@@ -1,0 +1,37 @@
+<div class="card-container">
+  <mat-card appRaiseCard class="data-card">
+    <mat-card-title>A simple Perceptron</mat-card-title>
+    <mat-card-subtitle>
+      We are using a simple perceptron model with 2 inputs (x and y coordinates).
+      <br>
+      The learned classes for the given points have the simple definition x > y.
+      <br>
+      The learning rate starts with 0.3 and is slowly reduced with each learned data point.
+      <br>
+      Click left to add add points of class1.
+      <br>
+      Click right to add add points of class2.
+    </mat-card-subtitle>
+    <mat-card-content>
+      <app-data-view
+        [points]="points"
+        [perceptron]="perceptron"
+        (dataViewClicked)="addPoint($event)">
+        [canvasWidth]="width"
+        [canvasHeight]="height"
+      </app-data-view>
+    </mat-card-content>
+    <div>
+    </div>
+  </mat-card>
+  <app-brain-settings></app-brain-settings>
+  <mat-card appRaiseCard class="perceptron-card">
+    <mat-card-title>Perceptron</mat-card-title>
+    <mat-card-subtitle>Here we show the current perceptron with its last inputs and outputs</mat-card-subtitle>
+    <mat-card-content>
+      <div>Learnrate: {{learnRate}}, learned data points: {{learnedDataPoints}}</div>
+      <app-perceptron [perceptron]="perceptron"></app-perceptron>
+    </mat-card-content>
+  </mat-card>
+</div>
+

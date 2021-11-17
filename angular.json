@@ -5,7 +5,7 @@
       "projectType": "application",
       "root": "apps/angular-examples",
       "sourceRoot": "apps/angular-examples/src",
-      "prefix": "wol-sok-mono",
+      "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
@@ -18,11 +18,36 @@
             "tsConfig": "apps/angular-examples/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
-              "apps/angular-examples/src/favicon.ico",
-              "apps/angular-examples/src/assets"
+              {
+                "glob": "*.*",
+                "input": "./projects/fib-wasm/build",
+                "output": "build"
+              },
+              "projects/angular-examples/src/favicon.ico",
+              "projects/angular-examples/src/manifest.json",
+              "projects/angular-examples/src/assets"
             ],
             "styles": ["apps/angular-examples/src/styles.scss"],
-            "scripts": []
+            "scripts": [
+              "node_modules/vega-lite/build/vega-lite.js",
+              {
+                "input": "node_modules/document-register-element/build/document-register-element.js",
+                "inject": true
+              }
+            ],
+            "allowedCommonJsDependencies": [
+              "assemblyscript/lib/loader",
+              "three-orbitcontrols-ts",
+              "gpu.js",
+              "semver",
+              "firebase/app",
+              "@firebase/component",
+              "@firebase/auth",
+              "typed-function",
+              "decimal.js",
+              "fraction.js",
+              "complex.js"
+            ]
           },
           "configurations": {
             "production": {
@@ -47,6 +72,7 @@
               "outputHashing": "all"
             },
             "development": {
+              "preserveSymlinks": true,
               "buildOptimizer": false,
               "optimization": false,
               "vendorChunk": true,
@@ -89,7 +115,7 @@
           "outputs": ["coverage/apps/angular-examples"],
           "options": {
             "jestConfig": "apps/angular-examples/jest.config.js",
-            "passWithNoTests": true
+            "passWithNoTests": false
           }
         }
       },

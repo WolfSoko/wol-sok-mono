@@ -1,0 +1,19 @@
+.logged-in, .log-in {
+  display: flex;
+  align-items: center;
+
+  .please-log-in, .profile-img {
+    margin-right: .7rem;
+  }
+
+  .profile-img {
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    background-position: center;
+    background-size: 45px 45px;
+  }
+}
+
+
+

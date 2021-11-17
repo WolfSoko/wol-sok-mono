@@ -1,0 +1,14 @@
+:host {
+  .web-assembly-card {
+    max-width: 450px;
+  }
+
+  .calc-spinner {
+    display: inline-block;
+    margin-left: 1rem;
+  }
+
+  mat-error{
+    padding: 2rem 0;
+  }
+}

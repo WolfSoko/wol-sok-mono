@@ -1,0 +1,22 @@
+<app-about></app-about>
+<mat-card class="technology-info-card">
+  <mat-card-title>
+    Technologies used:
+  </mat-card-title>
+  <mat-card-subtitle>
+    Click on a card to see the HTML vaporizing like Thanos.
+    <a target="_blank"
+       href="https://github.com/SuperheroicCoding/AngularExamples/tree/master/projects/sc-thanos">@supercode/thanos
+    </a>
+  </mat-card-subtitle>
+  <mat-card-content>
+    <div class="technology-cards">
+      <app-technology
+        *ngFor="let tech of technologies"
+        [title]="tech.title"
+        [image]="tech.image"
+        [link]="tech.link">
+      </app-technology>
+    </div>
+  </mat-card-content>
+</mat-card>

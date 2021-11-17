@@ -1,0 +1,44 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Bacteria War Game</mat-card-title>
+    <mat-card-subtitle>This is a game for 2 players currently only working with keyboard.<br>
+      Try to eat the other players bacteria. <br>Orange use <b>WASD</b> and Blue use <b>arrow keys</b> to control your
+      bacterias
+    </mat-card-subtitle>
+  </mat-card-header>
+</mat-card>
+<mat-card>
+  <mat-card-content>
+    <div *ngIf="state$ | async; let state" class="statistics">
+      <span>{{'Game time: ' + state.timePassed}}</span>
+      <span>{{'FPS: ' + (fps$ | async)}}</span>
+      <div *ngFor="let player of (players$ | async); ">Player {{player.id + 1}}: {{player.bacterias.length}}bacterias
+      </div>
+    </div>
+    <div class="canvas-container">
+      <div scThanos class="thanos-container">
+        <canvas
+          #canvasElement id="canvasElement" width="{{width}}"
+                height="{{height}}">
+        </canvas>
+      </div>
+    </div>
+  </mat-card-content>
+  <mat-card-actions>
+    <button mat-raised-button
+            (click)="startGame()"
+            [disabled]="isRunning$ | async"
+    >
+      Start
+    </button>
+    <button mat-raised-button
+            (click)="resetGame()"
+            [disabled]="!(isRunning$ | async)"
+    >
+      Reset
+    </button>
+  </mat-card-actions>
+</mat-card>
+<ng-template #loading>
+  <mat-spinner>Loading</mat-spinner>
+</ng-template>

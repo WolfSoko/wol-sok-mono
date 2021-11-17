@@ -1,105 +1,37 @@
+# SuperheroicCoding: Some examples with Angular+, Angular-Material, p5, three.js,  
 
+Just some cool examples implemented in Angular for topics that I am interested in. 
 
-# WolSokMono
+The topics are science algorithms like poisson distribution and reaction diffusion.
+Also shader programming with webgl and AI are given. 
+Firebase is used for persistence of custom webgl shaders.  
+For visualization p5 and three.js are used.
 
-This project was generated using [Nx](https://nx.dev).
+I always try to keep a good code structure as defined in the Angular style guide and Nx monorepo structure.
+Also I love rxjs and use it as much as I can.
+For components I use angular-material.    
+CSS wise I try use grid and flex layout.
 
-<p style="text-align: center;"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="450"></p>
+This project was generated with [Nx](https://nx.dev/l/a/getting-started/intro) 
 
-🔎 **Smart, Extensible Build Framework**
+To deploy it I use Github actions and AWS S3, with Cloudfront
 
-## Quick Start & Documentation
+## sc-thanos
+A special library is extracted from these Experiments called sc-thanos. 
+It's a cool vaporizing effect for your html Elements. 
+[sc-thanos on npm](https://www.npmjs.com/package/sc-thanos)
 
-[Nx Documentation](https://nx.dev/angular)
+Readme under: [Sc-Thanos README.md](./projects/sc-thanos/README.md)
 
-[10-minute video showing all Nx features](https://nx.dev/getting-started/intro)
-
-[Interactive Tutorial](https://nx.dev/tutorial/01-create-application)
-
-## Adding capabilities to your workspace
-
-Nx supports many plugins which add capabilities for developing different types of applications and different tools.
-
-These capabilities include generating applications, libraries, etc as well as the devtools to test, and build projects as well.
-
-Below are our core plugins:
-
-- [Angular](https://angular.io)
-  - `ng add @nrwl/angular`
-- [React](https://reactjs.org)
-  - `ng add @nrwl/react`
-- Web (no framework frontends)
-  - `ng add @nrwl/web`
-- [Nest](https://nestjs.com)
-  - `ng add @nrwl/nest`
-- [Express](https://expressjs.com)
-  - `ng add @nrwl/express`
-- [Node](https://nodejs.org)
-  - `ng add @nrwl/node`
-
-There are also many [community plugins](https://nx.dev/community) you could add.
-
-## Generate an application
-
-Run `ng g @nrwl/angular:app my-app` to generate an application.
-
-> You can use any of the plugins above to generate applications as well.
-
-When using Nx, you can create multiple applications and libraries in the same workspace.
-
-## Generate a library
-
-Run `ng g @nrwl/angular:lib my-lib` to generate a library.
-
-> You can also use any of the plugins above to generate libraries as well.
-
-Libraries are shareable across libraries and applications. They can be imported from `@wol-sok-mono/mylib`.
+A running version can be found on github pages: https://angularexamples.superheroiccoding.de/
 
 ## Development server
+Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 
-Run `ng serve my-app` for a dev server. Navigate to http://localhost:4200/. The app will automatically reload if you change any of the source files.
-
-## Code scaffolding
-
-Run `ng g component my-component --project=my-app` to generate a new component.
-
-## Build
-
-Run `ng build my-app` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
-
-## Running unit tests
-
-Run `ng test my-app` to execute the unit tests via [Jest](https://jestjs.io).
-
-Run `nx affected:test` to execute the unit tests affected by a change.
-
-## Running end-to-end tests
-
-Run `ng e2e my-app` to execute the end-to-end tests via [Cypress](https://www.cypress.io).
-
-Run `nx affected:e2e` to execute the end-to-end tests affected by a change.
-
-## Understand your workspace
-
-Run `nx dep-graph` to see a diagram of the dependencies of your projects.
+## Service Worker
+A serviceWorker configuration is generated if you run `ng build --prod`.
+It is used to serve the page even when you are offline. 
+You can test the service worker with `http-server -p 8080` from dist folder.
 
 ## Further help
-
-Visit the [Nx Documentation](https://nx.dev/angular) to learn more.
-
-
-
-
-
-
-## ☁ Nx Cloud
-
-### Distributed Computation Caching & Distributed Task Execution
-
-<p style="text-align: center;"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-cloud-card.png"></p>
-
-Nx Cloud pairs with Nx in order to enable you to build and test code more rapidly, by up to 10 times. Even teams that are new to Nx can connect to Nx Cloud and start saving time instantly.
-
-Teams using Nx gain the advantage of building full-stack applications with their preferred framework alongside Nx’s advanced code generation and project dependency graph, plus a unified experience for both frontend and backend developers.
-
-Visit [Nx Cloud](https://nx.app/) to learn more.
+To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).

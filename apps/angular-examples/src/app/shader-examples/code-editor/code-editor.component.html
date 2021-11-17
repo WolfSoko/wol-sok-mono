@@ -1,0 +1,14 @@
+<div *ngIf="codeTitle"
+     class="title">
+  {{codeTitle}}
+</div>
+<div class="editor"
+     ace-editor
+     [(text)]="code"
+     [mode]="mode"
+     [options]="options"
+     theme="monokai"
+     [readOnly]="false"
+     [autoUpdateContent]="true"
+     [durationBeforeCallback]="1000">
+</div>
