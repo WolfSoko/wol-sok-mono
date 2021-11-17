@@ -1,10 +1,10 @@
-import {Cell} from './cell';
-import {WorkerPostParams} from '../rx/operator/map-worker';
-import {CalcNextParam} from './calc-next-param';
-import {AddChemicalsParams} from './add-chemicals-param';
+import { Cell } from './cell';
+import { WorkerPostParams } from '../rx/operator/map-worker';
+import { CalcNextParam } from './calc-next-param';
+import { AddChemicalsParams } from './add-chemicals-param';
 
 
-export const calcNextDiffStep = function (input: CalcNextParam): WorkerPostParams<{ buffer: ArrayBufferLike, offsetRow: number }> {
+export const calcNextDiffStep = function(input: CalcNextParam): WorkerPostParams<{ buffer: ArrayBufferLike, offsetRow: number }> {
   const {
     width, height, gridBuffer, dA, dB, f,
     k,
@@ -38,7 +38,7 @@ export const calcNextDiffStep = function (input: CalcNextParam): WorkerPostParam
 
     let sumA = 0.0;
     let sumB = 0.0;
-    const add = (i, j, weight) => {
+    const add = (i: number, j: number, weight: number) => {
       const cell = getCell(i, j);
       sumA += cell.a * weight;
       sumB += cell.b * weight;
@@ -63,7 +63,7 @@ export const calcNextDiffStep = function (input: CalcNextParam): WorkerPostParam
     add(x - 1, y + 1, w.bottomLeft);
     add(x + 1, y - 1, w.topRight);
     add(x + 1, y + 1, w.bottomRight);
-    return {sumA, sumB};
+    return { sumA, sumB };
   };
 
   const constrain = (val: number) => Math.min(1.0, Math.max(0.0, val));
@@ -90,14 +90,14 @@ export const calcNextDiffStep = function (input: CalcNextParam): WorkerPostParam
       abb -
       ((dynK + dynF) * cell.b);
 
-    return {a: constrain(nextA), b: constrain(nextB)};
+    return { a: constrain(nextA), b: constrain(nextB) };
   };
 
   for (let x = 0; x < width; x++) {
     for (let y = offsetRow; y < offsetRow + offsetLength; y++) {
       if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
         // the borders are not encounterned;
-        setCell(x, y, {a: 0, b: 0});
+        setCell(x, y, { a: 0, b: 0 });
       } else {
         const lap = laplace(x, y);
         setCell(x, y, calcNextCell(
@@ -108,13 +108,13 @@ export const calcNextDiffStep = function (input: CalcNextParam): WorkerPostParam
     }
   }
   // we grid buffer to release resources. Otherwise the memory is eaten up really quick.
-  return {data: {buffer: next.buffer, offsetRow}, transferList: [next.buffer, gridBuffer]};
+  return { data: { buffer: next.buffer, offsetRow }, transferList: [next.buffer, gridBuffer] };
 };
 
 
-export const addChemicals = function (data: AddChemicalsParams): WorkerPostParams<ArrayBufferLike> {
+export const addChemicals = function(data: AddChemicalsParams): WorkerPostParams<ArrayBufferLike> {
   const grid = new Float32Array(data.gridBuffer);
-  const {x, y, r, width, height} = data;
+  const { x, y, r, width, height } = data;
 
   const setCell = (column: number, row: number, cell: Cell) => {
     const index = (column + row * width) * 2;
@@ -143,6 +143,6 @@ export const addChemicals = function (data: AddChemicalsParams): WorkerPostParam
     }
   }
 
-  return {data: grid.buffer, transferList: [grid.buffer]};
+  return { data: grid.buffer, transferList: [grid.buffer] };
 
 };

@@ -7,6 +7,7 @@ import {
   BoxGeometry,
   Clock,
   Color,
+  ColorRepresentation,
   FogExp2,
   Mesh,
   MeshBasicMaterial,
@@ -23,8 +24,8 @@ import {
   WebGLRenderer
 } from 'three';
 import { OrbitControls } from 'three-orbitcontrols-ts';
-import {MandelbrotFragment, MandelbrotVertex} from './mandelbrot-shader';
-import {map} from 'rxjs/operators';
+import { MandelbrotFragment, MandelbrotVertex } from './mandelbrot-shader';
+import { map } from 'rxjs/operators';
 
 const TAU = Math.PI / 2;
 
@@ -36,26 +37,26 @@ const TAU = Math.PI / 2;
 export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
-  @ViewChild('webGlCanvas', { static: true }) webGlCanvas: ElementRef;
+  @ViewChild('webGlCanvas', { static: true }) webGlCanvas!: ElementRef;
 
   mouseup$ = new EventEmitter<MouseEvent>();
   mousedown$ = new EventEmitter<MouseEvent>();
 
 
-  private renderer: WebGLRenderer;
-  private scene: Scene;
-  private camera: PerspectiveCamera;
-  private cube: Mesh;
-  private lastFrameTime: number;
-  private plane: Mesh;
-  private width: number;
-  private height: number;
-  private pointLight: PointLight;
-  private pointLightSphere: Mesh;
-  private clock: Clock;
-  private controls: any;
+  private renderer!: WebGLRenderer;
+  private scene!: Scene;
+  private camera!: PerspectiveCamera;
+  private cube!: Mesh;
+  private lastFrameTime!: number;
+  private plane!: Mesh;
+  private width!: number;
+  private height!: number;
+  private pointLight!: PointLight;
+  private pointLightSphere!: Mesh;
+  private clock!: Clock;
+  private controls!: any;
 
-  private activateLook$: Observable<boolean>;
+  private activateLook$!: Observable<boolean>;
 
   constructor(private zone: NgZone) {
   }
@@ -92,7 +93,7 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
     this.camera.position.z = -0.6;
     this.camera.position.y = 1.86;
     this.camera.position.x = 10;
-    this.renderer = new WebGLRenderer({canvas, antialias: true});
+    this.renderer = new WebGLRenderer({ canvas, antialias: true });
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = BasicShadowMap;
     this.renderer.setSize(this.width, this.height);
@@ -119,7 +120,7 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
     this.scene.add(pointLight);
 
     const geometry = new BoxGeometry(1, 1, 1);
-    const material = new MeshPhongMaterial({color: 0x6611dd, specular: 0x009900, shininess: 30, flatShading: true});
+    const material = new MeshPhongMaterial({ color: 0x6611dd, specular: 0x009900, shininess: 30, flatShading: true });
     this.cube = new Mesh(geometry, material);
     this.cube.castShadow = true;
     this.cube.receiveShadow = true;
@@ -143,7 +144,7 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
     this.animate(0);
   }
 
-  private createLight(color) {
+  private createLight(color: ColorRepresentation | undefined) {
     const pointLight = new PointLight(color);
     pointLight.castShadow = true;
     pointLight.shadow.camera.near = 1;
@@ -153,7 +154,7 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
 
-  private animate(time?: number) {
+  private animate(time: number) {
     this.zone.runOutsideAngular(() => {
       this.resize();
 
@@ -204,8 +205,8 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
   // Resize by clientWidth and clientHeight
   private resize() {
     const canvas: HTMLCanvasElement = this.webGlCanvas.nativeElement;
-    const width = Math.min(canvas.parentElement.clientWidth, 1024);
-    const height = canvas.parentElement.clientHeight;
+    const width = Math.min(canvas.parentElement?.clientWidth ?? 1, 1024);
+    const height = canvas.parentElement?.clientHeight ?? 1;
     if (width !== this.width ||
       height !== this.height) {
       this.renderer.setSize(width, height, true);

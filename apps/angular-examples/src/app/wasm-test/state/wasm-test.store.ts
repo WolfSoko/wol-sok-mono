@@ -11,7 +11,7 @@ export interface FibResult {
 export interface WasmTestState {
   fibRunning: boolean;
   fibOptions: { fibN: number };
-  fibResult: FibResult;
+  fibResult: FibResult | null;
 }
 
 export function createInitialState(): WasmTestState {

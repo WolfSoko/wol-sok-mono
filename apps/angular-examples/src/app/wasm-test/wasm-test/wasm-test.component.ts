@@ -12,14 +12,14 @@ import {FibResult} from '../state/wasm-test.store';
   styleUrls: ['./wasm-test.component.scss']
 })
 export class WasmTestComponent implements OnInit, OnDestroy {
-  fibRunning$: Observable<boolean>;
-  fibResult$: Observable<FibResult>;
-  fibN$: Observable<number>;
-  isLoading$: Observable<boolean>;
-  fibOptionsForm: FormGroup;
-  private persistForm: PersistNgFormPlugin<any>;
-  private subscription: Subscription;
-  fibError$: Observable<any>;
+  fibRunning$!: Observable<boolean>;
+  fibResult$!: Observable<FibResult>;
+  fibN$!: Observable<number>;
+  isLoading$!: Observable<boolean>;
+  fibOptionsForm!: FormGroup;
+  private persistForm!: PersistNgFormPlugin;
+  private subscription!: Subscription;
+  fibError$!: Observable<never>;
 
   constructor(private wasmTestQuery: WasmTestQuery,
               private wasmTestService: WasmTestService,

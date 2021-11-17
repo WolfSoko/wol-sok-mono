@@ -1,30 +1,20 @@
-import {Observable, Operator, Subscriber} from 'rxjs';
+import {Observable, Subscriber} from 'rxjs';
 
 
 export class WorkerPostParams<T> {
   data?: T;
-  transferList?: any[];
+  transferList?: Transferable[];
 }
 
 type WorkerParams<T> = WorkerPostParams<T> | T;
-
-export class MapWorkerOperator<T, R> implements Operator<T, R> {
-  constructor(private worker: Worker, private thisArg: any) {
-  }
-
-  call(subscriber: Subscriber<R>, source: any): any {
-    return;
-  }
-}
-
 
 class MapWorkerSubscriber<T extends WorkerPostParams<T>, R> extends Subscriber<T> {
 
   constructor(destination: Subscriber<R>, private worker: Worker) {
     super(destination);
 
-    this.worker.onmessage = (event: MessageEvent) => this.destination.next(event.data as R);
-    this.worker.onerror = (error) => this.destination.error(error);
+    this.worker.onmessage = (event: MessageEvent) => this.destination.next?.(event.data as R);
+    this.worker.onerror = (error) => this.destination.error?.(error);
   }
 
   protected _next(value: T): void {
@@ -47,7 +37,7 @@ class MapWorkerSubscriber<T extends WorkerPostParams<T>, R> extends Subscriber<T
 }
 
 // inline web worker helper
-function createWorker(fn) {
+function  createWorker<T, R>(fn: (input: T) => WorkerParams<R>) {
   /* tslint:disable:no-trailing-whitespace*/
   const webWorkerTemplate = `
     self.cb = ${fn};
@@ -57,7 +47,7 @@ function createWorker(fn) {
         self.postMessage(result.data, result.transferList);
       } else {
         self.postMessage(result);
-      } 
+      }
     };
   `;
   /* tslint:enable:no-trailing-whitespace*/

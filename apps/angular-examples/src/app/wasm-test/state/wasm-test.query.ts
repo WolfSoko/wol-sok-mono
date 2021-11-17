@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Query} from '@datorama/akita';
-import {WasmTestStore, WasmTestState} from './wasm-test.store';
+import { WasmTestStore, WasmTestState, FibResult } from './wasm-test.store';
+import { Observable } from 'rxjs';
 
 @Injectable({providedIn: 'root'})
 export class WasmTestQuery extends Query<WasmTestState> {
@@ -13,8 +14,8 @@ export class WasmTestQuery extends Query<WasmTestState> {
     return this.select((state) => state.fibRunning);
   }
 
-  selectFibResult() {
-    return this.select((state) => state.fibResult);
+  selectFibResult(): Observable<FibResult> {
+    return this.select((state) => state.fibResult!);
   }
 
   selectFibN() {

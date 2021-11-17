@@ -1,0 +1,30 @@
+{
+  "name": "@wolsok/sc-thanos",
+  "description": "wolsok's implementation of a cool thanos vaporizing effect for destroying dom elements",
+  "bugs": {
+    "url": "https://github.com/SuperheroicCoding/AngularExamples/issues"
+  },
+  "homepage": "https://angularexamples.superheroiccoding.de",
+  "repository": "https://github.com/SuperheroicCoding/AngularExamples/issues",
+  "license": "MIT",
+  "version": "0.6.1",
+  "keywords": [
+    "superheroicCoding",
+    "wolsok",
+    "angular",
+    "angular-lib",
+    "particles",
+    "animations",
+    "effects",
+    "html2canvas",
+    "rxjs"
+  ],
+  "peerDependencies": {
+    "html2canvas": "^1.3.2",
+    "@angular/common": "^13.0.1",
+    "@angular/core": "^13.0.1"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  }
+}

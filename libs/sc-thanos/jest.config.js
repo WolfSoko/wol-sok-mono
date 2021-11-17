@@ -1,5 +1,5 @@
 module.exports = {
-  displayName: 'angular-examples',
+  displayName: 'sc-thanos',
   preset: '../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {
@@ -8,7 +8,7 @@ module.exports = {
       stringifyContentPathRegex: '\\.(html|svg)$',
     },
   },
-  coverageDirectory: '../../coverage/apps/angular-examples',
+  coverageDirectory: '../../coverage/libs/sc-thanos',
   transform: {
     '^.+.(ts|mjs|js|html)$': 'jest-preset-angular',
   },
