@@ -1,4 +1,4 @@
-import {AfterViewChecked, Component, ElementRef, EventEmitter, Output, ViewChild} from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular/core';
 import * as p5 from 'p5';
 
 class Path {
@@ -34,16 +34,13 @@ class Start extends Path {
 })
 export class DrawDigitComponent implements AfterViewChecked {
 
-  @Output() change = new EventEmitter<Float32Array>();
-  private sketch: p5;
+  @Output() updatePixels = new EventEmitter<Float32Array>();
+  private sketch!: p5;
   private readonly size = 28 * 10;
 
   private path: Path[] = [];
 
-  @ViewChild('drawCanvas', {static: true}) private drawCanvas: ElementRef;
-
-  constructor() {
-  }
+  @ViewChild('drawCanvas', {static: true}) private drawCanvas!: ElementRef;
 
   reset() {
     this.path = [];
@@ -115,7 +112,7 @@ export class DrawDigitComponent implements AfterViewChecked {
             }
           }
           p.updatePixels();
-          this.change.emit(nextImage);
+          this.updatePixels.emit(nextImage);
         }
       };
 
@@ -126,6 +123,7 @@ export class DrawDigitComponent implements AfterViewChecked {
           }
           return false;
         }
+        return true;
       };
 
     }, this.drawCanvas.nativeElement);

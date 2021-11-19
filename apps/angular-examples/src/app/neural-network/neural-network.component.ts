@@ -1,23 +1,26 @@
-import {Component, OnInit} from '@angular/core';
-import {environment} from '../../environments/environment';
+import { Component } from '@angular/core';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-neural-network',
   templateUrl: './neural-network.component.html',
-  styleUrls: ['./neural-network.component.less']
+  styleUrls: ['./neural-network.component.less'],
 })
-export class NeuralNetworkComponent implements OnInit {
-  private _navLinks: { path: any, label: string, hidden: boolean }[];
+export class NeuralNetworkComponent {
+  private _navLinks: { path: string; label: string; hidden: boolean }[];
 
-  ngOnInit(): void {
+  constructor() {
     this._navLinks = [
-      {path: 'perceptron', label: 'Perceptron', hidden: false},
-      {path: 'multiPerceptron', label: 'Multi layer net', hidden: environment.production}
+      { path: 'perceptron', label: 'Perceptron', hidden: false },
+      {
+        path: 'multiPerceptron',
+        label: 'Multi layer net',
+        hidden: environment.production,
+      },
     ];
   }
 
   get navLinks() {
-    return this._navLinks.filter((link => !link.hidden));
+    return this._navLinks.filter((link) => !link.hidden);
   }
 }
-

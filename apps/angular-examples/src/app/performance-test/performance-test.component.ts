@@ -1,9 +1,9 @@
-import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
-import {ID} from '@datorama/akita';
-import {Observable} from 'rxjs';
-import {PerformanceTest} from './state/performance-test.model';
-import {PerformanceTestQuery} from './state/performance-test.query';
-import {arrayItems, PerformanceTestService} from './state/performance-test.service';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ID } from '@datorama/akita';
+import { Observable } from 'rxjs';
+import { PerformanceTest } from './state/performance-test.model';
+import { PerformanceTestQuery } from './state/performance-test.query';
+import { ARRAY_ITEMS_LENGTH, PerformanceTestService } from './state/performance-test.service';
 
 @Component({
   selector: 'app-performance-test',
@@ -11,18 +11,15 @@ import {arrayItems, PerformanceTestService} from './state/performance-test.servi
   styleUrls: ['./performance-test.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PerformanceTestComponent implements OnInit {
-  performanceTest$: Observable<PerformanceTest[]>;
-  isLoading$: Observable<boolean>;
-  activePerformanceTest$: Observable<PerformanceTest>;
-  arrayItems: number = arrayItems;
+export class PerformanceTestComponent{
+  readonly performanceTest$: Observable<PerformanceTest[]>;
+  readonly isLoading$: Observable<boolean>;
+  readonly activePerformanceTest$: Observable<PerformanceTest | undefined>;
+  readonly arrayItems: number = ARRAY_ITEMS_LENGTH;
 
   constructor(private performanceTestQuery: PerformanceTestQuery,
               private performanceTestService: PerformanceTestService
   ) {
-  }
-
-  ngOnInit() {
     this.performanceTest$ = this.performanceTestQuery.selectAll();
     this.isLoading$ = this.performanceTestQuery.selectLoading();
     this.activePerformanceTest$ = this.performanceTestQuery.selectActive();

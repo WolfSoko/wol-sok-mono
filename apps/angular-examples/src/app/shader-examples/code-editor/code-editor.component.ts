@@ -1,35 +1,29 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'app-code-editor',
   templateUrl: './code-editor.component.html',
   styleUrls: ['./code-editor.component.less']
 })
-export class CodeEditorComponent implements OnInit {
+export class CodeEditorComponent {
 
-  private codeValue: string;
+  private codeValue = '';
 
-  @Input() mode: string;
+  @Input() mode!: string;
 
   @Input() get code(): string {
     return this.codeValue;
   }
+
+  set code(code) {
+    this.codeValue = code;
+    this.codeChange.emit(code);
+  }
+
   @Input() codeTitle?: string;
 
   @Output() codeChange: EventEmitter<string> = new EventEmitter<string>();
 
-  options: any = {maxLines: 1000, printMargin: false};
-
-
-  set code(code) {
-    this.codeValue = code;
-    this.codeChange.emit(this.codeValue);
-  }
-
-  constructor() {
-  }
-
-  ngOnInit() {
-  }
+  options: { printMargin: boolean; maxLines: number } = {maxLines: 1000, printMargin: false};
 
 }

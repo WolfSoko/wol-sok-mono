@@ -1,16 +1,16 @@
-import {TrainData} from './train-data';
-import {LabelClass} from './point';
-import {timer, Subscription} from 'rxjs';
+import { TrainData } from './train-data';
+import { LabelClass } from './point';
+import { Subscription, timer } from 'rxjs';
 
 export class Perceptron {
 
   weights: number[];
   bias = 1.0;
   isLearning = false;
-  lastGuess: number;
-  lastLearnRate: number;
-  lastInput: number[];
-  private learnTimeoutSub: Subscription;
+  lastGuess = 0;
+  lastLearnRate = 0;
+  lastInput: number[] = [];
+  private learnTimeoutSub: Subscription = new Subscription();
 
   private static outputMapping(activationLevel: number): LabelClass {
     return activationLevel < 0.5 ? 0 : 1;
@@ -58,10 +58,8 @@ export class Perceptron {
 
     if (error !== 0.0) {
       this.isLearning = true;
-      if (this.learnTimeoutSub) {
-        this.learnTimeoutSub.unsubscribe();
-      }
-      this.learnTimeoutSub = timer(500).subscribe((ignore) => this.isLearning = false);
+      this.learnTimeoutSub.unsubscribe();
+      this.learnTimeoutSub.add(timer(500).subscribe((ignore) => this.isLearning = false));
       const adjustedWeights = this.weights.map((weight, index) =>
         weight + error * inputs[index] * learnRate
       );
@@ -91,7 +89,7 @@ export class Perceptron {
     return error;
   }
 
-  get classSeparatorLine(): { x0: number, y0: number, x1: number, y1: number } {
+  get classSeparatorLine(): { x0: number, y0: number, x1: number, y1: number }| undefined {
     if (this.inputConnections !== 2) {
       return undefined;
     }

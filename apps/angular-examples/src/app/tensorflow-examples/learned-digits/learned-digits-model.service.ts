@@ -1,6 +1,16 @@
-import {Injectable} from '@angular/core';
-import {layers, nextFrame, Sequential, sequential, SGDOptimizer, Tensor, Tensor2D, tidy, train} from '@tensorflow/tfjs';
-import {MnistDataService} from './mnist-data.service';
+import { Injectable } from '@angular/core';
+import {
+  layers,
+  nextFrame,
+  Sequential,
+  sequential,
+  SGDOptimizer,
+  Tensor,
+  Tensor2D,
+  tidy,
+  train
+} from '@tensorflow/tfjs';
+import { MnistDataService } from './mnist-data.service';
 
 
 const LEARNING_RATE = 0.15;
@@ -19,16 +29,16 @@ const TEST_ITERATION_FREQUENCY = 10;
 @Injectable({providedIn: 'root'})
 export class LearnedDigitsModelService {
   private model: Sequential;
-  private optimizer: SGDOptimizer;
+  private readonly optimizer: SGDOptimizer;
 
-  lossValues: { 'batch': number, 'loss': number | Tensor, 'set': string }[];
-  accuracyValues: { 'batch': number, 'accuracy': number | Tensor, 'set': string }[];
+  lossValues!: { batch: number, loss: number, set: string }[];
+  accuracyValues!: { batch: number, accuracy: number, set: string }[];
   isTraining = false;
-  predictions: number[];
-  labels: number[];
-  testBatch: { xs: Tensor2D; labels: Tensor2D };
-  testCustomBatch: Tensor2D;
-  customPredictions: number[];
+  predictions!: number[];
+  labels!: number[];
+  testBatch!: { xs: Tensor2D; labels: Tensor2D };
+  testCustomBatch!: Tensor2D;
+  customPredictions!: number[];
 
   constructor(private mnistData: MnistDataService) {
     this.model = sequential();
@@ -85,7 +95,7 @@ export class LearnedDigitsModelService {
       const batch = this.mnistData.nextTrainBatch(BATCH_SIZE);
 
       let testBatch;
-      let validationData;
+      let validationData!: [Tensor, Tensor];
       // Every few batches test the accuracy of the mode.
       if (i % TEST_ITERATION_FREQUENCY === 0) {
         testBatch = this.mnistData.nextTestBatch(TEST_BATCH_SIZE);
@@ -105,10 +115,10 @@ export class LearnedDigitsModelService {
           epochs: 1
         });
 
-      const loss = history.history.loss[0];
+      const loss = history.history.loss[0] as number;
       this.lossValues = [...this.lossValues, {'batch': i, 'loss': loss, 'set': 'train'}];
 
-      const accuracy = history.history.acc[0];
+      const accuracy = history.history.acc[0] as number;
       if (testBatch != null) {
         this.accuracyValues = [...this.accuracyValues, {'batch': i, 'accuracy': accuracy, 'set': 'train'}];
       }
@@ -125,13 +135,15 @@ export class LearnedDigitsModelService {
     this.isTraining = false;
   }
 
-  predictDrawing(imageData?: Float32Array) {
-    this.testCustomBatch = this.mnistData.nextCustomTestBatch(imageData);
+  predictDrawing(imageData: Float32Array): void {
+    const nextCustomBatch = this.mnistData.nextCustomTestBatch(imageData);
       tidy(() => {
-        const output: any = this.model.predict(this.testCustomBatch.reshape([-1, 28, 28, 1]) as any);
+        const reshapedBatch: Tensor = nextCustomBatch.reshape([-1, 28, 28, 1]);
+        const output: Tensor = this.model.predict(reshapedBatch) as Tensor;
         const axis = 1;
         this.customPredictions = Array.from(output.argMax(axis).dataSync());
       });
+    this.testCustomBatch = nextCustomBatch;
   }
 
   predict() {

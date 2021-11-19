@@ -1,6 +1,6 @@
-import {Component, OnInit} from '@angular/core';
-import {HeadlineAnimationService} from '../../core/headline-animation.service';
-import {PolynomialRegressionService} from './polynomial-regression.service';
+import { Component, OnInit } from '@angular/core';
+import { HeadlineAnimationService } from '../../core/headline-animation.service';
+import { PolynomialRegressionService } from './polynomial-regression.service';
 
 @Component({
   selector: 'app-polynomial-regressen',
@@ -8,9 +8,9 @@ import {PolynomialRegressionService} from './polynomial-regression.service';
   styleUrls: ['./polynomial-regression.component.less']
 })
 export class PolynomialRegressionComponent implements OnInit {
-  randomCoefficients: { a: number; b: number; c: number; d: number };
-  learnedCoefficients: { a: number; b: number; c: number; d: number };
-  currentLoss: number;
+  randomCoefficients!: { a: number; b: number; c: number; d: number };
+  learnedCoefficients!: { a: number; b: number; c: number; d: number };
+  currentLoss?: number;
   isLearning = false;
 
   constructor(public polyService: PolynomialRegressionService, public headlineAnimation: HeadlineAnimationService) {
@@ -25,6 +25,9 @@ export class PolynomialRegressionComponent implements OnInit {
     this.headlineAnimation.stopAnimation();
     await this.polyService.learnCoefficients(50, 10);
     this.learnedCoefficients = this.polyService.currentCoefficients;
+    if(!this.polyService.predictionsAfter){
+      throw new Error('predictionsAfter needed');
+    }
     const currentLossData = await this.polyService.loss(this.polyService.predictionsAfter, this.polyService.trainingData.ys).data();
     this.currentLoss = currentLossData[0];
     this.isLearning = false;

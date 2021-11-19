@@ -12,7 +12,7 @@ import {
   ViewChild
 } from '@angular/core';
 import P5 from 'p5';
-import {InputWave} from '../../state/input-wave.model';
+import { InputWave } from '../../state/input-wave.model';
 
 interface WaveCanvasChanges extends SimpleChanges {
   waveWidth: SimpleChange;
@@ -27,15 +27,15 @@ interface WaveCanvasChanges extends SimpleChanges {
 })
 export class WaveCanvasComponent implements OnChanges, AfterViewInit, OnDestroy {
 
-  @ViewChild('canvasContainer', {static: true}) canvasContainerRef: ElementRef;
-  private canvasContainer: HTMLElement;
+  @ViewChild('canvasContainer', {static: true}) canvasContainerRef!: ElementRef;
+  private canvasContainer?: HTMLElement;
 
-  @Input() waveWidth: number;
-  @Input() waveHeight: number;
-  @Input() wave: InputWave;
+  @Input() waveWidth!: number;
+  @Input() waveHeight!: number;
+  @Input() wave!: InputWave;
 
-  private sketch: P5;
-  private wavePartsToDraw: number;
+  private sketch: P5 | null = null;
+  private wavePartsToDraw = 0;
 
   constructor(@Inject(NgZone) private zone: NgZone) {
   }

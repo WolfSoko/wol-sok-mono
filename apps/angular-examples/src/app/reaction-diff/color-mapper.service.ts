@@ -1,5 +1,5 @@
-import {Injectable} from '@angular/core';
-import {Cell} from './cell';
+import { Injectable } from '@angular/core';
+import { Cell } from './cell';
 
 export interface ReactionDiffCellColor {
   r: number;
@@ -11,7 +11,7 @@ export interface ReactionDiffCellColor {
 export class ColorMapperService {
 
   backgroundColor: ReactionDiffCellColor = {r: 0, g: 0, b: 0};
-  savedColors: Array<Array<ReactionDiffCellColor>> = [];
+  savedColors: Array<Array<ReactionDiffCellColor | null>> = [];
 
   constructor() {
     for (let x = 0; x < 256; x++) {

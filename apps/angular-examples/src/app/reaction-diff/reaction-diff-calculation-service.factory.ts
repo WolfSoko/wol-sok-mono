@@ -1,15 +1,15 @@
-import {Injectable} from '@angular/core';
-import {GpuJsService} from '../core/gpujs.service';
-import {ColorMapperService} from './color-mapper.service';
-import {ReactionDiffCalculator} from './reaction-diff-calculator';
-import {ReactionDiffConfigService} from './reaction-diff-config.service';
-import {ReactionDiffGpuCalcService} from './reaction-diff-gpu-calc.service';
-import {ReactionDiffKernelModules} from './reaction-diff-window';
-import {ReactionDiffWorkerCalcService} from './reaction-diff-worker-calc.service';
+import { Injectable } from '@angular/core';
+import { GpuJsService } from '../core/gpujs.service';
+import { ColorMapperService } from './color-mapper.service';
+import { ReactionDiffCalculator } from './reaction-diff-calculator';
+import { ReactionDiffConfigService } from './reaction-diff-config.service';
+import { ReactionDiffGpuCalcService } from './reaction-diff-gpu-calc.service';
+import { ReactionDiffKernelModules } from './reaction-diff-window';
+import { ReactionDiffWorkerCalcService } from './reaction-diff-worker-calc.service';
 
 @Injectable()
 export class ReactionDiffCalcServiceFactory {
-  lastCalcService: ReactionDiffCalculator;
+  private lastCalcService?: ReactionDiffCalculator;
 
   constructor(private configService: ReactionDiffConfigService,
               private gpuJsService: GpuJsService,

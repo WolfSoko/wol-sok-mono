@@ -11,7 +11,7 @@ import {
   ViewChild
 } from '@angular/core';
 import * as p5 from 'p5';
-import {ReactionDiffCalculator} from '../reaction-diff-calculator';
+import { ReactionDiffCalculator } from '../reaction-diff-calculator';
 
 @Component({
   selector: 'app-p5-view',
@@ -21,20 +21,17 @@ import {ReactionDiffCalculator} from '../reaction-diff-calculator';
 })
 export class P5ViewComponent implements OnChanges, OnDestroy {
 
-  @ViewChild('drawArea', { static: true }) drawArea: ElementRef;
-  @Input() simWidth: number;
-  @Input() simHeight: number;
-  @Input() calcService: ReactionDiffCalculator;
+  @ViewChild('drawArea', { static: true }) drawArea!: ElementRef;
+  @Input() simWidth!: number;
+  @Input() simHeight!: number;
+  @Input() calcService!: ReactionDiffCalculator;
   @Input() run = false;
   @Input() showFps = false;
   @Output() mousePressed: EventEmitter<{ x: number, y: number }> = new EventEmitter();
 
-  private sketch: p5;
+  private sketch?: p5;
   private frameRate = 1;
   private drawOnce = true;
-
-  constructor() {
-  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.simWidth || changes.simHeight) {
@@ -95,7 +92,7 @@ export class P5ViewComponent implements OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.sketch.remove();
+    this.sketch?.remove();
   }
 }
 

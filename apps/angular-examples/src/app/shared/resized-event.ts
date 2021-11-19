@@ -1,4 +1,3 @@
-import {ElementRef} from '@angular/core';
 
 export class ResizedEvent {
 
@@ -7,8 +6,8 @@ export class ResizedEvent {
   readonly newHeight: number;
   constructor(
     entry: ResizeObserverEntry,
-    private readonly oldWidth: number,
-    private readonly oldHeight: number
+    private readonly oldWidth?: number,
+    private readonly oldHeight?: number
   ) {
     this.element = entry.target as HTMLElement;
     ({width: this.newWidth, height: this.newHeight} = entry.contentRect);

@@ -1,9 +1,9 @@
-import {Injectable} from '@angular/core';
-import {Store, StoreConfig} from '@datorama/akita';
+import { Injectable } from '@angular/core';
+import { Store, StoreConfig } from '@datorama/akita';
 import { PageEvent } from '@angular/material/paginator';
-import {ShaderCode} from './shader-code.model';
+import { ShaderCode } from './shader-code.model';
 
-export abstract class ShaderExampleState {
+export interface ShaderExampleState {
   showFps: boolean;
   showCodeEditor: boolean;
   currentPage: PageEvent;

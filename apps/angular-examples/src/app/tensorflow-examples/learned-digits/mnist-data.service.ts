@@ -1,6 +1,6 @@
-import {HttpClient} from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {tensor2d, util} from '@tensorflow/tfjs';
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Rank, Tensor, tensor2d, util } from '@tensorflow/tfjs';
 
 const IMAGE_SIZE = 784;
 const NUM_CLASSES = 10;
@@ -24,16 +24,16 @@ const MNIST_LABELS_PATH =
 export class MnistDataService {
   private shuffledTrainIndex: number;
   private shuffledTestIndex: number;
-  private datasetImages: Float32Array;
+  private datasetImages!: Float32Array;
 
-  private datasetLabels: Uint8Array;
-  private datasetCustomImages: Float32Array;
-  private testIndices: Uint32Array;
-  private trainIndices: Uint32Array;
-  private trainImages: Float32Array;
-  private testImages: Float32Array;
-  private trainLabels: Uint8Array;
-  private testLabels: Uint8Array;
+  private datasetLabels!: Uint8Array;
+  private datasetCustomImages!: Float32Array;
+  private testIndices!: Uint32Array;
+  private trainIndices!: Uint32Array;
+  private trainImages!: Float32Array;
+  private testImages!: Float32Array;
+  private trainLabels!: Uint8Array;
+  private testLabels!: Uint8Array;
   customImages = 0;
 
   constructor(private http: HttpClient) {
@@ -46,6 +46,9 @@ export class MnistDataService {
     const img = new Image();
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
+    if(!ctx){
+      throw new Error('Can not get canvas context');
+    }
     const imgRequest = new Promise((resolve, reject) => {
       img.crossOrigin = '';
       img.onload = () => {
@@ -102,7 +105,7 @@ export class MnistDataService {
       this.datasetLabels.slice(NUM_CLASSES * NUM_TRAIN_ELEMENTS);
   }
 
-  nextTrainBatch(batchSize) {
+  nextTrainBatch(batchSize: number): { xs: Tensor<Rank.R2>; labels: Tensor<Rank.R2> } {
     return this.nextBatch(
       batchSize, [this.trainImages, this.trainLabels], () => {
         this.shuffledTrainIndex =
@@ -111,7 +114,7 @@ export class MnistDataService {
       });
   }
 
-  nextTestBatch(batchSize) {
+  nextTestBatch(batchSize: number): { xs: Tensor<Rank.R2>; labels: Tensor<Rank.R2> } {
     return this.nextBatch(batchSize, [this.testImages, this.testLabels], () => {
 
       this.shuffledTestIndex =
@@ -120,7 +123,7 @@ export class MnistDataService {
     });
   }
 
-  nextCustomTestBatch(imageData: Float32Array) {
+  nextCustomTestBatch(imageData: Float32Array): Tensor<Rank.R2> {
     const batchImagesArray = new Float32Array(IMAGE_SIZE * (this.customImages + 1));
     batchImagesArray.set(imageData);
     if (this.customImages > 0) {
@@ -131,7 +134,7 @@ export class MnistDataService {
     return tensor2d(batchImagesArray, [this.customImages, IMAGE_SIZE]);
   }
 
-  nextBatch(batchSize, data: [Float32Array, Uint8Array], index) {
+  nextBatch(batchSize: number, data: [Float32Array, Uint8Array], index: () => number): { xs: Tensor<Rank.R2>; labels: Tensor<Rank.R2> } {
     const batchImagesArray = new Float32Array(batchSize * IMAGE_SIZE);
     const batchLabelsArray = new Uint8Array(batchSize * NUM_CLASSES);
 

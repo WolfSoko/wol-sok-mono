@@ -1,27 +1,26 @@
-import {IKernelRunShortcut, KernelOutput, Texture} from 'gpu.js';
-import p5, {Graphics} from 'p5';
-import {ReactionDiffCalcParams} from './reaction-diff-calc-params';
-import {CellWeights, weightsToArray} from './cell-weights';
-import {ReactionDiffCalculator} from './reaction-diff-calculator';
-import {Observable} from 'rxjs';
-import {GpuJsService} from '../core/gpujs.service';
-import {ReactionDiffKernelModules} from './reaction-diff-window';
+import { IKernelRunShortcut, Texture } from 'gpu.js';
+import { ReactionDiffCalcParams } from './reaction-diff-calc-params';
+import { CellWeights, weightsToArray } from './cell-weights';
+import { ReactionDiffCalculator } from './reaction-diff-calculator';
+import { Observable } from 'rxjs';
+import { GpuJsService } from '../core/gpujs.service';
+import { ReactionDiffKernelModules } from './reaction-diff-window';
 
 export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
 
   numberThreads = 1;
   private lastNextCalc = 0;
-  private weights: number[];
-  private addChemicalRadius: number;
-  private calcNextKernels: { first: IKernelRunShortcut, second: IKernelRunShortcut };
-  private speed: number;
-  private imageKernel: IKernelRunShortcut;
-  private calcParams: ReactionDiffCalcParams;
-  private nextAddChemicals: (number | number | number | number)[] = [0, 0, 0, 0];
-  private nextImage: HTMLCanvasElement;
-  private initGridKernel: IKernelRunShortcut;
+  private weights?: number[];
+  private addChemicalRadius = 1;
+  private calcNextKernels: { first: IKernelRunShortcut, second: IKernelRunShortcut } | null = null;
+  private speed = 1;
+  private imageKernel: IKernelRunShortcut | null = null;
+  private calcParams?: ReactionDiffCalcParams;
+  private nextAddChemicals: [number, number, number, number] = [0, 0, 0, 0];
+  private nextImage: HTMLCanvasElement | null = null;
+  private initGridKernel?: IKernelRunShortcut | null;
   private initialized = false;
-  private grid: Texture;
+  private grid?: Texture;
 
   constructor(private width: number,
               private height: number,
@@ -50,24 +49,12 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
     this.addChemical(this.width / 2, this.height / 2);
   }
 
-  private init() {
-    this.initGrid();
-
-    const first: IKernelRunShortcut = this.createCalcNextGpuKernel();
-    const second: IKernelRunShortcut = this.createCalcNextGpuKernel();
-    this.calcNextKernels = {
-      first,
-      second
-    };
-    this.imageKernel = this.createImageKernel();
-    this.addChemical(this.width / 2, this.height / 2);
-    this.initialized = true;
-  }
-
   addChemical(x: number, y: number): void {
     const r = this.addChemicalRadius;
-    this.nextAddChemicals = [x, y, r, 1.0];
-    this.calcNext(1);
+    if (r != null) {
+      this.nextAddChemicals = [x, y, r, 1.0];
+      this.calcNext(1);
+    }
   }
 
   resize(width: number, height: number): void {
@@ -80,6 +67,9 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
   }
 
   calcNext(repeat: number = this.speed): void {
+    if (!(this.calcParams && this.calcNextKernels)) {
+      throw new Error('calcParams or calcNextKernels not initialized');
+    }
     const calcParams = [
       this.calcParams.diffRateA,
       this.calcParams.diffRateB,
@@ -97,7 +87,6 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
         calcParams,
         this.nextAddChemicals
       ) as Texture;
-      // this.grid.delete();
       this.grid = nextCalcResult;
       this.lastNextCalc = (this.lastNextCalc + 1) % 2;
       this.nextAddChemicals = [0., 0., 0., 0.];
@@ -115,25 +104,19 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
     this.grid = this.initGridKernel() as Texture;
   }
 
-  private setWeights(weights: CellWeights) {
-    this.weights = weightsToArray(weights);
-  }
-
-  private setCalcParams(calcParams: ReactionDiffCalcParams) {
-    this.calcParams = calcParams;
-  }
-
   drawImage(p: { canvas: HTMLCanvasElement }) {
     if (!this.initialized) {
       return;
     }
-    if (!this.nextImage) {
+    if (!(this.nextImage && this.imageKernel)) {
       this.calcNext(1);
+      return;
     }
     this.imageKernel(this.grid);
     this.nextImage = this.imageKernel.canvas;
     const context = p.canvas.getContext('2d');
-    context.drawImage(this.nextImage, 0, this.nextImage.height - this.height, this.width, this.height, 0, 0, this.width, this.height);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    context?.drawImage(this.nextImage!, 0, this.nextImage!.height - this.height, this.width, this.height, 0, 0, this.width, this.height);
   }
 
   cleanup() {
@@ -150,12 +133,38 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
     this.nextImage = null;
   }
 
+  updateNumberThreads(numberWebWorkers: number): void {
+    // nothing to do here.
+  }
+
+  private init() {
+    this.initGrid();
+
+    const first: IKernelRunShortcut = this.createCalcNextGpuKernel();
+    const second: IKernelRunShortcut = this.createCalcNextGpuKernel();
+    this.calcNextKernels = {
+      first,
+      second
+    };
+    this.imageKernel = this.createImageKernel();
+    this.addChemical(this.width / 2, this.height / 2);
+    this.initialized = true;
+  }
+
+  private setWeights(weights: CellWeights) {
+    this.weights = weightsToArray(weights);
+  }
+
+  private setCalcParams(calcParams: ReactionDiffCalcParams) {
+    this.calcParams = calcParams;
+  }
+
   private createCalcNextGpuKernel(): IKernelRunShortcut {
     const calcNextModule = this.kernels.calcNextKernelModule;
     return this.gpuJs.createKernel(calcNextModule.calcNextKernel,
-      {output: [this.width, this.height, 2]})
+      { output: [this.width, this.height, 2] })
       .setPipeline(true)
-      .setConstants({width: this.width, height: this.height});
+      .setConstants({ width: this.width, height: this.height });
   }
 
   private createImageKernel(): IKernelRunShortcut {
@@ -164,9 +173,5 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
       .setOutput([this.width, this.height])
       .setFunctions(kernelModule.usedFunctions)
       .setGraphical(true);
-  }
-
-  updateNumberThreads(numberWebWorkers: number): void {
-    // nothing to do here.
   }
 }

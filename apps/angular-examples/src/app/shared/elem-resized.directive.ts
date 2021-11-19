@@ -1,6 +1,6 @@
-import {Directive, ElementRef, EventEmitter, OnDestroy, Output} from '@angular/core';
-import {default as ResizeObserver} from 'resize-observer-polyfill';
-import {ResizedEvent} from './resized-event';
+import { Directive, ElementRef, EventEmitter, OnDestroy, Output } from '@angular/core';
+import { default as ResizeObserver } from 'resize-observer-polyfill';
+import { ResizedEvent } from './resized-event';
 
 @Directive({
   selector: '[appElemResized]'
@@ -10,9 +10,9 @@ export class ElemResizedDirective implements OnDestroy {
   @Output()
   readonly appElemResized = new EventEmitter<ResizedEvent>();
 
-  private oldWidth: number;
-  private oldHeight: number;
-  private resizeObserver: ResizeObserver;
+  private oldWidth?: number;
+  private oldHeight?: number;
+  private resizeObserver?: ResizeObserver;
 
   constructor(private readonly element: ElementRef) {
     this.resizeObserver =
@@ -34,7 +34,7 @@ export class ElemResizedDirective implements OnDestroy {
   ngOnDestroy() {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
-      this.resizeObserver = null;
+      this.resizeObserver = undefined;
     }
   }
 

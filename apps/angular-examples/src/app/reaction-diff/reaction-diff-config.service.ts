@@ -1,8 +1,8 @@
-import {Injectable} from '@angular/core';
-import {BehaviorSubject, Subject, Observable} from 'rxjs';
-import {CellWeights} from './cell-weights';
-import {ReactionDiffCalcParams} from './reaction-diff-calc-params';
-import {map, tap} from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { CellWeights } from './cell-weights';
+import { ReactionDiffCalcParams } from './reaction-diff-calc-params';
+import { map, tap } from 'rxjs/operators';
 
 interface ExampleParamOption {
   name: string;
@@ -11,7 +11,6 @@ interface ExampleParamOption {
 
 @Injectable()
 export class ReactionDiffConfigService {
-
   static addChemicalRadius = 5;
 
   static defaultParams: ReactionDiffCalcParams = {
@@ -19,7 +18,7 @@ export class ReactionDiffConfigService {
     diffRateB: 0.5,
     feedRate: 0.055,
     killRate: 0.062,
-    dynamicKillFeed: false
+    dynamicKillFeed: false,
   };
 
   static mitosisParams: ReactionDiffCalcParams = {
@@ -27,7 +26,7 @@ export class ReactionDiffConfigService {
     diffRateB: 0.5,
     feedRate: 0.0367,
     killRate: 0.0649,
-    dynamicKillFeed: false
+    dynamicKillFeed: false,
   };
   // coral growth" simulation (f=.0545, k=.062)
   static coralGrowthParams: ReactionDiffCalcParams = {
@@ -35,7 +34,7 @@ export class ReactionDiffConfigService {
     diffRateB: 0.5,
     feedRate: 0.0545,
     killRate: 0.062,
-    dynamicKillFeed: false
+    dynamicKillFeed: false,
   };
 
   static dynamicKillFeed: ReactionDiffCalcParams = {
@@ -43,7 +42,7 @@ export class ReactionDiffConfigService {
     diffRateB: 0.5,
     feedRate: 0.01,
     killRate: 0.045,
-    dynamicKillFeed: true
+    dynamicKillFeed: true,
   };
 
   // pulsating" simulation (f=.0545, k=.062)
@@ -52,106 +51,136 @@ export class ReactionDiffConfigService {
     diffRateB: 0.5,
     feedRate: 0.026,
     killRate: 0.059,
-    dynamicKillFeed: false
+    dynamicKillFeed: false,
   };
 
   static defaultWeights = {
-    topLeft: 0.05, topCenter: 0.2, topRight: 0.05,
-    left: 0.2, center: -1.0, right: 0.2,
-    bottomLeft: 0.05, bottomCenter: 0.2, bottomRight: 0.05
+    topLeft: 0.05,
+    topCenter: 0.2,
+    topRight: 0.05,
+    left: 0.2,
+    center: -1.0,
+    right: 0.2,
+    bottomLeft: 0.05,
+    bottomCenter: 0.2,
+    bottomRight: 0.05,
   };
 
-  static exampleWeights: Array<ExampleParamOption> = [{
-    name: 'Default',
-    value: ReactionDiffConfigService.defaultParams
-  }, {
-    name: 'Coral growth',
-    value: ReactionDiffConfigService.coralGrowthParams
-  }, {
-    name: 'Mitosis',
-    value: ReactionDiffConfigService.mitosisParams
-  }, {
-    name: 'Dynamic kill and feedrate.',
-    value: ReactionDiffConfigService.dynamicKillFeed
-  }, {
-    name: 'Pulsation',
-    value: ReactionDiffConfigService.pulsatingParams
-  }
+  static exampleWeights: Array<ExampleParamOption> = [
+    {
+      name: 'Default',
+      value: ReactionDiffConfigService.defaultParams,
+    },
+    {
+      name: 'Coral growth',
+      value: ReactionDiffConfigService.coralGrowthParams,
+    },
+    {
+      name: 'Mitosis',
+      value: ReactionDiffConfigService.mitosisParams,
+    },
+    {
+      name: 'Dynamic kill and feedrate.',
+      value: ReactionDiffConfigService.dynamicKillFeed,
+    },
+    {
+      name: 'Pulsation',
+      value: ReactionDiffConfigService.pulsatingParams,
+    },
   ];
 
   public calcParams$: Observable<ReactionDiffCalcParams>;
   public calcCellWeights$: Observable<CellWeights>;
-  public exampleOptions = ReactionDiffConfigService.exampleWeights.map(option => option.name);
-  public selectedExample$: Observable<string>;
+  public exampleOptions = ReactionDiffConfigService.exampleWeights.map(
+    (option) => option.name
+  );
+  public selectedExample$: Observable<string | null>;
   public addChemicalRadius$: Observable<number>;
   public speed$: Observable<number>;
 
-  private selectedExampleSubject$: Subject<ExampleParamOption> = new BehaviorSubject(ReactionDiffConfigService.exampleWeights[0]);
-  private paramsSubject$: Subject<ReactionDiffCalcParams> = new BehaviorSubject(ReactionDiffConfigService.defaultParams);
-  private weightsSubject$: Subject<CellWeights> = new BehaviorSubject(ReactionDiffConfigService.defaultWeights);
-  private addChemicalRadiusSubject$: Subject<number> = new BehaviorSubject(ReactionDiffConfigService.addChemicalRadius);
+  private selectedExampleSubject$ =
+    new BehaviorSubject<ExampleParamOption | null>(
+      ReactionDiffConfigService.exampleWeights.find(
+        (example) => example.name === 'Dynamic kill and feedrate.'
+      ) ?? null
+    );
+  private paramsSubject$: Subject<ReactionDiffCalcParams> = new BehaviorSubject(
+    ReactionDiffConfigService.defaultParams
+  );
+  private weightsSubject$: Subject<CellWeights> = new BehaviorSubject(
+    ReactionDiffConfigService.defaultWeights
+  );
+  private addChemicalRadiusSubject$: Subject<number> = new BehaviorSubject(
+    ReactionDiffConfigService.addChemicalRadius
+  );
   private speedSubject$: Subject<number> = new BehaviorSubject(1);
 
   constructor() {
-    this.calcParams$ = this.paramsSubject$.asObservable()
-      .pipe(
-        map((calcParams) => Object.assign({}, calcParams))
-      );
-    this.calcCellWeights$ = this.weightsSubject$.asObservable().pipe(
-      map((weights) => this.trimWeights(weights))
-    );
+    this.calcParams$ = this.paramsSubject$
+      .asObservable()
+      .pipe(map((calcParams) => Object.assign({}, calcParams)));
+    this.calcCellWeights$ = this.weightsSubject$
+      .asObservable()
+      .pipe(map((weights) => this.trimWeights(weights)));
 
     this.addChemicalRadius$ = this.addChemicalRadiusSubject$.asObservable();
-    this.selectedExample$ =
-      this.selectedExampleSubject$.asObservable().pipe(
-        tap((example) =>
-          (example) ? this.updateCalcParams(example.value) : null),
-        map((example) => example ? example.name : null)
-      );
+    this.selectedExample$ = this.selectedExampleSubject$.asObservable().pipe(
+      tap((example) => (example ? this.updateCalcParams(example.value) : null)),
+      map((example) => (example ? example.name : null))
+    );
 
     this.speed$ = this.speedSubject$.asObservable();
   }
 
-  private trimWeights(weights: CellWeights): CellWeights {
-    return Object.keys(weights).reduce(
-      (result, key: string) =>
-        Object.assign(result, {[key]: Math.round(weights[key] * 10000) / 10000}), {}) as CellWeights;
-  }
-
-  updateAddChemicalRadius(radius: number) {
+  updateAddChemicalRadius(radius: number): void {
     this.addChemicalRadiusSubject$.next(radius);
   }
 
-  updateCalcParams(calcParams: ReactionDiffCalcParams) {
+  updateCalcParams(calcParams: ReactionDiffCalcParams): void {
     this.selectedExampleSubject$.next(null);
     this.paramsSubject$.next(calcParams);
   }
 
-  updateCalcCellWeights(weightsParams: CellWeights) {
+  updateCalcCellWeights(weightsParams: CellWeights): void {
     this.weightsSubject$.next(weightsParams);
   }
 
-  updateSpeed(speed) {
+  updateSpeed(speed: number): void {
     this.speedSubject$.next(speed);
   }
 
-  resetAddChemicalRadius() {
+  resetAddChemicalRadius(): void {
     this.updateAddChemicalRadius(ReactionDiffConfigService.addChemicalRadius);
   }
 
-  resetCalcParams() {
-    this.selectedExampleSubject$.next(ReactionDiffConfigService.exampleWeights[0]);
+  resetCalcParams(): void {
+    this.selectedExampleSubject$.next(
+      ReactionDiffConfigService.exampleWeights[0]
+    );
   }
 
-  resetCalcCellWeights() {
+  resetCalcCellWeights(): void {
     this.updateCalcCellWeights(ReactionDiffConfigService.defaultWeights);
   }
 
-  setSelection(name: string) {
-    const foundOption = ReactionDiffConfigService.exampleWeights.find((option) => option.name === name);
+  setSelection(name: string): void {
+    const foundOption = ReactionDiffConfigService.exampleWeights.find(
+      (option) => option.name === name
+    );
 
     if (foundOption) {
       this.selectedExampleSubject$.next(foundOption);
     }
+  }
+
+  private trimWeights(weights: CellWeights): CellWeights {
+    const keysOfWeights = Object.keys(weights) as Array<keyof CellWeights>;
+    return keysOfWeights.reduce(
+      (result, key) =>
+        Object.assign(result, {
+          [key]: Math.round(weights[key] * 10000) / 10000,
+        }),
+      {} as CellWeights
+    );
   }
 }

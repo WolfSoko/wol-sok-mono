@@ -14,9 +14,9 @@
     <mat-card-title>Simulation</mat-card-title>
     <mat-card-subtitle>Click to add fluid</mat-card-subtitle>
     <app-p5-view
-      *ngIf="calcService"
-      [simWidth]="(dimensions$ | async).width"
-      [simHeight]="(dimensions$ | async).height"
+      *ngIf="(dimensions$ | async) as dimensions"
+      [simWidth]="dimensions.width"
+      [simHeight]="dimensions.height"
       [calcService]="calcService"
       [run]="start"
       [showFps]="showFps"
@@ -159,7 +159,7 @@
       </mat-option>
     </mat-select>
   </mat-card>
-  <app-weights-config [weights]="cellWeights$ | async" (onWeightsChanged)="updateWeights($event)"></app-weights-config>
+  <app-weights-config [weights]="(cellWeights$ | async)" (weightsChanged)='updateWeights($event)'></app-weights-config>
   <mat-card appRaiseCard>
     <mat-card-title>
       Reset parameters and weights

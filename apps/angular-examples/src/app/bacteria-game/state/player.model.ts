@@ -1,5 +1,3 @@
-import {ID} from '@datorama/akita';
-
 export type PlayerColorArray = [number, number, number, number];
 
 export const bacteriumMaxEnergy = 1.;
@@ -7,7 +5,7 @@ export const bacteriumEnergyRestoreTimeInSec = 5;
 
 
   export interface Player {
-  id: ID;
+  id: number;
   x: number;
   y: number;
   color: PlayerColorArray;
@@ -35,11 +33,11 @@ export function createPlayer(params: Partial<Player>): Player {
   } as Player;
 }
 
-export function createPlayerWithBacterias(id: ID, x: number, y: number, color: PlayerColorArray, startBacteriaRadius: number): Player {
+export function createPlayerWithBacterias(id: number, x: number, y: number, color: PlayerColorArray, startBacteriaRadius: number): Player {
   return createPlayer({id, x, y, color, bacterias: createPlayerBacterias(x, y, startBacteriaRadius)});
 }
 
-function createPlayerBacterias(x, y, startBacteriaRadius): Bacteria[] {
+function createPlayerBacterias(x: number, y: number, startBacteriaRadius: number): Bacteria[] {
   const result = [];
   const rPow = startBacteriaRadius * startBacteriaRadius;
   for (let i = 0; i < startBacteriaRadius * 2; i++) {

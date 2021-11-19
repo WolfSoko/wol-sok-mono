@@ -1,4 +1,4 @@
-import { Graphics } from 'p5';
+import P5 from 'p5';
 
 export interface ReactionDiffCalculator {
   numberThreads: number;
@@ -13,7 +13,7 @@ export interface ReactionDiffCalculator {
 
   calcNext(): void;
 
-  drawImage(p: any): void;
+  drawImage(p: P5): void;
 
   cleanup(): void;
 }

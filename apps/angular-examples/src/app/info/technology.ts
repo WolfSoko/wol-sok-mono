@@ -1,6 +1,7 @@
 export class Technology {
-
-  constructor(public title, public link, public image) {
-  }
-
+  constructor(
+    public title: string,
+    public link: string,
+    public image: string
+  ) {}
 }

@@ -1,8 +1,10 @@
 import {
   AfterViewInit,
   Component,
-  ElementRef, Inject,
-  Input, NgZone,
+  ElementRef,
+  Inject,
+  Input,
+  NgZone,
   OnChanges,
   OnDestroy,
   SimpleChange,
@@ -10,9 +12,8 @@ import {
   ViewChild
 } from '@angular/core';
 import * as math from 'mathjs';
-import P5 from 'p5';
-import {InputWave} from '../../state/input-wave.model';
-import {Graphics} from 'p5';
+import P5, { Graphics } from 'p5';
+import { InputWave } from '../../state/input-wave.model';
 
 const NEG_TWO_PI = -2 * Math.PI;
 const CIRCLE_DRAW_SAMPLES = 800;
@@ -36,17 +37,17 @@ interface CenterData {
 })
 export class CircleCanvasComponent implements OnChanges, AfterViewInit, OnDestroy {
 
-  @ViewChild('canvasContainer', {static: true}) canvasContainerRef: ElementRef;
-  private canvasContainer: HTMLElement;
+  @ViewChild('canvasContainer', {static: true}) canvasContainerRef!: ElementRef;
+  private canvasContainer!: HTMLElement;
 
-  @Input() waveWidth: number;
-  @Input() waveHeight: number;
-  @Input() wave: InputWave;
+  @Input() waveWidth!: number;
+  @Input() waveHeight!: number;
+  @Input() wave!: InputWave;
 
-  private sketch: P5;
-  private frequencyToTest: number;
+  private sketch: P5 | null = null;
+  private frequencyToTest = 20;
   private centersOfFrequencies: { [key: number]: CenterData } = {};
-  private centers: number[];
+  private centers: number[] = [];
   private centerMin = 0;
   private centerMax = 0;
   private finished = false;
@@ -95,7 +96,7 @@ export class CircleCanvasComponent implements OnChanges, AfterViewInit, OnDestro
     const maxFrequencyToTest = 500;
     const frequencyStepWidth = 1.;
     const frequencySteps = (maxFrequencyToTest - minFrequencyToTest) * frequencyStepWidth;
-    let calcNextGenerator;
+    let calcNextGenerator: Generator<undefined> | null = null;
     let fourierCircleImg: Graphics;
     const samplesToTake = 3000;
 
@@ -138,15 +139,15 @@ export class CircleCanvasComponent implements OnChanges, AfterViewInit, OnDestro
           calcNextGenerator = calcNextFrequency.call(this);
         }
         if (!this.finished) {
-          calcNextGenerator.next();
+          calcNextGenerator?.next();
         } else {
           calcNextGenerator = null;
         }
       }
 
-      function* calcNextFrequency(this: CircleCanvasComponent) {
+      function* calcNextFrequency(this: CircleCanvasComponent): Generator<undefined> {
         let frequency = minFrequencyToTest;
-        let start: number;
+        let start: number | null = null;
         while (frequency < maxFrequencyToTest && !this.finished) {
           start = start == null ? performance.now() : start;
           let centerOfX = 0.;

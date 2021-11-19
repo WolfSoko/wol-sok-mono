@@ -1,4 +1,4 @@
 export interface AskForNumberDialogData {
   prediction: number;
-  numberDrawn: number;
+  drawn: number | null;
 }

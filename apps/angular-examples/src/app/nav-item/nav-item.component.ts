@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-nav-item',
@@ -6,10 +6,6 @@ import {Component, Input} from '@angular/core';
   styleUrls: ['./nav-item.component.scss']
 })
 export class NavItemComponent {
-
-  @Input() linkText: string;
-  @Input() path: string;
-
-  constructor() {
-  }
+  @Input() linkText?: string;
+  @Input() path?: string;
 }

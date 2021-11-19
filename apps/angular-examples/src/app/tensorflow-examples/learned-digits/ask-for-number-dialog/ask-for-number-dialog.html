@@ -4,13 +4,13 @@
   <mat-form-field>
     <label for="numberDrawn">What did you draw?</label>
     <input cdkFocusInitial min="0" max="0" id="numberDrawn" matInput type="number"
-           [(ngModel)]="data.numberDrawn">
+           [(ngModel)]="data.drawn">
   </mat-form-field>
 </div>
 <div mat-dialog-actions>
   <button mat-button (click)="onNoClick()">Don't know</button>
   <button mat-button
-          [disabled]="data.numberDrawn == null"
+          [disabled]="data.drawn === null"
           [mat-dialog-close]="data">
     Ok
   </button>

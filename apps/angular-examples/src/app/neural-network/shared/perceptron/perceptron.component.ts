@@ -1,5 +1,5 @@
-import {AfterContentInit, Component, ElementRef, Input, OnDestroy, ViewChild} from '@angular/core';
-import {Perceptron} from '../perceptron';
+import { AfterContentInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
+import { Perceptron } from '../perceptron';
 import * as p5 from 'p5';
 
 @Component({
@@ -9,17 +9,14 @@ import * as p5 from 'p5';
 })
 export class PerceptronComponent implements AfterContentInit, OnDestroy {
 
-  @Input() perceptron: Perceptron;
-  @Input() canvasHeight ? = 300;
-  @Input() canvasWidth ? = 300;
-  @ViewChild('perceptronCanvas', { static: true }) perceptronCanvas: ElementRef;
-  private scetch: p5;
+  @Input() perceptron!: Perceptron;
+  @Input() canvasHeight = 300;
+  @Input() canvasWidth = 300;
+  @ViewChild('perceptronCanvas', { static: true }) perceptronCanvas!: ElementRef;
+  private scetch?: p5;
 
   static roundFloat(input: number) {
     return input.toFixed(5);
-  }
-
-  constructor() {
   }
 
   ngAfterContentInit(): void {
@@ -38,7 +35,7 @@ export class PerceptronComponent implements AfterContentInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.scetch.remove();
+    this.scetch?.remove();
   }
 
   drawPerceptronCircle(p: p5) {

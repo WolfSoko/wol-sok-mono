@@ -1,6 +1,6 @@
-import {Injectable} from '@angular/core';
-import {Store, StoreConfig} from '@datorama/akita';
-import {Player} from './player.model';
+import { Injectable } from '@angular/core';
+import { Store, StoreConfig } from '@datorama/akita';
+import { Player } from './player.model';
 
 
 export enum GameState {
@@ -16,7 +16,7 @@ export interface GameStateState {
   timeDelta: number;
   width: number;
   height: number;
-  winner: Player;
+  winner: Player | null;
   keysPressed: string[];
 }
 

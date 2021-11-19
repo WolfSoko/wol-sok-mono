@@ -1,53 +1,56 @@
-import {Injectable} from '@angular/core';
-import {PoissonConfigService} from './poisson-config.service';
-import {Circle} from './shared/circle';
-import {Subject, Observable, Subscription, of, defer, range} from 'rxjs';
-import {Vector} from './shared/vector';
-import {RandomService} from '../core/random.service';
-import {Line} from './shared/line';
-import {ShapeFactoryService} from './shared/shape-factory.service';
-import {map, scan, switchMap, takeUntil, takeWhile, tap, toArray} from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { PoissonConfigService } from './poisson-config.service';
+import { Circle } from './shared/circle';
+import { defer, Observable, of, range, Subject, Subscription } from 'rxjs';
+import { Vector } from './shared/vector';
+import { RandomService } from '../core/random.service';
+import { Line } from './shared/line';
+import { ShapeFactoryService } from './shared/shape-factory.service';
+import { map, scan, switchMap, takeUntil, takeWhile, tap, toArray } from 'rxjs/operators';
+
+type RandomActive = {
+  active: Vector;
+  randomActiveIndex: number;
+};
 
 @Injectable()
 export class PoissonCalcService {
-  private height: number;
-  private width: number;
-
-  private r: number;
-  private k: number;
-  private w: number;
-
-  private cols: number;
-  private rows: number;
-
+  public foundCircles$!: Observable<Circle[]>;
+  public activeVectors$!: Observable<Vector[]>;
+  public lines$!: Observable<Line[]>;
+  private height!: number;
+  private width!: number;
+  private r!: number;
+  private k!: number;
+  private readonly w: number;
+  private cols!: number;
+  private rows!: number;
   private grid: Circle[][] = [];
   private active: Vector[] = [];
-
-  private foundCirclesSubject: Subject<Circle>;
-  public foundCircles$: Observable<Circle[]>;
-
-  private activesSubject: Subject<Vector[]>;
-  public activeVectors$: Observable<Vector[]>;
-
-  private lineSubject: Subject<Line>;
-  private linesSubject: Subject<Line[]>;
-  public lines$: Observable<Line[]>;
-
-  private iterationsPerFrame: number;
+  private foundCirclesSubject!: Subject<Circle>;
+  private activesSubject!: Subject<Vector[]>;
+  private lineSubject!: Subject<Line>;
+  private linesSubject!: Subject<Line[]>;
+  private iterationsPerFrame!: number;
   private subscriptions: Subscription;
 
-  private calculationSubject: Subject<void>;
+  private calculationSubject!: Subject<void>;
 
-  private calculationCompletedSubject: Subject<void>;
+  private calculationCompletedSubject!: Subject<void>;
 
-  constructor(private poissonConfig: PoissonConfigService, private shapeFactory: ShapeFactoryService, private random: RandomService) {
-    this.subscriptions = (this.poissonConfig.iterationsPerFrame$.subscribe(iterations => this.iterationsPerFrame = iterations))
-      .add(this.poissonConfig.k$.subscribe(k => this.k = k))
-      .add(this.poissonConfig.r$.subscribe(r => this.r = r));
+  constructor(
+    private readonly poissonConfig: PoissonConfigService,
+    private readonly shapeFactory: ShapeFactoryService,
+    private readonly random: RandomService
+  ) {
+    this.subscriptions = this.poissonConfig.iterationsPerFrame$
+      .subscribe((iterations) => (this.iterationsPerFrame = iterations))
+      .add(this.poissonConfig.k$.subscribe((k) => (this.k = k)))
+      .add(this.poissonConfig.r$.subscribe((r) => (this.r = r)));
     this.w = this.poissonConfig.w;
   }
 
-  public setup(width: number, height: number) {
+  public setup(width: number, height: number): void {
     this.width = width;
     this.height = height;
     this.rows = Math.floor(this.width / this.w);
@@ -90,48 +93,61 @@ export class PoissonCalcService {
     this.initCalculation();
   }
 
-  public calculate() {
+  public calculate(): void {
     this.lineSubject = new Subject();
-    this.lineSubject.pipe(
-      takeUntil(this.calculationCompletedSubject),
-      toArray()
-    ).subscribe(lines => this.linesSubject.next(lines));
+    this.lineSubject
+      .pipe(takeUntil(this.calculationCompletedSubject), toArray())
+      .subscribe((lines) => this.linesSubject.next(lines));
     this.calculationSubject.next();
   }
 
-  private initCalculation() {
-    const iterationsPerFrame$: Observable<number> =
-      defer(() => range(0, this.iterationsPerFrame)).pipe(
-        takeWhile(ignored => this.active.length > 0),
-        tap(undefined, undefined, () => this.calculationCompletedSubject.next())
-      );
+  public addPointForCalculation(vec: Vector): void {
+    this.addToGrid(vec);
+    this.addToActive(vec);
+  }
 
-    const randomActiveIndex$: Observable<number> =
-      defer(() => of(Math.floor(this.random.randomTo(this.active.length))));
+  private initCalculation(): void {
+    const iterationsPerFrame$: Observable<number> = defer(() =>
+      range(0, this.iterationsPerFrame)
+    ).pipe(
+      takeWhile((ignored) => this.active.length > 0),
+      tap(undefined, undefined, () => this.calculationCompletedSubject.next())
+    );
 
-    const randomActive$: Observable<{ active: Vector, randomActiveIndex: number }> =
-      randomActiveIndex$.pipe(
-        map(randomActiveIndex => ({active: this.active[randomActiveIndex], randomActiveIndex}))
-      );
+    const randomActiveIndex$: Observable<number> = defer(() =>
+      of(Math.floor(this.random.randomTo(this.active.length)))
+    );
 
-    this.calculationSubject.pipe(
-      switchMap(() => iterationsPerFrame$),
-      switchMap(ignored => randomActive$),
-      tap(this.onNextCalculation.bind(this))
-    )
+    const randomActive$: Observable<RandomActive> = randomActiveIndex$.pipe(
+      map((randomActiveIndex) => ({
+        active: this.active[randomActiveIndex],
+        randomActiveIndex
+      }))
+    );
+
+    this.calculationSubject
+      .pipe(
+        switchMap(() => iterationsPerFrame$),
+        switchMap((ignored) => randomActive$),
+        tap((randomActive) => this.onNextCalculation(randomActive))
+      )
       .subscribe(
-        ignored => { /* do nothing */
+        (ignored) => {
+          /* do nothing */
         },
-        error => console.error('error calculating', error),
+        (error) => console.error('error calculating', error),
         () => console.log('Calculation completed')
       );
   }
 
-  private onNextCalculation({active, randomActiveIndex}) {
+  private onNextCalculation({ active, randomActiveIndex }: RandomActive): void {
     let found = false;
     const currentDistance = this.currentDistanceForPos(active);
     for (let n = 0; n < this.k; n++) {
-      const sample = this.shapeFactory.randomVector().setMag(this.random.random(currentDistance, 2 * currentDistance)).addVec(active);
+      const sample = this.shapeFactory
+        .randomVector()
+        .setMag(this.random.random(currentDistance, 2 * currentDistance))
+        .addVec(active);
 
       /*this.drawHelper
         .setFillColor('blue')
@@ -140,22 +156,34 @@ export class PoissonCalcService {
       const row = Math.floor(sample.x / this.w);
       const col = Math.floor(sample.y / this.w);
 
-      if (col > -1 && row > -1 && col < this.cols && row < this.rows && !this.getFromGrid(sample)) {
-
-        const neighbours: Circle[] = this.getNeighbours(sample, currentDistance);
+      if (
+        col > -1 &&
+        row > -1 &&
+        col < this.cols &&
+        row < this.rows &&
+        !this.getFromGrid(sample)
+      ) {
+        const neighbours: Circle[] = this.getNeighbours(
+          sample,
+          currentDistance
+        );
         const ok = neighbours.every((neighbour: Circle) => {
           // this.drawHelper.setStrokeColor('white');
           if (neighbour) {
-            this.lineSubject.next(this.shapeFactory.createLine(sample, neighbour.pos));
+            this.lineSubject.next(
+              this.shapeFactory.createLine(sample, neighbour.pos)
+            );
             /*  .setFillColor('green')
                 .drawCircle(neighbour, this.step);
             */
             const sampleRadius = this.currentCircleRadius(sample);
             const dQuad = sample.fastDist(neighbour.pos);
             const distanceQuad = currentDistance * currentDistance;
-            const radiQuad = sampleRadius * sampleRadius + neighbour.r * neighbour.r;
+            const radiQuad =
+              sampleRadius * sampleRadius + neighbour.r * neighbour.r;
             return dQuad - radiQuad >= distanceQuad;
           }
+          return false;
         });
 
         if (ok) {
@@ -176,12 +204,10 @@ export class PoissonCalcService {
     return this.grid[x][y];
   }
 
-  public addPointForCalculation(vec: Vector) {
-    this.addToGrid(vec);
-    this.addToActive(vec);
-  }
-
-  private addToGrid(vec: Vector, circleRadius: number = this.currentCircleRadius(vec)) {
+  private addToGrid(
+    vec: Vector,
+    circleRadius: number = this.currentCircleRadius(vec)
+  ): void {
     const x = Math.floor(vec.x / this.w);
     const y = Math.floor(vec.y / this.w);
 
@@ -202,11 +228,12 @@ export class PoissonCalcService {
         if (distanceCheck(rowToCheck, colToCheck)) {
           result.push(neighbour);
         }
-      }));
+      })
+    );
     return result;
   }
 
-  private currentCircleRadius(vector) {
+  private currentCircleRadius(vector: Vector) {
     const radius = this.currentDistanceForPos(vector);
     return radius * 0.2;
   }
@@ -215,26 +242,24 @@ export class PoissonCalcService {
     return this.r * (1 + 2 * Math.abs(Math.sin((pos.x + pos.y) * 0.01)));
   }
 
-  private isInDistanceFactory(row, col, distance) {
+  private isInDistanceFactory(row: number, col: number, distance: number): (rowToCheck: number, colToCheck: number) => boolean {
     return (rowToCheck: number, colToCheck: number) =>
       this.isInDistance(rowToCheck - row, colToCheck - col, distance);
   }
 
-  private isInDistance(dr, dc, distance): boolean {
+  private isInDistance(dr: number, dc: number, distance: number): boolean {
     const rowW = this.w * dr;
     const colW = this.w * dc;
     return distance * distance >= rowW * rowW + colW * colW;
   }
 
-  private addToActive(vec: Vector) {
+  private addToActive(vec: Vector): void {
     this.active.push(vec);
     this.activesSubject.next(this.active);
   }
 
-  private removeFromActive(index: number) {
+  private removeFromActive(index: number): void {
     this.active.splice(index, 1);
     this.activesSubject.next(this.active);
   }
-
-
 }

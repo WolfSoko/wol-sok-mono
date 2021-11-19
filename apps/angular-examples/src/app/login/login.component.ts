@@ -1,6 +1,8 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {UntilDestroy, untilDestroyed} from '@ngneat/until-destroy';
-import {AuthenticationService, AuthQuery, Profile} from '../core';
+import { Component } from '@angular/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { AuthenticationService, AuthQuery, Profile } from '../core';
+import { Observable } from 'rxjs';
+import { startWith } from 'rxjs/operators';
 
 @UntilDestroy()
 @Component({
@@ -8,14 +10,14 @@ import {AuthenticationService, AuthQuery, Profile} from '../core';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
-export class LoginComponent implements OnInit, OnDestroy {
-  user: Profile;
+export class LoginComponent {
+  user$: Observable<Profile | null>;
 
-  constructor(private authQuery: AuthQuery, private authService: AuthenticationService) {
-  }
-
-  ngOnInit(): void {
-    this.authQuery.profile$.pipe(untilDestroyed(this)).subscribe(user => this.user = user);
+  constructor(
+    private authQuery: AuthQuery,
+    private authService: AuthenticationService
+  ) {
+    this.user$ = this.authQuery.profile$.pipe(startWith(null),untilDestroyed(this));
   }
 
   async login(): Promise<unknown> {
@@ -25,8 +27,4 @@ export class LoginComponent implements OnInit, OnDestroy {
   async logout(): Promise<void> {
     await this.authService.signOut();
   }
-
-  ngOnDestroy(): void {
-  }
-
 }

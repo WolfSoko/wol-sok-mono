@@ -1,27 +1,23 @@
-import {Component, Inject, OnInit} from '@angular/core';
-import {AppRoute} from '../../app-routing.module';
-import {ROUTER_LINKS} from '../../router-links.token';
-import {Router} from '@angular/router';
+import { Component, Inject } from '@angular/core';
+import { MainNavRoute } from '../../app-routing.module';
+import { ROUTER_LINKS } from '../../router-links.token';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-about',
   templateUrl: './about.component.html',
   styleUrls: ['./about.component.less']
 })
-export class AboutComponent implements OnInit {
+export class AboutComponent {
 
-  public routerLinks: AppRoute[];
+  public routerLinks: MainNavRoute[];
 
-
-  constructor(@Inject(ROUTER_LINKS) _routerLinks: AppRoute[], private router: Router) {
-    this.routerLinks = _routerLinks.filter(route => route.data.linkText !== 'Home');
+  constructor(@Inject(ROUTER_LINKS) routerLinks: MainNavRoute[], private router: Router) {
+    this.routerLinks = routerLinks.filter(route => route.data?.linkText !== 'Home');
   }
 
-  ngOnInit() {
-  }
-
-  openPage(route: AppRoute) {
-    this.router.navigateByUrl(route.path);
+  async openPage(path: string): Promise<void> {
+    await this.router.navigateByUrl(path);
   }
 
 

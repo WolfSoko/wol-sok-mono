@@ -1,13 +1,14 @@
-import {TrainData} from './train-data';
+import { TrainData } from './train-data';
+import P5 from 'p5';
 
 export type LabelClass = 0 | 1;
 
 export class Point {
-  private _label: LabelClass;
+  private _label: LabelClass | null = null;
 
   constructor(private x: number = Math.random(),
               private y: number = Math.random(),
-              private _labelDefinition = (in1, in2) => in1 > in2 ? 1 : 0) {
+              private _labelDefinition = (in1: number, in2: number) => in1 > in2 ? 1 : 0) {
   }
 
   get label(): LabelClass {
@@ -30,13 +31,13 @@ export class Point {
     return new TrainData(this.data, this.label);
   }
 
-  show(p: any) {
+  show(p: P5) {
     p.stroke(0);
     p.fill(this.label === 1 ? p.color(255, 255, 0) : p.color(0, 0, 255));
     p.ellipse(this.x * p.width, this.y * p.height, 8, 8);
   }
 
-  showForResult(p: any, result: LabelClass) {
+  showForResult(p: P5, result: LabelClass) {
     p.noStroke();
     if (result === this.label) {
       p.fill(0, 255, 0);

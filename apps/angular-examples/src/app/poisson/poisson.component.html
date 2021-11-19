@@ -20,8 +20,8 @@
         [circles]="poissonCalc.foundCircles$ | async"
         [actives]="poissonCalc.activeVectors$ | async"
         [lines]="poissonCalc.lines$ | async"
-        (onAddObject)="addPoint($event)"
-        (onReadyToPaint)="calculate()"
+        (addObject)='addPoint($event)'
+        (readyToPaint)='calculate()'
       >
       </app-canvas-view>
     </mat-card-content>
@@ -35,8 +35,8 @@
           [height]="height"
           [circles]="poissonCalc.foundCircles$ | async"
           [actives]="poissonCalc.activeVectors$ | async"
-          (onAddObject)="addPoint($event)"
-          (onReadyToPaint)="calculate()">
+          (addObject)="addPoint($event)"
+          (readyToPaint)="calculate()">
         </app-p5-view>-->
   </mat-card>
   <app-sim-controls (playChanged)="setPlay($event)" (onReset)="reset()"></app-sim-controls>

@@ -1,8 +1,7 @@
-import {Injectable} from '@angular/core';
-import {Title} from '@angular/platform-browser';
-import {ActivatedRoute, Data, NavigationEnd, Router} from '@angular/router';
-import {filter, map, switchMap} from 'rxjs/operators';
-import {AppRouteData} from '../app-routing.module';
+import { Injectable } from '@angular/core';
+import { Title } from '@angular/platform-browser';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { filter, map, switchMap } from 'rxjs/operators';
 
 @Injectable()
 export class TitleService {
@@ -10,15 +9,15 @@ export class TitleService {
               private router: Router,
               private titleService: Title) {
     const linkText$ = this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd),
-      switchMap<NavigationEnd, any>((ignored) => {
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      switchMap(() => {
         let actRoute = this.activatedRoute;
         while (actRoute.firstChild != null && actRoute.firstChild.outlet === 'primary') {
           actRoute = actRoute.firstChild;
         }
         return actRoute.data;
       }),
-      map((data: AppRouteData) => `${data.linkText ? data.linkText + '@' : ''}Angular Examples by SuperheroicConding`)
+      map((data) => `${data.linkText ? data.linkText + '@' : ''}angular-examples by wolsok`)
     );
 
     linkText$.subscribe((titleText) =>

@@ -1,15 +1,15 @@
-import {HttpClient} from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
-import {iif, Observable, of, zip} from 'rxjs';
-import {map, take, tap} from 'rxjs/operators';
-import {ReactionDiffKernelModules} from './reaction-diff-window';
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Resolve } from '@angular/router';
+import { iif, Observable, of, zip } from 'rxjs';
+import { map, take, tap } from 'rxjs/operators';
+import { ReactionDiffKernelModules } from './reaction-diff-window';
 
 @Injectable()
 export class LoadGpuKernelsResolver implements Resolve<ReactionDiffKernelModules> {
   private calcNextKernel$: Observable<string>;
   private imageKernelModule$: Observable<string>;
-  private kernels: ReactionDiffKernelModules;
+  private kernels: ReactionDiffKernelModules | null = null;
 
   constructor(private httpClient: HttpClient) {
     this.calcNextKernel$ = httpClient.get('./assets/reaction-diff/calc-next-grid-kernel.js', {responseType: 'text'});
@@ -17,10 +17,10 @@ export class LoadGpuKernelsResolver implements Resolve<ReactionDiffKernelModules
   }
 
   /* tslint:disable:no-eval */
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<ReactionDiffKernelModules> {
+  resolve(): Observable<ReactionDiffKernelModules> {
 
     return iif(() => this.kernels != null,
-      of(this.kernels),
+      of(this.kernels as ReactionDiffKernelModules),
       zip(this.calcNextKernel$, this.imageKernelModule$).pipe(
       map(([calcNext, image]) => {
         return ({

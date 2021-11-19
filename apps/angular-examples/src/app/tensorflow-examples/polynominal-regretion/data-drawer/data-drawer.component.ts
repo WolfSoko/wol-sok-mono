@@ -1,6 +1,6 @@
-import {Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild} from '@angular/core';
-import {Tensor} from '@tensorflow/tfjs';
-import {DataDrawerService} from './data-drawer.service';
+import { Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { Tensor } from '@tensorflow/tfjs';
+import { DataDrawerService } from './data-drawer.service';
 
 @Component({
   selector: 'app-data-drawer',
@@ -9,19 +9,19 @@ import {DataDrawerService} from './data-drawer.service';
 })
 export class DataDrawerComponent implements OnChanges {
 
-  @ViewChild('plot', { static: true }) plot: ElementRef;
-  @ViewChild('coeff', { static: true }) coeffContainer: ElementRef;
+  @ViewChild('plot', { static: true }) plot!: ElementRef;
+  @ViewChild('coeff', { static: true }) coeffContainer!: ElementRef;
 
-  @Input() caption: string;
-  @Input() coeffCaption: string;
-  @Input() data: { xs: Tensor, ys: Tensor };
-  @Input() coeff: { a: number, b: number, c: number, d: number };
+  @Input() caption!: string;
+  @Input() coeffCaption!: string;
+  @Input() data!: { xs: Tensor, ys: Tensor };
+  @Input() coeff!: { a: number, b: number, c: number, d: number };
   @Input() predictions?: Tensor;
 
   constructor(private dataDrawer: DataDrawerService) {
   }
 
-  ngOnChanges(change: SimpleChanges) {
+  ngOnChanges(_: SimpleChanges) {
     this.draw();
   }
 

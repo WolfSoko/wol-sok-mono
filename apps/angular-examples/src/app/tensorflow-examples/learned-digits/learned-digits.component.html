@@ -47,7 +47,7 @@
     Click on the prediction to enter the number you drew.
   </mat-card-subtitle>
   <mat-card-content>
-    <app-draw-digit #drawer (change)="nextDrawnImage($event)"></app-draw-digit>
+    <app-draw-digit #drawer (updatePixels)='nextDrawnImage($event)'></app-draw-digit>
     <div class="mat-subheading-1">{{drawingPredictions ?
       'Prediction: '+drawingPredictions[0] :
       'Draw to predict image!'}}
@@ -65,7 +65,7 @@
     <app-draw-predictions [batch]="drawingBatch"
                           [predictions]="drawingPredictions"
                           [labels]="drawingLabels"
-                          (onImageClicked)="askForLabel($event)">
+                          (imageClicked)='askForLabel($event)'>
     </app-draw-predictions>
   </div>
 </mat-card>

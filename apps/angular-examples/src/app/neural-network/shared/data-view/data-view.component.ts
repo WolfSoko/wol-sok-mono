@@ -6,16 +6,15 @@ import {
   Input,
   OnChanges,
   OnDestroy,
-  OnInit,
   Output,
   SimpleChange,
   SimpleChanges,
   ViewChild
 } from '@angular/core';
-import {Perceptron} from '../perceptron';
-import {Point} from '../point';
-import {DataP5Scetch} from './data-p5-scetch';
-import {BrainService} from '../brain.service';
+import { Perceptron } from '../perceptron';
+import { Point } from '../point';
+import { DataP5Sketch } from './data-p5-sketch';
+import { BrainService } from '../brain.service';
 import * as p5 from 'p5';
 
 interface ChangeInputs extends SimpleChanges {
@@ -28,31 +27,33 @@ interface ChangeInputs extends SimpleChanges {
   templateUrl: './data-view.component.html',
   styleUrls: ['./data-view.component.css']
 })
-export class DataViewComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
+export class DataViewComponent implements AfterViewInit, OnChanges, OnDestroy {
 
-  @ViewChild('dataCanvas', { static: true }) dataCanvas: ElementRef;
-  @ViewChild('legendCanvas', { static: true }) legendCanvas: ElementRef;
+  @ViewChild('dataCanvas', { static: true }) dataCanvas!: ElementRef;
+  @ViewChild('legendCanvas', { static: true }) legendCanvas!: ElementRef;
 
-  @Input() perceptron: Perceptron;
-  @Input() points: Point[];
-  @Input() canvasWidth ? = 400;
-  @Input() canvasHeight ? = 400;
+  @Input() perceptron!: Perceptron;
+  @Input() points!: Point[];
+  @Input() canvasWidth = 400;
+  @Input() canvasHeight = 400;
   @Input() showLinearDivider = true;
   @Output() dataViewClicked: EventEmitter<{ x: number, y: number, click: 'left' | 'right' }> = new EventEmitter();
 
-  private dataScetch: DataP5Scetch;
-  private legendScetch: p5;
-  private dataP5: p5;
+  private dataScetch?: DataP5Sketch;
+  private legendScetch?: p5;
+  private dataP5?: p5;
 
   constructor(private brainService: BrainService) {
   }
 
   ngOnChanges(changes: ChangeInputs): void {
-    if (changes.points && !changes.points.firstChange && changes.points.previousValue !== changes.points.currentValue) {
-      this.dataScetch.points = changes.points.currentValue;
-    }
-    if (changes.perceptron && !changes.perceptron.firstChange && changes.perceptron.previousValue !== changes.perceptron.currentValue) {
-      this.dataScetch.perceptron = changes.perceptron.currentValue;
+    if (this.dataScetch) {
+      if (changes.points && !changes.points.firstChange && changes.points.previousValue !== changes.points.currentValue) {
+        this.dataScetch.points = changes.points.currentValue;
+      }
+      if (changes.perceptron && !changes.perceptron.firstChange && changes.perceptron.previousValue !== changes.perceptron.currentValue) {
+        this.dataScetch.perceptron = changes.perceptron.currentValue;
+      }
     }
   }
 
@@ -61,19 +62,15 @@ export class DataViewComponent implements OnInit, AfterViewInit, OnChanges, OnDe
     this.initLegendScetch();
   }
 
-
-  ngOnInit() {
-  }
-
   ngOnDestroy(): void {
-    this.dataP5.remove();
-    this.legendScetch.remove();
+    this.dataP5?.remove();
+    this.legendScetch?.remove();
   }
 
   private initDataScetch() {
     this.dataP5 = new p5(p => {
-      this.dataScetch = new DataP5Scetch(p, this.canvasWidth, this.canvasHeight, this.brainService, (x, y, click) => {
-        this.dataViewClicked.emit({x, y, click});
+      this.dataScetch = new DataP5Sketch(p, this.canvasWidth, this.canvasHeight, this.brainService, (x, y, click) => {
+        this.dataViewClicked.emit({ x, y, click });
       }, this.showLinearDivider);
       this.dataScetch.points = this.points;
       this.dataScetch.perceptron = this.perceptron;

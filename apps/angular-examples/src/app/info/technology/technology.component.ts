@@ -1,20 +1,14 @@
-import {Component, Input, OnInit} from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-technology',
   templateUrl: './technology.component.html',
   styleUrls: ['./technology.component.less']
 })
-export class TechnologyComponent implements OnInit {
+export class TechnologyComponent  {
 
-  @Input() title: string;
-  @Input() link: string ;
-  @Input() image: string;
-
-  constructor() {
-  }
-
-  ngOnInit() {
-  }
+  @Input() title!: string;
+  @Input() link!: string ;
+  @Input() image!: string;
 
 }

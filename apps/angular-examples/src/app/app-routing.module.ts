@@ -1,17 +1,18 @@
-import {NgModule} from '@angular/core';
-import {Data, Route, RouterModule} from '@angular/router';
-import {InfoComponent} from './info/info.component';
-import {ROUTER_LINKS} from './router-links.token';
+import { NgModule } from '@angular/core';
+import { Data, Route, RouterModule } from '@angular/router';
+import { InfoComponent } from './info/info.component';
+import { ROUTER_LINKS } from './router-links.token';
 
-export interface AppRouteData extends Data {
-  linkText?: string;
+export interface MainNavRouteData extends Data {
+  linkText: string;
 }
 
-export interface AppRoute extends Route {
-  data?: AppRouteData;
+export interface MainNavRoute extends Route {
+  data: MainNavRouteData;
+  path: string;
 }
 
-export const routes: AppRoute[] = [
+export const mainNavRoutes: MainNavRoute[] = [
   {path: 'home', component: InfoComponent, data: {linkText: 'Home'}},
   {
     path: 'fourierAnalysis',
@@ -66,17 +67,17 @@ export const routes: AppRoute[] = [
     path: 'webassemblyTests',
     loadChildren: async () => import('./wasm-test/wasm-test.module').then(m => m.WasmTestModule),
     data: {linkText: 'Web Assembly Tests'}
-  },
-  {path: '**', redirectTo: '/home'}
+  }
 ];
 
+const defaultRoute = { path: '**', redirectTo: '/home' };
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, {paramsInheritanceStrategy: 'always'})],
+  imports: [RouterModule.forRoot([...mainNavRoutes, defaultRoute], {paramsInheritanceStrategy: 'always'})],
   exports: [RouterModule],
   providers: [
     {
-      provide: ROUTER_LINKS, useValue: routes.filter(route => route.data ? route.data.linkText : false)
+      provide: ROUTER_LINKS, useValue: mainNavRoutes
     }],
 })
 export class AppRoutingModule {

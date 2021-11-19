@@ -24,7 +24,7 @@
         <app-nav-item *ngFor="let route of routerLinks"
                       [path]="route.path"
                       [linkText]="route.data.linkText"
-                      (click)="openPage(route)">
+                      (click)="openPage(route.path)">
         </app-nav-item>
       </mat-nav-list>
     </mat-card-content>

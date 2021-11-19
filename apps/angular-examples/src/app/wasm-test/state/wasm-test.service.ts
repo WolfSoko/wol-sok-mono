@@ -1,11 +1,10 @@
-import {Injectable} from '@angular/core';
-import loader from 'assemblyscript/lib/loader';
-import {delay, filter, switchMapTo, take, tap} from 'rxjs/operators';
-import {WasmTestQuery} from './wasm-test.query';
-import {WasmTestStore} from './wasm-test.store';
-import ASModule from '@fib-wasm';
+import { Injectable } from '@angular/core';
+import { ASUtil, instantiateStreaming, ResultObject } from 'assemblyscript/lib/loader';
+import { delay, filter, switchMapTo, take, tap } from 'rxjs/operators';
+import { WasmTestQuery } from './wasm-test.query';
+import { WasmTestStore } from './wasm-test.store';
 
-function fibJS(n: number): any | number {
+function fibJS(n: number): number {
   if (n < 2) {
     return n;
   }
@@ -14,12 +13,12 @@ function fibJS(n: number): any | number {
 
 const memoize = Array<number>(50);
 
-function fibMemJS(nth: number): any | number {
+function fibMemJS(nth: number): number {
   memoize.fill(-1, 0, 50);
   return fibMemRec(nth);
 }
 
-function fibMemRec(n: number): any | number {
+function fibMemRec(n: number): number {
   if (n < 2) {
     return n;
   }
@@ -35,38 +34,39 @@ function fibMemRec(n: number): any | number {
 
 @Injectable({providedIn: 'root'})
 export class WasmTestService {
-  private fib: (number) => number;
-  private fibMem: (number) => number;
+  private fib: (n: number) => number = (noop: number) => noop;
+  private fibMem: (n: number) => number = (noop: number) => noop;
 
   constructor(private wasmTestStore: WasmTestStore,
               private wasmTestQuery: WasmTestQuery) {
     this.instantiateWasm()
       .then(result => {
-        this.fib = result.fib;
-        this.fibMem = result.fibMem;
+        this.fib = result.exports.fib;
+        this.fibMem = result.exports.fibMem;
+        this.wasmTestStore.setLoading(false)
       })
       .catch(e => {
         console.error(e);
         this.wasmTestStore.setError('Error loading WASM module!');
+        this.wasmTestStore.setLoading(false)
       })
-      .finally(() => this.wasmTestStore.setLoading(false));
   }
 
-  private async instantiateWasm(): Promise<typeof ASModule> {
+  private async instantiateWasm(): Promise<ResultObject & { exports: ASUtil & { fib(n: number): number; fibMem(n: number): number } }> {
     const fibImports = {
       index: {
-        logRecCalls(recCalls) {
+        logRecCalls(recCalls: void) {
           console.log('Reccalls: ', recCalls);
         }
       },
       env: {
-        abort(_msg, _file, line, column) {
-          console.error('abort called at index.ts:' + line + ':' + column);
+        abort(_msg: unknown, _file: unknown, line: number, column: number) {
+          console.error(`abort called at index.ts:${line}:${column}`);
         },
         memory: new WebAssembly.Memory({initial: 256}),
       }
     };
-    return loader.instantiateStreaming(fetch('build/optimized.wasm'), fibImports) as unknown as Promise<typeof ASModule>;
+    return instantiateStreaming<{fib(n:number): number, fibMem(n:number): number}>(fetch('build/optimized.wasm'), fibImports);
   }
 
   startFibCalc(): void {
@@ -74,7 +74,7 @@ export class WasmTestService {
       filter(loading => !loading),
       switchMapTo(this.wasmTestQuery.selectFibN()),
       take(1),
-      tap(n => this.wasmTestStore.update({fibRunning: true})),
+      tap(() => this.wasmTestStore.update({fibRunning: true})),
       delay(20),
       tap(n => {
         let startTime = window.performance.now();
@@ -92,7 +92,7 @@ export class WasmTestService {
     ).subscribe({error: (error) => this.handleCalculationError(error)});
   }
 
-  private handleCalculationError(error: any): void {
+  private handleCalculationError(error: unknown): void {
     console.error(error);
     this.wasmTestStore.setError('Error calculating Fibonacci number');
     this.wasmTestStore.setLoading(false);
@@ -103,7 +103,7 @@ export class WasmTestService {
       filter(loading => !loading),
       switchMapTo(this.wasmTestQuery.selectFibN()),
       take(1),
-      tap(n => this.wasmTestStore.update({fibRunning: true})),
+      tap(() => this.wasmTestStore.update({fibRunning: true})),
       delay(20),
       tap(n => {
         let startTime = window.performance.now();

@@ -1,19 +1,20 @@
+<ng-container *ngIf="(viewModel$ | async) as vm">
 <mat-card class="title">
   <mat-card-title>
     Some WebGl Shader Examples inspired by&nbsp;
     <a target="_blank" href="https://thebookofshaders.com">The Book of Shader</a>
   </mat-card-title>
   <mat-card-content>
-    <div fxLayout fxLayoutAlign="space-between" >
+    <div fxLayout fxLayoutAlign="space-between">
       <app-shader-examples-options></app-shader-examples-options>
-      <div fxLayout fxLayoutGap="0.5rem" *ngIf="state.savingShader | async">
+      <div fxLayout fxLayoutGap="0.5rem" *ngIf="vm.savingShader">
         <mat-spinner color="accent" diameter="24"></mat-spinner>
         <span>Auto saving</span>
       </div>
     </div>
   </mat-card-content>
 </mat-card>
-<ng-container *ngIf="!(isLoadingShaders | async); then shadersContainer; else spinner">
+<ng-container *ngIf="vm.isLoadingShaders === false; then shadersContainer; else spinner">
 </ng-container>
 <ng-template #shadersContainer>
   <mat-card class="shaders-container" (swipeleft)="nextPage()"
@@ -22,16 +23,16 @@
     <button mat-mini-fab color="primary" class="navigation-button left" (click)="previousPage()">
       <mat-icon aria-label="Previous page">keyboard_arrow_left</mat-icon>
     </button>
-    <div [@animator]="(state.animationState | async)"
+    <div [@animator]="(vm.animationState)"
          (@animator.done)="resetAnimationState()"
          class="shaders-grid-list">
-      <ng-container *ngFor="let shader of (state.pagedShaders | async); trackBy: trackByIndex">
+      <ng-container *ngFor="let shader of vm.pagedShaders; trackBy: trackByIndex">
         <div class="shader-tile">
           <div class="mat-subheading-2 shader-title">
             {{shader.description}}
           </div>
           <div class="editor-tile"
-               *ngIf="state.showCodeEditor | async">
+               *ngIf="vm.showCodeEditor">
             <app-code-editor
               class="code-editor"
               [code]="shader.code"
@@ -40,10 +41,10 @@
             </app-code-editor>
           </div>
           <div #shaderRenderer class="shader-renderer"
-               [class.show-editor]="state.showCodeEditor | async">
+               [class.show-editor]="vm.showCodeEditor">
             <app-render-shader
               [shaderCode]="shader.code"
-              [showFps]="state.showFps | async"
+              [showFps]="vm.showFps"
               [canvasWidth]="shaderRenderer.clientWidth"
               [canvasHeight]="shaderRenderer.getBoundingClientRect().height">
             </app-render-shader>
@@ -55,7 +56,6 @@
             (click)="nextPage()">
       <mat-icon aria-label="Next page">keyboard_arrow_right</mat-icon>
     </button>
-
   </mat-card>
 </ng-template>
 <ng-template #spinner>
@@ -65,12 +65,13 @@
     <div class="mat-subheading-1">Loading example shaders</div>
   </div>
 </ng-template>
-<mat-paginator *ngIf="!(isLoading | async)"
+<mat-paginator *ngIf="vm.isLoading === false"
                showFirstLastButtons="true"
-               [pageIndex]="(state.currentPage | async).pageIndex"
-               [length]="(state.currentPage | async).length"
-               [pageSize]="(state.currentPage | async).pageSize"
+               [pageIndex]="vm.currentPage.pageIndex"
+               [length]="vm.currentPage.length"
+               [pageSize]="vm.currentPage.pageSize"
                [pageSizeOptions]="[1,2,3,4,5,6]"
-               [hidePageSize]="state.isSmallScreen | async"
+               [hidePageSize]="vm.isSmallScreen"
                (page)="changeCurrentShaderPage($event)">
 </mat-paginator>
+</ng-container>

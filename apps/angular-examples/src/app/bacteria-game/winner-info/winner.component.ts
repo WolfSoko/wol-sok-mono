@@ -1,7 +1,7 @@
-import {Component} from '@angular/core';
-import {Observable} from 'rxjs';
-import {GameStateQuery} from '../state/game-state.query';
-import {Player} from '../state/player.model';
+import { Component } from '@angular/core';
+import { Observable } from 'rxjs';
+import { GameStateQuery } from '../state/game-state.query';
+import { Player } from '../state/player.model';
 
 @Component({
   selector: 'app-winner',
@@ -9,7 +9,7 @@ import {Player} from '../state/player.model';
   styleUrls: ['./winner.component.scss']
 })
 export class WinnerComponent {
-  winner$: Observable<Player>;
+  winner$: Observable<Player | null>;
 
   constructor(state: GameStateQuery) {
     this.winner$ = state.selectWinnerId();

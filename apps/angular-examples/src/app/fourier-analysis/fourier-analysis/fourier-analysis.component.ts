@@ -1,24 +1,23 @@
-import {Component, ElementRef, OnInit} from '@angular/core';
-import {Observable} from 'rxjs';
-import {ResizedEvent} from '../../shared/resized-event';
-import {FourierAnalysisQuery} from '../state/fourier-analysis.query';
-import {FourierAnalysisService} from '../state/fourier-analysis.service';
-import {FourierAnalysisState} from '../state/fourier-analysis.store';
-import {InputWaveService} from '../state/input-wave.service';
-
+import { Component, ElementRef } from '@angular/core';
+import { Observable } from 'rxjs';
+import { ResizedEvent } from '../../shared/resized-event';
+import { FourierAnalysisQuery } from '../state/fourier-analysis.query';
+import { FourierAnalysisService } from '../state/fourier-analysis.service';
+import { FourierAnalysisState } from '../state/fourier-analysis.store';
+import { InputWaveService } from '../state/input-wave.service';
 
 @Component({
   selector: 'app-fourier-analysis',
   templateUrl: './fourier-analysis.component.html',
-  styleUrls: ['./fourier-analysis.component.scss']
+  styleUrls: ['./fourier-analysis.component.scss'],
 })
-export class FourierAnalysisComponent implements OnInit {
+export class FourierAnalysisComponent {
   fourierAnalysis$: Observable<FourierAnalysisState>;
   isLoading$: Observable<boolean>;
-  inputWaveCanvasWidth: number;
-  inputWaveCanvasHeight: number;
-  circleCanvasWidth: number;
-  circleCanvasHeight: number;
+  inputWaveCanvasWidth = 0;
+  inputWaveCanvasHeight = 0;
+  circleCanvasWidth = 0;
+  circleCanvasHeight = 0;
 
   constructor(
     private el: ElementRef,
@@ -26,9 +25,6 @@ export class FourierAnalysisComponent implements OnInit {
     private fourierAnalysisTestService: FourierAnalysisService,
     private inputWaveService: InputWaveService
   ) {
-  }
-
-  ngOnInit(): void {
     this.fourierAnalysis$ = this.fourierAnalysisQuery.select();
     this.isLoading$ = this.fourierAnalysisQuery.selectLoading();
   }
@@ -40,6 +36,9 @@ export class FourierAnalysisComponent implements OnInit {
     this.circleCanvasWidth = availableWidth;
 
     this.circleCanvasHeight = Math.max(250, this.circleCanvasWidth * (9 / 94));
-    this.inputWaveCanvasHeight = Math.max(250, Math.round(this.inputWaveCanvasWidth * (9 / 64)));
+    this.inputWaveCanvasHeight = Math.max(
+      250,
+      Math.round(this.inputWaveCanvasWidth * (9 / 64))
+    );
   }
 }

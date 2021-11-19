@@ -1,9 +1,10 @@
-import {AfterContentInit, ChangeDetectionStrategy, Component, ViewChild} from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
-import {BehaviorSubject, Observable} from 'rxjs';
-import {animate, keyframes, transition, trigger} from '@angular/animations';
-import {fadeInLeft, fadeInRight, fadeOutLeft, fadeOutRight} from './leftInOut.animation';
-import {ShaderCode, ShaderCodeQuery, ShaderExamplesService, ShaderExamplesUIQuery} from './state';
+import { combineLatest, Observable } from 'rxjs';
+import { animate, keyframes, transition, trigger } from '@angular/animations';
+import { fadeInLeft, fadeInRight, fadeOutLeft, fadeOutRight } from './leftInOut.animation';
+import { ShaderCode, ShaderCodeQuery, ShaderExamplesService, ShaderExampleState, ShaderExamplesUIQuery } from './state';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-shader-examples',
@@ -15,34 +16,38 @@ import {ShaderCode, ShaderCodeQuery, ShaderExamplesService, ShaderExamplesUIQuer
       transition('* => fadeOutLeft', animate(200, keyframes(fadeOutLeft))),
       transition('* => fadeOutRight', animate(200, keyframes(fadeOutRight))),
       transition('fadeOutRight => *', animate(400, keyframes(fadeInLeft))),
-      transition('fadeOutLeft => *', animate(400, keyframes(fadeInRight))),
+      transition('fadeOutLeft => *', animate(400, keyframes(fadeInRight)))
     ])
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ShaderExamplesComponent implements AfterContentInit {
+export class ShaderExamplesComponent {
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  readonly viewModel$: Observable<ShaderExampleState & { isLoading: boolean } & { isLoadingShaders: boolean }>;
 
-  @ViewChild(MatPaginator) paginator: MatPaginator;
-  isLoadingShaders: Observable<boolean>;
-  isLoading: Observable<boolean>;
-  private animationEnded$: BehaviorSubject<boolean>;
-
-  constructor(public state: ShaderExamplesUIQuery,
-              shaderCodeQuery: ShaderCodeQuery,
-              private shaderExamplesService: ShaderExamplesService) {
-    this.isLoading = this.state.selectLoading();
-    this.isLoadingShaders = shaderCodeQuery.selectLoading();
-  }
-
-  ngAfterContentInit() {
-    this.animationEnded$ = new BehaviorSubject<boolean>(true);
+  constructor(
+    readonly state: ShaderExamplesUIQuery,
+    readonly shaderCodeQuery: ShaderCodeQuery,
+    private readonly shaderExamplesService: ShaderExamplesService
+  ) {
+    this.viewModel$ = combineLatest([
+      this.state.select(),
+      this.state.selectLoading(),
+      shaderCodeQuery.selectLoading()
+    ]).pipe(
+      map(([state, isLoading, isLoadingShaders]) => ({
+        ...state,
+        isLoading,
+        isLoadingShaders
+      }))
+    );
   }
 
   changeCurrentShaderPage($event: PageEvent) {
     this.shaderExamplesService.updateCurrentPage($event);
   }
 
-  trackByIndex(index, elem) {
+  trackByIndex(index: number) {
     return index;
   }
 
@@ -64,7 +69,7 @@ export class ShaderExamplesComponent implements AfterContentInit {
     }
   }
 
-  startAnimation(state) {
+  startAnimation(state: 'fadeOutRight' | 'fadeOutLeft') {
     this.shaderExamplesService.updateAnimationState(state);
   }
 

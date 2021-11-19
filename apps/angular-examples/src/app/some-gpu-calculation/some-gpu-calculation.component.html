@@ -2,26 +2,26 @@
   <mat-card-title>
     <div mat-card-avatar class="gpu-header-image"></div>
     <mat-card-title>An example utilizing gpu.js</mat-card-title>
-    <mat-card-subtitle>No friggeling shader code needed for this</mat-card-subtitle>
+    <mat-card-subtitle>No complicated shader code needed for this</mat-card-subtitle>
   </mat-card-title>
   <div class="canvas-container">
-    <canvas class="full-height" [style.oppacitiy]="additionForm.get('useGPU').value ? 1: 0" #gpuCanvas></canvas>
-    <canvas class="full-height" [style.oppacity]="additionForm.get('useGPU').value ? 0: 1" #gpu2dCanvas></canvas>
+    <canvas class="full-height" [style.oppacitiy]="additionForm.get('useGPU')?.value ? 1: 0" #gpuCanvas></canvas>
+    <canvas class="full-height" [style.oppacity]="additionForm.get('useGPU')?.value ? 0: 1" #gpu2dCanvas></canvas>
   </div>
-  <div>Calculation time with {{additionForm.get('useGPU').value ? 'GPU' : 'CPU'}} : {{(calculationTime$ | async)}}ms
+  <div>Calculation time with {{additionForm.get('useGPU')?.value ? 'GPU' : 'CPU'}} : {{(calculationTime$ | async)}}ms
   </div>
   <mat-card-content>
     <form class="gpu-form" [formGroup]="additionForm" novalidate>
       <div class="full-width">
         <span>Red</span>
         <mat-slider class="red-color-slider"
-                    thumb-label="true"
+                    thumbLabel="true"
                     min="0"
                     max="255"
                     color="warn"
                     formControlName="r">
         </mat-slider>
-        <mat-chip color="warn">{{additionForm.get('r').value}}</mat-chip>
+        <mat-chip color="warn">{{additionForm.get('r')?.value}}</mat-chip>
       </div>
       <div class="full-width">
         <span>Green</span>
@@ -32,7 +32,7 @@
                     color="warn"
                     formControlName="g">
         </mat-slider>
-        <mat-chip color="warn">{{additionForm.get('g').value}}</mat-chip>
+        <mat-chip color="warn">{{additionForm.get('g')?.value}}</mat-chip>
       </div>
       <div class="full-width">
         <span>Blue</span>
@@ -43,7 +43,7 @@
                     color="warn"
                     formControlName="b">
         </mat-slider>
-        <mat-chip color="warn">{{additionForm.get('b').value}}</mat-chip>
+        <mat-chip color="warn">{{additionForm.get('b')?.value}}</mat-chip>
       </div>
       <div class="full-width">
         <span>Repeatition</span>
@@ -53,7 +53,7 @@
           max="100"
           formControlName="repetition">
         </mat-slider>
-        <mat-chip color="accent">{{additionForm.get('repetition').value}}</mat-chip>
+        <mat-chip color="accent">{{additionForm.get('repetition')?.value}}</mat-chip>
       </div>
       <div class="full-width">
         <span>Speed</span>
@@ -63,10 +63,10 @@
           max="100"
           formControlName="speed">
         </mat-slider>
-        <mat-chip color="accent">{{additionForm.get('speed').value}}%</mat-chip>
+        <mat-chip color="accent">{{additionForm.get('speed')?.value}}%</mat-chip>
       </div>
       <mat-slide-toggle formControlName="useGPU">
-        {{additionForm.get('useGPU').value ? 'GPU is used' : 'GPU is not used' }}
+        {{additionForm.get('useGPU')?.value ? 'GPU is used' : 'GPU is not used' }}
       </mat-slide-toggle>
     </form>
   </mat-card-content>

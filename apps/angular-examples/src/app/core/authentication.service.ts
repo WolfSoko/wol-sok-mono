@@ -1,10 +1,10 @@
-import {Injectable} from '@angular/core';
-import {MatSnackBar} from '@angular/material/snack-bar';
-import {Router} from '@angular/router';
-import {Angulartics2} from 'angulartics2';
-import {tap} from 'rxjs/operators';
-import {AkitaAuthQuery, AkitaFireAuthService} from './akita-fire-auth';
-import {Profile} from './profile';
+import { Injectable } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
+import { Angulartics2 } from 'angulartics2';
+import { tap } from 'rxjs/operators';
+import { AkitaAuthQuery, AkitaFireAuthService } from './akita-fire-auth';
+import { Profile } from './profile';
 
 @Injectable({
   providedIn: 'root'
@@ -20,7 +20,7 @@ export class AuthenticationService {
     ).subscribe();
   }
 
-  async signIn(): Promise<Profile> {
+  async signIn(): Promise<Profile | null> {
     try {
       return (await this.afAuth.signin('google')).user;
     } catch (error) {
@@ -31,6 +31,7 @@ export class AuthenticationService {
         });
       matSnackBarRef.onAction().subscribe(() => this.signIn());
     }
+    return null;
   }
 
 
@@ -40,7 +41,7 @@ export class AuthenticationService {
       await this.afAuth.signOut();
     } catch (error) {
       console.log('Error sign out: ', error);
-      this.snackBar.open('Error signing out', null, {
+      this.snackBar.open('Error signing out', undefined, {
         duration: 6000, horizontalPosition: 'right', verticalPosition: 'top'
       });
     }

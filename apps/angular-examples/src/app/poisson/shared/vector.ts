@@ -3,8 +3,6 @@ export class Vector {
   constructor(public x: number, public y: number) {
   }
 
-  ng;
-
   mag() {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   }

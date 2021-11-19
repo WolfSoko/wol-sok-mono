@@ -1,37 +1,34 @@
-import {Component, EventEmitter, OnDestroy, OnInit, Output} from '@angular/core';
-import {PoissonConfigService} from '../poisson-config.service';
-import {Subscription} from 'rxjs';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { PoissonConfigService } from '../poisson-config.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy()
 @Component({
   selector: 'app-sim-controls',
   templateUrl: './sim-controls.component.html',
   styleUrls: ['./sim-controls.component.css'],
 })
-export class SimControlsComponent implements OnInit, OnDestroy {
-
-
+export class SimControlsComponent implements OnInit {
   @Output() playChanged: EventEmitter<boolean> = new EventEmitter();
   @Output() onReset: EventEmitter<boolean> = new EventEmitter();
 
   play = false;
-  iterationsPerFrame: number;
-  radius: number;
-  k: number;
+  iterationsPerFrame = 1;
+  radius = 1;
+  k = 1;
 
-  private subscriptions: Subscription[] = [];
-
-  constructor(private poissonConfig: PoissonConfigService) {
-
-  }
+  constructor(private poissonConfig: PoissonConfigService) {}
 
   ngOnInit() {
-    this.subscriptions.push(this.poissonConfig.r$.subscribe((r) => this.radius = r));
-    this.subscriptions.push(this.poissonConfig.k$.subscribe((k) => this.k = k));
-    this.subscriptions.push(this.poissonConfig.iterationsPerFrame$.subscribe((iters) => this.iterationsPerFrame = iters));
-  }
-
-  ngOnDestroy() {
-    this.subscriptions.forEach((sub) => sub.unsubscribe());
+    this.poissonConfig.r$
+      .pipe(untilDestroyed(this))
+      .subscribe((r) => (this.radius = r));
+    this.poissonConfig.k$
+      .pipe(untilDestroyed(this))
+      .subscribe((k) => (this.k = k));
+    this.poissonConfig.iterationsPerFrame$
+      .pipe(untilDestroyed(this))
+      .subscribe((iters) => (this.iterationsPerFrame = iters));
   }
 
   radiusChanged(radius: number) {
@@ -52,11 +49,6 @@ export class SimControlsComponent implements OnInit, OnDestroy {
     }
   }
 
-
-  private emitPlay() {
-    this.playChanged.emit(this.play);
-  }
-
   togglePlay() {
     this.play = !this.play;
     this.emitPlay();
@@ -68,4 +60,7 @@ export class SimControlsComponent implements OnInit, OnDestroy {
     this.onReset.emit(true);
   }
 
+  private emitPlay() {
+    this.playChanged.emit(this.play);
+  }
 }

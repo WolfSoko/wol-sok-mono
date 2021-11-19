@@ -9,18 +9,18 @@ import {
   OnDestroy,
   ViewChild
 } from '@angular/core';
-import {MatDialog} from '@angular/material/dialog';
-import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
-import {Observable} from 'rxjs';
-import {distinctUntilChanged, filter, map, switchMap, take} from 'rxjs/operators';
-import {ScThanosDirective} from '../../../../sc-thanos/src/public-api';
-import {GameStateQuery} from './state/game-state.query';
-import {GameStateService} from './state/game-state.service';
-import {GameState, GameStateState} from './state/game-state.store';
-import {Bacteria, Player} from './state/player.model';
-import {PlayerQuery} from './state/player.query';
-import {PlayerService} from './state/player.service';
-import {WinnerComponent} from './winner-info/winner.component';
+import { MatDialog } from '@angular/material/dialog';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Observable } from 'rxjs';
+import { distinctUntilChanged, filter, map, switchMap, take } from 'rxjs/operators';
+import { GameStateQuery } from './state/game-state.query';
+import { GameStateService } from './state/game-state.service';
+import { GameState, GameStateState } from './state/game-state.store';
+import { Bacteria, Player } from './state/player.model';
+import { PlayerQuery } from './state/player.query';
+import { PlayerService } from './state/player.service';
+import { WinnerComponent } from './winner-info/winner.component';
+import { ScThanosDirective } from '@wolsok/sc-thanos';
 
 export function createImageDataFromBacterias(
   data8: Uint8ClampedArray,
@@ -52,10 +52,10 @@ export function createImageDataFromBacterias(
 export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild('canvasElement', {static: true})
-  private canvasRef: ElementRef;
+  private canvasRef!: ElementRef;
   @ViewChild(ScThanosDirective, {static: true})
-  private thanos: ScThanosDirective;
-  private cx: CanvasRenderingContext2D;
+  private thanos!: ScThanosDirective;
+  private cx!: CanvasRenderingContext2D;
   width = 320;
   height = 140;
 
@@ -95,13 +95,23 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
 
   ngAfterViewInit(): void {
-    const canvasEl: HTMLCanvasElement = this.canvasRef.nativeElement;
-    this.cx = canvasEl.getContext('2d');
+    const { canvasEl, context } = this.getRenderingContext();
+    this.cx = context;
     this.cx.imageSmoothingEnabled = false;
     canvasEl.width = this.width;
     canvasEl.height = this.height;
     this.cx.fillStyle = 'rgb(0,0,0)';
     this.cx.fillRect(0, 0, this.width, this.height);
+  }
+
+  private getRenderingContext() {
+    const canvasEl: HTMLCanvasElement = this.canvasRef.nativeElement;
+
+    const context = canvasEl.getContext('2d');
+    if(context == null ){
+      throw new Error('Could not get rendering context');
+    }
+    return { canvasEl, context };
   }
 
   startGame() {

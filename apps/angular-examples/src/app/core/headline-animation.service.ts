@@ -1,24 +1,30 @@
-import {Injectable} from '@angular/core';
-import {BehaviorSubject, combineLatest, Observable} from 'rxjs';
-import {distinctUntilChanged, map, tap} from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 
 @Injectable()
 export class HeadlineAnimationService {
-
   private _runAnimation$ = new BehaviorSubject<boolean>(true);
   readonly runAnimation$: Observable<boolean>;
 
   constructor() {
-    const isVisible$ = new Observable<boolean>(subscriber => {
-
-      const intersectionCallback: IntersectionObserverCallback = (entries: IntersectionObserverEntry[]) => {
-        entries.forEach(entry => {
+    const isVisible$ = new Observable<boolean>((subscriber) => {
+      const intersectionCallback: IntersectionObserverCallback = (
+        entries: IntersectionObserverEntry[]
+      ) => {
+        entries.forEach((entry) => {
           subscriber.next(entry.isIntersecting);
         });
       };
       const observer = new IntersectionObserver(intersectionCallback);
 
-      observer.observe(document.getElementById('main-toolbar'));
+      const mainToolbarElem = document.getElementById('main-toolbar');
+      if (mainToolbarElem) {
+        observer.observe(mainToolbarElem);
+      } else {
+        subscriber.error(new Error('main-toolbar element not found'));
+        subscriber.complete();
+      }
       return () => {
         observer.disconnect();
       };
@@ -26,9 +32,10 @@ export class HeadlineAnimationService {
 
     this.runAnimation$ = combineLatest([
       this._runAnimation$.asObservable(),
-      isVisible$]).pipe(
+      isVisible$,
+    ]).pipe(
       map(([animate, isVisible]) => animate && isVisible),
-      distinctUntilChanged(),
+      distinctUntilChanged()
     );
   }
 
@@ -46,6 +53,4 @@ export class HeadlineAnimationService {
     this.startAnimation();
     return result;
   }
-
-
 }

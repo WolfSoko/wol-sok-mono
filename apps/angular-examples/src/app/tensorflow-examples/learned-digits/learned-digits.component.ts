@@ -1,14 +1,14 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {MatDialog, MatDialogRef} from '@angular/material/dialog';
-import {UntilDestroy, untilDestroyed} from '@ngneat/until-destroy';
-import {Tensor, Tensor2D} from '@tensorflow/tfjs';
-import {Subject} from 'rxjs';
-import {debounceTime} from 'rxjs/operators';
-import {HeadlineAnimationService} from '../../core/headline-animation.service';
-import {AskForNumberDialogComponent} from './ask-for-number-dialog/ask-for-number-dialog';
-import {AskForNumberDialogData} from './ask-for-number-dialog/ask-for-number-dialog-data';
-import {LearnedDigitsModelService} from './learned-digits-model.service';
-import {MnistDataService} from './mnist-data.service';
+import { Component, OnInit } from '@angular/core';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Tensor2D } from '@tensorflow/tfjs';
+import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+import { HeadlineAnimationService } from '../../core/headline-animation.service';
+import { AskForNumberDialogComponent } from './ask-for-number-dialog/ask-for-number-dialog';
+import { AskForNumberDialogData } from './ask-for-number-dialog/ask-for-number-dialog-data';
+import { LearnedDigitsModelService } from './learned-digits-model.service';
+import { MnistDataService } from './mnist-data.service';
 
 @UntilDestroy()
 @Component({
@@ -16,28 +16,28 @@ import {MnistDataService} from './mnist-data.service';
   templateUrl: './learned-digits.component.html',
   styleUrls: ['./learned-digits.component.less']
 })
-export class LearnedDigitsComponent implements OnInit, OnDestroy {
-  isLoading: boolean;
+export class LearnedDigitsComponent implements OnInit {
+  isLoading!: boolean;
   hasBeenTrained = false;
   errorLoadingData = false;
-  accuracyValues: { batch: number; accuracy: number | Tensor; set: string }[];
-  lossValues: { batch: number; loss: number | Tensor; set: string }[];
-  predictions: number[];
-  batch: { xs: Tensor2D; labels: Tensor2D };
-  labels: number[];
+  accuracyValues!: { batch: number; accuracy: number; set: string }[];
+  lossValues!: { batch: number; loss: number; set: string }[];
+  predictions!: number[];
+  batch!: { xs: Tensor2D; labels: Tensor2D };
+  labels!: number[];
 
-  drawingPredictions: number[];
-  drawingBatch: { xs: Tensor2D; ys: number[] };
+  drawingPredictions!: number[]
+  drawingBatch!: { xs: Tensor2D; labels: number[] };
   drawingLabels: number[] = [];
   private nextDrawnImageSubject$ = new Subject<Float32Array>();
 
-  constructor(private data: MnistDataService, private deepnet: LearnedDigitsModelService,
+  constructor(private data: MnistDataService, private deepNet: LearnedDigitsModelService,
               public headlineAnimation: HeadlineAnimationService,
               private dialog: MatDialog) {
     this.headlineAnimation.stopAnimation();
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     setTimeout(async () => {
       try {
         this.isLoading = true;
@@ -59,21 +59,21 @@ export class LearnedDigitsComponent implements OnInit, OnDestroy {
   }
 
   async train() {
-    await this.deepnet.train();
-    this.accuracyValues = this.deepnet.accuracyValues || [{'batch': 0, 'accuracy': 0.0, 'set': 'train'}];
-    this.lossValues = this.deepnet.lossValues || [{'batch': 0, 'loss': 1.0, 'set': 'train'}];
+    await this.deepNet.train();
+    this.accuracyValues = this.deepNet.accuracyValues || [{'batch': 0, 'accuracy': 0.0, 'set': 'train'}];
+    this.lossValues = this.deepNet.lossValues || [{'batch': 0, 'loss': 1.0, 'set': 'train'}];
     this.hasBeenTrained = true;
   }
 
   predict() {
-    this.deepnet.predict();
-    this.predictions = this.deepnet.predictions;
-    this.batch = this.deepnet.testBatch;
-    this.labels = this.deepnet.labels;
+    this.deepNet.predict();
+    this.predictions = this.deepNet.predictions;
+    this.batch = this.deepNet.testBatch;
+    this.labels = this.deepNet.labels;
   }
 
   get isTraining() {
-    return this.deepnet.isTraining;
+    return this.deepNet.isTraining;
   }
 
   nextDrawnImage($event: Float32Array) {
@@ -81,31 +81,28 @@ export class LearnedDigitsComponent implements OnInit, OnDestroy {
   }
 
   private testDrawnDigit($event: Float32Array) {
-    this.deepnet.predictDrawing($event);
-    this.drawingPredictions = this.deepnet.customPredictions;
+    this.deepNet.predictDrawing($event);
+    this.drawingPredictions = this.deepNet.customPredictions;
 
-    const xs = this.deepnet.testCustomBatch;
+    const xs = this.deepNet.testCustomBatch;
     this.drawingLabels = [-1, ...this.drawingLabels];
     this.askForLabel(0);
-    this.drawingBatch = {xs: xs, ys: this.drawingPredictions};
+    this.drawingBatch = {xs: xs, labels: this.drawingPredictions};
   }
 
   askForLabel(index: number) {
     const label = this.drawingLabels[index];
     const numberDrawn = label === -1 ? null : label;
     const drawingPrediction = this.drawingPredictions[index];
-    const dialogData: AskForNumberDialogData = {numberDrawn, prediction: drawingPrediction};
+    const dialogData: AskForNumberDialogData = {drawn: numberDrawn, prediction: drawingPrediction};
     const dialogRef: MatDialogRef<AskForNumberDialogComponent, AskForNumberDialogData> = this.dialog.open(AskForNumberDialogComponent, {
       width: '250px',
       data: dialogData
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      this.drawingLabels[index] = result?.numberDrawn ?? -1;
+      this.drawingLabels[index] = result?.drawn ?? -1;
       this.drawingLabels = [...this.drawingLabels];
     });
-  }
-
-  ngOnDestroy(): void {
   }
 }

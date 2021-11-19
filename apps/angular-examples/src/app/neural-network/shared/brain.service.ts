@@ -1,10 +1,10 @@
-import {Injectable} from '@angular/core';
-import {TrainDataService} from './train-data.service';
-import {distinctUntilChanged, filter, repeat, skipUntil, startWith, takeUntil} from 'rxjs/operators';
-import {Subject, Observable, interval} from 'rxjs';
-import {Point} from './point';
-import {Perceptron} from './perceptron';
-import {TrainData} from './train-data';
+import { Injectable } from '@angular/core';
+import { TrainDataService } from './train-data.service';
+import { distinctUntilChanged, filter, repeat, skipUntil, startWith, takeUntil } from 'rxjs/operators';
+import { interval, Observable, Subject } from 'rxjs';
+import { Point } from './point';
+import { Perceptron } from './perceptron';
+import { TrainData } from './train-data';
 
 const defaultLearnRate = 0.3;
 
@@ -13,7 +13,7 @@ export class BrainService {
 
   learnedDataPoints = 0;
   points: Point[] = [];
-  perceptrons: Perceptron[][];
+  perceptrons: Perceptron[][] = [[]];
   isSinglePerceptron = false;
 
   private _learnRate = defaultLearnRate;

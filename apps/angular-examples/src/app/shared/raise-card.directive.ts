@@ -1,4 +1,4 @@
-import {Directive, ElementRef, HostListener, Input, OnChanges, SimpleChanges} from '@angular/core';
+import { Directive, ElementRef, HostListener, Input, OnChanges, SimpleChanges } from '@angular/core';
 
 @Directive({
   selector: '[appRaiseCard]'
@@ -7,7 +7,7 @@ export class RaiseCardDirective implements OnChanges {
 
   static elevationClass = 'mat-elevation-z';
 
-  @Input() raiseLevel: number;
+  @Input() raiseLevel!: number;
 
   private defaultRaiseLevel = 10;
 
