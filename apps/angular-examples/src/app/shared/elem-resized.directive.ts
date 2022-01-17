@@ -1,5 +1,5 @@
 import { Directive, ElementRef, EventEmitter, OnDestroy, Output } from '@angular/core';
-import { default as ResizeObserver } from 'resize-observer-polyfill';
+import ResizeObserver from 'resize-observer-polyfill';
 import { ResizedEvent } from './resized-event';
 
 @Directive({

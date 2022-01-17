@@ -13,7 +13,7 @@ export interface ReactionDiffCalculator {
 
   calcNext(): void;
 
-  drawImage(p: P5): void;
+  drawImage(p: P5 | { canvas: HTMLCanvasElement }): void;
 
   cleanup(): void;
 }

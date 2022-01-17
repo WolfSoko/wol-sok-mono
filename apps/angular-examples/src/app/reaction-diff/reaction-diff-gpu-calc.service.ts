@@ -104,7 +104,7 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
     this.grid = this.initGridKernel() as Texture;
   }
 
-  drawImage(p: { canvas: HTMLCanvasElement }) {
+  drawImage(p: { canvas: HTMLCanvasElement }): void {
     if (!this.initialized) {
       return;
     }

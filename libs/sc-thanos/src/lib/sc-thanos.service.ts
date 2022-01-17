@@ -1,16 +1,16 @@
-import { Inject, Injectable, NgZone } from '@angular/core';
+import {Inject, Injectable, NgZone} from "@angular/core";
 
-import { default as html2canvas } from 'html2canvas';
-import { animationFrameScheduler, from, interval, Observable } from 'rxjs';
-import { map, switchMap, takeWhile, tap, timeInterval } from 'rxjs/operators';
-import { SC_THANOS_OPTIONS_TOKEN, ScThanosOptions } from './sc-thanos.options';
-import { SimplexNoise } from './simplex-noise';
+import {default as html2canvas} from "html2canvas";
+import {animationFrameScheduler, from, interval, Observable} from "rxjs";
+import {map, switchMap, takeWhile, tap, timeInterval} from "rxjs/operators";
+import {SC_THANOS_OPTIONS_TOKEN, ScThanosOptions} from "./sc-thanos.options";
+import {SimplexNoise} from "./simplex-noise";
 
 const PARTICLE_BYTE_LENGTH = 10;
 const MIN_PARTICLE_ALPHA = ~~(255 * 0.01);
 const HEIGHT_SCALE = 5;
 const WIDTH_SCALE = 2;
-const FLOW_FIELD_RES = 1. / 20.;
+const FLOW_FIELD_RES = 0.05;
 
 interface ParticlesData {
   particles: Float32Array;
@@ -178,13 +178,13 @@ export class ScThanosService {
     // scale result canvas to have more room to draw particles while vaporizing;
     const resultHeight = height * HEIGHT_SCALE;
     const resultWidth = width * WIDTH_SCALE;
-    const resultCanvas: HTMLCanvasElement = document.createElement('canvas');
+    const resultCanvas: HTMLCanvasElement = document.createElement("canvas");
     resultCanvas.height = resultHeight;
     resultCanvas.width = resultWidth;
 
-    const imageData = divCanvas.getContext('2d')?.getImageData(0, 0, width, height);
+    const imageData = divCanvas.getContext("2d")?.getImageData(0, 0, width, height);
     if (imageData == null) {
-      throw new Error('Could not get image data from canvas');
+      throw new Error("Could not get image data from canvas");
     }
     const particlesData = ScThanosService.createParticlesForImageData(imageData, maxParticleCount, resultWidth, resultHeight);
     return { resultCanvas, particlesData };
@@ -216,7 +216,9 @@ export class ScThanosService {
       // select random index from candiates
       const index = ~~(Math.random() * particleCandiatesList.length);
       const { x, y } = particleCandiatesList[index];
+
       // overwrite index with last element to prevent double selection of particles
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       particleCandiatesList[index] = particleCandiatesList.pop()!;
 
       maxParticleX = Math.max(maxParticleX, x);
@@ -257,7 +259,7 @@ export class ScThanosService {
   }
 
   private vaporizeIntern(elem: HTMLElement): Observable<any> {
-    elem.style.opacity = elem.style.opacity || '1';
+    elem.style.opacity = elem.style.opacity || "1";
     elem.style.transition = `opacity ${~~(this.thanosOptions.animationLength * .8)}ms ease-out`;
     const noise = new SimplexNoise({ frequency: 0.01, min: 0 });
     const seed = (new Date().getDate() * Math.random());
@@ -276,17 +278,17 @@ export class ScThanosService {
         const canvasAndParticles = ScThanosService.prepareCanvasForVaporize(canvasFromHtmlElem, this.thanosOptions.maxParticleCount);
         const { resultCanvas } = canvasAndParticles;
         if (elem.parentElement) {
-          elem.parentElement.style.position = elem.parentElement.style.position || 'relative';
+          elem.parentElement.style.position = elem.parentElement.style.position || "relative";
         }
-        resultCanvas.style.position = 'absolute';
-        resultCanvas.style.left = 0 + 'px';
-        resultCanvas.style.top = '-' + elem.getBoundingClientRect().height * (HEIGHT_SCALE - 1) + 'px';
-        resultCanvas.style.zIndex = '2000';
-        resultCanvas.style.pointerEvents = 'none';
+        resultCanvas.style.position = "absolute";
+        resultCanvas.style.left = 0 + "px";
+        resultCanvas.style.top = "-" + elem.getBoundingClientRect().height * (HEIGHT_SCALE - 1) + "px";
+        resultCanvas.style.zIndex = "2000";
+        resultCanvas.style.pointerEvents = "none";
 
-        elem.insertAdjacentElement('beforebegin', resultCanvas);
+        elem.insertAdjacentElement("beforebegin", resultCanvas);
         // this should start the transition above defined
-        elem.style.opacity = '0';
+        elem.style.opacity = "0";
         return canvasAndParticles;
       }),
       switchMap(({ resultCanvas, particlesData }) => {
@@ -311,7 +313,7 @@ export class ScThanosService {
                 noise,
                 seed
               });
-              const context = resultCanvas.getContext('2d');
+              const context = resultCanvas.getContext("2d");
               if (context) {
                 ScThanosService.drawParticles(context, particlesData.particles);
               }
