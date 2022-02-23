@@ -1,0 +1,12 @@
+{
+  "extends": "assemblyscript/std/assembly.json",
+  "include": [
+    "./**/*.ts"
+  ],
+  "compilerOptions": {
+    "outDir": "../build",
+    "module": "esnext",
+    "declaration": true,
+    "target": "esnext"
+  }
+}

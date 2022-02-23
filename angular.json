@@ -20,7 +20,7 @@
             "assets": [
               {
                 "glob": "*.*",
-                "input": "./projects/fib-wasm/build",
+                "input": "./libs/fib-wasm/build",
                 "output": "build"
               },
               "apps/angular-examples/src/favicon.ico",

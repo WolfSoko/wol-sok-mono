@@ -14,8 +14,8 @@
     "build:thanos": "nx build sc-thanos",
     "build:thanos:prod": "npm run  build:sc-thanos -- --configuration production",
     "build:as": "npm run build:as:untouched && npm run build:as:optimized",
-    "build:as:untouched": "asc projects/fib-wasm/assembly/index.ts -d projects/fib-wasm/index.d.ts -b projects/fib-wasm/build/untouched.wasm -t projects/fib-wasm/build/untouched.wat --sourceMap --importMemory --debug",
-    "build:as:optimized": "asc projects/fib-wasm/assembly/index.ts -d projects/fib-wasm/index.d.ts -b projects/fib-wasm/build/optimized.wasm -t projects/fib-wasm/build/optimized.wat --sourceMap --importMemory --optimize",
+    "build:as:untouched": "asc libs/fib-wasm/assembly/index.ts -d libs/fib-wasm/index.d.ts -b libs/fib-wasm/build/untouched.wasm -t libs/fib-wasm/build/untouched.wat --sourceMap --importMemory --debug",
+    "build:as:optimized": "asc libs/fib-wasm/assembly/index.ts -d libs/fib-wasm/index.d.ts -b libs/fib-wasm/build/optimized.wasm -t libs/fib-wasm/build/optimized.wat --sourceMap --importMemory --optimize",
     "update-firebase": "node tools/node-scripts/init-firebase",
     "deploy": "npm version patch && npm run build:libs:prod && npm run build:s3 && node tools/node-scripts/sync-S3",
     "deploy:without-build": "node tools/node-scripts/sync-S3",
@@ -123,6 +123,6 @@
   "akitaCli": {
     "customFolderName": "true",
     "isAngular": true,
-    "basePath": "./projects/angular-examples/src/app/"
+    "basePath": "./apps/angular-examples/src/app/"
   }
 }
