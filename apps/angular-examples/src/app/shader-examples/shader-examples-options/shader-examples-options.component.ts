@@ -1,11 +1,12 @@
-import { Component } from '@angular/core';
-import { ShaderExamplesService, ShaderExamplesUIQuery } from '../state';
-import { Observable } from 'rxjs';
+import {ChangeDetectionStrategy, Component} from "@angular/core";
+import {ShaderExamplesService, ShaderExamplesUIQuery} from "../state";
+import {Observable} from "rxjs";
 
 @Component({
   selector: 'app-shader-examples-options',
   templateUrl: './shader-examples-options.component.html',
-  styleUrls: ['./shader-examples-options.component.scss']
+  styleUrls: ['./shader-examples-options.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ShaderExamplesOptionsComponent {
   readonly isLoading: Observable<boolean>;

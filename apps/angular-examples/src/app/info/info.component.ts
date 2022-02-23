@@ -1,10 +1,11 @@
-import {Component, OnInit} from '@angular/core';
-import {Technology} from './technology';
+import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
+import {Technology} from "./technology";
 
 @Component({
   selector: 'app-info',
   templateUrl: './info.component.html',
-  styleUrls: ['./info.component.css']
+  styleUrls: ['./info.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InfoComponent implements OnInit {
 

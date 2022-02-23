@@ -1,5 +1,6 @@
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   Inject,
@@ -10,10 +11,10 @@ import {
   SimpleChange,
   SimpleChanges,
   ViewChild
-} from '@angular/core';
-import * as math from 'mathjs';
-import P5, { Graphics } from 'p5';
-import { InputWave } from '../../state/input-wave.model';
+} from "@angular/core";
+import * as math from "mathjs";
+import P5, {Graphics} from "p5";
+import {InputWave} from "../../state/input-wave.model";
 
 const NEG_TWO_PI = -2 * Math.PI;
 const CIRCLE_DRAW_SAMPLES = 800;
@@ -33,7 +34,8 @@ interface CenterData {
 @Component({
   selector: 'app-circle-canvas',
   templateUrl: './circle-canvas.component.html',
-  styleUrls: ['./circle-canvas.component.scss']
+  styleUrls: ['./circle-canvas.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CircleCanvasComponent implements OnChanges, AfterViewInit, OnDestroy {
 

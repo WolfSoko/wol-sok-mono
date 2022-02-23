@@ -1,14 +1,15 @@
-import { Component, OnDestroy } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { PersistNgFormPlugin } from '@datorama/akita';
-import { Observable } from 'rxjs';
-import { InputWaveOptionsQuery } from '../../state/input-wave-options.query';
-import { InputWaveOptionsState } from '../../state/input-wave-options.store';
+import {ChangeDetectionStrategy, Component, OnDestroy} from "@angular/core";
+import {FormArray, FormBuilder, FormGroup, Validators} from "@angular/forms";
+import {PersistNgFormPlugin} from "@datorama/akita";
+import {Observable} from "rxjs";
+import {InputWaveOptionsQuery} from "../../state/input-wave-options.query";
+import {InputWaveOptionsState} from "../../state/input-wave-options.store";
 
 @Component({
   selector: 'app-wave-options',
   templateUrl: './wave-options.component.html',
   styleUrls: ['./wave-options.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WaveOptionsComponent implements OnDestroy {
   private readonly persistForm: PersistNgFormPlugin;

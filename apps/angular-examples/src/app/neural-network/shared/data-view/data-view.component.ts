@@ -1,5 +1,6 @@
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   EventEmitter,
@@ -10,12 +11,12 @@ import {
   SimpleChange,
   SimpleChanges,
   ViewChild
-} from '@angular/core';
-import { Perceptron } from '../perceptron';
-import { Point } from '../point';
-import { DataP5Sketch } from './data-p5-sketch';
-import { BrainService } from '../brain.service';
-import * as p5 from 'p5';
+} from "@angular/core";
+import {Perceptron} from "../perceptron";
+import {Point} from "../point";
+import {DataP5Sketch} from "./data-p5-sketch";
+import {BrainService} from "../brain.service";
+import * as p5 from "p5";
 
 interface ChangeInputs extends SimpleChanges {
   points: SimpleChange;
@@ -25,7 +26,8 @@ interface ChangeInputs extends SimpleChanges {
 @Component({
   selector: 'app-data-view',
   templateUrl: './data-view.component.html',
-  styleUrls: ['./data-view.component.css']
+  styleUrls: ['./data-view.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DataViewComponent implements AfterViewInit, OnChanges, OnDestroy {
 

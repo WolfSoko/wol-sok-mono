@@ -1,11 +1,20 @@
-import { AfterContentInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
-import { Perceptron } from '../perceptron';
-import * as p5 from 'p5';
+import {
+  AfterContentInit,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  Input,
+  OnDestroy,
+  ViewChild
+} from "@angular/core";
+import {Perceptron} from "../perceptron";
+import * as p5 from "p5";
 
 @Component({
   selector: 'app-perceptron',
   templateUrl: './perceptron.component.html',
-  styleUrls: ['./perceptron.component.css']
+  styleUrls: ['./perceptron.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PerceptronComponent implements AfterContentInit, OnDestroy {
 

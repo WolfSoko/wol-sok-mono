@@ -1,10 +1,11 @@
-import {Component, Inject} from '@angular/core';
-import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
-import {AskForNumberDialogData} from './ask-for-number-dialog-data';
+import {ChangeDetectionStrategy, Component, Inject} from "@angular/core";
+import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
+import {AskForNumberDialogData} from "./ask-for-number-dialog-data";
 
 @Component({
   selector: 'app-ask-for-number-dialog',
   templateUrl: './ask-for-number-dialog.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AskForNumberDialogComponent {
 

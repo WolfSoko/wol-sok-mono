@@ -1,5 +1,6 @@
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   Inject,
@@ -10,9 +11,9 @@ import {
   SimpleChange,
   SimpleChanges,
   ViewChild
-} from '@angular/core';
-import P5 from 'p5';
-import { InputWave } from '../../state/input-wave.model';
+} from "@angular/core";
+import P5 from "p5";
+import {InputWave} from "../../state/input-wave.model";
 
 interface WaveCanvasChanges extends SimpleChanges {
   waveWidth: SimpleChange;
@@ -23,7 +24,8 @@ interface WaveCanvasChanges extends SimpleChanges {
 @Component({
   selector: 'app-wave-canvas',
   templateUrl: './wave-canvas.component.html',
-  styleUrls: ['./wave-canvas.component.scss']
+  styleUrls: ['./wave-canvas.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WaveCanvasComponent implements OnChanges, AfterViewInit, OnDestroy {
 

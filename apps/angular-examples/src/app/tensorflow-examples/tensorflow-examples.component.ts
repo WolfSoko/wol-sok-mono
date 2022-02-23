@@ -1,10 +1,10 @@
-import {Component, OnInit} from '@angular/core';
-import {environment} from '../../environments/environment';
+import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
 
 @Component({
   selector: 'app-tensorflow-examples',
   templateUrl: './tensorflow-examples.component.html',
-  styleUrls: ['./tensorflow-examples.component.less']
+  styleUrls: ['./tensorflow-examples.component.less'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TensorflowExamplesComponent implements OnInit {
 

@@ -1,14 +1,15 @@
-import { Component } from '@angular/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { AuthenticationService, AuthQuery, Profile } from '../core';
-import { Observable } from 'rxjs';
-import { startWith } from 'rxjs/operators';
+import {ChangeDetectionStrategy, Component} from "@angular/core";
+import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
+import {AuthenticationService, AuthQuery, Profile} from "../core";
+import {Observable} from "rxjs";
+import {startWith} from "rxjs/operators";
 
 @UntilDestroy()
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LoginComponent {
   user$: Observable<Profile | null>;

@@ -1,10 +1,10 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { IKernelRunShortcut } from 'gpu.js';
+import {AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewChild} from "@angular/core";
+import {FormBuilder, FormGroup, Validators} from "@angular/forms";
+import {IKernelRunShortcut} from "gpu.js";
 
-import { animationFrameScheduler, combineLatest, interval, Observable, of, Subscription, TimeInterval } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, mergeMap, scan, startWith, timeInterval } from 'rxjs/operators';
-import { GpuJsService } from '../core/gpujs.service';
+import {animationFrameScheduler, combineLatest, interval, Observable, of, Subscription, TimeInterval} from "rxjs";
+import {debounceTime, distinctUntilChanged, map, mergeMap, scan, startWith, timeInterval} from "rxjs/operators";
+import {GpuJsService} from "../core/gpujs.service";
 
 interface Configuration {
   r: number;
@@ -19,7 +19,8 @@ interface Configuration {
 @Component({
   selector: 'app-some-gpu-calculation',
   templateUrl: './some-gpu-calculation.component.html',
-  styleUrls: ['./some-gpu-calculation.component.less']
+  styleUrls: ['./some-gpu-calculation.component.less'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
 

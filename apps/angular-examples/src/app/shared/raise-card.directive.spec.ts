@@ -1,8 +1,8 @@
-import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {Component, DebugElement} from '@angular/core';
-import {By} from '@angular/platform-browser';
+import {ComponentFixture, TestBed} from "@angular/core/testing";
+import {Component, DebugElement} from "@angular/core";
+import {By} from "@angular/platform-browser";
 
-import {RaiseCardDirective} from './raise-card.directive';
+import {RaiseCardDirective} from "./raise-card.directive";
 
 @Component({
   template: `

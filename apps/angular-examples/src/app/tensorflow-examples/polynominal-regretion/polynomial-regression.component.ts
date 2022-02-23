@@ -1,11 +1,12 @@
-import { Component, OnInit } from '@angular/core';
-import { HeadlineAnimationService } from '../../core/headline-animation.service';
-import { PolynomialRegressionService } from './polynomial-regression.service';
+import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
+import {HeadlineAnimationService} from "../../core/headline-animation.service";
+import {PolynomialRegressionService} from "./polynomial-regression.service";
 
 @Component({
   selector: 'app-polynomial-regressen',
   templateUrl: './polynomial-regression.component.html',
-  styleUrls: ['./polynomial-regression.component.less']
+  styleUrls: ['./polynomial-regression.component.less'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PolynomialRegressionComponent implements OnInit {
   randomCoefficients!: { a: number; b: number; c: number; d: number };

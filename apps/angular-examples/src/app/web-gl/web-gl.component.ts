@@ -1,5 +1,15 @@
-import {AfterViewInit, Component, ElementRef, EventEmitter, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {merge, Observable} from 'rxjs';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  EventEmitter,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  ViewChild
+} from "@angular/core";
+import {merge, Observable} from "rxjs";
 
 import {
   AmbientLight,
@@ -22,17 +32,18 @@ import {
   UniformsLib,
   UniformsUtils,
   WebGLRenderer
-} from 'three';
-import { OrbitControls } from 'three-orbitcontrols-ts';
-import { MandelbrotFragment, MandelbrotVertex } from './mandelbrot-shader';
-import { map } from 'rxjs/operators';
+} from "three";
+import {OrbitControls} from "three-orbitcontrols-ts";
+import {MandelbrotFragment, MandelbrotVertex} from "./mandelbrot-shader";
+import {map} from "rxjs/operators";
 
 const TAU = Math.PI / 2;
 
 @Component({
   selector: 'app-web-gl',
   templateUrl: './web-gl.component.html',
-  styleUrls: ['./web-gl.component.less']
+  styleUrls: ['./web-gl.component.less'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
 

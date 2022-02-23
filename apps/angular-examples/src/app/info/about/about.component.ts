@@ -1,12 +1,13 @@
-import { Component, Inject } from '@angular/core';
-import { MainNavRoute } from '../../app-routing.module';
-import { ROUTER_LINKS } from '../../router-links.token';
-import { Router } from '@angular/router';
+import {ChangeDetectionStrategy, Component, Inject} from "@angular/core";
+import {MainNavRoute} from "../../app-routing.module";
+import {ROUTER_LINKS} from "../../router-links.token";
+import {Router} from "@angular/router";
 
 @Component({
   selector: 'app-about',
   templateUrl: './about.component.html',
-  styleUrls: ['./about.component.less']
+  styleUrls: ['./about.component.less'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AboutComponent {
 

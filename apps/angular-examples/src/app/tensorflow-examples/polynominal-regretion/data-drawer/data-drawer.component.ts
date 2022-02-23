@@ -1,11 +1,20 @@
-import { Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
-import { Tensor } from '@tensorflow/tfjs';
-import { DataDrawerService } from './data-drawer.service';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  Input,
+  OnChanges,
+  SimpleChanges,
+  ViewChild
+} from "@angular/core";
+import {Tensor} from "@tensorflow/tfjs";
+import {DataDrawerService} from "./data-drawer.service";
 
 @Component({
   selector: 'app-data-drawer',
   templateUrl: './data-drawer.component.html',
-  styleUrls: ['./data-drawer.component.less']
+  styleUrls: ['./data-drawer.component.less'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DataDrawerComponent implements OnChanges {
 

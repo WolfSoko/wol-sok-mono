@@ -1,12 +1,13 @@
-import { Component, OnInit } from '@angular/core';
-import { BrainService } from '../shared/brain.service';
-import { Point } from '../shared/point';
-import { Observable } from 'rxjs';
+import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
+import {BrainService} from "../shared/brain.service";
+import {Point} from "../shared/point";
+import {Observable} from "rxjs";
 
 @Component({
   selector: 'app-perceptron-tab',
   templateUrl: './perceptron-tab.component.html',
   styleUrls: ['./perceptron-tab.component.less'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PerceptronTabComponent implements OnInit {
   width = 400;

@@ -1,11 +1,12 @@
-import { Component, Input } from '@angular/core';
-import { BrainService } from '../brain.service';
-import { Observable } from 'rxjs';
+import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
+import {BrainService} from "../brain.service";
+import {Observable} from "rxjs";
 
 @Component({
   selector: 'app-brain-settings',
   templateUrl: './brain-settings.component.html',
-  styleUrls: ['./brain-settings.component.less']
+  styleUrls: ['./brain-settings.component.less'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BrainSettingsComponent {
 

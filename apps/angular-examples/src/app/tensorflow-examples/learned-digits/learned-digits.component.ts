@@ -1,20 +1,21 @@
-import { Component, OnInit } from '@angular/core';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Tensor2D } from '@tensorflow/tfjs';
-import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
-import { HeadlineAnimationService } from '../../core/headline-animation.service';
-import { AskForNumberDialogComponent } from './ask-for-number-dialog/ask-for-number-dialog';
-import { AskForNumberDialogData } from './ask-for-number-dialog/ask-for-number-dialog-data';
-import { LearnedDigitsModelService } from './learned-digits-model.service';
-import { MnistDataService } from './mnist-data.service';
+import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
+import {MatDialog, MatDialogRef} from "@angular/material/dialog";
+import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
+import {Tensor2D} from "@tensorflow/tfjs";
+import {Subject} from "rxjs";
+import {debounceTime} from "rxjs/operators";
+import {HeadlineAnimationService} from "../../core/headline-animation.service";
+import {AskForNumberDialogComponent} from "./ask-for-number-dialog/ask-for-number-dialog";
+import {AskForNumberDialogData} from "./ask-for-number-dialog/ask-for-number-dialog-data";
+import {LearnedDigitsModelService} from "./learned-digits-model.service";
+import {MnistDataService} from "./mnist-data.service";
 
 @UntilDestroy()
 @Component({
   selector: 'app-learned-digits',
   templateUrl: './learned-digits.component.html',
-  styleUrls: ['./learned-digits.component.less']
+  styleUrls: ['./learned-digits.component.less'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LearnedDigitsComponent implements OnInit {
   isLoading!: boolean;

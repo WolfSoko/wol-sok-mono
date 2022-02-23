@@ -1,5 +1,13 @@
-import { AfterViewChecked, Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular/core';
-import * as p5 from 'p5';
+import {
+  AfterViewChecked,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  EventEmitter,
+  Output,
+  ViewChild
+} from "@angular/core";
+import * as p5 from "p5";
 
 class Path {
 
@@ -30,7 +38,8 @@ class Start extends Path {
 @Component({
   selector: 'app-draw-digit',
   templateUrl: './draw-digit.component.html',
-  styleUrls: ['./draw-digit.component.less']
+  styleUrls: ['./draw-digit.component.less'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DrawDigitComponent implements AfterViewChecked {
 

@@ -1,12 +1,13 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { PoissonConfigService } from '../poisson-config.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import {ChangeDetectionStrategy, Component, EventEmitter, OnInit, Output} from "@angular/core";
+import {PoissonConfigService} from "../poisson-config.service";
+import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 
 @UntilDestroy()
 @Component({
   selector: 'app-sim-controls',
   templateUrl: './sim-controls.component.html',
   styleUrls: ['./sim-controls.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SimControlsComponent implements OnInit {
   @Output() playChanged: EventEmitter<boolean> = new EventEmitter();

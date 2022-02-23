@@ -1,11 +1,12 @@
-import {Component, OnInit} from '@angular/core';
-import {Point} from '../shared/point';
-import {BrainService} from '../shared/brain.service';
+import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
+import {Point} from "../shared/point";
+import {BrainService} from "../shared/brain.service";
 
 @Component({
   selector: 'app-multi-perceptron',
   templateUrl: './multi-perceptron.component.html',
-  styleUrls: ['./multi-perceptron.component.less']
+  styleUrls: ['./multi-perceptron.component.less'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MultiPerceptronComponent implements OnInit {
 

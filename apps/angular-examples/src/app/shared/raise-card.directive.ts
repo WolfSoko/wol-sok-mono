@@ -1,40 +1,70 @@
-import { Directive, ElementRef, HostListener, Input, OnChanges, SimpleChanges } from '@angular/core';
+import {
+  Directive,
+  ElementRef,
+  HostListener,
+  Input,
+  OnChanges,
+  Renderer2,
+  SimpleChange,
+  SimpleChanges
+} from "@angular/core";
+
+export interface TypesSimpleChange<T> extends SimpleChange {
+  previousValue: T | undefined;
+  currentValue: T | undefined;
+}
+
+
+interface RaiseCardChanges extends SimpleChanges {
+  raiseLevel: TypesSimpleChange<number>;
+}
 
 @Directive({
-  selector: '[appRaiseCard]'
+  selector: "[appRaiseCard]"
 })
 export class RaiseCardDirective implements OnChanges {
 
-  static elevationClass = 'mat-elevation-z';
+  private static elevationClass = "mat-elevation-z";
+  private static defaultRaiseLevel = 10;
 
   @Input() raiseLevel!: number;
 
-  private defaultRaiseLevel = 10;
-
-  constructor(private el: ElementRef) {
+  constructor(private readonly el: ElementRef, private readonly renderer: Renderer2) {
   }
 
-  getRaiseClass() {
-    return RaiseCardDirective.elevationClass + (this.raiseLevel || this.defaultRaiseLevel);
-  }
 
-  ngOnChanges(changes: SimpleChanges) {
+  ngOnChanges(changes: RaiseCardChanges) {
     if (changes.raiseLevel != null) {
       if (changes.raiseLevel.isFirstChange()) {
-        this.el.nativeElement.classList.remove(RaiseCardDirective.elevationClass + this.defaultRaiseLevel);
+        this.removeRaiseClass(this.getRaiseClass(RaiseCardDirective.defaultRaiseLevel));
       } else {
-        this.el.nativeElement.classList.remove(RaiseCardDirective.elevationClass + changes.raiseLevel.previousValue);
+        this.removeRaiseClass(this.getRaiseClass(changes.raiseLevel.previousValue));
       }
     }
   }
 
-  @HostListener('mouseenter')
-  addRaisedClass() {
-    this.el.nativeElement.classList.add(this.getRaiseClass());
+  @HostListener("touchstart")
+  @HostListener("mouseenter")
+  raise(): void {
+    this.addRaiseClass();
   }
 
-  @HostListener('mouseleave')
-  unraise() {
-    this.el.nativeElement.classList.remove(this.getRaiseClass());
+  private addRaiseClass(raiseClass: string = this.getRaiseClass()): void {
+    this.renderer.addClass(this.el.nativeElement, raiseClass);
+  }
+
+  @HostListener("touchend")
+  @HostListener("touchcancel")
+  @HostListener("mouseleave")
+  unRaise(): void {
+    this.removeRaiseClass();
+  }
+
+  private removeRaiseClass(raiseClass: string = this.getRaiseClass()): void {
+    this.renderer.removeClass(this.el.nativeElement, raiseClass);
+  }
+
+  private getRaiseClass(raiseLevel: number = this.raiseLevel ?? RaiseCardDirective.defaultRaiseLevel) {
+    return RaiseCardDirective.elevationClass + raiseLevel;
   }
 }

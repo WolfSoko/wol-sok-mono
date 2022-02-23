@@ -1,13 +1,14 @@
-import { Component, Inject } from "@angular/core";
-import { Angulartics2GoogleTagManager } from "angulartics2";
-import { MainNavRoute } from "./app-routing.module";
-import { TitleService } from "./core/title.service";
-import { ROUTER_LINKS } from "./router-links.token";
+import {ChangeDetectionStrategy, Component, Inject} from "@angular/core";
+import {Angulartics2GoogleTagManager} from "angulartics2";
+import {MainNavRoute} from "./app-routing.module";
+import {TitleService} from "./core/title.service";
+import {ROUTER_LINKS} from "./router-links.token";
 
 @Component({
   selector: "app-root",
   templateUrl: "./app.component.html",
-  styleUrls: ["./app.component.scss"]
+  styleUrls: ["./app.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent {
 

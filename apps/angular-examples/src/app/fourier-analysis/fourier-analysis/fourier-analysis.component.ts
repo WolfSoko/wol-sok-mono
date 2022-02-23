@@ -1,15 +1,16 @@
-import { Component, ElementRef } from '@angular/core';
-import { Observable } from 'rxjs';
-import { ResizedEvent } from '../../shared/resized-event';
-import { FourierAnalysisQuery } from '../state/fourier-analysis.query';
-import { FourierAnalysisService } from '../state/fourier-analysis.service';
-import { FourierAnalysisState } from '../state/fourier-analysis.store';
-import { InputWaveService } from '../state/input-wave.service';
+import {ChangeDetectionStrategy, Component, ElementRef} from "@angular/core";
+import {Observable} from "rxjs";
+import {ResizedEvent} from "../../shared/resized-event";
+import {FourierAnalysisQuery} from "../state/fourier-analysis.query";
+import {FourierAnalysisService} from "../state/fourier-analysis.service";
+import {FourierAnalysisState} from "../state/fourier-analysis.store";
+import {InputWaveService} from "../state/input-wave.service";
 
 @Component({
   selector: 'app-fourier-analysis',
   templateUrl: './fourier-analysis.component.html',
   styleUrls: ['./fourier-analysis.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FourierAnalysisComponent {
   fourierAnalysis$: Observable<FourierAnalysisState>;

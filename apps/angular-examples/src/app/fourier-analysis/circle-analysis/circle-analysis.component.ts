@@ -1,12 +1,13 @@
-import { Component, Input } from '@angular/core';
-import { Observable } from 'rxjs';
-import { InputWave } from '../state/input-wave.model';
-import { InputWaveQuery } from '../state/input-wave.query';
+import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
+import {Observable} from "rxjs";
+import {InputWave} from "../state/input-wave.model";
+import {InputWaveQuery} from "../state/input-wave.query";
 
 @Component({
   selector: 'app-circle-analysis',
   templateUrl: './circle-analysis.component.html',
-  styleUrls: ['./circle-analysis.component.scss']
+  styleUrls: ['./circle-analysis.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CircleAnalysisComponent  {
 

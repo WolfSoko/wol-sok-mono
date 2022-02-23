@@ -1,16 +1,17 @@
-import {Component, Inject, NgZone} from '@angular/core';
-import {SwUpdate, UpdateAvailableEvent} from '@angular/service-worker';
-import {from, interval} from 'rxjs';
-import {delay, finalize, flatMap, map, tap} from 'rxjs/operators';
-import {environment} from '../../environments/environment';
-import {ServiceWorkerLogUpdateService} from '../core/service-worker-log-update.service';
-import {ServiceWorkerUpdateService} from '../core/service-worker-update.service';
+import {ChangeDetectionStrategy, Component, Inject, NgZone} from "@angular/core";
+import {SwUpdate, UpdateAvailableEvent} from "@angular/service-worker";
+import {from, interval} from "rxjs";
+import {delay, finalize, flatMap, map, tap} from "rxjs/operators";
+import {environment} from "../../environments/environment";
+import {ServiceWorkerLogUpdateService} from "../core/service-worker-log-update.service";
+import {ServiceWorkerUpdateService} from "../core/service-worker-update.service";
 
 
 @Component({
   selector: 'app-service-worker-update',
   templateUrl: './service-worker-update.component.html',
-  styleUrls: ['./service-worker-update.component.scss']
+  styleUrls: ['./service-worker-update.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ServiceWorkerUpdateComponent {
   private _isLoading = false;
