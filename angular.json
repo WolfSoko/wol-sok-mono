@@ -73,6 +73,8 @@
                   "with": "apps/angular-examples/src/environments/environment.prod.ts"
                 }
               ],
+              "serviceWorker": true,
+              "ngswConfigPath": "apps/angular-examples/ngsw-config.json",
               "outputHashing": "all"
             },
             "development": {
