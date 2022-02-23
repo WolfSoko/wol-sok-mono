@@ -1,6 +1,6 @@
 {
   "name": "wolsok-mono",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "license": "MIT",
   "scripts": {
     "ng": "nx",
@@ -126,4 +126,3 @@
     "basePath": "./apps/angular-examples/src/app/"
   }
 }
-
