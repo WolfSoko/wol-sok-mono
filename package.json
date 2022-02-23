@@ -12,7 +12,7 @@
     "build:libs": "npm run build:as && npm run build:thanos",
     "build:libs:prod": "npm run build:as && npm run build:thanos:prod",
     "build:thanos": "nx build sc-thanos",
-    "build:thanos:prod": "npm run  build:sc-thanos -- --configuration production",
+    "build:thanos:prod": "npm run build:thanos -- --configuration production",
     "build:as": "npm run build:as:untouched && npm run build:as:optimized",
     "build:as:untouched": "asc libs/fib-wasm/assembly/index.ts -d libs/fib-wasm/index.d.ts -b libs/fib-wasm/build/untouched.wasm -t libs/fib-wasm/build/untouched.wat --sourceMap --importMemory --debug",
     "build:as:optimized": "asc libs/fib-wasm/assembly/index.ts -d libs/fib-wasm/index.d.ts -b libs/fib-wasm/build/optimized.wasm -t libs/fib-wasm/build/optimized.wat --sourceMap --importMemory --optimize",
