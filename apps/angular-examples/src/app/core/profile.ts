@@ -3,5 +3,7 @@ export interface Profile {
   displayName: string | null;
   photoURL: string | null;
   email: string | null;
-  [key: string]: unknown;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
 }
