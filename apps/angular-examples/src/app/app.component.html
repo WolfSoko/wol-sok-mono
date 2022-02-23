@@ -1,15 +1,17 @@
 <!--The content below is only a placeholder and can be replaced.-->
 <mat-sidenav-container class="page">
   <mat-sidenav class="navigationSidenav" #sidenav>
-    <mat-nav-list>
-      <app-nav-item *ngFor="let route of routerLinks"
-                    (click)="sidenav.close()"
-                    [path]="route.path"
-                    [linkText]="route.data.linkText">
-      </app-nav-item>
-    </mat-nav-list>
+    <nav>
+      <mat-nav-list>
+        <app-nav-item (click)="sidenav.close()"
+                      *ngFor="let route of routerLinks"
+                      [linkText]="route.data.linkText"
+                      [path]="route.path">
+        </app-nav-item>
+      </mat-nav-list>
+    </nav>
   </mat-sidenav>
-  <section class="pageGrid">
+  <section class="pageGrid" title="main content">
     <app-main-toolbar (clickSideNav)="sidenav.open()"></app-main-toolbar>
     <div class="page-content">
       <router-outlet></router-outlet>

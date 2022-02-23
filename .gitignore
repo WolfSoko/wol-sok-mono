@@ -2,6 +2,7 @@
 
 # compiled output
 /dist
+/distS3
 /tmp
 /out-tsc
 

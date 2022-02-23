@@ -1,6 +1,7 @@
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
+const mime = require('mime-types');
 
 const ONE_WEEK = 60 * 60 * 24 * 14;
 
@@ -124,7 +125,7 @@ function uploadFilesInBatches(allFiles, folder, bucket, prefix, startIndex) {
       });
     });
     return Promise.all(promises)
-      .then(data => {
+      .then(_ => {
         console.log('success upload batch of 5 files');
         return uploadFilesInBatches(allFiles, folder, bucket, prefix, startIndex + 5);
       });
@@ -139,18 +140,7 @@ function uploadFilesInBatches(allFiles, folder, bucket, prefix, startIndex) {
  * @returns {string}
  */
 function getContentTypeFor(fileName) {
-  const fileEnding = fileName.substring(fileName.lastIndexOf('.'));
-
-  if (fileEnding === '.html') return 'text/html';
-  if (fileEnding === '.css') return 'text/css';
-  if (fileEnding === '.json') return 'application/json';
-  if (fileEnding === '.js') return 'application/x-javascript';
-  if (fileEnding === '.png') return 'image/png';
-  if (fileEnding === '.jpg') return 'image/jpg';
-  if (fileEnding === '.jpeg') return 'image/jpeg';
-  if (fileEnding === '.svg') return 'image/svg+xml';
-  if (fileEnding === '.ico') return 'image/x-icon';
-  return 'application/octet-stream';
+  return mime.lookup(fileName) || 'application/octet-stream';
 }
 
 /**

@@ -8,8 +8,10 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
-          "outputs": ["{options.outputPath}"],
+          "builder": "@nrwl/angular:webpack-browser",
+          "outputs": [
+            "{options.outputPath}"
+          ],
           "options": {
             "outputPath": "dist/apps/angular-examples",
             "index": "apps/angular-examples/src/index.html",
@@ -27,7 +29,9 @@
               "apps/angular-examples/src/manifest.json",
               "apps/angular-examples/src/assets"
             ],
-            "styles": ["apps/angular-examples/src/styles.scss"],
+            "styles": [
+              "apps/angular-examples/src/styles.scss"
+            ],
             "scripts": [
               "node_modules/vega-lite/build/vega-lite.js",
               {
@@ -84,13 +88,19 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@nrwl/web:file-server",
+          "options": {
+            "buildTarget": "angular-examples:build",
+            "proxyUrl": "http://localhost:4200?",
+            "withDeps": true,
+            "parallel": true
+          },
           "configurations": {
             "production": {
-              "browserTarget": "angular-examples:build:production"
+              "buildTarget": "angular-examples:build:production"
             },
             "development": {
-              "browserTarget": "angular-examples:build:development"
+              "buildTarget": "angular-examples:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -112,14 +122,18 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/angular-examples"],
+          "outputs": [
+            "coverage/apps/angular-examples"
+          ],
           "options": {
             "jestConfig": "apps/angular-examples/jest.config.js",
             "passWithNoTests": false
           }
         }
       },
-      "tags": ["frontend"]
+      "tags": [
+        "frontend"
+      ]
     },
     "angular-examples-e2e": {
       "root": "apps/angular-examples-e2e",
@@ -140,14 +154,22 @@
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
-          "outputs": ["{options.outputFile}"],
+          "outputs": [
+            "{options.outputFile}"
+          ],
           "options": {
-            "lintFilePatterns": ["apps/angular-examples-e2e/**/*.{js,ts}"]
+            "lintFilePatterns": [
+              "apps/angular-examples-e2e/**/*.{js,ts}"
+            ]
           }
         }
       },
-      "tags": ["e2e"],
-      "implicitDependencies": ["angular-examples"]
+      "tags": [
+        "e2e"
+      ],
+      "implicitDependencies": [
+        "angular-examples"
+      ]
     },
     "sc-thanos": {
       "projectType": "library",
@@ -156,8 +178,10 @@
       "prefix": "sc-thanos",
       "architect": {
         "build": {
-          "builder": "@nrwl/angular:package",
-          "outputs": ["dist/libs/sc-thanos"],
+          "builder": "@nrwl/angular:ng-packagr-lite",
+          "outputs": [
+            "dist/libs/sc-thanos"
+          ],
           "options": {
             "project": "libs/sc-thanos/ng-package.json"
           },
@@ -173,7 +197,9 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/sc-thanos"],
+          "outputs": [
+            "coverage/libs/sc-thanos"
+          ],
           "options": {
             "jestConfig": "libs/sc-thanos/jest.config.js",
             "passWithNoTests": false
@@ -189,7 +215,9 @@
           }
         }
       },
-      "tags": ["component published"]
+      "tags": [
+        "component published"
+      ]
     }
   }
 }
