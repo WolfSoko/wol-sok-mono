@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
-import { EntityState, EntityStore, StoreConfig } from '@datorama/akita';
-import { ShaderCode } from './shader-code.model';
+import {Injectable} from "@angular/core";
+import {EntityState, EntityStore, StoreConfig} from "@datorama/akita";
+import {ShaderCode} from "./shader-code.model";
 
-export interface ShaderCodeState extends EntityState<ShaderCode> {}
+export type ShaderCodeState = EntityState<ShaderCode>
 
 @Injectable({ providedIn: 'root' })
 @StoreConfig({ name: 'shader-code' })

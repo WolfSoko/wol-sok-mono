@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
+import {AngularFirestore, AngularFirestoreCollection, QuerySnapshot} from "@angular/fire/firestore";
 import { combineLatest, Observable } from 'rxjs';
 import { map, shareReplay, take, tap } from 'rxjs/operators';
 import { AuthenticationService, AuthQuery } from '../../core';
@@ -56,7 +56,7 @@ export class ShaderCodeDataService {
     return this.shaders;
   }
 
-  async updateShader(shader: ShaderCode, newCode: string) {
+  async updateShader(shader: ShaderCode, newCode: string): Promise<QuerySnapshot<ShaderCode>> {
     const shaderByIdQuery = this.afs.collection<ShaderCode>(
       `angularExamples/shaderExamples/${this.userUid()}`,
       (ref) => ref.where('id', '==', shader.id)

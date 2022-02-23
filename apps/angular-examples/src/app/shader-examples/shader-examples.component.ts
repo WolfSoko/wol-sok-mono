@@ -4,7 +4,7 @@ import {combineLatest, Observable} from "rxjs";
 import {animate, keyframes, transition, trigger} from "@angular/animations";
 import {fadeInLeft, fadeInRight, fadeOutLeft, fadeOutRight} from "./leftInOut.animation";
 import {ShaderCode, ShaderCodeQuery, ShaderExamplesService, ShaderExampleState, ShaderExamplesUIQuery} from "./state";
-import {map} from "rxjs/operators";
+import {map, tap} from "rxjs/operators";
 
 @Component({
   selector: "app-shader-examples",
@@ -23,7 +23,7 @@ import {map} from "rxjs/operators";
 })
 export class ShaderExamplesComponent {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
-  readonly viewModel$: Observable<ShaderExampleState & { isLoading: boolean } & { isLoadingShaders: boolean }>;
+  readonly viewModel$: Observable<ShaderExampleState  & { isLoadingShaders: boolean }>;
 
   constructor(
     readonly state: ShaderExamplesUIQuery,
@@ -32,12 +32,10 @@ export class ShaderExamplesComponent {
   ) {
     this.viewModel$ = combineLatest([
       this.state.select(),
-      this.state.selectLoading(),
       shaderCodeQuery.selectLoading()
     ]).pipe(
-      map(([state, isLoading, isLoadingShaders]) => ({
+      map(([state, isLoadingShaders]) => ({
         ...state,
-        isLoading,
         isLoadingShaders
       }))
     );

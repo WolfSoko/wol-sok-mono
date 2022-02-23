@@ -25,13 +25,13 @@ export class ShaderExamplesService {
     this.updateShaderSubject = new Subject();
     this.updateShaderSubject
       .pipe(
-        debounceTime(2000),
+        debounceTime(2500),
         distinctUntilChanged((x1, x2) =>
           x1.shader.id === x2.shader.id && x1.code === x2.code
         ),
         tap(() => this.shaderExamplesUIStore.update({savingShader: true})),
         switchMap(({shader, code}) => this.shaderCodeService.update(shader, code)),
-        tap(() => this.shaderExamplesUIStore.update({savingShader: false}))
+        tap(() => this.shaderExamplesUIStore.update({savingShader: false})),
       ).subscribe();
 
     this.breakpointObserver.observe(

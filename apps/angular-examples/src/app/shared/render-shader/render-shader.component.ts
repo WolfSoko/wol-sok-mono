@@ -151,7 +151,7 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.runAnimation && !changes.runAnimation.isFirstChange() && changes.runAnimation.currentValue) {
-      requestAnimationFrame(timestamp => this.animate(timestamp));
+     this.animate(1.0);
     }
     if (changes.shaderCode && !changes.shaderCode.isFirstChange() && this.material) {
       this.material.setValues({ fragmentShader: this.shaderCode });
@@ -167,7 +167,7 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
     }
   }
 
-  render(time: number) {
+  render(time: number = 1) {
     if (this.uniforms && this.scene && this.camera) {
       this.stats?.begin();
       this.uniforms.time.value = time / 1000;
@@ -176,7 +176,7 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
     }
   }
 
-  animate(time: number) {
+  animate(time: number = 1.0) {
     try {
       this._ngZone.runOutsideAngular(() => {
         if (this.runAnimation) {
