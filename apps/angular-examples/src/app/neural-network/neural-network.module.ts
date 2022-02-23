@@ -25,7 +25,4 @@ import {NeuralNetworkRoutingModule} from './neural-network-routing.module';
   providers: [BrainService, TrainDataService]
 })
 export class NeuralNetworkModule {
-
-  constructor() {
-  }
 }

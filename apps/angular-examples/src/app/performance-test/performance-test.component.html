@@ -5,9 +5,9 @@
   <ng-template #loading>
     <mat-spinner></mat-spinner>
   </ng-template>
-  <mat-action-list *ngIf="!(isLoading$ | async); else loading">
+  <mat-action-list *ngIf="(isLoading$ | async) === false; else loading">
     <mat-list-item *ngFor="let performanceTest of (performanceTest$ | async); trackBy: trackByPerformanceTestId"
-                   [ngClass]="{active: (activePerformanceTest$ | async)?.id == performanceTest.id}"
+                   [ngClass]="{active: (activePerformanceTest$ | async)?.id === performanceTest.id}"
                    (click)="startTest(performanceTest)">
       <button
         mat-icon-button

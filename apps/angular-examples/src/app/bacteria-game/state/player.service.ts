@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
-import { ID, transaction } from '@datorama/akita';
-import { GameStateQuery } from './game-state.query';
-import { GameState } from './game-state.store';
+import {Injectable} from '@angular/core';
+import {ID, transaction} from '@datorama/akita';
+import {GameStateQuery} from './game-state.query';
+import {GameState} from './game-state.store';
 import {
   Bacteria,
   bacteriumEnergyRestoreTimeInSec,
@@ -10,12 +10,10 @@ import {
   Player,
   PlayerColorArray
 } from './player.model';
-import { PlayerQuery } from './player.query';
-import { PlayerStore } from './player.store';
+import {PlayerQuery} from './player.query';
+import {PlayerStore} from './player.store';
 
-const energyLossPerOtherBacterium = 0.8;
-
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class PlayerService {
   constructor(
     private playerStore: PlayerStore,
@@ -28,6 +26,16 @@ export class PlayerService {
         this.updatePlayerPos(value.keysPressed, value.deltaTimeSec)
       );
   }
+
+  private static getColorMapOfPlayers(players: Player[]) {
+    const colorToPlayer: { [key: string]: Player } = {};
+    for (const player of players) {
+      const rgb = player.color.slice(0, 3);
+      colorToPlayer[rgb.toString()] = player;
+    }
+    return colorToPlayer;
+  }
+
 
   @transaction()
   init(
@@ -79,7 +87,7 @@ export class PlayerService {
   ) {
     this.handleBacEating(width, height, imageData, deltaTimeSec);
 
-    const players = this.playerQuery.getAll().sort((a) => Math.random() - 0.5);
+    const players = this.playerQuery.getAll().sort((_) => Math.random() - 0.5);
 
     for (const player of players) {
       const bacs: Bacteria[] = [...player.bacterias];
@@ -89,7 +97,7 @@ export class PlayerService {
         continue;
       }
       for (let i = bacs.length - 1; i > -1; i--) {
-        const { x, y } = bacs[i];
+        const {x, y} = bacs[i];
 
         const moveDirectionX = mx - x;
         const moveDirectionY = my - y;
@@ -202,7 +210,7 @@ export class PlayerService {
         );
       }
 
-      this.update(player.id, { bacterias: bacs });
+      this.update(player.id, {bacterias: bacs});
     }
   }
 
@@ -329,7 +337,7 @@ export class PlayerService {
     deltaTimeSec: number
   ) {
     const players = this.getPLayerInRandomOrderToEqualifyChances();
-    const colorToPlayer = this.getColorMapOfPlayers(players);
+    const colorToPlayer = PlayerService.getColorMapOfPlayers(players);
 
     for (const player of players) {
       const bacs = [...player.bacterias];
@@ -337,7 +345,7 @@ export class PlayerService {
 
       for (let i = bacs.length - 1; i > -1; i--) {
         let bacterium = bacs[i];
-        const { x, y } = bacterium;
+        const {x, y} = bacterium;
         const surroundingPlayers = this.findSurroundingPlayer(
           x,
           y,
@@ -409,18 +417,10 @@ export class PlayerService {
       for (const entry of Object.entries(bacToAddToWinner)) {
         this.addBacterias(entry[0], entry[1]);
       }
-      this.update(player.id, { bacterias: bacs });
+      this.update(player.id, {bacterias: bacs});
     }
   }
 
-  private getColorMapOfPlayers(players: Player[]) {
-    const colorToPlayer: { [key: string]: Player } = {};
-    for (const player of players) {
-      const rgb = player.color.slice(0, 3);
-      colorToPlayer[rgb.toString()] = player;
-    }
-    return colorToPlayer;
-  }
 
   private getPLayerInRandomOrderToEqualifyChances() {
     return this.playerQuery.getAll().sort((a) => Math.random() - 0.5);

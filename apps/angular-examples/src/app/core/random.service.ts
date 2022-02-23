@@ -3,9 +3,6 @@ import {Injectable} from '@angular/core';
 @Injectable()
 export class RandomService {
 
-  constructor() {
-  }
-
   randomTo(to: number): number {
     return this.random(0, to);
   }

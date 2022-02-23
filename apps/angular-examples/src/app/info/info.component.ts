@@ -1,5 +1,5 @@
-import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
-import {Technology} from "./technology";
+import {ChangeDetectionStrategy, Component} from '@angular/core';
+import {Technology} from './technology';
 
 @Component({
   selector: 'app-info',
@@ -7,7 +7,7 @@ import {Technology} from "./technology";
   styleUrls: ['./info.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class InfoComponent implements OnInit {
+export class InfoComponent {
 
   public technologies = [
     new Technology('Angular+', 'http://angular.io/', 'assets/logos/angular.svg'),
@@ -20,11 +20,4 @@ export class InfoComponent implements OnInit {
     new Technology('tensorflow.js', 'https://js.tensorflow.org', 'assets/logos/tensorflow-js.png'),
     new Technology('firebase', 'https://firebase.google.com/', 'assets/logos/firebase.png'),
   ];
-
-  constructor() {
-  }
-
-  ngOnInit() {
-  }
-
 }

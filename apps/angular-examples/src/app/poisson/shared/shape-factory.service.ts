@@ -6,9 +6,6 @@ import {Line} from './line';
 @Injectable()
 export class ShapeFactoryService {
 
-  constructor() {
-  }
-
   public randomVector() {
     const a = Math.random() * 2 * Math.PI;
     const offsetX = Math.cos(a);

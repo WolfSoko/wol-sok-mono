@@ -134,7 +134,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         switchMap(() => this.vaporize()))
       .subscribe(() => {
         this.gameStateService.reset();
-        this.draw(1. / 1000.);
+        this.draw(1. / 1000);
       });
     this.gameStateService.pause();
   }

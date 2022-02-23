@@ -9,7 +9,7 @@
 </mat-card>
 <mat-card>
   <mat-card-content>
-    <div *ngIf="state$ | async; let state" class="statistics">
+    <div *ngIf="state$ | async; let state else loading" class="statistics">
       <span>{{'Game time: ' + state.timePassed}}</span>
       <span>{{'FPS: ' + (fps$ | async)}}</span>
       <div *ngFor="let player of (players$ | async); ">Player {{player.id + 1}}: {{player.bacterias.length}}bacterias
@@ -33,7 +33,7 @@
     </button>
     <button mat-raised-button
             (click)="resetGame()"
-            [disabled]="!(isRunning$ | async)"
+            [disabled]="(isRunning$ | async) === false"
     >
       Reset
     </button>

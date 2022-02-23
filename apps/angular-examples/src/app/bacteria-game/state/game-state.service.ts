@@ -30,6 +30,16 @@ export class GameStateService {
     );
   }
 
+  private static determineWinner(players: Player[]): Player | null {
+    const hasBacteriasPlayers = players.filter(
+      (value) => value.bacterias.length > 0
+    );
+    if (hasBacteriasPlayers.length === 1) {
+      return players[0];
+    }
+    return null;
+  }
+
   init(width: number, height: number) {
     this.gameStateStore.update({ width, height, winner: null });
     // subscribe update time passed when game running
@@ -82,7 +92,7 @@ export class GameStateService {
                 )
               )
           ),
-          map((players) => this.determineWinner(players)),
+          map((players) => GameStateService.determineWinner(players)),
           filter((winner) => winner != null)
         )
         .subscribe((winner) =>
@@ -108,33 +118,25 @@ export class GameStateService {
 
   start() {
     this.initPlayers();
-    this.gameStateStore.update((state) => ({
+    this.gameStateStore.update((_state) => ({
       currentState: GameState.RUNNING,
     }));
   }
 
   reset() {
-    this.gameStateStore.update((state) => ({
+    this.gameStateStore.update((_state) => ({
       currentState: GameState.END,
       timePassed: 0,
     }));
     this.initPlayers();
-    this.gameStateStore.update((state) => ({
+    this.gameStateStore.update((_state) => ({
       currentState: GameState.START,
       timePassed: 0,
       timeDelta: 1,
     }));
   }
 
-  private determineWinner(players: Player[]): Player | null {
-    const hasBacteriasPlayers = players.filter(
-      (value) => value.bacterias.length > 0
-    );
-    if (hasBacteriasPlayers.length === 1) {
-      return players[0];
-    }
-    return null;
-  }
+
 
   private togglePause(): void {
     this.gameStateStore.update((state) => {

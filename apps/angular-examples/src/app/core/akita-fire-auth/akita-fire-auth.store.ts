@@ -3,7 +3,7 @@ import {Store, StoreConfig} from '@datorama/akita';
 import {FireAuthState, initialAuthState} from 'akita-ng-fire';
 import {Profile} from '../profile';
 
-export interface AkitaAuthState extends FireAuthState<Profile> {}
+export type AkitaAuthState = FireAuthState<Profile>
 
 @Injectable({ providedIn: 'root' })
 @StoreConfig({ name: 'auth' })

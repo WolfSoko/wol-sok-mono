@@ -14,6 +14,4 @@ export class PoissonConfigService {
   public r$: BehaviorSubject<number> = new BehaviorSubject(5);
   public w = minRadius / Math.sqrt(2);
 
-  constructor() {
-  }
 }

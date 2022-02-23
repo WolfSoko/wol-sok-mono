@@ -4,9 +4,6 @@ import {randomNormal, randomUniform, Rank, scalar, Tensor, tidy} from '@tensorfl
 @Injectable({providedIn: 'root'})
 export class DataGeneratorService {
 
-  constructor() {
-  }
-
   generateData(numPoints: number,
                coeff: { a: number, b: number, c: number, d: number }, sigma = 0.125):
     { xs: Tensor<Rank.R1>, ys: Tensor<Rank.R1> } {
