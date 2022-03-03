@@ -7,8 +7,26 @@ on:
 
 env:
   NX_CLOUD_DISTRIBUTED_EXECUTION: true
+  NODE_OPTIONS: '--max_old_space_size=4096'
 
 jobs:
+
+  agents:
+    runs-on: ubuntu-latest
+    name: Agents
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        agent: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16'
+      - run: npm install
+      - name: Start Nx Agent ${{ matrix.agent }}
+        run: npx nx-cloud start-agent
+
   main:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
@@ -21,12 +39,15 @@ jobs:
         uses: nrwl/nx-set-shas@v2
       - uses: actions/setup-node@v1
         with:
-          node-version: '14'
+          node-version: '16'
       - run: npm install
-      - run: npx nx-cloud start-ci-run
-      - run: npx nx affected --target=build --parallel --max-parallel=3
-      - run: npx nx affected --target=test --parallel --max-parallel=3
-      - run: npx nx affected --target=lint --parallel --max-parallel=3
+      - name: Run verification
+        uses: JamesHenry/parallel-bash-commands@v0.1
+        with:
+          cmd1: npx nx affected --target=build --parallel=1
+          cmd2: npx nx affected --target=test --parallel=1
+          cmd3: npx nx affected --target=lint --parallel=3
+          cmd4: npx nx affected --target=e2e --parallel=1
       - run: npx nx-cloud stop-all-agents
   pr:
     runs-on: ubuntu-latest
@@ -40,25 +61,14 @@ jobs:
         uses: nrwl/nx-set-shas@v2
       - uses: actions/setup-node@v1
         with:
-          node-version: '14'
+          node-version: '16'
       - run: npm install
-      - run: npx nx-cloud start-ci-run
-      - run: npx nx affected --target=build --parallel --max-parallel=3
-      - run: npx nx affected --target=test --parallel --max-parallel=3
-      - run: npx nx affected --target=lint --parallel --max-parallel=3
-      - run: npx nx-cloud stop-all-agents
-  agents:
-    runs-on: ubuntu-latest
-    name: Agent 1
-    timeout-minutes: 60
-    strategy:
-      matrix:
-        agent: [ 1, 2, 3 ]
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - name: Run verification
+        uses: JamesHenry/parallel-bash-commands@v0.1
         with:
-          node-version: '14'
-      - run: npm install
-      - name: Start Nx Agent ${{ matrix.agent }}
-        run: npx nx-cloud start-agent
+          cmd1: npx nx affected --target=build --parallel=1
+          cmd2: npx nx affected --target=test --parallel=1
+          cmd3: npx nx affected --target=lint --parallel=3
+          cmd4: npx nx affected --target=e2e --parallel=1
+      - run: npx nx-cloud stop-all-agents
+
