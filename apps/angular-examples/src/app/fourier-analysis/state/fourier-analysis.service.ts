@@ -6,9 +6,6 @@ export class FourierAnalysisService {
 
   constructor(private fourierAnalysisStore: FourierAnalysisStore,
   ) {
-
-
+    fourierAnalysisStore.setLoading(false);
   }
-
-
 }
