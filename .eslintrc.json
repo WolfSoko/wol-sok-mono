@@ -17,20 +17,36 @@
                 "onlyDependOnLibsWithTags": [
                   "shared",
                   "feature",
-                  "feature:lazy"
+                  "feature:lazy",
+                  "api"
                 ]
               },
               {
                 "sourceTag": "feature",
-                "onlyDependOnLibsWithTags": ["shared"]
+                "onlyDependOnLibsWithTags": [
+                  "shared",
+                  "api"
+                ]
               },
               {
                 "sourceTag": "feature:lazy",
-                "onlyDependOnLibsWithTags": ["shared"]
+                "onlyDependOnLibsWithTags": [
+                  "shared",
+                  "api"
+                ]
               },
               {
                 "sourceTag": "shared",
-                "onlyDependOnLibsWithTags": ["shared"]
+                "onlyDependOnLibsWithTags": [
+                  "shared",
+                  "api"
+                ]
+              },
+              {
+                "sourceTag": "api",
+                "onlyDependOnLibsWithTags": [
+                  "api"
+                ]
               }
             ]
           }

@@ -1,7 +1,7 @@
-import {NgModule} from '@angular/core';
-import {Data, Route, RouterModule} from '@angular/router';
-import {InfoComponent} from './info/info.component';
-import {ROUTER_LINKS} from './router-links.token';
+import { NgModule } from '@angular/core';
+import { Data, Route, RouterModule } from '@angular/router';
+import { InfoComponent } from './info/info.component';
+import { ROUTER_LINKS } from './router-links.token';
 
 export interface MainNavRouteData extends Data {
   linkText: string;
@@ -17,7 +17,7 @@ export const mainNavRoutes: MainNavRoute[] = [
   {
     path: 'fourierAnalysis',
     loadChildren: async () =>
-      import('@wolsok/features-fourier-analysis').then(
+      import('@wolsok/features/fourier-analysis').then(
         (m) => m.FourierAnalysisModule
       ),
     data: { linkText: 'Fourier Analysis Example' },
@@ -95,8 +95,8 @@ export const mainNavRoutes: MainNavRoute[] = [
   {
     path: 'webassemblyTests',
     loadChildren: async () =>
-      import('./wasm-test/wasm-test.module').then((m) => m.WasmTestModule),
-    data: { linkText: 'Web Assembly Tests' },
+      import('@wolsok/features/wasm-test').then((m) => m.WasmTestModule),
+    data: { linkText: 'Calculating Fibonacci with WebAssembly' },
   },
 ];
 

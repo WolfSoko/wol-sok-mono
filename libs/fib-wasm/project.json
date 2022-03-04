@@ -3,5 +3,15 @@
   "root": "libs/fib-wasm",
   "sourceRoot": "libs/fib-wasm/src",
   "prefix": "fib-wasm",
-  "tags": ["shared"]
+  "targets": {
+    "build": {
+      "executor": "@nrwl/workspace:run-script",
+      "options": {
+        "script": "build"
+      }
+    }
+  },
+  "tags": [
+    "shared"
+  ]
 }

@@ -1,0 +1,45 @@
+{
+  "root": "libs/utils/decorators",
+  "sourceRoot": "libs/utils/decorators/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/libs\\utils/decorators",
+        "main": "libs/utils/decorators/src/index.ts",
+        "tsConfig": "libs/utils/decorators/tsconfig.lib.json",
+        "assets": [
+          "libs/utils/decorators/*.md"
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "libs/utils/decorators/**/*.ts"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": [
+        "coverage/libs/utils/decorators"
+      ],
+      "options": {
+        "jestConfig": "libs/utils/decorators/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": [
+    "shared"
+  ]
+}

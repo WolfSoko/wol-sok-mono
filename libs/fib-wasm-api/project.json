@@ -1,0 +1,51 @@
+{
+  "projectType": "library",
+  "root": "libs/fib-wasm-api",
+  "sourceRoot": "libs/fib-wasm-api/src",
+  "prefix": "sh-api-fib-wasm",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:ng-packagr-lite",
+      "outputs": [
+        "dist/libs/fib-wasm-api"
+      ],
+      "options": {
+        "project": "libs/fib-wasm-api/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/fib-wasm-api/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "libs/fib-wasm-api/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": [
+        "coverage/libs/fib-wasm-api"
+      ],
+      "options": {
+        "jestConfig": "libs/fib-wasm-api/jest.config.js",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": [
+          "libs/fib-wasm-api/src/**/*.ts",
+          "libs/fib-wasm-api/src/**/*.html"
+        ]
+      }
+    }
+  },
+  "implicitDependencies": [
+    "fib-wasm"
+  ],
+  "tags": [
+    "api"
+  ]
+}

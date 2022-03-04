@@ -1,10 +1,10 @@
-import {ChangeDetectionStrategy, Component, ElementRef} from '@angular/core';
-import {ResizedEvent} from '@wolsok/ui-kit-elem-resized';
-import {Observable} from 'rxjs';
-import {FourierAnalysisQuery} from '../state/fourier-analysis.query';
-import {FourierAnalysisService} from '../state/fourier-analysis.service';
-import {FourierAnalysisState} from '../state/fourier-analysis.store';
-import {InputWaveService} from '../state/input-wave.service';
+import { ChangeDetectionStrategy, Component, ElementRef } from '@angular/core';
+import { ResizedEvent } from '@wolsok/ui-kit/elem-resized';
+import { Observable } from 'rxjs';
+import { FourierAnalysisQuery } from '../state/fourier-analysis.query';
+import { FourierAnalysisService } from '../state/fourier-analysis.service';
+import { FourierAnalysisState } from '../state/fourier-analysis.store';
+import { InputWaveService } from '../state/input-wave.service';
 
 @Component({
   selector: 'lazy-feat-fanal-fourier-analysis',

@@ -4,9 +4,12 @@
     "angular-examples": "apps/angular-examples",
     "angular-examples-e2e": "apps/angular-examples-e2e",
     "feature-lazy-fourier-analysis": "libs/features/lazy/fourier-analysis",
+    "features-lazy-wasm-test": "libs/features/lazy/wasm-test",
     "fib-wasm": "libs/fib-wasm",
+    "fib-wasm-api": "libs/fib-wasm-api",
     "sc-thanos": "libs/sc-thanos",
     "ui-kit-elem-resized": "libs/ui-kit/elem-resized",
+    "utils-decorators": "libs/utils/decorators",
     "utils-rx-operators": "libs/utils/rx-operators"
   }
 }

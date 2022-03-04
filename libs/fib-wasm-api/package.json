@@ -1,10 +1,9 @@
 {
-  "name": "@wolsok/ui-kit/elem-resized",
+  "name": "@wolsok/fib-wasm-api",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "^13.2.0",
     "@angular/core": "^13.2.0",
-    "resize-observer-polyfill": "^1.5.1"
+    "assemblyscript": "^0.19.23"
   },
   "dependencies": {
     "tslib": "^2.3.0"

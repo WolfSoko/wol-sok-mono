@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ResizedEvent } from '@wolsok/ui-kit-elem-resized';
+import { ResizedEvent } from '@wolsok/ui-kit/elem-resized';
 import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { HeadlineAnimationService } from '../core/headline-animation.service';

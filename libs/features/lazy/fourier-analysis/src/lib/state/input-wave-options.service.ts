@@ -1,7 +1,10 @@
-import {Injectable} from '@angular/core';
-import {filterNotNull} from '@wolsok/utils-rx-operators';
-import {InputWaveOptionsStore, waveOptionsFromWave} from './input-wave-options.store';
-import {InputWaveQuery} from './input-wave.query';
+import { Injectable } from '@angular/core';
+import { filterNotNull } from '@wolsok/utils/rx-operators';
+import {
+  InputWaveOptionsStore,
+  waveOptionsFromWave,
+} from './input-wave-options.store';
+import { InputWaveQuery } from './input-wave.query';
 
 @Injectable({ providedIn: 'root' })
 export class InputWaveOptionsService {

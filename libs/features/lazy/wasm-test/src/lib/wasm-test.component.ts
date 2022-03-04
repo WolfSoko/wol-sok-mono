@@ -1,13 +1,18 @@
-import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {PersistNgFormPlugin} from '@datorama/akita';
-import {Observable, Subscription} from 'rxjs';
-import {WasmTestQuery} from '../state/wasm-test.query';
-import {WasmTestService} from '../state/wasm-test.service';
-import {FibResult} from '../state/wasm-test.store';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { PersistNgFormPlugin } from '@datorama/akita';
+import { Observable, Subscription } from 'rxjs';
+import { WasmTestQuery } from './state/wasm-test.query';
+import { WasmTestService } from './state/wasm-test.service';
+import { FibResult, WasmTestState } from './state/wasm-test.store';
 
 @Component({
-  selector: 'app-wasm-test',
+  selector: 'lazy-feat-wasm-test',
   templateUrl: './wasm-test.component.html',
   styleUrls: ['./wasm-test.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -18,9 +23,10 @@ export class WasmTestComponent implements OnInit, OnDestroy {
   readonly fibN$: Observable<number>;
   readonly isLoading$: Observable<boolean>;
   readonly fibOptionsForm: FormGroup;
+  readonly vm$: Observable<WasmTestState>;
+  readonly fibError$: Observable<never>;
   private readonly persistForm: PersistNgFormPlugin;
   private subscription?: Subscription;
-  fibError$!: Observable<never>;
 
   constructor(
     private wasmTestQuery: WasmTestQuery,
@@ -32,6 +38,7 @@ export class WasmTestComponent implements OnInit, OnDestroy {
     this.fibResult$ = this.wasmTestQuery.selectFibResult();
     this.isLoading$ = this.wasmTestQuery.selectLoading();
     this.fibError$ = this.wasmTestQuery.selectError();
+    this.vm$ = this.wasmTestQuery.select();
 
     this.fibOptionsForm = this.builder.group({
       fibN: this.builder.control(

@@ -1,0 +1,79 @@
+<ng-container *ngIf="vm$ | async as vm">
+  <mat-toolbar> Web Assembly Examples</mat-toolbar>
+  <mat-card
+    *ngIf="(isLoading$ | async) === false; else loading"
+    class="web-assembly-card"
+  >
+    <mat-card-title>
+      Calc Fibonacci with wasm compiled from Typescript!
+    </mat-card-title>
+    <mat-card-subtitle>
+      It's using a naive recursive algorithm. Be aware of O(n²)!
+    </mat-card-subtitle>
+    <mat-card-content>
+      <form [formGroup]="fibOptionsForm">
+        <mat-form-field class="n-input">
+          <input
+            formControlName="fibN"
+            id="fib-n-input"
+            matInput
+            placeholder="n"
+            type="number"
+          />
+          <mat-error *ngIf="fibOptionsForm.controls['fibN'].hasError('min')">
+            Fibonacci can only be calculated for positive numbers
+          </mat-error>
+          <mat-error *ngIf="fibOptionsForm.controls['fibN'].hasError('max')">
+            because of i32 arithmetic, we get an overflow if n > 45
+          </mat-error>
+          <mat-error
+            *ngIf="fibOptionsForm.controls['fibN'].hasError('required')"
+          >
+            please enter a value
+          </mat-error>
+        </mat-form-field>
+      </form>
+      <mat-divider></mat-divider>
+      <div *ngIf="vm.fibRunning === false">
+        <output *ngIf="vm.fibResult as result" for="fib-n-input">
+          <h4>Result</h4>
+          <div>Result for {{ result.n }} is: {{ result.fibOfN }}</div>
+          <div>Time wasm: {{ result.fibWasmTime }}</div>
+          <div>Time JS: {{ result.fibJSTime }}</div>
+          <div>Recursive calls: {{ vm.recursiveCalls }}</div>
+        </output>
+      </div>
+    </mat-card-content>
+    <mat-card-actions>
+      <button
+        (click)="calcFib()"
+        [disabled]="
+          (fibError$ | async) || vm.fibRunning || !fibOptionsForm.valid
+        "
+        color="accent"
+        mat-raised-button
+      >
+        <span>Calc fibonacci!</span>
+      </button>
+      <button
+        (click)="calcFibMem()"
+        [disabled]="
+          (fibError$ | async) || vm.fibRunning || !fibOptionsForm.valid
+        "
+        color="accent"
+        mat-raised-button
+      >
+        <span>Fibonacci with memoize!</span>
+      </button>
+      <div class="calc-spinner">
+        <mat-spinner
+          *ngIf="vm.fibRunning"
+          [diameter]="30"
+          color="accent"
+        ></mat-spinner>
+      </div>
+      <mat-error *ngIf="fibError$ | async as error">{{ error }}</mat-error>
+    </mat-card-actions>
+  </mat-card>
+</ng-container>
+<ng-template #loading>Loading WebAssemblyCode...</ng-template>
