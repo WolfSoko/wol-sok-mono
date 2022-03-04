@@ -1,11 +1,17 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  EventEmitter,
+  Output,
+} from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ResizedEvent } from '@wolsok/ui-kit-elem-resized';
 import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { HeadlineAnimationService } from '../core/headline-animation.service';
-import { ResizedEvent } from '../shared/resized-event';
 import { shader } from '../title-shader';
 
 @UntilDestroy()

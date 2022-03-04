@@ -1,19 +1,31 @@
 <mat-toolbar role="toolbar" id="main-toolbar" class="page-title">
-  <button class="sidenav-icon" mat-icon-button (click)="clickSideNav.emit($event)">
+  <button
+    class="sidenav-icon"
+    mat-icon-button
+    (click)="clickSideNav.emit($event)"
+  >
     <mat-icon>menu</mat-icon>
   </button>
-  <span class="on-top" [class.hide]="isHandset$ | async">SuperheroicCoding&nbsp;</span>
+  <span class="on-top" [class.hide]="isHandset$ | async"
+    >SuperheroicCoding&nbsp;</span
+  >
   <span class="on-top">Angular Demos</span>
   <span class="toolbar-spacer"></span>
-  <app-service-worker-update [class.hide]="isHandset$ | async"></app-service-worker-update>
+  <app-service-worker-update
+    [class.hide]="isHandset$ | async"
+  ></app-service-worker-update>
   <app-login></app-login>
-<div class="shader-background" (appElemResized)="onResize($event)" *ngIf="shaderCode">
-  <app-render-shader
-    [shaderCode]="shaderCode"
-    [canvasWidth]="shaderWidth"
-    [canvasHeight]="shaderHeight"
-    [runAnimation]="runAnimation$ | async"
+  <div
+    class="shader-background"
+    (shElemResized)="onResize($event)"
+    *ngIf="shaderCode"
   >
-  </app-render-shader>
-</div>
+    <app-render-shader
+      [shaderCode]="shaderCode"
+      [canvasWidth]="shaderWidth"
+      [canvasHeight]="shaderHeight"
+      [runAnimation]="runAnimation$ | async"
+    >
+    </app-render-shader>
+  </div>
 </mat-toolbar>

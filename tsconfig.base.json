@@ -15,7 +15,14 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@wolsok/sc-thanos": ["libs/sc-thanos/src/index.ts"]
+      "@@wolsok/fib-wasm-2": ["libs/fib-wasm-2/src/index.ts"],
+      "@wolsok/features-fourier-analysis": [
+        "libs/features/lazy/fourier-analysis/src/index.ts"
+      ],
+      "@wolsok/fib-wasm": ["libs/fib-wasm/src/index.ts"],
+      "@wolsok/sc-thanos": ["libs/sc-thanos/src/index.ts"],
+      "@wolsok/ui-kit-elem-resized": ["libs/ui-kit/elem-resized/src/index.ts"],
+      "@wolsok/utils-rx-operators": ["libs/utils/rx-operators/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

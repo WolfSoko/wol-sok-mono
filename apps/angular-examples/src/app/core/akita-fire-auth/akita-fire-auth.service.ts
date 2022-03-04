@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
-import { CollectionConfig, FireAuthService } from 'akita-ng-fire';
-import { Profile } from '../profile';
-import { AkitaAuthState, AkitaAuthStore } from './akita-fire-auth.store';
+import {Injectable} from '@angular/core';
+import {CollectionConfig, FireAuthService} from 'akita-ng-fire';
 import firebase from 'firebase';
+import {Profile} from '../profile';
+import {AkitaAuthState, AkitaAuthStore} from './akita-fire-auth.store';
 
 @Injectable({ providedIn: 'root' })
 @CollectionConfig({ path: 'users' })
@@ -11,10 +11,12 @@ export class AkitaFireAuthService extends FireAuthService<AkitaAuthState> {
     super(store);
   }
 
-  protected createProfile(
-    { displayName, email, photoURL, uid }: Profile,
-    ctx?: any
-  ): Profile {
+  protected createProfile({
+    displayName,
+    email,
+    photoURL,
+    uid,
+  }: Profile): Profile {
     return {
       uid: uid,
       email: email,

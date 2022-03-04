@@ -1,10 +1,10 @@
-import {AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewChild} from "@angular/core";
-import {FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {IKernelRunShortcut} from "gpu.js";
+import {AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewChild} from '@angular/core';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {IKernelRunShortcut} from 'gpu.js';
 
-import {animationFrameScheduler, combineLatest, interval, Observable, of, Subscription, TimeInterval} from "rxjs";
-import {debounceTime, distinctUntilChanged, map, mergeMap, scan, startWith, timeInterval} from "rxjs/operators";
-import {GpuJsService} from "../core/gpujs.service";
+import {animationFrameScheduler, combineLatest, interval, Observable, of, Subscription, TimeInterval} from 'rxjs';
+import {debounceTime, distinctUntilChanged, map, mergeMap, scan, startWith, timeInterval} from 'rxjs/operators';
+import {GpuJsService} from '../core/gpujs.service';
 
 interface Configuration {
   r: number;
@@ -100,7 +100,7 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
     const { clientWidth: width = 500, clientHeight: height = 500 } = this.gpuCanvas.nativeElement as HTMLCanvasElement;
     performance.mark('createCanvasWithGPU-start');
     this.gpuColorizer.setOutput([width, height]);
-    this.gpuColorizer(frameTime / 1000., r / 255., g / 255., b / 255., repetition, speed / 20, width, height);
+    this.gpuColorizer(frameTime / 1000, r / 255, g / 255, b / 255, repetition, speed / 20, width, height);
     performance.mark('createCanvasWithGPU-end');
     performance.measure('createCanvasWithGPU', 'createCanvasWithGPU-start', 'createCanvasWithGPU-end');
   }

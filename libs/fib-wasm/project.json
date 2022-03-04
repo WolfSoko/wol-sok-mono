@@ -1,0 +1,7 @@
+{
+  "projectType": "library",
+  "root": "libs/fib-wasm",
+  "sourceRoot": "libs/fib-wasm/src",
+  "prefix": "fib-wasm",
+  "tags": ["shared"]
+}

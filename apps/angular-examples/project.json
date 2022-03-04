@@ -1,0 +1,127 @@
+{
+  "projectType": "application",
+  "root": "apps/angular-examples",
+  "sourceRoot": "apps/angular-examples/src",
+  "prefix": "app",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:webpack-browser",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/angular-examples",
+        "index": "apps/angular-examples/src/index.html",
+        "main": "apps/angular-examples/src/main.ts",
+        "polyfills": "apps/angular-examples/src/polyfills.ts",
+        "tsConfig": "apps/angular-examples/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          {
+            "glob": "*.*",
+            "input": "dist/libs/fib-wasm/",
+            "output": "fib-wasm"
+          },
+          "apps/angular-examples/src/favicon.ico",
+          "apps/angular-examples/src/manifest.json",
+          "apps/angular-examples/src/assets"
+        ],
+        "styles": ["apps/angular-examples/src/styles.scss"],
+        "scripts": [
+          "node_modules/vega-lite/build/vega-lite.js",
+          {
+            "input": "node_modules/document-register-element/build/document-register-element.js",
+            "inject": true
+          }
+        ],
+        "allowedCommonJsDependencies": [
+          "assemblyscript/lib/loader",
+          "three-orbitcontrols-ts",
+          "gpu.js",
+          "semver",
+          "firebase/app",
+          "@firebase/component",
+          "@firebase/auth",
+          "typed-function",
+          "decimal.js",
+          "fraction.js",
+          "complex.js"
+        ]
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "2.7mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "2kb",
+              "maximumError": "4kb"
+            }
+          ],
+          "fileReplacements": [
+            {
+              "replace": "apps/angular-examples/src/environments/environment.ts",
+              "with": "apps/angular-examples/src/environments/environment.prod.ts"
+            }
+          ],
+          "serviceWorker": true,
+          "ngswConfigPath": "apps/angular-examples/ngsw-config.json",
+          "outputHashing": "all"
+        },
+        "development": {
+          "preserveSymlinks": true,
+          "buildOptimizer": false,
+          "optimization": false,
+          "vendorChunk": true,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@nrwl/web:file-server",
+      "options": {
+        "buildTarget": "angular-examples:build",
+        "proxyUrl": "http://localhost:4200?",
+        "parallel": true
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "angular-examples:build:production"
+        },
+        "development": {
+          "buildTarget": "angular-examples:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "browserTarget": "angular-examples:build"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": [
+          "apps/angular-examples/src/**/*.ts",
+          "apps/angular-examples/src/**/*.html"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/apps/angular-examples"],
+      "options": {
+        "jestConfig": "apps/angular-examples/jest.config.js",
+        "passWithNoTests": false
+      }
+    }
+  },
+  "tags": ["app"]
+}

@@ -25,15 +25,17 @@ import {
   Vector2,
   WebGLRenderer
 } from 'three';
-import { defaultVertexShader } from './default-vertex-shader';
+import {defaultVertexShader} from './default-vertex-shader';
 
 @Component({
   selector: 'app-render-shader',
   templateUrl: './render-shader.component.html',
   styleUrls: ['./render-shader.component.less'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class RenderShaderComponent
+  implements AfterViewInit, OnChanges, OnDestroy
+{
   @Input() shaderCode!: string;
   @Input() vertexShader!: string;
   @Input() runAnimation: boolean | null = true;
@@ -42,8 +44,10 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
   @Input() canvasHeight!: number;
   // eslint-disable-next-line @angular-eslint/no-output-native
   @Output() error: EventEmitter<unknown> = new EventEmitter();
-  @ViewChild('canvasContainer', { static: true }) private canvasContainer!: ElementRef<HTMLDivElement>;
-  @ViewChild('webGLCanvas', { static: true }) private webGLCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('canvasContainer', { static: true })
+  private canvasContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild('webGLCanvas', { static: true })
+  private webGLCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('stats', { static: true }) private statsElem!: ElementRef;
   private renderer?: Renderer;
 
@@ -53,11 +57,14 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
   private mesh?: Mesh;
 
   private scene?: Scene;
-  private uniforms?: { mouse: { value: Vector2 }; resolution: { value: Vector2 }; time: { value: number }; };
+  private uniforms?: {
+    mouse: { value: Vector2 };
+    resolution: { value: Vector2 };
+    time: { value: number };
+  };
   private stats?: Stats;
 
-  constructor(@Inject(NgZone) private _ngZone: NgZone) {
-  }
+  constructor(@Inject(NgZone) private _ngZone: NgZone) {}
 
   private static getOffsetLeft(elem: HTMLElement | null) {
     return RenderShaderComponent.getOffset(elem, 'offsetLeft');
@@ -67,7 +74,10 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
     return RenderShaderComponent.getOffset(elem, 'offsetTop');
   }
 
-  private static getOffset(elem: HTMLElement | null, offset: 'offsetTop' | 'offsetLeft') {
+  private static getOffset(
+    elem: HTMLElement | null,
+    offset: 'offsetTop' | 'offsetLeft'
+  ) {
     let e = elem;
     let result = 0;
     do {
@@ -83,14 +93,14 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
   ngAfterViewInit() {
     const renderParams = {
       antialias: true,
-      canvas: this.webGLCanvas.nativeElement
+      canvas: this.webGLCanvas.nativeElement,
     };
     this.renderer = new WebGLRenderer(renderParams);
 
     this.uniforms = {
       time: { value: 1.0 },
       resolution: { value: new Vector2(this.canvasWidth, this.canvasHeight) },
-      mouse: { value: new Vector2(0.5, 0.5) }
+      mouse: { value: new Vector2(0.5, 0.5) },
     };
 
     this.onResize();
@@ -105,7 +115,7 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
     this.material = new ShaderMaterial({
       uniforms: this.uniforms,
       vertexShader: this.vertexShader || defaultVertexShader,
-      fragmentShader: this.shaderCode
+      fragmentShader: this.shaderCode,
     });
 
     this.mesh = new Mesh(this.geometry, this.material);
@@ -127,33 +137,60 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
   onMouseMove(e: MouseEvent) {
     if (this.uniforms) {
       this.uniforms.mouse.value.x = e.offsetX / this.canvasWidth;
-      this.uniforms.mouse.value.y = (this.canvasHeight - e.offsetY) / this.canvasHeight;
+      this.uniforms.mouse.value.y =
+        (this.canvasHeight - e.offsetY) / this.canvasHeight;
     }
   }
 
   onTouchMove(e: TouchEvent) {
     if (this.uniforms) {
       const touch = e.touches[0];
-      const x = touch.pageX - RenderShaderComponent.getOffsetLeft(e.target as HTMLElement);
-      const y = touch.pageY - RenderShaderComponent.getOffsetTop(e.target as HTMLElement);
+      const x =
+        touch.pageX -
+        RenderShaderComponent.getOffsetLeft(e.target as HTMLElement);
+      const y =
+        touch.pageY -
+        RenderShaderComponent.getOffsetTop(e.target as HTMLElement);
 
-      this.uniforms.mouse.value.x = Math.max(Math.min(x / this.canvasWidth, 1.0), 0.0);
-      this.uniforms.mouse.value.y = Math.max(Math.min((this.canvasHeight - y) / this.canvasHeight, 1.0), 0.0);
+      this.uniforms.mouse.value.x = Math.max(
+        Math.min(x / this.canvasWidth, 1.0),
+        0.0
+      );
+      this.uniforms.mouse.value.y = Math.max(
+        Math.min((this.canvasHeight - y) / this.canvasHeight, 1.0),
+        0.0
+      );
     }
   }
 
   onResize() {
-    if (this.canvasWidth && this.canvasHeight && this.renderer && this.uniforms) {
+    if (
+      this.canvasWidth &&
+      this.canvasHeight &&
+      this.renderer &&
+      this.uniforms
+    ) {
       this.renderer.setSize(this.canvasWidth, this.canvasHeight);
-      this.uniforms.resolution.value = new Vector2(this.canvasWidth, this.canvasHeight);
+      this.uniforms.resolution.value = new Vector2(
+        this.canvasWidth,
+        this.canvasHeight
+      );
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.runAnimation && !changes.runAnimation.isFirstChange() && changes.runAnimation.currentValue) {
-     this.animate(1.0);
+    if (
+      changes.runAnimation &&
+      !changes.runAnimation.isFirstChange() &&
+      changes.runAnimation.currentValue
+    ) {
+      this.animate(1.0);
     }
-    if (changes.shaderCode && !changes.shaderCode.isFirstChange() && this.material) {
+    if (
+      changes.shaderCode &&
+      !changes.shaderCode.isFirstChange() &&
+      this.material
+    ) {
       this.material.setValues({ fragmentShader: this.shaderCode });
       this.material.needsUpdate = true;
     }
@@ -180,7 +217,7 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
     try {
       this._ngZone.runOutsideAngular(() => {
         if (this.runAnimation) {
-          requestAnimationFrame(timestamp => this.animate(timestamp));
+          requestAnimationFrame((timestamp) => this.animate(timestamp));
         }
         this.render(time);
       });
@@ -188,6 +225,4 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
       this.error.next(e);
     }
   }
-
-
 }

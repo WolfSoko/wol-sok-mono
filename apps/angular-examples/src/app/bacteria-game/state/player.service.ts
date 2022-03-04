@@ -13,7 +13,7 @@ import {
 import {PlayerQuery} from './player.query';
 import {PlayerStore} from './player.store';
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class PlayerService {
   constructor(
     private playerStore: PlayerStore,
@@ -35,7 +35,6 @@ export class PlayerService {
     }
     return colorToPlayer;
   }
-
 
   @transaction()
   init(
@@ -87,7 +86,7 @@ export class PlayerService {
   ) {
     this.handleBacEating(width, height, imageData, deltaTimeSec);
 
-    const players = this.playerQuery.getAll().sort((_) => Math.random() - 0.5);
+    const players = this.playerQuery.getAll().sort(() => Math.random() - 0.5);
 
     for (const player of players) {
       const bacs: Bacteria[] = [...player.bacterias];
@@ -97,7 +96,7 @@ export class PlayerService {
         continue;
       }
       for (let i = bacs.length - 1; i > -1; i--) {
-        const {x, y} = bacs[i];
+        const { x, y } = bacs[i];
 
         const moveDirectionX = mx - x;
         const moveDirectionY = my - y;
@@ -210,7 +209,7 @@ export class PlayerService {
         );
       }
 
-      this.update(player.id, {bacterias: bacs});
+      this.update(player.id, { bacterias: bacs });
     }
   }
 
@@ -345,7 +344,7 @@ export class PlayerService {
 
       for (let i = bacs.length - 1; i > -1; i--) {
         let bacterium = bacs[i];
-        const {x, y} = bacterium;
+        const { x, y } = bacterium;
         const surroundingPlayers = this.findSurroundingPlayer(
           x,
           y,
@@ -417,13 +416,12 @@ export class PlayerService {
       for (const entry of Object.entries(bacToAddToWinner)) {
         this.addBacterias(entry[0], entry[1]);
       }
-      this.update(player.id, {bacterias: bacs});
+      this.update(player.id, { bacterias: bacs });
     }
   }
 
-
   private getPLayerInRandomOrderToEqualifyChances() {
-    return this.playerQuery.getAll().sort((a) => Math.random() - 0.5);
+    return this.playerQuery.getAll().sort(() => Math.random() - 0.5);
   }
 
   private findSurroundingPlayer(

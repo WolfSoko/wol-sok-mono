@@ -1,0 +1,28 @@
+{
+  "root": "apps/angular-examples-e2e",
+  "sourceRoot": "apps/angular-examples-e2e/src",
+  "projectType": "application",
+  "targets": {
+    "e2e": {
+      "executor": "@nrwl/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/angular-examples-e2e/cypress.json",
+        "devServerTarget": "angular-examples:serve:development"
+      },
+      "configurations": {
+        "production": {
+          "devServerTarget": "angular-examples:serve:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/angular-examples-e2e/**/*.{js,ts}"]
+      }
+    }
+  },
+  "tags": ["e2e"],
+  "implicitDependencies": ["angular-examples"]
+}

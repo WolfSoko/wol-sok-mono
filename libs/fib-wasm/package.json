@@ -1,0 +1,12 @@
+{
+  "name": "@wolsok/fib-wasm",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "npm run build:production",
+    "build:development": "asc ./src/assembly/index.ts -d ./index.d.ts -b ../../dist/libs/fib-wasm/untouched.wasm -t ../../dist/libs/fib-wasm/untouched.wat --sourceMap --importMemory --debug",
+    "build:production": "asc ./src/assembly/index.ts -d ./index.d.ts -b ../../dist/libs/fib-wasm/optimized.wasm -t ../../dist/libs/fib-wasm/optimized.wat --sourceMap --importMemory --optimize"
+  },
+  "peerDependencies": {
+    "assemblyscript": "^0.19.20"
+  }
+}

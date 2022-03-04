@@ -1,0 +1,33 @@
+{
+  "root": "libs/utils/rx-operators",
+  "sourceRoot": "libs/utils/rx-operators/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/utils/rx-operators",
+        "main": "libs/utils/rx-operators/src/index.ts",
+        "tsConfig": "libs/utils/rx-operators/tsconfig.lib.json",
+        "assets": ["libs/utils/rx-operators/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/utils/rx-operators/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/libs/utils/rx-operators"],
+      "options": {
+        "jestConfig": "libs/utils/rx-operators/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["shared"]
+}

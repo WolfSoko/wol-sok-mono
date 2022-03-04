@@ -1,0 +1,42 @@
+{
+  "projectType": "library",
+  "root": "libs/features/lazy/fourier-analysis",
+  "sourceRoot": "libs/features/lazy/fourier-analysis/src",
+  "prefix": "lazy-feat-fanal",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:ng-packagr-lite",
+      "outputs": ["dist/libs/features/lazy/fourier-analysis"],
+      "options": {
+        "project": "libs/features/lazy/fourier-analysis/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/features/lazy/fourier-analysis/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "libs/features/lazy/fourier-analysis/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/libs/features/lazy/fourier-analysis"],
+      "options": {
+        "jestConfig": "libs/features/lazy/fourier-analysis/jest.config.js",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": [
+          "libs/features/lazy/fourier-analysis/src/**/*.ts",
+          "libs/features/lazy/fourier-analysis/src/**/*.html"
+        ]
+      }
+    }
+  },
+  "tags": ["feature:lazy"]
+}

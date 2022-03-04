@@ -1,13 +1,13 @@
-import { Injectable } from '@angular/core';
-import { applyTransaction } from '@datorama/akita';
-import { animationFrameScheduler, interval, Observable, Subscription } from 'rxjs';
-import { filter, map, pairwise, switchMapTo, takeUntil, tap, timestamp } from 'rxjs/operators';
-import { HeadlineAnimationService } from '../../core/headline-animation.service';
-import { GameStateQuery } from './game-state.query';
-import { GameState, GameStateStore } from './game-state.store';
-import { Player } from './player.model';
-import { PlayerQuery } from './player.query';
-import { PlayerService } from './player.service';
+import {Injectable} from '@angular/core';
+import {applyTransaction} from '@datorama/akita';
+import {animationFrameScheduler, interval, Observable, Subscription} from 'rxjs';
+import {filter, map, pairwise, switchMapTo, takeUntil, tap, timestamp} from 'rxjs/operators';
+import {HeadlineAnimationService} from '../../core/headline-animation.service';
+import {GameStateQuery} from './game-state.query';
+import {GameState, GameStateStore} from './game-state.store';
+import {Player} from './player.model';
+import {PlayerQuery} from './player.query';
+import {PlayerService} from './player.service';
 
 const FPS = 30;
 
@@ -118,25 +118,23 @@ export class GameStateService {
 
   start() {
     this.initPlayers();
-    this.gameStateStore.update((_state) => ({
+    this.gameStateStore.update(() => ({
       currentState: GameState.RUNNING,
     }));
   }
 
   reset() {
-    this.gameStateStore.update((_state) => ({
+    this.gameStateStore.update(() => ({
       currentState: GameState.END,
       timePassed: 0,
     }));
     this.initPlayers();
-    this.gameStateStore.update((_state) => ({
+    this.gameStateStore.update(() => ({
       currentState: GameState.START,
       timePassed: 0,
       timeDelta: 1,
     }));
   }
-
-
 
   private togglePause(): void {
     this.gameStateStore.update((state) => {
