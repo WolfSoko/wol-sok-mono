@@ -1,5 +1,5 @@
 {
-  "name": "@wolsok/sc-thanos",
+  "name": "@wolsok/thanos",
   "description": "wolsok's implementation of a cool thanos vaporizing effect for destroying dom elements",
   "bugs": {
     "url": "https://github.com/SuperheroicCoding/AngularExamples/issues"
@@ -19,6 +19,10 @@
     "html2canvas",
     "rxjs"
   ],
+  "scripts": {
+    "build:thanos": "nx build ws-thanos",
+    "build:thanos:prod": "nx build ws-thanos --prod"
+  },
   "peerDependencies": {
     "html2canvas": "^1.3.2",
     "@angular/common": "^13.0.1",

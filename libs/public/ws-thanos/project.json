@@ -1,0 +1,50 @@
+{
+  "projectType": "library",
+  "root": "libs/public/ws-thanos",
+  "sourceRoot": "libs/public/ws-thanos/src",
+  "prefix": "ws",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:ng-packagr-lite",
+      "outputs": [
+        "dist/libs/public/ws-thanos"
+      ],
+      "options": {
+        "project": "libs/public/ws-thanos/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/public/ws-thanos/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "libs/public/ws-thanos/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": [
+        "coverage/libs/public/ws-thanos"
+      ],
+      "options": {
+        "jestConfig": "libs/public/ws-thanos/jest.config.js",
+        "passWithNoTests": false
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": [
+          "libs/public/ws-thanos/src/**/*.ts",
+          "libs/public/ws-thanos/src/**/*.html"
+        ]
+      }
+    }
+  },
+  "tags": [
+    "shared",
+    "published",
+    "ui"
+  ]
+}

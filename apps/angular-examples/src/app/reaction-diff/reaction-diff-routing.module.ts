@@ -1,22 +1,16 @@
-import {NgModule} from '@angular/core';
-import {RouterModule, Routes} from '@angular/router';
-import {LoadGpuKernelsResolver} from './load-gpu-kernels.resolver';
-import {ReactionDiffComponent} from './reaction-diff.component';
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { ReactionDiffComponent } from './reaction-diff.component';
 
 const routes: Routes = [
   {
-    path: '', component: ReactionDiffComponent,
-    resolve: {
-      kernels: LoadGpuKernelsResolver
-    }
+    path: '',
+    component: ReactionDiffComponent,
   },
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class ReactionDiffRoutingModule {
-}
-
-
+export class ReactionDiffRoutingModule {}

@@ -1,11 +1,17 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+} from '@angular/core';
 import { CellWeights, weightsToArray } from '../cell-weights';
 
 @Component({
   selector: 'app-weights-config',
   templateUrl: './weights-config.component.html',
   styleUrls: ['./weights-config.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WeightsConfigComponent {
   @Output() weightsChanged: EventEmitter<CellWeights> =
@@ -20,6 +26,11 @@ export class WeightsConfigComponent {
 
   @Input() set weights(weights: CellWeights | undefined | null) {
     this.weightsInternal = weights;
+    this.updateSumOfWeights();
+  }
+
+  private updateSumOfWeights(): void {
+    this.sumOfWeights = this.sumWeights();
   }
 
   weightChanged() {

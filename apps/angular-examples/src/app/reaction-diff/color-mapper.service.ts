@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import P5 from 'p5';
 import { Cell } from './cell';
 
 export interface ReactionDiffCellColor {
@@ -7,10 +8,9 @@ export interface ReactionDiffCellColor {
   b: number;
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ColorMapperService {
-
-  backgroundColor: ReactionDiffCellColor = {r: 0, g: 0, b: 0};
+  backgroundColor: ReactionDiffCellColor = { r: 0, g: 0, b: 0 };
   savedColors: Array<Array<ReactionDiffCellColor | null>> = [];
 
   constructor() {
@@ -22,8 +22,7 @@ export class ColorMapperService {
     }
   }
 
-
-  calcColorFor(cell: Cell, p: any): ReactionDiffCellColor {
+  calcColorFor(cell: Cell, p: P5): ReactionDiffCellColor {
     if (isNaN(cell.a) || isNaN(cell.b)) {
       return this.backgroundColor;
     }
@@ -32,14 +31,22 @@ export class ColorMapperService {
     let result = this.savedColors[a][b];
     if (!result) {
       const pCalcedColor = this.calcColor(a, b, p);
-      result = {r: p.red(pCalcedColor), g: p.green(pCalcedColor), b: p.blue(pCalcedColor)};
+      result = {
+        r: p.red(pCalcedColor),
+        g: p.green(pCalcedColor),
+        b: p.blue(pCalcedColor),
+      };
       this.savedColors[a][b] = result;
     }
     return result;
   }
 
-  private calcColor(a: number, b: number, p: any): any {
-    const backgroundColor = p.color(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b);
+  private calcColor(a: number, b: number, p: P5): P5.Color {
+    const backgroundColor = p.color(
+      this.backgroundColor.r,
+      this.backgroundColor.g,
+      this.backgroundColor.b
+    );
     const aColor = p.color(a, a, 204);
     const bColor = p.color(0, 0, p.map(b, 0, 255, 0, 102));
 
@@ -51,13 +58,11 @@ export class ColorMapperService {
     }
 
     if (a === b) {
-      return p.lerpColor(aColor, bColor, .5);
+      return p.lerpColor(aColor, bColor, 0.5);
     }
     if (a > b) {
       return p.lerpColor(aColor, bColor, b / a);
     }
     return p.lerpColor(bColor, aColor, a / b);
   }
-
-
 }

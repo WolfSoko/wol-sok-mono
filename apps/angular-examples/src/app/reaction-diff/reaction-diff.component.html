@@ -4,8 +4,9 @@
   </mat-toolbar-row>
   <mat-toolbar-row>
     <p class="mat-caption description">
-      A simulation of two virtual chemicals reacting and diffusing on a 2D grid using the Gray-Scott model.
-      It uses gpu.js to calculate. Therefore it's quite fast. Use toggle to compare to CPU calculation.
+      A simulation of two virtual chemicals reacting and diffusing on a 2D grid
+      using the Gray-Scott model. It uses gpu.js to calculate. Therefore it's
+      quite fast. Use toggle to compare to CPU calculation.
     </p>
   </mat-toolbar-row>
 </mat-toolbar>
@@ -14,159 +15,191 @@
     <mat-card-title>Simulation</mat-card-title>
     <mat-card-subtitle>Click to add fluid</mat-card-subtitle>
     <app-p5-view
-      *ngIf="(dimensions$ | async) as dimensions"
+      *ngIf="dimensions$ | async as dimensions"
       [simWidth]="dimensions.width"
       [simHeight]="dimensions.height"
       [calcService]="calcService"
       [run]="start"
       [showFps]="showFps"
-      (mousePressed)="addChemical($event)">
+      (mousePressed)="addChemical($event)"
+    >
     </app-p5-view>
     <mat-card-actions>
-      <a mat-raised-button (click)="toggleRunSim()">{{start ? 'Pause' : 'Run'}}</a>
+      <a mat-raised-button (click)="toggleRunSim()">{{
+        start ? 'Pause' : 'Run'
+      }}</a>
       <a mat-raised-button color="accent" (click)="reset()">Reset</a>
       <mat-checkbox
-        matInput id="showFps"
+        matInput
+        id="showFps"
         type="checkbox"
         name="showFps"
-        [(ngModel)]="showFps">
+        [(ngModel)]="showFps"
+      >
         Show FPS
       </mat-checkbox>
     </mat-card-actions>
     <mat-form-field class="small">
-      <input matInput id="width"
-             placeholder="width"
-             type="number"
-             step="1"
-             name="width"
-             min="1"
-             max="2000"
-             required="true"
-             [ngModel]="width"
-             (ngModelChange)="updateDimension($event, height)">
+      <input
+        matInput
+        id="width"
+        placeholder="width"
+        type="number"
+        step="1"
+        name="width"
+        min="1"
+        max="2000"
+        required="true"
+        [ngModel]="width"
+        (ngModelChange)="updateDimension($event, height)"
+      />
     </mat-form-field>
     <mat-form-field class="small">
-      <input matInput id="height"
-             placeholder="height"
-             type="number"
-             step="1"
-             name="height"
-             min="1"
-             max="2000"
-             required="true"
-             [ngModel]="height"
-             (ngModelChange)="updateDimension(width, $event)">
+      <input
+        matInput
+        id="height"
+        placeholder="height"
+        type="number"
+        step="1"
+        name="height"
+        min="1"
+        max="2000"
+        required="true"
+        [ngModel]="height"
+        (ngModelChange)="updateDimension(width, $event)"
+      />
     </mat-form-field>
     <mat-form-field class="small" mat-tooltip="iterations per frame">
-      <input matInput id="speed"
-             placeholder="Speed"
-             type="number"
-             step="1"
-             name="speed"
-             min="1"
-             max="300"
-             required="true"
-             [disabled]="!useGpu"
-             [ngModel]="speed"
-             (ngModelChange)="updateSpeed($event)">
+      <input
+        matInput
+        id="speed"
+        placeholder="Speed"
+        type="number"
+        step="1"
+        name="speed"
+        min="1"
+        max="300"
+        required="true"
+        [disabled]="!useGpu"
+        [ngModel]="speed"
+        (ngModelChange)="updateSpeed($event)"
+      />
     </mat-form-field>
     <mat-form-field class="small">
-      <input matInput id="addChemicalRadius"
-             placeholder="Radius of chemical B on click"
-             type="number"
-             step="1"
-             name="addChemicalRadius"
-             min="1"
-             max="50"
-             required="true"
-             [(ngModel)]="addChemicalRadius"
-             (change)="updateAddChemicalRadius()">
+      <input
+        matInput
+        id="addChemicalRadius"
+        placeholder="Radius of chemical B on click"
+        type="number"
+        step="1"
+        name="addChemicalRadius"
+        min="1"
+        max="50"
+        required="true"
+        [(ngModel)]="addChemicalRadius"
+        (change)="updateAddChemicalRadius()"
+      />
     </mat-form-field>
     <mat-form-field class="small">
-      <input matInput id="numberThreads"
-             placeholder="web workers to calculate"
-             type="number"
-             step="1"
-             name="addChemicalRadius"
-             min="1"
-             max="16"
-             required="true"
-             [disabled]="useGpu"
-             [(ngModel)]="numberWebWorkers"
-             (change)="updateNumberOfWebWorkers()">
+      <input
+        matInput
+        id="numberThreads"
+        placeholder="web workers to calculate"
+        type="number"
+        step="1"
+        name="addChemicalRadius"
+        min="1"
+        max="16"
+        required="true"
+        [disabled]="useGpu"
+        [(ngModel)]="numberWebWorkers"
+        (change)="updateNumberOfWebWorkers()"
+      />
     </mat-form-field>
     <mat-slide-toggle [(ngModel)]="useGpu" (change)="updateUseGpu()">
       Use gpu.js
     </mat-slide-toggle>
-    <div *ngIf="showFps">Calculation needs: {{calculationTime$ | async}}ms</div>
+    <div *ngIf="showFps">
+      Calculation needs: {{ calculationTime$ | async }}ms
+    </div>
   </mat-card>
 
   <mat-card appRaiseCard class="parameters" *ngIf="calcParams">
     <mat-card-title>Parameters</mat-card-title>
     <mat-form-field class="small">
-      <input matInput id="diffRateA"
-             placeholder="Diffusion A"
-             type="number"
-             step="0.05"
-             name="diffRateA"
-             min="0.0"
-             max="1.0"
-             [(ngModel)]="calcParams.diffRateA"
-             (ngModelChange)="updateCalcParams(calcParams)"
-      >
+      <input
+        matInput
+        id="diffRateA"
+        placeholder="Diffusion A"
+        type="number"
+        step="0.05"
+        name="diffRateA"
+        min="0.0"
+        max="1.0"
+        [(ngModel)]="calcParams.diffRateA"
+        (ngModelChange)="updateCalcParams(calcParams)"
+      />
     </mat-form-field>
     <mat-form-field>
-      <input matInput id="diffRateB"
-             placeholder="Diffusion B"
-             type="number"
-             step="0.05"
-             name="diffRateB"
-             min="0.0"
-             max="1.0"
-             [(ngModel)]="calcParams.diffRateB"
-             (ngModelChange)="updateCalcParams(calcParams)"
-      >
+      <input
+        matInput
+        id="diffRateB"
+        placeholder="Diffusion B"
+        type="number"
+        step="0.05"
+        name="diffRateB"
+        min="0.0"
+        max="1.0"
+        [(ngModel)]="calcParams.diffRateB"
+        (ngModelChange)="updateCalcParams(calcParams)"
+      />
     </mat-form-field>
     <mat-form-field>
-      <input matInput id="feedRate"
-             placeholder="Feed rate"
-             type="number"
-             step="0.001"
-             name="feedRate"
-             min="0.000"
-             max="1.000"
-             [(ngModel)]="calcParams.feedRate"
-             (ngModelChange)="updateCalcParams(calcParams)"
-      >
+      <input
+        matInput
+        id="feedRate"
+        placeholder="Feed rate"
+        type="number"
+        step="0.001"
+        name="feedRate"
+        min="0.000"
+        max="1.000"
+        [(ngModel)]="calcParams.feedRate"
+        (ngModelChange)="updateCalcParams(calcParams)"
+      />
     </mat-form-field>
     <mat-form-field>
-      <input matInput id="killRate"
-             placeholder="Kill Rate"
-             type="number"
-             step="0.001"
-             name="killRate"
-             min="0.000"
-             max="1.000"
-             [(ngModel)]="calcParams.killRate"
-             (ngModelChange)="updateCalcParams(calcParams)"
-      >
+      <input
+        matInput
+        id="killRate"
+        placeholder="Kill Rate"
+        type="number"
+        step="0.001"
+        name="killRate"
+        min="0.000"
+        max="1.000"
+        [(ngModel)]="calcParams.killRate"
+        (ngModelChange)="updateCalcParams(calcParams)"
+      />
     </mat-form-field>
-    <br>
-    <mat-select placeholder="Example parameter config" [(ngModel)]="selectedExample "
-                (selectionChange)="setSelection($event)">
+    <br />
+    <mat-select
+      placeholder="Example parameter config"
+      [(ngModel)]="selectedExample"
+      (selectionChange)="setSelection($event)"
+    >
       <mat-option *ngFor="let example of examples" [value]="example">
         {{ example }}
       </mat-option>
     </mat-select>
   </mat-card>
-  <app-weights-config [weights]="(cellWeights$ | async)" (weightsChanged)='updateWeights($event)'></app-weights-config>
+  <app-weights-config
+    [weights]="cellWeights$ | async"
+    (weightsChanged)="updateWeights($event)"
+  ></app-weights-config>
   <mat-card appRaiseCard>
-    <mat-card-title>
-      Reset parameters and weights
-    </mat-card-title>
-    <button (click)="resetParametersWeights()"
-            color="accent"
-            mat-raised-button>
+    <mat-card-title> Reset parameters and weights </mat-card-title>
+    <button (click)="resetParametersWeights()" color="accent" mat-raised-button>
       Set parameters to default
     </button>
   </mat-card>

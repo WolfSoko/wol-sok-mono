@@ -10,10 +10,7 @@
     "importHelpers": true,
     "target": "es2015",
     "module": "esnext",
-    "lib": [
-      "es2017",
-      "dom"
-    ],
+    "lib": ["es2017", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
@@ -24,25 +21,12 @@
       "@wolsok/features/wasm-test": [
         "libs/features/lazy/wasm-test/src/index.ts"
       ],
-      "@wolsok/fib-wasm-api": [
-        "libs/fib-wasm-api/src/index.ts"
-      ],
-      "@wolsok/sc-thanos": [
-        "libs/sc-thanos/src/index.ts"
-      ],
-      "@wolsok/ui-kit/elem-resized": [
-        "libs/ui-kit/elem-resized/src/index.ts"
-      ],
-      "@wolsok/utils/rx-operators": [
-        "libs/utils/rx-operators/src/index.ts"
-      ],
-      "@wolsok/utils/decorators": [
-        "libs/utils/decorators/src/index.ts"
-      ]
+      "@wolsok/fib-wasm-api": ["libs/fib-wasm-api/src/index.ts"],
+      "@wolsok/ui-kit/elem-resized": ["libs/ui-kit/elem-resized/src/index.ts"],
+      "@wolsok/utils/decorators": ["libs/utils/decorators/src/index.ts"],
+      "@wolsok/utils/rx-operators": ["libs/utils/rx-operators/src/index.ts"],
+      "@wolsok/ws-thanos": ["libs/public/ws-thanos/src/index.ts"]
     }
   },
-  "exclude": [
-    "node_modules",
-    "tmp"
-  ]
+  "exclude": ["node_modules", "tmp"]
 }

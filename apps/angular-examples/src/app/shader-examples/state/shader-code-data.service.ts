@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
-import {AngularFirestore, AngularFirestoreCollection, QuerySnapshot} from "@angular/fire/firestore";
-import { combineLatest, Observable } from 'rxjs';
+import {
+  AngularFirestore,
+  AngularFirestoreCollection,
+  QuerySnapshot,
+} from '@angular/fire/firestore';
+import { combineLatest, firstValueFrom, Observable } from 'rxjs';
 import { map, shareReplay, take, tap } from 'rxjs/operators';
 import { AuthenticationService, AuthQuery } from '../../core';
 import { ShaderCode } from './shader-code.model';
@@ -33,13 +37,13 @@ export class ShaderCodeDataService {
   streamShaders(): Observable<ShaderCode[]> {
     if (this.shaders == null) {
       const defaultShaders = this.defaultShadersCol.valueChanges();
-      const userShaders: Observable<ShaderCode[]> = (
-        this.userShadersCol.stateChanges(['added'])
-      ).pipe(
-        map((documentChanges) =>
-          documentChanges.map((change) => change.payload.doc.data())
-        )
-      );
+      const userShaders: Observable<ShaderCode[]> = this.userShadersCol
+        .stateChanges(['added'])
+        .pipe(
+          map((documentChanges) =>
+            documentChanges.map((change) => change.payload.doc.data())
+          )
+        );
 
       const mapDefaultAndUserShaders = map(
         ([defaults, users]: [ShaderCode[], ShaderCode[]]) =>
@@ -56,19 +60,20 @@ export class ShaderCodeDataService {
     return this.shaders;
   }
 
-  async updateShader(shader: ShaderCode, newCode: string): Promise<QuerySnapshot<ShaderCode>> {
+  async updateShader(
+    shader: ShaderCode,
+    newCode: string
+  ): Promise<QuerySnapshot<ShaderCode>> {
     const shaderByIdQuery = this.afs.collection<ShaderCode>(
       `angularExamples/shaderExamples/${this.userUid()}`,
       (ref) => ref.where('id', '==', shader.id)
     );
     const newShader = { ...shader, ...{ code: newCode } };
 
-    const deleteOldShadersAndUpdateInBatch = (
-      shaderByIdQuery.get({})
-    ).pipe(
+    const deleteOldShadersAndUpdateInBatch = shaderByIdQuery.get({}).pipe(
       take(1),
       tap((ref) => ref.docs.forEach((doc) => doc.ref.delete())),
-      tap((_) => {
+      tap(() => {
         const newUid = this.afs.createId();
         const firestoreDocument = this.afs.doc(
           `angularExamples/shaderExamples/${this.userUid()}/${newUid}`
@@ -76,8 +81,7 @@ export class ShaderCodeDataService {
         firestoreDocument.ref.set(newShader);
       })
     );
-
-    return deleteOldShadersAndUpdateInBatch.toPromise();
+    return firstValueFrom(deleteOldShadersAndUpdateInBatch);
   }
 
   private userUid() {

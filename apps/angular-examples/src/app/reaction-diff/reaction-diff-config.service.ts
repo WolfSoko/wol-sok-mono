@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { CellWeights } from './cell-weights';
 import { ReactionDiffCalcParams } from './reaction-diff-calc-params';
-import { map, tap } from 'rxjs/operators';
 
 interface ExampleParamOption {
   name: string;
   value: ReactionDiffCalcParams;
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ReactionDiffConfigService {
   static addChemicalRadius = 5;
 

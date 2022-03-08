@@ -4,8 +4,8 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AkitaNgRouterStoreModule } from '@datorama/akita-ng-router-store';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
-import { ScThanosModule } from '@wolsok/sc-thanos';
 import { ElemResizedModule } from '@wolsok/ui-kit/elem-resized';
+import { WsThanosModule } from '@wolsok/ws-thanos';
 import { AppRoutingModule } from './app-routing.module';
 
 import { AppComponent } from './app.component';
@@ -35,7 +35,10 @@ import { SharedModule } from './shared/shared.module';
     BrowserModule,
     BrowserAnimationsModule,
     CoreModule,
-    ScThanosModule.forRoot({ maxParticleCount: 50000, animationLength: 5000 }),
+    WsThanosModule.forRoot({
+      maxParticleCount: 50000,
+      animationLength: 5000,
+    }),
     HttpClientModule,
     LoginModule,
     SharedModule,

@@ -1,12 +1,20 @@
 import { Injectable } from '@angular/core';
+import { defer, Observable, of, range, Subject, Subscription } from 'rxjs';
+import {
+  map,
+  scan,
+  switchMap,
+  takeUntil,
+  takeWhile,
+  tap,
+  toArray,
+} from 'rxjs/operators';
+import { RandomService } from '../core/random.service';
 import { PoissonConfigService } from './poisson-config.service';
 import { Circle } from './shared/circle';
-import { defer, Observable, of, range, Subject, Subscription } from 'rxjs';
-import { Vector } from './shared/vector';
-import { RandomService } from '../core/random.service';
 import { Line } from './shared/line';
 import { ShapeFactoryService } from './shared/shape-factory.service';
-import { map, scan, switchMap, takeUntil, takeWhile, tap, toArray } from 'rxjs/operators';
+import { Vector } from './shared/vector';
 
 type RandomActive = {
   active: Vector;
@@ -32,7 +40,7 @@ export class PoissonCalcService {
   private lineSubject!: Subject<Line>;
   private linesSubject!: Subject<Line[]>;
   private iterationsPerFrame!: number;
-  private subscriptions: Subscription;
+  private subscriptions: Subscription = new Subscription();
 
   private calculationSubject!: Subject<void>;
 
@@ -43,10 +51,18 @@ export class PoissonCalcService {
     private readonly shapeFactory: ShapeFactoryService,
     private readonly random: RandomService
   ) {
-    this.subscriptions = this.poissonConfig.iterationsPerFrame$
-      .subscribe((iterations) => (this.iterationsPerFrame = iterations))
-      .add(this.poissonConfig.k$.subscribe((k) => (this.k = k)))
-      .add(this.poissonConfig.r$.subscribe((r) => (this.r = r)));
+    this.subscriptions.add(
+      this.poissonConfig.iterationsPerFrame$.subscribe(
+        (iterations) => (this.iterationsPerFrame = iterations)
+      )
+    );
+    this.subscriptions.add(
+      this.poissonConfig.k$.subscribe((k) => (this.k = k))
+    );
+    this.subscriptions.add(
+      this.poissonConfig.r$.subscribe((r) => (this.r = r))
+    );
+
     this.w = this.poissonConfig.w;
   }
 
@@ -110,7 +126,7 @@ export class PoissonCalcService {
     const iterationsPerFrame$: Observable<number> = defer(() =>
       range(0, this.iterationsPerFrame)
     ).pipe(
-      takeWhile((ignored) => this.active.length > 0),
+      takeWhile(() => this.active.length > 0),
       tap(undefined, undefined, () => this.calculationCompletedSubject.next())
     );
 
@@ -121,23 +137,20 @@ export class PoissonCalcService {
     const randomActive$: Observable<RandomActive> = randomActiveIndex$.pipe(
       map((randomActiveIndex) => ({
         active: this.active[randomActiveIndex],
-        randomActiveIndex
+        randomActiveIndex,
       }))
     );
 
     this.calculationSubject
       .pipe(
         switchMap(() => iterationsPerFrame$),
-        switchMap((ignored) => randomActive$),
+        switchMap(() => randomActive$),
         tap((randomActive) => this.onNextCalculation(randomActive))
       )
-      .subscribe(
-        (ignored) => {
-          /* do nothing */
-        },
-        (error) => console.error('error calculating', error),
-        () => console.log('Calculation completed')
-      );
+      .subscribe({
+        error: (error) => console.error('error calculating', error),
+        complete: () => console.log('Calculation completed'),
+      });
   }
 
   private onNextCalculation({ active, randomActiveIndex }: RandomActive): void {
@@ -242,7 +255,11 @@ export class PoissonCalcService {
     return this.r * (1 + 2 * Math.abs(Math.sin((pos.x + pos.y) * 0.01)));
   }
 
-  private isInDistanceFactory(row: number, col: number, distance: number): (rowToCheck: number, colToCheck: number) => boolean {
+  private isInDistanceFactory(
+    row: number,
+    col: number,
+    distance: number
+  ): (rowToCheck: number, colToCheck: number) => boolean {
     return (rowToCheck: number, colToCheck: number) =>
       this.isInDistance(rowToCheck - row, colToCheck - col, distance);
   }
