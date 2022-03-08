@@ -6,9 +6,7 @@
   "targets": {
     "build": {
       "executor": "@nrwl/angular:ng-packagr-lite",
-      "outputs": [
-        "dist/libs/public/ws-thanos"
-      ],
+      "outputs": ["dist/libs/public/ws-thanos"],
       "options": {
         "project": "libs/public/ws-thanos/ng-package.json"
       },
@@ -22,16 +20,6 @@
       },
       "defaultConfiguration": "production"
     },
-    "test": {
-      "executor": "@nrwl/jest:jest",
-      "outputs": [
-        "coverage/libs/public/ws-thanos"
-      ],
-      "options": {
-        "jestConfig": "libs/public/ws-thanos/jest.config.js",
-        "passWithNoTests": false
-      }
-    },
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "options": {
@@ -40,11 +28,15 @@
           "libs/public/ws-thanos/src/**/*.html"
         ]
       }
+    },
+    "test": {
+      "executor": "@angular-devkit/build-angular:karma",
+      "options": {
+        "main": "libs/public/ws-thanos/src/test.ts",
+        "tsConfig": "libs/public/ws-thanos/tsconfig.spec.json",
+        "karmaConfig": "libs/public/ws-thanos/karma.conf.js"
+      }
     }
   },
-  "tags": [
-    "shared",
-    "published",
-    "ui"
-  ]
+  "tags": ["shared", "published", "ui"]
 }

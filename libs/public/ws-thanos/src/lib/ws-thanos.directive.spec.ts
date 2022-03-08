@@ -125,7 +125,7 @@ describe('WsThanosDirective', () => {
     beforeEach(() => {
       thanosService = TestBed.inject(WsThanosService);
       completedResult = false;
-      jest.spyOn(thanosService, 'vaporize');
+      spyOn(thanosService, 'vaporize').and.callThrough();
     });
 
     it('should call thanosService.vaporize', () => {
