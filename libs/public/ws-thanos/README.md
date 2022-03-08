@@ -4,7 +4,7 @@ An angular directive that vaporizes your DOM Elements like Thanos. This library 
 
 #### Live Demo:
 
-Click the technology cards on https://angularexamples.superheroiccoding.de
+Click the technology cards on https://angularexamples.wolsok.de
 
 ## Usage
 
@@ -80,3 +80,7 @@ Inject the 'WsThanosService' into your class. Call 'vaporize()' and subscribe to
 Send issues or PRs to https://github.com/wolsok/wol-sok-mono
 
 Run `nx test ws-thanos` to execute the unit tests.
+
+## Migration
+
+The earlier name of this component was @superheroiccoding/sc-thanos. Just switch to @wolsok/sc-thanos

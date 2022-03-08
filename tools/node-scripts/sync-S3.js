@@ -9,7 +9,7 @@ const credentials = new AWS.SharedIniFileCredentials();
 
 const myConfig = new AWS.Config({
   credentials,
-  region: 'eu-west-1'
+  region: 'eu-west-1',
 });
 
 var s3 = new AWS.S3();
@@ -27,72 +27,79 @@ console.log('excludeAssets:', excludeAssets);
 
 function deleteFromBucket(bucket, prefix) {
   return new Promise((resolve, reject) => {
+    s3.listObjects({ Bucket: bucket, Prefix: prefix }, (err, data) => {
+      if (err) {
+        console.error(
+          'There was an error listing ' + prefix + ' objects',
+          err.message
+        );
+        return reject(err);
+      }
+      const objects = data.Contents.filter((object) =>
+        excludeAssets ? object.Key.indexOf('assets') < 0 : true
+      ).map(function (object) {
+        return { Key: object.Key };
+      });
 
-    s3.listObjects({Bucket: bucket, Prefix: prefix}, (err, data) => {
-        if (err) {
-          console.error('There was an error listing ' + prefix + ' objects', err.message);
-          return reject(err);
-        }
-        const objects = data.Contents
-          .filter((object) => excludeAssets ? object.Key.indexOf('assets')  < 0 : true)
-          .map(function (object) {
-            return {Key: object.Key};
-          });
+      if (objects.length === 0) {
+        console.log('No objects found under ' + prefix);
+        return resolve(objects);
+      }
 
-        if (objects.length === 0) {
-          console.log('No objects found under ' + prefix);
-          return resolve(objects);
-        }
-
-        s3.deleteObjects({
+      s3.deleteObjects(
+        {
           Bucket: bucket,
-          Delete: {Objects: objects}
-        }, (err, data) => {
+          Delete: { Objects: objects },
+        },
+        (err, data) => {
           if (err) {
-            console.error('There was an error deleting ', +prefix + ' objects', err.message, err.stack);
+            console.error(
+              'There was an error deleting ',
+              +prefix + ' objects',
+              err.message,
+              err.stack
+            );
             return reject(err);
           }
-          console.log('Successfully deleted ' + prefix + ' from bucket', data.Deleted.reduce((prev, object) => prev + '\n' + object.Key, ''));
+          console.log(
+            'Successfully deleted ' + prefix + ' from bucket',
+            data.Deleted.reduce((prev, object) => prev + '\n' + object.Key, '')
+          );
           return resolve(objects);
-        });
-      }
-    );
+        }
+      );
+    });
   });
 }
-
 
 // async version with basic error handling
 function getAllFilesFor(currentDirPath) {
   const files = fs.readdirSync(currentDirPath);
 
   return files.reduce((prevFiles, name) => {
-      const filePath = path.join(currentDirPath, name);
-      const stat = fs.statSync(filePath);
-      if (stat.isFile()) {
-        return [...prevFiles, filePath];
-      }
-      if (stat.isDirectory()) {
-        return [...prevFiles, ...getAllFilesFor(filePath)];
-      }
-      return prevFiles;
-    }, []
-  );
+    const filePath = path.join(currentDirPath, name);
+    const stat = fs.statSync(filePath);
+    if (stat.isFile()) {
+      return [...prevFiles, filePath];
+    }
+    if (stat.isDirectory()) {
+      return [...prevFiles, ...getAllFilesFor(filePath)];
+    }
+    return prevFiles;
+  }, []);
 }
 
-
 function uploadFolderToBucket(folder, bucket, prefix) {
-
-  const allFiles = getAllFilesFor(folder)
-    .filter((file) => excludeAssets ? file.indexOf('assets')  < 0 : true);
-  return uploadFilesInBatches(allFiles, folder, bucket, prefix, 0)
+  const allFiles = getAllFilesFor(folder).filter((file) =>
+    excludeAssets ? file.indexOf('assets') < 0 : true
+  );
+  return uploadFilesInBatches(allFiles, folder, bucket, prefix, 0);
 }
 
 function uploadFilesInBatches(allFiles, folder, bucket, prefix, startIndex) {
   let batch = allFiles.slice(startIndex, startIndex + 5);
   if (batch.length > 0) {
-    const promises = batch.
-
-    map((filePath) => {
+    const promises = batch.map((filePath) => {
       // read file contents
       return new Promise((resolveInner, rejectInner) => {
         fs.readFile(filePath, (error, fileContent) => {
@@ -106,29 +113,39 @@ function uploadFilesInBatches(allFiles, folder, bucket, prefix, startIndex) {
           const cacheControl = getCacheControlFor(fileName);
           const contentType = getContentTypeFor(fileName);
 
-          s3.upload({
-            ACL: 'public-read',
-            Bucket: bucket,
-            Key: fileName,
-            Body: fileContent,
-            ContentType: contentType,
-            CacheControl: cacheControl
-          }, (err, data) => {
-            if (err) {
-              console.error(`Error uploading '${fileName}'!`, err.stack);
-              return rejectInner(err);
+          s3.upload(
+            {
+              ACL: 'public-read',
+              Bucket: bucket,
+              Key: fileName,
+              Body: fileContent,
+              ContentType: contentType,
+              CacheControl: cacheControl,
+            },
+            (err, data) => {
+              if (err) {
+                console.error(`Error uploading '${fileName}'!`, err.stack);
+                return rejectInner(err);
+              }
+              console.log(
+                `Successfully uploaded '${fileName}' with content-type: ${contentType} and cache-control: ${cacheControl}!`
+              );
+              resolveInner(data);
             }
-            console.log(`Successfully uploaded '${fileName}' with content-type: ${contentType} and cache-control: ${cacheControl}!`);
-            resolveInner(data);
-          });
+          );
         });
       });
     });
-    return Promise.all(promises)
-      .then(_ => {
-        console.log('success upload batch of 5 files');
-        return uploadFilesInBatches(allFiles, folder, bucket, prefix, startIndex + 5);
-      });
+    return Promise.all(promises).then((_) => {
+      console.log('success upload batch of 5 files');
+      return uploadFilesInBatches(
+        allFiles,
+        folder,
+        bucket,
+        prefix,
+        startIndex + 5
+      );
+    });
   }
   console.log('success uploaded all batches');
   return 'finish';
@@ -149,7 +166,6 @@ function getContentTypeFor(fileName) {
  * @returns {string}
  */
 function getCacheControlFor(fileName) {
-
   if (fileName.indexOf('ngsw.json') > 0) {
     return 'no-cache, no-store, must-revalidate';
   }
@@ -158,15 +174,22 @@ function getCacheControlFor(fileName) {
 
 function invalidateIndex() {
   const callerReference = '' + Math.random();
-  new AWS.CloudFront().createInvalidation({
-    DistributionId: 'EW5AZB46F9YF1', InvalidationBatch: {
-      Paths: {Quantity: 2, Items: ['/index.html', '/ngsw.json']},
-      CallerReference: callerReference
+  new AWS.CloudFront().createInvalidation(
+    {
+      DistributionId: 'E22J2LG5B4PGRR',
+      InvalidationBatch: {
+        Paths: { Quantity: 2, Items: ['/index.html', '/ngsw.json'] },
+        CallerReference: callerReference,
+      },
+    },
+    (err, data) => {
+      if (err) {
+        return console.log('Error creating invalidation', err);
+      }
+      return console.log(
+        'Successfully invalidated index.html',
+        JSON.stringify(data)
+      );
     }
-  }, (err, data) => {
-    if (err) {
-      return console.log('Error creating invalidation', err);
-    }
-    return console.log('Successfully invalidated index.html', JSON.stringify(data));
-  });
+  );
 }
