@@ -8,7 +8,7 @@
     "start": "nx serve",
     "start:prod": "cross-env NODE_OPTIONS=--max_old_space_size=12000 npm run start -- --configuration production --port=4300",
     "build": "nx build",
-    "build:s3": "cross-env NODE_OPTIONS=--max_old_space_size=7168 npm run build -- --output-path distS3 --base-href https://angularexamples.superheroiccoding.de",
+    "build:s3": "cross-env NODE_OPTIONS=--max_old_space_size=7168 npm run build -- --output-path distS3 --base-href https://angularexamples.wolsok.de",
     "update-firebase": "node tools/node-scripts/init-firebase",
     "deploy": "npm version patch && npm run build:s3 && node tools/node-scripts/sync-S3",
     "deploy:without-build": "node tools/node-scripts/sync-S3",
