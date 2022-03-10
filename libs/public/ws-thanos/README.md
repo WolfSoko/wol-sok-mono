@@ -83,4 +83,7 @@ Run `nx test ws-thanos` to execute the unit tests.
 
 ## Migration
 
-The earlier name of this component was @superheroiccoding/sc-thanos. Just switch to @wolsok/sc-thanos
+* Remove old version `npm uninstall sc-thanos`
+* Install `npm install @wolsok/thanos --save`
+* The earlier name of this component was `scThanos`. Just switch to `wsThanos`
+
