@@ -24,7 +24,7 @@
       "executor": "@nrwl/jest:jest",
       "outputs": ["coverage/libs/utils/rx-operators"],
       "options": {
-        "jestConfig": "libs/utils/rx-operators/jest.config.js",
+        "jestConfig": "libs/utils/rx-operators/jest.config.ts",
         "passWithNoTests": true
       }
     }

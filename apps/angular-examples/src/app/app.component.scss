@@ -41,10 +41,12 @@ app-main-toolbar {
   }
   .page-content {
     margin: 0;
+    overflow-x: hidden;
   }
 }
 
 .mat-drawer-content {
   overflow: hidden;
 }
+
 

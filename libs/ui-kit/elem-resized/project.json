@@ -24,7 +24,7 @@
       "executor": "@nrwl/jest:jest",
       "outputs": ["coverage/libs/ui-kit/elem-resized"],
       "options": {
-        "jestConfig": "libs/ui-kit/elem-resized/jest.config.js",
+        "jestConfig": "libs/ui-kit/elem-resized/jest.config.ts",
         "passWithNoTests": true
       }
     },

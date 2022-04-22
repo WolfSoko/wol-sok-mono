@@ -28,7 +28,7 @@
         "coverage/libs/features/lazy/wasm-test"
       ],
       "options": {
-        "jestConfig": "libs/features/lazy/wasm-test/jest.config.js",
+        "jestConfig": "libs/features/lazy/wasm-test/jest.config.ts",
         "passWithNoTests": true
       }
     },

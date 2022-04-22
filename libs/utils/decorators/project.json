@@ -9,7 +9,7 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/libs/libs\\utils/decorators",
+        "outputPath": "dist/libs/libs/utils/decorators",
         "main": "libs/utils/decorators/src/index.ts",
         "tsConfig": "libs/utils/decorators/tsconfig.lib.json",
         "assets": [
@@ -34,7 +34,7 @@
         "coverage/libs/utils/decorators"
       ],
       "options": {
-        "jestConfig": "libs/utils/decorators/jest.config.js",
+        "jestConfig": "libs/utils/decorators/jest.config.ts",
         "passWithNoTests": true
       }
     }

@@ -1,16 +1,31 @@
-import {AfterViewInit, Directive, ElementRef, EventEmitter, OnDestroy, Output} from '@angular/core';
+import {
+  AfterViewInit,
+  Directive,
+  ElementRef,
+  OnDestroy,
+  Output,
+} from '@angular/core';
 import ResizeObserver from 'resize-observer-polyfill';
-import {ResizedEvent} from './resized-event';
+import { distinctUntilChanged, Subject } from 'rxjs';
+import { ResizedEvent } from './resized-event';
 
 @Directive({
-  selector: '[shElemResized]',
+  selector: '[wsSharedUiElemResized]',
 })
 export class ElemResizedDirective implements AfterViewInit, OnDestroy {
-  @Output()
-  readonly shElemResized = new EventEmitter<ResizedEvent>();
+  private readonly elemResizedAction = new Subject<ResizedEvent>();
 
-  private oldWidth?: number;
-  private oldHeight?: number;
+  @Output()
+  readonly wsSharedUiElemResized = this.elemResizedAction
+    .asObservable()
+    .pipe(
+      distinctUntilChanged(
+        (previous, current) =>
+          previous.newWidth === current.newWidth &&
+          previous.newHeight === current.newHeight
+      )
+    );
+
   private resizeObserver?: ResizeObserver;
 
   constructor(private readonly element: ElementRef) {}
@@ -18,17 +33,8 @@ export class ElemResizedDirective implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.resizeObserver = new ResizeObserver(
       (resizeEntry: ResizeObserverEntry[], _observer: ResizeObserver) => {
-        const { contentRect } = resizeEntry[0];
-        const { width, height } = contentRect;
-        if (width === this.oldWidth && height === this.oldHeight) {
-          return;
-        }
-
-        this.shElemResized.emit(
-          new ResizedEvent(resizeEntry[0], this.oldWidth, this.oldHeight)
-        );
-        this.oldWidth = width;
-        this.oldHeight = height;
+        const resizeObserverEntry: ResizeObserverEntry = resizeEntry[0];
+        this.elemResizedAction.next(new ResizedEvent(resizeObserverEntry));
       }
     );
     this.resizeObserver.observe(this.element.nativeElement);

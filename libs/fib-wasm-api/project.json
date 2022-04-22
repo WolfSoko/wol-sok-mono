@@ -28,7 +28,7 @@
         "coverage/libs/fib-wasm-api"
       ],
       "options": {
-        "jestConfig": "libs/fib-wasm-api/jest.config.js",
+        "jestConfig": "libs/fib-wasm-api/jest.config.ts",
         "passWithNoTests": true
       }
     },

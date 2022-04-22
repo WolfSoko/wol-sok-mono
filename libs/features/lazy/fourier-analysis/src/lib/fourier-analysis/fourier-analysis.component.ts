@@ -15,10 +15,10 @@ import { InputWaveService } from '../state/input-wave.service';
 export class FourierAnalysisComponent {
   fourierAnalysis$: Observable<FourierAnalysisState>;
   isLoading$: Observable<boolean>;
-  inputWaveCanvasWidth = 0;
-  inputWaveCanvasHeight = 0;
-  circleCanvasWidth = 0;
-  circleCanvasHeight = 0;
+  inputWaveCanvasWidth = 300;
+  inputWaveCanvasHeight = 50;
+  circleCanvasWidth = 300;
+  circleCanvasHeight = 50;
 
   constructor(
     private el: ElementRef,

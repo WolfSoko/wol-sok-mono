@@ -9,6 +9,7 @@
     "**/*.ts"
   ],
   "exclude": [
-    "**/*.spec.ts"
+    "**/*.spec.ts",
+    "jest.config.ts"
   ]
 }

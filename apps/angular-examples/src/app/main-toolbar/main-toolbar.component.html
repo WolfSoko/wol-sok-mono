@@ -7,7 +7,7 @@
     <mat-icon>menu</mat-icon>
   </button>
   <span class="on-top" [class.hide]="isHandset$ | async"
-    >SuperheroicCoding&nbsp;</span
+  >SuperheroicCoding&nbsp;</span
   >
   <span class="on-top">Angular Demos</span>
   <span class="toolbar-spacer"></span>
@@ -17,7 +17,7 @@
   <app-login></app-login>
   <div
     class="shader-background"
-    (shElemResized)="onResize($event)"
+    (wsSharedUiElemResized)="onResize($event)"
     *ngIf="shaderCode"
   >
     <app-render-shader
