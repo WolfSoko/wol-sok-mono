@@ -1,6 +1,6 @@
-import {Injectable} from '@angular/core';
-import {Store, StoreConfig} from '@datorama/akita';
-import {InputWave} from './input-wave.model';
+import { Injectable } from '@angular/core';
+import { Store, StoreConfig } from '@datorama/akita';
+import { InputWave } from './input-wave.model';
 
 export interface InputWaveOptionsState {
   frequencies: number[];
@@ -10,9 +10,9 @@ export interface InputWaveOptionsState {
 
 export function createInitialState(): InputWaveOptionsState {
   return {
-    frequencies: [20],
+    frequencies: [100, 200, 200, 300],
     lengthInMs: 1000,
-    samplesPerSec: 30000,
+    samplesPerSec: 5000,
   };
 }
 
