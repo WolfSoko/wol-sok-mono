@@ -1,6 +1,6 @@
 {
   "name": "wolsok",
-  "version": "2.0.11",
+  "version": "2.0.12",
   "license": "MIT",
   "scripts": {
     "ng": "nx",
@@ -132,4 +132,3 @@
     "basePath": "./apps/angular-examples/src/app/"
   }
 }
-
