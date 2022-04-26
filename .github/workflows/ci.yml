@@ -20,8 +20,8 @@ jobs:
       matrix:
         agent: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
     steps:
-      - uses: actions/checkout@latest
-      - uses: actions/setup-node@latest
+      - uses: actions/checkout
+      - uses: actions/setup-node
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm install
@@ -32,19 +32,19 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - uses: actions/checkout@latest
+      - uses: actions/checkout
         name: Checkout [main]
         with:
           fetch-depth: 0
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@latest
-      - uses: actions/setup-node@latest
+        uses: nrwl/nx-set-shas
+      - uses: actions/setup-node
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - run: npm install -g node-gyp@latest
+      - run: npm install -g node-gyp
       - run: npm install
       - name: Run verification
-        uses: JamesHenry/parallel-bash-commands@v0.1
+        uses: JamesHenry/parallel-bash-commands
         with:
           cmd1: npx nx affected --target=build --parallel=4
           cmd2: npx nx affected --target=test --parallel=4
@@ -55,19 +55,19 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
     steps:
-      - uses: actions/checkout@latest
+      - uses: actions/checkout
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@latest
-      - uses: actions/setup-node@latest
+        uses: nrwl/nx-set-shas
+      - uses: actions/setup-node
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - run: npm install -g node-gyp@latest
+      - run: npm install -g node-gyp
       - run: npm install
       - name: Run verification
-        uses: JamesHenry/parallel-bash-commands@v0.1
+        uses: JamesHenry/parallel-bash-commands
         with:
           cmd1: npx nx affected --target=build --parallel=4
           cmd2: npx nx affected --target=test --parallel=4
