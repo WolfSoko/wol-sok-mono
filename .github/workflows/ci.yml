@@ -20,8 +20,8 @@ jobs:
       matrix:
         agent: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@latest
+      - uses: actions/setup-node@latest
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm install
@@ -32,13 +32,13 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@latest
         name: Checkout [main]
         with:
           fetch-depth: 0
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@v2
-      - uses: actions/setup-node@v1
+        uses: nrwl/nx-set-shas@latest
+      - uses: actions/setup-node@latest
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm install
@@ -54,13 +54,13 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@latest
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@v2
-      - uses: actions/setup-node@v1
+        uses: nrwl/nx-set-shas@latest
+      - uses: actions/setup-node@latest
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm install
