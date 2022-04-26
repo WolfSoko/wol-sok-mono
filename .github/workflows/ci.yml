@@ -32,7 +32,8 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - run: apt-get install xserver-xorg-dev libxidev libxext-dev -y
+      - name: Use Python ${{ matrix.python }}
+        uses: actions/setup-python@v2
       - uses: actions/checkout@v3
         name: Checkout [main]
         with:
@@ -53,7 +54,8 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
     steps:
-      - run: apt-get install xserver-xorg-dev libxidev libxext-dev -y
+      - name: Use Python ${{ matrix.python }}
+        uses: actions/setup-python@v2
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.ref }}
