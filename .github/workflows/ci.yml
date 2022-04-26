@@ -41,6 +41,7 @@ jobs:
       - uses: actions/setup-node@latest
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - run: npm install -g node-gyp@latest
       - run: npm install
       - name: Run verification
         uses: JamesHenry/parallel-bash-commands@v0.1
@@ -63,6 +64,7 @@ jobs:
       - uses: actions/setup-node@latest
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - run: npm install -g node-gyp@latest
       - run: npm install
       - name: Run verification
         uses: JamesHenry/parallel-bash-commands@v0.1
