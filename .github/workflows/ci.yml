@@ -20,14 +20,14 @@ jobs:
       matrix:
         agent: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
     steps:
+      - name: install apt dependencies for compiling node_module gl with node-gyp
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Use Python 3
-        uses: actions/setup-python@v2
-      - name: Set up GCC
-        uses: egor-tensin/setup-gcc@v1
       - run: npm install
       - name: Start Nx Agent ${{ matrix.agent }}
         run: npx nx-cloud start-agent
@@ -36,10 +36,10 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - name: Use Python 3
-        uses: actions/setup-python@v2
-      - name: Set up GCC
-        uses: egor-tensin/setup-gcc@v1
+      - name: install apt-deps for compiling node_module gl with node-gyp
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
       - uses: actions/checkout@v3
         name: Checkout [main]
         with:
@@ -59,8 +59,10 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
     steps:
-      - name: Use Python ${{ matrix.python }}
-        uses: actions/setup-python@v2
+      - name: install apt-deps for compiling node_module gl with node-gyp
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.ref }}
