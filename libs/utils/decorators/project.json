@@ -9,7 +9,7 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/libs/libs/utils/decorators",
+        "outputPath": "dist/libs/utils/decorators",
         "main": "libs/utils/decorators/src/index.ts",
         "tsConfig": "libs/utils/decorators/tsconfig.lib.json",
         "assets": [
