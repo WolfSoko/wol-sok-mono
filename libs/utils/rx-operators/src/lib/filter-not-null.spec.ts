@@ -1,5 +1,5 @@
-import {TestScheduler} from 'rxjs/testing';
-import {filterNotNull} from './filter-not-null';
+import { TestScheduler } from 'rxjs/testing';
+import { filterNotNull } from './filter-not-null';
 
 const testScheduler = new TestScheduler((actual, expected) => {
   // asserting the two objects are equal - required
@@ -11,14 +11,7 @@ const testScheduler = new TestScheduler((actual, expected) => {
 describe('filterNotNull', () => {
   it('should filter null', () => {
     testScheduler.run(({ cold, expectObservable }) => {
-      const values: {
-        a: number;
-        b: string;
-        c: null;
-        d: undefined;
-        e: {};
-        f: any[];
-      } = {
+      const values = {
         a: 1,
         b: 'test',
         c: null,
