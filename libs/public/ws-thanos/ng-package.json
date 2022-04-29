@@ -1,6 +1,6 @@
 {
   "$schema": "../../../node_modules/ng-packagr/ng-package.schema.json",
-  "dest": "..\\..\\../dist/libs/public/ws-thanos",
+  "dest": "../../../dist/libs/public/ws-thanos",
   "lib": {
     "entryFile": "src/index.ts"
   }
