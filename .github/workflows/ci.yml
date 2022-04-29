@@ -28,6 +28,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
       - run: npm install
       - name: Start Nx Agent ${{ matrix.agent }}
         run: npx nx-cloud start-agent
@@ -49,6 +50,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
       - run: npm install
       - run: npx nx affected --target=build --parallel
       - run: npx nx affected --target=test --parallel
@@ -72,7 +74,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - run: npm install -g node-gyp
+          cache: 'npm'
       - run: npm install
       - run: npx nx-cloud start-ci-run
       - run: npx nx affected --target=build --parallel
