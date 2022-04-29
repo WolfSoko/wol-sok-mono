@@ -11,5 +11,5 @@ module.exports = {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../../coverage/libs/utils/rx-operators',
-  preset: '..\\..\\..\\jest.preset.ts',
+  preset: '../../../jest.preset.ts',
 };
