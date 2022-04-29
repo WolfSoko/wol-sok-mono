@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
-import { Memoized } from '../../../../../../utils/decorators/src';
+import { Memoized } from './memoize-copy';
 
 @Injectable({
   providedIn: 'root',
