@@ -6,7 +6,9 @@
   "targets": {
     "build": {
       "executor": "@nrwl/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/public/ws-thanos"],
+      "outputs": [
+        "dist/libs/public/ws-thanos"
+      ],
       "options": {
         "project": "libs/public/ws-thanos/ng-package.json"
       },
@@ -34,9 +36,14 @@
       "options": {
         "main": "libs/public/ws-thanos/src/test.ts",
         "tsConfig": "libs/public/ws-thanos/tsconfig.spec.json",
-        "karmaConfig": "libs/public/ws-thanos/karma.conf.js"
+        "karmaConfig": "libs/public/ws-thanos/karma.conf.js",
+        "browser": "ChromeHeadless"
       }
     }
   },
-  "tags": ["shared", "published", "ui"]
+  "tags": [
+    "shared",
+    "published",
+    "ui"
+  ]
 }
