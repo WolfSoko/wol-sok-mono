@@ -1,13 +1,14 @@
-import { getGreeting } from '../support/app.po';
+import { getExperimentsTitle } from '../support/app.po';
 
 describe('angular-examples', () => {
-  beforeEach(() => cy.visit('/'));
+  beforeEach(() => {
+    // inspect the caught error
 
-  it('should display welcome message', () => {
-    // Custom command example, see `../support/commands.ts` file
-    cy.login('my-email@something.com', 'myPassword');
+    cy.visit('/');
+  });
 
+  it('should display Angular examples', () => {
     // Function helper example, see `../support/app.po.ts` file
-    getGreeting().contains('Welcome to angular-examples!');
+    getExperimentsTitle().contains('Experiments:');
   });
 });
