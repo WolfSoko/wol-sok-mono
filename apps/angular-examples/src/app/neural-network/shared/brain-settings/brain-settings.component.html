@@ -1,4 +1,4 @@
-<mat-card appRaiseCard class="brain-settings-card">
+<mat-card wsSharedUiElevateCard class="brain-settings-card">
   <mat-card-title>
     Brain Settings
   </mat-card-title>
@@ -11,7 +11,7 @@
     </button>
     <mat-slide-toggle matTooltip="Each 30ms we learn 10 random point" color="primary"
                       [ngModel]="autoLearning$ | async"
-                      (ngModelChange)="toggleAutoLearning($event)">Auto-learning {{(autoLearning$ | async)? 'enabled'
+                      (ngModelChange)="toggleAutoLearning($event)">Auto-learning {{(autoLearning$ | async) ? 'enabled'
       : 'disabled'}}
     </mat-slide-toggle>
     <button mat-raised-button

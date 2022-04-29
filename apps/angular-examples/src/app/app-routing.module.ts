@@ -73,7 +73,7 @@ export const mainNavRoutes: MainNavRoute[] = [
   {
     path: 'reactionDiff',
     loadChildren: async () =>
-      import('./reaction-diff/reaction-diff.module').then(
+      import('@wolsok/features/reaction-diff').then(
         (m) => m.ReactionDiffModule
       ),
     data: { linkText: 'Reaction Diffusion Algorithm (gpu.js)' },

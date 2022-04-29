@@ -1,0 +1,49 @@
+{
+  "projectType": "library",
+  "root": "libs/ui-kit",
+  "sourceRoot": "libs/ui-kit/src",
+  "prefix": "sh",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:ng-packagr-lite",
+      "outputs": [
+        "dist/libs/ui-kit"
+      ],
+      "options": {
+        "project": "libs/ui-kit/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/ui-kit/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "libs/ui-kit/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": [
+        "coverage/libs/ui-kit"
+      ],
+      "options": {
+        "jestConfig": "libs/ui-kit/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": [
+          "libs/ui-kit/src/**/*.ts",
+          "libs/ui-kit/src/**/*.html"
+        ]
+      }
+    }
+  },
+  "tags": [
+    "ui",
+    "shared"
+  ]
+}

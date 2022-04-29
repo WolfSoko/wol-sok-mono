@@ -4,7 +4,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AkitaNgRouterStoreModule } from '@datorama/akita-ng-router-store';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
-import { ElemResizedModule } from '@wolsok/ui-kit/elem-resized';
+import { ElemResizedModule } from '@wolsok/ui-kit';
 import { WsThanosModule } from '@wolsok/ws-thanos';
 import { AppRoutingModule } from './app-routing.module';
 

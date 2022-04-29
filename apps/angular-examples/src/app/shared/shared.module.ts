@@ -19,15 +19,16 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { ElemResizedModule, ElevateCardModule } from '@wolsok/ui-kit';
 import { WsThanosModule } from '@wolsok/ws-thanos';
 import { Angulartics2Module } from 'angulartics2';
-import { RaiseCardDirective } from './raise-card.directive';
 import { RenderShaderComponent } from './render-shader/render-shader.component';
 
 @NgModule({
-  imports: [CommonModule],
-  declarations: [RaiseCardDirective, RenderShaderComponent],
+  imports: [CommonModule, ElevateCardModule],
+  declarations: [RenderShaderComponent],
   exports: [
+    ElevateCardModule,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -49,10 +50,10 @@ import { RenderShaderComponent } from './render-shader/render-shader.component';
     MatChipsModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
-    RaiseCardDirective,
     RenderShaderComponent,
     Angulartics2Module,
     WsThanosModule,
+    ElemResizedModule,
   ],
 })
 export class SharedModule {}

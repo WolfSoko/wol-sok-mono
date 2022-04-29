@@ -1,4 +1,4 @@
-<mat-card appRaiseCard class="training-progress">
+<mat-card wsSharedUiElevateCard class="training-progress">
   <mat-card-title>
     Deep Neural Network for digit recognition.
   </mat-card-title>
@@ -38,7 +38,7 @@
     </button>
   </mat-card-actions>
 </mat-card>
-<mat-card appRaiseCard class="learnImagesCard">
+<mat-card wsSharedUiElevateCard class="learnImagesCard">
   <mat-card-title>
     Recognize handwritten digits!
   </mat-card-title>
@@ -47,9 +47,9 @@
     Click on the prediction to enter the number you drew.
   </mat-card-subtitle>
   <mat-card-content>
-    <app-draw-digit #drawer (updatePixels)='nextDrawnImage($event)'></app-draw-digit>
+    <app-draw-digit #drawer (updatePixels)="nextDrawnImage($event)"></app-draw-digit>
     <div class="mat-subheading-1">{{drawingPredictions ?
-      'Prediction: '+drawingPredictions[0] :
+      'Prediction: ' + drawingPredictions[0] :
       'Draw to predict image!'}}
     </div>
   </mat-card-content>
@@ -65,7 +65,7 @@
     <app-draw-predictions [batch]="drawingBatch"
                           [predictions]="drawingPredictions"
                           [labels]="drawingLabels"
-                          (imageClicked)='askForLabel($event)'>
+                          (imageClicked)="askForLabel($event)">
     </app-draw-predictions>
   </div>
 </mat-card>

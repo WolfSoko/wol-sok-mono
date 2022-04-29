@@ -6,7 +6,9 @@
   "targets": {
     "build": {
       "executor": "@nrwl/angular:webpack-browser",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/apps/angular-examples",
         "index": "apps/angular-examples/src/index.html",
@@ -24,7 +26,9 @@
           "apps/angular-examples/src/manifest.json",
           "apps/angular-examples/src/assets"
         ],
-        "styles": ["apps/angular-examples/src/styles.scss"],
+        "styles": [
+          "apps/angular-examples/src/styles.scss"
+        ],
         "scripts": [
           "node_modules/vega-lite/build/vega-lite.js",
           {
@@ -100,6 +104,18 @@
       },
       "defaultConfiguration": "development"
     },
+    "serve-ng": {
+      "executor": "@angular-devkit/build-angular:dev-server",
+      "configurations": {
+        "production": {
+          "browserTarget": "angular-examples:build:production"
+        },
+        "development": {
+          "browserTarget": "angular-examples:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
@@ -117,12 +133,16 @@
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/apps/angular-examples"],
+      "outputs": [
+        "coverage/apps/angular-examples"
+      ],
       "options": {
         "jestConfig": "apps/angular-examples/jest.config.ts",
         "passWithNoTests": false
       }
     }
   },
-  "tags": ["app"]
+  "tags": [
+    "app"
+  ]
 }

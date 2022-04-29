@@ -8,7 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { ElemResizedModule } from '@wolsok/ui-kit/elem-resized';
+import { ElemResizedModule } from '@wolsok/ui-kit';
 import { CircleAnalysisComponent } from './circle-analysis/circle-analysis.component';
 import { CircleCanvasComponent } from './circle-analysis/circle-canvas/circle-canvas.component';
 import { FourierAnalysisRoutingModule } from './fourier-analysis-routing.module';
