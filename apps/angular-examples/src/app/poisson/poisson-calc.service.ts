@@ -21,7 +21,7 @@ type RandomActive = {
   randomActiveIndex: number;
 };
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class PoissonCalcService {
   public foundCircles$!: Observable<Circle[]>;
   public activeVectors$!: Observable<Vector[]>;

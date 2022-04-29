@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Vector } from '../../shared/vector';
 import { Circle } from '../../shared/circle';
 import { Line } from '../../shared/line';
+import { Vector } from '../../shared/vector';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class CanvasDrawService {
   private ctx?: CanvasRenderingContext2D;
 

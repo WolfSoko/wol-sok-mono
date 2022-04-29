@@ -4,8 +4,6 @@ import { WS_THANOS_OPTIONS_TOKEN } from './ws-thanos-options.token';
 import { WsThanosDirective } from './ws-thanos.directive';
 import { WsThanosOptions } from './ws-thanos.options';
 
-import { WsThanosService } from './ws-thanos.service';
-
 @NgModule({
   declarations: [WsThanosDirective],
   imports: [],
@@ -18,7 +16,6 @@ export class WsThanosModule {
     return {
       ngModule: WsThanosModule,
       providers: [
-        WsThanosService,
         {
           provide: WS_THANOS_OPTIONS_TOKEN,
           useValue: createWsThanosOptions(options),

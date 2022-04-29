@@ -47,7 +47,7 @@ interface ParticleIndices {
   a: number;
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class WsThanosService {
   constructor(
     @Inject(WS_THANOS_OPTIONS_TOKEN)

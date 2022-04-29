@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Point } from './point';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class TrainDataService {
-
   createTestData(amount: number): Point[] {
     const points = [];
 
@@ -13,5 +12,4 @@ export class TrainDataService {
 
     return points;
   }
-
 }

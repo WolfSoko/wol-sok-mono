@@ -6,13 +6,6 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { Angulartics2Module } from 'angulartics2';
 import { environment } from '../../environments/environment';
-import { AuthenticationService } from './authentication.service';
-import { IsAuthenticatedGuard } from './guards/is-authenticated-guard.service';
-import { HeadlineAnimationService } from './headline-animation.service';
-import { RandomService } from './random.service';
-import { ServiceWorkerLogUpdateService } from './service-worker-log-update.service';
-import { ServiceWorkerUpdateService } from './service-worker-update.service';
-import { TitleService } from './title.service';
 
 @NgModule({
   imports: [
@@ -24,15 +17,6 @@ import { TitleService } from './title.service';
     ServiceWorkerModule.register('ngsw-worker.js', {
       enabled: environment.production,
     }),
-  ],
-  providers: [
-    TitleService,
-    RandomService,
-    ServiceWorkerLogUpdateService,
-    ServiceWorkerUpdateService,
-    AuthenticationService,
-    HeadlineAnimationService,
-    IsAuthenticatedGuard,
   ],
 })
 export class CoreModule {

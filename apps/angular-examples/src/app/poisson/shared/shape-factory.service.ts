@@ -1,11 +1,10 @@
-import {Injectable} from '@angular/core';
-import {Vector} from './vector';
-import {Circle} from './circle';
-import {Line} from './line';
+import { Injectable } from '@angular/core';
+import { Circle } from './circle';
+import { Line } from './line';
+import { Vector } from './vector';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ShapeFactoryService {
-
   public randomVector() {
     const a = Math.random() * 2 * Math.PI;
     const offsetX = Math.cos(a);
@@ -24,5 +23,4 @@ export class ShapeFactoryService {
   public createLine(from: Vector, to: Vector): Line {
     return new Line(from, to);
   }
-
 }

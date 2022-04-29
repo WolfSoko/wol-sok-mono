@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class HeadlineAnimationService {
   private _runAnimation$ = new BehaviorSubject<boolean>(true);
   readonly runAnimation$: Observable<boolean>;

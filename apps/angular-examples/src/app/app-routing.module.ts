@@ -12,7 +12,7 @@ export interface MainNavRoute extends Route {
   path: string;
 }
 
-export const mainNavRoutes: MainNavRoute[] = [
+const mainNavRoutes: MainNavRoute[] = [
   { path: 'home', component: InfoComponent, data: { linkText: 'Home' } },
   {
     path: 'fourierAnalysis',
