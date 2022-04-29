@@ -53,8 +53,8 @@ jobs:
           cache: 'npm'
       - run: npm install
       - run: npx nx affected --target=build --parallel
-      - run: npx nx affected --target=test --parallel
       - run: npx nx affected --target=lint --parallel
+      - run: npx nx affected --target=test --parallel
       - run: npx nx affected --target=e2e --parallel
       - run: npx nx-cloud stop-all-agents
   pr:
