@@ -38,14 +38,17 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
     speed$: Observable<number>,
     private gpuJs: GpuAdapterService
   ) {
-    this.gpuJs.setUseGPU(true);
-    calcParams$.subscribe((calcParams) => {
-      this.setCalcParams(calcParams);
+    this.gpuJs.setUseGPU(true).then(() => {
+      calcParams$.subscribe((calcParams) => {
+        this.setCalcParams(calcParams);
+      });
+      calcCellWeights$.subscribe((weights) => this.setWeights(weights));
+      addChemicalRadius$.subscribe(
+        (radius) => (this.addChemicalRadius = radius)
+      );
+      speed$.subscribe((speed) => (this.speed = speed));
+      this.init();
     });
-    calcCellWeights$.subscribe((weights) => this.setWeights(weights));
-    addChemicalRadius$.subscribe((radius) => (this.addChemicalRadius = radius));
-    speed$.subscribe((speed) => (this.speed = speed));
-    this.init();
   }
 
   reset(): void {
