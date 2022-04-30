@@ -17,7 +17,7 @@ const mainNavRoutes: MainNavRoute[] = [
   {
     path: 'fourierAnalysis',
     loadChildren: async () =>
-      import('@wolsok/features/fourier-analysis').then(
+      import('@wolsok/features-fourier-analysis').then(
         (m) => m.FourierAnalysisModule
       ),
     data: { linkText: 'Fourier Analysis Example' },
@@ -73,9 +73,7 @@ const mainNavRoutes: MainNavRoute[] = [
   {
     path: 'reactionDiff',
     loadChildren: async () =>
-      import('@wolsok/features/reaction-diff').then(
-        (m) => m.ReactionDiffModule
-      ),
+      import('@wolsok/feat-reaction-diff').then((m) => m.ReactionDiffModule),
     data: { linkText: 'Reaction Diffusion Algorithm (gpu.js)' },
   },
   {
@@ -95,7 +93,7 @@ const mainNavRoutes: MainNavRoute[] = [
   {
     path: 'webassemblyTests',
     loadChildren: async () =>
-      import('@wolsok/features/wasm-test').then((m) => m.WasmTestModule),
+      import('@@wolsok/features-wasm-test').then((m) => m.WasmTestModule),
     data: { linkText: 'Calculating Fibonacci with WebAssembly' },
   },
 ];

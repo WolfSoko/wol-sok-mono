@@ -13,7 +13,7 @@ type SumOfWeights = {
 };
 
 @Component({
-  selector: 'lazy-feat-reactdiff-weights-config',
+  selector: 'lazy-feat-react-diff-weights-config',
   templateUrl: './weights-config.component.html',
   styleUrls: ['./weights-config.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

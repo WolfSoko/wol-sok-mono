@@ -1,4 +1,8 @@
-import { IGPUFunctionSettings, KernelFunction, ThreadFunction } from 'gpu.js';
+import {
+  IGPUFunctionSettings,
+  KernelFunction,
+  ThreadFunction,
+} from '@wolsok/utils-gpu-calc';
 
 export interface ReactionDiffKernelModules {
   calcNextKernelModule: {

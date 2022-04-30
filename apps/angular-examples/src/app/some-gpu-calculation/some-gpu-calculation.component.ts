@@ -12,8 +12,8 @@ import {
   GpuAdapterService,
   IKernelFunctionThis,
   IKernelRunShortcut,
-} from '@wolsok/utils/gpu-calc';
-import { distinctUntilChangedDeepEqualObj } from '@wolsok/utils/rx-operators';
+} from '@wolsok/utils-gpu-calc';
+import { distinctUntilChangedDeepEqualObj } from '@wolsok/utils-rx-operators';
 
 import {
   animationFrameScheduler,

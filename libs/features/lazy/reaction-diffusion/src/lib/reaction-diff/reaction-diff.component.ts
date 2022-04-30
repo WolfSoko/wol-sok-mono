@@ -27,7 +27,7 @@ interface Dimensions {
 }
 
 @Component({
-  selector: 'lazy-feat-reactdiff-reaction-diff',
+  selector: 'lazy-feat-react-diff-reaction-diff',
   templateUrl: './reaction-diff.component.html',
   styleUrls: ['./reaction-diff.component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,

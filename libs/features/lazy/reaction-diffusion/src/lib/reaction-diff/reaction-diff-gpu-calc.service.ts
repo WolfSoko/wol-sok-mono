@@ -1,5 +1,9 @@
-import { GpuAdapterService } from '@wolsok/utils/gpu-calc';
-import { IKernelRunShortcut, IKernelRunShortcutBase, Texture } from 'gpu.js';
+import {
+  GpuAdapterService,
+  IKernelRunShortcut,
+  IKernelRunShortcutBase,
+  Texture,
+} from '@wolsok/utils-gpu-calc';
 import { Observable } from 'rxjs';
 import { CellWeights, weightsToArray } from './cell-weights';
 import {

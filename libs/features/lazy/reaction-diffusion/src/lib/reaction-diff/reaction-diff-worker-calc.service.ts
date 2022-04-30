@@ -1,4 +1,4 @@
-import { mapWorker, WorkerPostParams } from '@wolsok/utils/rx-operators';
+import { mapWorker, WorkerPostParams } from '@wolsok/utils-rx-operators';
 import * as p5 from 'p5';
 import { merge, Observable, range, Subject, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -213,7 +213,7 @@ export class ReactionDiffWorkerCalcService implements ReactionDiffCalculator {
     this.workers$ = this.workerSubjects$.map((subject) =>
       subject.pipe(
         filter(
-          (value) => this.calcRunning < this.numberThreads && this.canCalculate
+          () => this.calcRunning < this.numberThreads && this.canCalculate
         ),
         mapWorker(calcNextDiffStep)
       )

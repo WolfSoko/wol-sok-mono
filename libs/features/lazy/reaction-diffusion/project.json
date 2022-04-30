@@ -2,13 +2,27 @@
   "projectType": "library",
   "root": "libs/features/lazy/reaction-diffusion",
   "sourceRoot": "libs/features/lazy/reaction-diffusion/src",
-  "prefix": "lazyFeatReacDiff",
+  "prefix": "lazy-feat-react-diff",
   "targets": {
+    "build": {
+      "executor": "@nrwl/angular:ng-packagr-lite",
+      "outputs": ["dist/libs/features/lazy/reaction-diffusion"],
+      "options": {
+        "project": "libs/features/lazy/reaction-diffusion/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/features/lazy/reaction-diffusion/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "libs/features/lazy/reaction-diffusion/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": [
-        "coverage/libs/features/lazy/reaction-diffusion"
-      ],
+      "outputs": ["coverage/libs/features/lazy/reaction-diffusion"],
       "options": {
         "jestConfig": "libs/features/lazy/reaction-diffusion/jest.config.ts",
         "passWithNoTests": true
@@ -24,7 +38,5 @@
       }
     }
   },
-  "tags": [
-    "feature:lazy"
-  ]
+  "tags": ["feature:lazy"]
 }

@@ -1,11 +1,13 @@
 {
-  "name": "@wolsok/features-wasm-test",
+  "name": "@wolsok/feature-reaction-diffusion",
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/common": "^13.2.0",
     "@angular/core": "^13.2.0",
     "@angular/material": "^13.2.0",
-    "@datorama/akita": "^7.1.1"
+    "mathjs": "^10.3.0",
+    "gpu.js": "^0.1.0",
+    "rxjs": "^6.5.4"
   },
   "dependencies": {
     "tslib": "^2.3.0"

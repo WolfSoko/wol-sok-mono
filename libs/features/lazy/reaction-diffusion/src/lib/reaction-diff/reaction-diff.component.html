@@ -14,7 +14,7 @@
   <mat-card class="sim-card" wsSharedUiElevateCard>
     <mat-card-title>Simulation</mat-card-title>
     <mat-card-subtitle>Click to add fluid</mat-card-subtitle>
-    <lazy-feat-reactdiff-p5-view
+    <lazy-feat-react-diff-p5-view
       *ngIf="dimensions$ | async as dimensions"
       [simWidth]="dimensions.width"
       [simHeight]="dimensions.height"
@@ -23,11 +23,11 @@
       [showFps]="showFps"
       (mousePressed)="addChemical($event)"
     >
-    </lazy-feat-reactdiff-p5-view>
+    </lazy-feat-react-diff-p5-view>
     <mat-card-actions>
       <a mat-raised-button (click)="toggleRunSim()">{{
         start ? 'Pause' : 'Run'
-        }}</a>
+      }}</a>
       <a mat-raised-button color="accent" (click)="reset()">Reset</a>
       <mat-checkbox
         id="showFps"
@@ -68,7 +68,7 @@
         (ngModelChange)="updateDimension(width, $event)"
       />
     </mat-form-field>
-    <mat-form-field class="small" mat-tooltip="iterations per frame">
+    <mat-form-field class="small" matTooltip="iterations per frame">
       <input
         matInput
         id="speed"
@@ -192,12 +192,12 @@
       </mat-option>
     </mat-select>
   </mat-card>
-  <lazy-feat-reactdiff-weights-config
+  <lazy-feat-react-diff-weights-config
     class="weights-config"
     *ngIf="cellWeights$ | async as weights"
     [weights]="weights"
     (weightsChanged)="updateWeights($event)"
-  ></lazy-feat-reactdiff-weights-config>
+  ></lazy-feat-react-diff-weights-config>
   <mat-card wsSharedUiElevateCard>
     <mat-card-title> Reset parameters and weights</mat-card-title>
     <button (click)="resetParametersWeights()" color="accent" mat-raised-button>

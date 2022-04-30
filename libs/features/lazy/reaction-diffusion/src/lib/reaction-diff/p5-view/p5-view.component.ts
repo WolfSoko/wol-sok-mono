@@ -14,7 +14,7 @@ import * as p5 from 'p5';
 import { ReactionDiffCalculator } from '../reaction-diff-calculator';
 
 @Component({
-  selector: 'lazy-feat-reactdiff-p5-view',
+  selector: 'lazy-feat-react-diff-p5-view',
   templateUrl: './p5-view.component.html',
   styleUrls: ['./p5-view.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -38,6 +38,5 @@ import { WeightsConfigComponent } from './reaction-diff/weights-config/weights-c
     P5ViewComponent,
     WeightsConfigComponent,
   ],
-  exports: [ReactionDiffComponent],
 })
 export class ReactionDiffModule {}

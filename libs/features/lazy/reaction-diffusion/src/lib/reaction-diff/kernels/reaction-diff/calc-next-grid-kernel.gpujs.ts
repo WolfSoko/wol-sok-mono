@@ -3,7 +3,7 @@ import {
   IKernelFunctionThis,
   KernelFunction,
   ThreadFunction,
-} from 'gpu.js';
+} from '@wolsok/utils-gpu-calc';
 
 export interface CalcNextGridConstants extends IConstantsThis {
   width: number;

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { filterNotNull } from '@wolsok/utils/rx-operators';
+import { filterNotNull } from '@wolsok/utils-rx-operators';
 import {
   InputWaveOptionsStore,
   waveOptionsFromWave,

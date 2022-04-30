@@ -19,7 +19,7 @@ class MapWorkerSubscriber<
     this.worker.onerror = (error) => this.destination.error?.(error);
   }
 
-  protected _next(value: T): void {
+  protected override _next(value: T): void {
     if (value.transferList || value.transferList) {
       this.worker.postMessage(value.data, value.transferList);
     } else {
@@ -27,12 +27,12 @@ class MapWorkerSubscriber<
     }
   }
 
-  protected _complete(): void {
+  protected override _complete(): void {
     this.worker.terminate();
     super._complete();
   }
 
-  public unsubscribe(): void {
+  public override unsubscribe(): void {
     super.unsubscribe();
     this.worker.terminate();
   }
