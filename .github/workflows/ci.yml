@@ -19,17 +19,16 @@ jobs:
     with:
       node-version: ${{ github.env.NODE_VERSION }}
       install-command: |
-        echo "Install packages to compile node_modules gl with node-gyp"
+        echo 'Install packages to compile node_modules gl with node-gyp'
         sudo apt-get update -y
         sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
-        echo "Running npm ci"
         npm ci
       parallel-commands: |
         npx nx-cloud record -- npx nx workspace-lint
         npx nx-cloud record -- npx nx format:check
       parallel-commands-on-agents: |
         npx nx affected --target=lint --parallel
-        npx nx affected --target=test --parallel --ci --code-coverage
+        npx nx affected --target=test --parallel --code-coverage
         npx nx affected --target=build --parallel
         npx nx affected --target=e2e --parallel
   agents:
@@ -38,9 +37,8 @@ jobs:
     with:
       node-version: ${{ github.env.NODE_VERSION }}
       install-command: |
-        echo "Install packages to compile node_modules gl with node-gyp"
+        echo 'Install packages to compile node_modules gl with node-gyp'
         sudo apt-get update -y
         sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
-        echo "Running npm ci"
         npm ci
-      number-of-agents: 4
+      number-of-agents: 7
