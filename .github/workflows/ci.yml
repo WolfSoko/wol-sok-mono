@@ -6,15 +6,24 @@ on:
   pull_request:
 
 env:
-  NX_CLOUD_DISTRIBUTED_EXECUTION: true
   NODE_VERSION: '16'
-  NODE_OPTIONS: '--max_old_space_size=4096'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   main:
     name: Nx Cloud - Main Job
     uses: nrwl/ci/.github/workflows/nx-cloud-main.yml@v0.2
     with:
+      node-version: ${{ github.env.NODE_VERSION }}
+      install-command: |
+        echo "Install packages to compile node_modules gl with node-gyp"
+        sudo apt-get update -y
+        sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
+        echo "Running npm ci"
+        npm ci
       parallel-commands: |
         npx nx-cloud record -- npx nx workspace-lint
         npx nx-cloud record -- npx nx format:check
@@ -23,9 +32,15 @@ jobs:
         npx nx affected --target=test --parallel --ci --code-coverage
         npx nx affected --target=build --parallel
         npx nx affected --target=e2e --parallel
-
   agents:
     name: Nx Cloud - Agents
     uses: nrwl/ci/.github/workflows/nx-cloud-agents.yml@v0.2
     with:
-      number-of-agents: 3
+      node-version: ${{ github.env.NODE_VERSION }}
+      install-command: |
+        echo "Install packages to compile node_modules gl with node-gyp"
+        sudo apt-get update -y
+        sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
+        echo "Running npm ci"
+        npm ci
+      number-of-agents: 4
