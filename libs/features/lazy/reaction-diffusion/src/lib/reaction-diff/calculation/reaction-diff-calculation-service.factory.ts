@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { GpuAdapterService } from '@wolsok/utils-gpu-calc';
 import { ColorMapperService } from './color-mapper.service';
 import { ReactionDiffCalculator } from './reaction-diff-calculator';
-import { ReactionDiffConfigService } from './reaction-diff-config.service';
+import { ReactionDiffConfigService } from '../reaction-diff-config.service';
 import { ReactionDiffGpuCalcService } from './reaction-diff-gpu-calc.service';
 import { ReactionDiffWorkerCalcService } from './reaction-diff-worker-calc.service';
 

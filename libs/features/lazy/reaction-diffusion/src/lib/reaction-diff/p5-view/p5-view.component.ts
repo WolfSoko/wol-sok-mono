@@ -11,7 +11,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import * as p5 from 'p5';
-import { ReactionDiffCalculator } from '../reaction-diff-calculator';
+import { ReactionDiffCalculator } from '../calculation/reaction-diff-calculator';
 
 @Component({
   selector: 'lazy-feat-react-diff-p5-view',

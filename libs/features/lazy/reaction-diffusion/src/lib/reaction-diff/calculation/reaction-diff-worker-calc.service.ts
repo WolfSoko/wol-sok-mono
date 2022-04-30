@@ -6,7 +6,7 @@ import { filter } from 'rxjs/operators';
 import { AddChemicalsParams } from './add-chemicals-param';
 import { CalcNextParam } from './calc-next-param';
 import { Cell } from './cell';
-import { CellWeights } from './cell-weights';
+import { CellWeights } from '../cell-weights-to-array';
 import { ColorMapperService } from './color-mapper.service';
 import { ReactionDiffCalcParams } from './reaction-diff-calc-params';
 import { ReactionDiffCalculator } from './reaction-diff-calculator';

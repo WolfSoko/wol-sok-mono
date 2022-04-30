@@ -5,7 +5,7 @@ import {
   Output,
 } from '@angular/core';
 import { BehaviorSubject, filter, Observable, Subject } from 'rxjs';
-import { CellWeights, weightsToArray } from '../cell-weights';
+import { CellWeights, weightsToArray } from '../cell-weights-to-array';
 
 type SumOfWeights = {
   sum: number;

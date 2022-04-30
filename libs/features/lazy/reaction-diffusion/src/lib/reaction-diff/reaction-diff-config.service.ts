@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { CellWeights } from './cell-weights';
-import { ReactionDiffCalcParams } from './reaction-diff-calc-params';
+import { CellWeights } from './cell-weights-to-array';
+import { ReactionDiffCalcParams } from './calculation/reaction-diff-calc-params';
 
 interface ExampleParamOption {
   name: string;

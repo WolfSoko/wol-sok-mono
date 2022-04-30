@@ -1,4 +1,4 @@
-import { CellWeights } from './cell-weights';
+import { CellWeights } from '../cell-weights-to-array';
 
 export interface CalcNextParam {
   width: number;

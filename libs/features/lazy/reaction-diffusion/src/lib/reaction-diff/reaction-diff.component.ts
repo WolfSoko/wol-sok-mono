@@ -15,10 +15,10 @@ import {
   startWith,
   tap,
 } from 'rxjs/operators';
-import { CellWeights } from './cell-weights';
-import { ReactionDiffCalcParams } from './reaction-diff-calc-params';
-import { ReactionDiffCalcServiceFactory } from './reaction-diff-calculation-service.factory';
-import { ReactionDiffCalculator } from './reaction-diff-calculator';
+import { CellWeights } from './cell-weights-to-array';
+import { ReactionDiffCalcParams } from './calculation/reaction-diff-calc-params';
+import { ReactionDiffCalcServiceFactory } from './calculation/reaction-diff-calculation-service.factory';
+import { ReactionDiffCalculator } from './calculation/reaction-diff-calculator';
 import { ReactionDiffConfigService } from './reaction-diff-config.service';
 
 interface Dimensions {
