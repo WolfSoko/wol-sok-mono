@@ -10,9 +10,7 @@ I always try to keep a good code structure as defined in the Angular style guide
 rxjs and use it as much as I can. For components, I use Angular-Material.    
 CSS wise I use grid and flex layout.
 
-This project was generated with [Nx](https://nx.dev/l/a/getting-started/intro)
-
-To deploy it I use github actions and AWS S3, with Cloudfront
+This project utilizes heavyly the features of [Nx](https://nx.dev/l/a/getting-started/intro) Monorepo
 
 ## ws-thanos
 

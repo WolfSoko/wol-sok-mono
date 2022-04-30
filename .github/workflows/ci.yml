@@ -11,75 +11,21 @@ env:
   NODE_OPTIONS: '--max_old_space_size=4096'
 
 jobs:
+  main:
+    name: Nx Cloud - Main Job
+    uses: nrwl/ci/.github/workflows/nx-cloud-main.yml@v0.2
+    with:
+      parallel-commands: |
+        npx nx-cloud record -- npx nx workspace-lint
+        npx nx-cloud record -- npx nx format:check
+      parallel-commands-on-agents: |
+        npx nx affected --target=lint --parallel
+        npx nx affected --target=test --parallel --ci --code-coverage
+        npx nx affected --target=build --parallel
+        npx nx affected --target=e2e --parallel
 
   agents:
-    runs-on: ubuntu-latest
-    name: Agents
-    timeout-minutes: 60
-    strategy:
-      matrix:
-        agent: [ 1, 2, 3, 4 ]
-    steps:
-      - name: install apt dependencies for compiling node_module gl with node-gyp
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      - run: npm install
-      - name: Start Nx Agent ${{ matrix.agent }}
-        run: npx nx-cloud start-agent
-
-  main:
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'pull_request' }}
-    steps:
-      - name: install apt-deps for compiling node_module gl with node-gyp
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
-      - uses: actions/checkout@v3
-        name: Checkout [main]
-        with:
-          fetch-depth: 0
-      - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@v2
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      - run: npm install
-      - run: npx nx affected --target=build --parallel
-      - run: npx nx affected --target=lint --parallel
-      - run: npx nx affected --target=test --parallel
-      - run: npx nx affected --target=e2e --parallel
-      - run: npx nx-cloud stop-all-agents
-  pr:
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' }}
-    steps:
-      - name: install apt-deps for compiling node_module gl with node-gyp
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-      - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@v2
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      - run: npm install
-      - run: npx nx-cloud start-ci-run
-      - run: npx nx affected --target=build --parallel
-      - run: npx nx affected --target=test --parallel
-      - run: npx nx affected --target=lint --parallel
-      - run: npx nx affected --target=e2e --parallel
-      - run: npx nx-cloud stop-all-agents
-
+    name: Nx Cloud - Agents
+    uses: nrwl/ci/.github/workflows/nx-cloud-agents.yml@v0.2
+    with:
+      number-of-agents: 3
