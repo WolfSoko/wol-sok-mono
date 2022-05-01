@@ -1,5 +1,5 @@
 module.exports = {
-  displayName: 'features-lazy-wasm-test',
+  displayName: 'feat-lazy-wasm-test',
 
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {

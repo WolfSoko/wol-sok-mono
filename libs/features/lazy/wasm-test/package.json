@@ -1,5 +1,5 @@
 {
-  "name": "@wolsok/features-wasm-test",
+  "name": "@wolsok/feat-wasm-test",
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/common": "^13.2.0",

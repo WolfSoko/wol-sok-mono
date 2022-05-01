@@ -1,7 +1,7 @@
 import {
   calcNextKernelModule,
   imageKernelModule,
-} from '@wolsok/features-reaction-diffusion-kernels';
+} from '@wolsok/feat-shared-reaction-diffusion-kernels';
 import {
   GpuAdapterService,
   IKernelRunShortcut,

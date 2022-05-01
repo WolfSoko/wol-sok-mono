@@ -1,0 +1,101 @@
+<ng-container *ngIf="viewModel$ | async as vm">
+  <mat-card class="title">
+    <mat-card-title>
+      Some WebGl Shader Examples inspired by&nbsp;
+      <a target="_blank" href="https://thebookofshaders.com"
+        >The Book of Shader</a
+      >
+    </mat-card-title>
+    <mat-card-content>
+      <div>
+        <lzy-ft-shad-ex-options></lzy-ft-shad-ex-options>
+        <div *ngIf="vm.savingShader">
+          <mat-spinner color="accent" diameter="24"></mat-spinner>
+          <span>Auto saving</span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <ng-container
+    *ngIf="vm.isLoadingShaders === false; then shadersContainer; else spinner"
+  >
+  </ng-container>
+  <ng-template #shadersContainer>
+    <mat-card
+      class="shaders-container"
+      (swipeleft)="nextPage()"
+      (swiperight)="previousPage()"
+    >
+      <button
+        mat-mini-fab
+        color="primary"
+        class="navigation-button left"
+        (click)="previousPage()"
+      >
+        <mat-icon aria-label="Previous page">keyboard_arrow_left</mat-icon>
+      </button>
+      <div
+        [@animator]="vm.animationState"
+        (@animator.done)="resetAnimationState()"
+        class="shaders-grid-list"
+      >
+        <ng-container
+          *ngFor="let shader of vm.pagedShaders; trackBy: trackByIndex"
+        >
+          <div class="shader-tile">
+            <div class="mat-subheading-2 shader-title">
+              {{ shader.description }}
+            </div>
+            <div class="editor-tile" *ngIf="vm.showCodeEditor">
+              <lzy-ft-shad-ex-code-editor
+                class="code-editor"
+                [code]="shader.code"
+                (codeChange)="updateShaderCode(shader, $event)"
+                mode="glsl"
+              >
+              </lzy-ft-shad-ex-code-editor>
+            </div>
+            <div
+              #shaderRenderer
+              class="shader-renderer"
+              [class.show-editor]="vm.showCodeEditor"
+            >
+              <ws-shared-ui-render-shader
+                [shaderCode]="shader.code"
+                [showFps]="vm.showFps"
+                [canvasWidth]="shaderRenderer.clientWidth"
+                [canvasHeight]="shaderRenderer.getBoundingClientRect().height"
+              >
+              </ws-shared-ui-render-shader>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+      <button
+        mat-mini-fab
+        color="primary"
+        class="navigation-button right"
+        (click)="nextPage()"
+      >
+        <mat-icon aria-label="Next page">keyboard_arrow_right</mat-icon>
+      </button>
+    </mat-card>
+  </ng-template>
+  <ng-template #spinner>
+    <div class="shaders-container shaders-container-spinner">
+      <mat-spinner color="accent" diameter="56"> </mat-spinner>
+      <div class="mat-subheading-1">Loading example shaders</div>
+    </div>
+  </ng-template>
+  <mat-paginator
+    *ngIf="vm.isLoadingShaders === false"
+    showFirstLastButtons="true"
+    [pageIndex]="vm.currentPage.pageIndex"
+    [length]="vm.currentPage.length"
+    [pageSize]="vm.currentPage.pageSize"
+    [pageSizeOptions]="[1, 2, 3, 4, 5, 6]"
+    [hidePageSize]="vm.isSmallScreen"
+    (page)="changeCurrentShaderPage($event)"
+  >
+  </mat-paginator>
+</ng-container>

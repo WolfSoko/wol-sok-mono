@@ -1,15 +1,16 @@
-import {ChangeDetectionStrategy, Component} from "@angular/core";
-import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
-import {AuthenticationService, AuthQuery, Profile} from "../core";
-import {Observable} from "rxjs";
-import {startWith} from "rxjs/operators";
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { AuthenticationService, Profile } from '@wolsok/feat-api-auth';
+import { Observable } from 'rxjs';
+import { startWith } from 'rxjs/operators';
+import { AuthQuery } from '../core';
 
 @UntilDestroy()
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
   user$: Observable<Profile | null>;
@@ -18,7 +19,10 @@ export class LoginComponent {
     private authQuery: AuthQuery,
     private authService: AuthenticationService
   ) {
-    this.user$ = this.authQuery.profile$.pipe(startWith(null),untilDestroyed(this));
+    this.user$ = this.authQuery.profile$.pipe(
+      startWith(null),
+      untilDestroyed(this)
+    );
   }
 
   async login(): Promise<unknown> {

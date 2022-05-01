@@ -17,7 +17,7 @@ const mainNavRoutes: MainNavRoute[] = [
   {
     path: 'fourierAnalysis',
     loadChildren: async () =>
-      import('@wolsok/features-fourier-analysis').then(
+      import('@wolsok/feat-fourier-analysis').then(
         (m) => m.FourierAnalysisModule
       ),
     data: { linkText: 'Fourier Analysis Example' },
@@ -33,7 +33,7 @@ const mainNavRoutes: MainNavRoute[] = [
   {
     path: 'shaderExamples',
     loadChildren: async () =>
-      import('./shader-examples/shader-examples.module').then(
+      import('@wolsok/feat-shader-examples').then(
         (m) => m.ShaderExamplesModule
       ),
     data: {
@@ -93,7 +93,7 @@ const mainNavRoutes: MainNavRoute[] = [
   {
     path: 'webassemblyTests',
     loadChildren: async () =>
-      import('@wolsok/features-wasm-test').then((m) => m.WasmTestModule),
+      import('@wolsok/feat-wasm-test').then((m) => m.WasmTestModule),
     data: { linkText: 'Calculating Fibonacci with WebAssembly' },
   },
 ];

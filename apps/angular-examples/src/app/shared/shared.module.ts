@@ -22,11 +22,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ElemResizedModule, ElevateCardModule } from '@wolsok/ui-kit';
 import { WsThanosModule } from '@wolsok/ws-thanos';
 import { Angulartics2Module } from 'angulartics2';
-import { RenderShaderComponent } from './render-shader/render-shader.component';
+import { RenderShaderModule } from '@wolsok/ui-kit';
 
 @NgModule({
   imports: [CommonModule, ElevateCardModule],
-  declarations: [RenderShaderComponent],
   exports: [
     ElevateCardModule,
     CommonModule,
@@ -50,7 +49,7 @@ import { RenderShaderComponent } from './render-shader/render-shader.component';
     MatChipsModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
-    RenderShaderComponent,
+    RenderShaderModule,
     Angulartics2Module,
     WsThanosModule,
     ElemResizedModule,

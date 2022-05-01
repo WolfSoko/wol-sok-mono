@@ -1,0 +1,42 @@
+{
+  "projectType": "library",
+  "root": "libs/features/api/auth",
+  "sourceRoot": "libs/features/api/auth/src",
+  "prefix": "ft-api-auth",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:ng-packagr-lite",
+      "outputs": ["dist/libs/features/api/auth"],
+      "options": {
+        "project": "libs/features/api/auth/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/features/api/auth/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "libs/features/api/auth/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/libs/features/api/auth"],
+      "options": {
+        "jestConfig": "libs/features/api/auth/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": [
+          "libs/features/api/auth/**/*.ts",
+          "libs/features/api/auth/**/*.html"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
