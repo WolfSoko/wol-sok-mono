@@ -1,0 +1,25 @@
+{
+  "root": "libs/features/reaction-diffusion-kernels",
+  "sourceRoot": "libs/features/reaction-diffusion-kernels/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/features/reaction-diffusion-kernels",
+        "main": "libs/features/reaction-diffusion-kernels/src/index.ts",
+        "tsConfig": "libs/features/reaction-diffusion-kernels/tsconfig.lib.json",
+        "assets": ["libs/features/reaction-diffusion-kernels/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/features/reaction-diffusion-kernels/**/*.ts"]
+      }
+    }
+  },
+  "tags": ["shared"]
+}

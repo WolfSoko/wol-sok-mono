@@ -1,4 +1,4 @@
-import { IKernelFunctionThis } from '@wolsok/utils-gpu-calc';
+import type { IKernelFunctionThis } from '@wolsok/utils-gpu-calc';
 
 function mixVal(value1: number, value2: number, ratio: number): number {
   return value1 * (1.0 - ratio) + value2 * ratio;

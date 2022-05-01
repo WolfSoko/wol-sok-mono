@@ -93,7 +93,7 @@ const mainNavRoutes: MainNavRoute[] = [
   {
     path: 'webassemblyTests',
     loadChildren: async () =>
-      import('@@wolsok/features-wasm-test').then((m) => m.WasmTestModule),
+      import('@wolsok/features-wasm-test').then((m) => m.WasmTestModule),
     data: { linkText: 'Calculating Fibonacci with WebAssembly' },
   },
 ];

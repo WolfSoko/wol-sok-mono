@@ -1,4 +1,10 @@
 import {
+  CalcNextGridConstants,
+  CalcNextGridKernelParams,
+  calcNextKernelModule,
+  imageKernelModule,
+} from '@wolsok/features-reaction-diffusion-kernels';
+import {
   GpuAdapterService,
   IKernelRunShortcut,
   IKernelRunShortcutBase,
@@ -6,12 +12,6 @@ import {
 } from '@wolsok/utils-gpu-calc';
 import { Observable } from 'rxjs';
 import { CellWeights, weightsToArray } from '../cell-weights-to-array';
-import {
-  CalcNextGridConstants,
-  CalcNextGridKernelParams,
-  calcNextKernelModule,
-} from '../kernels/reaction-diff/calc-next-grid-kernel.gpujs';
-import { imageKernelModule } from '../kernels/reaction-diff/image-kernel.gpujs';
 import { ReactionDiffCalcParams } from './reaction-diff-calc-params';
 import { ReactionDiffCalculator } from './reaction-diff-calculator';
 
@@ -211,12 +211,7 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
       .createKernel(imageKernelModule.imageKernel)
       .setOutput([this.width, this.height]);
 
-    kernel.addFunction(imageKernelModule.usedFunctions[0], {
-      name: 'mixVal',
-      argumentNames: ['value1', 'value2', 'ratio'],
-      argumentTypes: { value1: 'float', value2: 'float', ratio: 'float' },
-      returnType: 'float',
-    });
+    kernel.addFunction(imageKernelModule.usedFunctions[0]);
     return kernel.setGraphical(true);
   }
 }
