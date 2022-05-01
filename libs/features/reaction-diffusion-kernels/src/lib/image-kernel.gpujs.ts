@@ -1,10 +1,12 @@
-import type { IKernelFunctionThis } from '@wolsok/utils-gpu-calc';
+import type {
+  IKernelFunctionThis,
+  ThreadFunction,
+} from '@wolsok/utils-gpu-calc';
+import type { KernelDefinition } from './kernel.definition';
 
 function mixVal(value1: number, value2: number, ratio: number): number {
   return value1 * (1.0 - ratio) + value2 * ratio;
 }
-
-const usedFunctions = [mixVal];
 
 function imageKernel(this: IKernelFunctionThis, grid: number[][][]): void {
   const aVal = grid[0][this.thread.y][this.thread.x];
@@ -50,7 +52,9 @@ function imageKernel(this: IKernelFunctionThis, grid: number[][][]): void {
   }
 }
 
-export const imageKernelModule: {
-  usedFunctions: ((value1: number, value2: number, ratio: number) => number)[];
-  imageKernel: (this: IKernelFunctionThis, grid: number[][][]) => void;
-} = { usedFunctions, imageKernel };
+export const imageKernelModule: KernelDefinition<
+  Parameters<typeof imageKernel>
+> = {
+  threadFunctions: [{ threadFn: mixVal as ThreadFunction }],
+  kernel: imageKernel,
+};

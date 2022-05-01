@@ -1,6 +1,4 @@
 import {
-  CalcNextGridConstants,
-  CalcNextGridKernelParams,
   calcNextKernelModule,
   imageKernelModule,
 } from '@wolsok/features-reaction-diffusion-kernels';
@@ -190,28 +188,31 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
   }
 
   private createCalcNextGpuKernel(): IKernelRunShortcutBase<Texture> {
-    return this.gpuJs
-      .createKernel<CalcNextGridKernelParams, CalcNextGridConstants, Texture>(
-        calcNextKernelModule.calcNextKernel,
-        {
-          output: [this.width, this.height, 2],
-          functions: calcNextKernelModule.usedFunctions,
-        }
-      )
-      .setImmutable(true)
-      .setConstants({
-        width: this.width,
-        height: this.height,
-      } as CalcNextGridConstants)
-      .setPipeline(true);
+    const pipeline: IKernelRunShortcutBase<Texture> = this.gpuJs
+      .createKernel(calcNextKernelModule.kernel, {
+        output: [this.width, this.height, 2],
+        pipeline: true,
+        constants: {
+          width: this.width,
+          height: this.height,
+        },
+      })
+      .setImmutable(true) as IKernelRunShortcutBase<Texture>;
+
+    calcNextKernelModule.threadFunctions.forEach(({ settings, threadFn }) => {
+      pipeline.addFunction(threadFn, settings);
+    });
+
+    return pipeline;
   }
 
   private createImageKernel(): IKernelRunShortcut {
     const kernel: IKernelRunShortcutBase = this.gpuJs
-      .createKernel(imageKernelModule.imageKernel)
+      .createKernel(imageKernelModule.kernel)
       .setOutput([this.width, this.height]);
-
-    kernel.addFunction(imageKernelModule.usedFunctions[0]);
+    imageKernelModule.threadFunctions.forEach(({ threadFn, settings }) => {
+      kernel.addFunction(threadFn, settings);
+    });
     return kernel.setGraphical(true);
   }
 }
