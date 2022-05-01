@@ -1,9 +1,12 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { AuthenticationService, Profile } from '@wolsok/feat-api-auth';
+import {
+  AuthenticationService,
+  AuthQuery,
+  Profile,
+} from '@wolsok/feat-api-auth';
 import { Observable } from 'rxjs';
 import { startWith } from 'rxjs/operators';
-import { AuthQuery } from '../core';
 
 @UntilDestroy()
 @Component({
