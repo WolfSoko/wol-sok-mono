@@ -23,30 +23,23 @@
               },
               {
                 "sourceTag": "feature",
-                "onlyDependOnLibsWithTags": [
-                  "shared",
-                  "api"
-                ]
+                "onlyDependOnLibsWithTags": ["feat-shared", "shared", "api"]
               },
               {
                 "sourceTag": "feature:lazy",
-                "onlyDependOnLibsWithTags": [
-                  "shared",
-                  "api"
-                ]
+                "onlyDependOnLibsWithTags": ["feat-shared", "shared", "api"]
+              },
+              {
+                "sourceTag": "feat-shared",
+                "onlyDependOnLibsWithTags": ["shared", "api"]
               },
               {
                 "sourceTag": "shared",
-                "onlyDependOnLibsWithTags": [
-                  "shared",
-                  "api"
-                ]
+                "onlyDependOnLibsWithTags": ["shared", "api"]
               },
               {
                 "sourceTag": "api",
-                "onlyDependOnLibsWithTags": [
-                  "api"
-                ]
+                "onlyDependOnLibsWithTags": ["api"]
               }
             ]
           }
