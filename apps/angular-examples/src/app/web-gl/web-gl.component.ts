@@ -7,9 +7,9 @@ import {
   NgZone,
   OnDestroy,
   OnInit,
-  ViewChild
-} from "@angular/core";
-import {merge, Observable} from "rxjs";
+  ViewChild,
+} from '@angular/core';
+import { merge, Observable } from 'rxjs';
 
 import {
   AmbientLight,
@@ -31,11 +31,11 @@ import {
   SpotLight,
   UniformsLib,
   UniformsUtils,
-  WebGLRenderer
-} from "three";
-import {OrbitControls} from "three-orbitcontrols-ts";
-import {MandelbrotFragment, MandelbrotVertex} from "./mandelbrot-shader";
-import {map} from "rxjs/operators";
+  WebGLRenderer,
+} from 'three';
+import { OrbitControls } from 'three-orbitcontrols-ts';
+import { MandelbrotFragment, MandelbrotVertex } from './mandelbrot-shader';
+import { map } from 'rxjs/operators';
 
 const TAU = Math.PI / 2;
 
@@ -43,16 +43,13 @@ const TAU = Math.PI / 2;
   selector: 'app-web-gl',
   templateUrl: './web-gl.component.html',
   styleUrls: ['./web-gl.component.less'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
-
-
   @ViewChild('webGlCanvas', { static: true }) webGlCanvas!: ElementRef;
 
   mouseup$ = new EventEmitter<MouseEvent>();
   mousedown$ = new EventEmitter<MouseEvent>();
-
 
   private renderer!: WebGLRenderer;
   private scene!: Scene;
@@ -65,27 +62,58 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
   private pointLight!: PointLight;
   private pointLightSphere!: Mesh;
   private clock!: Clock;
-  private controls!: any;
+  private controls!: unknown;
 
   private activateLook$!: Observable<boolean>;
 
-  constructor(private zone: NgZone) {
+  constructor(private zone: NgZone) {}
+
+  private static createLight(color: ColorRepresentation | undefined) {
+    const pointLight = new PointLight(color);
+    pointLight.castShadow = true;
+    pointLight.shadow.camera.near = 1;
+    pointLight.shadow.camera.far = 60;
+    pointLight.shadow.bias = -0.005; // reduces self-shadowing on double-sided objects
+    return pointLight;
+  }
+  private static createMandelbrotPlane(): Mesh {
+    return new Mesh(
+      new PlaneGeometry(100, 100, 1, 1),
+      WebGlComponent.createMandelbrotMaterial()
+    );
+  }
+
+  private static createMandelbrotMaterial(): ShaderMaterial {
+    const uniforms = UniformsUtils.merge([
+      UniformsLib['lights'],
+      { zoom: { type: 'f', value: 0.05 } },
+    ]);
+
+    return new ShaderMaterial({
+      uniforms,
+      vertexShader: MandelbrotVertex,
+      fragmentShader: MandelbrotFragment,
+      lights: true,
+    });
   }
 
   ngOnInit(): void {
-    this.activateLook$ =
-      merge(
-        this.mousedown$.pipe(
-          map((event) => {
-            event.stopPropagation();
-            event.preventDefault();
-            return true;
-          })),
-        this.mouseup$.pipe(map((event) => {
+    this.activateLook$ = merge(
+      this.mousedown$.pipe(
+        map((event) => {
+          event.stopPropagation();
+          event.preventDefault();
+          return true;
+        })
+      ),
+      this.mouseup$.pipe(
+        map((event) => {
           event.stopPropagation();
           event.preventDefault();
           return false;
-        })));
+        })
+      )
+    );
   }
 
   ngOnDestroy(): void {
@@ -99,7 +127,12 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
     const canvas: HTMLCanvasElement = this.webGlCanvas.nativeElement;
     this.width = canvas.clientWidth;
     this.height = canvas.clientHeight;
-    this.camera = new PerspectiveCamera(75, this.width / this.height, 0.1, 1000);
+    this.camera = new PerspectiveCamera(
+      75,
+      this.width / this.height,
+      0.1,
+      1000
+    );
     this.camera.rotation.x = -Math.PI / 5;
     this.camera.position.z = -0.6;
     this.camera.position.y = 1.86;
@@ -118,27 +151,36 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
     spotLight.position.x = 3;
     spotLight.position.y = 2;
     this.scene.add(spotLight);
-    const pointLight = this.createLight(0xff1111);
+    const pointLight = WebGlComponent.createLight(0xff1111);
     pointLight.position.y = 3;
 
     this.pointLight = pointLight;
     const sphere = new Mesh(new SphereGeometry(0.2, 8, 8));
     sphere.name = 'sphere';
-    sphere.position.set(pointLight.position.x, pointLight.position.y, pointLight.position.z);
+    sphere.position.set(
+      pointLight.position.x,
+      pointLight.position.y,
+      pointLight.position.z
+    );
     this.pointLightSphere = sphere;
     this.pointLight.add(sphere);
 
     this.scene.add(pointLight);
 
     const geometry = new BoxGeometry(1, 1, 1);
-    const material = new MeshPhongMaterial({ color: 0x6611dd, specular: 0x009900, shininess: 30, flatShading: true });
+    const material = new MeshPhongMaterial({
+      color: 0x6611dd,
+      specular: 0x009900,
+      shininess: 30,
+      flatShading: true,
+    });
     this.cube = new Mesh(geometry, material);
     this.cube.castShadow = true;
     this.cube.receiveShadow = true;
     this.cube.position.y = 0.75;
     this.scene.add(this.cube);
 
-    this.plane = this.createMandlebrotPlane();
+    this.plane = WebGlComponent.createMandelbrotPlane();
     this.plane.rotation.x = -TAU;
     this.plane.rotation.z = -0.85 * Math.PI;
     this.plane.translateX(7.5);
@@ -154,16 +196,6 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.animate(0);
   }
-
-  private createLight(color: ColorRepresentation | undefined) {
-    const pointLight = new PointLight(color);
-    pointLight.castShadow = true;
-    pointLight.shadow.camera.near = 1;
-    pointLight.shadow.camera.far = 60;
-    pointLight.shadow.bias = -0.005; // reduces self-shadowing on double-sided objects
-    return pointLight;
-  }
-
 
   private animate(time: number) {
     this.zone.runOutsideAngular(() => {
@@ -186,30 +218,12 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
       );
       this.pointLight.color.set(pointLightColor);
 
-      const meshBasicMaterial = (this.pointLightSphere.material as MeshBasicMaterial);
+      const meshBasicMaterial = this.pointLightSphere
+        .material as MeshBasicMaterial;
       meshBasicMaterial.color.set(pointLightColor);
 
       this.renderer.render(this.scene, this.camera);
       requestAnimationFrame((nextTime) => this.animate(nextTime));
-    });
-  }
-
-  private createMandlebrotPlane(): Mesh {
-    return new Mesh(new PlaneGeometry(100, 100, 1, 1), this.createMandelbrotMaterial());
-  }
-
-  private createMandelbrotMaterial(): ShaderMaterial {
-    const uniforms = UniformsUtils
-      .merge([
-        UniformsLib['lights'],
-        {zoom: {type: 'f', value: 0.05}}
-      ]);
-
-    return new ShaderMaterial({
-      uniforms,
-      vertexShader: MandelbrotVertex,
-      fragmentShader: MandelbrotFragment,
-      lights: true,
     });
   }
 
@@ -218,8 +232,7 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
     const canvas: HTMLCanvasElement = this.webGlCanvas.nativeElement;
     const width = Math.min(canvas.parentElement?.clientWidth ?? 1, 1024);
     const height = canvas.parentElement?.clientHeight ?? 1;
-    if (width !== this.width ||
-      height !== this.height) {
+    if (width !== this.width || height !== this.height) {
       this.renderer.setSize(width, height, true);
       this.camera.aspect = width / height;
       this.camera.updateProjectionMatrix();
