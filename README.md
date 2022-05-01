@@ -1,3 +1,5 @@
+[![.github/workflows/ci.yml](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/ci.yml/badge.svg)](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/ci.yml)
+
 # WolSok: Some examples with Angular+, Angular-Material, p5, three.js,...
 
 Just some examples implemented in angular for topics that are interesting to me.
