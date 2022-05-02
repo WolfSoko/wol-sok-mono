@@ -1,4 +1,4 @@
-<div class="stats" #stats [style.display]="showFps ? 'block' : 'none'"></div>
+<div class="stats" *ngIf="showFps">{{ fps$ | async }}FPS</div>
 <div #canvasContainer class="canvasContainer">
   <canvas
     #webGLCanvas

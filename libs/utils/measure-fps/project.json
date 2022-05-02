@@ -1,0 +1,33 @@
+{
+  "root": "libs/utils/measure-fps",
+  "sourceRoot": "libs/utils/measure-fps/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/utils/measure-fps",
+        "main": "libs/utils/measure-fps/src/index.ts",
+        "tsConfig": "libs/utils/measure-fps/tsconfig.lib.json",
+        "assets": ["libs/utils/measure-fps/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/utils/measure-fps/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/libs/utils/measure-fps"],
+      "options": {
+        "jestConfig": "libs/utils/measure-fps/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["shared"]
+}

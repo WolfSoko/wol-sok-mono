@@ -33,6 +33,7 @@
       "@wolsok/ui-kit": ["libs/ui-kit/src/index.ts"],
       "@wolsok/utils-decorators": ["libs/utils/decorators/src/index.ts"],
       "@wolsok/utils-gpu-calc": ["libs/utils/gpu-calc/src/index.ts"],
+      "@wolsok/utils-measure-fps": ["libs/utils/measure-fps/src/index.ts"],
       "@wolsok/utils-rx-operators": ["libs/utils/rx-operators/src/index.ts"],
       "@wolsok/ws-thanos": ["libs/public/ws-thanos/src/index.ts"]
     }

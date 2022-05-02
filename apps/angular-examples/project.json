@@ -6,9 +6,7 @@
   "targets": {
     "build": {
       "executor": "@nrwl/angular:webpack-browser",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/angular-examples",
         "index": "apps/angular-examples/src/index.html",
@@ -26,9 +24,7 @@
           "apps/angular-examples/src/manifest.json",
           "apps/angular-examples/src/assets"
         ],
-        "styles": [
-          "apps/angular-examples/src/styles.scss"
-        ],
+        "styles": ["apps/angular-examples/src/styles.scss"],
         "scripts": [
           "node_modules/vega-lite/build/vega-lite.js",
           {
@@ -77,8 +73,8 @@
         },
         "development": {
           "preserveSymlinks": true,
-          "buildOptimizer": false,
-          "optimization": false,
+          "buildOptimizer": true,
+          "optimization": true,
           "vendorChunk": true,
           "extractLicenses": false,
           "sourceMap": true,
@@ -133,16 +129,12 @@
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": [
-        "coverage/apps/angular-examples"
-      ],
+      "outputs": ["coverage/apps/angular-examples"],
       "options": {
         "jestConfig": "apps/angular-examples/jest.config.ts",
         "passWithNoTests": false
       }
     }
   },
-  "tags": [
-    "app"
-  ]
+  "tags": ["app"]
 }

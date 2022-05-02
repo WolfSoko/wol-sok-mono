@@ -1,3 +1,5 @@
+import { MeasureFps } from '@wolsok/utils-measure-fps';
+import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -14,7 +16,7 @@ import {
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
-import * as Stats from 'stats.js';
+import { sampleTime } from 'rxjs';
 import {
   Camera,
   Mesh,
@@ -33,6 +35,7 @@ import { defaultVertexShader } from './default-vertex-shader';
   templateUrl: './render-shader.component.html',
   styleUrls: ['./render-shader.component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [MeasureFps],
 })
 export class RenderShaderComponent
   implements AfterViewInit, OnChanges, OnDestroy
@@ -50,6 +53,9 @@ export class RenderShaderComponent
   @ViewChild('webGLCanvas', { static: true })
   private webGLCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('stats', { static: true }) private statsElem!: ElementRef;
+
+  fps$ = this.measureFps.fps$.pipe(sampleTime(300));
+
   private renderer?: Renderer;
 
   private camera?: Camera;
@@ -63,9 +69,11 @@ export class RenderShaderComponent
     resolution: { value: Vector2 };
     time: { value: number };
   };
-  private stats?: Stats;
 
-  constructor(@Inject(NgZone) private _ngZone: NgZone) {}
+  constructor(
+    @Inject(NgZone) private _ngZone: NgZone,
+    private readonly measureFps: MeasureFps
+  ) {}
 
   private static getOffsetLeft(elem: HTMLElement | null) {
     return RenderShaderComponent.getOffset(elem, 'offsetLeft');
@@ -107,8 +115,6 @@ export class RenderShaderComponent
     this.onResize();
 
     this.scene = new Scene();
-    this.stats = new Stats();
-    this.statsElem.nativeElement.appendChild(this.stats.dom);
 
     this.camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
     this.geometry = new PlaneBufferGeometry(2, 2);
@@ -207,10 +213,8 @@ export class RenderShaderComponent
 
   render(time: number = 1) {
     if (this.uniforms && this.scene && this.camera) {
-      this.stats?.begin();
       this.uniforms.time.value = time / 1000;
       this.renderer?.render(this.scene, this.camera);
-      this.stats?.end();
     }
   }
 
@@ -221,6 +225,7 @@ export class RenderShaderComponent
           requestAnimationFrame((timestamp) => this.animate(timestamp));
         }
         this.render(time);
+        this.measureFps.signalFrameReady();
       });
     } catch (e) {
       this.error.next(e);
@@ -230,6 +235,7 @@ export class RenderShaderComponent
 
 @NgModule({
   declarations: [RenderShaderComponent],
+  imports: [CommonModule],
   exports: [RenderShaderComponent],
 })
 export class RenderShaderModule {}
