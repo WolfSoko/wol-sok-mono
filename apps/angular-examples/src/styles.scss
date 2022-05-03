@@ -1,15 +1,17 @@
 /* You can add global styles to this file, and also import other style files */
 @import 'normalize.css/normalize.css';
-@import "@angular/material/prebuilt-themes/purple-green.css";
-@import "./app-loading-style.scss";
+@import 'apps/angular-examples/src/styles/app-loading-style';
+@import 'apps/angular-examples/src/styles/ws-material-theme';
 
-body, html {
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+body,
+html {
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
 
   * {
     box-sizing: border-box;
 
-    &:before, &:after {
+    &:before,
+    &:after {
       box-sizing: border-box;
     }
   }
@@ -21,5 +23,3 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
 }
-
-

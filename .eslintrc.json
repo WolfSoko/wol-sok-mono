@@ -10,7 +10,6 @@
           "error",
           {
             "allow": [],
-            // update depConstraints based on your tags
             "depConstraints": [
               {
                 "sourceTag": "app",

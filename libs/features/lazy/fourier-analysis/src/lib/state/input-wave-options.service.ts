@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { filterNotNull } from '@wolsok/utils-rx-operators';
+import { filterNotNil } from 'wolsok/utils-operators';
 import {
   InputWaveOptionsStore,
   waveOptionsFromWave,
@@ -14,7 +14,7 @@ export class InputWaveOptionsService {
   ) {
     inputWaveQuery
       .selectActive()
-      .pipe(filterNotNull)
+      .pipe(filterNotNil)
       .subscribe((wave) =>
         this.inputWaveOptionsStore.update(waveOptionsFromWave(wave))
       );

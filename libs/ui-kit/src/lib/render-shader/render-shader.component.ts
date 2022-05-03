@@ -28,14 +28,15 @@ import {
   Vector2,
   WebGLRenderer,
 } from 'three';
+import { ShowFpsModule } from '../show-fps/show-fps.component';
 import { defaultVertexShader } from './default-vertex-shader';
 
 @Component({
   selector: 'ws-shared-ui-render-shader',
   templateUrl: './render-shader.component.html',
-  styleUrls: ['./render-shader.component.less'],
+  styleUrls: ['./render-shader.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [MeasureFps],
+  providers: [{ provide: MeasureFps, useClass: MeasureFps }],
 })
 export class RenderShaderComponent
   implements AfterViewInit, OnChanges, OnDestroy
@@ -235,7 +236,7 @@ export class RenderShaderComponent
 
 @NgModule({
   declarations: [RenderShaderComponent],
-  imports: [CommonModule],
+  imports: [CommonModule, ShowFpsModule],
   exports: [RenderShaderComponent],
 })
 export class RenderShaderModule {}

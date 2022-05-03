@@ -1,5 +1,5 @@
-@import "../../variables";
-@import "@angular/material/theming";
+@import 'apps/angular-examples/src/styles/variables';
+@import '@angular/material/theming';
 
 :host {
   position: relative;
@@ -30,7 +30,6 @@
   }
 
   .page-title {
-    background-color: rgba(30, 30, 30, 0.0);
     pointer-events: none;
     height: 100%;
     padding: 0.5rem;

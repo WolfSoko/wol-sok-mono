@@ -21,7 +21,7 @@
     .path {
       stroke-dasharray: 1, 200;
       stroke-dashoffset: 0;
-      stroke: hsl(300,24%,71%);
+      stroke: hsl(300, 24%, 71%);
       animation: dash 1.5s ease-in-out infinite;
       stroke-linecap: round;
     }
@@ -36,7 +36,7 @@
 
 @keyframes dash {
   0% {
-    stroke: hsl(300,24%,71%);
+    stroke: hsl(300, 24%, 71%);
     stroke-dasharray: 1, 200;
     stroke-dashoffset: 0;
   }
@@ -46,9 +46,8 @@
     stroke-dashoffset: -35px;
   }
   100% {
-    stroke: hsl(300,24%,71%);
+    stroke: hsl(300, 24%, 71%);
     stroke-dasharray: 89, 200;
     stroke-dashoffset: -124px;
   }
 }
-

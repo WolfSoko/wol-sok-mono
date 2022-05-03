@@ -1,4 +1,8 @@
-<div class="stats" *ngIf="showFps">{{ fps$ | async }}FPS</div>
+<ws-shared-ui-show-fps
+  class="stats"
+  [show]="showFps"
+  [fps]="(fps$ | async) ?? 0"
+></ws-shared-ui-show-fps>
 <div #canvasContainer class="canvasContainer">
   <canvas
     #webGLCanvas

@@ -1,4 +1,4 @@
-import { WorkerPostParams } from '@wolsok/utils-rx-operators';
+import { WorkerPostParams } from 'wolsok/utils-operators';
 import { AddChemicalsParams } from './add-chemicals-param';
 import { CalcNextParam } from './calc-next-param';
 import { Cell } from './cell';

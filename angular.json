@@ -15,7 +15,7 @@
     "utils-decorators": "libs/utils/decorators",
     "utils-gpu-calc": "libs/utils/gpu-calc",
     "utils-measure-fps": "libs/utils/measure-fps",
-    "utils-rx-operators": "libs/utils/rx-operators",
+    "utils-operators": "libs/utils/operators",
     "ws-thanos": "libs/public/ws-thanos"
   }
 }

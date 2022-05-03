@@ -1,1 +1,1 @@
-export * from './lib/measure.fps';
+export * from './lib/measure-fps';

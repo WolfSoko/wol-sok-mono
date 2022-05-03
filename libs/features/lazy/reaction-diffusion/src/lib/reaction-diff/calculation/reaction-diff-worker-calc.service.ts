@@ -1,4 +1,4 @@
-import { mapWorker, WorkerPostParams } from '@wolsok/utils-rx-operators';
+import { mapWorkerOp, WorkerPostParams } from 'wolsok/utils-operators';
 import * as p5 from 'p5';
 import { merge, Observable, range, Subject, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -215,7 +215,7 @@ export class ReactionDiffWorkerCalcService implements ReactionDiffCalculator {
         filter(
           () => this.calcRunning < this.numberThreads && this.canCalculate
         ),
-        mapWorker(calcNextDiffStep)
+        mapWorkerOp(calcNextDiffStep)
       )
     );
 
@@ -294,7 +294,7 @@ export class ReactionDiffWorkerCalcService implements ReactionDiffCalculator {
       WorkerPostParams<AddChemicalsParams>
     >();
     this.addChemicalsSubject$
-      .pipe(mapWorker(addChemicals))
+      .pipe(mapWorkerOp(addChemicals))
       .subscribe((gridBuffer: ArrayBufferLike) => {
         this.grid = new Float32Array(gridBuffer);
         this.canCalculate = true;

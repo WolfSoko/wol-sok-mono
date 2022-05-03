@@ -1,4 +1,4 @@
-import { MeasureFps } from './measure.fps';
+import { MeasureFps } from './measure-fps';
 
 describe('MeasureFps', () => {
   let measureFps: MeasureFps;
@@ -47,9 +47,7 @@ describe('MeasureFps', () => {
     expect(nextSpy).lastCalledWith(0.4);
     whenSignalFrameReadyAfterMs(50);
     expect(nextSpy).lastCalledWith(0.6);
-    whenSignalFrameReadyAfterMs(50);
-    expect(nextSpy).lastCalledWith(0.8);
-    whenSignalFrameReadyAfterMs(50);
+    whenSignalFrameReadyAfterMs(150);
     expect(nextSpy).lastCalledWith(1);
   });
 

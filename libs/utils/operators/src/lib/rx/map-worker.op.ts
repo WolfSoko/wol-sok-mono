@@ -59,7 +59,7 @@ function createWorker<T, R>(fn: (input: T) => WorkerParams<R>) {
   return new Worker(url);
 }
 
-export const mapWorker =
+export const mapWorkerOp =
   <T, R>(workerFunction: (input: T) => WorkerParams<R>) =>
   (source: Observable<WorkerParams<T>>) =>
     new Observable<R>((subscriber) => {

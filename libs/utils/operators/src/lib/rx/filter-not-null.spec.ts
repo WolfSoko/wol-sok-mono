@@ -1,5 +1,5 @@
 import { TestScheduler } from 'rxjs/testing';
-import { filterNotNull } from './filter-not-null';
+import { filterNotNil } from './filter-not-null.op';
 
 const testScheduler = new TestScheduler((actual, expected) => {
   // asserting the two objects are equal - required
@@ -19,7 +19,7 @@ describe('filterNotNull', () => {
         e: {},
         f: [],
       };
-      const source = cold('abcdef|', values).pipe(filterNotNull);
+      const source = cold('abcdef|', values).pipe(filterNotNil);
       const expect1 = 'ab--ef|';
       expectObservable(source).toBe(expect1, values);
     });

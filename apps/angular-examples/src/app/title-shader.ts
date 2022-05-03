@@ -7,75 +7,116 @@ uniform vec2 resolution;
 uniform vec2 mouse;
 uniform float time;
 
-float random (in vec2 _st) {
-    return fract(sin(dot(_st.xy,
-                         vec2(12.9898,78.233)))*
-        43758.5453123);
+const float cloudscale = 0.4;
+const float speed = 0.02;
+const float clouddark = 0.6;
+const float cloudlight = 0.3;
+const float cloudcover = 0.3;
+const float cloudalpha = 7.0;
+const float skytint = 0.5;
+const vec3 skycolour1 = vec3(0.2, 0.4, 0.6);
+const vec3 skycolour2 = vec3(0.4, 0.7, 1.0);
+
+const mat2 m = mat2( 1.6,  1.2, -1.2,  1.6 );
+
+vec2 hash( vec2 p ) {
+  p = vec2(dot(p,vec2(127.1,311.7)), dot(p,vec2(269.5,183.3)));
+  return -1.0 + 2.0 * fract(sin(p)*43758.5453123);
 }
 
-float noise (in vec2 _st) {
-    vec2 i = floor(_st);
-    vec2 f = fract(_st);
-
-    // Four corners in 2D of a tile
-    float a = random(i);
-    float b = random(i + vec2(1.0, 0.0));
-    float c = random(i + vec2(0.0, 1.0));
-    float d = random(i + vec2(1.0, 1.0));
-
-    vec2 u = f * f * (3.0 - 2.0 * f);
-
-    return mix(a, b, u.x) +
-            (c - a)* u.y * (1.0 - u.x) +
-            (d - b) * u.x * u.y;
+float noise( in vec2 p ) {
+    const float K1 = 0.366025404; // (sqrt(3)-1)/2;
+    const float K2 = 0.211324865; // (3-sqrt(3))/6;
+    vec2 i = floor(p + (p.x+p.y)*K1);
+    vec2 a = p - i + (i.x+i.y)*K2;
+    float useAx = step(a.y, a.x);
+    vec2 o = useAx * vec2(1.0,0.0) + (1.0 - useAx) * vec2(0.0,1.0); //vec2 of = 0.5 + 0.5*vec2(sign(a.x-a.y), sign(a.y-a.x));
+    vec2 b = a - o + K2;
+    vec2 c = a - 1.0 + 2.0*K2;
+    vec3 h = max(0.5-vec3(dot(a,a), dot(b,b), dot(c,c) ), 0.0 );
+    vec3 n = h*h*h*h*vec3( dot(a,hash(i+0.0)), dot(b,hash(i+o)), dot(c,hash(i+1.0)));
+    return dot(n, vec3(70.0));
 }
 
-#define NUM_OCTAVES 5
-
-float fbm ( in vec2 _st) {
-    float v = 0.0;
-    float a = 0.5;
-    vec2 shift = vec2(100.0);
-    // Rotate to reduce axial bias
-    mat2 rot = mat2(cos(0.5), sin(0.5),
-                    -sin(0.5), cos(0.50));
-    for (int i = 0; i < NUM_OCTAVES; ++i) {
-        v += a * noise(_st);
-        _st = rot * _st * 2.0 + shift;
-        a *= 0.5;
-    }
-    return v;
+float fbm(vec2 n) {
+  float total = 0.0, amplitude = 0.1;
+  for (int i = 0; i < 7; i++) {
+    total += noise(n) * amplitude;
+    n = m * n;
+    amplitude *= 0.4;
+  }
+  return total;
 }
+
+// -----------------------------------------------
 
 void main() {
-    vec2 dim = gl_FragCoord.xy/resolution.xy;
-    vec2 st = dim*vec2(3., 3. * resolution.y / resolution.x);
-     st += st * abs(sin(time*0.1)*3.0);
-    vec3 color = vec3(0.0);
+    vec2 p = gl_FragCoord.xy / resolution.xy;
+    vec2 uv = p*vec2(resolution.x/resolution.y,1.0);
+    float depthOffHeaven = p.y;
+    float speed = speed;
+    float scaledTime = time * speed;
+    float q = fbm(uv * cloudscale * 0.5);
 
-    vec2 q = vec2(0.);
-    q.x = fbm( st + 0.00*time);
-    q.y = fbm( st + vec2(1.0));
+    //ridged noise shape
+    float r = 0.0;
+    uv *= cloudscale;
+    uv -= q - scaledTime;
+    float weight = 0.8;
+    for (int i=0; i<8; i++){
+    r += abs(weight*noise( uv ));
+        uv = m*uv + scaledTime;
+    weight *= 0.7;
+    }
 
-    vec2 r = vec2(0.);
-    r.x = fbm( st + 1.0*q + vec2(1.7,9.2)+ 0.15*time );
-    r.y = fbm( st + 1.0*q + vec2(8.3,2.8)+ 0.126*time);
+    //noise shape
+    float f = 0.0;
+    uv = p*vec2(resolution.x/resolution.y,1.0);
+    uv *= cloudscale;
+    uv -= q - scaledTime;
+    weight = 0.7;
+    for (int i=0; i<8; i++){
+    f += weight*noise( uv );
+        uv = m*uv + scaledTime;
+    weight *= 0.6;
+    }
 
-    r = r * (mouse.xy - 0.5) * vec2(4., 0.5);
+    f *= r + f;
 
-    float f = fbm(st+r);
+    //noise colour
+    float c = 0.0;
+    scaledTime = time * speed * 2.0;
+    uv = p*vec2(resolution.x/resolution.y,1.0);
+    uv *= cloudscale*2.0;
+    uv -= q - scaledTime;
+    weight = 0.4;
+    for (int i=0; i<7; i++){
+    c += weight*noise( uv );
+        uv = m*uv + scaledTime;
+    weight *= 0.6;
+    }
 
-    color = mix(vec3(0.101961,0.619608,0.666667),
-                vec3(0.666667 * abs(r.x),0.666667,0.498039),
-                clamp((f*f)*4.0,0.0,1.0));
+    //noise ridge colour
+    float c1 = 0.0;
+    scaledTime = time * speed * 3.0;
+    uv = p*vec2(resolution.x/resolution.y,1.0);
+    uv *= cloudscale*3.0;
+    uv -= q - scaledTime;
+    weight = 0.4;
+    for (int i=0; i<7; i++){
+    c1 += abs(weight*noise( uv ));
+        uv = m*uv + scaledTime;
+    weight *= 0.6;
+    }
 
-    color = mix(color,
-                vec3(0,0,0.164706),
-                clamp(length(q),0.0,1.0));
+    c += c1;
 
-    color = mix(color,
-                vec3(0.666667,1,0.666 * r.x),
-                clamp(length(r.x),0.0,1.0));
+    vec3 skycolour = mix(skycolour2, skycolour1, p.y);
+    vec3 cloudcolour = vec3(1.1, 1.1, 0.9) * clamp((clouddark + cloudlight*c), 0.0, 1.0);
 
-    gl_FragColor = vec4((f*f*f+.6*f*f+.5*f)*color,1.);
+    f = cloudcover + cloudalpha*f*r;
+
+    vec3 result = mix(skycolour, clamp(skytint * skycolour + cloudcolour, 0.0, 1.0), clamp(f + c, 0.0, 1.0));
+
+    gl_FragColor = vec4( result, 1.0 );
 }`;

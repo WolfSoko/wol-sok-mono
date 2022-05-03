@@ -13,7 +13,7 @@ import {
   IKernelFunctionThis,
   IKernelRunShortcut,
 } from '@wolsok/utils-gpu-calc';
-import { distinctUntilChangedDeepEqualObj } from '@wolsok/utils-rx-operators';
+import { distinctUntilChangedDeepEqualObj } from 'wolsok/utils-operators';
 
 import {
   animationFrameScheduler,
@@ -249,16 +249,15 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
     this.replaceCanvas(this.gpuColorizer.canvas);
   }
 
-  updateCanvasSize({ newWidth }: ResizedEvent) {
+  async updateCanvasSize({ newWidth }: ResizedEvent) {
     const canvas: HTMLCanvasElement | null = this.gpuCanvasWrapper.nativeElement
       .firstElementChild as HTMLCanvasElement;
     if (!canvas) {
       return;
     }
     const height: number = this.calcHeightOfCanvas(newWidth);
-    console.log('updateCanvasSize', newWidth, height);
     this.dimensionsOfCanvas = [newWidth, height];
-    this.createGPUColorizer(this.additionForm.get('useGPU')?.value);
+    await this.createGPUColorizer(this.additionForm.get('useGPU')?.value);
   }
 
   private calcHeightOfCanvas(newWidth: number): number {

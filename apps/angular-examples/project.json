@@ -25,6 +25,12 @@
           "apps/angular-examples/src/assets"
         ],
         "styles": ["apps/angular-examples/src/styles.scss"],
+        "stylePreprocessorOptions": {
+          "includePaths": [
+            "apps/angular-examples/src/styles",
+            "libs/ui-kit/src/lib/styles"
+          ]
+        },
         "scripts": [
           "node_modules/vega-lite/build/vega-lite.js",
           {
