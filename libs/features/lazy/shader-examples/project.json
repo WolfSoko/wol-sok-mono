@@ -1,6 +1,5 @@
 {
   "projectType": "library",
-  "root": "libs/features/lazy/shader-examples",
   "sourceRoot": "libs/features/lazy/shader-examples/src",
   "prefix": "lzy-ft-shad-ex",
   "targets": {

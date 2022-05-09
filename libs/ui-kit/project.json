@@ -1,14 +1,11 @@
 {
   "projectType": "library",
-  "root": "libs/ui-kit",
   "sourceRoot": "libs/ui-kit/src",
   "prefix": "sh",
   "targets": {
     "build": {
       "executor": "@nrwl/angular:ng-packagr-lite",
-      "outputs": [
-        "dist/libs/ui-kit"
-      ],
+      "outputs": ["dist/libs/ui-kit"],
       "options": {
         "project": "libs/ui-kit/ng-package.json"
       },
@@ -24,9 +21,7 @@
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": [
-        "coverage/libs/ui-kit"
-      ],
+      "outputs": ["coverage/libs/ui-kit"],
       "options": {
         "jestConfig": "libs/ui-kit/jest.config.ts",
         "passWithNoTests": true
@@ -42,8 +37,5 @@
       }
     }
   },
-  "tags": [
-    "ui",
-    "shared"
-  ]
+  "tags": ["ui", "shared"]
 }

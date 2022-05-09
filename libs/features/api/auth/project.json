@@ -1,6 +1,5 @@
 {
   "projectType": "library",
-  "root": "libs/features/api/auth",
   "sourceRoot": "libs/features/api/auth/src",
   "prefix": "ft-api-auth",
   "targets": {

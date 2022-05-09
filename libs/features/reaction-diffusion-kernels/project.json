@@ -1,5 +1,4 @@
 {
-  "root": "libs/features/reaction-diffusion-kernels",
   "sourceRoot": "libs/features/reaction-diffusion-kernels/src",
   "projectType": "library",
   "targets": {

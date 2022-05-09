@@ -1,6 +1,5 @@
 {
   "projectType": "application",
-  "root": "apps/angular-examples",
   "sourceRoot": "apps/angular-examples/src",
   "prefix": "app",
   "targets": {

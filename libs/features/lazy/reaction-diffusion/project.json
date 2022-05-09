@@ -1,6 +1,5 @@
 {
   "projectType": "library",
-  "root": "libs/features/lazy/reaction-diffusion",
   "sourceRoot": "libs/features/lazy/reaction-diffusion/src",
   "prefix": "lazy-feat-react-diff",
   "targets": {

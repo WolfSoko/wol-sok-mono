@@ -1,5 +1,4 @@
 {
-  "root": "libs/utils/measure-fps",
   "sourceRoot": "libs/utils/measure-fps/src",
   "projectType": "library",
   "targets": {

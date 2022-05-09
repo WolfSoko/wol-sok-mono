@@ -1,14 +1,11 @@
 {
   "projectType": "library",
-  "root": "libs/utils/gpu-calc",
   "sourceRoot": "libs/utils/gpu-calc/src",
   "prefix": "ws-utils-gpu-js",
   "targets": {
     "build": {
       "executor": "@nrwl/angular:ng-packagr-lite",
-      "outputs": [
-        "dist/libs/utils/gpu-calc"
-      ],
+      "outputs": ["dist/libs/utils/gpu-calc"],
       "options": {
         "project": "libs/utils/gpu-calc/ng-package.json"
       },
@@ -24,9 +21,7 @@
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": [
-        "coverage/libs/utils/gpu-calc"
-      ],
+      "outputs": ["coverage/libs/utils/gpu-calc"],
       "options": {
         "jestConfig": "libs/utils/gpu-calc/jest.config.ts",
         "passWithNoTests": true
@@ -42,7 +37,5 @@
       }
     }
   },
-  "tags": [
-    "shared"
-  ]
+  "tags": ["shared"]
 }

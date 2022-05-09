@@ -1,5 +1,4 @@
 {
-  "root": "libs/utils/operators",
   "sourceRoot": "libs/utils/operators/src",
   "projectType": "library",
   "targets": {
