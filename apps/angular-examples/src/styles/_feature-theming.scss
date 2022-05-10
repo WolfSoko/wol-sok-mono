@@ -5,5 +5,5 @@
 @include shared-ui.show-fps-theme(ws-theme.$theme);
 
 .theme-alternate {
-  @include shared-ui.show-fps-theme(ws-theme.$altTheme);
+  @include shared-ui.show-fps-color(ws-theme.$altTheme);
 }
