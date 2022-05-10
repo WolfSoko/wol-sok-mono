@@ -35,20 +35,37 @@ describe('MeasureFps', () => {
     whenSignalFrameReadyAfterMs(100);
   }
 
-  it('should update fps$ with moving average', () => {
+  it('should update fps$ with moving average window of 2', () => {
     const nextSpy = jest.fn();
+    measureFps = new MeasureFps(2);
     measureFps.fps$.subscribe(nextSpy);
     warmupMeasurement();
 
-    expect(nextSpy).lastCalledWith(0.1);
+    expect(nextSpy).lastCalledWith(5);
     whenSignalFrameReadyAfterMs(100);
-    expect(nextSpy).lastCalledWith(0.2);
+    expect(nextSpy).lastCalledWith(7.5);
     whenSignalFrameReadyAfterMs(50);
-    expect(nextSpy).lastCalledWith(0.4);
+    expect(nextSpy).lastCalledWith(13.8);
     whenSignalFrameReadyAfterMs(50);
-    expect(nextSpy).lastCalledWith(0.6);
+    expect(nextSpy).lastCalledWith(16.9);
     whenSignalFrameReadyAfterMs(150);
-    expect(nextSpy).lastCalledWith(1);
+    expect(nextSpy).lastCalledWith(11.8);
+    whenSignalFrameReadyAfterMs(50);
+    expect(nextSpy).lastCalledWith(15.9);
+    whenSignalFrameReadyAfterMs(50);
+    expect(nextSpy).lastCalledWith(18);
+    whenSignalFrameReadyAfterMs(50);
+    expect(nextSpy).lastCalledWith(19);
+    whenSignalFrameReadyAfterMs(50);
+    expect(nextSpy).lastCalledWith(19.5);
+    whenSignalFrameReadyAfterMs(50);
+    expect(nextSpy).lastCalledWith(19.8);
+    whenSignalFrameReadyAfterMs(50);
+    expect(nextSpy).lastCalledWith(19.9);
+    whenSignalFrameReadyAfterMs(50);
+    expect(nextSpy).lastCalledWith(20.0);
+    whenSignalFrameReadyAfterMs(100);
+    expect(nextSpy).lastCalledWith(15.0);
   });
 
   it('should ignore 0 measurement ', () => {

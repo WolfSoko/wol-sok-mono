@@ -9,16 +9,20 @@ import {
 const toFps = map<number, number>((ms) => 1000.0 / ms);
 
 export class MeasureFps {
+  constructor(private readonly avgWindowSize = 100) {}
+
   private timeStampsAction$ = new Subject<number>();
-  private fps = 0;
+  private lastFps = 0;
 
   fps$: Observable<number> = this.timeStampsAction$.asObservable().pipe(
     filterLessEqualOp,
     deltaOp,
     toFps,
-    map((nextFps) => movingAverage(100)([this.fps, nextFps])),
+    map((nextFps) =>
+      movingAverage(this.avgWindowSize)([this.lastFps, nextFps])
+    ),
     roundOp(1),
-    tap((nextFps) => (this.fps = nextFps))
+    tap((nextFps) => (this.lastFps = nextFps))
   );
 
   signalFrameReady() {
