@@ -1,32 +1,31 @@
-import { map, Observable, Subject, tap } from 'rxjs';
-import {
-  deltaOp,
-  filterLessEqualOp,
-  movingAverage,
-  roundOp,
-} from 'wolsok/utils-operators';
+import { bufferTime, filter, map, Observable, Subject } from 'rxjs';
+import { deltaOp, filterLessEqualOp, roundOp } from 'wolsok/utils-operators';
 
 const toFps = map<number, number>((ms) => 1000.0 / ms);
 
 export class MeasureFps {
-  constructor(private readonly avgWindowSize = 100) {}
+  constructor(
+    private readonly avgWindowSize = 300,
+    private readonly decimals = 1
+  ) {}
 
   private timeStampsAction$ = new Subject<number>();
-  private lastFps = 0;
 
   fps$: Observable<number> = this.timeStampsAction$.asObservable().pipe(
     filterLessEqualOp,
     deltaOp,
-    toFps,
-    map((nextFps) =>
-      movingAverage(this.avgWindowSize)([this.lastFps, nextFps])
+    bufferTime(this.avgWindowSize),
+    filter((measures) => measures.length > 0),
+    map(
+      (measures) =>
+        measures.reduce((last, measure) => last + measure, 0) / measures.length
     ),
-    roundOp(1),
-    tap((nextFps) => (this.lastFps = nextFps))
+    toFps,
+    roundOp(this.decimals)
   );
 
   signalFrameReady() {
     const timestamp = performance.now();
-    this.timeStampsAction$.next(timestamp);
+    this.timeStampsAction$.next(Math.floor(timestamp));
   }
 }

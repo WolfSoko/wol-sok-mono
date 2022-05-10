@@ -3,10 +3,12 @@
   <mat-sidenav class="navigationSidenav" #sidenav>
     <nav>
       <mat-nav-list>
-        <app-nav-item (click)="sidenav.close()"
-                      *ngFor="let route of routerLinks"
-                      [linkText]="route.data.linkText"
-                      [path]="route.path">
+        <app-nav-item
+          (click)="sidenav.close()"
+          *ngFor="let route of routerLinks"
+          [linkText]="route.data.linkText"
+          [path]="route.path"
+        >
         </app-nav-item>
       </mat-nav-list>
     </nav>

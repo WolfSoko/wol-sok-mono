@@ -36,7 +36,7 @@ import { defaultVertexShader } from './default-vertex-shader';
   templateUrl: './render-shader.component.html',
   styleUrls: ['./render-shader.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [{ provide: MeasureFps, useClass: MeasureFps }],
+  providers: [{ provide: MeasureFps, useValue: new MeasureFps() }],
 })
 export class RenderShaderComponent
   implements AfterViewInit, OnChanges, OnDestroy

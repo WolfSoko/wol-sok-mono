@@ -1,0 +1,9 @@
+@use 'libs/ui-kit/src/lib/styles/shared-ui-theme' as shared-ui;
+@use './ws-material-theme' as ws-theme;
+
+// Theme Init
+@include shared-ui.show-fps-theme(ws-theme.$theme);
+
+.theme-alternate {
+  @include shared-ui.show-fps-theme(ws-theme.$altTheme);
+}

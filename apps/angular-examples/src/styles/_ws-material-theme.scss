@@ -1,12 +1,10 @@
 /**
 * Generated theme by Material Theme Generator
 * https://materialtheme.arcsine.dev
-* Fork at: https://materialtheme.arcsine.dev/?c=YHBhbGV0dGU$YHByaW1hcnk$YF48IzNkOTllOSIsIj9lcjwjYzVlMGY4IiwiO2VyPCMyNzdjZGZ$LCIlPmBePCNhMGRhMjciLCI~ZXI8I2UzZjRiZSIsIjtlcjwjODRjYjE3fiwid2Fybj5gXjwjZjczZmI4IiwiP2VyPCNmZGM1ZWEiLCI7ZXI8I2YzMjlhMH4sIj9UZXh0PCMxZDFkMDAiLCI~PTwjZmFmYWZhIiwiO1RleHQ8I2ZkZmNlZCIsIjs9PCM2YTVmNWZ$LCJmb250cz5bYEA8KC00fixgQDwoLTN$LGBAPCgtMn4sYEA8KC0xfixgQDxoZWFkbGluZX4sYEA8dGl0bGV$LGBAPHN1YiktMn4sYEA8c3ViKS0xfixgQDxib2R5LTJ$LGBAPGJvZHktMX4sYEA8YnV0dG9ufixgQDxjYXB0aW9ufixgQDxpbnB1dCIsInNpemU$bnVsbH1dLCJpY29uczxGaWxsZWQiLCI~bmVzcz5mYWxzZSwidmVyc2lvbj4xM30=
+* Fork at: https://materialtheme.arcsine.dev/?c=YHBhbGV0dGU$YHByaW1hcnk$YF48IzNkOTllOSIsIj9lcjwjYzVlMGY4IiwiO2VyPCMyNzdjZGZ$LCIlPmBePCNhMGRhMjciLCI~ZXI8I2UzZjRiZSIsIjtlcjwjODRjYjE3fiwid2Fybj5gXjwjZjczZmI4IiwiP2VyPCNmZGM1ZWEiLCI7ZXI8I2YzMjlhMH4sIj9UZXh0PCMwMDAwMDAiLCI~PTwjZmFmYWZhIiwiO1RleHQ8I2ZmZmZmZiIsIjs9PCMyYzJjMmN$LCJmb250cz5bYEA8KC00fixgQDwoLTN$LGBAPCgtMn4sYEA8KC0xfixgQDxoZWFkbGluZX4sYEA8dGl0bGV$LGBAPHN1YiktMn4sYEA8c3ViKS0xfixgQDxib2R5LTJ$LGBAPGJvZHktMX4sYEA8YnV0dG9ufixgQDxjYXB0aW9ufixgQDxpbnB1dCIsInNpemU$bnVsbH1dLCJpY29uczxGaWxsZWQiLCI~bmVzcz5mYWxzZSwidmVyc2lvbj4xM30=
 */
 
 @use '@angular/material' as mat;
-@use 'libs/ui-kit/src/lib/styles/shared-ui-theme' as shared-ui;
-
 // Include the common styles for Angular Material. We include this here so that you only
 // have to load a single css file for Angular Material in your app.
 
@@ -33,7 +31,7 @@ $fontConfig: (
 // Foreground Elements
 
 // Light Theme Text
-$dark-text: #1d1d00;
+$dark-text: #000000;
 $dark-primary-text: rgba($dark-text, 0.87);
 $dark-accent-text: rgba($dark-primary-text, 0.54);
 $dark-disabled-text: rgba($dark-primary-text, 0.38);
@@ -60,7 +58,7 @@ $mat-light-theme-foreground: (
 );
 
 // Dark Theme text
-$light-text: #fdfced;
+$light-text: #ffffff;
 $light-primary-text: $light-text;
 $light-accent-text: rgba($light-primary-text, 0.7);
 $light-disabled-text: rgba($light-primary-text, 0.5);
@@ -94,9 +92,9 @@ $light-bg-darker-10: darken($light-background, 10%);
 $light-bg-darker-20: darken($light-background, 20%);
 $light-bg-darker-30: darken($light-background, 30%);
 $light-bg-lighter-5: lighten($light-background, 5%);
-$dark-bg-tooltip: lighten(#6a5f5f, 20%);
-$dark-bg-alpha-4: rgba(#6a5f5f, 0.04);
-$dark-bg-alpha-12: rgba(#6a5f5f, 0.12);
+$dark-bg-tooltip: lighten(#2c2c2c, 20%);
+$dark-bg-alpha-4: rgba(#2c2c2c, 0.04);
+$dark-bg-alpha-12: rgba(#2c2c2c, 0.12);
 
 $mat-light-theme-background: (
   background: $light-background,
@@ -117,7 +115,7 @@ $mat-light-theme-background: (
 );
 
 // Dark bg
-$dark-background: #6a5f5f;
+$dark-background: #2c2c2c;
 $dark-bg-lighter-5: lighten($dark-background, 5%);
 $dark-bg-lighter-10: lighten($dark-background, 10%);
 $dark-bg-lighter-20: lighten($dark-background, 20%);
@@ -148,7 +146,7 @@ $mat-dark-theme-background: (
 @include mat.core($fontConfig);
 
 // Theme Config
-:root,
+
 body {
   --primary-color: #3d99e9;
   --primary-lighter-color: #c5e0f8;
@@ -236,7 +234,6 @@ $altTheme: (
 
 // Theme Init
 @include mat.all-component-themes($theme);
-@include shared-ui.show-fps-theme($theme);
 
 .theme-alternate {
   @include mat.all-component-themes($altTheme);

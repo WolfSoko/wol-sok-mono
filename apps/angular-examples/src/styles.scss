@@ -2,6 +2,7 @@
 @import 'normalize.css/normalize.css';
 @import 'apps/angular-examples/src/styles/app-loading-style';
 @import 'apps/angular-examples/src/styles/ws-material-theme';
+@import 'apps/angular-examples/src/styles/feature-theming';
 
 body,
 html {
@@ -22,4 +23,5 @@ body {
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
+  transition: color, background-color 500ms ease;
 }

@@ -1,10 +1,13 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
   EventEmitter,
+  Inject,
   Output,
+  Renderer2,
 } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -28,12 +31,15 @@ export class MainToolbarComponent {
   isHandset$: Observable<boolean>;
   shaderWidth!: number;
   shaderHeight!: number;
+  themeMode: 'dark' | 'light' = 'dark';
 
   constructor(
-    private elRef: ElementRef,
-    private headlineAnimations: HeadlineAnimationService,
-    private router: Router,
-    private breakpointObserver: BreakpointObserver
+    private readonly elRef: ElementRef,
+    private readonly headlineAnimations: HeadlineAnimationService,
+    private readonly router: Router,
+    private readonly breakpointObserver: BreakpointObserver,
+    @Inject(DOCUMENT) private readonly document: Document,
+    private readonly renderer: Renderer2
   ) {
     this.router.events
       .pipe(
@@ -51,5 +57,19 @@ export class MainToolbarComponent {
   onResize($event: ResizedEvent) {
     this.shaderWidth = $event.newWidth;
     this.shaderHeight = $event.newHeight;
+  }
+
+  toggleTheme(): void {
+    if (this.themeMode === 'dark') {
+      this.renderer.removeClass(this.document.body, 'theme-default');
+      this.renderer.addClass(this.document.body, 'theme-alternate');
+      this.themeMode = 'light';
+      return;
+    }
+    if (this.themeMode === 'light') {
+      this.renderer.removeClass(this.document.body, 'theme-alternate');
+      this.renderer.addClass(this.document.body, 'theme-default');
+      this.themeMode = 'dark';
+    }
   }
 }
