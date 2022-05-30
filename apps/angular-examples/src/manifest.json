@@ -5,7 +5,7 @@
   "background_color": "#2d8baf",
   "display": "standalone",
   "scope": "/",
-  "start_url": "/home",
+  "start_url": "https://angularexamples.wolsok.de/home",
   "icons": [
     {
       "src": "assets/icons/windows11/SmallTile.scale-100.png",
