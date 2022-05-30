@@ -20,7 +20,9 @@ const args = process.argv.slice(2);
 const excludeAssets = args.some((elem) => elem.indexOf('excludeAssets') > -1);
 
 deleteFromBucket(bucket, prefix)
-  .then(() => uploadFolderToBucket('distS3/', bucket, prefix))
+  .then(() =>
+    uploadFolderToBucket('dist/apps/angular-examples/', bucket, prefix)
+  )
   .then(() => invalidateIndex());
 
 console.log('excludeAssets:', excludeAssets);
