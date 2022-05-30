@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
-import {
-  AngularFirestore,
-  AngularFirestoreCollection,
-  QuerySnapshot,
-} from '@angular/fire/firestore';
 import { combineLatest, firstValueFrom, Observable } from 'rxjs';
 import { map, shareReplay, take, tap } from 'rxjs/operators';
 import { AuthenticationService, AuthQuery } from '@wolsok/feat-api-auth';
 import { ShaderCode } from './shader-code.model';
+import {
+  AngularFirestore,
+  AngularFirestoreCollection,
+  QuerySnapshot,
+} from '@angular/fire/compat/firestore';
 
 @Injectable({
   providedIn: 'root',

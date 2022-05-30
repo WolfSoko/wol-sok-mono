@@ -1,16 +1,32 @@
-import { ModuleWithProviders, NgModule } from '@angular/core';
-import { AngularFireModule } from '@angular/fire';
-import { AngularFireAuthModule } from '@angular/fire/auth';
-import { FirebaseOptions } from '@angular/fire/firebase.app.module';
-import { AngularFirestoreModule } from '@angular/fire/firestore';
+import {
+  inject,
+  InjectionToken,
+  ModuleWithProviders,
+  NgModule,
+} from '@angular/core';
+import {
+  FirebaseOptions,
+  initializeApp,
+  provideFirebaseApp,
+} from '@angular/fire/app';
+import { getAuth, provideAuth } from '@angular/fire/auth';
+import { AngularFireModule } from '@angular/fire/compat';
+import { getFirestore, provideFirestore } from '@angular/fire/firestore';
 import { Angulartics2Module } from 'angulartics2';
+
+const FIREBASE_CONFIG_TOKEN = new InjectionToken<FirebaseOptions>(
+  'firebase.config'
+);
 
 @NgModule({
   imports: [
     Angulartics2Module,
-    AngularFireModule,
-    AngularFirestoreModule,
-    AngularFireAuthModule,
+    provideFirebaseApp(
+      () => initializeApp(inject(FIREBASE_CONFIG_TOKEN)),
+      [FIREBASE_CONFIG_TOKEN]
+    ),
+    provideFirestore(() => getFirestore()),
+    provideAuth(() => getAuth()),
   ],
 })
 export class AuthModule {
@@ -20,6 +36,8 @@ export class AuthModule {
     return {
       ngModule: AuthModule,
       providers: [
+        { provide: FIREBASE_CONFIG_TOKEN, useValue: firebaseConfig },
+
         AngularFireModule.initializeApp(firebaseConfig).providers ?? [],
       ],
     };
