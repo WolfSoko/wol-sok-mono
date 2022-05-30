@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { AngularFireStorageModule } from '@angular/fire/compat/storage';
+import { getFirestore, provideFirestore } from '@angular/fire/firestore';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -24,7 +25,7 @@ import { ShaderExamplesComponent } from './shader-examples.component';
     RenderShaderModule,
     AceEditorModule,
     MatPaginatorModule,
-    AngularFireStorageModule,
+    provideFirestore(() => getFirestore()),
     MatButtonModule,
     MatCheckboxModule,
     MatProgressSpinnerModule,

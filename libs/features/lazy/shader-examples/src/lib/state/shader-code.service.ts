@@ -22,6 +22,6 @@ export class ShaderCodeService {
 
   async update(shader: ShaderCode, code: string) {
     this.shaderCodeStore.update(shader.id, { code });
-    return this.shaderCodeDataService.updateShader(shader, code);
+    return this.shaderCodeDataService.updateShader(shader, { code });
   }
 }

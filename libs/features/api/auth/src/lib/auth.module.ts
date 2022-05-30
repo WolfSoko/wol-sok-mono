@@ -1,6 +1,7 @@
 import {
   inject,
   InjectionToken,
+  Injector,
   ModuleWithProviders,
   NgModule,
 } from '@angular/core';
@@ -10,7 +11,6 @@ import {
   provideFirebaseApp,
 } from '@angular/fire/app';
 import { getAuth, provideAuth } from '@angular/fire/auth';
-import { AngularFireModule } from '@angular/fire/compat';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
 import { Angulartics2Module } from 'angulartics2';
 
@@ -35,11 +35,7 @@ export class AuthModule {
   ): ModuleWithProviders<AuthModule> {
     return {
       ngModule: AuthModule,
-      providers: [
-        { provide: FIREBASE_CONFIG_TOKEN, useValue: firebaseConfig },
-
-        AngularFireModule.initializeApp(firebaseConfig).providers ?? [],
-      ],
+      providers: [{ provide: FIREBASE_CONFIG_TOKEN, useValue: firebaseConfig }],
     };
   }
 }

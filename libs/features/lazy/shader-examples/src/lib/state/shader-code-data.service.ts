@@ -1,13 +1,20 @@
 import { Injectable } from '@angular/core';
-import { combineLatest, firstValueFrom, Observable } from 'rxjs';
-import { map, shareReplay, take, tap } from 'rxjs/operators';
-import { AuthenticationService, AuthQuery } from '@wolsok/feat-api-auth';
-import { ShaderCode } from './shader-code.model';
 import {
-  AngularFirestore,
-  AngularFirestoreCollection,
-  QuerySnapshot,
-} from '@angular/fire/compat/firestore';
+  addDoc,
+  collection,
+  collectionData,
+  CollectionReference,
+  Firestore,
+  getDocs,
+  query,
+  QueryConstraint,
+  updateDoc,
+  where,
+} from '@angular/fire/firestore';
+import { AuthenticationService, AuthQuery } from '@wolsok/feat-api-auth';
+import { combineLatest, Observable } from 'rxjs';
+import { map, shareReplay } from 'rxjs/operators';
+import { ShaderCode } from './shader-code.model';
 
 @Injectable({
   providedIn: 'root',
@@ -15,36 +22,42 @@ import {
 export class ShaderCodeDataService {
   private shaders?: Observable<ShaderCode[]>;
 
-  private readonly userShadersCol: AngularFirestoreCollection<ShaderCode>;
-  private readonly defaultShadersCol: AngularFirestoreCollection<ShaderCode>;
+  private readonly userShaders$: Observable<ShaderCode[]>;
+  private readonly defaultShaders$: Observable<ShaderCode[]>;
 
   constructor(
-    private afs: AngularFirestore,
+    private firestore: Firestore,
     private authentication: AuthenticationService,
     private authQuery: AuthQuery
   ) {
-    this.defaultShadersCol = this.afs.collection<ShaderCode>(
-      '/angularExamples/shaderExamples/defaultShaders',
-      (ref) => ref.orderBy('id')
+    this.defaultShaders$ = this.observeShaderCollection(
+      '/angularExamples/shaderExamples/defaultShaders'
     );
 
-    this.userShadersCol = this.afs.collection<ShaderCode>(
-      `angularExamples/shaderExamples/${this.userUid()}`,
-      (ref) => ref.orderBy('id')
+    this.userShaders$ = this.observeShaderCollection(
+      `angularExamples/shaderExamples/${this.userUid()}`
     );
+  }
+
+  private observeShaderCollection(
+    shaderCollectionPath: string,
+    ...queryConstraints: QueryConstraint[]
+  ): Observable<ShaderCode[]> {
+    const shaderColRef = this.createCollectionRef(shaderCollectionPath);
+    return collectionData<ShaderCode>(query(shaderColRef, ...queryConstraints));
+  }
+
+  private createCollectionRef(
+    shaderCollectionPath: string
+  ): CollectionReference<ShaderCode> {
+    return collection(
+      this.firestore,
+      shaderCollectionPath
+    ) as CollectionReference<ShaderCode>;
   }
 
   streamShaders(): Observable<ShaderCode[]> {
     if (this.shaders == null) {
-      const defaultShaders = this.defaultShadersCol.valueChanges();
-      const userShaders: Observable<ShaderCode[]> = this.userShadersCol
-        .stateChanges(['added'])
-        .pipe(
-          map((documentChanges) =>
-            documentChanges.map((change) => change.payload.doc.data())
-          )
-        );
-
       const mapDefaultAndUserShaders = map(
         ([defaults, users]: [ShaderCode[], ShaderCode[]]) =>
           defaults.map((defaultShader) => {
@@ -52,36 +65,33 @@ export class ShaderCodeDataService {
             return shaderCode != null ? shaderCode : defaultShader;
           })
       );
-      this.shaders = combineLatest([defaultShaders, userShaders]).pipe(
-        mapDefaultAndUserShaders,
-        shareReplay(1)
-      );
+      this.shaders = combineLatest([
+        this.defaultShaders$,
+        this.userShaders$,
+      ]).pipe(mapDefaultAndUserShaders, shareReplay(1));
     }
     return this.shaders;
   }
 
   async updateShader(
     shader: ShaderCode,
-    newCode: string
-  ): Promise<QuerySnapshot<ShaderCode>> {
-    const shaderByIdQuery = this.afs.collection<ShaderCode>(
-      `angularExamples/shaderExamples/${this.userUid()}`,
-      (ref) => ref.where('id', '==', shader.id)
+    changedShader: Partial<ShaderCode>
+  ): Promise<ShaderCode> {
+    const shaderByIdQuery = this.createCollectionRef(
+      `angularExamples/shaderExamples/${this.userUid()}`
     );
-    const newShader = { ...shader, ...{ code: newCode } };
 
-    const deleteOldShadersAndUpdateInBatch = shaderByIdQuery.get({}).pipe(
-      take(1),
-      tap((ref) => ref.docs.forEach((doc) => doc.ref.delete())),
-      tap(() => {
-        const newUid = this.afs.createId();
-        const firestoreDocument = this.afs.doc(
-          `angularExamples/shaderExamples/${this.userUid()}/${newUid}`
-        );
-        firestoreDocument.ref.set(newShader);
-      })
-    );
-    return firstValueFrom(deleteOldShadersAndUpdateInBatch);
+    const shaderToUpdateDocRef = (
+      await getDocs(query(shaderByIdQuery, where('id', '==', shader.id)))
+    ).docs[0]?.ref;
+
+    const newShader = { ...shader, ...changedShader };
+    if (shaderToUpdateDocRef == null) {
+      await addDoc(shaderByIdQuery, newShader);
+      return newShader;
+    }
+    await updateDoc(shaderToUpdateDocRef, newShader);
+    return newShader;
   }
 
   private userUid() {
