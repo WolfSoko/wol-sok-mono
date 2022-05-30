@@ -180,7 +180,10 @@ function invalidateIndex() {
     {
       DistributionId: 'E22J2LG5B4PGRR',
       InvalidationBatch: {
-        Paths: { Quantity: 2, Items: ['/index.html', '/ngsw.json'] },
+        Paths: {
+          Quantity: 3,
+          Items: ['/index.html', '/ngsw.json', '/manifest.json'],
+        },
         CallerReference: callerReference,
       },
     },
@@ -189,7 +192,7 @@ function invalidateIndex() {
         return console.log('Error creating invalidation', err);
       }
       return console.log(
-        'Successfully invalidated index.html',
+        'Successfully invalidated index.html and pwa files',
         JSON.stringify(data)
       );
     }
