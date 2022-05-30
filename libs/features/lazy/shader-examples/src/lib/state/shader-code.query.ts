@@ -10,4 +10,8 @@ export class ShaderCodeQuery extends QueryEntity<ShaderCodeState, ShaderCode> {
   constructor(store: ShaderCodeStore) {
     super(store);
   }
+
+  public getAllSortedById(): ShaderCode[] {
+    return this.getAll({ sortBy: 'id' });
+  }
 }

@@ -108,7 +108,7 @@ export class ShaderExamplesService {
   }
 
   private updatePagedShaders(
-    shaderCodes: ShaderCode[] = this.shaderCodeQuery.getAll()
+    shaderCodes: ShaderCode[] = this.shaderCodeQuery.getAllSortedById()
   ) {
     this.shaderExamplesQuery.animationState
       .pipe(
