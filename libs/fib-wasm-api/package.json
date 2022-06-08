@@ -1,0 +1,11 @@
+{
+  "name": "@wolsok/fib-wasm-api",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/core": "^13.2.0",
+    "assemblyscript": "^0.19.23"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  }
+}
