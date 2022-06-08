@@ -1,5 +1,12 @@
-import { NgModule } from '@angular/core';
-import { Data, Route, RouterModule } from '@angular/router';
+import { NgModule, Type } from '@angular/core';
+import {
+  Data,
+  LoadChildrenCallback,
+  Route,
+  RouterModule,
+} from '@angular/router';
+import { FourierAnalysisModule } from '@wolsok/feat-fourier-analysis';
+import { BacteriaGameModule } from './bacteria-game/bacteria-game.module';
 import { InfoComponent } from './info/info.component';
 import { ROUTER_LINKS } from './router-links.token';
 
@@ -16,7 +23,7 @@ const mainNavRoutes: MainNavRoute[] = [
   { path: 'home', component: InfoComponent, data: { linkText: 'Home' } },
   {
     path: 'fourierAnalysis',
-    loadChildren: async () =>
+    loadChildren: () =>
       import('@wolsok/feat-fourier-analysis').then(
         (m) => m.FourierAnalysisModule
       ),
@@ -24,15 +31,15 @@ const mainNavRoutes: MainNavRoute[] = [
   },
   {
     path: 'bacteriaGame',
-    loadChildren: async () =>
+    loadChildren: () =>
       import('./bacteria-game/bacteria-game.module').then(
-        (m) => m.BacteriaGameModule
+        (m) => m.BacteriaGameModule as Type<BacteriaGameModule>
       ),
     data: { linkText: 'Bacteria Game' },
   },
   {
     path: 'shaderExamples',
-    loadChildren: async () =>
+    loadChildren: () =>
       import('@wolsok/feat-shader-examples').then(
         (m) => m.ShaderExamplesModule
       ),
@@ -42,7 +49,7 @@ const mainNavRoutes: MainNavRoute[] = [
   },
   {
     path: 'someGpuCalculations',
-    loadChildren: async () =>
+    loadChildren: () =>
       import('./some-gpu-calculation/some-gpu-calculation.module').then(
         (m) => m.SomeGpuCalculationModule
       ),
@@ -50,13 +57,13 @@ const mainNavRoutes: MainNavRoute[] = [
   },
   {
     path: 'webGl',
-    loadChildren: async () =>
+    loadChildren: () =>
       import('./web-gl/web-gl.module').then((m) => m.WebGlModule),
     data: { linkText: 'Mandelbrot plane, lights objects (three.js)' },
   },
   {
     path: 'tensorflowExamples',
-    loadChildren: async () =>
+    loadChildren: () =>
       import('./tensorflow-examples/tensorflow-examples.module').then(
         (m) => m.TensorflowExamplesModule
       ),
@@ -64,7 +71,7 @@ const mainNavRoutes: MainNavRoute[] = [
   },
   {
     path: 'neuralNetwork',
-    loadChildren: async () =>
+    loadChildren: () =>
       import('./neural-network/neural-network.module').then(
         (m) => m.NeuralNetworkModule
       ),
@@ -72,19 +79,19 @@ const mainNavRoutes: MainNavRoute[] = [
   },
   {
     path: 'reactionDiff',
-    loadChildren: async () =>
+    loadChildren: () =>
       import('@wolsok/feat-reaction-diff').then((m) => m.ReactionDiffModule),
     data: { linkText: 'Reaction Diffusion Algorithm (gpu.js)' },
   },
   {
     path: 'poisson',
-    loadChildren: async () =>
+    loadChildren: () =>
       import('./poisson/poisson.module').then((m) => m.PoissonModule),
     data: { linkText: 'Poisson Distribution Algorithm' },
   },
   {
     path: 'performanceTests',
-    loadChildren: async () =>
+    loadChildren: () =>
       import('./performance-test/performance-test.module').then(
         (m) => m.PerformanceTestModule
       ),
@@ -92,7 +99,7 @@ const mainNavRoutes: MainNavRoute[] = [
   },
   {
     path: 'webassemblyTests',
-    loadChildren: async () =>
+    loadChildren: () =>
       import('@wolsok/feat-wasm-test').then((m) => m.WasmTestModule),
     data: { linkText: 'Calculating Fibonacci with WebAssembly' },
   },

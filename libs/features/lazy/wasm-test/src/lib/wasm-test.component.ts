@@ -5,8 +5,9 @@ import {
   OnInit,
 } from '@angular/core';
 import {
-  UntypedFormBuilder,
-  UntypedFormGroup,
+  FormBuilder,
+  FormControl,
+  FormGroup,
   Validators,
 } from '@angular/forms';
 import { PersistNgFormPlugin } from '@datorama/akita';
@@ -26,16 +27,18 @@ export class WasmTestComponent implements OnInit, OnDestroy {
   readonly fibResult$: Observable<FibResult | null>;
   readonly fibN$: Observable<number>;
   readonly isLoading$: Observable<boolean>;
-  readonly fibOptionsForm: UntypedFormGroup;
   readonly vm$: Observable<WasmTestState>;
   readonly fibError$: Observable<never>;
   private readonly persistForm: PersistNgFormPlugin;
   private subscription?: Subscription;
+  readonly fibOptionsForm: FormGroup<{
+    fibN: FormControl<number | null>;
+  }>;
 
   constructor(
     private wasmTestQuery: WasmTestQuery,
     private wasmTestService: WasmTestService,
-    private builder: UntypedFormBuilder
+    private builder: FormBuilder
   ) {
     this.fibRunning$ = this.wasmTestQuery.selectFibRunning();
     this.fibN$ = this.wasmTestQuery.selectFibN();
@@ -60,8 +63,8 @@ export class WasmTestComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.subscription = this.fibRunning$.subscribe((fibRunning) =>
       fibRunning
-        ? this.fibOptionsForm.controls['fibN'].disable()
-        : this.fibOptionsForm.controls['fibN'].enable()
+        ? this.fibOptionsForm.controls.fibN.disable()
+        : this.fibOptionsForm.controls.fibN.enable()
     );
   }
 

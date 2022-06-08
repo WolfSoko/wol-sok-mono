@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
 import {
-  UntypedFormArray,
-  UntypedFormBuilder,
-  UntypedFormGroup,
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
   Validators,
 } from '@angular/forms';
 import { PersistNgFormPlugin } from '@datorama/akita';
@@ -19,11 +20,15 @@ import { InputWaveOptionsState } from '../../state/input-wave-options.store';
 export class WaveOptionsComponent implements OnDestroy {
   private readonly persistForm: PersistNgFormPlugin;
   waveOptions$: Observable<InputWaveOptionsState>;
-  form: UntypedFormGroup;
+  form: FormGroup<{
+    samplesPerSec: FormControl<number | null>;
+    lengthInMs: FormControl<number | null>;
+    frequencies: FormArray<FormControl<number | null>>;
+  }>;
 
   constructor(
-    private fb: UntypedFormBuilder,
-    private inputWaveOptionsQuery: InputWaveOptionsQuery
+    private readonly fb: FormBuilder,
+    private readonly inputWaveOptionsQuery: InputWaveOptionsQuery
   ) {
     this.waveOptions$ = this.inputWaveOptionsQuery.select();
     this.form = this.initFormValues();
@@ -36,15 +41,21 @@ export class WaveOptionsComponent implements OnDestroy {
     ).setForm(this.form, this.fb);
   }
 
-  get frequencies(): UntypedFormArray {
-    return this.form.get('frequencies') as UntypedFormArray;
+  get frequencies(): FormArray<FormControl<number | null>> {
+    return this.form.controls.frequencies;
   }
 
-  private initFormValues(): UntypedFormGroup {
+  private initFormValues(): FormGroup<{
+    samplesPerSec: FormControl<number | null>;
+    lengthInMs: FormControl<number | null>;
+    frequencies: FormArray<FormControl<number | null>>;
+  }> {
     return this.fb.group({
-      frequencies: this.fb.array([]),
-      lengthInMs: this.fb.control(null, [Validators.min(10)]),
-      samplesPerSec: this.fb.control(null, [Validators.min(100)]),
+      frequencies: this.fb.array<FormControl<number | null>>([]),
+      lengthInMs: this.fb.control<number | null>(null, [Validators.min(10)]),
+      samplesPerSec: this.fb.control<number | null>(null, [
+        Validators.min(100),
+      ]),
     });
   }
 
