@@ -6,7 +6,11 @@ import {
   OnDestroy,
   ViewChild,
 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators,
+} from '@angular/forms';
 import { ResizedEvent } from '@wolsok/ui-kit';
 import {
   GpuAdapterService,
@@ -53,7 +57,7 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
   @ViewChild('gpuCanvasContainer')
   gpuCanvasWrapper!: ElementRef<HTMLDivElement>;
 
-  additionForm!: FormGroup;
+  additionForm!: UntypedFormGroup;
   calculationTime$: Observable<string>;
 
   private gpuColorizer!: IKernelRunShortcut;
@@ -63,7 +67,7 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
     this.calcHeightOfCanvas(500),
   ];
 
-  constructor(private fb: FormBuilder, private gpu: GpuAdapterService) {
+  constructor(private fb: UntypedFormBuilder, private gpu: GpuAdapterService) {
     this.createForm();
 
     this.calculationTime$ = interval(500).pipe(

@@ -4,7 +4,11 @@ import {
   OnDestroy,
   OnInit,
 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators,
+} from '@angular/forms';
 import { PersistNgFormPlugin } from '@datorama/akita';
 import { Observable, Subscription } from 'rxjs';
 import { WasmTestQuery } from './state/wasm-test.query';
@@ -22,7 +26,7 @@ export class WasmTestComponent implements OnInit, OnDestroy {
   readonly fibResult$: Observable<FibResult | null>;
   readonly fibN$: Observable<number>;
   readonly isLoading$: Observable<boolean>;
-  readonly fibOptionsForm: FormGroup;
+  readonly fibOptionsForm: UntypedFormGroup;
   readonly vm$: Observable<WasmTestState>;
   readonly fibError$: Observable<never>;
   private readonly persistForm: PersistNgFormPlugin;
@@ -31,7 +35,7 @@ export class WasmTestComponent implements OnInit, OnDestroy {
   constructor(
     private wasmTestQuery: WasmTestQuery,
     private wasmTestService: WasmTestService,
-    private builder: FormBuilder
+    private builder: UntypedFormBuilder
   ) {
     this.fibRunning$ = this.wasmTestQuery.selectFibRunning();
     this.fibN$ = this.wasmTestQuery.selectFibN();

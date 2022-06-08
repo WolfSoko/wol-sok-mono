@@ -1,9 +1,14 @@
-import {ChangeDetectionStrategy, Component, OnDestroy} from '@angular/core';
-import {FormArray, FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {PersistNgFormPlugin} from '@datorama/akita';
-import {Observable} from 'rxjs';
-import {InputWaveOptionsQuery} from '../../state/input-wave-options.query';
-import {InputWaveOptionsState} from '../../state/input-wave-options.store';
+import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
+import {
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators,
+} from '@angular/forms';
+import { PersistNgFormPlugin } from '@datorama/akita';
+import { Observable } from 'rxjs';
+import { InputWaveOptionsQuery } from '../../state/input-wave-options.query';
+import { InputWaveOptionsState } from '../../state/input-wave-options.store';
 
 @Component({
   selector: 'lazy-feat-fanal-wave-options',
@@ -14,10 +19,10 @@ import {InputWaveOptionsState} from '../../state/input-wave-options.store';
 export class WaveOptionsComponent implements OnDestroy {
   private readonly persistForm: PersistNgFormPlugin;
   waveOptions$: Observable<InputWaveOptionsState>;
-  form: FormGroup;
+  form: UntypedFormGroup;
 
   constructor(
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private inputWaveOptionsQuery: InputWaveOptionsQuery
   ) {
     this.waveOptions$ = this.inputWaveOptionsQuery.select();
@@ -31,11 +36,11 @@ export class WaveOptionsComponent implements OnDestroy {
     ).setForm(this.form, this.fb);
   }
 
-  get frequencies(): FormArray {
-    return this.form.get('frequencies') as FormArray;
+  get frequencies(): UntypedFormArray {
+    return this.form.get('frequencies') as UntypedFormArray;
   }
 
-  private initFormValues(): FormGroup {
+  private initFormValues(): UntypedFormGroup {
     return this.fb.group({
       frequencies: this.fb.array([]),
       lengthInMs: this.fb.control(null, [Validators.min(10)]),
