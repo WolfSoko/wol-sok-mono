@@ -7,6 +7,7 @@ import {
   IKernelRunShortcut,
   IKernelRunShortcutBase,
   Texture,
+  IKernelFunctionThis,
 } from '@wolsok/utils-gpu-calc';
 import { Observable } from 'rxjs';
 import { CellWeights, weightsToArray } from '../cell-weights-to-array';
@@ -109,7 +110,7 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
   initGrid() {
     if (!this.initGridKernel) {
       this.initGridKernel = this.gpuJs
-        .createKernel(function initGrid() {
+        .createKernel(function initGrid(this: IKernelFunctionThis) {
           return 1.0 - (this.thread.z % 2);
         })
         .setOutput([this.width, this.height, 2])
