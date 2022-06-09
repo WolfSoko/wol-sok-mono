@@ -17,7 +17,7 @@ import {
   IKernelFunctionThis,
   IKernelRunShortcut,
 } from '@wolsok/utils-gpu-calc';
-import { distinctUntilChangedDeepEqualObj } from 'wolsok/utils-operators';
+import { distinctUntilChangedDeepEqualObj } from '@wolsok/utils-operators';
 
 import {
   animationFrameScheduler,
@@ -64,7 +64,7 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
   private subscription?: Subscription;
   dimensionsOfCanvas: [width: number, height: number] = [
     500,
-    this.calcHeightOfCanvas(500),
+    SomeGpuCalculationComponent.calcHeightOfCanvas(500),
   ];
 
   constructor(private fb: UntypedFormBuilder, private gpu: GpuAdapterService) {
@@ -89,6 +89,13 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
       startWith(0),
       map((time) => time.toFixed(3))
     );
+  }
+
+  private static calcHeightOfCanvas(
+    newWidth: number,
+    aspectRatio: number = 3 / 4
+  ): number {
+    return Math.floor(newWidth * aspectRatio);
   }
 
   async ngAfterViewInit(): Promise<void> {
@@ -259,12 +266,9 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
     if (!canvas) {
       return;
     }
-    const height: number = this.calcHeightOfCanvas(newWidth);
+    const height: number =
+      SomeGpuCalculationComponent.calcHeightOfCanvas(newWidth);
     this.dimensionsOfCanvas = [newWidth, height];
     await this.createGPUColorizer(this.additionForm.get('useGPU')?.value);
-  }
-
-  private calcHeightOfCanvas(newWidth: number): number {
-    return Math.floor(newWidth * 0.75);
   }
 }

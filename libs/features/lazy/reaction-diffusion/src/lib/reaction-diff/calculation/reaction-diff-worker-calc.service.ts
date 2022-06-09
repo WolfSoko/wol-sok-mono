@@ -1,4 +1,4 @@
-import { mapWorkerOp, WorkerPostParams } from 'wolsok/utils-operators';
+import { mapWorkerOp, WorkerPostParams } from '@wolsok/utils-operators';
 import * as p5 from 'p5';
 import { merge, Observable, range, Subject, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';

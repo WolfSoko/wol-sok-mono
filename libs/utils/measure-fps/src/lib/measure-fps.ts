@@ -1,5 +1,5 @@
 import { bufferTime, filter, map, Observable, Subject } from 'rxjs';
-import { deltaOp, filterLessEqualOp, roundOp } from 'wolsok/utils-operators';
+import { deltaOp, filterLessEqualOp, roundOp } from '@wolsok/utils-operators';
 
 const toFps = map<number, number>((ms) => 1000.0 / ms);
 
