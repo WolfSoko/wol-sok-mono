@@ -1,4 +1,5 @@
 {
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "npmScope": "@wolsok",
   "affected": {
     "defaultBase": "main"
@@ -23,14 +24,6 @@
       }
     }
   },
-  "targetDependencies": {
-    "build": [
-      {
-        "target": "build",
-        "projects": "dependencies"
-      }
-    ]
-  },
   "generators": {
     "@nrwl/angular:application": {
       "style": "scss",
@@ -47,5 +40,9 @@
     }
   },
   "defaultProject": "angular-examples",
-  "$schema": "./node_modules/nx/schemas/nx-schema.json"
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"]
+    }
+  }
 }
