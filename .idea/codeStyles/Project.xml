@@ -17,7 +17,6 @@
       <option name="FILE_NAME_STYLE" value="MIXED" />
       <option name="SPACE_BEFORE_FUNCTION_LEFT_PARENTH" value="false" />
       <option name="PREFER_AS_TYPE_CAST" value="true" />
-      <option name="USE_DOUBLE_QUOTES" value="false" />
       <option name="FORCE_QUOTE_STYlE" value="true" />
       <option name="PREFER_EXPLICIT_TYPES_VARS_FIELDS" value="true" />
       <option name="PREFER_EXPLICIT_TYPES_FUNCTION_RETURNS" value="true" />
