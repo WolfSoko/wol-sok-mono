@@ -10,7 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ElevateCardModule } from '@wolsok/ui-kit';
+import { ElevateCardModule, ShowFpsComponent } from "@wolsok/ui-kit";
 import { ReactionDiffRoutingModule } from './reaction-diff-routing.module';
 import { P5ViewComponent } from './reaction-diff/p5-view/p5-view.component';
 import { ReactionDiffComponent } from './reaction-diff/reaction-diff.component';
@@ -32,6 +32,7 @@ import { WeightsConfigComponent } from './reaction-diff/weights-config/weights-c
     MatSlideToggleModule,
     MatCheckboxModule,
     MatTooltipModule,
+    ShowFpsComponent
   ],
   declarations: [
     ReactionDiffComponent,

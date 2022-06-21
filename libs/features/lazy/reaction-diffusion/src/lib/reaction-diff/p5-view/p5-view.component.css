@@ -1,3 +1,15 @@
+:host {
+  position: relative;
+}
+
 .canvas-container {
   background-color: darkgrey;
 }
+
+.show-fps {
+  position: absolute;
+  top: 0.3em;
+  left: 0.3em;
+}
+
+

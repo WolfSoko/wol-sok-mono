@@ -2,6 +2,8 @@
   display: inline-block;
   padding: 0.25em 0.5em;
   border-radius: 0.5em;
+  min-width: 10ch;
+  text-align: end;
 
   color: var(--text-color, inherit);
 
