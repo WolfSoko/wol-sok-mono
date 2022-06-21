@@ -1,0 +1,5 @@
+@use '../../../../libs/ui-kit/src/lib/styles/shared-ui-theme' as shared-ui;
+
+.special-fps-style {
+  @include shared-ui.show-fps-theming-with-css-vars(white, black, green 10%, yellow 30%, orange 40%, purple);
+}

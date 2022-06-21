@@ -19,14 +19,18 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ElemResizedModule, ElevateCardModule } from '@wolsok/ui-kit';
+import {
+  ElemResizedModule,
+  ElevateCardModule,
+  RenderShaderComponent,
+} from '@wolsok/ui-kit';
 import { WsThanosModule } from '@wolsok/ws-thanos';
 import { Angulartics2Module } from 'angulartics2';
-import { RenderShaderModule } from '@wolsok/ui-kit';
 
 @NgModule({
-  imports: [CommonModule, ElevateCardModule],
+  imports: [CommonModule, ElevateCardModule, RenderShaderComponent],
   exports: [
+    RenderShaderComponent,
     ElevateCardModule,
     CommonModule,
     FormsModule,
@@ -49,7 +53,6 @@ import { RenderShaderModule } from '@wolsok/ui-kit';
     MatChipsModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
-    RenderShaderModule,
     Angulartics2Module,
     WsThanosModule,
     ElemResizedModule,

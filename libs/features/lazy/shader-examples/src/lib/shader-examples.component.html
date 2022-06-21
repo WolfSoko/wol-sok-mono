@@ -40,7 +40,7 @@
         class="shaders-grid-list"
       >
         <ng-container
-          *ngFor="let shader of vm.pagedShaders; trackBy: trackByIndex"
+          *ngFor="let shader of vm.pagedShaders; trackBy: trackByIndex; even as isEven"
         >
           <div class="shader-tile">
             <div class="mat-subheading-2 shader-title">
@@ -61,6 +61,7 @@
               [class.show-editor]="vm.showCodeEditor"
             >
               <ws-shared-ui-render-shader
+                [class.special-fps-style]="isEven"
                 [shaderCode]="shader.code"
                 [showFps]="vm.showFps"
                 [canvasWidth]="shaderRenderer.clientWidth"

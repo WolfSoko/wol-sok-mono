@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { AngularFireStorageModule } from '@angular/fire/compat/storage';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthModule } from '@wolsok/feat-api-auth';
-import { RenderShaderModule } from '@wolsok/ui-kit';
+import { RenderShaderComponent } from '@wolsok/ui-kit';
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
 import { CodeEditorComponent } from './code-editor/code-editor.component';
 import { ShaderExamplesOptionsComponent } from './shader-examples-options/shader-examples-options.component';
@@ -22,7 +21,6 @@ import { ShaderExamplesComponent } from './shader-examples.component';
     CommonModule,
     FormsModule,
     ShaderExamplesRoutingModule,
-    RenderShaderModule,
     AceEditorModule,
     MatPaginatorModule,
     provideFirestore(() => getFirestore()),
@@ -32,6 +30,7 @@ import { ShaderExamplesComponent } from './shader-examples.component';
     MatIconModule,
     MatCardModule,
     AuthModule,
+    RenderShaderComponent,
   ],
   declarations: [
     ShaderExamplesComponent,

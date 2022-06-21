@@ -3,7 +3,7 @@
   [show]="showFps"
   [fps]="(fps$ | async) ?? 0"
 ></ws-shared-ui-show-fps>
-<div #canvasContainer class="canvasContainer">
+<div #canvasContainer class="canvas-container">
   <canvas
     #webGLCanvas
     [width]="canvasWidth"

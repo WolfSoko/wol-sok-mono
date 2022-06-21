@@ -1,13 +1,14 @@
 import { byText } from '@ngneat/spectator';
 import { createHostFactory, SpectatorHost } from '@ngneat/spectator/jest';
 
-import { ShowFpsComponent, ShowFpsModule } from './show-fps.component';
+import { ShowFpsComponent } from './show-fps.component';
 
 describe('ShowFpsComponent', () => {
   const createHost = createHostFactory({
     template: `<ws-shared-ui-show-fps [show]="true" [fps]="60"></ws-shared-ui-show-fps>`,
     component: ShowFpsComponent,
-    imports: [ShowFpsModule],
+    imports: [ShowFpsComponent],
+    declareComponent: false,
   });
 
   it('should create', () => {

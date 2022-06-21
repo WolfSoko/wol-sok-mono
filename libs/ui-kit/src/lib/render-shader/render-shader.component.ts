@@ -1,4 +1,3 @@
-import { MeasureFps } from '@wolsok/utils-measure-fps';
 import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
@@ -8,7 +7,6 @@ import {
   EventEmitter,
   Inject,
   Input,
-  NgModule,
   NgZone,
   OnChanges,
   OnDestroy,
@@ -16,6 +14,7 @@ import {
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
+import { MeasureFps } from '@wolsok/utils-measure-fps';
 import { sampleTime } from 'rxjs';
 import {
   Camera,
@@ -28,15 +27,17 @@ import {
   Vector2,
   WebGLRenderer,
 } from 'three';
-import { ShowFpsModule } from '../show-fps/show-fps.component';
+import { ShowFpsComponent } from '../show-fps/show-fps.component';
 import { defaultVertexShader } from './default-vertex-shader';
 
 @Component({
+  standalone: true,
   selector: 'ws-shared-ui-render-shader',
   templateUrl: './render-shader.component.html',
   styleUrls: ['./render-shader.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: MeasureFps, useValue: new MeasureFps() }],
+  imports: [CommonModule, ShowFpsComponent],
 })
 export class RenderShaderComponent
   implements AfterViewInit, OnChanges, OnDestroy
@@ -233,10 +234,3 @@ export class RenderShaderComponent
     }
   }
 }
-
-@NgModule({
-  declarations: [RenderShaderComponent],
-  imports: [CommonModule, ShowFpsModule],
-  exports: [RenderShaderComponent],
-})
-export class RenderShaderModule {}

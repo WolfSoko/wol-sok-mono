@@ -1,32 +1,47 @@
 @use 'sass:map';
 @use '../../../../../node_modules/@angular/material/index' as mat;
 
-@mixin color($theme) {
+@mixin theming-with-css-vars(
+  $textColor,
+  $backgroundColor,
+  $gradientColor1,
+  $gradientColor2,
+  $gradientColor3,
+  $gradientColor4
+) {
+  ws-shared-ui-show-fps {
+    --text-color: #{$textColor};
+    --show-fps-background-color: #{$backgroundColor};
+    --gradient-color-1: #{$gradientColor1};
+    --gradient-color-2: #{$gradientColor2};
+    --gradient-color-3: #{$gradientColor3};
+    --gradient-color-4: #{$gradientColor4};
+  }
+
+}
+
+@mixin color($mat-theme) {
   // Get the color config from the theme.
-  $color-config: mat.get-color-config($theme);
+  $color-config: mat.get-color-config($mat-theme);
 
   // Get the primary color palette from the color-config.
   $primary-palette: map.get($color-config, primary);
   $accent-palette: map.get($color-config, accent);
   $warn-palette: map.get($color-config, warn);
 
-  .ws-ui-show-fps {
-    color: mat.get-contrast-color-from-palette($primary-palette, main);
-    background-color: mat.get-color-from-palette($accent-palette, main);
-    background-image: linear-gradient(
-      60deg,
+  @include theming-with-css-vars(
+      mat.get-contrast-color-from-palette($primary-palette, main) mat.get-color-from-palette($accent-palette, main),
       mat.get-color-from-palette($accent-palette, main),
       mat.get-color-from-palette($primary-palette, main) 45%,
       mat.get-color-from-palette($warn-palette, lighter) 55%,
       mat.get-color-from-palette($primary-palette, darker),
       mat.get-color-from-palette($accent-palette, darker)
-    );
-  }
+  );
 }
 
-@mixin theme($theme) {
-  $color-config: mat.get-color-config($theme);
+@mixin theme($mat-theme) {
+  $color-config: mat.get-color-config($mat-theme);
   @if $color-config != null {
-    @include color($theme);
+    @include color($mat-theme);
   }
 }
