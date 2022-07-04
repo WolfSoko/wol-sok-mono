@@ -7,7 +7,7 @@
     "postinstall": "node ./decorate-angular-cli.js && ngcc --properties es2020 browser module main",
     "start": "nx serve",
     "start:prod": "cross-env NODE_OPTIONS=--max_old_space_size=12000 npm run start -- --configuration production --port=4300",
-    "build": "nx build",
+    "build": "nx build angular-examples",
     "update-firebase": "node tools/node-scripts/init-firebase",
     "deploy": "npm version patch && npm run build && node tools/node-scripts/sync-S3",
     "deploy:without-build": "node tools/node-scripts/sync-S3",
