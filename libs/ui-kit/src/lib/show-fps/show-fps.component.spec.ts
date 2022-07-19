@@ -46,17 +46,17 @@ describe('ShowFpsComponent', () => {
   });
 
   it('should hide when show changes', () => {
-    const spectator: SpectatorHost<ShowFpsComponent, { show: boolean }> =
+    const spectator: SpectatorHost<ShowFpsComponent, { showFps: boolean }> =
       createHost(
-        `<ws-shared-ui-show-fps [show]="show" [fps]="60" ></ws-shared-ui-show-fps>`,
+        `<ws-shared-ui-show-fps [show]="showFps" [fps]="60" ></ws-shared-ui-show-fps>`,
         {
           hostProps: {
-            show: true,
+            showFps: true,
           },
         }
       );
-    expect(spectator.query(byText('60 FPS'))).toBeTruthy();
-    spectator.setHostInput('show', false);
-    expect(spectator.query(byText('60 FPS'))).not.toExist();
+    expect(spectator.query(byText('60.0 FPS'))).toExist();
+    spectator.setHostInput('showFps', false);
+    expect(spectator.query(byText('60.0 FPS'))).not.toExist();
   });
 });

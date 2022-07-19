@@ -11,7 +11,6 @@ import { MatChipsModule } from '@angular/material/chips';
   imports: [CommonModule, MatChipsModule],
 })
 export class ShowFpsComponent {
-
   @Input() fps = 0;
   @Input() show = false;
 }
