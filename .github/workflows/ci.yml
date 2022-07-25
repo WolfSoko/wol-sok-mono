@@ -30,7 +30,7 @@ jobs:
         npx nx affected --target=lint --parallel
         npx nx affected --target=test --parallel --code-coverage
         npx nx affected --target=build --parallel
-        npx nx affected --target=e2e --parallel
+        npx nx affected --target=e2e
   agents:
     name: Nx Cloud - Agents
     uses: nrwl/ci/.github/workflows/nx-cloud-agents.yml@v0.6

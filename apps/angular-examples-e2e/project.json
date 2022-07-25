@@ -5,15 +5,21 @@
   "targets": {
     "e2e": {
       "executor": "@nrwl/cypress:cypress",
+      "outputs": ["test-reports/apps/angular-examples-e2e"],
       "options": {
-        "cypressConfig": "apps/angular-examples-e2e/cypress.json",
-        "devServerTarget": "angular-examples:serve:development"
+        "cypressConfig": "apps/angular-examples-e2e/cypress.config.ts",
+        "devServerTarget": "angular-examples:serve:development",
+        "browser": "chrome"
       },
       "configurations": {
+        "development": {
+          "watch": true
+        },
         "production": {
           "devServerTarget": "angular-examples:serve:production"
         }
-      }
+      },
+      "defaultConfiguration": "production"
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",

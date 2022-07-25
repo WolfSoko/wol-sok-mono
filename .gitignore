@@ -6,6 +6,9 @@
 /tmp
 /out-tsc
 
+# test reports
+/test-reports
+
 # dependencies
 /node_modules
 
@@ -16,6 +19,7 @@
 *.launch
 .settings/
 *.sublime-workspace
+/.idea/sonarlint/issuestore/
 
 # IDE - VSCode
 .vscode/*
@@ -37,6 +41,7 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
-/.angular/cache/
 
 .angular
+
+
