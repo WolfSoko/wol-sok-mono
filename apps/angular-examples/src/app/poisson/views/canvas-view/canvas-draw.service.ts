@@ -26,13 +26,6 @@ export class CanvasDrawService {
     return this;
   }
 
-  setLineWidth(lineWidth: number) {
-    if (this.ctx) {
-      this.ctx.lineWidth = lineWidth;
-    }
-    return this;
-  }
-
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   drawCircle(circle: Circle, _step: number): CanvasDrawService {
     const offsetX = 0;
@@ -65,16 +58,6 @@ export class CanvasDrawService {
     return this;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  drawPath(points: Vector[], colorFn?: (vec: Vector) => string) {
-    this.ctx?.moveTo(points[0].x, points[0].y);
-    this.ctx?.beginPath();
-    points.forEach((vec) => this.ctx?.lineTo(vec.x, vec.y));
-    this.ctx?.closePath();
-    this.ctx?.stroke();
-    return this;
-  }
-
   drawArc(
     x: number,
     y: number,
@@ -87,10 +70,6 @@ export class CanvasDrawService {
     this.ctx?.arc(x, y, r, startAngle, endAngle, anticlockwise);
     this.ctx?.fill();
     return this;
-  }
-
-  clear(width: number, height: number) {
-    return this.setFillColor('black').fillRect(0, 0, width, height);
   }
 
   fillRect(x: number, y: number, width: number, height: number) {

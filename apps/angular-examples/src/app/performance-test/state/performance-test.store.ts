@@ -1,15 +1,26 @@
-import {Injectable} from '@angular/core';
-import {ActiveState, EntityState, EntityStore, getInitialEntitiesState, StoreConfig} from '@datorama/akita';
-import {createPerformanceTest, PerformanceTest} from './performance-test.model';
+import { Injectable } from '@angular/core';
+import {
+  ActiveState,
+  EntityState,
+  EntityStore,
+  getInitialEntitiesState,
+  ID,
+  StoreConfig,
+} from '@datorama/akita';
+import {
+  createPerformanceTest,
+  PerformanceTest,
+} from './performance-test.model';
 
-export interface PerformanceTestState extends EntityState<PerformanceTest>, ActiveState {
-}
+export interface PerformanceTestState
+  extends EntityState<PerformanceTest>,
+    ActiveState {}
 
-const initInitialState = function (): EntityState<PerformanceTest, any> {
+const initInitialState = function (): EntityState<PerformanceTest, ID> {
   const arrayReduce = createPerformanceTest({name: 'Array reduce'});
   const ngRxReduce = createPerformanceTest({name: 'ngrx range reduce'});
   const entities = {[arrayReduce.id]: arrayReduce, [ngRxReduce.id]: ngRxReduce};
-  const state: EntityState<PerformanceTest, any> = getInitialEntitiesState();
+  const state: EntityState<PerformanceTest, ID> = getInitialEntitiesState();
   state.entities = entities;
   state.ids = Object.keys(entities);
   state.loading = false;

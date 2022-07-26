@@ -8,6 +8,7 @@ module.exports = defineConfig({
   screenshotsFolder: '../../test-reports/apps/angular-examples-e2e/screenshots',
   chromeWebSecurity: false,
   e2e: {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     setupNodeEvents(on, config) {
       // e2e testing node events setup code
     },

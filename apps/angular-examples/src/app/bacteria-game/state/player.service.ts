@@ -27,6 +27,23 @@ export class PlayerService {
       );
   }
 
+  private static playerOnCell(
+    x: number,
+    y: number,
+    imageData: Uint8ClampedArray,
+    colorToPlayer: { [p: string]: Player },
+    width: number
+  ): [Player, number] {
+    const testIndex = (x + y * width) * 4;
+    const currentGridColor = [
+      imageData[testIndex],
+      imageData[testIndex + 1],
+      imageData[testIndex + 2],
+    ].toString();
+    const alphaAsEnergy = imageData[testIndex + 3];
+    return [colorToPlayer[currentGridColor], alphaAsEnergy / 255];
+  }
+
   private static getColorMapOfPlayers(players: Player[]) {
     const colorToPlayer: { [key: string]: Player } = {};
     for (const player of players) {
@@ -34,6 +51,61 @@ export class PlayerService {
       colorToPlayer[rgb.toString()] = player;
     }
     return colorToPlayer;
+  }
+
+  private static findSurroundingPlayer(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    colorToPlayer: { [p: string]: Player },
+    imageData: Uint8ClampedArray
+  ): { [p: number]: { amount: number; energy: number; player: Player } } {
+    // check if min 3 but more then own colors of N NE E SE S SW W NW are opponent colors
+    const result: {
+      [p: number]: {
+        energy: number;
+        amount: number;
+        player: Player;
+      };
+    } = {};
+
+    const rangeToTest = 2;
+
+    const xMin = Math.max(x - rangeToTest, 0);
+    const xMax = Math.min(x + rangeToTest, width);
+    const yMin = Math.max(y - rangeToTest, 0);
+    const yMax = Math.min(y + rangeToTest, height);
+
+    for (let xi = xMin; xi <= xMax; xi++) {
+      for (let yi = yMin; yi <= yMax; yi++) {
+        if (xi === x || yi === y) {
+          continue;
+        }
+        const [otherPlayer, energy] = PlayerService.playerOnCell(
+          xi,
+          yi,
+          imageData,
+          colorToPlayer,
+          width
+        );
+        if (otherPlayer == null) {
+          continue;
+        }
+        const id: number = otherPlayer.id;
+        if (result[id] == null) {
+          result[id] = {
+            amount: 0,
+            player: otherPlayer,
+            energy: 0,
+          };
+        }
+        result[id].amount++;
+        result[id].energy += energy;
+      }
+    }
+
+    return result;
   }
 
   @transaction()
@@ -345,7 +417,7 @@ export class PlayerService {
       for (let i = bacs.length - 1; i > -1; i--) {
         let bacterium = bacs[i];
         const { x, y } = bacterium;
-        const surroundingPlayers = this.findSurroundingPlayer(
+        const surroundingPlayers = PlayerService.findSurroundingPlayer(
           x,
           y,
           width,
@@ -357,7 +429,7 @@ export class PlayerService {
           continue;
         }
 
-        let otherPlayers = 0;
+
         let otherEnergy = 0;
         let ownPlayers = 0;
         let ownEnergy = 0;
@@ -376,7 +448,6 @@ export class PlayerService {
             otherEnergy += surroundingPlayer.energy;
             winner = sPlayer;
           }
-          otherPlayers += surroundingPlayer.amount;
         }
         if (otherEnergy > ownEnergy) {
           let energyLoss = otherEnergy - ownEnergy;
@@ -390,7 +461,7 @@ export class PlayerService {
           };
           if (bacterium.energy <= 0 && winner != null) {
             bacterium = bacs.splice(i, 1)[0];
-            const id = winner.id as number;
+            const id = winner.id;
             if (bacToAddToWinner[id] == null) {
               bacToAddToWinner[id] = [];
             }
@@ -422,74 +493,5 @@ export class PlayerService {
 
   private getPLayerInRandomOrderToEqualifyChances() {
     return this.playerQuery.getAll().sort(() => Math.random() - 0.5);
-  }
-
-  private findSurroundingPlayer(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    colorToPlayer: { [p: string]: Player },
-    imageData: Uint8ClampedArray
-  ): { [p: number]: { amount: number; energy: number; player: Player } } {
-    // check if min 3 but more then own colors of N NE E SE S SW W NW are opponent colors
-    const result: {
-      [p: number]: {
-        energy: number;
-        amount: number;
-        player: Player;
-      };
-    } = {};
-
-    const rangeToTest = 2;
-
-    const xMin = Math.max(x - rangeToTest, 0);
-    const xMax = Math.min(x + rangeToTest, width);
-    const yMin = Math.max(y - rangeToTest, 0);
-    const yMax = Math.min(y + rangeToTest, height);
-
-    for (let xi = xMin; xi <= xMax; xi++) {
-      for (let yi = yMin; yi <= yMax; yi++) {
-        if (xi !== x && yi !== y) {
-          const [otherPlayer, energy] = this.playerOnCell(
-            xi,
-            yi,
-            imageData,
-            colorToPlayer,
-            width
-          );
-          if (otherPlayer != null) {
-            if (result[otherPlayer.id as number] == null) {
-              result[otherPlayer.id as number] = {
-                amount: 0,
-                player: otherPlayer,
-                energy: 0,
-              };
-            }
-            result[otherPlayer.id as number].amount++;
-            result[otherPlayer.id as number].energy += energy;
-          }
-        }
-      }
-    }
-
-    return result;
-  }
-
-  private playerOnCell(
-    x: number,
-    y: number,
-    imageData: Uint8ClampedArray,
-    colorToPlayer: { [p: string]: Player },
-    width: number
-  ): [Player, number] {
-    const testIndex = (x + y * width) * 4;
-    const currentGridColor = [
-      imageData[testIndex],
-      imageData[testIndex + 1],
-      imageData[testIndex + 2],
-    ].toString();
-    const alphaAsEnergy = imageData[testIndex + 3];
-    return [colorToPlayer[currentGridColor], alphaAsEnergy / 255];
   }
 }

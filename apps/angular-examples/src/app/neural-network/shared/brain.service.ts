@@ -111,8 +111,7 @@ export class BrainService {
   private trainWithBackPropagation(trainData: TrainData) {
     this.guess(trainData.inputs); // set input and guess data of perceptrons;
     const outputPerceptron = this.perceptrons[this.perceptrons.length - 1][0];
-    const hiddenLayer = this.perceptrons[this.perceptrons.length - 2];
-    const inputLayer = this.perceptrons[0];
+
     const error =
       outputPerceptron.lastGuess *
       (1 - outputPerceptron.lastGuess) *
@@ -156,13 +155,6 @@ export class BrainService {
     }
     // last layer should always be only one output perceptron
     return this.perceptrons[this.perceptrons.length - 1][0].guess(layerResult);
-  }
-
-  guessSig(inputs: number[]) {
-    if (this.isSinglePerceptron) {
-      return this.perceptrons[0][0].guessSigSilent(inputs);
-    }
-    return this.guess(inputs);
   }
 
   toggleAutoTraining(autoTrainingEnabled: boolean) {

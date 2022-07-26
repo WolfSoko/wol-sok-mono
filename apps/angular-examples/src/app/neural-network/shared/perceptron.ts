@@ -59,7 +59,7 @@ export class Perceptron {
     if (error !== 0.0) {
       this.isLearning = true;
       this.learnTimeoutSub.unsubscribe();
-      this.learnTimeoutSub.add(timer(500).subscribe((ignore) => this.isLearning = false));
+      this.learnTimeoutSub.add(timer(500).subscribe(() => this.isLearning = false));
       const adjustedWeights = this.weights.map((weight, index) =>
         weight + error * inputs[index] * learnRate
       );
@@ -78,7 +78,7 @@ export class Perceptron {
       if (this.learnTimeoutSub) {
         this.learnTimeoutSub.unsubscribe();
       }
-      this.learnTimeoutSub = timer(500).subscribe((ignore) => this.isLearning = false);
+      this.learnTimeoutSub = timer(500).subscribe(() => this.isLearning = false);
       const adjustedWeights = this.weights.map((weight, index) =>
         weight + error * this.lastInput[index] * learnRate
       );

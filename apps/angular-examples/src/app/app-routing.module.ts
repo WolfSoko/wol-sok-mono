@@ -1,11 +1,5 @@
 import { NgModule, Type } from '@angular/core';
-import {
-  Data,
-  LoadChildrenCallback,
-  Route,
-  RouterModule,
-} from '@angular/router';
-import { FourierAnalysisModule } from '@wolsok/feat-fourier-analysis';
+import { Data, Route, RouterModule } from '@angular/router';
 import { BacteriaGameModule } from './bacteria-game/bacteria-game.module';
 import { InfoComponent } from './info/info.component';
 import { ROUTER_LINKS } from './router-links.token';

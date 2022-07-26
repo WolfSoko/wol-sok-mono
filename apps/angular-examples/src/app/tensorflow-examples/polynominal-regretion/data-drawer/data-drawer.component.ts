@@ -4,11 +4,10 @@ import {
   ElementRef,
   Input,
   OnChanges,
-  SimpleChanges,
-  ViewChild
-} from "@angular/core";
-import {Tensor} from "@tensorflow/tfjs";
-import {DataDrawerService} from "./data-drawer.service";
+  ViewChild,
+} from '@angular/core';
+import { Tensor } from '@tensorflow/tfjs';
+import { DataDrawerService } from './data-drawer.service';
 
 @Component({
   selector: 'app-data-drawer',
@@ -30,7 +29,7 @@ export class DataDrawerComponent implements OnChanges {
   constructor(private dataDrawer: DataDrawerService) {
   }
 
-  ngOnChanges(_: SimpleChanges) {
+  ngOnChanges() {
     this.draw();
   }
 
