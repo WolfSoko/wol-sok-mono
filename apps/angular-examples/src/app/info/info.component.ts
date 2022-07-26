@@ -11,7 +11,7 @@ export class InfoComponent {
 
   public technologies = [
     new Technology('Angular+', 'http://angular.io/', 'assets/logos/angular.svg'),
-    new Technology('Angular CLI', 'https://cli.angular.io/', 'assets/logos/angular-cli.svg'),
+    new Technology('nrwl.io', 'https://nrwl.io/', 'assets/logos/nrwl-logo.svg'),
     new Technology('Typescript', 'http://www.typescriptlang.org/', 'assets/logos/typescript.svg'),
     new Technology('p5js', 'https://p5js.org', 'assets/logos/p5.svg'),
     new Technology('three.js', 'https://threejs.org/', 'assets/logos/three-js.png'),

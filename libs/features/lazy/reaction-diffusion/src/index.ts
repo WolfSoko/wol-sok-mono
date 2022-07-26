@@ -1,1 +1,1 @@
-export * from './lib/reaction-diff.module';
+export * from './lib/reaction-diff/reaction-diff.component';

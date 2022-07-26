@@ -15,16 +15,19 @@
     "particles",
     "animations",
     "effects",
-    "html2canvas",
-    "rxjs"
+    "thanos",
+    "vaporize",
+    "vaporizing",
+    "Avengers",
+    "Marvel"
   ],
   "scripts": {
     "build:thanos": "nx build ws-thanos"
   },
   "peerDependencies": {
-    "html2canvas": "^1.3.2",
-    "@angular/common": "^13.0.1",
-    "@angular/core": "^13.0.1"
+    "@angular/common": "^14.1.0",
+    "@angular/core": "^14.1.0",
+    "html2canvas": "^1.4.1"
   },
   "dependencies": {
     "tslib": "^2.3.0"

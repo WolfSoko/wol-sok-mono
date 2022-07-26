@@ -1,11 +1,17 @@
-<div wsThanos #thanos="thanos">
+<div wsThanos #thanos="thanos" class="thanos-container">
   <mat-card
-    (click)="thanos.vaporize(false);"
+    (click)="thanos.vaporize(false)"
     class="technologyCard"
-    wsSharedUiElevateCard>
+    wsSharedUiElevateCard
+  >
     <mat-card-title>
-      <a mat-button target="_blank" [href]="link">{{title}}</a>
+      <a mat-button target="_blank" [href]="link">{{ title }}</a>
     </mat-card-title>
-    <div class="tech-image" mat-card-image [style.backgroundImage]="'url(' + image + ')'"></div>
+    <img
+      mat-card-image
+      class="tech-image"
+      [src]="image"
+      alt="logo of {{ title }}"
+    />
   </mat-card>
 </div>

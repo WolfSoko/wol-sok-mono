@@ -1,3 +1,4 @@
+import { CommonModule } from "@angular/common";
 import {
   ChangeDetectionStrategy, ChangeDetectorRef,
   Component,
@@ -10,10 +11,13 @@ import {
   SimpleChanges,
   ViewChild
 } from "@angular/core";
+import { ShowFpsComponent } from "@wolsok/ui-kit";
 import * as p5 from "p5";
 import { ReactionDiffCalculator } from "../calculation/reaction-diff-calculator";
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, ShowFpsComponent],
   selector: "lazy-feat-react-diff-p5-view",
   templateUrl: "./p5-view.component.html",
   styleUrls: ["./p5-view.component.css"],

@@ -1,4 +1,4 @@
-import { InjectionToken } from '@angular/core';
+import { InjectionToken, Provider } from '@angular/core';
 import { createWsThanosOptions } from './create-ws-thanos-options';
 import { WsThanosOptions } from './ws-thanos.options';
 
@@ -9,3 +9,7 @@ export const WS_THANOS_OPTIONS_TOKEN = new InjectionToken<WsThanosOptions>(
     factory: createWsThanosOptions,
   }
 );
+
+export function provideWsThanosOptions(options?: Partial<WsThanosOptions>): Provider {
+  return {provide: WS_THANOS_OPTIONS_TOKEN, useValue: createWsThanosOptions(options)};
+}

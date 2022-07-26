@@ -1,10 +1,8 @@
-import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   Directive,
   ElementRef,
   Input,
-  NgModule,
   OnDestroy,
   Output,
 } from '@angular/core';
@@ -13,6 +11,7 @@ import { debounceTime, distinctUntilChanged, Observable, Subject } from 'rxjs';
 import { ResizedEvent } from './resized-event';
 
 @Directive({
+  standalone: true,
   selector: '[wsSharedUiElemResized]',
 })
 export class ElemResizedDirective implements AfterViewInit, OnDestroy {
@@ -53,10 +52,3 @@ export class ElemResizedDirective implements AfterViewInit, OnDestroy {
     }
   }
 }
-
-@NgModule({
-  declarations: [ElemResizedDirective],
-  imports: [CommonModule],
-  exports: [ElemResizedDirective],
-})
-export class ElemResizedModule {}

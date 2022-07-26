@@ -11,14 +11,16 @@ export class ServiceWorkerLogUpdateService {
       console.log('ServiceWorker not used. Because in dev mode!');
       return;
     }
+    if(!this.updates.isEnabled) {
+      console.log('ServiceWorker not enabled');
+      return;
+    }
 
-    this.updates.available.subscribe((event) => {
-      console.log('current version is', event.current);
-      console.log('available version is', event.available);
+    this.updates.versionUpdates.subscribe((event) => {
+      console.log('Service Worker, version update event:', event);
     });
-    this.updates.activated.subscribe((event) => {
-      console.log('old version was', event.previous);
-      console.log('new version is', event.current);
+    this.updates.unrecoverable.subscribe((event) => {
+      console.warn('Service worker:', event);
     });
   }
 }

@@ -13,6 +13,7 @@ import { WsThanosOptions } from './ws-thanos.options';
 import { WsThanosService } from './ws-thanos.service';
 
 @Directive({
+  standalone: true,
   selector: '[wsThanos], ws-thanos',
   exportAs: 'thanos',
 })
@@ -27,7 +28,8 @@ export class WsThanosDirective implements OnDestroy {
     private readonly thanosService: WsThanosService,
     @Inject(WS_THANOS_OPTIONS_TOKEN)
     private readonly thanosOptions: WsThanosOptions,
-    @Inject(NgZone) private readonly ngZone: NgZone
+    @Inject(NgZone)
+    private readonly ngZone: NgZone
   ) {}
 
   public vaporize(removeElem = true): Observable<void> {

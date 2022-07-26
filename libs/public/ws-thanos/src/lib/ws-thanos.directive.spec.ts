@@ -1,10 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { Component, QueryList, ViewChildren } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import image from '../assets/how-to-be-funny.png';
+import { provideWsThanosOptions } from './ws-thanos-options.token';
 import { WsThanosDirective } from './ws-thanos.directive';
-import { WsThanosModule } from './ws-thanos.module';
 import { WsThanosService } from './ws-thanos.service';
 
 describe('WsThanosDirective', () => {
@@ -89,20 +88,18 @@ describe('WsThanosDirective', () => {
   let hostFixture: ComponentFixture<HostComponent>;
   let hostComp: HostComponent;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [
-          WsThanosModule.forRoot({
-            maxParticleCount: 20000,
-            animationLength: 4000,
-          }),
-          CommonModule,
-        ],
-        declarations: [HostComponent],
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [WsThanosDirective],
+      providers: [
+        provideWsThanosOptions({
+          maxParticleCount: 20000,
+          animationLength: 4000,
+        }),
+      ],
+      declarations: [HostComponent],
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     hostFixture = TestBed.createComponent(HostComponent);

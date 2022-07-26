@@ -1,10 +1,21 @@
+import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   OnDestroy,
   OnInit,
 } from '@angular/core';
-import { MatSelectChange } from '@angular/material/select';
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectChange, MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ElevateCardDirective } from "@wolsok/ui-kit";
 import { interval, Observable, Subject } from 'rxjs';
 import {
   debounceTime,
@@ -19,7 +30,9 @@ import { CellWeights } from './cell-weights-to-array';
 import { ReactionDiffCalcParams } from './calculation/reaction-diff-calc-params';
 import { ReactionDiffCalcServiceFactory } from './calculation/reaction-diff-calculation-service.factory';
 import { ReactionDiffCalculator } from './calculation/reaction-diff-calculator';
+import { P5ViewComponent } from './p5-view/p5-view.component';
 import { ReactionDiffConfigService } from './reaction-diff-config.service';
+import { WeightsConfigComponent } from "./weights-config/weights-config.component";
 
 interface Dimensions {
   width: number;
@@ -27,6 +40,24 @@ interface Dimensions {
 }
 
 @Component({
+  standalone: true,
+  imports: [
+    P5ViewComponent,
+    WeightsConfigComponent,
+    CommonModule,
+    ElevateCardDirective,
+    FormsModule,
+    MatCheckboxModule,
+    MatButtonModule,
+    MatToolbarModule,
+    MatIconModule,
+    MatCardModule,
+    MatSelectModule,
+    MatInputModule,
+    MatSlideToggleModule,
+    MatCheckboxModule,
+    MatTooltipModule,
+  ],
   selector: 'lazy-feat-react-diff-reaction-diff',
   templateUrl: './reaction-diff.component.html',
   styleUrls: ['./reaction-diff.component.less'],

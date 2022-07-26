@@ -1,10 +1,8 @@
-import { CommonModule } from '@angular/common';
 import {
   Directive,
   ElementRef,
   HostListener,
   Input,
-  NgModule,
   OnChanges,
   Renderer2,
   SimpleChange,
@@ -21,6 +19,7 @@ interface ElevateCardChanges extends SimpleChanges {
 }
 
 @Directive({
+  standalone: true,
   selector: '[wsSharedUiElevateCard]',
 })
 export class ElevateCardDirective implements OnChanges {
@@ -76,10 +75,3 @@ export class ElevateCardDirective implements OnChanges {
     return ElevateCardDirective.elevationClass + raiseLevel;
   }
 }
-
-@NgModule({
-  imports: [CommonModule],
-  declarations: [ElevateCardDirective],
-  exports: [ElevateCardDirective],
-})
-export class ElevateCardModule {}

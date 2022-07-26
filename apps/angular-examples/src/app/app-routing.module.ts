@@ -1,6 +1,5 @@
-import { NgModule, Type } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { Data, Route, RouterModule } from '@angular/router';
-import { BacteriaGameModule } from './bacteria-game/bacteria-game.module';
 import { InfoComponent } from './info/info.component';
 import { ROUTER_LINKS } from './router-links.token';
 
@@ -27,7 +26,7 @@ const mainNavRoutes: MainNavRoute[] = [
     path: 'bacteriaGame',
     loadChildren: () =>
       import('./bacteria-game/bacteria-game.module').then(
-        (m) => m.BacteriaGameModule as Type<BacteriaGameModule>
+        (m) => m.BacteriaGameModule
       ),
     data: { linkText: 'Bacteria Game' },
   },
@@ -73,8 +72,8 @@ const mainNavRoutes: MainNavRoute[] = [
   },
   {
     path: 'reactionDiff',
-    loadChildren: () =>
-      import('@wolsok/feat-reaction-diff').then((m) => m.ReactionDiffModule),
+    loadComponent: () =>
+      import('@wolsok/feat-reaction-diff').then((m) => m.ReactionDiffComponent),
     data: { linkText: 'Reaction Diffusion Algorithm (gpu.js)' },
   },
   {

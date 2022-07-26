@@ -4,8 +4,8 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AkitaNgRouterStoreModule } from '@datorama/akita-ng-router-store';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
-import { ElemResizedModule } from '@wolsok/ui-kit';
-import { WsThanosModule } from '@wolsok/ws-thanos';
+import { ElemResizedDirective } from '@wolsok/ui-kit';
+import { provideWsThanosOptions, WsThanosDirective } from '@wolsok/ws-thanos';
 import { AppRoutingModule } from './app-routing.module';
 
 import { AppComponent } from './app.component';
@@ -26,26 +26,28 @@ import { SharedModule } from './shared/shared.module';
     TechnologyComponent,
     NavItemComponent,
     AboutComponent,
-    ServiceWorkerUpdateComponent,
     MainToolbarComponent,
   ],
   imports: [
+    ServiceWorkerUpdateComponent,
     AkitaNgDevtools.forRoot(),
     AkitaNgRouterStoreModule,
     BrowserModule,
     BrowserAnimationsModule,
     CoreModule,
-    WsThanosModule.forRoot({
-      maxParticleCount: 50000,
-      animationLength: 5000,
-    }),
     HttpClientModule,
     LoginModule,
     SharedModule,
     AppRoutingModule,
-    ElemResizedModule,
+    WsThanosDirective,
+    ElemResizedDirective,
   ],
-
+  providers: [
+    provideWsThanosOptions({
+      maxParticleCount: 50000,
+      animationLength: 5000,
+    }),
+  ],
   bootstrap: [AppComponent],
 })
 export class AppModule {}
