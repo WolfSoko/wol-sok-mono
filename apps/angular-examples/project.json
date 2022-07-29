@@ -93,8 +93,8 @@
       "executor": "@nrwl/web:file-server",
       "options": {
         "buildTarget": "angular-examples:build",
-        "proxyUrl": "http://localhost:4200?",
-        "parallel": true
+        "parallel": true,
+        "spa": true
       },
       "configurations": {
         "production": {
