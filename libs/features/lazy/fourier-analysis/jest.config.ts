@@ -1,3 +1,4 @@
+/* eslint-disable */
 export default {
   displayName: 'feature-lazy-fourier-analysis',
 

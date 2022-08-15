@@ -1,3 +1,4 @@
+/* eslint-disable */
 export default {
   displayName: 'feat-lazy-shader-examples',
   preset: '../../../../jest.preset.js',

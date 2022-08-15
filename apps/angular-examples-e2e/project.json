@@ -9,7 +9,8 @@
       "options": {
         "cypressConfig": "apps/angular-examples-e2e/cypress.config.ts",
         "devServerTarget": "angular-examples:serve:development",
-        "browser": "chrome"
+        "browser": "chrome",
+        "testingType": "e2e"
       },
       "configurations": {
         "development": {

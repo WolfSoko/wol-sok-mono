@@ -1,3 +1,4 @@
+/* eslint-disable */
 export default {
   displayName: 'libs-features-lazy-reaction-diffusion',
   preset: '../../../../jest.preset.js',
