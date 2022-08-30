@@ -36,6 +36,8 @@
     "@datorama/akita-ng-router-store": "7.0.0",
     "@datorama/akita-ngdevtools": "7.0.0",
     "@ngneat/until-destroy": "^9.0.2",
+    "@sentry/angular": "^7.11.1",
+    "@sentry/tracing": "^7.11.1",
     "@tensorflow/tfjs": "2.8.6",
     "ace-builds": "^1.4.13",
     "akita-ng-fire": "7.0.0",

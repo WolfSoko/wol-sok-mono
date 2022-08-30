@@ -1,9 +1,11 @@
 import { HttpClientModule } from '@angular/common/http';
-import { NgModule } from '@angular/core';
+import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { Router } from '@angular/router';
 import { AkitaNgRouterStoreModule } from '@datorama/akita-ng-router-store';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
+import { createErrorHandler, TraceService } from '@sentry/angular';
 import { ElemResizedDirective } from '@wolsok/ui-kit';
 import { provideWsThanosOptions, WsThanosDirective } from '@wolsok/ws-thanos';
 import { AppRoutingModule } from './app-routing.module';
@@ -47,6 +49,23 @@ import { SharedModule } from './shared/shared.module';
       maxParticleCount: 50000,
       animationLength: 5000,
     }),
+    {
+      provide: ErrorHandler,
+      useValue: createErrorHandler({
+        showDialog: true,
+      }),
+    },
+    {
+      provide: TraceService,
+      deps: [Router],
+    },
+    {
+      provide: APP_INITIALIZER,
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      useFactory: () => () => {},
+      deps: [TraceService],
+      multi: true,
+    },
   ],
   bootstrap: [AppComponent],
 })
