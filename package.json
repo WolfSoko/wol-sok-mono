@@ -1,6 +1,6 @@
 {
   "name": "wolsok",
-  "version": "2.0.57",
+  "version": "2.0.58",
   "license": "MIT",
   "scripts": {
     "ng": "nx",
