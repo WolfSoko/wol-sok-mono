@@ -5,7 +5,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { AkitaNgRouterStoreModule } from '@datorama/akita-ng-router-store';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
-import { createErrorHandler, TraceService } from '@sentry/angular';
+import * as Sentry from '@sentry/angular';
 import { ElemResizedDirective } from '@wolsok/ui-kit';
 import { provideWsThanosOptions, WsThanosDirective } from '@wolsok/ws-thanos';
 import { AppRoutingModule } from './app-routing.module';
@@ -51,19 +51,19 @@ import { SharedModule } from './shared/shared.module';
     }),
     {
       provide: ErrorHandler,
-      useValue: createErrorHandler({
+      useValue: Sentry.createErrorHandler({
         showDialog: true,
       }),
     },
     {
-      provide: TraceService,
+      provide: Sentry.TraceService,
       deps: [Router],
     },
     {
       provide: APP_INITIALIZER,
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       useFactory: () => () => {},
-      deps: [TraceService],
+      deps: [Sentry.TraceService],
       multi: true,
     },
   ],
