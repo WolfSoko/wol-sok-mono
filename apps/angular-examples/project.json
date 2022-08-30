@@ -51,9 +51,11 @@
           "fraction.js",
           "complex.js"
         ],
-        "buildLibsFromSource": false
+        "buildLibsFromSource": false,
+        "sourceMap": true
       },
       "configurations": {
+
         "production": {
           "budgets": [
             {
