@@ -30,7 +30,7 @@
     <mat-card-subtitle>Here we show the current perceptron with its last inputs and outputs</mat-card-subtitle>
     <mat-card-content>
       <div>Learnrate: {{learnRate}}, learned data points: {{learnedDataPoints}}</div>
-      <app-perceptron [perceptron]="perceptron"></app-perceptron>
+      <app-perceptron *ngIf="perceptron" [perceptron]="perceptron"></app-perceptron>
     </mat-card-content>
   </mat-card>
 </div>
