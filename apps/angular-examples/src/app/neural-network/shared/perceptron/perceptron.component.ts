@@ -5,32 +5,31 @@ import {
   ElementRef,
   Input,
   OnDestroy,
-  ViewChild
-} from "@angular/core";
-import {Perceptron} from "../perceptron";
-import * as p5 from "p5";
+  ViewChild,
+} from '@angular/core';
+import { Perceptron } from '../perceptron';
+import * as P5 from 'p5';
 
 @Component({
   selector: 'app-perceptron',
   templateUrl: './perceptron.component.html',
   styleUrls: ['./perceptron.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PerceptronComponent implements AfterContentInit, OnDestroy {
-
   @Input() perceptron!: Perceptron;
   @Input() canvasHeight = 300;
   @Input() canvasWidth = 300;
-  @ViewChild('perceptronCanvas', { static: true }) perceptronCanvas!: ElementRef;
-  private scetch?: p5;
+  @ViewChild('perceptronCanvas', { static: true })
+  perceptronCanvas!: ElementRef;
+  private scetch?: P5;
 
   static roundFloat(input: number) {
     return input.toFixed(5);
   }
 
   ngAfterContentInit(): void {
-
-    this.scetch = new p5((p: p5) => {
+    this.scetch = new P5((p: P5) => {
       p.setup = () => {
         p.createCanvas(this.canvasWidth, this.canvasHeight);
       };
@@ -47,7 +46,7 @@ export class PerceptronComponent implements AfterContentInit, OnDestroy {
     this.scetch?.remove();
   }
 
-  drawPerceptronCircle(p: p5) {
+  drawPerceptronCircle(p: P5) {
     p.push();
     p.translate(this.perceptronCircleX(), this.canvasHeight / 2);
     this.perceptron.isLearning ? p.fill(255, 200, 200) : p.fill(200, 200, 255);
@@ -63,7 +62,11 @@ export class PerceptronComponent implements AfterContentInit, OnDestroy {
     if (this.perceptron.lastGuess != null) {
       p.textSize(circleSize / 4);
       p.textAlign(p.LEFT);
-      p.text('Output:' + PerceptronComponent.roundFloat(this.perceptron.lastGuess), circleSize / 2 + 2, -2);
+      p.text(
+        'Output:' + PerceptronComponent.roundFloat(this.perceptron.lastGuess),
+        circleSize / 2 + 2,
+        -2
+      );
     }
     p.pop();
   }
@@ -76,7 +79,7 @@ export class PerceptronComponent implements AfterContentInit, OnDestroy {
     return this.canvasWidth / 6;
   }
 
-  drawBiasInput(p: p5) {
+  drawBiasInput(p: P5) {
     p.push();
     p.translate(this.perceptronCircleX(), this.canvasHeight / 12);
     this.perceptron.isLearning ? p.fill(255, 200, 200) : p.fill(200, 200, 255);
@@ -87,13 +90,18 @@ export class PerceptronComponent implements AfterContentInit, OnDestroy {
     p.textAlign(p.CENTER);
     p.text('Bias', 0, circleSize / 10);
     p.textAlign(p.LEFT);
-    p.text(PerceptronComponent.roundFloat(this.perceptron.bias), 5, this.canvasHeight / 10);
+    p.text(
+      PerceptronComponent.roundFloat(this.perceptron.bias),
+      5,
+      this.canvasHeight / 10
+    );
     p.line(0, circleSize / 2, 0, this.canvasHeight / 3);
     p.pop();
   }
 
-  drawInputs(p: p5) {
-    const inputDistanceY = (this.canvasHeight) / (this.perceptron.weights.length + 1);
+  drawInputs(p: P5) {
+    const inputDistanceY =
+      this.canvasHeight / (this.perceptron.weights.length + 1);
     this.perceptron.weights.forEach((weight, index) => {
       const y = inputDistanceY * (index + 1);
       const circleSize = this.canvasWidth / 7.5;
@@ -103,17 +111,27 @@ export class PerceptronComponent implements AfterContentInit, OnDestroy {
       p.textAlign(p.CENTER);
       p.textSize(circleSize / 3.5);
       p.text('Input ' + (index + 1), circleX, y + 4);
-      p.line(circleX + circleSize / 2, y, this.perceptronCircleX() - this.perceptronCircleSize() / 2, this.canvasHeight / 2);
+      p.line(
+        circleX + circleSize / 2,
+        y,
+        this.perceptronCircleX() - this.perceptronCircleSize() / 2,
+        this.canvasHeight / 2
+      );
       p.textAlign(p.LEFT);
-      if (this.perceptron.lastInput != null) {
+      if (this.perceptron.lastInput?.[index] != null) {
         p.text(
-          `in${index + 1}: ${PerceptronComponent.roundFloat(this.perceptron.lastInput[index])}`,
+          `in${index + 1}: ${PerceptronComponent.roundFloat(
+            this.perceptron.lastInput[index]
+          )}`,
           circleX * 2,
-          y - this.perceptronCircleSize() / 4);
+          y - this.perceptronCircleSize() / 4
+        );
       }
-      p.text(`w${index + 1}: ${PerceptronComponent.roundFloat(weight)}`, circleX * 2, y + this.perceptronCircleSize() / 2);
+      p.text(
+        `w${index + 1}: ${PerceptronComponent.roundFloat(weight)}`,
+        circleX * 2,
+        y + this.perceptronCircleSize() / 2
+      );
     });
   }
-
 }
-

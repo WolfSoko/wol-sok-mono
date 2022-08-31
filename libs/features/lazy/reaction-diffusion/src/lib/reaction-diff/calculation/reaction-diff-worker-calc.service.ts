@@ -1,5 +1,5 @@
 import { mapWorkerOp, WorkerPostParams } from '@wolsok/utils-operators';
-import * as p5 from 'p5';
+import * as P5 from 'p5';
 import { merge, Observable, range, Subject, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
@@ -147,7 +147,7 @@ export class ReactionDiffWorkerCalcService implements ReactionDiffCalculator {
     this.initCalcWorkers$();
   }
 
-  drawImage(graphics: p5): void {
+  drawImage(graphics: P5): void {
     if (!this.grid) {
       return;
     }
