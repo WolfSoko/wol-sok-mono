@@ -41,4 +41,4 @@ jobs:
         sudo apt-get update -y
         sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
         npm ci
-      number-of-agents: 7
+      number-of-agents: 3
