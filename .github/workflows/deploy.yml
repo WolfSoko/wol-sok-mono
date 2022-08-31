@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   run:
+    environment: aws
     runs-on: ubuntu-latest
     steps:
       - name: Install ubuntu dependencies
