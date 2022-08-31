@@ -16,6 +16,11 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
+      - run: \
+          echo "Install packages to compile node_modules gl with node-gyp"
+          sudo apt-get update -y
+          sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
+          npm ci
       - uses: actions/checkout@v3
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
