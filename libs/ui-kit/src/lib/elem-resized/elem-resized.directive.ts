@@ -36,6 +36,9 @@ export class ElemResizedDirective implements AfterViewInit, OnDestroy {
   constructor(private readonly element: ElementRef) {}
 
   ngAfterViewInit(): void {
+    if(!ResizeObserver){
+      return;
+    }
     this.resizeObserver = new ResizeObserver(
       (resizeEntry: ResizeObserverEntry[]) => {
         const resizeObserverEntry: ResizeObserverEntry = resizeEntry[0];

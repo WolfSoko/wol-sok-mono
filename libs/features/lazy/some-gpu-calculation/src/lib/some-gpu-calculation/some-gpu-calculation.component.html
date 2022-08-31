@@ -1,11 +1,9 @@
 <mat-card wsSharedUiElevateCard class="gpu-card">
   <mat-card-title>
-    <div mat-card-avatar class="gpu-header-image"></div>
     <mat-card-title>An example utilizing gpu.js</mat-card-title>
-    <mat-card-subtitle
-    >No complicated shader code needed for this
-    </mat-card-subtitle
-    >
+    <mat-card-subtitle>
+      No complicated shader code needed for this. Use toggle to switch between GPU and CPU rendering.
+    </mat-card-subtitle>
   </mat-card-title>
   <div #gpuCanvasContainer
        class="canvas-container"
@@ -30,7 +28,7 @@
           formControlName="r"
         >
         </mat-slider>
-        <mat-chip color="warn">{{ additionForm.get('r')?.value }}</mat-chip>
+        <mat-chip class="value-of-slider" color="warn">{{ additionForm.get('r')?.value }}</mat-chip>
       </div>
       <div class="full-width">
         <span>Green</span>
@@ -43,7 +41,7 @@
           formControlName="g"
         >
         </mat-slider>
-        <mat-chip color="warn">{{ additionForm.get('g')?.value }}</mat-chip>
+        <mat-chip class="value-of-slider" color="warn">{{ additionForm.get('g')?.value }}</mat-chip>
       </div>
       <div class="full-width">
         <span>Blue</span>
@@ -56,10 +54,10 @@
           formControlName="b"
         >
         </mat-slider>
-        <mat-chip color="warn">{{ additionForm.get('b')?.value }}</mat-chip>
+        <mat-chip class="value-of-slider" color="warn">{{ additionForm.get('b')?.value }}</mat-chip>
       </div>
       <div class="full-width">
-        <span>Repeatition</span>
+        <span>Repetition</span>
         <mat-slider
           [thumbLabel]="true"
           min="1"
@@ -67,7 +65,7 @@
           formControlName="repetition"
         >
         </mat-slider>
-        <mat-chip color="accent">{{
+        <mat-chip color="accent" class="value-of-slider">{{
           additionForm.get('repetition')?.value
           }}</mat-chip>
       </div>
@@ -80,7 +78,7 @@
           formControlName="speed"
         >
         </mat-slider>
-        <mat-chip color="accent"
+        <mat-chip class="value-of-slider" color="accent"
         >{{ additionForm.get('speed')?.value }}%
         </mat-chip
         >

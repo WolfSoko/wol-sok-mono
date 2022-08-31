@@ -43,8 +43,8 @@ const mainNavRoutes: MainNavRoute[] = [
   {
     path: 'someGpuCalculations',
     loadChildren: () =>
-      import('./some-gpu-calculation/some-gpu-calculation.module').then(
-        (m) => m.SomeGpuCalculationModule
+      import('@wolsok/feat-lazy-some-gpu-calculation').then(
+        (mod) => mod.SOME_GPU_CALCULATION_ROUTES
       ),
     data: { linkText: 'Some Gpu Accelerated Calculations (gpu.js)' },
   },

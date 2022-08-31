@@ -15,6 +15,9 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@wolsok/feat-lazy-some-gpu-calculation": [
+        "libs/features/lazy/some-gpu-calculation/src/index.ts"
+      ],
       "@wolsok/feat-api-auth": ["libs/features/api/auth/src/index.ts"],
       "@wolsok/feat-fourier-analysis": [
         "libs/features/lazy/fourier-analysis/src/index.ts"

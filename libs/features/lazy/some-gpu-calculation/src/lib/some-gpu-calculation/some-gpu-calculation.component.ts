@@ -1,3 +1,4 @@
+import { CommonModule } from "@angular/common";
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -7,11 +8,16 @@ import {
   ViewChild,
 } from '@angular/core';
 import {
+  ReactiveFormsModule,
   UntypedFormBuilder,
   UntypedFormGroup,
-  Validators,
-} from '@angular/forms';
-import { ResizedEvent } from '@wolsok/ui-kit';
+  Validators
+} from "@angular/forms";
+import { MatCardModule } from "@angular/material/card";
+import { MatChipsModule } from "@angular/material/chips";
+import { MatSlideToggleModule } from "@angular/material/slide-toggle";
+import { MatSliderModule } from "@angular/material/slider";
+import { ElemResizedDirective, ElevateCardDirective, ResizedEvent } from "@wolsok/ui-kit";
 import {
   GpuAdapterService,
   IKernelFunctionThis,
@@ -48,9 +54,20 @@ interface Configuration {
 }
 
 @Component({
-  selector: 'app-some-gpu-calculation',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ElemResizedDirective,
+    ReactiveFormsModule,
+    MatSliderModule,
+    MatCardModule,
+    MatChipsModule,
+    MatSlideToggleModule,
+    ElevateCardDirective,
+  ],
+  selector: 'lazy-feat-gpu-calc',
   templateUrl: './some-gpu-calculation.component.html',
-  styleUrls: ['./some-gpu-calculation.component.less'],
+  styleUrls: ['./some-gpu-calculation.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {

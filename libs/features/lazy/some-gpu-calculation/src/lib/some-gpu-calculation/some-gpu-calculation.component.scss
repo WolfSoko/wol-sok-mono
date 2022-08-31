@@ -1,25 +1,22 @@
-:host {
-  .mat-slider-color-mixin(@color) {
-    .mat-slider-track-wrapper {
-      .mat-slider-track-fill {
-        background-color: @color;
-      }
-    }
-    .mat-slider-thumb,
-    .mat-slider-thumb-label {
-      background-color: @color;
+@mixin mat-slider-color-mixin($color) {
+  .mat-slider-track-wrapper {
+    .mat-slider-track-fill {
+      background-color: $color;
     }
   }
 
-  .gpu-card {
-    .gpu-header-image {
-      background-image: url('https://material.angular.io/assets/img/examples/shiba1.jpg');
-      background-size: cover;
-    }
+  .mat-slider-thumb,
+  .mat-slider-thumb-label {
+    background-color: $color;
+  }
+}
 
+:host {
+  .gpu-card {
     .canvas-container {
       width: 100%;
       overflow: hidden;
+
       canvas {
         grid-area: myArea;
         width: 100%;
@@ -41,6 +38,9 @@
     .full-width {
       width: 100%;
     }
+    .value-of-slider {
+      display: inline-block;
+    }
 
     .number-input-width {
       width: 80px;
@@ -49,15 +49,15 @@
 
   ::ng-deep {
     .red-color-slider {
-      .mat-slider-color-mixin(red);
+      @include mat-slider-color-mixin(red);
     }
 
     .green-color-slider {
-      .mat-slider-color-mixin(#00ff00);
+      @include mat-slider-color-mixin(#00ff00);
     }
 
     .blue-color-slider {
-      .mat-slider-color-mixin(blue);
+      @include mat-slider-color-mixin(blue);
     }
   }
 }
