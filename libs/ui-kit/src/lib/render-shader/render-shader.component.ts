@@ -20,7 +20,7 @@ import {
   Camera,
   Mesh,
   OrthographicCamera,
-  PlaneBufferGeometry,
+  PlaneGeometry,
   Renderer,
   Scene,
   ShaderMaterial,
@@ -61,7 +61,7 @@ export class RenderShaderComponent
   private renderer?: Renderer;
 
   private camera?: Camera;
-  private geometry?: PlaneBufferGeometry;
+  private geometry?: PlaneGeometry;
   private material?: ShaderMaterial;
   private mesh?: Mesh;
 
@@ -119,7 +119,7 @@ export class RenderShaderComponent
     this.scene = new Scene();
 
     this.camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    this.geometry = new PlaneBufferGeometry(2, 2);
+    this.geometry = new PlaneGeometry(2, 2);
 
     this.material = new ShaderMaterial({
       uniforms: this.uniforms,
