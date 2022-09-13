@@ -1,10 +1,11 @@
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-
 import { ElevateCardDirective } from './elevate-card.directive';
 
 @Component({
+  standalone: true,
+  imports:  [ElevateCardDirective],
   template: `
     <div
       wsSharedUiElevateCard
@@ -22,7 +23,7 @@ describe('ElevateCard directive', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [ElevateCardDirective, TestElevateCardComponent], // declare the test component
+      imports: [TestElevateCardComponent], // declare the test component
     });
 
     fixture = TestBed.createComponent(TestElevateCardComponent);
