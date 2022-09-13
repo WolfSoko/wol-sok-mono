@@ -25,12 +25,13 @@ jobs:
         npm ci
       parallel-commands: |
         npx nx workspace-lint
-        npx nx format:check
+      # npx nx format:check
       parallel-commands-on-agents: |
         npx nx affected --target=lint --parallel
         npx nx affected --target=test --parallel --code-coverage
         npx nx affected --target=build --parallel
         npx nx affected --target=e2e
+
 
   agents:
     name: Nx Cloud - Agents
