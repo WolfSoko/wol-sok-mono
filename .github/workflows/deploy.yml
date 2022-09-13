@@ -37,8 +37,8 @@ jobs:
           repo_token: '${{ secrets.GITHUB_TOKEN }}'
           prerelease: false
           files: |
-            dist/apps/angular-examples
-            dist/libs/public/ws-thanos
+            dist/apps/angular-examples/**/*
+            dist/libs/public/ws-thanos/**/*
       # Syncs your 'dist' folder from buildng the Vue app with an S3 bucket
       - name: S3 Sync
         uses: jakejarvis/s3-sync-action@v0.5.1
