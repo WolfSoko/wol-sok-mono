@@ -33,7 +33,7 @@ jobs:
       - name: Build
         run: npx nx build angular-examples
 
-      - name: 'ZIP-files'
+      - name: ZIP-files for release
         uses: vimtor/action-zip@v1
         with:
           files: |
@@ -54,8 +54,8 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: 'wolsok'
           SENTRY_PROJECT: 'angularexamples'
-        # Syncs your 'dist' folder from buildng the Vue app with an S3 bucket
-      - name: S3 Sync
+
+      - name: Upload angular-examples app to S3 bucket
         uses: jakejarvis/s3-sync-action@v0.5.1
         with:
           args: --acl public-read --delete
@@ -68,7 +68,7 @@ jobs:
           DEST_DIR: 'angularExamples/'
 
       # Clears the CloudFront cache so new requests will receive the latest version of your app
-      - name: Invalidate Cloudfront
+      - name: Invalidate Cloudfront CDN cache
         uses: chetan/invalidate-cloudfront-action@v1.3
         env:
           DISTRIBUTION: 'E22J2LG5B4PGRR'
