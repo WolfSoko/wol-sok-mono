@@ -1,4 +1,4 @@
-name: Deploy to AWS
+name: Release and deploy to AWS
 on:
   push:
     # Pattern matched against refs/tags
@@ -24,6 +24,7 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
       - uses: actions/checkout@v3
+
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ github.env.NODE_VERSION }}
@@ -32,14 +33,26 @@ jobs:
       - name: Build
         run: npx nx build angular-examples
 
+      - name: 'ZIP-files'
+        uses: vimtor/action-zip@v1
+        with:
+          files: dist/apps/angular-examples/ dist/apps/libs/public/
+          dest: release.zip
       - uses: 'marvinpinto/action-automatic-releases@latest'
         with:
           repo_token: '${{ secrets.GITHUB_TOKEN }}'
           prerelease: false
-          files: |
-            dist/apps/angular-examples/**/*
-            dist/libs/public/ws-thanos/**/*
-      # Syncs your 'dist' folder from buildng the Vue app with an S3 bucket
+          files: release.zip
+
+      - name: Create Sentry Release
+        uses: getsentry/action-release@v1
+        with:
+          environment: aws
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: 'wolsok'
+          SENTRY_PROJECT: 'angularexamples'
+        # Syncs your 'dist' folder from buildng the Vue app with an S3 bucket
       - name: S3 Sync
         uses: jakejarvis/s3-sync-action@v0.5.1
         with:
@@ -61,14 +74,5 @@ jobs:
           AWS_REGION: 'eu-west-1'
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: Create Sentry Release
-        uses: getsentry/action-release@v1
-        with:
-          environment: aws
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: 'wolsok'
-          SENTRY_PROJECT: 'angularexamples'
 
 
