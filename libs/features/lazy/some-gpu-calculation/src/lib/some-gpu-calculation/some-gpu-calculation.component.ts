@@ -110,7 +110,7 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
 
   private static calcHeightOfCanvas(
     newWidth: number,
-    aspectRatio: number = 3 / 4
+    aspectRatio: number = 9 / 16
   ): number {
     return Math.floor(newWidth * aspectRatio);
   }
