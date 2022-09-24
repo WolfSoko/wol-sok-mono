@@ -34,8 +34,7 @@ jobs:
         npx nx affected --target=test --code-coverage
         npx nx affected --target=build
         npx nx affected --target=e2e --parallel=1 --record=true --key=${CYPRESS_DASHBOARD_KEY}
-    env:
-      CYPRESS_SECRET_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
+      environment-variables: CYPRESS_DASHBOARD_KEY=${{ secrets.CYPRESS_DASHBOARD_KEY }}
 
   agents:
     name: Nx Cloud - Agents
@@ -49,3 +48,4 @@ jobs:
         sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
         npm ci
       number-of-agents: 4
+      environment-variables: CYPRESS_DASHBOARD_KEY=${{ secrets.CYPRESS_DASHBOARD_KEY }}
