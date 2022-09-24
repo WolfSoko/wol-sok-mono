@@ -11,13 +11,10 @@ form {
   align-items: center;
   justify-content: space-around;
 
-  > input, button {
+  > input,
+  button {
     margin: 8px;
   }
-}
-
-button {
-  height: 40px;
 }
 
 .gravitational-force-card {
