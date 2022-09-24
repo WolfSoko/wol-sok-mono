@@ -15,7 +15,7 @@ env:
   NODE_OPTIONS: '--max_old_space_size=4096'
   NX_BRANCH: ${{ github.event.number || github.ref_name }}
   NX_CLOUD_DISTRIBUTED_EXECUTION: 'true'
-  CYPRESS_CACHE_FOLDER: cache/cypress
+  CYPRESS_CACHE_FOLDER: 'cache/cypress'
   CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
 
 jobs:
@@ -75,7 +75,7 @@ jobs:
           cmd1: npx nx affected --target=build --parallel=1
           cmd2: npx nx affected --target=test --parallel=3
           cmd3: npx nx affected --target=lint --parallel=3
-          cmd4: npx -c nx affected --target=e2e --configuration=ci --record=true --parallel=1
+          cmd4: npx -c "nx affected --target=e2e --configuration=ci --record=true --parallel=1"
       - run: npx nx-cloud stop-all-agents
       - name: Tag main branch if all jobs succeed
         uses: nrwl/nx-tag-successful-ci-run@v1
@@ -111,5 +111,5 @@ jobs:
           cmd1: npx nx affected --target=build --parallel=1
           cmd2: npx nx affected --target=test --parallel=1
           cmd3: npx nx affected --target=lint --parallel=3
-          cmd4: npx nx affected --target=e2e --configuration=ci --record=true --parallel=1
+          cmd4: npx -c "nx affected --target=e2e --configuration=ci --record=true --parallel=1"
       - run: npx nx-cloud stop-all-agents
