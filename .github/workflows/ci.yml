@@ -7,6 +7,7 @@ on:
 
 env:
   NODE_VERSION: '16'
+  CYPRESS_SECRET_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
@@ -32,7 +33,9 @@ jobs:
         npx nx affected --target=lint
         npx nx affected --target=test --code-coverage
         npx nx affected --target=build
-        npx nx affected --target=e2e --parallel=1 --record=true --key="${{ github.secrets.CYPRESS_DASHBOARD_KEY }}" --ci-build-id="${{ github.repository }}-${{ github.run_id }}-${{ github.run_attempt }}"
+        npx nx affected --target=e2e --parallel=1 --record=true --key="${{ env.CYPRESS_DASHBOARD_KEY }}"
+    env:
+      CYPRESS_SECRET_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
 
   agents:
     name: Nx Cloud - Agents
