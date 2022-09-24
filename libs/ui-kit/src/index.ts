@@ -4,3 +4,5 @@ export * from './lib/elevate-card/elevate-card.directive';
 export * from './lib/render-shader/render-shader.component';
 
 export * from './lib/show-fps/show-fps.component';
+
+export * from './lib/async/async.directive';

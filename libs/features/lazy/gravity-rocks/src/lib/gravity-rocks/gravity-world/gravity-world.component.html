@@ -3,21 +3,34 @@
     <mat-toolbar color="primary">Play with the values</mat-toolbar>
     <mat-card-content>
       <form [formGroup]="form">
-        <input matInput type="number" placeholder="Gravitational Force"
-               formControlName="gravitationalConstant">
-        <input matInput type="number" placeholder="Mass of Sun"
-               formControlName="massOfSun">
-        <button mat-raised-button color="primary" (click)="startSim()">
-          Start
-        </button>
-        <button mat-raised-button color="accent" (click)="stopSim()">
-          Pause
-        </button>
+        <input
+          matInput
+          type="number"
+          placeholder="Gravitational Force"
+          formControlName="gravitationalConstant"
+        />
+        <input
+          matInput
+          type="number"
+          placeholder="Mass of Sun"
+          formControlName="massOfSun"
+        />
+        <ng-container *ngAsync="let running; from: running$">
+          <button
+            mat-raised-button
+            [color]="running ? 'accent' : 'primary'"
+            (click)="toggleSim(running)"
+          >
+            {{ running ? 'Pause' : 'Start' }}
+          </button>
+        </ng-container>
       </form>
       <mat-list>
         <mat-toolbar id="infos">Infos</mat-toolbar>
         <mat-list-item>
-          <span class="planetCount">PlanetCount = {{planetsAmount$ | async}}</span>
+          <span class="planetCount"
+            >PlanetCount = {{ planetsAmount$ | async }}</span
+          >
         </mat-list-item>
       </mat-list>
     </mat-card-content>
@@ -25,15 +38,27 @@
   <mat-card class="gravitational-force-card">
     <mat-toolbar color="primary">See the action</mat-toolbar>
     <mat-card-content>
-      <svg [style.width.px]="MAX_DIM.x"
-           [style.height.px]="MAX_DIM.y"
-           (mousedown)="mouseDown($event)"
-           (mousemove)="mouseMove($event)"
-           (mouseup)="mouseUp($event)">
+      <svg
+        [style.width.px]="MAX_DIM.x"
+        [style.height.px]="MAX_DIM.y"
+        (mousedown)="mouseDown($event)"
+        (mousemove)="mouseMove($event)"
+        (mouseup)="mouseUp($event)"
+      >
         <g>
-          <circle [attr.cx]="x$ | async" [attr.cy]="y$ | async" r="10" fill="red"></circle>
-          <circle id="sun" draggable [attr.cx]="mouseX$ | async" [attr.cy]="mouseY$ | async" r="25"
-                  fill="yellow"></circle>
+          <circle
+            [attr.cx]="x$ | async"
+            [attr.cy]="y$ | async"
+            r="10"
+            fill="red"
+          ></circle>
+          <circle
+            id="sun"
+            [attr.cx]="mouseX$ | async"
+            [attr.cy]="mouseY$ | async"
+            r="25"
+            fill="yellow"
+          ></circle>
         </g>
       </svg>
     </mat-card-content>
