@@ -19,6 +19,7 @@ jobs:
     secrets: inherit
     with:
       node-version: ${{ github.env.NODE_VERSION }}
+      number-of-agents: 4
       install-commands: |
         echo "Install packages to compile node_modules gl with node-gyp"
         sudo apt-get update -y
@@ -31,7 +32,8 @@ jobs:
         npx nx affected --target=lint --parallel
         npx nx affected --target=test --parallel --code-coverage
         npx nx affected --target=build --parallel
-        npx nx affected --target=e2e --parallel=1 --record=true --key="${{ github.secrets.CYPRESS_DASHBOARD_KEY }}" --ci-build-id="${{ github.repository }}-${{ github.run_id }}-${{ github.run_attempt }}"
+        npx nx affected --target=e2e --parallel=1 --record=true --key="${CYPRESS_DASHBOARD_KEY}" --ci-build-id="${{ github.repository }}-${{ github.run_id }}-${{ github.run_attempt }}"
+    env: CYPRESS_DASHBOARD_KEY=${{ github.secrets.CYPRESS_DASHBOARD_KEY }}
 
   agents:
     name: Nx Cloud - Agents
@@ -44,4 +46,5 @@ jobs:
         sudo apt-get update -y
         sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
         npm ci
-      number-of-agents: 3
+      number-of-agents: 4
+    env: CYPRESS_DASHBOARD_KEY=${{ github.secrets.CYPRESS_DASHBOARD_KEY }}
