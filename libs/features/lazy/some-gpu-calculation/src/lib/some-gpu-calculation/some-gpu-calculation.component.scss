@@ -13,13 +13,22 @@
 
 :host {
   .gpu-card {
-    .canvas-container {
-      width: 100%;
-      overflow: hidden;
+    .canvas-with-fps {
+      position: relative;
 
-      canvas {
-        grid-area: myArea;
+      .canvas-container {
         width: 100%;
+        overflow: hidden;
+
+        canvas {
+          width: 100%;
+        }
+      }
+
+      .fps {
+        position: absolute;
+        top: 8px;
+        left: 16px;
       }
     }
 
@@ -38,6 +47,7 @@
     .full-width {
       width: 100%;
     }
+
     .value-of-slider {
       display: inline-block;
     }

@@ -9,7 +9,16 @@
       "outputs": ["dist/libs/fib-wasm"],
       "options": {
         "script": "build"
-      }
+      },
+      "configurations": {
+        "production": {
+          "script": "build:production"
+        },
+        "development": {
+          "script": "build:development"
+        }
+      },
+      "defaultConfiguration": "production"
     }
   },
   "tags": ["shared"]

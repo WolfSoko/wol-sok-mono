@@ -2,14 +2,23 @@
   <mat-card-title>
     <mat-card-title>An example utilizing gpu.js</mat-card-title>
     <mat-card-subtitle>
-      No complicated shader code needed for this. Use toggle to switch between GPU and CPU rendering.
+      No complicated shader code needed for this. Use toggle to switch between
+      GPU and CPU rendering.
     </mat-card-subtitle>
   </mat-card-title>
-  <div #gpuCanvasContainer
-       class="canvas-container"
-       (wsSharedUiElemResized)="updateCanvasSize($event)"
-       [debounceTime]="500"
-  ></div>
+  <div class="canvas-with-fps">
+    <div
+      #gpuCanvasContainer
+      class="canvas-container"
+      (wsSharedUiElemResized)="updateCanvasSize($event)"
+      [debounceTime]="500"
+    ></div>
+    <ws-shared-ui-show-fps
+      class="fps"
+      [fps]="(fps$ | async) ?? 0"
+      [show]="true"
+    ></ws-shared-ui-show-fps>
+  </div>
   <div>
     Calculation time with
     {{ additionForm.get('useGPU')?.value ? 'GPU' : 'CPU' }} :
@@ -28,7 +37,9 @@
           formControlName="r"
         >
         </mat-slider>
-        <mat-chip class="value-of-slider" color="warn">{{ additionForm.get('r')?.value }}</mat-chip>
+        <mat-chip class="value-of-slider" color="warn">{{
+          additionForm.get('r')?.value
+        }}</mat-chip>
       </div>
       <div class="full-width">
         <span>Green</span>
@@ -41,7 +52,9 @@
           formControlName="g"
         >
         </mat-slider>
-        <mat-chip class="value-of-slider" color="warn">{{ additionForm.get('g')?.value }}</mat-chip>
+        <mat-chip class="value-of-slider" color="warn">{{
+          additionForm.get('g')?.value
+        }}</mat-chip>
       </div>
       <div class="full-width">
         <span>Blue</span>
@@ -54,7 +67,9 @@
           formControlName="b"
         >
         </mat-slider>
-        <mat-chip class="value-of-slider" color="warn">{{ additionForm.get('b')?.value }}</mat-chip>
+        <mat-chip class="value-of-slider" color="warn">{{
+          additionForm.get('b')?.value
+        }}</mat-chip>
       </div>
       <div class="full-width">
         <span>Repetition</span>
@@ -67,7 +82,7 @@
         </mat-slider>
         <mat-chip color="accent" class="value-of-slider">{{
           additionForm.get('repetition')?.value
-          }}</mat-chip>
+        }}</mat-chip>
       </div>
       <div class="full-width">
         <span>Speed</span>
@@ -79,13 +94,12 @@
         >
         </mat-slider>
         <mat-chip class="value-of-slider" color="accent"
-        >{{ additionForm.get('speed')?.value }}%
-        </mat-chip
-        >
+          >{{ additionForm.get('speed')?.value }}%
+        </mat-chip>
       </div>
       <mat-slide-toggle formControlName="useGPU">
         {{
-        additionForm.get('useGPU')?.value ? 'GPU is used' : 'GPU is not used'
+          additionForm.get('useGPU')?.value ? 'GPU is used' : 'GPU is not used'
         }}
       </mat-slide-toggle>
     </form>

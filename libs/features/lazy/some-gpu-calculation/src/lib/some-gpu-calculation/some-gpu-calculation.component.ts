@@ -1,4 +1,4 @@
-import { CommonModule } from "@angular/common";
+import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -11,18 +11,24 @@ import {
   ReactiveFormsModule,
   UntypedFormBuilder,
   UntypedFormGroup,
-  Validators
-} from "@angular/forms";
-import { MatCardModule } from "@angular/material/card";
-import { MatChipsModule } from "@angular/material/chips";
-import { MatSlideToggleModule } from "@angular/material/slide-toggle";
-import { MatSliderModule } from "@angular/material/slider";
-import { ElemResizedDirective, ElevateCardDirective, ResizedEvent } from "@wolsok/ui-kit";
+  Validators,
+} from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSliderModule } from '@angular/material/slider';
+import {
+  ElemResizedDirective,
+  ElevateCardDirective,
+  ResizedEvent,
+  ShowFpsComponent,
+} from '@wolsok/ui-kit';
 import {
   GpuAdapterService,
   IKernelFunctionThis,
   IKernelRunShortcut,
 } from '@wolsok/utils-gpu-calc';
+import { MeasureFps } from '@wolsok/utils-measure-fps';
 import { distinctUntilChangedDeepEqualObj } from '@wolsok/utils-operators';
 
 import {
@@ -30,7 +36,6 @@ import {
   combineLatest,
   interval,
   Observable,
-  of,
   Subscription,
   TimeInterval,
 } from 'rxjs';
@@ -38,7 +43,6 @@ import {
   debounceTime,
   delay,
   map,
-  mergeMap,
   scan,
   startWith,
   timeInterval,
@@ -64,7 +68,9 @@ interface Configuration {
     MatChipsModule,
     MatSlideToggleModule,
     ElevateCardDirective,
+    ShowFpsComponent,
   ],
+  providers: [{ provide: MeasureFps, useValue: new MeasureFps() }],
   selector: 'lazy-feat-gpu-calc',
   templateUrl: './some-gpu-calculation.component.html',
   styleUrls: ['./some-gpu-calculation.component.scss'],
@@ -75,7 +81,8 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
   gpuCanvasWrapper!: ElementRef<HTMLDivElement>;
 
   additionForm!: UntypedFormGroup;
-  calculationTime$: Observable<string>;
+  calculationTime$: Observable<number>;
+  fps$: Observable<number>;
 
   private gpuColorizer!: IKernelRunShortcut;
   private subscription?: Subscription;
@@ -84,28 +91,10 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
     SomeGpuCalculationComponent.calcHeightOfCanvas(500),
   ];
 
-  constructor(private fb: UntypedFormBuilder, private gpu: GpuAdapterService) {
+  constructor(private fb: UntypedFormBuilder, private gpu: GpuAdapterService, private readonly measureFps: MeasureFps) {
     this.createForm();
-
-    this.calculationTime$ = interval(500).pipe(
-      mergeMap(() => of(performance.getEntriesByName('createCanvasWithGPU'))),
-      map((measures: PerformanceEntry[]) => {
-        if (measures.length === 0) {
-          return 0;
-        }
-        const result = measures.reduce(
-          (acc, next) => acc + next.duration / measures.length,
-          0
-        );
-        if (measures.length > 60) {
-          performance.clearMeasures();
-          performance.clearMarks();
-        }
-        return result;
-      }),
-      startWith(0),
-      map((time) => time.toFixed(3))
-    );
+    this.calculationTime$ = this.measureFps.frameTimeMs$;
+    this.fps$ = this.measureFps.fps$;
   }
 
   private static calcHeightOfCanvas(
@@ -183,7 +172,6 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
     speed: number;
   }): void {
     const [width, height] = this.dimensionsOfCanvas;
-    performance.mark('createCanvasWithGPU-start');
     this.gpuColorizer.canvas.width = width;
     this.gpuColorizer.canvas.height = height;
     this.gpuColorizer.setOutput([width, height]);
@@ -197,13 +185,7 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
       width,
       height
     );
-
-    performance.mark('createCanvasWithGPU-end');
-    performance.measure(
-      'createCanvasWithGPU',
-      'createCanvasWithGPU-start',
-      'createCanvasWithGPU-end'
-    );
+    this.measureFps.signalFrameReady();
   }
 
   private replaceCanvas(canvas: HTMLCanvasElement): void {

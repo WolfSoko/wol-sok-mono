@@ -1,1 +1,1 @@
-export * from './lib/memoize';
+export { Memoized } from './lib/memoize';

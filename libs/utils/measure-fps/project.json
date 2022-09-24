@@ -4,14 +4,20 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "executor": "@nrwl/angular:ng-packagr-lite",
+      "outputs": ["dist/libs/utils/measure-fps"],
       "options": {
-        "outputPath": "dist/libs/utils/measure-fps",
-        "main": "libs/utils/measure-fps/src/index.ts",
-        "tsConfig": "libs/utils/measure-fps/tsconfig.lib.json",
-        "assets": ["libs/utils/measure-fps/*.md"]
-      }
+        "project": "libs/utils/measure-fps/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/utils/measure-fps/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "libs/utils/measure-fps/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",

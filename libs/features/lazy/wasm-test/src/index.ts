@@ -1,1 +1,1 @@
-export * from './lib/wasm-test.module';
+export { WasmTestModule } from './lib/wasm-test.module';

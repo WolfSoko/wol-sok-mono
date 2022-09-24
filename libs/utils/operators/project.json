@@ -4,14 +4,20 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "executor": "@nrwl/angular:ng-packagr-lite",
+      "outputs": ["dist/libs/utils/operators"],
       "options": {
-        "outputPath": "dist/libs/utils/operators",
-        "main": "libs/utils/operators/src/index.ts",
-        "tsConfig": "libs/utils/operators/tsconfig.lib.json",
-        "assets": ["libs/utils/operators/*.md"]
-      }
+        "project": "libs/utils/operators/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/utils/operators/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "libs/utils/operators/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
