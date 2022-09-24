@@ -38,7 +38,7 @@ jobs:
           cache: npm
       - name: Cache Cypress Binary
         id: cache-cypress-binary
-        uses: actions/cache@v2
+        uses: actions/cache@latest
         with:
           path: cypress/cache
           key: cypress-binary-${{ hashFiles('package-lock.json') }}
