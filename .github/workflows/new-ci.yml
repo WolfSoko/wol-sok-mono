@@ -35,13 +35,13 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ github.env.NODE_VERSION }}
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - name: Cache Cypress Binary
         id: cache-cypress-binary
         uses: actions/cache@v3
         with:
-          path: ${{ github.env.CYPRESS_CACHE_FOLDER }}
+          path: ${{ env.CYPRESS_CACHE_FOLDER }}
           key: cypress-binary-${{ hashFiles('package-lock.json') }}
       - run: npm ci
       - name: Start Nx Agent ${{ matrix.agent }}
@@ -64,7 +64,7 @@ jobs:
         uses: nrwl/nx-set-shas@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ github.env.NODE_VERSION }}
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: CYPRESS_INSTALL_BINARY=0 npm ci
       - run: npx nx workspace-lint
@@ -100,7 +100,7 @@ jobs:
           echo "HEAD: ${{ env.NX_HEAD }}"
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ github.env.NODE_VERSION }}
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm CYPRESS_INSTALL_BINARY=0 ci
       - run: npx nx workspace-lint
