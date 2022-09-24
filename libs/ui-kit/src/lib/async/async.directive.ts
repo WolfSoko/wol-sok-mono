@@ -1,13 +1,6 @@
 /* eslint-disable @angular-eslint/no-input-rename */
-import {
-  Directive,
-  Input,
-  OnChanges,
-  OnDestroy,
-  TemplateRef,
-  ViewContainerRef,
-} from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
+import { Directive, Input, OnChanges, OnDestroy, TemplateRef, ViewContainerRef } from "@angular/core";
+import { Observable, Subscription } from "rxjs";
 
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
@@ -22,8 +15,8 @@ export class AsyncDirective<T> implements OnChanges, OnDestroy {
   private subscription?: Subscription;
 
   constructor(
-    private tempRef: TemplateRef<{ $implicit: T; index: number }>,
-    private vcRef: ViewContainerRef
+    private readonly tempRef: TemplateRef<{ $implicit: T; index: number }>,
+    private readonly vcRef: ViewContainerRef
   ) {}
 
   private projectValue(value: T): void {
