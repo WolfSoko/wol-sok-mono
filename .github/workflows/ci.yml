@@ -46,7 +46,7 @@ jobs:
         with:
           path: ${{ env.CYPRESS_CACHE_FOLDER }}
           key: cypress-binary-${{ hashFiles('package-lock.json') }}
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - name: Start Nx Agent ${{ matrix.agent }}
         run: npx nx-cloud start-agent
 
