@@ -96,6 +96,12 @@ const mainNavRoutes: MainNavRoute[] = [
       import('@wolsok/feat-wasm-test').then((m) => m.WasmTestModule),
     data: { linkText: 'Calculating Fibonacci with WebAssembly' },
   },
+  {
+    path: 'gravityWorld',
+    loadChildren: () =>
+      import('@wolsok/gravity-rocks').then((m) => m.GRAVITY_ROCKS_ROUTES),
+    data: { linkText: 'Playing around with Sun and Planets gravity' },
+  },
 ];
 
 const defaultRoute = { path: '**', redirectTo: '/home' };
