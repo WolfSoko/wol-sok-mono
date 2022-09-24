@@ -17,7 +17,8 @@
           "watch": true
         },
         "ci": {
-          "devServerTarget": "angular-examples:serve:production"
+          "devServerTarget": "angular-examples:serve:production",
+          "parallel": true
         },
         "production": {
           "devServerTarget": "angular-examples:serve:production"

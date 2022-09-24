@@ -16,6 +16,7 @@ jobs:
   main:
     name: Nx Cloud - Main Job
     uses: nrwl/ci/.github/workflows/nx-cloud-main.yml@v0.7
+    secrets: inherit
     with:
       node-version: ${{ github.env.NODE_VERSION }}
       install-commands: |
@@ -30,12 +31,12 @@ jobs:
         npx nx affected --target=lint --parallel
         npx nx affected --target=test --parallel --code-coverage
         npx nx affected --target=build --parallel
-        npx nx affected --target=e2e --record=true --key=${{ github.secrets.CYPRESS_DASHBOARD_KEY }}
-
+        npx nx affected --target=e2e --parallel=1 --record=true --key="${{ github.secrets.CYPRESS_DASHBOARD_KEY }}" --ci-build-id="${{ github.repository }}-${{ github.run_id }}-${{ github.run_attempt }}"
 
   agents:
     name: Nx Cloud - Agents
     uses: nrwl/ci/.github/workflows/nx-cloud-agents.yml@v0.7
+    secrets: inherit
     with:
       node-version: ${{ github.env.NODE_VERSION }}
       install-commands: |
