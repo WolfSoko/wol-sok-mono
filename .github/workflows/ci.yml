@@ -29,11 +29,10 @@ jobs:
         npx nx workspace-lint
       # npx nx format:check
       parallel-commands-on-agents: |
-        npx nx affected --target=lint --parallel
-        npx nx affected --target=test --parallel --code-coverage
-        npx nx affected --target=build --parallel
-        npx nx affected --target=e2e --parallel=1 --record=true --key="${CYPRESS_DASHBOARD_KEY}" --ci-build-id="${{ github.repository }}-${{ github.run_id }}-${{ github.run_attempt }}"
-    env: CYPRESS_DASHBOARD_KEY=${{ github.secrets.CYPRESS_DASHBOARD_KEY }}
+        npx nx affected --target=lint
+        npx nx affected --target=test --code-coverage
+        npx nx affected --target=build
+        npx nx affected --target=e2e --parallel=1 --record=true --key="${{ github.secrets.CYPRESS_DASHBOARD_KEY }}" --ci-build-id="${{ github.repository }}-${{ github.run_id }}-${{ github.run_attempt }}"
 
   agents:
     name: Nx Cloud - Agents
@@ -47,4 +46,3 @@ jobs:
         sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
         npm ci
       number-of-agents: 4
-    env: CYPRESS_DASHBOARD_KEY=${{ github.secrets.CYPRESS_DASHBOARD_KEY }}
