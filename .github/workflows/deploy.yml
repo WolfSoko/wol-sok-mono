@@ -24,10 +24,9 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
       - uses: actions/checkout@v3
-
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ github.env.NODE_VERSION }}
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       - run: npm ci
       - name: Build
@@ -76,5 +75,3 @@ jobs:
           AWS_REGION: 'eu-west-1'
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-
