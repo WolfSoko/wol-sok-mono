@@ -59,11 +59,6 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-
       - uses: actions/checkout@v3
         name: 'Checkout [main]'
         if: ${{ github.event_name != 'pull_request' }}
@@ -77,13 +72,18 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v3
       - run: |
           echo "BASE: ${{ env.NX_BASE }}"
           echo "HEAD: ${{ env.NX_HEAD }}"
-
-      - run: npm ci --ignore-scripts
 
       - run: npx nx workspace-lint
       - run: npx nx-cloud start-ci-run
