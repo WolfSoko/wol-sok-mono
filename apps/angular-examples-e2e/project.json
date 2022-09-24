@@ -16,6 +16,9 @@
         "development": {
           "watch": true
         },
+        "ci": {
+          "devServerTarget": "angular-examples:serve:production"
+        },
         "production": {
           "devServerTarget": "angular-examples:serve:production"
         }

@@ -1,4 +1,5 @@
 [![.github/workflows/ci.yml](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/ci.yml/badge.svg)](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/ci.yml)
+[![wolsok-mono](https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/detailed/jyisda/main&style=flat&logo=cypress)](https://dashboard.cypress.io/projects/jyisda/runs)
 
 wol-sok-mono repo
 # Wild experiments and examples implemented in Angular+

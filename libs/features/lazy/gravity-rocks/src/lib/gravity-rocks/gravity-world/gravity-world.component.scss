@@ -1,0 +1,29 @@
+#simLayout {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  height: 100%;
+}
+
+form {
+  display: flex;
+  margin: 16px;
+  height: 80px;
+  align-items: center;
+  justify-content: space-around;
+
+  > input, button {
+    margin: 8px;
+  }
+}
+
+button {
+  height: 40px;
+}
+
+.gravitational-force-card {
+  margin: 16px;
+}
+
+svg {
+  background-color: black;
+}

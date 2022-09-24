@@ -2,7 +2,7 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "libs/features/lazy/reaction-diffusion/src",
-  "prefix": "lazy-feat-react-diff",
+  "prefix": "feat-lazy-react-diff",
   "targets": {
     "build": {
       "executor": "@nrwl/angular:ng-packagr-lite",

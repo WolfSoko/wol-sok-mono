@@ -1,4 +1,4 @@
-import { defineConfig } from 'cypress'
+import { defineConfig } from 'cypress';
 
 module.exports = defineConfig({
   fileServerFolder: '.',
@@ -7,6 +7,7 @@ module.exports = defineConfig({
   videosFolder: '../../test-reports/apps/angular-examples-e2e/videos',
   screenshotsFolder: '../../test-reports/apps/angular-examples-e2e/screenshots',
   chromeWebSecurity: false,
+  projectId: 'jyisda',
   e2e: {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     setupNodeEvents(on, config) {
@@ -15,4 +16,4 @@ module.exports = defineConfig({
     specPattern: './src/e2e/**/*.cy.{js,jsx,ts,tsx}',
     supportFile: './src/support/e2e.ts',
   },
-})
+});

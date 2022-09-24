@@ -13,7 +13,7 @@
           "error",
           {
             "type": "attribute",
-            "prefix": "featLazyReactDiff",
+            "prefix": "featLazyGravity",
             "style": "camelCase"
           }
         ],
@@ -21,7 +21,7 @@
           "error",
           {
             "type": "element",
-            "prefix": "feat-lazy-react-diff",
+            "prefix": "feat-lazy-gravity",
             "style": "kebab-case"
           }
         ]

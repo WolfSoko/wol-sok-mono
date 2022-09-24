@@ -28,7 +28,7 @@ type SumOfWeights = {
     MatFormFieldModule,
     MatIconModule,
   ],
-  selector: 'lazy-feat-react-diff-weights-config',
+  selector: 'feat-lazy-react-diff-weights-config',
   templateUrl: './weights-config.component.html',
   styleUrls: ['./weights-config.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

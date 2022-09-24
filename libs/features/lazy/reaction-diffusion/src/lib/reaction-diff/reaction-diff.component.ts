@@ -58,7 +58,7 @@ interface Dimensions {
     MatCheckboxModule,
     MatTooltipModule,
   ],
-  selector: 'lazy-feat-react-diff-reaction-diff',
+  selector: 'feat-lazy-react-diff-reaction-diff',
   templateUrl: './reaction-diff.component.html',
   styleUrls: ['./reaction-diff.component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,

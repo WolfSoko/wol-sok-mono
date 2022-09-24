@@ -12,13 +12,13 @@ import {
   ViewChild
 } from "@angular/core";
 import { ShowFpsComponent } from "@wolsok/ui-kit";
-import * as p5 from "p5";
+import * as P5 from "p5";
 import { ReactionDiffCalculator } from "../calculation/reaction-diff-calculator";
 
 @Component({
   standalone: true,
   imports: [CommonModule, ShowFpsComponent],
-  selector: "lazy-feat-react-diff-p5-view",
+  selector: "feat-lazy-react-diff-p5-view",
   templateUrl: "./p5-view.component.html",
   styleUrls: ["./p5-view.component.css"],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -35,7 +35,7 @@ export class P5ViewComponent implements OnChanges, OnDestroy {
 
   public frameRate = 1;
 
-  private sketch?: p5;
+  private sketch?: P5;
   private drawOnce = true;
 
   constructor(private ngZone: NgZone, private cd: ChangeDetectorRef) {
@@ -46,7 +46,7 @@ export class P5ViewComponent implements OnChanges, OnDestroy {
       if (this.sketch) {
         this.sketch.resizeCanvas(this.simWidth, this.simHeight);
       } else {
-        this.sketch = new p5(
+        this.sketch = new P5(
           (p) => this.initP5(p),
           this.drawArea.nativeElement
         );
@@ -54,7 +54,7 @@ export class P5ViewComponent implements OnChanges, OnDestroy {
     }
   }
 
-  private initP5(p: p5) {
+  private initP5(p: P5) {
     this.ngZone.runOutsideAngular(() => {
       p.setup = () => {
         p.pixelDensity(1);
