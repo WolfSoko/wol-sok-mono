@@ -75,9 +75,9 @@ describe('MeasureFps', () => {
     const nextSpy = jest.fn();
     measureFps.frameTimeMs$.subscribe(nextSpy);
     warmupMeasurement();
-    expect(nextSpy).lastCalledWith(200);
+    expect(nextSpy).lastCalledWith(201);
     whenSignalFrameReadyAfterMs(500);
-    expect(nextSpy).lastCalledWith(303);
+    expect(nextSpy).lastCalledWith(300);
   });
 
   function whenSignalFrameReadyAfterMs(ms: number): void {
