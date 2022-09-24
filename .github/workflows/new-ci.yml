@@ -12,9 +12,10 @@ concurrency:
 
 env:
   NODE_VERSION: '16'
-  NX_CLOUD_DISTRIBUTED_EXECUTION: 'true'
   NODE_OPTIONS: '--max_old_space_size=4096'
   CYPRESS_RECORD_KEY: ${{ github.secrets.CYPRESS_DASHBOARD_KEY }}
+  NX_BRANCH: ${{ github.event.number || github.ref_name }}
+  NX_CLOUD_DISTRIBUTED_EXECUTION: 'true'
 
 jobs:
   agents:
@@ -35,6 +36,12 @@ jobs:
         with:
           node-version: ${{ github.env.NODE_VERSION }}
           cache: npm
+      - name: Cache Cypress Binary
+        id: cache-cypress-binary
+        uses: actions/cache@v2
+        with:
+          path: cypress/cache
+          key: cypress-binary-${{ hashFiles('package-lock.json') }}
       - run: npm ci
       - name: Start Nx Agent ${{ matrix.agent }}
         run: npx nx-cloud start-agent
@@ -58,7 +65,7 @@ jobs:
         with:
           node-version: ${{ github.env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: CYPRESS_INSTALL_BINARY=0 npm ci
       - run: npx nx workspace-lint
       - run: npx nx-cloud start-ci-run
       - name: Run verification
@@ -94,7 +101,7 @@ jobs:
         with:
           node-version: ${{ github.env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: npm CYPRESS_INSTALL_BINARY=0 ci
       - run: npx nx workspace-lint
       - run: npx nx-cloud start-ci-run
       - name: Run verification
