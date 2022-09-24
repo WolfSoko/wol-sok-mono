@@ -25,12 +25,17 @@ jobs:
       matrix:
         agent: [1, 2, 3, 4, 5, 6]
     steps:
+      - name: install dependencies for node-gyp
+        run: |
+          echo "Install packages to compile node_modules gl with node-gyp"
+          sudo apt-get update -y
+          sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ github.env.NODE_VERSION }}
           cache: npm
-      - run: npm install
+      - run: npm ci
       - name: Start Nx Agent ${{ matrix.agent }}
         run: npx nx-cloud start-agent
 
