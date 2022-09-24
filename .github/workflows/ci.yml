@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    # Pattern matched against refs/tags
+    tags:
+      - 'v*'
   pull_request:
 
 concurrency:
@@ -17,7 +20,6 @@ env:
   NX_CLOUD_DISTRIBUTED_EXECUTION: 'true'
   CYPRESS_CACHE_FOLDER: 'cache/cypress'
   CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
-  CYPRESS_INSTALL_BINARY: 0
 
 jobs:
   agents:
@@ -27,8 +29,6 @@ jobs:
     strategy:
       matrix:
         agent: [1, 2, 3, 4, 5]
-    env:
-      CYPRESS_INSTALL_BINARY: 1
     steps:
       - name: install dependencies for node-gyp
         run: |
@@ -52,6 +52,8 @@ jobs:
 
   main:
     runs-on: ubuntu-latest
+    env:
+      CYPRESS_INSTALL_BINARY: 0
     steps:
       - name: install dependencies for node-gyp
         run: |
