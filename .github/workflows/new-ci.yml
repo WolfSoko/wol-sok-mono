@@ -27,6 +27,10 @@ jobs:
       matrix:
         agent: [1, 2, 3, 4, 5]
     steps:
+      - run: echo "env bash $CYPRESS_RECORD_KEY"
+      - run: echo "github.secrets ${{ github.secrets.CYPRESS_DASHBOARD_KEY }}"
+      - run: echo "secrets ${{ secrets.CYPRESS_DASHBOARD_KEY }}"
+      - run: echo "env ${{ env.CYPRESS_DASHBOARD_KEY }}"
       - name: install dependencies for node-gyp
         run: |
           echo "Install packages to compile node_modules gl with node-gyp"
