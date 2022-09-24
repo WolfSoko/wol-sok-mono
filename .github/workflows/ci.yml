@@ -1,50 +1,100 @@
-name: CI
+name: CI²
+
 on:
   push:
     branches:
       - main
   pull_request:
 
-env:
-  NODE_VERSION: '16'
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
   cancel-in-progress: true
 
-jobs:
-  main:
-    name: Nx Cloud - Main Job
-    uses: nrwl/ci/.github/workflows/nx-cloud-main.yml@v0.7
-    secrets: inherit
-    with:
-      node-version: ${{ github.env.NODE_VERSION }}
-      number-of-agents: 4
-      install-commands: |
-        echo "Install packages to compile node_modules gl with node-gyp"
-        sudo apt-get update -y
-        sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
-        npm ci
-      parallel-commands: |
-        npx nx workspace-lint
-      # npx nx format:check
-      parallel-commands-on-agents: |
-        npx nx affected --target=lint --parallel=3
-        npx nx affected --target=test --code-coverage --parallel=1
-        npx nx affected --target=build --parallel=1
-        npx nx affected --target=e2e --parallel=1 --record=true
-      environment-variables: CYPRESS_RECORD_KEY="${{ github.secrets.CYPRESS_DASHBOARD_KEY }}"
+env:
+  NODE_VERSION: '16'
+  NODE_OPTIONS: '--max_old_space_size=4096'
+  NX_BRANCH: ${{ github.event.number || github.ref_name }}
+  NX_CLOUD_DISTRIBUTED_EXECUTION: 'true'
+  CYPRESS_CACHE_FOLDER: 'cache/cypress'
+  CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
+  CYPRESS_INSTALL_BINARY: 0
 
+jobs:
   agents:
-    name: Nx Cloud - Agents
-    uses: nrwl/ci/.github/workflows/nx-cloud-agents.yml@v0.7
-    secrets: inherit
-    with:
-      node-version: ${{ github.env.NODE_VERSION }}
-      install-commands: |
-        echo "Install apt-packages to compile node_modules gl with node-gyp"
-        sudo apt-get update -y
-        sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
-        npm ci
-      number-of-agents: 4
-      environment-variables: CYPRESS_RECORD_KEY="${{ github.secrets.CYPRESS_DASHBOARD_KEY }}"
+    name: Nx Cloud Agents
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        agent: [1, 2, 3, 4, 5]
+    env:
+      CYPRESS_INSTALL_BINARY: 1
+    steps:
+      - name: install dependencies for node-gyp
+        run: |
+          echo "Install packages to compile node_modules gl with node-gyp"
+          sudo apt-get update -y
+          sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Cache Cypress Binary
+        id: cache-cypress-binary
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.CYPRESS_CACHE_FOLDER }}
+          key: cypress-binary-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
+      - name: Start Nx Agent ${{ matrix.agent }}
+        run: npx nx-cloud start-agent
+
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install dependencies for node-gyp
+        run: |
+          echo "Install packages to compile node_modules gl with node-gyp"
+          sudo apt-get update -y
+          sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - uses: actions/checkout@v3
+        name: 'Checkout [main]'
+        if: ${{ github.event_name != 'pull_request' }}
+        with:
+          fetch-depth: 0
+
+      - uses: actions/checkout@v3
+        name: 'Checkout [pr]'
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Derive appropriate SHAs for base and head for `nx affected` commands
+        uses: nrwl/nx-set-shas@v3
+      - run: |
+          echo "BASE: ${{ env.NX_BASE }}"
+          echo "HEAD: ${{ env.NX_HEAD }}"
+
+      - run: npm ci --ignore-scripts
+
+      - run: npx nx workspace-lint
+      - run: npx nx-cloud start-ci-run
+      - name: Run verification
+        uses: JamesHenry/parallel-bash-commands@v0.1
+        with:
+          cmd1: npx nx affected --target=build --parallel=1
+          cmd2: npx nx affected --target=test --parallel=3
+          cmd3: npx nx affected --target=lint --parallel=3
+          cmd4: npx -c \"nx affected --target=e2e --configuration=ci --record=true --parallel=1\"
+      - run: npx nx-cloud stop-all-agents
+      - name: Tag main branch if all jobs succeed
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: nrwl/nx-tag-successful-ci-run@v1
