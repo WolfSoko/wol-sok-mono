@@ -55,12 +55,24 @@ export class GravityWorldComponent {
   private static readonly INITIAL_MASS_OF_SUN: number = 50000.0;
   private static readonly INITIAL_GRAVITY_CONSTANT: number = 60.0;
 
+  public form: FormGroup<{
+    gravitationalConstant: FormControl<number>;
+    massOfSun: FormControl<number>;
+  }> = this.nNfB.group({
+    gravitationalConstant: GravityWorldComponent.INITIAL_GRAVITY_CONSTANT,
+    massOfSun: GravityWorldComponent.INITIAL_MASS_OF_SUN,
+  });
+
+  private massSun$ = this.form.controls.massOfSun.valueChanges;
+  private gravitationalConstant$ =
+    this.form.controls.gravitationalConstant.valueChanges;
+
   public MAX_DIM = Vector2d.create(1000, 700);
   private CENTER_POS = this.MAX_DIM.div(2);
   // public listOfPlanets = [new Planet(, mass)];
 
-  private planets$ = new Subject<Planet>();
-  public planetsObs$: Observable<Array<Planet>> = this.planets$
+  private planetsSubject$ = new Subject<Planet>();
+  public planets$: Observable<Array<Planet>> = this.planetsSubject$
     .asObservable()
     .pipe(
       scan(
@@ -69,26 +81,21 @@ export class GravityWorldComponent {
         new Array<Planet>()
       )
     );
-  public planetsAmount$ = this.planetsObs$.pipe(
+  public planetsAmount$ = this.planets$.pipe(
     map((planets) => planets.length),
     startWith(0)
   );
 
   private mass$ = from([1]);
-  public massSunSubject$ = new BehaviorSubject<number>(
-    GravityWorldComponent.INITIAL_MASS_OF_SUN
-  );
-  public massSun$ = this.massSunSubject$.asObservable();
-  private targetCoordinates$: Subject<Vector2d> = new Subject<Vector2d>();
-  private targetCoordinatesObs$: Observable<Vector2d> = this.targetCoordinates$
-    .asObservable()
-    .pipe(shareReplay(1));
-  private positionEmitter$ = new Subject<Vector2d>();
-  private positionObs$: Observable<Vector2d> = this.positionEmitter$
+
+  private targetCoordinatesSubject: Subject<Vector2d> = new Subject<Vector2d>();
+  private targetCoordinates$: Observable<Vector2d> =
+    this.targetCoordinatesSubject.asObservable().pipe(shareReplay(1));
+  private positionSubject$ = new Subject<Vector2d>();
+  private position$: Observable<Vector2d> = this.positionSubject$
     .asObservable()
     .pipe(shareReplay(1));
 
-  private gravitationalConstantSubject = new Subject<number>();
   private simStart$ = new Subject<boolean>();
 
   x$: Observable<number>;
@@ -119,19 +126,11 @@ export class GravityWorldComponent {
     last()
   );
 
-  public form: FormGroup<{
-    gravitationalConstant: FormControl<number>;
-    massOfSun: FormControl<number>;
-  }> = this.nNfB.group({
-    gravitationalConstant: GravityWorldComponent.INITIAL_GRAVITY_CONSTANT,
-    massOfSun: GravityWorldComponent.INITIAL_MASS_OF_SUN,
-  });
-
   constructor(private nNfB: NonNullableFormBuilder) {
     const centerPositionMapper = (targetVector: Vector2d) =>
       targetVector.sub(this.CENTER_POS);
 
-    const centeredTargetCoordinates$ = this.targetCoordinates$
+    const centeredTargetCoordinates$ = this.targetCoordinatesSubject
       .asObservable()
       .pipe(map(centerPositionMapper));
 
@@ -149,7 +148,7 @@ export class GravityWorldComponent {
       )
     );
 
-    const centeredPosition$ = this.positionObs$.pipe(map(centerPositionMapper));
+    const centeredPosition$ = this.position$.pipe(map(centerPositionMapper));
 
     const calculateGravityForce = (
       position1: TimeInterval<Vector2d>,
@@ -176,18 +175,10 @@ export class GravityWorldComponent {
         centeredPosition$,
         this.mass$,
         this.massSun$,
-        this.gravitationalConstantSubject,
+        this.gravitationalConstant$,
         // calculate the force
         calculateGravityForce
       )
-    );
-
-    this.form.controls.gravitationalConstant.valueChanges.subscribe((force) =>
-      this.gravitationalConstantSubject.next(force)
-    );
-
-    this.form.controls.massOfSun.valueChanges.subscribe((massOfSun) =>
-      this.massSunSubject$.next(massOfSun)
     );
 
     const velocity$ = gravitationalForceToApply$.pipe(
@@ -207,20 +198,23 @@ export class GravityWorldComponent {
 
     const nextPosition$ = velocity$.pipe(
       withLatestFrom(
-        this.positionObs$,
+        this.position$,
         (timedVelocity: TimeInterval<Vector2d>, position: Vector2d) =>
           position.add(timedVelocity.value.mul(timedVelocity.interval))
       )
     );
-    nextPosition$.subscribe((position) => this.positionEmitter$.next(position));
+    nextPosition$.subscribe((position) => this.positionSubject$.next(position));
 
-    this.x$ = this.positionObs$.pipe(map((vec) => vec.x));
-    this.y$ = this.positionObs$.pipe(map((vec) => vec.y));
-    this.mouseX$ = this.targetCoordinatesObs$.pipe(map((vec) => vec.x));
-    this.mouseY$ = this.targetCoordinatesObs$.pipe(map((vec) => vec.y));
+    this.x$ = this.position$.pipe(map((vec) => vec.x));
+    this.y$ = this.position$.pipe(map((vec) => vec.y));
+    this.mouseX$ = this.targetCoordinates$.pipe(map((vec) => vec.x));
+    this.mouseY$ = this.targetCoordinates$.pipe(map((vec) => vec.y));
 
-    this.positionEmitter$.next(this.CENTER_POS.sub(Vector2d.create(0, 30)));
-    this.targetCoordinates$.next(this.CENTER_POS);
+    this.positionSubject$.next(this.CENTER_POS.sub(Vector2d.create(0, 30)));
+    this.targetCoordinatesSubject.next(this.CENTER_POS);
+
+    // trigger initial value changes
+    this.form.enable();
   }
 
   mouseDown($event: MouseEvent) {
@@ -231,7 +225,7 @@ export class GravityWorldComponent {
     });
 
     this.drag$.subscribe({
-      next: (coord) => this.targetCoordinates$.next(coord),
+      next: (coord) => this.targetCoordinatesSubject.next(coord),
       error: (error) => console.error('error while dragging', error),
       complete: () => console.log('end drag'),
     });
@@ -249,7 +243,7 @@ export class GravityWorldComponent {
 
   addPlanet($event: MouseEvent) {
     console.log('addPlanet');
-    this.planets$.next(new Planet($event.offsetX, $event.offsetY, 200));
+    this.planetsSubject$.next(new Planet($event.offsetX, $event.offsetY, 200));
   }
 
   startSim() {
