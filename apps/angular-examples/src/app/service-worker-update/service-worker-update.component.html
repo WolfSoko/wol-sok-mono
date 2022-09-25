@@ -1,5 +1,14 @@
-<span class="mat-caption" *ngIf="isLoading">Checking for new version</span>
-<mat-spinner *ngIf="isLoading" [diameter]="24">
-</mat-spinner>
-<button color="warn" mat-raised-button *ngIf="updatesAvailable" (click)="activateUpdate()">Get new version!</button>
-
+<ng-container *ngIf="vm$ | async as vm">
+  <span class="mat-caption" *ngIf="vm.isLoading">
+    Checking for new version
+  </span>
+  <mat-spinner *ngIf="vm.isLoading" [diameter]="24"></mat-spinner>
+  <button
+    color="warn"
+    mat-raised-button
+    *ngIf="vm.updateAvailable"
+    (click)="activateUpdate()"
+  >
+    Get new version!
+  </button>
+</ng-container>

@@ -1,11 +1,11 @@
 :host {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.5em;
+  gap: 0.5rem;
 }
 
 span {
   padding-right: 1rem;
 }
-
-
-
-
