@@ -1,9 +1,8 @@
 import { Environment } from './environment.type';
-
-import packageJson from '../../../../package.json';
+import { version } from './version';
 
 export const environment: Environment = {
-  version: packageJson.version,
+  version,
   production: true,
   serviceWorkerCheckInterval: 30000,
   firebaseConfig: {

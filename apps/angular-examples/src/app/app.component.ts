@@ -5,8 +5,9 @@ import {
   Inject,
 } from '@angular/core';
 import { Angulartics2GoogleTagManager } from 'angulartics2';
-import { environment } from '../environments/environment';
+import { Environment } from '../environments/environment.type';
 import { MainNavRoute } from './app-routing.module';
+import { ENV_TOKEN } from './core/env.token';
 import { TitleService } from './core/title.service';
 import { ROUTER_LINKS } from './router-links.token';
 
@@ -17,13 +18,15 @@ import { ROUTER_LINKS } from './router-links.token';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
-  @HostBinding('attr.app-version') appVersionAttr = 'v' + environment.version;
+  @HostBinding('attr.app-version')
+  appVersionAttr = `angular-examples@${this.env.version}`;
 
   constructor(
     // we need title service to update page title.
     private titleService: TitleService,
     gtmManager: Angulartics2GoogleTagManager,
-    @Inject(ROUTER_LINKS) public routerLinks: MainNavRoute[]
+    @Inject(ROUTER_LINKS) public routerLinks: MainNavRoute[],
+    @Inject(ENV_TOKEN) private env: Environment
   ) {
     gtmManager.startTracking();
   }

@@ -3,11 +3,11 @@
 // `ng build --env=prod` then `environment.prod.ts` will be used instead.
 // The list of which env maps to which file can be found in `.angular-cli.json`.
 
-import packageJson from '../../../../package.json';
 import { Environment } from './environment.type';
+import { version } from './version';
 
 export const environment: Environment = {
-  version: packageJson.version + '-dev',
+  version,
   production: false,
   serviceWorkerCheckInterval: 0,
   firebaseConfig: {

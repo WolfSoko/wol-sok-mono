@@ -19,8 +19,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
-    "target": "es2020",
-    "resolveJsonModule": true
+    "target": "es2020"
   },
   "angularCompilerOptions": {
     "strictInjectionParameters": true,

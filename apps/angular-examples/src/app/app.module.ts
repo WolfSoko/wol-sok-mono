@@ -1,5 +1,10 @@
 import { HttpClientModule } from '@angular/common/http';
-import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
+import {
+  APP_INITIALIZER,
+  ErrorHandler,
+  InjectionToken,
+  NgModule,
+} from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
@@ -8,6 +13,8 @@ import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
 import * as Sentry from '@sentry/angular';
 import { ElemResizedDirective } from '@wolsok/ui-kit';
 import { provideWsThanosOptions, WsThanosDirective } from '@wolsok/ws-thanos';
+import { environment } from '../environments/environment';
+import { Environment } from '../environments/environment.type';
 import { AppRoutingModule } from './app-routing.module';
 
 import { AppComponent } from './app.component';

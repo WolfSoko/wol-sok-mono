@@ -14,6 +14,9 @@
         "polyfills": "apps/angular-examples/src/polyfills.ts",
         "tsConfig": "apps/angular-examples/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
+        "customWebpackConfig": {
+          "path": "tools/git-revision/git-revision-extra-webpack.config.js"
+        },
         "assets": [
           {
             "glob": "*.*",
@@ -49,7 +52,11 @@
           "typed-function",
           "decimal.js",
           "fraction.js",
-          "complex.js"
+          "complex.js",
+          "lodash",
+          "p5",
+          "html2canvas",
+          "seedrandom"
         ],
         "buildLibsFromSource": false,
         "sourceMap": true
