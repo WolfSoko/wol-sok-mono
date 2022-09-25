@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  run:
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Install ubuntu dependencies
@@ -30,7 +30,7 @@ jobs:
         uses: lewagon/wait-on-check-action@v1.0.0
         with:
           ref: ${{ github.ref }}
-          check-name: info-test-success
+          check-name: verify-main
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
           allowed-conclusions: success

@@ -49,7 +49,7 @@ jobs:
       - name: Start Nx Agent ${{ matrix.agent }}
         run: npx nx-cloud start-agent
 
-  main:
+  verify-main:
     runs-on: ubuntu-latest
     env:
       CYPRESS_INSTALL_BINARY: 0
@@ -99,9 +99,3 @@ jobs:
       - name: Tag main branch if all jobs succeed
         if: ${{ github.event_name != 'pull_request' }}
         uses: nrwl/nx-tag-successful-ci-run@v1
-
-  info-test-success:
-    runs-on: ubuntu-latest
-    needs: main
-    steps:
-      - run: echo "Inform waiting workflows"
