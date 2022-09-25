@@ -17,28 +17,6 @@ jobs:
           echo "${{ github.ref_name }}"
           echo "${{ github.sha }}"
 
-  run2:
-    runs-on: ubuntu-latest
-    steps:
-      - name: AWAIT REF_NAME
-        uses: lewagon/wait-on-check-action@v1.0.0
-        with:
-          ref: ${{ github.ref_name }}
-          check-name: trigger-waiting
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
-          allowed-conclusions: success
-  run3:
-    runs-on: ubuntu-latest
-    steps:
-      - name: AWAIT SHA
-        uses: lewagon/wait-on-check-action@v1.0.0
-        with:
-          ref: ${{ github.sha }}
-          check-name: trigger-waiting
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
-          allowed-conclusions: success
   run4:
     runs-on: ubuntu-latest
     steps:
@@ -47,6 +25,17 @@ jobs:
         with:
           ref: ${{ github.ref }}
           check-name: trigger-waiting
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+          allowed-conclusions: success
+  run5:
+    runs-on: ubuntu-latest
+    steps:
+      - name: AWAIT REF
+        uses: lewagon/wait-on-check-action@v1.0.0
+        with:
+          ref: ${{ github.ref }}
+          running-workflow-name: trigger-waiting
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
           allowed-conclusions: success
