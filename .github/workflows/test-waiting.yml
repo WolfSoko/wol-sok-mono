@@ -1,4 +1,4 @@
-name: Create versioned release
+name: Test waiting
 on:
   push:
     # Pattern matched against refs/tags
@@ -13,11 +13,34 @@ jobs:
     environment: aws
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for tests to succeed
+      - run: |
+          echo "${{ github.ref }}"
+          echo "${{ github.ref_name }}"
+          echo "${{ github.sha }}"
+
+      - name: AWAIT REF_NAME
+        uses: lewagon/wait-on-check-action@v1.0.0
+        with:
+          ref: ${{ github.ref_name }}
+          check-name: 'trigger-release:ci²-success'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+          allowed-conclusions: success
+
+      - name: AWAIT SHA
+        uses: lewagon/wait-on-check-action@v1.0.0
+        with:
+          ref: ${{ github.sha }}
+          check-name: 'trigger-release:ci²-success'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+          allowed-conclusions: success
+
+      - name: AWAIT REF
         uses: lewagon/wait-on-check-action@v1.0.0
         with:
           ref: ${{ github.ref }}
-          check-name: trigger-release:ci²-success
+          check-name: 'trigger-release:ci²-success'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
           allowed-conclusions: success

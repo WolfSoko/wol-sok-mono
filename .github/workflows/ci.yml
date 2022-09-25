@@ -54,10 +54,6 @@ jobs:
     env:
       CYPRESS_INSTALL_BINARY: 0
     steps:
-      - name: trigger-release:ci²-success
-        if: github.ref_type == 'tag'
-        run: echo "CI² successfully!"
-
       - name: install dependencies for node-gyp
         run: |
           echo "Install packages to compile node_modules gl with node-gyp"
