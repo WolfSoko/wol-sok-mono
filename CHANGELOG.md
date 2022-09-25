@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.2.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.1.10...v3.2.0) (2022-09-25)
+
+
+### Features
+
+* **angular-examples:** show when new app is available ([14057f3](https://github.com/WolfSoko/wol-sok-mono/commit/14057f3aa6b1236e3b767ea7661546e280cb6547))
+
+
+### Bug Fixes
+
+* **deploy:** use correct version ([3dd19c4](https://github.com/WolfSoko/wol-sok-mono/commit/3dd19c4e161819a4143764553ac03027f310903f))
+
 ### [3.1.10](https://github.com/WolfSoko/wol-sok-mono/compare/v3.1.9...v3.1.10) (2022-09-25)
 
 
