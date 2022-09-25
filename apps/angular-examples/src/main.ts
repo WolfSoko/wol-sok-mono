@@ -13,7 +13,7 @@ if (environment.production) {
 
 Sentry.init({
   dsn: 'https://d7eab9a5f3484e48b3cf9c110533dcbe@o1384048.ingest.sentry.io/6702682',
-  release: `angular-examples@${environment.version}`,
+  release: `angular-examples@v${environment.version}`,
   integrations: [
     new BrowserTracing({
       tracingOrigins: [

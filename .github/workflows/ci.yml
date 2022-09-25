@@ -2,7 +2,9 @@ name: ci²
 
 on:
   push:
-    branches: [main, '!refs/tags/v*']
+    branches:
+      - '!refs/tags/v*'
+      - main
     # Pattern matched against refs/tags
     tags:
       - 'v*'
@@ -30,7 +32,7 @@ jobs:
     steps:
       - name: install dependencies for node-gyp
         run: |
-          echo "Install packages to compile node_modules gl with node-gyp"
+          echo 'Install packages to compile node_modules gl with node-gyp"
           sudo apt-get update -y
           sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
       - uses: actions/checkout@v3
