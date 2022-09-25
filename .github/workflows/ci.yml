@@ -10,7 +10,7 @@ on:
   pull_request:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.sha }}
   cancel-in-progress: true
 
 env:
@@ -100,11 +100,3 @@ jobs:
       - name: Tag main branch if all jobs succeed
         if: ${{ github.event_name != 'pull_request' }}
         uses: nrwl/nx-tag-successful-ci-run@v1
-
-  cancel-if-triggered-twice:
-    timeout-minutes: 3
-    runs-on: ubuntu-latest
-    steps:
-      - name: Cancel workflow if triggered by main branch and has a tag
-        uses: andymckay/cancel-action@0.2
-        if: startsWith(github.ref_name, 'main') && ${{ env.GIT_TAG }} != v*
