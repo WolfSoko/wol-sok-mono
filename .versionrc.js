@@ -1,6 +1,6 @@
 const versionFile = {
-  filename: '.version',
-  type: 'plain-text',
+  filename: 'version.json',
+  type: 'json',
 };
 
 module.exports = {
