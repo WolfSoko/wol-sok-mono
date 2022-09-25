@@ -3,9 +3,20 @@ on:
   release:
     types: [created, published, released]
 
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+        default: v3.0.1
+        description: Release version
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
   cancel-in-progress: true
+
+env:
+  RELEASE_VERSION: ${{ github.event.inputs.version || github.ref }}
 
 jobs:
   deploy:
@@ -13,11 +24,15 @@ jobs:
     environment: aws
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Release prozess started for version ${{ github.ref }}"
-      - name: Fetch release
+      - run: echo "Release prozess started for version ${RELEASE_VERSION}"
+
+      - name: Download Release Asset
+        id: download_release_asset
+        uses: i3h/download-release-asset@v1
         with:
-          version: ${{ github.ref }}
-          file: 'release.zip'
+          repo: wol-sok-mono
+          tag: ${{ env.RELEASE_VERSION }}
+          file: release.zip
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Unzip release
@@ -52,7 +67,7 @@ jobs:
       - name: create release version
         id: sentry-version
         run: |
-          SENTRY_VERSION="angular-examples@${{ github.ref }}"
+          SENTRY_VERSION="angular-examples@${RELEASE_VERSION}"
           echo "Sentry version: ${SENTRY_VERSION}"
           echo "::set-output name=sentry-version::${SENTRY_VERSION}"
 
