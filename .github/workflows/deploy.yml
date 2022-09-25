@@ -1,7 +1,7 @@
 name: Deploy release to AWS
 on:
   release:
-    types: [published, released]
+    types: [created, published, released]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
