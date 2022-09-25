@@ -1,6 +1,9 @@
-import {Environment} from './environment.type';
+import { Environment } from './environment.type';
+
+import packageJson from '../../../../package.json';
 
 export const environment: Environment = {
+  version: packageJson.version,
   production: true,
   serviceWorkerCheckInterval: 30000,
   firebaseConfig: {
@@ -9,6 +12,6 @@ export const environment: Environment = {
     databaseURL: 'https://angularexamples-b69f4.firebaseio.com',
     projectId: 'angularexamples-b69f4',
     storageBucket: 'angularexamples-b69f4.appspot.com',
-    messagingSenderId: '311456846239'
-  }
+    messagingSenderId: '311456846239',
+  },
 };

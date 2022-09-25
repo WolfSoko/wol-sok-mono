@@ -3,7 +3,6 @@ import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { enableAkitaProdMode } from '@datorama/akita';
 import * as Sentry from '@sentry/angular';
 import { BrowserTracing } from '@sentry/tracing';
-import { version } from '../.././../package.json';
 import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 
@@ -14,7 +13,7 @@ if (environment.production) {
 
 Sentry.init({
   dsn: 'https://d7eab9a5f3484e48b3cf9c110533dcbe@o1384048.ingest.sentry.io/6702682',
-  release: `angular-examples@${version}`,
+  release: `angular-examples@${environment.version}`,
   integrations: [
     new BrowserTracing({
       tracingOrigins: [
