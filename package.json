@@ -1,6 +1,6 @@
 {
   "name": "wolsok",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "license": "MIT",
   "scripts": {
     "ng": "nx",
@@ -117,6 +117,7 @@
     "firebase-admin": "^11.0.1",
     "git-revision-webpack-plugin": "^5.0.0",
     "html2canvas": "^1.4.1",
+    "husky": "^8.0.1",
     "jasmine-core": "4.2.0",
     "jasmine-spec-reporter": "7.0.0",
     "jest": "28.1.3",
