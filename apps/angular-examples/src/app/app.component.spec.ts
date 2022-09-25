@@ -12,7 +12,7 @@ describe('AppComponent', () => {
     component: AppComponent,
     imports: [RouterTestingModule, Angulartics2Module.forRoot()],
     providers: [
-      { provide: ENV_TOKEN, useValue: { version: '1.2.3' } },
+      { provide: ENV_TOKEN, useValue: { version: 'v1.2.3' } },
       {
         provide: ROUTER_LINKS,
         useValue: [],
