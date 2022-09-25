@@ -15,7 +15,6 @@ jobs:
     steps:
       - run: echo "Release prozess started for version ${{ github.ref }}"
       - name: Fetch release
-        uses: saltares/fetch-gh-release-asset@master
         with:
           version: ${{ github.ref }}
           file: 'release.zip'
