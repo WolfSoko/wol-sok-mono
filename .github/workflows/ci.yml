@@ -2,8 +2,7 @@ name: ci²
 
 on:
   push:
-    branches:
-      - main
+    branches: [main, '!refs/tags/v*']
     # Pattern matched against refs/tags
     tags:
       - 'v*'
