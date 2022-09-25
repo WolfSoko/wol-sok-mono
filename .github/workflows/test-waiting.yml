@@ -9,8 +9,7 @@ env:
   NODE_VERSION: '16'
 
 jobs:
-  run:
-    environment: aws
+  run1:
     runs-on: ubuntu-latest
     steps:
       - run: |
@@ -18,29 +17,36 @@ jobs:
           echo "${{ github.ref_name }}"
           echo "${{ github.sha }}"
 
+  run2:
+    runs-on: ubuntu-latest
+    steps:
       - name: AWAIT REF_NAME
         uses: lewagon/wait-on-check-action@v1.0.0
         with:
           ref: ${{ github.ref_name }}
-          check-name: 'trigger-release:ci²-success'
+          check-name: trigger-waiting
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
           allowed-conclusions: success
-
+  run3:
+    runs-on: ubuntu-latest
+    steps:
       - name: AWAIT SHA
         uses: lewagon/wait-on-check-action@v1.0.0
         with:
           ref: ${{ github.sha }}
-          check-name: 'trigger-release:ci²-success'
+          check-name: trigger-waiting
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
           allowed-conclusions: success
-
+  run4:
+    runs-on: ubuntu-latest
+    steps:
       - name: AWAIT REF
         uses: lewagon/wait-on-check-action@v1.0.0
         with:
           ref: ${{ github.ref }}
-          check-name: 'trigger-release:ci²-success'
+          check-name: trigger-waiting
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
           allowed-conclusions: success

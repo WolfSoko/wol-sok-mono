@@ -5,7 +5,7 @@ on:
       - '*'
 
 jobs:
-  run:
+  trigger-waiting:
     environment: aws
     runs-on: ubuntu-latest
     steps:
