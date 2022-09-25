@@ -12,6 +12,7 @@
       "dependencies": "*",
       "devDependencies": "*"
     },
+    "version.json": ["angular-examples"],
     ".eslintrc.json": "*"
   },
   "tasksRunnerOptions": {
@@ -46,8 +47,13 @@
     }
   },
   "defaultProject": "angular-examples",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*"],
+    "production": ["!{projectRoot}/**/*.spec.ts"]
+  },
   "targetDefaults": {
     "build": {
+      "inputs": ["production", "^production"],
       "dependsOn": ["^build"]
     }
   }

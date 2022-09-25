@@ -15,7 +15,7 @@
         "tsConfig": "apps/angular-examples/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "customWebpackConfig": {
-          "path": "tools/git-revision/git-revision-extra-webpack.config.js"
+          "path": "tools/version-handling/version-webpack.config.js"
         },
         "assets": [
           {
@@ -115,18 +115,6 @@
         },
         "development": {
           "buildTarget": "angular-examples:build:development"
-        }
-      },
-      "defaultConfiguration": "development"
-    },
-    "serve-ng": {
-      "executor": "@angular-devkit/build-angular:dev-server",
-      "configurations": {
-        "production": {
-          "browserTarget": "angular-examples:build:production"
-        },
-        "development": {
-          "browserTarget": "angular-examples:build:development"
         }
       },
       "defaultConfiguration": "development"
