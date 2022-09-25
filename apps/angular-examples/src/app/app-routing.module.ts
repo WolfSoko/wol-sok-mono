@@ -57,8 +57,8 @@ const mainNavRoutes: MainNavRoute[] = [
   {
     path: 'tensorflowExamples',
     loadChildren: () =>
-      import('./tensorflow-examples/tensorflow-examples.module').then(
-        (m) => m.TensorflowExamplesModule
+      import('@wolsok/feat-lazy-tensorflow-examples').then(
+        (m) => m.TENSORFLOW_EXAMPLES_ROUTES
       ),
     data: { linkText: 'Tensorflow examples' },
   },

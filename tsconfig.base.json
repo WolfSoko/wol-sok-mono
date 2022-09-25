@@ -22,6 +22,9 @@
       "@wolsok/feat-lazy-some-gpu-calculation": [
         "libs/features/lazy/some-gpu-calculation/src/index.ts"
       ],
+      "@wolsok/feat-lazy-tensorflow-examples": [
+        "libs/features/lazy/tensorflow-examples/src/index.ts"
+      ],
       "@wolsok/feat-reaction-diff": [
         "libs/features/lazy/reaction-diffusion/src/index.ts"
       ],
