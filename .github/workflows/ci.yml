@@ -3,7 +3,6 @@ name: ci²
 on:
   push:
     branches:
-      - '!refs/tags/v*'
       - main
     # Pattern matched against refs/tags
     tags:
@@ -32,7 +31,7 @@ jobs:
     steps:
       - name: install dependencies for node-gyp
         run: |
-          echo 'Install packages to compile node_modules gl with node-gyp"
+          echo "Install packages to compile node_modules gl with node-gyp"
           sudo apt-get update -y
           sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
       - uses: actions/checkout@v3
@@ -100,3 +99,10 @@ jobs:
       - name: Tag main branch if all jobs succeed
         if: ${{ github.event_name != 'pull_request' }}
         uses: nrwl/nx-tag-successful-ci-run@v1
+
+  cancel-if-triggered-twice:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel workflow if triggered by main branch and has a tag
+        uses: andymckay/cancel-action@0.2
+        if: startsWith(github.ref_name, 'main') && ${{ env.GIT_TAG }} != v*
