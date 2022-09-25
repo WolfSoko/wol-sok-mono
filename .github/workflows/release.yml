@@ -11,6 +11,7 @@ concurrency:
 
 jobs:
   release:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       - name: Install ubuntu dependencies

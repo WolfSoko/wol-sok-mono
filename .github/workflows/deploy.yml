@@ -9,6 +9,7 @@ concurrency:
 
 jobs:
   deploy:
+    timeout-minutes: 15
     environment: aws
     runs-on: ubuntu-latest
     steps:

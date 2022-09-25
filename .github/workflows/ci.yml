@@ -24,7 +24,7 @@ jobs:
   agents:
     name: Nx Cloud Agents
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 15
     strategy:
       matrix:
         agent: [1, 2, 3, 4, 5]
@@ -50,6 +50,7 @@ jobs:
         run: npx nx-cloud start-agent
 
   verify-main:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     env:
       CYPRESS_INSTALL_BINARY: 0
@@ -101,6 +102,7 @@ jobs:
         uses: nrwl/nx-tag-successful-ci-run@v1
 
   cancel-if-triggered-twice:
+    timeout-minutes: 3
     runs-on: ubuntu-latest
     steps:
       - name: Cancel workflow if triggered by main branch and has a tag
