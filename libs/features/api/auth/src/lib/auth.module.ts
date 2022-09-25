@@ -1,7 +1,6 @@
 import {
   inject,
   InjectionToken,
-  Injector,
   ModuleWithProviders,
   NgModule,
 } from '@angular/core';
