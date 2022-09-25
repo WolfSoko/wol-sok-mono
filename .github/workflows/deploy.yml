@@ -60,20 +60,3 @@ jobs:
           AWS_REGION: 'eu-west-1'
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: create release version
-        id: sentry-version
-        run: |
-          SENTRY_VERSION="angular-examples@${{ env.RELEASE_VERSION }}"
-          echo "Sentry version: ${SENTRY_VERSION}"
-          echo "::set-output name=sentry-version::${SENTRY_VERSION}"
-
-      - name: Create Sentry Release
-        uses: getsentry/action-release@v1
-        with:
-          version: ${{ steps.sentry-version.outputs.sentry-version }}
-          environment: aws
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: 'wolsok'
-          SENTRY_PROJECT: 'angular-examples'
