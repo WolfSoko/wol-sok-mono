@@ -24,6 +24,7 @@ import {
 } from '@wolsok/ui-kit';
 import {
   BehaviorSubject,
+  combineLatest,
   EMPTY,
   interval,
   last,
@@ -71,7 +72,7 @@ export class GravityWorldComponent {
   private static readonly INITIAL_GRAVITY_CONSTANT: number = 60.0;
 
   @ViewChild('svgWorld')
-  svgWorld!: ElementRef<SVGElement>;
+  svgWorld!: ElementRef<SVGSVGElement>;
 
   public form: FormGroup<{
     gravitationalConstant: FormControl<number>;
@@ -109,23 +110,16 @@ export class GravityWorldComponent {
     new ReplaySubject<Vector2d>(1);
 
   private targetCoordinatesSubject: Subject<Vector2d> = new Subject<Vector2d>();
-  private targetCoordinates$: Observable<Vector2d> =
-    this.targetCoordinatesSubject.asObservable().pipe(
-      map((coords) => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const ownerSVGElement: SVGSVGElement = this.svgWorld.nativeElement.ownerSVGElement!;
-        const pt = ownerSVGElement.createSVGPoint();
-
-        // pass event coordinates
-        pt.x = coords.x;
-        pt.y = coords.y;
-
-        // transform to SVG coordinates
-        const svgP = pt.matrixTransform(ownerSVGElement.getScreenCTM()?.inverse());
-        return new Vector2d(svgP.x, svgP.y);
-      }),
-      shareReplay(1)
-    );
+  private targetCoordinates$: Observable<Vector2d> = combineLatest([
+    this.targetCoordinatesSubject.asObservable(),
+    this.containerSizeSubject$,
+    of(this.MAX_DIM),
+  ]).pipe(
+    map(([coords, containerSize, maxDims]) => {
+      return coords.vMul(maxDims.vDiv(containerSize));
+    }),
+    shareReplay(1)
+  );
 
   private positionSubject$: Subject<Vector2d> = new Subject<Vector2d>();
   private position$: Observable<Vector2d> = this.positionSubject$
@@ -147,7 +141,7 @@ export class GravityWorldComponent {
   private mouseMove$: Subject<MouseEvent> = new Subject();
   private mouseUp$: Subject<MouseEvent> = new Subject();
 
-  private drag$: Observable<Vector2d> = this.mouseDown$.asObservable().pipe(
+  drag$: Observable<Vector2d> = this.mouseDown$.asObservable().pipe(
     switchMap(() =>
       this.mouseMove$.asObservable().pipe(
         map((mm: MouseEvent) => Vector2d.create(mm.offsetX, mm.offsetY)),

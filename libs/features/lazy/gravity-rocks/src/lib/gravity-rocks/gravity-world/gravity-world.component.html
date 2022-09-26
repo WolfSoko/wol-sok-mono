@@ -8,16 +8,18 @@
         <p>
           <mat-form-field appearance="outline">
             <mat-label>Gravitational Force</mat-label>
-            <input matInput
-                   type="number"
-                   formControlName="gravitationalConstant">
+            <input
+              matInput
+              type="number"
+              formControlName="gravitationalConstant"
+            />
             <mat-hint>The gravitational constant</mat-hint>
           </mat-form-field>
         </p>
         <p>
           <mat-form-field appearance="outline">
             <mat-label>Mass of Sun</mat-label>
-            <input matInput type="number" formControlName="massOfSun">
+            <input matInput type="number" formControlName="massOfSun" />
             <mat-hint>The more mass the more gravitational attraction</mat-hint>
           </mat-form-field>
         </p>
@@ -34,21 +36,34 @@
       <mat-list>
         <mat-toolbar id="infos">Infos</mat-toolbar>
         <mat-list-item>
-          <span class="planetCount"
-          >PlanetCount = {{ planetsAmount$ | async }}</span
-          >
+          <span class="planetCount"> PlanetCount = 1 </span>
+        </mat-list-item>
+        <mat-list-item>
+          <span class="planetCount">
+            PlanetCoords.x = {{ x$ | async }} PlanetCoords.y = {{ y$ | async }}
+          </span>
+        </mat-list-item>
+        <mat-list-item>
+          <span class="planetCount">
+            drag.x = {{ (drag$ | async)?.x }} drag.y = {{ (drag$ | async)?.y }}
+          </span>
         </mat-list-item>
       </mat-list>
     </mat-card-content>
   </mat-card>
-  <mat-card class="gravitational-force-card" >
+  <mat-card class="gravitational-force-card">
     <mat-toolbar color="primary">See the action</mat-toolbar>
-    <mat-card-content>
-      <svg #svgWorld class="world-svg" (wsSharedUiElemResized)="resize($event)"
-           (mousedown)="mouseDown($event)"
-           (mousemove)="mouseMove($event)"
-           (mouseup)="mouseUp($event)"
-           [attr.viewBox]="'0 0 '+ MAX_DIM.x + ' ' + MAX_DIM.y"
+    <mat-card-content
+      (wsSharedUiElemResized)="resize($event)"
+      [debounceTime]="300"
+    >
+      <svg
+        #svgWorld
+        class="world-svg"
+        (mousedown)="mouseDown($event)"
+        (mousemove)="mouseMove($event)"
+        (mouseup)="mouseUp($event)"
+        [attr.viewBox]="'0 0 ' + MAX_DIM.x + ' ' + MAX_DIM.y"
       >
         <g>
           <circle
