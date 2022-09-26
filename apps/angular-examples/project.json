@@ -34,13 +34,6 @@
             "libs/ui-kit/src/lib/styles"
           ]
         },
-        "scripts": [
-          "node_modules/vega-lite/build/vega-lite.js",
-          {
-            "input": "node_modules/document-register-element/build/document-register-element.js",
-            "inject": true
-          }
-        ],
         "allowedCommonJsDependencies": [
           "assemblyscript/lib/loader",
           "three-orbitcontrols-ts",
@@ -103,6 +96,18 @@
       "defaultConfiguration": "production"
     },
     "serve": {
+      "executor": "@nrwl/angular:webpack-server",
+      "configurations": {
+        "production": {
+          "browserTarget": "angular-examples:build:production"
+        },
+        "development": {
+          "browserTarget": "angular-examples:build:development"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve-file": {
       "executor": "@nrwl/web:file-server",
       "options": {
         "buildTarget": "angular-examples:build",
@@ -117,7 +122,7 @@
           "buildTarget": "angular-examples:build:development"
         }
       },
-      "defaultConfiguration": "development"
+      "defaultConfiguration": "production"
     },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
