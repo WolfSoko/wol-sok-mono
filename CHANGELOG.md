@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.3.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.2.1...v3.3.0) (2022-09-26)
+
+
+### Features
+
+* **angular-examples:** use nrwl:webpack for serving to be faster ([6be1ebd](https://github.com/WolfSoko/wol-sok-mono/commit/6be1ebd77ab500f07c9555a797af0abfd4b4bb45))
+
+
+### Bug Fixes
+
+* **tensorflow:** image drawer fixed ([8422f25](https://github.com/WolfSoko/wol-sok-mono/commit/8422f259217ae6c9545541ee0917491618b36ccd))
+
 ### [3.2.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.2.0...v3.2.1) (2022-09-25)
 
 ## [3.2.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.1.10...v3.2.0) (2022-09-25)
