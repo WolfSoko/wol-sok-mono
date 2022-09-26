@@ -8,7 +8,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Tensor2D } from '@tensorflow/tfjs';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, tap } from 'rxjs/operators';
 import { AskForNumberDialogData } from './ask-for-number-dialog/ask-for-number-dialog-data';
 import { AskForNumberDialogComponent } from './ask-for-number-dialog/ask-for-number-dialog.component';
 import { DrawDigitComponent } from './draw-digit/draw-digit.component';
@@ -68,8 +68,12 @@ export class LearnedDigitsComponent implements OnInit {
 
     this.nextDrawnImageSubject$
       .asObservable()
-      .pipe(debounceTime(1000), untilDestroyed(this))
-      .subscribe((image) => this.testDrawnDigit(image));
+      .pipe(
+        debounceTime(1000),
+        tap((image) => this.testDrawnDigit(image)),
+        untilDestroyed(this)
+      )
+      .subscribe();
   }
 
   async train() {

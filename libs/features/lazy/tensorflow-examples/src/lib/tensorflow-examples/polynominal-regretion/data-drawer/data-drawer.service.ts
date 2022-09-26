@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Tensor } from '@tensorflow/tfjs';
-import renderChart, { VisualizationSpec } from 'vega-embed';
+import { default as embed, VisualizationSpec } from 'vega-embed';
 
 @Injectable({ providedIn: 'root' })
 export class DataDrawerService {
@@ -13,7 +13,6 @@ export class DataDrawerService {
     });
 
     const spec: VisualizationSpec = {
-      $schema: 'https://vega.github.io/schema/vega-lite/v4.4.0.json',
       width: 300,
       height: 300,
       data: { values: values },
@@ -23,8 +22,7 @@ export class DataDrawerService {
         y: { field: 'y', type: 'quantitative' },
       },
     };
-
-    return renderChart(element, spec, { actions: false });
+    return embed(element, spec, { actions: true });
   }
 
   async plotDataAndPredictions(
@@ -41,7 +39,6 @@ export class DataDrawerService {
     });
 
     const spec: VisualizationSpec = {
-      $schema: 'https://vega.github.io/schema/vega-lite/v4.4.0.json',
       width: 300,
       height: 300,
       data: { values: values },
@@ -63,8 +60,7 @@ export class DataDrawerService {
         },
       ],
     };
-
-    return renderChart(container, spec, { actions: false });
+    return embed(container, spec, { actions: false });
   }
 
   renderCoefficients(

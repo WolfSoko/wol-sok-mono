@@ -119,7 +119,6 @@ export class DrawPredictionsComponent implements OnChanges {
     await embed(
       this.lossCanvas.nativeElement,
       {
-        $schema: 'https://vega.github.io/schema/vega-lite/v4.4.0.json',
         data: { values: lossValues },
         mark: {
           type: 'line',
@@ -144,7 +143,6 @@ export class DrawPredictionsComponent implements OnChanges {
     await embed(
       this.accuracyCanvas.nativeElement,
       {
-        $schema: 'https://vega.github.io/schema/vega-lite/v4.4.0.json',
         data: { values: accuracyValues },
         width: 260,
         mark: { type: 'line', orient: 'vertical' },
