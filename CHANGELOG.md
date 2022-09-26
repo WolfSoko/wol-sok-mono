@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.4.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.3.1...v3.4.0) (2022-09-26)
+
+
+### Features
+
+* **gravity:** scalable world ([cbb1f14](https://github.com/WolfSoko/wol-sok-mono/commit/cbb1f14b6ef14cc1d69ce1f7052ef9d8747a4bfa))
+* massive refactoring ([2082609](https://github.com/WolfSoko/wol-sok-mono/commit/208260962b6b75bf8929ed81b28d6b2cb083e66a))
+
 ### [3.3.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.3.0...v3.3.1) (2022-09-26)
 
 
