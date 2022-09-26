@@ -2,7 +2,11 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import {
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Tensor2D } from '@tensorflow/tfjs';
@@ -22,6 +26,7 @@ import { MnistDataService } from './mnist-data.service';
   imports: [
     CommonModule,
     MatCardModule,
+    MatDialogModule,
     ElevateCardDirective,
     MatButtonModule,
     DrawDigitComponent,

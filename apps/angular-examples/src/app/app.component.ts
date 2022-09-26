@@ -5,9 +5,7 @@ import {
   HostBinding,
   Inject,
 } from '@angular/core';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
-import { provideWsThanosOptions } from '@wolsok/ws-thanos';
 import { Angulartics2GoogleTagManager } from 'angulartics2';
 import { Environment } from '../environments/environment.type';
 import { MainNavRoute } from './app-routes';

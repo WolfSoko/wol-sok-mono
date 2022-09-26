@@ -1,3 +1,4 @@
+import { HttpClientModule } from '@angular/common/http';
 import {
   APP_INITIALIZER,
   enableProdMode,
@@ -42,8 +43,8 @@ Sentry.init({
 
 // persistState({exclude: ['performance-test', 'wasm-test', 'input-wave', 'game-state', 'bacteria-player']});
 bootstrapApplication(AppComponent, {
-
   providers: [
+    importProvidersFrom(HttpClientModule),
     importProvidersFrom(CoreModule),
     {
       provide: ErrorHandler,
@@ -58,14 +59,15 @@ bootstrapApplication(AppComponent, {
     {
       provide: APP_INITIALIZER,
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      useFactory: () => () => {
-      },
+      useFactory: () => () => {},
       deps: [Sentry.TraceService],
       multi: true,
     },
-    importProvidersFrom(RouterModule.forRoot([...APP_ROUTES, DEFAULT_APP_ROUTE], {
-      paramsInheritanceStrategy: 'always',
-    })),
+    importProvidersFrom(
+      RouterModule.forRoot([...APP_ROUTES, DEFAULT_APP_ROUTE], {
+        paramsInheritanceStrategy: 'always',
+      })
+    ),
     [
       provideWsThanosOptions({
         maxParticleCount: 50000,
@@ -73,8 +75,7 @@ bootstrapApplication(AppComponent, {
       }),
     ],
   ],
-})
-  .catch((err) => console.error(err));
+}).catch((err) => console.error(err));
 
 // platformBrowserDynamic().bootstrapModule(AppModule).then(moduleRef => {
 //   const applicationRef = moduleRef.injector.get(ApplicationRef);
