@@ -1,9 +1,18 @@
-import { enableProdMode } from '@angular/core';
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import {
+  APP_INITIALIZER,
+  enableProdMode,
+  ErrorHandler,
+  importProvidersFrom,
+} from '@angular/core';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { Router, RouterModule } from '@angular/router';
 import { enableAkitaProdMode } from '@datorama/akita';
 import * as Sentry from '@sentry/angular';
 import { BrowserTracing } from '@sentry/tracing';
-import { AppModule } from './app/app.module';
+import { provideWsThanosOptions } from '@wolsok/ws-thanos';
+import { APP_ROUTES, DEFAULT_APP_ROUTE } from './app/app-routes';
+import { AppComponent } from './app/app.component';
+import { CoreModule } from './app/core/core.module';
 import { environment } from './environments/environment';
 
 if (environment.production) {
@@ -32,8 +41,39 @@ Sentry.init({
 });
 
 // persistState({exclude: ['performance-test', 'wasm-test', 'input-wave', 'game-state', 'bacteria-player']});
-platformBrowserDynamic()
-  .bootstrapModule(AppModule)
+bootstrapApplication(AppComponent, {
+
+  providers: [
+    importProvidersFrom(CoreModule),
+    {
+      provide: ErrorHandler,
+      useValue: Sentry.createErrorHandler({
+        showDialog: true,
+      }),
+    },
+    {
+      provide: Sentry.TraceService,
+      deps: [Router],
+    },
+    {
+      provide: APP_INITIALIZER,
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      useFactory: () => () => {
+      },
+      deps: [Sentry.TraceService],
+      multi: true,
+    },
+    importProvidersFrom(RouterModule.forRoot([...APP_ROUTES, DEFAULT_APP_ROUTE], {
+      paramsInheritanceStrategy: 'always',
+    })),
+    [
+      provideWsThanosOptions({
+        maxParticleCount: 50000,
+        animationLength: 5000,
+      }),
+    ],
+  ],
+})
   .catch((err) => console.error(err));
 
 // platformBrowserDynamic().bootstrapModule(AppModule).then(moduleRef => {

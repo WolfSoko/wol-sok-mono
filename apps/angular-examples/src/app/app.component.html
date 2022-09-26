@@ -1,22 +1,11 @@
-<!--The content below is only a placeholder and can be replaced.-->
-<mat-sidenav-container class="page">
-  <mat-sidenav class="navigationSidenav" #sidenav>
-    <nav>
-      <mat-nav-list>
-        <app-nav-item
-          (click)="sidenav.close()"
-          *ngFor="let route of routerLinks"
-          [linkText]="route.data.linkText"
-          [path]="route.path"
-        >
-        </app-nav-item>
-      </mat-nav-list>
-    </nav>
-  </mat-sidenav>
-  <section class="pageGrid" title="main content">
-    <app-main-toolbar (clickSideNav)="sidenav.open()"></app-main-toolbar>
-    <div class="page-content">
+<div class="page-grid">
+  <app-main-toolbar
+    (clickSideNav)="sideNavComponent.toggle()"
+  ></app-main-toolbar>
+  <app-side-nav #sideNavComponent class="page-content">
+    <section class="content-section">
       <router-outlet></router-outlet>
-    </div>
-  </section>
-</mat-sidenav-container>
+    </section>
+  </app-side-nav>
+  <div class="app-version">{{appVersionAttr}}</div>
+</div>

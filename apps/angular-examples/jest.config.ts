@@ -1,10 +1,9 @@
 /* eslint-disable */
 export default {
   displayName: 'angular-examples',
-
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {
-    VERSION: 'v1.2.3',
+    VERSION: '1.2.3',
     'ts-jest': {
       tsconfig: '<rootDir>/tsconfig.spec.json',
       stringifyContentPathRegex: '\\.(html|svg)$',

@@ -15,7 +15,7 @@ import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ElevateCardDirective } from "@wolsok/ui-kit";
+import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { interval, Observable, Subject } from 'rxjs';
 import {
   debounceTime,
@@ -26,13 +26,13 @@ import {
   startWith,
   tap,
 } from 'rxjs/operators';
-import { CellWeights } from './cell-weights-to-array';
 import { ReactionDiffCalcParams } from './calculation/reaction-diff-calc-params';
 import { ReactionDiffCalcServiceFactory } from './calculation/reaction-diff-calculation-service.factory';
 import { ReactionDiffCalculator } from './calculation/reaction-diff-calculator';
+import { CellWeights } from './cell-weights-to-array';
 import { P5ViewComponent } from './p5-view/p5-view.component';
 import { ReactionDiffConfigService } from './reaction-diff-config.service';
-import { WeightsConfigComponent } from "./weights-config/weights-config.component";
+import { WeightsConfigComponent } from './weights-config/weights-config.component';
 
 interface Dimensions {
   width: number;

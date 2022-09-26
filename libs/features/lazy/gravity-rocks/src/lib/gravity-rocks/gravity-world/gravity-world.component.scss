@@ -1,26 +1,27 @@
-#simLayout {
-  display: flex;
-  flex-wrap: wrap-reverse;
+.sim-layout {
+  display: grid;
   height: 100%;
+  width: 100%;
+  grid-template-columns: minmax(300px, 1fr) minmax(300px, 4fr);
+  grid-template-rows: 1fr;
+  align-items: start;
 }
 
-form {
-  display: flex;
+.gravitational-force-card-controls {
   margin: 16px;
-  height: 80px;
-  align-items: center;
-  justify-content: space-around;
 
-  > input,
-  button {
-    margin: 8px;
+  .configuration {
+    display: flex;
+    flex-flow: column;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-around;
+    gap: 8px;
   }
 }
 
-.gravitational-force-card {
-  margin: 16px;
-}
-
-svg {
+.world-svg {
+  width: 100%;
+  aspect-ratio: 5 / 3;
   background-color: black;
 }

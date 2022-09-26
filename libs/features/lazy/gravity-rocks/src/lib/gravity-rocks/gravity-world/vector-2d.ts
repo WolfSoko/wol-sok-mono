@@ -17,6 +17,11 @@ export class Vector2d {
     return new Vector2d(this.x * num, this.y * num);
   }
 
+  public scaleTo(scaleVector: Vector2d) {
+    const norm = this.norm();
+      new Vector2d(norm.x * scaleVector.x, norm.y * scaleVector.y);
+  }
+
   public div(num: number) {
     return new Vector2d(this.x / num, this.y / num);
   }

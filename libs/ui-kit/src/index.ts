@@ -5,4 +5,4 @@ export * from './lib/render-shader/render-shader.component';
 
 export * from './lib/show-fps/show-fps.component';
 
-export * from './lib/async/async.directive';
+export * from './lib/let/let.directive';

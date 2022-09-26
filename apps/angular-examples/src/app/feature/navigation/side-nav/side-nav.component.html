@@ -1,0 +1,23 @@
+<mat-sidenav-container
+  *wsLet="showStatic$ | async as staticToolbar"
+  [hasBackdrop]="!staticToolbar"
+>
+  <mat-sidenav
+    [disableClose]="staticToolbar"
+    [opened]="showSidebar$ | async"
+    [mode]="staticToolbar ? 'side' : 'over'"
+  >
+    <nav class="navigation-sidenav">
+      <mat-nav-list>
+        <app-nav-item
+          (click)="close()"
+          *ngFor="let route of routerLinks"
+          [linkText]="route.data.linkText"
+          [path]="route.path"
+        >
+        </app-nav-item>
+      </mat-nav-list>
+    </nav>
+  </mat-sidenav>
+  <ng-content #content> </ng-content>
+</mat-sidenav-container>

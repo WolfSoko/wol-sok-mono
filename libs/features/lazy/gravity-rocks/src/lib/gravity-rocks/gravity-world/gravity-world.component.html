@@ -1,21 +1,27 @@
-<div id="simLayout">
-  <mat-card class="gravitational-force-card">
-    <mat-toolbar color="primary">Play with the values</mat-toolbar>
+<div class="sim-layout">
+  <mat-card class="gravitational-force-card-controls">
+    <mat-card-header>
+      <mat-card-title>Play with the values</mat-card-title>
+    </mat-card-header>
     <mat-card-content>
       <form [formGroup]="form" class="configuration">
-        <input
-          matInput
-          type="number"
-          placeholder="Gravitational Force"
-          formControlName="gravitationalConstant"
-        />
-        <input
-          matInput
-          type="number"
-          placeholder="Mass of Sun"
-          formControlName="massOfSun"
-        />
-        <ng-container *ngAsync="let running; from: running$">
+        <p>
+          <mat-form-field appearance="outline">
+            <mat-label>Gravitational Force</mat-label>
+            <input matInput
+                   type="number"
+                   formControlName="gravitationalConstant">
+            <mat-hint>The gravitational constant</mat-hint>
+          </mat-form-field>
+        </p>
+        <p>
+          <mat-form-field appearance="outline">
+            <mat-label>Mass of Sun</mat-label>
+            <input matInput type="number" formControlName="massOfSun">
+            <mat-hint>The more mass the more gravitational attraction</mat-hint>
+          </mat-form-field>
+        </p>
+        <ng-container *wsLet="running$ | async as running">
           <button
             mat-raised-button
             [color]="running ? 'accent' : 'primary'"
@@ -29,21 +35,20 @@
         <mat-toolbar id="infos">Infos</mat-toolbar>
         <mat-list-item>
           <span class="planetCount"
-            >PlanetCount = {{ planetsAmount$ | async }}</span
+          >PlanetCount = {{ planetsAmount$ | async }}</span
           >
         </mat-list-item>
       </mat-list>
     </mat-card-content>
   </mat-card>
-  <mat-card class="gravitational-force-card">
+  <mat-card class="gravitational-force-card" >
     <mat-toolbar color="primary">See the action</mat-toolbar>
     <mat-card-content>
-      <svg
-        [style.width.px]="MAX_DIM.x"
-        [style.height.px]="MAX_DIM.y"
-        (mousedown)="mouseDown($event)"
-        (mousemove)="mouseMove($event)"
-        (mouseup)="mouseUp($event)"
+      <svg #svgWorld class="world-svg" (wsSharedUiElemResized)="resize($event)"
+           (mousedown)="mouseDown($event)"
+           (mousemove)="mouseMove($event)"
+           (mouseup)="mouseUp($event)"
+           [attr.viewBox]="'0 0 '+ MAX_DIM.x + ' ' + MAX_DIM.y"
       >
         <g>
           <circle

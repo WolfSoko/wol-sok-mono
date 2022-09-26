@@ -1,0 +1,45 @@
+<mat-toolbar
+  color="primary"
+  role="toolbar"
+  id="main-toolbar"
+  class="page-title"
+>
+  <button
+    class="sidenav-icon"
+    mat-icon-button
+    (click)="clickSideNav.emit($event)"
+  >
+    <mat-icon>menu</mat-icon>
+  </button>
+  <span class="on-top" [class.hide]="isHandset$ | async"
+    >WolSok Coding&nbsp;</span
+  >
+  <span class="on-top">Angular Experiments</span>
+  <span class="toolbar-spacer"></span>
+  <mat-slide-toggle
+    color="warn"
+    class="on-top"
+    (change)="toggleTheme()"
+    [checked]="themeMode === 'dark'"
+  >
+    <span class="mat-body-2">{{ themeMode }} mode</span>
+  </mat-slide-toggle>
+  <app-service-worker-update
+    [class.hide]="isHandset$ | async"
+  ></app-service-worker-update>
+
+  <app-login></app-login>
+  <div
+    class="shader-background"
+    (wsSharedUiElemResized)="onResize($event)"
+    *ngIf="shaderCode"
+  >
+    <ws-shared-ui-render-shader
+      [shaderCode]="shaderCode"
+      [canvasWidth]="shaderWidth"
+      [canvasHeight]="shaderHeight"
+      [runAnimation]="runAnimation$ | async"
+    >
+    </ws-shared-ui-render-shader>
+  </div>
+</mat-toolbar>

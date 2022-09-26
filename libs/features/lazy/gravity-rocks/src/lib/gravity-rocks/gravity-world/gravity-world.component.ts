@@ -1,5 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  ViewChild,
+} from '@angular/core';
 import {
   FormControl,
   FormGroup,
@@ -8,10 +13,15 @@ import {
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { AsyncDirective } from '@wolsok/ui-kit';
+import {
+  ElemResizedDirective,
+  LetDirective,
+  ResizedEvent,
+} from '@wolsok/ui-kit';
 import {
   BehaviorSubject,
   EMPTY,
@@ -20,6 +30,7 @@ import {
   map,
   Observable,
   of,
+  ReplaySubject,
   scan,
   shareReplay,
   startWith,
@@ -50,12 +61,17 @@ class Planet {
     MatInputModule,
     MatButtonModule,
     MatListModule,
-    AsyncDirective,
+    LetDirective,
+    ElemResizedDirective,
+    MatIconModule,
   ],
 })
 export class GravityWorldComponent {
   private static readonly INITIAL_MASS_OF_SUN: number = 50000.0;
   private static readonly INITIAL_GRAVITY_CONSTANT: number = 60.0;
+
+  @ViewChild('svgWorld')
+  svgWorld!: ElementRef<SVGElement>;
 
   public form: FormGroup<{
     gravitationalConstant: FormControl<number>;
@@ -70,7 +86,7 @@ export class GravityWorldComponent {
   private gravitationalConstant$: Observable<number> =
     this.form.controls.gravitationalConstant.valueChanges;
 
-  public MAX_DIM: Vector2d = Vector2d.create(1000, 700);
+  public MAX_DIM: Vector2d = Vector2d.create(1000, (1000 / 5) * 3);
   private CENTER_POS: Vector2d = this.MAX_DIM.div(2);
 
   private planetsSubject$: Subject<Planet> = new Subject();
@@ -89,10 +105,27 @@ export class GravityWorldComponent {
     map((planets: Array<Planet>) => planets.length),
     startWith(0)
   );
+  private containerSizeSubject$: Subject<Vector2d> =
+    new ReplaySubject<Vector2d>(1);
 
   private targetCoordinatesSubject: Subject<Vector2d> = new Subject<Vector2d>();
   private targetCoordinates$: Observable<Vector2d> =
-    this.targetCoordinatesSubject.asObservable().pipe(shareReplay(1));
+    this.targetCoordinatesSubject.asObservable().pipe(
+      map((coords) => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const ownerSVGElement: SVGSVGElement = this.svgWorld.nativeElement.ownerSVGElement!;
+        const pt = ownerSVGElement.createSVGPoint();
+
+        // pass event coordinates
+        pt.x = coords.x;
+        pt.y = coords.y;
+
+        // transform to SVG coordinates
+        const svgP = pt.matrixTransform(ownerSVGElement.getScreenCTM()?.inverse());
+        return new Vector2d(svgP.x, svgP.y);
+      }),
+      shareReplay(1)
+    );
 
   private positionSubject$: Subject<Vector2d> = new Subject<Vector2d>();
   private position$: Observable<Vector2d> = this.positionSubject$
@@ -231,6 +264,12 @@ export class GravityWorldComponent {
 
     // trigger initial value changes
     this.form.enable();
+  }
+
+  resize($event: ResizedEvent) {
+    this.containerSizeSubject$.next(
+      new Vector2d($event.newWidth, $event.newHeight)
+    );
   }
 
   mouseDown($event: MouseEvent): void {

@@ -14,7 +14,7 @@ mat-form-field {
   align-items: center;
 }
 
-.sumCheck md-icon {
+.sumCheck mat-icon {
   flex: 0 1 20%;
 }
 

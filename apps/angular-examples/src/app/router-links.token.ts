@@ -1,4 +1,7 @@
 import { InjectionToken } from '@angular/core';
-import { MainNavRoute } from './app-routing.module';
+import { APP_ROUTES, MainNavRoute } from './app-routes';
 
-export const ROUTER_LINKS = new InjectionToken<MainNavRoute[]>('routerLinks');
+export const ROUTER_LINKS = new InjectionToken<MainNavRoute[]>('routerLinks', {
+  providedIn: 'root',
+  factory: () => APP_ROUTES,
+});

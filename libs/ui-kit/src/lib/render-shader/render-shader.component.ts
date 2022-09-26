@@ -5,7 +5,6 @@ import {
   Component,
   ElementRef,
   EventEmitter,
-  Inject,
   Input,
   NgZone,
   OnChanges,
@@ -73,7 +72,7 @@ export class RenderShaderComponent
   };
 
   constructor(
-    @Inject(NgZone) private _ngZone: NgZone,
+    private ngZone: NgZone,
     private readonly measureFps: MeasureFps
   ) {}
 
@@ -222,7 +221,7 @@ export class RenderShaderComponent
 
   animate(time: number = 1.0) {
     try {
-      this._ngZone.runOutsideAngular(() => {
+      this.ngZone.runOutsideAngular(() => {
         if (this.runAnimation) {
           requestAnimationFrame((timestamp) => this.animate(timestamp));
         }
