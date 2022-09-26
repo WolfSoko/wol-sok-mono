@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.5.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.5.0...v3.5.1) (2022-09-26)
+
+
+### Bug Fixes
+
+* **learn-digits:** provide httpClient in main ([8b8037d](https://github.com/WolfSoko/wol-sok-mono/commit/8b8037d741cbd0ef03b4f72353c57ca6527c1f24))
+
 ## [3.5.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.4.0...v3.5.0) (2022-09-26)
 
 
