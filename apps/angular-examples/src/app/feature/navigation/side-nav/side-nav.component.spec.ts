@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { RouterTestingModule } from '@angular/router/testing';
 
 import { SideNavComponent } from './side-nav.component';
 
@@ -9,7 +10,7 @@ describe('SideNavComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SideNavComponent, NoopAnimationsModule],
+      imports: [SideNavComponent, NoopAnimationsModule, RouterTestingModule],
     }).compileComponents();
 
     fixture = TestBed.createComponent(SideNavComponent);
