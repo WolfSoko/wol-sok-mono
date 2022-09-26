@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { GravityRocksComponent } from "./gravity-rocks.component";
-
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { GravityRocksComponent } from './gravity-rocks.component';
 
 describe('GravityRocksAppComponent', () => {
   let component: GravityRocksComponent;
@@ -8,7 +8,7 @@ describe('GravityRocksAppComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [GravityRocksComponent],
+      imports: [GravityRocksComponent, NoopAnimationsModule],
     }).compileComponents();
 
     fixture = TestBed.createComponent(GravityRocksComponent);
