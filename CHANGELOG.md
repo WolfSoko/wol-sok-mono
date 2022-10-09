@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.8.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.7.4...v3.8.0) (2022-10-09)
+
+
+### Features
+
+* highlight active route ([0614615](https://github.com/WolfSoko/wol-sok-mono/commit/0614615b2441e5ae34687ea23b882f437137d62f))
+
 ### [3.7.4](https://github.com/WolfSoko/wol-sok-mono/compare/v3.7.3...v3.7.4) (2022-10-09)
 
 ### [3.7.3](https://github.com/WolfSoko/wol-sok-mono/compare/v3.7.2...v3.7.3) (2022-10-09)
