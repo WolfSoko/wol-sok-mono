@@ -113,7 +113,7 @@ export const DEFAULT_APP_ROUTE = { path: '**', redirectTo: '/home' };
 
 @NgModule({
   imports: [
-    RouterModule.forRoot(APP_ROUTES, {
+    RouterModule.forRoot([...APP_ROUTES, DEFAULT_APP_ROUTE], {
       paramsInheritanceStrategy: 'always',
     }),
   ],
