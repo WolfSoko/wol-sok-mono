@@ -12,6 +12,7 @@
       "dependencies": "*",
       "devDependencies": "*"
     },
+    "package-lock.json": "*",
     "version.json": ["angular-examples"],
     ".eslintrc.json": "*"
   },
