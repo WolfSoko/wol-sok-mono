@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GpuAdapterService } from '@wolsok/utils-gpu-calc';
-
 import { SomeGpuCalculationComponent } from './some-gpu-calculation.component';
 
 describe('SomeGpuCalculationComponent', () => {
@@ -8,6 +7,12 @@ describe('SomeGpuCalculationComponent', () => {
   let fixture: ComponentFixture<SomeGpuCalculationComponent>;
 
   beforeEach(async () => {
+    global.ResizeObserver = jest.fn().mockImplementation(() => ({
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    }));
+
     await TestBed.configureTestingModule({
       imports: [SomeGpuCalculationComponent],
       providers: [
