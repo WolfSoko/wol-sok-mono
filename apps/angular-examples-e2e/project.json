@@ -15,6 +15,9 @@
       "configurations": {
         "development": {
           "watch": true
+        },
+        "ci": {
+          "group": "angular-examples-e2e"
         }
       }
     },

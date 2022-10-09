@@ -12,6 +12,7 @@
       },
       "configurations": {
         "ci": {
+          "group": "feat-lazy-gravity-rocks:storybook",
           "devServerTarget": "feat-lazy-gravity-rocks:storybook:ci"
         }
       }
