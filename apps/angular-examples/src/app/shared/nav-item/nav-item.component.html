@@ -1,7 +1,9 @@
-<mat-list-item [routerLink]="path" routerLinkActive="active">
-  <mat-icon mat-list-icon>play_arrow</mat-icon>
-  <a>
-    <span>{{ linkText }}</span>
-    <span class="sub-title" *ngIf="subTitle">{{ subTitle }}</span>
-  </a>
-</mat-list-item>
+<a [routerLink]="path">
+  <mat-list-item routerLinkActive="active">
+    <mat-icon mat-list-icon>play_arrow</mat-icon>
+    <div>
+      <div>{{ linkText }}</div>
+      <div class="sub-title" *ngIf="subTitle">{{ subTitle }}</div>
+    </div>
+  </mat-list-item>
+</a>

@@ -14,6 +14,7 @@
           (click)="close()"
           *ngFor="let route of routerLinks"
           [linkText]="route.data.linkText"
+          [subTitle]="route.data.subTitle"
           [path]="route.path"
         >
         </app-nav-item>

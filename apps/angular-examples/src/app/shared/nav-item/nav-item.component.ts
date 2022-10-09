@@ -2,17 +2,11 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterModule } from '@angular/router';
 
 @Component({
   standalone: true,
-  imports: [
-    CommonModule,
-    MatListModule,
-    RouterLink,
-    RouterLinkActive,
-    MatIconModule,
-  ],
+  imports: [CommonModule, RouterModule, MatListModule, MatIconModule],
   selector: 'app-nav-item',
   templateUrl: './nav-item.component.html',
   styleUrls: ['./nav-item.component.scss'],

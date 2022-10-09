@@ -1,19 +1,10 @@
-:host-context(.mat-drawer-container-has-open) .active {
-  animation: active-color;
-  animation-duration: 250ms;
-  animation-timing-function: ease-in;
-  animation-fill-mode: both;
-
-  @keyframes active-color {
-    0% {
-      color: white;
-    }
-    100% {
-      color: #69f0ae;
-    }
+:host {
+  transition: color 250ms ease;
+  .active {
+    color: var(--active-color, #69f0ae);
   }
 
   .sub-title {
-    font-size: 0.5em;
+    font-size: 0.65em;
   }
 }
