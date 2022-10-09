@@ -83,7 +83,7 @@ jobs:
         uses: getsentry/action-release@v1
         with:
           version: ${{ steps.sentry-version.outputs.sentry-version }}
-          sourcemaps: dist/apps/production
+          sourcemaps: dist/production
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: 'wolsok'
