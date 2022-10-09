@@ -7,6 +7,12 @@ describe('GravityRocksAppComponent', () => {
   let fixture: ComponentFixture<GravityRocksComponent>;
 
   beforeEach(async () => {
+    global.ResizeObserver = jest.fn().mockImplementation(() => ({
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    }));
+
     await TestBed.configureTestingModule({
       imports: [GravityRocksComponent, NoopAnimationsModule],
     }).compileComponents();
