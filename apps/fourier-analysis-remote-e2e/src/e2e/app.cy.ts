@@ -1,4 +1,4 @@
-import { getGreeting } from '../support/app.po';
+import { getTitle } from '../support/app.po';
 
 describe('fourier-analysis-remote', () => {
   beforeEach(() => cy.visit('/'));
@@ -8,6 +8,6 @@ describe('fourier-analysis-remote', () => {
     cy.login('my-email@something.com', 'myPassword');
 
     // Function helper example, see `../support/app.po.ts` file
-    getGreeting().contains('Welcome fourier-analysis-remote');
+    getTitle().contains('Fourier Transformation Examples');
   });
 });
