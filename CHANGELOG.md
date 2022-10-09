@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.7.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.6.0...v3.7.0) (2022-10-09)
+
+
+### Features
+
+* integrate module federation for fourier analysis ([d36521c](https://github.com/WolfSoko/wol-sok-mono/commit/d36521c422a1a90b7311ad0043953f24c0d012e3))
+
 ## [3.6.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.5.1...v3.6.0) (2022-09-26)
 
 
