@@ -1,4 +1,4 @@
-import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -22,9 +22,9 @@ import {
   Observable,
   tap,
 } from 'rxjs';
-import { MainNavRoute } from '../../../app-routes';
-import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
+import { MainNavRoute } from '../../../app-routing.module';
 import { ROUTER_LINKS } from '../../../router-links.token';
+import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
 
 @Component({
   selector: 'app-side-nav',

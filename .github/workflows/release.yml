@@ -64,7 +64,7 @@ jobs:
         run: echo "TODO integrate ${{ steps.sentry-version.outputs.sentry-version }} into index.html"
 
       - name: Build
-        run: npx nx build angular-examples
+        run: npx nx prepare-prod angular-examples
 
       - name: ZIP-files for release
         uses: vimtor/action-zip@v1
@@ -83,7 +83,7 @@ jobs:
         uses: getsentry/action-release@v1
         with:
           version: ${{ steps.sentry-version.outputs.sentry-version }}
-          sourcemaps: dist/apps/angular-examples
+          sourcemaps: dist/apps/production
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: 'wolsok'

@@ -1,8 +1,10 @@
-import { Data, Route } from '@angular/router';
+import { NgModule } from '@angular/core';
+import { Data, Route, RouterModule } from '@angular/router';
 import { InfoComponent } from './feature/lazy/info/info.component';
 
 export interface MainNavRouteData extends Data {
   linkText: string;
+  subTitle?: string;
 }
 
 export interface MainNavRoute extends Route {
@@ -15,10 +17,11 @@ export const APP_ROUTES: MainNavRoute[] = [
   {
     path: 'fourierAnalysis',
     loadChildren: () =>
-      import('@wolsok/feat-fourier-analysis').then(
-        (m) => m.FourierAnalysisModule
-      ),
-    data: { linkText: 'Fourier Analysis Example' },
+      import('fourier-analysis-remote/Module').then((m) => m.RemoteEntryModule),
+    data: {
+      linkText: 'Fourier Analysis Example',
+      subTitle: 'Served independently by Webpacks Module-Federation',
+    },
   },
   {
     path: 'bacteriaGame',
@@ -77,7 +80,9 @@ export const APP_ROUTES: MainNavRoute[] = [
   {
     path: 'poisson',
     loadChildren: () =>
-      import('./feature/lazy/poisson/poisson.module').then((m) => m.PoissonModule),
+      import('./feature/lazy/poisson/poisson.module').then(
+        (m) => m.PoissonModule
+      ),
     data: { linkText: 'Poisson Distribution Algorithm' },
   },
   {
@@ -97,9 +102,21 @@ export const APP_ROUTES: MainNavRoute[] = [
   {
     path: 'gravityWorld',
     loadChildren: () =>
-      import('@wolsok/feat-lazy-gravity-rocks').then((m) => m.GRAVITY_ROCKS_ROUTES),
+      import('@wolsok/feat-lazy-gravity-rocks').then(
+        (m) => m.GRAVITY_ROCKS_ROUTES
+      ),
     data: { linkText: 'Playing around with Sun and Planets gravity' },
   },
 ];
 
 export const DEFAULT_APP_ROUTE = { path: '**', redirectTo: '/home' };
+
+@NgModule({
+  imports: [
+    RouterModule.forRoot(APP_ROUTES, {
+      paramsInheritanceStrategy: 'always',
+    }),
+  ],
+  exports: [RouterModule],
+})
+export class AppRoutingModule {}

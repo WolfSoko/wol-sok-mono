@@ -1,6 +1,7 @@
 <mat-list-item [routerLink]="path" routerLinkActive="active">
   <mat-icon mat-list-icon>play_arrow</mat-icon>
   <a>
-    {{linkText}}
+    <span>{{ linkText }}</span>
+    <span class="sub-title" *ngIf="subTitle">{{ subTitle }}</span>
   </a>
 </mat-list-item>

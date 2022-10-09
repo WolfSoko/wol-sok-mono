@@ -6,7 +6,6 @@ import {
   OnDestroy,
   Output,
 } from '@angular/core';
-import ResizeObserver from 'resize-observer-polyfill';
 import { debounceTime, distinctUntilChanged, Observable, Subject } from 'rxjs';
 import { ResizedEvent } from './resized-event';
 
@@ -36,7 +35,7 @@ export class ElemResizedDirective implements AfterViewInit, OnDestroy {
   constructor(private readonly element: ElementRef) {}
 
   ngAfterViewInit(): void {
-    if(!ResizeObserver){
+    if (!ResizeObserver) {
       return;
     }
     this.resizeObserver = new ResizeObserver(

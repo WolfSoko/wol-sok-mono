@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "npmScope": "@wolsok",
+  "npmScope": "wolsok",
   "affected": {
     "defaultBase": "main"
   },
@@ -55,6 +55,12 @@
     "build": {
       "inputs": ["production", "^production"],
       "dependsOn": ["^build"]
+    },
+    "e2e": {
+      "inputs": ["default", "^production"]
+    },
+    "prepare-prod": {
+      "dependsOn": ["build"]
     }
   }
 }

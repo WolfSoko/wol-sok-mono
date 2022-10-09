@@ -2,11 +2,11 @@ import { mapWorkerOp, WorkerPostParams } from '@wolsok/utils-operators';
 import * as P5 from 'p5';
 import { merge, Observable, range, Subject, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import { CellWeights } from '../cell-weights-to-array';
 
 import { AddChemicalsParams } from './add-chemicals-param';
 import { CalcNextParam } from './calc-next-param';
 import { Cell } from './cell';
-import { CellWeights } from '../cell-weights-to-array';
 import { ColorMapperService } from './color-mapper.service';
 import { ReactionDiffCalcParams } from './reaction-diff-calc-params';
 import { ReactionDiffCalculator } from './reaction-diff-calculator';
@@ -220,10 +220,10 @@ export class ReactionDiffWorkerCalcService implements ReactionDiffCalculator {
     );
 
     this.workerSubscriptions.add(
-      merge(...this.workers$).subscribe(
-        (data) => this.receiveChunk(data),
-        (error) => console.error(error)
-      )
+      merge(...this.workers$).subscribe({
+        next: (data) => this.receiveChunk(data),
+        error: (error) => console.error(error),
+      })
     );
 
     this.calcRunning = 0;

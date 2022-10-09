@@ -1,6 +1,7 @@
 <mat-sidenav-container
   *wsLet="showStatic$ | async as staticToolbar"
   [hasBackdrop]="!staticToolbar"
+  autosize
 >
   <mat-sidenav
     [disableClose]="staticToolbar"

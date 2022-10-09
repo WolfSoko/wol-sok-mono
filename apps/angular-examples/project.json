@@ -15,7 +15,7 @@
         "tsConfig": "apps/angular-examples/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "customWebpackConfig": {
-          "path": "tools/version-handling/version-webpack.config.js"
+          "path": "apps/angular-examples/webpack.config.js"
         },
         "assets": [
           {
@@ -51,7 +51,7 @@
           "html2canvas",
           "seedrandom"
         ],
-        "buildLibsFromSource": false,
+        "buildLibsFromSource": true,
         "sourceMap": true
       },
       "configurations": {
@@ -81,7 +81,10 @@
           ],
           "serviceWorker": true,
           "ngswConfigPath": "apps/angular-examples/ngsw-config.json",
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "customWebpackConfig": {
+            "path": "apps/angular-examples/webpack.prod.config.js"
+          }
         },
         "development": {
           "preserveSymlinks": true,
@@ -96,7 +99,7 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "@nrwl/angular:webpack-server",
+      "executor": "@nrwl/angular:module-federation-dev-server",
       "configurations": {
         "production": {
           "browserTarget": "angular-examples:build:production"
@@ -105,7 +108,10 @@
           "browserTarget": "angular-examples:build:development"
         }
       },
-      "defaultConfiguration": "production"
+      "defaultConfiguration": "development",
+      "options": {
+        "publicHost": "http://localhost:4200"
+      }
     },
     "serve-file": {
       "executor": "@nrwl/web:file-server",
@@ -146,7 +152,15 @@
         "jestConfig": "apps/angular-examples/jest.config.ts",
         "passWithNoTests": false
       }
+    },
+    "prepare-prod": {
+      "executor": "nx:run-commands",
+      "outputs": ["dist/production"],
+      "options": {
+        "command": "node tools/node-scripts/prepare-mf-build.js"
+      }
     }
   },
-  "tags": ["app"]
+  "tags": ["app"],
+  "implicitDependencies": ["fourier-analysis-remote"]
 }

@@ -1,37 +1,43 @@
-<div (wsSharedUiElemResized)="onResize($event)">
-  <mat-sidenav class="wave-options" #sidenav position="end">
-    <mat-card class="wave-options--card">
-      <mat-card-title>Wave options</mat-card-title>
-      <mat-card-content>
-        <lazy-feat-fanal-wave-options class="wave-options">
-        </lazy-feat-fanal-wave-options>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-raised-button (click)="sidenav.close()">Close</button>
-      </mat-card-actions>
-    </mat-card>
-  </mat-sidenav>
-  <mat-toolbar color="primary">
-    <mat-toolbar-row>
-      <div>Fourier Transformation Examples</div>
-      <span class="spacer"></span>
-      <button class="configure-button" mat-icon-button (click)="sidenav.open()">
-        <mat-icon>build</mat-icon>
-      </button>
-    </mat-toolbar-row>
-  </mat-toolbar>
-  <lazy-feat-fanal-input-wave
-    *ngIf="(isLoading$ | async) === false; else loading"
-    [width]="inputWaveCanvasWidth"
-    [height]="inputWaveCanvasHeight"
-  ></lazy-feat-fanal-input-wave>
-  <lazy-feat-fanal-circle-analysis
-    *ngIf="(isLoading$ | async) === false; else loading"
-    [width]="circleCanvasWidth"
-    [height]="circleCanvasHeight"
-  >
-  </lazy-feat-fanal-circle-analysis>
-  <ng-template #loading>
-    <mat-spinner color="accent"></mat-spinner>
-  </ng-template>
-</div>
+<mat-sidenav-container hasBackdrop="false">
+  <div (wsSharedUiElemResized)="onResize($event)">
+    <mat-sidenav class="wave-options" #sidenav position="end">
+      <mat-card class="wave-options--card">
+        <mat-card-title>Wave options</mat-card-title>
+        <mat-card-content>
+          <lazy-feat-fanal-wave-options class="wave-options">
+          </lazy-feat-fanal-wave-options>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-raised-button (click)="sidenav.close()">Close</button>
+        </mat-card-actions>
+      </mat-card>
+    </mat-sidenav>
+    <mat-toolbar color="primary">
+      <mat-toolbar-row>
+        <div>Fourier Transformation Examples</div>
+        <span class="spacer"></span>
+        <button
+          class="configure-button"
+          mat-icon-button
+          (click)="sidenav.open()"
+        >
+          <mat-icon>build</mat-icon>
+        </button>
+      </mat-toolbar-row>
+    </mat-toolbar>
+    <lazy-feat-fanal-input-wave
+      *ngIf="(isLoading$ | async) === false; else loading"
+      [width]="inputWaveCanvasWidth"
+      [height]="inputWaveCanvasHeight"
+    ></lazy-feat-fanal-input-wave>
+    <lazy-feat-fanal-circle-analysis
+      *ngIf="(isLoading$ | async) === false; else loading"
+      [width]="circleCanvasWidth"
+      [height]="circleCanvasHeight"
+    >
+    </lazy-feat-fanal-circle-analysis>
+    <ng-template #loading>
+      <mat-spinner color="accent"></mat-spinner>
+    </ng-template>
+  </div>
+</mat-sidenav-container>

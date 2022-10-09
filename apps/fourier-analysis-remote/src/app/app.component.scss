@@ -1,0 +1,18 @@
+:host {
+  display: grid;
+  grid-template-rows: 1fr;
+  grid-template-columns: 1fr;
+  grid-template-areas: 'content';
+  height: 100%;
+
+  router-outlet {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  router-outlet + * {
+    grid-area: content;
+    background-color: red;
+  }
+}

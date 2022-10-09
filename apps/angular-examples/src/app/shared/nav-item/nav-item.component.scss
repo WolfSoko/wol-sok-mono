@@ -1,5 +1,5 @@
 :host-context(.mat-drawer-container-has-open) .active {
-  animation: active-color ;
+  animation: active-color;
   animation-duration: 250ms;
   animation-timing-function: ease-in;
   animation-fill-mode: both;
@@ -13,5 +13,7 @@
     }
   }
 
+  .sub-title {
+    font-size: 0.5em;
+  }
 }
-

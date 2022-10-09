@@ -4,7 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
 import { Router } from '@angular/router';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
-import { MainNavRoute } from '../../../../app-routes';
+import { MainNavRoute } from '../../../../app-routing.module';
 import { ROUTER_LINKS } from '../../../../router-links.token';
 import { NavItemComponent } from '../../../../shared/nav-item/nav-item.component';
 

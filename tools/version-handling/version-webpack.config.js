@@ -1,12 +1,12 @@
 const { DefinePlugin } = require('webpack');
 const { version } = require('../../version.json');
-console.log('Building version: ' + version);
-
-module.exports = (config, _options) => {
-  config.plugins.push(
-    new DefinePlugin({
-      VERSION: JSON.stringify(version),
-    })
-  );
-  return config;
+module.exports = function withVersionHandling(config, context) {
+  console.log(config, context);
+  return {
+    plugins: [
+      new DefinePlugin({
+        VERSION: JSON.stringify(version),
+      }),
+    ],
+  };
 };
