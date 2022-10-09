@@ -16,8 +16,11 @@
 // Import commands.js using ES2015 syntax:
 import './commands';
 
+const knownErrors = [
+  `Cannot read properties of undefined (reading 'logger')`,
+  `Cannot use 'import.meta' outside a module`,
+];
+
 Cypress.on('uncaught:exception', (err) => {
-  return !err.message.includes(
-    "Cannot read properties of undefined (reading 'logger')"
-  );
+  return !knownErrors.some((knownError) => err.message.includes(knownError));
 });
