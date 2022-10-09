@@ -48,7 +48,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: 'eu-west-1'
-          SOURCE_DIR: 'dist/apps/production/'
+          SOURCE_DIR: 'dist/production/'
           DEST_DIR: 'angularExamples/'
 
       # Clears the CloudFront cache so new requests will receive the latest version of your app
