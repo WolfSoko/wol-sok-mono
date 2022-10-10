@@ -19,13 +19,16 @@
       "@wolsok/feat-fourier-analysis": [
         "libs/features/lazy/fourier-analysis/src/index.ts"
       ],
+      "@wolsok/feat-lazy-bac-game": [
+        "libs/features/lazy/bacteria-game/src/index.ts"
+      ],
       "@wolsok/feat-lazy-gravity-rocks": [
         "libs/features/lazy/gravity-rocks/src/index.ts"
       ],
       "@wolsok/feat-lazy-some-gpu-calculation": [
         "libs/features/lazy/some-gpu-calculation/src/index.ts"
       ],
-      "@wolsok/feat-lazy-tensorflow-examples": [
+      "@wolsok/feat-lazy-tf-examples": [
         "libs/features/lazy/tensorflow-examples/src/index.ts"
       ],
       "@wolsok/feat-reaction-diff": [

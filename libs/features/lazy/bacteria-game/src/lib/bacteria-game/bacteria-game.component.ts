@@ -1,16 +1,20 @@
+import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
   HostListener,
-  Inject,
   NgZone,
   OnDestroy,
   ViewChild,
 } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ShowFpsComponent } from '@wolsok/ui-kit';
 import { WsThanosDirective } from '@wolsok/ws-thanos';
 import { Observable } from 'rxjs';
 import {
@@ -49,7 +53,16 @@ export function createImageDataFromBacterias(
 
 @UntilDestroy()
 @Component({
-  selector: 'app-game-state',
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatCardModule,
+    WsThanosDirective,
+    MatButtonModule,
+    MatDialogModule,
+    MatProgressSpinnerModule,
+    ShowFpsComponent,
+  ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,7 +77,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   height = 140;
 
   state$: Observable<GameStateState>;
-  fps$: Observable<string>;
+  fps$: Observable<number>;
   players$: Observable<Player[]>;
   isRunning$: Observable<boolean>;
 
@@ -73,7 +86,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     private gameStateService: GameStateService,
     private playerService: PlayerService,
     private playerQuery: PlayerQuery,
-    @Inject(NgZone) private _ngZone: NgZone,
+    private ngZone: NgZone,
     private matDialog: MatDialog
   ) {
     this.state$ = this.query.select();
@@ -158,7 +171,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    this._ngZone.runOutsideAngular(() => {
+    this.ngZone.runOutsideAngular(() => {
       requestAnimationFrame(() => {
         this.cx.fillStyle = 'rgba(0,0,0,0.7)';
         this.cx.fillRect(0, 0, this.width, this.height);

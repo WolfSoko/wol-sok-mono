@@ -1,4 +1,5 @@
 {
+  "name": "utils-decorators",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/utils/decorators/src",
   "projectType": "library",

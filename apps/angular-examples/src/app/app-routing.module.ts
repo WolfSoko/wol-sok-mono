@@ -26,8 +26,8 @@ export const APP_ROUTES: MainNavRoute[] = [
   {
     path: 'bacteriaGame',
     loadChildren: () =>
-      import('./feature/lazy/bacteria-game/bacteria-game.module').then(
-        (m) => m.BacteriaGameModule
+      import('@wolsok/feat-lazy-bac-game').then(
+        (m) => m.FEAT_LAZY_BACTERIA_GAME_ROUTES
       ),
     data: { linkText: 'Bacteria Game' },
   },
@@ -58,7 +58,7 @@ export const APP_ROUTES: MainNavRoute[] = [
   {
     path: 'tensorflowExamples',
     loadChildren: () =>
-      import('@wolsok/feat-lazy-tensorflow-examples').then(
+      import('@wolsok/feat-lazy-tf-examples').then(
         (m) => m.TENSORFLOW_EXAMPLES_ROUTES
       ),
     data: { linkText: 'Tensorflow examples' },

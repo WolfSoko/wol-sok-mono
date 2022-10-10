@@ -1,4 +1,5 @@
 {
+  "name": "feat-lazy-shader-examples",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "libs/features/lazy/shader-examples/src",

@@ -1,13 +1,23 @@
-import {Injectable} from '@angular/core';
-import {applyTransaction} from '@datorama/akita';
-import {animationFrameScheduler, interval, Observable, Subscription} from 'rxjs';
-import {filter, map, pairwise, switchMapTo, takeUntil, tap, timestamp} from 'rxjs/operators';
-import {HeadlineAnimationService} from '../../../../core/headline-animation.service';
-import {GameStateQuery} from './game-state.query';
-import {GameState, GameStateStore} from './game-state.store';
-import {Player} from './player.model';
-import {PlayerQuery} from './player.query';
-import {PlayerService} from './player.service';
+import { Injectable } from '@angular/core';
+import { applyTransaction } from '@datorama/akita';
+import { MeasureFps } from '@wolsok/utils-measure-fps';
+import {
+  animationFrameScheduler,
+  filter,
+  interval,
+  map,
+  Observable,
+  pairwise,
+  Subscription,
+  switchMap,
+  takeUntil,
+  timestamp,
+} from 'rxjs';
+import { GameStateQuery } from './game-state.query';
+import { GameState, GameStateStore } from './game-state.store';
+import { Player } from './player.model';
+import { PlayerQuery } from './player.query';
+import { PlayerService } from './player.service';
 
 const FPS = 30;
 
@@ -15,12 +25,12 @@ const FPS = 30;
 export class GameStateService {
   private gameLoop$: Observable<number>;
   private subscriptions?: Subscription;
+  private measureFps = new MeasureFps();
 
   constructor(
     private gameStateStore: GameStateStore,
     private gameStateQuery: GameStateQuery,
     private playerQuery: PlayerQuery,
-    private headlineAnimation: HeadlineAnimationService,
     private playerService: PlayerService
   ) {
     this.gameLoop$ = interval(1000 / FPS, animationFrameScheduler).pipe(
@@ -51,37 +61,31 @@ export class GameStateService {
       .pipe(filter((value) => value !== GameState.RUNNING));
 
     this.subscriptions = running$
-      .pipe(switchMapTo(this.gameLoop$.pipe(takeUntil(notRunning$))))
-      .subscribe(
-        (timeDelta) =>
+      .pipe(switchMap(() => this.gameLoop$.pipe(takeUntil(notRunning$))))
+      .subscribe({
+        next: (timeDelta) => {
+          this.measureFps.signalFrameReady();
           this.gameStateStore.update((state) => ({
             timePassed: state.timePassed + timeDelta,
             timeDelta,
-          })),
-        (error) => {
+          }));
+        },
+        error: (error) => {
           console.error('error in gameLoop', error);
-        }
-      );
+        },
+      });
+
     this.subscriptions.add(
-      this.gameStateQuery
-        .selectCurrentGameState()
-        .pipe(
-          tap((x) => {
-            if (x === GameState.RUNNING || x === GameState.PAUSED) {
-              this.headlineAnimation.stopAnimation();
-            } else {
-              this.headlineAnimation.startAnimation();
-            }
-          })
-        )
-        .subscribe()
+      this.measureFps.fps$.subscribe((fps) =>
+        this.gameStateStore.update({ fps })
+      )
     );
 
     // subscribe determine Winner
     this.subscriptions.add(
       running$
         .pipe(
-          switchMapTo(
+          switchMap(() =>
             this.playerQuery
               .selectAll()
               .pipe(

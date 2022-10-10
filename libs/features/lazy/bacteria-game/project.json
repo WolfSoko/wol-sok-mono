@@ -1,0 +1,43 @@
+{
+  "name": "feat-lazy-bacteria-game",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/features/lazy/bacteria-game/src",
+  "prefix": "feat-lazy-bac-game",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:ng-packagr-lite",
+      "outputs": ["dist/libs/features/lazy/bacteria-game"],
+      "options": {
+        "project": "libs/features/lazy/bacteria-game/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/features/lazy/bacteria-game/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "libs/features/lazy/bacteria-game/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/libs/features/lazy/bacteria-game"],
+      "options": {
+        "jestConfig": "libs/features/lazy/bacteria-game/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": [
+          "libs/features/lazy/bacteria-game/**/*.ts",
+          "libs/features/lazy/bacteria-game/**/*.html"
+        ]
+      }
+    }
+  },
+  "tags": ["feature:lazy"]
+}

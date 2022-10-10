@@ -58,7 +58,11 @@
       "dependsOn": ["^build"]
     },
     "e2e": {
-      "inputs": ["default", "^production"]
+      "inputs": ["default", "^production"],
+      "outputs": ["test-reports/{projectRoot}"]
+    },
+    "test": {
+      "outputs": ["coverage/{projectRoot}"]
     },
     "prepare-prod": {
       "dependsOn": ["build"]

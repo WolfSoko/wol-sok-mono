@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-  displayName: 'feat-lazy-tf-examples',
+  displayName: 'feat-lazy-bacteria-game',
   preset: '../../../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {
@@ -9,8 +9,7 @@ export default {
       stringifyContentPathRegex: '\\.(html|svg)$',
     },
   },
-  coverageDirectory:
-    '../../../../coverage/libs/features/lazy/tensorflow-examples',
+  coverageDirectory: '../../../../coverage/libs/features/lazy/bacteria-game',
   transform: {
     '^.+\\.(ts|mjs|js|html)$': 'jest-preset-angular',
   },

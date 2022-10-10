@@ -1,4 +1,5 @@
 {
+  "name": "feat-lazy-gravity-rocks",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "libs/features/lazy/gravity-rocks/src",

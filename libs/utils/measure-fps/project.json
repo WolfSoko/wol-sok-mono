@@ -1,4 +1,5 @@
 {
+  "name": "utils-measure-fps",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/utils/measure-fps/src",
   "projectType": "library",

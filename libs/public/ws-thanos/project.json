@@ -1,4 +1,5 @@
 {
+  "name": "ws-thanos",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "libs/public/ws-thanos/src",

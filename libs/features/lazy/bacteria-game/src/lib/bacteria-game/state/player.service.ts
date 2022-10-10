@@ -1,17 +1,17 @@
-import {Injectable} from '@angular/core';
-import {ID, transaction} from '@datorama/akita';
-import {GameStateQuery} from './game-state.query';
-import {GameState} from './game-state.store';
+import { Injectable } from '@angular/core';
+import { ID, transaction } from '@datorama/akita';
+import { GameStateQuery } from './game-state.query';
+import { GameState } from './game-state.store';
 import {
   Bacteria,
   bacteriumEnergyRestoreTimeInSec,
   bacteriumMaxEnergy,
   createPlayerWithBacterias,
   Player,
-  PlayerColorArray
+  PlayerColorArray,
 } from './player.model';
-import {PlayerQuery} from './player.query';
-import {PlayerStore} from './player.store';
+import { PlayerQuery } from './player.query';
+import { PlayerStore } from './player.store';
 
 @Injectable({ providedIn: 'root' })
 export class PlayerService {
@@ -428,7 +428,6 @@ export class PlayerService {
         if (surroundingPlayers == null) {
           continue;
         }
-
 
         let otherEnergy = 0;
         let ownPlayers = 0;

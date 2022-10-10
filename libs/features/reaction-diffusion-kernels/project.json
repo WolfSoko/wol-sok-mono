@@ -1,4 +1,5 @@
 {
+  "name": "feat-shared-reaction-diffusion-kernels",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/features/reaction-diffusion-kernels/src",
   "projectType": "library",
