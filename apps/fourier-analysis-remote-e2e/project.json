@@ -13,10 +13,6 @@
       "configurations": {
         "production": {
           "devServerTarget": "fourier-analysis-remote:serve:production"
-        },
-        "ci": {
-          "devServerTarget": "fourier-analysis-remote:serve:production",
-          "group": "fourier-analysis-remote-e2e"
         }
       }
     },
