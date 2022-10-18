@@ -7,6 +7,11 @@
   "cli": {
     "packageManager": "npm"
   },
+  "pluginsConfig": {
+    "@nrwl/js": {
+      "analyzeSourceFiles": true
+    }
+  },
   "implicitDependencies": {
     "package.json": {
       "dependencies": "*",

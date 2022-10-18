@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Query } from '@datorama/akita';
-import { Observable } from 'rxjs';
-import { distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { GameState, GameStateState, GameStateStore } from './game-state.store';
+import { distinctUntilChanged, filter, map, Observable } from 'rxjs';
+import { GameState, GameStateState, GameStateStore } from './game.states';
 
 @Injectable({ providedIn: 'root' })
 export class GameStateQuery extends Query<GameStateState> {

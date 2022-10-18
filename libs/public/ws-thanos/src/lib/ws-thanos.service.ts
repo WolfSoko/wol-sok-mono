@@ -1,11 +1,20 @@
 import { Inject, Injectable, NgZone } from '@angular/core';
 
 import { default as html2canvas } from 'html2canvas';
-import { animationFrameScheduler, from, interval, Observable } from 'rxjs';
-import { map, switchMap, takeWhile, tap, timeInterval } from 'rxjs/operators';
+import {
+  animationFrameScheduler,
+  from,
+  interval,
+  map,
+  Observable,
+  switchMap,
+  takeWhile,
+  tap,
+  timeInterval,
+} from 'rxjs';
 import { SimplexNoise } from './simplex-noise';
 import { WS_THANOS_OPTIONS_TOKEN } from './ws-thanos-options.token';
-import { WsThanosOptions } from './ws-thanos.options';
+import type { WsThanosOptions } from './ws-thanos.options';
 
 const PARTICLE_BYTE_LENGTH = 10;
 const MIN_PARTICLE_ALPHA = ~~(255 * 0.01);
@@ -52,7 +61,7 @@ export class WsThanosService {
   constructor(
     @Inject(WS_THANOS_OPTIONS_TOKEN)
     private thanosOptions: WsThanosOptions,
-    @Inject(NgZone) private _ngZone: NgZone
+    private ngZone: NgZone
   ) {}
 
   private static getParticleIndicesForBase(base: number): ParticleIndices {
@@ -296,12 +305,12 @@ export class WsThanosService {
   }
 
   /**
-   * start the vaporize effect.
+   * start the vaporize-effect.
    *
    * It's running outside the ngZone.
    */
   vaporize(elem: HTMLElement): Observable<AnimationState> {
-    return this._ngZone.runOutsideAngular(() => this.vaporizeIntern(elem));
+    return this.ngZone.runOutsideAngular(() => this.vaporizeIntern(elem));
   }
 
   private vaporizeIntern(elem: HTMLElement): Observable<AnimationState> {

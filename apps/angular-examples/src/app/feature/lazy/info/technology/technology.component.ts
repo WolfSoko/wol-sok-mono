@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
-import { WsThanosDirective } from '@wolsok/ws-thanos';
+import { WsThanosDirective } from '@wolsok/thanos';
 
 @Component({
   standalone: true,

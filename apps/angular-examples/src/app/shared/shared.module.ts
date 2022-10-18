@@ -19,12 +19,12 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { WsThanosDirective } from '@wolsok/thanos';
 import {
   ElemResizedDirective,
   ElevateCardDirective,
   RenderShaderComponent,
 } from '@wolsok/ui-kit';
-import { WsThanosDirective } from '@wolsok/ws-thanos';
 import { Angulartics2Module } from 'angulartics2';
 
 @NgModule({

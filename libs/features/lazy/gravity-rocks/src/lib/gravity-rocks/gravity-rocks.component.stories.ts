@@ -7,7 +7,7 @@ export default {
   component: GravityRocksComponent,
   decorators: [
     moduleMetadata({
-      imports: [GravityRocksComponent, GravityRocksComponent, BrowserAnimationsModule],
+      imports: [GravityRocksComponent, BrowserAnimationsModule],
     }),
   ],
 } as Meta<GravityRocksComponent>;

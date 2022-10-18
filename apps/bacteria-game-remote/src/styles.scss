@@ -1,0 +1,26 @@
+/* You can add global styles to this file, and also import other style files */
+@import 'normalize.css/normalize.css';
+@import 'https://fonts.googleapis.com/icon?family=Material+Icons';
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
+
+body,
+html {
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+
+  * {
+    box-sizing: border-box;
+
+    &:before,
+    &:after {
+      box-sizing: border-box;
+    }
+  }
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: color, background-color 500ms ease;
+}

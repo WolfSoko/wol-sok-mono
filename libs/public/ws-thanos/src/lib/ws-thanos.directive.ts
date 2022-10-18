@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { WS_THANOS_OPTIONS_TOKEN } from './ws-thanos-options.token';
-import { WsThanosOptions } from './ws-thanos.options';
+import type { WsThanosOptions } from './ws-thanos.options';
 import { WsThanosService } from './ws-thanos.service';
 
 @Directive({
@@ -28,7 +28,6 @@ export class WsThanosDirective implements OnDestroy {
     private readonly thanosService: WsThanosService,
     @Inject(WS_THANOS_OPTIONS_TOKEN)
     private readonly thanosOptions: WsThanosOptions,
-    @Inject(NgZone)
     private readonly ngZone: NgZone
   ) {}
 

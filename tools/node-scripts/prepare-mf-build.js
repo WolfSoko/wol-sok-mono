@@ -3,15 +3,29 @@ const { copySync } = require('fs-extra');
 const { join } = require('path');
 
 const distFolder = join('./dist');
-const productionFolder = join(distFolder, 'production');
+const target = join(distFolder, 'production');
+const hostApp = 'angular-examples';
+const remotes = ['fourier-analysis-remote', 'bacteria-game-remote'];
 
-rmSync(productionFolder, { recursive: true, force: true });
-mkdirSync(productionFolder, { recursive: true });
-copySync(join(distFolder, 'apps/angular-examples'), productionFolder, {
-  recursive: true,
-});
-copySync(
-  join(distFolder, 'apps/fourier-analysis-remote'),
-  join(productionFolder, 'fourier-analysis-remote'),
-  { recursive: true }
-);
+prepareTargetFolder(target);
+prepareHostApp(hostApp, target);
+
+remotes.forEach((remote) => prepareRemote(remote, target));
+
+function prepareTargetFolder(folder) {
+  rmSync(folder, { recursive: true, force: true });
+  mkdirSync(folder, { recursive: true });
+}
+
+function prepareHostApp(host, target) {
+  copySync(join(distFolder, 'apps', host), target, {
+    recursive: true,
+  });
+}
+
+function prepareRemote(target) {
+  let remote = 'fourier-analysis-remote';
+  copySync(join(distFolder, 'apps', remote), join(target, remote), {
+    recursive: true,
+  });
+}

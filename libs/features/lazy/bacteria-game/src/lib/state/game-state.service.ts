@@ -14,12 +14,12 @@ import {
   timestamp,
 } from 'rxjs';
 import { GameStateQuery } from './game-state.query';
-import { GameState, GameStateStore } from './game-state.store';
+import { GameState, GameStateStore } from './game.states';
 import { Player } from './player.model';
 import { PlayerQuery } from './player.query';
 import { PlayerService } from './player.service';
 
-const FPS = 30;
+const FPS = 60;
 
 @Injectable({ providedIn: 'root' })
 export class GameStateService {
@@ -173,7 +173,7 @@ export class GameStateService {
 
   cleanup(): void {
     this.pause();
-    this.gameStateStore.update({ keysPressed: [] });
+    this.gameStateStore.update({ keysPressed: [], fps: 0 });
     this.subscriptions?.unsubscribe();
   }
 

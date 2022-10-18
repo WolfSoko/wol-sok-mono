@@ -42,12 +42,12 @@
       ],
       "@wolsok/feat-wasm-test": ["libs/features/lazy/wasm-test/src/index.ts"],
       "@wolsok/fib-wasm-api": ["libs/fib-wasm-api/src/index.ts"],
+      "@wolsok/thanos": ["libs/public/ws-thanos/src/index.ts"],
       "@wolsok/ui-kit": ["libs/ui-kit/src/index.ts"],
       "@wolsok/utils-decorators": ["libs/utils/decorators/src/index.ts"],
       "@wolsok/utils-gpu-calc": ["libs/utils/gpu-calc/src/index.ts"],
       "@wolsok/utils-measure-fps": ["libs/utils/measure-fps/src/index.ts"],
-      "@wolsok/utils-operators": ["libs/utils/operators/src/index.ts"],
-      "@wolsok/ws-thanos": ["libs/public/ws-thanos/src/index.ts"]
+      "@wolsok/utils-operators": ["libs/utils/operators/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

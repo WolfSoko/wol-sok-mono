@@ -1,67 +1,7 @@
-export interface Options {
-  amplitude: number; // The base amplitude (default: 1.0)
-  frequency: number; // The base frequency (default: 1.0)
-  max: number; // The maximum scaled value to return (effective default: 1.0)
-  min: number; // The minimum scaled value to return (effective default: -1.0)
-  octaves: number; // Integer; the number of octaves to sum for noise generation (default: 1)
-  persistence: number; // The persistence of amplitude per octave (default: 0.5)
-  random: () => number; // A function that generates random values between 0 and 1 (default: Math.random)
-}
-
-function createOptionsWithDefaults(options?: Partial<Options>) {
-  if (options != null) {
-    if (options['amplitude'] && typeof options.amplitude !== 'number') {
-      throw new Error('options.amplitude must be a number');
-    }
-
-    if (options['frequency'] && typeof options.frequency !== 'number') {
-      throw new Error('options.frequency must be a number');
-    }
-
-    if (
-      options['octaves'] &&
-      (typeof options.octaves !== 'number' ||
-        !isFinite(options.octaves) ||
-        Math.floor(options.octaves) !== options.octaves)
-    ) {
-      throw new Error('options.octaves must be an integer');
-    }
-
-    if (options['persistence'] && typeof options.persistence !== 'number') {
-      throw new Error('options.persistence must be a number');
-    }
-
-    if (options['random'] && typeof options.random !== 'function') {
-      throw new Error('options.random must be a function');
-    }
-
-    if (options['min'] && typeof options.min !== 'number') {
-      throw new Error('options.min must be a number');
-    }
-
-    if (options['max'] && typeof options.max !== 'number') {
-      throw new Error('options.max must be a number');
-    }
-  }
-
-  const optionsResult = {
-    amplitude: 1.0,
-    frequency: 1.0,
-    max: 1.0,
-    min: -1.0,
-    octaves: 1,
-    persistence: 0.5,
-    random: Math.random,
-    ...options,
-  };
-  if (optionsResult.min > optionsResult.max) {
-    throw new Error('min must be smaller max');
-  }
-  return optionsResult;
-}
+import type { SimplexNoiseOptions } from './simplex-noise-options';
 
 export class SimplexNoise {
-  constructor(options?: Partial<Options>) {
+  constructor(options?: Partial<SimplexNoiseOptions>) {
     const { min, max, random, amplitude, frequency, octaves, persistence } =
       createOptionsWithDefaults(options);
 
@@ -245,4 +185,56 @@ export class SimplexNoise {
     this.memScale3D[memIndex] = result;
     return result;
   }
+}
+
+function createOptionsWithDefaults(options?: Partial<SimplexNoiseOptions>) {
+  if (options != null) {
+    if (options['amplitude'] && typeof options.amplitude !== 'number') {
+      throw new Error('options.amplitude must be a number');
+    }
+
+    if (options['frequency'] && typeof options.frequency !== 'number') {
+      throw new Error('options.frequency must be a number');
+    }
+
+    if (
+      options['octaves'] &&
+      (typeof options.octaves !== 'number' ||
+        !isFinite(options.octaves) ||
+        Math.floor(options.octaves) !== options.octaves)
+    ) {
+      throw new Error('options.octaves must be an integer');
+    }
+
+    if (options['persistence'] && typeof options.persistence !== 'number') {
+      throw new Error('options.persistence must be a number');
+    }
+
+    if (options['random'] && typeof options.random !== 'function') {
+      throw new Error('options.random must be a function');
+    }
+
+    if (options['min'] && typeof options.min !== 'number') {
+      throw new Error('options.min must be a number');
+    }
+
+    if (options['max'] && typeof options.max !== 'number') {
+      throw new Error('options.max must be a number');
+    }
+  }
+
+  const optionsResult = {
+    amplitude: 1.0,
+    frequency: 1.0,
+    max: 1.0,
+    min: -1.0,
+    octaves: 1,
+    persistence: 0.5,
+    random: Math.random,
+    ...options,
+  };
+  if (optionsResult.min > optionsResult.max) {
+    throw new Error('min must be smaller max');
+  }
+  return optionsResult;
 }

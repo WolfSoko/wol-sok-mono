@@ -1,0 +1,28 @@
+{
+  "name": "bacteria-game-remote-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/bacteria-game-remote-e2e/src",
+  "projectType": "application",
+  "targets": {
+    "e2e": {
+      "executor": "@nrwl/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/bacteria-game-remote-e2e/cypress.config.ts",
+        "devServerTarget": "bacteria-game-remote:serve:development",
+        "testingType": "e2e"
+      },
+      "configurations": {
+        "ci": {}
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/bacteria-game-remote-e2e/**/*.{js,ts}"]
+      }
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["bacteria-game-remote"]
+}

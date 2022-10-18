@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ID, transaction } from '@datorama/akita';
 import { GameStateQuery } from './game-state.query';
-import { GameState } from './game-state.store';
+import { GameState } from './game.states';
 import {
   Bacteria,
   bacteriumEnergyRestoreTimeInSec,

@@ -14,7 +14,8 @@
       "configurations": {
         "production": {
           "devServerTarget": "fourier-analysis-remote:serve:production"
-        }
+        },
+        "ci": {}
       }
     },
     "lint": {

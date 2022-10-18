@@ -1,0 +1,124 @@
+{
+  "name": "bacteria-game-remote",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/bacteria-game-remote/src",
+  "prefix": "wolsok",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:webpack-browser",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/bacteria-game-remote",
+        "index": "apps/bacteria-game-remote/src/index.html",
+        "main": "apps/bacteria-game-remote/src/main.ts",
+        "polyfills": "apps/bacteria-game-remote/src/polyfills.ts",
+        "tsConfig": "apps/bacteria-game-remote/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          "apps/bacteria-game-remote/src/favicon.ico",
+          "apps/bacteria-game-remote/src/assets"
+        ],
+        "styles": [
+          "apps/bacteria-game-remote/src/styles.scss",
+          "node_modules/@angular/material/prebuilt-themes/pink-bluegrey.css"
+        ],
+        "scripts": [],
+        "customWebpackConfig": {
+          "path": "apps/bacteria-game-remote/webpack.config.js"
+        }
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "2kb",
+              "maximumError": "4kb"
+            }
+          ],
+          "fileReplacements": [
+            {
+              "replace": "apps/bacteria-game-remote/src/environments/environment.ts",
+              "with": "apps/bacteria-game-remote/src/environments/environment.prod.ts"
+            }
+          ],
+          "outputHashing": "all",
+          "customWebpackConfig": {
+            "path": "apps/bacteria-game-remote/webpack.prod.config.js"
+          }
+        },
+        "development": {
+          "buildOptimizer": false,
+          "optimization": false,
+          "vendorChunk": true,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@nrwl/angular:webpack-server",
+      "configurations": {
+        "production": {
+          "browserTarget": "bacteria-game-remote:build:production"
+        },
+        "development": {
+          "browserTarget": "bacteria-game-remote:build:development"
+        }
+      },
+      "defaultConfiguration": "development",
+      "options": {
+        "port": 4202,
+        "publicHost": "http://localhost:4202"
+      }
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "browserTarget": "bacteria-game-remote:build"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": [
+          "apps/bacteria-game-remote/**/*.ts",
+          "apps/bacteria-game-remote/**/*.html"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/apps/bacteria-game-remote"],
+      "options": {
+        "jestConfig": "apps/bacteria-game-remote/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "serve-static": {
+      "executor": "@nrwl/angular:file-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "bacteria-game-remote:build",
+        "port": 4202
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "bacteria-game-remote:build:development"
+        },
+        "production": {
+          "buildTarget": "bacteria-game-remote:build:production"
+        }
+      }
+    }
+  },
+  "tags": ["app"]
+}

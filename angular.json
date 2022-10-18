@@ -3,6 +3,8 @@
   "projects": {
     "angular-examples": "apps/angular-examples",
     "angular-examples-e2e": "apps/angular-examples-e2e",
+    "bacteria-game-remote": "apps/bacteria-game-remote",
+    "bacteria-game-remote-e2e": "apps/bacteria-game-remote-e2e",
     "feat-api-auth": "libs/features/api/auth",
     "feat-lazy-bacteria-game": "libs/features/lazy/bacteria-game",
     "feat-lazy-fourier-analysis": "libs/features/lazy/fourier-analysis",

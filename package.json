@@ -55,7 +55,7 @@
     "ngx-ace-editor-wrapper": "^9.1.12",
     "normalize.css": "^8.0.1",
     "p5": "^1.4.2",
-    "rxjs": "7.5.6",
+    "rxjs": "7.5.7",
     "stats.js": "^0.17.0",
     "three": "0.145.0",
     "three-orbitcontrols-ts": "^0.1.2",
@@ -146,3 +146,4 @@
     "basePath": "./apps/angular-examples/src/app/"
   }
 }
+

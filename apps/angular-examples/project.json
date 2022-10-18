@@ -163,5 +163,5 @@
     }
   },
   "tags": ["app"],
-  "implicitDependencies": ["fourier-analysis-remote"]
+  "implicitDependencies": ["fourier-analysis-remote", "bacteria-game-remote"]
 }

@@ -26,10 +26,8 @@ export const APP_ROUTES: MainNavRoute[] = [
   {
     path: 'bacteriaGame',
     loadChildren: () =>
-      import('@wolsok/feat-lazy-bac-game').then(
-        (m) => m.FEAT_LAZY_BACTERIA_GAME_ROUTES
-      ),
-    data: { linkText: 'Bacteria Game' },
+      import('bacteria-game-remote/Module').then((m) => m.RemoteEntryModule),
+    data: { linkText: 'Bacteria Game', subTitle: 'Served independently by MF' },
   },
   {
     path: 'shaderExamples',

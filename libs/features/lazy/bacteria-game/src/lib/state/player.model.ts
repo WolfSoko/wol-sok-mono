@@ -1,7 +1,7 @@
 export type PlayerColorArray = [number, number, number, number];
 
-export const bacteriumMaxEnergy = 1;
-export const bacteriumEnergyRestoreTimeInSec = 5;
+export const bacteriumMaxEnergy = 0.2;
+export const bacteriumEnergyRestoreTimeInSec = 10;
 
 export interface Player {
   id: number;
@@ -26,7 +26,7 @@ let playerId = 0;
 export function createPlayer(params: Partial<Player>): Player {
   return {
     id: playerId++,
-    maxSpeed: 100,
+    maxSpeed: 150,
     ...params,
   } as Player;
 }

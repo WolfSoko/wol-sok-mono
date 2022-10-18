@@ -7,7 +7,11 @@ module.exports = async (config, context) => {
   const federatedModules = await withModuleFederation({
     config,
     ...moduleFederationConfig,
-    remotes: [['fourier-analysis-remote', '/fourier-analysis-remote']],
+    remotes: [
+      ['fourier-analysis-remote', '/fourier-analysis-remote'],
+      ['bacteria-game-remote', '/bacteria-game-remote'],
+    ],
+
     /*
      * Remote overrides for production.
      * Each entry is a pair of an unique name and the URL where it is deployed.

@@ -13,9 +13,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { WsThanosDirective } from '@wolsok/thanos';
 import { ShowFpsComponent } from '@wolsok/ui-kit';
-import { WsThanosDirective } from '@wolsok/ws-thanos';
 import { Observable } from 'rxjs';
 import {
   distinctUntilChanged,
@@ -26,7 +27,7 @@ import {
 } from 'rxjs/operators';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
-import { GameState, GameStateState } from './state/game-state.store';
+import { GameState, GameStateState } from './state/game.states';
 import { Bacteria, Player } from './state/player.model';
 import { PlayerQuery } from './state/player.query';
 import { PlayerService } from './state/player.service';
@@ -62,6 +63,7 @@ export function createImageDataFromBacterias(
     MatDialogModule,
     MatProgressSpinnerModule,
     ShowFpsComponent,
+    MatToolbarModule,
   ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
