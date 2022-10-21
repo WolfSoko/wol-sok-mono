@@ -23,8 +23,7 @@ function prepareHostApp(host, target) {
   });
 }
 
-function prepareRemote(target) {
-  let remote = 'fourier-analysis-remote';
+function prepareRemote(remote, target) {
   copySync(join(distFolder, 'apps', remote), join(target, remote), {
     recursive: true,
   });
