@@ -55,7 +55,16 @@
   "defaultProject": "angular-examples",
   "namedInputs": {
     "default": ["{projectRoot}/**/*"],
-    "production": ["!{projectRoot}/**/*.spec.ts"]
+    "production": [
+      "!{projectRoot}/**/*.spec.[jt]s",
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/karma.conf.js",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/jest.config.[jt]s",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/.storybook/**/*",
+      "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)"
+    ]
   },
   "targetDefaults": {
     "build": {
@@ -67,10 +76,17 @@
       "outputs": ["test-reports/{projectRoot}"]
     },
     "test": {
-      "outputs": ["coverage/{projectRoot}"]
+      "outputs": ["coverage/{projectRoot}"],
+      "inputs": ["default", "^production", "{workspaceRoot}/karma.conf.js"]
     },
     "prepare-prod": {
       "dependsOn": ["build"]
+    },
+    "lint": {
+      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"]
+    },
+    "build-storybook": {
+      "inputs": ["default", "^production", "{workspaceRoot}/.storybook/**/*"]
     }
   }
 }
