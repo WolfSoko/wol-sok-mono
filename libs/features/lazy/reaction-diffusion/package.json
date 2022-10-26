@@ -6,7 +6,7 @@
     "@angular/core": "^13.2.0",
     "@angular/material": "^13.2.0",
     "mathjs": "^10.3.0",
-    "gpu.js": "^0.1.0",
+    "gpu.js": "^0.0.0",
     "rxjs": "^6.5.4"
   },
   "dependencies": {
