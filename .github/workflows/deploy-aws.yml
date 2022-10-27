@@ -53,7 +53,7 @@ jobs:
 
       # Clears the CloudFront cache so new requests will receive the latest version of your app
       - name: Invalidate Cloudfront CDN cache
-        uses: chetan/invalidate-cloudfront-action@v1.3
+        uses: chetan/invalidate-cloudfront-action@v2.4
         env:
           DISTRIBUTION: 'E22J2LG5B4PGRR'
           PATHS: '/index.html /ngsw.json /manifest.json'
