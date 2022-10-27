@@ -101,7 +101,7 @@
     "@types/three": "0.144.0",
     "@typescript-eslint/eslint-plugin": "5.36.1",
     "@typescript-eslint/parser": "5.36.1",
-    "assemblyscript": "0.21.3",
+    "assemblyscript": "0.22.0",
     "aws-sdk": "2.1241.0",
     "axios": "0.27.2",
     "chai": "4.3.6",
