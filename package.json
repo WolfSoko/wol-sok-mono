@@ -105,7 +105,6 @@
     "aws-sdk": "2.1223.0",
     "axios": "0.27.2",
     "chai": "4.3.6",
-    "codelyzer": "6.0.2",
     "cross-env": "7.0.3",
     "cypress": "10.7.0",
     "eslint": "8.22.0",
