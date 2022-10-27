@@ -51,7 +51,7 @@
     "gl-matrix": "3.4.3",
     "gpu.js": "2.15.2",
     "lodash": "4.17.21",
-    "mathjs": "11.2.1",
+    "mathjs": "11.3.2",
     "ngx-ace-editor-wrapper": "9.1.12",
     "normalize.css": "8.0.1",
     "p5": "1.5.0",
