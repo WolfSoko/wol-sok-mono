@@ -1,7 +1,7 @@
 name: Deploy release to AWS
 on:
   release:
-    types: [published]
+    types: [ published ]
 
   workflow_dispatch:
     inputs:
@@ -12,7 +12,7 @@ on:
         description: Release version
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
