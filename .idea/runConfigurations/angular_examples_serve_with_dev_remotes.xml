@@ -5,7 +5,6 @@
     <tasks>
       <task value="angular-examples:serve" />
     </tasks>
-    <arguments value="--devRemotes bacteria-game-remote,fourier-analysis-remote --verbose" />
     <envs />
     <method v="2" />
   </configuration>
