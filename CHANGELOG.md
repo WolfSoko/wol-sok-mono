@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.8.9](https://github.com/WolfSoko/wol-sok-mono/compare/v3.8.8...v3.8.9) (2022-10-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency mathjs to v11.3.2 ([2d716e5](https://github.com/WolfSoko/wol-sok-mono/commit/2d716e52a948f29781dfbea368e8642635710365))
+* **deps:** update sentry-javascript monorepo to v7.17.1 ([68f282c](https://github.com/WolfSoko/wol-sok-mono/commit/68f282c044fa3c85cf99ed94251ab427d3d2ebeb))
+
 ### [3.8.8](https://github.com/WolfSoko/wol-sok-mono/compare/v3.8.7...v3.8.8) (2022-10-27)
 
 
