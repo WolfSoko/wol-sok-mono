@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.8.10](https://github.com/WolfSoko/wol-sok-mono/compare/v3.8.9...v3.8.10) (2022-10-28)
+
+
+### Bug Fixes
+
+* **deps:** update angular monorepo ([2040d5b](https://github.com/WolfSoko/wol-sok-mono/commit/2040d5bdeacc77db78512390b63cf45afea4a9f0))
+* **deps:** update dependency @assemblyscript/loader to v0.22.0 ([213e4b2](https://github.com/WolfSoko/wol-sok-mono/commit/213e4b2da7b7725be9083b22894373ed8055ba98))
+* **deps:** update dependency ace-builds to v1.12.3 ([57ab014](https://github.com/WolfSoko/wol-sok-mono/commit/57ab014cb5296cad4a93c2b12f23d51b55cb24c4))
+* **deps:** update dependency core-js to v3.26.0 ([d99677f](https://github.com/WolfSoko/wol-sok-mono/commit/d99677f5bfe5cbb2efb50dcc0fe3560822a4a2f2))
+* **deps:** update dependency firebase to v9.13.0 ([3bb439a](https://github.com/WolfSoko/wol-sok-mono/commit/3bb439a08a550b981ea93c36a1a8ae74974293a7))
+* **deps:** update sentry-javascript monorepo to v7.17.2 ([8b3287a](https://github.com/WolfSoko/wol-sok-mono/commit/8b3287aabfaea33e1b7be82a8ddc36b18b0e5f18))
+
 ### [3.8.9](https://github.com/WolfSoko/wol-sok-mono/compare/v3.8.8...v3.8.9) (2022-10-28)
 
 
