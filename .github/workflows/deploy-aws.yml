@@ -20,7 +20,7 @@ env:
 
 jobs:
   deploy:
-    timeout-minutes: 15
+    timeout-minutes: 30
     environment: aws
     runs-on: ubuntu-latest
     steps:
