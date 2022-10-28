@@ -8,6 +8,6 @@
   },
   "peerDependencies": {
     "assemblyscript": "^0.19.20 || ^0.22.0",
-    "@assemblyscript/loader": "^0.19.23"
+    "@assemblyscript/loader": "^0.19.23 || ^0.22.0"
   }
 }
