@@ -47,7 +47,7 @@
     "browserslist": "4.21.4",
     "core-js": "3.25.2",
     "document-register-element": "1.14.10",
-    "firebase": "9.10.0",
+    "firebase": "9.13.0",
     "gl-matrix": "3.4.3",
     "gpu.js": "2.15.2",
     "lodash": "4.17.21",
