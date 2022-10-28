@@ -107,7 +107,7 @@
     "chai": "4.3.6",
     "cross-env": "7.0.3",
     "cypress": "10.11.0",
-    "eslint": "8.22.0",
+    "eslint": "8.26.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-cypress": "2.12.1",
     "firebase-admin": "11.0.1",
