@@ -74,7 +74,7 @@
     "@angular/cli": "14.2.1",
     "@angular/compiler-cli": "14.2.8",
     "@angular/language-service": "14.2.8",
-    "@ngneat/spectator": "11.3.0",
+    "@ngneat/spectator": "12.0.1",
     "@nrwl/angular": "15.0.4",
     "@nrwl/cli": "15.0.4",
     "@nrwl/cypress": "15.0.4",
