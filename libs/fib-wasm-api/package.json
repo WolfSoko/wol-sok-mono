@@ -6,6 +6,6 @@
     "assemblyscript": "^0.19.23 || ^0.22.0"
   },
   "dependencies": {
-    "tslib": "2.4.0"
+    "tslib": "2.4.1"
   }
 }
