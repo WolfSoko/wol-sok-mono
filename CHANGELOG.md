@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.8.13](https://github.com/WolfSoko/wol-sok-mono/compare/v3.8.12...v3.8.13) (2022-11-01)
+
+
+### Bug Fixes
+
+* **deps:** update angularmaterial monorepo to v14.2.6 ([df6f53d](https://github.com/WolfSoko/wol-sok-mono/commit/df6f53d696ced426bc2fac60b6b0ec519373128c))
+
 ### [3.8.12](https://github.com/WolfSoko/wol-sok-mono/compare/v3.8.11...v3.8.12) (2022-11-01)
 
 
