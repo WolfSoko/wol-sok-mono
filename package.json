@@ -39,7 +39,7 @@
     "@ngneat/until-destroy": "9.2.2",
     "@sentry/angular": "7.17.3",
     "@sentry/tracing": "7.17.3",
-    "@tensorflow/tfjs": "2.8.6",
+    "@tensorflow/tfjs": "4.0.0",
     "ace-builds": "1.12.3",
     "akita-ng-fire": "7.0.0",
     "angulartics2": "12.1.0",
