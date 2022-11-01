@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.8.12](https://github.com/WolfSoko/wol-sok-mono/compare/v3.8.11...v3.8.12) (2022-11-01)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tensorflow/tfjs to v4 ([6877840](https://github.com/WolfSoko/wol-sok-mono/commit/6877840a1ccc976d766c7ad26e53e861e3b55fad))
+* **deps:** update dependency ace-builds to v1.12.5 ([3418af1](https://github.com/WolfSoko/wol-sok-mono/commit/3418af1d6fec186698fdd3e181447ee6dcaa8277))
+* **deps:** update dependency three to v0.146.0 ([d235486](https://github.com/WolfSoko/wol-sok-mono/commit/d23548650747b9bbc7e655a85ccff9f5f565868f))
+* **deps:** update dependency tslib to v2.4.1 ([c7c852f](https://github.com/WolfSoko/wol-sok-mono/commit/c7c852f36890340df97e30c624f6af54468ed936))
+* **deps:** update sentry-javascript monorepo to v7.17.3 ([32b9877](https://github.com/WolfSoko/wol-sok-mono/commit/32b98772e32e758a25accae689255658c4562a5d))
+
 ### [3.8.11](https://github.com/WolfSoko/wol-sok-mono/compare/v3.8.10...v3.8.11) (2022-10-28)
 
 
