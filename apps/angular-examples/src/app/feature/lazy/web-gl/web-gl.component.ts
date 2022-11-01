@@ -33,7 +33,7 @@ import {
   UniformsUtils,
   WebGLRenderer,
 } from 'three';
-import { OrbitControls } from 'three-orbitcontrols-ts';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { MandelbrotFragment, MandelbrotVertex } from './mandelbrot-shader';
 import { map } from 'rxjs/operators';
 
