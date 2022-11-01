@@ -24,7 +24,7 @@ tiny atoms.
 
 Readme under: [README.md](./libs/public/ws-thanos/README.md)
 
-A running version can be found on github pages: https://angularexamples.wolsok.de/
+A running version can be found on GitHub pages: https://angularexamples.wolsok.de/
 
 ### npm install
 To run `npm install` you need to make sure `node-gyp` compilation process is working. See here: [node-gyp installation](https://github.com/nodejs/node-gyp#installation)
