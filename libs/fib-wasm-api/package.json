@@ -2,7 +2,7 @@
   "name": "@wolsok/fib-wasm-api",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/core": "^14.0.0",
+    "@angular/core": "^14.2.8",
     "assemblyscript": "^0.19.23 || ^0.22.0"
   },
   "dependencies": {
