@@ -118,7 +118,6 @@
       "executor": "@nrwl/web:file-server",
       "options": {
         "buildTarget": "angular-examples:build",
-        "parallel": true,
         "spa": true
       },
       "configurations": {
