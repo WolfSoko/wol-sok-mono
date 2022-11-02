@@ -17,4 +17,4 @@ jobs:
           LOG_LEVEL: debug
         with:
           configurationFile: renovate.config.js
-
+          token: ${{ secrets.RENOVATE_SELF_HOSTED_TOKEN }}

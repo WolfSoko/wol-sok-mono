@@ -3,7 +3,7 @@ module.exports = {
   dryRun: null,
   gitAuthor: 'Renovate Bot GitHub <bot@renovateapp.com>',
   platform: 'github',
-  repositories: ['WolfSoko/wol-sok-mono'],
+  repositories: ['wolfsoko/wol-sok-mono'],
   includeForks: false,
   dependencyDashboard: true,
   onboarding: false,
