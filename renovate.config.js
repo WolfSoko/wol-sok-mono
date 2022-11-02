@@ -1,5 +1,5 @@
 module.exports = {
-  branchPrefix: 'renovate-github/',
+  branchPrefix: 'renovate-github-sh/',
   dryRun: null,
   gitAuthor: 'Renovate Bot GitHub <bot@renovateapp.com>',
   platform: 'github',
