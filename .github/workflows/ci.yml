@@ -110,7 +110,7 @@ jobs:
         uses: JamesHenry/parallel-bash-commands@v1.0
         with:
           cmd1: npx nx affected --target=build --parallel=1
-          cmd2: npx nx affected --target=test --parallel=2
+          cmd2: npx nx affected --target=test --parallel=1
           cmd3: npx nx affected --target=lint --parallel=4
           cmd4: npx -c \"nx affected --target=e2e --parallel=1 --configuration=ci -- --record=true\"
       - run: npx nx-cloud stop-all-agents
