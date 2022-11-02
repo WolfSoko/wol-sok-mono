@@ -37,12 +37,14 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: npm
+
       - name: Cache Cypress Binary
         id: cache-cypress-binary
         uses: actions/cache@v3
         with:
           path: ${{ env.CYPRESS_CACHE_FOLDER }}
           key: cypress-binary-${{ hashFiles('package-lock.json') }}
+
       - name: Cache dependencies
         id: cache
         uses: actions/cache@v3
