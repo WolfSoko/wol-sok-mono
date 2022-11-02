@@ -33,7 +33,7 @@
           "build-storybook"
         ],
         "accessToken": "MWVmZTcxMWMtNWZiYy00MzRkLTk0NmEtMjRhZmZlNjk3ZWVlfHJlYWQtd3JpdGU=",
-        "parallel": 3
+        "parallel": 1
       }
     }
   },
