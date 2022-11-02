@@ -2,17 +2,8 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:base",
-    "monorepo:nrwl"
-  ],
-  "packageRules": [
-    {
-      "matchUpdateTypes": [
-        "minor",
-        "patch",
-        "pin",
-        "digest"
-      ],
-      "automerge": true
-    }
+    ":label(dependencies)",
+    "github>ng-easy/renovate-config",
+    "github>ng-easy/renovate-config:nrwlWorkspace"
   ]
 }
