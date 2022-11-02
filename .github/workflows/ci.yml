@@ -42,9 +42,17 @@ jobs:
         with:
           path: ${{ env.CYPRESS_CACHE_FOLDER }}
           key: cypress-binary-${{ hashFiles('package-lock.json') }}
-      - name: Install Dependencies
-        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: ./node_modules
+          key: modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
+
       - name: Start Nx Agent ${{ matrix.agent }}
         run: npx nx-cloud start-agent
 
@@ -57,8 +65,8 @@ jobs:
       - name: install dependencies for node-gyp
         run: |
           echo "Install packages to compile node_modules gl with node-gyp"
-          sudo apt-get update -y
-          sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
+          sudo apt-fast update -y
+          sudo apt-fast install xserver-xorg-dev libxi-dev libxext-dev -y
 
       - uses: actions/checkout@v3
         name: 'Checkout [main]'
@@ -78,9 +86,16 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
 
-      - name: Install Dependencies
-        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
-        run: npm ci
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: ./node_modules
+          key: modules-ignore-scripts-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci --ignore-scripts
 
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v3
