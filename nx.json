@@ -32,8 +32,7 @@
           "e2e",
           "build-storybook"
         ],
-        "accessToken": "MWVmZTcxMWMtNWZiYy00MzRkLTk0NmEtMjRhZmZlNjk3ZWVlfHJlYWQtd3JpdGU=",
-        "parallel": 1
+        "accessToken": "MWVmZTcxMWMtNWZiYy00MzRkLTk0NmEtMjRhZmZlNjk3ZWVlfHJlYWQtd3JpdGU="
       }
     }
   },
