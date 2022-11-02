@@ -87,7 +87,7 @@
     "@nrwl/workspace": "15.0.4",
     "@storybook/addon-essentials": "6.5.12",
     "@storybook/angular": "6.5.12",
-    "@storybook/builder-webpack5": "6.5.12",
+    "@storybook/builder-webpack5": "6.5.13",
     "@storybook/core-server": "6.5.12",
     "@storybook/manager-webpack5": "6.5.12",
     "@types/chai": "4.3.3",
