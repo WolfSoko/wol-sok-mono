@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.8.14](https://github.com/WolfSoko/wol-sok-mono/compare/v3.8.13...v3.8.14) (2022-11-03)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency angulartics2 to v12.2.0 ([0cc1641](https://github.com/WolfSoko/wol-sok-mono/commit/0cc1641453d0945e48364dce9a91e33e6ffa9243))
+* **deps:** :arrow_up: update dependency mathjs to ^11.3.2 ([b2d3326](https://github.com/WolfSoko/wol-sok-mono/commit/b2d3326fa9e843df72104bac1f5fcc8c8393da0f))
+
 ### [3.8.13](https://github.com/WolfSoko/wol-sok-mono/compare/v3.8.12...v3.8.13) (2022-11-01)
 
 
