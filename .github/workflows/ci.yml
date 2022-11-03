@@ -111,7 +111,7 @@ jobs:
           cmd1: npx nx affected --target=build --parallel=1
           cmd2: npx nx affected --target=test --parallel=2
           cmd3: npx nx affected --target=lint --parallel=4
-          cmd4: npx -c \"nx affected --target=e2e --configuration=ci --record=true --parallel=1\"
+          cmd4: npx -c \"nx affected --target=e2e --parallel=1 --configuration=ci -- --record=true\"
       - run: npx nx-cloud stop-all-agents
       - name: Tag main branch if all jobs succeed
         if: ${{ github.event_name != 'pull_request' }}
