@@ -2,9 +2,9 @@
   "name": "@wolsok/feature-fourier-analysis",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "^14.0.0",
-    "@angular/core": "^14.0.0",
-    "@angular/material": "^14.0.0",
+    "@angular/common": "^14.2.8",
+    "@angular/core": "^14.2.8",
+    "@angular/material": "^14.2.6",
     "p5": "^1.5.0",
     "@datorama/akita": "^7.1.1",
     "mathjs": "^11.3.2"

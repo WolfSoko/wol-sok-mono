@@ -2,9 +2,9 @@
   "name": "@wolsok/feature-reaction-diffusion",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "^14.0.0",
-    "@angular/core": "^14.0.0",
-    "@angular/material": "^14.0.0",
+    "@angular/common": "^14.2.8",
+    "@angular/core": "^14.2.8",
+    "@angular/material": "^14.2.6",
     "mathjs": "^10.3.0 || ^11.0.0",
     "gpu.js": "^2.15.2",
     "rxjs": "^7.5.7"
