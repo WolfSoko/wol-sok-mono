@@ -1,13 +1,13 @@
-import { Component, QueryList, ViewChildren } from "@angular/core";
-import { ComponentFixture, TestBed, waitForAsync } from "@angular/core/testing";
-import { By } from "@angular/platform-browser";
-import { firstValueFrom } from "rxjs";
-import image from "../assets/how-to-be-funny.png";
-import { provideWsThanosOptions } from "./ws-thanos-options.token";
-import { WsThanosDirective } from "./ws-thanos.directive";
-import { WsThanosService } from "./ws-thanos.service";
+import { Component, QueryList, ViewChildren } from '@angular/core';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { firstValueFrom } from 'rxjs';
+import image from '../assets/how-to-be-funny.png';
+import { provideWsThanosOptions } from './ws-thanos-options.token';
+import { WsThanosDirective } from './ws-thanos.directive';
+import { WsThanosService } from './ws-thanos.service';
 
-describe("WsThanosDirective", () => {
+describe('WsThanosDirective', () => {
   @Component({
     template: `
       <div
@@ -63,8 +63,8 @@ describe("WsThanosDirective", () => {
         .thanos-test-container {
           padding: 14px;
         }
-      `
-    ]
+      `,
+    ],
   })
   class HostComponent {
     showComplete = false;
@@ -81,7 +81,7 @@ describe("WsThanosDirective", () => {
     }
 
     completed() {
-      console.log("Completed");
+      console.log('Completed');
     }
   }
 
@@ -95,10 +95,10 @@ describe("WsThanosDirective", () => {
       providers: [
         provideWsThanosOptions({
           maxParticleCount: 5000,
-          animationLength: 2000
-        })
+          animationLength: 2000,
+        }),
       ],
-      declarations: [HostComponent]
+      declarations: [HostComponent],
     }).compileComponents();
   }));
 
@@ -111,24 +111,24 @@ describe("WsThanosDirective", () => {
     ).componentInstance;
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(directive).toBeTruthy();
   });
 
-  describe("vaporize()", () => {
+  describe('vaporize()', () => {
     let thanosService: WsThanosService;
 
     beforeEach(() => {
       thanosService = TestBed.inject(WsThanosService);
-      spyOn(thanosService, "vaporize").and.callThrough();
+      spyOn(thanosService, 'vaporize').and.callThrough();
     });
 
-    it("should call thanosService.vaporize", () => {
+    it('should call thanosService.vaporize', () => {
       whenVaporizeIsCalled();
       thenThanosServiceVaporizeWasCalled();
     });
 
-    it("should emit when vaporize is complete", (done) => {
+    it('should emit when vaporize is complete', (done) => {
       whenVaporizeIsCalled().then(done);
     }, 10000);
 
