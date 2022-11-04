@@ -4,6 +4,7 @@
     "config:base",
     ":label(dependencies)",
     "github>ng-easy/renovate-config",
-    "github>ng-easy/renovate-config:nrwlWorkspace"
+    "github>ng-easy/renovate-config:nrwlWorkspace",
+    "schedule:default"
   ]
 }
