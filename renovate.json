@@ -6,5 +6,6 @@
     "github>ng-easy/renovate-config",
     "github>ng-easy/renovate-config:nrwlWorkspace"
   ],
-  "schedule": []
+  "schedule": [],
+  "prCreation": "immediate"
 }
