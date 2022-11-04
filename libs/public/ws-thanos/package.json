@@ -6,7 +6,7 @@
     "url": "https://github.com/WolfSoko/wol-sok-mono/issues"
   },
   "homepage": "https://angularexamples.wolsok.de",
-  "repository": "https://github.com/WolfSoko/wol-sok-mono/libs/public/ws-thanos",
+  "repository": "https://github.com/WolfSoko/wol-sok-mono/tree/main/libs/public/ws-thanos",
   "license": "MIT",
   "keywords": [
     "wolsok",
