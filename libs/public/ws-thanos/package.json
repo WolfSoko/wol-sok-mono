@@ -1,6 +1,6 @@
 {
   "name": "@wolsok/thanos",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "wolsok's implementation of a cool thanos vaporizing effect for destroying dom elements",
   "bugs": {
     "url": "https://github.com/WolfSoko/wol-sok-mono/issues"
