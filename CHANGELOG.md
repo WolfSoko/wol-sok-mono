@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.9.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.8.15...v3.9.0) (2022-11-04)
+
+
+### Features
+
+* sentry update ([af9c0f6](https://github.com/WolfSoko/wol-sok-mono/commit/af9c0f626511ea2fb632c0dc56e8b2e61d451441))
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update nrwl workspace ([6a27657](https://github.com/WolfSoko/wol-sok-mono/commit/6a2765761ec04491c1fd67e4145861c984db1cbe))
+
 ### [3.8.15](https://github.com/WolfSoko/wol-sok-mono/compare/v3.8.14...v3.8.15) (2022-11-03)
 
 
