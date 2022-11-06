@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.10.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.9.0...v3.10.0) (2022-11-06)
+
+
+### Features
+
+* **ws-thanos:** update version to 3.0.0 ([f1f843c](https://github.com/WolfSoko/wol-sok-mono/commit/f1f843c519de3e1a0461c6cb959df9497528289d))
+* **ws-thanos:** update version to 3.0.1 ([540282d](https://github.com/WolfSoko/wol-sok-mono/commit/540282db4467aa92adbd6b9c0457526f0d0914e6))
+* **ws-thanos:** update version to 3.0.1 ([8cceb06](https://github.com/WolfSoko/wol-sok-mono/commit/8cceb0697e575fca0ff47af3927b8c462530cfe7))
+
 ## [3.9.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.8.15...v3.9.0) (2022-11-04)
 
 
