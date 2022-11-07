@@ -52,7 +52,7 @@ jobs:
         run: |
           SENTRY_VERSION="angular-examples@${{ github.ref_name }}"
           echo "Sentry version: ${SENTRY_VERSION}"
-          echo "::set-output name=sentry-version::${SENTRY_VERSION}"
+          echo "sentry-version=${SENTRY_VERSION} >> $GITHUB_OUTPUT"
 
       - name: Integrate sentry release version into index.html
         run: echo "TODO integrate ${{ steps.sentry-version.outputs.sentry-version }} into index.html"
