@@ -1,9 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
-    "github>ng-easy/renovate-config",
+    "github>ng-easy/renovate-config:default",
     "github>ng-easy/renovate-config:nrwlWorkspace",
+    ":label(dependencies)",
     ":assignee(WolfSoko)"
   ],
   "schedule": ["at any time"],
