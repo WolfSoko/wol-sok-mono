@@ -7,5 +7,6 @@
     ":assignee(WolfSoko)"
   ],
   "schedule": ["at any time"],
-  "prCreation": "immediate"
+  "prCreation": "immediate",
+  "automerge": true
 }
