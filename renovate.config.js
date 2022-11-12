@@ -2,6 +2,7 @@ module.exports = {
   branchPrefix: 'renovate-github-sh/',
   dryRun: null,
   dependencyDashboardTitle: 'Renovate Dashboard -- Self-Hosted',
+  globalExtends: [':label(self-hosted)'],
   gitAuthor: 'Renovate Bot GitHub <bot@renovateapp.com>',
   platform: 'github',
   repositories: ['wolfsoko/wol-sok-mono'],
