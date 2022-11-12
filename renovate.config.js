@@ -1,7 +1,7 @@
 module.exports = {
   branchPrefix: 'renovate-github-sh/',
   dryRun: null,
-  dependencyDashboardTitle: 'Self-hosted Renovate Dashboard for NX- and fontawesome-updates',
+  dependencyDashboardTitle: 'Renovate Dashboard -- Self-Hosted',
   gitAuthor: 'Renovate Bot GitHub <bot@renovateapp.com>',
   platform: 'github',
   repositories: ['wolfsoko/wol-sok-mono'],

@@ -4,9 +4,9 @@
     "github>ng-easy/renovate-config:default",
     "github>ng-easy/renovate-config:nrwlWorkspace",
     ":label(dependencies)",
-    ":assignee(WolfSoko)"
+    ":assignee(WolfSoko)",
+    ":automergePr"
   ],
   "schedule": ["at any time"],
-  "prCreation": "immediate",
-  "automerge": true
+  "prCreation": "immediate"
 }
