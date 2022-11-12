@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/core": "^14.2.10",
-    "assemblyscript": "^0.19.23 || ^0.22.0"
+    "assemblyscript": "^0.19.23 || ^0.22.0 || ^0.23.0"
   },
   "dependencies": {
     "tslib": "2.4.1"
