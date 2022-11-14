@@ -1,8 +1,10 @@
-on:
-push:
-  branches:
-    - main
 name: release-please
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   release-please:
     runs-on: ubuntu-latest
