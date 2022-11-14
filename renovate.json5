@@ -9,4 +9,5 @@
   ],
   schedule: ['at any time'],
   prCreation: 'immediate',
+  enabled: false
 }

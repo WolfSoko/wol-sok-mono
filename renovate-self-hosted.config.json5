@@ -3,5 +3,6 @@
   addLabels: [
     'self-hosted'
   ],
-  printConfig: true
+  printConfig: true,
+  enabled: true
 }
