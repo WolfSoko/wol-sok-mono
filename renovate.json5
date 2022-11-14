@@ -5,9 +5,10 @@
     'github>ng-easy/renovate-config:nrwlWorkspace',
     ':label(dependencies)',
     ':assignee(WolfSoko)',
-    ':automergePr',
+    ':automergePr'
   ],
   schedule: ['at any time'],
   prCreation: 'immediate',
-  enabled: false
+  platformAutomerge: true,
+  printConfig: true
 }
