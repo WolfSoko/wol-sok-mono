@@ -70,7 +70,7 @@ jobs:
           sudo apt-fast install xserver-xorg-dev libxi-dev libxext-dev -y
 
       - uses: actions/checkout@v3
-        name: 'Checkout [main]'
+        name: 'Checkout {{ github.ref_name }}'
         if: ${{ github.event_name != 'pull_request' }}
         with:
           fetch-depth: 0
