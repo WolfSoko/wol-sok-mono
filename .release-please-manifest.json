@@ -3,8 +3,7 @@
   "extra-files": [
     {
       "type": "json",
-      "path": "version.json",
-      "jsonpath": "$.version"
+      "path": "version.json"
     }
   ]
 }
