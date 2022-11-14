@@ -1,4 +1,13 @@
 {
+  "extra-files": [
+    "README.md",
+    "LICENSE",
+    {
+      "path": "version.json",
+      "type": "json",
+      "jsonpath": "$.version"
+    }
+  ],
   "packages": {
     ".": {
       "changelog-path": "CHANGELOG.md",
