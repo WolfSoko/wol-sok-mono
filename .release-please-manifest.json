@@ -1,9 +1,11 @@
 {
   ".": "0.0.0",
   "extra-files": [
+    "README.md",
     {
       "type": "json",
-      "path": "version.json"
+      "path": "version.json",
+      "jsonpath": "$.version"
     }
   ]
 }
