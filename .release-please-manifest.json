@@ -1,3 +1,10 @@
 {
-  ".": "0.0.0"
+  ".": "0.0.0",
+  "extra-files": [
+    {
+      "type": "json",
+      "path": "version.json",
+      "jsonpath": "$.version"
+    }
+  ]
 }
