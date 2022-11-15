@@ -7,7 +7,7 @@
     "build:production": "npx asc ./src/assembly/index.ts --bindings ./index.d.ts --outFile ../../dist/libs/fib-wasm/optimized.wasm --textFile ../../dist/libs/fib-wasm/optimized.wat --sourceMap --importMemory --optimize"
   },
   "peerDependencies": {
-    "assemblyscript": "^0.19.20 || ^0.22.0 || ^0.23.0",
-    "@assemblyscript/loader": "^0.19.23 || ^0.22.0 || ^0.23.0"
+    "assemblyscript": "^0.19.20 || ^0.22.0 || ^0.23.0 || ^0.24.0",
+    "@assemblyscript/loader": "^0.19.23 || ^0.22.0 || ^0.23.0 || ^0.24.0"
   }
 }
