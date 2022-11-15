@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.10.10](https://github.com/WolfSoko/wol-sok-mono/compare/wolsok-v3.10.9...wolsok-v3.10.10) (2022-11-15)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update all non-major dependencies to v0.24.0 ([9d6ed8a](https://github.com/WolfSoko/wol-sok-mono/commit/9d6ed8a44aa3055d88e8395668967b7ed43e6674))
+
 ## [3.10.9](https://github.com/WolfSoko/wol-sok-mono/compare/wolsok-v3.10.8...wolsok-v3.10.9) (2022-11-14)
 
 
