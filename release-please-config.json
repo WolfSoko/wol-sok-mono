@@ -7,6 +7,7 @@
       "bump-patch-for-minor-pre-major": false,
       "draft": false,
       "prerelease": false,
+      "version-file": "version.json",
       "extra-files": [
         "README.md",
         "LICENSE",
