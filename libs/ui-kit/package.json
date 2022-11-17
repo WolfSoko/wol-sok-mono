@@ -2,8 +2,8 @@
   "name": "@wolsok/ui-kit",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "^14.2.10",
-    "@angular/core": "^14.2.10"
+    "@angular/common": "^14.2.11",
+    "@angular/core": "^14.2.11"
   },
   "dependencies": {
     "tslib": "2.4.1"
