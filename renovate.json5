@@ -6,10 +6,10 @@
     ':label(dependencies)',
     ':assignee(WolfSoko)',
     ':automergePr',
+    ':automergeMinor'
   ],
   schedule: ['at any time'],
   automergeStrategy: 'rebase',
   prCreation: 'immediate',
-  platformAutomerge: true,
   printConfig: true,
 }
