@@ -2,8 +2,8 @@
   "name": "@wolsok/feat-wasm-test",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "^14.2.10",
-    "@angular/core": "^14.2.10",
+    "@angular/common": "^14.2.11",
+    "@angular/core": "^14.2.11",
     "@angular/material": "^14.2.7",
     "@datorama/akita": "^7.1.1"
   },
