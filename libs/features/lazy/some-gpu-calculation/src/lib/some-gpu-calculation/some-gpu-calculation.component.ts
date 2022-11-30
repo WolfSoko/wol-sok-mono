@@ -8,9 +8,10 @@ import {
   ViewChild,
 } from '@angular/core';
 import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
   ReactiveFormsModule,
-  UntypedFormBuilder,
-  UntypedFormGroup,
   Validators,
 } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -80,7 +81,15 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
   @ViewChild('gpuCanvasContainer')
   gpuCanvasWrapper!: ElementRef<HTMLDivElement>;
 
-  additionForm!: UntypedFormGroup;
+  additionForm!: FormGroup<{
+    r: FormControl<number>;
+    g: FormControl<number>;
+    b: FormControl<number>;
+    repetition: FormControl<number>;
+    speed: FormControl<number>;
+    useGPU: FormControl<boolean>;
+  }>;
+
   calculationTime$: Observable<number>;
   fps$: Observable<number>;
 
@@ -91,7 +100,11 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
     SomeGpuCalculationComponent.calcHeightOfCanvas(500),
   ];
 
-  constructor(private fb: UntypedFormBuilder, private gpu: GpuAdapterService, private readonly measureFps: MeasureFps) {
+  constructor(
+    private fb: FormBuilder,
+    private gpu: GpuAdapterService,
+    private readonly measureFps: MeasureFps
+  ) {
     this.createForm();
     this.calculationTime$ = this.measureFps.frameTimeMs$;
     this.fps$ = this.measureFps.fps$;
@@ -104,8 +117,10 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
     return Math.floor(newWidth * aspectRatio);
   }
 
+  readonly formatSpeed = (value: number) => value + '%';
+
   async ngAfterViewInit(): Promise<void> {
-    await this.createGPUColorizer(this.additionForm.get('useGPU')?.value);
+    await this.createGPUColorizer(this.additionForm.controls.useGPU.value);
     const config$: Observable<Omit<Configuration, 'useGPU'>> = (
       this.additionForm.valueChanges as Observable<Configuration>
     ).pipe(
@@ -193,7 +208,7 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
   }
 
   private createForm(): void {
-    this.additionForm = this.fb.group({
+    this.additionForm = this.fb.nonNullable.group({
       r: [255, [Validators.required, Validators.min(0), Validators.max(255)]],
       g: [255, [Validators.required, Validators.min(0), Validators.max(255)]],
       b: [255, [Validators.required, Validators.min(0), Validators.max(255)]],
@@ -268,6 +283,6 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
     const height: number =
       SomeGpuCalculationComponent.calcHeightOfCanvas(newWidth);
     this.dimensionsOfCanvas = [newWidth, height];
-    await this.createGPUColorizer(this.additionForm.get('useGPU')?.value);
+    await this.createGPUColorizer(this.additionForm.controls.useGPU.value);
   }
 }
