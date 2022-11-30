@@ -1,17 +1,29 @@
+import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
 import {
   FormArray,
   FormBuilder,
   FormControl,
-  FormGroup,
+  FormGroup, ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSliderModule } from '@angular/material/slider';
 import { PersistNgFormPlugin } from '@datorama/akita';
 import { Observable } from 'rxjs';
 import { InputWaveOptionsQuery } from '../../state/input-wave-options.query';
 import { InputWaveOptionsState } from '../../state/input-wave-options.store';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatSliderModule,
+    MatButtonModule,
+    MatIconModule,
+  ],
   selector: 'lazy-feat-fanal-wave-options',
   templateUrl: './wave-options.component.html',
   styleUrls: ['./wave-options.component.scss'],
