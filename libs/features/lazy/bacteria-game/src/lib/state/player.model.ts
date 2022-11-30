@@ -1,7 +1,7 @@
 export type PlayerColorArray = [number, number, number, number];
 
-export const bacteriumMaxEnergy = 0.2;
-export const bacteriumEnergyRestoreTimeInSec = 10;
+export const bacteriumMaxEnergy = 1.0;
+export const bacteriumEnergyRestoreTimeInSec = 30.0;
 
 export interface Player {
   id: number;
