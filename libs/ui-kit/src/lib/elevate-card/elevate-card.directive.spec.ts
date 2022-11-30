@@ -40,7 +40,7 @@ describe('ElevateCard directive', () => {
     thenOtherClassesShouldNotBeDeleted();
   });
 
-  it('should not have the mat-elevation class initialy', () => {
+  it('should not have the mat-elevation class initially', () => {
     thenElevationClassShouldNotBeSet();
   });
 
@@ -61,10 +61,12 @@ describe('ElevateCard directive', () => {
 
   function thenElevationClassShouldNotBeSet() {
     expect(el.classList.contains('mat-elevation-z15')).toBeFalsy();
+    expect(el.classList.contains('mat-mdc-elevation-specific')).toBeFalsy();
   }
 
   function thenElevationClassShouldBeSet() {
     expect(el.classList.contains('mat-elevation-z15')).toBeTruthy();
+    expect(el.classList.contains('mat-mdc-elevation-specific')).toBeTruthy();
   }
 
   function thenOtherClassesShouldNotBeDeleted() {

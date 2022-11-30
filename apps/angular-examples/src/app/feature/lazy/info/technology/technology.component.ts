@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -13,6 +13,7 @@ import { WsThanosDirective } from '@wolsok/thanos';
     MatCardModule,
     ElevateCardDirective,
     MatButtonModule,
+    NgOptimizedImage,
   ],
   selector: 'app-technology',
   templateUrl: './technology.component.html',
