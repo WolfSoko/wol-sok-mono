@@ -1,14 +1,26 @@
 import { animate, keyframes, transition, trigger } from '@angular/animations';
+import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
-import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import {
+  MatPaginator,
+  MatPaginatorModule,
+  PageEvent,
+} from '@angular/material/paginator';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { RenderShaderComponent } from '@wolsok/ui-kit';
 import { combineLatest, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { CodeEditorComponent } from './code-editor/code-editor.component';
 import {
   fadeInLeft,
   fadeInRight,
   fadeOutLeft,
   fadeOutRight,
 } from './leftInOut.animation';
+import { ShaderExamplesOptionsComponent } from './shader-examples-options/shader-examples-options.component';
 import {
   ShaderCode,
   ShaderCodeQuery,
@@ -18,6 +30,18 @@ import {
 } from './state';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    CodeEditorComponent,
+    ShaderExamplesOptionsComponent,
+    RenderShaderComponent,
+    MatCardModule,
+    MatProgressSpinnerModule,
+    MatButtonModule,
+    MatPaginatorModule,
+    MatIconModule,
+  ],
   selector: 'lzy-ft-shad-ex-shader-examples',
   templateUrl: './shader-examples.component.html',
   styleUrls: ['./shader-examples.component.scss'],

@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -5,11 +6,14 @@ import {
   Input,
   Output,
 } from '@angular/core';
+import { AceEditorModule } from 'ngx-ace-editor-wrapper';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, AceEditorModule],
   selector: 'lzy-ft-shad-ex-code-editor',
   templateUrl: './code-editor.component.html',
-  styleUrls: ['./code-editor.component.less'],
+  styleUrls: ['./code-editor.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CodeEditorComponent {
