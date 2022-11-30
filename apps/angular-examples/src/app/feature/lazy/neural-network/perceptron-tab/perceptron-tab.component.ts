@@ -6,7 +6,7 @@ import {Observable} from "rxjs";
 @Component({
   selector: 'app-perceptron-tab',
   templateUrl: './perceptron-tab.component.html',
-  styleUrls: ['./perceptron-tab.component.less'],
+  styleUrls: ['./perceptron-tab.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PerceptronTabComponent implements OnInit {

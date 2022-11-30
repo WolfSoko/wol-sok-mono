@@ -5,7 +5,7 @@ import {BrainService} from "../shared/brain.service";
 @Component({
   selector: 'app-multi-perceptron',
   templateUrl: './multi-perceptron.component.html',
-  styleUrls: ['./multi-perceptron.component.less'],
+  styleUrls: ['./multi-perceptron.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MultiPerceptronComponent implements OnInit {
