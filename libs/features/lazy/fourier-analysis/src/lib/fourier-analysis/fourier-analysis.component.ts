@@ -1,12 +1,36 @@
+import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef } from '@angular/core';
-import { ResizedEvent } from '@wolsok/ui-kit';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { ElemResizedDirective, ResizedEvent } from '@wolsok/ui-kit';
 import { Observable } from 'rxjs';
+import { CircleAnalysisComponent } from '../circle-analysis/circle-analysis.component';
+import { InputWaveComponent } from '../input-wave/input-wave.component';
+import { WaveOptionsComponent } from '../input-wave/wave-options/wave-options.component';
 import { FourierAnalysisQuery } from '../state/fourier-analysis.query';
 import { FourierAnalysisService } from '../state/fourier-analysis.service';
 import { FourierAnalysisState } from '../state/fourier-analysis.store';
 import { InputWaveService } from '../state/input-wave.service';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatSidenavModule,
+    ElemResizedDirective,
+    MatCardModule,
+    MatToolbarModule,
+    MatButtonModule,
+    WaveOptionsComponent,
+    InputWaveComponent,
+    CircleAnalysisComponent,
+    MatProgressSpinnerModule,
+    MatIconModule,
+  ],
   selector: 'lazy-feat-fanal-fourier-analysis',
   templateUrl: './fourier-analysis.component.html',
   styleUrls: ['./fourier-analysis.component.scss'],

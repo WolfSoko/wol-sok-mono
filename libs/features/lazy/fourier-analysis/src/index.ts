@@ -1,1 +1,1 @@
-export * from './lib/fourier-analysis.module';
+export * from './lib/fourier-analysis.routes';

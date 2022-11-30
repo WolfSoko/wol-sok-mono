@@ -1,10 +1,12 @@
 <mat-card appearance="raised">
-  <mat-card-title>
-    <span>Input Wave</span>
-    <button mat-icon-button (click)="listenToWaveAudio()">
-      <mat-icon>volume_up</mat-icon>
-    </button>
-  </mat-card-title>
+  <mat-card-header>
+    <mat-card-title>
+      <span>Input Wave</span>
+      <button mat-icon-button (click)="listenToWaveAudio()">
+        <mat-icon>volume_up</mat-icon>
+      </button>
+    </mat-card-title>
+  </mat-card-header>
   <mat-card-content>
     <lazy-feat-fanal-wave-canvas
       *ngIf="activeWave$ | async as wave"

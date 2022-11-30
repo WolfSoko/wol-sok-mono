@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -22,6 +23,8 @@ interface WaveCanvasChanges extends SimpleChanges {
 }
 
 @Component({
+  standalone: true,
+  imports: [CommonModule],
   selector: 'lazy-feat-fanal-wave-canvas',
   templateUrl: './wave-canvas.component.html',
   styleUrls: ['./wave-canvas.component.scss'],

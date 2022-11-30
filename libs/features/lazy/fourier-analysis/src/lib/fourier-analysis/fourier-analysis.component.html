@@ -2,7 +2,9 @@
   <div (wsSharedUiElemResized)="onResize($event)">
     <mat-sidenav class="wave-options" #sidenav position="end">
       <mat-card appearance="raised" class="wave-options--card">
-        <mat-card-title>Wave options</mat-card-title>
+        <mat-card-header>
+          <mat-card-title>Wave options</mat-card-title>
+        </mat-card-header>
         <mat-card-content>
           <lazy-feat-fanal-wave-options class="wave-options">
           </lazy-feat-fanal-wave-options>

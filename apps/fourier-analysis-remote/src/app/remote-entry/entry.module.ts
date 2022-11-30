@@ -7,9 +7,7 @@ import { RouterModule } from '@angular/router';
       {
         path: '',
         loadChildren: () =>
-          import('@wolsok/feat-fourier-analysis').then(
-            (m) => m.FourierAnalysisModule
-          ),
+          import('@wolsok/feat-fourier-analysis').then((m) => m.routes),
       },
     ]),
   ],

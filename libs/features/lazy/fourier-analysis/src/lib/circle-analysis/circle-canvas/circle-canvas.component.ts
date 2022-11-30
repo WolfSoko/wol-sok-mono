@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -31,6 +32,8 @@ interface CenterData {
 }
 
 @Component({
+  standalone: true,
+  imports: [CommonModule],
   selector: 'lazy-feat-fanal-circle-canvas',
   templateUrl: './circle-canvas.component.html',
   styleUrls: ['./circle-canvas.component.scss'],
