@@ -8,9 +8,9 @@
     <div *ngIf="lossLabel">{{ 'Last loss: ' + lossLabel }}</div>
   </div>
 
-  <div *ngIf="batch" class="mat-subheading-1">Predicted images:</div>
+  <div *ngIf="batch" class="mat-body-1">Predicted images:</div>
   <div class="images" #images></div>
-  <div *ngIf="batch && totalCorrect" class="mat-subheading-2">
+  <div *ngIf="batch && totalCorrect" class="mat-subtitle-1">
     {{
       'Result: ' +
         totalCorrect +

@@ -1,4 +1,4 @@
-<mat-card wsSharedUiElevateCard class="training-progress">
+<mat-card appearance="outlined" wsSharedUiElevateCard class="training-progress">
   <mat-card-title> Deep Neural Network for digit recognition. </mat-card-title>
   <mat-card-subtitle>
     The MNIST digits are used to train a deep neural network on your device.
@@ -40,7 +40,7 @@
     </button>
   </mat-card-actions>
 </mat-card>
-<mat-card wsSharedUiElevateCard class="learnImagesCard">
+<mat-card appearance="outlined" wsSharedUiElevateCard class="learnImagesCard">
   <mat-card-title> Recognize handwritten digits! </mat-card-title>
   <mat-card-subtitle>
     Draw a digit on the canvas to test the trained neural network. Click on the
@@ -51,7 +51,7 @@
       #drawer
       (updatePixels)="nextDrawnImage($event)"
     ></feat-lazy-tensor-app-draw-digit>
-    <div class="mat-subheading-1">
+    <div class="mat-body-1">
       {{
         drawingPredictions
           ? 'Prediction: ' + drawingPredictions[0]

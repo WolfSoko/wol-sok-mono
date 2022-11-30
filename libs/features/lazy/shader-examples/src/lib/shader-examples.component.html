@@ -1,5 +1,5 @@
 <ng-container *ngIf="viewModel$ | async as vm">
-  <mat-card class="title">
+  <mat-card appearance="outlined" class="title">
     <mat-card-title>
       Some WebGl Shader Examples inspired by&nbsp;
       <a target="_blank" href="https://thebookofshaders.com"
@@ -22,6 +22,7 @@
   </ng-container>
   <ng-template #shadersContainer>
     <mat-card
+      appearance="outlined"
       class="shaders-container"
       (swipeleft)="nextPage()"
       (swiperight)="previousPage()"
@@ -43,7 +44,7 @@
           *ngFor="let shader of vm.pagedShaders; trackBy: trackByIndex; even as isEven"
         >
           <div class="shader-tile">
-            <div class="mat-subheading-2 shader-title">
+            <div class="mat-subtitle-1 shader-title">
               {{ shader.description }}
             </div>
             <div class="editor-tile" *ngIf="vm.showCodeEditor">
@@ -85,7 +86,7 @@
   <ng-template #spinner>
     <div class="shaders-container shaders-container-spinner">
       <mat-spinner color="accent" diameter="56"> </mat-spinner>
-      <div class="mat-subheading-1">Loading example shaders</div>
+      <div class="mat-body-1">Loading example shaders</div>
     </div>
   </ng-template>
   <mat-paginator
