@@ -12,185 +12,202 @@
 </mat-toolbar>
 <section class="diff-content">
   <mat-card appearance="raised" class="sim-card" wsSharedUiElevateCard>
-    <mat-card-title>Simulation</mat-card-title>
-    <mat-card-subtitle>Click to add fluid</mat-card-subtitle>
-    <feat-lazy-react-diff-p5-view
-      *ngIf="dimensions$ | async as dimensions"
-      [simWidth]="dimensions.width"
-      [simHeight]="dimensions.height"
-      [calcService]="calcService"
-      [run]="start"
-      [showFps]="showFps"
-      (mousePressed)="addChemical($event)"
-    >
-    </feat-lazy-react-diff-p5-view>
-    <mat-card-actions>
-      <a mat-raised-button (click)="toggleRunSim()">{{
-        start ? 'Pause' : 'Run'
-      }}</a>
-      <a mat-raised-button color="accent" (click)="reset()">Reset</a>
-      <mat-checkbox
-        id="showFps"
-        type="checkbox"
-        name="showFps"
-        [(ngModel)]="showFps"
+    <mat-card-header>
+      <mat-card-title>Simulation</mat-card-title>
+      <mat-card-subtitle>Click to add fluid</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <feat-lazy-react-diff-p5-view
+        *ngIf="dimensions$ | async as dimensions"
+        [simWidth]="dimensions.width"
+        [simHeight]="dimensions.height"
+        [calcService]="calcService"
+        [run]="start"
+        [showFps]="showFps"
+        (mousePressed)="addChemical($event)"
       >
-        Show FPS
-      </mat-checkbox>
-    </mat-card-actions>
-    <mat-form-field class="small">
-      <input
-        matInput
-        id="width"
-        placeholder="width"
-        type="number"
-        step="1"
-        name="width"
-        min="1"
-        max="2000"
-        required="true"
-        [ngModel]="width"
-        (ngModelChange)="updateDimension($event, height)"
-      />
-    </mat-form-field>
-    <mat-form-field class="small">
-      <input
-        matInput
-        id="height"
-        placeholder="height"
-        type="number"
-        step="1"
-        name="height"
-        min="1"
-        max="2000"
-        required="true"
-        [ngModel]="height"
-        (ngModelChange)="updateDimension(width, $event)"
-      />
-    </mat-form-field>
-    <mat-form-field class="small" matTooltip="iterations per frame">
-      <input
-        matInput
-        id="speed"
-        placeholder="Speed"
-        type="number"
-        step="1"
-        name="speed"
-        min="1"
-        max="300"
-        required="true"
-        [disabled]="!useGpu"
-        [ngModel]="speed"
-        (ngModelChange)="updateSpeed($event)"
-      />
-    </mat-form-field>
-    <mat-form-field class="small">
-      <input
-        matInput
-        id="addChemicalRadius"
-        placeholder="Radius of chemical B on click"
-        type="number"
-        step="1"
-        name="addChemicalRadius"
-        min="1"
-        max="50"
-        required="true"
-        [(ngModel)]="addChemicalRadius"
-        (change)="updateAddChemicalRadius()"
-      />
-    </mat-form-field>
-    <mat-form-field class="small">
-      <input
-        matInput
-        id="numberThreads"
-        placeholder="web workers to calculate"
-        type="number"
-        step="1"
-        name="addChemicalRadius"
-        min="1"
-        max="16"
-        required="true"
-        [disabled]="useGpu"
-        [(ngModel)]="numberWebWorkers"
-        (change)="updateNumberOfWebWorkers()"
-      />
-    </mat-form-field>
-    <mat-slide-toggle [(ngModel)]="useGpu" (change)="updateUseGpu()">
-      Use gpu.js
-    </mat-slide-toggle>
-    <div *ngIf="showFps">
-      Calculation needs: {{ calculationTime$ | async }}ms
-    </div>
+      </feat-lazy-react-diff-p5-view>
+      <div class="sim-controls">
+        <a mat-raised-button (click)="toggleRunSim()">{{
+          start ? 'Pause' : 'Run'
+          }}</a>
+        <a mat-raised-button color="accent" (click)="reset()">Reset</a>
+        <mat-checkbox
+          id="showFps"
+          type="checkbox"
+          name="showFps"
+          [(ngModel)]="showFps"
+        >
+          Show FPS
+        </mat-checkbox>
+        <mat-slide-toggle [(ngModel)]="useGpu" (change)="updateUseGpu()">
+          Use gpu.js
+        </mat-slide-toggle>
+      </div>
+      <div class="sim-options">
+        <mat-form-field class="small">
+          <mat-label>
+            width
+          </mat-label>
+          <input
+            matInput
+            id="width"
+            type="number"
+            step="1"
+            name="width"
+            min="1"
+            max="2000"
+            required="true"
+            [ngModel]="width"
+            (ngModelChange)="updateDimension($event, height)"
+          />
+        </mat-form-field>
+        <mat-form-field class="small">
+          <mat-label>
+            height
+          </mat-label>
+          <input
+            matInput
+            id="height"
+            type="number"
+            step="1"
+            name="height"
+            min="1"
+            max="2000"
+            required="true"
+            [ngModel]="height"
+            (ngModelChange)="updateDimension(width, $event)"
+          />
+        </mat-form-field>
+        <mat-form-field class="small" matTooltip="iterations per frame">
+          <mat-label>speed</mat-label>
+          <input
+            matInput
+            id="speed"
+            type="number"
+            step="1"
+            name="speed"
+            min="1"
+            max="300"
+            required="true"
+            [disabled]="!useGpu"
+            [ngModel]="speed"
+            (ngModelChange)="updateSpeed($event)"
+          />
+        </mat-form-field>
+        <mat-form-field class="small">
+          <mat-label>Radius of chemical B on click</mat-label>
+          <input
+            matInput
+            id="addChemicalRadius"
+            type="number"
+            step="1"
+            name="addChemicalRadius"
+            min="1"
+            max="50"
+            required="true"
+            [(ngModel)]="addChemicalRadius"
+            (change)="updateAddChemicalRadius()"
+          />
+        </mat-form-field>
+        <mat-form-field class="small">
+          <mat-label>Web workers for calculate</mat-label>
+          <input
+            matInput
+            id="numberThreads"
+            type="number"
+            step="1"
+            name="addChemicalRadius"
+            min="1"
+            max="16"
+            required="true"
+            [disabled]="useGpu"
+            [(ngModel)]="numberWebWorkers"
+            (change)="updateNumberOfWebWorkers()"
+          />
+        </mat-form-field>
+      </div>
+      <div *ngIf="showFps">
+        Calculation needs: {{ calculationTime$ | async }}ms
+      </div>
+    </mat-card-content>
   </mat-card>
 
   <mat-card appearance="raised" wsSharedUiElevateCard class="parameters" *ngIf="calcParams">
-    <mat-card-title>Parameters</mat-card-title>
-    <mat-form-field class="small">
-      <input
-        matInput
-        id="diffRateA"
-        placeholder="Diffusion A"
-        type="number"
-        step="0.05"
-        name="diffRateA"
-        min="0.0"
-        max="1.0"
-        [(ngModel)]="calcParams.diffRateA"
-        (ngModelChange)="updateCalcParams(calcParams)"
-      />
-    </mat-form-field>
-    <mat-form-field>
-      <input
-        matInput
-        id="diffRateB"
-        placeholder="Diffusion B"
-        type="number"
-        step="0.05"
-        name="diffRateB"
-        min="0.0"
-        max="1.0"
-        [(ngModel)]="calcParams.diffRateB"
-        (ngModelChange)="updateCalcParams(calcParams)"
-      />
-    </mat-form-field>
-    <mat-form-field>
-      <input
-        matInput
-        id="feedRate"
-        placeholder="Feed rate"
-        type="number"
-        step="0.001"
-        name="feedRate"
-        min="0.000"
-        max="1.000"
-        [(ngModel)]="calcParams.feedRate"
-        (ngModelChange)="updateCalcParams(calcParams)"
-      />
-    </mat-form-field>
-    <mat-form-field>
-      <input
-        matInput
-        id="killRate"
-        placeholder="Kill Rate"
-        type="number"
-        step="0.001"
-        name="killRate"
-        min="0.000"
-        max="1.000"
-        [(ngModel)]="calcParams.killRate"
-        (ngModelChange)="updateCalcParams(calcParams)"
-      />
-    </mat-form-field>
-    <br />
-    <mat-select
-      placeholder="Example parameter config"
-      [(ngModel)]="selectedExample"
-      (selectionChange)="setSelection($event)"
-    >
-      <mat-option *ngFor="let example of examples" [value]="example">
-        {{ example }}
-      </mat-option>
-    </mat-select>
+    <mat-card-header>
+      <mat-card-title>Parameters</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-form-field class="small">
+        <mat-label>Diffusion A</mat-label>
+        <input
+          matInput
+          id="diffRateA"
+          type="number"
+          step="0.05"
+          name="diffRateA"
+          min="0.0"
+          max="1.0"
+          [(ngModel)]="calcParams.diffRateA"
+          (ngModelChange)="updateCalcParams(calcParams)"
+        />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Diffusion B</mat-label>
+        <input
+          matInput
+          id="diffRateB"
+          placeholder="Diffusion B"
+          type="number"
+          step="0.05"
+          name="diffRateB"
+          min="0.0"
+          max="1.0"
+          [(ngModel)]="calcParams.diffRateB"
+          (ngModelChange)="updateCalcParams(calcParams)"
+        />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Feed rate</mat-label>
+        <input
+          matInput
+          id="feedRate"
+          placeholder="Feed rate"
+          type="number"
+          step="0.001"
+          name="feedRate"
+          min="0.000"
+          max="1.000"
+          [(ngModel)]="calcParams.feedRate"
+          (ngModelChange)="updateCalcParams(calcParams)"
+        />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Kill Rate</mat-label>
+        <input
+          matInput
+          id="killRate"
+          placeholder="Kill Rate"
+          type="number"
+          step="0.001"
+          name="killRate"
+          min="0.000"
+          max="1.000"
+          [(ngModel)]="calcParams.killRate"
+          (ngModelChange)="updateCalcParams(calcParams)"
+        />
+      </mat-form-field>
+      <br />
+      <mat-select
+        placeholder="Example parameter config"
+        [(ngModel)]="selectedExample"
+        (selectionChange)="setSelection($event)"
+      >
+        <mat-option *ngFor="let example of examples" [value]="example">
+          {{ example }}
+        </mat-option>
+      </mat-select>
+    </mat-card-content>
   </mat-card>
   <feat-lazy-react-diff-weights-config
     class="weights-config"
@@ -199,9 +216,13 @@
     (weightsChanged)="updateWeights($event)"
   ></feat-lazy-react-diff-weights-config>
   <mat-card appearance="raised" wsSharedUiElevateCard>
-    <mat-card-title> Reset parameters and weights</mat-card-title>
-    <button (click)="resetParametersWeights()" color="accent" mat-raised-button>
-      Set parameters to default
-    </button>
+    <mat-card-header>
+      <mat-card-title> Reset parameters and weights</mat-card-title>
+    </mat-card-header>
+    <mat-card-actions>
+      <button (click)="resetParametersWeights()" color="accent" mat-raised-button>
+        Set parameters to default
+      </button>
+    </mat-card-actions>
   </mat-card>
 </section>
