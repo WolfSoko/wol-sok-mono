@@ -1,32 +1,32 @@
 <mat-card appearance="raised" wsSharedUiElevateCard class="gpu-card">
-  <mat-card-title>
+  <mat-card-header>
     <mat-card-title>An example utilizing gpu.js</mat-card-title>
     <mat-card-subtitle>
       No complicated shader code needed for this. Use toggle to switch between
       GPU and CPU rendering.
     </mat-card-subtitle>
-  </mat-card-title>
-  <div class="canvas-with-fps">
-    <div
-      #gpuCanvasContainer
-      class="canvas-container"
-      (wsSharedUiElemResized)="updateCanvasSize($event)"
-      [debounceTime]="500"
-    ></div>
-    <ws-shared-ui-show-fps
-      class="fps"
-      [fps]="(fps$ | async) ?? 0"
-      [show]="true"
-    ></ws-shared-ui-show-fps>
-  </div>
-  <div>
-    Calculation time with
-    {{ additionForm.get('useGPU')?.value ? 'GPU' : 'CPU' }} :
-    {{ calculationTime$ | async }}ms
-  </div>
+  </mat-card-header>
   <mat-card-content>
+    <div class="canvas-with-fps">
+      <div
+        #gpuCanvasContainer
+        class="canvas-container"
+        (wsSharedUiElemResized)="updateCanvasSize($event)"
+        [debounceTime]="500"
+      ></div>
+      <ws-shared-ui-show-fps
+        class="fps"
+        [fps]="(fps$ | async) ?? 0"
+        [show]="true"
+      ></ws-shared-ui-show-fps>
+    </div>
+    <div>
+      Calculation time with
+      {{ additionForm.controls.useGPU.value ? 'GPU' : 'CPU' }} :
+      {{ calculationTime$ | async }}ms
+    </div>
     <form class="gpu-form" [formGroup]="additionForm" novalidate>
-      <div class="full-width">
+      <div class="slider-grid">
         <span>Red</span>
         <mat-slider
           class="red-color-slider"
@@ -34,13 +34,11 @@
           min="0"
           max="255"
           color="warn"
-          ><input matSliderThumb formControlName="r" />
+        ><input matSliderThumb formControlName="r" />
         </mat-slider>
-        <mat-chip-option class="value-of-slider" color="warn">{{
-          additionForm.get('r')?.value
-        }}</mat-chip-option>
-      </div>
-      <div class="full-width">
+        <span class="value-of-slider mat-caption">{{
+          additionForm.controls.r.value
+          }}</span>
         <span>Green</span>
         <mat-slider
           class="green-color-slider"
@@ -48,13 +46,11 @@
           min="0"
           max="255"
           color="warn"
-          ><input matSliderThumb formControlName="g" />
+        ><input matSliderThumb formControlName="g" />
         </mat-slider>
-        <mat-chip-option class="value-of-slider" color="warn">{{
-          additionForm.get('g')?.value
-        }}</mat-chip-option>
-      </div>
-      <div class="full-width">
+        <span class="value-of-slider mat-caption">{{
+          additionForm.controls.g.value
+          }}</span>
         <span>Blue</span>
         <mat-slider
           class="blue-color-slider"
@@ -62,35 +58,31 @@
           min="0"
           max="255"
           color="warn"
-          ><input matSliderThumb formControlName="b" />
+        ><input matSliderThumb formControlName="b" />
         </mat-slider>
-        <mat-chip-option class="value-of-slider" color="warn">{{
-          additionForm.get('b')?.value
-        }}</mat-chip-option>
-      </div>
-      <div class="full-width">
+        <span class="value-of-slider mat-caption">{{
+          additionForm.controls.b.value
+          }}</span>
         <span>Repetition</span>
-        <mat-slider discrete min="1" max="100"
-          ><input matSliderThumb formControlName="repetition" />
+        <mat-slider discrete min="1" max="30">
+          <input matSliderThumb formControlName="repetition" />
         </mat-slider>
-        <mat-chip-option color="accent" class="value-of-slider">{{
-          additionForm.get('repetition')?.value
-        }}</mat-chip-option>
-      </div>
-      <div class="full-width">
+        <span class="value-of-slider mat-caption">{{
+          additionForm.controls.repetition.value
+          }}</span>
         <span>Speed</span>
-        <mat-slider discrete min="1" max="100"
-          ><input matSliderThumb formControlName="speed" />
+        <mat-slider discrete min="1" max="100" [displayWith]="formatSpeed"
+        ><input matSliderThumb formControlName="speed" />
         </mat-slider>
-        <mat-chip-option class="value-of-slider" color="accent"
-          >{{ additionForm.get('speed')?.value }}%
-        </mat-chip-option>
+        <span class="value-of-slider mat-caption"
+        >{{ formatSpeed(additionForm.controls.speed.value) }}
+        </span>
+        <mat-slide-toggle class="use-gpu-toggle" formControlName="useGPU">
+          {{
+          additionForm.controls.useGPU.value ? 'GPU is used' : 'GPU is not used'
+          }}
+        </mat-slide-toggle>
       </div>
-      <mat-slide-toggle formControlName="useGPU">
-        {{
-          additionForm.get('useGPU')?.value ? 'GPU is used' : 'GPU is not used'
-        }}
-      </mat-slide-toggle>
     </form>
   </mat-card-content>
 </mat-card>

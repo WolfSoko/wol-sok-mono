@@ -1,17 +1,18 @@
+@use 'sass:color';
+
 @mixin mat-slider-color-mixin($color) {
-  /* TODO(mdc-migration): The following rule targets internal classes of slider that may no longer apply for the MDC version. */
-  /* TODO(mdc-migration): The following rule targets internal classes of slider that may no longer apply for the MDC version. */
-  .mat-slider-track-wrapper {
-    /* TODO(mdc-migration): The following rule targets internal classes of slider that may no longer apply for the MDC version. */
-    .mat-slider-track-fill {
-      background-color: $color;
-    }
-  }
-  /* TODO(mdc-migration): The following rule targets internal classes of slider that may no longer apply for the MDC version. */
-  .mat-slider-thumb,
-  .mat-slider-thumb-label {
-    background-color: $color;
-  }
+
+  $hover-ripple: color.change($color, $alpha: 0.05);
+  $focus-ripple: color.change($color, $alpha: 0.2);
+
+  --mdc-slider-handle-color: #{$color};
+  --mdc-slider-focus-handle-color: #{$color};
+  --mdc-slider-hover-handle-color: #{$color};
+  --mdc-slider-active-track-color: #{$color};
+  --mdc-slider-inactive-track-color: #{$color};
+  --mat-mdc-slider-ripple-color: #{$color};
+  --mat-mdc-slider-hover-ripple-color: #{$hover-ripple};
+  --mat-mdc-slider-focus-ripple-color: #{$focus-ripple};
 }
 
 :host {
@@ -20,7 +21,7 @@
       position: relative;
 
       .canvas-container {
-        width: 100%;
+        width: calc(100% - 30px);
         overflow: hidden;
 
         canvas {
@@ -37,22 +38,26 @@
 
     .gpu-form {
       min-width: 150px;
-      max-width: 500px;
+      max-width: 450px;
       width: 100%;
     }
 
-    .full-height {
-      min-height: 500px;
-      height: 100%;
-      max-height: 500px;
+    .slider-grid {
+      display: grid;
+      width: 100%;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      justify-content: left;
+      gap: 1rem;
     }
 
-    .full-width {
-      width: 100%;
+    .use-gpu-toggle{
+      grid-column: 1 / 3;
     }
 
     .value-of-slider {
       display: inline-block;
+      min-width: 5ch;
     }
 
     .number-input-width {
@@ -60,17 +65,15 @@
     }
   }
 
-  ::ng-deep {
-    .red-color-slider {
-      @include mat-slider-color-mixin(red);
-    }
+  .red-color-slider {
+    @include mat-slider-color-mixin($color: red);
+  }
 
-    .green-color-slider {
-      @include mat-slider-color-mixin(#00ff00);
-    }
+  .green-color-slider {
+    @include mat-slider-color-mixin($color: lime);
+  }
 
-    .blue-color-slider {
-      @include mat-slider-color-mixin(blue);
-    }
+  .blue-color-slider {
+    @include mat-slider-color-mixin(blue);
   }
 }
