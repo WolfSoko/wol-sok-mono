@@ -1,16 +1,24 @@
 import { Injectable } from '@angular/core';
 import { ID, transaction } from '@datorama/akita';
-import { animationFrameScheduler, defer, Observable, of, queueScheduler, range, timer } from 'rxjs';
-import { map, reduce, switchMapTo, tap } from 'rxjs/operators';
+import {
+  animationFrameScheduler,
+  defer,
+  Observable,
+  of,
+  queueScheduler,
+  range,
+  timer,
+} from 'rxjs';
+import { map, reduce, switchMap, tap } from 'rxjs/operators';
 import {
   createPerformanceTest,
   createPerformanceTestResult,
   PerformanceTest,
-  PerformanceTestResults
+  PerformanceTestResults,
 } from './performance-test.model';
 import { PerformanceTestStore } from './performance-test.store';
 
-export const ARRAY_ITEMS_LENGTH = 15000000;
+export const ARRAY_ITEMS_LENGTH = 30_000_000;
 
 const calcMeanTime = (
   previousValue: number,
@@ -53,7 +61,7 @@ export class PerformanceTestService {
     const test$: Observable<PerformanceTestResults> =
       performanceTest.id === 0 ? this.createArrayTest() : this.createRxTest();
     return timer(10, animationFrameScheduler).pipe(
-      switchMapTo(test$),
+      switchMap(() => test$),
       tap((result: PerformanceTestResults) => {
         this.update(performanceTest.id, {
           result,
@@ -72,14 +80,10 @@ export class PerformanceTestService {
   private createArrayTest(): Observable<PerformanceTestResults> {
     return defer(() => {
       performance.mark('startMark');
-      const testArray: number[] = [];
-      for (let i = 0; i < ARRAY_ITEMS_LENGTH; i++) {
-        testArray.push(i);
-      }
+      const testArray = Array.from(Array(ARRAY_ITEMS_LENGTH).keys());
       performance.mark('arrayCreationEndMark');
       testArray.reduce(
-        (previousValue, currentValue) => previousValue + currentValue,
-        0
+        (previousValue, currentValue) => previousValue + currentValue
       );
       performance.mark('endMark');
       performance.measure('arrayCreation', 'startMark', 'arrayCreationEndMark');
@@ -101,7 +105,7 @@ export class PerformanceTestService {
 
   private createRxTest(): Observable<PerformanceTestResults> {
     performance.mark('startMark');
-    const performanceTest$ = range(0, ARRAY_ITEMS_LENGTH, queueScheduler).pipe(
+    return range(0, ARRAY_ITEMS_LENGTH, queueScheduler).pipe(
       reduce((previousValue, currentValue) => previousValue + currentValue, 0),
       tap(() => {
         performance.mark('endMark');
@@ -113,19 +117,5 @@ export class PerformanceTestService {
         return [createPerformanceTestResult('complete time', completeTime)];
       })
     );
-    return performanceTest$;
-  }
-
-  private addToProgress(
-    performanceTest: PerformanceTest,
-    progressMs: number
-  ): void {
-    const duration = performanceTest.ui?.duration ?? 1;
-    this.update(performanceTest.id, {
-      ui: {
-        duration,
-        progress: Math.min((progressMs * 100) / duration, 100),
-      },
-    });
   }
 }
