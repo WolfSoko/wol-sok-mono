@@ -1,4 +1,4 @@
-<mat-card wsSharedUiElevateCard class="gpu-card">
+<mat-card appearance="outlined" wsSharedUiElevateCard class="gpu-card">
   <mat-card-title>
     <mat-card-title>An example utilizing gpu.js</mat-card-title>
     <mat-card-subtitle>
@@ -30,72 +30,67 @@
         <span>Red</span>
         <mat-slider
           class="red-color-slider"
-          thumbLabel="true"
           min="0"
           max="255"
           color="warn"
           formControlName="r"
-        >
+        ><input matSliderThumb />
         </mat-slider>
-        <mat-chip class="value-of-slider" color="warn">{{
+        <mat-chip-option class="value-of-slider" color="warn">{{
           additionForm.get('r')?.value
-        }}</mat-chip>
+        }}</mat-chip-option>
       </div>
       <div class="full-width">
         <span>Green</span>
         <mat-slider
           class="green-color-slider"
-          [thumbLabel]="true"
           min="0"
           max="255"
           color="warn"
           formControlName="g"
-        >
+        ><input matSliderThumb />
         </mat-slider>
-        <mat-chip class="value-of-slider" color="warn">{{
+        <mat-chip-option class="value-of-slider" color="warn">{{
           additionForm.get('g')?.value
-        }}</mat-chip>
+        }}</mat-chip-option>
       </div>
       <div class="full-width">
         <span>Blue</span>
         <mat-slider
           class="blue-color-slider"
-          [thumbLabel]="true"
           min="0"
           max="255"
           color="warn"
           formControlName="b"
-        >
+        ><input matSliderThumb />
         </mat-slider>
-        <mat-chip class="value-of-slider" color="warn">{{
+        <mat-chip-option class="value-of-slider" color="warn">{{
           additionForm.get('b')?.value
-        }}</mat-chip>
+        }}</mat-chip-option>
       </div>
       <div class="full-width">
         <span>Repetition</span>
         <mat-slider
-          [thumbLabel]="true"
           min="1"
           max="100"
           formControlName="repetition"
-        >
+        ><input matSliderThumb />
         </mat-slider>
-        <mat-chip color="accent" class="value-of-slider">{{
+        <mat-chip-option color="accent" class="value-of-slider">{{
           additionForm.get('repetition')?.value
-        }}</mat-chip>
+        }}</mat-chip-option>
       </div>
       <div class="full-width">
         <span>Speed</span>
         <mat-slider
-          [thumbLabel]="true"
           min="1"
           max="100"
           formControlName="speed"
-        >
+        ><input matSliderThumb />
         </mat-slider>
-        <mat-chip class="value-of-slider" color="accent"
+        <mat-chip-option class="value-of-slider" color="accent"
           >{{ additionForm.get('speed')?.value }}%
-        </mat-chip>
+        </mat-chip-option>
       </div>
       <mat-slide-toggle formControlName="useGPU">
         {{

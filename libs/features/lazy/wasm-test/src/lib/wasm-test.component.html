@@ -1,6 +1,7 @@
 <ng-container *ngIf="vm$ | async as vm">
   <mat-toolbar> Web Assembly Examples</mat-toolbar>
   <mat-card
+    appearance="outlined"
     *ngIf="(isLoading$ | async) === false; else loading"
     class="web-assembly-card"
   >
