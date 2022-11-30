@@ -1,4 +1,4 @@
-@dataCardMinWidth: 470px;
+$dataCardMinWidth: 470px;
 
 .perceptron-canvas {
   width: 100%;
@@ -9,13 +9,13 @@
   margin: 1rem;
   display: grid;
   grid-gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(@dataCardMinWidth, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax($dataCardMinWidth, 1fr));
   justify-content: start;
   align-content: start;
 }
 
 .data-card {
-  min-width: @dataCardMinWidth;
+  min-width: $dataCardMinWidth;
   grid-row-start: 1;
   /* autoprefixer: off */
   grid-row-end: 3;

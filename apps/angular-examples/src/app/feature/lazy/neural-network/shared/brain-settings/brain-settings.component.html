@@ -1,9 +1,11 @@
 <mat-card appearance="outlined" wsSharedUiElevateCard class="brain-settings-card">
-  <mat-card-title>
-    Brain Settings
-  </mat-card-title>
-  <mat-card-subtitle>Train, create data, reset</mat-card-subtitle>
-  <mat-card-content>
+  <mat-card-header>
+    <mat-card-title>
+      Brain Settings
+    </mat-card-title>
+    <mat-card-subtitle>Train, create data, reset</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-actions class="brain-settings-card-actions">
     <button mat-raised-button color="accent" (click)="train()">Train 10 Points</button>
     <button mat-raised-button color="accent" (click)="testAgainstNewData()">Test against new data
     </button>
@@ -19,5 +21,5 @@
             (click)="clearPoints()">
       Clear Points
     </button>
-  </mat-card-content>
+  </mat-card-actions>
 </mat-card>

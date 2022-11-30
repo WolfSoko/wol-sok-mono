@@ -239,6 +239,8 @@ $altTheme: (
   @include mat.all-component-colors((color: $altTheme, typography: $fontConfig));
 }
 
+@include mat.typography-hierarchy((typography: $fontConfig));
+
 // Specific component overrides, pieces that are not in line with the general theming
 
 // Handle buttons appropriately, with respect to line-height
