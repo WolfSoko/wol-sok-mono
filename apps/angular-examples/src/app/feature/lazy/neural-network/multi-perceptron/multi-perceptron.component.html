@@ -1,4 +1,4 @@
-<div class="perceptrons-container">
+<div class="perceptron-container">
   <mat-card>
     <mat-card-header>
       <mat-card-subtitle>Data</mat-card-subtitle>
@@ -15,7 +15,7 @@
     </mat-card-header>
     <mat-card-content>
       <div>Learnrate: {{learnRate}}, learned data points: {{learnedDataPoints}}</div>
-      <ng-container *ngFor="let perceptron of inputPerceptrons">
+      <ng-container *ngFor="let perceptron of inputPerceptron">
         <app-perceptron [perceptron]="perceptron" [canvasWidth]="200" [canvasHeight]="200"></app-perceptron>
       </ng-container>
     </mat-card-content>
@@ -26,7 +26,7 @@
     </mat-card-header>
     <mat-card-content>
       <div>Learnrate: {{learnRate}}, learned data points: {{learnedDataPoints}}</div>
-      <ng-container *ngFor="let perceptron of hiddenPerceptrons">
+      <ng-container *ngFor="let perceptron of hiddenPerceptron">
         <app-perceptron [perceptron]="perceptron" [canvasWidth]="200" [canvasHeight]="200"></app-perceptron>
       </ng-container>
     </mat-card-content>
@@ -39,5 +39,5 @@
       <app-perceptron [perceptron]="outputPerceptron" [canvasWidth]="200" [canvasHeight]="200"></app-perceptron>
     </mat-card-content>
   </mat-card>
-  <app-brain-settings [perceptronLayers]="perceptronsPerLayer"></app-brain-settings>
+  <app-brain-settings [perceptronLayers]="perceptronPerLayer"></app-brain-settings>
 </div>
