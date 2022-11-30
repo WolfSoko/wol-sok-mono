@@ -43,12 +43,13 @@ export function createImageDataFromBacterias(
     const bacterium = bacterias[i];
     const { x, y, energy } = bacterium;
     const data8index = (y * width + x) * 4;
-    const [r, g, b] = color;
+    const [r, g, b, alpha] = color;
     data8[data8index] = r; // r
     data8[data8index + 1] = g; // g
     data8[data8index + 2] = b; // b
-    data8[data8index + 3] = Math.min(energy * energy * 255, 255); // alpha
+    data8[data8index + 3] = Math.min(energy * energy * alpha, alpha); // alpha
   }
+
   return data8;
 }
 
