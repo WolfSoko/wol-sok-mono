@@ -30,11 +30,11 @@
         <span>Red</span>
         <mat-slider
           class="red-color-slider"
+          discrete
           min="0"
           max="255"
           color="warn"
-          formControlName="r"
-        ><input matSliderThumb />
+          ><input matSliderThumb formControlName="r" />
         </mat-slider>
         <mat-chip-option class="value-of-slider" color="warn">{{
           additionForm.get('r')?.value
@@ -44,11 +44,11 @@
         <span>Green</span>
         <mat-slider
           class="green-color-slider"
+          discrete
           min="0"
           max="255"
           color="warn"
-          formControlName="g"
-        ><input matSliderThumb />
+          ><input matSliderThumb formControlName="g" />
         </mat-slider>
         <mat-chip-option class="value-of-slider" color="warn">{{
           additionForm.get('g')?.value
@@ -58,11 +58,11 @@
         <span>Blue</span>
         <mat-slider
           class="blue-color-slider"
+          discrete
           min="0"
           max="255"
           color="warn"
-          formControlName="b"
-        ><input matSliderThumb />
+          ><input matSliderThumb formControlName="b" />
         </mat-slider>
         <mat-chip-option class="value-of-slider" color="warn">{{
           additionForm.get('b')?.value
@@ -70,11 +70,8 @@
       </div>
       <div class="full-width">
         <span>Repetition</span>
-        <mat-slider
-          min="1"
-          max="100"
-          formControlName="repetition"
-        ><input matSliderThumb />
+        <mat-slider discrete min="1" max="100"
+          ><input matSliderThumb formControlName="repetition" />
         </mat-slider>
         <mat-chip-option color="accent" class="value-of-slider">{{
           additionForm.get('repetition')?.value
@@ -82,11 +79,8 @@
       </div>
       <div class="full-width">
         <span>Speed</span>
-        <mat-slider
-          min="1"
-          max="100"
-          formControlName="speed"
-        ><input matSliderThumb />
+        <mat-slider discrete min="1" max="100"
+          ><input matSliderThumb formControlName="speed" />
         </mat-slider>
         <mat-chip-option class="value-of-slider" color="accent"
           >{{ additionForm.get('speed')?.value }}%
