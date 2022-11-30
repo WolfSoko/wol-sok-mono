@@ -1,5 +1,5 @@
 import { NgModule, Optional, SkipSelf } from '@angular/core';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatLegacySnackBarModule as MatSnackBarModule } from '@angular/material/legacy-snack-bar';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { AkitaNgRouterStoreModule } from '@datorama/akita-ng-router-store';

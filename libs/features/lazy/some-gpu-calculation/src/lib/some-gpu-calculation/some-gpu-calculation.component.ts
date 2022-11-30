@@ -13,10 +13,10 @@ import {
   UntypedFormGroup,
   Validators,
 } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatSliderModule } from '@angular/material/slider';
+import { MatLegacyCardModule as MatCardModule } from '@angular/material/legacy-card';
+import { MatLegacyChipsModule as MatChipsModule } from '@angular/material/legacy-chips';
+import { MatLegacySlideToggleModule as MatSlideToggleModule } from '@angular/material/legacy-slide-toggle';
+import { MatLegacySliderModule as MatSliderModule } from '@angular/material/legacy-slider';
 import {
   ElemResizedDirective,
   ElevateCardDirective,

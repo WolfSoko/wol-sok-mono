@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
+import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
+import { MatLegacyCardModule as MatCardModule } from '@angular/material/legacy-card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatLegacyProgressSpinnerModule as MatProgressSpinnerModule } from '@angular/material/legacy-progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatSliderModule } from '@angular/material/slider';
+import { MatLegacySliderModule as MatSliderModule } from '@angular/material/legacy-slider';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { ElemResizedDirective } from '@wolsok/ui-kit';
 import { CircleAnalysisComponent } from './circle-analysis/circle-analysis.component';

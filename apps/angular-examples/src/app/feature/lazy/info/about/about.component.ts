@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
-import { MatListModule } from '@angular/material/list';
+import { MatLegacyCardModule as MatCardModule } from '@angular/material/legacy-card';
+import { MatLegacyListModule as MatListModule } from '@angular/material/legacy-list';
 import { Router } from '@angular/router';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { MainNavRoute } from '../../../../app-routing.module';

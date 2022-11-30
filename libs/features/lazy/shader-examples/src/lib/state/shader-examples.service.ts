@@ -1,6 +1,6 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Injectable } from '@angular/core';
-import { PageEvent } from '@angular/material/paginator';
+import { LegacyPageEvent as PageEvent } from '@angular/material/legacy-paginator';
 import { transaction as Transaction } from '@datorama/akita';
 import { EMPTY, Subject, throwError, TimeoutError } from 'rxjs';
 import {

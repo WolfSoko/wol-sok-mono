@@ -8,7 +8,7 @@ import {
   OnChanges,
   ViewChild,
 } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
+import { MatLegacyCardModule as MatCardModule } from '@angular/material/legacy-card';
 import { Tensor } from '@tensorflow/tfjs';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { DataDrawerService } from './data-drawer.service';

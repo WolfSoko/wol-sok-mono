@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import {ChangeDetectionStrategy, Component} from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
+import { MatLegacyCardModule as MatCardModule } from '@angular/material/legacy-card';
 import { RouterModule } from '@angular/router';
 import { AboutComponent } from './about/about.component';
 import {Technology} from './technology';

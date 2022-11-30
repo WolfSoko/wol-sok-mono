@@ -1,6 +1,6 @@
 import { animate, keyframes, transition, trigger } from '@angular/animations';
 import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
-import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { MatLegacyPaginator as MatPaginator, LegacyPageEvent as PageEvent } from '@angular/material/legacy-paginator';
 import { combineLatest, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {

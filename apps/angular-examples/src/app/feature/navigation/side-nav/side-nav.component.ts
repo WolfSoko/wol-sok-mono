@@ -11,7 +11,7 @@ import {
   ViewContainerRef,
   ViewEncapsulation,
 } from '@angular/core';
-import { MatListModule } from '@angular/material/list';
+import { MatLegacyListModule as MatListModule } from '@angular/material/legacy-list';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { LetDirective } from '@wolsok/ui-kit';
 import {
