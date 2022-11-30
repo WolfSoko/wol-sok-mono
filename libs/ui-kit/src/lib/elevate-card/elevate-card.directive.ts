@@ -24,9 +24,10 @@ interface ElevateCardChanges extends SimpleChanges {
 })
 export class ElevateCardDirective implements OnChanges {
   private static elevationClass = 'mat-elevation-z';
+  private static specificityClass = 'mat-mdc-elevation-specific';
   private static defaultElevationLevel = 10;
 
-  @Input() elevationLevel!: number;
+  @Input() elevationLevel = ElevateCardDirective.defaultElevationLevel;
 
   constructor(
     private readonly el: ElementRef,
@@ -54,6 +55,10 @@ export class ElevateCardDirective implements OnChanges {
   }
 
   private addRaiseClass(raiseClass: string = this.getRaiseClass()): void {
+    this.renderer.addClass(
+      this.el.nativeElement,
+      ElevateCardDirective.specificityClass
+    );
     this.renderer.addClass(this.el.nativeElement, raiseClass);
   }
 
@@ -66,12 +71,13 @@ export class ElevateCardDirective implements OnChanges {
 
   private removeRaiseClass(raiseClass: string = this.getRaiseClass()): void {
     this.renderer.removeClass(this.el.nativeElement, raiseClass);
+    this.renderer.removeClass(
+      this.el.nativeElement,
+      ElevateCardDirective.specificityClass
+    );
   }
 
-  private getRaiseClass(
-    raiseLevel: number = this.elevationLevel ??
-      ElevateCardDirective.defaultElevationLevel
-  ) {
+  private getRaiseClass(raiseLevel: number = this.elevationLevel) {
     return ElevateCardDirective.elevationClass + raiseLevel;
   }
 }

@@ -1,5 +1,6 @@
 :host {
   height: 100%;
+
   .thanos-container {
     height: 100%;
   }
@@ -12,9 +13,7 @@
     padding-bottom: 1.5rem;
 
     .tech-image {
-      padding-left: 2rem;
-      padding-right: 2rem;
-      max-height: 200px;
+      object-fit: contain;
     }
   }
 }
