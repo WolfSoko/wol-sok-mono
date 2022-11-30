@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { IsAuthenticatedGuard } from '@wolsok/feat-api-auth';
 import { ShaderExamplesComponent } from './shader-examples.component';
 
-const routes: Routes = [
+const shaderExamplesRoutingModule: Routes = [
   {
     path: '',
     component: ShaderExamplesComponent,
@@ -12,7 +12,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forChild(routes)],
+  imports: [RouterModule.forChild(shaderExamplesRoutingModule)],
   exports: [RouterModule],
 })
 export class ShaderExamplesRoutingModule {}
