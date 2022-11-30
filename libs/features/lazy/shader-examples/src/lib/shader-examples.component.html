@@ -1,5 +1,5 @@
 <ng-container *ngIf="viewModel$ | async as vm">
-  <mat-card appearance="outlined" class="title">
+  <mat-card appearance="raised" class="title">
     <mat-card-title>
       Some WebGl Shader Examples inspired by&nbsp;
       <a target="_blank" href="https://thebookofshaders.com"
@@ -22,7 +22,7 @@
   </ng-container>
   <ng-template #shadersContainer>
     <mat-card
-      appearance="outlined"
+      appearance="raised"
       class="shaders-container"
       (swipeleft)="nextPage()"
       (swiperight)="previousPage()"
