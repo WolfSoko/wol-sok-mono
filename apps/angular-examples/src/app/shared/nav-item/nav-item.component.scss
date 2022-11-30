@@ -2,7 +2,7 @@
   transition: color 250ms ease;
 
   .active {
-    .arrow-icon .link-text, .sub-title {
+    .arrow-icon, .link-text, .sub-title {
       color: var(--active-color, #69f0ae);
     }
   }
