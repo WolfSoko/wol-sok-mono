@@ -1,7 +1,10 @@
 :host {
   transition: color 250ms ease;
+
   .active {
-    color: var(--active-color, #69f0ae);
+    .arrow-icon .link-text, .sub-title {
+      color: var(--active-color, #69f0ae);
+    }
   }
 
   .sub-title {
