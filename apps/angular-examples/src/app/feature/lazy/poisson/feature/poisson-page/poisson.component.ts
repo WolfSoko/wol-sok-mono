@@ -1,12 +1,28 @@
+import { CommonModule } from '@angular/common';
 import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
-import {PoissonCalcService} from './poisson-calc.service';
-import {Vector} from './shared/vector';
+import { MatCardModule } from '@angular/material/card';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { ElevateCardDirective } from '@wolsok/ui-kit';
+import {PoissonCalcService} from '../../domain/poisson-calc.service';
+import {Vector} from '../../domain/model/vector';
+import { SimControlsComponent } from '../sim-controls/sim-controls.component';
+import { CanvasViewComponent } from '../canvas-view/canvas-view.component';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatCardModule,
+    CanvasViewComponent,
+    MatToolbarModule,
+    ElevateCardDirective,
+    SimControlsComponent,
+  ],
   selector: 'app-poisson',
   templateUrl: './poisson.component.html',
-  styleUrls: ['./poisson.component.css'],
+  styleUrls: ['./poisson.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [PoissonCalcService]
 })
 export class PoissonComponent implements OnInit {
   canvasWidth = 600;

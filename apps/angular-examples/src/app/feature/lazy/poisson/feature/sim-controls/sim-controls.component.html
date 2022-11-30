@@ -1,0 +1,32 @@
+<mat-card appearance="raised" wsSharedUiElevateCard *ngIf="config$ | async as config">
+  <mat-card-header>
+    <mat-card-title>Configs</mat-card-title>
+  </mat-card-header>
+  <mat-card-content class="configs">
+    <mat-form-field>
+      <mat-label>Min Radius between points</mat-label>
+      <input matInput id="radius" type="number" step="0.1" name="radius"
+             min="1.0" [ngModel]="config.r"
+             (ngModelChange)=radiusChanged($event)>
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Samples per iteration</mat-label>
+      <input matInput id="samples" type="number" name="samples" min="1"
+             [ngModel]="config.k"
+             (ngModelChange)=kChanged($event)>
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Iterations per frame</mat-label>
+      <input matInput id="iterationsPerFrame" type="number"
+             name="iterationsPerFrame"
+             min="1"
+             [ngModel]="config.iterationsPerFrame"
+             (ngModelChange)=iterationsPerFrameChanged($event)>
+    </mat-form-field>
+  </mat-card-content>
+  <mat-card-actions>
+    <button mat-raised-button (click)="togglePlay()">{{play ? 'Pause' : 'Play'}}</button>
+    <button mat-raised-button color="accent" (click)="reset()">Reset</button>
+  </mat-card-actions>
+</mat-card>
+
