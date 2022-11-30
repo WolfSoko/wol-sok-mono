@@ -12,29 +12,29 @@ export class MultiPerceptronComponent implements OnInit {
 
   width = 300;
   height = 300;
-  perceptronsPerLayer = [2, 3, 1];
+  perceptronPerLayer = [2, 3, 1];
 
   constructor(private brainService: BrainService) {
   }
 
   ngOnInit() {
-    this.brainService.createMultiPerceptron(2, this.perceptronsPerLayer);
+    this.brainService.createMultiPerceptron(2, this.perceptronPerLayer);
   }
 
-  get perceptrons() {
+  get perceptron() {
     return this.brainService.perceptrons;
   }
 
-  get inputPerceptrons() {
-    return this.perceptrons[0];
+  get inputPerceptron() {
+    return this.perceptron[0];
   }
 
-  get hiddenPerceptrons() {
-    return this.perceptrons[1];
+  get hiddenPerceptron() {
+    return this.perceptron[1];
   }
 
   get outputPerceptron() {
-    return this.perceptrons[this.perceptrons.length - 1][0];
+    return this.perceptron[this.perceptron.length - 1][0];
   }
 
   get learnedDataPoints() {
