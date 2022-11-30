@@ -60,7 +60,7 @@ interface Dimensions {
   ],
   selector: 'feat-lazy-react-diff-reaction-diff',
   templateUrl: './reaction-diff.component.html',
-  styleUrls: ['./reaction-diff.component.less'],
+  styleUrls: ['./reaction-diff.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReactionDiffComponent implements OnInit, OnDestroy {

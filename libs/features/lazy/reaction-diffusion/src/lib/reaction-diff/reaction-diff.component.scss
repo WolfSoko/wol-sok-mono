@@ -12,13 +12,20 @@
   padding-top: 0.5rem;
 }
 
-mat-form-field {
-  flex: auto;
-  width: 70px;
-}
-
 app-weights-config {
   flex: 1 1 340px;
+}
+
+.sim-controls, .sim-options{
+  display: flex;
+  padding: 1rem;
+  gap: 1rem;
+  justify-content: start;
+  align-items: center;
+}
+
+.sim-options {
+  flex-wrap: wrap;
 }
 
 .parameters {
