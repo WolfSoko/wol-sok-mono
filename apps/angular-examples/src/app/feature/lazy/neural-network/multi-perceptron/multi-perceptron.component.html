@@ -2,7 +2,7 @@
   <app-data-view [canvasWidth]="width" [canvasHeight]="height" [perceptron]="outputPerceptron"
                  [points]="points"
                  (dataViewClicked)="addPoint($event)" [showLinearDivider]="false"></app-data-view>
-  <mat-card class="inputLayer">
+  <mat-card appearance="outlined" class="inputLayer">
     <mat-card-subtitle>Input layer</mat-card-subtitle>
     <mat-card-content>
       <div>Learnrate: {{learnRate}}, learned data points: {{learnedDataPoints}}</div>
@@ -11,7 +11,7 @@
       </ng-container>
     </mat-card-content>
   </mat-card>
-  <mat-card class="hiddenLayer">
+  <mat-card appearance="outlined" class="hiddenLayer">
     <mat-card-subtitle>Hidden layer</mat-card-subtitle>
     <mat-card-content>
       <div>Learnrate: {{learnRate}}, learned data points: {{learnedDataPoints}}</div>
@@ -20,7 +20,7 @@
       </ng-container>
     </mat-card-content>
   </mat-card>
-  <mat-card class="outputLayer">
+  <mat-card appearance="outlined" class="outputLayer">
     <mat-card-subtitle>Output layer</mat-card-subtitle>
     <mat-card-content>
       <app-perceptron [perceptron]="outputPerceptron" [canvasWidth]="200" [canvasHeight]="200"></app-perceptron>

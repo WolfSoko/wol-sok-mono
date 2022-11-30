@@ -22,7 +22,7 @@
     (change)="toggleTheme()"
     [checked]="themeMode === 'dark'"
   >
-    <span class="mat-body-2">{{ themeMode }} mode</span>
+    <span class="mat-subtitle-2">{{ themeMode }} mode</span>
   </mat-slide-toggle>
   <app-service-worker-update
     [class.hide]="isHandset$ | async"
