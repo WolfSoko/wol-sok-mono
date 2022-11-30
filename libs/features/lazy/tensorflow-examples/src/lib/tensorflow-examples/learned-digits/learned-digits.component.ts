@@ -34,7 +34,7 @@ import { MnistDataService } from './mnist-data.service';
     MatProgressSpinnerModule,
   ],
   templateUrl: './learned-digits.component.html',
-  styleUrls: ['./learned-digits.component.less'],
+  styleUrls: ['./learned-digits.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LearnedDigitsComponent implements OnInit {

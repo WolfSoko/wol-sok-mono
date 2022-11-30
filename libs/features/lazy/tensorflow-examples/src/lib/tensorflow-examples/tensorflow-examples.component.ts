@@ -8,7 +8,7 @@ import { RouterModule } from '@angular/router';
   standalone: true,
   imports: [CommonModule, MatToolbarModule, RouterModule, MatTabsModule],
   templateUrl: './tensorflow-examples.component.html',
-  styleUrls: ['./tensorflow-examples.component.less'],
+  styleUrls: ['./tensorflow-examples.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TensorflowExamplesComponent {
