@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import {
   AfterContentInit,
   ChangeDetectionStrategy,
@@ -8,16 +9,18 @@ import {
   Output,
   ViewChild
 } from '@angular/core';
-import { Circle } from '../../shared/circle';
+import { Circle } from '../../domain/model/circle';
 import { CanvasDrawService } from './canvas-draw.service';
 import { animationFrameScheduler, interval, Observable } from 'rxjs';
-import { Vector } from '../../shared/vector';
-import { Line } from '../../shared/line';
+import { Vector } from '../../domain/model/vector';
+import { Line } from '../../domain/model/line';
 import { skipUntil } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy()
 @Component({
+  standalone: true,
+  imports: [CommonModule],
   selector: 'app-canvas-view',
   templateUrl: './canvas-view.component.html',
   styleUrls: ['./canvas-view.component.css'],

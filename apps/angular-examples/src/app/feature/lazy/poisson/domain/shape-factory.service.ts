@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Circle } from './circle';
-import { Line } from './line';
-import { Vector } from './vector';
+import { Circle } from './model/circle';
+import { Line } from './model/line';
+import { Vector } from './model/vector';
 
 @Injectable({ providedIn: 'root' })
 export class ShapeFactoryService {
@@ -16,8 +16,8 @@ export class ShapeFactoryService {
     return new Vector(x, y);
   }
 
-  public createCircle(vec: Vector, radius: number): Circle {
-    return new Circle(vec, radius);
+  public createCircle(pos: Vector, radius: number): Circle {
+    return new Circle(pos, radius);
   }
 
   public createLine(from: Vector, to: Vector): Line {

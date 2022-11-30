@@ -1,76 +1,87 @@
 import { Injectable } from '@angular/core';
-import { defer, Observable, of, range, Subject, Subscription } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
+  combineLatest,
+  defer,
+  merge,
+  Observable,
+  of,
+  range,
+  Subject,
+} from 'rxjs';
+import {
+  concatMap,
+  distinctUntilChanged,
   map,
   scan,
   switchMap,
+  take,
   takeUntil,
   takeWhile,
   tap,
   toArray,
 } from 'rxjs/operators';
-import { RandomService } from '../../../core/random.service';
+import { RandomService } from '../../../../core/random.service';
+import { Circle } from './model/circle';
+import { Line } from './model/line';
+import { PoissonConfig } from './model/poisson.config';
+import { Vector } from './model/vector';
 import { PoissonConfigService } from './poisson-config.service';
-import { Circle } from './shared/circle';
-import { Line } from './shared/line';
-import { ShapeFactoryService } from './shared/shape-factory.service';
-import { Vector } from './shared/vector';
+import { ShapeFactoryService } from './shape-factory.service';
 
 type RandomActive = {
   active: Vector;
   randomActiveIndex: number;
 };
 
-@Injectable({ providedIn: 'root' })
+@UntilDestroy()
+@Injectable()
 export class PoissonCalcService {
   public foundCircles$!: Observable<Circle[]>;
   public activeVectors$!: Observable<Vector[]>;
   public lines$!: Observable<Line[]>;
   private height!: number;
   private width!: number;
-  private r!: number;
-  private k!: number;
-  private readonly w: number;
   private cols!: number;
   private rows!: number;
+
   private grid: Circle[][] = [];
   private active: Vector[] = [];
   private foundCirclesSubject!: Subject<Circle>;
   private activesSubject!: Subject<Vector[]>;
   private lineSubject!: Subject<Line>;
   private linesSubject!: Subject<Line[]>;
-  private iterationsPerFrame!: number;
-  private subscriptions: Subscription = new Subscription();
+  private config$: Observable<PoissonConfig>;
 
   private calculationSubject!: Subject<void>;
 
   private calculationCompletedSubject!: Subject<void>;
+  private iterationComplete = new Subject<void>();
 
   constructor(
     private readonly poissonConfig: PoissonConfigService,
     private readonly shapeFactory: ShapeFactoryService,
     private readonly random: RandomService
   ) {
-    this.subscriptions.add(
-      this.poissonConfig.iterationsPerFrame$.subscribe(
-        (iterations) => (this.iterationsPerFrame = iterations)
-      )
-    );
-    this.subscriptions.add(
-      this.poissonConfig.k$.subscribe((k) => (this.k = k))
-    );
-    this.subscriptions.add(
-      this.poissonConfig.r$.subscribe((r) => (this.r = r))
-    );
-
-    this.w = this.poissonConfig.w;
+    this.config$ = this.poissonConfig.config$;
   }
 
-  public setup(width: number, height: number): void {
+  public setup(width: number, height: number) {
+    this.config$
+      .pipe(take(1), untilDestroyed(this))
+      .subscribe((config) => this.setupInternal(width, height, config));
+  }
+
+  private setupInternal(
+    width: number,
+    height: number,
+    config: PoissonConfig
+  ): void {
     this.width = width;
     this.height = height;
-    this.rows = Math.floor(this.width / this.w);
-    this.cols = Math.floor(this.height / this.w);
+
+    this.rows = Math.floor(this.width / config.w);
+    this.cols = Math.floor(this.height / config.w);
     this.grid = [];
     this.active = [];
 
@@ -112,23 +123,40 @@ export class PoissonCalcService {
   public calculate(): void {
     this.lineSubject = new Subject();
     this.lineSubject
-      .pipe(takeUntil(this.calculationCompletedSubject), toArray())
+      .pipe(
+        takeUntil(
+          merge(
+            this.iterationComplete.asObservable(),
+          )
+        ),
+        toArray(),
+        untilDestroyed(this)
+      )
       .subscribe((lines) => this.linesSubject.next(lines));
     this.calculationSubject.next();
   }
 
   public addPointForCalculation(vec: Vector): void {
-    this.addToGrid(vec);
-    this.addToActive(vec);
+    if(this.active.length === 0){
+      this.initCalculation();
+    }
+    this.config$.pipe(take(1)).subscribe((config) => {
+      this.addToGrid(vec, config.r, config.w);
+      this.addToActive(vec);
+    });
   }
 
   private initCalculation(): void {
-    const iterationsPerFrame$: Observable<number> = defer(() =>
-      range(0, this.iterationsPerFrame)
-    ).pipe(
-      takeWhile(() => this.active.length > 0),
-      tap(undefined, undefined, () => this.calculationCompletedSubject.next())
-    );
+    const iterationsPerFrame$: Observable<number> =
+      this.poissonConfig.config$.pipe(
+        map((value) => value.iterationsPerFrame),
+        distinctUntilChanged(),
+        switchMap((iterationsPerFrame) =>
+          range(0, iterationsPerFrame).pipe(
+            tap({ complete: () => this.iterationComplete.next() })
+          )
+        )
+      );
 
     const randomActiveIndex$: Observable<number> = defer(() =>
       of(Math.floor(this.random.randomTo(this.active.length)))
@@ -144,41 +172,49 @@ export class PoissonCalcService {
     this.calculationSubject
       .pipe(
         switchMap(() => iterationsPerFrame$),
-        switchMap(() => randomActive$),
-        tap((randomActive) => this.onNextCalculation(randomActive))
+        concatMap(() =>
+          combineLatest([randomActive$, this.config$.pipe(take(1))])
+        ),
+        takeWhile(() => this.active.length > 0),
+        untilDestroyed(this)
       )
       .subscribe({
+        next: ([randomActive, config]) =>
+          this.onNextCalculation(randomActive, config),
         error: (error) => console.error('error calculating', error),
-        complete: () => console.log('Calculation completed'),
+        complete: () => {
+          this.calculationCompletedSubject.next();
+          this.linesSubject.next([]);
+        },
       });
   }
 
-  private onNextCalculation({ active, randomActiveIndex }: RandomActive): void {
+  private onNextCalculation(
+    { active, randomActiveIndex }: RandomActive,
+    { k, r, w }: PoissonConfig
+  ): void {
     let found = false;
-    const currentDistance = this.currentDistanceForPos(active);
-    for (let n = 0; n < this.k; n++) {
+    const currentDistance = this.currentDistanceForPos(active, r);
+    for (let n = 0; n < k; n++) {
       const sample = this.shapeFactory
         .randomVector()
         .setMag(this.random.random(currentDistance, 2 * currentDistance))
         .addVec(active);
 
-      /*this.drawHelper
-        .setFillColor('blue')
-        .drawVec(sample, currentDistance * 0.2);*/
-
-      const row = Math.floor(sample.x / this.w);
-      const col = Math.floor(sample.y / this.w);
+      const row = Math.floor(sample.x / w);
+      const col = Math.floor(sample.y / w);
 
       if (
         col > -1 &&
         row > -1 &&
         col < this.cols &&
         row < this.rows &&
-        !this.getFromGrid(sample)
+        !this.getFromGrid(sample, w)
       ) {
         const neighbours: Circle[] = this.getNeighbours(
           sample,
-          currentDistance
+          currentDistance,
+          w
         );
         const ok = neighbours.every((neighbour: Circle) => {
           // this.drawHelper.setStrokeColor('white');
@@ -186,10 +222,8 @@ export class PoissonCalcService {
             this.lineSubject.next(
               this.shapeFactory.createLine(sample, neighbour.pos)
             );
-            /*  .setFillColor('green')
-                .drawCircle(neighbour, this.step);
-            */
-            const sampleRadius = this.currentCircleRadius(sample);
+
+            const sampleRadius = this.currentCircleRadius(sample, r);
             const dQuad = sample.fastDist(neighbour.pos);
             const distanceQuad = currentDistance * currentDistance;
             const radiQuad =
@@ -201,7 +235,7 @@ export class PoissonCalcService {
 
         if (ok) {
           found = true;
-          this.addToGrid(sample, this.currentCircleRadius(sample));
+          this.addToGrid(sample, this.currentCircleRadius(sample, r), w);
           this.addToActive(sample);
         }
       }
@@ -211,29 +245,31 @@ export class PoissonCalcService {
     }
   }
 
-  private getFromGrid(vec: Vector): Circle {
-    const x = Math.floor(vec.x / this.w);
-    const y = Math.floor(vec.y / this.w);
+  private getFromGrid(vec: Vector, w: number): Circle {
+    const x = Math.floor(vec.x / w);
+    const y = Math.floor(vec.y / w);
     return this.grid[x][y];
   }
 
   private addToGrid(
     vec: Vector,
-    circleRadius: number = this.currentCircleRadius(vec)
+    r: number,
+    w: number,
+    circleRadius: number = this.currentCircleRadius(vec, r)
   ): void {
-    const x = Math.floor(vec.x / this.w);
-    const y = Math.floor(vec.y / this.w);
+    const x = Math.floor(vec.x / w);
+    const y = Math.floor(vec.y / w);
 
     const circle = this.shapeFactory.createCircle(vec, circleRadius);
     this.grid[x][y] = circle;
     this.foundCirclesSubject.next(circle);
   }
 
-  private getNeighbours(vec: Vector, distance: number = this.r): Circle[] {
-    const cellWidth = this.w;
+  private getNeighbours(vec: Vector, r: number, w: number): Circle[] {
+    const cellWidth = w;
     const row = Math.floor(vec.x / cellWidth);
     const col = Math.floor(vec.y / cellWidth);
-    const distanceCheck = this.isInDistanceFactory(row, col, distance);
+    const distanceCheck = this.isInDistanceFactory(row, col, r, w);
     const result: Circle[] = [];
 
     this.grid.forEach((colVecs: Circle[], rowToCheck: number) =>
@@ -246,27 +282,33 @@ export class PoissonCalcService {
     return result;
   }
 
-  private currentCircleRadius(vector: Vector) {
-    const radius = this.currentDistanceForPos(vector);
+  private currentCircleRadius(vector: Vector, r: number) {
+    const radius = this.currentDistanceForPos(vector, r);
     return radius * 0.2;
   }
 
-  private currentDistanceForPos(pos: Vector) {
-    return this.r * (1 + 2 * Math.abs(Math.sin((pos.x + pos.y) * 0.01)));
+  private currentDistanceForPos(pos: Vector, r: number) {
+    return r * (1 + 2 * Math.abs(Math.sin((pos.x + pos.y) * 0.01)));
   }
 
   private isInDistanceFactory(
     row: number,
     col: number,
-    distance: number
+    distance: number,
+    w: number
   ): (rowToCheck: number, colToCheck: number) => boolean {
     return (rowToCheck: number, colToCheck: number) =>
-      this.isInDistance(rowToCheck - row, colToCheck - col, distance);
+      this.isInDistance(rowToCheck - row, colToCheck - col, distance, w);
   }
 
-  private isInDistance(dr: number, dc: number, distance: number): boolean {
-    const rowW = this.w * dr;
-    const colW = this.w * dc;
+  private isInDistance(
+    dr: number,
+    dc: number,
+    distance: number,
+    w: number
+  ): boolean {
+    const rowW = w * dr;
+    const colW = w * dc;
     return distance * distance >= rowW * rowW + colW * colW;
   }
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Circle } from '../../shared/circle';
-import { Line } from '../../shared/line';
-import { Vector } from '../../shared/vector';
+import { Circle } from '../../domain/model/circle';
+import { Line } from '../../domain/model/line';
+import { Vector } from '../../domain/model/vector';
 
 @Injectable({ providedIn: 'root' })
 export class CanvasDrawService {

@@ -49,8 +49,7 @@ export const APP_ROUTES: MainNavRoute[] = [
   },
   {
     path: 'webGl',
-    loadChildren: () =>
-      import('./feature/lazy/web-gl/web-gl.routes'),
+    loadChildren: () => import('./feature/lazy/web-gl/web-gl.routes'),
     data: { linkText: 'Mandelbrot plane, lights objects (three.js)' },
   },
   {
@@ -78,9 +77,7 @@ export const APP_ROUTES: MainNavRoute[] = [
   {
     path: 'poisson',
     loadChildren: () =>
-      import('./feature/lazy/poisson/poisson.module').then(
-        (m) => m.PoissonModule
-      ),
+      import('./feature/lazy/poisson/api/routes').then((m) => m.routes),
     data: { linkText: 'Poisson Distribution Algorithm' },
   },
   {
