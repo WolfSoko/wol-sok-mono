@@ -1,32 +1,25 @@
 :host {
   display: grid;
   width: fit-content;
-  /* TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version. */
-  mat-card.mat-mdc-card {
-    width: auto;
-  }
 
-}
+  .test-item {
+    transition: background-color 300ms ease-out;
 
-/* TODO(mdc-migration): The following rule targets internal classes of list that may no longer apply for the MDC version. */
-/* TODO(mdc-migration): The following rule targets internal classes of list that may no longer apply for the MDC version. */
-mat-list-item {
-  transition: background-color 300ms ease-out;
+    &.active {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
 
-  &.active {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
+    span {
+      margin-right: 1rem;
+    }
 
-  span {
-    margin-right: 1rem;
-  }
-  /* TODO(mdc-migration): The following rule targets internal classes of progress-bar that may no longer apply for the MDC version. */
-  mat-progress-bar {
-    opacity: 0;
-    transition: opacity 50ms;
-  }
+    .progress-bar {
+      opacity: 0;
+      transition: opacity 50ms;
+    }
 
-  &.active mat-progress-bar {
-    opacity: 1;
+    &.active .progress-bar {
+      opacity: 1;
+    }
   }
 }

@@ -86,8 +86,8 @@ export const APP_ROUTES: MainNavRoute[] = [
   {
     path: 'performanceTests',
     loadChildren: () =>
-      import('./feature/lazy/performance-test/performance-test.module').then(
-        (m) => m.PerformanceTestModule
+      import('./feature/lazy/performance-test/performance-test.routes').then(
+        (m) => m.routes
       ),
     data: { linkText: 'Performance Tests' },
   },
