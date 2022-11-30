@@ -9,6 +9,8 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
+import { MatCardModule } from '@angular/material/card';
+import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { merge, Observable } from 'rxjs';
 
 import {
@@ -40,10 +42,12 @@ import { map } from 'rxjs/operators';
 const TAU = Math.PI / 2;
 
 @Component({
+  standalone: true,
   selector: 'app-web-gl',
   templateUrl: './web-gl.component.html',
-  styleUrls: ['./web-gl.component.less'],
+  styleUrls: ['./web-gl.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [MatCardModule, ElevateCardDirective],
 })
 export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('webGlCanvas', { static: true }) webGlCanvas!: ElementRef;

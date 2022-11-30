@@ -50,7 +50,7 @@ export const APP_ROUTES: MainNavRoute[] = [
   {
     path: 'webGl',
     loadChildren: () =>
-      import('./feature/lazy/web-gl/web-gl.module').then((m) => m.WebGlModule),
+      import('./feature/lazy/web-gl/web-gl.routes'),
     data: { linkText: 'Mandelbrot plane, lights objects (three.js)' },
   },
   {
