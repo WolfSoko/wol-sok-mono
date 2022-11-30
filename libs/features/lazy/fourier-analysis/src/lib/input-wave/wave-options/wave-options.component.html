@@ -2,14 +2,8 @@
   <div formArrayName="frequencies">
     <p>Frequencies:</p>
     <div *ngFor="let frequency of frequencies?.controls; let i = index">
-      <!-- TODO: The 'vertical' property no longer exists -->
-      <mat-slider
-        class="config-slider"
-        [max]="500"
-        [min]="20"
-        [step]="1"
-        [formControlName]="i"
-      ><input matSliderThumb/>
+      <mat-slider class="config-slider" [max]="500" [min]="20" [step]="1" discrete="true"
+      ><input matSliderThumb [formControlName]="i" />
       </mat-slider>
       <span>
         <button color="warn" mat-icon-button (click)="removeFrequency(i)">
@@ -27,8 +21,8 @@
       [max]="5000"
       [min]="200"
       [step]="1"
-      formControlName="lengthInMs"
-    ><input matSliderThumb />
+      discrete="true"
+    ><input matSliderThumb formControlName="lengthInMs" />
     </mat-slider>
     <span>Duration in ms : {{ waveOptions.lengthInMs }}</span>
   </div>
@@ -38,8 +32,8 @@
       [max]="10000"
       [min]="3000"
       [step]="100"
-      formControlName="samplesPerSec"
-    ><input matSliderThumb />
+      discrete="true"
+    ><input matSliderThumb formControlName="samplesPerSec" />
     </mat-slider>
     <span>Sample rate: {{ waveOptions.samplesPerSec }}</span>
   </div>
