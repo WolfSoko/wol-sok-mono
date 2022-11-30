@@ -1,14 +1,16 @@
 <mat-card appearance="raised" wsSharedUiElevateCard>
-  <mat-card-title>Fitting data to a syntetic curve</mat-card-title>
-  <mat-card-subtitle
+  <mat-card-header>
+    <mat-card-title>Fitting data to a syntetic curve</mat-card-title>
+    <mat-card-subtitle
     >Utilizing tensorflow.js for polynominal regretion and vega to plot<br />
-    Inspired from
-    <a
-      href="https://github.com/tensorflow/tfjs-examples/tree/master/polynomial-regression-core"
-      target="_blank"
+      Inspired from
+      <a
+        href="https://github.com/tensorflow/tfjs-examples/tree/master/polynomial-regression-core"
+        target="_blank"
       >Tensorflow.js example</a
-    >
-  </mat-card-subtitle>
+      >
+    </mat-card-subtitle>
+  </mat-card-header>
   <mat-card-content class="drawings">
     <feat-lazy-tensor-data-drawer
       caption="Training data (synthetic)"
