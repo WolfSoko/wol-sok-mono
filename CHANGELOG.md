@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.10.14](https://github.com/WolfSoko/wol-sok-mono/compare/v3.10.13...v3.10.14) (2022-12-01)
+
+
+### Bug Fixes
+
+* **fourier:** Align frequenzy slider ([881c4c5](https://github.com/WolfSoko/wol-sok-mono/commit/881c4c53430248dd7ded2860845954b6a4b554c4))
+
 ### [3.10.13](https://github.com/WolfSoko/wol-sok-mono/compare/v3.10.12...v3.10.13) (2022-12-01)
 
 ### [3.10.12](https://github.com/WolfSoko/wol-sok-mono/compare/v3.10.11...v3.10.12) (2022-12-01)
