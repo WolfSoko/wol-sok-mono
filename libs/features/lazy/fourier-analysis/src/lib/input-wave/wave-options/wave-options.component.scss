@@ -1,3 +1,15 @@
+.frequency-sliders-grid {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 1rem 0;
+  place-items: center start;
+}
+
+.config-sliders-grid {
+  @extend .frequency-sliders-grid;
+  grid-template-columns: 1fr auto;
+}
+
 .config-slider {
-  width: 300px;
+  width: calc(100% - 1.5rem) ;
 }
