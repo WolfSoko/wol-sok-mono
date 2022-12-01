@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.10.11](https://github.com/WolfSoko/wol-sok-mono/compare/v3.10.10...v3.10.11) (2022-12-01)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update all non-major dependencies ([9fb4fd6](https://github.com/WolfSoko/wol-sok-mono/commit/9fb4fd6ed2e53ab8774303cdc938433d1c94e5dc))
+* **deps:** :arrow_up: update all non-major dependencies ([968a00f](https://github.com/WolfSoko/wol-sok-mono/commit/968a00f2d387a748141110b372784888d99287fd))
+* **deps:** :arrow_up: update all non-major dependencies to v7.20.0 ([cfd6c1e](https://github.com/WolfSoko/wol-sok-mono/commit/cfd6c1e44dc81b6b0b72c196ea03e5c05e1552c5))
+* **deps:** :arrow_up: update all non-major dependencies to v7.21.1 ([7689735](https://github.com/WolfSoko/wol-sok-mono/commit/7689735d8276a2c234f8c50d01c2d433c812c038))
+* **deps:** :arrow_up: update all non-major dependencies to v7.22.0 ([66c8977](https://github.com/WolfSoko/wol-sok-mono/commit/66c89779b4bfc9938bec5b7e1b5a84d7ed625a28))
+* **deps:** :arrow_up: update dependency ace-builds to v1.13.1 ([9315159](https://github.com/WolfSoko/wol-sok-mono/commit/9315159533ae1f7a9d022afdcd3fbf247724f594))
+* **deps:** :arrow_up: update dependency three to v0.147.0 ([f798367](https://github.com/WolfSoko/wol-sok-mono/commit/f7983673e38cabe70daddb74b6bc6d71b283b50a))
+* **fourier:** fix options sliders ([4d17534](https://github.com/WolfSoko/wol-sok-mono/commit/4d175343763b9f97bebadc5806aa23cf4ab73609))
+* **gpu-calculations:** fix sliders ([0735f09](https://github.com/WolfSoko/wol-sok-mono/commit/0735f092036a3ce53447743a5eb960850ff2feda))
+
 ### [3.10.10](https://github.com/WolfSoko/wol-sok-mono/compare/v3.10.9...v3.10.10) (2022-11-15)
 
 
