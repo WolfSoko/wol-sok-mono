@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.11.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.10.16...v3.11.0) (2022-12-02)
+
+
+### Features
+
+* add title to main-menu button ([f00ce91](https://github.com/WolfSoko/wol-sok-mono/commit/f00ce91bec11ef3e5f763b2ee84a948f6aa94c30))
+
 ### [3.10.16](https://github.com/WolfSoko/wol-sok-mono/compare/v3.10.15...v3.10.16) (2022-12-02)
 
 
