@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.10.16](https://github.com/WolfSoko/wol-sok-mono/compare/v3.10.15...v3.10.16) (2022-12-02)
+
+
+### Bug Fixes
+
+* tech images overflow ([eda2e3e](https://github.com/WolfSoko/wol-sok-mono/commit/eda2e3e2e2f458f74e977dc57c649be3c50f5a42))
+
 ### [3.10.15](https://github.com/WolfSoko/wol-sok-mono/compare/v3.10.14...v3.10.15) (2022-12-02)
 
 
