@@ -11,7 +11,7 @@ import {
   selector: '[wsLet]',
   standalone: true,
 })
-export class LetDirective<T = unknown> {
+export class LetDirective<T> {
   private context: LetContext<T> = new LetContext<T>();
   private viewRef: EmbeddedViewRef<LetContext<T>> | null = null;
 
@@ -22,17 +22,15 @@ export class LetDirective<T = unknown> {
     this.templateRef = templateRef;
   }
 
-  /**
-   * The Boolean expression to evaluate as the condition for showing a template.
-   */
   @Input()
-  set wsLet(condition: T) {
-    this.context.$implicit = condition;
-    this.context.wsLet = condition;
-    this._updateView();
+  set wsLet(input: T) {
+    this.context.$implicit = input;
+    this.context.wsLet = input;
+    this.viewRef = null;
+    this.updateView();
   }
 
-  private _updateView() {
+  private updateView() {
     if (this.viewRef) {
       return;
     }
@@ -52,7 +50,7 @@ export class LetDirective<T = unknown> {
 /**
  * @publicApi
  */
-export class LetContext<T = unknown> {
+export class LetContext<T> {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   public $implicit: T = null!;
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
