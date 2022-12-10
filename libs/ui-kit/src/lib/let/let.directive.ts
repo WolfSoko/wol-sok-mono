@@ -26,7 +26,6 @@ export class LetDirective<T> {
   set wsLet(input: T) {
     this.context.$implicit = input;
     this.context.wsLet = input;
-    this.viewRef = null;
     this.updateView();
   }
 
