@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.11.8](https://github.com/WolfSoko/wol-sok-mono/compare/v3.11.7...v3.11.8) (2022-12-12)
+
+
+### Bug Fixes
+
+* scale tech images better ([e0c4efb](https://github.com/WolfSoko/wol-sok-mono/commit/e0c4efb3beb82b04841d663ce6b4658f9451fb82))
+
 ### [3.11.7](https://github.com/WolfSoko/wol-sok-mono/compare/v3.11.6...v3.11.7) (2022-12-12)
 
 
