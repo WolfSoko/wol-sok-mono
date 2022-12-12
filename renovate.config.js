@@ -5,7 +5,7 @@ module.exports = {
   extends: ['local>wolfsoko/wol-sok-mono:renovate-self-hosted.config.json5'],
   gitAuthor: 'Renovate Bot GitHub <bot@renovateapp.com>',
   platform: 'github',
-  repositories: ['wolfsoko/wol-sok-mono'],
+  repositories: ['WolfSoko/wol-sok-mono'],
   includeForks: false,
   dependencyDashboard: true,
   onboarding: false,
