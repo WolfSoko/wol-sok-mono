@@ -5,13 +5,13 @@
     'github>ng-easy/renovate-config:nrwlWorkspace',
     ':label(dependencies)',
     ':assignee(WolfSoko)',
-    ':automergePr',
-    ':automergeMinor'
   ],
-  schedule: [
-    'at any time'
-  ],
+  gitAuthor: 'Renovate Self Hosted Bot',
+  schedule: ['at any time'],
   automergeStrategy: 'rebase',
+  automerge: true,
+  automergeType: 'pr',
+  platformAutomerge: true,
   prCreation: 'immediate',
-  printConfig: true
+  printConfig: true,
 }
