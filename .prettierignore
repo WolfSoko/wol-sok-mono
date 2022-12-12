@@ -3,3 +3,6 @@
 /dist
 /distS3
 /coverage
+/tmp
+/node_modules
+/.angular

@@ -8,8 +8,10 @@
     ':automergePr',
     ':automergeMinor'
   ],
-  schedule: ['at any time'],
+  schedule: [
+    'at any time'
+  ],
   automergeStrategy: 'rebase',
   prCreation: 'immediate',
-  printConfig: true,
+  printConfig: true
 }

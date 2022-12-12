@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - main
+      - renovate-github-sh/**
   pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') || startsWith(github.ref_name, 'renovate-github-sh') }}
 
 env:
   NODE_OPTIONS: '--max_old_space_size=4096'
