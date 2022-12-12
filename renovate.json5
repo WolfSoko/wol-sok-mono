@@ -6,7 +6,7 @@
     ':label(dependencies)',
     ':assignee(WolfSoko)',
   ],
-  gitAuthor: 'Renovate Self Hosted Bot',
+  gitAuthor: 'renovate@self-hosted.bot',
   schedule: ['at any time'],
   automergeStrategy: 'rebase',
   automerge: true,
