@@ -5,16 +5,6 @@ on:
 jobs:
   trigger-release:
     steps:
-      - uses: actions/checkout@v3
-        name: 'Checkout branch'
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
       - name: trigger release
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
