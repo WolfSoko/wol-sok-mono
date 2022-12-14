@@ -121,4 +121,14 @@ jobs:
         uses: nrwl/nx-tag-successful-ci-run@v1
       - name: trigger release
         if: ${{ !contains(github.event.head_commit.message, 'chore(release):') && github.ref_name == 'main' }}
-        run: ${{ toJSON(github.event.head_commit.message) }}
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          npm run release
+      - name: Push changes
+        if: ${{ !contains(github.event.head_commit.message, 'chore(release):') && github.ref_name == 'main' }}
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          tags: true
