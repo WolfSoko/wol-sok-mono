@@ -2,7 +2,7 @@ name: Bump Version
 on:
   workflow_run:
     workflows: [ ci² ]
-    types: [ completed, requested ]
+    types: [ completed ]
     branches:
       - main
     tags-ignore:
@@ -15,10 +15,9 @@ concurrency:
 jobs:
   on-success:
     runs-on: ubuntu-latest
-    #if: ${{ github.event.workflow_run.conclusion == 'success' ||  }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && !contains(github.event.workflow_run.head_commit.message, 'chore(release):') }}
     steps:
-      - run: echo 'CI triggered this here.${{ toJSON(github) }}'
       - name: Version bump and tag release
-        run: echo '${{ toJSON(github.event.workflow_run.head_commit) }}'
+        run: echo '${{ toJSON(github.event.workflow_run.head_commit.message) }}'
         # uses: ad-m/github-push-action@v0.6.0
 
