@@ -17,8 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     #if: ${{ github.event.workflow_run.conclusion == 'success' ||  }}
     steps:
-      - run: echo 'CI triggered this here.${{ toJSON(github.event) }}'
+      - run: echo 'CI triggered this here.${{ toJSON(github) }}'
       - name: Version bump and tag release
-        run: echo '${{ toJSON(github.event.head_commit) }}'
+        run: echo '${{ toJSON(github.event.workflow_run.head_commit) }}'
         # uses: ad-m/github-push-action@v0.6.0
 
