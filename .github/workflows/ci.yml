@@ -118,4 +118,6 @@ jobs:
       - name: Tag main branch if all jobs succeed
         if: ${{ github.ref_name == 'main' }}
         uses: nrwl/nx-tag-successful-ci-run@v1
-
+      - name: trigger release
+        if: ${{ !contains(github.event.workflow_run.head_commit.message, 'chore(release):') && github.ref_name == 'main' }}
+        run: ${{ toJSON(github.event) }}
