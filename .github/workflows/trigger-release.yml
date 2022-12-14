@@ -5,11 +5,22 @@ on:
 jobs:
   bump-version:
     steps:
+      - uses: actions/checkout@v3
+        name: 'Checkout branch'
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
       - name: trigger release
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           npm run release
+
       - name: Push changes
         uses: ad-m/github-push-action@v0.6.0
         with:
