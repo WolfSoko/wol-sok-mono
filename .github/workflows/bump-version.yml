@@ -15,9 +15,14 @@ concurrency:
 jobs:
   on-success:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' && !contains(github.event.workflow_run.head_commit.message, 'chore(release):') }}
+    if: github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Version bump and tag release
-        run: echo '${{ toJSON(github.event.workflow_run.head_commit.message) }}'
-        # uses: ad-m/github-push-action@v0.6.0
+        if: !contains(github.event.workflow_run.head_commit.message, 'chore(release):')
+        run: |
+          echo 'Normal commit ${{ toJSON(github.event.workflow_run.head_commit.message) }}'
+      - name: Info no run for release commits
+        if: contains(github.event.workflow_run.head_commit.message, 'chore(release):')
+        run: |
+          echo "Not running for release commits ${{ toJSON(github.event.workflow_run.head_commit.message) }}"
 
