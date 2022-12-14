@@ -1,0 +1,25 @@
+name: Create release
+on:
+  workflow_run:
+    workflows: [ ci² ]
+    types: [ completed ]
+    branches:
+      - main
+    tags-ignore:
+      - v*
+
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  on-success:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - run: echo 'CI triggered this here.${{ github.event }}'
+      - name: Version bump and tag release
+        run: echo '${{ github.event.head_commit }}'
+        # uses: ad-m/github-push-action@v0.6.0
+

@@ -118,8 +118,4 @@ jobs:
       - name: Tag main branch if all jobs succeed
         if: ${{ github.ref_name == 'main' }}
         uses: nrwl/nx-tag-successful-ci-run@v1
-      - name: Version bump and tag release
-        if: ${{ github.ref_name == 'main' }}
-        run: echo {{ github.event.head_commit }}
-        # uses: ad-m/github-push-action@v0.6.0
 
