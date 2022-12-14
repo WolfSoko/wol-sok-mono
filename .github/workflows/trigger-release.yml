@@ -28,3 +28,4 @@ jobs:
         with:
           branch: ${{ github.ref }}
           tags: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
