@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.11.24](https://github.com/WolfSoko/wol-sok-mono/compare/v3.11.23...v3.11.24) (2022-12-16)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency rxjs to v7.8.0 ([b9e30e7](https://github.com/WolfSoko/wol-sok-mono/commit/b9e30e730393e17c83deab83f079f8a658db93c1))
+
 ### [3.11.23](https://github.com/WolfSoko/wol-sok-mono/compare/v3.11.22...v3.11.23) (2022-12-15)
 
 ### [3.11.22](https://github.com/WolfSoko/wol-sok-mono/compare/v3.11.21...v3.11.22) (2022-12-15)
