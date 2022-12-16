@@ -55,7 +55,7 @@
     "ngx-ace-editor-wrapper": "9.1.12",
     "normalize.css": "8.0.1",
     "p5": "1.5.0",
-    "rxjs": "7.6.0",
+    "rxjs": "7.8.0",
     "stats.js": "0.17.0",
     "three": "0.147.0",
     "ts-keycode-enum": "1.0.6",
