@@ -109,7 +109,7 @@
     "eslint": "8.30.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-cypress": "2.12.1",
-    "firebase-admin": "11.4.0",
+    "firebase-admin": "11.4.1",
     "html2canvas": "1.4.1",
     "husky": "8.0.2",
     "jasmine-core": "4.5.0",
