@@ -21,10 +21,7 @@ export class FibonacciJsCalcService {
     if (n < 2) {
       return n;
     }
-    return (
-      this.calcFibonacciRecursiveNaive(n - 1) +
-      this.calcFibonacciRecursiveNaive(n - 2)
-    );
+    return this.calcFibonacciRecursiveNaive(n - 1) + this.calcFibonacciRecursiveNaive(n - 2);
   }
 
   @Memoized(FibonacciJsCalcService.resetMemoizeAction.asObservable())
@@ -32,9 +29,6 @@ export class FibonacciJsCalcService {
     if (n < 2) {
       return n;
     }
-    return (
-      this.calcFibonacciMemoizeInternal(n - 1) +
-      this.calcFibonacciMemoizeInternal(n - 2)
-    );
+    return this.calcFibonacciMemoizeInternal(n - 1) + this.calcFibonacciMemoizeInternal(n - 2);
   }
 }

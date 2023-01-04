@@ -17,7 +17,6 @@
     --gradient-color-3: #{$gradientColor3};
     --gradient-color-4: #{$gradientColor4};
   }
-
 }
 
 @mixin color($mat-theme) {
@@ -30,12 +29,12 @@
   $warn-palette: map.get($color-config, warn);
 
   @include theming-with-css-vars(
-      mat.get-contrast-color-from-palette($primary-palette, main) mat.get-color-from-palette($accent-palette, main),
-      mat.get-color-from-palette($accent-palette, main),
-      mat.get-color-from-palette($primary-palette, main) 45%,
-      mat.get-color-from-palette($warn-palette, lighter) 55%,
-      mat.get-color-from-palette($primary-palette, darker),
-      mat.get-color-from-palette($accent-palette, darker)
+    mat.get-contrast-color-from-palette($primary-palette, main) mat.get-color-from-palette($accent-palette, main),
+    mat.get-color-from-palette($accent-palette, main),
+    mat.get-color-from-palette($primary-palette, main) 45%,
+    mat.get-color-from-palette($warn-palette, lighter) 55%,
+    mat.get-color-from-palette($primary-palette, darker),
+    mat.get-color-from-palette($accent-palette, darker)
   );
 }
 

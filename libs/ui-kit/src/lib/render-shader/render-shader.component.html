@@ -1,8 +1,4 @@
-<ws-shared-ui-show-fps
-  class="stats"
-  [show]="showFps"
-  [fps]="(fps$ | async) ?? 0"
-></ws-shared-ui-show-fps>
+<ws-shared-ui-show-fps class="stats" [show]="showFps" [fps]="(fps$ | async) ?? 0"></ws-shared-ui-show-fps>
 <div #canvasContainer class="canvas-container">
   <canvas
     #webGLCanvas

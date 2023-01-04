@@ -1,15 +1,14 @@
-import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
-import {BrainService} from "../brain.service";
-import {Observable} from "rxjs";
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { BrainService } from '../brain.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-brain-settings',
   templateUrl: './brain-settings.component.html',
   styleUrls: ['./brain-settings.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BrainSettingsComponent {
-
   @Input() perceptronLayers?: number[];
 
   autoLearning$: Observable<boolean>;
@@ -41,5 +40,4 @@ export class BrainSettingsComponent {
   clearPoints() {
     this.brainService.clearPoints();
   }
-
 }

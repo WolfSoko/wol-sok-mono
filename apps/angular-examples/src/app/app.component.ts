@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  HostBinding,
-  Inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostBinding, Inject } from '@angular/core';
 import { Angulartics2GoogleTagManager } from 'angulartics2';
 import { Environment } from '../environments/environment.type';
 import { MainNavRoute } from './app-routing.module';

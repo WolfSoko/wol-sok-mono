@@ -15,10 +15,7 @@
         "polyfills": "apps/bacteria-game-remote/src/polyfills.ts",
         "tsConfig": "apps/bacteria-game-remote/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
-        "assets": [
-          "apps/bacteria-game-remote/src/favicon.ico",
-          "apps/bacteria-game-remote/src/assets"
-        ],
+        "assets": ["apps/bacteria-game-remote/src/favicon.ico", "apps/bacteria-game-remote/src/assets"],
         "styles": [
           "apps/bacteria-game-remote/src/styles.scss",
           "node_modules/@angular/material/prebuilt-themes/pink-bluegrey.css"
@@ -89,10 +86,7 @@
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "options": {
-        "lintFilePatterns": [
-          "apps/bacteria-game-remote/**/*.ts",
-          "apps/bacteria-game-remote/**/*.html"
-        ]
+        "lintFilePatterns": ["apps/bacteria-game-remote/**/*.ts", "apps/bacteria-game-remote/**/*.html"]
       }
     },
     "test": {

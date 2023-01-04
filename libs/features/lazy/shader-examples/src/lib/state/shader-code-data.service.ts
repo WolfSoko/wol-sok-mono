@@ -30,13 +30,9 @@ export class ShaderCodeDataService {
     private authentication: AuthenticationService,
     private authQuery: AuthQuery
   ) {
-    this.defaultShaders$ = this.observeShaderCollection(
-      '/angularExamples/shaderExamples/defaultShaders'
-    );
+    this.defaultShaders$ = this.observeShaderCollection('/angularExamples/shaderExamples/defaultShaders');
 
-    this.userShaders$ = this.observeShaderCollection(
-      `angularExamples/shaderExamples/${this.userUid()}`
-    );
+    this.userShaders$ = this.observeShaderCollection(`angularExamples/shaderExamples/${this.userUid()}`);
   }
 
   private observeShaderCollection(
@@ -47,43 +43,30 @@ export class ShaderCodeDataService {
     return collectionData<ShaderCode>(query(shaderColRef, ...queryConstraints));
   }
 
-  private createCollectionRef(
-    shaderCollectionPath: string
-  ): CollectionReference<ShaderCode> {
-    return collection(
-      this.firestore,
-      shaderCollectionPath
-    ) as CollectionReference<ShaderCode>;
+  private createCollectionRef(shaderCollectionPath: string): CollectionReference<ShaderCode> {
+    return collection(this.firestore, shaderCollectionPath) as CollectionReference<ShaderCode>;
   }
 
   streamShaders(): Observable<ShaderCode[]> {
     if (this.shaders == null) {
-      const mapDefaultAndUserShaders = map(
-        ([defaults, users]: [ShaderCode[], ShaderCode[]]) =>
-          defaults.map((defaultShader) => {
-            const shaderCode = users.find((sha) => sha.id === defaultShader.id);
-            return shaderCode != null ? shaderCode : defaultShader;
-          })
+      const mapDefaultAndUserShaders = map(([defaults, users]: [ShaderCode[], ShaderCode[]]) =>
+        defaults.map((defaultShader) => {
+          const shaderCode = users.find((sha) => sha.id === defaultShader.id);
+          return shaderCode != null ? shaderCode : defaultShader;
+        })
       );
-      this.shaders = combineLatest([
-        this.defaultShaders$,
-        this.userShaders$,
-      ]).pipe(mapDefaultAndUserShaders, shareReplay(1));
+      this.shaders = combineLatest([this.defaultShaders$, this.userShaders$]).pipe(
+        mapDefaultAndUserShaders,
+        shareReplay(1)
+      );
     }
     return this.shaders;
   }
 
-  async updateShader(
-    shader: ShaderCode,
-    changedShader: Partial<ShaderCode>
-  ): Promise<ShaderCode> {
-    const shaderByIdQuery = this.createCollectionRef(
-      `angularExamples/shaderExamples/${this.userUid()}`
-    );
+  async updateShader(shader: ShaderCode, changedShader: Partial<ShaderCode>): Promise<ShaderCode> {
+    const shaderByIdQuery = this.createCollectionRef(`angularExamples/shaderExamples/${this.userUid()}`);
 
-    const shaderToUpdateDocRef = (
-      await getDocs(query(shaderByIdQuery, where('id', '==', shader.id)))
-    ).docs[0]?.ref;
+    const shaderToUpdateDocRef = (await getDocs(query(shaderByIdQuery, where('id', '==', shader.id)))).docs[0]?.ref;
 
     const newShader = { ...shader, ...changedShader };
     if (shaderToUpdateDocRef == null) {

@@ -7,7 +7,7 @@ export interface PerformanceTest {
   name: string;
   result: PerformanceTestResults;
   runs: number;
-  ui?: { progress: number, duration: number };
+  ui?: { progress: number; duration: number };
 }
 
 export type PerformanceTestResults = Array<[string, number]>;
@@ -25,6 +25,6 @@ export function createPerformanceTest(params: Partial<PerformanceTest>) {
     result: [createPerformanceTestResult('press start to measure', NaN)],
     runs: 0,
     ui: { progress: 0, duration: 100 },
-    ...params
+    ...params,
   } as PerformanceTest;
 }

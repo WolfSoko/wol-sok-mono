@@ -115,6 +115,7 @@ export class DrawPredictionsComponent implements OnChanges {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async plotLosses(lossValues: string | any[]): Promise<void> {
     await embed(
       this.lossCanvas.nativeElement,
@@ -133,13 +134,10 @@ export class DrawPredictionsComponent implements OnChanges {
       },
       { width: 360 }
     );
-    this.lossLabel =
-      'last loss: ' + lossValues[lossValues.length - 1].loss.toFixed(2);
+    this.lossLabel = 'last loss: ' + lossValues[lossValues.length - 1].loss.toFixed(2);
   }
 
-  async plotAccuracies(
-    accuracyValues: { batch: number; accuracy: number; set: string }[]
-  ): Promise<void> {
+  async plotAccuracies(accuracyValues: { batch: number; accuracy: number; set: string }[]): Promise<void> {
     await embed(
       this.accuracyCanvas.nativeElement,
       {
@@ -154,9 +152,7 @@ export class DrawPredictionsComponent implements OnChanges {
       },
       { width: 360 }
     );
-    this.accuracyLabel = `last accuracy: ${(
-      accuracyValues[accuracyValues.length - 1].accuracy * 100
-    ).toFixed(2)}%`;
+    this.accuracyLabel = `last accuracy: ${(accuracyValues[accuracyValues.length - 1].accuracy * 100).toFixed(2)}%`;
   }
 
   private imageClick(index: number) {

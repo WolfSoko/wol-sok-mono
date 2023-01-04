@@ -8,11 +8,7 @@
         <p>
           <mat-form-field appearance="outline">
             <mat-label>Gravitational Force</mat-label>
-            <input
-              matInput
-              type="number"
-              formControlName="gravitationalConstant"
-            />
+            <input matInput type="number" formControlName="gravitationalConstant" />
             <mat-hint>The gravitational constant</mat-hint>
           </mat-form-field>
         </p>
@@ -24,11 +20,7 @@
           </mat-form-field>
         </p>
         <ng-container *wsLet="running$ | async as running">
-          <button
-            mat-raised-button
-            [color]="running ? 'accent' : 'primary'"
-            (click)="toggleSim(running)"
-          >
+          <button mat-raised-button [color]="running ? 'accent' : 'primary'" (click)="toggleSim(running)">
             {{ running ? 'Pause' : 'Start' }}
           </button>
         </ng-container>
@@ -39,24 +31,17 @@
           <span class="planetCount"> PlanetCount = 1 </span>
         </mat-list-item>
         <mat-list-item>
-          <span class="planetCount">
-            PlanetCoords.x = {{ x$ | async }} PlanetCoords.y = {{ y$ | async }}
-          </span>
+          <span class="planetCount"> PlanetCoords.x = {{ x$ | async }} PlanetCoords.y = {{ y$ | async }} </span>
         </mat-list-item>
         <mat-list-item>
-          <span class="planetCount">
-            drag.x = {{ (drag$ | async)?.x }} drag.y = {{ (drag$ | async)?.y }}
-          </span>
+          <span class="planetCount"> drag.x = {{ (drag$ | async)?.x }} drag.y = {{ (drag$ | async)?.y }} </span>
         </mat-list-item>
       </mat-list>
     </mat-card-content>
   </mat-card>
   <mat-card appearance="raised" class="gravitational-force-card">
     <mat-toolbar color="primary">See the action</mat-toolbar>
-    <mat-card-content
-      (wsSharedUiElemResized)="resize($event)"
-      [debounceTime]="300"
-    >
+    <mat-card-content (wsSharedUiElemResized)="resize($event)" [debounceTime]="300">
       <svg
         #svgWorld
         class="world-svg"
@@ -66,19 +51,8 @@
         [attr.viewBox]="'0 0 ' + MAX_DIM.x + ' ' + MAX_DIM.y"
       >
         <g>
-          <circle
-            [attr.cx]="x$ | async"
-            [attr.cy]="y$ | async"
-            r="10"
-            fill="red"
-          ></circle>
-          <circle
-            id="sun"
-            [attr.cx]="mouseX$ | async"
-            [attr.cy]="mouseY$ | async"
-            r="25"
-            fill="yellow"
-          ></circle>
+          <circle [attr.cx]="x$ | async" [attr.cy]="y$ | async" r="10" fill="red"></circle>
+          <circle id="sun" [attr.cx]="mouseX$ | async" [attr.cy]="mouseY$ | async" r="25" fill="yellow"></circle>
         </g>
       </svg>
     </mat-card-content>

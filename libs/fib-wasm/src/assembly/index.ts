@@ -45,8 +45,3 @@ function fibRecMem(n: i32): i32 {
   memoize[n] = result;
   return result;
 }
-
-
-
-
-

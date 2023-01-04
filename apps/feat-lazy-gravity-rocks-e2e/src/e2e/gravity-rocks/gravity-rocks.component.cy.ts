@@ -1,5 +1,4 @@
 describe('feat-lazy-gravity-rocks', () => {
-
   beforeEach(() => {
     cy.visit('/iframe.html?id=gravityrockscomponent--primary');
   });

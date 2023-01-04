@@ -2,27 +2,11 @@ import { Injectable, NgZone } from '@angular/core';
 
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
-import {
-  SwUpdate,
-  VersionEvent,
-  VersionReadyEvent,
-} from '@angular/service-worker';
-import {
-  concat,
-  exhaustMap,
-  filter,
-  from,
-  interval,
-  mapTo,
-  Observable,
-  of,
-} from 'rxjs';
+import { SwUpdate, VersionEvent, VersionReadyEvent } from '@angular/service-worker';
+import { concat, exhaustMap, filter, from, interval, mapTo, Observable, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-export type CHECK_FOR_UPDATE_STATE =
-  | 'CHECKING_FOR_UPDATES'
-  | 'NEW_VERSION_AVAILABLE'
-  | 'NO_NEW_VERSION_AVAILABLE';
+export type CHECK_FOR_UPDATE_STATE = 'CHECKING_FOR_UPDATES' | 'NEW_VERSION_AVAILABLE' | 'NO_NEW_VERSION_AVAILABLE';
 
 @Injectable({ providedIn: 'root' })
 export class ServiceWorkerUpdateService {
@@ -35,16 +19,12 @@ export class ServiceWorkerUpdateService {
     private readonly router: Router
   ) {
     this.versionReady$ = this.swUpdate.versionUpdates.pipe(
-      filter<VersionEvent, VersionReadyEvent>(
-        ServiceWorkerUpdateService.isVersionReadyEvent
-      ),
+      filter<VersionEvent, VersionReadyEvent>(ServiceWorkerUpdateService.isVersionReadyEvent),
       mapTo(true)
     );
   }
 
-  private static isVersionReadyEvent(
-    event: VersionEvent
-  ): event is VersionReadyEvent {
+  private static isVersionReadyEvent(event: VersionEvent): event is VersionReadyEvent {
     return event.type === 'VERSION_READY';
   }
 
@@ -75,11 +55,7 @@ export class ServiceWorkerUpdateService {
               from(
                 this.swUpdate
                   .checkForUpdate()
-                  .then((versionAvailable) =>
-                    versionAvailable
-                      ? 'NEW_VERSION_AVAILABLE'
-                      : 'NO_NEW_VERSION_AVAILABLE'
-                  )
+                  .then((versionAvailable) => (versionAvailable ? 'NEW_VERSION_AVAILABLE' : 'NO_NEW_VERSION_AVAILABLE'))
               )
             )
           )

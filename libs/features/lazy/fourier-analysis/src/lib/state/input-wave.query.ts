@@ -1,7 +1,7 @@
-import {Injectable} from '@angular/core';
-import {QueryEntity} from '@datorama/akita';
-import {InputWave} from './input-wave.model';
-import {InputWaveState, InputWaveStore} from './input-wave.store';
+import { Injectable } from '@angular/core';
+import { QueryEntity } from '@datorama/akita';
+import { InputWave } from './input-wave.model';
+import { InputWaveState, InputWaveStore } from './input-wave.store';
 
 @Injectable({
   providedIn: 'root',

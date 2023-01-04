@@ -11,7 +11,7 @@ export class ServiceWorkerLogUpdateService {
       console.log('ServiceWorker not used. Because in dev mode!');
       return;
     }
-    if(!this.updates.isEnabled) {
+    if (!this.updates.isEnabled) {
       console.log('ServiceWorker not enabled');
       return;
     }

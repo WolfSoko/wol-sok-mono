@@ -108,10 +108,7 @@ export class LearnedDigitsModelService {
       // Every few batches test the accuracy of the mode.
       if (i % TEST_ITERATION_FREQUENCY === 0) {
         testBatch = this.mnistData.nextTestBatch(TEST_BATCH_SIZE);
-        validationData = [
-          testBatch.xs.reshape([TEST_BATCH_SIZE, 28, 28, 1]),
-          testBatch.labels,
-        ];
+        validationData = [testBatch.xs.reshape([TEST_BATCH_SIZE, 28, 28, 1]), testBatch.labels];
       }
 
       // The entire dataset doesn't fit into memory so we call fit repeatedly
@@ -127,17 +124,11 @@ export class LearnedDigitsModelService {
       );
 
       const loss = history.history['loss'][0] as number;
-      this.lossValues = [
-        ...this.lossValues,
-        { batch: i, loss: loss, set: 'train' },
-      ];
+      this.lossValues = [...this.lossValues, { batch: i, loss: loss, set: 'train' }];
 
       const accuracy = history.history['acc'][0] as number;
       if (testBatch != null) {
-        this.accuracyValues = [
-          ...this.accuracyValues,
-          { batch: i, accuracy: accuracy, set: 'train' },
-        ];
+        this.accuracyValues = [...this.accuracyValues, { batch: i, accuracy: accuracy, set: 'train' }];
       }
 
       batch.xs.dispose();
@@ -168,9 +159,8 @@ export class LearnedDigitsModelService {
     this.testBatch = this.mnistData.nextTestBatch(testExamples);
 
     tidy(() => {
-      const output: any = this.model.predict(
-        this.testBatch.xs.reshape([-1, 28, 28, 1]) as any
-      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const output: any = this.model.predict(this.testBatch.xs.reshape([-1, 28, 28, 1]) as any);
       const axis = 1;
       this.labels = Array.from(this.testBatch.labels.argMax(axis).dataSync());
       this.predictions = Array.from(output.argMax(axis).dataSync());

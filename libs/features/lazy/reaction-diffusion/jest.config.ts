@@ -9,8 +9,7 @@ export default {
       stringifyContentPathRegex: '\\.(html|svg)$',
     },
   },
-  coverageDirectory:
-    '../../../../../coverage/libs/features/lazy/reaction-diffusion',
+  coverageDirectory: '../../../../../coverage/libs/features/lazy/reaction-diffusion',
   transform: {
     '^.+\\.(ts|mjs|js|html)$': 'jest-preset-angular',
   },

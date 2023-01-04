@@ -32,10 +32,7 @@
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "options": {
-        "lintFilePatterns": [
-          "libs/utils/gpu-calc/**/*.ts",
-          "libs/utils/gpu-calc/**/*.html"
-        ]
+        "lintFilePatterns": ["libs/utils/gpu-calc/**/*.ts", "libs/utils/gpu-calc/**/*.html"]
       }
     }
   },

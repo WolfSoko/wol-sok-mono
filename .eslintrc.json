@@ -1,7 +1,7 @@
 {
   "root": true,
   "ignorePatterns": ["**/*"],
-  "plugins": ["@nrwl/nx"],
+  "plugins": ["@nrwl/nx", "prettier"],
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
@@ -13,12 +13,7 @@
             "depConstraints": [
               {
                 "sourceTag": "app",
-                "onlyDependOnLibsWithTags": [
-                  "shared",
-                  "feature",
-                  "feature:lazy",
-                  "api"
-                ]
+                "onlyDependOnLibsWithTags": ["shared", "feature", "feature:lazy", "api"]
               },
               {
                 "sourceTag": "feature",
@@ -53,6 +48,11 @@
     {
       "files": ["*.js", "*.jsx"],
       "extends": ["plugin:@nrwl/nx/javascript"],
+      "rules": {}
+    },
+    {
+      "files": ["*.ts", "*.tsx", "*.js", "*.jsx", "*.json", "*.md"],
+      "extends": ["plugin:prettier/recommended"],
       "rules": {}
     }
   ]

@@ -10,10 +10,7 @@ import { ID } from '@datorama/akita';
 import { Observable } from 'rxjs';
 import { PerformanceTest } from './state/performance-test.model';
 import { PerformanceTestQuery } from './state/performance-test.query';
-import {
-  ARRAY_ITEMS_LENGTH,
-  PerformanceTestService,
-} from './state/performance-test.service';
+import { ARRAY_ITEMS_LENGTH, PerformanceTestService } from './state/performance-test.service';
 
 @Component({
   standalone: true,

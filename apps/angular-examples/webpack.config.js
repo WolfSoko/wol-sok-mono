@@ -9,8 +9,5 @@ module.exports = async (config, context) => {
     ...moduleFederationConfig,
   });
 
-  return merge(
-    federatedModules(config, context),
-    withVersionHandling(config, context)
-  );
+  return merge(federatedModules(config, context), withVersionHandling(config, context));
 };

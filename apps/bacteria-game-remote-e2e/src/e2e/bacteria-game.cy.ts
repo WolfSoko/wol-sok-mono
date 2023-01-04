@@ -1,9 +1,4 @@
-import {
-  getMainTitle,
-  getPlayArea,
-  getPlayCta,
-  getResetCta,
-} from '../support/app.po';
+import { getMainTitle, getPlayArea, getPlayCta, getResetCta } from '../support/app.po';
 
 describe('bacteria-game-remote', () => {
   beforeEach(() => cy.visit('/'));

@@ -6,17 +6,11 @@ import { IsAuthenticatedGuard } from './is-authenticated-guard.service';
 describe('IsAuthenticatedGuardGuard', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        IsAuthenticatedGuard,
-        { provide: AuthenticationService, useValue: {} },
-      ],
+      providers: [IsAuthenticatedGuard, { provide: AuthenticationService, useValue: {} }],
     });
   });
 
-  it('should create', inject(
-    [IsAuthenticatedGuard],
-    (guard: IsAuthenticatedGuard) => {
-      expect(guard).toBeTruthy();
-    }
-  ));
+  it('should create', inject([IsAuthenticatedGuard], (guard: IsAuthenticatedGuard) => {
+    expect(guard).toBeTruthy();
+  }));
 });

@@ -1,9 +1,11 @@
-.logged-in, .log-in {
+.logged-in,
+.log-in {
   display: flex;
   align-items: center;
 
-  .please-log-in, .profile-img {
-    margin-right: .7rem;
+  .please-log-in,
+  .profile-img {
+    margin-right: 0.7rem;
   }
 
   .profile-img {
@@ -14,6 +16,3 @@
     background-size: 45px 45px;
   }
 }
-
-
-

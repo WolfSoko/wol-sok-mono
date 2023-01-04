@@ -4,12 +4,10 @@ import { PerformanceTestStore, PerformanceTestState } from './performance-test.s
 import { PerformanceTest } from './performance-test.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class PerformanceTestQuery extends QueryEntity<PerformanceTestState, PerformanceTest> {
-
   constructor(protected store: PerformanceTestStore) {
     super(store);
   }
-
 }

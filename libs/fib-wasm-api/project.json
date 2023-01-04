@@ -32,10 +32,7 @@
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "options": {
-        "lintFilePatterns": [
-          "libs/fib-wasm-api/src/**/*.ts",
-          "libs/fib-wasm-api/src/**/*.html"
-        ]
+        "lintFilePatterns": ["libs/fib-wasm-api/src/**/*.ts", "libs/fib-wasm-api/src/**/*.html"]
       }
     }
   },

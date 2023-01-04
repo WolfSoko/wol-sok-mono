@@ -2,11 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import {
-  MatDialog,
-  MatDialogModule,
-  MatDialogRef,
-} from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Tensor2D } from '@tensorflow/tfjs';
@@ -52,11 +48,7 @@ export class LearnedDigitsComponent implements OnInit {
   drawingLabels: number[] = [];
   private nextDrawnImageSubject$ = new Subject<Float32Array>();
 
-  constructor(
-    private data: MnistDataService,
-    private deepNet: LearnedDigitsModelService,
-    private dialog: MatDialog
-  ) {}
+  constructor(private data: MnistDataService, private deepNet: LearnedDigitsModelService, private dialog: MatDialog) {}
 
   ngOnInit(): void {
     setTimeout(async () => {
@@ -83,12 +75,8 @@ export class LearnedDigitsComponent implements OnInit {
 
   async train() {
     await this.deepNet.train();
-    this.accuracyValues = this.deepNet.accuracyValues || [
-      { batch: 0, accuracy: 0.0, set: 'train' },
-    ];
-    this.lossValues = this.deepNet.lossValues || [
-      { batch: 0, loss: 1.0, set: 'train' },
-    ];
+    this.accuracyValues = this.deepNet.accuracyValues || [{ batch: 0, accuracy: 0.0, set: 'train' }];
+    this.lossValues = this.deepNet.lossValues || [{ batch: 0, loss: 1.0, set: 'train' }];
     this.hasBeenTrained = true;
   }
 
@@ -125,13 +113,13 @@ export class LearnedDigitsComponent implements OnInit {
       drawn: numberDrawn,
       prediction: drawingPrediction,
     };
-    const dialogRef: MatDialogRef<
+    const dialogRef: MatDialogRef<AskForNumberDialogComponent, AskForNumberDialogData> = this.dialog.open(
       AskForNumberDialogComponent,
-      AskForNumberDialogData
-    > = this.dialog.open(AskForNumberDialogComponent, {
-      width: '250px',
-      data: dialogData,
-    });
+      {
+        width: '250px',
+        data: dialogData,
+      }
+    );
 
     dialogRef.afterClosed().subscribe((result) => {
       this.drawingLabels[index] = result?.drawn ?? -1;

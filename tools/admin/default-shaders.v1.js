@@ -1,5 +1,6 @@
-const defaultShadersV1 = [{
-  code: `
+const defaultShadersV1 = [
+  {
+    code: `
     #ifdef GL_ES
     precision highp float;
     #endif
@@ -7,8 +8,8 @@ const defaultShadersV1 = [{
     void main() {
       gl_FragColor = vec4(1.0,0.0,1.0,1.0);
     }`,
-  description: 'Just pink!'
-},
+    description: 'Just pink!',
+  },
   {
     code: `
     #ifdef GL_ES
@@ -20,7 +21,7 @@ const defaultShadersV1 = [{
     void main() {
 	    gl_FragColor = vec4(abs(sin(time)),0.0,0.0,1.0);
     }`,
-    description: 'Using time to change color'
+    description: 'Using time to change color',
   },
   {
     code: `
@@ -35,7 +36,7 @@ const defaultShadersV1 = [{
 	    	vec2 st = gl_FragCoord.xy/resolution;
 	      gl_FragColor = vec4(st, 0.0, 1.0);
     }`,
-    description: 'Using gl_FragCoord to colorize'
+    description: 'Using gl_FragCoord to colorize',
   },
   {
     code: `
@@ -60,7 +61,7 @@ const defaultShadersV1 = [{
 
       gl_FragColor = vec4(color,1.0);
     }`,
-    description: 'Mixing colors'
+    description: 'Mixing colors',
   },
   {
     code: `
@@ -101,7 +102,7 @@ void main() {
 
     gl_FragColor = vec4(color,1.0);
 }`,
-    description: 'Mixing colors and show transition lines'
+    description: 'Mixing colors and show transition lines',
   },
   {
     code: `#ifdef GL_ES
@@ -141,7 +142,7 @@ void main(){
 
     gl_FragColor = vec4(color,1.0);
 }`,
-    description: 'Hue Colors'
+    description: 'Hue Colors',
   },
   {
     code: `#ifdef GL_ES
@@ -171,7 +172,7 @@ void main() {
 
 	gl_FragColor = vec4(color,1.0);
 }`,
-    description: 'Smoothstep function'
+    description: 'Smoothstep function',
   },
   {
     code: `#ifdef GL_ES
@@ -200,7 +201,8 @@ void main() {
     color = (1.0-pct)*color+pct*vec3(0.0,1.0,0.0);
 
     gl_FragColor = vec4(color,1.0);
-}`, description: 'Power function'
+}`,
+    description: 'Power function',
   },
   {
     code: `#ifdef GL_ES
@@ -231,7 +233,8 @@ void main() {
     color = (1.0-pct)*color+pct*vec3(0.0,1.0,0.0);
 
     gl_FragColor = vec4(color,1.0);
-}`, description: 'Step function'
+}`,
+    description: 'Step function',
   },
   {
     code: `#ifdef GL_ES
@@ -257,8 +260,10 @@ void main(){
     color = vec3(pct);
 
     gl_FragColor = vec4(color,1.0);
-}`, description: 'Rectangle'
-  }, {
+}`,
+    description: 'Rectangle',
+  },
+  {
     code: `#ifdef GL_ES
 precision highp float;
 #endif
@@ -283,7 +288,8 @@ void main(){
 
     vec3 color = vec3(bl);
     gl_FragColor = vec4(color,1.0);
-}`, description: 'Circle'
+}`,
+    description: 'Circle',
   },
   {
     code: `#ifdef GL_ES
@@ -347,8 +353,10 @@ void main() {
     // color -= step(.7,abs(sin(27.0*m_dist)))*.5;
 
     gl_FragColor = vec4(color,1.0);
-}`, description: 'Cellular Noise'
-  }, {
+}`,
+    description: 'Cellular Noise',
+  },
+  {
     code: `#ifdef GL_ES
 precision highp float;
 #endif
@@ -430,10 +438,12 @@ void main() {
                 clamp(length(r.x),0.0,1.0));
 
     gl_FragColor = vec4((f*f*f+.6*f*f+.5*f)*color,1.);
-}`, description: 'Smoke noise'
+}`,
+    description: 'Smoke noise',
   },
   {
-      description: 'Colorfull cirlce', code: `
+    description: 'Colorfull cirlce',
+    code: `
   #ifdef GL_ES
   precision highp float;
   #endif
@@ -470,7 +480,7 @@ void main() {
       color =  mix(color, vec3(distanceCircle), distToCenter);
       gl_FragColor = vec4(color, 1.0);
   }
-    `
-  }
+    `,
+  },
 ];
-module.exports = {defaultShaders: defaultShadersV1};
+module.exports = { defaultShaders: defaultShadersV1 };

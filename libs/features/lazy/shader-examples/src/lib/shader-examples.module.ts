@@ -4,10 +4,6 @@ import { AuthModule } from '@wolsok/feat-api-auth';
 import { ShaderExamplesRoutingModule } from './shader-examples-routing.module';
 
 @NgModule({
-  imports: [
-    ShaderExamplesRoutingModule,
-    provideFirestore(() => getFirestore()),
-    AuthModule,
-  ],
+  imports: [ShaderExamplesRoutingModule, provideFirestore(() => getFirestore()), AuthModule],
 })
 export class ShaderExamplesModule {}

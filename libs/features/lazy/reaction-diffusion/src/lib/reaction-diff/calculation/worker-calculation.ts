@@ -6,24 +6,10 @@ import { Cell } from './cell';
 export const calcNextDiffStep = function (
   input: CalcNextParam
 ): WorkerPostParams<{ buffer: ArrayBufferLike; offsetRow: number }> {
-  const {
-    width,
-    height,
-    gridBuffer,
-    dA,
-    dB,
-    f,
-    k,
-    w,
-    offsetRow,
-    offsetLength,
-    dynamicKillFeed,
-  } = input;
+  const { width, height, gridBuffer, dA, dB, f, k, w, offsetRow, offsetLength, dynamicKillFeed } = input;
   const grid = new Float32Array(gridBuffer);
 
-  const nextBuf = new ArrayBuffer(
-    width * offsetLength * 2 * Float32Array.BYTES_PER_ELEMENT
-  );
+  const nextBuf = new ArrayBuffer(width * offsetLength * 2 * Float32Array.BYTES_PER_ELEMENT);
   const next = new Float32Array(nextBuf);
 
   const setCell = (column: number, row: number, cell: Cell) => {
@@ -76,13 +62,7 @@ export const calcNextDiffStep = function (
 
   const constrain = (val: number) => Math.min(1.0, Math.max(0.0, val));
 
-  const calcNextCell = (
-    cell: Cell,
-    laplaceA: number,
-    laplaceB: number,
-    x: number,
-    y: number
-  ): Cell => {
+  const calcNextCell = (cell: Cell, laplaceA: number, laplaceB: number, x: number, y: number): Cell => {
     let dynK = k;
     let dynF = f;
     if (dynamicKillFeed) {
@@ -116,9 +96,7 @@ export const calcNextDiffStep = function (
   };
 };
 
-export const addChemicals = function (
-  data: AddChemicalsParams
-): WorkerPostParams<ArrayBufferLike> {
+export const addChemicals = function (data: AddChemicalsParams): WorkerPostParams<ArrayBufferLike> {
   const grid = new Float32Array(data.gridBuffer);
   const { x, y, r, width, height } = data;
 

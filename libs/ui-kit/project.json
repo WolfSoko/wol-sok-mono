@@ -32,10 +32,7 @@
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "options": {
-        "lintFilePatterns": [
-          "libs/ui-kit/src/**/*.ts",
-          "libs/ui-kit/src/**/*.html"
-        ]
+        "lintFilePatterns": ["libs/ui-kit/src/**/*.ts", "libs/ui-kit/src/**/*.html"]
       }
     }
   },

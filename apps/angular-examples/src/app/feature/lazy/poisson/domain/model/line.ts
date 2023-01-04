@@ -1,8 +1,5 @@
-import {Vector} from './vector';
+import { Vector } from './vector';
 
 export class Line {
-  constructor(public from: Vector, public to: Vector) {
-  }
-
+  constructor(public from: Vector, public to: Vector) {}
 }
-

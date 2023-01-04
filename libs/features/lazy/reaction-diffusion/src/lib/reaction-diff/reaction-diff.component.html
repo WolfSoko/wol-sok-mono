@@ -4,9 +4,8 @@
   </mat-toolbar-row>
   <mat-toolbar-row>
     <p class="mat-caption description">
-      A simulation of two virtual chemicals reacting and diffusing on a 2D grid
-      using the Gray-Scott model. It uses gpu.js to calculate. Therefore it's
-      quite fast. Use toggle to compare to CPU calculation.
+      A simulation of two virtual chemicals reacting and diffusing on a 2D grid using the Gray-Scott model. It uses
+      gpu.js to calculate. Therefore it's quite fast. Use toggle to compare to CPU calculation.
     </p>
   </mat-toolbar-row>
 </mat-toolbar>
@@ -28,27 +27,14 @@
       >
       </feat-lazy-react-diff-p5-view>
       <div class="sim-controls">
-        <a mat-raised-button (click)="toggleRunSim()">{{
-          start ? 'Pause' : 'Run'
-          }}</a>
+        <a mat-raised-button (click)="toggleRunSim()">{{ start ? 'Pause' : 'Run' }}</a>
         <a mat-raised-button color="accent" (click)="reset()">Reset</a>
-        <mat-checkbox
-          id="showFps"
-          type="checkbox"
-          name="showFps"
-          [(ngModel)]="showFps"
-        >
-          Show FPS
-        </mat-checkbox>
-        <mat-slide-toggle [(ngModel)]="useGpu" (change)="updateUseGpu()">
-          Use gpu.js
-        </mat-slide-toggle>
+        <mat-checkbox id="showFps" name="showFps" [(ngModel)]="showFps"> Show FPS </mat-checkbox>
+        <mat-slide-toggle [(ngModel)]="useGpu" (change)="updateUseGpu()"> Use gpu.js </mat-slide-toggle>
       </div>
       <div class="sim-options">
         <mat-form-field class="small">
-          <mat-label>
-            width
-          </mat-label>
+          <mat-label> width </mat-label>
           <input
             matInput
             id="width"
@@ -63,9 +49,7 @@
           />
         </mat-form-field>
         <mat-form-field class="small">
-          <mat-label>
-            height
-          </mat-label>
+          <mat-label> height </mat-label>
           <input
             matInput
             id="height"
@@ -127,9 +111,7 @@
           />
         </mat-form-field>
       </div>
-      <div *ngIf="showFps">
-        Calculation needs: {{ calculationTime$ | async }}ms
-      </div>
+      <div *ngIf="showFps">Calculation needs: {{ calculationTime$ | async }}ms</div>
     </mat-card-content>
   </mat-card>
 
@@ -220,9 +202,7 @@
       <mat-card-title> Reset parameters and weights</mat-card-title>
     </mat-card-header>
     <mat-card-actions>
-      <button (click)="resetParametersWeights()" color="accent" mat-raised-button>
-        Set parameters to default
-      </button>
+      <button (click)="resetParametersWeights()" color="accent" mat-raised-button>Set parameters to default</button>
     </mat-card-actions>
   </mat-card>
 </section>

@@ -12,9 +12,7 @@ export default {
   ],
 } as Meta<GravityRocksComponent>;
 
-const Template: Story<GravityRocksComponent> = (
-  args: GravityRocksComponent
-) => ({
+const Template: Story<GravityRocksComponent> = (args: GravityRocksComponent) => ({
   props: args,
 });
 

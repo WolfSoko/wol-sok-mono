@@ -15,9 +15,7 @@ describe('SomeGpuCalculationComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [SomeGpuCalculationComponent],
-      providers: [
-        { provide: GpuAdapterService, useValue: {} as GpuAdapterService },
-      ],
+      providers: [{ provide: GpuAdapterService, useValue: {} as GpuAdapterService }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(SomeGpuCalculationComponent);

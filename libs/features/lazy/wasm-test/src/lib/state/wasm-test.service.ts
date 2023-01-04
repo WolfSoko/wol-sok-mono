@@ -27,9 +27,7 @@ export class WasmTestService {
       });
 
     instantiateFibWasmService.recursiveCalls$
-      .pipe(
-        tap((recursiveCalls) => this.wasmTestStore.update({ recursiveCalls }))
-      )
+      .pipe(tap((recursiveCalls) => this.wasmTestStore.update({ recursiveCalls })))
       .subscribe();
   }
 
@@ -40,9 +38,7 @@ export class WasmTestService {
         filter((loading) => !loading),
         switchMapTo(this.wasmTestQuery.selectFibN()),
         take(1),
-        tap(() =>
-          this.wasmTestStore.update({ fibRunning: true, recursiveCalls: 0 })
-        ),
+        tap(() => this.wasmTestStore.update({ fibRunning: true, recursiveCalls: 0 })),
         delay(20),
         tap((n) => {
           let startTime = window.performance.now();
@@ -67,9 +63,7 @@ export class WasmTestService {
         filter((loading) => !loading),
         switchMapTo(this.wasmTestQuery.selectFibN()),
         take(1),
-        tap(() =>
-          this.wasmTestStore.update({ fibRunning: true, recursiveCalls: 0 })
-        ),
+        tap(() => this.wasmTestStore.update({ fibRunning: true, recursiveCalls: 0 })),
         delay(20),
         tap((n) => {
           let startTime = window.performance.now();

@@ -1,25 +1,19 @@
 <mat-card appearance="raised" wsSharedUiElevateCard class="brain-settings-card">
   <mat-card-header>
-    <mat-card-title>
-      Brain Settings
-    </mat-card-title>
+    <mat-card-title> Brain Settings </mat-card-title>
     <mat-card-subtitle>Train, create data, reset</mat-card-subtitle>
   </mat-card-header>
   <mat-card-actions class="brain-settings-card-actions">
     <button mat-raised-button color="accent" (click)="train()">Train 10 Points</button>
-    <button mat-raised-button color="accent" (click)="testAgainstNewData()">Test against new data
-    </button>
-    <button mat-raised-button color="accent" (click)="resetPerceptron()">Reset Perceptron
-    </button>
-    <mat-slide-toggle matTooltip="Each 30ms we learn 10 random point" color="primary"
-                      [ngModel]="autoLearning$ | async"
-                      (ngModelChange)="toggleAutoLearning($event)">Auto-learning {{(autoLearning$ | async) ? 'enabled'
-      : 'disabled'}}
+    <button mat-raised-button color="accent" (click)="testAgainstNewData()">Test against new data</button>
+    <button mat-raised-button color="accent" (click)="resetPerceptron()">Reset Perceptron</button>
+    <mat-slide-toggle
+      matTooltip="Each 30ms we learn 10 random point"
+      color="primary"
+      [ngModel]="autoLearning$ | async"
+      (ngModelChange)="toggleAutoLearning($event)"
+      >Auto-learning {{ (autoLearning$ | async) ? 'enabled' : 'disabled' }}
     </mat-slide-toggle>
-    <button mat-raised-button
-            color="accent"
-            (click)="clearPoints()">
-      Clear Points
-    </button>
+    <button mat-raised-button color="accent" (click)="clearPoints()">Clear Points</button>
   </mat-card-actions>
 </mat-card>

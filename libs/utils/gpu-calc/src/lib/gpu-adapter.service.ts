@@ -29,27 +29,18 @@ export class GpuAdapterService {
   >(
     kernel: KernelFunction<ArgTypes, ConstantsT>,
     settings?: IGPUKernelSettings
-  ): ((...args: ArgTypes) => KernelReturnType) &
-    IKernelRunShortcutBase<KernelReturnType> {
-    return this.delegateGPU.createKernel(kernel, settings) as ((
-      ...args: ArgTypes
-    ) => KernelReturnType) &
+  ): ((...args: ArgTypes) => KernelReturnType) & IKernelRunShortcutBase<KernelReturnType> {
+    return this.delegateGPU.createKernel(kernel, settings) as ((...args: ArgTypes) => KernelReturnType) &
       IKernelRunShortcutBase<KernelReturnType>;
   }
 
-  async setUseGPU(
-    useGPU: boolean = true,
-    settings?: Partial<IGPUSettings>
-  ): Promise<GpuAdapterService> {
+  async setUseGPU(useGPU: boolean = true, settings?: Partial<IGPUSettings>): Promise<GpuAdapterService> {
     await this.delegateGPU?.destroy();
     this.delegateGPU = new GPU({ mode: useGPU ? 'gpu' : 'cpu', ...settings });
     return this;
   }
 
-  addFunction(
-    kernelFunction: GPUFunction,
-    settings?: IGPUFunctionSettings
-  ): GpuAdapterService {
+  addFunction(kernelFunction: GPUFunction, settings?: IGPUFunctionSettings): GpuAdapterService {
     this.delegateGPU.addFunction(kernelFunction, settings);
     return this;
   }

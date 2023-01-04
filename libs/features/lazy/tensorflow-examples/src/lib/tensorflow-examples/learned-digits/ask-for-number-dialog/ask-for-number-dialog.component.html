@@ -3,19 +3,10 @@
 <div mat-dialog-content>
   <mat-form-field>
     <mat-label>What did you draw?</mat-label>
-    <input
-      min="0"
-      max="0"
-      id="numberDrawn"
-      matInput
-      type="number"
-      [(ngModel)]="data.drawn"
-    />
+    <input min="0" max="0" id="numberDrawn" matInput type="number" [(ngModel)]="data.drawn" />
   </mat-form-field>
 </div>
 <div mat-dialog-actions>
   <button mat-button (click)="onNoClick()">Don't know</button>
-  <button mat-button [disabled]="data.drawn === null" [mat-dialog-close]="data">
-    Ok
-  </button>
+  <button mat-button [disabled]="data.drawn === null" [mat-dialog-close]="data">Ok</button>
 </div>

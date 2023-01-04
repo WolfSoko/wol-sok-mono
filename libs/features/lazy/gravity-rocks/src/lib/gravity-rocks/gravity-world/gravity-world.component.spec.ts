@@ -13,9 +13,6 @@ describe('GravityWorldComponent', () => {
   });
 
   it('should create the component', () => {
-    expect(
-      createHost(`<feat-lazy-gravity-world></feat-lazy-gravity-world>`)
-        .component
-    ).toBeTruthy();
+    expect(createHost(`<feat-lazy-gravity-world></feat-lazy-gravity-world>`).component).toBeTruthy();
   });
 });

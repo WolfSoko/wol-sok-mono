@@ -106,12 +106,10 @@ export class WsThanosService {
     const startAccelerateY = time * (maxHeight - minParticleY) + minParticleY;
 
     const lengthY = maxHeight - startAccelerateY;
-    const accelerateRadiusPow =
-      startAccelerateX * startAccelerateX + lengthY * lengthY;
+    const accelerateRadiusPow = startAccelerateX * startAccelerateX + lengthY * lengthY;
 
     for (let i = 0; i < particles.length; i += PARTICLE_BYTE_LENGTH) {
-      const { x, y, dx, dy, ax, ay, a } =
-        WsThanosService.getParticleIndicesForBase(i);
+      const { x, y, dx, dy, ax, ay, a } = WsThanosService.getParticleIndicesForBase(i);
       const particleX = particles[x];
       const particleY = particles[y];
 
@@ -134,11 +132,9 @@ export class WsThanosService {
         // todo consider to use noise;
         pXLength += Math.tan((pXLength / 20.12) * time + seed) * 0.5;
         pXLength += (particleX % deltaTSec) * 0.5;
-        pXLength +=
-          Math.sin((pXLength / 30 + 723.394) * time + seed * 12.5) * 11;
+        pXLength += Math.sin((pXLength / 30 + 723.394) * time + seed * 12.5) * 11;
         pYLength += Math.tan((pYLength / 0.45) * time + seed * 1.5) * 0.5;
-        pYLength +=
-          Math.cos((pYLength / 100 + 2323.234) * time + seed * 456.1) * 23;
+        pYLength += Math.cos((pYLength / 100 + 2323.234) * time + seed * 456.1) * 23;
 
         const pLength = pXLength * pXLength + pYLength * pYLength;
         if (pLength > accelerateRadiusPow) {
@@ -147,12 +143,7 @@ export class WsThanosService {
         }
       } else {
         // use noise to flow along velocity field
-        const flowFieldAcc = WsThanosService.getXYFromFlowField(
-          noise,
-          seed,
-          particleX,
-          particleY
-        );
+        const flowFieldAcc = WsThanosService.getXYFromFlowField(noise, seed, particleX, particleY);
         const accelerationX = flowFieldAcc[0];
         const accelerationY = flowFieldAcc[1];
         particles[ax] += accelerationX;
@@ -169,10 +160,7 @@ export class WsThanosService {
     }
   }
 
-  private static drawParticles(
-    drawCtx: CanvasRenderingContext2D,
-    particles: Float32Array
-  ): void {
+  private static drawParticles(drawCtx: CanvasRenderingContext2D, particles: Float32Array): void {
     const { width, height } = drawCtx.canvas;
     drawCtx.clearRect(0, 0, width, height);
     const image = drawCtx.getImageData(0, 0, width, height);
@@ -190,11 +178,7 @@ export class WsThanosService {
       ) {
         continue;
       }
-      const { r, g, b, a } = WsThanosService.getColorIndicesForCoord(
-        ~~particles[pI.x],
-        ~~particles[pI.y],
-        width
-      );
+      const { r, g, b, a } = WsThanosService.getColorIndicesForCoord(~~particles[pI.x], ~~particles[pI.y], width);
       imageData[r] = ~~particles[pI.r];
       imageData[g] = ~~particles[pI.g];
       imageData[b] = ~~particles[pI.b];
@@ -219,17 +203,11 @@ export class WsThanosService {
     resultCanvas.height = resultHeight;
     resultCanvas.width = resultWidth;
 
-    const imageData = divCanvas
-      .getContext('2d')
-      ?.getImageData(0, 0, width, height);
+    const imageData = divCanvas.getContext('2d')?.getImageData(0, 0, width, height);
     if (imageData == null) {
       throw new Error('Could not get image data from canvas');
     }
-    const particlesData = WsThanosService.createParticlesForImageData(
-      imageData,
-      maxParticleCount,
-      resultHeight
-    );
+    const particlesData = WsThanosService.createParticlesForImageData(imageData, maxParticleCount, resultHeight);
     return { resultCanvas, particlesData };
   }
 
@@ -254,9 +232,7 @@ export class WsThanosService {
     }
 
     const maxNumParticles = Math.min(particleCandidates, maxParticleCount);
-    const particles = new Float32Array(
-      Float32Array.BYTES_PER_ELEMENT * maxNumParticles * PARTICLE_BYTE_LENGTH
-    );
+    const particles = new Float32Array(Float32Array.BYTES_PER_ELEMENT * maxNumParticles * PARTICLE_BYTE_LENGTH);
 
     let maxParticleX = 0;
     let minParticleY = resultHeight;
@@ -271,10 +247,9 @@ export class WsThanosService {
 
       maxParticleX = Math.max(maxParticleX, x);
       minParticleY = Math.min(minParticleY, y);
-      const { dx, dy, ax, ay, r, g, b, a, ...xy } =
-        WsThanosService.getParticleIndicesForBase(
-          particleCount * PARTICLE_BYTE_LENGTH
-        );
+      const { dx, dy, ax, ay, r, g, b, a, ...xy } = WsThanosService.getParticleIndicesForBase(
+        particleCount * PARTICLE_BYTE_LENGTH
+      );
       particles[xy.x] = x;
       particles[xy.y] = y + resultHeight - height;
       particles[dx] = 0;
@@ -293,12 +268,7 @@ export class WsThanosService {
     return { particles, maxParticleX, minParticleY };
   }
 
-  private static getXYFromFlowField(
-    noise: SimplexNoise,
-    seed: number,
-    x: number,
-    y: number
-  ) {
+  private static getXYFromFlowField(noise: SimplexNoise, seed: number, x: number, y: number) {
     const sampleX = noise.scaled3D(x, y, seed + 33.23, FLOW_FIELD_RES);
     const sampleY = noise.scaled3D(x, seed / 13.23, y, FLOW_FIELD_RES) * -1;
     return [sampleX, sampleY];
@@ -315,9 +285,7 @@ export class WsThanosService {
 
   private vaporizeIntern(elem: HTMLElement): Observable<AnimationState> {
     elem.style.opacity = elem.style.opacity || '1';
-    elem.style.transition = `opacity ${Math.floor(
-      this.thanosOptions.animationLength * 0.8
-    )}ms ease-out`;
+    elem.style.transition = `opacity ${Math.floor(this.thanosOptions.animationLength * 0.8)}ms ease-out`;
     const noise = new SimplexNoise({ frequency: 0.01, min: 0 });
     const seed = new Date().getDate() * Math.random();
     const html2CanvasPromise: Promise<HTMLCanvasElement> = html2canvas(elem, {
@@ -337,13 +305,11 @@ export class WsThanosService {
         );
         const { resultCanvas } = canvasAndParticles;
         if (elem.parentElement) {
-          elem.parentElement.style.position =
-            elem.parentElement.style.position || 'relative';
+          elem.parentElement.style.position = elem.parentElement.style.position || 'relative';
         }
         resultCanvas.style.position = 'absolute';
         resultCanvas.style.left = 0 + 'px';
-        resultCanvas.style.top =
-          '-' + elem.getBoundingClientRect().height * (HEIGHT_SCALE - 1) + 'px';
+        resultCanvas.style.top = '-' + elem.getBoundingClientRect().height * (HEIGHT_SCALE - 1) + 'px';
         resultCanvas.style.zIndex = '2000';
         resultCanvas.style.pointerEvents = 'none';
 
@@ -354,8 +320,7 @@ export class WsThanosService {
       }),
       switchMap(({ resultCanvas, particlesData }) => {
         let time = 0;
-        const { animationLength, maxParticleCount, particleAcceleration } =
-          this.thanosOptions;
+        const { animationLength, maxParticleCount, particleAcceleration } = this.thanosOptions;
         return interval(1000 / 60, animationFrameScheduler).pipe(
           timeInterval(),
           tap((deltaT) => (time += deltaT.interval)),

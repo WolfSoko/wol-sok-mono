@@ -4,30 +4,15 @@ import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import {
-  MatPaginator,
-  MatPaginatorModule,
-  PageEvent,
-} from '@angular/material/paginator';
+import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RenderShaderComponent } from '@wolsok/ui-kit';
 import { combineLatest, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CodeEditorComponent } from './code-editor/code-editor.component';
-import {
-  fadeInLeft,
-  fadeInRight,
-  fadeOutLeft,
-  fadeOutRight,
-} from './leftInOut.animation';
+import { fadeInLeft, fadeInRight, fadeOutLeft, fadeOutRight } from './leftInOut.animation';
 import { ShaderExamplesOptionsComponent } from './shader-examples-options/shader-examples-options.component';
-import {
-  ShaderCode,
-  ShaderCodeQuery,
-  ShaderExamplesService,
-  ShaderExampleState,
-  ShaderExamplesUIQuery,
-} from './state';
+import { ShaderCode, ShaderCodeQuery, ShaderExamplesService, ShaderExampleState, ShaderExamplesUIQuery } from './state';
 
 @Component({
   standalone: true,
@@ -58,19 +43,14 @@ import {
 })
 export class ShaderExamplesComponent {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
-  readonly viewModel$: Observable<
-    ShaderExampleState & { isLoadingShaders: boolean }
-  >;
+  readonly viewModel$: Observable<ShaderExampleState & { isLoadingShaders: boolean }>;
 
   constructor(
     readonly state: ShaderExamplesUIQuery,
     readonly shaderCodeQuery: ShaderCodeQuery,
     private readonly shaderExamplesService: ShaderExamplesService
   ) {
-    this.viewModel$ = combineLatest([
-      this.state.select(),
-      shaderCodeQuery.selectLoading(),
-    ]).pipe(
+    this.viewModel$ = combineLatest([this.state.select(), shaderCodeQuery.selectLoading()]).pipe(
       map(([state, isLoadingShaders]) => ({
         ...state,
         isLoadingShaders,

@@ -13,11 +13,7 @@ export class DataP5Sketch {
     private width: number = 400,
     private height: number = 400,
     private brainService: BrainService,
-    private onClickHandler: (
-      x: number,
-      y: number,
-      click: 'left' | 'right'
-    ) => void,
+    private onClickHandler: (x: number, y: number, click: 'left' | 'right') => void,
     private showLinearDivider = true
   ) {
     p.setup = this.setup.bind(this);
@@ -40,12 +36,7 @@ export class DataP5Sketch {
           const guessWithoutStep = this.brainService.guessSilent([inp0, inp1]);
           const absGuess = Math.abs(guessWithoutStep - 0.5);
           const colorValue = this.p.map(absGuess, 0, 0.1, 255, 128);
-          this.separationImg.set(x, y, [
-            colorValue,
-            colorValue,
-            colorValue,
-            255,
-          ]);
+          this.separationImg.set(x, y, [colorValue, colorValue, colorValue, 255]);
         }
       }
       this.separationImg.updatePixels();
@@ -70,14 +61,8 @@ export class DataP5Sketch {
       const mouseX = this.p.mouseX;
       const mouseY = this.p.mouseY;
 
-      if (
-        mouseX > 0 &&
-        mouseY > 0 &&
-        mouseX <= this.width &&
-        mouseY <= this.p.height
-      ) {
-        const mouseButton =
-          this.p.mouseButton === this.p.LEFT ? 'left' : 'right';
+      if (mouseX > 0 && mouseY > 0 && mouseX <= this.width && mouseY <= this.p.height) {
+        const mouseButton = this.p.mouseButton === this.p.LEFT ? 'left' : 'right';
         this.onClickHandler(mouseX, mouseY, mouseButton);
         return false;
       }

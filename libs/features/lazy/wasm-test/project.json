@@ -32,10 +32,7 @@
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "options": {
-        "lintFilePatterns": [
-          "libs/features/lazy/wasm-test/src/**/*.ts",
-          "libs/features/lazy/wasm-test/src/**/*.html"
-        ]
+        "lintFilePatterns": ["libs/features/lazy/wasm-test/src/**/*.ts", "libs/features/lazy/wasm-test/src/**/*.html"]
       }
     }
   },

@@ -1,9 +1,4 @@
-import type {
-  IConstantsThis,
-  IKernelFunctionThis,
-  KernelFunction,
-  ThreadFunction,
-} from '@wolsok/utils-gpu-calc';
+import type { IConstantsThis, IKernelFunctionThis, KernelFunction, ThreadFunction } from '@wolsok/utils-gpu-calc';
 import { KernelDefinition } from './kernel.definition';
 import { ThreadFunctionDefinition } from './thread-function.definition';
 
@@ -92,13 +87,7 @@ usedFunctions.push({
   threadFn: calcWeightedSum as ThreadFunction,
 });
 
-function calcNextA(
-  a: number,
-  dA: number,
-  laplaceA: number,
-  abb: number,
-  f: number
-): number {
+function calcNextA(a: number, dA: number, laplaceA: number, abb: number, f: number): number {
   return a + dA * laplaceA - abb + f * (1.0 - a);
 }
 
@@ -132,19 +121,8 @@ function calcNextKernel(
   this: CalcNextGridKernelThis,
   grid: number[][][],
   weights: number[],
-  calcParams: [
-    dA: number,
-    dB: number,
-    f: number,
-    k: number,
-    dynkillfeed: number
-  ],
-  addChemicalsParams: [
-    xAdd: number,
-    yAdd: number,
-    radius: number,
-    addChems: number
-  ]
+  calcParams: [dA: number, dB: number, f: number, k: number, dynkillfeed: number],
+  addChemicalsParams: [xAdd: number, yAdd: number, radius: number, addChems: number]
 ): number {
   const [dA, dB, f, k, dynkillfeed] = calcParams;
   const [xAdd, yAdd, radius, addChems] = addChemicalsParams;
@@ -159,50 +137,23 @@ function calcNextKernel(
 
   const isCalcFluidBToAdd = addChems * isFluidB;
   fluidB +=
-    isCalcFluidBToAdd *
-    calcFluidBToAdd(
-      grid,
-      xAdd,
-      yAdd,
-      radius,
-      this.thread.x,
-      this.thread.y,
-      this.constants.height
-    );
+    isCalcFluidBToAdd * calcFluidBToAdd(grid, xAdd, yAdd, radius, this.thread.x, this.thread.y, this.constants.height);
 
   // we calculate k and f depending on x, y when dynkillfeed = 1
   const kT = k * (1.0 - dynkillfeed) + (k + xNormed * 0.025) * dynkillfeed;
-  const fT =
-    f * (1.0 - dynkillfeed) + (f + 0.09 + yNormed * -0.09) * dynkillfeed;
+  const fT = f * (1.0 - dynkillfeed) + (f + 0.09 + yNormed * -0.09) * dynkillfeed;
 
   const abb: number = fluidA * fluidB * fluidB;
 
   const laplaceA: number =
     isFluidA *
-    calcWeightedSum(
-      grid,
-      0,
-      weights,
-      this.thread.x,
-      this.thread.y,
-      this.constants.width,
-      this.constants.height
-    );
+    calcWeightedSum(grid, 0, weights, this.thread.x, this.thread.y, this.constants.width, this.constants.height);
 
-  let result =
-    isFluidA * limit(calcNextA(fluidA, dA, laplaceA, abb, fT), 0.0, 1.0);
+  let result = isFluidA * limit(calcNextA(fluidA, dA, laplaceA, abb, fT), 0.0, 1.0);
 
   const laplaceB: number =
     isFluidB *
-    calcWeightedSum(
-      grid,
-      1,
-      weights,
-      this.thread.x,
-      this.thread.y,
-      this.constants.width,
-      this.constants.height
-    );
+    calcWeightedSum(grid, 1, weights, this.thread.x, this.thread.y, this.constants.width, this.constants.height);
   const fB: number = fluidB + dB * laplaceB + abb - (kT + fT) * fluidB;
   result += isFluidB * limit(fB, 0.0, 1.0);
   return result;
@@ -210,10 +161,7 @@ function calcNextKernel(
 
 export type CalcNextGridKernelParams = Parameters<typeof calcNextKernel>;
 
-export const calcNextKernelModule: KernelDefinition<
-  CalcNextGridKernelParams,
-  CalcNextGridKernelConstants
-> = {
+export const calcNextKernelModule: KernelDefinition<CalcNextGridKernelParams, CalcNextGridKernelConstants> = {
   kernel: calcNextKernel as KernelFunction,
   threadFunctions: usedFunctions,
 };

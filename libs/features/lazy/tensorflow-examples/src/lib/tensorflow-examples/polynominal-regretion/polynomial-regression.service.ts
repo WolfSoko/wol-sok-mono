@@ -1,4 +1,4 @@
-import { Injectable } from "@angular/core";
+import { Injectable } from '@angular/core';
 import {
   nextFrame,
   Rank,
@@ -9,9 +9,9 @@ import {
   tidy,
   train,
   Variable,
-  variable
-} from "@tensorflow/tfjs";
-import { DataGeneratorService } from "./data-generator.service";
+  variable,
+} from '@tensorflow/tfjs';
+import { DataGeneratorService } from './data-generator.service';
 
 /**
  * We want to learn the coefficients that give correct solutions to the
@@ -37,6 +37,7 @@ export class PolynomialRegressionService {
   private optimizer!: SGDOptimizer;
 
   private _trueCoefficients!: { a: number; b: number; c: number; d: number };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _trainingData: any;
 
   predictionsBefore?: Tensor<Rank.R0>;
@@ -68,10 +69,7 @@ export class PolynomialRegressionService {
 
   get trainingData() {
     if (!this._trainingData) {
-      this._trainingData = this.dataService.generateData(
-        400,
-        this.trueCoefficients
-      );
+      this._trainingData = this.dataService.generateData(400, this.trueCoefficients);
     }
     return this._trainingData;
   }
@@ -112,6 +110,7 @@ export class PolynomialRegressionService {
         .add(this.b.mul(x.square()))
         .add(this.c.mul(x))
         .add(this.d as Tensor);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as any;
   }
 
@@ -126,11 +125,7 @@ export class PolynomialRegressionService {
    * xs - training data x values
    * ys — training data y values
    */
-  async train(
-    xs: Tensor<Rank.R0>,
-    ys: Tensor<Rank.R0>,
-    numIterations: number = this.numIterations
-  ): Promise<void> {
+  async train(xs: Tensor<Rank.R0>, ys: Tensor<Rank.R0>, numIterations: number = this.numIterations): Promise<void> {
     for (let iter = 0; iter < numIterations; iter++) {
       // optimizer.minimize is where the training happens.
 
@@ -167,11 +162,7 @@ export class PolynomialRegressionService {
   async learnCoefficients(iterations = this.numIterations, batchSize = 10) {
     // Train the model!
     for (let i = iterations; i > 0; i -= batchSize) {
-      await this.train(
-        this.trainingData.xs,
-        this.trainingData.ys,
-        Math.min(batchSize, i)
-      );
+      await this.train(this.trainingData.xs, this.trainingData.ys, Math.min(batchSize, i));
       this.predictionsAfter = this.predict(this.trainingData.xs);
     }
   }

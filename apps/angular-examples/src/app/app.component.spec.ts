@@ -45,8 +45,7 @@ describe('AppComponent', () => {
     TestBed.overrideComponent(MainToolbarComponent, {
       set: { template: '<div>ToolbarComp</div>' },
     });
-    const fixture: ComponentFixture<AppComponent> =
-      TestBed.createComponent(AppComponent);
+    const fixture: ComponentFixture<AppComponent> = TestBed.createComponent(AppComponent);
     const comp: AppComponent = fixture.componentInstance;
     fixture.detectChanges();
     return {
@@ -62,8 +61,6 @@ describe('AppComponent', () => {
 
   it('should inform about the app version', () => {
     const { fixture } = createComp();
-    expect(fixture.debugElement.attributes['app-version']).toEqual(
-      'angular-examples@v1.2.3'
-    );
+    expect(fixture.debugElement.attributes['app-version']).toEqual('angular-examples@v1.2.3');
   });
 });

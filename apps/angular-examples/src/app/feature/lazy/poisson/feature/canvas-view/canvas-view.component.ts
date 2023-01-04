@@ -7,7 +7,7 @@ import {
   EventEmitter,
   Input,
   Output,
-  ViewChild
+  ViewChild,
 } from '@angular/core';
 import { Circle } from '../../domain/model/circle';
 import { CanvasDrawService } from './canvas-draw.service';
@@ -39,16 +39,13 @@ export class CanvasViewComponent implements AfterContentInit {
   private draw$: Observable<number>;
 
   constructor(private canvasDrawService: CanvasDrawService) {
-    this.draw$ = interval(0, animationFrameScheduler).pipe(
-      skipUntil(this.readyToPaint)
-    );
+    this.draw$ = interval(0, animationFrameScheduler).pipe(skipUntil(this.readyToPaint));
   }
 
   ngAfterContentInit(): void {
     this.canvas.nativeElement.width = this.canvasWidth;
     this.canvas.nativeElement.height = this.canvasHeight;
-    const context: CanvasRenderingContext2D =
-      this.canvas.nativeElement.getContext('2d');
+    const context: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
     this.canvasDrawService.initCtx(context);
     setTimeout(() => this.readyToPaint.emit(0), 1000);
     this.draw$.pipe(untilDestroyed(this)).subscribe(this.draw.bind(this));
@@ -60,10 +57,7 @@ export class CanvasViewComponent implements AfterContentInit {
 
   private isInsideDrawArea(circle: Circle): boolean {
     return (
-      circle.pos.x <= this.canvasWidth &&
-      circle.pos.y <= this.canvasHeight &&
-      circle.pos.x >= 0 &&
-      circle.pos.y >= 0
+      circle.pos.x <= this.canvasWidth && circle.pos.y <= this.canvasHeight && circle.pos.x >= 0 && circle.pos.y >= 0
     );
   }
 
@@ -71,24 +65,18 @@ export class CanvasViewComponent implements AfterContentInit {
     this.canvasDrawService.setFillColor('black');
     this.canvasDrawService.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
     if (this.circles) {
-      const filteredCircles = this.circles.filter(
-        this.isInsideDrawArea.bind(this)
-      );
+      const filteredCircles = this.circles.filter(this.isInsideDrawArea.bind(this));
       if (filteredCircles.length < this.circles.length) {
         console.error(
           'Some circles are out of draw area.',
           this.circles.filter((circle) => !this.isInsideDrawArea(circle))
         );
       }
-      this.circles.forEach((circle) =>
-        this.canvasDrawService.drawCircle(circle, step)
-      );
+      this.circles.forEach((circle) => this.canvasDrawService.drawCircle(circle, step));
     }
     if (this.actives) {
       this.canvasDrawService.setFillColor('red');
-      this.actives.forEach((active) =>
-        this.canvasDrawService.drawVec(active, 2)
-      );
+      this.actives.forEach((active) => this.canvasDrawService.drawVec(active, 2));
     }
     if (this.lines) {
       this.canvasDrawService.setStrokeColor('white');

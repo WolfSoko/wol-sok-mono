@@ -1,25 +1,13 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { CommonModule, DOCUMENT } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  EventEmitter,
-  Inject,
-  Output,
-  Renderer2,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Inject, Output, Renderer2 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { NavigationEnd, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-  ElemResizedDirective,
-  RenderShaderComponent,
-  ResizedEvent,
-} from '@wolsok/ui-kit';
+import { ElemResizedDirective, RenderShaderComponent, ResizedEvent } from '@wolsok/ui-kit';
 import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { HeadlineAnimationService } from '../../core/headline-animation.service';
@@ -69,9 +57,7 @@ export class MainToolbarComponent {
         untilDestroyed(this)
       )
       .subscribe(() => headlineAnimations.startAnimation());
-    this.isHandset$ = breakpointObserver
-      .observe(Breakpoints.Handset)
-      .pipe(map((value) => value.matches));
+    this.isHandset$ = breakpointObserver.observe(Breakpoints.Handset).pipe(map((value) => value.matches));
     this.runAnimation$ = headlineAnimations.runAnimation$;
     this.shaderCode = shader;
   }

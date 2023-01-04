@@ -30,10 +30,7 @@
         ],
         "styles": ["apps/angular-examples/src/styles.scss"],
         "stylePreprocessorOptions": {
-          "includePaths": [
-            "apps/angular-examples/src/styles",
-            "libs/ui-kit/src/lib/styles"
-          ]
+          "includePaths": ["apps/angular-examples/src/styles", "libs/ui-kit/src/lib/styles"]
         },
         "allowedCommonJsDependencies": [
           "assemblyscript/lib/loader",
@@ -139,10 +136,7 @@
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "options": {
-        "lintFilePatterns": [
-          "apps/angular-examples/src/**/*.ts",
-          "apps/angular-examples/src/**/*.html"
-        ]
+        "lintFilePatterns": ["apps/angular-examples/src/**/*.ts", "apps/angular-examples/src/**/*.html"]
       }
     },
     "test": {

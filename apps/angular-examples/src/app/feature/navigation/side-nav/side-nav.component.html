@@ -1,13 +1,5 @@
-<mat-sidenav-container
-  *wsLet="showStatic$ | async as staticToolbar"
-  [hasBackdrop]="!staticToolbar"
-  autosize
->
-  <mat-sidenav
-    [disableClose]="staticToolbar"
-    [opened]="showSidebar$ | async"
-    [mode]="staticToolbar ? 'side' : 'over'"
-  >
+<mat-sidenav-container *wsLet="showStatic$ | async as staticToolbar" [hasBackdrop]="!staticToolbar" autosize>
+  <mat-sidenav [disableClose]="staticToolbar" [opened]="showSidebar$ | async" [mode]="staticToolbar ? 'side' : 'over'">
     <nav class="navigation-sidenav">
       <mat-nav-list>
         <app-nav-item

@@ -62,11 +62,7 @@ export class PerceptronComponent implements AfterContentInit, OnDestroy {
     if (this.perceptron.lastGuess != null) {
       p.textSize(circleSize / 4);
       p.textAlign(p.LEFT);
-      p.text(
-        'Output:' + PerceptronComponent.roundFloat(this.perceptron.lastGuess),
-        circleSize / 2 + 2,
-        -2
-      );
+      p.text('Output:' + PerceptronComponent.roundFloat(this.perceptron.lastGuess), circleSize / 2 + 2, -2);
     }
     p.pop();
   }
@@ -90,18 +86,13 @@ export class PerceptronComponent implements AfterContentInit, OnDestroy {
     p.textAlign(p.CENTER);
     p.text('Bias', 0, circleSize / 10);
     p.textAlign(p.LEFT);
-    p.text(
-      PerceptronComponent.roundFloat(this.perceptron.bias),
-      5,
-      this.canvasHeight / 10
-    );
+    p.text(PerceptronComponent.roundFloat(this.perceptron.bias), 5, this.canvasHeight / 10);
     p.line(0, circleSize / 2, 0, this.canvasHeight / 3);
     p.pop();
   }
 
   drawInputs(p: P5) {
-    const inputDistanceY =
-      this.canvasHeight / (this.perceptron.weights.length + 1);
+    const inputDistanceY = this.canvasHeight / (this.perceptron.weights.length + 1);
     this.perceptron.weights.forEach((weight, index) => {
       const y = inputDistanceY * (index + 1);
       const circleSize = this.canvasWidth / 7.5;
@@ -120,9 +111,7 @@ export class PerceptronComponent implements AfterContentInit, OnDestroy {
       p.textAlign(p.LEFT);
       if (this.perceptron.lastInput?.[index] != null) {
         p.text(
-          `in${index + 1}: ${PerceptronComponent.roundFloat(
-            this.perceptron.lastInput[index]
-          )}`,
+          `in${index + 1}: ${PerceptronComponent.roundFloat(this.perceptron.lastInput[index])}`,
           circleX * 2,
           y - this.perceptronCircleSize() / 4
         );

@@ -3,24 +3,12 @@ import { Injectable } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { transaction as Transaction } from '@datorama/akita';
 import { EMPTY, Subject, throwError, TimeoutError } from 'rxjs';
-import {
-  catchError,
-  debounceTime,
-  distinctUntilChanged,
-  filter,
-  switchMap,
-  take,
-  tap,
-  timeout,
-} from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, filter, switchMap, take, tap, timeout } from 'rxjs/operators';
 import { ShaderCode } from './shader-code.model';
 import { ShaderCodeQuery } from './shader-code.query';
 import { ShaderCodeService } from './shader-code.service';
 import { ShaderExamplesUIQuery } from './shader-examples.query';
-import {
-  ShaderExampleState,
-  ShaderExamplesUIStore,
-} from './shader-examples.store';
+import { ShaderExampleState, ShaderExamplesUIStore } from './shader-examples.store';
 
 @Injectable({
   providedIn: 'root',
@@ -40,22 +28,16 @@ export class ShaderExamplesService {
     this.updateShaderSubject
       .pipe(
         debounceTime(2500),
-        distinctUntilChanged(
-          (x1, x2) => x1.shader.id === x2.shader.id && x1.code === x2.code
-        ),
+        distinctUntilChanged((x1, x2) => x1.shader.id === x2.shader.id && x1.code === x2.code),
         tap(() => this.shaderExamplesUIStore.update({ savingShader: true })),
-        switchMap(({ shader, code }) =>
-          this.shaderCodeService.update(shader, code)
-        ),
+        switchMap(({ shader, code }) => this.shaderCodeService.update(shader, code)),
         tap(() => this.shaderExamplesUIStore.update({ savingShader: false }))
       )
       .subscribe();
 
-    this.breakpointObserver
-      .observe([Breakpoints.HandsetLandscape, Breakpoints.HandsetPortrait])
-      .subscribe((result) => {
-        this.updateScreenSize(result.matches);
-      });
+    this.breakpointObserver.observe([Breakpoints.HandsetLandscape, Breakpoints.HandsetPortrait]).subscribe((result) => {
+      this.updateScreenSize(result.matches);
+    });
 
     this.shaderCodeQuery.selectAll().subscribe((shaderCodes) => {
       this.updateCurrentPage({ length: shaderCodes.length || 0 });
@@ -107,17 +89,13 @@ export class ShaderExamplesService {
     this.updateShaderSubject.next({ shader, code });
   }
 
-  private updatePagedShaders(
-    shaderCodes: ShaderCode[] = this.shaderCodeQuery.getAllSortedById()
-  ) {
+  private updatePagedShaders(shaderCodes: ShaderCode[] = this.shaderCodeQuery.getAllSortedById()) {
     this.shaderExamplesQuery.animationState
       .pipe(
         filter((animationState) => animationState === ''),
         take(1),
         timeout(500),
-        catchError((error) =>
-          error instanceof TimeoutError ? EMPTY : throwError(error)
-        )
+        catchError((error) => (error instanceof TimeoutError ? EMPTY : throwError(error)))
       )
       .subscribe({
         complete: () => {
@@ -125,10 +103,7 @@ export class ShaderExamplesService {
             const event = state.currentPage;
             const startIndex = event.pageSize * event.pageIndex;
             return {
-              pagedShaders: shaderCodes.slice(
-                startIndex,
-                startIndex + event.pageSize
-              ),
+              pagedShaders: shaderCodes.slice(startIndex, startIndex + event.pageSize),
             };
           });
         },

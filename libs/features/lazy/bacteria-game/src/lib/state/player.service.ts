@@ -22,9 +22,7 @@ export class PlayerService {
   ) {
     this.gameStateQuery
       .selectKeysPressed()
-      .subscribe((value) =>
-        this.updatePlayerPos(value.keysPressed, value.deltaTimeSec)
-      );
+      .subscribe((value) => this.updatePlayerPos(value.keysPressed, value.deltaTimeSec));
   }
 
   private static playerOnCell(
@@ -35,11 +33,7 @@ export class PlayerService {
     width: number
   ): [Player, number] {
     const testIndex = (x + y * width) * 4;
-    const currentGridColor = [
-      imageData[testIndex],
-      imageData[testIndex + 1],
-      imageData[testIndex + 2],
-    ].toString();
+    const currentGridColor = [imageData[testIndex], imageData[testIndex + 1], imageData[testIndex + 2]].toString();
     const alphaAsEnergy = imageData[testIndex + 3];
     return [colorToPlayer[currentGridColor], alphaAsEnergy / 255];
   }
@@ -82,13 +76,7 @@ export class PlayerService {
         if (xi === x || yi === y) {
           continue;
         }
-        const [otherPlayer, energy] = PlayerService.playerOnCell(
-          xi,
-          yi,
-          imageData,
-          colorToPlayer,
-          width
-        );
+        const [otherPlayer, energy] = PlayerService.playerOnCell(xi, yi, imageData, colorToPlayer, width);
         if (otherPlayer == null) {
           continue;
         }
@@ -109,21 +97,10 @@ export class PlayerService {
   }
 
   @transaction()
-  init(
-    playersData: { x: number; y: number; color: PlayerColorArray }[],
-    radius: number = 30
-  ) {
+  init(playersData: { x: number; y: number; color: PlayerColorArray }[], radius: number = 30) {
     this.playerStore.remove();
     playersData.forEach((playerData, index) =>
-      this.add(
-        createPlayerWithBacterias(
-          index,
-          playerData.x,
-          playerData.y,
-          playerData.color,
-          radius
-        )
-      )
+      this.add(createPlayerWithBacterias(index, playerData.x, playerData.y, playerData.color, radius))
     );
     this.setActive(0);
   }
@@ -150,12 +127,7 @@ export class PlayerService {
     }));
   }
 
-  gameLoop(
-    imageData: Uint8ClampedArray,
-    width: number,
-    height: number,
-    deltaTimeSec: number
-  ) {
+  gameLoop(imageData: Uint8ClampedArray, width: number, height: number, deltaTimeSec: number) {
     this.handleBacEating(width, height, imageData, deltaTimeSec);
 
     const players = this.playerQuery.getAll().sort(() => Math.random() - 0.5);
@@ -174,66 +146,23 @@ export class PlayerService {
         const moveDirectionY = my - y;
 
         // normalize
-        const len = Math.sqrt(
-          moveDirectionX * moveDirectionX + moveDirectionY * moveDirectionY
-        );
+        const len = Math.sqrt(moveDirectionX * moveDirectionX + moveDirectionY * moveDirectionY);
         if (len === 0) {
-          const randX = Math.round(
-            (Math.random() - 0.5) * deltaTimeSec * player.maxSpeed
-          );
-          const randY = Math.round(
-            (Math.random() - 0.5) * deltaTimeSec * player.maxSpeed
-          );
-          this.moveToIfFree(
-            randX,
-            randY,
-            x,
-            y,
-            imageData,
-            width,
-            height,
-            bacs,
-            i,
-            deltaTimeSec
-          );
+          const randX = Math.round((Math.random() - 0.5) * deltaTimeSec * player.maxSpeed);
+          const randY = Math.round((Math.random() - 0.5) * deltaTimeSec * player.maxSpeed);
+          this.moveToIfFree(randX, randY, x, y, imageData, width, height, bacs, i, deltaTimeSec);
           continue;
         }
 
-        const xStep = Math.round(
-          (moveDirectionX / len) * deltaTimeSec * player.maxSpeed
-        );
-        const yStep = Math.round(
-          (moveDirectionY / len) * deltaTimeSec * player.maxSpeed
-        );
+        const xStep = Math.round((moveDirectionX / len) * deltaTimeSec * player.maxSpeed);
+        const yStep = Math.round((moveDirectionY / len) * deltaTimeSec * player.maxSpeed);
 
-        let wasFree = this.moveToIfFree(
-          xStep,
-          yStep,
-          x,
-          y,
-          imageData,
-          width,
-          height,
-          bacs,
-          i,
-          deltaTimeSec
-        );
+        let wasFree = this.moveToIfFree(xStep, yStep, x, y, imageData, width, height, bacs, i, deltaTimeSec);
         if (wasFree) {
           continue;
         }
         for (let dX = xStep; dX !== 0; dX = dX - Math.sign(xStep)) {
-          wasFree = this.moveToIfFree(
-            dX,
-            yStep,
-            x,
-            y,
-            imageData,
-            width,
-            height,
-            bacs,
-            i,
-            deltaTimeSec
-          );
+          wasFree = this.moveToIfFree(dX, yStep, x, y, imageData, width, height, bacs, i, deltaTimeSec);
           if (wasFree) {
             break;
           }
@@ -242,18 +171,7 @@ export class PlayerService {
           continue;
         }
         for (let dY = yStep; dY !== 0; dY = dY - Math.sign(yStep)) {
-          wasFree = this.moveToIfFree(
-            xStep,
-            dY,
-            x,
-            y,
-            imageData,
-            width,
-            height,
-            bacs,
-            i,
-            deltaTimeSec
-          );
+          wasFree = this.moveToIfFree(xStep, dY, x, y, imageData, width, height, bacs, i, deltaTimeSec);
           if (wasFree) {
             break;
           }
@@ -261,24 +179,9 @@ export class PlayerService {
         if (wasFree) {
           continue;
         }
-        const randomX = Math.round(
-          (Math.random() - 0.5) * deltaTimeSec * player.maxSpeed
-        );
-        const randomY = Math.round(
-          (Math.random() - 0.5) * deltaTimeSec * player.maxSpeed
-        );
-        this.moveToIfFree(
-          randomX,
-          randomY,
-          x,
-          y,
-          imageData,
-          width,
-          height,
-          bacs,
-          i,
-          deltaTimeSec
-        );
+        const randomX = Math.round((Math.random() - 0.5) * deltaTimeSec * player.maxSpeed);
+        const randomY = Math.round((Math.random() - 0.5) * deltaTimeSec * player.maxSpeed);
+        this.moveToIfFree(randomX, randomY, x, y, imageData, width, height, bacs, i, deltaTimeSec);
       }
 
       this.update(player.id, { bacterias: bacs });
@@ -300,10 +203,7 @@ export class PlayerService {
     const moveToX = Math.max(Math.min(width - 1, x + xStep), 0);
     const moveToY = Math.max(Math.min(height - 1, y + yStep), 0);
     const testIndex = (moveToX + moveToY * width) * 4;
-    const currentGridColor =
-      imageData[testIndex] +
-      imageData[testIndex + 1] +
-      imageData[testIndex + 2];
+    const currentGridColor = imageData[testIndex] + imageData[testIndex + 1] + imageData[testIndex + 2];
     if (currentGridColor > 255) {
       return false;
     }
@@ -319,10 +219,7 @@ export class PlayerService {
     bacs[bacIndex] = {
       x: moveToX,
       y: moveToY,
-      energy: Math.min(
-        bacteriumMaxEnergy,
-        bacs[bacIndex].energy + deltaTimeSec * 0.1
-      ),
+      energy: Math.min(bacteriumMaxEnergy, bacs[bacIndex].energy + deltaTimeSec * 0.1),
     };
 
     return true;
@@ -366,47 +263,18 @@ export class PlayerService {
     const gameState = this.gameStateQuery.getValue();
     if (gameState.currentState === GameState.RUNNING) {
       this.playerStore.update(0, (state) => ({
-        x: Math.max(
-          Math.min(
-            state.x + xDir0 * (state.maxSpeed * deltaTimeInSec),
-            gameState.width
-          ),
-          0
-        ),
-        y: Math.max(
-          Math.min(
-            state.y + yDir0 * (state.maxSpeed * deltaTimeInSec),
-            gameState.height
-          ),
-          0
-        ),
+        x: Math.max(Math.min(state.x + xDir0 * (state.maxSpeed * deltaTimeInSec), gameState.width), 0),
+        y: Math.max(Math.min(state.y + yDir0 * (state.maxSpeed * deltaTimeInSec), gameState.height), 0),
       }));
       this.playerStore.update(1, (state) => ({
-        x: Math.max(
-          Math.min(
-            state.x + xDir1 * (state.maxSpeed * deltaTimeInSec),
-            gameState.width
-          ),
-          0
-        ),
-        y: Math.max(
-          Math.min(
-            state.y + yDir1 * (state.maxSpeed * deltaTimeInSec),
-            gameState.height
-          ),
-          0
-        ),
+        x: Math.max(Math.min(state.x + xDir1 * (state.maxSpeed * deltaTimeInSec), gameState.width), 0),
+        y: Math.max(Math.min(state.y + yDir1 * (state.maxSpeed * deltaTimeInSec), gameState.height), 0),
       }));
     }
   }
 
   @transaction()
-  private handleBacEating(
-    width: number,
-    height: number,
-    imageData: Uint8ClampedArray,
-    deltaTimeSec: number
-  ) {
+  private handleBacEating(width: number, height: number, imageData: Uint8ClampedArray, deltaTimeSec: number) {
     const players = this.getPLayerInRandomOrderToEqualifyChances();
     const colorToPlayer = PlayerService.getColorMapOfPlayers(players);
 
@@ -417,14 +285,7 @@ export class PlayerService {
       for (let i = bacs.length - 1; i > -1; i--) {
         let bacterium = bacs[i];
         const { x, y } = bacterium;
-        const surroundingPlayers = PlayerService.findSurroundingPlayer(
-          x,
-          y,
-          width,
-          height,
-          colorToPlayer,
-          imageData
-        );
+        const surroundingPlayers = PlayerService.findSurroundingPlayer(x, y, width, height, colorToPlayer, imageData);
         if (surroundingPlayers == null) {
           continue;
         }
@@ -476,10 +337,7 @@ export class PlayerService {
           // gainEnergy
           bacs[i] = {
             ...bacterium,
-            energy: Math.min(
-              bacteriumMaxEnergy,
-              bacterium.energy + deltaTimeSec / bacteriumEnergyRestoreTimeInSec
-            ),
+            energy: Math.min(bacteriumMaxEnergy, bacterium.energy + deltaTimeSec / bacteriumEnergyRestoreTimeInSec),
           };
         }
       }

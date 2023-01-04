@@ -1,27 +1,13 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  ViewChild,
-} from '@angular/core';
-import {
-  FormControl,
-  FormGroup,
-  NonNullableFormBuilder,
-  ReactiveFormsModule,
-} from '@angular/forms';
+import { ChangeDetectionStrategy, Component, ElementRef, ViewChild } from '@angular/core';
+import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import {
-  ElemResizedDirective,
-  LetDirective,
-  ResizedEvent,
-} from '@wolsok/ui-kit';
+import { ElemResizedDirective, LetDirective, ResizedEvent } from '@wolsok/ui-kit';
 import {
   BehaviorSubject,
   combineLatest,
@@ -82,10 +68,8 @@ export class GravityWorldComponent {
     massOfSun: GravityWorldComponent.INITIAL_MASS_OF_SUN,
   });
 
-  private massSun$: Observable<number> =
-    this.form.controls.massOfSun.valueChanges;
-  private gravitationalConstant$: Observable<number> =
-    this.form.controls.gravitationalConstant.valueChanges;
+  private massSun$: Observable<number> = this.form.controls.massOfSun.valueChanges;
+  private gravitationalConstant$: Observable<number> = this.form.controls.gravitationalConstant.valueChanges;
 
   public MAX_DIM: Vector2d = Vector2d.create(1000, (1000 / 5) * 3);
   private CENTER_POS: Vector2d = this.MAX_DIM.div(2);
@@ -93,21 +77,12 @@ export class GravityWorldComponent {
   private planetsSubject$: Subject<Planet> = new Subject();
   public planets$: Observable<Planet[]> = this.planetsSubject$
     .asObservable()
-    .pipe(
-      scan(
-        (allPlanets: Array<Planet>, newPlanet: Planet) => [
-          ...allPlanets,
-          newPlanet,
-        ],
-        []
-      )
-    );
+    .pipe(scan((allPlanets: Array<Planet>, newPlanet: Planet) => [...allPlanets, newPlanet], []));
   public planetsAmount$: Observable<number> = this.planets$.pipe(
     map((planets: Array<Planet>) => planets.length),
     startWith(0)
   );
-  private containerSizeSubject$: Subject<Vector2d> =
-    new ReplaySubject<Vector2d>(1);
+  private containerSizeSubject$: Subject<Vector2d> = new ReplaySubject<Vector2d>(1);
 
   private targetCoordinatesSubject: Subject<Vector2d> = new Subject<Vector2d>();
   private targetCoordinates$: Observable<Vector2d> = combineLatest([
@@ -122,13 +97,9 @@ export class GravityWorldComponent {
   );
 
   private positionSubject$: Subject<Vector2d> = new Subject<Vector2d>();
-  private position$: Observable<Vector2d> = this.positionSubject$
-    .asObservable()
-    .pipe(shareReplay(1));
+  private position$: Observable<Vector2d> = this.positionSubject$.asObservable().pipe(shareReplay(1));
 
-  private runningSubject: Subject<boolean> = new BehaviorSubject<boolean>(
-    false
-  );
+  private runningSubject: Subject<boolean> = new BehaviorSubject<boolean>(false);
   public running$: Observable<boolean> = this.runningSubject.asObservable();
 
   x$: Observable<number>;
@@ -151,40 +122,28 @@ export class GravityWorldComponent {
   );
 
   private noDrag$: Observable<MouseEvent> = this.mouseDown$.asObservable().pipe(
-    switchMap(() =>
-      this.mouseUp$
-        .asObservable()
-        .pipe(takeUntil(this.mouseMove$.asObservable()))
-    ),
+    switchMap(() => this.mouseUp$.asObservable().pipe(takeUntil(this.mouseMove$.asObservable()))),
     last()
   );
 
   constructor(private nNfB: NonNullableFormBuilder) {
-    const centerPositionMapper: (targetVector: Vector2d) => Vector2d = (
-      targetVector: Vector2d
-    ) => targetVector.sub(this.CENTER_POS);
+    const centerPositionMapper: (targetVector: Vector2d) => Vector2d = (targetVector: Vector2d) =>
+      targetVector.sub(this.CENTER_POS);
 
-    const centeredTargetCoordinates$: Observable<Vector2d> =
-      this.targetCoordinates$.pipe(map(centerPositionMapper));
+    const centeredTargetCoordinates$: Observable<Vector2d> = this.targetCoordinates$.pipe(map(centerPositionMapper));
 
-    const timedTargetCoordinates$: Observable<TimeInterval<Vector2d>> =
-      this.running$.pipe(
-        switchMap((simStart: boolean) => {
-          if (simStart) {
-            return interval(10).pipe(timeInterval());
-          }
-          return EMPTY;
-        }),
-        withLatestFrom(centeredTargetCoordinates$),
-        map(
-          ([interval, targetCoordinates]) =>
-            new TimeInterval(targetCoordinates, interval.interval / 1000)
-        )
-      );
-
-    const centeredPosition$: Observable<Vector2d> = this.position$.pipe(
-      map(centerPositionMapper)
+    const timedTargetCoordinates$: Observable<TimeInterval<Vector2d>> = this.running$.pipe(
+      switchMap((simStart: boolean) => {
+        if (simStart) {
+          return interval(10).pipe(timeInterval());
+        }
+        return EMPTY;
+      }),
+      withLatestFrom(centeredTargetCoordinates$),
+      map(([interval, targetCoordinates]) => new TimeInterval(targetCoordinates, interval.interval / 1000))
     );
+
+    const centeredPosition$: Observable<Vector2d> = this.position$.pipe(map(centerPositionMapper));
 
     const calculateGravityForce: (
       position1: TimeInterval<Vector2d>,
@@ -205,46 +164,25 @@ export class GravityWorldComponent {
         return new TimeInterval(Vector2d.zero, interval);
       }
       // newtons law shortened to a1 = G * m2 / r²
-      const forceAmount: number =
-        gravityConst * mass2 * (1 / Math.pow(distance, 1.3));
-      const directedForce: Vector2d = position1.value
-        .directionTo(position2)
-        .mul(forceAmount);
+      const forceAmount: number = gravityConst * mass2 * (1 / Math.pow(distance, 1.3));
+      const directedForce: Vector2d = position1.value.directionTo(position2).mul(forceAmount);
       return new TimeInterval(directedForce.mul(interval), interval);
     };
 
-    const gravitationalForceToApply$: Observable<TimeInterval<Vector2d>> =
-      timedTargetCoordinates$.pipe(
-        withLatestFrom(
-          centeredPosition$,
-          of(1),
-          this.massSun$,
-          this.gravitationalConstant$,
-          calculateGravityForce
-        )
-      );
+    const gravitationalForceToApply$: Observable<TimeInterval<Vector2d>> = timedTargetCoordinates$.pipe(
+      withLatestFrom(centeredPosition$, of(1), this.massSun$, this.gravitationalConstant$, calculateGravityForce)
+    );
 
-    const velocity$: Observable<TimeInterval<Vector2d>> =
-      gravitationalForceToApply$.pipe(
-        scan(
-          (
-            oldVelocity: TimeInterval<Vector2d>,
-            forceInterval: TimeInterval<Vector2d>
-          ) => {
-            const newVelocity: Vector2d = oldVelocity.value.add(
-              forceInterval.value.mul(forceInterval.interval)
-            );
-            return new TimeInterval(newVelocity, forceInterval.interval);
-          },
-          new TimeInterval(Vector2d.create(-100, 100), 20)
-        )
-      );
+    const velocity$: Observable<TimeInterval<Vector2d>> = gravitationalForceToApply$.pipe(
+      scan((oldVelocity: TimeInterval<Vector2d>, forceInterval: TimeInterval<Vector2d>) => {
+        const newVelocity: Vector2d = oldVelocity.value.add(forceInterval.value.mul(forceInterval.interval));
+        return new TimeInterval(newVelocity, forceInterval.interval);
+      }, new TimeInterval(Vector2d.create(-100, 100), 20))
+    );
 
     const nextPosition$: Observable<Vector2d> = velocity$.pipe(
       withLatestFrom(this.position$),
-      map(([timedVelocity, position]) =>
-        position.add(timedVelocity.value.mul(timedVelocity.interval))
-      )
+      map(([timedVelocity, position]) => position.add(timedVelocity.value.mul(timedVelocity.interval)))
     );
     nextPosition$.subscribe((position) => this.positionSubject$.next(position));
 
@@ -261,9 +199,7 @@ export class GravityWorldComponent {
   }
 
   resize($event: ResizedEvent) {
-    this.containerSizeSubject$.next(
-      new Vector2d($event.newWidth, $event.newHeight)
-    );
+    this.containerSizeSubject$.next(new Vector2d($event.newWidth, $event.newHeight));
   }
 
   mouseDown($event: MouseEvent): void {

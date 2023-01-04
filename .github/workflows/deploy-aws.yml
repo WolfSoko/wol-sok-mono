@@ -1,7 +1,7 @@
 name: Deploy release to AWS
 on:
   release:
-    types: [ published ]
+    types: [published]
 
   workflow_dispatch:
     inputs:

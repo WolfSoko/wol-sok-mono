@@ -7,13 +7,7 @@
         [style.backgroundImage]="'url(' + user.photoURL + ')'"
         matTooltip="Welcome {{ user.displayName }}"
       ></div>
-      <button
-        mat-mini-fab
-        class="mat-elevation-z6"
-        color="warn"
-        (click)="logout()"
-        matTooltip="Logout"
-      >
+      <button mat-mini-fab class="mat-elevation-z6" color="warn" (click)="logout()" matTooltip="Logout">
         <mat-icon>logout</mat-icon>
       </button>
     </div>

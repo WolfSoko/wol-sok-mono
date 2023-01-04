@@ -81,17 +81,11 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
     return pointLight;
   }
   private static createMandelbrotPlane(): Mesh {
-    return new Mesh(
-      new PlaneGeometry(100, 100, 1, 1),
-      WebGlComponent.createMandelbrotMaterial()
-    );
+    return new Mesh(new PlaneGeometry(100, 100, 1, 1), WebGlComponent.createMandelbrotMaterial());
   }
 
   private static createMandelbrotMaterial(): ShaderMaterial {
-    const uniforms = UniformsUtils.merge([
-      UniformsLib['lights'],
-      { zoom: { type: 'f', value: 0.05 } },
-    ]);
+    const uniforms = UniformsUtils.merge([UniformsLib['lights'], { zoom: { type: 'f', value: 0.05 } }]);
 
     return new ShaderMaterial({
       uniforms,
@@ -131,12 +125,7 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
     const canvas: HTMLCanvasElement = this.webGlCanvas.nativeElement;
     this.width = canvas.clientWidth;
     this.height = canvas.clientHeight;
-    this.camera = new PerspectiveCamera(
-      75,
-      this.width / this.height,
-      0.1,
-      1000
-    );
+    this.camera = new PerspectiveCamera(75, this.width / this.height, 0.1, 1000);
     this.camera.rotation.x = -Math.PI / 5;
     this.camera.position.z = -0.6;
     this.camera.position.y = 1.86;
@@ -161,11 +150,7 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
     this.pointLight = pointLight;
     const sphere = new Mesh(new SphereGeometry(0.2, 8, 8));
     sphere.name = 'sphere';
-    sphere.position.set(
-      pointLight.position.x,
-      pointLight.position.y,
-      pointLight.position.z
-    );
+    sphere.position.set(pointLight.position.x, pointLight.position.y, pointLight.position.z);
     this.pointLightSphere = sphere;
     this.pointLight.add(sphere);
 
@@ -222,8 +207,7 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
       );
       this.pointLight.color.set(pointLightColor);
 
-      const meshBasicMaterial = this.pointLightSphere
-        .material as MeshBasicMaterial;
+      const meshBasicMaterial = this.pointLightSphere.material as MeshBasicMaterial;
       meshBasicMaterial.color.set(pointLightColor);
 
       this.renderer.render(this.scene, this.camera);

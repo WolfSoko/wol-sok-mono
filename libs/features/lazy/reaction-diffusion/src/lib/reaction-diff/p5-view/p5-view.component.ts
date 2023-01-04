@@ -1,55 +1,52 @@
-import { CommonModule } from "@angular/common";
+import { CommonModule } from '@angular/common';
 import {
-  ChangeDetectionStrategy, ChangeDetectorRef,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
-  Input, NgZone,
+  Input,
+  NgZone,
   OnChanges,
   OnDestroy,
   Output,
   SimpleChanges,
-  ViewChild
-} from "@angular/core";
-import { ShowFpsComponent } from "@wolsok/ui-kit";
-import * as P5 from "p5";
-import { ReactionDiffCalculator } from "../calculation/reaction-diff-calculator";
+  ViewChild,
+} from '@angular/core';
+import { ShowFpsComponent } from '@wolsok/ui-kit';
+import * as P5 from 'p5';
+import { ReactionDiffCalculator } from '../calculation/reaction-diff-calculator';
 
 @Component({
   standalone: true,
   imports: [CommonModule, ShowFpsComponent],
-  selector: "feat-lazy-react-diff-p5-view",
-  templateUrl: "./p5-view.component.html",
-  styleUrls: ["./p5-view.component.css"],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  selector: 'feat-lazy-react-diff-p5-view',
+  templateUrl: './p5-view.component.html',
+  styleUrls: ['./p5-view.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class P5ViewComponent implements OnChanges, OnDestroy {
-  @ViewChild("drawArea", { static: true }) drawArea!: ElementRef;
+  @ViewChild('drawArea', { static: true }) drawArea!: ElementRef;
   @Input() simWidth!: number;
   @Input() simHeight!: number;
   @Input() calcService!: ReactionDiffCalculator;
   @Input() run = false;
   @Input() showFps = false;
-  @Output() mousePressed: EventEmitter<{ x: number; y: number }> =
-    new EventEmitter();
+  @Output() mousePressed: EventEmitter<{ x: number; y: number }> = new EventEmitter();
 
   public frameRate = 1;
 
   private sketch?: P5;
   private drawOnce = true;
 
-  constructor(private ngZone: NgZone, private cd: ChangeDetectorRef) {
-  }
+  constructor(private ngZone: NgZone, private cd: ChangeDetectorRef) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes["simWidth"] || changes["simHeight"]) {
+    if (changes['simWidth'] || changes['simHeight']) {
       if (this.sketch) {
         this.sketch.resizeCanvas(this.simWidth, this.simHeight);
       } else {
-        this.sketch = new P5(
-          (p) => this.initP5(p),
-          this.drawArea.nativeElement
-        );
+        this.sketch = new P5((p) => this.initP5(p), this.drawArea.nativeElement);
       }
     }
   }
@@ -64,11 +61,11 @@ export class P5ViewComponent implements OnChanges, OnDestroy {
       p.draw = () => {
         if (this.run) {
           p.background(51);
-          performance.mark("calcNext-start");
+          performance.mark('calcNext-start');
           this.calcService.calcNext();
           this.calcService.drawImage(p);
-          performance.mark("calcNext-end");
-          performance.measure("calcNext", "calcNext-start", "calcNext-end");
+          performance.mark('calcNext-end');
+          performance.measure('calcNext', 'calcNext-start', 'calcNext-end');
         }
 
         if (this.drawOnce && !this.run) {

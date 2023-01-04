@@ -1,7 +1,6 @@
 @use 'sass:color';
 
 @mixin mat-slider-color-mixin($color) {
-
   $hover-ripple: color.change($color, $alpha: 0.05);
   $focus-ripple: color.change($color, $alpha: 0.2);
 
@@ -51,7 +50,7 @@
       gap: 1rem;
     }
 
-    .use-gpu-toggle{
+    .use-gpu-toggle {
       grid-column: 1 / 3;
     }
 

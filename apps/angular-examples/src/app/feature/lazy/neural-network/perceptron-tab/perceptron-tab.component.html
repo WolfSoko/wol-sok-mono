@@ -4,27 +4,22 @@
       <mat-card-title>A simple Perceptron</mat-card-title>
       <mat-card-subtitle>
         We are using a simple perceptron model with 2 inputs (x and y coordinates).
-        <br>
+        <br />
         The learned classes for the given points have the simple definition x > y.
-        <br>
+        <br />
         The learning rate starts with 0.3 and is slowly reduced with each learned data point.
-        <br>
+        <br />
         Click left to add add points of class1.
-        <br>
+        <br />
         Click right to add add points of class2.
       </mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <app-data-view
-        [points]="points"
-        [perceptron]="perceptron"
-        (dataViewClicked)="addPoint($event)">
-        [canvasWidth]="width"
-        [canvasHeight]="height"
+      <app-data-view [points]="points" [perceptron]="perceptron" (dataViewClicked)="addPoint($event)">
+        [canvasWidth]="width" [canvasHeight]="height"
       </app-data-view>
     </mat-card-content>
-    <div>
-    </div>
+    <div></div>
   </mat-card>
   <app-brain-settings></app-brain-settings>
   <mat-card appearance="raised" wsSharedUiElevateCard class="perceptron-card">
@@ -33,9 +28,8 @@
       <mat-card-subtitle>Here we show the current perceptron with its last inputs and outputs</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <div>Learnrate: {{learnRate}}, learned data points: {{learnedDataPoints}}</div>
+      <div>Learnrate: {{ learnRate }}, learned data points: {{ learnedDataPoints }}</div>
       <app-perceptron *ngIf="perceptron" [perceptron]="perceptron"></app-perceptron>
     </mat-card-content>
   </mat-card>
 </div>
-

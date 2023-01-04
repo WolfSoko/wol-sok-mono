@@ -12,14 +12,7 @@ import { SideNavComponent } from './feature/navigation/side-nav/side-nav.compone
 
 @NgModule({
   declarations: [AppComponent],
-  imports: [
-    CommonModule,
-    AppRoutingModule,
-    HttpClientModule,
-    CoreModule,
-    MainToolbarComponent,
-    SideNavComponent,
-  ],
+  imports: [CommonModule, AppRoutingModule, HttpClientModule, CoreModule, MainToolbarComponent, SideNavComponent],
   exports: [MainToolbarComponent, SideNavComponent],
   bootstrap: [AppComponent],
   providers: [

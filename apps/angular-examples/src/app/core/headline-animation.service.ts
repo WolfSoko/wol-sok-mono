@@ -9,9 +9,7 @@ export class HeadlineAnimationService {
 
   constructor() {
     const isVisible$ = new Observable<boolean>((subscriber) => {
-      const intersectionCallback: IntersectionObserverCallback = (
-        entries: IntersectionObserverEntry[]
-      ) => {
+      const intersectionCallback: IntersectionObserverCallback = (entries: IntersectionObserverEntry[]) => {
         entries.forEach((entry) => {
           subscriber.next(entry.isIntersecting);
         });
@@ -30,10 +28,7 @@ export class HeadlineAnimationService {
       };
     });
 
-    this.runAnimation$ = combineLatest([
-      this._runAnimation$.asObservable(),
-      isVisible$,
-    ]).pipe(
+    this.runAnimation$ = combineLatest([this._runAnimation$.asObservable(), isVisible$]).pipe(
       map(([animate, isVisible]) => animate && isVisible),
       distinctUntilChanged()
     );

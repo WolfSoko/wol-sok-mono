@@ -233,13 +233,27 @@ $altTheme: (
 );
 
 // Theme Init
-@include mat.all-component-themes((color: $theme, typography: $fontConfig));
+@include mat.all-component-themes(
+  (
+    color: $theme,
+    typography: $fontConfig,
+  )
+);
 
 .theme-alternate {
-  @include mat.all-component-colors((color: $altTheme, typography: $fontConfig));
+  @include mat.all-component-colors(
+    (
+      color: $altTheme,
+      typography: $fontConfig,
+    )
+  );
 }
 
-@include mat.typography-hierarchy((typography: $fontConfig));
+@include mat.typography-hierarchy(
+  (
+    typography: $fontConfig,
+  )
+);
 
 // Specific component overrides, pieces that are not in line with the general theming
 

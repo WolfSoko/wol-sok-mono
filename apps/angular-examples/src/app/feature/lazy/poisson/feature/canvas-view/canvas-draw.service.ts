@@ -31,11 +31,7 @@ export class CanvasDrawService {
     const offsetX = 0;
     const offsetY = 0;
 
-    return this.setFillColor('#009F10').drawPoint(
-      circle.pos.x + offsetX,
-      circle.pos.y + offsetY,
-      circle.r
-    );
+    return this.setFillColor('#009F10').drawPoint(circle.pos.x + offsetX, circle.pos.y + offsetY, circle.r);
   }
 
   drawVec(vec: Vector, radius: number) {
@@ -58,14 +54,7 @@ export class CanvasDrawService {
     return this;
   }
 
-  drawArc(
-    x: number,
-    y: number,
-    r: number,
-    startAngle: number,
-    endAngle: number,
-    anticlockwise: boolean
-  ) {
+  drawArc(x: number, y: number, r: number, startAngle: number, endAngle: number, anticlockwise: boolean) {
     this.ctx?.beginPath();
     this.ctx?.arc(x, y, r, startAngle, endAngle, anticlockwise);
     this.ctx?.fill();

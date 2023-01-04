@@ -20,9 +20,7 @@ export class InstantiateFibWasmService {
     },
     env: {
       abort(msg: number, file: number, line: number, column: number) {
-        console.error(
-          `abort called at ${file}:${line}:${column} with msg: ${msg}`
-        );
+        console.error(`abort called at ${file}:${line}:${column} with msg: ${msg}`);
       },
       memory: new WebAssembly.Memory({ initial: 256 }),
     },

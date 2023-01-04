@@ -20,9 +20,7 @@ const args = process.argv.slice(2);
 const excludeAssets = args.some((elem) => elem.indexOf('excludeAssets') > -1);
 
 deleteFromBucket(bucket, prefix)
-  .then(() =>
-    uploadFolderToBucket('dist/apps/angular-examples/', bucket, prefix)
-  )
+  .then(() => uploadFolderToBucket('dist/apps/angular-examples/', bucket, prefix))
   .then(() => invalidateIndex());
 
 console.log('excludeAssets:', excludeAssets);
@@ -31,17 +29,14 @@ function deleteFromBucket(bucket, prefix) {
   return new Promise((resolve, reject) => {
     s3.listObjects({ Bucket: bucket, Prefix: prefix }, (err, data) => {
       if (err) {
-        console.error(
-          'There was an error listing ' + prefix + ' objects',
-          err.message
-        );
+        console.error('There was an error listing ' + prefix + ' objects', err.message);
         return reject(err);
       }
-      const objects = data.Contents.filter((object) =>
-        excludeAssets ? object.Key.indexOf('assets') < 0 : true
-      ).map(function (object) {
-        return { Key: object.Key };
-      });
+      const objects = data.Contents.filter((object) => (excludeAssets ? object.Key.indexOf('assets') < 0 : true)).map(
+        function (object) {
+          return { Key: object.Key };
+        }
+      );
 
       if (objects.length === 0) {
         console.log('No objects found under ' + prefix);
@@ -55,12 +50,7 @@ function deleteFromBucket(bucket, prefix) {
         },
         (err, data) => {
           if (err) {
-            console.error(
-              'There was an error deleting ',
-              +prefix + ' objects',
-              err.message,
-              err.stack
-            );
+            console.error('There was an error deleting ', +prefix + ' objects', err.message, err.stack);
             return reject(err);
           }
           console.log(
@@ -92,9 +82,7 @@ function getAllFilesFor(currentDirPath) {
 }
 
 function uploadFolderToBucket(folder, bucket, prefix) {
-  const allFiles = getAllFilesFor(folder).filter((file) =>
-    excludeAssets ? file.indexOf('assets') < 0 : true
-  );
+  const allFiles = getAllFilesFor(folder).filter((file) => (excludeAssets ? file.indexOf('assets') < 0 : true));
   return uploadFilesInBatches(allFiles, folder, bucket, prefix, 0);
 }
 
@@ -140,13 +128,7 @@ function uploadFilesInBatches(allFiles, folder, bucket, prefix, startIndex) {
     });
     return Promise.all(promises).then((_) => {
       console.log('success upload batch of 5 files');
-      return uploadFilesInBatches(
-        allFiles,
-        folder,
-        bucket,
-        prefix,
-        startIndex + 5
-      );
+      return uploadFilesInBatches(allFiles, folder, bucket, prefix, startIndex + 5);
     });
   }
   console.log('success uploaded all batches');
@@ -191,10 +173,7 @@ function invalidateIndex() {
       if (err) {
         return console.log('Error creating invalidation', err);
       }
-      return console.log(
-        'Successfully invalidated index.html and pwa files',
-        JSON.stringify(data)
-      );
+      return console.log('Successfully invalidated index.html and pwa files', JSON.stringify(data));
     }
   );
 }

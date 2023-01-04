@@ -7,14 +7,7 @@ import { WsThanosDirective } from '@wolsok/thanos';
 
 @Component({
   standalone: true,
-  imports: [
-    CommonModule,
-    WsThanosDirective,
-    MatCardModule,
-    ElevateCardDirective,
-    MatButtonModule,
-    NgOptimizedImage,
-  ],
+  imports: [CommonModule, WsThanosDirective, MatCardModule, ElevateCardDirective, MatButtonModule, NgOptimizedImage],
   selector: 'app-technology',
   templateUrl: './technology.component.html',
   styleUrls: ['./technology.component.scss'],

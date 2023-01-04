@@ -42,11 +42,7 @@ export class ColorMapperService {
   }
 
   private calcColor(a: number, b: number, p: P5): P5.Color {
-    const backgroundColor = p.color(
-      this.backgroundColor.r,
-      this.backgroundColor.g,
-      this.backgroundColor.b
-    );
+    const backgroundColor = p.color(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b);
     const aColor = p.color(a, a, 204);
     const bColor = p.color(0, 0, p.map(b, 0, 255, 0, 102));
 

@@ -47,8 +47,8 @@ export class FourierAnalysisComponent {
   constructor(
     private el: ElementRef,
     private fourierAnalysisQuery: FourierAnalysisQuery,
-    private fourierAnalysisTestService: FourierAnalysisService,
-    private inputWaveService: InputWaveService
+    private _fourierAnalysisTestService: FourierAnalysisService,
+    private _inputWaveService: InputWaveService
   ) {
     this.fourierAnalysis$ = this.fourierAnalysisQuery.select();
     this.isLoading$ = this.fourierAnalysisQuery.selectLoading();
@@ -61,9 +61,6 @@ export class FourierAnalysisComponent {
     this.circleCanvasWidth = availableWidth;
 
     this.circleCanvasHeight = Math.max(250, this.circleCanvasWidth * (9 / 94));
-    this.inputWaveCanvasHeight = Math.max(
-      250,
-      Math.round(this.inputWaveCanvasWidth * (9 / 64))
-    );
+    this.inputWaveCanvasHeight = Math.max(250, Math.round(this.inputWaveCanvasWidth * (9 / 64)));
   }
 }

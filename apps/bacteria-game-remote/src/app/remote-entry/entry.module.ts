@@ -6,10 +6,7 @@ import { RouterModule } from '@angular/router';
     RouterModule.forChild([
       {
         path: '',
-        loadChildren: () =>
-          import('@wolsok/feat-lazy-bac-game').then(
-            (m) => m.FEAT_LAZY_BACTERIA_GAME_ROUTES
-          ),
+        loadChildren: () => import('@wolsok/feat-lazy-bac-game').then((m) => m.FEAT_LAZY_BACTERIA_GAME_ROUTES),
       },
     ]),
   ],

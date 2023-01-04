@@ -9,8 +9,7 @@ export default {
       stringifyContentPathRegex: '\\.(html|svg)$',
     },
   },
-  coverageDirectory:
-    '../../../../coverage/libs/features/lazy/some-gpu-calculation',
+  coverageDirectory: '../../../../coverage/libs/features/lazy/some-gpu-calculation',
   transform: {
     '^.+\\.(ts|mjs|js|html)$': 'jest-preset-angular',
   },

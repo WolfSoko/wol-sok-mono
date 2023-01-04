@@ -24,10 +24,7 @@
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "options": {
-        "lintFilePatterns": [
-          "libs/public/ws-thanos/src/**/*.ts",
-          "libs/public/ws-thanos/src/**/*.html"
-        ]
+        "lintFilePatterns": ["libs/public/ws-thanos/src/**/*.ts", "libs/public/ws-thanos/src/**/*.html"]
       }
     },
     "test": {

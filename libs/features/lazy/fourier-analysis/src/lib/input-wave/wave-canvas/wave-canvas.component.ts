@@ -11,10 +11,10 @@ import {
   OnDestroy,
   SimpleChange,
   SimpleChanges,
-  ViewChild
+  ViewChild,
 } from '@angular/core';
 import P5 from 'p5';
-import {InputWave} from '../../state/input-wave.model';
+import { InputWave } from '../../state/input-wave.model';
 
 interface WaveCanvasChanges extends SimpleChanges {
   waveWidth: SimpleChange;
@@ -30,9 +30,7 @@ interface WaveCanvasChanges extends SimpleChanges {
   styleUrls: ['./wave-canvas.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WaveCanvasComponent
-  implements OnChanges, AfterViewInit, OnDestroy
-{
+export class WaveCanvasComponent implements OnChanges, AfterViewInit, OnDestroy {
   @ViewChild('canvasContainer', { static: true })
   canvasContainerRef!: ElementRef;
   private canvasContainer?: HTMLElement;
@@ -63,9 +61,7 @@ export class WaveCanvasComponent
   }
 
   private initCanvas() {
-    this.zone.runOutsideAngular(
-      () => new P5(this.initSketch.bind(this), this.canvasContainer)
-    );
+    this.zone.runOutsideAngular(() => new P5(this.initSketch.bind(this), this.canvasContainer));
   }
 
   initSketch(sketch: P5) {
@@ -80,11 +76,7 @@ export class WaveCanvasComponent
     };
 
     sketch.draw = () => {
-      if (
-        this.wave == null ||
-        this.wave.points == null ||
-        this.wave.points.length === 0
-      ) {
+      if (this.wave == null || this.wave.points == null || this.wave.points.length === 0) {
         return;
       }
       const w = sketch.width;
@@ -103,17 +95,10 @@ export class WaveCanvasComponent
         sketch.noFill();
         sketch.beginShape();
         if (this.wavePartsToDraw < samples) {
-          this.wavePartsToDraw = Math.min(
-            this.wavePartsToDraw + samples / 90,
-            samples
-          );
+          this.wavePartsToDraw = Math.min(this.wavePartsToDraw + samples / 90, samples);
         }
 
-        for (
-          let i = 0;
-          i < this.wavePartsToDraw;
-          i = i + Math.floor(Math.max(samples / w, 1))
-        ) {
+        for (let i = 0; i < this.wavePartsToDraw; i = i + Math.floor(Math.max(samples / w, 1))) {
           sketch.vertex(
             sketch.map(i, 0, samples, leftPadding, w),
             sketch.map(points[i], -1, 1, h - bottomPadding, topPadding)
@@ -123,12 +108,7 @@ export class WaveCanvasComponent
       }
 
       function drawXAxis(this: WaveCanvasComponent) {
-        sketch.line(
-          leftPadding,
-          h - bottomPadding + 10,
-          w,
-          h - bottomPadding + 10
-        );
+        sketch.line(leftPadding, h - bottomPadding + 10, w, h - bottomPadding + 10);
         sketch.textAlign('center', 'center');
         sketch.textSize(12);
 
@@ -144,24 +124,13 @@ export class WaveCanvasComponent
       function drawMouseOverInfoLine() {
         const mX = sketch.mouseX;
         const mY = sketch.mouseY;
-        if (
-          mX > leftPadding &&
-          mX < w &&
-          mY > topPadding &&
-          mY < h - bottomPadding
-        ) {
+        if (mX > leftPadding && mX < w && mY > topPadding && mY < h - bottomPadding) {
           sketch.push();
           sketch.strokeWeight(1);
           sketch.stroke(123, 31, 162);
           sketch.line(mX, topPadding, mX, h - bottomPadding);
           const index = Math.floor(sketch.map(mX, leftPadding, w, 0, samples));
-          const y = sketch.map(
-            points[index],
-            -1,
-            1,
-            h - bottomPadding,
-            topPadding
-          );
+          const y = sketch.map(points[index], -1, 1, h - bottomPadding, topPadding);
           sketch.stroke(105, 240, 174);
           sketch.ellipseMode('center');
           sketch.ellipse(mX, y, 5);

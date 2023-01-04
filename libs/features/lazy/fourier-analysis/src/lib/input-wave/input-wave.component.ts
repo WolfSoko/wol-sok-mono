@@ -15,23 +15,14 @@ import { WaveCanvasComponent } from './wave-canvas/wave-canvas.component';
   templateUrl: './input-wave.component.html',
   styleUrls: ['./input-wave.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    MatCardModule,
-    MatIconModule,
-    MatButtonModule,
-    WaveCanvasComponent,
-    CommonModule,
-  ],
+  imports: [MatCardModule, MatIconModule, MatButtonModule, WaveCanvasComponent, CommonModule],
 })
 export class InputWaveComponent {
   @Input() width = 0;
   @Input() height = 0;
   activeWave$: Observable<InputWave | undefined>;
 
-  constructor(
-    private waveQuery: InputWaveQuery,
-    private inputWaveService: InputWaveService
-  ) {
+  constructor(private waveQuery: InputWaveQuery, private inputWaveService: InputWaveService) {
     this.activeWave$ = waveQuery.selectActive();
   }
 

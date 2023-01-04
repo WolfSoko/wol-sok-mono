@@ -3,7 +3,6 @@ import { LabelClass } from './point';
 import { Subscription, timer } from 'rxjs';
 
 export class Perceptron {
-
   weights: number[];
   bias = 1.0;
   isLearning = false;
@@ -24,7 +23,6 @@ export class Perceptron {
     return result;
   }
 
-
   constructor(private inputConnections: number) {
     this.weights = Perceptron.getRandomWeights(inputConnections);
   }
@@ -39,7 +37,6 @@ export class Perceptron {
     return Perceptron.outputMapping(this.guessSigSilent(inputs));
   }
 
-
   guessSigSilent(inputs: number[]): number {
     const weightedSum = inputs.reduce((prev, input, index) => prev + input * this.weights[index], this.bias);
     return 1 / (1 + Math.exp(-weightedSum));
@@ -51,7 +48,7 @@ export class Perceptron {
     return this.lastGuess;
   }
 
-  train({inputs, expected}: TrainData, learnRate: number): number {
+  train({ inputs, expected }: TrainData, learnRate: number): number {
     this.lastLearnRate = learnRate;
     const guess = this.guess(inputs);
     const error = expected - guess;
@@ -59,10 +56,8 @@ export class Perceptron {
     if (error !== 0.0) {
       this.isLearning = true;
       this.learnTimeoutSub.unsubscribe();
-      this.learnTimeoutSub.add(timer(500).subscribe(() => this.isLearning = false));
-      const adjustedWeights = this.weights.map((weight, index) =>
-        weight + error * inputs[index] * learnRate
-      );
+      this.learnTimeoutSub.add(timer(500).subscribe(() => (this.isLearning = false)));
+      const adjustedWeights = this.weights.map((weight, index) => weight + error * inputs[index] * learnRate);
 
       this.bias = this.bias + error * learnRate;
       this.weights = adjustedWeights;
@@ -78,10 +73,8 @@ export class Perceptron {
       if (this.learnTimeoutSub) {
         this.learnTimeoutSub.unsubscribe();
       }
-      this.learnTimeoutSub = timer(500).subscribe(() => this.isLearning = false);
-      const adjustedWeights = this.weights.map((weight, index) =>
-        weight + error * this.lastInput[index] * learnRate
-      );
+      this.learnTimeoutSub = timer(500).subscribe(() => (this.isLearning = false));
+      const adjustedWeights = this.weights.map((weight, index) => weight + error * this.lastInput[index] * learnRate);
 
       this.bias = this.bias + error * learnRate;
       this.weights = adjustedWeights;
@@ -89,15 +82,13 @@ export class Perceptron {
     return error;
   }
 
-  get classSeparatorLine(): { x0: number, y0: number, x1: number, y1: number }| undefined {
+  get classSeparatorLine(): { x0: number; y0: number; x1: number; y1: number } | undefined {
     if (this.inputConnections !== 2) {
       return undefined;
     }
     const y0 = this.bias / -this.weights[1];
     const y1 = (this.weights[0] + this.bias) / -this.weights[1];
 
-    return {x0: 0, y0, x1: 0, y1};
-
+    return { x0: 0, y0, x1: 0, y1 };
   }
-
 }

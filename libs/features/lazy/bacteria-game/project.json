@@ -32,10 +32,7 @@
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "options": {
-        "lintFilePatterns": [
-          "libs/features/lazy/bacteria-game/**/*.ts",
-          "libs/features/lazy/bacteria-game/**/*.html"
-        ]
+        "lintFilePatterns": ["libs/features/lazy/bacteria-game/**/*.ts", "libs/features/lazy/bacteria-game/**/*.html"]
       }
     }
   },

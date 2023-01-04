@@ -25,11 +25,7 @@ export class DataDrawerService {
     return embed(element, spec, { actions: true });
   }
 
-  async plotDataAndPredictions(
-    container: HTMLElement,
-    data: { xs: Tensor; ys: Tensor },
-    preds: Tensor
-  ) {
+  async plotDataAndPredictions(container: HTMLElement, data: { xs: Tensor; ys: Tensor }, preds: Tensor) {
     const xvals = await data.xs.data();
     const yvals = await data.ys.data();
     const predVals = await preds.data();
@@ -63,12 +59,9 @@ export class DataDrawerService {
     return embed(container, spec, { actions: false });
   }
 
-  renderCoefficients(
-    container: { innerHTML: string },
-    coeff: { a: number; b: number; c: number; d: number }
-  ) {
-    container.innerHTML = `<span>a=${coeff.a.toFixed(3)}, b=${coeff.b.toFixed(
+  renderCoefficients(container: { innerHTML: string }, coeff: { a: number; b: number; c: number; d: number }) {
+    container.innerHTML = `<span>a=${coeff.a.toFixed(3)}, b=${coeff.b.toFixed(3)}, c=${coeff.c.toFixed(
       3
-    )}, c=${coeff.c.toFixed(3)},  d=${coeff.d.toFixed(3)}</span>`;
+    )},  d=${coeff.d.toFixed(3)}</span>`;
   }
 }

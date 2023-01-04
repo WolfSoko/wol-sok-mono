@@ -5,14 +5,8 @@ import { ElevateCardDirective } from './elevate-card.directive';
 
 @Component({
   standalone: true,
-  imports:  [ElevateCardDirective],
-  template: `
-    <div
-      wsSharedUiElevateCard
-      class="classThatShouldNotBeDeleted"
-      [elevationLevel]="15"
-    ></div>
-  `,
+  imports: [ElevateCardDirective],
+  template: ` <div wsSharedUiElevateCard class="classThatShouldNotBeDeleted" [elevationLevel]="15"></div> `,
 })
 class TestElevateCardComponent {}
 

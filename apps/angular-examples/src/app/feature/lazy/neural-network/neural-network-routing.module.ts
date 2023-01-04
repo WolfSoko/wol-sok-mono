@@ -4,20 +4,22 @@ import { NeuralNetworkComponent } from './neural-network.component';
 import { MultiPerceptronComponent } from './multi-perceptron/multi-perceptron.component';
 import { PerceptronTabComponent } from './perceptron-tab/perceptron-tab.component';
 
+const routes: Routes = [
+  {
+    path: '',
+    component: NeuralNetworkComponent,
+    children: [
+      { path: 'perceptron', component: PerceptronTabComponent },
+      { path: 'multiPerceptron', component: MultiPerceptronComponent },
+      { path: '', pathMatch: 'full', redirectTo: 'perceptron' },
+    ],
+  },
+];
 
-const routes: Routes = [{
-  path: '', component: NeuralNetworkComponent, children: [
-    {path: 'perceptron', component: PerceptronTabComponent},
-    {path: 'multiPerceptron', component: MultiPerceptronComponent},
-    {path: '', pathMatch: 'full', redirectTo: 'perceptron'}
-  ]
-}];
-
-export const navLinks = routes.filter(route => route.path?.length);
+export const navLinks = routes.filter((route) => route.path?.length);
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class NeuralNetworkRoutingModule {
-}
+export class NeuralNetworkRoutingModule {}

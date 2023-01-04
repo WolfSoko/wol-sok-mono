@@ -4,12 +4,13 @@ import { ShaderExamplesShaderCodeStore, ShaderExamplesShaderCodeState } from './
 import { ShaderExamplesShaderCode } from './shader-examples-shader-code.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
-export class ShaderExamplesShaderCodeQuery extends QueryEntity<ShaderExamplesShaderCodeState, ShaderExamplesShaderCode> {
-
+export class ShaderExamplesShaderCodeQuery extends QueryEntity<
+  ShaderExamplesShaderCodeState,
+  ShaderExamplesShaderCode
+> {
   constructor(protected store: ShaderExamplesShaderCodeStore) {
     super(store);
   }
-
 }

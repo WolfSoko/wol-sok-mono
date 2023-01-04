@@ -6,8 +6,7 @@ import { RouterModule } from '@angular/router';
     RouterModule.forChild([
       {
         path: '',
-        loadChildren: () =>
-          import('@wolsok/feat-fourier-analysis').then((m) => m.routes),
+        loadChildren: () => import('@wolsok/feat-fourier-analysis').then((m) => m.routes),
       },
     ]),
   ],

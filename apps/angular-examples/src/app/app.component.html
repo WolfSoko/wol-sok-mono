@@ -1,11 +1,9 @@
 <div class="page-grid">
-  <app-main-toolbar
-    (clickSideNav)="sideNavComponent.toggle()"
-  ></app-main-toolbar>
+  <app-main-toolbar (clickSideNav)="sideNavComponent.toggle()"></app-main-toolbar>
   <app-side-nav #sideNavComponent class="page-content">
     <section class="content-section">
       <router-outlet></router-outlet>
     </section>
   </app-side-nav>
-  <div class="app-version">{{appVersionAttr}}</div>
+  <div class="app-version">{{ appVersionAttr }}</div>
 </div>

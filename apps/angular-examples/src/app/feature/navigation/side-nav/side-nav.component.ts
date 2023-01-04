@@ -14,14 +14,7 @@ import {
 import { MatListModule } from '@angular/material/list';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { LetDirective } from '@wolsok/ui-kit';
-import {
-  BehaviorSubject,
-  combineLatest,
-  distinctUntilChanged,
-  map,
-  Observable,
-  tap,
-} from 'rxjs';
+import { BehaviorSubject, combineLatest, distinctUntilChanged, map, Observable, tap } from 'rxjs';
 import { MainNavRoute } from '../../../app-routing.module';
 import { ROUTER_LINKS } from '../../../router-links.token';
 import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
@@ -29,13 +22,7 @@ import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
 @Component({
   selector: 'app-side-nav',
   standalone: true,
-  imports: [
-    CommonModule,
-    MatSidenavModule,
-    MatListModule,
-    NavItemComponent,
-    LetDirective,
-  ],
+  imports: [CommonModule, MatSidenavModule, MatListModule, NavItemComponent, LetDirective],
   templateUrl: './side-nav.component.html',
   styleUrls: ['./side-nav.component.scss'],
   encapsulation: ViewEncapsulation.Emulated,
@@ -45,21 +32,15 @@ export class SideNavComponent {
   @ViewChild(MatSidenav) sideNav!: MatSidenav;
   @ContentChild('content') contentRef!: ElementRef;
 
-  showStatic$: Observable<boolean> = this.breakpointObserver
-    .observe([Breakpoints.Large, Breakpoints.XLarge])
-    .pipe(
-      map((result) => result?.matches),
-      distinctUntilChanged(),
-      tap(() => this.markParentForChangeDetection())
-    );
+  showStatic$: Observable<boolean> = this.breakpointObserver.observe([Breakpoints.Large, Breakpoints.XLarge]).pipe(
+    map((result) => result?.matches),
+    distinctUntilChanged(),
+    tap(() => this.markParentForChangeDetection())
+  );
 
-  private showSidebarSubject: BehaviorSubject<boolean> =
-    new BehaviorSubject<boolean>(false);
+  private showSidebarSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
-  showSidebar$: Observable<boolean> = combineLatest([
-    this.showStatic$,
-    this.showSidebarSubject.asObservable(),
-  ]).pipe(
+  showSidebar$: Observable<boolean> = combineLatest([this.showStatic$, this.showSidebarSubject.asObservable()]).pipe(
     map(([isStatic, show]) => isStatic || show),
     distinctUntilChanged()
   );

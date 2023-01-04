@@ -3,8 +3,6 @@
   "dest": "../../dist/libs/ui-kit",
   "lib": {
     "entryFile": "src/index.ts",
-    "styleIncludePaths": [
-      "src/lib/styles/*.scss"
-    ]
+    "styleIncludePaths": ["src/lib/styles/*.scss"]
   }
 }

@@ -10,18 +10,13 @@ import { WsThanosService } from './ws-thanos.service';
 describe('WsThanosDirective', () => {
   @Component({
     template: `
-      <div
-        class="thanos-test-container"
-        wsThanos
-        (wsThanosComplete)="completed()"
-      >
+      <div class="thanos-test-container" wsThanos (wsThanosComplete)="completed()">
         <h1>My content for the div</h1>
         <img alt="funny-face" style="height: 400px" src="${image}" />
       </div>
       <div class="grid-test">
         <ws-thanos class="div-without-remove" #myThanos="thanos">
-          This div should be vaporized when clicked on button and then become
-          visible again!
+          This div should be vaporized when clicked on button and then become visible again!
           <div class="inner">Inner container</div>
         </ws-thanos>
         <button (click)="myThanos.vaporize(false)">Vaporize div above</button>
@@ -106,9 +101,7 @@ describe('WsThanosDirective', () => {
     hostFixture = TestBed.createComponent(HostComponent);
     hostComp = hostFixture.componentInstance;
     hostFixture.detectChanges();
-    directive = hostFixture.debugElement.query(
-      By.directive(WsThanosDirective)
-    ).componentInstance;
+    directive = hostFixture.debugElement.query(By.directive(WsThanosDirective)).componentInstance;
   });
 
   it('should create', () => {

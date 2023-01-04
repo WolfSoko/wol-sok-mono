@@ -7,17 +7,12 @@ import { ShaderCode } from './shader-code.model';
   providedIn: 'root',
 })
 export class ShaderCodeService {
-  constructor(
-    private shaderCodeStore: ShaderCodeStore,
-    private shaderCodeDataService: ShaderCodeDataService
-  ) {}
+  constructor(private shaderCodeStore: ShaderCodeStore, private shaderCodeDataService: ShaderCodeDataService) {}
 
   get() {
-    this.shaderCodeDataService
-      .streamShaders()
-      .subscribe((entities: ShaderCode[]) => {
-        this.shaderCodeStore.set(entities);
-      });
+    this.shaderCodeDataService.streamShaders().subscribe((entities: ShaderCode[]) => {
+      this.shaderCodeStore.set(entities);
+    });
   }
 
   async update(shader: ShaderCode, code: string) {

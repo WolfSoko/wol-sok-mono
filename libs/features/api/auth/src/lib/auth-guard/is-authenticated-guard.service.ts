@@ -9,10 +9,7 @@ import { AuthenticationService } from '../authentication.service';
   providedIn: 'root',
 })
 export class IsAuthenticatedGuard implements CanActivate, CanLoad {
-  constructor(
-    private authQuery: AuthQuery,
-    private authService: AuthenticationService
-  ) {}
+  constructor(private authQuery: AuthQuery, private authService: AuthenticationService) {}
 
   canActivate(): Observable<boolean> | Promise<boolean> | boolean {
     return this.loginIfNotAuthenticated();

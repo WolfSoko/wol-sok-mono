@@ -1,13 +1,13 @@
-import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
-import {BrainService} from "../shared/brain.service";
-import {Point} from "../shared/point";
-import {Observable} from "rxjs";
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { BrainService } from '../shared/brain.service';
+import { Point } from '../shared/point';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-perceptron-tab',
   templateUrl: './perceptron-tab.component.html',
   styleUrls: ['./perceptron-tab.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PerceptronTabComponent implements OnInit {
   width = 400;
@@ -41,9 +41,7 @@ export class PerceptronTabComponent implements OnInit {
   }
 
   addPoint({ x, y, click }: { x: number; y: number; click: 'left' | 'right' }) {
-    const point = new Point(x / this.width, y / this.height, () =>
-      click === 'left' ? 1 : 0
-    );
+    const point = new Point(x / this.width, y / this.height, () => (click === 'left' ? 1 : 0));
     this.brainService.addPoint(point);
   }
 }

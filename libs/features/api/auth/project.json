@@ -32,10 +32,7 @@
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "options": {
-        "lintFilePatterns": [
-          "libs/features/api/auth/**/*.ts",
-          "libs/features/api/auth/**/*.html"
-        ]
+        "lintFilePatterns": ["libs/features/api/auth/**/*.ts", "libs/features/api/auth/**/*.html"]
       }
     }
   },

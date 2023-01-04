@@ -3,20 +3,13 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ElevateCardDirective } from "@wolsok/ui-kit";
+import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { DataDrawerComponent } from './data-drawer/data-drawer.component';
 import { PolynomialRegressionService } from './polynomial-regression.service';
 
 @Component({
   standalone: true,
-  imports: [
-    CommonModule,
-    MatCardModule,
-    DataDrawerComponent,
-    MatButtonModule,
-    MatTooltipModule,
-    ElevateCardDirective,
-  ],
+  imports: [CommonModule, MatCardModule, DataDrawerComponent, MatButtonModule, MatTooltipModule, ElevateCardDirective],
   templateUrl: './polynomial-regression.component.html',
   styleUrls: ['./polynomial-regression.component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,

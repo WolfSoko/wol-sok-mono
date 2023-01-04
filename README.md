@@ -2,6 +2,7 @@
 [![wolsok-mono](https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/detailed/jyisda/main&style=flat&logo=cypress)](https://dashboard.cypress.io/projects/jyisda/runs)
 
 wol-sok-mono repo
+
 # Wild experiments and examples implemented in Angular+
 
 Just some examples implemented in angular for topics that are interesting to me.
@@ -27,4 +28,5 @@ Readme under: [README.md](./libs/public/ws-thanos/README.md)
 A running version can be found on GitHub pages: https://angularexamples.wolsok.de/
 
 ### npm install
+
 To run `npm install` you need to make sure `node-gyp` compilation process is working. See here: [node-gyp installation](https://github.com/nodejs/node-gyp#installation)

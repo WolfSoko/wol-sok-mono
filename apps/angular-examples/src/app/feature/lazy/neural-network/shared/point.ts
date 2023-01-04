@@ -6,10 +6,11 @@ export type LabelClass = 0 | 1;
 export class Point {
   private _label: LabelClass | null = null;
 
-  constructor(private x: number = Math.random(),
-              private y: number = Math.random(),
-              private _labelDefinition = (in1: number, in2: number) => in1 > in2 ? 1 : 0) {
-  }
+  constructor(
+    private x: number = Math.random(),
+    private y: number = Math.random(),
+    private _labelDefinition = (in1: number, in2: number) => (in1 > in2 ? 1 : 0)
+  ) {}
 
   get label(): LabelClass {
     if (this._label == null) {

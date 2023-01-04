@@ -18,22 +18,14 @@
       "devDependencies": "*"
     },
     "package-lock.json": "*",
-    "version.json": [
-      "angular-examples"
-    ],
+    "version.json": ["angular-examples"],
     ".eslintrc.json": "*"
   },
   "tasksRunnerOptions": {
     "default": {
       "runner": "@nrwl/nx-cloud",
       "options": {
-        "cacheableOperations": [
-          "build",
-          "lint",
-          "test",
-          "e2e",
-          "build-storybook"
-        ],
+        "cacheableOperations": ["build", "lint", "test", "e2e", "build-storybook"],
         "accessToken": "MWVmZTcxMWMtNWZiYy00MzRkLTk0NmEtMjRhZmZlNjk3ZWVlfHJlYWQtd3JpdGU=",
         "parallel": 1
       }
@@ -56,9 +48,7 @@
   },
   "defaultProject": "angular-examples",
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*"
-    ],
+    "default": ["{projectRoot}/**/*"],
     "production": [
       "!{projectRoot}/**/*.spec.[jt]s",
       "!{projectRoot}/tsconfig.spec.json",
@@ -72,53 +62,26 @@
   },
   "targetDefaults": {
     "build": {
-      "inputs": [
-        "production",
-        "^production"
-      ],
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "dist/{projectRoot}"
-      ]
+      "inputs": ["production", "^production"],
+      "dependsOn": ["^build"],
+      "outputs": ["dist/{projectRoot}"]
     },
     "e2e": {
-      "inputs": [
-        "default",
-        "^production"
-      ],
-      "outputs": [
-        "test-reports/{projectRoot}"
-      ]
+      "inputs": ["default", "^production"],
+      "outputs": ["test-reports/{projectRoot}"]
     },
     "test": {
-      "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/karma.conf.js"
-      ],
-      "outputs": [
-        "coverage/{projectRoot}"
-      ]
+      "inputs": ["default", "^production", "{workspaceRoot}/karma.conf.js"],
+      "outputs": ["coverage/{projectRoot}"]
     },
     "prepare-prod": {
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
-      "inputs": [
-        "default",
-        "{workspaceRoot}/.eslintrc.json"
-      ]
+      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"]
     },
     "build-storybook": {
-      "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/.storybook/**/*"
-      ]
+      "inputs": ["default", "^production", "{workspaceRoot}/.storybook/**/*"]
     }
   }
 }

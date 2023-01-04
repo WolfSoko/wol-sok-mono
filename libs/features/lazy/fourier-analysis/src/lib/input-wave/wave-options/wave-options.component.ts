@@ -1,12 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
-import {
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup, ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
@@ -17,13 +11,7 @@ import { InputWaveOptionsState } from '../../state/input-wave-options.store';
 
 @Component({
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatSliderModule,
-    MatButtonModule,
-    MatIconModule,
-  ],
+  imports: [CommonModule, ReactiveFormsModule, MatSliderModule, MatButtonModule, MatIconModule],
   selector: 'lazy-feat-fanal-wave-options',
   templateUrl: './wave-options.component.html',
   styleUrls: ['./wave-options.component.scss'],
@@ -38,19 +26,12 @@ export class WaveOptionsComponent implements OnDestroy {
     frequencies: FormArray<FormControl<number | null>>;
   }>;
 
-  constructor(
-    private readonly fb: FormBuilder,
-    private readonly inputWaveOptionsQuery: InputWaveOptionsQuery
-  ) {
+  constructor(private readonly fb: FormBuilder, private readonly inputWaveOptionsQuery: InputWaveOptionsQuery) {
     this.waveOptions$ = this.inputWaveOptionsQuery.select();
     this.form = this.initFormValues();
-    this.persistForm = new PersistNgFormPlugin(
-      this.inputWaveOptionsQuery,
-      undefined,
-      {
-        debounceTime: 500,
-      }
-    ).setForm(this.form, this.fb);
+    this.persistForm = new PersistNgFormPlugin(this.inputWaveOptionsQuery, undefined, {
+      debounceTime: 500,
+    }).setForm(this.form, this.fb);
   }
 
   get frequencies(): FormArray<FormControl<number | null>> {
@@ -65,9 +46,7 @@ export class WaveOptionsComponent implements OnDestroy {
     return this.fb.group({
       frequencies: this.fb.array<FormControl<number | null>>([]),
       lengthInMs: this.fb.control<number | null>(null, [Validators.min(10)]),
-      samplesPerSec: this.fb.control<number | null>(null, [
-        Validators.min(100),
-      ]),
+      samplesPerSec: this.fb.control<number | null>(null, [Validators.min(100)]),
     });
   }
 
@@ -78,9 +57,7 @@ export class WaveOptionsComponent implements OnDestroy {
   }
 
   addFrequency() {
-    this.frequencies.push(
-      this.fb.control(this.frequencies.at(this.frequencies.length - 1).value)
-    );
+    this.frequencies.push(this.fb.control(this.frequencies.at(this.frequencies.length - 1).value));
   }
 
   removeFrequency(i: number) {

@@ -1,5 +1,5 @@
-import {Injectable} from '@angular/core';
-import {FourierAnalysisStore} from './fourier-analysis.store';
+import { Injectable } from '@angular/core';
+import { FourierAnalysisStore } from './fourier-analysis.store';
 
 @Injectable({ providedIn: 'root' })
 export class FourierAnalysisService {

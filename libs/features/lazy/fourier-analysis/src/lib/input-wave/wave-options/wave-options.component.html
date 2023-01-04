@@ -1,17 +1,9 @@
 <form *ngIf="waveOptions$ | async as waveOptions" [formGroup]="form">
   <div formArrayName="frequencies">
     <p>Frequencies:</p>
-    <div
-      *ngFor="let frequency of frequencies?.controls; let i = index"
-      class="frequency-sliders-grid"
-    >
-      <mat-slider
-        class="config-slider"
-        [max]="500"
-        [min]="20"
-        [step]="1"
-        discrete="true"
-      ><input matSliderThumb [formControlName]="i" />
+    <div *ngFor="let frequency of frequencies?.controls; let i = index" class="frequency-sliders-grid">
+      <mat-slider class="config-slider" [max]="500" [min]="20" [step]="1" discrete="true"
+        ><input matSliderThumb [formControlName]="i" />
       </mat-slider>
       <span>{{ frequency?.value }} Hz</span>
       <button color="warn" mat-icon-button (click)="removeFrequency(i)">
@@ -21,22 +13,12 @@
     <button mat-button (click)="addFrequency()">Add frequency</button>
   </div>
   <div class="config-sliders-grid">
-    <mat-slider
-      class="config-slider"
-      [max]="5000"
-      [min]="200"
-      [step]="1"
-      discrete="true"
-    ><input matSliderThumb formControlName="lengthInMs" />
+    <mat-slider class="config-slider" [max]="5000" [min]="200" [step]="1" discrete="true"
+      ><input matSliderThumb formControlName="lengthInMs" />
     </mat-slider>
     <span>Duration in ms : {{ waveOptions.lengthInMs }}</span>
-    <mat-slider
-      class="config-slider"
-      [max]="10000"
-      [min]="3000"
-      [step]="100"
-      discrete="true"
-    ><input matSliderThumb formControlName="samplesPerSec" />
+    <mat-slider class="config-slider" [max]="10000" [min]="3000" [step]="100" discrete="true"
+      ><input matSliderThumb formControlName="samplesPerSec" />
     </mat-slider>
     <span>Sample rate: {{ waveOptions.samplesPerSec }}</span>
   </div>

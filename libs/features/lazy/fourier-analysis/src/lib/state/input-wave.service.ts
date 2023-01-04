@@ -1,19 +1,15 @@
-import {Injectable} from '@angular/core';
-import {applyTransaction, ID} from '@datorama/akita';
-import {delay, map, tap} from 'rxjs/operators';
-import {InputWaveOptionsQuery} from './input-wave-options.query';
-import {InputWaveOptionsState} from './input-wave-options.store';
-import {createFrequencyPoints, createFrequencyWave, InputWave} from './input-wave.model';
-import {InputWaveQuery} from './input-wave.query';
-import {InputWaveStore} from './input-wave.store';
+import { Injectable } from '@angular/core';
+import { applyTransaction, ID } from '@datorama/akita';
+import { delay, map, tap } from 'rxjs/operators';
+import { InputWaveOptionsQuery } from './input-wave-options.query';
+import { InputWaveOptionsState } from './input-wave-options.store';
+import { createFrequencyPoints, createFrequencyWave, InputWave } from './input-wave.model';
+import { InputWaveQuery } from './input-wave.query';
+import { InputWaveStore } from './input-wave.store';
 
 const kAmplitute = 100;
 
-function playByteArray(
-  bytes: ArrayLike<number>,
-  sampleRate: number,
-  context: AudioContext
-) {
+function playByteArray(bytes: ArrayLike<number>, sampleRate: number, context: AudioContext) {
   const buffer = context.createBuffer(1, bytes.length, sampleRate);
   const buf = buffer.getChannelData(0);
   for (let i = 0; i < bytes.length; ++i) {
@@ -38,11 +34,7 @@ export class InputWaveService {
         tap(() => this.inputWaveStore.setLoading(true)),
         delay(1),
         map((options: InputWaveOptionsState) => {
-          const points = createFrequencyPoints(
-            options.frequencies,
-            options.lengthInMs,
-            options.samplesPerSec
-          );
+          const points = createFrequencyPoints(options.frequencies, options.lengthInMs, options.samplesPerSec);
           return createFrequencyWave(options, points);
         })
       )
@@ -50,9 +42,7 @@ export class InputWaveService {
         applyTransaction(() => {
           this.inputWaveStore.add(wave);
           this.inputWaveStore.setActive(wave.id);
-          this.inputWaveStore.remove(
-            (entity: InputWave) => entity.id !== wave.id
-          );
+          this.inputWaveStore.remove((entity: InputWave) => entity.id !== wave.id);
           this.inputWaveStore.setLoading(false);
         });
       });
