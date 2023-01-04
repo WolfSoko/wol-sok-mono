@@ -74,6 +74,7 @@
     "@angular/cli": "15.0.4",
     "@angular/compiler-cli": "15.0.4",
     "@angular/language-service": "15.0.4",
+    "@commitlint/cli": "^17.4.0",
     "@commitlint/config-conventional": "^17.4.0",
     "@ngneat/spectator": "13.0.0",
     "@nrwl/angular": "15.4.2",
