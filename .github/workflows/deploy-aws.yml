@@ -60,3 +60,13 @@ jobs:
           AWS_REGION: 'eu-west-1'
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - uses: nashmaniac/create-issue-action@v1.1
+        if: failure()
+        name: Create Issue
+        with:
+          title: 'bug(deploy): Deploy release to AWS pipeline failed'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          assignees: ${{ github.actor }}
+          labels: bug
+          body: GitHub [Deploy release to AWS workflow](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/deploy-aws.yml) failed
