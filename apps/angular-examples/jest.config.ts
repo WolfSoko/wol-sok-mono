@@ -1,3 +1,5 @@
+import type { Config } from 'jest';
+
 /* eslint-disable */
 export default {
   displayName: 'angular-examples',
@@ -20,4 +22,4 @@ export default {
     'jest-preset-angular/build/serializers/html-comment',
   ],
   preset: '../../jest.preset.js',
-};
+} as Config;
