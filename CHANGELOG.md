@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.11.76](https://github.com/WolfSoko/wol-sok-mono/compare/v3.11.75...v3.11.76) (2023-01-14)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency @datorama/akita-ng-router-store to v8 ([c70721d](https://github.com/WolfSoko/wol-sok-mono/commit/c70721d1a16b5eaac4433bd4a0687ac0bc0717a8))
+
 ### [3.11.75](https://github.com/WolfSoko/wol-sok-mono/compare/v3.11.74...v3.11.75) (2023-01-13)
 
 ### [3.11.74](https://github.com/WolfSoko/wol-sok-mono/compare/v3.11.73...v3.11.74) (2023-01-13)
