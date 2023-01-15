@@ -5,7 +5,7 @@
     "@angular/common": "^15.1.0",
     "@angular/core": "^15.1.0",
     "@angular/material": "^15.1.0",
-    "@datorama/akita": "^7.1.1"
+    "@datorama/akita": "^8.0.0"
   },
   "dependencies": {
     "tslib": "2.4.1"
