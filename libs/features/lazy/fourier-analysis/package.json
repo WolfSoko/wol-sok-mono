@@ -6,7 +6,7 @@
     "@angular/core": "^15.1.0",
     "@angular/material": "^15.1.0",
     "p5": "^1.5.0",
-    "@datorama/akita": "^7.1.1",
+    "@datorama/akita": "^8.0.0",
     "mathjs": "^11.5.0"
   },
   "dependencies": {
