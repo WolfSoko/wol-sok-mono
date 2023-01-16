@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.11.80](https://github.com/WolfSoko/wol-sok-mono/compare/v3.11.79...v3.11.80) (2023-01-16)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency @datorama/akita to v8 ([fe8e880](https://github.com/WolfSoko/wol-sok-mono/commit/fe8e8808cd2ea62733ab11f301174bb0159240a0))
+
 ### [3.11.79](https://github.com/WolfSoko/wol-sok-mono/compare/v3.11.78...v3.11.79) (2023-01-15)
 
 
