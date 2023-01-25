@@ -77,7 +77,7 @@ jobs:
         uses: getsentry/action-release@v1
         with:
           version: ${{ steps.sentry-version.outputs.sentry-version }}
-          sourcemaps: dist/production
+          sourcemaps: 'dist/production dist/production/bacteria-game-remote dist/production/fib-wasm dist/production/fourier-analysis-remote'
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: 'wolsok'
