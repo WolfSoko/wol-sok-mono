@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.12.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.11.85...v3.12.0) (2023-01-25)
+
+
+### Features
+
+* enable sentry replay ([22abfa8](https://github.com/WolfSoko/wol-sok-mono/commit/22abfa87d9606b1c9744e28b4e5e4aca882f7398))
+
 ### [3.11.85](https://github.com/WolfSoko/wol-sok-mono/compare/v3.11.84...v3.11.85) (2023-01-22)
 
 ### [3.11.84](https://github.com/WolfSoko/wol-sok-mono/compare/v3.11.83...v3.11.84) (2023-01-22)
