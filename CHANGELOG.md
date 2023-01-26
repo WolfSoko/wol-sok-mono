@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.13.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.12.0...v3.13.0) (2023-01-26)
+
+
+### Features
+
+* **deps:** update nrwl 15.6.2 ([bebdd5e](https://github.com/WolfSoko/wol-sok-mono/commit/bebdd5e8798d8fa8019fcbe204d523984f5038d5))
+* **sentry:** add source maps of federated modules ([5f3e3b3](https://github.com/WolfSoko/wol-sok-mono/commit/5f3e3b35d68687af7cceb12a1cd69bd4a0a28435))
+
 ## [3.12.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.11.85...v3.12.0) (2023-01-25)
 
 
