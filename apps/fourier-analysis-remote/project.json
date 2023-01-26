@@ -29,9 +29,10 @@
       "configurations": {
         "production": {
           "sourceMap": {
-            "hidden": true,
+            "hidden": false,
             "scripts": true,
-            "styles": true
+            "styles": true,
+            "vendor": true
           },
           "budgets": [
             {
