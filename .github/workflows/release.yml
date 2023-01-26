@@ -16,13 +16,10 @@ jobs:
     env:
       CYPRESS_INSTALL_BINARY: 0
     steps:
+      - uses: actions/checkout@v3
       - name: Install ubuntu dependencies
         shell: bash
-        run: |
-          echo "Install packages to compile node_modules gl with node-gyp"
-          sudo apt-get update -y
-          sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
-      - uses: actions/checkout@v3
+        run: ./.github/scripts/install-ubuntu-packages.sh
       - uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
@@ -52,7 +49,7 @@ jobs:
         run: |
           SENTRY_VERSION="angular-examples@${{ github.ref_name }}"
           echo "Sentry version: ${SENTRY_VERSION}"
-          echo "sentry-version=${SENTRY_VERSION} >> $GITHUB_ENV"
+          echo "sentry-version=${SENTRY_VERSION}" >> $GITHUB_ENV
 
       - name: Integrate sentry release version into index.html
         run: echo "TODO integrate ${{ env.sentry-version }} into index.html"
