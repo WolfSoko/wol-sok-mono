@@ -25,11 +25,11 @@
     "build:thanos": "nx build ws-thanos"
   },
   "peerDependencies": {
-    "@angular/common": "^15.1.1",
-    "@angular/core": "^15.1.1",
+    "@angular/common": "^15.1.2",
+    "@angular/core": "^15.1.2",
     "html2canvas": "^1.4.1"
   },
   "dependencies": {
-    "tslib": "2.4.1"
+    "tslib": "2.5.0"
   }
 }
