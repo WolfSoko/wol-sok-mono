@@ -42,6 +42,6 @@ runs:
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
-      run: npm ci --ignore-scripts="${{ inputs.run-scripts }}"
+      run: npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
       env:
         CYPRESS_INSTALL_BINARY: ${{ ((inputs.cypress == 'true') && 1) || 0 }}
