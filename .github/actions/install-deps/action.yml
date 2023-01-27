@@ -17,23 +17,8 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Eco inputs
-      shell: bash
-      run: |
-        echo "Inputs apt-packages: ${{ inputs.apt-packages }} ${{ toJSON(inputs.apt-packages) }} ${{ fromJSON(inputs.apt-packages) }}"
-        echo "Inputs cypress: ${{ inputs.cypress }}"
-        echo "Inputs run-scripts: ${{ inputs.run-scripts }}"
-    - name: Inputs cypress
-      if: inputs.cypress
-      shell: bash
-      run: echo "Install Cypress"
-    - name: Inputs run-scripts
-      if: inputs.run-scripts
-      shell: bash
-      run: echo "Run npm install scripts"
-
     - name: Install ubuntu dependencies
-      if: inputs.apt-packages
+      if: inputs.apt-packages == 'true'
       shell: bash
       run: ./.github/actions/install-deps/install-ubuntu-packages.sh
     - uses: actions/setup-node@v3
@@ -42,7 +27,7 @@ runs:
         cache: npm
     - name: Cache Cypress Binary
       id: cache-cypress-binary
-      if: inputs.cypress
+      if: inputs.cypress == 'true'
       uses: actions/cache@v3
       with:
         path: 'cache/cypress'
@@ -52,11 +37,11 @@ runs:
       uses: actions/cache@v3
       with:
         path: ./node_modules
-        key: modules-${{ inputs.run-scripts && 'with' || 'ignore' }}-scripts-${{ hashFiles('package-lock.json') }}
+        key: modules-${{ inputs.run-scripts == 'true' && 'with' || 'ignore' }}-scripts-${{ hashFiles('package-lock.json') }}
 
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
-      run: npm ci --ignore-scripts=${{ inputs.run-scripts }}
+      run: npm ci --ignore-scripts="${{ inputs.run-scripts }}"
       env:
-        CYPRESS_INSTALL_BINARY: ${{ (inputs.cypress && 1) || 0 }}
+        CYPRESS_INSTALL_BINARY: ${{ ((inputs.cypress == 'true') && 1) || 0 }}
