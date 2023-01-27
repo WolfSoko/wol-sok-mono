@@ -4,15 +4,15 @@ inputs:
   run-scripts: # id of input
     description: 'run npm ci with --no-scripts flag'
     required: false
-    default: false
+    default: 'false'
   cypress:
     description: 'install cypress'
     required: false
-    default: false
+    default: 'false'
   apt-packages:
     description: 'install packages needed to run tests'
     required: false
-    default: false
+    default: 'false'
 
 runs:
   using: composite
@@ -32,6 +32,8 @@ runs:
       with:
         path: ${{ env.CYPRESS_CACHE_FOLDER }}
         key: cypress-binary-${{ hashFiles('package-lock.json') }}
+      env:
+        CYPRESS_CACHE_FOLDER: 'cache/cypress'
     - name: Cache dependencies
       id: cache
       uses: actions/cache@v3
@@ -40,8 +42,16 @@ runs:
         key: modules-${{ inputs.run-scripts == 'true' && 'with' || 'ignore' }}-scripts-${{ hashFiles('package-lock.json') }}
 
     - name: Install dependencies
-      if: steps.cache.outputs.cache-hit != 'true'
+      if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress == 'false'
       shell: bash
       run: npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
       env:
-        CYPRESS_INSTALL_BINARY: ${{ ((inputs.cypress == 'true') && 1) || 0 }}
+        CYPRESS_INSTALL_BINARY: 0
+        CYPRESS_CACHE_FOLDER: 'cache/cypress'
+
+    - name: Install dependencies
+      if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress != 'false'
+      shell: bash
+      run: npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+      env:
+        CYPRESS_CACHE_FOLDER: 'cache/cypress'
