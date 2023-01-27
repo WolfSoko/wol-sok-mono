@@ -61,7 +61,6 @@ jobs:
   warmup-caches-for-agents:
     name: Warmup npm caches for agents
     runs-on: ubuntu-latest
-    container: cypress/browsers
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
