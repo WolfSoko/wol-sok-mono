@@ -13,27 +13,14 @@ jobs:
   release:
     timeout-minutes: 20
     runs-on: ubuntu-latest
-    env:
-      CYPRESS_INSTALL_BINARY: 0
     steps:
       - uses: actions/checkout@v3
-      - name: Install ubuntu dependencies
-        shell: bash
-        run: ./.github/scripts/install-ubuntu-packages.sh
-      - uses: actions/setup-node@v3
+      - name: Install Deps
+        uses: ./.github/actions/install-deps
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-      - name: Cache dependencies
-        id: cache
-        uses: actions/cache@v3
-        with:
-          path: ./node_modules
-          key: modules-${{ hashFiles('package-lock.json') }}
-
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: npm ci
+          cypress: false
+          apt-packages: true
+          run-scripts: true
 
       - name: Wait for tests to succeed
         uses: lewagon/wait-on-check-action@v1.2.0
