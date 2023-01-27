@@ -32,7 +32,8 @@
       "outputs": ["coverage/libs/utils/decorators"],
       "options": {
         "jestConfig": "libs/utils/decorators/jest.config.ts",
-        "passWithNoTests": true
+        "passWithNoTests": true,
+        "codeCoverage": true
       }
     }
   },

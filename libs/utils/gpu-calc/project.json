@@ -26,7 +26,8 @@
       "outputs": ["coverage/libs/utils/gpu-calc"],
       "options": {
         "jestConfig": "libs/utils/gpu-calc/jest.config.ts",
-        "passWithNoTests": true
+        "passWithNoTests": true,
+        "codeCoverage": true
       }
     },
     "lint": {

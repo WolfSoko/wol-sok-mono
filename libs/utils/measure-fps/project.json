@@ -32,7 +32,8 @@
       "outputs": ["coverage/libs/utils/measure-fps"],
       "options": {
         "jestConfig": "libs/utils/measure-fps/jest.config.ts",
-        "passWithNoTests": true
+        "passWithNoTests": true,
+        "codeCoverage": true
       }
     }
   },

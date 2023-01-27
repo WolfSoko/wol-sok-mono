@@ -19,7 +19,8 @@
     },
     "package-lock.json": "*",
     "version.json": ["angular-examples"],
-    ".eslintrc.json": "*"
+    ".eslintrc.json": "*",
+    ".codecov.yml": "*"
   },
   "tasksRunnerOptions": {
     "default": {

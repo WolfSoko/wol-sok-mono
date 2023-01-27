@@ -12,5 +12,6 @@ export default {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../../coverage/libs/utils/decorators',
+  coverageReporters: ['lcov'],
   preset: '../../../jest.preset.js',
 };

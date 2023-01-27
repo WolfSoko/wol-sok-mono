@@ -1,0 +1,126 @@
+comment:
+  layout: reach
+  behavior: new
+  require_changes: true
+coverage:
+  range: 0..100
+  round: nearest
+  precision: 1
+  status:
+    patch:
+      default:
+        target: 50%
+        threshold: 10%
+    project:
+      default:
+        target: 50%
+        threshold: 10%
+      angular-examples:
+        flags:
+          - angular-examples
+      bacteria-game-remote:
+        flags:
+          - bacteria-game-remote
+      feat-api-auth:
+        flags:
+          - feat-api-auth
+      feat-lazy-bacteria-game:
+        flags:
+          - feat-lazy-bacteria-game
+      feat-lazy-fourier-analysis:
+        flags:
+          - feat-lazy-fourier-analysis
+      feat-lazy-gravity-rocks:
+        flags:
+          - feat-lazy-gravity-rocks
+      feat-lazy-react-diff:
+        flags:
+          - feat-lazy-react-diff
+      feat-lazy-shader-examples:
+        flags:
+          - feat-lazy-shader-examples
+      feat-lazy-some-gpu-calculation:
+        flags:
+          - feat-lazy-some-gpu-calculation
+      feat-lazy-tf-examples:
+        flags:
+          - feat-lazy-tf-examples
+      feat-lazy-wasm-test:
+        flags:
+          - feat-lazy-wasm-test
+      fib-wasm-api:
+        flags:
+          - fib-wasm-api
+      fourier-analysis-remote:
+        flags:
+          - fourier-analysis-remote
+      ui-kit:
+        flags:
+          - ui-kit
+      utils-decorators:
+        flags:
+          - utils-decorators
+      utils-gpu-calc:
+        flags:
+          - utils-gpu-calc
+      utils-measure-fps:
+        flags:
+          - utils-measure-fps
+      utils-operators:
+        flags:
+          - utils-operators
+flags:
+  angular-examples:
+    paths:
+      - apps/angular-examples
+  bacteria-game-remote:
+    paths:
+      - apps/bacteria-game-remote
+  feat-api-auth:
+    paths:
+      - libs/features/api/auth
+  feat-lazy-bacteria-game:
+    paths:
+      - libs/features/lazy/bacteria-game
+  feat-lazy-fourier-analysis:
+    paths:
+      - libs/features/lazy/fourier-analysis
+  feat-lazy-gravity-rocks:
+    paths:
+      - libs/features/lazy/gravity-rocks
+  feat-lazy-react-diff:
+    paths:
+      - libs/features/lazy/reaction-diffusion
+  feat-lazy-shader-examples:
+    paths:
+      - libs/features/lazy/shader-examples
+  feat-lazy-some-gpu-calculation:
+    paths:
+      - libs/features/lazy/some-gpu-calculation
+  feat-lazy-tf-examples:
+    paths:
+      - libs/features/lazy/tensorflow-examples
+  feat-lazy-wasm-test:
+    paths:
+      - libs/features/lazy/wasm-test
+  fib-wasm-api:
+    paths:
+      - libs/fib-wasm-api
+  fourier-analysis-remote:
+    paths:
+      - apps/fourier-analysis-remote
+  ui-kit:
+    paths:
+      - libs/ui-kit
+  utils-decorators:
+    paths:
+      - libs/utils/decorators
+  utils-gpu-calc:
+    paths:
+      - libs/utils/gpu-calc
+  utils-measure-fps:
+    paths:
+      - libs/utils/measure-fps
+  utils-operators:
+    paths:
+      - libs/utils/operators

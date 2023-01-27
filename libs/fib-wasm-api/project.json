@@ -26,7 +26,8 @@
       "outputs": ["coverage/libs/fib-wasm-api"],
       "options": {
         "jestConfig": "libs/fib-wasm-api/jest.config.ts",
-        "passWithNoTests": true
+        "passWithNoTests": true,
+        "codeCoverage": true
       }
     },
     "lint": {

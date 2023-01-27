@@ -26,7 +26,8 @@
       "outputs": ["coverage/libs/features/lazy/tensorflow-examples"],
       "options": {
         "jestConfig": "libs/features/lazy/tensorflow-examples/jest.config.ts",
-        "passWithNoTests": true
+        "passWithNoTests": true,
+        "codeCoverage": true
       }
     },
     "lint": {

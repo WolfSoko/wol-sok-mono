@@ -145,7 +145,8 @@
       "outputs": ["coverage/apps/angular-examples"],
       "options": {
         "jestConfig": "apps/angular-examples/jest.config.ts",
-        "passWithNoTests": false
+        "passWithNoTests": false,
+        "codeCoverage": true
       }
     },
     "prepare-prod": {

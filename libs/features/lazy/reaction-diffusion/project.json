@@ -26,7 +26,8 @@
       "outputs": ["coverage/libs/features/lazy/reaction-diffusion"],
       "options": {
         "jestConfig": "libs/features/lazy/reaction-diffusion/jest.config.ts",
-        "passWithNoTests": true
+        "passWithNoTests": true,
+        "codeCoverage": true
       }
     },
     "lint": {

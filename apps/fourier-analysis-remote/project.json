@@ -101,7 +101,8 @@
       "outputs": ["coverage/apps/fourier-analysis-remote"],
       "options": {
         "jestConfig": "apps/fourier-analysis-remote/jest.config.ts",
-        "passWithNoTests": true
+        "passWithNoTests": true,
+        "codeCoverage": true
       }
     },
     "serve-static": {

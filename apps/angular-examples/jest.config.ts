@@ -12,6 +12,7 @@ export default {
     },
   },
   coverageDirectory: '../../coverage/apps/angular-examples',
+  coverageReporters: ['lcov'],
   transform: {
     '^.+.(ts|mjs|js|html)$': 'jest-preset-angular',
   },

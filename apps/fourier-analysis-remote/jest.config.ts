@@ -10,6 +10,7 @@ export default {
     },
   },
   coverageDirectory: '../../coverage/apps/fourier-analysis-remote',
+  coverageReporters: ['lcov'],
   transform: {
     '^.+\\.(ts|mjs|js|html)$': 'jest-preset-angular',
   },
