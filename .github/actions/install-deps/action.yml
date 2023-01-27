@@ -30,7 +30,7 @@ runs:
       if: inputs.cypress == 'true'
       uses: actions/cache@v3
       with:
-        path: 'cache/cypress'
+        path: ${{ env.CYPRESS_CACHE_FOLDER }}
         key: cypress-binary-${{ hashFiles('package-lock.json') }}
     - name: Cache dependencies
       id: cache
