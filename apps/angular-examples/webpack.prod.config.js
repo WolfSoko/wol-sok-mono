@@ -14,7 +14,7 @@ module.exports = async (config, context) => {
 
     /*
      * Remote overrides for production.
-     * Each entry is a pair of an unique name and the URL where it is deployed.
+     * Each entry is a pair of a unique name and the URL where it is deployed.
      *
      * e.g.
      * remotes: [
