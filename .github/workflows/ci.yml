@@ -14,7 +14,6 @@ env:
   NODE_OPTIONS: '--max_old_space_size=4096'
   NX_BRANCH: ${{ github.event.number || github.ref_name }}
   NX_CLOUD_DISTRIBUTED_EXECUTION: 'true'
-  CYPRESS_CACHE_FOLDER: 'cache/cypress'
   CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
 
 jobs:
@@ -68,31 +67,23 @@ jobs:
         agent: [1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v3
-      - name: Install ubuntu dependencies
-        shell: bash
-        run: ./.github/scripts/install-ubuntu-packages.sh
-      - uses: actions/setup-node@v3
+        name: 'Checkout branch'
+        if: ${{ github.event_name != 'pull_request' }}
         with:
-          node-version-file: '.nvmrc'
-          cache: npm
+          fetch-depth: 0
 
-      - name: Cache Cypress Binary
-        id: cache-cypress-binary
-        uses: actions/cache@v3
+      - uses: actions/checkout@v3
+        name: 'Checkout [pr]'
+        if: ${{ github.event_name == 'pull_request' }}
         with:
-          path: ${{ env.CYPRESS_CACHE_FOLDER }}
-          key: cypress-binary-${{ hashFiles('package-lock.json') }}
-
-      - name: Cache dependencies
-        id: cache
-        uses: actions/cache@v3
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Install Deps
+        uses: ./.github/actions/install-deps
         with:
-          path: ./node_modules
-          key: modules-${{ hashFiles('package-lock.json') }}
-
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: npm ci
+          cypress: true
+          apt-packages: true
+          run-scripts: true
 
       - name: Start Nx Agent ${{ matrix.agent }}
         run: npx nx-cloud start-agent
