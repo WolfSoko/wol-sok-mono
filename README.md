@@ -1,7 +1,7 @@
 [![.github/workflows/ci.yml](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/ci.yml/badge.svg)](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/ci.yml)
 [![wolsok-mono](https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/detailed/jyisda/main&style=flat&logo=cypress)](https://dashboard.cypress.io/projects/jyisda/runs)
 ![renovate](https://img.shields.io/badge/maintaied%20with-renovate-blue?logo=renovatebot)
-[![codecov](https://codecov.io/gh/WolfSoko/wol-sok-mono/branch/main/graph/badge.svg)](https://codecov.io/gh/WolfSoko/wol-sok-mono)
+[![codecov](https://codecov.io/github/WolfSoko/wol-sok-mono/branch/main/graph/badge.svg?token=SYKFAX478R)](https://codecov.io/github/WolfSoko/wol-sok-mono)
 
 wol-sok-mono repo
 
