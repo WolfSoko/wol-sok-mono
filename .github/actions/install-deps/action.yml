@@ -1,0 +1,60 @@
+name: 'Install Dependencies'
+description: 'Installs all dependencies for this repo to run'
+inputs:
+  run-scripts: # id of input
+    description: 'run npm ci with --no-scripts flag'
+    required: false
+    default: 'false'
+  cypress:
+    description: 'install cypress'
+    required: false
+    default: 'false'
+  apt-packages:
+    description: 'install packages needed to run tests'
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Inputs apt-packages
+      if: inputs.apt-packages
+      shell: bash
+      run: echo "Install apt packages"
+    - name: Inputs cypress
+      if: inputs.cypress
+      shell: bash
+      run: echo "Install Cypress"
+    - name: Inputs run-scripts
+      if: inputs.run-scripts
+      shell: bash
+      run: echo "Run npm install scripts"
+
+    - name: Install ubuntu dependencies
+      if: inputs.apt-packages
+      shell: bash
+      run: ./.github/actions/install-deps/install-ubuntu-packages.sh
+    - uses: actions/setup-node@v3
+      with:
+        node-version-file: '.nvmrc'
+        cache: npm
+    - name: Cache Cypress Binary
+      id: cache-cypress-binary
+      if: inputs.cypress
+      uses: actions/cache@v3
+      with:
+        path: 'cache/cypress'
+        key: cypress-binary-${{ hashFiles('package-lock.json') }}
+    - name: Cache dependencies
+      id: cache
+      uses: actions/cache@v3
+      with:
+        path: ./node_modules
+        key: modules-${{ inputs.run-scripts == 'true' && 'with' || 'ignore' }}-scripts-${{ hashFiles('package-lock.json') }}
+
+    - name: Install dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm ci --ignore-scripts=${{ inputs.run-scripts != 'true' }}
+      env:
+        CYPRESS_INSTALL_BINARY: ${{ (inputs.cypress == 'true' && 1) || 0 }}
