@@ -1,5 +1,6 @@
 [![.github/workflows/ci.yml](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/ci.yml/badge.svg)](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/ci.yml)
 [![wolsok-mono](https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/detailed/jyisda/main&style=flat&logo=cypress)](https://dashboard.cypress.io/projects/jyisda/runs)
+![renovate](https://img.shields.io/badge/maintaied%20with-renovate-blue?logo=renovatebot)
 
 wol-sok-mono repo
 
@@ -30,3 +31,7 @@ A running version can be found on GitHub pages: https://angularexamples.wolsok.d
 ### npm install
 
 To run `npm install` you need to make sure `node-gyp` compilation process is working. See here: [node-gyp installation](https://github.com/nodejs/node-gyp#installation)
+
+## Contributors
+
+[![contributors](https://contrib.rocks/image?repo=WolfSoko/wol-sok-mono)](https://github.com/WolfSoko/wol-sok-mono/graphs/contributors)
