@@ -17,21 +17,29 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: unify inputs
+      run: |
+        echo "run-scripts=${{ inputs.run-scripts }}" >> GITHUB_ENV
+        echo "cypress=${{ (inputs.cypress != 'false') }}" >> GITHUB_ENV
+        echo "apt-packages=${{ (inputs.apt-packages != 'false') }}" >> GITHUB_ENV
+      shell: bash
+    - run: env
+      shell: bash
     - name: Inputs apt-packages
-      if: inputs.apt-packages
+      if: env.apt-packages
       shell: bash
       run: echo "Install apt packages"
     - name: Inputs cypress
-      if: inputs.cypress
+      if: env.cypress
       shell: bash
       run: echo "Install Cypress"
     - name: Inputs run-scripts
-      if: inputs.run-scripts
+      if: env.run-scripts
       shell: bash
       run: echo "Run npm install scripts"
 
     - name: Install ubuntu dependencies
-      if: inputs.apt-packages
+      if: env.apt-packages
       shell: bash
       run: ./.github/actions/install-deps/install-ubuntu-packages.sh
     - uses: actions/setup-node@v3
@@ -40,7 +48,7 @@ runs:
         cache: npm
     - name: Cache Cypress Binary
       id: cache-cypress-binary
-      if: inputs.cypress
+      if: env.cypress
       uses: actions/cache@v3
       with:
         path: 'cache/cypress'
@@ -50,11 +58,11 @@ runs:
       uses: actions/cache@v3
       with:
         path: ./node_modules
-        key: modules-${{ inputs.run-scripts == 'true' && 'with' || 'ignore' }}-scripts-${{ hashFiles('package-lock.json') }}
+        key: modules-${{ env.run-scripts && 'with' || 'ignore' }}-scripts-${{ hashFiles('package-lock.json') }}
 
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
-      run: npm ci --ignore-scripts=${{ inputs.run-scripts != 'true' }}
+      run: npm ci --ignore-scripts=${{ env.run-scripts }}
       env:
-        CYPRESS_INSTALL_BINARY: ${{ (inputs.cypress == 'true' && 1) || 0 }}
+        CYPRESS_INSTALL_BINARY: ${{ (env.cypress && 1) || 0 }}
