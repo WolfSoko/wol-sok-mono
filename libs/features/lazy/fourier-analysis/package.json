@@ -7,7 +7,7 @@
     "@angular/material": "^15.1.2",
     "p5": "^1.5.0",
     "@datorama/akita": "^8.0.0",
-    "mathjs": "^11.5.0"
+    "mathjs": "^11.5.1"
   },
   "dependencies": {
     "tslib": "2.5.0"
