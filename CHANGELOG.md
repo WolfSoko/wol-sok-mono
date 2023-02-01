@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.13.34](https://github.com/WolfSoko/wol-sok-mono/compare/v3.13.33...v3.13.34) (2023-02-01)
+
+
+### Bug Fixes
+
+* **ui-kit-render-shader:** check for WEBGL before trying to render ([4e80065](https://github.com/WolfSoko/wol-sok-mono/commit/4e800658d4a1578d03f029309a09b1cc8b513352))
+* **ui-kit-render-shader:** use CanvasRenderer if WebGL is not available ([c4ec4fc](https://github.com/WolfSoko/wol-sok-mono/commit/c4ec4fcaee755f975faca12f3c5a61c6e5f2a102))
+
 ### [3.13.33](https://github.com/WolfSoko/wol-sok-mono/compare/v3.13.32...v3.13.33) (2023-02-01)
 
 ### [3.13.32](https://github.com/WolfSoko/wol-sok-mono/compare/v3.13.31...v3.13.32) (2023-02-01)
