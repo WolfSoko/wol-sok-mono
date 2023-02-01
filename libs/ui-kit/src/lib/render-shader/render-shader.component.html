@@ -1,3 +1,4 @@
+<ng-container *ngIf="webGlAvailable"></ng-container>
 <ws-shared-ui-show-fps class="stats" [show]="showFps" [fps]="(fps$ | async) ?? 0"></ws-shared-ui-show-fps>
 <div #canvasContainer class="canvas-container">
   <canvas
