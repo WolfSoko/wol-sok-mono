@@ -7,10 +7,9 @@
 const { expect, test } = require('@playwright/test')
 
 test('visit page and take screenshot', async ({ page }) => {
-    // Change checklyhq.com to your site's URL,
     // or, even better, define a ENVIRONMENT_URL environment variable
     // to reuse it across your browser checks
-    const response = await page.goto(process.env.ENVIRONMENT_URL || 'https://checklyhq.com')
+    const response = await page.goto(process.env.ENVIRONMENT_URL || 'https://angularexamples.wolsok.de')
 
     // Test that the response did not fail
     expect(response.status()).toBeLessThan(400)
