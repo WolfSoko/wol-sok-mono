@@ -26,7 +26,11 @@ import {
   Vector2,
   WebGLRenderer,
 } from 'three';
-import WEBGL from 'three/examples/jsm/capabilities/WebGL';
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { default as THREE } from 'three-canvas-renderer';
+
 import { ShowFpsComponent } from '../show-fps/show-fps.component';
 import { defaultVertexShader } from './default-vertex-shader';
 
@@ -55,8 +59,6 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
   @ViewChild('stats', { static: true }) private statsElem!: ElementRef;
 
   fps$ = this.measureFps.fps$.pipe(sampleTime(300));
-
-  webGlAvailable = WEBGL.isWebGLAvailable();
 
   private renderer?: Renderer;
 
@@ -96,16 +98,14 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
   }
 
   ngAfterViewInit() {
-    if (this.webGlAvailable) {
-      console.log('WebGl is not Available');
-      return;
-    }
     const renderParams = {
       antialias: true,
       canvas: this.webGLCanvas.nativeElement,
     };
     try {
-      this.renderer = new WebGLRenderer(renderParams);
+      this.renderer = this.isWebGLAvailable()
+        ? new WebGLRenderer(renderParams)
+        : new THREE.CanvasRenderer(renderParams);
     } catch (e) {
       if (e instanceof Error && e.message == 'Error creating WebGL context.') {
         return;
@@ -148,10 +148,6 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
   }
 
   onMouseMove(e: MouseEvent) {
-    if (this.webGlAvailable) {
-      console.log('WebGl is not Available');
-      return;
-    }
     if (this.uniforms) {
       this.uniforms.mouse.value.x = e.offsetX / this.canvasWidth;
       this.uniforms.mouse.value.y = (this.canvasHeight - e.offsetY) / this.canvasHeight;
@@ -159,10 +155,6 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
   }
 
   onTouchMove(e: TouchEvent) {
-    if (this.webGlAvailable) {
-      console.log('WebGl is not Available');
-      return;
-    }
     if (this.uniforms) {
       const touch = e.touches[0];
       const x = touch.pageX - RenderShaderComponent.getOffsetLeft(e.target as HTMLElement);
@@ -174,10 +166,6 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
   }
 
   onResize() {
-    if (this.webGlAvailable) {
-      console.log('WebGl is not Available');
-      return;
-    }
     if (this.canvasWidth && this.canvasHeight && this.renderer && this.uniforms) {
       this.renderer.setSize(this.canvasWidth, this.canvasHeight);
       this.uniforms.resolution.value = new Vector2(this.canvasWidth, this.canvasHeight);
@@ -185,10 +173,6 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (this.webGlAvailable) {
-      console.log('WebGl is not Available');
-      return;
-    }
     if (changes['runAnimation'] && !changes['runAnimation'].isFirstChange() && changes['runAnimation'].currentValue) {
       this.animate(1.0);
     }
@@ -207,10 +191,6 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
   }
 
   render(time: number = 1) {
-    if (this.webGlAvailable) {
-      console.log('WebGl is not Available');
-      return;
-    }
     if (this.uniforms && this.scene && this.camera) {
       this.uniforms.time.value = time / 1000;
       this.renderer?.render(this.scene, this.camera);
@@ -218,10 +198,6 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
   }
 
   animate(time: number = 1.0) {
-    if (this.webGlAvailable) {
-      console.log('WebGl is not Available');
-      return;
-    }
     try {
       this.ngZone.runOutsideAngular(() => {
         if (this.runAnimation) {
@@ -232,6 +208,18 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
       });
     } catch (e) {
       this.error.next(e);
+    }
+  }
+
+  private isWebGLAvailable() {
+    try {
+      const canvas = this.webGLCanvas.nativeElement;
+      return !!(
+        window.WebGLRenderingContext &&
+        (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+      );
+    } catch (e) {
+      return false;
     }
   }
 }
