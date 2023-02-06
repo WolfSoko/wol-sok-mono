@@ -12,6 +12,7 @@ import {
 import { MatCardModule } from '@angular/material/card';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { merge, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import {
   AmbientLight,
@@ -37,7 +38,6 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { MandelbrotFragment, MandelbrotVertex } from './mandelbrot-shader';
-import { map } from 'rxjs/operators';
 
 const TAU = Math.PI / 2;
 
@@ -80,6 +80,7 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
     pointLight.shadow.bias = -0.005; // reduces self-shadowing on double-sided objects
     return pointLight;
   }
+
   private static createMandelbrotPlane(): Mesh {
     return new Mesh(new PlaneGeometry(100, 100, 1, 1), WebGlComponent.createMandelbrotMaterial());
   }

@@ -1,6 +1,6 @@
 # @wolsok/thanos
 
-An angular directive that vaporizes your DOM Elements like Thanos. This library is generated with [Nx](https://nx.dev).
+An angular directive that vaporizes your DOM Elements like Thanos snaps his fingers. This library is generated with [Nx](https://nx.dev).
 
 #### Live Demo:
 
