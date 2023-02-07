@@ -23,13 +23,11 @@ jobs:
 
       - name: trigger release
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.email "github-actions[bot]@users.no-reply.github.com"
           git config --local user.name "github-actions[bot]"
+          echo "increment version"
           npx standard-version
-
-      - name: Push changes
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          branch: ${{ github.ref }}
-          tags: true
-          github_token: ${{ secrets.PUSH_TOKEN }}
+          echo "push changes"
+          git push --follow-tags origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.PUSH_TOKEN }}
