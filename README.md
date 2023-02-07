@@ -2,7 +2,7 @@
 [![wolsok-mono](https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/detailed/jyisda/main&style=flat&logo=cypress)](https://dashboard.cypress.io/projects/jyisda/runs)
 ![renovate](https://img.shields.io/badge/maintaied%20with-renovate-blue?logo=renovatebot)
 [![codecov](https://codecov.io/github/WolfSoko/wol-sok-mono/branch/main/graph/badge.svg?token=SYKFAX478R)](https://codecov.io/github/WolfSoko/wol-sok-mono)
-
+[![Run Action Deployment](https://github-action-button.web.app/buttons/simple.svg?name=&eventType=&type=simple&action=deployment)](https://github-action-button.web.app/repos/WolfSoko/wol-sok-mono/button?name=&eventType=&type=simple&action=deployment)
 wol-sok-mono repo
 
 # Wild experiments and examples implemented in Angular+
