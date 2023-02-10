@@ -1,7 +1,7 @@
 {
   "name": "@wolsok/thanos",
   "version": "3.0.1",
-  "description": "wolsok's implementation of a cool thanos vaporizing effect for destroying dom elements",
+  "description": "Wolf Soko's implementation of a cool Thanos snapping vaporizing effect for destroying dom elements",
   "bugs": {
     "url": "https://github.com/WolfSoko/wol-sok-mono/issues"
   },
@@ -9,6 +9,7 @@
   "repository": "https://github.com/WolfSoko/wol-sok-mono/tree/main/libs/public/ws-thanos",
   "license": "MIT",
   "keywords": [
+    "wolf soko",
     "wolsok",
     "angular",
     "angular-lib",
@@ -19,7 +20,8 @@
     "vaporize",
     "vaporizing",
     "Avengers",
-    "Marvel"
+    "Marvel",
+    "npm"
   ],
   "scripts": {
     "build:thanos": "nx build ws-thanos"
