@@ -4,7 +4,7 @@ import { version } from './version';
 export const environment: Environment = {
   version,
   production: true,
-  serviceWorkerCheckInterval: 30000,
+  serviceWorkerCheckInterval: 60000,
   firebaseConfig: {
     apiKey: 'AIzaSyDA2Q6A4MrhgYlJnjaWycO-M6D8ToXRYAM',
     authDomain: 'angularexamples-b69f4.firebaseapp.com',

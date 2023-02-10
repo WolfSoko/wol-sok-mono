@@ -80,10 +80,7 @@
           ],
           "serviceWorker": true,
           "ngswConfigPath": "apps/angular-examples/ngsw-config.json",
-          "outputHashing": "all",
-          "customWebpackConfig": {
-            "path": "apps/angular-examples/webpack.prod.config.js"
-          }
+          "outputHashing": "all"
         },
         "development": {
           "preserveSymlinks": true,

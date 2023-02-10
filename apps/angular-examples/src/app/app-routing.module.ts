@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Data, Route, RouterModule } from '@angular/router';
+import { loadRemoteModule } from '@nrwl/angular/mf';
 import { InfoComponent } from './feature/lazy/info/info.component';
 
 export interface MainNavRouteData extends Data {
@@ -16,7 +17,7 @@ export const APP_ROUTES: MainNavRoute[] = [
   { path: 'home', component: InfoComponent, data: { linkText: 'Home' } },
   {
     path: 'fourierAnalysis',
-    loadChildren: () => import('fourier-analysis-remote/Module').then((m) => m.RemoteEntryModule),
+    loadChildren: () => loadRemoteModule('fourier-analysis-remote', './Module').then((m) => m.RemoteEntryModule),
     data: {
       linkText: 'Fourier Analysis Example',
       subTitle: 'Served independently by Webpacks Module-Federation',
@@ -24,7 +25,7 @@ export const APP_ROUTES: MainNavRoute[] = [
   },
   {
     path: 'bacteriaGame',
-    loadChildren: () => import('bacteria-game-remote/Module').then((m) => m.RemoteEntryModule),
+    loadChildren: () => loadRemoteModule('bacteria-game-remote', './Module').then((m) => m.RemoteEntryModule),
     data: { linkText: 'Bacteria Game', subTitle: 'Served independently by MF' },
   },
   {
