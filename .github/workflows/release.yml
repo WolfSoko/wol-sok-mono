@@ -23,7 +23,7 @@ jobs:
           run-scripts: true
 
       - name: Wait for tests to succeed
-        uses: lewagon/wait-on-check-action@v1.3.0
+        uses: lewagon/wait-on-check-action@v1.3.1
         with:
           ref: ${{ github.ref }}
           check-name: verify
