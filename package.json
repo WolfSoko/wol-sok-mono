@@ -41,7 +41,7 @@
     "@sentry/angular": "7.37.2",
     "@sentry/tracing": "7.37.2",
     "@tensorflow/tfjs": "4.2.0",
-    "ace-builds": "1.15.1",
+    "ace-builds": "1.15.2",
     "akita-ng-fire": "7.0.0",
     "angulartics2": "12.2.0",
     "brace": "0.11.1",
@@ -63,7 +63,7 @@
     "ts-keycode-enum": "1.0.6",
     "tslib": "2.5.0",
     "vega": "5.22.1",
-    "vega-embed": "6.21.2",
+    "vega-embed": "6.21.3",
     "vega-lite": "5.6.1",
     "zone.js": "0.12.0"
   },
