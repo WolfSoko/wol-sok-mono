@@ -23,7 +23,7 @@ env:
   CYPRESS_CACHE_FOLDER: 'cache/cypress'
 
 jobs:
-  verify-and-release:
+  verify:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
@@ -82,20 +82,6 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
-      - name: trigger release
-        if: ${{ !contains(github.event.head_commit.message , 'chore(release):') && github.ref_name == 'main' }}
-        run: |
-          git config --local user.email "github-actions[bot]@users.no-reply.github.com"
-          git config --local user.name "github-actions[bot]"
-          npx standard-version
-      - name: Push changes
-        if: ${{ !contains(github.event.head_commit.message , 'chore(release):') && github.ref_name == 'main' }}
-        uses: ad-m/github-push-action@master
-        with:
-          branch: ${{ github.ref }}
-          tags: true
-          github_token: ${{ secrets.PUSH_TOKEN }}
-
   warmup-caches-for-agents:
     name: Warmup npm caches for agents
     runs-on: ubuntu-latest
@@ -150,3 +136,9 @@ jobs:
 
       - name: Start Nx Agent ${{ matrix.agent }}
         run: npx nx-cloud start-agent
+
+  trigger-release:
+    uses: ./.github/workflows/trigger-release.yml
+    secrets: inherit
+    needs: verify
+    if: ${{ success() && !contains(github.event.head_commit.message, 'chore(release):') && github.ref_name == 'main' }}
