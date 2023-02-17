@@ -23,7 +23,7 @@ env:
   CYPRESS_CACHE_FOLDER: 'cache/cypress'
 
 jobs:
-  verify:
+  verify-and-release:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
@@ -45,7 +45,13 @@ jobs:
 
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v3
-      - run: |
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
+
+      - name: print affected base and head info
+        run: |
           echo "BASE: ${{ env.NX_BASE }}"
           echo "HEAD: ${{ env.NX_HEAD }}"
 
@@ -54,7 +60,7 @@ jobs:
       - name: Run verification
         uses: JamesHenry/parallel-bash-commands@v1.0
         with:
-          cmd1: npx nx affected --target=build --parallel=1
+          cmd1: npx nx run-many --target=build --parallel=1
           cmd2: npx nx run-many --target=test --parallel=1 --code-coverage
           cmd3: npx nx affected --target=lint --parallel=4
           cmd4: npx -c \"nx affected --target=e2e --parallel=1 --configuration=ci -- --record=true\"
@@ -63,14 +69,32 @@ jobs:
       - name: Tag main branch if all jobs succeed
         if: ${{ github.ref_name == 'main' }}
         uses: nrwl/nx-tag-successful-ci-run@v1
+
       - name: Report Codecov
         if: github.ref_name == 'main' && hashFiles('coverage/**/*') != ''
-        uses: 'codecov/codecov-action@v3.1.1'
+        uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unittests
           fail_ci_if_error: true
           verbose: true
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: trigger release
+        if: ${{ !contains(github.event.head_commit.message , 'chore(release):') && github.ref_name == 'main' }}
+        run: |
+          git config --local user.email "github-actions[bot]@users.no-reply.github.com"
+          git config --local user.name "github-actions[bot]"
+          npx standard-version
+      - name: Push changes
+        if: ${{ !contains(github.event.head_commit.message , 'chore(release):') && github.ref_name == 'main' }}
+        uses: ad-m/github-push-action@master
+        with:
+          branch: ${{ github.ref }}
+          tags: true
+          github_token: ${{ secrets.PUSH_TOKEN }}
 
   warmup-caches-for-agents:
     name: Warmup npm caches for agents
@@ -126,45 +150,3 @@ jobs:
 
       - name: Start Nx Agent ${{ matrix.agent }}
         run: npx nx-cloud start-agent
-
-  code-ql:
-    # CodeQL runs on ubuntu-latest, windows-latest, and macos-latest
-    runs-on: ubuntu-latest
-    needs: verify
-    steps:
-      - uses: actions/checkout@v3
-        name: 'Checkout branch'
-        if: ${{ github.event_name != 'pull_request' }}
-        with:
-          fetch-depth: 0
-
-      - uses: actions/checkout@v3
-        name: 'Checkout [pr]'
-        if: ${{ github.event_name == 'pull_request' }}
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-      - name: Install Deps
-        uses: ./.github/actions/install-deps
-        with:
-          cypress: true
-          apt-packages: true
-          run-scripts: true
-
-      # Initializes the CodeQL tools for scanning.
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
-        with:
-          languages: javascript
-
-      - name: Build
-        run: npx nx run-many --target=build --all
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
-
-  trigger-release:
-    uses: ./.github/workflows/trigger-release.yml
-    secrets: inherit
-    needs: verify
-    if: ${{ success() && !contains(github.event.head_commit.message, 'chore(release):') && github.ref_name == 'main' }}
