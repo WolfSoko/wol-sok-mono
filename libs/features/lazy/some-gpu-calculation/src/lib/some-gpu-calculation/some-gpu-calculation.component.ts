@@ -44,6 +44,7 @@ interface Configuration {
 export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
   @ViewChild('gpuCanvasContainer')
   gpuCanvasWrapper!: ElementRef<HTMLDivElement>;
+  webglSupported = false;
 
   additionForm!: FormGroup<{
     r: FormControl<number>;
@@ -56,10 +57,9 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
 
   calculationTime$: Observable<number>;
   fps$: Observable<number>;
-
+  dimensionsOfCanvas: [width: number, height: number] = [500, SomeGpuCalculationComponent.calcHeightOfCanvas(500)];
   private gpuColorizer!: IKernelRunShortcut;
   private subscription?: Subscription;
-  dimensionsOfCanvas: [width: number, height: number] = [500, SomeGpuCalculationComponent.calcHeightOfCanvas(500)];
 
   constructor(private fb: FormBuilder, private gpu: GpuAdapterService, private readonly measureFps: MeasureFps) {
     this.createForm();
@@ -74,42 +74,52 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
   readonly formatSpeed = (value: number) => value + '%';
 
   async ngAfterViewInit(): Promise<void> {
-    await this.createGPUColorizer(this.additionForm.controls.useGPU.value);
-    const config$: Observable<Omit<Configuration, 'useGPU'>> = (
-      this.additionForm.valueChanges as Observable<Configuration>
-    ).pipe(
-      startWith(this.additionForm.value as Configuration),
-      map(({ r, g, b, repetition, speed }) => ({ r, g, b, repetition, speed })),
-      distinctUntilChangedDeepEqualObj(),
-      debounceTime(300)
-    );
+    try {
+      await this.createGPUColorizer(this.additionForm.controls.useGPU.value);
+      const config$: Observable<Omit<Configuration, 'useGPU'>> = (
+        this.additionForm.valueChanges as Observable<Configuration>
+      ).pipe(
+        startWith(this.additionForm.value as Configuration),
+        map(({ r, g, b, repetition, speed }) => ({ r, g, b, repetition, speed })),
+        distinctUntilChangedDeepEqualObj(),
+        debounceTime(300)
+      );
 
-    const gpuColorizerFrames$ = interval(Math.floor(1000 / 120), animationFrameScheduler).pipe(
-      timeInterval<number>(),
-      scan<TimeInterval<number>, number>((acc, value) => acc + value.interval, 0)
-    );
+      const gpuColorizerFrames$ = interval(Math.floor(1000 / 120), animationFrameScheduler).pipe(
+        timeInterval<number>(),
+        scan<TimeInterval<number>, number>((acc, value) => acc + value.interval, 0)
+      );
 
-    const calculateNextFrame$ = combineLatest([gpuColorizerFrames$, config$]).pipe(
-      map(([frameTime, { r, g, b, repetition, speed }]) => ({
-        frameTime,
-        r,
-        g,
-        b,
-        repetition,
-        speed,
-      }))
-    );
+      const calculateNextFrame$ = combineLatest([gpuColorizerFrames$, config$]).pipe(
+        map(([frameTime, { r, g, b, repetition, speed }]) => ({
+          frameTime,
+          r,
+          g,
+          b,
+          repetition,
+          speed,
+        }))
+      );
 
-    this.subscription = calculateNextFrame$.subscribe((config) => {
-      this.calculateNextFrame(config);
-    });
+      this.subscription = calculateNextFrame$.subscribe((config) => {
+        this.calculateNextFrame(config);
+      });
 
-    this.subscription.add(
-      this.additionForm
-        .get('useGPU')
-        ?.valueChanges.pipe(delay(0))
-        .subscribe(async (useGPU) => await this.createGPUColorizer(useGPU))
-    );
+      this.subscription.add(
+        this.additionForm
+          .get('useGPU')
+          ?.valueChanges.pipe(delay(0))
+          .subscribe(async (useGPU) => {
+            try {
+              await this.createGPUColorizer(useGPU);
+            } catch (e) {
+              console.warn(e);
+            }
+          })
+      );
+    } catch (e) {
+      console.warn(e);
+    }
   }
 
   ngOnDestroy(): void {
@@ -139,6 +149,20 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
     this.measureFps.signalFrameReady();
   }
 
+  async updateCanvasSize({ newWidth }: ResizedEvent) {
+    const canvas: HTMLCanvasElement | null = this.gpuCanvasWrapper.nativeElement.firstElementChild as HTMLCanvasElement;
+    if (!canvas) {
+      return;
+    }
+    const height: number = SomeGpuCalculationComponent.calcHeightOfCanvas(newWidth);
+    this.dimensionsOfCanvas = [newWidth, height];
+    try {
+      await this.createGPUColorizer(this.additionForm.controls.useGPU.value);
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
   private replaceCanvas(canvas: HTMLCanvasElement): void {
     this.gpuCanvasWrapper.nativeElement.replaceChildren(canvas);
   }
@@ -160,7 +184,9 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
     canvas.height = this.dimensionsOfCanvas[1];
     if (useGPU) {
       const gl = canvas.getContext('webgl2', { premultipliedAlpha: false });
+      this.webglSupported = true;
       if (!gl) {
+        this.webglSupported = false;
         throw new Error('WebGL is not supported');
       }
       await this.gpu.setUseGPU(useGPU, { canvas, context: gl });
@@ -199,15 +225,5 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
     this.gpuColorizer = this.gpu.createKernel(colorFn).setGraphical(true).setDynamicOutput(true);
 
     this.replaceCanvas(this.gpuColorizer.canvas);
-  }
-
-  async updateCanvasSize({ newWidth }: ResizedEvent) {
-    const canvas: HTMLCanvasElement | null = this.gpuCanvasWrapper.nativeElement.firstElementChild as HTMLCanvasElement;
-    if (!canvas) {
-      return;
-    }
-    const height: number = SomeGpuCalculationComponent.calcHeightOfCanvas(newWidth);
-    this.dimensionsOfCanvas = [newWidth, height];
-    await this.createGPUColorizer(this.additionForm.controls.useGPU.value);
   }
 }

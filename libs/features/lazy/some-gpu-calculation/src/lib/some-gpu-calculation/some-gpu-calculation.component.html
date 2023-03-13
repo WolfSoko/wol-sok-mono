@@ -1,4 +1,4 @@
-<mat-card appearance="raised" wsSharedUiElevateCard class="gpu-card">
+<mat-card appearance="raised" class="gpu-card" wsSharedUiElevateCard>
   <mat-card-header>
     <mat-card-title>An example utilizing gpu.js</mat-card-title>
     <mat-card-subtitle>
@@ -6,44 +6,45 @@
     </mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
-    <div class="canvas-with-fps">
+    <div class="canvas-with-fps" *ngIf="webglSupported; else webglError">
       <div
         #gpuCanvasContainer
-        class="canvas-container"
         (wsSharedUiElemResized)="updateCanvasSize($event)"
         [debounceTime]="500"
+        class="canvas-container"
       ></div>
-      <ws-shared-ui-show-fps class="fps" [fps]="(fps$ | async) ?? 0" [show]="true"></ws-shared-ui-show-fps>
+      <ws-shared-ui-show-fps [fps]="(fps$ | async) ?? 0" [show]="true" class="fps"></ws-shared-ui-show-fps>
     </div>
+
     <div>
       Calculation time with
       {{ additionForm.controls.useGPU.value ? 'GPU' : 'CPU' }} : {{ calculationTime$ | async }}ms
     </div>
-    <form class="gpu-form" [formGroup]="additionForm" novalidate>
+    <form [formGroup]="additionForm" class="gpu-form" novalidate>
       <div class="slider-grid">
         <span>Red</span>
-        <mat-slider class="red-color-slider" discrete min="0" max="255" color="warn"
-          ><input matSliderThumb formControlName="r" />
+        <mat-slider class="red-color-slider" color="warn" discrete max="255" min="0"
+          ><input formControlName="r" matSliderThumb />
         </mat-slider>
         <span class="value-of-slider mat-caption">{{ additionForm.controls.r.value }}</span>
         <span>Green</span>
-        <mat-slider class="green-color-slider" discrete min="0" max="255" color="warn"
-          ><input matSliderThumb formControlName="g" />
+        <mat-slider class="green-color-slider" color="warn" discrete max="255" min="0"
+          ><input formControlName="g" matSliderThumb />
         </mat-slider>
         <span class="value-of-slider mat-caption">{{ additionForm.controls.g.value }}</span>
         <span>Blue</span>
-        <mat-slider class="blue-color-slider" discrete min="0" max="255" color="warn"
-          ><input matSliderThumb formControlName="b" />
+        <mat-slider class="blue-color-slider" color="warn" discrete max="255" min="0"
+          ><input formControlName="b" matSliderThumb />
         </mat-slider>
         <span class="value-of-slider mat-caption">{{ additionForm.controls.b.value }}</span>
         <span>Repetition</span>
-        <mat-slider discrete min="1" max="30">
-          <input matSliderThumb formControlName="repetition" />
+        <mat-slider discrete max="30" min="1">
+          <input formControlName="repetition" matSliderThumb />
         </mat-slider>
         <span class="value-of-slider mat-caption">{{ additionForm.controls.repetition.value }}</span>
         <span>Speed</span>
-        <mat-slider discrete min="1" max="100" [displayWith]="formatSpeed"
-          ><input matSliderThumb formControlName="speed" />
+        <mat-slider [displayWith]="formatSpeed" discrete max="100" min="1"
+          ><input formControlName="speed" matSliderThumb />
         </mat-slider>
         <span class="value-of-slider mat-caption">{{ formatSpeed(additionForm.controls.speed.value) }} </span>
         <mat-slide-toggle class="use-gpu-toggle" formControlName="useGPU">
@@ -53,3 +54,6 @@
     </form>
   </mat-card-content>
 </mat-card>
+<ng-template #webglError>
+  <p>WebGl is not supported</p>
+</ng-template>
