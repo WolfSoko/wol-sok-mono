@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.14.68](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.67...v3.14.68) (2023-03-13)
+
+
+### Bug Fixes
+
+* catch webgl not supported error ([ac3d6fb](https://github.com/WolfSoko/wol-sok-mono/commit/ac3d6fb13ee8269d67dcf83f075fafe23be128b4))
+
 ### [3.14.67](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.66...v3.14.67) (2023-03-13)
 
 
