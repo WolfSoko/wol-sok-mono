@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.14.71](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.70...v3.14.71) (2023-03-13)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency @angular/cli to ~15.2.2 ([3f835a4](https://github.com/WolfSoko/wol-sok-mono/commit/3f835a407dc5b641342bf2ec3379fbf2c6c7e90a))
+
 ### [3.14.70](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.69...v3.14.70) (2023-03-13)
 
 
