@@ -74,7 +74,7 @@
     "@angular-eslint/eslint-plugin": "15.2.1",
     "@angular-eslint/eslint-plugin-template": "15.2.1",
     "@angular-eslint/template-parser": "15.2.1",
-    "@angular/cli": "~15.2.0",
+    "@angular/cli": "15.2.2",
     "@angular/compiler-cli": "15.2.2",
     "@angular/language-service": "15.2.2",
     "@commitlint/cli": "^17.4.4",
@@ -156,3 +156,4 @@
     "basePath": "./apps/angular-examples/src/app/"
   }
 }
+
