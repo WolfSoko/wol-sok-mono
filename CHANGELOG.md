@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.14.81](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.80...v3.14.81) (2023-03-18)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency mathjs to v11.7.0 ([039853c](https://github.com/WolfSoko/wol-sok-mono/commit/039853c0f5712071df1b57b21e1852897c38251e))
+
 ### [3.14.80](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.79...v3.14.80) (2023-03-18)
 
 ### [3.14.79](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.78...v3.14.79) (2023-03-18)
