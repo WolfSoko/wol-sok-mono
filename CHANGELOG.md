@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.14.143](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.142...v3.14.143) (2023-04-08)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency @nx-squeezer/workspace to v2.0.3 ([b2b3411](https://github.com/WolfSoko/wol-sok-mono/commit/b2b34117bea645e4de62ec2cf43dc618fd0f9d1e))
+
 ### [3.14.142](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.141...v3.14.142) (2023-04-07)
 
 ### [3.14.141](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.140...v3.14.141) (2023-04-07)
