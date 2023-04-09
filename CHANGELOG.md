@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.14.150](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.149...v3.14.150) (2023-04-09)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency @tensorflow/tfjs to v4.4.0 ([51aad03](https://github.com/WolfSoko/wol-sok-mono/commit/51aad03a8f27d8bc7574798fe6a6e83e0cb57482))
+
 ### [3.14.149](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.148...v3.14.149) (2023-04-09)
 
 ### [3.14.148](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.147...v3.14.148) (2023-04-08)
