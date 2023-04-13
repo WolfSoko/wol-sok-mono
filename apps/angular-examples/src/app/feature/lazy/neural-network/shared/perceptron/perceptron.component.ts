@@ -7,14 +7,15 @@ import {
   OnDestroy,
   ViewChild,
 } from '@angular/core';
-import { Perceptron } from '../perceptron';
 import * as P5 from 'p5';
+import { Perceptron } from '../perceptron';
 
 @Component({
   selector: 'app-perceptron',
   templateUrl: './perceptron.component.html',
   styleUrls: ['./perceptron.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
 })
 export class PerceptronComponent implements AfterContentInit, OnDestroy {
   @Input() perceptron!: Perceptron;
@@ -67,14 +68,6 @@ export class PerceptronComponent implements AfterContentInit, OnDestroy {
     p.pop();
   }
 
-  private perceptronCircleX() {
-    return this.canvasWidth / 2 + this.canvasWidth / 30;
-  }
-
-  private perceptronCircleSize() {
-    return this.canvasWidth / 6;
-  }
-
   drawBiasInput(p: P5) {
     p.push();
     p.translate(this.perceptronCircleX(), this.canvasHeight / 12);
@@ -122,5 +115,13 @@ export class PerceptronComponent implements AfterContentInit, OnDestroy {
         y + this.perceptronCircleSize() / 2
       );
     });
+  }
+
+  private perceptronCircleX() {
+    return this.canvasWidth / 2 + this.canvasWidth / 30;
+  }
+
+  private perceptronCircleSize() {
+    return this.canvasWidth / 6;
   }
 }

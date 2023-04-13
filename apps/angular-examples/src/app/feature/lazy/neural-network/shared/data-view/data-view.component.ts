@@ -12,11 +12,11 @@ import {
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
+import * as p5 from 'p5';
+import { BrainService } from '../brain.service';
 import { Perceptron } from '../perceptron';
 import { Point } from '../point';
 import { DataP5Sketch } from './data-p5-sketch';
-import { BrainService } from '../brain.service';
-import * as p5 from 'p5';
 
 interface ChangeInputs extends SimpleChanges {
   points: SimpleChange;
@@ -28,6 +28,7 @@ interface ChangeInputs extends SimpleChanges {
   templateUrl: './data-view.component.html',
   styleUrls: ['./data-view.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
 })
 export class DataViewComponent implements AfterViewInit, OnChanges, OnDestroy {
   @ViewChild('dataCanvas', { static: true }) dataCanvas!: ElementRef;

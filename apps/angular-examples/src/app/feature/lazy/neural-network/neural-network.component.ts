@@ -1,4 +1,8 @@
+import { NgFor } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -6,10 +10,10 @@ import { environment } from '../../../../environments/environment';
   templateUrl: './neural-network.component.html',
   styleUrls: ['./neural-network.component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [MatToolbarModule, MatTabsModule, NgFor, RouterLinkActive, RouterLink, RouterOutlet],
 })
 export class NeuralNetworkComponent {
-  private _navLinks: { path: string; label: string; hidden: boolean }[];
-
   constructor() {
     this._navLinks = [
       { path: 'perceptron', label: 'Perceptron', hidden: false },
@@ -20,6 +24,8 @@ export class NeuralNetworkComponent {
       },
     ];
   }
+
+  private _navLinks: { path: string; label: string; hidden: boolean }[];
 
   get navLinks() {
     return this._navLinks.filter((link) => !link.hidden);

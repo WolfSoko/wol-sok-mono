@@ -1,12 +1,29 @@
+import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { BrainService } from '../brain.service';
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Observable } from 'rxjs';
+import { ElevateCardDirective } from '@wolsok/ui-kit';
+import { BrainService } from '../brain.service';
 
 @Component({
   selector: 'app-brain-settings',
   templateUrl: './brain-settings.component.html',
   styleUrls: ['./brain-settings.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [
+    MatCardModule,
+    ElevateCardDirective,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTooltipModule,
+    FormsModule,
+    AsyncPipe,
+  ],
 })
 export class BrainSettingsComponent {
   @Input() perceptronLayers?: number[];

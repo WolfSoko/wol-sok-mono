@@ -1,12 +1,19 @@
+import { NgFor } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { Point } from '../shared/point';
+import { MatCardModule } from '@angular/material/card';
+import { BrainSettingsComponent } from '../shared/brain-settings/brain-settings.component';
 import { BrainService } from '../shared/brain.service';
+import { DataViewComponent } from '../shared/data-view/data-view.component';
+import { PerceptronComponent } from '../shared/perceptron/perceptron.component';
+import { Point } from '../shared/point';
 
 @Component({
   selector: 'app-multi-perceptron',
   templateUrl: './multi-perceptron.component.html',
   styleUrls: ['./multi-perceptron.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [MatCardModule, DataViewComponent, NgFor, PerceptronComponent, BrainSettingsComponent],
 })
 export class MultiPerceptronComponent implements OnInit {
   width = 300;
@@ -14,10 +21,6 @@ export class MultiPerceptronComponent implements OnInit {
   perceptronPerLayer = [2, 3, 1];
 
   constructor(private brainService: BrainService) {}
-
-  ngOnInit() {
-    this.brainService.createMultiPerceptron(2, this.perceptronPerLayer);
-  }
 
   get perceptron() {
     return this.brainService.perceptrons;
@@ -45,6 +48,10 @@ export class MultiPerceptronComponent implements OnInit {
 
   get points() {
     return this.brainService.points;
+  }
+
+  ngOnInit() {
+    this.brainService.createMultiPerceptron(2, this.perceptronPerLayer);
   }
 
   addPoint({ x, y, click }: { x: number; y: number; click: 'left' | 'right' }) {

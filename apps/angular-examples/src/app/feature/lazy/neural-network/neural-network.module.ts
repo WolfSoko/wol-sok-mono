@@ -10,8 +10,9 @@ import { DataViewComponent } from './shared/data-view/data-view.component';
 import { PerceptronComponent } from './shared/perceptron/perceptron.component';
 
 @NgModule({
-  imports: [SharedModule, NeuralNetworkRoutingModule],
-  declarations: [
+  imports: [
+    SharedModule,
+    NeuralNetworkRoutingModule,
     NeuralNetworkComponent,
     PerceptronComponent,
     DataViewComponent,
