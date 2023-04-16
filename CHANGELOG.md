@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.14.166](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.165...v3.14.166) (2023-04-16)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency core-js to v3.30.1 ([65ac887](https://github.com/WolfSoko/wol-sok-mono/commit/65ac887859d1672ba9bc7d377fd0cd45e33d0e3f))
+
 ### [3.14.165](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.164...v3.14.165) (2023-04-15)
 
 
