@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.14.171](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.170...v3.14.171) (2023-04-20)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update nrwl workspace ([71c48c9](https://github.com/WolfSoko/wol-sok-mono/commit/71c48c98499785af93e741e74b6df445092178f7))
+
 ### [3.14.170](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.169...v3.14.170) (2023-04-20)
 
 
