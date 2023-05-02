@@ -60,6 +60,8 @@ describe('WsThanosDirective', () => {
         }
       `,
     ],
+    standalone: true,
+    imports: [WsThanosDirective],
   })
   class HostComponent {
     showComplete = false;
@@ -86,14 +88,13 @@ describe('WsThanosDirective', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [WsThanosDirective],
+      imports: [WsThanosDirective, HostComponent],
       providers: [
         provideWsThanosOptions({
           maxParticleCount: 5000,
           animationLength: 2000,
         }),
       ],
-      declarations: [HostComponent],
     }).compileComponents();
   }));
 
