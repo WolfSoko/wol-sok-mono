@@ -93,7 +93,7 @@
     "@storybook/addon-essentials": "7.0.7",
     "@storybook/addon-mdx-gfm": "^7.0.7",
     "@storybook/angular": "7.0.7",
-    "@storybook/core-common": "^6.5.16",
+    "@storybook/core-common": "^7.0.7",
     "@storybook/core-server": "7.0.7",
     "@storybook/test-runner": "^0.10.0",
     "@types/chai": "4.3.5",
