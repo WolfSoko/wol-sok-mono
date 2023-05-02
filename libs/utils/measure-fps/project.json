@@ -5,7 +5,7 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:ng-packagr-lite",
+      "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["dist/libs/utils/measure-fps"],
       "options": {
         "project": "libs/utils/measure-fps/ng-package.json"
@@ -21,14 +21,14 @@
       "defaultConfiguration": "production"
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["libs/utils/measure-fps/**/*.ts"]
       }
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["coverage/libs/utils/measure-fps"],
       "options": {
         "jestConfig": "libs/utils/measure-fps/jest.config.ts",

@@ -6,7 +6,7 @@
   "prefix": "app",
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:webpack-browser",
+      "executor": "@nx/angular:webpack-browser",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/angular-examples",
@@ -95,7 +95,7 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "@nrwl/angular:module-federation-dev-server",
+      "executor": "@nx/angular:module-federation-dev-server",
       "configurations": {
         "production": {
           "browserTarget": "angular-examples:build:production"
@@ -110,7 +110,7 @@
       }
     },
     "serve-file": {
-      "executor": "@nrwl/web:file-server",
+      "executor": "@nx/web:file-server",
       "options": {
         "buildTarget": "angular-examples:build",
         "spa": true
@@ -132,13 +132,13 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "options": {
         "lintFilePatterns": ["apps/angular-examples/src/**/*.ts", "apps/angular-examples/src/**/*.html"]
       }
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["coverage/apps/angular-examples"],
       "options": {
         "jestConfig": "apps/angular-examples/jest.config.ts",

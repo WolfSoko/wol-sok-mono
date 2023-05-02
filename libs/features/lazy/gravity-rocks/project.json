@@ -6,7 +6,7 @@
   "prefix": "feat-lz-gravity",
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:ng-packagr-lite",
+      "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["dist/libs/features/lazy/gravity-rocks"],
       "options": {
         "project": "libs/features/lazy/gravity-rocks/ng-package.json"
@@ -22,7 +22,7 @@
       "defaultConfiguration": "production"
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["coverage/libs/features/lazy/gravity-rocks"],
       "options": {
         "jestConfig": "libs/features/lazy/gravity-rocks/jest.config.ts",
@@ -31,7 +31,7 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "options": {
         "lintFilePatterns": ["libs/features/lazy/gravity-rocks/**/*.ts", "libs/features/lazy/gravity-rocks/**/*.html"]
       }

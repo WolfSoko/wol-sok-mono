@@ -6,7 +6,7 @@
   "prefix": "sh-api-fib-wasm",
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:ng-packagr-lite",
+      "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["dist/libs/fib-wasm-api"],
       "options": {
         "project": "libs/fib-wasm-api/ng-package.json"
@@ -22,7 +22,7 @@
       "defaultConfiguration": "production"
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["coverage/libs/fib-wasm-api"],
       "options": {
         "jestConfig": "libs/fib-wasm-api/jest.config.ts",
@@ -31,7 +31,7 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "options": {
         "lintFilePatterns": ["libs/fib-wasm-api/src/**/*.ts", "libs/fib-wasm-api/src/**/*.html"]
       }

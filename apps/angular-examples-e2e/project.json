@@ -5,7 +5,7 @@
   "projectType": "application",
   "targets": {
     "e2e": {
-      "executor": "@nrwl/cypress:cypress",
+      "executor": "@nx/cypress:cypress",
       "outputs": ["test-reports/apps/angular-examples-e2e"],
       "options": {
         "cypressConfig": "apps/angular-examples-e2e/cypress.config.ts",
@@ -20,7 +20,7 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["apps/angular-examples-e2e/**/*.{js,ts}"]

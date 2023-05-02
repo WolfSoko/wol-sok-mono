@@ -6,7 +6,7 @@
   "prefix": "feat-lazy-bac-game",
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:ng-packagr-lite",
+      "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["dist/libs/features/lazy/bacteria-game"],
       "options": {
         "project": "libs/features/lazy/bacteria-game/ng-package.json"
@@ -22,7 +22,7 @@
       "defaultConfiguration": "production"
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["coverage/libs/features/lazy/bacteria-game"],
       "options": {
         "jestConfig": "libs/features/lazy/bacteria-game/jest.config.ts",
@@ -31,7 +31,7 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "options": {
         "lintFilePatterns": ["libs/features/lazy/bacteria-game/**/*.ts", "libs/features/lazy/bacteria-game/**/*.html"]
       }

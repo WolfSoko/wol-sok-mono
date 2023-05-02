@@ -6,7 +6,7 @@
   "prefix": "lazy-feat-wasm-test",
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:ng-packagr-lite",
+      "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["dist/libs/features/lazy/wasm-test"],
       "options": {
         "project": "libs/features/lazy/wasm-test/ng-package.json"
@@ -22,7 +22,7 @@
       "defaultConfiguration": "production"
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["coverage/libs/features/lazy/wasm-test"],
       "options": {
         "jestConfig": "libs/features/lazy/wasm-test/jest.config.ts",
@@ -31,7 +31,7 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "options": {
         "lintFilePatterns": ["libs/features/lazy/wasm-test/src/**/*.ts", "libs/features/lazy/wasm-test/src/**/*.html"]
       }

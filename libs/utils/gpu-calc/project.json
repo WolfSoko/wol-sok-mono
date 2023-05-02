@@ -6,7 +6,7 @@
   "prefix": "ws-utils-gpu-js",
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:ng-packagr-lite",
+      "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["dist/libs/utils/gpu-calc"],
       "options": {
         "project": "libs/utils/gpu-calc/ng-package.json"
@@ -22,7 +22,7 @@
       "defaultConfiguration": "production"
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["coverage/libs/utils/gpu-calc"],
       "options": {
         "jestConfig": "libs/utils/gpu-calc/jest.config.ts",
@@ -31,7 +31,7 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "options": {
         "lintFilePatterns": ["libs/utils/gpu-calc/**/*.ts", "libs/utils/gpu-calc/**/*.html"]
       }

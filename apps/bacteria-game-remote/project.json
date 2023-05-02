@@ -6,7 +6,7 @@
   "prefix": "wolsok",
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:webpack-browser",
+      "executor": "@nx/angular:webpack-browser",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/bacteria-game-remote",
@@ -68,7 +68,7 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "@nrwl/angular:webpack-dev-server",
+      "executor": "@nx/angular:webpack-dev-server",
       "configurations": {
         "production": {
           "browserTarget": "bacteria-game-remote:build:production"
@@ -90,13 +90,13 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "options": {
         "lintFilePatterns": ["apps/bacteria-game-remote/**/*.ts", "apps/bacteria-game-remote/**/*.html"]
       }
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["coverage/apps/bacteria-game-remote"],
       "options": {
         "jestConfig": "apps/bacteria-game-remote/jest.config.ts",
@@ -105,7 +105,7 @@
       }
     },
     "serve-static": {
-      "executor": "@nrwl/web:file-server",
+      "executor": "@nx/web:file-server",
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "bacteria-game-remote:build",

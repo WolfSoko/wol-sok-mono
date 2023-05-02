@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Data, Route, RouterModule } from '@angular/router';
-import { loadRemoteModule } from '@nrwl/angular/mf';
+import { loadRemoteModule } from '@nx/angular/mf';
 import { InfoComponent } from './feature/lazy/info/info.component';
 
 export interface MainNavRouteData extends Data {

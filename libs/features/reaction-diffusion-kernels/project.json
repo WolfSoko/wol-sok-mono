@@ -5,7 +5,7 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:ng-packagr-lite",
+      "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["dist/libs/features/reaction-diffusion-kernels"],
       "options": {
         "project": "libs/features/reaction-diffusion-kernels/ng-package.json"
@@ -21,7 +21,7 @@
       "defaultConfiguration": "production"
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["libs/features/reaction-diffusion-kernels/**/*.ts"]

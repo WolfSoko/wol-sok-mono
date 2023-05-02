@@ -1,4 +1,4 @@
-const { withModuleFederation } = require('@nrwl/angular/module-federation');
+const { withModuleFederation } = require('@nx/angular/module-federation');
 const moduleFederationConfig = require('./module-federation.config');
 const withVersionHandling = require('../../tools/version-handling/version-webpack.config');
 const { merge } = require('webpack-merge');

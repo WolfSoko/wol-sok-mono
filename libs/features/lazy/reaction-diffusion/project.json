@@ -6,7 +6,7 @@
   "prefix": "feat-lazy-react-diff",
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:ng-packagr-lite",
+      "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["dist/libs/features/lazy/reaction-diffusion"],
       "options": {
         "project": "libs/features/lazy/reaction-diffusion/ng-package.json"
@@ -22,7 +22,7 @@
       "defaultConfiguration": "production"
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["coverage/libs/features/lazy/reaction-diffusion"],
       "options": {
         "jestConfig": "libs/features/lazy/reaction-diffusion/jest.config.ts",
@@ -31,7 +31,7 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "options": {
         "lintFilePatterns": [
           "libs/features/lazy/reaction-diffusion/**/*.ts",

@@ -1,4 +1,4 @@
-import { setRemoteDefinitions } from '@nrwl/angular/mf';
+import { setRemoteDefinitions } from '@nx/angular/mf';
 import { environment } from './environments/environment';
 
 const mfFileName = `module-federation.manifest${environment.production ? '.prod' : ''}.json`;

@@ -1,5 +1,4 @@
 import type { StorybookConfig } from '@storybook/core-common';
-
 export const rootMain: StorybookConfig = {
   stories: [],
   addons: ['@storybook/addon-essentials'],
@@ -9,4 +8,13 @@ export const rootMain: StorybookConfig = {
   //   // Return the altered config
   //   return config;
   // },
+};
+
+export const framework = {
+  name: '@storybook/angular',
+  options: {},
+};
+export const addons = ['@storybook/addon-mdx-gfm'];
+export const docs = {
+  autodocs: true,
 };

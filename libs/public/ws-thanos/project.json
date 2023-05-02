@@ -6,7 +6,7 @@
   "prefix": "ws",
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:ng-packagr-lite",
+      "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["dist/libs/public/ws-thanos"],
       "options": {
         "project": "libs/public/ws-thanos/ng-package.json"
@@ -22,7 +22,7 @@
       "defaultConfiguration": "production"
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "options": {
         "lintFilePatterns": ["libs/public/ws-thanos/src/**/*.ts", "libs/public/ws-thanos/src/**/*.html"]
       }
