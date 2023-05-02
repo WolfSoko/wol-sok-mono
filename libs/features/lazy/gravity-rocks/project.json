@@ -65,6 +65,24 @@
           "quiet": true
         }
       }
+    },
+    "test-storybook": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "test-storybook -c libs/features/lazy/gravity-rocks/.storybook --url=http://localhost:4400"
+      }
+    },
+    "static-storybook": {
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "feat-lazy-gravity-rocks:build-storybook",
+        "staticFilePath": "dist/storybook/feat-lazy-gravity-rocks"
+      },
+      "configurations": {
+        "ci": {
+          "buildTarget": "feat-lazy-gravity-rocks:build-storybook:ci"
+        }
+      }
     }
   },
   "tags": ["feature:lazy"]

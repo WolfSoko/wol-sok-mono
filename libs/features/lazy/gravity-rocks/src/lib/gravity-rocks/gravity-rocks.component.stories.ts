@@ -1,5 +1,5 @@
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { Meta, moduleMetadata, Story } from '@storybook/angular';
+import { Meta, moduleMetadata, StoryFn } from '@storybook/angular';
 import { GravityRocksComponent } from './gravity-rocks.component';
 
 export default {
@@ -12,7 +12,7 @@ export default {
   ],
 } as Meta<GravityRocksComponent>;
 
-const Template: Story<GravityRocksComponent> = (args: GravityRocksComponent) => ({
+const Template: StoryFn<GravityRocksComponent> = (args: GravityRocksComponent) => ({
   props: args,
 });
 

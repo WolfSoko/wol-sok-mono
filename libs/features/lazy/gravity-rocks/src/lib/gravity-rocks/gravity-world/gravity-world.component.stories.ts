@@ -1,4 +1,4 @@
-import { Meta, moduleMetadata, Story } from '@storybook/angular';
+import { Meta, moduleMetadata, StoryFn } from '@storybook/angular';
 import { GravityWorldComponent } from './gravity-world.component';
 
 export default {
@@ -11,7 +11,7 @@ export default {
   ],
 } as Meta<GravityWorldComponent>;
 
-const Template: Story<GravityWorldComponent> = (args: GravityWorldComponent) => ({
+const Template: StoryFn<GravityWorldComponent> = (args: GravityWorldComponent) => ({
   props: args,
 });
 
