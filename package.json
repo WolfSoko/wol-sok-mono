@@ -38,8 +38,7 @@
     "@datorama/akita-ng-router-store": "8.0.0",
     "@datorama/akita-ngdevtools": "7.0.0",
     "@ngneat/until-destroy": "9.2.3",
-    "@sentry/angular": "7.50.0",
-    "@sentry/tracing": "7.50.0",
+    "@sentry/angular-ivy": "^7.50.0",
     "@tensorflow/tfjs": "4.4.0",
     "ace-builds": "1.18.0",
     "akita-ng-fire": "7.0.0",
@@ -156,4 +155,3 @@
     "basePath": "./apps/angular-examples/src/app/"
   }
 }
-

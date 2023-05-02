@@ -5,8 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Observable } from 'rxjs';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
+import { Observable } from 'rxjs';
 import { BrainService } from '../brain.service';
 
 @Component({

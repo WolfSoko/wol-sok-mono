@@ -1,8 +1,7 @@
 import { enableProdMode, ViewEncapsulation } from '@angular/core';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { enableAkitaProdMode } from '@datorama/akita';
-import * as Sentry from '@sentry/angular';
-import { BrowserTracing } from '@sentry/tracing';
+import * as Sentry from '@sentry/angular-ivy';
 import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 
@@ -25,7 +24,7 @@ Sentry.init({
 
   integrations: [
     new Sentry.Replay(),
-    new BrowserTracing({
+    new Sentry.BrowserTracing({
       tracePropagationTargets: ['https://angularexamples.wolsok.de/'],
       routingInstrumentation: Sentry.routingInstrumentation,
     }),
