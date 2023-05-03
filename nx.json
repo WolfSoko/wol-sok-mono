@@ -49,11 +49,12 @@
       "!{projectRoot}/.eslintrc.json",
       "!{projectRoot}/.storybook/**/*",
       "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)"
-    ]
+    ],
+    "globals": []
   },
   "targetDefaults": {
     "build": {
-      "inputs": ["production", "^production"],
+      "inputs": ["production", "globals", "^production", "^globals"],
       "dependsOn": ["^build"],
       "outputs": ["dist/{projectRoot}"]
     },
