@@ -38,9 +38,6 @@ jobs:
           echo "Sentry version: ${SENTRY_VERSION}"
           echo "sentry-version=${SENTRY_VERSION}" >> $GITHUB_ENV
 
-      - name: Integrate sentry release version into index.html
-        run: echo "TODO integrate ${{ env.sentry-version }} into index.html"
-
       - name: Build
         run: npx nx prepare-prod angular-examples
 

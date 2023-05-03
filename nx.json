@@ -12,16 +12,6 @@
       "analyzeSourceFiles": true
     }
   },
-  "implicitDependencies": {
-    "package.json": {
-      "dependencies": "*",
-      "devDependencies": "*"
-    },
-    "package-lock.json": "*",
-    "version.json": ["angular-examples"],
-    ".eslintrc.json": "*",
-    ".codecov.yml": "*"
-  },
   "tasksRunnerOptions": {
     "default": {
       "runner": "nx-cloud",
@@ -72,7 +62,14 @@
       "outputs": ["test-reports/{projectRoot}"]
     },
     "test": {
-      "inputs": ["default", "^production", "{workspaceRoot}/karma.conf.js"],
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/karma.conf.js",
+        "{workspaceRoot}/jest.preset.js",
+        "{workspaceRoot}/jest.config.ts",
+        "{workspaceRoot}/.codecov.yml"
+      ],
       "outputs": ["coverage/{projectRoot}"]
     },
     "prepare-prod": {
@@ -82,7 +79,7 @@
       "inputs": ["default", "{workspaceRoot}/.eslintrc.json"]
     },
     "build-storybook": {
-      "inputs": ["default", "^production", "{workspaceRoot}/.storybook/**/*", "!{projectRoot}/.storybook/**/*"]
+      "inputs": ["default", "^production", "!{projectRoot}/.storybook/**/*"]
     }
   }
 }
