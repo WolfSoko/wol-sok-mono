@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.14.196](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.195...v3.14.196) (2023-05-03)
+
+
+### Bug Fixes
+
+* webpack error due to version mismatch ([fb6bf2c](https://github.com/WolfSoko/wol-sok-mono/commit/fb6bf2c8d25fd9bb695f7cc96efa21632e31cfda))
+
 ### [3.14.195](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.194...v3.14.195) (2023-05-02)
 
 ### [3.14.194](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.193...v3.14.194) (2023-05-02)
