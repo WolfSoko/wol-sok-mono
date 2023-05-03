@@ -89,7 +89,7 @@
     "@nx/storybook": "16.0.1",
     "@nx/web": "16.0.1",
     "@nx/workspace": "16.0.1",
-    "@schematics/angular": "15.2.7",
+    "@schematics/angular": "16.0.0",
     "@storybook/addon-essentials": "7.0.7",
     "@storybook/addon-mdx-gfm": "^7.0.7",
     "@storybook/angular": "7.0.7",
