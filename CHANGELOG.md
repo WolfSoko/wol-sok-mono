@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.15.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.203...v3.15.0) (2023-05-05)
+
+
+### Features
+
+* migrate to angular 16 ([c61575e](https://github.com/WolfSoko/wol-sok-mono/commit/c61575e01534e19291c2f80c3312344edef177b1))
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update all non-major dependencies ([8ed268b](https://github.com/WolfSoko/wol-sok-mono/commit/8ed268b138e1ee3f0e684986fc8224741b1cb1eb))
+
 ### [3.14.203](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.202...v3.14.203) (2023-05-05)
 
 ### [3.14.202](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.201...v3.14.202) (2023-05-05)
