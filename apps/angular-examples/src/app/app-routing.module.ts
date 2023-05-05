@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Data, Route, RouterModule } from '@angular/router';
 import { loadRemoteModule } from '@nx/angular/mf';
+import { canMatchWithLoginIfNotAuthenticated } from '@wolsok/feat-api-auth';
 import { InfoComponent } from './feature/lazy/info/info.component';
 
 export interface MainNavRouteData extends Data {
@@ -31,6 +32,7 @@ export const APP_ROUTES: MainNavRoute[] = [
   {
     path: 'shaderExamples',
     loadChildren: () => import('@wolsok/feat-shader-examples').then((m) => m.ShaderExamplesModule),
+    canMatch: [canMatchWithLoginIfNotAuthenticated],
     data: {
       linkText: 'WebGL Shader examples with live code editor (three.js)',
     },

@@ -1,13 +1,13 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { IsAuthenticatedGuard } from '@wolsok/feat-api-auth';
+import { canActivateWithLoginIfNotAuthenticated, canMatchWithLoginIfNotAuthenticated } from '@wolsok/feat-api-auth';
 import { ShaderExamplesComponent } from './shader-examples.component';
 
 const shaderExamplesRoutingModule: Routes = [
   {
     path: '',
     component: ShaderExamplesComponent,
-    canActivate: [IsAuthenticatedGuard],
+    canActivate: [canActivateWithLoginIfNotAuthenticated],
   },
 ];
 

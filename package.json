@@ -4,7 +4,6 @@
   "license": "MIT",
   "scripts": {
     "ng": "nx",
-    "postinstall": "node ./decorate-angular-cli.js",
     "start": "nx serve",
     "start:prod": "cross-env NODE_OPTIONS=--max_old_space_size=12000 npm run start -- --configuration production --port=4300",
     "build": "nx build angular-examples",
@@ -38,7 +37,7 @@
     "@datorama/akita-ng-router-store": "8.0.0",
     "@datorama/akita-ngdevtools": "7.0.0",
     "@ngneat/until-destroy": "9.2.3",
-    "@sentry/angular-ivy": "^7.50.0",
+    "@sentry/angular-ivy": "^7.51.0",
     "@tensorflow/tfjs": "4.4.0",
     "ace-builds": "1.18.0",
     "akita-ng-fire": "7.0.0",
@@ -157,5 +156,35 @@
     "customFolderName": "true",
     "isAngular": true,
     "basePath": "./apps/angular-examples/src/app/"
+  },
+  "overrides": {
+    "@angular/fire": {
+      "@angular/common": "16.0.0",
+      "@angular/core": "16.0.0",
+      "@angular/platform-browser": "16.0.0",
+      "@angular/platform-browser-dynamic": "16.0.0"
+    },
+    "akita-ng-fire": {
+      "@angular/common": "16.0.0",
+      "@angular/core": "16.0.0",
+      "@angular/router": "16.0.0",
+      "@angular/platform-browser": "16.0.0",
+      "@angular/platform-browser-dynamic": "16.0.0"
+    },
+    "@datorama/akita": {
+      "tslib": "2.5.0"
+    },
+    "@nx-squeezer/workspace": {
+      "nx": "16.1.0"
+    },
+    "@storybook/angular": {
+      "typescript": "5.0.4"
+    },
+    "jest-preset-angular": {
+      "@angular-devkit/build-angular": "16.0.0",
+      "@angular/compiler-cli": "16.0.0",
+      "@angular/core": "16.0.0",
+      "@angular/platform-browser-dynamic": "16.0.0"
+    }
   }
 }
