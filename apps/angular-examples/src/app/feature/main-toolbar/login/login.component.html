@@ -1,23 +1,20 @@
-<ng-container *ngIf="user$ | async as user">
-  <div *ngIf="user; then showLoggedIn; else showLogin"></div>
-  <ng-template #showLoggedIn>
-    <div class="logged-in">
-      <div
-        class="profile-img mat-elevation-z6"
-        [style.backgroundImage]="'url(' + user.photoURL + ')'"
-        matTooltip="Welcome {{ user.displayName }}"
-      ></div>
-      <button mat-mini-fab class="mat-elevation-z6" color="warn" (click)="logout()" matTooltip="Logout">
-        <mat-icon>logout</mat-icon>
-      </button>
-    </div>
-  </ng-template>
-  <ng-template #showLogin>
-    <div class="log-in">
-      <div class="please-log-in mat-caption caption">Please login.</div>
-      <button mat-mini-fab color="accent" (click)="login()">
-        <mat-icon>input</mat-icon>
-      </button>
-    </div>
-  </ng-template>
-</ng-container>
+<div *ngIf="user() as profile; else showLogin">
+  <div class="logged-in">
+    <div
+      class="profile-img mat-elevation-z6"
+      [style.backgroundImage]="'url(' + profile.photoURL + ')'"
+      matTooltip="Welcome {{ profile.displayName }}"
+    ></div>
+    <button mat-mini-fab class="mat-elevation-z6" color="warn" (click)="logout()" matTooltip="Logout">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </div>
+</div>
+<ng-template #showLogin>
+  <div class="log-in">
+    <div class="please-log-in mat-caption caption">Please login.</div>
+    <button mat-mini-fab color="accent" (click)="login()">
+      <mat-icon>input</mat-icon>
+    </button>
+  </div>
+</ng-template>

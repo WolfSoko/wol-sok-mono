@@ -1,6 +1,10 @@
 :host {
   transition: color 250ms ease;
 
+  a.app-nav-item {
+    text-decoration: none;
+  }
+
   .active {
     .arrow-icon,
     .link-text,

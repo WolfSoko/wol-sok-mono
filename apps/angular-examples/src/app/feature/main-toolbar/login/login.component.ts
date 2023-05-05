@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -8,7 +9,6 @@ import { AuthenticationService, AuthQuery, Profile } from '@wolsok/feat-api-auth
 import { Observable } from 'rxjs';
 import { startWith } from 'rxjs/operators';
 
-@UntilDestroy()
 @Component({
   standalone: true,
   imports: [CommonModule, MatButtonModule, MatTooltipModule, MatIconModule],
@@ -18,10 +18,10 @@ import { startWith } from 'rxjs/operators';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
-  user$: Observable<Profile | null>;
+  user: Signal<Profile | undefined>;
 
   constructor(private authQuery: AuthQuery, private authService: AuthenticationService) {
-    this.user$ = this.authQuery.profile$.pipe(startWith(null), untilDestroyed(this));
+    this.user = toSignal(this.authQuery.profile$);
   }
 
   async login(): Promise<unknown> {

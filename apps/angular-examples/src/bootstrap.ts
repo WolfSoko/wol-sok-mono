@@ -1,8 +1,11 @@
-import { enableProdMode, ViewEncapsulation } from '@angular/core';
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { enableProdMode } from '@angular/core';
+import { bootstrapApplication } from '@angular/platform-browser';
 import { enableAkitaProdMode } from '@datorama/akita';
 import * as Sentry from '@sentry/angular-ivy';
-import { AppModule } from './app/app.module';
+import { provideWsThanosOptions } from '@wolsok/thanos';
+import { provideAppRouter } from './app/app-routing';
+import { AppComponent } from './app/app.component';
+import { provideCore } from './app/core/core.module';
 import { environment } from './environments/environment';
 
 if (environment.production) {
@@ -36,12 +39,25 @@ Sentry.init({
   tracesSampleRate: 1.0,
 });
 
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideAppRouter(),
+    provideCore(),
+    [
+      provideWsThanosOptions({
+        maxParticleCount: 50000,
+        animationLength: 5000,
+      }),
+    ],
+  ],
+}).catch((err) => console.error(err));
+
 // persistState({exclude: ['performance-test', 'wasm-test', 'input-wave', 'game-state', 'bacteria-player']});
-platformBrowserDynamic()
-  .bootstrapModule(AppModule, {
-    defaultEncapsulation: ViewEncapsulation.Emulated,
-  })
-  .catch((err) => console.error(err));
+// platformBrowserDynamic()
+//   .bootstrapModule(AppModule, {
+//     defaultEncapsulation: ViewEncapsulation.Emulated,
+//   })
+//   .catch((err) => console.error(err));
 
 // platformBrowserDynamic().bootstrapModule(AppModule).then(moduleRef => {
 //   const applicationRef = moduleRef.injector.get(ApplicationRef);

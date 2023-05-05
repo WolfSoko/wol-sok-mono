@@ -15,7 +15,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { LetDirective } from '@wolsok/ui-kit';
 import { BehaviorSubject, combineLatest, distinctUntilChanged, map, Observable, tap } from 'rxjs';
-import { MainNavRoute } from '../../../app-routing.module';
+import { MainNavRoute } from '../../../app-routing';
 import { ROUTER_LINKS } from '../../../router-links.token';
 import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
 

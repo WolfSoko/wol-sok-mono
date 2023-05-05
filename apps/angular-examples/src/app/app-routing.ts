@@ -1,5 +1,4 @@
-import { NgModule } from '@angular/core';
-import { Data, Route, RouterModule } from '@angular/router';
+import { Data, provideRouter, Route, Routes, withComponentInputBinding, withRouterConfig } from '@angular/router';
 import { loadRemoteModule } from '@nx/angular/mf';
 import { canMatchWithLoginIfNotAuthenticated } from '@wolsok/feat-api-auth';
 import { InfoComponent } from './feature/lazy/info/info.component';
@@ -14,8 +13,15 @@ export interface MainNavRoute extends Route {
   path: string;
 }
 
-export const APP_ROUTES: MainNavRoute[] = [
-  { path: 'home', component: InfoComponent, data: { linkText: 'Home' } },
+export type MainNavRoutes = MainNavRoute[];
+
+export const APP_ROUTES: MainNavRoutes = [
+  {
+    // here we can have a vaporizeDemo query param to show a demo of the vaporize effect
+    path: 'home',
+    component: InfoComponent,
+    data: { linkText: 'Home' },
+  },
   {
     path: 'fourierAnalysis',
     loadChildren: () => loadRemoteModule('fourier-analysis-remote', './Module').then((m) => m.RemoteEntryModule),
@@ -85,14 +91,11 @@ export const APP_ROUTES: MainNavRoute[] = [
   },
 ];
 
-export const DEFAULT_APP_ROUTE = { path: '**', redirectTo: '/home' };
+const DEFAULT_APP_ROUTE = { path: '**', redirectTo: '/home' };
 
-@NgModule({
-  imports: [
-    RouterModule.forRoot([...APP_ROUTES, DEFAULT_APP_ROUTE], {
-      paramsInheritanceStrategy: 'always',
-    }),
-  ],
-  exports: [RouterModule],
-})
-export class AppRoutingModule {}
+export const provideAppRouter = () =>
+  provideRouter(
+    [...APP_ROUTES, DEFAULT_APP_ROUTE],
+    withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+    withComponentInputBinding()
+  );
