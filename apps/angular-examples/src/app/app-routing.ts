@@ -1,4 +1,14 @@
-import { Data, provideRouter, Route, Routes, withComponentInputBinding, withRouterConfig } from '@angular/router';
+import {
+  Data,
+  provideRouter,
+  Route,
+  Routes,
+  withComponentInputBinding,
+  withDisabledInitialNavigation,
+  withEnabledBlockingInitialNavigation,
+  withInMemoryScrolling,
+  withRouterConfig,
+} from '@angular/router';
 import { loadRemoteModule } from '@nx/angular/mf';
 import { canMatchWithLoginIfNotAuthenticated } from '@wolsok/feat-api-auth';
 import { InfoComponent } from './feature/lazy/info/info.component';
@@ -17,7 +27,7 @@ export type MainNavRoutes = MainNavRoute[];
 
 export const APP_ROUTES: MainNavRoutes = [
   {
-    // here we can have a vaporizeDemo query param to show a demo of the vaporize effect
+    // here we can have a thanosDemo query param to show a demo of the vaporize effect
     path: 'home',
     component: InfoComponent,
     data: { linkText: 'Home' },
@@ -97,5 +107,10 @@ export const provideAppRouter = () =>
   provideRouter(
     [...APP_ROUTES, DEFAULT_APP_ROUTE],
     withRouterConfig({ paramsInheritanceStrategy: 'always' }),
-    withComponentInputBinding()
+    withComponentInputBinding(),
+    withEnabledBlockingInitialNavigation(),
+    withInMemoryScrolling({
+      scrollPositionRestoration: 'enabled',
+      anchorScrolling: 'enabled',
+    })
   );

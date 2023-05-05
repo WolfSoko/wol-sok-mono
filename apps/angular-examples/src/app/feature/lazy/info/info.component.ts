@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { RouterModule } from '@angular/router';
 import { AboutComponent } from './about/about.component';
@@ -15,7 +15,7 @@ import { TechnologyComponent } from './technology/technology.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InfoComponent {
-  @Input() vaporizeDemo = false;
+  @Input() thanosDemo = false;
 
   public technologies = [
     new Technology('Angular+', 'http://angular.io/', 'assets/logos/angular.svg'),

@@ -4,7 +4,7 @@ An angular directive that vaporizes your DOM Elements like Thanos snaps his fing
 
 #### Live Demo:
 
-Click the technology cards on https://angularexamples.wolsok.de
+Click the technology cards on https://angularexamples.wolsok.de/home?thanosDemo=true
 
 ## Usage
 
