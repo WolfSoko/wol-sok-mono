@@ -16,7 +16,7 @@ export class ReactionDiffCalcServiceFactory {
     private colorMapper: ColorMapperService
   ) {}
 
-  public createCalcService(width: number, height: number, useGpuJs: boolean = true) {
+  public createCalcService(width: number, height: number, useGpuJs = true) {
     if (useGpuJs) {
       this.lastCalcService = new ReactionDiffGpuCalcService(
         width,

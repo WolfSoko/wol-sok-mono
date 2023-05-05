@@ -24,8 +24,8 @@ export function createInputWave(params: Partial<InputWave>) {
 
 export function createFrequencyPoints(
   frequencies: number[] = [220], // 220 Hz = "A" note
-  lengthMs: number = 1000,
-  samplesPerSec: number = 3000
+  lengthMs = 1000,
+  samplesPerSec = 3000
 ): Array<number> {
   function* gen(): IterableIterator<number> {
     let step = 0;

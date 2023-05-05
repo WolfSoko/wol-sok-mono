@@ -190,14 +190,14 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
     }
   }
 
-  render(time: number = 1) {
+  render(time = 1) {
     if (this.uniforms && this.scene && this.camera) {
       this.uniforms.time.value = time / 1000;
       this.renderer?.render(this.scene, this.camera);
     }
   }
 
-  animate(time: number = 1.0) {
+  animate(time = 1.0) {
     try {
       this.ngZone.runOutsideAngular(() => {
         if (this.runAnimation) {

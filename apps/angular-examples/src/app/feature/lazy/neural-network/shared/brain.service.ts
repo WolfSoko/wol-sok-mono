@@ -43,12 +43,12 @@ export class BrainService {
     this._learnRate = learnRate;
   }
 
-  createPerceptron(inputDimensions: number = 2): Perceptron {
+  createPerceptron(inputDimensions = 2): Perceptron {
     this.createMultiPerceptron(inputDimensions, [1]);
     return this.perceptrons[0][0];
   }
 
-  createMultiPerceptron(inputDimensions: number = 2, amountPerceptronsPerLayer: number[] = [3, 1]): Perceptron[][] {
+  createMultiPerceptron(inputDimensions = 2, amountPerceptronsPerLayer: number[] = [3, 1]): Perceptron[][] {
     this.learnedDataPoints = 0;
     this.learnRate = defaultLearnRate;
     this.isSinglePerceptron = amountPerceptronsPerLayer.length === 1;
@@ -62,7 +62,7 @@ export class BrainService {
     return this.perceptrons;
   }
 
-  train(randomDataPointsToTest: number = 10) {
+  train(randomDataPointsToTest = 10) {
     if (this.points.length === 0) {
       return;
     }

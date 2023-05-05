@@ -97,7 +97,7 @@ export class PlayerService {
   }
 
   @transaction()
-  init(playersData: { x: number; y: number; color: PlayerColorArray }[], radius: number = 30) {
+  init(playersData: { x: number; y: number; color: PlayerColorArray }[], radius = 30) {
     this.playerStore.remove();
     playersData.forEach((playerData, index) =>
       this.add(createPlayerWithBacterias(index, playerData.x, playerData.y, playerData.color, radius))

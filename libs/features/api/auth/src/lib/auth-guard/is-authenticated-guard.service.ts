@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, CanLoad } from '@angular/router';
+
 import { from, Observable, of } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
 import { AuthQuery } from '../akita-fire-auth';
@@ -8,7 +8,7 @@ import { AuthenticationService } from '../authentication.service';
 @Injectable({
   providedIn: 'root',
 })
-export class IsAuthenticatedGuard implements CanActivate, CanLoad {
+export class IsAuthenticatedGuard {
   constructor(private authQuery: AuthQuery, private authService: AuthenticationService) {}
 
   canActivate(): Observable<boolean> | Promise<boolean> | boolean {

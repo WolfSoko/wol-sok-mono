@@ -34,7 +34,7 @@ export class GpuAdapterService {
       IKernelRunShortcutBase<KernelReturnType>;
   }
 
-  async setUseGPU(useGPU: boolean = true, settings?: Partial<IGPUSettings>): Promise<GpuAdapterService> {
+  async setUseGPU(useGPU = true, settings?: Partial<IGPUSettings>): Promise<GpuAdapterService> {
     await this.delegateGPU?.destroy();
     this.delegateGPU = new GPU({ mode: useGPU ? 'gpu' : 'cpu', ...settings });
     return this;
