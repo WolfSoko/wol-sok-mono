@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.16.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.15.0...v3.16.0) (2023-05-05)
+
+
+### Features
+
+* add thanosDemo mode ([f1f0382](https://github.com/WolfSoko/wol-sok-mono/commit/f1f0382d4aa06ae347ad615375bf275a0682574a))
+* use standalone bootstrap ([cb8aef5](https://github.com/WolfSoko/wol-sok-mono/commit/cb8aef5cc7e29a8642fa731b3ab77d9ac5e21085))
+
 ## [3.15.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.203...v3.15.0) (2023-05-05)
 
 
