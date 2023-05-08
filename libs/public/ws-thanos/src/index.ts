@@ -7,3 +7,4 @@ export * from './lib/ws-thanos-options.token';
 export * from './lib/ws-thanos.options';
 export * from './lib/create-ws-thanos-options';
 export * from './lib/simplex-noise';
+export { AnimationState } from './lib/animation.state';

@@ -1,13 +1,14 @@
 import { Component, QueryList, ViewChildren } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { combineLatest, EMPTY, firstValueFrom, lastValueFrom, of } from 'rxjs';
+import { combineLatest, firstValueFrom, of, take } from 'rxjs';
 import image from '../assets/how-to-be-funny.png';
+import { AnimationState } from './animation.state';
 import { provideWsThanosOptions } from './ws-thanos-options.token';
 import { WsThanosDirective } from './ws-thanos.directive';
 import { WsThanosService } from './ws-thanos.service';
 
-describe('WsThanosDirective', () => {
+describe('Integration Test: WsThanosDirective', () => {
   @Component({
     template: `
       <div class="thanos-test-container" wsThanos (wsThanosComplete)="completed()">
@@ -64,7 +65,6 @@ describe('WsThanosDirective', () => {
     imports: [WsThanosDirective],
   })
   class HostComponent {
-    showComplete = false;
     wsThanosDirective!: WsThanosDirective;
 
     @ViewChildren(WsThanosDirective)
@@ -73,8 +73,7 @@ describe('WsThanosDirective', () => {
     }
 
     startThanos() {
-      this.showComplete = false;
-      return this.wsThanosDirective.vaporize();
+      return this.wsThanosDirective.vaporize().subscribe();
     }
 
     completed() {
@@ -102,43 +101,59 @@ describe('WsThanosDirective', () => {
     hostFixture = TestBed.createComponent(HostComponent);
     hostComp = hostFixture.componentInstance;
     hostFixture.detectChanges();
-    directive = hostFixture.debugElement.query(By.directive(WsThanosDirective)).componentInstance;
+    directive = hostComp.wsThanosDirective;
   });
 
   it('should create', () => {
     expect(directive).toBeTruthy();
   });
 
-  describe('vaporize()', () => {
-    let thanosService: WsThanosService;
-
-    it('should call thanosService.vaporize', () => {
-      givenThanosServiceVaporizeIsMocked();
+  describe('vaporizeAndScrollIntoView$()', () => {
+    it('should call thanosService.vaporizeAndScrollIntoView', () => {
+      givenStubbedThanosService_VaporizeReturns();
       whenVaporizeIsCalled();
       thenThanosServiceVaporizeWasCalled();
     });
 
-    it('should emit when vaporize is complete', (done) => {
-      combineLatest([hostComp.wsThanosDirective.wsThanosComplete, hostComp.startThanos()]).subscribe(() => {
-        done();
+    it('should emit animationState', (done) => {
+      const animationState: AnimationState = {
+        animationT: 0,
+        deltaTSec: 0,
+        maxHeight: 0,
+        maxWidth: 0,
+      };
+      givenStubbedThanosService_VaporizeReturns(of(animationState));
+      directive.vaporize$(false).subscribe({
+        next: (result) => {
+          expect(result).toEqual(animationState);
+          done();
+        },
       });
     });
 
-    it('should vaporize and then complete the observable', (done) => {
-      lastValueFrom(hostComp.startThanos()).then(done);
-    });
-
-    function givenThanosServiceVaporizeIsMocked(): void {
-      thanosService = TestBed.inject(WsThanosService);
-      spyOn(thanosService, 'vaporize').and.returnValue(of({} as any));
-    }
-
-    function thenThanosServiceVaporizeWasCalled() {
-      expect(thanosService.vaporize).toHaveBeenCalled();
-    }
-
-    function whenVaporizeIsCalled(): Promise<void> {
-      return firstValueFrom(hostComp.startThanos());
-    }
+    it('should emit complete when vaporizeAndScrollIntoView is complete', (done) => {
+      combineLatest([firstValueFrom(directive.wsThanosComplete), directive.vaporize$()]).subscribe({
+        complete: done,
+      });
+    }, 10000);
   });
+
+  function givenStubbedThanosService_VaporizeReturns(
+    vaporizeReturns: ReturnType<WsThanosService['vaporize']> = of({} as AnimationState)
+  ): void {
+    const thanosService = getWsThanosService();
+    spyOn(thanosService, 'vaporize').and.returnValue(vaporizeReturns);
+  }
+
+  function getWsThanosService(): WsThanosService {
+    return TestBed.inject(WsThanosService);
+  }
+
+  function thenThanosServiceVaporizeWasCalled() {
+    expect(getWsThanosService().vaporize).toHaveBeenCalled();
+  }
+
+  function whenVaporizeIsCalled(): void {
+    directive.vaporize$(false).subscribe();
+  }
 });

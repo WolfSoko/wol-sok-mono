@@ -1,14 +1,37 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ElementRef, Input, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  Inject,
+  Input,
+  QueryList,
+  signal,
+  ViewChildren,
+} from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
+import { from, Subject } from 'rxjs';
+import { concatMap, takeUntil } from 'rxjs/operators';
 import { AboutComponent } from './about/about.component';
 import { Technology } from './technology';
 import { TechnologyComponent } from './technology/technology.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, RouterModule, AboutComponent, MatCardModule, TechnologyComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    AboutComponent,
+    MatCardModule,
+    TechnologyComponent,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
+  ],
   selector: 'app-info',
   templateUrl: './info.component.html',
   styleUrls: ['./info.component.css'],
@@ -16,6 +39,16 @@ import { TechnologyComponent } from './technology/technology.component';
 })
 export class InfoComponent {
   @Input() thanosDemo = false;
+  @ViewChildren(TechnologyComponent) techCards!: QueryList<TechnologyComponent>;
+  demoRunning = signal(false);
+  private stopSub = new Subject<void>();
+
+  constructor(@Inject(DestroyRef) private destroy$: DestroyRef) {
+    destroy$.onDestroy(() => {
+      this.stopSub.next();
+      this.stopSub.complete();
+    });
+  }
 
   public technologies = [
     new Technology('Angular+', 'http://angular.io/', 'assets/logos/angular.svg'),
@@ -28,4 +61,27 @@ export class InfoComponent {
     new Technology('tensorflow.js', 'https://js.tensorflow.org', 'assets/logos/tensorflow-js.png'),
     new Technology('firebase', 'https://firebase.google.com/', 'assets/logos/firebase.png'),
   ];
+
+  startDemo(): void {
+    this.demoRunning.set(true);
+    from(this.techCards.toArray())
+      .pipe(
+        concatMap((techCard) => techCard.vaporizeAndScrollIntoView(false).pipe(takeUntil(this.stopSub.asObservable()))),
+        takeUntil(this.stopSub.asObservable())
+      )
+      .subscribe({ complete: () => this.demoRunning.set(false) });
+  }
+
+  stopDemo(): void {
+    this.stopSub.next();
+    this.demoRunning.set(false);
+  }
+
+  toggleDemo(): void {
+    if (!this.demoRunning()) {
+      this.startDemo();
+    } else {
+      this.stopDemo();
+    }
+  }
 }

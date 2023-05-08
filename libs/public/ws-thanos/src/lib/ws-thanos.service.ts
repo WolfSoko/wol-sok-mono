@@ -3,6 +3,7 @@ import { Inject, Injectable, NgZone } from '@angular/core';
 import { default as html2canvas } from 'html2canvas';
 import {
   animationFrameScheduler,
+  finalize,
   from,
   interval,
   map,
@@ -12,6 +13,7 @@ import {
   tap,
   timeInterval,
 } from 'rxjs';
+import { AnimationState } from './animation.state';
 import { SimplexNoise } from './simplex-noise';
 import { WS_THANOS_OPTIONS_TOKEN } from './ws-thanos-options.token';
 import type { WsThanosOptions } from './ws-thanos.options';
@@ -26,13 +28,6 @@ interface ParticlesData {
   particles: Float32Array;
   maxParticleX: number;
   minParticleY: number;
-}
-
-interface AnimationState {
-  deltaTSec: number;
-  animationT: number;
-  maxWidth: number;
-  maxHeight: number;
 }
 
 interface UpdateParticleParams {
@@ -275,7 +270,7 @@ export class WsThanosService {
   }
 
   /**
-   * start the vaporize-effect.
+   * start the vaporizeAndScrollIntoView-effect.
    *
    * It's running outside the ngZone.
    */
@@ -351,11 +346,7 @@ export class WsThanosService {
             }
           }),
           takeWhile((animationState) => animationState.animationT <= 1),
-          tap({
-            complete: () => {
-              return resultCanvas.remove();
-            },
-          })
+          finalize(() => resultCanvas.remove())
         );
       })
     );

@@ -67,12 +67,12 @@ directly in html via template ref:
   (wsThanosComplete)=onComplete()>
   This div will be vaporized on click
   </div>
-<button (click)="thanos.vaporize(removeElement)">
+<button (click)="thanos.vaporizeAndScrollIntoView(removeElement)">
 ```
 
 ### `WsThanosService` usage
 
-Inject the 'WsThanosService' into your class. Call 'vaporize()' and subscribe to it.
+Inject the 'WsThanosService' into your class. Call 'vaporizeAndScrollIntoView(removeElement)' and subscribe to it.
 
 ## Collaboration
 

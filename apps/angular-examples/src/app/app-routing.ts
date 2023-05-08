@@ -27,7 +27,7 @@ export type MainNavRoutes = MainNavRoute[];
 
 export const APP_ROUTES: MainNavRoutes = [
   {
-    // here we can have a thanosDemo query param to show a demo of the vaporize effect
+    // here we can have a thanosDemo query param to show a demo of the vaporizeAndScrollIntoView effect
     path: 'home',
     component: InfoComponent,
     data: { linkText: 'Home' },
