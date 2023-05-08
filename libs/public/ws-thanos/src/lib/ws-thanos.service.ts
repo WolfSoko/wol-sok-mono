@@ -282,7 +282,7 @@ export class WsThanosService {
     elem.style.opacity = elem.style.opacity || '1';
     elem.style.transition = `opacity ${Math.floor(this.thanosOptions.animationLength * 0.8)}ms ease-out`;
     const noise = new SimplexNoise({ frequency: 0.01, min: 0 });
-    const seed = new Date().getDate() * Math.random();
+    const seed = new Date().getTime() * Math.random();
     const html2CanvasPromise: Promise<HTMLCanvasElement> = html2canvas(elem, {
       backgroundColor: null,
       scale: 1,
