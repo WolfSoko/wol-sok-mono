@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.16.3](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.2...v3.16.3) (2023-05-08)
+
+
+### Bug Fixes
+
+* **ws-thanos:** complete observable ([f08733e](https://github.com/WolfSoko/wol-sok-mono/commit/f08733e5221f0fea05bbddc0761b57a3ee2ebb9c))
+* **ws-thanos:** complete observable ([eb30aed](https://github.com/WolfSoko/wol-sok-mono/commit/eb30aed14bf8ce7fba1ecb4e0f8e91e12b10d723))
+
 ### [3.16.2](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.1...v3.16.2) (2023-05-08)
 
 ### [3.16.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.0...v3.16.1) (2023-05-08)
