@@ -12,7 +12,7 @@ module.exports = function (config) {
       ...baseConfig.coverageReporter,
       dir: join(__dirname, '../../../coverage/libs/public/ws-thanos'),
     },
-    browsers: ['Chrome, ChromeHeadlessCI'],
+    browsers: ['ChromeHeadlessCI'],
     customLaunchers: {
       ChromeHeadlessCI: {
         base: 'ChromeHeadless',
