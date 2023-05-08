@@ -1,12 +1,14 @@
 <div wsThanos #thanos="thanos" class="thanos-container">
   <mat-card appearance="raised" (click)="thanos.vaporize(false)" class="technologyCard" wsSharedUiElevateCard>
     <mat-card-header>
-      <mat-card-title>
-        <a mat-button target="_blank" [href]="link">{{ title }}</a>
-      </mat-card-title>
+      <mat-card-title-group class="title-group">
+        <mat-card-title>
+          <a mat-button target="_blank" [href]="link">{{ title }}</a>
+        </mat-card-title>
+        <div class="tech-image" matCardImageXLarge>
+          <img [fill]="true" priority="false" [ngSrc]="image" alt="logo of {{ title }}" src="" />
+        </div>
+      </mat-card-title-group>
     </mat-card-header>
-    <div mat-card-image class="tech-image">
-      <img [fill]="true" priority="false" [ngSrc]="image" alt="logo of {{ title }}" src="" />
-    </div>
   </mat-card>
 </div>

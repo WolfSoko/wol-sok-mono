@@ -5,14 +5,24 @@
     height: 100%;
   }
 
+  .title-group {
+    flex-direction: column;
+    align-items: center;
+  }
+
   .technologyCard {
     cursor: pointer;
     padding-bottom: 1.5rem;
 
     .tech-image {
-      width: 300px;
-      height: 160px;
+      // this is needed for the position:absolute that is set by the the ngOptimizeImg directive
+      position: relative;
+      max-height: 160px;
       padding: 0.5rem;
+      img {
+        object-fit: scale-down;
+        padding: 0.5rem;
+      }
     }
   }
 }
