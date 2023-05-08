@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.16.4](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.3...v3.16.4) (2023-05-08)
+
+
+### Bug Fixes
+
+* **ws-thanos:** use better seed ([7e40f67](https://github.com/WolfSoko/wol-sok-mono/commit/7e40f67248945eb3ee150b1066519f63b9c880e4))
+
 ### [3.16.3](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.2...v3.16.3) (2023-05-08)
 
 
