@@ -1,6 +1,6 @@
 {
   "name": "@wolsok/thanos",
-  "version": "16.0.0",
+  "version": "16.0.1",
   "description": "Wolf Soko's implementation of a cool Thanos snapping vaporizing effect for destroying dom elements",
   "bugs": {
     "url": "https://github.com/WolfSoko/wol-sok-mono/issues"
@@ -32,6 +32,6 @@
     "html2canvas": "^1.4.1"
   },
   "dependencies": {
-    "tslib": "2.5.0"
+    "tslib": "^2.5.0"
   }
 }

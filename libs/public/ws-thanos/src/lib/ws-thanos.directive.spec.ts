@@ -1,7 +1,7 @@
 import { Component, QueryList, ViewChildren } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { firstValueFrom } from 'rxjs';
+import { combineLatest, EMPTY, firstValueFrom, lastValueFrom, of } from 'rxjs';
 import image from '../assets/how-to-be-funny.png';
 import { provideWsThanosOptions } from './ws-thanos-options.token';
 import { WsThanosDirective } from './ws-thanos.directive';
@@ -65,7 +65,7 @@ describe('WsThanosDirective', () => {
   })
   class HostComponent {
     showComplete = false;
-    private wsThanosDirective!: WsThanosDirective;
+    wsThanosDirective!: WsThanosDirective;
 
     @ViewChildren(WsThanosDirective)
     set thanos(thanos: QueryList<WsThanosDirective>) {
@@ -91,8 +91,8 @@ describe('WsThanosDirective', () => {
       imports: [WsThanosDirective, HostComponent],
       providers: [
         provideWsThanosOptions({
-          maxParticleCount: 5000,
-          animationLength: 2000,
+          maxParticleCount: 500,
+          animationLength: 1000,
         }),
       ],
     }).compileComponents();
@@ -112,19 +112,26 @@ describe('WsThanosDirective', () => {
   describe('vaporize()', () => {
     let thanosService: WsThanosService;
 
-    beforeEach(() => {
-      thanosService = TestBed.inject(WsThanosService);
-      spyOn(thanosService, 'vaporize').and.callThrough();
-    });
-
     it('should call thanosService.vaporize', () => {
+      givenThanosServiceVaporizeIsMocked();
       whenVaporizeIsCalled();
       thenThanosServiceVaporizeWasCalled();
     });
 
     it('should emit when vaporize is complete', (done) => {
-      whenVaporizeIsCalled().then(done);
-    }, 10000);
+      combineLatest([hostComp.wsThanosDirective.wsThanosComplete, hostComp.startThanos()]).subscribe(() => {
+        done();
+      });
+    });
+
+    it('should vaporize and then complete the observable', (done) => {
+      lastValueFrom(hostComp.startThanos()).then(done);
+    });
+
+    function givenThanosServiceVaporizeIsMocked(): void {
+      thanosService = TestBed.inject(WsThanosService);
+      spyOn(thanosService, 'vaporize').and.returnValue(of({} as any));
+    }
 
     function thenThanosServiceVaporizeWasCalled() {
       expect(thanosService.vaporize).toHaveBeenCalled();

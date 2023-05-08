@@ -1,5 +1,5 @@
 import { Directive, ElementRef, EventEmitter, Inject, NgZone, OnDestroy, Output } from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription, take } from 'rxjs';
 import { WS_THANOS_OPTIONS_TOKEN } from './ws-thanos-options.token';
 import type { WsThanosOptions } from './ws-thanos.options';
 import { WsThanosService } from './ws-thanos.service';
@@ -11,9 +11,10 @@ import { WsThanosService } from './ws-thanos.service';
 })
 export class WsThanosDirective implements OnDestroy {
   private subscription?: Subscription;
+  private wsThanosCompleteSubject: Subject<void> = new Subject<void>();
 
   @Output()
-  private wsThanosComplete: EventEmitter<void> = new EventEmitter<void>();
+  public wsThanosComplete: Observable<void> = this.wsThanosCompleteSubject.asObservable();
 
   constructor(
     private readonly vaporizeDomElem: ElementRef<HTMLElement>,
@@ -35,16 +36,15 @@ export class WsThanosDirective implements OnDestroy {
             elem.style.transition = 'opacity 700ms';
             elem.style.opacity = '1';
           }
-          this.wsThanosComplete.emit();
+          this.wsThanosCompleteSubject.next();
         });
       },
       error: (error) => {
-        console.error('error emitted by vaporize', error);
-        this.wsThanosComplete.emit();
+        this.wsThanosCompleteSubject.next();
       },
     });
 
-    return this.wsThanosComplete.asObservable();
+    return this.wsThanosComplete.pipe(take(1));
   }
 
   ngOnDestroy(): void {
