@@ -1,4 +1,5 @@
-import { Directive, ElementRef, Inject, NgZone, OnDestroy, Output } from '@angular/core';
+import { Directive, ElementRef, Inject, NgZone, Output } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, Observable, Subject, Subscription, take, tap } from 'rxjs';
 import { AnimationState } from './animation.state';
 import { WS_THANOS_OPTIONS_TOKEN } from './ws-thanos-options.token';
@@ -10,8 +11,9 @@ import { WsThanosService } from './ws-thanos.service';
   selector: '[wsThanos], ws-thanos',
   exportAs: 'thanos',
 })
-export class WsThanosDirective implements OnDestroy {
-  private wsThanosCompleteSubject: Subject<void> = new Subject<void>();
+export class WsThanosDirective {
+  private wsThanosCompleteSubject = new Subject<void>();
+  private untilDestroyed = takeUntilDestroyed();
 
   @Output()
   public wsThanosComplete: Observable<void> = this.wsThanosCompleteSubject.asObservable();
@@ -63,11 +65,7 @@ export class WsThanosDirective implements OnDestroy {
    * @Deprecated use vaporizeAndScrollIntoView$ instead and subscribe to it
    */
   public vaporize(removeElem = true): Observable<void> {
-    this.subscriptions.add(this.vaporize$(removeElem).subscribe());
+    this.vaporize$(removeElem).pipe(this.untilDestroyed).subscribe();
     return this.wsThanosComplete.pipe(take(1));
-  }
-
-  ngOnDestroy(): void {
-    this.subscriptions.unsubscribe();
   }
 }

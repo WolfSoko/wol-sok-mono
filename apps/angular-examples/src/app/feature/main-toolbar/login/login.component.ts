@@ -1,13 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Signal, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AuthenticationService, AuthQuery, Profile } from '@wolsok/feat-api-auth';
-import { Observable } from 'rxjs';
-import { startWith } from 'rxjs/operators';
 
 @Component({
   standalone: true,
