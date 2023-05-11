@@ -232,6 +232,8 @@ $altTheme: (
 );
 
 // Theme Init
+mat.$theme-ignore-duplication-warnings: true;
+
 @include mat.all-component-themes(
   (
     color: $theme,
@@ -240,7 +242,6 @@ $altTheme: (
 );
 
 .theme-alternate {
-  mat.$theme-ignore-duplication-warnings: true;
   @include mat.all-component-colors(
     (
       color: $altTheme,

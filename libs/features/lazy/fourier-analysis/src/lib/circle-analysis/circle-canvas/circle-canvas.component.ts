@@ -44,9 +44,9 @@ export class CircleCanvasComponent implements OnChanges, AfterViewInit, OnDestro
   canvasContainerRef!: ElementRef;
   private canvasContainer!: HTMLElement;
 
-  @Input() waveWidth!: number;
-  @Input() waveHeight!: number;
-  @Input() wave!: InputWave;
+  @Input({ required: true }) waveWidth!: number;
+  @Input({ required: true }) waveHeight!: number;
+  @Input({ required: true }) wave!: InputWave;
 
   private sketch: P5 | null = null;
   private frequencyToTest = 20;
