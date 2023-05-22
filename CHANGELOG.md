@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.16.13](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.12...v3.16.13) (2023-05-22)
+
+
+### Bug Fixes
+
+* use overwritten version of nx ([3ef7518](https://github.com/WolfSoko/wol-sok-mono/commit/3ef7518f7c2015b5b6d5ad44b202806f24cd151e))
+
 ### [3.16.12](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.11...v3.16.12) (2023-05-11)
 
 
