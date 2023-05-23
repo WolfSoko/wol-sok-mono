@@ -159,32 +159,26 @@
   },
   "overrides": {
     "@angular/fire": {
-      "@angular/common": "16.0.0",
-      "@angular/core": "16.0.0",
-      "@angular/platform-browser": "16.0.0",
-      "@angular/platform-browser-dynamic": "16.0.0"
+      "@angular/common": "^16.0.0",
+      "@angular/core": "^16.0.0",
+      "@angular/platform-browser": "^16.0.0",
+      "@angular/platform-browser-dynamic": "^16.0.0"
     },
     "akita-ng-fire": {
-      "@angular/common": "16.0.0",
-      "@angular/core": "16.0.0",
-      "@angular/router": "16.0.0",
-      "@angular/platform-browser": "16.0.0",
-      "@angular/platform-browser-dynamic": "16.0.0"
+      "@angular/common": "^16.0.0",
+      "@angular/core": "^16.0.0",
+      "@angular/router": "^16.0.0",
+      "@angular/platform-browser": "^16.0.0",
+      "@angular/platform-browser-dynamic": "^16.0.0"
     },
     "@datorama/akita": {
       "tslib": "2.5.0"
     },
     "@nx-squeezer/workspace": {
-      "nx": "16.1.x"
+      "nx": "^16.0.0"
     },
     "@storybook/angular": {
       "typescript": "5.0.4"
-    },
-    "jest-preset-angular": {
-      "@angular-devkit/build-angular": "16.0.0",
-      "@angular/compiler-cli": "16.0.0",
-      "@angular/core": "16.0.0",
-      "@angular/platform-browser-dynamic": "16.0.0"
     }
   }
 }
