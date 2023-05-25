@@ -150,7 +150,7 @@
     "typescript": "5.0.4",
     "webpack": "5.83.1",
     "webpack-bundle-analyzer": "4.8.0",
-    "webpack-merge": "^5.8.0"
+    "webpack-merge": "^5.9.0"
   },
   "akitaCli": {
     "customFolderName": "true",
