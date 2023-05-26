@@ -106,7 +106,7 @@
     "@typescript-eslint/eslint-plugin": "5.59.7",
     "@typescript-eslint/parser": "5.59.7",
     "assemblyscript": "0.27.5",
-    "aws-sdk": "2.1382.0",
+    "aws-sdk": "2.1383.0",
     "axios": "1.4.0",
     "chai": "4.3.7",
     "cross-env": "7.0.3",
