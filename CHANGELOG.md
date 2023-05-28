@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.16.41](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.40...v3.16.41) (2023-05-28)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency firebase to v9.22.1 ([730f326](https://github.com/WolfSoko/wol-sok-mono/commit/730f32698f44b6b0675e939ea7fb324a0def45ea))
+
 ### [3.16.40](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.39...v3.16.40) (2023-05-28)
 
 ### [3.16.39](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.38...v3.16.39) (2023-05-28)
