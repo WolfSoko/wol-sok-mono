@@ -159,11 +159,11 @@
   },
   "overrides": {
     "akita-ng-fire": {
-      "@angular/common": "^16.0.0",
-      "@angular/core": "^16.0.0",
-      "@angular/router": "^16.0.0",
-      "@angular/platform-browser": "^16.0.0",
-      "@angular/platform-browser-dynamic": "^16.0.0"
+      "@angular/common": "^16.0.3",
+      "@angular/core": "^16.0.3",
+      "@angular/router": "^16.0.3",
+      "@angular/platform-browser": "^16.0.3",
+      "@angular/platform-browser-dynamic": "^16.0.3"
     },
     "@datorama/akita": {
       "tslib": "^2.5.0"
