@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.16.48](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.47...v3.16.48) (2023-05-31)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency browserslist to v4.21.6 ([77e6668](https://github.com/WolfSoko/wol-sok-mono/commit/77e6668557ac29afca3c5eab5b208ee755f21829))
+
 ### [3.16.47](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.46...v3.16.47) (2023-05-31)
 
 ### [3.16.46](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.45...v3.16.46) (2023-05-31)
