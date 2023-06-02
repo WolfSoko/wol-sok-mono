@@ -53,6 +53,9 @@
     "globals": []
   },
   "targetDefaults": {
+    "release": {
+      "dependsOn": ["build"]
+    },
     "build": {
       "inputs": ["production", "globals", "^production", "^globals"],
       "dependsOn": ["^build"],

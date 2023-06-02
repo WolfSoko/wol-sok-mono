@@ -69,7 +69,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          npx nx affected --target release --all
+          npx nx affected --target release
           npx semantic-release-plus
 
       - uses: nashmaniac/create-issue-action@v1.1
