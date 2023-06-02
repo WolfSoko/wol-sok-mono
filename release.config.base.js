@@ -1,3 +1,4 @@
 module.exports = {
-  extends: 'semantic-release-npm-github-publish'
-}
+  extends: 'semantic-release-npm-github-publish',
+  branch: ['main'],
+};
