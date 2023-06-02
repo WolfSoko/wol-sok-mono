@@ -34,6 +34,14 @@
         "tsConfig": "libs/public/ws-thanos/tsconfig.spec.json",
         "karmaConfig": "libs/public/ws-thanos/karma.conf.js"
       }
+    },
+    "release": {
+      "executor": "nx:run-commands",
+      "outputs": [],
+      "options": {
+        "command": "npx semantic-release-plus --extends ./libs/public/ws-thanos/release.config.js",
+        "parallel": false
+      }
     }
   },
   "tags": ["shared", "published", "ui"]
