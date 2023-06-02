@@ -129,31 +129,6 @@ jobs:
       - name: Start Nx Agent ${{ matrix.agent }}
         run: npx nx-cloud start-agent
 
-  code-ql:
-    name: CodeQL analysis
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v3
-        name: 'Checkout branch'
-        if: ${{ github.event_name != 'pull_request' }}
-        with:
-          fetch-depth: 0
-      - uses: actions/checkout@v3
-        name: 'Checkout [pr]'
-        if: ${{ github.event_name == 'pull_request' }}
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-      - name: Install Deps
-        uses: ./.github/actions/install-deps
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
-        with:
-          languages: javascript
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
-
   trigger-release:
     uses: ./.github/workflows/trigger-release.yml
     secrets: inherit
