@@ -15,12 +15,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        name: 'Checkout branch'
+        with:
+          fetch-depth: 0
+
       - name: Install Deps
         uses: ./.github/actions/install-deps
         with:
           cypress: false
           apt-packages: true
           run-scripts: true
+
+      - name: Derive appropriate SHAs for base and head for `nx affected` commands
+        uses: nrwl/nx-set-shas@v3
 
       - name: Wait for tests to succeed
         uses: lewagon/wait-on-check-action@v1.3.1
@@ -64,7 +71,7 @@ jobs:
           SENTRY_ORG: 'wolsok'
           SENTRY_PROJECT: 'angular-examples'
 
-      - name: Release ws-thanos
+      - name: Release affected
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
