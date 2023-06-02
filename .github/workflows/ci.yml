@@ -50,6 +50,7 @@ jobs:
         run: |
           echo "BASE: ${{ env.NX_BASE }}"
           echo "HEAD: ${{ env.NX_HEAD }}"
+          npx nx show projects --affected
 
       - run: npx nx workspace-lint
       - run: npx nx-cloud start-ci-run
