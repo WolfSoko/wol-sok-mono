@@ -45,10 +45,6 @@ jobs:
 
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v3
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
-        with:
-          languages: javascript
 
       - name: print affected base and head info
         run: |
@@ -151,6 +147,10 @@ jobs:
           fetch-depth: 0
       - name: Install Deps
         uses: ./.github/actions/install-deps
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
