@@ -4,7 +4,7 @@
     "config:base",
     ":label(dependencies)",
     "github>nx-squeezer/squeezer",
-    "github>WolfSoko/nx-renovate-self-hosted:nxMonorepo",
+    "github>nx-squeezer/squeezer:nxMonorepo",
     ":assignee(WolfSoko)"
   ],
   "schedule": ["at any time"],
