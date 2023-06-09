@@ -167,9 +167,6 @@
     },
     "@datorama/akita": {
       "tslib": "^2.5.0"
-    },
-    "@storybook/angular": {
-      "typescript": "^5.0.4"
     }
   }
 }
