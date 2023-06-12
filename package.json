@@ -77,7 +77,7 @@
     "@angular/language-service": "16.0.4",
     "@commitlint/cli": "^17.6.5",
     "@commitlint/config-conventional": "^17.6.5",
-    "@ngneat/spectator": "15.0.0",
+    "@ngneat/spectator": "15.0.1",
     "@nx-squeezer/workspace": "3.1.0",
     "@nx/angular": "16.3.2",
     "@nx/cypress": "16.3.2",
