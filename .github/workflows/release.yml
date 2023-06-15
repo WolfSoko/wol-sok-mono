@@ -64,7 +64,7 @@ jobs:
           SENTRY_ORG: 'wolsok'
           SENTRY_PROJECT: 'angular-examples'
 
-      - uses: nashmaniac/create-issue-action@v1.1
+      - uses: nashmaniac/create-issue-action@v1.2
         if: failure()
         name: Create Issue
         with:
