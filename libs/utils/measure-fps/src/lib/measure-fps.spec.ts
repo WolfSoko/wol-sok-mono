@@ -1,10 +1,17 @@
 import { MeasureFps } from './measure-fps';
 
+function makePerformanceWritableToLetUseFakeTimersWork(): void {
+  Object.defineProperty(globalThis, 'performance', {
+    writable: true,
+  });
+}
+
 describe('MeasureFps', () => {
   let measureFps: MeasureFps;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    makePerformanceWritableToLetUseFakeTimersWork();
+    jest.useFakeTimers({});
     measureFps = new MeasureFps();
   });
 
@@ -30,13 +37,6 @@ describe('MeasureFps', () => {
 
     expect(nextSpy).toHaveBeenCalledTimes(1);
   });
-
-  function warmupMeasurement(): void {
-    whenSignalFrameReadyAfterMs(1);
-    whenSignalFrameReadyAfterMs(101);
-    whenSignalFrameReadyAfterMs(201);
-    whenSignalFrameReadyAfterMs(300);
-  }
 
   it('should update fps$ with average window of 200ms', () => {
     const nextSpy = jest.fn();
@@ -83,5 +83,12 @@ describe('MeasureFps', () => {
   function whenSignalFrameReadyAfterMs(ms: number): void {
     jest.advanceTimersByTime(ms);
     measureFps.signalFrameReady();
+  }
+
+  function warmupMeasurement(): void {
+    whenSignalFrameReadyAfterMs(1);
+    whenSignalFrameReadyAfterMs(101);
+    whenSignalFrameReadyAfterMs(201);
+    whenSignalFrameReadyAfterMs(300);
   }
 });
