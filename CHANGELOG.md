@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.18.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.32...v3.18.0) (2023-06-22)
+
+
+### Features
+
+* add rollapolla app ([67cb2a6](https://github.com/WolfSoko/wol-sok-mono/commit/67cb2a6d4eab90988fc85b2fc2b06da5da57cd9e))
+
 ### [3.17.32](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.31...v3.17.32) (2023-06-19)
 
 ### [3.17.31](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.30...v3.17.31) (2023-06-19)
