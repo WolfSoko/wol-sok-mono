@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.18.7](https://github.com/WolfSoko/wol-sok-mono/compare/v3.18.6...v3.18.7) (2023-06-26)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency akita-ng-fire to v7.0.1 ([29df241](https://github.com/WolfSoko/wol-sok-mono/commit/29df24147e8bad3002ad65614d55c011ce5287ba))
+
 ### [3.18.6](https://github.com/WolfSoko/wol-sok-mono/compare/v3.18.5...v3.18.6) (2023-06-25)
 
 
