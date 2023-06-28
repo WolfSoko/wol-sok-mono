@@ -10,7 +10,7 @@ describe('RollaPollaStack snapshot', () => {
     const app = new App();
 
     // WHEN
-    const stack = new RollaPollaStack(app, 'RollaPolla', { deployDirectory: 'test-deploy-assets' });
+    const stack = new RollaPollaStack(app, 'RollaPolla', { buildOutputPath: 'test-build-path' });
     template = Template.fromStack(stack);
   });
 
