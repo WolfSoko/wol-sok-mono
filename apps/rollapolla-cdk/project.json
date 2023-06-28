@@ -1,0 +1,43 @@
+{
+  "name": "rollapolla-cdk",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/rollapolla-cdk/src",
+  "implicitDependencies": ["rollapolla"],
+  "targets": {
+    "deploy": {
+      "executor": "@ago-dev/nx-aws-cdk-v2:deploy",
+      "options": {}
+    },
+    "destroy": {
+      "executor": "@ago-dev/nx-aws-cdk-v2:destroy",
+      "options": {}
+    },
+    "bootstrap": {
+      "executor": "@ago-dev/nx-aws-cdk-v2:bootstrap",
+      "options": {}
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/rollapolla-cdk/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/rollapolla-cdk/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
+      }
+    }
+  },
+  "tags": []
+}

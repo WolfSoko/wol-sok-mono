@@ -14,7 +14,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { MeasureFps } from '@wolsok/utils-measure-fps';
-import { sampleTime } from 'rxjs';
+import { Observable, sampleTime } from 'rxjs';
 import {
   Camera,
   Mesh,
@@ -58,7 +58,7 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
   private webGLCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('stats', { static: true }) private statsElem!: ElementRef;
 
-  fps$ = this.measureFps.fps$.pipe(sampleTime(300));
+  fps$: Observable<number>;
 
   private renderer?: Renderer;
 
@@ -74,7 +74,9 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
     time: { value: number };
   };
 
-  constructor(private ngZone: NgZone, private readonly measureFps: MeasureFps) {}
+  constructor(private ngZone: NgZone, private readonly measureFps: MeasureFps) {
+    this.fps$ = this.measureFps.fps$.pipe(sampleTime(300));
+  }
 
   private static getOffsetLeft(elem: HTMLElement | null) {
     return RenderShaderComponent.getOffset(elem, 'offsetLeft');

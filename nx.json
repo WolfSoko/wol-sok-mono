@@ -1,43 +1,10 @@
 {
-  "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "npmScope": "wolsok",
-  "affected": {
-    "defaultBase": "main"
-  },
-  "cli": {
-    "packageManager": "npm"
-  },
   "pluginsConfig": {
     "@nx/js": {
       "analyzeSourceFiles": true
     }
   },
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "nx-cloud",
-      "options": {
-        "cacheableOperations": ["build", "lint", "test", "e2e", "build-storybook"],
-        "accessToken": "MWVmZTcxMWMtNWZiYy00MzRkLTk0NmEtMjRhZmZlNjk3ZWVlfHJlYWQtd3JpdGU=",
-        "parallel": 1
-      }
-    }
-  },
-  "generators": {
-    "@nx/angular:application": {
-      "style": "scss",
-      "linter": "eslint",
-      "unitTestRunner": "jest",
-      "e2eTestRunner": "cypress"
-    },
-    "@nx/angular:library": {
-      "linter": "eslint",
-      "unitTestRunner": "jest"
-    },
-    "@nx/angular:component": {
-      "style": "scss"
-    }
-  },
-  "defaultProject": "angular-examples",
+  "npmScope": "wolsok",
   "namedInputs": {
     "default": ["{projectRoot}/**/*"],
     "production": [
@@ -55,6 +22,9 @@
   "targetDefaults": {
     "release": {
       "dependsOn": ["build"]
+    },
+    "deploy": {
+      "dependsOn": ["^build"]
     },
     "build": {
       "inputs": ["production", "globals", "^production", "^globals"],
@@ -85,5 +55,37 @@
     "build-storybook": {
       "inputs": ["default", "^production", "!{projectRoot}/.storybook/**/*"]
     }
-  }
+  },
+  "tasksRunnerOptions": {
+    "default": {
+      "runner": "nx-cloud",
+      "options": {
+        "cacheableOperations": ["build", "lint", "test", "e2e", "build-storybook"],
+        "accessToken": "MWVmZTcxMWMtNWZiYy00MzRkLTk0NmEtMjRhZmZlNjk3ZWVlfHJlYWQtd3JpdGU=",
+        "parallel": 1
+      }
+    }
+  },
+  "affected": {
+    "defaultBase": "main"
+  },
+  "cli": {
+    "packageManager": "npm"
+  },
+  "generators": {
+    "@nx/angular:application": {
+      "style": "scss",
+      "linter": "eslint",
+      "unitTestRunner": "jest",
+      "e2eTestRunner": "cypress"
+    },
+    "@nx/angular:library": {
+      "linter": "eslint",
+      "unitTestRunner": "jest"
+    },
+    "@nx/angular:component": {
+      "style": "scss"
+    }
+  },
+  "defaultProject": "angular-examples"
 }
