@@ -4,10 +4,11 @@ import { Bucket } from './bucket';
 
 describe('RollaPolla Bucket', () => {
   let stack: Template;
+  let rollAPollaStack: Bucket;
 
   beforeAll(() => {
     const app = new cdk.App();
-    const rollAPollaStack = new Bucket(app, 'RollAPollaBucket', { buildOutputPath: 'test-build-path' });
+    rollAPollaStack = new Bucket(app, 'RollAPollaBucket', { buildOutputPath: 'apps/rollapolla-cdk/test-build-path' });
     stack = Template.fromStack(rollAPollaStack);
   });
 
@@ -45,6 +46,10 @@ describe('RollaPolla Bucket', () => {
       stack.hasResource('AWS::S3::Bucket', {
         UpdateReplacePolicy: 'Delete',
       });
+    });
+
+    it('should expose the bucket as field', () => {
+      expect(rollAPollaStack.bucketRef).toBeDefined();
     });
 
     function thenBucketHasResourceProperties(props: any) {
