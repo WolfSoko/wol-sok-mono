@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.19.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.18.9...v3.19.0) (2023-06-28)
+
+
+### Features
+
+* add rollAPolla cdk ([203b585](https://github.com/WolfSoko/wol-sok-mono/commit/203b58536c5a961c3bc74c0b4650a384acbca9d1))
+* **rollapolla:** add network stack ([29acca4](https://github.com/WolfSoko/wol-sok-mono/commit/29acca4a67f038cd4e3153d41e9b27de1a7fcdd8))
+* update nx to 14.1 ([52ec245](https://github.com/WolfSoko/wol-sok-mono/commit/52ec24552f62d09f4afda05b6c5e9d5991d6c014))
+* update package-lock.json ([26b633d](https://github.com/WolfSoko/wol-sok-mono/commit/26b633d70856510a4bd45f416c68f529f2529c44))
+
+
+### Bug Fixes
+
+* **gravity-world:** fix usage before assignment ([481071d](https://github.com/WolfSoko/wol-sok-mono/commit/481071df0f99ee4ba7a068fb89262fccf1c4f665))
+
 ### [3.18.9](https://github.com/WolfSoko/wol-sok-mono/compare/v3.18.8...v3.18.9) (2023-06-26)
 
 ### [3.18.8](https://github.com/WolfSoko/wol-sok-mono/compare/v3.18.7...v3.18.8) (2023-06-26)
