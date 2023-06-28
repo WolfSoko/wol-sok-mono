@@ -63,13 +63,10 @@ export class GravityWorldComponent {
   public form: FormGroup<{
     gravitationalConstant: FormControl<number>;
     massOfSun: FormControl<number>;
-  }> = this.nNfB.group({
-    gravitationalConstant: GravityWorldComponent.INITIAL_GRAVITY_CONSTANT,
-    massOfSun: GravityWorldComponent.INITIAL_MASS_OF_SUN,
-  });
+  }>;
 
-  private massSun$: Observable<number> = this.form.controls.massOfSun.valueChanges;
-  private gravitationalConstant$: Observable<number> = this.form.controls.gravitationalConstant.valueChanges;
+  private readonly massSun$: Observable<number>;
+  private readonly gravitationalConstant$: Observable<number>;
 
   public MAX_DIM: Vector2d = Vector2d.create(1000, (1000 / 5) * 3);
   private CENTER_POS: Vector2d = this.MAX_DIM.div(2);
@@ -126,7 +123,13 @@ export class GravityWorldComponent {
     last()
   );
 
-  constructor(private nNfB: NonNullableFormBuilder) {
+  constructor(nNfB: NonNullableFormBuilder) {
+    this.form = nNfB.group({
+      gravitationalConstant: GravityWorldComponent.INITIAL_GRAVITY_CONSTANT,
+      massOfSun: GravityWorldComponent.INITIAL_MASS_OF_SUN,
+    });
+    this.massSun$ = this.form.controls.massOfSun.valueChanges;
+    this.gravitationalConstant$ = this.form.controls.gravitationalConstant.valueChanges;
     const centerPositionMapper: (targetVector: Vector2d) => Vector2d = (targetVector: Vector2d) =>
       targetVector.sub(this.CENTER_POS);
 
