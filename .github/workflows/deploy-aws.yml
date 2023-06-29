@@ -61,15 +61,6 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      # Clears the CloudFront cache so new requests will receive the latest version of your app
-      - name: Deploy CDK Apps
-        env:
-          AWS_REGION: 'eu-central-1'
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: |
-          nx run affected target=deploy -- --require-approval=never
-
       - uses: nashmaniac/create-issue-action@v1.2
         if: failure()
         name: Create Issue
@@ -79,3 +70,24 @@ jobs:
           assignees: ${{ github.actor }}
           labels: bug
           body: GitHub [Deploy release to AWS workflow](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/deploy-aws.yml) failed
+
+  deploy-cdk-apps:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        name: 'Checkout main branch'
+        with:
+          ref: main
+          # only latest version of main branch
+          fetch-depth: 1
+      - name: Install Deps
+        uses: ./.github/actions/install-deps
+      # Clears the CloudFront cache so new requests will receive the latest version of your app
+      - name: Deploy CDK Apps
+        env:
+          AWS_REGION: 'eu-central-1'
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          npx nx run-many target=deploy -- --require-approval=never
