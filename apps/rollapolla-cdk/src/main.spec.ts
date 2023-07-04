@@ -5,15 +5,7 @@ import { RollaPollaStack } from './stacks/rolla-polla.stack';
 // Mock the fromLookup method
 jest.mock('aws-cdk-lib/aws-route53', () => {
   return {
-    HostedZone: {
-      fromLookup: jest.fn().mockImplementation(() => {
-        // Return a mock instance of HostedZone for testing purposes
-        return {
-          hostedZoneId: '<mocked-hosted-zone-id>',
-          zoneName: '<mocked-zone-name>',
-        };
-      }),
-    },
+    HostedZone: jest.fn(),
     RecordTarget: {
       fromAlias: jest.fn(),
     },
