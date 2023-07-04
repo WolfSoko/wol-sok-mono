@@ -15,7 +15,7 @@ export class NetworkStack extends Stack {
 
   private createNetworkStack({ websiteBucket, domainName }: NetworkStackProps) {
     // Lookup existing domain zone
-    const zone = HostedZone.fromLookup(this, 'RollaPollaZone', { domainName });
+    const zone = new HostedZone(this, 'RollaPollaZone', { zoneName: domainName });
 
     // Create a certificate
     const certificate = new Certificate(this, 'RollaPollaCertificate', {
@@ -41,7 +41,7 @@ export class NetworkStack extends Stack {
 
     // Route53 alias record for the CloudFront distribution
     new ARecord(this, 'RollaPollaAliasRecord', {
-      recordName: domainName,
+      recordName: domainName + '.',
       target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
       zone,
     });

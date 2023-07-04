@@ -14,7 +14,7 @@ jest.mock('./bucket/bucket', () => {
 // First, mock the NetworkStack
 jest.mock('./network/network.stack', () => {
   return {
-    NetworkStack: jest.fn().mockImplementation(() => undefined),
+    NetworkStack: jest.fn(),
   };
 });
 

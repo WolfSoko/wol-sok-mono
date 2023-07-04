@@ -15,9 +15,9 @@ jest.mock('aws-cdk-lib/aws-route53', () => {
       }),
     },
     RecordTarget: {
-      fromAlias: jest.fn().mockImplementation(() => undefined),
+      fromAlias: jest.fn(),
     },
-    ARecord: jest.fn().mockImplementation(() => undefined),
+    ARecord: jest.fn(),
   };
 });
 
