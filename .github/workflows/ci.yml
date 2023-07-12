@@ -40,6 +40,8 @@ jobs:
 
       - name: Install Deps
         uses: ./.github/actions/install-deps
+        with:
+          run-scripts: true
 
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v3
