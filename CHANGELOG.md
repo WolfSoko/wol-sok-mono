@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.20.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.19.13...v3.20.0) (2023-07-14)
+
+
+### Features
+
+* **nx:** migrate to 16.5.1 ([4c71c99](https://github.com/WolfSoko/wol-sok-mono/commit/4c71c99be3a359c594e2b7bf13916c28724d8bb0))
+
+
+### Bug Fixes
+
+* install binaries for linux ([0256d45](https://github.com/WolfSoko/wol-sok-mono/commit/0256d452fea515b2b679efcb7a1b247595a09651))
+
 ### [3.19.13](https://github.com/WolfSoko/wol-sok-mono/compare/v3.19.12...v3.19.13) (2023-07-10)
 
 ### [3.19.12](https://github.com/WolfSoko/wol-sok-mono/compare/v3.19.11...v3.19.12) (2023-07-09)
