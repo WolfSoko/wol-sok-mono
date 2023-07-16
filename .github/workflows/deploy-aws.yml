@@ -74,7 +74,7 @@ jobs:
   deploy-cdk-apps:
     timeout-minutes: 45
     runs-on: ubuntu-latest
-    environment: aws-sdk
+    environment: aws-cdk
     steps:
       - uses: actions/checkout@v3
         name: 'Checkout main branch'
