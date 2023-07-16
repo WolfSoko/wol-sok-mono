@@ -1,27 +1,18 @@
-import * as cdk from 'aws-cdk-lib';
-import { StackProps } from 'aws-cdk-lib';
+import { App, Stack, StackProps } from 'aws-cdk-lib';
+import { SpaSite } from './static-site/spa.site';
 
-import { Construct } from 'constructs';
-import { Bucket } from './bucket/bucket';
+export interface AppStackProps extends StackProps {
+  buildOutputPath: string;
+  domainName: string;
+}
 
-import { BucketProps } from './bucket/bucket.props';
-import { NetworkStackProps } from './network/network-stack.props';
-import { NetworkStack } from './network/network.stack';
+export class AppStack extends Stack {
+  constructor(parent: App, name: string, props: AppStackProps) {
+    super(parent, name, props);
 
-type PublicNetworkProps = Pick<NetworkStackProps, 'domainName'>;
-
-export interface RollAPollaStackProps extends BucketProps, PublicNetworkProps, StackProps {}
-
-export class AppStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: RollAPollaStackProps) {
-    super(scope, id, props);
-
-    const { bucketRef: websiteBucket } = new Bucket(this, 'BucketStack', props);
-    const { domainName } = props;
-
-    new NetworkStack(this, 'NetworkStack', {
-      domainName,
-      websiteBucket,
+    new SpaSite(this, name, {
+      domainName: props.domainName,
+      buildOutputPath: props.buildOutputPath,
     });
   }
 }
