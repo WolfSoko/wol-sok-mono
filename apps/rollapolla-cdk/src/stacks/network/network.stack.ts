@@ -2,7 +2,7 @@ import { Stack } from 'aws-cdk-lib';
 import { Certificate } from 'aws-cdk-lib/aws-certificatemanager';
 import { Distribution, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront';
 import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
-import { ARecord, HostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
+import { ARecord, HostedZone, PublicHostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
 import { Construct } from 'constructs';
 import { NetworkStackProps } from './network-stack.props';
@@ -15,7 +15,7 @@ export class NetworkStack extends Stack {
 
   private createNetworkStack({ websiteBucket, domainName }: NetworkStackProps) {
     // Lookup existing domain zone
-    const zone = new HostedZone(this, 'RollaPollaZone', { zoneName: domainName });
+    const zone = new PublicHostedZone(this, 'RollaPollaZone', { zoneName: domainName });
 
     // Create a certificate
     const certificate = new Certificate(this, 'RollaPollaCertificate', {
@@ -41,7 +41,6 @@ export class NetworkStack extends Stack {
 
     // Route53 alias record for the CloudFront distribution
     new ARecord(this, 'RollaPollaAliasRecord', {
-      recordName: domainName + '.',
       target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
       zone,
     });
