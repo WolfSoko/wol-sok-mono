@@ -72,8 +72,9 @@ jobs:
           body: GitHub [Deploy release to AWS workflow](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/deploy-aws.yml) failed
 
   deploy-cdk-apps:
-    timeout-minutes: 30
+    timeout-minutes: 45
     runs-on: ubuntu-latest
+    environment: aws
     steps:
       - uses: actions/checkout@v3
         name: 'Checkout main branch'
