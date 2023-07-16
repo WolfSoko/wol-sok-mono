@@ -11,5 +11,4 @@ module.exports = {
    * More info: https://jestjs.io/docs/upgrading-to-jest29#snapshot-format
    */
   coverageReporters: ['lcov'],
-  snapshotFormat: { escapeString: true, printBasicPrototype: true },
 };

@@ -19,6 +19,7 @@ export class Bucket extends Stack {
       accessControl: BucketAccessControl.BUCKET_OWNER_FULL_CONTROL,
       publicReadAccess: true,
       removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
     });
 
     new s3deploy.BucketDeployment(this, 'DeployApp', {

@@ -1,5 +1,5 @@
 import { Stack } from 'aws-cdk-lib';
-import { Certificate } from 'aws-cdk-lib/aws-certificatemanager';
+import { Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
 import { Distribution, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront';
 import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { ARecord, HostedZone, PublicHostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
@@ -20,6 +20,8 @@ export class NetworkStack extends Stack {
     // Create a certificate
     const certificate = new Certificate(this, 'RollaPollaCertificate', {
       domainName: domainName,
+      subjectAlternativeNames: [`*.${domainName}`],
+      validation: CertificateValidation.fromDns(zone),
     });
 
     // CloudFront distribution that provides HTTPS

@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import { Bucket } from './bucket';
 
-describe('RollaPolla Bucket', () => {
+describe('Bucket', () => {
   let stack: Template;
   let rollAPollaStack: Bucket;
 
@@ -27,7 +27,7 @@ describe('RollaPolla Bucket', () => {
       });
     });
 
-    it('should have public read access policy', () => {
+    it('should have read access and delete policy', () => {
       stack.hasResourceProperties('AWS::S3::BucketPolicy', {
         Bucket: { Ref: Match.stringLikeRegexp('rollAPolla') },
         PolicyDocument: {
@@ -37,6 +37,15 @@ describe('RollaPolla Bucket', () => {
               Effect: 'Allow',
               Principal: { AWS: '*' },
             },
+            {
+              Action: ['s3:GetBucket*', 's3:List*', 's3:DeleteObject*'],
+              Effect: 'Allow',
+              Principal: {
+                AWS: {
+                  'Fn::GetAtt': [Match.stringLikeRegexp('CustomS3AutoDeleteObjectsCustomResourceProviderRole'), 'Arn'],
+                },
+              },
+            },
           ],
         },
       });
@@ -45,6 +54,7 @@ describe('RollaPolla Bucket', () => {
     it('should have the destroy removal policy', () => {
       stack.hasResource('AWS::S3::Bucket', {
         UpdateReplacePolicy: 'Delete',
+        DeletionPolicy: 'Delete',
       });
     });
 

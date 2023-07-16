@@ -1,6 +1,6 @@
 import { App } from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
-import { RollaPollaStack } from './stacks/rolla-polla.stack';
+import { AppStack } from './stacks/app.stack';
 
 // Mock the fromLookup method
 jest.mock('aws-cdk-lib/aws-route53', () => {
@@ -15,14 +15,13 @@ jest.mock('aws-cdk-lib/aws-route53', () => {
 
 describe('RollaPollaStack snapshot', () => {
   let template: Template;
-  const envCentral = { account: '2383838383', region: 'eu-central-1' };
 
   beforeEach(() => {
     // GIVEN
     const app = new App();
 
     // WHEN
-    const stack = new RollaPollaStack(app, 'RollaPolla', {
+    const stack = new AppStack(app, 'RollaPolla', {
       buildOutputPath: 'apps/rollapolla-cdk/test-build-path',
       domainName: 'test-domain',
     });

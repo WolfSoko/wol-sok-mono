@@ -8,15 +8,20 @@ import { BucketProps } from './bucket/bucket.props';
 import { NetworkStackProps } from './network/network-stack.props';
 import { NetworkStack } from './network/network.stack';
 
-export interface RollAPollaStackProps extends BucketProps, Pick<NetworkStackProps, 'domainName'>, StackProps {}
+type PublicNetworkProps = Pick<NetworkStackProps, 'domainName'>;
 
-export class RollaPollaStack extends cdk.Stack {
+export interface RollAPollaStackProps extends BucketProps, PublicNetworkProps, StackProps {}
+
+export class AppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: RollAPollaStackProps) {
     super(scope, id, props);
-    const bucket: Bucket = new Bucket(this, 'RollAPollaBucketStack', props);
-    new NetworkStack(this, 'RollAPollaNetworkStack', {
-      domainName: props.domainName,
-      websiteBucket: bucket.bucketRef,
+
+    const { bucketRef: websiteBucket } = new Bucket(this, 'BucketStack', props);
+    const { domainName } = props;
+
+    new NetworkStack(this, 'NetworkStack', {
+      domainName,
+      websiteBucket,
     });
   }
 }
