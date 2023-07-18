@@ -44,7 +44,9 @@ runs:
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress == 'false'
       shell: bash
-      run: npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+      run: |
+        npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+        npm i @nx/nx-linux-x64-gnu
       env:
         CYPRESS_INSTALL_BINARY: 0
         CYPRESS_CACHE_FOLDER: 'cache/cypress'
@@ -52,6 +54,8 @@ runs:
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress != 'false'
       shell: bash
-      run: npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+      run: |
+        npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+        npm i @nx/nx-linux-x64-gnu
       env:
         CYPRESS_CACHE_FOLDER: 'cache/cypress'
