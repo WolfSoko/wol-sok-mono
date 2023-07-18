@@ -50,8 +50,8 @@ export class SpaSite extends Construct {
 
   private createBucket(siteDomain: string, cloudfrontOAI: OriginAccessIdentity): Bucket {
     // Content bucket
-    const siteBucket = new Bucket(this, 'Bucket', {
-      bucketName: siteDomain,
+    const siteBucket = new Bucket(this, `Bucket`, {
+      bucketName: `${siteDomain}-spa-data`,
       publicReadAccess: false,
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       /**
@@ -77,7 +77,7 @@ export class SpaSite extends Construct {
       })
     );
 
-    new CfnOutput(this, `${this.spaName}-Bucket`, { value: siteBucket.bucketName });
+    new CfnOutput(this, `${siteDomain}-Bucket`, { value: siteBucket.bucketName });
     return siteBucket;
   }
 
