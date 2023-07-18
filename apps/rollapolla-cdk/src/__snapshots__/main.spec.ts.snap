@@ -6,11 +6,6 @@ exports[`RollaPollaStack snapshot should match snapshot 1`] = `
     "RollaPollaRollaPollaARecord232D21C0": {
       "Value": "test-domain",
     },
-    "RollaPollaRollaPollaBucket428822C3": {
-      "Value": {
-        "Ref": "RollaPollaBucketA1859A96",
-      },
-    },
     "RollaPollaRollaPollaDistributionIdCDBC775B": {
       "Value": {
         "Ref": "RollaPollaDistribution067B4E7D",
@@ -22,6 +17,11 @@ exports[`RollaPollaStack snapshot should match snapshot 1`] = `
     "RollaPollaRollaPollasCertificate7CF8BE6A": {
       "Value": {
         "Ref": "RollaPollaCertificateBF50DB0A",
+      },
+    },
+    "RollaPollatestdomainBucket40ECFE62": {
+      "Value": {
+        "Ref": "RollaPollaBucketA1859A96",
       },
     },
   },
@@ -261,7 +261,7 @@ exports[`RollaPollaStack snapshot should match snapshot 1`] = `
     "RollaPollaBucketA1859A96": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "BucketName": "test-domain",
+        "BucketName": "test-domain-spa-data",
         "PublicAccessBlockConfiguration": {
           "BlockPublicAcls": true,
           "BlockPublicPolicy": true,
