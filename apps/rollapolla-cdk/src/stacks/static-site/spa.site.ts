@@ -84,9 +84,8 @@ export class SpaSite extends Construct {
   private createCertificate(zone: IHostedZone, domainName: string): Certificate {
     // TLS certificate
     const certificate = new Certificate(this, 'Certificate', {
-      validation: CertificateValidation.fromDns(zone),
+      validation: CertificateValidation.fromEmail(),
       domainName,
-      subjectAlternativeNames: ['*.' + domainName],
     });
 
     new CfnOutput(this, `${this.spaName}-sCertificate`, { value: certificate.certificateArn });
