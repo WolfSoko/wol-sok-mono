@@ -384,10 +384,8 @@ exports[`RollaPollaStack snapshot should match snapshot 1`] = `
         "DomainValidationOptions": [
           {
             "DomainName": "test-domain",
+            "ValidationDomain": "test-domain",
           },
-        ],
-        "SubjectAlternativeNames": [
-          "*.test-domain",
         ],
         "Tags": [
           {
@@ -395,7 +393,7 @@ exports[`RollaPollaStack snapshot should match snapshot 1`] = `
             "Value": "RollaPolla/RollaPolla/Certificate",
           },
         ],
-        "ValidationMethod": "DNS",
+        "ValidationMethod": "EMAIL",
       },
       "Type": "AWS::CertificateManager::Certificate",
     },
