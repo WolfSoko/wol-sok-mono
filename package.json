@@ -81,7 +81,7 @@
     "@commitlint/cli": "^17.6.6",
     "@commitlint/config-conventional": "^17.6.6",
     "@ngneat/spectator": "15.0.1",
-    "@nx-squeezer/workspace": "3.1.0",
+    "@nx-squeezer/workspace": "3.1.1",
     "@nx/angular": "16.5.3",
     "@nx/cypress": "16.5.3",
     "@nx/eslint-plugin": "16.5.3",
