@@ -20,6 +20,7 @@
 .settings/
 *.sublime-workspace
 /.idea/sonarlint/issuestore/
+/.idea/aws.xml
 
 # IDE - VSCode
 .vscode/*
