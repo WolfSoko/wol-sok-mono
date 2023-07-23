@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.20.20](https://github.com/WolfSoko/wol-sok-mono/compare/v3.20.19...v3.20.20) (2023-07-23)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency vega-lite to v5.14.0 ([4584ffb](https://github.com/WolfSoko/wol-sok-mono/commit/4584ffb4275576e57f605d7d9b8389b1a22f3ced))
+
 ### [3.20.19](https://github.com/WolfSoko/wol-sok-mono/compare/v3.20.18...v3.20.19) (2023-07-22)
 
 
