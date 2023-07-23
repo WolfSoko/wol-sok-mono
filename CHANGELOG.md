@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.20.21](https://github.com/WolfSoko/wol-sok-mono/compare/v3.20.20...v3.20.21) (2023-07-23)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency aws-cdk to ^2.88.0 ([a4a1912](https://github.com/WolfSoko/wol-sok-mono/commit/a4a1912c4f616c8ae2cc4a343d536aa729557529))
+
 ### [3.20.20](https://github.com/WolfSoko/wol-sok-mono/compare/v3.20.19...v3.20.20) (2023-07-23)
 
 
