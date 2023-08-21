@@ -42,6 +42,15 @@ runs:
         path: ./node_modules
         key: modules-${{ inputs.run-scripts == 'true' && 'with' || 'ignore' }}-scripts-${{ inputs.cypress == 'true' && 'with' || 'ignore' }}-cypress-${{ hashFiles('package-lock.json') }}
 
+    # install binaries before installing dependencies with scripts because post install scripts are needing the binaries already
+    - name: Install binaries
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        npm install @nx/nx-linux-x64-gnu
+      env:
+        CYPRESS_CACHE_FOLDER: 'cache/cypress'
+
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress == 'false'
       shell: bash
@@ -56,13 +65,5 @@ runs:
       shell: bash
       run: |
         npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
-      env:
-        CYPRESS_CACHE_FOLDER: 'cache/cypress'
-
-    - name: Install binaries
-      if: steps.cache.outputs.cache-hit != 'true'
-      shell: bash
-      run: |
-        npm install @nx/nx-linux-x64-gnu
       env:
         CYPRESS_CACHE_FOLDER: 'cache/cypress'
