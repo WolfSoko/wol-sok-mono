@@ -41,7 +41,21 @@
           "vendorChunk": true,
           "extractLicenses": false,
           "sourceMap": true,
-          "namedChunks": true
+          "namedChunks": true,
+          "fileReplacements": [
+            {
+              "replace": "apps/rollapolla/src/environments/environment.ts",
+              "with": "apps/rollapolla/src/environments/environment.development.ts"
+            }
+          ]
+        },
+        "prototype": {
+          "fileReplacements": [
+            {
+              "replace": "apps/rollapolla/src/environments/environment.ts",
+              "with": "apps/rollapolla/src/environments/environment.prototype.ts"
+            }
+          ]
         }
       },
       "defaultConfiguration": "production"
@@ -54,9 +68,37 @@
         },
         "development": {
           "browserTarget": "rollapolla:build:development"
+        },
+        "prototype": {
+          "browserTarget": "rollapolla:build:prototype"
         }
       },
       "defaultConfiguration": "development"
+    },
+    "firebase": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/rollapolla",
+        "command": "firebase"
+      },
+      "configurations": {
+        "login": {
+          "command": "firebase login"
+        },
+        "deploy": {
+          "command": "firebase deploy"
+        },
+        "emulators": {
+          "command": "firebase emulators:exec"
+        }
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/rollapolla",
+        "command": "firebase deploy"
+      }
     },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
@@ -89,6 +131,11 @@
       "executor": "@nx/web:file-server",
       "options": {
         "buildTarget": "rollapolla:build"
+      },
+      "configurations": {
+        "prototype": {
+          "buildTarget": "rollapolla:build:prototype"
+        }
       }
     }
   }

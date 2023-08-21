@@ -26,7 +26,7 @@
       "dependsOn": ["build"]
     },
     "deploy": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["build, ^build"]
     },
     "build": {
       "inputs": ["production", "globals", "^production", "^globals"],

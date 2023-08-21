@@ -16,6 +16,7 @@ inputs:
 
 runs:
   using: composite
+
   steps:
     - name: Install ubuntu dependencies
       if: inputs.apt-packages == 'true'
@@ -39,14 +40,13 @@ runs:
       uses: actions/cache@v3
       with:
         path: ./node_modules
-        key: modules-${{ inputs.run-scripts == 'true' && 'with' || 'ignore' }}-scripts-${{ hashFiles('package-lock.json') }}
+        key: modules-${{ inputs.run-scripts == 'true' && 'with' || 'ignore' }}-scripts-${{ inputs.cypress == 'true' && 'with' || 'ignore' }}-cypress-${{ hashFiles('package-lock.json') }}
 
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress == 'false'
       shell: bash
       run: |
         npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
-        npm i @nx/nx-linux-x64-gnu
       env:
         CYPRESS_INSTALL_BINARY: 0
         CYPRESS_CACHE_FOLDER: 'cache/cypress'
@@ -56,6 +56,13 @@ runs:
       shell: bash
       run: |
         npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
-        npm i @nx/nx-linux-x64-gnu
+      env:
+        CYPRESS_CACHE_FOLDER: 'cache/cypress'
+
+    - name: Install binaries
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        npm install @nx/nx-linux-x64-gnu
       env:
         CYPRESS_CACHE_FOLDER: 'cache/cypress'

@@ -5,18 +5,30 @@
   "projectType": "application",
   "targets": {
     "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx firebase --config apps/rollapolla/firebase.json emulators:exec 'npx nx run rollapolla-e2e:e2e-base'"
+        ]
+      }
+    },
+    "e2e-base": {
       "executor": "@nx/cypress:cypress",
       "options": {
         "cypressConfig": "apps/rollapolla-e2e/cypress.config.ts",
-        "devServerTarget": "rollapolla:serve:development",
-        "testingType": "e2e"
+        "devServerTarget": "rollapolla:serve:prototype",
+        "testingType": "e2e",
+        "cwd": "apps/rollapolla-e2e"
       },
       "configurations": {
         "production": {
           "devServerTarget": "rollapolla:serve:production"
         },
         "ci": {
-          "devServerTarget": "rollapolla:serve-static"
+          "devServerTarget": "rollapolla:serve-static:prototype"
+        },
+        "dev": {
+          "watch": true
         }
       }
     },
