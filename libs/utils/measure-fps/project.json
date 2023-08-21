@@ -6,9 +6,10 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/utils/measure-fps"],
+      "outputs": ["{workspaceRoot}/dist/libs/utils/measure-fps"],
       "options": {
-        "project": "libs/utils/measure-fps/ng-package.json"
+        "project": "libs/utils/measure-fps/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
@@ -29,7 +30,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/libs/utils/measure-fps"],
+      "outputs": ["{workspaceRoot}/coverage/libs/utils/measure-fps"],
       "options": {
         "jestConfig": "libs/utils/measure-fps/jest.config.ts",
         "passWithNoTests": true,

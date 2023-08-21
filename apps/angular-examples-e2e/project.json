@@ -6,7 +6,7 @@
   "targets": {
     "e2e": {
       "executor": "@nx/cypress:cypress",
-      "outputs": ["test-reports/apps/angular-examples-e2e"],
+      "outputs": ["{workspaceRoot}/test-reports/apps/angular-examples-e2e"],
       "options": {
         "cypressConfig": "apps/angular-examples-e2e/cypress.config.ts",
         "devServerTarget": "angular-examples:serve",

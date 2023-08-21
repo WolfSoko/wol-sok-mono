@@ -7,9 +7,10 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/features/api/auth"],
+      "outputs": ["{workspaceRoot}/dist/libs/features/api/auth"],
       "options": {
-        "project": "libs/features/api/auth/ng-package.json"
+        "project": "libs/features/api/auth/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
@@ -23,7 +24,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/libs/features/api/auth"],
+      "outputs": ["{workspaceRoot}/coverage/libs/features/api/auth"],
       "options": {
         "jestConfig": "libs/features/api/auth/jest.config.ts",
         "passWithNoTests": true,

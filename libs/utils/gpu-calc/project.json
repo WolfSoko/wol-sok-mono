@@ -7,9 +7,10 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/utils/gpu-calc"],
+      "outputs": ["{workspaceRoot}/dist/libs/utils/gpu-calc"],
       "options": {
-        "project": "libs/utils/gpu-calc/ng-package.json"
+        "project": "libs/utils/gpu-calc/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
@@ -23,7 +24,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/libs/utils/gpu-calc"],
+      "outputs": ["{workspaceRoot}/coverage/libs/utils/gpu-calc"],
       "options": {
         "jestConfig": "libs/utils/gpu-calc/jest.config.ts",
         "passWithNoTests": true,

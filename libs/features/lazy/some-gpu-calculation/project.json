@@ -7,9 +7,10 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/features/lazy/some-gpu-calculation"],
+      "outputs": ["{workspaceRoot}/dist/libs/features/lazy/some-gpu-calculation"],
       "options": {
-        "project": "libs/features/lazy/some-gpu-calculation/ng-package.json"
+        "project": "libs/features/lazy/some-gpu-calculation/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
@@ -23,7 +24,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/libs/features/lazy/some-gpu-calculation"],
+      "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/some-gpu-calculation"],
       "options": {
         "jestConfig": "libs/features/lazy/some-gpu-calculation/jest.config.ts",
         "passWithNoTests": true,

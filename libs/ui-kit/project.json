@@ -7,9 +7,10 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/ui-kit"],
+      "outputs": ["{workspaceRoot}/dist/libs/ui-kit"],
       "options": {
-        "project": "libs/ui-kit/ng-package.json"
+        "project": "libs/ui-kit/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
@@ -23,7 +24,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/libs/ui-kit"],
+      "outputs": ["{workspaceRoot}/coverage/libs/ui-kit"],
       "options": {
         "jestConfig": "libs/ui-kit/jest.config.ts",
         "passWithNoTests": true,

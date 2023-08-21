@@ -7,9 +7,10 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/features/lazy/wasm-test"],
+      "outputs": ["{workspaceRoot}/dist/libs/features/lazy/wasm-test"],
       "options": {
-        "project": "libs/features/lazy/wasm-test/ng-package.json"
+        "project": "libs/features/lazy/wasm-test/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
@@ -23,7 +24,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/libs/features/lazy/wasm-test"],
+      "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/wasm-test"],
       "options": {
         "jestConfig": "libs/features/lazy/wasm-test/jest.config.ts",
         "passWithNoTests": true,

@@ -142,7 +142,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/apps/angular-examples"],
+      "outputs": ["{workspaceRoot}/coverage/apps/angular-examples"],
       "options": {
         "jestConfig": "apps/angular-examples/jest.config.ts",
         "passWithNoTests": false,
@@ -151,7 +151,7 @@
     },
     "prepare-prod": {
       "executor": "nx:run-commands",
-      "outputs": ["dist/production"],
+      "outputs": ["{workspaceRoot}/dist/production"],
       "options": {
         "command": "node tools/node-scripts/prepare-mf-build.js"
       }

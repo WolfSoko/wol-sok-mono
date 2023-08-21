@@ -7,9 +7,10 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/fib-wasm-api"],
+      "outputs": ["{workspaceRoot}/dist/libs/fib-wasm-api"],
       "options": {
-        "project": "libs/fib-wasm-api/ng-package.json"
+        "project": "libs/fib-wasm-api/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
@@ -23,7 +24,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/libs/fib-wasm-api"],
+      "outputs": ["{workspaceRoot}/coverage/libs/fib-wasm-api"],
       "options": {
         "jestConfig": "libs/fib-wasm-api/jest.config.ts",
         "passWithNoTests": true,

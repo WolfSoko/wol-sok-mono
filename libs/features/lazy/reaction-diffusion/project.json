@@ -7,9 +7,10 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/features/lazy/reaction-diffusion"],
+      "outputs": ["{workspaceRoot}/dist/libs/features/lazy/reaction-diffusion"],
       "options": {
-        "project": "libs/features/lazy/reaction-diffusion/ng-package.json"
+        "project": "libs/features/lazy/reaction-diffusion/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
@@ -23,7 +24,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/libs/features/lazy/reaction-diffusion"],
+      "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/reaction-diffusion"],
       "options": {
         "jestConfig": "libs/features/lazy/reaction-diffusion/jest.config.ts",
         "passWithNoTests": true,

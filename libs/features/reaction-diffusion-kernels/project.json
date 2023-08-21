@@ -6,9 +6,10 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/features/reaction-diffusion-kernels"],
+      "outputs": ["{workspaceRoot}/dist/libs/features/reaction-diffusion-kernels"],
       "options": {
-        "project": "libs/features/reaction-diffusion-kernels/ng-package.json"
+        "project": "libs/features/reaction-diffusion-kernels/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {

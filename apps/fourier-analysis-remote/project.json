@@ -98,7 +98,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/apps/fourier-analysis-remote"],
+      "outputs": ["{workspaceRoot}/coverage/apps/fourier-analysis-remote"],
       "options": {
         "jestConfig": "apps/fourier-analysis-remote/jest.config.ts",
         "passWithNoTests": true,

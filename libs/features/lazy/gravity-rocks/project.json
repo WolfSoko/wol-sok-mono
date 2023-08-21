@@ -7,9 +7,10 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/features/lazy/gravity-rocks"],
+      "outputs": ["{workspaceRoot}/dist/libs/features/lazy/gravity-rocks"],
       "options": {
-        "project": "libs/features/lazy/gravity-rocks/ng-package.json"
+        "project": "libs/features/lazy/gravity-rocks/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
@@ -23,7 +24,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/libs/features/lazy/gravity-rocks"],
+      "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/gravity-rocks"],
       "options": {
         "jestConfig": "libs/features/lazy/gravity-rocks/jest.config.ts",
         "passWithNoTests": true,

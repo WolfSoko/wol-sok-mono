@@ -6,9 +6,10 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/utils/operators"],
+      "outputs": ["{workspaceRoot}/dist/libs/utils/operators"],
       "options": {
-        "project": "libs/utils/operators/ng-package.json"
+        "project": "libs/utils/operators/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
@@ -29,7 +30,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/libs/utils/operators"],
+      "outputs": ["{workspaceRoot}/coverage/libs/utils/operators"],
       "options": {
         "jestConfig": "libs/utils/operators/jest.config.ts",
         "passWithNoTests": true,

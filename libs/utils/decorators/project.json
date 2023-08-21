@@ -6,9 +6,10 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/utils/decorators"],
+      "outputs": ["{workspaceRoot}/dist/libs/utils/decorators"],
       "options": {
-        "project": "libs/utils/decorators/ng-package.json"
+        "project": "libs/utils/decorators/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
@@ -29,7 +30,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/libs/utils/decorators"],
+      "outputs": ["{workspaceRoot}/coverage/libs/utils/decorators"],
       "options": {
         "jestConfig": "libs/utils/decorators/jest.config.ts",
         "passWithNoTests": true,

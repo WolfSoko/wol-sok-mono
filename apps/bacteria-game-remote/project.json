@@ -97,7 +97,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/apps/bacteria-game-remote"],
+      "outputs": ["{workspaceRoot}/coverage/apps/bacteria-game-remote"],
       "options": {
         "jestConfig": "apps/bacteria-game-remote/jest.config.ts",
         "passWithNoTests": true,

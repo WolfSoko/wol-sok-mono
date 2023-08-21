@@ -31,11 +31,11 @@
     "build": {
       "inputs": ["production", "globals", "^production", "^globals"],
       "dependsOn": ["^build"],
-      "outputs": ["dist/{projectRoot}"]
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"]
     },
     "e2e": {
       "inputs": ["default", "^production"],
-      "outputs": ["test-reports/{projectRoot}"]
+      "outputs": ["{workspaceRoot}/test-reports/{projectRoot}"]
     },
     "test": {
       "inputs": [
@@ -46,7 +46,7 @@
         "{workspaceRoot}/jest.config.ts",
         "{workspaceRoot}/.codecov.yml"
       ],
-      "outputs": ["coverage/{projectRoot}"]
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"]
     },
     "prepare-prod": {
       "dependsOn": ["build"]

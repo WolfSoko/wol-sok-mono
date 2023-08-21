@@ -7,9 +7,10 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/features/lazy/tensorflow-examples"],
+      "outputs": ["{workspaceRoot}/dist/libs/features/lazy/tensorflow-examples"],
       "options": {
-        "project": "libs/features/lazy/tensorflow-examples/ng-package.json"
+        "project": "libs/features/lazy/tensorflow-examples/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
@@ -23,7 +24,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/libs/features/lazy/tensorflow-examples"],
+      "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/tensorflow-examples"],
       "options": {
         "jestConfig": "libs/features/lazy/tensorflow-examples/jest.config.ts",
         "passWithNoTests": true,

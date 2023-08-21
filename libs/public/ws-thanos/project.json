@@ -7,9 +7,10 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["dist/libs/public/ws-thanos"],
+      "outputs": ["{workspaceRoot}/dist/libs/public/ws-thanos"],
       "options": {
-        "project": "libs/public/ws-thanos/ng-package.json"
+        "project": "libs/public/ws-thanos/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
