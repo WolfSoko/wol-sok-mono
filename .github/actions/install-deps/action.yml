@@ -2,7 +2,7 @@ name: 'Install Dependencies'
 description: 'Installs all dependencies for this repo to run'
 inputs:
   run-scripts: # id of input
-    description: 'run npm ci with --no-scripts flag'
+    description: 'run npm install with --no-scripts flag'
     required: false
     default: 'false'
   cypress:
@@ -45,8 +45,7 @@ runs:
       if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress == 'false'
       shell: bash
       run: |
-        npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
-        npm i @nx/nx-linux-x64-gnu
+        npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
       env:
         CYPRESS_INSTALL_BINARY: 0
         CYPRESS_CACHE_FOLDER: 'cache/cypress'
@@ -55,7 +54,6 @@ runs:
       if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress != 'false'
       shell: bash
       run: |
-        npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
-        npm i @nx/nx-linux-x64-gnu
+        npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
       env:
         CYPRESS_CACHE_FOLDER: 'cache/cypress'
