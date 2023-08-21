@@ -46,6 +46,7 @@ runs:
       shell: bash
       run: |
         npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+        npm i @nx/nx-linux-x64-gnu
       env:
         CYPRESS_INSTALL_BINARY: 0
         CYPRESS_CACHE_FOLDER: 'cache/cypress'
@@ -55,5 +56,6 @@ runs:
       shell: bash
       run: |
         npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+        npm i @nx/nx-linux-x64-gnu
       env:
         CYPRESS_CACHE_FOLDER: 'cache/cypress'
