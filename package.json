@@ -65,7 +65,7 @@
     "vega": "5.25.0",
     "vega-embed": "6.22.2",
     "vega-lite": "5.14.1",
-    "zone.js": "0.13.0"
+    "zone.js": "0.13.1"
   },
   "devDependencies": {
     "@ago-dev/nx-aws-cdk-v2": "1.6.1",
@@ -166,14 +166,15 @@
   },
   "overrides": {
     "akita-ng-fire": {
-      "@angular/common": "^16.0.0",
-      "@angular/core": "^16.0.0",
-      "@angular/router": "^16.0.0",
-      "@angular/platform-browser": "^16.0.0",
-      "@angular/platform-browser-dynamic": "^16.0.0"
+      "@angular/common": "^16.2.1",
+      "@angular/core": "^16.2.1",
+      "@angular/router": "^16.2.1",
+      "@angular/platform-browser": "^16.2.1",
+      "@angular/platform-browser-dynamic": "^16.2.1"
     },
     "@datorama/akita": {
       "tslib": "^2.5.0"
     }
   }
 }
+
