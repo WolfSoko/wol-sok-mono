@@ -138,7 +138,7 @@
     "karma-coverage": "2.2.1",
     "karma-jasmine": "5.1.0",
     "karma-jasmine-html-reporter": "2.1.0",
-    "lint-staged": "13.3.0",
+    "lint-staged": "14.0.1",
     "mime-types": "2.1.35",
     "ng-packagr": "16.2.0",
     "nx": "16.7.4",
