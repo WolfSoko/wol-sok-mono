@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.21.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.20.23...v3.21.0) (2023-08-24)
+
+
+### Features
+
+* ✨ Add devmoji to commitlint in husky config ([ec76d1c](https://github.com/WolfSoko/wol-sok-mono/commit/ec76d1c8341388af3a71e472ad9b5a5658010c4f))
+
 ### [3.20.23](https://github.com/WolfSoko/wol-sok-mono/compare/v3.20.22...v3.20.23) (2023-07-24)
 
 
