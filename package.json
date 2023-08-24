@@ -82,7 +82,7 @@
     "@commitlint/config-conventional": "^17.7.0",
     "@commitlint/config-nx-scopes": "^17.6.4",
     "@ngneat/spectator": "15.0.1",
-    "@nx-squeezer/workspace": "3.1.1",
+    "@nx-squeezer/workspace": "4.0.3",
     "@nx/angular": "16.7.4",
     "@nx/cypress": "16.7.4",
     "@nx/eslint-plugin": "16.7.4",
