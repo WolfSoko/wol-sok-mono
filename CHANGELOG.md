@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.21.14](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.13...v3.21.14) (2023-08-26)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update nx monorepo to v16.2.2 ([3eed040](https://github.com/WolfSoko/wol-sok-mono/commit/3eed040e8f80864b5736dd38220ec615a899a7fc))
+
 ### [3.21.13](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.12...v3.21.13) (2023-08-26)
 
 
