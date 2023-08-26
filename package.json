@@ -42,7 +42,7 @@
     "ace-builds": "1.24.1",
     "akita-ng-fire": "7.0.1",
     "angulartics2": "12.2.1",
-    "aws-cdk": "^2.92.0",
+    "aws-cdk": "^2.93.0",
     "brace": "0.11.1",
     "browserslist": "4.21.10",
     "constructs": "^10.2.69",
