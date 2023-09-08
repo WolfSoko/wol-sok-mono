@@ -104,7 +104,7 @@
     "@types/jasmine": "4.3.5",
     "@types/jasminewd2": "2.0.10",
     "@types/jest": "29.5.4",
-    "@types/lodash": "4.14.197",
+    "@types/lodash": "4.14.198",
     "@types/node": "18.17.14",
     "@types/p5": "1.7.0",
     "@types/three": "0.155.1",
