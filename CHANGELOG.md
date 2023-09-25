@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.22.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.68...v3.22.0) (2023-09-25)
+
+
+### Features
+
+* **feat-lazy-tf-examples:** ✨ Update build and test commands ([d2e5fcd](https://github.com/WolfSoko/wol-sok-mono/commit/d2e5fcd95b34caf751985de6ebb09ceda9f51267))
+
 ### [3.21.68](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.67...v3.21.68) (2023-09-14)
 
 ### [3.21.67](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.66...v3.21.67) (2023-09-12)
