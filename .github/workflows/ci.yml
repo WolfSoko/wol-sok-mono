@@ -68,7 +68,7 @@ jobs:
 
       - name: Report Codecov
         if: github.ref_name == 'main' && hashFiles('coverage/**/*') != ''
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v4-beta
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unittests
