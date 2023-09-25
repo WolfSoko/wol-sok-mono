@@ -3,7 +3,7 @@
     <div>Tensorflow Examples</div>
   </mat-toolbar-row>
 </mat-toolbar>
-<nav mat-tab-nav-bar>
+<nav mat-tab-nav-bar [tabPanel]="tabPanel">
   <a
     mat-tab-link
     *ngFor="let link of navLinks"
@@ -15,4 +15,4 @@
     {{ link.label }}
   </a>
 </nav>
-<router-outlet></router-outlet>
+<mat-tab-nav-panel #tabPanel><router-outlet></router-outlet></mat-tab-nav-panel>

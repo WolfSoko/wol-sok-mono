@@ -1,7 +1,7 @@
-import { Route } from '@angular/router';
+import { Routes } from '@angular/router';
 import { TensorflowExamplesComponent } from './tensorflow-examples/tensorflow-examples.component';
 
-export const TENSORFLOW_EXAMPLES_ROUTES: Route[] = [
+export const TENSORFLOW_EXAMPLES_ROUTES: Routes = [
   {
     path: '',
     component: TensorflowExamplesComponent,
