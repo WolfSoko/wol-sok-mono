@@ -8,7 +8,7 @@ describe('angular-examples', () => {
   });
 
   it('should display Angular examples', () => {
-    // Function helper example, see `../support/app.po.ts` file
+    // Function helper example, see `../support/tensorflow-examples.po.ts` file
     getExperimentsTitle().contains('Experiments:');
   });
 });
