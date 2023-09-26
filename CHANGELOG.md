@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.22.2](https://github.com/WolfSoko/wol-sok-mono/compare/v3.22.1...v3.22.2) (2023-09-26)
+
+
+### Bug Fixes
+
+* **angular-examples:** 🐛 provide http client ([1e45a70](https://github.com/WolfSoko/wol-sok-mono/commit/1e45a70cecbea8ef26069c06ab2f08ff1e39eb22))
+
 ### [3.22.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.22.0...v3.22.1) (2023-09-26)
 
 ## [3.22.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.68...v3.22.0) (2023-09-25)
