@@ -35,7 +35,7 @@ export class MnistDataService {
   private testLabels!: Uint8Array;
   customImages = 0;
 
-  constructor(private http: HttpClient) {
+  constructor(private readonly http: HttpClient) {
     this.shuffledTrainIndex = 0;
     this.shuffledTestIndex = 0;
   }

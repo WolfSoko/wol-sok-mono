@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -29,7 +28,6 @@ import { MnistDataService } from './mnist-data.service';
     DrawDigitComponent,
     DrawPredictionsComponent,
     MatProgressSpinnerModule,
-    HttpClientModule,
   ],
   templateUrl: './learned-digits.component.html',
   styleUrls: ['./learned-digits.component.scss'],

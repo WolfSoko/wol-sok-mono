@@ -1,3 +1,4 @@
+import { provideHttpClient } from '@angular/common/http';
 import { enableProdMode } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { enableAkitaProdMode } from '@datorama/akita';
@@ -42,6 +43,7 @@ Sentry.init({
 bootstrapApplication(AppComponent, {
   providers: [
     provideAppRouter(),
+    provideHttpClient(),
     provideCore(),
     [
       provideWsThanosOptions({
