@@ -126,7 +126,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private getRenderingContext() {
     const canvasEl: HTMLCanvasElement = this.canvasRef.nativeElement;
 
-    const context = canvasEl.getContext('2d');
+    const context = canvasEl.getContext('2d', { willReadFrequently: true });
     if (context == null) {
       throw new Error('Could not get rendering context');
     }

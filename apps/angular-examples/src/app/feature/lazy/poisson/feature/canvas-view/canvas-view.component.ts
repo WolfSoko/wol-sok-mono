@@ -45,7 +45,7 @@ export class CanvasViewComponent implements AfterContentInit {
   ngAfterContentInit(): void {
     this.canvas.nativeElement.width = this.canvasWidth;
     this.canvas.nativeElement.height = this.canvasHeight;
-    const context: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
+    const context: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d', { willReadFrequently: true });
     this.canvasDrawService.initCtx(context);
     setTimeout(() => this.readyToPaint.emit(0), 1000);
     this.draw$.pipe(untilDestroyed(this)).subscribe(this.draw.bind(this));

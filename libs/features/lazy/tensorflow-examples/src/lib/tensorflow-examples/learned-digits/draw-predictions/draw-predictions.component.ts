@@ -44,7 +44,7 @@ export class DrawPredictionsComponent implements OnChanges {
     const [width, height] = [28, 28];
     canvas.width = width;
     canvas.height = height;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) {
       throw new Error('Could not get context');
     }

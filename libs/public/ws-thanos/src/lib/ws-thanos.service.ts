@@ -198,7 +198,7 @@ export class WsThanosService {
     resultCanvas.height = resultHeight;
     resultCanvas.width = resultWidth;
 
-    const imageData = divCanvas.getContext('2d')?.getImageData(0, 0, width, height);
+    const imageData = divCanvas.getContext('2d', { willReadFrequently: true })?.getImageData(0, 0, width, height);
     if (imageData == null) {
       throw new Error('Could not get image data from canvas');
     }
@@ -340,7 +340,7 @@ export class WsThanosService {
               noise,
               seed,
             });
-            const context = resultCanvas.getContext('2d');
+            const context = resultCanvas.getContext('2d', { willReadFrequently: true });
             if (context) {
               WsThanosService.drawParticles(context, particlesData.particles);
             }

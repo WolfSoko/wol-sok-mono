@@ -21,10 +21,10 @@ const MNIST_LABELS_PATH = 'assets/mnist/mnist_labels_uint8.data';
  */
 @Injectable({ providedIn: 'root' })
 export class MnistDataService {
+  customImages = 0;
   private shuffledTrainIndex: number;
   private shuffledTestIndex: number;
   private datasetImages!: Float32Array;
-
   private datasetLabels!: Uint8Array;
   private datasetCustomImages!: Float32Array;
   private testIndices!: Uint32Array;
@@ -33,7 +33,6 @@ export class MnistDataService {
   private testImages!: Float32Array;
   private trainLabels!: Uint8Array;
   private testLabels!: Uint8Array;
-  customImages = 0;
 
   constructor(private readonly http: HttpClient) {
     this.shuffledTrainIndex = 0;
@@ -44,7 +43,7 @@ export class MnistDataService {
     // Make a request for the MNIST sprited image.
     const img = new Image();
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) {
       throw new Error('Can not get canvas context');
     }
