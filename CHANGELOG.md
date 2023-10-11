@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.23.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.22.7...v3.23.0) (2023-10-11)
+
+
+### Features
+
+* ✨ Update @angular/cli version to 16.2.3 ([bd548d8](https://github.com/WolfSoko/wol-sok-mono/commit/bd548d86c951527e1c64842852f797ce8e6c8cc1))
+
 ### [3.22.7](https://github.com/WolfSoko/wol-sok-mono/compare/v3.22.6...v3.22.7) (2023-10-05)
 
 ### [3.22.6](https://github.com/WolfSoko/wol-sok-mono/compare/v3.22.5...v3.22.6) (2023-10-04)
