@@ -26,13 +26,13 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         name: 'Checkout branch'
         if: ${{ github.event_name != 'pull_request' }}
         with:
           fetch-depth: 0
 
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         name: 'Checkout [pr]'
         if: ${{ github.event_name == 'pull_request' }}
         with:
@@ -80,13 +80,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         name: 'Checkout branch'
         if: ${{ github.event_name != 'pull_request' }}
         with:
           fetch-depth: 0
 
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         name: 'Checkout [pr]'
         if: ${{ github.event_name == 'pull_request' }}
         with:
@@ -108,12 +108,12 @@ jobs:
       matrix:
         agent: [1, 2, 3, 4, 5]
     steps:
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         name: 'Checkout branch'
         if: ${{ github.event_name != 'pull_request' }}
         with:
           fetch-depth: 0
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         name: 'Checkout [pr]'
         if: ${{ github.event_name == 'pull_request' }}
         with:
