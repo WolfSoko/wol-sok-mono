@@ -22,7 +22,7 @@ runs:
       if: inputs.apt-packages == 'true'
       shell: bash
       run: ./.github/actions/install-deps/install-ubuntu-packages.sh
-    - uses: actions/setup-node@v3
+    - uses: actions/setup-node@v4
       with:
         node-version-file: '.nvmrc'
         cache: npm
