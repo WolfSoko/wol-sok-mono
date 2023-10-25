@@ -23,8 +23,7 @@
         "scripts": [],
         "customWebpackConfig": {
           "path": "apps/fourier-analysis-remote/webpack.config.js"
-        },
-        "buildLibsFromSource": false
+        }
       },
       "configurations": {
         "production": {
