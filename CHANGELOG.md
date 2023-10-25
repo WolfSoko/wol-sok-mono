@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.23.8](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.7...v3.23.8) (2023-10-25)
+
+
+### Bug Fixes
+
+* 🐛 remove updateBuildableProjectDepsInPackageJson in project.jsons ([7c2d2a4](https://github.com/WolfSoko/wol-sok-mono/commit/7c2d2a47777d717d2b29b0423e8d7bfaf886f8d1))
+* **fourier-analysis-remote:** 🐛 remove buildFromLibs: false ([bfc80df](https://github.com/WolfSoko/wol-sok-mono/commit/bfc80df2878c6ce6f7fdfd38d27a155bbf24fb4b))
+
 ### [3.23.7](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.6...v3.23.7) (2023-10-23)
 
 ### [3.23.6](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.5...v3.23.6) (2023-10-22)
