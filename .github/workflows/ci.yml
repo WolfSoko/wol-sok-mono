@@ -106,7 +106,7 @@ jobs:
     needs: warmup-caches-for-agents
     strategy:
       matrix:
-        agent: [1, 2, 3, 4, 5]
+        agent: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         name: 'Checkout branch'
