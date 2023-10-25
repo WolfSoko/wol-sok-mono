@@ -4,7 +4,6 @@
       "analyzeSourceFiles": true
     }
   },
-  "npmScope": "wolsok",
   "namedInputs": {
     "default": ["{projectRoot}/**/*"],
     "production": [
@@ -34,11 +33,13 @@
     "build": {
       "inputs": ["production", "globals", "^production", "^globals"],
       "dependsOn": ["^build"],
-      "outputs": ["{workspaceRoot}/dist/{projectRoot}"]
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "cache": true
     },
     "e2e": {
       "inputs": ["default", "^production"],
-      "outputs": ["{workspaceRoot}/test-reports/{projectRoot}"]
+      "outputs": ["{workspaceRoot}/test-reports/{projectRoot}"],
+      "cache": true
     },
     "test": {
       "inputs": [
@@ -49,29 +50,23 @@
         "{workspaceRoot}/jest.config.ts",
         "{workspaceRoot}/.codecov.yml"
       ],
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"]
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "cache": true
     },
     "prepare-prod": {
       "dependsOn": ["build"]
     },
     "lint": {
-      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"]
+      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
+      "cache": true
     },
     "build-storybook": {
-      "inputs": ["default", "^production", "{projectRoot}/.storybook/**/*", "{projectRoot}/tsconfig.storybook.json"]
+      "inputs": ["default", "^production", "{projectRoot}/.storybook/**/*", "{projectRoot}/tsconfig.storybook.json"],
+      "cache": true
     },
     "component-test": {
-      "inputs": ["default", "^production"]
-    }
-  },
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "nx-cloud",
-      "options": {
-        "cacheableOperations": ["build", "lint", "test", "e2e", "build-storybook", "component-test"],
-        "accessToken": "ZDIxOTJiNDctZjhhNS00NDYzLWFiNzQtODg0NDJkYTMyYzBlfHJlYWQtb25seQ==",
-        "parallel": 1
-      }
+      "inputs": ["default", "^production"],
+      "cache": true
     }
   },
   "affected": {
@@ -95,5 +90,7 @@
       "style": "scss"
     }
   },
-  "defaultProject": "angular-examples"
+  "defaultProject": "angular-examples",
+  "nxCloudAccessToken": "ZDIxOTJiNDctZjhhNS00NDYzLWFiNzQtODg0NDJkYTMyYzBlfHJlYWQtb25seQ==",
+  "parallel": 3
 }

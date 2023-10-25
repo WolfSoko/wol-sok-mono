@@ -78,22 +78,21 @@
     "@angular/cli": "16.2.3",
     "@angular/compiler-cli": "16.2.3",
     "@angular/language-service": "16.2.3",
-    "@commitlint/cli": "^17.8.0",
-    "@commitlint/config-conventional": "^17.8.0",
-    "@commitlint/config-nx-scopes": "^17.6.4",
+    "@commitlint/cli": "^18.1.0",
+    "@commitlint/config-conventional": "^18.1.0",
+    "@commitlint/config-nx-scopes": "^18.1.0",
     "@cypress/webpack-dev-server": "^3.6.1",
     "@ngneat/spectator": "15.0.1",
     "@nx-squeezer/renovate": "^2.0.2",
-    "@nx-squeezer/workspace": "4.0.3",
-    "@nx/angular": "16.10.0",
-    "@nx/cypress": "16.10.0",
-    "@nx/eslint-plugin": "16.10.0",
-    "@nx/jest": "16.10.0",
-    "@nx/js": "16.10.0",
-    "@nx/linter": "16.10.0",
-    "@nx/storybook": "16.10.0",
-    "@nx/web": "16.10.0",
-    "@nx/workspace": "16.10.0",
+    "@nx-squeezer/workspace": "4.0.4",
+    "@nx/angular": "17.0.1",
+    "@nx/cypress": "17.0.1",
+    "@nx/eslint-plugin": "17.0.1",
+    "@nx/jest": "17.0.1",
+    "@nx/js": "17.0.1",
+    "@nx/storybook": "17.0.1",
+    "@nx/web": "17.0.1",
+    "@nx/workspace": "17.0.1",
     "@schematics/angular": "16.2.1",
     "@storybook/addon-essentials": "7.5.1",
     "@storybook/addon-mdx-gfm": "7.5.1",
@@ -119,7 +118,7 @@
     "cross-env": "7.0.3",
     "cypress": "^13.3.2",
     "eslint": "8.51.0",
-    "eslint-config-prettier": "8.10.0",
+    "eslint-config-prettier": "9.0.0",
     "eslint-plugin-cdk": "^1.8.0",
     "eslint-plugin-cypress": "2.15.1",
     "eslint-plugin-prettier": "4.2.1",
@@ -144,8 +143,7 @@
     "lint-staged": "14.0.1",
     "mime-types": "2.1.35",
     "ng-packagr": "16.2.2",
-    "nx": "16.10.0",
-    "nx-cloud": "16.5.2",
+    "nx": "17.0.1",
     "postcss": "8.4.31",
     "postcss-import": "15.1.0",
     "postcss-preset-env": "9.2.0",
@@ -160,7 +158,8 @@
     "typescript": "5.1.6",
     "webpack": "5.89.0",
     "webpack-bundle-analyzer": "4.9.1",
-    "webpack-merge": "^5.10.0"
+    "webpack-merge": "^5.10.0",
+    "@nx/eslint": "17.0.1"
   },
   "akitaCli": {
     "customFolderName": "true",
@@ -177,6 +176,14 @@
     },
     "@datorama/akita": {
       "tslib": "^2.5.0"
+    },
+    "@nx-squeezer/workspace": {
+      "@commitlint/cli": "^18.1.0",
+      "@commitlint/config-conventional": "^18.1.0",
+      "nx": "^17.0.1"
+    },
+    "@commitlint/config-nx-scopes": {
+      "nx": "^17.0.1"
     }
   }
 }

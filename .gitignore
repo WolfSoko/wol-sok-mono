@@ -48,3 +48,5 @@ Thumbs.db
 
 /cdk.out
 /cdk.context.json
+
+.nx/cache

@@ -23,7 +23,7 @@
       "defaultConfiguration": "production"
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "options": {
         "lintFilePatterns": ["libs/public/ws-thanos/src/**/*.ts", "libs/public/ws-thanos/src/**/*.html"]
       }
