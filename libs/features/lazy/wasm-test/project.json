@@ -9,8 +9,7 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/features/lazy/wasm-test"],
       "options": {
-        "project": "libs/features/lazy/wasm-test/ng-package.json",
-        "updateBuildableProjectDepsInPackageJson": true
+        "project": "libs/features/lazy/wasm-test/ng-package.json"
       },
       "configurations": {
         "production": {

@@ -9,8 +9,7 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/features/lazy/bacteria-game"],
       "options": {
-        "project": "libs/features/lazy/bacteria-game/ng-package.json",
-        "updateBuildableProjectDepsInPackageJson": true
+        "project": "libs/features/lazy/bacteria-game/ng-package.json"
       },
       "configurations": {
         "production": {

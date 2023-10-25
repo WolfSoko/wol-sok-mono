@@ -9,8 +9,7 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/utils/gpu-calc"],
       "options": {
-        "project": "libs/utils/gpu-calc/ng-package.json",
-        "updateBuildableProjectDepsInPackageJson": true
+        "project": "libs/utils/gpu-calc/ng-package.json"
       },
       "configurations": {
         "production": {

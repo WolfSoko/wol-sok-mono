@@ -9,8 +9,7 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/fib-wasm-api"],
       "options": {
-        "project": "libs/fib-wasm-api/ng-package.json",
-        "updateBuildableProjectDepsInPackageJson": true
+        "project": "libs/fib-wasm-api/ng-package.json"
       },
       "configurations": {
         "production": {

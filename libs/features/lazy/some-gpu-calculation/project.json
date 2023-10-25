@@ -9,8 +9,7 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/features/lazy/some-gpu-calculation"],
       "options": {
-        "project": "libs/features/lazy/some-gpu-calculation/ng-package.json",
-        "updateBuildableProjectDepsInPackageJson": true
+        "project": "libs/features/lazy/some-gpu-calculation/ng-package.json"
       },
       "configurations": {
         "production": {

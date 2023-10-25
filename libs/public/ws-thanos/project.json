@@ -9,8 +9,7 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/public/ws-thanos"],
       "options": {
-        "project": "libs/public/ws-thanos/ng-package.json",
-        "updateBuildableProjectDepsInPackageJson": true
+        "project": "libs/public/ws-thanos/ng-package.json"
       },
       "configurations": {
         "production": {

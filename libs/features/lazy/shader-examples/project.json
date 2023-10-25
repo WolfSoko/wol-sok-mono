@@ -9,8 +9,7 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/features/lazy/shader-examples"],
       "options": {
-        "project": "libs/features/lazy/shader-examples/ng-package.json",
-        "updateBuildableProjectDepsInPackageJson": true
+        "project": "libs/features/lazy/shader-examples/ng-package.json"
       },
       "configurations": {
         "production": {

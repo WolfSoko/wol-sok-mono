@@ -9,8 +9,7 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/features/lazy/gravity-rocks"],
       "options": {
-        "project": "libs/features/lazy/gravity-rocks/ng-package.json",
-        "updateBuildableProjectDepsInPackageJson": true
+        "project": "libs/features/lazy/gravity-rocks/ng-package.json"
       },
       "configurations": {
         "production": {

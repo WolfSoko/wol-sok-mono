@@ -9,8 +9,7 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/features/lazy/fourier-analysis"],
       "options": {
-        "project": "libs/features/lazy/fourier-analysis/ng-package.json",
-        "updateBuildableProjectDepsInPackageJson": true
+        "project": "libs/features/lazy/fourier-analysis/ng-package.json"
       },
       "configurations": {
         "production": {

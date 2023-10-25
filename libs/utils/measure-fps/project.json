@@ -8,8 +8,7 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/utils/measure-fps"],
       "options": {
-        "project": "libs/utils/measure-fps/ng-package.json",
-        "updateBuildableProjectDepsInPackageJson": true
+        "project": "libs/utils/measure-fps/ng-package.json"
       },
       "configurations": {
         "production": {
