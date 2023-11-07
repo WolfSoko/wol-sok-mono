@@ -58,8 +58,8 @@
       [attr.viewBox]="'0 0 ' + canvasSize().x + ' ' + canvasSize().y"
     >
       <defs>
-        <marker id="head" orient="auto" markerWidth="3" markerHeight="4" refX="0.1" refY="2">
-          <path d="M0,0 V4 L2,2 Z" fill="darkred" />
+        <marker id="force-arrow-head" orient="auto" markerWidth="3" markerHeight="4" refX="0.1" refY="2">
+          <path d="M0,0 V4 L2,2 Z" fill="#348B85" />
         </marker>
       </defs>
       <g>
@@ -80,7 +80,24 @@
           r="25"
           fill="#ffffab"
         ></circle>
-        <path *ngFor="let force of forces()" d="" />
+        <path
+          *ngFor="let dValue of forcesSvgPaths()"
+          class="line-line"
+          marker-end="url(#force-arrow-head)"
+          stroke-width="3"
+          fill="none"
+          stroke="#348B85"
+          [attr.d]="dValue"
+        />
+        <path
+          *ngFor="let dValue of velocitySvgPath()"
+          class="line-line"
+          marker-end="url(#force-arrow-head)"
+          stroke-width="3"
+          fill="none"
+          stroke="#8B5870"
+          [attr.d]="dValue"
+        />
       </g>
     </svg>
   </mat-card>

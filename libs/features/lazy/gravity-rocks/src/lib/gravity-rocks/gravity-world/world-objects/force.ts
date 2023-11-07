@@ -1,18 +1,19 @@
 import { Vector2d } from '@wolsok/utils-math';
 import { WorldObject } from './world-object';
 
-export interface Force {
-  applyForceFor(wo: WorldObject, dT: number): void;
+export abstract class Force {
+  abstract applyForceFor(wo: WorldObject, dT: number): void;
 }
 
-export class SpringForce implements Force {
-  private springEnd: Vector2d;
+export class SpringForce extends Force {
+  springEnd: Vector2d;
 
   constructor(
-    private wo: WorldObject,
+    public wo: WorldObject,
     private springStrength: number = wo.mass,
     private dampingStrength: number = wo.mass
   ) {
+    super();
     this.springEnd = wo.pos;
   }
 

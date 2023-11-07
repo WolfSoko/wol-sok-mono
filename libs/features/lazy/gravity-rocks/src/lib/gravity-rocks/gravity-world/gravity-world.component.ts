@@ -27,6 +27,7 @@ import { GravityWorldService } from './gravity-world.service';
 import { Force, SpringForce } from './world-objects/force';
 import { Planet } from './world-objects/planet';
 import { Sun } from './world-objects/sun';
+import { svgPathForVelocity, toSvgPath } from './world-objects/toSvgPath';
 import { WorldObject } from './world-objects/world-object';
 
 interface Settings {
@@ -74,6 +75,11 @@ export class GravityWorldComponent {
   planets: WritableSignal<Planet[]> = signal([]);
 
   forces: WritableSignal<Force[]> = signal([]);
+  forcesSvgPaths: Signal<string[]> = computed(() => this.forces().map((f) => toSvgPath(f)));
+
+  velocitySvgPath: Signal<string[]> = computed(() =>
+    this.planets().map((planet) => svgPathForVelocity(planet.pos, planet.vel))
+  );
 
   canvasSize: WritableSignal<Vector2d> = signal(this.MAX_DIM);
 
