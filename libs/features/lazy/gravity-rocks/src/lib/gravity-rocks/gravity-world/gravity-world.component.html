@@ -20,7 +20,12 @@
           </mat-form-field>
         </p>
         <ng-container *wsLet="running$ | async as running">
-          <button mat-raised-button [color]="running ? 'accent' : 'primary'" (click)="toggleSim(running)">
+          <button
+            data-qa="cta-start"
+            mat-raised-button
+            [color]="running ? 'accent' : 'primary'"
+            (click)="toggleSim(running)"
+          >
             {{ running ? 'Pause' : 'Start' }}
           </button>
         </ng-container>

@@ -31,7 +31,11 @@ import { TimeInterval } from './time-interval';
 import { Vector2d } from './vector-2d';
 
 class Planet {
-  constructor(public x: number, public y: number, public mass: number) {}
+  constructor(
+    public x: number,
+    public y: number,
+    public mass: number
+  ) {}
 }
 
 @Component({
@@ -55,7 +59,7 @@ class Planet {
 })
 export class GravityWorldComponent {
   private static readonly INITIAL_MASS_OF_SUN: number = 50000.0;
-  private static readonly INITIAL_GRAVITY_CONSTANT: number = 60.0;
+  private static readonly INITIAL_GRAVITY_CONSTANT: number = 100.0;
 
   @ViewChild('svgWorld')
   svgWorld!: ElementRef<SVGSVGElement>;
@@ -167,6 +171,7 @@ export class GravityWorldComponent {
         return new TimeInterval(Vector2d.zero, interval);
       }
       // newtons law shortened to a1 = G * m2 / r²
+      // the power of 1.3 is to make the simulation more interesting
       const forceAmount: number = gravityConst * mass2 * (1 / Math.pow(distance, 1.3));
       const directedForce: Vector2d = position1.value.directionTo(position2).mul(forceAmount);
       return new TimeInterval(directedForce.mul(interval), interval);
@@ -177,10 +182,13 @@ export class GravityWorldComponent {
     );
 
     const velocity$: Observable<TimeInterval<Vector2d>> = gravitationalForceToApply$.pipe(
-      scan((oldVelocity: TimeInterval<Vector2d>, forceInterval: TimeInterval<Vector2d>) => {
-        const newVelocity: Vector2d = oldVelocity.value.add(forceInterval.value.mul(forceInterval.interval));
-        return new TimeInterval(newVelocity, forceInterval.interval);
-      }, new TimeInterval(Vector2d.create(-100, 100), 20))
+      scan(
+        (oldVelocity: TimeInterval<Vector2d>, forceInterval: TimeInterval<Vector2d>) => {
+          const newVelocity: Vector2d = oldVelocity.value.add(forceInterval.value.mul(forceInterval.interval));
+          return new TimeInterval(newVelocity, forceInterval.interval);
+        },
+        new TimeInterval(Vector2d.create(-100, 0), 20)
+      )
     );
 
     const nextPosition$: Observable<Vector2d> = velocity$.pipe(
@@ -194,7 +202,7 @@ export class GravityWorldComponent {
     this.mouseX$ = this.targetCoordinates$.pipe(map((vec: Vector2d) => vec.x));
     this.mouseY$ = this.targetCoordinates$.pipe(map((vec: Vector2d) => vec.y));
 
-    this.positionSubject$.next(this.CENTER_POS.sub(Vector2d.create(0, 30)));
+    this.positionSubject$.next(this.CENTER_POS.sub(Vector2d.create(0, 100)));
     this.targetCoordinatesSubject.next(this.CENTER_POS);
 
     // trigger initial value changes
