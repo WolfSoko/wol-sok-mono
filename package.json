@@ -83,10 +83,9 @@
     "@commitlint/config-nx-scopes": "^18.3.0",
     "@cypress/webpack-dev-server": "^3.6.1",
     "@ngneat/spectator": "15.0.1",
-    "@nx-squeezer/renovate": "^2.0.2",
-    "@nx-squeezer/workspace": "4.0.4",
     "@nx/angular": "17.0.1",
     "@nx/cypress": "17.0.1",
+    "@nx/eslint": "17.0.1",
     "@nx/eslint-plugin": "17.0.1",
     "@nx/jest": "17.0.1",
     "@nx/js": "17.0.1",
@@ -100,6 +99,8 @@
     "@storybook/core-common": "^7.5.2",
     "@storybook/core-server": "7.5.2",
     "@storybook/test-runner": "0.13.0",
+    "@swc-node/register": "~1.6.7",
+    "@swc/core": "~1.3.85",
     "@types/chai": "4.3.9",
     "@types/jasmine": "4.6.1",
     "@types/jasminewd2": "2.0.12",
@@ -121,7 +122,7 @@
     "eslint-config-prettier": "9.0.0",
     "eslint-plugin-cdk": "^1.8.0",
     "eslint-plugin-cypress": "2.15.1",
-    "eslint-plugin-prettier": "4.2.1",
+    "eslint-plugin-prettier": "5.0.1",
     "eslint-plugin-storybook": "0.6.15",
     "firebase-admin": "11.11.0",
     "fs-extra": "^11.1.1",
@@ -148,7 +149,7 @@
     "postcss-import": "15.1.0",
     "postcss-preset-env": "9.3.0",
     "postcss-url": "10.1.3",
-    "prettier": "2.8.8",
+    "prettier": "3.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "standard-version": "9.5.0",
@@ -158,8 +159,7 @@
     "typescript": "5.1.6",
     "webpack": "5.89.0",
     "webpack-bundle-analyzer": "4.9.1",
-    "webpack-merge": "^5.10.0",
-    "@nx/eslint": "17.0.1"
+    "webpack-merge": "^5.10.0"
   },
   "akitaCli": {
     "customFolderName": "true",
@@ -176,11 +176,6 @@
     },
     "@datorama/akita": {
       "tslib": "^2.5.0"
-    },
-    "@nx-squeezer/workspace": {
-      "@commitlint/cli": "^18.2.0",
-      "@commitlint/config-conventional": "^18.1.0",
-      "nx": "^17.0.1"
     },
     "@commitlint/config-nx-scopes": {
       "nx": "^17.0.1"
