@@ -25,6 +25,6 @@
       }
     }
   },
-  "tags": [],
+  "tags": ["e2e"],
   "implicitDependencies": ["feat-lazy-gravity-rocks"]
 }

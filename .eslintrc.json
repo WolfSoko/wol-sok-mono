@@ -16,6 +16,10 @@
                 "onlyDependOnLibsWithTags": ["shared", "feature", "feature:lazy", "api"]
               },
               {
+                "sourceTag": "e2e",
+                "onlyDependOnLibsWithTags": ["shared"]
+              },
+              {
                 "sourceTag": "feature",
                 "onlyDependOnLibsWithTags": ["feat-shared", "shared", "api"]
               },
