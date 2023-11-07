@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.25.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.24.0...v3.25.0) (2023-11-07)
+
+
+### Features
+
+* **feat-lazy-gravity-rocks:** ✨ complete rework. ([32a37fd](https://github.com/WolfSoko/wol-sok-mono/commit/32a37fd7fa6837ff88dbcc1abccf9538d9038382))
+
 ## [3.24.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.20...v3.24.0) (2023-11-07)
 
 
