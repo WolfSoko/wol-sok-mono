@@ -41,6 +41,17 @@ export class Vector2d {
     return this.sub(vector).norm();
   }
 
+  public orthogonalTo(vector: Vector2d): Vector2d {
+    const dirTo: Vector2d = this.directionTo(vector);
+    return new Vector2d(dirTo.y, -dirTo.x);
+  }
+
+  public rotate(angle: number): Vector2d {
+    const x: number = this.x * Math.cos(angle) - this.y * Math.sin(angle);
+    const y: number = this.x * Math.sin(angle) + this.y * Math.cos(angle);
+    return new Vector2d(x, y);
+  }
+
   public norm(): Vector2d {
     return this.div(this.length());
   }

@@ -19,28 +19,31 @@
             <mat-hint>The more mass the more gravitational attraction</mat-hint>
           </mat-form-field>
         </p>
-        <ng-container *wsLet="running$ | async as running">
+        <div>
           <button
             data-qa="cta-start"
             mat-raised-button
-            [color]="running ? 'accent' : 'primary'"
-            (click)="toggleSim(running)"
+            [color]="running() ? 'accent' : 'primary'"
+            (click)="toggleSim()"
           >
-            {{ running ? 'Pause' : 'Start' }}
+            {{ running() ? 'Pause' : 'Start' }}
           </button>
-        </ng-container>
+          <button data-qa="cta-reset" mat-raised-button color="accent" (click)="reset()">Reset</button>
+        </div>
       </form>
       <mat-list>
         <mat-toolbar id="infos">Infos</mat-toolbar>
         <mat-list-item>
           <span class="planetCount"> PlanetCount = 1 </span>
         </mat-list-item>
-        <mat-list-item>
-          <span class="planetCount"> PlanetCoords.x = {{ x$ | async }} PlanetCoords.y = {{ y$ | async }} </span>
+        <mat-list-item *ngFor="let planet of planets(); let i = index">
+          <span class="planetCount">
+            Planet {{ i + 1 }}: x= {{ planet.pos.x | number: '1.0-0' }}, y= {{ planet.pos.y | number: '1.0-0' }}
+          </span>
         </mat-list-item>
-        <mat-list-item>
+        <!--<mat-list-item>
           <span class="planetCount"> drag.x = {{ (drag$ | async)?.x }} drag.y = {{ (drag$ | async)?.y }} </span>
-        </mat-list-item>
+        </mat-list-item>-->
       </mat-list>
     </mat-card-content>
   </mat-card>
@@ -56,8 +59,14 @@
         [attr.viewBox]="'0 0 ' + MAX_DIM.x + ' ' + MAX_DIM.y"
       >
         <g>
-          <circle [attr.cx]="x$ | async" [attr.cy]="y$ | async" r="10" fill="red"></circle>
-          <circle id="sun" [attr.cx]="mouseX$ | async" [attr.cy]="mouseY$ | async" r="25" fill="yellow"></circle>
+          <circle
+            *ngFor="let planet of planets()"
+            [attr.cx]="planet.pos.x"
+            [attr.cy]="planet.pos.y"
+            [attr.r]="planet.mass / 10"
+            fill="red"
+          ></circle>
+          <circle id="sun" [attr.cx]="sun.pos.x" [attr.cy]="sun.pos.y" r="25" fill="yellow"></circle>
         </g>
       </svg>
     </mat-card-content>

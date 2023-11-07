@@ -38,4 +38,14 @@ describe('GravityWorldComponent', () => {
     spectator.click(qaSelector('cta-start'));
     expect(spectator.query(qaSelector('cta-start'))).toHaveText('Start');
   });
+
+  it('should have a reset button', () => {
+    expect(spectator.query(qaSelector('cta-reset'))).toHaveText('Reset');
+  });
+
+  it('should stop simulation on reset', () => {
+    spectator.click(qaSelector('cta-start'));
+    spectator.click(qaSelector('cta-reset'));
+    expect(spectator.query(qaSelector('cta-start'))).toHaveText('Start');
+  });
 });

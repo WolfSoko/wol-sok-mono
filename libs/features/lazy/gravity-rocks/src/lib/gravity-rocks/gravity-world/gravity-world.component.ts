@@ -1,5 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ElementRef, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  ElementRef,
+  Signal,
+  signal,
+  ViewChild,
+  WritableSignal,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -8,34 +18,16 @@ import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { ElemResizedDirective, LetDirective, ResizedEvent } from '@wolsok/ui-kit';
-import {
-  BehaviorSubject,
-  combineLatest,
-  EMPTY,
-  interval,
-  last,
-  map,
-  Observable,
-  of,
-  ReplaySubject,
-  scan,
-  shareReplay,
-  startWith,
-  Subject,
-  switchMap,
-  takeUntil,
-  timeInterval,
-  withLatestFrom,
-} from 'rxjs';
-import { TimeInterval } from './time-interval';
+import { last, map, Observable, Subject, switchMap, takeUntil, tap } from 'rxjs';
+import { GravityWorldService } from './gravity-world.service';
 import { Vector2d } from './vector-2d';
+import { SpringForce } from './world-objects/force';
+import { Planet } from './world-objects/planet';
+import { Sun } from './world-objects/sun';
 
-class Planet {
-  constructor(
-    public x: number,
-    public y: number,
-    public mass: number
-  ) {}
+interface Settings {
+  gravitationalConstant: number;
+  massOfSun: number;
 }
 
 @Component({
@@ -58,8 +50,9 @@ class Planet {
   ],
 })
 export class GravityWorldComponent {
-  private static readonly INITIAL_MASS_OF_SUN: number = 50000.0;
-  private static readonly INITIAL_GRAVITY_CONSTANT: number = 100.0;
+  private static readonly INITIAL_MASS_OF_SUN: number = 100000.0;
+  private static readonly INITIAL_GRAVITY_CONSTANT: number = 6;
+  public MAX_DIM: Vector2d = Vector2d.create(1000, (1000 / 5) * 3);
 
   @ViewChild('svgWorld')
   svgWorld!: ElementRef<SVGSVGElement>;
@@ -68,47 +61,24 @@ export class GravityWorldComponent {
     gravitationalConstant: FormControl<number>;
     massOfSun: FormControl<number>;
   }>;
-  public MAX_DIM: Vector2d = Vector2d.create(1000, (1000 / 5) * 3);
 
-  x$: Observable<number>;
-  y$: Observable<number>;
-  mouseX$: Observable<number>;
-  mouseY$: Observable<number>;
-  private readonly massSun$: Observable<number>;
-  private readonly gravitationalConstant$: Observable<number>;
-  private CENTER_POS: Vector2d = this.MAX_DIM.div(2);
-  private planetsSubject$: Subject<Planet> = new Subject();
-  public planets$: Observable<Planet[]> = this.planetsSubject$
-    .asObservable()
-    .pipe(scan((allPlanets: Array<Planet>, newPlanet: Planet) => [...allPlanets, newPlanet], []));
-  public planetsAmount$: Observable<number> = this.planets$.pipe(
-    map((planets: Array<Planet>) => planets.length),
-    startWith(0)
-  );
-  private containerSizeSubject$: Subject<Vector2d> = new ReplaySubject<Vector2d>(1);
-  private targetCoordinatesSubject: Subject<Vector2d> = new Subject<Vector2d>();
-  private targetCoordinates$: Observable<Vector2d> = combineLatest([
-    this.targetCoordinatesSubject.asObservable(),
-    this.containerSizeSubject$,
-    of(this.MAX_DIM),
-  ]).pipe(
-    map(([coords, containerSize, maxDims]) => {
-      return coords.vMul(maxDims.vDiv(containerSize));
-    }),
-    shareReplay(1)
-  );
-  private positionSubject$: Subject<Vector2d> = new Subject<Vector2d>();
-  private position$: Observable<Vector2d> = this.positionSubject$.asObservable().pipe(shareReplay(1));
-  private runningSubject: Subject<boolean> = new BehaviorSubject<boolean>(false);
-  public running$: Observable<boolean> = this.runningSubject.asObservable();
+  private settings: Signal<Settings>;
+
+  public running = signal(false);
+  sun!: Sun;
+  planets: WritableSignal<Planet[]> = signal([]);
+
+  private canvasSize: WritableSignal<Vector2d> = signal(this.MAX_DIM);
+
   private mouseDown$: Subject<MouseEvent> = new Subject();
   private mouseMove$: Subject<MouseEvent> = new Subject();
   private mouseUp$: Subject<MouseEvent> = new Subject();
 
-  drag$: Observable<Vector2d> = this.mouseDown$.asObservable().pipe(
-    switchMap(() =>
+  drag$: Observable<{ start: Vector2d; end: Vector2d }> = this.mouseDown$.asObservable().pipe(
+    map((mouseDownEvent: MouseEvent) => Vector2d.create(mouseDownEvent.offsetX, mouseDownEvent.offsetY)),
+    switchMap((start: Vector2d) =>
       this.mouseMove$.asObservable().pipe(
-        map((mm: MouseEvent) => Vector2d.create(mm.offsetX, mm.offsetY)),
+        map((mm: MouseEvent) => ({ start, end: Vector2d.create(mm.offsetX, mm.offsetY) })),
         takeUntil(this.mouseUp$.asObservable())
       )
     )
@@ -119,99 +89,68 @@ export class GravityWorldComponent {
     last()
   );
 
-  constructor(nNfB: NonNullableFormBuilder) {
-    this.form = nNfB.group({
+  private sunToMouseSpring!: SpringForce;
+
+  constructor(
+    private readonly worldService: GravityWorldService,
+    nNfB: NonNullableFormBuilder
+  ) {
+    const initialSettings: Settings = {
       gravitationalConstant: GravityWorldComponent.INITIAL_GRAVITY_CONSTANT,
       massOfSun: GravityWorldComponent.INITIAL_MASS_OF_SUN,
-    });
-    this.massSun$ = this.form.controls.massOfSun.valueChanges;
-    this.gravitationalConstant$ = this.form.controls.gravitationalConstant.valueChanges;
-    const centerPositionMapper: (targetVector: Vector2d) => Vector2d = (targetVector: Vector2d) =>
-      targetVector.sub(this.CENTER_POS);
-
-    const centeredTargetCoordinates$: Observable<Vector2d> = this.targetCoordinates$.pipe(map(centerPositionMapper));
-
-    const timedTargetCoordinates$: Observable<TimeInterval<Vector2d>> = this.running$.pipe(
-      switchMap((simStart: boolean) => {
-        if (simStart) {
-          return interval(10).pipe(timeInterval());
-        }
-        return EMPTY;
-      }),
-      withLatestFrom(centeredTargetCoordinates$),
-      map(([interval, targetCoordinates]) => new TimeInterval(targetCoordinates, interval.interval / 1000))
-    );
-
-    const centeredPosition$: Observable<Vector2d> = this.position$.pipe(map(centerPositionMapper));
-
-    const calculateGravityForce: (
-      position1: TimeInterval<Vector2d>,
-      position2: Vector2d,
-      mass1: number,
-      mass2: number,
-      gravityConst: number
-    ) => TimeInterval<Vector2d> = (
-      position1: TimeInterval<Vector2d>,
-      position2: Vector2d,
-      mass1: number,
-      mass2: number,
-      gravityConst: number
-    ) => {
-      const distance: number = position1.value.dist(position2);
-      const interval: number = position1.interval;
-      if (Math.abs(distance) <= 0.5) {
-        return new TimeInterval(Vector2d.zero, interval);
-      }
-      // newtons law shortened to a1 = G * m2 / r²
-      // the power of 1.3 is to make the simulation more interesting
-      const forceAmount: number = gravityConst * mass2 * (1 / Math.pow(distance, 1.3));
-      const directedForce: Vector2d = position1.value.directionTo(position2).mul(forceAmount);
-      return new TimeInterval(directedForce.mul(interval), interval);
     };
+    this.form = nNfB.group(initialSettings);
 
-    const gravitationalForceToApply$: Observable<TimeInterval<Vector2d>> = timedTargetCoordinates$.pipe(
-      withLatestFrom(centeredPosition$, of(1), this.massSun$, this.gravitationalConstant$, calculateGravityForce)
+    this.settings = toSignal(this.form.valueChanges.pipe(map(() => this.form.getRawValue() as Settings)), {
+      initialValue: initialSettings,
+    });
+    this.initializeSunAndPlanets();
+    this.initializeDragSunToMouseSpring();
+
+    this.updatePlanets();
+
+    effect(() => {
+      this.worldService.setUniverse(this.canvasSize().x, this.canvasSize().y, this.form.value.gravitationalConstant!);
+    });
+    effect(() => (this.running() ? this.gameLoop() : null));
+  }
+
+  private initializeSunAndPlanets(): void {
+    this.sun = new Sun(this.calcCenteredVec(), undefined, GravityWorldComponent.INITIAL_MASS_OF_SUN);
+
+    this.worldService.addWorldObject(this.sun);
+
+    this.worldService.addWorldObject(new Planet(this.calcCenteredVec(new Vector2d(0, 100)), new Vector2d(-40, 0), 100));
+    const planet2Pos: Vector2d = new Vector2d(-200, -150);
+    this.worldService.addWorldObject(
+      new Planet(this.calcCenteredVec(planet2Pos), planet2Pos.orthogonalTo(this.sun.pos).mul(30), 200)
     );
+  }
 
-    const velocity$: Observable<TimeInterval<Vector2d>> = gravitationalForceToApply$.pipe(
-      scan(
-        (oldVelocity: TimeInterval<Vector2d>, forceInterval: TimeInterval<Vector2d>) => {
-          const newVelocity: Vector2d = oldVelocity.value.add(forceInterval.value.mul(forceInterval.interval));
-          return new TimeInterval(newVelocity, forceInterval.interval);
-        },
-        new TimeInterval(Vector2d.create(-100, 0), 20)
-      )
-    );
-    const nextPosition$: Observable<Vector2d> = velocity$.pipe(
-      withLatestFrom(this.position$),
-      map(([timedVelocity, position]) => position.add(timedVelocity.value.mul(timedVelocity.interval)))
-    );
-    nextPosition$.subscribe((position) => this.positionSubject$.next(position));
-    this.x$ = this.position$.pipe(map((vec: Vector2d) => vec.x));
-    this.y$ = this.position$.pipe(map((vec: Vector2d) => vec.y));
-    this.mouseX$ = this.targetCoordinates$.pipe(map((vec: Vector2d) => vec.x));
-    this.mouseY$ = this.targetCoordinates$.pipe(map((vec: Vector2d) => vec.y));
+  private calcCenteredVec(vec: Vector2d = new Vector2d(0, 0)): Vector2d {
+    return this.canvasSize().div(2).add(vec);
+  }
 
-    this.positionSubject$.next(this.CENTER_POS.sub(Vector2d.create(0, 100)));
-    this.targetCoordinatesSubject.next(this.CENTER_POS);
-
-    // trigger initial value changes
-    this.form.enable();
+  private updatePlanets(): void {
+    this.planets.set(this.worldService.getWorldObjects().filter((wo) => wo instanceof Planet) as Array<Planet>);
   }
 
   resize($event: ResizedEvent) {
-    this.containerSizeSubject$.next(new Vector2d($event.newWidth, $event.newHeight));
+    this.canvasSize.set(new Vector2d($event.newWidth, $event.newHeight));
   }
 
   mouseDown($event: MouseEvent): void {
     this.noDrag$.subscribe({
-      next: (event: MouseEvent) => this.addPlanet(event),
+      // next: (event: MouseEvent) => this.addPlanet(event),
       error: (error) => console.error('error while no dragging', error),
       complete: () => console.log('end click'),
     });
 
     this.drag$.subscribe({
-      next: (coord: Vector2d) => this.targetCoordinatesSubject.next(coord),
+      next: ({ end }) => {
+        const svgCoordinate: Vector2d = this.toSVGCoordinates(end);
+        this.sunToMouseSpring.updateSpringEnd(svgCoordinate);
+      },
       error: (error) => console.error('error while dragging', error),
       complete: () => console.log('end drag'),
     });
@@ -226,20 +165,56 @@ export class GravityWorldComponent {
     this.mouseMove$.next($event);
   }
 
-  addPlanet($event: MouseEvent): void {
-    console.log('addPlanet');
-    this.planetsSubject$.next(new Planet($event.offsetX, $event.offsetY, 200));
-  }
-
   startSim(): void {
-    this.runningSubject.next(true);
+    this.running.set(true);
   }
 
   stopSim(): void {
-    this.runningSubject.next(false);
+    this.running.set(false);
   }
 
-  toggleSim(running: boolean): void {
-    running ? this.stopSim() : this.startSim();
+  toggleSim(): void {
+    this.running.update((running) => !running);
+  }
+
+  private gameLoop(lastFrameTime?: number): void | null {
+    requestAnimationFrame((time) => {
+      if (!this.running()) {
+        return;
+      }
+      const deltaTime: number = lastFrameTime ? (time - lastFrameTime) / 1000 : 1 / 120;
+      this.worldService.calcNextTick(deltaTime);
+      this.updatePlanets();
+      this.gameLoop(time);
+    });
+  }
+
+  reset(): void {
+    this.stopSim();
+    this.worldService.removeAll();
+
+    const initialSetting = {
+      gravitationalConstant: GravityWorldComponent.INITIAL_GRAVITY_CONSTANT,
+      massOfSun: GravityWorldComponent.INITIAL_MASS_OF_SUN,
+    };
+    this.form.setValue(initialSetting);
+
+    this.initializeSunAndPlanets();
+    this.initializeDragSunToMouseSpring();
+  }
+
+  private toSVGCoordinates(end: Vector2d): Vector2d {
+    // get coordiantes in svg space
+    const svgWorld: SVGSVGElement = this.svgWorld.nativeElement;
+    const pt: SVGPoint = svgWorld.createSVGPoint();
+    pt.x = end.x;
+    pt.y = end.y;
+    const endInSVGCoords: SVGPoint = pt.matrixTransform(svgWorld.getCTM()!.inverse());
+    return new Vector2d(endInSVGCoords.x, endInSVGCoords.y);
+  }
+
+  private initializeDragSunToMouseSpring(): void {
+    this.sunToMouseSpring = new SpringForce(this.sun, this.sun.mass);
+    this.worldService.addForceObject(this.sunToMouseSpring);
   }
 }
