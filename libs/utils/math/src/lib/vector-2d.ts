@@ -1,3 +1,7 @@
+export function vec2(x = 0, y = 0): Vector2d {
+  return Vector2d.create(x, y);
+}
+
 export class Vector2d {
   public static zero: Vector2d = new Vector2d(0.0, 0.0);
 

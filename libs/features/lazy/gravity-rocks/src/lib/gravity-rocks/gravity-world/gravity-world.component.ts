@@ -6,8 +6,10 @@ import {
   ElementRef,
   Signal,
   signal,
+  computed,
   ViewChild,
   WritableSignal,
+  TrackByFunction,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -17,13 +19,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { ElemResizedDirective, LetDirective, ResizedEvent } from '@wolsok/ui-kit';
-import { last, map, Observable, Subject, switchMap, takeUntil } from 'rxjs';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ElemResizedDirective, LetDirective } from '@wolsok/ui-kit';
+import { vec2, Vector2d } from '@wolsok/utils-math';
+import { map, Observable, Subject, switchMap, take, takeUntil } from 'rxjs';
 import { GravityWorldService } from './gravity-world.service';
-import { Vector2d } from './vector-2d';
-import { SpringForce } from './world-objects/force';
+import { Force, SpringForce } from './world-objects/force';
 import { Planet } from './world-objects/planet';
 import { Sun } from './world-objects/sun';
+import { WorldObject } from './world-objects/world-object';
 
 interface Settings {
   gravitationalConstant: number;
@@ -47,6 +51,7 @@ interface Settings {
     LetDirective,
     ElemResizedDirective,
     MatIconModule,
+    MatTooltipModule,
   ],
 })
 export class GravityWorldComponent {
@@ -68,32 +73,33 @@ export class GravityWorldComponent {
   sun!: Sun;
   planets: WritableSignal<Planet[]> = signal([]);
 
-  private canvasSize: WritableSignal<Vector2d> = signal(this.MAX_DIM);
+  forces: WritableSignal<Force[]> = signal([]);
+
+  canvasSize: WritableSignal<Vector2d> = signal(this.MAX_DIM);
 
   private mouseDown$: Subject<MouseEvent> = new Subject();
   private mouseMove$: Subject<MouseEvent> = new Subject();
   private mouseUp$: Subject<MouseEvent> = new Subject();
 
-  drag$: Observable<{ start: Vector2d; end: Vector2d }> = this.mouseDown$.asObservable().pipe(
-    map((mouseDownEvent: MouseEvent) => Vector2d.create(mouseDownEvent.offsetX, mouseDownEvent.offsetY)),
-    switchMap((start: Vector2d) =>
+  drag$: Observable<{ end: Vector2d }> = this.mouseDown$.asObservable().pipe(
+    take(1),
+    switchMap(() =>
       this.mouseMove$.asObservable().pipe(
-        map((mm: MouseEvent) => ({ start, end: Vector2d.create(mm.offsetX, mm.offsetY) })),
+        map((mm: MouseEvent) => ({ end: Vector2d.create(mm.offsetX, mm.offsetY) })),
         takeUntil(this.mouseUp$.asObservable())
       )
     )
   );
 
   private noDrag$: Observable<MouseEvent> = this.mouseDown$.asObservable().pipe(
-    switchMap(() => this.mouseUp$.asObservable().pipe(takeUntil(this.mouseMove$.asObservable()))),
-    last()
+    take(1),
+    switchMap(() => this.mouseUp$.asObservable().pipe(takeUntil(this.mouseMove$.asObservable())))
   );
-
-  private sunToMouseSpring!: SpringForce;
+  trackByPlanet: TrackByFunction<Planet> = (index, planet) => planet.pos;
 
   constructor(
-    private readonly worldService: GravityWorldService,
-    nNfB: NonNullableFormBuilder
+    readonly worldService: GravityWorldService,
+    readonly nNfB: NonNullableFormBuilder
   ) {
     const initialSettings: Settings = {
       gravitationalConstant: GravityWorldComponent.INITIAL_GRAVITY_CONSTANT,
@@ -105,9 +111,8 @@ export class GravityWorldComponent {
       initialValue: initialSettings,
     });
     this.initializeSunAndPlanets();
-    this.initializeDragSunToMouseSpring();
 
-    this.updatePlanets();
+    this.updateSignals();
 
     effect(() => {
       this.worldService.setUniverse(this.canvasSize().x, this.canvasSize().y, this.settings().gravitationalConstant);
@@ -120,41 +125,59 @@ export class GravityWorldComponent {
 
     this.worldService.addWorldObject(this.sun);
 
-    this.worldService.addWorldObject(new Planet(this.calcCenteredVec(new Vector2d(0, 100)), new Vector2d(-40, 0), 100));
-    const planet2Pos: Vector2d = new Vector2d(-200, -150);
+    this.worldService.addWorldObject(new Planet(this.calcCenteredVec(vec2(0, 100)), vec2(-40, 0), 100));
+    const planet2Pos: Vector2d = vec2(-200, -150);
     this.worldService.addWorldObject(
       new Planet(this.calcCenteredVec(planet2Pos), planet2Pos.orthogonalTo(this.sun.pos).mul(30), 200)
     );
+    this.updateSignals();
   }
 
-  private calcCenteredVec(vec: Vector2d = new Vector2d(0, 0)): Vector2d {
+  private calcCenteredVec(vec: Vector2d = vec2(0, 0)): Vector2d {
     return this.canvasSize().div(2).add(vec);
   }
 
-  private updatePlanets(): void {
+  private updateSignals(): void {
     this.planets.set(this.worldService.getWorldObjects().filter((wo) => wo instanceof Planet) as Array<Planet>);
+    this.forces.set(this.worldService.getForces());
   }
 
-  resize($event: ResizedEvent) {
-    this.canvasSize.set(new Vector2d($event.newWidth, $event.newHeight));
+  private findWorldObject(target: SVGElement): WorldObject | undefined {
+    return this.worldService.getWorldObjects().find((wo) => wo.id === target.id);
   }
 
   mouseDown($event: MouseEvent): void {
-    this.noDrag$.subscribe({
-      // next: (event: MouseEvent) => this.addPlanet(event),
+    let wo = this.findWorldObject($event.target as SVGElement);
+    if (!wo) {
+      const pos = vec2($event.offsetX, $event.offsetY);
+      wo = this.createRandomPlanetAt(pos);
+      this.worldService.addWorldObject(wo);
+    }
+    const springForce = new SpringForce(wo);
+    this.worldService.addForceObject(springForce);
+    this.updateSignals();
+
+    /*this.noDrag$.subscribe({
+      next: (event: MouseEvent) => console.log('noDrag$ next', event),
       error: (error) => console.error('error while no dragging', error),
-      complete: () => console.log('end click'),
-    });
+      complete: () => console.log('end noDrag$ click'),
+    });*/
 
     this.drag$.subscribe({
-      next: ({ end }) => {
-        const svgCoordinate: Vector2d = this.toSVGCoordinates(end);
-        this.sunToMouseSpring.updateSpringEnd(svgCoordinate);
+      next: ({ end }) => springForce.updateSpringEnd(this.toSVGCoordinates(end)),
+
+      error: (error) => {
+        console.error('error while dragging', error);
+        this.removeForce(springForce);
       },
-      error: (error) => console.error('error while dragging', error),
-      complete: () => console.log('end drag'),
+      complete: () => this.removeForce(springForce),
     });
     this.mouseDown$.next($event);
+  }
+
+  private removeForce(springForce: SpringForce): void {
+    this.worldService.removeForceObject(springForce);
+    this.updateSignals();
   }
 
   mouseUp($event: MouseEvent): void {
@@ -163,10 +186,6 @@ export class GravityWorldComponent {
 
   mouseMove($event: MouseEvent): void {
     this.mouseMove$.next($event);
-  }
-
-  startSim(): void {
-    this.running.set(true);
   }
 
   stopSim(): void {
@@ -184,7 +203,7 @@ export class GravityWorldComponent {
       }
       const deltaTime: number = lastFrameTime ? (time - lastFrameTime) / 1000 : 1 / 120;
       this.worldService.calcNextTick(deltaTime);
-      this.updatePlanets();
+      this.updateSignals();
       this.gameLoop(time);
     });
   }
@@ -200,25 +219,29 @@ export class GravityWorldComponent {
     this.form.setValue(initialSetting);
 
     this.initializeSunAndPlanets();
-    this.initializeDragSunToMouseSpring();
   }
 
-  private toSVGCoordinates(end: Vector2d): Vector2d {
+  private toSVGCoordinates({ x, y }: Vector2d): Vector2d {
     // get coordiantes in svg space
     const svgWorld: SVGSVGElement = this.svgWorld.nativeElement;
     const pt: SVGPoint = svgWorld.createSVGPoint();
-    pt.x = end.x;
-    pt.y = end.y;
-    const screenCTM: DOMMatrix | null = svgWorld.getScreenCTM();
-    if (!screenCTM) {
-      throw new Error('screenCTM is null');
+    pt.x = x;
+    pt.y = y;
+    const ctm: DOMMatrix | null = svgWorld.getCTM();
+    if (!ctm) {
+      throw new Error('ctm is null');
     }
-    const endInSVGCoords: SVGPoint = pt.matrixTransform(screenCTM.inverse());
-    return new Vector2d(endInSVGCoords.x, endInSVGCoords.y);
+    const endInSVGCoords: SVGPoint = pt.matrixTransform(ctm.inverse());
+    return vec2(endInSVGCoords.x, endInSVGCoords.y);
   }
 
-  private initializeDragSunToMouseSpring(): void {
-    this.sunToMouseSpring = new SpringForce(this.sun, this.sun.mass);
-    this.worldService.addForceObject(this.sunToMouseSpring);
+  private createRandomPlanetAt(pos: Vector2d): Planet {
+    const planet: Planet = new Planet(this.toSVGCoordinates(pos), undefined, Math.random() * 400 + 30);
+    return planet;
+  }
+
+  removePlanet(planet: Planet): void {
+    this.worldService.removeWorldObject(planet);
+    this.updateSignals();
   }
 }

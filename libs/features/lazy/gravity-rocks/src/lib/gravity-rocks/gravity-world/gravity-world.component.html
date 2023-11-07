@@ -9,66 +9,79 @@
           <mat-form-field appearance="outline">
             <mat-label>Gravitational Force</mat-label>
             <input matInput type="number" formControlName="gravitationalConstant" />
-            <mat-hint>The gravitational constant</mat-hint>
+            <mat-hint>Gravitational constant</mat-hint>
           </mat-form-field>
         </p>
         <p>
           <mat-form-field appearance="outline">
             <mat-label>Mass of Sun</mat-label>
             <input matInput type="number" formControlName="massOfSun" />
-            <mat-hint>The more mass the more gravitational attraction</mat-hint>
+            <mat-hint>More mass more gravity</mat-hint>
           </mat-form-field>
         </p>
-        <div>
-          <button
-            data-qa="cta-start"
-            mat-raised-button
-            [color]="running() ? 'accent' : 'primary'"
-            (click)="toggleSim()"
-          >
-            {{ running() ? 'Pause' : 'Start' }}
-          </button>
-          <button data-qa="cta-reset" mat-raised-button color="accent" (click)="reset()">Reset</button>
-        </div>
       </form>
-      <mat-list>
-        <mat-toolbar id="infos">Infos</mat-toolbar>
+      <mat-list class="info-list">
+        <h4 mat-subheader>Infos</h4>
         <mat-list-item>
-          <span class="planetCount"> PlanetCount = 1 </span>
+          <span>Planets = {{ planets().length }}</span>
+        </mat-list-item>
+        <mat-list-item>
+          <span>Forces = {{ worldService.getForces().length }}</span>
         </mat-list-item>
         <mat-list-item *ngFor="let planet of planets(); let i = index">
-          <span class="planetCount">
-            Planet {{ i + 1 }}: x= {{ planet.pos.x | number: '1.0-0' }}, y= {{ planet.pos.y | number: '1.0-0' }}
-          </span>
+          <div class="planet-info-item">
+            <span [style.background-color]="planet.color">
+              Planet{{ i + 1 }}: x={{ planet.pos.x | number: '1.0-0' }},y={{ planet.pos.y | number: '1.0-0' }}
+            </span>
+            <button mat-icon-button (click)="removePlanet(planet)">
+              <mat-icon aria-label="Remove planet">delete_forever</mat-icon>
+            </button>
+          </div>
         </mat-list-item>
-        <!--<mat-list-item>
-          <span class="planetCount"> drag.x = {{ (drag$ | async)?.x }} drag.y = {{ (drag$ | async)?.y }} </span>
-        </mat-list-item>-->
       </mat-list>
+      <mat-card-actions>
+        <button data-qa="cta-reset" mat-raised-button color="accent" (click)="reset()">Reset</button>
+        <button data-qa="cta-start" mat-raised-button [color]="running() ? 'accent' : 'primary'" (click)="toggleSim()">
+          {{ running() ? 'Pause' : 'Start' }}
+        </button>
+      </mat-card-actions>
     </mat-card-content>
   </mat-card>
   <mat-card appearance="raised" class="gravitational-force-card">
-    <mat-toolbar color="primary">See the action</mat-toolbar>
-    <mat-card-content (wsSharedUiElemResized)="resize($event)" [debounceTime]="300">
-      <svg
-        #svgWorld
-        class="world-svg"
-        (mousedown)="mouseDown($event)"
-        (mousemove)="mouseMove($event)"
-        (mouseup)="mouseUp($event)"
-        [attr.viewBox]="'0 0 ' + MAX_DIM.x + ' ' + MAX_DIM.y"
-      >
-        <g>
-          <circle
-            *ngFor="let planet of planets()"
-            [attr.cx]="planet.pos.x"
-            [attr.cy]="planet.pos.y"
-            [attr.r]="planet.mass / 10"
-            fill="red"
-          ></circle>
-          <circle id="sun" [attr.cx]="sun.pos.x" [attr.cy]="sun.pos.y" r="25" fill="yellow"></circle>
-        </g>
-      </svg>
-    </mat-card-content>
+    <mat-toolbar color="primary">Enjoy, click and drag to manipulate.</mat-toolbar>
+    <svg
+      #svgWorld
+      class="world-svg"
+      (mousedown)="mouseDown($event)"
+      (mousemove)="mouseMove($event)"
+      (mouseup)="mouseUp($event)"
+      [attr.viewBox]="'0 0 ' + canvasSize().x + ' ' + canvasSize().y"
+    >
+      <defs>
+        <marker id="head" orient="auto" markerWidth="3" markerHeight="4" refX="0.1" refY="2">
+          <path d="M0,0 V4 L2,2 Z" fill="darkred" />
+        </marker>
+      </defs>
+      <g>
+        <circle
+          class="world-object"
+          *ngFor="let planet of planets()"
+          [id]="planet.id"
+          [attr.cx]="planet.pos.x"
+          [attr.cy]="planet.pos.y"
+          [attr.r]="planet.mass / 10"
+          [attr.fill]="planet.color"
+        ></circle>
+        <circle
+          class="world-object"
+          [id]="sun.id"
+          [attr.cx]="sun.pos.x"
+          [attr.cy]="sun.pos.y"
+          r="25"
+          fill="#ffffab"
+        ></circle>
+        <path *ngFor="let force of forces()" d="" />
+      </g>
+    </svg>
   </mat-card>
 </div>

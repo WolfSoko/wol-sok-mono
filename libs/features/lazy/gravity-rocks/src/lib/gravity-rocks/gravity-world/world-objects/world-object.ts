@@ -1,15 +1,16 @@
-import { Vector2d } from '../vector-2d';
+import { uuid, vec2, Vector2d } from '@wolsok/utils-math';
 
 export class WorldObject {
   public pos: Vector2d;
-  vel: Vector2d = new Vector2d(0, 0);
-  private acc: Vector2d = new Vector2d(0, 0);
+  vel: Vector2d = vec2(0, 0);
+  private acc: Vector2d = vec2(0, 0);
   public isStatic = false;
 
   constructor(
     pos: Vector2d,
-    vel: Vector2d = new Vector2d(0, 0),
-    public mass: number
+    vel: Vector2d = vec2(0, 0),
+    public mass: number,
+    public id: string = uuid()
   ) {
     this.pos = pos;
     this.vel = vel;
@@ -28,7 +29,7 @@ export class WorldObject {
     // This is the method of Verlet integration for better accuracy
     this.vel = this.vel.add(dVelocityHalf);
 
-    this.acc = new Vector2d(0, 0);
+    this.acc = vec2(0, 0);
   }
 
   distanceTo(other: WorldObject): number {

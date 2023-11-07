@@ -1,4 +1,4 @@
-import { Vector2d } from '../vector-2d';
+import { Vector2d } from '@wolsok/utils-math';
 import { WorldObject } from './world-object';
 
 export interface Force {
@@ -10,7 +10,8 @@ export class SpringForce implements Force {
 
   constructor(
     private wo: WorldObject,
-    private springStrength: number
+    private springStrength: number = wo.mass,
+    private dampingStrength: number = wo.mass
   ) {
     this.springEnd = wo.pos;
   }
@@ -28,9 +29,7 @@ export class SpringForce implements Force {
     const forceMagnitude: number = -this.springStrength * distance;
     const directedForce: Vector2d = forceDirection.mul(forceMagnitude);
 
-    // damping
-    const damping = 100000;
-    const dampingForce: Vector2d = woToApply.vel.mul(-damping);
+    const dampingForce: Vector2d = woToApply.vel.mul(-this.dampingStrength);
 
     woToApply.applyForce(directedForce.add(dampingForce), dT, true);
   }

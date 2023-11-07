@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { Force } from './world-objects/force';
+import { Injectable, Signal, signal, WritableSignal } from '@angular/core';
+import { Force, SpringForce } from './world-objects/force';
 import { WorldObject } from './world-objects/world-object';
 
 @Injectable({
@@ -41,6 +41,10 @@ export class GravityWorldService {
     return Array.from(this.worldObjects);
   }
 
+  removeWorldObject(woToRemove: WorldObject): void {
+    this.worldObjects = this.worldObjects.filter((wo) => wo !== woToRemove);
+  }
+
   getForces(): Array<Force> {
     return Array.from(this.forces);
   }
@@ -52,5 +56,9 @@ export class GravityWorldService {
 
   addForceObject(forceObj: Force): void {
     this.forces.add(forceObj);
+  }
+
+  removeForceObject(springForce: Force): boolean {
+    return this.forces.delete(springForce);
   }
 }

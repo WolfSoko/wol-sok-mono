@@ -32,7 +32,8 @@
       "@wolsok/utils-decorators": ["libs/utils/decorators/src/index.ts"],
       "@wolsok/utils-gpu-calc": ["libs/utils/gpu-calc/src/index.ts"],
       "@wolsok/utils-measure-fps": ["libs/utils/measure-fps/src/index.ts"],
-      "@wolsok/utils-operators": ["libs/utils/operators/src/index.ts"]
+      "@wolsok/utils-operators": ["libs/utils/operators/src/index.ts"],
+      "@wolsok/utils-math": ["libs/utils/math/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

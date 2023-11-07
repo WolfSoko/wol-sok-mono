@@ -1,4 +1,4 @@
 import { filter } from 'rxjs';
-import { notNull } from '../not-null';
+import { notNil } from '../not.nil';
 
-export const filterNotNil = filter(notNull);
+export const filterNotNil = filter(notNil);

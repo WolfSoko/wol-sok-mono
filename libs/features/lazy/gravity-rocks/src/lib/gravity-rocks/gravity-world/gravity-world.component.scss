@@ -8,7 +8,7 @@
 }
 
 .gravitational-force-card-controls {
-  margin: 16px;
+  height: 100%;
 
   .configuration {
     display: flex;
@@ -17,6 +17,22 @@
     align-items: center;
     justify-content: space-around;
     gap: 8px;
+    overflow: auto;
+  }
+  .info-list {
+    max-height: 400px;
+    overflow: auto;
+
+    .planet-info-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+  mat-list-item {
+    height: 32px;
+    padding-left: 8px;
+    padding-right: 8px;
   }
 }
 
@@ -26,6 +42,6 @@
   background-color: black;
 }
 
-#sun {
+.world-object {
   cursor: grab;
 }

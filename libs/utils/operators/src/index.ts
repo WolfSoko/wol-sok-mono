@@ -5,5 +5,5 @@ export * from './lib/rx/delta.op';
 export { movingAverage } from './lib/moving-average';
 export { round } from './lib/round';
 export { roundOp } from './lib/rx/round.op';
-export { notNull } from './lib/not-null';
+export { notNil } from './lib/not.nil';
 export * from './lib/rx/filter-less-equal.op';
