@@ -35,6 +35,8 @@ interface Settings {
   massOfSun: number;
 }
 
+const SVG_VIEW_PORT_SIZE = 3000;
+
 @Component({
   standalone: true,
   selector: 'feat-lazy-gravity-world',
@@ -56,9 +58,9 @@ interface Settings {
   ],
 })
 export class GravityWorldComponent {
-  private static readonly INITIAL_MASS_OF_SUN: number = 100000.0;
-  private static readonly INITIAL_GRAVITY_CONSTANT: number = 6;
-  public MAX_DIM: Vector2d = Vector2d.create(1000, (1000 / 5) * 3);
+  private static readonly INITIAL_MASS_OF_SUN: number = 80000.0;
+  private static readonly INITIAL_GRAVITY_CONSTANT: number = 80;
+  public MAX_DIM: Vector2d = Vector2d.create(SVG_VIEW_PORT_SIZE, (SVG_VIEW_PORT_SIZE / 5) * 3);
 
   @ViewChild('svgWorld')
   svgWorld!: ElementRef<SVGSVGElement>;
@@ -132,10 +134,10 @@ export class GravityWorldComponent {
 
     this.worldService.addWorldObject(this.sun);
 
-    this.worldService.addWorldObject(new Planet(this.calcCenteredVec(vec2(0, 100)), vec2(-40, 0), 100));
-    const planet2Pos: Vector2d = vec2(-200, -150);
+    this.worldService.addWorldObject(new Planet(this.calcCenteredVec(vec2(0, 450)), vec2(-100, 0), 1000));
+    const planet2Pos: Vector2d = vec2(-300, -250);
     this.worldService.addWorldObject(
-      new Planet(this.calcCenteredVec(planet2Pos), planet2Pos.orthogonalTo(this.sun.pos).mul(30), 200)
+      new Planet(this.calcCenteredVec(planet2Pos), planet2Pos.orthogonalTo(this.sun.pos).mul(100), 2000)
     );
     this.updateSignals();
   }
