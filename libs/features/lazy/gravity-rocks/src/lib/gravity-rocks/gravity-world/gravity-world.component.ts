@@ -68,13 +68,15 @@ export class GravityWorldComponent {
     gravitationalConstant: FormControl<number>;
     massOfSun: FormControl<number>;
   }>;
+  public MAX_DIM: Vector2d = Vector2d.create(1000, (1000 / 5) * 3);
 
+  x$: Observable<number>;
+  y$: Observable<number>;
+  mouseX$: Observable<number>;
+  mouseY$: Observable<number>;
   private readonly massSun$: Observable<number>;
   private readonly gravitationalConstant$: Observable<number>;
-
-  public MAX_DIM: Vector2d = Vector2d.create(1000, (1000 / 5) * 3);
   private CENTER_POS: Vector2d = this.MAX_DIM.div(2);
-
   private planetsSubject$: Subject<Planet> = new Subject();
   public planets$: Observable<Planet[]> = this.planetsSubject$
     .asObservable()
@@ -84,7 +86,6 @@ export class GravityWorldComponent {
     startWith(0)
   );
   private containerSizeSubject$: Subject<Vector2d> = new ReplaySubject<Vector2d>(1);
-
   private targetCoordinatesSubject: Subject<Vector2d> = new Subject<Vector2d>();
   private targetCoordinates$: Observable<Vector2d> = combineLatest([
     this.targetCoordinatesSubject.asObservable(),
@@ -96,19 +97,10 @@ export class GravityWorldComponent {
     }),
     shareReplay(1)
   );
-
   private positionSubject$: Subject<Vector2d> = new Subject<Vector2d>();
   private position$: Observable<Vector2d> = this.positionSubject$.asObservable().pipe(shareReplay(1));
-
   private runningSubject: Subject<boolean> = new BehaviorSubject<boolean>(false);
   public running$: Observable<boolean> = this.runningSubject.asObservable();
-
-  x$: Observable<number>;
-  y$: Observable<number>;
-
-  mouseX$: Observable<number>;
-  mouseY$: Observable<number>;
-
   private mouseDown$: Subject<MouseEvent> = new Subject();
   private mouseMove$: Subject<MouseEvent> = new Subject();
   private mouseUp$: Subject<MouseEvent> = new Subject();
@@ -190,13 +182,11 @@ export class GravityWorldComponent {
         new TimeInterval(Vector2d.create(-100, 0), 20)
       )
     );
-
     const nextPosition$: Observable<Vector2d> = velocity$.pipe(
       withLatestFrom(this.position$),
       map(([timedVelocity, position]) => position.add(timedVelocity.value.mul(timedVelocity.interval)))
     );
     nextPosition$.subscribe((position) => this.positionSubject$.next(position));
-
     this.x$ = this.position$.pipe(map((vec: Vector2d) => vec.x));
     this.y$ = this.position$.pipe(map((vec: Vector2d) => vec.y));
     this.mouseX$ = this.targetCoordinates$.pipe(map((vec: Vector2d) => vec.x));
