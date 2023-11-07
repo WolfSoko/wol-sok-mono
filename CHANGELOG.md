@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.27.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.26.0...v3.27.0) (2023-11-07)
+
+
+### Features
+
+* **feat-lazy-gravity-rocks:** ✨ add velocity force arrows ([da85b58](https://github.com/WolfSoko/wol-sok-mono/commit/da85b5875de951c023a74f30201c5a24421a9966))
+
 ## [3.26.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.25.0...v3.26.0) (2023-11-07)
 
 
