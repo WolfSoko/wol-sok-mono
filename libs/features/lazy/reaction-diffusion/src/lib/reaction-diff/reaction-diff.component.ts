@@ -68,7 +68,10 @@ export class ReactionDiffComponent implements OnInit, OnDestroy {
   drawImageTime$!: Observable<number>;
   private dimensionsSubject$: Subject<Dimensions> = new Subject();
 
-  constructor(private calcFactory: ReactionDiffCalcServiceFactory, private configService: ReactionDiffConfigService) {
+  constructor(
+    private calcFactory: ReactionDiffCalcServiceFactory,
+    private configService: ReactionDiffConfigService
+  ) {
     this.cellWeights$ = this.configService.calcCellWeights$;
   }
 

@@ -26,7 +26,10 @@ export class WaveOptionsComponent implements OnDestroy {
     frequencies: FormArray<FormControl<number | null>>;
   }>;
 
-  constructor(private readonly fb: FormBuilder, private readonly inputWaveOptionsQuery: InputWaveOptionsQuery) {
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly inputWaveOptionsQuery: InputWaveOptionsQuery
+  ) {
     this.waveOptions$ = this.inputWaveOptionsQuery.select();
     this.form = this.initFormValues();
     this.persistForm = new PersistNgFormPlugin(this.inputWaveOptionsQuery, undefined, {

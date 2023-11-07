@@ -48,7 +48,11 @@ export class LearnedDigitsComponent implements OnInit {
   drawingLabels: number[] = [];
   private nextDrawnImageSubject$ = new Subject<Float32Array>();
 
-  constructor(private data: MnistDataService, private deepNet: LearnedDigitsModelService, private dialog: MatDialog) {}
+  constructor(
+    private data: MnistDataService,
+    private deepNet: LearnedDigitsModelService,
+    private dialog: MatDialog
+  ) {}
 
   ngOnInit(): void {
     setTimeout(async () => {

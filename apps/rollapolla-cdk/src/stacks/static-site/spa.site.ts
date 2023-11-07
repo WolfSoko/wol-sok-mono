@@ -27,7 +27,11 @@ export interface StaticSiteProps {
  * Route53 alias record, and ACM certificate.
  */
 export class SpaSite extends Construct {
-  constructor(parent: Construct, private readonly spaName: string, private readonly props: StaticSiteProps) {
+  constructor(
+    parent: Construct,
+    private readonly spaName: string,
+    private readonly props: StaticSiteProps
+  ) {
     super(parent, spaName);
     const zone = HostedZone.fromLookup(this, spaName, {
       privateZone: false,

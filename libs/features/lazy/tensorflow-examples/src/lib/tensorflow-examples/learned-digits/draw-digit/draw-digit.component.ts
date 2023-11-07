@@ -12,7 +12,10 @@ import {
 import P5 from 'p5';
 
 class Path {
-  constructor(public x: number, public y: number) {}
+  constructor(
+    public x: number,
+    public y: number
+  ) {}
 
   isEnd() {
     return false;

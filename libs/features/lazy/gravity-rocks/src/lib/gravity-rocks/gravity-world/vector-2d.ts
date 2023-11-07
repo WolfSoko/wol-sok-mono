@@ -49,5 +49,8 @@ export class Vector2d {
     return this.x * vec.x + this.y * vec.y;
   }
 
-  constructor(public x: number, public y: number) {}
+  constructor(
+    public x: number,
+    public y: number
+  ) {}
 }

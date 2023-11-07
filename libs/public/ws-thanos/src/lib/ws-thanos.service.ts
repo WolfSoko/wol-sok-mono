@@ -326,7 +326,7 @@ export class WsThanosService {
                 animationT: time / animationLength,
                 maxWidth: resultCanvas.width,
                 maxHeight: resultCanvas.height,
-              } as AnimationState)
+              }) as AnimationState
           ),
           tap((animationState) => {
             WsThanosService.updateParticles({

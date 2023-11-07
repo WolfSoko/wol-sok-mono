@@ -19,7 +19,10 @@ import { NavItemComponent } from '../../../../shared/nav-item/nav-item.component
 export class AboutComponent {
   public routerLinks: MainNavRoute[];
 
-  constructor(@Inject(ROUTER_LINKS) routerLinks: MainNavRoutes, private router: Router) {
+  constructor(
+    @Inject(ROUTER_LINKS) routerLinks: MainNavRoutes,
+    private router: Router
+  ) {
     this.routerLinks = routerLinks.filter((route) => route.data?.linkText !== 'Home');
   }
 

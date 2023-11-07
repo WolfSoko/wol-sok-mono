@@ -29,7 +29,10 @@ function createViewModel(vm: Partial<ViewModel> = {}): ViewModel {
 export class ServiceWorkerUpdateComponent {
   vm$: Observable<ViewModel> = of(createViewModel());
 
-  constructor(updateLogger: ServiceWorkerLogUpdateService, private updateService: ServiceWorkerUpdateService) {
+  constructor(
+    updateLogger: ServiceWorkerLogUpdateService,
+    private updateService: ServiceWorkerUpdateService
+  ) {
     if (!environment.production) {
       return;
     }

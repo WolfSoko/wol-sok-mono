@@ -7,7 +7,10 @@ import { ShaderCode } from './shader-code.model';
   providedIn: 'root',
 })
 export class ShaderCodeService {
-  constructor(private shaderCodeStore: ShaderCodeStore, private shaderCodeDataService: ShaderCodeDataService) {}
+  constructor(
+    private shaderCodeStore: ShaderCodeStore,
+    private shaderCodeDataService: ShaderCodeDataService
+  ) {}
 
   get() {
     this.shaderCodeDataService.streamShaders().subscribe((entities: ShaderCode[]) => {

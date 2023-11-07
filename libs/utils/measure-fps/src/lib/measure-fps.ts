@@ -9,7 +9,10 @@ export class MeasureFps {
   fps$: Observable<number>;
   frameTimeMs$: Observable<number>;
 
-  constructor(private readonly avgWindowSize = 300, private readonly decimals = 1) {
+  constructor(
+    private readonly avgWindowSize = 300,
+    private readonly decimals = 1
+  ) {
     const frameTimeMs: Observable<number> = this.timeStampsAction$.asObservable().pipe(
       filterLessEqualOp,
       deltaOp,

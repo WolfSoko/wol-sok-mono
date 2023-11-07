@@ -29,7 +29,10 @@ export class ElevateCardDirective implements OnChanges {
 
   @Input() elevationLevel = ElevateCardDirective.defaultElevationLevel;
 
-  constructor(private readonly el: ElementRef, private readonly renderer: Renderer2) {}
+  constructor(
+    private readonly el: ElementRef,
+    private readonly renderer: Renderer2
+  ) {}
 
   ngOnChanges(changes: ElevateCardChanges) {
     if (changes.raiseLevel != null) {

@@ -23,7 +23,10 @@ export class DataDrawerComponent implements OnChanges {
   @Input() coeff!: { a: number; b: number; c: number; d: number };
   @Input() predictions?: Tensor;
 
-  constructor(private readonly dataDrawer: DataDrawerService, private readonly ngZone: NgZone) {}
+  constructor(
+    private readonly dataDrawer: DataDrawerService,
+    private readonly ngZone: NgZone
+  ) {}
 
   ngOnChanges() {
     this.draw();

@@ -22,7 +22,10 @@ export class InputWaveComponent {
   @Input() height = 0;
   activeWave$: Observable<InputWave | undefined>;
 
-  constructor(private waveQuery: InputWaveQuery, private inputWaveService: InputWaveService) {
+  constructor(
+    private waveQuery: InputWaveQuery,
+    private inputWaveService: InputWaveService
+  ) {
     this.activeWave$ = waveQuery.selectActive();
   }
 

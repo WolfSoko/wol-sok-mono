@@ -39,7 +39,10 @@ export class P5ViewComponent implements OnChanges, OnDestroy {
   private sketch?: P5;
   private drawOnce = true;
 
-  constructor(private ngZone: NgZone, private cd: ChangeDetectorRef) {}
+  constructor(
+    private ngZone: NgZone,
+    private cd: ChangeDetectorRef
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['simWidth'] || changes['simHeight']) {

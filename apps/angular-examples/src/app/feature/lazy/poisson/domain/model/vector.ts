@@ -1,5 +1,8 @@
 export class Vector {
-  constructor(public x: number, public y: number) {}
+  constructor(
+    public x: number,
+    public y: number
+  ) {}
 
   mag() {
     return Math.sqrt(this.x * this.x + this.y * this.y);

@@ -74,7 +74,10 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
     time: { value: number };
   };
 
-  constructor(private ngZone: NgZone, private readonly measureFps: MeasureFps) {
+  constructor(
+    private ngZone: NgZone,
+    private readonly measureFps: MeasureFps
+  ) {
     this.fps$ = this.measureFps.fps$.pipe(sampleTime(300));
   }
 

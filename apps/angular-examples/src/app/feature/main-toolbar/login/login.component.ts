@@ -17,7 +17,10 @@ import { AuthenticationService, AuthQuery, Profile } from '@wolsok/feat-api-auth
 export class LoginComponent {
   user: Signal<Profile | undefined>;
 
-  constructor(private authQuery: AuthQuery, private authService: AuthenticationService) {
+  constructor(
+    private authQuery: AuthQuery,
+    private authService: AuthenticationService
+  ) {
     this.user = toSignal(this.authQuery.profile$);
   }
 

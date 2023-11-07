@@ -25,7 +25,7 @@ export class GpuAdapterService {
   createKernel<
     ArgTypes extends ThreadKernelVariable[],
     ConstantsT extends IConstantsThis = Record<string, never>,
-    KernelReturnType extends KernelOutput = KernelOutput
+    KernelReturnType extends KernelOutput = KernelOutput,
   >(
     kernel: KernelFunction<ArgTypes, ConstantsT>,
     settings?: IGPUKernelSettings

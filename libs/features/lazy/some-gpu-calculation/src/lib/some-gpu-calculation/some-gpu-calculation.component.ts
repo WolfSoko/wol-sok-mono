@@ -61,7 +61,11 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
   private gpuColorizer!: IKernelRunShortcut;
   private subscription?: Subscription;
 
-  constructor(private fb: FormBuilder, private gpu: GpuAdapterService, private readonly measureFps: MeasureFps) {
+  constructor(
+    private fb: FormBuilder,
+    private gpu: GpuAdapterService,
+    private readonly measureFps: MeasureFps
+  ) {
     this.createForm();
     this.calculationTime$ = this.measureFps.frameTimeMs$;
     this.fps$ = this.measureFps.fps$;

@@ -5,7 +5,10 @@ import { InputWaveQuery } from './input-wave.query';
 
 @Injectable({ providedIn: 'root' })
 export class InputWaveOptionsService {
-  constructor(private inputWaveOptionsStore: InputWaveOptionsStore, inputWaveQuery: InputWaveQuery) {
+  constructor(
+    private inputWaveOptionsStore: InputWaveOptionsStore,
+    inputWaveQuery: InputWaveQuery
+  ) {
     inputWaveQuery
       .selectActive()
       .pipe(filterNotNil)
