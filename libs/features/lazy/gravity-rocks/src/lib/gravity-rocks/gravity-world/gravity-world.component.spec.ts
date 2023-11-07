@@ -1,12 +1,10 @@
 import { createHostFactory, SpectatorHost } from '@ngneat/spectator/jest';
 import { qaSelector } from '@wolsok/test-helper';
-import { ResizedEvent } from '@wolsok/ui-kit';
 import { GravityWorldComponent } from './gravity-world.component';
 
 describe('GravityWorldComponent', () => {
   const createHost = createHostFactory(GravityWorldComponent);
   let spectator: SpectatorHost<GravityWorldComponent>;
-  let component: GravityWorldComponent;
 
   beforeEach(() => {
     global.ResizeObserver = jest.fn().mockImplementation(() => ({
@@ -17,7 +15,6 @@ describe('GravityWorldComponent', () => {
 
     spectator = createHost(`<feat-lazy-gravity-world></feat-lazy-gravity-world>`);
     spectator.detectChanges();
-    component = spectator.component;
   });
 
   it('should create the component', () => {

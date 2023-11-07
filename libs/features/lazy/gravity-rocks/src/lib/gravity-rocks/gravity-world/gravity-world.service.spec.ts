@@ -118,9 +118,7 @@ describe('GravityWorldService', () => {
   it('should add a force object', () => {
     expect(() =>
       service.addForceObject({
-        applyForceFor(wo: WorldObject): Vector2d {
-          return new Vector2d(0, 0);
-        },
+        applyForceFor: jest.fn(),
       })
     ).not.toThrow();
   });

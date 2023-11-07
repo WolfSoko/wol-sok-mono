@@ -18,7 +18,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { ElemResizedDirective, LetDirective, ResizedEvent } from '@wolsok/ui-kit';
-import { last, map, Observable, Subject, switchMap, takeUntil, tap } from 'rxjs';
+import { last, map, Observable, Subject, switchMap, takeUntil } from 'rxjs';
 import { GravityWorldService } from './gravity-world.service';
 import { Vector2d } from './vector-2d';
 import { SpringForce } from './world-objects/force';
@@ -110,7 +110,7 @@ export class GravityWorldComponent {
     this.updatePlanets();
 
     effect(() => {
-      this.worldService.setUniverse(this.canvasSize().x, this.canvasSize().y, this.form.value.gravitationalConstant!);
+      this.worldService.setUniverse(this.canvasSize().x, this.canvasSize().y, this.settings().gravitationalConstant);
     });
     effect(() => (this.running() ? this.gameLoop() : null));
   }
@@ -209,7 +209,11 @@ export class GravityWorldComponent {
     const pt: SVGPoint = svgWorld.createSVGPoint();
     pt.x = end.x;
     pt.y = end.y;
-    const endInSVGCoords: SVGPoint = pt.matrixTransform(svgWorld.getCTM()!.inverse());
+    const screenCTM: DOMMatrix | null = svgWorld.getScreenCTM();
+    if (!screenCTM) {
+      throw new Error('screenCTM is null');
+    }
+    const endInSVGCoords: SVGPoint = pt.matrixTransform(screenCTM.inverse());
     return new Vector2d(endInSVGCoords.x, endInSVGCoords.y);
   }
 
