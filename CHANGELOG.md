@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.24.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.20...v3.24.0) (2023-11-07)
+
+
+### Features
+
+* **feat-lazy-gravity-rocks:** ✨ improve start situation for gravity ([94504be](https://github.com/WolfSoko/wol-sok-mono/commit/94504be3e9f878179b1fbabfa3bdc2c0c4542f7d))
+* **feat-lazy-gravity-rocks:** ✨ move  field under dependent field ([f770dda](https://github.com/WolfSoko/wol-sok-mono/commit/f770ddabf7817809a8e64852f32d5c61fd1b777d))
+
 ### [3.23.20](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.19...v3.23.20) (2023-11-06)
 
 ### [3.23.19](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.18...v3.23.19) (2023-11-06)
