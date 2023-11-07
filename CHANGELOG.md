@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.26.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.25.0...v3.26.0) (2023-11-07)
+
+
+### Features
+
+* **feat-lazy-gravity-rocks:** ✨ add multiple planets ([cdcd59a](https://github.com/WolfSoko/wol-sok-mono/commit/cdcd59a49d42d2fd03fd06bac4a7ce99e143c7b0))
+* **feat-lazy-gravity-rocks:** ✨ update suns mass ([fe0fc36](https://github.com/WolfSoko/wol-sok-mono/commit/fe0fc362190610df07f920b3a8a01581929543a5))
+
 ## [3.25.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.24.0...v3.25.0) (2023-11-07)
 
 
