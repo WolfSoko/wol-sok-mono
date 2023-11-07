@@ -117,6 +117,7 @@ export class GravityWorldComponent {
     effect(() => {
       this.worldService.setUniverse(this.canvasSize().x, this.canvasSize().y, this.settings().gravitationalConstant);
     });
+    effect(() => (this.sun.mass = this.settings().massOfSun));
     effect(() => (this.running() ? this.gameLoop() : null));
   }
 
