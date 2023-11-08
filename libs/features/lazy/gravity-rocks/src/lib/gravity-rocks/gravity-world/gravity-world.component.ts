@@ -2,17 +2,17 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   ElementRef,
+  Inject,
   Signal,
   signal,
-  computed,
+  TrackByFunction,
   ViewChild,
   WritableSignal,
-  TrackByFunction,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,17 +23,14 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ElemResizedDirective, LetDirective } from '@wolsok/ui-kit';
 import { vec2, Vector2d } from '@wolsok/utils-math';
 import { map, Observable, Subject, switchMap, take, takeUntil } from 'rxjs';
-import { GravityWorldService } from './gravity-world.service';
-import { Force, SpringForce } from './world-objects/force';
-import { Planet } from './world-objects/planet';
-import { Sun } from './world-objects/sun';
-import { svgPathForVelocity, toSvgPath } from './world-objects/toSvgPath';
-import { WorldObject } from './world-objects/world-object';
-
-interface Settings {
-  gravitationalConstant: number;
-  massOfSun: number;
-}
+import { GravityConfigComponent } from './config/gravity-config.component';
+import { GravityWorldConfig, INITIAL_CONFIG } from './domain/gravity-world-config';
+import { GravityWorldService } from './domain/gravity-world.service';
+import { Force, SpringForce } from './domain/world-objects/force';
+import { Planet } from './domain/world-objects/planet';
+import { Sun } from './domain/world-objects/sun';
+import { svgPathForVelocity, toSvgPath } from './domain/world-objects/toSvgPath';
+import { WorldObject } from './domain/world-objects/world-object';
 
 const SVG_VIEW_PORT_SIZE = 3000;
 
@@ -55,22 +52,16 @@ const SVG_VIEW_PORT_SIZE = 3000;
     ElemResizedDirective,
     MatIconModule,
     MatTooltipModule,
+    GravityConfigComponent,
   ],
 })
 export class GravityWorldComponent {
-  private static readonly INITIAL_MASS_OF_SUN: number = 80000.0;
-  private static readonly INITIAL_GRAVITY_CONSTANT: number = 80;
   public MAX_DIM: Vector2d = Vector2d.create(SVG_VIEW_PORT_SIZE, (SVG_VIEW_PORT_SIZE / 5) * 3);
 
   @ViewChild('svgWorld')
   svgWorld!: ElementRef<SVGSVGElement>;
 
-  public form: FormGroup<{
-    gravitationalConstant: FormControl<number>;
-    massOfSun: FormControl<number>;
-  }>;
-
-  private settings: Signal<Settings>;
+  settings: WritableSignal<GravityWorldConfig>;
 
   public running = signal(false);
   sun!: Sun;
@@ -107,19 +98,10 @@ export class GravityWorldComponent {
 
   constructor(
     readonly worldService: GravityWorldService,
-    readonly nNfB: NonNullableFormBuilder
+    @Inject(INITIAL_CONFIG) private readonly initialConfig: GravityWorldConfig
   ) {
-    const initialSettings: Settings = {
-      gravitationalConstant: GravityWorldComponent.INITIAL_GRAVITY_CONSTANT,
-      massOfSun: GravityWorldComponent.INITIAL_MASS_OF_SUN,
-    };
-    this.form = nNfB.group(initialSettings);
-
-    this.settings = toSignal(this.form.valueChanges.pipe(map(() => this.form.getRawValue() as Settings)), {
-      initialValue: initialSettings,
-    });
+    this.settings = signal(this.initialConfig);
     this.initializeSunAndPlanets();
-
     this.updateSignals();
 
     effect(() => {
@@ -130,7 +112,7 @@ export class GravityWorldComponent {
   }
 
   private initializeSunAndPlanets(): void {
-    this.sun = new Sun(this.calcCenteredVec(), undefined, GravityWorldComponent.INITIAL_MASS_OF_SUN);
+    this.sun = new Sun(this.calcCenteredVec(), undefined, this.settings().massOfSun);
 
     this.worldService.addWorldObject(this.sun);
 
@@ -220,13 +202,6 @@ export class GravityWorldComponent {
   reset(): void {
     this.stopSim();
     this.worldService.removeAll();
-
-    const initialSetting = {
-      gravitationalConstant: GravityWorldComponent.INITIAL_GRAVITY_CONSTANT,
-      massOfSun: GravityWorldComponent.INITIAL_MASS_OF_SUN,
-    };
-    this.form.setValue(initialSetting);
-
     this.initializeSunAndPlanets();
   }
 

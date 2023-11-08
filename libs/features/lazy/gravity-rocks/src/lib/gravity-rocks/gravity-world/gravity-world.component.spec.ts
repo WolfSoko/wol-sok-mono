@@ -1,5 +1,6 @@
 import { createHostFactory, SpectatorHost } from '@ngneat/spectator/jest';
 import { qaSelector } from '@wolsok/test-helper';
+import { GravityConfigComponent } from './config/gravity-config.component';
 import { GravityWorldComponent } from './gravity-world.component';
 
 describe('GravityWorldComponent', () => {
@@ -13,7 +14,7 @@ describe('GravityWorldComponent', () => {
       disconnect: jest.fn(),
     }));
 
-    spectator = createHost(`<feat-lazy-gravity-world></feat-lazy-gravity-world>`);
+    spectator = createHost(`<feat-lazy-gravity-world></feat-lazy-gravity-world>`, {});
     spectator.detectChanges();
   });
 
@@ -44,5 +45,9 @@ describe('GravityWorldComponent', () => {
     spectator.click(qaSelector('cta-start'));
     spectator.click(qaSelector('cta-reset'));
     expect(spectator.query(qaSelector('cta-start'))).toHaveText('Start');
+  });
+
+  it('should show the config', () => {
+    expect(spectator.query(GravityConfigComponent)).toBeTruthy();
   });
 });

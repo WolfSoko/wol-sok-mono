@@ -1,0 +1,10 @@
+<form [formGroup]="form" class="configuration" data-qa="form">
+  <mat-form-field appearance="outline">
+    <mat-label>Gravitational Force</mat-label>
+    <input matInput data-qa="gConstant" type="number" formControlName="gravitationalConstant" />
+  </mat-form-field>
+  <mat-form-field appearance="outline">
+    <mat-label>Mass of Sun</mat-label>
+    <input matInput data-qa="massOfSun" type="number" formControlName="massOfSun" />
+  </mat-form-field>
+</form>
