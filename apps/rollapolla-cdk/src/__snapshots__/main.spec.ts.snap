@@ -435,7 +435,7 @@ exports[`RollaPollaStack snapshot should match snapshot 1`] = `
           },
         ],
         "SourceObjectKeys": [
-          "c78241556f6011a25f5b4bd068380a55e1cad7879ccd38683e8bc6f4ddf7a960.zip",
+          "0f4b4cd1039b74d91f0f3526c88e9fdadac0b34a1ad0c2bf89f7324bafc791aa.zip",
         ],
       },
       "Type": "Custom::CDKBucketDeployment",

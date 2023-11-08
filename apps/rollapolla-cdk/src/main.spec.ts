@@ -22,13 +22,13 @@ describe('RollaPollaStack snapshot', () => {
 
     // WHEN
     const stack = new AppStack(app, 'RollaPolla', {
-      buildOutputPath: 'apps/rollapolla-cdk/test-build-path',
+      buildOutputPath: './apps/rollapolla-cdk/test-build-path',
       domainName: 'test-domain',
     });
     template = Template.fromStack(stack);
   });
 
   it('should match snapshot', () => {
-    expect(template).toMatchSnapshot();
+    expect(template.toJSON()).toMatchSnapshot();
   });
 });
