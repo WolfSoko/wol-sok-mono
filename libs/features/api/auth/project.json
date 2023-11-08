@@ -26,7 +26,6 @@
       "outputs": ["{workspaceRoot}/coverage/libs/features/api/auth"],
       "options": {
         "jestConfig": "libs/features/api/auth/jest.config.ts",
-        "passWithNoTests": true,
         "codeCoverage": true
       }
     },

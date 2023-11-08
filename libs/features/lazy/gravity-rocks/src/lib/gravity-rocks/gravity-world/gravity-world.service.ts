@@ -1,5 +1,5 @@
-import { Injectable, Signal, signal, WritableSignal } from '@angular/core';
-import { Force, SpringForce } from './world-objects/force';
+import { Injectable } from '@angular/core';
+import { Force } from './world-objects/force';
 import { WorldObject } from './world-objects/world-object';
 
 @Injectable({

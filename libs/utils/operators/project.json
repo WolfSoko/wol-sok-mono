@@ -32,7 +32,6 @@
       "outputs": ["{workspaceRoot}/coverage/libs/utils/operators"],
       "options": {
         "jestConfig": "libs/utils/operators/jest.config.ts",
-        "passWithNoTests": true,
         "codeCoverage": true
       }
     }

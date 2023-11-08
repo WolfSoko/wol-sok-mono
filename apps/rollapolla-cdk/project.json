@@ -30,12 +30,6 @@
       "options": {
         "jestConfig": "apps/rollapolla-cdk/jest.config.ts",
         "passWithNoTests": false
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "codeCoverage": true
-        }
       }
     }
   },

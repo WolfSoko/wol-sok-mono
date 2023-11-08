@@ -26,7 +26,6 @@
       "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/gravity-rocks"],
       "options": {
         "jestConfig": "libs/features/lazy/gravity-rocks/jest.config.ts",
-        "passWithNoTests": true,
         "codeCoverage": true
       }
     },

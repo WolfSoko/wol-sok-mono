@@ -26,7 +26,6 @@
       "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/some-gpu-calculation"],
       "options": {
         "jestConfig": "libs/features/lazy/some-gpu-calculation/jest.config.ts",
-        "passWithNoTests": true,
         "codeCoverage": true
       }
     },

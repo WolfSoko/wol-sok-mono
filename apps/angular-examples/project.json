@@ -101,10 +101,10 @@
       "executor": "@nx/angular:module-federation-dev-server",
       "configurations": {
         "production": {
-          "browserTarget": "angular-examples:build:production"
+          "buildTarget": "angular-examples:build:production"
         },
         "development": {
-          "browserTarget": "angular-examples:build:development"
+          "buildTarget": "angular-examples:build:development"
         }
       },
       "defaultConfiguration": "development",
@@ -131,7 +131,7 @@
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "browserTarget": "angular-examples:build"
+        "buildTarget": "angular-examples:build"
       }
     },
     "lint": {

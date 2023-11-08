@@ -1,7 +1,6 @@
 import { Component, QueryList, ViewChildren } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { combineLatest, firstValueFrom, of, take } from 'rxjs';
+import { combineLatest, firstValueFrom, of } from 'rxjs';
 import image from '../assets/how-to-be-funny.png';
 import { AnimationState } from './animation.state';
 import { provideWsThanosOptions } from './ws-thanos-options.token';

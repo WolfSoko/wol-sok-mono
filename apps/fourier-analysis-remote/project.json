@@ -71,10 +71,10 @@
       "executor": "@nx/angular:webpack-dev-server",
       "configurations": {
         "production": {
-          "browserTarget": "fourier-analysis-remote:build:production"
+          "buildTarget": "fourier-analysis-remote:build:production"
         },
         "development": {
-          "browserTarget": "fourier-analysis-remote:build:development"
+          "buildTarget": "fourier-analysis-remote:build:development"
         }
       },
       "defaultConfiguration": "development",
@@ -86,7 +86,7 @@
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "browserTarget": "fourier-analysis-remote:build"
+        "buildTarget": "fourier-analysis-remote:build"
       }
     },
     "lint": {
@@ -100,7 +100,6 @@
       "outputs": ["{workspaceRoot}/coverage/apps/fourier-analysis-remote"],
       "options": {
         "jestConfig": "apps/fourier-analysis-remote/jest.config.ts",
-        "passWithNoTests": true,
         "codeCoverage": true
       }
     },

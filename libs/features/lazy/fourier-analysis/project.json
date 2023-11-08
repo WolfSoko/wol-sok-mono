@@ -26,7 +26,6 @@
       "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/fourier-analysis"],
       "options": {
         "jestConfig": "libs/features/lazy/fourier-analysis/jest.config.ts",
-        "passWithNoTests": true,
         "codeCoverage": true
       }
     },

@@ -26,7 +26,6 @@
       "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/shader-examples"],
       "options": {
         "jestConfig": "libs/features/lazy/shader-examples/jest.config.ts",
-        "passWithNoTests": true,
         "codeCoverage": true
       }
     },
