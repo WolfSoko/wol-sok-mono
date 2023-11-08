@@ -18,6 +18,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ElemResizedDirective, LetDirective } from '@wolsok/ui-kit';
@@ -53,6 +54,7 @@ const SVG_VIEW_PORT_SIZE = 3000;
     MatIconModule,
     MatTooltipModule,
     GravityConfigComponent,
+    MatSidenavModule,
   ],
 })
 export class GravityWorldComponent {

@@ -1,39 +1,40 @@
-<div class="sim-layout">
-  <mat-card appearance="raised" class="gravitational-force-card-controls">
-    <mat-card-header>
-      <mat-card-title>Play with the values</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <feat-lazy-gravity-config [config]="settings()" (configChange)="settings.set($event)" />
-      <mat-list class="info-list">
-        <h4 mat-subheader>Infos</h4>
-        <mat-list-item>
-          <span>Planets = {{ planets().length }}</span>
-        </mat-list-item>
-        <mat-list-item>
-          <span>Forces = {{ worldService.getForces().length }}</span>
-        </mat-list-item>
-        <mat-list-item *ngFor="let planet of planets(); let i = index">
-          <div class="planet-info-item">
-            <span [style.background-color]="planet.color">
-              Planet{{ i + 1 }}: x={{ planet.pos.x | number: '1.0-0' }},y={{ planet.pos.y | number: '1.0-0' }}
-            </span>
-            <button mat-icon-button (click)="removePlanet(planet)">
-              <mat-icon aria-label="Remove planet">delete_forever</mat-icon>
-            </button>
-          </div>
-        </mat-list-item>
-      </mat-list>
-      <mat-card-actions>
-        <button data-qa="cta-reset" mat-raised-button color="accent" (click)="reset()">Reset</button>
-        <button data-qa="cta-start" mat-raised-button [color]="running() ? 'accent' : 'primary'" (click)="toggleSim()">
-          {{ running() ? 'Pause' : 'Start' }}
-        </button>
-      </mat-card-actions>
-    </mat-card-content>
-  </mat-card>
+<mat-drawer-container class="sim-layout" autosize>
+  <mat-drawer #drawer class="sidenav-drawer" mode="side">
+    <mat-card appearance="raised" class="gravitational-force-card-controls">
+      <mat-card-header>
+        <mat-card-title>Play with the values</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <feat-lazy-gravity-config [config]="settings()" (configChange)="settings.set($event)" />
+        <mat-list class="info-list">
+          <h4 mat-subheader>Infos</h4>
+          <mat-list-item>
+            <span>Planets = {{ planets().length }}</span>
+          </mat-list-item>
+          <mat-list-item>
+            <span>Forces = {{ worldService.getForces().length }}</span>
+          </mat-list-item>
+          <mat-list-item *ngFor="let planet of planets(); let i = index">
+            <div class="planet-info-item">
+              <span [style.background-color]="planet.color">
+                Planet{{ i + 1 }}: x={{ planet.pos.x | number: '1.0-0' }},y={{ planet.pos.y | number: '1.0-0' }}
+              </span>
+              <button mat-icon-button (click)="removePlanet(planet)">
+                <mat-icon aria-label="Remove planet">delete_forever</mat-icon>
+              </button>
+            </div>
+          </mat-list-item>
+        </mat-list>
+      </mat-card-content>
+    </mat-card>
+  </mat-drawer>
   <mat-card appearance="raised" class="gravitational-force-card">
-    <mat-toolbar color="primary">Enjoy, click and drag to manipulate.</mat-toolbar>
+    <div matCardTitle class="content-title">
+      <button class="config-button" color="primary" mat-mini-fab type="button" (click)="drawer.toggle()">
+        <mat-icon>build</mat-icon>
+      </button>
+      <span>Click and drag to manipulate.</span>
+    </div>
     <svg
       #svgWorld
       class="world-svg"
@@ -85,5 +86,11 @@
         />
       </g>
     </svg>
+    <mat-card-actions>
+      <button data-qa="cta-reset" mat-raised-button color="accent" (click)="reset()">Reset</button>
+      <button data-qa="cta-start" mat-raised-button [color]="running() ? 'accent' : 'primary'" (click)="toggleSim()">
+        {{ running() ? 'Pause' : 'Start' }}
+      </button>
+    </mat-card-actions>
   </mat-card>
-</div>
+</mat-drawer-container>

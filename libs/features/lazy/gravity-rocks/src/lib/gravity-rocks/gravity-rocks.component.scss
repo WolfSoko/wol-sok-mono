@@ -5,9 +5,11 @@
   align-content: center;
 
   .page-content {
-    margin: 10px;
+    width: 100%;
+    height: 100%;
+    padding: 10px;
     display: flex;
-    align-self: flex-start;
+    align-self: stretch;
     align-content: stretch;
   }
 }
