@@ -1,6 +1,6 @@
-<mat-drawer-container class="sim-layout" autosize>
+<mat-drawer-container [class.config-visible]="drawer.opened" class="sim-layout" autosize>
   <mat-drawer #drawer class="sidenav-drawer" mode="side">
-    <mat-card appearance="raised" class="gravitational-force-card-controls">
+    <mat-card appearance="raised" class="gravitational-force-card-controls" *ngIf="drawer.opened">
       <mat-card-header>
         <mat-card-title>Play with the values</mat-card-title>
       </mat-card-header>
@@ -16,12 +16,12 @@
           </mat-list-item>
           <mat-list-item *ngFor="let planet of planets(); let i = index">
             <div class="planet-info-item">
-              <span [style.background-color]="planet.color">
-                Planet{{ i + 1 }}: x={{ planet.pos.x | number: '1.0-0' }},y={{ planet.pos.y | number: '1.0-0' }}
-              </span>
               <button mat-icon-button (click)="removePlanet(planet)">
                 <mat-icon aria-label="Remove planet">delete_forever</mat-icon>
               </button>
+              <span [style.background-color]="planet.color">
+                Planet{{ i + 1 }}: x={{ planet.pos.x | number: '1.0-0' }},y={{ planet.pos.y | number: '1.0-0' }}
+              </span>
             </div>
           </mat-list-item>
         </mat-list>
@@ -30,7 +30,7 @@
   </mat-drawer>
   <mat-card appearance="raised" class="gravitational-force-card">
     <div matCardTitle class="content-title">
-      <button class="config-button" color="primary" mat-mini-fab type="button" (click)="drawer.toggle()">
+      <button class="config-button" color="accent" mat-mini-fab type="button" (click)="drawer.toggle()">
         <mat-icon>build</mat-icon>
       </button>
       <span>Click and drag to manipulate.</span>

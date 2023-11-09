@@ -49,7 +49,13 @@
     scale: 0.7;
     animation: wiggle 0.2s linear 1s 30;
     animation-fill-mode: backwards;
+    transition: rotate 0.5s ease-in-out;
   }
+}
+
+.config-visible .config-button {
+  transition: rotate 0.5s ease-in-out;
+  rotate: 180deg;
 }
 
 @keyframes wiggle {
