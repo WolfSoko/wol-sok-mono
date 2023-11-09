@@ -25,8 +25,8 @@ export class GravityConfigComponent {
 
   @Output() readonly configChange: Observable<GravityWorldConfig>;
 
-  constructor(private nNfB: NonNullableFormBuilder) {
-    this.form = this.nNfB.group({
+  constructor(nNfB: NonNullableFormBuilder) {
+    this.form = nNfB.group({
       gravitationalConstant: 0,
       massOfSun: 0,
     });
