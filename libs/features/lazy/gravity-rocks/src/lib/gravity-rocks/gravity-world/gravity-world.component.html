@@ -30,7 +30,14 @@
   </mat-drawer>
   <mat-card appearance="raised" class="gravitational-force-card">
     <div matCardTitle class="content-title">
-      <button class="config-button" color="accent" mat-mini-fab type="button" (click)="drawer.toggle()">
+      <button
+        class="config-button"
+        data-qa="cta-toggle-config"
+        color="accent"
+        mat-mini-fab
+        type="button"
+        (click)="drawer.toggle()"
+      >
         <mat-icon>build</mat-icon>
       </button>
       <span>Click and drag to manipulate.</span>

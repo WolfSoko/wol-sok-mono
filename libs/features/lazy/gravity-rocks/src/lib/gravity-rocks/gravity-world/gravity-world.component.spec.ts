@@ -48,6 +48,7 @@ describe('GravityWorldComponent', () => {
   });
 
   it('should show the config', () => {
+    spectator.click(qaSelector('cta-toggle-config'));
     expect(spectator.query(GravityConfigComponent)).toBeTruthy();
   });
 });
