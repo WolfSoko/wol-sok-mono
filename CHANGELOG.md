@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.29.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.28.5...v3.29.0) (2023-11-09)
+
+
+### Features
+
+* ✨ move config form into component ([6db7541](https://github.com/WolfSoko/wol-sok-mono/commit/6db75416f1b78bd54961487e9ed3018c116ecbfc))
+* ✨ move config to sidebar ([02a7df2](https://github.com/WolfSoko/wol-sok-mono/commit/02a7df2155b3f291b895f76e6f2db8e6c5f9f7e7))
+* ✨ only show planet list when config is open ([5771e80](https://github.com/WolfSoko/wol-sok-mono/commit/5771e80e9f4664dfdcbb392833c5701f627d0f72))
+
+
+### Bug Fixes
+
+* **feat-lazy-gravity-rocks:** 🐛 form used before initialization ([2af285e](https://github.com/WolfSoko/wol-sok-mono/commit/2af285eb39beba6c3c6ad731287c13b62d90a1b7))
+* **feat-lazy-gravity-rocks:** 🐛 form used before initialization ([c028054](https://github.com/WolfSoko/wol-sok-mono/commit/c02805410dc74b61f644afb142b53c08c7403766))
+* **feat-lazy-gravity-rocks:** 🐛 form used before initialization ([0717299](https://github.com/WolfSoko/wol-sok-mono/commit/071729939f18b2a02f62d1fbb09b8ce90326fdc7))
+
 ### [3.28.5](https://github.com/WolfSoko/wol-sok-mono/compare/v3.28.4...v3.28.5) (2023-11-08)
 
 ### [3.28.4](https://github.com/WolfSoko/wol-sok-mono/compare/v3.28.3...v3.28.4) (2023-11-08)
