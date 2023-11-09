@@ -21,8 +21,8 @@
   </mat-card-header>
   <mat-card-content>
     <div class="technology-cards">
+      @for (tech of technologies; track tech; let i = $index) {
       <app-technology
-        *ngFor="let tech of technologies; let i = index"
         [autoVaporize]="thanosDemo"
         [autoVaporizeAfter]="5000 * i"
         [title]="tech.title"
@@ -30,6 +30,7 @@
         [link]="tech.link"
       >
       </app-technology>
+      }
     </div>
   </mat-card-content>
 </mat-card>

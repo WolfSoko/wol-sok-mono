@@ -11,7 +11,8 @@
   <app-service-worker-update [class.hide]="isHandset$ | async"></app-service-worker-update>
 
   <app-login></app-login>
-  <div class="shader-background" (wsSharedUiElemResized)="onResize($event)" *ngIf="shaderCode">
+  @if (shaderCode) {
+  <div class="shader-background" (wsSharedUiElemResized)="onResize($event)">
     <ws-shared-ui-render-shader
       [shaderCode]="shaderCode"
       [canvasWidth]="shaderWidth"
@@ -20,4 +21,5 @@
     >
     </ws-shared-ui-render-shader>
   </div>
+  }
 </mat-toolbar>

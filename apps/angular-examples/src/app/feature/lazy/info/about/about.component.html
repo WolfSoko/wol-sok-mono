@@ -22,14 +22,15 @@
     </mat-card-header>
     <mat-card-content>
       <mat-nav-list>
+        @for (route of routerLinks; track route) {
         <app-nav-item
-          *ngFor="let route of routerLinks"
           [path]="route.path"
           [linkText]="route.data.linkText"
           [subTitle]="route.data.subTitle"
           (click)="openPage(route.path)"
         >
         </app-nav-item>
+        }
       </mat-nav-list>
     </mat-card-content>
   </mat-card>

@@ -29,7 +29,9 @@
     </mat-card-header>
     <mat-card-content>
       <div>Learnrate: {{ learnRate }}, learned data points: {{ learnedDataPoints }}</div>
-      <app-perceptron *ngIf="perceptron" [perceptron]="perceptron"></app-perceptron>
+      @if (perceptron) {
+      <app-perceptron [perceptron]="perceptron"></app-perceptron>
+      }
     </mat-card-content>
   </mat-card>
 </div>

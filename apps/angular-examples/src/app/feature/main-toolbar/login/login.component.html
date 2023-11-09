@@ -1,4 +1,5 @@
-<div *ngIf="user() as profile; else showLogin">
+@if (user(); as profile) {
+<div>
   <div class="logged-in">
     <div
       class="profile-img mat-elevation-z6"
@@ -10,11 +11,13 @@
     </button>
   </div>
 </div>
-<ng-template #showLogin>
-  <div class="log-in">
-    <div class="please-log-in mat-caption caption">Please login.</div>
-    <button mat-mini-fab color="accent" (click)="login()">
-      <mat-icon>input</mat-icon>
-    </button>
-  </div>
-</ng-template>
+} @else {
+
+<div class="log-in">
+  <div class="please-log-in mat-caption caption">Please login.</div>
+  <button mat-mini-fab color="accent" (click)="login()">
+    <mat-icon>input</mat-icon>
+  </button>
+</div>
+
+}

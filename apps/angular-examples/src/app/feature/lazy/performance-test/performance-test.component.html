@@ -7,10 +7,11 @@
     </mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
-    <mat-action-list *ngIf="(isLoading$ | async) === false; else loading">
+    @if ((isLoading$ | async) === false) {
+    <mat-action-list>
+      @for (performanceTest of performanceTest$ | async; track trackByPerformanceTestId($index, performanceTest)) {
       <mat-list-item
         class="test-item"
-        *ngFor="let performanceTest of performanceTest$ | async; trackBy: trackByPerformanceTestId"
         [ngClass]="{
           active: (activePerformanceTest$ | async)?.id === performanceTest.id
         }"
@@ -22,15 +23,18 @@
         <h4 matListItemTitle class="mat-h4">{{ performanceTest.name }}</h4>
         <p matListItemLine class="mat-caption">runs: {{ performanceTest.runs }}</p>
         <div matListItemLine class="mat-caption">
-          <span *ngFor="let testResult of performanceTest.result">
+          @for (testResult of performanceTest.result; track testResult) {
+          <span>
             {{ testResult[0] + ': ' + testResult[1] + ' ms' }}
           </span>
+          }
         </div>
         <mat-progress-bar class="progress-bar" mode="indeterminate"></mat-progress-bar>
       </mat-list-item>
+      }
     </mat-action-list>
-    <ng-template #loading>
-      <mat-spinner></mat-spinner>
-    </ng-template>
+    } @else {
+    <mat-spinner></mat-spinner>
+    }
   </mat-card-content>
 </mat-card>

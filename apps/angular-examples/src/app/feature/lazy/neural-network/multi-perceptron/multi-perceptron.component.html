@@ -20,9 +20,11 @@
     </mat-card-header>
     <mat-card-content>
       <div>Learnrate: {{ learnRate }}, learned data points: {{ learnedDataPoints }}</div>
-      <ng-container *ngFor="let perceptron of inputPerceptron">
-        <app-perceptron [perceptron]="perceptron" [canvasWidth]="200" [canvasHeight]="200"></app-perceptron>
-      </ng-container>
+      @for (perceptron of inputPerceptron; track perceptron) {
+
+      <app-perceptron [perceptron]="perceptron" [canvasWidth]="200" [canvasHeight]="200"></app-perceptron>
+
+      }
     </mat-card-content>
   </mat-card>
   <mat-card appearance="raised" class="hiddenLayer">
@@ -31,9 +33,11 @@
     </mat-card-header>
     <mat-card-content>
       <div>Learnrate: {{ learnRate }}, learned data points: {{ learnedDataPoints }}</div>
-      <ng-container *ngFor="let perceptron of hiddenPerceptron">
-        <app-perceptron [perceptron]="perceptron" [canvasWidth]="200" [canvasHeight]="200"></app-perceptron>
-      </ng-container>
+      @for (perceptron of hiddenPerceptron; track perceptron) {
+
+      <app-perceptron [perceptron]="perceptron" [canvasWidth]="200" [canvasHeight]="200"></app-perceptron>
+
+      }
     </mat-card-content>
   </mat-card>
   <mat-card appearance="raised" class="outputLayer">

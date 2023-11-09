@@ -2,14 +2,15 @@
   <mat-sidenav [disableClose]="staticToolbar" [opened]="showSidebar$ | async" [mode]="staticToolbar ? 'side' : 'over'">
     <nav class="navigation-sidenav">
       <mat-nav-list>
+        @for (route of routerLinks; track route) {
         <app-nav-item
           (click)="close()"
-          *ngFor="let route of routerLinks"
           [linkText]="route.data.linkText"
           [subTitle]="route.data.subTitle"
           [path]="route.path"
         >
         </app-nav-item>
+        }
       </mat-nav-list>
     </nav>
   </mat-sidenav>

@@ -1,4 +1,5 @@
-<mat-card appearance="raised" wsSharedUiElevateCard *ngIf="config$ | async as config">
+@if (config$ | async; as config) {
+<mat-card appearance="raised" wsSharedUiElevateCard>
   <mat-card-header>
     <mat-card-title>Configs</mat-card-title>
   </mat-card-header>
@@ -46,3 +47,4 @@
     <button mat-raised-button color="accent" (click)="reset()">Reset</button>
   </mat-card-actions>
 </mat-card>
+}

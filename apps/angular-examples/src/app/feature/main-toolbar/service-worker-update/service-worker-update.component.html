@@ -1,5 +1,7 @@
-<ng-container *ngIf="vm$ | async as vm">
-  <span class="mat-caption" *ngIf="vm.isLoading"> Checking for new version </span>
-  <mat-spinner *ngIf="vm.isLoading" [diameter]="24"></mat-spinner>
-  <button color="warn" mat-raised-button *ngIf="vm.updateAvailable" (click)="activateUpdate()">Get new version!</button>
-</ng-container>
+@if (vm$ | async; as vm) { @if (vm.isLoading) {
+<span class="mat-caption"> Checking for new version </span>
+} @if (vm.isLoading) {
+<mat-spinner [diameter]="24"></mat-spinner>
+} @if (vm.updateAvailable) {
+<button color="warn" mat-raised-button (click)="activateUpdate()">Get new version!</button>
+} }
