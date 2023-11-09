@@ -17,19 +17,22 @@ export class GravityConfigComponent {
   readonly form: FormGroup<{
     gravitationalConstant: FormControl<number>;
     massOfSun: FormControl<number>;
-  }> = this.nNfB.group({
-    gravitationalConstant: 0,
-    massOfSun: 0,
-  });
+  }>;
 
   @Input() set config(config: GravityWorldConfig) {
     this.form.patchValue(config);
   }
 
-  @Output() readonly configChange: Observable<GravityWorldConfig> = this.form.valueChanges.pipe(
-    map(() => this.form.getRawValue()),
-    distinctUntilChanged(compareGravityWorldConfig)
-  );
+  @Output() readonly configChange: Observable<GravityWorldConfig>;
 
-  constructor(private nNfB: NonNullableFormBuilder) {}
+  constructor(private nNfB: NonNullableFormBuilder) {
+    this.form = this.nNfB.group({
+      gravitationalConstant: 0,
+      massOfSun: 0,
+    });
+    this.configChange = this.form.valueChanges.pipe(
+      map(() => this.form.getRawValue()),
+      distinctUntilChanged(compareGravityWorldConfig)
+    );
+  }
 }
