@@ -108,7 +108,7 @@
     "@types/lodash": "4.14.200",
     "@types/node": "18.18.8",
     "@types/p5": "1.7.3",
-    "@types/three": "0.158.1",
+    "@types/three": "0.158.2",
     "@typescript-eslint/eslint-plugin": "6.10.0",
     "@typescript-eslint/parser": "6.10.0",
     "assemblyscript": "0.27.15",
