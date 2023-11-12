@@ -48,7 +48,7 @@
     "constructs": "^10.3.0",
     "core-js": "3.33.2",
     "document-register-element": "1.14.10",
-    "firebase": "10.5.2",
+    "firebase": "10.6.0",
     "gl-matrix": "3.4.3",
     "gpu.js": "2.16.0",
     "lodash": "4.17.21",
