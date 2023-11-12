@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.29.23](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.22...v3.29.23) (2023-11-12)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency @assemblyscript/loader to v0.27.16 ([331b2ac](https://github.com/WolfSoko/wol-sok-mono/commit/331b2ac4b6577e44c0b29d8ea45235c26a57c0a6))
+
 ### [3.29.22](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.21...v3.29.22) (2023-11-11)
 
 ### [3.29.21](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.20...v3.29.21) (2023-11-11)
