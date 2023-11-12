@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.29.31](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.30...v3.29.31) (2023-11-12)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update angular monorepo to v17.0.2 ([0bb2539](https://github.com/WolfSoko/wol-sok-mono/commit/0bb2539c08c72f1d94417cd5d73edf1ffef041c6))
+
 ### [3.29.30](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.29...v3.29.30) (2023-11-12)
 
 ### [3.29.29](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.28...v3.29.29) (2023-11-12)
