@@ -48,6 +48,7 @@ runs:
       shell: bash
       run: |
         npm install @nx/nx-linux-x64-gnu --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+        npm install @rollup/rollup-linux-x64-gnu --ignore-scripts=${{ inputs.run-scripts == 'false' }}
       env:
         CYPRESS_CACHE_FOLDER: 'cache/cypress'
 
