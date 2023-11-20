@@ -1,16 +1,24 @@
 <div class="results">
   <div class="accuracy-result">
     <div #accuracyCanvas></div>
-    <div *ngIf="accuracyLabel">{{ 'Last accuracy: ' + accuracyLabel }}</div>
+    @if (accuracyLabel) {
+      <div>{{ 'Last accuracy: ' + accuracyLabel }}</div>
+    }
   </div>
   <div class="loss-result">
     <div #lossCanvas></div>
-    <div *ngIf="lossLabel">{{ 'Last loss: ' + lossLabel }}</div>
+    @if (lossLabel) {
+      <div>{{ 'Last loss: ' + lossLabel }}</div>
+    }
   </div>
 
-  <div *ngIf="batch" class="mat-body-1">Predicted images:</div>
+  @if (batch) {
+    <div class="mat-body-1">Predicted images:</div>
+  }
   <div class="images" #images></div>
-  <div *ngIf="batch && totalCorrect" class="mat-subtitle-1">
-    {{ 'Result: ' + totalCorrect + ' of ' + totalPredictions + ' recognized correctly.' }}
-  </div>
+  @if (batch && totalCorrect) {
+    <div class="mat-subtitle-1">
+      {{ 'Result: ' + totalCorrect + ' of ' + totalPredictions + ' recognized correctly.' }}
+    </div>
+  }
 </div>

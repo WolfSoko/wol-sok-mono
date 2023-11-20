@@ -16,16 +16,17 @@
       <mat-card-subtitle>Click to add fluid</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <feat-lazy-react-diff-p5-view
-        *ngIf="dimensions$ | async as dimensions"
-        [simWidth]="dimensions.width"
-        [simHeight]="dimensions.height"
-        [calcService]="calcService"
-        [run]="start"
-        [showFps]="showFps"
-        (mousePressed)="addChemical($event)"
-      >
-      </feat-lazy-react-diff-p5-view>
+      @if (dimensions$ | async; as dimensions) {
+        <feat-lazy-react-diff-p5-view
+          [simWidth]="dimensions.width"
+          [simHeight]="dimensions.height"
+          [calcService]="calcService"
+          [run]="start"
+          [showFps]="showFps"
+          (mousePressed)="addChemical($event)"
+        >
+        </feat-lazy-react-diff-p5-view>
+      }
       <div class="sim-controls">
         <a mat-raised-button (click)="toggleRunSim()">{{ start ? 'Pause' : 'Run' }}</a>
         <a mat-raised-button color="accent" (click)="reset()">Reset</a>
@@ -111,92 +112,99 @@
           />
         </mat-form-field>
       </div>
-      <div *ngIf="showFps">Calculation needs: {{ calculationTime$ | async }}ms</div>
+      @if (showFps) {
+        <div>Calculation needs: {{ calculationTime$ | async }}ms</div>
+      }
     </mat-card-content>
   </mat-card>
 
-  <mat-card appearance="raised" wsSharedUiElevateCard class="parameters" *ngIf="calcParams">
-    <mat-card-header>
-      <mat-card-title>Parameters</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <mat-form-field class="small">
-        <mat-label>Diffusion A</mat-label>
-        <input
-          matInput
-          id="diffRateA"
-          type="number"
-          step="0.05"
-          name="diffRateA"
-          min="0.0"
-          max="1.0"
-          [(ngModel)]="calcParams.diffRateA"
-          (ngModelChange)="updateCalcParams(calcParams)"
-        />
-      </mat-form-field>
-      <mat-form-field>
-        <mat-label>Diffusion B</mat-label>
-        <input
-          matInput
-          id="diffRateB"
-          placeholder="Diffusion B"
-          type="number"
-          step="0.05"
-          name="diffRateB"
-          min="0.0"
-          max="1.0"
-          [(ngModel)]="calcParams.diffRateB"
-          (ngModelChange)="updateCalcParams(calcParams)"
-        />
-      </mat-form-field>
-      <mat-form-field>
-        <mat-label>Feed rate</mat-label>
-        <input
-          matInput
-          id="feedRate"
-          placeholder="Feed rate"
-          type="number"
-          step="0.001"
-          name="feedRate"
-          min="0.000"
-          max="1.000"
-          [(ngModel)]="calcParams.feedRate"
-          (ngModelChange)="updateCalcParams(calcParams)"
-        />
-      </mat-form-field>
-      <mat-form-field>
-        <mat-label>Kill Rate</mat-label>
-        <input
-          matInput
-          id="killRate"
-          placeholder="Kill Rate"
-          type="number"
-          step="0.001"
-          name="killRate"
-          min="0.000"
-          max="1.000"
-          [(ngModel)]="calcParams.killRate"
-          (ngModelChange)="updateCalcParams(calcParams)"
-        />
-      </mat-form-field>
-      <br />
-      <mat-select
-        placeholder="Example parameter config"
-        [(ngModel)]="selectedExample"
-        (selectionChange)="setSelection($event)"
-      >
-        <mat-option *ngFor="let example of examples" [value]="example">
-          {{ example }}
-        </mat-option>
-      </mat-select>
-    </mat-card-content>
-  </mat-card>
-  <feat-lazy-react-diff-weights-config
-    class="weights-config"
-    *ngIf="cellWeights$ | async as weights"
-    [weights]="weights"
-    (weightsChanged)="updateWeights($event)"
-  ></feat-lazy-react-diff-weights-config>
+  @if (calcParams) {
+    <mat-card appearance="raised" wsSharedUiElevateCard class="parameters">
+      <mat-card-header>
+        <mat-card-title>Parameters</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-form-field class="small">
+          <mat-label>Diffusion A</mat-label>
+          <input
+            matInput
+            id="diffRateA"
+            type="number"
+            step="0.05"
+            name="diffRateA"
+            min="0.0"
+            max="1.0"
+            [(ngModel)]="calcParams.diffRateA"
+            (ngModelChange)="updateCalcParams(calcParams)"
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Diffusion B</mat-label>
+          <input
+            matInput
+            id="diffRateB"
+            placeholder="Diffusion B"
+            type="number"
+            step="0.05"
+            name="diffRateB"
+            min="0.0"
+            max="1.0"
+            [(ngModel)]="calcParams.diffRateB"
+            (ngModelChange)="updateCalcParams(calcParams)"
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Feed rate</mat-label>
+          <input
+            matInput
+            id="feedRate"
+            placeholder="Feed rate"
+            type="number"
+            step="0.001"
+            name="feedRate"
+            min="0.000"
+            max="1.000"
+            [(ngModel)]="calcParams.feedRate"
+            (ngModelChange)="updateCalcParams(calcParams)"
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Kill Rate</mat-label>
+          <input
+            matInput
+            id="killRate"
+            placeholder="Kill Rate"
+            type="number"
+            step="0.001"
+            name="killRate"
+            min="0.000"
+            max="1.000"
+            [(ngModel)]="calcParams.killRate"
+            (ngModelChange)="updateCalcParams(calcParams)"
+          />
+        </mat-form-field>
+        <br />
+        <mat-select
+          placeholder="Example parameter config"
+          [(ngModel)]="selectedExample"
+          (selectionChange)="setSelection($event)"
+        >
+          @for (example of examples; track example) {
+            <mat-option [value]="example">
+              {{ example }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-card-content>
+    </mat-card>
+  }
+  @if (cellWeights$ | async; as weights) {
+    <feat-lazy-react-diff-weights-config
+      class="weights-config"
+      [weights]="weights"
+      (weightsChanged)="updateWeights($event)"
+    ></feat-lazy-react-diff-weights-config>
+  }
   <mat-card appearance="raised" wsSharedUiElevateCard>
     <mat-card-header>
       <mat-card-title> Reset parameters and weights</mat-card-title>

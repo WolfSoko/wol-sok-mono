@@ -7,8 +7,10 @@ import {
   HostListener,
   NgZone,
   OnDestroy,
+  Signal,
   ViewChild,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -73,7 +75,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   width = 320;
   height = 140;
 
-  state$: Observable<GameStateState>;
+  state: Signal<GameStateState | undefined>;
   fps$: Observable<number>;
   players$: Observable<Player[]>;
   isRunning$: Observable<boolean>;
@@ -86,7 +88,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     private ngZone: NgZone,
     private matDialog: MatDialog
   ) {
-    this.state$ = this.query.select();
+    this.state = toSignal(this.query.select());
     this.fps$ = this.query.selectFps();
     this.gameStateService.reset();
     this.players$ = this.playerQuery.selectAll();

@@ -12,12 +12,16 @@
     </mat-card-title>
   </mat-card-header>
   <mat-card-content>
-    <div *ngIf="state$ | async; let state; else: loading" class="statistics">
-      <span>{{ 'Game time: ' + state.timePassed }}</span>
-      <div *ngFor="let player of players$ | async">
-        Player {{ player.id + 1 }}: {{ player.bacterias.length }}bacterias
+    @if (state()) {
+      <div class="statistics">
+        <span>{{ 'Game time: ' + state()?.timePassed }}</span>
+        @for (player of players$ | async; track player) {
+          <div>Player {{ player.id + 1 }}: {{ player.bacterias.length }}bacterias</div>
+        }
       </div>
-    </div>
+    } @else {
+      #: loading|
+    }
     <div class="canvas-container">
       <div wsThanos class="thanos-container">
         <ws-shared-ui-show-fps [show]="true" [fps]="(fps$ | async) ?? 0"></ws-shared-ui-show-fps>

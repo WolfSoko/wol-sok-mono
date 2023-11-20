@@ -6,15 +6,19 @@
     </mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
-    <div class="canvas-with-fps" *ngIf="webglSupported; else webglError">
-      <div
-        #gpuCanvasContainer
-        (wsSharedUiElemResized)="updateCanvasSize($event)"
-        [debounceTime]="500"
-        class="canvas-container"
-      ></div>
-      <ws-shared-ui-show-fps [fps]="(fps$ | async) ?? 0" [show]="true" class="fps"></ws-shared-ui-show-fps>
-    </div>
+    @if (webglSupported) {
+      <div class="canvas-with-fps">
+        <div
+          #gpuCanvasContainer
+          (wsSharedUiElemResized)="updateCanvasSize($event)"
+          [debounceTime]="500"
+          class="canvas-container"
+        ></div>
+        <ws-shared-ui-show-fps [fps]="(fps$ | async) ?? 0" [show]="true" class="fps"></ws-shared-ui-show-fps>
+      </div>
+    } @else {
+      <p>WebGl is not supported</p>
+    }
 
     <div>
       Calculation time with
@@ -54,6 +58,3 @@
     </form>
   </mat-card-content>
 </mat-card>
-<ng-template #webglError>
-  <p>WebGl is not supported</p>
-</ng-template>

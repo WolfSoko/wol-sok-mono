@@ -1,4 +1,3 @@
-import { NgFor } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { BrainSettingsComponent } from '../shared/brain-settings/brain-settings.component';
@@ -13,7 +12,7 @@ import { Point } from '../shared/point';
   styleUrls: ['./multi-perceptron.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [MatCardModule, DataViewComponent, NgFor, PerceptronComponent, BrainSettingsComponent],
+  imports: [MatCardModule, DataViewComponent, PerceptronComponent, BrainSettingsComponent],
 })
 export class MultiPerceptronComponent implements OnInit {
   width = 300;

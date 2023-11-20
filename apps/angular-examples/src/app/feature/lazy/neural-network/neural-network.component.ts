@@ -1,4 +1,3 @@
-import { NgFor } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -11,7 +10,7 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./neural-network.component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [MatToolbarModule, MatTabsModule, NgFor, RouterLinkActive, RouterLink, RouterOutlet],
+  imports: [MatToolbarModule, MatTabsModule, RouterLinkActive, RouterLink, RouterOutlet],
 })
 export class NeuralNetworkComponent {
   constructor() {

@@ -1,6 +1,8 @@
-<div *ngIf="codeTitle" class="title">
-  {{ codeTitle }}
-</div>
+@if (codeTitle) {
+  <div class="title">
+    {{ codeTitle }}
+  </div>
+}
 <div
   class="editor"
   ace-editor

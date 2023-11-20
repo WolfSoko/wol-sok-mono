@@ -8,11 +8,8 @@
     </mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
-    <lazy-feat-fanal-circle-canvas
-      *ngIf="activeWave$ | async as wave"
-      [waveWidth]="width"
-      [waveHeight]="height"
-      [wave]="wave"
-    />
+    @if (activeWave$ | async; as wave) {
+      <lazy-feat-fanal-circle-canvas [waveWidth]="width" [waveHeight]="height" [wave]="wave" />
+    }
   </mat-card-content>
 </mat-card>

@@ -1,4 +1,3 @@
-import { NgIf } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
@@ -15,7 +14,7 @@ import { Point } from '../shared/point';
   styleUrls: ['./perceptron-tab.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [MatCardModule, ElevateCardDirective, DataViewComponent, BrainSettingsComponent, NgIf, PerceptronComponent],
+  imports: [MatCardModule, ElevateCardDirective, DataViewComponent, BrainSettingsComponent, PerceptronComponent],
 })
 export class PerceptronTabComponent implements OnInit {
   width = 400;

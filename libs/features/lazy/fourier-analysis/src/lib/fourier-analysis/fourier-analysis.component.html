@@ -22,19 +22,19 @@
         </button>
       </mat-toolbar-row>
     </mat-toolbar>
-    <lazy-feat-fanal-input-wave
-      *ngIf="(isLoading$ | async) === false; else loading"
-      [width]="inputWaveCanvasWidth"
-      [height]="inputWaveCanvasHeight"
-    ></lazy-feat-fanal-input-wave>
-    <lazy-feat-fanal-circle-analysis
-      *ngIf="(isLoading$ | async) === false; else loading"
-      [width]="circleCanvasWidth"
-      [height]="circleCanvasHeight"
-    >
-    </lazy-feat-fanal-circle-analysis>
-    <ng-template #loading>
+    @if ((isLoading$ | async) === false) {
+      <lazy-feat-fanal-input-wave
+        [width]="inputWaveCanvasWidth"
+        [height]="inputWaveCanvasHeight"
+      ></lazy-feat-fanal-input-wave>
+    } @else {
       <mat-spinner color="accent"></mat-spinner>
-    </ng-template>
+    }
+    @if ((isLoading$ | async) === false) {
+      <lazy-feat-fanal-circle-analysis [width]="circleCanvasWidth" [height]="circleCanvasHeight">
+      </lazy-feat-fanal-circle-analysis>
+    } @else {
+      <mat-spinner color="accent"></mat-spinner>
+    }
   </div>
 </mat-sidenav-container>

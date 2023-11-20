@@ -1,32 +1,36 @@
 <mat-drawer-container [class.config-visible]="drawer.opened" class="sim-layout" autosize>
   <mat-drawer #drawer class="sidenav-drawer" mode="side">
-    <mat-card appearance="raised" class="gravitational-force-card-controls" *ngIf="drawer.opened">
-      <mat-card-header>
-        <mat-card-title>Play with the values</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <feat-lazy-gravity-config [config]="settings()" (configChange)="settings.set($event)" />
-        <mat-list class="info-list">
-          <h4 mat-subheader>Infos</h4>
-          <mat-list-item>
-            <span>Planets = {{ planets().length }}</span>
-          </mat-list-item>
-          <mat-list-item>
-            <span>Forces = {{ worldService.getForces().length }}</span>
-          </mat-list-item>
-          <mat-list-item *ngFor="let planet of planets(); let i = index">
-            <div class="planet-info-item">
-              <button mat-icon-button (click)="removePlanet(planet)">
-                <mat-icon aria-label="Remove planet">delete_forever</mat-icon>
-              </button>
-              <span [style.background-color]="planet.color">
-                Planet{{ i + 1 }}: x={{ planet.pos.x | number: '1.0-0' }},y={{ planet.pos.y | number: '1.0-0' }}
-              </span>
-            </div>
-          </mat-list-item>
-        </mat-list>
-      </mat-card-content>
-    </mat-card>
+    @if (drawer.opened) {
+      <mat-card appearance="raised" class="gravitational-force-card-controls">
+        <mat-card-header>
+          <mat-card-title>Play with the values</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <feat-lazy-gravity-config [config]="settings()" (configChange)="settings.set($event)" />
+          <mat-list class="info-list">
+            <h4 mat-subheader>Infos</h4>
+            <mat-list-item>
+              <span>Planets = {{ planets().length }}</span>
+            </mat-list-item>
+            <mat-list-item>
+              <span>Forces = {{ worldService.getForces().length }}</span>
+            </mat-list-item>
+            @for (planet of planets(); track planet; let i = $index) {
+              <mat-list-item>
+                <div class="planet-info-item">
+                  <button mat-icon-button (click)="removePlanet(planet)">
+                    <mat-icon aria-label="Remove planet">delete_forever</mat-icon>
+                  </button>
+                  <span [style.background-color]="planet.color">
+                    Planet{{ i + 1 }}: x={{ planet.pos.x | number: '1.0-0' }},y={{ planet.pos.y | number: '1.0-0' }}
+                  </span>
+                </div>
+              </mat-list-item>
+            }
+          </mat-list>
+        </mat-card-content>
+      </mat-card>
+    }
   </mat-drawer>
   <mat-card appearance="raised" class="gravitational-force-card">
     <div matCardTitle class="content-title">
@@ -56,15 +60,16 @@
         </marker>
       </defs>
       <g>
-        <circle
-          class="world-object"
-          *ngFor="let planet of planets()"
-          [id]="planet.id"
-          [attr.cx]="planet.pos.x"
-          [attr.cy]="planet.pos.y"
-          [attr.r]="planet.radius"
-          [attr.fill]="planet.color"
-        ></circle>
+        @for (planet of planets(); track planet) {
+          <circle
+            class="world-object"
+            [id]="planet.id"
+            [attr.cx]="planet.pos.x"
+            [attr.cy]="planet.pos.y"
+            [attr.r]="planet.radius"
+            [attr.fill]="planet.color"
+          ></circle>
+        }
         <circle
           class="world-object sun"
           [id]="sun.id"
@@ -73,24 +78,26 @@
           [attr.r]="sun.radius"
           fill="#ffffab"
         ></circle>
-        <path
-          *ngFor="let dValue of forcesSvgPaths()"
-          class="line-line"
-          marker-end="url(#force-arrow-head)"
-          stroke-width="6"
-          fill="none"
-          stroke="#348B85"
-          [attr.d]="dValue"
-        />
-        <path
-          *ngFor="let dValue of velocitySvgPath()"
-          class="line-line"
-          marker-end="url(#force-arrow-head)"
-          stroke-width="6"
-          fill="none"
-          stroke="#8B5870"
-          [attr.d]="dValue"
-        />
+        @for (dValue of forcesSvgPaths(); track dValue) {
+          <path
+            class="line-line"
+            marker-end="url(#force-arrow-head)"
+            stroke-width="6"
+            fill="none"
+            stroke="#348B85"
+            [attr.d]="dValue"
+          />
+        }
+        @for (dValue of velocitySvgPath(); track dValue) {
+          <path
+            class="line-line"
+            marker-end="url(#force-arrow-head)"
+            stroke-width="6"
+            fill="none"
+            stroke="#8B5870"
+            [attr.d]="dValue"
+          />
+        }
       </g>
     </svg>
     <mat-card-actions>

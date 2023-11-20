@@ -1,4 +1,4 @@
-<ng-container *ngIf="viewModel$ | async as vm">
+@if (viewModel$ | async; as vm) {
   <mat-card appearance="raised" class="title">
     <mat-card-header>
       <mat-card-title>
@@ -9,15 +9,16 @@
     <mat-card-content>
       <div>
         <lzy-ft-shad-ex-options></lzy-ft-shad-ex-options>
-        <div *ngIf="vm.savingShader">
-          <mat-spinner color="accent" diameter="24"></mat-spinner>
-          <span>Auto saving</span>
-        </div>
+        @if (vm.savingShader) {
+          <div>
+            <mat-spinner color="accent" diameter="24"></mat-spinner>
+            <span>Auto saving</span>
+          </div>
+        }
       </div>
     </mat-card-content>
   </mat-card>
-  <ng-container *ngIf="vm.isLoadingShaders === false; then shadersContainer; else spinner"> </ng-container>
-  <ng-template #shadersContainer>
+  @if (vm.isLoadingShaders === false) {
     <mat-card appearance="raised" class="shaders-container" (swipeleft)="nextPage()" (swiperight)="previousPage()">
       <mat-card-content>
         <button mat-mini-fab color="primary" class="navigation-button left" (click)="previousPage()">
@@ -29,15 +30,17 @@
               <div class="mat-subtitle-1 shader-title">
                 {{ shader.description }}
               </div>
-              <div class="editor-tile" *ngIf="vm.showCodeEditor">
-                <lzy-ft-shad-ex-code-editor
-                  class="code-editor"
-                  [code]="shader.code"
-                  (codeChange)="updateShaderCode(shader, $event)"
-                  mode="glsl"
-                >
-                </lzy-ft-shad-ex-code-editor>
-              </div>
+              <
+              @if (vm.showCodeEditor) {
+                <div class="editor-tile">
+                  <lzy-ft-shad-ex-code-editor
+                    class="code-editor"
+                    [code]="shader.code"
+                    (codeChange)="updateShaderCode(shader, $event)"
+                    mode="glsl"
+                  />
+                </div>
+              }
               <div #shaderRenderer class="shader-renderer" [class.show-editor]="vm.showCodeEditor">
                 <ws-shared-ui-render-shader
                   [class.special-fps-style]="isEven"
@@ -45,8 +48,7 @@
                   [showFps]="vm.showFps"
                   [canvasWidth]="shaderRenderer.clientWidth"
                   [canvasHeight]="shaderRenderer.getBoundingClientRect().height"
-                >
-                </ws-shared-ui-render-shader>
+                />
               </div>
             </div>
           </ng-container>
@@ -56,22 +58,22 @@
         </button>
       </mat-card-content>
     </mat-card>
-  </ng-template>
-  <ng-template #spinner>
+  } @else {
     <div class="shaders-container shaders-container-spinner">
       <mat-spinner color="accent" diameter="56"></mat-spinner>
       <div class="mat-body-1">Loading example shaders</div>
     </div>
-  </ng-template>
-  <mat-paginator
-    *ngIf="vm.isLoadingShaders === false"
-    showFirstLastButtons="true"
-    [pageIndex]="vm.currentPage.pageIndex"
-    [length]="vm.currentPage.length"
-    [pageSize]="vm.currentPage.pageSize"
-    [pageSizeOptions]="[1, 2, 3, 4, 5, 6]"
-    [hidePageSize]="vm.isSmallScreen"
-    (page)="changeCurrentShaderPage($event)"
-  >
-  </mat-paginator>
-</ng-container>
+  }
+  <
+  @if (vm.isLoadingShaders === false) {
+    <mat-paginator
+      showFirstLastButtons="true"
+      [pageIndex]="vm.currentPage.pageIndex"
+      [length]="vm.currentPage.length"
+      [pageSize]="vm.currentPage.pageSize"
+      [pageSizeOptions]="[1, 2, 3, 4, 5, 6]"
+      [hidePageSize]="vm.isSmallScreen"
+      (page)="changeCurrentShaderPage($event)"
+    />
+  }
+}
