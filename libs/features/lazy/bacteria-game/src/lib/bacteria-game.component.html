@@ -20,7 +20,7 @@
         }
       </div>
     } @else {
-      #: loading|
+      <mat-spinner>Loading</mat-spinner>
     }
     <div class="canvas-container">
       <div wsThanos class="thanos-container">
@@ -34,6 +34,3 @@
     <button mat-raised-button (click)="resetGame()" [disabled]="(isRunning$ | async) === false">Reset</button>
   </mat-card-actions>
 </mat-card>
-<ng-template #loading>
-  <mat-spinner>Loading</mat-spinner>
-</ng-template>

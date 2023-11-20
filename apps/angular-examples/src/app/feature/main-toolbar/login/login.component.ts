@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MAT_TOOLTIP_SCROLL_STRATEGY_FACTORY_PROVIDER, MatTooltipModule } from '@angular/material/tooltip';
 import { AuthenticationService, AuthQuery, Profile } from '@wolsok/feat-api-auth';
 
 @Component({
@@ -13,6 +13,7 @@ import { AuthenticationService, AuthQuery, Profile } from '@wolsok/feat-api-auth
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [MAT_TOOLTIP_SCROLL_STRATEGY_FACTORY_PROVIDER],
 })
 export class LoginComponent {
   user: Signal<Profile | undefined>;
