@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.30.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.58...v3.30.0) (2023-11-20)
+
+
+### Features
+
+* ✨ some deferred loading ([4a0d2d3](https://github.com/WolfSoko/wol-sok-mono/commit/4a0d2d3e61fff120b379a34a294b7b88b5bdebd5))
+
+
+### Bug Fixes
+
+* 🐛 control flow syntax ([0780843](https://github.com/WolfSoko/wol-sok-mono/commit/078084343486281d1994635de113dd892954b07b))
+
 ### [3.29.58](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.57...v3.29.58) (2023-11-20)
 
 
