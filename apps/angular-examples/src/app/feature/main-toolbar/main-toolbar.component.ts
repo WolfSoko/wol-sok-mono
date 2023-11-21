@@ -1,21 +1,29 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { CommonModule, DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Inject, Output, Renderer2 } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  ElementRef,
+  EventEmitter,
+  Inject,
+  Output,
+  Renderer2,
+  Signal,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { NavigationEnd, Router } from '@angular/router';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ElemResizedDirective, RenderShaderComponent, ResizedEvent } from '@wolsok/ui-kit';
-import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { HeadlineAnimationService } from '../../core/headline-animation.service';
 import { shader } from '../../title-shader';
 import { LoginComponent } from './login/login.component';
 import { ServiceWorkerUpdateComponent } from './service-worker-update/service-worker-update.component';
 
-@UntilDestroy()
 @Component({
   selector: 'app-main-toolbar',
   standalone: true,
@@ -37,29 +45,31 @@ import { ServiceWorkerUpdateComponent } from './service-worker-update/service-wo
 export class MainToolbarComponent {
   @Output() clickSideNav = new EventEmitter<Event>();
   shaderCode: string;
-  runAnimation$: Observable<boolean>;
-  isHandset$: Observable<boolean>;
+  runAnimation: Signal<boolean>;
+  isHandset: Signal<boolean>;
   shaderWidth!: number;
   shaderHeight!: number;
   themeMode: 'dark' | 'light' = 'dark';
 
   constructor(
-    private readonly elRef: ElementRef,
+    private readonly el: ElementRef,
     private readonly headlineAnimations: HeadlineAnimationService,
+    breakpointObserver: BreakpointObserver,
     private readonly router: Router,
-    private readonly breakpointObserver: BreakpointObserver,
     @Inject(DOCUMENT) private readonly document: Document,
     private readonly renderer: Renderer2
   ) {
-    this.router.events
-      .pipe(
-        filter((value) => value instanceof NavigationEnd),
-        untilDestroyed(this)
-      )
-      .subscribe(() => headlineAnimations.startAnimation());
-    this.isHandset$ = breakpointObserver.observe(Breakpoints.Handset).pipe(map((value) => value.matches));
-    this.runAnimation$ = headlineAnimations.runAnimation$;
     this.shaderCode = shader;
+    const navEnd = toSignal(this.router.events.pipe(filter((value) => value instanceof NavigationEnd)));
+    this.isHandset = toSignal(breakpointObserver.observe(Breakpoints.Handset).pipe(map((value) => value.matches)), {
+      initialValue: false,
+    });
+    this.runAnimation = toSignal(this.headlineAnimations.runAnimation$, { initialValue: false });
+    effect(() => {
+      if (navEnd()) {
+        this.headlineAnimations.startAnimation();
+      }
+    });
   }
 
   onResize($event: ResizedEvent) {

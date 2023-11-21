@@ -2,7 +2,7 @@
   <button class="sidenav-icon" mat-icon-button title="main-menu" (click)="clickSideNav.emit($event)">
     <mat-icon>menu</mat-icon>
   </button>
-  <span class="on-top" [class.hide]="isHandset$ | async">WolSok Coding&nbsp;</span>
+  <span class="on-top" [class.hide]="isHandset()">WolSok Coding&nbsp;</span>
   <span class="on-top">Angular Experiments</span>
   <span class="toolbar-spacer"></span>
   @defer (on timer(1s)) {
@@ -11,7 +11,7 @@
     </mat-slide-toggle>
   }
   @defer (on timer(3s)) {
-    <app-service-worker-update [class.hide]="isHandset$ | async" />
+    <app-service-worker-update [class.hide]="isHandset()" />
   }
   @defer (on timer(2s)) {
     <app-login />
@@ -22,9 +22,8 @@
         [shaderCode]="shaderCode"
         [canvasWidth]="shaderWidth"
         [canvasHeight]="shaderHeight"
-        [runAnimation]="runAnimation$ | async"
-      >
-      </ws-shared-ui-render-shader>
+        [runAnimation]="runAnimation()"
+      />
     </div>
   }
 </mat-toolbar>

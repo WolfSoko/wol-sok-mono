@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
+import { BehaviorSubject, combineLatest, Observable, Subscriber } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
@@ -9,6 +9,15 @@ export class HeadlineAnimationService {
 
   constructor() {
     const isVisible$ = new Observable<boolean>((subscriber) => {
+      function findToolbarAndObserve(observer: IntersectionObserver, subscriber: Subscriber<boolean>): void {
+        const mainToolbarElem = document.getElementById('main-toolbar');
+        if (mainToolbarElem) {
+          observer.observe(mainToolbarElem);
+        } else {
+          requestIdleCallback(() => findToolbarAndObserve(observer, subscriber));
+        }
+      }
+
       const intersectionCallback: IntersectionObserverCallback = (entries: IntersectionObserverEntry[]) => {
         entries.forEach((entry) => {
           subscriber.next(entry.isIntersecting);
@@ -16,13 +25,7 @@ export class HeadlineAnimationService {
       };
       const observer = new IntersectionObserver(intersectionCallback);
 
-      const mainToolbarElem = document.getElementById('main-toolbar');
-      if (mainToolbarElem) {
-        observer.observe(mainToolbarElem);
-      } else {
-        subscriber.error(new Error('main-toolbar element not found'));
-        subscriber.complete();
-      }
+      findToolbarAndObserve(observer, subscriber);
       return () => {
         observer.disconnect();
       };
