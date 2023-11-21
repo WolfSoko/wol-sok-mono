@@ -1,18 +1,19 @@
-<mat-sidenav-container *wsLet="showStatic$ | async as staticToolbar" [hasBackdrop]="!staticToolbar" autosize>
-  <mat-sidenav [disableClose]="staticToolbar" [opened]="showSidebar$ | async" [mode]="staticToolbar ? 'side' : 'over'">
+<mat-sidenav-container [hasBackdrop]="hasBackdrop()" [autosize]="true">
+  <mat-sidenav [opened]="showSidebar()" [mode]="mode()">
     <nav class="navigation-sidenav">
       <mat-nav-list>
         @for (route of routerLinks; track route) {
-        <app-nav-item
-          (click)="close()"
-          [linkText]="route.data.linkText"
-          [subTitle]="route.data.subTitle"
-          [path]="route.path"
-        >
-        </app-nav-item>
+          @defer (when showSidebar()) {
+            <app-nav-item
+              (click)="close()"
+              [linkText]="route.data.linkText"
+              [subTitle]="route.data.subTitle"
+              [path]="route.path"
+            />
+          }
         }
       </mat-nav-list>
     </nav>
   </mat-sidenav>
-  <ng-content #content> </ng-content>
+  <ng-content />
 </mat-sidenav-container>

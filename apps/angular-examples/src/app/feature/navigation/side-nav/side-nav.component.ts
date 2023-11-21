@@ -4,17 +4,19 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ContentChild,
-  ElementRef,
+  computed,
+  effect,
   Inject,
-  ViewChild,
+  signal,
   ViewContainerRef,
   ViewEncapsulation,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatListModule } from '@angular/material/list';
-import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { LetDirective } from '@wolsok/ui-kit';
-import { BehaviorSubject, combineLatest, distinctUntilChanged, map, Observable, tap } from 'rxjs';
+import { map } from 'rxjs';
 import { MainNavRoute } from '../../../app-routing';
 import { ROUTER_LINKS } from '../../../router-links.token';
 import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
@@ -22,46 +24,46 @@ import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
 @Component({
   selector: 'app-side-nav',
   standalone: true,
-  imports: [CommonModule, MatSidenavModule, MatListModule, NavItemComponent, LetDirective],
+  imports: [CommonModule, MatSidenavModule, MatListModule, NavItemComponent, LetDirective, MatProgressSpinnerModule],
   templateUrl: './side-nav.component.html',
   styleUrls: ['./side-nav.component.scss'],
   encapsulation: ViewEncapsulation.Emulated,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SideNavComponent {
-  @ViewChild(MatSidenav) sideNav!: MatSidenav;
-  @ContentChild('content') contentRef!: ElementRef;
-
-  showStatic$: Observable<boolean> = this.breakpointObserver.observe([Breakpoints.Large, Breakpoints.XLarge]).pipe(
-    map((result) => result?.matches),
-    distinctUntilChanged(),
-    tap(() => this.markParentForChangeDetection())
+  private isLargeScreen = toSignal(
+    this.breakpointObserver.observe([Breakpoints.Large, Breakpoints.XLarge]).pipe(map((result) => result.matches)),
+    { initialValue: false }
   );
 
-  private showSidebarSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-
-  showSidebar$: Observable<boolean> = combineLatest([this.showStatic$, this.showSidebarSubject.asObservable()]).pipe(
-    map(([isStatic, show]) => isStatic || show),
-    distinctUntilChanged()
-  );
+  mode = computed(() => (this.isLargeScreen() ? 'side' : 'over'));
+  hasBackdrop = computed(() => !this.isLargeScreen());
+  showSidebar = signal<boolean>(false);
 
   constructor(
     @Inject(ROUTER_LINKS) public routerLinks: MainNavRoute[],
     private readonly breakpointObserver: BreakpointObserver,
-    private cdRef: ChangeDetectorRef,
     private viewContainerRef: ViewContainerRef
-  ) {}
+  ) {
+    effect(
+      () => {
+        this.showSidebar.set(this.isLargeScreen());
+        this.markParentForChangeDetection();
+      },
+      { allowSignalWrites: true }
+    );
+  }
 
   toggle(): void {
-    this.showSidebarSubject.next(!this.showSidebarSubject.getValue());
+    this.showSidebar.update((show) => !show);
   }
 
   close(): void {
-    this.showSidebarSubject.next(false);
+    this.showSidebar.set(false);
   }
 
   open(): void {
-    this.showSidebarSubject.next(true);
+    this.showSidebar.set(true);
   }
 
   private markParentForChangeDetection(): void {
