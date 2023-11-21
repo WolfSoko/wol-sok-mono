@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.31.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.30.2...v3.31.0) (2023-11-21)
+
+
+### Features
+
+* ✨ make sidebar also dynamic on large screens ([798a23e](https://github.com/WolfSoko/wol-sok-mono/commit/798a23ea3361ca774fa4edbba8374a43a91fb933))
+
 ### [3.30.2](https://github.com/WolfSoko/wol-sok-mono/compare/v3.30.1...v3.30.2) (2023-11-20)
 
 ### [3.30.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.30.0...v3.30.1) (2023-11-20)
