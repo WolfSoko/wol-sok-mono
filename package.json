@@ -116,7 +116,7 @@
     "@typescript-eslint/parser": "6.12.0",
     "assemblyscript": "0.27.19",
     "aws-cdk-lib": "^2.110.0",
-    "aws-sdk": "2.1499.0",
+    "aws-sdk": "2.1500.0",
     "axios": "1.6.2",
     "chai": "4.3.10",
     "cross-env": "7.0.3",
