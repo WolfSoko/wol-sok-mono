@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.33.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.32.0...v3.33.0) (2023-11-23)
+
+
+### Features
+
+* ✨ use loadRemoteModule again ([d2728a9](https://github.com/WolfSoko/wol-sok-mono/commit/d2728a98c212090f45ed8eb969e3b24083d1effa))
+
 ## [3.32.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.31.4...v3.32.0) (2023-11-23)
 
 
