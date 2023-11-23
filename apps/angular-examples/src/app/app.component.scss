@@ -8,12 +8,10 @@
     display: grid;
     grid-template-rows: variables.$main-toolbar-height 1fr auto;
     grid-template-columns: 1fr;
-    grid-template-areas: 'header' 'main';
+    grid-template-areas: 'header' 'main' 'footer';
     height: 100%;
-    min-height: 100vh;
 
     app-main-toolbar {
-      height: 100%;
       grid-area: header;
     }
   }
@@ -30,7 +28,6 @@
     grid-template-rows: 1fr;
     grid-template-columns: 1fr;
     grid-template-areas: 'content';
-    height: 100%;
 
     router-outlet {
       display: none;
