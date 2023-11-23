@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.34.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.33.0...v3.34.0) (2023-11-23)
+
+
+### Features
+
+* ✨ remove unecessary 100vh ([ee3eee2](https://github.com/WolfSoko/wol-sok-mono/commit/ee3eee25c09fc44d0588578437b7f8498e1f5d3a))
+
 ## [3.33.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.32.0...v3.33.0) (2023-11-23)
 
 
