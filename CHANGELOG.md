@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.32.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.31.4...v3.32.0) (2023-11-23)
+
+
+### Features
+
+* ✨ provide shader-examples as module federation ([d5b8728](https://github.com/WolfSoko/wol-sok-mono/commit/d5b8728be5b212d4a4aa08e025816e57430b9dbe))
+
 ### [3.31.4](https://github.com/WolfSoko/wol-sok-mono/compare/v3.31.3...v3.31.4) (2023-11-22)
 
 
