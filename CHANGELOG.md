@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.35.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.34.0...v3.35.0) (2023-11-23)
+
+
+### Features
+
+* ✨ add shader-examples-remote to implicit deps ([cbc14a7](https://github.com/WolfSoko/wol-sok-mono/commit/cbc14a7c6a6a82a8d413ba32bd185d549b9713bd))
+
 ## [3.34.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.33.0...v3.34.0) (2023-11-23)
 
 
