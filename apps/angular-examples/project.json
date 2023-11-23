@@ -158,5 +158,5 @@
     }
   },
   "tags": ["app", "type:host"],
-  "implicitDependencies": ["fourier-analysis-remote", "bacteria-game-remote"]
+  "implicitDependencies": ["fourier-analysis-remote", "bacteria-game-remote", "shader-examples-remote"]
 }
