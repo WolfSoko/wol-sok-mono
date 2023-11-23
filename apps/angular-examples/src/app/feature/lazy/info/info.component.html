@@ -1,37 +1,37 @@
+<app-about></app-about>
 @defer {
-  <app-about></app-about>
+  <mat-card class="technology-info-card">
+    <mat-card-header>
+      <mat-card-title-group>
+        <mat-card-title> Technologies used:</mat-card-title>
+        <mat-card-subtitle>
+          Click a card and watch the HTML vanish like Thanos’ snap.
+          <a target="_blank" href="https://github.com/WolfSoko/wol-sok-mono/tree/main/libs/public/ws-thanos">
+            &#64;wolsok/thanos
+          </a>
+        </mat-card-subtitle>
+        <button
+          matTooltip="Start ws-thanos vaporizing demo"
+          mat-mini-fab
+          aria-label="Start ws-thanos vaporizing demo"
+          (click)="toggleDemo()"
+        >
+          <mat-icon>{{ !demoRunning() ? 'pinch' : 'stop' }}</mat-icon>
+        </button>
+      </mat-card-title-group>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="technology-cards">
+        @for (tech of technologies; track tech; let i = $index) {
+          <app-technology
+            [autoVaporize]="thanosDemo"
+            [autoVaporizeAfter]="5000 * i"
+            [title]="tech.title"
+            [image]="tech.image"
+            [link]="tech.link"
+          />
+        }
+      </div>
+    </mat-card-content>
+  </mat-card>
 }
-<mat-card class="technology-info-card">
-  <mat-card-header>
-    <mat-card-title-group>
-      <mat-card-title> Technologies used:</mat-card-title>
-      <mat-card-subtitle>
-        Click a card and watch the HTML vanish like Thanos’ snap.
-        <a target="_blank" href="https://github.com/WolfSoko/wol-sok-mono/tree/main/libs/public/ws-thanos">
-          &#64;wolsok/thanos
-        </a>
-      </mat-card-subtitle>
-      <button
-        matTooltip="Start ws-thanos vaporizing demo"
-        mat-mini-fab
-        aria-label="Start ws-thanos vaporizing demo"
-        (click)="toggleDemo()"
-      >
-        <mat-icon>{{ !demoRunning() ? 'pinch' : 'stop' }}</mat-icon>
-      </button>
-    </mat-card-title-group>
-  </mat-card-header>
-  <mat-card-content>
-    <div class="technology-cards">
-      @for (tech of technologies; track tech; let i = $index) {
-        <app-technology
-          [autoVaporize]="thanosDemo"
-          [autoVaporizeAfter]="5000 * i"
-          [title]="tech.title"
-          [image]="tech.image"
-          [link]="tech.link"
-        />
-      }
-    </div>
-  </mat-card-content>
-</mat-card>
