@@ -1,1 +1,1 @@
-export * from './lib/shader-examples.module';
+export * from './lib/shader-examples-routes';

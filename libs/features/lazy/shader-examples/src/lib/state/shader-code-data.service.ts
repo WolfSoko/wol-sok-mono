@@ -12,7 +12,7 @@ import {
   where,
 } from '@angular/fire/firestore';
 import { AuthenticationService, AuthQuery } from '@wolsok/feat-api-auth';
-import { combineLatest, Observable } from 'rxjs';
+import { combineLatest, Observable, of } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { ShaderCode } from './shader-code.model';
 
@@ -55,10 +55,7 @@ export class ShaderCodeDataService {
           return shaderCode != null ? shaderCode : defaultShader;
         })
       );
-      this.shaders = combineLatest([this.defaultShaders$, this.userShaders$]).pipe(
-        mapDefaultAndUserShaders,
-        shareReplay(1)
-      );
+      this.shaders = combineLatest([this.defaultShaders$, of([])]).pipe(mapDefaultAndUserShaders, shareReplay(1));
     }
     return this.shaders;
   }

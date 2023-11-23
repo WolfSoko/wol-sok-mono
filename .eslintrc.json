@@ -13,14 +13,14 @@
             "depConstraints": [
               {
                 "sourceTag": "app",
-                "onlyDependOnLibsWithTags": ["shared", "feature", "feature:lazy", "api"]
+                "onlyDependOnLibsWithTags": ["shared", "feature", "feature:lazy", "api", "type:remote"]
               },
               {
                 "sourceTag": "e2e",
                 "onlyDependOnLibsWithTags": ["shared"]
               },
               {
-                "sourceTag": "feature",
+                "sourceTag": " feature",
                 "onlyDependOnLibsWithTags": ["feat-shared", "shared", "api"]
               },
               {

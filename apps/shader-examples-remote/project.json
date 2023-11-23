@@ -1,0 +1,112 @@
+{
+  "name": "shader-examples-remote",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/shader-examples-remote/src",
+  "tags": ["app", "type:remote", "scope:shader-examples"],
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:webpack-browser",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/shader-examples-remote",
+        "index": "apps/shader-examples-remote/src/index.html",
+        "main": "apps/shader-examples-remote/src/main.ts",
+        "polyfills": ["zone.js"],
+        "tsConfig": "apps/shader-examples-remote/tsconfig.app.json",
+        "assets": ["apps/shader-examples-remote/src/favicon.ico", "apps/shader-examples-remote/src/assets"],
+        "styles": [
+          "apps/shader-examples-remote/src/styles.scss",
+          "node_modules/@angular/material/prebuilt-themes/pink-bluegrey.css"
+        ],
+        "scripts": [],
+        "customWebpackConfig": {
+          "path": "apps/shader-examples-remote/webpack.config.ts"
+        }
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "2kb",
+              "maximumError": "4kb"
+            }
+          ],
+          "outputHashing": "all",
+          "customWebpackConfig": {
+            "path": "apps/shader-examples-remote/webpack.prod.config.ts"
+          }
+        },
+        "development": {
+          "buildOptimizer": false,
+          "optimization": false,
+          "vendorChunk": true,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@nx/angular:webpack-dev-server",
+      "options": {
+        "port": 4203,
+        "publicHost": "http://localhost:4203"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "shader-examples-remote:build:production"
+        },
+        "development": {
+          "buildTarget": "shader-examples-remote:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "buildTarget": "shader-examples-remote:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/shader-examples-remote/**/*.ts", "apps/shader-examples-remote/**/*.html"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/shader-examples-remote/jest.config.ts"
+      }
+    },
+    "serve-static": {
+      "executor": "@nx/web:file-server",
+      "defaultConfiguration": "production",
+      "options": {
+        "buildTarget": "shader-examples-remote:build",
+        "port": 4203,
+        "watch": false
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "shader-examples-remote:build:development"
+        },
+        "production": {
+          "buildTarget": "shader-examples-remote:build:production"
+        }
+      }
+    }
+  }
+}

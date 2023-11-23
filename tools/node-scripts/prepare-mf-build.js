@@ -5,7 +5,7 @@ const { join } = require('path');
 const distFolder = join('./dist');
 const target = join(distFolder, 'production');
 const hostApp = 'angular-examples';
-const remotes = ['fourier-analysis-remote', 'bacteria-game-remote'];
+const remotes = ['fourier-analysis-remote', 'bacteria-game-remote', 'shader-examples-remote'];
 
 prepareTargetFolder(target);
 prepareHostApp(hostApp, target);

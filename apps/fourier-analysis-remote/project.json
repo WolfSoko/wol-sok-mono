@@ -120,5 +120,5 @@
       }
     }
   },
-  "tags": ["app"]
+  "tags": ["app", "type:remote"]
 }
