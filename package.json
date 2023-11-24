@@ -32,7 +32,7 @@
     "@angular/platform-browser-dynamic": "17.0.4",
     "@angular/router": "17.0.4",
     "@angular/service-worker": "17.0.4",
-    "@assemblyscript/loader": "0.27.19",
+    "@assemblyscript/loader": "0.27.20",
     "@datorama/akita": "8.0.1",
     "@datorama/akita-ng-router-store": "8.0.0",
     "@datorama/akita-ngdevtools": "7.0.0",
