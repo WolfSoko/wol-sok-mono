@@ -1,5 +1,5 @@
 {
-  "name": "@wolsok/data-access",
+  "name": "@wolsok/shared-data-access",
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/common": "^17.0.0",
