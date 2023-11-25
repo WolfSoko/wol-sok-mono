@@ -54,6 +54,7 @@ describe('DataAccess', () => {
 
   it('should configure firebase app', () => {
     provideDataAccess();
+    // @ts-expect-error initializeApp is called with parameter
     expect(initializeApp).toHaveBeenCalledWith(environment.firebaseConfig);
   });
 
@@ -62,6 +63,7 @@ describe('DataAccess', () => {
       apiKey: '1235667',
     };
     provideDataAccess(options);
+    // @ts-expect-error initializeApp is called with parameter
     expect(initializeApp).toHaveBeenCalledWith(options);
   });
 
@@ -76,6 +78,7 @@ describe('DataAccess', () => {
     (importProvidersFrom as jest.Mock).mockReturnValue('mockedResult');
     const result = provideDataAccess();
     expect(result as unknown).toEqual('mockedResult');
+    // @ts-expect-error check is okay and not excessively
     expect(importProvidersFrom).toHaveBeenCalledWith([
       firebaseAppProvider,
       firestoreProvider,
