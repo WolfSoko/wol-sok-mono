@@ -7,5 +7,6 @@
     "target": "es2016"
   },
   "files": ["src/test-setup.ts"],
-  "include": ["**/*.test.ts", "**/*.spec.ts", "**/*.d.ts", "jest.config.ts"]
+  "include": ["**/*.test.ts", "**/*.spec.ts", "**/*.d.ts", "jest.config.ts"],
+  "exclude": ["**/*.integrationspec.ts", "src/integration-test-setup.ts"]
 }

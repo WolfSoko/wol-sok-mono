@@ -1,4 +1,6 @@
 /* eslint-disable */
+import JestConfig from '../../jest.config';
+
 export default {
   displayName: 'ui-kit',
 
@@ -14,6 +16,9 @@ export default {
         stringifyContentPathRegex: '\\.(html|svg)$',
       },
     ],
+  },
+  moduleNameMapper: {
+    "^.+.(glsl)$": "jest-transform-stub"
   },
   transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
   snapshotSerializers: [

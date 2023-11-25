@@ -29,11 +29,23 @@
         "codeCoverage": true
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
+    "test-integration": {
+      "executor": "@angular-devkit/build-angular:karma",
       "options": {
-        "lintFilePatterns": ["libs/ui-kit/src/**/*.ts", "libs/ui-kit/src/**/*.html"]
+        "main": "libs/ui-kit/src/integration-test-setup.ts",
+        "tsConfig": "libs/ui-kit/tsconfig.integrationspec.json",
+        "include": ["libs/ui-kit/src/**/*.integrationspec.ts"],
+        "karmaConfig": "libs/ui-kit/karma.conf.js"
       }
+    }
+  },
+  "lint": {
+    "executor": "@nx/eslint:lint",
+    "options": {
+      "lintFilePatterns": [
+        "libs/ui-kit/src/**/*.ts",
+        "libs/ui-kit/src/**/*.html"
+      ]
     }
   },
   "tags": ["ui", "shared"]
