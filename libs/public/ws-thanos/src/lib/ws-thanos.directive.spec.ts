@@ -10,13 +10,18 @@ import { WsThanosService } from './ws-thanos.service';
 describe('Integration Test: WsThanosDirective', () => {
   @Component({
     template: `
-      <div class="thanos-test-container" wsThanos (wsThanosComplete)="completed()">
+      <div
+        class="thanos-test-container"
+        wsThanos
+        (wsThanosComplete)="completed()"
+      >
         <h1>My content for the div</h1>
         <img alt="funny-face" style="height: 400px" src="${image}" />
       </div>
       <div class="grid-test">
         <ws-thanos class="div-without-remove" #myThanos="thanos">
-          This div should be vaporized when clicked on button and then become visible again!
+          This div should be vaporized when clicked on button and then become
+          visible again!
           <div class="inner">Inner container</div>
         </ws-thanos>
         <button (click)="myThanos.vaporize(false)">Vaporize div above</button>
@@ -131,14 +136,19 @@ describe('Integration Test: WsThanosDirective', () => {
     });
 
     it('should emit complete when vaporizeAndScrollIntoView is complete', (done) => {
-      combineLatest([firstValueFrom(directive.wsThanosComplete), directive.vaporize$()]).subscribe({
+      combineLatest([
+        firstValueFrom(directive.wsThanosComplete),
+        directive.vaporize$(),
+      ]).subscribe({
         complete: done,
       });
     }, 10000);
   });
 
   function givenStubbedThanosService_VaporizeReturns(
-    vaporizeReturns: ReturnType<WsThanosService['vaporize']> = of({} as AnimationState)
+    vaporizeReturns: ReturnType<WsThanosService['vaporize']> = of(
+      {} as AnimationState
+    )
   ): void {
     const thanosService = getWsThanosService();
     spyOn(thanosService, 'vaporize').and.returnValue(vaporizeReturns);

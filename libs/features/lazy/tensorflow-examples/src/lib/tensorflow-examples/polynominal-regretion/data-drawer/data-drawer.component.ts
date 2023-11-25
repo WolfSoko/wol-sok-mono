@@ -1,5 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ElementRef, Input, NgZone, OnChanges, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  Input,
+  NgZone,
+  OnChanges,
+  ViewChild,
+} from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { Tensor } from '@tensorflow/tfjs';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
@@ -38,12 +46,19 @@ export class DataDrawerComponent implements OnChanges {
         if (!this.predictions) {
           await this.dataDrawer.plotData(this.plot.nativeElement, this.data);
         } else {
-          await this.dataDrawer.plotDataAndPredictions(this.plot.nativeElement, this.data, this.predictions);
+          await this.dataDrawer.plotDataAndPredictions(
+            this.plot.nativeElement,
+            this.data,
+            this.predictions
+          );
         }
       }
     });
     if (this.coeff) {
-      this.dataDrawer.renderCoefficients(this.coeffContainer.nativeElement, this.coeff);
+      this.dataDrawer.renderCoefficients(
+        this.coeffContainer.nativeElement,
+        this.coeff
+      );
     }
   }
 }

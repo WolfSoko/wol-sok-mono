@@ -6,7 +6,11 @@ export function Memoized(resetSignal$?: Observable<void>) {
     memoize.clear();
   });
 
-  return function (target: object, key: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: object,
+    key: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
     descriptor.value = function (...args: unknown[]) {
       const argsStringified: string = JSON.stringify(args);

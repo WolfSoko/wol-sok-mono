@@ -17,7 +17,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { NavigationEnd, Router } from '@angular/router';
-import { ElemResizedDirective, RenderShaderComponent, ResizedEvent } from '@wolsok/ui-kit';
+import {
+  ElemResizedDirective,
+  RenderShaderComponent,
+  ResizedEvent,
+} from '@wolsok/ui-kit';
 import { filter, map } from 'rxjs/operators';
 import { HeadlineAnimationService } from '../../core/headline-animation.service';
 import { shader } from '../../title-shader';
@@ -60,11 +64,20 @@ export class MainToolbarComponent {
     private readonly renderer: Renderer2
   ) {
     this.shaderCode = shader;
-    const navEnd = toSignal(this.router.events.pipe(filter((value) => value instanceof NavigationEnd)));
-    this.isHandset = toSignal(breakpointObserver.observe(Breakpoints.Handset).pipe(map((value) => value.matches)), {
+    const navEnd = toSignal(
+      this.router.events.pipe(filter((value) => value instanceof NavigationEnd))
+    );
+    this.isHandset = toSignal(
+      breakpointObserver
+        .observe(Breakpoints.Handset)
+        .pipe(map((value) => value.matches)),
+      {
+        initialValue: false,
+      }
+    );
+    this.runAnimation = toSignal(this.headlineAnimations.runAnimation$, {
       initialValue: false,
     });
-    this.runAnimation = toSignal(this.headlineAnimations.runAnimation$, { initialValue: false });
     effect(() => {
       if (navEnd()) {
         this.headlineAnimations.startAnimation();

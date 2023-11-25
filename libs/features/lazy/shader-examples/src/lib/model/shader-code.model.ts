@@ -10,6 +10,10 @@ export interface ShaderCode {
  * A factory function that creates ShaderCode
  * @param params
  */
-export function createShaderCode({ id = guid(), code = '', description = '' }: Partial<ShaderCode>) {
+export function createShaderCode({
+  id = guid(),
+  code = '',
+  description = '',
+}: Partial<ShaderCode>) {
   return { id, code, description } as ShaderCode;
 }

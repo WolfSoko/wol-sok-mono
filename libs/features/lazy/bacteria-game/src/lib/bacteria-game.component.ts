@@ -20,7 +20,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { WsThanosDirective } from '@wolsok/thanos';
 import { ShowFpsComponent } from '@wolsok/ui-kit';
 import { Observable } from 'rxjs';
-import { distinctUntilChanged, filter, map, switchMap, take } from 'rxjs/operators';
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  switchMap,
+  take,
+} from 'rxjs/operators';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
 import { GameState, GameStateState } from './state/game.states';
@@ -94,7 +100,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.players$ = this.playerQuery.selectAll();
     this.isRunning$ = this.query
       .selectCurrentGameState()
-      .pipe(map((state) => state === GameState.RUNNING || state === GameState.PAUSED));
+      .pipe(
+        map(
+          (state) => state === GameState.RUNNING || state === GameState.PAUSED
+        )
+      );
 
     this.query
       .selectTimeDelta()
@@ -174,17 +184,47 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         this.cx.fillRect(0, 0, this.width, this.height);
         this.cx.fillStyle = 'rgb(200,200,200)';
         const wallWidth = 10;
-        this.cx.fillRect(this.width / 2 - 50, 0, wallWidth, this.height / 2 - 50);
-        this.cx.fillRect(this.width / 2 - 50, this.height / 2 - 30, wallWidth, this.height / 2 + 30);
-        this.cx.fillRect(this.width / 2 + 30, 0, wallWidth, this.height / 2 + 30);
-        this.cx.fillRect(this.width / 2 + 30, this.height / 2 + 50, wallWidth, this.height / 2 - 50);
+        this.cx.fillRect(
+          this.width / 2 - 50,
+          0,
+          wallWidth,
+          this.height / 2 - 50
+        );
+        this.cx.fillRect(
+          this.width / 2 - 50,
+          this.height / 2 - 30,
+          wallWidth,
+          this.height / 2 + 30
+        );
+        this.cx.fillRect(
+          this.width / 2 + 30,
+          0,
+          wallWidth,
+          this.height / 2 + 30
+        );
+        this.cx.fillRect(
+          this.width / 2 + 30,
+          this.height / 2 + 50,
+          wallWidth,
+          this.height / 2 - 50
+        );
 
         const image = this.cx.getImageData(0, 0, this.width, this.height);
         const data = new Uint8ClampedArray(image.data.buffer);
         for (const player of this.playerQuery.getAll()) {
-          createImageDataFromBacterias(data, this.width, player.color, player.bacterias);
+          createImageDataFromBacterias(
+            data,
+            this.width,
+            player.color,
+            player.bacterias
+          );
         }
-        this.playerService.gameLoop(data, this.width, this.height, deltaTimeInSec);
+        this.playerService.gameLoop(
+          data,
+          this.width,
+          this.height,
+          deltaTimeInSec
+        );
         this.cx.putImageData(image, 0, 0);
 
         for (const player of this.playerQuery.getAll()) {

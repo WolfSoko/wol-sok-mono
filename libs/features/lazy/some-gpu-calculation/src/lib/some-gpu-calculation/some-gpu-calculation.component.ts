@@ -1,17 +1,53 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  OnDestroy,
+  ViewChild,
+} from '@angular/core';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSliderModule } from '@angular/material/slider';
-import { ElemResizedDirective, ElevateCardDirective, ResizedEvent, ShowFpsComponent } from '@wolsok/ui-kit';
-import { GpuAdapterService, IKernelFunctionThis, IKernelRunShortcut } from '@wolsok/utils-gpu-calc';
+import {
+  ElemResizedDirective,
+  ElevateCardDirective,
+  ResizedEvent,
+  ShowFpsComponent,
+} from '@wolsok/ui-kit';
+import {
+  GpuAdapterService,
+  IKernelFunctionThis,
+  IKernelRunShortcut,
+} from '@wolsok/utils-gpu-calc';
 import { MeasureFps } from '@wolsok/utils-measure-fps';
 import { distinctUntilChangedDeepEqualObj } from '@wolsok/utils-operators';
 
-import { animationFrameScheduler, combineLatest, interval, Observable, Subscription, TimeInterval } from 'rxjs';
-import { debounceTime, delay, map, scan, startWith, timeInterval } from 'rxjs/operators';
+import {
+  animationFrameScheduler,
+  combineLatest,
+  interval,
+  Observable,
+  Subscription,
+  TimeInterval,
+} from 'rxjs';
+import {
+  debounceTime,
+  delay,
+  map,
+  scan,
+  startWith,
+  timeInterval,
+} from 'rxjs/operators';
 
 interface Configuration {
   r: number;
@@ -57,7 +93,10 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
 
   calculationTime$: Observable<number>;
   fps$: Observable<number>;
-  dimensionsOfCanvas: [width: number, height: number] = [500, SomeGpuCalculationComponent.calcHeightOfCanvas(500)];
+  dimensionsOfCanvas: [width: number, height: number] = [
+    500,
+    SomeGpuCalculationComponent.calcHeightOfCanvas(500),
+  ];
   private gpuColorizer!: IKernelRunShortcut;
   private subscription?: Subscription;
 
@@ -71,7 +110,10 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
     this.fps$ = this.measureFps.fps$;
   }
 
-  private static calcHeightOfCanvas(newWidth: number, aspectRatio: number = 9 / 16): number {
+  private static calcHeightOfCanvas(
+    newWidth: number,
+    aspectRatio: number = 9 / 16
+  ): number {
     return Math.floor(newWidth * aspectRatio);
   }
 
@@ -84,17 +126,32 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
         this.additionForm.valueChanges as Observable<Configuration>
       ).pipe(
         startWith(this.additionForm.value as Configuration),
-        map(({ r, g, b, repetition, speed }) => ({ r, g, b, repetition, speed })),
+        map(({ r, g, b, repetition, speed }) => ({
+          r,
+          g,
+          b,
+          repetition,
+          speed,
+        })),
         distinctUntilChangedDeepEqualObj(),
         debounceTime(300)
       );
 
-      const gpuColorizerFrames$ = interval(Math.floor(1000 / 120), animationFrameScheduler).pipe(
+      const gpuColorizerFrames$ = interval(
+        Math.floor(1000 / 120),
+        animationFrameScheduler
+      ).pipe(
         timeInterval<number>(),
-        scan<TimeInterval<number>, number>((acc, value) => acc + value.interval, 0)
+        scan<TimeInterval<number>, number>(
+          (acc, value) => acc + value.interval,
+          0
+        )
       );
 
-      const calculateNextFrame$ = combineLatest([gpuColorizerFrames$, config$]).pipe(
+      const calculateNextFrame$ = combineLatest([
+        gpuColorizerFrames$,
+        config$,
+      ]).pipe(
         map(([frameTime, { r, g, b, repetition, speed }]) => ({
           frameTime,
           r,
@@ -149,16 +206,27 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
     this.gpuColorizer.canvas.width = width;
     this.gpuColorizer.canvas.height = height;
     this.gpuColorizer.setOutput([width, height]);
-    this.gpuColorizer(frameTime / 1000, r / 255, g / 255, b / 255, repetition, speed / 20, width, height);
+    this.gpuColorizer(
+      frameTime / 1000,
+      r / 255,
+      g / 255,
+      b / 255,
+      repetition,
+      speed / 20,
+      width,
+      height
+    );
     this.measureFps.signalFrameReady();
   }
 
   async updateCanvasSize({ newWidth }: ResizedEvent) {
-    const canvas: HTMLCanvasElement | null = this.gpuCanvasWrapper.nativeElement.firstElementChild as HTMLCanvasElement;
+    const canvas: HTMLCanvasElement | null = this.gpuCanvasWrapper.nativeElement
+      .firstElementChild as HTMLCanvasElement;
     if (!canvas) {
       return;
     }
-    const height: number = SomeGpuCalculationComponent.calcHeightOfCanvas(newWidth);
+    const height: number =
+      SomeGpuCalculationComponent.calcHeightOfCanvas(newWidth);
     this.dimensionsOfCanvas = [newWidth, height];
     try {
       await this.createGPUColorizer(this.additionForm.controls.useGPU.value);
@@ -176,8 +244,14 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
       r: [255, [Validators.required, Validators.min(0), Validators.max(255)]],
       g: [255, [Validators.required, Validators.min(0), Validators.max(255)]],
       b: [255, [Validators.required, Validators.min(0), Validators.max(255)]],
-      repetition: [1, [Validators.required, Validators.min(1), Validators.max(100)]],
-      speed: [20, [Validators.required, Validators.min(1), Validators.max(100)]],
+      repetition: [
+        1,
+        [Validators.required, Validators.min(1), Validators.max(100)],
+      ],
+      speed: [
+        20,
+        [Validators.required, Validators.min(1), Validators.max(100)],
+      ],
       useGPU: [true, [Validators.required]],
     });
   }
@@ -226,7 +300,10 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
       );
     }
 
-    this.gpuColorizer = this.gpu.createKernel(colorFn).setGraphical(true).setDynamicOutput(true);
+    this.gpuColorizer = this.gpu
+      .createKernel(colorFn)
+      .setGraphical(true)
+      .setDynamicOutput(true);
 
     this.replaceCanvas(this.gpuColorizer.canvas);
   }

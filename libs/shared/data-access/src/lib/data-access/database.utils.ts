@@ -1,5 +1,12 @@
 import { Injectable } from '@angular/core';
-import { addDoc, collectionData, getDocs, query, updateDoc, where } from '@angular/fire/firestore';
+import {
+  addDoc,
+  collectionData,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from '@angular/fire/firestore';
 
 @Injectable({ providedIn: 'root' })
 export class DbUtils {

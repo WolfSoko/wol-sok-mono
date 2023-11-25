@@ -3,8 +3,15 @@ import { ChangeDetectionStrategy, Component, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MAT_TOOLTIP_SCROLL_STRATEGY_FACTORY_PROVIDER, MatTooltipModule } from '@angular/material/tooltip';
-import { AuthenticationService, AuthQuery, Profile } from '@wolsok/feat-api-auth';
+import {
+  MAT_TOOLTIP_SCROLL_STRATEGY_FACTORY_PROVIDER,
+  MatTooltipModule,
+} from '@angular/material/tooltip';
+import {
+  AuthenticationService,
+  AuthQuery,
+  Profile,
+} from '@wolsok/feat-api-auth';
 
 @Component({
   standalone: true,

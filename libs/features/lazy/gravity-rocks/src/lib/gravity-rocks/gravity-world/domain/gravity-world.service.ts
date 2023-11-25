@@ -7,13 +7,21 @@ import { WorldObject } from './world-objects/world-object';
 })
 export class GravityWorldService {
   private worldObjects: Array<WorldObject> = [];
-  private universe: { G: number; width: number; height: number } = { width: 1000, height: 1000, G: 10 };
+  private universe: { G: number; width: number; height: number } = {
+    width: 1000,
+    height: 1000,
+    G: 10,
+  };
   private forces: Set<Force> = new Set();
 
   addWorldObject(wo: WorldObject): void {
     this.worldObjects.push(wo);
   }
-  setUniverse(width: number, height: number, gravitationalConstant: number): void {
+  setUniverse(
+    width: number,
+    height: number,
+    gravitationalConstant: number
+  ): void {
     this.universe = { width, height, G: gravitationalConstant };
   }
 
@@ -24,7 +32,8 @@ export class GravityWorldService {
       for (let j = i + 1; j < this.worldObjects.length; j++) {
         const other = this.worldObjects[j];
         const distance = current.distanceTo(other);
-        const forceMagnitude = (-this.universe.G * current.mass * other.mass) / distance ** 2;
+        const forceMagnitude =
+          (-this.universe.G * current.mass * other.mass) / distance ** 2;
         const forceDirection = current.directionTo(other);
         const directedForce = forceDirection.mul(forceMagnitude);
 

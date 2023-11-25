@@ -1,5 +1,12 @@
 import { Injectable } from '@angular/core';
-import { randomNormal, randomUniform, Rank, scalar, Tensor, tidy } from '@tensorflow/tfjs';
+import {
+  randomNormal,
+  randomUniform,
+  Rank,
+  scalar,
+  Tensor,
+  tidy,
+} from '@tensorflow/tfjs';
 
 @Injectable({ providedIn: 'root' })
 export class DataGeneratorService {
@@ -9,7 +16,12 @@ export class DataGeneratorService {
     sigma = 0.125
   ): { xs: Tensor<Rank.R1>; ys: Tensor<Rank.R1> } {
     return tidy(() => {
-      const [a, b, c, d]: Tensor<Rank.R0>[] = [scalar(coeff.a), scalar(coeff.b), scalar(coeff.c), scalar(coeff.d)];
+      const [a, b, c, d]: Tensor<Rank.R0>[] = [
+        scalar(coeff.a),
+        scalar(coeff.b),
+        scalar(coeff.c),
+        scalar(coeff.d),
+      ];
 
       const xs = randomUniform([numPoints], -1, 1);
 

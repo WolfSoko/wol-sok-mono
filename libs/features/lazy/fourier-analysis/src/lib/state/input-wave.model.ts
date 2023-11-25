@@ -33,7 +33,8 @@ export function createFrequencyPoints(
     while (step < samples) {
       const t = step / samplesPerSec;
       yield frequencies.reduce(
-        (previousFreq, currentFreq) => previousFreq + Math.sin(currentFreq * 2 * Math.PI * t),
+        (previousFreq, currentFreq) =>
+          previousFreq + Math.sin(currentFreq * 2 * Math.PI * t),
         0
       ) / frequencies.length;
       step++;

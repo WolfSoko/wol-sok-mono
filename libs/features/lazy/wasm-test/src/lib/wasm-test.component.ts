@@ -1,6 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
@@ -58,19 +69,23 @@ export class WasmTestComponent implements OnInit, OnDestroy {
     this.vm$ = this.wasmTestQuery.select();
 
     this.fibOptionsForm = this.builder.group({
-      fibN: this.builder.control(this.wasmTestQuery.getValue().fibOptions.fibN, [
-        Validators.min(0),
-        Validators.max(45),
-        Validators.required,
-      ]),
+      fibN: this.builder.control(
+        this.wasmTestQuery.getValue().fibOptions.fibN,
+        [Validators.min(0), Validators.max(45), Validators.required]
+      ),
     });
 
-    this.persistForm = new PersistNgFormPlugin(this.wasmTestQuery, 'fibOptions').setForm(this.fibOptionsForm);
+    this.persistForm = new PersistNgFormPlugin(
+      this.wasmTestQuery,
+      'fibOptions'
+    ).setForm(this.fibOptionsForm);
   }
 
   ngOnInit() {
     this.subscription = this.fibRunning$.subscribe((fibRunning) =>
-      fibRunning ? this.fibOptionsForm.controls.fibN.disable() : this.fibOptionsForm.controls.fibN.enable()
+      fibRunning
+        ? this.fibOptionsForm.controls.fibN.disable()
+        : this.fibOptionsForm.controls.fibN.enable()
     );
   }
 

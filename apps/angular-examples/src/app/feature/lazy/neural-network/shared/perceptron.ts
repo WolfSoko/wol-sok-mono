@@ -38,7 +38,10 @@ export class Perceptron {
   }
 
   guessSigSilent(inputs: number[]): number {
-    const weightedSum = inputs.reduce((prev, input, index) => prev + input * this.weights[index], this.bias);
+    const weightedSum = inputs.reduce(
+      (prev, input, index) => prev + input * this.weights[index],
+      this.bias
+    );
     return 1 / (1 + Math.exp(-weightedSum));
   }
 
@@ -56,8 +59,12 @@ export class Perceptron {
     if (error !== 0.0) {
       this.isLearning = true;
       this.learnTimeoutSub.unsubscribe();
-      this.learnTimeoutSub.add(timer(500).subscribe(() => (this.isLearning = false)));
-      const adjustedWeights = this.weights.map((weight, index) => weight + error * inputs[index] * learnRate);
+      this.learnTimeoutSub.add(
+        timer(500).subscribe(() => (this.isLearning = false))
+      );
+      const adjustedWeights = this.weights.map(
+        (weight, index) => weight + error * inputs[index] * learnRate
+      );
 
       this.bias = this.bias + error * learnRate;
       this.weights = adjustedWeights;
@@ -73,8 +80,12 @@ export class Perceptron {
       if (this.learnTimeoutSub) {
         this.learnTimeoutSub.unsubscribe();
       }
-      this.learnTimeoutSub = timer(500).subscribe(() => (this.isLearning = false));
-      const adjustedWeights = this.weights.map((weight, index) => weight + error * this.lastInput[index] * learnRate);
+      this.learnTimeoutSub = timer(500).subscribe(
+        () => (this.isLearning = false)
+      );
+      const adjustedWeights = this.weights.map(
+        (weight, index) => weight + error * this.lastInput[index] * learnRate
+      );
 
       this.bias = this.bias + error * learnRate;
       this.weights = adjustedWeights;
@@ -82,7 +93,9 @@ export class Perceptron {
     return error;
   }
 
-  get classSeparatorLine(): { x0: number; y0: number; x1: number; y1: number } | undefined {
+  get classSeparatorLine():
+    | { x0: number; y0: number; x1: number; y1: number }
+    | undefined {
     if (this.inputConnections !== 2) {
       return undefined;
     }

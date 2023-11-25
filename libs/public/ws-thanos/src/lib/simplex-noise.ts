@@ -2,7 +2,8 @@ import type { SimplexNoiseOptions } from './simplex-noise-options';
 
 export class SimplexNoise {
   constructor(options?: Partial<SimplexNoiseOptions>) {
-    const { min, max, random, amplitude, frequency, octaves, persistence } = createOptionsWithDefaults(options);
+    const { min, max, random, amplitude, frequency, octaves, persistence } =
+      createOptionsWithDefaults(options);
 
     this.random = random;
     this.amplitude = amplitude;
@@ -10,7 +11,10 @@ export class SimplexNoise {
     this.octaves = octaves;
     this.persistence = persistence;
 
-    this.scale = min === -1 && max === 1 ? (value) => value : (value) => min + ((value + 1) / 2) * (max - min);
+    this.scale =
+      min === -1 && max === 1
+        ? (value) => value
+        : (value) => min + ((value + 1) / 2) * (max - min);
 
     const p = new Uint8Array(256);
     for (let i = 0; i < 256; i++) {
@@ -62,7 +66,9 @@ export class SimplexNoise {
   private memScale3D: { [key: string]: number } = {};
 
   dot(gs: number[], coords: number[]): number {
-    return gs.slice(0, Math.min(gs.length, coords.length)).reduce((total, g, i) => total + g * coords[i], 0);
+    return gs
+      .slice(0, Math.min(gs.length, coords.length))
+      .reduce((total, g, i) => total + g * coords[i], 0);
   }
 
   raw3D(x: number, y: number, z: number): number {
@@ -121,19 +127,33 @@ export class SimplexNoise {
     const jj = j & 255;
     const kk = k & 255;
     const gi0 = this.permMod12[ii + this.perm[jj + this.perm[kk]]];
-    const gi1 = this.permMod12[ii + i1 + this.perm[jj + j1 + this.perm[kk + k1]]];
-    const gi2 = this.permMod12[ii + i2 + this.perm[jj + j2 + this.perm[kk + k2]]];
+    const gi1 =
+      this.permMod12[ii + i1 + this.perm[jj + j1 + this.perm[kk + k1]]];
+    const gi2 =
+      this.permMod12[ii + i2 + this.perm[jj + j2 + this.perm[kk + k2]]];
     const gi3 = this.permMod12[ii + 1 + this.perm[jj + 1 + this.perm[kk + 1]]];
 
     // Calculate the contribution from the four corners
     const t0 = 0.5 - x0 * x0 - y0 * y0 - z0 * z0;
-    const n0 = t0 < 0 ? 0.0 : Math.pow(t0, 4) * this.dot(SimplexNoise.GRAD3D[gi0], [x0, y0, z0]);
+    const n0 =
+      t0 < 0
+        ? 0.0
+        : Math.pow(t0, 4) * this.dot(SimplexNoise.GRAD3D[gi0], [x0, y0, z0]);
     const t1 = 0.5 - x1 * x1 - y1 * y1 - z1 * z1;
-    const n1 = t1 < 0 ? 0.0 : Math.pow(t1, 4) * this.dot(SimplexNoise.GRAD3D[gi1], [x1, y1, z1]);
+    const n1 =
+      t1 < 0
+        ? 0.0
+        : Math.pow(t1, 4) * this.dot(SimplexNoise.GRAD3D[gi1], [x1, y1, z1]);
     const t2 = 0.5 - x2 * x2 - y2 * y2 - z2 * z2;
-    const n2 = t2 < 0 ? 0.0 : Math.pow(t2, 4) * this.dot(SimplexNoise.GRAD3D[gi2], [x2, y2, z2]);
+    const n2 =
+      t2 < 0
+        ? 0.0
+        : Math.pow(t2, 4) * this.dot(SimplexNoise.GRAD3D[gi2], [x2, y2, z2]);
     const t3 = 0.5 - x3 * x3 - y3 * y3 - z3 * z3;
-    const n3 = t3 < 0 ? 0.0 : Math.pow(t3, 4) * this.dot(SimplexNoise.GRAD3D[gi3], [x3, y3, z3]);
+    const n3 =
+      t3 < 0
+        ? 0.0
+        : Math.pow(t3, 4) * this.dot(SimplexNoise.GRAD3D[gi3], [x3, y3, z3]);
 
     // Add contributions from each corner to get the final noise value.
     // The result is scaled to stay just inside [-1,1]
@@ -141,7 +161,9 @@ export class SimplexNoise {
   }
 
   scaled3D(x: number, y: number, z: number, resolution: number): number {
-    const memIndex = `${Math.round(x * resolution)}${Math.round(y * resolution)}${Math.round(z * resolution)}`;
+    const memIndex = `${Math.round(x * resolution)}${Math.round(
+      y * resolution
+    )}${Math.round(z * resolution)}`;
     const memElem = this.memScale3D[memIndex];
     if (memElem != null) {
       return memElem;
@@ -153,7 +175,8 @@ export class SimplexNoise {
     let noise = 0;
 
     for (let i = 0; i < this.octaves; i++) {
-      noise += this.raw3D(x * frequency, y * frequency, z * frequency) * amplitude;
+      noise +=
+        this.raw3D(x * frequency, y * frequency, z * frequency) * amplitude;
       maxAmplitude += amplitude;
       amplitude *= this.persistence;
       frequency *= 2;

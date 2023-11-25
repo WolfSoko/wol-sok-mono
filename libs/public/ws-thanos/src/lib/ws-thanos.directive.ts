@@ -16,7 +16,8 @@ export class WsThanosDirective {
   private untilDestroyed = takeUntilDestroyed();
 
   @Output()
-  public wsThanosComplete: Observable<void> = this.wsThanosCompleteSubject.asObservable();
+  public wsThanosComplete: Observable<void> =
+    this.wsThanosCompleteSubject.asObservable();
   private subscriptions: Subscription = new Subscription();
 
   constructor(
@@ -40,7 +41,10 @@ export class WsThanosDirective {
     return this.thanosService.vaporize(elem).pipe(
       tap({
         error: (error) => {
-          console.error('Error vaporizing', error, { elemTovaporize: elem, removeElem });
+          console.error('Error vaporizing', error, {
+            elemTovaporize: elem,
+            removeElem,
+          });
         },
       }),
       finalize(() =>

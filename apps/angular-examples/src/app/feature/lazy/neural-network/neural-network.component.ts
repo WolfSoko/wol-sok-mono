@@ -10,7 +10,13 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./neural-network.component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [MatToolbarModule, MatTabsModule, RouterLinkActive, RouterLink, RouterOutlet],
+  imports: [
+    MatToolbarModule,
+    MatTabsModule,
+    RouterLinkActive,
+    RouterLink,
+    RouterOutlet,
+  ],
 })
 export class NeuralNetworkComponent {
   constructor() {

@@ -30,13 +30,24 @@ export class ReactionDiffWorkerCalcService implements ReactionDiffCalculator {
 
   private workerSubscriptions: Subscription = new Subscription();
 
-  private static setCell(column: number, row: number, cell: Cell, width: number, arrayToSet: Float32Array): void {
+  private static setCell(
+    column: number,
+    row: number,
+    cell: Cell,
+    width: number,
+    arrayToSet: Float32Array
+  ): void {
     const index = (column + row * width) * 2;
     arrayToSet[index] = cell.a;
     arrayToSet[index + 1] = cell.b;
   }
 
-  private static getCell(column: number, row: number, width: number, arrayToGet: Float32Array): Cell {
+  private static getCell(
+    column: number,
+    row: number,
+    width: number,
+    arrayToGet: Float32Array
+  ): Cell {
     const index = (column + row * width) * 2;
     return {
       a: arrayToGet[index],
@@ -77,7 +88,10 @@ export class ReactionDiffWorkerCalcService implements ReactionDiffCalculator {
     for (let i = 0; i < this.numberThreads; i++) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const view = new Float32Array(this.grid!);
-      const offsetLengthAdjusted = offsetRow + offsetLength > this.height ? this.height - offsetRow : offsetLength;
+      const offsetLengthAdjusted =
+        offsetRow + offsetLength > this.height
+          ? this.height - offsetRow
+          : offsetLength;
 
       this.workerSubjects$[i].next({
         data: {
@@ -140,7 +154,10 @@ export class ReactionDiffWorkerCalcService implements ReactionDiffCalculator {
     graphics.loadPixels();
     for (let x = 0; x < this.grid.length - 1; x = x + 2) {
       const pix = x * 2;
-      const cellColor = this.colorMapper.calcColorFor({ a: this.grid[x], b: this.grid[x + 1] }, graphics);
+      const cellColor = this.colorMapper.calcColorFor(
+        { a: this.grid[x], b: this.grid[x + 1] },
+        graphics
+      );
       graphics.pixels[pix] = cellColor.r;
       graphics.pixels[pix + 1] = cellColor.b;
       graphics.pixels[pix + 2] = cellColor.g;
@@ -169,7 +186,13 @@ export class ReactionDiffWorkerCalcService implements ReactionDiffCalculator {
 
     for (let x = 0; x < this.width; x++) {
       for (let y = 0; y < this.height; y++) {
-        ReactionDiffWorkerCalcService.setCell(x, y, { a: 1, b: 0 }, this.width, this.grid);
+        ReactionDiffWorkerCalcService.setCell(
+          x,
+          y,
+          { a: 1, b: 0 },
+          this.width,
+          this.grid
+        );
       }
     }
 
@@ -181,12 +204,17 @@ export class ReactionDiffWorkerCalcService implements ReactionDiffCalculator {
   private initCalcWorkers$() {
     this.workerSubjects$ = [];
     range(0, this.numberThreads).subscribe(
-      (index) => (this.workerSubjects$[index] = new Subject<WorkerPostParams<CalcNextParam>>())
+      (index) =>
+        (this.workerSubjects$[index] = new Subject<
+          WorkerPostParams<CalcNextParam>
+        >())
     );
 
     this.workers$ = this.workerSubjects$.map((subject) =>
       subject.pipe(
-        filter(() => this.calcRunning < this.numberThreads && this.canCalculate),
+        filter(
+          () => this.calcRunning < this.numberThreads && this.canCalculate
+        ),
         mapWorkerOp(calcNextDiffStep)
       )
     );
@@ -219,11 +247,28 @@ export class ReactionDiffWorkerCalcService implements ReactionDiffCalculator {
           (y >= offsetHeight && y + offsetHeight < this.height)
         ) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const cell = ReactionDiffWorkerCalcService.getCell(x - offsetWidth, y - offsetHeight, this.width, this.grid);
-          ReactionDiffWorkerCalcService.setCell(x, y, cell, newWidth, adjustedGrid);
+          const cell = ReactionDiffWorkerCalcService.getCell(
+            x - offsetWidth,
+            y - offsetHeight,
+            this.width,
+            this.grid
+          );
+          ReactionDiffWorkerCalcService.setCell(
+            x,
+            y,
+            cell,
+            newWidth,
+            adjustedGrid
+          );
           continue;
         }
-        ReactionDiffWorkerCalcService.setCell(x, y, { a: 1, b: 0 }, newWidth, adjustedGrid);
+        ReactionDiffWorkerCalcService.setCell(
+          x,
+          y,
+          { a: 1, b: 0 },
+          newWidth,
+          adjustedGrid
+        );
       }
     }
     return adjustedGrid;
@@ -245,10 +290,14 @@ export class ReactionDiffWorkerCalcService implements ReactionDiffCalculator {
   }
 
   private initAddChemicals$(): void {
-    this.addChemicalsSubject$ = new Subject<WorkerPostParams<AddChemicalsParams>>();
-    this.addChemicalsSubject$.pipe(mapWorkerOp(addChemicals)).subscribe((gridBuffer: ArrayBufferLike) => {
-      this.grid = new Float32Array(gridBuffer);
-      this.canCalculate = true;
-    });
+    this.addChemicalsSubject$ = new Subject<
+      WorkerPostParams<AddChemicalsParams>
+    >();
+    this.addChemicalsSubject$
+      .pipe(mapWorkerOp(addChemicals))
+      .subscribe((gridBuffer: ArrayBufferLike) => {
+        this.grid = new Float32Array(gridBuffer);
+        this.canCalculate = true;
+      });
   }
 }

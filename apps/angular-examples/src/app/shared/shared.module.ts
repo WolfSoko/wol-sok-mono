@@ -20,11 +20,21 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { WsThanosDirective } from '@wolsok/thanos';
-import { ElemResizedDirective, ElevateCardDirective, RenderShaderComponent } from '@wolsok/ui-kit';
+import {
+  ElemResizedDirective,
+  ElevateCardDirective,
+  RenderShaderComponent,
+} from '@wolsok/ui-kit';
 import { Angulartics2Module } from 'angulartics2';
 
 @NgModule({
-  imports: [CommonModule, ElemResizedDirective, ElevateCardDirective, RenderShaderComponent, WsThanosDirective],
+  imports: [
+    CommonModule,
+    ElemResizedDirective,
+    ElevateCardDirective,
+    RenderShaderComponent,
+    WsThanosDirective,
+  ],
   exports: [
     ElemResizedDirective,
     ElevateCardDirective,

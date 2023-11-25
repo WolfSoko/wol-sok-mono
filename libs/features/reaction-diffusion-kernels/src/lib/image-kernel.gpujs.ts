@@ -1,4 +1,7 @@
-import type { IKernelFunctionThis, ThreadFunction } from '@wolsok/utils-gpu-calc';
+import type {
+  IKernelFunctionThis,
+  ThreadFunction,
+} from '@wolsok/utils-gpu-calc';
 import type { KernelDefinition } from './kernel.definition';
 
 function mixVal(value1: number, value2: number, ratio: number): number {
@@ -25,19 +28,33 @@ function imageKernel(this: IKernelFunctionThis, grid: number[][][]): void {
   const bb = bVal * 0.4;
 
   if (Math.abs(aVal) < 0.001) {
-    this.color(mixVal(rbg, rb, bVal), mixVal(gbg, gb, bVal), mixVal(bbg, bb, bVal));
+    this.color(
+      mixVal(rbg, rb, bVal),
+      mixVal(gbg, gb, bVal),
+      mixVal(bbg, bb, bVal)
+    );
   } else if (Math.abs(bVal) < 0.001) {
-    this.color(mixVal(rbg, ra, 0.5), mixVal(gbg, ga, 0.5), mixVal(bbg, ba, 0.5));
+    this.color(
+      mixVal(rbg, ra, 0.5),
+      mixVal(gbg, ga, 0.5),
+      mixVal(bbg, ba, 0.5)
+    );
   } else if (aVal < bVal) {
     const rel = aVal / bVal;
     this.color(mixVal(rb, ra, rel), mixVal(gb, ga, rel), mixVal(bb, ba, rel));
   } else {
     const rel2 = bVal / aVal;
-    this.color(mixVal(ra, rb, rel2), mixVal(ga, gb, rel2), mixVal(ba, bb, rel2));
+    this.color(
+      mixVal(ra, rb, rel2),
+      mixVal(ga, gb, rel2),
+      mixVal(ba, bb, rel2)
+    );
   }
 }
 
-export const imageKernelModule: KernelDefinition<Parameters<typeof imageKernel>> = {
+export const imageKernelModule: KernelDefinition<
+  Parameters<typeof imageKernel>
+> = {
   threadFunctions: [{ threadFn: mixVal as ThreadFunction }],
   kernel: imageKernel,
 };

@@ -18,7 +18,14 @@ import { Observable, switchMap, timer } from 'rxjs';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, WsThanosDirective, MatCardModule, ElevateCardDirective, MatButtonModule, NgOptimizedImage],
+  imports: [
+    CommonModule,
+    WsThanosDirective,
+    MatCardModule,
+    ElevateCardDirective,
+    MatButtonModule,
+    NgOptimizedImage,
+  ],
   selector: 'app-technology',
   templateUrl: './technology.component.html',
   styleUrls: ['./technology.component.scss'],
@@ -49,8 +56,14 @@ export class TechnologyComponent implements OnInit {
     }
   }
 
-  public vaporizeAndScrollIntoView(removeElem?: boolean): Observable<AnimationState> {
-    this.elemRef.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+  public vaporizeAndScrollIntoView(
+    removeElem?: boolean
+  ): Observable<AnimationState> {
+    this.elemRef.nativeElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'center',
+    });
     return this.thanos.vaporize$(removeElem);
   }
 }

@@ -91,24 +91,37 @@ export class ReactionDiffConfigService {
 
   public calcParams$: Observable<ReactionDiffCalcParams>;
   public calcCellWeights$: Observable<CellWeights>;
-  public exampleOptions = ReactionDiffConfigService.exampleWeights.map((option) => option.name);
+  public exampleOptions = ReactionDiffConfigService.exampleWeights.map(
+    (option) => option.name
+  );
   public selectedExample$: Observable<string | null>;
   public addChemicalRadius$: Observable<number>;
   public speed$: Observable<number>;
 
-  private selectedExampleSubject$ = new BehaviorSubject<ExampleParamOption | null>(
-    ReactionDiffConfigService.exampleWeights.find((example) => example.name === 'Dynamic kill and feedrate.') ?? null
-  );
+  private selectedExampleSubject$ =
+    new BehaviorSubject<ExampleParamOption | null>(
+      ReactionDiffConfigService.exampleWeights.find(
+        (example) => example.name === 'Dynamic kill and feedrate.'
+      ) ?? null
+    );
   private paramsSubject$: Subject<ReactionDiffCalcParams> = new BehaviorSubject(
     ReactionDiffConfigService.defaultParams
   );
-  private weightsSubject$: Subject<CellWeights> = new BehaviorSubject(ReactionDiffConfigService.defaultWeights);
-  private addChemicalRadiusSubject$: Subject<number> = new BehaviorSubject(ReactionDiffConfigService.addChemicalRadius);
+  private weightsSubject$: Subject<CellWeights> = new BehaviorSubject(
+    ReactionDiffConfigService.defaultWeights
+  );
+  private addChemicalRadiusSubject$: Subject<number> = new BehaviorSubject(
+    ReactionDiffConfigService.addChemicalRadius
+  );
   private speedSubject$: Subject<number> = new BehaviorSubject(1);
 
   constructor() {
-    this.calcParams$ = this.paramsSubject$.asObservable().pipe(map((calcParams) => Object.assign({}, calcParams)));
-    this.calcCellWeights$ = this.weightsSubject$.asObservable().pipe(map((weights) => this.trimWeights(weights)));
+    this.calcParams$ = this.paramsSubject$
+      .asObservable()
+      .pipe(map((calcParams) => Object.assign({}, calcParams)));
+    this.calcCellWeights$ = this.weightsSubject$
+      .asObservable()
+      .pipe(map((weights) => this.trimWeights(weights)));
 
     this.addChemicalRadius$ = this.addChemicalRadiusSubject$.asObservable();
     this.selectedExample$ = this.selectedExampleSubject$.asObservable().pipe(
@@ -141,7 +154,9 @@ export class ReactionDiffConfigService {
   }
 
   resetCalcParams(): void {
-    this.selectedExampleSubject$.next(ReactionDiffConfigService.exampleWeights[0]);
+    this.selectedExampleSubject$.next(
+      ReactionDiffConfigService.exampleWeights[0]
+    );
   }
 
   resetCalcCellWeights(): void {
@@ -149,7 +164,9 @@ export class ReactionDiffConfigService {
   }
 
   setSelection(name: string): void {
-    const foundOption = ReactionDiffConfigService.exampleWeights.find((option) => option.name === name);
+    const foundOption = ReactionDiffConfigService.exampleWeights.find(
+      (option) => option.name === name
+    );
 
     if (foundOption) {
       this.selectedExampleSubject$.next(foundOption);

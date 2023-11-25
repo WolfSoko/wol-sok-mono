@@ -15,7 +15,13 @@ import { WaveCanvasComponent } from './wave-canvas/wave-canvas.component';
   templateUrl: './input-wave.component.html',
   styleUrls: ['./input-wave.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatCardModule, MatIconModule, MatButtonModule, WaveCanvasComponent, CommonModule],
+  imports: [
+    MatCardModule,
+    MatIconModule,
+    MatButtonModule,
+    WaveCanvasComponent,
+    CommonModule,
+  ],
 })
 export class InputWaveComponent {
   @Input() width = 0;

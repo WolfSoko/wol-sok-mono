@@ -31,7 +31,10 @@ export const APP_ROUTES: MainNavRoutes = [
   },
   {
     path: 'fourierAnalysis',
-    loadChildren: () => loadRemoteModule('fourier-analysis-remote', './Module').then((m) => m.RemoteEntryModule),
+    loadChildren: () =>
+      loadRemoteModule('fourier-analysis-remote', './Module').then(
+        (m) => m.RemoteEntryModule
+      ),
     data: {
       linkText: 'Fourier Analysis Example',
       subTitle: 'Served independently by Webpacks Module-Federation',
@@ -39,12 +42,18 @@ export const APP_ROUTES: MainNavRoutes = [
   },
   {
     path: 'bacteriaGame',
-    loadChildren: () => loadRemoteModule('bacteria-game-remote', './Routes').then((routes) => routes.entryRoutes),
+    loadChildren: () =>
+      loadRemoteModule('bacteria-game-remote', './Routes').then(
+        (routes) => routes.entryRoutes
+      ),
     data: { linkText: 'Bacteria Game', subTitle: 'Served independently by MF' },
   },
   {
     path: 'shaderExamples',
-    loadChildren: () => loadRemoteModule('shader-examples-remote', './Routes').then((routes) => routes.remoteRoutes),
+    loadChildren: () =>
+      loadRemoteModule('shader-examples-remote', './Routes').then(
+        (routes) => routes.remoteRoutes
+      ),
     data: {
       linkText: 'WebGL Shader examples with live code editor (three.js)',
       subTitle: 'Served independently by MF',
@@ -52,7 +61,10 @@ export const APP_ROUTES: MainNavRoutes = [
   },
   {
     path: 'someGpuCalculations',
-    loadChildren: () => import('@wolsok/feat-lazy-some-gpu-calculation').then((mod) => mod.SOME_GPU_CALCULATION_ROUTES),
+    loadChildren: () =>
+      import('@wolsok/feat-lazy-some-gpu-calculation').then(
+        (mod) => mod.SOME_GPU_CALCULATION_ROUTES
+      ),
     data: { linkText: 'Some Gpu Accelerated Calculations (gpu.js)' },
   },
   {
@@ -62,28 +74,38 @@ export const APP_ROUTES: MainNavRoutes = [
   },
   {
     path: 'tensorflowExamples',
-    loadChildren: () => import('@wolsok/feat-lazy-tf-examples').then((m) => m.TENSORFLOW_EXAMPLES_ROUTES),
+    loadChildren: () =>
+      import('@wolsok/feat-lazy-tf-examples').then(
+        (m) => m.TENSORFLOW_EXAMPLES_ROUTES
+      ),
     data: { linkText: 'Tensorflow examples' },
   },
   {
     path: 'neuralNetwork',
     loadChildren: () =>
-      import('./feature/lazy/neural-network/neural-network.module').then((m) => m.NeuralNetworkModule),
+      import('./feature/lazy/neural-network/neural-network.module').then(
+        (m) => m.NeuralNetworkModule
+      ),
     data: { linkText: 'Neural Networks (p5)' },
   },
   {
     path: 'reactionDiff',
-    loadComponent: () => import('@wolsok/feat-reaction-diff').then((m) => m.ReactionDiffComponent),
+    loadComponent: () =>
+      import('@wolsok/feat-reaction-diff').then((m) => m.ReactionDiffComponent),
     data: { linkText: 'Reaction Diffusion Algorithm (gpu.js)' },
   },
   {
     path: 'poisson',
-    loadChildren: () => import('./feature/lazy/poisson/api/routes').then((m) => m.routes),
+    loadChildren: () =>
+      import('./feature/lazy/poisson/api/routes').then((m) => m.routes),
     data: { linkText: 'Poisson Distribution Algorithm' },
   },
   {
     path: 'performanceTests',
-    loadChildren: () => import('./feature/lazy/performance-test/performance-test.routes').then((m) => m.routes),
+    loadChildren: () =>
+      import('./feature/lazy/performance-test/performance-test.routes').then(
+        (m) => m.routes
+      ),
     data: { linkText: 'Performance Tests' },
   },
   {
@@ -93,7 +115,10 @@ export const APP_ROUTES: MainNavRoutes = [
   },
   {
     path: 'gravityWorld',
-    loadChildren: () => import('@wolsok/feat-lazy-gravity-rocks').then((m) => m.GRAVITY_ROCKS_ROUTES),
+    loadChildren: () =>
+      import('@wolsok/feat-lazy-gravity-rocks').then(
+        (m) => m.GRAVITY_ROCKS_ROUTES
+      ),
     data: { linkText: 'Playing around with Sun and Planets gravity' },
   },
 ];

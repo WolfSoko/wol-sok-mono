@@ -40,12 +40,16 @@ describe('loginIfNotAuthenticated', () => {
 
   it('should return false if signIn fails', async () => {
     authenticated$.next(false);
-    TestBed.inject(AuthenticationService).signIn = jest.fn(() => Promise.reject());
+    TestBed.inject(AuthenticationService).signIn = jest.fn(() =>
+      Promise.reject()
+    );
     const result = await whenLoginIfNotAuthenticatedIsCalled();
     expect(result).toBe(false);
   });
 
   function whenLoginIfNotAuthenticatedIsCalled(): Promise<boolean> {
-    return TestBed.runInInjectionContext(() => lastValueFrom(loginIfNotAuthenticated()));
+    return TestBed.runInInjectionContext(() =>
+      lastValueFrom(loginIfNotAuthenticated())
+    );
   }
 });

@@ -9,7 +9,14 @@ import { PolynomialRegressionService } from './polynomial-regression.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, MatCardModule, DataDrawerComponent, MatButtonModule, MatTooltipModule, ElevateCardDirective],
+  imports: [
+    CommonModule,
+    MatCardModule,
+    DataDrawerComponent,
+    MatButtonModule,
+    MatTooltipModule,
+    ElevateCardDirective,
+  ],
   templateUrl: './polynomial-regression.component.html',
   styleUrls: ['./polynomial-regression.component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,

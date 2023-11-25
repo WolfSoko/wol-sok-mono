@@ -6,7 +6,7 @@
 
 const { expect, test } = require('@playwright/test')
 
-test('visit page and take screenshot', async ({ page }) => {
+test('visit home page and take screenshot', async ({ page }) => {
     // or, even better, define a ENVIRONMENT_URL environment variable
     // to reuse it across your browser checks
     const response = await page.goto(process.env.ENVIRONMENT_URL || 'https://angularexamples.wolsok.de')
@@ -15,5 +15,12 @@ test('visit page and take screenshot', async ({ page }) => {
     expect(response.status()).toBeLessThan(400)
 
     // Take a screenshot
-    await page.screenshot({ path: 'screenshot.jpg' })
+    await page.screenshot()
 })
+
+test('visit shaderExamples and take screenshot', async ({ page }) => {
+  const response = await page.goto(process.env.ENVIRONMENT_URL + '/shaderExamples' || 'https://angularexamples.wolsok.de/shaderExamples')
+  expect(response.status()).toBeLessThan(400)
+  await page.screenshot()
+})
+

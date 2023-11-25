@@ -14,7 +14,13 @@ import { Point } from '../shared/point';
   styleUrls: ['./perceptron-tab.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [MatCardModule, ElevateCardDirective, DataViewComponent, BrainSettingsComponent, PerceptronComponent],
+  imports: [
+    MatCardModule,
+    ElevateCardDirective,
+    DataViewComponent,
+    BrainSettingsComponent,
+    PerceptronComponent,
+  ],
 })
 export class PerceptronTabComponent implements OnInit {
   width = 400;
@@ -48,7 +54,9 @@ export class PerceptronTabComponent implements OnInit {
   }
 
   addPoint({ x, y, click }: { x: number; y: number; click: 'left' | 'right' }) {
-    const point = new Point(x / this.width, y / this.height, () => (click === 'left' ? 1 : 0));
+    const point = new Point(x / this.width, y / this.height, () =>
+      click === 'left' ? 1 : 0
+    );
     this.brainService.addPoint(point);
   }
 }

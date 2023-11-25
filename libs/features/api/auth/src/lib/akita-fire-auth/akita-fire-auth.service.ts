@@ -11,7 +11,12 @@ export class AkitaFireAuthService extends FireAuthService<AkitaAuthState> {
     super(store);
   }
 
-  protected override createProfile({ displayName, email, photoURL, uid }: Profile): Profile {
+  protected override createProfile({
+    displayName,
+    email,
+    photoURL,
+    uid,
+  }: Profile): Profile {
     return {
       uid: uid,
       email: email,
@@ -20,7 +25,9 @@ export class AkitaFireAuthService extends FireAuthService<AkitaAuthState> {
     };
   }
 
-  protected override async onSignin(userCredential: UserCredential): Promise<void> {
+  protected override async onSignin(
+    userCredential: UserCredential
+  ): Promise<void> {
     if (userCredential.user) {
       await this.update(this.createProfile(userCredential.user));
     }

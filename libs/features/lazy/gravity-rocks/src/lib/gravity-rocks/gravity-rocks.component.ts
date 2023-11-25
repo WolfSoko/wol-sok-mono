@@ -1,5 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ViewEncapsulation,
+} from '@angular/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { GravityWorldComponent } from './gravity-world/gravity-world.component';

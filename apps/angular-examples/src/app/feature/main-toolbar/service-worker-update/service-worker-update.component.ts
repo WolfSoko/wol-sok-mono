@@ -5,7 +5,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { catchError, map, Observable, of, startWith } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ServiceWorkerLogUpdateService } from '../../../core/service-worker-log-update.service';
-import { CHECK_FOR_UPDATE_STATE, ServiceWorkerUpdateService } from '../../../core/service-worker-update.service';
+import {
+  CHECK_FOR_UPDATE_STATE,
+  ServiceWorkerUpdateService,
+} from '../../../core/service-worker-update.service';
 
 type ViewModel = { isLoading: boolean; updateAvailable: boolean };
 

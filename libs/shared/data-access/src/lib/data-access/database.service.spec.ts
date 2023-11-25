@@ -34,7 +34,8 @@ describe('DatabaseService', () => {
     it('should return the collectionRef', () => {
       const colRefResult = { test: 'test123' };
       (collection as jest.Mock).mockReturnValue(colRefResult);
-      const collectionReference: unknown = spectator.service.collection('testPath');
+      const collectionReference: unknown =
+        spectator.service.collection('testPath');
       expect(collectionReference).toEqual(colRefResult);
     });
   });

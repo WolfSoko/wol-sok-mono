@@ -5,7 +5,9 @@ import { AppStack } from './stacks/app.stack';
 // Mock the fromLookup method
 jest.mock('aws-cdk-lib/aws-route53', () => {
   return {
-    HostedZone: { fromLookup: jest.fn((domain: string) => ({ superZone: domain })) },
+    HostedZone: {
+      fromLookup: jest.fn((domain: string) => ({ superZone: domain })),
+    },
     RecordTarget: {
       fromAlias: jest.fn(),
     },

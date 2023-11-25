@@ -10,8 +10,40 @@ export interface CellWeights {
   bottomRight: number;
 }
 
-type NineTuple = [number, number, number, number, number, number, number, number, number];
-export const weightsToArray: (weights: CellWeights) => NineTuple = (weights: CellWeights) => {
-  const { bottomLeft, left, bottomCenter, topCenter, right, topRight, center, bottomRight, topLeft } = weights;
-  return [topLeft, topCenter, topRight, left, center, right, bottomLeft, bottomCenter, bottomRight];
+type NineTuple = [
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+];
+export const weightsToArray: (weights: CellWeights) => NineTuple = (
+  weights: CellWeights
+) => {
+  const {
+    bottomLeft,
+    left,
+    bottomCenter,
+    topCenter,
+    right,
+    topRight,
+    center,
+    bottomRight,
+    topLeft,
+  } = weights;
+  return [
+    topLeft,
+    topCenter,
+    topRight,
+    left,
+    center,
+    right,
+    bottomLeft,
+    bottomCenter,
+    bottomRight,
+  ];
 };

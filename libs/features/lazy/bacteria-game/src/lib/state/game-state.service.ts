@@ -41,7 +41,9 @@ export class GameStateService {
   }
 
   private static determineWinner(players: Player[]): Player | null {
-    const hasBacteriasPlayers = players.filter((value) => value.bacterias.length > 0);
+    const hasBacteriasPlayers = players.filter(
+      (value) => value.bacterias.length > 0
+    );
     if (hasBacteriasPlayers.length === 1) {
       return players[0];
     }
@@ -51,25 +53,33 @@ export class GameStateService {
   init(width: number, height: number) {
     this.gameStateStore.update({ width, height, winner: null });
     // subscribe update time passed when game running
-    const running$ = this.gameStateQuery.selectCurrentGameState(GameState.RUNNING);
+    const running$ = this.gameStateQuery.selectCurrentGameState(
+      GameState.RUNNING
+    );
     const notRunning$ = this.gameStateQuery
       .selectCurrentGameState()
       .pipe(filter((value) => value !== GameState.RUNNING));
 
-    this.subscriptions = running$.pipe(switchMap(() => this.gameLoop$.pipe(takeUntil(notRunning$)))).subscribe({
-      next: (timeDelta) => {
-        this.measureFps.signalFrameReady();
-        this.gameStateStore.update((state) => ({
-          timePassed: state.timePassed + timeDelta,
-          timeDelta,
-        }));
-      },
-      error: (error) => {
-        console.error('error in gameLoop', error);
-      },
-    });
+    this.subscriptions = running$
+      .pipe(switchMap(() => this.gameLoop$.pipe(takeUntil(notRunning$))))
+      .subscribe({
+        next: (timeDelta) => {
+          this.measureFps.signalFrameReady();
+          this.gameStateStore.update((state) => ({
+            timePassed: state.timePassed + timeDelta,
+            timeDelta,
+          }));
+        },
+        error: (error) => {
+          console.error('error in gameLoop', error);
+        },
+      });
 
-    this.subscriptions.add(this.measureFps.fps$.subscribe((fps) => this.gameStateStore.update({ fps })));
+    this.subscriptions.add(
+      this.measureFps.fps$.subscribe((fps) =>
+        this.gameStateStore.update({ fps })
+      )
+    );
 
     // subscribe determine Winner
     this.subscriptions.add(
@@ -80,7 +90,9 @@ export class GameStateService {
               .selectAll()
               .pipe(
                 takeUntil(
-                  this.gameStateQuery.selectCurrentGameState().pipe(filter((value) => value !== GameState.RUNNING))
+                  this.gameStateQuery
+                    .selectCurrentGameState()
+                    .pipe(filter((value) => value !== GameState.RUNNING))
                 )
               )
           ),
@@ -146,7 +158,10 @@ export class GameStateService {
       return;
     }
     this.gameStateStore.update((state) => ({
-      keysPressed: [...state.keysPressed.filter((keys) => keyToAdd !== keys), keyToAdd],
+      keysPressed: [
+        ...state.keysPressed.filter((keys) => keyToAdd !== keys),
+        keyToAdd,
+      ],
     }));
   }
 

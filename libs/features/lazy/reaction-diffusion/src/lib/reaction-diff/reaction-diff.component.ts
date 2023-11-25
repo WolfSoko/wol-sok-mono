@@ -1,5 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -12,7 +17,15 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { interval, Observable, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, map, share, startWith, tap } from 'rxjs/operators';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  map,
+  share,
+  startWith,
+  tap,
+} from 'rxjs/operators';
 import { ReactionDiffCalcParams } from './calculation/reaction-diff-calc-params';
 import { ReactionDiffCalcServiceFactory } from './calculation/reaction-diff-calculation-service.factory';
 import { ReactionDiffCalculator } from './calculation/reaction-diff-calculator';
@@ -88,12 +101,22 @@ export class ReactionDiffComponent implements OnInit, OnDestroy {
   public ngOnInit() {
     this.examples = this.configService.exampleOptions;
 
-    this.calcService = this.calcFactory.createCalcService(this.width, this.height, this.useGpu);
+    this.calcService = this.calcFactory.createCalcService(
+      this.width,
+      this.height,
+      this.useGpu
+    );
     this.numberWebWorkers = this.calcService.numberThreads;
 
-    this.configService.selectedExample$.subscribe((example) => (this.selectedExample = example));
-    this.configService.calcParams$.subscribe((calcParams) => (this.calcParams = calcParams));
-    this.configService.addChemicalRadius$.subscribe((radius) => (this.addChemicalRadius = radius));
+    this.configService.selectedExample$.subscribe(
+      (example) => (this.selectedExample = example)
+    );
+    this.configService.calcParams$.subscribe(
+      (calcParams) => (this.calcParams = calcParams)
+    );
+    this.configService.addChemicalRadius$.subscribe(
+      (radius) => (this.addChemicalRadius = radius)
+    );
 
     this.configService.speed$.subscribe((speed) => (this.speed = speed));
 
@@ -107,9 +130,11 @@ export class ReactionDiffComponent implements OnInit, OnDestroy {
         }
         const measurementsToTake = Math.min(measures.length, 30);
         return (
-          measures.slice(measures.length - measurementsToTake).reduce((acc, next) => {
-            return acc + next.duration;
-          }, 0) / measurementsToTake
+          measures
+            .slice(measures.length - measurementsToTake)
+            .reduce((acc, next) => {
+              return acc + next.duration;
+            }, 0) / measurementsToTake
         ).toFixed(2);
       })
     );
@@ -134,7 +159,9 @@ export class ReactionDiffComponent implements OnInit, OnDestroy {
         this.height = dim.height;
       }),
       debounceTime(500),
-      distinctUntilChanged((x, y) => x.width === y.width && y.height === x.height),
+      distinctUntilChanged(
+        (x, y) => x.width === y.width && y.height === x.height
+      ),
       share()
     );
     distinctDebouncedDimensions.subscribe((dim) => {
@@ -142,7 +169,9 @@ export class ReactionDiffComponent implements OnInit, OnDestroy {
       this.calcService.resize(dim.width, dim.height);
     });
 
-    this.dimensions$ = distinctDebouncedDimensions.pipe(startWith({ width: this.width, height: this.height }));
+    this.dimensions$ = distinctDebouncedDimensions.pipe(
+      startWith({ width: this.width, height: this.height })
+    );
   }
 
   public toggleRunSim(): void {
@@ -189,7 +218,11 @@ export class ReactionDiffComponent implements OnInit, OnDestroy {
 
   updateUseGpu(): void {
     this.start = false;
-    this.calcService = this.calcFactory.createCalcService(this.width, this.height, this.useGpu);
+    this.calcService = this.calcFactory.createCalcService(
+      this.width,
+      this.height,
+      this.useGpu
+    );
     if (!this.useGpu) {
       this.numberWebWorkers = this.calcService.numberThreads;
     }

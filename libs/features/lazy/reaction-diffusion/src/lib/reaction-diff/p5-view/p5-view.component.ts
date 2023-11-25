@@ -32,7 +32,8 @@ export class P5ViewComponent implements OnChanges, OnDestroy {
   @Input() calcService!: ReactionDiffCalculator;
   @Input() run = false;
   @Input() showFps = false;
-  @Output() mousePressed: EventEmitter<{ x: number; y: number }> = new EventEmitter();
+  @Output() mousePressed: EventEmitter<{ x: number; y: number }> =
+    new EventEmitter();
 
   public frameRate = 1;
 
@@ -49,7 +50,10 @@ export class P5ViewComponent implements OnChanges, OnDestroy {
       if (this.sketch) {
         this.sketch.resizeCanvas(this.simWidth, this.simHeight);
       } else {
-        this.sketch = new P5((p) => this.initP5(p), this.drawArea.nativeElement);
+        this.sketch = new P5(
+          (p) => this.initP5(p),
+          this.drawArea.nativeElement
+        );
       }
     }
   }

@@ -13,7 +13,10 @@ import { AppComponent } from './app.component';
       [
         {
           path: '',
-          loadChildren: () => import('./remote-entry/entry.module').then((m) => m.RemoteEntryModule),
+          loadChildren: () =>
+            import('./remote-entry/entry.module').then(
+              (m) => m.RemoteEntryModule
+            ),
         },
       ],
       { initialNavigation: 'enabledBlocking' }

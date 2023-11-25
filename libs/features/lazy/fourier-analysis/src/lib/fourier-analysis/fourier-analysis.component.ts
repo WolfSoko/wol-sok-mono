@@ -61,6 +61,9 @@ export class FourierAnalysisComponent {
     this.circleCanvasWidth = availableWidth;
 
     this.circleCanvasHeight = Math.max(250, this.circleCanvasWidth * (9 / 94));
-    this.inputWaveCanvasHeight = Math.max(250, Math.round(this.inputWaveCanvasWidth * (9 / 64)));
+    this.inputWaveCanvasHeight = Math.max(
+      250,
+      Math.round(this.inputWaveCanvasWidth * (9 / 64))
+    );
   }
 }

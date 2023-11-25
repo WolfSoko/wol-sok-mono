@@ -1,4 +1,10 @@
-import { Directive, EmbeddedViewRef, Input, TemplateRef, ViewContainerRef } from '@angular/core';
+import {
+  Directive,
+  EmbeddedViewRef,
+  Input,
+  TemplateRef,
+  ViewContainerRef,
+} from '@angular/core';
 
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
@@ -33,7 +39,10 @@ export class LetDirective<T> {
       return;
     }
 
-    this.viewRef = this.viewContainer.createEmbeddedView(this.templateRef, this.context);
+    this.viewRef = this.viewContainer.createEmbeddedView(
+      this.templateRef,
+      this.context
+    );
   }
 }
 

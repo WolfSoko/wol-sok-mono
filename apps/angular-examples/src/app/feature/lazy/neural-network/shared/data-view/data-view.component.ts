@@ -39,7 +39,11 @@ export class DataViewComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() canvasWidth = 400;
   @Input() canvasHeight = 400;
   @Input() showLinearDivider = true;
-  @Output() dataViewClicked: EventEmitter<{ x: number; y: number; click: 'left' | 'right' }> = new EventEmitter();
+  @Output() dataViewClicked: EventEmitter<{
+    x: number;
+    y: number;
+    click: 'left' | 'right';
+  }> = new EventEmitter();
 
   private dataScetch?: DataP5Sketch;
   private legendScetch?: p5;

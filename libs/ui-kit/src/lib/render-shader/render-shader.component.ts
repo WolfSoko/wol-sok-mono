@@ -43,7 +43,9 @@ import { defaultVertexShader } from './default-vertex-shader';
   providers: [{ provide: MeasureFps, useValue: new MeasureFps() }],
   imports: [CommonModule, ShowFpsComponent],
 })
-export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class RenderShaderComponent
+  implements AfterViewInit, OnChanges, OnDestroy
+{
   @Input() shaderCode!: string;
   @Input() vertexShader!: string;
   @Input() runAnimation: boolean | null = true;
@@ -89,7 +91,10 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
     return RenderShaderComponent.getOffset(elem, 'offsetTop');
   }
 
-  private static getOffset(elem: HTMLElement | null, offset: 'offsetTop' | 'offsetLeft') {
+  private static getOffset(
+    elem: HTMLElement | null,
+    offset: 'offsetTop' | 'offsetLeft'
+  ) {
     let e = elem;
     let result = 0;
     do {
@@ -155,33 +160,60 @@ export class RenderShaderComponent implements AfterViewInit, OnChanges, OnDestro
   onMouseMove(e: MouseEvent) {
     if (this.uniforms) {
       this.uniforms.mouse.value.x = e.offsetX / this.canvasWidth;
-      this.uniforms.mouse.value.y = (this.canvasHeight - e.offsetY) / this.canvasHeight;
+      this.uniforms.mouse.value.y =
+        (this.canvasHeight - e.offsetY) / this.canvasHeight;
     }
   }
 
   onTouchMove(e: TouchEvent) {
     if (this.uniforms) {
       const touch = e.touches[0];
-      const x = touch.pageX - RenderShaderComponent.getOffsetLeft(e.target as HTMLElement);
-      const y = touch.pageY - RenderShaderComponent.getOffsetTop(e.target as HTMLElement);
+      const x =
+        touch.pageX -
+        RenderShaderComponent.getOffsetLeft(e.target as HTMLElement);
+      const y =
+        touch.pageY -
+        RenderShaderComponent.getOffsetTop(e.target as HTMLElement);
 
-      this.uniforms.mouse.value.x = Math.max(Math.min(x / this.canvasWidth, 1.0), 0.0);
-      this.uniforms.mouse.value.y = Math.max(Math.min((this.canvasHeight - y) / this.canvasHeight, 1.0), 0.0);
+      this.uniforms.mouse.value.x = Math.max(
+        Math.min(x / this.canvasWidth, 1.0),
+        0.0
+      );
+      this.uniforms.mouse.value.y = Math.max(
+        Math.min((this.canvasHeight - y) / this.canvasHeight, 1.0),
+        0.0
+      );
     }
   }
 
   onResize() {
-    if (this.canvasWidth && this.canvasHeight && this.renderer && this.uniforms) {
+    if (
+      this.canvasWidth &&
+      this.canvasHeight &&
+      this.renderer &&
+      this.uniforms
+    ) {
       this.renderer.setSize(this.canvasWidth, this.canvasHeight);
-      this.uniforms.resolution.value = new Vector2(this.canvasWidth, this.canvasHeight);
+      this.uniforms.resolution.value = new Vector2(
+        this.canvasWidth,
+        this.canvasHeight
+      );
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['runAnimation'] && !changes['runAnimation'].isFirstChange() && changes['runAnimation'].currentValue) {
+    if (
+      changes['runAnimation'] &&
+      !changes['runAnimation'].isFirstChange() &&
+      changes['runAnimation'].currentValue
+    ) {
       this.animate(1.0);
     }
-    if (changes['shaderCode'] && !changes['shaderCode'].isFirstChange() && this.material) {
+    if (
+      changes['shaderCode'] &&
+      !changes['shaderCode'].isFirstChange() &&
+      this.material
+    ) {
       this.material.setValues({ fragmentShader: this.shaderCode });
       this.material.needsUpdate = true;
     }

@@ -1,4 +1,7 @@
-import { calcNextKernelModule, imageKernelModule } from '@wolsok/feat-shared-reaction-diffusion-kernels';
+import {
+  calcNextKernelModule,
+  imageKernelModule,
+} from '@wolsok/feat-shared-reaction-diffusion-kernels';
 import {
   GpuAdapterService,
   IKernelRunShortcut,
@@ -43,7 +46,9 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
         this.setCalcParams(calcParams);
       });
       calcCellWeights$.subscribe((weights) => this.setWeights(weights));
-      addChemicalRadius$.subscribe((radius) => (this.addChemicalRadius = radius));
+      addChemicalRadius$.subscribe(
+        (radius) => (this.addChemicalRadius = radius)
+      );
       speed$.subscribe((speed) => (this.speed = speed));
       this.init();
     });
@@ -85,9 +90,17 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
 
     for (let i = 0; i < repeat; i++) {
       // using texture swap to prevent input texture == output texture webGl error;
-      const calcKernel = this.lastNextCalc === 0 ? this.calcNextKernels.first : this.calcNextKernels.second;
+      const calcKernel =
+        this.lastNextCalc === 0
+          ? this.calcNextKernels.first
+          : this.calcNextKernels.second;
       const oldGrid: Texture | undefined = this.grid;
-      this.grid = calcKernel(oldGrid, this.weights, calcParams, this.nextAddChemicals);
+      this.grid = calcKernel(
+        oldGrid,
+        this.weights,
+        calcParams,
+        this.nextAddChemicals
+      );
       oldGrid?.delete();
       this.lastNextCalc = (this.lastNextCalc + 1) % 2;
       this.nextAddChemicals = [0, 0, 0, 0];

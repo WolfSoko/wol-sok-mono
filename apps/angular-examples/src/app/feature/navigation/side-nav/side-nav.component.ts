@@ -24,7 +24,14 @@ import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
 @Component({
   selector: 'app-side-nav',
   standalone: true,
-  imports: [CommonModule, MatSidenavModule, MatListModule, NavItemComponent, LetDirective, MatProgressSpinnerModule],
+  imports: [
+    CommonModule,
+    MatSidenavModule,
+    MatListModule,
+    NavItemComponent,
+    LetDirective,
+    MatProgressSpinnerModule,
+  ],
   templateUrl: './side-nav.component.html',
   styleUrls: ['./side-nav.component.scss'],
   encapsulation: ViewEncapsulation.Emulated,
@@ -32,7 +39,9 @@ import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
 })
 export class SideNavComponent {
   private isLargeScreen = toSignal(
-    this.breakpointObserver.observe([Breakpoints.Large, Breakpoints.XLarge]).pipe(map((result) => result.matches)),
+    this.breakpointObserver
+      .observe([Breakpoints.Large, Breakpoints.XLarge])
+      .pipe(map((result) => result.matches)),
     { initialValue: false }
   );
 

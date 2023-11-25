@@ -14,7 +14,10 @@ describe('GravityWorldComponent', () => {
       disconnect: jest.fn(),
     }));
 
-    spectator = createHost(`<feat-lazy-gravity-world></feat-lazy-gravity-world>`, {});
+    spectator = createHost(
+      `<feat-lazy-gravity-world></feat-lazy-gravity-world>`,
+      {}
+    );
     spectator.detectChanges();
   });
 

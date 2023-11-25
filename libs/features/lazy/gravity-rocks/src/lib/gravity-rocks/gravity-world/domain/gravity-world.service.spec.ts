@@ -29,7 +29,9 @@ describe('GravityWorldService', () => {
   });
 
   it('should let me add a planets', () => {
-    expect(() => service.addWorldObject(new Planet(vec2(50, 50), undefined, 10))).not.toThrow();
+    expect(() =>
+      service.addWorldObject(new Planet(vec2(50, 50), undefined, 10))
+    ).not.toThrow();
   });
 
   it('should let me set the universe size', () => {

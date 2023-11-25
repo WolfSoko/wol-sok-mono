@@ -31,42 +31,52 @@ function createWorker<T, R>(fn: (input: T) => WorkerPostParams<R>) {
 export function mapWorkerOp<T, R>(
   workerFunction: (value: T) => WorkerPostParams<R>
 ): OperatorFunction<T | WorkerPostParams<T>, R> {
-  return operate((source: Observable<T | WorkerPostParams<T>>, subscriber: Subscriber<R>) => {
-    const worker: Worker = createWorker(workerFunction);
-    const listensForWorkerMessages = false;
+  return operate(
+    (
+      source: Observable<T | WorkerPostParams<T>>,
+      subscriber: Subscriber<R>
+    ) => {
+      const worker: Worker = createWorker(workerFunction);
+      const listensForWorkerMessages = false;
 
-    // Subscribe to the source, all errors and completions are sent along
-    // to the consumer.
-    source.subscribe(
-      createOperatorSubscriber(
-        subscriber,
-        (value: T | WorkerPostParams<T>) => {
-          if (!listensForWorkerMessages) {
-            worker.onmessage = (event: MessageEvent) => subscriber.next(event.data as R);
-            worker.onerror = (error) => subscriber.error(error);
-          }
-          postMessage(value);
-        },
-        undefined,
-        undefined,
-        () => worker.terminate()
-      )
-    );
+      // Subscribe to the source, all errors and completions are sent along
+      // to the consumer.
+      source.subscribe(
+        createOperatorSubscriber(
+          subscriber,
+          (value: T | WorkerPostParams<T>) => {
+            if (!listensForWorkerMessages) {
+              worker.onmessage = (event: MessageEvent) =>
+                subscriber.next(event.data as R);
+              worker.onerror = (error) => subscriber.error(error);
+            }
+            postMessage(value);
+          },
+          undefined,
+          undefined,
+          () => worker.terminate()
+        )
+      );
 
-    function postMessage(value: T | WorkerPostParams<T>): void {
-      if (!hasTransferList(value)) {
-        worker.postMessage(value);
+      function postMessage(value: T | WorkerPostParams<T>): void {
+        if (!hasTransferList(value)) {
+          worker.postMessage(value);
+          return;
+        }
+        worker.postMessage(value.data, value.transferList);
         return;
       }
-      worker.postMessage(value.data, value.transferList);
-      return;
-    }
 
-    function hasTransferList(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      value: any
-    ): value is WorkerPostParams<T> & { transferList: Transferable[] } {
-      return !!value.transferList && value.transferList instanceof Array && value.transferList.length > 0;
+      function hasTransferList(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        value: any
+      ): value is WorkerPostParams<T> & { transferList: Transferable[] } {
+        return (
+          !!value.transferList &&
+          value.transferList instanceof Array &&
+          value.transferList.length > 0
+        );
+      }
     }
-  });
+  );
 }

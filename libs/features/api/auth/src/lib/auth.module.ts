@@ -1,4 +1,8 @@
-import { importProvidersFrom, ModuleWithProviders, NgModule } from '@angular/core';
+import {
+  importProvidersFrom,
+  ModuleWithProviders,
+  NgModule,
+} from '@angular/core';
 import { getAuth, provideAuth } from '@angular/fire/auth';
 import { Angulartics2Module } from 'angulartics2';
 

@@ -1,6 +1,14 @@
 import { Injectable } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, defer, merge, Observable, of, range, Subject } from 'rxjs';
+import {
+  combineLatest,
+  defer,
+  merge,
+  Observable,
+  of,
+  range,
+  Subject,
+} from 'rxjs';
 import {
   concatMap,
   distinctUntilChanged,
@@ -59,10 +67,16 @@ export class PoissonCalcService {
   }
 
   public setup(width: number, height: number) {
-    this.config$.pipe(take(1), untilDestroyed(this)).subscribe((config) => this.setupInternal(width, height, config));
+    this.config$
+      .pipe(take(1), untilDestroyed(this))
+      .subscribe((config) => this.setupInternal(width, height, config));
   }
 
-  private setupInternal(width: number, height: number, config: PoissonConfig): void {
+  private setupInternal(
+    width: number,
+    height: number,
+    config: PoissonConfig
+  ): void {
     this.width = width;
     this.height = height;
 
@@ -109,7 +123,11 @@ export class PoissonCalcService {
   public calculate(): void {
     this.lineSubject = new Subject();
     this.lineSubject
-      .pipe(takeUntil(merge(this.iterationComplete.asObservable())), toArray(), untilDestroyed(this))
+      .pipe(
+        takeUntil(merge(this.iterationComplete.asObservable())),
+        toArray(),
+        untilDestroyed(this)
+      )
       .subscribe((lines) => this.linesSubject.next(lines));
     this.calculationSubject.next();
   }
@@ -125,13 +143,16 @@ export class PoissonCalcService {
   }
 
   private initCalculation(): void {
-    const iterationsPerFrame$: Observable<number> = this.poissonConfig.config$.pipe(
-      map((value) => value.iterationsPerFrame),
-      distinctUntilChanged(),
-      switchMap((iterationsPerFrame) =>
-        range(0, iterationsPerFrame).pipe(tap({ complete: () => this.iterationComplete.next() }))
-      )
-    );
+    const iterationsPerFrame$: Observable<number> =
+      this.poissonConfig.config$.pipe(
+        map((value) => value.iterationsPerFrame),
+        distinctUntilChanged(),
+        switchMap((iterationsPerFrame) =>
+          range(0, iterationsPerFrame).pipe(
+            tap({ complete: () => this.iterationComplete.next() })
+          )
+        )
+      );
 
     const randomActiveIndex$: Observable<number> = defer(() =>
       of(Math.floor(this.random.randomTo(this.active.length)))
@@ -147,12 +168,15 @@ export class PoissonCalcService {
     this.calculationSubject
       .pipe(
         switchMap(() => iterationsPerFrame$),
-        concatMap(() => combineLatest([randomActive$, this.config$.pipe(take(1))])),
+        concatMap(() =>
+          combineLatest([randomActive$, this.config$.pipe(take(1))])
+        ),
         takeWhile(() => this.active.length > 0),
         untilDestroyed(this)
       )
       .subscribe({
-        next: ([randomActive, config]) => this.onNextCalculation(randomActive, config),
+        next: ([randomActive, config]) =>
+          this.onNextCalculation(randomActive, config),
         error: (error) => console.error('error calculating', error),
         complete: () => {
           this.calculationCompletedSubject.next();
@@ -161,7 +185,10 @@ export class PoissonCalcService {
       });
   }
 
-  private onNextCalculation({ active, randomActiveIndex }: RandomActive, { k, r, w }: PoissonConfig): void {
+  private onNextCalculation(
+    { active, randomActiveIndex }: RandomActive,
+    { k, r, w }: PoissonConfig
+  ): void {
     let found = false;
     const currentDistance = this.currentDistanceForPos(active, r);
     for (let n = 0; n < k; n++) {
@@ -173,17 +200,30 @@ export class PoissonCalcService {
       const row = Math.floor(sample.x / w);
       const col = Math.floor(sample.y / w);
 
-      if (col > -1 && row > -1 && col < this.cols && row < this.rows && !this.getFromGrid(sample, w)) {
-        const neighbours: Circle[] = this.getNeighbours(sample, currentDistance, w);
+      if (
+        col > -1 &&
+        row > -1 &&
+        col < this.cols &&
+        row < this.rows &&
+        !this.getFromGrid(sample, w)
+      ) {
+        const neighbours: Circle[] = this.getNeighbours(
+          sample,
+          currentDistance,
+          w
+        );
         const ok = neighbours.every((neighbour: Circle) => {
           // this.drawHelper.setStrokeColor('white');
           if (neighbour) {
-            this.lineSubject.next(this.shapeFactory.createLine(sample, neighbour.pos));
+            this.lineSubject.next(
+              this.shapeFactory.createLine(sample, neighbour.pos)
+            );
 
             const sampleRadius = this.currentCircleRadius(sample, r);
             const dQuad = sample.fastDist(neighbour.pos);
             const distanceQuad = currentDistance * currentDistance;
-            const radiQuad = sampleRadius * sampleRadius + neighbour.r * neighbour.r;
+            const radiQuad =
+              sampleRadius * sampleRadius + neighbour.r * neighbour.r;
             return dQuad - radiQuad >= distanceQuad;
           }
           return false;
@@ -207,7 +247,12 @@ export class PoissonCalcService {
     return this.grid[x][y];
   }
 
-  private addToGrid(vec: Vector, r: number, w: number, circleRadius: number = this.currentCircleRadius(vec, r)): void {
+  private addToGrid(
+    vec: Vector,
+    r: number,
+    w: number,
+    circleRadius: number = this.currentCircleRadius(vec, r)
+  ): void {
     const x = Math.floor(vec.x / w);
     const y = Math.floor(vec.y / w);
 
@@ -252,7 +297,12 @@ export class PoissonCalcService {
       this.isInDistance(rowToCheck - row, colToCheck - col, distance, w);
   }
 
-  private isInDistance(dr: number, dc: number, distance: number, w: number): boolean {
+  private isInDistance(
+    dr: number,
+    dc: number,
+    distance: number,
+    w: number
+  ): boolean {
     const rowW = w * dr;
     const colW = w * dc;
     return distance * distance >= rowW * rowW + colW * colW;

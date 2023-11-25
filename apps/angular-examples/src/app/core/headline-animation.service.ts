@@ -9,16 +9,23 @@ export class HeadlineAnimationService {
 
   constructor() {
     const isVisible$ = new Observable<boolean>((subscriber) => {
-      function findToolbarAndObserve(observer: IntersectionObserver, subscriber: Subscriber<boolean>): void {
+      function findToolbarAndObserve(
+        observer: IntersectionObserver,
+        subscriber: Subscriber<boolean>
+      ): void {
         const mainToolbarElem = document.getElementById('main-toolbar');
         if (mainToolbarElem) {
           observer.observe(mainToolbarElem);
         } else {
-          requestIdleCallback(() => findToolbarAndObserve(observer, subscriber));
+          requestIdleCallback(() =>
+            findToolbarAndObserve(observer, subscriber)
+          );
         }
       }
 
-      const intersectionCallback: IntersectionObserverCallback = (entries: IntersectionObserverEntry[]) => {
+      const intersectionCallback: IntersectionObserverCallback = (
+        entries: IntersectionObserverEntry[]
+      ) => {
         entries.forEach((entry) => {
           subscriber.next(entry.isIntersecting);
         });
@@ -31,7 +38,10 @@ export class HeadlineAnimationService {
       };
     });
 
-    this.runAnimation$ = combineLatest([this._runAnimation$.asObservable(), isVisible$]).pipe(
+    this.runAnimation$ = combineLatest([
+      this._runAnimation$.asObservable(),
+      isVisible$,
+    ]).pipe(
       map(([animate, isVisible]) => animate && isVisible),
       distinctUntilChanged()
     );

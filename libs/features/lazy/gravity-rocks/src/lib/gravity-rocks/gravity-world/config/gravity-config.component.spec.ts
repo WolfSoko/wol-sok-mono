@@ -56,13 +56,17 @@ describe('GravityConfigComponent', () => {
 
   it('should show the initial config in the inputs', () => {
     createComp();
-    expect(getGInput()?.value).toEqual('' + initialConfig.gravitationalConstant);
+    expect(getGInput()?.value).toEqual(
+      '' + initialConfig.gravitationalConstant
+    );
     expect(getMassOfSunInput()?.value).toEqual('' + initialConfig.massOfSun);
   });
 
   it('should change the inputs when initial config changes', () => {
     createComp();
-    spectator.setHostInput({ initialConfig: { gravitationalConstant: 20, massOfSun: 20000 } });
+    spectator.setHostInput({
+      initialConfig: { gravitationalConstant: 20, massOfSun: 20000 },
+    });
     expect(getGInput()?.value).toEqual('20');
     expect(getMassOfSunInput()?.value).toEqual('20000');
   });
@@ -76,14 +80,20 @@ describe('GravityConfigComponent', () => {
     createComp();
     const input = getGInput();
     spectator.typeInElement('20', input);
-    expect(configChangedMock).toHaveBeenCalledWith({ ...initialConfig, gravitationalConstant: 20 });
+    expect(configChangedMock).toHaveBeenCalledWith({
+      ...initialConfig,
+      gravitationalConstant: 20,
+    });
   });
 
   it('should emit when input "massOfSun" is changed config', () => {
     createComp();
     const input = getMassOfSunInput();
     spectator.typeInElement('20000000', input);
-    expect(configChangedMock).toHaveBeenCalledWith({ ...initialConfig, massOfSun: 20000000 });
+    expect(configChangedMock).toHaveBeenCalledWith({
+      ...initialConfig,
+      massOfSun: 20000000,
+    });
   });
 
   it('should only emit if the value has changed', () => {

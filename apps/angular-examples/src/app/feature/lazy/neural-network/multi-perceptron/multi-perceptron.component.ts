@@ -12,7 +12,12 @@ import { Point } from '../shared/point';
   styleUrls: ['./multi-perceptron.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [MatCardModule, DataViewComponent, PerceptronComponent, BrainSettingsComponent],
+  imports: [
+    MatCardModule,
+    DataViewComponent,
+    PerceptronComponent,
+    BrainSettingsComponent,
+  ],
 })
 export class MultiPerceptronComponent implements OnInit {
   width = 300;
@@ -54,7 +59,9 @@ export class MultiPerceptronComponent implements OnInit {
   }
 
   addPoint({ x, y, click }: { x: number; y: number; click: 'left' | 'right' }) {
-    const point = new Point(x / this.width, y / this.height, () => (click === 'left' ? 1 : 0));
+    const point = new Point(x / this.width, y / this.height, () =>
+      click === 'left' ? 1 : 0
+    );
     this.brainService.addPoint(point);
   }
 }

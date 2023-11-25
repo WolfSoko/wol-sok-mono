@@ -37,9 +37,13 @@ export class ElevateCardDirective implements OnChanges {
   ngOnChanges(changes: ElevateCardChanges) {
     if (changes.raiseLevel != null) {
       if (changes.raiseLevel.isFirstChange()) {
-        this.removeRaiseClass(this.getRaiseClass(ElevateCardDirective.defaultElevationLevel));
+        this.removeRaiseClass(
+          this.getRaiseClass(ElevateCardDirective.defaultElevationLevel)
+        );
       } else {
-        this.removeRaiseClass(this.getRaiseClass(changes.raiseLevel.previousValue));
+        this.removeRaiseClass(
+          this.getRaiseClass(changes.raiseLevel.previousValue)
+        );
       }
     }
   }
@@ -51,7 +55,10 @@ export class ElevateCardDirective implements OnChanges {
   }
 
   private addRaiseClass(raiseClass: string = this.getRaiseClass()): void {
-    this.renderer.addClass(this.el.nativeElement, ElevateCardDirective.specificityClass);
+    this.renderer.addClass(
+      this.el.nativeElement,
+      ElevateCardDirective.specificityClass
+    );
     this.renderer.addClass(this.el.nativeElement, raiseClass);
   }
 
@@ -64,7 +71,10 @@ export class ElevateCardDirective implements OnChanges {
 
   private removeRaiseClass(raiseClass: string = this.getRaiseClass()): void {
     this.renderer.removeClass(this.el.nativeElement, raiseClass);
-    this.renderer.removeClass(this.el.nativeElement, ElevateCardDirective.specificityClass);
+    this.renderer.removeClass(
+      this.el.nativeElement,
+      ElevateCardDirective.specificityClass
+    );
   }
 
   private getRaiseClass(raiseLevel: number = this.elevationLevel) {

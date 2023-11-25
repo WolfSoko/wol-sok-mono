@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Query } from '@datorama/akita';
-import { ShaderExampleState, ShaderExamplesUIStore } from './shader-examples.store';
+import {
+  ShaderExampleState,
+  ShaderExamplesUIStore,
+} from './shader-examples.store';
 
 @Injectable({
   providedIn: 'root',

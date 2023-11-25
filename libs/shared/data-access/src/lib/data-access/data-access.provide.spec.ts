@@ -1,5 +1,13 @@
-import { importProvidersFrom, ModuleWithProviders, NgModule } from '@angular/core';
-import { FirebaseOptions, initializeApp, provideFirebaseApp } from '@angular/fire/app';
+import {
+  importProvidersFrom,
+  ModuleWithProviders,
+  NgModule,
+} from '@angular/core';
+import {
+  FirebaseOptions,
+  initializeApp,
+  provideFirebaseApp,
+} from '@angular/fire/app';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
 import { environment } from '../../environments/environment';
 import { provideDataAccess } from './data-access.provide';
@@ -22,7 +30,9 @@ jest.mock('@angular/core', () => ({
 
 jest.mock('@angular/fire/app', () => ({
   initializeApp: jest.fn(() => firebaseAppProvider),
-  provideFirebaseApp: jest.fn((...args: Parameters<typeof provideFirebaseApp>) => args[0](args[1])),
+  provideFirebaseApp: jest.fn(
+    (...args: Parameters<typeof provideFirebaseApp>) => args[0](args[1])
+  ),
 }));
 
 const firestoreProvider: ModuleWithProviders<Firestore> = {
@@ -31,7 +41,9 @@ const firestoreProvider: ModuleWithProviders<Firestore> = {
 };
 
 jest.mock('@angular/fire/firestore', () => ({
-  provideFirestore: jest.fn((...args: Parameters<typeof provideFirestore>) => args[0](args[1])),
+  provideFirestore: jest.fn((...args: Parameters<typeof provideFirestore>) =>
+    args[0](args[1])
+  ),
   getFirestore: jest.fn(() => firestoreProvider),
 }));
 
@@ -64,6 +76,9 @@ describe('DataAccess', () => {
     (importProvidersFrom as jest.Mock).mockReturnValue('mockedResult');
     const result = provideDataAccess();
     expect(result as unknown).toEqual('mockedResult');
-    expect(importProvidersFrom).toHaveBeenCalledWith([firebaseAppProvider, firestoreProvider]);
+    expect(importProvidersFrom).toHaveBeenCalledWith([
+      firebaseAppProvider,
+      firestoreProvider,
+    ]);
   });
 });

@@ -1,5 +1,8 @@
 import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
-import { Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
+import {
+  Certificate,
+  CertificateValidation,
+} from 'aws-cdk-lib/aws-certificatemanager';
 import {
   AllowedMethods,
   Distribution,
@@ -9,7 +12,12 @@ import {
 } from 'aws-cdk-lib/aws-cloudfront';
 import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { CanonicalUserPrincipal, PolicyStatement } from 'aws-cdk-lib/aws-iam';
-import { ARecord, HostedZone, IHostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
+import {
+  ARecord,
+  HostedZone,
+  IHostedZone,
+  RecordTarget,
+} from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
 import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
@@ -47,12 +55,20 @@ export class SpaSite extends Construct {
 
     const certificate = this.createCertificate(zone, props.domainName);
     const bucket = this.createBucket(siteDomain, cloudfrontOAI);
-    const distribution = this.createDistribution(siteDomain, certificate, bucket, cloudfrontOAI);
+    const distribution = this.createDistribution(
+      siteDomain,
+      certificate,
+      bucket,
+      cloudfrontOAI
+    );
     this.createARecord(siteDomain, distribution, zone);
     this.createBucketDeployment(props.buildOutputPath, bucket, distribution);
   }
 
-  private createBucket(siteDomain: string, cloudfrontOAI: OriginAccessIdentity): Bucket {
+  private createBucket(
+    siteDomain: string,
+    cloudfrontOAI: OriginAccessIdentity
+  ): Bucket {
     // Content bucket
     const siteBucket = new Bucket(this, `Bucket`, {
       bucketName: `${siteDomain}-spa-data`,
@@ -77,22 +93,33 @@ export class SpaSite extends Construct {
       new PolicyStatement({
         actions: ['s3:GetObject'],
         resources: [siteBucket.arnForObjects('*')],
-        principals: [new CanonicalUserPrincipal(cloudfrontOAI.cloudFrontOriginAccessIdentityS3CanonicalUserId)],
+        principals: [
+          new CanonicalUserPrincipal(
+            cloudfrontOAI.cloudFrontOriginAccessIdentityS3CanonicalUserId
+          ),
+        ],
       })
     );
 
-    new CfnOutput(this, `${siteDomain}-Bucket`, { value: siteBucket.bucketName });
+    new CfnOutput(this, `${siteDomain}-Bucket`, {
+      value: siteBucket.bucketName,
+    });
     return siteBucket;
   }
 
-  private createCertificate(zone: IHostedZone, domainName: string): Certificate {
+  private createCertificate(
+    zone: IHostedZone,
+    domainName: string
+  ): Certificate {
     // TLS certificate
     const certificate = new Certificate(this, 'Certificate', {
       validation: CertificateValidation.fromEmail(),
       domainName,
     });
 
-    new CfnOutput(this, `${this.spaName}-sCertificate`, { value: certificate.certificateArn });
+    new CfnOutput(this, `${this.spaName}-sCertificate`, {
+      value: certificate.certificateArn,
+    });
     return certificate;
   }
 
@@ -118,17 +145,25 @@ export class SpaSite extends Construct {
         },
       ],
       defaultBehavior: {
-        origin: new S3Origin(siteBucket, { originAccessIdentity: cloudfrontOAI }),
+        origin: new S3Origin(siteBucket, {
+          originAccessIdentity: cloudfrontOAI,
+        }),
         compress: true,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
       },
     });
-    new CfnOutput(this, `${this.spaName}-DistributionId`, { value: distribution.distributionId });
+    new CfnOutput(this, `${this.spaName}-DistributionId`, {
+      value: distribution.distributionId,
+    });
     return distribution;
   }
 
-  private createARecord(siteDomain: string, distribution: Distribution, zone: IHostedZone): void {
+  private createARecord(
+    siteDomain: string,
+    distribution: Distribution,
+    zone: IHostedZone
+  ): void {
     // Route53 alias record for the CloudFront distribution
     new ARecord(this, 'SiteAliasRecord', {
       recordName: siteDomain,
@@ -138,7 +173,11 @@ export class SpaSite extends Construct {
     new CfnOutput(this, `${this.spaName}-ARecord`, { value: siteDomain });
   }
 
-  private createBucketDeployment(buildOutputPath: string, spaBucket: Bucket, distribution: Distribution): void {
+  private createBucketDeployment(
+    buildOutputPath: string,
+    spaBucket: Bucket,
+    distribution: Distribution
+  ): void {
     // Deploy site contents to S3 spaBucket
     new BucketDeployment(this, 'DeployWithInvalidation', {
       sources: [Source.asset(buildOutputPath)],

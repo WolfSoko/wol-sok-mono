@@ -12,7 +12,10 @@ export interface PerformanceTest {
 
 export type PerformanceTestResults = Array<[string, number]>;
 
-export function createPerformanceTestResult(name: string, result: number): [string, number] {
+export function createPerformanceTestResult(
+  name: string,
+  result: number
+): [string, number] {
   return [name, result];
 }
 

@@ -1,4 +1,10 @@
-import { APP_INITIALIZER, EnvironmentProviders, ErrorHandler, importProvidersFrom, Provider } from '@angular/core';
+import {
+  APP_INITIALIZER,
+  EnvironmentProviders,
+  ErrorHandler,
+  importProvidersFrom,
+  Provider,
+} from '@angular/core';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';

@@ -14,9 +14,11 @@ export class ShaderCodeService {
   ) {}
 
   get() {
-    this.shaderCodeDataService.streamShaders().subscribe((entities: ShaderCode[]) => {
-      this.shaderCodeStore.set(entities);
-    });
+    this.shaderCodeDataService
+      .streamShaders()
+      .subscribe((entities: ShaderCode[]) => {
+        this.shaderCodeStore.set(entities);
+      });
   }
 
   async update(shader: ShaderCode, code: string, permanent: boolean = false) {

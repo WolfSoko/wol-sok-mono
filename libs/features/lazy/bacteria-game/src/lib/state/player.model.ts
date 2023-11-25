@@ -47,7 +47,11 @@ export function createPlayerWithBacterias(
   });
 }
 
-function createPlayerBacterias(x: number, y: number, startBacteriaRadius: number): Bacteria[] {
+function createPlayerBacterias(
+  x: number,
+  y: number,
+  startBacteriaRadius: number
+): Bacteria[] {
   const result = [];
   const rPow = startBacteriaRadius * startBacteriaRadius;
   for (let i = 0; i < startBacteriaRadius * 2; i++) {
