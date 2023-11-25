@@ -8,7 +8,7 @@
     "default": ["{projectRoot}/**/*"],
     "production": [
       "!{projectRoot}/**/*.spec.[jt]s",
-      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/tsconfig.*spec.json",
       "!{projectRoot}/karma.conf.js",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
       "!{projectRoot}/jest.config.[jt]s",
@@ -16,7 +16,7 @@
       "!{projectRoot}/.storybook/**/*",
       "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
       "!{projectRoot}/tsconfig.storybook.json",
-      "!{projectRoot}/src/test-setup.[jt]s",
+      "!{projectRoot}/src/*test-setup.[jt]s",
       "!{projectRoot}/cypress/**/*",
       "!{projectRoot}/**/*.cy.[jt]s?(x)",
       "!{projectRoot}/cypress.config.[jt]s"
@@ -53,6 +53,11 @@
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "cache": true
     },
+    "test-integration": {
+      "inputs": ["default", "^production", "{workspaceRoot}/karma.conf.js"],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "cache": true
+    },
     "prepare-prod": {
       "dependsOn": ["build"]
     },
@@ -61,7 +66,12 @@
       "cache": true
     },
     "build-storybook": {
-      "inputs": ["default", "^production", "{projectRoot}/.storybook/**/*", "{projectRoot}/tsconfig.storybook.json"],
+      "inputs": [
+        "default",
+        "^production",
+        "{projectRoot}/.storybook/**/*",
+        "{projectRoot}/tsconfig.storybook.json"
+      ],
       "cache": true
     },
     "component-test": {
