@@ -1,16 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AuthenticationService, AuthQuery } from '@wolsok/feat-api-auth';
-import {
-  collectionData,
-  DatabaseService,
-  query,
-  QueryConstraint,
-  CollectionReference,
-  getDocs,
-  addDoc,
-  updateDoc,
-  where,
-} from '@wolsok/shared-data-access';
+import { CollectionReference, DatabaseService, DbUtils, QueryConstraint } from '@wolsok/shared-data-access';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { ShaderCode } from '../model/shader-code.model';
@@ -25,10 +15,10 @@ export class ShaderCodeDataService {
   constructor(
     private db: DatabaseService,
     private authentication: AuthenticationService,
-    private authQuery: AuthQuery
+    private authQuery: AuthQuery,
+    private dbUtils: DbUtils
   ) {
     this.defaultShaders$ = this.observeShaderCollection('/angularExamples/shaderExamples/defaultShaders');
-
     this.userShaders$ = this.observeShaderCollection(`angularExamples/shaderExamples/${this.userUid()}`);
   }
 
@@ -37,7 +27,7 @@ export class ShaderCodeDataService {
     ...queryConstraints: QueryConstraint[]
   ): Observable<ShaderCode[]> {
     const shaderColRef = this.getShaderCollection(shaderCollectionPath);
-    return collectionData<ShaderCode>(query(shaderColRef, ...queryConstraints));
+    return this.dbUtils.collectionData<ShaderCode>(this.dbUtils.query(shaderColRef, ...queryConstraints));
   }
 
   private getShaderCollection(shaderCollectionPath: string): CollectionReference<ShaderCode> {
@@ -60,14 +50,16 @@ export class ShaderCodeDataService {
   async updateShader(shader: ShaderCode, changedShader: Partial<ShaderCode>): Promise<ShaderCode> {
     const shaderByIdQuery = this.getShaderCollection(`angularExamples/shaderExamples/${this.userUid()}`);
 
-    const shaderToUpdateDocRef = (await getDocs(query(shaderByIdQuery, where('id', '==', shader.id)))).docs[0]?.ref;
+    const shaderToUpdateDocRef = (
+      await this.dbUtils.getDocs(this.dbUtils.query(shaderByIdQuery, this.dbUtils.where('id', '==', shader.id)))
+    ).docs[0]?.ref;
 
     const newShader = { ...shader, ...changedShader };
     if (shaderToUpdateDocRef == null) {
-      await addDoc(shaderByIdQuery, newShader);
+      await this.dbUtils.addDoc(shaderByIdQuery, newShader);
       return newShader;
     }
-    await updateDoc(shaderToUpdateDocRef, newShader);
+    await this.dbUtils.updateDoc(shaderToUpdateDocRef, newShader);
     return newShader;
   }
 

@@ -1,16 +1,6 @@
 import { Injectable } from '@angular/core';
-import { collection, CollectionReference, Firestore } from '@angular/fire/firestore';
-export {
-  addDoc,
-  collectionData,
-  CollectionReference,
-  Firestore,
-  getDocs,
-  query,
-  QueryConstraint,
-  updateDoc,
-  where,
-} from '@angular/fire/firestore';
+import { collection, Firestore } from '@angular/fire/firestore';
+import { CollectionReference } from './database-types';
 
 @Injectable({
   providedIn: 'root',

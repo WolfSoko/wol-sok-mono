@@ -63,7 +63,7 @@ describe('DataAccess', () => {
     (importProvidersFrom as jest.Mock).mockReset();
     (importProvidersFrom as jest.Mock).mockReturnValue('mockedResult');
     const result = provideDataAccess();
-    expect(result).toEqual('mockedResult');
-    expect(importProvidersFrom).toHaveBeenCalledWith(firebaseAppProvider, firestoreProvider);
+    expect(result as unknown).toEqual('mockedResult');
+    expect(importProvidersFrom).toHaveBeenCalledWith([firebaseAppProvider, firestoreProvider]);
   });
 });
