@@ -300,7 +300,7 @@ export class WsThanosService {
   }
 
   /**
-   * start the vaporizeAndScrollIntoView-effect.
+   * start the vaporize-effect.
    *
    * It's running outside the ngZone.
    */

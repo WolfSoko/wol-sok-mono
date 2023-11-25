@@ -112,8 +112,8 @@ describe('Integration Test: WsThanosDirective', () => {
     expect(directive).toBeTruthy();
   });
 
-  describe('vaporizeAndScrollIntoView$()', () => {
-    it('should call thanosService.vaporizeAndScrollIntoView', () => {
+  describe('vaporize()', () => {
+    it('should call thanosService.vaporize', () => {
       givenStubbedThanosService_VaporizeReturns();
       whenVaporizeIsCalled();
       thenThanosServiceVaporizeWasCalled();
@@ -135,7 +135,7 @@ describe('Integration Test: WsThanosDirective', () => {
       });
     });
 
-    it('should emit complete when vaporizeAndScrollIntoView is complete', (done) => {
+    it('should emit complete when vaporize is complete', (done) => {
       combineLatest([
         firstValueFrom(directive.wsThanosComplete),
         directive.vaporize$(),

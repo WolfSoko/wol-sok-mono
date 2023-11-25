@@ -66,7 +66,6 @@ export class WsThanosDirective {
    * Vaporize the dom element of this directive
    * @param removeElem remove the vaporized dom element or blend back in after a while
    *
-   * @Deprecated use vaporizeAndScrollIntoView$ instead and subscribe to it
    */
   public vaporize(removeElem = true): Observable<void> {
     this.vaporize$(removeElem).pipe(this.untilDestroyed).subscribe();
