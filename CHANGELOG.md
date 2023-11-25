@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.36.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.22...v3.36.0) (2023-11-25)
+
+
+### Features
+
+* ✨ wip render shader 2 without three.js ([ec2a755](https://github.com/WolfSoko/wol-sok-mono/commit/ec2a755e63f95d7cc4071c179d0ff8f66d02cc6a))
+
 ### [3.35.22](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.21...v3.35.22) (2023-11-25)
 
 ### [3.35.21](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.20...v3.35.21) (2023-11-25)
