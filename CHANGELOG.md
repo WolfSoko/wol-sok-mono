@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.35.21](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.20...v3.35.21) (2023-11-25)
+
+
+### Bug Fixes
+
+* 🐛 align names between path mapping and package ([bd8f569](https://github.com/WolfSoko/wol-sok-mono/commit/bd8f5699b6e4d77c257553092d0b63002639938a))
+* 🐛 could not inject firebase for module federation module ([1714b67](https://github.com/WolfSoko/wol-sok-mono/commit/1714b67830f5705779448c3e46a8b083184f2ee0))
+
 ### [3.35.20](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.19...v3.35.20) (2023-11-25)
 
 ### [3.35.19](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.18...v3.35.19) (2023-11-25)
