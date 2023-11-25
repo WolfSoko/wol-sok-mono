@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { QueryEntity } from '@datorama/akita';
+import { ShaderCode } from '../model/shader-code.model';
 import { ShaderCodeStore, ShaderCodeState } from './shader-code.store';
-import { ShaderCode } from './shader-code.model';
 
 @Injectable({
   providedIn: 'root',

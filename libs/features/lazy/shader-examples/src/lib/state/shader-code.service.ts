@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
+import { ShaderCodeDataService } from '../data-access/shader-code-data.service';
+import { ShaderCode } from '../model/shader-code.model';
+
 import { ShaderCodeStore } from './shader-code.store';
-import { ShaderCodeDataService } from './shader-code-data.service';
-import { ShaderCode } from './shader-code.model';
 
 @Injectable({
   providedIn: 'root',

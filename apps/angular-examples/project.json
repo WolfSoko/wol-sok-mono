@@ -88,7 +88,7 @@
         "development": {
           "preserveSymlinks": true,
           "buildOptimizer": true,
-          "optimization": true,
+          "optimization": false,
           "vendorChunk": true,
           "extractLicenses": false,
           "sourceMap": true,

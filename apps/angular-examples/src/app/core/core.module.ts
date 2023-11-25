@@ -7,6 +7,7 @@ import { AkitaNgRouterStoreModule } from '@datorama/akita-ng-router-store';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
 import * as Sentry from '@sentry/angular-ivy';
 import { AuthModule } from '@wolsok/feat-api-auth';
+import { provideDataAccess } from '@wolsok/shared-data-access';
 import { Angulartics2Module } from 'angulartics2';
 import { environment } from '../../environments/environment';
 
@@ -15,12 +16,13 @@ export const provideCore: () => Array<Provider | EnvironmentProviders> = () => [
   provideServiceWorker('ngsw-worker.js', {
     enabled: environment.production,
   }),
+  provideDataAccess(environment.firebaseConfig),
   importProvidersFrom(
     AkitaNgDevtools.forRoot(),
     AkitaNgRouterStoreModule,
     MatSnackBarModule,
     Angulartics2Module.forRoot(),
-    AuthModule.forRoot(environment.firebaseConfig)
+    AuthModule.forRoot()
   ),
   {
     provide: ErrorHandler,

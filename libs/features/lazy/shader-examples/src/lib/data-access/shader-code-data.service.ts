@@ -1,24 +1,21 @@
 import { Injectable } from '@angular/core';
+import { AuthenticationService, AuthQuery } from '@wolsok/feat-api-auth';
 import {
-  addDoc,
-  collection,
   collectionData,
-  CollectionReference,
-  Firestore,
-  getDocs,
+  DatabaseService,
   query,
   QueryConstraint,
+  CollectionReference,
+  getDocs,
+  addDoc,
   updateDoc,
   where,
-} from '@angular/fire/firestore';
-import { AuthenticationService, AuthQuery } from '@wolsok/feat-api-auth';
+} from '@wolsok/shared-data-access';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
-import { ShaderCode } from './shader-code.model';
+import { ShaderCode } from '../model/shader-code.model';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class ShaderCodeDataService {
   private shaders?: Observable<ShaderCode[]>;
 
@@ -26,7 +23,7 @@ export class ShaderCodeDataService {
   private readonly defaultShaders$: Observable<ShaderCode[]>;
 
   constructor(
-    private firestore: Firestore,
+    private db: DatabaseService,
     private authentication: AuthenticationService,
     private authQuery: AuthQuery
   ) {
@@ -39,12 +36,12 @@ export class ShaderCodeDataService {
     shaderCollectionPath: string,
     ...queryConstraints: QueryConstraint[]
   ): Observable<ShaderCode[]> {
-    const shaderColRef = this.createCollectionRef(shaderCollectionPath);
+    const shaderColRef = this.getShaderCollection(shaderCollectionPath);
     return collectionData<ShaderCode>(query(shaderColRef, ...queryConstraints));
   }
 
-  private createCollectionRef(shaderCollectionPath: string): CollectionReference<ShaderCode> {
-    return collection(this.firestore, shaderCollectionPath) as CollectionReference<ShaderCode>;
+  private getShaderCollection(shaderCollectionPath: string): CollectionReference<ShaderCode> {
+    return this.db.collection<ShaderCode>(shaderCollectionPath);
   }
 
   streamShaders(): Observable<ShaderCode[]> {
@@ -61,7 +58,7 @@ export class ShaderCodeDataService {
   }
 
   async updateShader(shader: ShaderCode, changedShader: Partial<ShaderCode>): Promise<ShaderCode> {
-    const shaderByIdQuery = this.createCollectionRef(`angularExamples/shaderExamples/${this.userUid()}`);
+    const shaderByIdQuery = this.getShaderCollection(`angularExamples/shaderExamples/${this.userUid()}`);
 
     const shaderToUpdateDocRef = (await getDocs(query(shaderByIdQuery, where('id', '==', shader.id)))).docs[0]?.ref;
 

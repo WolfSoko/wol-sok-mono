@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
 import { PageEvent } from '@angular/material/paginator';
-import { ShaderCode } from './shader-code.model';
+import { ShaderCode } from '../model/shader-code.model';
 
 export interface ShaderExampleState {
   showFps: boolean;

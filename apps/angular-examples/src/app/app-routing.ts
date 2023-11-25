@@ -39,7 +39,7 @@ export const APP_ROUTES: MainNavRoutes = [
   },
   {
     path: 'bacteriaGame',
-    loadChildren: () => loadRemoteModule('bacteria-game-remote', './Module').then((m) => m.RemoteEntryModule),
+    loadChildren: () => loadRemoteModule('bacteria-game-remote', './Routes').then((routes) => routes.entryRoutes),
     data: { linkText: 'Bacteria Game', subTitle: 'Served independently by MF' },
   },
   {
@@ -47,7 +47,7 @@ export const APP_ROUTES: MainNavRoutes = [
     loadChildren: () => loadRemoteModule('shader-examples-remote', './Routes').then((routes) => routes.remoteRoutes),
     data: {
       linkText: 'WebGL Shader examples with live code editor (three.js)',
-      subTitle: 'Served independently by Webpacks Module-Federation',
+      subTitle: 'Served independently by MF',
     },
   },
   {

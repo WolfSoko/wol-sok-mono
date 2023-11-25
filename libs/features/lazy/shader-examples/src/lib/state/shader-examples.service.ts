@@ -4,7 +4,7 @@ import { PageEvent } from '@angular/material/paginator';
 import { transaction as Transaction } from '@datorama/akita';
 import { EMPTY, Subject, throwError, TimeoutError } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, filter, switchMap, take, tap, timeout } from 'rxjs/operators';
-import { ShaderCode } from './shader-code.model';
+import { ShaderCode } from '../model/shader-code.model';
 import { ShaderCodeQuery } from './shader-code.query';
 import { ShaderCodeService } from './shader-code.service';
 import { ShaderExamplesUIQuery } from './shader-examples.query';

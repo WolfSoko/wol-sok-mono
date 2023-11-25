@@ -1,7 +1,7 @@
-import { guid, ID } from '@datorama/akita';
+import { guid } from '@datorama/akita';
 
 export interface ShaderCode {
-  id: ID;
+  id: string;
   code: string;
   description: string;
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { EntityState, EntityStore, StoreConfig } from '@datorama/akita';
-import { ShaderCode } from './shader-code.model';
+import { ShaderCode } from '../model/shader-code.model';
 
 export type ShaderCodeState = EntityState<ShaderCode>;
 
