@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.35.19](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.18...v3.35.19) (2023-11-25)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update all non-major dependencies ([82616ee](https://github.com/WolfSoko/wol-sok-mono/commit/82616eee884c619e3ad157eb75f67b33b8a4b87e))
+
 ### [3.35.18](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.17...v3.35.18) (2023-11-25)
 
 ### [3.35.17](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.16...v3.35.17) (2023-11-25)
