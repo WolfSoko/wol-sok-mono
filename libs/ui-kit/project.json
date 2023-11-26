@@ -37,7 +37,7 @@
         "include": ["libs/ui-kit/src/**/*.integrationspec.ts"],
         "karmaConfig": "libs/ui-kit/karma.conf.js",
         "customWebpackConfig": {
-          "path": "libs/ui-kit/glsl-webpack.config.ts"
+          "path": "tools/glsl/with-glsl-loader.js"
         }
       }
     },

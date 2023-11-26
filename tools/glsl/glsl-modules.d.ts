@@ -3,12 +3,12 @@ declare module '*.glsl' {
   export default value;
 }
 
-declare module '*.vs' {
+declare module '*.glv' {
   const value: string;
   export default value;
 }
 
-declare module '*.fs' {
+declare module '*.glf' {
   const value: string;
   export default value;
 }

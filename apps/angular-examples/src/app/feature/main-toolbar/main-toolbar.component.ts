@@ -24,7 +24,7 @@ import {
 } from '@wolsok/ui-kit';
 import { filter, map } from 'rxjs/operators';
 import { HeadlineAnimationService } from '../../core/headline-animation.service';
-import { shader } from '../../title-shader';
+import shader from '../../title-shader.glsl';
 import { LoginComponent } from './login/login.component';
 import { ServiceWorkerUpdateComponent } from './service-worker-update/service-worker-update.component';
 
