@@ -1,10 +1,15 @@
+# version 300 es
+
 // Vertex Shader (vsSource)
-attribute vec4 aVertexPosition;
-attribute vec2 aTextureCoord;
-varying vec2 vTextureCoord;
+in vec4 aVertexPosition;
+in vec2 aTextureCoord;
+in float aTime;
+out vec2 vTextureCoord;
+out float vTime;
 
 void main() {
   gl_Position = aVertexPosition;
   vTextureCoord = aTextureCoord;
+  vTime = aTime;
 }
 

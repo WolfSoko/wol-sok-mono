@@ -30,22 +30,25 @@
       }
     },
     "test-integration": {
-      "executor": "@angular-devkit/build-angular:karma",
+      "executor": "@angular-builders/custom-webpack:karma",
       "options": {
         "main": "libs/ui-kit/src/integration-test-setup.ts",
         "tsConfig": "libs/ui-kit/tsconfig.integrationspec.json",
         "include": ["libs/ui-kit/src/**/*.integrationspec.ts"],
-        "karmaConfig": "libs/ui-kit/karma.conf.js"
+        "karmaConfig": "libs/ui-kit/karma.conf.js",
+        "customWebpackConfig": {
+          "path": "libs/ui-kit/glsl-webpack.config.ts"
+        }
       }
-    }
-  },
-  "lint": {
-    "executor": "@nx/eslint:lint",
-    "options": {
-      "lintFilePatterns": [
-        "libs/ui-kit/src/**/*.ts",
-        "libs/ui-kit/src/**/*.html"
-      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": [
+          "libs/ui-kit/src/**/*.ts",
+          "libs/ui-kit/src/**/*.html"
+        ]
+      }
     }
   },
   "tags": ["ui", "shared"]

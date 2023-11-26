@@ -1,4 +1,6 @@
-module.exports = {
+import { Configuration } from 'webpack';
+
+export default {
   module: {
     rules: [
       {
@@ -7,4 +9,4 @@ module.exports = {
       },
     ],
   },
-};
+} as Configuration;

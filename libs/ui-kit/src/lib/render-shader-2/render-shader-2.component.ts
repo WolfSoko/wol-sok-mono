@@ -27,25 +27,10 @@ export class RenderShader2Component implements AfterViewInit {
   private loadAndRenderImage() {
     const image = new Image();
     image.onload = () => {
-      const imageData = this.getImageData(image);
-      this.webglService.renderImage(imageData);
+      this.webglService.renderImage(image);
       this.startLoop();
     };
     image.src = howToBeFunnyPng; // Pfad zu deinem Bild
-  }
-
-  private getImageData(image: HTMLImageElement): ImageData {
-    const offscreenCanvas = document.createElement('canvas');
-    offscreenCanvas.width = image.width;
-    offscreenCanvas.height = image.height;
-
-    const ctx = offscreenCanvas.getContext('2d');
-    if (!ctx) {
-      throw new Error('Could not create 2d context for offsetCanvas');
-    }
-    ctx.drawImage(image, 0, 0);
-
-    return ctx.getImageData(0, 0, image.width, image.height);
   }
 
   private startLoop(startTime = performance.now()): void {

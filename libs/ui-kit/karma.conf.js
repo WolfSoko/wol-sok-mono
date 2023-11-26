@@ -3,14 +3,10 @@
 
 const { join } = require('path');
 const getBaseKarmaConfig = require('../../karma.conf');
-const glslWebpackConfig = require('./glsl-webpack.config');
 
 module.exports = function (config) {
   const baseConfig = getBaseKarmaConfig();
 
-  config.buildWebpack.webpackConfig.module.rules.push(
-    ...glslWebpackConfig.module.rules
-  );
   config.set({
     ...baseConfig,
 

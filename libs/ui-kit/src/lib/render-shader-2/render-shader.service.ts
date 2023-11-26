@@ -4,7 +4,7 @@ import defaultVertexShader from './default-vertex-shader.glsl';
 
 type Texture = { glTexture: WebGLTexture; w: number; h: number };
 type Context = {
-  gl: WebGLRenderingContext;
+  gl: WebGL2RenderingContext;
   shaderProgram: WebGLProgram;
   texture: Texture;
 };
@@ -13,16 +13,16 @@ type Context = {
   providedIn: 'root',
 })
 export class WebglService {
-  private gl: WebGLRenderingContext | null = null;
+  private gl: WebGL2RenderingContext | null = null;
   private shaderProgram: WebGLProgram | null = null;
   private texture: Texture | null = null;
 
-  private uTime: WebGLUniformLocation | null = null;
+  private aTime: number | null = null;
 
   constructor() {}
 
   public initializeWebGL(canvas: HTMLCanvasElement): boolean {
-    this.gl = canvas.getContext('webgl');
+    this.gl = canvas.getContext('webgl2');
     if (!this.gl) {
       console.error('WebGL not supported');
       return false;
@@ -32,7 +32,7 @@ export class WebglService {
     return true;
   }
 
-  public renderImage(imageData: ImageData): void {
+  public renderImage(imageData: ImageData | HTMLImageElement): void {
     if (!this.gl) {
       console.error('WebGL-Context is not initialized');
       return;
@@ -53,28 +53,37 @@ export class WebglService {
   }
 
   public render(dTime: number) {
-    if (!this.gl || !this.shaderProgram || !this.texture) {
-      return;
-    }
     const context: Context = this.createContext();
-    this.updateUniformTime(dTime, context);
+    this.updateEllapsedTime(dTime, context);
     // this.drawScene(context);
     context.gl.drawArrays(context.gl.TRIANGLE_STRIP, 0, 4);
   }
 
-  updateUniformTime(dTime: number, { gl, shaderProgram }: Context) {
-    if (!this.uTime) {
-      this.uTime = gl.getUniformLocation(shaderProgram, 'uTime');
+  private updateEllapsedTime(
+    elapsedTime: number,
+    { gl, shaderProgram }: Context
+  ) {
+    if (!this.aTime) {
+      this.aTime = gl.getAttribLocation(shaderProgram, 'aTime');
     }
-    gl.uniform1f(this.uTime, dTime);
+    gl.vertexAttrib1f(this.aTime, elapsedTime);
   }
 
-  private initShaders(gl: WebGLRenderingContext) {
-    const vsSource = defaultVertexShader;
-    const fsSource = defaultFragmentShader;
-
-    const vertexShader = this.compileShader(gl.VERTEX_SHADER, vsSource, gl);
-    const fragmentShader = this.compileShader(gl.FRAGMENT_SHADER, fsSource, gl);
+  private initShaders(
+    gl: WebGLRenderingContext,
+    vertexShaderCode: string = defaultVertexShader,
+    fragmentShaderCode: string = defaultFragmentShader
+  ) {
+    const vertexShader = this.compileShader(
+      gl.VERTEX_SHADER,
+      vertexShaderCode,
+      gl
+    );
+    const fragmentShader = this.compileShader(
+      gl.FRAGMENT_SHADER,
+      fragmentShaderCode,
+      gl
+    );
 
     const shaderProgram = gl.createProgram();
     if (!shaderProgram) {
@@ -86,6 +95,12 @@ export class WebglService {
     gl.linkProgram(shaderProgram);
 
     if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+      console.log('Vertex shader info log:', gl.getShaderInfoLog(vertexShader));
+      console.log(
+        'Fragment shader info log:',
+        gl.getShaderInfoLog(fragmentShader)
+      );
+      console.log('Program info log', gl.getProgramInfoLog(shaderProgram));
       throw Error('Unable to initialize the shader program');
     }
 
@@ -98,7 +113,7 @@ export class WebglService {
       'aTextureCoord'
     );
 
-    const timeAttributeLocation = gl.getUniformLocation(shaderProgram, 'uTime');
+    const timeAttributeLocation = gl.getAttribLocation(shaderProgram, 'aTime');
 
     if (
       positionAttributeLocation === -1 ||
@@ -149,8 +164,8 @@ export class WebglService {
   }
 
   private createTextureFromImageData(
-    imageData: ImageData,
-    gl: WebGLRenderingContext
+    image: ImageData | HTMLImageElement,
+    gl: WebGL2RenderingContext
   ) {
     const glTexture = gl.createTexture();
 
@@ -159,8 +174,8 @@ export class WebglService {
     }
     this.texture = {
       glTexture,
-      w: imageData.width,
-      h: imageData.height,
+      w: image.width,
+      h: image.height,
     };
 
     gl.bindTexture(gl.TEXTURE_2D, this.texture.glTexture);
@@ -169,16 +184,17 @@ export class WebglService {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,
       gl.RGBA,
-      imageData.width,
-      imageData.height,
+      image.width,
+      image.height,
       0,
       gl.RGBA,
       gl.UNSIGNED_BYTE,
-      imageData.data
+      image
     );
 
     gl.bindTexture(gl.TEXTURE_2D, this.texture.glTexture);
@@ -211,14 +227,13 @@ export class WebglService {
     // prettier-ignore
     const vertices = [
       // Vertex positions     // Texture coordinates
-      -xScale, yScale, 0.0, 0.0,  // V1: Top left
-      -xScale, -yScale, 0.0, 1.0,  // V2: Bottom left
-      xScale, yScale, 1.0, 0.0,  // V3: Top right
-      xScale, -yScale, 1.0, 1.0,  // V4: Bottom right
+      -xScale, yScale,        0.0, 1.0,  // V1: Top left
+      -xScale, -yScale,       0.0, 0.0,  // V2: Bottom left
+      xScale, yScale,         1.0, 1.0,  // V3: Top right
+      xScale, -yScale,        1.0, 0.0,  // V4: Bottom right
     ];
 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
     // Define how to read the vertex buffer
     const position = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
     gl.vertexAttribPointer(
@@ -242,10 +257,14 @@ export class WebglService {
     );
     gl.enableVertexAttribArray(textureCoord);
 
+    const imageTextureUnit = 0;
     // Bind the texture
-    gl.activeTexture(gl.TEXTURE0);
+    gl.activeTexture(gl.TEXTURE0 + imageTextureUnit);
     gl.bindTexture(gl.TEXTURE_2D, texture.glTexture);
-    gl.uniform1i(gl.getUniformLocation(shaderProgram, 'uSampler'), 0);
+    gl.uniform1i(
+      gl.getUniformLocation(shaderProgram, 'uSampler'),
+      imageTextureUnit
+    );
     // Draw your object
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); // Drawing a square using a triangle strip
   }
