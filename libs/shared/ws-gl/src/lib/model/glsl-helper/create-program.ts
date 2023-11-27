@@ -1,10 +1,10 @@
-import defaultFragmentShader from '../shaders/default-fragment-shader.glsl';
-import defaultVertexShader from '../shaders/default-vertex-shader.glsl';
+import { FragCode, VertCode } from '../glsl-code.types';
 import { compileShader } from './compile-shader';
+
 export function createProgram(
   gl: WebGLRenderingContext,
-  vertexShaderCode: string = defaultVertexShader,
-  fragmentShaderCode: string = defaultFragmentShader
+  vertexShaderCode: VertCode,
+  fragmentShaderCode: FragCode
 ) {
   const vertexShader = compileShader(gl.VERTEX_SHADER, vertexShaderCode, gl);
   const fragmentShader = compileShader(

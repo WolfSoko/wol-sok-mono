@@ -1,10 +1,7 @@
 import { Injectable } from '@angular/core';
-import {
-  FragCode,
-  VertCode,
-  defaultVertexShader,
-  defaultFragmentShader,
-} from '@wolsok/ws-gl';
+import { FragCode, VertCode } from '@wolsok/ws-gl';
+import { vaporizingTextureFragmentShader } from './vaporizing-fragment-shader.glsl';
+import { textureVertexShader } from './texture-vertex-shader.glsl';
 
 type Texture = { glTexture: WebGLTexture; w: number; h: number };
 type Context = {
@@ -75,8 +72,8 @@ export class WebglService {
 
   private initShaders(
     gl: WebGLRenderingContext,
-    vertexShaderCode: VertCode = defaultVertexShader,
-    fragmentShaderCode: FragCode = defaultFragmentShader
+    vertexShaderCode: VertCode = textureVertexShader,
+    fragmentShaderCode: FragCode = vaporizingTextureFragmentShader
   ) {
     const vertexShader = this.compileShader(
       gl.VERTEX_SHADER,

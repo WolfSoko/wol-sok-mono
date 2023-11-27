@@ -1,7 +1,6 @@
-import { VertCode } from '../../../index';
+import { VertCode } from '@wolsok/ws-gl';
 
-export default `# version 300 es
-
+export const textureVertexShader: VertCode = `# version 300 es
 // Vertex Shader (vsSource)
 in vec4 aVertexPosition;
 in vec2 aTextureCoord;
