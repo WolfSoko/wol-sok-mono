@@ -1,10 +1,9 @@
-const defaultShaders = require('./default-shaders.v1').defaultShaders;
 
 /**
  *
  * @param: db: admin.firestore.Firestore a firestore db
  */
-async function initBaseData(db) {
+async function initBaseData(db, defaultShaders) {
   const defaultShadersCol = db.collection('angularExamples/shaderExamples/defaultShaders');
   const defaultShadersQuery = await defaultShadersCol.orderBy('id').get();
   const deletePromises = defaultShadersQuery.docs.map((shaderDoc) => {

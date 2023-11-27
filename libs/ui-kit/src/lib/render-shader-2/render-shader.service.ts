@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { FragCode, VertCode } from '../model/glsl-code.types';
 import defaultFragmentShader from './default-fragment-shader.glsl';
 import defaultVertexShader from './default-vertex-shader.glsl';
 
@@ -71,8 +72,8 @@ export class WebglService {
 
   private initShaders(
     gl: WebGLRenderingContext,
-    vertexShaderCode: string = defaultVertexShader,
-    fragmentShaderCode: string = defaultFragmentShader
+    vertexShaderCode: VertCode = defaultVertexShader,
+    fragmentShaderCode: FragCode = defaultFragmentShader
   ) {
     const vertexShader = this.compileShader(
       gl.VERTEX_SHADER,

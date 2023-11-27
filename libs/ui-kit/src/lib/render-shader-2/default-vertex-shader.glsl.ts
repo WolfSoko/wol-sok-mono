@@ -1,4 +1,5 @@
-# version 300 es
+import { VertCode } from '../model/glsl-code.types';
+export default `# version 300 es
 
 // Vertex Shader (vsSource)
 in vec4 aVertexPosition;
@@ -11,5 +12,4 @@ void main() {
   gl_Position = aVertexPosition;
   vTextureCoord = aTextureCoord;
   vTime = aTime;
-}
-
+}` as VertCode;

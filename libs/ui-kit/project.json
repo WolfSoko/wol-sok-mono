@@ -35,10 +35,7 @@
         "main": "libs/ui-kit/src/integration-test-setup.ts",
         "tsConfig": "libs/ui-kit/tsconfig.integrationspec.json",
         "include": ["libs/ui-kit/src/**/*.integrationspec.ts"],
-        "karmaConfig": "libs/ui-kit/karma.conf.js",
-        "customWebpackConfig": {
-          "path": "tools/glsl/with-glsl-loader.js"
-        }
+        "karmaConfig": "libs/ui-kit/karma.conf.js"
       }
     },
     "lint": {

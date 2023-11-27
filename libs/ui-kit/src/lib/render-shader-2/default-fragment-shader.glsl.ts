@@ -1,4 +1,5 @@
-# version 300 es
+import { FragCode } from '../model/glsl-code.types';
+export default `# version 300 es
 // Fragment Shader
 precision mediump float;
 
@@ -18,5 +19,4 @@ void main() {
   mediump float alpha = smoothstep(1.0, 0.0, noise + vTime * 0.1);
 
   fragColor = vec4(fragColor.rgb, fragColor.a * alpha);
-}
-
+}` as FragCode;

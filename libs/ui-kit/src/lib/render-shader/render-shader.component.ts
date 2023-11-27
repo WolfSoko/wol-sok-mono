@@ -15,24 +15,16 @@ import {
 } from '@angular/core';
 import { MeasureFps } from '@wolsok/utils-measure-fps';
 import { Observable, sampleTime } from 'rxjs';
-import {
-  Camera,
-  Mesh,
-  OrthographicCamera,
-  PlaneGeometry,
-  Renderer,
-  Scene,
-  ShaderMaterial,
-  Vector2,
-  WebGLRenderer,
-} from 'three';
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import { default as THREE } from 'three-canvas-renderer';
+import { FragCode, VertCode } from '../model/glsl-code.types';
+import { u1f, u2f, Uniform1f, Uniform2f } from '../model/glsl-helper/uniforms';
+import { Mesh } from '../model/mesh';
+import { PlaneGeometry } from '../model/plane-geometry';
+import { Scene } from '../model/scene';
+import { ShaderMaterial } from '../model/shader-material';
+import { WebGl2Renderer } from '../model/webgl2-renderer';
 
 import { ShowFpsComponent } from '../show-fps/show-fps.component';
-import { defaultVertexShader } from './default-vertex-shader';
+import defaultVertexShader from './default-vertex-shader.vert';
 
 @Component({
   standalone: true,
@@ -46,8 +38,8 @@ import { defaultVertexShader } from './default-vertex-shader';
 export class RenderShaderComponent
   implements AfterViewInit, OnChanges, OnDestroy
 {
-  @Input() shaderCode!: string;
-  @Input() vertexShader!: string;
+  @Input() shaderCode!: FragCode;
+  @Input() vertexShader!: VertCode;
   @Input() runAnimation: boolean | null = true;
   @Input() showFps = false;
   @Input() canvasWidth!: number;
@@ -62,18 +54,17 @@ export class RenderShaderComponent
 
   fps$: Observable<number>;
 
-  private renderer?: Renderer;
+  private renderer?: WebGl2Renderer;
 
-  private camera?: Camera;
   private geometry?: PlaneGeometry;
   private material?: ShaderMaterial;
   private mesh?: Mesh;
 
   private scene?: Scene;
   private uniforms?: {
-    mouse: { value: Vector2 };
-    resolution: { value: Vector2 };
-    time: { value: number };
+    mouse: Uniform2f;
+    resolution: Uniform2f;
+    time: Uniform1f;
   };
 
   constructor(
@@ -112,34 +103,28 @@ export class RenderShaderComponent
       antialias: true,
       canvas: this.webGLCanvas.nativeElement,
     };
-    try {
-      this.renderer = this.isWebGLAvailable()
-        ? new WebGLRenderer(renderParams)
-        : new THREE.CanvasRenderer(renderParams);
-    } catch (e) {
-      if (e instanceof Error && e.message == 'Error creating WebGL context.') {
-        return;
-      }
+    if (!this.isWebGL2Available()) {
+      console.error('Could not create WebGL2 context');
+      return;
     }
-
+    this.renderer = new WebGl2Renderer(renderParams);
     this.uniforms = {
-      time: { value: 1.0 },
-      resolution: { value: new Vector2(this.canvasWidth, this.canvasHeight) },
-      mouse: { value: new Vector2(0.5, 0.5) },
+      time: u1f('uTime', 1.0),
+      resolution: u2f('uResolution', this.canvasWidth, this.canvasHeight),
+      mouse: u2f('uMouse', 0.5, 0.5),
     };
 
     this.onResize();
 
     this.scene = new Scene();
 
-    this.camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
     this.geometry = new PlaneGeometry(2, 2);
 
-    this.material = new ShaderMaterial({
-      uniforms: this.uniforms,
-      vertexShader: this.vertexShader || defaultVertexShader,
-      fragmentShader: this.shaderCode,
-    });
+    this.material = new ShaderMaterial(
+      this.vertexShader || defaultVertexShader,
+      this.shaderCode,
+      this.uniforms
+    );
 
     this.mesh = new Mesh(this.geometry, this.material);
 
@@ -150,18 +135,17 @@ export class RenderShaderComponent
   }
 
   ngOnDestroy(): void {
-    if (this.renderer instanceof WebGLRenderer) {
+    if (this.renderer) {
       console.log('ngOnDestroy: WebGLRenderer dispose.');
-      this.renderer.forceContextLoss();
       this.renderer.dispose();
     }
   }
 
   onMouseMove(e: MouseEvent) {
     if (this.uniforms) {
-      this.uniforms.mouse.value.x = e.offsetX / this.canvasWidth;
-      this.uniforms.mouse.value.y =
-        (this.canvasHeight - e.offsetY) / this.canvasHeight;
+      const x = e.offsetX / this.canvasWidth;
+      const y = (this.canvasHeight - e.offsetY) / this.canvasHeight;
+      this.uniforms.mouse.value = [x, y];
     }
   }
 
@@ -175,14 +159,12 @@ export class RenderShaderComponent
         touch.pageY -
         RenderShaderComponent.getOffsetTop(e.target as HTMLElement);
 
-      this.uniforms.mouse.value.x = Math.max(
-        Math.min(x / this.canvasWidth, 1.0),
-        0.0
-      );
-      this.uniforms.mouse.value.y = Math.max(
+      const mX = Math.max(Math.min(x / this.canvasWidth, 1.0), 0.0);
+      const mY = Math.max(
         Math.min((this.canvasHeight - y) / this.canvasHeight, 1.0),
         0.0
       );
+      this.uniforms.mouse.value = [mX, mY];
     }
   }
 
@@ -194,10 +176,7 @@ export class RenderShaderComponent
       this.uniforms
     ) {
       this.renderer.setSize(this.canvasWidth, this.canvasHeight);
-      this.uniforms.resolution.value = new Vector2(
-        this.canvasWidth,
-        this.canvasHeight
-      );
+      this.uniforms.resolution.value = [this.canvasWidth, this.canvasHeight];
     }
   }
 
@@ -215,7 +194,6 @@ export class RenderShaderComponent
       this.material
     ) {
       this.material.setValues({ fragmentShader: this.shaderCode });
-      this.material.needsUpdate = true;
     }
 
     if (changes['canvasWidth'] && !changes['canvasWidth'].isFirstChange()) {
@@ -228,33 +206,30 @@ export class RenderShaderComponent
   }
 
   render(time = 1) {
-    if (this.uniforms && this.scene && this.camera) {
+    if (this.uniforms && this.scene) {
       this.uniforms.time.value = time / 1000;
-      this.renderer?.render(this.scene, this.camera);
+      this.renderer?.render(this.scene);
     }
   }
 
   animate(time = 1.0) {
     try {
       this.ngZone.runOutsideAngular(() => {
+        this.render(time);
+        this.measureFps.signalFrameReady();
         if (this.runAnimation) {
           requestAnimationFrame((timestamp) => this.animate(timestamp));
         }
-        this.render(time);
-        this.measureFps.signalFrameReady();
       });
     } catch (e) {
       this.error.next(e);
     }
   }
 
-  private isWebGLAvailable() {
+  private isWebGL2Available() {
     try {
       const canvas = this.webGLCanvas.nativeElement;
-      return !!(
-        window.WebGLRenderingContext &&
-        (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
-      );
+      return !!(window.WebGL2RenderingContext && canvas.getContext('webgl2'));
     } catch (e) {
       return false;
     }

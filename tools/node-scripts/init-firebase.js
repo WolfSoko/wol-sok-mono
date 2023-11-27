@@ -1,6 +1,7 @@
 const os = require('os');
 const admin = require('firebase-admin');
-const serviceAccount = require(os.homedir() + '/.firebase/angularexamples-firebase-adminsdk.json');
+const serviceAccount = require(os.homedir() + '/.firebase/angularexamples-b69f4-firebase-adminsdk-lz4i3-a8dd3e2808.json');
+const defaultShaders = require('../admin/default-shaders.v2').defaultShaders;
 
 const initBaseData = require('../admin/base-data.v1').initBaseData;
 
@@ -12,7 +13,7 @@ admin.initializeApp({
 const db = admin.firestore();
 
 async function writeDefaultData() {
-  return await initBaseData(db);
+  return await initBaseData(db, defaultShaders);
 }
 
 writeDefaultData().then(

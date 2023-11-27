@@ -1,10 +1,15 @@
+import { FragCode } from '@wolsok/ui-kit';
+
+export default `# version 300 es
 #ifdef GL_ES
 precision highp float;
 #endif
 
-uniform vec2 resolution;
-uniform vec2 mouse;
-uniform float time;
+uniform highp vec2 uResolution;
+uniform mediump vec2 uMouse;
+uniform highp float uTime;
+
+out highp vec4 fragColor;
 
 const float cloudscale = 0.4;
 const float speed = 0.02;
@@ -50,11 +55,11 @@ float fbm(vec2 n) {
 // -----------------------------------------------
 
 void main() {
-  vec2 p = gl_FragCoord.xy / resolution.xy;
-  vec2 uv = p*vec2(resolution.x/resolution.y, 1.0);
+  vec2 p = gl_FragCoord.xy / uResolution.xy;
+  vec2 uv = p*vec2(uResolution.x/uResolution.y, 1.0);
   float depthOffHeaven = p.y;
   float speed = speed;
-  float scaledTime = time * speed;
+  float scaledTime = uTime * speed;
   float q = fbm(uv * cloudscale * 0.5);
 
   //ridged noise shape
@@ -70,7 +75,7 @@ void main() {
 
   //noise shape
   float f = 0.0;
-  uv = p*vec2(resolution.x/resolution.y, 1.0);
+  uv = p*vec2(uResolution.x/uResolution.y, 1.0);
   uv *= cloudscale;
   uv -= q - scaledTime;
   weight = 0.7;
@@ -84,8 +89,8 @@ void main() {
 
   //noise colour
   float c = 0.0;
-  scaledTime = time * speed * 2.0;
-  uv = p*vec2(resolution.x/resolution.y, 1.0);
+  scaledTime = uTime * speed * 2.0;
+  uv = p*vec2(uResolution.x/uResolution.y, 1.0);
   uv *= cloudscale*2.0;
   uv -= q - scaledTime;
   weight = 0.4;
@@ -97,8 +102,8 @@ void main() {
 
   //noise ridge colour
   float c1 = 0.0;
-  scaledTime = time * speed * 3.0;
-  uv = p*vec2(resolution.x/resolution.y, 1.0);
+  scaledTime = uTime * speed * 3.0;
+  uv = p*vec2(uResolution.x/uResolution.y, 1.0);
   uv *= cloudscale*3.0;
   uv -= q - scaledTime;
   weight = 0.4;
@@ -117,5 +122,5 @@ void main() {
 
   vec3 result = mix(skycolour, clamp(skytint * skycolour + cloudcolour, 0.0, 1.0), clamp(f + c, 0.0, 1.0));
 
-  gl_FragColor = vec4(result, 1.0);
-}
+  fragColor = vec4(result, 1.0);
+}` as FragCode;

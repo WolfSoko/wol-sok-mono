@@ -7,7 +7,7 @@ import {
   OnDestroy,
   ViewChild,
 } from '@angular/core';
-import * as P5 from 'p5';
+import P5 from 'p5';
 import { Perceptron } from '../perceptron';
 
 @Component({

@@ -1,5 +1,10 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ColorMaterial } from '../model/color.material';
+import { Mesh } from '../model/mesh';
+import { PlaneGeometry } from '../model/plane-geometry';
+import { Scene } from '../model/scene';
+import { WebGl2Renderer } from '../model/webgl2-renderer';
 import { WebglService } from './render-shader.service';
 import howToBeFunnyPng from './testing-assets/how-to-be-funny.png';
 
@@ -11,16 +16,22 @@ import howToBeFunnyPng from './testing-assets/how-to-be-funny.png';
   styleUrl: './render-shader-2.component.scss',
 })
 export class RenderShader2Component implements AfterViewInit {
-  @ViewChild('glCanvas') private canvasRef?: ElementRef;
+  @ViewChild('glImageCanvas') private imageCanvasRef?: ElementRef;
+  @ViewChild('glSceneCanvas') private sceneCanvasRef?: ElementRef;
+  private scene?: Scene;
+  private renderer?: WebGl2Renderer;
   constructor(private webglService: WebglService) {}
 
   ngAfterViewInit() {
-    const canvas: HTMLCanvasElement = this.canvasRef?.nativeElement;
-    if (!canvas) {
+    const imageCanvasRef: HTMLCanvasElement =
+      this.imageCanvasRef?.nativeElement;
+    const szeneCanvas: HTMLCanvasElement = this.sceneCanvasRef?.nativeElement;
+    if (!imageCanvasRef || !szeneCanvas) {
       throw new Error('could not find glCanvas');
     }
-    if (this.webglService.initializeWebGL(canvas)) {
+    if (this.webglService.initializeWebGL(imageCanvasRef)) {
       this.loadAndRenderImage();
+      this.initScene(szeneCanvas);
     }
   }
 
@@ -37,7 +48,33 @@ export class RenderShader2Component implements AfterViewInit {
     requestAnimationFrame((time) => {
       const deltaTime = (time - startTime) / 1000;
       this.webglService.render(deltaTime);
+      this.renderer?.render(this.scene!);
       this.startLoop(startTime);
+    });
+  }
+
+  private initScene(sceneCanvas: HTMLCanvasElement): void {
+    this.scene = new Scene();
+    for (let i = 0; i < 1000; i++) {
+      const material = new ColorMaterial(
+        Math.random(),
+        Math.random(),
+        Math.random(),
+        1
+      );
+      const geometry = new PlaneGeometry(
+        2 - Math.random() * 2,
+        2 - Math.random() * 2,
+        Math.random() + Math.random() * 2 - 1,
+        Math.random() + Math.random() * 2 - 1
+      );
+      const mesh = new Mesh(geometry, material);
+      this.scene.add(mesh);
+    }
+
+    this.renderer = new WebGl2Renderer({
+      canvas: sceneCanvas,
+      antialias: true,
     });
   }
 }

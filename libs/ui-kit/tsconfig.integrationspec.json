@@ -10,7 +10,6 @@
   "include": [
     "**/*.integrationspec.ts",
     "**/*.d.ts",
-    "../../tools/glsl/glsl-modules.d.ts",
     "**/integration-test-setup.ts"
   ]
 }

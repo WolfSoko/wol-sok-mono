@@ -14,7 +14,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { ShowFpsComponent } from '@wolsok/ui-kit';
-import * as P5 from 'p5';
+import P5 from 'p5';
 import { ReactionDiffCalculator } from '../calculation/reaction-diff-calculator';
 
 @Component({

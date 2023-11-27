@@ -1,5 +1,6 @@
 /* eslint-disable */
-import JestConfig from '../../jest.config';
+
+import { JestConfigWithTsJest } from 'ts-jest';
 
 export default {
   displayName: 'ui-kit',
@@ -17,9 +18,6 @@ export default {
       },
     ],
   },
-  moduleNameMapper: {
-    "^.+.(glsl)$": "jest-transform-stub"
-  },
   transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
   snapshotSerializers: [
     'jest-preset-angular/build/serializers/no-ng-attributes',
@@ -27,4 +25,4 @@ export default {
     'jest-preset-angular/build/serializers/html-comment',
   ],
   preset: '../../jest.preset.js',
-};
+} as JestConfigWithTsJest ;

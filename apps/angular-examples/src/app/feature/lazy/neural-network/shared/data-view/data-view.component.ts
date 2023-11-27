@@ -12,7 +12,7 @@ import {
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
-import * as p5 from 'p5';
+import p5 from 'p5';
 import { BrainService } from '../brain.service';
 import { Perceptron } from '../perceptron';
 import { Point } from '../point';
