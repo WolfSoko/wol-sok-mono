@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.36.1...v4.0.0) (2023-11-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* 💥 ✨ add new shader rendering. Get rid of three.js
+
+### Features
+
+* ✨ make it easy to load shader files with webpack ([34d2b55](https://github.com/WolfSoko/wol-sok-mono/commit/34d2b556d8703e406df24914a392bdc339db9ff0))
+* ✨ move gl renderer to own lib ([d835a6f](https://github.com/WolfSoko/wol-sok-mono/commit/d835a6f707a7e5f6ba0bc66f11900b313e520151))
+* 💥 ✨ add new shader rendering. Get rid of three.js ([5c576f0](https://github.com/WolfSoko/wol-sok-mono/commit/5c576f0ea34d5754e62dbc5df88172c214b134ad))
+
 ### [3.36.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.36.0...v3.36.1) (2023-11-25)
 
 ## [3.36.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.22...v3.36.0) (2023-11-25)
