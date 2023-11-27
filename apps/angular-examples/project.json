@@ -33,25 +33,12 @@
         ],
         "styles": ["apps/angular-examples/src/styles.scss"],
         "stylePreprocessorOptions": {
-          "includePaths": ["apps/angular-examples/src/styles", "libs/ui-kit/src/lib/styles"]
+          "includePaths": [
+            "apps/angular-examples/src/styles",
+            "libs/ui-kit/src/lib/styles"
+          ]
         },
-        "allowedCommonJsDependencies": [
-          "assemblyscript/lib/loader",
-          "three-orbitcontrols-ts",
-          "gpu.js",
-          "semver",
-          "firebase/app",
-          "@firebase/component",
-          "@firebase/auth",
-          "typed-function",
-          "decimal.js",
-          "fraction.js",
-          "complex.js",
-          "lodash",
-          "p5",
-          "html2canvas",
-          "seedrandom"
-        ],
+        "allowedCommonJsDependencies": [],
         "buildLibsFromSource": true,
         "sourceMap": true
       },
@@ -137,7 +124,10 @@
     "lint": {
       "executor": "@nx/eslint:lint",
       "options": {
-        "lintFilePatterns": ["apps/angular-examples/src/**/*.ts", "apps/angular-examples/src/**/*.html"]
+        "lintFilePatterns": [
+          "apps/angular-examples/src/**/*.ts",
+          "apps/angular-examples/src/**/*.html"
+        ]
       }
     },
     "test": {
@@ -158,5 +148,9 @@
     }
   },
   "tags": ["app", "type:host"],
-  "implicitDependencies": ["fourier-analysis-remote", "bacteria-game-remote", "shader-examples-remote"]
+  "implicitDependencies": [
+    "fourier-analysis-remote",
+    "bacteria-game-remote",
+    "shader-examples-remote"
+  ]
 }

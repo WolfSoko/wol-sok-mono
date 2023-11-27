@@ -1,4 +1,4 @@
-import { u4f } from './glsl-helper/uniforms';
+import { u4f } from './uniforms';
 import { ShaderMaterial } from './shader-material';
 import colorMaterialFrag from './shaders/color-material.frag';
 import colorMaterialVert from './shaders/color-material.vert';

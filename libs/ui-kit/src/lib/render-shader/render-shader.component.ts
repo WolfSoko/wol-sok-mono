@@ -14,14 +14,20 @@ import {
   ViewChild,
 } from '@angular/core';
 import { MeasureFps } from '@wolsok/utils-measure-fps';
+import {
+  FragCode,
+  Mesh,
+  PlaneGeometry,
+  Scene,
+  ShaderMaterial,
+  u1f,
+  u2f,
+  Uniform1f,
+  Uniform2f,
+  VertCode,
+  WebGl2Renderer,
+} from '@wolsok/ws-gl';
 import { Observable, sampleTime } from 'rxjs';
-import { FragCode, VertCode } from '../model/glsl-code.types';
-import { u1f, u2f, Uniform1f, Uniform2f } from '../model/glsl-helper/uniforms';
-import { Mesh } from '../model/mesh';
-import { PlaneGeometry } from '../model/plane-geometry';
-import { Scene } from '../model/scene';
-import { ShaderMaterial } from '../model/shader-material';
-import { WebGl2Renderer } from '../model/webgl2-renderer';
 
 import { ShowFpsComponent } from '../show-fps/show-fps.component';
 import defaultVertexShader from './default-vertex-shader.vert';

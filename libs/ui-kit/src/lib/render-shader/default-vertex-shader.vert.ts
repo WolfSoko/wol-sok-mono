@@ -1,4 +1,5 @@
-import { VertCode } from '../model/glsl-code.types';
+import { VertCode } from '@wolsok/ws-gl';
+
 export default `# version 300 es
 
 in vec2 pUv;

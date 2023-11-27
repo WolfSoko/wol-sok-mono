@@ -19,10 +19,10 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { NavigationEnd, Router } from '@angular/router';
 import {
   ElemResizedDirective,
-  FragCode,
   RenderShaderComponent,
   ResizedEvent,
 } from '@wolsok/ui-kit';
+import { FragCode } from '@wolsok/ws-gl';
 import { filter, map } from 'rxjs/operators';
 import { HeadlineAnimationService } from '../../core/headline-animation.service';
 import shader from '../../title-shader.frag';

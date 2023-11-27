@@ -1,10 +1,12 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ColorMaterial } from '../model/color.material';
-import { Mesh } from '../model/mesh';
-import { PlaneGeometry } from '../model/plane-geometry';
-import { Scene } from '../model/scene';
-import { WebGl2Renderer } from '../model/webgl2-renderer';
+import {
+  ColorMaterial,
+  Mesh,
+  PlaneGeometry,
+  Scene,
+  WebGl2Renderer,
+} from '@wolsok/ws-gl';
 import { WebglService } from './render-shader.service';
 import howToBeFunnyPng from './testing-assets/how-to-be-funny.png';
 
@@ -55,7 +57,7 @@ export class RenderShader2Component implements AfterViewInit {
 
   private initScene(sceneCanvas: HTMLCanvasElement): void {
     this.scene = new Scene();
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 10; i++) {
       const material = new ColorMaterial(
         Math.random(),
         Math.random(),

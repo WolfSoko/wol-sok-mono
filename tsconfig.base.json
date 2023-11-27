@@ -53,6 +53,7 @@
       "@wolsok/utils-math": ["libs/utils/math/src/index.ts"],
       "@wolsok/utils-measure-fps": ["libs/utils/measure-fps/src/index.ts"],
       "@wolsok/utils-operators": ["libs/utils/operators/src/index.ts"],
+      "@wolsok/ws-gl": ["libs/shared/ws-gl/src/index.ts"],
       "bacteria-game-remote/Routes": [
         "apps/bacteria-game-remote/src/app/remote-entry/entry.routes.ts"
       ],

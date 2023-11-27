@@ -1,4 +1,5 @@
-import { FragCode } from '../model/glsl-code.types';
+import { FragCode } from '../../../index';
+
 export default `# version 300 es
 // Fragment Shader
 precision mediump float;

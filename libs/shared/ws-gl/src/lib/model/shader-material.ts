@@ -1,7 +1,8 @@
 import { FragCode, VertCode } from './glsl-code.types';
-import { setUniform, Uniform } from './glsl-helper/uniforms';
+import { setUniform } from './glsl-helper/uniform-helper';
 import { Material } from './material';
 import { RenderingContextWithProgram } from './rendering-context';
+import { Uniform } from './uniforms';
 
 export class ShaderMaterial extends Material {
   constructor(

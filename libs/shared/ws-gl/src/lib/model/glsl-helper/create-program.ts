@@ -1,5 +1,5 @@
-import defaultFragmentShader from '../../render-shader-2/default-fragment-shader.glsl';
-import defaultVertexShader from '../../render-shader-2/default-vertex-shader.glsl';
+import defaultFragmentShader from '../shaders/default-fragment-shader.glsl';
+import defaultVertexShader from '../shaders/default-vertex-shader.glsl';
 import { compileShader } from './compile-shader';
 export function createProgram(
   gl: WebGLRenderingContext,

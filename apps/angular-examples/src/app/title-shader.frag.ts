@@ -1,4 +1,4 @@
-import { FragCode } from '@wolsok/ui-kit';
+import { FragCode } from '@wolsok/ws-gl';
 
 export default `# version 300 es
 #ifdef GL_ES

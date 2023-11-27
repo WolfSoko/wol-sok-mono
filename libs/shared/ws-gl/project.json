@@ -1,0 +1,42 @@
+{
+  "name": "ws-gl",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/ws-gl/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/shared/ws-gl",
+        "main": "libs/shared/ws-gl/src/index.ts",
+        "tsConfig": "libs/shared/ws-gl/tsconfig.lib.json",
+        "assets": ["libs/shared/ws-gl/*.md"],
+        "generatePackageJson": true,
+        "format": ["cjs"]
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs ws-gl {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "libs/shared/ws-gl/**/*.ts",
+          "libs/shared/ws-gl/package.json"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/shared/ws-gl/jest.config.ts"
+      }
+    }
+  },
+  "tags": ["shared"]
+}

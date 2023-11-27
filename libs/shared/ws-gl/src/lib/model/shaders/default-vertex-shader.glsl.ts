@@ -1,4 +1,5 @@
-import { VertCode } from '../model/glsl-code.types';
+import { VertCode } from '../../../index';
+
 export default `# version 300 es
 
 // Vertex Shader (vsSource)

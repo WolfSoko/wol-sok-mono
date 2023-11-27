@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
-import { FragCode, VertCode } from '../model/glsl-code.types';
-import defaultFragmentShader from './default-fragment-shader.glsl';
-import defaultVertexShader from './default-vertex-shader.glsl';
+import {
+  FragCode,
+  VertCode,
+  defaultVertexShader,
+  defaultFragmentShader,
+} from '@wolsok/ws-gl';
 
 type Texture = { glTexture: WebGLTexture; w: number; h: number };
 type Context = {
