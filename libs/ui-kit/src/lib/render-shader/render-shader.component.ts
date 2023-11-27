@@ -27,6 +27,7 @@ import {
   VertCode,
   WebGl2Renderer,
 } from '@wolsok/ws-gl';
+
 import { Observable, sampleTime } from 'rxjs';
 
 import { ShowFpsComponent } from '../show-fps/show-fps.component';
@@ -65,7 +66,6 @@ export class RenderShaderComponent
   private geometry?: PlaneGeometry;
   private material?: ShaderMaterial;
   private mesh?: Mesh;
-
   private scene?: Scene;
   private uniforms?: {
     mouse: Uniform2f;

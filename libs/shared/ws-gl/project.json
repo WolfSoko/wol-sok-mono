@@ -5,15 +5,13 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nx/esbuild:esbuild",
+      "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/shared/ws-gl",
         "main": "libs/shared/ws-gl/src/index.ts",
         "tsConfig": "libs/shared/ws-gl/tsconfig.lib.json",
-        "assets": ["libs/shared/ws-gl/*.md"],
-        "generatePackageJson": true,
-        "format": ["cjs"]
+        "assets": ["libs/shared/ws-gl/*.md"]
       }
     },
     "publish": {
