@@ -51,6 +51,12 @@
     animation-fill-mode: backwards;
     transition: rotate 0.5s ease-in-out;
   }
+  .reset-button {
+    margin-left: auto;
+  }
+  .start-button {
+    margin-right: 2rem;
+  }
 }
 
 .config-visible .config-button {

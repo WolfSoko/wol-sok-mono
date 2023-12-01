@@ -57,6 +57,7 @@
       </button>
       <span>Click and drag to manipulate.</span>
       <button
+        class="reset-button"
         data-qa="cta-reset"
         mat-raised-button
         color="accent"
@@ -67,6 +68,7 @@
       <button
         data-qa="cta-start"
         mat-raised-button
+        class="start-button"
         [color]="running() ? 'accent' : 'primary'"
         (click)="toggleSim()"
       >
