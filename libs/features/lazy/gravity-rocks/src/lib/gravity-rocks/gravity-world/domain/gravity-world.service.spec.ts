@@ -123,27 +123,19 @@ describe('GravityWorldService', () => {
 
   it('should removeAll world objects', () => {
     service.addWorldObject(new Planet(vec2(0, 100), undefined, 10));
-    service.addForceObject({ applyForceFor: jest.fn });
+    service.addForceObject(createMockedForce());
     service.removeAll();
     expect(service.getWorldObjects()).toEqual([]);
     expect(service.getForces()).toEqual([]);
   });
 
   it('should add a force object', () => {
-    expect(() =>
-      service.addForceObject({
-        applyForceFor: jest.fn(),
-      })
-    ).not.toThrow();
+    expect(() => service.addForceObject(createMockedForce())).not.toThrow();
   });
 
   it('should removeAll force objects', () => {
-    const forceObj1: Force = {
-      applyForceFor: jest.fn(),
-    };
-    const forceObj2: Force = {
-      applyForceFor: jest.fn(),
-    };
+    const forceObj1 = createMockedForce();
+    const forceObj2 = createMockedForce('456');
     service.addForceObject(forceObj1);
     service.addForceObject(forceObj2);
     service.removeForceObject(forceObj2);
@@ -151,9 +143,7 @@ describe('GravityWorldService', () => {
   });
 
   it('should call the force for all objects on nextTick', () => {
-    const testForce = {
-      applyForceFor: jest.fn(),
-    };
+    const testForce = createMockedForce();
     service.addForceObject(testForce);
     const planet: WorldObject = new Planet(vec2(100, 100), undefined, 10);
     service.addWorldObject(planet);
@@ -164,7 +154,7 @@ describe('GravityWorldService', () => {
 
     expect(testForce.applyForceFor).toHaveBeenCalledTimes(1);
     expect(testForce.applyForceFor).toHaveBeenCalledWith(planet, dT);
-    testForce.applyForceFor.mockClear();
+    (testForce.applyForceFor as jest.Mock).mockClear();
 
     const planet2: WorldObject = new Planet(vec2(0, 50), undefined, 10);
     service.addWorldObject(planet2);
@@ -174,4 +164,11 @@ describe('GravityWorldService', () => {
     expect(testForce.applyForceFor).toHaveBeenCalledWith(planet, dT);
     expect(testForce.applyForceFor).toHaveBeenCalledWith(planet2, dT);
   });
+
+  function createMockedForce(id: string = '123'): Force {
+    return {
+      id,
+      applyForceFor: jest.fn(),
+    };
+  }
 });
