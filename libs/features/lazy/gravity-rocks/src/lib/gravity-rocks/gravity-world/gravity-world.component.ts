@@ -23,6 +23,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ElemResizedDirective, LetDirective } from '@wolsok/ui-kit';
 import { vec2, Vector2d } from '@wolsok/utils-math';
+import { notNil } from '@wolsok/utils-operators';
 import { map, Observable, Subject, switchMap, take, takeUntil } from 'rxjs';
 import { GravityConfigComponent } from './config/gravity-config.component';
 import {
@@ -33,6 +34,7 @@ import { GravityWorldService } from './domain/gravity-world.service';
 import { Force, SpringForce } from './domain/world-objects/force';
 import { Planet } from './domain/world-objects/planet';
 import { Sun } from './domain/world-objects/sun';
+import { SvgPath } from './domain/world-objects/svg-path';
 import {
   svgPathForVelocity,
   toSvgPath,
@@ -79,12 +81,16 @@ export class GravityWorldComponent {
   planets: WritableSignal<Planet[]> = signal([]);
 
   forces: WritableSignal<Force[]> = signal([]);
-  forcesSvgPaths: Signal<string[]> = computed(() =>
-    this.forces().map((f) => toSvgPath(f))
+  forcesSvgPaths: Signal<SvgPath[]> = computed(() =>
+    this.forces()
+      .map((f) => toSvgPath(f))
+      .filter(notNil)
   );
 
-  velocitySvgPath: Signal<string[]> = computed(() =>
-    this.planets().map((planet) => svgPathForVelocity(planet.pos, planet.vel))
+  velocitySvgPath: Signal<SvgPath[]> = computed(() =>
+    this.planets().map((planet) =>
+      svgPathForVelocity(planet.id, planet.pos, planet.vel)
+    )
   );
 
   canvasSize: WritableSignal<Vector2d> = signal(this.MAX_DIM);

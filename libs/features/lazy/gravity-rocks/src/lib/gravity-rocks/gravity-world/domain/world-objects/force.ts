@@ -2,6 +2,8 @@ import { Vector2d } from '@wolsok/utils-math';
 import { WorldObject } from './world-object';
 
 export abstract class Force {
+  constructor(public id: string) {}
+
   abstract applyForceFor(wo: WorldObject, dT: number): void;
 }
 
@@ -13,7 +15,7 @@ export class SpringForce extends Force {
     private springStrength: number = wo.mass,
     private dampingStrength: number = wo.mass
   ) {
-    super();
+    super('ForceOn:' + wo.id);
     this.springEnd = wo.pos;
   }
 

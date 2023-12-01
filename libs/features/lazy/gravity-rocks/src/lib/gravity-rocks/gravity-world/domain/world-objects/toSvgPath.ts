@@ -1,17 +1,22 @@
 import { Vector2d } from '@wolsok/utils-math';
 import { Force, SpringForce } from './force';
+import { SvgPath } from './svg-path';
 
-export function toSvgPath(force: Force): string {
+export function toSvgPath(force: Force): SvgPath | null {
   if (force instanceof SpringForce) {
     const { x, y } = force.wo.pos;
     const { x: x2, y: y2 } = force.springEnd;
-    return `M${x} ${y} ${x2} ${y2}`;
+    return { id: force.id, path: `M${x} ${y} ${x2} ${y2}` };
   }
-  return '';
+  return null;
 }
 
-export function svgPathForVelocity(pos: Vector2d, vel: Vector2d): string {
+export function svgPathForVelocity(
+  id: string,
+  pos: Vector2d,
+  vel: Vector2d
+): SvgPath {
   const { x, y } = pos;
   const { x: x2, y: y2 } = pos.add(vel);
-  return `M${x} ${y} ${x2} ${y2}`;
+  return { id, path: `M${x} ${y} ${x2} ${y2}` };
 }

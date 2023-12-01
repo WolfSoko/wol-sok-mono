@@ -1,4 +1,8 @@
-<mat-drawer-container [class.config-visible]="drawer.opened" class="sim-layout" autosize>
+<mat-drawer-container
+  [class.config-visible]="drawer.opened"
+  class="sim-layout"
+  autosize
+>
   <mat-drawer #drawer class="sidenav-drawer" mode="side">
     @if (drawer.opened) {
       <mat-card appearance="raised" class="gravitational-force-card-controls">
@@ -6,7 +10,10 @@
           <mat-card-title>Play with the values</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <feat-lazy-gravity-config [config]="settings()" (configChange)="settings.set($event)" />
+          <feat-lazy-gravity-config
+            [config]="settings()"
+            (configChange)="settings.set($event)"
+          />
           <mat-list class="info-list">
             <h4 mat-subheader>Infos</h4>
             <mat-list-item>
@@ -15,14 +22,18 @@
             <mat-list-item>
               <span>Forces = {{ worldService.getForces().length }}</span>
             </mat-list-item>
-            @for (planet of planets(); track planet; let i = $index) {
+            @for (planet of planets(); track planet.id; let i = $index) {
               <mat-list-item>
                 <div class="planet-info-item">
                   <button mat-icon-button (click)="removePlanet(planet)">
-                    <mat-icon aria-label="Remove planet">delete_forever</mat-icon>
+                    <mat-icon aria-label="Remove planet"
+                      >delete_forever</mat-icon
+                    >
                   </button>
                   <span [style.background-color]="planet.color">
-                    Planet{{ i + 1 }}: x={{ planet.pos.x | number: '1.0-0' }},y={{ planet.pos.y | number: '1.0-0' }}
+                    Planet{{ i + 1 }}: x={{
+                      planet.pos.x | number: '1.0-0'
+                    }},y={{ planet.pos.y | number: '1.0-0' }}
                   </span>
                 </div>
               </mat-list-item>
@@ -45,6 +56,22 @@
         <mat-icon>build</mat-icon>
       </button>
       <span>Click and drag to manipulate.</span>
+      <button
+        data-qa="cta-reset"
+        mat-raised-button
+        color="accent"
+        (click)="reset()"
+      >
+        Reset
+      </button>
+      <button
+        data-qa="cta-start"
+        mat-raised-button
+        [color]="running() ? 'accent' : 'primary'"
+        (click)="toggleSim()"
+      >
+        {{ running() ? 'Pause' : 'Start' }}
+      </button>
     </div>
     <svg
       #svgWorld
@@ -55,12 +82,19 @@
       [attr.viewBox]="'0 0 ' + canvasSize().x + ' ' + canvasSize().y"
     >
       <defs>
-        <marker id="force-arrow-head" orient="auto" markerWidth="3" markerHeight="4" refX="0.1" refY="2">
+        <marker
+          id="force-arrow-head"
+          orient="auto"
+          markerWidth="3"
+          markerHeight="4"
+          refX="0.1"
+          refY="2"
+        >
           <path d="M0,0 V4 L2,2 Z" fill="#348B85" />
         </marker>
       </defs>
       <g>
-        @for (planet of planets(); track planet) {
+        @for (planet of planets(); track planet.id) {
           <circle
             class="world-object"
             [id]="planet.id"
@@ -78,33 +112,27 @@
           [attr.r]="sun.radius"
           fill="#ffffab"
         ></circle>
-        @for (dValue of forcesSvgPaths(); track dValue) {
+        @for (force of forcesSvgPaths(); track force.id) {
           <path
             class="line-line"
             marker-end="url(#force-arrow-head)"
             stroke-width="6"
             fill="none"
             stroke="#348B85"
-            [attr.d]="dValue"
+            [attr.d]="force.path"
           />
         }
-        @for (dValue of velocitySvgPath(); track dValue) {
+        @for (velocity of velocitySvgPath(); track velocity.id) {
           <path
             class="line-line"
             marker-end="url(#force-arrow-head)"
             stroke-width="6"
             fill="none"
             stroke="#8B5870"
-            [attr.d]="dValue"
+            [attr.d]="velocity.path"
           />
         }
       </g>
     </svg>
-    <mat-card-actions>
-      <button data-qa="cta-reset" mat-raised-button color="accent" (click)="reset()">Reset</button>
-      <button data-qa="cta-start" mat-raised-button [color]="running() ? 'accent' : 'primary'" (click)="toggleSim()">
-        {{ running() ? 'Pause' : 'Start' }}
-      </button>
-    </mat-card-actions>
   </mat-card>
 </mat-drawer-container>
