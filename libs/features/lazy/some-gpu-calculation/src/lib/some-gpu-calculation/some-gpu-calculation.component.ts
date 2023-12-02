@@ -79,7 +79,7 @@ interface Configuration {
 })
 export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
   @ViewChild('gpuCanvasContainer')
-  gpuCanvasWrapper!: ElementRef<HTMLDivElement>;
+  gpuCanvasWrapper?: ElementRef<HTMLDivElement>;
   webglSupported = false;
 
   additionForm!: FormGroup<{
@@ -220,6 +220,9 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
   }
 
   async updateCanvasSize({ newWidth }: ResizedEvent) {
+    if (!this.gpuCanvasWrapper?.nativeElement) {
+      return;
+    }
     const canvas: HTMLCanvasElement | null = this.gpuCanvasWrapper.nativeElement
       .firstElementChild as HTMLCanvasElement;
     if (!canvas) {
@@ -236,6 +239,9 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
   }
 
   private replaceCanvas(canvas: HTMLCanvasElement): void {
+    if (!this.gpuCanvasWrapper?.nativeElement) {
+      return;
+    }
     this.gpuCanvasWrapper.nativeElement.replaceChildren(canvas);
   }
 
