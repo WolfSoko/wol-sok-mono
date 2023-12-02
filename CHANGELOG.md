@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.1.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.0.6...v4.1.0) (2023-12-02)
+
+
+### Features
+
+* **feat-lazy-gravity-rocks:** ✨ change mode of config to over ([23f0bf1](https://github.com/WolfSoko/wol-sok-mono/commit/23f0bf12da1ed8fc37540eaf807e45ffd2e0ac95))
+* **feat-lazy-gravity-rocks:** ✨ put buttons start reset at top ([16f99e9](https://github.com/WolfSoko/wol-sok-mono/commit/16f99e98c7f0b4c1b9733b72c54dbf389f839e47))
+
+
+### Bug Fixes
+
+* 🐛 load canvas in any case ([3abb4de](https://github.com/WolfSoko/wol-sok-mono/commit/3abb4de946786554a403d2279c771137a64fbb5c))
+
 ### [4.0.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.0.5...v4.0.6) (2023-12-01)
 
 ### [4.0.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.0.4...v4.0.5) (2023-12-01)
