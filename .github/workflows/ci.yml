@@ -20,6 +20,7 @@ env:
   CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
   CYPRESS_CACHE_FOLDER: 'cache/cypress'
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  DEBUG: ${{ runner.debug }}
 
 jobs:
   verify:
@@ -49,18 +50,18 @@ jobs:
         run: |
           echo "BASE: ${{ env.NX_BASE }}"
           echo "HEAD: ${{ env.NX_HEAD }}"
-          npx nx show projects --affected
+          npx nx show projects --affected ${DEBUG && '--verbose' || '' }
 
       - run: npx nx-cloud start-ci-run
       - name: Run verification
         uses: JamesHenry/parallel-bash-commands@v1.0
         with:
-          cmd1: npx nx affected --target=build --parallel=1
-          cmd2: npx nx affected --target=test --parallel=1 --code-coverage
-          cmd3: npx nx affected --target=test-integration --parallel=1 --code-coverage
-          cmd4: npx nx affected --target=lint --parallel=4
-          cmd5: npx nx affected --target=component-test --parallel=1
-          cmd6: npx -c \"nx affected --target=e2e --parallel=1 --configuration=ci -- ${{!contains(github.event_name, 'pull_request') && '--record=true' || ''}}\"
+          cmd1: npx nx affected --target=build --parallel=1 ${DEBUG && '--verbose' || '' }
+          cmd2: npx nx affected --target=test --parallel=1 --code-coverage ${DEBUG && '--verbose' || '' }
+          cmd3: npx nx affected --target=test-integration --parallel=1 --code-coverage ${DEBUG && '--verbose' || '' }
+          cmd4: npx nx affected --target=lint --parallel=4 ${DEBUG && '--verbose' || '' }
+          cmd5: npx nx affected --target=component-test --parallel=1 ${DEBUG && '--verbose' || '' }
+          cmd6: npx -c \"nx affected --target=e2e --parallel=1 --configuration=ci ${DEBUG && '--verbose' || '' } -- ${{!contains(github.event_name, 'pull_request') && '--record=true' || ''}}\"
       - run: npx nx-cloud stop-all-agents
         if: ${{ always() }}
       - name: Tag main branch if all jobs succeed
