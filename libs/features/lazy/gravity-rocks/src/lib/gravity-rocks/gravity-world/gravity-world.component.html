@@ -32,8 +32,8 @@
                   </button>
                   <span [style.background-color]="planet.color">
                     Planet{{ i + 1 }}: x={{
-                      planet.pos.x | number: '1.0-0'
-                    }},y={{ planet.pos.y | number: '1.0-0' }}
+                      planet.pos.x | number: "1.0-0"
+                    }},y={{ planet.pos.y | number: "1.0-0" }}
                   </span>
                 </div>
               </mat-list-item>
@@ -72,7 +72,7 @@
         [color]="running() ? 'accent' : 'primary'"
         (click)="toggleSim()"
       >
-        {{ running() ? 'Pause' : 'Start' }}
+        {{ running() ? "Pause" : "Start" }}
       </button>
     </div>
     <svg

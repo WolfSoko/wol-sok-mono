@@ -13,7 +13,7 @@
     "deploy-manually:without-build": "node tools/node-scripts/sync-S3",
     "deploy-manually:exclude-assets": "npm version patch && npm run build && node tools/node-scripts/sync-S3 --excludeAssets",
     "test": "nx test",
-    "lint": "nx lint",
+    "lint": "nx run-many -t lint --fix",
     "e2e": "nx e2e",
     "prepare": "husky install"
   },
