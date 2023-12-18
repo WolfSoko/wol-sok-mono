@@ -125,7 +125,7 @@
     "cross-env": "7.0.3",
     "cypress": "^13.6.1",
     "esbuild": "^0.19.9",
-    "eslint": "8.55.0",
+    "eslint": "8.56.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-cdk": "^1.8.0",
     "eslint-plugin-cypress": "2.15.1",
