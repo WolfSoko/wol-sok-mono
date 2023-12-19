@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.1.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.20...v4.1.21) (2023-12-19)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.87.0 ([45f4deb](https://github.com/WolfSoko/wol-sok-mono/commit/45f4debac7c0b4c3055bc59f17f8eeb994a4f833))
+* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.88.0 ([12a1555](https://github.com/WolfSoko/wol-sok-mono/commit/12a1555bc993a3e334fac9d652263a25fc1b3ff7))
+* **deps:** :arrow_up: update dependency @tensorflow/tfjs to v4.15.0 ([481ab2d](https://github.com/WolfSoko/wol-sok-mono/commit/481ab2d9f6346ce2e007a4ef6392227a860c03d4))
+* **deps:** :arrow_up: update dependency ace-builds to v1.32.1 ([e94ac0c](https://github.com/WolfSoko/wol-sok-mono/commit/e94ac0c59f861d0cdc545089c30e5bb19ca417a6))
+* **deps:** :arrow_up: update dependency ace-builds to v1.32.2 ([20f1046](https://github.com/WolfSoko/wol-sok-mono/commit/20f104615852c7296cf9c3b9a7e63cc7c3236431))
+* **deps:** :arrow_up: update dependency aws-cdk to ^2.115.0 ([5667a05](https://github.com/WolfSoko/wol-sok-mono/commit/5667a053de6a694f0a8d606f1b7b03fa9173e33c))
+
 ### [4.1.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.19...v4.1.20) (2023-12-13)
 
 
