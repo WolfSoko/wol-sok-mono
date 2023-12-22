@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.1.31](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.30...v4.1.31) (2023-12-22)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency vega-embed to v6.24.0 ([e9c9296](https://github.com/WolfSoko/wol-sok-mono/commit/e9c929694fe615741b3393b3ac0a11885402b12a))
+
 ### [4.1.30](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.29...v4.1.30) (2023-12-22)
 
 
