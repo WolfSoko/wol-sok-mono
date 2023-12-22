@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.1.30](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.29...v4.1.30) (2023-12-22)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.89.0 ([f841035](https://github.com/WolfSoko/wol-sok-mono/commit/f841035db55e49d3a6013bd3ae9602a4e592f3f6))
+
 ### [4.1.29](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.28...v4.1.29) (2023-12-22)
 
 ### [4.1.28](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.27...v4.1.28) (2023-12-22)
