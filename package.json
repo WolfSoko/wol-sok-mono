@@ -63,7 +63,7 @@
     "ts-keycode-enum": "1.0.6",
     "tslib": "2.5.2",
     "vega": "5.26.1",
-    "vega-embed": "6.23.0",
+    "vega-embed": "6.24.0",
     "vega-lite": "5.16.3",
     "zone.js": "0.14.2"
   },
