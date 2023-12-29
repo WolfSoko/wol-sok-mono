@@ -120,7 +120,7 @@
     "assemblyscript": "0.27.22",
     "aws-cdk-lib": "^2.116.1",
     "aws-sdk": "2.1525.0",
-    "axios": "1.6.2",
+    "axios": "1.6.3",
     "chai": "4.3.10",
     "cross-env": "7.0.3",
     "cypress": "^13.6.2",
