@@ -29,7 +29,7 @@ runs:
     - name: Cache Cypress Binary
       id: cache-cypress-binary
       if: inputs.cypress == 'true'
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ env.CYPRESS_CACHE_FOLDER }}
         key: cypress-binary-${{ hashFiles('package-lock.json') }}
@@ -37,7 +37,7 @@ runs:
         CYPRESS_CACHE_FOLDER: 'cache/cypress'
     - name: Cache dependencies
       id: cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ./node_modules
         key: modules-${{ inputs.run-scripts == 'true' && 'with' || 'ignore' }}-scripts-${{ inputs.cypress == 'true' && 'with' || 'ignore' }}-cypress-${{ hashFiles('package-lock.json') }}
