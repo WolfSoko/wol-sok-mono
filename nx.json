@@ -63,7 +63,11 @@
     },
     "lint": {
       "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
-      "cache": true
+      "cache": true,
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["{projectRoot}/**/*.ts", "{projectRoot}/**/*.html"]
+      }
     },
     "build-storybook": {
       "inputs": [
