@@ -30,10 +30,7 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "options": {
-        "lintFilePatterns": ["libs/features/lazy/gravity-rocks/**/*.ts", "libs/features/lazy/gravity-rocks/**/*.html"]
-      }
+      "executor": "@nx/eslint:lint"
     },
     "storybook": {
       "executor": "@storybook/angular:start-storybook",
@@ -56,7 +53,9 @@
         "outputDir": "dist/storybook/feat-lazy-gravity-rocks",
         "configDir": "libs/features/lazy/gravity-rocks/.storybook",
         "browserTarget": "feat-lazy-gravity-rocks:build-storybook",
-        "styles": ["node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css"],
+        "styles": [
+          "node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css"
+        ],
         "compodoc": false
       },
       "configurations": {

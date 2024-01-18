@@ -15,7 +15,10 @@
         "main": "apps/shader-examples-remote/src/main.ts",
         "polyfills": ["zone.js"],
         "tsConfig": "apps/shader-examples-remote/tsconfig.app.json",
-        "assets": ["apps/shader-examples-remote/src/favicon.ico", "apps/shader-examples-remote/src/assets"],
+        "assets": [
+          "apps/shader-examples-remote/src/favicon.ico",
+          "apps/shader-examples-remote/src/assets"
+        ],
         "styles": [
           "apps/shader-examples-remote/src/styles.scss",
           "node_modules/@angular/material/prebuilt-themes/pink-bluegrey.css"
@@ -56,7 +59,7 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "@nx/angular:webpack-dev-server",
+      "executor": "@nx/angular:dev-server",
       "options": {
         "port": 4203,
         "publicHost": "http://localhost:4203"
@@ -79,10 +82,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": ["apps/shader-examples-remote/**/*.ts", "apps/shader-examples-remote/**/*.html"]
-      }
+      "outputs": ["{options.outputFile}"]
     },
     "test": {
       "executor": "@nx/jest:jest",

@@ -15,7 +15,10 @@
         "polyfills": "apps/fourier-analysis-remote/src/polyfills.ts",
         "tsConfig": "apps/fourier-analysis-remote/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
-        "assets": ["apps/fourier-analysis-remote/src/favicon.ico", "apps/fourier-analysis-remote/src/assets"],
+        "assets": [
+          "apps/fourier-analysis-remote/src/favicon.ico",
+          "apps/fourier-analysis-remote/src/assets"
+        ],
         "styles": [
           "apps/fourier-analysis-remote/src/styles.scss",
           "node_modules/@angular/material/prebuilt-themes/pink-bluegrey.css"
@@ -68,7 +71,7 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "@nx/angular:webpack-dev-server",
+      "executor": "@nx/angular:dev-server",
       "configurations": {
         "production": {
           "buildTarget": "fourier-analysis-remote:build:production"
@@ -90,10 +93,7 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "options": {
-        "lintFilePatterns": ["apps/fourier-analysis-remote/**/*.ts", "apps/fourier-analysis-remote/**/*.html"]
-      }
+      "executor": "@nx/eslint:lint"
     },
     "test": {
       "executor": "@nx/jest:jest",

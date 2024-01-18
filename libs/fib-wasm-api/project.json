@@ -30,10 +30,7 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "options": {
-        "lintFilePatterns": ["libs/fib-wasm-api/src/**/*.ts", "libs/fib-wasm-api/src/**/*.html"]
-      }
+      "executor": "@nx/eslint:lint"
     }
   },
   "implicitDependencies": ["fib-wasm"],

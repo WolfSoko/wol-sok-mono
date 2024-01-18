@@ -30,10 +30,7 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "options": {
-        "lintFilePatterns": ["libs/utils/gpu-calc/**/*.ts", "libs/utils/gpu-calc/**/*.html"]
-      }
+      "executor": "@nx/eslint:lint"
     }
   },
   "tags": ["shared"]

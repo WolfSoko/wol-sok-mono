@@ -23,20 +23,16 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/shader-examples"],
+      "outputs": [
+        "{workspaceRoot}/coverage/libs/features/lazy/shader-examples"
+      ],
       "options": {
         "jestConfig": "libs/features/lazy/shader-examples/jest.config.ts",
         "codeCoverage": true
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "options": {
-        "lintFilePatterns": [
-          "libs/features/lazy/shader-examples/**/*.ts",
-          "libs/features/lazy/shader-examples/**/*.html"
-        ]
-      }
+      "executor": "@nx/eslint:lint"
     }
   },
   "tags": ["feature:lazy"]

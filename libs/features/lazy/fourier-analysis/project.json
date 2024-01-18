@@ -23,20 +23,16 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/fourier-analysis"],
+      "outputs": [
+        "{workspaceRoot}/coverage/libs/features/lazy/fourier-analysis"
+      ],
       "options": {
         "jestConfig": "libs/features/lazy/fourier-analysis/jest.config.ts",
         "codeCoverage": true
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "options": {
-        "lintFilePatterns": [
-          "libs/features/lazy/fourier-analysis/src/**/*.ts",
-          "libs/features/lazy/fourier-analysis/src/**/*.html"
-        ]
-      }
+      "executor": "@nx/eslint:lint"
     }
   },
   "tags": ["feature:lazy"]

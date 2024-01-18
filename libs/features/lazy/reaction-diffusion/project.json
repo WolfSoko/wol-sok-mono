@@ -23,20 +23,16 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/reaction-diffusion"],
+      "outputs": [
+        "{workspaceRoot}/coverage/libs/features/lazy/reaction-diffusion"
+      ],
       "options": {
         "jestConfig": "libs/features/lazy/reaction-diffusion/jest.config.ts",
         "codeCoverage": true
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "options": {
-        "lintFilePatterns": [
-          "libs/features/lazy/reaction-diffusion/**/*.ts",
-          "libs/features/lazy/reaction-diffusion/**/*.html"
-        ]
-      }
+      "executor": "@nx/eslint:lint"
     }
   },
   "tags": ["feature:lazy"]

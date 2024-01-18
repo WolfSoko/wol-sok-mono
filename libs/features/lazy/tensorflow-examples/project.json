@@ -7,7 +7,9 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["{workspaceRoot}/dist/libs/features/lazy/tensorflow-examples"],
+      "outputs": [
+        "{workspaceRoot}/dist/libs/features/lazy/tensorflow-examples"
+      ],
       "options": {
         "project": "libs/features/lazy/tensorflow-examples/ng-package.json"
       },
@@ -23,20 +25,16 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/tensorflow-examples"],
+      "outputs": [
+        "{workspaceRoot}/coverage/libs/features/lazy/tensorflow-examples"
+      ],
       "options": {
         "jestConfig": "libs/features/lazy/tensorflow-examples/jest.config.ts",
         "codeCoverage": true
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "options": {
-        "lintFilePatterns": [
-          "libs/features/lazy/tensorflow-examples/**/*.ts",
-          "libs/features/lazy/tensorflow-examples/**/*.html"
-        ]
-      }
+      "executor": "@nx/eslint:lint"
     },
     "e2e": {
       "executor": "@nx/cypress:cypress",

@@ -6,7 +6,9 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["{workspaceRoot}/dist/libs/features/reaction-diffusion-kernels"],
+      "outputs": [
+        "{workspaceRoot}/dist/libs/features/reaction-diffusion-kernels"
+      ],
       "options": {
         "project": "libs/features/reaction-diffusion-kernels/ng-package.json"
       },
@@ -22,10 +24,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": ["libs/features/reaction-diffusion-kernels/**/*.ts"]
-      }
+      "outputs": ["{options.outputFile}"]
     }
   },
   "tags": ["feat-shared"]

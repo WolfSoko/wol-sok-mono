@@ -15,7 +15,10 @@
         "main": "apps/rollapolla/src/main.ts",
         "polyfills": ["zone.js"],
         "tsConfig": "apps/rollapolla/tsconfig.app.json",
-        "assets": ["apps/rollapolla/src/favicon.ico", "apps/rollapolla/src/assets"],
+        "assets": [
+          "apps/rollapolla/src/favicon.ico",
+          "apps/rollapolla/src/assets"
+        ],
         "styles": ["apps/rollapolla/src/styles.scss"],
         "scripts": []
       },
@@ -66,10 +69,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": ["apps/rollapolla/**/*.ts", "apps/rollapolla/**/*.html"]
-      }
+      "outputs": ["{options.outputFile}"]
     },
     "test": {
       "executor": "@nx/jest:jest",

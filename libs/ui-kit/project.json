@@ -39,13 +39,7 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "options": {
-        "lintFilePatterns": [
-          "libs/ui-kit/src/**/*.ts",
-          "libs/ui-kit/src/**/*.html"
-        ]
-      }
+      "executor": "@nx/eslint:lint"
     }
   },
   "tags": ["ui", "shared"]
