@@ -91,7 +91,7 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
   private static createMandelbrotMaterial(): ShaderMaterial {
     const uniforms = UniformsUtils.merge([
       UniformsLib['lights'],
-      { zoom: { type: 'f', value: 0.05 } },
+      { zoom: { value: 0.05 } },
     ]);
 
     return new ShaderMaterial({
