@@ -6,7 +6,7 @@ import { createServiceFactory } from '@ngneat/spectator/jest';
 import { DatabaseService } from './database.service';
 
 jest.mock('@angular/fire/firestore', () => ({
-  ...jest.requireActual('@angular/fire/firestore'),
+  Firestore: jest.fn(),
   collection: jest.fn(),
 }));
 describe('DatabaseService', () => {
