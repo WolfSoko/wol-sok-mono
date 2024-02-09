@@ -33,8 +33,6 @@ runs:
       with:
         path: ${{ env.CYPRESS_CACHE_FOLDER }}
         key: cypress-binary-${{ hashFiles('package-lock.json') }}
-      env:
-        CYPRESS_CACHE_FOLDER: 'cache/cypress'
     - name: Cache dependencies
       id: cache
       uses: actions/cache@v4
@@ -49,8 +47,6 @@ runs:
       run: |
         npm install @nx/nx-linux-x64-gnu --ignore-scripts=${{ inputs.run-scripts == 'false' }}
         npm install @rollup/rollup-linux-x64-gnu --ignore-scripts=${{ inputs.run-scripts == 'false' }}
-      env:
-        CYPRESS_CACHE_FOLDER: 'cache/cypress'
 
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress == 'false'
@@ -59,12 +55,9 @@ runs:
         npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
       env:
         CYPRESS_INSTALL_BINARY: 0
-        CYPRESS_CACHE_FOLDER: 'cache/cypress'
 
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress != 'false'
       shell: bash
       run: |
         npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
-      env:
-        CYPRESS_CACHE_FOLDER: 'cache/cypress'
