@@ -165,7 +165,7 @@ describe('GravityWorldService', () => {
     expect(testForce.applyForceFor).toHaveBeenCalledWith(planet2, dT);
   });
 
-  function createMockedForce(id: string = '123'): Force {
+  function createMockedForce(id = '123'): Force {
     return {
       id,
       applyForceFor: jest.fn(),

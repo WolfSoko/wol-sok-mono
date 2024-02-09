@@ -3,8 +3,6 @@ import { Disposable, Renderable, RenderingContext } from './rendering-context';
 
 export class Scene implements Renderable, Disposable {
   private meshs: Mesh[] = [];
-  constructor() {}
-
   add(mesh: Mesh) {
     this.meshs.push(mesh);
   }

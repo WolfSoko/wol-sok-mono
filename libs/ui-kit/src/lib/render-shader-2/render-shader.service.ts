@@ -20,8 +20,6 @@ export class WebglService {
 
   private aTime: number | null = null;
 
-  constructor() {}
-
   public initializeWebGL(canvas: HTMLCanvasElement): boolean {
     this.gl = canvas.getContext('webgl2');
     if (!this.gl) {

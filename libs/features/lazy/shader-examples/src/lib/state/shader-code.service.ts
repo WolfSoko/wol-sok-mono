@@ -21,7 +21,7 @@ export class ShaderCodeService {
       });
   }
 
-  async update(shader: ShaderCode, code: string, permanent: boolean = false) {
+  async update(shader: ShaderCode, code: string, permanent = false) {
     this.shaderCodeStore.update(shader.id, { code });
     if (permanent) {
       await this.shaderCodeDataService.updateShader(shader, { code });

@@ -13,8 +13,8 @@ export class PlaneGeometry extends Geometry {
   constructor(
     private readonly width: number,
     private readonly height: number,
-    private readonly x: number = 0,
-    private readonly y: number = 0
+    private readonly x = 0,
+    private readonly y = 0
   ) {
     super();
 

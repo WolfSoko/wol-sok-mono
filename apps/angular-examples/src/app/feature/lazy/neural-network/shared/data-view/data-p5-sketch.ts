@@ -10,8 +10,8 @@ export class DataP5Sketch {
 
   constructor(
     private p: P5,
-    private width: number = 400,
-    private height: number = 400,
+    private width = 400,
+    private height = 400,
     private brainService: BrainService,
     private onClickHandler: (
       x: number,
