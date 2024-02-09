@@ -36,19 +36,6 @@
     "lint": {
       "executor": "@nx/eslint:lint"
     },
-    "e2e": {
-      "executor": "@nx/cypress:cypress",
-      "options": {
-        "cypressConfig": "libs/features/lazy/tensorflow-examples/cypress.config.ts",
-        "testingType": "e2e",
-        "devServerTarget": "angular-examples:serve"
-      },
-      "configurations": {
-        "production": {
-          "devServerTarget": "angular-examples:serve:production"
-        }
-      }
-    },
     "component-test": {
       "executor": "@nx/cypress:cypress",
       "options": {
