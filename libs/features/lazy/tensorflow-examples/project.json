@@ -41,7 +41,8 @@
       "options": {
         "cypressConfig": "libs/features/lazy/tensorflow-examples/cypress.config.ts",
         "testingType": "e2e",
-        "devServerTarget": "angular-examples:serve"
+        "devServerTarget": "angular-examples:serve",
+        "port": 4201
       },
       "configurations": {
         "production": {
