@@ -1,3 +1,4 @@
+import { nxE2EPreset } from '@nx/cypress/plugins/cypress-preset';
 import { defineConfig } from 'cypress';
 
 module.exports = defineConfig({
@@ -9,11 +10,18 @@ module.exports = defineConfig({
   chromeWebSecurity: false,
   projectId: 'jyisda',
   e2e: {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    setupNodeEvents(on, config) {
-      // e2e testing node events setup code
-    },
     specPattern: './src/e2e/**/*.cy.{js,jsx,ts,tsx}',
     supportFile: './src/support/e2e.ts',
+    ...nxE2EPreset(__filename, {
+      cypressDir: 'src',
+      bundler: 'webpack',
+      webServerCommands: {
+        default: 'nx run angular-examples:serve',
+      },
+      webServerConfig: {
+        timeout: 120000,
+      },
+    }),
+    baseUrl: 'http://localhost:4200',
   },
 });

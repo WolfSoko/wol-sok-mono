@@ -4,21 +4,6 @@
   "sourceRoot": "apps/angular-examples-e2e/src",
   "projectType": "application",
   "targets": {
-    "e2e": {
-      "executor": "@nx/cypress:cypress",
-      "outputs": ["{workspaceRoot}/test-reports/apps/angular-examples-e2e"],
-      "options": {
-        "cypressConfig": "apps/angular-examples-e2e/cypress.config.ts",
-        "devServerTarget": "angular-examples:serve",
-        "browser": "chrome",
-        "testingType": "e2e"
-      },
-      "configurations": {
-        "development": {
-          "watch": true
-        }
-      }
-    },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
