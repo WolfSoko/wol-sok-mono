@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.1.63](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.62...v4.1.63) (2024-02-09)
+
+
+### Bug Fixes
+
+* 🐛 remove type of uniform variable ([17eb0e5](https://github.com/WolfSoko/wol-sok-mono/commit/17eb0e513835c02815119a4f8b2caf680c830f1b))
+
 ### [4.1.62](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.61...v4.1.62) (2024-01-17)
 
 ### [4.1.61](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.60...v4.1.61) (2024-01-03)
