@@ -101,10 +101,6 @@ jobs:
           cypress: true
           apt-packages: true
           run-scripts: true
-      - name: Printout cypress folder contents recursive
-        run: |
-          echo ${{ env.CYPRESS_CACHE_FOLDER }}
-          ls -laR ${{ env.CYPRESS_CACHE_FOLDER }}
 
       - name: Start Nx Agent ${{ matrix.agent }}
         run: npx nx-cloud start-agent
