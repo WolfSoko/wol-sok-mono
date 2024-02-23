@@ -1,15 +1,44 @@
 <mat-card appearance="raised">
   <mat-card-header>
     <mat-card-title>
-      <span>Input Wave</span>
-      <button mat-icon-button (click)="listenToWaveAudio()">
+      @if (
+        audioRecorderState().audioRecorderState === "ready" ||
+        audioRecorderState().audioRecorderState === "recorded"
+      ) {
+        <button
+          mat-icon-button
+          (click)="recordSound()"
+          aria-label="Record Audio for Fourier Analysis"
+        >
+          <mat-icon>mic</mat-icon>
+        </button>
+      } @else {
+        <button
+          class="stop-recording-button"
+          mat-icon-button
+          (click)="stopRecording()"
+          aria-label="Stop Recording"
+        >
+          <mat-icon>stop</mat-icon>
+        </button>
+      }
+      <button
+        [disabled]="audioRecorderState().audioRecorderState === 'recording'"
+        aria-label="Listen to wave"
+        mat-icon-button
+        (click)="listenToWaveAudio()"
+      >
         <mat-icon>volume_up</mat-icon>
       </button>
     </mat-card-title>
   </mat-card-header>
   <mat-card-content>
-    @if (activeWave$ | async; as wave) {
-      <lazy-feat-fanal-wave-canvas [waveWidth]="width" [waveHeight]="height" [wave]="wave">
+    @if (activeWave(); as wave) {
+      <lazy-feat-fanal-wave-canvas
+        [waveWidth]="width"
+        [waveHeight]="height"
+        [wave]="wave"
+      >
       </lazy-feat-fanal-wave-canvas>
     }
   </mat-card-content>

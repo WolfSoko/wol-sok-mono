@@ -1,12 +1,21 @@
 import { ID } from '@datorama/akita';
 import { InputWaveOptionsState } from './input-wave-options.store';
 
-export interface InputWave {
-  frequencies: number[];
+export type InputWave = GeneratedInputWave | RecordedInputWave;
+
+export interface InputWaveProps {
   id: ID;
-  points: number[];
+  points: ArrayLike<number>;
   samplesPerSec: number;
   lengthInMs: number;
+}
+
+export interface GeneratedInputWave extends InputWaveProps {
+  type: 'generated';
+  frequencies: ArrayLike<number>;
+}
+export interface RecordedInputWave extends InputWaveProps {
+  type: 'recorded';
 }
 
 let id = 0;
@@ -14,16 +23,30 @@ let id = 0;
 /**
  * A factory function that creates InputWave
  */
-export function createInputWave(params: Partial<InputWave>) {
+export function createGeneratedInputWave(
+  params: Partial<GeneratedInputWave>
+): GeneratedInputWave {
   return {
     id: id++,
     points: [],
+    type: 'generated',
     ...params,
-  } as InputWave;
+  } as GeneratedInputWave;
+}
+
+export function createRecordedInputWave(
+  params: Partial<RecordedInputWave>
+): RecordedInputWave {
+  return {
+    id: id++,
+    points: [],
+    type: 'recorded',
+    ...params,
+  } as RecordedInputWave;
 }
 
 export function createFrequencyPoints(
-  frequencies: number[] = [220], // 220 Hz = "A" note
+  frequencies: ArrayLike<number> = [220], // 220 Hz = "A" note
   lengthMs = 1000,
   samplesPerSec = 3000
 ): Array<number> {
@@ -32,7 +55,7 @@ export function createFrequencyPoints(
     const samples = Math.floor((samplesPerSec * lengthMs) / 1000);
     while (step < samples) {
       const t = step / samplesPerSec;
-      yield frequencies.reduce(
+      yield Array.from(frequencies).reduce(
         (previousFreq, currentFreq) =>
           previousFreq + Math.sin(currentFreq * 2 * Math.PI * t),
         0
@@ -44,14 +67,36 @@ export function createFrequencyPoints(
   return Array.from(gen());
 }
 
-export function createFrequencyWave(
+export function createGeneratedFrequencyWave(
   { frequencies, samplesPerSec, lengthInMs }: InputWaveOptionsState,
   points: number[]
-): InputWave {
-  return createInputWave({
+): GeneratedInputWave {
+  return createGeneratedInputWave({
     points,
     frequencies,
     lengthInMs,
     samplesPerSec: samplesPerSec,
   });
+}
+
+export function createRecordedFrequencyWave(
+  {
+    samplesPerSec,
+    lengthInMs,
+  }: Omit<InputWaveOptionsState, 'frequencies' | 'type'>,
+  points: ArrayLike<number>
+): RecordedInputWave {
+  return createRecordedInputWave({
+    points,
+    lengthInMs,
+    samplesPerSec: samplesPerSec,
+  });
+}
+
+export function isGeneratedWave(wave: InputWave): wave is GeneratedInputWave {
+  return wave.type === 'generated';
+}
+
+export function isRecordedWave(wave: InputWave): wave is RecordedInputWave {
+  return wave.type === 'recorded';
 }

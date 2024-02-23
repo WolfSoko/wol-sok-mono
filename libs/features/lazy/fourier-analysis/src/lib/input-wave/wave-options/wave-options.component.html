@@ -2,25 +2,56 @@
   <form [formGroup]="form">
     <div formArrayName="frequencies">
       <p>Frequencies:</p>
-      @for (frequency of frequencies.controls; track frequency; let i = $index) {
+      @for (
+        frequency of frequencies.controls;
+        track frequency;
+        let i = $index
+      ) {
         <div class="frequency-sliders-grid">
-          <mat-slider class="config-slider" [max]="500" [min]="20" [step]="1" discrete="true"
+          <mat-slider
+            [disabled]="waveOptions.type === 'recorded'"
+            class="config-slider"
+            [max]="500"
+            [min]="20"
+            [step]="1"
+            discrete="true"
             ><input matSliderThumb [formControlName]="i" />
           </mat-slider>
           <span>{{ frequency?.value }} Hz</span>
-          <button color="warn" mat-icon-button (click)="removeFrequency(i)">
+          <button
+            [disabled]="waveOptions.type === 'recorded'"
+            color="warn"
+            mat-icon-button
+            (click)="removeFrequency(i)"
+          >
             <mat-icon>remove</mat-icon>
           </button>
         </div>
       }
-      <button mat-button (click)="addFrequency()">Add frequency</button>
+      <button mat-button (click)="addFrequency()">
+        Add frequency{{
+          waveOptions.type === "recorded" ? " to generate new wave" : ""
+        }}
+      </button>
     </div>
     <div class="config-sliders-grid">
-      <mat-slider class="config-slider" [max]="5000" [min]="200" [step]="1" discrete="true"
+      <mat-slider
+        [disabled]="waveOptions.type === 'recorded'"
+        class="config-slider"
+        [max]="5000"
+        [min]="200"
+        [step]="1"
+        discrete="true"
         ><input matSliderThumb formControlName="lengthInMs" />
       </mat-slider>
-      <span>Duration in ms : {{ waveOptions.lengthInMs }}</span>
-      <mat-slider class="config-slider" [max]="10000" [min]="3000" [step]="100" discrete="true"
+      <span>Duration in ms : {{ waveOptions.lengthInMs | number }}</span>
+      <mat-slider
+        [disabled]="waveOptions.type === 'recorded'"
+        class="config-slider"
+        [max]="10000"
+        [min]="3000"
+        [step]="100"
+        discrete="true"
         ><input matSliderThumb formControlName="samplesPerSec" />
       </mat-slider>
       <span>Sample rate: {{ waveOptions.samplesPerSec }}</span>

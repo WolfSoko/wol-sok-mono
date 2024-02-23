@@ -14,7 +14,16 @@ import { MatSliderModule } from '@angular/material/slider';
 import { PersistNgFormPlugin } from '@datorama/akita';
 import { Observable } from 'rxjs';
 import { InputWaveOptionsQuery } from '../../state/input-wave-options.query';
-import { InputWaveOptionsState } from '../../state/input-wave-options.store';
+import {
+  InputWaveOptionsState,
+  InputWaveOptionsStore,
+} from '../../state/input-wave-options.store';
+
+interface WaveOptionsForm {
+  samplesPerSec: FormControl<number | null>;
+  lengthInMs: FormControl<number | null>;
+  frequencies: FormArray<FormControl<number | null>>;
+}
 
 @Component({
   standalone: true,
@@ -33,11 +42,7 @@ import { InputWaveOptionsState } from '../../state/input-wave-options.store';
 export class WaveOptionsComponent implements OnDestroy {
   private readonly persistForm: PersistNgFormPlugin;
   waveOptions$: Observable<InputWaveOptionsState>;
-  form: FormGroup<{
-    samplesPerSec: FormControl<number | null>;
-    lengthInMs: FormControl<number | null>;
-    frequencies: FormArray<FormControl<number | null>>;
-  }>;
+  form: FormGroup<WaveOptionsForm>;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -58,11 +63,7 @@ export class WaveOptionsComponent implements OnDestroy {
     return this.form.controls.frequencies;
   }
 
-  private initFormValues(): FormGroup<{
-    samplesPerSec: FormControl<number | null>;
-    lengthInMs: FormControl<number | null>;
-    frequencies: FormArray<FormControl<number | null>>;
-  }> {
+  private initFormValues(): FormGroup<WaveOptionsForm> {
     return this.fb.group({
       frequencies: this.fb.array<FormControl<number | null>>([]),
       lengthInMs: this.fb.control<number | null>(null, [Validators.min(10)]),

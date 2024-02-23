@@ -88,10 +88,9 @@ export class ServiceWorkerUpdateService {
     );
   }
 
-  activateUpdate() {
-    return this.swUpdate
-      .activateUpdate()
-      .then(() => this.router.navigate(['/home']))
-      .then(() => document.location.reload());
+  async activateUpdate() {
+    await this.swUpdate.activateUpdate();
+    await this.router.navigate(['/home']);
+    return document.location.reload();
   }
 }
