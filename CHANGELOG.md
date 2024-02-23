@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.2.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.104...v4.2.0) (2024-02-23)
+
+
+### Features
+
+* **feat-lazy-fourier-analysis:** ✨ add button for analysing recorded sound ([736e0a5](https://github.com/WolfSoko/wol-sok-mono/commit/736e0a553f47fa4dcff38c60d3f21b66732fe272))
+
+
+### Bug Fixes
+
+* 🐛 fix usage before init error ([43ceb00](https://github.com/WolfSoko/wol-sok-mono/commit/43ceb00bf72c31c704febdc31aa898575ba4b6ce))
+
 ### [4.1.104](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.103...v4.1.104) (2024-02-22)
 
 ### [4.1.103](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.102...v4.1.103) (2024-02-22)
