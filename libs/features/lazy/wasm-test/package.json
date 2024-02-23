@@ -8,6 +8,6 @@
     "@datorama/akita": "^8.0.0"
   },
   "dependencies": {
-    "tslib": "2.5.0"
+    "tslib": "2.5.2"
   }
 }
