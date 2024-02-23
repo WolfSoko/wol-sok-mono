@@ -1,4 +1,4 @@
-import { effect, Injectable, Signal } from '@angular/core';
+import { effect, inject, Injectable, Signal } from '@angular/core';
 import { applyTransaction, ID } from '@datorama/akita';
 import { delay, filter, map, tap } from 'rxjs/operators';
 import {
@@ -40,15 +40,16 @@ function playByteArray(
 
 @Injectable({ providedIn: 'root' })
 export class InputWaveService {
-  audioRecorderState: Signal<AudioRecordingState> =
+  private readonly audioRecorderService: AudioRecorderService =
+    inject(AudioRecorderService);
+  private readonly audioRecorderState: Signal<AudioRecordingState> =
     this.audioRecorderService.audioRecorderState;
 
   constructor(
     private readonly inputWaveStore: InputWaveStore,
-    private readonly inputWaveOptionsQuery: InputWaveOptionsQuery,
+    inputWaveOptionsQuery: InputWaveOptionsQuery,
     private readonly inputWaveOptionsStore: InputWaveOptionsStore,
-    private readonly inputWaveQuery: InputWaveQuery,
-    private readonly audioRecorderService: AudioRecorderService
+    private readonly inputWaveQuery: InputWaveQuery
   ) {
     inputWaveOptionsQuery
       .select()
