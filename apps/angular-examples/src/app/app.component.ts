@@ -24,7 +24,7 @@ import { ROUTER_LINKS } from './router-links.token';
 })
 export class AppComponent {
   @HostBinding('attr.app-version')
-  appVersionAttr = `angular-examples@${this.env.version}`;
+  appVersionAttr: string;
 
   constructor(
     // we need title service to update page title.
@@ -34,5 +34,6 @@ export class AppComponent {
     @Inject(ENV_TOKEN) private env: Environment
   ) {
     gtmManager.startTracking();
+    this.appVersionAttr = `angular-examples@${this.env.version}`;
   }
 }

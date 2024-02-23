@@ -3,8 +3,13 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "module": "commonjs",
-    "target": "es2016",
+    "target": "ES2022",
     "types": ["jest", "node"]
   },
-  "include": ["cdk/jest.config.ts", "cdk/**/*.test.ts", "cdk/**/*.spec.ts", "src/**/*.d.ts"]
+  "include": [
+    "cdk/jest.config.ts",
+    "cdk/**/*.test.ts",
+    "cdk/**/*.spec.ts",
+    "src/**/*.d.ts"
+  ]
 }

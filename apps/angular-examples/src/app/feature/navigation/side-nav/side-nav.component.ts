@@ -6,6 +6,7 @@ import {
   Component,
   computed,
   effect,
+  inject,
   Inject,
   signal,
   ViewContainerRef,
@@ -38,6 +39,8 @@ import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SideNavComponent {
+  private readonly breakpointObserver: BreakpointObserver =
+    inject(BreakpointObserver);
   private isLargeScreen = toSignal(
     this.breakpointObserver
       .observe([Breakpoints.Large, Breakpoints.XLarge])
@@ -51,7 +54,6 @@ export class SideNavComponent {
 
   constructor(
     @Inject(ROUTER_LINKS) public routerLinks: MainNavRoute[],
-    private readonly breakpointObserver: BreakpointObserver,
     private viewContainerRef: ViewContainerRef
   ) {
     effect(
