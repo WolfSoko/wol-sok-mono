@@ -1,15 +1,22 @@
 <mat-card appearance="raised">
   <mat-card-header>
-    <mat-card-title>FFT - Center point analysis - Manual implementation </mat-card-title>
-    <mat-card-subtitle
-      >We wrap the signal wave around the imaginary cirlce using different frequencies and and measure the centerpoint.
+    <mat-card-title
+      >NFT - Center point analysis - Manual implementation
+    </mat-card-title>
+    <mat-card-subtitle>
+      We wrap the signal wave around the imaginary cirlce using different
+      frequencies and measure the centerpoint.
       <br />
       If the centerpoint is of the middle, we have found a frequency
     </mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
     @if (activeWave$ | async; as wave) {
-      <lazy-feat-fanal-circle-canvas [waveWidth]="width" [waveHeight]="height" [wave]="wave" />
+      <lazy-feat-fanal-circle-canvas
+        [waveWidth]="width"
+        [waveHeight]="height"
+        [wave]="wave"
+      />
     }
   </mat-card-content>
 </mat-card>
