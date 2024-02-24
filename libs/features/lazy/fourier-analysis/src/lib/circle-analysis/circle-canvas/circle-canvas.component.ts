@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import * as math from 'mathjs';
 import P5, { Graphics } from 'p5';
-import { InputWave } from '../../state/input-wave.model';
+import { InputWave } from '../../model/input-wave.model';
 
 const NEG_TWO_PI = -2 * Math.PI;
 const CIRCLE_DRAW_SAMPLES = 800;

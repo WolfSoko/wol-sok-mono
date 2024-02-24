@@ -10,7 +10,7 @@
     "importHelpers": true,
     "target": "ES2022",
     "module": "esnext",
-    "lib": ["es2017", "dom"],
+    "lib": ["dom", "ES2023"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "allowJs": true,

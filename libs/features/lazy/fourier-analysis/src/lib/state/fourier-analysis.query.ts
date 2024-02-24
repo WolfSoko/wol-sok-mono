@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Query } from '@datorama/akita';
 import { Observable } from 'rxjs';
+import { InputWave } from '../model/input-wave.model';
 import {
   FourierAnalysisState,
   FourierAnalysisStore,
 } from './fourier-analysis.store';
-import { InputWave } from './input-wave.model';
 import { InputWaveQuery } from './input-wave.query';
 
 @Injectable({ providedIn: 'root' })

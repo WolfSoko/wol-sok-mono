@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormArray,
   FormBuilder,
@@ -11,18 +12,14 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
-import { PersistNgFormPlugin } from '@datorama/akita';
-import { Observable } from 'rxjs';
-import { InputWaveOptionsQuery } from '../../state/input-wave-options.query';
-import {
-  InputWaveOptionsState,
-  InputWaveOptionsStore,
-} from '../../state/input-wave-options.store';
+import { debounceTime, Observable } from 'rxjs';
+import { InputWaveOptionsModel } from '../../model/input-wave-options.model';
+import { InputWaveOptionsRepo } from '../../state/input-wave-options.repo';
 
 interface WaveOptionsForm {
-  samplesPerSec: FormControl<number | null>;
-  lengthInMs: FormControl<number | null>;
-  frequencies: FormArray<FormControl<number | null>>;
+  samplesPerSec: FormControl<number>;
+  lengthInMs: FormControl<number>;
+  frequencies: FormArray<FormControl<number>>;
 }
 
 @Component({
@@ -39,55 +36,80 @@ interface WaveOptionsForm {
   styleUrls: ['./wave-options.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WaveOptionsComponent implements OnDestroy {
-  private readonly persistForm: PersistNgFormPlugin;
-  waveOptions$: Observable<InputWaveOptionsState>;
+export class WaveOptionsComponent {
+  waveOptions$: Observable<InputWaveOptionsModel>;
   form: FormGroup<WaveOptionsForm>;
 
   constructor(
     private readonly fb: FormBuilder,
-    private readonly inputWaveOptionsQuery: InputWaveOptionsQuery
+    private readonly inputWaveOptionsRepo: InputWaveOptionsRepo
   ) {
-    this.waveOptions$ = this.inputWaveOptionsQuery.select();
-    this.form = this.initFormValues();
-    this.persistForm = new PersistNgFormPlugin(
-      this.inputWaveOptionsQuery,
-      undefined,
-      {
-        debounceTime: 500,
+    this.waveOptions$ = this.inputWaveOptionsRepo.state$;
+    this.form = this.initForm();
+
+    effect(() => {
+      const optionsModel = this.inputWaveOptionsRepo.state();
+      const updateOptions = { emitEvent: false };
+
+      if (optionsModel) {
+        this.updateForm(optionsModel, updateOptions);
       }
-    ).setForm(this.form, this.fb);
+    });
+
+    this.form.valueChanges
+      .pipe(debounceTime(300), takeUntilDestroyed())
+      .subscribe((formValue) => {
+        this.inputWaveOptionsRepo.update(formValue);
+      });
   }
 
-  get frequencies(): FormArray<FormControl<number | null>> {
+  private updateForm(
+    optionsModel: InputWaveOptionsModel,
+    updateOptions: { emitEvent: boolean }
+  ): void {
+    const { frequencies, ...rest } = optionsModel;
+    this.form.patchValue(rest, updateOptions);
+
+    const frequenciesFormControls = frequencies.map((freq) =>
+      this.fb.nonNullable.control(freq)
+    );
+    this.form.setControl(
+      'frequencies',
+      this.fb.array(frequenciesFormControls),
+      updateOptions
+    );
+
+    if (optionsModel.type === 'generated') {
+      this.form.enable(updateOptions);
+    }
+    if (optionsModel.type === 'recorded') {
+      this.form.disable(updateOptions);
+    }
+  }
+
+  get frequencies(): FormArray<FormControl<number>> {
     return this.form.controls.frequencies;
   }
 
-  private initFormValues(): FormGroup<WaveOptionsForm> {
+  private initForm(): FormGroup<WaveOptionsForm> {
     return this.fb.group({
-      frequencies: this.fb.array<FormControl<number | null>>([]),
-      lengthInMs: this.fb.control<number | null>(null, [Validators.min(10)]),
-      samplesPerSec: this.fb.control<number | null>(null, [
+      frequencies: this.fb.nonNullable.array<FormControl<number>>([]),
+      lengthInMs: this.fb.nonNullable.control<number>(2, [Validators.min(10)]),
+      samplesPerSec: this.fb.nonNullable.control<number>(1000, [
         Validators.min(100),
       ]),
     });
   }
 
-  ngOnDestroy(): void {
-    if (this.persistForm != null) {
-      this.persistForm.destroy();
-    }
-  }
-
   addFrequency() {
-    this.frequencies.push(
-      this.fb.control(this.frequencies.at(this.frequencies.length - 1).value)
-    );
+    this.inputWaveOptionsRepo.addFrequency();
   }
 
   removeFrequency(i: number) {
-    if (this.frequencies.length > 1) {
-      this.frequencies.removeAt(i);
-    }
+    this.inputWaveOptionsRepo.removeFrequency(i);
+  }
+
+  generateDefaultWave(): void {
+    this.inputWaveOptionsRepo.reset();
   }
 }

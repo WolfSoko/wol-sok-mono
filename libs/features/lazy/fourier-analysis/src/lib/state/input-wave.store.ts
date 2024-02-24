@@ -5,8 +5,8 @@ import {
   EntityStore,
   StoreConfig,
 } from '@datorama/akita';
-import { AudioRecorderState, InputWaveUIModel } from './input-wave-ui.model';
-import { InputWave } from './input-wave.model';
+import { InputWave } from '../model/input-wave.model';
+import { InputWaveUIModel } from './input-wave-ui.model';
 
 export interface InputWaveState extends EntityState<InputWave>, ActiveState {
   ui: InputWaveUIModel;

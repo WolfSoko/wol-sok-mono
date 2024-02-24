@@ -14,7 +14,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import P5 from 'p5';
-import { InputWave } from '../../state/input-wave.model';
+import { InputWave } from '../../model/input-wave.model';
 
 interface WaveCanvasChanges extends SimpleChanges {
   waveWidth: SimpleChange;

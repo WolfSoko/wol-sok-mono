@@ -2,22 +2,21 @@ import { effect, inject, Injectable, Signal } from '@angular/core';
 import { applyTransaction, ID } from '@datorama/akita';
 import { delay, filter, map, tap } from 'rxjs/operators';
 import {
-  AudioRecorderService,
-  AudioRecordingState,
-} from '../util/audio-recorder.service';
-import { InputWaveOptionsQuery } from './input-wave-options.query';
-import {
-  InputWaveOptionsState,
-  InputWaveOptionsStore,
+  InputWaveOptionsModel,
   waveOptionsFromWave,
-} from './input-wave-options.store';
-import { InputWaveUIModel } from './input-wave-ui.model';
+} from '../model/input-wave-options.model';
 import {
   createFrequencyPoints,
   createGeneratedFrequencyWave,
   createRecordedFrequencyWave,
   InputWave,
-} from './input-wave.model';
+} from '../model/input-wave.model';
+import {
+  AudioRecorderService,
+  AudioRecordingState,
+} from '../util/audio-recorder.service';
+import { InputWaveOptionsRepo } from './input-wave-options.repo';
+import { InputWaveUIModel } from './input-wave-ui.model';
 import { InputWaveQuery } from './input-wave.query';
 import { InputWaveStore } from './input-wave.store';
 
@@ -47,18 +46,15 @@ export class InputWaveService {
 
   constructor(
     private readonly inputWaveStore: InputWaveStore,
-    inputWaveOptionsQuery: InputWaveOptionsQuery,
-    private readonly inputWaveOptionsStore: InputWaveOptionsStore,
+    private readonly inputWaveOptionsRepo: InputWaveOptionsRepo,
     private readonly inputWaveQuery: InputWaveQuery
   ) {
-    inputWaveOptionsQuery
-      .select()
+    inputWaveOptionsRepo.state$
       .pipe(
-        tap((options) => console.log('options', options)),
         tap(() => this.inputWaveStore.setLoading(true)),
         delay(1),
         filter(({ type }) => type === 'generated'),
-        map((options: InputWaveOptionsState) => {
+        map((options: InputWaveOptionsModel) => {
           const points = createFrequencyPoints(
             options.frequencies,
             options.lengthInMs,
@@ -90,7 +86,7 @@ export class InputWaveService {
               audioData
             );
             this.setActive(wave);
-            this.inputWaveOptionsStore.update(waveOptionsFromWave(wave));
+            this.inputWaveOptionsRepo.update(waveOptionsFromWave(wave));
             break;
           }
           case 'ready':
@@ -120,6 +116,7 @@ export class InputWaveService {
   updateAudioRecorderState(audioRecorderState: InputWaveUIModel) {
     this.inputWaveStore.update({ ui: audioRecorderState });
   }
+
   setActive(wave: InputWave) {
     applyTransaction(() => {
       this.inputWaveStore.add(wave);
@@ -145,6 +142,7 @@ export class InputWaveService {
   recordAudio(): void {
     this.audioRecorderService.recordAudio();
   }
+
   stopRecording(): void {
     this.audioRecorderService.stopRecording();
   }

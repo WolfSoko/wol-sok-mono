@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { Observable } from 'rxjs';
-import { InputWave } from '../state/input-wave.model';
+import { InputWave } from '../model/input-wave.model';
 import { InputWaveQuery } from '../state/input-wave.query';
 import { CircleCanvasComponent } from './circle-canvas/circle-canvas.component';
 
