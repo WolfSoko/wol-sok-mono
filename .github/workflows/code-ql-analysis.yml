@@ -9,6 +9,9 @@ on:
   schedule:
     - cron: '30 5 * * 3' # 5:30am every Wednesday
 
+env:
+  HUSKY: 0
+
 jobs:
   analyze:
     name: Analyze

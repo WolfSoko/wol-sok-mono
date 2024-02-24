@@ -16,6 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  HUSKY: 0
   RELEASE_VERSION: ${{ github.event.inputs.version || github.ref_name }}
 
 jobs:

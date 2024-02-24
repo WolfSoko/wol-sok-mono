@@ -14,6 +14,7 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') || startsWith(github.ref_name, 'renovate-github-sh') }}
 
 env:
+  HUSKY: 0
   NODE_OPTIONS: '--max_old_space_size=4096'
   NX_BRANCH: ${{ github.event.number || github.ref_name }}
   NX_CLOUD_DISTRIBUTED_EXECUTION: 'true'
