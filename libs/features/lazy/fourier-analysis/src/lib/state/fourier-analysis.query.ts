@@ -6,7 +6,7 @@ import {
   FourierAnalysisState,
   FourierAnalysisStore,
 } from './fourier-analysis.store';
-import { InputWaveQuery } from './input-wave.query';
+import { InputWaveRepo } from './input-wave-repo';
 
 @Injectable({ providedIn: 'root' })
 export class FourierAnalysisQuery extends Query<FourierAnalysisState> {
@@ -14,9 +14,9 @@ export class FourierAnalysisQuery extends Query<FourierAnalysisState> {
 
   constructor(
     protected override store: FourierAnalysisStore,
-    private waveQuery: InputWaveQuery
+    private waveQuery: InputWaveRepo
   ) {
     super(store);
-    this.selectActiveWave = this.waveQuery.selectActive();
+    this.selectActiveWave = this.waveQuery.activeWave$;
   }
 }

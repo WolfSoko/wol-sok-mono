@@ -1,10 +1,9 @@
-import { ID } from '@datorama/akita';
 import { InputWaveOptionsModel } from './input-wave-options.model';
 
 export type InputWave = GeneratedInputWave | RecordedInputWave;
 
 export interface InputWaveProps {
-  id: ID;
+  id: number;
   points: ArrayLike<number>;
   samplesPerSec: number;
   lengthInMs: number;
@@ -75,20 +74,6 @@ export function createGeneratedFrequencyWave(
   return createGeneratedInputWave({
     points,
     frequencies,
-    lengthInMs,
-    samplesPerSec: samplesPerSec,
-  });
-}
-
-export function createRecordedFrequencyWave(
-  {
-    samplesPerSec,
-    lengthInMs,
-  }: Omit<InputWaveOptionsModel, 'frequencies' | 'type'>,
-  points: ArrayLike<number>
-): RecordedInputWave {
-  return createRecordedInputWave({
-    points,
     lengthInMs,
     samplesPerSec: samplesPerSec,
   });

@@ -14,7 +14,6 @@ import { WaveOptionsComponent } from '../input-wave/wave-options/wave-options.co
 import { FourierAnalysisQuery } from '../state/fourier-analysis.query';
 import { FourierAnalysisService } from '../state/fourier-analysis.service';
 import { FourierAnalysisState } from '../state/fourier-analysis.store';
-import { InputWaveService } from '../state/input-wave.service';
 
 @Component({
   standalone: true,
@@ -47,8 +46,7 @@ export class FourierAnalysisComponent {
   constructor(
     private el: ElementRef,
     private fourierAnalysisQuery: FourierAnalysisQuery,
-    private _fourierAnalysisTestService: FourierAnalysisService,
-    private _inputWaveService: InputWaveService
+    private _fourierAnalysisTestService: FourierAnalysisService
   ) {
     this.fourierAnalysis$ = this.fourierAnalysisQuery.select();
     this.isLoading$ = this.fourierAnalysisQuery.selectLoading();

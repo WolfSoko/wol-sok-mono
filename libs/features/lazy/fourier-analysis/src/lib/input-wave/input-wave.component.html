@@ -2,8 +2,8 @@
   <mat-card-header>
     <mat-card-title>
       @if (
-        audioRecorderState().audioRecorderState === "ready" ||
-        audioRecorderState().audioRecorderState === "recorded"
+        audioRecorderState().state === "ready" ||
+        audioRecorderState().state === "recorded"
       ) {
         <button
           mat-icon-button
@@ -23,7 +23,7 @@
         </button>
       }
       <button
-        [disabled]="audioRecorderState().audioRecorderState === 'recording'"
+        [disabled]="audioRecorderState().state === 'recording'"
         aria-label="Listen to wave"
         mat-icon-button
         (click)="listenToWaveAudio()"

@@ -1,9 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  Signal,
+} from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { Observable } from 'rxjs';
 import { InputWave } from '../model/input-wave.model';
-import { InputWaveQuery } from '../state/input-wave.query';
+import { InputWaveRepo } from '../state/input-wave-repo';
 import { CircleCanvasComponent } from './circle-canvas/circle-canvas.component';
 
 @Component({
@@ -17,9 +21,9 @@ import { CircleCanvasComponent } from './circle-canvas/circle-canvas.component';
 export class CircleAnalysisComponent {
   @Input() width!: number;
   @Input() height!: number;
-  activeWave$: Observable<InputWave | undefined>;
+  activeWave: Signal<InputWave | undefined>;
 
-  constructor(private waveQuery: InputWaveQuery) {
-    this.activeWave$ = waveQuery.selectActive();
+  constructor(private waveQuery: InputWaveRepo) {
+    this.activeWave = waveQuery.activeWave;
   }
 }

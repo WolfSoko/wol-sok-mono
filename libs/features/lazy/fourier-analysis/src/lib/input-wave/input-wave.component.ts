@@ -3,18 +3,17 @@ import {
   ChangeDetectionStrategy,
   Component,
   effect,
+  inject,
   Input,
   Signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatLabel } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { InputWave } from '../model/input-wave.model';
-import { InputWaveUIModel } from '../state/input-wave-ui.model';
-import { InputWaveQuery } from '../state/input-wave.query';
+import { InputWaveRepo } from '../state/input-wave-repo';
 import { InputWaveService } from '../state/input-wave.service';
 import { WaveCanvasComponent } from './wave-canvas/wave-canvas.component';
 
@@ -34,24 +33,21 @@ import { WaveCanvasComponent } from './wave-canvas/wave-canvas.component';
   ],
 })
 export class InputWaveComponent {
+  private waveRepo: InputWaveRepo = inject(InputWaveRepo);
+  private inputWaveService: InputWaveService = inject(InputWaveService);
+  private snackbar: MatSnackBar = inject(MatSnackBar);
+
   @Input() width = 0;
   @Input() height = 0;
   activeWave: Signal<InputWave | undefined>;
-  audioRecorderState: Signal<InputWaveUIModel>;
+  audioRecorderState = this.waveRepo.audioRecorderState;
 
-  constructor(
-    private waveQuery: InputWaveQuery,
-    private inputWaveService: InputWaveService,
-    private snackbar: MatSnackBar
-  ) {
-    this.activeWave = toSignal(waveQuery.selectActive());
-    this.audioRecorderState = toSignal(waveQuery.selectUI(), {
-      initialValue: { audioRecorderState: 'ready' },
-    });
+  constructor() {
+    this.activeWave = this.waveRepo.activeWave;
 
     effect(() => {
-      const recState = this.audioRecorderState();
-      if (recState.audioRecorderState === 'error') {
+      const recState = this.waveRepo.audioRecorderState();
+      if (recState?.state === 'error') {
         const error = recState.error;
         console.error('Error recording Audio', error);
         this.informAboutRecordingError(error);
@@ -77,7 +73,7 @@ export class InputWaveComponent {
       message += ' Permission given?';
     }
 
-    const snack = this.snackbar.open(message, undefined, {
+    this.snackbar.open(message, undefined, {
       duration: 6000,
       horizontalPosition: 'center',
       verticalPosition: 'top',
