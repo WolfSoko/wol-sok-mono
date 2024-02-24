@@ -166,7 +166,7 @@
     "standard-version": "9.5.0",
     "storybook": "^7.6.17",
     "ts-jest": "29.1.2",
-    "ts-node": "10.9.1",
+    "ts-node": "10.9.2",
     "ts-shader-loader": "^2.0.2",
     "typescript": "5.3.3",
     "webpack": "5.90.3",
