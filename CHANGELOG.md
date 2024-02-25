@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.4.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.3.6...v4.4.0) (2024-02-25)
+
+
+### Features
+
+* ✨ use new angular logo ([8588d30](https://github.com/WolfSoko/wol-sok-mono/commit/8588d30249f5c6e3cc0660811c308c003c5d41e8))
+
 ### [4.3.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.3.5...v4.3.6) (2024-02-25)
 
 ### [4.3.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.3.4...v4.3.5) (2024-02-25)
