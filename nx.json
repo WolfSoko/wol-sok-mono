@@ -46,7 +46,10 @@
     },
     "e2e": {
       "inputs": ["default", "^production"],
-      "outputs": ["{workspaceRoot}/test-reports/{projectRoot}"],
+      "outputs": [
+        "{workspaceRoot}/test-reports/{projectRoot}",
+        "{workspaceRoot}/dist/.playwright/{projectRoot}"
+      ],
       "cache": true
     },
     "test": {
