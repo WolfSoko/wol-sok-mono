@@ -33,8 +33,6 @@ launch-templates:
           BASE_BRANCH: 'main'
       - name: Install Node Modules
         script: |
-          sudo npm install @nx/nx-linux-x64-gnu -g
-          sudo npm install @rollup/rollup-linux-x64-gnu -g
           npm install
       - name: Install Browsers (if needed)
         uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/install-browsers/main.yaml'
