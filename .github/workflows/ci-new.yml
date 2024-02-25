@@ -46,10 +46,10 @@ jobs:
         uses: JamesHenry/parallel-bash-commands@v1.0
         with:
           cmd1: npx nx affected -t=build
-          cmd4: npx nx affected -t="lint,component-test"
-          cmd2: npx nx affected -t="test,test-integration" -c=ci
+          cmd4: npx nx affected -t=\"lint,component-test\"
+          cmd2: npx nx affected -t=\"test,test-integration\" -c=ci
           # running cypress e2e test
-          cmd6: npx nx affected -t=e2e --exclude="*,!tag:e2e" -c=ci ${{!contains(github.event_name, 'pull_request') && '-- --record=true' || ''}}
+          cmd6: npx nx affected -t=e2e --exclude=\"*,!tag:e2e\" -c=ci ${{!contains(github.event_name, 'pull_request') && '-- --record=true' || ''}}
           # running playwrights e2e test
           cmd7: npx nx affected -t=e2e-ci
 
