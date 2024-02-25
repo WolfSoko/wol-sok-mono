@@ -31,7 +31,6 @@ export class InputWaveService {
   ) {
     inputWaveOptionsRepo.state$
       .pipe(
-        tap(() => this.inputWaveStore.setLoading(true)),
         delay(1),
         filter(({ type }) => type === 'generated'),
         map((options: InputWaveOptionsModel) => {
@@ -65,7 +64,7 @@ export class InputWaveService {
               { samplesPerSec, lengthInMs },
               audioData
             );
-            this.setActive(wave);
+            this.inputWaveStore.addActiveWave(wave);
             this.inputWaveOptionsRepo.update(waveOptionsFromWave(wave));
             break;
           }
@@ -84,18 +83,6 @@ export class InputWaveService {
       { allowSignalWrites: true }
     );
   }
-
-  add(inputWave: InputWave) {
-    this.inputWaveStore.add(inputWave);
-  }
-
-  update(id: number, inputWave: Partial<InputWave>) {
-    this.inputWaveStore.updateWave(id, inputWave);
-  }
-  setActive(wave: InputWave) {
-    this.inputWaveStore.addActiveWave(wave);
-  }
-
   listenToWave() {
     const activeWave = this.inputWaveStore.activeWave();
     if (!activeWave) {

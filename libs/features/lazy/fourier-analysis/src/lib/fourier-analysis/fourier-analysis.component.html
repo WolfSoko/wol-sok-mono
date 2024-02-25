@@ -6,8 +6,9 @@
           <mat-card-title>Wave options</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <lazy-feat-fanal-wave-options class="wave-options">
-          </lazy-feat-fanal-wave-options>
+          @defer (on timer(500)) {
+            <lazy-feat-fanal-wave-options class="wave-options" />
+          }
         </mat-card-content>
         <mat-card-actions>
           <button mat-raised-button (click)="sidenav.close()">Close</button>
@@ -27,22 +28,17 @@
         </button>
       </mat-toolbar-row>
     </mat-toolbar>
-    @if ((isLoading$ | async) === false) {
+    @defer (on timer(1000)) {
       <lazy-feat-fanal-input-wave
         [width]="inputWaveCanvasWidth"
         [height]="inputWaveCanvasHeight"
-      ></lazy-feat-fanal-input-wave>
-    } @else {
-      <mat-spinner color="accent"></mat-spinner>
+      />
     }
-    @if ((isLoading$ | async) === false) {
+    @defer (on timer(2500)) {
       <lazy-feat-fanal-circle-analysis
         [width]="circleCanvasWidth"
         [height]="circleCanvasHeight"
-      >
-      </lazy-feat-fanal-circle-analysis>
-    } @else {
-      <mat-spinner color="accent"></mat-spinner>
+      />
     }
   </div>
 </mat-sidenav-container>

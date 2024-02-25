@@ -14,7 +14,6 @@ import {
   RecorderState,
 } from '../model/audio-recorder-status.model';
 import { InputWave } from '../model/input-wave.model';
-import { updateLoading, withLoading } from './is-loading-store-props';
 
 const {
   withAudioRecorderState,
@@ -30,25 +29,19 @@ const inputWavesStore = createStore(
   withProps<RecorderState>(initialRecorderState),
   withEntities<InputWave>(),
   withActiveId(),
-  withAudioRecorderState(),
-  withLoading()
+  withAudioRecorderState()
 );
 
 @Injectable({ providedIn: 'root' })
 export class InputWaveRepo {
   activeWave$ = inputWavesStore.pipe(selectActiveEntity());
   activeWave = toSignal(this.activeWave$);
-
   audioRecorderState = toSignal(
     inputWavesStore.pipe(selectAudioRecorderState()),
     { requireSync: true }
   );
   updateAudioRecordState(audioRecorderState: RecorderState): void {
     inputWavesStore.update(setAudioRecorderState(audioRecorderState));
-  }
-
-  setLoading(b: boolean) {
-    inputWavesStore.update(updateLoading(b));
   }
 
   add(inputWave: InputWave): void {
@@ -60,10 +53,6 @@ export class InputWaveRepo {
   }
 
   addActiveWave(wave: InputWave) {
-    inputWavesStore.update(
-      addEntities(wave),
-      setActiveId(wave.id),
-      updateLoading(false)
-    );
+    inputWavesStore.update(addEntities(wave), setActiveId(wave.id));
   }
 }
