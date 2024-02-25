@@ -14,7 +14,7 @@ launch-templates:
         script: |
           echo "Install packages to compile node_modules gl with node-gyp"
           sudo apt-get update -y
-          sudo apt-get install build-essential python3 python-is-python3 make gcc g++ xserver-xorg-dev libxi-dev libxext-dev -y
+          sudo apt-get install python3 python-is-python3 make gcc g++ xserver-xorg-dev libxi-dev libxext-dev -y
 
       - name: Restore Node Modules Cache
         uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/cache/main.yaml'
@@ -33,10 +33,6 @@ launch-templates:
           BASE_BRANCH: 'main'
       - name: Install Node Modules
         script: |
-          echo "test for python3 and python"
-          python3 -c "print('Hello Python3!')"
-          python -c "print('Hello Python!')"
-          echo "try installing node-gyp"
           npm install
       - name: Install Browsers (if needed)
         uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/install-browsers/main.yaml'
