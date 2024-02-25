@@ -17,9 +17,8 @@ launch-templates:
           sudo apt-get install build-essential xserver-xorg-dev libxi-dev libxext-dev -y
           echo "Install node-gyp"
           echo "Python path: $(which python)"
-          echo "Python ENV Variable: $PYTHON"
-          ln -s /usr/bin/python3 /usr/bin/python
           export PYTHON=/usr/bin/python3
+          echo "Python ENV Variable: $PYTHON"
           npm install node-gyp
 
       - name: Restore Node Modules Cache
