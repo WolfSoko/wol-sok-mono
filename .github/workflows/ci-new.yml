@@ -10,6 +10,12 @@ permissions:
   actions: read
   contents: read
 
+env:
+  HUSKY: 0
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
+  NODE_OPTIONS: '--max_old_space_size=4096'
+
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -19,19 +25,19 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version-file: nvmrc
           cache: 'npm'
       - name: Install necessary binaries
         run: |
-          npm install -g @nx/nx-linux-x64-gnu
-          npm install -g @rollup/rollup-linux-x64-gnu
           echo "Install packages to compile node_modules gl with node-gyp"
           sudo apt-get update -y
           sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
+          npm install -g @nx/nx-linux-x64-gnu
+          npm install -g @rollup/rollup-linux-x64-gnu
       # This line enables distribution
       # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "e2e-ci" targets have been requested
       - run: npx nx-cloud start-ci-run --distribute-on="8 my-linux-large-js" --stop-agents-after="e2e-ci"
-      - run: npm ci
+      - run: npm install
 
       - uses: nrwl/nx-set-shas@v3
       # This line is needed for nx affected to work when CI is running on a PR
