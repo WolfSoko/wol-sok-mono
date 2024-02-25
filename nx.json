@@ -1,4 +1,7 @@
 {
+  "nxCloudUrl": "https://cloud.nx.app",
+  "nxCloudAccessToken": "ZDIxOTJiNDctZjhhNS00NDYzLWFiNzQtODg0NDJkYTMyYzBlfHJlYWQtb25seQ==",
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "pluginsConfig": {
     "@nx/js": {
       "analyzeSourceFiles": true
@@ -62,12 +65,22 @@
         "{workspaceRoot}/.codecov.yml"
       ],
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "cache": true
+      "cache": true,
+      "configurations": {
+        "ci": {
+          "codeCoverage": true
+        }
+      }
     },
     "test-integration": {
       "inputs": ["default", "^production", "{workspaceRoot}/karma.conf.js"],
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "cache": true
+      "cache": true,
+      "configurations": {
+        "ci": {
+          "codeCoverage": true
+        }
+      }
     },
     "prepare-prod": {
       "dependsOn": ["build"]
@@ -144,6 +157,5 @@
     }
   },
   "defaultProject": "angular-examples",
-  "nxCloudAccessToken": "ZDIxOTJiNDctZjhhNS00NDYzLWFiNzQtODg0NDJkYTMyYzBlfHJlYWQtb25seQ==",
   "parallel": 3
 }
