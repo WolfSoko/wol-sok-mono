@@ -1,7 +1,6 @@
 {
-  "root": true,
   "ignorePatterns": ["**/*"],
-  "plugins": ["@nx", "prettier"],
+  "plugins": ["prettier"],
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
@@ -13,7 +12,13 @@
             "depConstraints": [
               {
                 "sourceTag": "app",
-                "onlyDependOnLibsWithTags": ["shared", "feature", "feature:lazy", "api", "type:remote"]
+                "onlyDependOnLibsWithTags": [
+                  "shared",
+                  "feature",
+                  "feature:lazy",
+                  "api",
+                  "type:remote"
+                ]
               },
               {
                 "sourceTag": "e2e",
@@ -46,12 +51,10 @@
     },
     {
       "files": ["*.ts", "*.tsx"],
-      "extends": ["plugin:@nx/typescript"],
       "rules": {}
     },
     {
       "files": ["*.js", "*.jsx"],
-      "extends": ["plugin:@nx/javascript"],
       "rules": {}
     },
     {
@@ -60,5 +63,5 @@
       "rules": {}
     }
   ],
-  "extends": ["plugin:storybook/recommended"]
+  "extends": ["plugin:storybook/recommended", "./.eslintrc.base.json"]
 }

@@ -23,38 +23,46 @@ import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
 
-export interface StaticSiteProps {
+export interface SpaProps {
   domainName: string;
   buildOutputPath: string;
+  deleteBucketPolicy?: RemovalPolicy;
 }
+
+const defaultBucketDeletionPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
 
 /**
  * SPA infrastructure, which deploys spa content to an S3 bucket.
  *
- * The spa redirects from HTTP to HTTPS, using a CloudFront distribution,
- * Route53 alias record, and ACM certificate.
+ * The spa redirects from HTTP to HTTPS, uses a CloudFront distribution,
+ * Route53 alias record,
+ * and ACM certificate.
  */
-export class SpaSite extends Construct {
+export class SpaConstruct extends Construct {
   constructor(
     parent: Construct,
     private readonly spaName: string,
-    private readonly props: StaticSiteProps
+    private readonly props: SpaProps
   ) {
     super(parent, spaName);
+    const removalPolicy: RemovalPolicy =
+      props.deleteBucketPolicy ?? defaultBucketDeletionPolicy;
+    const { domainName, buildOutputPath } = props;
     const zone = HostedZone.fromLookup(this, spaName, {
       privateZone: false,
-      domainName: props.domainName,
+      domainName,
     });
     // potential room for subdomains here.
-    const siteDomain = props.domainName;
+    const siteDomain = domainName;
+
     const cloudfrontOAI = new OriginAccessIdentity(this, 'cloudfront-OAI', {
-      comment: `OAI for ${this.spaName}`,
+      comment: `OriginAccessIdentity for ${this.spaName}`,
     });
 
     new CfnOutput(this, `${spaName}-Site:`, { value: 'https://' + siteDomain });
 
-    const certificate = this.createCertificate(zone, props.domainName);
-    const bucket = this.createBucket(siteDomain, cloudfrontOAI);
+    const certificate = this.createCertificate(zone, domainName);
+    const bucket = this.createBucket(domainName, cloudfrontOAI, removalPolicy);
     const distribution = this.createDistribution(
       siteDomain,
       certificate,
@@ -62,12 +70,13 @@ export class SpaSite extends Construct {
       cloudfrontOAI
     );
     this.createARecord(siteDomain, distribution, zone);
-    this.createBucketDeployment(props.buildOutputPath, bucket, distribution);
+    this.createBucketDeployment(buildOutputPath, bucket, distribution);
   }
 
   private createBucket(
     siteDomain: string,
-    cloudfrontOAI: OriginAccessIdentity
+    cloudfrontOAI: OriginAccessIdentity,
+    removalPolicy: RemovalPolicy = RemovalPolicy.DESTROY
   ): Bucket {
     // Content bucket
     const siteBucket = new Bucket(this, `Bucket`, {
@@ -79,13 +88,13 @@ export class SpaSite extends Construct {
        * the new bucket, and it will remain in your account until manually deleted. By setting the policy to
        * DESTROY, cdk destroy will attempt to delete the bucket, but will error if the bucket is not empty.
        */
-      removalPolicy: RemovalPolicy.DESTROY, // NOT recommended for production code
+      removalPolicy: removalPolicy,
 
       /**
        * For sample purposes only, if you create an S3 bucket then populate it, stack destruction fails.  This
        * setting will enable full cleanup of the demo.
        */
-      autoDeleteObjects: true, // NOT recommended for production code
+      autoDeleteObjects: removalPolicy === RemovalPolicy.DESTROY, // Danger not recommended for production code
     });
 
     // Grant access to cloudfront
@@ -130,7 +139,6 @@ export class SpaSite extends Construct {
     cloudfrontOAI: OriginAccessIdentity
   ): Distribution {
     // CloudFront distribution that provides HTTPS
-    // CloudFront distribution
     const distribution = new Distribution(this, 'Distribution', {
       certificate: certificate,
       defaultRootObject: 'index.html',

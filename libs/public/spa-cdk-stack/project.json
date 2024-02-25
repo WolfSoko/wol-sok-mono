@@ -1,0 +1,30 @@
+{
+  "name": "spa-cdk-stack",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/public/spa-cdk-stack/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/public/spa-cdk-stack",
+        "main": "libs/public/spa-cdk-stack/src/index.ts",
+        "tsConfig": "libs/public/spa-cdk-stack/tsconfig.lib.json",
+        "assets": ["libs/public/spa-cdk-stack/*.md"]
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs spa-cdk-stack {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../../../coverage/libs/public/spa-cdk-stack"
+      }
+    }
+  },
+  "tags": []
+}
