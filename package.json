@@ -166,6 +166,7 @@
     "lint-staged": "15.2.2",
     "mime-types": "2.1.35",
     "ng-packagr": "17.2.0",
+    "node-gyp": "^10.0.1",
     "nx": "18.0.4",
     "postcss": "8.4.35",
     "postcss-import": "15.1.0",
