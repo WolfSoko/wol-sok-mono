@@ -12,8 +12,7 @@ launch-templates:
         uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/checkout/main.yaml'
       - name: Install necessary binaries
         run: |
-          npm install @nx/nx-linux-x64-gnu
-          npm install @rollup/rollup-linux-x64-gnu
+
           echo "Install packages to compile node_modules gl with node-gyp"
           sudo apt-get update -y
           sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
@@ -35,6 +34,6 @@ launch-templates:
           BASE_BRANCH: 'main'
       - name: Install Node Modules
         run: |
-          npm install
+          npm install @nx/nx-linux-x64-gnu @rollup/rollup-linux-x64-gnu
       - name: Install Browsers (if needed)
         uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/install-browsers/main.yaml'
