@@ -18,6 +18,7 @@ export default {
       },
     ],
   },
+  modulePathIgnorePatterns: ['<rootDir>/e2e/'],
   transformIgnorePatterns: ['node_modules/(?!.*.mjs$|@datorama/akita)'],
   snapshotSerializers: [
     'jest-preset-angular/build/serializers/no-ng-attributes',
