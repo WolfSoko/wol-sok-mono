@@ -26,7 +26,7 @@ jobs:
 
       # Connect your workspace on nx.app and uncomment this to enable task distribution.
       # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "e2e-ci" targets have been requested
-      - run: npx nx-cloud start-ci-run --distribute-on="5 my-linux-large-js" --stop-agents-after="e2e-ci"
+      - run: npx nx-cloud start-ci-run --distribute-on="5 wolsokmono-linux-extra-large" --stop-agents-after="e2e-ci"
 
       - uses: actions/setup-node@v4
         with:
