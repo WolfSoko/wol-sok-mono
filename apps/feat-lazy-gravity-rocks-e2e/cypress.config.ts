@@ -5,6 +5,7 @@ export default defineConfig({
   projectId: 'jyisda',
   e2e: {
     ...nxE2EStorybookPreset(__dirname),
+    supportFile: 'src/support/e2e.ts',
     testIsolation: false,
   },
 });

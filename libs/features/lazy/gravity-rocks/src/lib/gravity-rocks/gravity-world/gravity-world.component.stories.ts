@@ -1,3 +1,7 @@
+import {
+  BrowserAnimationsModule,
+  provideAnimations,
+} from '@angular/platform-browser/animations';
 import { Meta, moduleMetadata, StoryFn } from '@storybook/angular';
 import { GravityWorldComponent } from './gravity-world.component';
 
@@ -6,7 +10,7 @@ export default {
   component: GravityWorldComponent,
   decorators: [
     moduleMetadata({
-      imports: [GravityWorldComponent],
+      imports: [GravityWorldComponent, BrowserAnimationsModule],
     }),
   ],
 } as Meta<GravityWorldComponent>;
