@@ -2,6 +2,7 @@ import type { StorybookConfig } from '@storybook/angular';
 
 const config: StorybookConfig = {
   stories: ['../**/*.stories.@(js|jsx|ts|tsx|mdx)'],
+  // eslint-disable-next-line storybook/no-uninstalled-addons
   addons: ['@storybook/addon-essentials'],
   framework: {
     name: '@storybook/angular',
