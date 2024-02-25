@@ -42,7 +42,13 @@ jobs:
         if: github.event_name == 'pull_request'
 
       - run: npx nx-cloud record -- nx format:check
-      - run: |
-          npx nx affected -t test test-integration --code-coverage
-          npx nx affected -t lint component-test build e2e-ci
-          npx nx affected --target=e2e --exclude=angular-examples --parallel=1 --configuration=ci ${{!contains(github.event_name, 'pull_request') && '-- --record=true' || ''}}
+      - name: Run verification
+        uses: JamesHenry/parallel-bash-commands@v1.0
+        with:
+          cmd1: npx nx affected -t=build
+          cmd4: npx nx affected -t=lint component-test
+          cmd2: npx nx affected -t=test test-integration -c=ci
+          # running cypress e2e test
+          cmd6: npx nx affected -t=e2e --exclude=angular-examples -c=ci ${{!contains(github.event_name, 'pull_request') && '-- --record=true' || ''}}
+          # running playwrights e2e test
+          cmd7: npx nx affected -t=e2e-ci
