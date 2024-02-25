@@ -14,12 +14,10 @@ launch-templates:
         script: |
           echo "Install packages to compile node_modules gl with node-gyp build-essential"
           sudo apt-get update -y
-          sudo apt-get install python3 build-essential xserver-xorg-dev libxi-dev libxext-dev -y
+          sudo apt-get install python python3 build-essential xserver-xorg-dev libxi-dev libxext-dev -y
           echo "Install node-gyp"
-          echo "Python path: $(which python)"
-          export PYTHON=/usr/bin/python3
-          echo "Python ENV Variable: $PYTHON"
-          python3 -c "print('Hello, World!')"
+          python3 -c "print('Hello Python3!')"
+          python -c "print('Hello Python!')"
           npm install node-gyp
 
       - name: Restore Node Modules Cache
