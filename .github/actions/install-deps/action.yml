@@ -6,7 +6,7 @@ inputs:
     required: false
     default: 'false'
   cypress:
-    description: 'install cypress'
+    description: 'install cypress and playwright dependencies'
     required: false
     default: 'false'
   apt-packages:
@@ -33,6 +33,13 @@ runs:
       with:
         path: ${{ env.CYPRESS_CACHE_FOLDER }}
         key: cypress-binary-${{ hashFiles('package-lock.json') }}
+    - name: Cache Playwright binaries
+      id: cache-playwright-binary
+      if: inputs.cypress == 'true'
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-binary-${{ hashFiles('package-lock.json') }}
     - name: Cache dependencies
       id: cache
       uses: actions/cache@v4
@@ -61,3 +68,4 @@ runs:
       shell: bash
       run: |
         npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+        npx playwright install-deps
