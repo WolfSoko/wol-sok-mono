@@ -1,9 +1,13 @@
-name: CI
+name: CI/CD
 on:
   push:
     branches:
       - main
   pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
 
 # Needed for nx-set-shas when run on the main branch
 permissions:
