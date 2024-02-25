@@ -12,6 +12,12 @@
         "targetName": "e2e",
         "componentTestingTargetName": "component-test"
       }
+    },
+    {
+      "plugin": "@nx/playwright/plugin",
+      "options": {
+        "targetName": "e2e"
+      }
     }
   ],
   "namedInputs": {
