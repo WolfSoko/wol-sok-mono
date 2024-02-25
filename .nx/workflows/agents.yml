@@ -19,6 +19,7 @@ launch-templates:
           echo "Python path: $(which python)"
           export PYTHON=/usr/bin/python3
           echo "Python ENV Variable: $PYTHON"
+          python -c "print('Hello, World!')"
           npm install node-gyp
 
       - name: Restore Node Modules Cache
