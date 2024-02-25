@@ -14,7 +14,7 @@ launch-templates:
         script: |
           echo "Install packages to compile node_modules gl with node-gyp build-essential"
           sudo apt-get update -y
-          sudo apt-get install python3.8 build-essential xserver-xorg-dev libxi-dev libxext-dev -y
+          sudo apt-get install python3 build-essential xserver-xorg-dev libxi-dev libxext-dev -y
           echo "Install node-gyp"
           echo "Python path: $(which python)"
           export PYTHON=/usr/bin/python3
