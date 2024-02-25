@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.3.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.2.9...v4.3.0) (2024-02-25)
+
+
+### Features
+
+* ✨ cleanup, no loading state ([456438e](https://github.com/WolfSoko/wol-sok-mono/commit/456438e61e39e84c99a079184a52bc407d2f43bc))
+* ✨ use elf instead of akita for wave options ([4261ca0](https://github.com/WolfSoko/wol-sok-mono/commit/4261ca0cd0da6cc1d74e9978b03e12f769c82d37))
+* ✨ use elf instead of akita for wave-store ([fc989ed](https://github.com/WolfSoko/wol-sok-mono/commit/fc989ed44fc0ac59208b1139f5277f362c0f9e53))
+* **feat-lazy-fourier-analysis:** ✨ cleanup last remains of akita ([4111b58](https://github.com/WolfSoko/wol-sok-mono/commit/4111b58b7409c2831157c94df08a6126e5f42fd3))
+
 ### [4.2.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.2.8...v4.2.9) (2024-02-24)
 
 
