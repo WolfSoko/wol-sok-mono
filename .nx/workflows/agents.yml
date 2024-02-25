@@ -10,7 +10,7 @@ launch-templates:
     init-steps:
       - name: Install Node Modules
         run: |
-          echo {{ github.env }}
+          echo '{{ github.env }}'
       - name: Checkout # using a reusable step
         uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/checkout/main.yaml'
       - name: Install necessary binaries
