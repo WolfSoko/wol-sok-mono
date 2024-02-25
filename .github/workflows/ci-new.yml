@@ -46,4 +46,4 @@ jobs:
         if: github.event_name == 'pull_request'
 
       - run: npx nx-cloud record -- nx format:check
-      - run: npx nx affected -t lint test build e2e-ci
+      - run: npx nx affected -t lint test test-integration component-test build e2e-ci
