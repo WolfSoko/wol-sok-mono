@@ -12,9 +12,12 @@ launch-templates:
         uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/checkout/main.yaml'
       - name: Install necessary binaries
         script: |
-          echo "Install packages to compile node_modules gl with node-gyp"
+          echo "Install packages to compile node_modules gl with node-gyp build-essential"
           sudo apt-get update -y
-          sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
+          sudo apt-get install build-essential xserver-xorg-dev libxi-dev libxext-dev -y
+          echo "Install node-gyp"
+          echo "Python path: $(which python)"
+          echo "Python ENV Variable: $PYTHON"
           npm install node-gyp
 
       - name: Restore Node Modules Cache
