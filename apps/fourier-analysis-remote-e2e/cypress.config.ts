@@ -5,5 +5,6 @@ export default defineConfig({
   projectId: 'jyisda',
   e2e: {
     ...nxE2EPreset(__dirname),
+    supportFile: 'src/support/e2e.ts',
   },
 });
