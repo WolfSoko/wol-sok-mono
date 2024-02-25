@@ -32,14 +32,10 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: 'npm'
-      - name: Install necessary binaries
-        run: |
-          echo "Install packages to compile node_modules gl with node-gyp"
-          sudo apt-get update -y
-          sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
-
-      - run: npm install @nx/nx-linux-x64-gnu @rollup/rollup-linux-x64-gnu
-
+      - name: Install Deps
+        uses: ./.github/actions/install-deps
+        with:
+          cypress: false
       - uses: nrwl/nx-set-shas@v4
       # This line is needed for nx affected to work when CI is running on a PR
       - run: git branch --track main origin/main
