@@ -8,14 +8,9 @@ launch-templates:
       CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
       NODE_OPTIONS: '--max_old_space_size=4096'
     init-steps:
-      - name: Install Node Modules
-        shell: bash
-        run: |
-          echo '{{ github.env }}'
       - name: Checkout # using a reusable step
         uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/checkout/main.yaml'
       - name: Install necessary binaries
-        shell: bash
         run: |
           npm install @nx/nx-linux-x64-gnu
           npm install @rollup/rollup-linux-x64-gnu
@@ -39,7 +34,6 @@ launch-templates:
             '../.cache/ms-playwright'
           BASE_BRANCH: 'main'
       - name: Install Node Modules
-        shell: bash
         run: |
           npm install
       - name: Install Browsers (if needed)
