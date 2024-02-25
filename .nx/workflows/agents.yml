@@ -16,9 +16,6 @@ launch-templates:
           sudo apt-get update -y
           sudo apt-get install build-essential python3 make gcc g++ xserver-xorg-dev libxi-dev libxext-dev -y
 
-          python3 -c "print('Hello Python3!')"
-          python -c "print('Hello Python!')"
-
       - name: Restore Node Modules Cache
         uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/cache/main.yaml'
         env:
@@ -38,7 +35,10 @@ launch-templates:
         script: |
           echo "test for python3 and python"
           python3 -c "print('Hello Python3!')"
+          alias python=python3
           python -c "print('Hello Python!')"
+          echo "try installing node-gyp"
+          npm explore npm/node_modules/@npmcli/run-script -g -- npm_config_global=false npm install node-gyp@latest
           npm install
       - name: Install Browsers (if needed)
         uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/install-browsers/main.yaml'
