@@ -40,12 +40,6 @@ runs:
       with:
         path: ~/.cache/ms-playwright
         key: playwright-binary-${{ hashFiles('package-lock.json') }}
-    - name: Cache dependencies
-      id: cache
-      uses: actions/cache@v4
-      with:
-        path: ./node_modules
-        key: modules-${{ inputs.run-scripts == 'true' && 'with' || 'ignore' }}-scripts-${{ inputs.cypress == 'true' && 'with' || 'ignore' }}-cypress-${{ hashFiles('package-lock.json') }}
 
     # install binaries before installing dependencies with scripts because post install scripts are needing the binaries already
     - name: Install binaries
