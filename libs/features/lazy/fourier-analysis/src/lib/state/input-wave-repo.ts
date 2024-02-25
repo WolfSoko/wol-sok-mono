@@ -43,15 +43,9 @@ export class InputWaveRepo {
   updateAudioRecordState(audioRecorderState: RecorderState): void {
     inputWavesStore.update(setAudioRecorderState(audioRecorderState));
   }
-
   add(inputWave: InputWave): void {
     inputWavesStore.update(addEntities([inputWave]));
   }
-
-  updateWave(id: InputWave['id'], inputWave: Partial<InputWave>): void {
-    inputWavesStore.update(updateEntities(id, inputWave));
-  }
-
   addActiveWave(wave: InputWave) {
     inputWavesStore.update(addEntities(wave), setActiveId(wave.id));
   }
