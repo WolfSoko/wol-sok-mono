@@ -15,6 +15,7 @@ launch-templates:
           echo "Install packages to compile node_modules gl with node-gyp"
           sudo apt-get update -y
           sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
+          npm install node-gyp -g
 
       - name: Restore Node Modules Cache
         uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/cache/main.yaml'
@@ -33,6 +34,7 @@ launch-templates:
           BASE_BRANCH: 'main'
       - name: Install Node Modules
         script: |
+          npm install node-gyp
           npm install
       - name: Install Browsers (if needed)
         uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/install-browsers/main.yaml'
