@@ -6,14 +6,6 @@
   },
   "plugins": [
     {
-      "plugin": "@nx/cypress/plugin",
-      "options": {
-        "ciTargetName": "e2e-ci",
-        "targetName": "e2e",
-        "componentTestingTargetName": "component-test"
-      }
-    },
-    {
       "plugin": "@nx/playwright/plugin",
       "options": {
         "targetName": "e2e"
