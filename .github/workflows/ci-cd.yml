@@ -7,7 +7,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') || startsWith(github.ref_name, 'renovate-github-sh') }}
 
 # Needed for nx-set-shas when run on the main branch
 permissions:
