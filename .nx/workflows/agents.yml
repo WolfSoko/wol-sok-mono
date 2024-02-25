@@ -37,7 +37,6 @@ launch-templates:
           python3 -c "print('Hello Python3!')"
           python -c "print('Hello Python!')"
           echo "try installing node-gyp"
-          npm explore npm/node_modules/@npmcli/run-script -g -- npm_config_global=false npm install node-gyp@latest
           npm install
       - name: Install Browsers (if needed)
         uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/install-browsers/main.yaml'
