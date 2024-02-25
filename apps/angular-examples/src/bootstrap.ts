@@ -3,10 +3,9 @@ import { enableProdMode } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { enableAkitaProdMode } from '@datorama/akita';
 import {
-  BrowserTracing,
+  browserTracingIntegration,
   init,
-  Replay,
-  routingInstrumentation,
+  replayIntegration,
 } from '@sentry/angular-ivy';
 import { provideWsThanosOptions } from '@wolsok/thanos';
 import { provideAppRouter } from './app/app-routing';
@@ -31,12 +30,7 @@ init({
   // sessions when an error occurs.
   replaysOnErrorSampleRate: 1.0,
 
-  integrations: [
-    new Replay(),
-    new BrowserTracing({
-      routingInstrumentation,
-    }),
-  ],
+  integrations: [replayIntegration(), browserTracingIntegration()],
   tracePropagationTargets: ['https://angularexamples.wolsok.de/'],
   // Set tracesSampleRate to 1.0 to capture 100%
   // of transactions for performance monitoring.
