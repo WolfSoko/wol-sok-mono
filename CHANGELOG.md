@@ -4,30 +4,27 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.3.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.3.1...v4.3.2) (2024-02-25)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency zone.js to v0.14.4 ([9d5b7f0](https://github.com/WolfSoko/wol-sok-mono/commit/9d5b7f0f1a6fbf7ae011ef0962b339ccff48a540))
-* **deps:** :arrow_up: update nx monorepo to v17.2.2 ([97a1e01](https://github.com/WolfSoko/wol-sok-mono/commit/97a1e01daa727ca9baa9ec83d0797bd1e0cbc526))
+- **deps:** :arrow_up: update dependency zone.js to v0.14.4 ([9d5b7f0](https://github.com/WolfSoko/wol-sok-mono/commit/9d5b7f0f1a6fbf7ae011ef0962b339ccff48a540))
+- **deps:** :arrow_up: update nx monorepo to v17.2.2 ([97a1e01](https://github.com/WolfSoko/wol-sok-mono/commit/97a1e01daa727ca9baa9ec83d0797bd1e0cbc526))
 
 ### [4.3.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.3.0...v4.3.1) (2024-02-25)
 
 ## [4.3.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.2.9...v4.3.0) (2024-02-25)
 
-
 ### Features
 
-* ✨ cleanup, no loading state ([456438e](https://github.com/WolfSoko/wol-sok-mono/commit/456438e61e39e84c99a079184a52bc407d2f43bc))
-* ✨ use elf instead of akita for wave options ([4261ca0](https://github.com/WolfSoko/wol-sok-mono/commit/4261ca0cd0da6cc1d74e9978b03e12f769c82d37))
-* ✨ use elf instead of akita for wave-store ([fc989ed](https://github.com/WolfSoko/wol-sok-mono/commit/fc989ed44fc0ac59208b1139f5277f362c0f9e53))
-* **feat-lazy-fourier-analysis:** ✨ cleanup last remains of akita ([4111b58](https://github.com/WolfSoko/wol-sok-mono/commit/4111b58b7409c2831157c94df08a6126e5f42fd3))
+- ✨ cleanup, no loading state ([456438e](https://github.com/WolfSoko/wol-sok-mono/commit/456438e61e39e84c99a079184a52bc407d2f43bc))
+- ✨ use elf instead of akita for wave options ([4261ca0](https://github.com/WolfSoko/wol-sok-mono/commit/4261ca0cd0da6cc1d74e9978b03e12f769c82d37))
+- ✨ use elf instead of akita for wave-store ([fc989ed](https://github.com/WolfSoko/wol-sok-mono/commit/fc989ed44fc0ac59208b1139f5277f362c0f9e53))
+- **feat-lazy-fourier-analysis:** ✨ cleanup last remains of akita ([4111b58](https://github.com/WolfSoko/wol-sok-mono/commit/4111b58b7409c2831157c94df08a6126e5f42fd3))
 
 ### [4.2.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.2.8...v4.2.9) (2024-02-24)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.129.0 ([18fbc46](https://github.com/WolfSoko/wol-sok-mono/commit/18fbc4649e338518612a98089e043ea9633f8a8b))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.129.0 ([18fbc46](https://github.com/WolfSoko/wol-sok-mono/commit/18fbc4649e338518612a98089e043ea9633f8a8b))
 
 ### [4.2.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.2.7...v4.2.8) (2024-02-24)
 
@@ -39,10 +36,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.2.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.2.3...v4.2.4) (2024-02-23)
 
-
 ### Bug Fixes
 
-* 🐛 typo ([954a2c0](https://github.com/WolfSoko/wol-sok-mono/commit/954a2c0da1e88bf031ef0bc2ebc0c6218314063b))
+- 🐛 typo ([954a2c0](https://github.com/WolfSoko/wol-sok-mono/commit/954a2c0da1e88bf031ef0bc2ebc0c6218314063b))
 
 ### [4.2.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.2.2...v4.2.3) (2024-02-23)
 
@@ -52,15 +48,13 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## [4.2.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.104...v4.2.0) (2024-02-23)
 
-
 ### Features
 
-* **feat-lazy-fourier-analysis:** ✨ add button for analysing recorded sound ([736e0a5](https://github.com/WolfSoko/wol-sok-mono/commit/736e0a553f47fa4dcff38c60d3f21b66732fe272))
-
+- **feat-lazy-fourier-analysis:** ✨ add button for analysing recorded sound ([736e0a5](https://github.com/WolfSoko/wol-sok-mono/commit/736e0a553f47fa4dcff38c60d3f21b66732fe272))
 
 ### Bug Fixes
 
-* 🐛 fix usage before init error ([43ceb00](https://github.com/WolfSoko/wol-sok-mono/commit/43ceb00bf72c31c704febdc31aa898575ba4b6ce))
+- 🐛 fix usage before init error ([43ceb00](https://github.com/WolfSoko/wol-sok-mono/commit/43ceb00bf72c31c704febdc31aa898575ba4b6ce))
 
 ### [4.1.104](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.103...v4.1.104) (2024-02-22)
 
@@ -92,19 +86,17 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.1.90](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.89...v4.1.90) (2024-02-18)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.101.1 ([38b0508](https://github.com/WolfSoko/wol-sok-mono/commit/38b0508f39a7e9c2548e257928c4de073737d20e))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.101.1 ([38b0508](https://github.com/WolfSoko/wol-sok-mono/commit/38b0508f39a7e9c2548e257928c4de073737d20e))
 
 ### [4.1.89](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.88...v4.1.89) (2024-02-18)
 
 ### [4.1.88](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.87...v4.1.88) (2024-02-18)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.128.0 ([7b94110](https://github.com/WolfSoko/wol-sok-mono/commit/7b94110961bb52efc2a1f85b0f7f5ca345b98362))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.128.0 ([7b94110](https://github.com/WolfSoko/wol-sok-mono/commit/7b94110961bb52efc2a1f85b0f7f5ca345b98362))
 
 ### [4.1.87](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.86...v4.1.87) (2024-02-17)
 
@@ -112,19 +104,17 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.1.85](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.84...v4.1.85) (2024-02-17)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency browserslist to v4.23.0 ([c8691e5](https://github.com/WolfSoko/wol-sok-mono/commit/c8691e57bdbafd046896bf03462649fcdce6774d))
+- **deps:** :arrow_up: update dependency browserslist to v4.23.0 ([c8691e5](https://github.com/WolfSoko/wol-sok-mono/commit/c8691e57bdbafd046896bf03462649fcdce6774d))
 
 ### [4.1.84](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.83...v4.1.84) (2024-02-17)
 
 ### [4.1.83](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.82...v4.1.83) (2024-02-17)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency core-js to v3.36.0 ([34629ab](https://github.com/WolfSoko/wol-sok-mono/commit/34629abd3873102f0d28b1b9b06f13e1a2b7c07d))
+- **deps:** :arrow_up: update dependency core-js to v3.36.0 ([34629ab](https://github.com/WolfSoko/wol-sok-mono/commit/34629abd3873102f0d28b1b9b06f13e1a2b7c07d))
 
 ### [4.1.82](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.81...v4.1.82) (2024-02-16)
 
@@ -136,10 +126,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.1.78](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.77...v4.1.78) (2024-02-16)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.101.0 ([ed25ba0](https://github.com/WolfSoko/wol-sok-mono/commit/ed25ba004ffe97574a937ada485db6099a629294))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.101.0 ([ed25ba0](https://github.com/WolfSoko/wol-sok-mono/commit/ed25ba004ffe97574a937ada485db6099a629294))
 
 ### [4.1.77](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.76...v4.1.77) (2024-02-16)
 
@@ -155,10 +144,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.1.71](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.70...v4.1.71) (2024-02-13)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.127.0 ([af42077](https://github.com/WolfSoko/wol-sok-mono/commit/af4207782fcb1aec4206023d333ca81e79c671db))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.127.0 ([af42077](https://github.com/WolfSoko/wol-sok-mono/commit/af4207782fcb1aec4206023d333ca81e79c671db))
 
 ### [4.1.70](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.69...v4.1.70) (2024-02-13)
 
@@ -168,10 +156,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.1.67](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.66...v4.1.67) (2024-02-12)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([8cd609e](https://github.com/WolfSoko/wol-sok-mono/commit/8cd609ef6fb1747de029304c9cf4ec332cd62946))
+- **deps:** :arrow_up: update all non-major dependencies ([8cd609e](https://github.com/WolfSoko/wol-sok-mono/commit/8cd609ef6fb1747de029304c9cf4ec332cd62946))
 
 ### [4.1.66](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.65...v4.1.66) (2024-02-12)
 
@@ -181,10 +168,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.1.63](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.62...v4.1.63) (2024-02-09)
 
-
 ### Bug Fixes
 
-* 🐛 remove type of uniform variable ([17eb0e5](https://github.com/WolfSoko/wol-sok-mono/commit/17eb0e513835c02815119a4f8b2caf680c830f1b))
+- 🐛 remove type of uniform variable ([17eb0e5](https://github.com/WolfSoko/wol-sok-mono/commit/17eb0e513835c02815119a4f8b2caf680c830f1b))
 
 ### [4.1.62](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.61...v4.1.62) (2024-01-17)
 
@@ -198,26 +184,23 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.1.57](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.56...v4.1.57) (2024-01-01)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency ace-builds to v1.32.3 ([0d98e23](https://github.com/WolfSoko/wol-sok-mono/commit/0d98e239a50aa328e68d52f8e02aede696f57a72))
+- **deps:** :arrow_up: update dependency ace-builds to v1.32.3 ([0d98e23](https://github.com/WolfSoko/wol-sok-mono/commit/0d98e239a50aa328e68d52f8e02aede696f57a72))
 
 ### [4.1.56](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.55...v4.1.56) (2023-12-31)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency core-js to v3.35.0 ([27776e4](https://github.com/WolfSoko/wol-sok-mono/commit/27776e4402d0bc1f3c2b694fc41807b6e9682edc))
+- **deps:** :arrow_up: update dependency core-js to v3.35.0 ([27776e4](https://github.com/WolfSoko/wol-sok-mono/commit/27776e4402d0bc1f3c2b694fc41807b6e9682edc))
 
 ### [4.1.55](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.54...v4.1.55) (2023-12-31)
 
 ### [4.1.54](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.53...v4.1.54) (2023-12-30)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.117.0 ([436545a](https://github.com/WolfSoko/wol-sok-mono/commit/436545ac3a58e25874fc36681f7cc7ad98466e0e))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.117.0 ([436545a](https://github.com/WolfSoko/wol-sok-mono/commit/436545ac3a58e25874fc36681f7cc7ad98466e0e))
 
 ### [4.1.53](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.52...v4.1.53) (2023-12-30)
 
@@ -241,31 +224,27 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.1.43](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.42...v4.1.43) (2023-12-25)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.116.1 ([28debe5](https://github.com/WolfSoko/wol-sok-mono/commit/28debe547491dc8f2a913dff46500da87a6e58a1))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.116.1 ([28debe5](https://github.com/WolfSoko/wol-sok-mono/commit/28debe547491dc8f2a913dff46500da87a6e58a1))
 
 ### [4.1.42](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.41...v4.1.42) (2023-12-25)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency three to v0.160.0 ([c4539c3](https://github.com/WolfSoko/wol-sok-mono/commit/c4539c38dd82e1fe09d8dad9c8b12e253eec6a58))
+- **deps:** :arrow_up: update dependency three to v0.160.0 ([c4539c3](https://github.com/WolfSoko/wol-sok-mono/commit/c4539c38dd82e1fe09d8dad9c8b12e253eec6a58))
 
 ### [4.1.41](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.40...v4.1.41) (2023-12-25)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.91.0 ([a931b75](https://github.com/WolfSoko/wol-sok-mono/commit/a931b755c69acd904503ad1afd14f7aee836710f))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.91.0 ([a931b75](https://github.com/WolfSoko/wol-sok-mono/commit/a931b755c69acd904503ad1afd14f7aee836710f))
 
 ### [4.1.40](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.39...v4.1.40) (2023-12-25)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.116.0 ([83119fb](https://github.com/WolfSoko/wol-sok-mono/commit/83119fb6ad26425b83afcb9ba1bf593732723ee7))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.116.0 ([83119fb](https://github.com/WolfSoko/wol-sok-mono/commit/83119fb6ad26425b83afcb9ba1bf593732723ee7))
 
 ### [4.1.39](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.38...v4.1.39) (2023-12-25)
 
@@ -277,17 +256,15 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.1.35](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.34...v4.1.35) (2023-12-23)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.90.0 ([828a079](https://github.com/WolfSoko/wol-sok-mono/commit/828a079fc1041c361f20d69f655842ecde86a6d9))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.90.0 ([828a079](https://github.com/WolfSoko/wol-sok-mono/commit/828a079fc1041c361f20d69f655842ecde86a6d9))
 
 ### [4.1.34](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.33...v4.1.34) (2023-12-23)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency mathjs to v12.2.1 ([608f496](https://github.com/WolfSoko/wol-sok-mono/commit/608f49669a3912d388f581ec64ff9986cf88e3a2))
+- **deps:** :arrow_up: update dependency mathjs to v12.2.1 ([608f496](https://github.com/WolfSoko/wol-sok-mono/commit/608f49669a3912d388f581ec64ff9986cf88e3a2))
 
 ### [4.1.33](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.32...v4.1.33) (2023-12-22)
 
@@ -295,17 +272,15 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.1.31](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.30...v4.1.31) (2023-12-22)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency vega-embed to v6.24.0 ([e9c9296](https://github.com/WolfSoko/wol-sok-mono/commit/e9c929694fe615741b3393b3ac0a11885402b12a))
+- **deps:** :arrow_up: update dependency vega-embed to v6.24.0 ([e9c9296](https://github.com/WolfSoko/wol-sok-mono/commit/e9c929694fe615741b3393b3ac0a11885402b12a))
 
 ### [4.1.30](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.29...v4.1.30) (2023-12-22)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.89.0 ([f841035](https://github.com/WolfSoko/wol-sok-mono/commit/f841035db55e49d3a6013bd3ae9602a4e592f3f6))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.89.0 ([f841035](https://github.com/WolfSoko/wol-sok-mono/commit/f841035db55e49d3a6013bd3ae9602a4e592f3f6))
 
 ### [4.1.29](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.28...v4.1.29) (2023-12-22)
 
@@ -325,31 +300,28 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.1.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.20...v4.1.21) (2023-12-19)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.87.0 ([45f4deb](https://github.com/WolfSoko/wol-sok-mono/commit/45f4debac7c0b4c3055bc59f17f8eeb994a4f833))
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.88.0 ([12a1555](https://github.com/WolfSoko/wol-sok-mono/commit/12a1555bc993a3e334fac9d652263a25fc1b3ff7))
-* **deps:** :arrow_up: update dependency @tensorflow/tfjs to v4.15.0 ([481ab2d](https://github.com/WolfSoko/wol-sok-mono/commit/481ab2d9f6346ce2e007a4ef6392227a860c03d4))
-* **deps:** :arrow_up: update dependency ace-builds to v1.32.1 ([e94ac0c](https://github.com/WolfSoko/wol-sok-mono/commit/e94ac0c59f861d0cdc545089c30e5bb19ca417a6))
-* **deps:** :arrow_up: update dependency ace-builds to v1.32.2 ([20f1046](https://github.com/WolfSoko/wol-sok-mono/commit/20f104615852c7296cf9c3b9a7e63cc7c3236431))
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.115.0 ([5667a05](https://github.com/WolfSoko/wol-sok-mono/commit/5667a053de6a694f0a8d606f1b7b03fa9173e33c))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.87.0 ([45f4deb](https://github.com/WolfSoko/wol-sok-mono/commit/45f4debac7c0b4c3055bc59f17f8eeb994a4f833))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.88.0 ([12a1555](https://github.com/WolfSoko/wol-sok-mono/commit/12a1555bc993a3e334fac9d652263a25fc1b3ff7))
+- **deps:** :arrow_up: update dependency @tensorflow/tfjs to v4.15.0 ([481ab2d](https://github.com/WolfSoko/wol-sok-mono/commit/481ab2d9f6346ce2e007a4ef6392227a860c03d4))
+- **deps:** :arrow_up: update dependency ace-builds to v1.32.1 ([e94ac0c](https://github.com/WolfSoko/wol-sok-mono/commit/e94ac0c59f861d0cdc545089c30e5bb19ca417a6))
+- **deps:** :arrow_up: update dependency ace-builds to v1.32.2 ([20f1046](https://github.com/WolfSoko/wol-sok-mono/commit/20f104615852c7296cf9c3b9a7e63cc7c3236431))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.115.0 ([5667a05](https://github.com/WolfSoko/wol-sok-mono/commit/5667a053de6a694f0a8d606f1b7b03fa9173e33c))
 
 ### [4.1.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.19...v4.1.20) (2023-12-13)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([3753d72](https://github.com/WolfSoko/wol-sok-mono/commit/3753d725b831854679d7d4295f56f76c77d7b6ca))
+- **deps:** :arrow_up: update all non-major dependencies ([3753d72](https://github.com/WolfSoko/wol-sok-mono/commit/3753d725b831854679d7d4295f56f76c77d7b6ca))
 
 ### [4.1.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.18...v4.1.19) (2023-12-13)
 
 ### [4.1.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.17...v4.1.18) (2023-12-13)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update angular monorepo to v17.0.6 ([cc1263b](https://github.com/WolfSoko/wol-sok-mono/commit/cc1263b08ff11a5c8ea3c5b3477427ba580e2df0))
+- **deps:** :arrow_up: update angular monorepo to v17.0.6 ([cc1263b](https://github.com/WolfSoko/wol-sok-mono/commit/cc1263b08ff11a5c8ea3c5b3477427ba580e2df0))
 
 ### [4.1.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.16...v4.1.17) (2023-12-06)
 
@@ -361,10 +333,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.1.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.12...v4.1.13) (2023-12-04)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update nx monorepo to v17.0.2 ([ce6ce31](https://github.com/WolfSoko/wol-sok-mono/commit/ce6ce3152853d5516fc52a8d6eaf334808988ac1))
+- **deps:** :arrow_up: update nx monorepo to v17.0.2 ([ce6ce31](https://github.com/WolfSoko/wol-sok-mono/commit/ce6ce3152853d5516fc52a8d6eaf334808988ac1))
 
 ### [4.1.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.11...v4.1.12) (2023-12-04)
 
@@ -388,25 +359,22 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.1.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.1...v4.1.2) (2023-12-03)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update angular monorepo to v17.0.5 ([5241865](https://github.com/WolfSoko/wol-sok-mono/commit/5241865cf3232965cf602481f0a2ed71363eb21b))
+- **deps:** :arrow_up: update angular monorepo to v17.0.5 ([5241865](https://github.com/WolfSoko/wol-sok-mono/commit/5241865cf3232965cf602481f0a2ed71363eb21b))
 
 ### [4.1.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.1.0...v4.1.1) (2023-12-03)
 
 ## [4.1.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.0.6...v4.1.0) (2023-12-02)
 
-
 ### Features
 
-* **feat-lazy-gravity-rocks:** ✨ change mode of config to over ([23f0bf1](https://github.com/WolfSoko/wol-sok-mono/commit/23f0bf12da1ed8fc37540eaf807e45ffd2e0ac95))
-* **feat-lazy-gravity-rocks:** ✨ put buttons start reset at top ([16f99e9](https://github.com/WolfSoko/wol-sok-mono/commit/16f99e98c7f0b4c1b9733b72c54dbf389f839e47))
-
+- **feat-lazy-gravity-rocks:** ✨ change mode of config to over ([23f0bf1](https://github.com/WolfSoko/wol-sok-mono/commit/23f0bf12da1ed8fc37540eaf807e45ffd2e0ac95))
+- **feat-lazy-gravity-rocks:** ✨ put buttons start reset at top ([16f99e9](https://github.com/WolfSoko/wol-sok-mono/commit/16f99e98c7f0b4c1b9733b72c54dbf389f839e47))
 
 ### Bug Fixes
 
-* 🐛 load canvas in any case ([3abb4de](https://github.com/WolfSoko/wol-sok-mono/commit/3abb4de946786554a403d2279c771137a64fbb5c))
+- 🐛 load canvas in any case ([3abb4de](https://github.com/WolfSoko/wol-sok-mono/commit/3abb4de946786554a403d2279c771137a64fbb5c))
 
 ### [4.0.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.0.5...v4.0.6) (2023-12-01)
 
@@ -414,10 +382,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.0.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.0.3...v4.0.4) (2023-11-30)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.82.0 ([4878999](https://github.com/WolfSoko/wol-sok-mono/commit/48789995082f5c829245df8aba6248ca2ad5f0cb))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.82.0 ([4878999](https://github.com/WolfSoko/wol-sok-mono/commit/48789995082f5c829245df8aba6248ca2ad5f0cb))
 
 ### [4.0.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.0.2...v4.0.3) (2023-11-29)
 
@@ -425,51 +392,46 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [4.0.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.0.0...v4.0.1) (2023-11-27)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @assemblyscript/loader to v0.27.22 ([ddb1227](https://github.com/WolfSoko/wol-sok-mono/commit/ddb1227634f0938854a614576f0eaa9e5ea3d282))
+- **deps:** :arrow_up: update dependency @assemblyscript/loader to v0.27.22 ([ddb1227](https://github.com/WolfSoko/wol-sok-mono/commit/ddb1227634f0938854a614576f0eaa9e5ea3d282))
 
 ## [4.0.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.36.1...v4.0.0) (2023-11-27)
 
-
 ### ⚠ BREAKING CHANGES
 
-* 💥 ✨ add new shader rendering. Get rid of three.js
+- 💥 ✨ add new shader rendering. Get rid of three.js
 
 ### Features
 
-* ✨ make it easy to load shader files with webpack ([34d2b55](https://github.com/WolfSoko/wol-sok-mono/commit/34d2b556d8703e406df24914a392bdc339db9ff0))
-* ✨ move gl renderer to own lib ([d835a6f](https://github.com/WolfSoko/wol-sok-mono/commit/d835a6f707a7e5f6ba0bc66f11900b313e520151))
-* 💥 ✨ add new shader rendering. Get rid of three.js ([5c576f0](https://github.com/WolfSoko/wol-sok-mono/commit/5c576f0ea34d5754e62dbc5df88172c214b134ad))
+- ✨ make it easy to load shader files with webpack ([34d2b55](https://github.com/WolfSoko/wol-sok-mono/commit/34d2b556d8703e406df24914a392bdc339db9ff0))
+- ✨ move gl renderer to own lib ([d835a6f](https://github.com/WolfSoko/wol-sok-mono/commit/d835a6f707a7e5f6ba0bc66f11900b313e520151))
+- 💥 ✨ add new shader rendering. Get rid of three.js ([5c576f0](https://github.com/WolfSoko/wol-sok-mono/commit/5c576f0ea34d5754e62dbc5df88172c214b134ad))
 
 ### [3.36.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.36.0...v3.36.1) (2023-11-25)
 
 ## [3.36.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.22...v3.36.0) (2023-11-25)
 
-
 ### Features
 
-* ✨ wip render shader 2 without three.js ([ec2a755](https://github.com/WolfSoko/wol-sok-mono/commit/ec2a755e63f95d7cc4071c179d0ff8f66d02cc6a))
+- ✨ wip render shader 2 without three.js ([ec2a755](https://github.com/WolfSoko/wol-sok-mono/commit/ec2a755e63f95d7cc4071c179d0ff8f66d02cc6a))
 
 ### [3.35.22](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.21...v3.35.22) (2023-11-25)
 
 ### [3.35.21](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.20...v3.35.21) (2023-11-25)
 
-
 ### Bug Fixes
 
-* 🐛 align names between path mapping and package ([bd8f569](https://github.com/WolfSoko/wol-sok-mono/commit/bd8f5699b6e4d77c257553092d0b63002639938a))
-* 🐛 could not inject firebase for module federation module ([1714b67](https://github.com/WolfSoko/wol-sok-mono/commit/1714b67830f5705779448c3e46a8b083184f2ee0))
+- 🐛 align names between path mapping and package ([bd8f569](https://github.com/WolfSoko/wol-sok-mono/commit/bd8f5699b6e4d77c257553092d0b63002639938a))
+- 🐛 could not inject firebase for module federation module ([1714b67](https://github.com/WolfSoko/wol-sok-mono/commit/1714b67830f5705779448c3e46a8b083184f2ee0))
 
 ### [3.35.20](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.19...v3.35.20) (2023-11-25)
 
 ### [3.35.19](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.18...v3.35.19) (2023-11-25)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([82616ee](https://github.com/WolfSoko/wol-sok-mono/commit/82616eee884c619e3ad157eb75f67b33b8a4b87e))
+- **deps:** :arrow_up: update all non-major dependencies ([82616ee](https://github.com/WolfSoko/wol-sok-mono/commit/82616eee884c619e3ad157eb75f67b33b8a4b87e))
 
 ### [3.35.18](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.17...v3.35.18) (2023-11-25)
 
@@ -481,10 +443,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.35.14](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.13...v3.35.14) (2023-11-24)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.81.1 ([92be327](https://github.com/WolfSoko/wol-sok-mono/commit/92be3274a90459bd4b41d91d83184625831d3f1c))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.81.1 ([92be327](https://github.com/WolfSoko/wol-sok-mono/commit/92be3274a90459bd4b41d91d83184625831d3f1c))
 
 ### [3.35.13](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.12...v3.35.13) (2023-11-24)
 
@@ -496,10 +457,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.35.9](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.8...v3.35.9) (2023-11-24)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @assemblyscript/loader to v0.27.20 ([b6efd6c](https://github.com/WolfSoko/wol-sok-mono/commit/b6efd6c5cdee07715592ddbd2c173c7744b2cd10))
+- **deps:** :arrow_up: update dependency @assemblyscript/loader to v0.27.20 ([b6efd6c](https://github.com/WolfSoko/wol-sok-mono/commit/b6efd6c5cdee07715592ddbd2c173c7744b2cd10))
 
 ### [3.35.8](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.7...v3.35.8) (2023-11-24)
 
@@ -511,10 +471,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.35.4](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.3...v3.35.4) (2023-11-23)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update angular monorepo to v17.0.4 ([ea122a9](https://github.com/WolfSoko/wol-sok-mono/commit/ea122a95f213528b7a1513c570c1cf874a5ed5ce))
+- **deps:** :arrow_up: update angular monorepo to v17.0.4 ([ea122a9](https://github.com/WolfSoko/wol-sok-mono/commit/ea122a95f213528b7a1513c570c1cf874a5ed5ce))
 
 ### [3.35.3](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.2...v3.35.3) (2023-11-23)
 
@@ -522,68 +481,59 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.35.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.35.0...v3.35.1) (2023-11-23)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.81.0 ([bfa08ea](https://github.com/WolfSoko/wol-sok-mono/commit/bfa08ea2777ac9a39d50b7af8883a8d4534ee4fa))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.81.0 ([bfa08ea](https://github.com/WolfSoko/wol-sok-mono/commit/bfa08ea2777ac9a39d50b7af8883a8d4534ee4fa))
 
 ## [3.35.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.34.0...v3.35.0) (2023-11-23)
 
-
 ### Features
 
-* ✨ add shader-examples-remote to implicit deps ([cbc14a7](https://github.com/WolfSoko/wol-sok-mono/commit/cbc14a7c6a6a82a8d413ba32bd185d549b9713bd))
+- ✨ add shader-examples-remote to implicit deps ([cbc14a7](https://github.com/WolfSoko/wol-sok-mono/commit/cbc14a7c6a6a82a8d413ba32bd185d549b9713bd))
 
 ## [3.34.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.33.0...v3.34.0) (2023-11-23)
 
-
 ### Features
 
-* ✨ remove unecessary 100vh ([ee3eee2](https://github.com/WolfSoko/wol-sok-mono/commit/ee3eee25c09fc44d0588578437b7f8498e1f5d3a))
+- ✨ remove unecessary 100vh ([ee3eee2](https://github.com/WolfSoko/wol-sok-mono/commit/ee3eee25c09fc44d0588578437b7f8498e1f5d3a))
 
 ## [3.33.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.32.0...v3.33.0) (2023-11-23)
 
-
 ### Features
 
-* ✨ use loadRemoteModule again ([d2728a9](https://github.com/WolfSoko/wol-sok-mono/commit/d2728a98c212090f45ed8eb969e3b24083d1effa))
+- ✨ use loadRemoteModule again ([d2728a9](https://github.com/WolfSoko/wol-sok-mono/commit/d2728a98c212090f45ed8eb969e3b24083d1effa))
 
 ## [3.32.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.31.4...v3.32.0) (2023-11-23)
 
-
 ### Features
 
-* ✨ provide shader-examples as module federation ([d5b8728](https://github.com/WolfSoko/wol-sok-mono/commit/d5b8728be5b212d4a4aa08e025816e57430b9dbe))
+- ✨ provide shader-examples as module federation ([d5b8728](https://github.com/WolfSoko/wol-sok-mono/commit/d5b8728be5b212d4a4aa08e025816e57430b9dbe))
 
 ### [3.31.4](https://github.com/WolfSoko/wol-sok-mono/compare/v3.31.3...v3.31.4) (2023-11-22)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency core-js to v3.33.3 ([f995935](https://github.com/WolfSoko/wol-sok-mono/commit/f99593589c9e4cea4aea873c4f54cbc9f12a8b1f))
+- **deps:** :arrow_up: update dependency core-js to v3.33.3 ([f995935](https://github.com/WolfSoko/wol-sok-mono/commit/f99593589c9e4cea4aea873c4f54cbc9f12a8b1f))
 
 ### [3.31.3](https://github.com/WolfSoko/wol-sok-mono/compare/v3.31.2...v3.31.3) (2023-11-22)
 
 ### [3.31.2](https://github.com/WolfSoko/wol-sok-mono/compare/v3.31.1...v3.31.2) (2023-11-21)
 
-
 ### Bug Fixes
 
-* 🐛 remove html '<' ([8590fff](https://github.com/WolfSoko/wol-sok-mono/commit/8590fff63e1b391263b38259670fa0307f0d09bc))
+- 🐛 remove html '<' ([8590fff](https://github.com/WolfSoko/wol-sok-mono/commit/8590fff63e1b391263b38259670fa0307f0d09bc))
 
 ### [3.31.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.31.0...v3.31.1) (2023-11-21)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @assemblyscript/loader to v0.27.19 ([f69d71f](https://github.com/WolfSoko/wol-sok-mono/commit/f69d71fb97ad18460d45768ac14a52adbd2e8dbc))
+- **deps:** :arrow_up: update dependency @assemblyscript/loader to v0.27.19 ([f69d71f](https://github.com/WolfSoko/wol-sok-mono/commit/f69d71fb97ad18460d45768ac14a52adbd2e8dbc))
 
 ## [3.31.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.30.2...v3.31.0) (2023-11-21)
 
-
 ### Features
 
-* ✨ make sidebar also dynamic on large screens ([798a23e](https://github.com/WolfSoko/wol-sok-mono/commit/798a23ea3361ca774fa4edbba8374a43a91fb933))
+- ✨ make sidebar also dynamic on large screens ([798a23e](https://github.com/WolfSoko/wol-sok-mono/commit/798a23ea3361ca774fa4edbba8374a43a91fb933))
 
 ### [3.30.2](https://github.com/WolfSoko/wol-sok-mono/compare/v3.30.1...v3.30.2) (2023-11-20)
 
@@ -591,31 +541,27 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## [3.30.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.58...v3.30.0) (2023-11-20)
 
-
 ### Features
 
-* ✨ some deferred loading ([4a0d2d3](https://github.com/WolfSoko/wol-sok-mono/commit/4a0d2d3e61fff120b379a34a294b7b88b5bdebd5))
-
+- ✨ some deferred loading ([4a0d2d3](https://github.com/WolfSoko/wol-sok-mono/commit/4a0d2d3e61fff120b379a34a294b7b88b5bdebd5))
 
 ### Bug Fixes
 
-* 🐛 control flow syntax ([0780843](https://github.com/WolfSoko/wol-sok-mono/commit/078084343486281d1994635de113dd892954b07b))
+- 🐛 control flow syntax ([0780843](https://github.com/WolfSoko/wol-sok-mono/commit/078084343486281d1994635de113dd892954b07b))
 
 ### [3.29.58](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.57...v3.29.58) (2023-11-20)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency mathjs to v12.1.0 ([567f4b4](https://github.com/WolfSoko/wol-sok-mono/commit/567f4b49c2958bebb469aee91cee5a27ff78bfee))
+- **deps:** :arrow_up: update dependency mathjs to v12.1.0 ([567f4b4](https://github.com/WolfSoko/wol-sok-mono/commit/567f4b49c2958bebb469aee91cee5a27ff78bfee))
 
 ### [3.29.57](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.56...v3.29.57) (2023-11-20)
 
 ### [3.29.56](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.55...v3.29.56) (2023-11-20)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.110.0 ([b2aa71a](https://github.com/WolfSoko/wol-sok-mono/commit/b2aa71a83cc2d230874d6de3ce624ef69eb88224))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.110.0 ([b2aa71a](https://github.com/WolfSoko/wol-sok-mono/commit/b2aa71a83cc2d230874d6de3ce624ef69eb88224))
 
 ### [3.29.55](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.54...v3.29.55) (2023-11-19)
 
@@ -627,24 +573,21 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.29.51](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.50...v3.29.51) (2023-11-19)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.109.0 ([a0786be](https://github.com/WolfSoko/wol-sok-mono/commit/a0786bed946ce0e348c9db3faaa11185d0355e88))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.109.0 ([a0786be](https://github.com/WolfSoko/wol-sok-mono/commit/a0786bed946ce0e348c9db3faaa11185d0355e88))
 
 ### [3.29.50](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.49...v3.29.50) (2023-11-18)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update angular monorepo to v17.0.3 ([18a4fc9](https://github.com/WolfSoko/wol-sok-mono/commit/18a4fc9fe8e95c5a78758e1948d79a85938726c2))
+- **deps:** :arrow_up: update angular monorepo to v17.0.3 ([18a4fc9](https://github.com/WolfSoko/wol-sok-mono/commit/18a4fc9fe8e95c5a78758e1948d79a85938726c2))
 
 ### [3.29.49](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.48...v3.29.49) (2023-11-18)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([02c5363](https://github.com/WolfSoko/wol-sok-mono/commit/02c536352c0f2072e307edfe37f62ac53750f4aa))
+- **deps:** :arrow_up: update all non-major dependencies ([02c5363](https://github.com/WolfSoko/wol-sok-mono/commit/02c536352c0f2072e307edfe37f62ac53750f4aa))
 
 ### [3.29.48](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.47...v3.29.48) (2023-11-18)
 
@@ -652,26 +595,23 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.29.46](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.45...v3.29.46) (2023-11-17)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([11adf3f](https://github.com/WolfSoko/wol-sok-mono/commit/11adf3f07900f19a178b1106637575c96bf6aa59))
+- **deps:** :arrow_up: update all non-major dependencies ([11adf3f](https://github.com/WolfSoko/wol-sok-mono/commit/11adf3f07900f19a178b1106637575c96bf6aa59))
 
 ### [3.29.45](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.44...v3.29.45) (2023-11-17)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.108.0 ([82a332d](https://github.com/WolfSoko/wol-sok-mono/commit/82a332da4db4c0040e72813f9888d4161c7155de))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.108.0 ([82a332d](https://github.com/WolfSoko/wol-sok-mono/commit/82a332da4db4c0040e72813f9888d4161c7155de))
 
 ### [3.29.44](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.43...v3.29.44) (2023-11-16)
 
 ### [3.29.43](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.42...v3.29.43) (2023-11-16)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.107.0 ([7e04f6b](https://github.com/WolfSoko/wol-sok-mono/commit/7e04f6b509d5539c4bc77dcb132254aea351e3e8))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.107.0 ([7e04f6b](https://github.com/WolfSoko/wol-sok-mono/commit/7e04f6b509d5539c4bc77dcb132254aea351e3e8))
 
 ### [3.29.42](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.41...v3.29.42) (2023-11-16)
 
@@ -681,10 +621,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.29.39](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.38...v3.29.39) (2023-11-14)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.106.1 ([5442f55](https://github.com/WolfSoko/wol-sok-mono/commit/5442f551a91e5c14961f810b4a95f95638816dad))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.106.1 ([5442f55](https://github.com/WolfSoko/wol-sok-mono/commit/5442f551a91e5c14961f810b4a95f95638816dad))
 
 ### [3.29.38](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.37...v3.29.38) (2023-11-14)
 
@@ -692,10 +631,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.29.36](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.35...v3.29.36) (2023-11-13)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.106.0 ([a8d9958](https://github.com/WolfSoko/wol-sok-mono/commit/a8d9958da4d9d63253c6fb97eab2dc7250759a08))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.106.0 ([a8d9958](https://github.com/WolfSoko/wol-sok-mono/commit/a8d9958da4d9d63253c6fb97eab2dc7250759a08))
 
 ### [3.29.35](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.34...v3.29.35) (2023-11-13)
 
@@ -703,33 +641,29 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.29.33](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.32...v3.29.33) (2023-11-13)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency vega-lite to v5.16.3 ([8e3a83b](https://github.com/WolfSoko/wol-sok-mono/commit/8e3a83b293731686b5cd536459c68da8e4e28e37))
+- **deps:** :arrow_up: update dependency vega-lite to v5.16.3 ([8e3a83b](https://github.com/WolfSoko/wol-sok-mono/commit/8e3a83b293731686b5cd536459c68da8e4e28e37))
 
 ### [3.29.32](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.31...v3.29.32) (2023-11-12)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency vega to v5.26.1 ([1cc62a3](https://github.com/WolfSoko/wol-sok-mono/commit/1cc62a38add9fe649155bb33bee15623f31130c7))
+- **deps:** :arrow_up: update dependency vega to v5.26.1 ([1cc62a3](https://github.com/WolfSoko/wol-sok-mono/commit/1cc62a38add9fe649155bb33bee15623f31130c7))
 
 ### [3.29.31](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.30...v3.29.31) (2023-11-12)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update angular monorepo to v17.0.2 ([0bb2539](https://github.com/WolfSoko/wol-sok-mono/commit/0bb2539c08c72f1d94417cd5d73edf1ffef041c6))
+- **deps:** :arrow_up: update angular monorepo to v17.0.2 ([0bb2539](https://github.com/WolfSoko/wol-sok-mono/commit/0bb2539c08c72f1d94417cd5d73edf1ffef041c6))
 
 ### [3.29.30](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.29...v3.29.30) (2023-11-12)
 
 ### [3.29.29](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.28...v3.29.29) (2023-11-12)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @assemblyscript/loader to v0.27.17 ([7cadfa8](https://github.com/WolfSoko/wol-sok-mono/commit/7cadfa8e2239b2e0e68db7c52e7d38d71a80c826))
+- **deps:** :arrow_up: update dependency @assemblyscript/loader to v0.27.17 ([7cadfa8](https://github.com/WolfSoko/wol-sok-mono/commit/7cadfa8e2239b2e0e68db7c52e7d38d71a80c826))
 
 ### [3.29.28](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.27...v3.29.28) (2023-11-12)
 
@@ -737,31 +671,27 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.29.26](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.25...v3.29.26) (2023-11-12)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update angular monorepo to v17.0.1 ([3efadbd](https://github.com/WolfSoko/wol-sok-mono/commit/3efadbd41a55500f8f5503252140fb0ada3c05e2))
+- **deps:** :arrow_up: update angular monorepo to v17.0.1 ([3efadbd](https://github.com/WolfSoko/wol-sok-mono/commit/3efadbd41a55500f8f5503252140fb0ada3c05e2))
 
 ### [3.29.25](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.24...v3.29.25) (2023-11-12)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.80.0 ([50aebee](https://github.com/WolfSoko/wol-sok-mono/commit/50aebee6766eaed3e620a62ab4bc17b929eb904d))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.80.0 ([50aebee](https://github.com/WolfSoko/wol-sok-mono/commit/50aebee6766eaed3e620a62ab4bc17b929eb904d))
 
 ### [3.29.24](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.23...v3.29.24) (2023-11-12)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency firebase to v10.6.0 ([f2787f4](https://github.com/WolfSoko/wol-sok-mono/commit/f2787f49b473c6076ffac06d9ed24f9646f1f66c))
+- **deps:** :arrow_up: update dependency firebase to v10.6.0 ([f2787f4](https://github.com/WolfSoko/wol-sok-mono/commit/f2787f49b473c6076ffac06d9ed24f9646f1f66c))
 
 ### [3.29.23](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.22...v3.29.23) (2023-11-12)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @assemblyscript/loader to v0.27.16 ([331b2ac](https://github.com/WolfSoko/wol-sok-mono/commit/331b2ac4b6577e44c0b29d8ea45235c26a57c0a6))
+- **deps:** :arrow_up: update dependency @assemblyscript/loader to v0.27.16 ([331b2ac](https://github.com/WolfSoko/wol-sok-mono/commit/331b2ac4b6577e44c0b29d8ea45235c26a57c0a6))
 
 ### [3.29.22](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.21...v3.29.22) (2023-11-11)
 
@@ -769,46 +699,41 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.29.20](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.19...v3.29.20) (2023-11-11)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency vega-lite to v5.16.2 ([6ac6ac4](https://github.com/WolfSoko/wol-sok-mono/commit/6ac6ac494c05e817dc0b6936a06ba377a76b0049))
+- **deps:** :arrow_up: update dependency vega-lite to v5.16.2 ([6ac6ac4](https://github.com/WolfSoko/wol-sok-mono/commit/6ac6ac494c05e817dc0b6936a06ba377a76b0049))
 
 ### [3.29.19](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.18...v3.29.19) (2023-11-11)
 
 ### [3.29.18](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.17...v3.29.18) (2023-11-11)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.79.0 ([e2d6149](https://github.com/WolfSoko/wol-sok-mono/commit/e2d6149e829e5927ecf4731318bd5c55c6071568))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.79.0 ([e2d6149](https://github.com/WolfSoko/wol-sok-mono/commit/e2d6149e829e5927ecf4731318bd5c55c6071568))
 
 ### [3.29.17](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.16...v3.29.17) (2023-11-11)
 
 ### [3.29.16](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.15...v3.29.16) (2023-11-11)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency mathjs to v12 ([dbd4002](https://github.com/WolfSoko/wol-sok-mono/commit/dbd4002bd3d0a1a2cc1e4fa09983c20c7b914817))
+- **deps:** :arrow_up: update dependency mathjs to v12 ([dbd4002](https://github.com/WolfSoko/wol-sok-mono/commit/dbd4002bd3d0a1a2cc1e4fa09983c20c7b914817))
 
 ### [3.29.15](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.14...v3.29.15) (2023-11-11)
 
 ### [3.29.14](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.13...v3.29.14) (2023-11-11)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.105.0 ([534aef9](https://github.com/WolfSoko/wol-sok-mono/commit/534aef98d4cc4d03ce8db293bf6cf52123f23661))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.105.0 ([534aef9](https://github.com/WolfSoko/wol-sok-mono/commit/534aef98d4cc4d03ce8db293bf6cf52123f23661))
 
 ### [3.29.13](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.12...v3.29.13) (2023-11-11)
 
 ### [3.29.12](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.11...v3.29.12) (2023-11-11)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.78.0 ([551b788](https://github.com/WolfSoko/wol-sok-mono/commit/551b788566cf795867e8c60195dda067b47c4363))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.78.0 ([551b788](https://github.com/WolfSoko/wol-sok-mono/commit/551b788566cf795867e8c60195dda067b47c4363))
 
 ### [3.29.11](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.10...v3.29.11) (2023-11-10)
 
@@ -816,10 +741,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.29.9](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.8...v3.29.9) (2023-11-10)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency vega to v5.26.0 ([18cd4d1](https://github.com/WolfSoko/wol-sok-mono/commit/18cd4d1a9fb29125cbf21190d1d2704be578c0da))
+- **deps:** :arrow_up: update dependency vega to v5.26.0 ([18cd4d1](https://github.com/WolfSoko/wol-sok-mono/commit/18cd4d1a9fb29125cbf21190d1d2704be578c0da))
 
 ### [3.29.8](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.7...v3.29.8) (2023-11-10)
 
@@ -827,19 +751,17 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.29.6](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.5...v3.29.6) (2023-11-10)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update nx monorepo to v17 ([715e0ab](https://github.com/WolfSoko/wol-sok-mono/commit/715e0ab82f764e9e2ba70773580d0707089d5d3c))
+- **deps:** :arrow_up: update nx monorepo to v17 ([715e0ab](https://github.com/WolfSoko/wol-sok-mono/commit/715e0ab82f764e9e2ba70773580d0707089d5d3c))
 
 ### [3.29.5](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.4...v3.29.5) (2023-11-10)
 
 ### [3.29.4](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.3...v3.29.4) (2023-11-10)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @tensorflow/tfjs to v4.13.0 ([e0e0479](https://github.com/WolfSoko/wol-sok-mono/commit/e0e04790af39efce796ad339de7f30cfe2030703))
+- **deps:** :arrow_up: update dependency @tensorflow/tfjs to v4.13.0 ([e0e0479](https://github.com/WolfSoko/wol-sok-mono/commit/e0e04790af39efce796ad339de7f30cfe2030703))
 
 ### [3.29.3](https://github.com/WolfSoko/wol-sok-mono/compare/v3.29.2...v3.29.3) (2023-11-09)
 
@@ -849,28 +771,25 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## [3.29.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.28.5...v3.29.0) (2023-11-09)
 
-
 ### Features
 
-* ✨ move config form into component ([6db7541](https://github.com/WolfSoko/wol-sok-mono/commit/6db75416f1b78bd54961487e9ed3018c116ecbfc))
-* ✨ move config to sidebar ([02a7df2](https://github.com/WolfSoko/wol-sok-mono/commit/02a7df2155b3f291b895f76e6f2db8e6c5f9f7e7))
-* ✨ only show planet list when config is open ([5771e80](https://github.com/WolfSoko/wol-sok-mono/commit/5771e80e9f4664dfdcbb392833c5701f627d0f72))
-
+- ✨ move config form into component ([6db7541](https://github.com/WolfSoko/wol-sok-mono/commit/6db75416f1b78bd54961487e9ed3018c116ecbfc))
+- ✨ move config to sidebar ([02a7df2](https://github.com/WolfSoko/wol-sok-mono/commit/02a7df2155b3f291b895f76e6f2db8e6c5f9f7e7))
+- ✨ only show planet list when config is open ([5771e80](https://github.com/WolfSoko/wol-sok-mono/commit/5771e80e9f4664dfdcbb392833c5701f627d0f72))
 
 ### Bug Fixes
 
-* **feat-lazy-gravity-rocks:** 🐛 form used before initialization ([2af285e](https://github.com/WolfSoko/wol-sok-mono/commit/2af285eb39beba6c3c6ad731287c13b62d90a1b7))
-* **feat-lazy-gravity-rocks:** 🐛 form used before initialization ([c028054](https://github.com/WolfSoko/wol-sok-mono/commit/c02805410dc74b61f644afb142b53c08c7403766))
-* **feat-lazy-gravity-rocks:** 🐛 form used before initialization ([0717299](https://github.com/WolfSoko/wol-sok-mono/commit/071729939f18b2a02f62d1fbb09b8ce90326fdc7))
+- **feat-lazy-gravity-rocks:** 🐛 form used before initialization ([2af285e](https://github.com/WolfSoko/wol-sok-mono/commit/2af285eb39beba6c3c6ad731287c13b62d90a1b7))
+- **feat-lazy-gravity-rocks:** 🐛 form used before initialization ([c028054](https://github.com/WolfSoko/wol-sok-mono/commit/c02805410dc74b61f644afb142b53c08c7403766))
+- **feat-lazy-gravity-rocks:** 🐛 form used before initialization ([0717299](https://github.com/WolfSoko/wol-sok-mono/commit/071729939f18b2a02f62d1fbb09b8ce90326fdc7))
 
 ### [3.28.5](https://github.com/WolfSoko/wol-sok-mono/compare/v3.28.4...v3.28.5) (2023-11-08)
 
 ### [3.28.4](https://github.com/WolfSoko/wol-sok-mono/compare/v3.28.3...v3.28.4) (2023-11-08)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([993ef1d](https://github.com/WolfSoko/wol-sok-mono/commit/993ef1d4fe5e35ddcfbb7378070bc493fcd903b1))
+- **deps:** :arrow_up: update all non-major dependencies ([993ef1d](https://github.com/WolfSoko/wol-sok-mono/commit/993ef1d4fe5e35ddcfbb7378070bc493fcd903b1))
 
 ### [3.28.3](https://github.com/WolfSoko/wol-sok-mono/compare/v3.28.2...v3.28.3) (2023-11-08)
 
@@ -880,72 +799,63 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## [3.28.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.27.0...v3.28.0) (2023-11-07)
 
-
 ### Features
 
-* **feat-lazy-gravity-rocks:** ✨ new scaling ([5145655](https://github.com/WolfSoko/wol-sok-mono/commit/51456554ed64a1dea434150feeda4e1f5996ca12))
+- **feat-lazy-gravity-rocks:** ✨ new scaling ([5145655](https://github.com/WolfSoko/wol-sok-mono/commit/51456554ed64a1dea434150feeda4e1f5996ca12))
 
 ## [3.27.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.26.0...v3.27.0) (2023-11-07)
 
-
 ### Features
 
-* **feat-lazy-gravity-rocks:** ✨ add velocity force arrows ([da85b58](https://github.com/WolfSoko/wol-sok-mono/commit/da85b5875de951c023a74f30201c5a24421a9966))
+- **feat-lazy-gravity-rocks:** ✨ add velocity force arrows ([da85b58](https://github.com/WolfSoko/wol-sok-mono/commit/da85b5875de951c023a74f30201c5a24421a9966))
 
 ## [3.26.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.25.0...v3.26.0) (2023-11-07)
 
-
 ### Features
 
-* **feat-lazy-gravity-rocks:** ✨ add multiple planets ([cdcd59a](https://github.com/WolfSoko/wol-sok-mono/commit/cdcd59a49d42d2fd03fd06bac4a7ce99e143c7b0))
-* **feat-lazy-gravity-rocks:** ✨ update suns mass ([fe0fc36](https://github.com/WolfSoko/wol-sok-mono/commit/fe0fc362190610df07f920b3a8a01581929543a5))
+- **feat-lazy-gravity-rocks:** ✨ add multiple planets ([cdcd59a](https://github.com/WolfSoko/wol-sok-mono/commit/cdcd59a49d42d2fd03fd06bac4a7ce99e143c7b0))
+- **feat-lazy-gravity-rocks:** ✨ update suns mass ([fe0fc36](https://github.com/WolfSoko/wol-sok-mono/commit/fe0fc362190610df07f920b3a8a01581929543a5))
 
 ## [3.25.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.24.0...v3.25.0) (2023-11-07)
 
-
 ### Features
 
-* **feat-lazy-gravity-rocks:** ✨ complete rework. ([32a37fd](https://github.com/WolfSoko/wol-sok-mono/commit/32a37fd7fa6837ff88dbcc1abccf9538d9038382))
+- **feat-lazy-gravity-rocks:** ✨ complete rework. ([32a37fd](https://github.com/WolfSoko/wol-sok-mono/commit/32a37fd7fa6837ff88dbcc1abccf9538d9038382))
 
 ## [3.24.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.20...v3.24.0) (2023-11-07)
 
-
 ### Features
 
-* **feat-lazy-gravity-rocks:** ✨ improve start situation for gravity ([94504be](https://github.com/WolfSoko/wol-sok-mono/commit/94504be3e9f878179b1fbabfa3bdc2c0c4542f7d))
-* **feat-lazy-gravity-rocks:** ✨ move  field under dependent field ([f770dda](https://github.com/WolfSoko/wol-sok-mono/commit/f770ddabf7817809a8e64852f32d5c61fd1b777d))
+- **feat-lazy-gravity-rocks:** ✨ improve start situation for gravity ([94504be](https://github.com/WolfSoko/wol-sok-mono/commit/94504be3e9f878179b1fbabfa3bdc2c0c4542f7d))
+- **feat-lazy-gravity-rocks:** ✨ move field under dependent field ([f770dda](https://github.com/WolfSoko/wol-sok-mono/commit/f770ddabf7817809a8e64852f32d5c61fd1b777d))
 
 ### [3.23.20](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.19...v3.23.20) (2023-11-06)
 
 ### [3.23.19](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.18...v3.23.19) (2023-11-06)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([72c2960](https://github.com/WolfSoko/wol-sok-mono/commit/72c2960c5709d112192879af224f2dd8a79fd770))
+- **deps:** :arrow_up: update all non-major dependencies ([72c2960](https://github.com/WolfSoko/wol-sok-mono/commit/72c2960c5709d112192879af224f2dd8a79fd770))
 
 ### [3.23.18](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.17...v3.23.18) (2023-10-30)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([61ea28d](https://github.com/WolfSoko/wol-sok-mono/commit/61ea28d4c205b8747aaaf457b402089e5637a1aa))
+- **deps:** :arrow_up: update all non-major dependencies ([61ea28d](https://github.com/WolfSoko/wol-sok-mono/commit/61ea28d4c205b8747aaaf457b402089e5637a1aa))
 
 ### [3.23.17](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.16...v3.23.17) (2023-10-30)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.103.1 ([5fa4793](https://github.com/WolfSoko/wol-sok-mono/commit/5fa479343697d7157c3e0e2b3b83be4d4ba6ab13))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.103.1 ([5fa4793](https://github.com/WolfSoko/wol-sok-mono/commit/5fa479343697d7157c3e0e2b3b83be4d4ba6ab13))
 
 ### [3.23.16](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.15...v3.23.16) (2023-10-30)
 
 ### [3.23.15](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.14...v3.23.15) (2023-10-29)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([f5fc5d7](https://github.com/WolfSoko/wol-sok-mono/commit/f5fc5d7bc4fa60810eeead2a2018c09355669814))
+- **deps:** :arrow_up: update all non-major dependencies ([f5fc5d7](https://github.com/WolfSoko/wol-sok-mono/commit/f5fc5d7bc4fa60810eeead2a2018c09355669814))
 
 ### [3.23.14](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.13...v3.23.14) (2023-10-29)
 
@@ -955,10 +865,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.23.11](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.10...v3.23.11) (2023-10-29)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([4bfb43a](https://github.com/WolfSoko/wol-sok-mono/commit/4bfb43ab3a6b7c0f737ef2e2efa5228c9298704b))
+- **deps:** :arrow_up: update all non-major dependencies ([4bfb43a](https://github.com/WolfSoko/wol-sok-mono/commit/4bfb43ab3a6b7c0f737ef2e2efa5228c9298704b))
 
 ### [3.23.10](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.9...v3.23.10) (2023-10-28)
 
@@ -966,11 +875,10 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.23.8](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.7...v3.23.8) (2023-10-25)
 
-
 ### Bug Fixes
 
-* 🐛 remove updateBuildableProjectDepsInPackageJson in project.jsons ([7c2d2a4](https://github.com/WolfSoko/wol-sok-mono/commit/7c2d2a47777d717d2b29b0423e8d7bfaf886f8d1))
-* **fourier-analysis-remote:** 🐛 remove buildFromLibs: false ([bfc80df](https://github.com/WolfSoko/wol-sok-mono/commit/bfc80df2878c6ce6f7fdfd38d27a155bbf24fb4b))
+- 🐛 remove updateBuildableProjectDepsInPackageJson in project.jsons ([7c2d2a4](https://github.com/WolfSoko/wol-sok-mono/commit/7c2d2a47777d717d2b29b0423e8d7bfaf886f8d1))
+- **fourier-analysis-remote:** 🐛 remove buildFromLibs: false ([bfc80df](https://github.com/WolfSoko/wol-sok-mono/commit/bfc80df2878c6ce6f7fdfd38d27a155bbf24fb4b))
 
 ### [3.23.7](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.6...v3.23.7) (2023-10-23)
 
@@ -982,26 +890,23 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.23.3](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.2...v3.23.3) (2023-10-20)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([20a26ab](https://github.com/WolfSoko/wol-sok-mono/commit/20a26ab6d2eade263bd968344d8c0395c273e965))
+- **deps:** :arrow_up: update all non-major dependencies ([20a26ab](https://github.com/WolfSoko/wol-sok-mono/commit/20a26ab6d2eade263bd968344d8c0395c273e965))
 
 ### [3.23.2](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.1...v3.23.2) (2023-10-20)
 
 ### [3.23.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.23.0...v3.23.1) (2023-10-19)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([21aff5e](https://github.com/WolfSoko/wol-sok-mono/commit/21aff5edf7e9bc58ad4c715aef042d94ff4d6b73))
+- **deps:** :arrow_up: update all non-major dependencies ([21aff5e](https://github.com/WolfSoko/wol-sok-mono/commit/21aff5edf7e9bc58ad4c715aef042d94ff4d6b73))
 
 ## [3.23.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.22.7...v3.23.0) (2023-10-11)
 
-
 ### Features
 
-* ✨ Update @angular/cli version to 16.2.3 ([bd548d8](https://github.com/WolfSoko/wol-sok-mono/commit/bd548d86c951527e1c64842852f797ce8e6c8cc1))
+- ✨ Update @angular/cli version to 16.2.3 ([bd548d8](https://github.com/WolfSoko/wol-sok-mono/commit/bd548d86c951527e1c64842852f797ce8e6c8cc1))
 
 ### [3.22.7](https://github.com/WolfSoko/wol-sok-mono/compare/v3.22.6...v3.22.7) (2023-10-05)
 
@@ -1011,37 +916,33 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.22.4](https://github.com/WolfSoko/wol-sok-mono/compare/v3.22.3...v3.22.4) (2023-09-27)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([33302e0](https://github.com/WolfSoko/wol-sok-mono/commit/33302e068f317be79b58bc1b5fa6eefb2fed8e95))
+- **deps:** :arrow_up: update all non-major dependencies ([33302e0](https://github.com/WolfSoko/wol-sok-mono/commit/33302e068f317be79b58bc1b5fa6eefb2fed8e95))
 
 ### [3.22.3](https://github.com/WolfSoko/wol-sok-mono/compare/v3.22.2...v3.22.3) (2023-09-26)
 
 ### [3.22.2](https://github.com/WolfSoko/wol-sok-mono/compare/v3.22.1...v3.22.2) (2023-09-26)
 
-
 ### Bug Fixes
 
-* **angular-examples:** 🐛 provide http client ([1e45a70](https://github.com/WolfSoko/wol-sok-mono/commit/1e45a70cecbea8ef26069c06ab2f08ff1e39eb22))
+- **angular-examples:** 🐛 provide http client ([1e45a70](https://github.com/WolfSoko/wol-sok-mono/commit/1e45a70cecbea8ef26069c06ab2f08ff1e39eb22))
 
 ### [3.22.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.22.0...v3.22.1) (2023-09-26)
 
 ## [3.22.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.68...v3.22.0) (2023-09-25)
 
-
 ### Features
 
-* **feat-lazy-tf-examples:** ✨ Update build and test commands ([d2e5fcd](https://github.com/WolfSoko/wol-sok-mono/commit/d2e5fcd95b34caf751985de6ebb09ceda9f51267))
+- **feat-lazy-tf-examples:** ✨ Update build and test commands ([d2e5fcd](https://github.com/WolfSoko/wol-sok-mono/commit/d2e5fcd95b34caf751985de6ebb09ceda9f51267))
 
 ### [3.21.68](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.67...v3.21.68) (2023-09-14)
 
 ### [3.21.67](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.66...v3.21.67) (2023-09-12)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.95.1 ([b95a183](https://github.com/WolfSoko/wol-sok-mono/commit/b95a183bf39c1763a7572293509e2cd84d553db4))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.95.1 ([b95a183](https://github.com/WolfSoko/wol-sok-mono/commit/b95a183bf39c1763a7572293509e2cd84d553db4))
 
 ### [3.21.66](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.65...v3.21.66) (2023-09-12)
 
@@ -1053,17 +954,15 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.21.62](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.61...v3.21.62) (2023-09-11)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency ace-builds to v1.24.2 ([2d36144](https://github.com/WolfSoko/wol-sok-mono/commit/2d36144b900ec16afaf43417a2036ae8f8fc4e94))
+- **deps:** :arrow_up: update dependency ace-builds to v1.24.2 ([2d36144](https://github.com/WolfSoko/wol-sok-mono/commit/2d36144b900ec16afaf43417a2036ae8f8fc4e94))
 
 ### [3.21.61](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.60...v3.21.61) (2023-09-11)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.95.0 ([281b644](https://github.com/WolfSoko/wol-sok-mono/commit/281b644ec2b4f6a5313f1781d3295bcbfa7b9135))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.95.0 ([281b644](https://github.com/WolfSoko/wol-sok-mono/commit/281b644ec2b4f6a5313f1781d3295bcbfa7b9135))
 
 ### [3.21.60](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.59...v3.21.60) (2023-09-10)
 
@@ -1073,19 +972,17 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.21.57](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.56...v3.21.57) (2023-09-10)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency core-js to v3.32.2 ([53e6b34](https://github.com/WolfSoko/wol-sok-mono/commit/53e6b346801daead63e57327b9c5e4b16a4270c1))
+- **deps:** :arrow_up: update dependency core-js to v3.32.2 ([53e6b34](https://github.com/WolfSoko/wol-sok-mono/commit/53e6b346801daead63e57327b9c5e4b16a4270c1))
 
 ### [3.21.56](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.55...v3.21.56) (2023-09-09)
 
 ### [3.21.55](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.54...v3.21.55) (2023-09-09)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.68.0 ([78d4638](https://github.com/WolfSoko/wol-sok-mono/commit/78d4638200d1761368f12d2a92ec89ac77037180))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.68.0 ([78d4638](https://github.com/WolfSoko/wol-sok-mono/commit/78d4638200d1761368f12d2a92ec89ac77037180))
 
 ### [3.21.54](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.53...v3.21.54) (2023-09-08)
 
@@ -1093,24 +990,21 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.21.52](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.51...v3.21.52) (2023-09-08)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.67.0 ([880bb90](https://github.com/WolfSoko/wol-sok-mono/commit/880bb90e193e93246a7706ca7f31f4c544e560f1))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.67.0 ([880bb90](https://github.com/WolfSoko/wol-sok-mono/commit/880bb90e193e93246a7706ca7f31f4c544e560f1))
 
 ### [3.21.51](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.50...v3.21.51) (2023-09-08)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency mathjs to v11.11.0 ([9ed7fa4](https://github.com/WolfSoko/wol-sok-mono/commit/9ed7fa418b64a66d0f71dc08fa6a3bd6a67c3d70))
+- **deps:** :arrow_up: update dependency mathjs to v11.11.0 ([9ed7fa4](https://github.com/WolfSoko/wol-sok-mono/commit/9ed7fa418b64a66d0f71dc08fa6a3bd6a67c3d70))
 
 ### [3.21.50](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.49...v3.21.50) (2023-09-08)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency three to v0.156.1 ([b859d34](https://github.com/WolfSoko/wol-sok-mono/commit/b859d345977518ee834d0f86ae9efcc9ead6aaad))
+- **deps:** :arrow_up: update dependency three to v0.156.1 ([b859d34](https://github.com/WolfSoko/wol-sok-mono/commit/b859d345977518ee834d0f86ae9efcc9ead6aaad))
 
 ### [3.21.49](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.48...v3.21.49) (2023-09-07)
 
@@ -1122,10 +1016,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.21.45](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.44...v3.21.45) (2023-09-04)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.94.0 ([d242320](https://github.com/WolfSoko/wol-sok-mono/commit/d242320913330a0f529455dd2001fb85e3898590))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.94.0 ([d242320](https://github.com/WolfSoko/wol-sok-mono/commit/d242320913330a0f529455dd2001fb85e3898590))
 
 ### [3.21.44](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.43...v3.21.44) (2023-09-04)
 
@@ -1139,10 +1032,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.21.39](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.38...v3.21.39) (2023-09-02)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update nx monorepo to v16.2.3 ([923f135](https://github.com/WolfSoko/wol-sok-mono/commit/923f13512c4006b175ffc2da85bc3e4ca95991a6))
+- **deps:** :arrow_up: update nx monorepo to v16.2.3 ([923f135](https://github.com/WolfSoko/wol-sok-mono/commit/923f13512c4006b175ffc2da85bc3e4ca95991a6))
 
 ### [3.21.38](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.37...v3.21.38) (2023-09-02)
 
@@ -1154,10 +1046,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.21.34](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.33...v3.21.34) (2023-09-01)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([ed2d966](https://github.com/WolfSoko/wol-sok-mono/commit/ed2d966337d56b698b8988f2e404628c972466b8))
+- **deps:** :arrow_up: update all non-major dependencies ([ed2d966](https://github.com/WolfSoko/wol-sok-mono/commit/ed2d966337d56b698b8988f2e404628c972466b8))
 
 ### [3.21.33](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.32...v3.21.33) (2023-09-01)
 
@@ -1171,10 +1062,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.21.28](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.27...v3.21.28) (2023-08-31)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.65.0 ([1a1b52e](https://github.com/WolfSoko/wol-sok-mono/commit/1a1b52ef0c171371e4288bcbb9696900a42aa4da))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.65.0 ([1a1b52e](https://github.com/WolfSoko/wol-sok-mono/commit/1a1b52ef0c171371e4288bcbb9696900a42aa4da))
 
 ### [3.21.27](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.26...v3.21.27) (2023-08-28)
 
@@ -1196,10 +1086,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.21.18](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.17...v3.21.18) (2023-08-26)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.93.0 ([e7c34c6](https://github.com/WolfSoko/wol-sok-mono/commit/e7c34c631747ebde27d3af15bba02f9075c83334))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.93.0 ([e7c34c6](https://github.com/WolfSoko/wol-sok-mono/commit/e7c34c631747ebde27d3af15bba02f9075c83334))
 
 ### [3.21.17](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.16...v3.21.17) (2023-08-26)
 
@@ -1209,17 +1098,15 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.21.14](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.13...v3.21.14) (2023-08-26)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update nx monorepo to v16.2.2 ([3eed040](https://github.com/WolfSoko/wol-sok-mono/commit/3eed040e8f80864b5736dd38220ec615a899a7fc))
+- **deps:** :arrow_up: update nx monorepo to v16.2.2 ([3eed040](https://github.com/WolfSoko/wol-sok-mono/commit/3eed040e8f80864b5736dd38220ec615a899a7fc))
 
 ### [3.21.13](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.12...v3.21.13) (2023-08-26)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency mathjs to v11.10.0 ([29c9ec3](https://github.com/WolfSoko/wol-sok-mono/commit/29c9ec388ba72c22acac5c96e2c82e3c8993f491))
+- **deps:** :arrow_up: update dependency mathjs to v11.10.0 ([29c9ec3](https://github.com/WolfSoko/wol-sok-mono/commit/29c9ec388ba72c22acac5c96e2c82e3c8993f491))
 
 ### [3.21.12](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.11...v3.21.12) (2023-08-25)
 
@@ -1231,10 +1118,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.21.8](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.7...v3.21.8) (2023-08-24)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency firebase to v10 ([34f4b85](https://github.com/WolfSoko/wol-sok-mono/commit/34f4b8523617b868dd51577f381417a0cf0ddba6))
+- **deps:** :arrow_up: update dependency firebase to v10 ([34f4b85](https://github.com/WolfSoko/wol-sok-mono/commit/34f4b8523617b868dd51577f381417a0cf0ddba6))
 
 ### [3.21.7](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.6...v3.21.7) (2023-08-24)
 
@@ -1244,63 +1130,55 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.21.4](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.3...v3.21.4) (2023-08-24)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update nx monorepo ([06c205c](https://github.com/WolfSoko/wol-sok-mono/commit/06c205c8d459e5d91c5e1154c435906b2a018371))
+- **deps:** :arrow_up: update nx monorepo ([06c205c](https://github.com/WolfSoko/wol-sok-mono/commit/06c205c8d459e5d91c5e1154c435906b2a018371))
 
 ### [3.21.3](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.2...v3.21.3) (2023-08-24)
 
 ### [3.21.2](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.1...v3.21.2) (2023-08-24)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([18ce57a](https://github.com/WolfSoko/wol-sok-mono/commit/18ce57ac955ace7cd5dac534127eb6a2b4a9b775))
+- **deps:** :arrow_up: update all non-major dependencies ([18ce57a](https://github.com/WolfSoko/wol-sok-mono/commit/18ce57ac955ace7cd5dac534127eb6a2b4a9b775))
 
 ### [3.21.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.21.0...v3.21.1) (2023-08-24)
 
 ## [3.21.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.20.23...v3.21.0) (2023-08-24)
 
-
 ### Features
 
-* ✨ Add devmoji to commitlint in husky config ([ec76d1c](https://github.com/WolfSoko/wol-sok-mono/commit/ec76d1c8341388af3a71e472ad9b5a5658010c4f))
+- ✨ Add devmoji to commitlint in husky config ([ec76d1c](https://github.com/WolfSoko/wol-sok-mono/commit/ec76d1c8341388af3a71e472ad9b5a5658010c4f))
 
 ### [3.20.23](https://github.com/WolfSoko/wol-sok-mono/compare/v3.20.22...v3.20.23) (2023-07-24)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.60.0 ([a9b897a](https://github.com/WolfSoko/wol-sok-mono/commit/a9b897a53ae7f3326969687c3f6c47a3d9602744))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.60.0 ([a9b897a](https://github.com/WolfSoko/wol-sok-mono/commit/a9b897a53ae7f3326969687c3f6c47a3d9602744))
 
 ### [3.20.22](https://github.com/WolfSoko/wol-sok-mono/compare/v3.20.21...v3.20.22) (2023-07-23)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency vega-lite to v5.14.1 ([dca68e0](https://github.com/WolfSoko/wol-sok-mono/commit/dca68e02204a3eb68a192770209009e8abd716fc))
+- **deps:** :arrow_up: update dependency vega-lite to v5.14.1 ([dca68e0](https://github.com/WolfSoko/wol-sok-mono/commit/dca68e02204a3eb68a192770209009e8abd716fc))
 
 ### [3.20.21](https://github.com/WolfSoko/wol-sok-mono/compare/v3.20.20...v3.20.21) (2023-07-23)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.88.0 ([a4a1912](https://github.com/WolfSoko/wol-sok-mono/commit/a4a1912c4f616c8ae2cc4a343d536aa729557529))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.88.0 ([a4a1912](https://github.com/WolfSoko/wol-sok-mono/commit/a4a1912c4f616c8ae2cc4a343d536aa729557529))
 
 ### [3.20.20](https://github.com/WolfSoko/wol-sok-mono/compare/v3.20.19...v3.20.20) (2023-07-23)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency vega-lite to v5.14.0 ([4584ffb](https://github.com/WolfSoko/wol-sok-mono/commit/4584ffb4275576e57f605d7d9b8389b1a22f3ced))
+- **deps:** :arrow_up: update dependency vega-lite to v5.14.0 ([4584ffb](https://github.com/WolfSoko/wol-sok-mono/commit/4584ffb4275576e57f605d7d9b8389b1a22f3ced))
 
 ### [3.20.19](https://github.com/WolfSoko/wol-sok-mono/compare/v3.20.18...v3.20.19) (2023-07-22)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([cef3ae7](https://github.com/WolfSoko/wol-sok-mono/commit/cef3ae7c70fb44b8bfd6a0c5a74e1d452f50a4fa))
+- **deps:** :arrow_up: update all non-major dependencies ([cef3ae7](https://github.com/WolfSoko/wol-sok-mono/commit/cef3ae7c70fb44b8bfd6a0c5a74e1d452f50a4fa))
 
 ### [3.20.18](https://github.com/WolfSoko/wol-sok-mono/compare/v3.20.17...v3.20.18) (2023-07-21)
 
@@ -1340,15 +1218,13 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## [3.20.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.19.13...v3.20.0) (2023-07-14)
 
-
 ### Features
 
-* **nx:** migrate to 16.5.1 ([4c71c99](https://github.com/WolfSoko/wol-sok-mono/commit/4c71c99be3a359c594e2b7bf13916c28724d8bb0))
-
+- **nx:** migrate to 16.5.1 ([4c71c99](https://github.com/WolfSoko/wol-sok-mono/commit/4c71c99be3a359c594e2b7bf13916c28724d8bb0))
 
 ### Bug Fixes
 
-* install binaries for linux ([0256d45](https://github.com/WolfSoko/wol-sok-mono/commit/0256d452fea515b2b679efcb7a1b247595a09651))
+- install binaries for linux ([0256d45](https://github.com/WolfSoko/wol-sok-mono/commit/0256d452fea515b2b679efcb7a1b247595a09651))
 
 ### [3.19.13](https://github.com/WolfSoko/wol-sok-mono/compare/v3.19.12...v3.19.13) (2023-07-10)
 
@@ -1374,33 +1250,29 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.19.2](https://github.com/WolfSoko/wol-sok-mono/compare/v3.19.1...v3.19.2) (2023-07-04)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency constructs to ^10.2.60 ([5f33cae](https://github.com/WolfSoko/wol-sok-mono/commit/5f33cae2d24190276aae8a75e749bd062fdc468c))
-* **deps:** :arrow_up: update dependency vega-lite to v5.11.1 ([c7f819c](https://github.com/WolfSoko/wol-sok-mono/commit/c7f819c36a80ac6d8abc79e48ee4e8c504db0ed3))
+- **deps:** :arrow_up: update dependency constructs to ^10.2.60 ([5f33cae](https://github.com/WolfSoko/wol-sok-mono/commit/5f33cae2d24190276aae8a75e749bd062fdc468c))
+- **deps:** :arrow_up: update dependency vega-lite to v5.11.1 ([c7f819c](https://github.com/WolfSoko/wol-sok-mono/commit/c7f819c36a80ac6d8abc79e48ee4e8c504db0ed3))
 
 ### [3.19.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.19.0...v3.19.1) (2023-06-28)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([90c176b](https://github.com/WolfSoko/wol-sok-mono/commit/90c176b9482aa9808824231a1912de6fae731fb3))
+- **deps:** :arrow_up: update all non-major dependencies ([90c176b](https://github.com/WolfSoko/wol-sok-mono/commit/90c176b9482aa9808824231a1912de6fae731fb3))
 
 ## [3.19.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.18.9...v3.19.0) (2023-06-28)
 
-
 ### Features
 
-* add rollAPolla cdk ([203b585](https://github.com/WolfSoko/wol-sok-mono/commit/203b58536c5a961c3bc74c0b4650a384acbca9d1))
-* **rollapolla:** add network stack ([29acca4](https://github.com/WolfSoko/wol-sok-mono/commit/29acca4a67f038cd4e3153d41e9b27de1a7fcdd8))
-* update nx to 14.1 ([52ec245](https://github.com/WolfSoko/wol-sok-mono/commit/52ec24552f62d09f4afda05b6c5e9d5991d6c014))
-* update package-lock.json ([26b633d](https://github.com/WolfSoko/wol-sok-mono/commit/26b633d70856510a4bd45f416c68f529f2529c44))
-
+- add rollAPolla cdk ([203b585](https://github.com/WolfSoko/wol-sok-mono/commit/203b58536c5a961c3bc74c0b4650a384acbca9d1))
+- **rollapolla:** add network stack ([29acca4](https://github.com/WolfSoko/wol-sok-mono/commit/29acca4a67f038cd4e3153d41e9b27de1a7fcdd8))
+- update nx to 14.1 ([52ec245](https://github.com/WolfSoko/wol-sok-mono/commit/52ec24552f62d09f4afda05b6c5e9d5991d6c014))
+- update package-lock.json ([26b633d](https://github.com/WolfSoko/wol-sok-mono/commit/26b633d70856510a4bd45f416c68f529f2529c44))
 
 ### Bug Fixes
 
-* **gravity-world:** fix usage before assignment ([481071d](https://github.com/WolfSoko/wol-sok-mono/commit/481071df0f99ee4ba7a068fb89262fccf1c4f665))
+- **gravity-world:** fix usage before assignment ([481071d](https://github.com/WolfSoko/wol-sok-mono/commit/481071df0f99ee4ba7a068fb89262fccf1c4f665))
 
 ### [3.18.9](https://github.com/WolfSoko/wol-sok-mono/compare/v3.18.8...v3.18.9) (2023-06-26)
 
@@ -1408,17 +1280,15 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.18.7](https://github.com/WolfSoko/wol-sok-mono/compare/v3.18.6...v3.18.7) (2023-06-26)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency akita-ng-fire to v7.0.1 ([29df241](https://github.com/WolfSoko/wol-sok-mono/commit/29df24147e8bad3002ad65614d55c011ce5287ba))
+- **deps:** :arrow_up: update dependency akita-ng-fire to v7.0.1 ([29df241](https://github.com/WolfSoko/wol-sok-mono/commit/29df24147e8bad3002ad65614d55c011ce5287ba))
 
 ### [3.18.6](https://github.com/WolfSoko/wol-sok-mono/compare/v3.18.5...v3.18.6) (2023-06-25)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency firebase to v9.23.0 ([0b6a94f](https://github.com/WolfSoko/wol-sok-mono/commit/0b6a94fadc11bb19a8d8c63f4172f952a1dc0f63))
+- **deps:** :arrow_up: update dependency firebase to v9.23.0 ([0b6a94f](https://github.com/WolfSoko/wol-sok-mono/commit/0b6a94fadc11bb19a8d8c63f4172f952a1dc0f63))
 
 ### [3.18.5](https://github.com/WolfSoko/wol-sok-mono/compare/v3.18.4...v3.18.5) (2023-06-25)
 
@@ -1428,19 +1298,17 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.18.2](https://github.com/WolfSoko/wol-sok-mono/compare/v3.18.1...v3.18.2) (2023-06-22)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([a7e86b9](https://github.com/WolfSoko/wol-sok-mono/commit/a7e86b9ca5c73e655017eab25406a7d8221bcd3f))
+- **deps:** :arrow_up: update all non-major dependencies ([a7e86b9](https://github.com/WolfSoko/wol-sok-mono/commit/a7e86b9ca5c73e655017eab25406a7d8221bcd3f))
 
 ### [3.18.1](https://github.com/WolfSoko/wol-sok-mono/compare/v3.18.0...v3.18.1) (2023-06-22)
 
 ## [3.18.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.32...v3.18.0) (2023-06-22)
 
-
 ### Features
 
-* add rollapolla app ([67cb2a6](https://github.com/WolfSoko/wol-sok-mono/commit/67cb2a6d4eab90988fc85b2fc2b06da5da57cd9e))
+- add rollapolla app ([67cb2a6](https://github.com/WolfSoko/wol-sok-mono/commit/67cb2a6d4eab90988fc85b2fc2b06da5da57cd9e))
 
 ### [3.17.32](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.31...v3.17.32) (2023-06-19)
 
@@ -1448,28 +1316,25 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.17.30](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.29...v3.17.30) (2023-06-19)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([912146d](https://github.com/WolfSoko/wol-sok-mono/commit/912146dffcb744d8b79501939d9b9f55c0020239))
+- **deps:** :arrow_up: update all non-major dependencies ([912146d](https://github.com/WolfSoko/wol-sok-mono/commit/912146dffcb744d8b79501939d9b9f55c0020239))
 
 ### [3.17.29](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.28...v3.17.29) (2023-06-19)
 
 ### [3.17.28](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.27...v3.17.28) (2023-06-19)
 
-
 ### Bug Fixes
 
-* update angular ([8d2ab80](https://github.com/WolfSoko/wol-sok-mono/commit/8d2ab806d2b52d2b53db3ad35fb787878b81d492))
+- update angular ([8d2ab80](https://github.com/WolfSoko/wol-sok-mono/commit/8d2ab806d2b52d2b53db3ad35fb787878b81d492))
 
 ### [3.17.27](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.26...v3.17.27) (2023-06-19)
 
 ### [3.17.26](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.25...v3.17.26) (2023-06-15)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([7da584c](https://github.com/WolfSoko/wol-sok-mono/commit/7da584c83e839d45dc1680a1cb4cbd01196d34fe))
+- **deps:** :arrow_up: update all non-major dependencies ([7da584c](https://github.com/WolfSoko/wol-sok-mono/commit/7da584c83e839d45dc1680a1cb4cbd01196d34fe))
 
 ### [3.17.25](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.24...v3.17.25) (2023-06-15)
 
@@ -1487,10 +1352,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.17.18](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.17...v3.17.18) (2023-06-09)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([6d98247](https://github.com/WolfSoko/wol-sok-mono/commit/6d98247c3912158e5aa639d7a731f06fc65a4c7a))
+- **deps:** :arrow_up: update all non-major dependencies ([6d98247](https://github.com/WolfSoko/wol-sok-mono/commit/6d98247c3912158e5aa639d7a731f06fc65a4c7a))
 
 ### [3.17.17](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.16...v3.17.17) (2023-06-09)
 
@@ -1516,10 +1380,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.17.6](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.5...v3.17.6) (2023-06-04)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.54.0 ([a0cb7c9](https://github.com/WolfSoko/wol-sok-mono/commit/a0cb7c9deedc234beca6a25961f6ab72ce96d6dd))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.54.0 ([a0cb7c9](https://github.com/WolfSoko/wol-sok-mono/commit/a0cb7c9deedc234beca6a25961f6ab72ce96d6dd))
 
 ### [3.17.5](https://github.com/WolfSoko/wol-sok-mono/compare/v3.17.4...v3.17.5) (2023-06-04)
 
@@ -1533,19 +1396,17 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## [3.17.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.53...v3.17.0) (2023-06-02)
 
-
 ### Features
 
-* **release:** use release please to CD ws-thanos ([860c8e6](https://github.com/WolfSoko/wol-sok-mono/commit/860c8e6e648d397d79778bc8e0f9d79a23c4d8e9))
+- **release:** use release please to CD ws-thanos ([860c8e6](https://github.com/WolfSoko/wol-sok-mono/commit/860c8e6e648d397d79778bc8e0f9d79a23c4d8e9))
 
 ### [3.16.53](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.52...v3.16.53) (2023-06-01)
 
 ### [3.16.52](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.51...v3.16.52) (2023-06-01)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([a9557c7](https://github.com/WolfSoko/wol-sok-mono/commit/a9557c77c1361fa3e04aa9abb76c065df7668ade))
+- **deps:** :arrow_up: update all non-major dependencies ([a9557c7](https://github.com/WolfSoko/wol-sok-mono/commit/a9557c77c1361fa3e04aa9abb76c065df7668ade))
 
 ### [3.16.51](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.50...v3.16.51) (2023-06-01)
 
@@ -1555,10 +1416,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.16.48](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.47...v3.16.48) (2023-05-31)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency browserslist to v4.21.6 ([77e6668](https://github.com/WolfSoko/wol-sok-mono/commit/77e6668557ac29afca3c5eab5b208ee755f21829))
+- **deps:** :arrow_up: update dependency browserslist to v4.21.6 ([77e6668](https://github.com/WolfSoko/wol-sok-mono/commit/77e6668557ac29afca3c5eab5b208ee755f21829))
 
 ### [3.16.47](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.46...v3.16.47) (2023-05-31)
 
@@ -1574,10 +1434,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.16.41](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.40...v3.16.41) (2023-05-28)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency firebase to v9.22.1 ([730f326](https://github.com/WolfSoko/wol-sok-mono/commit/730f32698f44b6b0675e939ea7fb324a0def45ea))
+- **deps:** :arrow_up: update dependency firebase to v9.22.1 ([730f326](https://github.com/WolfSoko/wol-sok-mono/commit/730f32698f44b6b0675e939ea7fb324a0def45ea))
 
 ### [3.16.40](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.39...v3.16.40) (2023-05-28)
 
@@ -1589,10 +1448,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.16.36](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.35...v3.16.36) (2023-05-27)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.53.1 ([c34fee1](https://github.com/WolfSoko/wol-sok-mono/commit/c34fee170c7a3633077371f2e1f415c0ba691da2))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.53.1 ([c34fee1](https://github.com/WolfSoko/wol-sok-mono/commit/c34fee170c7a3633077371f2e1f415c0ba691da2))
 
 ### [3.16.35](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.34...v3.16.35) (2023-05-27)
 
@@ -1602,10 +1460,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.16.32](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.31...v3.16.32) (2023-05-26)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.53.0 ([e1e7be9](https://github.com/WolfSoko/wol-sok-mono/commit/e1e7be9c082384ebede5c3f23f12632f6a97db41))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.53.0 ([e1e7be9](https://github.com/WolfSoko/wol-sok-mono/commit/e1e7be9c082384ebede5c3f23f12632f6a97db41))
 
 ### [3.16.31](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.30...v3.16.31) (2023-05-26)
 
@@ -1619,10 +1476,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.16.26](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.25...v3.16.26) (2023-05-25)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency ace-builds to v1.22.0 ([133d466](https://github.com/WolfSoko/wol-sok-mono/commit/133d466dd9c91156dc2cd8ccbfd113581172ec6e))
+- **deps:** :arrow_up: update dependency ace-builds to v1.22.0 ([133d466](https://github.com/WolfSoko/wol-sok-mono/commit/133d466dd9c91156dc2cd8ccbfd113581172ec6e))
 
 ### [3.16.25](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.24...v3.16.25) (2023-05-25)
 
@@ -1646,44 +1502,39 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.16.15](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.14...v3.16.15) (2023-05-22)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([def6a44](https://github.com/WolfSoko/wol-sok-mono/commit/def6a44d29f3f85bd6b690538824b3f4062ff9ef))
+- **deps:** :arrow_up: update all non-major dependencies ([def6a44](https://github.com/WolfSoko/wol-sok-mono/commit/def6a44d29f3f85bd6b690538824b3f4062ff9ef))
 
 ### [3.16.14](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.13...v3.16.14) (2023-05-22)
 
 ### [3.16.13](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.12...v3.16.13) (2023-05-22)
 
-
 ### Bug Fixes
 
-* use overwritten version of nx ([3ef7518](https://github.com/WolfSoko/wol-sok-mono/commit/3ef7518f7c2015b5b6d5ad44b202806f24cd151e))
+- use overwritten version of nx ([3ef7518](https://github.com/WolfSoko/wol-sok-mono/commit/3ef7518f7c2015b5b6d5ad44b202806f24cd151e))
 
 ### [3.16.12](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.11...v3.16.12) (2023-05-11)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.51.2 ([066d365](https://github.com/WolfSoko/wol-sok-mono/commit/066d365b23668d8186f49e1b7136ef938cc54b6b))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.51.2 ([066d365](https://github.com/WolfSoko/wol-sok-mono/commit/066d365b23668d8186f49e1b7136ef938cc54b6b))
 
 ### [3.16.11](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.10...v3.16.11) (2023-05-10)
 
 ### [3.16.10](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.9...v3.16.10) (2023-05-10)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency core-js to v3.30.2 ([ee96b3b](https://github.com/WolfSoko/wol-sok-mono/commit/ee96b3b1511c4c9ec0f64bcc63a6a2641d3269a6))
+- **deps:** :arrow_up: update dependency core-js to v3.30.2 ([ee96b3b](https://github.com/WolfSoko/wol-sok-mono/commit/ee96b3b1511c4c9ec0f64bcc63a6a2641d3269a6))
 
 ### [3.16.9](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.8...v3.16.9) (2023-05-09)
 
 ### [3.16.8](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.7...v3.16.8) (2023-05-09)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency vega-lite to v5.9.0 ([18f0c0e](https://github.com/WolfSoko/wol-sok-mono/commit/18f0c0e7f9c83acfa5d469cc5949cb50852991af))
+- **deps:** :arrow_up: update dependency vega-lite to v5.9.0 ([18f0c0e](https://github.com/WolfSoko/wol-sok-mono/commit/18f0c0e7f9c83acfa5d469cc5949cb50852991af))
 
 ### [3.16.7](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.6...v3.16.7) (2023-05-08)
 
@@ -1693,18 +1544,16 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.16.4](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.3...v3.16.4) (2023-05-08)
 
-
 ### Bug Fixes
 
-* **ws-thanos:** use better seed ([7e40f67](https://github.com/WolfSoko/wol-sok-mono/commit/7e40f67248945eb3ee150b1066519f63b9c880e4))
+- **ws-thanos:** use better seed ([7e40f67](https://github.com/WolfSoko/wol-sok-mono/commit/7e40f67248945eb3ee150b1066519f63b9c880e4))
 
 ### [3.16.3](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.2...v3.16.3) (2023-05-08)
 
-
 ### Bug Fixes
 
-* **ws-thanos:** complete observable ([f08733e](https://github.com/WolfSoko/wol-sok-mono/commit/f08733e5221f0fea05bbddc0761b57a3ee2ebb9c))
-* **ws-thanos:** complete observable ([eb30aed](https://github.com/WolfSoko/wol-sok-mono/commit/eb30aed14bf8ce7fba1ecb4e0f8e91e12b10d723))
+- **ws-thanos:** complete observable ([f08733e](https://github.com/WolfSoko/wol-sok-mono/commit/f08733e5221f0fea05bbddc0761b57a3ee2ebb9c))
+- **ws-thanos:** complete observable ([eb30aed](https://github.com/WolfSoko/wol-sok-mono/commit/eb30aed14bf8ce7fba1ecb4e0f8e91e12b10d723))
 
 ### [3.16.2](https://github.com/WolfSoko/wol-sok-mono/compare/v3.16.1...v3.16.2) (2023-05-08)
 
@@ -1712,32 +1561,28 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## [3.16.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.15.0...v3.16.0) (2023-05-05)
 
-
 ### Features
 
-* add thanosDemo mode ([f1f0382](https://github.com/WolfSoko/wol-sok-mono/commit/f1f0382d4aa06ae347ad615375bf275a0682574a))
-* use standalone bootstrap ([cb8aef5](https://github.com/WolfSoko/wol-sok-mono/commit/cb8aef5cc7e29a8642fa731b3ab77d9ac5e21085))
+- add thanosDemo mode ([f1f0382](https://github.com/WolfSoko/wol-sok-mono/commit/f1f0382d4aa06ae347ad615375bf275a0682574a))
+- use standalone bootstrap ([cb8aef5](https://github.com/WolfSoko/wol-sok-mono/commit/cb8aef5cc7e29a8642fa731b3ab77d9ac5e21085))
 
 ## [3.15.0](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.203...v3.15.0) (2023-05-05)
 
-
 ### Features
 
-* migrate to angular 16 ([c61575e](https://github.com/WolfSoko/wol-sok-mono/commit/c61575e01534e19291c2f80c3312344edef177b1))
-
+- migrate to angular 16 ([c61575e](https://github.com/WolfSoko/wol-sok-mono/commit/c61575e01534e19291c2f80c3312344edef177b1))
 
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([8ed268b](https://github.com/WolfSoko/wol-sok-mono/commit/8ed268b138e1ee3f0e684986fc8224741b1cb1eb))
+- **deps:** :arrow_up: update all non-major dependencies ([8ed268b](https://github.com/WolfSoko/wol-sok-mono/commit/8ed268b138e1ee3f0e684986fc8224741b1cb1eb))
 
 ### [3.14.203](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.202...v3.14.203) (2023-05-05)
 
 ### [3.14.202](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.201...v3.14.202) (2023-05-05)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update nrwl workspace to v16 ([9f4841a](https://github.com/WolfSoko/wol-sok-mono/commit/9f4841aaa846c1a0f0383c372099bee0a94c99cb))
+- **deps:** :arrow_up: update nrwl workspace to v16 ([9f4841a](https://github.com/WolfSoko/wol-sok-mono/commit/9f4841aaa846c1a0f0383c372099bee0a94c99cb))
 
 ### [3.14.201](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.200...v3.14.201) (2023-05-05)
 
@@ -1751,10 +1596,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.14.196](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.195...v3.14.196) (2023-05-03)
 
-
 ### Bug Fixes
 
-* webpack error due to version mismatch ([fb6bf2c](https://github.com/WolfSoko/wol-sok-mono/commit/fb6bf2c8d25fd9bb695f7cc96efa21632e31cfda))
+- webpack error due to version mismatch ([fb6bf2c](https://github.com/WolfSoko/wol-sok-mono/commit/fb6bf2c8d25fd9bb695f7cc96efa21632e31cfda))
 
 ### [3.14.195](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.194...v3.14.195) (2023-05-02)
 
@@ -1762,10 +1606,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.14.193](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.192...v3.14.193) (2023-05-02)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency vega-lite to v5.8.0 ([e4e919f](https://github.com/WolfSoko/wol-sok-mono/commit/e4e919fa891046baca6ea8fa5addc91eff82fe5e))
+- **deps:** :arrow_up: update dependency vega-lite to v5.8.0 ([e4e919f](https://github.com/WolfSoko/wol-sok-mono/commit/e4e919fa891046baca6ea8fa5addc91eff82fe5e))
 
 ### [3.14.192](https://github.com/WolfSoko/wol-sok-mono/compare/v3.14.191...v3.14.192) (2023-05-02)
 
