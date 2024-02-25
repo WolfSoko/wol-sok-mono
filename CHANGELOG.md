@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.3.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.3.1...v4.3.2) (2024-02-25)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency zone.js to v0.14.4 ([9d5b7f0](https://github.com/WolfSoko/wol-sok-mono/commit/9d5b7f0f1a6fbf7ae011ef0962b339ccff48a540))
+* **deps:** :arrow_up: update nx monorepo to v17.2.2 ([97a1e01](https://github.com/WolfSoko/wol-sok-mono/commit/97a1e01daa727ca9baa9ec83d0797bd1e0cbc526))
+
 ### [4.3.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.3.0...v4.3.1) (2024-02-25)
 
 ## [4.3.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.2.9...v4.3.0) (2024-02-25)
