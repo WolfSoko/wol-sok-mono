@@ -23,7 +23,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v3
+
+      # Connect your workspace on nx.app and uncomment this to enable task distribution.
+      # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "e2e-ci" targets have been requested
+      - run: npx nx-cloud start-ci-run --distribute-on="5 linux-medium-js" --stop-agents-after="e2e-ci"
+
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: 'npm'
@@ -33,9 +38,6 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
 
-      # This line enables distribution
-      # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "e2e-ci" targets have been requested
-      - run: npx nx-cloud start-ci-run --distribute-on="8 my-linux-large-js" --stop-agents-after="e2e-ci"
       - run: npm install @nx/nx-linux-x64-gnu @rollup/rollup-linux-x64-gnu
 
       - uses: nrwl/nx-set-shas@v3
