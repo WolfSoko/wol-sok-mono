@@ -7,12 +7,6 @@ launch-templates:
     init-steps:
       - name: Checkout # using a reusable step
         uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/checkout/main.yaml'
-      - name: Restore Node Modules Cache
-        uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/cache/main.yaml'
-        env:
-          KEY: 'package-lock.json|yarn.lock|pnpm-lock.yaml'
-          PATHS: 'node_modules'
-          BASE_BRANCH: 'main'
       - name: Install necessary binaries
         run: |
           npm install -g @nx/nx-linux-x64-gnu
@@ -20,17 +14,22 @@ launch-templates:
           echo "Install packages to compile node_modules gl with node-gyp"
           sudo apt-get update -y
           sudo apt-get install xserver-xorg-dev libxi-dev libxext-dev -y
-      - name: Install Node Modules
-        uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/install-node-modules/main.yaml'
-      - name: Run a custom script
-        script: |
-          git config --global user.email test@test.com
-          git config --global user.name "Test Test"
-      - name: Setting env # Redefine PATH for further steps
-        script: echo "PATH=$HOME/my-folder:$PATH" >> $NX_CLOUD_ENV
-      - name: Print path
-        script: echo $PATH # will include my-folder
-      - name: Define env var for a step
+      - name: Restore Node Modules Cache
+        uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/cache/main.yaml'
         env:
-          MY_ENV_VAR: 'for-step'
-        script: echo $MY_ENV_VAR # will print for-step
+          KEY: 'package-lock.json|yarn.lock|pnpm-lock.yaml'
+          PATHS: 'node_modules'
+          BASE_BRANCH: 'main'
+
+      - name: Restore Browser Binary Cache
+        uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/cache/main.yaml'
+        env:
+          KEY: 'package-lock.json|yarn.lock|pnpm-lock.yaml|"browsers"'
+          PATHS: |
+            '../.cache/Cypress'
+            '../.cache/ms-playwright'
+          BASE_BRANCH: 'main'
+      - name: Install Node Modules
+        uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/install-node-modules/main.yaml'
+      - name: Install Browsers (if needed)
+        uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/install-browsers/main.yaml'
