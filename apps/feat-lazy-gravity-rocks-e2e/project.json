@@ -22,6 +22,6 @@
       "outputs": ["{options.outputFile}"]
     }
   },
-  "tags": ["storybook-e2e"],
+  "tags": ["e2e", "storybook-e2e"],
   "implicitDependencies": ["feat-lazy-gravity-rocks"]
 }
