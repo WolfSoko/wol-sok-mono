@@ -200,11 +200,10 @@
       "@angular/fire": "^17.0.1"
     },
     "@datorama/akita": {
-      "tslib": "^2.5.0"
+      "tslib": "^2.5.2"
     }
   },
   "nx": {
     "includedScripts": []
   }
 }
-
