@@ -29,7 +29,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npx nx serve angular-examples',
-    url: 'http://localhost:4200',
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     cwd: workspaceRoot,
     timeout: (process.env.CI ? 360 : 180) * 1000,
