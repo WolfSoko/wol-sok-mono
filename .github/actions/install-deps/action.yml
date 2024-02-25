@@ -41,19 +41,11 @@ runs:
         path: ~/.cache/ms-playwright
         key: playwright-binary-${{ hashFiles('package-lock.json') }}
 
-    # install binaries before installing dependencies with scripts because post install scripts are needing the binaries already
-    - name: Install binaries
-      if: steps.cache.outputs.cache-hit != 'true'
-      shell: bash
-      run: |
-        npm install @nx/nx-linux-x64-gnu --ignore-scripts=${{ inputs.run-scripts == 'false' }}
-        npm install @rollup/rollup-linux-x64-gnu --ignore-scripts=${{ inputs.run-scripts == 'false' }}
-
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress == 'false'
       shell: bash
       run: |
-        npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+        npm install @nx/nx-linux-x64-gnu @rollup/rollup-linux-x64-gnu --ignore-scripts=${{ inputs.run-scripts == 'false' }}
       env:
         CYPRESS_INSTALL_BINARY: 0
 
@@ -61,5 +53,5 @@ runs:
       if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress != 'false'
       shell: bash
       run: |
-        npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+        npm install @nx/nx-linux-x64-gnu @rollup/rollup-linux-x64-gnu --ignore-scripts=${{ inputs.run-scripts == 'false' }}
         npx playwright install-deps
