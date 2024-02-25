@@ -52,3 +52,18 @@ jobs:
           cmd6: npx nx affected -t=e2e --exclude=angular-examples -c=ci ${{!contains(github.event_name, 'pull_request') && '-- --record=true' || ''}}
           # running playwrights e2e test
           cmd7: npx nx affected -t=e2e-ci
+
+      - name: Report Codecov
+        if: github.ref_name == 'main' && hashFiles('coverage/**/*') != ''
+        uses: codecov/codecov-action@v4-beta
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unittests
+          fail_ci_if_error: true
+          verbose: true
+
+  trigger-release:
+    uses: ./.github/workflows/trigger-release.yml
+    secrets: inherit
+    needs: main
+    if: ${{ success() && !contains(github.event.head_commit.message, 'chore(release):') && github.ref_name == 'main' }}
