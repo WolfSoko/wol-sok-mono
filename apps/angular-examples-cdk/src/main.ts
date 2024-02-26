@@ -10,5 +10,5 @@ new SpaStack(app, 'AngularExamples', {
   },
   buildOutputPath: 'dist/production',
   domainName: 'angularexamples.wolsok.de',
-  deleteBucketPolicy: RemovalPolicy.DESTROY,
+  bucketRemovalPolicy: RemovalPolicy.DESTROY,
 });

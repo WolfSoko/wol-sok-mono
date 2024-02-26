@@ -20,11 +20,11 @@ class TestSpaStack extends Stack {
   constructor(parent: App, name: string, props: SpaProps & StackProps) {
     super(parent, name, props);
 
-    const { domainName, buildOutputPath, deleteBucketPolicy } = props;
+    const { domainName, buildOutputPath, bucketRemovalPolicy } = props;
     new SpaConstruct(this, name, {
       domainName,
       buildOutputPath,
-      deleteBucketPolicy,
+      bucketRemovalPolicy: bucketRemovalPolicy,
     });
   }
 }
@@ -60,7 +60,7 @@ describe('SpaCdkStack', () => {
 
   it('should match snapshot setting bucket removal policy to retain', () => {
     const { template } = testStackFactory({
-      deleteBucketPolicy: RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE,
+      bucketRemovalPolicy: RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE,
     });
     expect(template.toJSON()).toMatchSnapshot();
   });

@@ -370,10 +370,10 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
     },
     "TestSpaStackCertificate88463A20": {
       "Properties": {
-        "DomainName": "*.test-domain.com",
+        "DomainName": "test-domain.com",
         "DomainValidationOptions": [
           {
-            "DomainName": "*.test-domain.com",
+            "DomainName": "test-domain.com",
             "ValidationDomain": "test-domain.com",
           },
         ],
@@ -781,10 +781,10 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
     },
     "TestSpaStackCertificate88463A20": {
       "Properties": {
-        "DomainName": "*.test-domain.com",
+        "DomainName": "test-domain.com",
         "DomainValidationOptions": [
           {
-            "DomainName": "*.test-domain.com",
+            "DomainName": "test-domain.com",
             "ValidationDomain": "test-domain.com",
           },
         ],
@@ -1310,10 +1310,10 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
     },
     "TestSpaStackCertificate88463A20": {
       "Properties": {
-        "DomainName": "*.subdomain.test-domain.com",
+        "DomainName": "*.test-domain.com",
         "DomainValidationOptions": [
           {
-            "DomainName": "*.subdomain.test-domain.com",
+            "DomainName": "*.test-domain.com",
             "ValidationDomain": "test-domain.com",
           },
         ],

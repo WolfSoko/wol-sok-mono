@@ -26,10 +26,10 @@ import { Construct } from 'constructs';
 export interface SpaProps {
   domainName: string;
   buildOutputPath: string;
-  deleteBucketPolicy?: RemovalPolicy;
+  bucketRemovalPolicy?: RemovalPolicy;
 }
 
-const defaultBucketDeletionPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
+const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
 
 /**
  * SPA infrastructure, which deploys spa content to an S3 bucket.
@@ -46,12 +46,11 @@ export class SpaConstruct extends Construct {
   ) {
     super(parent, spaName);
     const removalPolicy: RemovalPolicy =
-      props.deleteBucketPolicy ?? defaultBucketDeletionPolicy;
-    const { domainName, buildOutputPath } = props;
+      props.bucketRemovalPolicy ?? defaultBucketRemovalPolicy;
+    const { buildOutputPath } = props;
 
-    // extract main domain
-    const siteDomain = domainName;
-    const mainDomain = domainName.split('.').slice(-2).join('.');
+    const { mainDomain, certificateDomainName, siteDomain } =
+      this.extractDomains(props.domainName);
 
     const zone = HostedZone.fromLookup(this, spaName, {
       privateZone: false,
@@ -64,7 +63,7 @@ export class SpaConstruct extends Construct {
 
     new CfnOutput(this, `${spaName}-Site:`, { value: 'https://' + siteDomain });
 
-    const certificate = this.createCertificate(zone, `*.${domainName}`);
+    const certificate = this.createCertificate(zone, certificateDomainName);
     const bucket = this.createBucket(siteDomain, cloudfrontOAI, removalPolicy);
     const distribution = this.createDistribution(
       siteDomain,
@@ -196,5 +195,25 @@ export class SpaConstruct extends Construct {
       distribution,
       distributionPaths: ['/*'],
     });
+  }
+
+  private extractDomains(domainName: string): {
+    certificateDomainName: string;
+    mainDomain: string;
+    siteDomain: string;
+  } {
+    // extract main domain
+    const siteDomain = domainName;
+    const mainDomain = domainName.split('.').slice(-2).join('.');
+    const certificateDomainName: string =
+      mainDomain === siteDomain ? mainDomain : `*.${mainDomain}`;
+
+    // inform user about domain handling
+    if (mainDomain !== siteDomain) {
+      console.warn(
+        `The domain ${siteDomain} is not a top level domain. The certificate will be created for *.${mainDomain}`
+      );
+    }
+    return { siteDomain, mainDomain, certificateDomainName };
   }
 }

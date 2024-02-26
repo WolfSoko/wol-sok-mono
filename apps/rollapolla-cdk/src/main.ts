@@ -10,5 +10,5 @@ new SpaStack(app, 'RollaPolla', {
   },
   buildOutputPath: 'dist/apps/rollapolla',
   domainName: 'rollapolla.com',
-  deleteBucketPolicy: RemovalPolicy.DESTROY,
+  bucketRemovalPolicy: RemovalPolicy.DESTROY,
 });

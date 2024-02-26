@@ -8,7 +8,7 @@ export class SpaStack extends Stack {
     new SpaConstruct(this, name, {
       domainName: props.domainName,
       buildOutputPath: props.buildOutputPath,
-      deleteBucketPolicy: props.deleteBucketPolicy,
+      bucketRemovalPolicy: props.bucketRemovalPolicy,
     });
   }
 }
