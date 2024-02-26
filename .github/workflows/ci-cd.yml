@@ -49,13 +49,12 @@ jobs:
       - name: Run verification
         uses: JamesHenry/parallel-bash-commands@v1.0
         with:
-          cmd1: npx nx affected -t=build --parallel=1
-          cmd4: npx nx affected -t=\"lint,component-test\" --parallel=1
-          cmd2: npx nx affected -t=\"test,test-integration\" -c=ci --parallel=1
+          cmd1: npx nx affected -t=\"build,lint,component-test\"
+          cmd2: npx nx affected -t=\"test,test-integration\" -c=ci
           # running cypress e2e test
-          cmd6: npx nx affected -t=e2e --exclude=\"*,!tag:storybook-e2e\" -c=ci --parallel=1
+          cmd6: npx nx affected -t=e2e --exclude=\"*,!tag:storybook-e2e\" -c=ci
           # running playwrights e2e test
-          cmd7: npx nx affected -t=e2e-ci --parallel=1
+          cmd7: npx nx affected -t=e2e-ci
       - run: npx nx-cloud stop-all-agents
         if: ${{ always() }}
       - name: Report Codecov
