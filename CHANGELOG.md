@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.8.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.7.0...v4.8.0) (2024-02-26)
+
+
+### Features
+
+* **angular-examples-cdk:** ✨ fix dependency config ([6205ac8](https://github.com/WolfSoko/wol-sok-mono/commit/6205ac8a109450096c85d6170ca14702e3cad22f))
+
 ## [4.7.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.6.0...v4.7.0) (2024-02-26)
 
 
