@@ -5,7 +5,7 @@ const app = new App();
 
 new SpaStack(app, 'AngularExamples', {
   env: {
-    region: 'eu-central-1',
+    region: 'us-east-1',
     account: '088632064895',
   },
   buildOutputPath: 'dist/production',

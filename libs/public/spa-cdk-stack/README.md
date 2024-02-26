@@ -7,6 +7,7 @@ Features are:
 
 - Deployment of your build files to the S3 bucket.
 - Cloudfront invalidation with deployment
+- Creation of a certificate for your domain (only possible if region is us-east-1).
 - Redirect from HTTP to HTTPS with an ACM certificate.
 - Route53 alias record creation,
 

@@ -1,5 +1,6 @@
 import { App, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
+import * as path from 'path';
 import { vitest } from 'vitest';
 import { SpaConstruct, SpaProps } from './spa/spa.construct';
 
@@ -33,7 +34,7 @@ const defaultTestProps: SpaProps & StackProps = {
     region: 'us-east-1',
     account: '123456789',
   },
-  buildOutputPath: 'libs/public/spa-cdk-stack/test-build-path',
+  buildOutputPath: path.join(__dirname, '../../test-build-path'),
   domainName: 'test-domain',
 };
 describe('SpaCdkStack', () => {
