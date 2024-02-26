@@ -6,7 +6,7 @@
   "implicitDependencies": ["angular-examples"],
   "targets": {
     "deploy": {
-      "dependsOn": ["prepare-prod"],
+      "dependsOn": ["^prepare-prod"],
       "executor": "@ago-dev/nx-aws-cdk-v2:deploy",
       "options": {}
     },
