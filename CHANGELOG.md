@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.5.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.4.6...v4.5.0) (2024-02-26)
+
+
+### Features
+
+* ✨ extract lib for cdk spa stack ([bd97aea](https://github.com/WolfSoko/wol-sok-mono/commit/bd97aea753740c8fb4616e1e79b43abd48abfb2d))
+
 ### [4.4.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.4.5...v4.4.6) (2024-02-25)
 
 ### [4.4.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.4.4...v4.4.5) (2024-02-25)
