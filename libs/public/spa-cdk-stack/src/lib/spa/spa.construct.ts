@@ -124,7 +124,7 @@ export class SpaConstruct extends Construct {
   ): Certificate {
     // TLS certificate
     const certificate = new Certificate(this, 'Certificate', {
-      validation: CertificateValidation.fromEmail(),
+      validation: CertificateValidation.fromDns(zone),
       domainName,
     });
 

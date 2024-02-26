@@ -374,7 +374,6 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         "DomainValidationOptions": [
           {
             "DomainName": "test-domain.com",
-            "ValidationDomain": "test-domain.com",
           },
         ],
         "Tags": [
@@ -383,7 +382,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
             "Value": "TestSpaStack/TestSpaStack/Certificate",
           },
         ],
-        "ValidationMethod": "EMAIL",
+        "ValidationMethod": "DNS",
       },
       "Type": "AWS::CertificateManager::Certificate",
     },
@@ -785,7 +784,6 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         "DomainValidationOptions": [
           {
             "DomainName": "test-domain.com",
-            "ValidationDomain": "test-domain.com",
           },
         ],
         "Tags": [
@@ -794,7 +792,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
             "Value": "TestSpaStack/TestSpaStack/Certificate",
           },
         ],
-        "ValidationMethod": "EMAIL",
+        "ValidationMethod": "DNS",
       },
       "Type": "AWS::CertificateManager::Certificate",
     },
@@ -1314,7 +1312,6 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         "DomainValidationOptions": [
           {
             "DomainName": "*.test-domain.com",
-            "ValidationDomain": "test-domain.com",
           },
         ],
         "Tags": [
@@ -1323,7 +1320,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
             "Value": "TestSpaStack/TestSpaStack/Certificate",
           },
         ],
-        "ValidationMethod": "EMAIL",
+        "ValidationMethod": "DNS",
       },
       "Type": "AWS::CertificateManager::Certificate",
     },
