@@ -1,4 +1,4 @@
-name: Deploy release to AWS
+name: Deploy release
 on:
   release:
     types: [published]
@@ -40,23 +40,24 @@ jobs:
         id: previous_release
         run: |
           echo "Finding previous release tag"
-          PREVIOUS_RELEASE=$(git describe --tags --abbrev=0 --exclude=${RELEASE_VERSION})
+          PREVIOUS_RELEASE=$(git describe --tags --abbrev=0 --exclude=${{ env.RELEASE_VERSION }}
           echo "Previous release: $PREVIOUS_RELEASE"
           echo "previous_release=$PREVIOUS_RELEASE" >> $GITHUB_ENV
 
       - name: Show affected projects
-        run: echo "Affected projects = $(npx nx show projects --affected base=${PREVIOUS_RELEASE} head=${RELEASE_VERSION} -t deploy)"
+        run: echo "Affected projects = $(npx nx show projects --affected base=${{ env.PREVIOUS_RELEASE }} head=${{ env.RELEASE_VERSION }} -t deploy)"
 
       - name: Deploy CDK Apps
         run: |
-          npx nx affected base=${PREVIOUS_RELEASE} head=${RELEASE_VERSION} --target=deploy -- --all --require-approval=never
+          npx nx affected base=${{ env.PREVIOUS_RELEASE }} head=${{ env.RELEASE_VERSION }} --target=deploy -- --all --require-approval=never
 
       - uses: nashmaniac/create-issue-action@v1.2
         if: failure()
         name: Create Issue
         with:
-          title: 'bug(deploy): Deploy release to AWS pipeline failed'
+          title: 'bug(deploy): Deploy release ${{ env.RELEASE_VERSION }} failed'
           token: ${{ secrets.GITHUB_TOKEN }}
           assignees: ${{ github.actor }}
           labels: bug
-          body: GitHub [Deploy release workflow](${{ github.event.html_url }}) failed
+          body: |
+            GitHub [Deploy release workflow](${{ github.event.html_url }})
