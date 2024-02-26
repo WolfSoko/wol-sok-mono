@@ -8,7 +8,7 @@ on:
       version:
         required: true
         type: string
-        default: v3.0.1
+        default: v4.8.7
         description: Release version
 
 concurrency:
@@ -42,17 +42,18 @@ jobs:
       - name: Find previous release tag
         id: previous_release
         run: |
-          echo "Finding previous release tag"
-          PREVIOUS_RELEASE=$(git describe --tags --abbrev=0 --exclude=${{ env.RELEASE_VERSION }} )
+          echo "Determining SHAs for affected projects"
+          PREVIOUS_RELEASE=$(git describe --tags --abbrev=0 --exclude=$RELEASE_VERSION)
           echo "Previous release: $PREVIOUS_RELEASE"
-          echo "PREVIOUS_RELEASE=$PREVIOUS_RELEASE" >> $GITHUB_ENV
+          echo "NX_BASE=$PREVIOUS_RELEASE" >> $GITHUB_ENV
+          echo "NX_HEAD=$RELEASE_VERSION" >> $GITHUB_ENV
 
       - name: Show affected projects
-        run: echo "Affected projects = $(npx nx show projects --affected base=${{ env.PREVIOUS_RELEASE }} head=${{ env.RELEASE_VERSION }} -t deploy)"
+        run: echo "Affected projects = $(npx nx show projects --affected -t deploy)"
 
       - name: Deploy CDK Apps
         run: |
-          npx nx affected base=${{ env.PREVIOUS_RELEASE }} head=${{ env.RELEASE_VERSION }} --target=deploy -- --all --require-approval=never
+          npx nx affected --target=deploy -- --all --require-approval=never
 
       - uses: nashmaniac/create-issue-action@v1.2
         if: failure()
