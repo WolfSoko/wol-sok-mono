@@ -36,7 +36,6 @@ jobs:
           ref: ${{ env.RELEASE_VERSION }}
       - name: Install Deps
         uses: ./.github/actions/install-deps
-      - run: echo "Affected projects = $(npx nx show projects --affected base=${PREVIOUS_RELEASE} head=${RELEASE_VERSION} -t deploy)"
       - name: Find previous release tag
         id: previous_release
         run: |
@@ -45,8 +44,10 @@ jobs:
           echo "Previous release: $PREVIOUS_RELEASE"
           echo "previous_release=$PREVIOUS_RELEASE" >> $GITHUB_ENV
 
-      - name: Deploy CDK Apps
+      - name: Show affected projects
+        run: echo "Affected projects = $(npx nx show projects --affected base=${PREVIOUS_RELEASE} head=${RELEASE_VERSION} -t deploy)"
 
+      - name: Deploy CDK Apps
         run: |
           npx nx affected base=${PREVIOUS_RELEASE} head=${RELEASE_VERSION} --target=deploy -- --all --require-approval=never
 
