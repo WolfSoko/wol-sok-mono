@@ -40,7 +40,7 @@ jobs:
         id: previous_release
         run: |
           echo "Finding previous release tag"
-          PREVIOUS_RELEASE=$(git describe --tags --abbrev=0 --exclude=${RELEASE_VERSION} 2>/dev/null)
+          PREVIOUS_RELEASE=$(git describe --tags --abbrev=0 --exclude=${RELEASE_VERSION})
           echo "Previous release: $PREVIOUS_RELEASE"
           echo "previous_release=$PREVIOUS_RELEASE" >> $GITHUB_ENV
 
