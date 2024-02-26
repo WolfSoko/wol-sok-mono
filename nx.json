@@ -91,7 +91,8 @@
       }
     },
     "prepare-prod": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build"],
+      "cache": true
     },
     "build-storybook": {
       "inputs": [
