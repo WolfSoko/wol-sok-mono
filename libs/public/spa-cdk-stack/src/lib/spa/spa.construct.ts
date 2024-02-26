@@ -64,7 +64,7 @@ export class SpaConstruct extends Construct {
 
     new CfnOutput(this, `${spaName}-Site:`, { value: 'https://' + siteDomain });
 
-    const certificate = this.createCertificate(zone, `*.domainName`);
+    const certificate = this.createCertificate(zone, `*.${domainName}`);
     const bucket = this.createBucket(siteDomain, cloudfrontOAI, removalPolicy);
     const distribution = this.createDistribution(
       siteDomain,
