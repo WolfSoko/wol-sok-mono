@@ -33,7 +33,7 @@ const defaultTestProps: SpaProps & StackProps = {
     region: 'us-east-1',
     account: '123456789',
   },
-  buildOutputPath: 'test-build-path',
+  buildOutputPath: 'libs/public/spa-cdk-stack/test-build-path',
   domainName: 'test-domain',
 };
 describe('SpaCdkStack', () => {
