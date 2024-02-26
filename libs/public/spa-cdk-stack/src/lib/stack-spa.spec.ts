@@ -3,6 +3,18 @@ import { Template } from 'aws-cdk-lib/assertions';
 import { vitest } from 'vitest';
 import { SpaConstruct, SpaProps } from './spa/spa.construct';
 
+// Mock the fromLookup method
+vitest.mock('aws-cdk-lib/aws-route53', () => {
+  return {
+    HostedZone: {
+      fromLookup: vitest.fn((domain: string) => ({ superZone: domain })),
+    },
+    RecordTarget: {
+      fromAlias: vitest.fn(),
+    },
+    ARecord: vitest.fn(),
+  };
+});
 class TestSpaStack extends Stack {
   constructor(parent: App, name: string, props: SpaProps & StackProps) {
     super(parent, name, props);
@@ -16,18 +28,6 @@ class TestSpaStack extends Stack {
   }
 }
 
-// Mock the fromLookup method
-vitest.mock('aws-cdk-lib/aws-route53', () => {
-  return {
-    HostedZone: {
-      fromLookup: vitest.fn((domain: string) => ({ superZone: domain })),
-    },
-    RecordTarget: {
-      fromAlias: vitest.fn(),
-    },
-    ARecord: vitest.fn(),
-  };
-});
 const defaultTestProps: SpaProps & StackProps = {
   env: {
     region: 'us-east-1',
