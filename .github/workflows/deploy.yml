@@ -42,7 +42,7 @@ jobs:
           echo "Finding previous release tag"
           PREVIOUS_RELEASE=$(git describe --tags --abbrev=0 --exclude=${{ env.RELEASE_VERSION }} )
           echo "Previous release: $PREVIOUS_RELEASE"
-          echo "previous_release=$PREVIOUS_RELEASE" >> $GITHUB_ENV
+          echo "PREVIOUS_RELEASE=$PREVIOUS_RELEASE" >> $GITHUB_ENV
 
       - name: Show affected projects
         run: echo "Affected projects = $(npx nx show projects --affected base=${{ env.PREVIOUS_RELEASE }} head=${{ env.RELEASE_VERSION }} -t deploy)"
