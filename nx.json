@@ -24,6 +24,7 @@
   "namedInputs": {
     "default": ["{projectRoot}/**/*"],
     "production": [
+      "default",
       "!{projectRoot}/**/*.spec.[jt]s",
       "!{projectRoot}/tsconfig.*spec.json",
       "!{projectRoot}/karma.conf.js",
