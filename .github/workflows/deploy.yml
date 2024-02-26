@@ -34,6 +34,9 @@ jobs:
         name: 'Checkout version tagged branch'
         with:
           ref: ${{ env.RELEASE_VERSION }}
+          fetch-depth: 0
+          fetch-tags: true
+
       - name: Install Deps
         uses: ./.github/actions/install-deps
       - name: Find previous release tag
