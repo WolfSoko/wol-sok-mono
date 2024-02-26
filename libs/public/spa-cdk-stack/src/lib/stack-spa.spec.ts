@@ -35,7 +35,7 @@ const defaultTestProps: SpaProps & StackProps = {
     account: '123456789',
   },
   buildOutputPath: path.join(__dirname, '../../test-build-path'),
-  domainName: 'test-domain',
+  domainName: 'test-domain.com',
 };
 describe('SpaCdkStack', () => {
   function testStackFactory(
@@ -62,6 +62,16 @@ describe('SpaCdkStack', () => {
     const { template } = testStackFactory({
       deleteBucketPolicy: RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE,
     });
+    expect(template.toJSON()).toMatchSnapshot();
+  });
+
+  it('should use the main domain name even if a subdomain is provided', () => {
+    // given, when
+    const { template, stack } = testStackFactory({
+      domainName: 'subdomain.test-domain.com',
+    });
+
+    //then
     expect(template.toJSON()).toMatchSnapshot();
   });
 });

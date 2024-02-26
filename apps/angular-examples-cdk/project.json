@@ -9,7 +9,7 @@
       "dependsOn": ["^prepare-prod"],
       "executor": "@ago-dev/nx-aws-cdk-v2:deploy",
       "options": {
-        "output": "dist/{projectRoot}"
+        "output": "{workspaceRoot}/dist/{projectRoot}"
       }
     },
     "destroy": {

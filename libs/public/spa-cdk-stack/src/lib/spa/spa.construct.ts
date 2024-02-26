@@ -48,12 +48,15 @@ export class SpaConstruct extends Construct {
     const removalPolicy: RemovalPolicy =
       props.deleteBucketPolicy ?? defaultBucketDeletionPolicy;
     const { domainName, buildOutputPath } = props;
+
+    // extract main domain
+    const siteDomain = domainName;
+    const mainDomain = domainName.split('.').slice(-2).join('.');
+
     const zone = HostedZone.fromLookup(this, spaName, {
       privateZone: false,
-      domainName,
+      domainName: mainDomain,
     });
-    // potential room for subdomains here.
-    const siteDomain = domainName;
 
     const cloudfrontOAI = new OriginAccessIdentity(this, 'cloudfront-OAI', {
       comment: `OriginAccessIdentity for ${this.spaName}`,
@@ -61,8 +64,8 @@ export class SpaConstruct extends Construct {
 
     new CfnOutput(this, `${spaName}-Site:`, { value: 'https://' + siteDomain });
 
-    const certificate = this.createCertificate(zone, domainName);
-    const bucket = this.createBucket(domainName, cloudfrontOAI, removalPolicy);
+    const certificate = this.createCertificate(zone, `*.domainName`);
+    const bucket = this.createBucket(siteDomain, cloudfrontOAI, removalPolicy);
     const distribution = this.createDistribution(
       siteDomain,
       certificate,
