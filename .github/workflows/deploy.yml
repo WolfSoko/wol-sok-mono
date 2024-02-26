@@ -1,0 +1,61 @@
+name: Deploy release to AWS
+on:
+  release:
+    types: [published]
+
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+        default: v3.0.1
+        description: Release version
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HUSKY: 0
+  RELEASE_VERSION: ${{ github.event.inputs.version || github.ref_name }}
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+jobs:
+  deploy:
+    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    environment: aws-cdk
+    steps:
+      - run: echo "Release process starting for version ${{ env.RELEASE_VERSION }}"
+
+      - uses: actions/checkout@v4
+        name: 'Checkout version tagged branch'
+        with:
+          ref: ${{ env.RELEASE_VERSION }}
+      - name: Install Deps
+        uses: ./.github/actions/install-deps
+      - run: echo "Affected projects = $(npx nx show projects --affected base=${PREVIOUS_RELEASE} head=${RELEASE_VERSION} -t deploy)"
+      - name: Find previous release tag
+        id: previous_release
+        run: |
+          echo "Finding previous release tag"
+          PREVIOUS_RELEASE=$(git describe --tags --abbrev=0 --exclude=${RELEASE_VERSION} 2>/dev/null)
+          echo "Previous release: $PREVIOUS_RELEASE"
+          echo "previous_release=$PREVIOUS_RELEASE" >> $GITHUB_ENV
+
+      - name: Deploy CDK Apps
+
+        run: |
+          npx nx affected base=${PREVIOUS_RELEASE} head=${RELEASE_VERSION} --target=deploy -- --all --require-approval=never
+
+      - uses: nashmaniac/create-issue-action@v1.2
+        if: failure()
+        name: Create Issue
+        with:
+          title: 'bug(deploy): Deploy release to AWS pipeline failed'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          assignees: ${{ github.actor }}
+          labels: bug
+          body: GitHub [Deploy release workflow](${{ github.event.html_url }}) failed
