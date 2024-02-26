@@ -12,12 +12,12 @@ function fibRec(n: i32): i32 {
 
 export function fib(n: i32): i32 {
   recCalls = 0;
-  let result: i32 = fibRec(n);
+  const result: i32 = fibRec(n);
   logRecCalls(recCalls);
   return result;
 }
 
-let memoize: Array<i32> = new Array<i32>(50);
+const memoize: Array<i32> = new Array<i32>(50);
 
 export function fibMem(n: i32): i32 {
   recCalls = 0;
@@ -28,7 +28,7 @@ export function fibMem(n: i32): i32 {
     i++;
   }
 
-  let result: i32 = fibRecMem(n);
+  const result: i32 = fibRecMem(n);
   logRecCalls(recCalls);
   return result;
 }
@@ -41,7 +41,7 @@ function fibRecMem(n: i32): i32 {
     return n;
   }
   recCalls++;
-  let result: i32 = fibRecMem(n - 1) + fibRecMem(n - 2);
+  const result: i32 = fibRecMem(n - 1) + fibRecMem(n - 2);
   memoize[n] = result;
   return result;
 }
