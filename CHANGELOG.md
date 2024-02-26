@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.8.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.8.16...v4.8.17) (2024-02-26)
+
 ### [4.8.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.8.15...v4.8.16) (2024-02-26)
 
 ### [4.8.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.8.14...v4.8.15) (2024-02-26)
