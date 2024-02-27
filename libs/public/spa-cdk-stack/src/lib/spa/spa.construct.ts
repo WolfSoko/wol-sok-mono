@@ -49,8 +49,9 @@ export class SpaConstruct extends Construct {
       props.bucketRemovalPolicy ?? defaultBucketRemovalPolicy;
     const { buildOutputPath } = props;
 
-    const { mainDomain, certificateDomainName, siteDomain } =
-      this.extractDomains(props.domainName);
+    const { mainDomain, subDomainWildcard, siteDomain } = this.extractDomains(
+      props.domainName
+    );
 
     const zone = HostedZone.fromLookup(this, spaName, {
       privateZone: false,
@@ -64,14 +65,11 @@ export class SpaConstruct extends Construct {
     new CfnOutput(this, `${spaName}-Site:`, { value: 'https://' + siteDomain });
 
     let certificate: Certificate;
+
     if (mainDomain === siteDomain) {
-      certificate = this.createCertificate(zone, certificateDomainName);
+      certificate = this.createCertificate(zone, mainDomain);
     } else {
-      certificate = this.createCertificate(
-        zone,
-        certificateDomainName,
-        siteDomain
-      );
+      certificate = this.createCertificate(zone, mainDomain, subDomainWildcard);
     }
 
     const bucket = this.createBucket(siteDomain, cloudfrontOAI, removalPolicy);
@@ -211,14 +209,14 @@ export class SpaConstruct extends Construct {
   }
 
   private extractDomains(domainName: string): {
-    certificateDomainName: string;
+    subDomainWildcard: string;
     mainDomain: string;
     siteDomain: string;
   } {
     // extract main domain
     const siteDomain = domainName;
     const mainDomain = domainName.split('.').slice(-2).join('.');
-    const certificateDomainName: string =
+    const subDomainWildcard: string =
       mainDomain === siteDomain ? mainDomain : `*.${mainDomain}`;
 
     // inform user about domain handling
@@ -227,6 +225,6 @@ export class SpaConstruct extends Construct {
         `The domain ${siteDomain} is not a top level domain. The certificate will be created for *.${mainDomain}`
       );
     }
-    return { siteDomain, mainDomain, certificateDomainName };
+    return { siteDomain, mainDomain, subDomainWildcard };
   }
 }

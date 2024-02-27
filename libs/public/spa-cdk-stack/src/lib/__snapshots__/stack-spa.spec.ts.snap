@@ -1310,17 +1310,14 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
     },
     "TestSpaStackCertificate88463A20": {
       "Properties": {
-        "DomainName": "*.test-domain.com",
+        "DomainName": "test-domain.com",
         "DomainValidationOptions": [
           {
-            "DomainName": "*.test-domain.com",
-          },
-          {
-            "DomainName": "subdomain.test-domain.com",
+            "DomainName": "test-domain.com",
           },
         ],
         "SubjectAlternativeNames": [
-          "subdomain.test-domain.com",
+          "*.test-domain.com",
         ],
         "Tags": [
           {
