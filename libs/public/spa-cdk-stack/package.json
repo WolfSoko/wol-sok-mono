@@ -1,6 +1,6 @@
 {
   "name": "@wolsok/spa-cdk-stack",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "dependencies": {
     "tslib": "^2.3.0",
     "aws-cdk-lib": "^2.130.0",
