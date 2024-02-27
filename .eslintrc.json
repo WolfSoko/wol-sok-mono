@@ -21,6 +21,14 @@
                 ]
               },
               {
+                "sourceTag": "infra",
+                "onlyDependOnLibsWithTags": ["infra-shared"]
+              },
+              {
+                "sourceTag": "infra-shared",
+                "onlyDependOnLibsWithTags": ["infra-shared"]
+              },
+              {
                 "sourceTag": "e2e",
                 "onlyDependOnLibsWithTags": ["shared"]
               },

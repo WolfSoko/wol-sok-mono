@@ -26,5 +26,5 @@
       }
     }
   },
-  "tags": ["infra-shared"]
+  "tags": ["infra-shared", "published"]
 }
