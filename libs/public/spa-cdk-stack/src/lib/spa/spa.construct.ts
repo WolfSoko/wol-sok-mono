@@ -69,7 +69,7 @@ export class SpaConstruct extends Construct {
     if (mainDomain === siteDomain) {
       certificate = this.createCertificate(zone, mainDomain);
     } else {
-      certificate = this.createCertificate(zone, mainDomain, subDomainWildcard);
+      certificate = this.createCertificate(zone, mainDomain, siteDomain);
     }
 
     const bucket = this.createBucket(siteDomain, cloudfrontOAI, removalPolicy);

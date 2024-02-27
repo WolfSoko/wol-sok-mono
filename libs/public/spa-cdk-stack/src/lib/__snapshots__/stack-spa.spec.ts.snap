@@ -1315,9 +1315,12 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
           {
             "DomainName": "test-domain.com",
           },
+          {
+            "DomainName": "subdomain.test-domain.com",
+          },
         ],
         "SubjectAlternativeNames": [
-          "*.test-domain.com",
+          "subdomain.test-domain.com",
         ],
         "Tags": [
           {
