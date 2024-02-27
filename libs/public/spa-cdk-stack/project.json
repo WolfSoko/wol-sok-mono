@@ -14,10 +14,6 @@
         "assets": ["libs/public/spa-cdk-stack/*.md"]
       }
     },
-    "publish": {
-      "command": "node tools/scripts/publish.mjs spa-cdk-stack {args.ver} {args.tag}",
-      "dependsOn": ["build"]
-    },
     "test": {
       "executor": "@nx/vite:test",
       "outputs": ["{options.reportsDirectory}"],

@@ -14,10 +14,6 @@
         "assets": ["libs/shared/ws-gl/*.md"]
       }
     },
-    "publish": {
-      "command": "node tools/scripts/publish.mjs ws-gl {args.ver} {args.tag}",
-      "dependsOn": ["build"]
-    },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
