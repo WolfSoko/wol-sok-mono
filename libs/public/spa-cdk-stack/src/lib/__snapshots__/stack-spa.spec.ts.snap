@@ -376,6 +376,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
             "DomainName": "test-domain.com",
           },
         ],
+        "SubjectAlternativeNames": [],
         "Tags": [
           {
             "Key": "Name",
@@ -786,6 +787,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
             "DomainName": "test-domain.com",
           },
         ],
+        "SubjectAlternativeNames": [],
         "Tags": [
           {
             "Key": "Name",
@@ -1313,6 +1315,12 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
           {
             "DomainName": "*.test-domain.com",
           },
+          {
+            "DomainName": "subdomain.test-domain.com",
+          },
+        ],
+        "SubjectAlternativeNames": [
+          "subdomain.test-domain.com",
         ],
         "Tags": [
           {

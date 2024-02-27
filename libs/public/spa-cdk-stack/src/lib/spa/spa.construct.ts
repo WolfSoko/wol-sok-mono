@@ -63,7 +63,17 @@ export class SpaConstruct extends Construct {
 
     new CfnOutput(this, `${spaName}-Site:`, { value: 'https://' + siteDomain });
 
-    const certificate = this.createCertificate(zone, certificateDomainName);
+    let certificate: Certificate;
+    if (mainDomain === siteDomain) {
+      certificate = this.createCertificate(zone, certificateDomainName);
+    } else {
+      certificate = this.createCertificate(
+        zone,
+        certificateDomainName,
+        siteDomain
+      );
+    }
+
     const bucket = this.createBucket(siteDomain, cloudfrontOAI, removalPolicy);
     const distribution = this.createDistribution(
       siteDomain,
@@ -120,12 +130,15 @@ export class SpaConstruct extends Construct {
 
   private createCertificate(
     zone: IHostedZone,
-    domainName: string
+    ...domainNames: string[]
   ): Certificate {
+    const [firstDomain, ...restDomains] = domainNames;
+
     // TLS certificate
     const certificate = new Certificate(this, 'Certificate', {
       validation: CertificateValidation.fromDns(zone),
-      domainName,
+      domainName: firstDomain,
+      subjectAlternativeNames: restDomains,
     });
 
     new CfnOutput(this, `${this.spaName}-sCertificate`, {
