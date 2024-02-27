@@ -130,13 +130,13 @@ export class SpaConstruct extends Construct {
     zone: IHostedZone,
     ...domainNames: string[]
   ): Certificate {
-    const [firstDomain, ...restDomains] = domainNames;
+    const [mainDomain, ...restofDomains] = domainNames;
 
     // TLS certificate
     const certificate = new Certificate(this, 'Certificate', {
       validation: CertificateValidation.fromDns(zone),
-      domainName: firstDomain,
-      subjectAlternativeNames: restDomains,
+      domainName: mainDomain,
+      subjectAlternativeNames: restofDomains,
     });
 
     new CfnOutput(this, `${this.spaName}-sCertificate`, {
