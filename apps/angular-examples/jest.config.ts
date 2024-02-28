@@ -5,7 +5,7 @@ export default {
   displayName: 'angular-examples',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {
-    VERSION: '1.2.3',
+    VERSION: 'v1.2.3',
   },
   coverageDirectory: '../../coverage/apps/angular-examples',
   coverageReporters: ['lcov'],
