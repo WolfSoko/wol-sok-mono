@@ -6,15 +6,16 @@ const { DefinePlugin } = require('webpack');
 const latestVersionTag = getLatestVersionTag();
 console.log(`Version for build: ${latestVersionTag}`);
 
-module.exports = function withVersionHandling(config, context) {
-  return {
-    plugins: [
-      new DefinePlugin({
-        VERSION: latestVersionTag,
-      }),
-    ],
-  };
-};
+const withVersionHandling = (config, context) => ({
+  ...config,
+  plugins: [
+    new DefinePlugin({
+      VERSION: latestVersionTag,
+    }),
+  ],
+});
+
+module.exports = withVersionHandling;
 function getLatestVersionTag() {
   // Get latest version tag like v1.0.0 that matches the regex pattern
   let version;

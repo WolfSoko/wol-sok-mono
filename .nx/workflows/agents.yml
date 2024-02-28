@@ -11,6 +11,7 @@ launch-templates:
         uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/checkout/main.yaml'
         env:
           GIT_CHECKOUT_DEPTH: 0
+          GIT_FETCH_TAGS: 'true'
       - name: Install necessary binaries
         script: |
           echo "Install packages to compile node_modules gl with node-gyp"
