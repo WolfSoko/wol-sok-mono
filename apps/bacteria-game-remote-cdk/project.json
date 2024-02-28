@@ -6,7 +6,7 @@
   "implicitDependencies": ["bacteria-game-remote"],
   "targets": {
     "deploy": {
-      "dependsOn": ["^build:production"],
+      "dependsOn": ["^build"],
       "executor": "@ago-dev/nx-aws-cdk-v2:deploy",
       "options": {
         "output": "{workspaceRoot}/dist/{projectRoot}"
