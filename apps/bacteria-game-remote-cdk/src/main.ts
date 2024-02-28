@@ -10,7 +10,7 @@ new SpaStack(app, stackName, {
     region: 'us-east-1',
     account: '088632064895',
   },
-  buildOutputPath: 'dist/production',
+  buildOutputPath: 'dist/apps/bacteria-game-remote',
   domainName: 'bacteria-game.wolsok.de',
   bucketRemovalPolicy: RemovalPolicy.DESTROY,
 });
