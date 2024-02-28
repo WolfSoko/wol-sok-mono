@@ -43,7 +43,7 @@
     "globals": [],
     "version": [
       {
-        "runtime": "git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*'\n"
+        "runtime": "node tools/version-handling/version-webpack.config.js"
       }
     ]
   },
