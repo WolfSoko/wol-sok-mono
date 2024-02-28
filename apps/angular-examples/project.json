@@ -4,6 +4,11 @@
   "projectType": "application",
   "sourceRoot": "apps/angular-examples/src",
   "prefix": "app",
+  "implicitDependencies": [
+    "bacteria-game-remote",
+    "fourier-analysis-remote",
+    "shader-examples-remote"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/angular:webpack-browser",
