@@ -7,6 +7,7 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:webpack-browser",
+      "inputs": ["version", "production", "globals", "^production", "^globals"],
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/angular-examples",
