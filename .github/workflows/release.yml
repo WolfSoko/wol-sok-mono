@@ -9,6 +9,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  issues: write
+  contents: write
+
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
   HUSKY: 0
@@ -59,12 +63,22 @@ jobs:
           SENTRY_ORG: 'wolsok'
           SENTRY_PROJECT: 'angular-examples'
 
-      - uses: nashmaniac/create-issue-action@v1.2
+      - name: Create Issue on Failure
         if: failure()
-        name: Create Issue
+        uses: actions/github-script@v5
         with:
-          title: 'bug(release): create release pipeline failed'
-          token: ${{ secrets.GITHUB_TOKEN }}
-          assignees: ${{ github.actor }}
-          labels: bug
-          body: GitHub [create release workflow](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/release.yml) failed
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueTitle = 'bug(release): create release pipeline failed';
+            const issueBody = 'GitHub [create release workflow](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/release.yml) failed';
+            const labels = ['bug'];
+            const assignees = [context.actor];
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issueTitle,
+              body: issueBody,
+              assignees: assignees,
+              labels: labels
+            });

@@ -15,6 +15,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  issues: write
+  contents: read
+
 env:
   HUSKY: 0
   RELEASE_VERSION: ${{ github.event.inputs.version || github.ref_name }}
@@ -55,13 +59,13 @@ jobs:
         run: |
           npx nx affected --target=deploy -- --all --require-approval=never
 
-      - uses: nashmaniac/create-issue-action@v1.2
+      - name: Create Issue
         if: failure()
-        name: Create Issue
-        with:
-          title: 'bug(deploy): Deploy release ${{ env.RELEASE_VERSION }} failed'
-          token: ${{ secrets.GITHUB_TOKEN }}
-          assignees: ${{ github.actor }}
-          labels: bug
-          body: |
-            GitHub [Deploy release workflow](${{ github.event.html_url }})
+        run: |
+          gh issue create \
+            --title "bug(deploy): Deploy release ${{ env.RELEASE_VERSION }} failed" \
+            --body "GitHub [Deploy release workflow](${{ github.event.html_url }})" \
+            --label "bug" \
+            --assignee "${{ github.actor }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
