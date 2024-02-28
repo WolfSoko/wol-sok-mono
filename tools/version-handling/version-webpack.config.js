@@ -7,7 +7,6 @@ const latestVersionTag = getLatestVersionTag();
 console.log(`Version for build: ${latestVersionTag}`);
 
 const withVersionHandling = (config, context) => ({
-  ...config,
   plugins: [
     new DefinePlugin({
       VERSION: latestVersionTag,
