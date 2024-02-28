@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.9.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.8.26...v4.9.0) (2024-02-28)
+
+
+### Features
+
+* ✨ align urls for remotes ([798a941](https://github.com/WolfSoko/wol-sok-mono/commit/798a941a19adf51acf12f6bc98bfb4e09bda92b4))
+* ✨ create cdks for federated modules ([0bfdd8c](https://github.com/WolfSoko/wol-sok-mono/commit/0bfdd8c735d1df28515bce9ad8e03837b697b759))
+
 ### [4.8.26](https://github.com/WolfSoko/wol-sok-mono/compare/v4.8.25...v4.8.26) (2024-02-28)
 
 ### [4.8.25](https://github.com/WolfSoko/wol-sok-mono/compare/v4.8.24...v4.8.25) (2024-02-28)
