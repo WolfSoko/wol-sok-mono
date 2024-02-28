@@ -66,6 +66,10 @@
             {
               "replace": "apps/angular-examples/src/environments/environment.ts",
               "with": "apps/angular-examples/src/environments/environment.prod.ts"
+            },
+            {
+              "replace": "apps/angular-examples/module-federation.config.js",
+              "with": "apps/angular-examples/module-federation.config.prod.js"
             }
           ],
           "serviceWorker": true,
@@ -132,19 +136,7 @@
         "passWithNoTests": false,
         "codeCoverage": true
       }
-    },
-    "prepare-prod": {
-      "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist/production"],
-      "options": {
-        "command": "node tools/node-scripts/prepare-mf-build.js"
-      }
     }
   },
-  "tags": ["app", "type:host"],
-  "implicitDependencies": [
-    "fourier-analysis-remote",
-    "bacteria-game-remote",
-    "shader-examples-remote"
-  ]
+  "tags": ["app", "type:host"]
 }

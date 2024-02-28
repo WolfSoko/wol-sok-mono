@@ -4,17 +4,17 @@ import { SpaStack } from './stacks/spa.stack';
 
 const app = new App();
 
-const stackName = 'AngularExamples';
+const stackName = 'FourierAnalysis';
 new SpaStack(app, stackName, {
   env: {
     region: 'us-east-1',
     account: '088632064895',
   },
-  buildOutputPath: 'dist/apps/angular-examples',
-  domainName: 'angularexamples.wolsok.de',
+  buildOutputPath: 'dist/production',
+  domainName: 'fourieranalysis.wolsok.de',
   bucketRemovalPolicy: RemovalPolicy.DESTROY,
 });
 
 const tags: Tags = Tags.of(app);
-tags.add('app', 'AngularExamples');
+tags.add('app', 'FourierAnalysis');
 tags.add('version', envOrDie('RELEASE_VERSION'));
