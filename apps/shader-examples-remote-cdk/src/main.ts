@@ -10,7 +10,7 @@ new SpaStack(app, stackName, {
     region: 'us-east-1',
     account: '088632064895',
   },
-  buildOutputPath: 'dist/production/shader-examples-remote',
+  buildOutputPath: 'dist/apps/shader-examples-remote',
   domainName: 'shader-examples.wolsok.de',
   bucketRemovalPolicy: RemovalPolicy.DESTROY,
 });
