@@ -69,7 +69,7 @@
             },
             {
               "replace": "apps/angular-examples/module-federation.config.js",
-              "with": "apps/angular-examples/module-federation.config.prod.js"
+              "with": "apps/angular-examples/module-federation.prod.config.js"
             }
           ],
           "serviceWorker": true,
