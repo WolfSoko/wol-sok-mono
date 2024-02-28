@@ -11,7 +11,7 @@ new SpaStack(app, stackName, {
     account: '088632064895',
   },
   buildOutputPath: 'dist/production',
-  domainName: 'fourieranalysis.wolsok.de',
+  domainName: 'fourier-analysis.wolsok.de',
   bucketRemovalPolicy: RemovalPolicy.DESTROY,
 });
 

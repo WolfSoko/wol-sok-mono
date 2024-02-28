@@ -11,7 +11,7 @@ new SpaStack(app, stackName, {
     account: '088632064895',
   },
   buildOutputPath: 'dist/production',
-  domainName: 'shaderexamples.wolsok.de',
+  domainName: 'shader-examples.wolsok.de',
   bucketRemovalPolicy: RemovalPolicy.DESTROY,
 });
 
