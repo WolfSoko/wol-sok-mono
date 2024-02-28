@@ -6,12 +6,11 @@ launch-templates:
       HUSKY: 0
       CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
       NODE_OPTIONS: '--max_old_space_size=4096'
+      GIT_CHECKOUT_DEPTH: '0'
 
     init-steps:
       - name: Checkout # using a reusable step
         uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/checkout/main.yaml'
-        env:
-          GIT_CHECKOUT_DEPTH: '0'
       - name: Install necessary binaries
         script: |
           echo "Install packages to compile node_modules gl with node-gyp"
