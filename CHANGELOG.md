@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.9.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.6...v4.9.7) (2024-02-28)
+
+
+### Bug Fixes
+
+* 🐛 add remotes to implicit deps ([21115ef](https://github.com/WolfSoko/wol-sok-mono/commit/21115ef80e67c1529be82dd46485fb8d0183e25c))
+
 ### [4.9.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.5...v4.9.6) (2024-02-28)
 
 ### [4.9.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.4...v4.9.5) (2024-02-28)
