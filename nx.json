@@ -40,7 +40,12 @@
       "!{projectRoot}/cypress.config.[jt]s",
       "!{projectRoot}/tsconfig.spec.json"
     ],
-    "globals": []
+    "globals": [],
+    "version": [
+      {
+        "runtime": "git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*'\n"
+      }
+    ]
   },
   "targetDefaults": {
     "release": {

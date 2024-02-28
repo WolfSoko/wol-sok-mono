@@ -1,4 +1,5 @@
 const { execSync } = require('child_process');
+const { DefinePlugin } = require('webpack');
 
 module.exports = function withVersionHandling(config, context) {
   return {

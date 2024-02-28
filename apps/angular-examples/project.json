@@ -4,6 +4,9 @@
   "projectType": "application",
   "sourceRoot": "apps/angular-examples/src",
   "prefix": "app",
+  "namedInputs": {
+    "globals": ["version"]
+  },
   "targets": {
     "build": {
       "executor": "@nx/angular:webpack-browser",
