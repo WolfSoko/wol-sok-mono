@@ -6,12 +6,12 @@ launch-templates:
       HUSKY: 0
       CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
       NODE_OPTIONS: '--max_old_space_size=4096'
-      GIT_CHECKOUT_DEPTH: '500'
-      GIT_FETCH_TAGS: 'true'
 
     init-steps:
       - name: Checkout # using a reusable step
-        uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/checkout/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/checkout/main.yaml'
+        env:
+          GIT_CHECKOUT_DEPTH: '0'
       - name: Install necessary binaries
         script: |
           echo "Install packages to compile node_modules gl with node-gyp"
@@ -19,7 +19,7 @@ launch-templates:
           sudo apt-get install python3 python-is-python3 make gcc g++ xserver-xorg-dev libxi-dev libxext-dev -y
 
       - name: Restore Node Modules Cache
-        uses: 'nrwl/nx-cloud-workflows/v1.1/workflow-steps/cache/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/cache/main.yaml'
         env:
           KEY: 'package-lock.json'
           PATHS: 'node_modules'
