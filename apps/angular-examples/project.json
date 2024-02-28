@@ -19,7 +19,7 @@
         "tsConfig": "apps/angular-examples/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "customWebpackConfig": {
-          "path": "apps/angular-examples/webpack.config.js"
+          "path": "apps/angular-examples/webpack.config.ts"
         },
         "assets": [
           {
