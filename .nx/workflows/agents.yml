@@ -6,7 +6,8 @@ launch-templates:
       HUSKY: 0
       CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
       NODE_OPTIONS: '--max_old_space_size=4096'
-      GIT_CHECKOUT_DEPTH: '0'
+      GIT_CHECKOUT_DEPTH: '500'
+      GIT_FETCH_TAGS: 'true'
 
     init-steps:
       - name: Checkout # using a reusable step
