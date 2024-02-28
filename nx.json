@@ -43,7 +43,7 @@
     "globals": [],
     "version": [
       {
-        "runtime": "node tools/version-handling/version-webpack.config.js"
+        "runtime": "node tools/version-handling/latest-version-tag.js"
       }
     ]
   },
