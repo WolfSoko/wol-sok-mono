@@ -75,7 +75,7 @@ jobs:
           triggerRelease=$([[ -z $projects ]] && echo "false" || echo "true")
           echo "triggerRelease=$triggerRelease" >> $GITHUB_ENV
       - name: trigger release
-        if: success() && env.triggerRelease == "true"
+        if: success() && env.triggerRelease == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.no-reply.github.com"
           git config --local user.name "github-actions[bot]"
