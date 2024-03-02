@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.12.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.11.1-deployed...v4.12.0) (2024-03-02)
+
+
+### Features
+
+* **angular-examples:** ✨ load version after startup ([d408de6](https://github.com/WolfSoko/wol-sok-mono/commit/d408de6332b62f269af7fd6584e64e2e350c31f6))
+
 ### [4.11.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.11.0...v4.11.1) (2024-03-02)
 
 ## [4.11.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.10.0...v4.11.0) (2024-03-02)
