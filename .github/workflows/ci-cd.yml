@@ -78,9 +78,9 @@ jobs:
       - name: trigger release
         if: steps.shouldTriggerRelease.outputs.triggerRelease == 'true'
         run: |
-          git config --local user.email "github-actions[bot]@users.no-reply.github.com"
-          git config --local user.name "github-actions[bot]"
           npx standard-version
+          git push origin --tags
+
       - name: Push changes
         if: steps.shouldTriggerRelease.outputs.triggerRelease == 'true'
         uses: ad-m/github-push-action@master
