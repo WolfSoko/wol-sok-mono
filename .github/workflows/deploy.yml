@@ -17,7 +17,7 @@ concurrency:
 
 permissions:
   issues: write
-  contents: read
+  contents: write
 
 env:
   HUSKY: 0
@@ -43,13 +43,13 @@ jobs:
 
       - name: Install Deps
         uses: ./.github/actions/install-deps
-      - name: Find previous release tag
-        id: previous_release
+      - name: Find previous deployment tag
+        id: previous_deployment
         run: |
           echo "Determining SHAs for affected projects"
-          PREVIOUS_RELEASE=$(git describe --tags --abbrev=0 --exclude=$RELEASE_VERSION)
-          echo "Previous release: $PREVIOUS_RELEASE"
-          echo "NX_BASE=$PREVIOUS_RELEASE" >> $GITHUB_ENV
+          PREVIOUS_DEPLOYMENT=$(git describe --tags --abbrev=0 --match="*deployed")
+          echo "Previous release: $PREVIOUS_DEPLOYMENT"
+          echo "NX_BASE=$PREVIOUS_DEPLOYMENT" >> $GITHUB_ENV
           echo "NX_HEAD=$RELEASE_VERSION" >> $GITHUB_ENV
 
       - name: Show affected projects
@@ -58,6 +58,14 @@ jobs:
       - name: Deploy CDK Apps
         run: |
           npx nx affected --target=deploy -- --all --require-approval=never
+
+      - name: Tag deployment success
+        run: |
+          DEPLOY_TAG=$RELEASE_VERSION
+          git tag -a "$DEPLOY_TAG-deploy" -m "Tag deployment for $DEPLOY_TAG"
+          git push origin --tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Issue
         if: failure()

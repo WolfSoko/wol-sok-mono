@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+    tags-ignore:
+      - '*'
   pull_request:
 
 concurrency:
@@ -12,7 +14,8 @@ concurrency:
 # Needed for nx-set-shas when run on the main branch
 permissions:
   actions: read
-  contents: read
+  contents: write
+  pull-requests: write
 
 env:
   HUSKY: 0
@@ -65,9 +68,21 @@ jobs:
           flags: unittests
           fail_ci_if_error: true
           verbose: true
-
-  trigger-release:
-    uses: ./.github/workflows/trigger-release.yml
-    secrets: inherit
-    needs: main
-    if: ${{ success() && !contains(github.event.head_commit.message, 'chore(release):') && github.ref_name == 'main' }}
+      - name: determine if deployables are affected and a release should be triggered
+        run: |
+          projects=$(npx nx show projects --affected -t deploy);
+          echo $projects
+          triggerRelease=$([[ -z $projects ]] && echo "false" || echo "true")
+          echo "triggerRelease=$triggerRelease" >> $GITHUB_ENV
+      - name: trigger release
+        if: success() && env.triggerRelease == "true"
+        run: |
+          git config --local user.email "github-actions[bot]@users.no-reply.github.com"
+          git config --local user.name "github-actions[bot]"
+          npx standard-version
+      - name: Push changes
+        if: success() && env.triggerRelease == "true"
+        uses: ad-m/github-push-action@master
+        with:
+          branch: ${{ github.ref }}
+          tags: true
