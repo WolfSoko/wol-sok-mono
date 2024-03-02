@@ -69,19 +69,20 @@ jobs:
           fail_ci_if_error: true
           verbose: true
       - name: determine if deployables are affected and a release should be triggered
+        id: shouldTriggerRelease
         run: |
           projects=$(npx nx show projects --affected -t deploy);
           echo $projects
           triggerRelease=$([[ -z $projects ]] && echo "false" || echo "true")
-          echo "triggerRelease=$triggerRelease" >> $GITHUB_ENV
+          echo "triggerRelease=$triggerRelease" >> $GITHUB_OUTPUT
       - name: trigger release
-        if: success() && env.triggerRelease == 'true'
+        if: steps.shouldTriggerRelease.outputs.triggerRelease == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.no-reply.github.com"
           git config --local user.name "github-actions[bot]"
           npx standard-version
       - name: Push changes
-        if: success() && env.triggerRelease == "true"
+        if: steps.shouldTriggerRelease.outputs.triggerRelease == 'true'
         uses: ad-m/github-push-action@master
         with:
           branch: ${{ github.ref }}
