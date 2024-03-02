@@ -1,8 +1,9 @@
 import { App, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
-import { Template } from 'aws-cdk-lib/assertions';
+import { Match, Template } from 'aws-cdk-lib/assertions';
 import * as path from 'path';
 import { vitest } from 'vitest';
 import { SpaConstruct, SpaProps } from './spa/spa.construct';
+import { Source } from 'aws-cdk-lib/aws-s3-deployment';
 
 // Mock the fromLookup method
 vitest.mock('aws-cdk-lib/aws-route53', () => {
@@ -17,11 +18,12 @@ vitest.mock('aws-cdk-lib/aws-route53', () => {
   };
 });
 class TestSpaStack extends Stack {
+  spaConstruct: SpaConstruct;
   constructor(parent: App, name: string, props: SpaProps & StackProps) {
     super(parent, name, props);
 
     const { domainName, buildOutputPath, bucketRemovalPolicy } = props;
-    new SpaConstruct(this, name, {
+    this.spaConstruct = new SpaConstruct(this, name, {
       domainName,
       buildOutputPath,
       bucketRemovalPolicy: bucketRemovalPolicy,
@@ -40,7 +42,7 @@ const defaultTestProps: SpaProps & StackProps = {
 describe('SpaCdkStack', () => {
   function testStackFactory(
     props: Partial<SpaProps & StackProps> = defaultTestProps
-  ): { app: App; template: Template; stack: TestSpaStack } {
+  ): { app: App; template: () => Template; stack: TestSpaStack } {
     // GIVEN
     const app = new App();
 
@@ -49,20 +51,20 @@ describe('SpaCdkStack', () => {
       ...defaultTestProps,
       ...props,
     });
-    const template = Template.fromStack(stack);
+    const template = () => Template.fromStack(stack);
     return { stack, app, template };
   }
 
   it('should match snapshot', () => {
     const { template } = testStackFactory();
-    expect(template.toJSON()).toMatchSnapshot();
+    expect(template().toJSON()).toMatchSnapshot();
   });
 
   it('should match snapshot setting bucket removal policy to retain', () => {
     const { template } = testStackFactory({
       bucketRemovalPolicy: RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE,
     });
-    expect(template.toJSON()).toMatchSnapshot();
+    expect(template().toJSON()).toMatchSnapshot();
   });
 
   it('should use the main domain name even if a subdomain is provided', () => {
@@ -72,6 +74,39 @@ describe('SpaCdkStack', () => {
     });
 
     //then
-    expect(template.toJSON()).toMatchSnapshot();
+    expect(template().toJSON()).toMatchSnapshot();
+  });
+
+  it('should create an BucketDeployment for the buildOutputPath', () => {
+    const { template } = testStackFactory();
+    //then
+    template().hasResourceProperties('Custom::CDKBucketDeployment', {
+      SourceObjectKeys: Match.arrayEquals([Match.stringLikeRegexp('\\w+.zip')]),
+    });
+  });
+
+  it('should create an extra BucketDeployment when using addExtraAssets', () => {
+    const { template, stack } = testStackFactory();
+    stack.spaConstruct.addExtraAssets(
+      Source.asset(path.join(__dirname, '../../extra-assets-path'))
+    );
+    //then
+    expect(template().toJSON()).toMatchSnapshot();
+  });
+
+  it('should create an extra Custom::CDKBucketDeployment when using addExtraAssets', () => {
+    const { template, stack } = testStackFactory();
+
+    //when
+    stack.spaConstruct.addExtraAssets(
+      Source.asset(path.join(__dirname, '../../extra-assets-path'))
+    );
+    //then
+    template().hasResourceProperties('Custom::CDKBucketDeployment', {
+      SourceObjectKeys: Match.arrayEquals([
+        Match.stringLikeRegexp('\\w+.zip'),
+        Match.stringLikeRegexp('\\w+.zip'),
+      ]),
+    });
   });
 });

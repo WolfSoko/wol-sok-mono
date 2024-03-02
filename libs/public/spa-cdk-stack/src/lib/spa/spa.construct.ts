@@ -20,7 +20,11 @@ import {
 } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
 import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3';
-import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
+import {
+  BucketDeployment,
+  ISource,
+  Source,
+} from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
 
 export interface SpaProps {
@@ -39,6 +43,7 @@ const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
  * and ACM certificate.
  */
 export class SpaConstruct extends Construct {
+  private bucketDeployment: BucketDeployment;
   constructor(
     parent: Construct,
     private readonly spaName: string,
@@ -80,7 +85,12 @@ export class SpaConstruct extends Construct {
       cloudfrontOAI
     );
     this.createARecord(siteDomain, distribution, zone);
-    this.createBucketDeployment(buildOutputPath, bucket, distribution);
+    const deploymentAssets = Source.asset(buildOutputPath);
+    this.bucketDeployment = this.createBucketDeployment(
+      [deploymentAssets],
+      bucket,
+      distribution
+    );
   }
 
   private createBucket(
@@ -194,14 +204,22 @@ export class SpaConstruct extends Construct {
     new CfnOutput(this, `${this.spaName}-ARecord`, { value: siteDomain });
   }
 
+  /**
+   * Add some additional assets to the bucket of the SPA
+   */
+  public addExtraAssets(...assets: ISource[]) {
+    assets.forEach((asset) => this.bucketDeployment?.addSource(asset));
+  }
+
   private createBucketDeployment(
-    buildOutputPath: string,
+    sources: ISource[],
     spaBucket: Bucket,
     distribution: Distribution
-  ): void {
+  ): BucketDeployment {
     // Deploy site contents to S3 spaBucket
-    new BucketDeployment(this, 'DeployWithInvalidation', {
-      sources: [Source.asset(buildOutputPath)],
+
+    return new BucketDeployment(this, 'DeployWithInvalidation', {
+      sources,
       destinationBucket: spaBucket,
       distribution,
       distributionPaths: ['/*'],
