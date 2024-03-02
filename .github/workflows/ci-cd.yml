@@ -100,6 +100,6 @@ jobs:
           git config --local user.email "github-actions[bot]@users.no-reply.github.com"
           git config --local user.name "github-actions[bot]"
           npx standard-version
-          git push origin $GITHUB_REF --follow-tags --force-with-lease --no-verify
+          git push --follow-tags origin main
         env:
           GITHUB_TOKEN: secrets.PAT_TOKEN
