@@ -69,6 +69,7 @@ jobs:
           fail_ci_if_error: true
           verbose: true
       - name: determine if deployables are affected and a release should be triggered
+        if: github.ref_name == 'main'
         id: shouldTriggerRelease
         run: |
           projects=$(npx nx show projects --affected -t deploy);
