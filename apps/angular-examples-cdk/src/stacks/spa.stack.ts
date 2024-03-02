@@ -1,7 +1,8 @@
 import { SpaConstruct, SpaProps } from '@wolsok/spa-cdk-stack';
 import { App, Stack, StackProps } from 'aws-cdk-lib';
 import { Source } from 'aws-cdk-lib/aws-s3-deployment';
-import * as path from 'path';
+// eslint-disable-next-line @nx/enforce-module-boundaries
+import { version } from '../../../../version.json';
 
 export class SpaStack extends Stack {
   constructor(parent: App, name: string, props: StackProps & SpaProps) {
@@ -12,6 +13,6 @@ export class SpaStack extends Stack {
       buildOutputPath: props.buildOutputPath,
       bucketRemovalPolicy: props.bucketRemovalPolicy,
     });
-    spa.addExtraAssets(Source.asset('version.json'));
+    spa.addExtraAssets(Source.jsonData('version', version));
   }
 }
