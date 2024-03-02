@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.9.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.14...v4.9.15) (2024-03-02)
+
+
+### Bug Fixes
+
+* 🐛 working remote config ([e80d6de](https://github.com/WolfSoko/wol-sok-mono/commit/e80d6de66edbac0264c3fdbdb35430e61089573a))
+
 ### [4.9.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.13...v4.9.14) (2024-03-01)
 
 ### [4.9.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.12...v4.9.13) (2024-03-01)
