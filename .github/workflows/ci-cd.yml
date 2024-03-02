@@ -77,12 +77,27 @@ jobs:
           triggerRelease=$([[ -z $projects ]] && echo "false" || echo "true")
           echo "triggerRelease=$triggerRelease" >> $GITHUB_OUTPUT
           echo "$([[ -z $projects ]] && echo 'No deployable projects affected, no need for a release' || echo 'Deployable projects affected. Trigger release!!!')" >> $GITHUB_STEP_SUMMARY
+
+  # as the main workflow is mandatory for the branch protection we need a separate job
+  trigger-release:
+    runs-on: ubuntu-latest
+    needs: main
+    steps:
+      - uses: actions/checkout@v4
+        name: 'Checkout branch'
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
       - name: trigger release
-        if: steps.shouldTriggerRelease.outputs.triggerRelease == 'true'
+        if: needs.main.steps.shouldTriggerRelease.outputs.triggerRelease == 'true'
         run: |
           git config --global user.email "trigger.release@github.com"
           git config --global user.name "Arelease ShouldBeMate"
           npx standard-version
-          git push origin $GITHUB_REF --tags --force-with-lease --no-verify
+          git push origin $GITHUB_REF --follow-tags --force-with-lease --no-verify
         env:
           GITHUB_TOKEN: secrets.PAT_TOKEN

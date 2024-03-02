@@ -1,0 +1,35 @@
+name: Trigger Release
+on:
+  workflow_call:
+    secrets:
+      PUSH_TOKEN:
+        required: true
+  workflow_dispatch:
+
+jobs:
+  trigger-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        name: 'Checkout branch'
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - name: trigger release
+        run: |
+          git config --local user.email "github-actions[bot]@users.no-reply.github.com"
+          git config --local user.name "github-actions[bot]"
+          npx standard-version
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: ${{ github.ref }}
+          tags: true
+          github_token: ${{ secrets.PUSH_TOKEN }}
