@@ -10,9 +10,18 @@ module.exports = function latestVersionTag() {
       .trim();
   } catch (error) {
     console.error(
-      'Error while getting latest version tag. Returning a timestamp version',
+      'Error while getting latest version tag. Returning commit hash',
       error
     );
+    try {
+      // get current commit hash
+      return execSync('git rev-parse --short HEAD');
+    } catch (error) {
+      console.error(
+        'Error while getting head commit hash. Returning a timestamp version',
+        error
+      );
+    }
     return `t${Date.now()}`;
   }
 };
