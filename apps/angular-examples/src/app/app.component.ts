@@ -28,8 +28,7 @@ import { ROUTER_LINKS } from './router-links.token';
   imports: [MainToolbarComponent, SideNavComponent, RouterOutlet],
 })
 export class AppComponent {
-  @HostBinding('attr.app-version')
-  appVersionAttr: Signal<void | undefined>;
+  appVersionAttr: Signal<string | undefined>;
 
   constructor(
     // we need title service to update page title.
@@ -43,12 +42,10 @@ export class AppComponent {
     this.appVersionAttr = toSignal(
       httpClient.get<string>('/version').pipe(
         catchError((err, caught) => {
-          console.log('No version found', err);
+          console.warn('No version found', err);
           return of('next');
         }),
-        map((version: string) => {
-          `angular-examples@${version}`;
-        })
+        map((version: string) => `angular-examples@${version}`)
       )
     );
   }
