@@ -2,7 +2,7 @@ name: Trigger Release
 on:
   workflow_call:
     secrets:
-      PUSH_TOKEN:
+      PAT_TOKEN:
         required: true
   workflow_dispatch:
 
