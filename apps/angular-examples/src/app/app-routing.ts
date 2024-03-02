@@ -7,7 +7,6 @@ import {
   withInMemoryScrolling,
   withRouterConfig,
 } from '@angular/router';
-import { loadRemoteModule } from '@nx/angular/mf';
 import { InfoComponent } from './feature/lazy/info/info.component';
 
 export interface MainNavRouteData extends Data {
@@ -32,8 +31,8 @@ export const APP_ROUTES: MainNavRoutes = [
   {
     path: 'fourierAnalysis',
     loadChildren: () =>
-      loadRemoteModule('fourier-analysis-remote', './Module').then(
-        (m) => m.RemoteEntryModule
+      import('fourier-analysis-remote/Routes').then(
+        (routes) => routes.remoteRoutes
       ),
     data: {
       linkText: 'Fourier Analysis Example',
@@ -43,15 +42,15 @@ export const APP_ROUTES: MainNavRoutes = [
   {
     path: 'bacteriaGame',
     loadChildren: () =>
-      loadRemoteModule('bacteria-game-remote', './Routes').then(
-        (routes) => routes.entryRoutes
+      import('shader-examples-remote/Routes').then(
+        (routes) => routes.remoteRoutes
       ),
     data: { linkText: 'Bacteria Game', subTitle: 'Served independently by MF' },
   },
   {
     path: 'shaderExamples',
     loadChildren: () =>
-      loadRemoteModule('shader-examples-remote', './Routes').then(
+      import('shader-examples-remote/Routes').then(
         (routes) => routes.remoteRoutes
       ),
     data: {

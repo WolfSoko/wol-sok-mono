@@ -58,8 +58,8 @@
       "bacteria-game-remote/Routes": [
         "apps/bacteria-game-remote/src/app/remote-entry/entry.routes.ts"
       ],
-      "fourier-analysis-remote/Module": [
-        "apps/fourier-analysis-remote/src/app/remote-entry/entry.module.ts"
+      "fourier-analysis-remote/Routes": [
+        "apps/fourier-analysis-remote/src/app/remote-entry/entry.routes.ts"
       ],
       "shader-examples-remote/Routes": [
         "apps/shader-examples-remote/src/app/remote-entry/entry.routes.ts"

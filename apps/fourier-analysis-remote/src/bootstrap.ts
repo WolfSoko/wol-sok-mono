@@ -1,44 +1,18 @@
-import {
-  APP_INITIALIZER,
-  ApplicationRef,
-  enableProdMode,
-  ViewEncapsulation,
-} from '@angular/core';
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-import { Actions } from '@ngneat/effects-ng';
+import { enableProdMode } from '@angular/core';
+import { bootstrapApplication } from '@angular/platform-browser';
 import { devTools } from '@ngneat/elf-devtools';
-
-import { AppModule } from './app/app.module';
+import { appConfig } from './app/app.config';
+import { RemoteEntryComponent } from './app/remote-entry/entry.component';
 import { environment } from './environments/environment';
 
 if (environment.production) {
   enableProdMode();
 }
 
-platformBrowserDynamic()
-  .bootstrapModule(AppModule, {
-    providers: [
-      {
-        provide: APP_INITIALIZER,
-        multi: true,
-        useFactory: initElfDevTools,
-        deps: [Actions],
-      },
-    ],
-    defaultEncapsulation: ViewEncapsulation.Emulated,
-  })
-  .then((moduleRef) => {
+bootstrapApplication(RemoteEntryComponent, appConfig)
+  .then((appRef) =>
     devTools({
-      postTimelineUpdate: () => moduleRef.injector.get(ApplicationRef).tick(),
-    });
-  })
+      postTimelineUpdate: () => appRef.tick(),
+    })
+  )
   .catch((err) => console.error(err));
-
-export function initElfDevTools(actions: Actions) {
-  return () => {
-    devTools({
-      name: 'Fourier Analysis Remote App',
-      actionsDispatcher: actions,
-    });
-  };
-}

@@ -1,4 +1,6 @@
-module.exports = {
+import { ModuleFederationConfig } from '@nx/webpack';
+
+const config: ModuleFederationConfig = {
   name: 'angular-examples',
   remotes: [
     ['bacteria-game-remote', 'https://bacteria-game.wolsok.de'],
@@ -6,3 +8,4 @@ module.exports = {
     ['shader-examples-remote', 'https://shader-examples.wolsok.de'],
   ],
 };
+export default config;

@@ -69,15 +69,14 @@
             {
               "replace": "apps/angular-examples/src/environments/environment.ts",
               "with": "apps/angular-examples/src/environments/environment.prod.ts"
-            },
-            {
-              "replace": "apps/angular-examples/module-federation.config.js",
-              "with": "apps/angular-examples/module-federation.prod.config.js"
             }
           ],
           "serviceWorker": true,
           "ngswConfigPath": "apps/angular-examples/ngsw-config.json",
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "customWebpackConfig": {
+            "path": "apps/angular-examples/webpack.prod.config.ts"
+          }
         },
         "development": {
           "preserveSymlinks": true,
