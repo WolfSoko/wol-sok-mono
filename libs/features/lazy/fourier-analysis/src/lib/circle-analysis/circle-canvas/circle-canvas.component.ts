@@ -400,8 +400,8 @@ export class CircleCanvasComponent
         fourierCircleImg.ellipse(
           centerData.real * radius,
           -centerData.imag * radius,
-          3,
-          3
+          6,
+          6
         );
       }
     }
