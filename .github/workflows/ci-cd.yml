@@ -81,7 +81,7 @@ jobs:
           git config --global user.email "wolframsokollek@gmail.com"
           git config --global user.name "Arelease ShouldBeMate"
           npx standard-version
-          git push origin --tags --force
+          git push origin --tags --force-with-lease --no-verify
 
       - name: Push changes
         if: steps.shouldTriggerRelease.outputs.triggerRelease == 'true'
