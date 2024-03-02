@@ -4,8 +4,10 @@ on:
     branches:
       - main
     paths-ignore:
-      - version.json
-      - CHANGELOG.MD
+      - '**/version.json'
+      - '**/CHANGELOG.MD'
+    tags-ignore:
+      - 'v*'
   pull_request:
 
 concurrency:
