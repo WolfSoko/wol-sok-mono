@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.10.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.17...v4.10.0) (2024-03-02)
+
+
+### Features
+
+* **angular-examples-cdk:** ✨ add version.json to bucket ([774a2d8](https://github.com/WolfSoko/wol-sok-mono/commit/774a2d8d3c6ed4652f71158f1259ae30cf44e8b8))
+* **spa-cdk-stack:** ✨ add function to upload extra assets ([1f87e7d](https://github.com/WolfSoko/wol-sok-mono/commit/1f87e7d6cdff14c1a375455b08abafd84c4f9d0f))
+
+
+### Bug Fixes
+
+* 🐛 typos ([793cd52](https://github.com/WolfSoko/wol-sok-mono/commit/793cd52c35f4e3049ab62d39c670f6229a9ebb3a))
+
 ### [4.9.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.16...v4.9.17) (2024-03-02)
 
 ### [4.9.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.15...v4.9.16) (2024-03-02)
