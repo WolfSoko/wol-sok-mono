@@ -61,6 +61,8 @@ jobs:
 
       - name: Tag deployment success
         run: |
+          git config --global user.email "github-actions[bot]@users.no-reply.github.com"
+          git config --global user.name "github-actions[bot]"
           DEPLOY_TAG=$RELEASE_VERSION
           git tag -a "$DEPLOY_TAG-deployed" $GITHUB_SHA -m "Version $RELEASE_VERSION deployed successfully"
           git push origin --tags
