@@ -82,24 +82,7 @@ jobs:
 
   # as the main workflow is mandatory for the branch protection we need a separate job
   trigger-release:
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/trigger-release.yml
+    secrets: inherit
     needs: main
-    if: needs.main.outputs.shouldTriggerRelease == 'true'
-    steps:
-      - uses: actions/checkout@v4
-        name: 'Checkout branch'
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-
-      - name: trigger release
-        run: |
-          git config --global user.email "github-actions[bot]@users.no-reply.github.com"
-          git config --global user.name "github-actions[bot]"
-          npx standard-version
-          git push --follow-tags origin main
-        env:
-          GITHUB_TOKEN: secrets.PAT_TOKEN
+    if: ${{ success() && needs.main.outputs.shouldTriggerRelease == 'true' && !contains(github.event.head_commit.message, 'chore(release):') && github.ref_name == 'main' }}
