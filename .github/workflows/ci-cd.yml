@@ -78,10 +78,10 @@ jobs:
       - name: trigger release
         if: steps.shouldTriggerRelease.outputs.triggerRelease == 'true'
         run: |
-          git config --global user.email "trigger-release@github.com"
+          git config --global user.email "wolframsokollek@gmail.com"
           git config --global user.name "Arelease ShouldBeMate"
           npx standard-version
-          git push origin --tags
+          git push origin --tags --force
 
       - name: Push changes
         if: steps.shouldTriggerRelease.outputs.triggerRelease == 'true'
