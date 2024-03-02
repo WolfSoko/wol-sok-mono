@@ -76,6 +76,7 @@ jobs:
           echo $projects
           triggerRelease=$([[ -z $projects ]] && echo "false" || echo "true")
           echo "triggerRelease=$triggerRelease" >> $GITHUB_OUTPUT
+          echo "$([[ -z $projects ]] && echo 'No deployable projects affected, no need for a release' || echo 'Deployable projects affected. Trigger release!!!')" >> $GITHUB_STEP_SUMMARY
       - name: trigger release
         if: steps.shouldTriggerRelease.outputs.triggerRelease == 'true'
         run: |

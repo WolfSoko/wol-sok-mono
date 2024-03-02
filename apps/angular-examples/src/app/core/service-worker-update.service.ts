@@ -13,7 +13,7 @@ import {
   filter,
   from,
   interval,
-  mapTo,
+  map,
   Observable,
   of,
 } from 'rxjs';
@@ -38,7 +38,7 @@ export class ServiceWorkerUpdateService {
       filter<VersionEvent, VersionReadyEvent>(
         ServiceWorkerUpdateService.isVersionReadyEvent
       ),
-      mapTo(true)
+      map(() => true)
     );
   }
 
