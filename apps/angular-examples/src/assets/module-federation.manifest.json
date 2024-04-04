@@ -1,5 +1,5 @@
 {
   "fourier-analysis-remote": "http://localhost:4201",
-  "bacteria-game-remote": "http://localhost:4202",
-  "shader-examples-remote": "http://localhost:4203"
+  "bacteria-game-remote": "http://localhost:4201/bacteria-game-remote",
+  "shader-examples-remote": "http://localhost:4201/shader-examples-remote"
 }

@@ -1,9 +1,5 @@
-import {
-  HttpClientTestingModule,
-  HttpTestingController,
-} from '@angular/common/http/testing';
-import { inject } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AuthenticationService } from '@wolsok/feat-api-auth';
 import { Angulartics2GoogleTagManager } from 'angulartics2';
@@ -13,12 +9,11 @@ import { ServiceWorkerUpdateService } from './core/service-worker-update.service
 import { MainToolbarComponent } from './feature/main-toolbar/main-toolbar.component';
 import { SideNavComponent } from './feature/navigation/side-nav/side-nav.component';
 import { ROUTER_LINKS } from './router-links.token';
-import { By } from '@angular/platform-browser';
 
 describe('AppComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [AppComponent, RouterTestingModule, HttpClientTestingModule],
+      imports: [AppComponent, RouterTestingModule],
       providers: [
         { provide: ROUTER_LINKS, useValue: [] },
         {
@@ -52,15 +47,11 @@ describe('AppComponent', () => {
     const fixture: ComponentFixture<AppComponent> =
       TestBed.createComponent(AppComponent);
 
-    const httpTestingController: HttpTestingController = TestBed.inject(
-      HttpTestingController
-    );
     const comp: AppComponent = fixture.componentInstance;
     fixture.detectChanges();
     return {
       fixture: fixture,
       component: comp,
-      httpTestingController,
     };
   };
 
@@ -70,20 +61,14 @@ describe('AppComponent', () => {
   });
 
   it('should inform about the app version', () => {
-    const { fixture, httpTestingController } = createComp();
-    httpTestingController.expectOne('/version').flush('1.2.3');
-    fixture.detectChanges();
-    const versionDiv = fixture.debugElement.query(By.css('.app-version'))
-      .nativeElement as HTMLDivElement;
-    expect(versionDiv.textContent).toEqual('angular-examples@1.2.3');
+    const { fixture } = createComp();
+    expect(fixture.debugElement.attributes['app-version']).toEqual(
+      'angular-examples@next'
+    );
   });
 
-  it('should set app version to next of request failed', () => {
-    const { fixture, httpTestingController } = createComp();
-    httpTestingController
-      .expectOne('/version')
-      .flush(null, { status: 404, statusText: 'Not Found' });
-    fixture.detectChanges();
+  it('should add an version attribute to the host', () => {
+    const { fixture } = createComp();
     const versionDiv = fixture.debugElement.query(By.css('.app-version'))
       .nativeElement as HTMLDivElement;
     expect(versionDiv.textContent).toEqual('angular-examples@next');

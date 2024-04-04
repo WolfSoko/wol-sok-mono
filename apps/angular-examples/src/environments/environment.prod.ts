@@ -1,8 +1,7 @@
 import { Environment } from './environment.type';
-import { version } from './version';
 
 export const environment: Environment = {
-  version,
+  version: 'next',
   production: true,
   serviceWorkerCheckInterval: 60000,
   firebaseConfig: {
