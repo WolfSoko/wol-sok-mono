@@ -1,10 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  Signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,7 +10,6 @@ import { ElemResizedDirective, ResizedEvent } from '@wolsok/ui-kit';
 import { CircleAnalysisComponent } from '../circle-analysis/circle-analysis.component';
 import { InputWaveComponent } from '../input-wave/input-wave.component';
 import { WaveOptionsComponent } from '../input-wave/wave-options/wave-options.component';
-import { InputWaveRepo } from '../state/input-wave-repo';
 
 @Component({
   standalone: true,
