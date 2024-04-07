@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -36,8 +36,6 @@ export class FourierAnalysisComponent {
   inputWaveCanvasHeight = 50;
   circleCanvasWidth = 300;
   circleCanvasHeight = 50;
-
-  constructor(private el: ElementRef) {}
 
   onResize($event: ResizedEvent) {
     const availableWidth = Math.max(300, $event.newWidth - 32);
