@@ -94,7 +94,7 @@
     "@commitlint/config-conventional": "^19.0.0",
     "@commitlint/config-nx-scopes": "^19.0.0",
     "@cypress/webpack-dev-server": "^3.7.4",
-    "@ngneat/spectator": "17.0.0",
+    "@ngneat/spectator": "18.0.1",
     "@nx/angular": "18.2.3",
     "@nx/cypress": "18.2.3",
     "@nx/devkit": "18.2.3",
