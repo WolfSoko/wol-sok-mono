@@ -201,19 +201,6 @@
     "isAngular": true,
     "basePath": "./apps/angular-examples/src/app/"
   },
-  "overrides": {
-    "akita-ng-fire": {
-      "@angular/common": "^17.2.2",
-      "@angular/core": "^17.2.2",
-      "@angular/router": "^17.2.2",
-      "@angular/platform-browser": "^17.2.2",
-      "@angular/platform-browser-dynamic": "^17.2.2",
-      "@angular/fire": "^17.0.1"
-    },
-    "@datorama/akita": {
-      "tslib": "^2.5.2"
-    }
-  },
   "nx": {
     "includedScripts": []
   }
