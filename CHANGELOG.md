@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.14.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.13.1-deployed...v4.14.0) (2024-04-29)
+
+
+### Features
+
+* ✨ don't delete other assets for index and extra deployments ([3513b6f](https://github.com/WolfSoko/wol-sok-mono/commit/3513b6fd3bd336545e6ead5b43419db9be623167))
+* ✨ try setting different cache header for index and other assets ([7c21cd6](https://github.com/WolfSoko/wol-sok-mono/commit/7c21cd64bfba09c1ebf2a3e2aafddd250ce56b10))
+
 ### [4.13.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.13.0-deployed...v4.13.1) (2024-04-29)
 
 ## [4.13.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.12.4-deployed...v4.13.0) (2024-04-29)
