@@ -459,7 +459,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "DistributionPaths": [
           "/*",
         ],
-        "Prune": true,
+        "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
             "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
@@ -501,7 +501,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "DistributionPaths": [
           "/*",
         ],
-        "Prune": true,
+        "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
             "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
@@ -1083,7 +1083,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "DistributionPaths": [
           "/*",
         ],
-        "Prune": true,
+        "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
             "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
@@ -1125,7 +1125,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "DistributionPaths": [
           "/*",
         ],
-        "Prune": true,
+        "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
             "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
@@ -1703,7 +1703,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         "DistributionPaths": [
           "/*",
         ],
-        "Prune": true,
+        "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
             "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
@@ -2163,7 +2163,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         "DistributionPaths": [
           "/*",
         ],
-        "Prune": true,
+        "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
             "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
@@ -2746,7 +2746,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         "DistributionPaths": [
           "/*",
         ],
-        "Prune": true,
+        "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
             "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",

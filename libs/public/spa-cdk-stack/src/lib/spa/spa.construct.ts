@@ -1,4 +1,4 @@
-import { CfnOutput, Duration, IgnoreMode, RemovalPolicy } from 'aws-cdk-lib';
+import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import {
   Certificate,
   CertificateValidation,
@@ -20,7 +20,7 @@ import {
   RecordTarget,
 } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
-import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3';
+import { BlockPublicAccess, Bucket, IBucket } from 'aws-cdk-lib/aws-s3';
 import {
   BucketDeployment,
   CacheControl,
@@ -93,18 +93,21 @@ export class SpaConstruct extends Construct {
       exclude: ['index.html'],
     });
 
+    this.bucketDeployments.push(
+      this.createBucketDeployment(
+        [deploymentAssets],
+        CacheControl.maxAge(Duration.days(365)),
+        true,
+        this.bucket,
+        this.distribution
+      )
+    );
+
     const indexAsset = Source.asset(buildOutputPath, {
       // glob ignore all but index.html
       exclude: ['**', '!index.html'],
     });
-
-    this.bucketDeployments.push(
-      this.createBucketDeployment([deploymentAssets])
-    );
-
-    this.bucketDeployments.push(
-      this.createBucketDeployment([indexAsset], CacheControl.noCache())
-    );
+    this.addExtraAssets([indexAsset], CacheControl.noCache());
   }
 
   /**
@@ -115,7 +118,13 @@ export class SpaConstruct extends Construct {
     cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365))
   ): void {
     this.bucketDeployments.push(
-      this.createBucketDeployment(assets, cacheControl)
+      this.createBucketDeployment(
+        assets,
+        cacheControl,
+        false,
+        this.bucket,
+        this.distribution
+      )
     );
   }
 
@@ -233,8 +242,9 @@ export class SpaConstruct extends Construct {
   private createBucketDeployment(
     sources: ISource[],
     cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365)),
-    destinationBucket: Bucket = this.bucket,
-    distribution: IDistribution = this.distribution
+    prune = true,
+    destinationBucket: IBucket,
+    distribution: IDistribution
   ): BucketDeployment {
     // Deploy site contents to S3 spaBucket
     return new BucketDeployment(
@@ -244,6 +254,7 @@ export class SpaConstruct extends Construct {
         sources,
         destinationBucket,
         distribution,
+        prune,
         distributionPaths: ['/*'],
         cacheControl: [cacheControl],
       }
