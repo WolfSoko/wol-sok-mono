@@ -192,6 +192,10 @@
     "webpack-bundle-analyzer": "4.10.1",
     "webpack-merge": "^5.10.0"
   },
+  "optionalDependencies": {
+    "@nx/nx-linux-x64-gnu": "18.3.4",
+    "@rollup/rollup-linux-x64-gnu": "18.3.4"
+  },
   "akitaCli": {
     "customFolderName": "true",
     "isAngular": true,
