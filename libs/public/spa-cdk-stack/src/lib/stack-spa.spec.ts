@@ -1,9 +1,9 @@
-import { App, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import { App, Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import * as path from 'path';
 import { vitest } from 'vitest';
 import { SpaConstruct, SpaProps } from './spa/spa.construct';
-import { Source } from 'aws-cdk-lib/aws-s3-deployment';
+import { CacheControl, Source } from 'aws-cdk-lib/aws-s3-deployment';
 
 // Mock the fromLookup method
 vitest.mock('aws-cdk-lib/aws-route53', () => {
@@ -77,9 +77,10 @@ describe('SpaCdkStack', () => {
     expect(template().toJSON()).toMatchSnapshot();
   });
 
-  it('should create an BucketDeployment for the buildOutputPath', () => {
+  it('should create an BucketDeployment for the buildOutputPath and index.html', () => {
     const { template } = testStackFactory();
     //then
+    template().resourceCountIs('Custom::CDKBucketDeployment', 2);
     template().hasResourceProperties('Custom::CDKBucketDeployment', {
       SourceObjectKeys: Match.arrayEquals([Match.stringLikeRegexp('\\w+.zip')]),
     });
@@ -87,8 +88,18 @@ describe('SpaCdkStack', () => {
 
   it('should create an extra BucketDeployment when using addExtraAssets', () => {
     const { template, stack } = testStackFactory();
+    stack.spaConstruct.addExtraAssets([
+      Source.asset(path.join(__dirname, '../../extra-assets-path')),
+    ]);
+    //then
+    expect(template().toJSON()).toMatchSnapshot();
+  });
+
+  it('should create an extra BucketDeployment when using addExtraAssets with cache control', () => {
+    const { template, stack } = testStackFactory();
     stack.spaConstruct.addExtraAssets(
-      Source.asset(path.join(__dirname, '../../extra-assets-path'))
+      [Source.asset(path.join(__dirname, '../../extra-assets-path'))],
+      CacheControl.maxAge(Duration.seconds(123456))
     );
     //then
     expect(template().toJSON()).toMatchSnapshot();
@@ -98,15 +109,13 @@ describe('SpaCdkStack', () => {
     const { template, stack } = testStackFactory();
 
     //when
-    stack.spaConstruct.addExtraAssets(
-      Source.asset(path.join(__dirname, '../../extra-assets-path'))
-    );
+    stack.spaConstruct.addExtraAssets([
+      Source.asset(path.join(__dirname, '../../extra-assets-path')),
+    ]);
     //then
+    template().resourceCountIs('Custom::CDKBucketDeployment', 3);
     template().hasResourceProperties('Custom::CDKBucketDeployment', {
-      SourceObjectKeys: Match.arrayEquals([
-        Match.stringLikeRegexp('\\w+.zip'),
-        Match.stringLikeRegexp('\\w+.zip'),
-      ]),
+      SourceObjectKeys: Match.arrayEquals([Match.stringLikeRegexp('\\w+.zip')]),
     });
   });
 });

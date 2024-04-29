@@ -5,7 +5,9 @@ import {
 } from 'aws-cdk-lib/aws-certificatemanager';
 import {
   AllowedMethods,
+  CloudFrontWebDistribution,
   Distribution,
+  IDistribution,
   OriginAccessIdentity,
   SecurityPolicyProtocol,
   ViewerProtocolPolicy,
@@ -22,6 +24,7 @@ import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
 import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3';
 import {
   BucketDeployment,
+  CacheControl,
   ISource,
   Source,
 } from 'aws-cdk-lib/aws-s3-deployment';
@@ -43,7 +46,10 @@ const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
  * and ACM certificate.
  */
 export class SpaConstruct extends Construct {
-  private bucketDeployment: BucketDeployment;
+  private bucketDeployments = [] as BucketDeployment[];
+  private bucket: Bucket;
+  private distribution: Distribution;
+
   constructor(
     parent: Construct,
     private readonly spaName: string,
@@ -77,19 +83,43 @@ export class SpaConstruct extends Construct {
       certificate = this.createCertificate(zone, mainDomain, siteDomain);
     }
 
-    const bucket = this.createBucket(siteDomain, cloudfrontOAI, removalPolicy);
-    const distribution = this.createDistribution(
+    this.bucket = this.createBucket(siteDomain, cloudfrontOAI, removalPolicy);
+    this.distribution = this.createDistribution(
       siteDomain,
       certificate,
-      bucket,
+      this.bucket,
       cloudfrontOAI
     );
-    this.createARecord(siteDomain, distribution, zone);
-    const deploymentAssets = Source.asset(buildOutputPath);
-    this.bucketDeployment = this.createBucketDeployment(
-      [deploymentAssets],
-      bucket,
-      distribution
+    this.createARecord(siteDomain, this.distribution, zone);
+
+    const deploymentAssets = Source.asset(buildOutputPath, {
+      exclude: ['**/index.html'],
+    });
+
+    const indexAsset = Source.asset(buildOutputPath, {
+      exclude: ['!**/index.html'],
+    });
+
+    this.bucketDeployments.push(
+      this.createBucketDeployment([deploymentAssets])
+    );
+
+    this.bucketDeployments.push(
+      this.createBucketDeployment([indexAsset], CacheControl.noCache())
+    );
+  }
+
+  /**
+   * Add some additional assets to the bucket of the SPA
+   */
+  public addExtraAssets(
+    assets: ISource[],
+    cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365))
+  ): void {
+    assets.forEach((asset) =>
+      this.bucketDeployments.push(
+        this.createBucketDeployment(assets, cacheControl)
+      )
     );
   }
 
@@ -204,26 +234,24 @@ export class SpaConstruct extends Construct {
     new CfnOutput(this, `${this.spaName}-ARecord`, { value: siteDomain });
   }
 
-  /**
-   * Add some additional assets to the bucket of the SPA
-   */
-  public addExtraAssets(...assets: ISource[]) {
-    assets.forEach((asset) => this.bucketDeployment?.addSource(asset));
-  }
-
   private createBucketDeployment(
     sources: ISource[],
-    spaBucket: Bucket,
-    distribution: Distribution
+    cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365)),
+    destinationBucket: Bucket = this.bucket,
+    distribution: IDistribution = this.distribution
   ): BucketDeployment {
     // Deploy site contents to S3 spaBucket
-
-    return new BucketDeployment(this, 'DeployWithInvalidation', {
-      sources,
-      destinationBucket: spaBucket,
-      distribution,
-      distributionPaths: ['/*'],
-    });
+    return new BucketDeployment(
+      this,
+      'DeployWithInvalidation' + this.bucketDeployments.length + 1,
+      {
+        sources,
+        destinationBucket,
+        distribution,
+        distributionPaths: ['/*'],
+        cacheControl: [cacheControl],
+      }
+    );
   }
 
   private extractDomains(domainName: string): {

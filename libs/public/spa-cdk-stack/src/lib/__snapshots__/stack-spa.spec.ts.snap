@@ -51,7 +51,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "Handler": "index.handler",
         "Layers": [
           {
-            "Ref": "TestSpaStackDeployWithInvalidationAwsCliLayerF9D5D766",
+            "Ref": "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
           },
         ],
         "Role": {
@@ -263,7 +263,15 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:adbb4000",
+            "Key": "aws-cdk:cr-owned:97a1d951",
+            "Value": "true",
+          },
+          {
+            "Key": "aws-cdk:cr-owned:cd95010c",
+            "Value": "true",
+          },
+          {
+            "Key": "aws-cdk:cr-owned:deb4c6a5",
             "Value": "true",
           },
         ],
@@ -387,7 +395,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::CertificateManager::Certificate",
     },
-    "TestSpaStackDeployWithInvalidationAwsCliLayerF9D5D766": {
+    "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF": {
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -397,7 +405,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidationCustomResource88DCD00C": {
+    "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -418,16 +426,721 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         },
         "SourceBucketNames": [
           "cdk-hnb659fds-assets-123456789-us-east-1",
-          "cdk-hnb659fds-assets-123456789-us-east-1",
-        ],
-        "SourceMarkers": [
-          {},
-          {},
         ],
         "SourceObjectKeys": [
-          "0f4b4cd1039b74d91f0f3526c88e9fdadac0b34a1ad0c2bf89f7324bafc791aa.zip",
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
+        ],
+        "SystemMetadata": {
+          "cache-control": "max-age=31536000",
+        },
+      },
+      "Type": "Custom::CDKBucketDeployment",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
+          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+        },
+        "Description": "/opt/awscli/aws",
+      },
+      "Type": "AWS::Lambda::LayerVersion",
+    },
+    "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DestinationBucketName": {
+          "Ref": "TestSpaStackBucketAD480A08",
+        },
+        "DistributionId": {
+          "Ref": "TestSpaStackDistributionB76F2A7E",
+        },
+        "DistributionPaths": [
+          "/*",
+        ],
+        "Prune": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn",
+          ],
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-123456789-us-east-1",
+        ],
+        "SourceObjectKeys": [
+          "5e8310b58660ba3a62edf2087475a9e5e445337cad939e3a063d0e4bb9cd60f2.zip",
+        ],
+        "SystemMetadata": {
+          "cache-control": "no-cache",
+        },
+      },
+      "Type": "Custom::CDKBucketDeployment",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TestSpaStackDeployWithInvalidation21AwsCliLayerFA7AB67D": {
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
+          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+        },
+        "Description": "/opt/awscli/aws",
+      },
+      "Type": "AWS::Lambda::LayerVersion",
+    },
+    "TestSpaStackDeployWithInvalidation21CustomResource4ED22E6A": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DestinationBucketName": {
+          "Ref": "TestSpaStackBucketAD480A08",
+        },
+        "DistributionId": {
+          "Ref": "TestSpaStackDistributionB76F2A7E",
+        },
+        "DistributionPaths": [
+          "/*",
+        ],
+        "Prune": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn",
+          ],
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-123456789-us-east-1",
+        ],
+        "SourceObjectKeys": [
           "3ea4a6eff43d13007d010f66f8587f95225886c56bb76e9c1dddd64e4826b5d5.zip",
         ],
+        "SystemMetadata": {
+          "cache-control": "max-age=31536000",
+        },
+      },
+      "Type": "Custom::CDKBucketDeployment",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TestSpaStackDistributionB76F2A7E": {
+      "Properties": {
+        "DistributionConfig": {
+          "Aliases": [
+            "test-domain.com",
+          ],
+          "CustomErrorResponses": [
+            {
+              "ErrorCachingMinTTL": 1800,
+              "ErrorCode": 403,
+              "ResponseCode": 200,
+              "ResponsePagePath": "/index.html",
+            },
+          ],
+          "DefaultCacheBehavior": {
+            "AllowedMethods": [
+              "GET",
+              "HEAD",
+              "OPTIONS",
+            ],
+            "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+            "Compress": true,
+            "TargetOriginId": "TestSpaStackDistributionOrigin126C831C0",
+            "ViewerProtocolPolicy": "redirect-to-https",
+          },
+          "DefaultRootObject": "index.html",
+          "Enabled": true,
+          "HttpVersion": "http2",
+          "IPV6Enabled": true,
+          "Origins": [
+            {
+              "DomainName": {
+                "Fn::GetAtt": [
+                  "TestSpaStackBucketAD480A08",
+                  "RegionalDomainName",
+                ],
+              },
+              "Id": "TestSpaStackDistributionOrigin126C831C0",
+              "S3OriginConfig": {
+                "OriginAccessIdentity": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "origin-access-identity/cloudfront/",
+                      {
+                        "Ref": "TestSpaStackcloudfrontOAI3E9C1D4F",
+                      },
+                    ],
+                  ],
+                },
+              },
+            },
+          ],
+          "ViewerCertificate": {
+            "AcmCertificateArn": {
+              "Ref": "TestSpaStackCertificate88463A20",
+            },
+            "MinimumProtocolVersion": "TLSv1.2_2021",
+            "SslSupportMethod": "sni-only",
+          },
+        },
+      },
+      "Type": "AWS::CloudFront::Distribution",
+    },
+    "TestSpaStackcloudfrontOAI3E9C1D4F": {
+      "Properties": {
+        "CloudFrontOriginAccessIdentityConfig": {
+          "Comment": "OriginAccessIdentity for TestSpaStack",
+        },
+      },
+      "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`SpaCdkStack > should create an extra BucketDeployment when using addExtraAssets with cache control 1`] = `
+{
+  "Outputs": {
+    "TestSpaStackTestSpaStackARecord44B4DC9F": {
+      "Value": "test-domain.com",
+    },
+    "TestSpaStackTestSpaStackDistributionId87BB8166": {
+      "Value": {
+        "Ref": "TestSpaStackDistributionB76F2A7E",
+      },
+    },
+    "TestSpaStackTestSpaStackSiteF9552F35": {
+      "Value": "https://test-domain.com",
+    },
+    "TestSpaStackTestSpaStacksCertificate3188AB03": {
+      "Value": {
+        "Ref": "TestSpaStackCertificate88463A20",
+      },
+    },
+    "TestSpaStacktestdomaincomBucket419DCC62": {
+      "Value": {
+        "Ref": "TestSpaStackBucketAD480A08",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536": {
+      "DependsOn": [
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
+          "S3Key": "2d56e153cac88d3e0c2f842e8e6f6783b8725bf91f95e0673b4725448a56e96d.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "AWS_CA_BUNDLE": "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",
+          },
+        },
+        "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+          },
+        ],
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.9",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789-us-east-1",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789-us-east-1/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TestSpaStackBucketAD480A08",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "TestSpaStackBucketAD480A08",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "cloudfront:GetInvalidation",
+                "cloudfront:CreateInvalidation",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "Roles": [
+          {
+            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
+          "S3Key": "b7f33614a69548d6bafe224d751a7ef238cde19097415e553fe8b63a4c8fd8a6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "TestSpaStackBucketAD480A08",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs18.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TestSpaStackBucketAD480A08": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketName": "test-domain.com-spa-data",
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+          {
+            "Key": "aws-cdk:cr-owned:97a1d951",
+            "Value": "true",
+          },
+          {
+            "Key": "aws-cdk:cr-owned:cd95010c",
+            "Value": "true",
+          },
+          {
+            "Key": "aws-cdk:cr-owned:deb4c6a5",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TestSpaStackBucketAutoDeleteObjectsCustomResource8C240E97": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "TestSpaStackBucketPolicyE95A6639",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "TestSpaStackBucketAD480A08",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TestSpaStackBucketPolicyE95A6639": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "TestSpaStackBucketAD480A08",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TestSpaStackBucketAD480A08",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "TestSpaStackBucketAD480A08",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Principal": {
+                "CanonicalUser": {
+                  "Fn::GetAtt": [
+                    "TestSpaStackcloudfrontOAI3E9C1D4F",
+                    "S3CanonicalUserId",
+                  ],
+                },
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "TestSpaStackBucketAD480A08",
+                        "Arn",
+                      ],
+                    },
+                    "/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "TestSpaStackCertificate88463A20": {
+      "Properties": {
+        "DomainName": "test-domain.com",
+        "DomainValidationOptions": [
+          {
+            "DomainName": "test-domain.com",
+          },
+        ],
+        "SubjectAlternativeNames": [],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestSpaStack/TestSpaStack/Certificate",
+          },
+        ],
+        "ValidationMethod": "DNS",
+      },
+      "Type": "AWS::CertificateManager::Certificate",
+    },
+    "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF": {
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
+          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+        },
+        "Description": "/opt/awscli/aws",
+      },
+      "Type": "AWS::Lambda::LayerVersion",
+    },
+    "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DestinationBucketName": {
+          "Ref": "TestSpaStackBucketAD480A08",
+        },
+        "DistributionId": {
+          "Ref": "TestSpaStackDistributionB76F2A7E",
+        },
+        "DistributionPaths": [
+          "/*",
+        ],
+        "Prune": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn",
+          ],
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-123456789-us-east-1",
+        ],
+        "SourceObjectKeys": [
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
+        ],
+        "SystemMetadata": {
+          "cache-control": "max-age=31536000",
+        },
+      },
+      "Type": "Custom::CDKBucketDeployment",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
+          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+        },
+        "Description": "/opt/awscli/aws",
+      },
+      "Type": "AWS::Lambda::LayerVersion",
+    },
+    "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DestinationBucketName": {
+          "Ref": "TestSpaStackBucketAD480A08",
+        },
+        "DistributionId": {
+          "Ref": "TestSpaStackDistributionB76F2A7E",
+        },
+        "DistributionPaths": [
+          "/*",
+        ],
+        "Prune": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn",
+          ],
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-123456789-us-east-1",
+        ],
+        "SourceObjectKeys": [
+          "5e8310b58660ba3a62edf2087475a9e5e445337cad939e3a063d0e4bb9cd60f2.zip",
+        ],
+        "SystemMetadata": {
+          "cache-control": "no-cache",
+        },
+      },
+      "Type": "Custom::CDKBucketDeployment",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TestSpaStackDeployWithInvalidation21AwsCliLayerFA7AB67D": {
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
+          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+        },
+        "Description": "/opt/awscli/aws",
+      },
+      "Type": "AWS::Lambda::LayerVersion",
+    },
+    "TestSpaStackDeployWithInvalidation21CustomResource4ED22E6A": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DestinationBucketName": {
+          "Ref": "TestSpaStackBucketAD480A08",
+        },
+        "DistributionId": {
+          "Ref": "TestSpaStackDistributionB76F2A7E",
+        },
+        "DistributionPaths": [
+          "/*",
+        ],
+        "Prune": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn",
+          ],
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-123456789-us-east-1",
+        ],
+        "SourceObjectKeys": [
+          "3ea4a6eff43d13007d010f66f8587f95225886c56bb76e9c1dddd64e4826b5d5.zip",
+        ],
+        "SystemMetadata": {
+          "cache-control": "max-age=123456",
+        },
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -586,7 +1299,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         "Handler": "index.handler",
         "Layers": [
           {
-            "Ref": "TestSpaStackDeployWithInvalidationAwsCliLayerF9D5D766",
+            "Ref": "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
           },
         ],
         "Role": {
@@ -798,7 +1511,11 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:adbb4000",
+            "Key": "aws-cdk:cr-owned:cd95010c",
+            "Value": "true",
+          },
+          {
+            "Key": "aws-cdk:cr-owned:deb4c6a5",
             "Value": "true",
           },
         ],
@@ -922,7 +1639,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       },
       "Type": "AWS::CertificateManager::Certificate",
     },
-    "TestSpaStackDeployWithInvalidationAwsCliLayerF9D5D766": {
+    "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF": {
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -932,7 +1649,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidationCustomResource88DCD00C": {
+    "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -955,8 +1672,53 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "0f4b4cd1039b74d91f0f3526c88e9fdadac0b34a1ad0c2bf89f7324bafc791aa.zip",
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
         ],
+        "SystemMetadata": {
+          "cache-control": "max-age=31536000",
+        },
+      },
+      "Type": "Custom::CDKBucketDeployment",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
+          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+        },
+        "Description": "/opt/awscli/aws",
+      },
+      "Type": "AWS::Lambda::LayerVersion",
+    },
+    "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DestinationBucketName": {
+          "Ref": "TestSpaStackBucketAD480A08",
+        },
+        "DistributionId": {
+          "Ref": "TestSpaStackDistributionB76F2A7E",
+        },
+        "DistributionPaths": [
+          "/*",
+        ],
+        "Prune": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn",
+          ],
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-123456789-us-east-1",
+        ],
+        "SourceObjectKeys": [
+          "5e8310b58660ba3a62edf2087475a9e5e445337cad939e3a063d0e4bb9cd60f2.zip",
+        ],
+        "SystemMetadata": {
+          "cache-control": "no-cache",
+        },
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -1115,7 +1877,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         "Handler": "index.handler",
         "Layers": [
           {
-            "Ref": "TestSpaStackDeployWithInvalidationAwsCliLayerF9D5D766",
+            "Ref": "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
           },
         ],
         "Role": {
@@ -1267,7 +2029,11 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         },
         "Tags": [
           {
-            "Key": "aws-cdk:cr-owned:adbb4000",
+            "Key": "aws-cdk:cr-owned:cd95010c",
+            "Value": "true",
+          },
+          {
+            "Key": "aws-cdk:cr-owned:deb4c6a5",
             "Value": "true",
           },
         ],
@@ -1333,7 +2099,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       },
       "Type": "AWS::CertificateManager::Certificate",
     },
-    "TestSpaStackDeployWithInvalidationAwsCliLayerF9D5D766": {
+    "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF": {
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -1343,7 +2109,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidationCustomResource88DCD00C": {
+    "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -1366,8 +2132,53 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "0f4b4cd1039b74d91f0f3526c88e9fdadac0b34a1ad0c2bf89f7324bafc791aa.zip",
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
         ],
+        "SystemMetadata": {
+          "cache-control": "max-age=31536000",
+        },
+      },
+      "Type": "Custom::CDKBucketDeployment",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
+          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+        },
+        "Description": "/opt/awscli/aws",
+      },
+      "Type": "AWS::Lambda::LayerVersion",
+    },
+    "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DestinationBucketName": {
+          "Ref": "TestSpaStackBucketAD480A08",
+        },
+        "DistributionId": {
+          "Ref": "TestSpaStackDistributionB76F2A7E",
+        },
+        "DistributionPaths": [
+          "/*",
+        ],
+        "Prune": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn",
+          ],
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-123456789-us-east-1",
+        ],
+        "SourceObjectKeys": [
+          "5e8310b58660ba3a62edf2087475a9e5e445337cad939e3a063d0e4bb9cd60f2.zip",
+        ],
+        "SystemMetadata": {
+          "cache-control": "no-cache",
+        },
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -1526,7 +2337,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         "Handler": "index.handler",
         "Layers": [
           {
-            "Ref": "TestSpaStackDeployWithInvalidationAwsCliLayerF9D5D766",
+            "Ref": "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
           },
         ],
         "Role": {
@@ -1738,7 +2549,11 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:adbb4000",
+            "Key": "aws-cdk:cr-owned:cd95010c",
+            "Value": "true",
+          },
+          {
+            "Key": "aws-cdk:cr-owned:deb4c6a5",
             "Value": "true",
           },
         ],
@@ -1867,7 +2682,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       },
       "Type": "AWS::CertificateManager::Certificate",
     },
-    "TestSpaStackDeployWithInvalidationAwsCliLayerF9D5D766": {
+    "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF": {
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -1877,7 +2692,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidationCustomResource88DCD00C": {
+    "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -1900,8 +2715,53 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "0f4b4cd1039b74d91f0f3526c88e9fdadac0b34a1ad0c2bf89f7324bafc791aa.zip",
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
         ],
+        "SystemMetadata": {
+          "cache-control": "max-age=31536000",
+        },
+      },
+      "Type": "Custom::CDKBucketDeployment",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
+          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+        },
+        "Description": "/opt/awscli/aws",
+      },
+      "Type": "AWS::Lambda::LayerVersion",
+    },
+    "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DestinationBucketName": {
+          "Ref": "TestSpaStackBucketAD480A08",
+        },
+        "DistributionId": {
+          "Ref": "TestSpaStackDistributionB76F2A7E",
+        },
+        "DistributionPaths": [
+          "/*",
+        ],
+        "Prune": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn",
+          ],
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-123456789-us-east-1",
+        ],
+        "SourceObjectKeys": [
+          "5e8310b58660ba3a62edf2087475a9e5e445337cad939e3a063d0e4bb9cd60f2.zip",
+        ],
+        "SystemMetadata": {
+          "cache-control": "no-cache",
+        },
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
