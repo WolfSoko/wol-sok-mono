@@ -45,7 +45,7 @@ runs:
       if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress == 'false'
       shell: bash
       run: |
-        npm install
+        npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
       env:
         CYPRESS_INSTALL_BINARY: 0
 
@@ -53,5 +53,5 @@ runs:
       if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress != 'false'
       shell: bash
       run: |
-        npm install
+        npm install  --ignore-scripts=${{ inputs.run-scripts == 'false' }}
         npx playwright install --with-deps
