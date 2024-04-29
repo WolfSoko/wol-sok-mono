@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.13.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.12.4-deployed...v4.13.0) (2024-04-29)
+
+
+### Features
+
+* ✨ add caching for assets ([c824e76](https://github.com/WolfSoko/wol-sok-mono/commit/c824e76a57f1f1b10ef76756e0e42b1bf55be03d))
+
 ### [4.12.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.12.3-deployed...v4.12.4) (2024-04-23)
 
 ### [4.12.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.12.2-deployed...v4.12.3) (2024-04-23)
