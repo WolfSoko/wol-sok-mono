@@ -470,7 +470,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "193c4b574e880b1eed4c7cc6342f54606a533dda82f739b2a7a478b004001f66.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
           "cache-control": "no-cache",
@@ -1094,7 +1094,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "193c4b574e880b1eed4c7cc6342f54606a533dda82f739b2a7a478b004001f66.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
           "cache-control": "no-cache",
@@ -1714,7 +1714,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "193c4b574e880b1eed4c7cc6342f54606a533dda82f739b2a7a478b004001f66.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
           "cache-control": "no-cache",
@@ -2174,7 +2174,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "193c4b574e880b1eed4c7cc6342f54606a533dda82f739b2a7a478b004001f66.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
           "cache-control": "no-cache",
@@ -2757,7 +2757,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "193c4b574e880b1eed4c7cc6342f54606a533dda82f739b2a7a478b004001f66.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
           "cache-control": "no-cache",

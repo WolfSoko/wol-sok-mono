@@ -1,4 +1,4 @@
-import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
+import { CfnOutput, Duration, IgnoreMode, RemovalPolicy } from 'aws-cdk-lib';
 import {
   Certificate,
   CertificateValidation,
@@ -90,11 +90,12 @@ export class SpaConstruct extends Construct {
     this.createARecord(siteDomain, this.distribution, zone);
 
     const deploymentAssets = Source.asset(buildOutputPath, {
-      exclude: ['**/index.html'],
+      exclude: ['index.html'],
     });
 
     const indexAsset = Source.asset(buildOutputPath, {
-      exclude: ['!**/index.html'],
+      // glob ignore all but index.html
+      exclude: ['**', '!index.html'],
     });
 
     this.bucketDeployments.push(
