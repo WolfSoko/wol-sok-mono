@@ -428,10 +428,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "max-age=31536000",
+          "cache-control": "no-cache",
         },
       },
       "Type": "Custom::CDKBucketDeployment",
@@ -470,10 +470,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "no-cache",
+          "cache-control": "max-age=31536000",
         },
       },
       "Type": "Custom::CDKBucketDeployment",
@@ -1052,10 +1052,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "max-age=31536000",
+          "cache-control": "no-cache",
         },
       },
       "Type": "Custom::CDKBucketDeployment",
@@ -1094,10 +1094,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "no-cache",
+          "cache-control": "max-age=31536000",
         },
       },
       "Type": "Custom::CDKBucketDeployment",
@@ -1672,10 +1672,10 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "max-age=31536000",
+          "cache-control": "no-cache",
         },
       },
       "Type": "Custom::CDKBucketDeployment",
@@ -1714,10 +1714,10 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "no-cache",
+          "cache-control": "max-age=31536000",
         },
       },
       "Type": "Custom::CDKBucketDeployment",
@@ -2132,10 +2132,10 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "max-age=31536000",
+          "cache-control": "no-cache",
         },
       },
       "Type": "Custom::CDKBucketDeployment",
@@ -2174,10 +2174,10 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "no-cache",
+          "cache-control": "max-age=31536000",
         },
       },
       "Type": "Custom::CDKBucketDeployment",
@@ -2715,10 +2715,10 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "max-age=31536000",
+          "cache-control": "no-cache",
         },
       },
       "Type": "Custom::CDKBucketDeployment",
@@ -2757,10 +2757,10 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "no-cache",
+          "cache-control": "max-age=31536000",
         },
       },
       "Type": "Custom::CDKBucketDeployment",

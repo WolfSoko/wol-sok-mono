@@ -45,7 +45,7 @@ const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
  * and ACM certificate.
  */
 export class SpaConstruct extends Construct {
-  private bucketDeployments = [] as BucketDeployment[];
+  private bucketDeployments: BucketDeployment[] = [];
   private bucket: Bucket;
   private distribution: Distribution;
 
@@ -89,6 +89,20 @@ export class SpaConstruct extends Construct {
     );
     this.createARecord(siteDomain, this.distribution, zone);
 
+    const indexAsset = Source.asset(buildOutputPath, {
+      // glob ignore all but index.html
+      exclude: ['**', '!index.html'],
+    });
+    this.bucketDeployments.push(
+      this.createBucketDeployment(
+        [indexAsset],
+        CacheControl.noCache(),
+        true,
+        this.bucket,
+        this.distribution
+      )
+    );
+
     const deploymentAssets = Source.asset(buildOutputPath, {
       exclude: ['index.html'],
     });
@@ -97,17 +111,11 @@ export class SpaConstruct extends Construct {
       this.createBucketDeployment(
         [deploymentAssets],
         CacheControl.maxAge(Duration.days(365)),
-        true,
+        false,
         this.bucket,
         this.distribution
       )
     );
-
-    const indexAsset = Source.asset(buildOutputPath, {
-      // glob ignore all but index.html
-      exclude: ['**', '!index.html'],
-    });
-    this.addExtraAssets([indexAsset], CacheControl.noCache());
   }
 
   /**
@@ -242,7 +250,7 @@ export class SpaConstruct extends Construct {
   private createBucketDeployment(
     sources: ISource[],
     cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365)),
-    prune = true,
+    prune: boolean,
     destinationBucket: IBucket,
     distribution: IDistribution
   ): BucketDeployment {
