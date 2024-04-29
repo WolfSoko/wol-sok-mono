@@ -198,7 +198,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "b7f33614a69548d6bafe224d751a7ef238cde19097415e553fe8b63a4c8fd8a6.zip",
+          "S3Key": "2eb6a831b107939f63cfebf68e6316e1a40f79fc99cae0fee9b333bac8d29bc4.zip",
         },
         "Description": {
           "Fn::Join": [
@@ -822,7 +822,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "b7f33614a69548d6bafe224d751a7ef238cde19097415e553fe8b63a4c8fd8a6.zip",
+          "S3Key": "2eb6a831b107939f63cfebf68e6316e1a40f79fc99cae0fee9b333bac8d29bc4.zip",
         },
         "Description": {
           "Fn::Join": [
@@ -1446,7 +1446,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "b7f33614a69548d6bafe224d751a7ef238cde19097415e553fe8b63a4c8fd8a6.zip",
+          "S3Key": "2eb6a831b107939f63cfebf68e6316e1a40f79fc99cae0fee9b333bac8d29bc4.zip",
         },
         "Description": {
           "Fn::Join": [
@@ -2484,7 +2484,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "b7f33614a69548d6bafe224d751a7ef238cde19097415e553fe8b63a4c8fd8a6.zip",
+          "S3Key": "2eb6a831b107939f63cfebf68e6316e1a40f79fc99cae0fee9b333bac8d29bc4.zip",
         },
         "Description": {
           "Fn::Join": [
