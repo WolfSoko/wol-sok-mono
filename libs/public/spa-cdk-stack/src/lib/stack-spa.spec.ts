@@ -69,7 +69,7 @@ describe('SpaCdkStack', () => {
 
   it('should use the main domain name even if a subdomain is provided', () => {
     // given, when
-    const { template, stack } = testStackFactory({
+    const { template } = testStackFactory({
       domainName: 'subdomain.test-domain.com',
     });
 

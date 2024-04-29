@@ -1,4 +1,3 @@
-import { WebpackConfigOptions } from '@angular-devkit/build-angular/src/utils/build-options';
 import { withModuleFederation } from '@nx/angular/module-federation';
 import { merge } from 'webpack-merge';
 // eslint-disable-next-line @nx/enforce-module-boundaries

@@ -5,7 +5,6 @@ import {
 } from 'aws-cdk-lib/aws-certificatemanager';
 import {
   AllowedMethods,
-  CloudFrontWebDistribution,
   Distribution,
   IDistribution,
   OriginAccessIdentity,
@@ -60,9 +59,7 @@ export class SpaConstruct extends Construct {
       props.bucketRemovalPolicy ?? defaultBucketRemovalPolicy;
     const { buildOutputPath } = props;
 
-    const { mainDomain, subDomainWildcard, siteDomain } = this.extractDomains(
-      props.domainName
-    );
+    const { mainDomain, siteDomain } = this.extractDomains(props.domainName);
 
     const zone = HostedZone.fromLookup(this, spaName, {
       privateZone: false,
@@ -116,10 +113,8 @@ export class SpaConstruct extends Construct {
     assets: ISource[],
     cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365))
   ): void {
-    assets.forEach((asset) =>
-      this.bucketDeployments.push(
-        this.createBucketDeployment(assets, cacheControl)
-      )
+    this.bucketDeployments.push(
+      this.createBucketDeployment(assets, cacheControl)
     );
   }
 
