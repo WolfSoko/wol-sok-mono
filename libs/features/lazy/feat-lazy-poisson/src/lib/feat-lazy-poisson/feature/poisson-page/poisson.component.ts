@@ -51,6 +51,10 @@ export class PoissonComponent implements OnInit {
     }
   }
 
+  step(): void {
+    this.poissonCalc.calculate();
+  }
+
   addPoint(vector: Vector) {
     this.poissonCalc.addPointForCalculation(vector);
   }

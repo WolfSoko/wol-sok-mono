@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
+  output,
   Output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -34,8 +35,9 @@ import { PoissonConfigService } from '../../domain/poisson-config.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SimControlsComponent {
-  @Output() playChanged: EventEmitter<boolean> = new EventEmitter();
-  @Output() resetSim: EventEmitter<boolean> = new EventEmitter();
+  playChanged = output<boolean>();
+  resetSim = output<boolean>();
+  stepSim = output<void>();
 
   play = false;
   config$: Observable<PoissonConfig>;
@@ -75,5 +77,10 @@ export class SimControlsComponent {
 
   private emitPlay() {
     this.playChanged.emit(this.play);
+  }
+  step(): void {
+    this.play = false;
+    this.emitPlay();
+    this.stepSim.emit();
   }
 }
