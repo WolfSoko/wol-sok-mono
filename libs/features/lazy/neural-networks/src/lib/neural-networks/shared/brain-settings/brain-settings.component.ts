@@ -10,7 +10,7 @@ import { Observable } from 'rxjs';
 import { BrainService } from '../brain.service';
 
 @Component({
-  selector: 'app-brain-settings',
+  selector: 'feat-lazy-neural-networks-brain-settings',
   templateUrl: './brain-settings.component.html',
   styleUrls: ['./brain-settings.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

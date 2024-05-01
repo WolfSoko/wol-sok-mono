@@ -24,7 +24,7 @@ interface ChangeInputs extends SimpleChanges {
 }
 
 @Component({
-  selector: 'app-data-view',
+  selector: 'feat-lazy-neural-networks-data-view',
   templateUrl: './data-view.component.html',
   styleUrls: ['./data-view.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

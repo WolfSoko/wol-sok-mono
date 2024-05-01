@@ -4,14 +4,14 @@
       <mat-card-subtitle>Data</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <app-data-view
+      <feat-lazy-neural-networks-data-view
         [canvasWidth]="width"
         [canvasHeight]="height"
         [perceptron]="outputPerceptron"
         [points]="points"
         (dataViewClicked)="addPoint($event)"
         [showLinearDivider]="false"
-      ></app-data-view>
+      />
     </mat-card-content>
   </mat-card>
   <mat-card appearance="raised" class="inputLayer">
@@ -19,11 +19,15 @@
       <mat-card-subtitle>Input layer</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <div>Learnrate: {{ learnRate }}, learned data points: {{ learnedDataPoints }}</div>
+      <div>
+        Learnrate: {{ learnRate }}, learned data points: {{ learnedDataPoints }}
+      </div>
       @for (perceptron of inputPerceptron; track perceptron) {
-
-      <app-perceptron [perceptron]="perceptron" [canvasWidth]="200" [canvasHeight]="200"></app-perceptron>
-
+        <feat-lazy-neural-networks-perceptron
+          [perceptron]="perceptron"
+          [canvasWidth]="200"
+          [canvasHeight]="200"
+        />
       }
     </mat-card-content>
   </mat-card>
@@ -32,11 +36,15 @@
       <mat-card-subtitle>Hidden layer</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <div>Learnrate: {{ learnRate }}, learned data points: {{ learnedDataPoints }}</div>
+      <div>
+        Learnrate: {{ learnRate }}, learned data points: {{ learnedDataPoints }}
+      </div>
       @for (perceptron of hiddenPerceptron; track perceptron) {
-
-      <app-perceptron [perceptron]="perceptron" [canvasWidth]="200" [canvasHeight]="200"></app-perceptron>
-
+        <feat-lazy-neural-networks-perceptron
+          [perceptron]="perceptron"
+          [canvasWidth]="200"
+          [canvasHeight]="200"
+        />
       }
     </mat-card-content>
   </mat-card>
@@ -45,8 +53,14 @@
       <mat-card-subtitle>Output layer</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <app-perceptron [perceptron]="outputPerceptron" [canvasWidth]="200" [canvasHeight]="200"></app-perceptron>
+      <feat-lazy-neural-networks-perceptron
+        [perceptron]="outputPerceptron"
+        [canvasWidth]="200"
+        [canvasHeight]="200"
+      />
     </mat-card-content>
   </mat-card>
-  <app-brain-settings [perceptronLayers]="perceptronPerLayer"></app-brain-settings>
+  <feat-lazy-neural-networks-brain-settings
+    [perceptronLayers]="perceptronPerLayer"
+  />
 </div>

@@ -9,7 +9,7 @@ import { PerceptronComponent } from '../shared/perceptron/perceptron.component';
 import { Point } from '../shared/point';
 
 @Component({
-  selector: 'app-perceptron-tab',
+  selector: 'feat-lazy-neural-networks-perceptron-tab',
   templateUrl: './perceptron-tab.component.html',
   styleUrls: ['./perceptron-tab.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

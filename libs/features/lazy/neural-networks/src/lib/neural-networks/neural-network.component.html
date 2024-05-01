@@ -1,0 +1,21 @@
+<mat-toolbar color="primary">
+  <mat-toolbar-row>
+    <div>Neural-Networks!</div>
+  </mat-toolbar-row>
+</mat-toolbar>
+<nav mat-tab-nav-bar [tabPanel]="tabPanel">
+  @for (link of navLinks; track link) {
+    <a
+      mat-tab-link
+      [routerLink]="link.path"
+      routerLinkActive="active"
+      #rla="routerLinkActive"
+      [active]="rla.isActive"
+    >
+      {{ link.label }}
+    </a>
+  }
+</nav>
+<mat-tab-nav-panel #tabPanel>
+  <router-outlet></router-outlet>
+</mat-tab-nav-panel>

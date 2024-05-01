@@ -7,7 +7,7 @@ import { PerceptronComponent } from '../shared/perceptron/perceptron.component';
 import { Point } from '../shared/point';
 
 @Component({
-  selector: 'app-multi-perceptron',
+  selector: 'feat-lazy-neural-networks-multi-perceptron',
   templateUrl: './multi-perceptron.component.html',
   styleUrls: ['./multi-perceptron.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

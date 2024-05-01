@@ -82,9 +82,7 @@ export const APP_ROUTES: MainNavRoutes = [
   {
     path: 'neuralNetwork',
     loadChildren: () =>
-      import('./feature/lazy/neural-network/neural-network-routes').then(
-        (m) => m.routes
-      ),
+      import('@wolsok/feat-lazy-neural-networks').then((m) => m.routes),
     data: { linkText: 'Neural Networks (p5)' },
   },
   {

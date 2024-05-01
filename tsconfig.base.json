@@ -27,6 +27,10 @@
       "@wolsok/feat-lazy-gravity-rocks": [
         "libs/features/lazy/gravity-rocks/src/index.ts"
       ],
+      "@wolsok/feat-lazy-neural-networks": [
+        "libs/features/lazy/neural-networks/src/index.ts"
+      ],
+      "@wolsok/feat-lazy-poisson": ["libs/features/lazy/poisson/src/index.ts"],
       "@wolsok/feat-lazy-some-gpu-calculation": [
         "libs/features/lazy/some-gpu-calculation/src/index.ts"
       ],
@@ -57,9 +61,6 @@
       "@wolsok/ws-gl": ["libs/shared/ws-gl/src/index.ts"],
       "bacteria-game-remote/Routes": [
         "apps/bacteria-game-remote/src/app/remote-entry/entry.routes.ts"
-      ],
-      "@wolsok/feat-lazy-poisson": [
-        "libs/features/lazy/feat-lazy-poisson/src/index.ts"
       ],
       "fourier-analysis-remote/Routes": [
         "apps/fourier-analysis-remote/src/app/remote-entry/entry.routes.ts"

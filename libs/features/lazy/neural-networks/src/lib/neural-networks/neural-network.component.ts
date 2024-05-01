@@ -2,12 +2,10 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { environment } from '../../../../environments/environment';
 
 @Component({
-  selector: 'app-neural-network',
+  selector: 'feat-lazy-neural-networks-page',
   templateUrl: './neural-network.component.html',
-  styleUrls: ['./neural-network.component.less'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
@@ -25,7 +23,7 @@ export class NeuralNetworkComponent {
       {
         path: 'multiPerceptron',
         label: 'Multi layer net',
-        hidden: environment.production,
+        hidden: true,
       },
     ];
   }

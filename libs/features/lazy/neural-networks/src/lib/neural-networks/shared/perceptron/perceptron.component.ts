@@ -11,7 +11,7 @@ import P5 from 'p5';
 import { Perceptron } from '../perceptron';
 
 @Component({
-  selector: 'app-perceptron',
+  selector: 'feat-lazy-neural-networks-perceptron',
   templateUrl: './perceptron.component.html',
   styleUrls: ['./perceptron.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
