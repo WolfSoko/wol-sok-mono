@@ -1,6 +1,3 @@
-import { Injectable } from '@angular/core';
-
-@Injectable({ providedIn: 'root' })
 export class RandomService {
   randomTo(to: number): number {
     return this.random(0, to);

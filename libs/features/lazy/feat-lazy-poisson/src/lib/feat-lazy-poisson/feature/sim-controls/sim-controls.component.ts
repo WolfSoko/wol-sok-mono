@@ -28,7 +28,7 @@ import { PoissonConfigService } from '../../domain/poisson-config.service';
     MatButtonModule,
     ElevateCardDirective,
   ],
-  selector: 'app-sim-controls',
+  selector: 'lazy-feat-poisson-sim-controls',
   templateUrl: './sim-controls.component.html',
   styleUrls: ['./sim-controls.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -21,7 +21,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @Component({
   standalone: true,
   imports: [CommonModule],
-  selector: 'app-canvas-view',
+  selector: 'lazy-feat-poisson-app-canvas-view',
   templateUrl: './canvas-view.component.html',
   styleUrls: ['./canvas-view.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

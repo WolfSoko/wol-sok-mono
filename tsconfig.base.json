@@ -58,6 +58,9 @@
       "bacteria-game-remote/Routes": [
         "apps/bacteria-game-remote/src/app/remote-entry/entry.routes.ts"
       ],
+      "@wolsok/feat-lazy-poisson": [
+        "libs/features/lazy/feat-lazy-poisson/src/index.ts"
+      ],
       "fourier-analysis-remote/Routes": [
         "apps/fourier-analysis-remote/src/app/remote-entry/entry.routes.ts"
       ],

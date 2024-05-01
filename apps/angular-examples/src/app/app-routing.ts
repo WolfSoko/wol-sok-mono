@@ -96,7 +96,7 @@ export const APP_ROUTES: MainNavRoutes = [
   {
     path: 'poisson',
     loadChildren: () =>
-      import('./feature/lazy/poisson/api/routes').then((m) => m.routes),
+      import('@wolsok/feat-lazy-poisson').then((m) => m.routes),
     data: { linkText: 'Poisson Distribution Algorithm' },
   },
   {

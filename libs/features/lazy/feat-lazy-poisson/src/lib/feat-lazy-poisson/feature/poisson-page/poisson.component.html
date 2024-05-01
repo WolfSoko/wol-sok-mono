@@ -3,18 +3,25 @@
     <span>Poisson Distribution</span>
   </mat-toolbar-row>
   <mat-toolbar-row>
-    <div><span class="mat-subtitle-1">Evenly distributed circles on a plane</span><br /></div>
+    <div>
+      <span class="mat-subtitle-1">Evenly distributed circles on a plane</span
+      ><br />
+    </div>
   </mat-toolbar-row>
 </mat-toolbar>
 <div class="sim-content">
   <mat-card appearance="raised" wsSharedUiElevateCard>
     <mat-card-header>
       <mat-card-title>Simulation</mat-card-title>
-      <mat-card-subtitle>Click to add a point as seed for the algorithm</mat-card-subtitle>
-      <mat-card-subtitle>Play with the configs to change behavior</mat-card-subtitle>
+      <mat-card-subtitle
+        >Click to add a point as seed for the algorithm</mat-card-subtitle
+      >
+      <mat-card-subtitle
+        >Play with the configs to change behavior</mat-card-subtitle
+      >
     </mat-card-header>
     <mat-card-content>
-      <app-canvas-view
+      <lazy-feat-poisson-app-canvas-view
         [canvasWidth]="canvasWidth"
         [canvasHeight]="canvasHeight"
         [circles]="poissonCalc.foundCircles$ | async"
@@ -22,9 +29,11 @@
         [lines]="poissonCalc.lines$ | async"
         (addObject)="addPoint($event)"
         (readyToPaint)="calculate()"
-      >
-      </app-canvas-view>
+      />
     </mat-card-content>
   </mat-card>
-  <app-sim-controls (playChanged)="setPlay($event)" (resetSim)="reset()"></app-sim-controls>
+  <lazy-feat-poisson-sim-controls
+    (playChanged)="setPlay($event)"
+    (resetSim)="reset()"
+  />
 </div>

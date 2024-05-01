@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { RandomService } from '@wolsok/utils-math';
 import {
   combineLatest,
   defer,
@@ -21,7 +22,6 @@ import {
   tap,
   toArray,
 } from 'rxjs/operators';
-import { RandomService } from '../../../../core/random.service';
 import { Circle } from './model/circle';
 import { Line } from './model/line';
 import { PoissonConfig } from './model/poisson.config';

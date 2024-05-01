@@ -1,0 +1,36 @@
+{
+  "name": "feat-lazy-poisson",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/lazy/feat-lazy-poisson/src",
+  "prefix": "lazy-feat-poisson",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "options": {
+        "project": "libs/features/lazy/feat-lazy-poisson/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/features/lazy/feat-lazy-poisson/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "libs/features/lazy/feat-lazy-poisson/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/features/lazy/feat-lazy-poisson/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
