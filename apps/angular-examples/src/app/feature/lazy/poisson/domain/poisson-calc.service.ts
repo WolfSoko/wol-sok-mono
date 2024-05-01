@@ -268,13 +268,24 @@ export class PoissonCalcService {
     const distanceCheck = this.isInDistanceFactory(row, col, r, w);
     const result: Circle[] = [];
 
-    this.grid.forEach((colVecs: Circle[], rowToCheck: number) =>
-      colVecs.forEach((neighbour: Circle, colToCheck: number) => {
+    const maxDeltaIndex: number = Math.ceil(r / w);
+    const minRow = Math.max(0, row - maxDeltaIndex);
+    const maxRow = Math.min(row + maxDeltaIndex, this.grid.length);
+
+    for (let rowToCheck = minRow; rowToCheck < maxRow; rowToCheck++) {
+      const colVecs: Circle[] = this.grid[rowToCheck];
+      const minCol = Math.max(0, col - maxDeltaIndex);
+      const maxCol = Math.min(col + maxDeltaIndex, colVecs.length);
+      for (let colToCheck = minCol; colToCheck < maxCol; colToCheck++) {
+        const neighbour: Circle = colVecs[colToCheck];
+        if (!neighbour) {
+          continue;
+        }
         if (distanceCheck(rowToCheck, colToCheck)) {
           result.push(neighbour);
         }
-      })
-    );
+      }
+    }
     return result;
   }
 
