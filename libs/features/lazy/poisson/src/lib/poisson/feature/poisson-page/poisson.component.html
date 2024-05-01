@@ -22,6 +22,7 @@
     </mat-card-header>
     <mat-card-content>
       <lazy-feat-poisson-app-canvas-view
+        #canvasView
         [canvasWidth]="canvasWidth"
         [canvasHeight]="canvasHeight"
         [circles]="poissonCalc.foundCircles$ | async"
@@ -35,6 +36,6 @@
   <lazy-feat-poisson-sim-controls
     (playChanged)="setPlay($event)"
     (stepSim)="step()"
-    (resetSim)="reset()"
+    (resetSim)="canvasView.reset(); reset()"
   />
 </div>

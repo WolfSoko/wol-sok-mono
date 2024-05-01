@@ -3,21 +3,26 @@ import {
   AfterContentInit,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   Input,
   Output,
   ViewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Circle } from '../../domain/model/circle';
 import { CanvasDrawService } from './canvas-draw.service';
-import { animationFrameScheduler, interval, Observable } from 'rxjs';
+import {
+  animationFrameScheduler,
+  interval,
+  Observable,
+  Subscription,
+} from 'rxjs';
 import { Vector } from '../../domain/model/vector';
 import { Line } from '../../domain/model/line';
 import { skipUntil } from 'rxjs/operators';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
-@UntilDestroy()
 @Component({
   standalone: true,
   imports: [CommonModule],
@@ -36,22 +41,43 @@ export class CanvasViewComponent implements AfterContentInit {
   @Output() addObject = new EventEmitter<Vector>();
   @Output() readyToPaint = new EventEmitter<number>();
 
-  private draw$: Observable<number>;
+  private draw$?: Observable<number>;
+  private subs?: Subscription;
 
-  constructor(private canvasDrawService: CanvasDrawService) {
-    this.draw$ = interval(0, animationFrameScheduler).pipe(
-      skipUntil(this.readyToPaint)
-    );
-  }
+  constructor(
+    private canvasDrawService: CanvasDrawService,
+    private destroyRef: DestroyRef
+  ) {}
 
   ngAfterContentInit(): void {
+    this.reset();
+  }
+
+  public reset() {
+    if (this.subs) {
+      this.subs.unsubscribe();
+    }
+    this.draw$ = interval(0, animationFrameScheduler).pipe(
+      skipUntil(this.readyToPaint),
+      takeUntilDestroyed(this.destroyRef)
+    );
+
     this.canvas.nativeElement.width = this.canvasWidth;
     this.canvas.nativeElement.height = this.canvasHeight;
     const context: CanvasRenderingContext2D =
       this.canvas.nativeElement.getContext('2d', { willReadFrequently: true });
+
     this.canvasDrawService.initCtx(context);
+
+    this.canvasDrawService.useOffscreen();
+    this.canvasDrawService.setFillColor('black');
+    this.canvasDrawService.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+    this.canvasDrawService.useMain();
+
     setTimeout(() => this.readyToPaint.emit(0), 1000);
-    this.draw$.pipe(untilDestroyed(this)).subscribe(this.draw.bind(this));
+    this.subs = this.draw$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((step) => this.draw(step));
   }
 
   public onClick($event: MouseEvent): void {
@@ -70,20 +96,27 @@ export class CanvasViewComponent implements AfterContentInit {
   private draw(step: number): void {
     this.canvasDrawService.setFillColor('black');
     this.canvasDrawService.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+
     if (this.circles) {
-      const filteredCircles = this.circles.filter(
-        this.isInsideDrawArea.bind(this)
+      const filteredCircles = this.circles.filter((circle) =>
+        this.isInsideDrawArea(circle)
       );
       if (filteredCircles.length < this.circles.length) {
         console.error(
           'Some circles are out of draw area.',
           this.circles.filter((circle) => !this.isInsideDrawArea(circle))
         );
+        throw new Error('Some circles are out of draw area.');
       }
-      this.circles.forEach((circle) =>
-        this.canvasDrawService.drawCircle(circle, step)
-      );
+      this.canvasDrawService.useOffscreen();
+      this.circles
+        .filter((circle) => !circle.drawn)
+        .forEach((circle) => {
+          this.canvasDrawService.drawCircle(circle);
+        });
+      this.canvasDrawService.useMain();
     }
+    this.canvasDrawService.mergeOffscreenCanvas();
     if (this.actives) {
       this.canvasDrawService.setFillColor('red');
       this.actives.forEach((active) =>
