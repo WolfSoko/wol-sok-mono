@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  signal,
   Signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -43,8 +44,8 @@ export class PoissonComponent implements OnInit {
   canvasWidth = 600;
   canvasHeight = 600;
 
-  play = false;
-  showDebug = false;
+  play = signal(false);
+  showDebug = signal(false);
   fps: Signal<number | undefined>;
 
   constructor(
@@ -67,7 +68,7 @@ export class PoissonComponent implements OnInit {
   }
 
   calculate(): void {
-    if (this.play) {
+    if (this.play()) {
       this.poissonCalc.calculate();
       this.measureFps.signalFrameReady();
     }
@@ -82,10 +83,10 @@ export class PoissonComponent implements OnInit {
   }
 
   setPlay(play: boolean) {
-    this.play = play;
+    this.play.set(play);
   }
 
   toggleDebugInfo(): void {
-    this.showDebug = !this.showDebug;
+    this.showDebug.update((showDebug: boolean) => !showDebug);
   }
 }

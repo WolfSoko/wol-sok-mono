@@ -1,13 +1,12 @@
 .sim-content {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
   position: relative;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .fps {
   position: absolute;
-  top: 0;
-  right: 0;
-  margin: 2rem;
+  top: 3rem;
+  right: 2rem;
 }

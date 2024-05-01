@@ -44,9 +44,11 @@
     (resetSim)="canvasView.reset(); reset()"
   />
   <mat-card>
-    <mat-card-title>Debug Info</mat-card-title>
+    <mat-card-header>
+      <mat-card-title>Debug Info</mat-card-title>
+    </mat-card-header>
     <mat-card-content>
-      @if (showDebug) {
+      @if (showDebug()) {
         <ul class="debug-info">
           <li>
             Found Circles: {{ (poissonCalc.foundCircles$ | async)?.length }}
@@ -63,7 +65,7 @@
         </ul>
       }
       <button mat-raised-button (click)="toggleDebugInfo()">
-        {{ showDebug ? "Hide debug info" : "Show Debug Info" }}
+        {{ showDebug() ? "Hide debug info" : "Show Debug Info" }}
       </button>
     </mat-card-content>
   </mat-card>
