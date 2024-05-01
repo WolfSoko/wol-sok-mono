@@ -20,7 +20,12 @@
         >Play with the configs to change behavior</mat-card-subtitle
       >
     </mat-card-header>
-    <mat-card-content>
+    <mat-card-content class="canvas-content">
+      <ws-shared-ui-show-fps
+        class="fps"
+        [show]="true"
+        [fps]="fps() ?? 0.0"
+      ></ws-shared-ui-show-fps>
       <lazy-feat-poisson-app-canvas-view
         #canvasView
         [canvasWidth]="canvasWidth"
@@ -38,4 +43,28 @@
     (stepSim)="step()"
     (resetSim)="canvasView.reset(); reset()"
   />
+  <mat-card>
+    <mat-card-title>Debug Info</mat-card-title>
+    <mat-card-content>
+      @if (showDebug) {
+        <ul class="debug-info">
+          <li>
+            Found Circles: {{ (poissonCalc.foundCircles$ | async)?.length }}
+          </li>
+          <li>
+            Drawn Circles:
+            {{ (poissonCalc.drawnCircles$ | async)?.length }}
+          </li>
+          <li>
+            ActiveVectors: {{ (poissonCalc.activeVectors$ | async)?.length }}
+          </li>
+          <li>Drawn Lines: {{ (poissonCalc.lines$ | async)?.length }}</li>
+          <li>Dimensions: {{ canvasWidth }} x {{ canvasHeight }}</li>
+        </ul>
+      }
+      <button mat-raised-button (click)="toggleDebugInfo()">
+        {{ showDebug ? "Hide debug info" : "Show Debug Info" }}
+      </button>
+    </mat-card-content>
+  </mat-card>
 </div>

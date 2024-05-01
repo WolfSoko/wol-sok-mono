@@ -38,6 +38,7 @@ type RandomActive = {
 @Injectable()
 export class PoissonCalcService {
   public foundCircles$!: Observable<Circle[]>;
+  public drawnCircles$!: Observable<Circle[]>;
   public activeVectors$!: Observable<Vector[]>;
   public lines$!: Observable<Line[]>;
   private height!: number;
@@ -99,6 +100,9 @@ export class PoissonCalcService {
         pre.push(current);
         return pre;
       }, [])
+    );
+    this.drawnCircles$ = this.foundCircles$.pipe(
+      map((circles) => circles.filter((circle) => circle.drawn))
     );
 
     if (this.activesSubject) {
@@ -213,7 +217,6 @@ export class PoissonCalcService {
           w
         );
         const ok = neighbours.every((neighbour: Circle) => {
-          // this.drawHelper.setStrokeColor('white');
           if (neighbour) {
             this.lineSubject.next(
               this.shapeFactory.createLine(sample, neighbour.pos)

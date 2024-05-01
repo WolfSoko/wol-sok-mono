@@ -84,39 +84,23 @@ export class CanvasViewComponent implements AfterContentInit {
     this.addObject.emit(new Vector($event.offsetX, $event.offsetY));
   }
 
-  private isInsideDrawArea(circle: Circle): boolean {
-    return (
-      circle.pos.x <= this.canvasWidth &&
-      circle.pos.y <= this.canvasHeight &&
-      circle.pos.x >= 0 &&
-      circle.pos.y >= 0
-    );
-  }
-
   private draw(step: number): void {
     this.canvasDrawService.setFillColor('black');
     this.canvasDrawService.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
 
     if (this.circles) {
-      const filteredCircles = this.circles.filter((circle) =>
-        this.isInsideDrawArea(circle)
-      );
-      if (filteredCircles.length < this.circles.length) {
-        console.error(
-          'Some circles are out of draw area.',
-          this.circles.filter((circle) => !this.isInsideDrawArea(circle))
-        );
-        throw new Error('Some circles are out of draw area.');
-      }
       this.canvasDrawService.useOffscreen();
-      this.circles
-        .filter((circle) => !circle.drawn)
-        .forEach((circle) => {
-          this.canvasDrawService.drawCircle(circle);
-        });
+      for (const circle of this.circles) {
+        if (circle.drawn) {
+          continue;
+        }
+        this.canvasDrawService.drawCircle(circle);
+        circle.drawn = true;
+      }
       this.canvasDrawService.useMain();
     }
     this.canvasDrawService.mergeOffscreenCanvas();
+
     if (this.actives) {
       this.canvasDrawService.setFillColor('red');
       this.actives.forEach((active) =>
