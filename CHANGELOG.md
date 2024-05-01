@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.16.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.16.0-deployed...v4.16.1) (2024-05-01)
+
+
+### Bug Fixes
+
+* **feat-lazy-poisson:** 🐛 fix lib folders ([638237d](https://github.com/WolfSoko/wol-sok-mono/commit/638237d9323e69fdbb63b1a0f831e1b4a549b652))
+
 ## [4.16.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.15.0-deployed...v4.16.0) (2024-05-01)
 
 
