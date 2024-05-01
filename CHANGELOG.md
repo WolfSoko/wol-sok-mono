@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.15.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.14.1-deployed...v4.15.0) (2024-05-01)
+
+
+### Features
+
+* ✨ extract poisson into lazy lib ([1588343](https://github.com/WolfSoko/wol-sok-mono/commit/1588343e7774b64ebe12de0d9860a8c65f9f0683))
+
 ### [4.14.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.14.0-deployed...v4.14.1) (2024-05-01)
 
 ## [4.14.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.13.1-deployed...v4.14.0) (2024-04-29)
