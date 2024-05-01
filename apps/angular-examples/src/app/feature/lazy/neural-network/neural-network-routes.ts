@@ -1,10 +1,9 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
-import { NeuralNetworkComponent } from './neural-network.component';
+import { Routes } from '@angular/router';
 import { MultiPerceptronComponent } from './multi-perceptron/multi-perceptron.component';
+import { NeuralNetworkComponent } from './neural-network.component';
 import { PerceptronTabComponent } from './perceptron-tab/perceptron-tab.component';
 
-const routes: Routes = [
+export const routes: Routes = [
   {
     path: '',
     component: NeuralNetworkComponent,
@@ -15,11 +14,3 @@ const routes: Routes = [
     ],
   },
 ];
-
-export const navLinks = routes.filter((route) => route.path?.length);
-
-@NgModule({
-  imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule],
-})
-export class NeuralNetworkRoutingModule {}
