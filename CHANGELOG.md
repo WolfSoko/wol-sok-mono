@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.16.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.15.0-deployed...v4.16.0) (2024-05-01)
+
+
+### Features
+
+* **feat-lazy-poisson:** ✨ add step control ([f18e45a](https://github.com/WolfSoko/wol-sok-mono/commit/f18e45a3600292104004c90cf018691024bca2f7))
+
 ## [4.15.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.14.1-deployed...v4.15.0) (2024-05-01)
 
 
