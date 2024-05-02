@@ -1,2 +1,2 @@
-// this version is set at build time. It reflects the version of the version.json file in the root of the project.
+// this version is set at build time. It reflects latest git tag at build time
 export const version = VERSION;
