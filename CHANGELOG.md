@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.17.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.17.1-deployed...v4.17.2) (2024-05-02)
+
+
+### Bug Fixes
+
+* **angular-examples:** 🐛 bacteria-game not working ([de8a1b4](https://github.com/WolfSoko/wol-sok-mono/commit/de8a1b4b230b9f19663c5ac306e22c4aa901730d))
+
 ### [4.17.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.17.0-deployed...v4.17.1) (2024-05-01)
 
 ## [4.17.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.16.2-deployed...v4.17.0) (2024-05-01)
