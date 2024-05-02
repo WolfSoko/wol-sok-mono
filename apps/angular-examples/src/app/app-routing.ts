@@ -36,16 +36,8 @@ export const APP_ROUTES: MainNavRoutes = [
       ),
     data: {
       linkText: 'Fourier Analysis Example',
-      subTitle: 'Served independently by Webpacks Module-Federation',
+      subTitle: 'Served independently by Module-Federation',
     },
-  },
-  {
-    path: 'bacteriaGame',
-    loadChildren: () =>
-      import('shader-examples-remote/Routes').then(
-        (routes) => routes.remoteRoutes
-      ),
-    data: { linkText: 'Bacteria Game', subTitle: 'Served independently by MF' },
   },
   {
     path: 'shaderExamples',
@@ -57,6 +49,42 @@ export const APP_ROUTES: MainNavRoutes = [
       linkText: 'WebGL Shader examples with live code editor (three.js)',
       subTitle: 'Served independently by MF',
     },
+  },
+  {
+    path: 'tensorflowExamples',
+    loadChildren: () =>
+      import('@wolsok/feat-lazy-tf-examples').then(
+        (m) => m.TENSORFLOW_EXAMPLES_ROUTES
+      ),
+    data: { linkText: 'Tensorflow examples' },
+  },
+  {
+    path: 'reactionDiff',
+    loadComponent: () =>
+      import('@wolsok/feat-reaction-diff').then((m) => m.ReactionDiffComponent),
+    data: { linkText: 'Reaction Diffusion Algorithm (gpu.js)' },
+  },
+  {
+    path: 'poisson',
+    loadChildren: () =>
+      import('@wolsok/feat-lazy-poisson').then((m) => m.routes),
+    data: { linkText: 'Poisson Distribution Algorithm' },
+  },
+  {
+    path: 'bacteriaGame',
+    loadChildren: () =>
+      import('bacteria-game-remote/Routes').then(
+        (routes) => routes.entryRoutes
+      ),
+    data: { linkText: 'Bacteria Game', subTitle: 'Served independently by MF' },
+  },
+  {
+    path: 'gravityWorld',
+    loadChildren: () =>
+      import('@wolsok/feat-lazy-gravity-rocks').then(
+        (m) => m.GRAVITY_ROCKS_ROUTES
+      ),
+    data: { linkText: 'Playing around with Sun and Planets gravity' },
   },
   {
     path: 'someGpuCalculations',
@@ -72,30 +100,10 @@ export const APP_ROUTES: MainNavRoutes = [
     data: { linkText: 'Mandelbrot plane, lights objects (three.js)' },
   },
   {
-    path: 'tensorflowExamples',
-    loadChildren: () =>
-      import('@wolsok/feat-lazy-tf-examples').then(
-        (m) => m.TENSORFLOW_EXAMPLES_ROUTES
-      ),
-    data: { linkText: 'Tensorflow examples' },
-  },
-  {
     path: 'neuralNetwork',
     loadChildren: () =>
       import('@wolsok/feat-lazy-neural-networks').then((m) => m.routes),
     data: { linkText: 'Neural Networks (p5)' },
-  },
-  {
-    path: 'reactionDiff',
-    loadComponent: () =>
-      import('@wolsok/feat-reaction-diff').then((m) => m.ReactionDiffComponent),
-    data: { linkText: 'Reaction Diffusion Algorithm (gpu.js)' },
-  },
-  {
-    path: 'poisson',
-    loadChildren: () =>
-      import('@wolsok/feat-lazy-poisson').then((m) => m.routes),
-    data: { linkText: 'Poisson Distribution Algorithm' },
   },
   {
     path: 'performanceTests',
@@ -109,14 +117,6 @@ export const APP_ROUTES: MainNavRoutes = [
     path: 'webassemblyTests',
     loadChildren: () => import('@wolsok/feat-wasm-test').then((m) => m.routes),
     data: { linkText: 'Calculating Fibonacci with WebAssembly' },
-  },
-  {
-    path: 'gravityWorld',
-    loadChildren: () =>
-      import('@wolsok/feat-lazy-gravity-rocks').then(
-        (m) => m.GRAVITY_ROCKS_ROUTES
-      ),
-    data: { linkText: 'Playing around with Sun and Planets gravity' },
   },
 ];
 
