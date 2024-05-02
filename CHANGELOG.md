@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.17.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.17.2-deployed...v4.17.3) (2024-05-02)
+
+
+### Bug Fixes
+
+* **angular-examples:** 🐛 add version to deps for build ([c6e5631](https://github.com/WolfSoko/wol-sok-mono/commit/c6e5631ae2a1e02e414c38312f6b44d5d4ba8028))
+
 ### [4.17.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.17.1-deployed...v4.17.2) (2024-05-02)
 
 
