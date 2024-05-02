@@ -2,14 +2,13 @@ import { HttpClient } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
-  HostBinding,
   Inject,
   Signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
 import { Angulartics2GoogleTagManager } from 'angulartics2';
-import { catchError, from, of } from 'rxjs';
+import { catchError, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Environment } from '../environments/environment.type';
 import { MainNavRoutes } from './app-routing';
@@ -41,9 +40,9 @@ export class AppComponent {
     gtmManager.startTracking();
     this.appVersionAttr = toSignal(
       httpClient.get<string>('/version.json').pipe(
-        catchError((err, caught) => {
-          console.warn('No version found', err);
-          return of(env.version);
+        catchError((err) => {
+          console.warn('No version found', err?.status, err?.statusText);
+          return of('next');
         }),
         map((version: string) => `angular-examples@${version}`)
       )

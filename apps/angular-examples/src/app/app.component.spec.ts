@@ -2,9 +2,9 @@ import {
   HttpClientTestingModule,
   HttpTestingController,
 } from '@angular/common/http/testing';
-import { inject } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
+import { By } from '@angular/platform-browser';
+import { RouterModule } from '@angular/router';
 import { AuthenticationService } from '@wolsok/feat-api-auth';
 import { Angulartics2GoogleTagManager } from 'angulartics2';
 import { AppComponent } from './app.component';
@@ -13,12 +13,15 @@ import { ServiceWorkerUpdateService } from './core/service-worker-update.service
 import { MainToolbarComponent } from './feature/main-toolbar/main-toolbar.component';
 import { SideNavComponent } from './feature/navigation/side-nav/side-nav.component';
 import { ROUTER_LINKS } from './router-links.token';
-import { By } from '@angular/platform-browser';
 
 describe('AppComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [AppComponent, RouterTestingModule, HttpClientTestingModule],
+      imports: [
+        AppComponent,
+        RouterModule.forRoot([]),
+        HttpClientTestingModule,
+      ],
       providers: [
         { provide: ROUTER_LINKS, useValue: [] },
         {
@@ -71,7 +74,7 @@ describe('AppComponent', () => {
 
   it('should inform about the app version', () => {
     const { fixture, httpTestingController } = createComp();
-    httpTestingController.expectOne('/version').flush('1.2.3');
+    httpTestingController.expectOne('/version.json').flush('1.2.3');
     fixture.detectChanges();
     const versionDiv = fixture.debugElement.query(By.css('.app-version'))
       .nativeElement as HTMLDivElement;
@@ -81,7 +84,7 @@ describe('AppComponent', () => {
   it('should set app version to next of request failed', () => {
     const { fixture, httpTestingController } = createComp();
     httpTestingController
-      .expectOne('/version')
+      .expectOne('/version.json')
       .flush(null, { status: 404, statusText: 'Not Found' });
     fixture.detectChanges();
     const versionDiv = fixture.debugElement.query(By.css('.app-version'))
