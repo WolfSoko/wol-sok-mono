@@ -14,7 +14,7 @@ export class SpaStack extends Stack {
       bucketRemovalPolicy: props.bucketRemovalPolicy,
     });
     spa.addExtraAssets(
-      [Source.jsonData('version', version)],
+      [Source.jsonData('version.json', version)],
       CacheControl.noCache()
     );
   }

@@ -40,10 +40,10 @@ export class AppComponent {
   ) {
     gtmManager.startTracking();
     this.appVersionAttr = toSignal(
-      httpClient.get<string>('/version').pipe(
+      httpClient.get<string>('/version.json').pipe(
         catchError((err, caught) => {
           console.warn('No version found', err);
-          return of('next');
+          return of(env.version);
         }),
         map((version: string) => `angular-examples@${version}`)
       )
