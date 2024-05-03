@@ -1,13 +1,10 @@
-import {
-  HttpClientTestingModule,
-  HttpTestingController,
-} from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 import { AuthenticationService } from '@wolsok/feat-api-auth';
 import { Angulartics2GoogleTagManager } from 'angulartics2';
 import { AppComponent } from './app.component';
+import { ENV_TOKEN } from './core/env.token';
 import { ServiceWorkerLogUpdateService } from './core/service-worker-log-update.service';
 import { ServiceWorkerUpdateService } from './core/service-worker-update.service';
 import { MainToolbarComponent } from './feature/main-toolbar/main-toolbar.component';
@@ -15,13 +12,9 @@ import { SideNavComponent } from './feature/navigation/side-nav/side-nav.compone
 import { ROUTER_LINKS } from './router-links.token';
 
 describe('AppComponent', () => {
-  beforeEach(() => {
+  const createComp = (version: string | null = '1.0.0') => {
     TestBed.configureTestingModule({
-      imports: [
-        AppComponent,
-        RouterModule.forRoot([]),
-        HttpClientTestingModule,
-      ],
+      imports: [AppComponent, RouterModule.forRoot([])],
       providers: [
         { provide: ROUTER_LINKS, useValue: [] },
         {
@@ -40,11 +33,9 @@ describe('AppComponent', () => {
           provide: AuthenticationService,
           useValue: { startLogging: jest.fn() },
         },
+        { provide: ENV_TOKEN, useValue: { version } },
       ],
     });
-  });
-
-  const createComp = () => {
     TestBed.overrideComponent(SideNavComponent, {
       remove: { templateUrl: '' },
       add: { template: '<div>SideNavComp</div>' },
@@ -55,15 +46,11 @@ describe('AppComponent', () => {
     const fixture: ComponentFixture<AppComponent> =
       TestBed.createComponent(AppComponent);
 
-    const httpTestingController: HttpTestingController = TestBed.inject(
-      HttpTestingController
-    );
     const comp: AppComponent = fixture.componentInstance;
     fixture.detectChanges();
     return {
       fixture: fixture,
       component: comp,
-      httpTestingController,
     };
   };
 
@@ -73,19 +60,18 @@ describe('AppComponent', () => {
   });
 
   it('should inform about the app version', () => {
-    const { fixture, httpTestingController } = createComp();
-    httpTestingController.expectOne('/version.json').flush('1.2.3');
+    const expectedVersion = '1.0.0-test';
+    const { fixture } = createComp('1.0.0-test');
     fixture.detectChanges();
     const versionDiv = fixture.debugElement.query(By.css('.app-version'))
       .nativeElement as HTMLDivElement;
-    expect(versionDiv.textContent).toEqual('angular-examples@1.2.3');
+    expect(versionDiv.textContent).toEqual(
+      'angular-examples@' + expectedVersion
+    );
   });
 
-  it('should set app version to next of request failed', () => {
-    const { fixture, httpTestingController } = createComp();
-    httpTestingController
-      .expectOne('/version.json')
-      .flush(null, { status: 404, statusText: 'Not Found' });
+  it('should set app version to next version is not given', () => {
+    const { fixture } = createComp(null);
     fixture.detectChanges();
     const versionDiv = fixture.debugElement.query(By.css('.app-version'))
       .nativeElement as HTMLDivElement;
