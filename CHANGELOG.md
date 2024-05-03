@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.19.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.18.1-deployed...v4.19.0) (2024-05-03)
+
+
+### Features
+
+* ✨ test analogjs ([9800cd3](https://github.com/WolfSoko/wol-sok-mono/commit/9800cd3f804724142db2dd29887bd838fd54d52a))
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency zone.js to v0.14.5 ([839e077](https://github.com/WolfSoko/wol-sok-mono/commit/839e077da6c7121e77e54583597031c06199caa3))
+
 ### [4.18.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.18.0-deployed...v4.18.1) (2024-05-03)
 
 
