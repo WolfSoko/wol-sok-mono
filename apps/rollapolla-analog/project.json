@@ -1,0 +1,56 @@
+{
+  "name": "rollapolla-analog",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@analogjs/platform:vite",
+
+      "defaultConfiguration": "production",
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": false,
+          "mode": "production"
+        }
+      },
+      "outputs": [
+        "{options.outputPath}",
+        "{workspaceRoot}/dist/apps/rollapolla-analog/.nitro",
+        "{workspaceRoot}/dist/apps/rollapolla-analog/ssr",
+        "{workspaceRoot}/dist/apps/rollapolla-analog/analog"
+      ],
+      "options": {
+        "main": "apps/rollapolla-analog/src/main.ts",
+        "configFile": "apps/rollapolla-analog/vite.config.ts",
+        "outputPath": "dist/apps/rollapolla-analog/client",
+        "tsConfig": "apps/rollapolla-analog/tsconfig.app.json"
+      }
+    },
+    "serve": {
+      "executor": "@analogjs/platform:vite-dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "rollapolla-analog:build",
+        "port": 4200
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "rollapolla-analog:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "rollapolla-analog:build:production"
+        }
+      }
+    },
+    "test": {
+      "executor": "@analogjs/platform:vitest",
+      "outputs": ["{projectRoot}/coverage"]
+    }
+  },
+  "tags": [],
+  "sourceRoot": "apps/rollapolla-analog/src"
+}

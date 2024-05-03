@@ -25,6 +25,7 @@
       <project name="math" file="file://$PROJECT_DIR$/libs/utils/math/project.json" />
       <project name="neural-networks" file="file://$PROJECT_DIR$/libs/features/lazy/neural-networks/project.json" />
       <project name="rollapolla" file="file://$PROJECT_DIR$/apps/rollapolla/project.json" />
+      <project name="rollapolla-analog" file="file://$PROJECT_DIR$/apps/rollapolla-analog/project.json" />
       <project name="rollapolla-cdk" file="file://$PROJECT_DIR$/apps/rollapolla-cdk/project.json" />
       <project name="shader-examples-remote" file="file://$PROJECT_DIR$/apps/shader-examples-remote/project.json" />
       <project name="shader-examples-remote-cdk" file="file://$PROJECT_DIR$/apps/shader-examples-remote-cdk/project.json" />
