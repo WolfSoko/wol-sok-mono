@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.18.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.17.5-deployed...v4.18.0) (2024-05-03)
+
+
+### Features
+
+* ✨ provide local next version for development ([d534924](https://github.com/WolfSoko/wol-sok-mono/commit/d53492421d50a497d74a0bd5197f635a985e698b))
+* ✨ simplify version logic ([d2a9564](https://github.com/WolfSoko/wol-sok-mono/commit/d2a95647bff68b6aaa1e103d8f40abad17a4bad3))
+
 ### [4.17.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.17.4-deployed...v4.17.5) (2024-05-03)
 
 
