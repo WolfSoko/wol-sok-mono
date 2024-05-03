@@ -1,9 +1,4 @@
-import {
-  APP_INITIALIZER,
-  ApplicationConfig,
-  ApplicationRef,
-  ViewEncapsulation,
-} from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import {
   provideRouter,

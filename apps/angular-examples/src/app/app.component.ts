@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Inject,
-  signal,
-  Signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Angulartics2GoogleTagManager } from 'angulartics2';
 import { Environment } from '../environments/environment.type';
