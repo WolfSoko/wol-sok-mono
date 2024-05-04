@@ -3,9 +3,9 @@ import { Component } from '@angular/core';
 import { RollapollaWelcomeComponent } from './rollapolla-welcome.component';
 
 @Component({
-  selector: 'rollapolla-analog-home',
+  selector: 'rap-home',
   standalone: true,
   imports: [RollapollaWelcomeComponent],
-  template: ` <rollapolla-analog-analog-welcome /> `,
+  template: ` <rap-welcome /> `,
 })
 export default class HomeComponent {}

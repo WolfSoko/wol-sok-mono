@@ -16,7 +16,7 @@ import { injectTrpcClient } from '../../trpc-client';
 const UPDATE_INTERVAL_MS = 5000;
 
 @Component({
-  selector: 'rollapolla-analog-analog-welcome',
+  selector: 'rap-welcome',
   standalone: true,
   imports: [AsyncPipe, FormsModule, NgFor, DatePipe, NgIf],
   styles: [
