@@ -13,6 +13,8 @@ import { interval, map, shareReplay, Subject, switchMap, take } from 'rxjs';
 import { Note } from '../../note';
 import { injectTrpcClient } from '../../trpc-client';
 
+const UPDATE_INTERVAL_MS = 5000;
+
 @Component({
   selector: 'rollapolla-analog-analog-welcome',
   standalone: true,
@@ -386,6 +388,7 @@ import { injectTrpcClient } from '../../trpc-client';
             name="newNote"
             [(ngModel)]="newNote"
             class="trpcInput"
+            maxlength="200"
           />
           <button class="lightBtn">+</button>
         </form>
@@ -395,7 +398,7 @@ import { injectTrpcClient } from '../../trpc-client';
             *ngFor="let note of notes; trackBy: noteTrackBy; let i = index"
           >
             <div class="note-head">
-              <p class="note-date">{{ note.createdAt | date }}</p>
+              <p class="note-date">{{ note.createdAt | date: 'medium' }}</p>
               <button class="noteDeleteBtn" (click)="removeNote(note.id)">
                 x
               </button>
@@ -435,7 +438,7 @@ export class AnalogWelcomeComponent {
     const ngZone: NgZone = inject(NgZone);
     if (isPlatformBrowser(platformId)) {
       ngZone.runOutsideAngular(() =>
-        interval(500)
+        interval(UPDATE_INTERVAL_MS)
           .pipe(takeUntilDestroyed())
           .subscribe(() => ngZone.run(() => this.triggerRefresh$.next()))
       );
