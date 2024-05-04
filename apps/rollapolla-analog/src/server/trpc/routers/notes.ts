@@ -4,7 +4,7 @@ import { publicProcedure, router } from '../trpc';
 
 let noteId = 0;
 const notes: Note[] = [];
-const MAX_NOTES = 10;
+const MAX_NOTES = 50;
 const NOTE_MAX_LENGTH = 200;
 export const noteRouter = router({
   create: publicProcedure
