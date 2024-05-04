@@ -353,23 +353,13 @@ const UPDATE_INTERVAL_MS = 5000;
             >Follow along on Twitter</a
           >
           <h1 class="intro-heading">
-            <span class="intro-analog">Analog.</span> The fullstack Angular
-            meta-framework
+            <span class="intro-analog">RollaPolla.com.</span>
+            Polls for everyone!
           </h1>
           <p class="intro-description">
             Analog is for building applications and websites with Angular.
             <br />Powered by Vite.
           </p>
-          <div class="btn-container">
-            <a class="darkBtn" href="https://analogjs.org">Read the docs</a>
-            <a
-              target="_blank"
-              rel="noreferrer"
-              class="lightBtn"
-              href="https://github.com/analogjs/analog"
-              >Star on GitHub</a
-            >
-          </div>
         </div>
       </section>
       <section id="trpc-demo" class="trpc-section">
