@@ -33,7 +33,7 @@
       "rules": {}
     },
     {
-      "files": ["e2e/**/*.{ts,tsx,js,jsx}"],
+      "files": ["e2e/**/*.{ts,js,tsx,jsx}"],
       "extends": ["plugin:playwright/recommended"],
       "rules": {}
     }

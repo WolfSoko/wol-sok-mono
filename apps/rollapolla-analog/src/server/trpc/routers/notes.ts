@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { publicProcedure, router } from '../trpc';
 import { Note } from '../../../note';
+import { publicProcedure, router } from '../trpc';
 
 let noteId = 0;
 const notes: Note[] = [];
@@ -11,13 +11,14 @@ export const noteRouter = router({
         note: z.string(),
       })
     )
-    .mutation(({ input }) =>
-      notes.push({
+    .mutation(({ input }) => {
+      const number: number = notes.push({
         id: noteId++,
         note: input.note,
         createdAt: new Date().toISOString(),
-      })
-    ),
+      });
+      return number;
+    }),
   list: publicProcedure.query(() => notes),
   remove: publicProcedure
     .input(

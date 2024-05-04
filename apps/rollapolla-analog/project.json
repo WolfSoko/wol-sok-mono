@@ -5,7 +5,6 @@
   "targets": {
     "build": {
       "executor": "@analogjs/platform:vite",
-
       "defaultConfiguration": "production",
       "configurations": {
         "development": {
@@ -24,7 +23,7 @@
       ],
       "options": {
         "main": "apps/rollapolla-analog/src/main.ts",
-        "configFile": "apps/rollapolla-analog/vite.config.ts",
+        "configFile": "apps/rollapolla-analog/vite.config.mts",
         "outputPath": "dist/apps/rollapolla-analog/client",
         "tsConfig": "apps/rollapolla-analog/tsconfig.app.json"
       }

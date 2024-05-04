@@ -1,10 +1,17 @@
-import { Component } from '@angular/core';
-import { AsyncPipe, DatePipe, NgFor, NgIf } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms';
 import { waitFor } from '@analogjs/trpc';
-import { shareReplay, Subject, switchMap, take } from 'rxjs';
-import { injectTrpcClient } from '../../trpc-client';
+import {
+  AsyncPipe,
+  DatePipe,
+  isPlatformBrowser,
+  NgFor,
+  NgIf,
+} from '@angular/common';
+import { Component, inject, NgZone, PLATFORM_ID } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule, NgForm } from '@angular/forms';
+import { interval, map, shareReplay, Subject, switchMap, take } from 'rxjs';
 import { Note } from '../../note';
+import { injectTrpcClient } from '../../trpc-client';
 
 @Component({
   selector: 'rollapolla-analog-analog-welcome',
@@ -415,6 +422,7 @@ export class AnalogWelcomeComponent {
   public triggerRefresh$ = new Subject<void>();
   public notes$ = this.triggerRefresh$.pipe(
     switchMap(() => this._trpc.note.list.query()),
+    map((res) => res.toReversed()),
     shareReplay(1)
   );
   public newNote = '';
@@ -422,6 +430,16 @@ export class AnalogWelcomeComponent {
   constructor() {
     void waitFor(this.notes$);
     this.triggerRefresh$.next();
+    const platformId = inject(PLATFORM_ID);
+    console.log(platformId, isPlatformBrowser(platformId));
+    const ngZone: NgZone = inject(NgZone);
+    if (isPlatformBrowser(platformId)) {
+      ngZone.runOutsideAngular(() =>
+        interval(500)
+          .pipe(takeUntilDestroyed())
+          .subscribe(() => ngZone.run(() => this.triggerRefresh$.next()))
+      );
+    }
   }
 
   public noteTrackBy = (index: number, note: Note) => {
