@@ -349,7 +349,7 @@ const UPDATE_INTERVAL_MS = 5000;
           <a
             class="intro-badge"
             target="_blank"
-            href="https://twitter.com/analogjs"
+            href="https://twitter.com/rollapolla"
             >Follow along on Twitter</a
           >
           <h1 class="intro-heading">
