@@ -356,9 +356,8 @@ const UPDATE_INTERVAL_MS = 5000;
             <span class="intro-analog">RollaPolla.com.</span>
             Polls for everyone!
           </h1>
-          <p class="intro-description">
-            Analog is for building applications and websites with Angular.
-            <br />Powered by Vite.
+          <p class="intro-description" data-testid="coming-soon">
+            Coming Soon!
           </p>
         </div>
       </section>
@@ -410,7 +409,7 @@ const UPDATE_INTERVAL_MS = 5000;
     </main>
   `,
 })
-export class AnalogWelcomeComponent {
+export class RollapollaWelcomeComponent {
   private _trpc = injectTrpcClient();
   public triggerRefresh$ = new Subject<void>();
   public notes$ = this.triggerRefresh$.pipe(

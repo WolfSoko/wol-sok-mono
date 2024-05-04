@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { RouterOutlet } from '@angular/router';
+import { expect } from '@playwright/test';
 
 @Component({
   selector: 'rollapolla-analog-root',
@@ -7,4 +9,8 @@ import { RouterOutlet } from '@angular/router';
   imports: [RouterOutlet],
   template: ` <router-outlet></router-outlet> `,
 })
-export class AppComponent {}
+export class AppComponent {
+  constructor(title: Title) {
+    title.setTitle('Polls for everyone | RollaPolla.com');
+  }
+}

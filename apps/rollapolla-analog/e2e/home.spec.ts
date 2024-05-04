@@ -10,3 +10,8 @@ test('has title', async ({ page }) => {
     })
   ).toBeVisible();
 });
+
+test('informs about coming soon', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByTestId('coming-soon')).toContainText('Coming Soon!');
+});
