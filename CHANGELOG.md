@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.20.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.19.4-deployed...v4.20.0) (2024-05-05)
+
+
+### Features
+
+* ✨ add rollapolla-analog as analogjs app ([289cd92](https://github.com/WolfSoko/wol-sok-mono/commit/289cd928792236db639eb848d33311560060da12))
+* ✨ add title and coming soon message ([4c1b90b](https://github.com/WolfSoko/wol-sok-mono/commit/4c1b90bf78830f15b7f2bb7f1a4fb340aa83cbcd))
+* ✨ add twitter link ([89c377e](https://github.com/WolfSoko/wol-sok-mono/commit/89c377e60ada11d51d7e86c28b4118dde7924dd0))
+* ✨ change title ([c3657f9](https://github.com/WolfSoko/wol-sok-mono/commit/c3657f99e2c48b1f820e37fa6a0c5b8b6bd5d02c))
+
+
+### Bug Fixes
+
+* 🐛 naming of components ([8d3b1c7](https://github.com/WolfSoko/wol-sok-mono/commit/8d3b1c75c57552370caeb51b72c8f623891e4702))
+* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.113.0 ([5b0c61c](https://github.com/WolfSoko/wol-sok-mono/commit/5b0c61cef4629db92b3d724ce0aef68aaf1365c5))
+
 ### [4.19.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.19.3-deployed...v4.19.4) (2024-05-04)
 
 
