@@ -19,7 +19,7 @@ describe('AppComponent', () => {
   it('should have as title "Polls for everyone | RollaPolla.com" ', () => {
     TestBed.createComponent(AppComponent);
     expect(TestBed.inject(Title).getTitle()).toEqual(
-      'Polls for everyone | RollaPolla.com'
+      'Polls for everyone | www.RollaPolla.com'
     );
   });
 });

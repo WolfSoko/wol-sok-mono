@@ -34,14 +34,6 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         vite: {
           inlineStylesExtension: 'scss',
         },
-        nitro: {
-          buildDir: '../../dist/apps/rollapolla-analog/.nitro',
-          routeRules: {
-            '/': {
-              prerender: true,
-            },
-          },
-        },
       }),
       nxViteTsPaths(),
       splitVendorChunkPlugin(),

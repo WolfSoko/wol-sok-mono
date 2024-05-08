@@ -3,7 +3,13 @@ import { Note } from '../../../note';
 import { publicProcedure, router } from '../trpc';
 
 let noteId = 0;
-const notes: Note[] = [];
+const initialMessage: Note = {
+  id: noteId++,
+  createdAt: new Date().toISOString(),
+  note: 'Hello RollaPolla users!',
+};
+const notes: Note[] = [initialMessage];
+
 const MAX_NOTES = 50;
 const NOTE_MAX_LENGTH = 200;
 export const noteRouter = router({
