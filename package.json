@@ -126,7 +126,7 @@
     "@nx/web": "18.3.4",
     "@nx/webpack": "18.3.4",
     "@nx/workspace": "18.3.4",
-    "@playwright/test": "^1.43.1",
+    "@playwright/test": "^1.44.0",
     "@schematics/angular": "17.3.3",
     "@storybook/addon-essentials": "7.6.19",
     "@storybook/addon-mdx-gfm": "7.6.19",
