@@ -176,7 +176,7 @@
     "jest-canvas-mock": "^2.5.2",
     "jest-environment-jsdom": "29.7.0",
     "jest-environment-node": "^29.7.0",
-    "jest-preset-angular": "14.0.3",
+    "jest-preset-angular": "14.0.4",
     "jest-transform-stub": "^2.0.0",
     "jsdom": "^24.0.0",
     "jsonc-eslint-parser": "^2.4.0",
