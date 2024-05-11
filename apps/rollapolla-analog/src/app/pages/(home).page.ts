@@ -6,6 +6,6 @@ import { RollapollaWelcomeComponent } from './rollapolla-welcome.component';
   selector: 'rap-home',
   standalone: true,
   imports: [RollapollaWelcomeComponent],
-  template: ` <rap-welcome /> `,
+  template: ` <rap-welcome></rap-welcome>`,
 })
 export default class HomeComponent {}

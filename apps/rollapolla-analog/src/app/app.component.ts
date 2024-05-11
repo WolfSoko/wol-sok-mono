@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RouterOutlet } from '@angular/router';
 
@@ -9,8 +9,7 @@ import { RouterOutlet } from '@angular/router';
   template: ` <router-outlet></router-outlet> `,
 })
 export class AppComponent {
-  constructor(title: Title) {
-    console.log('AppComponent');
-    title.setTitle('Polls for everyone | www.RollaPolla.com');
+  constructor() {
+    inject(Title).setTitle('Polls for everyone | www.RollaPolla.com');
   }
 }

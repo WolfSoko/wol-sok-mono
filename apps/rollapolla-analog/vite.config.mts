@@ -34,6 +34,13 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         vite: {
           inlineStylesExtension: 'scss',
         },
+        nitro: {
+          routeRules: {
+            '/': {
+              prerender: true,
+            },
+          },
+        },
       }),
       nxViteTsPaths(),
       splitVendorChunkPlugin(),

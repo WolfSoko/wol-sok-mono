@@ -1,0 +1,71 @@
+<main class="main">
+  <section class="intro-section">
+    <div class="intro-container">
+      <img
+        class="intro-logo"
+        src="https://analogjs.org/img/logos/analog-logo.svg"
+        alt="AnalogJs logo. Two red triangles and a white analog wave in front"
+      />
+      <a
+        class="intro-badge"
+        target="_blank"
+        href="https://twitter.com/rollapolla"
+        >Follow along on Twitter</a
+      >
+      <h1 class="intro-heading">
+        <span class="intro-analog">www.RollaPolla.com.</span>
+        Polls for everyone!
+      </h1>
+      <p class="intro-description" data-testid="coming-soon">Coming Soon!</p>
+    </div>
+  </section>
+  <section id="trpc-demo" class="trpc-section">
+    <div class="trpc-container">
+      <h2 class="trpc-heading">Leave a note</h2>
+      <p class="trpc-description">
+        This is an example of how you can use tRPC to superpower your
+        client-server interaction.
+      </p>
+    </div>
+    <form class="trpc-form" #f="ngForm" (ngSubmit)="addNote(f)">
+      <label class="sr-only" for="newNote"> Note </label>
+      <input
+        id="newNote"
+        autocomplete="off"
+        name="newNote"
+        [(ngModel)]="newNote"
+        class="trpcInput"
+      />
+      <button class="lightBtn">+</button>
+    </form>
+    @if (notes()) {
+      <div class="notes">
+        @for (note of notes(); track noteTrackBy; let i = $index) {
+          @if (note) {
+            <div class="note">
+              <div class="note-head">
+                <p class="note-date">{{ note.createdAt | date: "medium" }}</p>
+                <button class="noteDeleteBtn" (click)="removeNote(note.id)">
+                  x
+                </button>
+              </div>
+              <p class="note-note">{{ note.note }}</p>
+            </div>
+          }
+        }
+        @if (notes()?.length === 0) {
+          <div class="no-notes">
+            <h3 class="no-notes-headline">No notes yet!</h3>
+            <p class="no-notes-desc">
+              Add a new one and see them appear here...
+            </p>
+          </div>
+        }
+      </div>
+    } @else {
+      <ng-template #loading>
+        <p class="loading-text">Loading...</p>
+      </ng-template>
+    }
+  </section>
+</main>
