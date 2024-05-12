@@ -1,8 +1,7 @@
 import { waitFor } from '@analogjs/trpc';
 import { isPlatformBrowser } from '@angular/common';
-import { inject, NgZone, PLATFORM_ID, Signal } from '@angular/core';
+import { inject, NgZone, PLATFORM_ID } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { NgForm } from '@angular/forms';
 import {
   interval,
   map,
