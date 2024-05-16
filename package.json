@@ -54,7 +54,7 @@
     "@tensorflow/tfjs": "4.19.0",
     "@trpc/client": "^10.45.2",
     "@trpc/server": "^10.45.2",
-    "ace-builds": "1.33.1",
+    "ace-builds": "1.33.2",
     "akita-ng-fire": "7.0.1",
     "angulartics2": "13.0.0",
     "aws-cdk": "^2.141.0",
