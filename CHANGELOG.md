@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.22.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.13-deployed...v4.22.14) (2024-05-16)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency ace-builds to v1.33.2 ([275d458](https://github.com/WolfSoko/wol-sok-mono/commit/275d4589301d115c52de6c0f8a5d41f98754dfae))
+
 ### [4.22.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.12-deployed...v4.22.13) (2024-05-16)
 
 ### [4.22.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.11-deployed...v4.22.12) (2024-05-15)
