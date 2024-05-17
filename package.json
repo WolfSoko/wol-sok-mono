@@ -152,7 +152,7 @@
     "assemblyscript": "0.27.27",
     "autoprefixer": "^10.4.19",
     "aws-cdk-lib": "^2.141.0",
-    "aws-sdk": "2.1619.0",
+    "aws-sdk": "2.1620.0",
     "axios": "1.6.8",
     "chai": "5.1.1",
     "cross-env": "7.0.3",
