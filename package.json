@@ -141,7 +141,7 @@
     "@types/jasmine": "5.1.4",
     "@types/jasminewd2": "2.0.13",
     "@types/jest": "29.5.12",
-    "@types/lodash": "4.17.1",
+    "@types/lodash": "4.17.2",
     "@types/node": "^20.12.12",
     "@types/p5": "1.7.6",
     "@types/three": "0.164.0",
