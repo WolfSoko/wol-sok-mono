@@ -1,17 +1,22 @@
 <div class="about-container">
   <mat-card appearance="raised" wsSharedUiElevateCard class="title">
     <mat-card-header>
-      <mat-card-subtitle>Learning by playing and experimenting! </mat-card-subtitle>
+      <mat-card-subtitle
+        >Learning by playing and experimenting!
+      </mat-card-subtitle>
       <mat-card-title> What's this all about?</mat-card-title>
     </mat-card-header>
     <mat-card-content>
       <p>
-        This site contains a wide range of topics like webGl, AI, science-algorithms. It is implemented based on
-        Angular, but integrates a lot of other libraries.<br />
-        As a side effect I gain experience with state-of-the-art dev ops stuff. Continuous-Integration, -Delivery,
-        -Deployment<br />
+        This site contains a wide range of topics like webGl, AI,
+        science-algorithms. It is implemented based on Angular, but integrates a
+        lot of other libraries.<br />
+        As a side effect I gain experience with state-of-the-art dev ops stuff.
+        Continuous-Integration, -Delivery, -Deployment<br />
         Take a look at the sources on
-        <a target="_blank" href="https://github.com/WolfSoko/wol-sok-mono">github.com/WolfSoko</a>
+        <a target="_blank" href="https://github.com/WolfSoko/wol-sok-mono"
+          >github.com/WolfSoko</a
+        >
         <br />
       </p>
     </mat-card-content>
@@ -23,13 +28,13 @@
     <mat-card-content>
       <mat-nav-list>
         @for (route of routerLinks; track route) {
-        <app-nav-item
-          [path]="route.path"
-          [linkText]="route.data.linkText"
-          [subTitle]="route.data.subTitle"
-          (click)="openPage(route.path)"
-        >
-        </app-nav-item>
+          <app-nav-item
+            [path]="route.path"
+            [linkText]="route.data.linkText"
+            [subTitle]="route.data.subTitle"
+            (click)="openPage(route.path)"
+          >
+          </app-nav-item>
         }
       </mat-nav-list>
     </mat-card-content>

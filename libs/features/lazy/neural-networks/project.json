@@ -4,7 +4,7 @@
   "sourceRoot": "libs/features/lazy/neural-networks/src",
   "prefix": "lib",
   "projectType": "library",
-  "tags": [],
+  "tags": ["feature:lazy"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
@@ -30,7 +30,9 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "options": {
+        "args": ["./**/*.ts", "./**/*.html"]
+      }
     }
   }
 }

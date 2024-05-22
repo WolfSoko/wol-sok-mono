@@ -4,6 +4,7 @@
   "projectType": "library",
   "sourceRoot": "libs/features/lazy/bacteria-game/src",
   "prefix": "feat-lazy-bac-game",
+  "tags": ["feature:lazy"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
@@ -30,8 +31,9 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "options": {
+        "args": ["./**/*.ts", "./**/*.html"]
+      }
     }
-  },
-  "tags": ["feature:lazy"]
+  }
 }

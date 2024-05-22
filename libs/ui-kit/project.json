@@ -4,6 +4,7 @@
   "projectType": "library",
   "sourceRoot": "libs/ui-kit/src",
   "prefix": "sh",
+  "tags": ["ui", "shared"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
@@ -39,8 +40,9 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "options": {
+        "args": ["./**/*.ts", "./**/*.html"]
+      }
     }
-  },
-  "tags": ["ui", "shared"]
+  }
 }

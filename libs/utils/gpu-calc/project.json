@@ -4,6 +4,7 @@
   "projectType": "library",
   "sourceRoot": "libs/utils/gpu-calc/src",
   "prefix": "ws-utils-gpu-js",
+  "tags": ["shared"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
@@ -30,8 +31,9 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "options": {
+        "args": ["./**/*.ts"]
+      }
     }
-  },
-  "tags": ["shared"]
+  }
 }

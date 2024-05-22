@@ -4,6 +4,7 @@
   "sourceRoot": "libs/features/lazy/poisson/src",
   "prefix": "lazy-feat-poisson",
   "projectType": "library",
+  "tags": ["feature:lazy"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
@@ -29,8 +30,9 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "options": {
+        "args": ["./**/*.ts", "./**/*.html"]
+      }
     }
-  },
-  "tags": ["feature:lazy"]
+  }
 }

@@ -4,6 +4,8 @@
   "projectType": "library",
   "sourceRoot": "libs/fib-wasm-api/src",
   "prefix": "sh-api-fib-wasm",
+  "tags": ["api"],
+  "implicitDependencies": ["fib-wasm"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
@@ -30,9 +32,9 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "options": {
+        "args": ["./**/*.ts"]
+      }
     }
-  },
-  "implicitDependencies": ["fib-wasm"],
-  "tags": ["api"]
+  }
 }

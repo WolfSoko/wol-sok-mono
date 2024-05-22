@@ -4,6 +4,7 @@
   "projectType": "library",
   "sourceRoot": "libs/public/ws-thanos/src",
   "prefix": "ws",
+  "tags": ["shared", "published", "ui"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
@@ -22,7 +23,9 @@
       "defaultConfiguration": "production"
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "options": {
+        "args": ["./**/*.ts"]
+      }
     },
     "test": {
       "executor": "@angular-devkit/build-angular:karma",
@@ -32,6 +35,5 @@
         "karmaConfig": "libs/public/ws-thanos/karma.conf.js"
       }
     }
-  },
-  "tags": ["shared", "published", "ui"]
+  }
 }

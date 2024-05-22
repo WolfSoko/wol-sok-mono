@@ -4,6 +4,7 @@
   "projectType": "library",
   "sourceRoot": "libs/features/lazy/tensorflow-examples/src",
   "prefix": "feat-lazy-tensor",
+  "tags": ["feature:lazy"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
@@ -34,7 +35,9 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "options": {
+        "args": ["./**/*.ts", "./**/*.html"]
+      }
     },
     "component-test": {
       "executor": "@nx/cypress:cypress",
@@ -45,6 +48,5 @@
         "devServerTarget": "angular-examples:build"
       }
     }
-  },
-  "tags": ["feature:lazy"]
+  }
 }

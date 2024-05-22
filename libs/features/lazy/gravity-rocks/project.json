@@ -4,6 +4,7 @@
   "projectType": "library",
   "sourceRoot": "libs/features/lazy/gravity-rocks/src",
   "prefix": "feat-lz-gravity",
+  "tags": ["feature:lazy"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
@@ -30,7 +31,9 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "options": {
+        "args": ["./**/*.ts", "./**/*.html"]
+      }
     },
     "storybook": {
       "executor": "@storybook/angular:start-storybook",
@@ -82,6 +85,5 @@
         }
       }
     }
-  },
-  "tags": ["feature:lazy"]
+  }
 }

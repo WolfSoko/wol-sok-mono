@@ -3,6 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/features/reaction-diffusion-kernels/src",
   "projectType": "library",
+  "tags": ["feat-shared"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
@@ -23,9 +24,9 @@
       "defaultConfiguration": "production"
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "options": {
+        "args": ["./**/*.ts"]
+      }
     }
-  },
-  "tags": ["feat-shared"]
+  }
 }

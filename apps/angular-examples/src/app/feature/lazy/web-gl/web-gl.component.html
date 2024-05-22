@@ -1,10 +1,17 @@
 <mat-card appearance="raised" wsSharedUiElevateCard>
   <mat-card-header>
     <mat-card-title> Example for three.js. </mat-card-title>
-    <mat-card-subtitle> Just some objects, lights and a plane with a custom mandelbrot shader. </mat-card-subtitle>
+    <mat-card-subtitle>
+      Just some objects, lights and a plane with a custom mandelbrot shader.
+    </mat-card-subtitle>
   </mat-card-header>
   <mat-card-content class="content">
-    <canvas #webGlCanvas (mouseup)="mouseup$.emit($event)" (mousedown)="mousedown$.emit($event)"> </canvas>
+    <canvas
+      #webGlCanvas
+      (mouseup)="mouseup$.emit($event)"
+      (mousedown)="mousedown$.emit($event)"
+    >
+    </canvas>
   </mat-card-content>
   <mat-card-footer></mat-card-footer>
 </mat-card>

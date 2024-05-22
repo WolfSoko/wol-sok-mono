@@ -4,6 +4,7 @@
   "projectType": "library",
   "sourceRoot": "libs/features/lazy/reaction-diffusion/src",
   "prefix": "feat-lazy-react-diff",
+  "tags": ["feature:lazy"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
@@ -32,8 +33,9 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "options": {
+        "args": ["./**/*.ts", "./**/*.html"]
+      }
     }
-  },
-  "tags": ["feature:lazy"]
+  }
 }

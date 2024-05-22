@@ -3,6 +3,8 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/feat-lazy-gravity-rocks-e2e/src",
   "projectType": "application",
+  "tags": ["e2e", "storybook-e2e"],
+  "implicitDependencies": ["feat-lazy-gravity-rocks"],
   "targets": {
     "e2e": {
       "executor": "@nx/cypress:cypress",
@@ -18,10 +20,9 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "options": {
+        "args": ["./**/*.ts"]
+      }
     }
-  },
-  "tags": ["e2e", "storybook-e2e"],
-  "implicitDependencies": ["feat-lazy-gravity-rocks"]
+  }
 }

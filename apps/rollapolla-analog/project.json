@@ -2,6 +2,8 @@
   "name": "rollapolla-analog",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
+  "sourceRoot": "apps/rollapolla-analog/src",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@analogjs/platform:vite",
@@ -50,10 +52,9 @@
       "outputs": ["{projectRoot}/coverage"]
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "options": {
+        "args": ["./**/*.ts"]
+      }
     }
-  },
-  "tags": [],
-  "sourceRoot": "apps/rollapolla-analog/src"
+  }
 }

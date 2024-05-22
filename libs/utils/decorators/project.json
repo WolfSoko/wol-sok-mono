@@ -3,6 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/utils/decorators/src",
   "projectType": "library",
+  "tags": ["shared"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
@@ -21,8 +22,9 @@
       "defaultConfiguration": "production"
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "options": {
+        "args": ["./**/*.ts"]
+      }
     },
     "test": {
       "executor": "@nx/jest:jest",
@@ -32,6 +34,5 @@
         "codeCoverage": true
       }
     }
-  },
-  "tags": ["shared"]
+  }
 }

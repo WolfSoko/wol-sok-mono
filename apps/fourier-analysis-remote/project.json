@@ -4,6 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/fourier-analysis-remote/src",
   "prefix": "wolsok",
+  "tags": ["app", "type:remote"],
   "targets": {
     "build": {
       "executor": "@nx/angular:webpack-browser",
@@ -93,7 +94,9 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "options": {
+        "args": ["./**/*.ts", "./**/*.html"]
+      }
     },
     "test": {
       "executor": "@nx/jest:jest",
@@ -119,6 +122,5 @@
         }
       }
     }
-  },
-  "tags": ["app", "type:remote"]
+  }
 }

@@ -4,6 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/angular-examples/src",
   "prefix": "app",
+  "tags": ["app", "type:host"],
   "implicitDependencies": [
     "bacteria-game-remote",
     "fourier-analysis-remote",
@@ -128,7 +129,9 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "options": {
+        "args": ["./**/*.ts", "./**/*.html"]
+      }
     },
     "test": {
       "executor": "@nx/jest:jest",
@@ -139,6 +142,5 @@
         "codeCoverage": true
       }
     }
-  },
-  "tags": ["app", "type:host"]
+  }
 }

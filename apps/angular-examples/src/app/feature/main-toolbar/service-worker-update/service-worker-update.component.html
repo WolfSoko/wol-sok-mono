@@ -1,7 +1,13 @@
-@if (vm$ | async; as vm) { @if (vm.isLoading) {
-<span class="mat-caption"> Checking for new version </span>
-} @if (vm.isLoading) {
-<mat-spinner [diameter]="24"></mat-spinner>
-} @if (vm.updateAvailable) {
-<button color="warn" mat-raised-button (click)="activateUpdate()">Get new version!</button>
-} }
+@if (vm$ | async; as vm) {
+  @if (vm.isLoading) {
+    <span class="mat-caption"> Checking for new version </span>
+  }
+  @if (vm.isLoading) {
+    <mat-spinner [diameter]="24"></mat-spinner>
+  }
+  @if (vm.updateAvailable) {
+    <button color="warn" mat-raised-button (click)="activateUpdate()">
+      Get new version!
+    </button>
+  }
+}

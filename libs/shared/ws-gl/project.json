@@ -3,6 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/shared/ws-gl/src",
   "projectType": "library",
+  "tags": ["shared"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -15,8 +16,9 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "options": {
+        "args": ["./**/*.ts"]
+      }
     },
     "test": {
       "executor": "@nx/jest:jest",
@@ -25,6 +27,5 @@
         "jestConfig": "libs/shared/ws-gl/jest.config.ts"
       }
     }
-  },
-  "tags": ["shared"]
+  }
 }
