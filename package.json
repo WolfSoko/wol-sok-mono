@@ -155,7 +155,7 @@
     "autoprefixer": "^10.4.19",
     "aws-cdk-lib": "^2.142.1",
     "aws-sdk": "2.1623.0",
-    "axios": "1.6.8",
+    "axios": "1.7.0",
     "chai": "5.1.1",
     "cross-env": "7.0.3",
     "cypress": "^13.9.0",
