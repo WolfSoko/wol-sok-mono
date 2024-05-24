@@ -27,8 +27,8 @@
     "build:thanos": "nx build ws-thanos"
   },
   "peerDependencies": {
-    "@angular/common": "^17.2.2",
-    "@angular/core": "^17.2.2",
+    "@angular/common": "^18.0.0",
+    "@angular/core": "^18.0.0",
     "html2canvas": "^1.4.1"
   },
   "dependencies": {
