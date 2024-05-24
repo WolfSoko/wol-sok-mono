@@ -146,7 +146,7 @@
     "@types/lodash": "4.17.4",
     "@types/node": "^20.12.12",
     "@types/p5": "1.7.6",
-    "@types/three": "0.164.0",
+    "@types/three": "0.164.1",
     "@typescript-eslint/eslint-plugin": "7.10.0",
     "@typescript-eslint/parser": "7.10.0",
     "@vitest/coverage-v8": "1.6.0",
