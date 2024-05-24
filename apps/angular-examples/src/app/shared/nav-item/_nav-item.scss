@@ -16,7 +16,9 @@
   $accent-palette: map.get($color-config, accent);
   $warn-palette: map.get($color-config, warn);
 
-  @include theming-with-css-vars(mat.m2-get-color-from-palette($accent-palette, darker));
+  @include theming-with-css-vars(
+    mat.m2-get-color-from-palette($accent-palette, darker)
+  );
 }
 
 @mixin theme($mat-theme) {
