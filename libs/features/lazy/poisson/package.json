@@ -2,17 +2,17 @@
   "name": "feat-lazy-poisson",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "^17.3.0",
-    "@angular/core": "^17.3.0",
-    "@angular/router": "17.3.8",
+    "@angular/common": "^18.0.0",
+    "@angular/core": "^18.0.0",
+    "@angular/router": "18.0.0",
     "@ngneat/until-destroy": "10.0.0",
     "@wolsok/utils-math": "0.0.1",
     "rxjs": "7.8.1",
-    "@angular/fire": "17.0.1",
-    "@angular/material": "17.3.8",
+    "@angular/fire": "18.0.1",
+    "@angular/material": "18.0.0",
     "@wolsok/ui-kit": "0.0.1",
     "@wolsok/utils-measure-fps": "0.0.1",
-    "@angular/forms": "17.3.8"
+    "@angular/forms": "18.0.0"
   },
   "dependencies": {},
   "sideEffects": false
