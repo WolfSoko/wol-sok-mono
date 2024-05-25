@@ -34,56 +34,6 @@
       "options": {
         "args": ["./**/*.ts", "./**/*.html"]
       }
-    },
-    "storybook": {
-      "executor": "@storybook/angular:start-storybook",
-      "options": {
-        "port": 4400,
-        "configDir": "libs/features/lazy/gravity-rocks/.storybook",
-        "browserTarget": "feat-lazy-gravity-rocks:build-storybook",
-        "compodoc": false
-      },
-      "configurations": {
-        "ci": {
-          "quiet": true
-        }
-      }
-    },
-    "build-storybook": {
-      "executor": "@storybook/angular:build-storybook",
-      "outputs": ["{options.outputDir}"],
-      "options": {
-        "outputDir": "dist/storybook/feat-lazy-gravity-rocks",
-        "configDir": "libs/features/lazy/gravity-rocks/.storybook",
-        "browserTarget": "feat-lazy-gravity-rocks:build-storybook",
-        "styles": [
-          "node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css"
-        ],
-        "compodoc": false
-      },
-      "configurations": {
-        "ci": {
-          "quiet": true
-        }
-      }
-    },
-    "test-storybook": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "test-storybook -c libs/features/lazy/gravity-rocks/.storybook --url=http://localhost:4400"
-      }
-    },
-    "static-storybook": {
-      "executor": "@nx/web:file-server",
-      "options": {
-        "buildTarget": "feat-lazy-gravity-rocks:build-storybook",
-        "staticFilePath": "dist/storybook/feat-lazy-gravity-rocks"
-      },
-      "configurations": {
-        "ci": {
-          "buildTarget": "feat-lazy-gravity-rocks:build-storybook:ci"
-        }
-      }
     }
   }
 }
