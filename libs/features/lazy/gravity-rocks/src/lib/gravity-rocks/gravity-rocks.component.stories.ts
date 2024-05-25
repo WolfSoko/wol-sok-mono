@@ -1,7 +1,4 @@
-import {
-  BrowserAnimationsModule,
-  provideAnimations,
-} from '@angular/platform-browser/animations';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Meta, moduleMetadata, StoryFn } from '@storybook/angular';
 import { GravityRocksComponent } from './gravity-rocks.component';
 
