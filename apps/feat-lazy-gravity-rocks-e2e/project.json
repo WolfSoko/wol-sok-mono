@@ -6,19 +6,6 @@
   "tags": ["e2e", "storybook-e2e"],
   "implicitDependencies": ["feat-lazy-gravity-rocks"],
   "targets": {
-    "e2e": {
-      "executor": "@nx/cypress:cypress",
-      "options": {
-        "cypressConfig": "apps/feat-lazy-gravity-rocks-e2e/cypress.config.ts",
-        "devServerTarget": "feat-lazy-gravity-rocks:storybook",
-        "testingType": "e2e"
-      },
-      "configurations": {
-        "ci": {
-          "devServerTarget": "feat-lazy-gravity-rocks:static-storybook:ci"
-        }
-      }
-    },
     "lint": {
       "options": {
         "args": ["./**/*.ts"]
