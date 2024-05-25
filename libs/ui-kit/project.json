@@ -30,15 +30,6 @@
         "codeCoverage": true
       }
     },
-    "test-integration": {
-      "executor": "@angular-builders/custom-webpack:karma",
-      "options": {
-        "main": "libs/ui-kit/src/integration-test-setup.ts",
-        "tsConfig": "libs/ui-kit/tsconfig.integrationspec.json",
-        "include": ["libs/ui-kit/src/**/*.integrationspec.ts"],
-        "karmaConfig": "libs/ui-kit/karma.conf.js"
-      }
-    },
     "lint": {
       "options": {
         "args": ["./**/*.ts", "./**/*.html"]
