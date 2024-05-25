@@ -103,7 +103,8 @@
       },
       "defaultConfiguration": "development",
       "options": {
-        "publicHost": "http://localhost:4200"
+        "publicHost": "http://localhost:4200",
+        "devRemotes": []
       }
     },
     "serve-file": {
