@@ -7,5 +7,6 @@ export default defineConfig({
     ...nxE2EStorybookPreset(__dirname),
     supportFile: 'src/support/e2e.ts',
     testIsolation: false,
+    baseUrl: 'http://localhost:9009',
   },
 });
