@@ -115,7 +115,7 @@
     "@eslint/js": "~8.57.0",
     "@ngneat/spectator": "18.0.2",
     "@nx/angular": "19.1.0",
-    "@nx/cypress": "19.1.0",
+    "@nx/cypress": "^19.1.0",
     "@nx/devkit": "19.1.0",
     "@nx/esbuild": "19.1.0",
     "@nx/eslint": "19.1.0",
