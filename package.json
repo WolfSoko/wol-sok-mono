@@ -137,7 +137,7 @@
     "@storybook/core-common": "7.6.19",
     "@storybook/core-server": "7.6.19",
     "@storybook/jest": "^0.2.3",
-    "@storybook/test-runner": "0.18.1",
+    "@storybook/test-runner": "0.18.2",
     "@storybook/testing-library": "^0.2.2",
     "@swc-node/register": "1.9.1",
     "@swc/core": "~1.5.20",
