@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.22.71](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.70-deployed...v4.22.71) (2024-06-01)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update nx monorepo to v18.0.1 ([c74ac20](https://github.com/WolfSoko/wol-sok-mono/commit/c74ac2010315fe8ae1f8748ca4288b684557fd9c))
+
 ### [4.22.70](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.69-deployed...v4.22.70) (2024-06-01)
 
 ### [4.22.69](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.68-deployed...v4.22.69) (2024-06-01)
