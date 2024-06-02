@@ -1,5 +1,9 @@
-.main {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+.hero-title {
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.centered-content {
+  text-align: center;
 }
