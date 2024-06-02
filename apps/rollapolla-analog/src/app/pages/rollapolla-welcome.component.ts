@@ -1,13 +1,27 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { Component, Signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
+import { MatButtonModule, MatIconButton } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormField } from '@angular/material/form-field';
+import { MatIcon, MatIconModule } from '@angular/material/icon';
+import { MatInput, MatInputModule } from '@angular/material/input';
 import { Note } from '../../note';
 import { pollAdapter } from '../adapter/poll.adapter';
 
 @Component({
   selector: 'rap-welcome',
   standalone: true,
-  imports: [AsyncPipe, FormsModule, DatePipe],
+  imports: [
+    AsyncPipe,
+    FormsModule,
+    DatePipe,
+    MatFormField,
+    MatInputModule,
+    MatIconModule,
+    MatButtonModule,
+    MatCardModule,
+  ],
   styleUrl: './rollapolla-welcome.component.scss',
   templateUrl: './rollapolla-welcome.component.html',
 })

@@ -1,17 +1,65 @@
 @use '@angular/material' as mat;
+@import 'normalize.css/normalize.css';
+
 @include mat.core();
 
-$analog-primary: mat.m2-define-palette(mat.$m2-indigo-palette);
-$analog-accent: mat.m2-define-palette(mat.$m2-pink-palette, A200, A100, A400);
-$analog-warn: mat.m2-define-palette(mat.$m2-red-palette);
-$analog-theme: mat.m2-define-light-theme(
+$theme: mat.define-theme(
   (
     color: (
-      primary: $analog-primary,
-      accent: $analog-accent,
-      warn: $analog-warn,
+      theme-type: light,
+      primary: mat.$spring-green-palette,
     ),
   )
 );
 
-@include mat.all-component-themes($analog-theme);
+$dark-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: dark,
+      primary: mat.$spring-green-palette,
+    ),
+  )
+);
+
+html {
+  @include mat.core-theme($dark-theme);
+  @include mat.button-theme($dark-theme);
+  @include mat.form-field-theme($dark-theme);
+  @include mat.input-theme($dark-theme);
+  @include mat.card-theme($dark-theme);
+
+  // Apply the light theme only when the user prefers light themes.
+  @media (prefers-color-scheme: light) {
+    // Use the `-color` mixins to only apply color styles without reapplying the same
+    // typography and density styles.
+    @include mat.core-color($theme);
+    @include mat.button-color($theme);
+    @include mat.form-field-color($theme);
+    @include mat.input-color($theme);
+    @include mat.card-color($theme);
+  }
+}
+
+body,
+html {
+  * {
+    box-sizing: border-box;
+
+    &:before,
+    &:after {
+      box-sizing: border-box;
+    }
+  }
+}
+
+body {
+  margin: 0;
+  transition:
+    color,
+    background-color 500ms ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 1rem;
+}
