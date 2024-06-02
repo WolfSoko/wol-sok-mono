@@ -1,15 +1,15 @@
-<svg version='1.2' xmlns='http://www.w3.org/2000/svg'
-     width='376.000000pt' height='277.000000pt' viewBox='0 0 376.000000 277.000000'
-     preserveAspectRatio='xMidYMid meet'>
-<defs>
-  <linearGradient id='circle-gradient'>
-        <stop offset="0%" style="stop-color:rgb(221,228,114);stop-opacity:1" />
-        <stop offset="100%" style="stop-color:rgb(0,128,72);stop-opacity:1" />
-      </linearGradient>
-    </defs>
-  <g transform='translate(10,281) scale(0.1,-0.1)'
-     fill='#0D244B' stroke='none'>
-    <ellipse fill='url(#circle-gradient)' cx='1775' cy='1425' rx='1530' ry='1200'></ellipse>
+<svg height='277pt' preserveAspectRatio='xMidYMid meet'
+     viewBox='0 0 376 277' width='376pt'
+     xmlns='http://www.w3.org/2000/svg'>
+  <defs>
+    <linearGradient id='circle-gradient'>
+      <stop offset='0%' style='stop-color:rgb(221,228,114);stop-opacity:1' />
+      <stop offset='100%' style='stop-color:rgb(0,128,72);stop-opacity:1' />
+    </linearGradient>
+  </defs>
+  <g fill='#0D244B'
+     stroke='none' transform='translate(10,281) scale(0.1,-0.1)'>
+    <ellipse cx='1775' cy='1425' fill='url(#circle-gradient)' rx='1530' ry='1200'></ellipse>
     <path d='M1797 2214 c-12 -42 -18 -49 -53 -61 -21 -8 -45 -20 -53 -27 -11 -12
 -9 -17 17 -30 17 -9 37 -16 45 -16 24 0 37 -25 44 -79 6 -49 8 -52 32 -49 23
 3 27 9 33 50 8 59 11 64 45 73 34 8 73 32 73 45 0 5 -19 15 -42 21 -54 15 -64
@@ -37,7 +37,7 @@ c125 16 203 54 289 140 78 79 122 162 146 276 52 255 -106 515 -352 580 -89
 -46 15 -119 81 -144 130 -42 82 -34 194 19 267 15 21 52 52 82 68 51 29 60 30
 179 31 108 1 125 4 128 18 2 9 -3 28 -12 41 -23 35 -85 48 -186 41 -100 -8
 -124 2 -122 53 3 111 181 169 353 115z' />
-</g>
+    </g>
     <path d='M860 1535 l0 -115 89 0 c74 0 93 3 114 21 51 39 56 140 11 190 -15
 16 -32 19 -116 19 l-98 0 0 -115z' />
     <path d='M2580 1530 l0 -120 84 0 c76 0 87 3 115 26 61 51 63 129 4 189 -24
