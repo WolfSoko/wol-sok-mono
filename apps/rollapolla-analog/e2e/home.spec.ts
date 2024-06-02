@@ -9,9 +9,10 @@ test.describe('Home', () => {
     // Expect h1 to contain a substring.
     await expect(
       page.getByRole('heading', {
-        name: 'www.RollaPolla.com. Polls for everyone!',
+        name: 'RollaPolla',
       })
     ).toBeVisible();
+    await expect(page.getByText('Polls for everyone!')).toBeVisible();
   });
 
   test('informs about coming soon', async ({ page }) => {
