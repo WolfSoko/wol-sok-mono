@@ -156,7 +156,7 @@
     "@vitest/ui": "1.6.0",
     "assemblyscript": "0.27.27",
     "autoprefixer": "^10.4.19",
-    "aws-cdk-lib": "^2.143.0",
+    "aws-cdk-lib": "^2.143.1",
     "aws-sdk": "2.1630.0",
     "axios": "1.7.2",
     "chai": "5.1.1",
