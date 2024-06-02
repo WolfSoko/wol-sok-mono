@@ -3,7 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "apps/rollapolla-analog/src",
-  "tags": [],
+  "tags": ["app"],
   "targets": {
     "build": {
       "executor": "@analogjs/platform:vite",
