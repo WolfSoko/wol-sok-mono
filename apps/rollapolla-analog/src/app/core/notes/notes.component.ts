@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, Signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { Note } from '../../../shared/note';
-import { NotesRepoAdapter } from '../../adapter/notes-repo.adapter';
 import { NotesRepoPort } from '../../ports/notes-repo.port';
 import { NoteFormComponent } from './note-form.component';
 import { NotesListComponent } from './notes-list.component';

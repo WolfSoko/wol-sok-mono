@@ -1,8 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, input, output, OutputEmitterRef } from '@angular/core';
-import { MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
-import { MatList, MatListItem, MatListModule } from '@angular/material/list';
+import { MatListModule } from '@angular/material/list';
 import { Note } from '../../../shared/note';
 
 @Component({
