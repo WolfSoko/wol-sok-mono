@@ -27,6 +27,7 @@ html {
   @include mat.form-field-theme($dark-theme);
   @include mat.input-theme($dark-theme);
   @include mat.card-theme($dark-theme);
+  @include mat.list-theme($dark-theme);
 
   // Apply the light theme only when the user prefers light themes.
   @media (prefers-color-scheme: light) {
@@ -37,7 +38,10 @@ html {
     @include mat.form-field-color($theme);
     @include mat.input-color($theme);
     @include mat.card-color($theme);
+    @include mat.list-color($dark-theme);
   }
+
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
 
 body,

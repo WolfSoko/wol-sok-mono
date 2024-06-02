@@ -1,0 +1,28 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title> What polls are fun and interesting? </mat-card-title>
+    <mat-card-subtitle
+      >Please let us know, what the most interesting polls are for
+      you.</mat-card-subtitle
+    >
+  </mat-card-header>
+  <mat-card-content>
+    <rap-note-form (noteAdded)="addNote($event)"></rap-note-form>
+  </mat-card-content>
+</mat-card>
+<br />
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Users favourite polls</mat-card-title>
+    <mat-card-subtitle class="mat-caption"
+      >Thoughts of users. Live stream</mat-card-subtitle
+    >
+  </mat-card-header>
+  <mat-card-content>
+    <rap-notes-list
+      [notes]="notes()"
+      [noteTrackBy]="noteTrackBy"
+      (removeNote)="removeNote($event)"
+    ></rap-notes-list>
+  </mat-card-content>
+</mat-card>

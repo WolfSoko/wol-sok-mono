@@ -1,0 +1,38 @@
+<form class="trpc-form" [formGroup]="form" (ngSubmit)="addNote()">
+  <mat-form-field class="form-field">
+    <mat-label>Most fun poll</mat-label>
+    <textarea
+      data-testid="note-input"
+      rows="3"
+      matInput
+      formControlName="newNote"
+      name="newNote"
+      placeholder="Please share your thoughts"
+    ></textarea>
+    @if (form.value.newNote.length > 0) {
+      <mat-hint
+        >{{
+          "Input length: " + (form.value.newNote.length ?? 0) + "/" + MAX_LENGTH
+        }}
+      </mat-hint>
+    }
+    @if (form.controls.newNote.errors?.maxlength; as error) {
+      <mat-error
+        >Maximum length is {{ error.requiredLength }} characters
+      </mat-error>
+    }
+    @if (form.controls.newNote.errors?.minlength; as error) {
+      <mat-error
+        >Minimal length is {{ error.requiredLength }} chars required
+      </mat-error>
+    }
+  </mat-form-field>
+  <button
+    type="submit"
+    [disabled]="form.invalid"
+    mat-icon-button
+    title="Add note"
+  >
+    <mat-icon>add</mat-icon>
+  </button>
+</form>

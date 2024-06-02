@@ -6,9 +6,13 @@ test.describe('Leave a note', () => {
   });
 
   test('should provide a way to leave a note', async ({ page }) => {
-    const leaveNoteInput: Locator = await page.getByRole('textbox', {
-      name: 'Your note',
-    });
+    const leaveNoteInput: Locator = page.getByTestId('note-input');
     await expect(leaveNoteInput).toBeVisible();
+
+    await leaveNoteInput.fill('Hello, world!                  ');
+
+    await page.click('button[type="submit"]');
+
+    // await expect(page.getByTestId('note-note')).toContainText('Hello, world!');
   });
 });
