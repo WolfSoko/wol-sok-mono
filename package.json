@@ -143,7 +143,7 @@
     "@storybook/test-runner": "0.18.2",
     "@storybook/testing-library": "^0.2.2",
     "@swc-node/register": "1.9.1",
-    "@swc/core": "~1.5.22",
+    "@swc/core": "~1.5.23",
     "@swc/helpers": "~0.5.11",
     "@types/chai": "4.3.16",
     "@types/jasmine": "5.1.4",
