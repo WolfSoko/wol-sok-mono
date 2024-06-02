@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.24.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.23.0-deployed...v4.24.0) (2024-06-02)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ add logo ([a4de98c](https://github.com/WolfSoko/wol-sok-mono/commit/a4de98c20502b46233ba45a7b1426c1077c6262d))
+* **rollapolla-analog:** ✨ change title ([2ca79fc](https://github.com/WolfSoko/wol-sok-mono/commit/2ca79fca707658b59c53df18b6912c2bab3aa6d5))
+
 ## [4.23.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.79-deployed...v4.23.0) (2024-06-02)
 
 
