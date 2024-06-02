@@ -61,5 +61,13 @@ body {
   flex-direction: column;
   align-items: center;
   height: 100%;
+  width: 100%;
   padding: 1rem;
+
+  rap-root {
+    width: 100%;
+    max-width: 800px;
+    margin: auto;
+    height: 100%;
+  }
 }
