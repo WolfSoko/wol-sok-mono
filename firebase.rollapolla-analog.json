@@ -1,0 +1,19 @@
+{
+  "functions": {
+    "source": "dist/apps/rollapolla-analog/analog/server"
+  },
+  "hosting": [
+    {
+      "site": "rollapolla-v1",
+      "public": "dist/apps/rollapolla-analog/analog/public",
+
+      "cleanUrls": true,
+      "rewrites": [
+        {
+          "source": "**",
+          "function": "server"
+        }
+      ]
+    }
+  ]
+}

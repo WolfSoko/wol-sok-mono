@@ -2,7 +2,7 @@ import { AsyncPipe, DatePipe } from '@angular/common';
 import { Component, Signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Note } from '../../note';
-import { pollAdapter } from '../adapter/polll.adapter';
+import { pollAdapter } from '../adapter/poll.adapter';
 
 @Component({
   selector: 'rap-welcome',
@@ -13,7 +13,7 @@ import { pollAdapter } from '../adapter/polll.adapter';
 })
 export class RollapollaWelcomeComponent {
   newNote = '';
-  private pollAdapter = pollAdapter();
+  pollAdapter = pollAdapter();
   notes: Signal<Note[] | undefined> = this.pollAdapter.notes;
   noteTrackBy = this.pollAdapter.noteTrackBy;
 

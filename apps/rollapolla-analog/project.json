@@ -13,7 +13,7 @@
           "mode": "development"
         },
         "production": {
-          "sourcemap": false,
+          "sourcemap": true,
           "mode": "production"
         }
       },
@@ -24,9 +24,9 @@
         "{workspaceRoot}/dist/apps/rollapolla-analog/analog"
       ],
       "options": {
-        "main": "apps/rollapolla-analog/src/main.ts",
-        "configFile": "apps/rollapolla-analog/vite.config.mts",
-        "outputPath": "dist/apps/rollapolla-analog/client",
+        "main": "{projectRoot}/src/main.ts",
+        "configFile": "{projectRoot}/vite.config.mts",
+        "outputPath": "./dist/apps/rollapolla-analog/client",
         "tsConfig": "apps/rollapolla-analog/tsconfig.app.json"
       }
     },
@@ -54,6 +54,40 @@
     "lint": {
       "options": {
         "args": ["./**/*.ts"]
+      }
+    },
+    "firebase": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "firebase --config=firebase.{projectName}.json --project=rollapolla-v1"
+      },
+      "configurations": {
+        "production": {
+          "command": "firebase --config=firebase{projectName}.json"
+        }
+      }
+    },
+    "killports": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "kill-port --port 9099,5001,8080,9000,5000,8085,9199,9299,4000,4400,4500"
+      }
+    },
+    "emulate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run rollapolla-analog:killports",
+          "nx run rollapolla-analog:firebase emulators:start --import={projectRoot}/.emulators --export-on-exit"
+        ],
+        "parallel": false
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "command": "nx run rollapolla-analog:firebase deploy"
       }
     }
   }

@@ -5,6 +5,7 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import {
   ConfigEnv,
   defineConfig,
+  optimizeDeps,
   splitVendorChunkPlugin,
   UserConfig,
 } from 'vite';
@@ -12,13 +13,9 @@ import {
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   return {
-    root: __dirname,
+    root: 'apps/rollapolla-analog',
     publicDir: 'src/public',
     cacheDir: `../../node_modules/.vite`,
-    ssr: {
-      noExternal: ['@analogjs/trpc', '@trpc/server'],
-    },
-
     build: {
       outDir: '../../dist/apps/rollapolla-analog/client',
       reportCompressedSize: true,
@@ -36,8 +33,15 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         },
         nitro: {
           routeRules: {
-            '/': {
-              prerender: true,
+            '/': { prerender: true },
+          },
+          preset: 'firebase',
+          firebase: {
+            nodeVersion: '20',
+            gen: 2,
+            httpsOptions: {
+              region: 'europe-central2',
+              maxInstances: 100,
             },
           },
         },

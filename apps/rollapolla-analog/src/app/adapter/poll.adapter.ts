@@ -1,34 +1,37 @@
-import { waitFor } from '@analogjs/trpc';
 import { isPlatformBrowser } from '@angular/common';
-import { inject, NgZone, PLATFORM_ID } from '@angular/core';
+import {
+  inject,
+  NgZone,
+  PLATFORM_ID,
+  signal,
+  WritableSignal,
+} from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   interval,
   map,
   merge,
+  of,
   shareReplay,
   Subject,
   switchMap,
-  take,
 } from 'rxjs';
 import { Note } from '../../note';
-import { injectTrpcClient } from '../../trpc-client';
 
 const UPDATE_INTERVAL_MS = 5000;
 
 export const pollAdapter = () => {
-  const trpc = injectTrpcClient();
+  // const trpc = injectTrpcClient();
   const triggerRefresh$ = new Subject<void>();
   const optimisticUpdates$ = new Subject<Note[]>();
-
+  const notes: WritableSignal<Note[]> = signal([] as Note[]);
   const notes$ = triggerRefresh$.pipe(
-    switchMap(() => merge(optimisticUpdates$, trpc.note.list.query())),
+    switchMap(() => merge(optimisticUpdates$, of(notes()))),
     map((res) => res.toReversed()),
     shareReplay(1)
   );
 
   const platformId = inject(PLATFORM_ID);
-  void waitFor(notes$);
   triggerRefresh$.next();
   const ngZone: NgZone = inject(NgZone);
   if (isPlatformBrowser(platformId)) {
@@ -56,17 +59,17 @@ export const pollAdapter = () => {
         },
       ]);
 
-      trpc.note.create
-        .mutate({ note: newNote })
-        .pipe(take(1))
-        .subscribe(() => triggerRefresh$.next());
+      // trpc.note.create
+      //   .mutate({ note: newNote })
+      //   .pipe(take(1))
+      //   .subscribe(() => triggerRefresh$.next());
     },
 
     removeNote(id: number) {
-      trpc.note.remove
-        .mutate({ id })
-        .pipe(take(1))
-        .subscribe(() => triggerRefresh$.next());
+      // trpc.note.remove
+      //   .mutate({ id })
+      //   .pipe(take(1))
+      //   .subscribe(() => triggerRefresh$.next());
     },
   };
 };
