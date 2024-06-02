@@ -44,7 +44,6 @@ body,
 html {
   * {
     box-sizing: border-box;
-
     &:before,
     &:after {
       box-sizing: border-box;
@@ -54,13 +53,21 @@ html {
 
 body {
   margin: 0;
+  background: linear-gradient(
+    to bottom left,
+    #001a0d,
+    #00331a 70%,
+    #004d26 80%,
+    #006633 90%,
+    #008040
+  );
   transition:
     color,
     background-color 500ms ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100%;
+  height: 100vh;
   width: 100%;
   padding: 1rem;
 
