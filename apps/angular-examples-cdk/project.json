@@ -3,7 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "apps/angular-examples-cdk/src",
-  "tags": ["infra"],
+  "tags": ["infra", "cdk"],
   "implicitDependencies": ["angular-examples"],
   "targets": {
     "deploy": {

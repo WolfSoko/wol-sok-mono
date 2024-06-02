@@ -58,7 +58,8 @@ jobs:
 
       - name: Deploy CDK Apps
         run: |
-          npx nx affected --target=deploy -- --all --require-approval=never
+          npx nx affected --target=deploy --exclude='*,!tag:cdk' -- --all --require-approval=never
+          npx nx affected --target=deploy --exclude='tag:cdk'
 
       - name: Tag deployment success
         run: |
