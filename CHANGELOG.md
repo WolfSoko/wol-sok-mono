@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.23.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.79-deployed...v4.23.0) (2024-06-02)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ apply angular material style ([af6e77a](https://github.com/WolfSoko/wol-sok-mono/commit/af6e77a076afaee87248f4113f5b8c04dd60b6e4))
+
 ### [4.22.79](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.78-deployed...v4.22.79) (2024-06-02)
 
 ### [4.22.78](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.77-deployed...v4.22.78) (2024-06-02)
