@@ -51,7 +51,6 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     ],
     test: {
       globals: true,
-      cache: { dir: '../../node_modules/.vitest' },
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],
       include: ['src/**/*.spec.ts'],
