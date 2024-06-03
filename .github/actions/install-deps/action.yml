@@ -22,15 +22,14 @@ runs:
       if: inputs.apt-packages == 'true'
       shell: bash
       run: ./.github/actions/install-deps/install-ubuntu-packages.sh
+
+    # Setup pnpm
+    - uses: pnpm/action-setup@v4
+
     - uses: actions/setup-node@v4
       with:
         node-version-file: '.nvmrc'
         cache: pnpm
-
-    # Setup pnpm
-    - uses: pnpm/action-setup@v4
-      with:
-        version: 8
 
     - id: cache-cypress-binary
       if: inputs.cypress == 'true'
