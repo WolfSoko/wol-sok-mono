@@ -27,6 +27,11 @@ runs:
         node-version-file: '.nvmrc'
         cache: pnpm
 
+    # Setup pnpm
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 8
+
     - id: cache-cypress-binary
       if: inputs.cypress == 'true'
       uses: actions/cache@v4
