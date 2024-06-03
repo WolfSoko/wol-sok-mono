@@ -58,4 +58,4 @@ runs:
       shell: bash
       run: |
         pnpm i --ignore-scripts=${{ inputs.run-scripts == 'false' }}
-        npx playwright install --with-deps
+        pnpm playwright install --with-deps

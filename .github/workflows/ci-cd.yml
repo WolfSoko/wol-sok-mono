@@ -36,32 +36,29 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Connect your workspace on nx.app and uncomment this to enable task distribution.
-      # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "e2e-ci" targets have been requested
-      - run: npx nx-cloud start-ci-run --distribute-on=".nx/workflows/dynamic-changesets.yml" --stop-agents-after="e2e-ci"
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: 'npm'
       - name: Install Deps
         uses: ./.github/actions/install-deps
         with:
           cypress: false
+
+      # Connect your workspace on nx.app and uncomment this to enable task distribution.
+      # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "e2e-ci" targets have been requested
+      - run: pnpm nx-cloud start-ci-run --distribute-on=".nx/workflows/dynamic-changesets.yml" --stop-agents-after="e2e-ci"
+
       - uses: nrwl/nx-set-shas@v4
       # This line is needed for nx affected to work when CI is running on a PR
       - run: git branch --track main origin/main
         if: github.event_name == 'pull_request'
 
-      - run: npx nx-cloud record -- nx format:check
+      - run: pnpm nx-cloud record -- nx format:check
       - name: Run verification
         uses: JamesHenry/parallel-bash-commands@v1.0
         with:
-          cmd1: npx nx affected -t=\"build,lint,component-test\"
-          cmd2: npx nx affected -t=\"test,test-integration\" -c=ci
+          cmd1: pnpm nx affected -t=\"build,lint,component-test\"
+          cmd2: pnpm nx affected -t=\"test,test-integration\" -c=ci
           # running playwrights e2e test
-          cmd3: npx nx affected -t=e2e-ci
-      - run: npx nx-cloud stop-all-agents
+          cmd3: pnpm nx affected -t=e2e-ci
+      - run: pnpm nx-cloud stop-all-agents
         if: ${{ always() }}
       - name: Report Codecov
         if: github.ref_name == 'main' && hashFiles('coverage/**/*') != ''
@@ -75,7 +72,7 @@ jobs:
         if: github.ref_name == 'main'
         id: shouldTriggerRelease
         run: |
-          projects=$(npx nx show projects --affected -t deploy);
+          projects=$(pnpm nx show projects --affected -t deploy);
           echo $projects
           triggerRelease=$([[ -z $projects ]] && echo "false" || echo "true")
           echo "triggerRelease=$triggerRelease" >> $GITHUB_OUTPUT
