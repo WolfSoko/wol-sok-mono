@@ -10,10 +10,10 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class DbUtils {
-  addDoc = addDoc;
-  collectionData = collectionData;
-  getDocs = getDocs;
-  query = query;
-  updateDoc = updateDoc;
-  where = where;
+  addDoc: typeof addDoc = addDoc;
+  collectionData: typeof collectionData = collectionData;
+  getDocs: typeof getDocs = getDocs;
+  query: typeof query = query;
+  updateDoc: typeof updateDoc = updateDoc;
+  where: typeof where = where;
 }
