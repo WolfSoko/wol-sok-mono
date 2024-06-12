@@ -19,8 +19,8 @@
   },
   "private": true,
   "dependencies": {
-    "@analogjs/content": "1.4.0",
-    "@analogjs/router": "1.4.0",
+    "@analogjs/content": "1.5.0",
+    "@analogjs/router": "1.5.0",
     "@angular/animations": "18.0.1",
     "@angular/cdk": "18.0.1",
     "@angular/common": "18.0.1",
@@ -89,13 +89,14 @@
     "vega-embed": "6.25.0",
     "vega-lite": "5.18.1",
     "zod": "^3.23.8",
-    "zone.js": "0.14.6"
+    "zone.js": "0.14.6",
+    "marked-mangle": "^1.1.7"
   },
   "devDependencies": {
     "@ago-dev/nx-aws-cdk-v2": "1.6.1",
-    "@analogjs/platform": "1.4.0",
-    "@analogjs/vite-plugin-angular": "1.4.0",
-    "@analogjs/vite-plugin-nitro": "1.4.0",
+    "@analogjs/platform": "1.5.0",
+    "@analogjs/vite-plugin-angular": "1.5.0",
+    "@analogjs/vite-plugin-nitro": "1.5.0",
     "@angular-architects/native-federation": "^17.1.8",
     "@angular-builders/custom-webpack": "^17.0.2",
     "@angular-devkit/architect": "0.1800.2",
