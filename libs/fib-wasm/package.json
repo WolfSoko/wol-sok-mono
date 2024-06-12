@@ -2,7 +2,7 @@
   "name": "@wolsok/fib-wasm",
   "version": "0.0.1",
   "scripts": {
-    "build": "npm run build:production",
+    "build": "pnpm run build:production",
     "build:development": "npx asc ./src/assembly/index.ts --bindings ./index.d.ts --outFile ../../dist/libs/fib-wasm/untouched.wasm --textFile ../../dist/libs/fib-wasm/untouched.wat --sourceMap --importMemory --debug",
     "build:production": "npx asc ./src/assembly/index.ts --bindings ./index.d.ts --outFile ../../dist/libs/fib-wasm/optimized.wasm --textFile ../../dist/libs/fib-wasm/optimized.wat --sourceMap --importMemory --optimize"
   },

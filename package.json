@@ -3,6 +3,7 @@
   "version": "3.1.0",
   "license": "MIT",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "ng": "nx",
     "start": "nx serve",
     "start:prod": "cross-env NODE_OPTIONS=--max_old_space_size=12000 npm run start -- --configuration production --port=4300",
@@ -225,7 +226,12 @@
     "webpack-merge": "^5.10.0"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "^4.18.0"
+    "@rollup/rollup-linux-x64-gnu": "^4.18.0",
+    "@rollup/rollup-win32-x64-msvc": "^4.18.0",
+    "@nx/nx-darwin-arm64": "19.1.1",
+    "@nx/nx-darwin-x64": "19.1.1",
+    "@nx/nx-linux-x64-gnu": "19.1.1",
+    "@nx/nx-win32-x64-msvc": "19.1.1"
   },
   "akitaCli": {
     "customFolderName": "true",
