@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.28.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.27.1-deployed...v4.28.0) (2024-06-12)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ better wording for user input ([1b0da47](https://github.com/WolfSoko/wol-sok-mono/commit/1b0da471ff48fe4480ba9dfe5819ec768efd32ae))
+* **rollapolla-analog:** ✨ minor logo optimizations ([51865dd](https://github.com/WolfSoko/wol-sok-mono/commit/51865dd9db42b192cc6dc9de520b834b376a206b))
+
+
+### Bug Fixes
+
+* 🐛 update types of DbUtils ([be1f11a](https://github.com/WolfSoko/wol-sok-mono/commit/be1f11a871065632398eae857e599d746707e971))
+
 ### [4.27.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.27.0-deployed...v4.27.1) (2024-06-02)
 
 ## [4.27.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.26.0-deployed...v4.27.0) (2024-06-02)
