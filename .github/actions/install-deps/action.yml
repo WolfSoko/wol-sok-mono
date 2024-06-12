@@ -2,7 +2,7 @@ name: 'Install Dependencies'
 description: 'Installs all dependencies for this repo to run'
 inputs:
   run-scripts: # id of input
-    description: 'run pnpm install with --no-scripts flag'
+    description: 'run npm install with --no-scripts flag'
     required: false
     default: 'false'
   cypress:
@@ -25,27 +25,27 @@ runs:
     - uses: actions/setup-node@v4
       with:
         node-version-file: '.nvmrc'
-        cache: pnpm
-
-    - id: cache-cypress-binary
+        cache: npm
+    - name: Cache Cypress Binary
+      id: cache-cypress-binary
       if: inputs.cypress == 'true'
       uses: actions/cache@v4
       with:
         path: ${{ env.CYPRESS_CACHE_FOLDER }}
-        key: cypress-binary-${{ hashFiles('pnpm-lock.yaml') }}
+        key: cypress-binary-${{ hashFiles('package-lock.json') }}
     - name: Cache Playwright binaries
       id: cache-playwright-binary
       if: inputs.cypress == 'true'
       uses: actions/cache@v4
       with:
         path: ~/.cache/ms-playwright
-        key: playwright-binary-${{ hashFiles('pnpm-lock.yaml') }}
+        key: playwright-binary-${{ hashFiles('package-lock.json') }}
 
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress == 'false'
       shell: bash
       run: |
-        pnpm i --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+        npm install @nx/nx-linux-x64-gnu @rollup/rollup-linux-x64-gnu --ignore-scripts=${{ inputs.run-scripts == 'false' }}
       env:
         CYPRESS_INSTALL_BINARY: 0
 
@@ -53,5 +53,5 @@ runs:
       if: steps.cache.outputs.cache-hit != 'true' && inputs.cypress != 'false'
       shell: bash
       run: |
-        pnpm i --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+        npm install @nx/nx-linux-x64-gnu @rollup/rollup-linux-x64-gnu --ignore-scripts=${{ inputs.run-scripts == 'false' }}
         npx playwright install --with-deps
