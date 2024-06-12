@@ -10,3 +10,5 @@
 /.nx/cache
 .angular
 CHANGELOG.md
+
+/.nx/workspace-data

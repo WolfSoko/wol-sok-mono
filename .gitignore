@@ -50,6 +50,7 @@ Thumbs.db
 /cdk.context.json
 
 .nx/cache
+.nx/workspace-data
 
 storybook-static
 
