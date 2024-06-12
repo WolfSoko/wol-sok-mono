@@ -25,7 +25,7 @@ export default defineConfig({
   },
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'pnpm nx serve rollapolla-analog',
+    command: 'npx nx serve rollapolla-analog',
     url: 'http://localhost:4200',
     reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,

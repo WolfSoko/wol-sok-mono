@@ -1,5 +1,5 @@
 {
-  "app": "pnpm ts-node src/main.ts",
+  "app": "npx ts-node src/main.ts",
   "output": "../../dist/apps/angular-examples-cdk",
   "requireApproval": "never",
   "watch": {
