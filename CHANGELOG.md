@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.33.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.32.1-deployed...v4.33.0) (2024-06-15)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ moving background, better styling ([f0dae6b](https://github.com/WolfSoko/wol-sok-mono/commit/f0dae6b6a63b65693f673399007708fa3e3d5590))
+
 ### [4.32.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.32.0-deployed...v4.32.1) (2024-06-15)
 
 
