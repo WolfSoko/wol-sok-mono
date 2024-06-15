@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.32.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.31.0...v4.32.0) (2024-06-15)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ add ttl for notes ([e05a1d6](https://github.com/WolfSoko/wol-sok-mono/commit/e05a1d65fecb3417f20b9c0e240845df916a70c4))
+* **rollapolla-analog:** ✨ add ttl indices ([48b57e7](https://github.com/WolfSoko/wol-sok-mono/commit/48b57e7e729f1bd71e46e559b94ac8a2072734e4))
+
 ## [4.31.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.30.7-deployed...v4.31.0) (2024-06-15)
 
 
