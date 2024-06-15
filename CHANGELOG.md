@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.29.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.28.12...v4.29.0) (2024-06-15)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ add firebase store ([f3daa2b](https://github.com/WolfSoko/wol-sok-mono/commit/f3daa2bb07b9cf1ca7e88fda66c5040ab1053058))
+
+
+### Bug Fixes
+
+* 🐛 remove commonjs ([482c8ae](https://github.com/WolfSoko/wol-sok-mono/commit/482c8aec77bf4ef3f2bfbd3f5eb08cc694289403))
+* **shared-data-access:** 🐛 add rxjs to peerDeps ([5aa2664](https://github.com/WolfSoko/wol-sok-mono/commit/5aa2664b44030092145de7526ede097fecab1058))
+* **shared-data-access:** 🐛 remove injectable decorator ([5e03b84](https://github.com/WolfSoko/wol-sok-mono/commit/5e03b846fb0755966c995625d6ac5fc692b803c8))
+
 ### [4.28.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.28.11-deployed...v4.28.12) (2024-06-14)
 
 ### [4.28.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.28.10-deployed...v4.28.11) (2024-06-14)
