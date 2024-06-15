@@ -1,12 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AuthenticationService, AuthQuery } from '@wolsok/feat-api-auth';
-import {
-  CollectionReference,
-  DatabaseService,
-  DbUtils,
-  QueryConstraint,
-  Repo,
-} from '@wolsok/shared-data-access';
+import { DatabaseService, DbUtils, Repo } from '@wolsok/shared-data-access';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { ShaderCode } from '../model/shader-code.model';

@@ -1,11 +1,7 @@
 import { inject, Injectable, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-import {
-  addDoc,
-  CollectionReference,
-  Timestamp,
-} from '@angular/fire/firestore';
+import { Timestamp } from '@angular/fire/firestore';
 import { DatabaseService, Repo } from '@wolsok/shared-data-access';
 import { map } from 'rxjs';
 import { Note } from '../../shared/note';
