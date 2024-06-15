@@ -4,7 +4,6 @@
     {
       "collectionGroup": "notes",
       "fieldPath": "createdAt",
-      "ttl": false,
       "indexes": [
         {
           "order": "DESCENDING",

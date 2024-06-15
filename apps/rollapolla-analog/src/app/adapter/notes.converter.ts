@@ -7,11 +7,13 @@ import {
 import { Note } from '../../shared/note';
 import { NoteDto } from './note.dto';
 
+const SEVEN_DAYS: number = 1000 * 60 * 60 * 24 * 7;
 export const notesConverter: FirestoreDataConverter<Note, NoteDto> = {
   toFirestore(note: Note): NoteDto {
     return {
       note: note.note,
-      createdAt: Timestamp.fromDate(note.createdAt as Date),
+      createdAt: Timestamp.fromDate(note.createdAt),
+      ttl: Timestamp.fromMillis(SEVEN_DAYS),
     };
   },
   fromFirestore(
