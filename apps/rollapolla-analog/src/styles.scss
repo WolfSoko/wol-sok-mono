@@ -38,7 +38,7 @@ html {
     @include mat.form-field-color($theme);
     @include mat.input-color($theme);
     @include mat.card-color($theme);
-    @include mat.list-color($dark-theme);
+    @include mat.list-color($theme);
   }
 
   font-family: Roboto, 'Helvetica Neue', sans-serif;
@@ -58,16 +58,33 @@ html {
 body {
   margin: 0;
   background: linear-gradient(
-    to bottom left,
-    #001a0d,
-    #00331a 70%,
-    #004d26 80%,
-    #006633 90%,
-    #008040
-  );
-  transition:
-    color,
-    background-color 500ms ease;
+      to right,
+      #008040,
+      #006633 24%,
+      #004d26 27%,
+      #00331a 30%,
+      #001a0d 33.3333%,
+      #00331a 37%,
+      #004d26 40%,
+      #006633 43%,
+      #008040 66.66%,
+      #006633 91%,
+      #004d26 94%,
+      #00331a 97%,
+      #001a0d 100%
+    )
+    repeat-y;
+  background-size: 300% 100%;
+  animation: gradient-move 10s linear infinite;
+
+  @keyframes gradient-move {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 100% 50%;
+    }
+  }
   display: flex;
   flex-direction: column;
   align-items: center;

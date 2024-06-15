@@ -2,6 +2,12 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
+  h1 {
+    line-height: 1.2;
+    background: linear-gradient(to right, #ffc371, #ff5f6d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 }
 
 .centered-content {

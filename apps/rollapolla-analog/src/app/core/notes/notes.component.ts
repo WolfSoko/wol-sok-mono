@@ -11,7 +11,23 @@ import { NotesListComponent } from './notes-list.component';
   standalone: true,
   imports: [CommonModule, MatCardModule, NotesListComponent, NoteFormComponent],
   templateUrl: './notes.component.html',
-  styles: ``,
+  styles: `
+    :host {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: stretch;
+      align-items: start;
+    }
+    .form,
+    .notes {
+      flex: 1 1 calc(50% - 0.5rem);
+    }
+    .notes {
+      max-height: 480px;
+      overflow-y: auto;
+    }
+  `,
 })
 export class NotesComponent {
   pollAdapter = inject(NotesRepoPort);
