@@ -204,6 +204,7 @@
     "ng-packagr": "18.0.0",
     "node-gyp": "^10.1.0",
     "nx": "19.2.3",
+    "nx-cloud": "^19.0.0",
     "postcss": "8.4.38",
     "postcss-import": "16.1.0",
     "postcss-preset-env": "9.5.14",
