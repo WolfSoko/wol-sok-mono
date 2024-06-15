@@ -16,11 +16,8 @@
       ]
     }
   ],
-  "firestore": [
-    {
-      "database": "rollapolla-v1",
-      "rules": "apps/rollapolla-analog/firestore.rules",
-      "indexes": "apps/rollapolla-analog/firestore.default.indexes.json"
-    }
-  ]
+  "firestore": {
+    "rules": "apps/rollapolla-analog/firestore.rules",
+    "indexes": "apps/rollapolla-analog/firestore.default.indexes.json"
+  }
 }

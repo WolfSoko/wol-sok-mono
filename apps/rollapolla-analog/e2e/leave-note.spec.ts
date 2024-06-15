@@ -9,10 +9,10 @@ test.describe('Leave a note', () => {
     const leaveNoteInput: Locator = page.getByTestId('note-input');
     await expect(leaveNoteInput).toBeVisible();
 
-    await leaveNoteInput.fill('Hello, world!                  ');
+    await leaveNoteInput.fill('         Hello, world!          ');
 
     await page.click('button[type="submit"]');
 
-    // await expect(page.getByTestId('note-note')).toContainText('Hello, world!');
+    await expect(page.getByTestId('note-note')).toContainText('Hello, world!');
   });
 });

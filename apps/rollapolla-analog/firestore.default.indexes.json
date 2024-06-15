@@ -1,3 +1,16 @@
 {
-  "indexes": []
+  "indexes": [],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "notes",
+      "fieldPath": "createdAt",
+      "ttl": false,
+      "indexes": [
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        }
+      ]
+    }
+  ]
 }

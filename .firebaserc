@@ -1,5 +1,16 @@
 {
   "projects": {
     "default": "rollapolla-v1"
-  }
+  },
+  "targets": {
+    "rollapolla-v1": {
+      "database": {
+        "default": [
+          "default"
+        ]
+      }
+    }
+  },
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
 }

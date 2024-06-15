@@ -1,37 +1,34 @@
 import { inject, Injectable, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-import { Timestamp } from '@angular/fire/firestore';
-import { DatabaseService, Repo } from '@wolsok/shared-data-access';
-import { map } from 'rxjs';
+import {
+  addDoc,
+  collection,
+  collectionData,
+  CollectionReference,
+  Firestore,
+  limit,
+  orderBy,
+  query,
+} from '@angular/fire/firestore';
 import { Note } from '../../shared/note';
 import { NotesRepoPort } from '../ports/notes-repo.port';
-
-interface NoteDTO {
-  id: string;
-  note: string;
-  createdAt: Timestamp;
-}
+import { NoteDto } from './note.dto';
+import { notesConverter } from './notes.converter';
 
 @Injectable()
 export class NotesRepoAdapter extends NotesRepoPort {
-  private readonly db = inject(DatabaseService);
+  private readonly fs: Firestore = inject(Firestore);
   private readonly notes: Signal<Note[] | undefined>;
-  private readonly notesRepo: Repo<NoteDTO>;
+  private readonly notesCol: CollectionReference<Note, NoteDto>;
 
   constructor() {
     super();
-    this.notesRepo = this.db.createRepo<NoteDTO>('notes');
-    const notes$ = this.notesRepo.data$().pipe(
-      map((notes) =>
-        notes.map(
-          (note: NoteDTO) =>
-            ({
-              ...note,
-              createdAt: note.createdAt.toDate(),
-            }) as Note
-        )
-      )
+    this.notesCol = collection(this.fs, 'notes').withConverter<Note, NoteDto>(
+      notesConverter
+    );
+    const notes$ = collectionData(
+      query(this.notesCol, orderBy('createdAt', 'desc'), limit(20))
     );
     this.notes = toSignal(notes$, { rejectErrors: true });
   }
@@ -41,10 +38,11 @@ export class NotesRepoAdapter extends NotesRepoPort {
   }
 
   async addNote(note: string): Promise<void> {
-    const newNote: Omit<NoteDTO, 'id'> = {
+    const newNote: Note = {
+      id: '-1',
       note,
-      createdAt: Timestamp.now(),
+      createdAt: new Date(),
     };
-    await this.notesRepo.addDoc(newNote);
+    await addDoc(this.notesCol, newNote);
   }
 }
