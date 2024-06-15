@@ -1,19 +1,18 @@
 import { EnvironmentProviders } from '@angular/core';
 import {
+  FirebaseApp,
   FirebaseOptions,
-  initializeApp,
+  initializeServerApp,
   provideFirebaseApp,
 } from '@angular/fire/app';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
 import { environment } from '../../environments/environment';
 
-export type DataAccessOptions = FirebaseOptions;
-
-export function provideDataAccess(
+export function provideDataAccessServer(
   options: FirebaseOptions = environment.firebaseConfig
 ): EnvironmentProviders[] {
   return [
-    provideFirebaseApp(() => initializeApp(options)),
-    provideFirestore(() => getFirestore()),
+    provideFirebaseApp(() => initializeServerApp(options, {})),
+    provideFirestore((inject) => getFirestore(inject.get(FirebaseApp))),
   ];
 }
