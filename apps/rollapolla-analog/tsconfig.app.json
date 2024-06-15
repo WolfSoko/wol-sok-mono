@@ -11,5 +11,5 @@
     "src/app/routes/**/*.ts",
     "src/app/pages/**/*.page.ts"
   ],
-  "exclude": ["**/*.test.ts", "**/*.spec.ts"]
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/*.mock.ts"]
 }

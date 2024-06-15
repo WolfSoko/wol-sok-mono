@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Note } from '../../../shared/note';
-import { NotesRepoAdapter } from '../../adapter/notes-repo.adapter';
+import { NotesRepoAdapterMock } from '../../adapter/notes-repo.adapter.mock';
 import { NotesRepoPort } from '../../ports/notes-repo.port';
 import { NotesComponent } from './notes.component';
 
@@ -14,7 +14,7 @@ describe('NotesComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [NotesComponent, NoopAnimationsModule],
-      providers: [{ provide: NotesRepoPort, useClass: NotesRepoAdapter }],
+      providers: [{ provide: NotesRepoPort, useClass: NotesRepoAdapterMock }],
     }).compileComponents();
     createComponent();
   });
@@ -27,9 +27,9 @@ describe('NotesComponent', () => {
     vi.spyOn(TestBed.inject(NotesRepoPort), 'getNotes').mockReturnValue(
       signal<Note[]>([
         {
-          id: 1,
+          id: '1',
           note: 'What a nice poll!',
-          createdAt: new Date().toISOString(),
+          createdAt: new Date(),
         },
       ])
     );

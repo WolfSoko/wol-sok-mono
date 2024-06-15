@@ -11,5 +11,5 @@
     ]
   },
   "files": ["src/test-setup.ts"],
-  "include": ["src/**/*.spec.ts", "**/*.d.ts"]
+  "include": ["src/**/*.spec.ts", "src/**/*.mock.ts", "**/*.d.ts"]
 }
