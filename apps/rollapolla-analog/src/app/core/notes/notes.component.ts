@@ -16,11 +16,6 @@ import { NotesListComponent } from './notes-list.component';
 export class NotesComponent {
   pollAdapter = inject(NotesRepoPort);
   notes: Signal<Note[] | undefined> = this.pollAdapter.getNotes();
-  noteTrackBy = this.pollAdapter.noteTrackBy;
-
-  removeNote(id: number) {
-    this.pollAdapter.removeNote(id);
-  }
 
   addNote(note: string) {
     this.pollAdapter.addNote(note);

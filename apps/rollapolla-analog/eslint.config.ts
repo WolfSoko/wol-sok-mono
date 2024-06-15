@@ -2,7 +2,7 @@
 import { FlatCompat } from '@eslint/eslintrc';
 
 import js from '@eslint/js';
-import baseConfig1 from '../../eslint.base.config.js';
+
 import baseConfig from '../../eslint.config.js';
 
 const compat = new FlatCompat({
@@ -12,7 +12,6 @@ const compat = new FlatCompat({
 
 export default [
   ...baseConfig,
-  ...baseConfig1,
   ...compat
     .config({
       extends: [

@@ -27,7 +27,7 @@
         "main": "{projectRoot}/src/main.ts",
         "configFile": "{projectRoot}/vite.config.mts",
         "outputPath": "./dist/apps/rollapolla-analog/client",
-        "tsConfig": "apps/rollapolla-analog/tsconfig.app.json"
+        "tsConfig": "{projectRoot}/tsconfig.app.json"
       }
     },
     "serve": {

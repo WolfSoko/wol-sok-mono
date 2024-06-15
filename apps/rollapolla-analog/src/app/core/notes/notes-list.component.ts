@@ -7,7 +7,7 @@ import { Note } from '../../../shared/note';
   selector: 'rap-notes-list',
   template: `@if (notes()) {
       <mat-list data-testid="notes-list">
-        @for (note of notes(); track noteTrackBy(); let i = $index) {
+        @for (note of notes(); track note.id; let i = $index) {
           <mat-list-item>
             <span matListItemTitle data-testid="note-note">{{
               note.note
