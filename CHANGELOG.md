@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.34.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.34.0...v4.34.1) (2024-06-15)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency marked-gfm-heading-id to v4 ([2fadf27](https://github.com/WolfSoko/wol-sok-mono/commit/2fadf272024ff5a39e2ed0a08b23303fe3c7251e))
+
 ## [4.34.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.33.1...v4.34.0) (2024-06-15)
 
 
