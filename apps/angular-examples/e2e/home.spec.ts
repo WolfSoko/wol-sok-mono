@@ -6,6 +6,6 @@ test('has main title', async ({ page }) => {
   // Function helper example, see `../support/tensorflow-examples.po.ts` file
   const angularExamplesPage = new AngularExamplesPage(page);
   await expect(angularExamplesPage.mainTitle).toContainText(
-    'Angular Experiment'
+    'Angular Experiments'
   );
 });
