@@ -5,7 +5,7 @@ test.describe('Leave a note', () => {
     await page.goto('/');
   });
 
-  test('should provide a way to leave a note', async ({ page }) => {
+  test('should provide a way to leave a trimmed note', async ({ page }) => {
     const leaveNoteInput: Locator = page.getByTestId('note-input');
     await expect(leaveNoteInput).toBeVisible();
 
@@ -13,6 +13,8 @@ test.describe('Leave a note', () => {
 
     await page.click('button[type="submit"]');
 
-    await expect(page.getByTestId('note-note')).toContainText('Hello, world!');
+    await expect(page.getByTestId('note-note').first()).toContainText(
+      'Hello, world!'
+    );
   });
 });

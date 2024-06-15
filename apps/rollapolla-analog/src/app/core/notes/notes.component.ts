@@ -23,10 +23,6 @@ import { NotesListComponent } from './notes-list.component';
     .notes {
       flex: 1 1 calc(50% - 0.5rem);
     }
-    .notes {
-      max-height: 480px;
-      overflow-y: auto;
-    }
   `,
 })
 export class NotesComponent {
@@ -34,6 +30,6 @@ export class NotesComponent {
   notes: Signal<Note[] | undefined> = this.pollAdapter.getNotes();
 
   addNote(note: string) {
-    this.pollAdapter.addNote(note);
+    this.pollAdapter.addNote(note.trim());
   }
 }

@@ -45,6 +45,9 @@ export class NoteFormComponent {
   });
 
   addNote() {
+    const trimmedNote = this.form.value.newNote?.trim();
+    this.form.patchValue({ newNote: trimmedNote });
+
     if (!this.form.value.newNote || !this.form.valid) {
       this.form.markAllAsTouched();
       return;

@@ -6,7 +6,7 @@ import { Note } from '../../../shared/note';
 @Component({
   selector: 'rap-notes-list',
   template: `@if (notes()) {
-      <mat-list data-testid="notes-list">
+      <mat-list class="notes-list" data-testid="notes-list">
         @for (note of notes(); track note.id; let i = $index) {
           <mat-list-item>
             <span matListItemTitle data-testid="note-note">{{
@@ -27,7 +27,13 @@ import { Note } from '../../../shared/note';
         <p class="loading-text">Loading...</p>
       </ng-template>
     }`,
-  styles: ``,
+  styles: `
+    :host {
+      display: block;
+      max-height: 480px;
+      overflow-y: auto;
+    }
+  `,
   standalone: true,
   imports: [DatePipe, MatListModule],
 })
