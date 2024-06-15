@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.30.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.29.0...v4.30.0) (2024-06-15)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ add server mode for firebase ([ed19828](https://github.com/WolfSoko/wol-sok-mono/commit/ed198283eed8ffc3c6bb1a3f403667d80f416f10))
+
 ## [4.29.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.28.12...v4.29.0) (2024-06-15)
 
 
