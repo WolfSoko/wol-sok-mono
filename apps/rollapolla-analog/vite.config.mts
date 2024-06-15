@@ -37,7 +37,6 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         vite: {
           inlineStylesExtension: 'scss',
         },
-        ssr: false,
         nitro: {
           routeRules: {
             '/': { prerender: true },
