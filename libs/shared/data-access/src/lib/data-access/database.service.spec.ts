@@ -4,6 +4,7 @@ import { SpectatorService } from '@ngneat/spectator';
 import { createServiceFactory } from '@ngneat/spectator/jest';
 
 import { DatabaseService } from './database.service';
+import { Repo } from './repo.service';
 
 jest.mock('@angular/fire/firestore', () => ({
   ...jest.requireActual('@angular/fire/firestore'),
@@ -24,19 +25,18 @@ describe('DatabaseService', () => {
     expect(spectator.service).toBeTruthy();
   });
 
-  describe('collection method', () => {
+  describe('createRepo method', () => {
     it('should call firebase collection', () => {
-      spectator.service.collection('testPath');
-      const firstore = TestBed.inject(Firestore);
-      expect(collection as unknown).toHaveBeenCalledWith(firstore, 'testPath');
+      spectator.service.createRepo('testPath');
+      const firestore = TestBed.inject(Firestore);
+      expect(collection as unknown).toHaveBeenCalledWith(firestore, 'testPath');
     });
 
-    it('should return the collectionRef', () => {
+    it('should return the repo', () => {
       const colRefResult = { test: 'test123' };
       (collection as jest.Mock).mockReturnValue(colRefResult);
-      const collectionReference: unknown =
-        spectator.service.collection('testPath');
-      expect(collectionReference).toEqual(colRefResult);
+      const repo: Repo<unknown> = spectator.service.createRepo('testPath');
+      expect(repo).toBeInstanceOf(Repo);
     });
   });
 });
