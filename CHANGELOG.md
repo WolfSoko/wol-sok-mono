@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.31.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.30.7-deployed...v4.31.0) (2024-06-15)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ add firebase indices ([c0f2098](https://github.com/WolfSoko/wol-sok-mono/commit/c0f20986ce18e4f74b2e256564d0d23794e9be41))
+
 ### [4.30.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.30.6-deployed...v4.30.7) (2024-06-15)
 
 ### [4.30.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.30.5-deployed...v4.30.6) (2024-06-15)
