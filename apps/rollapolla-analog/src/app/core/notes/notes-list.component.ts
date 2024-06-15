@@ -33,8 +33,4 @@ import { Note } from '../../../shared/note';
 })
 export class NotesListComponent {
   notes = input<Note[]>();
-  noteTrackBy = input<(index: number, note: Note) => string | number>(
-    (index, note) => index
-  );
-  removeNote: OutputEmitterRef<number> = output<number>();
 }
