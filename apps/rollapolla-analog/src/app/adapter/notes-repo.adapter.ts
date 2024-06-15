@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 import { Timestamp } from '@angular/fire/firestore';
 import { DatabaseService, Repo } from '@wolsok/shared-data-access';
-import { map } from 'rxjs';
+import { catchError, map } from 'rxjs';
 import { Note } from '../../shared/note';
 import { NotesRepoPort } from '../ports/notes-repo.port';
 
@@ -33,7 +33,7 @@ export class NotesRepoAdapter extends NotesRepoPort {
         )
       )
     );
-    this.notes = toSignal(notes$);
+    this.notes = toSignal(notes$, { rejectErrors: true });
   }
 
   getNotes(): Signal<Note[] | undefined> {
