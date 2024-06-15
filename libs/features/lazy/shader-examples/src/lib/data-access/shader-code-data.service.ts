@@ -5,6 +5,7 @@ import {
   DatabaseService,
   DbUtils,
   QueryConstraint,
+  Repo,
 } from '@wolsok/shared-data-access';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
@@ -32,19 +33,14 @@ export class ShaderCodeDataService {
   }
 
   private observeShaderCollection(
-    shaderCollectionPath: string,
-    ...queryConstraints: QueryConstraint[]
+    shaderCollectionPath: string
   ): Observable<ShaderCode[]> {
     const shaderColRef = this.getShaderCollection(shaderCollectionPath);
-    return this.dbUtils.collectionData<ShaderCode>(
-      this.dbUtils.query(shaderColRef, ...queryConstraints)
-    );
+    return shaderColRef.data$();
   }
 
-  private getShaderCollection(
-    shaderCollectionPath: string
-  ): CollectionReference<ShaderCode> {
-    return this.db.collection<ShaderCode>(shaderCollectionPath);
+  private getShaderCollection(shaderCollectionPath: string): Repo<ShaderCode> {
+    return this.db.createRepo<ShaderCode>(shaderCollectionPath);
   }
 
   streamShaders(): Observable<ShaderCode[]> {
@@ -68,25 +64,22 @@ export class ShaderCodeDataService {
     shader: ShaderCode,
     changedShader: Partial<ShaderCode>
   ): Promise<ShaderCode> {
-    const shaderByIdQuery = this.getShaderCollection(
+    const shaderByIdRepo = this.getShaderCollection(
       `angularExamples/shaderExamples/${this.userUid()}`
     );
 
-    const shaderToUpdateDocRef = (
-      await this.dbUtils.getDocs(
-        this.dbUtils.query(
-          shaderByIdQuery,
-          this.dbUtils.where('id', '==', shader.id)
-        )
-      )
-    ).docs[0]?.ref;
+    const shaderToUpdateDocRef = await shaderByIdRepo.queryFirst(
+      'id',
+      '==',
+      shader.id
+    );
 
     const newShader = { ...shader, ...changedShader };
     if (shaderToUpdateDocRef == null) {
-      await this.dbUtils.addDoc(shaderByIdQuery, newShader);
+      await shaderByIdRepo.addDoc(newShader);
       return newShader;
     }
-    await this.dbUtils.updateDoc(shaderToUpdateDocRef, newShader);
+    await shaderByIdRepo.updateDoc(shaderToUpdateDocRef, newShader);
     return newShader;
   }
 

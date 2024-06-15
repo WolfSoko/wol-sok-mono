@@ -1,15 +1,20 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { collection, Firestore } from '@angular/fire/firestore';
 import { CollectionReference } from './database-types';
+import { Repo } from './repo.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DatabaseService {
-  constructor(private readonly firestore: Firestore) {}
+  private readonly firestore = inject(Firestore);
+
+  createRepo<T>(path: string): Repo<T> {
+    return new Repo<T>(this.collection(path));
+  }
 
   // delegate all calls to firestore
-  collection<T>(path: string): CollectionReference<T> {
+  private collection<T>(path: string): CollectionReference<T> {
     return collection(this.firestore, path) as CollectionReference<T>;
   }
 }
