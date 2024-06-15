@@ -30,11 +30,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       },
     },
     ssr: {
-      noExternal: [
-        'firebase/**',
-        'firebase-functions/**',
-        'firebase-admin/**',
-      ],
+      noExternal: ['firebase/**', 'firebase-functions/**', 'firebase-admin/**'],
     },
     plugins: [
       analog({
