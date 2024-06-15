@@ -1,4 +1,3 @@
-import { Injectable } from '@angular/core';
 import {
   addDoc,
   collectionData,
@@ -12,7 +11,6 @@ import {
 import { type Observable } from 'rxjs';
 import { type CollectionReference } from './database-types';
 
-@Injectable()
 export class Repo<T> {
   constructor(private readonly col: CollectionReference<T>) {}
 
