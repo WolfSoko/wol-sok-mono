@@ -2,15 +2,15 @@ import { Injectable } from '@angular/core';
 import {
   addDoc,
   collectionData,
-  DocumentData,
-  DocumentReference,
+  type DocumentData,
+  type DocumentReference,
   getDocs,
   query,
   updateDoc,
   where,
 } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
-import { CollectionReference } from './database-types';
+import { type Observable } from 'rxjs';
+import { type CollectionReference } from './database-types';
 
 @Injectable()
 export class Repo<T> {

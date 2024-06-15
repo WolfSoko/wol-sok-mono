@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { collection, Firestore } from '@angular/fire/firestore';
-import { CollectionReference } from './database-types';
+import { type CollectionReference } from './database-types';
 import { Repo } from './repo.service';
 
 @Injectable({

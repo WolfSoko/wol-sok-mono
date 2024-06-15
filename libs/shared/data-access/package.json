@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/core": "^18.0.0",
-    "@angular/fire": "^18.0.1"
+    "@angular/fire": "^18.0.1",
+    "rxjs": "^7.8.1"
   },
   "sideEffects": false
 }
