@@ -97,7 +97,7 @@
   },
   "devDependencies": {
     "@ago-dev/nx-aws-cdk-v2": "1.6.1",
-    "@angular-architects/native-federation": "^17.1.8",
+    "@angular-architects/native-federation": "^18.0.2",
     "@angular-builders/custom-webpack": "^17.0.2",
     "@angular-devkit/architect": "0.1800.3",
     "@angular-devkit/build-angular": "18.0.3",
