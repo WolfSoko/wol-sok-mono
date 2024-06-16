@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.35.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.34.4-deployed...v4.35.0) (2024-06-16)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ add ctrl Enter for send note ([65727f0](https://github.com/WolfSoko/wol-sok-mono/commit/65727f099b8063e6ca6afc75d7c7e9f6aa8d0bec))
+
 ### [4.34.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.34.3-deployed...v4.34.4) (2024-06-16)
 
 
