@@ -9,12 +9,25 @@ test.describe('Leave a note', () => {
     const leaveNoteInput: Locator = page.getByTestId('note-input');
     await expect(leaveNoteInput).toBeVisible();
 
-    await leaveNoteInput.fill('         Hello, world!          ');
+    const message = `         Hello, world!${Math.random()}        `;
+    await leaveNoteInput.fill(message);
 
     await page.click('button[type="submit"]');
 
     await expect(page.getByTestId('note-note').first()).toContainText(
-      'Hello, world!'
+      message.trim()
     );
+  });
+
+  test('should send note by keypress CTRL+ENTER', async ({ page }) => {
+    const leaveNoteInput: Locator = page.getByTestId('note-input');
+    await expect(leaveNoteInput).toBeVisible();
+
+    const message = `Hello World from Playwright ${Math.random()}`;
+    await leaveNoteInput.fill(message);
+
+    await leaveNoteInput.press('Control+Enter');
+
+    await expect(page.getByTestId('note-note').first()).toContainText(message);
   });
 });
