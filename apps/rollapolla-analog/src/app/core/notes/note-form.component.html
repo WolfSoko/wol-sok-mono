@@ -1,4 +1,8 @@
-<form [formGroup]="form" (ngSubmit)="addNote()">
+<form
+  [formGroup]="form"
+  (ngSubmit)="addNote()"
+  (keyup)="$event.ctrlKey && $event.key === 'Enter' ? addNote() : false"
+>
   <mat-form-field class="form-field">
     <mat-label>Most fun poll</mat-label>
     <textarea
@@ -9,6 +13,7 @@
       name="newNote"
       placeholder="Please share your thoughts"
     ></textarea>
+    <mat-hint>Press Ctrl+Enter to send</mat-hint>
     @if (form.value.newNote.length > 0) {
       <mat-hint
         >{{
@@ -27,12 +32,8 @@
       </mat-error>
     }
   </mat-form-field>
-  <button
-    type="submit"
-    [disabled]="form.invalid"
-    mat-icon-button
-    title="Add note"
-  >
+  <button type="submit" [disabled]="form.invalid" mat-button title="Add note">
+    Send note
     <mat-icon>add</mat-icon>
   </button>
 </form>
