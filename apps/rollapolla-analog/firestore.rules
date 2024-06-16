@@ -14,9 +14,10 @@ service cloud.firestore {
       allow read, write: if request.time < timestamp.date(2024, 7, 14);
     }
     match /notes/{noteId} {
-      allow create, update: if request.resource.data.createdAt is timestamp;
-      allow create, update: if request.resource.data.ttl is timestamp && request.resource.data.ttl > request.resource.data.createdAt;
-      allow create, update: if request.resource.data.note.size() > 9;
+      allow create, update: if request.resource.data.createdAt is timestamp &&
+          request.resource.data.ttl is timestamp &&
+          request.resource.data.ttl > request.resource.data.createdAt &&
+          request.resource.data.note.size() > 9;
     }
   }
 }
