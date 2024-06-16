@@ -13,7 +13,7 @@ export const notesConverter: FirestoreDataConverter<Note, NoteDto> = {
     return {
       note: note.note,
       createdAt: Timestamp.fromDate(note.createdAt),
-      ttl: Timestamp.fromMillis(SEVEN_DAYS),
+      ttl: Timestamp.fromMillis(note.createdAt.getTime() + SEVEN_DAYS),
     };
   },
   fromFirestore(
