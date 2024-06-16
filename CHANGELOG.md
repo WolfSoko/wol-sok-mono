@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.34.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.34.3-deployed...v4.34.4) (2024-06-16)
+
+
+### Bug Fixes
+
+* **rollapolla-analog:** 🐛 firestore rules ([93cb4a6](https://github.com/WolfSoko/wol-sok-mono/commit/93cb4a6406df2e73c696d596d4009fc18ee34e18))
+* **rollapolla-analog:** 🐛 firestore ttl ([9f4d186](https://github.com/WolfSoko/wol-sok-mono/commit/9f4d1862d50db336de63b39c469ab19b8770d8b9))
+
 ### [4.34.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.34.2-deployed...v4.34.3) (2024-06-16)
 
 ### [4.34.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.34.1-deployed...v4.34.2) (2024-06-16)
