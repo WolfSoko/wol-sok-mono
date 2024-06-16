@@ -12,7 +12,7 @@ test.describe('Home', () => {
         name: 'RollaPolla',
       })
     ).toBeVisible();
-    await expect(page.getByText('Polls for everyone!')).toBeVisible();
+    await expect(page.getByText('Easy Polling for Everyone!')).toBeVisible();
   });
 
   test('informs about coming soon', async ({ page }) => {

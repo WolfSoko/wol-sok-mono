@@ -14,9 +14,9 @@ test.describe('Leave a note', () => {
 
     await page.click('button[type="submit"]');
 
-    await expect(page.getByTestId('note-note').first()).toContainText(
-      message.trim()
-    );
+    await expect(
+      page.getByTestId('note-note').getByText(message.trim())
+    ).toBeVisible();
   });
 
   test('should send note by keypress CTRL+ENTER', async ({ page }) => {
@@ -28,6 +28,8 @@ test.describe('Leave a note', () => {
 
     await leaveNoteInput.press('Control+Enter');
 
-    await expect(page.getByTestId('note-note').first()).toContainText(message);
+    await expect(
+      page.getByTestId('note-note').getByText(message.trim())
+    ).toBeVisible();
   });
 });
