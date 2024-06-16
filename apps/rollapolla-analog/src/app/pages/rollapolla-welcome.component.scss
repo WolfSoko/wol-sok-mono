@@ -1,15 +1,16 @@
+h1 {
+  background: linear-gradient(to right, #ffc371, #ff5f6d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+}
 .hero-title {
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  h1 {
-    background: linear-gradient(to right, #ffc371, #ff5f6d);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
 }
 
-.centered-content {
+.text-centered {
   text-align: center;
 }
 
