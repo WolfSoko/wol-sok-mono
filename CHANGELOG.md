@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.36.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.35.1-deployed...v4.36.0) (2024-06-16)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ enable material typography ([c51b55e](https://github.com/WolfSoko/wol-sok-mono/commit/c51b55e1c67bfbb970190b9cb038a0f0f094e38f))
+
 ### [4.35.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.35.0-deployed...v4.35.1) (2024-06-16)
 
 ## [4.35.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.34.4-deployed...v4.35.0) (2024-06-16)
