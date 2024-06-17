@@ -1,3 +1,4 @@
+import { provideExperimentalZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
@@ -7,6 +8,7 @@ describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [RouterModule, AppComponent],
+      providers: [provideExperimentalZonelessChangeDetection()],
     }).compileComponents();
   });
 
@@ -19,7 +21,7 @@ describe('AppComponent', () => {
   it('should have as title "Polls for everyone | RollaPolla.com" ', () => {
     TestBed.createComponent(AppComponent);
     expect(TestBed.inject(Title).getTitle()).toEqual(
-      'Polls for everyone | www.RollaPolla.com'
+      'Polls for everyone | RollaPolla.com'
     );
   });
 });

@@ -1,4 +1,7 @@
-import { signal } from '@angular/core';
+import {
+  provideExperimentalZonelessChangeDetection,
+  signal,
+} from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -14,7 +17,10 @@ describe('NotesComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [NotesComponent, NoopAnimationsModule],
-      providers: [{ provide: NotesRepoPort, useClass: NotesRepoAdapterMock }],
+      providers: [
+        provideExperimentalZonelessChangeDetection(),
+        { provide: NotesRepoPort, useClass: NotesRepoAdapterMock },
+      ],
     }).compileComponents();
     createComponent();
   });

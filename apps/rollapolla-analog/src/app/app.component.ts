@@ -10,6 +10,6 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   constructor() {
-    inject(Title).setTitle('Polls for everyone | www.RollaPolla.com');
+    inject(Title).setTitle('Polls for everyone | RollaPolla.com');
   }
 }
