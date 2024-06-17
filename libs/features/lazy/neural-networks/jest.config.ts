@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
   displayName: 'neural-networks',
   preset: '../../../../jest.preset.js',
