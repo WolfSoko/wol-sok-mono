@@ -16,13 +16,7 @@
       },
       "configurations": {
         "development": {
-          "mode": "development",
-          "fileReplacements": [
-            {
-              "replace": "{projectRoot}/src/environments/environment.ts",
-              "with": "{projectRoot}/src/environments/environment.develop.ts"
-            }
-          ]
+          "mode": "development"
         },
         "production": {
           "sourcemap": true,
