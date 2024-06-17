@@ -1,6 +1,5 @@
-import { DataAccessOptions } from '@wolsok/shared-data-access';
-
-export const dataAccessOptions: DataAccessOptions = {
+import { FirebaseOptions } from '@angular/fire/app';
+export const dataAccessOptions: FirebaseOptions = {
   apiKey: 'AIzaSyC_xYS5_BoMPyqn3sdMQ_RdmVq84Q3nXOI',
   authDomain: 'rollapolla-v1.firebaseapp.com',
   projectId: 'rollapolla-v1',

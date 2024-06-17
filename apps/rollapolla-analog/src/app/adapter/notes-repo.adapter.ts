@@ -1,4 +1,12 @@
-import { inject, Injectable, Sanitizer, Signal } from '@angular/core';
+import { isPlatformServer } from '@angular/common';
+import {
+  effect,
+  ExperimentalPendingTasks,
+  inject,
+  Injectable,
+  PLATFORM_ID,
+  Signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import {
@@ -27,10 +35,30 @@ export class NotesRepoAdapter extends NotesRepoPort {
     this.notesCol = collection(this.fs, 'notes').withConverter<Note, NoteDto>(
       notesConverter
     );
+    // if is server environment, inform zoneless context to wait for the notes to be loaded
+
+    let cleanup: () => void;
+    const isServer = isPlatformServer(inject(PLATFORM_ID));
+    if (isServer) {
+      cleanup = inject(ExperimentalPendingTasks).add();
+    }
     const notes$ = collectionData(
       query(this.notesCol, orderBy('createdAt', 'desc'), limit(20))
     );
+
     this.notes = toSignal(notes$, { rejectErrors: true });
+    if (isServer) {
+      effect(() => {
+        if (this.notes() === undefined) {
+          // give the server 200ms to load the notes
+          // otherwise finish rendering
+          setTimeout(cleanup, 200);
+          return;
+        }
+        // if notes are loaded, finish rendering
+        cleanup();
+      });
+    }
   }
 
   getNotes(): Signal<Note[] | undefined> {

@@ -8,6 +8,12 @@
     "build": {
       "executor": "@analogjs/platform:vite",
       "defaultConfiguration": "production",
+      "options": {
+        "main": "{projectRoot}/src/main.ts",
+        "configFile": "{projectRoot}/vite.config.mts",
+        "outputPath": "{workspaceRoot}/dist/apps/rollapolla-analog/client",
+        "tsConfig": "{projectRoot}/tsconfig.app.json"
+      },
       "configurations": {
         "development": {
           "mode": "development"
@@ -22,13 +28,7 @@
         "{workspaceRoot}/dist/apps/rollapolla-analog/.nitro",
         "{workspaceRoot}/dist/apps/rollapolla-analog/ssr",
         "{workspaceRoot}/dist/apps/rollapolla-analog/analog"
-      ],
-      "options": {
-        "main": "{projectRoot}/src/main.ts",
-        "configFile": "{projectRoot}/vite.config.mts",
-        "outputPath": "./dist/apps/rollapolla-analog/client",
-        "tsConfig": "{projectRoot}/tsconfig.app.json"
-      }
+      ]
     },
     "serve": {
       "executor": "@analogjs/platform:vite-dev-server",

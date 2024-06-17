@@ -40,7 +40,6 @@ html {
     @include mat.input-color($theme);
     @include mat.card-color($theme);
     @include mat.list-color($theme);
-    @include mat.typography-hierarchy($theme);
   }
 
   font-family: Roboto, 'Helvetica Neue', sans-serif;
@@ -78,11 +77,11 @@ body {
     )
     repeat-y;
   background-size: 300% 100%;
-  animation: gradient-move 10s linear infinite;
+  animation: gradient-move 10s ease-in-out infinite;
 
   @keyframes gradient-move {
     0% {
-      background-position: 0% 50%;
+      background-position: 0 50%;
     }
     100% {
       background-position: 100% 50%;
