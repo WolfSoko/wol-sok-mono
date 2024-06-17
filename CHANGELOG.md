@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.39.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.38.0-deployed...v4.39.0) (2024-06-17)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ give server more time to load ([7593202](https://github.com/WolfSoko/wol-sok-mono/commit/75932025cbe805a19cb8cdf0613cbf865ddd3d08))
+
 ## [4.38.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.37.5-deployed...v4.38.0) (2024-06-17)
 
 
