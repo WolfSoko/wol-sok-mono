@@ -52,7 +52,7 @@ export class NotesRepoAdapter extends NotesRepoPort {
         if (this.notes() === undefined) {
           // give the server 200ms to load the notes
           // otherwise finish rendering
-          setTimeout(cleanup, 200);
+          setTimeout(cleanup, 400);
           return;
         }
         // if notes are loaded, finish rendering
