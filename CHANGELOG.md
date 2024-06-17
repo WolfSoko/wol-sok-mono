@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.38.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.37.5-deployed...v4.38.0) (2024-06-17)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ use zoneless ([bd4cacf](https://github.com/WolfSoko/wol-sok-mono/commit/bd4cacfc564f6d57ce04837a0123152f685f5cb1))
+
 ### [4.37.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.37.4-deployed...v4.37.5) (2024-06-17)
 
 ### [4.37.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.37.3-deployed...v4.37.4) (2024-06-16)
