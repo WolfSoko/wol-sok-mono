@@ -1,32 +1,23 @@
-import { test, expect, Locator } from '@playwright/test';
+import { test } from '@playwright/test';
+import { HomePage } from './pos/home.page';
 
 test.describe('Home', () => {
+  let homePage: HomePage;
+
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    homePage = new HomePage(page);
+    await homePage.goto();
   });
 
-  test('has title', async ({ page }) => {
-    // Expect h1 to contain a substring.
-    await expect(
-      page.getByRole('heading', {
-        name: 'RollaPolla',
-      })
-    ).toBeVisible();
-    await expect(page.getByText('Easy Polling for Everyone!')).toBeVisible();
+  test('has title', async () => {
+    await homePage.expectTitleVisible();
   });
 
-  test('informs about coming soon', async ({ page }) => {
-    await expect(page.getByTestId('coming-soon')).toContainText('Coming Soon!');
+  test('informs about coming soon', async () => {
+    await homePage.expectComingSoonVisible();
   });
 
-  test('has a cta to follow on twitter', async ({ page }) => {
-    const twitterLink: Locator = page.getByRole('link', {
-      name: 'Follow along on Twitter',
-    });
-    await expect(twitterLink).toBeVisible();
-    expect(await twitterLink.getAttribute('href')).toContain(
-      'https://twitter.com/rollapolla'
-    );
-    await expect(twitterLink).toHaveAttribute('target', '_blank');
+  test('has a cta to follow on twitter', async () => {
+    await homePage.expectTwitterLinkVisible();
   });
 });
