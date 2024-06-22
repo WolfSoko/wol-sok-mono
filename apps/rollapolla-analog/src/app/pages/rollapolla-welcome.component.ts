@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormField } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { CreatePollComponent } from '../core/create-poll/create-poll.component';
 import { NotesComponent } from '../core/notes/notes.component';
 
 @Component({
@@ -21,6 +22,7 @@ import { NotesComponent } from '../core/notes/notes.component';
     MatButtonModule,
     MatCardModule,
     NotesComponent,
+    CreatePollComponent,
   ],
   styleUrl: './rollapolla-welcome.component.scss',
   templateUrl: './rollapolla-welcome.component.html',
