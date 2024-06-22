@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.40.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.39.15...v4.40.0) (2024-06-22)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ add import createpoll to homepage ([abf4f11](https://github.com/WolfSoko/wol-sok-mono/commit/abf4f11295dadd5c91328f65f045b6d92560884d))
+
 ### [4.39.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.39.14...v4.39.15) (2024-06-22)
 
 ### [4.39.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.39.13...v4.39.14) (2024-06-22)
