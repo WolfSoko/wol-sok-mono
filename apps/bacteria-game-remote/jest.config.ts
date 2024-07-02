@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 export default {
   displayName: 'bacteria-game-remote',
   preset: '../../jest.preset.js',

@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 export default {
   displayName: 'feat-lazy-some-gpu-calculation',
   preset: '../../../../jest.preset.js',

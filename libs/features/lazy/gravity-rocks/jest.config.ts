@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 export default {
   displayName: 'feat-lazy-gravity-rocks',
   preset: '../../../../jest.preset.js',
