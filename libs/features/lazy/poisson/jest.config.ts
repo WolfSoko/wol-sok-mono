@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 export default {
   displayName: 'feat-lazy-poisson',
   preset: '../../../../jest.preset.js',
