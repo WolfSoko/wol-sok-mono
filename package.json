@@ -225,7 +225,7 @@
     "vitest": "1.6.0",
     "webpack": "5.92.1",
     "webpack-bundle-analyzer": "4.10.2",
-    "webpack-merge": "^5.10.0"
+    "webpack-merge": "^6.0.0"
   },
   "optionalDependencies": {
     "@esbuild/linux-x64": "^0.21.5",
