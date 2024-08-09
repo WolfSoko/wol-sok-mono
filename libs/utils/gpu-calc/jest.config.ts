@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 export default {
   displayName: 'utils-gpu-calc',
   preset: '../../../jest.preset.js',

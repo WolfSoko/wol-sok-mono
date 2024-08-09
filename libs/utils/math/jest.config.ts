@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 export default {
   displayName: 'math',
   preset: '../../../jest.preset.js',
