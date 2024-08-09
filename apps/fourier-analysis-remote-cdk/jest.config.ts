@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 export default {
   displayName: 'fourier-analysis-remote-cdk',
   preset: '../../jest.preset.js',
