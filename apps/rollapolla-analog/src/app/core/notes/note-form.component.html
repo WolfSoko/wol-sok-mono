@@ -14,19 +14,22 @@
       placeholder="Please share your thoughts"
     ></textarea>
     <mat-hint>Press Ctrl+Enter to send</mat-hint>
-    @if (form.value.newNote.length > 0) {
+    @if (form.value.newNote?.length ?? 0 > 0) {
       <mat-hint
         >{{
-          "Input length: " + (form.value.newNote.length ?? 0) + "/" + MAX_LENGTH
+          "Input length: " +
+            (form.value.newNote?.length ?? 0) +
+            "/" +
+            MAX_LENGTH
         }}
       </mat-hint>
     }
-    @if (form.controls.newNote.errors?.maxlength; as error) {
+    @if (form.controls.newNote?.errors?.["maxlength"]; as error) {
       <mat-error
         >Maximum length is {{ error.requiredLength }} characters
       </mat-error>
     }
-    @if (form.controls.newNote.errors?.minlength; as error) {
+    @if (form.controls.newNote?.errors?.["minlength"]; as error) {
       <mat-error
         >Minimal length is {{ error.requiredLength }} chars required
       </mat-error>
