@@ -186,6 +186,14 @@
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
+    },
+    "e2e-ci--**/*": {
+      "dependsOn": [
+        "angular-examples:build",
+        "bacteria-game-remote:build",
+        "fourier-analysis-remote:build",
+        "rollapolla-analog:build"
+      ]
     }
   },
   "cli": {

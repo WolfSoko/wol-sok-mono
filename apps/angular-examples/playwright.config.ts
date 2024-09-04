@@ -28,7 +28,7 @@ export default defineConfig({
   },
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npx nx serve angular-examples',
+    command: 'npx nx run angular-examples:serve-file',
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     cwd: workspaceRoot,

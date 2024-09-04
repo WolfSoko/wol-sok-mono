@@ -5,6 +5,8 @@ import { withVersionHandling } from '../../tools/version-handling/version-webpac
 import moduleFederationConfig from './module-federation.config';
 
 export default async (config: object) => {
-  const federatedModules = await withModuleFederation(moduleFederationConfig);
+  const federatedModules = await withModuleFederation(moduleFederationConfig, {
+    dts: false,
+  });
   return merge(config, federatedModules, withVersionHandling());
 };
