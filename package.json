@@ -93,7 +93,7 @@
     "vega-embed": "6.25.0",
     "vega-lite": "5.19.0",
     "zod": "^3.23.8",
-    "zone.js": "0.14.7"
+    "zone.js": "0.15.0"
   },
   "devDependencies": {
     "@ago-dev/nx-aws-cdk-v2": "1.6.1",
