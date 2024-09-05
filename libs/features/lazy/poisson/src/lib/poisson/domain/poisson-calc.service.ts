@@ -124,7 +124,7 @@ export class PoissonCalcService {
     this.initCalculation();
   }
 
-  public calculate(step = false): void {
+  public calculate(): void {
     this.lineSubject = new Subject();
     this.lineSubject
       .pipe(
