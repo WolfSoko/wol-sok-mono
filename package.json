@@ -191,7 +191,7 @@
     "jest-environment-node": "^29.7.0",
     "jest-preset-angular": "14.1.1",
     "jest-transform-stub": "^2.0.0",
-    "jsdom": "^24.1.0",
+    "jsdom": "^25.0.0",
     "jsonc-eslint-parser": "^2.4.0",
     "karma": "6.4.3",
     "karma-chrome-launcher": "3.2.0",
