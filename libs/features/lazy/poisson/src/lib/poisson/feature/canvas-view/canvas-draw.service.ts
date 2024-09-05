@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { off } from '@angular/fire/database';
 import { Circle } from '../../domain/model/circle';
 import { Line } from '../../domain/model/line';
 import { Vector } from '../../domain/model/vector';
