@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.41.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.41.0-deployed...v4.41.1) (2024-09-05)
+
+
+### Bug Fixes
+
+* **deps:** :arrow_up: update dependency zone.js to v0.15.0 ([bc51f99](https://github.com/WolfSoko/wol-sok-mono/commit/bc51f99e36973c2404105bffc034303d7a833c16))
+
 ## [4.41.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.40.7-deployed...v4.41.0) (2024-09-05)
 
 
