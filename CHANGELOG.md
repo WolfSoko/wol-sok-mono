@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.41.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.40.7-deployed...v4.41.0) (2024-09-05)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ update read write rules ([f789b82](https://github.com/WolfSoko/wol-sok-mono/commit/f789b82be982bb9a3793cd99e229a546287c843a))
+
+
+### Bug Fixes
+
+* **feat-lazy-poisson:** 🐛 fix linting ([c9b79f7](https://github.com/WolfSoko/wol-sok-mono/commit/c9b79f7a7485e6089e2a2b04f0f327af4f7302a7))
+* **rollapolla-analog:** 🐛 fix possibly undefined errors ([3bda9ca](https://github.com/WolfSoko/wol-sok-mono/commit/3bda9ca9944a464db2f3aa546ae2f1c709a5f491))
+
 ### [4.40.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.40.6-deployed...v4.40.7) (2024-08-04)
 
 ### [4.40.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.40.5...v4.40.6) (2024-07-08)
