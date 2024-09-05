@@ -38,7 +38,7 @@ jobs:
           echo "sentry-version=${SENTRY_VERSION}" >> $GITHUB_ENV
 
       - name: Build
-        run: npx nx run-many -t="build" -c production --projects="tag:app --parallel=1"
+        run: npx nx run-many -t="build" -c="production" --projects="tag:app" --parallel="1"
 
       - name: ZIP-files for release
         uses: vimtor/action-zip@v1
