@@ -3,7 +3,7 @@
   "extends": [
     "config:base",
     ":label(dependencies)",
-    "github>WolfSoko/nx-renovate-self-hosted/nxMonorepo",
+    "github>WolfSoko/nx-renovate-self-hosted:nxMonorepo",
     ":assignee(WolfSoko)"
   ],
   "schedule": ["at any time"],
