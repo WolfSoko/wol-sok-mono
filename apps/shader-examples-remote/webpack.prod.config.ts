@@ -1,9 +1,9 @@
 import { withModuleFederation } from '@nx/angular/module-federation';
 import config from './module-federation.config';
 
-export default withModuleFederation({
-  dts: false,
-  ...config,
+export default withModuleFederation(
+  config,
+  { dts: false }
   /*
    * Remote overrides for production.
    * Each entry is a pair of a unique name and the URL where it is deployed.
@@ -14,4 +14,4 @@ export default withModuleFederation({
    *   ['app2', 'https://app2.example.com'],
    * ]
    */
-});
+);

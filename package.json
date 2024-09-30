@@ -97,7 +97,6 @@
   },
   "devDependencies": {
     "@ago-dev/nx-aws-cdk-v2": "1.6.1",
-    "@angular-architects/native-federation": "^18.0.2",
     "@angular-builders/custom-webpack": "^18.0.0",
     "@angular-devkit/architect": "0.1802.2",
     "@angular-devkit/build-angular": "18.2.2",
@@ -115,6 +114,7 @@
     "@cypress/webpack-dev-server": "3.10.0",
     "@eslint/eslintrc": "^3.1.0",
     "@eslint/js": "~9.5.0",
+    "@module-federation/enhanced": "^0.6.6",
     "@ngneat/spectator": "19.0.0",
     "@nx/angular": "19.8.2",
     "@nx/cypress": "19.8.2",
@@ -223,9 +223,9 @@
     "vite": "~5.3.1",
     "vite-tsconfig-paths": "^5.0.1",
     "vitest": "2.0.0",
-    "webpack": "5.94.0",
+    "webpack": "5.95.0",
     "webpack-bundle-analyzer": "4.10.2",
-    "webpack-merge": "^6.0.0"
+    "webpack-merge": "^6.0.1"
   },
   "optionalDependencies": {
     "@esbuild/linux-x64": "^0.21.5",
