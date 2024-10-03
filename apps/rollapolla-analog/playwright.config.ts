@@ -17,6 +17,7 @@ const baseURL = process.env['BASE_URL'] || 'http://localhost:4200';
  */
 export default defineConfig({
   ...nxE2EPreset(__filename, { testDir: './e2e' }),
+  timeout: 60 * 1000,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     baseURL,
@@ -26,7 +27,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npx nx serve rollapolla-analog',
-    url: 'http://localhost:4200',
+    url: 'http://127.0.0.1:4200',
     reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,
     timeout: 120 * 1000,
