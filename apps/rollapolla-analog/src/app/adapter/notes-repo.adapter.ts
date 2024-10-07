@@ -37,10 +37,10 @@ export class NotesRepoAdapter extends NotesRepoPort {
     );
     // if is server environment, inform zoneless context to wait for the notes to be loaded
 
-    let cleanup: () => void;
+    let finishRendering: () => void;
     const isServer = isPlatformServer(inject(PLATFORM_ID));
     if (isServer) {
-      cleanup = inject(ExperimentalPendingTasks).add();
+      finishRendering = inject(ExperimentalPendingTasks).add();
     }
     const notes$ = collectionData(
       query(this.notesCol, orderBy('createdAt', 'desc'), limit(20))
@@ -52,11 +52,11 @@ export class NotesRepoAdapter extends NotesRepoPort {
         if (this.notes() === undefined) {
           // give the server 200ms to load the notes
           // otherwise finish rendering
-          setTimeout(cleanup, 400);
+          setTimeout(finishRendering, 400);
           return;
         }
         // if notes are loaded, finish rendering
-        cleanup();
+        finishRendering();
       });
     }
   }
