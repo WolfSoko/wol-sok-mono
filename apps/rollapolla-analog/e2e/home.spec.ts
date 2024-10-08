@@ -1,23 +1,15 @@
-import { test } from '@playwright/test';
-import { HomePage } from './pos/home.page';
+import { test } from './fixture/home-page-hydrated.fixture';
 
 test.describe('Home', () => {
-  let homePage: HomePage;
-
-  test.beforeEach(async ({ page }) => {
-    homePage = new HomePage(page);
-    await homePage.goto();
-  });
-
-  test('has title', async () => {
+  test('has title', async ({ homePage }) => {
     await homePage.expectTitleVisible();
   });
 
-  test('informs about coming soon', async () => {
+  test('informs about coming soon', async ({ homePage }) => {
     await homePage.expectComingSoonVisible();
   });
 
-  test('has a cta to follow on twitter', async () => {
+  test('has a cta to follow on twitter', async ({ homePage }) => {
     await homePage.expectTwitterLinkVisible();
   });
 });

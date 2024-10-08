@@ -1,4 +1,4 @@
-import { expect, Locator, Page } from '@playwright/test';
+import { Page, expect, Locator } from '@playwright/test';
 
 export class HomePage {
   readonly page: Page;
@@ -29,7 +29,7 @@ export class HomePage {
   }
 
   async expectTwitterLinkVisible() {
-    const twitterLink: Locator = this.page.getByRole('link', {
+    const twitterLink = this.page.getByRole('link', {
       name: 'Follow along on Twitter',
     });
     await expect(twitterLink).toBeVisible();

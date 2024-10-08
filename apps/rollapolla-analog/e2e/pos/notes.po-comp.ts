@@ -1,15 +1,7 @@
-import { Locator, Page, expect } from '@playwright/test';
+import { expect, Locator, Page } from '@playwright/test';
 
 export class NotesPoComp {
-  readonly page: Page;
-
-  constructor(page: Page) {
-    this.page = page;
-  }
-
-  async goto() {
-    await this.page.goto('/');
-  }
+  constructor(private readonly page: Page) {}
 
   async leaveTrimmedNote() {
     const leaveNoteInput: Locator = this.page.getByTestId('note-input');
