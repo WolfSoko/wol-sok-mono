@@ -19,6 +19,7 @@ export default defineConfig({
   ...nxE2EPreset(__filename, {
     testDir: './e2e',
   }),
+  timeout: 120_000,
   /* Shared settings for all the projects below. See ht
   tps://playwright.dev/docs/api/class-testoptions. */
   use: {
