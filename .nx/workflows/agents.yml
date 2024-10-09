@@ -9,7 +9,7 @@ launch-templates:
 
     init-steps:
       - name: Checkout # using a reusable step
-        uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/checkout/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/checkout/main.yaml'
         env:
           GIT_CHECKOUT_DEPTH: '0'
       - name: Install necessary binaries
@@ -19,13 +19,13 @@ launch-templates:
           sudo apt-get install python3 python-is-python3 make gcc g++ xserver-xorg-dev libxi-dev libxext-dev -y
 
       - name: Restore Node Modules Cache
-        uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/cache/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/cache/main.yaml'
         env:
           KEY: 'package-lock.json'
           PATHS: 'node_modules'
           BASE_BRANCH: 'main'
       - name: Restore Browser Binary Cache
-        uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/cache/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/cache/main.yaml'
         env:
           KEY: 'package-lock.json|"browsers"'
           PATHS: |
@@ -35,4 +35,4 @@ launch-templates:
       - name: Install Node Modules
         script: npm install
       - name: Install Browsers (if needed)
-        uses: 'nrwl/nx-cloud-workflows/v3.3/workflow-steps/install-browsers/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/install-browsers/main.yaml'
