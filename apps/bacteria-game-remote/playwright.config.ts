@@ -28,7 +28,7 @@ export default defineConfig({
   webServer: {
     command: 'npx nx run bacteria-game-remote:serve-static',
     url: 'http://localhost:4202',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,
   },
   projects: [
