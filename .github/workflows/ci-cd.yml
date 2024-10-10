@@ -45,8 +45,8 @@ jobs:
       - name: Install Deps
         uses: ./.github/actions/install-deps
         with:
-          cypress: 'false'
-          apt-packages: 'false'
+          cypress: 'true'
+          apt-packages: 'true'
 
       - uses: nrwl/nx-set-shas@v4
       - run: |
