@@ -37,6 +37,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: nrwl/nx-set-shas@v4
+      - run: |
+          echo "BASE: ${{ env.NX_BASE }}"
+          echo "HEAD: ${{ env.NX_HEAD }}"
+
       # Connect your workspace on nx.app and uncomment this to enable task distribution.
       # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "e2e-ci" targets have been requested
       - run: npx nx-cloud start-ci-run --distribute-on=".nx/workflows/dynamic-changesets.yml" --stop-agents-after="e2e-ci"
@@ -51,11 +56,6 @@ jobs:
         with:
           cypress: 'true'
           apt-packages: 'true'
-
-      - uses: nrwl/nx-set-shas@v4
-      - run: |
-          echo "BASE: ${{ env.NX_BASE }}"
-          echo "HEAD: ${{ env.NX_HEAD }}"
 
       # This line is needed for nx affected to work when CI is running on a PR
       - run: git branch --track main origin/main
