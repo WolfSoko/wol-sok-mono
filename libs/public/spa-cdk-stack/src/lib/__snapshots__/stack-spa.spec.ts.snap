@@ -41,7 +41,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "2d56e153cac88d3e0c2f842e8e6f6783b8725bf91f95e0673b4725448a56e96d.zip",
+          "S3Key": "c6358465bf49dfae556bb430bf9c81fa578c221b82c308e3707901b1dd654762.zip",
         },
         "Environment": {
           "Variables": {
@@ -60,7 +60,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             "Arn",
           ],
         },
-        "Runtime": "python3.9",
+        "Runtime": "python3.11",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -198,7 +198,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "2eb6a831b107939f63cfebf68e6316e1a40f79fc99cae0fee9b333bac8d29bc4.zip",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
         },
         "Description": {
           "Fn::Join": [
@@ -399,7 +399,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+          "S3Key": "31a54de8fc55600d6d0d5ad60b980b65f0fa40116c6f0eec37facc3b4d11f6b8.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -417,6 +417,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "DistributionPaths": [
           "/*",
         ],
+        "OutputObjectKeys": true,
         "Prune": true,
         "ServiceToken": {
           "Fn::GetAtt": [
@@ -441,7 +442,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+          "S3Key": "31a54de8fc55600d6d0d5ad60b980b65f0fa40116c6f0eec37facc3b4d11f6b8.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -459,6 +460,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "DistributionPaths": [
           "/*",
         ],
+        "OutputObjectKeys": true,
         "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
@@ -483,7 +485,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+          "S3Key": "31a54de8fc55600d6d0d5ad60b980b65f0fa40116c6f0eec37facc3b4d11f6b8.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -501,6 +503,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "DistributionPaths": [
           "/*",
         ],
+        "OutputObjectKeys": true,
         "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
@@ -665,7 +668,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "2d56e153cac88d3e0c2f842e8e6f6783b8725bf91f95e0673b4725448a56e96d.zip",
+          "S3Key": "c6358465bf49dfae556bb430bf9c81fa578c221b82c308e3707901b1dd654762.zip",
         },
         "Environment": {
           "Variables": {
@@ -684,7 +687,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             "Arn",
           ],
         },
-        "Runtime": "python3.9",
+        "Runtime": "python3.11",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -822,7 +825,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "2eb6a831b107939f63cfebf68e6316e1a40f79fc99cae0fee9b333bac8d29bc4.zip",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
         },
         "Description": {
           "Fn::Join": [
@@ -1023,7 +1026,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+          "S3Key": "31a54de8fc55600d6d0d5ad60b980b65f0fa40116c6f0eec37facc3b4d11f6b8.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -1041,6 +1044,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "DistributionPaths": [
           "/*",
         ],
+        "OutputObjectKeys": true,
         "Prune": true,
         "ServiceToken": {
           "Fn::GetAtt": [
@@ -1065,7 +1069,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+          "S3Key": "31a54de8fc55600d6d0d5ad60b980b65f0fa40116c6f0eec37facc3b4d11f6b8.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -1083,6 +1087,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "DistributionPaths": [
           "/*",
         ],
+        "OutputObjectKeys": true,
         "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
@@ -1107,7 +1112,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+          "S3Key": "31a54de8fc55600d6d0d5ad60b980b65f0fa40116c6f0eec37facc3b4d11f6b8.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -1125,6 +1130,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "DistributionPaths": [
           "/*",
         ],
+        "OutputObjectKeys": true,
         "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
@@ -1289,7 +1295,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "2d56e153cac88d3e0c2f842e8e6f6783b8725bf91f95e0673b4725448a56e96d.zip",
+          "S3Key": "c6358465bf49dfae556bb430bf9c81fa578c221b82c308e3707901b1dd654762.zip",
         },
         "Environment": {
           "Variables": {
@@ -1308,7 +1314,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
             "Arn",
           ],
         },
-        "Runtime": "python3.9",
+        "Runtime": "python3.11",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -1446,7 +1452,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "2eb6a831b107939f63cfebf68e6316e1a40f79fc99cae0fee9b333bac8d29bc4.zip",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
         },
         "Description": {
           "Fn::Join": [
@@ -1643,7 +1649,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+          "S3Key": "31a54de8fc55600d6d0d5ad60b980b65f0fa40116c6f0eec37facc3b4d11f6b8.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -1661,6 +1667,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         "DistributionPaths": [
           "/*",
         ],
+        "OutputObjectKeys": true,
         "Prune": true,
         "ServiceToken": {
           "Fn::GetAtt": [
@@ -1685,7 +1692,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+          "S3Key": "31a54de8fc55600d6d0d5ad60b980b65f0fa40116c6f0eec37facc3b4d11f6b8.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -1703,6 +1710,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         "DistributionPaths": [
           "/*",
         ],
+        "OutputObjectKeys": true,
         "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
@@ -1867,7 +1875,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "2d56e153cac88d3e0c2f842e8e6f6783b8725bf91f95e0673b4725448a56e96d.zip",
+          "S3Key": "c6358465bf49dfae556bb430bf9c81fa578c221b82c308e3707901b1dd654762.zip",
         },
         "Environment": {
           "Variables": {
@@ -1886,7 +1894,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
             "Arn",
           ],
         },
-        "Runtime": "python3.9",
+        "Runtime": "python3.11",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -2103,7 +2111,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+          "S3Key": "31a54de8fc55600d6d0d5ad60b980b65f0fa40116c6f0eec37facc3b4d11f6b8.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -2121,6 +2129,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         "DistributionPaths": [
           "/*",
         ],
+        "OutputObjectKeys": true,
         "Prune": true,
         "ServiceToken": {
           "Fn::GetAtt": [
@@ -2145,7 +2154,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+          "S3Key": "31a54de8fc55600d6d0d5ad60b980b65f0fa40116c6f0eec37facc3b4d11f6b8.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -2163,6 +2172,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         "DistributionPaths": [
           "/*",
         ],
+        "OutputObjectKeys": true,
         "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
@@ -2327,7 +2337,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "2d56e153cac88d3e0c2f842e8e6f6783b8725bf91f95e0673b4725448a56e96d.zip",
+          "S3Key": "c6358465bf49dfae556bb430bf9c81fa578c221b82c308e3707901b1dd654762.zip",
         },
         "Environment": {
           "Variables": {
@@ -2346,7 +2356,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
             "Arn",
           ],
         },
-        "Runtime": "python3.9",
+        "Runtime": "python3.11",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -2484,7 +2494,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "2eb6a831b107939f63cfebf68e6316e1a40f79fc99cae0fee9b333bac8d29bc4.zip",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
         },
         "Description": {
           "Fn::Join": [
@@ -2686,7 +2696,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+          "S3Key": "31a54de8fc55600d6d0d5ad60b980b65f0fa40116c6f0eec37facc3b4d11f6b8.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -2704,6 +2714,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         "DistributionPaths": [
           "/*",
         ],
+        "OutputObjectKeys": true,
         "Prune": true,
         "ServiceToken": {
           "Fn::GetAtt": [
@@ -2728,7 +2739,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "3322b7049fb0ed2b7cbb644a2ada8d1116ff80c32dca89e6ada846b5de26f961.zip",
+          "S3Key": "31a54de8fc55600d6d0d5ad60b980b65f0fa40116c6f0eec37facc3b4d11f6b8.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -2746,6 +2757,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         "DistributionPaths": [
           "/*",
         ],
+        "OutputObjectKeys": true,
         "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
