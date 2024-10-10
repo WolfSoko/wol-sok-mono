@@ -31,9 +31,9 @@ export default defineConfig({
   webServer: {
     command: 'npx nx run angular-examples:serve-file',
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,
-    timeout: (process.env.CI ? 360 : 180) * 1000,
+    timeout: process.env['CI'] ? 360_000 : 180_000,
   },
   projects: [
     {

@@ -28,9 +28,9 @@ export default defineConfig({
   webServer: {
     command: 'npx nx serve rollapolla-analog',
     url: 'http://localhost:4200',
-    reuseExistingServer: !process.env['CI'],
+    reuseExistingServer: !process.env.CI,
     cwd: workspaceRoot,
-    timeout: 120 * 1000,
+    timeout: (process.env.CI ? 360 : 120) * 1000,
   },
   projects: [
     {
