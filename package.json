@@ -145,7 +145,7 @@
     "@swc-node/register": "1.9.2",
     "@swc/core": "1.6.3",
     "@swc/helpers": "0.5.11",
-    "@types/chai": "4.3.16",
+    "@types/chai": "4.3.20",
     "@types/jasmine": "5.1.4",
     "@types/jasminewd2": "2.0.13",
     "@types/jest": "29.5.12",
