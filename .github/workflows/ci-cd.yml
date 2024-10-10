@@ -37,23 +37,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Connect your workspace on nx.app and uncomment this to enable task distribution.
-      # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "e2e-ci" targets have been requested
-      - run: npx nx-cloud start-ci-run --distribute-on=".nx/workflows/dynamic-changesets.yml" --stop-agents-after="e2e-ci"
-
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: 'npm'
+
       - name: Install Deps
         uses: ./.github/actions/install-deps
         with:
           cypress: 'false'
           apt-packages: 'false'
+
       - uses: nrwl/nx-set-shas@v4
       # This line is needed for nx affected to work when CI is running on a PR
       - run: git branch --track main origin/main
         if: github.event_name == 'pull_request'
+
+      # Connect your workspace on nx.app and uncomment this to enable task distribution.
+      # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "e2e-ci" targets have been requested
+      - run: npx nx-cloud start-ci-run --distribute-on=".nx/workflows/dynamic-changesets.yml" --stop-agents-after="e2e-ci"
 
       - run: npx nx-cloud record -- nx format:check
       - name: Run verification
