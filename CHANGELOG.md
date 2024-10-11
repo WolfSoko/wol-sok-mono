@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.42.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.41.9...v4.42.0) (2024-10-11)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ allow write till 2024-31-12 ([9330ab5](https://github.com/WolfSoko/wol-sok-mono/commit/9330ab52bc01372ec66e819a23f32ca1f9119c70))
+
+
+### Bug Fixes
+
+* **rollapolla-analog:** 🐛 use localhost for e2e tests ([0a8ac2d](https://github.com/WolfSoko/wol-sok-mono/commit/0a8ac2da3edff04a01af51bd18d402ec331fd62c))
+
 ### [4.41.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.41.8-deployed...v4.41.9) (2024-10-02)
 
 ### [4.41.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.41.7-deployed...v4.41.8) (2024-09-05)
