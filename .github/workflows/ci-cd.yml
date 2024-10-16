@@ -23,7 +23,6 @@ permissions:
 env:
   HUSKY: 0
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-  NX_SKIP_NX_CACHE: true
   CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
   NODE_OPTIONS: '--max_old_space_size=4096'
 
