@@ -229,5 +229,6 @@
   },
   "defaultProject": "angular-examples",
   "parallel": 3,
-  "defaultBase": "main"
+  "defaultBase": "main",
+  "useLegacyCache": true
 }
