@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 export default {
   displayName: 'feat-lazy-tf-examples',
   preset: '../../../../jest.preset.js',
