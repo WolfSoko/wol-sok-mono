@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 export default {
   displayName: 'shader-examples-remote-cdk',
   preset: '../../jest.preset.js',
