@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 export default {
   displayName: 'libs/utils-decorators',
 

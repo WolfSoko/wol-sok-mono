@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 export default {
   displayName: 'feat-lazy-bacteria-game',
   preset: '../../../../jest.preset.js',
