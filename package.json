@@ -96,7 +96,7 @@
     "zone.js": "0.15.0"
   },
   "devDependencies": {
-    "@ago-dev/nx-aws-cdk-v2": "1.6.1",
+    "@wolsok/nx-aws-cdk-v2": "2.0.0-beta",
     "@angular-builders/custom-webpack": "^18.0.0",
     "@angular-devkit/architect": "0.1802.2",
     "@angular-devkit/build-angular": "18.2.2",
