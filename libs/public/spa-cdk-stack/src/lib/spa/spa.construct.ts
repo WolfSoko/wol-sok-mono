@@ -11,7 +11,7 @@ import {
   SecurityPolicyProtocol,
   ViewerProtocolPolicy,
 } from 'aws-cdk-lib/aws-cloudfront';
-import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
+import { S3StaticWebsiteOrigin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { CanonicalUserPrincipal, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import {
   ARecord,
@@ -219,8 +219,8 @@ export class SpaConstruct extends Construct {
         },
       ],
       defaultBehavior: {
-        origin: new S3Origin(siteBucket, {
-          originAccessIdentity: cloudfrontOAI,
+        origin: new S3StaticWebsiteOrigin(siteBucket, {
+          originAccessControlId: cloudfrontOAI.originAccessIdentityId,
         }),
         compress: true,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
