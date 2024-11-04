@@ -65,3 +65,5 @@ pubsub-debug.log
 ui-debug.log
 firebase-export*
 .secret.local
+
+vite.config.*.timestamp*
