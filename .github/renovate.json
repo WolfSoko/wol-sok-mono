@@ -7,6 +7,7 @@
     ":assignee(WolfSoko)"
   ],
   "schedule": ["at any time"],
+  "prConcurrentLimit": 5,
   "automergeStrategy": "rebase",
   "automerge": true,
   "automergeType": "pr",
