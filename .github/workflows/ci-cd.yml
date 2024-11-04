@@ -57,8 +57,8 @@ jobs:
           apt-packages: 'true'
 
       # This line is needed for nx affected to work when CI is running on a PR
-      - run: git branch --track main origin/main
-        if: github.event_name == 'pull_request'
+      #      - run: git branch --track main origin/main
+      #        if: github.event_name == 'pull_request'
 
       - run: npx nx-cloud record -- nx format:check
       - run: npx nx affected -t=\"build,lint,component-test\"
