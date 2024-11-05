@@ -28,12 +28,12 @@ env:
   FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
 jobs:
-  deploy:
+  deploy-non-cdk:
     timeout-minutes: 45
     runs-on: ubuntu-latest
     environment: aws-cdk
     steps:
-      - run: echo "Release process starting for version ${{ env.RELEASE_VERSION }}"
+      - run: echo "Release process starting for non cdk apps version ${{ env.RELEASE_VERSION }}"
 
       - uses: actions/checkout@v4
         name: 'Checkout version tagged branch'
@@ -48,7 +48,7 @@ jobs:
         id: previous_deployment
         run: |
           echo "Determining SHAs for affected projects"
-          PREVIOUS_DEPLOYMENT=$(git describe --tags --abbrev=0 --match="*deployed")
+          PREVIOUS_DEPLOYMENT=$(git describe --tags --abbrev=0 --match="*-non-cdk-deployed")
           echo "Previous release: $PREVIOUS_DEPLOYMENT"
           echo "NX_BASE=$PREVIOUS_DEPLOYMENT" >> $GITHUB_ENV
           echo "NX_HEAD=$RELEASE_VERSION" >> $GITHUB_ENV
@@ -60,6 +60,55 @@ jobs:
         run: |
           npx nx affected --target=deploy --exclude='tag:cdk'
 
+      - name: Tag deployment success
+        run: |
+          git config --global user.email "github-actions[bot]@users.no-reply.github.com"
+          git config --global user.name "github-actions[bot]"
+          DEPLOY_TAG=$RELEASE_VERSION
+          git tag -a "$DEPLOY_TAG-non-cdk-deployed" $GITHUB_SHA -m "Version $RELEASE_VERSION deployed non-cdk apps successfully"
+          git push origin --tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Issue
+        if: failure()
+        run: |
+          gh issue create \
+            --title "bug(deploy): Deploy release ${{ env.RELEASE_VERSION }} for non-cdk apps failed" \
+            --body "GitHub [Deploy release workflow](${{ github.event.html_url }})" \
+            --label "bug" \
+            --assignee "${{ github.actor }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-cdk:
+    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    environment: aws-cdk
+    steps:
+      - run: echo "Release process starting for cdk apps version ${{ env.RELEASE_VERSION }}"
+
+      - uses: actions/checkout@v4
+        name: 'Checkout version tagged branch'
+        with:
+          ref: ${{ env.RELEASE_VERSION }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Install Deps
+        uses: ./.github/actions/install-deps
+      - name: Find previous deployment tag
+        id: previous_deployment
+        run: |
+          echo "Determining SHAs for affected projects"
+          PREVIOUS_DEPLOYMENT=$(git describe --tags --abbrev=0 --match="*cdk-deployed")
+          echo "Previous release: $PREVIOUS_DEPLOYMENT"
+          echo "NX_BASE=$PREVIOUS_DEPLOYMENT" >> $GITHUB_ENV
+          echo "NX_HEAD=$RELEASE_VERSION" >> $GITHUB_ENV
+
+      - name: Show affected projects
+        run: echo "Affected projects = $(npx nx show projects --affected -t deploy)"
+
       - name: Deploy CDK Apps
         run: |
           npx nx affected --target=deploy --exclude='*,!tag:cdk' -- --require-approval=never
@@ -69,7 +118,7 @@ jobs:
           git config --global user.email "github-actions[bot]@users.no-reply.github.com"
           git config --global user.name "github-actions[bot]"
           DEPLOY_TAG=$RELEASE_VERSION
-          git tag -a "$DEPLOY_TAG-deployed" $GITHUB_SHA -m "Version $RELEASE_VERSION deployed successfully"
+          git tag -a "$DEPLOY_TAG-cdk-deployed" $GITHUB_SHA -m "Version $RELEASE_VERSION deployed cdk apps successfully"
           git push origin --tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -78,7 +127,7 @@ jobs:
         if: failure()
         run: |
           gh issue create \
-            --title "bug(deploy): Deploy release ${{ env.RELEASE_VERSION }} failed" \
+            --title "bug(deploy): Deploy cdk apps release ${{ env.RELEASE_VERSION }} failed" \
             --body "GitHub [Deploy release workflow](${{ github.event.html_url }})" \
             --label "bug" \
             --assignee "${{ github.actor }}"
