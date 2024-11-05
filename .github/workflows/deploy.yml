@@ -56,9 +56,12 @@ jobs:
       - name: Show affected projects
         run: echo "Affected projects = $(npx nx show projects --affected -t deploy)"
 
-      - name: Deploy CDK and non CDK Apps
+      - name: Deploy non CDK Apps
         run: |
           npx nx affected --target=deploy --exclude='tag:cdk'
+
+      - name: Deploy CDK Apps
+        run: |
           npx nx affected --target=deploy --exclude='*,!tag:cdk' -- --require-approval=never
 
       - name: Tag deployment success
