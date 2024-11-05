@@ -101,7 +101,7 @@ jobs:
         id: previous_deployment
         run: |
           echo "Determining SHAs for affected projects"
-          PREVIOUS_DEPLOYMENT=$(git describe --tags --abbrev=0 --match="*cdk-deployed")
+          PREVIOUS_DEPLOYMENT=$(git describe --tags --abbrev=0 --match="*-cdk-deployed")
           echo "Previous release: $PREVIOUS_DEPLOYMENT"
           echo "NX_BASE=$PREVIOUS_DEPLOYMENT" >> $GITHUB_ENV
           echo "NX_HEAD=$RELEASE_VERSION" >> $GITHUB_ENV
