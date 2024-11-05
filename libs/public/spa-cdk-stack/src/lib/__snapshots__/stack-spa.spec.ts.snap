@@ -275,6 +275,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             "Value": "true",
           },
         ],
+        "WebsiteConfiguration": {
+          "ErrorDocument": "index.html",
+          "IndexDocument": "index.html",
+        },
       },
       "Type": "AWS::S3::Bucket",
       "UpdateReplacePolicy": "Delete",
@@ -551,7 +555,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           },
           "DefaultRootObject": "index.html",
           "Enabled": true,
-          "HttpVersion": "http2",
+          "HttpVersion": "http2and3",
           "IPV6Enabled": true,
           "Origins": [
             {
@@ -905,6 +909,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             "Value": "true",
           },
         ],
+        "WebsiteConfiguration": {
+          "ErrorDocument": "index.html",
+          "IndexDocument": "index.html",
+        },
       },
       "Type": "AWS::S3::Bucket",
       "UpdateReplacePolicy": "Delete",
@@ -1181,7 +1189,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           },
           "DefaultRootObject": "index.html",
           "Enabled": true,
-          "HttpVersion": "http2",
+          "HttpVersion": "http2and3",
           "IPV6Enabled": true,
           "Origins": [
             {
@@ -1531,6 +1539,10 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
             "Value": "true",
           },
         ],
+        "WebsiteConfiguration": {
+          "ErrorDocument": "index.html",
+          "IndexDocument": "index.html",
+        },
       },
       "Type": "AWS::S3::Bucket",
       "UpdateReplacePolicy": "Delete",
@@ -1764,7 +1776,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
           },
           "DefaultRootObject": "index.html",
           "Enabled": true,
-          "HttpVersion": "http2",
+          "HttpVersion": "http2and3",
           "IPV6Enabled": true,
           "Origins": [
             {
@@ -2054,6 +2066,10 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
             "Value": "true",
           },
         ],
+        "WebsiteConfiguration": {
+          "ErrorDocument": "index.html",
+          "IndexDocument": "index.html",
+        },
       },
       "Type": "AWS::S3::Bucket",
       "UpdateReplacePolicy": "Retain",
@@ -2229,7 +2245,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
           },
           "DefaultRootObject": "index.html",
           "Enabled": true,
-          "HttpVersion": "http2",
+          "HttpVersion": "http2and3",
           "IPV6Enabled": true,
           "Origins": [
             {
@@ -2579,6 +2595,10 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
             "Value": "true",
           },
         ],
+        "WebsiteConfiguration": {
+          "ErrorDocument": "index.html",
+          "IndexDocument": "index.html",
+        },
       },
       "Type": "AWS::S3::Bucket",
       "UpdateReplacePolicy": "Delete",
@@ -2817,7 +2837,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
           },
           "DefaultRootObject": "index.html",
           "Enabled": true,
-          "HttpVersion": "http2",
+          "HttpVersion": "http2and3",
           "IPV6Enabled": true,
           "Origins": [
             {

@@ -6,6 +6,7 @@ import {
 import {
   AllowedMethods,
   Distribution,
+  HttpVersion,
   IDistribution,
   OriginAccessIdentity,
   SecurityPolicyProtocol,
@@ -143,6 +144,8 @@ export class SpaConstruct extends Construct {
   ): Bucket {
     // Content bucket
     const siteBucket = new Bucket(this, `Bucket`, {
+      websiteIndexDocument: 'index.html',
+      websiteErrorDocument: 'index.html',
       bucketName: `${siteDomain}-spa-data`,
       publicReadAccess: false,
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
@@ -209,6 +212,7 @@ export class SpaConstruct extends Construct {
       certificate: certificate,
       defaultRootObject: 'index.html',
       domainNames: [siteDomain],
+      httpVersion: HttpVersion.HTTP2_AND_3,
       minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
       errorResponses: [
         {
