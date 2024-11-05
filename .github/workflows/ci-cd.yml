@@ -36,6 +36,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Debug print env variables
+        run: |
+          printenv
+
       - uses: nrwl/nx-set-shas@v4
       - run: |
           echo "BASE: ${{ env.NX_BASE }}"
