@@ -10,8 +10,6 @@ launch-templates:
     init-steps:
       - name: Checkout # using a reusable step
         uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/checkout/main.yaml'
-        env:
-          GIT_CHECKOUT_DEPTH: '0'
       - name: Install necessary binaries
         script: |
           echo "Install packages to compile node_modules gl with node-gyp"
