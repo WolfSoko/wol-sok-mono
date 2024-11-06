@@ -66,13 +66,13 @@ jobs:
           echo "NX_HEAD=$RELEASE_VERSION" >> $GITHUB_ENV
 
       - name: Show affected projects
-        run:
-          AFFECTED_PROJECTS=$(npx nx show projects --affected -t deploy --exclude='${{ matrix.config.exclude-pattern }}')"
+        run: |
+          AFFECTED_PROJECTS=$(npx nx show projects --affected -t deploy --exclude='${{ matrix.config.exclude-pattern }}')
           echo "Affected projects = $(AFFECTED_PROJECTS)"
           // add multiline to github env
-          echo "AFFECTED_PROJECTS<<EOF" >> $GITHUB_ENV
-          echo "$AFFECTED_PROJECTS" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo 'AFFECTED_PROJECTS<<EOF' >> $GITHUB_ENV
+          echo '$AFFECTED_PROJECTS' >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
 
       - name: Deploy Apps
         if: github.env.AFFECTED_PROJECTS != ''
