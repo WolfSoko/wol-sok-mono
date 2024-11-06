@@ -69,7 +69,7 @@ jobs:
         run: |
           AFFECTED_PROJECTS=$(npx nx show projects --affected -t deploy --exclude='${{ matrix.config.exclude-pattern }}')
           triggerRelease=$([[ -z $AFFECTED_PROJECTS ]] && echo "false" || echo "true")
-          echo "Trigger release: $triggerRelease for $AFFECTED_PROJECTS
+          echo "Trigger release: $triggerRelease for ${AFFECTED_PROJECTS}"
           echo "triggerRelease=$triggerRelease" >> $GITHUB_ENV
           echo "$([[ -z $AFFECTED_PROJECTS ]] && echo 'No deployable projects affected.' || echo 'Deployable projects affected. Start deployment!!!')" >> $GITHUB_STEP_SUMMARY
 
