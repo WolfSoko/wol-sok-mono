@@ -45,6 +45,7 @@ jobs:
         with:
           files: |
             dist/
+            version.json
           dest: release.zip
 
       - uses: 'marvinpinto/action-automatic-releases@latest'
