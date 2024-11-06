@@ -68,7 +68,7 @@ jobs:
       - name: Show affected projects
         run: |
           AFFECTED_PROJECTS=$(npx nx show projects --affected -t deploy --exclude='${{ matrix.config.exclude-pattern }}')
-          echo "Affected projects = $(AFFECTED_PROJECTS)"
+          echo "Affected projects = $($AFFECTED_PROJECTS)"
           // add multiline to github env
           echo 'AFFECTED_PROJECTS<<EOF' >> $GITHUB_ENV
           echo '$AFFECTED_PROJECTS' >> $GITHUB_ENV
