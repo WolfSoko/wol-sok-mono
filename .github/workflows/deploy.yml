@@ -74,12 +74,12 @@ jobs:
           echo 'EOF' >> $GITHUB_ENV
 
       - name: Deploy Apps
-        if: github.env.AFFECTED_PROJECTS != ''
+        if: env.AFFECTED_PROJECTS != ''
         run: npx nx affected --target=deploy --exclude='${{ matrix.config.exclude-pattern }} '${{ matrix.config.extra-deploy-args}}
 
       - name: Tag deployment success
         # only run if deploy apps was not skipped
-        if: github.env.AFFECTED_PROJECTS != ''
+        if: env.AFFECTED_PROJECTS != ''
         run: |
           git config --global user.email "github-actions[bot]@users.no-reply.github.com"
           git config --global user.name "github-actions[bot]"
