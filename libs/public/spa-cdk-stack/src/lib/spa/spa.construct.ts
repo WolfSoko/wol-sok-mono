@@ -221,7 +221,7 @@ export class SpaConstruct extends Construct {
         {
           httpStatus: 403,
           responseHttpStatus: 200,
-          responsePagePath: 'index.html',
+          responsePagePath: '/index.html',
           ttl: Duration.minutes(30),
         },
       ],
