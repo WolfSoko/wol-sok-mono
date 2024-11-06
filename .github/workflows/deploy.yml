@@ -68,18 +68,17 @@ jobs:
       - name: Show affected projects
         run: |
           AFFECTED_PROJECTS=$(npx nx show projects --affected -t deploy --exclude='${{ matrix.config.exclude-pattern }}')
-          echo "Affected projects = $AFFECTED_PROJECTS"
-          echo 'AFFECTED_PROJECTS<<EOF' >> $GITHUB_ENV
-          echo '$AFFECTED_PROJECTS' >> $GITHUB_ENV
-          echo 'EOF' >> $GITHUB_ENV
+          triggerRelease=$([[ -z $AFFECTED_PROJECTS ]] && echo "false" || echo "true")
+          echo "triggerRelease=$triggerRelease" >> $GITHUB_ENV
+          echo "$([[ -z $AFFECTED_PROJECTS ]] && echo 'No deployable projects affected.' || echo 'Deployable projects affected. Start deployment!!!')" >> $GITHUB_STEP_SUMMARY
 
       - name: Deploy Apps
-        if: env.AFFECTED_PROJECTS != ''
+        if: env.triggerRelease
         run: npx nx affected --target=deploy --exclude='${{ matrix.config.exclude-pattern }} '${{ matrix.config.extra-deploy-args}}
 
       - name: Tag deployment success
         # only run if deploy apps was not skipped
-        if: env.AFFECTED_PROJECTS != ''
+        if: env.triggerRelease
         run: |
           git config --global user.email "github-actions[bot]@users.no-reply.github.com"
           git config --global user.name "github-actions[bot]"
