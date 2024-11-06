@@ -59,7 +59,7 @@
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/eslint.config.js"
     ],
-    "globals": [],
+    "globals": [".github/**"],
     "version": [
       {
         "runtime": "node -e \"console.log(require('./tools/version-handling/latest-version-tag.js')())\""
