@@ -9,6 +9,9 @@ const { execSync } = require('node:child_process');
  *
  */
 const latestVersionTag = (appDeployedPrefix) => {
+  // read version from version.json
+  return require('../../version.json').version;
+
   // Get latest version tag like v1.0.0 that matches the glob pattern
   try {
     const latestVersionTag = execSync(
