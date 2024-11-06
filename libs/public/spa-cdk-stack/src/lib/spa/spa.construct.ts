@@ -14,7 +14,11 @@ import {
   SecurityPolicyProtocol,
   ViewerProtocolPolicy,
 } from 'aws-cdk-lib/aws-cloudfront';
-import { S3StaticWebsiteOrigin } from 'aws-cdk-lib/aws-cloudfront-origins';
+import {
+  S3BucketOrigin,
+  S3Origin,
+  S3StaticWebsiteOrigin,
+} from 'aws-cdk-lib/aws-cloudfront-origins';
 import { CanonicalUserPrincipal, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import {
   ARecord,
@@ -206,7 +210,7 @@ export class SpaConstruct extends Construct {
   private createDistribution(
     siteDomain: string,
     certificate: Certificate,
-    siteBucket: Bucket,
+    siteBucket: IBucket,
     cloudfrontOAI: OriginAccessIdentity
   ): Distribution {
     // CloudFront distribution that provides HTTPS
@@ -226,9 +230,8 @@ export class SpaConstruct extends Construct {
         },
       ],
       defaultBehavior: {
-        origin: new S3StaticWebsiteOrigin(siteBucket, {
-          originAccessControlId: cloudfrontOAI.originAccessIdentityId,
-          originPath: '/',
+        origin: S3BucketOrigin.withOriginAccessIdentity(siteBucket, {
+          originAccessIdentity: cloudfrontOAI,
         }),
         compress: true,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
