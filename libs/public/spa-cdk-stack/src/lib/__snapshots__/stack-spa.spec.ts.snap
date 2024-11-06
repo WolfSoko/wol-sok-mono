@@ -412,6 +412,12 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
       "DeletionPolicy": "Delete",
       "Properties": {
+        "DestinationBucketArn": {
+          "Fn::GetAtt": [
+            "TestSpaStackBucketAD480A08",
+            "Arn",
+          ],
+        },
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
@@ -455,6 +461,12 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
       "DeletionPolicy": "Delete",
       "Properties": {
+        "DestinationBucketArn": {
+          "Fn::GetAtt": [
+            "TestSpaStackBucketAD480A08",
+            "Arn",
+          ],
+        },
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
@@ -1043,6 +1055,12 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
       "DeletionPolicy": "Delete",
       "Properties": {
+        "DestinationBucketArn": {
+          "Fn::GetAtt": [
+            "TestSpaStackBucketAD480A08",
+            "Arn",
+          ],
+        },
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
@@ -1086,6 +1104,12 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
       "DeletionPolicy": "Delete",
       "Properties": {
+        "DestinationBucketArn": {
+          "Fn::GetAtt": [
+            "TestSpaStackBucketAD480A08",
+            "Arn",
+          ],
+        },
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
@@ -1670,6 +1694,12 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
     "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
       "DeletionPolicy": "Delete",
       "Properties": {
+        "DestinationBucketArn": {
+          "Fn::GetAtt": [
+            "TestSpaStackBucketAD480A08",
+            "Arn",
+          ],
+        },
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
@@ -2136,6 +2166,12 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
     "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
       "DeletionPolicy": "Delete",
       "Properties": {
+        "DestinationBucketArn": {
+          "Fn::GetAtt": [
+            "TestSpaStackBucketAD480A08",
+            "Arn",
+          ],
+        },
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
@@ -2725,6 +2761,12 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
     "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
       "DeletionPolicy": "Delete",
       "Properties": {
+        "DestinationBucketArn": {
+          "Fn::GetAtt": [
+            "TestSpaStackBucketAD480A08",
+            "Arn",
+          ],
+        },
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },

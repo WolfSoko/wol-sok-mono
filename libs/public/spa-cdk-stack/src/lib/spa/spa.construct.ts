@@ -9,16 +9,10 @@ import {
   HttpVersion,
   IDistribution,
   OriginAccessIdentity,
-  OriginProtocolPolicy,
-  OriginSslPolicy,
   SecurityPolicyProtocol,
   ViewerProtocolPolicy,
 } from 'aws-cdk-lib/aws-cloudfront';
-import {
-  S3BucketOrigin,
-  S3Origin,
-  S3StaticWebsiteOrigin,
-} from 'aws-cdk-lib/aws-cloudfront-origins';
+import { S3BucketOrigin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { CanonicalUserPrincipal, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import {
   ARecord,
@@ -123,6 +117,12 @@ export class SpaConstruct extends Construct {
         this.distribution
       )
     );
+
+    // Make sure that the index.html is deployed last, as it's needed to
+    // serve the SPA so chain the deployments
+    this.bucketDeployments[1].node.addDependency(
+      this.bucketDeployments[0].deployedBucket
+    );
   }
 
   /**
@@ -132,15 +132,21 @@ export class SpaConstruct extends Construct {
     assets: ISource[],
     cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365))
   ): void {
-    this.bucketDeployments.push(
-      this.createBucketDeployment(
-        assets,
-        cacheControl,
-        false,
-        this.bucket,
-        this.distribution
-      )
+    const extraAssetsDeployment: BucketDeployment = this.createBucketDeployment(
+      assets,
+      cacheControl,
+      false,
+      this.bucket,
+      this.distribution
     );
+
+    const latestDeployment: BucketDeployment | undefined =
+      this.bucketDeployments.at(-1);
+    if (latestDeployment) {
+      extraAssetsDeployment.node.addDependency(latestDeployment.deployedBucket);
+    }
+
+    this.bucketDeployments.push(extraAssetsDeployment);
   }
 
   private createBucket(
