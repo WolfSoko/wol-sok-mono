@@ -272,7 +272,7 @@ export class SpaConstruct extends Construct {
     // Deploy site contents to S3 spaBucket
     return new BucketDeployment(
       this,
-      'DeployWithInvalidation' + this.bucketDeployments.length + 1,
+      'DeployWithInvalidation' + (this.bucketDeployments.length + 1),
       {
         sources,
         destinationBucket,

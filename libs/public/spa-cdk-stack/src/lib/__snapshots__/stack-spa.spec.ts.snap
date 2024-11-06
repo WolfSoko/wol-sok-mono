@@ -51,7 +51,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "Handler": "index.handler",
         "Layers": [
           {
-            "Ref": "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+            "Ref": "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
           },
         ],
         "Role": {
@@ -263,15 +263,15 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:97a1d951",
+            "Key": "aws-cdk:cr-owned:125fd083",
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:cd95010c",
+            "Key": "aws-cdk:cr-owned:5d271eb0",
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:deb4c6a5",
+            "Key": "aws-cdk:cr-owned:8d098902",
             "Value": "true",
           },
         ],
@@ -399,7 +399,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::CertificateManager::Certificate",
     },
-    "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF": {
+    "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3": {
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -409,7 +409,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
+    "TestSpaStackDeployWithInvalidation1CustomResource62284BFA": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -442,10 +442,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
     },
-    "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+    "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9": {
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
-        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+        "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
+        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
       ],
       "Properties": {
         "Content": {
@@ -456,11 +456,11 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
+    "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
-        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+        "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
+        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -493,10 +493,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
     },
-    "TestSpaStackDeployWithInvalidation21AwsCliLayerFA7AB67D": {
+    "TestSpaStackDeployWithInvalidation3AwsCliLayer60F92F7F": {
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9",
-        "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA",
+        "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9",
+        "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9",
       ],
       "Properties": {
         "Content": {
@@ -507,11 +507,11 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation21CustomResource4ED22E6A": {
+    "TestSpaStackDeployWithInvalidation3CustomResource927735B1": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9",
-        "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA",
+        "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9",
+        "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -698,7 +698,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "Handler": "index.handler",
         "Layers": [
           {
-            "Ref": "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+            "Ref": "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
           },
         ],
         "Role": {
@@ -910,15 +910,15 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:97a1d951",
+            "Key": "aws-cdk:cr-owned:125fd083",
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:cd95010c",
+            "Key": "aws-cdk:cr-owned:5d271eb0",
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:deb4c6a5",
+            "Key": "aws-cdk:cr-owned:8d098902",
             "Value": "true",
           },
         ],
@@ -1046,7 +1046,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::CertificateManager::Certificate",
     },
-    "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF": {
+    "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3": {
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -1056,7 +1056,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
+    "TestSpaStackDeployWithInvalidation1CustomResource62284BFA": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -1089,10 +1089,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
     },
-    "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+    "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9": {
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
-        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+        "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
+        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
       ],
       "Properties": {
         "Content": {
@@ -1103,11 +1103,11 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
+    "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
-        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+        "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
+        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -1140,10 +1140,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
     },
-    "TestSpaStackDeployWithInvalidation21AwsCliLayerFA7AB67D": {
+    "TestSpaStackDeployWithInvalidation3AwsCliLayer60F92F7F": {
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9",
-        "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA",
+        "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9",
+        "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9",
       ],
       "Properties": {
         "Content": {
@@ -1154,11 +1154,11 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation21CustomResource4ED22E6A": {
+    "TestSpaStackDeployWithInvalidation3CustomResource927735B1": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9",
-        "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA",
+        "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9",
+        "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -1345,7 +1345,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         "Handler": "index.handler",
         "Layers": [
           {
-            "Ref": "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+            "Ref": "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
           },
         ],
         "Role": {
@@ -1557,11 +1557,11 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:cd95010c",
+            "Key": "aws-cdk:cr-owned:125fd083",
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:deb4c6a5",
+            "Key": "aws-cdk:cr-owned:8d098902",
             "Value": "true",
           },
         ],
@@ -1689,7 +1689,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       },
       "Type": "AWS::CertificateManager::Certificate",
     },
-    "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF": {
+    "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3": {
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -1699,7 +1699,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
+    "TestSpaStackDeployWithInvalidation1CustomResource62284BFA": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -1732,10 +1732,10 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
     },
-    "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+    "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9": {
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
-        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+        "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
+        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
       ],
       "Properties": {
         "Content": {
@@ -1746,11 +1746,11 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
+    "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
-        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+        "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
+        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -1937,7 +1937,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         "Handler": "index.handler",
         "Layers": [
           {
-            "Ref": "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+            "Ref": "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
           },
         ],
         "Role": {
@@ -2089,11 +2089,11 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         },
         "Tags": [
           {
-            "Key": "aws-cdk:cr-owned:cd95010c",
+            "Key": "aws-cdk:cr-owned:125fd083",
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:deb4c6a5",
+            "Key": "aws-cdk:cr-owned:8d098902",
             "Value": "true",
           },
         ],
@@ -2163,7 +2163,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       },
       "Type": "AWS::CertificateManager::Certificate",
     },
-    "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF": {
+    "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3": {
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -2173,7 +2173,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
+    "TestSpaStackDeployWithInvalidation1CustomResource62284BFA": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -2206,10 +2206,10 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
     },
-    "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+    "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9": {
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
-        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+        "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
+        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
       ],
       "Properties": {
         "Content": {
@@ -2220,11 +2220,11 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
+    "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
-        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+        "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
+        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -2411,7 +2411,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         "Handler": "index.handler",
         "Layers": [
           {
-            "Ref": "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+            "Ref": "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
           },
         ],
         "Role": {
@@ -2623,11 +2623,11 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:cd95010c",
+            "Key": "aws-cdk:cr-owned:125fd083",
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:deb4c6a5",
+            "Key": "aws-cdk:cr-owned:8d098902",
             "Value": "true",
           },
         ],
@@ -2760,7 +2760,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       },
       "Type": "AWS::CertificateManager::Certificate",
     },
-    "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF": {
+    "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3": {
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -2770,7 +2770,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
+    "TestSpaStackDeployWithInvalidation1CustomResource62284BFA": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -2803,10 +2803,10 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
     },
-    "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+    "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9": {
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
-        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+        "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
+        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
       ],
       "Properties": {
         "Content": {
@@ -2817,11 +2817,11 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
+    "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
-        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+        "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
+        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
       ],
       "Properties": {
         "DestinationBucketName": {
