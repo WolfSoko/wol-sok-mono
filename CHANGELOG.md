@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.44.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.8-non-cdk-deployed...v4.44.9) (2024-11-06)
+
+
+### Bug Fixes
+
+* 🐛 fix deployment. Use normal bucket instead of website bucket ([af445b5](https://github.com/WolfSoko/wol-sok-mono/commit/af445b58b7ff1c61ce9a441b4cf573c126691274))
+
 ### [4.44.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.7-non-cdk-deployed...v4.44.8) (2024-11-06)
 
 ### [4.44.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.6-non-cdk-deployed...v4.44.7) (2024-11-06)
