@@ -33,10 +33,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     },
   },
   "Resources": {
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D": {
       "DependsOn": [
-        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
-        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
       ],
       "Properties": {
         "Code": {
@@ -54,9 +54,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             "Ref": "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
           },
         ],
+        "MemorySize": 1024,
         "Role": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
             "Arn",
           ],
         },
@@ -65,7 +66,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::Function",
     },
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8": {
       "Properties": {
         "AssumeRolePolicyDocument": {
           "Statement": [
@@ -96,7 +97,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::IAM::Role",
     },
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D": {
       "Properties": {
         "PolicyDocument": {
           "Statement": [
@@ -182,10 +183,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           ],
           "Version": "2012-10-17",
         },
-        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D",
         "Roles": [
           {
-            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
           },
         ],
       },
@@ -263,15 +264,15 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:125fd083",
+            "Key": "aws-cdk:cr-owned:23fee1fe",
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:5d271eb0",
+            "Key": "aws-cdk:cr-owned:5ac0cd57",
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:8d098902",
+            "Key": "aws-cdk:cr-owned:ffab5150",
             "Value": "true",
           },
         ],
@@ -409,7 +410,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation1CustomResource62284BFA": {
+    "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -425,7 +426,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "Prune": true,
         "ServiceToken": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
             "Arn",
           ],
         },
@@ -445,7 +446,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9": {
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
-        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
+        "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
       ],
       "Properties": {
         "Content": {
@@ -456,11 +457,11 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9": {
+    "TestSpaStackDeployWithInvalidation2CustomResource1024MiBCCBCCC1C": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
-        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
+        "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -476,7 +477,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
             "Arn",
           ],
         },
@@ -496,7 +497,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     "TestSpaStackDeployWithInvalidation3AwsCliLayer60F92F7F": {
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9",
-        "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9",
+        "TestSpaStackDeployWithInvalidation2CustomResource1024MiBCCBCCC1C",
       ],
       "Properties": {
         "Content": {
@@ -507,11 +508,11 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation3CustomResource927735B1": {
+    "TestSpaStackDeployWithInvalidation3CustomResource1024MiB2A9CDE31": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9",
-        "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9",
+        "TestSpaStackDeployWithInvalidation2CustomResource1024MiBCCBCCC1C",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -527,7 +528,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
             "Arn",
           ],
         },
@@ -680,10 +681,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     },
   },
   "Resources": {
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D": {
       "DependsOn": [
-        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
-        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
       ],
       "Properties": {
         "Code": {
@@ -701,9 +702,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             "Ref": "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
           },
         ],
+        "MemorySize": 1024,
         "Role": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
             "Arn",
           ],
         },
@@ -712,7 +714,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::Function",
     },
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8": {
       "Properties": {
         "AssumeRolePolicyDocument": {
           "Statement": [
@@ -743,7 +745,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::IAM::Role",
     },
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D": {
       "Properties": {
         "PolicyDocument": {
           "Statement": [
@@ -829,10 +831,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           ],
           "Version": "2012-10-17",
         },
-        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D",
         "Roles": [
           {
-            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
           },
         ],
       },
@@ -910,15 +912,15 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:125fd083",
+            "Key": "aws-cdk:cr-owned:23fee1fe",
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:5d271eb0",
+            "Key": "aws-cdk:cr-owned:5ac0cd57",
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:8d098902",
+            "Key": "aws-cdk:cr-owned:ffab5150",
             "Value": "true",
           },
         ],
@@ -1056,7 +1058,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation1CustomResource62284BFA": {
+    "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -1072,7 +1074,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "Prune": true,
         "ServiceToken": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
             "Arn",
           ],
         },
@@ -1092,7 +1094,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9": {
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
-        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
+        "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
       ],
       "Properties": {
         "Content": {
@@ -1103,11 +1105,11 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9": {
+    "TestSpaStackDeployWithInvalidation2CustomResource1024MiBCCBCCC1C": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
-        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
+        "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -1123,7 +1125,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
             "Arn",
           ],
         },
@@ -1143,7 +1145,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     "TestSpaStackDeployWithInvalidation3AwsCliLayer60F92F7F": {
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9",
-        "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9",
+        "TestSpaStackDeployWithInvalidation2CustomResource1024MiBCCBCCC1C",
       ],
       "Properties": {
         "Content": {
@@ -1154,11 +1156,11 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation3CustomResource927735B1": {
+    "TestSpaStackDeployWithInvalidation3CustomResource1024MiB2A9CDE31": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9",
-        "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9",
+        "TestSpaStackDeployWithInvalidation2CustomResource1024MiBCCBCCC1C",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -1174,7 +1176,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
             "Arn",
           ],
         },
@@ -1327,10 +1329,10 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
     },
   },
   "Resources": {
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D": {
       "DependsOn": [
-        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
-        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
       ],
       "Properties": {
         "Code": {
@@ -1348,9 +1350,10 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
             "Ref": "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
           },
         ],
+        "MemorySize": 1024,
         "Role": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
             "Arn",
           ],
         },
@@ -1359,7 +1362,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       },
       "Type": "AWS::Lambda::Function",
     },
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8": {
       "Properties": {
         "AssumeRolePolicyDocument": {
           "Statement": [
@@ -1390,7 +1393,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       },
       "Type": "AWS::IAM::Role",
     },
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D": {
       "Properties": {
         "PolicyDocument": {
           "Statement": [
@@ -1476,10 +1479,10 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
           ],
           "Version": "2012-10-17",
         },
-        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D",
         "Roles": [
           {
-            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
           },
         ],
       },
@@ -1557,11 +1560,11 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:125fd083",
+            "Key": "aws-cdk:cr-owned:23fee1fe",
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:8d098902",
+            "Key": "aws-cdk:cr-owned:ffab5150",
             "Value": "true",
           },
         ],
@@ -1699,7 +1702,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation1CustomResource62284BFA": {
+    "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -1715,7 +1718,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         "Prune": true,
         "ServiceToken": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
             "Arn",
           ],
         },
@@ -1735,7 +1738,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
     "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9": {
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
-        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
+        "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
       ],
       "Properties": {
         "Content": {
@@ -1746,11 +1749,11 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9": {
+    "TestSpaStackDeployWithInvalidation2CustomResource1024MiBCCBCCC1C": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
-        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
+        "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -1766,7 +1769,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
             "Arn",
           ],
         },
@@ -1919,10 +1922,10 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
     },
   },
   "Resources": {
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D": {
       "DependsOn": [
-        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
-        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
       ],
       "Properties": {
         "Code": {
@@ -1940,9 +1943,10 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
             "Ref": "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
           },
         ],
+        "MemorySize": 1024,
         "Role": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
             "Arn",
           ],
         },
@@ -1951,7 +1955,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       },
       "Type": "AWS::Lambda::Function",
     },
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8": {
       "Properties": {
         "AssumeRolePolicyDocument": {
           "Statement": [
@@ -1982,7 +1986,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       },
       "Type": "AWS::IAM::Role",
     },
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D": {
       "Properties": {
         "PolicyDocument": {
           "Statement": [
@@ -2068,10 +2072,10 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
           ],
           "Version": "2012-10-17",
         },
-        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D",
         "Roles": [
           {
-            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
           },
         ],
       },
@@ -2089,11 +2093,11 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         },
         "Tags": [
           {
-            "Key": "aws-cdk:cr-owned:125fd083",
+            "Key": "aws-cdk:cr-owned:23fee1fe",
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:8d098902",
+            "Key": "aws-cdk:cr-owned:ffab5150",
             "Value": "true",
           },
         ],
@@ -2173,7 +2177,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation1CustomResource62284BFA": {
+    "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -2189,7 +2193,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         "Prune": true,
         "ServiceToken": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
             "Arn",
           ],
         },
@@ -2209,7 +2213,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
     "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9": {
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
-        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
+        "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
       ],
       "Properties": {
         "Content": {
@@ -2220,11 +2224,11 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9": {
+    "TestSpaStackDeployWithInvalidation2CustomResource1024MiBCCBCCC1C": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
-        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
+        "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -2240,7 +2244,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
             "Arn",
           ],
         },
@@ -2393,10 +2397,10 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
     },
   },
   "Resources": {
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D": {
       "DependsOn": [
-        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
-        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
       ],
       "Properties": {
         "Code": {
@@ -2414,9 +2418,10 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
             "Ref": "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
           },
         ],
+        "MemorySize": 1024,
         "Role": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
             "Arn",
           ],
         },
@@ -2425,7 +2430,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       },
       "Type": "AWS::Lambda::Function",
     },
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8": {
       "Properties": {
         "AssumeRolePolicyDocument": {
           "Statement": [
@@ -2456,7 +2461,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       },
       "Type": "AWS::IAM::Role",
     },
-    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D": {
       "Properties": {
         "PolicyDocument": {
           "Statement": [
@@ -2542,10 +2547,10 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
           ],
           "Version": "2012-10-17",
         },
-        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRoleDefaultPolicy0801355D",
         "Roles": [
           {
-            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBServiceRole739949D8",
           },
         ],
       },
@@ -2623,11 +2628,11 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:125fd083",
+            "Key": "aws-cdk:cr-owned:23fee1fe",
             "Value": "true",
           },
           {
-            "Key": "aws-cdk:cr-owned:8d098902",
+            "Key": "aws-cdk:cr-owned:ffab5150",
             "Value": "true",
           },
         ],
@@ -2770,7 +2775,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation1CustomResource62284BFA": {
+    "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -2786,7 +2791,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         "Prune": true,
         "ServiceToken": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
             "Arn",
           ],
         },
@@ -2806,7 +2811,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
     "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9": {
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
-        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
+        "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
       ],
       "Properties": {
         "Content": {
@@ -2817,11 +2822,11 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "TestSpaStackDeployWithInvalidation2CustomResource4C22DAE9": {
+    "TestSpaStackDeployWithInvalidation2CustomResource1024MiBCCBCCC1C": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
-        "TestSpaStackDeployWithInvalidation1CustomResource62284BFA",
+        "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -2837,7 +2842,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
-            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
             "Arn",
           ],
         },
