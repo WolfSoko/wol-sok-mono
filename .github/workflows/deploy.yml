@@ -29,7 +29,7 @@ env:
 
 jobs:
   deploy:
-    timeout-minutes: 45
+    timeout-minutes: 90
     runs-on: ubuntu-latest
     environment: aws-cdk
     strategy:
