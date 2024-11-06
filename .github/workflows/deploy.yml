@@ -78,7 +78,7 @@ jobs:
 
       - name: Tag deployment success
         # only run if deploy apps was not skipped
-        if: sucess() && env.triggerRelease == 'true'
+        if: success() && env.triggerRelease
         run: |
           git config --global user.email "github-actions[bot]@users.no-reply.github.com"
           git config --global user.name "github-actions[bot]"
