@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.44.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.2-cdk-deployed...v4.44.3) (2024-11-06)
+
+
+### Bug Fixes
+
+* 🐛 fix globals and version ([5f6a6c3](https://github.com/WolfSoko/wol-sok-mono/commit/5f6a6c366d484310c11c11da137a3d196be02823))
+* **spa-cdk-stack:** 🐛 fix release workflow ([4dd7d10](https://github.com/WolfSoko/wol-sok-mono/commit/4dd7d10835acf3601055ce37977ef43af17e8f94))
+* **spa-cdk-stack:** 🐛 fix release workflow ([409fe18](https://github.com/WolfSoko/wol-sok-mono/commit/409fe18d00ed51cb11a5dfc6e0035987a6244d69))
+* **spa-cdk-stack:** 🐛 fix release workflow ([f55796f](https://github.com/WolfSoko/wol-sok-mono/commit/f55796fa2e5a5c666f17548d219110141e0b0237))
+* **spa-cdk-stack:** 🐛 fix release workflow ([64c1a26](https://github.com/WolfSoko/wol-sok-mono/commit/64c1a269bbb10431f6da66a197f272d43e60801e))
+
 ### [4.44.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.1-cdk-deployed...v4.44.2) (2024-11-06)
 
 
