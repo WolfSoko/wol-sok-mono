@@ -1,6 +1,14 @@
 const { execSync } = require('node:child_process');
 
-module.exports = function latestVersionTag() {
+/**
+ *
+ * @returns {string} An app version like v1.0.0 a githash or a timestamp
+ *
+ * @param appDeployedPrefix { 'non-cdk-deployed' | 'cdk-deployed' }
+ * filter to find the appropriate version tag
+ *
+ */
+const latestVersionTag = (appDeployedPrefix) => {
   // Get latest version tag like v1.0.0 that matches the glob pattern
   try {
     const latestVersionTag = execSync(
@@ -8,7 +16,10 @@ module.exports = function latestVersionTag() {
     )
       .toString()
       .trim();
-    if (!latestVersionTag.includes('deployed')) {
+    const isDeployedRegex = new RegExp(
+      'v[0-9]*.[0-9]*.[0-9]-' + appDeployedPrefix
+    );
+    if (!isDeployedRegex.test(latestVersionTag)) {
       return latestVersionTag;
     }
     const [major, minor, patch] = latestVersionTag.split('-')[0].split('.');
@@ -20,7 +31,7 @@ module.exports = function latestVersionTag() {
     );
     try {
       // get current commit hash
-      return execSync('git rev-parse --short HEAD');
+      return execSync('git rev-parse --short HEAD').toString();
     } catch (error) {
       console.error(
         'Error while getting head commit hash. Returning a timestamp version',
@@ -30,3 +41,5 @@ module.exports = function latestVersionTag() {
     return `t${Date.now()}`;
   }
 };
+
+module.exports = { latestVersionTag };

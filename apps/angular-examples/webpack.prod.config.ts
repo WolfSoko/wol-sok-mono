@@ -8,5 +8,5 @@ export default async (config: object) => {
   const federatedModules = await withModuleFederation(moduleFederationConfig, {
     dts: false,
   });
-  return merge(config, federatedModules, withVersionHandling());
+  return merge(config, federatedModules, withVersionHandling('cdk-deployed'));
 };

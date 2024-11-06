@@ -1,10 +1,12 @@
 import { DefinePlugin } from 'webpack';
-import latestVersionTag from './latest-version-tag';
+import { latestVersionTag } from './latest-version-tag';
 
-export const withVersionHandling = () => ({
+type AppDeployedPrefix = `${'non-cdk' | 'cdk'}-deployed`;
+
+export const withVersionHandling = (appDeployedPrefix: AppDeployedPrefix) => ({
   plugins: [
     new DefinePlugin({
-      VERSION: `"${latestVersionTag()}"`,
+      VERSION: `"${latestVersionTag(appDeployedPrefix)}"`,
     }),
   ],
 });
