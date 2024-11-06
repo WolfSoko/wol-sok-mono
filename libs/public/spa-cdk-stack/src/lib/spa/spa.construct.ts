@@ -9,6 +9,8 @@ import {
   HttpVersion,
   IDistribution,
   OriginAccessIdentity,
+  OriginProtocolPolicy,
+  OriginSslPolicy,
   SecurityPolicyProtocol,
   ViewerProtocolPolicy,
 } from 'aws-cdk-lib/aws-cloudfront';
@@ -47,8 +49,8 @@ const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
  */
 export class SpaConstruct extends Construct {
   private bucketDeployments: BucketDeployment[] = [];
-  private bucket: Bucket;
-  private distribution: Distribution;
+  private readonly bucket: Bucket;
+  private readonly distribution: Distribution;
 
   constructor(
     parent: Construct,
@@ -214,17 +216,19 @@ export class SpaConstruct extends Construct {
       domainNames: [siteDomain],
       httpVersion: HttpVersion.HTTP2_AND_3,
       minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
+
       errorResponses: [
         {
           httpStatus: 403,
           responseHttpStatus: 200,
-          responsePagePath: '/index.html',
+          responsePagePath: 'index.html',
           ttl: Duration.minutes(30),
         },
       ],
       defaultBehavior: {
         origin: new S3StaticWebsiteOrigin(siteBucket, {
           originAccessControlId: cloudfrontOAI.originAccessIdentityId,
+          originPath: '/',
         }),
         compress: true,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,

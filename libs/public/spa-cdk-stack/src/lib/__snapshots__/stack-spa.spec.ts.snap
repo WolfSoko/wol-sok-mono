@@ -539,7 +539,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
               "ErrorCachingMinTTL": 1800,
               "ErrorCode": 403,
               "ResponseCode": 200,
-              "ResponsePagePath": "/index.html",
+              "ResponsePagePath": "index.html",
             },
           ],
           "DefaultCacheBehavior": {
@@ -582,6 +582,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
                 ],
               },
               "Id": "TestSpaStackDistributionOrigin126C831C0",
+              "OriginPath": "",
             },
           ],
           "ViewerCertificate": {
@@ -1173,7 +1174,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
               "ErrorCachingMinTTL": 1800,
               "ErrorCode": 403,
               "ResponseCode": 200,
-              "ResponsePagePath": "/index.html",
+              "ResponsePagePath": "index.html",
             },
           ],
           "DefaultCacheBehavior": {
@@ -1216,6 +1217,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
                 ],
               },
               "Id": "TestSpaStackDistributionOrigin126C831C0",
+              "OriginPath": "",
             },
           ],
           "ViewerCertificate": {
@@ -1760,7 +1762,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
               "ErrorCachingMinTTL": 1800,
               "ErrorCode": 403,
               "ResponseCode": 200,
-              "ResponsePagePath": "/index.html",
+              "ResponsePagePath": "index.html",
             },
           ],
           "DefaultCacheBehavior": {
@@ -1803,6 +1805,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
                 ],
               },
               "Id": "TestSpaStackDistributionOrigin126C831C0",
+              "OriginPath": "",
             },
           ],
           "ViewerCertificate": {
@@ -2229,7 +2232,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
               "ErrorCachingMinTTL": 1800,
               "ErrorCode": 403,
               "ResponseCode": 200,
-              "ResponsePagePath": "/index.html",
+              "ResponsePagePath": "index.html",
             },
           ],
           "DefaultCacheBehavior": {
@@ -2272,6 +2275,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
                 ],
               },
               "Id": "TestSpaStackDistributionOrigin126C831C0",
+              "OriginPath": "",
             },
           ],
           "ViewerCertificate": {
@@ -2821,7 +2825,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
               "ErrorCachingMinTTL": 1800,
               "ErrorCode": 403,
               "ResponseCode": 200,
-              "ResponsePagePath": "/index.html",
+              "ResponsePagePath": "index.html",
             },
           ],
           "DefaultCacheBehavior": {
@@ -2864,6 +2868,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
                 ],
               },
               "Id": "TestSpaStackDistributionOrigin126C831C0",
+              "OriginPath": "",
             },
           ],
           "ViewerCertificate": {
