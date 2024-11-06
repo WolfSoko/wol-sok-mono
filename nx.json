@@ -62,7 +62,7 @@
     "globals": ["{workspaceRoot}/.github/**"],
     "version": [
       {
-        "runtime": "node -e \"console.log(require('./tools/version-handling/latest-version-tag.js')())\""
+        "runtime": "node -e \"console.log(require('./tools/version-handling/latest-version-tag.js').latestVersionTag('cdk-deployed'))\""
       }
     ]
   },
