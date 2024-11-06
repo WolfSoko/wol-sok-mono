@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.44.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.10...v4.44.11) (2024-11-06)
+
+
+### Bug Fixes
+
+* 🐛 deploy buckets in series ([7e6d17e](https://github.com/WolfSoko/wol-sok-mono/commit/7e6d17e5df4f01eddbdb31e1c78fdde7f59d16cd))
+* 🐛 try path with ./ for agent node cache ([55a5829](https://github.com/WolfSoko/wol-sok-mono/commit/55a5829291112c193dcb944594dc9b03cc0ef907))
+
 ### [4.44.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.9...v4.44.10) (2024-11-06)
 
 
