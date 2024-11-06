@@ -412,12 +412,6 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "DestinationBucketArn": {
-          "Fn::GetAtt": [
-            "TestSpaStackBucketAD480A08",
-            "Arn",
-          ],
-        },
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
@@ -449,6 +443,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "UpdateReplacePolicy": "Delete",
     },
     "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+      "DependsOn": [
+        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+      ],
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -460,13 +458,11 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     },
     "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
       "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+      ],
       "Properties": {
-        "DestinationBucketArn": {
-          "Fn::GetAtt": [
-            "TestSpaStackBucketAD480A08",
-            "Arn",
-          ],
-        },
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
@@ -498,6 +494,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "UpdateReplacePolicy": "Delete",
     },
     "TestSpaStackDeployWithInvalidation21AwsCliLayerFA7AB67D": {
+      "DependsOn": [
+        "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9",
+        "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA",
+      ],
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -509,6 +509,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     },
     "TestSpaStackDeployWithInvalidation21CustomResource4ED22E6A": {
       "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9",
+        "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA",
+      ],
       "Properties": {
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
@@ -1055,12 +1059,6 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "DestinationBucketArn": {
-          "Fn::GetAtt": [
-            "TestSpaStackBucketAD480A08",
-            "Arn",
-          ],
-        },
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
@@ -1092,6 +1090,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "UpdateReplacePolicy": "Delete",
     },
     "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+      "DependsOn": [
+        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+      ],
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -1103,13 +1105,11 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     },
     "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
       "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+      ],
       "Properties": {
-        "DestinationBucketArn": {
-          "Fn::GetAtt": [
-            "TestSpaStackBucketAD480A08",
-            "Arn",
-          ],
-        },
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
@@ -1141,6 +1141,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "UpdateReplacePolicy": "Delete",
     },
     "TestSpaStackDeployWithInvalidation21AwsCliLayerFA7AB67D": {
+      "DependsOn": [
+        "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9",
+        "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA",
+      ],
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -1152,6 +1156,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     },
     "TestSpaStackDeployWithInvalidation21CustomResource4ED22E6A": {
       "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9",
+        "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA",
+      ],
       "Properties": {
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
@@ -1694,12 +1702,6 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
     "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "DestinationBucketArn": {
-          "Fn::GetAtt": [
-            "TestSpaStackBucketAD480A08",
-            "Arn",
-          ],
-        },
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
@@ -1731,6 +1733,10 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       "UpdateReplacePolicy": "Delete",
     },
     "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+      "DependsOn": [
+        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+      ],
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -1742,6 +1748,10 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
     },
     "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
       "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+      ],
       "Properties": {
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
@@ -2166,12 +2176,6 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
     "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "DestinationBucketArn": {
-          "Fn::GetAtt": [
-            "TestSpaStackBucketAD480A08",
-            "Arn",
-          ],
-        },
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
@@ -2203,6 +2207,10 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       "UpdateReplacePolicy": "Delete",
     },
     "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+      "DependsOn": [
+        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+      ],
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -2214,6 +2222,10 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
     },
     "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
       "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+      ],
       "Properties": {
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
@@ -2761,12 +2773,6 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
     "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "DestinationBucketArn": {
-          "Fn::GetAtt": [
-            "TestSpaStackBucketAD480A08",
-            "Arn",
-          ],
-        },
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
@@ -2798,6 +2804,10 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       "UpdateReplacePolicy": "Delete",
     },
     "TestSpaStackDeployWithInvalidation11AwsCliLayer868541A9": {
+      "DependsOn": [
+        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+      ],
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
@@ -2809,6 +2819,10 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
     },
     "TestSpaStackDeployWithInvalidation11CustomResourceDFD953CA": {
       "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "TestSpaStackDeployWithInvalidation01AwsCliLayer9437CAAF",
+        "TestSpaStackDeployWithInvalidation01CustomResourceE59CFB5F",
+      ],
       "Properties": {
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",

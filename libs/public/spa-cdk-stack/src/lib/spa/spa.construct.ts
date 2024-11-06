@@ -120,9 +120,7 @@ export class SpaConstruct extends Construct {
 
     // Make sure that the index.html is deployed last, as it's needed to
     // serve the SPA so chain the deployments
-    this.bucketDeployments[1].node.addDependency(
-      this.bucketDeployments[0].deployedBucket
-    );
+    this.bucketDeployments[1].node.addDependency(this.bucketDeployments[0]);
   }
 
   /**
@@ -143,7 +141,7 @@ export class SpaConstruct extends Construct {
     const latestDeployment: BucketDeployment | undefined =
       this.bucketDeployments.at(-1);
     if (latestDeployment) {
-      extraAssetsDeployment.node.addDependency(latestDeployment.deployedBucket);
+      extraAssetsDeployment.node.addDependency(latestDeployment);
     }
 
     this.bucketDeployments.push(extraAssetsDeployment);
