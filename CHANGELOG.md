@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.44.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.0-cdk-deployed...v4.44.1) (2024-11-06)
+
+
+### Bug Fixes
+
+* **spa-cdk-stack:** 🐛 fix responsePagePath ([372efe4](https://github.com/WolfSoko/wol-sok-mono/commit/372efe46e71561d2e3508a974426cec32f0c2df5))
+
 ## [4.44.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.43.0-cdk-deployed...v4.44.0) (2024-11-06)
 
 
