@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
   displayName: 'shader-examples-remote',
   preset: '../../jest.preset.js',

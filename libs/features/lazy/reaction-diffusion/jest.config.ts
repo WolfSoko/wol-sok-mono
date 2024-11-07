@@ -1,10 +1,10 @@
-/* eslint-disable */
 export default {
   displayName: 'feat-lazy-reaction-diffusion',
   preset: '../../../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {},
-  coverageDirectory: '../../../../../coverage/libs/features/lazy/reaction-diffusion',
+  coverageDirectory:
+    '../../../../../coverage/libs/features/lazy/reaction-diffusion',
   coverageReporters: ['lcov'],
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [

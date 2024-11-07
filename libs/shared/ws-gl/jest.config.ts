@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
   displayName: 'ws-gl',
   preset: '../../../jest.preset.js',

@@ -1,10 +1,10 @@
-/* eslint-disable */
 export default {
   displayName: 'feat-lazy-some-gpu-calculation',
   preset: '../../../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts', 'jest-canvas-mock'],
   globals: {},
-  coverageDirectory: '../../../../coverage/libs/features/lazy/some-gpu-calculation',
+  coverageDirectory:
+    '../../../../coverage/libs/features/lazy/some-gpu-calculation',
   coverageReporters: ['lcov'],
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [

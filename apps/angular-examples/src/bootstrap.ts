@@ -23,7 +23,7 @@ init({
   release: `angular-examples@${environment.version}`,
   // This sets the sample rate to be 10%. You may want this to be 100% while
   // in development and sample at a lower rate in production
-  // eslint-disable-next-line no-magic-numbers
+
   replaysSessionSampleRate: 1,
 
   // If the entire session is not sampled, use the below sample rate to sample

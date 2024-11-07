@@ -1,10 +1,10 @@
-/* eslint-disable */
 export default {
   displayName: 'feat-lazy-tf-examples',
   preset: '../../../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {},
-  coverageDirectory: '../../../../coverage/libs/features/lazy/tensorflow-examples',
+  coverageDirectory:
+    '../../../../coverage/libs/features/lazy/tensorflow-examples',
   coverageReporters: ['lcov'],
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [

@@ -246,7 +246,6 @@ export class ReactionDiffWorkerCalcService implements ReactionDiffCalculator {
           (x >= offsetWidth && offsetWidth + x < this.width) ||
           (y >= offsetHeight && y + offsetHeight < this.height)
         ) {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const cell = ReactionDiffWorkerCalcService.getCell(
             x - offsetWidth,
             y - offsetHeight,
