@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
   displayName: 'bacteria-game-remote-cdk',
   preset: '../../jest.preset.js',

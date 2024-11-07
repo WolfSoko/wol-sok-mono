@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
   displayName: 'angular-examples-cdk',
   preset: '../../jest.preset.js',

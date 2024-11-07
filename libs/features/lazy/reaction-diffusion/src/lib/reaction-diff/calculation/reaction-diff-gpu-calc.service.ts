@@ -131,7 +131,7 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
     this.imageKernel?.(this.grid);
     this.nextImage = this.imageKernel?.canvas;
     const context = p.canvas.getContext('2d', { willReadFrequently: true });
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
     if (this.nextImage) {
       context?.drawImage(
         this.nextImage,

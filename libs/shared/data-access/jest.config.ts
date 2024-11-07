@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
   displayName: 'shared-data-access',
   preset: '../../../jest.preset.js',
@@ -14,5 +13,4 @@ export default {
     ],
   },
   transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
-
 };

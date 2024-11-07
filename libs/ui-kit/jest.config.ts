@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 import { JestConfigWithTsJest } from 'ts-jest';
 
 export default {
@@ -25,4 +23,4 @@ export default {
     'jest-preset-angular/build/serializers/html-comment',
   ],
   preset: '../../jest.preset.js',
-} as JestConfigWithTsJest ;
+} as JestConfigWithTsJest;

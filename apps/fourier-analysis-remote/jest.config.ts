@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
   displayName: 'fourier-analysis-remote',
   preset: '../../jest.preset.js',

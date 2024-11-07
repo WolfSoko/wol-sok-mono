@@ -1,6 +1,5 @@
 import type { Config } from 'jest';
 
-/* eslint-disable */
 export default {
   displayName: 'angular-examples',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
