@@ -9,6 +9,7 @@ import {
   HttpVersion,
   IDistribution,
   OriginAccessIdentity,
+  ResponseHeadersPolicy,
   SecurityPolicyProtocol,
   ViewerProtocolPolicy,
 } from 'aws-cdk-lib/aws-cloudfront';
@@ -34,6 +35,7 @@ export interface SpaProps {
   domainName: string;
   buildOutputPath: string;
   bucketRemovalPolicy?: RemovalPolicy;
+  allowedOrigins?: string[];
 }
 
 const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
@@ -86,7 +88,8 @@ export class SpaConstruct extends Construct {
       siteDomain,
       certificate,
       this.bucket,
-      cloudfrontOAI
+      cloudfrontOAI,
+      props.allowedOrigins
     );
     this.createARecord(siteDomain, this.distribution, zone);
 
@@ -215,8 +218,27 @@ export class SpaConstruct extends Construct {
     siteDomain: string,
     certificate: Certificate,
     siteBucket: IBucket,
-    cloudfrontOAI: OriginAccessIdentity
+    cloudfrontOAI: OriginAccessIdentity,
+    allowedOrigins: string[] = []
   ): Distribution {
+    const responseHeadersPolicy = new ResponseHeadersPolicy(
+      this,
+      'ResponseHeadersPolicy',
+      {
+        corsBehavior: {
+          accessControlAllowCredentials: false,
+          accessControlAllowOrigins: [
+            ...allowedOrigins,
+            siteDomain,
+            'localhost',
+            '127.0.0.1',
+          ],
+          accessControlAllowMethods: ['GET', 'HEAD', 'OPTIONS'],
+          accessControlAllowHeaders: ['*'],
+          originOverride: true,
+        },
+      }
+    );
     // CloudFront distribution that provides HTTPS
     const distribution = new Distribution(this, 'Distribution', {
       certificate: certificate,
@@ -224,7 +246,6 @@ export class SpaConstruct extends Construct {
       domainNames: [siteDomain],
       httpVersion: HttpVersion.HTTP2_AND_3,
       minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
-
       errorResponses: [
         {
           httpStatus: 403,
@@ -234,6 +255,7 @@ export class SpaConstruct extends Construct {
         },
       ],
       defaultBehavior: {
+        responseHeadersPolicy,
         origin: S3BucketOrigin.withOriginAccessIdentity(siteBucket, {
           originAccessIdentity: cloudfrontOAI,
         }),

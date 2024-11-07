@@ -567,6 +567,9 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             ],
             "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
             "Compress": true,
+            "ResponseHeadersPolicyId": {
+              "Ref": "TestSpaStackResponseHeadersPolicyEA652AD7",
+            },
             "TargetOriginId": "TestSpaStackDistributionOrigin126C831C0",
             "ViewerProtocolPolicy": "redirect-to-https",
           },
@@ -608,6 +611,37 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         },
       },
       "Type": "AWS::CloudFront::Distribution",
+    },
+    "TestSpaStackResponseHeadersPolicyEA652AD7": {
+      "Properties": {
+        "ResponseHeadersPolicyConfig": {
+          "CorsConfig": {
+            "AccessControlAllowCredentials": false,
+            "AccessControlAllowHeaders": {
+              "Items": [
+                "*",
+              ],
+            },
+            "AccessControlAllowMethods": {
+              "Items": [
+                "GET",
+                "HEAD",
+                "OPTIONS",
+              ],
+            },
+            "AccessControlAllowOrigins": {
+              "Items": [
+                "test-domain.com",
+                "localhost",
+                "127.0.0.1",
+              ],
+            },
+            "OriginOverride": true,
+          },
+          "Name": "TestSpaStackResponseHeadersPolicy28139784",
+        },
+      },
+      "Type": "AWS::CloudFront::ResponseHeadersPolicy",
     },
     "TestSpaStackcloudfrontOAI3E9C1D4F": {
       "Properties": {
@@ -1215,6 +1249,9 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             ],
             "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
             "Compress": true,
+            "ResponseHeadersPolicyId": {
+              "Ref": "TestSpaStackResponseHeadersPolicyEA652AD7",
+            },
             "TargetOriginId": "TestSpaStackDistributionOrigin126C831C0",
             "ViewerProtocolPolicy": "redirect-to-https",
           },
@@ -1256,6 +1293,37 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         },
       },
       "Type": "AWS::CloudFront::Distribution",
+    },
+    "TestSpaStackResponseHeadersPolicyEA652AD7": {
+      "Properties": {
+        "ResponseHeadersPolicyConfig": {
+          "CorsConfig": {
+            "AccessControlAllowCredentials": false,
+            "AccessControlAllowHeaders": {
+              "Items": [
+                "*",
+              ],
+            },
+            "AccessControlAllowMethods": {
+              "Items": [
+                "GET",
+                "HEAD",
+                "OPTIONS",
+              ],
+            },
+            "AccessControlAllowOrigins": {
+              "Items": [
+                "test-domain.com",
+                "localhost",
+                "127.0.0.1",
+              ],
+            },
+            "OriginOverride": true,
+          },
+          "Name": "TestSpaStackResponseHeadersPolicy28139784",
+        },
+      },
+      "Type": "AWS::CloudFront::ResponseHeadersPolicy",
     },
     "TestSpaStackcloudfrontOAI3E9C1D4F": {
       "Properties": {
@@ -1808,6 +1876,9 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
             ],
             "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
             "Compress": true,
+            "ResponseHeadersPolicyId": {
+              "Ref": "TestSpaStackResponseHeadersPolicyEA652AD7",
+            },
             "TargetOriginId": "TestSpaStackDistributionOrigin126C831C0",
             "ViewerProtocolPolicy": "redirect-to-https",
           },
@@ -1849,6 +1920,37 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         },
       },
       "Type": "AWS::CloudFront::Distribution",
+    },
+    "TestSpaStackResponseHeadersPolicyEA652AD7": {
+      "Properties": {
+        "ResponseHeadersPolicyConfig": {
+          "CorsConfig": {
+            "AccessControlAllowCredentials": false,
+            "AccessControlAllowHeaders": {
+              "Items": [
+                "*",
+              ],
+            },
+            "AccessControlAllowMethods": {
+              "Items": [
+                "GET",
+                "HEAD",
+                "OPTIONS",
+              ],
+            },
+            "AccessControlAllowOrigins": {
+              "Items": [
+                "test-domain.com",
+                "localhost",
+                "127.0.0.1",
+              ],
+            },
+            "OriginOverride": true,
+          },
+          "Name": "TestSpaStackResponseHeadersPolicy28139784",
+        },
+      },
+      "Type": "AWS::CloudFront::ResponseHeadersPolicy",
     },
     "TestSpaStackcloudfrontOAI3E9C1D4F": {
       "Properties": {
@@ -2283,6 +2385,9 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
             ],
             "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
             "Compress": true,
+            "ResponseHeadersPolicyId": {
+              "Ref": "TestSpaStackResponseHeadersPolicyEA652AD7",
+            },
             "TargetOriginId": "TestSpaStackDistributionOrigin126C831C0",
             "ViewerProtocolPolicy": "redirect-to-https",
           },
@@ -2324,6 +2429,37 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         },
       },
       "Type": "AWS::CloudFront::Distribution",
+    },
+    "TestSpaStackResponseHeadersPolicyEA652AD7": {
+      "Properties": {
+        "ResponseHeadersPolicyConfig": {
+          "CorsConfig": {
+            "AccessControlAllowCredentials": false,
+            "AccessControlAllowHeaders": {
+              "Items": [
+                "*",
+              ],
+            },
+            "AccessControlAllowMethods": {
+              "Items": [
+                "GET",
+                "HEAD",
+                "OPTIONS",
+              ],
+            },
+            "AccessControlAllowOrigins": {
+              "Items": [
+                "test-domain.com",
+                "localhost",
+                "127.0.0.1",
+              ],
+            },
+            "OriginOverride": true,
+          },
+          "Name": "TestSpaStackResponseHeadersPolicy28139784",
+        },
+      },
+      "Type": "AWS::CloudFront::ResponseHeadersPolicy",
     },
     "TestSpaStackcloudfrontOAI3E9C1D4F": {
       "Properties": {
@@ -2881,6 +3017,9 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
             ],
             "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
             "Compress": true,
+            "ResponseHeadersPolicyId": {
+              "Ref": "TestSpaStackResponseHeadersPolicyEA652AD7",
+            },
             "TargetOriginId": "TestSpaStackDistributionOrigin126C831C0",
             "ViewerProtocolPolicy": "redirect-to-https",
           },
@@ -2922,6 +3061,37 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         },
       },
       "Type": "AWS::CloudFront::Distribution",
+    },
+    "TestSpaStackResponseHeadersPolicyEA652AD7": {
+      "Properties": {
+        "ResponseHeadersPolicyConfig": {
+          "CorsConfig": {
+            "AccessControlAllowCredentials": false,
+            "AccessControlAllowHeaders": {
+              "Items": [
+                "*",
+              ],
+            },
+            "AccessControlAllowMethods": {
+              "Items": [
+                "GET",
+                "HEAD",
+                "OPTIONS",
+              ],
+            },
+            "AccessControlAllowOrigins": {
+              "Items": [
+                "subdomain.test-domain.com",
+                "localhost",
+                "127.0.0.1",
+              ],
+            },
+            "OriginOverride": true,
+          },
+          "Name": "TestSpaStackResponseHeadersPolicy28139784",
+        },
+      },
+      "Type": "AWS::CloudFront::ResponseHeadersPolicy",
     },
     "TestSpaStackcloudfrontOAI3E9C1D4F": {
       "Properties": {

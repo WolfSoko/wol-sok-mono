@@ -13,6 +13,7 @@ new SpaStack(app, stackName, {
   buildOutputPath: 'dist/apps/bacteria-game-remote',
   domainName: 'bacteria-game.wolsok.de',
   bucketRemovalPolicy: RemovalPolicy.DESTROY,
+  allowedOrigins: ['angularexamples.wolsok.de'],
 });
 
 const tags: Tags = Tags.of(app);

@@ -13,6 +13,7 @@ new SpaStack(app, stackName, {
   buildOutputPath: 'dist/apps/fourier-analysis-remote',
   domainName: 'fourier-analysis.wolsok.de',
   bucketRemovalPolicy: RemovalPolicy.DESTROY,
+  allowedOrigins: ['angularexamples.wolsok.de'],
 });
 
 const tags: Tags = Tags.of(app);
