@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.46.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.45.5-non-cdk-deployed...v4.46.0) (2024-11-07)
+
+
+### Features
+
+* ✨ use cors allowed origins for remotes ([772b3a5](https://github.com/WolfSoko/wol-sok-mono/commit/772b3a50167c4d6ff7ed562bccb48ee785c041dc))
+
+
+### Bug Fixes
+
+* **deps:** update dependency browserslist to v4.24.2 ([b80529b](https://github.com/WolfSoko/wol-sok-mono/commit/b80529b2e9c10b4eeff3ee09b072722c46a20f0a))
+* **deps:** update dependency constructs to v10.4.2 ([ff370ab](https://github.com/WolfSoko/wol-sok-mono/commit/ff370ab250a602036ab5a7db690f965c1a60d1d1))
+
 ### [4.45.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.45.4-non-cdk-deployed...v4.45.5) (2024-11-07)
 
 
