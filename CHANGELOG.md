@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.45.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.45.4-non-cdk-deployed...v4.45.5) (2024-11-07)
+
+
+### Bug Fixes
+
+* **deps:** update dependency angulartics2 to v14.1.0 ([12e71a9](https://github.com/WolfSoko/wol-sok-mono/commit/12e71a93266ed967a522fe1a485b3e624ba5d028))
+
 ### [4.45.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.45.3-non-cdk-deployed...v4.45.4) (2024-11-07)
 
 
