@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.45.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.34-non-cdk-deployed...v4.45.0) (2024-11-07)
+
+
+### Features
+
+* ✨ implement dynamic module federation ([fa039af](https://github.com/WolfSoko/wol-sok-mono/commit/fa039af9e8639d282ac7cfca1e63adbf7f6d5fab))
+
 ### [4.44.34](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.33-non-cdk-deployed...v4.44.34) (2024-11-07)
 
 ### [4.44.33](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.32-non-cdk-deployed...v4.44.33) (2024-11-07)
