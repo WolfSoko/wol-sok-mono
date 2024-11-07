@@ -58,7 +58,7 @@
     "@trpc/server": "^10.45.2",
     "ace-builds": "1.36.4",
     "akita-ng-fire": "7.0.1",
-    "angulartics2": "14.0.0",
+    "angulartics2": "14.1.0",
     "aws-cdk": "^2.164.1",
     "brace": "0.11.1",
     "browserslist": "4.23.1",
