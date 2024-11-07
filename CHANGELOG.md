@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.45.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.45.0-non-cdk-deployed...v4.45.1) (2024-11-07)
+
+
+### Bug Fixes
+
+* **deps:** update analog monorepo to v1.9.2 ([fa8b436](https://github.com/WolfSoko/wol-sok-mono/commit/fa8b436b2365fd95fb743538777082bbc0f5a851))
+
 ## [4.45.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.34-non-cdk-deployed...v4.45.0) (2024-11-07)
 
 
