@@ -140,7 +140,7 @@
     "@storybook/core-common": "8.1.10",
     "@storybook/core-server": "8.2.8",
     "@storybook/jest": "^0.2.3",
-    "@storybook/test-runner": "0.18.2",
+    "@storybook/test-runner": "0.19.1",
     "@storybook/testing-library": "^0.2.2",
     "@swc-node/register": "1.9.2",
     "@swc/core": "1.6.3",
