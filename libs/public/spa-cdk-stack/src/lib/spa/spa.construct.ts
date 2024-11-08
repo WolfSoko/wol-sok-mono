@@ -23,7 +23,12 @@ import {
   RecordTarget,
 } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
-import { BlockPublicAccess, Bucket, IBucket } from 'aws-cdk-lib/aws-s3';
+import {
+  BlockPublicAccess,
+  Bucket,
+  IBucket,
+  ObjectOwnership,
+} from 'aws-cdk-lib/aws-s3';
 import {
   BucketDeployment,
   CacheControl,
@@ -70,10 +75,6 @@ export class SpaConstruct extends Construct {
       domainName: mainDomain,
     });
 
-    const cloudfrontOAC = new S3OriginAccessControl(this, 'cloudfront-OAC', {
-      description: `OriginAccessControl for ${this.spaName}`,
-    });
-
     new CfnOutput(this, `${spaName}-Site:`, { value: 'https://' + siteDomain });
 
     let certificate: Certificate;
@@ -84,13 +85,12 @@ export class SpaConstruct extends Construct {
       certificate = this.createCertificate(zone, mainDomain, siteDomain);
     }
 
-    this.bucket = this.createBucket(siteDomain, cloudfrontOAC, removalPolicy);
+    this.bucket = this.createBucket(siteDomain, removalPolicy);
 
     this.distribution = this.createDistribution(
       siteDomain,
       certificate,
       this.bucket,
-      cloudfrontOAC,
       extraAllowedOrigins
     );
     this.createARecord(siteDomain, this.distribution, zone);
@@ -154,7 +154,6 @@ export class SpaConstruct extends Construct {
 
   private createBucket(
     siteDomain: string,
-    cloudfrontOAC: IOriginAccessControl,
     removalPolicy: RemovalPolicy = RemovalPolicy.DESTROY
   ): Bucket {
     // Content bucket
@@ -177,17 +176,6 @@ export class SpaConstruct extends Construct {
        */
       autoDeleteObjects: removalPolicy === RemovalPolicy.DESTROY, // Danger not recommended for production code
     });
-
-    // Grant access to cloudfront
-    siteBucket.addToResourcePolicy(
-      new PolicyStatement({
-        actions: ['s3:GetObject'],
-        resources: [siteBucket.arnForObjects('*')],
-        principals: [
-          new CanonicalUserPrincipal(cloudfrontOAC.originAccessControlId),
-        ],
-      })
-    );
 
     new CfnOutput(this, `${siteDomain}-Bucket`, {
       value: siteBucket.bucketName,
@@ -218,7 +206,6 @@ export class SpaConstruct extends Construct {
     siteDomain: string,
     certificate: Certificate,
     siteBucket: IBucket,
-    cloudfrontOAC: IOriginAccessControl,
     allowedOrigins: string[] = []
   ): Distribution {
     const responseHeadersPolicy = new ResponseHeadersPolicy(
@@ -256,9 +243,7 @@ export class SpaConstruct extends Construct {
       ],
       defaultBehavior: {
         responseHeadersPolicy,
-        origin: S3BucketOrigin.withOriginAccessControl(siteBucket, {
-          originAccessControl: cloudfrontOAC,
-        }),
+        origin: S3BucketOrigin.withOriginAccessControl(siteBucket),
         compress: true,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,

@@ -351,32 +351,6 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             },
             {
               "Action": "s3:GetObject",
-              "Effect": "Allow",
-              "Principal": {
-                "CanonicalUser": {
-                  "Fn::GetAtt": [
-                    "TestSpaStackcloudfrontOAC8A6F28B0",
-                    "Id",
-                  ],
-                },
-              },
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    {
-                      "Fn::GetAtt": [
-                        "TestSpaStackBucketAD480A08",
-                        "Arn",
-                      ],
-                    },
-                    "/*",
-                  ],
-                ],
-              },
-            },
-            {
-              "Action": "s3:GetObject",
               "Condition": {
                 "StringEquals": {
                   "AWS:SourceArn": {
@@ -632,7 +606,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
               "Id": "TestSpaStackDistributionOrigin126C831C0",
               "OriginAccessControlId": {
                 "Fn::GetAtt": [
-                  "TestSpaStackcloudfrontOAC8A6F28B0",
+                  "TestSpaStackDistributionOrigin1S3OriginAccessControlB7839C34",
                   "Id",
                 ],
               },
@@ -651,6 +625,17 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         },
       },
       "Type": "AWS::CloudFront::Distribution",
+    },
+    "TestSpaStackDistributionOrigin1S3OriginAccessControlB7839C34": {
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Name": "TestSpaStackDistributionOrigin1S3OriginAccessControl98722011",
+          "OriginAccessControlOriginType": "s3",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4",
+        },
+      },
+      "Type": "AWS::CloudFront::OriginAccessControl",
     },
     "TestSpaStackResponseHeadersPolicyEA652AD7": {
       "Properties": {
@@ -682,18 +667,6 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         },
       },
       "Type": "AWS::CloudFront::ResponseHeadersPolicy",
-    },
-    "TestSpaStackcloudfrontOAC8A6F28B0": {
-      "Properties": {
-        "OriginAccessControlConfig": {
-          "Description": "OriginAccessControl for TestSpaStack",
-          "Name": "TestSpaStackcloudfrontOACE14A925C",
-          "OriginAccessControlOriginType": "s3",
-          "SigningBehavior": "always",
-          "SigningProtocol": "sigv4",
-        },
-      },
-      "Type": "AWS::CloudFront::OriginAccessControl",
     },
   },
   "Rules": {
@@ -1077,32 +1050,6 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             },
             {
               "Action": "s3:GetObject",
-              "Effect": "Allow",
-              "Principal": {
-                "CanonicalUser": {
-                  "Fn::GetAtt": [
-                    "TestSpaStackcloudfrontOAC8A6F28B0",
-                    "Id",
-                  ],
-                },
-              },
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    {
-                      "Fn::GetAtt": [
-                        "TestSpaStackBucketAD480A08",
-                        "Arn",
-                      ],
-                    },
-                    "/*",
-                  ],
-                ],
-              },
-            },
-            {
-              "Action": "s3:GetObject",
               "Condition": {
                 "StringEquals": {
                   "AWS:SourceArn": {
@@ -1358,7 +1305,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
               "Id": "TestSpaStackDistributionOrigin126C831C0",
               "OriginAccessControlId": {
                 "Fn::GetAtt": [
-                  "TestSpaStackcloudfrontOAC8A6F28B0",
+                  "TestSpaStackDistributionOrigin1S3OriginAccessControlB7839C34",
                   "Id",
                 ],
               },
@@ -1377,6 +1324,17 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         },
       },
       "Type": "AWS::CloudFront::Distribution",
+    },
+    "TestSpaStackDistributionOrigin1S3OriginAccessControlB7839C34": {
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Name": "TestSpaStackDistributionOrigin1S3OriginAccessControl98722011",
+          "OriginAccessControlOriginType": "s3",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4",
+        },
+      },
+      "Type": "AWS::CloudFront::OriginAccessControl",
     },
     "TestSpaStackResponseHeadersPolicyEA652AD7": {
       "Properties": {
@@ -1408,18 +1366,6 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         },
       },
       "Type": "AWS::CloudFront::ResponseHeadersPolicy",
-    },
-    "TestSpaStackcloudfrontOAC8A6F28B0": {
-      "Properties": {
-        "OriginAccessControlConfig": {
-          "Description": "OriginAccessControl for TestSpaStack",
-          "Name": "TestSpaStackcloudfrontOACE14A925C",
-          "OriginAccessControlOriginType": "s3",
-          "SigningBehavior": "always",
-          "SigningProtocol": "sigv4",
-        },
-      },
-      "Type": "AWS::CloudFront::OriginAccessControl",
     },
   },
   "Rules": {
@@ -1799,32 +1745,6 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
             },
             {
               "Action": "s3:GetObject",
-              "Effect": "Allow",
-              "Principal": {
-                "CanonicalUser": {
-                  "Fn::GetAtt": [
-                    "TestSpaStackcloudfrontOAC8A6F28B0",
-                    "Id",
-                  ],
-                },
-              },
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    {
-                      "Fn::GetAtt": [
-                        "TestSpaStackBucketAD480A08",
-                        "Arn",
-                      ],
-                    },
-                    "/*",
-                  ],
-                ],
-              },
-            },
-            {
-              "Action": "s3:GetObject",
               "Condition": {
                 "StringEquals": {
                   "AWS:SourceArn": {
@@ -2029,7 +1949,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
               "Id": "TestSpaStackDistributionOrigin126C831C0",
               "OriginAccessControlId": {
                 "Fn::GetAtt": [
-                  "TestSpaStackcloudfrontOAC8A6F28B0",
+                  "TestSpaStackDistributionOrigin1S3OriginAccessControlB7839C34",
                   "Id",
                 ],
               },
@@ -2048,6 +1968,17 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         },
       },
       "Type": "AWS::CloudFront::Distribution",
+    },
+    "TestSpaStackDistributionOrigin1S3OriginAccessControlB7839C34": {
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Name": "TestSpaStackDistributionOrigin1S3OriginAccessControl98722011",
+          "OriginAccessControlOriginType": "s3",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4",
+        },
+      },
+      "Type": "AWS::CloudFront::OriginAccessControl",
     },
     "TestSpaStackResponseHeadersPolicyEA652AD7": {
       "Properties": {
@@ -2079,18 +2010,6 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         },
       },
       "Type": "AWS::CloudFront::ResponseHeadersPolicy",
-    },
-    "TestSpaStackcloudfrontOAC8A6F28B0": {
-      "Properties": {
-        "OriginAccessControlConfig": {
-          "Description": "OriginAccessControl for TestSpaStack",
-          "Name": "TestSpaStackcloudfrontOACE14A925C",
-          "OriginAccessControlOriginType": "s3",
-          "SigningBehavior": "always",
-          "SigningProtocol": "sigv4",
-        },
-      },
-      "Type": "AWS::CloudFront::OriginAccessControl",
     },
   },
   "Rules": {
@@ -2352,32 +2271,6 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
           "Statement": [
             {
               "Action": "s3:GetObject",
-              "Effect": "Allow",
-              "Principal": {
-                "CanonicalUser": {
-                  "Fn::GetAtt": [
-                    "TestSpaStackcloudfrontOAC8A6F28B0",
-                    "Id",
-                  ],
-                },
-              },
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    {
-                      "Fn::GetAtt": [
-                        "TestSpaStackBucketAD480A08",
-                        "Arn",
-                      ],
-                    },
-                    "/*",
-                  ],
-                ],
-              },
-            },
-            {
-              "Action": "s3:GetObject",
               "Condition": {
                 "StringEquals": {
                   "AWS:SourceArn": {
@@ -2582,7 +2475,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
               "Id": "TestSpaStackDistributionOrigin126C831C0",
               "OriginAccessControlId": {
                 "Fn::GetAtt": [
-                  "TestSpaStackcloudfrontOAC8A6F28B0",
+                  "TestSpaStackDistributionOrigin1S3OriginAccessControlB7839C34",
                   "Id",
                 ],
               },
@@ -2601,6 +2494,17 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         },
       },
       "Type": "AWS::CloudFront::Distribution",
+    },
+    "TestSpaStackDistributionOrigin1S3OriginAccessControlB7839C34": {
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Name": "TestSpaStackDistributionOrigin1S3OriginAccessControl98722011",
+          "OriginAccessControlOriginType": "s3",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4",
+        },
+      },
+      "Type": "AWS::CloudFront::OriginAccessControl",
     },
     "TestSpaStackResponseHeadersPolicyEA652AD7": {
       "Properties": {
@@ -2632,18 +2536,6 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         },
       },
       "Type": "AWS::CloudFront::ResponseHeadersPolicy",
-    },
-    "TestSpaStackcloudfrontOAC8A6F28B0": {
-      "Properties": {
-        "OriginAccessControlConfig": {
-          "Description": "OriginAccessControl for TestSpaStack",
-          "Name": "TestSpaStackcloudfrontOACE14A925C",
-          "OriginAccessControlOriginType": "s3",
-          "SigningBehavior": "always",
-          "SigningProtocol": "sigv4",
-        },
-      },
-      "Type": "AWS::CloudFront::OriginAccessControl",
     },
   },
   "Rules": {
@@ -3023,32 +2915,6 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
             },
             {
               "Action": "s3:GetObject",
-              "Effect": "Allow",
-              "Principal": {
-                "CanonicalUser": {
-                  "Fn::GetAtt": [
-                    "TestSpaStackcloudfrontOAC8A6F28B0",
-                    "Id",
-                  ],
-                },
-              },
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    {
-                      "Fn::GetAtt": [
-                        "TestSpaStackBucketAD480A08",
-                        "Arn",
-                      ],
-                    },
-                    "/*",
-                  ],
-                ],
-              },
-            },
-            {
-              "Action": "s3:GetObject",
               "Condition": {
                 "StringEquals": {
                   "AWS:SourceArn": {
@@ -3258,7 +3124,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
               "Id": "TestSpaStackDistributionOrigin126C831C0",
               "OriginAccessControlId": {
                 "Fn::GetAtt": [
-                  "TestSpaStackcloudfrontOAC8A6F28B0",
+                  "TestSpaStackDistributionOrigin1S3OriginAccessControlB7839C34",
                   "Id",
                 ],
               },
@@ -3277,6 +3143,17 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         },
       },
       "Type": "AWS::CloudFront::Distribution",
+    },
+    "TestSpaStackDistributionOrigin1S3OriginAccessControlB7839C34": {
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Name": "TestSpaStackDistributionOrigin1S3OriginAccessControl98722011",
+          "OriginAccessControlOriginType": "s3",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4",
+        },
+      },
+      "Type": "AWS::CloudFront::OriginAccessControl",
     },
     "TestSpaStackResponseHeadersPolicyEA652AD7": {
       "Properties": {
@@ -3308,18 +3185,6 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         },
       },
       "Type": "AWS::CloudFront::ResponseHeadersPolicy",
-    },
-    "TestSpaStackcloudfrontOAC8A6F28B0": {
-      "Properties": {
-        "OriginAccessControlConfig": {
-          "Description": "OriginAccessControl for TestSpaStack",
-          "Name": "TestSpaStackcloudfrontOACE14A925C",
-          "OriginAccessControlOriginType": "s3",
-          "SigningBehavior": "always",
-          "SigningProtocol": "sigv4",
-        },
-      },
-      "Type": "AWS::CloudFront::OriginAccessControl",
     },
   },
   "Rules": {
