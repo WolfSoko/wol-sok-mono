@@ -60,7 +60,7 @@ export class SpaConstruct extends Construct {
     super(parent, spaName);
     const removalPolicy: RemovalPolicy =
       props.bucketRemovalPolicy ?? defaultBucketRemovalPolicy;
-    const { buildOutputPath } = props;
+    const { buildOutputPath, allowedOrigins } = props;
 
     const { mainDomain, siteDomain } = this.extractDomains(props.domainName);
 
@@ -84,12 +84,13 @@ export class SpaConstruct extends Construct {
     }
 
     this.bucket = this.createBucket(siteDomain, cloudfrontOAI, removalPolicy);
+
     this.distribution = this.createDistribution(
       siteDomain,
       certificate,
       this.bucket,
       cloudfrontOAI,
-      props.allowedOrigins
+      allowedOrigins
     );
     this.createARecord(siteDomain, this.distribution, zone);
 
@@ -219,7 +220,7 @@ export class SpaConstruct extends Construct {
     certificate: Certificate,
     siteBucket: IBucket,
     cloudfrontOAI: OriginAccessIdentity,
-    allowedOrigins: string[] = []
+    allowedOrigins: string[] = ['localhost', '127.0.0.1', siteDomain]
   ): Distribution {
     const responseHeadersPolicy = new ResponseHeadersPolicy(
       this,
