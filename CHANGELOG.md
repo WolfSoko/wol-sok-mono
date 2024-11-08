@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.47.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.2...v4.47.3) (2024-11-08)
+
+
+### Bug Fixes
+
+* 🐛 simplify OAC access ([0c4fd53](https://github.com/WolfSoko/wol-sok-mono/commit/0c4fd53af45e3ff6e17445641b3e6f273efe582a))
+
 ### [4.47.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.1...v4.47.2) (2024-11-08)
 
 
