@@ -36,7 +36,7 @@ export interface SpaProps {
   domainName: string;
   buildOutputPath: string;
   bucketRemovalPolicy?: RemovalPolicy;
-  allowedOrigins?: string[];
+  extraAllowedOrigins?: string[];
 }
 
 const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
@@ -61,7 +61,7 @@ export class SpaConstruct extends Construct {
     super(parent, spaName);
     const removalPolicy: RemovalPolicy =
       props.bucketRemovalPolicy ?? defaultBucketRemovalPolicy;
-    const { buildOutputPath, allowedOrigins } = props;
+    const { buildOutputPath, extraAllowedOrigins } = props;
 
     const { mainDomain, siteDomain } = this.extractDomains(props.domainName);
 
@@ -91,7 +91,7 @@ export class SpaConstruct extends Construct {
       certificate,
       this.bucket,
       cloudfrontOAC,
-      allowedOrigins
+      extraAllowedOrigins
     );
     this.createARecord(siteDomain, this.distribution, zone);
 

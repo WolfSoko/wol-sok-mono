@@ -13,7 +13,7 @@ new SpaStack(app, stackName, {
   buildOutputPath: 'dist/apps/shader-examples-remote',
   domainName: 'shader-examples.wolsok.de',
   bucketRemovalPolicy: RemovalPolicy.DESTROY,
-  allowedOrigins: ['https://angularexamples.wolsok.de'],
+  extraAllowedOrigins: ['https://angularexamples.wolsok.de'],
 });
 
 const tags: Tags = Tags.of(app);
