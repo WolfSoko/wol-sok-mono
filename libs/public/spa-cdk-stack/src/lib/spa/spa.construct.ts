@@ -229,9 +229,9 @@ export class SpaConstruct extends Construct {
           accessControlAllowCredentials: false,
           accessControlAllowOrigins: [
             ...allowedOrigins,
-            siteDomain,
-            'localhost',
-            '127.0.0.1',
+            'https://' + siteDomain,
+            'http://localhost',
+            'http://127.0.0.1',
           ],
           accessControlAllowMethods: ['GET', 'HEAD', 'OPTIONS'],
           accessControlAllowHeaders: ['*'],

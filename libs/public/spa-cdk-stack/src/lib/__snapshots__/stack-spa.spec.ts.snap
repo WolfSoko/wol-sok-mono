@@ -671,9 +671,9 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             },
             "AccessControlAllowOrigins": {
               "Items": [
-                "test-domain.com",
-                "localhost",
-                "127.0.0.1",
+                "https://test-domain.com",
+                "http://localhost",
+                "http://127.0.0.1",
               ],
             },
             "OriginOverride": true,
@@ -1397,9 +1397,9 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
             },
             "AccessControlAllowOrigins": {
               "Items": [
-                "test-domain.com",
-                "localhost",
-                "127.0.0.1",
+                "https://test-domain.com",
+                "http://localhost",
+                "http://127.0.0.1",
               ],
             },
             "OriginOverride": true,
@@ -2068,9 +2068,9 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
             },
             "AccessControlAllowOrigins": {
               "Items": [
-                "test-domain.com",
-                "localhost",
-                "127.0.0.1",
+                "https://test-domain.com",
+                "http://localhost",
+                "http://127.0.0.1",
               ],
             },
             "OriginOverride": true,
@@ -2621,9 +2621,9 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
             },
             "AccessControlAllowOrigins": {
               "Items": [
-                "test-domain.com",
-                "localhost",
-                "127.0.0.1",
+                "https://test-domain.com",
+                "http://localhost",
+                "http://127.0.0.1",
               ],
             },
             "OriginOverride": true,
@@ -3297,9 +3297,9 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
             },
             "AccessControlAllowOrigins": {
               "Items": [
-                "subdomain.test-domain.com",
-                "localhost",
-                "127.0.0.1",
+                "https://subdomain.test-domain.com",
+                "http://localhost",
+                "http://127.0.0.1",
               ],
             },
             "OriginOverride": true,

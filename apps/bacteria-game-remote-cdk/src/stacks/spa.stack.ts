@@ -9,7 +9,7 @@ export class SpaStack extends Stack {
       domainName: props.domainName,
       buildOutputPath: props.buildOutputPath,
       bucketRemovalPolicy: props.bucketRemovalPolicy,
-      allowedOrigins: ['angularexamples.wolsok.de'],
+      allowedOrigins: ['https://angularexamples.wolsok.de'],
     });
   }
 }
