@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.46.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.6-non-cdk-deployed...v4.46.7) (2024-11-08)
+
+
+### Bug Fixes
+
+* **deps:** update dependency mermaid to v11.4.0 ([122441b](https://github.com/WolfSoko/wol-sok-mono/commit/122441b12cbc39876782c2a26f23575aa0382c68))
+
 ### [4.46.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.5-non-cdk-deployed...v4.46.6) (2024-11-08)
 
 
