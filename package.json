@@ -80,7 +80,7 @@
     "mermaid": "^11.1.0",
     "ngx-ace-editor-wrapper": "9.1.12",
     "normalize.css": "8.0.1",
-    "p5": "1.9.4",
+    "p5": "1.11.1",
     "prismjs": "^1.29.0",
     "rxjs": "7.8.1",
     "stats.js": "0.17.0",
