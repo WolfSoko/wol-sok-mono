@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.47.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.3-cdk-deployed...v4.47.4) (2024-11-08)
+
+
+### Bug Fixes
+
+* 🐛 bacteria-game remote url ([c7055a2](https://github.com/WolfSoko/wol-sok-mono/commit/c7055a2f4b333db215242c57c6772cb1aae2ba5c))
+
 ### [4.47.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.2...v4.47.3) (2024-11-08)
 
 
