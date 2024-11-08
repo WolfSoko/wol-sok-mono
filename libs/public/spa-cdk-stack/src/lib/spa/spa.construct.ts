@@ -8,8 +8,9 @@ import {
   Distribution,
   HttpVersion,
   IDistribution,
-  OriginAccessIdentity,
+  IOriginAccessControl,
   ResponseHeadersPolicy,
+  S3OriginAccessControl,
   SecurityPolicyProtocol,
   ViewerProtocolPolicy,
 } from 'aws-cdk-lib/aws-cloudfront';
@@ -55,7 +56,7 @@ export class SpaConstruct extends Construct {
   constructor(
     parent: Construct,
     private readonly spaName: string,
-    private readonly props: SpaProps
+    props: SpaProps
   ) {
     super(parent, spaName);
     const removalPolicy: RemovalPolicy =
@@ -69,8 +70,8 @@ export class SpaConstruct extends Construct {
       domainName: mainDomain,
     });
 
-    const cloudfrontOAI = new OriginAccessIdentity(this, 'cloudfront-OAI', {
-      comment: `OriginAccessIdentity for ${this.spaName}`,
+    const cloudfrontOAC = new S3OriginAccessControl(this, 'cloudfront-OAC', {
+      description: `OriginAccessControl for ${this.spaName}`,
     });
 
     new CfnOutput(this, `${spaName}-Site:`, { value: 'https://' + siteDomain });
@@ -83,13 +84,13 @@ export class SpaConstruct extends Construct {
       certificate = this.createCertificate(zone, mainDomain, siteDomain);
     }
 
-    this.bucket = this.createBucket(siteDomain, cloudfrontOAI, removalPolicy);
+    this.bucket = this.createBucket(siteDomain, cloudfrontOAC, removalPolicy);
 
     this.distribution = this.createDistribution(
       siteDomain,
       certificate,
       this.bucket,
-      cloudfrontOAI,
+      cloudfrontOAC,
       allowedOrigins
     );
     this.createARecord(siteDomain, this.distribution, zone);
@@ -153,7 +154,7 @@ export class SpaConstruct extends Construct {
 
   private createBucket(
     siteDomain: string,
-    cloudfrontOAI: OriginAccessIdentity,
+    cloudfrontOAC: IOriginAccessControl,
     removalPolicy: RemovalPolicy = RemovalPolicy.DESTROY
   ): Bucket {
     // Content bucket
@@ -183,9 +184,7 @@ export class SpaConstruct extends Construct {
         actions: ['s3:GetObject'],
         resources: [siteBucket.arnForObjects('*')],
         principals: [
-          new CanonicalUserPrincipal(
-            cloudfrontOAI.cloudFrontOriginAccessIdentityS3CanonicalUserId
-          ),
+          new CanonicalUserPrincipal(cloudfrontOAC.originAccessControlId),
         ],
       })
     );
@@ -219,8 +218,8 @@ export class SpaConstruct extends Construct {
     siteDomain: string,
     certificate: Certificate,
     siteBucket: IBucket,
-    cloudfrontOAI: OriginAccessIdentity,
-    allowedOrigins: string[] = ['localhost', '127.0.0.1', siteDomain]
+    cloudfrontOAC: IOriginAccessControl,
+    allowedOrigins: string[] = []
   ): Distribution {
     const responseHeadersPolicy = new ResponseHeadersPolicy(
       this,
@@ -257,8 +256,8 @@ export class SpaConstruct extends Construct {
       ],
       defaultBehavior: {
         responseHeadersPolicy,
-        origin: S3BucketOrigin.withOriginAccessIdentity(siteBucket, {
-          originAccessIdentity: cloudfrontOAI,
+        origin: S3BucketOrigin.withOriginAccessControl(siteBucket, {
+          originAccessControl: cloudfrontOAC,
         }),
         compress: true,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
