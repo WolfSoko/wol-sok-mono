@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.47.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.15-non-cdk-deployed...v4.47.0) (2024-11-08)
+
+
+### Features
+
+* ✨ add allowed origins ([6d65a46](https://github.com/WolfSoko/wol-sok-mono/commit/6d65a4669e85cf978f47089ccd9d0a0c9a0abf99))
+
 ### [4.46.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.14-non-cdk-deployed...v4.46.15) (2024-11-08)
 
 ### [4.46.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.13-non-cdk-deployed...v4.46.14) (2024-11-08)
