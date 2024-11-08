@@ -90,7 +90,7 @@
     "ts-keycode-enum": "1.0.6",
     "tslib": "2.5.2",
     "vega": "5.30.0",
-    "vega-embed": "6.25.0",
+    "vega-embed": "6.28.0",
     "vega-lite": "5.19.0",
     "zod": "^3.23.8",
     "zone.js": "0.15.0"
