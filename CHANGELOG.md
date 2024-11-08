@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.46.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.3-non-cdk-deployed...v4.46.4) (2024-11-08)
+
+
+### Bug Fixes
+
+* **deps:** update dependency firebase to v10.14.1 ([c16c1da](https://github.com/WolfSoko/wol-sok-mono/commit/c16c1da00ca52d317d6e25f15ef5a62eb16a923a))
+
 ### [4.46.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.2-non-cdk-deployed...v4.46.3) (2024-11-08)
 
 
