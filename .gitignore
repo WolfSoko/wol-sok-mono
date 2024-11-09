@@ -21,6 +21,7 @@
 *.sublime-workspace
 /.idea/sonarlint/issuestore/
 /.idea/aws.xml
+/.idea/vcs.xml
 
 # IDE - VSCode
 .vscode/*
@@ -66,4 +67,5 @@ ui-debug.log
 firebase-export*
 .secret.local
 
-vite.config.*.timestamp*
+vite.config.*.timestamp*!
+
