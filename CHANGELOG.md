@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.47.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.4-cdk-deployed...v4.47.5) (2024-11-09)
+
+
+### Bug Fixes
+
+* 🐛 remove static remotes definitions ([8cf9765](https://github.com/WolfSoko/wol-sok-mono/commit/8cf97658c0eebaedc4e19982c5aa55b2d49c6d6e))
+
 ### [4.47.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.3-cdk-deployed...v4.47.4) (2024-11-08)
 
 
