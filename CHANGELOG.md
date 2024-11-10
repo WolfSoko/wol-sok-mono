@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.47.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.5-cdk-deployed...v4.47.6) (2024-11-10)
+
+
+### Bug Fixes
+
+* 🐛 enable experiments top level await for prod ([09c2451](https://github.com/WolfSoko/wol-sok-mono/commit/09c24518c2b20f3b6e91506e02cc003494b4d5a8))
+* 🐛 lint error ([ef0a2dc](https://github.com/WolfSoko/wol-sok-mono/commit/ef0a2dc7e2f95eb5276bcf3e00583a5149c46f9f))
+
 ### [4.47.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.4-cdk-deployed...v4.47.5) (2024-11-09)
 
 
