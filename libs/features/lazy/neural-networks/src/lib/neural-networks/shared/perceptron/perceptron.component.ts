@@ -50,7 +50,11 @@ export class PerceptronComponent implements AfterContentInit, OnDestroy {
   drawPerceptronCircle(p: P5) {
     p.push();
     p.translate(this.perceptronCircleX(), this.canvasHeight / 2);
-    this.perceptron.isLearning ? p.fill(255, 200, 200) : p.fill(200, 200, 255);
+    if (this.perceptron.isLearning) {
+      p.fill(255, 200, 200);
+    } else {
+      p.fill(200, 200, 255);
+    }
 
     const circleSize = this.perceptronCircleSize();
     p.ellipse(0, 0, circleSize, circleSize);
@@ -75,7 +79,11 @@ export class PerceptronComponent implements AfterContentInit, OnDestroy {
   drawBiasInput(p: P5) {
     p.push();
     p.translate(this.perceptronCircleX(), this.canvasHeight / 12);
-    this.perceptron.isLearning ? p.fill(255, 200, 200) : p.fill(200, 200, 255);
+    if (this.perceptron.isLearning) {
+      p.fill(255, 200, 200);
+    } else {
+      p.fill(200, 200, 255);
+    }
     const circleSize = this.canvasWidth / 7.5;
     p.ellipse(0, 0, circleSize, circleSize);
     p.fill(0, 0, 0);
