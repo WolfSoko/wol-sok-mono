@@ -19,9 +19,9 @@
 *.launch
 .settings/
 *.sublime-workspace
-/.idea/sonarlint/issuestore/
-/.idea/aws.xml
-/.idea/vcs.xml
+.idea/sonarlint/issuestore/
+.idea/aws.xml
+.idea/vcs.xml
 
 # IDE - VSCode
 .vscode/*
