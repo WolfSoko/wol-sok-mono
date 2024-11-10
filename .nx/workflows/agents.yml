@@ -34,5 +34,7 @@ launch-templates:
           base-branch: 'main'
       - name: Install Node Modules
         uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/install-node-modules/main.yaml'
+        inputs:
+          npm_legacy_install: 'false'
       - name: Install Browsers (if needed)
         uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/install-browsers/main.yaml'
