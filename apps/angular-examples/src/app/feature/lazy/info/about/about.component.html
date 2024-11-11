@@ -29,7 +29,7 @@
       <mat-nav-list>
         @for (route of routerLinks; track route) {
           <app-nav-item
-            [path]="route.path"
+            [path]="'/' + route.path"
             [linkText]="route.data.linkText"
             [subTitle]="route.data.subTitle"
             (click)="openPage(route.path)"
