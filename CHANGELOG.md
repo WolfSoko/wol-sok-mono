@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.47.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.10-non-cdk-deployed...v4.47.11) (2024-11-11)
+
+
+### Bug Fixes
+
+* 🐛 home routes without 'home/' in routes ([8615ff3](https://github.com/WolfSoko/wol-sok-mono/commit/8615ff390c34a2709f2cd2773f3d549410d27a01))
+
 ### [4.47.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.9-non-cdk-deployed...v4.47.10) (2024-11-10)
 
 
