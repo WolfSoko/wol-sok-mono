@@ -1,10 +1,13 @@
 import { InputWave } from '../input-wave.model';
 
-export function replayWave(wave: InputWave): void {
+export function replayWave(wave: InputWave): () => void {
   if (wave != null) {
     const context = new AudioContext();
-    playByteArray(wave.points, wave.samplesPerSec, context);
+    return playByteArray(wave.points, wave.samplesPerSec, context);
   }
+  return () => {
+    // noop
+  };
 }
 
 function playByteArray(
@@ -22,4 +25,5 @@ function playByteArray(
   node.buffer = buffer;
   node.connect(context.destination);
   node.start();
+  return () => node.stop();
 }

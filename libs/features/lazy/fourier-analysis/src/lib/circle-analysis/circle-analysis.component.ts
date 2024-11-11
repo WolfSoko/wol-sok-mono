@@ -2,7 +2,8 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  Input,
+  inject,
+  input,
   Signal,
 } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
@@ -19,11 +20,7 @@ import { CircleCanvasComponent } from './circle-canvas/circle-canvas.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CircleAnalysisComponent {
-  @Input() width!: number;
-  @Input() height!: number;
-  activeWave: Signal<InputWave | undefined>;
-
-  constructor(private waveQuery: InputWaveRepo) {
-    this.activeWave = waveQuery.activeWave;
-  }
+  width = input.required<number>();
+  height = input.required<number>();
+  activeWave: Signal<InputWave | undefined> = inject(InputWaveRepo).activeWave;
 }

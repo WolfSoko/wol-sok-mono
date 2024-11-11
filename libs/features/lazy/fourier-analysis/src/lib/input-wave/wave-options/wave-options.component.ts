@@ -47,14 +47,17 @@ export class WaveOptionsComponent {
     this.waveOptions$ = this.inputWaveOptionsRepo.state$;
     this.form = this.initForm();
 
-    effect(() => {
-      const optionsModel = this.inputWaveOptionsRepo.state();
-      const updateOptions = { emitEvent: false };
+    effect(
+      () => {
+        const optionsModel = this.inputWaveOptionsRepo.state();
+        const updateOptions = { emitEvent: false };
 
-      if (optionsModel) {
-        this.updateForm(optionsModel, updateOptions);
-      }
-    });
+        if (optionsModel) {
+          this.updateForm(optionsModel, updateOptions);
+        }
+      },
+      { allowSignalWrites: true }
+    );
 
     this.form.valueChanges
       .pipe(debounceTime(300), takeUntilDestroyed())

@@ -6,7 +6,7 @@
           <mat-card-title>Wave options</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          @defer (on timer(500)) {
+          @defer (on timer(5000)) {
             <lazy-feat-fanal-wave-options class="wave-options" />
           }
         </mat-card-content>
@@ -30,14 +30,14 @@
     </mat-toolbar>
     @defer (on timer(1000)) {
       <lazy-feat-fanal-input-wave
-        [width]="inputWaveCanvasWidth"
-        [height]="inputWaveCanvasHeight"
+        [width]="inputWaveCanvasWidth()"
+        [height]="inputWaveCanvasHeight()"
       />
     }
     @defer (on timer(2500)) {
       <lazy-feat-fanal-circle-analysis
-        [width]="circleCanvasWidth"
-        [height]="circleCanvasHeight"
+        [width]="circleCanvasWidth()"
+        [height]="circleCanvasHeight()"
       />
     }
   </div>

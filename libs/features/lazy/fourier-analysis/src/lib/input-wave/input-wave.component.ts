@@ -4,7 +4,7 @@ import {
   Component,
   effect,
   inject,
-  Input,
+  input,
   Signal,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -37,14 +37,12 @@ export class InputWaveComponent {
   private inputWaveService: InputWaveService = inject(InputWaveService);
   private snackbar: MatSnackBar = inject(MatSnackBar);
 
-  @Input() width = 0;
-  @Input() height = 0;
-  activeWave: Signal<InputWave | undefined>;
+  width = input.required<number>();
+  height = input.required<number>();
+  activeWave: Signal<InputWave | undefined> = this.waveRepo.activeWave;
   audioRecorderState = this.waveRepo.audioRecorderState;
 
   constructor() {
-    this.activeWave = this.waveRepo.activeWave;
-
     effect(() => {
       const recState = this.waveRepo.audioRecorderState();
       if (recState?.state === 'error') {

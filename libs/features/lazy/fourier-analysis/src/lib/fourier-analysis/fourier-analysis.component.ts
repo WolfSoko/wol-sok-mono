@@ -1,5 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  signal,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -32,21 +37,20 @@ import { WaveOptionsComponent } from '../input-wave/wave-options/wave-options.co
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FourierAnalysisComponent {
-  inputWaveCanvasWidth = 300;
-  inputWaveCanvasHeight = 50;
-  circleCanvasWidth = 300;
-  circleCanvasHeight = 50;
+  inputWaveCanvasWidth = signal(300);
+  circleCanvasWidth = signal(300);
+
+  inputWaveCanvasHeight = computed(() =>
+    Math.max(250, Math.round(this.inputWaveCanvasWidth() * (9 / 64)))
+  );
+
+  circleCanvasHeight = computed(() =>
+    Math.max(250, this.circleCanvasWidth() * (9 / 94))
+  );
 
   onResize($event: ResizedEvent) {
     const availableWidth = Math.max(300, $event.newWidth - 32);
-
-    this.inputWaveCanvasWidth = availableWidth;
-    this.circleCanvasWidth = availableWidth;
-
-    this.circleCanvasHeight = Math.max(250, this.circleCanvasWidth * (9 / 94));
-    this.inputWaveCanvasHeight = Math.max(
-      250,
-      Math.round(this.inputWaveCanvasWidth * (9 / 64))
-    );
+    this.inputWaveCanvasWidth.set(availableWidth);
+    this.circleCanvasWidth.set(availableWidth);
   }
 }

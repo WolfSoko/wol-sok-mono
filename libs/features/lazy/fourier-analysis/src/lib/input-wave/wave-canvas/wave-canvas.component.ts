@@ -1,26 +1,19 @@
 import { CommonModule } from '@angular/common';
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  effect,
   ElementRef,
-  Inject,
-  Input,
+  inject,
+  Injector,
+  input,
   NgZone,
-  OnChanges,
   OnDestroy,
-  SimpleChange,
-  SimpleChanges,
-  ViewChild,
+  signal,
+  viewChild,
 } from '@angular/core';
 import P5 from 'p5';
 import { InputWave } from '../../model/input-wave.model';
-
-interface WaveCanvasChanges extends SimpleChanges {
-  waveWidth: SimpleChange;
-  waveHeight: SimpleChange;
-  wave: SimpleChange;
-}
 
 @Component({
   standalone: true,
@@ -30,41 +23,50 @@ interface WaveCanvasChanges extends SimpleChanges {
   styleUrls: ['./wave-canvas.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WaveCanvasComponent
-  implements OnChanges, AfterViewInit, OnDestroy
-{
-  @ViewChild('canvasContainer', { static: true })
-  canvasContainerRef!: ElementRef;
-  private canvasContainer?: HTMLElement;
+export class WaveCanvasComponent implements OnDestroy {
+  canvasContainerRef =
+    viewChild.required<ElementRef<HTMLDivElement>>('canvasContainer');
 
-  @Input() waveWidth!: number;
-  @Input() waveHeight!: number;
-  @Input() wave!: InputWave;
+  waveWidth = input.required<number>();
+  waveHeight = input.required<number>();
+  wave = input.required<InputWave>();
+  private zone = inject(NgZone);
+  private injector = inject(Injector);
 
   private sketch: P5 | null = null;
-  private wavePartsToDraw = 0;
+  private wavePartsToDraw = signal(0);
 
-  constructor(@Inject(NgZone) private zone: NgZone) {}
+  constructor() {
+    effect(
+      () => {
+        if (this.waveWidth() != null || this.waveHeight() != null) {
+          if (this.sketch != null) {
+            this.sketch.resizeCanvas(this.waveWidth(), this.waveHeight());
+          }
+        }
+      },
+      { allowSignalWrites: true }
+    );
 
-  ngAfterViewInit(): void {
-    this.canvasContainer = this.canvasContainerRef.nativeElement;
-    setTimeout(() => this.initCanvas(), 100);
-  }
-
-  ngOnChanges(changes: WaveCanvasChanges): void {
-    if (changes.waveWidth != null || changes.waveHeight != null) {
-      if (this.sketch != null) {
-        this.sketch.resizeCanvas(this.waveWidth, this.waveHeight);
+    effect(
+      () => {
+        // observe wave signal an reset wavePartsToDraw on change
+        this.wave();
+        this.wavePartsToDraw.set(0);
+        this.sketch?.loop();
+      },
+      { allowSignalWrites: true }
+    );
+    effect(() => {
+      if (this.canvasContainerRef()?.nativeElement && this.sketch == null) {
+        this.initCanvas(this.canvasContainerRef().nativeElement);
       }
-    }
-    if (changes.wave) {
-      this.wavePartsToDraw = 0;
-    }
+    });
   }
 
-  private initCanvas() {
+  private initCanvas(canvasContainer: HTMLDivElement) {
     this.zone.runOutsideAngular(
-      () => new P5(this.initSketch.bind(this), this.canvasContainer)
+      () => new P5((p5: P5) => this.initSketch(p5), canvasContainer)
     );
   }
 
@@ -76,20 +78,16 @@ export class WaveCanvasComponent
     const topPadding = 10;
 
     sketch.setup = () => {
-      sketch.createCanvas(this.waveWidth, this.waveHeight);
+      sketch.createCanvas(this.waveWidth(), this.waveHeight());
     };
 
     sketch.draw = () => {
-      if (
-        this.wave == null ||
-        this.wave.points == null ||
-        this.wave.points.length === 0
-      ) {
+      if ((this.wave()?.points?.length ?? 0) === 0) {
         return;
       }
       const w = sketch.width;
       const h = sketch.height;
-      const points = this.wave.points;
+      const points = this.wave().points;
       const samples = points.length;
 
       sketch.background(66);
@@ -102,16 +100,15 @@ export class WaveCanvasComponent
         sketch.strokeWeight(0.5);
         sketch.noFill();
         sketch.beginShape();
-        if (this.wavePartsToDraw < samples) {
-          this.wavePartsToDraw = Math.min(
-            this.wavePartsToDraw + samples / 90,
-            samples
+        if (this.wavePartsToDraw() < samples) {
+          this.wavePartsToDraw.update((prev) =>
+            Math.min(prev + samples / 90, samples)
           );
         }
 
         for (
           let i = 0;
-          i < this.wavePartsToDraw;
+          i < this.wavePartsToDraw();
           i = i + Math.floor(Math.max(samples / w, 1))
         ) {
           sketch.vertex(
@@ -132,7 +129,7 @@ export class WaveCanvasComponent
         sketch.textAlign('center', 'center');
         sketch.textSize(12);
 
-        const stepWidthMs = this.wave.lengthInMs / 10;
+        const stepWidthMs = this.wave().lengthInMs / 10;
         for (let i = 0; i < 10; i++) {
           const x = sketch.map(i, 0, 10, leftPadding, w);
           const y = h - bottomPadding + 30;

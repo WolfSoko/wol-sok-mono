@@ -1,5 +1,5 @@
 import { effect, inject, Injectable, Signal } from '@angular/core';
-import { delay, filter, map, tap } from 'rxjs/operators';
+import { delay, filter, map } from 'rxjs/operators';
 import { replayWave } from '../model/audio/replay.wave';
 import { createRecordedFrequencyWave } from '../model/create-recorded-frequency.wave';
 import {
@@ -24,6 +24,10 @@ export class InputWaveService {
     inject(AudioRecorderService);
   private readonly audioRecorderState: Signal<AudioRecordingState> =
     this.audioRecorderService.audioRecorderState;
+
+  private stopReplay: () => void = () => {
+    // noop
+  };
 
   constructor(
     private readonly inputWaveStore: InputWaveRepo,
@@ -89,10 +93,12 @@ export class InputWaveService {
       console.error('No active wave to listen to');
       return;
     }
-    replayWave(activeWave);
+
+    this.stopReplay = replayWave(activeWave);
   }
 
   recordAudio(): void {
+    this.stopReplay();
     this.audioRecorderService.recordAudio();
   }
 

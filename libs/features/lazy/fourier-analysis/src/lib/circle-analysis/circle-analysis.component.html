@@ -11,8 +11,8 @@
   <mat-card-content>
     @if (activeWave(); as wave) {
       <lazy-feat-fanal-circle-canvas
-        [waveWidth]="width"
-        [waveHeight]="height"
+        [waveWidth]="width()"
+        [waveHeight]="height()"
         [wave]="wave"
       />
     }

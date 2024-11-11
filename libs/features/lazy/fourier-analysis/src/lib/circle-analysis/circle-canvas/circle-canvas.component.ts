@@ -3,11 +3,11 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  effect,
   ElementRef,
-  Inject,
-  Input,
+  inject,
+  input,
   NgZone,
-  OnChanges,
   OnDestroy,
   SimpleChange,
   SimpleChanges,
@@ -39,16 +39,14 @@ interface CenterData {
   styleUrls: ['./circle-canvas.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CircleCanvasComponent
-  implements OnChanges, AfterViewInit, OnDestroy
-{
+export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
   @ViewChild('canvasContainer', { static: true })
   canvasContainerRef!: ElementRef;
   private canvasContainer!: HTMLElement;
 
-  @Input({ required: true }) waveWidth!: number;
-  @Input({ required: true }) waveHeight!: number;
-  @Input({ required: true }) wave!: InputWave;
+  waveWidth = input.required<number>();
+  waveHeight = input.required<number>();
+  wave = input.required<InputWave>();
 
   private sketch: P5 | null = null;
   private frequencyToTest = 20;
@@ -57,33 +55,36 @@ export class CircleCanvasComponent
   private centerMin = 0;
   private centerMax = 0;
   private finished = false;
-
-  constructor(@Inject(NgZone) private _ngZone: NgZone) {}
+  private _ngZone = inject(NgZone);
 
   ngAfterViewInit(): void {
     this.canvasContainer = this.canvasContainerRef.nativeElement;
     setTimeout(() => this.initCanvas(), 500);
   }
 
-  ngOnChanges(changes: CircleCanvasChanges): void {
-    if (changes.waveWidth != null || changes.waveHeight != null) {
-      if (this.sketch != null) {
-        this.sketch.resizeCanvas(this.waveWidth, this.waveHeight);
-        this.sketch.redraw();
+  constructor() {
+    effect(() => {
+      if (this.waveWidth() != null || this.waveHeight() != null) {
+        if (this.sketch != null) {
+          this.sketch.resizeCanvas(this.waveWidth(), this.waveHeight());
+          this.sketch.redraw();
+        }
       }
-    }
-    if (changes.wave && this.wave !== null) {
-      this.centersOfFrequencies = {};
-      this.centers = [];
-      this.frequencyToTest = 20;
-      this.centerMin = 0;
-      this.centerMax = 0;
-      this.finished = false;
-      if (this.sketch != null) {
-        this.initSketch(this.sketch);
-        this.sketch.loop();
+    });
+    effect(() => {
+      if (this.wave() !== null) {
+        this.centersOfFrequencies = {};
+        this.centers = [];
+        this.frequencyToTest = 20;
+        this.centerMin = 0;
+        this.centerMax = 0;
+        this.finished = false;
+        if (this.sketch != null) {
+          this.initSketch(this.sketch);
+          this.sketch.loop();
+        }
       }
-    }
+    });
   }
 
   private initCanvas() {
@@ -107,14 +108,14 @@ export class CircleCanvasComponent
     const samplesToTake = 3000;
 
     sketch.setup = () => {
-      sketch.createCanvas(this.waveWidth, this.waveHeight);
+      sketch.createCanvas(this.waveWidth(), this.waveHeight());
     };
 
     sketch.draw = () => {
       if (
-        this.wave == null ||
-        this.wave.points == null ||
-        this.wave.points.length === 0
+        this.wave() == null ||
+        this.wave().points == null ||
+        this.wave().points.length === 0
       ) {
         return;
       }
@@ -165,17 +166,17 @@ export class CircleCanvasComponent
           let imag = 0;
           for (let n = 0; n < samplesToTake; n++) {
             const tIndex = Math.floor(
-              sketch.map(n, 0, samplesToTake, 0, this.wave.points.length)
+              sketch.map(n, 0, samplesToTake, 0, this.wave().points.length)
             );
             const t = sketch.map(
               n,
               0,
               samplesToTake,
               0,
-              this.wave.lengthInMs / 1000
+              this.wave().lengthInMs / 1000
             );
             const normalizedSamplePoint = sketch.map(
-              this.wave.points[tIndex],
+              this.wave().points[tIndex],
               -1,
               1,
               -1,
@@ -337,7 +338,7 @@ export class CircleCanvasComponent
         2 * (radius + padding),
         2 * (radius + padding)
       );
-      const drawSamplesLength = this.wave.points.length;
+      const drawSamplesLength = this.wave().points.length;
       const stepSize = Math.max(
         1,
         Math.floor(drawSamplesLength / CIRCLE_DRAW_SAMPLES)
@@ -365,7 +366,7 @@ export class CircleCanvasComponent
             0,
             drawSamplesLength,
             0,
-            this.wave.points.length
+            this.wave().points.length
           )
         );
         const t = fourierCircleImg.map(
@@ -373,10 +374,10 @@ export class CircleCanvasComponent
           0,
           drawSamplesLength,
           0,
-          this.wave.lengthInMs / 1000
+          this.wave().lengthInMs / 1000
         );
         const normalizedSamplePoint = fourierCircleImg.map(
-          this.wave.points[tIndex],
+          this.wave().points[tIndex],
           -1,
           1,
           0,
