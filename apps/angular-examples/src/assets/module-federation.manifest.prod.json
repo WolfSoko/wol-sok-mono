@@ -1,5 +1,14 @@
-{
-  "fourier-analysis-remote": "https:///fourier-analysis.wolsok.de",
-  "bacteria-game-remote": "https://bacteria-game.wolsok.de",
-  "shader-examples-remote": "https://shader-examples.wolsok.de"
-}
+[
+  {
+    "name": "fourier-analysis-remote",
+    "entry": "https://fourier-analysis.wolsok.de/mf-manifest.json"
+  },
+  {
+    "name": "bacteria-game-remote",
+    "entry": "https://bacteria-game.wolsok.de/mf-manifest.json"
+  },
+  {
+    "name": "shader-examples-remote",
+    "entry": "https://shader-examples.wolsok.de/mf-manifest.json"
+  }
+]

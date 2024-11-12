@@ -7,8 +7,8 @@ import {
   withInMemoryScrolling,
   withRouterConfig,
 } from '@angular/router';
-import { loadRemoteModule } from '@nx/angular/mf';
 import { InfoComponent } from './feature/lazy/info/info.component';
+import { loadRemote } from '@module-federation/enhanced/runtime';
 
 export interface MainNavRouteData extends Data {
   linkText: string;
@@ -32,9 +32,9 @@ export const APP_ROUTES: MainNavRoutes = [
   {
     path: 'fourierAnalysis',
     loadChildren: () =>
-      loadRemoteModule('fourier-analysis-remote', './Routes').then(
-        (routes) => routes.remoteRoutes
-      ),
+      loadRemote<typeof import('fourier-analysis-remote/Routes')>(
+        'fourier-analysis-remote/Routes'
+      ).then((routes) => routes?.remoteRoutes ?? []),
     data: {
       linkText: 'Fourier Analysis Example',
       subTitle: 'Served independently by Module-Federation',
@@ -43,9 +43,9 @@ export const APP_ROUTES: MainNavRoutes = [
   {
     path: 'shaderExamples',
     loadChildren: () =>
-      loadRemoteModule('shader-examples-remote', './Routes').then(
-        (routes) => routes.remoteRoutes
-      ),
+      loadRemote<typeof import('shader-examples-remote/Routes')>(
+        'shader-examples-remote/Routes'
+      ).then((routes) => routes?.remoteRoutes ?? []),
     data: {
       linkText: 'WebGL Shader examples with live code editor (three.js)',
       subTitle: 'Served independently by MF',
@@ -74,9 +74,9 @@ export const APP_ROUTES: MainNavRoutes = [
   {
     path: 'bacteriaGame',
     loadChildren: () =>
-      loadRemoteModule('bacteria-game-remote', './Routes').then(
-        (routes) => routes.entryRoutes
-      ),
+      loadRemote<typeof import('bacteria-game-remote/Routes')>(
+        'bacteria-game-remote/Routes'
+      ).then((routes) => routes?.entryRoutes ?? []),
     data: { linkText: 'Bacteria Game', subTitle: 'Served independently by MF' },
   },
   {

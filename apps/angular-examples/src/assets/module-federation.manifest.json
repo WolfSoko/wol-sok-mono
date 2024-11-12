@@ -1,5 +1,14 @@
-{
-  "fourier-analysis-remote": "http://localhost:4201",
-  "bacteria-game-remote": "http://localhost:4202",
-  "shader-examples-remote": "http://localhost:4203"
-}
+[
+  {
+    "name": "fourier-analysis-remote",
+    "entry": "http://localhost:4201/mf-manifest.json"
+  },
+  {
+    "name": "bacteria-game-remote",
+    "entry": "http://localhost:4202/mf-manifest.json"
+  },
+  {
+    "name": "shader-examples-remote",
+    "entry": "http://localhost:4203/mf-manifest.json"
+  }
+]
