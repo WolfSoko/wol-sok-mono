@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.49.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.48.0-cdk-deployed...v4.49.0) (2024-11-13)
+
+
+### Features
+
+* ✨ remove impicit dependency for angular example ([d16dc2c](https://github.com/WolfSoko/wol-sok-mono/commit/d16dc2c808819e2b18621e02026c63a011c27236))
+
 ## [4.48.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.25-cdk-deployed...v4.48.0) (2024-11-13)
 
 
