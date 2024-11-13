@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.47.25](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.24-non-cdk-deployed...v4.47.25) (2024-11-13)
+
+
+### Bug Fixes
+
+* 🐛 module federation by providing webpack config a little different ([24d29da](https://github.com/WolfSoko/wol-sok-mono/commit/24d29da7235ae0e63c16e2fb145ec6aa9f3de4c8))
+
 ### [4.47.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.23-non-cdk-deployed...v4.47.24) (2024-11-13)
 
 ### [4.47.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.22-non-cdk-deployed...v4.47.23) (2024-11-12)
