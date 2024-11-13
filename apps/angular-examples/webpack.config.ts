@@ -5,13 +5,14 @@ import { withVersionHandling } from '../../tools/version-handling/version-webpac
 import moduleFederationConfig from './module-federation.config';
 
 export default async (config: object) => {
-  const federatedModules = await withModuleFederation(moduleFederationConfig, {
-    dts: false,
+  const federatedModulesConfig = (
+    await withModuleFederation(moduleFederationConfig, {
+      dts: false,
+    })
+  )(config);
+  return merge(federatedModulesConfig, withVersionHandling('cdk-deployed'), {
+    experiments: {
+      topLevelAwait: true,
+    },
   });
-  return merge(
-    config,
-    { experiments: { topLevelAwait: true } },
-    federatedModules,
-    withVersionHandling('cdk-deployed')
-  );
 };
