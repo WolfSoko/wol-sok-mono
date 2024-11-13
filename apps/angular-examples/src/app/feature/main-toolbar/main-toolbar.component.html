@@ -22,7 +22,9 @@
       (change)="toggleTheme()"
       [checked]="themeMode === 'dark'"
     >
-      <span class="mat-subtitle-2">{{ themeMode }} mode</span>
+      <span class="mat-subtitle-2" style="color: black"
+        >{{ themeMode }} mode</span
+      >
     </mat-slide-toggle>
   }
   @defer (on timer(3s)) {
