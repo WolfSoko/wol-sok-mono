@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.50.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.49.0-cdk-deployed...v4.50.0) (2024-11-13)
+
+
+### Features
+
+* ✨ better contrast for theme toggle ([fa19b56](https://github.com/WolfSoko/wol-sok-mono/commit/fa19b56bb8e4ce6da39dbb5974a700fd1fb2d4c0))
+
 ## [4.49.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.48.0-cdk-deployed...v4.49.0) (2024-11-13)
 
 
