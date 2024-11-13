@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.48.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.25-cdk-deployed...v4.48.0) (2024-11-13)
+
+
+### Features
+
+* ✨ invert shader-examples order for more impressive visuals ([c2de5d6](https://github.com/WolfSoko/wol-sok-mono/commit/c2de5d679cb30c623651d56e54e9e109121d66cf))
+
 ### [4.47.25](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.24-non-cdk-deployed...v4.47.25) (2024-11-13)
 
 
