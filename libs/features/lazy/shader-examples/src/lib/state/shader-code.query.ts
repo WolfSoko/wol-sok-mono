@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { QueryEntity } from '@datorama/akita';
+import { Order, QueryEntity } from '@datorama/akita';
 import { ShaderCode } from '../model/shader-code.model';
-import { ShaderCodeStore, ShaderCodeState } from './shader-code.store';
+import { ShaderCodeState, ShaderCodeStore } from './shader-code.store';
 
 @Injectable({
   providedIn: 'root',
@@ -12,6 +12,6 @@ export class ShaderCodeQuery extends QueryEntity<ShaderCodeState, ShaderCode> {
   }
 
   public getAllSortedById(): ShaderCode[] {
-    return this.getAll({ sortBy: 'id' });
+    return this.getAll({ sortBy: 'id', sortByOrder: Order.DESC });
   }
 }
