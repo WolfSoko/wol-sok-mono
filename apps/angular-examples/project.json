@@ -5,11 +5,6 @@
   "sourceRoot": "apps/angular-examples/src",
   "prefix": "app",
   "tags": ["app", "type:host"],
-  "implicitDependencies": [
-    "bacteria-game-remote",
-    "fourier-analysis-remote",
-    "shader-examples-remote"
-  ],
   "targets": {
     "build": {
       "executor": "@nx/angular:webpack-browser",
