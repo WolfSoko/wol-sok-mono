@@ -21,13 +21,13 @@ launch-templates:
       - name: Restore Node Modules Cache
         uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/cache/main.yaml'
         inputs:
-          key: 'package-lock.json|yarn.lock|pnpm-lock.yaml'
+          key: 'package-lock.json'
           paths: 'node_modules'
           base-branch: 'main'
       - name: Restore Browser Binary Cache
         uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/cache/main.yaml'
         inputs:
-          key: 'package-lock.json|yarn.lock|pnpm-lock.yaml|"browsers"'
+          key: 'package-lock.json|"browsers"'
           paths: |
             '../.cache/Cypress'
             '../.cache/ms-playwright'
