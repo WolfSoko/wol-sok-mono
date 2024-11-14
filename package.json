@@ -152,7 +152,7 @@
     "@types/lodash": "4.17.13",
     "@types/node": "^22.0.0",
     "@types/p5": "1.7.6",
-    "@types/three": "0.169.0",
+    "@types/three": "0.170.0",
     "@typescript-eslint/eslint-plugin": "8.14.0",
     "@typescript-eslint/parser": "8.14.0",
     "@typescript-eslint/utils": "8.14.0",
