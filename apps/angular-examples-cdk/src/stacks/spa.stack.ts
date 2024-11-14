@@ -1,5 +1,5 @@
 import { SpaConstruct, SpaProps } from '@wolsok/spa-cdk-stack';
-import { App, Duration, Stack, StackProps } from 'aws-cdk-lib';
+import { App, Duration, IgnoreMode, Stack, StackProps } from 'aws-cdk-lib';
 import { CacheControl, Source } from 'aws-cdk-lib/aws-s3-deployment';
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import { version } from '../../../../version.json';

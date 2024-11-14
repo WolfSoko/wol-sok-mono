@@ -8,6 +8,7 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:webpack-browser",
+      "dependsOn": ["^build"],
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/shader-examples-remote",

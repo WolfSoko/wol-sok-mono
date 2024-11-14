@@ -7,6 +7,7 @@
   "tags": ["app", "type:remote"],
   "targets": {
     "build": {
+      "dependsOn": ["^build"],
       "executor": "@nx/angular:webpack-browser",
       "outputs": ["{options.outputPath}"],
       "options": {
