@@ -8,14 +8,11 @@ import {
   Distribution,
   HttpVersion,
   IDistribution,
-  IOriginAccessControl,
   ResponseHeadersPolicy,
-  S3OriginAccessControl,
   SecurityPolicyProtocol,
   ViewerProtocolPolicy,
 } from 'aws-cdk-lib/aws-cloudfront';
 import { S3BucketOrigin } from 'aws-cdk-lib/aws-cloudfront-origins';
-import { CanonicalUserPrincipal, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import {
   ARecord,
   HostedZone,
@@ -23,12 +20,7 @@ import {
   RecordTarget,
 } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
-import {
-  BlockPublicAccess,
-  Bucket,
-  IBucket,
-  ObjectOwnership,
-} from 'aws-cdk-lib/aws-s3';
+import { BlockPublicAccess, Bucket, IBucket } from 'aws-cdk-lib/aws-s3';
 import {
   BucketDeployment,
   CacheControl,

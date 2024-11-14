@@ -18,7 +18,11 @@ export class SpaStack extends Stack {
       CacheControl.noCache()
     );
     spa.addExtraAssets(
-      [Source.asset(props.buildOutputPath + '/fib-wasm')],
+      [
+        Source.asset(props.buildOutputPath + '/fib-wasm', {
+          exclude: ['**', '!optimized.wasm'],
+        }),
+      ],
       CacheControl.maxAge(Duration.days(1)),
       'application/wasm'
     );
