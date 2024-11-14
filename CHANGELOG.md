@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.50.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.0-cdk-deployed...v4.50.1) (2024-11-14)
+
+
+### Bug Fixes
+
+* 🐛 fib wasm absolute path ([93eaaf7](https://github.com/WolfSoko/wol-sok-mono/commit/93eaaf7efaf39cffdebe89ea2893a50a10a4a043))
+
 ## [4.50.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.49.0-cdk-deployed...v4.50.0) (2024-11-13)
 
 
