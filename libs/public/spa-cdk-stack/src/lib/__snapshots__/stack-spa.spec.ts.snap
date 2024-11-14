@@ -422,7 +422,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "0457d333165d06eb6c6f378cdab18fc4e0714ab2e47bcdedd45059f77e7f37da.zip",
+          "S3Key": "2e978c20dab148afad7b0a7cbe53b42a2bcd72c40e670a644721752fae05c2ca.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -469,7 +469,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "0457d333165d06eb6c6f378cdab18fc4e0714ab2e47bcdedd45059f77e7f37da.zip",
+          "S3Key": "2e978c20dab148afad7b0a7cbe53b42a2bcd72c40e670a644721752fae05c2ca.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -520,7 +520,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "0457d333165d06eb6c6f378cdab18fc4e0714ab2e47bcdedd45059f77e7f37da.zip",
+          "S3Key": "2e978c20dab148afad7b0a7cbe53b42a2bcd72c40e670a644721752fae05c2ca.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -1121,7 +1121,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "0457d333165d06eb6c6f378cdab18fc4e0714ab2e47bcdedd45059f77e7f37da.zip",
+          "S3Key": "2e978c20dab148afad7b0a7cbe53b42a2bcd72c40e670a644721752fae05c2ca.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -1168,7 +1168,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "0457d333165d06eb6c6f378cdab18fc4e0714ab2e47bcdedd45059f77e7f37da.zip",
+          "S3Key": "2e978c20dab148afad7b0a7cbe53b42a2bcd72c40e670a644721752fae05c2ca.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -1219,7 +1219,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "0457d333165d06eb6c6f378cdab18fc4e0714ab2e47bcdedd45059f77e7f37da.zip",
+          "S3Key": "2e978c20dab148afad7b0a7cbe53b42a2bcd72c40e670a644721752fae05c2ca.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -1816,7 +1816,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "0457d333165d06eb6c6f378cdab18fc4e0714ab2e47bcdedd45059f77e7f37da.zip",
+          "S3Key": "2e978c20dab148afad7b0a7cbe53b42a2bcd72c40e670a644721752fae05c2ca.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -1863,7 +1863,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "0457d333165d06eb6c6f378cdab18fc4e0714ab2e47bcdedd45059f77e7f37da.zip",
+          "S3Key": "2e978c20dab148afad7b0a7cbe53b42a2bcd72c40e670a644721752fae05c2ca.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -2342,7 +2342,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "0457d333165d06eb6c6f378cdab18fc4e0714ab2e47bcdedd45059f77e7f37da.zip",
+          "S3Key": "2e978c20dab148afad7b0a7cbe53b42a2bcd72c40e670a644721752fae05c2ca.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -2389,7 +2389,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "0457d333165d06eb6c6f378cdab18fc4e0714ab2e47bcdedd45059f77e7f37da.zip",
+          "S3Key": "2e978c20dab148afad7b0a7cbe53b42a2bcd72c40e670a644721752fae05c2ca.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -2991,7 +2991,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "0457d333165d06eb6c6f378cdab18fc4e0714ab2e47bcdedd45059f77e7f37da.zip",
+          "S3Key": "2e978c20dab148afad7b0a7cbe53b42a2bcd72c40e670a644721752fae05c2ca.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -3038,7 +3038,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789-us-east-1",
-          "S3Key": "0457d333165d06eb6c6f378cdab18fc4e0714ab2e47bcdedd45059f77e7f37da.zip",
+          "S3Key": "2e978c20dab148afad7b0a7cbe53b42a2bcd72c40e670a644721752fae05c2ca.zip",
         },
         "Description": "/opt/awscli/aws",
       },

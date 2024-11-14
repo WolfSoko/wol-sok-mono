@@ -133,14 +133,16 @@ export class SpaConstruct extends Construct {
    */
   public addExtraAssets(
     assets: ISource[],
-    cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365))
+    cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365)),
+    contentType?: string
   ): void {
     const extraAssetsDeployment: BucketDeployment = this.createBucketDeployment(
       assets,
       cacheControl,
       false,
       this.bucket,
-      this.distribution
+      this.distribution,
+      contentType
     );
 
     const latestDeployment: BucketDeployment | undefined =
@@ -274,7 +276,8 @@ export class SpaConstruct extends Construct {
     cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365)),
     prune: boolean,
     destinationBucket: IBucket,
-    distribution: IDistribution
+    distribution: IDistribution,
+    contentType?: string
   ): BucketDeployment {
     // Deploy site contents to S3 spaBucket
     return new BucketDeployment(
@@ -288,6 +291,7 @@ export class SpaConstruct extends Construct {
         memoryLimit: 1024,
         distributionPaths: ['/*'],
         cacheControl: [cacheControl],
+        ...(contentType ? { contentType } : {}),
       }
     );
   }
