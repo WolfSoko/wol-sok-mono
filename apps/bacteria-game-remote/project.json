@@ -26,7 +26,7 @@
         ],
         "scripts": [],
         "customWebpackConfig": {
-          "path": "apps/bacteria-game-remote/webpack.config.js"
+          "path": "apps/bacteria-game-remote/webpack.config.ts"
         }
       },
       "configurations": {
@@ -57,7 +57,7 @@
           ],
           "outputHashing": "all",
           "customWebpackConfig": {
-            "path": "apps/bacteria-game-remote/webpack.prod.config.js"
+            "path": "apps/bacteria-game-remote/webpack.prod.config.ts"
           }
         },
         "development": {
