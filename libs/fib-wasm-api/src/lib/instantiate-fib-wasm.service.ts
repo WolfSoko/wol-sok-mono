@@ -32,6 +32,6 @@ export class InstantiateFibWasmService {
     return instantiateStreaming<{
       fib(n: number): number;
       fibMem(n: number): number;
-    }>(fetch('fib-wasm/optimized.wasm'), this.imports);
+    }>(fetch('/fib-wasm/optimized.wasm'), this.imports);
   }
 }
