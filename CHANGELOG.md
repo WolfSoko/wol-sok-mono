@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.50.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.19-non-cdk-deployed...v4.50.20) (2024-11-15)
+
+
+### Bug Fixes
+
+* 🐛 don't cache mf-manifests ([01d76c2](https://github.com/WolfSoko/wol-sok-mono/commit/01d76c247a4c6026336f17c7690e1a6a96b873b5))
+
 ## [4.50.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.18-non-cdk-deployed...v4.50.19) (2024-11-15)
 
 ### [4.50.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.17...v4.50.18) (2024-11-14)
