@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.50.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.23-non-cdk-deployed...v4.50.24) (2024-11-15)
+
 ## [4.50.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.22-non-cdk-deployed...v4.50.23) (2024-11-15)
 
 ## [4.50.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.21-cdk-deployed...v4.50.22) (2024-11-15)
