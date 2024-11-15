@@ -1,5 +1,5 @@
 import { SpaConstruct, SpaProps } from '@wolsok/spa-cdk-stack';
-import { App, Duration, IgnoreMode, Stack, StackProps } from 'aws-cdk-lib';
+import { App, Duration, Stack, StackProps } from 'aws-cdk-lib';
 import { CacheControl, Source } from 'aws-cdk-lib/aws-s3-deployment';
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import { version } from '../../../../version.json';
@@ -14,10 +14,6 @@ export class SpaStack extends Stack {
       bucketRemovalPolicy: props.bucketRemovalPolicy,
     });
     spa.addExtraAssets(
-      [Source.jsonData('version.json', version)],
-      CacheControl.noCache()
-    );
-    spa.addExtraAssets(
       [
         Source.asset(props.buildOutputPath + '/fib-wasm', {
           exclude: ['**', '!optimized.wasm'],
@@ -25,6 +21,17 @@ export class SpaStack extends Stack {
       ],
       CacheControl.maxAge(Duration.days(1)),
       'application/wasm'
+    );
+    spa.addExtraAssets(
+      [
+        Source.jsonData('version.json', version),
+        Source.asset(props.buildOutputPath + '/mf-manifest.json'),
+        Source.asset(props.buildOutputPath + '/mf-stats.json'),
+        Source.asset(props.buildOutputPath + '/assets', {
+          exclude: ['**', '!module-federation.manifest*.json'],
+        }),
+      ],
+      CacheControl.noCache()
     );
   }
 }
