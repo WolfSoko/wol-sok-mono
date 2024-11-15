@@ -16,7 +16,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { LetDirective } from '@wolsok/ui-kit';
 import { map } from 'rxjs';
 import { MainNavRoute } from '../../../app-routing';
 import { ROUTER_LINKS } from '../../../router-links.token';
@@ -30,7 +29,6 @@ import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
     MatSidenavModule,
     MatListModule,
     NavItemComponent,
-    LetDirective,
     MatProgressSpinnerModule,
   ],
   templateUrl: './side-nav.component.html',

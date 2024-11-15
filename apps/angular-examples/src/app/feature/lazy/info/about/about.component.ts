@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
+import { MatAnchor } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
 import { Router } from '@angular/router';
@@ -16,10 +17,11 @@ import { NavItemComponent } from '../../../../shared/nav-item/nav-item.component
     ElevateCardDirective,
     MatListModule,
     NavItemComponent,
+    MatAnchor,
   ],
   selector: 'app-about',
   templateUrl: './about.component.html',
-  styleUrls: ['./about.component.less'],
+  styleUrls: ['./about.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AboutComponent {
