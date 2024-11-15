@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.51.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.24-non-cdk-deployed...v4.51.0) (2024-11-15)
+
+
+### Features
+
+* ✨ fix anchor layout ([58feccf](https://github.com/WolfSoko/wol-sok-mono/commit/58feccff9929824aa9077d020b537db7b6f6ea91))
+
 ## [4.50.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.23-non-cdk-deployed...v4.50.24) (2024-11-15)
 
 ## [4.50.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.22-non-cdk-deployed...v4.50.23) (2024-11-15)
