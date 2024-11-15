@@ -25,8 +25,12 @@ export class SpaStack extends Stack {
     spa.addExtraAssets(
       [
         Source.jsonData('version.json', version),
-        Source.asset(props.buildOutputPath + '/mf-manifest.json'),
-        Source.asset(props.buildOutputPath + '/mf-stats.json'),
+        Source.asset(props.buildOutputPath, {
+          exclude: ['**', '!mf-manifest.json'],
+        }),
+        Source.asset(props.buildOutputPath, {
+          exclude: ['**', '!mf-stats.json'],
+        }),
         Source.asset(props.buildOutputPath + '/assets', {
           exclude: ['**', '!module-federation.manifest*.json'],
         }),
