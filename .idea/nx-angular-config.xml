@@ -21,6 +21,7 @@
       <project name="fib-wasm-api" file="file://$PROJECT_DIR$/libs/fib-wasm-api/project.json" />
       <project name="fourier-analysis-remote" file="file://$PROJECT_DIR$/apps/fourier-analysis-remote/project.json" />
       <project name="fourier-analysis-remote-cdk" file="file://$PROJECT_DIR$/apps/fourier-analysis-remote-cdk/project.json" />
+      <project name="headline-animation" file="file://$PROJECT_DIR$/libs/shared/headline-animation/project.json" />
       <project name="math" file="file://$PROJECT_DIR$/libs/utils/math/project.json" />
       <project name="neural-networks" file="file://$PROJECT_DIR$/libs/features/lazy/neural-networks/project.json" />
       <project name="rollapolla-analog" file="file://$PROJECT_DIR$/apps/rollapolla-analog/project.json" />

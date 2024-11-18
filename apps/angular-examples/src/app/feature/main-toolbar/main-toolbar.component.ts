@@ -4,10 +4,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   effect,
-  ElementRef,
-  EventEmitter,
-  Inject,
-  Output,
+  inject,
+  output,
   Renderer2,
   Signal,
 } from '@angular/core';
@@ -16,7 +14,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, NavigationStart, Router } from '@angular/router';
+import { HeadlineAnimationService } from '@wolsok/headline-animation';
 import {
   ElemResizedDirective,
   RenderShaderComponent,
@@ -24,7 +23,7 @@ import {
 } from '@wolsok/ui-kit';
 import { FragCode } from '@wolsok/ws-gl';
 import { filter, map } from 'rxjs/operators';
-import { HeadlineAnimationService } from '../../core/headline-animation.service';
+import { stopHeadlineAnimationWhenNotVisible } from '../../core/stop-headline-animation-when-not-visible';
 import shader from '../../title-shader.frag';
 import { LoginComponent } from './login/login.component';
 import { ServiceWorkerUpdateComponent } from './service-worker-update/service-worker-update.component';
@@ -48,42 +47,52 @@ import { ServiceWorkerUpdateComponent } from './service-worker-update/service-wo
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MainToolbarComponent {
-  @Output() clickSideNav = new EventEmitter<Event>();
-  shaderCode: FragCode;
-  runAnimation: Signal<boolean>;
+  clickSideNav = output<Event>();
+
+  private readonly headlineAnimationService = inject(HeadlineAnimationService);
+  private readonly router = inject(Router);
+  private readonly document: Document = inject(DOCUMENT);
+  private readonly renderer = inject(Renderer2);
+
+  shaderCode: FragCode = shader;
+  runAnimation: Signal<boolean> = this.headlineAnimationService.runAnimation;
   isHandset: Signal<boolean>;
   shaderWidth!: number;
   shaderHeight!: number;
   themeMode: 'dark' | 'light' = 'dark';
 
-  constructor(
-    private readonly el: ElementRef,
-    private readonly headlineAnimations: HeadlineAnimationService,
-    breakpointObserver: BreakpointObserver,
-    private readonly router: Router,
-    @Inject(DOCUMENT) private readonly document: Document,
-    private readonly renderer: Renderer2
-  ) {
-    this.shaderCode = shader;
-    const navEnd = toSignal(
-      this.router.events.pipe(filter((value) => value instanceof NavigationEnd))
+  constructor() {
+    stopHeadlineAnimationWhenNotVisible(this.headlineAnimationService);
+
+    const navStartEnd = toSignal(
+      this.router.events.pipe(
+        filter(
+          (value) =>
+            value instanceof NavigationEnd || value instanceof NavigationStart
+        )
+      )
     );
     this.isHandset = toSignal(
-      breakpointObserver
+      inject(BreakpointObserver)
         .observe(Breakpoints.Handset)
         .pipe(map((value) => value.matches)),
       {
         initialValue: false,
       }
     );
-    this.runAnimation = toSignal(this.headlineAnimations.runAnimation$, {
-      initialValue: false,
-    });
-    effect(() => {
-      if (navEnd()) {
-        this.headlineAnimations.startAnimation();
-      }
-    });
+
+    effect(
+      () => {
+        if (navStartEnd() instanceof NavigationEnd) {
+          console.log('Nav End');
+          this.headlineAnimationService.startAnimation();
+        } else {
+          console.log('Nav Start');
+          this.headlineAnimationService.stopAnimation();
+        }
+      },
+      { allowSignalWrites: true }
+    );
   }
 
   onResize($event: ResizedEvent) {

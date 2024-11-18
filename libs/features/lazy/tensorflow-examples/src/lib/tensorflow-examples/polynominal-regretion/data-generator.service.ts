@@ -13,7 +13,7 @@ export class DataGeneratorService {
   generateData(
     numPoints: number,
     coeff: { a: number; b: number; c: number; d: number },
-    sigma = 0.125
+    sigma = 0.725
   ): { xs: Tensor<Rank.R1>; ys: Tensor<Rank.R1> } {
     return tidy(() => {
       const [a, b, c, d]: Tensor<Rank.R0>[] = [
