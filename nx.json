@@ -40,7 +40,11 @@
     }
   ],
   "namedInputs": {
-    "default": ["{projectRoot}/**/*"],
+    "default": [
+      "{projectRoot}/**/*",
+      "{workspaceRoot}/.github/**/*",
+      "{workspaceRoot}/.nx/workflows/**"
+    ],
     "production": [
       "default",
       "!{projectRoot}/**/*.spec.[jt]s",
