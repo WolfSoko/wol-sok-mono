@@ -21,7 +21,6 @@ import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ElemResizedDirective, LetDirective } from '@wolsok/ui-kit';
 import { vec2, Vector2d } from '@wolsok/utils-math';
 import { notNil } from '@wolsok/utils-operators';
 import { map, Observable, Subject, switchMap, take, takeUntil } from 'rxjs';
@@ -57,8 +56,6 @@ const SVG_VIEW_PORT_SIZE = 3000;
     MatInputModule,
     MatButtonModule,
     MatListModule,
-    LetDirective,
-    ElemResizedDirective,
     MatIconModule,
     MatTooltipModule,
     GravityConfigComponent,

@@ -1,5 +1,5 @@
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { Meta, moduleMetadata, StoryFn } from '@storybook/angular';
+import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { GravityWorldComponent } from './gravity-world.component';
 
 export default {
@@ -12,11 +12,8 @@ export default {
   ],
 } as Meta<GravityWorldComponent>;
 
-const Template: StoryFn<GravityWorldComponent> = (
-  args: GravityWorldComponent
-) => ({
-  props: args,
-});
+type Story = StoryObj<GravityWorldComponent>;
 
-export const Primary = Template.bind({});
-Primary.args = {};
+export const Primary: Story = {
+  args: {},
+};
