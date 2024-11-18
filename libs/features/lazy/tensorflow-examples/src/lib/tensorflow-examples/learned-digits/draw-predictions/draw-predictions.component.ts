@@ -3,12 +3,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  EventEmitter,
+  inject,
   Input,
   OnChanges,
-  Output,
+  output,
+  Renderer2,
   SimpleChanges,
-  ViewChild,
+  viewChild,
 } from '@angular/core';
 import { Tensor1D, Tensor2D } from '@tensorflow/tfjs';
 import embed from 'vega-embed';
@@ -18,13 +19,16 @@ import embed from 'vega-embed';
   imports: [CommonModule],
   selector: 'feat-lazy-tensor-draw-predictions',
   templateUrl: './draw-predictions.component.html',
-  styleUrls: ['./draw-predictions.component.less'],
+  styleUrls: ['./draw-predictions.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DrawPredictionsComponent implements OnChanges {
-  @ViewChild('lossCanvas', { static: true }) lossCanvas!: ElementRef;
-  @ViewChild('accuracyCanvas', { static: true }) accuracyCanvas!: ElementRef;
-  @ViewChild('images', { static: true }) images!: ElementRef;
+  private readonly renderer = inject(Renderer2);
+
+  lossCanvas = viewChild.required<ElementRef<HTMLElement>>('lossCanvas');
+  accuracyCanvas =
+    viewChild.required<ElementRef<HTMLElement>>('accuracyCanvas');
+  images = viewChild.required<ElementRef<HTMLElement>>('images');
 
   lossLabel!: string;
   accuracyLabel!: string;
@@ -35,7 +39,7 @@ export class DrawPredictionsComponent implements OnChanges {
   @Input() lossValues!: { batch: number; loss: number; set: string }[];
   @Input() accuracyValues!: { batch: number; accuracy: number; set: string }[];
 
-  @Output() imageClicked: EventEmitter<number> = new EventEmitter<number>();
+  imageClicked = output<number>();
 
   totalCorrect!: number;
   totalPredictions!: number;
@@ -82,18 +86,18 @@ export class DrawPredictionsComponent implements OnChanges {
     const testExamples = xs.shape[0];
     this.totalPredictions = testExamples;
     this.totalCorrect = 0;
-    (this.images.nativeElement as HTMLDivElement).innerHTML = '';
+    this.renderer.setProperty(this.images().nativeElement, 'innerHTML', '');
 
     for (let i = 0; i < testExamples; i++) {
       const image = xs.slice([i, 0], [1, xs.shape[1]]);
 
-      const div = document.createElement('div');
+      const div: HTMLDivElement = this.renderer.createElement('div');
       div.className = 'pred-container';
 
-      const canvas = document.createElement('canvas');
+      const canvas: HTMLCanvasElement = this.renderer.createElement('canvas');
       DrawPredictionsComponent.draw(image.flatten(), canvas);
 
-      const pred = document.createElement('div');
+      const pred: HTMLDivElement = this.renderer.createElement('div');
 
       const prediction = predictions[i];
       const label = labels[i];
@@ -103,22 +107,22 @@ export class DrawPredictionsComponent implements OnChanges {
       pred.className = `pred ${correct ? 'pred-correct' : 'pred-incorrect'}`;
       pred.innerText = `pred: ${prediction}`;
 
-      div.appendChild(pred);
-      div.appendChild(canvas);
-      div.addEventListener('click', (event) => {
+      this.renderer.appendChild(div, pred);
+      this.renderer.appendChild(div, canvas);
+      this.renderer.listen(div, 'click', (event) => {
         event.stopPropagation();
         event.stopImmediatePropagation();
         this.imageClick(i);
       });
 
-      this.images.nativeElement.appendChild(div);
+      this.renderer.appendChild(this.images().nativeElement, div);
     }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async plotLosses(lossValues: string | any[]): Promise<void> {
     await embed(
-      this.lossCanvas.nativeElement,
+      this.lossCanvas().nativeElement,
       {
         data: { values: lossValues },
         mark: {
@@ -142,7 +146,7 @@ export class DrawPredictionsComponent implements OnChanges {
     accuracyValues: { batch: number; accuracy: number; set: string }[]
   ): Promise<void> {
     await embed(
-      this.accuracyCanvas.nativeElement,
+      this.accuracyCanvas().nativeElement,
       {
         data: { values: accuracyValues },
         width: 260,

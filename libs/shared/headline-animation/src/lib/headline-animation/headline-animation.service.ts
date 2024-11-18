@@ -2,14 +2,29 @@ import { Injectable, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class HeadlineAnimationService {
-  private _runAnimation = signal<boolean>(true);
-  readonly runAnimation = this._runAnimation.asReadonly();
+  readonly runAnimation = signal(true);
 
   stopAnimation() {
-    this._runAnimation.set(false);
+    this.updateAnimation(false);
   }
 
   startAnimation() {
-    this._runAnimation.set(true);
+    this.updateAnimation(true);
+  }
+
+  toggleAnimation() {
+    this.updateAnimation((prev) => !prev);
+  }
+
+  updateAnimation(animate: boolean): void;
+  updateAnimation(updateFn: (prev: boolean) => boolean): void;
+  updateAnimation(
+    updateFnOrAnimate: boolean | ((prev: boolean) => boolean)
+  ): void {
+    if (typeof updateFnOrAnimate === 'boolean') {
+      this.runAnimation.set(updateFnOrAnimate);
+      return;
+    }
+    this.runAnimation.update(updateFnOrAnimate);
   }
 }

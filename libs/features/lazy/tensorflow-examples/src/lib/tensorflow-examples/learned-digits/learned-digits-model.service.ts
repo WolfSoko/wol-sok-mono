@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import {
   layers,
   nextFrame,
@@ -32,7 +32,7 @@ export class LearnedDigitsModelService {
 
   lossValues!: { batch: number; loss: number; set: string }[];
   accuracyValues!: { batch: number; accuracy: number; set: string }[];
-  isTraining = false;
+  isTraining = signal(false);
   predictions!: number[];
   labels!: number[];
   testBatch!: { xs: Tensor2D; labels: Tensor2D };
@@ -96,7 +96,7 @@ export class LearnedDigitsModelService {
   }
 
   async train() {
-    this.isTraining = true;
+    this.isTraining.set(true);
     this.lossValues = [];
     this.accuracyValues = [];
 
@@ -149,7 +149,7 @@ export class LearnedDigitsModelService {
 
       await nextFrame();
     }
-    this.isTraining = false;
+    this.isTraining.set(false);
   }
 
   predictDrawing(imageData: Float32Array): void {

@@ -4,9 +4,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  EventEmitter,
   NgZone,
-  Output,
+  output,
+  viewChild,
   ViewChild,
 } from '@angular/core';
 import P5 from 'p5';
@@ -43,17 +43,18 @@ class Start extends Path {
   imports: [CommonModule],
   selector: 'feat-lazy-tensor-app-draw-digit',
   templateUrl: './draw-digit.component.html',
-  styleUrls: ['./draw-digit.component.less'],
+  styleUrls: ['./draw-digit.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DrawDigitComponent implements AfterViewChecked {
-  @Output() updatePixels = new EventEmitter<Float32Array>();
+  updatePixels = output<Float32Array>();
   private sketch!: P5;
   private readonly size = 28 * 10;
 
   private path: Path[] = [];
 
-  @ViewChild('drawCanvas', { static: true }) private drawCanvas!: ElementRef;
+  private drawCanvas =
+    viewChild.required<ElementRef<HTMLElement>>('drawCanvas');
 
   constructor(private ngZone: NgZone) {}
 
@@ -141,7 +142,7 @@ export class DrawDigitComponent implements AfterViewChecked {
           }
           return true;
         };
-      }, this.drawCanvas.nativeElement);
+      }, this.drawCanvas().nativeElement);
     });
   }
 

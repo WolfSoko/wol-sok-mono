@@ -1,64 +1,101 @@
 <mat-card appearance="raised" wsSharedUiElevateCard class="training-progress">
   <mat-card-header>
     <mat-card-title> Deep Neural Network for digit recognition.</mat-card-title>
-    <mat-card-subtitle> The MNIST digits are used to train a deep neural network on your device. </mat-card-subtitle>
+    <mat-card-subtitle>
+      The MNIST digits are used to train a deep neural network on your device.
+    </mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
-    @if (isLoading) {
+    @if (isLoading()) {
       <div>
         <mat-spinner color="accent"></mat-spinner>
         <div>Fetching MNIST images...</div>
       </div>
     }
-    @if (errorLoadingData) {
-      <div class="mat-error">There was an error loading the data. Try again later.</div>
+    @if (errorLoadingData()) {
+      <div class="mat-error">
+        There was an error loading the data. Try again later.
+      </div>
     }
-    @if (!isLoading && !errorLoadingData) {
+    @if (!isLoading() && !errorLoadingData()) {
+      <div>Successfully loaded MNIST digits!</div>
+    }
+  </mat-card-content>
+  <mat-card-actions>
+    <button
+      color="accent"
+      [disabled]="isLoading() || isTraining() || errorLoadingData()"
+      mat-raised-button
+      (click)="train()"
+    >
+      Train Deep Neural Network on MNIST digits
+    </button>
+    <button
+      color="accent"
+      [disabled]="isLoading() || errorLoadingData()"
+      mat-raised-button
+      (click)="predict()"
+    >
+      Predict 100 randomly chosen digits
+    </button>
+  </mat-card-actions>
+</mat-card>
+<mat-card class="mnist-results">
+  <mat-card-title>Results</mat-card-title>
+  <mat-card-content>
+    @if (
+      !isLoading() &&
+      !errorLoadingData() &&
+      batch() &&
+      labels() &&
+      predictions() &&
+      lossValues() &&
+      accuracyValues()
+    ) {
       <feat-lazy-tensor-draw-predictions
-        [batch]="batch"
-        [labels]="labels"
-        [predictions]="predictions"
-        [lossValues]="lossValues"
-        [accuracyValues]="accuracyValues"
+        [batch]="batch()!"
+        [labels]="labels()!"
+        [predictions]="predictions()!"
+        [lossValues]="lossValues()!"
+        [accuracyValues]="accuracyValues()!"
       >
       </feat-lazy-tensor-draw-predictions>
     }
   </mat-card-content>
-  <mat-card-actions>
-    <button color="accent" [disabled]="isLoading || isTraining || errorLoadingData" mat-raised-button (click)="train()">
-      Train Deep Neural Network on MNIST digits
-    </button>
-    <button color="accent" [disabled]="isLoading || errorLoadingData" mat-raised-button (click)="predict()">
-      Predict MNIST digits
-    </button>
-  </mat-card-actions>
 </mat-card>
 <mat-card appearance="raised" wsSharedUiElevateCard class="learnImagesCard">
   <mat-card-header>
     <mat-card-title> Recognize handwritten digits!</mat-card-title>
     <mat-card-subtitle>
-      Draw a digit on the canvas to test the trained neural network. Click on the prediction to enter the number you
-      drew.
+      Draw a digit on the canvas to test the trained neural network. Click on
+      the prediction to enter the number you drew.
     </mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
-    <feat-lazy-tensor-app-draw-digit #drawer (updatePixels)="nextDrawnImage($event)"></feat-lazy-tensor-app-draw-digit>
+    <feat-lazy-tensor-app-draw-digit
+      #drawer
+      (updatePixels)="nextDrawnImage($event)"
+    ></feat-lazy-tensor-app-draw-digit>
     <div class="mat-body-1">
-      {{ drawingPredictions ? 'Prediction: ' + drawingPredictions[0] : 'Draw to predict image!' }}
+      {{
+        drawingPredictions()
+          ? "Prediction: " + drawingPredictions()![0]
+          : "Draw to predict image!"
+      }}
     </div>
   </mat-card-content>
   <mat-card-actions>
-    <button mat-raised-button color="accent" (click)="drawer.reset()">Clear</button>
+    <button mat-raised-button color="accent" (click)="drawer.reset()">
+      Clear
+    </button>
   </mat-card-actions>
-  <mat-card-footer>
-    <div class="drawing-result">
-      <feat-lazy-tensor-draw-predictions
-        [batch]="drawingBatch"
-        [predictions]="drawingPredictions"
-        [labels]="drawingLabels"
-        (imageClicked)="askForLabel($event)"
-      >
-      </feat-lazy-tensor-draw-predictions>
-    </div>
+  <mat-card-footer class="drawing-result">
+    <feat-lazy-tensor-draw-predictions
+      [batch]="drawingBatch()!"
+      [predictions]="drawingPredictions()!"
+      [labels]="drawingLabels()"
+      (imageClicked)="askForLabel($event)"
+    >
+    </feat-lazy-tensor-draw-predictions>
   </mat-card-footer>
 </mat-card>

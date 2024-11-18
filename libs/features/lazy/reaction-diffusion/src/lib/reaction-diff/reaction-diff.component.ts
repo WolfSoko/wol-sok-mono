@@ -2,8 +2,11 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  effect,
+  inject,
   OnDestroy,
   OnInit,
+  signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,6 +18,7 @@ import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { HeadlineAnimationService } from '@wolsok/headline-animation';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { interval, Observable, Subject } from 'rxjs';
 import {
@@ -64,6 +68,7 @@ interface Dimensions {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReactionDiffComponent implements OnInit, OnDestroy {
+  private readonly headlineAnimationService = inject(HeadlineAnimationService);
   public calcService!: ReactionDiffCalculator;
   public showFps = true;
   public width = 340;
@@ -75,10 +80,11 @@ export class ReactionDiffComponent implements OnInit, OnDestroy {
   public selectedExample: string | null = null;
   public addChemicalRadius!: number;
   public speed = 1;
-  public useGpu = true;
+  public useGpu = signal(true);
   dimensions$!: Observable<Dimensions>;
   calculationTime$!: Observable<string>;
   drawImageTime$!: Observable<number>;
+  start = signal(false);
   private dimensionsSubject$: Subject<Dimensions> = new Subject();
 
   constructor(
@@ -86,16 +92,14 @@ export class ReactionDiffComponent implements OnInit, OnDestroy {
     private configService: ReactionDiffConfigService
   ) {
     this.cellWeights$ = this.configService.calcCellWeights$;
-  }
-
-  private _start = false;
-
-  get start(): boolean {
-    return this._start;
-  }
-
-  set start(start: boolean) {
-    this._start = start;
+    effect(
+      () => {
+        this.headlineAnimationService.updateAnimation(
+          !(this.start() && this.useGpu())
+        );
+      },
+      { allowSignalWrites: true }
+    );
   }
 
   public ngOnInit() {
@@ -104,7 +108,7 @@ export class ReactionDiffComponent implements OnInit, OnDestroy {
     this.calcService = this.calcFactory.createCalcService(
       this.width,
       this.height,
-      this.useGpu
+      this.useGpu()
     );
     this.numberWebWorkers = this.calcService.numberThreads;
 
@@ -165,7 +169,7 @@ export class ReactionDiffComponent implements OnInit, OnDestroy {
       share()
     );
     distinctDebouncedDimensions.subscribe((dim) => {
-      this.start = false;
+      this.start.set(false);
       this.calcService.resize(dim.width, dim.height);
     });
 
@@ -175,11 +179,11 @@ export class ReactionDiffComponent implements OnInit, OnDestroy {
   }
 
   public toggleRunSim(): void {
-    this.start = !this.start;
+    this.start.update((start) => !start);
   }
 
   public reset(): void {
-    this.start = false;
+    this.start.set(false);
     this.calcService.reset();
   }
 
@@ -217,13 +221,13 @@ export class ReactionDiffComponent implements OnInit, OnDestroy {
   }
 
   updateUseGpu(): void {
-    this.start = false;
+    this.start.set(false);
     this.calcService = this.calcFactory.createCalcService(
       this.width,
       this.height,
-      this.useGpu
+      this.useGpu()
     );
-    if (!this.useGpu) {
+    if (!this.useGpu()) {
       this.numberWebWorkers = this.calcService.numberThreads;
     }
   }

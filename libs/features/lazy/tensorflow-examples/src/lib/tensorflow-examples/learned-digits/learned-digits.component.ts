@@ -1,5 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import {
@@ -19,6 +25,7 @@ import { DrawDigitComponent } from './draw-digit/draw-digit.component';
 import { DrawPredictionsComponent } from './draw-predictions/draw-predictions.component';
 import { LearnedDigitsModelService } from './learned-digits-model.service';
 import { MnistDataService } from './mnist-data.service';
+import { HeadlineAnimationService } from '@wolsok/headline-animation';
 
 @UntilDestroy()
 @Component({
@@ -38,38 +45,40 @@ import { MnistDataService } from './mnist-data.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LearnedDigitsComponent implements OnInit {
-  isLoading!: boolean;
-  hasBeenTrained = false;
-  errorLoadingData = false;
-  accuracyValues!: { batch: number; accuracy: number; set: string }[];
-  lossValues!: { batch: number; loss: number; set: string }[];
-  predictions!: number[];
-  batch!: { xs: Tensor2D; labels: Tensor2D };
-  labels!: number[];
+  isLoading = signal(true);
+  hasBeenTrained = signal(false);
+  errorLoadingData = signal(false);
+  accuracyValues = signal<
+    { batch: number; accuracy: number; set: string }[] | null
+  >(null);
+  lossValues = signal<{ batch: number; loss: number; set: string }[] | null>(
+    null
+  );
+  predictions = signal<number[] | null>(null);
+  batch = signal<{ xs: Tensor2D; labels: Tensor2D } | null>(null);
+  labels = signal<number[] | null>(null);
 
-  drawingPredictions!: number[];
-  drawingBatch!: { xs: Tensor2D; labels: number[] };
-  drawingLabels: number[] = [];
+  drawingPredictions = signal<number[] | null>(null);
+  drawingBatch = signal<{ xs: Tensor2D; labels: number[] } | null>(null);
+  drawingLabels = signal<number[]>([]);
   private nextDrawnImageSubject$ = new Subject<Float32Array>();
-
-  constructor(
-    private data: MnistDataService,
-    private deepNet: LearnedDigitsModelService,
-    private dialog: MatDialog
-  ) {}
+  private readonly headlineAnimationService = inject(HeadlineAnimationService);
+  private data = inject(MnistDataService);
+  private deepNet = inject(LearnedDigitsModelService);
+  private dialog = inject(MatDialog);
+  isTraining = this.deepNet.isTraining.asReadonly();
 
   ngOnInit(): void {
     setTimeout(async () => {
       try {
-        this.isLoading = true;
         await this.data.load();
       } catch (error) {
         console.error('error loading mnist data', error);
-        this.errorLoadingData = true;
+        this.errorLoadingData.set(true);
       } finally {
-        this.isLoading = false;
+        this.isLoading.set(false);
       }
-    }, 200);
+    }, 1500);
 
     this.nextDrawnImageSubject$
       .asObservable()
@@ -82,25 +91,24 @@ export class LearnedDigitsComponent implements OnInit {
   }
 
   async train() {
+    this.headlineAnimationService.stopAnimation();
     await this.deepNet.train();
-    this.accuracyValues = this.deepNet.accuracyValues || [
-      { batch: 0, accuracy: 0.0, set: 'train' },
-    ];
-    this.lossValues = this.deepNet.lossValues || [
-      { batch: 0, loss: 1.0, set: 'train' },
-    ];
-    this.hasBeenTrained = true;
+    this.accuracyValues.set(
+      this.deepNet.accuracyValues || [{ batch: 0, accuracy: 0.0, set: 'train' }]
+    );
+    this.lossValues.set(
+      this.deepNet.lossValues || [{ batch: 0, loss: 1.0, set: 'train' }]
+    );
+    this.hasBeenTrained.set(true);
+    this.predict();
+    this.headlineAnimationService.startAnimation();
   }
 
   predict() {
     this.deepNet.predict();
-    this.predictions = this.deepNet.predictions;
-    this.batch = this.deepNet.testBatch;
-    this.labels = this.deepNet.labels;
-  }
-
-  get isTraining() {
-    return this.deepNet.isTraining;
+    this.predictions.set(this.deepNet.predictions);
+    this.batch.set(this.deepNet.testBatch);
+    this.labels.set(this.deepNet.labels);
   }
 
   nextDrawnImage($event: Float32Array) {
@@ -109,18 +117,18 @@ export class LearnedDigitsComponent implements OnInit {
 
   private testDrawnDigit($event: Float32Array) {
     this.deepNet.predictDrawing($event);
-    this.drawingPredictions = this.deepNet.customPredictions;
+    this.drawingPredictions.set(this.deepNet.customPredictions);
 
     const xs = this.deepNet.testCustomBatch;
-    this.drawingLabels = [-1, ...this.drawingLabels];
+    this.drawingLabels.update((labels) => [-1, ...labels]);
     this.askForLabel(0);
-    this.drawingBatch = { xs: xs, labels: this.drawingPredictions };
+    this.drawingBatch.set({ xs: xs, labels: this.drawingPredictions() ?? [] });
   }
 
   askForLabel(index: number) {
-    const label = this.drawingLabels[index];
+    const label = this.drawingLabels()[index];
     const numberDrawn = label === -1 ? null : label;
-    const drawingPrediction = this.drawingPredictions[index];
+    const drawingPrediction = this.drawingPredictions()?.[index] ?? -1;
     const dialogData: AskForNumberDialogData = {
       drawn: numberDrawn,
       prediction: drawingPrediction,
@@ -134,8 +142,10 @@ export class LearnedDigitsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      this.drawingLabels[index] = result?.drawn ?? -1;
-      this.drawingLabels = [...this.drawingLabels];
+      this.drawingLabels.update((labels) => {
+        labels[index] = result?.drawn ?? -1;
+        return [...labels];
+      });
     });
   }
 }
