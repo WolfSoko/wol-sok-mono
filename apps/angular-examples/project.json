@@ -117,7 +117,7 @@
           "buildTarget": "angular-examples:build:development"
         }
       },
-      "defaultConfiguration": "production"
+      "defaultConfiguration": "development"
     },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",

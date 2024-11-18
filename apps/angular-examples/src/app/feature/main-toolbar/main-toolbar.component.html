@@ -12,8 +12,10 @@
   >
     <mat-icon>menu</mat-icon>
   </button>
-  <span class="on-top" [class.hide]="isHandset()">WolSok Coding&nbsp;</span>
-  <span class="on-top">Angular Experiments</span>
+  <span class="on-top" [class.hide]="isHandset()"
+    >WolSok Coding&nbsp;-&nbsp;Experiments</span
+  >
+  <span class="on-top" [class.hide]="!isHandset()">WolSok`s Experiments</span>
   <span class="toolbar-spacer"></span>
   @defer (on timer(1s)) {
     <mat-slide-toggle
