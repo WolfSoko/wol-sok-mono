@@ -1,11 +1,22 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+  signal,
+  WritableSignal,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { HeadlineAnimationService } from '@wolsok/headline-animation';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { DataDrawerComponent } from './data-drawer/data-drawer.component';
-import { PolynomialRegressionService } from './polynomial-regression.service';
+import {
+  Coefficients,
+  PolynomialRegressionService,
+} from './polynomial-regression.service';
 
 @Component({
   standalone: true,
@@ -18,41 +29,49 @@ import { PolynomialRegressionService } from './polynomial-regression.service';
     ElevateCardDirective,
   ],
   templateUrl: './polynomial-regression.component.html',
-  styleUrls: ['./polynomial-regression.component.less'],
+  styleUrls: ['./polynomial-regression.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PolynomialRegressionComponent implements OnInit {
-  randomCoefficients!: { a: number; b: number; c: number; d: number };
-  learnedCoefficients!: { a: number; b: number; c: number; d: number };
-  currentLoss?: number;
-  isLearning = false;
+export class PolynomialRegressionComponent {
+  private readonly headlineAnimationService = inject(HeadlineAnimationService);
 
-  constructor(public polyService: PolynomialRegressionService) {}
+  public polyService = inject(PolynomialRegressionService);
 
-  ngOnInit() {
-    this.randomCoefficients = this.polyService.currentCoefficients;
-  }
+  trueCoefficients = this.polyService.trueCoefficients;
+  beforeRandomDataChangedCoefficients = signal<Coefficients | null>(null);
+  randomCoefficients = () => this.polyService.getCurrentCoefficients();
+  learnedCoefficients = signal<Coefficients | null>(null);
+  currentLoss: WritableSignal<number> = signal(0);
+  isLearning = signal(false);
 
   async learn() {
-    this.isLearning = true;
+    this.isLearning.set(true);
+    this.headlineAnimationService.stopAnimation();
+
     await this.polyService.learnCoefficients(50, 10);
-    this.learnedCoefficients = this.polyService.currentCoefficients;
-    if (!this.polyService.predictionsAfter) {
+
+    this.learnedCoefficients.set(this.polyService.getCurrentCoefficients());
+    const predictionsAfter = this.polyService.predictionsAfter();
+    if (!predictionsAfter) {
       throw new Error('predictionsAfter needed');
     }
+
     const currentLossData = await this.polyService
-      .loss(this.polyService.predictionsAfter, this.polyService.trainingData.ys)
+      .loss(predictionsAfter, this.polyService.trainingData()!.ys)
       .data();
-    this.currentLoss = currentLossData[0];
-    this.isLearning = false;
+
+    this.currentLoss.set(currentLossData[0]);
+    this.isLearning.set(false);
+    this.headlineAnimationService.startAnimation();
   }
 
   setRandomCoefficients() {
-    this.polyService.trueCoefficients = {
+    this.beforeRandomDataChangedCoefficients.set(this.learnedCoefficients());
+    this.polyService.setTrueCoefficients({
       a: Math.random() * 10 - 5,
       b: Math.random() * 10 - 5,
       c: Math.random() * 10 - 5,
       d: Math.random() * 10 - 5,
-    };
+    });
   }
 }

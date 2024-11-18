@@ -4,7 +4,13 @@ import { default as embed, VisualizationSpec } from 'vega-embed';
 
 @Injectable({ providedIn: 'root' })
 export class DataDrawerService {
-  async plotData(element: HTMLElement, data: { xs: Tensor; ys: Tensor }) {
+  async plotData(
+    element: HTMLElement | null,
+    data: { xs: Tensor; ys: Tensor }
+  ) {
+    if (!element) {
+      return;
+    }
     const xvals = await data.xs.data();
     const yvals = await data.ys.data();
 
@@ -26,16 +32,27 @@ export class DataDrawerService {
   }
 
   async plotDataAndPredictions(
-    container: HTMLElement,
+    container: HTMLElement | null,
     data: { xs: Tensor; ys: Tensor },
-    preds: Tensor
+    preds: Tensor,
+    predsNew?: Tensor | null
   ) {
-    const xvals = await data.xs.data();
-    const yvals = await data.ys.data();
-    const predVals = await preds.data();
+    if (!container) {
+      return;
+    }
 
-    const values = Array.from(yvals).map((_y, i) => {
-      return { x: xvals[i], y: yvals[i], pred: predVals[i] };
+    const xVals = await data.xs.data();
+    const yVals = await data.ys.data();
+    const predVals = await preds.data();
+    const predNewVals = await predsNew?.data();
+
+    const values = Array.from(yVals).map((_y, i) => {
+      return {
+        x: xVals[i],
+        y: yVals[i],
+        pred: predVals[i],
+        predNew: predNewVals?.[i],
+      };
     });
 
     const spec: VisualizationSpec = {
@@ -58,17 +75,20 @@ export class DataDrawerService {
             color: { value: 'tomato' },
           },
         },
+        {
+          mark: {
+            type: 'line',
+            orient: 'vertical',
+            text: 'old learned polynomial',
+          },
+          encoding: {
+            x: { field: 'x', type: 'quantitative' },
+            y: { field: 'predNew', type: 'quantitative' },
+            color: { value: 'grey' },
+          },
+        },
       ],
     };
     return embed(container, spec, { actions: false });
-  }
-
-  renderCoefficients(
-    container: { innerHTML: string },
-    coeff: { a: number; b: number; c: number; d: number }
-  ) {
-    container.innerHTML = `<span>a=${coeff.a.toFixed(3)}, b=${coeff.b.toFixed(
-      3
-    )}, c=${coeff.c.toFixed(3)},  d=${coeff.d.toFixed(3)}</span>`;
   }
 }

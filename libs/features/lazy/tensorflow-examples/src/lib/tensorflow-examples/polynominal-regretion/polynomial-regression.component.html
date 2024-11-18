@@ -1,42 +1,41 @@
 <mat-card appearance="raised" wsSharedUiElevateCard>
   <mat-card-header>
-    <mat-card-title>Fitting data to a syntetic curve</mat-card-title>
+    <mat-card-title>Fitting data to a synthetic curve</mat-card-title>
     <mat-card-subtitle
-      >Utilizing tensorflow.js for polynominal regretion and vega to plot<br />
+      >Utilizing tensorflow.js for polynomial regression and vega to plot<br />
       Inspired from
-      <a href="https://github.com/tensorflow/tfjs-examples/tree/master/polynomial-regression-core" target="_blank"
+      <a
+        mat-button
+        href="https://github.com/tensorflow/tfjs-examples/tree/master/polynomial-regression-core"
+        target="_blank"
         >Tensorflow.js example</a
       >
     </mat-card-subtitle>
   </mat-card-header>
-  <mat-card-content class="drawings">
-    <feat-lazy-tensor-data-drawer
-      caption="Training data (synthetic)"
-      coeffCaption="True coefficients:"
-      [coeff]="polyService.trueCoefficients"
-      [data]="polyService.trainingData"
-    >
-    </feat-lazy-tensor-data-drawer>
-    <feat-lazy-tensor-data-drawer
-      caption="Fit curve with random coefficients (before training)"
-      coeffCaption="Random coefficients:"
-      [coeff]="randomCoefficients"
-      [data]="polyService.trainingData"
-      [predictions]="polyService.predictionsBefore"
-    >
-    </feat-lazy-tensor-data-drawer>
-    <feat-lazy-tensor-data-drawer
-      caption="Fit curve with learned coefficients (after training)"
-      coeffCaption="Learned coefficients:"
-      [coeff]="learnedCoefficients"
-      [data]="polyService.trainingData"
-      [predictions]="polyService.predictionsAfter"
-    >
-    </feat-lazy-tensor-data-drawer>
-  </mat-card-content>
+  @if (polyService.trainingData(); as trainingData) {
+    <mat-card-content class="drawings">
+      <feat-lazy-tensor-data-drawer
+        caption="Training data (synthetic)"
+        [coeffsCaption]="[
+          'True coefficients:',
+          'Before set random data:',
+          'Learned:',
+        ]"
+        [coeffs]="[
+          trueCoefficients(),
+          beforeRandomDataChangedCoefficients(),
+          learnedCoefficients(),
+        ]"
+        [data]="trainingData"
+        [predictions]="polyService.predictionsAfter()"
+        [predictionsNew]="polyService.predictionsBefore()"
+      >
+      </feat-lazy-tensor-data-drawer>
+    </mat-card-content>
+  }
   <mat-card-actions>
     <button
-      [disabled]="isLearning"
+      [disabled]="isLearning()"
       mat-raised-button
       color="accent"
       (click)="learn()"
@@ -45,9 +44,14 @@
     >
       Learn (50 iterations)
     </button>
-    <button [disabled]="isLearning" mat-raised-button color="accent" (click)="setRandomCoefficients()">
+    <button
+      [disabled]="isLearning()"
+      mat-raised-button
+      color="accent"
+      (click)="setRandomCoefficients()"
+    >
       Set random training data
     </button>
-    <span>Current loss: {{ currentLoss?.toFixed(5) }}</span>
+    <span>Current loss: {{ currentLoss().toFixed(5) }}</span>
   </mat-card-actions>
 </mat-card>

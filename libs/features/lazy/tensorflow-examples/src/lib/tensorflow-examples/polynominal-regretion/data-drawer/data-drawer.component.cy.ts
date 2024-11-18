@@ -15,7 +15,7 @@ describe(DataDrawerComponent.name, () => {
     cy.mount(DataDrawerComponent, {
       componentProperties: {
         caption: '',
-        coeffCaption: '',
+        coeffsCaption: '',
       },
     });
   });

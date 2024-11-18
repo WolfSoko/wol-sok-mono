@@ -29,10 +29,8 @@ export function stopHeadlineAnimationWhenNotVisible(
   effect(
     () => {
       if (isVisible()) {
-        console.log('Visible Start animation');
         headlineAnimationService.startAnimation();
       } else {
-        console.log('Not Visible Stop Animation');
         headlineAnimationService.stopAnimation();
       }
     },

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal, WritableSignal } from '@angular/core';
 import {
   nextFrame,
   Rank,
@@ -12,6 +12,13 @@ import {
   variable,
 } from '@tensorflow/tfjs';
 import { DataGeneratorService } from './data-generator.service';
+
+export type Coefficients = {
+  a: number;
+  b: number;
+  c: number;
+  d: number;
+};
 
 /**
  * We want to learn the coefficients that give correct solutions to the
@@ -36,48 +43,41 @@ export class PolynomialRegressionService {
   private numIterations!: number;
   private optimizer!: SGDOptimizer;
 
-  private _trueCoefficients!: { a: number; b: number; c: number; d: number };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private _trainingData: any;
+  trueCoefficients: WritableSignal<Coefficients> = signal({
+    a: -0.8,
+    b: -0.2,
+    c: 0.9,
+    d: 0.5,
+  });
 
-  predictionsBefore?: Tensor<Rank.R0>;
-  predictionsAfter?: Tensor<Rank.R0>;
-  currentLoss!: Scalar;
+  trainingData: WritableSignal<{
+    xs: Tensor<Rank.R0>;
+    ys: Tensor<Rank.R0>;
+  } | null> = signal(null);
+
+  predictionsBefore: WritableSignal<Tensor<Rank.R0> | null> = signal(null);
+  predictionsAfter: WritableSignal<Tensor<Rank.R0> | null> = signal(null);
 
   constructor(private dataService: DataGeneratorService) {
-    this.setPolynominal();
+    this.setPolynomial();
     this.createOptimizer();
+    this.initTrainingData();
   }
 
-  set trueCoefficients(coefficients) {
-    this._trueCoefficients = coefficients;
-    this.trainingData = null;
-    this.predictionsBefore = this.predict(this.trainingData.xs);
-    this.predictionsAfter = undefined;
+  setTrueCoefficients(coefficients: Coefficients) {
+    this.trueCoefficients.set(coefficients);
+    this.initTrainingData();
+    this.predictionsBefore.set(this.predict(this.trainingData()!.xs));
+    this.predictionsAfter.set(null);
   }
 
-  get trueCoefficients() {
-    if (!this._trueCoefficients) {
-      this._trueCoefficients = { a: -0.8, b: -0.2, c: 0.9, d: 0.5 };
-    }
-    return this._trueCoefficients;
+  private initTrainingData() {
+    this.trainingData.set(
+      this.dataService.generateData(400, this.trueCoefficients())
+    );
   }
 
-  set trainingData(coefficients) {
-    this._trainingData = coefficients;
-  }
-
-  get trainingData() {
-    if (!this._trainingData) {
-      this._trainingData = this.dataService.generateData(
-        400,
-        this.trueCoefficients
-      );
-    }
-    return this._trainingData;
-  }
-
-  setPolynominal(
+  setPolynomial(
     a: number = Math.random(),
     b: number = Math.random(),
     c: number = Math.random(),
@@ -90,7 +90,7 @@ export class PolynomialRegressionService {
   }
 
   // Step 2. Create an optimizer, we will use this later. You can play
-  // with some of these values to see how the model perfoms.
+  // with some of these values to see how the model performs.
   createOptimizer(numIterations = 75, learningRate = 0.5) {
     this.numIterations = numIterations;
     this.optimizer = train.sgd(learningRate);
@@ -105,7 +105,7 @@ export class PolynomialRegressionService {
    *
    * @return number predicted y value
    */
-  private predict(x: Tensor) {
+  private predict(x: Tensor): Tensor<Rank.R0> {
     // y = a * x ^ 3 + b * x ^ 2 + c * x + d
     return tidy(() => {
       return this.a
@@ -113,8 +113,7 @@ export class PolynomialRegressionService {
         .add(this.b.mul(x.square()))
         .add(this.c.mul(x))
         .add(this.d as Tensor);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    }) as any;
+    });
   }
 
   loss(prediction: Tensor<Rank.R0>, labels: Tensor<Rank.R0>): Tensor<Rank.R0> {
@@ -128,7 +127,7 @@ export class PolynomialRegressionService {
    * xs - training data x values
    * ys — training data y values
    */
-  async train(
+  private async train(
     xs: Tensor<Rank.R0>,
     ys: Tensor<Rank.R0>,
     numIterations: number = this.numIterations
@@ -154,27 +153,24 @@ export class PolynomialRegressionService {
     }
   }
 
-  get currentCoefficients(): { a: number; b: number; c: number; d: number } {
-    return Object.assign(
-      {},
-      {
-        a: this.a.dataSync()[0],
-        b: this.b.dataSync()[0],
-        c: this.c.dataSync()[0],
-        d: this.d.dataSync()[0],
-      }
-    );
+  getCurrentCoefficients(): { a: number; b: number; c: number; d: number } {
+    return {
+      a: this.a.dataSync()[0],
+      b: this.b.dataSync()[0],
+      c: this.c.dataSync()[0],
+      d: this.d.dataSync()[0],
+    };
   }
 
   async learnCoefficients(iterations = this.numIterations, batchSize = 10) {
     // Train the model!
     for (let i = iterations; i > 0; i -= batchSize) {
       await this.train(
-        this.trainingData.xs,
-        this.trainingData.ys,
+        this.trainingData()!.xs,
+        this.trainingData()!.ys,
         Math.min(batchSize, i)
       );
-      this.predictionsAfter = this.predict(this.trainingData.xs);
+      this.predictionsAfter.set(this.predict(this.trainingData()!.xs));
     }
   }
 }

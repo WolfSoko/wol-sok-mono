@@ -84,10 +84,8 @@ export class MainToolbarComponent {
     effect(
       () => {
         if (navStartEnd() instanceof NavigationEnd) {
-          console.log('Nav End');
           this.headlineAnimationService.startAnimation();
         } else {
-          console.log('Nav Start');
           this.headlineAnimationService.stopAnimation();
         }
       },
