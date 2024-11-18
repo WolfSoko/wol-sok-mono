@@ -8,7 +8,7 @@
   ],
   "schedule": ["at any time"],
   "prConcurrentLimit": 2,
-  "automergeStrategy": "rebase",
+  "automergeStrategy": "auto",
   "automerge": true,
   "automergeType": "pr",
   "platformAutomerge": true,
