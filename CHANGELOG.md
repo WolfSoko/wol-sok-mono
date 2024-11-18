@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.52.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.51.11-non-cdk-deployed...v4.52.0) (2024-11-18)
+
+
+### Features
+
+* ✨ move HeadlineAnimationService into shared lib ([59d9f49](https://github.com/WolfSoko/wol-sok-mono/commit/59d9f49ac302bdb36b567f57b49e0c51b1e28491))
+* **angular-examples:** ✨ rename title ([3c18fc9](https://github.com/WolfSoko/wol-sok-mono/commit/3c18fc935a2caebc1ec6e8ab711def20d577e688))
+* **feat-lazy-tf-examples:** ✨ add missing peer deps ([b0a96f1](https://github.com/WolfSoko/wol-sok-mono/commit/b0a96f105ab35426e3ac3adab17b33fb8cfc69b1))
+* **feat-lazy-tf-examples:** ✨ Only one graph to show all data ([f4b6cf2](https://github.com/WolfSoko/wol-sok-mono/commit/f4b6cf275932c11a56a2fd2eb76e82c769ca544b))
+
 ## [4.51.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.51.10-non-cdk-deployed...v4.51.11) (2024-11-18)
 
 ## [4.51.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.51.9-non-cdk-deployed...v4.51.10) (2024-11-18)
