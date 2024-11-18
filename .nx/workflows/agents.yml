@@ -17,11 +17,13 @@ launch-templates:
           echo "Install packages to compile node_modules gl with node-gyp"
           sudo apt-get update -y
           sudo apt-get install python3 python-is-python3 make gcc g++ xserver-xorg-dev libxi-dev libxext-dev -y
+          echo "npm cache is set to: $(npm get cache)"
       - name: Restore Node Modules Cache
         uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/cache/main.yaml'
         inputs:
           key: 'package-lock.json'
-          paths: 'node_modules'
+          paths: |
+            '~/.npm'
           base_branch: 'main'
       - name: Restore Browser Binary Cache
         uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/cache/main.yaml'
