@@ -64,11 +64,16 @@ export class MainToolbarComponent {
   constructor() {
     stopHeadlineAnimationWhenNotVisible(this.headlineAnimationService);
 
-    const navStartEnd = toSignal(
+    const navState = toSignal(
       this.router.events.pipe(
         filter(
           (value) =>
             value instanceof NavigationEnd || value instanceof NavigationStart
+        ),
+        map((event) =>
+          event instanceof NavigationEnd
+            ? ('navEnd' as const)
+            : ('navStart' as const)
         )
       )
     );
@@ -82,13 +87,8 @@ export class MainToolbarComponent {
     );
 
     effect(
-      () => {
-        if (navStartEnd() instanceof NavigationEnd) {
-          this.headlineAnimationService.startAnimation();
-        } else {
-          this.headlineAnimationService.stopAnimation();
-        }
-      },
+      () =>
+        this.headlineAnimationService.updateAnimation(navState() === 'navEnd'),
       { allowSignalWrites: true }
     );
   }
