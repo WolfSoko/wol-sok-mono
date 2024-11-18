@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.52.2-non-cdk-deployed...v4.53.0) (2024-11-18)
+
+
+### Features
+
+* **angular-examples:** ✨ simplify headline animation calls ([2a16be8](https://github.com/WolfSoko/wol-sok-mono/commit/2a16be8340c564fac6510c508ab9308a9c7cc93b))
+* **feat-lazy-tf-examples:** ✨ change order of mnist results. Use signals ([3863e26](https://github.com/WolfSoko/wol-sok-mono/commit/3863e267acefcd52245fc1cf32883d46986162ae))
+
 ## [4.52.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.52.1-non-cdk-deployed...v4.52.2) (2024-11-18)
 
 ## [4.52.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.52.0-non-cdk-deployed...v4.52.1) (2024-11-18)
