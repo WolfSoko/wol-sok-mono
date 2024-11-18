@@ -3,9 +3,10 @@
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/common": "^18.0.0",
-    "@angular/core": "^18.0.0"
+    "@angular/core": "^18.0.0",
+    "gpu.js": "2.16.0"
   },
-  "dependencies": {
+  "devDependencies": {
     "tslib": "2.5.2"
   }
 }

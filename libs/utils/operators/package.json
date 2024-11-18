@@ -1,4 +1,8 @@
 {
   "name": "@wolsok/utils-operators",
-  "version": "0.0.1"
+  "version": "0.0.1",
+  "dependencies": {
+    "lodash": "4.17.21",
+    "rxjs": "7.8.1"
+  }
 }

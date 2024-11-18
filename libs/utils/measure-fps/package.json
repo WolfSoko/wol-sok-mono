@@ -1,4 +1,8 @@
 {
   "name": "@wolsok/utils-measure-fps",
-  "version": "0.0.1"
+  "version": "0.0.1",
+  "dependencies": {
+    "@wolsok/utils-operators": "0.0.1",
+    "rxjs": "7.8.1"
+  }
 }

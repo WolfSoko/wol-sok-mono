@@ -1,4 +1,8 @@
 {
   "name": "@wolsok/feat-shared-reaction-diffusion-kernels",
-  "version": "0.0.1"
+  "version": "0.0.1",
+  "dependencies": {
+    "@wolsok/utils-gpu-calc": "0.0.1",
+    "gpu.js": "2.16.0"
+  }
 }
