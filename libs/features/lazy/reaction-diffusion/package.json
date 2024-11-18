@@ -4,12 +4,17 @@
   "peerDependencies": {
     "@angular/common": "^18.0.0",
     "@angular/core": "^18.0.0",
+    "@angular/forms": "^18.0.0",
     "@angular/material": "^18.0.0",
-    "mathjs": "^10.3.0 || ^11.0.0 || ^12.0.0 || ^13.0.0",
-    "gpu.js": "^2.16.0",
-    "rxjs": "^7.8.0"
+    "rxjs": "^7.8.0",
+    "p5": "^1.11.1",
+    "@wolsok/utils-gpu-calc": "^0.0.1",
+    "@wolsok/feat-shared-reaction-diffusion-kernels": "^0.0.1",
+    "@wolsok/utils-operators": "^0.0.1",
+    "@wolsok/ui-kit": "^0.0.1",
+    "@wolsok/headline-animation": "^0.0.1"
   },
-  "dependencies": {
+  "devDependencies": {
     "tslib": "2.5.2"
   }
 }
