@@ -192,12 +192,8 @@
       "inputs": ["production", "^production"]
     },
     "e2e-ci--**/*": {
-      "dependsOn": [
-        "angular-examples:build",
-        "bacteria-game-remote:build",
-        "fourier-analysis-remote:build",
-        "rollapolla-analog:build"
-      ]
+      "dependsOn": ["build"],
+      "inputs": ["default", "^production"]
     }
   },
   "cli": {
