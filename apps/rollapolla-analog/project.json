@@ -7,7 +7,6 @@
   "targets": {
     "build": {
       "executor": "@analogjs/platform:vite",
-      "dependsOn": ["^build"],
       "defaultConfiguration": "production",
       "options": {
         "main": "{projectRoot}/src/main.ts",

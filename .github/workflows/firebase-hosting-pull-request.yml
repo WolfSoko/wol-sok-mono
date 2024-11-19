@@ -19,9 +19,11 @@ jobs:
       - name: Install Deps
         uses: ./.github/actions/install-deps
       - run: npx nx run rollapolla-analog:build:production
+      - name: copy firebase.rollapolla-analog.json to firebase.json
+        run: cp firebase.rollapolla-analog.json firebase.json
+
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          entryPoint: firebase.rollapolla-analog.json
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ROLLAPOLLA_V1 }}
           projectId: rollapolla-v1
