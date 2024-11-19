@@ -27,7 +27,6 @@ jobs:
       - name: Install Deps
         uses: ./.github/actions/install-deps
         with:
-          browser: 'false'
           apt-packages: 'true'
           run-scripts: 'true'
 
