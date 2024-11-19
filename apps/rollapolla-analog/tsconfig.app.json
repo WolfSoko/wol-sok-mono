@@ -2,8 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "types": [],
-    "useDefineForClassFields": false
+    "types": []
   },
   "files": ["src/main.ts", "src/main.server.ts"],
   "include": [
