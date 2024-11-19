@@ -48,9 +48,12 @@ export class RenderShader2Component implements AfterViewInit {
 
   private startLoop(startTime = performance.now()): void {
     requestAnimationFrame((time) => {
+      if (!this.scene) {
+        throw new Error('Scene is not initialized. Cannot run shader loop.');
+      }
       const deltaTime = (time - startTime) / 1000;
       this.webglService.render(deltaTime);
-      this.renderer?.render(this.scene!);
+      this.renderer?.render(this.scene);
       this.startLoop(startTime);
     });
   }
