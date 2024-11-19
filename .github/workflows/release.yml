@@ -23,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: npx nx-cloud start-ci-run --distribute-on="3 wolsokmono-linux-extra-large" --stop-agents-after="build"
       - name: Install Deps
         uses: ./.github/actions/install-deps
         with:
@@ -38,7 +39,7 @@ jobs:
           echo "sentry-version=${SENTRY_VERSION}" >> $GITHUB_ENV
 
       - name: Build
-        run: npx nx run-many -t="build" -c="production" --projects="tag:app" --parallel="1"
+        run: npx nx run-many -t="build" -c="production" --projects="tag:app"
 
       - name: ZIP-files for release
         uses: vimtor/action-zip@v1
