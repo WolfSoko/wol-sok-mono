@@ -1,0 +1,28 @@
+{
+  "functions": [
+    {
+      "source": "dist/apps/rollapolla-analog/analog/server"
+    }
+  ],
+  "hosting": [
+    {
+      "site": "rollapolla-v1",
+      "public": "dist/apps/rollapolla-analog/analog/public",
+
+      "cleanUrls": true,
+      "rewrites": [
+        {
+          "source": "**",
+          "function": "server"
+        }
+      ]
+    }
+  ],
+  "firestore": [
+    {
+      "database": "rollapolla-v1",
+      "rules": "apps/rollapolla-analog/firestore.rules",
+      "indexes": "apps/rollapolla-analog/firestore.default.indexes.json"
+    }
+  ]
+}

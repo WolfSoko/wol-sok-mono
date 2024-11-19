@@ -64,11 +64,11 @@
     "firebase": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "firebase --config=firebase.{projectName}.json --project=rollapolla-v1"
+        "command": "firebase --project=rollapolla-v1"
       },
       "configurations": {
         "production": {
-          "command": "firebase --config=firebase{projectName}.json"
+          "command": "firebase"
         }
       }
     },

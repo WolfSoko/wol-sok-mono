@@ -1,4 +1,3 @@
-/// <reference types="vitest" />
 import analog from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import {
@@ -8,7 +7,6 @@ import {
   UserConfig,
 } from 'vite';
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   return {
     root: 'apps/rollapolla-analog',
@@ -42,7 +40,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           },
           preset: 'firebase',
           firebase: {
-            nodeVersion: '20',
+            nodeVersion: '22',
             gen: 2,
             httpsOptions: {
               region: 'europe-central2',
