@@ -4,9 +4,6 @@
 name: Deploy to Firebase Hosting on PR
 on:
   push:
-    paths:
-      - apps/rollapolla-analog/**
-      - firebase.rollapolla-analog.json
 
 permissions:
   checks: write
