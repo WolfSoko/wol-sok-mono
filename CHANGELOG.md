@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.22...v4.53.23) (2024-11-19)
+
+
+### Bug Fixes
+
+* **rollapolla-analog:** 🐛 revert config changes ([94112ea](https://github.com/WolfSoko/wol-sok-mono/commit/94112eaea692a2b846127b893fd93d5563f83c36))
+
 ## [4.53.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.21...v4.53.22) (2024-11-19)
 
 
