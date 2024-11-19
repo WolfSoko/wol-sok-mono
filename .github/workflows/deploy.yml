@@ -26,6 +26,7 @@ env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   deploy:
@@ -78,16 +79,21 @@ jobs:
         run: npx nx affected --target=deploy --exclude='${{ matrix.config.exclude-pattern }}' ${{ matrix.config.extra-deploy-args}}
 
       - name: Tag deployment success
-        # only run if deploy apps was not skipped
         if: success() && env.triggerRelease == 'true'
         run: |
+          echo "Configuring git user"
           git config --global user.email "github-actions[bot]@users.no-reply.github.com"
           git config --global user.name "github-actions[bot]"
+
+          echo "Setting deploy tag"
           DEPLOY_TAG=$RELEASE_VERSION-${{ matrix.config.deploy-tag-suffix }}
+          echo "Deploy tag: $DEPLOY_TAG"
+
+          echo "Tagging commit"
           git tag -a "$DEPLOY_TAG" $GITHUB_SHA -m "Version $RELEASE_VERSION deployed ${{ matrix.config.app-type }} apps successfully"
+
+          echo "Pushing tags"
           git push origin --tags
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Issue
         if: failure()
@@ -97,5 +103,3 @@ jobs:
             --body "GitHub [Deploy release workflow](${{ github.event.html_url }})" \
             --label "bug" \
             --assignee "${{ github.actor }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
