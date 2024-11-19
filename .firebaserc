@@ -1,14 +1,15 @@
 {
   "projects": {
     "default": "rollapolla-v1"
+  }
   },
   "targets": {
     "rollapolla-v1": {
-      "functions": {},
-      "hosting": {
-        "sites": ["rollapolla-v1"]
-      },
-      "firestore": {}
+      "database": {
+        "default": [
+          "default"
+        ]
+      }
     }
   },
   "etags": {},

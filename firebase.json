@@ -9,7 +9,6 @@
     {
       "site": "rollapolla-v1",
       "public": "dist/apps/rollapolla-analog/analog/public",
-
       "cleanUrls": true,
       "rewrites": [
         {
@@ -21,7 +20,6 @@
   ],
   "firestore": [
     {
-      "target": "rollapolla-v1",
       "rules": "apps/rollapolla-analog/firestore.rules",
       "indexes": "apps/rollapolla-analog/firestore.default.indexes.json"
     }
