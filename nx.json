@@ -85,11 +85,16 @@
     },
     "e2e": {
       "inputs": ["default", "^production"],
+      "dependsOn": ["build"],
       "outputs": [
         "{workspaceRoot}/test-reports/{projectRoot}",
         "{workspaceRoot}/dist/.playwright/{projectRoot}"
       ],
       "cache": true
+    },
+    "e2e-ci--**/*": {
+      "dependsOn": ["build"],
+      "inputs": ["default", "^production"]
     },
     "test": {
       "inputs": [
@@ -190,10 +195,6 @@
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
-    },
-    "e2e-ci--**/*": {
-      "dependsOn": ["build"],
-      "inputs": ["default", "^production"]
     }
   },
   "cli": {
