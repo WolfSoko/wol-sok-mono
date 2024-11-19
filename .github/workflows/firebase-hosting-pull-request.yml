@@ -14,15 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: 'npm'
       - name: Install Deps
         uses: ./.github/actions/install-deps
-        with:
-          cypress: 'false'
-          apt-packages: 'false'
       - run: npx nx rollapolla-analog:build:production
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
