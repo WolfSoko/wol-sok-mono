@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.18...v4.53.19) (2024-11-19)
+
+
+### CI/CD
+
+* 👷 no need for agents when build release ([5b5f8dd](https://github.com/WolfSoko/wol-sok-mono/commit/5b5f8dd1314d3f9d2bc16d5d6ea6760d8b20c30b))
+* 👷 try target for firestore-config ([e99d4cf](https://github.com/WolfSoko/wol-sok-mono/commit/e99d4cfa1ad5953a79e8dc1cf7c15e60cd60bf73))
+
+
+### Chore
+
+* 🔧 add json schema for firebase config [skip-ci] ([8cda4ea](https://github.com/WolfSoko/wol-sok-mono/commit/8cda4eaccab9b178ab9b0dece4af7b59c891331d))
+* 🔧 fix deploy dependencies ([47a3754](https://github.com/WolfSoko/wol-sok-mono/commit/47a3754ead6a4b8ffb0472bf52af7c41870b726e))
+
 ## [4.53.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.17-non-cdk-deployed...v4.53.18) (2024-11-19)
 
 
