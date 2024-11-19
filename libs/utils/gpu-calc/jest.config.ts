@@ -4,7 +4,7 @@ export default {
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {},
   coverageDirectory: '../../../coverage/libs/utils/gpu-calc',
-  coverageReporters: ['lcov'],
+
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',

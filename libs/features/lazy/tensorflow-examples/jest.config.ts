@@ -5,7 +5,7 @@ export default {
   globals: {},
   coverageDirectory:
     '../../../../coverage/libs/features/lazy/tensorflow-examples',
-  coverageReporters: ['lcov'],
+
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',
