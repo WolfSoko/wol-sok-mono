@@ -7,7 +7,7 @@ import { DatabaseService } from './database.service';
 import { Repo } from './repo.service';
 
 vi.mock('@angular/fire/firestore', async () => ({
-  ...(await vi.importActual('@angular/fire/firestore')),
+  Firestore: vi.fn(),
   collection: vi.fn(),
 }));
 describe('DatabaseService', () => {
