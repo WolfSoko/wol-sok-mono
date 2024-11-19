@@ -70,7 +70,7 @@ jobs:
         if: ${{ always() }}
       - name: Report Codecov
         if: github.ref_name == 'main' && hashFiles('coverage/**/*') != ''
-        uses: codecov/codecov-action@v5-beta
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unittests
