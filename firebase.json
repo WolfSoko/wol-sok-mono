@@ -1,4 +1,5 @@
 {
+  "$schema": "./node_modules/firebase-tools/schema/firebase-config.json",
   "functions": [
     {
       "source": "dist/apps/rollapolla-analog/analog/server"
@@ -20,7 +21,7 @@
   ],
   "firestore": [
     {
-      "database": "rollapolla-v1",
+      "target": "rollapolla-v1",
       "rules": "apps/rollapolla-analog/firestore.rules",
       "indexes": "apps/rollapolla-analog/firestore.default.indexes.json"
     }
