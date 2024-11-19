@@ -22,11 +22,10 @@
       "defaultConfiguration": "production"
     },
     "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/libs/shared/data-access"],
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"],
       "options": {
-        "jestConfig": "libs/shared/data-access/jest.config.ts",
-        "codeCoverage": true
+        "reportsDirectory": "../../../coverage/libs/shared/data-access"
       }
     },
     "lint": {

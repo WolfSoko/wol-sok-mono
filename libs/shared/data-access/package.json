@@ -4,7 +4,12 @@
   "peerDependencies": {
     "@angular/core": "^18.0.0",
     "@angular/fire": "^18.0.1",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "vite": "5.4.11",
+    "@nx/vite": "20.1.2"
+  },
+  "devDependencies": {
+    "tslib": "^2.5.0"
   },
   "sideEffects": false
 }
