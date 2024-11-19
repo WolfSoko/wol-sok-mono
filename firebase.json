@@ -1,14 +1,12 @@
 {
-  "$schema": "./node_modules/firebase-tools/schema/firebase-config.json",
-  "functions": [
-    {
-      "source": "dist/apps/rollapolla-analog/analog/server"
-    }
-  ],
+  "functions": {
+    "source": "dist/apps/rollapolla-analog/analog/server"
+  },
   "hosting": [
     {
       "site": "rollapolla-v1",
       "public": "dist/apps/rollapolla-analog/analog/public",
+
       "cleanUrls": true,
       "rewrites": [
         {
@@ -18,10 +16,8 @@
       ]
     }
   ],
-  "firestore": [
-    {
-      "rules": "apps/rollapolla-analog/firestore.rules",
-      "indexes": "apps/rollapolla-analog/firestore.default.indexes.json"
-    }
-  ]
+  "firestore": {
+    "rules": "apps/rollapolla-analog/firestore.rules",
+    "indexes": "apps/rollapolla-analog/firestore.default.indexes.json"
+  }
 }
