@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.27](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.26-non-cdk-deployed...v4.53.27) (2024-11-19)
+
+
+### Chore
+
+* **deps:** update actions/checkout action to v4 ([6db2073](https://github.com/WolfSoko/wol-sok-mono/commit/6db2073a2c77e52fd1c9050aef230832360f0e54))
+
 ## [4.53.26](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.25-non-cdk-deployed...v4.53.26) (2024-11-19)
 
 
