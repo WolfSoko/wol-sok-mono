@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.14-non-cdk-deployed...v4.53.15) (2024-11-19)
+
+
+### CI/CD
+
+* 👷 rename input of installDeps from cypress to browser ([b634ed4](https://github.com/WolfSoko/wol-sok-mono/commit/b634ed4d1795a87891b806bd574da5c9be218d2d))
+* 👷 test if it work without browsers ([070757c](https://github.com/WolfSoko/wol-sok-mono/commit/070757c84bfcc47f27b15cd30d7819aeb85c4f2a))
+* **rollapolla-analog:** 👷 add preview deployment ([1416db0](https://github.com/WolfSoko/wol-sok-mono/commit/1416db0d9d48ee75f7c17f7c583f72ef357df285))
+* **rollapolla-analog:** 👷 add preview deployment ([f468dba](https://github.com/WolfSoko/wol-sok-mono/commit/f468dba7ea0fe64cd18b0aa2bbde18d05c6b2092))
+* **rollapolla-analog:** 👷 create default firebase.json for gh action ([eb837a2](https://github.com/WolfSoko/wol-sok-mono/commit/eb837a2b033e11f42ba9da522d1808e57839f743))
+* **rollapolla-analog:** 👷 fix preview deployment by add missing run to npx nx command ([66f0c30](https://github.com/WolfSoko/wol-sok-mono/commit/66f0c300ada85c673fd3a08e88e104bd120ce724))
+* **rollapolla-analog:** 👷 fix select correct firebase.json ([bf14a9b](https://github.com/WolfSoko/wol-sok-mono/commit/bf14a9b188c008df5bcad7838e4a1c9198855a73))
+* **rollapolla-analog:** 👷 trigger always (for now) ([2faa16e](https://github.com/WolfSoko/wol-sok-mono/commit/2faa16e12b48ad2fddf935a0bd4f504159393699))
+
 ## [4.53.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.13-non-cdk-deployed...v4.53.14) (2024-11-19)
 
 
