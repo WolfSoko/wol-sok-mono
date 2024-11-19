@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.17-non-cdk-deployed...v4.53.18) (2024-11-19)
+
+
+### Chore
+
+* **rollapolla-analog:** 🔧 👷 better config for firebase ([4e8317e](https://github.com/WolfSoko/wol-sok-mono/commit/4e8317eb126227de6f242fee8dfef23062459cf8))
+* **rollapolla-analog:** 🔧 fix type of vite config ([001c046](https://github.com/WolfSoko/wol-sok-mono/commit/001c04656e0b7bc45a85efed555dc80bfb42b16d))
+* **rollapolla-analog:** 🔧 set package.json type = module ([1c75733](https://github.com/WolfSoko/wol-sok-mono/commit/1c7573305b3d73ef572978f97a09afb414347cc8))
+
+
+### Testing
+
+* **rollapolla-analog:** 🚨 fix e2e by using esnext modules ([eb00c83](https://github.com/WolfSoko/wol-sok-mono/commit/eb00c837c2842679bcf9dc047384552d7fd3599c))
+
 ## [4.53.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.16-non-cdk-deployed...v4.53.17) (2024-11-19)
 
 
