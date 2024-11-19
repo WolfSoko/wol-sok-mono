@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.23-non-cdk-deployed...v4.53.24) (2024-11-19)
+
+
+### Chore
+
+* 🔧 add local firebase schema config [skip ci] ([0ea0f28](https://github.com/WolfSoko/wol-sok-mono/commit/0ea0f2846d248d642ccf9e62249a9d34934798da))
+* **deps:** update nx monorepo ([33900f1](https://github.com/WolfSoko/wol-sok-mono/commit/33900f124e9b8a6916fa7c9f1dd5547d4acefb66))
+
 ## [4.53.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.22...v4.53.23) (2024-11-19)
 
 
