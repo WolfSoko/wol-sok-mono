@@ -1,13 +1,10 @@
 import analog from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import {
-  ConfigEnv,
-  defineConfig,
-  splitVendorChunkPlugin,
-  UserConfig,
-} from 'vite';
+import { ConfigEnv, defineConfig, splitVendorChunkPlugin } from 'vite';
 
-export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
+import { ViteUserConfig } from 'vitest/config';
+
+export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
   return {
     root: 'apps/rollapolla-analog',
     publicDir: 'src/public',
