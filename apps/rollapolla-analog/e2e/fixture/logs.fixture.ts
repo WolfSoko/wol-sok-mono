@@ -15,7 +15,7 @@ export const expect = expectBase.extend({
     const assertionName = 'toHaveConsoleMsg';
     let pass: boolean;
     let log: string;
-    let matcherResult: any;
+    let matcherResult: { actual: unknown };
     try {
       await expect(async () => {
         expect(logs).toContainEqual(expect.stringContaining(expected));
@@ -24,7 +24,7 @@ export const expect = expectBase.extend({
       log = logs.find((log) => log.includes(expected));
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
-      const matcherResult = e.matcherResult;
+      matcherResult = e.matcherResult as { actual: unknown };
       pass = false;
     }
     const message = pass
