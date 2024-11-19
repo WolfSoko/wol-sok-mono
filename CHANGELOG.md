@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.3-non-cdk-deployed...v4.53.4) (2024-11-19)
+
+
+### Bug Fixes
+
+* **deps:** update dependency vega-embed to v6.29.0 ([4044ea4](https://github.com/WolfSoko/wol-sok-mono/commit/4044ea40ac1491351753e9174db56cd19ff80cb2))
+
 ## [4.53.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.2-non-cdk-deployed...v4.53.3) (2024-11-19)
 
 ## [4.53.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.1-non-cdk-deployed...v4.53.2) (2024-11-19)
