@@ -1,4 +1,5 @@
 import type { Config } from 'jest';
+import { JestConfigWithTsJest } from 'ts-jest';
 
 export default {
   displayName: 'angular-examples',
@@ -24,4 +25,5 @@ export default {
     'jest-preset-angular/build/serializers/html-comment',
   ],
   preset: '../../jest.preset.js',
-} as Config;
+  testEnvironment: 'jsdom',
+} satisfies JestConfigWithTsJest;

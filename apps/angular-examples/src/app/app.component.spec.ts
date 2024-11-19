@@ -11,6 +11,7 @@ import { MainToolbarComponent } from './feature/main-toolbar/main-toolbar.compon
 import { SideNavComponent } from './feature/navigation/side-nav/side-nav.component';
 import { ROUTER_LINKS } from './router-links.token';
 
+jest.mock('./core/stop-headline-animation-when-not-visible');
 describe('AppComponent', () => {
   const createComp = (version: string | null = '1.0.0') => {
     TestBed.configureTestingModule({
