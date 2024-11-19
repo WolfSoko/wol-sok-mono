@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.20...v4.53.21) (2024-11-19)
+
+
+### Bug Fixes
+
+* **rollapolla-analog:** 🐛 set correct deploy target ([b6c86f9](https://github.com/WolfSoko/wol-sok-mono/commit/b6c86f946730cc1d654b0d2400b3868c60636de4))
+
+
+### Testing
+
+* **rollapolla-analog:** 🚨 try to fix import.meta but no results ([3e679f0](https://github.com/WolfSoko/wol-sok-mono/commit/3e679f0de165378d752f263d367a6bdc3bc2383d))
+
 ## [4.53.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.19...v4.53.20) (2024-11-19)
 
 
