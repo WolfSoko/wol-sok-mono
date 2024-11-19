@@ -67,7 +67,10 @@ export class PolynomialRegressionService {
   setTrueCoefficients(coefficients: Coefficients) {
     this.trueCoefficients.set(coefficients);
     this.initTrainingData();
-    this.predictionsBefore.set(this.predict(this.trainingData()!.xs));
+    const trainingData = this.trainingData();
+    if (trainingData) {
+      this.predictionsBefore.set(this.predict(trainingData.xs));
+    }
     this.predictionsAfter.set(null);
   }
 
@@ -164,13 +167,17 @@ export class PolynomialRegressionService {
 
   async learnCoefficients(iterations = this.numIterations, batchSize = 10) {
     // Train the model!
+    const trainingData = this.trainingData();
+    if (trainingData == null) {
+      throw new Error(`Cannot start training, no training data available`);
+    }
     for (let i = iterations; i > 0; i -= batchSize) {
       await this.train(
-        this.trainingData()!.xs,
-        this.trainingData()!.ys,
+        trainingData.xs,
+        trainingData.ys,
         Math.min(batchSize, i)
       );
-      this.predictionsAfter.set(this.predict(this.trainingData()!.xs));
+      this.predictionsAfter.set(this.predict(trainingData.xs));
     }
   }
 }
