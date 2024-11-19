@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.15...v4.53.16) (2024-11-19)
+
+
+### CI/CD
+
+* **rollapolla-analog:** 👷 try with channelId preprod ([beaf934](https://github.com/WolfSoko/wol-sok-mono/commit/beaf9347c4357a79b02664c714eca3c0bdfa4e48))
+
 ## [4.53.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.14-non-cdk-deployed...v4.53.15) (2024-11-19)
 
 
