@@ -2,8 +2,8 @@
   "name": "rollapolla-analog",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "sourceRoot": "apps/rollapolla-analog/src",
-  "tags": ["app"],
+  "sourceRoot": "{projectRoot}/src",
+  "tags": ["app", "type:firebase"],
   "targets": {
     "build": {
       "executor": "@analogjs/platform:vite",
@@ -48,13 +48,7 @@
       }
     },
     "test": {
-      "executor": "@analogjs/platform:vitest",
-      "outputs": ["{workspaceRoot}/coverage/apps/{projectName}"],
-      "configurations": {
-        "ci": {
-          "coverage": true
-        }
-      }
+      "executor": "@analogjs/platform:vitest"
     },
     "lint": {
       "options": {
@@ -90,6 +84,12 @@
     },
     "deploy": {
       "executor": "nx:run-commands",
+      "inputs": [
+        "production",
+        "^production",
+        "{workspaceRoot}/firebase*.json",
+        "{workspaceRoot}/.firebaserc"
+      ],
       "dependsOn": ["build"],
       "options": {
         "command": "nx run rollapolla-analog:firebase deploy"

@@ -45,22 +45,21 @@
       "default",
       "!{projectRoot}/**/*.spec.[jt]s",
       "!{projectRoot}/tsconfig.*spec.json",
+      "!{projectRoot}/tsconfig.storybook.json",
+      "!{projectRoot}/tsconfig.editor.json",
       "!{projectRoot}/karma.conf.js",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
       "!{projectRoot}/jest.config.[jt]s",
       "!{projectRoot}/.storybook/**/*",
       "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
-      "!{projectRoot}/tsconfig.storybook.json",
       "!{projectRoot}/src/*test-setup.[jt]s",
       "!{projectRoot}/cypress/**/*",
       "!{projectRoot}/**/*.cy.[jt]s?(x)",
+      "!{projectRoot}/playwright.config.[jt]s",
       "!{projectRoot}/cypress.config.[jt]s",
-      "!{projectRoot}/tsconfig.spec.json",
-      "!{projectRoot}/eslint.config.js"
+      "!{projectRoot}/eslint.config.[jt]s"
     ],
     "sharedGlobals": [
-      "{workspaceRoot}/firebase*.json",
-      "{workspaceRoot}/.firebaserc",
       "{workspaceRoot}/.github/**",
       "{workspaceRoot}/.nx/workflows/**"
     ],
@@ -70,7 +69,6 @@
       }
     ]
   },
-
   "targetDefaults": {
     "release": {
       "dependsOn": ["build"]
@@ -79,7 +77,7 @@
       "dependsOn": ["^build"]
     },
     "build": {
-      "inputs": ["production", "sharedGlobals", "^production"],
+      "inputs": ["sharedGlobals", "production", "^production"],
       "dependsOn": ["^build"],
       "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "cache": true
