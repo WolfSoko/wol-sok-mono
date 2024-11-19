@@ -19,7 +19,7 @@ import { DataDrawerService } from './data-drawer.service';
   imports: [CommonModule, MatCardModule, ElevateCardDirective],
   selector: 'feat-lazy-tensor-data-drawer',
   templateUrl: './data-drawer.component.html',
-  styleUrls: ['./data-drawer.component.less'],
+  styleUrls: ['./data-drawer.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DataDrawerComponent {

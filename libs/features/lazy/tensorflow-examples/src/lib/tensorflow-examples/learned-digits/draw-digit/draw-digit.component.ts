@@ -7,7 +7,6 @@ import {
   NgZone,
   output,
   viewChild,
-  ViewChild,
 } from '@angular/core';
 import P5 from 'p5';
 
