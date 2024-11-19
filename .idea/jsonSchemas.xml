@@ -3,11 +3,13 @@
   <component name="JsonSchemaMappingsProjectConfiguration">
     <state>
       <map>
-        <entry key="Firebase">
+        <entry key="Firebase_Local_Schema">
+
           <value>
             <SchemaInfo>
-              <option name="name" value="Firebase" />
-              <option name="relativePathToSchema" value="https://raw.githubusercontent.com/firebase/firebase-tools/master/schema/firebase-config.json" />
+              <option name="name" value="Firebase_Local_Schema" />
+              <option name="relativePathToSchema" value="node_modules/firebase-tools/schema/firebase-config.json" />
+              <option name="schemaVersion" value="JSON Schema 7" />
               <option name="applicationDefined" value="true" />
               <option name="patterns">
                 <list>
