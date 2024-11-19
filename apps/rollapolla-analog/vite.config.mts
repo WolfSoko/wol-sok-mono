@@ -63,6 +63,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       coverage: {
         reportsDirectory: '../../coverage/apps/rollapolla-analog',
         provider: 'v8',
+        reporter: ['html', 'lcov', 'text'],
       },
     },
     define: {

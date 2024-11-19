@@ -50,7 +50,12 @@
     },
     "test": {
       "executor": "@analogjs/platform:vitest",
-      "outputs": ["{projectRoot}/coverage"]
+      "outputs": ["{workspaceRoot}/coverage/apps/{projectName}"],
+      "configurations": {
+        "ci": {
+          "coverage": true
+        }
+      }
     },
     "lint": {
       "options": {

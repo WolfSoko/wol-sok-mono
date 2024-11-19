@@ -16,9 +16,14 @@
     },
     "test": {
       "executor": "@nx/vite:test",
-      "outputs": ["{options.reportsDirectory}"],
+      "outputs": ["{workspaceRoot}/coverage/libs/public/spa-cdk-stack"],
       "options": {
-        "reportsDirectory": "../../../coverage/libs/public/spa-cdk-stack"
+        "reportsDirectory": "{workspaceRoot}/coverage/libs/public/spa-cdk-stack"
+      },
+      "configurations": {
+        "ci": {
+          "coverage": true
+        }
       }
     }
   },

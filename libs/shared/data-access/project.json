@@ -23,9 +23,14 @@
     },
     "test": {
       "executor": "@nx/vite:test",
-      "outputs": ["{options.reportsDirectory}"],
+      "outputs": ["{workspaceRoot}/coverage/libs/shared/data-access"],
       "options": {
-        "reportsDirectory": "../../../coverage/libs/shared/data-access"
+        "reportsDirectory": "{workspaceRoot}/coverage/libs/shared/data-access"
+      },
+      "configurations": {
+        "ci": {
+          "coverage": true
+        }
       }
     },
     "lint": {
