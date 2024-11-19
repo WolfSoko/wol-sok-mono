@@ -3,7 +3,7 @@
     "default": "rollapolla-v1"
   },
   "targets": {
-    "rollapolla-v2": {
+    "rollapolla-v1": {
       "functions": {},
       "hosting": {
         "sites": ["rollapolla-v1"]
