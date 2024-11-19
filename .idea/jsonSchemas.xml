@@ -3,13 +3,29 @@
   <component name="JsonSchemaMappingsProjectConfiguration">
     <state>
       <map>
+        <entry key="Firebase">
+          <value>
+            <SchemaInfo>
+              <option name="name" value="Firebase" />
+              <option name="relativePathToSchema" value="https://raw.githubusercontent.com/firebase/firebase-tools/master/schema/firebase-config.json" />
+              <option name="applicationDefined" value="true" />
+              <option name="patterns">
+                <list>
+                  <Item>
+                    <option name="path" value="firebase.json" />
+                  </Item>
+                </list>
+              </option>
+            </SchemaInfo>
+          </value>
+        </entry>
         <entry key="GitHub Action">
           <value>
             <SchemaInfo>
               <option name="generatedName" value="New Schema" />
               <option name="name" value="GitHub Action" />
               <option name="relativePathToSchema" value="https://json.schemastore.org/github-action.json" />
-              <option name="schemaVersion" value="JSON Schema version 7" />
+              <option name="schemaVersion" value="JSON Schema 7" />
               <option name="patterns">
                 <list>
                   <Item>
@@ -28,7 +44,7 @@
               <option name="generatedName" value="New Schema" />
               <option name="name" value="GitHub Workflow" />
               <option name="relativePathToSchema" value="https://json.schemastore.org/github-workflow.json" />
-              <option name="schemaVersion" value="JSON Schema version 7" />
+              <option name="schemaVersion" value="JSON Schema 7" />
               <option name="patterns">
                 <list>
                   <Item>
