@@ -45,7 +45,7 @@ jobs:
         uses: vimtor/action-zip@v1
         with:
           files: |
-            dist/
+            dist/**/*.*
             version.json
           dest: release.zip
 
