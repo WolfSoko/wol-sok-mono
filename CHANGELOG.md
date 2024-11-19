@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.29](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.28-non-cdk-deployed...v4.53.29) (2024-11-19)
+
+
+### Chore
+
+* **deps:** update dependency vite-tsconfig-paths to v5.1.3 ([fe80826](https://github.com/WolfSoko/wol-sok-mono/commit/fe808267b5545e74edc4705423de4e8feafa8554))
+
 ## [4.53.28](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.27-non-cdk-deployed...v4.53.28) (2024-11-19)
 
 
