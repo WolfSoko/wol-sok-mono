@@ -93,7 +93,7 @@ jobs:
           git tag -a "$DEPLOY_TAG" $GITHUB_SHA -m "Version $RELEASE_VERSION deployed ${{ matrix.config.app-type }} apps successfully"
 
           echo "Pushing tags"
-          git push origin --tags
+          git push origin "$DEPLOY_TAG"
 
       - name: Create Issue
         if: failure()
