@@ -22,6 +22,11 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 50
+
       - name: Install Deps
         uses: ./.github/actions/install-deps
         with:
