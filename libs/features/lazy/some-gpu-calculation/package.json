@@ -6,7 +6,7 @@
     "@angular/core": "^18.0.0",
     "@angular/router": "18.2.12",
     "@angular/forms": "18.2.12",
-    "@angular/material": "18.2.13",
+    "@angular/material": "18.2.14",
     "@wolsok/ui-kit": "0.0.1",
     "@wolsok/utils-gpu-calc": "0.0.1",
     "@wolsok/utils-measure-fps": "0.0.1",

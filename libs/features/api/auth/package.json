@@ -9,7 +9,7 @@
     "akita-ng-fire": "7.0.1",
     "@angular/router": "18.2.12",
     "angulartics2": "14.1.0",
-    "@angular/material": "18.2.13"
+    "@angular/material": "18.2.14"
   },
   "devDependencies": {
     "tslib": "2.5.2"
