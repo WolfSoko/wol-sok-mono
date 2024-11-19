@@ -22,8 +22,6 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: npx nx-cloud start-ci-run --distribute-on="3 wolsokmono-linux-extra-large" --stop-agents-after="build"
       - name: Install Deps
         uses: ./.github/actions/install-deps
         with:
