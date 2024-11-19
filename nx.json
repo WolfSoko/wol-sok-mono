@@ -40,11 +40,7 @@
     }
   ],
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "{workspaceRoot}/.github/**/*",
-      "{workspaceRoot}/.nx/workflows/**"
-    ],
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
       "default",
       "!{projectRoot}/**/*.spec.[jt]s",
@@ -63,7 +59,10 @@
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/eslint.config.js"
     ],
-    "globals": ["{workspaceRoot}/.github/**"],
+    "sharedGlobals": [
+      "{workspaceRoot}/.github/**",
+      "{workspaceRoot}/.nx/workflows/**"
+    ],
     "version": [
       {
         "runtime": "node -e \"console.log(require('./tools/version-handling/latest-version-tag.js').latestVersionTag('cdk-deployed'))\""
@@ -78,23 +77,10 @@
       "dependsOn": ["^build"]
     },
     "build": {
-      "inputs": ["production", "globals", "^production", "^globals"],
+      "inputs": ["production", "sharedGlobals", "^production"],
       "dependsOn": ["^build"],
       "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "cache": true
-    },
-    "e2e": {
-      "inputs": ["default", "^production"],
-      "dependsOn": ["build"],
-      "outputs": [
-        "{workspaceRoot}/test-reports/{projectRoot}",
-        "{workspaceRoot}/dist/.playwright/{projectRoot}"
-      ],
-      "cache": true
-    },
-    "e2e-ci--**/*": {
-      "dependsOn": ["build"],
-      "inputs": ["default", "^production"]
     },
     "test": {
       "inputs": [
@@ -230,6 +216,9 @@
   },
   "defaultProject": "angular-examples",
   "parallel": 6,
+  "affected": {
+    "defaultBase": "main"
+  },
   "defaultBase": "main",
   "useLegacyCache": true
 }
