@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.32](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.31-non-cdk-deployed...v4.53.32) (2024-11-20)
+
+
+### Bug Fixes
+
+* **deps:** update dependency mathjs to v13.2.3 ([ba95d41](https://github.com/WolfSoko/wol-sok-mono/commit/ba95d413b6847e5e5bca5b9c7c075ad8edc06c90))
+
 ## [4.53.31](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.30-non-cdk-deployed...v4.53.31) (2024-11-20)
 
 
