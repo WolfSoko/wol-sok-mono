@@ -22,15 +22,17 @@ launch-templates:
         uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/cache/main.yaml'
         inputs:
           key: 'package-lock.json'
-          paths: 'node_modules'
-          base_branch: 'main'
+          paths: |
+            'node_modules'
+            '/home/workflows/.npm'
+          base-branch: 'main'
       - name: Restore Browser Binary Cache
         uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/cache/main.yaml'
         inputs:
           key: 'package-lock.json|"browsers"'
           paths: |
             '/home/workflows/.cache/Cypress'
-          base_branch: 'main'
+          base-branch: 'main'
       - name: Install Node Modules
         script: |
           npm install
