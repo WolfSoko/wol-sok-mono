@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.38](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.37-non-cdk-deployed...v4.53.38) (2024-11-21)
+
+
+### CI/CD
+
+* 👷 also cache global node cache. ([22df354](https://github.com/WolfSoko/wol-sok-mono/commit/22df3543b7d9a4d190fab0a9d68bb34143a0fa43))
+
 ## [4.53.37](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.36-non-cdk-deployed...v4.53.37) (2024-11-21)
 
 
