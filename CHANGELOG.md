@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.41](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.40-non-cdk-deployed...v4.53.41) (2024-11-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency firebase-functions to v6.1.1 ([4bbcee7](https://github.com/WolfSoko/wol-sok-mono/commit/4bbcee7b985b1faf4e15314fcbad86f4dbf0c578))
+
 ## [4.53.40](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.39-non-cdk-deployed...v4.53.40) (2024-11-21)
 
 
