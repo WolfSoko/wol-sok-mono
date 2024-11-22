@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.44](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.43-non-cdk-deployed...v4.53.44) (2024-11-22)
+
+
+### Chore
+
+* **deps:** update dependency @swc/core to v1.9.3 ([48ed3ba](https://github.com/WolfSoko/wol-sok-mono/commit/48ed3ba2cdfbd35347395e371390f59f0d0ed42c))
+
 ## [4.53.43](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.42-non-cdk-deployed...v4.53.43) (2024-11-22)
 
 
