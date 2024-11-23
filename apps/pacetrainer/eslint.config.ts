@@ -1,6 +1,8 @@
 import { FlatCompat } from '@eslint/eslintrc';
+
 import js from '@eslint/js';
 
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import baseConfig from '../../eslint.config.js';
 
 const compat = new FlatCompat({
@@ -26,7 +28,7 @@ export default [
           'error',
           {
             type: 'attribute',
-            prefix: 'rap',
+            prefix: 'pace',
             style: 'camelCase',
           },
         ],
@@ -34,7 +36,7 @@ export default [
           'error',
           {
             type: 'element',
-            prefix: 'rap',
+            prefix: 'pace',
             style: 'kebab-case',
           },
         ],

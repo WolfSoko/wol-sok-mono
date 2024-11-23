@@ -1,5 +1,5 @@
 {
-  "name": "rollapolla-analog",
+  "name": "pacetrainer",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "{projectRoot}/src",
@@ -34,16 +34,16 @@
       "executor": "@analogjs/platform:vite-dev-server",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "rollapolla-analog:build",
+        "buildTarget": "pacetrainer:build",
         "port": 4200
       },
       "configurations": {
         "development": {
-          "buildTarget": "rollapolla-analog:build:development",
+          "buildTarget": "pacetrainer:build:development",
           "hmr": true
         },
         "production": {
-          "buildTarget": "rollapolla-analog:build:production"
+          "buildTarget": "pacetrainer:build:production"
         }
       }
     },
@@ -58,7 +58,7 @@
     "firebase": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "firebase --config=firebase.{projectName}.json --project=rollapolla-v1"
+        "command": "firebase --config=firebase.{projectName}.json --project=pacetrainer"
       },
       "configurations": {
         "production": {
@@ -76,8 +76,8 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "nx run rollapolla-analog:killports",
-          "nx run rollapolla-analog:firebase emulators:start --import={projectRoot}/.emulators --export-on-exit"
+          "nx run pacetrainer:killports",
+          "nx run pacetrainer:firebase emulators:start --import={projectRoot}/.emulators --export-on-exit"
         ],
         "parallel": false
       }
@@ -92,7 +92,7 @@
       ],
       "dependsOn": ["build"],
       "options": {
-        "command": "nx run rollapolla-analog:firebase deploy"
+        "command": "nx run pacetrainer:firebase deploy"
       }
     }
   }

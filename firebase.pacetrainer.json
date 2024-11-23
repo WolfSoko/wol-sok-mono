@@ -1,0 +1,21 @@
+{
+  "functions": [
+    {
+      "source": "dist/apps/pacetrainer/analog/server"
+    }
+  ],
+  "hosting": [
+    {
+      "site": "pacetrainer",
+      "public": "dist/apps/pacetrainer/analog/public",
+
+      "cleanUrls": true,
+      "rewrites": [
+        {
+          "source": "**",
+          "function": "server"
+        }
+      ]
+    }
+  ]
+}

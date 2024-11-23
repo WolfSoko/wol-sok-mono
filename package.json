@@ -20,7 +20,6 @@
   "private": true,
   "dependencies": {
     "@analogjs/content": "1.9.4",
-    "@analogjs/platform": "1.9.4",
     "@analogjs/router": "1.9.4",
     "@analogjs/vite-plugin-angular": "1.9.4",
     "@analogjs/vite-plugin-nitro": "1.9.4",
@@ -96,6 +95,7 @@
     "zone.js": "0.15.0"
   },
   "devDependencies": {
+    "@analogjs/platform": "^1.7.0",
     "@angular-builders/custom-webpack": "18.0.0",
     "@angular-devkit/architect": "0.1900.1",
     "@angular-devkit/build-angular": "18.2.12",
