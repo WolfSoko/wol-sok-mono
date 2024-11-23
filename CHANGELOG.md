@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.49](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.48-non-cdk-deployed...v4.53.49) (2024-11-23)
+
+
+### Chore
+
+* **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.27.4 ([2f29f9b](https://github.com/WolfSoko/wol-sok-mono/commit/2f29f9b1732a5f742006c2f086ae96390bd44735))
+
 ## [4.53.48](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.47-non-cdk-deployed...v4.53.48) (2024-11-23)
 
 
