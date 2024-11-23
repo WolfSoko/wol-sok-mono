@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.53.52](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.51-non-cdk-deployed...v4.53.52) (2024-11-23)
+
+
+### Chore
+
+* **deps:** update dependency angular-eslint to v18.4.2 ([865d581](https://github.com/WolfSoko/wol-sok-mono/commit/865d5817dc6db83b16309afc4860135a42c02c18))
+
 ## [4.53.51](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.50-non-cdk-deployed...v4.53.51) (2024-11-23)
 
 
