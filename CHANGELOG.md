@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.54.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.52-non-cdk-deployed...v4.54.0) (2024-11-23)
+
+
+### Features
+
+* **pacetrainer:** ✨ add pacetrainer app as analog app with firebase ([287a93c](https://github.com/WolfSoko/wol-sok-mono/commit/287a93c0be169c79ec50e56a8888e370b3ddddd9))
+
+
+### Testing
+
+* **pacetrainer:** 🚨 ✨ add pacetrainer e2e tests ([db2b856](https://github.com/WolfSoko/wol-sok-mono/commit/db2b8560f5e7087a412d9408052bd4fea8f6ee04))
+
 ## [4.53.52](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.51-non-cdk-deployed...v4.53.52) (2024-11-23)
 
 
