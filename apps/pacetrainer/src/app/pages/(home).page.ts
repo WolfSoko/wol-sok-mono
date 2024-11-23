@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
 
-import { AnalogWelcomeComponent } from './analog-welcome.component';
+import { PacetrainerTitleComponent } from './pacetrainer-title.component';
 
 @Component({
   selector: 'pacetrainer-home',
   standalone: true,
-  imports: [AnalogWelcomeComponent],
+  imports: [PacetrainerTitleComponent],
   template: ` <pacetrainer-analog-welcome /> `,
 })
 export default class HomeComponent {}

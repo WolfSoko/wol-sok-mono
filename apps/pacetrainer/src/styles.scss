@@ -1,0 +1,63 @@
+@use '@angular/material' as mat;
+
+@import 'normalize.css/normalize.css';
+
+@include mat.core();
+
+$theme: mat.define-theme(
+  (
+    color: (
+      theme-type: light,
+      primary: mat.$azure-palette,
+    ),
+  )
+);
+
+$dark-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: dark,
+      primary: mat.$azure-palette,
+    ),
+  )
+);
+
+html {
+  @include mat.core-theme($theme);
+  @include mat.button-theme($theme);
+  @include mat.form-field-theme($theme);
+  @include mat.input-theme($theme);
+  @include mat.card-theme($theme);
+  @include mat.list-theme($theme);
+  @include mat.typography-hierarchy($theme);
+
+  // Apply the light theme only when the user prefers light themes.
+  @media (prefers-color-scheme: dark) {
+    // Use the `-color` mixins to only apply color styles without reapplying the same
+    // typography and density styles.
+    @include mat.core-color($dark-theme);
+    @include mat.button-color($dark-theme);
+    @include mat.form-field-color($dark-theme);
+    @include mat.input-color($dark-theme);
+    @include mat.card-color($dark-theme);
+    @include mat.list-color($dark-theme);
+  }
+
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+}
+
+body,
+html {
+  * {
+    box-sizing: border-box;
+    &:before,
+    &:after {
+      box-sizing: border-box;
+    }
+  }
+}
+
+body {
+  margin: 0;
+  text-wrap: pretty;
+}

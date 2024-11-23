@@ -17,5 +17,8 @@ export class HomePage {
         name: 'Pace-Trainer',
       })
     ).toBeVisible();
+    await expect(
+      this.page.getByText('Dein digitaler Laufcoach.')
+    ).toBeVisible();
   }
 }
