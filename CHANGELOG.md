@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.55.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.55.0...v4.55.1) (2024-11-24)
+
+
+### CI/CD
+
+* 👷 fix release ([e5d3e50](https://github.com/WolfSoko/wol-sok-mono/commit/e5d3e50f5b8f945da6dc8ebb946ba06aecf8902a))
+
 ## [4.55.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.54.0...v4.55.0) (2024-11-24)
 
 
