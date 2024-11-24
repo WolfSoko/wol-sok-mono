@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.55.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.54.0...v4.55.0) (2024-11-24)
+
+
+### Features
+
+* **pacetrainer:** ✨ initial styling ([1ecec8e](https://github.com/WolfSoko/wol-sok-mono/commit/1ecec8ef704c1464dd2d191ba5cc766753fc26c7))
+* **pacetrainer:** ✨ try add pacetrainer firebase hosting project ([f7afc21](https://github.com/WolfSoko/wol-sok-mono/commit/f7afc215874327b03496d538e9ffc2645132e2c4))
+* **pacetrainer:** ✨ try add pacetrainer firebase hosting project ([9b0bd2b](https://github.com/WolfSoko/wol-sok-mono/commit/9b0bd2be860eb4bae139cbd85353cb7744bbfd1b))
+
+
+### Code style
+
+* 🎨 fix some lint errors ([55d5705](https://github.com/WolfSoko/wol-sok-mono/commit/55d57059302de8081b4a909f275eafb93ac90f75))
+
 ## [4.54.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.52-non-cdk-deployed...v4.54.0) (2024-11-23)
 
 
