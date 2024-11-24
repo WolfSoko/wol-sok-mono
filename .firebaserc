@@ -1,13 +1,9 @@
 {
   "projects": {
-    "default": "rollapolla-v1"
-    "pacetrainer": "pacetrainer"
-  }
-  "targets": [
-    "pacetrainer": {
-      "pacetrainer": {
-      }
-    },
+    "default": "rollapolla-v1",
+    "pacetrainer": "pacetrainer-ef5b4"
+  },
+  "targets": {
     "rollapolla-v1": {
       "database": {
         "default": [
@@ -15,7 +11,7 @@
         ]
       }
     }
-  ],
-  a"etags": {},
+  },
+  "etags": {},
   "dataconnectEmulatorConfig": {}
 }
