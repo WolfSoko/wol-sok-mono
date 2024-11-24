@@ -1,6 +1,8 @@
 import { FlatCompat } from '@eslint/eslintrc';
+// @ts-expect-error import error but it works
 import js from '@eslint/js';
 
+// @ts-expect-error import error
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import baseConfig from '../../eslint.config.js';
 

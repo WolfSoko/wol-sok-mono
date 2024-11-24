@@ -5,6 +5,7 @@ import { workspaceRoot } from '@nx/devkit';
 
 import { fileURLToPath } from 'node:url';
 
+// @ts-expect-error import.meta only in ESNext but it is configured
 const __filename = fileURLToPath(import.meta.url);
 
 // For CI, you may want to set BASE_URL to the deployed application.
