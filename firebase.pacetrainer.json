@@ -6,7 +6,7 @@
   ],
   "hosting": [
     {
-      "site": "pacetrainer",
+      "site": "pacetrainer-ef5b4",
       "public": "dist/apps/pacetrainer/analog/public",
 
       "cleanUrls": true,

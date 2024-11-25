@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
+import { MatDivider } from '@angular/material/divider';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
 @Component({
-  selector: 'pacetrainer-analog-welcome',
+  selector: 'pacetrainer-title',
   standalone: true,
   styles: [
     `
@@ -19,8 +20,9 @@ import { MatToolbarModule } from '@angular/material/toolbar';
       <span role="heading" class="title mat-title-large">Pace-Trainer</span>
       <span class="mat-subtitle-2">Dein digitaler Laufcoach.</span>
     </mat-toolbar>
+    <mat-divider />
   `,
-  imports: [MatToolbarModule],
+  imports: [MatToolbarModule, MatDivider],
 })
 export class PacetrainerTitleComponent {
   count = 0;
