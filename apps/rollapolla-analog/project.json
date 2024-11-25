@@ -58,7 +58,7 @@
     "firebase": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "firebase --config=firebase.{projectName}.json --project=rollapolla-v1"
+        "command": "firebase --config=firebase.{projectName}.json --project={projectName}"
       },
       "configurations": {
         "production": {
@@ -76,8 +76,8 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "nx run rollapolla-analog:killports",
-          "nx run rollapolla-analog:firebase emulators:start --import={projectRoot}/.emulators --export-on-exit"
+          "nx run {projectName}:killports",
+          "nx run {projectName}:firebase emulators:start --import={projectRoot}/.emulators --export-on-exit"
         ],
         "parallel": false
       }
@@ -92,7 +92,7 @@
       ],
       "dependsOn": ["build"],
       "options": {
-        "command": "nx run rollapolla-analog:firebase deploy"
+        "command": "nx run {projectName}:firebase deploy"
       }
     }
   }
