@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.56.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.55.2...v4.56.0) (2024-11-25)
+
+
+### Features
+
+* ✨ simplify firebase tasks ([a0d4f08](https://github.com/WolfSoko/wol-sok-mono/commit/a0d4f083c7e2f61325022563dd76c403bae36ce8))
+
+
+### CI/CD
+
+* 👷 add pactrainer to firebaserc ([bfa5a1a](https://github.com/WolfSoko/wol-sok-mono/commit/bfa5a1a86176217ff28a0e313b1f50d468a3b4e1))
+* 👷 different parallel settings for different jobs ([4c99104](https://github.com/WolfSoko/wol-sok-mono/commit/4c99104f1d9afede2df5fca9b9c5611bd0272e3b))
+* 👷 don't stop parallel deployment if one failed ([8e8e528](https://github.com/WolfSoko/wol-sok-mono/commit/8e8e5285851362a1971e969e490ffb90d17906fe))
+
 ## [4.55.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.55.1...v4.55.2) (2024-11-25)
 
 
