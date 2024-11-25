@@ -57,7 +57,14 @@ jobs:
       #        if: github.event_name == 'pull_request'
 
       - run: npx nx-cloud record -- nx format:check
-      - run: npx nx affected -t="lint,test,build,component-test,e2e-ci" -c="ci" --parallel="3"
+      - run: |
+          # Start task in parallel
+          npx nx affected -t="lint,test,build" -c=ci --parallel="3" &
+          npx nx affected -t="component-test,e2e-ci" --parallel="1" &
+
+          # Wait for all background jobs to finish
+          wait
+
       - run: npx nx-cloud stop-all-agents
         if: ${{ always() }}
       - name: Report Codecov
