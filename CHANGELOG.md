@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.56.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.4-non-cdk-deployed...v4.56.5) (2024-11-26)
+
+
+### Chore
+
+* **deps:** update dependency axios to v1.7.8 ([d99c4ad](https://github.com/WolfSoko/wol-sok-mono/commit/d99c4ad25033f3a9b0cfdf671059209250df7062))
+
 ## [4.56.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.3-non-cdk-deployed...v4.56.4) (2024-11-26)
 
 
