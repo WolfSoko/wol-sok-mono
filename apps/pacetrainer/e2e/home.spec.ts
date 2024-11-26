@@ -10,9 +10,18 @@ test.describe('Home', () => {
     await homePage.expectSprintTrainingConfiguration();
   });
 
-  // test('can configure sprint training', ({homePage}) => {
-  //   await homePage.configureSprintTraining({repetitions: 7, sprintTime: 20, recoverTime: 90})
-  //
-  //   await homePage.expectSprintTrainingConfiguration({repetitions: 7, sprintTime: 20, recoverTime: 90})
-  // })
+  test('can configure sprint training', async ({ homePage }) => {
+    await homePage.configureSprintTraining({
+      repetitions: 7,
+      sprintTime: 20,
+      recoveryTime: 90,
+    });
+
+    await homePage.expectSprintTrainingConfiguration({
+      repetitions: 7,
+      sprintTime: 20,
+      recoveryTime: 90,
+      totalTime: 770,
+    });
+  });
 });

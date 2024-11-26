@@ -16,32 +16,35 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
   template: `
     <form [formGroup]="sprintForm" class="sprint-form">
       <mat-form-field appearance="fill">
-        <mat-label>Repetitions</mat-label>
+        <mat-label>Wiederholungen</mat-label>
         <input
           matInput
-          id="repetitions"
+          data-qa="repetitions"
           formControlName="repetitions"
           type="number"
+          placeholder="Wiederholungen"
         />
       </mat-form-field>
 
       <mat-form-field appearance="fill">
-        <mat-label>Sprint Time</mat-label>
+        <mat-label>Sprint Zeit in Sekunden</mat-label>
         <input
           matInput
-          id="sprintTime"
+          data-qa="sprintTime"
           formControlName="sprintTime"
           type="number"
+          placeholder="Sprint Zeit (s)"
         />
       </mat-form-field>
 
       <mat-form-field appearance="fill">
-        <mat-label>Recovery Time</mat-label>
+        <mat-label>Erholungszeit in Sekunden</mat-label>
         <input
           matInput
-          id="recoveryTime"
+          data-qa="recoveryTime"
           formControlName="recoveryTime"
           type="number"
+          placeholder="Erholungszeit (s)"
         />
       </mat-form-field>
     </form>

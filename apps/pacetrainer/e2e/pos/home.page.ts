@@ -1,4 +1,5 @@
 import { expect, Page } from '@playwright/test';
+import { SprintTrainingInputData } from '../../src/app/features/training-configuration/data/sprint-training-input.data';
 import { SprintTrainingData } from '../../src/app/features/training-configuration/data/sprint-training.data';
 
 export class HomePage {
@@ -52,5 +53,17 @@ export class HomePage {
     await expect(
       this.sprintTraining.getByText(`Gesamtzeit: ${totalTime}s`)
     ).toBeVisible();
+  }
+
+  async configureSprintTraining({
+    recoveryTime,
+    sprintTime,
+    repetitions,
+  }: SprintTrainingInputData) {
+    await this.sprintTraining.getByTestId('repetitions').fill('' + repetitions);
+    await this.sprintTraining.getByTestId('sprintTime').fill('' + sprintTime);
+    await this.sprintTraining
+      .getByTestId('recoveryTime')
+      .fill('' + recoveryTime);
   }
 }
