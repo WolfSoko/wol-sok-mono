@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.56.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.1-cdk-deployed...v4.56.2) (2024-11-26)
+
+
+### CI/CD
+
+* **pacetrainer:** 👷 add sprint training config ([282dd7d](https://github.com/WolfSoko/wol-sok-mono/commit/282dd7dd5462381778177664cb03fc258bd3b39f))
+
 ## [4.56.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.0-cdk-deployed...v4.56.1) (2024-11-25)
 
 
