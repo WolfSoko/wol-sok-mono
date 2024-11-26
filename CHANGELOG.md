@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.56.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.8-non-cdk-deployed...v4.56.9) (2024-11-26)
+
+
+### Chore
+
+* **deps:** update dependency prettier to v3.4.0 ([36b1815](https://github.com/WolfSoko/wol-sok-mono/commit/36b18150055f0fb6788a0b0d665cbf6917c36a0d))
+
 ## [4.56.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.7-non-cdk-deployed...v4.56.8) (2024-11-26)
 
 
