@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.56.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.6-non-cdk-deployed...v4.56.7) (2024-11-26)
+
+
+### Chore
+
+* **deps:** update dependency @angular-devkit/architect to v0.1900.2 ([df603e1](https://github.com/WolfSoko/wol-sok-mono/commit/df603e1864829e3ec047890c8a4736f436281046))
+
 ## [4.56.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.5-non-cdk-deployed...v4.56.6) (2024-11-26)
 
 
