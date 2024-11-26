@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.56.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.3-non-cdk-deployed...v4.56.4) (2024-11-26)
+
+
+### CI/CD
+
+* 👷 run all task parallel ([01165dc](https://github.com/WolfSoko/wol-sok-mono/commit/01165dc4a33f147a1e81b9120b6a5eda4663878c))
+
 ## [4.56.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.2-non-cdk-deployed...v4.56.3) (2024-11-26)
 
 
