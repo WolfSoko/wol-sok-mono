@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.56.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.11-non-cdk-deployed...v4.56.12) (2024-11-26)
+
+
+### Chore
+
+* **deps:** update vitest monorepo to v2.1.6 ([5cedc7a](https://github.com/WolfSoko/wol-sok-mono/commit/5cedc7a040dffc7115cf5f6d3462c585960f34aa))
+
 ## [4.56.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.10-non-cdk-deployed...v4.56.11) (2024-11-26)
 
 
