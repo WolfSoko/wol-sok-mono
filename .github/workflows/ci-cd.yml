@@ -59,8 +59,11 @@ jobs:
       - run: npx nx-cloud record -- nx format:check
       - run: |
           # Start task in parallel
-          npx nx affected -t="lint,test,build" -c=ci --parallel="3" &
-          npx nx affected -t="component-test,e2e-ci" --parallel="1" &
+          npx nx affected -t=lint -c=ci --parallel=3 &
+          npx nx affected -t=test -c=ci --parallel=3 &
+          npx nx affected -t=build -c=ci --parallel=3 &
+          npx nx affected -t="component-test" --parallel=1 &
+          npx nx affected -t=e2e-ci --parallel=1 &
 
           # Wait for all background jobs to finish
           wait
