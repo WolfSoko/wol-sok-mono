@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.56.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.2-non-cdk-deployed...v4.56.3) (2024-11-26)
+
+
+### CI/CD
+
+* 👷 release all apps to sentry ([95beba1](https://github.com/WolfSoko/wol-sok-mono/commit/95beba1c6910caf3e444146828af2c7bfe3f3ab1))
+
+
+### Chore
+
+* **deps:** update typescript-eslint monorepo to v8.16.0 ([129ebe2](https://github.com/WolfSoko/wol-sok-mono/commit/129ebe21dd7cd8d33bdaeb9ab7a2b0d87689e9fc))
+
 ## [4.56.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.1-cdk-deployed...v4.56.2) (2024-11-26)
 
 
