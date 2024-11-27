@@ -56,7 +56,7 @@ jobs:
       #      - run: git branch --track main origin/main
       #        if: github.event_name == 'pull_request'
 
-      # - run: npx nx-cloud record -- nx format:check
+      - run: npx nx format:check
       - run: |
           # Start task in parallel
           npx nx affected -t=lint -c=ci --parallel=3 &
