@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.58.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.58.1-non-cdk-deployed...v4.58.2) (2024-11-27)
+
+
+### Testing
+
+* **pacetrainer:** 🚨 split tests ([d9f18d5](https://github.com/WolfSoko/wol-sok-mono/commit/d9f18d522255ec66f4c982adefc99344c04cafbf))
+
 ## [4.58.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.58.0-non-cdk-deployed...v4.58.1) (2024-11-27)
 
 
