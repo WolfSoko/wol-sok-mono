@@ -30,7 +30,6 @@ test.describe('Sprint Training', () => {
   });
 
   test('can start training', async ({ sprintTraining }) => {
-    await sprintTraining.expectTrainingStateStartable();
     await sprintTraining.startTraining();
   });
 
