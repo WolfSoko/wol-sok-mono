@@ -1,22 +1,26 @@
-import { expect, Page } from '@playwright/test';
+import { expect, Locator, Page } from '@playwright/test';
 import { SprintTrainingInputData } from '../../src/app/features/training-configuration/data/sprint-training-input.data';
 import { SprintTrainingData } from '../../src/app/features/training-configuration/data/sprint-training.data';
 
 export class SprintTrainingPage {
   readonly page: Page;
 
-  readonly sprintTraining;
+  readonly sprintTraining: Locator;
+  readonly toggleTrainingCta: Locator;
+  readonly stopTrainingCta: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.sprintTraining = page.getByTestId('sprint-training');
+    this.toggleTrainingCta = this.sprintTraining.getByTestId('toggle-training');
+    this.stopTrainingCta = this.sprintTraining.getByTestId('stop-training');
   }
 
-  async goto() {
+  async goto(): Promise<void> {
     await this.page.goto('/');
   }
 
-  async expectTitleVisible() {
+  async expectTitleVisible(): Promise<void> {
     await expect(
       this.sprintTraining.getByText('Sprint Training')
     ).toBeVisible();
@@ -29,7 +33,7 @@ export class SprintTrainingPage {
       sprintTime: 10,
       totalTime: 280,
     }
-  ) {
+  ): Promise<void> {
     await expect(
       this.sprintTraining.getByText(`${repetitions} Wiederholungen`)
     ).toBeVisible();
@@ -48,7 +52,7 @@ export class SprintTrainingPage {
     recoveryTime,
     sprintTime,
     repetitions,
-  }: SprintTrainingInputData) {
+  }: SprintTrainingInputData): Promise<void> {
     await this.sprintTraining.getByTestId('repetitions').fill('' + repetitions);
     await this.sprintTraining.getByTestId('sprintTime').fill('' + sprintTime);
     await this.sprintTraining
@@ -56,13 +60,48 @@ export class SprintTrainingPage {
       .fill('' + recoveryTime);
   }
 
-  async startTraining() {
-    await expect(
-      this.sprintTraining.getByTestId('toggle-training')
-    ).toContainText('Go Go Go');
-    await this.sprintTraining.getByTestId('toggle-training').tap();
-    await expect(
-      this.sprintTraining.getByTestId('toggle-training')
-    ).toContainText('Pausieren');
+  async startTraining(): Promise<void> {
+    await this.expectTrainingStateStartable();
+    await this.toggleTrainingCta.click();
+    await expect(this.toggleTrainingCta).toContainText('Pausieren');
+  }
+
+  async expectTrainingStateStartable(): Promise<void> {
+    await expect(this.toggleTrainingCta).toContainText('Go Go Go');
+    await this.stopTrainingCta.isDisabled();
+  }
+
+  async expectTrainingStateStoppable(): Promise<void> {
+    await this.stopTrainingCta.isEnabled();
+    await expect(this.stopTrainingCta).toContainText('Training beenden');
+  }
+
+  async expectTrainingStateNotStoppable(): Promise<void> {
+    await this.stopTrainingCta.isDisabled();
+  }
+
+  async expectTrainingStateResumable(): Promise<void> {
+    await expect(this.toggleTrainingCta).toContainText('Weiter');
+  }
+
+  async stopTraining(): Promise<void> {
+    await this.expectTrainingStateStoppable();
+    await this.stopTrainingCta.click();
+    await this.expectTrainingStateStartable();
+  }
+
+  async pauseTraining(): Promise<void> {
+    await this.expectTrainingStatePausable();
+    await this.toggleTrainingCta.click();
+    await this.expectTrainingStateResumable();
+  }
+
+  async expectTrainingStatePausable(): Promise<void> {
+    await expect(this.toggleTrainingCta).toContainText('Pausieren');
+  }
+
+  async resumeTraining(): Promise<void> {
+    await this.expectTrainingStateResumable();
+    await this.toggleTrainingCta.click();
   }
 }

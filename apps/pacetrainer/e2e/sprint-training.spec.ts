@@ -3,6 +3,8 @@ import { test } from './fixtures/sprint-training.fixture';
 test.describe('Sprint Training', () => {
   test('has sprint training', async ({ sprintTraining }) => {
     await sprintTraining.expectTitleVisible();
+    await sprintTraining.expectTrainingStateStartable();
+    await sprintTraining.expectTrainingStateStoppable();
     await sprintTraining.expectSprintTrainingConfiguration();
   });
 
@@ -24,12 +26,22 @@ test.describe('Sprint Training', () => {
   test('can not stop training when training is not started', async ({
     sprintTraining,
   }) => {
-    await sprintTraining.sprintTraining
-      .getByTestId('stop-training')
-      .isDisabled();
+    await sprintTraining.expectTrainingStateNotStoppable();
   });
 
   test('can start training', async ({ sprintTraining }) => {
+    await sprintTraining.expectTrainingStateStartable();
     await sprintTraining.startTraining();
+  });
+
+  test('can stop training', async ({ sprintTraining }) => {
+    await sprintTraining.startTraining();
+    await sprintTraining.stopTraining();
+  });
+
+  test('can pause and resume training', async ({ sprintTraining }) => {
+    await sprintTraining.startTraining();
+    await sprintTraining.pauseTraining();
+    await sprintTraining.resumeTraining();
   });
 });
