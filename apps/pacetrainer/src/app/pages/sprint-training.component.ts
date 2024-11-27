@@ -20,7 +20,11 @@ import { SprintTrainingRunnerService } from '../features/training-runner/sprint-
       </div>
     </mat-card-content>
     <mat-card-actions class="ctas">
-      <button mat-raised-button (click)="toggleTraining()">
+      <button
+        mat-raised-button
+        (click)="toggleTraining()"
+        data-qa="toggle-training"
+      >
         @switch (trainingState()) {
           @case ('stopped') {
             Go Go Go
@@ -37,6 +41,7 @@ import { SprintTrainingRunnerService } from '../features/training-runner/sprint-
         mat-raised-button
         [disabled]="trainingState() === 'stopped'"
         (click)="endTraining()"
+        data-qa="stop-training"
       >
         Training beenden
       </button>
@@ -46,11 +51,11 @@ import { SprintTrainingRunnerService } from '../features/training-runner/sprint-
     trigger('myInsertRemoveTrigger', [
       transition(':enter', [
         style({ opacity: 0, height: 0 }),
-        animate('500ms ease-out', style({ opacity: 1, height: 100 })),
+        animate('100ms ease-out', style({ opacity: 1, height: 100 })),
       ]),
       transition(':leave', [
         style({ opacity: 1, height: 100 }),
-        animate('500ms ease-in', style({ opacity: 0, height: 0 })),
+        animate('100ms ease-in', style({ opacity: 0, height: 0 })),
       ]),
     ]),
   ],

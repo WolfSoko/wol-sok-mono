@@ -1,4 +1,4 @@
-import { test } from './fixtures/home-page-hydrated.fixture';
+import { test, expect } from './fixtures/home-page-hydrated.fixture';
 
 test.describe('Home', () => {
   test('has title', async ({ homePage }) => {
@@ -23,5 +23,15 @@ test.describe('Home', () => {
       recoveryTime: 90,
       totalTime: 770,
     });
+  });
+
+  test('can not stop training when training is not started', async ({
+    homePage,
+  }) => {
+    await homePage.sprintTraining.getByTestId('stop-training').isDisabled();
+  });
+
+  test('can start training', async ({ homePage }) => {
+    await homePage.startTraining();
   });
 });

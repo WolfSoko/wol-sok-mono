@@ -66,4 +66,14 @@ export class HomePage {
       .getByTestId('recoveryTime')
       .fill('' + recoveryTime);
   }
+
+  async startTraining() {
+    await expect(
+      this.sprintTraining.getByTestId('toggle-training')
+    ).toContainText('Go Go Go');
+    await this.sprintTraining.getByTestId('toggle-training').tap();
+    await expect(
+      this.sprintTraining.getByTestId('toggle-training')
+    ).toContainText('Pausieren');
+  }
 }
