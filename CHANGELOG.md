@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.58.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.58.2-non-cdk-deployed...v4.58.3) (2024-11-27)
+
+
+### CI/CD
+
+* 👷 add --verbose to nx format:check ([b6e9925](https://github.com/WolfSoko/wol-sok-mono/commit/b6e9925787c295b3c684b6b2bbdf1ad75f641bba))
+* 👷 comment out nx format:check ([bec87ff](https://github.com/WolfSoko/wol-sok-mono/commit/bec87ff04991c73c0f8e08fdf7f8d87ac994c881))
+* 👷 nx format:check without cloud-record ([f016c60](https://github.com/WolfSoko/wol-sok-mono/commit/f016c60756321865e9eca056a1cb811b49a026a6))
+
+
+### Testing
+
+* **pacetrainer:** 🚨 tests states of start stop pause training ([d6c57e5](https://github.com/WolfSoko/wol-sok-mono/commit/d6c57e5e2b3d7dcaf0ecc522054ff66af9519e70))
+* **pacetrainer:** 🚨 tests states of start stop pause training ([fc03644](https://github.com/WolfSoko/wol-sok-mono/commit/fc0364474e0557f7fec30a2570d1c4ba863dbd94))
+
 ## [4.58.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.58.1-non-cdk-deployed...v4.58.2) (2024-11-27)
 
 
