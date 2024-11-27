@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.58.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.57.0-non-cdk-deployed...v4.58.0) (2024-11-27)
+
+
+### Features
+
+* **pacetrainer:** ✨ added ctas ([a23c035](https://github.com/WolfSoko/wol-sok-mono/commit/a23c03581f8d3938453747bcc90eb81f834de5cd))
+
 ## [4.57.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.13-non-cdk-deployed...v4.57.0) (2024-11-26)
 
 
