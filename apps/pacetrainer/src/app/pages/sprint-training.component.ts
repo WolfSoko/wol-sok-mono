@@ -1,7 +1,10 @@
-import { Component } from '@angular/core';
+import { animate, style, transition, trigger } from '@angular/animations';
+import { Component, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { ShowSprintTrainingComponent } from '../features/training-configuration/show-sprint-training.component';
 import { SprintFormComponent } from '../features/training-configuration/sprint-training-form.component';
+import { SprintTrainingRunnerService } from '../features/training-runner/sprint-training-runner.service';
 
 @Component({
   standalone: true,
@@ -10,12 +13,52 @@ import { SprintFormComponent } from '../features/training-configuration/sprint-t
     <mat-card-header>Sprint Training</mat-card-header>
     <mat-card-content>
       <div class="configurator">
-        <pacetrainer-sprint-form />
+        @if (trainingState() === 'stopped') {
+          <pacetrainer-sprint-form @myInsertRemoveTrigger />
+        }
         <pacetrainer-show-sprint-training />
       </div>
     </mat-card-content>
+    <mat-card-actions class="ctas">
+      <button mat-raised-button (click)="toggleTraining()">
+        @switch (trainingState()) {
+          @case ('stopped') {
+            Go Go Go
+          }
+          @case ('paused') {
+            Weiter
+          }
+          @default {
+            Pausieren
+          }
+        }
+      </button>
+      <button
+        mat-raised-button
+        [disabled]="trainingState() === 'stopped'"
+        (click)="endTraining()"
+      >
+        Training beenden
+      </button>
+    </mat-card-actions>
   </mat-card>`,
+  animations: [
+    trigger('myInsertRemoveTrigger', [
+      transition(':enter', [
+        style({ opacity: 0, height: 0 }),
+        animate('500ms ease-out', style({ opacity: 1, height: 100 })),
+      ]),
+      transition(':leave', [
+        style({ opacity: 1, height: 100 }),
+        animate('500ms ease-in', style({ opacity: 0, height: 0 })),
+      ]),
+    ]),
+  ],
   styles: `
+    .ctas {
+      justify-content: center;
+      gap: 1rem;
+    }
     .configurator {
       padding: 1rem;
       display: flex;
@@ -24,6 +67,25 @@ import { SprintFormComponent } from '../features/training-configuration/sprint-t
       gap: 1rem;
     }
   `,
-  imports: [MatCardModule, ShowSprintTrainingComponent, SprintFormComponent],
+  imports: [
+    MatCardModule,
+    ShowSprintTrainingComponent,
+    SprintFormComponent,
+    MatButtonModule,
+  ],
 })
-export class SprintTrainingComponent {}
+export class SprintTrainingComponent {
+  private readonly sprintTrainingRunnerService = inject(
+    SprintTrainingRunnerService
+  );
+
+  trainingState = this.sprintTrainingRunnerService.trainingState;
+
+  toggleTraining(): void {
+    this.sprintTrainingRunnerService.toggleTraining();
+  }
+
+  endTraining(): void {
+    this.sprintTrainingRunnerService.endTraining();
+  }
+}
