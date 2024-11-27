@@ -220,7 +220,7 @@
     "ts-jest": "29.2.5",
     "ts-node": "10.9.2",
     "ts-shader-loader": "2.0.2",
-    "typescript": "5.7.2",
+    "typescript": "5.5.4",
     "typescript-eslint": "8.16.0",
     "vite": "5.4.11",
     "vite-tsconfig-paths": "5.1.3",
