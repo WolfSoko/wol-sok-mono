@@ -33,7 +33,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npx nx serve pacetrainer',
-    url: 'http://localhost:4200',
+    url: 'http://localhost:4301',
     reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,
     timeout: (process.env['CI'] ? 360 : 120) * 1000,

@@ -5,6 +5,7 @@ import { workspaceRoot } from '@nx/devkit';
 
 import { fileURLToPath } from 'node:url';
 
+// @ts-expect-error somehow the import.meta is not recognized
 const __filename = fileURLToPath(import.meta.url);
 
 // For CI, you may want to set BASE_URL to the deployed application.
@@ -31,10 +32,10 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npx nx serve rollapolla-analog',
-    url: 'http://localhost:4200',
-    reuseExistingServer: !process.env.CI,
+    url: 'http://localhost:4300',
+    reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,
-    timeout: (process.env.CI ? 360 : 120) * 1000,
+    timeout: (process.env['CI'] ? 360 : 120) * 1000,
   },
   projects: [
     {
