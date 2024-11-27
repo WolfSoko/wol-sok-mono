@@ -35,7 +35,7 @@
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "rollapolla-analog:build",
-        "port": 4200
+        "port": 4300
       },
       "configurations": {
         "development": {
