@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.60.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.60.0-non-cdk-deployed...v4.60.1) (2024-11-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency mermaid to v11.4.1 ([81a62f4](https://github.com/WolfSoko/wol-sok-mono/commit/81a62f4f74774288185d99347a0ec5a72a0510ac))
+
 ## [4.60.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.59.0-non-cdk-deployed...v4.60.0) (2024-11-28)
 
 
