@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { DatePipe } from '@angular/common';
 import {
   Component,
@@ -9,7 +10,6 @@ import {
   input,
   OnInit,
   Output,
-  output,
   runInInjectionContext,
   Signal,
 } from '@angular/core';
@@ -22,12 +22,11 @@ import {
   animationFrameScheduler,
   interval,
   NEVER,
-  Subject,
   switchMap,
   takeUntil,
   tap,
 } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 const FULL_DASHARRAY = 283;
 
@@ -172,7 +171,6 @@ export class CountDownCircleComponent implements OnInit {
       });
 
       effect(() => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         if (this.timeLeft!() <= 0) {
           this.onComplete.emit();
         }
