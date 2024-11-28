@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.60.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.60.5-non-cdk-deployed...v4.60.6) (2024-11-28)
+
+
+### Refactorings
+
+* **pacetrainer:** ♻️ simplify e2e tests ([b31b488](https://github.com/WolfSoko/wol-sok-mono/commit/b31b488cf5bbb922c949f21de698cfa9218033ec))
+
 ## [4.60.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.60.4-non-cdk-deployed...v4.60.5) (2024-11-28)
 
 
