@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.60.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.60.2-non-cdk-deployed...v4.60.3) (2024-11-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency p5 to v1.11.2 ([6a1e3af](https://github.com/WolfSoko/wol-sok-mono/commit/6a1e3af44ba6b6130f5a6fe9a60188374e7ae1c4))
+
+
+### Chore
+
+* **deps:** update dependency @ngneat/spectator to v19.1.0 ([43b0cf4](https://github.com/WolfSoko/wol-sok-mono/commit/43b0cf4aaaeb95f3c0322fa55754cd727b285c46))
+* **deps:** update dependency @types/jasmine to v5.1.5 ([9f53345](https://github.com/WolfSoko/wol-sok-mono/commit/9f53345c13ba862d67f316cf8de28112e874e192))
+* **deps:** update dependency jest-preset-angular to v14.4.1 ([7ef2298](https://github.com/WolfSoko/wol-sok-mono/commit/7ef229884da74dedf879c998e91199155a690d1a))
+
 ## [4.60.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.60.1-non-cdk-deployed...v4.60.2) (2024-11-28)
 
 
