@@ -3,17 +3,31 @@ import {
   Component,
   computed,
   effect,
+  EventEmitter,
   inject,
   Injector,
   input,
   OnInit,
+  Output,
   output,
   runInInjectionContext,
   Signal,
 } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { animationFrameScheduler, interval } from 'rxjs';
-import { map } from 'rxjs/operators';
+import {
+  takeUntilDestroyed,
+  toObservable,
+  toSignal,
+} from '@angular/core/rxjs-interop';
+import {
+  animationFrameScheduler,
+  interval,
+  NEVER,
+  Subject,
+  switchMap,
+  takeUntil,
+  tap,
+} from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 
 const FULL_DASHARRAY = 283;
 
@@ -46,7 +60,7 @@ const FULL_DASHARRAY = 283;
         </g>
       </svg>
       <span class="time">
-        <span>{{ timeLeft?.() | date: 'H:mm:ss' }}</span>
+        {{ timeLeft?.() | date: timeLeftFormat!() : 'UTC' }}
       </span>
     </div>
   `,
@@ -70,11 +84,8 @@ const FULL_DASHARRAY = 283;
           }
 
           &-completed {
-            // stroke-width: 2px;
-            // stroke: #88b462;
-
+            stroke: #88b462;
             stroke-width: 1px;
-            stroke: grey;
           }
 
           .time {
@@ -96,7 +107,7 @@ const FULL_DASHARRAY = 283;
             stroke-width: 2px;
             transform: rotate(90deg);
             transform-origin: center;
-            transition: 1s linear all;
+            transition: 100ms ease-in all;
             stroke: #1cbbf8;
           }
 
@@ -114,34 +125,56 @@ export class CountDownCircleComponent implements OnInit {
 
   duration = input.required<number>(); // milliseconds
 
-  timeRun = input(0); // milliseconds
   paused = input(false);
 
-  onComplete = output<boolean>();
+  @Output() onComplete = new EventEmitter<void>();
 
   private timer?: Signal<number>;
   timeLeft?: Signal<number>;
+  timeLeftFormat?: Signal<string>;
 
   ngOnInit() {
     runInInjectionContext(this.injector, () => {
-      const intervalTime = 1000;
+      const intervalPeriod = 1000;
+      let timerState = 0;
       this.timer = toSignal(
-        interval(intervalTime, animationFrameScheduler).pipe(
-          map((i) => i * intervalTime),
-          takeUntilDestroyed()
+        toObservable(this.paused).pipe(
+          switchMap((paused) =>
+            paused ? NEVER : interval(intervalPeriod, animationFrameScheduler)
+          ),
+          tap(() => (timerState += intervalPeriod)),
+          map(() => timerState),
+          takeUntilDestroyed(),
+          takeUntil(this.onComplete)
         ),
         { initialValue: 0 }
       );
 
       this.timeLeft = computed(
-        () => this.duration() - this.timeRun() - this.timer!(),
+        () => Math.max(this.duration() - this.timer!(), 0),
         {
           equal: (a, b) => a === b || this.paused(),
         }
       );
+      /**
+       * formats the timeLeft (milliseconds) in the format HH'h':mm'm':ss's'
+       * shows only what is necessary
+       */
+      this.timeLeftFormat = computed(() => {
+        const timeLeft = this.timeLeft?.() ?? 0;
+        if (timeLeft >= 3600000) {
+          return 'H:mm:ss';
+        }
+        if (timeLeft > 60000) {
+          return 'm:ss';
+        }
+        return 's';
+      });
+
       effect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         if (this.timeLeft!() <= 0) {
-          this.onComplete.emit(true);
+          this.onComplete.emit();
         }
       });
     });
