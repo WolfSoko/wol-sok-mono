@@ -106,7 +106,7 @@ const FULL_DASHARRAY = 283;
             stroke-width: 2px;
             transform: rotate(90deg);
             transform-origin: center;
-            transition: 100ms ease-in all;
+            transition: 300ms ease-in all;
             stroke: #1cbbf8;
           }
 

@@ -3,7 +3,7 @@ import { test } from './fixtures/sprint-training.fixture';
 test.describe(' Run Sprint Training', () => {
   test('hide config after starting training', async ({ sprintTraining }) => {
     await sprintTraining.startTraining();
-    await sprintTraining.expectSprintTrainingConfiguration(false);
+    await sprintTraining.expectSprintTrainingConfigurationNotVisible();
   });
 
   test('show config after stopping training', async ({ sprintTraining }) => {

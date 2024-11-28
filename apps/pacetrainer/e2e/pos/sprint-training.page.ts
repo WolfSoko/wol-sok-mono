@@ -28,8 +28,13 @@ export class SprintTrainingPage {
     ).toBeVisible();
   }
 
+  async expectSprintTrainingConfigurationNotVisible(): Promise<void> {
+    await expect(
+      this.sprintTraining.getByTestId('sprint-form')
+    ).not.toBeVisible();
+  }
+
   async expectSprintTrainingConfiguration(
-    visible = true,
     { repetitions, sprintTime, recoveryTime, totalTime }: SprintTrainingData = {
       repetitions: 4,
       recoveryTime: 60,
@@ -37,13 +42,6 @@ export class SprintTrainingPage {
       totalTime: 280,
     }
   ): Promise<void> {
-    if (!visible) {
-      await expect(
-        this.sprintTraining.getByTestId('sprint-form')
-      ).not.toBeVisible();
-      return;
-    }
-
     await expect(
       this.sprintTraining.getByText(`${repetitions} Wiederholungen`)
     ).toBeVisible();
