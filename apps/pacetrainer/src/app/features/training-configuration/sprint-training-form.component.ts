@@ -27,13 +27,13 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
       </mat-form-field>
 
       <mat-form-field appearance="fill">
-        <mat-label>Sprint Zeit in Sekunden</mat-label>
+        <mat-label>Sprintzeit in Sekunden</mat-label>
         <input
           matInput
           data-qa="sprintTime"
           formControlName="sprintTime"
           type="number"
-          placeholder="Sprint Zeit (s)"
+          placeholder="Sprintzeit (s)"
         />
       </mat-form-field>
 

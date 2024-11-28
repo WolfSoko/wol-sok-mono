@@ -15,6 +15,8 @@ export class HomePage {
   }
 
   async expectTitleVisible() {
+    // check html title
+    expect(await this.page.title()).toBe('Pace-Trainer');
     await expect(
       this.page.getByRole('heading', {
         name: 'Pace-Trainer',
