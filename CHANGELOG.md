@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.59.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.58.5-non-cdk-deployed...v4.59.0) (2024-11-28)
+
+
+### Features
+
+* ✨ added countdown timer to sprint training ([a2258c0](https://github.com/WolfSoko/wol-sok-mono/commit/a2258c089402a452662915cdcb6ff25cb60690e9))
+
 ## [4.58.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.58.4-non-cdk-deployed...v4.58.5) (2024-11-28)
 
 
