@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.60.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.59.0-non-cdk-deployed...v4.60.0) (2024-11-28)
+
+
+### Features
+
+* ✨ pausable countdown ([ee67430](https://github.com/WolfSoko/wol-sok-mono/commit/ee674308ad54df50ed5d3ed18029b09f1e8e4b8e))
+
+
+### Code style
+
+* 🎨 suppress forbidden non null assertion ([6c64662](https://github.com/WolfSoko/wol-sok-mono/commit/6c64662ec69e8eaeec5ec223b62aa466edafaa19))
+
 ## [4.59.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.58.5-non-cdk-deployed...v4.59.0) (2024-11-28)
 
 
