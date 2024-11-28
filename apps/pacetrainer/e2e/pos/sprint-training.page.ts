@@ -8,12 +8,14 @@ export class SprintTrainingPage {
   readonly sprintTraining: Locator;
   readonly toggleTrainingCta: Locator;
   readonly stopTrainingCta: Locator;
+  private countdownTimer: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.sprintTraining = page.getByTestId('sprint-training');
     this.toggleTrainingCta = this.sprintTraining.getByTestId('toggle-training');
     this.stopTrainingCta = this.sprintTraining.getByTestId('stop-training');
+    this.countdownTimer = this.sprintTraining.getByTestId('countdown-timer');
   }
 
   async goto(): Promise<void> {
@@ -27,6 +29,7 @@ export class SprintTrainingPage {
   }
 
   async expectSprintTrainingConfiguration(
+    visible = true,
     { repetitions, sprintTime, recoveryTime, totalTime }: SprintTrainingData = {
       repetitions: 4,
       recoveryTime: 60,
@@ -34,6 +37,13 @@ export class SprintTrainingPage {
       totalTime: 280,
     }
   ): Promise<void> {
+    if (!visible) {
+      await expect(
+        this.sprintTraining.getByTestId('sprint-form')
+      ).not.toBeVisible();
+      return;
+    }
+
     await expect(
       this.sprintTraining.getByText(`${repetitions} Wiederholungen`)
     ).toBeVisible();
@@ -103,5 +113,11 @@ export class SprintTrainingPage {
   async resumeTraining(): Promise<void> {
     await this.expectTrainingStateResumable();
     await this.toggleTrainingCta.click();
+  }
+
+  async expectCountdownTimer(number: number): Promise<void> {
+    for (let i = number; i > 0; i--) {
+      await expect(this.countdownTimer).toBeVisible();
+    }
   }
 }

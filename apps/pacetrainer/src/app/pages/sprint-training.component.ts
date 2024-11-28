@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { ShowSprintTrainingComponent } from '../features/training-configuration/show-sprint-training.component';
 import { SprintFormComponent } from '../features/training-configuration/sprint-training-form.component';
 import { SprintTrainingRunnerService } from '../features/training-runner/sprint-training-runner.service';
+import { CountDownCircleComponent } from '../shared/count-down-circle.component';
 
 @Component({
   standalone: true,
@@ -13,6 +14,13 @@ import { SprintTrainingRunnerService } from '../features/training-runner/sprint-
     <mat-card-header>Sprint Training</mat-card-header>
     <mat-card-content>
       <div class="configurator">
+        @if (trainingState() !== 'stopped') {
+          <pacetrainer-countdown-circle
+            @myInsertRemoveTrigger
+            [duration]="5000"
+            [paused]="trainingState() === 'paused'"
+          />
+        }
         @if (trainingState() === 'stopped') {
           <pacetrainer-sprint-form @myInsertRemoveTrigger />
         }
@@ -77,6 +85,7 @@ import { SprintTrainingRunnerService } from '../features/training-runner/sprint-
     ShowSprintTrainingComponent,
     SprintFormComponent,
     MatButtonModule,
+    CountDownCircleComponent,
   ],
 })
 export class SprintTrainingComponent {

@@ -14,7 +14,7 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
   standalone: true,
   selector: 'pacetrainer-sprint-form',
   template: `
-    <form [formGroup]="sprintForm" class="sprint-form">
+    <form [formGroup]="sprintForm" class="sprint-form" data-qa="sprint-form">
       <mat-form-field appearance="fill">
         <mat-label>Wiederholungen</mat-label>
         <input
