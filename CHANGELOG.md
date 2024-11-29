@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.61.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.60.6-non-cdk-deployed...v4.61.0) (2024-11-29)
+
+
+### Features
+
+* **pacetrainer:** ✨ add favicons ([ba4edaa](https://github.com/WolfSoko/wol-sok-mono/commit/ba4edaa72bcf3d8913f0653d000f0a7d7e28694f))
+
 ## [4.60.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.60.5-non-cdk-deployed...v4.60.6) (2024-11-28)
 
 
