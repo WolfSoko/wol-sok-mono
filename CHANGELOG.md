@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.62.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.61.5-non-cdk-deployed...v4.62.0) (2024-11-29)
+
+
+### Features
+
+* ✨ better overview of sprint training config ([1036878](https://github.com/WolfSoko/wol-sok-mono/commit/10368785f683181fcd74d533a12e21126866098d))
+
+
+### Chore
+
+* **deps:** update nx monorepo to v18.4.3 ([7d266ca](https://github.com/WolfSoko/wol-sok-mono/commit/7d266ca305331c3a937ca7f5999739968c1ab6b5))
+
 ## [4.61.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.61.4-non-cdk-deployed...v4.61.5) (2024-11-29)
 
 
