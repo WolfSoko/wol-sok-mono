@@ -216,7 +216,7 @@
     "postcss-url": "10.1.3",
     "prettier": "3.4.1",
     "rollup": "4.27.4",
-    "storybook": "8.4.5",
+    "storybook": "8.4.6",
     "ts-jest": "29.2.5",
     "ts-node": "10.9.2",
     "ts-shader-loader": "2.0.2",
