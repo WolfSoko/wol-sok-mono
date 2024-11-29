@@ -68,7 +68,6 @@ export class SprintTrainingDataService {
     sprintTime,
     recoveryTime,
   }: Partial<SprintTrainingInputData>): void {
-    console.log(typeof repetitions, typeof sprintTime, typeof recoveryTime);
     if (repetitions) {
       this.repetitions.set(repetitions);
     }
