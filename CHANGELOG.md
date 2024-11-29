@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.61.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.61.2-non-cdk-deployed...v4.61.3) (2024-11-29)
+
+
+### Performance
+
+* **pacetrainer:** ⚡️ remove zone.js for browser ([bb04333](https://github.com/WolfSoko/wol-sok-mono/commit/bb04333b1f6fd3c78140b8616ab5eeac17e98e54))
+
+
+### Testing
+
+* **pacetrainer:** 🚨 add test for data service ([b32311e](https://github.com/WolfSoko/wol-sok-mono/commit/b32311e315b706d14575fa8763c9082f92ef4ba0))
+
 ## [4.61.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.61.1-non-cdk-deployed...v4.61.2) (2024-11-29)
 
 
