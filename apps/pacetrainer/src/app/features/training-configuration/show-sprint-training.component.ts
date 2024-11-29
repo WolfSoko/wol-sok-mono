@@ -5,10 +5,13 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
   standalone: true,
   selector: 'pacetrainer-show-sprint-training',
   template: `
-    <div>{{ data().sprintTime }}s - Sprint</div>
-    <div>{{ data().recoveryTime }}s - Gehen/Stehen</div>
-    <div>{{ data().repetitions }} Wiederholungen</div>
-    <div>Gesamtzeit: {{ data().totalTime }}s</div>
+    <div class="mat-headline-small">Übersicht:</div>
+    <div class="mat-body-medium">
+      <div>{{ data().repetitions }} Wiederholungen</div>
+      <div>{{ data().sprintTime }}s - Sprint</div>
+      <div>{{ data().recoveryTime }}s - Gehen/Stehen</div>
+    </div>
+    <div class="mat-body-strong">Gesamtzeit: {{ data().totalTime }}s</div>
   `,
   styles: [``],
   imports: [],

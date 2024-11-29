@@ -30,9 +30,4 @@ import { RouterLink } from '@angular/router';
   `,
   imports: [MatToolbarModule, MatDivider, RouterLink],
 })
-export class PacetrainerTitleComponent {
-  count = 0;
-  increment() {
-    this.count++;
-  }
-}
+export class PacetrainerTitleComponent {}

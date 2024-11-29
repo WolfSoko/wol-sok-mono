@@ -175,6 +175,11 @@ export class CountDownCircleComponent implements OnInit {
           this.onComplete.emit();
         }
       });
+      effect(() => {
+        // call to make sure the timer is reseted when the duration changes
+        this.duration();
+        timerState = 0;
+      });
     });
   }
 
