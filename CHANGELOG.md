@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.62.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.0-non-cdk-deployed...v4.62.1) (2024-11-29)
+
+
+### Chore
+
+* **deps:** update storybook monorepo to v8.4.6 ([22593f6](https://github.com/WolfSoko/wol-sok-mono/commit/22593f6191c2569208dcb497db91092fa64a0876))
+
 ## [4.62.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.61.5-non-cdk-deployed...v4.62.0) (2024-11-29)
 
 
