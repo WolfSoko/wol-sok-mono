@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.62.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.2-non-cdk-deployed...v4.62.3) (2024-11-30)
+
+
+### Chore
+
+* **deps:** update eslint monorepo to ~9.16.0 ([81ca491](https://github.com/WolfSoko/wol-sok-mono/commit/81ca49110ccac351f2e46b58ea3643d51d0263ac))
+
 ## [4.62.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.1-non-cdk-deployed...v4.62.2) (2024-11-29)
 
 
