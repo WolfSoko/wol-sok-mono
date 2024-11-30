@@ -177,6 +177,7 @@ export class CountDownCircleComponent implements OnInit {
       });
       effect(() => {
         // call to make sure the timer is reseted when the duration changes
+        // TODO: replace with linked signal when available
         this.duration();
         timerState = 0;
       });
