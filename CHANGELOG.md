@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.62.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.12-non-cdk-deployed...v4.62.13) (2024-12-02)
+
+
+### Chore
+
+* **deps:** update dependency jasmine-core to v5.5.0 ([8552862](https://github.com/WolfSoko/wol-sok-mono/commit/8552862471d389da97e9bab739813d92fc1d43da))
+
 ## [4.62.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.11-non-cdk-deployed...v4.62.12) (2024-12-02)
 
 
