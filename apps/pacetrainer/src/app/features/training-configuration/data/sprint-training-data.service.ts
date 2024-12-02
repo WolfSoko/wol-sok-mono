@@ -1,12 +1,6 @@
-import { isPlatformBrowser } from '@angular/common';
-import {
-  computed,
-  effect,
-  inject,
-  Injectable,
-  PLATFORM_ID,
-  signal,
-} from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
+import { Seconds } from '../../../shared/model/constants/time-utils';
+import { RepositoryFactory } from '../../../shared/repository.factory';
 import { SprintTrainingInputData } from './sprint-training-input.data';
 import { SprintTrainingData } from './sprint-training.data';
 
@@ -14,16 +8,19 @@ import { SprintTrainingData } from './sprint-training.data';
   providedIn: 'root',
 })
 export class SprintTrainingDataService {
-  private readonly localStorageKey = 'sprintTrainingData';
+  private readonly repositoryService = inject(
+    RepositoryFactory
+  ).create<SprintTrainingInputData>('sprint-training-data');
 
   // Define signals for the state
-  repetitions = signal<number>(4);
-  sprintTime = signal<number>(10);
-  recoveryTime = signal<number>(60);
+  repetitions = signal(4);
+  sprintTime = signal(10 as Seconds);
+  recoveryTime = signal(60 as Seconds);
   totalTime = computed(
-    () => this.repetitions() * (this.sprintTime() + this.recoveryTime())
+    () =>
+      (this.repetitions() *
+        (this.sprintTime() + this.recoveryTime())) as Seconds
   );
-
   data = computed<SprintTrainingData>(() => ({
     repetitions: this.repetitions(),
     sprintTime: this.sprintTime(),
@@ -31,35 +28,26 @@ export class SprintTrainingDataService {
     totalTime: this.totalTime(),
   }));
 
-  private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-
   constructor() {
-    this.loadFromLocalStorage();
-    effect(() => this.saveToLocalStorage());
+    this.loadFromRepository();
+    effect(() => this.saveToRepository(), { allowSignalWrites: true });
   }
 
-  private saveToLocalStorage(): void {
-    if (!this.isBrowser) {
-      return;
-    }
+  private saveToRepository(): void {
     const data: SprintTrainingInputData = {
       repetitions: this.repetitions(),
       sprintTime: this.sprintTime(),
       recoveryTime: this.recoveryTime(),
     };
-    localStorage?.setItem(this.localStorageKey, JSON.stringify(data));
+    this.repositoryService.save(data);
   }
 
-  private loadFromLocalStorage(): void {
-    if (!this.isBrowser) {
-      return;
-    }
-    const data = localStorage?.getItem(this.localStorageKey);
+  private loadFromRepository(): void {
+    const data = this.repositoryService.load();
     if (data) {
-      const parsedData: SprintTrainingInputData = JSON.parse(data);
-      this.repetitions.set(parsedData.repetitions);
-      this.sprintTime.set(parsedData.sprintTime);
-      this.recoveryTime.set(parsedData.recoveryTime);
+      this.repetitions.set(data.repetitions);
+      this.sprintTime.set(data.sprintTime);
+      this.recoveryTime.set(data.recoveryTime);
     }
   }
 

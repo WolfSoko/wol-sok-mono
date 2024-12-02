@@ -12,10 +12,10 @@ test.describe(' Run Sprint Training', () => {
     await sprintTraining.expectSprintTrainingConfiguration();
   });
 
-  test('it shows a timer counting down from 5 to 0 before training time starts', async ({
+  test('it shows a timer counting down from 10 to 0 when training starts', async ({
     sprintTraining,
   }) => {
     await sprintTraining.startTraining();
-    await sprintTraining.expectCountdownTimer(5);
+    await sprintTraining.expectCountdownTimer(10);
   });
 });

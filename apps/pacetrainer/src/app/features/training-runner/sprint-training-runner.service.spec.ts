@@ -1,3 +1,5 @@
+import { provideExperimentalZonelessChangeDetection } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { SprintTrainingRunnerService } from './sprint-training-runner.service';
 
@@ -5,7 +7,10 @@ describe('SprintTrainingRunnerService', () => {
   let service: SprintTrainingRunnerService;
 
   beforeEach(() => {
-    service = new SprintTrainingRunnerService();
+    TestBed.configureTestingModule({
+      providers: [provideExperimentalZonelessChangeDetection()],
+    });
+    service = TestBed.inject(SprintTrainingRunnerService);
   });
 
   it('should be created with initial state "stopped"', () => {

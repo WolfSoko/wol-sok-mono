@@ -1,3 +1,4 @@
+import { seconds } from '../src/app/shared/model/constants/time-utils';
 import { test } from './fixtures/sprint-training.fixture';
 
 test.describe('Sprint Training', () => {
@@ -11,15 +12,15 @@ test.describe('Sprint Training', () => {
   test('can configure sprint training', async ({ sprintTraining }) => {
     await sprintTraining.configureSprintTraining({
       repetitions: 7,
-      sprintTime: 20,
-      recoveryTime: 90,
+      sprintTime: seconds(20),
+      recoveryTime: seconds(90),
     });
 
     await sprintTraining.expectSprintTrainingConfiguration({
       repetitions: 7,
-      sprintTime: 20,
-      recoveryTime: 90,
-      totalTime: 770,
+      sprintTime: seconds(20),
+      recoveryTime: seconds(90),
+      totalTime: seconds(770),
     });
   });
 

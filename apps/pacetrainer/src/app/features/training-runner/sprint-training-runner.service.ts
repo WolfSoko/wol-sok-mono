@@ -1,9 +1,9 @@
 import { Injectable, signal, WritableSignal } from '@angular/core';
+import { TrainingRunnerState } from './training-runner.state';
 
 @Injectable({ providedIn: 'root' })
 export class SprintTrainingRunnerService {
-  trainingState: WritableSignal<'running' | 'stopped' | 'paused'> =
-    signal('stopped');
+  trainingState: WritableSignal<TrainingRunnerState> = signal('stopped');
 
   toggleTraining(): void {
     this.trainingState.update((value) =>

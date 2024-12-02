@@ -1,6 +1,7 @@
 import { expect, Locator, Page } from '@playwright/test';
 import { SprintTrainingInputData } from '../../src/app/features/training-configuration/data/sprint-training-input.data';
 import { SprintTrainingData } from '../../src/app/features/training-configuration/data/sprint-training.data';
+import { seconds } from '../../src/app/shared/model/constants/time-utils';
 
 export class SprintTrainingPage {
   readonly page: Page;
@@ -37,9 +38,9 @@ export class SprintTrainingPage {
   async expectSprintTrainingConfiguration(
     { repetitions, sprintTime, recoveryTime, totalTime }: SprintTrainingData = {
       repetitions: 4,
-      recoveryTime: 60,
-      sprintTime: 10,
-      totalTime: 280,
+      recoveryTime: seconds(60),
+      sprintTime: seconds(10),
+      totalTime: seconds(280),
     }
   ): Promise<void> {
     await expect(
@@ -114,8 +115,8 @@ export class SprintTrainingPage {
   }
 
   async expectCountdownTimer(number: number): Promise<void> {
-    for (let i = number; i > 0; i--) {
-      await expect(this.countdownTimer).toBeVisible();
+    for (let i = number - 1; i > 0; i--) {
+      await expect(this.countdownTimer.getByText(i + 'sec')).toBeVisible();
     }
   }
 }
