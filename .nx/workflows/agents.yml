@@ -23,10 +23,10 @@ launch-templates:
       - name: Restore Node Modules Cache
         uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/cache/main.yaml'
         inputs:
-          key: 'package-lock.json|"new"'
+          key: 'package-lock.json|"newer"'
           paths: |
-            /home/workflows/workflows/node_modules
-            /home/workflows/.npm
+            /home/workflows/workspace/node_modules/**/*
+            /home/workflows/.npm/**/*
           base-branch: 'main'
       - name: Restore Browser Binary Cache
         uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/cache/main.yaml'
