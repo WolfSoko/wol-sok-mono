@@ -18,20 +18,21 @@ launch-templates:
           sudo apt-get update -y
           sudo apt-get install python3 python-is-python3 make gcc g++ xserver-xorg-dev libxi-dev libxext-dev libavif13 -y
           echo "npm cache is set to: $(npm get cache)"
+          echo "cwd is set to: $(pwd)"
+
       - name: Restore Node Modules Cache
         uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/cache/main.yaml'
         inputs:
-          key: 'package-lock.json'
+          key: 'package-lock.json|"new"'
           paths: |
-            'node_modules'
-            '/home/workflows/.npm'
+            /home/workflows/workflows/node_modules
+            /home/workflows/.npm
           base-branch: 'main'
       - name: Restore Browser Binary Cache
         uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/cache/main.yaml'
         inputs:
           key: 'package-lock.json|"browsers"'
-          paths: |
-            '/home/workflows/.cache/Cypress'
+          paths: /home/workflows/.cache/Cypress
           base-branch: 'main'
       - name: Install Node Modules
         script: |
