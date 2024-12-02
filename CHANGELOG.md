@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.63.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.13...v4.63.0) (2024-12-02)
+
+
+### Features
+
+* **pacetrainer:** ✨ run training with intervals ([5286e94](https://github.com/WolfSoko/wol-sok-mono/commit/5286e94fa45ede1c5a41de898a82b245f24855f6))
+
+
+### Code style
+
+* 🎨 add todo ([1536311](https://github.com/WolfSoko/wol-sok-mono/commit/15363119620634b12c3cd39c7bc22decad449943))
+
 ## [4.62.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.12-non-cdk-deployed...v4.62.13) (2024-12-02)
 
 
