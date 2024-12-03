@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.67.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.1-non-cdk-deployed...v4.67.2) (2024-12-03)
+
+
+### Bug Fixes
+
+* **deps:** update dependency vega-lite to v5.22.0 ([ce83a82](https://github.com/WolfSoko/wol-sok-mono/commit/ce83a823443f88e2107ad0adbc6c5f89e950914a))
+
 ## [4.67.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.0-non-cdk-deployed...v4.67.1) (2024-12-03)
 
 ## [4.67.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.66.3-non-cdk-deployed...v4.67.0) (2024-12-03)
