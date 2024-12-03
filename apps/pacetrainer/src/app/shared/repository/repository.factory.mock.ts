@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Repository } from './repository';
 import { RepositoryFactory } from './repository.factory';
-import { JSONCompatible } from './utils/json-utils/json-utils';
+import { JSONCompatible } from '../utils/json-utils/json-utils';
 
 @Injectable({
   providedIn: 'root',

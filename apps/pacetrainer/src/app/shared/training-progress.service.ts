@@ -23,7 +23,7 @@ import {
 import { intervalStateChange } from './model/log-events/state.change.model';
 import { CurrentIntervalDataModel } from './model/training/current-interval-data.model';
 import { TrainingName } from './model/training/training-name';
-import { RepositoryFactory } from './repository.factory';
+import { RepositoryFactory } from './repository/repository.factory';
 import { TrainingEventLogService } from './training-event-log.service';
 
 const PRECISION_PERIOD_MS = milliseconds(100);
@@ -105,11 +105,13 @@ export class TrainingProgressService {
 
         switch (state) {
           case 'paused':
+            break;
           case 'stopped':
             this.elapsed.set(milliseconds(0));
-            return;
+            break;
           case 'running':
             this.elapsed.update((old) => add(old, PRECISION_PERIOD_MS));
+            break;
         }
       },
       { allowSignalWrites: true }

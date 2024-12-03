@@ -116,7 +116,7 @@ export class SprintTrainingPage {
 
   async expectCountdownTimer(number: number): Promise<void> {
     for (let i = number - 1; i > 0; i--) {
-      await expect(this.countdownTimer.getByText(i + 'sec')).toBeVisible();
+      await expect(this.countdownTimer.getByText(i + ' sec')).toBeVisible();
     }
   }
 }

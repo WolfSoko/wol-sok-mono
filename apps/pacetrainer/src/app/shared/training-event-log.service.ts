@@ -6,7 +6,7 @@ import {
   WritableSignal,
 } from '@angular/core';
 import { SprintTrainingRunnerService } from '../features/training-runner/sprint-training-runner.service';
-import { RepositoryFactory } from './repository.factory';
+import { RepositoryFactory } from './repository/repository.factory';
 import {
   simpleStateChange,
   TrainingStateChange,

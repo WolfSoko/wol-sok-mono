@@ -2,7 +2,7 @@ import {
   JSONCompatible,
   safeJsonParse,
   safeJsonStringify,
-} from './utils/json-utils/json-utils';
+} from '../utils/json-utils/json-utils';
 
 export const LOCAL_STORAGE_KEY_PREFIX = 'PACETRAINER@';
 

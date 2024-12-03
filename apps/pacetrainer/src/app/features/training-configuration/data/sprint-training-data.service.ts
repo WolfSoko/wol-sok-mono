@@ -1,6 +1,6 @@
 import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { Seconds } from '../../../shared/model/constants/time-utils';
-import { RepositoryFactory } from '../../../shared/repository.factory';
+import { RepositoryFactory } from '../../../shared/repository/repository.factory';
 import { SprintTrainingInputData } from './sprint-training-input.data';
 import { SprintTrainingData } from './sprint-training.data';
 

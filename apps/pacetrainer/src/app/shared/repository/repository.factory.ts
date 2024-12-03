@@ -1,7 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { Repository } from './repository';
-import { JSONCompatible } from './utils/json-utils/json-utils';
+import { JSONCompatible } from '../utils/json-utils/json-utils';
 
 @Injectable({
   providedIn: 'root',

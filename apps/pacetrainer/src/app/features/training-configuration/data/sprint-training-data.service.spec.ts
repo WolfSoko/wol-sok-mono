@@ -2,8 +2,8 @@ import { provideExperimentalZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { seconds } from '../../../shared/model/constants/time-utils';
-import { RepositoryFactory } from '../../../shared/repository.factory';
-import { RepositoryFactoryMock } from '../../../shared/repository.factory.mock';
+import { provideRepositoryMock } from '../../../shared/repository/provide-repository.mock';
+import { RepositoryFactoryMock } from '../../../shared/repository/repository.factory.mock';
 import { SprintTrainingDataService } from './sprint-training-data.service';
 import { SprintTrainingInputData } from './sprint-training-input.data';
 
@@ -15,12 +15,12 @@ describe('SprintTrainingDataService', () => {
     TestBed.configureTestingModule({
       providers: [
         provideExperimentalZonelessChangeDetection(),
-        { provide: RepositoryFactory, useClass: RepositoryFactoryMock },
+        provideRepositoryMock(),
       ],
     });
     repositoryFactoryMock = TestBed.inject(
-      RepositoryFactory
-    ) as RepositoryFactoryMock<SprintTrainingInputData>;
+      RepositoryFactoryMock<SprintTrainingInputData>
+    );
     if (initialData) {
       repositoryFactoryMock.initialData = initialData;
     }
