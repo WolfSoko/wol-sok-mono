@@ -48,7 +48,12 @@
       }
     },
     "test": {
-      "executor": "@analogjs/platform:vitest"
+      "executor": "@analogjs/vitest-angular:build-test",
+      "options": {
+        "tsConfig": "{projectRoot}/tsconfig.spec.json",
+        "setupFile": "{projectRoot}/src/test-setup.ts",
+        "configFile": "vite.config.mts"
+      }
     },
     "lint": {
       "options": {
