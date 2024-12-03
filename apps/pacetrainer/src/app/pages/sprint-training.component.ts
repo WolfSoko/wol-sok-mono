@@ -2,10 +2,12 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatList, MatListItem } from '@angular/material/list';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { ShowSprintTrainingComponent } from '../features/training-configuration/show-sprint-training.component';
+import { SprintTrainingOverviewComponent } from '../features/training-configuration/sprint-training-overview.component';
 import { SprintFormComponent } from '../features/training-configuration/sprint-training-form.component';
-import { SprintTrainingRunnerService } from '../features/training-runner/sprint-training-runner.service';
+import { TrainingLiveStateComponent } from '../features/training-live-state/training-live-state.component';
+import { TrainingRunnerService } from '../shared/training-runner/training-runner.service';
 import { TrainingProgressService } from '../shared/training-progress.service';
 import { CountDownCircleComponent } from '../shared/ui/count-down-circle/count-down-circle.component';
 import { TrainingTimePipe } from '../shared/ui/training-time.pipe';
@@ -14,36 +16,15 @@ import { TrainingTimePipe } from '../shared/ui/training-time.pipe';
   standalone: true,
   selector: 'pacetrainer-sprint-training',
   template: ` <mat-card data-qa="sprint-training">
+    @let state = trainingState();
+    @let interval = currentInterval();
     <mat-card-header>
       <mat-card-title>Sprint Training</mat-card-title>
-      @if (currentInterval(); as current) {
-        <mat-card-subtitle>
-          <div>
-            @switch (current.name) {
-              @case ('sprint') {
-                <span> Sprint </span>
-              }
-              @case ('recovery') {
-                <span> Gehen </span>
-              }
-            }
-            @if (trainingState() === 'paused') {
-              <span>&nbsp;-&nbsp;pausiert</span>
-            }
-          </div>
-          <div>
-            Interval:&nbsp;{{ current.repetitionCount }}
-            {{ current.elapsedDuration | trainingTime }}&nbsp;/&nbsp;
-            {{ current.duration | trainingTime }}&nbsp;-&nbsp;Noch:
-            {{ current.leftDuration | trainingTime }}
-          </div>
-        </mat-card-subtitle>
-      }
     </mat-card-header>
     <mat-card-content>
       <div class="configurator">
-        @if (trainingState() !== 'stopped'; as isStopped) {
-          @if (currentInterval(); as interval) {
+        @if (state !== 'stopped'; as isStopped) {
+          @if (interval) {
             @defer (on viewport) {
               <pacetrainer-countdown-circle
                 @myInsertRemoveTrigger
@@ -55,7 +36,7 @@ import { TrainingTimePipe } from '../shared/ui/training-time.pipe';
             }
           }
         }
-        @if (trainingState() === 'stopped') {
+        @if (state === 'stopped') {
           @defer (on viewport) {
             <pacetrainer-sprint-form @myInsertRemoveTrigger />
           } @placeholder {
@@ -63,7 +44,13 @@ import { TrainingTimePipe } from '../shared/ui/training-time.pipe';
           }
         }
         @defer (on viewport) {
-          <pacetrainer-show-sprint-training />
+          @if (interval) {
+            <pacetrainer-training-live-state
+              [currentInterval]="interval"
+              [trainingState]="state"
+            />
+          }
+          <pacetrainer-sprint-training-overview [open]="state === 'stopped'" />
         } @placeholder {
           <mat-spinner></mat-spinner>
         }
@@ -75,7 +62,7 @@ import { TrainingTimePipe } from '../shared/ui/training-time.pipe';
         (click)="toggleTraining()"
         data-qa="toggle-training"
       >
-        @switch (trainingState()) {
+        @switch (state) {
           @case ('stopped') {
             Go Go Go
           }
@@ -89,7 +76,7 @@ import { TrainingTimePipe } from '../shared/ui/training-time.pipe';
       </button>
       <button
         mat-raised-button
-        [disabled]="trainingState() === 'stopped'"
+        [disabled]="state === 'stopped'"
         (click)="endTraining()"
         data-qa="stop-training"
       >
@@ -124,18 +111,19 @@ import { TrainingTimePipe } from '../shared/ui/training-time.pipe';
   `,
   imports: [
     MatCardModule,
-    ShowSprintTrainingComponent,
+    SprintTrainingOverviewComponent,
     SprintFormComponent,
     MatButtonModule,
     CountDownCircleComponent,
     TrainingTimePipe,
     MatProgressSpinner,
+    MatList,
+    MatListItem,
+    TrainingLiveStateComponent,
   ],
 })
 export class SprintTrainingComponent {
-  private readonly sprintTrainingRunnerService = inject(
-    SprintTrainingRunnerService
-  );
+  private readonly sprintTrainingRunnerService = inject(TrainingRunnerService);
 
   trainingState = this.sprintTrainingRunnerService.trainingState;
   currentInterval = inject(TrainingProgressService).currentInterval;

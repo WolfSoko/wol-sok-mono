@@ -1,4 +1,4 @@
-import { TrainingRunnerState } from '../../../features/training-runner/training-runner.state';
+import { TrainingRunnerState } from '../../training-runner/training-runner.state';
 import { CurrentIntervalDataModel } from '../training/current-interval-data.model';
 
 type IntervalEvent = CurrentIntervalDataModel['name'];

@@ -5,11 +5,11 @@ import {
   signal,
   WritableSignal,
 } from '@angular/core';
-import { RepositoryFactory } from '../../shared/repository/repository.factory';
+import { RepositoryFactory } from '../repository/repository.factory';
 import { TrainingRunnerState } from './training-runner.state';
 
 @Injectable({ providedIn: 'root' })
-export class SprintTrainingRunnerService {
+export class TrainingRunnerService {
   repo = inject(RepositoryFactory).create<TrainingRunnerState>(
     'trainingRunnerState'
   );

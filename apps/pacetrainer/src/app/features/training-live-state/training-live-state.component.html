@@ -1,0 +1,33 @@
+@if (trainingState() !== "stopped") {
+  @if (currentInterval(); as current) {
+    <span class="mat-title-large">
+      @switch (current.name) {
+        @case ("sprint") {
+          Sprint
+        }
+        @case ("recovery") {
+          Gehen
+        }
+      }
+      @if (trainingState() === "paused") {
+        - pausiert
+      }
+    </span>
+    <mat-list class="stats-list">
+      <mat-list-item>
+        Gesamtzeit:
+        {{ current.elapsedTrainingTime | trainingTime }}
+      </mat-list-item>
+      <mat-list-item>
+        Aktuelles Intervall: {{ current.repetitionCount }}
+      </mat-list-item>
+      <mat-list-item>
+        Intervallzeit: {{ current.elapsedDuration | trainingTime }} von
+        {{ current.duration | trainingTime }}
+      </mat-list-item>
+      <mat-list-item>
+        Noch: {{ current.leftDuration | trainingTime }}
+      </mat-list-item>
+    </mat-list>
+  }
+}

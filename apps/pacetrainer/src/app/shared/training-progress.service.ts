@@ -11,7 +11,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { concat, defer, distinctUntilChanged, interval, map, of } from 'rxjs';
 import { SprintTrainingDataService } from '../features/training-configuration/data/sprint-training-data.service';
 import { SprintTrainingData } from '../features/training-configuration/data/sprint-training.data';
-import { SprintTrainingRunnerService } from '../features/training-runner/sprint-training-runner.service';
+import { TrainingRunnerService } from './training-runner/training-runner.service';
 import {
   add,
   Milliseconds,
@@ -48,7 +48,7 @@ export class TrainingProgressService {
     RepositoryFactory
   ).create<Milliseconds>('ellapsedTrainingTime');
 
-  private readonly runnerService = inject(SprintTrainingRunnerService);
+  private readonly runnerService = inject(TrainingRunnerService);
 
   private readonly eventLogService = inject(TrainingEventLogService);
   private readonly trainingProgressData = signal<TrainingData>([]);

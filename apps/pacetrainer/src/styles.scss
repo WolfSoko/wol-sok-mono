@@ -29,6 +29,8 @@ html {
   @include mat.input-theme($theme);
   @include mat.card-theme($theme);
   @include mat.list-theme($theme);
+  @include mat.expansion-theme($theme);
+
   @include mat.typography-hierarchy($theme);
 
   // Apply the light theme only when the user prefers light themes.
@@ -41,6 +43,8 @@ html {
     @include mat.input-color($dark-theme);
     @include mat.card-color($dark-theme);
     @include mat.list-color($dark-theme);
+    @include mat.expansion-color($dark-theme);
+    @include mat.typography-hierarchy($dark-theme);
   }
 
   font-family: Roboto, 'Helvetica Neue', sans-serif;

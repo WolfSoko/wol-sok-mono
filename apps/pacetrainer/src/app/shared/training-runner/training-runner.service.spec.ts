@@ -1,16 +1,16 @@
 import { provideExperimentalZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { provideRepositoryMock } from '../../shared/repository/provide-repository.mock';
-import { RepositoryFactoryMock } from '../../shared/repository/repository.factory.mock';
-import { SprintTrainingRunnerService } from './sprint-training-runner.service';
+import { provideRepositoryMock } from '../repository/provide-repository.mock';
+import { RepositoryFactoryMock } from '../repository/repository.factory.mock';
+import { TrainingRunnerService } from './training-runner.service';
 import { TrainingRunnerState } from './training-runner.state';
 
-describe('SprintTrainingRunnerService', () => {
-  let service: SprintTrainingRunnerService;
+describe('TrainingRunnerService', () => {
+  let service: TrainingRunnerService;
 
   function initService(): void {
-    service = TestBed.inject(SprintTrainingRunnerService);
+    service = TestBed.inject(TrainingRunnerService);
   }
 
   beforeEach(() => {

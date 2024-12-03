@@ -5,7 +5,7 @@ import {
   signal,
   WritableSignal,
 } from '@angular/core';
-import { SprintTrainingRunnerService } from '../features/training-runner/sprint-training-runner.service';
+import { TrainingRunnerService } from './training-runner/training-runner.service';
 import { RepositoryFactory } from './repository/repository.factory';
 import {
   simpleStateChange,
@@ -20,7 +20,7 @@ export class TrainingEventLogService {
   private readonly logRepository =
     inject(RepositoryFactory).create<TrainingEventLog>('trainingEventLog');
 
-  private readonly runnerService = inject(SprintTrainingRunnerService);
+  private readonly runnerService = inject(TrainingRunnerService);
 
   private trainingEventLog: WritableSignal<TrainingEventLog>;
 
