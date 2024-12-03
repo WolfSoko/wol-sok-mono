@@ -3,20 +3,11 @@
     position: relative;
     height: 200px;
     width: 200px;
+    transition: 1000ms ease-in;
 
     &-circle {
       fill: none;
       stroke: none;
-    }
-
-    &-stroke {
-      stroke-width: 1px;
-      stroke: grey;
-    }
-
-    &-completed {
-      stroke: #88b462;
-      stroke-width: 1px;
     }
 
     .time {
@@ -28,17 +19,12 @@
       align-items: center;
       justify-content: center;
       font-size: 26px;
-
-      img {
-        height: 80px;
-      }
     }
 
     #remaining-time-stroke {
       stroke-width: 2px;
       transform: rotate(90deg);
       transform-origin: center;
-      transition: 100ms ease-in all;
       stroke: #1cbbf8;
     }
 
