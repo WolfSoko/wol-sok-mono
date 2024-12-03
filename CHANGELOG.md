@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.66.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.66.1-non-cdk-deployed...v4.66.2) (2024-12-03)
+
+
+### Chore
+
+* **deps:** update dependency jest-preset-angular to v14.4.2 ([3b16efb](https://github.com/WolfSoko/wol-sok-mono/commit/3b16efbdeaa6d3cd407fda93cfadbd24e9555f2f))
+
 ## [4.66.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.66.0-non-cdk-deployed...v4.66.1) (2024-12-03)
 
 
