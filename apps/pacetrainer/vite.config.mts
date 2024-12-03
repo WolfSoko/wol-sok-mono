@@ -51,7 +51,7 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
     ],
     test: {
       globals: true,
-      environment: 'jsdom',
+      // environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],
       include: ['src/**/*.spec.ts'],
       reporters: ['default'],
@@ -59,6 +59,12 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
         reportsDirectory: '../../coverage/apps/pacetrainer',
         provider: 'v8',
         reporter: ['html', 'lcov', 'text'],
+      },
+      browser: {
+        enabled: true,
+        name: 'chromium',
+        headless: !!process.env['CI'],
+        provider: 'playwright',
       },
     },
     define: {
