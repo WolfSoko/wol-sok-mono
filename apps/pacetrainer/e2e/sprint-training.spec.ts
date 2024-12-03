@@ -1,4 +1,4 @@
-import { seconds, sToMs } from '../src/app/shared/model/constants/time-utils';
+import { seconds } from '../src/app/shared/model/constants/time-utils';
 import { test } from './fixtures/sprint-training.fixture';
 
 test.describe('Sprint Training', () => {

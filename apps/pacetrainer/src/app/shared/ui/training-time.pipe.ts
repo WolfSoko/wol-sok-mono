@@ -2,14 +2,11 @@ import { DatePipe } from '@angular/common';
 import { Pipe, PipeTransform } from '@angular/core';
 import {
   ge,
-  gt,
   hours,
   hToMs,
   milliseconds,
   minutes,
   mToMs,
-  seconds,
-  sToMs,
 } from '../model/constants/time-utils';
 
 @Pipe({
@@ -37,9 +34,6 @@ export class TrainingTimePipe implements PipeTransform {
     }
     if (ge(ms, mToMs(minutes(1)))) {
       return `m:ss 'min'`;
-    }
-    if (ge(ms, sToMs(seconds(1)))) {
-      return `s 'sec'`;
     }
     return `s,S 'sec'`;
   }

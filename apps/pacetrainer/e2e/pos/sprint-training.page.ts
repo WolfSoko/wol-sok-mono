@@ -7,6 +7,7 @@ import {
 export class SprintTrainingPage {
   readonly page: Page;
 
+  readonly overview: Locator;
   readonly sprintTraining: Locator;
   readonly toggleTrainingCta: Locator;
   readonly stopTrainingCta: Locator;
@@ -14,6 +15,7 @@ export class SprintTrainingPage {
 
   constructor(page: Page) {
     this.page = page;
+    this.overview = page.getByTestId('training-overview');
     this.sprintTraining = page.getByTestId('sprint-training');
     this.toggleTrainingCta = this.sprintTraining.getByTestId('toggle-training');
     this.stopTrainingCta = this.sprintTraining.getByTestId('stop-training');
@@ -45,28 +47,26 @@ export class SprintTrainingPage {
     }
   ): Promise<void> {
     await expect(
-      this.sprintTraining.getByText(`${repetitions} Wiederholungen`)
+      this.overview.getByText(`${repetitions} Wiederholungen`)
     ).toBeVisible();
     await expect(
-      this.sprintTraining.getByText(`${this.formatTime(sprintTime)} - Sprint`)
+      this.overview.getByText(`${this.formatTime(sprintTime)} - Sprint`)
     ).toBeVisible();
     await expect(
-      this.sprintTraining.getByText(
-        `${this.formatTime(recoveryTime)} - Gehen/Stehen`
-      )
+      this.overview.getByText(`${this.formatTime(recoveryTime)} - Gehen/Stehen`)
     ).toBeVisible();
     await expect(
-      this.sprintTraining.getByText(`Gesamtzeit: ${this.formatTime(totalTime)}`)
+      this.overview.getByText(`Gesamtzeit: ${this.formatTime(totalTime)}`)
     ).toBeVisible();
   }
 
   private formatTime(time: Seconds): string {
+    const deciSeconds = Math.floor(time * 10);
     if (time < 1) {
-      const deciSeconds = Math.floor(time * 10);
       return `0,${deciSeconds} ms`;
     }
     if (time < 60) {
-      return `${time} sec`;
+      return `${Math.floor(time)},0 sec`;
     }
     const minutes = Math.floor(time / 60);
     const seconds = ('' + (time - minutes * 60)).padStart(2, '0');
@@ -136,7 +136,9 @@ export class SprintTrainingPage {
 
   async expectCountdownTimer(number: number): Promise<void> {
     for (let i = number - 1; i > 0; i--) {
-      await expect(this.countdownTimer.getByText(i + ' sec')).toBeVisible();
+      await expect(
+        this.countdownTimer.getByText(new RegExp(`${i},\\d sec`))
+      ).toBeVisible();
     }
   }
 }

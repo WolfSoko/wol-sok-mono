@@ -14,7 +14,7 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
     @let recoveryTime = conf.recoveryTime;
     @let totalTime = conf.totalTime;
 
-    <mat-expansion-panel [expanded]="open()">
+    <mat-expansion-panel [expanded]="open()" data-qa="training-overview">
       <mat-expansion-panel-header>
         <mat-panel-title>Übersicht</mat-panel-title>
         <mat-panel-description class="mat-body-medium">

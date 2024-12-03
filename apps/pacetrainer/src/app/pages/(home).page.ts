@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 import { PacetrainerTitleComponent } from './pacetrainer-title.component';
-import { SprintTrainingComponent } from './sprint-training.component';
+import { SprintTrainingComponent } from '../features/sprint-training/sprint-training.component';
 
 @Component({
   selector: 'pacetrainer-home',
