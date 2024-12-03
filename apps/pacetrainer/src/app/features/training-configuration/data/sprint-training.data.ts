@@ -1,8 +1,8 @@
-import { Seconds } from '../../../shared/model/constants/time-utils';
+import { Milliseconds } from '../../../shared/model/constants/time-utils';
 
 export type SprintTrainingData = {
-  recoveryTime: Seconds;
-  sprintTime: Seconds;
+  recoveryTime: Milliseconds;
+  sprintTime: Milliseconds;
   repetitions: number;
-  totalTime: Seconds;
+  totalTime: Milliseconds;
 };

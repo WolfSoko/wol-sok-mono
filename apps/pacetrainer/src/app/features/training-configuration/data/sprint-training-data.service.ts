@@ -1,5 +1,10 @@
 import { computed, effect, inject, Injectable, signal } from '@angular/core';
-import { Seconds } from '../../../shared/model/constants/time-utils';
+import {
+  add,
+  milliseconds,
+  Seconds,
+  sToMs,
+} from '../../../shared/model/constants/time-utils';
 import { RepositoryFactory } from '../../../shared/repository/repository.factory';
 import { SprintTrainingInputData } from './sprint-training-input.data';
 import { SprintTrainingData } from './sprint-training.data';
@@ -14,12 +19,12 @@ export class SprintTrainingDataService {
 
   // Define signals for the state
   repetitions = signal(4);
-  sprintTime = signal(10 as Seconds);
-  recoveryTime = signal(60 as Seconds);
-  totalTime = computed(
-    () =>
-      (this.repetitions() *
-        (this.sprintTime() + this.recoveryTime())) as Seconds
+  sprintTime = signal(sToMs(10 as Seconds));
+  recoveryTime = signal(sToMs(60 as Seconds));
+  totalTime = computed(() =>
+    milliseconds(
+      this.repetitions() * add(this.sprintTime(), this.recoveryTime())
+    )
   );
   data = computed<SprintTrainingData>(() => ({
     repetitions: this.repetitions(),

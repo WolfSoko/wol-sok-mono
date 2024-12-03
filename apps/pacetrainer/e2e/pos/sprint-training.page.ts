@@ -1,7 +1,8 @@
 import { expect, Locator, Page } from '@playwright/test';
-import { SprintTrainingInputData } from '../../src/app/features/training-configuration/data/sprint-training-input.data';
-import { SprintTrainingData } from '../../src/app/features/training-configuration/data/sprint-training.data';
-import { seconds } from '../../src/app/shared/model/constants/time-utils';
+import {
+  seconds,
+  Seconds,
+} from '../../src/app/shared/model/constants/time-utils';
 
 export class SprintTrainingPage {
   readonly page: Page;
@@ -36,7 +37,7 @@ export class SprintTrainingPage {
   }
 
   async expectSprintTrainingConfiguration(
-    { repetitions, sprintTime, recoveryTime, totalTime }: SprintTrainingData = {
+    { repetitions, sprintTime, recoveryTime, totalTime } = {
       repetitions: 4,
       recoveryTime: seconds(60),
       sprintTime: seconds(10),
@@ -47,21 +48,40 @@ export class SprintTrainingPage {
       this.sprintTraining.getByText(`${repetitions} Wiederholungen`)
     ).toBeVisible();
     await expect(
-      this.sprintTraining.getByText(`${sprintTime}s - Sprint`)
+      this.sprintTraining.getByText(`${this.formatTime(sprintTime)} - Sprint`)
     ).toBeVisible();
     await expect(
-      this.sprintTraining.getByText(`${recoveryTime}s - Gehen/Stehen`)
+      this.sprintTraining.getByText(
+        `${this.formatTime(recoveryTime)} - Gehen/Stehen`
+      )
     ).toBeVisible();
     await expect(
-      this.sprintTraining.getByText(`Gesamtzeit: ${totalTime}s`)
+      this.sprintTraining.getByText(`Gesamtzeit: ${this.formatTime(totalTime)}`)
     ).toBeVisible();
+  }
+
+  private formatTime(time: Seconds): string {
+    if (time < 1) {
+      const deciSeconds = Math.floor(time * 10);
+      return `0,${deciSeconds} ms`;
+    }
+    if (time < 60) {
+      return `${time} sec`;
+    }
+    const minutes = Math.floor(time / 60);
+    const seconds = ('' + (time - minutes * 60)).padStart(2, '0');
+    return `${minutes}:${seconds} min`;
   }
 
   async configureSprintTraining({
     recoveryTime,
     sprintTime,
     repetitions,
-  }: SprintTrainingInputData): Promise<void> {
+  }: {
+    repetitions: number;
+    sprintTime: Seconds;
+    recoveryTime: Seconds;
+  }): Promise<void> {
     await this.sprintTraining.getByTestId('repetitions').fill('' + repetitions);
     await this.sprintTraining.getByTestId('sprintTime').fill('' + sprintTime);
     await this.sprintTraining

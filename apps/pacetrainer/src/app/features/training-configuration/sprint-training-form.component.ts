@@ -7,7 +7,8 @@ import {
 } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
-import { debounceTime } from 'rxjs';
+import { debounceTime, map } from 'rxjs';
+import { msToS, sToMs } from '../../shared/model/constants/time-utils';
 import { SprintTrainingDataService } from './data/sprint-training-data.service';
 
 @Component({
@@ -61,23 +62,31 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
 export class SprintFormComponent {
   private readonly dataService = inject(SprintTrainingDataService);
   sprintForm = inject(NonNullableFormBuilder).group({
-    sprintTime: [
-      this.dataService.sprintTime(),
-      [Validators.required, Validators.min(1)],
-    ],
     repetitions: [
       this.dataService.repetitions(),
       [Validators.required, Validators.min(1)],
     ],
+    sprintTime: [
+      msToS(this.dataService.sprintTime()),
+      [Validators.required, Validators.min(1)],
+    ],
     recoveryTime: [
-      this.dataService.recoveryTime(),
+      msToS(this.dataService.recoveryTime()),
       [Validators.required, Validators.min(1)],
     ],
   });
 
   constructor() {
     this.sprintForm.valueChanges
-      .pipe(debounceTime(500), takeUntilDestroyed())
+      .pipe(
+        debounceTime(500),
+        takeUntilDestroyed(),
+        map(({ repetitions, sprintTime, recoveryTime }) => ({
+          ...(repetitions ? { repetitions } : {}),
+          ...(sprintTime ? { sprintTime: sToMs(sprintTime) } : {}),
+          ...(recoveryTime ? { recoveryTime: sToMs(recoveryTime) } : {}),
+        }))
+      )
       .subscribe((values) => this.dataService.updateState(values));
   }
 }

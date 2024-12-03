@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Pipe, PipeTransform } from '@angular/core';
 import {
+  ge,
   gt,
   hours,
   hToMs,
@@ -31,13 +32,13 @@ export class TrainingTimePipe implements PipeTransform {
       timeInMS instanceof Date ? timeInMS.getTime() : timeInMS
     );
 
-    if (gt(ms, hToMs(hours(1)))) {
+    if (ge(ms, hToMs(hours(1)))) {
       return `H:mm:ss 'h'`;
     }
-    if (gt(ms, mToMs(minutes(1)))) {
-      return `mm:ss 'min'`;
+    if (ge(ms, mToMs(minutes(1)))) {
+      return `m:ss 'min'`;
     }
-    if (gt(ms, sToMs(seconds(1)))) {
+    if (ge(ms, sToMs(seconds(1)))) {
       return `s 'sec'`;
     }
     return `s,S 'sec'`;

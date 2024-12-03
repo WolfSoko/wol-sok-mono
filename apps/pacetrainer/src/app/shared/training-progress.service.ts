@@ -147,13 +147,8 @@ export class TrainingProgressService {
     const progressData: TrainingData = [];
 
     for (let i = 0; i < repetitions; i++) {
-      progressData.push(['sprint', sToMs(sprintTime), i + 1, COUNTDOWN_TIME]);
-      progressData.push([
-        'recovery',
-        sToMs(recoveryTime),
-        i + 1,
-        COUNTDOWN_TIME,
-      ]);
+      progressData.push(['sprint', sprintTime, i + 1, COUNTDOWN_TIME]);
+      progressData.push(['recovery', recoveryTime, i + 1, COUNTDOWN_TIME]);
     }
 
     this.trainingProgressData.set(progressData);
