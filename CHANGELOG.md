@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.66.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.65.0-non-cdk-deployed...v4.66.0) (2024-12-03)
+
+
+### Features
+
+* **pacetrainer:** ✨ extract overview and live-stats into own container ([e300a5b](https://github.com/WolfSoko/wol-sok-mono/commit/e300a5b65fe3d1676f83ca0b68a174f8e50c4fb5))
+
+
+### CI/CD
+
+* 👷 run lint and test on staged files ([aded220](https://github.com/WolfSoko/wol-sok-mono/commit/aded2200467cbe3f6b968650c1aa91cfb48b6bbb))
+
 ## [4.65.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.64.0-non-cdk-deployed...v4.65.0) (2024-12-03)
 
 
