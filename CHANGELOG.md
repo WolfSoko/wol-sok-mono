@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.64.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.63.2-non-cdk-deployed...v4.64.0) (2024-12-03)
+
+
+### Features
+
+* **pacetrainer:** ✨ better logic and animation for count-down-circle ([5ca7757](https://github.com/WolfSoko/wol-sok-mono/commit/5ca775761c58aacff6f9e76b50e28d35b356b300))
+* **pacetrainer:** ✨ make reload safe ([1ec8fcf](https://github.com/WolfSoko/wol-sok-mono/commit/1ec8fcfa7a54a2e43a2237cc4516450d266c4ddf))
+
 ## [4.63.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.63.1-non-cdk-deployed...v4.63.2) (2024-12-03)
 
 
