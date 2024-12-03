@@ -1,7 +1,7 @@
 {
   "type": "module",
-  "dependencies": {
-    "@analogjs/platform": "^1.7.0",
+  "peerDependencies": {
+    "@analogjs/platform": "1.10.0",
     "@analogjs/router": "1.10.0",
     "@angular/common": "18.2.13",
     "@angular/core": "18.2.13",
