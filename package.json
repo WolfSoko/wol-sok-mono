@@ -168,7 +168,7 @@
     "autoprefixer": "^10.4.19",
     "aws-cdk-lib": "^2.164.1",
     "aws-sdk": "2.1692.0",
-    "axios": "1.7.8",
+    "axios": "1.7.9",
     "chai": "5.1.2",
     "commit-and-tag-version": "^12.5.0",
     "cross-env": "7.0.3",
