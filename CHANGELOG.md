@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.67.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.10-non-cdk-deployed...v4.67.11) (2024-12-04)
+
+
+### Chore
+
+* **deps:** update dependency node-gyp to v11 ([93a2961](https://github.com/WolfSoko/wol-sok-mono/commit/93a296155b8624cb77d3a9fbe5c7f84e6234f2c3))
+
 ## [4.67.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.9-non-cdk-deployed...v4.67.10) (2024-12-04)
 
 
