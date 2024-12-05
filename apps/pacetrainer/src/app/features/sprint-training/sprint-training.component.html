@@ -1,14 +1,14 @@
-<mat-card data-qa="sprint-training">
-  @let state = trainingState();
-  @let interval = currentInterval();
-  <mat-card-header>
-    <mat-card-title>Sprint Training</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
-    <div class="configurator">
-      @if (state !== "stopped"; as isStopped) {
-        @if (interval) {
-          @defer (hydrate on interaction) {
+@defer (hydrate on interaction) {
+  <mat-card data-qa="sprint-training">
+    @let state = trainingState();
+    @let interval = currentInterval();
+    <mat-card-header>
+      <mat-card-title>Sprint Training</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="configurator">
+        @if (state !== "stopped"; as isStopped) {
+          @if (interval) {
             <pacetrainer-countdown-circle
               @myInsertRemoveTrigger
               [duration]="interval.duration"
@@ -18,56 +18,46 @@
               [currentInterval]="interval"
               [trainingState]="state"
             />
-          } @placeholder {
-            <mat-spinner />
           }
         }
-      }
-      @if (state === "stopped") {
-        @defer (hydrate on interaction) {
+        @if (state === "stopped") {
           <pacetrainer-sprint-form @myInsertRemoveTrigger />
-        } @placeholder {
-          <mat-spinner />
         }
-      }
-    </div>
-  </mat-card-content>
-  <mat-card-actions class="ctas">
-    <button
-      mat-raised-button
-      (click)="toggleTraining()"
-      data-qa="toggle-training"
-    >
-      @switch (state) {
-        @case ("stopped") {
-          Go Go Go
+      </div>
+    </mat-card-content>
+    <mat-card-actions class="ctas">
+      <button
+        mat-raised-button
+        (click)="toggleTraining()"
+        data-qa="toggle-training"
+      >
+        @switch (state) {
+          @case ("stopped") {
+            Go Go Go
+          }
+          @case ("paused") {
+            Weiter
+          }
+          @default {
+            Pausieren
+          }
         }
-        @case ("paused") {
-          Weiter
-        }
-        @default {
-          Pausieren
-        }
-      }
-    </button>
-    <button
-      mat-raised-button
-      [disabled]="state === 'stopped'"
-      (click)="endTraining()"
-      data-qa="stop-training"
-    >
-      Training beenden
-    </button>
-  </mat-card-actions>
-</mat-card>
-<mat-card>
-  <mat-card-content>
-    <div class="overview">
-      @defer (hydrate on interaction) {
+      </button>
+      <button
+        mat-raised-button
+        [disabled]="state === 'stopped'"
+        (click)="endTraining()"
+        data-qa="stop-training"
+      >
+        Training beenden
+      </button>
+    </mat-card-actions>
+  </mat-card>
+  <mat-card>
+    <mat-card-content>
+      <div class="overview">
         <pacetrainer-sprint-training-overview [open]="state === 'stopped'" />
-      } @placeholder {
-        <mat-spinner />
-      }
-    </div>
-  </mat-card-content>
-</mat-card>
+      </div>
+    </mat-card-content>
+  </mat-card>
+}

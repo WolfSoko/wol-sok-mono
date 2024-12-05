@@ -36,6 +36,7 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
   imports: [MatExpansionModule, MatList, MatListItem, TrainingTimePipe],
 })
 export class SprintTrainingOverviewComponent {
+
   open = input<boolean>(false);
   data = inject(SprintTrainingDataService).data;
 }
