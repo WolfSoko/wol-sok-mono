@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.67.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.13-non-cdk-deployed...v4.67.14) (2024-12-05)
+
+
+### Chore
+
+* **deps:** update dependency webpack to v5.97.1 ([db6053a](https://github.com/WolfSoko/wol-sok-mono/commit/db6053a9eefb926dc7a71eb9cc96d26cc448978b))
+
 ## [4.67.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.12-non-cdk-deployed...v4.67.13) (2024-12-05)
 
 
