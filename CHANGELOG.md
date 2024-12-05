@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.67.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.12-non-cdk-deployed...v4.67.13) (2024-12-05)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @sentry/angular-ivy to v7.120.1 ([2ed45de](https://github.com/WolfSoko/wol-sok-mono/commit/2ed45de4f66aec1eccee26dd3b21f597ce3cfc22))
+
 ## [4.67.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.11-non-cdk-deployed...v4.67.12) (2024-12-05)
 
 
