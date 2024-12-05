@@ -1,11 +1,12 @@
-
 /**
  *
  * @param db
  * @param defaultShaders
  */
 async function initBaseData(db, defaultShaders) {
-  const defaultShadersCol = db.collection('angularExamples/shaderExamples/defaultShaders');
+  const defaultShadersCol = db.collection(
+    'angularExamples/shaderExamples/defaultShaders'
+  );
   const defaultShadersQuery = await defaultShadersCol.orderBy('id').get();
   const deletePromises = defaultShadersQuery.docs.map((shaderDoc) => {
     return shaderDoc.ref.delete();
@@ -20,7 +21,9 @@ async function initBaseData(db, defaultShaders) {
     .map((shader) => defaultShadersCol.add(shader));
   await Promise.all(uploadPromises);
 
-  console.log('Added default shaders to angularExamples/shaderExamples/defaultShaders');
+  console.log(
+    'Added default shaders to angularExamples/shaderExamples/defaultShaders'
+  );
 }
 
 module.exports = { initBaseData };
