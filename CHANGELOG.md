@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.67.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.14-non-cdk-deployed...v4.67.15) (2024-12-05)
+
+
+### Code style
+
+* 🎨 fix indentation ([f627e95](https://github.com/WolfSoko/wol-sok-mono/commit/f627e9512697d1d34174154cba8001dc42f19086))
+
 ## [4.67.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.13-non-cdk-deployed...v4.67.14) (2024-12-05)
 
 
