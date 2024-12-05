@@ -59,7 +59,6 @@ interface Configuration {
 }
 
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     ElemResizedDirective,

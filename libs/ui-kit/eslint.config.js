@@ -21,12 +21,8 @@ module.exports = [
     .map((config) => ({
       ...config,
       files: ['**/*.ts'],
+      files: ['**/*.ts'],
       rules: {
-        ...config.rules,
-        '@angular-eslint/no-host-metadata-property': [
-          'error',
-          { allowStatic: true },
-        ],
         '@angular-eslint/directive-selector': [
           'error',
           {
@@ -54,4 +50,10 @@ module.exports = [
         ...config.rules,
       },
     })),
+  {
+    files: ['**/*.ts'],
+    rules: {
+      '@angular-eslint/prefer-standalone': 'off',
+    },
+  },
 ];

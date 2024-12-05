@@ -9,7 +9,6 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { GravityWorldComponent } from './gravity-world/gravity-world.component';
 
 @Component({
-  standalone: true,
   imports: [CommonModule, MatToolbarModule, GravityWorldComponent],
   selector: 'feat-lazy-gravity-rocks',
   templateUrl: './gravity-rocks.component.html',

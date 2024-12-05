@@ -44,7 +44,7 @@ import { Note } from '../../../shared/note';
     .notes-list {
     }
   `,
-  standalone: true,
+
   imports: [DatePipe, MatListModule, MatCardModule],
 })
 export class NotesListComponent {

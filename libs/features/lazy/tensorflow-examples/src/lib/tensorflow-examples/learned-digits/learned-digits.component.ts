@@ -29,7 +29,6 @@ import { HeadlineAnimationService } from '@wolsok/headline-animation';
 
 @UntilDestroy()
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     MatCardModule,

@@ -16,7 +16,6 @@ import {
 
 @Component({
   selector: 'feat-lazy-gravity-config',
-  standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,

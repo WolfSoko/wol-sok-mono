@@ -43,7 +43,6 @@ import { WorldObject } from './domain/world-objects/world-object';
 const SVG_VIEW_PORT_SIZE = 3000;
 
 @Component({
-  standalone: true,
   selector: 'feat-lazy-gravity-world',
   templateUrl: 'gravity-world.component.html',
   styleUrls: ['gravity-world.component.scss'],

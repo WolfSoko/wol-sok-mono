@@ -11,7 +11,6 @@ import { NotesComponent } from '../core/notes/notes.component';
 
 @Component({
   selector: 'rap-welcome',
-  standalone: true,
   imports: [
     AsyncPipe,
     FormsModule,

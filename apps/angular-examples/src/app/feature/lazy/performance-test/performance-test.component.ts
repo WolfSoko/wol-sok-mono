@@ -16,7 +16,6 @@ import {
 } from './state/performance-test.service';
 
 @Component({
-  standalone: true,
   selector: 'app-performance-test',
   templateUrl: './performance-test.component.html',
   styleUrls: ['./performance-test.component.scss'],

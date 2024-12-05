@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'rap-create-poll',
-  standalone: true,
+
   imports: [CommonModule],
   templateUrl: './create-poll.component.html',
   styleUrl: './create-poll.component.scss',

@@ -22,7 +22,6 @@ import { Technology } from './technology';
 import { TechnologyComponent } from './technology/technology.component';
 
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     RouterModule,

@@ -9,7 +9,6 @@ import {
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
   selector: '[wsLet]',
-  standalone: true,
 })
 export class LetDirective<T> {
   private context: LetContext<T> = new LetContext<T>();

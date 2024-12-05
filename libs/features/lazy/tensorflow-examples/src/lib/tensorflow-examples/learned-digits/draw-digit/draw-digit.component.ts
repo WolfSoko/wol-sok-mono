@@ -38,7 +38,6 @@ class Start extends Path {
 }
 
 @Component({
-  standalone: true,
   imports: [CommonModule],
   selector: 'feat-lazy-tensor-app-draw-digit',
   templateUrl: './draw-digit.component.html',

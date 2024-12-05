@@ -8,7 +8,7 @@ import { NotesListComponent } from './notes-list.component';
 
 @Component({
   selector: 'rap-notes',
-  standalone: true,
+
   imports: [CommonModule, MatCardModule, NotesListComponent, NoteFormComponent],
   templateUrl: './notes.component.html',
   styles: `

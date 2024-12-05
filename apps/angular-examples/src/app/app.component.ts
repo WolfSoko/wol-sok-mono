@@ -14,7 +14,6 @@ import { ROUTER_LINKS } from './router-links.token';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
   imports: [MainToolbarComponent, SideNavComponent, RouterOutlet],
 })
 export class AppComponent {

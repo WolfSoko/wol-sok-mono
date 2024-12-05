@@ -30,7 +30,6 @@ import { ServiceWorkerUpdateComponent } from './service-worker-update/service-wo
 
 @Component({
   selector: 'app-main-toolbar',
-  standalone: true,
   imports: [
     CommonModule,
     LoginComponent,

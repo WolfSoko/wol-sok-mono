@@ -10,7 +10,6 @@ import { ROUTER_LINKS } from '../../../../router-links.token';
 import { NavItemComponent } from '../../../../shared/nav-item/nav-item.component';
 
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     MatCardModule,

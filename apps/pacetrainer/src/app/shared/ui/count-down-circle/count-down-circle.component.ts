@@ -5,7 +5,6 @@ import { TrainingTimePipe } from '../training-time.pipe';
 @Component({
   selector: 'pacetrainer-countdown-circle',
   templateUrl: './count-down-circle.component.html',
-  standalone: true,
   styleUrl: './count-down-circle.component.scss',
   imports: [TrainingTimePipe],
 })

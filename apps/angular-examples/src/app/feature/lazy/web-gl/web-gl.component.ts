@@ -42,7 +42,6 @@ import { MandelbrotFragment, MandelbrotVertex } from './mandelbrot-shader';
 const TAU = Math.PI / 2;
 
 @Component({
-  standalone: true,
   selector: 'app-web-gl',
   templateUrl: './web-gl.component.html',
   styleUrls: ['./web-gl.component.scss'],

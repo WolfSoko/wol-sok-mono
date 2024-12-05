@@ -19,7 +19,6 @@ type SumOfWeights = {
 };
 
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule,

@@ -4,7 +4,6 @@ import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'rap-root',
-  standalone: true,
   imports: [RouterOutlet],
   template: `<router-outlet></router-outlet>`,
 })

@@ -30,7 +30,6 @@ import {
 } from './state';
 
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     CodeEditorComponent,

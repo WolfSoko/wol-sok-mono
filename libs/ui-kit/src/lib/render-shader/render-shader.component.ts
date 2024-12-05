@@ -34,7 +34,6 @@ import { ShowFpsComponent } from '../show-fps/show-fps.component';
 import defaultVertexShader from './default-vertex-shader.vert';
 
 @Component({
-  standalone: true,
   selector: 'ws-shared-ui-render-shader',
   templateUrl: './render-shader.component.html',
   styleUrls: ['./render-shader.component.scss'],

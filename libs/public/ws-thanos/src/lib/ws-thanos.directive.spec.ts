@@ -65,7 +65,6 @@ describe('Integration Test: WsThanosDirective', () => {
         }
       `,
     ],
-    standalone: true,
     imports: [WsThanosDirective],
   })
   class HostComponent {

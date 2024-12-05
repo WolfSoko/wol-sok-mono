@@ -12,7 +12,6 @@ import { msToS, sToMs } from '../../shared/model/constants/time-utils';
 import { SprintTrainingDataService } from './data/sprint-training-data.service';
 
 @Component({
-  standalone: true,
   selector: 'pacetrainer-sprint-form',
   template: `
     <form [formGroup]="sprintForm" class="sprint-form" data-qa="sprint-form">

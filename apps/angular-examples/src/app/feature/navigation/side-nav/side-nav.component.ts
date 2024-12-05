@@ -23,7 +23,6 @@ import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
 
 @Component({
   selector: 'app-side-nav',
-  standalone: true,
   imports: [
     CommonModule,
     MatSidenavModule,

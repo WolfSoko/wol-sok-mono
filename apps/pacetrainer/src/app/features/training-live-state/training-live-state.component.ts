@@ -5,7 +5,6 @@ import { TrainingRunnerState } from '../../shared/training-runner/training-runne
 import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
 
 @Component({
-  standalone: true,
   selector: 'pacetrainer-training-live-state',
   styleUrl: 'training-live-state.component.scss',
   templateUrl: 'training-live-state.component.html',

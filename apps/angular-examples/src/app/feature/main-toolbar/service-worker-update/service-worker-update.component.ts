@@ -22,7 +22,6 @@ function createViewModel(vm: Partial<ViewModel> = {}): ViewModel {
 }
 
 @Component({
-  standalone: true,
   imports: [CommonModule, MatProgressSpinnerModule, MatButtonModule],
   selector: 'app-service-worker-update',
   templateUrl: './service-worker-update.component.html',

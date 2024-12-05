@@ -18,7 +18,6 @@ import {
 } from './polynomial-regression.service';
 
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     MatCardModule,

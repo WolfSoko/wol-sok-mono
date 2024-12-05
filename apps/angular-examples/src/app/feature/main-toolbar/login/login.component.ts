@@ -14,7 +14,6 @@ import {
 } from '@wolsok/feat-api-auth';
 
 @Component({
-  standalone: true,
   imports: [CommonModule, MatButtonModule, MatTooltipModule, MatIconModule],
   selector: 'app-login',
   templateUrl: './login.component.html',

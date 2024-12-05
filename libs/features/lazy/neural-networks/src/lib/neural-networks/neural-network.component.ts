@@ -7,7 +7,6 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   selector: 'feat-lazy-neural-networks-page',
   templateUrl: './neural-network.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
   imports: [
     MatToolbarModule,
     MatTabsModule,

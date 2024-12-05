@@ -14,7 +14,6 @@ import { BrainService } from '../brain.service';
   templateUrl: './brain-settings.component.html',
   styleUrls: ['./brain-settings.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
   imports: [
     MatCardModule,
     ElevateCardDirective,

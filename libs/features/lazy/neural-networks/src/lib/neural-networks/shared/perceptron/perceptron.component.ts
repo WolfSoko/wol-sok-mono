@@ -15,7 +15,6 @@ import { Perceptron } from '../perceptron';
   templateUrl: './perceptron.component.html',
   styleUrls: ['./perceptron.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
 })
 export class PerceptronComponent implements AfterContentInit, OnDestroy {
   @Input() perceptron!: Perceptron;

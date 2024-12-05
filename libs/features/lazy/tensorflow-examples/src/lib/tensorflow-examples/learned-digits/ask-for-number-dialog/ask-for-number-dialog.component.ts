@@ -12,7 +12,6 @@ import { MatListModule } from '@angular/material/list';
 import { AskForNumberDialogData } from './ask-for-number-dialog-data';
 
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     MatInputModule,

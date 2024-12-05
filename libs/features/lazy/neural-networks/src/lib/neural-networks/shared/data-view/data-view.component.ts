@@ -28,7 +28,6 @@ interface ChangeInputs extends SimpleChanges {
   templateUrl: './data-view.component.html',
   styleUrls: ['./data-view.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
 })
 export class DataViewComponent implements AfterViewInit, OnChanges, OnDestroy {
   @ViewChild('dataCanvas', { static: true }) dataCanvas!: ElementRef;

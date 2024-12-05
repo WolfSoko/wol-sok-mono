@@ -5,7 +5,6 @@ import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'pacetrainer-title',
-  standalone: true,
   styles: [
     `
       mat-toolbar {

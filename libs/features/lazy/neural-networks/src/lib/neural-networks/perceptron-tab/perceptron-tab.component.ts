@@ -13,7 +13,6 @@ import { Point } from '../shared/point';
   templateUrl: './perceptron-tab.component.html',
   styleUrls: ['./perceptron-tab.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
   imports: [
     MatCardModule,
     ElevateCardDirective,

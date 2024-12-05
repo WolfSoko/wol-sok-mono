@@ -18,7 +18,7 @@ import { MatInputModule } from '@angular/material/input';
       width: 100%;
     }
   `,
-  standalone: true,
+
   imports: [
     DatePipe,
     ReactiveFormsModule,

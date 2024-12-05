@@ -26,7 +26,6 @@ import { WasmTestService } from './state/wasm-test.service';
 import { FibResult, WasmTestState } from './state/wasm-test.store';
 
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     MatToolbarModule,

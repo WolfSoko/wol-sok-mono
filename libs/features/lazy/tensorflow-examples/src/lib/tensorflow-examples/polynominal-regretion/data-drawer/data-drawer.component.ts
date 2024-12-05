@@ -15,7 +15,6 @@ import { Coefficients } from '../polynomial-regression.service';
 import { DataDrawerService } from './data-drawer.service';
 
 @Component({
-  standalone: true,
   imports: [CommonModule, MatCardModule, ElevateCardDirective],
   selector: 'feat-lazy-tensor-data-drawer',
   templateUrl: './data-drawer.component.html',

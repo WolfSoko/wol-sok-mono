@@ -6,7 +6,6 @@ import { GameStateQuery } from '../state/game-state.query';
 import { Player } from '../state/player.model';
 
 @Component({
-  standalone: true,
   imports: [CommonModule, MatToolbarModule],
   templateUrl: './winner.component.html',
   styleUrls: ['./winner.component.scss'],

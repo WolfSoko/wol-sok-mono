@@ -11,7 +11,6 @@ import { TrainingRunnerService } from '../../shared/training-runner/training-run
 import { CountDownCircleComponent } from '../../shared/ui/count-down-circle/count-down-circle.component';
 
 @Component({
-  standalone: true,
   selector: 'pacetrainer-sprint-training',
   templateUrl: './sprint-training.component.html',
   animations: [

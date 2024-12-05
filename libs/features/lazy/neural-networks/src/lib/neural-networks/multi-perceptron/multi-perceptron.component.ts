@@ -11,7 +11,6 @@ import { Point } from '../shared/point';
   templateUrl: './multi-perceptron.component.html',
   styleUrls: ['./multi-perceptron.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
   imports: [
     MatCardModule,
     DataViewComponent,

@@ -13,7 +13,6 @@ import { PoissonConfigService } from '../../domain/poisson-config.service';
 
 @UntilDestroy()
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     MatCardModule,

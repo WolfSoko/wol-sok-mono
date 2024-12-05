@@ -1,9 +1,10 @@
 import {
-  APP_INITIALIZER,
   EnvironmentProviders,
   ErrorHandler,
   importProvidersFrom,
   Provider,
+  inject,
+  provideAppInitializer,
 } from '@angular/core';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -40,11 +41,8 @@ export const provideCore: () => Array<Provider | EnvironmentProviders> = () => [
     provide: TraceService,
     deps: [Router],
   },
-  {
-    provide: APP_INITIALIZER,
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    useFactory: () => () => {},
-    deps: [TraceService],
-    multi: true,
-  },
+  provideAppInitializer(() => {
+    const initializerFn = (() => () => {})(inject(TraceService));
+    return initializerFn();
+  }),
 ];

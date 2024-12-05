@@ -4,7 +4,6 @@ import { RollapollaWelcomeComponent } from './rollapolla-welcome.component';
 
 @Component({
   selector: 'rap-home',
-  standalone: true,
   imports: [RollapollaWelcomeComponent],
   template: ` <rap-welcome></rap-welcome>`,
 })

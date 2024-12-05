@@ -16,7 +16,6 @@ import P5 from 'p5';
 import { InputWave } from '../../model/input-wave.model';
 
 @Component({
-  standalone: true,
   imports: [CommonModule],
   selector: 'lazy-feat-fanal-wave-canvas',
   templateUrl: './wave-canvas.component.html',

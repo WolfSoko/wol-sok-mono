@@ -19,7 +19,6 @@ interface ElevateCardChanges extends SimpleChanges {
 }
 
 @Directive({
-  standalone: true,
   selector: '[wsSharedUiElevateCard]',
 })
 export class ElevateCardDirective implements OnChanges {

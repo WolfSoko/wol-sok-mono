@@ -4,7 +4,6 @@ import { By } from '@angular/platform-browser';
 import { ElevateCardDirective } from './elevate-card.directive';
 
 @Component({
-  standalone: true,
   imports: [ElevateCardDirective],
   template: `
     <div

@@ -18,12 +18,11 @@ import P5 from 'p5';
 import { ReactionDiffCalculator } from '../calculation/reaction-diff-calculator';
 
 @Component({
-  standalone: true,
-  imports: [CommonModule, ShowFpsComponent],
-  selector: 'feat-lazy-react-diff-p5-view',
-  templateUrl: './p5-view.component.html',
-  styleUrls: ['./p5-view.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [CommonModule, ShowFpsComponent],
+    selector: 'feat-lazy-react-diff-p5-view',
+    templateUrl: './p5-view.component.html',
+    styleUrls: ['./p5-view.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class P5ViewComponent implements OnChanges, OnDestroy {
   @ViewChild('drawArea', { static: true }) drawArea!: ElementRef;

@@ -17,7 +17,6 @@ import { InputWaveComponent } from '../input-wave/input-wave.component';
 import { WaveOptionsComponent } from '../input-wave/wave-options/wave-options.component';
 
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     MatSidenavModule,

@@ -12,7 +12,6 @@ import howToBeFunnyPng from './testing-assets/how-to-be-funny.png';
 
 @Component({
   selector: 'ws-shared-ui-render-shader-2',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './render-shader-2.component.html',
   styleUrl: './render-shader-2.component.scss',

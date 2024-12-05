@@ -1,4 +1,8 @@
-import { APP_INITIALIZER, ApplicationConfig } from '@angular/core';
+import {
+  ApplicationConfig,
+  inject,
+  provideAppInitializer,
+} from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import {
   provideRouter,
@@ -12,12 +16,10 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideAnimations(),
     provideRouter(appRoutes, withEnabledBlockingInitialNavigation()),
-    {
-      provide: APP_INITIALIZER,
-      multi: true,
-      useFactory: initElfDevTools,
-      deps: [Actions],
-    },
+    provideAppInitializer(() => {
+      const initializerFn = initElfDevTools(inject(Actions));
+      return initializerFn();
+    }),
   ],
 };
 

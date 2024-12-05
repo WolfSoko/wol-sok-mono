@@ -12,7 +12,6 @@ import { InputWaveRepo } from '../state/input-wave-repo';
 import { CircleCanvasComponent } from './circle-canvas/circle-canvas.component';
 
 @Component({
-  standalone: true,
   imports: [CommonModule, MatCardModule, CircleCanvasComponent],
   selector: 'lazy-feat-fanal-circle-analysis',
   templateUrl: './circle-analysis.component.html',

@@ -23,7 +23,6 @@ interface WaveOptionsForm {
 }
 
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,

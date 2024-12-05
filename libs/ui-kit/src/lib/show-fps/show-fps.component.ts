@@ -7,7 +7,6 @@ import { MatChipsModule } from '@angular/material/chips';
   templateUrl: './show-fps.component.html',
   styleUrls: ['./show-fps.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
   imports: [CommonModule, MatChipsModule],
 })
 export class ShowFpsComponent {

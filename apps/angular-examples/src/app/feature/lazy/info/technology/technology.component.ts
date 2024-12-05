@@ -17,7 +17,6 @@ import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { Observable, switchMap, timer } from 'rxjs';
 
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     WsThanosDirective,

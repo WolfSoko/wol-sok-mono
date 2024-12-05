@@ -44,7 +44,6 @@ interface Dimensions {
 }
 
 @Component({
-  standalone: true,
   imports: [
     P5ViewComponent,
     WeightsConfigComponent,

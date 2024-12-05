@@ -5,7 +5,6 @@ import { SprintTrainingComponent } from '../features/sprint-training/sprint-trai
 
 @Component({
   selector: 'pacetrainer-home',
-  standalone: true,
   imports: [PacetrainerTitleComponent, SprintTrainingComponent],
   template: `<pacetrainer-title /> <pacetrainer-sprint-training />`,
   styles: `

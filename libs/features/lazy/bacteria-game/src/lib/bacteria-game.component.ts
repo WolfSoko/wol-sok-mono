@@ -57,7 +57,6 @@ export function createImageDataFromBacterias(
 
 @UntilDestroy()
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     MatCardModule,

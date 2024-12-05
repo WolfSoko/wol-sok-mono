@@ -24,7 +24,6 @@ import { Line } from '../../domain/model/line';
 import { skipUntil } from 'rxjs/operators';
 
 @Component({
-  standalone: true,
   imports: [CommonModule],
   selector: 'lazy-feat-poisson-app-canvas-view',
   templateUrl: './canvas-view.component.html',

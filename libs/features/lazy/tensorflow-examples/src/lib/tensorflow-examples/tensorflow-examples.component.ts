@@ -5,7 +5,6 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterModule } from '@angular/router';
 
 @Component({
-  standalone: true,
   imports: [CommonModule, MatToolbarModule, RouterModule, MatTabsModule],
   templateUrl: './tensorflow-examples.component.html',
   styleUrls: ['./tensorflow-examples.component.scss'],

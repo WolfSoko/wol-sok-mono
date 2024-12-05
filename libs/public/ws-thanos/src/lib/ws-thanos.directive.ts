@@ -7,7 +7,6 @@ import type { WsThanosOptions } from './ws-thanos.options';
 import { WsThanosService } from './ws-thanos.service';
 
 @Directive({
-  standalone: true,
   selector: '[wsThanos], ws-thanos',
   exportAs: 'thanos',
 })

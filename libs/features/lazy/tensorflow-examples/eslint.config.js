@@ -55,4 +55,10 @@ module.exports = [
     files: ['**/*.cy.{ts,js,tsx,jsx}', 'cypress/**/*.{ts,js,tsx,jsx}'],
     rules: {},
   },
+  {
+    files: ['**/*.ts'],
+    rules: {
+      '@angular-eslint/prefer-standalone': 'off',
+    },
+  },
 ];

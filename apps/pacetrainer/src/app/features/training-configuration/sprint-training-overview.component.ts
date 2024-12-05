@@ -5,7 +5,6 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
 import { SprintTrainingDataService } from './data/sprint-training-data.service';
 
 @Component({
-  standalone: true,
   selector: 'pacetrainer-sprint-training-overview',
   template: `
     @let conf = data();

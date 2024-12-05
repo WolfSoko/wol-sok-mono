@@ -32,7 +32,6 @@ interface CenterData {
 }
 
 @Component({
-  standalone: true,
   imports: [CommonModule],
   selector: 'lazy-feat-fanal-circle-canvas',
   templateUrl: './circle-canvas.component.html',

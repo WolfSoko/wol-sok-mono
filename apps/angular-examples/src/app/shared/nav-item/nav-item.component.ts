@@ -5,7 +5,6 @@ import { MatListModule } from '@angular/material/list';
 import { RouterModule } from '@angular/router';
 
 @Component({
-  standalone: true,
   imports: [CommonModule, RouterModule, MatListModule, MatIconModule],
   selector: 'app-nav-item',
   templateUrl: './nav-item.component.html',

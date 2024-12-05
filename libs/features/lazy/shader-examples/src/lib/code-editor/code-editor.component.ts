@@ -9,7 +9,6 @@ import {
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
 
 @Component({
-  standalone: true,
   imports: [CommonModule, AceEditorModule],
   selector: 'lzy-ft-shad-ex-code-editor',
   templateUrl: './code-editor.component.html',

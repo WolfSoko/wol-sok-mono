@@ -10,7 +10,6 @@ import { debounceTime, distinctUntilChanged, Observable, Subject } from 'rxjs';
 import { ResizedEvent } from './resized-event';
 
 @Directive({
-  standalone: true,
   selector: '[wsSharedUiElemResized]',
 })
 export class ElemResizedDirective implements AfterViewInit, OnDestroy {

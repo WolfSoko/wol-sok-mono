@@ -1,4 +1,4 @@
-import { withModuleFederation } from '@nx/angular/module-federation';
+import { withModuleFederation } from '@nx/module-federation/angular';
 import { merge } from 'webpack-merge';
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import { withVersionHandling } from '../../tools/version-handling/version-webpack.config';

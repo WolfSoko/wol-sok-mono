@@ -18,7 +18,6 @@ import { InputWaveService } from '../state/input-wave.service';
 import { WaveCanvasComponent } from './wave-canvas/wave-canvas.component';
 
 @Component({
-  standalone: true,
   selector: 'lazy-feat-fanal-input-wave',
   templateUrl: './input-wave.component.html',
   styleUrls: ['./input-wave.component.scss'],

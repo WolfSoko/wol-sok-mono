@@ -19,7 +19,6 @@ import { SimControlsComponent } from '../sim-controls/sim-controls.component';
 import { CanvasViewComponent } from '../canvas-view/canvas-view.component';
 
 @Component({
-  standalone: true,
   imports: [
     CommonModule,
     MatCardModule,
