@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.68.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.68.0-non-cdk-deployed...v4.68.1) (2024-12-05)
+
+
+### Chore
+
+* **deps:** update dependency @module-federation/enhanced to v0.8.1 ([15db146](https://github.com/WolfSoko/wol-sok-mono/commit/15db146816652bc46c890a84688b3c987a0f2f58))
+* **deps:** update nx monorepo to v20.2.0 ([cb346fc](https://github.com/WolfSoko/wol-sok-mono/commit/cb346fcc7ccb5d886130adc3c97852d87c87a90e))
+
 ## [4.68.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.21-non-cdk-deployed...v4.68.0) (2024-12-05)
 
 
