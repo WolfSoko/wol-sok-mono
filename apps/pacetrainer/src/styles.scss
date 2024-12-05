@@ -24,6 +24,8 @@ $dark-theme: mat.define-theme(
 
 html {
   @include mat.core-theme($theme);
+  @include mat.app-background();
+  @include mat.toolbar-theme($theme);
   @include mat.button-theme($theme);
   @include mat.form-field-theme($theme);
   @include mat.input-theme($theme);
@@ -39,6 +41,7 @@ html {
     // Use the `-color` mixins to only apply color styles without reapplying the same
     // typography and density styles.
     @include mat.core-color($dark-theme);
+    @include mat.toolbar-color($dark-theme);
     @include mat.button-color($dark-theme);
     @include mat.form-field-color($dark-theme);
     @include mat.input-color($dark-theme);
