@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.67.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.20...v4.67.21) (2024-12-05)
+
+
+### Chore
+
+* **deps:** update nx monorepo ([6513663](https://github.com/WolfSoko/wol-sok-mono/commit/65136637667d02121944c8576c422ff93f5a3402))
+
 ## [4.67.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.19...v4.67.20) (2024-12-05)
 
 
