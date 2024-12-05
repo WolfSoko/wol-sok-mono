@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.67.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.18...v4.67.19) (2024-12-05)
+
+
+### Bug Fixes
+
+* **pacetrainer:** 🐛 angular material theming includes ([910f1c9](https://github.com/WolfSoko/wol-sok-mono/commit/910f1c96d15172f13946ff3c509d0f517a269cdf))
+
 ## [4.67.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.17-non-cdk-deployed...v4.67.18) (2024-12-05)
 
 
