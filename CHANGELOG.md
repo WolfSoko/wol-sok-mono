@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.67.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.17-non-cdk-deployed...v4.67.18) (2024-12-05)
+
+
+### Bug Fixes
+
+* **rollapolla-analog:** 🐛 fix zoneless ssr rendering ([533a950](https://github.com/WolfSoko/wol-sok-mono/commit/533a95082bb05dbb1d8a3435588f67744670eaf7))
+
 ## [4.67.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.16-non-cdk-deployed...v4.67.17) (2024-12-05)
 
 
