@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.67.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.11-non-cdk-deployed...v4.67.12) (2024-12-05)
+
+
+### Chore
+
+* **deps:** update dependency firebase-tools to v13.28.0 ([48342ca](https://github.com/WolfSoko/wol-sok-mono/commit/48342ca0b15fed269c1a5f2ba5c40286c7cc3d29))
+
 ## [4.67.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.10-non-cdk-deployed...v4.67.11) (2024-12-04)
 
 
