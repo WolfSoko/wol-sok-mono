@@ -15,7 +15,11 @@ import {
   provideFirestore,
 } from '@angular/fire/firestore';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
-import { provideClientHydration } from '@angular/platform-browser';
+import {
+  provideClientHydration,
+  withEventReplay,
+  withIncrementalHydration,
+} from '@angular/platform-browser';
 import { withEnabledBlockingInitialNavigation } from '@angular/router';
 import { environment } from '../environments/environment';
 import { providePortsAndAdapter } from './provide-ports-and.adapter';
@@ -24,7 +28,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideExperimentalZonelessChangeDetection(),
     provideFileRouter(withEnabledBlockingInitialNavigation()),
-    provideClientHydration(),
+    provideClientHydration(withEventReplay(), withIncrementalHydration()),
     provideHttpClient(withFetch()),
     {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,

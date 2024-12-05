@@ -50,7 +50,7 @@ export class RenderShaderComponent
   @Input() showFps = false;
   @Input() canvasWidth!: number;
   @Input() canvasHeight!: number;
-  // eslint-disable-next-line @angular-eslint/no-output-native
+
   @Output() error: EventEmitter<unknown> = new EventEmitter();
   @ViewChild('canvasContainer', { static: true })
   private canvasContainer!: ElementRef<HTMLDivElement>;

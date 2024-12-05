@@ -17,8 +17,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     provideRouter(appRoutes, withEnabledBlockingInitialNavigation()),
     provideAppInitializer(() => {
-      const initializerFn = initElfDevTools(inject(Actions));
-      return initializerFn();
+      initElfDevTools(inject(Actions));
     }),
   ],
 };

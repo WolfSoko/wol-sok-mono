@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormField } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { CreatePollComponent } from '../core/create-poll/create-poll.component';
 import { NotesComponent } from '../core/notes/notes.component';
 
@@ -22,6 +23,7 @@ import { NotesComponent } from '../core/notes/notes.component';
     MatCardModule,
     NotesComponent,
     CreatePollComponent,
+    MatProgressSpinner,
   ],
   styleUrl: './rollapolla-welcome.component.scss',
   templateUrl: './rollapolla-welcome.component.html',

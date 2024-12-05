@@ -26,7 +26,15 @@
     </mat-card-content>
   </mat-card>
   <br />
-  <rap-create-poll />
+  @defer (hydrate on interaction) {
+    <rap-create-poll />
+  } @placeholder {
+    <mat-spinner />
+  }
   <br />
-  <rap-notes />
+  @defer (hydrate on interaction) {
+    <rap-notes />
+  } @placeholder {
+    <mat-spinner />
+  }
 </main>

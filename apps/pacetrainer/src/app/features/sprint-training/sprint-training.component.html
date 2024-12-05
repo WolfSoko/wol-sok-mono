@@ -8,7 +8,7 @@
     <div class="configurator">
       @if (state !== "stopped"; as isStopped) {
         @if (interval) {
-          @defer (on viewport) {
+          @defer (hydrate on interaction) {
             <pacetrainer-countdown-circle
               @myInsertRemoveTrigger
               [duration]="interval.duration"
@@ -24,7 +24,7 @@
         }
       }
       @if (state === "stopped") {
-        @defer (on viewport) {
+        @defer (hydrate on interaction) {
           <pacetrainer-sprint-form @myInsertRemoveTrigger />
         } @placeholder {
           <mat-spinner />
@@ -63,7 +63,7 @@
 <mat-card>
   <mat-card-content>
     <div class="overview">
-      @defer (on viewport) {
+      @defer (hydrate on interaction) {
         <pacetrainer-sprint-training-overview [open]="state === 'stopped'" />
       } @placeholder {
         <mat-spinner />

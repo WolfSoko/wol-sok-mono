@@ -7,7 +7,7 @@
   "peerDependencies": {
     "@analogjs/router": "1.10.1",
     "@analogjs/platform": "1.10.1",
-    "@angular/fire": "18.0.1",
+    "@angular/fire": "19.0.0-rc.0",
     "@angular/core": "19.0.3",
     "@angular/common": "19.0.3",
     "@angular/platform-browser": "19.0.3",

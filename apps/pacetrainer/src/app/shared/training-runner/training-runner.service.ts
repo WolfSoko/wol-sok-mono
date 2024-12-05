@@ -16,12 +16,9 @@ export class TrainingRunnerService {
   trainingState: WritableSignal<TrainingRunnerState>;
   constructor() {
     this.trainingState = signal(this.repo.load() ?? 'stopped');
-    effect(
-      () => {
-        this.repo.save(this.trainingState());
-      },
-      { allowSignalWrites: true }
-    );
+    effect(() => {
+      this.repo.save(this.trainingState());
+    });
   }
 
   toggleTraining(): void {

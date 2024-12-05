@@ -27,23 +27,20 @@ export class TrainingEventLogService {
   constructor() {
     this.trainingEventLog = signal(this.logRepository.load() ?? []);
 
-    effect(
-      () => {
-        const state = this.runnerService.trainingState();
-        switch (state) {
-          case 'paused':
-            this.pauseTraining();
-            break;
-          case 'running':
-            this.startTraining();
-            break;
-          case 'stopped':
-            this.stopTraining();
-            break;
-        }
-      },
-      { allowSignalWrites: true }
-    );
+    effect(() => {
+      const state = this.runnerService.trainingState();
+      switch (state) {
+        case 'paused':
+          this.pauseTraining();
+          break;
+        case 'running':
+          this.startTraining();
+          break;
+        case 'stopped':
+          this.stopTraining();
+          break;
+      }
+    });
 
     effect(() => this.logRepository.save(this.trainingEventLog()));
   }

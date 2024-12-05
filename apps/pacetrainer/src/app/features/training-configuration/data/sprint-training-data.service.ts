@@ -35,7 +35,7 @@ export class SprintTrainingDataService {
 
   constructor() {
     this.loadFromRepository();
-    effect(() => this.saveToRepository(), { allowSignalWrites: true });
+    effect(() => this.saveToRepository());
   }
 
   private saveToRepository(): void {

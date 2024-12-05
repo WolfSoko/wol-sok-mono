@@ -67,55 +67,46 @@ export class TrainingProgressService {
   constructor() {
     this.initElapsedTiming();
 
-    effect(
-      () => {
-        this.initProgressData(this.sprintTrainingDataService.data());
-      },
-      { allowSignalWrites: true }
-    );
+    effect(() => {
+      this.initProgressData(this.sprintTrainingDataService.data());
+    });
 
-    effect(
-      () => {
-        const state = this.runnerService.trainingState();
-        switch (state) {
-          case 'paused':
-            untracked(this.pauseTraining);
-            break;
-          case 'running':
-            untracked(this.startTraining);
-            break;
-          case 'stopped':
-            untracked(this.stopTraining);
-            break;
-        }
-      },
-      { allowSignalWrites: true }
-    );
+    effect(() => {
+      const state = this.runnerService.trainingState();
+      switch (state) {
+        case 'paused':
+          untracked(this.pauseTraining);
+          break;
+        case 'running':
+          untracked(this.startTraining);
+          break;
+        case 'stopped':
+          untracked(this.stopTraining);
+          break;
+      }
+    });
     this.registerLogCurrentIntervalEffect();
   }
 
   private initElapsedTiming(): void {
     this.elapsed = signal(this.progressRepo.load() ?? milliseconds(0));
 
-    effect(
-      () => {
-        // every tick this function is called
-        this.currentTime();
-        const state = this.runnerService.trainingState();
+    effect(() => {
+      // every tick this function is called
+      this.currentTime();
+      const state = this.runnerService.trainingState();
 
-        switch (state) {
-          case 'paused':
-            break;
-          case 'stopped':
-            this.elapsed.set(milliseconds(0));
-            break;
-          case 'running':
-            this.elapsed.update((old) => add(old, PRECISION_PERIOD_MS));
-            break;
-        }
-      },
-      { allowSignalWrites: true }
-    );
+      switch (state) {
+        case 'paused':
+          break;
+        case 'stopped':
+          this.elapsed.set(milliseconds(0));
+          break;
+        case 'running':
+          this.elapsed.update((old) => add(old, PRECISION_PERIOD_MS));
+          break;
+      }
+    });
 
     effect(() => this.progressRepo.save(this.elapsed()));
   }
@@ -128,18 +119,15 @@ export class TrainingProgressService {
     );
     const currentIntervalForLogging = toSignal(currentIntervalForLogging$);
 
-    effect(
-      () => {
-        const currentInterval = currentIntervalForLogging();
-        if (currentInterval == null) {
-          return;
-        }
-        this.eventLogService.pushEntry(
-          intervalStateChange(currentInterval.name, currentInterval)
-        );
-      },
-      { allowSignalWrites: true }
-    );
+    effect(() => {
+      const currentInterval = currentIntervalForLogging();
+      if (currentInterval == null) {
+        return;
+      }
+      this.eventLogService.pushEntry(
+        intervalStateChange(currentInterval.name, currentInterval)
+      );
+    });
   }
 
   initProgressData(data: SprintTrainingData): void {

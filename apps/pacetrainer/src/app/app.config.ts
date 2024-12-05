@@ -8,7 +8,11 @@ import {
   ApplicationConfig,
   provideExperimentalZonelessChangeDetection,
 } from '@angular/core';
-import { provideClientHydration } from '@angular/platform-browser';
+import {
+  provideClientHydration,
+  withEventReplay,
+  withIncrementalHydration,
+} from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 
 export const appConfig: ApplicationConfig = {
@@ -16,7 +20,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     provideExperimentalZonelessChangeDetection(),
     provideFileRouter(),
-    provideClientHydration(),
+    provideClientHydration(withEventReplay(), withIncrementalHydration()),
     provideHttpClient(
       withFetch(),
       withInterceptors([requestContextInterceptor])

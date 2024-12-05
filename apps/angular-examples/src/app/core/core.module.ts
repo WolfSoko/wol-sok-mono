@@ -42,7 +42,6 @@ export const provideCore: () => Array<Provider | EnvironmentProviders> = () => [
     deps: [Router],
   },
   provideAppInitializer(() => {
-    const initializerFn = (() => () => {})(inject(TraceService));
-    return initializerFn();
+    inject(TraceService);
   }),
 ];
