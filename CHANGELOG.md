@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.68.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.21-non-cdk-deployed...v4.68.0) (2024-12-05)
+
+
+### Features
+
+* ✨ improve hydration ([fe4d80b](https://github.com/WolfSoko/wol-sok-mono/commit/fe4d80b9ed4875f143eed68ca18025f98d5f96c8))
+* ✨ remove empty line ([f2f0e93](https://github.com/WolfSoko/wol-sok-mono/commit/f2f0e9302d8b6d9c627175389480e71dfdd5509e))
+
+
+### Code style
+
+* 🎨 formatted files ([189a428](https://github.com/WolfSoko/wol-sok-mono/commit/189a4287765fe99d0ea3711f12b7f0d35731142f))
+
 ## [4.67.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.20...v4.67.21) (2024-12-05)
 
 
