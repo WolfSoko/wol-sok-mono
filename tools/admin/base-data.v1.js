@@ -1,7 +1,8 @@
 
 /**
  *
- * @param: db: admin.firestore.Firestore a firestore db
+ * @param db
+ * @param defaultShaders
  */
 async function initBaseData(db, defaultShaders) {
   const defaultShadersCol = db.collection('angularExamples/shaderExamples/defaultShaders');
