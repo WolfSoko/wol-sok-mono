@@ -1,9 +1,9 @@
 import { isPlatformServer } from '@angular/common';
 import {
   effect,
-  ExperimentalPendingTasks,
   inject,
   Injectable,
+  PendingTasks,
   PLATFORM_ID,
   Signal,
 } from '@angular/core';
@@ -40,7 +40,7 @@ export class NotesRepoAdapter extends NotesRepoPort {
     let finishRendering: () => void;
     const isServer = isPlatformServer(inject(PLATFORM_ID));
     if (isServer) {
-      finishRendering = inject(ExperimentalPendingTasks).add();
+      finishRendering = inject(PendingTasks).add();
     }
     const notes$ = collectionData(
       query(this.notesCol, orderBy('createdAt', 'desc'), limit(20))
