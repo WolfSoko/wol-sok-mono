@@ -162,6 +162,9 @@ export class TrainingProgressService {
 
   currentInterval: Signal<null | CurrentIntervalDataModel> = computed(() => {
     const progressData = this.trainingProgressData();
+    const sprintData = this.sprintTrainingDataService.data();
+    const totalRepetitionCount = sprintData.repetitions;
+
     if (!progressData.length) {
       return null;
     }
@@ -185,6 +188,7 @@ export class TrainingProgressService {
           duration,
           leftDuration: subtract(duration, elapsedDuration),
           repetitionCount,
+          totalRepetitionCount,
           index: i,
           isLast: i === progressData.length - 1,
           leftTotalDuration: subtract(totalTrainingLength, elapsedTrainingTime),
@@ -206,6 +210,7 @@ export class TrainingProgressService {
       elapsedDuration: lastDuration,
       leftDuration: milliseconds(0),
       repetitionCount,
+      totalRepetitionCount,
       index: progressData.length - 1,
       isLast: true,
       leftTotalDuration: milliseconds(0),

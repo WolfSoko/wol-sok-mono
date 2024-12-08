@@ -9,6 +9,7 @@ export type CurrentIntervalDataModel = {
   leftDuration: Milliseconds;
   elapsedDuration: Milliseconds;
   repetitionCount: number;
+  totalRepetitionCount: number;
   leftTotalDuration: Milliseconds;
   elapsedTrainingTime: Milliseconds;
 };
