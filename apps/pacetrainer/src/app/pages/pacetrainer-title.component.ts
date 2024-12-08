@@ -16,16 +16,18 @@ import { RouterLink } from '@angular/router';
     `,
   ],
   template: `
-    <mat-toolbar color="primary">
-      <span role="heading" class="title mat-title-large">
-        <a routerLink="/"
-          ><img src="/android-chrome-192x192.png" height="32px" width="32px"
-        /></a>
-        Pace-Trainer
-      </span>
-      <span class="mat-subtitle-2">Dein digitaler Laufcoach.</span>
-    </mat-toolbar>
-    <mat-divider />
+    @defer (hydrate on interaction) {
+      <mat-toolbar color="primary">
+        <span role="heading" class="title mat-title-large">
+          <a routerLink="/"
+            ><img src="/android-chrome-192x192.png" height="32px" width="32px"
+          /></a>
+          Pace-Trainer
+        </span>
+        <span class="mat-subtitle-2">Dein digitaler Laufcoach.</span>
+      </mat-toolbar>
+      <mat-divider />
+    }
   `,
   imports: [MatToolbarModule, MatDivider, RouterLink],
 })

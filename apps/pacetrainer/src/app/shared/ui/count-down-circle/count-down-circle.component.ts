@@ -13,9 +13,10 @@ export class CountDownCircleComponent {
   duration = input.required<Milliseconds>(); // milliseconds
 
   svgArc = computed(() => {
-    const timeLeft: number = this.timeLeft() ?? this.duration();
-    const rawFraction = timeLeft / this.duration();
-    const fraction = rawFraction - (1 / this.duration()) * (1 - rawFraction);
+    const timeLeft: number = this.timeLeft();
+    const duration: Milliseconds = this.duration();
+    const rawFraction = timeLeft / duration;
+    const fraction = rawFraction - (1 / duration) * (1 - rawFraction);
     return describeArc(50, 50, 45, -90, 360 * fraction - 90);
   });
 }
@@ -46,7 +47,7 @@ function describeArc(
 
   const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
 
-  const d = [
+  return [
     'M',
     start.x,
     start.y,
@@ -59,6 +60,4 @@ function describeArc(
     end.x,
     end.y,
   ].join(' ');
-
-  return d;
 }

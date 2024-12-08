@@ -6,8 +6,8 @@
   >
     <g class="base-timer-circle">
       <circle
-        [class.base-timer-completed]="(this.timeLeft() ?? 1) <= 1000"
-        [class.base-timer-stroke]="(this.timeLeft() ?? 1) > 1000"
+        [class.base-timer-completed]="this.timeLeft() <= 1000"
+        [class.base-timer-stroke]="this.timeLeft() > 1000"
         stroke-width="1"
         stroke="#88b462"
         cx="50"

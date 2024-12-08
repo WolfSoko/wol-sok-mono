@@ -1,4 +1,4 @@
-@defer (hydrate on interaction) {
+@defer (hydrate on viewport) {
   <mat-card data-qa="sprint-training">
     @let state = trainingState();
     @let interval = currentInterval();
@@ -60,4 +60,6 @@
       </div>
     </mat-card-content>
   </mat-card>
+} @placeholder {
+  <mat-spinner></mat-spinner>
 }
