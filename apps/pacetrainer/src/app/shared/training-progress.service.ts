@@ -3,6 +3,7 @@ import {
   effect,
   inject,
   Injectable,
+  PendingTasks,
   Signal,
   signal,
   untracked,
@@ -43,6 +44,7 @@ export class TrainingProgressService {
   private readonly sprintTrainingDataService = inject(
     SprintTrainingDataService
   );
+  private pendingTask = inject(PendingTasks);
 
   private readonly progressRepo = inject(
     RepositoryFactory
@@ -67,8 +69,10 @@ export class TrainingProgressService {
   constructor() {
     this.initElapsedTiming();
 
-    effect(() => {
+    effect(async () => {
+      const complete = this.pendingTask.add();
       this.initProgressData(this.sprintTrainingDataService.data());
+      complete();
     });
 
     effect(() => {
