@@ -1,14 +1,13 @@
 @defer (hydrate on viewport) {
   <mat-card data-qa="sprint-training">
     @let state = trainingState();
-    @let interval = currentInterval();
     <mat-card-header>
       <mat-card-title>Sprint Training</mat-card-title>
     </mat-card-header>
     <mat-card-content>
       <div class="configurator">
         @if (state !== "stopped"; as isStopped) {
-          @if (interval) {
+          @if (currentInterval(); as interval) {
             <pacetrainer-countdown-circle
               @myInsertRemoveTrigger
               [duration]="interval.duration"
