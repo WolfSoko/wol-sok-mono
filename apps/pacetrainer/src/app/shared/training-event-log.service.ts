@@ -2,6 +2,7 @@ import {
   effect,
   inject,
   Injectable,
+  PendingTasks,
   signal,
   WritableSignal,
 } from '@angular/core';
@@ -22,12 +23,13 @@ export class TrainingEventLogService {
 
   private readonly runnerService = inject(TrainingRunnerService);
 
-  private trainingEventLog: WritableSignal<TrainingEventLog>;
+  private readonly trainingEventLog: WritableSignal<TrainingEventLog>;
 
   constructor() {
     this.trainingEventLog = signal(this.logRepository.load() ?? []);
 
     effect(() => {
+      console.log('TrainingEventLogService effect');
       const state = this.runnerService.trainingState();
       switch (state) {
         case 'paused':
@@ -42,7 +44,10 @@ export class TrainingEventLogService {
       }
     });
 
-    effect(() => this.logRepository.save(this.trainingEventLog()));
+    effect(() => {
+      console.log('save log');
+      return this.logRepository.save(this.trainingEventLog());
+    });
   }
 
   private startTraining(): void {

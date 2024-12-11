@@ -3,16 +3,24 @@ import {
   effect,
   inject,
   Injectable,
-  PendingTasks,
+  Injector,
+  linkedSignal,
   Signal,
   signal,
   untracked,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { concat, defer, distinctUntilChanged, interval, map, of } from 'rxjs';
+import {
+  distinctUntilChanged,
+  filter,
+  interval,
+  map,
+  pairwise,
+  takeUntil,
+  tap,
+} from 'rxjs';
 import { SprintTrainingDataService } from '../features/training-configuration/data/sprint-training-data.service';
 import { SprintTrainingData } from '../features/training-configuration/data/sprint-training.data';
-import { TrainingRunnerService } from './training-runner/training-runner.service';
 import {
   add,
   Milliseconds,
@@ -26,6 +34,7 @@ import { CurrentIntervalDataModel } from './model/training/current-interval-data
 import { TrainingName } from './model/training/training-name';
 import { RepositoryFactory } from './repository/repository.factory';
 import { TrainingEventLogService } from './training-event-log.service';
+import { TrainingRunnerService } from './training-runner/training-runner.service';
 
 const PRECISION_PERIOD_MS = milliseconds(100);
 const COUNTDOWN_TIME = sToMs(seconds(5));
@@ -44,87 +53,63 @@ export class TrainingProgressService {
   private readonly sprintTrainingDataService = inject(
     SprintTrainingDataService
   );
-  private pendingTask = inject(PendingTasks);
+
+  private injector = inject(Injector);
 
   private readonly progressRepo = inject(
     RepositoryFactory
-  ).create<Milliseconds>('ellapsedTrainingTime');
+  ).create<Milliseconds>('elapsedTrainingTime');
 
   private readonly runnerService = inject(TrainingRunnerService);
 
   private readonly eventLogService = inject(TrainingEventLogService);
   private readonly trainingProgressData = signal<TrainingData>([]);
 
-  currentTime = toSignal(
-    concat(
-      defer(() => of(new Date())),
-      interval(PRECISION_PERIOD_MS)
-    ).pipe(map(() => new Date())),
-    {
-      requireSync: true,
-    }
+  private readonly deltaTime$ = interval(PRECISION_PERIOD_MS).pipe(
+    map(() => milliseconds(new Date().getTime())),
+    pairwise(),
+    map(([first, second]) => subtract(second, first))
   );
-  elapsed = signal(milliseconds(0));
+
+  elapsed = signal(this.progressRepo.load() ?? milliseconds(0));
 
   constructor() {
-    this.initElapsedTiming();
+    effect(() => {
+      console.log('Progress Service effect save elapsed');
+      return this.progressRepo.save(this.elapsed());
+    });
 
     effect(async () => {
-      const complete = this.pendingTask.add();
+      console.log('ProgressService effect1');
       this.initProgressData(this.sprintTrainingDataService.data());
-      complete();
     });
 
     effect(() => {
+      console.log('ProgressService effect2');
       const state = this.runnerService.trainingState();
       switch (state) {
         case 'paused':
-          untracked(this.pauseTraining);
+          untracked(() => this.pauseTraining());
           break;
         case 'running':
-          untracked(this.startTraining);
+          untracked(() => this.startTraining());
           break;
         case 'stopped':
-          untracked(this.stopTraining);
+          untracked(() => this.stopTraining());
           break;
       }
     });
     this.registerLogCurrentIntervalEffect();
   }
-
-  private initElapsedTiming(): void {
-    this.elapsed = signal(this.progressRepo.load() ?? milliseconds(0));
-
-    effect(() => {
-      // every tick this function is called
-      this.currentTime();
-      const state = this.runnerService.trainingState();
-
-      switch (state) {
-        case 'paused':
-          break;
-        case 'stopped':
-          this.elapsed.set(milliseconds(0));
-          break;
-        case 'running':
-          this.elapsed.update((old) => add(old, PRECISION_PERIOD_MS));
-          break;
-      }
-    });
-
-    effect(() => this.progressRepo.save(this.elapsed()));
-  }
-
   private registerLogCurrentIntervalEffect(): void {
-    const currentIntervalForLogging$ = toObservable(this.currentInterval).pipe(
-      distinctUntilChanged(
-        (previous, current) => previous?.index === current?.index
-      )
+    const currentIntervalForLogging = linkedSignal(
+      () => this.currentInterval(),
+      { equal: (a, b) => a?.index === b?.index }
     );
-    const currentIntervalForLogging = toSignal(currentIntervalForLogging$);
 
     effect(() => {
       const currentInterval = currentIntervalForLogging();
+      console.log('Current Interval for Logging', currentInterval);
       if (currentInterval == null) {
         return;
       }
@@ -154,14 +139,30 @@ export class TrainingProgressService {
   });
 
   private startTraining(): void {
-    // to be implemented
+    this.deltaTime$
+      .pipe(
+        tap((dT) => console.log('DT:' + dT)),
+        filter(() => this.runnerService.trainingState() === 'running'),
+        takeUntil(
+          toObservable(this.runnerService.trainingState, {
+            injector: this.injector,
+          }).pipe(
+            tap((state) => console.log('toObservable', state)),
+            filter((state) => state !== 'running')
+          )
+        )
+      )
+      .subscribe((deltaT) => {
+        console.log('Delta Time', deltaT);
+        this.elapsed.update((old) => add(old, deltaT));
+      });
   }
 
   private pauseTraining(): void {
     // to be implemented
   }
   private stopTraining(): void {
-    // to be implemented
+    this.elapsed.set(milliseconds(0));
   }
 
   currentInterval: Signal<null | CurrentIntervalDataModel> = computed(() => {

@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatListModule } from '@angular/material/list';
 import { CurrentIntervalDataModel } from '../../shared/model/training/current-interval-data.model';
 import { TrainingRunnerState } from '../../shared/training-runner/training-runner.state';
@@ -9,6 +9,7 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
   styleUrl: 'training-live-state.component.scss',
   templateUrl: 'training-live-state.component.html',
   imports: [MatListModule, TrainingTimePipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrainingLiveStateComponent {
   trainingState = input.required<TrainingRunnerState>();

@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDivider } from '@angular/material/divider';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink } from '@angular/router';
 
@@ -27,8 +28,11 @@ import { RouterLink } from '@angular/router';
         <span class="mat-subtitle-2">Dein digitaler Laufcoach.</span>
       </mat-toolbar>
       <mat-divider />
+    } @placeholder {
+      <mat-spinner></mat-spinner>
     }
   `,
-  imports: [MatToolbarModule, MatDivider, RouterLink],
+  imports: [MatToolbarModule, MatDivider, RouterLink, MatProgressSpinnerModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PacetrainerTitleComponent {}

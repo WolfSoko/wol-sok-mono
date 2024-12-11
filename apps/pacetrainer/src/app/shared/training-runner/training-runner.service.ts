@@ -13,10 +13,12 @@ export class TrainingRunnerService {
   repo = inject(RepositoryFactory).create<TrainingRunnerState>(
     'trainingRunnerState'
   );
-  trainingState: WritableSignal<TrainingRunnerState>;
+
+  trainingState = signal(this.repo.load() ?? 'stopped');
+
   constructor() {
-    this.trainingState = signal(this.repo.load() ?? 'stopped');
     effect(() => {
+      console.log('save trainingState', this.trainingState());
       this.repo.save(this.trainingState());
     });
   }

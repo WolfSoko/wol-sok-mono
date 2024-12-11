@@ -1,4 +1,9 @@
-import { Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 import { Milliseconds } from '../../model/constants/time-utils';
 import { TrainingTimePipe } from '../training-time.pipe';
 
@@ -7,6 +12,7 @@ import { TrainingTimePipe } from '../training-time.pipe';
   templateUrl: './count-down-circle.component.html',
   styleUrl: './count-down-circle.component.scss',
   imports: [TrainingTimePipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CountDownCircleComponent {
   timeLeft = input.required<Milliseconds>(); // milliseconds

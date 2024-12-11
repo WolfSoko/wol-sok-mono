@@ -35,7 +35,10 @@ export class SprintTrainingDataService {
 
   constructor() {
     this.loadFromRepository();
-    effect(() => this.saveToRepository());
+    effect(() => {
+      console.log('Save data');
+      this.saveToRepository();
+    });
   }
 
   private saveToRepository(): void {

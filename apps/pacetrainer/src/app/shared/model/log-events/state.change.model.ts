@@ -43,6 +43,7 @@ export function intervalStateChange(
     leftTotalDuration,
     elapsedTrainingTime,
     repetitionCount,
+    totalRepetitionCount,
   } = params;
   return {
     to,
@@ -56,6 +57,7 @@ export function intervalStateChange(
       leftTotalDuration,
       elapsedTrainingTime,
       repetitionCount,
+      totalRepetitionCount,
     },
   };
 }

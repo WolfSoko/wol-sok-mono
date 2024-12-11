@@ -1,4 +1,9 @@
-import { Component, inject, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+} from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatList, MatListItem } from '@angular/material/list';
 import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
@@ -34,6 +39,7 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
   `,
   styles: [``],
   imports: [MatExpansionModule, MatList, MatListItem, TrainingTimePipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SprintTrainingOverviewComponent {
   open = input<boolean>(false);

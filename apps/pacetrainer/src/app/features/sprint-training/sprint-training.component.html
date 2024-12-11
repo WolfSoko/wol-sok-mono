@@ -1,12 +1,12 @@
-@defer (hydrate on viewport) {
-  <mat-card data-qa="sprint-training">
-    @let state = trainingState();
-    <mat-card-header>
-      <mat-card-title>Sprint Training</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <div class="configurator">
-        @if (state !== "stopped"; as isStopped) {
+<mat-card data-qa="sprint-training">
+  @let state = trainingState();
+  <mat-card-header>
+    <mat-card-title>Sprint Training</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (state !== "stopped"; as isStopped) {
+      @defer (hydrate on idle) {
+        <div class="runner">
           @if (currentInterval(); as interval) {
             <pacetrainer-countdown-circle
               @myInsertRemoveTrigger
@@ -18,47 +18,49 @@
               [trainingState]="state"
             />
           }
-        }
-        @if (state === "stopped") {
-          <pacetrainer-sprint-form @myInsertRemoveTrigger />
-        }
+        </div>
+      } @placeholder {
+        <mat-spinner></mat-spinner>
+      }
+    }
+    @if (state === "stopped") {
+      <div class="configurator">
+        <pacetrainer-sprint-form @myInsertRemoveTrigger />
       </div>
-    </mat-card-content>
-    <mat-card-actions class="ctas">
-      <button
-        mat-raised-button
-        (click)="toggleTraining()"
-        data-qa="toggle-training"
-      >
-        @switch (state) {
-          @case ("stopped") {
-            Go Go Go
-          }
-          @case ("paused") {
-            Weiter
-          }
-          @default {
-            Pausieren
-          }
+    }
+  </mat-card-content>
+  <mat-card-actions class="ctas">
+    <button
+      mat-raised-button
+      (click)="toggleTraining()"
+      data-qa="toggle-training"
+    >
+      @switch (state) {
+        @case ("stopped") {
+          Go Go Go
         }
-      </button>
-      <button
-        mat-raised-button
-        [disabled]="state === 'stopped'"
-        (click)="endTraining()"
-        data-qa="stop-training"
-      >
-        Training beenden
-      </button>
-    </mat-card-actions>
-  </mat-card>
-  <mat-card>
-    <mat-card-content>
-      <div class="overview">
-        <pacetrainer-sprint-training-overview [open]="state === 'stopped'" />
-      </div>
-    </mat-card-content>
-  </mat-card>
-} @placeholder {
-  <mat-spinner></mat-spinner>
-}
+        @case ("paused") {
+          Weiter
+        }
+        @case ("running") {
+          Pausieren
+        }
+      }
+    </button>
+    <button
+      mat-raised-button
+      [disabled]="state === 'stopped'"
+      (click)="endTraining()"
+      data-qa="stop-training"
+    >
+      Training beenden
+    </button>
+  </mat-card-actions>
+</mat-card>
+<mat-card>
+  <mat-card-content>
+    <div class="overview">
+      <pacetrainer-sprint-training-overview [open]="state === 'stopped'" />
+    </div>
+  </mat-card-content>
+</mat-card>

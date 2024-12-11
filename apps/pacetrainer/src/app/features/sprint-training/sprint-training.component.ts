@@ -1,14 +1,14 @@
 import { animate, style, transition, trigger } from '@angular/animations';
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { SprintFormComponent } from '../training-configuration/sprint-training-form.component';
-import { SprintTrainingOverviewComponent } from '../training-configuration/sprint-training-overview.component';
-import { TrainingLiveStateComponent } from '../training-live-state/training-live-state.component';
 import { TrainingProgressService } from '../../shared/training-progress.service';
 import { TrainingRunnerService } from '../../shared/training-runner/training-runner.service';
 import { CountDownCircleComponent } from '../../shared/ui/count-down-circle/count-down-circle.component';
+import { SprintFormComponent } from '../training-configuration/sprint-training-form.component';
+import { SprintTrainingOverviewComponent } from '../training-configuration/sprint-training-overview.component';
+import { TrainingLiveStateComponent } from '../training-live-state/training-live-state.component';
 
 @Component({
   selector: 'pacetrainer-sprint-training',
@@ -35,6 +35,7 @@ import { CountDownCircleComponent } from '../../shared/ui/count-down-circle/coun
     CountDownCircleComponent,
     TrainingLiveStateComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SprintTrainingComponent {
   private readonly sprintTrainingRunnerService = inject(TrainingRunnerService);

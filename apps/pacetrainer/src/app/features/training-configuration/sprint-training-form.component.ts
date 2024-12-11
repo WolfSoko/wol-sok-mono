@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   NonNullableFormBuilder,
@@ -57,6 +57,7 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
     `,
   ],
   imports: [MatCardModule, ReactiveFormsModule, MatInputModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SprintFormComponent {
   private readonly dataService = inject(SprintTrainingDataService);
