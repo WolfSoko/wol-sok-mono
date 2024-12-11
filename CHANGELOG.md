@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.69.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.68.1-non-cdk-deployed...v4.69.0) (2024-12-11)
+
+
+### Features
+
+* **pacetrainer:** ✨  add total repetitions to training-progress.service.ts ([0c6fb2d](https://github.com/WolfSoko/wol-sok-mono/commit/0c6fb2d91693d81ec045e3da3faccf66f79fc8f3))
+* **pacetrainer:** ✨ add total repetitions to training-progress.service.ts ([bba0a7b](https://github.com/WolfSoko/wol-sok-mono/commit/bba0a7b8ac2f77e95345dcab51be51da194277fb))
+* **pacetrainer:** ✨ add total repetitions to training-progress.service.ts ([8308a38](https://github.com/WolfSoko/wol-sok-mono/commit/8308a38091a1ee1bd1d89479debc9fdddf78015d))
+* **pacetrainer:** ✨ better hydrate on viewport ([6aeaa0a](https://github.com/WolfSoko/wol-sok-mono/commit/6aeaa0a9c8a22646e8d34c41ce0be1bd17762534))
+* **pacetrainer:** ✨ fix hydration ([d4469b3](https://github.com/WolfSoko/wol-sok-mono/commit/d4469b342a5412b3e531a8e6d34ecf8444ec4790))
+
+
+### Chore
+
+* **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.28.1 ([f0860b3](https://github.com/WolfSoko/wol-sok-mono/commit/f0860b3ca224bae3428e4d9c460bdf5f3fabcf69))
+* **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.28.1 ([2b1a982](https://github.com/WolfSoko/wol-sok-mono/commit/2b1a982aecedf2901a1334a83dc58d7adaf6f4d9))
+* **deps:** update dependency angular-eslint to v19.0.1 ([d6a9dfd](https://github.com/WolfSoko/wol-sok-mono/commit/d6a9dfd71415dd5e716a3624094d3ee98947b6bc))
+* **deps:** update dependency rollup to v4.28.1 ([0cff0ee](https://github.com/WolfSoko/wol-sok-mono/commit/0cff0ee3ea5aa5382c61f70a07ecfafb5074d0cf))
+* **deps:** update dependency vite-tsconfig-paths to v5.1.4 ([a636a0b](https://github.com/WolfSoko/wol-sok-mono/commit/a636a0b7afd438058fa60ffc69dc0f80f6955f5b))
+
+
+### Code style
+
+* **pacetrainer:** 🎨 remove unused imports ([16eea8f](https://github.com/WolfSoko/wol-sok-mono/commit/16eea8fec8f8e997de3ffd6f8b728d5a488a8349))
+* **rollapolla-analog:** 🎨 optimize imports ([e3d8793](https://github.com/WolfSoko/wol-sok-mono/commit/e3d879389e13161e36a7914da20b5cf7ba3abc68))
+
+
+### Testing
+
+* **pacetrainer:** 🚨 make countdown e2e test more stable ([61e196e](https://github.com/WolfSoko/wol-sok-mono/commit/61e196e152bd8591635ddff578ea67f62fbad4d8))
+
 ## [4.68.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.68.0-non-cdk-deployed...v4.68.1) (2024-12-05)
 
 
