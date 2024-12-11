@@ -136,9 +136,17 @@ export class SprintTrainingPage {
 
   async expectCountdownTimer(number: number): Promise<void> {
     for (let i = number - 1; i > 0; i--) {
-      await expect(
-        this.countdownTimer.getByText(new RegExp(`${i},\\d sec`))
-      ).toBeVisible();
+      await expect
+        .poll(
+          () =>
+            this.countdownTimer
+              .getByText(new RegExp(`${i},\\d sec`))
+              .isVisible(),
+          {
+            intervals: [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+          }
+        )
+        .toBe(true);
     }
   }
 }
