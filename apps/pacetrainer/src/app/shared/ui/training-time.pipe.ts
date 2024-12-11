@@ -11,7 +11,6 @@ import {
 
 @Pipe({
   name: 'trainingTime',
-  pure: true
 })
 export class TrainingTimePipe implements PipeTransform {
   datePipe = new DatePipe('en-US', 'UTC');

@@ -9,16 +9,8 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import {
-  distinctUntilChanged,
-  filter,
-  interval,
-  map,
-  pairwise,
-  takeUntil,
-  tap,
-} from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { filter, interval, map, pairwise, takeUntil, tap } from 'rxjs';
 import { SprintTrainingDataService } from '../features/training-configuration/data/sprint-training-data.service';
 import { SprintTrainingData } from '../features/training-configuration/data/sprint-training.data';
 import {

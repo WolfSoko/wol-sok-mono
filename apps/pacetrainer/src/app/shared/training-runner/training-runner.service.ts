@@ -1,10 +1,4 @@
-import {
-  effect,
-  inject,
-  Injectable,
-  signal,
-  WritableSignal,
-} from '@angular/core';
+import { effect, inject, Injectable, signal } from '@angular/core';
 import { RepositoryFactory } from '../repository/repository.factory';
 import { TrainingRunnerState } from './training-runner.state';
 

@@ -2,16 +2,15 @@ import {
   effect,
   inject,
   Injectable,
-  PendingTasks,
   signal,
   WritableSignal,
 } from '@angular/core';
-import { TrainingRunnerService } from './training-runner/training-runner.service';
-import { RepositoryFactory } from './repository/repository.factory';
 import {
   simpleStateChange,
   TrainingStateChange,
 } from './model/log-events/state.change.model';
+import { RepositoryFactory } from './repository/repository.factory';
+import { TrainingRunnerService } from './training-runner/training-runner.service';
 
 type TrainingEventLogEntry = [time: Date, event: TrainingStateChange];
 type TrainingEventLog = TrainingEventLogEntry[];
