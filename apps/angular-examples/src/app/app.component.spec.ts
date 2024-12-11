@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
-import { AuthenticationService } from '@wolsok/feat-api-auth';
 import { Angulartics2GoogleTagManager } from 'angulartics2';
 import { AppComponent } from './app.component';
 import { ENV_TOKEN } from './core/env.token';
@@ -11,6 +10,10 @@ import { MainToolbarComponent } from './feature/main-toolbar/main-toolbar.compon
 import { SideNavComponent } from './feature/navigation/side-nav/side-nav.component';
 import { ROUTER_LINKS } from './router-links.token';
 
+jest.mock('@angular/fire/auth', () => ({
+  getAuth: jest.fn(),
+  provideAuth: jest.fn(),
+}));
 jest.mock('./core/stop-headline-animation-when-not-visible');
 describe('AppComponent', () => {
   const createComp = (version: string | null = '1.0.0') => {
@@ -28,10 +31,6 @@ describe('AppComponent', () => {
         },
         {
           provide: ServiceWorkerUpdateService,
-          useValue: { startLogging: jest.fn() },
-        },
-        {
-          provide: AuthenticationService,
           useValue: { startLogging: jest.fn() },
         },
         { provide: ENV_TOKEN, useValue: { version } },

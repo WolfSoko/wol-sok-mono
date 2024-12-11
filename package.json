@@ -29,7 +29,7 @@
     "@angular/compiler": "19.0.3",
     "@angular/core": "19.0.3",
     "@angular/elements": "19.0.3",
-    "@angular/fire": "19.0.0-rc.0",
+    "@angular/fire": "19.0.0-rc.1",
     "@angular/forms": "19.0.3",
     "@angular/material": "19.0.2",
     "@angular/platform-browser": "19.0.3",
@@ -244,12 +244,12 @@
   },
   "overrides": {
     "akita-ng-fire": {
-      "@angular/common": "^18.0.2",
-      "@angular/core": "^18.0.2",
-      "@angular/router": "^18.0.2",
-      "@angular/platform-browser": "^18.0.2",
-      "@angular/platform-browser-dynamic": "^18.0.2",
-      "@angular/fire": "^18.0.1"
+      "@angular/common": "^19.0.2",
+      "@angular/core": "^19.0.2",
+      "@angular/router": "^19.0.2",
+      "@angular/platform-browser": "^19.0.2",
+      "@angular/platform-browser-dynamic": "^19.0.2",
+      "@angular/fire": "^19.0.1"
     },
     "@datorama/akita": {
       "tslib": "^2.5.2"
