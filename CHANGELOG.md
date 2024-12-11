@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.69.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.0-non-cdk-deployed...v4.69.1) (2024-12-11)
+
+
+### Code style
+
+* 🎨 remove allowSignalWrites option from effect ([1447741](https://github.com/WolfSoko/wol-sok-mono/commit/1447741be7b9a2bf4012c6644c77be400ac1a5c3))
+
+
+### Testing
+
+* 🚨 fix tests ([788923e](https://github.com/WolfSoko/wol-sok-mono/commit/788923ece047728d048d695997daf0e01323240f))
+
 ## [4.69.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.68.1-non-cdk-deployed...v4.69.0) (2024-12-11)
 
 
