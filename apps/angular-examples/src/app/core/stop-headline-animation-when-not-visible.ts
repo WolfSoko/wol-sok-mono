@@ -26,14 +26,11 @@ export function stopHeadlineAnimationWhenNotVisible(
 
   findToolbarAndObserve(observer);
 
-  effect(
-    () => {
-      if (isVisible()) {
-        headlineAnimationService.startAnimation();
-      } else {
-        headlineAnimationService.stopAnimation();
-      }
-    },
-    { allowSignalWrites: true }
-  );
+  effect(() => {
+    if (isVisible()) {
+      headlineAnimationService.startAnimation();
+    } else {
+      headlineAnimationService.stopAnimation();
+    }
+  });
 }

@@ -36,26 +36,20 @@ export class WaveCanvasComponent implements OnDestroy {
   private wavePartsToDraw = signal(0);
 
   constructor() {
-    effect(
-      () => {
-        if (this.waveWidth() != null || this.waveHeight() != null) {
-          if (this.sketch != null) {
-            this.sketch.resizeCanvas(this.waveWidth(), this.waveHeight());
-          }
+    effect(() => {
+      if (this.waveWidth() != null || this.waveHeight() != null) {
+        if (this.sketch != null) {
+          this.sketch.resizeCanvas(this.waveWidth(), this.waveHeight());
         }
-      },
-      { allowSignalWrites: true }
-    );
+      }
+    });
 
-    effect(
-      () => {
-        // observe wave signal an reset wavePartsToDraw on change
-        this.wave();
-        this.wavePartsToDraw.set(0);
-        this.sketch?.loop();
-      },
-      { allowSignalWrites: true }
-    );
+    effect(() => {
+      // observe wave signal an reset wavePartsToDraw on change
+      this.wave();
+      this.wavePartsToDraw.set(0);
+      this.sketch?.loop();
+    });
     effect(() => {
       if (this.canvasContainerRef()?.nativeElement && this.sketch == null) {
         this.initCanvas(this.canvasContainerRef().nativeElement);

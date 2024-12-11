@@ -85,10 +85,8 @@ export class MainToolbarComponent {
       }
     );
 
-    effect(
-      () =>
-        this.headlineAnimationService.updateAnimation(navState() === 'navEnd'),
-      { allowSignalWrites: true }
+    effect(() =>
+      this.headlineAnimationService.updateAnimation(navState() === 'navEnd')
     );
   }
 

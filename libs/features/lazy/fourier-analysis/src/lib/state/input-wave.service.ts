@@ -50,42 +50,39 @@ export class InputWaveService {
         this.inputWaveStore.addActiveWave(wave);
       });
 
-    effect(
-      () => {
-        const record = this.audioRecorderState();
-        switch (record.state) {
-          case 'recording':
-            this.inputWaveStore.updateAudioRecordState({
-              state: record.state,
-            });
-            break;
-          case 'recorded': {
-            const { audioData, lengthInMs, samplesPerSec } = record.data;
-            this.inputWaveStore.updateAudioRecordState({
-              state: record.state,
-            });
-            const wave: InputWave = createRecordedFrequencyWave(
-              { samplesPerSec, lengthInMs },
-              audioData
-            );
-            this.inputWaveStore.addActiveWave(wave);
-            this.inputWaveOptionsRepo.update(waveOptionsFromWave(wave));
-            break;
-          }
-          case 'ready':
-            this.inputWaveStore.updateAudioRecordState({
-              state: record.state,
-            });
-            break;
-          case 'error':
-            this.inputWaveStore.updateAudioRecordState({
-              state: record.state,
-              error: record.error,
-            });
+    effect(() => {
+      const record = this.audioRecorderState();
+      switch (record.state) {
+        case 'recording':
+          this.inputWaveStore.updateAudioRecordState({
+            state: record.state,
+          });
+          break;
+        case 'recorded': {
+          const { audioData, lengthInMs, samplesPerSec } = record.data;
+          this.inputWaveStore.updateAudioRecordState({
+            state: record.state,
+          });
+          const wave: InputWave = createRecordedFrequencyWave(
+            { samplesPerSec, lengthInMs },
+            audioData
+          );
+          this.inputWaveStore.addActiveWave(wave);
+          this.inputWaveOptionsRepo.update(waveOptionsFromWave(wave));
+          break;
         }
-      },
-      { allowSignalWrites: true }
-    );
+        case 'ready':
+          this.inputWaveStore.updateAudioRecordState({
+            state: record.state,
+          });
+          break;
+        case 'error':
+          this.inputWaveStore.updateAudioRecordState({
+            state: record.state,
+            error: record.error,
+          });
+      }
+    });
   }
   listenToWave() {
     const activeWave = this.inputWaveStore.activeWave();

@@ -91,14 +91,11 @@ export class ReactionDiffComponent implements OnInit, OnDestroy {
     private configService: ReactionDiffConfigService
   ) {
     this.cellWeights$ = this.configService.calcCellWeights$;
-    effect(
-      () => {
-        this.headlineAnimationService.updateAnimation(
-          !(this.start() && this.useGpu())
-        );
-      },
-      { allowSignalWrites: true }
-    );
+    effect(() => {
+      this.headlineAnimationService.updateAnimation(
+        !(this.start() && this.useGpu())
+      );
+    });
   }
 
   public ngOnInit() {

@@ -53,13 +53,10 @@ export class SideNavComponent {
     @Inject(ROUTER_LINKS) public routerLinks: MainNavRoute[],
     private viewContainerRef: ViewContainerRef
   ) {
-    effect(
-      () => {
-        this.showSidebar.set(this.isLargeScreen());
-        this.markParentForChangeDetection();
-      },
-      { allowSignalWrites: true }
-    );
+    effect(() => {
+      this.showSidebar.set(this.isLargeScreen());
+      this.markParentForChangeDetection();
+    });
   }
 
   toggle(): void {
