@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.69.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.6-non-cdk-deployed...v4.69.7) (2024-12-12)
+
+
+### Chore
+
+* **deps:** update dependency lint-staged to v15.2.11 ([059b61a](https://github.com/WolfSoko/wol-sok-mono/commit/059b61ae95e4fc669a34583459f22d3ad1356413))
+
 ## [4.69.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.5-non-cdk-deployed...v4.69.6) (2024-12-12)
 
 
