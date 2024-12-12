@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.69.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.2-non-cdk-deployed...v4.69.3) (2024-12-12)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @sentry/angular-ivy to v7.120.1 ([facf459](https://github.com/WolfSoko/wol-sok-mono/commit/facf459d983ad9e6664a05da46169e5c73b4e915))
+
+
+### Chore
+
+* **deps:** update dependency @module-federation/enhanced to v0.8.2 ([20b91e3](https://github.com/WolfSoko/wol-sok-mono/commit/20b91e30460691b5debd0cbc290629b52c2c2b1c))
+* **deps:** update dependency cypress to v13.16.1 ([27a4284](https://github.com/WolfSoko/wol-sok-mono/commit/27a428479b885a206140ac179d47546e29a5fca5))
+
 ## [4.69.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.1-non-cdk-deployed...v4.69.2) (2024-12-11)
 
 ## [4.69.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.0-non-cdk-deployed...v4.69.1) (2024-12-11)
