@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.69.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.8-non-cdk-deployed...v4.69.9) (2024-12-12)
+
+
+### Bug Fixes
+
+* **deps:** update dependency superjson to v2.2.2 ([5a527df](https://github.com/WolfSoko/wol-sok-mono/commit/5a527df81c03336c9f3b817ac50a7a3543af6e7c))
+
 ## [4.69.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.7-non-cdk-deployed...v4.69.8) (2024-12-12)
 
 
