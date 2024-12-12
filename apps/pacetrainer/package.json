@@ -3,19 +3,19 @@
   "peerDependencies": {
     "@analogjs/platform": "1.10.1",
     "@analogjs/router": "1.10.1",
-    "@angular/common": "19.0.3",
-    "@angular/core": "19.0.3",
-    "@angular/material": "19.0.2",
-    "@angular/platform-browser": "19.0.3",
-    "@angular/platform-server": "19.0.3",
-    "@angular/router": "19.0.3",
-    "@nx/vite": "20.2.0",
+    "@angular/common": "19.0.4",
+    "@angular/core": "19.0.4",
+    "@angular/material": "19.0.3",
+    "@angular/platform-browser": "19.0.4",
+    "@angular/platform-server": "19.0.4",
+    "@angular/router": "19.0.4",
+    "@nx/vite": "20.2.2",
     "h3": "1.13.0",
     "vite": "5.4.11",
     "vitest": "2.1.8",
     "@playwright/test": "^1.48.0",
-    "@angular/forms": "19.0.3",
+    "@angular/forms": "19.0.4",
     "rxjs": "7.8.1",
-    "@angular/animations": "19.0.3"
+    "@angular/animations": "19.0.4"
   }
 }
