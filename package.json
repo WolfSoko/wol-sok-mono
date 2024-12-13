@@ -249,7 +249,7 @@
       "@angular/router": "^19.0.2",
       "@angular/platform-browser": "^19.0.2",
       "@angular/platform-browser-dynamic": "^19.0.2",
-      "@angular/fire": "^19.0.0-rc"
+      "@angular/fire": "^19.0.3-rc"
     },
     "@datorama/akita": {
       "tslib": "^2.5.2"
