@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.69.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.17...v4.69.18) (2024-12-13)
+
+
+### Bug Fixes
+
+* **deps:** update dependency zod to v3.24.1 ([d9fffd1](https://github.com/WolfSoko/wol-sok-mono/commit/d9fffd108a597074abc1fb9d959a197acf62db14))
+
 ## [4.69.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.16...v4.69.17) (2024-12-13)
 
 
