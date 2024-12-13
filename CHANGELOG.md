@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.69.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.14...v4.69.15) (2024-12-13)
+
+
+### Bug Fixes
+
+* **deps:** update dependency firebase to v11.1.0 ([f881c8f](https://github.com/WolfSoko/wol-sok-mono/commit/f881c8fdbebf5837c54d8e7b4976d5ca852e8cc3))
+
 ## [4.69.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.13...v4.69.14) (2024-12-13)
 
 
