@@ -5,8 +5,9 @@ import {
 import { NotesPoComp } from '../pos/notes.po-comp';
 
 const test = testBase.extend<{ leaveNoteComp: NotesPoComp }>({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   leaveNoteComp: async ({ page, homePage }, use) => {
+    await homePage.expectTitleVisible()
     const leaveNoteComp = new NotesPoComp(page);
     await use(leaveNoteComp);
   },

@@ -14,8 +14,8 @@ export const expect = expectBase.extend({
   async toHaveConsoleMsg(logs: string[], expected: string) {
     const assertionName = 'toHaveConsoleMsg';
     let pass: boolean;
-    let log: string;
-    let matcherResult: { actual: unknown };
+    let log: string | undefined;
+    let matcherResult: { actual: unknown } = { actual: undefined };
     try {
       await expect(async () => {
         expect(logs).toContainEqual(expect.stringContaining(expected));
