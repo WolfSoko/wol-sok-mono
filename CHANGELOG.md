@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.69.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.15...v4.69.16) (2024-12-13)
+
+
+### Bug Fixes
+
+* **deps:** update dependency vega-lite to v5.23.0 ([e70c7b6](https://github.com/WolfSoko/wol-sok-mono/commit/e70c7b6faa89ac00cc151ab29180388945ff6662))
+
 ## [4.69.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.14...v4.69.15) (2024-12-13)
 
 
