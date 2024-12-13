@@ -234,6 +234,7 @@
   },
   "optionalDependencies": {
     "@esbuild/linux-x64": "^0.24.0",
+    "@nx/nx-linux-x64-gnu": "^20.2.2",
     "@rollup/rollup-linux-x64-gnu": "^4.24.4",
     "@rollup/rollup-win32-x64-msvc": "^4.24.4"
   },
