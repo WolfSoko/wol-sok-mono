@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.69.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.18...v4.69.19) (2024-12-13)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @angular/fire to v19.0.0-rc.4 ([e461960](https://github.com/WolfSoko/wol-sok-mono/commit/e461960fa34fc5a30f3cff595b7ec71b238d095d))
+* **deps:** update dependency browserslist to v4.24.3 ([e85839d](https://github.com/WolfSoko/wol-sok-mono/commit/e85839d3f3fcc7c7dab468b3c800f3c223266045))
+
+
+### Refactorings
+
+* ♻️ remove akita ng form ([71d437c](https://github.com/WolfSoko/wol-sok-mono/commit/71d437cc38a14286bcf66f60bb91fa6f42e9ea82))
+* ♻️ use elf instead of akita-ng-fire ([333998c](https://github.com/WolfSoko/wol-sok-mono/commit/333998cdcb9de52eb545f110c276d9503a8ed3f1))
+
+
+### CI/CD
+
+* 👷 don't install binaries ([41f8313](https://github.com/WolfSoko/wol-sok-mono/commit/41f83135bd9ad1ce9afda295e0c07263a5c76bed))
+* 👷 fix ci pipeline that triggers release even if checks failed ([4e4d486](https://github.com/WolfSoko/wol-sok-mono/commit/4e4d48683ebf1b927ebc5a4140b8ecfc3db09788))
+
+
+### Chore
+
+* **deps:** update dependency @module-federation/enhanced to v0.8.4 ([cf2bfee](https://github.com/WolfSoko/wol-sok-mono/commit/cf2bfee30c3574380ec0f0f181449e30441d4635))
+* **deps:** update dependency postcss-preset-env to v10.1.2 ([5da65f7](https://github.com/WolfSoko/wol-sok-mono/commit/5da65f76b34b5d04ddb7a7fdd18aaaa46c2279f1))
+* **deps:** update eslint monorepo to ~9.17.0 ([76f8996](https://github.com/WolfSoko/wol-sok-mono/commit/76f8996da70b3452da36edfc180cbb5660c32b04))
+
+
+### Testing
+
+* 🚨 update snapshot ([3a5e053](https://github.com/WolfSoko/wol-sok-mono/commit/3a5e0536b4f3cdf780750143fd5878dcba27f1ad))
+
 ## [4.69.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.17...v4.69.18) (2024-12-13)
 
 
