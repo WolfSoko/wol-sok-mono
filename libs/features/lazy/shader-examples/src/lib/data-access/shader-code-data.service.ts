@@ -1,30 +1,22 @@
-import { Injectable } from '@angular/core';
-import { AuthenticationService, AuthQuery } from '@wolsok/feat-api-auth';
-import { DatabaseService, DbUtils, Repo } from '@wolsok/shared-data-access';
+import { inject, Injectable } from '@angular/core';
+import { AuthFacade } from '@wolsok/feat-api-auth';
+import { DatabaseService, Repo } from '@wolsok/shared-data-access';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { ShaderCode } from '../model/shader-code.model';
 
 @Injectable({ providedIn: 'root' })
 export class ShaderCodeDataService {
+  private readonly profile = inject(AuthFacade).profile;
+  private readonly db: DatabaseService = inject(DatabaseService);
+
   private shaders?: Observable<ShaderCode[]>;
-
-  private readonly userShaders$: Observable<ShaderCode[]>;
-  private readonly defaultShaders$: Observable<ShaderCode[]>;
-
-  constructor(
-    private db: DatabaseService,
-    private authentication: AuthenticationService,
-    private authQuery: AuthQuery,
-    private dbUtils: DbUtils
-  ) {
-    this.defaultShaders$ = this.observeShaderCollection(
-      '/angularExamples/shaderExamples/defaultShaders'
-    );
-    this.userShaders$ = this.observeShaderCollection(
-      `angularExamples/shaderExamples/${this.userUid()}`
-    );
-  }
+  private readonly userShaders$ = this.observeShaderCollection(
+    `angularExamples/shaderExamples/${this.userUid()}`
+  );
+  private readonly defaultShaders$ = this.observeShaderCollection(
+    '/angularExamples/shaderExamples/defaultShaders'
+  );
 
   private observeShaderCollection(
     shaderCollectionPath: string
@@ -78,6 +70,6 @@ export class ShaderCodeDataService {
   }
 
   private userUid() {
-    return this.authQuery.profile?.uid;
+    return this.profile()?.uid;
   }
 }

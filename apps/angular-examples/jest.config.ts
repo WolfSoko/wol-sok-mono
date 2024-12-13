@@ -1,5 +1,4 @@
-import type { Config } from 'jest';
-import { JestConfigWithTsJest } from 'ts-jest';
+import type { JestConfigWithTsJest } from 'ts-jest';
 
 export default {
   displayName: 'angular-examples',

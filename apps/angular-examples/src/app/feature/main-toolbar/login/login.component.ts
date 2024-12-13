@@ -1,6 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  Signal,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import {
@@ -9,7 +13,7 @@ import {
 } from '@angular/material/tooltip';
 import {
   AuthenticationService,
-  AuthQuery,
+  AuthFacade,
   Profile,
 } from '@wolsok/feat-api-auth';
 
@@ -22,14 +26,9 @@ import {
   providers: [MAT_TOOLTIP_SCROLL_STRATEGY_FACTORY_PROVIDER],
 })
 export class LoginComponent {
-  user: Signal<Profile | undefined>;
+  private readonly authService = inject(AuthenticationService);
 
-  constructor(
-    private authQuery: AuthQuery,
-    private authService: AuthenticationService
-  ) {
-    this.user = toSignal(this.authQuery.profile$);
-  }
+  user: Signal<Profile | undefined | null> = inject(AuthFacade).profile;
 
   async login(): Promise<unknown> {
     return await this.authService.signIn();

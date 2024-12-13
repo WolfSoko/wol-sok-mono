@@ -1,22 +1,33 @@
+import { signal, WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { BehaviorSubject, lastValueFrom } from 'rxjs';
-import { AuthQuery } from '../akita-fire-auth';
+import { AuthFacade } from '../fire-auth';
 import { AuthenticationService } from '../authentication.service';
+import { Profile } from '../profile';
 import { loginIfNotAuthenticated } from './login-if-not-authenticated';
 
+jest.mock('../fire-auth/auth.facade', () => {
+  class AuthFacade {}
+  return {
+    AuthFacade,
+  };
+});
 describe('loginIfNotAuthenticated', () => {
-  let authenticated$: BehaviorSubject<boolean>;
+  let authenticated: WritableSignal<boolean>;
+  let authenticationServiceMock: jest.Mocked<Partial<AuthenticationService>>;
   beforeEach(() => {
-    authenticated$ = new BehaviorSubject<boolean>(true);
+    authenticated = signal<boolean>(true);
+    authenticationServiceMock = {
+      signIn: jest.fn().mockResolvedValue({ uid: 'foo' }),
+    };
     TestBed.configureTestingModule({
       providers: [
         {
           provide: AuthenticationService,
           useValue: {
-            signIn: jest.fn(() => Promise.resolve(true)),
+            ...authenticationServiceMock,
           },
         },
-        { provide: AuthQuery, useValue: { authenticated$ } },
+        { provide: AuthFacade, useValue: { authenticated } },
       ],
     });
   });
@@ -27,19 +38,24 @@ describe('loginIfNotAuthenticated', () => {
   });
 
   it('should call signIn if not authenticated', async () => {
-    authenticated$.next(false);
+    authenticated.set(false);
     await whenLoginIfNotAuthenticatedIsCalled();
     expect(TestBed.inject(AuthenticationService).signIn).toHaveBeenCalled();
   });
 
   it('should return result from signIn', async () => {
-    authenticated$.next(false);
+    authenticated.set(false);
+
+    jest
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      .mocked(authenticationServiceMock.signIn!)
+      .mockResolvedValue({ uid: 'bar' } as Profile);
     const result = await whenLoginIfNotAuthenticatedIsCalled();
     expect(result).toBe(true);
   });
 
   it('should return false if signIn fails', async () => {
-    authenticated$.next(false);
+    authenticated.set(false);
     TestBed.inject(AuthenticationService).signIn = jest.fn(() =>
       Promise.reject()
     );
@@ -47,9 +63,7 @@ describe('loginIfNotAuthenticated', () => {
     expect(result).toBe(false);
   });
 
-  function whenLoginIfNotAuthenticatedIsCalled(): Promise<boolean> {
-    return TestBed.runInInjectionContext(() =>
-      lastValueFrom(loginIfNotAuthenticated())
-    );
+  async function whenLoginIfNotAuthenticatedIsCalled(): Promise<boolean> {
+    return await TestBed.runInInjectionContext(() => loginIfNotAuthenticated());
   }
 });

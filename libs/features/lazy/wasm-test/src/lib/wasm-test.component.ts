@@ -19,7 +19,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { PersistNgFormPlugin } from '@datorama/akita';
 import { Observable, Subscription } from 'rxjs';
 import { WasmTestQuery } from './state/wasm-test.query';
 import { WasmTestService } from './state/wasm-test.service';
@@ -49,7 +48,6 @@ export class WasmTestComponent implements OnInit, OnDestroy {
   readonly isLoading$: Observable<boolean>;
   readonly vm$: Observable<WasmTestState>;
   readonly fibError$: Observable<never>;
-  private readonly persistForm: PersistNgFormPlugin;
   private subscription?: Subscription;
   readonly fibOptionsForm: FormGroup<{
     fibN: FormControl<number | null>;
@@ -73,11 +71,6 @@ export class WasmTestComponent implements OnInit, OnDestroy {
         [Validators.min(0), Validators.max(45), Validators.required]
       ),
     });
-
-    this.persistForm = new PersistNgFormPlugin(
-      this.wasmTestQuery,
-      'fibOptions'
-    ).setForm(this.fibOptionsForm);
   }
 
   ngOnInit() {

@@ -1,32 +1,28 @@
-import { Injectable } from '@angular/core';
+import { effect, inject, Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { Angulartics2 } from 'angulartics2';
-import { tap } from 'rxjs/operators';
-import { AuthQuery, AkitaFireAuthService } from './akita-fire-auth';
 import { Profile } from './profile';
+import { AuthFacade } from './fire-auth';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthenticationService {
-  constructor(
-    private afAuth: AkitaFireAuthService,
-    private akitaAuthQuery: AuthQuery,
-    private router: Router,
-    angulartics: Angulartics2,
-    private snackBar: MatSnackBar
-  ) {
-    afAuth.sync().subscribe();
-    this.akitaAuthQuery
-      .select()
-      .pipe(tap((user) => angulartics.setUsername.next('' + user.uid)))
-      .subscribe();
+  private readonly authFacade = inject(AuthFacade);
+  private readonly router = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
+
+  constructor() {
+    const angulartics = inject(Angulartics2);
+    effect(() => {
+      angulartics.setUsername.next('' + this.authFacade.profile()?.uid);
+    });
   }
 
   async signIn(): Promise<Profile | null> {
     try {
-      return (await this.afAuth.signin('google')).user;
+      return (await this.authFacade.signin()).profile ?? null;
     } catch (error) {
       console.log('Error sign in: ', error);
       const matSnackBarRef = this.snackBar.open(
@@ -46,10 +42,10 @@ export class AuthenticationService {
   async signOut(): Promise<void> {
     try {
       await this.router.navigate(['/']);
-      await this.afAuth.signOut();
+      await this.authFacade.signOut();
     } catch (error) {
       console.log('Error sign out: ', error);
-      this.snackBar.open('Error signing out', undefined, {
+      this.snackBar.open('Error signing out. Please try again.', undefined, {
         duration: 6000,
         horizontalPosition: 'right',
         verticalPosition: 'top',
