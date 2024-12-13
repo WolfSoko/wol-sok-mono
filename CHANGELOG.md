@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.69.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.16...v4.69.17) (2024-12-13)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @angular/fire to v19.0.0-rc.3 ([5ba6118](https://github.com/WolfSoko/wol-sok-mono/commit/5ba611847b35950a17c8c06d43ed853adab62a76))
+
 ## [4.69.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.15...v4.69.16) (2024-12-13)
 
 
