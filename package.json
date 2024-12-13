@@ -116,7 +116,7 @@
     "@cypress/webpack-dev-server": "3.11.0",
     "@eslint/eslintrc": "^3.1.0",
     "@eslint/js": "~9.16.0",
-    "@module-federation/enhanced": "0.8.2",
+    "@module-federation/enhanced": "0.8.3",
     "@ngneat/spectator": "19.1.2",
     "@nx/angular": "20.2.0",
     "@nx/cypress": "20.2.0",
