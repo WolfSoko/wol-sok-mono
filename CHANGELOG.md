@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.69.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.12...v4.69.13) (2024-12-13)
+
+
+### Chore
+
+* **deps:** update typescript-eslint monorepo to v8.18.0 ([575c371](https://github.com/WolfSoko/wol-sok-mono/commit/575c3715fb276481709bb83ed9cb78e5872e510e))
+
 ## [4.69.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.11...v4.69.12) (2024-12-13)
 
 
