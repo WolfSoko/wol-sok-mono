@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.69.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.20-non-cdk-deployed...v4.69.21) (2024-12-14)
+
+
+### Bug Fixes
+
+* **deps:** update analog monorepo to v1.10.2-beta.9 ([b805111](https://github.com/WolfSoko/wol-sok-mono/commit/b8051110de239ced1fbd0f50a620674e14a38ce7))
+
 ## [4.69.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.19-non-cdk-deployed...v4.69.20) (2024-12-14)
 
 
