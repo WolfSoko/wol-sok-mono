@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.69.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.19-non-cdk-deployed...v4.69.20) (2024-12-14)
+
+
+### Code style
+
+* 🎨 fix format ([730e1a2](https://github.com/WolfSoko/wol-sok-mono/commit/730e1a245e62b25a39cfe417d7eb919a94938438))
+
+
+### Testing
+
+* 🚨 try to harden e2e tests ([d8311bb](https://github.com/WolfSoko/wol-sok-mono/commit/d8311bb0ec7bcca079817768c1dbb0bf996f1b87))
+
 ## [4.69.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.18...v4.69.19) (2024-12-13)
 
 
