@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.70.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.21-non-cdk-deployed...v4.70.0) (2024-12-14)
+
+
+### Features
+
+* ✨ show upcoming training type ([682519a](https://github.com/WolfSoko/wol-sok-mono/commit/682519a4897860e4642661ba6591dcb81a04c881))
+
 ## [4.69.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.20-non-cdk-deployed...v4.69.21) (2024-12-14)
 
 
