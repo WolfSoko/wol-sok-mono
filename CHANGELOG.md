@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.70.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.70.1-non-cdk-deployed...v4.70.2) (2024-12-14)
+
+
+### Bug Fixes
+
+* **deps:** update aws-cdk monorepo to v2.173.1 ([a0d2de3](https://github.com/WolfSoko/wol-sok-mono/commit/a0d2de39e1a26e2d820b16ccacd8bb54533e1541))
+
 ## [4.70.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.70.0-non-cdk-deployed...v4.70.1) (2024-12-14)
 
 
