@@ -8,7 +8,7 @@ import {
 import {
   simpleStateChange,
   TrainingStateChange,
-} from './model/log-events/state.change.model';
+} from './model/log-events/state-change.model';
 import { RepositoryFactory } from './repository/repository.factory';
 import { TrainingRunnerService } from './training-runner/training-runner.service';
 

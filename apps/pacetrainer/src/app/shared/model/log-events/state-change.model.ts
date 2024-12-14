@@ -1,16 +1,20 @@
 import { TrainingRunnerState } from '../../training-runner/training-runner.state';
+import { CountdownModel } from '../training/countdown.model';
 import { CurrentIntervalDataModel } from '../training/current-interval-data.model';
 
 type IntervalEvent = CurrentIntervalDataModel['name'];
 
-type StateChangeModel =
+type ToCountdownStateChange = 'countdownStart' | 'countdownEnd';
+
+type ToStateChange =
   | TrainingRunnerState
   | IntervalEvent
   | 'endTraining'
-  | 'startTraining';
+  | 'startTraining'
+  | ToCountdownStateChange;
 
 export interface TrainingStateChangeBase {
-  to: StateChangeModel;
+  to: ToStateChange;
 }
 
 export interface SimpleStateChange extends TrainingStateChangeBase {
@@ -23,9 +27,18 @@ export interface IntervalStateChange extends TrainingStateChangeBase {
   params: Omit<CurrentIntervalDataModel, 'name'>;
 }
 
-export type TrainingStateChange = SimpleStateChange | IntervalStateChange;
+export interface CountdownStateChange extends TrainingStateChangeBase {
+  to: ToCountdownStateChange;
+  type: 'countdown';
+  params?: CountdownModel;
+}
 
-export function simpleStateChange(to: StateChangeModel): SimpleStateChange {
+export type TrainingStateChange =
+  | SimpleStateChange
+  | IntervalStateChange
+  | CountdownStateChange;
+
+export function simpleStateChange(to: ToStateChange): SimpleStateChange {
   return { to, type: 'simple' };
 }
 
@@ -44,6 +57,8 @@ export function intervalStateChange(
     elapsedTrainingTime,
     repetitionCount,
     totalRepetitionCount,
+    countdown,
+    nextIntervalName,
   } = params;
   return {
     to,
@@ -58,6 +73,14 @@ export function intervalStateChange(
       elapsedTrainingTime,
       repetitionCount,
       totalRepetitionCount,
+      countdown,
+      nextIntervalName,
     },
   };
+}
+export function countdownStateChange(
+  to: CountdownStateChange['to'],
+  params?: CountdownStateChange['params']
+): CountdownStateChange {
+  return { to, type: 'countdown', params };
 }

@@ -3,7 +3,8 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { TrainingProgressService } from '../../shared/training-progress.service';
+import { TrainingProgressEventBridge } from '../../shared/training-progress/training-progress-event-bridge';
+import { TrainingProgressService } from '../../shared/training-progress/training-progress.service';
 import { TrainingRunnerService } from '../../shared/training-runner/training-runner.service';
 import { CountDownCircleComponent } from '../../shared/ui/count-down-circle/count-down-circle.component';
 import { SprintFormComponent } from '../training-configuration/sprint-training-form.component';
@@ -39,9 +40,16 @@ import { TrainingLiveStateComponent } from '../training-live-state/training-live
 })
 export class SprintTrainingComponent {
   private readonly sprintTrainingRunnerService = inject(TrainingRunnerService);
+  private readonly trainingProgressService = inject(TrainingProgressService);
+
+  // inject to create the TrainingProgressEventBridge
+  private readonly trainingProgressEventBridge = inject(
+    TrainingProgressEventBridge
+  );
 
   trainingState = this.sprintTrainingRunnerService.trainingState;
-  currentInterval = inject(TrainingProgressService).currentInterval;
+  currentInterval = this.trainingProgressService.currentInterval;
+  countdown = this.trainingProgressService.countdown;
 
   toggleTraining(): void {
     this.sprintTrainingRunnerService.toggleTraining();

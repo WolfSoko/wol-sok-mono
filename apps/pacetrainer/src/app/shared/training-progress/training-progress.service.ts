@@ -4,15 +4,14 @@ import {
   inject,
   Injectable,
   Injector,
-  linkedSignal,
   Signal,
   signal,
   untracked,
 } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { filter, interval, map, pairwise, takeUntil, tap } from 'rxjs';
-import { SprintTrainingDataService } from '../features/training-configuration/data/sprint-training-data.service';
-import { SprintTrainingData } from '../features/training-configuration/data/sprint-training.data';
+import { SprintTrainingDataService } from '../../features/training-configuration/data/sprint-training-data.service';
+import { SprintTrainingData } from '../../features/training-configuration/data/sprint-training.data';
 import {
   add,
   Milliseconds,
@@ -20,15 +19,15 @@ import {
   seconds,
   sToMs,
   subtract,
-} from './model/constants/time-utils';
-import { intervalStateChange } from './model/log-events/state.change.model';
-import { CurrentIntervalDataModel } from './model/training/current-interval-data.model';
-import { TrainingName } from './model/training/training-name';
-import { RepositoryFactory } from './repository/repository.factory';
-import { TrainingEventLogService } from './training-event-log.service';
-import { TrainingRunnerService } from './training-runner/training-runner.service';
+} from '../model/constants/time-utils';
+import { CountdownModel } from '../model/training/countdown.model';
+import { CurrentIntervalDataModel } from '../model/training/current-interval-data.model';
+import { TrainingName } from '../model/training/training-name';
+import { RepositoryFactory } from '../repository/repository.factory';
+import { TrainingEventLogService } from '../training-event-log.service';
+import { TrainingRunnerService } from '../training-runner/training-runner.service';
 
-const PRECISION_PERIOD_MS = milliseconds(100);
+const PRECISION_PERIOD_MS = milliseconds(50);
 const COUNTDOWN_TIME = sToMs(seconds(5));
 
 type TrainingInterval = [
@@ -72,7 +71,6 @@ export class TrainingProgressService {
     });
 
     effect(async () => {
-      console.log('ProgressService effect1');
       this.initProgressData(this.sprintTrainingDataService.data());
     });
 
@@ -90,24 +88,6 @@ export class TrainingProgressService {
           untracked(() => this.stopTraining());
           break;
       }
-    });
-    this.registerLogCurrentIntervalEffect();
-  }
-  private registerLogCurrentIntervalEffect(): void {
-    const currentIntervalForLogging = linkedSignal(
-      () => this.currentInterval(),
-      { equal: (a, b) => a?.index === b?.index }
-    );
-
-    effect(() => {
-      const currentInterval = currentIntervalForLogging();
-      console.log('Current Interval for Logging', currentInterval);
-      if (currentInterval == null) {
-        return;
-      }
-      this.eventLogService.pushEntry(
-        intervalStateChange(currentInterval.name, currentInterval)
-      );
     });
   }
 
@@ -173,6 +153,7 @@ export class TrainingProgressService {
 
     for (let i = 0; i < progressData.length; i++) {
       const [name, duration, repetitionCount] = progressData[i];
+      const [nextName] = progressData[i + 1] ?? [];
       accDuration = add(duration, accDuration);
       if (accDuration > elapsedTrainingTime) {
         const elapsedDuration = subtract(
@@ -190,6 +171,8 @@ export class TrainingProgressService {
           isLast: i === progressData.length - 1,
           leftTotalDuration: subtract(totalTrainingLength, elapsedTrainingTime),
           elapsedTrainingTime: elapsedTrainingTime,
+          nextIntervalName: nextName,
+          countdown: COUNTDOWN_TIME,
         };
       }
     }
@@ -212,6 +195,22 @@ export class TrainingProgressService {
       isLast: true,
       leftTotalDuration: milliseconds(0),
       elapsedTrainingTime: elapsedTrainingTime,
+      nextIntervalName: 'finished',
+      countdown: COUNTDOWN_TIME,
+    };
+  });
+
+  countdown: Signal<CountdownModel | null> = computed(() => {
+    const currentInterval = this.currentInterval();
+    if (
+      currentInterval == null ||
+      currentInterval.leftDuration > currentInterval.countdown
+    ) {
+      return null;
+    }
+    return {
+      countdownTime: currentInterval.leftDuration,
+      countdownTo: currentInterval.nextIntervalName,
     };
   });
 }

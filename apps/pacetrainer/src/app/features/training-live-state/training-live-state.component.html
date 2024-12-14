@@ -1,14 +1,12 @@
 @if (trainingState() !== "stopped") {
+  @if (countdown()?.countdownTo; as countdownTo) {
+    <div class="next-training-name">
+      als Nächstes: {{ countdownTo | trainingName }}
+    </div>
+  }
   @if (currentInterval(); as current) {
     <span class="mat-title-large">
-      @switch (current.name) {
-        @case ("sprint") {
-          Sprint
-        }
-        @case ("recovery") {
-          Gehen
-        }
-      }
+      {{ current.name | trainingName }}
       @if (trainingState() === "paused") {
         - pausiert
       }

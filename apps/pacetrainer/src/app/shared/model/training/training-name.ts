@@ -1,1 +1,1 @@
-export type TrainingName = 'recovery' | 'sprint';
+export type TrainingName = 'recovery' | 'sprint' | 'finished';

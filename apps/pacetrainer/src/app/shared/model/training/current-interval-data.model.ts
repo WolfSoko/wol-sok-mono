@@ -12,4 +12,6 @@ export type CurrentIntervalDataModel = {
   totalRepetitionCount: number;
   leftTotalDuration: Milliseconds;
   elapsedTrainingTime: Milliseconds;
+  nextIntervalName: TrainingName;
+  countdown: Milliseconds;
 };
