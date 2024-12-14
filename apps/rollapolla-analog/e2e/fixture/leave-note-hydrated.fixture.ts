@@ -5,9 +5,8 @@ import {
 import { NotesPoComp } from '../pos/notes.po-comp';
 
 const test = testBase.extend<{ leaveNoteComp: NotesPoComp }>({
-
   leaveNoteComp: async ({ page, homePage }, use) => {
-    await homePage.expectTitleVisible()
+    await homePage.expectTitleVisible();
     const leaveNoteComp = new NotesPoComp(page);
     await use(leaveNoteComp);
   },
