@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.71.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.70.5-non-cdk-deployed...v4.71.0) (2024-12-15)
+
+
+### Features
+
+* ✨ add countdown beeps ([de2715b](https://github.com/WolfSoko/wol-sok-mono/commit/de2715b17da1cb15cf3431af7a23b199edcba8b2))
+
 ## [4.70.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.70.4-non-cdk-deployed...v4.70.5) (2024-12-15)
 
 
