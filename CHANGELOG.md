@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.71.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.0-non-cdk-deployed...v4.71.1) (2024-12-15)
+
+
+### Chore
+
+* **deps:** update dependency @commitlint/cli to v19.6.1 ([1aa23db](https://github.com/WolfSoko/wol-sok-mono/commit/1aa23dbbd91f46d718ce9b433ce3dcfbe2d486ef))
+
 ## [4.71.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.70.5-non-cdk-deployed...v4.71.0) (2024-12-15)
 
 
