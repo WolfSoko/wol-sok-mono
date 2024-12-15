@@ -9,9 +9,10 @@ import {
   untracked,
 } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { filter, interval, map, pairwise, takeUntil, tap } from 'rxjs';
+import { filter, interval, map, pairwise, takeUntil } from 'rxjs';
 import { SprintTrainingDataService } from '../../features/training-configuration/data/sprint-training-data.service';
 import { SprintTrainingData } from '../../features/training-configuration/data/sprint-training.data';
+import { TrainingEventBacklogService } from '../event-backlog/training-event-backlog.service';
 import {
   add,
   Milliseconds,
@@ -20,11 +21,9 @@ import {
   sToMs,
   subtract,
 } from '../model/constants/time-utils';
-import { CountdownModel } from '../model/training/countdown.model';
 import { CurrentIntervalDataModel } from '../model/training/current-interval-data.model';
 import { TrainingName } from '../model/training/training-name';
 import { RepositoryFactory } from '../repository/repository.factory';
-import { TrainingEventLogService } from '../training-event-log.service';
 import { TrainingRunnerService } from '../training-runner/training-runner.service';
 
 const PRECISION_PERIOD_MS = milliseconds(50);
@@ -53,7 +52,7 @@ export class TrainingProgressService {
 
   private readonly runnerService = inject(TrainingRunnerService);
 
-  private readonly eventLogService = inject(TrainingEventLogService);
+  private readonly eventLogService = inject(TrainingEventBacklogService);
   private readonly trainingProgressData = signal<TrainingData>([]);
 
   private readonly deltaTime$ = interval(PRECISION_PERIOD_MS).pipe(
@@ -66,7 +65,6 @@ export class TrainingProgressService {
 
   constructor() {
     effect(() => {
-      console.log('Progress Service effect save elapsed');
       return this.progressRepo.save(this.elapsed());
     });
 
@@ -75,7 +73,6 @@ export class TrainingProgressService {
     });
 
     effect(() => {
-      console.log('ProgressService effect2');
       const state = this.runnerService.trainingState();
       switch (state) {
         case 'paused':
@@ -113,19 +110,14 @@ export class TrainingProgressService {
   private startTraining(): void {
     this.deltaTime$
       .pipe(
-        tap((dT) => console.log('DT:' + dT)),
         filter(() => this.runnerService.trainingState() === 'running'),
         takeUntil(
           toObservable(this.runnerService.trainingState, {
             injector: this.injector,
-          }).pipe(
-            tap((state) => console.log('toObservable', state)),
-            filter((state) => state !== 'running')
-          )
+          }).pipe(filter((state) => state !== 'running'))
         )
       )
       .subscribe((deltaT) => {
-        console.log('Delta Time', deltaT);
         this.elapsed.update((old) => add(old, deltaT));
       });
   }
@@ -197,20 +189,6 @@ export class TrainingProgressService {
       elapsedTrainingTime: elapsedTrainingTime,
       nextIntervalName: 'finished',
       countdown: COUNTDOWN_TIME,
-    };
-  });
-
-  countdown: Signal<CountdownModel | null> = computed(() => {
-    const currentInterval = this.currentInterval();
-    if (
-      currentInterval == null ||
-      currentInterval.leftDuration > currentInterval.countdown
-    ) {
-      return null;
-    }
-    return {
-      countdownTime: currentInterval.leftDuration,
-      countdownTo: currentInterval.nextIntervalName,
     };
   });
 }

@@ -3,9 +3,12 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { IntervalCountdownEventBridge } from '../../shared/interval-countdown/interval-countdown-event-bridge';
+import { IntervalCountdownService } from '../../shared/interval-countdown/interval-countdown.service';
 import { TrainingProgressEventBridge } from '../../shared/training-progress/training-progress-event-bridge';
 import { TrainingProgressService } from '../../shared/training-progress/training-progress.service';
 import { TrainingRunnerService } from '../../shared/training-runner/training-runner.service';
+import { TrainingRunnerEventBridge } from '../../shared/training-runner/training-runner-event-bridge.service';
 import { CountDownCircleComponent } from '../../shared/ui/count-down-circle/count-down-circle.component';
 import { SprintFormComponent } from '../training-configuration/sprint-training-form.component';
 import { SprintTrainingOverviewComponent } from '../training-configuration/sprint-training-overview.component';
@@ -41,6 +44,14 @@ import { TrainingLiveStateComponent } from '../training-live-state/training-live
 export class SprintTrainingComponent {
   private readonly sprintTrainingRunnerService = inject(TrainingRunnerService);
   private readonly trainingProgressService = inject(TrainingProgressService);
+  countdown = inject(IntervalCountdownService).countdown;
+
+  constructor() {
+    // inject services for side effects
+    inject(TrainingProgressEventBridge);
+    inject(TrainingRunnerEventBridge);
+    inject(IntervalCountdownEventBridge);
+  }
 
   // inject to create the TrainingProgressEventBridge
   private readonly trainingProgressEventBridge = inject(
@@ -49,7 +60,6 @@ export class SprintTrainingComponent {
 
   trainingState = this.sprintTrainingRunnerService.trainingState;
   currentInterval = this.trainingProgressService.currentInterval;
-  countdown = this.trainingProgressService.countdown;
 
   toggleTraining(): void {
     this.sprintTrainingRunnerService.toggleTraining();

@@ -69,11 +69,11 @@ export function subtract<T extends TimeUnit>(term: T, ...subtrahends: T[]): T {
   return (term - add(...subtrahends)) as T;
 }
 
-export function mul<T extends TimeUnit>(ms1: T, ms2: T) {
+export function mul<T extends TimeUnit>(ms1: T, ms2: number) {
   return (ms1 * ms2) as T;
 }
 
-export function div<T extends TimeUnit>(ms1: T, ms2: T) {
+export function div<T extends TimeUnit>(ms1: T, ms2: number) {
   return (ms1 / ms2) as T;
 }
 

@@ -116,13 +116,13 @@ describe('Time Math Functions', () => {
   });
 
   it('should multiply time units correctly', () => {
-    expect(mul(milliseconds(2), milliseconds(3))).toBe(milliseconds(6));
-    expect(mul(seconds(2), seconds(3))).toBe(seconds(6));
+    expect(mul(milliseconds(2), 3)).toBe(milliseconds(6));
+    expect(mul(seconds(2), 3)).toBe(seconds(6));
   });
 
   it('should divide time units correctly', () => {
-    expect(div(milliseconds(6), milliseconds(3))).toBe(milliseconds(2));
-    expect(div(seconds(6), seconds(3))).toBe(seconds(2));
+    expect(div(milliseconds(6), 3)).toBe(milliseconds(2));
+    expect(div(seconds(6), 3)).toBe(seconds(2));
   });
 });
 
