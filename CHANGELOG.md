@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.71.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.5-non-cdk-deployed...v4.71.6) (2024-12-17)
+
+
+### Chore
+
+* **deps:** update dependency @ngneat/spectator to v19.2.0 ([1918bdb](https://github.com/WolfSoko/wol-sok-mono/commit/1918bdbe4cec3d54ffae6b5e439d13a94ae9bc1a))
+
 ## [4.71.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.4-non-cdk-deployed...v4.71.5) (2024-12-17)
 
 
