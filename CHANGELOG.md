@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.71.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.8-non-cdk-deployed...v4.71.9) (2024-12-17)
+
+
+### Chore
+
+* **deps:** update dependency cypress to v13.17.0 ([adf1224](https://github.com/WolfSoko/wol-sok-mono/commit/adf122427eac22b2b8dd2099d3e6c1651c4ab51e))
+
 ## [4.71.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.7-non-cdk-deployed...v4.71.8) (2024-12-17)
 
 
