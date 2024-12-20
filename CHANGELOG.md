@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.71.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.16-non-cdk-deployed...v4.71.17) (2024-12-20)
+
+
+### Chore
+
+* **deps:** update dependency firebase-functions-test to v3.4.0 ([45eb159](https://github.com/WolfSoko/wol-sok-mono/commit/45eb159dabe9dd6add28a47b0306232413402bfe))
+
 ## [4.71.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.15-non-cdk-deployed...v4.71.16) (2024-12-20)
 
 
