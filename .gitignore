@@ -69,3 +69,6 @@ firebase-export*
 
 **/vite.config.*.timestamp-*
 
+
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
