@@ -207,7 +207,7 @@
     "karma-jasmine": "5.1.0",
     "karma-jasmine-html-reporter": "2.1.0",
     "kill-port": "^2.0.1",
-    "lint-staged": "15.2.11",
+    "lint-staged": "15.3.0",
     "mime-types": "2.1.35",
     "ng-packagr": "19.0.1",
     "node-gyp": "^11.0.0",
