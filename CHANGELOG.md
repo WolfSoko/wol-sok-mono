@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.71.39](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.38-non-cdk-deployed...v4.71.39) (2024-12-31)
+
+
+### Chore
+
+* **deps:** update dependency @module-federation/enhanced to v0.8.7 ([7290d66](https://github.com/WolfSoko/wol-sok-mono/commit/7290d665a8c9d1141b8f65986da3d9dd3dc7c1a1))
+
 ## [4.71.38](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.37-non-cdk-deployed...v4.71.38) (2024-12-30)
 
 
