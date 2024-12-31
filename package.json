@@ -83,7 +83,7 @@
     "rxjs": "7.8.1",
     "stats.js": "0.17.0",
     "superjson": "^2.2.1",
-    "three": "0.171.0",
+    "three": "0.172.0",
     "three-canvas-renderer": "^2.0.0",
     "ts-keycode-enum": "1.0.6",
     "tslib": "2.5.2",
