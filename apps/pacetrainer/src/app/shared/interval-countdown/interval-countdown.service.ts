@@ -96,7 +96,12 @@ export class IntervalCountdownService {
     this.countdown.set(null);
   }
   private playBeep(frequency = 440, length: Seconds = seconds(0.2)): void {
+    if (!('AudioContext' in globalThis)) {
+      console.warn('AudioContext not supported in this browser');
+      return;
+    }
     const audioCtx = new AudioContext();
+
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
 
@@ -116,16 +121,16 @@ export class IntervalCountdownService {
   }
 
   private textToSpeech(text: string) {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text); // Create a new utterance for the specified text
-
-      utterance.lang = 'de-DE';
-      utterance.pitch = 1;
-      utterance.rate = 1.25;
-      utterance.volume = 1;
-      window.speechSynthesis.speak(utterance);
-    } else {
-      console.error('Speech synthesis not supported in this browser.');
+    if (!('speechSynthesis' in globalThis)) {
+      console.warn('Speech synthesis not supported in this browser.');
+      return;
     }
+    const utterance = new SpeechSynthesisUtterance(text); // Create a new utterance for the specified text
+
+    utterance.lang = 'de-DE';
+    utterance.pitch = 1;
+    utterance.rate = 1.25;
+    utterance.volume = 1;
+    window.speechSynthesis.speak(utterance);
   }
 }

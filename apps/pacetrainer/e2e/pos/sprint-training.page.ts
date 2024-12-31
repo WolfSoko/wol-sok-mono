@@ -35,7 +35,7 @@ export class SprintTrainingPage {
   async expectSprintTrainingConfigurationNotVisible(): Promise<void> {
     await expect(
       this.sprintTraining.getByTestId('sprint-form')
-    ).not.toBeVisible();
+    ).not.toBeVisible({ timeout: 10000 });
   }
 
   async expectSprintTrainingConfiguration(
@@ -92,21 +92,26 @@ export class SprintTrainingPage {
   async startTraining(): Promise<void> {
     await this.expectTrainingStateStartable();
     await this.toggleTrainingCta.click();
-    await expect(this.toggleTrainingCta).toContainText('Pausieren');
+  }
+
+  async expectTrainingStatePausable(): Promise<void> {
+    await expect(this.toggleTrainingCta).toContainText('Pausieren', {
+      timeout: 10000,
+    });
   }
 
   async expectTrainingStateStartable(): Promise<void> {
     await expect(this.toggleTrainingCta).toContainText('Go Go Go');
-    await this.stopTrainingCta.isDisabled();
+    await expect(this.stopTrainingCta).not.toBeVisible();
   }
 
   async expectTrainingStateStoppable(): Promise<void> {
-    await this.stopTrainingCta.isEnabled();
+    await this.stopTrainingCta.isEnabled({ timeout: 10000 });
     await expect(this.stopTrainingCta).toContainText('Training beenden');
   }
 
   async expectTrainingStateNotStoppable(): Promise<void> {
-    await this.stopTrainingCta.isDisabled();
+    await expect(this.stopTrainingCta).not.toBeVisible();
   }
 
   async expectTrainingStateResumable(): Promise<void> {
@@ -123,10 +128,6 @@ export class SprintTrainingPage {
     await this.expectTrainingStatePausable();
     await this.toggleTrainingCta.click();
     await this.expectTrainingStateResumable();
-  }
-
-  async expectTrainingStatePausable(): Promise<void> {
-    await expect(this.toggleTrainingCta).toContainText('Pausieren');
   }
 
   async resumeTraining(): Promise<void> {

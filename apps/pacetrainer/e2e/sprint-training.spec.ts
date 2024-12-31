@@ -5,7 +5,6 @@ test.describe('Sprint Training', () => {
   test('has sprint training', async ({ sprintTraining }) => {
     await sprintTraining.expectTitleVisible();
     await sprintTraining.expectTrainingStateStartable();
-    await sprintTraining.expectTrainingStateStoppable();
     await sprintTraining.expectSprintTrainingConfiguration();
   });
 
