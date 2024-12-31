@@ -12,7 +12,7 @@ export class RepositoryFactory {
   create<T extends JSONCompatible<T>>(localStorageKey: string): Repository<T> {
     return new Repository<T>(
       localStorageKey,
-      isPlatformBrowser(this.platformId)
+      isPlatformBrowser(this.platformId) && false
     );
   }
 }

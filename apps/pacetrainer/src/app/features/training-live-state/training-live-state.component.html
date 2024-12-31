@@ -1,12 +1,13 @@
-@if (trainingState() !== "stopped") {
-  @if (countdown()?.countdownTo; as countdownTo) {
-    <div class="next-training-name">
-      als Nächstes: {{ countdownTo | trainingName }}
-    </div>
-  }
-  @if (currentInterval(); as current) {
+@if (countdown()?.countdownTo; as countdownTo) {
+  <div class="next-training-name">
+    als Nächstes: {{ countdownTo | trainingName }}
+  </div>
+}
+@if (trainingState() !== "stopped" || trainingState() !== "initial") {
+  @if (currentExercise(); as current) {
     <span class="mat-title-large">
       {{ current.name | trainingName }}
+      [{{ current.repetitionCount }}/{{ current.totalRepetitionCount }}]
       @if (trainingState() === "paused") {
         - pausiert
       }
@@ -17,16 +18,8 @@
         {{ current.elapsedTrainingTime | trainingTime }}
       </mat-list-item>
       <mat-list-item>
-        Aktuelles Intervall: {{ current.repetitionCount }}/{{
-          current.totalRepetitionCount
-        }}
-      </mat-list-item>
-      <mat-list-item>
         Intervallzeit: {{ current.elapsedDuration | trainingTime }} von
         {{ current.duration | trainingTime }}
-      </mat-list-item>
-      <mat-list-item>
-        Noch: {{ current.leftDuration | trainingTime }}
       </mat-list-item>
     </mat-list>
   }

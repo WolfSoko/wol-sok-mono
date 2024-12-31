@@ -8,11 +8,10 @@ export class TrainingRunnerService {
     'trainingRunnerState'
   );
 
-  trainingState = signal(this.repo.load() ?? 'stopped');
+  trainingState = signal(this.repo.load() ?? 'initial');
 
   constructor() {
     effect(() => {
-      console.log('save trainingState', this.trainingState());
       this.repo.save(this.trainingState());
     });
   }

@@ -1,1 +1,6 @@
-export type TrainingName = 'recovery' | 'sprint' | 'finished';
+export type TrainingName =
+  | 'getready'
+  | 'recovery'
+  | 'sprint'
+  | 'running'
+  | 'finished';

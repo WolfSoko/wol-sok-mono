@@ -1,1 +1,1 @@
-export type TrainingRunnerState = 'running' | 'stopped' | 'paused';
+export type TrainingRunnerState = 'initial' | 'running' | 'stopped' | 'paused';

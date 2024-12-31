@@ -1,14 +1,15 @@
+import { TrainingProgress } from '../../training-progress/model/training-progress.model';
 import { TrainingRunnerState } from '../../training-runner/training-runner.state';
 import { CountdownModel } from '../training/countdown.model';
-import { CurrentIntervalDataModel } from '../training/current-interval-data.model';
+import { Exercise } from '../training/excercise';
 
-type IntervalEvent = CurrentIntervalDataModel['name'];
+type ExerciseTypeEvent = Exercise['type'];
 
 type ToCountdownStateChange = 'countdownStart' | 'countdownEnd';
 
 type ToStateChange =
   | TrainingRunnerState
-  | IntervalEvent
+  | ExerciseTypeEvent
   | 'endTraining'
   | 'startTraining'
   | ToCountdownStateChange;
@@ -21,10 +22,10 @@ export interface SimpleStateChange extends TrainingStateChangeBase {
   type: 'simple';
 }
 
-export interface IntervalStateChange extends TrainingStateChangeBase {
-  to: IntervalEvent;
-  type: 'interval';
-  params: Omit<CurrentIntervalDataModel, 'name'>;
+export interface TrainingProgressChange extends TrainingStateChangeBase {
+  to: ExerciseTypeEvent;
+  type: 'trainingProgress';
+  params: TrainingProgress;
 }
 
 export interface CountdownStateChange extends TrainingStateChangeBase {
@@ -35,7 +36,7 @@ export interface CountdownStateChange extends TrainingStateChangeBase {
 
 export type TrainingStateChange =
   | SimpleStateChange
-  | IntervalStateChange
+  | TrainingProgressChange
   | CountdownStateChange;
 
 export function simpleStateChange(to: ToStateChange): SimpleStateChange {
@@ -43,39 +44,15 @@ export function simpleStateChange(to: ToStateChange): SimpleStateChange {
 }
 
 export function intervalStateChange(
-  to: IntervalStateChange['to'],
-  params: IntervalStateChange['params']
-): IntervalStateChange {
+  to: TrainingProgressChange['to'],
+  params: TrainingProgressChange['params']
+): TrainingProgressChange {
   // make sure only known properties are passed
-  const {
-    elapsedDuration,
-    duration,
-    leftDuration,
-    isLast,
-    index,
-    leftTotalDuration,
-    elapsedTrainingTime,
-    repetitionCount,
-    totalRepetitionCount,
-    countdown,
-    nextIntervalName,
-  } = params;
+
   return {
     to,
-    type: 'interval',
-    params: {
-      elapsedDuration,
-      duration,
-      leftDuration,
-      isLast,
-      index,
-      leftTotalDuration,
-      elapsedTrainingTime,
-      repetitionCount,
-      totalRepetitionCount,
-      countdown,
-      nextIntervalName,
-    },
+    type: 'trainingProgress',
+    params,
   };
 }
 export function countdownStateChange(

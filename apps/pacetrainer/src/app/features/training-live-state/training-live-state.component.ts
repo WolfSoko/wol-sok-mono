@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatListModule } from '@angular/material/list';
 import { CountdownModel } from '../../shared/model/training/countdown.model';
-import { CurrentIntervalDataModel } from '../../shared/model/training/current-interval-data.model';
+import { CurrentExerciseViewModel } from '../../shared/model/training/current-exercise-view.model';
 import { TrainingRunnerState } from '../../shared/training-runner/training-runner.state';
 import { TrainingNamePipe } from '../../shared/ui/training-name.pipe';
 import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
@@ -16,5 +16,5 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
 export class TrainingLiveStateComponent {
   countdown = input<CountdownModel | null>();
   trainingState = input.required<TrainingRunnerState>();
-  currentInterval = input.required<CurrentIntervalDataModel>();
+  currentExercise = input<CurrentExerciseViewModel>();
 }

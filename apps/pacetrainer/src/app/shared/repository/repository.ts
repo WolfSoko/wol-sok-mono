@@ -4,7 +4,7 @@ import {
   safeJsonStringify,
 } from '../utils/json-utils/json-utils';
 
-export const LOCAL_STORAGE_KEY_PREFIX = 'PACETRAINER@';
+export const LOCAL_STORAGE_KEY_PREFIX = 'PACETRAINER@V0.9';
 
 export class Repository<T extends JSONCompatible<T>> {
   private readonly localStorageKey: string;

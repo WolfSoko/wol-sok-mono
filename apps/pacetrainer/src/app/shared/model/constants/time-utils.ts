@@ -14,6 +14,8 @@ export type Days = { [timeUnitSymbol]: 'd' } & number;
 
 export type TimeUnit = Milliseconds | Seconds | Minutes | Hours | Days;
 
+export const ZERO_MS = milliseconds(0);
+
 // factories
 export function milliseconds(ms: number): Milliseconds {
   return ms as Milliseconds;
@@ -73,8 +75,11 @@ export function mul<T extends TimeUnit>(ms1: T, ms2: number) {
   return (ms1 * ms2) as T;
 }
 
-export function div<T extends TimeUnit>(ms1: T, ms2: number) {
-  return (ms1 / ms2) as T;
+export function div<T extends TimeUnit, T2 extends number | T>(
+  ms1: T,
+  ms2: T2
+): T2 extends TimeUnit ? number : T {
+  return (ms1 / ms2) as T2 extends TimeUnit ? number : T;
 }
 
 // compare

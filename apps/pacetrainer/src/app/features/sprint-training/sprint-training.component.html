@@ -1,21 +1,36 @@
 <mat-card data-qa="sprint-training">
   @let state = trainingState();
+  @let isInitialOrStopped = state === "stopped" || state === "initial";
   <mat-card-header>
     <mat-card-title>Sprint Training</mat-card-title>
   </mat-card-header>
   <mat-card-content>
-    @if (state !== "stopped"; as isStopped) {
+    @if (isInitialOrStopped) {
+      @if (countdown(); as countdown) {
+        <pacetrainer-countdown-circle
+          @myInsertRemoveTrigger
+          [duration]="countdown.countdownTime"
+          [timeLeft]="countdown.timeLeft"
+        />
+        <pacetrainer-training-live-state
+          [countdown]="countdown"
+          [trainingState]="state"
+        />
+      }
+    } @else {
       @defer (hydrate on viewport; on viewport) {
         <div class="runner">
-          @if (currentInterval(); as interval) {
-            <pacetrainer-countdown-circle
-              @myInsertRemoveTrigger
-              [duration]="interval.duration"
-              [timeLeft]="interval.leftDuration"
-            />
+          @if (currentExercise(); as exercise) {
+            @if (exercise.duration) {
+              <pacetrainer-countdown-circle
+                @myInsertRemoveTrigger
+                [duration]="exercise.duration"
+                [timeLeft]="exercise.leftDuration"
+              />
+            }
             <pacetrainer-training-live-state
               [countdown]="countdown()"
-              [currentInterval]="interval"
+              [currentExercise]="exercise"
               [trainingState]="state"
             />
           }
@@ -24,7 +39,7 @@
         <mat-spinner></mat-spinner>
       }
     }
-    @if (state === "stopped") {
+    @if (isInitialOrStopped) {
       <div class="configurator">
         <pacetrainer-sprint-form @myInsertRemoveTrigger />
       </div>
@@ -34,10 +49,14 @@
     <button
       mat-raised-button
       (click)="toggleTraining()"
+      [disabled]="startingTraining()"
       data-qa="toggle-training"
     >
       @switch (state) {
         @case ("stopped") {
+          Go Go Go
+        }
+        @case ("initial") {
           Go Go Go
         }
         @case ("paused") {
@@ -48,20 +67,17 @@
         }
       }
     </button>
-    <button
-      mat-raised-button
-      [disabled]="state === 'stopped'"
-      (click)="endTraining()"
-      data-qa="stop-training"
-    >
-      Training beenden
-    </button>
+    @if (!isInitialOrStopped) {
+      <button mat-raised-button (click)="endTraining()" data-qa="stop-training">
+        Training beenden
+      </button>
+    }
   </mat-card-actions>
 </mat-card>
 <mat-card>
   <mat-card-content>
     <div class="overview">
-      <pacetrainer-sprint-training-overview [open]="state === 'stopped'" />
+      <pacetrainer-sprint-training-overview [open]="isInitialOrStopped" />
     </div>
   </mat-card-content>
 </mat-card>

@@ -1,38 +1,9 @@
-<div class="base-timer" data-qa="countdown-timer">
-  <svg
-    class="base-timer-svg"
-    viewBox="0 0 100 100"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <g class="base-timer-circle">
-      <circle
-        [class.base-timer-completed]="this.timeLeft() <= 1000"
-        [class.base-timer-stroke]="this.timeLeft() > 1000"
-        stroke-width="1"
-        stroke="#88b462"
-        cx="50"
-        cy="50"
-        r="45"
-      >
-        <animate
-          attributeName="stroke-width"
-          dur="1s"
-          [attr.to]="this.timeLeft() < 5000 ? 3 : 1"
-          fill="freeze"
-          repeatCount="indefinite"
-        />
-        <animate
-          attributeName="stroke"
-          dur="1s"
-          [attr.to]="this.timeLeft() < 5000 ? '#84cb17' : '#88b462'"
-          fill="freeze"
-          repeatCount="indefinite"
-        />
-      </circle>
-      <path id="remaining-time-stroke" [attr.d]="svgArc()"></path>
-    </g>
-  </svg>
-  <span class="time">
+<div class="base-countdown" data-qa="countdown-timer">
+  <mat-progress-spinner
+    mode="determinate"
+    [value]="(timeLeft() / duration()) * 100"
+  />
+  <span class="mat-title-medium">
     {{ timeLeft() | trainingTime }}
   </span>
 </div>

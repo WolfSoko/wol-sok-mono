@@ -51,12 +51,11 @@ html {
     @include mat.expansion-color($dark-theme);
     @include mat.typography-hierarchy($dark-theme);
   }
-
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
 
 body,
 html {
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
   * {
     box-sizing: border-box;
 

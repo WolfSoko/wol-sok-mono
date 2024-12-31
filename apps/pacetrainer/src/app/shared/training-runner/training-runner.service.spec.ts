@@ -27,11 +27,11 @@ describe('TrainingRunnerService', () => {
       initService();
     });
 
-    it('should be created with initial state "stopped"', () => {
-      expect(service.trainingState()).toBe('stopped');
+    it('should be created with initial state "initial"', () => {
+      expect(service.trainingState()).toBe('initial');
     });
 
-    it('should toggle training state to "running" from "stopped"', () => {
+    it('should toggle training state to "running" from "initial"', () => {
       service.toggleTraining();
       expect(service.trainingState()).toBe('running');
     });

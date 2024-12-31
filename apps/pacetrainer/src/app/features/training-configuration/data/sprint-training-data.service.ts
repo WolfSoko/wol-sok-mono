@@ -5,6 +5,15 @@ import {
   Seconds,
   sToMs,
 } from '../../../shared/model/constants/time-utils';
+import {
+  createRecoveryExercise,
+  createSprintExercise,
+} from '../../../shared/model/training/excercise';
+import { createIntervalWithDuration } from '../../../shared/model/training/interval';
+import {
+  createTrainingWithDuration,
+  TrainingConfigWithDuration,
+} from '../../../shared/model/training/training-config-with.duration';
 import { RepositoryFactory } from '../../../shared/repository/repository.factory';
 import { SprintTrainingInputData } from './sprint-training-input.data';
 import { SprintTrainingData } from './sprint-training.data';
@@ -33,12 +42,28 @@ export class SprintTrainingDataService {
     totalTime: this.totalTime(),
   }));
 
+  sprintTrainingConfig = computed(() =>
+    this.initSprintTrainingConfig(this.data())
+  );
+
   constructor() {
     this.loadFromRepository();
     effect(() => {
       console.log('Save data');
       this.saveToRepository();
     });
+  }
+
+  private initSprintTrainingConfig(
+    data: SprintTrainingData
+  ): TrainingConfigWithDuration {
+    const { repetitions, sprintTime, recoveryTime } = data;
+    const exercises = createIntervalWithDuration(
+      repetitions,
+      createSprintExercise(sprintTime),
+      createRecoveryExercise(recoveryTime)
+    );
+    return createTrainingWithDuration([exercises]);
   }
 
   private saveToRepository(): void {
