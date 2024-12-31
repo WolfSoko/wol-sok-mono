@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.72.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.40-non-cdk-deployed...v4.72.0) (2024-12-31)
+
+
+### Features
+
+* ✨ add countdown voice and beeps ([c768b29](https://github.com/WolfSoko/wol-sok-mono/commit/c768b29abc2fd15a9d177f1d649faaa8b9cb9a92))
+
+
+### Testing
+
+* **pacetrainer:** 🚨 fix e2e tests ([56a5eb9](https://github.com/WolfSoko/wol-sok-mono/commit/56a5eb91b6cf0759864905faaedc4eaa237162a8))
+
 ## [4.71.40](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.39-non-cdk-deployed...v4.71.40) (2024-12-31)
 
 
