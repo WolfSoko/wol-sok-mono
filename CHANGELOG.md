@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.72.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.12-non-cdk-deployed...v4.72.13) (2025-01-05)
+
+
+### Chore
+
+* **deps:** update dependency web-streams-polyfill to v4.1.0 ([d6d11ee](https://github.com/WolfSoko/wol-sok-mono/commit/d6d11ee04bac2f70aaecab7e7ab02818322fd6fc))
+
 ## [4.72.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.11-non-cdk-deployed...v4.72.12) (2025-01-05)
 
 
