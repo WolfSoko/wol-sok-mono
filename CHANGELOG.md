@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.72.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.11-non-cdk-deployed...v4.72.12) (2025-01-05)
+
+
+### Chore
+
+* **deps:** update dependency @angular-builders/custom-webpack to v19 ([a0c0c3e](https://github.com/WolfSoko/wol-sok-mono/commit/a0c0c3ef327f7ad53553043913e6d56747368a3d))
+
 ## [4.72.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.10-non-cdk-deployed...v4.72.11) (2025-01-05)
 
 
