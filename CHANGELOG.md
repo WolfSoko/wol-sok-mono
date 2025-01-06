@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.72.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.17-non-cdk-deployed...v4.72.18) (2025-01-06)
+
+
+### Bug Fixes
+
+* **deps:** update dependency marked to v15.0.6 ([eea299b](https://github.com/WolfSoko/wol-sok-mono/commit/eea299bf69d226649829b52b0551818de6e76677))
+
 ## [4.72.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.16-non-cdk-deployed...v4.72.17) (2025-01-06)
 
 
