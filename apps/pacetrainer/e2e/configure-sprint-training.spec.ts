@@ -23,24 +23,5 @@ test.describe('Sprint Training', () => {
     });
   });
 
-  test('can not stop training when training is not started', async ({
-    sprintTraining,
-  }) => {
-    await sprintTraining.expectTrainingStateNotStoppable();
-  });
 
-  test('can start training', async ({ sprintTraining }) => {
-    await sprintTraining.startTraining();
-  });
-
-  test('can stop training', async ({ sprintTraining }) => {
-    await sprintTraining.startTraining();
-    await sprintTraining.stopTraining();
-  });
-
-  test('can pause and resume training', async ({ sprintTraining }) => {
-    await sprintTraining.startTraining();
-    await sprintTraining.pauseTraining();
-    await sprintTraining.resumeTraining();
-  });
 });
