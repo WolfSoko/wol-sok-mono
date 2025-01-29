@@ -166,7 +166,7 @@
     "angular-eslint": "19.0.2",
     "assemblyscript": "0.27.31",
     "autoprefixer": "^10.4.19",
-    "aws-cdk-lib": "^2.164.1",
+    "aws-cdk-lib": "^2.177.0",
     "aws-sdk": "2.1692.0",
     "axios": "1.7.9",
     "chai": "5.1.2",
