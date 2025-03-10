@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.29-non-cdk-deployed...v4.73.0) (2025-03-10)
+
+
+### Features
+
+* ✨ add sync check to CI/CD and lint-staged config ([7c190d6](https://github.com/WolfSoko/wol-sok-mono/commit/7c190d68543c96b503b10e2cc5ef50dc1b1c2f02))
+
 ## [4.72.29](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.28-non-cdk-deployed...v4.72.29) (2025-03-10)
 
 
