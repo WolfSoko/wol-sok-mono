@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.0-non-cdk-deployed...v4.73.1) (2025-03-10)
+
+
+### Bug Fixes
+
+* **rollapolla-analog:** 🐛 relocate animation keyframes and adjust font-family ([55e7cae](https://github.com/WolfSoko/wol-sok-mono/commit/55e7cae29c0f98e1cea488484887120506dfd212))
+
+
+### Chore
+
+* **deps:** update dependency axios to v1.8.2 [security] ([41f7bf7](https://github.com/WolfSoko/wol-sok-mono/commit/41f7bf7f1e9c8e8f9dcfc5c400991e28de2f647c))
+
 ## [4.73.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.29-non-cdk-deployed...v4.73.0) (2025-03-10)
 
 
