@@ -22,6 +22,7 @@ $dark-theme: mat.define-theme(
 );
 
 html {
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
   @include mat.app-background();
   @include mat.core-theme($dark-theme);
   @include mat.toolbar-theme($dark-theme);
@@ -44,8 +45,6 @@ html {
     @include mat.card-color($theme);
     @include mat.list-color($theme);
   }
-
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
 
 body,
@@ -81,6 +80,12 @@ body {
     repeat-y;
   background-size: 300% 100%;
   animation: gradient-move 10s ease-in-out infinite;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+  padding: 1rem;
 
   @keyframes gradient-move {
     0% {
@@ -90,13 +95,6 @@ body {
       background-position: 100% 50%;
     }
   }
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100vh;
-  width: 100%;
-  padding: 1rem;
-
   rap-root {
     width: 100%;
     max-width: 800px;

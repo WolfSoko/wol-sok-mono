@@ -9,7 +9,7 @@ launch-templates:
 
     init-steps:
       - name: Checkout # using a reusable step
-        uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/checkout/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/checkout/main.yaml'
         env:
           GIT_CHECKOUT_DEPTH: '50'
       - name: Install necessary binaries
@@ -21,20 +21,22 @@ launch-templates:
           echo "cwd is set to: $(pwd)"
 
       - name: Restore Node Modules Cache
-        uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/cache/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/cache/main.yaml'
         inputs:
           key: 'package-lock.json'
           paths: |
-            /home/workflows/workspace/node_modules/
+            ~/workflows/workspace/node_modules/
+            ~/.npm
           base-branch: 'main'
       - name: Restore Browser Binary Cache
-        uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/cache/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/cache/main.yaml'
         inputs:
           key: 'package-lock.json|"browsers"'
-          paths: /home/workflows/.cache/Cypress
+          paths: |
+            '~/.cache/Cypress'
           base-branch: 'main'
       - name: Install Node Modules
         script: |
           npm install
       - name: Install Browsers (if needed)
-        uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/install-browsers/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/install-browsers/main.yaml'
