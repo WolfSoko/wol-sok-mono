@@ -22,6 +22,4 @@ test.describe('Sprint Training', () => {
       totalTime: seconds(770),
     });
   });
-
-
 });

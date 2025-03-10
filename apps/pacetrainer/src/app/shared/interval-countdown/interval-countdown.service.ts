@@ -125,7 +125,7 @@ export class IntervalCountdownService {
       console.warn('Speech synthesis not supported in this browser.');
       return;
     }
-    const utterance = new SpeechSynthesisUtterance(text); // Create a new utterance for the specified text
+    const utterance = new SpeechSynthesisUtterance(text);
 
     utterance.lang = 'de-DE';
     utterance.pitch = 1;
