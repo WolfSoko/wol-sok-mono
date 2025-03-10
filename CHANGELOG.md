@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.72.29](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.28-non-cdk-deployed...v4.72.29) (2025-03-10)
+
+
+### Bug Fixes
+
+* **deps:** update aws-cdk monorepo to v2.175.0 ([e0cd838](https://github.com/WolfSoko/wol-sok-mono/commit/e0cd838b51954adcc1f8b0ba56f2e5ee879c4cb0))
+* **deps:** update dependency @angular/fire to v19.0.0-rc.5 ([7303d9d](https://github.com/WolfSoko/wol-sok-mono/commit/7303d9db0cbcc22d2acfc98c9e64ce98dea2833e))
+* **deps:** update dependency @sentry/angular-ivy to v7.120.3 ([fedc435](https://github.com/WolfSoko/wol-sok-mono/commit/fedc4354cddd5579c8ccd87d97bb160cde93dc30))
+* **deps:** update dependency ace-builds to v1.37.4 ([2161964](https://github.com/WolfSoko/wol-sok-mono/commit/2161964472b21380a49974c79390231dcbfc157f))
+* **deps:** update nx monorepo ([c2d3c82](https://github.com/WolfSoko/wol-sok-mono/commit/c2d3c826bf02942a3cc82092a3921725f04bcbeb))
+
+
+### Chore
+
+* **deps:** update dependency @swc/core to v1.10.7 ([75f14b2](https://github.com/WolfSoko/wol-sok-mono/commit/75f14b263a678b100a51a51b2b14f06112d4d124))
+* **deps:** update dependency @vitest/browser to v2.1.9 [security] ([a8acbe9](https://github.com/WolfSoko/wol-sok-mono/commit/a8acbe94ab2177b76b22d5a433beb39d2e42ec08))
+* **deps:** update dependency aws-cdk-lib to v2.177.0 [security] ([d5044d6](https://github.com/WolfSoko/wol-sok-mono/commit/d5044d6df0c5128a2fd18f9e3de968654b819a47))
+* **deps:** update dependency h3 to v1.13.1 ([a30d5ee](https://github.com/WolfSoko/wol-sok-mono/commit/a30d5ee22122b2b1accc2cec222652e5d8da6303))
+* **deps:** update dependency jest-preset-angular to v14.5.0 ([09293ee](https://github.com/WolfSoko/wol-sok-mono/commit/09293ee7ac7184fc16e67a31a9cf637cd77a3ce1))
+* **deps:** update dependency jsdom to v26 ([30116a2](https://github.com/WolfSoko/wol-sok-mono/commit/30116a2491ee5863048cd69c9b5851c75ad42957))
+* **deps:** update dependency vite to v5.4.12 [security] ([d38aada](https://github.com/WolfSoko/wol-sok-mono/commit/d38aadaadb3e3744bc23abd400a565ac32db1eee))
+* **deps:** update dependency vitest to v2.1.9 [security] ([00ce03d](https://github.com/WolfSoko/wol-sok-mono/commit/00ce03d0b902d67779720c7e7d2f174ffa88f51d))
+
+
+### Code style
+
+* 🎨 Remove unnecessary comment and clean up trailing empty lines ([85c8ef2](https://github.com/WolfSoko/wol-sok-mono/commit/85c8ef2c139157b70987352d147b3d6d8580b700))
+
+
+### Testing
+
+* **pacetrainer:** 🚨 sort tests better ([afc4374](https://github.com/WolfSoko/wol-sok-mono/commit/afc4374e5864b79c2f24575f433a205ea1814576))
+
 ## [4.72.28](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.27-non-cdk-deployed...v4.72.28) (2025-01-08)
 
 
