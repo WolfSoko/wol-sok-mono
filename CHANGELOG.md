@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.2...v4.73.3) (2025-03-10)
+
+
+### Bug Fixes
+
+* **deps:** update dependency prismjs to v1.30.0 [security] ([f33276e](https://github.com/WolfSoko/wol-sok-mono/commit/f33276ef974fdfb3adc89ab3c52400622360712a))
+
 ## [4.73.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.1-non-cdk-deployed...v4.73.2) (2025-03-10)
 
 
