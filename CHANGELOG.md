@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.1-non-cdk-deployed...v4.73.2) (2025-03-10)
+
+
+### Bug Fixes
+
+* **rollapolla-analog:** 🐛 extend Firestore rules expiration date to May 31, 2025 ([4118d9d](https://github.com/WolfSoko/wol-sok-mono/commit/4118d9da7610d31950366634bcf52d8bb1e854e1))
+* **rollapolla-analog:** 🐛 relocate animation keyframes and adjust font-family ([471a3a5](https://github.com/WolfSoko/wol-sok-mono/commit/471a3a561f00b65358606c2076b6ecdab35814c2))
+
+
+### Chore
+
+* **spa-cdk-stack:** 🔧 update aws-cdk-lib and dependencies ([40cc66e](https://github.com/WolfSoko/wol-sok-mono/commit/40cc66eff21070cf5fee260b9a3a3ad1e306ad47))
+
 ## [4.73.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.0-non-cdk-deployed...v4.73.1) (2025-03-10)
 
 
