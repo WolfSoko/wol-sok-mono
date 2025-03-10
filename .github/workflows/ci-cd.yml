@@ -56,7 +56,9 @@ jobs:
       #      - run: git branch --track main origin/main
       #        if: github.event_name == 'pull_request'
 
-      - run: npx nx format:check
+      - run: |
+          npx nx format:check
+          npx nx sync:check
       - name: run-checks in parallel on nx agents
         run: |
           # Start task in parallel
