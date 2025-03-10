@@ -94,4 +94,7 @@ module.exports = [
       '@angular-eslint/prefer-standalone': 'off',
     },
   },
+  {
+    ignores: ['**/vite.config.*.timestamp*', '**/vitest.config.*.timestamp*'],
+  },
 ];
