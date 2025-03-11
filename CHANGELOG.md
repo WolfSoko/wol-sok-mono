@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.34](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.33...v4.73.34) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency chai to v5.2.0 ([6961569](https://github.com/WolfSoko/wol-sok-mono/commit/696156979319744fbd1180b0c4be3b194a62cf20))
+
 ## [4.73.33](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.32...v4.73.33) (2025-03-11)
 
 
