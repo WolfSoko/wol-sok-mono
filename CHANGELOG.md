@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.32](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.31...v4.73.32) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency @swc/core to v1.11.8 ([a967355](https://github.com/WolfSoko/wol-sok-mono/commit/a9673557dfbc2a2e3d7daed772f177b97fcb6731))
+
 ## [4.73.31](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.30...v4.73.31) (2025-03-11)
 
 
