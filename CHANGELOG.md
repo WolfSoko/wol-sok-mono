@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.17...v4.73.18) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update vitest monorepo to v2.1.9 ([6ca381e](https://github.com/WolfSoko/wol-sok-mono/commit/6ca381e6913134397e309754effbd98d5d996fed))
+
 ## [4.73.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.16...v4.73.17) (2025-03-11)
 
 
