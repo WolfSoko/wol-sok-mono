@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.6...v4.73.7) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency @cypress/webpack-dev-server to v4.0.1 ([515f51a](https://github.com/WolfSoko/wol-sok-mono/commit/515f51a933ba9df0047d48ee75d7344f83498576))
+
 ## [4.73.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.5...v4.73.6) (2025-03-11)
 
 
