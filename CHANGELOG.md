@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.9...v4.73.10) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency assemblyscript to v0.27.35 ([e4f3cd7](https://github.com/WolfSoko/wol-sok-mono/commit/e4f3cd7fa71e9bdfb95f38cc6deb02cee2e53753))
+
 ## [4.73.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.8...v4.73.9) (2025-03-11)
 
 
