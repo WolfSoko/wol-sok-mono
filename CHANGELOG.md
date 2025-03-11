@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.43](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.42...v4.73.43) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency postcss to v8.5.3 ([fe076d5](https://github.com/WolfSoko/wol-sok-mono/commit/fe076d5cfa29aafd0356a877539f5b22c134a8f7))
+
 ## [4.73.42](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.41...v4.73.42) (2025-03-11)
 
 
