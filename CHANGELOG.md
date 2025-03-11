@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.45](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.44...v4.73.45) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency rollup to v4.35.0 ([97426e4](https://github.com/WolfSoko/wol-sok-mono/commit/97426e4d2edc48260b0dfbaccd82591072afde44))
+
 ## [4.73.44](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.43...v4.73.44) (2025-03-11)
 
 
