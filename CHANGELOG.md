@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.12...v4.73.13) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency eslint-plugin-storybook to v0.11.4 ([595869e](https://github.com/WolfSoko/wol-sok-mono/commit/595869eb1b652a3ead70d08b06cf2d6673f56b00))
+
 ## [4.73.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.11...v4.73.12) (2025-03-11)
 
 
