@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.16...v4.73.17) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency ts-jest to v29.2.6 ([950eebb](https://github.com/WolfSoko/wol-sok-mono/commit/950eebb2b4ac9aae97013452b4c96b26f7bac0ca))
+
 ## [4.73.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.15...v4.73.16) (2025-03-11)
 
 
