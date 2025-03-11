@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.4...v4.73.5) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update eslint monorepo to ~9.22.0 ([ad8c42c](https://github.com/WolfSoko/wol-sok-mono/commit/ad8c42cc85f3df782dbe6881f6b56585f008d8f2))
+
 ## [4.73.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.3...v4.73.4) (2025-03-11)
 
 
