@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.5...v4.73.6) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency @chromatic-com/storybook to v3.2.5 ([e04851e](https://github.com/WolfSoko/wol-sok-mono/commit/e04851e4963f5271b3a5118a31d2482a45765297))
+
 ## [4.73.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.4...v4.73.5) (2025-03-11)
 
 
