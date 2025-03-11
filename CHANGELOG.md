@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.15...v4.73.16) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency postcss-preset-env to v10.1.5 ([2d3b6ce](https://github.com/WolfSoko/wol-sok-mono/commit/2d3b6ce4ae80952a10e869770dbd404891c3e13e))
+
 ## [4.73.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.14...v4.73.15) (2025-03-11)
 
 
