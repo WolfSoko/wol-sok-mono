@@ -37,7 +37,7 @@
     "@angular/platform-server": "19.2.1",
     "@angular/router": "19.2.1",
     "@angular/service-worker": "19.2.1",
-    "@assemblyscript/loader": "0.27.31",
+    "@assemblyscript/loader": "0.27.35",
     "@datorama/akita": "8.0.1",
     "@datorama/akita-ng-router-store": "8.0.0",
     "@datorama/akita-ngdevtools": "7.0.0",
