@@ -15,7 +15,7 @@
     "vitest": "2.1.9",
     "@playwright/test": "^1.48.0",
     "@angular/forms": "19.2.1",
-    "rxjs": "7.8.1",
+    "rxjs": "7.8.2",
     "@angular/animations": "19.2.1"
   }
 }

@@ -7,7 +7,7 @@
     "@angular/material": "^18.0.0 || ^19.0.0",
     "@datorama/akita": "^8.0.0",
     "@wolsok/utils-decorators": "0.0.1",
-    "rxjs": "7.8.1",
+    "rxjs": "7.8.2",
     "@angular/router": "19.2.1",
     "@wolsok/fib-wasm-api": "0.0.1",
     "@angular/forms": "19.2.1"

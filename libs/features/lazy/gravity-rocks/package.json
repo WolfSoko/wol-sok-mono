@@ -6,7 +6,7 @@
     "@angular/core": "^18.0.0 || ^19.0.0",
     "@angular/material": "19.2.2",
     "@angular/forms": "19.2.1",
-    "rxjs": "7.8.1",
+    "rxjs": "7.8.2",
     "@wolsok/utils-math": "0.0.1",
     "@wolsok/utils-operators": "0.0.1",
     "@angular/router": "19.2.1"
