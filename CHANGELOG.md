@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.31](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.30...v4.73.31) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency @storybook/test-runner to v0.22.0 ([3b05fea](https://github.com/WolfSoko/wol-sok-mono/commit/3b05fea6063e09a6908c43634bd4658d443cc8cf))
+
 ## [4.73.30](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.29...v4.73.30) (2025-03-11)
 
 
