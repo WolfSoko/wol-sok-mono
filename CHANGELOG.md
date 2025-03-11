@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.23...v4.73.24) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update commitlint monorepo to v19.8.0 ([0add89e](https://github.com/WolfSoko/wol-sok-mono/commit/0add89eacc983fae30a50679686c8e860b491375))
+
 ## [4.73.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.22...v4.73.23) (2025-03-11)
 
 
