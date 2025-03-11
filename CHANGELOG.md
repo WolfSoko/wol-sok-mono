@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.21...v4.73.22) (2025-03-11)
+
+
+### Bug Fixes
+
+* **deps:** update dependency rxjs to v7.8.2 ([82deba7](https://github.com/WolfSoko/wol-sok-mono/commit/82deba7a6df4a3577ab70f76217387db76cacbd2))
+
 ## [4.73.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.20...v4.73.21) (2025-03-11)
 
 
