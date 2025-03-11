@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.10...v4.73.11) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency autoprefixer to v10.4.21 ([adfb5ba](https://github.com/WolfSoko/wol-sok-mono/commit/adfb5ba0153627842b96d8e4bf46ecca35878bc9))
+
 ## [4.73.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.9...v4.73.10) (2025-03-11)
 
 
