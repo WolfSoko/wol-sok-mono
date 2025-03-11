@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.36](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.35...v4.73.36) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency firebase-admin to v13.2.0 ([18eeaa9](https://github.com/WolfSoko/wol-sok-mono/commit/18eeaa9e2a1b356cf525fa9263b32f6cc47511e7))
+
 ## [4.73.35](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.34...v4.73.35) (2025-03-11)
 
 
