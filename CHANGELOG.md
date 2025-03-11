@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.14...v4.73.15) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency jest-preset-angular to v14.5.3 ([2a8113c](https://github.com/WolfSoko/wol-sok-mono/commit/2a8113cb53c8c2d1b92a42daa32e503aa2cfd0c9))
+
 ## [4.73.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.13...v4.73.14) (2025-03-11)
 
 
