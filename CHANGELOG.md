@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.38](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.37...v4.73.38) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency fs-extra to v11.3.0 ([8e23411](https://github.com/WolfSoko/wol-sok-mono/commit/8e23411cdf07158f8b1f0d125f8f88a1f61401f8))
+
 ## [4.73.37](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.36...v4.73.37) (2025-03-11)
 
 
