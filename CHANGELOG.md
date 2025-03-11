@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.35](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.34...v4.73.35) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency eslint-plugin-cypress to v4.2.0 ([3ca5d21](https://github.com/WolfSoko/wol-sok-mono/commit/3ca5d21805f4c9d087a92c0b2715507fbe9eadd2))
+
 ## [4.73.34](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.33...v4.73.34) (2025-03-11)
 
 
