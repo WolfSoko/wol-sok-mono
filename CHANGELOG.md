@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.18...v4.73.19) (2025-03-11)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @assemblyscript/loader to v0.27.35 ([26382a9](https://github.com/WolfSoko/wol-sok-mono/commit/26382a9b126a44fc119ba35049902f4fc6149fe0))
+
 ## [4.73.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.17...v4.73.18) (2025-03-11)
 
 
