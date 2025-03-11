@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.40](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.39...v4.73.40) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency jasmine-core to v5.6.0 ([12473f2](https://github.com/WolfSoko/wol-sok-mono/commit/12473f21fca76040eb8010146550ccafe0fbadda))
+
 ## [4.73.39](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.38...v4.73.39) (2025-03-11)
 
 
