@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.8...v4.73.9) (2025-03-11)
+
+
+### Chore
+
+* **deps:** update dependency @types/lodash to v4.17.16 ([48a7326](https://github.com/WolfSoko/wol-sok-mono/commit/48a73269a67c124c26c66e0c61ac4f2161a6add7))
+
 ## [4.73.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.7...v4.73.8) (2025-03-11)
 
 
