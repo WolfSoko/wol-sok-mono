@@ -10,7 +10,7 @@
     "@angular/router": "19.2.1",
     "@wolsok/ui-kit": "0.0.1",
     "@angular/forms": "19.2.1",
-    "rxjs": "7.8.1",
+    "rxjs": "7.8.2",
     "@ngneat/elf": "^2.5.1",
     "lodash": "4.17.21",
     "@ngneat/elf-entities": "^5.0.2"
