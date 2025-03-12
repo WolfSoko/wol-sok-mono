@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.50](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.49...v4.73.50) (2025-03-12)
+
+
+### Bug Fixes
+
+* **deps:** update dependency core-js to v3.41.0 ([56f7933](https://github.com/WolfSoko/wol-sok-mono/commit/56f793369a4e6330de223ab47937bea129bcad93))
+
 ## [4.73.49](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.48...v4.73.49) (2025-03-12)
 
 
