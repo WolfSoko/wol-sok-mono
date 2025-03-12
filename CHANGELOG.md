@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.49](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.48...v4.73.49) (2025-03-12)
+
+
+### Bug Fixes
+
+* **deps:** update dependency ace-builds to v1.39.0 ([370894e](https://github.com/WolfSoko/wol-sok-mono/commit/370894e6593b4e3f71ce203626c98e29da4bd540))
+
 ## [4.73.48](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.47...v4.73.48) (2025-03-12)
 
 
