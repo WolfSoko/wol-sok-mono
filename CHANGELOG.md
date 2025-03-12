@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.74.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.61...v4.74.0) (2025-03-12)
+
+
+### Features
+
+* ✨ update [@rspack](https://github.com/rspack) dependencies to version 1.2.8 ([38dadd2](https://github.com/WolfSoko/wol-sok-mono/commit/38dadd2b953a9a7990c523678bc9907d0e715b2b))
+
+
+### Chore
+
+* 🔧 add GTK and Graphene dependencies for node-gyp compilation on Ubuntu ([7963710](https://github.com/WolfSoko/wol-sok-mono/commit/796371091e4d8a2e43d093b7bf55087ca562707a))
+
 ## [4.73.61](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.60...v4.73.61) (2025-03-12)
 
 
