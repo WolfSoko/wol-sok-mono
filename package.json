@@ -147,7 +147,7 @@
     "@swc/core": "1.11.8",
     "@swc/helpers": "0.5.15",
     "@types/chai": "5.2.0",
-    "@types/eslint__eslintrc": "^2.1.2",
+    "@types/eslint__eslintrc": "^3.0.0",
     "@types/jasmine": "5.1.7",
     "@types/jasminewd2": "2.0.13",
     "@types/jest": "29.5.14",
