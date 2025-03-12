@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.59](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.58...v4.73.59) (2025-03-12)
+
+
+### Chore
+
+* **deps:** update getsentry/action-release action to v3 ([5b26ceb](https://github.com/WolfSoko/wol-sok-mono/commit/5b26cebc96aba36217abb9f28fc705c0eadbdb54))
+
 ## [4.73.58](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.57...v4.73.58) (2025-03-12)
 
 
