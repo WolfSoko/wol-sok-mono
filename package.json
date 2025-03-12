@@ -176,7 +176,7 @@
     "cypress": "^13.13.0",
     "esbuild": "^0.19.3",
     "eslint": "9.22.0",
-    "eslint-config-prettier": "9.1.0",
+    "eslint-config-prettier": "10.1.1",
     "eslint-plugin-cdk": "^1.8.0",
     "eslint-plugin-cypress": "4.2.0",
     "eslint-plugin-html": "^8.1.1",
