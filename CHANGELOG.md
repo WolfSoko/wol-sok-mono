@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.47](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.46...v4.73.47) (2025-03-12)
+
+
+### Chore
+
+* **deps:** update dependency webpack to v5.98.0 ([c965cb7](https://github.com/WolfSoko/wol-sok-mono/commit/c965cb7326467bfcc39f5e92cf789882f1f1e591))
+
 ## [4.73.46](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.45...v4.73.46) (2025-03-11)
 
 
