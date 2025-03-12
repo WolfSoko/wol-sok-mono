@@ -28,7 +28,6 @@ import { WaveCanvasComponent } from './wave-canvas/wave-canvas.component';
     MatButtonModule,
     WaveCanvasComponent,
     CommonModule,
-    MatLabel,
   ],
 })
 export class InputWaveComponent {
