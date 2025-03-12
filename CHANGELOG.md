@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.48](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.47...v4.73.48) (2025-03-12)
+
+
+### Bug Fixes
+
+* **deps:** update analog monorepo to v1.14.0 ([597ab1f](https://github.com/WolfSoko/wol-sok-mono/commit/597ab1f57d0716cc67d9516c5edbc6112d153223))
+
+
+### Chore
+
+* **deps:** update storybook monorepo to v8.6.4 ([0497131](https://github.com/WolfSoko/wol-sok-mono/commit/0497131637ce654b5c63b77888f83793e6457c8b))
+
 ## [4.73.47](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.46...v4.73.47) (2025-03-12)
 
 
