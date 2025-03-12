@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.58](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.57...v4.73.58) (2025-03-12)
+
+
+### Chore
+
+* **deps:** update dependency eslint-config-prettier to v10 ([afca320](https://github.com/WolfSoko/wol-sok-mono/commit/afca320e46b66509518e6fd1a1158bf4ba6e997f))
+
 ## [4.73.57](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.56...v4.73.57) (2025-03-12)
 
 
