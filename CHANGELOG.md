@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.73.57](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.56...v4.73.57) (2025-03-12)
+
+
+### Chore
+
+* **deps:** update dependency aws-cdk-lib to v2.183.0 ([1b89ac7](https://github.com/WolfSoko/wol-sok-mono/commit/1b89ac7b28805b5e96f9b5b7d4463d5204e1d67a))
+
 ## [4.73.56](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.55...v4.73.56) (2025-03-12)
 
 
