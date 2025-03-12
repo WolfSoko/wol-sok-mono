@@ -1,8 +1,8 @@
 {
   "type": "module",
   "peerDependencies": {
-    "@analogjs/platform": "1.12.0",
-    "@analogjs/router": "1.12.0",
+    "@analogjs/platform": "1.14.0",
+    "@analogjs/router": "1.14.0",
     "@angular/common": "19.2.1",
     "@angular/core": "19.2.1",
     "@angular/material": "19.2.2",
