@@ -12,7 +12,7 @@
     "@nx/vite": "20.5.0",
     "h3": "1.15.1",
     "vite": "6.2.1",
-    "vitest": "2.1.9",
+    "vitest": "3.0.8",
     "@playwright/test": "^1.48.0",
     "@angular/forms": "19.2.1",
     "rxjs": "7.8.2",
