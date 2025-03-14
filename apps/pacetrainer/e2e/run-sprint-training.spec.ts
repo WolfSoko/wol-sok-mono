@@ -1,6 +1,6 @@
 import { test } from './fixtures/sprint-training.fixture';
 
-test.describe(' Run Sprint Training', () => {
+test.describe('Run Sprint Training', () => {
   test('hide config after starting training', async ({ sprintTraining }) => {
     await sprintTraining.startTraining();
     await sprintTraining.expectSprintTrainingConfigurationNotVisible();
