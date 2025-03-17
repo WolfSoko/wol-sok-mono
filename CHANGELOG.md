@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.74.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.6...v4.74.7) (2025-03-17)
+
+
+### Chore
+
+* **spa-cdk-stack:** 🔧 update dependencies and fix deploy args ([1434f35](https://github.com/WolfSoko/wol-sok-mono/commit/1434f35e12c622b69df4640ed7288a68fc4998d6))
+
 ## [4.74.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.5...v4.74.6) (2025-03-17)
 
 
