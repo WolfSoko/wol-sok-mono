@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.74.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.3...v4.74.4) (2025-03-17)
+
+
+### Bug Fixes
+
+* **ci:** 🐛 👷 correct syntax for extra-deploy-args in deploy workflow ([9d12550](https://github.com/WolfSoko/wol-sok-mono/commit/9d12550609a7445982325cf72e5ce5667e6a0ce9))
+
 ## [4.74.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.2...v4.74.3) (2025-03-12)
 
 
