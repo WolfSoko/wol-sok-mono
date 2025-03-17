@@ -5,7 +5,7 @@ export default {
     'scope-enum': async (ctx) => [
       2,
       'always',
-      [...configNx.utils.getProjects(ctx), 'release'],
+      [...configNx.utils.getProjects(ctx), 'release', 'ci', 'build', 'deps'],
     ],
   },
 };
