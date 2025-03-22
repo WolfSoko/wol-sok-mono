@@ -102,7 +102,7 @@ export class SprintTrainingPage {
 
   async expectTrainingStateStartable(): Promise<void> {
     await expect(this.toggleTrainingCta).toContainText('Go Go Go');
-    await expect(this.stopTrainingCta).not.toBeVisible();
+    await expect(this.stopTrainingCta).toBeHidden();
   }
 
   async expectTrainingStateStoppable(): Promise<void> {
@@ -111,7 +111,7 @@ export class SprintTrainingPage {
   }
 
   async expectTrainingStateNotStoppable(): Promise<void> {
-    await expect(this.stopTrainingCta).not.toBeVisible();
+    await expect(this.stopTrainingCta).toBeHidden();
   }
 
   async expectTrainingStateResumable(): Promise<void> {
