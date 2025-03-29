@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 import { AppComponent } from './app.component';
+import { MatIconRegistry } from '@angular/material/icon';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
@@ -23,5 +24,13 @@ describe('AppComponent', () => {
     expect(TestBed.inject(Title).getTitle()).toEqual(
       'Polls for everyone | RollaPolla.com'
     );
+  });
+
+  it('should register icons to MatIconRegistry', () => {
+    TestBed.overrideProvider(MatIconRegistry, {});
+
+    expect(
+      MatIconRegistry.prototype.addSvgIconLiteralInNamespace
+    ).toHaveBeenCalledWith();
   });
 });

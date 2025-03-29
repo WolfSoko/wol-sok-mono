@@ -30,12 +30,13 @@ export class HomePage {
 
   async expectXLinkVisible() {
     const twitterLink = this.page.getByRole('link', {
-      name: 'Follow along on X',
+      name: 'Follow',
     });
     await expect(twitterLink).toBeVisible();
     expect(await twitterLink.getAttribute('href')).toContain(
       'https://x.com/rollapolla'
     );
     await expect(twitterLink).toHaveAttribute('target', '_blank');
+    await expect(twitterLink).toHaveScreenshot();
   }
 }
