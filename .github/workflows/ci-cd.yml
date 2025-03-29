@@ -61,15 +61,35 @@ jobs:
           npx nx sync:check
       - name: run-checks in parallel on nx agents
         run: |
-          # Start task in parallel
+          # Start task in parallel and capture PIDs
           npx nx affected -t=lint -c=ci --parallel=3 &
+          LINT_PID=$!
           npx nx affected -t=test -c=ci --parallel=3 &
+          TEST_PID=$!
           npx nx affected -t=build -c=ci --parallel=3 &
+          BUILD_PID=$!
           npx nx affected -t="component-test" --parallel=1 &
+          COMPONENT_TEST_PID=$!
           npx nx affected -t=e2e-ci --parallel=1 &
+          E2E_CI_PID=$!
 
-          # Wait for all background jobs to finish
-          wait
+          # Wait for all background jobs to finish and capture their exit codes
+          wait $LINT_PID
+          LINT_STATUS=$?
+          wait $TEST_PID
+          TEST_STATUS=$?
+          wait $BUILD_PID
+          BUILD_STATUS=$?
+          wait $COMPONENT_TEST_PID
+          COMPONENT_TEST_STATUS=$?
+          wait $E2E_CI_PID
+          E2E_CI_STATUS=$?
+
+          # Check exit codes and fail the step if any task failed
+          if [ $LINT_STATUS -ne 0 ] || [ $TEST_STATUS -ne 0 ] || [ $BUILD_STATUS -ne 0 ] || [ $COMPONENT_TEST_STATUS -ne 0 ] || [ $E2E_CI_STATUS -ne 0 ]; then
+            echo "One or more checks failed."
+            exit 1
+          fi
       - name: Report Codecov
         if: success() && github.ref_name == 'main' && hashFiles('coverage/**/*') != ''
         uses: codecov/codecov-action@v5
