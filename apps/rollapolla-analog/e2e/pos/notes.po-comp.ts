@@ -15,7 +15,7 @@ export class NotesPoComp {
     await this.page.click('button[type="submit"]');
 
     await expect(
-      this.page.getByTestId('note-note').getByText(message.trim())
+      this.page.getByTestId('notes-list').getByText(message.trim())
     ).toBeVisible();
   }
 
@@ -32,7 +32,7 @@ export class NotesPoComp {
     await leaveNoteInput.press('Control+Enter');
 
     await expect(
-      this.page.getByTestId('note-note').getByText(message.trim())
+      this.page.getByTestId('notes-list').getByText(message.trim())
     ).toBeVisible();
   }
 }

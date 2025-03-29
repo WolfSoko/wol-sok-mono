@@ -1,11 +1,10 @@
-import { DatePipe } from '@angular/common';
 import { Component, inject, output } from '@angular/core';
 import {
   NonNullableFormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { MatButtonModule, MatIconButton } from '@angular/material/button';
+import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -20,11 +19,9 @@ import { MatInputModule } from '@angular/material/input';
   `,
 
   imports: [
-    DatePipe,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatIconModule,
-    MatIconButton,
     MatButtonModule,
     MatInputModule,
   ],
