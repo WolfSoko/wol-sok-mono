@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.75.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.11-non-cdk-deployed...v4.75.0) (2025-03-29)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ update X link and improve UI layout ([5de190e](https://github.com/WolfSoko/wol-sok-mono/commit/5de190e10f2dfdf22d9d6cbc20a359fdc9c68a26))
+
+
+### Chore
+
+* 🔧 add IntelliJ IDEA nx-angular configuration file ([62c5c90](https://github.com/WolfSoko/wol-sok-mono/commit/62c5c9006bf5ddf2b5931eb36f5a67ba84e16f7d))
+
 ## [4.74.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.10-cdk-deployed...v4.74.11) (2025-03-29)
 
 
