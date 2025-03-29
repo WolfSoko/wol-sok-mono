@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.76.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.12-cdk-deployed...v4.76.13) (2025-03-29)
+
+
+### Bug Fixes
+
+* **rollapolla-analog:** 🐛 update firestore rules to adjust write access and message size limits ([b1167c1](https://github.com/WolfSoko/wol-sok-mono/commit/b1167c18e29b49b316a2487aae73cb25e39e5e58))
+
+
+### Chore
+
+* **deps:** update dependency @module-federation/enhanced to v0.11.2 ([9f68954](https://github.com/WolfSoko/wol-sok-mono/commit/9f68954e2e13ec87c02a2d696d08e62635911b30))
+
 ## [4.76.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.11-cdk-deployed...v4.76.12) (2025-03-29)
 
 
