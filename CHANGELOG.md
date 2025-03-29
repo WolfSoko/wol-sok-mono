@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.76.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.13-non-cdk-deployed...v4.76.14) (2025-03-29)
+
+
+### Chore
+
+* **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.38.0 ([942d0a5](https://github.com/WolfSoko/wol-sok-mono/commit/942d0a5b061f02ee36b08ae62a5fff54355469a0))
+
 ## [4.76.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.12-cdk-deployed...v4.76.13) (2025-03-29)
 
 
