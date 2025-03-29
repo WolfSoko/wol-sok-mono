@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.76.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.10-cdk-deployed...v4.76.11) (2025-03-29)
+
+
+### Chore
+
+* **deps:** update swc monorepo ([ab05f9a](https://github.com/WolfSoko/wol-sok-mono/commit/ab05f9a486aa901ca0d8a8a3d9300dd6dd24353b))
+
 ## [4.76.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.9...v4.76.10) (2025-03-29)
 
 
