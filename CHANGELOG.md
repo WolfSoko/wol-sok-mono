@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.76.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.15-non-cdk-deployed...v4.76.16) (2025-03-29)
+
+
+### Chore
+
+* **deps:** update dependency @rspack/core to v1.3.0 ([48ee032](https://github.com/WolfSoko/wol-sok-mono/commit/48ee0321dbce5ea2c971d89e0bb5cb431074f345))
+
 ## [4.76.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.14-non-cdk-deployed...v4.76.15) (2025-03-29)
 
 
