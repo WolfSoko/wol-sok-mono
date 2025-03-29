@@ -1,9 +1,9 @@
 import { provideExperimentalZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { MatIconRegistry } from '@angular/material/icon';
 import { Title } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 import { AppComponent } from './app.component';
-import { MatIconRegistry } from '@angular/material/icon';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
@@ -26,11 +26,19 @@ describe('AppComponent', () => {
     );
   });
 
-  it('should register icons to MatIconRegistry', () => {
-    TestBed.overrideProvider(MatIconRegistry, {});
+  it('should register xTwitter icons to MatIconRegistry', async () => {
+    const addSvgIconSpy = vi.spyOn(
+      TestBed.inject(MatIconRegistry),
+      'addSvgIconLiteralInNamespace'
+    );
+    TestBed.createComponent(AppComponent);
 
-    expect(
-      MatIconRegistry.prototype.addSvgIconLiteralInNamespace
-    ).toHaveBeenCalledWith();
+    expect(addSvgIconSpy).toHaveBeenCalledWith(
+      'fa',
+      'xTwitter',
+      expect.objectContaining({
+        changingThisBreaksApplicationSecurity: expect.stringContaining('<svg'),
+      })
+    );
   });
 });
