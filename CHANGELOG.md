@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.76.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.7-non-cdk-deployed...v4.76.8) (2025-03-29)
+
+
+### Chore
+
+* **deps:** update dependency eslint-plugin-prettier to v5.2.5 ([ec02c6c](https://github.com/WolfSoko/wol-sok-mono/commit/ec02c6cf58f8977f52577443a6ffc46c6d9a95c8))
+
 ## [4.76.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.6-non-cdk-deployed...v4.76.7) (2025-03-29)
 
 
