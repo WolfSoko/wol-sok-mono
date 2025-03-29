@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.76.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.4-non-cdk-deployed...v4.76.5) (2025-03-29)
+
+
+### Chore
+
+* **deps:** update dependency @types/chai to v5.2.1 ([3e2b9d4](https://github.com/WolfSoko/wol-sok-mono/commit/3e2b9d4093139dde0f8c8e8272f351b5d62f099e))
+
 ## [4.76.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.3-non-cdk-deployed...v4.76.4) (2025-03-29)
 
 
