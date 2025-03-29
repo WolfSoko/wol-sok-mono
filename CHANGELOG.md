@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.74.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.10-cdk-deployed...v4.74.11) (2025-03-29)
+
+
+### Chore
+
+* **rollapolla-analog:** 🔧 update firestore rules date ([3e43528](https://github.com/WolfSoko/wol-sok-mono/commit/3e435286db3f80c728a03bf5e717b4086b8835a0))
+
 ## [4.74.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.9-cdk-deployed...v4.74.10) (2025-03-25)
 
 
