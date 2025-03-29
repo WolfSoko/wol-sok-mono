@@ -6,7 +6,8 @@ import { SprintTrainingComponent } from '../features/sprint-training/sprint-trai
 @Component({
   selector: 'pace-home',
   imports: [PacetrainerTitleComponent, SprintTrainingComponent],
-  template: `<pace-title /> <pace-sprint-training />`,
+  template: `<pace-title></pace-title>
+    <pace-sprint-training></pace-sprint-training>`,
   styles: `
     :host {
       display: block;

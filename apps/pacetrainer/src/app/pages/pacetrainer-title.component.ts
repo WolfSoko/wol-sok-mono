@@ -27,7 +27,7 @@ import { RouterLink } from '@angular/router';
         </span>
         <span class="mat-subtitle-2">Dein digitaler Laufcoach.</span>
       </mat-toolbar>
-      <mat-divider />
+      <mat-divider></mat-divider>
     } @placeholder {
       <mat-spinner></mat-spinner>
     }

@@ -11,11 +11,11 @@
           @myInsertRemoveTrigger
           [duration]="countdown.countdownTime"
           [timeLeft]="countdown.timeLeft"
-        />
+        ></pace-countdown-circle>
         <pace-training-live-state
           [countdown]="countdown"
           [trainingState]="state"
-        />
+        ></pace-training-live-state>
       }
     } @else {
       @defer (hydrate on viewport; on viewport) {
@@ -26,13 +26,13 @@
                 @myInsertRemoveTrigger
                 [duration]="exercise.duration"
                 [timeLeft]="exercise.leftDuration"
-              />
+              ></pace-countdown-circle>
             }
             <pace-training-live-state
               [countdown]="countdown()"
               [currentExercise]="exercise"
               [trainingState]="state"
-            />
+            ></pace-training-live-state>
           }
         </div>
       } @placeholder {
@@ -41,7 +41,7 @@
     }
     @if (isInitialOrStopped) {
       <div class="configurator">
-        <pace-sprint-form @myInsertRemoveTrigger />
+        <pace-sprint-form @myInsertRemoveTrigger></pace-sprint-form>
       </div>
     }
   </mat-card-content>
@@ -77,7 +77,9 @@
 <mat-card>
   <mat-card-content>
     <div class="overview">
-      <pace-sprint-training-overview [open]="isInitialOrStopped" />
+      <pace-sprint-training-overview
+        [open]="isInitialOrStopped"
+      ></pace-sprint-training-overview>
     </div>
   </mat-card-content>
 </mat-card>
