@@ -32,7 +32,7 @@ import { TrainingLiveStateComponent } from '../training-live-state/training-live
 const START_TRAINING_COUNTDOWN = milliseconds(5000);
 
 @Component({
-  selector: 'pacetrainer-sprint-training',
+  selector: 'pace-sprint-training',
   templateUrl: './sprint-training.component.html',
   animations: [
     trigger('myInsertRemoveTrigger', [

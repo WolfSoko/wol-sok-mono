@@ -58,6 +58,8 @@ export default [
       files: ['e2e/**/*.{ts,js,tsx,jsx}'],
       rules: {
         ...config.rules,
+        'playwright/no-standalone-expect': 'off',
+        'playwright/expect-expect': 'off',
       },
     })),
 ];

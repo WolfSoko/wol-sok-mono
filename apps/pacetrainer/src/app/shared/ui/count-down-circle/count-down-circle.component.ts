@@ -4,7 +4,7 @@ import { Milliseconds } from '../../model/constants/time-utils';
 import { TrainingTimePipe } from '../training-time.pipe';
 
 @Component({
-  selector: 'pacetrainer-countdown-circle',
+  selector: 'pace-countdown-circle',
   templateUrl: './count-down-circle.component.html',
   styleUrl: './count-down-circle.component.scss',
   imports: [TrainingTimePipe, MatProgressSpinner],

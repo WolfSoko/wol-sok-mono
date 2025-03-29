@@ -10,7 +10,7 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
 import { SprintTrainingDataService } from './data/sprint-training-data.service';
 
 @Component({
-  selector: 'pacetrainer-sprint-training-overview',
+  selector: 'pace-sprint-training-overview',
   template: `
     @let conf = data();
     @let repetitions = conf.repetitions;

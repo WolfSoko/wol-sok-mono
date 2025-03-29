@@ -12,7 +12,7 @@ import { msToS, sToMs } from '../../shared/model/constants/time-utils';
 import { SprintTrainingDataService } from './data/sprint-training-data.service';
 
 @Component({
-  selector: 'pacetrainer-sprint-form',
+  selector: 'pace-sprint-form',
   template: `
     <form [formGroup]="sprintForm" class="sprint-form" data-qa="sprint-form">
       <mat-form-field appearance="fill">

@@ -5,7 +5,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink } from '@angular/router';
 
 @Component({
-  selector: 'pacetrainer-title',
+  selector: 'pace-title',
   styles: [
     `
       mat-toolbar {

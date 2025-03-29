@@ -7,12 +7,12 @@
   <mat-card-content>
     @if (isInitialOrStopped) {
       @if (countdown(); as countdown) {
-        <pacetrainer-countdown-circle
+        <pace-countdown-circle
           @myInsertRemoveTrigger
           [duration]="countdown.countdownTime"
           [timeLeft]="countdown.timeLeft"
         />
-        <pacetrainer-training-live-state
+        <pace-training-live-state
           [countdown]="countdown"
           [trainingState]="state"
         />
@@ -22,13 +22,13 @@
         <div class="runner">
           @if (currentExercise(); as exercise) {
             @if (exercise.duration) {
-              <pacetrainer-countdown-circle
+              <pace-countdown-circle
                 @myInsertRemoveTrigger
                 [duration]="exercise.duration"
                 [timeLeft]="exercise.leftDuration"
               />
             }
-            <pacetrainer-training-live-state
+            <pace-training-live-state
               [countdown]="countdown()"
               [currentExercise]="exercise"
               [trainingState]="state"
@@ -41,7 +41,7 @@
     }
     @if (isInitialOrStopped) {
       <div class="configurator">
-        <pacetrainer-sprint-form @myInsertRemoveTrigger />
+        <pace-sprint-form @myInsertRemoveTrigger />
       </div>
     }
   </mat-card-content>
@@ -77,7 +77,7 @@
 <mat-card>
   <mat-card-content>
     <div class="overview">
-      <pacetrainer-sprint-training-overview [open]="isInitialOrStopped" />
+      <pace-sprint-training-overview [open]="isInitialOrStopped" />
     </div>
   </mat-card-content>
 </mat-card>

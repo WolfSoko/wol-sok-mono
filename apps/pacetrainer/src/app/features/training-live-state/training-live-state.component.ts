@@ -7,7 +7,7 @@ import { TrainingNamePipe } from '../../shared/ui/training-name.pipe';
 import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
 
 @Component({
-  selector: 'pacetrainer-training-live-state',
+  selector: 'pace-training-live-state',
   styleUrl: 'training-live-state.component.scss',
   templateUrl: 'training-live-state.component.html',
   imports: [MatListModule, TrainingTimePipe, TrainingNamePipe],

@@ -4,9 +4,9 @@ import { PacetrainerTitleComponent } from './pacetrainer-title.component';
 import { SprintTrainingComponent } from '../features/sprint-training/sprint-training.component';
 
 @Component({
-  selector: 'pacetrainer-home',
+  selector: 'pace-home',
   imports: [PacetrainerTitleComponent, SprintTrainingComponent],
-  template: `<pacetrainer-title /> <pacetrainer-sprint-training />`,
+  template: `<pace-title /> <pace-sprint-training />`,
   styles: `
     :host {
       display: block;
