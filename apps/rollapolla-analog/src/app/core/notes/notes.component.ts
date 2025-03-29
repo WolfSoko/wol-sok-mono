@@ -15,13 +15,13 @@ import { NotesListComponent } from './notes-list.component';
     :host {
       display: flex;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: 0.2rem;
       justify-content: stretch;
       align-items: start;
     }
     .form,
     .notes {
-      flex: 1 1 calc(50% - 0.5rem);
+      flex: 1 1 auto;
     }
   `,
 })
