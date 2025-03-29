@@ -164,7 +164,7 @@
     "@vitest/coverage-v8": "3.0.9",
     "@vitest/ui": "3.0.9",
     "@wolsok/nx-aws-cdk-v2": "2.1.2",
-    "angular-eslint": "19.2.1",
+    "angular-eslint": "19.3.0",
     "assemblyscript": "0.27.35",
     "autoprefixer": "^10.4.19",
     "aws-cdk": "^2.1004.0",
