@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.76.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.3-non-cdk-deployed...v4.76.4) (2025-03-29)
+
+
+### Chore
+
+* **deps:** update dependency @playwright/test to v1.51.1 ([80e3456](https://github.com/WolfSoko/wol-sok-mono/commit/80e345694374a0f4e911ddebcb9dc01cb61990b5))
+
 ## [4.76.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.2-non-cdk-deployed...v4.76.3) (2025-03-29)
 
 
