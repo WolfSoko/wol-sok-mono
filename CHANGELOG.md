@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.76.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.1-non-cdk-deployed...v4.76.2) (2025-03-29)
+
+
+### Bug Fixes
+
+* 🐛 lint errors ([d97228f](https://github.com/WolfSoko/wol-sok-mono/commit/d97228f890acc1681b05bfa412519ab7fcdab716))
+* **deps:** update analog monorepo to v1.14.1 ([2605041](https://github.com/WolfSoko/wol-sok-mono/commit/2605041e535843a05258b5c0d83a338b7c331811))
+* **deps:** update nx monorepo ([1865dae](https://github.com/WolfSoko/wol-sok-mono/commit/1865daecd2745abc25ff5a044bb14295fc968d36))
+* **deps:** update nx monorepo ([73e76bb](https://github.com/WolfSoko/wol-sok-mono/commit/73e76bbccd5d37ae861d7870515412f2b44d343d))
+* **pacetrainer:** 🐛 analog does not support self closing angular components ([c2f9601](https://github.com/WolfSoko/wol-sok-mono/commit/c2f960146d240aadbea6d2d530ba41b6d630c6e2))
+* **pacetrainer:** 🐛 fix selector ([2bab94b](https://github.com/WolfSoko/wol-sok-mono/commit/2bab94b9d8fded434ed32bef4caf16d7c0f460c4))
+* **rollapolla-analog:** 🐛 update test IDs and improve hydration strategy ([da7554a](https://github.com/WolfSoko/wol-sok-mono/commit/da7554ae2c99e37573a3c81ac7b674b58e4d5611))
+
+
+### Refactorings
+
+* **rollapolla-analog:** ♻️ update UI and clean code ([729046c](https://github.com/WolfSoko/wol-sok-mono/commit/729046c20630a8ec630c210290cc21907726b3d8))
+
+
+### CI/CD
+
+* 👷 improve parallel execution with exit status checks ([c6550e9](https://github.com/WolfSoko/wol-sok-mono/commit/c6550e9eee967c615f1358b93044dea1bf41264b))
+* 👷 only run linting not testing in commit hook ([24cb51d](https://github.com/WolfSoko/wol-sok-mono/commit/24cb51d597bff919df29a3d5842e462c8bf9d560))
+
+
+### Chore
+
+* **deps:** update dependency @chromatic-com/storybook to v3.2.6 ([1a73a45](https://github.com/WolfSoko/wol-sok-mono/commit/1a73a458c5afc5d5786d76aa02298f351aad1530))
+* **deps:** update dependency @cypress/webpack-dev-server to v4.0.2 ([2707c26](https://github.com/WolfSoko/wol-sok-mono/commit/2707c2652cd840e1632381aeea709768b1d2c63e))
+* **deps:** update vitest monorepo to v3.0.9 ([4da1cdf](https://github.com/WolfSoko/wol-sok-mono/commit/4da1cdff948e9a16318b1ae9ed0a192a81b4d2e8))
+
+
+### Testing
+
+* 🚨 update snapshots for cdk ([30c0a6b](https://github.com/WolfSoko/wol-sok-mono/commit/30c0a6b1dc5cee3e324d5a7a578b03ee016af546))
+* **rollapolla-analog:** 🚨 add snapshots for linux ([40e6311](https://github.com/WolfSoko/wol-sok-mono/commit/40e6311be5bde6a4e84b127a5d1998f475614c31))
+
 ## [4.76.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.0-non-cdk-deployed...v4.76.1) (2025-03-29)
 
 
