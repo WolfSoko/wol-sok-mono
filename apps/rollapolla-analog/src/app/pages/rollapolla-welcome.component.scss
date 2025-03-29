@@ -1,7 +1,16 @@
+section.page-header {
+  display: flex;
+  flex-wrap: wrap;
+
+  align-items: center;
+  justify-content: center;
+}
+
 h1 {
   background: linear-gradient(to right, #ffc371, #ff5365);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  margin: 0;
 }
 .hero-title {
   flex-wrap: wrap;
@@ -14,6 +23,6 @@ h1 {
 }
 
 img {
-  width: 100%;
+  width: clamp(200px, 50%, 300%);
   object-fit: contain;
 }

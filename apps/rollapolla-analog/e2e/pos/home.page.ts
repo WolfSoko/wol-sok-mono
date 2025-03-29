@@ -28,13 +28,13 @@ export class HomePage {
     );
   }
 
-  async expectTwitterLinkVisible() {
+  async expectXLinkVisible() {
     const twitterLink = this.page.getByRole('link', {
-      name: 'Follow along on Twitter',
+      name: 'Follow along on X',
     });
     await expect(twitterLink).toBeVisible();
     expect(await twitterLink.getAttribute('href')).toContain(
-      'https://twitter.com/rollapolla'
+      'https://x.com/rollapolla'
     );
     await expect(twitterLink).toHaveAttribute('target', '_blank');
   }

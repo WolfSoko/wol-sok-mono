@@ -9,7 +9,7 @@ test.describe('Home', () => {
     await homePage.expectComingSoonVisible();
   });
 
-  test('has a cta to follow on twitter', async ({ homePage }) => {
-    await homePage.expectTwitterLinkVisible();
+  test('has a cta to follow on X', async ({ homePage }) => {
+    await homePage.expectXLinkVisible();
   });
 });
