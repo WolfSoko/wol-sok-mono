@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.76.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.75.0-non-cdk-deployed...v4.76.0) (2025-03-29)
+
+
+### Features
+
+* **rollapolla-analog:** ✨ integrate FontAwesome for branding X link ([f708e20](https://github.com/WolfSoko/wol-sok-mono/commit/f708e2032e9fdc9ed955dd83797e0aef87593424))
+
 ## [4.75.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.11-non-cdk-deployed...v4.75.0) (2025-03-29)
 
 
