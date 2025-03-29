@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.76.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.8-non-cdk-deployed...v4.76.9) (2025-03-29)
+
+
+### Refactorings
+
+* **rollapolla-analog:** ♻️ migrate notes feature to chat messages ([4c3a2b6](https://github.com/WolfSoko/wol-sok-mono/commit/4c3a2b68369ef01e4044e1767219fa573eacb3af))
+
 ## [4.76.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.7-non-cdk-deployed...v4.76.8) (2025-03-29)
 
 
