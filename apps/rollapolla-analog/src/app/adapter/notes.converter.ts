@@ -2,28 +2,22 @@ import {
   FirestoreDataConverter,
   QueryDocumentSnapshot,
   SnapshotOptions,
-  Timestamp,
 } from '@angular/fire/firestore';
-import { Note } from '../../shared/note';
+import { ChatMessage } from '../../shared/chat.message';
 import { NoteDto } from './note.dto';
 
-const SEVEN_DAYS: number = 1000 * 60 * 60 * 24 * 7;
-export const notesConverter: FirestoreDataConverter<Note, NoteDto> = {
-  toFirestore(note: Note): NoteDto {
-    return {
-      note: note.note,
-      createdAt: Timestamp.fromDate(note.createdAt),
-      ttl: Timestamp.fromMillis(note.createdAt.getTime() + SEVEN_DAYS),
-    };
+export const notesConverter: FirestoreDataConverter<ChatMessage, NoteDto> = {
+  toFirestore(note: ChatMessage): never {
+    throw new Error(`Don't use this anymore ${note}`);
   },
   fromFirestore(
     snapshot: QueryDocumentSnapshot<NoteDto>,
     options?: SnapshotOptions
-  ): Note {
+  ): ChatMessage {
     const data = snapshot.data(options) as NoteDto;
     return {
       id: snapshot.id,
-      note: data.note,
+      message: data.note,
       createdAt: new Date(data.createdAt.toDate()),
     };
   },

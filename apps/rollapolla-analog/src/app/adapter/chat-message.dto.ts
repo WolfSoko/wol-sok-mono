@@ -1,8 +1,7 @@
 import { Timestamp } from '@angular/fire/firestore';
 
-// @deprecated use ChatMessageDto
-export interface NoteDto {
-  note: string;
+export interface ChatMessageDto {
+  message: string;
   createdAt: Timestamp;
   ttl: Timestamp;
 }

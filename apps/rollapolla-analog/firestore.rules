@@ -14,10 +14,15 @@ service cloud.firestore {
       allow read, write: if request.time < timestamp.date(2025, 6, 30);
     }
     match /notes/{noteId} {
-      allow create, update: if request.resource.data.createdAt is timestamp &&
-          request.resource.data.ttl is timestamp &&
-          request.resource.data.ttl > request.resource.data.createdAt &&
-          request.resource.data.note.size() > 9;
+      // Forbid create and update operations by not allowing them
+      // No allow rule means no access is granted
+    }
+    match /chatMessages/{messageId} {
+     allow create, update: if request.resource.data.createdAt is timestamp &&
+       request.resource.data.ttl is timestamp &&
+       request.resource.data.ttl > request.resource.data.createdAt &&
+       request.resource.data.message.size() > 9 &&
+       request.resource.data.message.size() < 1000
     }
   }
 }

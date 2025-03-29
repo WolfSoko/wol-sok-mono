@@ -1,4 +1,9 @@
-import '@analogjs/vite-plugin-angular/setup-vitest';
+import '@analogjs/vitest-angular/setup-snapshots';
+import {
+  NgModule,
+  provideExperimentalZonelessChangeDetection,
+} from '@angular/core';
+
 import { getTestBed } from '@angular/core/testing';
 
 import {
@@ -6,7 +11,13 @@ import {
   platformBrowserDynamicTesting,
 } from '@angular/platform-browser-dynamic/testing';
 
+@NgModule({
+  imports: [BrowserDynamicTestingModule],
+  providers: [provideExperimentalZonelessChangeDetection()],
+})
+export class TestingModule {}
+
 getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
+  TestingModule,
   platformBrowserDynamicTesting()
 );

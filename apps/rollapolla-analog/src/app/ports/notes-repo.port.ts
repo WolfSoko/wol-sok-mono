@@ -1,7 +1,6 @@
 import { Signal } from '@angular/core';
-import { Note } from '../../shared/note';
+import { ChatMessage } from '../../shared/chat.message';
 
 export abstract class NotesRepoPort {
-  abstract getNotes(): Signal<Note[] | undefined>;
-  abstract addNote(newNote: string): void;
+  abstract getNotes(): Signal<ChatMessage[] | undefined>;
 }

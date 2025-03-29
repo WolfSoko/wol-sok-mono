@@ -2,30 +2,32 @@ import { DatePipe } from '@angular/common';
 import { Component, input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
-import { Note } from '../../../shared/note';
+import { ChatMessage } from '../../../shared/chat.message';
 
 @Component({
-  selector: 'rap-notes-list',
-  template: `@if (notes()) {
-      <mat-list class="notes-list" data-testid="notes-list">
-        @for (note of notes(); track note.id; let i = $index) {
+  selector: 'rap-messages-list',
+  template: `@if (messages()) {
+      <mat-list class="messages-list" data-testid="messages-list">
+        @for (message of messages(); track message.id; let i = $index) {
           <li>
             <mat-card>
               <mat-card-subtitle>
-                <span data-testid="note-note">{{ note.note }}</span>
+                <span [attr.data-testid]="'message-item-' + message.id">{{
+                  message.message
+                }}</span>
               </mat-card-subtitle>
               <mat-card-footer>
                 <span class="mat-label-small">{{
-                  note.createdAt | date: 'medium'
+                  message.createdAt | date: 'medium'
                 }}</span>
               </mat-card-footer>
             </mat-card>
             <br />
           </li>
         }
-        @if (notes()?.length === 0) {
+        @if (messages()?.length === 0) {
           <div>
-            <h4>No notes yet!</h4>
+            <h4>No messages yet!</h4>
             <p>Add a new one and see them appear here...</p>
           </div>
         }
@@ -41,12 +43,13 @@ import { Note } from '../../../shared/note';
       max-height: 480px;
       overflow-y: auto;
     }
-    .notes-list {
+
+    .messages-list {
     }
   `,
 
   imports: [DatePipe, MatListModule, MatCardModule],
 })
-export class NotesListComponent {
-  notes = input<Note[]>();
+export class MessagesListComponent {
+  messages = input<ChatMessage[]>();
 }

@@ -1,0 +1,53 @@
+<form
+  [formGroup]="form"
+  (ngSubmit)="addMessage()"
+  (keyup)="$event.ctrlKey && $event.key === 'Enter' ? addMessage() : false"
+>
+  <mat-form-field class="form-field">
+    <mat-label>Most fun poll</mat-label>
+    <textarea
+      data-testid="message-input"
+      rows="3"
+      matInput
+      formControlName="newMessage"
+      name="newMessage"
+      placeholder="Please share your thoughts"
+    ></textarea>
+    <mat-hint align="start"
+      ><span
+        >Ctrl+Enter <mat-icon class="input-icon" fontIcon="input"></mat-icon
+      ></span>
+    </mat-hint>
+    <mat-hint align="end"
+      >{{
+        form.controls.newMessage.getRawValue().length + "/" + maxMessageLength()
+      }}
+    </mat-hint>
+    @if (form.controls.newMessage.errors?.["maxlength"]; as error) {
+      <mat-error
+        >Maximum length is {{ error.requiredLength }} characters
+      </mat-error>
+    }
+    @if (
+      form.controls.newMessage.dirty &&
+        form.controls.newMessage.errors?.["minlength"];
+      as error
+    ) {
+      <mat-error
+        >Minimal length is {{ error.requiredLength }} characters
+      </mat-error>
+    }
+  </mat-form-field>
+  <div class="submit-button-container">
+    <button
+      type="submit"
+      [disabled]="form.invalid"
+      mat-button
+      class="submit-button"
+      title="Add message"
+    >
+      Send message
+      <mat-icon>add</mat-icon>
+    </button>
+  </div>
+</form>

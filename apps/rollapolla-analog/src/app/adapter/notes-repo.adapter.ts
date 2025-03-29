@@ -1,16 +1,7 @@
-import { isPlatformServer } from '@angular/common';
-import {
-  effect,
-  inject,
-  Injectable,
-  PendingTasks,
-  PLATFORM_ID,
-  Signal,
-} from '@angular/core';
+import { inject, Injectable, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import {
-  addDoc,
   collection,
   collectionData,
   CollectionReference,
@@ -19,58 +10,41 @@ import {
   orderBy,
   query,
 } from '@angular/fire/firestore';
-import { Note } from '../../shared/note';
+import { ChatMessage } from '../../shared/chat.message';
 import { NotesRepoPort } from '../ports/notes-repo.port';
 import { NoteDto } from './note.dto';
 import { notesConverter } from './notes.converter';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class NotesRepoAdapter extends NotesRepoPort {
   private readonly fs: Firestore = inject(Firestore);
-  private readonly notes: Signal<Note[] | undefined>;
-  private readonly notesCol: CollectionReference<Note, NoteDto>;
+  private readonly notes: Signal<ChatMessage[] | undefined>;
+  private readonly notesCol: CollectionReference<ChatMessage, NoteDto>;
 
   constructor() {
     super();
-    this.notesCol = collection(this.fs, 'notes').withConverter<Note, NoteDto>(
-      notesConverter
-    );
-    // if is server environment, inform zoneless context to wait for the notes to be loaded
+    this.notesCol = collection(this.fs, 'notes').withConverter<
+      ChatMessage,
+      NoteDto
+    >(notesConverter);
 
-    let finishRendering: () => void;
-    const isServer = isPlatformServer(inject(PLATFORM_ID));
-    if (isServer) {
-      finishRendering = inject(PendingTasks).add();
-    }
     const notes$ = collectionData(
       query(this.notesCol, orderBy('createdAt', 'desc'), limit(20))
     );
 
     this.notes = toSignal(notes$, { rejectErrors: true });
-    if (isServer) {
-      effect(() => {
-        if (this.notes() === undefined) {
-          // give the server 200ms to load the notes
-          // otherwise finish rendering
-          setTimeout(finishRendering, 400);
-          return;
-        }
-        // if notes are loaded, finish rendering
-        finishRendering();
-      });
-    }
   }
 
-  getNotes(): Signal<Note[] | undefined> {
+  getNotes(): Signal<ChatMessage[] | undefined> {
     return this.notes;
   }
 
+  /**
+   *
+   * @param note
+   * @deprecated use new ChatMessageAdapter
+   */
   async addNote(note: string): Promise<void> {
-    const newNote: Note = {
-      id: '-1',
-      note,
-      createdAt: new Date(),
-    };
-    await addDoc(this.notesCol, newNote);
+    throw new Error('Deprecated');
   }
 }

@@ -5,7 +5,15 @@
   </mat-card-header>
   <br />
   <mat-card-content>
-    <rap-note-form (noteAdded)="addNote($event)"></rap-note-form>
+    @defer (hydrate on idle; on viewport) {
+      <rap-chat-message-form
+        [minMessageLength]="minLength()"
+        [maxMessageLength]="maxLength()"
+        (messageAdded)="addChatMessage($event)"
+      ></rap-chat-message-form>
+    } @placeholder {
+      <mat-spinner></mat-spinner>
+    }
   </mat-card-content>
 </mat-card>
 <mat-card class="notes">
@@ -14,6 +22,6 @@
   </mat-card-header>
   <br />
   <mat-card-content>
-    <rap-notes-list [notes]="notes()"></rap-notes-list>
+    <rap-messages-list [messages]="chatMessages()"></rap-messages-list>
   </mat-card-content>
 </mat-card>

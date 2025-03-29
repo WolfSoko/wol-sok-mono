@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CreatePollComponent } from '../core/create-poll/create-poll.component';
-import { NotesComponent } from '../core/notes/notes.component';
+import { ChatLiveStreamComponent } from '../core/notes/chat-live-stream.component';
 
 @Component({
   selector: 'rap-welcome',
@@ -17,7 +17,7 @@ import { NotesComponent } from '../core/notes/notes.component';
     MatButtonModule,
     MatCardModule,
     MatProgressSpinnerModule,
-    NotesComponent,
+    ChatLiveStreamComponent,
     CreatePollComponent,
   ],
   styleUrl: './rollapolla-welcome.component.scss',
