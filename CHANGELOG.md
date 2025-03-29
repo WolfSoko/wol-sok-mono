@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.76.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.0-non-cdk-deployed...v4.76.1) (2025-03-29)
+
+
+### Testing
+
+* **rollapolla-analog:** 🚨 update spec to test xTwitter icon registration ([258a41d](https://github.com/WolfSoko/wol-sok-mono/commit/258a41d2a1b4da457f8640951113f641491a7aa7))
+
 ## [4.76.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.75.0-non-cdk-deployed...v4.76.0) (2025-03-29)
 
 
