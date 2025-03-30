@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.76.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.19-non-cdk-deployed...v4.76.20) (2025-03-30)
+
+
+### Chore
+
+* **deps:** update dependency @eslint/js to v9.23.0 ([3490e7a](https://github.com/WolfSoko/wol-sok-mono/commit/3490e7a05846a52a5da60f13500f7da9ff1e8138))
+* **deps:** update dependency @types/three to v0.175.0 ([248e722](https://github.com/WolfSoko/wol-sok-mono/commit/248e722de3e964c81a7a03f315f6ea829142fc18))
+* **deps:** update dependency firebase-tools to v14 ([9197620](https://github.com/WolfSoko/wol-sok-mono/commit/91976209881ba866a3f54006955acf0c7925f3ac))
+* **deps:** update dependency rollup to v4.38.0 ([45142e5](https://github.com/WolfSoko/wol-sok-mono/commit/45142e57f3b08255eb536a10d0a066062b7ba59d))
+
 ## [4.76.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.18-non-cdk-deployed...v4.76.19) (2025-03-30)
 
 
