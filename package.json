@@ -231,6 +231,7 @@
     "vite": "6.2.3",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "3.0.9",
+    "vitest-mock-extended": "^3.0.1",
     "web-streams-polyfill": "4.1.0",
     "webpack": "5.98.0",
     "webpack-bundle-analyzer": "4.10.2",
@@ -239,8 +240,8 @@
   "optionalDependencies": {
     "@esbuild/linux-x64": "0.25.2",
     "@nx/nx-linux-x64-gnu": "20.6.4",
-    "@rollup/rollup-linux-x64-gnu": "4.24.4",
-    "@rollup/rollup-win32-x64-msvc": "4.24.4"
+    "@rollup/rollup-linux-x64-gnu": "4.38.0",
+    "@rollup/rollup-win32-x64-msvc": "4.38.0"
   },
   "akitaCli": {
     "customFolderName": "true",
