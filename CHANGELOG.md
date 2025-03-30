@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.76.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.21-cdk-deployed...v4.76.22) (2025-03-30)
+
+
+### Chore
+
+* **deps:** update dependency @nx/nx-linux-x64-gnu to v20.6.4 ([802c955](https://github.com/WolfSoko/wol-sok-mono/commit/802c9558115fe6f517b35ad63126953fbf9d4208))
+
 ## [4.76.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.20-cdk-deployed...v4.76.21) (2025-03-30)
 
 
