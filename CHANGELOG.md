@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.76.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.22-cdk-deployed...v4.76.23) (2025-03-30)
+
+
+### Chore
+
+* **deps:** update dependency @esbuild/linux-x64 to v0.25.2 ([f53038e](https://github.com/WolfSoko/wol-sok-mono/commit/f53038e9422589c9f139f42a3674ecf71616d971))
+
 ## [4.76.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.21-cdk-deployed...v4.76.22) (2025-03-30)
 
 
