@@ -237,7 +237,7 @@
     "webpack-merge": "6.0.1"
   },
   "optionalDependencies": {
-    "@esbuild/linux-x64": "0.25.1",
+    "@esbuild/linux-x64": "0.25.2",
     "@nx/nx-linux-x64-gnu": "20.6.4",
     "@rollup/rollup-linux-x64-gnu": "4.24.4",
     "@rollup/rollup-win32-x64-msvc": "4.24.4"
