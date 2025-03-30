@@ -1,17 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { collection, Firestore } from '@angular/fire/firestore';
-import { MockedObject } from '@storybook/test';
 import { vi } from 'vitest';
+import { mock } from 'vitest-mock-extended';
 
 import { DatabaseService } from './database.service';
 import { Repo } from './repo.service';
 
-vi.mock('@angular/fire/firestore', async () => ({
-  Firestore: vi.fn(),
-  collection: vi.fn(),
-}));
+vi.mock('@angular/fire/firestore');
 describe('DatabaseService', () => {
-  let firestoreMock: MockedObject<Firestore>;
+  const firestoreMock = mock<Firestore>();
   let service: DatabaseService;
   beforeEach(() => {
     TestBed.configureTestingModule({

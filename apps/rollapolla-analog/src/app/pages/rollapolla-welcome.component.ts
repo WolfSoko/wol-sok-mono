@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CreatePollComponent } from '../core/create-poll/create-poll.component';
-import { ChatLiveStreamComponent } from '../core/notes/chat-live-stream.component';
+import { ChatLiveStreamComponent } from '../core/chat-live-stream/chat-live-stream.component';
 
 @Component({
   selector: 'rap-welcome',
