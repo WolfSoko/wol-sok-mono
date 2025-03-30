@@ -171,7 +171,16 @@
     },
     "@nx/vite:test": {
       "cache": true,
-      "inputs": ["default", "^production"]
+      "inputs": ["default", "^production"],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "configurations": {
+        "ci": {
+          "coverage": true
+        },
+        "watch": {
+          "watch": true
+        }
+      }
     },
     "@nx/angular:ng-packagr-lite": {
       "cache": true,

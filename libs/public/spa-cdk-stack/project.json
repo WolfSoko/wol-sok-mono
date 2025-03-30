@@ -15,16 +15,7 @@
       }
     },
     "test": {
-      "executor": "@nx/vite:test",
-      "outputs": ["{workspaceRoot}/coverage/libs/public/spa-cdk-stack"],
-      "options": {
-        "reportsDirectory": "{workspaceRoot}/coverage/libs/public/spa-cdk-stack"
-      },
-      "configurations": {
-        "ci": {
-          "coverage": true
-        }
-      }
+      "executor": "@nx/vite:test"
     }
   },
   "tags": ["infra-shared", "published"]
