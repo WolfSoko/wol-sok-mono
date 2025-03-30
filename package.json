@@ -88,7 +88,7 @@
     "three-canvas-renderer": "^2.0.0",
     "ts-keycode-enum": "1.0.6",
     "tslib": "2.5.2",
-    "vega": "5.32.0",
+    "vega": "5.33.0",
     "vega-embed": "6.29.0",
     "vega-lite": "5.23.0",
     "zod": "^3.23.8",
