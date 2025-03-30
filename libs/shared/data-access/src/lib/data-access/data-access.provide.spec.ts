@@ -13,7 +13,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { environment } from '../../environments/environment';
 import { provideDataAccess } from './data-access.provide';
 import { mock, MockProxy } from 'vitest-mock-extended';
-import { Injector } from '@angular/core';
+import { EnvironmentProviders, Injector } from '@angular/core';
 
 vi.mock('@angular/fire/app', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -39,9 +39,9 @@ describe('provideDataAccess', () => {
     vi.mocked(getFirestore).mockReturnValue(firestore);
 
     vi.mocked(provideFirestore).mockImplementation(
-      (callback: (injector: Injector) => Firestore): Firestore => {
+      (callback: (injector: Injector) => Firestore): EnvironmentProviders => {
         provideFirebaseCallbackResult = callback(injectorMock, ...[]);
-        return provideFirebaseCallbackResult!;
+        return provideFirebaseCallbackResult as unknown as EnvironmentProviders;
       }
     );
   });
