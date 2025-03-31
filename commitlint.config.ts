@@ -12,6 +12,7 @@ export default {
         'github',
         'dev-deps',
         'deps',
+        'tools',
       ],
     ],
   },
