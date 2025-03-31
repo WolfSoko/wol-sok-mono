@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.4-non-cdk-deployed...v4.77.5) (2025-03-31)
+
+
+### Chore
+
+* **deps:** update dependency @wolsok/nx-aws-cdk-v2 to v2.1.6 ([539766e](https://github.com/WolfSoko/wol-sok-mono/commit/539766ecfbf9c8e653bf3d11e503c1b8664986f7))
+
 ## [4.77.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.3-non-cdk-deployed...v4.77.4) (2025-03-31)
 
 
