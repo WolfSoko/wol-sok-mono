@@ -224,7 +224,7 @@
     "prettier": "3.5.3",
     "rollup": "4.38.0",
     "storybook": "8.6.11",
-    "ts-jest": "29.3.0",
+    "ts-jest": "29.3.1",
     "ts-node": "10.9.2",
     "ts-shader-loader": "2.0.2",
     "tsx": "^4.19.3",
