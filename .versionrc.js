@@ -3,7 +3,7 @@ const versionFile = {
   type: 'json',
 };
 
-module.exports = {
+export default {
   bumpFiles: [versionFile],
   packageFiles: [versionFile],
   types: [

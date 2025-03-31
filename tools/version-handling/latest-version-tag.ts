@@ -1,16 +1,17 @@
-const { execSync } = require('node:child_process');
+import { execSync } from 'node:child_process';
+import { version } from '../../version.json';
 
 /**
- *
  * @returns {string} An app version like v1.0.0 a githash or a timestamp
  *
- * @param appDeployedPrefix { 'non-cdk-deployed' | 'cdk-deployed' }
- * filter to find the appropriate version tag
+ * @param appDeployedPrefix filter to find the appropriate version tag
  *
  */
-const latestVersionTag = (appDeployedPrefix) => {
+export function latestVersionTag(
+  appDeployedPrefix: string | 'non-cdk-deployed' | 'cdk-deployed'
+): string {
   // read version from version.json
-  return require('../../version.json').version;
+  if (!appDeployedPrefix) return version;
 
   // Get latest version tag like v1.0.0 that matches the glob pattern
   try {
@@ -43,6 +44,4 @@ const latestVersionTag = (appDeployedPrefix) => {
     }
     return `t${Date.now()}`;
   }
-};
-
-module.exports = { latestVersionTag };
+}

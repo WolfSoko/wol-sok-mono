@@ -23,6 +23,6 @@ export default {
     'jest-preset-angular/build/serializers/ng-snapshot',
     'jest-preset-angular/build/serializers/html-comment',
   ],
-  preset: '../../jest.preset.js',
+  preset: '../../jest.preset.cjs',
   testEnvironment: 'jsdom',
 } satisfies JestConfigWithTsJest;

@@ -235,7 +235,8 @@ export class RenderShaderComponent
     try {
       const canvas = this.webGLCanvas.nativeElement;
       return !!(window.WebGL2RenderingContext && canvas.getContext('webgl2'));
-    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_e) {
       return false;
     }
   }

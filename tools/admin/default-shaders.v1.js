@@ -483,4 +483,4 @@ void main() {
     `,
   },
 ];
-module.exports = { defaultShaders: defaultShadersV1 };
+export default { defaultShaders: defaultShadersV1 };

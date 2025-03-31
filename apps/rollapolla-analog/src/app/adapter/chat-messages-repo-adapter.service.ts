@@ -18,8 +18,6 @@ import { addPendingTaskForServer } from './add-pending-task-for-server';
 import { chatMessageConverter } from './chat-message.converter';
 import { ChatMessageDto } from './chat-message.dto';
 
-const MIN_MESSAGE_LENGTH = 9;
-
 @Injectable()
 export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
   private readonly fs: Firestore = inject(Firestore);

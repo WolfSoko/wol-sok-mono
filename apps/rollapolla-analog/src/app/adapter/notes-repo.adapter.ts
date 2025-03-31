@@ -38,13 +38,4 @@ export class NotesRepoAdapter extends NotesRepoPort {
   getNotes(): Signal<ChatMessage[] | undefined> {
     return this.notes;
   }
-
-  /**
-   *
-   * @param note
-   * @deprecated use new ChatMessageAdapter
-   */
-  async addNote(note: string): Promise<void> {
-    throw new Error('Deprecated');
-  }
 }

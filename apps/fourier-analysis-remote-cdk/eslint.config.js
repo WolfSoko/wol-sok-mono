@@ -1,8 +1,8 @@
-const baseConfig = require('../../eslint.config.js');
-const baseConfig1 = require('../../eslint.base.config.js');
-const eslintPluginCdk = require('eslint-plugin-cdk');
+import baseConfig from '../../eslint.config.js';
+import baseConfig1 from '../../eslint.base.config.js';
+import eslintPluginCdk from 'eslint-plugin-cdk';
 
-module.exports = [
+export default [
   ...baseConfig,
   ...baseConfig1,
   { plugins: { cdk: eslintPluginCdk } },

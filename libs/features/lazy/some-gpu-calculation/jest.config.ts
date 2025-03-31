@@ -1,6 +1,6 @@
 export default {
   displayName: 'feat-lazy-some-gpu-calculation',
-  preset: '../../../../jest.preset.js',
+  preset: '../../../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts', 'jest-canvas-mock'],
   globals: {},
   coverageDirectory:

@@ -1,16 +1,23 @@
-const { FlatCompat } = require('@eslint/eslintrc');
-const nxEslintPlugin = require('@nx/eslint-plugin');
-const js = require('@eslint/js');
+import { FlatCompat } from '@eslint/eslintrc';
+import nxEslintPlugin from '@nx/eslint-plugin';
+import js from '@eslint/js';
+import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
+
+// Convert import.meta.url to a file path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
   recommendedConfig: js.configs.recommended,
 });
 
-module.exports = [
+export default [
   { plugins: { '@nx': nxEslintPlugin } },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    ignores: ['**/eslint.config.{ts,js}'],
     rules: {
       '@nx/enforce-module-boundaries': [
         'error',

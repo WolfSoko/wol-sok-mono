@@ -32,7 +32,7 @@
       "options": {
         "main": "libs/public/ws-thanos/src/test.ts",
         "tsConfig": "libs/public/ws-thanos/tsconfig.spec.json",
-        "karmaConfig": "libs/public/ws-thanos/karma.conf.js"
+        "karmaConfig": "libs/public/ws-thanos/karma.conf.cjs"
       }
     }
   }

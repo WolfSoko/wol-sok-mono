@@ -11,5 +11,6 @@
   "devDependencies": {
     "tslib": "^2.5.0"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "type": "module"
 }

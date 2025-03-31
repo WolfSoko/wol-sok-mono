@@ -1,6 +1,6 @@
 export default {
   displayName: 'utils-measure-fps',
-  preset: '../../../jest.preset.js',
+  preset: '../../../jest.preset.cjs',
   globals: {},
   testEnvironment: 'node',
   transform: {

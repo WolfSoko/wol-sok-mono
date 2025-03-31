@@ -1,6 +1,6 @@
 export default {
   displayName: 'ws-gl',
-  preset: '../../../jest.preset.js',
+  preset: '../../../jest.preset.cjs',
   testEnvironment: 'jsdom',
   transform: {
     '^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }],

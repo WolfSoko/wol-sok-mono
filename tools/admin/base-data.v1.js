@@ -3,7 +3,7 @@
  * @param db
  * @param defaultShaders
  */
-async function initBaseData(db, defaultShaders) {
+export async function initBaseData(db, defaultShaders) {
   const defaultShadersCol = db.collection(
     'angularExamples/shaderExamples/defaultShaders'
   );
@@ -25,5 +25,3 @@ async function initBaseData(db, defaultShaders) {
     'Added default shaders to angularExamples/shaderExamples/defaultShaders'
   );
 }
-
-module.exports = { initBaseData };

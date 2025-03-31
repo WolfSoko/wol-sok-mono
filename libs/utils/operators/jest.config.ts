@@ -13,5 +13,5 @@ export default {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../../coverage/libs/utils/operators',
 
-  preset: '../../../jest.preset.js',
+  preset: '../../../jest.preset.cjs',
 };

@@ -14,5 +14,6 @@
     "@wolsok/headline-animation": "^0.0.1",
     "p5": "^1.11.1",
     "rxjs": "^7.0.0"
-  }
+  },
+  "type": "module"
 }

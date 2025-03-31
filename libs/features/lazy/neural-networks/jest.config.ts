@@ -1,6 +1,6 @@
 export default {
   displayName: 'neural-networks',
-  preset: '../../../../jest.preset.js',
+  preset: '../../../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   coverageDirectory: '../../../../coverage/libs/features/lazy/neural-networks',
   transform: {

@@ -4,5 +4,6 @@
   "peerDependencies": {
     "@wolsok/utils-gpu-calc": "0.0.1",
     "gpu.js": "^2.16.0"
-  }
+  },
+  "type": "module"
 }

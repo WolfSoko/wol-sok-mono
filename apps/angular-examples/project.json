@@ -8,7 +8,12 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:webpack-browser",
-      "inputs": ["production", "sharedGlobals", "^production", "version"],
+      "inputs": [
+        "production",
+        "sharedGlobals",
+        "^production",
+        "cdk-deployed-version"
+      ],
       "dependsOn": ["^build"],
       "outputs": ["{options.outputPath}"],
       "options": {

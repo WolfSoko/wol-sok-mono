@@ -1,6 +1,6 @@
 export default {
   displayName: 'feat-lazy-reaction-diffusion',
-  preset: '../../../../jest.preset.js',
+  preset: '../../../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {},
   coverageDirectory:

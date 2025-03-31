@@ -1,14 +1,21 @@
-const { FlatCompat } = require('@eslint/eslintrc');
-const baseConfig = require('../../../../eslint.config.js');
-const baseConfig1 = require('../../../../eslint.base.config.js');
-const js = require('@eslint/js');
+import { FlatCompat } from '@eslint/eslintrc';
+import baseConfig from '../../../../eslint.config.js';
+import baseConfig1 from '../../../../eslint.base.config.js';
+import js from '@eslint/js';
+
+import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
+
+// Convert import.meta.url to a file path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
   recommendedConfig: js.configs.recommended,
 });
 
-module.exports = [
+export default [
   ...baseConfig,
   ...baseConfig1,
   ...compat.extends('plugin:cypress/recommended'),

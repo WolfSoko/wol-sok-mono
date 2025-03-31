@@ -1,6 +1,6 @@
 export default {
   displayName: 'features-api-auth',
-  preset: '../../../../jest.preset.js',
+  preset: '../../../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {},
   coverageDirectory: '../../../../coverage/libs/features/api/auth',

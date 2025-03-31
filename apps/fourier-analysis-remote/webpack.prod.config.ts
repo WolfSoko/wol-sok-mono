@@ -1,7 +1,7 @@
-const { withModuleFederation } = require('@nx/module-federation/angular');
-const config = require('./module-federation.config');
-module.exports = withModuleFederation({
-  dts: false,
+import { withModuleFederation } from '@nx/module-federation/angular';
+import config from './module-federation.config';
+
+export default withModuleFederation({
   ...config,
   /*
    * Remote overrides for production.

@@ -1,6 +1,6 @@
 export default {
   displayName: 'fourier-analysis-remote',
-  preset: '../../jest.preset.js',
+  preset: '../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {},
   coverageDirectory: '../../coverage/apps/fourier-analysis-remote',

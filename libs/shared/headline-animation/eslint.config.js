@@ -1,7 +1,9 @@
-const nx = require('@nx/eslint-plugin');
-const baseConfig = require('../../../eslint.base.config.js');
+import nx from '@nx/eslint-plugin';
+import baseConfig from '../../../eslint.base.config.js';
 
-module.exports = [
+import jsonc_eslint_parser from 'jsonc-eslint-parser';
+
+export default [
   ...baseConfig,
   {
     files: ['**/*.json'],
@@ -14,7 +16,7 @@ module.exports = [
       ],
     },
     languageOptions: {
-      parser: require('jsonc-eslint-parser'),
+      parser: jsonc_eslint_parser,
     },
   },
   ...nx.configs['flat/angular'],

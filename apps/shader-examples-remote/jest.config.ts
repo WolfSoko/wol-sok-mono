@@ -1,6 +1,6 @@
 export default {
   displayName: 'shader-examples-remote',
-  preset: '../../jest.preset.js',
+  preset: '../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   coverageDirectory: '../../coverage/apps/shader-examples-remote',
   transform: {

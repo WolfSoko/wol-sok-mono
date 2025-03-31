@@ -1,6 +1,6 @@
 export default {
   displayName: 'feat-lazy-shader-examples',
-  preset: '../../../../jest.preset.js',
+  preset: '../../../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {},
   coverageDirectory: '../../../../coverage/libs/features/lazy/shader-examples',

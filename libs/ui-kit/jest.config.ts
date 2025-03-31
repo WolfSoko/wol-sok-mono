@@ -2,11 +2,9 @@ import { JestConfigWithTsJest } from 'ts-jest';
 
 export default {
   displayName: 'ui-kit',
-
+  preset: '../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-  globals: {},
   coverageDirectory: '../../coverage/libs/ui-kit',
-
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',
@@ -22,5 +20,4 @@ export default {
     'jest-preset-angular/build/serializers/ng-snapshot',
     'jest-preset-angular/build/serializers/html-comment',
   ],
-  preset: '../../jest.preset.js',
 } as JestConfigWithTsJest;

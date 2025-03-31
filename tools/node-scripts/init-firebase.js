@@ -1,12 +1,15 @@
-const os = require('os');
-const admin = require('firebase-admin');
-const serviceAccount = require(
-  os.homedir() +
-    '/.firebase/angularexamples-b69f4-firebase-adminsdk-lz4i3-a8dd3e2808.json'
-);
-const defaultShaders = require('../admin/default-shaders.v2').defaultShaders;
+import os from 'os';
+import admin from 'firebase-admin';
+const serviceAccount = (
+  await import(
+    os.homedir() +
+      '/.firebase/angularexamples-b69f4-firebase-adminsdk-lz4i3-a8dd3e2808.json'
+  )
+).default;
 
-const initBaseData = require('../admin/base-data.v1').initBaseData;
+import defaultShaders from '../admin/default-shaders.v2';
+
+import { initBaseData } from '../admin/base-data.v1';
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),

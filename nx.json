@@ -63,9 +63,14 @@
       "{workspaceRoot}/.github/**",
       "{workspaceRoot}/.nx/workflows/**"
     ],
-    "version": [
+    "non-cdk-deployed-version": [
       {
-        "runtime": "node -e \"console.log(require('./tools/version-handling/latest-version-tag.js').latestVersionTag('cdk-deployed'))\""
+        "runtime": "npx tsx ./tools/version-handling/latest-non-cdk-deployed-tag.ts"
+      }
+    ],
+    "cdk-deployed-version": [
+      {
+        "runtime": "npx tsx ./tools/version-handling/latest-cdk-deployed-tag.ts"
       }
     ]
   },

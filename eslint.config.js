@@ -1,18 +1,27 @@
-const { FlatCompat } = require('@eslint/eslintrc');
-const baseConfig = require('./eslint.base.config.js');
-const js = require('@eslint/js');
+import { FlatCompat } from '@eslint/eslintrc';
+import baseConfig from './eslint.base.config.js';
+import jsoncEslintParser from 'jsonc-eslint-parser';
+import js from '@eslint/js';
+
+import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
+
+// Convert import.meta.url to a file path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
   recommendedConfig: js.configs.recommended,
 });
 
-module.exports = [
+export default [
   ...baseConfig,
   ...compat.extends('plugin:storybook/recommended'),
   { plugins: {} },
   {
-    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    files: ['**/*.ts', '**/*.tsx', '', '**/*.js', '**/*.jsx'],
+    ignores: ['**/eslint.config.{ts,js}'],
     rules: {
       '@nx/enforce-module-boundaries': [
         'error',
@@ -85,7 +94,7 @@ module.exports = [
       ],
     },
     languageOptions: {
-      parser: require('jsonc-eslint-parser'),
+      parser: jsoncEslintParser,
     },
   },
   {

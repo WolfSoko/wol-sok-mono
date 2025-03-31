@@ -27,7 +27,7 @@
         ],
         "scripts": [],
         "customWebpackConfig": {
-          "path": "apps/fourier-analysis-remote/webpack.config.js"
+          "path": "apps/fourier-analysis-remote/webpack.config.ts"
         }
       },
       "configurations": {
@@ -58,7 +58,7 @@
           ],
           "outputHashing": "all",
           "customWebpackConfig": {
-            "path": "apps/fourier-analysis-remote/webpack.prod.config.js"
+            "path": "apps/fourier-analysis-remote/webpack.prod.config.ts"
           }
         },
         "development": {

@@ -1,6 +1,6 @@
 export default {
   displayName: 'feat-lazy-poisson',
-  preset: '../../../../jest.preset.js',
+  preset: '../../../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   coverageDirectory: '../../../../coverage/libs/features/lazy/poisson',
   transform: {
