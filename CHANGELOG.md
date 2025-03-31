@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.0-non-cdk-deployed...v4.77.1) (2025-03-31)
+
+
+### Chore
+
+* **deps:** update dependency vite to v6.2.4 ([16d5bfc](https://github.com/WolfSoko/wol-sok-mono/commit/16d5bfcd06ca73c47a62092181ffba22f720e69b))
+
 ## [4.77.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.23-non-cdk-deployed...v4.77.0) (2025-03-31)
 
 
