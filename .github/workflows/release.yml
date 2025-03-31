@@ -59,7 +59,7 @@ jobs:
       - name: Create Sentry Release
         uses: getsentry/action-release@v3
         with:
-          version: ${{ env.sentry-version }}
+          release: ${{ env.sentry-version }}
           sourcemaps: 'dist/apps'
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
