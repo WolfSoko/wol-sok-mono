@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.1-non-cdk-deployed...v4.77.2) (2025-03-31)
+
+
+### CI/CD
+
+* 👷 replace deprecated version property for sentry-release ([2000cd2](https://github.com/WolfSoko/wol-sok-mono/commit/2000cd20509be50248c4d0a228e53fef2eceb5c5))
+
 ## [4.77.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.0-non-cdk-deployed...v4.77.1) (2025-03-31)
 
 
