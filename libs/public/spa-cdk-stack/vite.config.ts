@@ -2,8 +2,11 @@ import { defineConfig } from 'vite';
 
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 
+import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
+
 export default defineConfig({
-  root: __dirname,
+  root: dirname(fileURLToPath(import.meta.url)),
   cacheDir: '../../../node_modules/.vite/libs/public/spa-cdk-stack',
 
   plugins: [nxViteTsPaths()],

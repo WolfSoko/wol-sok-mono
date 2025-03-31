@@ -1,6 +1,6 @@
 import analog from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { ConfigEnv, defineConfig, splitVendorChunkPlugin } from 'vite';
+import { ConfigEnv, defineConfig } from 'vite';
 
 import { ViteUserConfig } from 'vitest/config';
 
@@ -47,7 +47,6 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
         },
       }),
       nxViteTsPaths(),
-      splitVendorChunkPlugin(),
     ],
     test: {
       globals: true,

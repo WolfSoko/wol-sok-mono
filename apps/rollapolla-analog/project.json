@@ -10,7 +10,7 @@
       "defaultConfiguration": "production",
       "options": {
         "main": "{projectRoot}/src/main.ts",
-        "configFile": "{projectRoot}/vite.config.mts",
+        "configFile": "{projectRoot}/vite.config.ts",
         "outputPath": "{workspaceRoot}/dist/{projectRoot}/client",
         "tsConfig": "{projectRoot}/tsconfig.app.json"
       },
@@ -52,7 +52,7 @@
       "options": {
         "tsConfig": "{projectRoot}/tsconfig.spec.json",
         "setupFile": "{projectRoot}/src/test-setup.ts",
-        "configFile": "vite.config.mts"
+        "configFile": "vite.config.ts"
       }
     },
     "lint": {
