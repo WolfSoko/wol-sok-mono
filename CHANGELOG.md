@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.23-non-cdk-deployed...v4.77.0) (2025-03-31)
+
+
+### Features
+
+* **shared-data-access:** ✨ add Firestore emulator support and refactor module usage ([599c375](https://github.com/WolfSoko/wol-sok-mono/commit/599c375673b431f6f93e5ce2dd5fd846480e2aad))
+
+
+### Bug Fixes
+
+* **shared-data-access:** 🐛 resolve path issues and enhance Firestore mock ([94b1ace](https://github.com/WolfSoko/wol-sok-mono/commit/94b1acedd9b063f57a018d0e6c2352df832c5a14))
+
+
+### Refactorings
+
+* ♻️ standardize filename conversion in playwright configs ([1a11e71](https://github.com/WolfSoko/wol-sok-mono/commit/1a11e717f968cf2ec5a7a5bc626af36e54b09b77))
+* **tools:** ♻️ add console log to output the `versionTag` during execution. ([07830c5](https://github.com/WolfSoko/wol-sok-mono/commit/07830c5c34a7d97294087b9e2238b076285acea2))
+
+
+### CI/CD
+
+* 👷 update commitlint scope-enum configuration ([ef9e1e2](https://github.com/WolfSoko/wol-sok-mono/commit/ef9e1e2adfc93ff5986d8c02e05e0eaaaee6c155))
+* 👷 update commitlint scope-enum configuration ([0253752](https://github.com/WolfSoko/wol-sok-mono/commit/02537521581229e8ee7e04ec7108e5459eb1f113))
+* 👷 update workflow to fetch all tags in agents.yml ([4641ce3](https://github.com/WolfSoko/wol-sok-mono/commit/4641ce346af9fa7e296751201730370c893162fe))
+
+
+### Chore
+
+* 🔧 add nx-angular-config.xml for IntelliJ project setup ([33b1521](https://github.com/WolfSoko/wol-sok-mono/commit/33b15217dea327d31cda02681a2795f13bb6457f))
+* **deps:** bump tar-fs from 2.1.1 to 2.1.2 ([0adc488](https://github.com/WolfSoko/wol-sok-mono/commit/0adc488f90144d73970fca5ca65e3932c13cd839))
+
+
+### Testing
+
+* **shared-data-access:** 🚨 update Firestore mock in database.service.spec.ts ([590d53c](https://github.com/WolfSoko/wol-sok-mono/commit/590d53cec4262e060bff02d64c8fc9b7f7349f91))
+
 ## [4.76.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.22-cdk-deployed...v4.76.23) (2025-03-30)
 
 
