@@ -6,8 +6,11 @@ import { mock } from 'vitest-mock-extended';
 import { DatabaseService } from './database.service';
 import { Repo } from './repo.service';
 
-vi.mock('@angular/fire/firestore', async (importOriginal) => {
-  return { ...(await importOriginal()), collection: vi.fn() };
+vi.mock('@angular/fire/firestore', async () => {
+  return {
+    Firestore: vi.fn(),
+    collection: vi.fn(),
+  };
 });
 describe('DatabaseService', () => {
   const firestoreMock = mock<Firestore>();
