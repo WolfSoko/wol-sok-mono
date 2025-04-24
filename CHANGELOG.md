@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.11-non-cdk-deployed...v4.77.12) (2025-04-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @trpc/server to v11.1.1 [security] ([0de5547](https://github.com/WolfSoko/wol-sok-mono/commit/0de5547bdc62c879f7db7cf0f81a32953f34d902))
+
 ## [4.77.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.10-non-cdk-deployed...v4.77.11) (2025-03-31)
 
 
