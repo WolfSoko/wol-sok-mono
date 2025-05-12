@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.12-non-cdk-deployed...v4.77.13) (2025-05-12)
+
+
+### Chore
+
+* **deps:** 🔗 upgrade [@nx](https://github.com/nx) packages to version 21.0.3 and cypress to 14.2.1; add continuous option in project.json ([da1fc76](https://github.com/WolfSoko/wol-sok-mono/commit/da1fc76c5861d530d91cf1026de94655b0f3360c))
+* **deps:** 🔗 upgrade @nx/vite to version 21.0.3 ([16eb85d](https://github.com/WolfSoko/wol-sok-mono/commit/16eb85d0d7ef5fed174d338ab31985705a6fc252))
+* **feat-lazy-tf-examples:** 🔧 remove injectDocumentDomain option from configuration ([80f05f0](https://github.com/WolfSoko/wol-sok-mono/commit/80f05f0c8914130da6759c7b79d671cffc9cec93))
+
 ## [4.77.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.11-non-cdk-deployed...v4.77.12) (2025-04-24)
 
 
