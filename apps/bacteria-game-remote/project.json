@@ -86,7 +86,8 @@
       "options": {
         "port": 4202,
         "publicHost": "http://localhost:4202"
-      }
+      },
+      "continuous": true
     },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",

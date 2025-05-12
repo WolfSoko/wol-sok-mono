@@ -106,7 +106,8 @@
       "options": {
         "publicHost": "http://localhost:4200",
         "devRemotes": []
-      }
+      },
+      "continuous": true
     },
     "serve-file": {
       "executor": "@nx/web:file-server",
