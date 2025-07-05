@@ -100,7 +100,7 @@
     "@analogjs/vitest-angular": "1.14.1",
     "@angular-builders/custom-webpack": "19.0.0",
     "@angular-devkit/architect": "0.1902.5",
-    "@angular-devkit/build-angular": "19.2.5",
+    "@angular-devkit/build-angular": "19.2.15",
     "@angular-devkit/core": "19.2.5",
     "@angular-devkit/schematics": "19.2.5",
     "@angular-eslint/eslint-plugin": "19.3.0",
