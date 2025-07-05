@@ -44,7 +44,7 @@ jobs:
           - app-type: cdk
             deploy-tag-suffix: cdk-deployed
             exclude-pattern: '*,!tag:cdk'
-            extra-deploy-args: '-- --require-approval=never'
+            extra-deploy-args: '--require-approval=never'
     steps:
       - run: echo "Release process starting for ${{ matrix.config.app-type }} apps version ${{ env.RELEASE_VERSION }}"
 
