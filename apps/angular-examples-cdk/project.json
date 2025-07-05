@@ -10,7 +10,8 @@
       "dependsOn": ["^build"],
       "executor": "@wolsok/nx-aws-cdk-v2:deploy",
       "options": {
-        "output": "{workspaceRoot}/dist/{projectRoot}"
+        "output": "{workspaceRoot}/dist/{projectRoot}",
+        "requireApproval": "never"
       }
     },
     "destroy": {
