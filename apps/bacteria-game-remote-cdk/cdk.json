@@ -1,7 +1,6 @@
 {
   "app": "npx ts-node src/main.ts",
   "output": "../../dist/apps/bacteria-game-remote-cdk",
-  "requireApproval": "never",
   "watch": {
     "include": ["**"],
     "exclude": [

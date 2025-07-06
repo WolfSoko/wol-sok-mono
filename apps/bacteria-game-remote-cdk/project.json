@@ -11,7 +11,7 @@
       "executor": "@wolsok/nx-aws-cdk-v2:deploy",
       "options": {
         "output": "{workspaceRoot}/dist/{projectRoot}",
-        "requireApproval": "never"
+        "require-approval": "never"
       }
     },
     "destroy": {
