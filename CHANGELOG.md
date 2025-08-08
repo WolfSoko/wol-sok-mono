@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.15-non-cdk-deployed...v4.77.16) (2025-08-08)
+
+
+### Bug Fixes
+
+* 🐛 update @wolsok/nx-aws-cdk-v2 to version 2.4.0 ([977346a](https://github.com/WolfSoko/wol-sok-mono/commit/977346accc5ea00831591025dae02dcad46c6c41))
+* **import:** remove .js extension from spa.stack import ([f7e11de](https://github.com/WolfSoko/wol-sok-mono/commit/f7e11de57bb9ee44cbec47779b046bd17488fa5e))
+* **nx:** 🐛 update defaultBase to use origin/main for consistency ([c92da9f](https://github.com/WolfSoko/wol-sok-mono/commit/c92da9fba4c8d5353a4082a333c54e04ced5c649))
+* **rollapolla-analog:** 🐛 extend read/write access deadline to October 30, 2025 ([7fcd5bc](https://github.com/WolfSoko/wol-sok-mono/commit/7fcd5bc718d4a6ede77bd48cbf188e63ea0df3a4))
+
+
+### CI/CD
+
+* 👷 fix require-approval option and upgrade AWS CDK dependencies ([4c50ea7](https://github.com/WolfSoko/wol-sok-mono/commit/4c50ea71092ed160ebc7996232ec5e199a3854d8))
+* 👷‍♂️ reduce fetch-depth to 30 in CI/CD workflow to improve speed ([ab7c658](https://github.com/WolfSoko/wol-sok-mono/commit/ab7c65803df46e7e7fec50cfe78fb41023347973))
+
+
+### Chore
+
+* 🔧 add nx rules ([62c3a76](https://github.com/WolfSoko/wol-sok-mono/commit/62c3a768c89aac23852a344ac65e4941086fb530))
+* 🔧 update .prettierignore and nx-rules.mdc formatting ([99f7f04](https://github.com/WolfSoko/wol-sok-mono/commit/99f7f045d0b111896a5a25c263957d9e03bad8aa))
+* 🔧 update workspace settings and add MCP config ([53e5bc7](https://github.com/WolfSoko/wol-sok-mono/commit/53e5bc7913e37ff1724a1af075460fd97f937b6a))
+
+
+### Code style
+
+* 🎨 format .vscode/settings.json for consistency ([faf0b68](https://github.com/WolfSoko/wol-sok-mono/commit/faf0b68752a358b3b89e7162a778e9cc32281bd0))
+* 🎨 format file ([c78ed7f](https://github.com/WolfSoko/wol-sok-mono/commit/c78ed7f67083e72f275a850fe275f7cfd5d019b7))
+
 ## [4.77.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.14-non-cdk-deployed...v4.77.15) (2025-07-05)
 
 ## [4.77.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.13-non-cdk-deployed...v4.77.14) (2025-06-01)
