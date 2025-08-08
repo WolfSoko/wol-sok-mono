@@ -226,5 +226,5 @@
   },
   "defaultProject": "angular-examples",
   "parallel": 6,
-  "defaultBase": "origin/main"
+  "defaultBase": "main"
 }
