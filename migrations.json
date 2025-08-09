@@ -260,12 +260,192 @@
             "type": "UPDATE"
           }
         ],
-        "ref": "7e63cf61cb531a93e378b1448d5167c1fcb3c0ab",
+        "ref": "c7d255e7f268547f24d23e124e310d1d7bdc7528",
+        "nextSteps": []
+      },
+      "update-module-resolution": {
+        "type": "successful",
+        "name": "update-module-resolution",
+        "changedFiles": [
+          {
+            "path": "libs/features/lazy/some-gpu-calculation/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/some-gpu-calculation/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/tensorflow-examples/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/tensorflow-examples/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/reaction-diffusion/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/reaction-diffusion/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/fourier-analysis/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/fourier-analysis/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/shader-examples/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/shader-examples/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/neural-networks/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/neural-networks/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/bacteria-game/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/bacteria-game/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/gravity-rocks/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/gravity-rocks/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/shared/headline-animation/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/shared/headline-animation/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/wasm-test/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/wasm-test/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "apps/fourier-analysis-remote/tsconfig.app.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "apps/shader-examples-remote/tsconfig.app.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/poisson/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/lazy/poisson/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "apps/bacteria-game-remote/tsconfig.app.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/shared/data-access/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/shared/data-access/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/api/auth/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/features/api/auth/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "apps/rollapolla-analog/tsconfig.app.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "apps/rollapolla-analog/tsconfig.spec.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "apps/angular-examples/tsconfig.app.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/public/ws-thanos/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/public/ws-thanos/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/public/ws-thanos/tsconfig.spec.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/utils/gpu-calc/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/utils/gpu-calc/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/fib-wasm-api/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/fib-wasm-api/tsconfig.lib.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "apps/pacetrainer/tsconfig.app.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "apps/pacetrainer/tsconfig.spec.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/ui-kit/tsconfig.lib.prod.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "libs/ui-kit/tsconfig.lib.json",
+            "type": "UPDATE"
+          }
+        ],
+        "ref": "6ba791240f9543412757d1668c259568cb06d778",
         "nextSteps": []
       }
     },
     "runningMigrations": [
-      "set-generator-defaults-for-previous-style-guide"
+      "update-module-resolution"
     ]
   }
 }
