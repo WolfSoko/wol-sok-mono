@@ -170,9 +170,6 @@
     },
     "targetVersion": "latest",
     "confirmedPackageUpdates": true,
-    "runningMigrations": [
-      "21-1-0-add-ignore-entries-for-nx-rule-files"
-    ],
     "completedMigrations": {
       "21-1-0-add-ignore-entries-for-nx-rule-files": {
         "type": "successful",
@@ -183,9 +180,31 @@
             "type": "UPDATE"
           }
         ],
-        "ref": "673956ceeb7adc1422747699fab0e8a277e05f6e",
+        "ref": "087ebf515daf62ea7351af441096ee5a03504508",
+        "nextSteps": []
+      },
+      "update-21-2-0-migrate-storybook-v9": {
+        "type": "successful",
+        "name": "update-21-2-0-migrate-storybook-v9",
+        "changedFiles": [],
+        "ref": "087ebf515daf62ea7351af441096ee5a03504508",
+        "nextSteps": []
+      },
+      "update-21-2-0-remove-addon-dependencies": {
+        "type": "successful",
+        "name": "update-21-2-0-remove-addon-dependencies",
+        "changedFiles": [
+          {
+            "path": "package.json",
+            "type": "UPDATE"
+          }
+        ],
+        "ref": "34528eb4eec7dad2a914252ad4a3f4c8b737429e",
         "nextSteps": []
       }
-    }
+    },
+    "runningMigrations": [
+      "update-21-2-0-remove-addon-dependencies"
+    ]
   }
 }
