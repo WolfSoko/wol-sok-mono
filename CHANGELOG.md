@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.16-non-cdk-deployed...v4.77.17) (2025-08-09)
+
+
+### Chore
+
+* 🔧 add tsconfig-paths dependency to package.json and package-lock.json ([04e8f81](https://github.com/WolfSoko/wol-sok-mono/commit/04e8f816e02450ebb13122d9df88ad54c05cc67d))
+* 🔧 use npx to start nx mcp server ([4093678](https://github.com/WolfSoko/wol-sok-mono/commit/4093678e9e41f2c06ddc1e60a10d7aa7de990109))
+
 ## [4.77.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.15-non-cdk-deployed...v4.77.16) (2025-08-08)
 
 
