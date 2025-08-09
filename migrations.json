@@ -169,6 +169,23 @@
       "subject": "chore: 🔧 update @wolsok/nx-aws-cdk-v2 to version 2.5.0 and switch from ts-node to tsx in cdk.json files"
     },
     "targetVersion": "latest",
-    "confirmedPackageUpdates": true
+    "confirmedPackageUpdates": true,
+    "runningMigrations": [
+      "21-1-0-add-ignore-entries-for-nx-rule-files"
+    ],
+    "completedMigrations": {
+      "21-1-0-add-ignore-entries-for-nx-rule-files": {
+        "type": "successful",
+        "name": "21-1-0-add-ignore-entries-for-nx-rule-files",
+        "changedFiles": [
+          {
+            "path": ".gitignore",
+            "type": "UPDATE"
+          }
+        ],
+        "ref": "673956ceeb7adc1422747699fab0e8a277e05f6e",
+        "nextSteps": []
+      }
+    }
   }
 }
