@@ -5,7 +5,7 @@
     "@angular/core": "20.1.6",
     "@angular/fire": "19.0.0",
     "rxjs": "^7.8.1",
-    "vite": "6.2.4",
+    "vite": "6.2.7",
     "@nx/vite": "21.3.11"
   },
   "devDependencies": {
