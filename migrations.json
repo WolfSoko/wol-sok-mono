@@ -221,12 +221,32 @@
             "type": "UPDATE"
           }
         ],
-        "ref": "161b1d04d0681e1c29f7eecc6783ac126674fb2b",
+        "ref": "18d32de7e8d7bcd0b3617c59610c75c530de6b4b",
+        "nextSteps": []
+      },
+      "migrate-provide-server-rendering-import": {
+        "type": "successful",
+        "name": "migrate-provide-server-rendering-import",
+        "changedFiles": [
+          {
+            "path": "apps/rollapolla-analog/src/app/app.config.server.ts",
+            "type": "UPDATE"
+          },
+          {
+            "path": "package.json",
+            "type": "UPDATE"
+          },
+          {
+            "path": "apps/pacetrainer/src/app/app.config.server.ts",
+            "type": "UPDATE"
+          }
+        ],
+        "ref": "8e7734c6b9885c98d20821efcbe67fe497f9950e",
         "nextSteps": []
       }
     },
     "runningMigrations": [
-      "update-angular-cli-version-20-0-0"
+      "migrate-provide-server-rendering-import"
     ]
   }
 }
