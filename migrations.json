@@ -199,12 +199,34 @@
             "type": "UPDATE"
           }
         ],
-        "ref": "34528eb4eec7dad2a914252ad4a3f4c8b737429e",
+        "ref": "55f885c36cb5054b9b518550b0d826fee8e59a38",
+        "nextSteps": []
+      },
+      "rename-test-path-pattern": {
+        "type": "successful",
+        "name": "rename-test-path-pattern",
+        "changedFiles": [],
+        "ref": "55f885c36cb5054b9b518550b0d826fee8e59a38",
+        "nextSteps": []
+      },
+      "replace-removed-matcher-aliases": {
+        "type": "skipped"
+      },
+      "update-angular-cli-version-20-0-0": {
+        "type": "successful",
+        "name": "update-angular-cli-version-20-0-0",
+        "changedFiles": [
+          {
+            "path": "package.json",
+            "type": "UPDATE"
+          }
+        ],
+        "ref": "161b1d04d0681e1c29f7eecc6783ac126674fb2b",
         "nextSteps": []
       }
     },
     "runningMigrations": [
-      "update-21-2-0-remove-addon-dependencies"
+      "update-angular-cli-version-20-0-0"
     ]
   }
 }
