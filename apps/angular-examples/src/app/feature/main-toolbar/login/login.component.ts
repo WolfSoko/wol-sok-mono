@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,7 +17,7 @@ import {
 } from '@wolsok/feat-api-auth';
 
 @Component({
-  imports: [CommonModule, MatButtonModule, MatTooltipModule, MatIconModule],
+  imports: [MatButtonModule, MatTooltipModule, MatIconModule],
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],

@@ -1,15 +1,15 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter, map, switchMap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class TitleService {
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private router: Router,
-    private titleService: Title
-  ) {
+  private activatedRoute = inject(ActivatedRoute);
+  private router = inject(Router);
+  private titleService = inject(Title);
+
+  constructor() {
     const linkText$ = this.router.events.pipe(
       filter((e): e is NavigationEnd => e instanceof NavigationEnd),
       switchMap(() => {

@@ -1,4 +1,4 @@
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { NgOptimizedImage } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,7 +18,6 @@ import { Observable, switchMap, timer } from 'rxjs';
 
 @Component({
   imports: [
-    CommonModule,
     WsThanosDirective,
     MatCardModule,
     ElevateCardDirective,
@@ -31,6 +30,8 @@ import { Observable, switchMap, timer } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TechnologyComponent implements OnInit {
+  private elemRef = inject<ElementRef<HTMLElement>>(ElementRef);
+
   @Input() title!: string;
   @Input() link!: string;
   @Input() image!: string;
@@ -41,8 +42,6 @@ export class TechnologyComponent implements OnInit {
   public thanos!: WsThanosDirective;
 
   private destroyRef: DestroyRef = inject(DestroyRef);
-
-  constructor(private elemRef: ElementRef<HTMLElement>) {}
 
   ngOnInit(): void {
     if (this.autoVaporize) {

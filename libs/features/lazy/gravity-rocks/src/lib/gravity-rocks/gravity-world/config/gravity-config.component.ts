@@ -1,5 +1,4 @@
-import { CommonModule } from '@angular/common';
-import { Component, Input, Output } from '@angular/core';
+import { Component, Input, Output, inject } from '@angular/core';
 import {
   FormControl,
   FormGroup,
@@ -16,12 +15,7 @@ import {
 
 @Component({
   selector: 'feat-lazy-gravity-config',
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-  ],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule],
   templateUrl: './gravity-config.component.html',
   styleUrls: ['./gravity-config.component.scss'],
 })
@@ -37,7 +31,9 @@ export class GravityConfigComponent {
 
   @Output() readonly configChange: Observable<GravityWorldConfig>;
 
-  constructor(nNfB: NonNullableFormBuilder) {
+  constructor() {
+    const nNfB = inject(NonNullableFormBuilder);
+
     this.form = nNfB.group({
       gravitationalConstant: 0,
       massOfSun: 0,

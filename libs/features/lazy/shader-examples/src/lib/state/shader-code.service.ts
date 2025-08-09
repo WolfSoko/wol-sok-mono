@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ShaderCodeDataService } from '../data-access/shader-code-data.service';
 import { ShaderCode } from '../model/shader-code.model';
 
@@ -8,10 +8,8 @@ import { ShaderCodeStore } from './shader-code.store';
   providedIn: 'root',
 })
 export class ShaderCodeService {
-  constructor(
-    private shaderCodeStore: ShaderCodeStore,
-    private shaderCodeDataService: ShaderCodeDataService
-  ) {}
+  private shaderCodeStore = inject(ShaderCodeStore);
+  private shaderCodeDataService = inject(ShaderCodeDataService);
 
   get() {
     this.shaderCodeDataService

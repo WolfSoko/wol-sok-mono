@@ -8,6 +8,7 @@ import {
   OnDestroy,
   OnInit,
   ViewChild,
+  inject,
 } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
@@ -49,6 +50,8 @@ const TAU = Math.PI / 2;
   imports: [MatCardModule, ElevateCardDirective],
 })
 export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
+  private zone = inject(NgZone);
+
   @ViewChild('webGlCanvas', { static: true }) webGlCanvas!: ElementRef;
 
   mouseup$ = new EventEmitter<MouseEvent>();
@@ -68,8 +71,6 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
   private controls!: unknown;
 
   private activateLook$!: Observable<boolean>;
-
-  constructor(private zone: NgZone) {}
 
   private static createLight(color: ColorRepresentation | undefined) {
     const pointLight = new PointLight(color);

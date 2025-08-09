@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -30,7 +29,6 @@ import { HeadlineAnimationService } from '@wolsok/headline-animation';
 @UntilDestroy()
 @Component({
   imports: [
-    CommonModule,
     MatCardModule,
     MatDialogModule,
     ElevateCardDirective,

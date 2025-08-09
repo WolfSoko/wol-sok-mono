@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { applyTransaction } from '@datorama/akita';
 import { MeasureFps } from '@wolsok/utils-measure-fps';
 import {
@@ -23,16 +23,16 @@ const FPS = 60;
 
 @Injectable({ providedIn: 'root' })
 export class GameStateService {
+  private gameStateStore = inject(GameStateStore);
+  private gameStateQuery = inject(GameStateQuery);
+  private playerQuery = inject(PlayerQuery);
+  private playerService = inject(PlayerService);
+
   private gameLoop$: Observable<number>;
   private subscriptions?: Subscription;
   private measureFps = new MeasureFps();
 
-  constructor(
-    private gameStateStore: GameStateStore,
-    private gameStateQuery: GameStateQuery,
-    private playerQuery: PlayerQuery,
-    private playerService: PlayerService
-  ) {
+  constructor() {
     this.gameLoop$ = interval(1000 / FPS, animationFrameScheduler).pipe(
       timestamp(),
       pairwise(),

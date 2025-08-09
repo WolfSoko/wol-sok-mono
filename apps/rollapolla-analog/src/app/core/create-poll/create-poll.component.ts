@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'rap-create-poll',
 
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './create-poll.component.html',
   styleUrl: './create-poll.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

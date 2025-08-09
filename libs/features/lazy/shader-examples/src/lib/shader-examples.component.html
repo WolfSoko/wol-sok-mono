@@ -41,13 +41,11 @@
           (@animator.done)="resetAnimationState()"
           class="shaders-grid-list"
         >
-          <ng-container
-            *ngFor="
-              let shader of vm.pagedShaders;
-              trackBy: trackByIndex;
-              even as isEven
-            "
-          >
+          @for (
+            shader of vm.pagedShaders;
+            track trackByIndex($index);
+            let isEven = $even
+          ) {
             <div class="shader-tile">
               <div class="mat-subtitle-1 shader-title">
                 {{ shader.description }}
@@ -76,7 +74,7 @@
                 />
               </div>
             </div>
-          </ng-container>
+          }
         </div>
         <button
           mat-mini-fab

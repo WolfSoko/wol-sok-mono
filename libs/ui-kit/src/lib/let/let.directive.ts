@@ -4,6 +4,7 @@ import {
   Input,
   TemplateRef,
   ViewContainerRef,
+  inject,
 } from '@angular/core';
 
 @Directive({
@@ -11,13 +12,16 @@ import {
   selector: '[wsLet]',
 })
 export class LetDirective<T> {
+  private readonly viewContainer = inject(ViewContainerRef);
+  private readonly templateRef =
+    inject<TemplateRef<LetContext<T>>>(TemplateRef);
+
   private context: LetContext<T> = new LetContext<T>();
   private viewRef: EmbeddedViewRef<LetContext<T>> | null = null;
 
-  constructor(
-    private readonly viewContainer: ViewContainerRef,
-    private readonly templateRef: TemplateRef<LetContext<T>>
-  ) {
+  constructor() {
+    const templateRef = this.templateRef;
+
     this.templateRef = templateRef;
   }
 

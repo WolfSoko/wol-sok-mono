@@ -1,4 +1,4 @@
-import { Injectable, signal, WritableSignal } from '@angular/core';
+import { Injectable, signal, WritableSignal, inject } from '@angular/core';
 import {
   nextFrame,
   Rank,
@@ -36,6 +36,8 @@ export type Coefficients = {
  */
 @Injectable({ providedIn: 'root' })
 export class PolynomialRegressionService {
+  private dataService = inject(DataGeneratorService);
+
   private a!: Variable<Rank.R0>;
   private b!: Variable<Rank.R0>;
   private c!: Variable<Rank.R0>;
@@ -58,7 +60,7 @@ export class PolynomialRegressionService {
   predictionsBefore: WritableSignal<Tensor<Rank.R0> | null> = signal(null);
   predictionsAfter: WritableSignal<Tensor<Rank.R0> | null> = signal(null);
 
-  constructor(private dataService: DataGeneratorService) {
+  constructor() {
     this.setPolynomial();
     this.createOptimizer();
     this.initTrainingData();

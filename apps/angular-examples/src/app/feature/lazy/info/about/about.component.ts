@@ -1,5 +1,4 @@
-import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatAnchor } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
@@ -11,7 +10,6 @@ import { NavItemComponent } from '../../../../shared/nav-item/nav-item.component
 
 @Component({
   imports: [
-    CommonModule,
     MatCardModule,
     ElevateCardDirective,
     MatListModule,
@@ -24,12 +22,13 @@ import { NavItemComponent } from '../../../../shared/nav-item/nav-item.component
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AboutComponent {
+  private router = inject(Router);
+
   public routerLinks: MainNavRoute[];
 
-  constructor(
-    @Inject(ROUTER_LINKS) routerLinks: MainNavRoutes,
-    private router: Router
-  ) {
+  constructor() {
+    const routerLinks = inject<MainNavRoutes>(ROUTER_LINKS);
+
     this.routerLinks = routerLinks.filter(
       (route) => route.data?.linkText !== 'Home'
     );

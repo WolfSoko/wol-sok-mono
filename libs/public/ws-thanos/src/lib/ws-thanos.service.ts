@@ -1,4 +1,4 @@
-import { Inject, Injectable, NgZone } from '@angular/core';
+import { Injectable, NgZone, inject } from '@angular/core';
 
 import { default as html2canvas } from 'html2canvas';
 import {
@@ -53,11 +53,10 @@ interface ParticleIndices {
 
 @Injectable({ providedIn: 'root' })
 export class WsThanosService {
-  constructor(
-    @Inject(WS_THANOS_OPTIONS_TOKEN)
-    private thanosOptions: WsThanosOptions,
-    private ngZone: NgZone
-  ) {}
+  private readonly thanosOptions: WsThanosOptions = inject(
+    WS_THANOS_OPTIONS_TOKEN
+  );
+  private readonly ngZone: NgZone = inject(NgZone);
 
   private static getParticleIndicesForBase(base: number): ParticleIndices {
     return {

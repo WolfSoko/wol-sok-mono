@@ -18,7 +18,7 @@
         ></pace-training-live-state>
       }
     } @else {
-      @defer (hydrate on viewport; on viewport) {
+      @defer (hydrate on viewport) {
         <div class="runner">
           @if (currentExercise(); as exercise) {
             @if (exercise.duration) {

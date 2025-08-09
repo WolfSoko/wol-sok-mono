@@ -67,6 +67,9 @@ interface Dimensions {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReactionDiffComponent implements OnInit, OnDestroy {
+  private calcFactory = inject(ReactionDiffCalcServiceFactory);
+  private configService = inject(ReactionDiffConfigService);
+
   private readonly headlineAnimationService = inject(HeadlineAnimationService);
   public calcService!: ReactionDiffCalculator;
   public showFps = true;
@@ -86,10 +89,7 @@ export class ReactionDiffComponent implements OnInit, OnDestroy {
   start = signal(false);
   private dimensionsSubject$: Subject<Dimensions> = new Subject();
 
-  constructor(
-    private calcFactory: ReactionDiffCalcServiceFactory,
-    private configService: ReactionDiffConfigService
-  ) {
+  constructor() {
     this.cellWeights$ = this.configService.calcCellWeights$;
     effect(() => {
       this.headlineAnimationService.updateAnimation(

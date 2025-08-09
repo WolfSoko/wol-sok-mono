@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   AfterContentInit,
   ChangeDetectionStrategy,
@@ -9,6 +8,7 @@ import {
   Input,
   Output,
   ViewChild,
+  inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Circle } from '../../domain/model/circle';
@@ -24,13 +24,16 @@ import { Line } from '../../domain/model/line';
 import { skipUntil } from 'rxjs/operators';
 
 @Component({
-  imports: [CommonModule],
+  imports: [],
   selector: 'lazy-feat-poisson-app-canvas-view',
   templateUrl: './canvas-view.component.html',
   styleUrls: ['./canvas-view.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CanvasViewComponent implements AfterContentInit {
+  private canvasDrawService = inject(CanvasDrawService);
+  private destroyRef = inject(DestroyRef);
+
   @ViewChild('canvas', { static: true }) canvas!: ElementRef;
   @Input() canvasWidth = 50;
   @Input() canvasHeight = 50;
@@ -42,11 +45,6 @@ export class CanvasViewComponent implements AfterContentInit {
 
   private draw$?: Observable<number>;
   private subs?: Subscription;
-
-  constructor(
-    private canvasDrawService: CanvasDrawService,
-    private destroyRef: DestroyRef
-  ) {}
 
   ngAfterContentInit(): void {
     this.reset();

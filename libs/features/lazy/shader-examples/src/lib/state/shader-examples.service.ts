@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { transaction as Transaction } from '@datorama/akita';
 import { EMPTY, Subject, throwError, TimeoutError } from 'rxjs';
@@ -26,15 +26,17 @@ import {
   providedIn: 'root',
 })
 export class ShaderExamplesService {
+  private shaderExamplesUIStore = inject(ShaderExamplesUIStore);
+  private breakpointObserver = inject(BreakpointObserver);
+  private shaderCodeQuery = inject(ShaderCodeQuery);
+  private shaderExamplesQuery = inject(ShaderExamplesUIQuery);
+  private shaderCodeService = inject(ShaderCodeService);
+
   private updateShaderSubject: Subject<{ shader: ShaderCode; code: string }>;
 
-  constructor(
-    private shaderExamplesUIStore: ShaderExamplesUIStore,
-    private breakpointObserver: BreakpointObserver,
-    private shaderCodeQuery: ShaderCodeQuery,
-    private shaderExamplesQuery: ShaderExamplesUIQuery,
-    private shaderCodeService: ShaderCodeService
-  ) {
+  constructor() {
+    const shaderCodeService = this.shaderCodeService;
+
     shaderCodeService.get();
     this.updateShaderSubject = new Subject();
     this.updateShaderSubject

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Order, QueryEntity } from '@datorama/akita';
 import { ShaderCode } from '../model/shader-code.model';
 import { ShaderCodeState, ShaderCodeStore } from './shader-code.store';
@@ -7,7 +7,9 @@ import { ShaderCodeState, ShaderCodeStore } from './shader-code.store';
   providedIn: 'root',
 })
 export class ShaderCodeQuery extends QueryEntity<ShaderCodeState, ShaderCode> {
-  constructor(store: ShaderCodeStore) {
+  constructor() {
+    const store = inject(ShaderCodeStore);
+
     super(store);
   }
 

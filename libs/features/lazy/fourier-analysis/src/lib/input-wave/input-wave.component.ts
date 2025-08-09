@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,7 +8,6 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatLabel } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { InputWave } from '../model/input-wave.model';
@@ -19,16 +17,10 @@ import { WaveCanvasComponent } from './wave-canvas/wave-canvas.component';
 
 @Component({
   selector: 'lazy-feat-fanal-input-wave',
-  templateUrl: './input-wave.component.html',
+  templateUrl: './-wave.component.htmlinput',
   styleUrls: ['./input-wave.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    MatCardModule,
-    MatIconModule,
-    MatButtonModule,
-    WaveCanvasComponent,
-    CommonModule,
-  ],
+  imports: [MatCardModule, MatIconModule, MatButtonModule, WaveCanvasComponent],
 })
 export class InputWaveComponent {
   private waveRepo: InputWaveRepo = inject(InputWaveRepo);
@@ -63,7 +55,7 @@ export class InputWaveComponent {
     this.inputWaveService.stopRecording();
   }
 
-  private informAboutRecordingError(error: any): void {
+  private informAboutRecordingError(error: unknown): void {
     let message = 'Error recording audio.';
     if (error instanceof Error && error.message.includes('Permission denied')) {
       message += ' Permission given?';

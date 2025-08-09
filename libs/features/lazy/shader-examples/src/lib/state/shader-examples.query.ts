@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Query } from '@datorama/akita';
 import {
   ShaderExampleState,
@@ -17,7 +17,9 @@ export class ShaderExamplesUIQuery extends Query<ShaderExampleState> {
   animationState = this.select((session) => session.animationState);
   savingShader = this.select((session) => session.savingShader);
 
-  constructor(store: ShaderExamplesUIStore) {
+  constructor() {
+    const store = inject(ShaderExamplesUIStore);
+
     super(store);
   }
 

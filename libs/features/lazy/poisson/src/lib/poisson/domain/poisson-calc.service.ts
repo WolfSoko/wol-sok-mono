@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { RandomService } from '@wolsok/utils-math';
 import {
@@ -37,6 +37,10 @@ type RandomActive = {
 @UntilDestroy()
 @Injectable()
 export class PoissonCalcService {
+  private readonly poissonConfig = inject(PoissonConfigService);
+  private readonly shapeFactory = inject(ShapeFactoryService);
+  private readonly random = inject(RandomService);
+
   public foundCircles$!: Observable<Circle[]>;
   public drawnCircles$!: Observable<Circle[]>;
   public activeVectors$!: Observable<Vector[]>;
@@ -59,11 +63,7 @@ export class PoissonCalcService {
   private calculationCompletedSubject!: Subject<void>;
   private iterationComplete = new Subject<void>();
 
-  constructor(
-    private readonly poissonConfig: PoissonConfigService,
-    private readonly shapeFactory: ShapeFactoryService,
-    private readonly random: RandomService
-  ) {
+  constructor() {
     this.config$ = this.poissonConfig.config$;
   }
 

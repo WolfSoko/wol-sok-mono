@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { BrainSettingsComponent } from '../shared/brain-settings/brain-settings.component';
 import { BrainService } from '../shared/brain.service';
@@ -19,11 +24,11 @@ import { Point } from '../shared/point';
   ],
 })
 export class MultiPerceptronComponent implements OnInit {
+  private brainService = inject(BrainService);
+
   width = 300;
   height = 300;
   perceptronPerLayer = [2, 3, 1];
-
-  constructor(private brainService: BrainService) {}
 
   get perceptron() {
     return this.brainService.perceptrons;

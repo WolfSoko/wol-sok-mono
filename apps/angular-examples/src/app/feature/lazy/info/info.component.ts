@@ -1,13 +1,12 @@
-import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  Inject,
   Input,
   QueryList,
   signal,
   ViewChildren,
+  inject,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -23,7 +22,6 @@ import { TechnologyComponent } from './technology/technology.component';
 
 @Component({
   imports: [
-    CommonModule,
     RouterModule,
     AboutComponent,
     MatCardModule,
@@ -39,12 +37,16 @@ import { TechnologyComponent } from './technology/technology.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InfoComponent {
+  private destroy$ = inject<DestroyRef>(DestroyRef);
+
   @Input() thanosDemo = false;
   @ViewChildren(TechnologyComponent) techCards!: QueryList<TechnologyComponent>;
   demoRunning = signal(false);
   private stopSub = new Subject<void>();
 
-  constructor(@Inject(DestroyRef) private destroy$: DestroyRef) {
+  constructor() {
+    const destroy$ = this.destroy$;
+
     destroy$.onDestroy(() => {
       this.stopSub.next();
       this.stopSub.complete();

@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { CommonModule, DOCUMENT } from '@angular/common';
+
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,6 +8,7 @@ import {
   output,
   Renderer2,
   Signal,
+  DOCUMENT,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -31,7 +32,6 @@ import { ServiceWorkerUpdateComponent } from './service-worker-update/service-wo
 @Component({
   selector: 'app-main-toolbar',
   imports: [
-    CommonModule,
     LoginComponent,
     ServiceWorkerUpdateComponent,
     ElemResizedDirective,

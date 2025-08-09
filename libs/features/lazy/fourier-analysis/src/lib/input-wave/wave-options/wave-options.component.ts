@@ -1,5 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, effect } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormArray,
@@ -36,13 +41,13 @@ interface WaveOptionsForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WaveOptionsComponent {
+  private readonly fb = inject(FormBuilder);
+  private readonly inputWaveOptionsRepo = inject(InputWaveOptionsRepo);
+
   waveOptions$: Observable<InputWaveOptionsModel>;
   form: FormGroup<WaveOptionsForm>;
 
-  constructor(
-    private readonly fb: FormBuilder,
-    private readonly inputWaveOptionsRepo: InputWaveOptionsRepo
-  ) {
+  constructor() {
     this.waveOptions$ = this.inputWaveOptionsRepo.state$;
     this.form = this.initForm();
 

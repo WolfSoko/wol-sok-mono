@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -15,7 +14,7 @@ import { Tensor1D, Tensor2D } from '@tensorflow/tfjs';
 import embed from 'vega-embed';
 
 @Component({
-  imports: [CommonModule],
+  imports: [],
   selector: 'feat-lazy-tensor-draw-predictions',
   templateUrl: './draw-predictions.component.html',
   styleUrls: ['./draw-predictions.component.scss'],

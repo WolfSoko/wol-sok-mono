@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -19,7 +18,6 @@ import {
 
 @Component({
   imports: [
-    CommonModule,
     MatCardModule,
     DataDrawerComponent,
     MatButtonModule,

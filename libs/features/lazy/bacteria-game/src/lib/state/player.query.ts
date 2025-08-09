@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { QueryEntity } from '@datorama/akita';
 import { Player } from './player.model';
 import { PlayerState, PlayerStore } from './player.store';
@@ -7,7 +7,13 @@ import { PlayerState, PlayerStore } from './player.store';
   providedIn: 'root',
 })
 export class PlayerQuery extends QueryEntity<PlayerState, Player> {
-  constructor(protected override store: PlayerStore) {
+  protected override store: PlayerStore;
+
+  constructor() {
+    const store = inject(PlayerStore);
+
     super(store);
+
+    this.store = store;
   }
 }

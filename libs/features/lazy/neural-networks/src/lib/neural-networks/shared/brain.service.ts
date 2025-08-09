@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { interval, Observable, Subject } from 'rxjs';
 import {
   distinctUntilChanged,
@@ -17,6 +17,8 @@ const defaultLearnRate = 0.3;
 
 @Injectable({ providedIn: 'root' })
 export class BrainService {
+  private trainDataService = inject(TrainDataService);
+
   learnedDataPoints = 0;
   points: Point[] = [];
   perceptrons: Perceptron[][] = [[]];
@@ -38,7 +40,7 @@ export class BrainService {
     repeat()
   );
 
-  constructor(private trainDataService: TrainDataService) {
+  constructor() {
     this.autoLearner$.subscribe(() => this.train());
   }
 

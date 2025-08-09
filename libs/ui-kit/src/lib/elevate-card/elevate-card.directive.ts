@@ -7,6 +7,7 @@ import {
   Renderer2,
   SimpleChange,
   SimpleChanges,
+  inject,
 } from '@angular/core';
 
 export interface TypesSimpleChange<T> extends SimpleChange {
@@ -22,16 +23,14 @@ interface ElevateCardChanges extends SimpleChanges {
   selector: '[wsSharedUiElevateCard]',
 })
 export class ElevateCardDirective implements OnChanges {
+  private readonly el = inject(ElementRef);
+  private readonly renderer = inject(Renderer2);
+
   private static elevationClass = 'mat-elevation-z';
   private static specificityClass = 'mat-mdc-elevation-specific';
   private static defaultElevationLevel = 10;
 
   @Input() elevationLevel = ElevateCardDirective.defaultElevationLevel;
-
-  constructor(
-    private readonly el: ElementRef,
-    private readonly renderer: Renderer2
-  ) {}
 
   ngOnChanges(changes: ElevateCardChanges) {
     if (changes.raiseLevel != null) {

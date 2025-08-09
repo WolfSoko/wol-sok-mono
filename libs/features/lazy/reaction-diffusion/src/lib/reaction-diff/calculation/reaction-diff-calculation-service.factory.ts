@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { GpuAdapterService } from '@wolsok/utils-gpu-calc';
 import { ColorMapperService } from './color-mapper.service';
 import { ReactionDiffCalculator } from './reaction-diff-calculator';
@@ -8,13 +8,11 @@ import { ReactionDiffWorkerCalcService } from './reaction-diff-worker-calc.servi
 
 @Injectable({ providedIn: 'root' })
 export class ReactionDiffCalcServiceFactory {
-  private lastCalcService?: ReactionDiffCalculator;
+  private configService = inject(ReactionDiffConfigService);
+  private gpuJsService = inject(GpuAdapterService);
+  private colorMapper = inject(ColorMapperService);
 
-  constructor(
-    private configService: ReactionDiffConfigService,
-    private gpuJsService: GpuAdapterService,
-    private colorMapper: ColorMapperService
-  ) {}
+  private lastCalcService?: ReactionDiffCalculator;
 
   public createCalcService(width: number, height: number, useGpuJs = true) {
     if (useGpuJs) {

@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,7 +17,6 @@ import { WaveOptionsComponent } from '../input-wave/wave-options/wave-options.co
 
 @Component({
   imports: [
-    CommonModule,
     MatSidenavModule,
     ElemResizedDirective,
     MatCardModule,

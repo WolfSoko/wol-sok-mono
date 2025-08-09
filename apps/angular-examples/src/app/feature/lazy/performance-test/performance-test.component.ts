@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -31,15 +31,15 @@ import {
   ],
 })
 export class PerformanceTestComponent {
+  private performanceTestQuery = inject(PerformanceTestQuery);
+  private performanceTestService = inject(PerformanceTestService);
+
   readonly performanceTest$: Observable<PerformanceTest[]>;
   readonly isLoading$: Observable<boolean>;
   readonly activePerformanceTest$: Observable<PerformanceTest | undefined>;
   readonly arrayItems: number = ARRAY_ITEMS_LENGTH;
 
-  constructor(
-    private performanceTestQuery: PerformanceTestQuery,
-    private performanceTestService: PerformanceTestService
-  ) {
+  constructor() {
     this.performanceTest$ = this.performanceTestQuery.selectAll();
     this.isLoading$ = this.performanceTestQuery.selectLoading();
     this.activePerformanceTest$ = this.performanceTestQuery.selectActive();

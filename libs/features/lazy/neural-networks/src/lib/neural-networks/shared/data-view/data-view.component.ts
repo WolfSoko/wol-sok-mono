@@ -11,6 +11,7 @@ import {
   SimpleChange,
   SimpleChanges,
   ViewChild,
+  inject,
 } from '@angular/core';
 import p5 from 'p5';
 import { BrainService } from '../brain.service';
@@ -30,6 +31,8 @@ interface ChangeInputs extends SimpleChanges {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DataViewComponent implements AfterViewInit, OnChanges, OnDestroy {
+  private brainService = inject(BrainService);
+
   @ViewChild('dataCanvas', { static: true }) dataCanvas!: ElementRef;
   @ViewChild('legendCanvas', { static: true }) legendCanvas!: ElementRef;
 
@@ -47,8 +50,6 @@ export class DataViewComponent implements AfterViewInit, OnChanges, OnDestroy {
   private dataScetch?: DataP5Sketch;
   private legendScetch?: p5;
   private dataP5?: p5;
-
-  constructor(private brainService: BrainService) {}
 
   ngOnChanges(changes: ChangeInputs): void {
     if (this.dataScetch) {

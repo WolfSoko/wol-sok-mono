@@ -20,6 +20,9 @@ import { InputWaveRepo } from './input-wave-repo';
 
 @Injectable({ providedIn: 'root' })
 export class InputWaveService {
+  private readonly inputWaveStore = inject(InputWaveRepo);
+  private readonly inputWaveOptionsRepo = inject(InputWaveOptionsRepo);
+
   private readonly audioRecorderService: AudioRecorderService =
     inject(AudioRecorderService);
   private readonly audioRecorderState: Signal<AudioRecordingState> =
@@ -29,10 +32,9 @@ export class InputWaveService {
     // noop
   };
 
-  constructor(
-    private readonly inputWaveStore: InputWaveRepo,
-    private readonly inputWaveOptionsRepo: InputWaveOptionsRepo
-  ) {
+  constructor() {
+    const inputWaveOptionsRepo = this.inputWaveOptionsRepo;
+
     inputWaveOptionsRepo.state$
       .pipe(
         delay(1),

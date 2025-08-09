@@ -45,39 +45,39 @@ describe('MeasureFps', () => {
     warmupMeasurement();
 
     whenSignalFrameReadyAfterMs(100);
-    expect(nextSpy).lastCalledWith(5);
+    expect(nextSpy).toHaveBeenLastCalledWith(5);
     whenSignalFrameReadyAfterMs(50);
     whenSignalFrameReadyAfterMs(50);
     whenSignalFrameReadyAfterMs(100);
-    expect(nextSpy).lastCalledWith(6.7);
+    expect(nextSpy).toHaveBeenLastCalledWith(6.7);
     whenSignalFrameReadyAfterMs(50);
     whenSignalFrameReadyAfterMs(50);
     whenSignalFrameReadyAfterMs(50);
     whenSignalFrameReadyAfterMs(50);
-    expect(nextSpy).lastCalledWith(15);
+    expect(nextSpy).toHaveBeenLastCalledWith(15);
     whenSignalFrameReadyAfterMs(50);
     whenSignalFrameReadyAfterMs(50);
     whenSignalFrameReadyAfterMs(50);
     whenSignalFrameReadyAfterMs(50);
-    expect(nextSpy).lastCalledWith(20.0);
+    expect(nextSpy).toHaveBeenLastCalledWith(20.0);
   });
 
   it('should ignore 0 measurement ', () => {
     const nextSpy = jest.fn();
     measureFps.fps$.subscribe(nextSpy);
     warmupMeasurement();
-    expect(nextSpy).lastCalledWith(5);
+    expect(nextSpy).toHaveBeenLastCalledWith(5);
     measureFps.signalFrameReady();
-    expect(nextSpy).lastCalledWith(5);
+    expect(nextSpy).toHaveBeenLastCalledWith(5);
   });
 
   it('should provide frameTime in milliseconds', () => {
     const nextSpy = jest.fn();
     measureFps.frameTimeMs$.subscribe(nextSpy);
     warmupMeasurement();
-    expect(nextSpy).lastCalledWith(201);
+    expect(nextSpy).toHaveBeenLastCalledWith(201);
     whenSignalFrameReadyAfterMs(500);
-    expect(nextSpy).lastCalledWith(300);
+    expect(nextSpy).toHaveBeenLastCalledWith(300);
   });
 
   function whenSignalFrameReadyAfterMs(ms: number): void {

@@ -1,11 +1,10 @@
-import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterModule } from '@angular/router';
 
 @Component({
-  imports: [CommonModule, MatToolbarModule, RouterModule, MatTabsModule],
+  imports: [MatToolbarModule, RouterModule, MatTabsModule],
   templateUrl: './tensorflow-examples.component.html',
   styleUrls: ['./tensorflow-examples.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

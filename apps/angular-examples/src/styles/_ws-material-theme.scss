@@ -12,18 +12,38 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
 
 $fontConfig: (
-  display-4:
-    mat.m2-define-typography-level(112px, 112px, 300, 'Roboto', -0.0134em),
-  display-3:
-    mat.m2-define-typography-level(56px, 56px, 400, 'Roboto', -0.0089em),
+  display-4: mat.m2-define-typography-level(
+      112px,
+      112px,
+      300,
+      'Roboto',
+      -0.0134em
+    ),
+  display-3: mat.m2-define-typography-level(
+      56px,
+      56px,
+      400,
+      'Roboto',
+      -0.0089em
+    ),
   display-2: mat.m2-define-typography-level(45px, 48px, 400, 'Roboto', 0em),
   display-1: mat.m2-define-typography-level(34px, 40px, 400, 'Roboto', 0.0074em),
   headline: mat.m2-define-typography-level(24px, 32px, 400, 'Roboto', 0em),
   title: mat.m2-define-typography-level(20px, 32px, 500, 'Roboto', 0.0075em),
-  subheading-2:
-    mat.m2-define-typography-level(16px, 28px, 400, 'Roboto', 0.0094em),
-  subheading-1:
-    mat.m2-define-typography-level(15px, 24px, 500, 'Roboto', 0.0067em),
+  subheading-2: mat.m2-define-typography-level(
+      16px,
+      28px,
+      400,
+      'Roboto',
+      0.0094em
+    ),
+  subheading-1: mat.m2-define-typography-level(
+      15px,
+      24px,
+      500,
+      'Roboto',
+      0.0067em
+    ),
   body-2: mat.m2-define-typography-level(14px, 24px, 500, 'Roboto', 0.0179em),
   body-1: mat.m2-define-typography-level(14px, 20px, 400, 'Roboto', 0.0179em),
   button: mat.m2-define-typography-level(14px, 14px, 500, 'Roboto', 0.0893em),
@@ -146,7 +166,8 @@ $mat-dark-theme-background: (
 );
 
 // Compute font config
-@include mat.core();
+@include mat.elevation-classes();
+@include mat.app-background();
 
 // Theme Config
 
@@ -164,8 +185,7 @@ $mat-primary: (
   darker: #277cdf,
   200: #3d99e9,
   // For slide toggle,
-  contrast:
-    (
+  contrast: (
       main: $dark-primary-text,
       lighter: $dark-primary-text,
       darker: $light-primary-text,
@@ -187,8 +207,7 @@ $mat-accent: (
   darker: #84cb17,
   200: #a0da27,
   // For slide toggle,
-  contrast:
-    (
+  contrast: (
       main: $dark-primary-text,
       lighter: $dark-primary-text,
       darker: $dark-primary-text,
@@ -210,8 +229,7 @@ $mat-warn: (
   darker: #f329a0,
   200: #f73fb8,
   // For slide toggle,
-  contrast:
-    (
+  contrast: (
       main: $dark-primary-text,
       lighter: $dark-primary-text,
       darker: $light-primary-text,

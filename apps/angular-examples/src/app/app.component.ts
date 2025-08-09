@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Angulartics2GoogleTagManager } from 'angulartics2';
 import { Environment } from '../environments/environment.type';
@@ -17,15 +17,16 @@ import { ROUTER_LINKS } from './router-links.token';
   imports: [MainToolbarComponent, SideNavComponent, RouterOutlet],
 })
 export class AppComponent {
+  private titleService = inject(TitleService);
+  routerLinks = inject<MainNavRoutes>(ROUTER_LINKS);
+  private env = inject<Environment>(ENV_TOKEN);
+
   appVersion: string;
 
-  constructor(
-    // we need title service to update page title.
-    private titleService: TitleService,
-    gtmManager: Angulartics2GoogleTagManager,
-    @Inject(ROUTER_LINKS) public routerLinks: MainNavRoutes,
-    @Inject(ENV_TOKEN) private env: Environment
-  ) {
+  constructor() {
+    const gtmManager = inject(Angulartics2GoogleTagManager);
+    const env = this.env;
+
     gtmManager.startTracking();
     this.appVersion = `angular-examples@${env.version ?? 'next'}`;
   }

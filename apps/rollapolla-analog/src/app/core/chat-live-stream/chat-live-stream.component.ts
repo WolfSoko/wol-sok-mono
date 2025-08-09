@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -17,7 +16,6 @@ import { MessagesListComponent } from './messages-list.component';
   selector: 'rap-chat-live-stream',
 
   imports: [
-    CommonModule,
     MatCardModule,
     MessagesListComponent,
     ChatMessageFormComponent,

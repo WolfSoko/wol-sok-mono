@@ -4,11 +4,11 @@
   $hover-ripple: color.change($color, $alpha: 0.05);
   $focus-ripple: color.change($color, $alpha: 0.2);
 
-  --mdc-slider-handle-color: #{$color};
-  --mdc-slider-focus-handle-color: #{$color};
-  --mdc-slider-hover-handle-color: #{$color};
-  --mdc-slider-active-track-color: #{$color};
-  --mdc-slider-inactive-track-color: #{$color};
+  --mat-slider-handle-color: #{$color};
+  --mat-slider-focus-handle-color: #{$color};
+  --mat-slider-hover-handle-color: #{$color};
+  --mat-slider-active-track-color: #{$color};
+  --mat-slider-inactive-track-color: #{$color};
   --mat-mdc-slider-ripple-color: #{$color};
   --mat-mdc-slider-hover-ripple-color: #{$hover-ripple};
   --mat-mdc-slider-focus-ripple-color: #{$focus-ripple};

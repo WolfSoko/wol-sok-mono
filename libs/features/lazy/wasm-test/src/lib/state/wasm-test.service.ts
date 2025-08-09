@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { InstantiateFibWasmService } from '@wolsok/fib-wasm-api';
 import { delay, filter, switchMapTo, take, tap } from 'rxjs/operators';
 import { FibonacciJsCalcService } from '../fibonacci-js-calc/fibonacci-js-calc.service';
@@ -7,12 +7,13 @@ import { WasmTestStore } from './wasm-test.store';
 
 @Injectable({ providedIn: 'root' })
 export class WasmTestService {
-  constructor(
-    private readonly wasmTestStore: WasmTestStore,
-    private readonly wasmTestQuery: WasmTestQuery,
-    instantiateFibWasmService: InstantiateFibWasmService,
-    private readonly fibonacciJsCalcService: FibonacciJsCalcService
-  ) {
+  private readonly wasmTestStore = inject(WasmTestStore);
+  private readonly wasmTestQuery = inject(WasmTestQuery);
+  private readonly fibonacciJsCalcService = inject(FibonacciJsCalcService);
+
+  constructor() {
+    const instantiateFibWasmService = inject(InstantiateFibWasmService);
+
     instantiateFibWasmService
       .instantiateWasm()
       .then((result) => {

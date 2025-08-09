@@ -7,6 +7,7 @@ import {
   input,
   NgZone,
   viewChild,
+  inject,
 } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { Tensor } from '@tensorflow/tfjs';
@@ -22,6 +23,9 @@ import { DataDrawerService } from './data-drawer.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DataDrawerComponent {
+  private readonly dataDrawer = inject(DataDrawerService);
+  private readonly ngZone = inject(NgZone);
+
   plot = viewChild.required<ElementRef>('plot');
   caption = input.required<string>();
   coeffsCaption = input.required<string[]>();
@@ -30,10 +34,7 @@ export class DataDrawerComponent {
   predictions = input<Tensor | null>();
   predictionsNew = input<Tensor | null>();
 
-  constructor(
-    private readonly dataDrawer: DataDrawerService,
-    private readonly ngZone: NgZone
-  ) {
+  constructor() {
     effect(() => this.draw());
   }
 

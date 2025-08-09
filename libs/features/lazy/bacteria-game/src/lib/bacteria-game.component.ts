@@ -9,6 +9,7 @@ import {
   OnDestroy,
   Signal,
   ViewChild,
+  inject,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -72,6 +73,13 @@ export function createImageDataFromBacterias(
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
+  private query = inject(GameStateQuery);
+  private gameStateService = inject(GameStateService);
+  private playerService = inject(PlayerService);
+  private playerQuery = inject(PlayerQuery);
+  private ngZone = inject(NgZone);
+  private matDialog = inject(MatDialog);
+
   @ViewChild('canvasElement', { static: true })
   private canvasRef!: ElementRef;
   @ViewChild(WsThanosDirective, { static: true })
@@ -85,14 +93,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   players$: Observable<Player[]>;
   isRunning$: Observable<boolean>;
 
-  constructor(
-    private query: GameStateQuery,
-    private gameStateService: GameStateService,
-    private playerService: PlayerService,
-    private playerQuery: PlayerQuery,
-    private ngZone: NgZone,
-    private matDialog: MatDialog
-  ) {
+  constructor() {
     this.state = toSignal(this.query.select());
     this.fps$ = this.query.selectFps();
     this.gameStateService.reset();

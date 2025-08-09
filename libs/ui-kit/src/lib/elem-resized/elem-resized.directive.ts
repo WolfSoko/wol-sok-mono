@@ -5,6 +5,7 @@ import {
   Input,
   OnDestroy,
   Output,
+  inject,
 } from '@angular/core';
 import { debounceTime, distinctUntilChanged, Observable, Subject } from 'rxjs';
 import { ResizedEvent } from './resized-event';
@@ -13,6 +14,8 @@ import { ResizedEvent } from './resized-event';
   selector: '[wsSharedUiElemResized]',
 })
 export class ElemResizedDirective implements AfterViewInit, OnDestroy {
+  private readonly element = inject(ElementRef);
+
   private readonly elemResizedAction = new Subject<ResizedEvent>();
 
   @Input() debounceTime = 0;
@@ -29,8 +32,6 @@ export class ElemResizedDirective implements AfterViewInit, OnDestroy {
     );
 
   private resizeObserver?: ResizeObserver;
-
-  constructor(private readonly element: ElementRef) {}
 
   ngAfterViewInit(): void {
     if (!ResizeObserver) {

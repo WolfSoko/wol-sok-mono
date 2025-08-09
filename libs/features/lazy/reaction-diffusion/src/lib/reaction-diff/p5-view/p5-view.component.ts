@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -12,19 +11,23 @@ import {
   Output,
   SimpleChanges,
   ViewChild,
+  inject,
 } from '@angular/core';
 import { ShowFpsComponent } from '@wolsok/ui-kit';
 import P5 from 'p5';
 import { ReactionDiffCalculator } from '../calculation/reaction-diff-calculator';
 
 @Component({
-  imports: [CommonModule, ShowFpsComponent],
+  imports: [ShowFpsComponent],
   selector: 'feat-lazy-react-diff-p5-view',
   templateUrl: './p5-view.component.html',
   styleUrls: ['./p5-view.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class P5ViewComponent implements OnChanges, OnDestroy {
+  private ngZone = inject(NgZone);
+  private cd = inject(ChangeDetectorRef);
+
   @ViewChild('drawArea', { static: true }) drawArea!: ElementRef;
   @Input() simWidth!: number;
   @Input() simHeight!: number;
@@ -38,11 +41,6 @@ export class P5ViewComponent implements OnChanges, OnDestroy {
 
   private sketch?: P5;
   private drawOnce = true;
-
-  constructor(
-    private ngZone: NgZone,
-    private cd: ChangeDetectorRef
-  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['simWidth'] || changes['simHeight']) {

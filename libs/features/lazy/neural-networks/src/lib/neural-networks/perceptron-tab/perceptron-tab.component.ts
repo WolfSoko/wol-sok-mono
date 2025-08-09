@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { Observable } from 'rxjs';
@@ -22,12 +27,14 @@ import { Point } from '../shared/point';
   ],
 })
 export class PerceptronTabComponent implements OnInit {
+  private brainService = inject(BrainService);
+
   width = 400;
   height = 400;
 
   autoLearning$: Observable<boolean>;
 
-  constructor(private brainService: BrainService) {
+  constructor() {
     this.autoLearning$ = this.brainService.autoLearning$;
   }
 

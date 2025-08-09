@@ -6,6 +6,7 @@ import {
   ElementRef,
   OnDestroy,
   ViewChild,
+  inject,
 } from '@angular/core';
 import {
   FormBuilder,
@@ -77,6 +78,10 @@ interface Configuration {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
+  private fb = inject(FormBuilder);
+  private gpu = inject(GpuAdapterService);
+  private readonly measureFps = inject(MeasureFps);
+
   @ViewChild('gpuCanvasContainer')
   gpuCanvasWrapper?: ElementRef<HTMLDivElement>;
   webglSupported = false;
@@ -99,11 +104,7 @@ export class SomeGpuCalculationComponent implements AfterViewInit, OnDestroy {
   private gpuColorizer!: IKernelRunShortcut;
   private subscription?: Subscription;
 
-  constructor(
-    private fb: FormBuilder,
-    private gpu: GpuAdapterService,
-    private readonly measureFps: MeasureFps
-  ) {
+  constructor() {
     this.createForm();
     this.calculationTime$ = this.measureFps.frameTimeMs$;
     this.fps$ = this.measureFps.fps$;

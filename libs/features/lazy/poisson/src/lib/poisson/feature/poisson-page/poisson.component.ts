@@ -5,6 +5,7 @@ import {
   OnInit,
   signal,
   Signal,
+  inject,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButton } from '@angular/material/button';
@@ -40,6 +41,9 @@ import { CanvasViewComponent } from '../canvas-view/canvas-view.component';
   ],
 })
 export class PoissonComponent implements OnInit {
+  poissonCalc = inject(PoissonCalcService);
+  private readonly measureFps = inject(MeasureFps);
+
   canvasWidth = 600;
   canvasHeight = 600;
 
@@ -47,10 +51,7 @@ export class PoissonComponent implements OnInit {
   showDebug = signal(false);
   fps: Signal<number | undefined>;
 
-  constructor(
-    public poissonCalc: PoissonCalcService,
-    private readonly measureFps: MeasureFps
-  ) {
+  constructor() {
     this.fps = toSignal(this.measureFps.fps$);
   }
 

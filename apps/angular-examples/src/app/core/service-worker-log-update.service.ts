@@ -1,10 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ServiceWorkerLogUpdateService {
-  constructor(private updates: SwUpdate) {}
+  private updates = inject(SwUpdate);
 
   startLogging() {
     if (!environment.production) {

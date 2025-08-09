@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { catchError, map, Observable, of, startWith } from 'rxjs';
@@ -29,12 +29,14 @@ function createViewModel(vm: Partial<ViewModel> = {}): ViewModel {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ServiceWorkerUpdateComponent {
+  private updateService = inject(ServiceWorkerUpdateService);
+
   vm$: Observable<ViewModel> = of(createViewModel());
 
-  constructor(
-    updateLogger: ServiceWorkerLogUpdateService,
-    private updateService: ServiceWorkerUpdateService
-  ) {
+  constructor() {
+    const updateLogger = inject(ServiceWorkerLogUpdateService);
+    const updateService = this.updateService;
+
     if (!environment.production) {
       return;
     }

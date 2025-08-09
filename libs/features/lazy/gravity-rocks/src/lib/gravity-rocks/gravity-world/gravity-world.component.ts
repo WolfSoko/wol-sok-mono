@@ -5,12 +5,12 @@ import {
   computed,
   effect,
   ElementRef,
-  Inject,
   Signal,
   signal,
   TrackByFunction,
   ViewChild,
   WritableSignal,
+  inject,
 } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -62,6 +62,9 @@ const SVG_VIEW_PORT_SIZE = 3000;
   ],
 })
 export class GravityWorldComponent {
+  readonly worldService = inject(GravityWorldService);
+  private readonly initialConfig = inject<GravityWorldConfig>(INITIAL_CONFIG);
+
   public MAX_DIM: Vector2d = Vector2d.create(
     SVG_VIEW_PORT_SIZE,
     (SVG_VIEW_PORT_SIZE / 5) * 3
@@ -117,10 +120,7 @@ export class GravityWorldComponent {
   );
   trackByPlanet: TrackByFunction<Planet> = (index, planet) => planet.pos;
 
-  constructor(
-    readonly worldService: GravityWorldService,
-    @Inject(INITIAL_CONFIG) private readonly initialConfig: GravityWorldConfig
-  ) {
+  constructor() {
     this.settings = signal(this.initialConfig);
     this.initializeSunAndPlanets();
     this.updateSignals();

@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,7 +8,7 @@ import {
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
 
 @Component({
-  imports: [CommonModule, AceEditorModule],
+  imports: [AceEditorModule],
   selector: 'lzy-ft-shad-ex-code-editor',
   templateUrl: './code-editor.component.html',
   styleUrls: ['./code-editor.component.scss'],

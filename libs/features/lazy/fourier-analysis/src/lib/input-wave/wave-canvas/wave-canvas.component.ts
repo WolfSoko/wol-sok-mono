@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -16,7 +15,7 @@ import P5 from 'p5';
 import { InputWave } from '../../model/input-wave.model';
 
 @Component({
-  imports: [CommonModule],
+  imports: [],
   selector: 'lazy-feat-fanal-wave-canvas',
   templateUrl: './wave-canvas.component.html',
   styleUrls: ['./wave-canvas.component.scss'],

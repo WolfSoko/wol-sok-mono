@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import {
   layers,
   nextFrame,
@@ -27,6 +27,8 @@ const TEST_ITERATION_FREQUENCY = 10;
 
 @Injectable({ providedIn: 'root' })
 export class LearnedDigitsModelService {
+  private mnistData = inject(MnistDataService);
+
   private model: Sequential;
   private readonly optimizer: SGDOptimizer;
 
@@ -39,7 +41,7 @@ export class LearnedDigitsModelService {
   testCustomBatch!: Tensor2D;
   customPredictions!: number[];
 
-  constructor(private mnistData: MnistDataService) {
+  constructor() {
     this.model = sequential();
     this.model.add(
       layers.conv2d({

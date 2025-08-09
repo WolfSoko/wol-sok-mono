@@ -1,5 +1,4 @@
-import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import {
@@ -13,7 +12,6 @@ import { AskForNumberDialogData } from './ask-for-number-dialog-data';
 
 @Component({
   imports: [
-    CommonModule,
     MatInputModule,
     FormsModule,
     MatDialogModule,
@@ -25,10 +23,8 @@ import { AskForNumberDialogData } from './ask-for-number-dialog-data';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AskForNumberDialogComponent {
-  constructor(
-    public dialogRef: MatDialogRef<AskForNumberDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: AskForNumberDialogData
-  ) {}
+  dialogRef = inject<MatDialogRef<AskForNumberDialogComponent>>(MatDialogRef);
+  data = inject<AskForNumberDialogData>(MAT_DIALOG_DATA);
 
   onNoClick(): void {
     this.dialogRef.close();

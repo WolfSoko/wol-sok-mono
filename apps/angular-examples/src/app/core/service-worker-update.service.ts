@@ -1,4 +1,4 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable, NgZone, inject } from '@angular/core';
 
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
@@ -26,14 +26,14 @@ export type CHECK_FOR_UPDATE_STATE =
 
 @Injectable({ providedIn: 'root' })
 export class ServiceWorkerUpdateService {
+  private readonly swUpdate = inject(SwUpdate);
+  private readonly snackbar = inject(MatSnackBar);
+  private readonly ngZone = inject(NgZone);
+  private readonly router = inject(Router);
+
   versionReady$: Observable<boolean>;
 
-  constructor(
-    private readonly swUpdate: SwUpdate,
-    private readonly snackbar: MatSnackBar,
-    private readonly ngZone: NgZone,
-    private readonly router: Router
-  ) {
+  constructor() {
     this.versionReady$ = this.swUpdate.versionUpdates.pipe(
       filter<VersionEvent, VersionReadyEvent>(
         ServiceWorkerUpdateService.isVersionReadyEvent

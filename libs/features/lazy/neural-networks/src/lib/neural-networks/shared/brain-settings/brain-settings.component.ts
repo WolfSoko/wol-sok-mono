@@ -1,5 +1,10 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  inject,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -25,11 +30,15 @@ import { BrainService } from '../brain.service';
   ],
 })
 export class BrainSettingsComponent {
+  private brainService = inject(BrainService);
+
   @Input() perceptronLayers?: number[];
 
   autoLearning$: Observable<boolean>;
 
-  constructor(private brainService: BrainService) {
+  constructor() {
+    const brainService = this.brainService;
+
     this.autoLearning$ = brainService.autoLearning$;
   }
 

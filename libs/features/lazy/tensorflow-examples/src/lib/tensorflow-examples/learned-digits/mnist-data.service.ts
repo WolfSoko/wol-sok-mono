@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Rank, Tensor, tensor2d, util } from '@tensorflow/tfjs';
 import { firstValueFrom } from 'rxjs';
 
@@ -21,6 +21,8 @@ const MNIST_LABELS_PATH = 'assets/mnist/mnist_labels_uint8.data';
  */
 @Injectable({ providedIn: 'root' })
 export class MnistDataService {
+  private readonly http = inject(HttpClient);
+
   customImages = 0;
   private shuffledTrainIndex: number;
   private shuffledTestIndex: number;
@@ -34,7 +36,7 @@ export class MnistDataService {
   private trainLabels!: Uint8Array;
   private testLabels!: Uint8Array;
 
-  constructor(private readonly http: HttpClient) {
+  constructor() {
     this.shuffledTrainIndex = 0;
     this.shuffledTestIndex = 0;
   }

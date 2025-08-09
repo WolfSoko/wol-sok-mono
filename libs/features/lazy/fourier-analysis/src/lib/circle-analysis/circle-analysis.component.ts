@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,7 +12,7 @@ import { InputWaveRepo } from '../state/input-wave-repo';
 import { CircleCanvasComponent } from './circle-canvas/circle-canvas.component';
 
 @Component({
-  imports: [CommonModule, MatCardModule, CircleCanvasComponent],
+  imports: [MatCardModule, CircleCanvasComponent],
   selector: 'lazy-feat-fanal-circle-analysis',
   templateUrl: './circle-analysis.component.html',
   styleUrls: ['./circle-analysis.component.scss'],

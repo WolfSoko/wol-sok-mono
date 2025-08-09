@@ -1,5 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  output,
+  inject,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -28,6 +33,8 @@ import { PoissonConfigService } from '../../domain/poisson-config.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SimControlsComponent {
+  readonly poissonConfig = inject(PoissonConfigService);
+
   playChanged = output<boolean>();
   resetSim = output<boolean>();
   stepSim = output<void>();
@@ -35,7 +42,9 @@ export class SimControlsComponent {
   play = false;
   config$: Observable<PoissonConfig>;
 
-  constructor(public readonly poissonConfig: PoissonConfigService) {
+  constructor() {
+    const poissonConfig = this.poissonConfig;
+
     this.config$ = poissonConfig.config$;
   }
 

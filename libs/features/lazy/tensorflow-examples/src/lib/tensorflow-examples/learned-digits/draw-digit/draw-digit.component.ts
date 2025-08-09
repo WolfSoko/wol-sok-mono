@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   AfterViewChecked,
   ChangeDetectionStrategy,
@@ -7,6 +6,7 @@ import {
   NgZone,
   output,
   viewChild,
+  inject,
 } from '@angular/core';
 import P5 from 'p5';
 
@@ -38,13 +38,15 @@ class Start extends Path {
 }
 
 @Component({
-  imports: [CommonModule],
+  imports: [],
   selector: 'feat-lazy-tensor-app-draw-digit',
   templateUrl: './draw-digit.component.html',
   styleUrls: ['./draw-digit.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DrawDigitComponent implements AfterViewChecked {
+  private ngZone = inject(NgZone);
+
   updatePixels = output<Float32Array>();
   private sketch!: P5;
   private readonly size = 28 * 10;
@@ -53,8 +55,6 @@ export class DrawDigitComponent implements AfterViewChecked {
 
   private drawCanvas =
     viewChild.required<ElementRef<HTMLElement>>('drawCanvas');
-
-  constructor(private ngZone: NgZone) {}
 
   reset() {
     this.path = [];

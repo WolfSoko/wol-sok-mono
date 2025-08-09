@@ -1,4 +1,4 @@
-import { Directive, ElementRef, Inject, NgZone, Output } from '@angular/core';
+import { Directive, ElementRef, NgZone, Output, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, Observable, Subject, Subscription, take, tap } from 'rxjs';
 import { AnimationState } from './animation.state';
@@ -19,13 +19,13 @@ export class WsThanosDirective {
     this.wsThanosCompleteSubject.asObservable();
   private subscriptions: Subscription = new Subscription();
 
-  constructor(
-    private readonly vaporizeDomElem: ElementRef<HTMLElement>,
-    private readonly thanosService: WsThanosService,
-    @Inject(WS_THANOS_OPTIONS_TOKEN)
-    private readonly thanosOptions: WsThanosOptions,
-    private readonly ngZone: NgZone
-  ) {}
+  private readonly vaporizeDomElem: ElementRef<HTMLElement> =
+    inject(ElementRef);
+  private readonly thanosService: WsThanosService = inject(WsThanosService);
+  private readonly thanosOptions: WsThanosOptions = inject(
+    WS_THANOS_OPTIONS_TOKEN
+  );
+  private readonly ngZone: NgZone = inject(NgZone);
 
   /**
    *

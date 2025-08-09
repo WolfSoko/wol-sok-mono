@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ID, transaction } from '@datorama/akita';
 import {
   animationFrameScheduler,
@@ -29,6 +29,8 @@ const calcMeanTime = (
 
 @Injectable({ providedIn: 'root' })
 export class PerformanceTestService {
+  private performanceTestStore = inject(PerformanceTestStore);
+
   private static calcMeanTime(entriesName: string): number {
     return (
       Math.round(
@@ -36,8 +38,6 @@ export class PerformanceTestService {
       ) / 100
     );
   }
-
-  constructor(private performanceTestStore: PerformanceTestStore) {}
 
   @transaction()
   add(performanceTest: Partial<PerformanceTest>) {

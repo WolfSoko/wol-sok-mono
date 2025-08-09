@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { CommonModule } from '@angular/common';
+
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -7,7 +7,6 @@ import {
   computed,
   effect,
   inject,
-  Inject,
   signal,
   ViewContainerRef,
   ViewEncapsulation,
@@ -24,7 +23,6 @@ import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
 @Component({
   selector: 'app-side-nav',
   imports: [
-    CommonModule,
     MatSidenavModule,
     MatListModule,
     NavItemComponent,
@@ -36,6 +34,9 @@ import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SideNavComponent {
+  routerLinks = inject(ROUTER_LINKS);
+  private viewContainerRef = inject(ViewContainerRef);
+
   private readonly breakpointObserver: BreakpointObserver =
     inject(BreakpointObserver);
   private isLargeScreen = toSignal(
@@ -49,10 +50,7 @@ export class SideNavComponent {
   hasBackdrop = computed(() => !this.isLargeScreen());
   showSidebar = signal<boolean>(false);
 
-  constructor(
-    @Inject(ROUTER_LINKS) public routerLinks: MainNavRoute[],
-    private viewContainerRef: ViewContainerRef
-  ) {
+  constructor() {
     effect(() => {
       this.showSidebar.set(this.isLargeScreen());
       this.markParentForChangeDetection();

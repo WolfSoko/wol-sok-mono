@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { Observable } from 'rxjs';
 import { GameStateQuery } from '../state/game-state.query';
@@ -14,7 +14,9 @@ import { Player } from '../state/player.model';
 export class WinnerComponent {
   winner$: Observable<Player | null>;
 
-  constructor(state: GameStateQuery) {
-    this.winner$ = state.selectWinnerId();
+  private state = inject(GameStateQuery);
+
+  constructor() {
+    this.winner$ = this.state.selectWinnerId();
   }
 }

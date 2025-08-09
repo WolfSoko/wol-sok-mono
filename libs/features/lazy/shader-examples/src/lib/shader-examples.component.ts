@@ -1,6 +1,11 @@
 import { animate, keyframes, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ViewChild,
+  inject,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -56,16 +61,18 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShaderExamplesComponent {
+  readonly state = inject(ShaderExamplesUIQuery);
+  readonly shaderCodeQuery = inject(ShaderCodeQuery);
+  private readonly shaderExamplesService = inject(ShaderExamplesService);
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   readonly viewModel$: Observable<
     ShaderExampleState & { isLoadingShaders: boolean }
   >;
 
-  constructor(
-    readonly state: ShaderExamplesUIQuery,
-    readonly shaderCodeQuery: ShaderCodeQuery,
-    private readonly shaderExamplesService: ShaderExamplesService
-  ) {
+  constructor() {
+    const shaderCodeQuery = this.shaderCodeQuery;
+
     this.viewModel$ = combineLatest([
       this.state.select(),
       shaderCodeQuery.selectLoading(),

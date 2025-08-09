@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ID, transaction } from '@datorama/akita';
 import { GameStateQuery } from './game-state.query';
 import { GameState } from './game.states';
@@ -15,11 +15,11 @@ import { PlayerStore } from './player.store';
 
 @Injectable({ providedIn: 'root' })
 export class PlayerService {
-  constructor(
-    private playerStore: PlayerStore,
-    private gameStateQuery: GameStateQuery,
-    private playerQuery: PlayerQuery
-  ) {
+  private playerStore = inject(PlayerStore);
+  private gameStateQuery = inject(GameStateQuery);
+  private playerQuery = inject(PlayerQuery);
+
+  constructor() {
     this.gameStateQuery
       .selectKeysPressed()
       .subscribe((value) =>

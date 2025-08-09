@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { QueryEntity } from '@datorama/akita';
 import {
   PerformanceTestStore,
@@ -13,7 +13,13 @@ export class PerformanceTestQuery extends QueryEntity<
   PerformanceTestState,
   PerformanceTest
 > {
-  constructor(protected store: PerformanceTestStore) {
+  protected store: PerformanceTestStore;
+
+  constructor() {
+    const store = inject(PerformanceTestStore);
+
     super(store);
+
+    this.store = store;
   }
 }

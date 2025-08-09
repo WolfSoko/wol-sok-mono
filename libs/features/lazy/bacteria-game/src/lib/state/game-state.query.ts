@@ -1,12 +1,18 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Query } from '@datorama/akita';
 import { distinctUntilChanged, filter, map, Observable } from 'rxjs';
 import { GameState, GameStateState, GameStateStore } from './game.states';
 
 @Injectable({ providedIn: 'root' })
 export class GameStateQuery extends Query<GameStateState> {
-  constructor(protected override store: GameStateStore) {
+  protected override store: GameStateStore;
+
+  constructor() {
+    const store = inject(GameStateStore);
+
     super(store);
+
+    this.store = store;
   }
 
   selectCurrentGameState(gameStateFilter?: GameState): Observable<GameState> {

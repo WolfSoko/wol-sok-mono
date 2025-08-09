@@ -5,7 +5,7 @@
   </mat-card-header>
   <br />
   <mat-card-content>
-    @defer (hydrate on idle; on viewport) {
+    @defer (hydrate on idle) {
       <rap-chat-message-form
         [minMessageLength]="minLength()"
         [maxMessageLength]="maxLength()"

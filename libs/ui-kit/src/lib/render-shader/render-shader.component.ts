@@ -12,6 +12,7 @@ import {
   Output,
   SimpleChanges,
   ViewChild,
+  inject,
 } from '@angular/core';
 import { MeasureFps } from '@wolsok/utils-measure-fps';
 import {
@@ -44,6 +45,9 @@ import defaultVertexShader from './default-vertex-shader.vert';
 export class RenderShaderComponent
   implements AfterViewInit, OnChanges, OnDestroy
 {
+  private ngZone = inject(NgZone);
+  private readonly measureFps = inject(MeasureFps);
+
   @Input() shaderCode!: FragCode;
   @Input() vertexShader!: VertCode;
   @Input() runAnimation: boolean | null = true;
@@ -72,10 +76,7 @@ export class RenderShaderComponent
     time: Uniform1f;
   };
 
-  constructor(
-    private ngZone: NgZone,
-    private readonly measureFps: MeasureFps
-  ) {
+  constructor() {
     this.fps$ = this.measureFps.fps$.pipe(sampleTime(300));
   }
 

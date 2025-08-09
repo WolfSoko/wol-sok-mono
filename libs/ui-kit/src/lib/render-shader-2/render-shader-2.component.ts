@@ -1,5 +1,11 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  ViewChild,
+  inject,
+} from '@angular/core';
+
 import {
   ColorMaterial,
   Mesh,
@@ -12,16 +18,17 @@ import howToBeFunnyPng from './testing-assets/how-to-be-funny.png';
 
 @Component({
   selector: 'ws-shared-ui-render-shader-2',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './render-shader-2.component.html',
   styleUrl: './render-shader-2.component.scss',
 })
 export class RenderShader2Component implements AfterViewInit {
+  private webglService = inject(WebglService);
+
   @ViewChild('glImageCanvas') private imageCanvasRef?: ElementRef;
   @ViewChild('glSceneCanvas') private sceneCanvasRef?: ElementRef;
   private scene?: Scene;
   private renderer?: WebGl2Renderer;
-  constructor(private webglService: WebglService) {}
 
   ngAfterViewInit() {
     const imageCanvasRef: HTMLCanvasElement =

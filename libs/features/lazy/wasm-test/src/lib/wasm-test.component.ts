@@ -4,6 +4,7 @@ import {
   Component,
   OnDestroy,
   OnInit,
+  inject,
 } from '@angular/core';
 import {
   FormBuilder,
@@ -42,6 +43,10 @@ import { FibResult, WasmTestState } from './state/wasm-test.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WasmTestComponent implements OnInit, OnDestroy {
+  private wasmTestQuery = inject(WasmTestQuery);
+  private wasmTestService = inject(WasmTestService);
+  private builder = inject(FormBuilder);
+
   readonly fibRunning$: Observable<boolean>;
   readonly fibResult$: Observable<FibResult | null>;
   readonly fibN$: Observable<number>;
@@ -53,11 +58,7 @@ export class WasmTestComponent implements OnInit, OnDestroy {
     fibN: FormControl<number | null>;
   }>;
 
-  constructor(
-    private wasmTestQuery: WasmTestQuery,
-    private wasmTestService: WasmTestService,
-    private builder: FormBuilder
-  ) {
+  constructor() {
     this.fibRunning$ = this.wasmTestQuery.selectFibRunning();
     this.fibN$ = this.wasmTestQuery.selectFibN();
     this.fibResult$ = this.wasmTestQuery.selectFibResult();

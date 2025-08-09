@@ -27,7 +27,7 @@ export type RecordingStateInitial = {
 
 export type RecordingStateError = {
   state: 'error';
-  error: any;
+  error: unknown;
 };
 
 const initialValue: AudioRecordingState = {
