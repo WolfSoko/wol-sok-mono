@@ -1,4 +1,4 @@
-import { provideExperimentalZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { provideRepositoryMock } from '../repository/provide-repository.mock';
@@ -15,10 +15,7 @@ describe('TrainingRunnerService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideExperimentalZonelessChangeDetection(),
-        provideRepositoryMock(),
-      ],
+      providers: [provideZonelessChangeDetection(), provideRepositoryMock()],
     });
   });
 

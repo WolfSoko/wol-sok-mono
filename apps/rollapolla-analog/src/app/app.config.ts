@@ -2,7 +2,7 @@ import { provideFileRouter } from '@analogjs/router';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import {
   ApplicationConfig,
-  provideExperimentalZonelessChangeDetection,
+  provideZonelessChangeDetection,
 } from '@angular/core';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import {
@@ -17,7 +17,7 @@ import { providePortsAndAdapter } from './provide-ports-and.adapter';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideExperimentalZonelessChangeDetection(),
+    provideZonelessChangeDetection(),
     provideFileRouter(withEnabledBlockingInitialNavigation()),
     provideClientHydration(withIncrementalHydration(), withEventReplay()),
     provideHttpClient(withFetch()),

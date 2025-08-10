@@ -1,4 +1,4 @@
-import { provideExperimentalZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { seconds, sToMs } from '../../../shared/model/constants/time-utils';
@@ -13,10 +13,7 @@ describe('SprintTrainingDataService', () => {
 
   function initTest(initialData?: SprintTrainingInputData): void {
     TestBed.configureTestingModule({
-      providers: [
-        provideExperimentalZonelessChangeDetection(),
-        provideRepositoryMock(),
-      ],
+      providers: [provideZonelessChangeDetection(), provideRepositoryMock()],
     });
     repositoryFactoryMock = TestBed.inject(
       RepositoryFactoryMock<SprintTrainingInputData>

@@ -1,7 +1,7 @@
 import '@analogjs/vitest-angular/setup-snapshots';
 import {
   NgModule,
-  provideExperimentalZonelessChangeDetection,
+  provideZonelessChangeDetection,
 } from '@angular/core';
 
 import { getTestBed } from '@angular/core/testing';
@@ -13,7 +13,7 @@ import {
 
 @NgModule({
   imports: [BrowserDynamicTestingModule],
-  providers: [provideExperimentalZonelessChangeDetection()],
+  providers: [provideZonelessChangeDetection()],
 })
 export class TestingModule {}
 

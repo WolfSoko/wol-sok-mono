@@ -2,7 +2,7 @@ import { provideFileRouter } from '@analogjs/router';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import {
   ApplicationConfig,
-  provideExperimentalZonelessChangeDetection,
+  provideZonelessChangeDetection,
 } from '@angular/core';
 import {
   provideClientHydration,
@@ -13,7 +13,7 @@ import { withEnabledBlockingInitialNavigation } from '@angular/router';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideExperimentalZonelessChangeDetection(),
+    provideZonelessChangeDetection(),
     provideFileRouter(withEnabledBlockingInitialNavigation()),
     provideClientHydration(withIncrementalHydration(), withEventReplay()),
     provideHttpClient(withFetch()),
