@@ -1,7 +1,7 @@
 launch-templates:
   wolsokmono-linux-extra-large:
     resourceClass: 'docker_linux_amd64/extra_large'
-    image: 'ubuntu22.04-node20.11-v10'
+    image: 'ubuntu22.04-node20.11-v9'
     env:
       HUSKY: 0
       CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
@@ -15,8 +15,8 @@ launch-templates:
           GIT_FETCH_TAGS: 'true'
       - name: Install necessary binaries
         script: |
-          echo "update node to lts"
-          nvm install --lts
+          echo "node version used: $(node -v)"
+          echo "nvm is installed: $(if command -v nvm >/dev/null 2>&1; then echo yes; else echo no; fi)"
           echo "Install packages to compile node_modules gl with node-gyp"
           sudo apt-get update -y
           sudo apt-get install python3 python-is-python3 make gcc g++ xserver-xorg-dev libxi-dev libxext-dev libavif13 libgtk-4-1 libgraphene-1.0-dev -y
