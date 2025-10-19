@@ -1,7 +1,8 @@
 import { nxComponentTestingPreset } from '@nx/angular/plugins/component-testing';
-import { nxE2EPreset } from '@nx/cypress/plugins/cypress-preset';
 import { defineConfig } from 'cypress';
 import { fileURLToPath } from 'node:url';
+
+const { nxE2EPreset } = await import('@nx/cypress/plugins/cypress-preset');
 
 // Convert import.meta.url to a file path
 const filename = fileURLToPath(import.meta.url);

@@ -10,7 +10,8 @@
 /test-reports
 
 # dependencies
-/node_modules
+node_modules/
+**/node_modules/
 
 # IDEs and editors
 .project
