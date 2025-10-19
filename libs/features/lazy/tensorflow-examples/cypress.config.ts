@@ -1,7 +1,14 @@
 import { nxComponentTestingPreset } from '@nx/angular/plugins/component-testing';
-import { nxE2EPreset } from '@nx/cypress/plugins/cypress-preset';
 import { defineConfig } from 'cypress';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+
+const require = createRequire(import.meta.url);
+
+// Nx executes this config through ts-node in CommonJS mode, so we must resolve the
+// preset synchronously. createRequire lets us load the CJS-only Nx preset without
+// relying on top-level await, which would break when the file is required.
+const { nxE2EPreset } = require('@nx/cypress/plugins/cypress-preset');
 
 // Convert import.meta.url to a file path
 const filename = fileURLToPath(import.meta.url);
