@@ -18,7 +18,6 @@ const compat = new FlatCompat({
 export default [
   ...baseConfig,
   ...baseConfig1,
-  ...compat.extends('plugin:cypress/recommended'),
   ...compat
     .config({
       extends: [
@@ -59,7 +58,7 @@ export default [
       },
     })),
   {
-    files: ['**/*.cy.{ts,js,tsx,jsx}', 'cypress/**/*.{ts,js,tsx,jsx}'],
+    files: ['**/*.cy.{ts,js,tsx,jsx}'],
     rules: {},
   },
   {

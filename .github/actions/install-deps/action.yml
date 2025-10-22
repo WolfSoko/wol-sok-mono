@@ -32,13 +32,6 @@ runs:
       with:
         path: node_modules
         key: node-modules-${{ hashFiles('package-lock.json') }}
-    - name: Cache Cypress Binary
-      id: cache-browser-binary
-      if: inputs.browser == 'true'
-      uses: actions/cache@v4
-      with:
-        path: ${{ env.CYPRESS_CACHE_FOLDER || '~/.cache/Cypress' }}
-        key: cypress-binary-${{ hashFiles('package-lock.json') }}
     - name: Cache Playwright binaries
       id: cache-playwright-binary
       if: inputs.browser == 'true'
@@ -52,8 +45,6 @@ runs:
       shell: bash
       run: |
         npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
-      env:
-        CYPRESS_INSTALL_BINARY: 0
 
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true' && inputs.browser != 'false'

@@ -13,8 +13,6 @@
     "**/*.spec.ts",
     "jest.config.ts",
     "**/*.test.ts",
-    "cypress/**/*",
-    "cypress.config.ts",
     "**/*.cy.ts",
     "**/*.cy.js",
     "**/*.cy.tsx",

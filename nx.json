@@ -28,15 +28,6 @@
         "testStorybookTargetName": "test-storybook",
         "staticStorybookTargetName": "static-storybook"
       }
-    },
-    {
-      "plugin": "@nx/cypress/plugin",
-      "options": {
-        "targetName": "cypress:e2e",
-        "openTargetName": "open-cypress",
-        "componentTestingTargetName": "cypress:component-test",
-        "ciTargetName": "e2e-ci"
-      }
     }
   ],
   "namedInputs": {
@@ -53,10 +44,7 @@
       "!{projectRoot}/.storybook/**/*",
       "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
       "!{projectRoot}/src/*test-setup.[jt]s",
-      "!{projectRoot}/cypress/**/*",
-      "!{projectRoot}/**/*.cy.[jt]s?(x)",
       "!{projectRoot}/playwright.config.[jt]s",
-      "!{projectRoot}/cypress.config.[jt]s",
       "!{projectRoot}/eslint.config.[jt]s"
     ],
     "sharedGlobals": [
@@ -121,10 +109,6 @@
         "{projectRoot}/.storybook/**/*",
         "{projectRoot}/tsconfig.storybook.json"
       ],
-      "cache": true
-    },
-    "component-test": {
-      "inputs": ["default", "^production"],
       "cache": true
     },
     "@nx/jest:jest": {

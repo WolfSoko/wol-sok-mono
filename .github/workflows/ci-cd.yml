@@ -23,7 +23,6 @@ permissions:
 env:
   HUSKY: 0
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-  CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_DASHBOARD_KEY }}
   NODE_OPTIONS: '--max_old_space_size=4096'
 
 jobs:
@@ -68,8 +67,6 @@ jobs:
           TEST_PID=$!
           npx nx affected -t=build -c=ci --parallel=3 &
           BUILD_PID=$!
-          npx nx affected -t="component-test" --parallel=1 &
-          COMPONENT_TEST_PID=$!
           npx nx affected -t=e2e-ci --parallel=1 &
           E2E_CI_PID=$!
 
@@ -80,13 +77,11 @@ jobs:
           TEST_STATUS=$?
           wait $BUILD_PID
           BUILD_STATUS=$?
-          wait $COMPONENT_TEST_PID
-          COMPONENT_TEST_STATUS=$?
           wait $E2E_CI_PID
           E2E_CI_STATUS=$?
 
           # Check exit codes and fail the step if any task failed
-          if [ $LINT_STATUS -ne 0 ] || [ $TEST_STATUS -ne 0 ] || [ $BUILD_STATUS -ne 0 ] || [ $COMPONENT_TEST_STATUS -ne 0 ] || [ $E2E_CI_STATUS -ne 0 ]; then
+          if [ $LINT_STATUS -ne 0 ] || [ $TEST_STATUS -ne 0 ] || [ $BUILD_STATUS -ne 0 ] || [ $E2E_CI_STATUS -ne 0 ]; then
             echo "One or more checks failed."
             exit 1
           fi
