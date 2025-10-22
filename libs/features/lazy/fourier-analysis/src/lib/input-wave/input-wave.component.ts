@@ -17,7 +17,7 @@ import { WaveCanvasComponent } from './wave-canvas/wave-canvas.component';
 
 @Component({
   selector: 'lazy-feat-fanal-input-wave',
-  templateUrl: './-wave.component.htmlinput',
+  templateUrl: './input-wave.component.html',
   styleUrls: ['./input-wave.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MatCardModule, MatIconModule, MatButtonModule, WaveCanvasComponent],

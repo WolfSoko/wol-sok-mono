@@ -32,7 +32,7 @@ export class NotesRepoAdapter extends NotesRepoPort {
       query(this.notesCol, orderBy('createdAt', 'desc'), limit(20))
     );
 
-    this.notes = toSignal(notes$, { rejectErrors: true });
+    this.notes = toSignal(notes$);
   }
 
   getNotes(): Signal<ChatMessage[] | undefined> {

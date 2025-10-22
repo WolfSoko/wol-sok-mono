@@ -43,7 +43,6 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
 
     const chatMessages = toSignal(chatMessages$, {
       initialValue: [],
-      rejectErrors: true,
     });
 
     this.chatMessages = computed(() => {
