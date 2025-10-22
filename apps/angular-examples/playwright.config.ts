@@ -3,17 +3,12 @@ import { nxE2EPreset } from '@nx/playwright/preset';
 
 import { workspaceRoot } from '@nx/devkit';
 
-import { fileURLToPath } from 'node:url';
-
-// Convert import.meta.url to a file path
-const filename = fileURLToPath(import.meta.url);
-// For CI, you may want to set BASE_URL to the deployed application.
 const baseURL = process.env['BASE_URL'] || 'http://localhost:4200';
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  ...nxE2EPreset(filename, {
+  ...nxE2EPreset(__filename, {
     testDir: './e2e',
   }),
   timeout: 120_000,

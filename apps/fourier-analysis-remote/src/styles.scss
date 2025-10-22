@@ -22,5 +22,7 @@ body {
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
-  transition: color, background-color 500ms ease;
+  transition:
+    color,
+    background-color 500ms ease;
 }

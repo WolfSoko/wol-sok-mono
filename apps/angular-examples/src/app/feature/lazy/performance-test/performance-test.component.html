@@ -17,7 +17,7 @@
             class="test-item"
             [ngClass]="{
               active:
-                (activePerformanceTest$ | async)?.id === performanceTest.id
+                (activePerformanceTest$ | async)?.id === performanceTest.id,
             }"
             (click)="startTest(performanceTest)"
           >
