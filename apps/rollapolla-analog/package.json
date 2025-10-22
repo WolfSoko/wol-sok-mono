@@ -22,7 +22,7 @@
     "h3": "1.15.4",
     "vite": "6.2.4",
     "vitest": "3.1.1",
-    "@wolsok/shared-data-access": "0.0.1",
+    "@wolsok/shared-data-access": "*",
     "@angular/ssr": "~20.1.0"
   }
 }

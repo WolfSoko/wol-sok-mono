@@ -33,6 +33,7 @@
     "serve": {
       "executor": "@analogjs/platform:vite-dev-server",
       "defaultConfiguration": "development",
+      "continuous": true,
       "options": {
         "buildTarget": "rollapolla-analog:build",
         "port": 4300

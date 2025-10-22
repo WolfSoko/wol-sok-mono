@@ -11,5 +11,8 @@
   "devDependencies": {
     "tslib": "^2.5.0"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  }
 }

@@ -3,13 +3,20 @@ import { NgModule, provideZonelessChangeDetection } from '@angular/core';
 
 import { getTestBed } from '@angular/core/testing';
 import {
+  provideClientHydration,
+  withIncrementalHydration,
+} from '@angular/platform-browser';
+import {
   BrowserTestingModule,
   platformBrowserTesting,
 } from '@angular/platform-browser/testing';
 
 @NgModule({
   imports: [BrowserTestingModule],
-  providers: [provideZonelessChangeDetection()],
+  providers: [
+    provideZonelessChangeDetection(),
+    provideClientHydration(withIncrementalHydration()),
+  ],
 })
 export class TestingModule {}
 
