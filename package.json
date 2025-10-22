@@ -2,7 +2,6 @@
   "name": "wolsok",
   "version": "3.1.0",
   "license": "MIT",
-  "type": "module",
   "scripts": {
     "ng": "nx",
     "start": "nx serve",
