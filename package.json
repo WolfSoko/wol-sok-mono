@@ -34,7 +34,7 @@
     "@angular/material": "20.1.5",
     "@angular/platform-browser": "20.1.6",
     "@angular/platform-browser-dynamic": "20.1.6",
-    "@angular/platform-server": "20.1.6",
+    "@angular/platform-server": "20.3.6",
     "@angular/router": "20.1.6",
     "@angular/service-worker": "20.1.6",
     "@angular/ssr": "~20.1.0",
