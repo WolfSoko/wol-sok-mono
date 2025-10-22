@@ -4,6 +4,5 @@
   "peerDependencies": {
     "@wolsok/utils-operators": "0.0.1",
     "rxjs": "^7.8.1"
-  },
-  "type": "module"
+  }
 }

@@ -8,6 +8,5 @@
   },
   "devDependencies": {
     "tslib": "2.5.2"
-  },
-  "type": "module"
+  }
 }

@@ -12,6 +12,5 @@
     "p5": "^1.9.3"
   },
   "dependencies": {},
-  "sideEffects": false,
-  "type": "module"
+  "sideEffects": false
 }

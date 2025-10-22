@@ -14,6 +14,5 @@
     "@angular/forms": "20.1.6"
   },
   "dependencies": {},
-  "sideEffects": false,
-  "type": "module"
+  "sideEffects": false
 }

@@ -1,7 +1,6 @@
 {
   "name": "@wolsok/ui-kit",
   "version": "0.0.1",
-  "type": "module",
   "peerDependencies": {
     "@angular/common": "20.1.6",
     "@angular/core": "20.1.6",

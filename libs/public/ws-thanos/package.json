@@ -23,7 +23,6 @@
     "Marvel",
     "npm"
   ],
-  "type": "module",
   "scripts": {
     "build:thanos": "nx build ws-thanos"
   },
