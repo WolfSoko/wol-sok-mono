@@ -12,13 +12,19 @@ launch-templates:
         env:
           GIT_CHECKOUT_DEPTH: '50'
           GIT_FETCH_TAGS: 'true'
+
+      - name: Install Node
+        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/install-node/main.yaml'
+
       - name: Install necessary binaries
         script: |
+
           echo "node version used: $(node -v)"
-          echo "nvm is installed: $(if command -v nvm >/dev/null 2>&1; then echo yes; else echo no; fi)"
+
           echo "Install packages to compile node_modules gl with node-gyp"
           sudo apt-get update -y
           sudo apt-get install python3 python-is-python3 make gcc g++ xserver-xorg-dev libxi-dev libxext-dev libavif13 libgtk-4-1 libgraphene-1.0-dev -y
+
           echo "npm cache is set to: $(npm get cache)"
           echo "cwd is set to: $(pwd)"
 
@@ -30,8 +36,10 @@ launch-templates:
             ~/workflows/workspace/node_modules/
             ~/.npm
           base-branch: 'main'
+
       - name: Install Node Modules
         script: |
           npm install
+
       - name: Install Browsers (if needed)
         uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/install-browsers/main.yaml'
