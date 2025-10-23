@@ -31,9 +31,10 @@ jobs:
     outputs:
       shouldTriggerRelease: ${{ steps.shouldTriggerRelease.outputs.triggerRelease }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          filter: tree:0
 
       - name: Debug print env variables
         run: |
@@ -46,7 +47,10 @@ jobs:
 
       # Connect your workspace on nx.app and uncomment this to enable task distribution.
       # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "e2e-ci" targets have been requested
-      - run: npx nx-cloud start-ci-run --auto-apply-fixes="*format*,*lint*" --no-distribution --distribute-on=".nx/workflows/dynamic-changesets.yml" --stop-agents-after="e2e-ci"
+      - run: npx nx-cloud start-ci-run &
+          --auto-apply-fixes="*format*,*lint*"
+          --distribute-on=".nx/workflows/dynamic-changesets.yml" &
+          --stop-agents-after="e2e-ci"
 
       - name: Install Deps
         uses: ./.github/actions/install-deps
@@ -85,8 +89,10 @@ jobs:
             echo "One or more checks failed."
             exit 1
           fi
-      - run: npx nx fix-ci
+      - name: Auto Fix CI
         if: always()
+        run: npx nx fix-ci
+
       - name: Report Codecov
         if: success() && github.ref_name == 'main' && hashFiles('coverage/**/*') != ''
         uses: codecov/codecov-action@v5
