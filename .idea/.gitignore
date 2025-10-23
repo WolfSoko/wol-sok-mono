@@ -7,3 +7,4 @@
 # Editor-based HTTP Client requests
 /httpRequests/
 /checkstyle-idea.xml
+/copilot.data.migration.ask2agent.xml
