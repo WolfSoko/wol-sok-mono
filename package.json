@@ -2,6 +2,7 @@
   "name": "wolsok",
   "version": "3.1.0",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "ng": "nx",
     "start": "nx serve",
@@ -18,9 +19,6 @@
     "prepare": "husky"
   },
   "private": true,
-  "workspaces": [
-    "libs/shared/data-access"
-  ],
   "dependencies": {
     "@analogjs/content": "1.19.4",
     "@analogjs/router": "1.19.4",
