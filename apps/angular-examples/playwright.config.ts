@@ -5,14 +5,11 @@ import { workspaceRoot } from '@nx/devkit';
 
 const baseURL = process.env['BASE_URL'] || 'http://localhost:4200';
 
-// Fix: Verwende __filename statt import.meta.url
-const filename = __filename;
-
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  ...nxE2EPreset(filename, {
+  ...nxE2EPreset(import.meta.url, {
     testDir: './e2e',
   }),
   timeout: 120_000,
