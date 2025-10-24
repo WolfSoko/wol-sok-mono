@@ -10,15 +10,14 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/features/lazy/gravity-rocks"],
       "options": {
-        "project": "libs/features/lazy/gravity-rocks/ng-package.json"
+        "project": "libs/features/lazy/gravity-rocks/ng-package.json",
+        "tsConfig": "libs/features/lazy/gravity-rocks/tsconfig.lib.json"
       },
       "configurations": {
         "production": {
           "tsConfig": "libs/features/lazy/gravity-rocks/tsconfig.lib.prod.json"
         },
-        "development": {
-          "tsConfig": "libs/features/lazy/gravity-rocks/tsconfig.lib.json"
-        }
+        "development": {}
       },
       "defaultConfiguration": "production"
     },
@@ -27,7 +26,8 @@
       "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/gravity-rocks"],
       "options": {
         "jestConfig": "libs/features/lazy/gravity-rocks/jest.config.ts",
-        "codeCoverage": true
+        "codeCoverage": true,
+        "tsConfig": "libs/features/lazy/gravity-rocks/tsconfig.spec.json"
       }
     },
     "lint": {

@@ -10,15 +10,14 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/features/lazy/fourier-analysis"],
       "options": {
-        "project": "libs/features/lazy/fourier-analysis/ng-package.json"
+        "project": "libs/features/lazy/fourier-analysis/ng-package.json",
+        "tsConfig": "libs/features/lazy/fourier-analysis/tsconfig.lib.json"
       },
       "configurations": {
         "production": {
           "tsConfig": "libs/features/lazy/fourier-analysis/tsconfig.lib.prod.json"
         },
-        "development": {
-          "tsConfig": "libs/features/lazy/fourier-analysis/tsconfig.lib.json"
-        }
+        "development": {}
       },
       "defaultConfiguration": "production"
     },
@@ -29,7 +28,8 @@
       ],
       "options": {
         "jestConfig": "libs/features/lazy/fourier-analysis/jest.config.ts",
-        "codeCoverage": true
+        "codeCoverage": true,
+        "tsConfig": "libs/features/lazy/fourier-analysis/tsconfig.spec.json"
       }
     },
     "lint": {

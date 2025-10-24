@@ -10,15 +10,14 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/utils/gpu-calc"],
       "options": {
-        "project": "libs/utils/gpu-calc/ng-package.json"
+        "project": "libs/utils/gpu-calc/ng-package.json",
+        "tsConfig": "libs/utils/gpu-calc/tsconfig.lib.json"
       },
       "configurations": {
         "production": {
           "tsConfig": "libs/utils/gpu-calc/tsconfig.lib.prod.json"
         },
-        "development": {
-          "tsConfig": "libs/utils/gpu-calc/tsconfig.lib.json"
-        }
+        "development": {}
       },
       "defaultConfiguration": "production"
     },
@@ -27,7 +26,8 @@
       "outputs": ["{workspaceRoot}/coverage/libs/utils/gpu-calc"],
       "options": {
         "jestConfig": "libs/utils/gpu-calc/jest.config.ts",
-        "codeCoverage": true
+        "codeCoverage": true,
+        "tsConfig": "libs/utils/gpu-calc/tsconfig.spec.json"
       }
     },
     "lint": {

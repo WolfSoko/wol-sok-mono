@@ -105,7 +105,8 @@
       "outputs": ["{workspaceRoot}/coverage/apps/bacteria-game-remote"],
       "options": {
         "jestConfig": "apps/bacteria-game-remote/jest.config.ts",
-        "codeCoverage": true
+        "codeCoverage": true,
+        "tsConfig": "apps/bacteria-game-remote/tsconfig.spec.json"
       }
     },
     "serve-static": {

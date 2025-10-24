@@ -10,15 +10,14 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/features/lazy/wasm-test"],
       "options": {
-        "project": "libs/features/lazy/wasm-test/ng-package.json"
+        "project": "libs/features/lazy/wasm-test/ng-package.json",
+        "tsConfig": "libs/features/lazy/wasm-test/tsconfig.lib.json"
       },
       "configurations": {
         "production": {
           "tsConfig": "libs/features/lazy/wasm-test/tsconfig.lib.prod.json"
         },
-        "development": {
-          "tsConfig": "libs/features/lazy/wasm-test/tsconfig.lib.json"
-        }
+        "development": {}
       },
       "defaultConfiguration": "production"
     },
@@ -27,7 +26,8 @@
       "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/wasm-test"],
       "options": {
         "jestConfig": "libs/features/lazy/wasm-test/jest.config.ts",
-        "codeCoverage": true
+        "codeCoverage": true,
+        "tsConfig": "libs/features/lazy/wasm-test/tsconfig.spec.json"
       }
     },
     "lint": {

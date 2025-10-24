@@ -105,7 +105,8 @@
       "outputs": ["{workspaceRoot}/coverage/apps/fourier-analysis-remote"],
       "options": {
         "jestConfig": "apps/fourier-analysis-remote/jest.config.ts",
-        "codeCoverage": true
+        "codeCoverage": true,
+        "tsConfig": "apps/fourier-analysis-remote/tsconfig.spec.json"
       }
     },
     "serve-static": {

@@ -12,15 +12,14 @@
         "{workspaceRoot}/dist/libs/features/lazy/tensorflow-examples"
       ],
       "options": {
-        "project": "libs/features/lazy/tensorflow-examples/ng-package.json"
+        "project": "libs/features/lazy/tensorflow-examples/ng-package.json",
+        "tsConfig": "libs/features/lazy/tensorflow-examples/tsconfig.lib.json"
       },
       "configurations": {
         "production": {
           "tsConfig": "libs/features/lazy/tensorflow-examples/tsconfig.lib.prod.json"
         },
-        "development": {
-          "tsConfig": "libs/features/lazy/tensorflow-examples/tsconfig.lib.json"
-        }
+        "development": {}
       },
       "defaultConfiguration": "production"
     },
@@ -31,7 +30,8 @@
       ],
       "options": {
         "jestConfig": "libs/features/lazy/tensorflow-examples/jest.config.ts",
-        "codeCoverage": true
+        "codeCoverage": true,
+        "tsConfig": "libs/features/lazy/tensorflow-examples/tsconfig.spec.json"
       }
     },
     "lint": {

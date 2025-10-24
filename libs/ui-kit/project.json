@@ -10,15 +10,14 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/ui-kit"],
       "options": {
-        "project": "libs/ui-kit/ng-package.json"
+        "project": "libs/ui-kit/ng-package.json",
+        "tsConfig": "libs/ui-kit/tsconfig.lib.json"
       },
       "configurations": {
         "production": {
           "tsConfig": "libs/ui-kit/tsconfig.lib.prod.json"
         },
-        "development": {
-          "tsConfig": "libs/ui-kit/tsconfig.lib.json"
-        }
+        "development": {}
       },
       "defaultConfiguration": "production"
     },
@@ -27,7 +26,8 @@
       "outputs": ["{workspaceRoot}/coverage/libs/ui-kit"],
       "options": {
         "jestConfig": "libs/ui-kit/jest.config.ts",
-        "codeCoverage": true
+        "codeCoverage": true,
+        "tsConfig": "libs/ui-kit/tsconfig.spec.json"
       }
     },
     "lint": {

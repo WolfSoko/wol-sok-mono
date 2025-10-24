@@ -9,15 +9,14 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/shared/data-access"],
       "options": {
-        "project": "libs/shared/data-access/ng-package.json"
+        "project": "libs/shared/data-access/ng-package.json",
+        "tsConfig": "libs/shared/data-access/tsconfig.lib.json"
       },
       "configurations": {
         "production": {
           "tsConfig": "libs/shared/data-access/tsconfig.lib.prod.json"
         },
-        "development": {
-          "tsConfig": "libs/shared/data-access/tsconfig.lib.json"
-        }
+        "development": {}
       },
       "defaultConfiguration": "production"
     },

@@ -12,15 +12,14 @@
         "{workspaceRoot}/dist/libs/features/lazy/some-gpu-calculation"
       ],
       "options": {
-        "project": "libs/features/lazy/some-gpu-calculation/ng-package.json"
+        "project": "libs/features/lazy/some-gpu-calculation/ng-package.json",
+        "tsConfig": "libs/features/lazy/some-gpu-calculation/tsconfig.lib.json"
       },
       "configurations": {
         "production": {
           "tsConfig": "libs/features/lazy/some-gpu-calculation/tsconfig.lib.prod.json"
         },
-        "development": {
-          "tsConfig": "libs/features/lazy/some-gpu-calculation/tsconfig.lib.json"
-        }
+        "development": {}
       },
       "defaultConfiguration": "production"
     },
@@ -31,7 +30,8 @@
       ],
       "options": {
         "jestConfig": "libs/features/lazy/some-gpu-calculation/jest.config.ts",
-        "codeCoverage": true
+        "codeCoverage": true,
+        "tsConfig": "libs/features/lazy/some-gpu-calculation/tsconfig.spec.json"
       }
     },
     "lint": {

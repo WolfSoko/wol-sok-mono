@@ -10,15 +10,14 @@
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/features/lazy/bacteria-game"],
       "options": {
-        "project": "libs/features/lazy/bacteria-game/ng-package.json"
+        "project": "libs/features/lazy/bacteria-game/ng-package.json",
+        "tsConfig": "libs/features/lazy/bacteria-game/tsconfig.lib.json"
       },
       "configurations": {
         "production": {
           "tsConfig": "libs/features/lazy/bacteria-game/tsconfig.lib.prod.json"
         },
-        "development": {
-          "tsConfig": "libs/features/lazy/bacteria-game/tsconfig.lib.json"
-        }
+        "development": {}
       },
       "defaultConfiguration": "production"
     },
@@ -27,7 +26,8 @@
       "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/bacteria-game"],
       "options": {
         "jestConfig": "libs/features/lazy/bacteria-game/jest.config.ts",
-        "codeCoverage": true
+        "codeCoverage": true,
+        "tsConfig": "libs/features/lazy/bacteria-game/tsconfig.spec.json"
       }
     },
     "lint": {
