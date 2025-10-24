@@ -53,10 +53,13 @@ jobs:
             --distribute-on=".nx/workflows/dynamic-changesets.yml" \
             --stop-agents-after="e2e-ci"
 
+      - run: rm -rf node_modules && npm cache clean --force
+
       - name: Install Deps
         uses: ./.github/actions/install-deps
         with:
           run-scripts: 'true'
+          apt-packages: 'true'
 
       # This line is needed for nx affected to work when CI is running on a PR
       #      - run: git branch --track main origin/main
