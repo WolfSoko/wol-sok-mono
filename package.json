@@ -247,6 +247,7 @@
     "basePath": "./apps/angular-examples/src/app/"
   },
   "overrides": {
+    "node-gyp": "11.5.0",
     "akita-ng-fire": {
       "@angular/common": "^19.0.2",
       "@angular/core": "^19.0.2",
