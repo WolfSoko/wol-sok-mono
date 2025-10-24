@@ -55,13 +55,15 @@ jobs:
 
       - name: Install Deps
         uses: ./.github/actions/install-deps
+        with:
+          run-scripts: 'true'
 
       # This line is needed for nx affected to work when CI is running on a PR
       #      - run: git branch --track main origin/main
       #        if: github.event_name == 'pull_request'
 
       - run: |
-          npx nx format:check
+          npx nx format:check --verbose
           npx nx sync:check
       - name: run-checks in parallel on nx agents
         run: |
