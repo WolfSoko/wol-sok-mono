@@ -1,7 +1,6 @@
-import { defineConfig, devices } from '@playwright/test';
-import { nxE2EPreset } from '@nx/playwright/preset';
-
 import { workspaceRoot } from '@nx/devkit';
+import { nxE2EPreset } from '@nx/playwright/preset';
+import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env['BASE_URL'] || 'http://localhost:4200';
 
@@ -9,7 +8,7 @@ const baseURL = process.env['BASE_URL'] || 'http://localhost:4200';
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  ...nxE2EPreset(import.meta.url, {
+  ...nxE2EPreset(__filename, {
     testDir: './e2e',
   }),
   timeout: 120_000,
