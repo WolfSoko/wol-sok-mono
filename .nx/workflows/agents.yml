@@ -23,10 +23,7 @@ launch-templates:
 
           echo "Install packages to compile node_modules gl with node-gyp"
           sudo apt-get update -y
-          sudo apt-get install python3 python-is-python3 make gcc g++ xserver-xorg-dev libxi-dev libxext-dev libavif13 libgtk-4-1 libgraphene-1.0-dev -y
-
-          echo "npm cache is set to: $(npm get cache)"
-          echo "cwd is set to: $(pwd)"
+          sudo apt-get install python3 python-is-python3 make gcc g++ xserver-xorg-dev mesa-common-dev libxi-dev libxext-dev libavif13 libgtk-4-1 libgraphene-1.0-dev -y
 
       - name: Restore Node Modules Cache
         uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/cache/main.yaml'
