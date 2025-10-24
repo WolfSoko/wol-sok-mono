@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.20-non-cdk-deployed...v4.77.21) (2025-10-24)
+
+
+### CI/CD
+
+* 👷 update tsconfig to include module and moduleResolution options ([51e8239](https://github.com/WolfSoko/wol-sok-mono/commit/51e8239f45b044a3b6e25d150d1b68502688636a))
+
 ## [4.77.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.19-non-cdk-deployed...v4.77.20) (2025-10-24)
 
 
