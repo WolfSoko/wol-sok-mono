@@ -57,9 +57,6 @@ jobs:
 
       - name: Install Deps
         uses: ./.github/actions/install-deps
-        with:
-          run-scripts: 'true'
-          apt-packages: 'true'
 
       # This line is needed for nx affected to work when CI is running on a PR
       #      - run: git branch --track main origin/main
