@@ -63,8 +63,8 @@ jobs:
       #        if: github.event_name == 'pull_request'
 
       - run: |
-          npx nx format:check --verbose
-          npx nx sync:check
+          npx nx-cloud record -- nx format:check --verbose
+          npx nx-cloud record -- nx sync:check
       - name: run-checks in parallel on nx agents
         run: |
           # Start task in parallel and capture PIDs
