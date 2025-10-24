@@ -8,7 +8,7 @@ const baseURL = process.env['BASE_URL'] || 'http://localhost:4200';
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  ...nxE2EPreset(__filename, {
+  ...nxE2EPreset(import.meta.url, {
     testDir: './e2e',
   }),
   timeout: 120_000,
