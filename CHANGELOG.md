@@ -2,6 +2,75 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.18-non-cdk-deployed...v4.77.19) (2025-10-24)
+
+
+### Bug Fixes
+
+* 🐛 add .junie to ignore lists ([61e4774](https://github.com/WolfSoko/wol-sok-mono/commit/61e477461eea88ccf30a70b6e75f0b072ec797c1))
+* 🐛 command syntax ([6515a91](https://github.com/WolfSoko/wol-sok-mono/commit/6515a91dee7769022eeb425163b74bdc157b5066))
+* 🐛 playwright config ([444217b](https://github.com/WolfSoko/wol-sok-mono/commit/444217beb0c9517edf1f198300ce0661ace98628))
+* 🐛 resolve __filename ES module error in Playwright configs ([32f648d](https://github.com/WolfSoko/wol-sok-mono/commit/32f648d1c736df15eb26df366c5f13deeeea1a31))
+* 🐛 set type module in root package ([dd3cf2b](https://github.com/WolfSoko/wol-sok-mono/commit/dd3cf2be9e2a34cdc8255dd7cb4e44e179b19f8e))
+* 🐛 use fileURLToPath for import.meta.url in Playwright configs ([74f1913](https://github.com/WolfSoko/wol-sok-mono/commit/74f1913bb9309258ad98d890ffaca10e05d94f7b))
+* **shared-data-access:** 🐛 removed conflicting export entry ([c2687d3](https://github.com/WolfSoko/wol-sok-mono/commit/c2687d3b651687d08a917754e13726df726150b3))
+
+
+### CI/CD
+
+* 👷 🔧 update agents.yml to install Node ([acd0183](https://github.com/WolfSoko/wol-sok-mono/commit/acd018399c2e59a1fe72ee105885c757fcb89968))
+* 👷 add npm cache clean and apt-packages option for dependency installation ([7ade04d](https://github.com/WolfSoko/wol-sok-mono/commit/7ade04df762682ab6a84cba78b7a10a6035ca663))
+* 👷 add nx self healing ([86ef19a](https://github.com/WolfSoko/wol-sok-mono/commit/86ef19aca78ed4c292f3a37e63b7fc7b49526765))
+* 👷 add python3 and build-essentials to package installation ([5dae58e](https://github.com/WolfSoko/wol-sok-mono/commit/5dae58e7b8df06e401ef89d3aeefca4753a32380))
+* 👷 add run-scripts option and enable verbose output for format check ([5f45190](https://github.com/WolfSoko/wol-sok-mono/commit/5f451906fab54377c523b75ebc803618dbee6f4b))
+* 👷 disable apt package installation in CI workflow ([e22376b](https://github.com/WolfSoko/wol-sok-mono/commit/e22376b6f2f84fefc9558f0fb41209897830f334))
+* 👷 don't install scripts ([bb01bc2](https://github.com/WolfSoko/wol-sok-mono/commit/bb01bc25733d0dc3c3c11a713cd82f1350ab5c19))
+* 👷 enable apt package installation in CI workflow ([aff8c40](https://github.com/WolfSoko/wol-sok-mono/commit/aff8c400ac0616311e15f7baa26a493e0c0bc03c))
+* 👷 enable apt package installation in CI workflow ([f3909d1](https://github.com/WolfSoko/wol-sok-mono/commit/f3909d1f3e19dac781b61ac496a5a4937386427c))
+* 👷 fix Node.js version in .nvmrc to 20.19.5 ([5724eef](https://github.com/WolfSoko/wol-sok-mono/commit/5724eef9523fea720579eb11ca33861cd39577d0))
+* 👷 remove type module again ([7f1e43b](https://github.com/WolfSoko/wol-sok-mono/commit/7f1e43bd594387f638e1f7338245f849c2988f7c))
+* 👷 update .nvmrc to allow any LTS version ([eb60eb0](https://github.com/WolfSoko/wol-sok-mono/commit/eb60eb0749bc77f8b43ba3c5bd81c2686705c741))
+* 👷 update actions/checkout to v5 and improve nx-cloud command execution ([0ea0304](https://github.com/WolfSoko/wol-sok-mono/commit/0ea0304af8375a462073639d83760bbde77329e1))
+* 👷 update CI checks to use nx-cloud for format and sync checks ([e8b7d1e](https://github.com/WolfSoko/wol-sok-mono/commit/e8b7d1ebd8e81b70303e37d4a427cb65bc258413))
+* 👷 update CI to always install apt packages ([1480e34](https://github.com/WolfSoko/wol-sok-mono/commit/1480e34bf6a72430fa3c327a7e0449a82eba20e6))
+* 👷 update node-gyp version to 11.5.0 and clean up package-lock.json ([5f2753d](https://github.com/WolfSoko/wol-sok-mono/commit/5f2753d895e1753ba652e0fec3b15d2006fe70de))
+* 👷 update Node.js dependencies and switch to LTS version ([3c1e59d](https://github.com/WolfSoko/wol-sok-mono/commit/3c1e59d97f0b3319ba6e440ddce67e70a9930906))
+* 👷 update package installation script for consistency ([0d29acf](https://github.com/WolfSoko/wol-sok-mono/commit/0d29acf0ef1382519fb58e8e64dac11d2602ad58))
+* 👷 update package installation to include additional dependencies for node-gyp ([a5046e1](https://github.com/WolfSoko/wol-sok-mono/commit/a5046e1500e5ac4becd1d3885e5105dcf3aaf2f2))
+* 👷 update package installation to include mesa-common-dev ([a76d35f](https://github.com/WolfSoko/wol-sok-mono/commit/a76d35f90b8ca9d7edf7cfb6959e09c6ff4012d3))
+
+
+### Chore
+
+* [nx migration] 21-1-0-add-ignore-entries-for-nx-rule-files ([087ebf5](https://github.com/WolfSoko/wol-sok-mono/commit/087ebf515daf62ea7351af441096ee5a03504508))
+* [nx migration] migrate-provide-server-rendering-import ([27261fb](https://github.com/WolfSoko/wol-sok-mono/commit/27261fbbe7dbccc04a1cc992dba131d16dadb121))
+* [nx migration] set-generator-defaults-for-previous-style-guide ([c7d255e](https://github.com/WolfSoko/wol-sok-mono/commit/c7d255e7f268547f24d23e124e310d1d7bdc7528))
+* [nx migration] update-21-2-0-remove-addon-dependencies ([55f885c](https://github.com/WolfSoko/wol-sok-mono/commit/55f885c36cb5054b9b518550b0d826fee8e59a38))
+* [nx migration] update-angular-cli-version-20-0-0 ([18d32de](https://github.com/WolfSoko/wol-sok-mono/commit/18d32de7e8d7bcd0b3617c59610c75c530de6b4b))
+* [nx migration] update-angular-cli-version-20-1-0 ([6c3d8eb](https://github.com/WolfSoko/wol-sok-mono/commit/6c3d8ebe8a9f156369bb0bc627db16b99af5d969))
+* [nx migration] update-module-resolution ([39448ce](https://github.com/WolfSoko/wol-sok-mono/commit/39448ce42586a33b31dbd200d8366b3aa09552d5))
+* 🔧 fix moduleResolution casing in tsconfig and clean up circle-analysis.component.ts ([9b1c583](https://github.com/WolfSoko/wol-sok-mono/commit/9b1c58361fb98d7bac0bf8f6eefb7d91102cbfbd))
+* 🔧 migrate to latest nx version ([a531529](https://github.com/WolfSoko/wol-sok-mono/commit/a531529b5df026cce44748d643460815554e2655))
+* 🔧 remove cypress tests ([235caac](https://github.com/WolfSoko/wol-sok-mono/commit/235caac054363d84c55b45145dbb1ba16a4771b6))
+* 🔧 remove module type from package.json ([5dd60bb](https://github.com/WolfSoko/wol-sok-mono/commit/5dd60bbc52ededba8c90845a24c443fd8897701b))
+* 🔧 remove module type from package.json and add AGENTS.md for repository guidelines ([38debd1](https://github.com/WolfSoko/wol-sok-mono/commit/38debd1e1c2ebf6f7fc2eb8251cbc5b80a77ad6a))
+* 🔧 remove rejectErrors option from toSignal in chat and notes adapters; ([725010e](https://github.com/WolfSoko/wol-sok-mono/commit/725010e3aa38862db064f45ff93b230cb5538b42))
+* 🔧 remove tsconfig.json and update VSCode settings for nx workspace path ([359d5b4](https://github.com/WolfSoko/wol-sok-mono/commit/359d5b4384e8da5b73977983bb1291097fdd4a0e))
+* 🔧 replace provideExperimentalZonelessChangeDetection with provideZonelessChangeDetection in setup and spec files ([2f1387b](https://github.com/WolfSoko/wol-sok-mono/commit/2f1387b689c8f3e1d7698e3fa762a561bf5e502e))
+* 🔧 simplify args in settings.json and update .nxignore ([67bf8f6](https://github.com/WolfSoko/wol-sok-mono/commit/67bf8f6b62c8c77c2c3e031462a400197b48810a))
+* 🔧 update agents.yml to install LTS version of Node.js ([4993a76](https://github.com/WolfSoko/wol-sok-mono/commit/4993a76544ef9aca5d765479d5443678f067b99f))
+* 🔧 update agents.yml to use image with correct v9 and improve installation logging ([fb3fcef](https://github.com/WolfSoko/wol-sok-mono/commit/fb3fcefeffebeb88f6b4aaaddec3b9ddda1e79e2))
+* 🔧 update configuration files and dependencies ([05f63e4](https://github.com/WolfSoko/wol-sok-mono/commit/05f63e4a376f2243198391d48211673f82508246))
+* 🔧 update testing environment to use BrowserTestingModule and platformBrowserTesting ([cbd6d0a](https://github.com/WolfSoko/wol-sok-mono/commit/cbd6d0a552c71d1dda035cc0f4fe250bd6c272c1))
+* start nx migration ([ca33876](https://github.com/WolfSoko/wol-sok-mono/commit/ca33876229399354de02b67f9908bf8c8acd7ac0))
+
+
+### Testing
+
+* 🚨 add updated snapshots ([8aaf43a](https://github.com/WolfSoko/wol-sok-mono/commit/8aaf43af9e37ec85fc22f5f2a19d7f2c82910481))
+* 🚨 revert snapsot changes ([618e57c](https://github.com/WolfSoko/wol-sok-mono/commit/618e57c4fdc8f162f4e29d698d5b792ef9bc257a))
+* 🚨 update snapshots ([7ad2787](https://github.com/WolfSoko/wol-sok-mono/commit/7ad2787fd06070f190b744ff2b898f7e3548d11f))
+
 ## [4.77.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.17-non-cdk-deployed...v4.77.18) (2025-08-09)
 
 
