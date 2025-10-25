@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.46](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.45-non-cdk-deployed...v4.77.46) (2025-10-25)
+
+
+### Chore
+
+* **deps:** update dependency vitest-mock-extended to v3.1.0 ([28d5a66](https://github.com/WolfSoko/wol-sok-mono/commit/28d5a66c7cd01d92a845179e0baf40582ad77948))
+
 ## [4.77.45](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.44-non-cdk-deployed...v4.77.45) (2025-10-25)
 
 
