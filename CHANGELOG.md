@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.41](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.40-non-cdk-deployed...v4.77.41) (2025-10-25)
+
+
+### Chore
+
+* **deps:** update dependency eslint-plugin-storybook to v9 ([ccf2cdb](https://github.com/WolfSoko/wol-sok-mono/commit/ccf2cdbcc49eb0cf316f585517502d2e1ac52e6f))
+* **deps:** update dependency jsdom to v27 ([aec8603](https://github.com/WolfSoko/wol-sok-mono/commit/aec8603469c04fc8b1047d2eac1a6e59a8a438cf))
+
 ## [4.77.40](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.39-non-cdk-deployed...v4.77.40) (2025-10-25)
 
 
