@@ -2,14 +2,14 @@
   "name": "@wolsok/feat-lazy-gravity-rocks",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "20.1.6",
-    "@angular/core": "20.1.6",
-    "@angular/material": "20.1.5",
-    "@angular/forms": "20.1.6",
+    "@angular/common": "20.3.7",
+    "@angular/core": "20.3.7",
+    "@angular/material": "20.2.10",
+    "@angular/forms": "20.3.7",
     "rxjs": "7.8.2",
     "@wolsok/utils-math": "0.0.1",
     "@wolsok/utils-operators": "0.0.1",
-    "@angular/router": "20.1.6"
+    "@angular/router": "20.3.7"
   },
   "devDependencies": {
     "tslib": "2.5.2"

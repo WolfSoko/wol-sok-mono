@@ -27,7 +27,7 @@
     "build:thanos": "nx build ws-thanos"
   },
   "peerDependencies": {
-    "@angular/core": "20.1.6",
+    "@angular/core": "20.3.7",
     "html2canvas": "^1.4.1",
     "rxjs": "7.8.2"
   },

@@ -1,22 +1,22 @@
 {
   "type": "module",
   "peerDependencies": {
-    "@analogjs/platform": "1.19.4",
-    "@analogjs/router": "1.19.4",
-    "@angular/common": "20.1.6",
-    "@angular/core": "20.1.6",
-    "@angular/material": "20.1.5",
-    "@angular/platform-browser": "20.1.6",
-    "@angular/platform-server": "20.1.6",
-    "@angular/router": "20.1.6",
-    "@nx/vite": "21.3.11",
+    "@analogjs/platform": "1.22.1",
+    "@analogjs/router": "1.22.1",
+    "@angular/common": "20.3.7",
+    "@angular/core": "20.3.7",
+    "@angular/material": "20.2.10",
+    "@angular/platform-browser": "20.3.7",
+    "@angular/platform-server": "20.3.7",
+    "@angular/router": "20.3.7",
+    "@nx/vite": "22.0.1",
     "h3": "1.15.4",
-    "vite": "6.2.4",
+    "vite": "7.1.9",
     "vitest": "3.1.1",
     "@playwright/test": "^1.56.1",
-    "@angular/forms": "20.1.6",
+    "@angular/forms": "20.3.7",
     "rxjs": "7.8.2",
-    "@angular/animations": "20.1.6",
-    "@angular/ssr": "~20.1.0"
+    "@angular/animations": "20.3.7",
+    "@angular/ssr": "20.3.7"
   }
 }
