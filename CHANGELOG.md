@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.27](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.26-non-cdk-deployed...v4.77.27) (2025-10-25)
+
+
+### Chore
+
+* **deps:** update dependency eslint-plugin-html to v8.1.3 ([1605e2c](https://github.com/WolfSoko/wol-sok-mono/commit/1605e2c249b793be66f49953790c5f4ccc2bacb2))
+* **deps:** update dependency html-webpack-plugin to v5.6.4 ([fad1170](https://github.com/WolfSoko/wol-sok-mono/commit/fad117015f92df6226828684d9579b6933239470))
+* **deps:** update dependency jest-preset-angular to v15.0.3 ([28088b5](https://github.com/WolfSoko/wol-sok-mono/commit/28088b53ff2612a37955b45f3e83054123351e79))
+* **deps:** update dependency jsonc-eslint-parser to v2.4.1 ([8253a73](https://github.com/WolfSoko/wol-sok-mono/commit/8253a738eaa63fbe5d7d06cccfea7af1470bfebd))
+* **deps:** update dependency postcss to v8.5.6 ([bcf7324](https://github.com/WolfSoko/wol-sok-mono/commit/bcf7324f182a4969d81f612b7e2951e638819920))
+* **deps:** update dependency ts-jest to v29.4.5 ([0ab6499](https://github.com/WolfSoko/wol-sok-mono/commit/0ab6499d7067969eae6d4458a002eb632a8c28f3))
+
 ## [4.77.26](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.25-non-cdk-deployed...v4.77.26) (2025-10-25)
 
 
