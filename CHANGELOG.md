@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.34](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.33-non-cdk-deployed...v4.77.34) (2025-10-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @assemblyscript/loader to v0.28.9 ([dfa7c4e](https://github.com/WolfSoko/wol-sok-mono/commit/dfa7c4e1248640e49af3a071f51de20c4e5ac7f6))
+* **deps:** update dependency vega to v6.2.0 ([3e6741f](https://github.com/WolfSoko/wol-sok-mono/commit/3e6741f063913ad7370fc3e1c03f745fe414198a))
+
 ## [4.77.33](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.32-non-cdk-deployed...v4.77.33) (2025-10-25)
 
 
