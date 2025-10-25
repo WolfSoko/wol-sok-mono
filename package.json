@@ -211,7 +211,7 @@
     "node-gyp": "11.5.0",
     "nx": "22.0.1",
     "nx-cloud": "19.1.0",
-    "postcss": "8.5.3",
+    "postcss": "8.5.6",
     "postcss-import": "16.1.0",
     "postcss-preset-env": "10.1.5",
     "postcss-url": "10.1.3",
