@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.31](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.30-non-cdk-deployed...v4.77.31) (2025-10-25)
+
+
+### Chore
+
+* **deps:** update dependency firebase-tools to v14.22.0 ([5e36196](https://github.com/WolfSoko/wol-sok-mono/commit/5e3619604623d55257d00f1458282de8be4bfeca))
+* **deps:** update dependency jasmine-core to v5.12.0 ([cac7cf9](https://github.com/WolfSoko/wol-sok-mono/commit/cac7cf9dc9f84c70bd47caa19a42d26a01e39cf7))
+* **deps:** update dependency jiti to v2.6.1 ([07585b0](https://github.com/WolfSoko/wol-sok-mono/commit/07585b0f9dade40145d74039146a24132f332393))
+* **deps:** update dependency jsdom to v26.1.0 ([12fbc74](https://github.com/WolfSoko/wol-sok-mono/commit/12fbc74f60bea04b2b2f22db55c6380a0f07b572))
+* **deps:** update dependency postcss-preset-env to v10.4.0 ([00e603f](https://github.com/WolfSoko/wol-sok-mono/commit/00e603ffe28b1b627c9b9cb5a379b7730e95a33d))
+* **deps:** update dependency prettier to v3.6.2 ([2b92ad1](https://github.com/WolfSoko/wol-sok-mono/commit/2b92ad1b1fff710f4bb87a7e9b81edc9894c3ba8))
+
 ## [4.77.30](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.29-non-cdk-deployed...v4.77.30) (2025-10-25)
 
 
