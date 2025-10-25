@@ -15,8 +15,7 @@ describe('GravityWorldComponent', () => {
     }));
 
     spectator = createHost(
-      `<feat-lazy-gravity-world></feat-lazy-gravity-world>`,
-      {}
+      `<feat-lazy-gravity-world></feat-lazy-gravity-world>`
     );
     spectator.detectChanges();
   });
