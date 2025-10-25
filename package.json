@@ -173,7 +173,7 @@
     "cross-fetch": "4.1.0",
     "esbuild": "0.25.1",
     "eslint": "^9.28.0",
-    "eslint-config-prettier": "10.1.1",
+    "eslint-config-prettier": "10.1.8",
     "eslint-plugin-cdk": "1.8.0",
     "eslint-plugin-html": "8.1.2",
     "eslint-plugin-playwright": "1.8.3",
