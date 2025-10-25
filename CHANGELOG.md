@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.28](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.27-non-cdk-deployed...v4.77.28) (2025-10-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @ngneat/elf-cli to v3.1.1 ([0f7960a](https://github.com/WolfSoko/wol-sok-mono/commit/0f7960a16056e3fcfac30624a1a46c807fab026a))
+* **deps:** update dependency @sentry/angular-ivy to v7.120.4 ([7cfa140](https://github.com/WolfSoko/wol-sok-mono/commit/7cfa140d9e7248c7d47f2f34b8c049b23052775a))
+* **deps:** update dependency marked to v15.0.12 ([4090c81](https://github.com/WolfSoko/wol-sok-mono/commit/4090c81ebe60b197816535bf25c029fb19e663c5))
+* **deps:** update dependency marked-highlight to v2.2.2 ([ea4188f](https://github.com/WolfSoko/wol-sok-mono/commit/ea4188f4bd2003985ddf387964a5cc0b9f3bdeb7))
+* **deps:** update dependency p5 to v1.11.11 ([b0b63b4](https://github.com/WolfSoko/wol-sok-mono/commit/b0b63b4857ecdf53ce87c70380d66ed05c959edb))
+* **deps:** update dependency superjson to v2.2.3 ([4b7db39](https://github.com/WolfSoko/wol-sok-mono/commit/4b7db395d40413fd646f13ff2624380d317cc8d7))
+
+
+### Chore
+
+* **deps:** update dependency postcss-import to v16.1.1 ([4dcbf06](https://github.com/WolfSoko/wol-sok-mono/commit/4dcbf063dbe409ea64fcbddd1f80149878e5e8de))
+* **deps:** update storybook monorepo ([5577f93](https://github.com/WolfSoko/wol-sok-mono/commit/5577f93a19948babb78d1a060fed9b452384554e))
+
 ## [4.77.27](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.26-non-cdk-deployed...v4.77.27) (2025-10-25)
 
 
