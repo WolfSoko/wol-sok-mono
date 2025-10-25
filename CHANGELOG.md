@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.33](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.32-non-cdk-deployed...v4.77.33) (2025-10-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency ace-builds to v1.43.4 ([54905bd](https://github.com/WolfSoko/wol-sok-mono/commit/54905bd6334764c084b7c2151b126597b5198a93))
+* **deps:** update dependency core-js to v3.46.0 ([ff7a24b](https://github.com/WolfSoko/wol-sok-mono/commit/ff7a24b4b95d4d97b36964ce35166b5efa10d3d7))
+
+
+### Chore
+
+* **deps:** update dependency rollup to v4.52.5 ([64e3252](https://github.com/WolfSoko/wol-sok-mono/commit/64e32525106a56f1fece7c3a59b58c38cb75c335))
+* **deps:** update dependency webpack to v5.102.1 ([e2fc898](https://github.com/WolfSoko/wol-sok-mono/commit/e2fc8987f08ad8c06f3283431e623bd20544b0d1))
+* **deps:** update jest monorepo to v30.2.0 ([df7fd98](https://github.com/WolfSoko/wol-sok-mono/commit/df7fd98b3dc005d4d1b266e34b41dbed86483411))
+* **deps:** update swc monorepo ([5d0b48b](https://github.com/WolfSoko/wol-sok-mono/commit/5d0b48b910edc805aadcd25c61d70d8ed07f0f76))
+
 ## [4.77.32](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.31-non-cdk-deployed...v4.77.32) (2025-10-25)
 
 
