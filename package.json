@@ -29,7 +29,7 @@
     "@angular/compiler": "20.3.7",
     "@angular/core": "20.3.7",
     "@angular/elements": "20.3.7",
-    "@angular/fire": "19.0.0",
+    "@angular/fire": "20.0.1",
     "@angular/forms": "20.3.7",
     "@angular/material": "20.2.10",
     "@angular/platform-browser": "20.3.7",
@@ -236,7 +236,7 @@
   },
   "optionalDependencies": {
     "@esbuild/linux-x64": "0.25.11",
-    "@nx/nx-linux-x64-gnu": "20.7.0",
+    "@nx/nx-linux-x64-gnu": "22.0.1",
     "@rollup/rollup-linux-x64-gnu": "4.52.5",
     "@rollup/rollup-win32-x64-msvc": "4.52.5"
   },
@@ -253,7 +253,7 @@
       "@angular/router": "^19.0.2",
       "@angular/platform-browser": "^19.0.2",
       "@angular/platform-browser-dynamic": "^19.0.2",
-      "@angular/fire": "^19.0.0-rc"
+      "@angular/fire": "^20.0.0"
     },
     "@datorama/akita": {
       "tslib": "^2.5.2"
