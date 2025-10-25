@@ -54,7 +54,7 @@
     "@ngneat/elf-persist-state": "1.2.1",
     "@ngneat/elf-state-history": "1.4.0",
     "@ngneat/until-destroy": "10.0.0",
-    "@sentry/angular-ivy": "7.120.3",
+    "@sentry/angular-ivy": "7.120.4",
     "@tensorflow/tfjs": "4.22.0",
     "@trpc/client": "11.0.1",
     "@trpc/server": "11.1.1",
