@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.38](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.37...v4.77.38) (2025-10-25)
+
+
+### Chore
+
+* **deps:** update actions/setup-node action to v6 ([c36afd6](https://github.com/WolfSoko/wol-sok-mono/commit/c36afd6c8fcfe6e831749b030a548b249dfc539b))
+* **deps:** update github/codeql-action action to v4 ([2f00292](https://github.com/WolfSoko/wol-sok-mono/commit/2f00292134e9c4ed981a8532e9fc156017ae5b57))
+
 ## [4.77.37](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.36-non-cdk-deployed...v4.77.37) (2025-10-25)
 
 
