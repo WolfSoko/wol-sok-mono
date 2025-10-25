@@ -163,7 +163,7 @@
     "angular-eslint": "20.4.0",
     "assemblyscript": "0.27.35",
     "autoprefixer": "10.4.21",
-    "aws-cdk": "2.1017.1",
+    "aws-cdk": "2.1031.0",
     "aws-cdk-lib": "2.199.0",
     "aws-sdk": "2.1692.0",
     "axios": "1.8.4",
