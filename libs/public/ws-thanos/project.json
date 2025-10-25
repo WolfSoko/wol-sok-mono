@@ -33,24 +33,6 @@
         "tsConfig": "libs/public/ws-thanos/tsconfig.spec.json",
         "karmaConfig": "libs/public/ws-thanos/karma.conf.cjs"
       }
-    },
-    "deploy": {
-      "executor": "nx:run-commands",
-      "inputs": [
-        "production",
-        "^production",
-        "{projectRoot}/package.json",
-        "{projectRoot}/ng-package.json"
-      ],
-      "dependsOn": ["build"],
-      "options": {
-        "command": "npm publish dist/libs/public/ws-thanos --access public"
-      },
-      "configurations": {
-        "dry-run": {
-          "command": "npm publish dist/libs/public/ws-thanos --access public --dry-run"
-        }
-      }
     }
   }
 }
