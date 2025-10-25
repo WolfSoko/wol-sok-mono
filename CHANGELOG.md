@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.78.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.47-non-cdk-deployed...v4.78.0) (2025-10-25)
+
+
+### Features
+
+* ✨ enhance login and toolbar components with improved styling and functionality ([25373b9](https://github.com/WolfSoko/wol-sok-mono/commit/25373b9cfd486111c761c258222d50e4bbcda136))
+* ✨ improve button formatting and enhance SCSS theme structure ([ba9b7dd](https://github.com/WolfSoko/wol-sok-mono/commit/ba9b7dd00102232230472f8114fe1ba36b180f08))
+* ✨ use newest angular material theming ([28082b8](https://github.com/WolfSoko/wol-sok-mono/commit/28082b852bcf71e95bb90fa6bd82fc750fa8cfa2))
+
 ## [4.77.47](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.46-non-cdk-deployed...v4.77.47) (2025-10-25)
 
 
