@@ -43,7 +43,7 @@ Angular has a powerful built-in dependency injection system. Services and depend
 
 **Using the inject() Function**
 ```typescript
-import {inject, Component} from 'angular/core';
+import {inject, Component} from '@angular/core';
 
 @Component({/* ... */})
 export class UserProfile {
@@ -202,7 +202,7 @@ export class UserProfileComponent {
 
   private userService = inject(UserService);
 
-  constructor(): void {
+  constructor() {
     this.user$ = this.userService.getUser(this.userId);
   }
 }
