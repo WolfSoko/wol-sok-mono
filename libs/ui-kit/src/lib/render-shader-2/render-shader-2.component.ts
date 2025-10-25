@@ -4,6 +4,7 @@ import {
   ElementRef,
   ViewChild,
   inject,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 
 import {
@@ -21,6 +22,7 @@ import howToBeFunnyPng from './testing-assets/how-to-be-funny.png';
   imports: [],
   templateUrl: './render-shader-2.component.html',
   styleUrl: './render-shader-2.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RenderShader2Component implements AfterViewInit {
   private webglService = inject(WebglService);

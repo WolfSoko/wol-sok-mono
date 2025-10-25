@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
 import { ChatMessage } from '../../../shared/chat.message';
@@ -47,7 +47,7 @@ import { ChatMessage } from '../../../shared/chat.message';
     .messages-list {
     }
   `,
-
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [DatePipe, MatListModule, MatCardModule],
 })
 export class MessagesListComponent {

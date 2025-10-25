@@ -14,7 +14,6 @@
         "outputPath": "dist/apps/bacteria-game-remote",
         "index": "apps/bacteria-game-remote/src/index.html",
         "main": "apps/bacteria-game-remote/src/main.ts",
-        "polyfills": "apps/bacteria-game-remote/src/polyfills.ts",
         "tsConfig": "apps/bacteria-game-remote/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "assets": [
