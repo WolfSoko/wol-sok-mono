@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.30](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.29-non-cdk-deployed...v4.77.30) (2025-10-25)
+
+
+### Chore
+
+* **deps:** update dependency @storybook/test-runner to v0.23.0 ([c68d5b9](https://github.com/WolfSoko/wol-sok-mono/commit/c68d5b9571c06d97ed425f8837cdc959c0caf22e))
+* **deps:** update dependency @types/node to v22.18.12 ([40935f9](https://github.com/WolfSoko/wol-sok-mono/commit/40935f9f09ae4a9e36304634f3d129581cab7cbb))
+* **deps:** update dependency aws-cdk to v2.1031.0 ([bebe73a](https://github.com/WolfSoko/wol-sok-mono/commit/bebe73a2adecd8071a99ca068e5ed53dff1fa73a))
+* **deps:** update dependency axios to v1.12.2 ([721c327](https://github.com/WolfSoko/wol-sok-mono/commit/721c327d6d99f39a2276869e442fc75b62d4b89d))
+* **deps:** update dependency chai to v5.3.3 ([76dcce6](https://github.com/WolfSoko/wol-sok-mono/commit/76dcce6d4cade09dc0b89b43ccea2688f03ca324))
+* **deps:** update dependency commit-and-tag-version to v12.6.0 ([006d149](https://github.com/WolfSoko/wol-sok-mono/commit/006d1499b51cc39780ccb9945736b5989d210884))
+* **deps:** update dependency eslint-plugin-prettier to v5.5.4 ([c9869cd](https://github.com/WolfSoko/wol-sok-mono/commit/c9869cdec402826551edd7d15a716e53ad495b23))
+* **deps:** update dependency firebase-admin to v13.5.0 ([d8335ee](https://github.com/WolfSoko/wol-sok-mono/commit/d8335ee41f003ee6ed65d20d0875ac2629cea58b))
+
 ## [4.77.29](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.28-non-cdk-deployed...v4.77.29) (2025-10-25)
 
 
