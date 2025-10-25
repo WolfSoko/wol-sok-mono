@@ -21,6 +21,8 @@ This project utilizes the features of [Nx](https://nx.dev/l/a/getting-started/in
 ## Documentation
 
 - **[Angular Framework Overview](./docs/ANGULAR.md)** - Comprehensive guide to Angular and how it's used in this monorepo
+- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Complete guide for deploying applications and packages
+- **[Future CDK Integration](./docs/FUTURE_CDK_INTEGRATION.md)** - Planning document for CDK standardization
 
 ## ws-thanos
 
