@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.29](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.28-non-cdk-deployed...v4.77.29) (2025-10-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency marked-gfm-heading-id to v4.1.2 ([4b9c11b](https://github.com/WolfSoko/wol-sok-mono/commit/4b9c11b7e5a7a19ced78a650a19a92edf944df7d))
+* **deps:** update dependency marked-mangle to v1.1.11 ([a3adb8c](https://github.com/WolfSoko/wol-sok-mono/commit/a3adb8cda4b7cb6e9c504117620baf6889bb15f0))
+
+
+### Chore
+
+* **deps:** update dependency @module-federation/enhanced to v0.21.1 ([263acc7](https://github.com/WolfSoko/wol-sok-mono/commit/263acc745f4cc468bfbc721082b6f5de3c1a3218))
+* **deps:** update dependency @ngneat/spectator to v19.6.2 ([7864337](https://github.com/WolfSoko/wol-sok-mono/commit/7864337ce6611739fcd514636cb9a453b9afb15a))
+* **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.52.5 ([69ac773](https://github.com/WolfSoko/wol-sok-mono/commit/69ac77325129ba1e3e44c8a90ef9364deec2aad9))
+* **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.52.5 ([a35304c](https://github.com/WolfSoko/wol-sok-mono/commit/a35304cbbc6e10b38355966b804c1ed67e406385))
+* **deps:** update dependency @rspack/core to v1.5.8 ([433b9e6](https://github.com/WolfSoko/wol-sok-mono/commit/433b9e68d0ae24eb0fd7e0831d413c3b11da400d))
+* **deps:** update dependency assemblyscript to v0.28.9 ([4ea525d](https://github.com/WolfSoko/wol-sok-mono/commit/4ea525d766bb36eb63e255397f17a0b70e293ef9))
+
 ## [4.77.28](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.27-non-cdk-deployed...v4.77.28) (2025-10-25)
 
 
