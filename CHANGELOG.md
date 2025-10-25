@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.45](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.44-non-cdk-deployed...v4.77.45) (2025-10-25)
+
+
+### Chore
+
+* **deps:** update dependency tsx to v4.20.6 ([7b20a7a](https://github.com/WolfSoko/wol-sok-mono/commit/7b20a7a5b01a3cd67237bb164ad1dcff7004e283))
+
 ## [4.77.44](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.43-non-cdk-deployed...v4.77.44) (2025-10-25)
 
 
