@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.26](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.25-non-cdk-deployed...v4.77.26) (2025-10-25)
+
+
+### Chore
+
+* **deps:** update dependency fs-extra to v11.3.2 ([ea09c07](https://github.com/WolfSoko/wol-sok-mono/commit/ea09c071214342cbe282e12cc636cb669debab46))
+* **deps:** update dependency inquirer to v8.2.7 ([825dd78](https://github.com/WolfSoko/wol-sok-mono/commit/825dd782857b1ecee164fcf4d49bb3741abcf8a4))
+
 ## [4.77.25](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.24-non-cdk-deployed...v4.77.25) (2025-10-25)
 
 
