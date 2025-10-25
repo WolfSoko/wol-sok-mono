@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.32](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.31-non-cdk-deployed...v4.77.32) (2025-10-25)
+
+
+### Chore
+
+* **deps:** update dependency web-streams-polyfill to v4.2.0 ([bebd364](https://github.com/WolfSoko/wol-sok-mono/commit/bebd364e7f8346732feccc3eb906f719f9fe4410))
+* **deps:** update vitest monorepo to v3.2.4 ([eba4b1a](https://github.com/WolfSoko/wol-sok-mono/commit/eba4b1a6f1009f40ea7e012457e8b700630cd04e))
+
 ## [4.77.31](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.30-non-cdk-deployed...v4.77.31) (2025-10-25)
 
 
