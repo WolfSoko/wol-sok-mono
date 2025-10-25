@@ -237,7 +237,7 @@
   "optionalDependencies": {
     "@esbuild/linux-x64": "0.25.2",
     "@nx/nx-linux-x64-gnu": "20.7.0",
-    "@rollup/rollup-linux-x64-gnu": "4.38.0",
+    "@rollup/rollup-linux-x64-gnu": "4.52.5",
     "@rollup/rollup-win32-x64-msvc": "4.38.0"
   },
   "akitaCli": {
