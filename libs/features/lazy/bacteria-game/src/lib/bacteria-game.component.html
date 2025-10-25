@@ -7,16 +7,18 @@
   <mat-card-header>
     <mat-card-title>
       This is a game is for 2 players.<br />
-      Try to eat the other players bacteria by surrounding them. <br />Orange use <b>WASD</b> and Blue use
-      <b>Arrow keys</b> to control your bacterias
+      Try to eat the other players bacteria by surrounding them. <br />Orange
+      use <b>WASD</b> and Blue use <b>Arrow keys</b> to control your bacterias
     </mat-card-title>
   </mat-card-header>
   <mat-card-content>
     @if (state()) {
       <div class="statistics">
-        <span>{{ 'Game time: ' + state()?.timePassed }}</span>
-        @for (player of players$ | async; track player) {
-          <div>Player {{ player.id + 1 }}: {{ player.bacterias.length }}bacterias</div>
+        <span>{{ "Game time: " + state()?.timePassed }}</span>
+        @for (player of players$ | async; track player.id) {
+          <div>
+            Player {{ player.id + 1 }}: {{ player.bacterias.length }}bacterias
+          </div>
         }
       </div>
     } @else {
@@ -24,13 +26,34 @@
     }
     <div class="canvas-container">
       <div wsThanos class="thanos-container">
-        <ws-shared-ui-show-fps [show]="true" [fps]="(fps$ | async) ?? 0"></ws-shared-ui-show-fps>
-        <canvas #canvasElement id="canvasElement" width="{{ width }}" height="{{ height }}"> </canvas>
+        <ws-shared-ui-show-fps
+          [show]="true"
+          [fps]="(fps$ | async) ?? 0"
+        ></ws-shared-ui-show-fps>
+        <canvas
+          #canvasElement
+          id="canvasElement"
+          width="{{ width }}"
+          height="{{ height }}"
+        >
+        </canvas>
       </div>
     </div>
   </mat-card-content>
   <mat-card-actions>
-    <button mat-raised-button (click)="startGame()" [disabled]="isRunning$ | async">Start</button>
-    <button mat-raised-button (click)="resetGame()" [disabled]="(isRunning$ | async) === false">Reset</button>
+    <button
+      mat-raised-button
+      (click)="startGame()"
+      [disabled]="isRunning$ | async"
+    >
+      Start
+    </button>
+    <button
+      mat-raised-button
+      (click)="resetGame()"
+      [disabled]="(isRunning$ | async) === false"
+    >
+      Reset
+    </button>
   </mat-card-actions>
 </mat-card>
