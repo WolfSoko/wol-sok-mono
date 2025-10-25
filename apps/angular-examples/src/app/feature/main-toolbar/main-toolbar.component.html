@@ -2,20 +2,22 @@
   color="primary"
   role="toolbar"
   id="main-toolbar"
-  class="page-title"
+  class="page-title-toolbar"
 >
   <button
-    class="sidenav-icon"
-    mat-icon-button
+    mat-mini-fab
+    class="mat-elevation-z6 sidenav-icon"
+    color="warn"
     title="main-menu"
     (click)="clickSideNav.emit($event)"
   >
     <mat-icon>menu</mat-icon>
   </button>
-  <span class="on-top" [class.hide]="isHandset()"
-    >WolSok Coding&nbsp;-&nbsp;Experiments</span
-  >
-  <span class="on-top" [class.hide]="!isHandset()">WolSok`s Experiments</span>
+  <span class="toolbar-spacer"></span>
+  <h1 class="on-top" [class.hide]="isHandset()">
+    WolSok Coding&nbsp;-&nbsp;Experiments
+  </h1>
+  <h1 class="on-top" [class.hide]="!isHandset()">WolSok`s Experiments</h1>
   <span class="toolbar-spacer"></span>
   @defer (on timer(1s)) {
     <mat-slide-toggle
@@ -33,7 +35,7 @@
     <app-service-worker-update [class.hide]="isHandset()" />
   }
   @defer (on timer(2s)) {
-    <app-login />
+    <app-login class="login" />
   }
   @if (shaderCode) {
     <div class="shader-background" (wsSharedUiElemResized)="onResize($event)">

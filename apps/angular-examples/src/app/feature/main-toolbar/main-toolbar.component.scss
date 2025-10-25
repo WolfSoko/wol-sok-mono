@@ -1,5 +1,12 @@
 :host {
+  --mat-toolbar-container-text-color: var(--mat-sys-on-primary-fixed-variant);
+  --mat-toolbar-title-text-weight: 800;
+
   position: relative;
+
+  .page-title-toolbar {
+    gap: 0.5rem;
+  }
 
   .hide {
     display: none;
@@ -22,15 +29,14 @@
   .sidenav-icon,
   app-login,
   app-service-worker-update,
-  .page-title {
+  .page-title-toolbar {
     @extend .on-top;
     pointer-events: all;
   }
 
-  .page-title {
+  .page-title-toolbar {
     pointer-events: none;
     height: 100%;
-    padding: 0.5rem;
   }
 
   .shader-background {
