@@ -20,7 +20,7 @@ This project utilizes the features of [Nx](https://nx.dev/l/a/getting-started/in
 
 ## Documentation
 
-- **[Angular Framework Overview](./ANGULAR.md)** - Comprehensive guide to Angular and how it's used in this monorepo
+- **[Angular Framework Overview](./docs/ANGULAR.md)** - Comprehensive guide to Angular and how it's used in this monorepo
 
 ## ws-thanos
 
