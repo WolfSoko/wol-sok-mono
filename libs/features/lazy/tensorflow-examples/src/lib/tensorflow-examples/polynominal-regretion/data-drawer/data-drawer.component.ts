@@ -36,7 +36,7 @@ export class DataDrawerComponent {
     effect(() => this.draw());
   }
 
-  draw() {
+  async draw() {
     if (this.data) {
       const predictions = this.predictions();
       if (!predictions) {
