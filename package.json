@@ -73,7 +73,7 @@
     "isomorphic-fetch": "3.0.0",
     "lodash": "4.17.21",
     "marked": "15.0.12",
-    "marked-gfm-heading-id": "4.1.1",
+    "marked-gfm-heading-id": "4.1.2",
     "marked-highlight": "2.2.2",
     "marked-mangle": "1.1.10",
     "mathjs": "14.4.0",
