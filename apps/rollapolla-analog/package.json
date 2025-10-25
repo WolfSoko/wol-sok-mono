@@ -21,7 +21,7 @@
     "@playwright/test": "^1.48.0",
     "h3": "1.15.4",
     "vite": "7.1.9",
-    "vitest": "3.1.1",
+    "vitest": "3.2.4",
     "@wolsok/shared-data-access": "*",
     "@angular/ssr": "20.3.7"
   }
