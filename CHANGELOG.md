@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.23-non-cdk-deployed...v4.77.24) (2025-10-25)
+
+
+### Chore
+
+* **deps:** update dependency @chromatic-com/storybook to v3.2.7 ([a470601](https://github.com/WolfSoko/wol-sok-mono/commit/a470601b0e001261419753c3939ccac4b8ae3fc9))
+* **deps:** update dependency @types/jasmine to v5.1.12 ([caea178](https://github.com/WolfSoko/wol-sok-mono/commit/caea178aab7ccd11c7ca8f33d0c69b7dd882e7bb))
+
 ## [4.77.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.22-non-cdk-deployed...v4.77.23) (2025-10-25)
 
 
