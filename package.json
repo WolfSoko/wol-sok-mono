@@ -197,7 +197,7 @@
     "jest-transform-stub": "2.0.0",
     "jest-util": "30.2.0",
     "jiti": "2.6.1",
-    "jsdom": "26.1.0",
+    "jsdom": "27.0.1",
     "jsonc-eslint-parser": "2.4.1",
     "karma": "6.4.4",
     "karma-chrome-launcher": "3.2.0",
