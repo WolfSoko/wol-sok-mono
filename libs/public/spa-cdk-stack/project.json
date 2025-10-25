@@ -3,7 +3,6 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/public/spa-cdk-stack/src",
   "projectType": "library",
-  "tags": ["infra-shared", "published"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -17,23 +16,7 @@
     },
     "test": {
       "executor": "@nx/vite:test"
-    },
-    "deploy": {
-      "executor": "nx:run-commands",
-      "inputs": [
-        "production",
-        "^production",
-        "{projectRoot}/package.json"
-      ],
-      "dependsOn": ["build"],
-      "options": {
-        "command": "npm publish dist/libs/public/spa-cdk-stack --access public"
-      },
-      "configurations": {
-        "dry-run": {
-          "command": "npm publish dist/libs/public/spa-cdk-stack --access public --dry-run"
-        }
-      }
     }
-  }
+  },
+  "tags": ["infra-shared", "published"]
 }
