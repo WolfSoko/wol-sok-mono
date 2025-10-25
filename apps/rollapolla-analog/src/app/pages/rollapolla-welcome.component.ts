@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -22,5 +22,6 @@ import { ChatLiveStreamComponent } from '../core/chat-live-stream/chat-live-stre
   ],
   styleUrl: './rollapolla-welcome.component.scss',
   templateUrl: './rollapolla-welcome.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RollapollaWelcomeComponent {}

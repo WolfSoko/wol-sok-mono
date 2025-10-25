@@ -14,7 +14,6 @@
         "outputPath": "dist/apps/fourier-analysis-remote",
         "index": "apps/fourier-analysis-remote/src/index.html",
         "main": "apps/fourier-analysis-remote/src/main.ts",
-        "polyfills": "apps/fourier-analysis-remote/src/polyfills.ts",
         "tsConfig": "apps/fourier-analysis-remote/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "assets": [

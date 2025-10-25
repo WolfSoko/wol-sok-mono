@@ -1,4 +1,8 @@
-import { Component, DebugElement } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DebugElement,
+} from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ElevateCardDirective } from './elevate-card.directive';
@@ -12,6 +16,7 @@ import { ElevateCardDirective } from './elevate-card.directive';
       [elevationLevel]="15"
     ></div>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 class TestElevateCardComponent {}
 

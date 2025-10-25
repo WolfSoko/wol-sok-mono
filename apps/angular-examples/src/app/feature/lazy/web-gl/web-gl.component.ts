@@ -4,11 +4,9 @@ import {
   Component,
   ElementRef,
   EventEmitter,
-  NgZone,
   OnDestroy,
   OnInit,
   ViewChild,
-  inject,
 } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
@@ -50,8 +48,6 @@ const TAU = Math.PI / 2;
   imports: [MatCardModule, ElevateCardDirective],
 })
 export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
-  private zone = inject(NgZone);
-
   @ViewChild('webGlCanvas', { static: true }) webGlCanvas!: ElementRef;
 
   mouseup$ = new EventEmitter<MouseEvent>();
@@ -203,33 +199,31 @@ export class WebGlComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private animate(time: number) {
-    this.zone.runOutsideAngular(() => {
-      this.resize();
+    this.resize();
 
-      const frameTime = this.clock.getDelta();
-      /*(this.checkerBoard.material as ShaderMaterial)
+    const frameTime = this.clock.getDelta();
+    /*(this.checkerBoard.material as ShaderMaterial)
         .uniforms.zoom.value = Math.cos(time * 0.0001) * 0.1;*/
 
-      this.cube.rotation.x += 0.5 * frameTime;
-      this.cube.rotation.y += 0.5 * frameTime;
+    this.cube.rotation.x += 0.5 * frameTime;
+    this.cube.rotation.y += 0.5 * frameTime;
 
-      this.pointLight.position.x = Math.sin(time * 0.0007) * 3;
-      this.pointLight.position.y = 3 + Math.cos(time * 0.0005) * 2;
-      this.pointLight.position.z = Math.cos(time * 0.0003) * 3;
-      const pointLightColor = new Color(
-        (Math.cos(time * 0.0003) + 1) * 0.5,
-        (Math.sin(time * 0.0005) + 1) * 0.5,
-        (Math.cos(time * 0.0007) + 1) * 0.5
-      );
-      this.pointLight.color.set(pointLightColor);
+    this.pointLight.position.x = Math.sin(time * 0.0007) * 3;
+    this.pointLight.position.y = 3 + Math.cos(time * 0.0005) * 2;
+    this.pointLight.position.z = Math.cos(time * 0.0003) * 3;
+    const pointLightColor = new Color(
+      (Math.cos(time * 0.0003) + 1) * 0.5,
+      (Math.sin(time * 0.0005) + 1) * 0.5,
+      (Math.cos(time * 0.0007) + 1) * 0.5
+    );
+    this.pointLight.color.set(pointLightColor);
 
-      const meshBasicMaterial = this.pointLightSphere
-        .material as MeshBasicMaterial;
-      meshBasicMaterial.color.set(pointLightColor);
+    const meshBasicMaterial = this.pointLightSphere
+      .material as MeshBasicMaterial;
+    meshBasicMaterial.color.set(pointLightColor);
 
-      this.renderer.render(this.scene, this.camera);
-      requestAnimationFrame((nextTime) => this.animate(nextTime));
-    });
+    this.renderer.render(this.scene, this.camera);
+    requestAnimationFrame((nextTime) => this.animate(nextTime));
   }
 
   // Resize by clientWidth and clientHeight

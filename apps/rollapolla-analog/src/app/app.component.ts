@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer, Title } from '@angular/platform-browser';
 import { RouterOutlet } from '@angular/router';
@@ -9,6 +9,7 @@ import { icon } from '@fortawesome/fontawesome-svg-core';
   selector: 'rap-root',
   imports: [RouterOutlet],
   template: `<router-outlet></router-outlet>`,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
   constructor() {
