@@ -46,7 +46,7 @@ Angular applications are organized into modules (NgModules), though this reposit
 This monorepo uses Angular extensively across multiple applications:
 
 ### Version
-- **Angular**: 20.3.x (latest stable)
+- **Angular**: 20.3.7 (latest stable)
 - **TypeScript**: For type-safe development
 - **Analog.js**: Meta-framework for Angular providing file-based routing and Vite integration
 
@@ -166,7 +166,7 @@ npx nx run-many -t build         # Run task across multiple projects
 - [Angular Material](https://material.angular.io) - Material Design components
 - [RxJS](https://rxjs.dev) - Reactive programming
 - [Nx](https://nx.dev) - Monorepo tools
-- [Akita](https://opensource.salesforce.com/akita/) - State management
+- [Akita](https://datorama.github.io/akita/) - State management
 
 ### Learning Resources
 - [Angular Tutorial](https://angular.dev/tutorials)
