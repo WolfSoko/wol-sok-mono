@@ -1,6 +1,6 @@
 /// <reference types="jest"/>
-import { setupZoneTestEnv } from 'jest-preset-angular/setup-env/zone';
+import { setupZonelessTestEnv } from 'jest-preset-angular/setup-env/zoneless';
 
-setupZoneTestEnv();
+setupZonelessTestEnv();
 
 import 'jest-canvas-mock';

@@ -5,7 +5,6 @@ import {
   effect,
   ElementRef,
   input,
-  NgZone,
   viewChild,
   inject,
 } from '@angular/core';
@@ -24,7 +23,6 @@ import { DataDrawerService } from './data-drawer.service';
 })
 export class DataDrawerComponent {
   private readonly dataDrawer = inject(DataDrawerService);
-  private readonly ngZone = inject(NgZone);
 
   plot = viewChild.required<ElementRef>('plot');
   caption = input.required<string>();
@@ -39,23 +37,18 @@ export class DataDrawerComponent {
   }
 
   draw() {
-    this.ngZone.runOutsideAngular(async () => {
-      if (this.data) {
-        const predictions = this.predictions();
-        if (!predictions) {
-          await this.dataDrawer.plotData(
-            this.plot()?.nativeElement,
-            this.data()
-          );
-        } else {
-          await this.dataDrawer.plotDataAndPredictions(
-            this.plot()?.nativeElement,
-            this.data(),
-            predictions,
-            this.predictionsNew()
-          );
-        }
+    if (this.data) {
+      const predictions = this.predictions();
+      if (!predictions) {
+        await this.dataDrawer.plotData(this.plot()?.nativeElement, this.data());
+      } else {
+        await this.dataDrawer.plotDataAndPredictions(
+          this.plot()?.nativeElement,
+          this.data(),
+          predictions,
+          this.predictionsNew()
+        );
       }
-    });
+    }
   }
 }

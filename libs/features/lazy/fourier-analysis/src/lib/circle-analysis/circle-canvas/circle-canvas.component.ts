@@ -6,7 +6,6 @@ import {
   ElementRef,
   inject,
   input,
-  NgZone,
   OnDestroy,
   SimpleChange,
   SimpleChanges,
@@ -53,7 +52,6 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
   private centerMin = 0;
   private centerMax = 0;
   private finished = false;
-  private _ngZone = inject(NgZone);
 
   ngAfterViewInit(): void {
     this.canvasContainer = this.canvasContainerRef.nativeElement;
@@ -86,9 +84,7 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   private initCanvas() {
-    this._ngZone.runOutsideAngular(
-      () => new P5(this.initSketch.bind(this), this.canvasContainer)
-    );
+    new P5(this.initSketch.bind(this), this.canvasContainer);
   }
 
   initSketch(sketch: P5) {
