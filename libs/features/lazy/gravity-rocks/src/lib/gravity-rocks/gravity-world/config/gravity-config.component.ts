@@ -1,4 +1,10 @@
-import { Component, Input, Output, inject } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import {
   FormControl,
   FormGroup,
@@ -18,6 +24,7 @@ import {
   imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule],
   templateUrl: './gravity-config.component.html',
   styleUrls: ['./gravity-config.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GravityConfigComponent {
   readonly form: FormGroup<{

@@ -1,4 +1,4 @@
-import { Injectable, NgZone, inject } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
@@ -28,7 +28,6 @@ export type CHECK_FOR_UPDATE_STATE =
 export class ServiceWorkerUpdateService {
   private readonly swUpdate = inject(SwUpdate);
   private readonly snackbar = inject(MatSnackBar);
-  private readonly ngZone = inject(NgZone);
   private readonly router = inject(Router);
 
   versionReady$: Observable<boolean>;
@@ -66,22 +65,18 @@ export class ServiceWorkerUpdateService {
   }
 
   checkForUpdatesRegularly(): Observable<CHECK_FOR_UPDATE_STATE> {
-    return this.ngZone.runOutsideAngular(() =>
-      interval(environment.serviceWorkerCheckInterval).pipe(
-        exhaustMap(() =>
-          this.ngZone.run(() =>
-            concat(
-              of('CHECKING_FOR_UPDATES' as const),
-              from(
-                this.swUpdate
-                  .checkForUpdate()
-                  .then((versionAvailable) =>
-                    versionAvailable
-                      ? 'NEW_VERSION_AVAILABLE'
-                      : 'NO_NEW_VERSION_AVAILABLE'
-                  )
+    return interval(environment.serviceWorkerCheckInterval).pipe(
+      exhaustMap(() =>
+        concat(
+          of('CHECKING_FOR_UPDATES' as const),
+          from(
+            this.swUpdate
+              .checkForUpdate()
+              .then((versionAvailable) =>
+                versionAvailable
+                  ? 'NEW_VERSION_AVAILABLE'
+                  : 'NO_NEW_VERSION_AVAILABLE'
               )
-            )
           )
         )
       )
