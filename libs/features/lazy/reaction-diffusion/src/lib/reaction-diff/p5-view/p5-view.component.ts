@@ -5,7 +5,6 @@ import {
   ElementRef,
   EventEmitter,
   Input,
-  NgZone,
   OnChanges,
   OnDestroy,
   Output,
@@ -25,7 +24,6 @@ import { ReactionDiffCalculator } from '../calculation/reaction-diff-calculator'
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class P5ViewComponent implements OnChanges, OnDestroy {
-  private ngZone = inject(NgZone);
   private cd = inject(ChangeDetectorRef);
 
   @ViewChild('drawArea', { static: true }) drawArea!: ElementRef;
@@ -56,55 +54,53 @@ export class P5ViewComponent implements OnChanges, OnDestroy {
   }
 
   private initP5(p: P5) {
-    this.ngZone.runOutsideAngular(() => {
-      p.setup = () => {
-        p.pixelDensity(1);
-        p.createCanvas(this.simWidth, this.simHeight);
-      };
+    p.setup = () => {
+      p.pixelDensity(1);
+      p.createCanvas(this.simWidth, this.simHeight);
+    };
 
-      p.draw = () => {
+    p.draw = () => {
+      if (this.run) {
+        p.background(51);
+        performance.mark('calcNext-start');
+        this.calcService.calcNext();
+        this.calcService.drawImage(p);
+        performance.mark('calcNext-end');
+        performance.measure('calcNext', 'calcNext-start', 'calcNext-end');
+      }
+
+      if (this.drawOnce && !this.run) {
+        this.calcService.drawImage(p);
+        this.drawOnce = false;
+        this.cd.markForCheck();
+      }
+
+      if (this.showFps) {
+        const frameRate = p.frameRate();
+        this.frameRate = this.frameRate * 0.99 + frameRate * 0.01;
         if (this.run) {
-          p.background(51);
-          performance.mark('calcNext-start');
-          this.calcService.calcNext();
-          this.calcService.drawImage(p);
-          performance.mark('calcNext-end');
-          performance.measure('calcNext', 'calcNext-start', 'calcNext-end');
-        }
-
-        if (this.drawOnce && !this.run) {
-          this.calcService.drawImage(p);
-          this.drawOnce = false;
           this.cd.markForCheck();
         }
+      }
+    };
 
-        if (this.showFps) {
-          const frameRate = p.frameRate();
-          this.frameRate = this.frameRate * 0.99 + frameRate * 0.01;
-          if (this.run) {
-            this.cd.markForCheck();
-          }
-        }
-      };
+    const addChemical = () => {
+      const x = p.floor(p.mouseX);
+      const y = p.floor(p.mouseY);
+      if (x > -1 && x < p.width && y > -1 && y < p.height) {
+        this.calcService.addChemical(x, y);
+        this.drawOnce = true;
+        this.cd.markForCheck();
+        // don't bubble up event.
+        return false;
+      }
+      return true;
+    };
 
-      const addChemical = () => {
-        const x = p.floor(p.mouseX);
-        const y = p.floor(p.mouseY);
-        if (x > -1 && x < p.width && y > -1 && y < p.height) {
-          this.calcService.addChemical(x, y);
-          this.drawOnce = true;
-          this.cd.markForCheck();
-          // don't bubble up event.
-          return false;
-        }
-        return true;
-      };
-
-      p.mouseClicked = addChemical;
-      p.mouseDragged = addChemical;
-      p.touchMoved = addChemical;
-      p.touchStarted = addChemical;
-    });
+    p.mouseClicked = addChemical;
+    p.mouseDragged = addChemical;
+    p.touchMoved = addChemical;
+    p.touchStarted = addChemical;
   }
 
   ngOnDestroy(): void {

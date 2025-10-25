@@ -5,7 +5,6 @@ import {
   Component,
   ElementRef,
   HostListener,
-  NgZone,
   OnDestroy,
   Signal,
   ViewChild,
@@ -77,7 +76,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private gameStateService = inject(GameStateService);
   private playerService = inject(PlayerService);
   private playerQuery = inject(PlayerQuery);
-  private ngZone = inject(NgZone);
   private matDialog = inject(MatDialog);
 
   @ViewChild('canvasElement', { static: true })
@@ -178,63 +176,51 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    this.ngZone.runOutsideAngular(() => {
-      requestAnimationFrame(() => {
-        this.cx.fillStyle = 'rgba(0,0,0,0.7)';
-        this.cx.fillRect(0, 0, this.width, this.height);
-        this.cx.fillStyle = 'rgb(200,200,200)';
-        const wallWidth = 10;
-        this.cx.fillRect(
-          this.width / 2 - 50,
-          0,
-          wallWidth,
-          this.height / 2 - 50
-        );
-        this.cx.fillRect(
-          this.width / 2 - 50,
-          this.height / 2 - 30,
-          wallWidth,
-          this.height / 2 + 30
-        );
-        this.cx.fillRect(
-          this.width / 2 + 30,
-          0,
-          wallWidth,
-          this.height / 2 + 30
-        );
-        this.cx.fillRect(
-          this.width / 2 + 30,
-          this.height / 2 + 50,
-          wallWidth,
-          this.height / 2 - 50
-        );
+    requestAnimationFrame(() => {
+      this.cx.fillStyle = 'rgba(0,0,0,0.7)';
+      this.cx.fillRect(0, 0, this.width, this.height);
+      this.cx.fillStyle = 'rgb(200,200,200)';
+      const wallWidth = 10;
+      this.cx.fillRect(this.width / 2 - 50, 0, wallWidth, this.height / 2 - 50);
+      this.cx.fillRect(
+        this.width / 2 - 50,
+        this.height / 2 - 30,
+        wallWidth,
+        this.height / 2 + 30
+      );
+      this.cx.fillRect(this.width / 2 + 30, 0, wallWidth, this.height / 2 + 30);
+      this.cx.fillRect(
+        this.width / 2 + 30,
+        this.height / 2 + 50,
+        wallWidth,
+        this.height / 2 - 50
+      );
 
-        const image = this.cx.getImageData(0, 0, this.width, this.height);
-        const data = new Uint8ClampedArray(image.data.buffer);
-        for (const player of this.playerQuery.getAll()) {
-          createImageDataFromBacterias(
-            data,
-            this.width,
-            player.color,
-            player.bacterias
-          );
-        }
-        this.playerService.gameLoop(
+      const image = this.cx.getImageData(0, 0, this.width, this.height);
+      const data = new Uint8ClampedArray(image.data.buffer);
+      for (const player of this.playerQuery.getAll()) {
+        createImageDataFromBacterias(
           data,
           this.width,
-          this.height,
-          deltaTimeInSec
+          player.color,
+          player.bacterias
         );
-        this.cx.putImageData(image, 0, 0);
+      }
+      this.playerService.gameLoop(
+        data,
+        this.width,
+        this.height,
+        deltaTimeInSec
+      );
+      this.cx.putImageData(image, 0, 0);
 
-        for (const player of this.playerQuery.getAll()) {
-          this.cx.strokeStyle = `rgba(${player.color.join(',')})`;
-          this.cx.fillRect(player.x - 6, player.y - 0.5, 13, 2);
-          this.cx.fillRect(player.x - 0.5, player.y - 6, 2, 13);
-          this.cx.strokeRect(player.x - 6, player.y - 0.5, 13, 2);
-          this.cx.strokeRect(player.x - 0.5, player.y - 6, 2, 13);
-        }
-      });
+      for (const player of this.playerQuery.getAll()) {
+        this.cx.strokeStyle = `rgba(${player.color.join(',')})`;
+        this.cx.fillRect(player.x - 6, player.y - 0.5, 13, 2);
+        this.cx.fillRect(player.x - 0.5, player.y - 6, 2, 13);
+        this.cx.strokeRect(player.x - 6, player.y - 0.5, 13, 2);
+        this.cx.strokeRect(player.x - 0.5, player.y - 6, 2, 13);
+      }
     });
   }
 

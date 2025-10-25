@@ -6,7 +6,6 @@ import {
   ElementRef,
   EventEmitter,
   Input,
-  NgZone,
   OnChanges,
   OnDestroy,
   Output,
@@ -45,7 +44,6 @@ import defaultVertexShader from './default-vertex-shader.vert';
 export class RenderShaderComponent
   implements AfterViewInit, OnChanges, OnDestroy
 {
-  private ngZone = inject(NgZone);
   private readonly measureFps = inject(MeasureFps);
 
   @Input() shaderCode!: FragCode;
@@ -220,13 +218,11 @@ export class RenderShaderComponent
 
   animate(time = 1.0) {
     try {
-      this.ngZone.runOutsideAngular(() => {
-        this.render(time);
-        this.measureFps.signalFrameReady();
-        if (this.runAnimation) {
-          requestAnimationFrame((timestamp) => this.animate(timestamp));
-        }
-      });
+      this.render(time);
+      this.measureFps.signalFrameReady();
+      if (this.runAnimation) {
+        requestAnimationFrame((timestamp) => this.animate(timestamp));
+      }
     } catch (e) {
       this.error.next(e);
     }

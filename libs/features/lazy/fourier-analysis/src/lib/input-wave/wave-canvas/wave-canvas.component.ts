@@ -6,7 +6,6 @@ import {
   inject,
   Injector,
   input,
-  NgZone,
   OnDestroy,
   signal,
   viewChild,
@@ -28,7 +27,6 @@ export class WaveCanvasComponent implements OnDestroy {
   waveWidth = input.required<number>();
   waveHeight = input.required<number>();
   wave = input.required<InputWave>();
-  private zone = inject(NgZone);
   private injector = inject(Injector);
 
   private sketch: P5 | null = null;
@@ -57,9 +55,7 @@ export class WaveCanvasComponent implements OnDestroy {
   }
 
   private initCanvas(canvasContainer: HTMLDivElement) {
-    this.zone.runOutsideAngular(
-      () => new P5((p5: P5) => this.initSketch(p5), canvasContainer)
-    );
+    new P5((p5: P5) => this.initSketch(p5), canvasContainer);
   }
 
   initSketch(sketch: P5) {
