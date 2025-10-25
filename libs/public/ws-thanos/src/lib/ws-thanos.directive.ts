@@ -1,4 +1,4 @@
-import { Directive, ElementRef, NgZone, Output, inject } from '@angular/core';
+import { Directive, ElementRef, Output, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, Observable, Subject, Subscription, take, tap } from 'rxjs';
 import { AnimationState } from './animation.state';
@@ -25,7 +25,6 @@ export class WsThanosDirective {
   private readonly thanosOptions: WsThanosOptions = inject(
     WS_THANOS_OPTIONS_TOKEN
   );
-  private readonly ngZone: NgZone = inject(NgZone);
 
   /**
    *
@@ -46,18 +45,16 @@ export class WsThanosDirective {
           });
         },
       }),
-      finalize(() =>
-        this.ngZone.run(() => {
-          if (removeElem) {
-            elem.remove();
-          } else {
-            // make visible again
-            elem.style.transition = 'opacity 700ms';
-            elem.style.opacity = '1';
-          }
-          this.wsThanosCompleteSubject.next();
-        })
-      )
+      finalize(() => {
+        if (removeElem) {
+          elem.remove();
+        } else {
+          // make visible again
+          elem.style.transition = 'opacity 700ms';
+          elem.style.opacity = '1';
+        }
+        this.wsThanosCompleteSubject.next();
+      })
     );
   }
 

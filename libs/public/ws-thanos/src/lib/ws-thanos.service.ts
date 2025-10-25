@@ -1,4 +1,4 @@
-import { Injectable, NgZone, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 
 import { default as html2canvas } from 'html2canvas';
 import {
@@ -56,7 +56,6 @@ export class WsThanosService {
   private readonly thanosOptions: WsThanosOptions = inject(
     WS_THANOS_OPTIONS_TOKEN
   );
-  private readonly ngZone: NgZone = inject(NgZone);
 
   private static getParticleIndicesForBase(base: number): ParticleIndices {
     return {
@@ -300,11 +299,9 @@ export class WsThanosService {
 
   /**
    * start the vaporize-effect.
-   *
-   * It's running outside the ngZone.
    */
   vaporize(elem: HTMLElement): Observable<AnimationState> {
-    return this.ngZone.runOutsideAngular(() => this.vaporizeIntern(elem));
+    return this.vaporizeIntern(elem);
   }
 
   private vaporizeIntern(elem: HTMLElement): Observable<AnimationState> {
