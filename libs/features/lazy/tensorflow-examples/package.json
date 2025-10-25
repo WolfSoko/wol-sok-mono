@@ -8,7 +8,7 @@
     "@angular/material": "20.2.10",
     "@angular/forms": "20.3.7",
     "@tensorflow/tfjs": "^4.22.0",
-    "vega-embed": "7.0.2",
+    "vega-embed": "7.1.0",
     "@ngneat/until-destroy": "^10.0.0",
     "@wolsok/ui-kit": "^0.0.1",
     "@wolsok/headline-animation": "^0.0.1",
