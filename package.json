@@ -29,7 +29,7 @@
     "@angular/compiler": "20.3.7",
     "@angular/core": "20.3.7",
     "@angular/elements": "20.3.7",
-    "@angular/fire": "19.0.0",
+    "@angular/fire": "19.2.0",
     "@angular/forms": "20.3.7",
     "@angular/material": "20.2.10",
     "@angular/platform-browser": "20.3.7",
@@ -93,7 +93,7 @@
     "vega-embed": "7.1.0",
     "vega-lite": "6.4.1",
     "zod": "4.1.12",
-    "zone.js": "0.15.0"
+    "zone.js": "0.15.1"
   },
   "devDependencies": {
     "@analogjs/platform": "1.22.1",
@@ -236,7 +236,7 @@
   },
   "optionalDependencies": {
     "@esbuild/linux-x64": "0.25.11",
-    "@nx/nx-linux-x64-gnu": "20.7.0",
+    "@nx/nx-linux-x64-gnu": "20.8.2",
     "@rollup/rollup-linux-x64-gnu": "4.52.5",
     "@rollup/rollup-win32-x64-msvc": "4.52.5"
   },
