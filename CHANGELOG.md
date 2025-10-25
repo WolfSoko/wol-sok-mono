@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.37](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.36-non-cdk-deployed...v4.77.37) (2025-10-25)
+
+
+### Bug Fixes
+
+* **deps:** update trpc monorepo to v11.6.0 ([6aedb76](https://github.com/WolfSoko/wol-sok-mono/commit/6aedb76573264d59565aa439cb36118c0392002e))
+
+
+### Chore
+
+* **deps:** update actions/github-script action to v8 ([07630b6](https://github.com/WolfSoko/wol-sok-mono/commit/07630b6982863af8fbed12af738dc31caeb508d4))
+
 ## [4.77.36](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.35-non-cdk-deployed...v4.77.36) (2025-10-25)
 
 
