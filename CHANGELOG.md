@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.25](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.24-non-cdk-deployed...v4.77.25) (2025-10-25)
+
+
+### Chore
+
+* **deps:** update dependency @types/lodash to v4.17.20 ([2230f3d](https://github.com/WolfSoko/wol-sok-mono/commit/2230f3d03036b46971c111a806af132964fe2317))
+* **deps:** update dependency eslint-config-prettier to v10.1.8 ([cb8f7b1](https://github.com/WolfSoko/wol-sok-mono/commit/cb8f7b1b29d77b58ebe0422c66556ffa585f5cdb))
+
 ## [4.77.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.23-non-cdk-deployed...v4.77.24) (2025-10-25)
 
 
