@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.39](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.38-non-cdk-deployed...v4.77.39) (2025-10-25)
+
+
+### Chore
+
+* **deps:** update commitlint monorepo to v20 ([d8ae1a1](https://github.com/WolfSoko/wol-sok-mono/commit/d8ae1a1ad501268c53d5f2ad791e7e5cc84f8f0f))
+* **deps:** update dependency @angular-builders/custom-webpack to v20 ([57ed0a8](https://github.com/WolfSoko/wol-sok-mono/commit/57ed0a86cf691834169e0f53381d665247b0e746))
+* **deps:** update dependency @ngneat/spectator to v22 ([097c75c](https://github.com/WolfSoko/wol-sok-mono/commit/097c75c1acfb02fd2035ceacbcfc1e584d7e1505))
+* **deps:** update dependency chai to v6 ([1888d0e](https://github.com/WolfSoko/wol-sok-mono/commit/1888d0e31b41247cc97eb9bcc0626187015e4af8))
+
 ## [4.77.38](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.37...v4.77.38) (2025-10-25)
 
 
