@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.36](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.35-non-cdk-deployed...v4.77.36) (2025-10-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency vega-embed to v7.1.0 ([425a034](https://github.com/WolfSoko/wol-sok-mono/commit/425a034434964d8949f18f37884d6c8daaacf793))
+* **deps:** update dependency vega-lite to v6.4.1 ([3aee37a](https://github.com/WolfSoko/wol-sok-mono/commit/3aee37a2b307dfeb9fc0bfb295b612422d860fef))
+* **deps:** update dependency zod to v3.25.76 ([be62692](https://github.com/WolfSoko/wol-sok-mono/commit/be6269217701805b827a4059bb1a2937aa34ab37))
+
+
+### Chore
+
+* **deps:** update actions/checkout action to v5 ([81f28c5](https://github.com/WolfSoko/wol-sok-mono/commit/81f28c5539bcea18a5f3bc34bdf849ed3f40af5c))
+
 ## [4.77.35](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.34-non-cdk-deployed...v4.77.35) (2025-10-25)
 
 
