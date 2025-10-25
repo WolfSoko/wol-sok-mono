@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.21-cdk-deployed...v4.77.22) (2025-10-25)
+
+
+### Chore
+
+* **deps:** 🔗 update [@analogjs](https://github.com/analogjs) packages to version 1.22.1 ([3b31379](https://github.com/WolfSoko/wol-sok-mono/commit/3b31379d546101c82618bc7fbdb45230987e0e6f))
+* **deps:** 🔗 update [@analogjs](https://github.com/analogjs) packages to version 1.22.1 ([a3ba1c0](https://github.com/WolfSoko/wol-sok-mono/commit/a3ba1c09c815ffea7af9a8a3b8de59d4e21756d0))
+* **deps:** 🔗 update Angular and [@analogjs](https://github.com/analogjs) packages to latest versions ([0001012](https://github.com/WolfSoko/wol-sok-mono/commit/00010121e95952098a9972072b19b1e3d7b73d78))
+* **deps:** update [@analogjs](https://github.com/analogjs) packages to version 1.22.1 ([0cf27b6](https://github.com/WolfSoko/wol-sok-mono/commit/0cf27b67d9ae49d0babafe5ac8894efc7deb926c))
+
 ## [4.77.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.20-non-cdk-deployed...v4.77.21) (2025-10-24)
 
 
