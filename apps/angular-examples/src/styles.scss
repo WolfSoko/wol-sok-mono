@@ -1,9 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
-@import 'normalize.css/normalize.css';
-@import 'apps/angular-examples/src/styles/app-loading-style';
-@import 'apps/angular-examples/src/styles/ws-material-theme';
-@import 'apps/angular-examples/src/styles/feature-theming';
-@import 'libs/features/lazy/shader-examples/src/globals';
+@use 'normalize.css/normalize.css';
+@use 'apps/angular-examples/src/styles/app-loading-style';
+@use '@angular/material' as mat;
 
 body,
 html {
@@ -24,4 +22,17 @@ body {
   transition:
     color,
     background-color 500ms ease;
+}
+
+html {
+  color-scheme: dark;
+  @include mat.theme((
+    color: mat.$azure-palette,
+    typography: Roboto,
+    density: 0
+  ));
+}
+
+body.theme-alternate {
+  color-scheme: light;
 }

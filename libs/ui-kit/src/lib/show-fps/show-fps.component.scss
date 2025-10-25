@@ -1,3 +1,9 @@
+@use './show-fps.component-theme' as *;
+
+:host {
+  @include defaultVars();
+}
+
 .ws-ui-show-fps {
   display: inline-block;
   padding: 0.25em 0.5em;
@@ -17,7 +23,8 @@
   );
   background-size: 400%;
 
-  animation: background-animation 4s infinite alternate;
+  animation: background-animation infinite alternate;
+  animation-duration: 4s;
 
   @keyframes background-animation {
     0% {

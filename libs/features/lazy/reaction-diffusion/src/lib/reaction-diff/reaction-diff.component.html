@@ -130,7 +130,22 @@
       <mat-card-header>
         <mat-card-title>Parameters</mat-card-title>
       </mat-card-header>
-      <mat-card-content>
+      <mat-card-content
+        ><mat-form-field>
+          <mat-label>Szenarios</mat-label>
+          <mat-select
+            placeholder="Example parameter config"
+            [(ngModel)]="selectedExample"
+            (selectionChange)="setSelection($event)"
+          >
+            @for (example of examples; track example) {
+              <mat-option [value]="example">
+                {{ example }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <br />
         <mat-form-field class="small">
           <mat-label>Diffusion A</mat-label>
           <input
@@ -190,18 +205,6 @@
             (ngModelChange)="updateCalcParams(calcParams)"
           />
         </mat-form-field>
-        <br />
-        <mat-select
-          placeholder="Example parameter config"
-          [(ngModel)]="selectedExample"
-          (selectionChange)="setSelection($event)"
-        >
-          @for (example of examples; track example) {
-            <mat-option [value]="example">
-              {{ example }}
-            </mat-option>
-          }
-        </mat-select>
       </mat-card-content>
     </mat-card>
   }
