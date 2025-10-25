@@ -109,7 +109,7 @@
     "@angular/cli": "~20.3.0",
     "@angular/compiler-cli": "20.3.7",
     "@angular/language-service": "20.3.7",
-    "@chromatic-com/storybook": "3.2.7",
+    "@chromatic-com/storybook": "4.1.1",
     "@commitlint/cli": "20.1.0",
     "@commitlint/config-conventional": "20.0.0",
     "@commitlint/config-nx-scopes": "20.0.0",
