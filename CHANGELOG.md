@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.40](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.39-non-cdk-deployed...v4.77.40) (2025-10-25)
+
+
+### Chore
+
+* **deps:** update dependency @chromatic-com/storybook to v4 ([fe52659](https://github.com/WolfSoko/wol-sok-mono/commit/fe52659f7d3f1c0acae1efd587539b8ad4d9e8da))
+* **deps:** update dependency cross-env to v10 ([5f349ff](https://github.com/WolfSoko/wol-sok-mono/commit/5f349ffb615620c0f703187aa879f85b5d622741))
+
 ## [4.77.39](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.38-non-cdk-deployed...v4.77.39) (2025-10-25)
 
 
