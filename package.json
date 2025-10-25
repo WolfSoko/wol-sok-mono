@@ -193,7 +193,7 @@
     "jest-canvas-mock": "2.5.2",
     "jest-environment-jsdom": "30.0.5",
     "jest-environment-node": "29.7.0",
-    "jest-preset-angular": "15.0.0",
+    "jest-preset-angular": "15.0.3",
     "jest-transform-stub": "2.0.0",
     "jest-util": "30.0.5",
     "jiti": "2.4.2",
