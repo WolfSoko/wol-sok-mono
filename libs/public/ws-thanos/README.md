@@ -80,6 +80,28 @@ Send issues or PRs to https://github.com/wolsok/wol-sok-mono
 
 Run `nx test ws-thanos` to execute unit tests.
 
+## Publishing
+
+This package is published to npm as `@wolsok/thanos` using Nx deploy targets.
+
+### Local Publishing (Dry Run)
+```bash
+nx deploy ws-thanos --configuration=dry-run
+```
+
+### Publishing via CI/CD
+The package is automatically published when:
+1. Changes affecting ws-thanos are merged to main
+2. A release is created
+3. The deploy workflow runs with `nx affected --target=deploy`
+
+### Manual Publishing
+To manually publish (requires npm authentication):
+```bash
+nx build ws-thanos --configuration=production
+nx deploy ws-thanos
+```
+
 ## Migration
 
 From `1.0.1` to `2.0.0`

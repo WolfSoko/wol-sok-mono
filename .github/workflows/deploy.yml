@@ -27,6 +27,7 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 jobs:
   deploy:
@@ -37,9 +38,13 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          - app-type: npm-packages
+            deploy-tag-suffix: npm-deployed
+            exclude-pattern: '*,!tag:published'
+            extra-deploy-args: ''
           - app-type: non-cdk
             deploy-tag-suffix: non-cdk-deployed
-            exclude-pattern: 'tag:cdk'
+            exclude-pattern: 'tag:cdk,tag:published'
             extra-deploy-args: ''
           - app-type: cdk
             deploy-tag-suffix: cdk-deployed
@@ -57,6 +62,12 @@ jobs:
 
       - name: Install Deps
         uses: ./.github/actions/install-deps
+
+      - name: Configure npm authentication
+        if: matrix.config.app-type == 'npm-packages'
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          echo "Setting up npm authentication for publishing"
 
       - name: Find previous deployment tag
         id: previous_deployment
