@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.42](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.41-non-cdk-deployed...v4.77.42) (2025-10-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency marked to v16 ([05ec15c](https://github.com/WolfSoko/wol-sok-mono/commit/05ec15cee213013678f34af1253078a0b06f6bda))
+
+
+### Chore
+
+* **deps:** update vitest monorepo to v4 ([f762565](https://github.com/WolfSoko/wol-sok-mono/commit/f7625655cb8205c140b5bc12fc91a0c645b29211))
+
 ## [4.77.41](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.40-non-cdk-deployed...v4.77.41) (2025-10-25)
 
 
