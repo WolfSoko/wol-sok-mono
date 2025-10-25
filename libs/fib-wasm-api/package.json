@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/core": "20.3.7",
-    "@assemblyscript/loader": "^0.27.31",
+    "@assemblyscript/loader": "^0.27.31 || ^0.28.0",
     "rxjs": "7.8.2"
   },
   "devDependencies": {
