@@ -62,7 +62,7 @@ describe('GravityConfigComponent', () => {
     expect(getMassOfSunInput()?.value).toEqual('' + initialConfig.massOfSun);
   });
 
-  it('should change the inputs when initial config changes', () => {
+  it('should change the inputs when config changes', async () => {
     createComp();
     spectator.setHostInput({
       initialConfig: { gravitationalConstant: 20, massOfSun: 20000 },
