@@ -48,7 +48,7 @@ jobs:
     steps:
       - run: echo "Release process starting for ${{ matrix.config.app-type }} apps version ${{ env.RELEASE_VERSION }}"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         name: 'Checkout version tagged branch'
         with:
           ref: ${{ env.RELEASE_VERSION }}
