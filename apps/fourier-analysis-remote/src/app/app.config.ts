@@ -2,6 +2,7 @@ import {
   ApplicationConfig,
   inject,
   provideAppInitializer,
+  provideZonelessChangeDetection,
 } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import {
@@ -14,6 +15,7 @@ import { appRoutes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideZonelessChangeDetection(),
     provideAnimations(),
     provideRouter(appRoutes, withEnabledBlockingInitialNavigation()),
     provideAppInitializer(() => {

@@ -1,4 +1,9 @@
-import { Component, QueryList, ViewChildren } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  QueryList,
+  ViewChildren,
+} from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { combineLatest, firstValueFrom, of } from 'rxjs';
 import image from '../assets/how-to-be-funny.png';
@@ -66,6 +71,7 @@ describe('Integration Test: WsThanosDirective', () => {
       `,
     ],
     imports: [WsThanosDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
   })
   class HostComponent {
     wsThanosDirective!: WsThanosDirective;

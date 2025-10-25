@@ -20,7 +20,6 @@
         "outputPath": "dist/apps/angular-examples",
         "index": "apps/angular-examples/src/index.html",
         "main": "apps/angular-examples/src/main.ts",
-        "polyfills": "apps/angular-examples/src/polyfills.ts",
         "tsConfig": "apps/angular-examples/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "customWebpackConfig": {
