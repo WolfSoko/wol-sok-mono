@@ -18,6 +18,10 @@ CSS wise I use grid and flex layout.
 
 This project utilizes the features of [Nx](https://nx.dev/l/a/getting-started/intro) Monorepo
 
+## Documentation
+
+- **[Angular Framework Overview](./ANGULAR.md)** - Comprehensive guide to Angular and how it's used in this monorepo
+
 ## ws-thanos
 
 A special angular-component is extracted from these experiments called `ws-thanos`. It vaporizes your html Elements into
