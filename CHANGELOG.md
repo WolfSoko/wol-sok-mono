@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.77.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.22-non-cdk-deployed...v4.77.23) (2025-10-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency mermaid to v11.10.0 [security] ([38b2750](https://github.com/WolfSoko/wol-sok-mono/commit/38b27500347d4a5414f9a7b9ea5ead9e6af5f4d9))
+
+
+### Chore
+
+* **deps:** update commitlint monorepo to v19.8.1 ([b4d4db7](https://github.com/WolfSoko/wol-sok-mono/commit/b4d4db7c26750bff01ba0f201122e338c21a4145))
+* **deps:** update dependency @angular-builders/custom-webpack to v19.0.1 ([b0524ed](https://github.com/WolfSoko/wol-sok-mono/commit/b0524ed75bb9f6ef9ba77939c8733285ffd442a0))
+* **deps:** update dependency @esbuild/linux-x64 to v0.25.11 ([e0d9565](https://github.com/WolfSoko/wol-sok-mono/commit/e0d9565f5e9928514bafc0a37f1123d12b200199))
+
 ## [4.77.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.21-cdk-deployed...v4.77.22) (2025-10-25)
 
 
