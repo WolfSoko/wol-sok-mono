@@ -37,13 +37,15 @@
       }
     },
     "ct": {
-      "executor": "@nx/playwright:playwright",
+      "executor": "nx:run-commands",
       "outputs": [
         "{workspaceRoot}/playwright-report",
         "{workspaceRoot}/test-results"
       ],
       "options": {
-        "config": "libs/public/ws-thanos/playwright-ct.config.ts"
+        "command": "npx playwright test",
+        "cwd": "libs/public/ws-thanos",
+        "args": "--config=playwright-ct.config.ts"
       }
     }
   }
