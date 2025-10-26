@@ -141,8 +141,7 @@ describe('Integration Test: WsThanosDirective', () => {
     });
 
     // SKIPPED: This test requires real browser features (html2canvas, canvas rendering, getComputedStyle)
-    // that are not properly simulated in jsdom. See Playwright Component Tests instead:
-    // libs/public/ws-thanos/src/ct/ws-thanos.directive.ct.spec.ts
+    // that are not properly simulated in jsdom. See E2E tests in apps/ws-thanos-test-app instead.
     it.skip('should emit complete when vaporize is complete', (done) => {
       combineLatest([
         firstValueFrom(directive.wsThanosComplete),
