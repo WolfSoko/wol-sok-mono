@@ -1,4 +1,3 @@
-import { fakeAsync } from '@angular/core/testing';
 import { createDirectiveFactory } from '@ngneat/spectator/jest';
 import { Subject } from 'rxjs';
 import { LetDirective } from './let.directive';
@@ -22,7 +21,7 @@ describe('LetDirective', () => {
     expect(span?.textContent).toContain('false');
   });
 
-  it('should provide the values in stream with async pipe', fakeAsync(() => {
+  it('should provide the values in stream with async pipe', () => {
     const testSubject = new Subject<{ emission: number }>();
     const spectator = createDirective(
       `
@@ -49,5 +48,5 @@ describe('LetDirective', () => {
     spectator.detectChanges();
     spectator.query('span.use-value');
     expect(span?.textContent).toContain('emission:2');
-  }));
+  });
 });
