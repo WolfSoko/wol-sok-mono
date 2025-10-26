@@ -43,9 +43,8 @@
         "{workspaceRoot}/test-results"
       ],
       "options": {
-        "command": "npx playwright test",
-        "cwd": "libs/public/ws-thanos",
-        "args": "--config=playwright-ct.config.ts"
+        "command": "npx playwright test --config=playwright-ct.config.ts",
+        "cwd": "libs/public/ws-thanos"
       }
     }
   }
