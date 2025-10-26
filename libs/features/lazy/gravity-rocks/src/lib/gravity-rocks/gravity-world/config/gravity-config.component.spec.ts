@@ -67,6 +67,7 @@ describe('GravityConfigComponent', () => {
     spectator.setHostInput({
       initialConfig: { gravitationalConstant: 20, massOfSun: 20000 },
     });
+    spectator.detectChanges();
     expect(getGInput()?.value).toEqual('20');
     expect(getMassOfSunInput()?.value).toEqual('20000');
   });
