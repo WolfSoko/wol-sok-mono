@@ -5,12 +5,14 @@ This document outlines the plan for bringing all CDK and AWS deployments under a
 ## Current State
 
 ### CDK Stacks (Already Integrated)
+
 - `angular-examples-cdk`
 - `fourier-analysis-remote-cdk`
 - `shader-examples-remote-cdk`
 - `bacteria-game-remote-cdk`
 
 These already use:
+
 - `@wolsok/nx-aws-cdk-v2:deploy` executor
 - `tag:cdk` for filtering
 - Deploy workflow integration
@@ -18,6 +20,7 @@ These already use:
 ### Other AWS Resources (Not Yet Integrated)
 
 May include:
+
 - Lambda functions
 - S3 buckets
 - CloudFront distributions
@@ -30,6 +33,7 @@ May include:
 ### 1. Inventory Existing Deployments
 
 Identify all current deployment methods:
+
 - Manual AWS CLI scripts
 - Custom deployment scripts
 - GitHub Actions without Nx integration
@@ -38,6 +42,7 @@ Identify all current deployment methods:
 ### 2. Standardize CDK Patterns
 
 Create reusable CDK constructs:
+
 - Standard SPA hosting pattern (already exists as `spa-cdk-stack`)
 - Lambda function deployment pattern
 - API deployment pattern
@@ -122,6 +127,7 @@ export default async function runExecutor(
 ### 7. Testing Strategy
 
 Add deployment testing:
+
 - Dry-run deployments in PR checks
 - Smoke tests after deployment
 - Integration tests for deployed services
@@ -130,6 +136,7 @@ Add deployment testing:
 ### 8. Deployment Monitoring
 
 Add monitoring and alerting:
+
 - Deployment success/failure notifications
 - CloudWatch dashboard creation
 - Error tracking integration
@@ -148,30 +155,35 @@ Add monitoring and alerting:
 ## Migration Path
 
 ### Phase 1: Assess (1-2 weeks)
+
 - [ ] Inventory all current AWS resources
 - [ ] Document current deployment processes
 - [ ] Identify gaps in CDK coverage
 - [ ] Create migration plan
 
 ### Phase 2: Standardize (2-3 weeks)
+
 - [ ] Create missing CDK constructs
 - [ ] Update existing CDK stacks to follow patterns
 - [ ] Add deploy targets to all CDK projects
 - [ ] Test deployments in dev environment
 
 ### Phase 3: Integrate (2-3 weeks)
+
 - [ ] Update GitHub workflows
 - [ ] Configure environment-specific deployments
 - [ ] Add deployment testing
 - [ ] Document new processes
 
 ### Phase 4: Migrate (3-4 weeks)
+
 - [ ] Migrate non-CDK deployments to CDK
 - [ ] Update CI/CD pipelines
 - [ ] Train team on new processes
 - [ ] Monitor and adjust
 
 ### Phase 5: Optimize (Ongoing)
+
 - [ ] Add deployment metrics
 - [ ] Implement cost optimization
 - [ ] Add automated rollback
@@ -180,6 +192,7 @@ Add monitoring and alerting:
 ## Example: Lambda Function Deployment
 
 Before (manual script):
+
 ```bash
 #!/bin/bash
 npm run build
@@ -188,6 +201,7 @@ aws lambda update-function-code --function-name my-function --zip-file fileb://f
 ```
 
 After (Nx + CDK):
+
 ```typescript
 // apps/my-lambda-cdk/src/main.ts
 import * as lambda from 'aws-cdk-lib/aws-lambda';
@@ -207,6 +221,7 @@ export class MyLambdaStack extends cdk.Stack {
 ```
 
 Deploy with:
+
 ```bash
 nx deploy my-lambda-cdk
 ```

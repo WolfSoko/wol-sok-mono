@@ -85,6 +85,7 @@ Run `nx test ws-thanos` to execute unit tests.
 This package is published to npm as `@wolsok/thanos` using Nx Release.
 
 ### Local Testing (Dry Run)
+
 ```bash
 # Build the package
 nx build ws-thanos
@@ -94,18 +95,23 @@ nx release publish --dry-run
 ```
 
 ### Publishing via CI/CD
+
 The package is automatically published when:
+
 1. A release tag is created (e.g., `v4.8.7`)
 2. The deploy workflow detects changes affecting ws-thanos
 3. `nx release publish` runs in the CI/CD pipeline
 
 The workflow uses Nx's built-in release capabilities with:
+
 - Automatic versioning based on conventional commits
 - Changelog generation (see CHANGELOG.md in this directory)
 - NPM provenance for enhanced security
 
 ### Manual Publishing
+
 To manually publish (requires npm authentication):
+
 ```bash
 # Login to npm
 npm login
@@ -118,7 +124,9 @@ nx release publish
 ```
 
 ### Versioning
+
 This project uses Nx Release with independent versioning. Version bumps are determined by:
+
 - Conventional commit messages (feat: = minor, fix: = patch, BREAKING CHANGE: = major)
 - Manual version specification via `nx release version [version]`
 
