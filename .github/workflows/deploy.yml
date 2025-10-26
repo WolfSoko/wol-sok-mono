@@ -41,7 +41,7 @@ jobs:
         config:
           - app-type: npm-packages
             deploy-tag-suffix: npm-deployed
-            exclude-pattern: '*,!tag:published'
+            projects-filter: 'tag:published'
             extra-deploy-args: ''
           - app-type: non-cdk
             deploy-tag-suffix: non-cdk-deployed
