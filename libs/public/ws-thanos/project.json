@@ -35,6 +35,16 @@
         "codeCoverage": true,
         "tsConfig": "libs/public/ws-thanos/tsconfig.spec.json"
       }
+    },
+    "ct": {
+      "executor": "@nx/playwright:playwright",
+      "outputs": [
+        "{workspaceRoot}/playwright-report",
+        "{workspaceRoot}/test-results"
+      ],
+      "options": {
+        "config": "libs/public/ws-thanos/playwright-ct.config.ts"
+      }
     }
   }
 }

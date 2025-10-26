@@ -140,7 +140,10 @@ describe('Integration Test: WsThanosDirective', () => {
       });
     });
 
-    it('should emit complete when vaporize is complete', (done) => {
+    // SKIPPED: This test requires real browser features (html2canvas, canvas rendering, getComputedStyle)
+    // that are not properly simulated in jsdom. See Playwright Component Tests instead:
+    // libs/public/ws-thanos/src/ct/ws-thanos.directive.ct.spec.ts
+    it.skip('should emit complete when vaporize is complete', (done) => {
       combineLatest([
         firstValueFrom(directive.wsThanosComplete),
         directive.vaporize$(),
@@ -156,7 +159,7 @@ describe('Integration Test: WsThanosDirective', () => {
     )
   ): void {
     const thanosService = getWsThanosService();
-    spyOn(thanosService, 'vaporize').and.returnValue(vaporizeReturns);
+    jest.spyOn(thanosService, 'vaporize').mockReturnValue(vaporizeReturns);
   }
 
   function getWsThanosService(): WsThanosService {
