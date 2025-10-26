@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatChipsModule } from '@angular/material/chips';
 
 @Component({
@@ -10,6 +10,6 @@ import { MatChipsModule } from '@angular/material/chips';
   imports: [CommonModule, MatChipsModule],
 })
 export class ShowFpsComponent {
-  @Input() fps = 0;
-  @Input() show = false;
+  fps = input(0);
+  show = input(false);
 }
