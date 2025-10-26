@@ -330,7 +330,7 @@ Check:
 2. Does the package version in `package.json` already exist on npm?
 3. Run locally with `nx release publish --dry-run` to test package structure
 4. Is the build output in the correct location? Check `dist/libs/[package-name]`
-5. Is `@nx/js` package installed? It provides the publish executor
+5. Is Nx Release properly configured in `nx.json`?
 
 Common fixes:
 ```bash
