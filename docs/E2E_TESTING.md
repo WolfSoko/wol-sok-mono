@@ -8,7 +8,7 @@ All applications in the monorepo have Playwright E2E tests configured through th
 
 - **angular-examples**
 - **pacetrainer**
-- **bacteria-game-remote**  
+- **bacteria-game-remote**
 - **fourier-analysis-remote**
 - **rollapolla-analog**
 
@@ -21,6 +21,7 @@ npx nx e2e <project-name>
 ```
 
 Example:
+
 ```bash
 npx nx e2e angular-examples
 npx nx e2e pacetrainer
@@ -91,6 +92,7 @@ Playwright configuration is defined per-app in `playwright.config.ts`:
 E2E tests are automatically run in the CI/CD pipeline via the `.github/workflows/ci-cd.yml` workflow.
 
 The workflow runs:
+
 ```bash
 npx nx affected -t e2e-ci --parallel=1
 ```
@@ -120,6 +122,7 @@ npx nx e2e <project-name> -- --debug
 Test reports are generated in `dist/.playwright/<project-name>/playwright-report/`
 
 To view:
+
 ```bash
 npx playwright show-report dist/.playwright/<project-name>/playwright-report
 ```
