@@ -5,6 +5,7 @@ export default {
   preset: '../../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   coverageDirectory: '../../../coverage/libs/public/ws-thanos',
+  testPathIgnorePatterns: ['\\.ct\\.spec\\.ts$'],
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',
