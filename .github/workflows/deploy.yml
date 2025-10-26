@@ -73,7 +73,7 @@ jobs:
       - name: Configure npm authentication
         if: matrix.config.app-type == 'npm-packages'
         run: |
-          echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" >> .npmrc
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
           echo "Configured npm authentication using root .npmrc"
 
       - name: Find previous deployment tag
