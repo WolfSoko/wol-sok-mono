@@ -18,6 +18,7 @@ concurrency:
 permissions:
   issues: write
   contents: write
+  id-token: write # needed for npm provenance
 
 env:
   HUSKY: 0
@@ -27,6 +28,7 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 jobs:
   deploy:
@@ -37,9 +39,13 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          - app-type: npm-packages
+            deploy-tag-suffix: npm-deployed
+            projects-filter: 'tag:published'
+            extra-deploy-args: ''
           - app-type: non-cdk
             deploy-tag-suffix: non-cdk-deployed
-            exclude-pattern: 'tag:cdk'
+            exclude-pattern: 'tag:cdk,tag:published'
             extra-deploy-args: ''
           - app-type: cdk
             deploy-tag-suffix: cdk-deployed
@@ -58,6 +64,13 @@ jobs:
       - name: Install Deps
         uses: ./.github/actions/install-deps
 
+      - name: Setup Node.js for npm publishing
+        if: matrix.config.app-type == 'npm-packages'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org/'
+
       - name: Find previous deployment tag
         id: previous_deployment
         run: |
@@ -67,16 +80,41 @@ jobs:
           echo "NX_BASE=$PREVIOUS_DEPLOYMENT" >> $GITHUB_ENV
           echo "NX_HEAD=$RELEASE_VERSION" >> $GITHUB_ENV
 
-      - name: Show affected projects
+      - name: Show affected projects and set triggerRelease
         run: |
-          AFFECTED_PROJECTS=$(npx nx show projects --affected -t deploy --exclude='${{ matrix.config.exclude-pattern }}')
-          triggerRelease=$([[ -z $AFFECTED_PROJECTS ]] && echo "false" || echo "true")
-          echo "Trigger release: $triggerRelease for ${AFFECTED_PROJECTS}"
-          echo "triggerRelease=$triggerRelease" >> $GITHUB_ENV
-          echo "$([[ -z $AFFECTED_PROJECTS ]] && echo 'No deployable projects affected.' || echo 'Deployable projects affected. Start deployment!!!')" >> $GITHUB_STEP_SUMMARY
+          set_trigger_release() {
+            local affected="$1"
+            if [[ -z "$affected" ]]; then
+              echo "triggerRelease=false" >> $GITHUB_ENV
+              echo "Trigger release: false for ${affected}"
+              echo "$2" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "triggerRelease=true" >> $GITHUB_ENV
+              echo "Trigger release: true for ${affected}"
+              echo "$3" >> $GITHUB_STEP_SUMMARY
+            fi
+          }
+
+          if [[ "${{ matrix.config.app-type }}" == "npm-packages" ]]; then
+            AFFECTED_PROJECTS=$(npx nx show projects --affected --projects='tag:published')
+            set_trigger_release "$AFFECTED_PROJECTS" \
+              "No npm packages affected." \
+              "NPM packages affected. Start publishing!!!"
+          else
+            AFFECTED_PROJECTS=$(npx nx show projects --affected -t deploy --exclude='${{ matrix.config.exclude-pattern }}')
+            set_trigger_release "$AFFECTED_PROJECTS" \
+              "No deployable projects affected." \
+              "Deployable projects affected. Start deployment!!!"
+          fi
+      - name: Publish npm packages
+        if: success() && env.triggerRelease == 'true' && matrix.config.app-type == 'npm-packages'
+        run: npx nx release publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
 
       - name: Deploy Apps
-        if: success() && env.triggerRelease == 'true'
+        if: success() && env.triggerRelease == 'true' && matrix.config.app-type != 'npm-packages'
         run: npx nx affected --target=deploy --exclude='${{ matrix.config.exclude-pattern }}' ${{ matrix.config.extra-deploy-args}}
 
       - name: Tag deployment success

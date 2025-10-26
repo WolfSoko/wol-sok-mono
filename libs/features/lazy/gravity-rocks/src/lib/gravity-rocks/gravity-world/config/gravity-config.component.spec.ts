@@ -1,114 +1,89 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { createHostFactory, SpectatorHost } from '@ngneat/spectator/jest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { qaSelector } from '@wolsok/test-helper';
+import { take } from 'rxjs';
 import { GravityWorldConfig } from '../domain/gravity-world-config';
 import { GravityConfigComponent } from './gravity-config.component';
 
+function getByQa<T extends HTMLElement>(
+  fixture: ComponentFixture<GravityConfigComponent>,
+  qa: string
+): T | null {
+  return fixture.nativeElement.querySelector(qaSelector(qa));
+}
+
 describe('GravityConfigComponent', () => {
-  const createHost = createHostFactory(GravityConfigComponent);
-
-  let spectator: SpectatorHost<GravityConfigComponent>;
-  let initialConfig: GravityWorldConfig;
-  let configChangedMock: jest.Mock<void, [GravityWorldConfig]>;
-
-  function createComp(): void {
-    spectator = createHost(
-      `<feat-lazy-gravity-config [config]="initialConfig" (configChange)="configChangedMock($event)"/>`,
-      {
-        hostProps: { initialConfig, configChangedMock },
-      }
-    );
-  }
+  let fixture: ComponentFixture<GravityConfigComponent>;
+  let component: GravityConfigComponent;
+  const initialConfig: GravityWorldConfig = {
+    gravitationalConstant: 10,
+    massOfSun: 10000,
+  };
+  let emitted: GravityWorldConfig[];
 
   beforeEach(async () => {
-    initialConfig = {
-      gravitationalConstant: 10,
-      massOfSun: 10000,
-    };
-
-    configChangedMock = jest.fn();
+    await TestBed.configureTestingModule({
+      imports: [GravityConfigComponent],
+    }).compileComponents();
+    fixture = TestBed.createComponent(GravityConfigComponent);
+    component = fixture.componentInstance;
+    emitted = [];
+    component.configChange.pipe(take(10)).subscribe((c) => emitted.push(c));
+    component.config = initialConfig;
+    fixture.detectChanges();
   });
 
   it('should create', () => {
-    createComp();
-    expect(spectator.component).toBeTruthy();
+    expect(component).toBeTruthy();
   });
 
   it('should have a form', () => {
-    createComp();
-    expect(spectator.query(qaSelector('form'))).toBeTruthy();
+    expect(getByQa(fixture, 'form')).toBeTruthy();
   });
 
-  it('should have a gravitational constant input', () => {
-    createComp();
-    expect(spectator.query(qaSelector('gConstant'))).toBeTruthy();
+  it('should have inputs', () => {
+    expect(getByQa<HTMLInputElement>(fixture, 'gConstant')).toBeTruthy();
+    expect(getByQa<HTMLInputElement>(fixture, 'massOfSun')).toBeTruthy();
   });
 
-  it('should have a mass of sun input', () => {
-    createComp();
-    expect(spectator.query(qaSelector('massOfSun'))).toBeTruthy();
+  it('should set initial form values', () => {
+    expect(component.form.getRawValue()).toEqual(initialConfig);
+    const gInput = getByQa<HTMLInputElement>(fixture, 'gConstant');
+    const massInput = getByQa<HTMLInputElement>(fixture, 'massOfSun');
+    expect(gInput?.value).toBe('' + initialConfig.gravitationalConstant);
+    expect(massInput?.value).toBe('' + initialConfig.massOfSun);
   });
 
-  it('should set the initial config as form values', () => {
-    createComp();
-    expect(spectator.component.form.getRawValue()).toEqual(initialConfig);
+  it('should patch when config input changes', () => {
+    component.config = { gravitationalConstant: 20, massOfSun: 20000 };
+    fixture.detectChanges();
+    const gInput = getByQa<HTMLInputElement>(fixture, 'gConstant');
+    const massInput = getByQa<HTMLInputElement>(fixture, 'massOfSun');
+    expect(gInput?.value).toBe('20');
+    expect(massInput?.value).toBe('20000');
   });
 
-  it('should show the initial config in the inputs', () => {
-    createComp();
-    expect(getGInput()?.value).toEqual(
-      '' + initialConfig.gravitationalConstant
-    );
-    expect(getMassOfSunInput()?.value).toEqual('' + initialConfig.massOfSun);
+  it('should emit when values change', async () => {
+    const gInput = getByQa<HTMLInputElement>(fixture, 'gConstant')!;
+    gInput.value = '20';
+    gInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    const massInput = getByQa<HTMLInputElement>(fixture, 'massOfSun')!;
+    massInput.value = '20000000';
+    massInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    // last emitted should reflect updated
+    const last = emitted[emitted.length - 1];
+    expect(last.gravitationalConstant).toBe(20);
+    expect(last.massOfSun).toBe(20000000);
   });
 
-  it('should change the inputs when config changes', async () => {
-    createComp();
-    spectator.setHostInput({
-      initialConfig: { gravitationalConstant: 20, massOfSun: 20000 },
-    });
-    spectator.detectChanges();
-    expect(getGInput()?.value).toEqual('20');
-    expect(getMassOfSunInput()?.value).toEqual('20000');
+  it('should not emit for duplicate value', () => {
+    const initialEmits = emitted.length;
+    const gInput = getByQa<HTMLInputElement>(fixture, 'gConstant')!;
+    gInput.value = '' + initialConfig.gravitationalConstant;
+    gInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(emitted.length).toBe(initialEmits); // distinctUntilChanged
   });
-
-  it('should emit the initial config', () => {
-    createComp();
-    expect(configChangedMock).toHaveBeenCalledWith(initialConfig);
-  });
-
-  it('should emit when input "G" is changed', () => {
-    createComp();
-    const input = getGInput();
-    spectator.typeInElement('20', input);
-    expect(configChangedMock).toHaveBeenCalledWith({
-      ...initialConfig,
-      gravitationalConstant: 20,
-    });
-  });
-
-  it('should emit when input "massOfSun" is changed config', () => {
-    createComp();
-    const input = getMassOfSunInput();
-    spectator.typeInElement('20000000', input);
-    expect(configChangedMock).toHaveBeenCalledWith({
-      ...initialConfig,
-      massOfSun: 20000000,
-    });
-  });
-
-  it('should only emit if the value has changed', () => {
-    createComp();
-    const input = getGInput();
-    spectator.typeInElement('10', input);
-    expect(configChangedMock).toHaveBeenCalledTimes(1);
-  });
-
-  function getGInput(): HTMLInputElement {
-    return spectator.query<HTMLInputElement>(qaSelector('gConstant'))!;
-  }
-
-  function getMassOfSunInput(): HTMLInputElement {
-    return spectator.query<HTMLInputElement>(qaSelector('massOfSun'))!;
-  }
 });

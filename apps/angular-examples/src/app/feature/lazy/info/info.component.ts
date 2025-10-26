@@ -2,7 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  Input,
+  input,
   QueryList,
   signal,
   ViewChildren,
@@ -39,7 +39,7 @@ import { TechnologyComponent } from './technology/technology.component';
 export class InfoComponent {
   private destroy$ = inject<DestroyRef>(DestroyRef);
 
-  @Input() thanosDemo = false;
+  thanosDemo = input(false);
   @ViewChildren(TechnologyComponent) techCards!: QueryList<TechnologyComponent>;
   demoRunning = signal(false);
   private stopSub = new Subject<void>();
@@ -53,7 +53,7 @@ export class InfoComponent {
     });
   }
 
-  public technologies = [
+  public technologies = signal([
     new Technology(
       'Angular+',
       'http://angular.io/',
@@ -87,7 +87,7 @@ export class InfoComponent {
       'https://firebase.google.com/',
       'assets/logos/firebase.png'
     ),
-  ];
+  ]).asReadonly();
 
   startDemo(): void {
     this.demoRunning.set(true);
