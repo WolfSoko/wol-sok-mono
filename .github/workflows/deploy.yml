@@ -80,24 +80,32 @@ jobs:
           echo "NX_BASE=$PREVIOUS_DEPLOYMENT" >> $GITHUB_ENV
           echo "NX_HEAD=$RELEASE_VERSION" >> $GITHUB_ENV
 
-      - name: Show affected projects (npm packages)
-        if: matrix.config.app-type == 'npm-packages'
+      - name: Show affected projects and set triggerRelease
         run: |
-          AFFECTED_PROJECTS=$(npx nx show projects --affected --projects='tag:published')
-          triggerRelease=$([[ -z $AFFECTED_PROJECTS ]] && echo "false" || echo "true")
-          echo "Trigger release: $triggerRelease for ${AFFECTED_PROJECTS}"
-          echo "triggerRelease=$triggerRelease" >> $GITHUB_ENV
-          echo "$([[ -z $AFFECTED_PROJECTS ]] && echo 'No npm packages affected.' || echo 'NPM packages affected. Start publishing!!!')" >> $GITHUB_STEP_SUMMARY
+          set_trigger_release() {
+            local affected="$1"
+            if [[ -z "$affected" ]]; then
+              echo "triggerRelease=false" >> $GITHUB_ENV
+              echo "Trigger release: false for ${affected}"
+              echo "$2" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "triggerRelease=true" >> $GITHUB_ENV
+              echo "Trigger release: true for ${affected}"
+              echo "$3" >> $GITHUB_STEP_SUMMARY
+            fi
+          }
 
-      - name: Show affected projects (apps)
-        if: matrix.config.app-type != 'npm-packages'
-        run: |
-          AFFECTED_PROJECTS=$(npx nx show projects --affected -t deploy --exclude='${{ matrix.config.exclude-pattern }}')
-          triggerRelease=$([[ -z $AFFECTED_PROJECTS ]] && echo "false" || echo "true")
-          echo "Trigger release: $triggerRelease for ${AFFECTED_PROJECTS}"
-          echo "triggerRelease=$triggerRelease" >> $GITHUB_ENV
-          echo "$([[ -z $AFFECTED_PROJECTS ]] && echo 'No deployable projects affected.' || echo 'Deployable projects affected. Start deployment!!!')" >> $GITHUB_STEP_SUMMARY
-
+          if [[ "${{ matrix.config.app-type }}" == "npm-packages" ]]; then
+            AFFECTED_PROJECTS=$(npx nx show projects --affected --projects='tag:published')
+            set_trigger_release "$AFFECTED_PROJECTS" \
+              "No npm packages affected." \
+              "NPM packages affected. Start publishing!!!"
+          else
+            AFFECTED_PROJECTS=$(npx nx show projects --affected -t deploy --exclude='${{ matrix.config.exclude-pattern }}')
+            set_trigger_release "$AFFECTED_PROJECTS" \
+              "No deployable projects affected." \
+              "Deployable projects affected. Start deployment!!!"
+          fi
       - name: Publish npm packages
         if: success() && env.triggerRelease == 'true' && matrix.config.app-type == 'npm-packages'
         run: npx nx release publish
