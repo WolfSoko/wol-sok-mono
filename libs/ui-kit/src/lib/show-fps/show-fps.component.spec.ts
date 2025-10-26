@@ -1,64 +1,55 @@
-import { byText } from '@ngneat/spectator';
-import { createHostFactory, SpectatorHost } from '@ngneat/spectator/jest';
-
+import { ComponentRef } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ShowFpsComponent } from './show-fps.component';
 
 describe('ShowFpsComponent', () => {
-  const createHost = createHostFactory({
-    template: `<ws-shared-ui-show-fps [show]="true" [fps]="60"></ws-shared-ui-show-fps>`,
-    component: ShowFpsComponent,
-    imports: [ShowFpsComponent],
-    declareComponent: false,
+  let fixture: ComponentFixture<ShowFpsComponent>;
+  let compRef: ComponentRef<ShowFpsComponent>;
+
+  beforeEach(async () => {
+    fixture = TestBed.createComponent(ShowFpsComponent);
+    compRef = fixture.componentRef;
+  });
+  it('should create component', () => {
+    expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should create', () => {
-    const spectator = createHost();
-    expect(spectator.queryHost(ShowFpsComponent)).toBeTruthy();
+  it('should show fps when show is true', () => {
+    setInput(40.1, true);
+    expect(getFpsText()).toBe('40.1 FPS');
   });
 
-  it('should show fps if show is true', () => {
-    const spectator = createHost(
-      `<ws-shared-ui-show-fps [show]="true" [fps]="40.1" ></ws-shared-ui-show-fps>`
+  it('should hide when show is false', () => {
+    setInput(50, false);
+    expect(getFpsText()).toBeNull();
+  });
+
+  it('should update fps when value changes', () => {
+    setInput(40.1, true);
+    expect(getFpsText()).toBe('40.1 FPS');
+    setInput(30.2);
+    expect(getFpsText()).toBe('30.2 FPS');
+  });
+
+  it('should hide after being visible when toggled', () => {
+    setInput(60, true);
+    fixture.detectChanges();
+    expect(getFpsText()).toBe('60.0 FPS');
+    setInput(undefined, false);
+    fixture.detectChanges();
+    expect(getFpsText()).toBeNull();
+  });
+
+  function getFpsText() {
+    return (
+      (fixture.nativeElement.querySelector('.ws-ui-show-fps') as HTMLElement)
+        ?.textContent ?? null
     );
-    expect(spectator.query(byText('40.1 FPS'))).toExist();
-  });
+  }
 
-  it('should not show fps if show is false', () => {
-    const spectator = createHost(
-      `<ws-shared-ui-show-fps [show]="false" [fps]="40.1" ></ws-shared-ui-show-fps>`
-    );
-    expect(spectator.query(byText('40.1 FPS'))).not.toExist();
-  });
-
-  it('should update fps when changes', () => {
-    const spectator: SpectatorHost<ShowFpsComponent, { fps: number }> =
-      createHost(
-        `<ws-shared-ui-show-fps [show]="true" [fps]="fps" ></ws-shared-ui-show-fps>`,
-        {
-          hostProps: {
-            fps: 40.1,
-          },
-        }
-      );
-    expect(spectator.query(byText('40.1 FPS'))).toExist();
-    spectator.setHostInput('fps', 30.2);
-    spectator.fixture.detectChanges();
-    expect(spectator.query(byText('30.2 FPS'))).toExist();
-  });
-
-  it('should hide when show changes', () => {
-    const spectator: SpectatorHost<ShowFpsComponent, { showFps: boolean }> =
-      createHost(
-        `<ws-shared-ui-show-fps [show]="showFps" [fps]="60" ></ws-shared-ui-show-fps>`,
-        {
-          hostProps: {
-            showFps: true,
-          },
-        }
-      );
-    expect(spectator.query(byText('60.0 FPS'))).toExist();
-    spectator.setHostInput('showFps', false);
-    spectator.fixture.detectChanges();
-    expect(spectator.query(byText('60.0 FPS'))).not.toExist();
-  });
+  function setInput(fps?: number, show?: boolean) {
+    if (typeof fps !== 'undefined') compRef.setInput('fps', fps);
+    if (typeof show !== 'undefined') compRef.setInput('show', show);
+    fixture.detectChanges();
+  }
 });
