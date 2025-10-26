@@ -380,7 +380,7 @@ Planned improvements for the deployment workflow:
 3. **Rollback Support** - Automated rollback on deployment failures
 4. **Deployment Approval** - Manual approval gates for production deployments
 5. **Deployment Metrics** - Track deployment frequency and success rates
-6. **Version Management** - Automated version bumping with conventional commits
+6. **Version Management Enhancements** - Expand versioning to support multi-package releases, changelog automation, and integration with additional deployment tools beyond current Nx Release capabilities.
    This guide covers deployment processes for applications in the wol-sok-mono repository.
 
 ## Table of Contents
