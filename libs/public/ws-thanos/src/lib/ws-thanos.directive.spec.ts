@@ -4,7 +4,7 @@ import {
   QueryList,
   ViewChildren,
 } from '@angular/core';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { combineLatest, firstValueFrom, of } from 'rxjs';
 import image from '../assets/how-to-be-funny.png';
 import { AnimationState } from './animation.state';
@@ -94,8 +94,8 @@ describe('Integration Test: WsThanosDirective', () => {
   let hostFixture: ComponentFixture<HostComponent>;
   let hostComp: HostComponent;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
       imports: [WsThanosDirective, HostComponent],
       providers: [
         provideWsThanosOptions({
@@ -104,7 +104,7 @@ describe('Integration Test: WsThanosDirective', () => {
         }),
       ],
     }).compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     hostFixture = TestBed.createComponent(HostComponent);
