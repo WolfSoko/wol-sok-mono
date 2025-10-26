@@ -22,7 +22,8 @@ import { ROUTER_LINKS } from './router-links.token';
   imports: [MainToolbarComponent, SideNavComponent, RouterOutlet],
 })
 export class AppComponent {
-  private titleService = inject(TitleService);
+  // inject title service to trigger setting of title
+  private _titleService = inject(TitleService);
   routerLinks = inject<MainNavRoutes>(ROUTER_LINKS);
   private env = inject<Environment>(ENV_TOKEN);
 
