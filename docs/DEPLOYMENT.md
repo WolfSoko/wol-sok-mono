@@ -108,9 +108,9 @@ NPM packages are automatically published when:
 The workflow:
 - Checks out the release tag
 - Installs dependencies
-- Sets up Node.js with npm registry authentication
+- Sets up Node.js with npm registry authentication (via `setup-node` action)
 - Runs `nx release publish` to publish affected packages
-- Configures npm authentication by appending `NPM_TOKEN` to `.npmrc`
+- Uses `NODE_AUTH_TOKEN` environment variable for authentication
 - Enables npm provenance for enhanced security
 - Tags the deployment as `{version}-npm-deployed`
 
