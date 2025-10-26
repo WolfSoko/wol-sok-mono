@@ -83,7 +83,7 @@ jobs:
       - name: Show affected projects (npm packages)
         if: matrix.config.app-type == 'npm-packages'
         run: |
-          AFFECTED_PROJECTS=$(npx nx show projects --affected --projects='${{ matrix.config.exclude-pattern }}')
+          AFFECTED_PROJECTS=$(npx nx show projects --affected --projects='tag:published')
           triggerRelease=$([[ -z $AFFECTED_PROJECTS ]] && echo "false" || echo "true")
           echo "Trigger release: $triggerRelease for ${AFFECTED_PROJECTS}"
           echo "triggerRelease=$triggerRelease" >> $GITHUB_ENV
