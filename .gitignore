@@ -22,6 +22,7 @@
 .idea/sonarlint/issuestore/
 .idea/aws.xml
 .idea/vcs.xml
+.idea/nx-angular-config.xml
 
 # IDE - VSCode
 .vscode/*
