@@ -4,9 +4,13 @@ import {
   BrowserTestingModule,
   platformBrowserTesting,
 } from '@angular/platform-browser/testing';
+import { provideZonelessChangeDetection } from '@angular/core';
 
 // First, initialize the Angular testing environment.
 getTestBed().initTestEnvironment(
   BrowserTestingModule,
-  platformBrowserTesting()
+  platformBrowserTesting(),
+  {
+    providers: [provideZonelessChangeDetection()],
+  }
 );
