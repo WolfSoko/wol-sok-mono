@@ -129,6 +129,7 @@ npx playwright show-report dist/.playwright/<project-name>/playwright-report
 
 ## Notes
 
-- **Karma**: Karma is still used for **unit tests** (not E2E tests) in some libraries like `ws-thanos`. This is expected and correct.
+- **Unit Tests**: All libraries use **Jest** for unit testing, including component tests that need DOM access.
+- **E2E Tests**: All applications use **Playwright** for end-to-end testing.
 - **Nx Plugin**: The `@nx/playwright` plugin automatically infers E2E targets for projects with a `playwright.config.ts` file.
 - **No Manual Setup Needed**: E2E targets are auto-configured by Nx based on the presence of Playwright config files.
