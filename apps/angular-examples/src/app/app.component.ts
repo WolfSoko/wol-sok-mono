@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Angulartics2GoogleTagManager } from 'angulartics2';
 import { Environment } from '../environments/environment.type';
@@ -21,13 +26,13 @@ export class AppComponent {
   routerLinks = inject<MainNavRoutes>(ROUTER_LINKS);
   private env = inject<Environment>(ENV_TOKEN);
 
-  appVersion: string;
+  appVersion = signal('');
 
   constructor() {
     const gtmManager = inject(Angulartics2GoogleTagManager);
     const env = this.env;
 
     gtmManager.startTracking();
-    this.appVersion = `angular-examples@${env.version ?? 'next'}`;
+    this.appVersion.set(`angular-examples@${env.version ?? 'next'}`);
   }
 }

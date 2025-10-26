@@ -26,9 +26,9 @@
     </mat-card-header>
     <mat-card-content>
       <div class="technology-cards">
-        @for (tech of technologies; track tech; let i = $index) {
+        @for (tech of technologies(); track tech; let i = $index) {
           <app-technology
-            [autoVaporize]="thanosDemo"
+            [autoVaporize]="thanosDemo()"
             [autoVaporizeAfter]="5000 * i"
             [title]="tech.title"
             [image]="tech.image"
