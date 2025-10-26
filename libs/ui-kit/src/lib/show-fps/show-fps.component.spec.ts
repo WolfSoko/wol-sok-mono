@@ -42,6 +42,7 @@ describe('ShowFpsComponent', () => {
       );
     expect(spectator.query(byText('40.1 FPS'))).toExist();
     spectator.setHostInput('fps', 30.2);
+    spectator.fixture.detectChanges();
     expect(spectator.query(byText('30.2 FPS'))).toExist();
   });
 
@@ -57,6 +58,7 @@ describe('ShowFpsComponent', () => {
       );
     expect(spectator.query(byText('60.0 FPS'))).toExist();
     spectator.setHostInput('showFps', false);
+    spectator.fixture.detectChanges();
     expect(spectator.query(byText('60.0 FPS'))).not.toExist();
   });
 });
