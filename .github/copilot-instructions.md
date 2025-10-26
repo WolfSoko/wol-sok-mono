@@ -2,6 +2,9 @@
 
 This repository is a monorepo of Angular+ experiments and examples, managed with Nx. It showcases science algorithms, shader programming with WebGL, AI examples, and uses Firebase for persistence.
 
+> **📚 Comprehensive Documentation Available**  
+> For detailed information, see the `docs/` folder with guides on [Getting Started](../docs/GETTING_STARTED.md), [Architecture](../docs/ARCHITECTURE.md), [Testing](../docs/TESTING.md), [Contributing](../docs/CONTRIBUTING.md), and [Deployment](../docs/DEPLOYMENT.md).
+
 ## Repository Overview
 
 - **Tech Stack**: Angular 20+, TypeScript 5.9+, Nx 22+, RxJS 7+, Angular Material, Firebase
@@ -219,4 +222,15 @@ When submitting PRs:
 
 ---
 
-For more detailed guidelines, see `AGENTS.md` in the repository root.
+## Documentation
+
+For comprehensive information, refer to these guides in the `docs/` folder:
+
+- **[Getting Started Guide](../docs/GETTING_STARTED.md)** - Complete setup instructions, prerequisites, troubleshooting, and IDE configuration
+- **[Architecture Overview](../docs/ARCHITECTURE.md)** - Monorepo structure, technology stack, design principles, and development workflow
+- **[Testing Guide](../docs/TESTING.md)** - Unit testing (Jest), E2E testing (Playwright), best practices, and common patterns
+- **[Contributing Guide](../docs/CONTRIBUTING.md)** - Contribution workflow, code standards, commit conventions, and PR process
+- **[Deployment Guide](../docs/DEPLOYMENT.md)** - Firebase, AWS CDK, and GitHub Pages deployment procedures with rollback steps
+- **[Angular Framework Overview](../docs/ANGULAR.md)** - Angular patterns, Signals, RxJS, and modern Angular features used in this monorepo
+
+For additional guidelines, see `AGENTS.md` in the repository root.
