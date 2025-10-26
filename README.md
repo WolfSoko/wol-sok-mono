@@ -11,6 +11,7 @@ A monorepo of Angular applications showcasing interactive visualizations, scient
 ## About This Project
 
 This repository contains multiple Angular applications demonstrating various topics including:
+
 - **Scientific Algorithms**: Poisson distribution, Fourier analysis, reaction-diffusion systems
 - **Graphics & Visualization**: WebGL shaders, Three.js 3D graphics, p5.js creative coding
 - **Machine Learning**: Neural networks and TensorFlow.js examples
