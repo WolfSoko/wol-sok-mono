@@ -69,12 +69,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Configure npm authentication
-        if: matrix.config.app-type == 'npm-packages'
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
-          echo "Configured npm authentication using root .npmrc"
+          registry-url: 'https://registry.npmjs.org/'
 
       - name: Find previous deployment tag
         id: previous_deployment
@@ -107,7 +102,7 @@ jobs:
         if: success() && env.triggerRelease == 'true' && matrix.config.app-type == 'npm-packages'
         run: npx nx release publish
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
       - name: Deploy Apps
