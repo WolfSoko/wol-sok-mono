@@ -21,6 +21,7 @@ This project utilizes the features of [Nx](https://nx.dev/l/a/getting-started/in
 ## Documentation
 
 - **[Angular Framework Overview](./docs/ANGULAR.md)** - Comprehensive guide to Angular and how it's used in this monorepo
+- **[E2E Testing with Playwright](./docs/E2E_TESTING.md)** - Guide to end-to-end testing using Playwright
 
 ## ws-thanos
 
