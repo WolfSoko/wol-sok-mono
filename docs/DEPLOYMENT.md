@@ -328,7 +328,7 @@ Check:
 
 1. **For npm packages**: Does the project have the `published` tag? Run `nx show projects --projects='tag:published'`
 2. **For apps**: Does the project have a `deploy` target in `project.json`?
-3. Are there affected changes? Run `nx show projects --affected --projects='tag:published'` or `nx show projects --affected -t deploy`
+3. Are there affected changes? Run `nx show projects --affected --projects='tag:published'`
 4. Are the tags correct? Check project tags match the deployment type
 
 ### NPM Publish Fails
