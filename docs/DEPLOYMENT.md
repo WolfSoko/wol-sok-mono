@@ -110,7 +110,7 @@ The workflow:
 - Installs dependencies
 - Sets up Node.js with npm registry authentication
 - Runs `nx release publish` to publish affected packages
-- Uses `NODE_AUTH_TOKEN` from `NPM_TOKEN` secret
+- Configures npm authentication by appending `NPM_TOKEN` to `.npmrc`
 - Enables npm provenance for enhanced security
 - Tags the deployment as `{version}-npm-deployed`
 
