@@ -1,0 +1,65 @@
+{
+  "name": "ws-thanos-test-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/ws-thanos-test-app/src",
+  "prefix": "app",
+  "tags": ["type:test-app"],
+  "targets": {
+    "build": {
+      "executor": "@angular-devkit/build-angular:browser",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/ws-thanos-test-app",
+        "index": "apps/ws-thanos-test-app/src/index.html",
+        "main": "apps/ws-thanos-test-app/src/main.ts",
+        "tsConfig": "apps/ws-thanos-test-app/tsconfig.app.json",
+        "assets": [],
+        "styles": ["apps/ws-thanos-test-app/src/styles.css"],
+        "scripts": []
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false,
+          "buildOptimizer": true
+        },
+        "development": {
+          "buildOptimizer": false,
+          "optimization": false,
+          "vendorChunk": true,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular-devkit/build-angular:dev-server",
+      "configurations": {
+        "production": {
+          "buildTarget": "ws-thanos-test-app:build:production"
+        },
+        "development": {
+          "buildTarget": "ws-thanos-test-app:build:development"
+        }
+      },
+      "defaultConfiguration": "development",
+      "options": {
+        "port": 4350
+      }
+    },
+    "e2e": {
+      "executor": "@nx/playwright:playwright",
+      "outputs": ["{workspaceRoot}/playwright-report", "{workspaceRoot}/test-results"],
+      "options": {
+        "config": "apps/ws-thanos-test-app/playwright.config.ts"
+      }
+    }
+  }
+}
