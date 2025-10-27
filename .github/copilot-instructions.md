@@ -98,8 +98,6 @@ npx nx affected -t lint                   # Lint affected projects
 - ❌ **DO NOT use *ngIf, *ngFor, \*ngSwitch** - use @if, @for, @switch instead
 - ❌ **DO NOT use traditional properties** - use signals instead
 
-Other guidelines:
-
 - Use **strongly typed APIs** - avoid `any` unless absolutely necessary
 - Mark class members as `public` or `private` explicitly
 - Follow Angular style guide conventions
@@ -117,6 +115,7 @@ Other guidelines:
 
 - This repo uses **Signals** for local component state
 - This repo uses **Akita** and **Elf** for global state management
+- This repo uses **Akita** and **Elf** for state management
 - Follow existing state management patterns when working with stores
 
 ## Testing Guidelines
