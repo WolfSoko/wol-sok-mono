@@ -200,7 +200,7 @@ npx nx graph                              # Visualize dependency graph
 
 ## Documentation
 
-- **[Angular Framework Overview](./docs/ANGULAR.md)** - Comprehensive Angular guide
+- **[Angular Framework Overview](../docs/ANGULAR.md)** - Comprehensive Angular guide
 - **[SECURITY.md](../SECURITY.md)** - Security guidelines
 - **[AGENTS.md](../AGENTS.md)** - Additional agent instructions
 
