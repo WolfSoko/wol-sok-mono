@@ -48,6 +48,7 @@ sudo apt-get install -y build-essential python3 libx11-dev libxi-dev libxext-dev
 #### Windows
 
 Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022):
+
 - Select "Desktop development with C++"
 - Or use: `npm install --global windows-build-tools`
 
@@ -118,6 +119,7 @@ npx nx show projects
 1. **Install system build tools** (see [Prerequisites](#system-dependencies-for-node-gyp))
 
 2. **Clear npm cache**:
+
    ```bash
    npm cache clean --force
    rm -rf node_modules package-lock.json
@@ -125,6 +127,7 @@ npx nx show projects
    ```
 
 3. **Set Python version** (if you have multiple Python installations):
+
    ```bash
    npm config set python /usr/bin/python3
    ```
@@ -141,10 +144,11 @@ npx nx show projects
 **Solutions**:
 
 1. **Kill process on port**:
+
    ```bash
    # macOS/Linux
    lsof -ti:4200 | xargs kill -9
-   
+
    # Windows
    netstat -ano | findstr :4200
    taskkill /PID <PID> /F
@@ -162,6 +166,7 @@ npx nx show projects
 **Solutions**:
 
 1. **Increase Node.js memory**:
+
    ```bash
    export NODE_OPTIONS="--max_old_space_size=8192"
    # Add to ~/.bashrc or ~/.zshrc for persistence
@@ -272,22 +277,26 @@ npm run lint
 ### Daily Workflow
 
 1. **Pull latest changes**:
+
    ```bash
    git checkout main
    git pull origin main
    ```
 
 2. **Update dependencies** (if needed):
+
    ```bash
    npm ci
    ```
 
 3. **Create a feature branch**:
+
    ```bash
    git checkout -b feat/my-feature
    ```
 
 4. **Make changes** and test locally:
+
    ```bash
    npx nx serve <project>
    npx nx test <project>
@@ -295,6 +304,7 @@ npm run lint
    ```
 
 5. **Commit changes** (following [Conventional Commits](https://www.conventionalcommits.org/)):
+
    ```bash
    git add .
    git commit -m "feat(pacetrainer): add new timer feature"

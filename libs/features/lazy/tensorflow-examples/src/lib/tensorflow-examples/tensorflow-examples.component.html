@@ -5,7 +5,13 @@
 </mat-toolbar>
 <nav mat-tab-nav-bar [tabPanel]="tabPanel">
   @for (link of navLinks; track link) {
-    <a mat-tab-link [routerLink]="link.path" routerLinkActive="active" #rla="routerLinkActive" [active]="rla.isActive">
+    <a
+      mat-tab-link
+      [routerLink]="link.path"
+      routerLinkActive="active"
+      #rla="routerLinkActive"
+      [active]="rla.isActive"
+    >
       {{ link.label }}
     </a>
   }

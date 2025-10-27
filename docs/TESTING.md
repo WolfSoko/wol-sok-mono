@@ -193,7 +193,10 @@ it('should update with OnPush', () => {
 
 ```typescript
 import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { UserService } from './user.service';
 
 describe('UserService', () => {
@@ -202,10 +205,7 @@ describe('UserService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        UserService,
-        provideHttpClientTesting(),
-      ],
+      providers: [UserService, provideHttpClientTesting()],
     });
 
     service = TestBed.inject(UserService);
@@ -219,7 +219,7 @@ describe('UserService', () => {
   it('should fetch users', () => {
     const mockUsers = [{ id: 1, name: 'John' }];
 
-    service.getUsers().subscribe(users => {
+    service.getUsers().subscribe((users) => {
       expect(users).toEqual(mockUsers);
     });
 
@@ -270,9 +270,7 @@ describe('ComponentWithDeps', () => {
 
     TestBed.configureTestingModule({
       imports: [MyComponent],
-      providers: [
-        { provide: DataService, useValue: mockService },
-      ],
+      providers: [{ provide: DataService, useValue: mockService }],
     });
 
     const fixture = TestBed.createComponent(MyComponent);
@@ -519,9 +517,7 @@ Don't make real HTTP calls or access real databases:
 ```typescript
 // ✓ Good: Mock HTTP client
 TestBed.configureTestingModule({
-  providers: [
-    provideHttpClientTesting(),
-  ],
+  providers: [provideHttpClientTesting()],
 });
 
 // ✗ Bad: Real HTTP calls in tests
@@ -717,6 +713,7 @@ it('should navigate to detail page', async () => {
 ## Getting Help
 
 If you have questions about testing:
+
 - Check existing test files for examples
 - Review this guide and linked resources
 - Ask in team discussions or issues

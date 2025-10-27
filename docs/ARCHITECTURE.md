@@ -58,8 +58,9 @@ wol-sok-mono/
 ### Production Applications
 
 #### 1. **angular-examples** (Main Application)
+
 - **Purpose**: Showcase of Angular features, algorithms, and visualizations
-- **Features**: 
+- **Features**:
   - Interactive algorithm demonstrations
   - WebGL shader examples
   - Neural network visualizations
@@ -69,6 +70,7 @@ wol-sok-mono/
 - **Tech**: Angular 20, Angular Material, Three.js, p5.js
 
 #### 2. **pacetrainer**
+
 - **Purpose**: Training pace calculator and workout planner
 - **Features**: Pace calculations, training plans, workout tracking
 - **Build**: Vite-based (via Analog.js)
@@ -76,6 +78,7 @@ wol-sok-mono/
 - **Tech**: Angular 20, Analog.js, Angular Material
 
 #### 3. **rollapolla-analog**
+
 - **Purpose**: Experimental application using Analog.js
 - **Build**: Vite-based with SSR support
 - **Deployment**: Firebase Hosting
