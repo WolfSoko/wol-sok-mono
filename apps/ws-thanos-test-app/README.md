@@ -4,7 +4,7 @@ This is a dedicated test application for the `@wolsok/ws-thanos` directive. It p
 
 **Modern Angular Features:**
 
-- ✨ **Zoneless Change Detection** - Uses `provideExperimentalZonelessChangeDetection()`
+- ✨ **Zoneless Change Detection** - Uses `provideZonelessChangeDetection()`
 - 🎯 **Signals** - State management with Angular signals
 - 🔀 **@if Syntax** - Modern control flow instead of \*ngIf
 - ⚡ **OnPush Strategy** - Optimized change detection
@@ -90,7 +90,7 @@ The application provides three test scenarios:
 
 ## Implementation Details
 
-- **Zoneless**: Uses `provideExperimentalZonelessChangeDetection()` for better performance
+- **Zoneless**: Uses `provideZonelessChangeDetection()` for better performance
 - **Signals**: State managed with Angular signals instead of traditional properties
 - **@if Syntax**: Modern control flow with @if instead of \*ngIf directives
 - **OnPush Strategy**: Change detection optimized with `ChangeDetectionStrategy.OnPush`

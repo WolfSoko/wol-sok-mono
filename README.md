@@ -10,7 +10,7 @@ A monorepo of Angular applications showcasing interactive visualizations, scient
 
 **Modern Angular Stack:**
 
-- ⚡ **Zoneless Change Detection** - All apps use experimental zoneless mode for better performance
+- ⚡ **Zoneless Change Detection** - All apps use zoneless mode for better performance
 - 🎯 **Signals** - Reactive state management with Angular signals
 - 🔀 **Modern Control Flow** - @if, @for, @switch syntax throughout
 - 📦 **Standalone Components** - No NgModules, pure standalone architecture

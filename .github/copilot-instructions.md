@@ -4,7 +4,7 @@ This repository is a monorepo of Angular+ experiments and examples, managed with
 
 **🔥 IMPORTANT: This repository uses ZONELESS Angular everywhere!**
 
-- All apps use `provideExperimentalZonelessChangeDetection()`
+- All apps use `provideZonelessChangeDetection()`
 - Use signals for state management, not traditional properties
 - Use @if, @for, @switch control flow instead of *ngIf, *ngFor, \*ngSwitch
 - Use OnPush change detection strategy
@@ -93,7 +93,7 @@ npx nx affected -t lint                   # Lint affected projects
 - ✅ **Use signals** for reactive state: `myValue = signal(0)`
 - ✅ **Use @if/@for/@switch** instead of *ngIf/*ngFor/\*ngSwitch
 - ✅ **Use OnPush** change detection strategy on all components
-- ✅ **Use provideExperimentalZonelessChangeDetection()** in bootstrapApplication
+- ✅ **Use provideZonelessChangeDetection()** in bootstrapApplication
 - ❌ **DO NOT use Zone.js** or traditional change detection
 - ❌ **DO NOT use *ngIf, *ngFor, \*ngSwitch** - use @if, @for, @switch instead
 - ❌ **DO NOT use traditional properties** - use signals instead
