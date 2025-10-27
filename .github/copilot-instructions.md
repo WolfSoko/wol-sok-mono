@@ -109,6 +109,7 @@ Other guidelines:
 ### Code Style
 
 - **2-space indentation** (enforced by Prettier)
+- **ALWAYS run `npx nx format:write` before committing** to ensure all files are properly formatted
 - Run Prettier and ESLint before committing (via Husky pre-commit hooks)
 - Follow existing patterns in the codebase
 

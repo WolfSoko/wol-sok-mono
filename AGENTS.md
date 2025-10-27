@@ -23,6 +23,7 @@
 - Filenames: kebab-case (e.g., `training-live-state.component.ts`); tests end with `.spec.ts`.
 - Prefer strongly typed APIs and explicit `public`/`private` in classes.
 - Linting: ESLint (`eslint*.config.*`). Formatting: Prettier (`.prettierrc.json`). Pre-commit runs via Husky + lint-staged.
+- **IMPORTANT**: Always run `npx nx format:write` before committing to ensure all files are properly formatted.
 
 ## Testing Guidelines
 
