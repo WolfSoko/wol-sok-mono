@@ -3,7 +3,9 @@ import { test, expect } from '@playwright/test';
 test.describe('WsThanos Directive E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('h1')).toContainText('WsThanos Directive Test Application');
+    await expect(page.locator('h1')).toContainText(
+      'WsThanos Directive Test Application'
+    );
   });
 
   test('should render the test application', async ({ page }) => {
@@ -28,7 +30,9 @@ test.describe('WsThanos Directive E2E Tests', () => {
     await page.waitForTimeout(200);
 
     // Check opacity is decreasing (animation in progress)
-    const opacity = await target.evaluate(el => window.getComputedStyle(el).opacity);
+    const opacity = await target.evaluate(
+      (el) => window.getComputedStyle(el).opacity
+    );
     expect(parseFloat(opacity)).toBeLessThan(1);
 
     // Wait for animation to complete and element to be removed
@@ -41,7 +45,9 @@ test.describe('WsThanos Directive E2E Tests', () => {
     await expect(page.getByTestId('status-test1')).toBeVisible();
   });
 
-  test('should vaporize and restore element (fade back in)', async ({ page }) => {
+  test('should vaporize and restore element (fade back in)', async ({
+    page,
+  }) => {
     const target = page.getByTestId('vaporize-restore');
     const button = page.getByTestId('btn-vaporize-restore');
 
@@ -56,7 +62,9 @@ test.describe('WsThanos Directive E2E Tests', () => {
     await page.waitForTimeout(200);
 
     // Check opacity is decreasing
-    const opacityDuring = await target.evaluate(el => window.getComputedStyle(el).opacity);
+    const opacityDuring = await target.evaluate(
+      (el) => window.getComputedStyle(el).opacity
+    );
     expect(parseFloat(opacityDuring)).toBeLessThan(1);
 
     // Wait for vaporization animation to complete
@@ -69,7 +77,9 @@ test.describe('WsThanos Directive E2E Tests', () => {
     await page.waitForTimeout(1000);
 
     // Element should be faded back to opacity 1 (or close to it)
-    const finalOpacity = await target.evaluate(el => window.getComputedStyle(el).opacity);
+    const finalOpacity = await target.evaluate(
+      (el) => window.getComputedStyle(el).opacity
+    );
     expect(parseFloat(finalOpacity)).toBeGreaterThan(0.9);
 
     // Completion event should have fired
@@ -119,10 +129,16 @@ test.describe('WsThanos Directive E2E Tests', () => {
     await page.waitForTimeout(200);
 
     // All should be fading
-    const opacity1 = await element1.evaluate(el => window.getComputedStyle(el).opacity);
-    const opacity2 = await element2.evaluate(el => window.getComputedStyle(el).opacity);
-    const opacity3 = await element3.evaluate(el => window.getComputedStyle(el).opacity);
-    
+    const opacity1 = await element1.evaluate(
+      (el) => window.getComputedStyle(el).opacity
+    );
+    const opacity2 = await element2.evaluate(
+      (el) => window.getComputedStyle(el).opacity
+    );
+    const opacity3 = await element3.evaluate(
+      (el) => window.getComputedStyle(el).opacity
+    );
+
     expect(parseFloat(opacity1)).toBeLessThan(1);
     expect(parseFloat(opacity2)).toBeLessThan(1);
     expect(parseFloat(opacity3)).toBeLessThan(1);

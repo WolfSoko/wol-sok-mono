@@ -1,6 +1,5 @@
 ## 16.1.0 (2024-02-27)
 
-
 ### 🚀 Features
 
 - nrwl/workspace migrate to 14.1.4
@@ -9,7 +8,7 @@
 
 - ✨ extract lib for cdk spa stack
 
-- ***:** rename sc-thanos ws-thanos
+- **\*:** rename sc-thanos ws-thanos
 
 - **ws-thanos:** update version to 3.0.0
 
@@ -19,11 +18,9 @@
 
 - **release:** use release please to CD ws-thanos
 
-
 ### 🔥 Performance
 
 - ⚡️ add willReadFrequently: true to canvases
-
 
 ### 🩹 Fixes
 
@@ -55,8 +52,7 @@
 
 - **deps:** :arrow_up: update nx monorepo to v17
 
-
-### ❤️  Thank You
+### ❤️ Thank You
 
 - Renovate Bot GitHub
 - Wolfram

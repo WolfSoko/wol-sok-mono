@@ -56,7 +56,10 @@
     },
     "e2e": {
       "executor": "@nx/playwright:playwright",
-      "outputs": ["{workspaceRoot}/playwright-report", "{workspaceRoot}/test-results"],
+      "outputs": [
+        "{workspaceRoot}/playwright-report",
+        "{workspaceRoot}/test-results"
+      ],
       "options": {
         "config": "apps/ws-thanos-test-app/playwright.config.ts"
       }

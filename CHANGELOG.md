@@ -4,3090 +4,2659 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.78.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.47-non-cdk-deployed...v4.78.0) (2025-10-25)
 
-
 ### Features
 
-* ✨ enhance login and toolbar components with improved styling and functionality ([25373b9](https://github.com/WolfSoko/wol-sok-mono/commit/25373b9cfd486111c761c258222d50e4bbcda136))
-* ✨ improve button formatting and enhance SCSS theme structure ([ba9b7dd](https://github.com/WolfSoko/wol-sok-mono/commit/ba9b7dd00102232230472f8114fe1ba36b180f08))
-* ✨ use newest angular material theming ([28082b8](https://github.com/WolfSoko/wol-sok-mono/commit/28082b852bcf71e95bb90fa6bd82fc750fa8cfa2))
+- ✨ enhance login and toolbar components with improved styling and functionality ([25373b9](https://github.com/WolfSoko/wol-sok-mono/commit/25373b9cfd486111c761c258222d50e4bbcda136))
+- ✨ improve button formatting and enhance SCSS theme structure ([ba9b7dd](https://github.com/WolfSoko/wol-sok-mono/commit/ba9b7dd00102232230472f8114fe1ba36b180f08))
+- ✨ use newest angular material theming ([28082b8](https://github.com/WolfSoko/wol-sok-mono/commit/28082b852bcf71e95bb90fa6bd82fc750fa8cfa2))
 
 ## [4.77.47](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.46-non-cdk-deployed...v4.77.47) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** update eslint monorepo to v9.38.0 ([d8ecfbc](https://github.com/WolfSoko/wol-sok-mono/commit/d8ecfbc214a6192fbbf8e21ab38a4b8f7a4673f0))
+- **deps:** update eslint monorepo to v9.38.0 ([d8ecfbc](https://github.com/WolfSoko/wol-sok-mono/commit/d8ecfbc214a6192fbbf8e21ab38a4b8f7a4673f0))
 
 ## [4.77.46](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.45-non-cdk-deployed...v4.77.46) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** update dependency vitest-mock-extended to v3.1.0 ([28d5a66](https://github.com/WolfSoko/wol-sok-mono/commit/28d5a66c7cd01d92a845179e0baf40582ad77948))
+- **deps:** update dependency vitest-mock-extended to v3.1.0 ([28d5a66](https://github.com/WolfSoko/wol-sok-mono/commit/28d5a66c7cd01d92a845179e0baf40582ad77948))
 
 ## [4.77.45](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.44-non-cdk-deployed...v4.77.45) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** update dependency tsx to v4.20.6 ([7b20a7a](https://github.com/WolfSoko/wol-sok-mono/commit/7b20a7a5b01a3cd67237bb164ad1dcff7004e283))
+- **deps:** update dependency tsx to v4.20.6 ([7b20a7a](https://github.com/WolfSoko/wol-sok-mono/commit/7b20a7a5b01a3cd67237bb164ad1dcff7004e283))
 
 ## [4.77.44](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.43-non-cdk-deployed...v4.77.44) (2025-10-25)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency p5 to v2 ([0043f93](https://github.com/WolfSoko/wol-sok-mono/commit/0043f93c44c4ded5fdf828c1852342572feaddb7))
+- **deps:** update dependency p5 to v2 ([0043f93](https://github.com/WolfSoko/wol-sok-mono/commit/0043f93c44c4ded5fdf828c1852342572feaddb7))
 
 ## [4.77.43](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.42-non-cdk-deployed...v4.77.43) (2025-10-25)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency mathjs to v15 ([5526f50](https://github.com/WolfSoko/wol-sok-mono/commit/5526f50cc1b9b704d530207d082a47a7f17006e9))
-* **deps:** update dependency zod to v4 ([76f2a18](https://github.com/WolfSoko/wol-sok-mono/commit/76f2a186df5a42de9c9e2c73bc6f42b55e649303))
+- **deps:** update dependency mathjs to v15 ([5526f50](https://github.com/WolfSoko/wol-sok-mono/commit/5526f50cc1b9b704d530207d082a47a7f17006e9))
+- **deps:** update dependency zod to v4 ([76f2a18](https://github.com/WolfSoko/wol-sok-mono/commit/76f2a186df5a42de9c9e2c73bc6f42b55e649303))
 
 ## [4.77.42](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.41-non-cdk-deployed...v4.77.42) (2025-10-25)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency marked to v16 ([05ec15c](https://github.com/WolfSoko/wol-sok-mono/commit/05ec15cee213013678f34af1253078a0b06f6bda))
-
+- **deps:** update dependency marked to v16 ([05ec15c](https://github.com/WolfSoko/wol-sok-mono/commit/05ec15cee213013678f34af1253078a0b06f6bda))
 
 ### Chore
 
-* **deps:** update vitest monorepo to v4 ([f762565](https://github.com/WolfSoko/wol-sok-mono/commit/f7625655cb8205c140b5bc12fc91a0c645b29211))
+- **deps:** update vitest monorepo to v4 ([f762565](https://github.com/WolfSoko/wol-sok-mono/commit/f7625655cb8205c140b5bc12fc91a0c645b29211))
 
 ## [4.77.41](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.40-non-cdk-deployed...v4.77.41) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** update dependency eslint-plugin-storybook to v9 ([ccf2cdb](https://github.com/WolfSoko/wol-sok-mono/commit/ccf2cdbcc49eb0cf316f585517502d2e1ac52e6f))
-* **deps:** update dependency jsdom to v27 ([aec8603](https://github.com/WolfSoko/wol-sok-mono/commit/aec8603469c04fc8b1047d2eac1a6e59a8a438cf))
+- **deps:** update dependency eslint-plugin-storybook to v9 ([ccf2cdb](https://github.com/WolfSoko/wol-sok-mono/commit/ccf2cdbcc49eb0cf316f585517502d2e1ac52e6f))
+- **deps:** update dependency jsdom to v27 ([aec8603](https://github.com/WolfSoko/wol-sok-mono/commit/aec8603469c04fc8b1047d2eac1a6e59a8a438cf))
 
 ## [4.77.40](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.39-non-cdk-deployed...v4.77.40) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** update dependency @chromatic-com/storybook to v4 ([fe52659](https://github.com/WolfSoko/wol-sok-mono/commit/fe52659f7d3f1c0acae1efd587539b8ad4d9e8da))
-* **deps:** update dependency cross-env to v10 ([5f349ff](https://github.com/WolfSoko/wol-sok-mono/commit/5f349ffb615620c0f703187aa879f85b5d622741))
+- **deps:** update dependency @chromatic-com/storybook to v4 ([fe52659](https://github.com/WolfSoko/wol-sok-mono/commit/fe52659f7d3f1c0acae1efd587539b8ad4d9e8da))
+- **deps:** update dependency cross-env to v10 ([5f349ff](https://github.com/WolfSoko/wol-sok-mono/commit/5f349ffb615620c0f703187aa879f85b5d622741))
 
 ## [4.77.39](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.38-non-cdk-deployed...v4.77.39) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** update commitlint monorepo to v20 ([d8ae1a1](https://github.com/WolfSoko/wol-sok-mono/commit/d8ae1a1ad501268c53d5f2ad791e7e5cc84f8f0f))
-* **deps:** update dependency @angular-builders/custom-webpack to v20 ([57ed0a8](https://github.com/WolfSoko/wol-sok-mono/commit/57ed0a86cf691834169e0f53381d665247b0e746))
-* **deps:** update dependency @ngneat/spectator to v22 ([097c75c](https://github.com/WolfSoko/wol-sok-mono/commit/097c75c1acfb02fd2035ceacbcfc1e584d7e1505))
-* **deps:** update dependency chai to v6 ([1888d0e](https://github.com/WolfSoko/wol-sok-mono/commit/1888d0e31b41247cc97eb9bcc0626187015e4af8))
+- **deps:** update commitlint monorepo to v20 ([d8ae1a1](https://github.com/WolfSoko/wol-sok-mono/commit/d8ae1a1ad501268c53d5f2ad791e7e5cc84f8f0f))
+- **deps:** update dependency @angular-builders/custom-webpack to v20 ([57ed0a8](https://github.com/WolfSoko/wol-sok-mono/commit/57ed0a86cf691834169e0f53381d665247b0e746))
+- **deps:** update dependency @ngneat/spectator to v22 ([097c75c](https://github.com/WolfSoko/wol-sok-mono/commit/097c75c1acfb02fd2035ceacbcfc1e584d7e1505))
+- **deps:** update dependency chai to v6 ([1888d0e](https://github.com/WolfSoko/wol-sok-mono/commit/1888d0e31b41247cc97eb9bcc0626187015e4af8))
 
 ## [4.77.38](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.37...v4.77.38) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** update actions/setup-node action to v6 ([c36afd6](https://github.com/WolfSoko/wol-sok-mono/commit/c36afd6c8fcfe6e831749b030a548b249dfc539b))
-* **deps:** update github/codeql-action action to v4 ([2f00292](https://github.com/WolfSoko/wol-sok-mono/commit/2f00292134e9c4ed981a8532e9fc156017ae5b57))
+- **deps:** update actions/setup-node action to v6 ([c36afd6](https://github.com/WolfSoko/wol-sok-mono/commit/c36afd6c8fcfe6e831749b030a548b249dfc539b))
+- **deps:** update github/codeql-action action to v4 ([2f00292](https://github.com/WolfSoko/wol-sok-mono/commit/2f00292134e9c4ed981a8532e9fc156017ae5b57))
 
 ## [4.77.37](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.36-non-cdk-deployed...v4.77.37) (2025-10-25)
 
-
 ### Bug Fixes
 
-* **deps:** update trpc monorepo to v11.6.0 ([6aedb76](https://github.com/WolfSoko/wol-sok-mono/commit/6aedb76573264d59565aa439cb36118c0392002e))
-
+- **deps:** update trpc monorepo to v11.6.0 ([6aedb76](https://github.com/WolfSoko/wol-sok-mono/commit/6aedb76573264d59565aa439cb36118c0392002e))
 
 ### Chore
 
-* **deps:** update actions/github-script action to v8 ([07630b6](https://github.com/WolfSoko/wol-sok-mono/commit/07630b6982863af8fbed12af738dc31caeb508d4))
+- **deps:** update actions/github-script action to v8 ([07630b6](https://github.com/WolfSoko/wol-sok-mono/commit/07630b6982863af8fbed12af738dc31caeb508d4))
 
 ## [4.77.36](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.35-non-cdk-deployed...v4.77.36) (2025-10-25)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency vega-embed to v7.1.0 ([425a034](https://github.com/WolfSoko/wol-sok-mono/commit/425a034434964d8949f18f37884d6c8daaacf793))
-* **deps:** update dependency vega-lite to v6.4.1 ([3aee37a](https://github.com/WolfSoko/wol-sok-mono/commit/3aee37a2b307dfeb9fc0bfb295b612422d860fef))
-* **deps:** update dependency zod to v3.25.76 ([be62692](https://github.com/WolfSoko/wol-sok-mono/commit/be6269217701805b827a4059bb1a2937aa34ab37))
-
+- **deps:** update dependency vega-embed to v7.1.0 ([425a034](https://github.com/WolfSoko/wol-sok-mono/commit/425a034434964d8949f18f37884d6c8daaacf793))
+- **deps:** update dependency vega-lite to v6.4.1 ([3aee37a](https://github.com/WolfSoko/wol-sok-mono/commit/3aee37a2b307dfeb9fc0bfb295b612422d860fef))
+- **deps:** update dependency zod to v3.25.76 ([be62692](https://github.com/WolfSoko/wol-sok-mono/commit/be6269217701805b827a4059bb1a2937aa34ab37))
 
 ### Chore
 
-* **deps:** update actions/checkout action to v5 ([81f28c5](https://github.com/WolfSoko/wol-sok-mono/commit/81f28c5539bcea18a5f3bc34bdf849ed3f40af5c))
+- **deps:** update actions/checkout action to v5 ([81f28c5](https://github.com/WolfSoko/wol-sok-mono/commit/81f28c5539bcea18a5f3bc34bdf849ed3f40af5c))
 
 ## [4.77.35](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.34-non-cdk-deployed...v4.77.35) (2025-10-25)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency firebase to v11.10.0 ([9c2fb80](https://github.com/WolfSoko/wol-sok-mono/commit/9c2fb808358fb82e0d3ea9dadc0ad54fb132ffd7))
-* **deps:** update dependency firebase-functions to v6.6.0 ([7b83be2](https://github.com/WolfSoko/wol-sok-mono/commit/7b83be2344298917da639af5f99bc5b4b09760cb))
-* **deps:** update dependency mathjs to v14.9.1 ([044370a](https://github.com/WolfSoko/wol-sok-mono/commit/044370aac687b401752c9b50e7e036e0a9d8466a))
-* **deps:** update dependency three to v0.180.0 ([6775dab](https://github.com/WolfSoko/wol-sok-mono/commit/6775dab504911b2895a596cf6b23818b586beafa))
+- **deps:** update dependency firebase to v11.10.0 ([9c2fb80](https://github.com/WolfSoko/wol-sok-mono/commit/9c2fb808358fb82e0d3ea9dadc0ad54fb132ffd7))
+- **deps:** update dependency firebase-functions to v6.6.0 ([7b83be2](https://github.com/WolfSoko/wol-sok-mono/commit/7b83be2344298917da639af5f99bc5b4b09760cb))
+- **deps:** update dependency mathjs to v14.9.1 ([044370a](https://github.com/WolfSoko/wol-sok-mono/commit/044370aac687b401752c9b50e7e036e0a9d8466a))
+- **deps:** update dependency three to v0.180.0 ([6775dab](https://github.com/WolfSoko/wol-sok-mono/commit/6775dab504911b2895a596cf6b23818b586beafa))
 
 ## [4.77.34](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.33-non-cdk-deployed...v4.77.34) (2025-10-25)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency @assemblyscript/loader to v0.28.9 ([dfa7c4e](https://github.com/WolfSoko/wol-sok-mono/commit/dfa7c4e1248640e49af3a071f51de20c4e5ac7f6))
-* **deps:** update dependency vega to v6.2.0 ([3e6741f](https://github.com/WolfSoko/wol-sok-mono/commit/3e6741f063913ad7370fc3e1c03f745fe414198a))
+- **deps:** update dependency @assemblyscript/loader to v0.28.9 ([dfa7c4e](https://github.com/WolfSoko/wol-sok-mono/commit/dfa7c4e1248640e49af3a071f51de20c4e5ac7f6))
+- **deps:** update dependency vega to v6.2.0 ([3e6741f](https://github.com/WolfSoko/wol-sok-mono/commit/3e6741f063913ad7370fc3e1c03f745fe414198a))
 
 ## [4.77.33](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.32-non-cdk-deployed...v4.77.33) (2025-10-25)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency ace-builds to v1.43.4 ([54905bd](https://github.com/WolfSoko/wol-sok-mono/commit/54905bd6334764c084b7c2151b126597b5198a93))
-* **deps:** update dependency core-js to v3.46.0 ([ff7a24b](https://github.com/WolfSoko/wol-sok-mono/commit/ff7a24b4b95d4d97b36964ce35166b5efa10d3d7))
-
+- **deps:** update dependency ace-builds to v1.43.4 ([54905bd](https://github.com/WolfSoko/wol-sok-mono/commit/54905bd6334764c084b7c2151b126597b5198a93))
+- **deps:** update dependency core-js to v3.46.0 ([ff7a24b](https://github.com/WolfSoko/wol-sok-mono/commit/ff7a24b4b95d4d97b36964ce35166b5efa10d3d7))
 
 ### Chore
 
-* **deps:** update dependency rollup to v4.52.5 ([64e3252](https://github.com/WolfSoko/wol-sok-mono/commit/64e32525106a56f1fece7c3a59b58c38cb75c335))
-* **deps:** update dependency webpack to v5.102.1 ([e2fc898](https://github.com/WolfSoko/wol-sok-mono/commit/e2fc8987f08ad8c06f3283431e623bd20544b0d1))
-* **deps:** update jest monorepo to v30.2.0 ([df7fd98](https://github.com/WolfSoko/wol-sok-mono/commit/df7fd98b3dc005d4d1b266e34b41dbed86483411))
-* **deps:** update swc monorepo ([5d0b48b](https://github.com/WolfSoko/wol-sok-mono/commit/5d0b48b910edc805aadcd25c61d70d8ed07f0f76))
+- **deps:** update dependency rollup to v4.52.5 ([64e3252](https://github.com/WolfSoko/wol-sok-mono/commit/64e32525106a56f1fece7c3a59b58c38cb75c335))
+- **deps:** update dependency webpack to v5.102.1 ([e2fc898](https://github.com/WolfSoko/wol-sok-mono/commit/e2fc8987f08ad8c06f3283431e623bd20544b0d1))
+- **deps:** update jest monorepo to v30.2.0 ([df7fd98](https://github.com/WolfSoko/wol-sok-mono/commit/df7fd98b3dc005d4d1b266e34b41dbed86483411))
+- **deps:** update swc monorepo ([5d0b48b](https://github.com/WolfSoko/wol-sok-mono/commit/5d0b48b910edc805aadcd25c61d70d8ed07f0f76))
 
 ## [4.77.32](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.31-non-cdk-deployed...v4.77.32) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** update dependency web-streams-polyfill to v4.2.0 ([bebd364](https://github.com/WolfSoko/wol-sok-mono/commit/bebd364e7f8346732feccc3eb906f719f9fe4410))
-* **deps:** update vitest monorepo to v3.2.4 ([eba4b1a](https://github.com/WolfSoko/wol-sok-mono/commit/eba4b1a6f1009f40ea7e012457e8b700630cd04e))
+- **deps:** update dependency web-streams-polyfill to v4.2.0 ([bebd364](https://github.com/WolfSoko/wol-sok-mono/commit/bebd364e7f8346732feccc3eb906f719f9fe4410))
+- **deps:** update vitest monorepo to v3.2.4 ([eba4b1a](https://github.com/WolfSoko/wol-sok-mono/commit/eba4b1a6f1009f40ea7e012457e8b700630cd04e))
 
 ## [4.77.31](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.30-non-cdk-deployed...v4.77.31) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** update dependency firebase-tools to v14.22.0 ([5e36196](https://github.com/WolfSoko/wol-sok-mono/commit/5e3619604623d55257d00f1458282de8be4bfeca))
-* **deps:** update dependency jasmine-core to v5.12.0 ([cac7cf9](https://github.com/WolfSoko/wol-sok-mono/commit/cac7cf9dc9f84c70bd47caa19a42d26a01e39cf7))
-* **deps:** update dependency jiti to v2.6.1 ([07585b0](https://github.com/WolfSoko/wol-sok-mono/commit/07585b0f9dade40145d74039146a24132f332393))
-* **deps:** update dependency jsdom to v26.1.0 ([12fbc74](https://github.com/WolfSoko/wol-sok-mono/commit/12fbc74f60bea04b2b2f22db55c6380a0f07b572))
-* **deps:** update dependency postcss-preset-env to v10.4.0 ([00e603f](https://github.com/WolfSoko/wol-sok-mono/commit/00e603ffe28b1b627c9b9cb5a379b7730e95a33d))
-* **deps:** update dependency prettier to v3.6.2 ([2b92ad1](https://github.com/WolfSoko/wol-sok-mono/commit/2b92ad1b1fff710f4bb87a7e9b81edc9894c3ba8))
+- **deps:** update dependency firebase-tools to v14.22.0 ([5e36196](https://github.com/WolfSoko/wol-sok-mono/commit/5e3619604623d55257d00f1458282de8be4bfeca))
+- **deps:** update dependency jasmine-core to v5.12.0 ([cac7cf9](https://github.com/WolfSoko/wol-sok-mono/commit/cac7cf9dc9f84c70bd47caa19a42d26a01e39cf7))
+- **deps:** update dependency jiti to v2.6.1 ([07585b0](https://github.com/WolfSoko/wol-sok-mono/commit/07585b0f9dade40145d74039146a24132f332393))
+- **deps:** update dependency jsdom to v26.1.0 ([12fbc74](https://github.com/WolfSoko/wol-sok-mono/commit/12fbc74f60bea04b2b2f22db55c6380a0f07b572))
+- **deps:** update dependency postcss-preset-env to v10.4.0 ([00e603f](https://github.com/WolfSoko/wol-sok-mono/commit/00e603ffe28b1b627c9b9cb5a379b7730e95a33d))
+- **deps:** update dependency prettier to v3.6.2 ([2b92ad1](https://github.com/WolfSoko/wol-sok-mono/commit/2b92ad1b1fff710f4bb87a7e9b81edc9894c3ba8))
 
 ## [4.77.30](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.29-non-cdk-deployed...v4.77.30) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** update dependency @storybook/test-runner to v0.23.0 ([c68d5b9](https://github.com/WolfSoko/wol-sok-mono/commit/c68d5b9571c06d97ed425f8837cdc959c0caf22e))
-* **deps:** update dependency @types/node to v22.18.12 ([40935f9](https://github.com/WolfSoko/wol-sok-mono/commit/40935f9f09ae4a9e36304634f3d129581cab7cbb))
-* **deps:** update dependency aws-cdk to v2.1031.0 ([bebe73a](https://github.com/WolfSoko/wol-sok-mono/commit/bebe73a2adecd8071a99ca068e5ed53dff1fa73a))
-* **deps:** update dependency axios to v1.12.2 ([721c327](https://github.com/WolfSoko/wol-sok-mono/commit/721c327d6d99f39a2276869e442fc75b62d4b89d))
-* **deps:** update dependency chai to v5.3.3 ([76dcce6](https://github.com/WolfSoko/wol-sok-mono/commit/76dcce6d4cade09dc0b89b43ccea2688f03ca324))
-* **deps:** update dependency commit-and-tag-version to v12.6.0 ([006d149](https://github.com/WolfSoko/wol-sok-mono/commit/006d1499b51cc39780ccb9945736b5989d210884))
-* **deps:** update dependency eslint-plugin-prettier to v5.5.4 ([c9869cd](https://github.com/WolfSoko/wol-sok-mono/commit/c9869cdec402826551edd7d15a716e53ad495b23))
-* **deps:** update dependency firebase-admin to v13.5.0 ([d8335ee](https://github.com/WolfSoko/wol-sok-mono/commit/d8335ee41f003ee6ed65d20d0875ac2629cea58b))
+- **deps:** update dependency @storybook/test-runner to v0.23.0 ([c68d5b9](https://github.com/WolfSoko/wol-sok-mono/commit/c68d5b9571c06d97ed425f8837cdc959c0caf22e))
+- **deps:** update dependency @types/node to v22.18.12 ([40935f9](https://github.com/WolfSoko/wol-sok-mono/commit/40935f9f09ae4a9e36304634f3d129581cab7cbb))
+- **deps:** update dependency aws-cdk to v2.1031.0 ([bebe73a](https://github.com/WolfSoko/wol-sok-mono/commit/bebe73a2adecd8071a99ca068e5ed53dff1fa73a))
+- **deps:** update dependency axios to v1.12.2 ([721c327](https://github.com/WolfSoko/wol-sok-mono/commit/721c327d6d99f39a2276869e442fc75b62d4b89d))
+- **deps:** update dependency chai to v5.3.3 ([76dcce6](https://github.com/WolfSoko/wol-sok-mono/commit/76dcce6d4cade09dc0b89b43ccea2688f03ca324))
+- **deps:** update dependency commit-and-tag-version to v12.6.0 ([006d149](https://github.com/WolfSoko/wol-sok-mono/commit/006d1499b51cc39780ccb9945736b5989d210884))
+- **deps:** update dependency eslint-plugin-prettier to v5.5.4 ([c9869cd](https://github.com/WolfSoko/wol-sok-mono/commit/c9869cdec402826551edd7d15a716e53ad495b23))
+- **deps:** update dependency firebase-admin to v13.5.0 ([d8335ee](https://github.com/WolfSoko/wol-sok-mono/commit/d8335ee41f003ee6ed65d20d0875ac2629cea58b))
 
 ## [4.77.29](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.28-non-cdk-deployed...v4.77.29) (2025-10-25)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency marked-gfm-heading-id to v4.1.2 ([4b9c11b](https://github.com/WolfSoko/wol-sok-mono/commit/4b9c11b7e5a7a19ced78a650a19a92edf944df7d))
-* **deps:** update dependency marked-mangle to v1.1.11 ([a3adb8c](https://github.com/WolfSoko/wol-sok-mono/commit/a3adb8cda4b7cb6e9c504117620baf6889bb15f0))
-
+- **deps:** update dependency marked-gfm-heading-id to v4.1.2 ([4b9c11b](https://github.com/WolfSoko/wol-sok-mono/commit/4b9c11b7e5a7a19ced78a650a19a92edf944df7d))
+- **deps:** update dependency marked-mangle to v1.1.11 ([a3adb8c](https://github.com/WolfSoko/wol-sok-mono/commit/a3adb8cda4b7cb6e9c504117620baf6889bb15f0))
 
 ### Chore
 
-* **deps:** update dependency @module-federation/enhanced to v0.21.1 ([263acc7](https://github.com/WolfSoko/wol-sok-mono/commit/263acc745f4cc468bfbc721082b6f5de3c1a3218))
-* **deps:** update dependency @ngneat/spectator to v19.6.2 ([7864337](https://github.com/WolfSoko/wol-sok-mono/commit/7864337ce6611739fcd514636cb9a453b9afb15a))
-* **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.52.5 ([69ac773](https://github.com/WolfSoko/wol-sok-mono/commit/69ac77325129ba1e3e44c8a90ef9364deec2aad9))
-* **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.52.5 ([a35304c](https://github.com/WolfSoko/wol-sok-mono/commit/a35304cbbc6e10b38355966b804c1ed67e406385))
-* **deps:** update dependency @rspack/core to v1.5.8 ([433b9e6](https://github.com/WolfSoko/wol-sok-mono/commit/433b9e68d0ae24eb0fd7e0831d413c3b11da400d))
-* **deps:** update dependency assemblyscript to v0.28.9 ([4ea525d](https://github.com/WolfSoko/wol-sok-mono/commit/4ea525d766bb36eb63e255397f17a0b70e293ef9))
+- **deps:** update dependency @module-federation/enhanced to v0.21.1 ([263acc7](https://github.com/WolfSoko/wol-sok-mono/commit/263acc745f4cc468bfbc721082b6f5de3c1a3218))
+- **deps:** update dependency @ngneat/spectator to v19.6.2 ([7864337](https://github.com/WolfSoko/wol-sok-mono/commit/7864337ce6611739fcd514636cb9a453b9afb15a))
+- **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.52.5 ([69ac773](https://github.com/WolfSoko/wol-sok-mono/commit/69ac77325129ba1e3e44c8a90ef9364deec2aad9))
+- **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.52.5 ([a35304c](https://github.com/WolfSoko/wol-sok-mono/commit/a35304cbbc6e10b38355966b804c1ed67e406385))
+- **deps:** update dependency @rspack/core to v1.5.8 ([433b9e6](https://github.com/WolfSoko/wol-sok-mono/commit/433b9e68d0ae24eb0fd7e0831d413c3b11da400d))
+- **deps:** update dependency assemblyscript to v0.28.9 ([4ea525d](https://github.com/WolfSoko/wol-sok-mono/commit/4ea525d766bb36eb63e255397f17a0b70e293ef9))
 
 ## [4.77.28](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.27-non-cdk-deployed...v4.77.28) (2025-10-25)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency @ngneat/elf-cli to v3.1.1 ([0f7960a](https://github.com/WolfSoko/wol-sok-mono/commit/0f7960a16056e3fcfac30624a1a46c807fab026a))
-* **deps:** update dependency @sentry/angular-ivy to v7.120.4 ([7cfa140](https://github.com/WolfSoko/wol-sok-mono/commit/7cfa140d9e7248c7d47f2f34b8c049b23052775a))
-* **deps:** update dependency marked to v15.0.12 ([4090c81](https://github.com/WolfSoko/wol-sok-mono/commit/4090c81ebe60b197816535bf25c029fb19e663c5))
-* **deps:** update dependency marked-highlight to v2.2.2 ([ea4188f](https://github.com/WolfSoko/wol-sok-mono/commit/ea4188f4bd2003985ddf387964a5cc0b9f3bdeb7))
-* **deps:** update dependency p5 to v1.11.11 ([b0b63b4](https://github.com/WolfSoko/wol-sok-mono/commit/b0b63b4857ecdf53ce87c70380d66ed05c959edb))
-* **deps:** update dependency superjson to v2.2.3 ([4b7db39](https://github.com/WolfSoko/wol-sok-mono/commit/4b7db395d40413fd646f13ff2624380d317cc8d7))
-
+- **deps:** update dependency @ngneat/elf-cli to v3.1.1 ([0f7960a](https://github.com/WolfSoko/wol-sok-mono/commit/0f7960a16056e3fcfac30624a1a46c807fab026a))
+- **deps:** update dependency @sentry/angular-ivy to v7.120.4 ([7cfa140](https://github.com/WolfSoko/wol-sok-mono/commit/7cfa140d9e7248c7d47f2f34b8c049b23052775a))
+- **deps:** update dependency marked to v15.0.12 ([4090c81](https://github.com/WolfSoko/wol-sok-mono/commit/4090c81ebe60b197816535bf25c029fb19e663c5))
+- **deps:** update dependency marked-highlight to v2.2.2 ([ea4188f](https://github.com/WolfSoko/wol-sok-mono/commit/ea4188f4bd2003985ddf387964a5cc0b9f3bdeb7))
+- **deps:** update dependency p5 to v1.11.11 ([b0b63b4](https://github.com/WolfSoko/wol-sok-mono/commit/b0b63b4857ecdf53ce87c70380d66ed05c959edb))
+- **deps:** update dependency superjson to v2.2.3 ([4b7db39](https://github.com/WolfSoko/wol-sok-mono/commit/4b7db395d40413fd646f13ff2624380d317cc8d7))
 
 ### Chore
 
-* **deps:** update dependency postcss-import to v16.1.1 ([4dcbf06](https://github.com/WolfSoko/wol-sok-mono/commit/4dcbf063dbe409ea64fcbddd1f80149878e5e8de))
-* **deps:** update storybook monorepo ([5577f93](https://github.com/WolfSoko/wol-sok-mono/commit/5577f93a19948babb78d1a060fed9b452384554e))
+- **deps:** update dependency postcss-import to v16.1.1 ([4dcbf06](https://github.com/WolfSoko/wol-sok-mono/commit/4dcbf063dbe409ea64fcbddd1f80149878e5e8de))
+- **deps:** update storybook monorepo ([5577f93](https://github.com/WolfSoko/wol-sok-mono/commit/5577f93a19948babb78d1a060fed9b452384554e))
 
 ## [4.77.27](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.26-non-cdk-deployed...v4.77.27) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** update dependency eslint-plugin-html to v8.1.3 ([1605e2c](https://github.com/WolfSoko/wol-sok-mono/commit/1605e2c249b793be66f49953790c5f4ccc2bacb2))
-* **deps:** update dependency html-webpack-plugin to v5.6.4 ([fad1170](https://github.com/WolfSoko/wol-sok-mono/commit/fad117015f92df6226828684d9579b6933239470))
-* **deps:** update dependency jest-preset-angular to v15.0.3 ([28088b5](https://github.com/WolfSoko/wol-sok-mono/commit/28088b53ff2612a37955b45f3e83054123351e79))
-* **deps:** update dependency jsonc-eslint-parser to v2.4.1 ([8253a73](https://github.com/WolfSoko/wol-sok-mono/commit/8253a738eaa63fbe5d7d06cccfea7af1470bfebd))
-* **deps:** update dependency postcss to v8.5.6 ([bcf7324](https://github.com/WolfSoko/wol-sok-mono/commit/bcf7324f182a4969d81f612b7e2951e638819920))
-* **deps:** update dependency ts-jest to v29.4.5 ([0ab6499](https://github.com/WolfSoko/wol-sok-mono/commit/0ab6499d7067969eae6d4458a002eb632a8c28f3))
+- **deps:** update dependency eslint-plugin-html to v8.1.3 ([1605e2c](https://github.com/WolfSoko/wol-sok-mono/commit/1605e2c249b793be66f49953790c5f4ccc2bacb2))
+- **deps:** update dependency html-webpack-plugin to v5.6.4 ([fad1170](https://github.com/WolfSoko/wol-sok-mono/commit/fad117015f92df6226828684d9579b6933239470))
+- **deps:** update dependency jest-preset-angular to v15.0.3 ([28088b5](https://github.com/WolfSoko/wol-sok-mono/commit/28088b53ff2612a37955b45f3e83054123351e79))
+- **deps:** update dependency jsonc-eslint-parser to v2.4.1 ([8253a73](https://github.com/WolfSoko/wol-sok-mono/commit/8253a738eaa63fbe5d7d06cccfea7af1470bfebd))
+- **deps:** update dependency postcss to v8.5.6 ([bcf7324](https://github.com/WolfSoko/wol-sok-mono/commit/bcf7324f182a4969d81f612b7e2951e638819920))
+- **deps:** update dependency ts-jest to v29.4.5 ([0ab6499](https://github.com/WolfSoko/wol-sok-mono/commit/0ab6499d7067969eae6d4458a002eb632a8c28f3))
 
 ## [4.77.26](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.25-non-cdk-deployed...v4.77.26) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** update dependency fs-extra to v11.3.2 ([ea09c07](https://github.com/WolfSoko/wol-sok-mono/commit/ea09c071214342cbe282e12cc636cb669debab46))
-* **deps:** update dependency inquirer to v8.2.7 ([825dd78](https://github.com/WolfSoko/wol-sok-mono/commit/825dd782857b1ecee164fcf4d49bb3741abcf8a4))
+- **deps:** update dependency fs-extra to v11.3.2 ([ea09c07](https://github.com/WolfSoko/wol-sok-mono/commit/ea09c071214342cbe282e12cc636cb669debab46))
+- **deps:** update dependency inquirer to v8.2.7 ([825dd78](https://github.com/WolfSoko/wol-sok-mono/commit/825dd782857b1ecee164fcf4d49bb3741abcf8a4))
 
 ## [4.77.25](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.24-non-cdk-deployed...v4.77.25) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** update dependency @types/lodash to v4.17.20 ([2230f3d](https://github.com/WolfSoko/wol-sok-mono/commit/2230f3d03036b46971c111a806af132964fe2317))
-* **deps:** update dependency eslint-config-prettier to v10.1.8 ([cb8f7b1](https://github.com/WolfSoko/wol-sok-mono/commit/cb8f7b1b29d77b58ebe0422c66556ffa585f5cdb))
+- **deps:** update dependency @types/lodash to v4.17.20 ([2230f3d](https://github.com/WolfSoko/wol-sok-mono/commit/2230f3d03036b46971c111a806af132964fe2317))
+- **deps:** update dependency eslint-config-prettier to v10.1.8 ([cb8f7b1](https://github.com/WolfSoko/wol-sok-mono/commit/cb8f7b1b29d77b58ebe0422c66556ffa585f5cdb))
 
 ## [4.77.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.23-non-cdk-deployed...v4.77.24) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** update dependency @chromatic-com/storybook to v3.2.7 ([a470601](https://github.com/WolfSoko/wol-sok-mono/commit/a470601b0e001261419753c3939ccac4b8ae3fc9))
-* **deps:** update dependency @types/jasmine to v5.1.12 ([caea178](https://github.com/WolfSoko/wol-sok-mono/commit/caea178aab7ccd11c7ca8f33d0c69b7dd882e7bb))
+- **deps:** update dependency @chromatic-com/storybook to v3.2.7 ([a470601](https://github.com/WolfSoko/wol-sok-mono/commit/a470601b0e001261419753c3939ccac4b8ae3fc9))
+- **deps:** update dependency @types/jasmine to v5.1.12 ([caea178](https://github.com/WolfSoko/wol-sok-mono/commit/caea178aab7ccd11c7ca8f33d0c69b7dd882e7bb))
 
 ## [4.77.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.22-non-cdk-deployed...v4.77.23) (2025-10-25)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency mermaid to v11.10.0 [security] ([38b2750](https://github.com/WolfSoko/wol-sok-mono/commit/38b27500347d4a5414f9a7b9ea5ead9e6af5f4d9))
-
+- **deps:** update dependency mermaid to v11.10.0 [security] ([38b2750](https://github.com/WolfSoko/wol-sok-mono/commit/38b27500347d4a5414f9a7b9ea5ead9e6af5f4d9))
 
 ### Chore
 
-* **deps:** update commitlint monorepo to v19.8.1 ([b4d4db7](https://github.com/WolfSoko/wol-sok-mono/commit/b4d4db7c26750bff01ba0f201122e338c21a4145))
-* **deps:** update dependency @angular-builders/custom-webpack to v19.0.1 ([b0524ed](https://github.com/WolfSoko/wol-sok-mono/commit/b0524ed75bb9f6ef9ba77939c8733285ffd442a0))
-* **deps:** update dependency @esbuild/linux-x64 to v0.25.11 ([e0d9565](https://github.com/WolfSoko/wol-sok-mono/commit/e0d9565f5e9928514bafc0a37f1123d12b200199))
+- **deps:** update commitlint monorepo to v19.8.1 ([b4d4db7](https://github.com/WolfSoko/wol-sok-mono/commit/b4d4db7c26750bff01ba0f201122e338c21a4145))
+- **deps:** update dependency @angular-builders/custom-webpack to v19.0.1 ([b0524ed](https://github.com/WolfSoko/wol-sok-mono/commit/b0524ed75bb9f6ef9ba77939c8733285ffd442a0))
+- **deps:** update dependency @esbuild/linux-x64 to v0.25.11 ([e0d9565](https://github.com/WolfSoko/wol-sok-mono/commit/e0d9565f5e9928514bafc0a37f1123d12b200199))
 
 ## [4.77.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.21-cdk-deployed...v4.77.22) (2025-10-25)
 
-
 ### Chore
 
-* **deps:** 🔗 update [@analogjs](https://github.com/analogjs) packages to version 1.22.1 ([3b31379](https://github.com/WolfSoko/wol-sok-mono/commit/3b31379d546101c82618bc7fbdb45230987e0e6f))
-* **deps:** 🔗 update [@analogjs](https://github.com/analogjs) packages to version 1.22.1 ([a3ba1c0](https://github.com/WolfSoko/wol-sok-mono/commit/a3ba1c09c815ffea7af9a8a3b8de59d4e21756d0))
-* **deps:** 🔗 update Angular and [@analogjs](https://github.com/analogjs) packages to latest versions ([0001012](https://github.com/WolfSoko/wol-sok-mono/commit/00010121e95952098a9972072b19b1e3d7b73d78))
-* **deps:** update [@analogjs](https://github.com/analogjs) packages to version 1.22.1 ([0cf27b6](https://github.com/WolfSoko/wol-sok-mono/commit/0cf27b67d9ae49d0babafe5ac8894efc7deb926c))
+- **deps:** 🔗 update [@analogjs](https://github.com/analogjs) packages to version 1.22.1 ([3b31379](https://github.com/WolfSoko/wol-sok-mono/commit/3b31379d546101c82618bc7fbdb45230987e0e6f))
+- **deps:** 🔗 update [@analogjs](https://github.com/analogjs) packages to version 1.22.1 ([a3ba1c0](https://github.com/WolfSoko/wol-sok-mono/commit/a3ba1c09c815ffea7af9a8a3b8de59d4e21756d0))
+- **deps:** 🔗 update Angular and [@analogjs](https://github.com/analogjs) packages to latest versions ([0001012](https://github.com/WolfSoko/wol-sok-mono/commit/00010121e95952098a9972072b19b1e3d7b73d78))
+- **deps:** update [@analogjs](https://github.com/analogjs) packages to version 1.22.1 ([0cf27b6](https://github.com/WolfSoko/wol-sok-mono/commit/0cf27b67d9ae49d0babafe5ac8894efc7deb926c))
 
 ## [4.77.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.20-non-cdk-deployed...v4.77.21) (2025-10-24)
 
-
 ### CI/CD
 
-* 👷 update tsconfig to include module and moduleResolution options ([51e8239](https://github.com/WolfSoko/wol-sok-mono/commit/51e8239f45b044a3b6e25d150d1b68502688636a))
+- 👷 update tsconfig to include module and moduleResolution options ([51e8239](https://github.com/WolfSoko/wol-sok-mono/commit/51e8239f45b044a3b6e25d150d1b68502688636a))
 
 ## [4.77.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.19-non-cdk-deployed...v4.77.20) (2025-10-24)
 
-
 ### Chore
 
-* **deps:** update dependency lint-staged to v15.5.2 ([378ea3a](https://github.com/WolfSoko/wol-sok-mono/commit/378ea3ab75724db86ccb764c4eb9f8cf4da63015))
+- **deps:** update dependency lint-staged to v15.5.2 ([378ea3a](https://github.com/WolfSoko/wol-sok-mono/commit/378ea3ab75724db86ccb764c4eb9f8cf4da63015))
 
 ## [4.77.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.18-non-cdk-deployed...v4.77.19) (2025-10-24)
 
-
 ### Bug Fixes
 
-* 🐛 add .junie to ignore lists ([61e4774](https://github.com/WolfSoko/wol-sok-mono/commit/61e477461eea88ccf30a70b6e75f0b072ec797c1))
-* 🐛 command syntax ([6515a91](https://github.com/WolfSoko/wol-sok-mono/commit/6515a91dee7769022eeb425163b74bdc157b5066))
-* 🐛 playwright config ([444217b](https://github.com/WolfSoko/wol-sok-mono/commit/444217beb0c9517edf1f198300ce0661ace98628))
-* 🐛 resolve __filename ES module error in Playwright configs ([32f648d](https://github.com/WolfSoko/wol-sok-mono/commit/32f648d1c736df15eb26df366c5f13deeeea1a31))
-* 🐛 set type module in root package ([dd3cf2b](https://github.com/WolfSoko/wol-sok-mono/commit/dd3cf2be9e2a34cdc8255dd7cb4e44e179b19f8e))
-* 🐛 use fileURLToPath for import.meta.url in Playwright configs ([74f1913](https://github.com/WolfSoko/wol-sok-mono/commit/74f1913bb9309258ad98d890ffaca10e05d94f7b))
-* **shared-data-access:** 🐛 removed conflicting export entry ([c2687d3](https://github.com/WolfSoko/wol-sok-mono/commit/c2687d3b651687d08a917754e13726df726150b3))
-
+- 🐛 add .junie to ignore lists ([61e4774](https://github.com/WolfSoko/wol-sok-mono/commit/61e477461eea88ccf30a70b6e75f0b072ec797c1))
+- 🐛 command syntax ([6515a91](https://github.com/WolfSoko/wol-sok-mono/commit/6515a91dee7769022eeb425163b74bdc157b5066))
+- 🐛 playwright config ([444217b](https://github.com/WolfSoko/wol-sok-mono/commit/444217beb0c9517edf1f198300ce0661ace98628))
+- 🐛 resolve \_\_filename ES module error in Playwright configs ([32f648d](https://github.com/WolfSoko/wol-sok-mono/commit/32f648d1c736df15eb26df366c5f13deeeea1a31))
+- 🐛 set type module in root package ([dd3cf2b](https://github.com/WolfSoko/wol-sok-mono/commit/dd3cf2be9e2a34cdc8255dd7cb4e44e179b19f8e))
+- 🐛 use fileURLToPath for import.meta.url in Playwright configs ([74f1913](https://github.com/WolfSoko/wol-sok-mono/commit/74f1913bb9309258ad98d890ffaca10e05d94f7b))
+- **shared-data-access:** 🐛 removed conflicting export entry ([c2687d3](https://github.com/WolfSoko/wol-sok-mono/commit/c2687d3b651687d08a917754e13726df726150b3))
 
 ### CI/CD
 
-* 👷 🔧 update agents.yml to install Node ([acd0183](https://github.com/WolfSoko/wol-sok-mono/commit/acd018399c2e59a1fe72ee105885c757fcb89968))
-* 👷 add npm cache clean and apt-packages option for dependency installation ([7ade04d](https://github.com/WolfSoko/wol-sok-mono/commit/7ade04df762682ab6a84cba78b7a10a6035ca663))
-* 👷 add nx self healing ([86ef19a](https://github.com/WolfSoko/wol-sok-mono/commit/86ef19aca78ed4c292f3a37e63b7fc7b49526765))
-* 👷 add python3 and build-essentials to package installation ([5dae58e](https://github.com/WolfSoko/wol-sok-mono/commit/5dae58e7b8df06e401ef89d3aeefca4753a32380))
-* 👷 add run-scripts option and enable verbose output for format check ([5f45190](https://github.com/WolfSoko/wol-sok-mono/commit/5f451906fab54377c523b75ebc803618dbee6f4b))
-* 👷 disable apt package installation in CI workflow ([e22376b](https://github.com/WolfSoko/wol-sok-mono/commit/e22376b6f2f84fefc9558f0fb41209897830f334))
-* 👷 don't install scripts ([bb01bc2](https://github.com/WolfSoko/wol-sok-mono/commit/bb01bc25733d0dc3c3c11a713cd82f1350ab5c19))
-* 👷 enable apt package installation in CI workflow ([aff8c40](https://github.com/WolfSoko/wol-sok-mono/commit/aff8c400ac0616311e15f7baa26a493e0c0bc03c))
-* 👷 enable apt package installation in CI workflow ([f3909d1](https://github.com/WolfSoko/wol-sok-mono/commit/f3909d1f3e19dac781b61ac496a5a4937386427c))
-* 👷 fix Node.js version in .nvmrc to 20.19.5 ([5724eef](https://github.com/WolfSoko/wol-sok-mono/commit/5724eef9523fea720579eb11ca33861cd39577d0))
-* 👷 remove type module again ([7f1e43b](https://github.com/WolfSoko/wol-sok-mono/commit/7f1e43bd594387f638e1f7338245f849c2988f7c))
-* 👷 update .nvmrc to allow any LTS version ([eb60eb0](https://github.com/WolfSoko/wol-sok-mono/commit/eb60eb0749bc77f8b43ba3c5bd81c2686705c741))
-* 👷 update actions/checkout to v5 and improve nx-cloud command execution ([0ea0304](https://github.com/WolfSoko/wol-sok-mono/commit/0ea0304af8375a462073639d83760bbde77329e1))
-* 👷 update CI checks to use nx-cloud for format and sync checks ([e8b7d1e](https://github.com/WolfSoko/wol-sok-mono/commit/e8b7d1ebd8e81b70303e37d4a427cb65bc258413))
-* 👷 update CI to always install apt packages ([1480e34](https://github.com/WolfSoko/wol-sok-mono/commit/1480e34bf6a72430fa3c327a7e0449a82eba20e6))
-* 👷 update node-gyp version to 11.5.0 and clean up package-lock.json ([5f2753d](https://github.com/WolfSoko/wol-sok-mono/commit/5f2753d895e1753ba652e0fec3b15d2006fe70de))
-* 👷 update Node.js dependencies and switch to LTS version ([3c1e59d](https://github.com/WolfSoko/wol-sok-mono/commit/3c1e59d97f0b3319ba6e440ddce67e70a9930906))
-* 👷 update package installation script for consistency ([0d29acf](https://github.com/WolfSoko/wol-sok-mono/commit/0d29acf0ef1382519fb58e8e64dac11d2602ad58))
-* 👷 update package installation to include additional dependencies for node-gyp ([a5046e1](https://github.com/WolfSoko/wol-sok-mono/commit/a5046e1500e5ac4becd1d3885e5105dcf3aaf2f2))
-* 👷 update package installation to include mesa-common-dev ([a76d35f](https://github.com/WolfSoko/wol-sok-mono/commit/a76d35f90b8ca9d7edf7cfb6959e09c6ff4012d3))
-
+- 👷 🔧 update agents.yml to install Node ([acd0183](https://github.com/WolfSoko/wol-sok-mono/commit/acd018399c2e59a1fe72ee105885c757fcb89968))
+- 👷 add npm cache clean and apt-packages option for dependency installation ([7ade04d](https://github.com/WolfSoko/wol-sok-mono/commit/7ade04df762682ab6a84cba78b7a10a6035ca663))
+- 👷 add nx self healing ([86ef19a](https://github.com/WolfSoko/wol-sok-mono/commit/86ef19aca78ed4c292f3a37e63b7fc7b49526765))
+- 👷 add python3 and build-essentials to package installation ([5dae58e](https://github.com/WolfSoko/wol-sok-mono/commit/5dae58e7b8df06e401ef89d3aeefca4753a32380))
+- 👷 add run-scripts option and enable verbose output for format check ([5f45190](https://github.com/WolfSoko/wol-sok-mono/commit/5f451906fab54377c523b75ebc803618dbee6f4b))
+- 👷 disable apt package installation in CI workflow ([e22376b](https://github.com/WolfSoko/wol-sok-mono/commit/e22376b6f2f84fefc9558f0fb41209897830f334))
+- 👷 don't install scripts ([bb01bc2](https://github.com/WolfSoko/wol-sok-mono/commit/bb01bc25733d0dc3c3c11a713cd82f1350ab5c19))
+- 👷 enable apt package installation in CI workflow ([aff8c40](https://github.com/WolfSoko/wol-sok-mono/commit/aff8c400ac0616311e15f7baa26a493e0c0bc03c))
+- 👷 enable apt package installation in CI workflow ([f3909d1](https://github.com/WolfSoko/wol-sok-mono/commit/f3909d1f3e19dac781b61ac496a5a4937386427c))
+- 👷 fix Node.js version in .nvmrc to 20.19.5 ([5724eef](https://github.com/WolfSoko/wol-sok-mono/commit/5724eef9523fea720579eb11ca33861cd39577d0))
+- 👷 remove type module again ([7f1e43b](https://github.com/WolfSoko/wol-sok-mono/commit/7f1e43bd594387f638e1f7338245f849c2988f7c))
+- 👷 update .nvmrc to allow any LTS version ([eb60eb0](https://github.com/WolfSoko/wol-sok-mono/commit/eb60eb0749bc77f8b43ba3c5bd81c2686705c741))
+- 👷 update actions/checkout to v5 and improve nx-cloud command execution ([0ea0304](https://github.com/WolfSoko/wol-sok-mono/commit/0ea0304af8375a462073639d83760bbde77329e1))
+- 👷 update CI checks to use nx-cloud for format and sync checks ([e8b7d1e](https://github.com/WolfSoko/wol-sok-mono/commit/e8b7d1ebd8e81b70303e37d4a427cb65bc258413))
+- 👷 update CI to always install apt packages ([1480e34](https://github.com/WolfSoko/wol-sok-mono/commit/1480e34bf6a72430fa3c327a7e0449a82eba20e6))
+- 👷 update node-gyp version to 11.5.0 and clean up package-lock.json ([5f2753d](https://github.com/WolfSoko/wol-sok-mono/commit/5f2753d895e1753ba652e0fec3b15d2006fe70de))
+- 👷 update Node.js dependencies and switch to LTS version ([3c1e59d](https://github.com/WolfSoko/wol-sok-mono/commit/3c1e59d97f0b3319ba6e440ddce67e70a9930906))
+- 👷 update package installation script for consistency ([0d29acf](https://github.com/WolfSoko/wol-sok-mono/commit/0d29acf0ef1382519fb58e8e64dac11d2602ad58))
+- 👷 update package installation to include additional dependencies for node-gyp ([a5046e1](https://github.com/WolfSoko/wol-sok-mono/commit/a5046e1500e5ac4becd1d3885e5105dcf3aaf2f2))
+- 👷 update package installation to include mesa-common-dev ([a76d35f](https://github.com/WolfSoko/wol-sok-mono/commit/a76d35f90b8ca9d7edf7cfb6959e09c6ff4012d3))
 
 ### Chore
 
-* [nx migration] 21-1-0-add-ignore-entries-for-nx-rule-files ([087ebf5](https://github.com/WolfSoko/wol-sok-mono/commit/087ebf515daf62ea7351af441096ee5a03504508))
-* [nx migration] migrate-provide-server-rendering-import ([27261fb](https://github.com/WolfSoko/wol-sok-mono/commit/27261fbbe7dbccc04a1cc992dba131d16dadb121))
-* [nx migration] set-generator-defaults-for-previous-style-guide ([c7d255e](https://github.com/WolfSoko/wol-sok-mono/commit/c7d255e7f268547f24d23e124e310d1d7bdc7528))
-* [nx migration] update-21-2-0-remove-addon-dependencies ([55f885c](https://github.com/WolfSoko/wol-sok-mono/commit/55f885c36cb5054b9b518550b0d826fee8e59a38))
-* [nx migration] update-angular-cli-version-20-0-0 ([18d32de](https://github.com/WolfSoko/wol-sok-mono/commit/18d32de7e8d7bcd0b3617c59610c75c530de6b4b))
-* [nx migration] update-angular-cli-version-20-1-0 ([6c3d8eb](https://github.com/WolfSoko/wol-sok-mono/commit/6c3d8ebe8a9f156369bb0bc627db16b99af5d969))
-* [nx migration] update-module-resolution ([39448ce](https://github.com/WolfSoko/wol-sok-mono/commit/39448ce42586a33b31dbd200d8366b3aa09552d5))
-* 🔧 fix moduleResolution casing in tsconfig and clean up circle-analysis.component.ts ([9b1c583](https://github.com/WolfSoko/wol-sok-mono/commit/9b1c58361fb98d7bac0bf8f6eefb7d91102cbfbd))
-* 🔧 migrate to latest nx version ([a531529](https://github.com/WolfSoko/wol-sok-mono/commit/a531529b5df026cce44748d643460815554e2655))
-* 🔧 remove cypress tests ([235caac](https://github.com/WolfSoko/wol-sok-mono/commit/235caac054363d84c55b45145dbb1ba16a4771b6))
-* 🔧 remove module type from package.json ([5dd60bb](https://github.com/WolfSoko/wol-sok-mono/commit/5dd60bbc52ededba8c90845a24c443fd8897701b))
-* 🔧 remove module type from package.json and add AGENTS.md for repository guidelines ([38debd1](https://github.com/WolfSoko/wol-sok-mono/commit/38debd1e1c2ebf6f7fc2eb8251cbc5b80a77ad6a))
-* 🔧 remove rejectErrors option from toSignal in chat and notes adapters; ([725010e](https://github.com/WolfSoko/wol-sok-mono/commit/725010e3aa38862db064f45ff93b230cb5538b42))
-* 🔧 remove tsconfig.json and update VSCode settings for nx workspace path ([359d5b4](https://github.com/WolfSoko/wol-sok-mono/commit/359d5b4384e8da5b73977983bb1291097fdd4a0e))
-* 🔧 replace provideExperimentalZonelessChangeDetection with provideZonelessChangeDetection in setup and spec files ([2f1387b](https://github.com/WolfSoko/wol-sok-mono/commit/2f1387b689c8f3e1d7698e3fa762a561bf5e502e))
-* 🔧 simplify args in settings.json and update .nxignore ([67bf8f6](https://github.com/WolfSoko/wol-sok-mono/commit/67bf8f6b62c8c77c2c3e031462a400197b48810a))
-* 🔧 update agents.yml to install LTS version of Node.js ([4993a76](https://github.com/WolfSoko/wol-sok-mono/commit/4993a76544ef9aca5d765479d5443678f067b99f))
-* 🔧 update agents.yml to use image with correct v9 and improve installation logging ([fb3fcef](https://github.com/WolfSoko/wol-sok-mono/commit/fb3fcefeffebeb88f6b4aaaddec3b9ddda1e79e2))
-* 🔧 update configuration files and dependencies ([05f63e4](https://github.com/WolfSoko/wol-sok-mono/commit/05f63e4a376f2243198391d48211673f82508246))
-* 🔧 update testing environment to use BrowserTestingModule and platformBrowserTesting ([cbd6d0a](https://github.com/WolfSoko/wol-sok-mono/commit/cbd6d0a552c71d1dda035cc0f4fe250bd6c272c1))
-* start nx migration ([ca33876](https://github.com/WolfSoko/wol-sok-mono/commit/ca33876229399354de02b67f9908bf8c8acd7ac0))
-
+- [nx migration] 21-1-0-add-ignore-entries-for-nx-rule-files ([087ebf5](https://github.com/WolfSoko/wol-sok-mono/commit/087ebf515daf62ea7351af441096ee5a03504508))
+- [nx migration] migrate-provide-server-rendering-import ([27261fb](https://github.com/WolfSoko/wol-sok-mono/commit/27261fbbe7dbccc04a1cc992dba131d16dadb121))
+- [nx migration] set-generator-defaults-for-previous-style-guide ([c7d255e](https://github.com/WolfSoko/wol-sok-mono/commit/c7d255e7f268547f24d23e124e310d1d7bdc7528))
+- [nx migration] update-21-2-0-remove-addon-dependencies ([55f885c](https://github.com/WolfSoko/wol-sok-mono/commit/55f885c36cb5054b9b518550b0d826fee8e59a38))
+- [nx migration] update-angular-cli-version-20-0-0 ([18d32de](https://github.com/WolfSoko/wol-sok-mono/commit/18d32de7e8d7bcd0b3617c59610c75c530de6b4b))
+- [nx migration] update-angular-cli-version-20-1-0 ([6c3d8eb](https://github.com/WolfSoko/wol-sok-mono/commit/6c3d8ebe8a9f156369bb0bc627db16b99af5d969))
+- [nx migration] update-module-resolution ([39448ce](https://github.com/WolfSoko/wol-sok-mono/commit/39448ce42586a33b31dbd200d8366b3aa09552d5))
+- 🔧 fix moduleResolution casing in tsconfig and clean up circle-analysis.component.ts ([9b1c583](https://github.com/WolfSoko/wol-sok-mono/commit/9b1c58361fb98d7bac0bf8f6eefb7d91102cbfbd))
+- 🔧 migrate to latest nx version ([a531529](https://github.com/WolfSoko/wol-sok-mono/commit/a531529b5df026cce44748d643460815554e2655))
+- 🔧 remove cypress tests ([235caac](https://github.com/WolfSoko/wol-sok-mono/commit/235caac054363d84c55b45145dbb1ba16a4771b6))
+- 🔧 remove module type from package.json ([5dd60bb](https://github.com/WolfSoko/wol-sok-mono/commit/5dd60bbc52ededba8c90845a24c443fd8897701b))
+- 🔧 remove module type from package.json and add AGENTS.md for repository guidelines ([38debd1](https://github.com/WolfSoko/wol-sok-mono/commit/38debd1e1c2ebf6f7fc2eb8251cbc5b80a77ad6a))
+- 🔧 remove rejectErrors option from toSignal in chat and notes adapters; ([725010e](https://github.com/WolfSoko/wol-sok-mono/commit/725010e3aa38862db064f45ff93b230cb5538b42))
+- 🔧 remove tsconfig.json and update VSCode settings for nx workspace path ([359d5b4](https://github.com/WolfSoko/wol-sok-mono/commit/359d5b4384e8da5b73977983bb1291097fdd4a0e))
+- 🔧 replace provideExperimentalZonelessChangeDetection with provideZonelessChangeDetection in setup and spec files ([2f1387b](https://github.com/WolfSoko/wol-sok-mono/commit/2f1387b689c8f3e1d7698e3fa762a561bf5e502e))
+- 🔧 simplify args in settings.json and update .nxignore ([67bf8f6](https://github.com/WolfSoko/wol-sok-mono/commit/67bf8f6b62c8c77c2c3e031462a400197b48810a))
+- 🔧 update agents.yml to install LTS version of Node.js ([4993a76](https://github.com/WolfSoko/wol-sok-mono/commit/4993a76544ef9aca5d765479d5443678f067b99f))
+- 🔧 update agents.yml to use image with correct v9 and improve installation logging ([fb3fcef](https://github.com/WolfSoko/wol-sok-mono/commit/fb3fcefeffebeb88f6b4aaaddec3b9ddda1e79e2))
+- 🔧 update configuration files and dependencies ([05f63e4](https://github.com/WolfSoko/wol-sok-mono/commit/05f63e4a376f2243198391d48211673f82508246))
+- 🔧 update testing environment to use BrowserTestingModule and platformBrowserTesting ([cbd6d0a](https://github.com/WolfSoko/wol-sok-mono/commit/cbd6d0a552c71d1dda035cc0f4fe250bd6c272c1))
+- start nx migration ([ca33876](https://github.com/WolfSoko/wol-sok-mono/commit/ca33876229399354de02b67f9908bf8c8acd7ac0))
 
 ### Testing
 
-* 🚨 add updated snapshots ([8aaf43a](https://github.com/WolfSoko/wol-sok-mono/commit/8aaf43af9e37ec85fc22f5f2a19d7f2c82910481))
-* 🚨 revert snapsot changes ([618e57c](https://github.com/WolfSoko/wol-sok-mono/commit/618e57c4fdc8f162f4e29d698d5b792ef9bc257a))
-* 🚨 update snapshots ([7ad2787](https://github.com/WolfSoko/wol-sok-mono/commit/7ad2787fd06070f190b744ff2b898f7e3548d11f))
+- 🚨 add updated snapshots ([8aaf43a](https://github.com/WolfSoko/wol-sok-mono/commit/8aaf43af9e37ec85fc22f5f2a19d7f2c82910481))
+- 🚨 revert snapsot changes ([618e57c](https://github.com/WolfSoko/wol-sok-mono/commit/618e57c4fdc8f162f4e29d698d5b792ef9bc257a))
+- 🚨 update snapshots ([7ad2787](https://github.com/WolfSoko/wol-sok-mono/commit/7ad2787fd06070f190b744ff2b898f7e3548d11f))
 
 ## [4.77.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.17-non-cdk-deployed...v4.77.18) (2025-08-09)
 
-
 ### Chore
 
-* 🔧 update @wolsok/nx-aws-cdk-v2 to version 2.5.0 and switch from ts-node to tsx in cdk.json files ([899d63d](https://github.com/WolfSoko/wol-sok-mono/commit/899d63d36a086dae09ebc4b08c3987f8be121cc2))
+- 🔧 update @wolsok/nx-aws-cdk-v2 to version 2.5.0 and switch from ts-node to tsx in cdk.json files ([899d63d](https://github.com/WolfSoko/wol-sok-mono/commit/899d63d36a086dae09ebc4b08c3987f8be121cc2))
 
 ## [4.77.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.16-non-cdk-deployed...v4.77.17) (2025-08-09)
 
-
 ### Chore
 
-* 🔧 add tsconfig-paths dependency to package.json and package-lock.json ([04e8f81](https://github.com/WolfSoko/wol-sok-mono/commit/04e8f816e02450ebb13122d9df88ad54c05cc67d))
-* 🔧 use npx to start nx mcp server ([4093678](https://github.com/WolfSoko/wol-sok-mono/commit/4093678e9e41f2c06ddc1e60a10d7aa7de990109))
+- 🔧 add tsconfig-paths dependency to package.json and package-lock.json ([04e8f81](https://github.com/WolfSoko/wol-sok-mono/commit/04e8f816e02450ebb13122d9df88ad54c05cc67d))
+- 🔧 use npx to start nx mcp server ([4093678](https://github.com/WolfSoko/wol-sok-mono/commit/4093678e9e41f2c06ddc1e60a10d7aa7de990109))
 
 ## [4.77.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.15-non-cdk-deployed...v4.77.16) (2025-08-08)
 
-
 ### Bug Fixes
 
-* 🐛 update @wolsok/nx-aws-cdk-v2 to version 2.4.0 ([977346a](https://github.com/WolfSoko/wol-sok-mono/commit/977346accc5ea00831591025dae02dcad46c6c41))
-* **import:** remove .js extension from spa.stack import ([f7e11de](https://github.com/WolfSoko/wol-sok-mono/commit/f7e11de57bb9ee44cbec47779b046bd17488fa5e))
-* **nx:** 🐛 update defaultBase to use origin/main for consistency ([c92da9f](https://github.com/WolfSoko/wol-sok-mono/commit/c92da9fba4c8d5353a4082a333c54e04ced5c649))
-* **rollapolla-analog:** 🐛 extend read/write access deadline to October 30, 2025 ([7fcd5bc](https://github.com/WolfSoko/wol-sok-mono/commit/7fcd5bc718d4a6ede77bd48cbf188e63ea0df3a4))
-
+- 🐛 update @wolsok/nx-aws-cdk-v2 to version 2.4.0 ([977346a](https://github.com/WolfSoko/wol-sok-mono/commit/977346accc5ea00831591025dae02dcad46c6c41))
+- **import:** remove .js extension from spa.stack import ([f7e11de](https://github.com/WolfSoko/wol-sok-mono/commit/f7e11de57bb9ee44cbec47779b046bd17488fa5e))
+- **nx:** 🐛 update defaultBase to use origin/main for consistency ([c92da9f](https://github.com/WolfSoko/wol-sok-mono/commit/c92da9fba4c8d5353a4082a333c54e04ced5c649))
+- **rollapolla-analog:** 🐛 extend read/write access deadline to October 30, 2025 ([7fcd5bc](https://github.com/WolfSoko/wol-sok-mono/commit/7fcd5bc718d4a6ede77bd48cbf188e63ea0df3a4))
 
 ### CI/CD
 
-* 👷 fix require-approval option and upgrade AWS CDK dependencies ([4c50ea7](https://github.com/WolfSoko/wol-sok-mono/commit/4c50ea71092ed160ebc7996232ec5e199a3854d8))
-* 👷‍♂️ reduce fetch-depth to 30 in CI/CD workflow to improve speed ([ab7c658](https://github.com/WolfSoko/wol-sok-mono/commit/ab7c65803df46e7e7fec50cfe78fb41023347973))
-
+- 👷 fix require-approval option and upgrade AWS CDK dependencies ([4c50ea7](https://github.com/WolfSoko/wol-sok-mono/commit/4c50ea71092ed160ebc7996232ec5e199a3854d8))
+- 👷‍♂️ reduce fetch-depth to 30 in CI/CD workflow to improve speed ([ab7c658](https://github.com/WolfSoko/wol-sok-mono/commit/ab7c65803df46e7e7fec50cfe78fb41023347973))
 
 ### Chore
 
-* 🔧 add nx rules ([62c3a76](https://github.com/WolfSoko/wol-sok-mono/commit/62c3a768c89aac23852a344ac65e4941086fb530))
-* 🔧 update .prettierignore and nx-rules.mdc formatting ([99f7f04](https://github.com/WolfSoko/wol-sok-mono/commit/99f7f045d0b111896a5a25c263957d9e03bad8aa))
-* 🔧 update workspace settings and add MCP config ([53e5bc7](https://github.com/WolfSoko/wol-sok-mono/commit/53e5bc7913e37ff1724a1af075460fd97f937b6a))
-
+- 🔧 add nx rules ([62c3a76](https://github.com/WolfSoko/wol-sok-mono/commit/62c3a768c89aac23852a344ac65e4941086fb530))
+- 🔧 update .prettierignore and nx-rules.mdc formatting ([99f7f04](https://github.com/WolfSoko/wol-sok-mono/commit/99f7f045d0b111896a5a25c263957d9e03bad8aa))
+- 🔧 update workspace settings and add MCP config ([53e5bc7](https://github.com/WolfSoko/wol-sok-mono/commit/53e5bc7913e37ff1724a1af075460fd97f937b6a))
 
 ### Code style
 
-* 🎨 format .vscode/settings.json for consistency ([faf0b68](https://github.com/WolfSoko/wol-sok-mono/commit/faf0b68752a358b3b89e7162a778e9cc32281bd0))
-* 🎨 format file ([c78ed7f](https://github.com/WolfSoko/wol-sok-mono/commit/c78ed7f67083e72f275a850fe275f7cfd5d019b7))
+- 🎨 format .vscode/settings.json for consistency ([faf0b68](https://github.com/WolfSoko/wol-sok-mono/commit/faf0b68752a358b3b89e7162a778e9cc32281bd0))
+- 🎨 format file ([c78ed7f](https://github.com/WolfSoko/wol-sok-mono/commit/c78ed7f67083e72f275a850fe275f7cfd5d019b7))
 
 ## [4.77.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.14-non-cdk-deployed...v4.77.15) (2025-07-05)
 
 ## [4.77.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.13-non-cdk-deployed...v4.77.14) (2025-06-01)
 
-
 ### Chore
 
-* **deps:** 🔗 upgrade @wolsok/nx-aws-cdk-v2 to version 2.3.1 ([e64da49](https://github.com/WolfSoko/wol-sok-mono/commit/e64da49c538dfdc5f0c187e84dbcf09b6dca8371))
+- **deps:** 🔗 upgrade @wolsok/nx-aws-cdk-v2 to version 2.3.1 ([e64da49](https://github.com/WolfSoko/wol-sok-mono/commit/e64da49c538dfdc5f0c187e84dbcf09b6dca8371))
 
 ## [4.77.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.12-non-cdk-deployed...v4.77.13) (2025-05-12)
 
-
 ### Chore
 
-* **deps:** 🔗 upgrade [@nx](https://github.com/nx) packages to version 21.0.3 and cypress to 14.2.1; add continuous option in project.json ([da1fc76](https://github.com/WolfSoko/wol-sok-mono/commit/da1fc76c5861d530d91cf1026de94655b0f3360c))
-* **deps:** 🔗 upgrade @nx/vite to version 21.0.3 ([16eb85d](https://github.com/WolfSoko/wol-sok-mono/commit/16eb85d0d7ef5fed174d338ab31985705a6fc252))
-* **feat-lazy-tf-examples:** 🔧 remove injectDocumentDomain option from configuration ([80f05f0](https://github.com/WolfSoko/wol-sok-mono/commit/80f05f0c8914130da6759c7b79d671cffc9cec93))
+- **deps:** 🔗 upgrade [@nx](https://github.com/nx) packages to version 21.0.3 and cypress to 14.2.1; add continuous option in project.json ([da1fc76](https://github.com/WolfSoko/wol-sok-mono/commit/da1fc76c5861d530d91cf1026de94655b0f3360c))
+- **deps:** 🔗 upgrade @nx/vite to version 21.0.3 ([16eb85d](https://github.com/WolfSoko/wol-sok-mono/commit/16eb85d0d7ef5fed174d338ab31985705a6fc252))
+- **feat-lazy-tf-examples:** 🔧 remove injectDocumentDomain option from configuration ([80f05f0](https://github.com/WolfSoko/wol-sok-mono/commit/80f05f0c8914130da6759c7b79d671cffc9cec93))
 
 ## [4.77.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.11-non-cdk-deployed...v4.77.12) (2025-04-24)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency @trpc/server to v11.1.1 [security] ([0de5547](https://github.com/WolfSoko/wol-sok-mono/commit/0de5547bdc62c879f7db7cf0f81a32953f34d902))
+- **deps:** update dependency @trpc/server to v11.1.1 [security] ([0de5547](https://github.com/WolfSoko/wol-sok-mono/commit/0de5547bdc62c879f7db7cf0f81a32953f34d902))
 
 ## [4.77.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.10-non-cdk-deployed...v4.77.11) (2025-03-31)
 
-
 ### Chore
 
-* **deps:** update dependency jest-preset-angular to v14.5.4 ([d4ad71d](https://github.com/WolfSoko/wol-sok-mono/commit/d4ad71d102bcef52c0dddeb189b352c00670ec4b))
+- **deps:** update dependency jest-preset-angular to v14.5.4 ([d4ad71d](https://github.com/WolfSoko/wol-sok-mono/commit/d4ad71d102bcef52c0dddeb189b352c00670ec4b))
 
 ## [4.77.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.9-non-cdk-deployed...v4.77.10) (2025-03-31)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency firebase to v11.6.0 ([f1d5f5c](https://github.com/WolfSoko/wol-sok-mono/commit/f1d5f5c27790daad3acc9cb2914984a2a44b475c))
+- **deps:** update dependency firebase to v11.6.0 ([f1d5f5c](https://github.com/WolfSoko/wol-sok-mono/commit/f1d5f5c27790daad3acc9cb2914984a2a44b475c))
 
 ## [4.77.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.8-non-cdk-deployed...v4.77.9) (2025-03-31)
 
-
 ### Chore
 
-* **deps:** update typescript-eslint monorepo to v8.29.0 ([3113b6c](https://github.com/WolfSoko/wol-sok-mono/commit/3113b6c41d6b0a18e265ccf8b8a112de68b9ac4f))
+- **deps:** update typescript-eslint monorepo to v8.29.0 ([3113b6c](https://github.com/WolfSoko/wol-sok-mono/commit/3113b6c41d6b0a18e265ccf8b8a112de68b9ac4f))
 
 ## [4.77.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.7-non-cdk-deployed...v4.77.8) (2025-03-31)
 
-
 ### Chore
 
-* **deps:** update dependency ts-jest to v29.3.1 ([dc48b00](https://github.com/WolfSoko/wol-sok-mono/commit/dc48b007c4f0e67be7bce6dc4ecf12677ceb0c31))
+- **deps:** update dependency ts-jest to v29.3.1 ([dc48b00](https://github.com/WolfSoko/wol-sok-mono/commit/dc48b007c4f0e67be7bce6dc4ecf12677ceb0c31))
 
 ## [4.77.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.6-non-cdk-deployed...v4.77.7) (2025-03-31)
 
-
 ### Chore
 
-* **deps:** update nx monorepo to v20.7.0 ([bba5832](https://github.com/WolfSoko/wol-sok-mono/commit/bba583250a344991714229bb5b39760ba1daf1a5))
+- **deps:** update nx monorepo to v20.7.0 ([bba5832](https://github.com/WolfSoko/wol-sok-mono/commit/bba583250a344991714229bb5b39760ba1daf1a5))
 
 ## [4.77.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.5-non-cdk-deployed...v4.77.6) (2025-03-31)
 
-
 ### Chore
 
-* **deps:** 🔗 update @wolsok/nx-aws-cdk-v2 to version 2.1.6 ([4677f6c](https://github.com/WolfSoko/wol-sok-mono/commit/4677f6cdac337b1c1899f63faeee4d6af69716c1))
-* **deps:** 🔗 update @wolsok/nx-aws-cdk-v2 to version 2.2.0 ([702b5bc](https://github.com/WolfSoko/wol-sok-mono/commit/702b5bcac38036a00ea07d0456f3a27f54d4224f))
+- **deps:** 🔗 update @wolsok/nx-aws-cdk-v2 to version 2.1.6 ([4677f6c](https://github.com/WolfSoko/wol-sok-mono/commit/4677f6cdac337b1c1899f63faeee4d6af69716c1))
+- **deps:** 🔗 update @wolsok/nx-aws-cdk-v2 to version 2.2.0 ([702b5bc](https://github.com/WolfSoko/wol-sok-mono/commit/702b5bcac38036a00ea07d0456f3a27f54d4224f))
 
 ## [4.77.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.4-non-cdk-deployed...v4.77.5) (2025-03-31)
 
-
 ### Chore
 
-* **deps:** update dependency @wolsok/nx-aws-cdk-v2 to v2.1.6 ([539766e](https://github.com/WolfSoko/wol-sok-mono/commit/539766ecfbf9c8e653bf3d11e503c1b8664986f7))
+- **deps:** update dependency @wolsok/nx-aws-cdk-v2 to v2.1.6 ([539766e](https://github.com/WolfSoko/wol-sok-mono/commit/539766ecfbf9c8e653bf3d11e503c1b8664986f7))
 
 ## [4.77.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.3-non-cdk-deployed...v4.77.4) (2025-03-31)
 
-
 ### Chore
 
-* **deps:** update dependency @wolsok/nx-aws-cdk-v2 to v2.1.5 ([cccc483](https://github.com/WolfSoko/wol-sok-mono/commit/cccc483480655fdc9bbdd859d3b6dd2c87c41373))
+- **deps:** update dependency @wolsok/nx-aws-cdk-v2 to v2.1.5 ([cccc483](https://github.com/WolfSoko/wol-sok-mono/commit/cccc483480655fdc9bbdd859d3b6dd2c87c41373))
 
 ## [4.77.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.2-non-cdk-deployed...v4.77.3) (2025-03-31)
 
-
 ### Chore
 
-* **deps:** update vitest monorepo to v3.1.1 ([46aafeb](https://github.com/WolfSoko/wol-sok-mono/commit/46aafeb86628a9e91cd4f3218509578f8a40db1c))
+- **deps:** update vitest monorepo to v3.1.1 ([46aafeb](https://github.com/WolfSoko/wol-sok-mono/commit/46aafeb86628a9e91cd4f3218509578f8a40db1c))
 
 ## [4.77.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.1-non-cdk-deployed...v4.77.2) (2025-03-31)
 
-
 ### CI/CD
 
-* 👷 replace deprecated version property for sentry-release ([2000cd2](https://github.com/WolfSoko/wol-sok-mono/commit/2000cd20509be50248c4d0a228e53fef2eceb5c5))
+- 👷 replace deprecated version property for sentry-release ([2000cd2](https://github.com/WolfSoko/wol-sok-mono/commit/2000cd20509be50248c4d0a228e53fef2eceb5c5))
 
 ## [4.77.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.0-non-cdk-deployed...v4.77.1) (2025-03-31)
 
-
 ### Chore
 
-* **deps:** update dependency vite to v6.2.4 ([16d5bfc](https://github.com/WolfSoko/wol-sok-mono/commit/16d5bfcd06ca73c47a62092181ffba22f720e69b))
+- **deps:** update dependency vite to v6.2.4 ([16d5bfc](https://github.com/WolfSoko/wol-sok-mono/commit/16d5bfcd06ca73c47a62092181ffba22f720e69b))
 
 ## [4.77.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.23-non-cdk-deployed...v4.77.0) (2025-03-31)
 
-
 ### Features
 
-* **shared-data-access:** ✨ add Firestore emulator support and refactor module usage ([599c375](https://github.com/WolfSoko/wol-sok-mono/commit/599c375673b431f6f93e5ce2dd5fd846480e2aad))
-
+- **shared-data-access:** ✨ add Firestore emulator support and refactor module usage ([599c375](https://github.com/WolfSoko/wol-sok-mono/commit/599c375673b431f6f93e5ce2dd5fd846480e2aad))
 
 ### Bug Fixes
 
-* **shared-data-access:** 🐛 resolve path issues and enhance Firestore mock ([94b1ace](https://github.com/WolfSoko/wol-sok-mono/commit/94b1acedd9b063f57a018d0e6c2352df832c5a14))
-
+- **shared-data-access:** 🐛 resolve path issues and enhance Firestore mock ([94b1ace](https://github.com/WolfSoko/wol-sok-mono/commit/94b1acedd9b063f57a018d0e6c2352df832c5a14))
 
 ### Refactorings
 
-* ♻️ standardize filename conversion in playwright configs ([1a11e71](https://github.com/WolfSoko/wol-sok-mono/commit/1a11e717f968cf2ec5a7a5bc626af36e54b09b77))
-* **tools:** ♻️ add console log to output the `versionTag` during execution. ([07830c5](https://github.com/WolfSoko/wol-sok-mono/commit/07830c5c34a7d97294087b9e2238b076285acea2))
-
+- ♻️ standardize filename conversion in playwright configs ([1a11e71](https://github.com/WolfSoko/wol-sok-mono/commit/1a11e717f968cf2ec5a7a5bc626af36e54b09b77))
+- **tools:** ♻️ add console log to output the `versionTag` during execution. ([07830c5](https://github.com/WolfSoko/wol-sok-mono/commit/07830c5c34a7d97294087b9e2238b076285acea2))
 
 ### CI/CD
 
-* 👷 update commitlint scope-enum configuration ([ef9e1e2](https://github.com/WolfSoko/wol-sok-mono/commit/ef9e1e2adfc93ff5986d8c02e05e0eaaaee6c155))
-* 👷 update commitlint scope-enum configuration ([0253752](https://github.com/WolfSoko/wol-sok-mono/commit/02537521581229e8ee7e04ec7108e5459eb1f113))
-* 👷 update workflow to fetch all tags in agents.yml ([4641ce3](https://github.com/WolfSoko/wol-sok-mono/commit/4641ce346af9fa7e296751201730370c893162fe))
-
+- 👷 update commitlint scope-enum configuration ([ef9e1e2](https://github.com/WolfSoko/wol-sok-mono/commit/ef9e1e2adfc93ff5986d8c02e05e0eaaaee6c155))
+- 👷 update commitlint scope-enum configuration ([0253752](https://github.com/WolfSoko/wol-sok-mono/commit/02537521581229e8ee7e04ec7108e5459eb1f113))
+- 👷 update workflow to fetch all tags in agents.yml ([4641ce3](https://github.com/WolfSoko/wol-sok-mono/commit/4641ce346af9fa7e296751201730370c893162fe))
 
 ### Chore
 
-* 🔧 add nx-angular-config.xml for IntelliJ project setup ([33b1521](https://github.com/WolfSoko/wol-sok-mono/commit/33b15217dea327d31cda02681a2795f13bb6457f))
-* **deps:** bump tar-fs from 2.1.1 to 2.1.2 ([0adc488](https://github.com/WolfSoko/wol-sok-mono/commit/0adc488f90144d73970fca5ca65e3932c13cd839))
-
+- 🔧 add nx-angular-config.xml for IntelliJ project setup ([33b1521](https://github.com/WolfSoko/wol-sok-mono/commit/33b15217dea327d31cda02681a2795f13bb6457f))
+- **deps:** bump tar-fs from 2.1.1 to 2.1.2 ([0adc488](https://github.com/WolfSoko/wol-sok-mono/commit/0adc488f90144d73970fca5ca65e3932c13cd839))
 
 ### Testing
 
-* **shared-data-access:** 🚨 update Firestore mock in database.service.spec.ts ([590d53c](https://github.com/WolfSoko/wol-sok-mono/commit/590d53cec4262e060bff02d64c8fc9b7f7349f91))
+- **shared-data-access:** 🚨 update Firestore mock in database.service.spec.ts ([590d53c](https://github.com/WolfSoko/wol-sok-mono/commit/590d53cec4262e060bff02d64c8fc9b7f7349f91))
 
 ## [4.76.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.22-cdk-deployed...v4.76.23) (2025-03-30)
 
-
 ### Chore
 
-* **deps:** update dependency @esbuild/linux-x64 to v0.25.2 ([f53038e](https://github.com/WolfSoko/wol-sok-mono/commit/f53038e9422589c9f139f42a3674ecf71616d971))
+- **deps:** update dependency @esbuild/linux-x64 to v0.25.2 ([f53038e](https://github.com/WolfSoko/wol-sok-mono/commit/f53038e9422589c9f139f42a3674ecf71616d971))
 
 ## [4.76.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.21-cdk-deployed...v4.76.22) (2025-03-30)
 
-
 ### Chore
 
-* **deps:** update dependency @nx/nx-linux-x64-gnu to v20.6.4 ([802c955](https://github.com/WolfSoko/wol-sok-mono/commit/802c9558115fe6f517b35ad63126953fbf9d4208))
+- **deps:** update dependency @nx/nx-linux-x64-gnu to v20.6.4 ([802c955](https://github.com/WolfSoko/wol-sok-mono/commit/802c9558115fe6f517b35ad63126953fbf9d4208))
 
 ## [4.76.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.20-cdk-deployed...v4.76.21) (2025-03-30)
 
-
 ### Chore
 
-* **deps:** update dependency @esbuild/linux-x64 to v0.25.1 ([c5f5097](https://github.com/WolfSoko/wol-sok-mono/commit/c5f509770f80b058be39e7e6051c1a624f49c9bb))
+- **deps:** update dependency @esbuild/linux-x64 to v0.25.1 ([c5f5097](https://github.com/WolfSoko/wol-sok-mono/commit/c5f509770f80b058be39e7e6051c1a624f49c9bb))
 
 ## [4.76.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.19-non-cdk-deployed...v4.76.20) (2025-03-30)
 
-
 ### Chore
 
-* **deps:** update dependency @eslint/js to v9.23.0 ([3490e7a](https://github.com/WolfSoko/wol-sok-mono/commit/3490e7a05846a52a5da60f13500f7da9ff1e8138))
-* **deps:** update dependency @types/three to v0.175.0 ([248e722](https://github.com/WolfSoko/wol-sok-mono/commit/248e722de3e964c81a7a03f315f6ea829142fc18))
-* **deps:** update dependency firebase-tools to v14 ([9197620](https://github.com/WolfSoko/wol-sok-mono/commit/91976209881ba866a3f54006955acf0c7925f3ac))
-* **deps:** update dependency rollup to v4.38.0 ([45142e5](https://github.com/WolfSoko/wol-sok-mono/commit/45142e57f3b08255eb536a10d0a066062b7ba59d))
+- **deps:** update dependency @eslint/js to v9.23.0 ([3490e7a](https://github.com/WolfSoko/wol-sok-mono/commit/3490e7a05846a52a5da60f13500f7da9ff1e8138))
+- **deps:** update dependency @types/three to v0.175.0 ([248e722](https://github.com/WolfSoko/wol-sok-mono/commit/248e722de3e964c81a7a03f315f6ea829142fc18))
+- **deps:** update dependency firebase-tools to v14 ([9197620](https://github.com/WolfSoko/wol-sok-mono/commit/91976209881ba866a3f54006955acf0c7925f3ac))
+- **deps:** update dependency rollup to v4.38.0 ([45142e5](https://github.com/WolfSoko/wol-sok-mono/commit/45142e57f3b08255eb536a10d0a066062b7ba59d))
 
 ## [4.76.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.18-non-cdk-deployed...v4.76.19) (2025-03-30)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency browserslist to v4.24.4 ([b73bb02](https://github.com/WolfSoko/wol-sok-mono/commit/b73bb027dffcc73ad04ffc70908c9927d23e1371))
-
+- **deps:** update dependency browserslist to v4.24.4 ([b73bb02](https://github.com/WolfSoko/wol-sok-mono/commit/b73bb027dffcc73ad04ffc70908c9927d23e1371))
 
 ### Chore
 
-* **deps:** update dependency eslint-plugin-storybook to v0.12.0 ([eb958ab](https://github.com/WolfSoko/wol-sok-mono/commit/eb958ab01e40bee91e8f44fe210240317267e7c9))
-
+- **deps:** update dependency eslint-plugin-storybook to v0.12.0 ([eb958ab](https://github.com/WolfSoko/wol-sok-mono/commit/eb958ab01e40bee91e8f44fe210240317267e7c9))
 
 ### Testing
 
-* 🚨 update snapshots ([ca132a0](https://github.com/WolfSoko/wol-sok-mono/commit/ca132a07ed76fa7ac7ea2e67ad315d8124967e6d))
+- 🚨 update snapshots ([ca132a0](https://github.com/WolfSoko/wol-sok-mono/commit/ca132a07ed76fa7ac7ea2e67ad315d8124967e6d))
 
 ## [4.76.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.17-non-cdk-deployed...v4.76.18) (2025-03-29)
 
-
 ### Chore
 
-* **deps:** update dependency aws-cdk to v2.1006.0 ([5e3a612](https://github.com/WolfSoko/wol-sok-mono/commit/5e3a612e5a953052363abc245c45e16a1f7a230b))
+- **deps:** update dependency aws-cdk to v2.1006.0 ([5e3a612](https://github.com/WolfSoko/wol-sok-mono/commit/5e3a612e5a953052363abc245c45e16a1f7a230b))
 
 ## [4.76.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.16-non-cdk-deployed...v4.76.17) (2025-03-29)
 
-
 ### Chore
 
-* **deps:** update dependency angular-eslint to v19.3.0 ([4a7776f](https://github.com/WolfSoko/wol-sok-mono/commit/4a7776f56a7fd22002da147aea29554c0464bfd4))
+- **deps:** update dependency angular-eslint to v19.3.0 ([4a7776f](https://github.com/WolfSoko/wol-sok-mono/commit/4a7776f56a7fd22002da147aea29554c0464bfd4))
 
 ## [4.76.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.15-non-cdk-deployed...v4.76.16) (2025-03-29)
 
-
 ### Chore
 
-* **deps:** update dependency @rspack/core to v1.3.0 ([48ee032](https://github.com/WolfSoko/wol-sok-mono/commit/48ee0321dbce5ea2c971d89e0bb5cb431074f345))
+- **deps:** update dependency @rspack/core to v1.3.0 ([48ee032](https://github.com/WolfSoko/wol-sok-mono/commit/48ee0321dbce5ea2c971d89e0bb5cb431074f345))
 
 ## [4.76.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.14-non-cdk-deployed...v4.76.15) (2025-03-29)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.38.0 ([d8e928a](https://github.com/WolfSoko/wol-sok-mono/commit/d8e928a404e30869221d7faf1b14485b262a8eb3))
+- **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.38.0 ([d8e928a](https://github.com/WolfSoko/wol-sok-mono/commit/d8e928a404e30869221d7faf1b14485b262a8eb3))
 
 ## [4.76.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.13-non-cdk-deployed...v4.76.14) (2025-03-29)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.38.0 ([942d0a5](https://github.com/WolfSoko/wol-sok-mono/commit/942d0a5b061f02ee36b08ae62a5fff54355469a0))
+- **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.38.0 ([942d0a5](https://github.com/WolfSoko/wol-sok-mono/commit/942d0a5b061f02ee36b08ae62a5fff54355469a0))
 
 ## [4.76.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.12-cdk-deployed...v4.76.13) (2025-03-29)
 
-
 ### Bug Fixes
 
-* **rollapolla-analog:** 🐛 update firestore rules to adjust write access and message size limits ([b1167c1](https://github.com/WolfSoko/wol-sok-mono/commit/b1167c18e29b49b316a2487aae73cb25e39e5e58))
-
+- **rollapolla-analog:** 🐛 update firestore rules to adjust write access and message size limits ([b1167c1](https://github.com/WolfSoko/wol-sok-mono/commit/b1167c18e29b49b316a2487aae73cb25e39e5e58))
 
 ### Chore
 
-* **deps:** update dependency @module-federation/enhanced to v0.11.2 ([9f68954](https://github.com/WolfSoko/wol-sok-mono/commit/9f68954e2e13ec87c02a2d696d08e62635911b30))
+- **deps:** update dependency @module-federation/enhanced to v0.11.2 ([9f68954](https://github.com/WolfSoko/wol-sok-mono/commit/9f68954e2e13ec87c02a2d696d08e62635911b30))
 
 ## [4.76.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.11-cdk-deployed...v4.76.12) (2025-03-29)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency ace-builds to v1.39.1 ([e1b8056](https://github.com/WolfSoko/wol-sok-mono/commit/e1b80568437daa8689fc4dfe7f5c51b41121626c))
+- **deps:** update dependency ace-builds to v1.39.1 ([e1b8056](https://github.com/WolfSoko/wol-sok-mono/commit/e1b80568437daa8689fc4dfe7f5c51b41121626c))
 
 ## [4.76.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.10-cdk-deployed...v4.76.11) (2025-03-29)
 
-
 ### Chore
 
-* **deps:** update swc monorepo ([ab05f9a](https://github.com/WolfSoko/wol-sok-mono/commit/ab05f9a486aa901ca0d8a8a3d9300dd6dd24353b))
+- **deps:** update swc monorepo ([ab05f9a](https://github.com/WolfSoko/wol-sok-mono/commit/ab05f9a486aa901ca0d8a8a3d9300dd6dd24353b))
 
 ## [4.76.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.9...v4.76.10) (2025-03-29)
 
-
 ### Chore
 
-* **deps:** update storybook monorepo to v8.6.11 ([7baaa10](https://github.com/WolfSoko/wol-sok-mono/commit/7baaa10242c8cc5c684a93c5648afeaf337e3c41))
+- **deps:** update storybook monorepo to v8.6.11 ([7baaa10](https://github.com/WolfSoko/wol-sok-mono/commit/7baaa10242c8cc5c684a93c5648afeaf337e3c41))
 
 ## [4.76.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.8-non-cdk-deployed...v4.76.9) (2025-03-29)
 
-
 ### Refactorings
 
-* **rollapolla-analog:** ♻️ migrate notes feature to chat messages ([4c3a2b6](https://github.com/WolfSoko/wol-sok-mono/commit/4c3a2b68369ef01e4044e1767219fa573eacb3af))
+- **rollapolla-analog:** ♻️ migrate notes feature to chat messages ([4c3a2b6](https://github.com/WolfSoko/wol-sok-mono/commit/4c3a2b68369ef01e4044e1767219fa573eacb3af))
 
 ## [4.76.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.7-non-cdk-deployed...v4.76.8) (2025-03-29)
 
-
 ### Chore
 
-* **deps:** update dependency eslint-plugin-prettier to v5.2.5 ([ec02c6c](https://github.com/WolfSoko/wol-sok-mono/commit/ec02c6cf58f8977f52577443a6ffc46c6d9a95c8))
+- **deps:** update dependency eslint-plugin-prettier to v5.2.5 ([ec02c6c](https://github.com/WolfSoko/wol-sok-mono/commit/ec02c6cf58f8977f52577443a6ffc46c6d9a95c8))
 
 ## [4.76.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.6-non-cdk-deployed...v4.76.7) (2025-03-29)
 
-
 ### Chore
 
-* **deps:** update dependency axios to v1.8.4 ([38a5ff4](https://github.com/WolfSoko/wol-sok-mono/commit/38a5ff452f7c9005443c4a8aa017a591745aa1ae))
+- **deps:** update dependency axios to v1.8.4 ([38a5ff4](https://github.com/WolfSoko/wol-sok-mono/commit/38a5ff452f7c9005443c4a8aa017a591745aa1ae))
 
 ## [4.76.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.5-non-cdk-deployed...v4.76.6) (2025-03-29)
 
-
 ### Chore
 
-* **deps:** update dependency @types/node to v22.13.14 ([049df9c](https://github.com/WolfSoko/wol-sok-mono/commit/049df9cc7429cc2da1793e0359dc53d3e39e416a))
+- **deps:** update dependency @types/node to v22.13.14 ([049df9c](https://github.com/WolfSoko/wol-sok-mono/commit/049df9cc7429cc2da1793e0359dc53d3e39e416a))
 
 ## [4.76.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.4-non-cdk-deployed...v4.76.5) (2025-03-29)
 
-
 ### Chore
 
-* **deps:** update dependency @types/chai to v5.2.1 ([3e2b9d4](https://github.com/WolfSoko/wol-sok-mono/commit/3e2b9d4093139dde0f8c8e8272f351b5d62f099e))
+- **deps:** update dependency @types/chai to v5.2.1 ([3e2b9d4](https://github.com/WolfSoko/wol-sok-mono/commit/3e2b9d4093139dde0f8c8e8272f351b5d62f099e))
 
 ## [4.76.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.3-non-cdk-deployed...v4.76.4) (2025-03-29)
 
-
 ### Chore
 
-* **deps:** update dependency @playwright/test to v1.51.1 ([80e3456](https://github.com/WolfSoko/wol-sok-mono/commit/80e345694374a0f4e911ddebcb9dc01cb61990b5))
+- **deps:** update dependency @playwright/test to v1.51.1 ([80e3456](https://github.com/WolfSoko/wol-sok-mono/commit/80e345694374a0f4e911ddebcb9dc01cb61990b5))
 
 ## [4.76.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.2-non-cdk-deployed...v4.76.3) (2025-03-29)
 
-
 ### Chore
 
-* **deps:** update dependency @eslint/eslintrc to v3.3.1 ([60105c4](https://github.com/WolfSoko/wol-sok-mono/commit/60105c44eb43b877c7686ef241579fff42ad44f3))
+- **deps:** update dependency @eslint/eslintrc to v3.3.1 ([60105c4](https://github.com/WolfSoko/wol-sok-mono/commit/60105c44eb43b877c7686ef241579fff42ad44f3))
 
 ## [4.76.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.1-non-cdk-deployed...v4.76.2) (2025-03-29)
 
-
 ### Bug Fixes
 
-* 🐛 lint errors ([d97228f](https://github.com/WolfSoko/wol-sok-mono/commit/d97228f890acc1681b05bfa412519ab7fcdab716))
-* **deps:** update analog monorepo to v1.14.1 ([2605041](https://github.com/WolfSoko/wol-sok-mono/commit/2605041e535843a05258b5c0d83a338b7c331811))
-* **deps:** update nx monorepo ([1865dae](https://github.com/WolfSoko/wol-sok-mono/commit/1865daecd2745abc25ff5a044bb14295fc968d36))
-* **deps:** update nx monorepo ([73e76bb](https://github.com/WolfSoko/wol-sok-mono/commit/73e76bbccd5d37ae861d7870515412f2b44d343d))
-* **pacetrainer:** 🐛 analog does not support self closing angular components ([c2f9601](https://github.com/WolfSoko/wol-sok-mono/commit/c2f960146d240aadbea6d2d530ba41b6d630c6e2))
-* **pacetrainer:** 🐛 fix selector ([2bab94b](https://github.com/WolfSoko/wol-sok-mono/commit/2bab94b9d8fded434ed32bef4caf16d7c0f460c4))
-* **rollapolla-analog:** 🐛 update test IDs and improve hydration strategy ([da7554a](https://github.com/WolfSoko/wol-sok-mono/commit/da7554ae2c99e37573a3c81ac7b674b58e4d5611))
-
+- 🐛 lint errors ([d97228f](https://github.com/WolfSoko/wol-sok-mono/commit/d97228f890acc1681b05bfa412519ab7fcdab716))
+- **deps:** update analog monorepo to v1.14.1 ([2605041](https://github.com/WolfSoko/wol-sok-mono/commit/2605041e535843a05258b5c0d83a338b7c331811))
+- **deps:** update nx monorepo ([1865dae](https://github.com/WolfSoko/wol-sok-mono/commit/1865daecd2745abc25ff5a044bb14295fc968d36))
+- **deps:** update nx monorepo ([73e76bb](https://github.com/WolfSoko/wol-sok-mono/commit/73e76bbccd5d37ae861d7870515412f2b44d343d))
+- **pacetrainer:** 🐛 analog does not support self closing angular components ([c2f9601](https://github.com/WolfSoko/wol-sok-mono/commit/c2f960146d240aadbea6d2d530ba41b6d630c6e2))
+- **pacetrainer:** 🐛 fix selector ([2bab94b](https://github.com/WolfSoko/wol-sok-mono/commit/2bab94b9d8fded434ed32bef4caf16d7c0f460c4))
+- **rollapolla-analog:** 🐛 update test IDs and improve hydration strategy ([da7554a](https://github.com/WolfSoko/wol-sok-mono/commit/da7554ae2c99e37573a3c81ac7b674b58e4d5611))
 
 ### Refactorings
 
-* **rollapolla-analog:** ♻️ update UI and clean code ([729046c](https://github.com/WolfSoko/wol-sok-mono/commit/729046c20630a8ec630c210290cc21907726b3d8))
-
+- **rollapolla-analog:** ♻️ update UI and clean code ([729046c](https://github.com/WolfSoko/wol-sok-mono/commit/729046c20630a8ec630c210290cc21907726b3d8))
 
 ### CI/CD
 
-* 👷 improve parallel execution with exit status checks ([c6550e9](https://github.com/WolfSoko/wol-sok-mono/commit/c6550e9eee967c615f1358b93044dea1bf41264b))
-* 👷 only run linting not testing in commit hook ([24cb51d](https://github.com/WolfSoko/wol-sok-mono/commit/24cb51d597bff919df29a3d5842e462c8bf9d560))
-
+- 👷 improve parallel execution with exit status checks ([c6550e9](https://github.com/WolfSoko/wol-sok-mono/commit/c6550e9eee967c615f1358b93044dea1bf41264b))
+- 👷 only run linting not testing in commit hook ([24cb51d](https://github.com/WolfSoko/wol-sok-mono/commit/24cb51d597bff919df29a3d5842e462c8bf9d560))
 
 ### Chore
 
-* **deps:** update dependency @chromatic-com/storybook to v3.2.6 ([1a73a45](https://github.com/WolfSoko/wol-sok-mono/commit/1a73a458c5afc5d5786d76aa02298f351aad1530))
-* **deps:** update dependency @cypress/webpack-dev-server to v4.0.2 ([2707c26](https://github.com/WolfSoko/wol-sok-mono/commit/2707c2652cd840e1632381aeea709768b1d2c63e))
-* **deps:** update vitest monorepo to v3.0.9 ([4da1cdf](https://github.com/WolfSoko/wol-sok-mono/commit/4da1cdff948e9a16318b1ae9ed0a192a81b4d2e8))
-
+- **deps:** update dependency @chromatic-com/storybook to v3.2.6 ([1a73a45](https://github.com/WolfSoko/wol-sok-mono/commit/1a73a458c5afc5d5786d76aa02298f351aad1530))
+- **deps:** update dependency @cypress/webpack-dev-server to v4.0.2 ([2707c26](https://github.com/WolfSoko/wol-sok-mono/commit/2707c2652cd840e1632381aeea709768b1d2c63e))
+- **deps:** update vitest monorepo to v3.0.9 ([4da1cdf](https://github.com/WolfSoko/wol-sok-mono/commit/4da1cdff948e9a16318b1ae9ed0a192a81b4d2e8))
 
 ### Testing
 
-* 🚨 update snapshots for cdk ([30c0a6b](https://github.com/WolfSoko/wol-sok-mono/commit/30c0a6b1dc5cee3e324d5a7a578b03ee016af546))
-* **rollapolla-analog:** 🚨 add snapshots for linux ([40e6311](https://github.com/WolfSoko/wol-sok-mono/commit/40e6311be5bde6a4e84b127a5d1998f475614c31))
+- 🚨 update snapshots for cdk ([30c0a6b](https://github.com/WolfSoko/wol-sok-mono/commit/30c0a6b1dc5cee3e324d5a7a578b03ee016af546))
+- **rollapolla-analog:** 🚨 add snapshots for linux ([40e6311](https://github.com/WolfSoko/wol-sok-mono/commit/40e6311be5bde6a4e84b127a5d1998f475614c31))
 
 ## [4.76.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.76.0-non-cdk-deployed...v4.76.1) (2025-03-29)
 
-
 ### Testing
 
-* **rollapolla-analog:** 🚨 update spec to test xTwitter icon registration ([258a41d](https://github.com/WolfSoko/wol-sok-mono/commit/258a41d2a1b4da457f8640951113f641491a7aa7))
+- **rollapolla-analog:** 🚨 update spec to test xTwitter icon registration ([258a41d](https://github.com/WolfSoko/wol-sok-mono/commit/258a41d2a1b4da457f8640951113f641491a7aa7))
 
 ## [4.76.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.75.0-non-cdk-deployed...v4.76.0) (2025-03-29)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ integrate FontAwesome for branding X link ([f708e20](https://github.com/WolfSoko/wol-sok-mono/commit/f708e2032e9fdc9ed955dd83797e0aef87593424))
+- **rollapolla-analog:** ✨ integrate FontAwesome for branding X link ([f708e20](https://github.com/WolfSoko/wol-sok-mono/commit/f708e2032e9fdc9ed955dd83797e0aef87593424))
 
 ## [4.75.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.11-non-cdk-deployed...v4.75.0) (2025-03-29)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ update X link and improve UI layout ([5de190e](https://github.com/WolfSoko/wol-sok-mono/commit/5de190e10f2dfdf22d9d6cbc20a359fdc9c68a26))
-
+- **rollapolla-analog:** ✨ update X link and improve UI layout ([5de190e](https://github.com/WolfSoko/wol-sok-mono/commit/5de190e10f2dfdf22d9d6cbc20a359fdc9c68a26))
 
 ### Chore
 
-* 🔧 add IntelliJ IDEA nx-angular configuration file ([62c5c90](https://github.com/WolfSoko/wol-sok-mono/commit/62c5c9006bf5ddf2b5931eb36f5a67ba84e16f7d))
+- 🔧 add IntelliJ IDEA nx-angular configuration file ([62c5c90](https://github.com/WolfSoko/wol-sok-mono/commit/62c5c9006bf5ddf2b5931eb36f5a67ba84e16f7d))
 
 ## [4.74.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.10-cdk-deployed...v4.74.11) (2025-03-29)
 
-
 ### Chore
 
-* **rollapolla-analog:** 🔧 update firestore rules date ([3e43528](https://github.com/WolfSoko/wol-sok-mono/commit/3e435286db3f80c728a03bf5e717b4086b8835a0))
+- **rollapolla-analog:** 🔧 update firestore rules date ([3e43528](https://github.com/WolfSoko/wol-sok-mono/commit/3e435286db3f80c728a03bf5e717b4086b8835a0))
 
 ## [4.74.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.9-cdk-deployed...v4.74.10) (2025-03-25)
 
-
 ### Chore
 
-* **deps:** update dependency vite to v6.2.3 [security] ([6097f93](https://github.com/WolfSoko/wol-sok-mono/commit/6097f936eea1e031696018051e1a2b0e3f03a80d))
+- **deps:** update dependency vite to v6.2.3 [security] ([6097f93](https://github.com/WolfSoko/wol-sok-mono/commit/6097f936eea1e031696018051e1a2b0e3f03a80d))
 
 ## [4.74.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.8...v4.74.9) (2025-03-17)
 
-
 ### Chore
 
-* **deps:** 🔗 update @wolsok/nx-aws-cdk-v2 to version 2.1.2 in package files ([8938d8e](https://github.com/WolfSoko/wol-sok-mono/commit/8938d8ef309c0597ec4b11104af475321baf2d5e))
+- **deps:** 🔗 update @wolsok/nx-aws-cdk-v2 to version 2.1.2 in package files ([8938d8e](https://github.com/WolfSoko/wol-sok-mono/commit/8938d8ef309c0597ec4b11104af475321baf2d5e))
 
 ## [4.74.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.7...v4.74.8) (2025-03-17)
 
-
 ### Chore
 
-* **deps:** 🔗 update @wolsok/nx-aws-cdk-v2 to version 2.1.1 in package files ([13576a7](https://github.com/WolfSoko/wol-sok-mono/commit/13576a78456a218190239c247ad4a97f29fe580a))
+- **deps:** 🔗 update @wolsok/nx-aws-cdk-v2 to version 2.1.1 in package files ([13576a7](https://github.com/WolfSoko/wol-sok-mono/commit/13576a78456a218190239c247ad4a97f29fe580a))
 
 ## [4.74.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.6...v4.74.7) (2025-03-17)
 
-
 ### Chore
 
-* **spa-cdk-stack:** 🔧 update dependencies and fix deploy args ([1434f35](https://github.com/WolfSoko/wol-sok-mono/commit/1434f35e12c622b69df4640ed7288a68fc4998d6))
+- **spa-cdk-stack:** 🔧 update dependencies and fix deploy args ([1434f35](https://github.com/WolfSoko/wol-sok-mono/commit/1434f35e12c622b69df4640ed7288a68fc4998d6))
 
 ## [4.74.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.5...v4.74.6) (2025-03-17)
 
-
 ### Chore
 
-* **deps:** update dependency aws-cdk-lib to v2.184.1 ([d50325b](https://github.com/WolfSoko/wol-sok-mono/commit/d50325b70c43881acdce0a3bb8ccc9af5b63224b))
+- **deps:** update dependency aws-cdk-lib to v2.184.1 ([d50325b](https://github.com/WolfSoko/wol-sok-mono/commit/d50325b70c43881acdce0a3bb8ccc9af5b63224b))
 
 ## [4.74.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.4...v4.74.5) (2025-03-17)
 
-
 ### Chore
 
-* **deps:** update dependency aws-cdk to v2.1004.0 ([e48569b](https://github.com/WolfSoko/wol-sok-mono/commit/e48569b853bd1a4f0d8b40744123b732503763fc))
+- **deps:** update dependency aws-cdk to v2.1004.0 ([e48569b](https://github.com/WolfSoko/wol-sok-mono/commit/e48569b853bd1a4f0d8b40744123b732503763fc))
 
 ## [4.74.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.3...v4.74.4) (2025-03-17)
 
-
 ### Bug Fixes
 
-* **ci:** 🐛 👷 correct syntax for extra-deploy-args in deploy workflow ([9d12550](https://github.com/WolfSoko/wol-sok-mono/commit/9d12550609a7445982325cf72e5ce5667e6a0ce9))
+- **ci:** 🐛 👷 correct syntax for extra-deploy-args in deploy workflow ([9d12550](https://github.com/WolfSoko/wol-sok-mono/commit/9d12550609a7445982325cf72e5ce5667e6a0ce9))
 
 ## [4.74.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.2...v4.74.3) (2025-03-12)
 
-
 ### Chore
 
-* **deps:** update dependency lint-staged to v15.5.0 ([5dc6255](https://github.com/WolfSoko/wol-sok-mono/commit/5dc6255e85e799bc9bf35c8583e205fdd05a8742))
+- **deps:** update dependency lint-staged to v15.5.0 ([5dc6255](https://github.com/WolfSoko/wol-sok-mono/commit/5dc6255e85e799bc9bf35c8583e205fdd05a8742))
 
 ## [4.74.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.1...v4.74.2) (2025-03-12)
 
-
 ### Chore
 
-* **deps:** update dependency @swc/core to v1.11.9 ([91296fb](https://github.com/WolfSoko/wol-sok-mono/commit/91296fb5d7cc6c11f777649b13c0ef952f0785b6))
+- **deps:** update dependency @swc/core to v1.11.9 ([91296fb](https://github.com/WolfSoko/wol-sok-mono/commit/91296fb5d7cc6c11f777649b13c0ef952f0785b6))
 
 ## [4.74.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.74.0...v4.74.1) (2025-03-12)
 
-
 ### Bug Fixes
 
-* **spa-cdk-stack:** 🐛 update package names in Ubuntu install scripts ([90fe462](https://github.com/WolfSoko/wol-sok-mono/commit/90fe462016c81b64fa03a0d07b578ea95032dfde))
+- **spa-cdk-stack:** 🐛 update package names in Ubuntu install scripts ([90fe462](https://github.com/WolfSoko/wol-sok-mono/commit/90fe462016c81b64fa03a0d07b578ea95032dfde))
 
 ## [4.74.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.61...v4.74.0) (2025-03-12)
 
-
 ### Features
 
-* ✨ update [@rspack](https://github.com/rspack) dependencies to version 1.2.8 ([38dadd2](https://github.com/WolfSoko/wol-sok-mono/commit/38dadd2b953a9a7990c523678bc9907d0e715b2b))
-
+- ✨ update [@rspack](https://github.com/rspack) dependencies to version 1.2.8 ([38dadd2](https://github.com/WolfSoko/wol-sok-mono/commit/38dadd2b953a9a7990c523678bc9907d0e715b2b))
 
 ### Chore
 
-* 🔧 add GTK and Graphene dependencies for node-gyp compilation on Ubuntu ([7963710](https://github.com/WolfSoko/wol-sok-mono/commit/796371091e4d8a2e43d093b7bf55087ca562707a))
+- 🔧 add GTK and Graphene dependencies for node-gyp compilation on Ubuntu ([7963710](https://github.com/WolfSoko/wol-sok-mono/commit/796371091e4d8a2e43d093b7bf55087ca562707a))
 
 ## [4.73.61](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.60...v4.73.61) (2025-03-12)
 
-
 ### Chore
 
-* **deps:** update dependency axios to v1.8.3 ([20dd86e](https://github.com/WolfSoko/wol-sok-mono/commit/20dd86ef0b09fdc510ea5aa1d6006af98e7c3dec))
+- **deps:** update dependency axios to v1.8.3 ([20dd86e](https://github.com/WolfSoko/wol-sok-mono/commit/20dd86ef0b09fdc510ea5aa1d6006af98e7c3dec))
 
 ## [4.73.60](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.59...v4.73.60) (2025-03-12)
 
-
 ### Chore
 
-* **deps:** update vitest monorepo to v3 ([a300908](https://github.com/WolfSoko/wol-sok-mono/commit/a30090853dc6089d16d07ac5c6f4b9498c1151cc))
+- **deps:** update vitest monorepo to v3 ([a300908](https://github.com/WolfSoko/wol-sok-mono/commit/a30090853dc6089d16d07ac5c6f4b9498c1151cc))
 
 ## [4.73.59](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.58...v4.73.59) (2025-03-12)
 
-
 ### Chore
 
-* **deps:** update getsentry/action-release action to v3 ([5b26ceb](https://github.com/WolfSoko/wol-sok-mono/commit/5b26cebc96aba36217abb9f28fc705c0eadbdb54))
+- **deps:** update getsentry/action-release action to v3 ([5b26ceb](https://github.com/WolfSoko/wol-sok-mono/commit/5b26cebc96aba36217abb9f28fc705c0eadbdb54))
 
 ## [4.73.58](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.57...v4.73.58) (2025-03-12)
 
-
 ### Chore
 
-* **deps:** update dependency eslint-config-prettier to v10 ([afca320](https://github.com/WolfSoko/wol-sok-mono/commit/afca320e46b66509518e6fd1a1158bf4ba6e997f))
+- **deps:** update dependency eslint-config-prettier to v10 ([afca320](https://github.com/WolfSoko/wol-sok-mono/commit/afca320e46b66509518e6fd1a1158bf4ba6e997f))
 
 ## [4.73.57](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.56...v4.73.57) (2025-03-12)
 
-
 ### Chore
 
-* **deps:** update dependency aws-cdk-lib to v2.183.0 ([1b89ac7](https://github.com/WolfSoko/wol-sok-mono/commit/1b89ac7b28805b5e96f9b5b7d4463d5204e1d67a))
+- **deps:** update dependency aws-cdk-lib to v2.183.0 ([1b89ac7](https://github.com/WolfSoko/wol-sok-mono/commit/1b89ac7b28805b5e96f9b5b7d4463d5204e1d67a))
 
 ## [4.73.56](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.55...v4.73.56) (2025-03-12)
 
-
 ### Chore
 
-* **deps:** update dependency @types/eslint__eslintrc to v3 ([777d094](https://github.com/WolfSoko/wol-sok-mono/commit/777d09432744c07b719882f91048b03b962c1b69))
+- **deps:** update dependency @types/eslint\_\_eslintrc to v3 ([777d094](https://github.com/WolfSoko/wol-sok-mono/commit/777d09432744c07b719882f91048b03b962c1b69))
 
 ## [4.73.55](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.54...v4.73.55) (2025-03-12)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency vega to v5.32.0 ([8baf40f](https://github.com/WolfSoko/wol-sok-mono/commit/8baf40f98e40e261431761f1cc67daa83589f6d3))
+- **deps:** update dependency vega to v5.32.0 ([8baf40f](https://github.com/WolfSoko/wol-sok-mono/commit/8baf40f98e40e261431761f1cc67daa83589f6d3))
 
 ## [4.73.54](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.53...v4.73.54) (2025-03-12)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency three to v0.174.0 ([1c71d3a](https://github.com/WolfSoko/wol-sok-mono/commit/1c71d3acea190af33254d0e10971fa6b49a6c788))
+- **deps:** update dependency three to v0.174.0 ([1c71d3a](https://github.com/WolfSoko/wol-sok-mono/commit/1c71d3acea190af33254d0e10971fa6b49a6c788))
 
 ## [4.73.53](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.52...v4.73.53) (2025-03-12)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency mathjs to v14.3.1 ([ea2d41b](https://github.com/WolfSoko/wol-sok-mono/commit/ea2d41b9931cf204127c8bcb840f8d8ebb371ca5))
+- **deps:** update dependency mathjs to v14.3.1 ([ea2d41b](https://github.com/WolfSoko/wol-sok-mono/commit/ea2d41b9931cf204127c8bcb840f8d8ebb371ca5))
 
 ## [4.73.52](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.51...v4.73.52) (2025-03-12)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency firebase-functions to v6.3.2 ([d140b5b](https://github.com/WolfSoko/wol-sok-mono/commit/d140b5b63764fe0692aef1763e1af8b535a7560e))
+- **deps:** update dependency firebase-functions to v6.3.2 ([d140b5b](https://github.com/WolfSoko/wol-sok-mono/commit/d140b5b63764fe0692aef1763e1af8b535a7560e))
 
 ## [4.73.51](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.50...v4.73.51) (2025-03-12)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency firebase to v11.4.0 ([a001180](https://github.com/WolfSoko/wol-sok-mono/commit/a0011807b82bf8f29199fcfb67e52bdaa135825c))
+- **deps:** update dependency firebase to v11.4.0 ([a001180](https://github.com/WolfSoko/wol-sok-mono/commit/a0011807b82bf8f29199fcfb67e52bdaa135825c))
 
 ## [4.73.50](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.49...v4.73.50) (2025-03-12)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency core-js to v3.41.0 ([56f7933](https://github.com/WolfSoko/wol-sok-mono/commit/56f793369a4e6330de223ab47937bea129bcad93))
+- **deps:** update dependency core-js to v3.41.0 ([56f7933](https://github.com/WolfSoko/wol-sok-mono/commit/56f793369a4e6330de223ab47937bea129bcad93))
 
 ## [4.73.49](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.48...v4.73.49) (2025-03-12)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency ace-builds to v1.39.0 ([370894e](https://github.com/WolfSoko/wol-sok-mono/commit/370894e6593b4e3f71ce203626c98e29da4bd540))
+- **deps:** update dependency ace-builds to v1.39.0 ([370894e](https://github.com/WolfSoko/wol-sok-mono/commit/370894e6593b4e3f71ce203626c98e29da4bd540))
 
 ## [4.73.48](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.47...v4.73.48) (2025-03-12)
 
-
 ### Bug Fixes
 
-* **deps:** update analog monorepo to v1.14.0 ([597ab1f](https://github.com/WolfSoko/wol-sok-mono/commit/597ab1f57d0716cc67d9516c5edbc6112d153223))
-
+- **deps:** update analog monorepo to v1.14.0 ([597ab1f](https://github.com/WolfSoko/wol-sok-mono/commit/597ab1f57d0716cc67d9516c5edbc6112d153223))
 
 ### Chore
 
-* **deps:** update storybook monorepo to v8.6.4 ([0497131](https://github.com/WolfSoko/wol-sok-mono/commit/0497131637ce654b5c63b77888f83793e6457c8b))
+- **deps:** update storybook monorepo to v8.6.4 ([0497131](https://github.com/WolfSoko/wol-sok-mono/commit/0497131637ce654b5c63b77888f83793e6457c8b))
 
 ## [4.73.47](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.46...v4.73.47) (2025-03-12)
 
-
 ### Chore
 
-* **deps:** update dependency webpack to v5.98.0 ([c965cb7](https://github.com/WolfSoko/wol-sok-mono/commit/c965cb7326467bfcc39f5e92cf789882f1f1e591))
+- **deps:** update dependency webpack to v5.98.0 ([c965cb7](https://github.com/WolfSoko/wol-sok-mono/commit/c965cb7326467bfcc39f5e92cf789882f1f1e591))
 
 ## [4.73.46](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.45...v4.73.46) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency firebase-tools to v13.34.0 ([73550a1](https://github.com/WolfSoko/wol-sok-mono/commit/73550a144aee828adebbe2ce5094cb7eeed49f83))
+- **deps:** update dependency firebase-tools to v13.34.0 ([73550a1](https://github.com/WolfSoko/wol-sok-mono/commit/73550a144aee828adebbe2ce5094cb7eeed49f83))
 
 ## [4.73.45](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.44...v4.73.45) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency rollup to v4.35.0 ([97426e4](https://github.com/WolfSoko/wol-sok-mono/commit/97426e4d2edc48260b0dfbaccd82591072afde44))
+- **deps:** update dependency rollup to v4.35.0 ([97426e4](https://github.com/WolfSoko/wol-sok-mono/commit/97426e4d2edc48260b0dfbaccd82591072afde44))
 
 ## [4.73.44](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.43...v4.73.44) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency prettier to v3.5.3 ([5c848bc](https://github.com/WolfSoko/wol-sok-mono/commit/5c848bc7f4ebca884eaf04b6c0f1d89d78ab5fe6))
+- **deps:** update dependency prettier to v3.5.3 ([5c848bc](https://github.com/WolfSoko/wol-sok-mono/commit/5c848bc7f4ebca884eaf04b6c0f1d89d78ab5fe6))
 
 ## [4.73.43](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.42...v4.73.43) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency postcss to v8.5.3 ([fe076d5](https://github.com/WolfSoko/wol-sok-mono/commit/fe076d5cfa29aafd0356a877539f5b22c134a8f7))
+- **deps:** update dependency postcss to v8.5.3 ([fe076d5](https://github.com/WolfSoko/wol-sok-mono/commit/fe076d5cfa29aafd0356a877539f5b22c134a8f7))
 
 ## [4.73.42](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.41...v4.73.42) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency node-gyp to v11.1.0 ([fd90340](https://github.com/WolfSoko/wol-sok-mono/commit/fd903406aa7fafc5106ea7e9455fc830d7e6f91e))
+- **deps:** update dependency node-gyp to v11.1.0 ([fd90340](https://github.com/WolfSoko/wol-sok-mono/commit/fd903406aa7fafc5106ea7e9455fc830d7e6f91e))
 
 ## [4.73.41](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.40...v4.73.41) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency lint-staged to v15.4.3 ([c478e58](https://github.com/WolfSoko/wol-sok-mono/commit/c478e5876fb643ba5031d5e1c1ceaabe6356b8ee))
+- **deps:** update dependency lint-staged to v15.4.3 ([c478e58](https://github.com/WolfSoko/wol-sok-mono/commit/c478e5876fb643ba5031d5e1c1ceaabe6356b8ee))
 
 ## [4.73.40](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.39...v4.73.40) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency jasmine-core to v5.6.0 ([12473f2](https://github.com/WolfSoko/wol-sok-mono/commit/12473f21fca76040eb8010146550ccafe0fbadda))
+- **deps:** update dependency jasmine-core to v5.6.0 ([12473f2](https://github.com/WolfSoko/wol-sok-mono/commit/12473f21fca76040eb8010146550ccafe0fbadda))
 
 ## [4.73.39](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.38...v4.73.39) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency h3 to v1.15.1 ([9e1513b](https://github.com/WolfSoko/wol-sok-mono/commit/9e1513b2db67e7248da8dc06499a8c68badc8062))
+- **deps:** update dependency h3 to v1.15.1 ([9e1513b](https://github.com/WolfSoko/wol-sok-mono/commit/9e1513b2db67e7248da8dc06499a8c68badc8062))
 
 ## [4.73.38](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.37...v4.73.38) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency fs-extra to v11.3.0 ([8e23411](https://github.com/WolfSoko/wol-sok-mono/commit/8e23411cdf07158f8b1f0d125f8f88a1f61401f8))
+- **deps:** update dependency fs-extra to v11.3.0 ([8e23411](https://github.com/WolfSoko/wol-sok-mono/commit/8e23411cdf07158f8b1f0d125f8f88a1f61401f8))
 
 ## [4.73.37](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.36...v4.73.37) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency firebase-tools to v13.33.0 ([36486c2](https://github.com/WolfSoko/wol-sok-mono/commit/36486c20f096b29a536f9b4797abdd53f4406b2c))
+- **deps:** update dependency firebase-tools to v13.33.0 ([36486c2](https://github.com/WolfSoko/wol-sok-mono/commit/36486c20f096b29a536f9b4797abdd53f4406b2c))
 
 ## [4.73.36](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.35...v4.73.36) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency firebase-admin to v13.2.0 ([18eeaa9](https://github.com/WolfSoko/wol-sok-mono/commit/18eeaa9e2a1b356cf525fa9263b32f6cc47511e7))
+- **deps:** update dependency firebase-admin to v13.2.0 ([18eeaa9](https://github.com/WolfSoko/wol-sok-mono/commit/18eeaa9e2a1b356cf525fa9263b32f6cc47511e7))
 
 ## [4.73.35](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.34...v4.73.35) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency eslint-plugin-cypress to v4.2.0 ([3ca5d21](https://github.com/WolfSoko/wol-sok-mono/commit/3ca5d21805f4c9d087a92c0b2715507fbe9eadd2))
+- **deps:** update dependency eslint-plugin-cypress to v4.2.0 ([3ca5d21](https://github.com/WolfSoko/wol-sok-mono/commit/3ca5d21805f4c9d087a92c0b2715507fbe9eadd2))
 
 ## [4.73.34](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.33...v4.73.34) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency chai to v5.2.0 ([6961569](https://github.com/WolfSoko/wol-sok-mono/commit/696156979319744fbd1180b0c4be3b194a62cf20))
+- **deps:** update dependency chai to v5.2.0 ([6961569](https://github.com/WolfSoko/wol-sok-mono/commit/696156979319744fbd1180b0c4be3b194a62cf20))
 
 ## [4.73.33](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.32...v4.73.33) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency @types/node to v22.13.10 ([72977d2](https://github.com/WolfSoko/wol-sok-mono/commit/72977d299a8b1c7549b5da7606a1663adeb46ebd))
+- **deps:** update dependency @types/node to v22.13.10 ([72977d2](https://github.com/WolfSoko/wol-sok-mono/commit/72977d299a8b1c7549b5da7606a1663adeb46ebd))
 
 ## [4.73.32](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.31...v4.73.32) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency @swc/core to v1.11.8 ([a967355](https://github.com/WolfSoko/wol-sok-mono/commit/a9673557dfbc2a2e3d7daed772f177b97fcb6731))
+- **deps:** update dependency @swc/core to v1.11.8 ([a967355](https://github.com/WolfSoko/wol-sok-mono/commit/a9673557dfbc2a2e3d7daed772f177b97fcb6731))
 
 ## [4.73.31](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.30...v4.73.31) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency @storybook/test-runner to v0.22.0 ([3b05fea](https://github.com/WolfSoko/wol-sok-mono/commit/3b05fea6063e09a6908c43634bd4658d443cc8cf))
+- **deps:** update dependency @storybook/test-runner to v0.22.0 ([3b05fea](https://github.com/WolfSoko/wol-sok-mono/commit/3b05fea6063e09a6908c43634bd4658d443cc8cf))
 
 ## [4.73.30](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.29...v4.73.30) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.35.0 ([2dde67c](https://github.com/WolfSoko/wol-sok-mono/commit/2dde67c3d6ce5d093258785b9edb777a678cd8b4))
+- **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.35.0 ([2dde67c](https://github.com/WolfSoko/wol-sok-mono/commit/2dde67c3d6ce5d093258785b9edb777a678cd8b4))
 
 ## [4.73.29](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.28...v4.73.29) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.35.0 ([9dce21b](https://github.com/WolfSoko/wol-sok-mono/commit/9dce21b20861093282010ed8b44e16dc08277056))
+- **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.35.0 ([9dce21b](https://github.com/WolfSoko/wol-sok-mono/commit/9dce21b20861093282010ed8b44e16dc08277056))
 
 ## [4.73.28](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.27...v4.73.28) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency @playwright/test to v1.51.0 ([239ea4e](https://github.com/WolfSoko/wol-sok-mono/commit/239ea4e1eb004545dd3994027234491b2cece3f1))
+- **deps:** update dependency @playwright/test to v1.51.0 ([239ea4e](https://github.com/WolfSoko/wol-sok-mono/commit/239ea4e1eb004545dd3994027234491b2cece3f1))
 
 ## [4.73.27](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.26...v4.73.27) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency @ngneat/spectator to v19.4.1 ([ff2095c](https://github.com/WolfSoko/wol-sok-mono/commit/ff2095ce8f5f06c2c7102867a575d8c52a042580))
+- **deps:** update dependency @ngneat/spectator to v19.4.1 ([ff2095c](https://github.com/WolfSoko/wol-sok-mono/commit/ff2095ce8f5f06c2c7102867a575d8c52a042580))
 
 ## [4.73.26](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.25...v4.73.26) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency @module-federation/enhanced to v0.10.0 ([7fccc89](https://github.com/WolfSoko/wol-sok-mono/commit/7fccc893f81c4f88ce3f795b8f8d564741d34352))
+- **deps:** update dependency @module-federation/enhanced to v0.10.0 ([7fccc89](https://github.com/WolfSoko/wol-sok-mono/commit/7fccc893f81c4f88ce3f795b8f8d564741d34352))
 
 ## [4.73.25](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.24...v4.73.25) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency @esbuild/linux-x64 to ^0.25.0 ([ece938f](https://github.com/WolfSoko/wol-sok-mono/commit/ece938fc29ac411648e7c0da93e1134d8aa16a46))
+- **deps:** update dependency @esbuild/linux-x64 to ^0.25.0 ([ece938f](https://github.com/WolfSoko/wol-sok-mono/commit/ece938fc29ac411648e7c0da93e1134d8aa16a46))
 
 ## [4.73.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.23...v4.73.24) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update commitlint monorepo to v19.8.0 ([0add89e](https://github.com/WolfSoko/wol-sok-mono/commit/0add89eacc983fae30a50679686c8e860b491375))
+- **deps:** update commitlint monorepo to v19.8.0 ([0add89e](https://github.com/WolfSoko/wol-sok-mono/commit/0add89eacc983fae30a50679686c8e860b491375))
 
 ## [4.73.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.22...v4.73.23) (2025-03-11)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency zod to v3.24.2 ([3d0a80e](https://github.com/WolfSoko/wol-sok-mono/commit/3d0a80e8401a9fa545959a94fb912f630aa0129c))
+- **deps:** update dependency zod to v3.24.2 ([3d0a80e](https://github.com/WolfSoko/wol-sok-mono/commit/3d0a80e8401a9fa545959a94fb912f630aa0129c))
 
 ## [4.73.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.21...v4.73.22) (2025-03-11)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency rxjs to v7.8.2 ([82deba7](https://github.com/WolfSoko/wol-sok-mono/commit/82deba7a6df4a3577ab70f76217387db76cacbd2))
+- **deps:** update dependency rxjs to v7.8.2 ([82deba7](https://github.com/WolfSoko/wol-sok-mono/commit/82deba7a6df4a3577ab70f76217387db76cacbd2))
 
 ## [4.73.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.20...v4.73.21) (2025-03-11)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency p5 to v1.11.3 ([13af181](https://github.com/WolfSoko/wol-sok-mono/commit/13af1815f02c617290c8f2345ee0ad8954e85874))
+- **deps:** update dependency p5 to v1.11.3 ([13af181](https://github.com/WolfSoko/wol-sok-mono/commit/13af1815f02c617290c8f2345ee0ad8954e85874))
 
 ## [4.73.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.19...v4.73.20) (2025-03-11)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency marked to v15.0.7 ([1ab3211](https://github.com/WolfSoko/wol-sok-mono/commit/1ab3211984f4a69aec7d79e685cf53f9c3bcf7f5))
+- **deps:** update dependency marked to v15.0.7 ([1ab3211](https://github.com/WolfSoko/wol-sok-mono/commit/1ab3211984f4a69aec7d79e685cf53f9c3bcf7f5))
 
 ## [4.73.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.18...v4.73.19) (2025-03-11)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency @assemblyscript/loader to v0.27.35 ([26382a9](https://github.com/WolfSoko/wol-sok-mono/commit/26382a9b126a44fc119ba35049902f4fc6149fe0))
+- **deps:** update dependency @assemblyscript/loader to v0.27.35 ([26382a9](https://github.com/WolfSoko/wol-sok-mono/commit/26382a9b126a44fc119ba35049902f4fc6149fe0))
 
 ## [4.73.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.17...v4.73.18) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update vitest monorepo to v2.1.9 ([6ca381e](https://github.com/WolfSoko/wol-sok-mono/commit/6ca381e6913134397e309754effbd98d5d996fed))
+- **deps:** update vitest monorepo to v2.1.9 ([6ca381e](https://github.com/WolfSoko/wol-sok-mono/commit/6ca381e6913134397e309754effbd98d5d996fed))
 
 ## [4.73.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.16...v4.73.17) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency ts-jest to v29.2.6 ([950eebb](https://github.com/WolfSoko/wol-sok-mono/commit/950eebb2b4ac9aae97013452b4c96b26f7bac0ca))
+- **deps:** update dependency ts-jest to v29.2.6 ([950eebb](https://github.com/WolfSoko/wol-sok-mono/commit/950eebb2b4ac9aae97013452b4c96b26f7bac0ca))
 
 ## [4.73.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.15...v4.73.16) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency postcss-preset-env to v10.1.5 ([2d3b6ce](https://github.com/WolfSoko/wol-sok-mono/commit/2d3b6ce4ae80952a10e869770dbd404891c3e13e))
+- **deps:** update dependency postcss-preset-env to v10.1.5 ([2d3b6ce](https://github.com/WolfSoko/wol-sok-mono/commit/2d3b6ce4ae80952a10e869770dbd404891c3e13e))
 
 ## [4.73.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.14...v4.73.15) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency jest-preset-angular to v14.5.3 ([2a8113c](https://github.com/WolfSoko/wol-sok-mono/commit/2a8113cb53c8c2d1b92a42daa32e503aa2cfd0c9))
+- **deps:** update dependency jest-preset-angular to v14.5.3 ([2a8113c](https://github.com/WolfSoko/wol-sok-mono/commit/2a8113cb53c8c2d1b92a42daa32e503aa2cfd0c9))
 
 ## [4.73.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.13...v4.73.14) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency firebase-functions-test to v3.4.1 ([e8e35c5](https://github.com/WolfSoko/wol-sok-mono/commit/e8e35c5da490a49d39b600fbda33d271da5eb5ac))
+- **deps:** update dependency firebase-functions-test to v3.4.1 ([e8e35c5](https://github.com/WolfSoko/wol-sok-mono/commit/e8e35c5da490a49d39b600fbda33d271da5eb5ac))
 
 ## [4.73.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.12...v4.73.13) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency eslint-plugin-storybook to v0.11.4 ([595869e](https://github.com/WolfSoko/wol-sok-mono/commit/595869eb1b652a3ead70d08b06cf2d6673f56b00))
+- **deps:** update dependency eslint-plugin-storybook to v0.11.4 ([595869e](https://github.com/WolfSoko/wol-sok-mono/commit/595869eb1b652a3ead70d08b06cf2d6673f56b00))
 
 ## [4.73.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.11...v4.73.12) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency eslint-plugin-prettier to v5.2.3 ([7fe7dfe](https://github.com/WolfSoko/wol-sok-mono/commit/7fe7dfeda39ff01a4334d1926cfdddf3c1bfe263))
+- **deps:** update dependency eslint-plugin-prettier to v5.2.3 ([7fe7dfe](https://github.com/WolfSoko/wol-sok-mono/commit/7fe7dfeda39ff01a4334d1926cfdddf3c1bfe263))
 
 ## [4.73.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.10...v4.73.11) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency autoprefixer to v10.4.21 ([adfb5ba](https://github.com/WolfSoko/wol-sok-mono/commit/adfb5ba0153627842b96d8e4bf46ecca35878bc9))
+- **deps:** update dependency autoprefixer to v10.4.21 ([adfb5ba](https://github.com/WolfSoko/wol-sok-mono/commit/adfb5ba0153627842b96d8e4bf46ecca35878bc9))
 
 ## [4.73.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.9...v4.73.10) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency assemblyscript to v0.27.35 ([e4f3cd7](https://github.com/WolfSoko/wol-sok-mono/commit/e4f3cd7fa71e9bdfb95f38cc6deb02cee2e53753))
+- **deps:** update dependency assemblyscript to v0.27.35 ([e4f3cd7](https://github.com/WolfSoko/wol-sok-mono/commit/e4f3cd7fa71e9bdfb95f38cc6deb02cee2e53753))
 
 ## [4.73.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.8...v4.73.9) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency @types/lodash to v4.17.16 ([48a7326](https://github.com/WolfSoko/wol-sok-mono/commit/48a73269a67c124c26c66e0c61ac4f2161a6add7))
+- **deps:** update dependency @types/lodash to v4.17.16 ([48a7326](https://github.com/WolfSoko/wol-sok-mono/commit/48a73269a67c124c26c66e0c61ac4f2161a6add7))
 
 ## [4.73.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.7...v4.73.8) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency @types/jasmine to v5.1.7 ([6405ab1](https://github.com/WolfSoko/wol-sok-mono/commit/6405ab1553ded7a63f95f9f53f2358244f45bac2))
+- **deps:** update dependency @types/jasmine to v5.1.7 ([6405ab1](https://github.com/WolfSoko/wol-sok-mono/commit/6405ab1553ded7a63f95f9f53f2358244f45bac2))
 
 ## [4.73.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.6...v4.73.7) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency @cypress/webpack-dev-server to v4.0.1 ([515f51a](https://github.com/WolfSoko/wol-sok-mono/commit/515f51a933ba9df0047d48ee75d7344f83498576))
+- **deps:** update dependency @cypress/webpack-dev-server to v4.0.1 ([515f51a](https://github.com/WolfSoko/wol-sok-mono/commit/515f51a933ba9df0047d48ee75d7344f83498576))
 
 ## [4.73.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.5...v4.73.6) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update dependency @chromatic-com/storybook to v3.2.5 ([e04851e](https://github.com/WolfSoko/wol-sok-mono/commit/e04851e4963f5271b3a5118a31d2482a45765297))
+- **deps:** update dependency @chromatic-com/storybook to v3.2.5 ([e04851e](https://github.com/WolfSoko/wol-sok-mono/commit/e04851e4963f5271b3a5118a31d2482a45765297))
 
 ## [4.73.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.4...v4.73.5) (2025-03-11)
 
-
 ### Chore
 
-* **deps:** update eslint monorepo to ~9.22.0 ([ad8c42c](https://github.com/WolfSoko/wol-sok-mono/commit/ad8c42cc85f3df782dbe6881f6b56585f008d8f2))
+- **deps:** update eslint monorepo to ~9.22.0 ([ad8c42c](https://github.com/WolfSoko/wol-sok-mono/commit/ad8c42cc85f3df782dbe6881f6b56585f008d8f2))
 
 ## [4.73.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.3...v4.73.4) (2025-03-11)
 
-
 ### Bug Fixes
 
-* **deps:** update nx monorepo ([21ac011](https://github.com/WolfSoko/wol-sok-mono/commit/21ac011196805dc4697520fda8dd5a458a6da21a))
+- **deps:** update nx monorepo ([21ac011](https://github.com/WolfSoko/wol-sok-mono/commit/21ac011196805dc4697520fda8dd5a458a6da21a))
 
 ## [4.73.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.2...v4.73.3) (2025-03-10)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency prismjs to v1.30.0 [security] ([f33276e](https://github.com/WolfSoko/wol-sok-mono/commit/f33276ef974fdfb3adc89ab3c52400622360712a))
+- **deps:** update dependency prismjs to v1.30.0 [security] ([f33276e](https://github.com/WolfSoko/wol-sok-mono/commit/f33276ef974fdfb3adc89ab3c52400622360712a))
 
 ## [4.73.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.1-non-cdk-deployed...v4.73.2) (2025-03-10)
 
-
 ### Bug Fixes
 
-* **rollapolla-analog:** 🐛 extend Firestore rules expiration date to May 31, 2025 ([4118d9d](https://github.com/WolfSoko/wol-sok-mono/commit/4118d9da7610d31950366634bcf52d8bb1e854e1))
-* **rollapolla-analog:** 🐛 relocate animation keyframes and adjust font-family ([471a3a5](https://github.com/WolfSoko/wol-sok-mono/commit/471a3a561f00b65358606c2076b6ecdab35814c2))
-
+- **rollapolla-analog:** 🐛 extend Firestore rules expiration date to May 31, 2025 ([4118d9d](https://github.com/WolfSoko/wol-sok-mono/commit/4118d9da7610d31950366634bcf52d8bb1e854e1))
+- **rollapolla-analog:** 🐛 relocate animation keyframes and adjust font-family ([471a3a5](https://github.com/WolfSoko/wol-sok-mono/commit/471a3a561f00b65358606c2076b6ecdab35814c2))
 
 ### Chore
 
-* **spa-cdk-stack:** 🔧 update aws-cdk-lib and dependencies ([40cc66e](https://github.com/WolfSoko/wol-sok-mono/commit/40cc66eff21070cf5fee260b9a3a3ad1e306ad47))
+- **spa-cdk-stack:** 🔧 update aws-cdk-lib and dependencies ([40cc66e](https://github.com/WolfSoko/wol-sok-mono/commit/40cc66eff21070cf5fee260b9a3a3ad1e306ad47))
 
 ## [4.73.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.73.0-non-cdk-deployed...v4.73.1) (2025-03-10)
 
-
 ### Bug Fixes
 
-* **rollapolla-analog:** 🐛 relocate animation keyframes and adjust font-family ([55e7cae](https://github.com/WolfSoko/wol-sok-mono/commit/55e7cae29c0f98e1cea488484887120506dfd212))
-
+- **rollapolla-analog:** 🐛 relocate animation keyframes and adjust font-family ([55e7cae](https://github.com/WolfSoko/wol-sok-mono/commit/55e7cae29c0f98e1cea488484887120506dfd212))
 
 ### Chore
 
-* **deps:** update dependency axios to v1.8.2 [security] ([41f7bf7](https://github.com/WolfSoko/wol-sok-mono/commit/41f7bf7f1e9c8e8f9dcfc5c400991e28de2f647c))
+- **deps:** update dependency axios to v1.8.2 [security] ([41f7bf7](https://github.com/WolfSoko/wol-sok-mono/commit/41f7bf7f1e9c8e8f9dcfc5c400991e28de2f647c))
 
 ## [4.73.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.29-non-cdk-deployed...v4.73.0) (2025-03-10)
 
-
 ### Features
 
-* ✨ add sync check to CI/CD and lint-staged config ([7c190d6](https://github.com/WolfSoko/wol-sok-mono/commit/7c190d68543c96b503b10e2cc5ef50dc1b1c2f02))
+- ✨ add sync check to CI/CD and lint-staged config ([7c190d6](https://github.com/WolfSoko/wol-sok-mono/commit/7c190d68543c96b503b10e2cc5ef50dc1b1c2f02))
 
 ## [4.72.29](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.28-non-cdk-deployed...v4.72.29) (2025-03-10)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.175.0 ([e0cd838](https://github.com/WolfSoko/wol-sok-mono/commit/e0cd838b51954adcc1f8b0ba56f2e5ee879c4cb0))
-* **deps:** update dependency @angular/fire to v19.0.0-rc.5 ([7303d9d](https://github.com/WolfSoko/wol-sok-mono/commit/7303d9db0cbcc22d2acfc98c9e64ce98dea2833e))
-* **deps:** update dependency @sentry/angular-ivy to v7.120.3 ([fedc435](https://github.com/WolfSoko/wol-sok-mono/commit/fedc4354cddd5579c8ccd87d97bb160cde93dc30))
-* **deps:** update dependency ace-builds to v1.37.4 ([2161964](https://github.com/WolfSoko/wol-sok-mono/commit/2161964472b21380a49974c79390231dcbfc157f))
-* **deps:** update nx monorepo ([c2d3c82](https://github.com/WolfSoko/wol-sok-mono/commit/c2d3c826bf02942a3cc82092a3921725f04bcbeb))
-
+- **deps:** update aws-cdk monorepo to v2.175.0 ([e0cd838](https://github.com/WolfSoko/wol-sok-mono/commit/e0cd838b51954adcc1f8b0ba56f2e5ee879c4cb0))
+- **deps:** update dependency @angular/fire to v19.0.0-rc.5 ([7303d9d](https://github.com/WolfSoko/wol-sok-mono/commit/7303d9db0cbcc22d2acfc98c9e64ce98dea2833e))
+- **deps:** update dependency @sentry/angular-ivy to v7.120.3 ([fedc435](https://github.com/WolfSoko/wol-sok-mono/commit/fedc4354cddd5579c8ccd87d97bb160cde93dc30))
+- **deps:** update dependency ace-builds to v1.37.4 ([2161964](https://github.com/WolfSoko/wol-sok-mono/commit/2161964472b21380a49974c79390231dcbfc157f))
+- **deps:** update nx monorepo ([c2d3c82](https://github.com/WolfSoko/wol-sok-mono/commit/c2d3c826bf02942a3cc82092a3921725f04bcbeb))
 
 ### Chore
 
-* **deps:** update dependency @swc/core to v1.10.7 ([75f14b2](https://github.com/WolfSoko/wol-sok-mono/commit/75f14b263a678b100a51a51b2b14f06112d4d124))
-* **deps:** update dependency @vitest/browser to v2.1.9 [security] ([a8acbe9](https://github.com/WolfSoko/wol-sok-mono/commit/a8acbe94ab2177b76b22d5a433beb39d2e42ec08))
-* **deps:** update dependency aws-cdk-lib to v2.177.0 [security] ([d5044d6](https://github.com/WolfSoko/wol-sok-mono/commit/d5044d6df0c5128a2fd18f9e3de968654b819a47))
-* **deps:** update dependency h3 to v1.13.1 ([a30d5ee](https://github.com/WolfSoko/wol-sok-mono/commit/a30d5ee22122b2b1accc2cec222652e5d8da6303))
-* **deps:** update dependency jest-preset-angular to v14.5.0 ([09293ee](https://github.com/WolfSoko/wol-sok-mono/commit/09293ee7ac7184fc16e67a31a9cf637cd77a3ce1))
-* **deps:** update dependency jsdom to v26 ([30116a2](https://github.com/WolfSoko/wol-sok-mono/commit/30116a2491ee5863048cd69c9b5851c75ad42957))
-* **deps:** update dependency vite to v5.4.12 [security] ([d38aada](https://github.com/WolfSoko/wol-sok-mono/commit/d38aadaadb3e3744bc23abd400a565ac32db1eee))
-* **deps:** update dependency vitest to v2.1.9 [security] ([00ce03d](https://github.com/WolfSoko/wol-sok-mono/commit/00ce03d0b902d67779720c7e7d2f174ffa88f51d))
-
+- **deps:** update dependency @swc/core to v1.10.7 ([75f14b2](https://github.com/WolfSoko/wol-sok-mono/commit/75f14b263a678b100a51a51b2b14f06112d4d124))
+- **deps:** update dependency @vitest/browser to v2.1.9 [security] ([a8acbe9](https://github.com/WolfSoko/wol-sok-mono/commit/a8acbe94ab2177b76b22d5a433beb39d2e42ec08))
+- **deps:** update dependency aws-cdk-lib to v2.177.0 [security] ([d5044d6](https://github.com/WolfSoko/wol-sok-mono/commit/d5044d6df0c5128a2fd18f9e3de968654b819a47))
+- **deps:** update dependency h3 to v1.13.1 ([a30d5ee](https://github.com/WolfSoko/wol-sok-mono/commit/a30d5ee22122b2b1accc2cec222652e5d8da6303))
+- **deps:** update dependency jest-preset-angular to v14.5.0 ([09293ee](https://github.com/WolfSoko/wol-sok-mono/commit/09293ee7ac7184fc16e67a31a9cf637cd77a3ce1))
+- **deps:** update dependency jsdom to v26 ([30116a2](https://github.com/WolfSoko/wol-sok-mono/commit/30116a2491ee5863048cd69c9b5851c75ad42957))
+- **deps:** update dependency vite to v5.4.12 [security] ([d38aada](https://github.com/WolfSoko/wol-sok-mono/commit/d38aadaadb3e3744bc23abd400a565ac32db1eee))
+- **deps:** update dependency vitest to v2.1.9 [security] ([00ce03d](https://github.com/WolfSoko/wol-sok-mono/commit/00ce03d0b902d67779720c7e7d2f174ffa88f51d))
 
 ### Code style
 
-* 🎨 Remove unnecessary comment and clean up trailing empty lines ([85c8ef2](https://github.com/WolfSoko/wol-sok-mono/commit/85c8ef2c139157b70987352d147b3d6d8580b700))
-
+- 🎨 Remove unnecessary comment and clean up trailing empty lines ([85c8ef2](https://github.com/WolfSoko/wol-sok-mono/commit/85c8ef2c139157b70987352d147b3d6d8580b700))
 
 ### Testing
 
-* **pacetrainer:** 🚨 sort tests better ([afc4374](https://github.com/WolfSoko/wol-sok-mono/commit/afc4374e5864b79c2f24575f433a205ea1814576))
+- **pacetrainer:** 🚨 sort tests better ([afc4374](https://github.com/WolfSoko/wol-sok-mono/commit/afc4374e5864b79c2f24575f433a205ea1814576))
 
 ## [4.72.28](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.27-non-cdk-deployed...v4.72.28) (2025-01-08)
 
-
 ### Chore
 
-* **deps:** update dependency @cypress/webpack-dev-server to v4 ([29f6c6f](https://github.com/WolfSoko/wol-sok-mono/commit/29f6c6fdf3b6cb5e4c5b3e6e059d519439d7d3fd))
+- **deps:** update dependency @cypress/webpack-dev-server to v4 ([29f6c6f](https://github.com/WolfSoko/wol-sok-mono/commit/29f6c6fdf3b6cb5e4c5b3e6e059d519439d7d3fd))
 
 ## [4.72.27](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.26-non-cdk-deployed...v4.72.27) (2025-01-07)
 
-
 ### Chore
 
-* **deps:** update nx monorepo to v20.3.1 ([bf62640](https://github.com/WolfSoko/wol-sok-mono/commit/bf62640420247383ec68bb33a1f8dcd2647c5531))
+- **deps:** update nx monorepo to v20.3.1 ([bf62640](https://github.com/WolfSoko/wol-sok-mono/commit/bf62640420247383ec68bb33a1f8dcd2647c5531))
 
 ## [4.72.26](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.25-non-cdk-deployed...v4.72.26) (2025-01-07)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency core-js to v3.40.0 ([ab88508](https://github.com/WolfSoko/wol-sok-mono/commit/ab88508b28e8da915168cc79afb6b791eebef224))
+- **deps:** update dependency core-js to v3.40.0 ([ab88508](https://github.com/WolfSoko/wol-sok-mono/commit/ab88508b28e8da915168cc79afb6b791eebef224))
 
 ## [4.72.25](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.24-non-cdk-deployed...v4.72.25) (2025-01-07)
 
-
 ### Chore
 
-* **deps:** update dependency @swc/core to v1.10.6 ([34d4af7](https://github.com/WolfSoko/wol-sok-mono/commit/34d4af7a8a6e7f89889788a3b88296640843e8aa))
+- **deps:** update dependency @swc/core to v1.10.6 ([34d4af7](https://github.com/WolfSoko/wol-sok-mono/commit/34d4af7a8a6e7f89889788a3b88296640843e8aa))
 
 ## [4.72.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.23-non-cdk-deployed...v4.72.24) (2025-01-07)
 
-
 ### Bug Fixes
 
-* **deps:** update analog monorepo to v1.12.0 ([846e56f](https://github.com/WolfSoko/wol-sok-mono/commit/846e56fb6879fc0a5bcf821e6a2fae0b27ebd22c))
-* **deps:** update dependency ace-builds to v1.37.3 ([6df11ac](https://github.com/WolfSoko/wol-sok-mono/commit/6df11ac086ffc8dc5622e0cbc14f323f5ba34001))
+- **deps:** update analog monorepo to v1.12.0 ([846e56f](https://github.com/WolfSoko/wol-sok-mono/commit/846e56fb6879fc0a5bcf821e6a2fae0b27ebd22c))
+- **deps:** update dependency ace-builds to v1.37.3 ([6df11ac](https://github.com/WolfSoko/wol-sok-mono/commit/6df11ac086ffc8dc5622e0cbc14f323f5ba34001))
 
 ## [4.72.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.22-non-cdk-deployed...v4.72.23) (2025-01-07)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.174.1 ([3cbe990](https://github.com/WolfSoko/wol-sok-mono/commit/3cbe990e78c5c6ac592eae11f1c3f376343765d7))
+- **deps:** update aws-cdk monorepo to v2.174.1 ([3cbe990](https://github.com/WolfSoko/wol-sok-mono/commit/3cbe990e78c5c6ac592eae11f1c3f376343765d7))
 
 ## [4.72.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.21-non-cdk-deployed...v4.72.22) (2025-01-07)
 
-
 ### Chore
 
-* **deps:** update dependency rollup to v4.30.1 ([00e6874](https://github.com/WolfSoko/wol-sok-mono/commit/00e687461422a7e3b1aa2a8f045e43e70dc8bf52))
+- **deps:** update dependency rollup to v4.30.1 ([00e6874](https://github.com/WolfSoko/wol-sok-mono/commit/00e687461422a7e3b1aa2a8f045e43e70dc8bf52))
 
 ## [4.72.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.20-non-cdk-deployed...v4.72.21) (2025-01-07)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.30.1 ([acf975e](https://github.com/WolfSoko/wol-sok-mono/commit/acf975e9aecf41322172d06ce39c80b415f60a4d))
+- **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.30.1 ([acf975e](https://github.com/WolfSoko/wol-sok-mono/commit/acf975e9aecf41322172d06ce39c80b415f60a4d))
 
 ## [4.72.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.19-non-cdk-deployed...v4.72.20) (2025-01-07)
 
-
 ### Chore
 
-* **deps:** update dependency @module-federation/enhanced to v0.8.8 ([b4e4669](https://github.com/WolfSoko/wol-sok-mono/commit/b4e466903723b9765facac117779302382dcb45f))
+- **deps:** update dependency @module-federation/enhanced to v0.8.8 ([b4e4669](https://github.com/WolfSoko/wol-sok-mono/commit/b4e466903723b9765facac117779302382dcb45f))
 
 ## [4.72.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.18-non-cdk-deployed...v4.72.19) (2025-01-06)
 
-
 ### Chore
 
-* **deps:** update typescript-eslint monorepo to v8.19.1 ([03161e7](https://github.com/WolfSoko/wol-sok-mono/commit/03161e76412667cefa82df3ab9d22b78942df03d))
+- **deps:** update typescript-eslint monorepo to v8.19.1 ([03161e7](https://github.com/WolfSoko/wol-sok-mono/commit/03161e76412667cefa82df3ab9d22b78942df03d))
 
 ## [4.72.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.17-non-cdk-deployed...v4.72.18) (2025-01-06)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency marked to v15.0.6 ([eea299b](https://github.com/WolfSoko/wol-sok-mono/commit/eea299bf69d226649829b52b0551818de6e76677))
+- **deps:** update dependency marked to v15.0.6 ([eea299b](https://github.com/WolfSoko/wol-sok-mono/commit/eea299bf69d226649829b52b0551818de6e76677))
 
 ## [4.72.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.16-non-cdk-deployed...v4.72.17) (2025-01-06)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency ace-builds to v1.37.2 ([7f65591](https://github.com/WolfSoko/wol-sok-mono/commit/7f6559185306b6de23583d8456c90730628ebc7f))
+- **deps:** update dependency ace-builds to v1.37.2 ([7f65591](https://github.com/WolfSoko/wol-sok-mono/commit/7f6559185306b6de23583d8456c90730628ebc7f))
 
 ## [4.72.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.15-non-cdk-deployed...v4.72.16) (2025-01-06)
 
-
 ### Chore
 
-* **deps:** update dependency @types/three to v0.172.0 ([c4081e8](https://github.com/WolfSoko/wol-sok-mono/commit/c4081e81255d219d39a386f6e44faa2fd6410885))
+- **deps:** update dependency @types/three to v0.172.0 ([c4081e8](https://github.com/WolfSoko/wol-sok-mono/commit/c4081e81255d219d39a386f6e44faa2fd6410885))
 
 ## [4.72.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.14-non-cdk-deployed...v4.72.15) (2025-01-06)
 
-
 ### Chore
 
-* **deps:** update dependency rollup to v4.30.0 ([83993d0](https://github.com/WolfSoko/wol-sok-mono/commit/83993d06968b34abca4b55fadf1b1b958b0404fb))
+- **deps:** update dependency rollup to v4.30.0 ([83993d0](https://github.com/WolfSoko/wol-sok-mono/commit/83993d06968b34abca4b55fadf1b1b958b0404fb))
 
 ## [4.72.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.13-non-cdk-deployed...v4.72.14) (2025-01-06)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.30.0 ([ab5827b](https://github.com/WolfSoko/wol-sok-mono/commit/ab5827bd4184dceffe33cee8feee76c6a6aedbdb))
+- **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.30.0 ([ab5827b](https://github.com/WolfSoko/wol-sok-mono/commit/ab5827bd4184dceffe33cee8feee76c6a6aedbdb))
 
 ## [4.72.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.12-non-cdk-deployed...v4.72.13) (2025-01-05)
 
-
 ### Chore
 
-* **deps:** update dependency web-streams-polyfill to v4.1.0 ([d6d11ee](https://github.com/WolfSoko/wol-sok-mono/commit/d6d11ee04bac2f70aaecab7e7ab02818322fd6fc))
+- **deps:** update dependency web-streams-polyfill to v4.1.0 ([d6d11ee](https://github.com/WolfSoko/wol-sok-mono/commit/d6d11ee04bac2f70aaecab7e7ab02818322fd6fc))
 
 ## [4.72.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.11-non-cdk-deployed...v4.72.12) (2025-01-05)
 
-
 ### Chore
 
-* **deps:** update dependency @angular-builders/custom-webpack to v19 ([a0c0c3e](https://github.com/WolfSoko/wol-sok-mono/commit/a0c0c3ef327f7ad53553043913e6d56747368a3d))
+- **deps:** update dependency @angular-builders/custom-webpack to v19 ([a0c0c3e](https://github.com/WolfSoko/wol-sok-mono/commit/a0c0c3ef327f7ad53553043913e6d56747368a3d))
 
 ## [4.72.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.10-non-cdk-deployed...v4.72.11) (2025-01-05)
 
-
 ### Chore
 
-* **deps:** update dependency rollup to v4.29.2 ([6c68916](https://github.com/WolfSoko/wol-sok-mono/commit/6c689167928a53fc1624cb1c3aef0740c31bf894))
+- **deps:** update dependency rollup to v4.29.2 ([6c68916](https://github.com/WolfSoko/wol-sok-mono/commit/6c689167928a53fc1624cb1c3aef0740c31bf894))
 
 ## [4.72.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.9-non-cdk-deployed...v4.72.10) (2025-01-05)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.29.2 ([d0658c0](https://github.com/WolfSoko/wol-sok-mono/commit/d0658c0f1dc5b4e03ac4b2b365221a301e0c5e69))
+- **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.29.2 ([d0658c0](https://github.com/WolfSoko/wol-sok-mono/commit/d0658c0f1dc5b4e03ac4b2b365221a301e0c5e69))
 
 ## [4.72.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.8-non-cdk-deployed...v4.72.9) (2025-01-05)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.29.2 ([abd2911](https://github.com/WolfSoko/wol-sok-mono/commit/abd2911b2a7d1a118bb321b889edacece6783e0c))
+- **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.29.2 ([abd2911](https://github.com/WolfSoko/wol-sok-mono/commit/abd2911b2a7d1a118bb321b889edacece6783e0c))
 
 ## [4.72.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.7-non-cdk-deployed...v4.72.8) (2025-01-04)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.174.0 ([e0bd461](https://github.com/WolfSoko/wol-sok-mono/commit/e0bd4610d61ac0305d68a29a5d5f14b9e944cde0))
+- **deps:** update aws-cdk monorepo to v2.174.0 ([e0bd461](https://github.com/WolfSoko/wol-sok-mono/commit/e0bd4610d61ac0305d68a29a5d5f14b9e944cde0))
 
 ## [4.72.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.6-non-cdk-deployed...v4.72.7) (2025-01-03)
 
-
 ### Chore
 
-* **deps:** update dependency @types/lodash to v4.17.14 ([3ddde8e](https://github.com/WolfSoko/wol-sok-mono/commit/3ddde8eb4294496bc6802c9c7b26d43a7369900e))
+- **deps:** update dependency @types/lodash to v4.17.14 ([3ddde8e](https://github.com/WolfSoko/wol-sok-mono/commit/3ddde8eb4294496bc6802c9c7b26d43a7369900e))
 
 ## [4.72.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.5-non-cdk-deployed...v4.72.6) (2025-01-03)
 
-
 ### Chore
 
-* **deps:** update dependency @types/node to v22.10.5 ([f42aee9](https://github.com/WolfSoko/wol-sok-mono/commit/f42aee92df212e7c50bf6e7cfb1497436564a298))
+- **deps:** update dependency @types/node to v22.10.5 ([f42aee9](https://github.com/WolfSoko/wol-sok-mono/commit/f42aee92df212e7c50bf6e7cfb1497436564a298))
 
 ## [4.72.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.4-non-cdk-deployed...v4.72.5) (2025-01-02)
 
-
 ### Chore
 
-* **deps:** update dependency @types/node to v22.10.4 ([4a61508](https://github.com/WolfSoko/wol-sok-mono/commit/4a61508b0f1267aa0d4c216ac79c9d800c0d60d0))
+- **deps:** update dependency @types/node to v22.10.4 ([4a61508](https://github.com/WolfSoko/wol-sok-mono/commit/4a61508b0f1267aa0d4c216ac79c9d800c0d60d0))
 
 ## [4.72.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.3-non-cdk-deployed...v4.72.4) (2025-01-02)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency marked to v15.0.5 ([2c14fd1](https://github.com/WolfSoko/wol-sok-mono/commit/2c14fd17f900be004d7e4919363cc683c4ff278e))
+- **deps:** update dependency marked to v15.0.5 ([2c14fd1](https://github.com/WolfSoko/wol-sok-mono/commit/2c14fd17f900be004d7e4919363cc683c4ff278e))
 
 ## [4.72.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.2-non-cdk-deployed...v4.72.3) (2025-01-02)
 
-
 ### Chore
 
-* **deps:** update dependency eslint-plugin-storybook to v0.11.2 ([939a9c6](https://github.com/WolfSoko/wol-sok-mono/commit/939a9c62e32055893a69195e08e5528bd281f227))
+- **deps:** update dependency eslint-plugin-storybook to v0.11.2 ([939a9c6](https://github.com/WolfSoko/wol-sok-mono/commit/939a9c62e32055893a69195e08e5528bd281f227))
 
 ## [4.72.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.1-non-cdk-deployed...v4.72.2) (2025-01-01)
 
-
 ### Chore
 
-* **deps:** update dependency @types/node to v22.10.3 ([2d6caac](https://github.com/WolfSoko/wol-sok-mono/commit/2d6caac6ffb826f69f171648ccc0ee679655b9a2))
+- **deps:** update dependency @types/node to v22.10.3 ([2d6caac](https://github.com/WolfSoko/wol-sok-mono/commit/2d6caac6ffb826f69f171648ccc0ee679655b9a2))
 
 ## [4.72.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.72.0-non-cdk-deployed...v4.72.1) (2024-12-31)
 
-
 ### Bug Fixes
 
-* **deps:** update analog monorepo to v1.11.0 ([74df4ea](https://github.com/WolfSoko/wol-sok-mono/commit/74df4ea9508fe0ba5b1e50434ef4af1690561f0c))
+- **deps:** update analog monorepo to v1.11.0 ([74df4ea](https://github.com/WolfSoko/wol-sok-mono/commit/74df4ea9508fe0ba5b1e50434ef4af1690561f0c))
 
 ## [4.72.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.40-non-cdk-deployed...v4.72.0) (2024-12-31)
 
-
 ### Features
 
-* ✨ add countdown voice and beeps ([c768b29](https://github.com/WolfSoko/wol-sok-mono/commit/c768b29abc2fd15a9d177f1d649faaa8b9cb9a92))
-
+- ✨ add countdown voice and beeps ([c768b29](https://github.com/WolfSoko/wol-sok-mono/commit/c768b29abc2fd15a9d177f1d649faaa8b9cb9a92))
 
 ### Testing
 
-* **pacetrainer:** 🚨 fix e2e tests ([56a5eb9](https://github.com/WolfSoko/wol-sok-mono/commit/56a5eb91b6cf0759864905faaedc4eaa237162a8))
+- **pacetrainer:** 🚨 fix e2e tests ([56a5eb9](https://github.com/WolfSoko/wol-sok-mono/commit/56a5eb91b6cf0759864905faaedc4eaa237162a8))
 
 ## [4.71.40](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.39-non-cdk-deployed...v4.71.40) (2024-12-31)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency three to v0.172.0 ([839421c](https://github.com/WolfSoko/wol-sok-mono/commit/839421c1db7293ea2302e4d121a3cd3895019705))
+- **deps:** update dependency three to v0.172.0 ([839421c](https://github.com/WolfSoko/wol-sok-mono/commit/839421c1db7293ea2302e4d121a3cd3895019705))
 
 ## [4.71.39](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.38-non-cdk-deployed...v4.71.39) (2024-12-31)
 
-
 ### Chore
 
-* **deps:** update dependency @module-federation/enhanced to v0.8.7 ([7290d66](https://github.com/WolfSoko/wol-sok-mono/commit/7290d665a8c9d1141b8f65986da3d9dd3dc7c1a1))
+- **deps:** update dependency @module-federation/enhanced to v0.8.7 ([7290d66](https://github.com/WolfSoko/wol-sok-mono/commit/7290d665a8c9d1141b8f65986da3d9dd3dc7c1a1))
 
 ## [4.71.38](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.37-non-cdk-deployed...v4.71.38) (2024-12-30)
 
-
 ### Chore
 
-* **deps:** update typescript-eslint monorepo to v8.19.0 ([98ba322](https://github.com/WolfSoko/wol-sok-mono/commit/98ba322f9d39ede692e07e4febf51530e77fa600))
+- **deps:** update typescript-eslint monorepo to v8.19.0 ([98ba322](https://github.com/WolfSoko/wol-sok-mono/commit/98ba322f9d39ede692e07e4febf51530e77fa600))
 
 ## [4.71.37](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.36-non-cdk-deployed...v4.71.37) (2024-12-30)
 
-
 ### Chore
 
-* **deps:** update dependency @swc/core to v1.10.4 ([bd0e68f](https://github.com/WolfSoko/wol-sok-mono/commit/bd0e68f62cc75e0a78ef40372e411e475372b85c))
+- **deps:** update dependency @swc/core to v1.10.4 ([bd0e68f](https://github.com/WolfSoko/wol-sok-mono/commit/bd0e68f62cc75e0a78ef40372e411e475372b85c))
 
 ## [4.71.36](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.35-non-cdk-deployed...v4.71.36) (2024-12-28)
 
-
 ### Chore
 
-* **deps:** update dependency @ngneat/spectator to v19.3.0 ([330c962](https://github.com/WolfSoko/wol-sok-mono/commit/330c962595071e7b46710cefbdfaeccea6cda887))
+- **deps:** update dependency @ngneat/spectator to v19.3.0 ([330c962](https://github.com/WolfSoko/wol-sok-mono/commit/330c962595071e7b46710cefbdfaeccea6cda887))
 
 ## [4.71.35](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.34-non-cdk-deployed...v4.71.35) (2024-12-28)
 
-
 ### Chore
 
-* **deps:** update dependency lint-staged to v15.3.0 ([e01b2da](https://github.com/WolfSoko/wol-sok-mono/commit/e01b2da595924d80b4fe6f8b512e6599472d112e))
+- **deps:** update dependency lint-staged to v15.3.0 ([e01b2da](https://github.com/WolfSoko/wol-sok-mono/commit/e01b2da595924d80b4fe6f8b512e6599472d112e))
 
 ## [4.71.34](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.33-non-cdk-deployed...v4.71.34) (2024-12-27)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.173.4 ([afa8176](https://github.com/WolfSoko/wol-sok-mono/commit/afa817602d91f33db1ff2d4dae9eeb3193addf63))
+- **deps:** update aws-cdk monorepo to v2.173.4 ([afa8176](https://github.com/WolfSoko/wol-sok-mono/commit/afa817602d91f33db1ff2d4dae9eeb3193addf63))
 
 ## [4.71.33](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.32-non-cdk-deployed...v4.71.33) (2024-12-27)
 
-
 ### Chore
 
-* **deps:** update dependency @swc/core to v1.10.3 ([c60a623](https://github.com/WolfSoko/wol-sok-mono/commit/c60a62381a4e8e539a91f28dc3a5ec214e051556))
+- **deps:** update dependency @swc/core to v1.10.3 ([c60a623](https://github.com/WolfSoko/wol-sok-mono/commit/c60a62381a4e8e539a91f28dc3a5ec214e051556))
 
 ## [4.71.32](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.31-non-cdk-deployed...v4.71.32) (2024-12-27)
 
-
 ### Chore
 
-* **deps:** update dependency postcss-preset-env to v10.1.3 ([9ae345c](https://github.com/WolfSoko/wol-sok-mono/commit/9ae345c8a3a46632837f1b70c68cdedc88c2e8ab))
+- **deps:** update dependency postcss-preset-env to v10.1.3 ([9ae345c](https://github.com/WolfSoko/wol-sok-mono/commit/9ae345c8a3a46632837f1b70c68cdedc88c2e8ab))
 
 ## [4.71.31](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.30-non-cdk-deployed...v4.71.31) (2024-12-27)
 
-
 ### Chore
 
-* **deps:** update dependency @module-federation/enhanced to v0.8.6 ([134b7a9](https://github.com/WolfSoko/wol-sok-mono/commit/134b7a9bfe9c13c704779f751cdaa4aa72609bcc))
+- **deps:** update dependency @module-federation/enhanced to v0.8.6 ([134b7a9](https://github.com/WolfSoko/wol-sok-mono/commit/134b7a9bfe9c13c704779f751cdaa4aa72609bcc))
 
 ## [4.71.30](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.29-non-cdk-deployed...v4.71.30) (2024-12-26)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.173.3 ([1f02684](https://github.com/WolfSoko/wol-sok-mono/commit/1f02684695e922e1eead4072b31e42de12de3ca8))
+- **deps:** update aws-cdk monorepo to v2.173.3 ([1f02684](https://github.com/WolfSoko/wol-sok-mono/commit/1f02684695e922e1eead4072b31e42de12de3ca8))
 
 ## [4.71.29](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.28-non-cdk-deployed...v4.71.29) (2024-12-26)
 
-
 ### Chore
 
-* **deps:** update dependency @swc/core to v1.10.2 ([b87a916](https://github.com/WolfSoko/wol-sok-mono/commit/b87a916a247ffb29e68a729da8ea4c158c0ec445))
+- **deps:** update dependency @swc/core to v1.10.2 ([b87a916](https://github.com/WolfSoko/wol-sok-mono/commit/b87a916a247ffb29e68a729da8ea4c158c0ec445))
 
 ## [4.71.28](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.27-non-cdk-deployed...v4.71.28) (2024-12-23)
 
-
 ### Chore
 
-* **deps:** update typescript-eslint monorepo to v8.18.2 ([11114ed](https://github.com/WolfSoko/wol-sok-mono/commit/11114edb0ee83a79b821b403ef82dc1984d50485))
+- **deps:** update typescript-eslint monorepo to v8.18.2 ([11114ed](https://github.com/WolfSoko/wol-sok-mono/commit/11114edb0ee83a79b821b403ef82dc1984d50485))
 
 ## [4.71.27](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.26-non-cdk-deployed...v4.71.27) (2024-12-21)
 
-
 ### Chore
 
-* **deps:** update dependency cross-fetch to v4.1.0 ([32770d2](https://github.com/WolfSoko/wol-sok-mono/commit/32770d21da2223bdce644852c191be924be214ac))
+- **deps:** update dependency cross-fetch to v4.1.0 ([32770d2](https://github.com/WolfSoko/wol-sok-mono/commit/32770d21da2223bdce644852c191be924be214ac))
 
 ## [4.71.26](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.25-non-cdk-deployed...v4.71.26) (2024-12-21)
 
-
 ### Chore
 
-* **deps:** update dependency rollup to v4.29.1 ([bbcc74f](https://github.com/WolfSoko/wol-sok-mono/commit/bbcc74fef9eaec68fa22abe80f75700fd2f03693))
+- **deps:** update dependency rollup to v4.29.1 ([bbcc74f](https://github.com/WolfSoko/wol-sok-mono/commit/bbcc74fef9eaec68fa22abe80f75700fd2f03693))
 
 ## [4.71.25](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.24-non-cdk-deployed...v4.71.25) (2024-12-21)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.29.1 ([64638e2](https://github.com/WolfSoko/wol-sok-mono/commit/64638e23fd6557ff55807854a43c6c3bda22ad4e))
+- **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.29.1 ([64638e2](https://github.com/WolfSoko/wol-sok-mono/commit/64638e23fd6557ff55807854a43c6c3bda22ad4e))
 
 ## [4.71.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.23-non-cdk-deployed...v4.71.24) (2024-12-21)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.29.1 ([f6f06d2](https://github.com/WolfSoko/wol-sok-mono/commit/f6f06d2b7f77f6d11c9a3d0c80f55655774cd85f))
+- **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.29.1 ([f6f06d2](https://github.com/WolfSoko/wol-sok-mono/commit/f6f06d2b7f77f6d11c9a3d0c80f55655774cd85f))
 
 ## [4.71.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.22-non-cdk-deployed...v4.71.23) (2024-12-20)
 
-
 ### Chore
 
-* **deps:** update dependency rollup to v4.29.0 ([a1e517c](https://github.com/WolfSoko/wol-sok-mono/commit/a1e517c34575d2aa710e7e657b3b393c2c51b394))
+- **deps:** update dependency rollup to v4.29.0 ([a1e517c](https://github.com/WolfSoko/wol-sok-mono/commit/a1e517c34575d2aa710e7e657b3b393c2c51b394))
 
 ## [4.71.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.21-non-cdk-deployed...v4.71.22) (2024-12-20)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.29.0 ([227906b](https://github.com/WolfSoko/wol-sok-mono/commit/227906bc55a6ff7ebbaef32a6d71d7caad817746))
+- **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.29.0 ([227906b](https://github.com/WolfSoko/wol-sok-mono/commit/227906bc55a6ff7ebbaef32a6d71d7caad817746))
 
 ## [4.71.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.20-non-cdk-deployed...v4.71.21) (2024-12-20)
 
-
 ### Chore
 
-* **deps:** update nx monorepo to v20.3.0 ([7f47036](https://github.com/WolfSoko/wol-sok-mono/commit/7f47036cdf985eb9ca6f1f6092ebe568f8e0f770))
+- **deps:** update nx monorepo to v20.3.0 ([7f47036](https://github.com/WolfSoko/wol-sok-mono/commit/7f47036cdf985eb9ca6f1f6092ebe568f8e0f770))
 
 ## [4.71.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.19-non-cdk-deployed...v4.71.20) (2024-12-20)
 
-
 ### Chore
 
-* **deps:** update dependency @esbuild/linux-x64 to v0.24.2 ([56af6df](https://github.com/WolfSoko/wol-sok-mono/commit/56af6df8476a64796c2fc0dbcfe6a563de78537b))
+- **deps:** update dependency @esbuild/linux-x64 to v0.24.2 ([56af6df](https://github.com/WolfSoko/wol-sok-mono/commit/56af6df8476a64796c2fc0dbcfe6a563de78537b))
 
 ## [4.71.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.18-non-cdk-deployed...v4.71.19) (2024-12-20)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency ace-builds to v1.37.1 ([3e6296d](https://github.com/WolfSoko/wol-sok-mono/commit/3e6296de9611efc883d12c2261df66d5a86ebfa9))
+- **deps:** update dependency ace-builds to v1.37.1 ([3e6296d](https://github.com/WolfSoko/wol-sok-mono/commit/3e6296de9611efc883d12c2261df66d5a86ebfa9))
 
 ## [4.71.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.17-non-cdk-deployed...v4.71.18) (2024-12-20)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency firebase-functions to v6.2.0 ([3020c2b](https://github.com/WolfSoko/wol-sok-mono/commit/3020c2b0eb577ca8275d4b866d602a2af37fbb33))
+- **deps:** update dependency firebase-functions to v6.2.0 ([3020c2b](https://github.com/WolfSoko/wol-sok-mono/commit/3020c2b0eb577ca8275d4b866d602a2af37fbb33))
 
 ## [4.71.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.16-non-cdk-deployed...v4.71.17) (2024-12-20)
 
-
 ### Chore
 
-* **deps:** update dependency firebase-functions-test to v3.4.0 ([45eb159](https://github.com/WolfSoko/wol-sok-mono/commit/45eb159dabe9dd6add28a47b0306232413402bfe))
+- **deps:** update dependency firebase-functions-test to v3.4.0 ([45eb159](https://github.com/WolfSoko/wol-sok-mono/commit/45eb159dabe9dd6add28a47b0306232413402bfe))
 
 ## [4.71.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.15-non-cdk-deployed...v4.71.16) (2024-12-20)
 
-
 ### Chore
 
-* **deps:** update dependency firebase-admin to v13.0.2 ([0397e69](https://github.com/WolfSoko/wol-sok-mono/commit/0397e691890abcfac824f4c347d9130b504f22fb))
+- **deps:** update dependency firebase-admin to v13.0.2 ([0397e69](https://github.com/WolfSoko/wol-sok-mono/commit/0397e691890abcfac824f4c347d9130b504f22fb))
 
 ## [4.71.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.14-non-cdk-deployed...v4.71.15) (2024-12-20)
 
-
 ### Chore
 
-* **deps:** update dependency @chromatic-com/storybook to v3.2.3 ([0bae1d6](https://github.com/WolfSoko/wol-sok-mono/commit/0bae1d6d905d33384e743e97823d3bfc0c3e9ea6))
-* **deps:** update dependency @esbuild/linux-x64 to v0.24.1 ([8ce0699](https://github.com/WolfSoko/wol-sok-mono/commit/8ce0699d331cf2ee0080e438a846daf83f17ae43))
+- **deps:** update dependency @chromatic-com/storybook to v3.2.3 ([0bae1d6](https://github.com/WolfSoko/wol-sok-mono/commit/0bae1d6d905d33384e743e97823d3bfc0c3e9ea6))
+- **deps:** update dependency @esbuild/linux-x64 to v0.24.1 ([8ce0699](https://github.com/WolfSoko/wol-sok-mono/commit/8ce0699d331cf2ee0080e438a846daf83f17ae43))
 
 ## [4.71.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.13-non-cdk-deployed...v4.71.14) (2024-12-20)
 
-
 ### Chore
 
-* **deps:** update dependency @storybook/test-runner to v0.21.0 ([6de136f](https://github.com/WolfSoko/wol-sok-mono/commit/6de136f4328db3839d10cd3d1bc1f5786c95b40d))
+- **deps:** update dependency @storybook/test-runner to v0.21.0 ([6de136f](https://github.com/WolfSoko/wol-sok-mono/commit/6de136f4328db3839d10cd3d1bc1f5786c95b40d))
 
 ## [4.71.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.12-non-cdk-deployed...v4.71.13) (2024-12-18)
 
-
 ### Bug Fixes
 
-* **deps:** update nx monorepo ([0c81ab0](https://github.com/WolfSoko/wol-sok-mono/commit/0c81ab03d3bbc511d7b69c3b66c565c3825f27c2))
+- **deps:** update nx monorepo ([0c81ab0](https://github.com/WolfSoko/wol-sok-mono/commit/0c81ab03d3bbc511d7b69c3b66c565c3825f27c2))
 
 ## [4.71.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.11-non-cdk-deployed...v4.71.12) (2024-12-18)
 
-
 ### Bug Fixes
 
-* **deps:** update nx monorepo to v19.0.5 ([d22da7f](https://github.com/WolfSoko/wol-sok-mono/commit/d22da7f1adda49f4c7b075a2afdbe381132828db))
+- **deps:** update nx monorepo to v19.0.5 ([d22da7f](https://github.com/WolfSoko/wol-sok-mono/commit/d22da7f1adda49f4c7b075a2afdbe381132828db))
 
 ## [4.71.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.10-non-cdk-deployed...v4.71.11) (2024-12-18)
 
-
 ### Bug Fixes
 
-* **deps:** update nx monorepo to v19.0.4 ([ac8ca9f](https://github.com/WolfSoko/wol-sok-mono/commit/ac8ca9fb53d82259442bfcee2476fc981f95edd9))
+- **deps:** update nx monorepo to v19.0.4 ([ac8ca9f](https://github.com/WolfSoko/wol-sok-mono/commit/ac8ca9fb53d82259442bfcee2476fc981f95edd9))
 
 ## [4.71.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.9-non-cdk-deployed...v4.71.10) (2024-12-18)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.173.2 ([d239010](https://github.com/WolfSoko/wol-sok-mono/commit/d239010307b1bdc98c202901447680e68ae3a435))
+- **deps:** update aws-cdk monorepo to v2.173.2 ([d239010](https://github.com/WolfSoko/wol-sok-mono/commit/d239010307b1bdc98c202901447680e68ae3a435))
 
 ## [4.71.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.8-non-cdk-deployed...v4.71.9) (2024-12-17)
 
-
 ### Chore
 
-* **deps:** update dependency cypress to v13.17.0 ([adf1224](https://github.com/WolfSoko/wol-sok-mono/commit/adf122427eac22b2b8dd2099d3e6c1651c4ab51e))
+- **deps:** update dependency cypress to v13.17.0 ([adf1224](https://github.com/WolfSoko/wol-sok-mono/commit/adf122427eac22b2b8dd2099d3e6c1651c4ab51e))
 
 ## [4.71.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.7-non-cdk-deployed...v4.71.8) (2024-12-17)
 
-
 ### Bug Fixes
 
-* **deps:** update analog monorepo to v1.10.3 ([ecee2ee](https://github.com/WolfSoko/wol-sok-mono/commit/ecee2ee0a5cbd7782c65fe7038ee22b814824e46))
+- **deps:** update analog monorepo to v1.10.3 ([ecee2ee](https://github.com/WolfSoko/wol-sok-mono/commit/ecee2ee0a5cbd7782c65fe7038ee22b814824e46))
 
 ## [4.71.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.6-non-cdk-deployed...v4.71.7) (2024-12-17)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency ace-builds to v1.37.0 ([ae375b5](https://github.com/WolfSoko/wol-sok-mono/commit/ae375b50bdb5c40baa42a5480015f794b9eda43e))
+- **deps:** update dependency ace-builds to v1.37.0 ([ae375b5](https://github.com/WolfSoko/wol-sok-mono/commit/ae375b50bdb5c40baa42a5480015f794b9eda43e))
 
 ## [4.71.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.5-non-cdk-deployed...v4.71.6) (2024-12-17)
 
-
 ### Chore
 
-* **deps:** update dependency @ngneat/spectator to v19.2.0 ([1918bdb](https://github.com/WolfSoko/wol-sok-mono/commit/1918bdbe4cec3d54ffae6b5e439d13a94ae9bc1a))
+- **deps:** update dependency @ngneat/spectator to v19.2.0 ([1918bdb](https://github.com/WolfSoko/wol-sok-mono/commit/1918bdbe4cec3d54ffae6b5e439d13a94ae9bc1a))
 
 ## [4.71.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.4-non-cdk-deployed...v4.71.5) (2024-12-17)
 
-
 ### Chore
 
-* **deps:** update dependency @module-federation/enhanced to v0.8.5 ([1420e5e](https://github.com/WolfSoko/wol-sok-mono/commit/1420e5e1b0139c0c2410ffa4653bf564015be42e))
+- **deps:** update dependency @module-federation/enhanced to v0.8.5 ([1420e5e](https://github.com/WolfSoko/wol-sok-mono/commit/1420e5e1b0139c0c2410ffa4653bf564015be42e))
 
 ## [4.71.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.3-non-cdk-deployed...v4.71.4) (2024-12-16)
 
-
 ### Chore
 
-* **deps:** update typescript-eslint monorepo to v8.18.1 ([b009f8c](https://github.com/WolfSoko/wol-sok-mono/commit/b009f8cc9793b4e01b64408117dcee6a03836f72))
+- **deps:** update typescript-eslint monorepo to v8.18.1 ([b009f8c](https://github.com/WolfSoko/wol-sok-mono/commit/b009f8cc9793b4e01b64408117dcee6a03836f72))
 
 ## [4.71.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.2-non-cdk-deployed...v4.71.3) (2024-12-16)
 
-
 ### Bug Fixes
 
-* **deps:** update analog monorepo to v1.10.2 ([1e3b44a](https://github.com/WolfSoko/wol-sok-mono/commit/1e3b44a2c38fa7252a7102c8d5007699ae38ca66))
+- **deps:** update analog monorepo to v1.10.2 ([1e3b44a](https://github.com/WolfSoko/wol-sok-mono/commit/1e3b44a2c38fa7252a7102c8d5007699ae38ca66))
 
 ## [4.71.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.1-non-cdk-deployed...v4.71.2) (2024-12-16)
 
-
 ### Bug Fixes
 
-* **deps:** update analog monorepo to v1.10.2-beta.12 ([cc28131](https://github.com/WolfSoko/wol-sok-mono/commit/cc281313b2c5a776a86e9b135e3796706cc31ae5))
+- **deps:** update analog monorepo to v1.10.2-beta.12 ([cc28131](https://github.com/WolfSoko/wol-sok-mono/commit/cc281313b2c5a776a86e9b135e3796706cc31ae5))
 
 ## [4.71.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.71.0-non-cdk-deployed...v4.71.1) (2024-12-15)
 
-
 ### Chore
 
-* **deps:** update dependency @commitlint/cli to v19.6.1 ([1aa23db](https://github.com/WolfSoko/wol-sok-mono/commit/1aa23dbbd91f46d718ce9b433ce3dcfbe2d486ef))
+- **deps:** update dependency @commitlint/cli to v19.6.1 ([1aa23db](https://github.com/WolfSoko/wol-sok-mono/commit/1aa23dbbd91f46d718ce9b433ce3dcfbe2d486ef))
 
 ## [4.71.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.70.5-non-cdk-deployed...v4.71.0) (2024-12-15)
 
-
 ### Features
 
-* ✨ add countdown beeps ([de2715b](https://github.com/WolfSoko/wol-sok-mono/commit/de2715b17da1cb15cf3431af7a23b199edcba8b2))
+- ✨ add countdown beeps ([de2715b](https://github.com/WolfSoko/wol-sok-mono/commit/de2715b17da1cb15cf3431af7a23b199edcba8b2))
 
 ## [4.70.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.70.4-non-cdk-deployed...v4.70.5) (2024-12-15)
 
-
 ### Bug Fixes
 
-* **deps:** update analog monorepo to v1.10.2-beta.11 ([a84ebfc](https://github.com/WolfSoko/wol-sok-mono/commit/a84ebfc3d2b2877097142916363229d7aea92f76))
+- **deps:** update analog monorepo to v1.10.2-beta.11 ([a84ebfc](https://github.com/WolfSoko/wol-sok-mono/commit/a84ebfc3d2b2877097142916363229d7aea92f76))
 
 ## [4.70.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.70.3-non-cdk-deployed...v4.70.4) (2024-12-15)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency marked to v15.0.4 ([3a15225](https://github.com/WolfSoko/wol-sok-mono/commit/3a1522530369c6d220e402911ae6af472393f6b6))
+- **deps:** update dependency marked to v15.0.4 ([3a15225](https://github.com/WolfSoko/wol-sok-mono/commit/3a1522530369c6d220e402911ae6af472393f6b6))
 
 ## [4.70.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.70.2-non-cdk-deployed...v4.70.3) (2024-12-15)
 
-
 ### Chore
 
-* **deps:** update dependency @types/three to v0.171.0 ([ee1751f](https://github.com/WolfSoko/wol-sok-mono/commit/ee1751f7f0958a0e8956617c596a52c58c81b49b))
+- **deps:** update dependency @types/three to v0.171.0 ([ee1751f](https://github.com/WolfSoko/wol-sok-mono/commit/ee1751f7f0958a0e8956617c596a52c58c81b49b))
 
 ## [4.70.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.70.1-non-cdk-deployed...v4.70.2) (2024-12-14)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.173.1 ([a0d2de3](https://github.com/WolfSoko/wol-sok-mono/commit/a0d2de39e1a26e2d820b16ccacd8bb54533e1541))
+- **deps:** update aws-cdk monorepo to v2.173.1 ([a0d2de3](https://github.com/WolfSoko/wol-sok-mono/commit/a0d2de39e1a26e2d820b16ccacd8bb54533e1541))
 
 ## [4.70.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.70.0-non-cdk-deployed...v4.70.1) (2024-12-14)
 
-
 ### Bug Fixes
 
-* **deps:** update analog monorepo to v1.10.2-beta.10 ([5e1dfd4](https://github.com/WolfSoko/wol-sok-mono/commit/5e1dfd463c8773bc6a68bb6608ad7333bee7ec42))
+- **deps:** update analog monorepo to v1.10.2-beta.10 ([5e1dfd4](https://github.com/WolfSoko/wol-sok-mono/commit/5e1dfd463c8773bc6a68bb6608ad7333bee7ec42))
 
 ## [4.70.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.21-non-cdk-deployed...v4.70.0) (2024-12-14)
 
-
 ### Features
 
-* ✨ show upcoming training type ([682519a](https://github.com/WolfSoko/wol-sok-mono/commit/682519a4897860e4642661ba6591dcb81a04c881))
+- ✨ show upcoming training type ([682519a](https://github.com/WolfSoko/wol-sok-mono/commit/682519a4897860e4642661ba6591dcb81a04c881))
 
 ## [4.69.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.20-non-cdk-deployed...v4.69.21) (2024-12-14)
 
-
 ### Bug Fixes
 
-* **deps:** update analog monorepo to v1.10.2-beta.9 ([b805111](https://github.com/WolfSoko/wol-sok-mono/commit/b8051110de239ced1fbd0f50a620674e14a38ce7))
+- **deps:** update analog monorepo to v1.10.2-beta.9 ([b805111](https://github.com/WolfSoko/wol-sok-mono/commit/b8051110de239ced1fbd0f50a620674e14a38ce7))
 
 ## [4.69.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.19-non-cdk-deployed...v4.69.20) (2024-12-14)
 
-
 ### Code style
 
-* 🎨 fix format ([730e1a2](https://github.com/WolfSoko/wol-sok-mono/commit/730e1a245e62b25a39cfe417d7eb919a94938438))
-
+- 🎨 fix format ([730e1a2](https://github.com/WolfSoko/wol-sok-mono/commit/730e1a245e62b25a39cfe417d7eb919a94938438))
 
 ### Testing
 
-* 🚨 try to harden e2e tests ([d8311bb](https://github.com/WolfSoko/wol-sok-mono/commit/d8311bb0ec7bcca079817768c1dbb0bf996f1b87))
+- 🚨 try to harden e2e tests ([d8311bb](https://github.com/WolfSoko/wol-sok-mono/commit/d8311bb0ec7bcca079817768c1dbb0bf996f1b87))
 
 ## [4.69.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.18...v4.69.19) (2024-12-13)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency @angular/fire to v19.0.0-rc.4 ([e461960](https://github.com/WolfSoko/wol-sok-mono/commit/e461960fa34fc5a30f3cff595b7ec71b238d095d))
-* **deps:** update dependency browserslist to v4.24.3 ([e85839d](https://github.com/WolfSoko/wol-sok-mono/commit/e85839d3f3fcc7c7dab468b3c800f3c223266045))
-
+- **deps:** update dependency @angular/fire to v19.0.0-rc.4 ([e461960](https://github.com/WolfSoko/wol-sok-mono/commit/e461960fa34fc5a30f3cff595b7ec71b238d095d))
+- **deps:** update dependency browserslist to v4.24.3 ([e85839d](https://github.com/WolfSoko/wol-sok-mono/commit/e85839d3f3fcc7c7dab468b3c800f3c223266045))
 
 ### Refactorings
 
-* ♻️ remove akita ng form ([71d437c](https://github.com/WolfSoko/wol-sok-mono/commit/71d437cc38a14286bcf66f60bb91fa6f42e9ea82))
-* ♻️ use elf instead of akita-ng-fire ([333998c](https://github.com/WolfSoko/wol-sok-mono/commit/333998cdcb9de52eb545f110c276d9503a8ed3f1))
-
+- ♻️ remove akita ng form ([71d437c](https://github.com/WolfSoko/wol-sok-mono/commit/71d437cc38a14286bcf66f60bb91fa6f42e9ea82))
+- ♻️ use elf instead of akita-ng-fire ([333998c](https://github.com/WolfSoko/wol-sok-mono/commit/333998cdcb9de52eb545f110c276d9503a8ed3f1))
 
 ### CI/CD
 
-* 👷 don't install binaries ([41f8313](https://github.com/WolfSoko/wol-sok-mono/commit/41f83135bd9ad1ce9afda295e0c07263a5c76bed))
-* 👷 fix ci pipeline that triggers release even if checks failed ([4e4d486](https://github.com/WolfSoko/wol-sok-mono/commit/4e4d48683ebf1b927ebc5a4140b8ecfc3db09788))
-
+- 👷 don't install binaries ([41f8313](https://github.com/WolfSoko/wol-sok-mono/commit/41f83135bd9ad1ce9afda295e0c07263a5c76bed))
+- 👷 fix ci pipeline that triggers release even if checks failed ([4e4d486](https://github.com/WolfSoko/wol-sok-mono/commit/4e4d48683ebf1b927ebc5a4140b8ecfc3db09788))
 
 ### Chore
 
-* **deps:** update dependency @module-federation/enhanced to v0.8.4 ([cf2bfee](https://github.com/WolfSoko/wol-sok-mono/commit/cf2bfee30c3574380ec0f0f181449e30441d4635))
-* **deps:** update dependency postcss-preset-env to v10.1.2 ([5da65f7](https://github.com/WolfSoko/wol-sok-mono/commit/5da65f76b34b5d04ddb7a7fdd18aaaa46c2279f1))
-* **deps:** update eslint monorepo to ~9.17.0 ([76f8996](https://github.com/WolfSoko/wol-sok-mono/commit/76f8996da70b3452da36edfc180cbb5660c32b04))
-
+- **deps:** update dependency @module-federation/enhanced to v0.8.4 ([cf2bfee](https://github.com/WolfSoko/wol-sok-mono/commit/cf2bfee30c3574380ec0f0f181449e30441d4635))
+- **deps:** update dependency postcss-preset-env to v10.1.2 ([5da65f7](https://github.com/WolfSoko/wol-sok-mono/commit/5da65f76b34b5d04ddb7a7fdd18aaaa46c2279f1))
+- **deps:** update eslint monorepo to ~9.17.0 ([76f8996](https://github.com/WolfSoko/wol-sok-mono/commit/76f8996da70b3452da36edfc180cbb5660c32b04))
 
 ### Testing
 
-* 🚨 update snapshot ([3a5e053](https://github.com/WolfSoko/wol-sok-mono/commit/3a5e0536b4f3cdf780750143fd5878dcba27f1ad))
+- 🚨 update snapshot ([3a5e053](https://github.com/WolfSoko/wol-sok-mono/commit/3a5e0536b4f3cdf780750143fd5878dcba27f1ad))
 
 ## [4.69.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.17...v4.69.18) (2024-12-13)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency zod to v3.24.1 ([d9fffd1](https://github.com/WolfSoko/wol-sok-mono/commit/d9fffd108a597074abc1fb9d959a197acf62db14))
+- **deps:** update dependency zod to v3.24.1 ([d9fffd1](https://github.com/WolfSoko/wol-sok-mono/commit/d9fffd108a597074abc1fb9d959a197acf62db14))
 
 ## [4.69.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.16...v4.69.17) (2024-12-13)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency @angular/fire to v19.0.0-rc.3 ([5ba6118](https://github.com/WolfSoko/wol-sok-mono/commit/5ba611847b35950a17c8c06d43ed853adab62a76))
+- **deps:** update dependency @angular/fire to v19.0.0-rc.3 ([5ba6118](https://github.com/WolfSoko/wol-sok-mono/commit/5ba611847b35950a17c8c06d43ed853adab62a76))
 
 ## [4.69.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.15...v4.69.16) (2024-12-13)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency vega-lite to v5.23.0 ([e70c7b6](https://github.com/WolfSoko/wol-sok-mono/commit/e70c7b6faa89ac00cc151ab29180388945ff6662))
+- **deps:** update dependency vega-lite to v5.23.0 ([e70c7b6](https://github.com/WolfSoko/wol-sok-mono/commit/e70c7b6faa89ac00cc151ab29180388945ff6662))
 
 ## [4.69.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.14...v4.69.15) (2024-12-13)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency firebase to v11.1.0 ([f881c8f](https://github.com/WolfSoko/wol-sok-mono/commit/f881c8fdbebf5837c54d8e7b4976d5ca852e8cc3))
+- **deps:** update dependency firebase to v11.1.0 ([f881c8f](https://github.com/WolfSoko/wol-sok-mono/commit/f881c8fdbebf5837c54d8e7b4976d5ca852e8cc3))
 
 ## [4.69.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.13...v4.69.14) (2024-12-13)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.173.0 ([9d359ba](https://github.com/WolfSoko/wol-sok-mono/commit/9d359ba8edaba97f54bac9617a3352d6c40a9255))
+- **deps:** update aws-cdk monorepo to v2.173.0 ([9d359ba](https://github.com/WolfSoko/wol-sok-mono/commit/9d359ba8edaba97f54bac9617a3352d6c40a9255))
 
 ## [4.69.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.12...v4.69.13) (2024-12-13)
 
-
 ### Chore
 
-* **deps:** update typescript-eslint monorepo to v8.18.0 ([575c371](https://github.com/WolfSoko/wol-sok-mono/commit/575c3715fb276481709bb83ed9cb78e5872e510e))
+- **deps:** update typescript-eslint monorepo to v8.18.0 ([575c371](https://github.com/WolfSoko/wol-sok-mono/commit/575c3715fb276481709bb83ed9cb78e5872e510e))
 
 ## [4.69.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.11...v4.69.12) (2024-12-13)
 
-
 ### Chore
 
-* **deps:** update dependency firebase-tools to v13.29.0 ([5864501](https://github.com/WolfSoko/wol-sok-mono/commit/58645018c15ca3f8d97b11cf180b3878a888b787))
+- **deps:** update dependency firebase-tools to v13.29.0 ([5864501](https://github.com/WolfSoko/wol-sok-mono/commit/58645018c15ca3f8d97b11cf180b3878a888b787))
 
 ## [4.69.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.10...v4.69.11) (2024-12-13)
 
-
 ### Bug Fixes
 
-* **deps:** update nx monorepo ([e52fde7](https://github.com/WolfSoko/wol-sok-mono/commit/e52fde7075c431d51786f88a6a0adb7016d5cc11))
+- **deps:** update nx monorepo ([e52fde7](https://github.com/WolfSoko/wol-sok-mono/commit/e52fde7075c431d51786f88a6a0adb7016d5cc11))
 
 ## [4.69.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.9-non-cdk-deployed...v4.69.10) (2024-12-13)
 
-
 ### Bug Fixes
 
-* **deps:** update nx monorepo ([28b0e1e](https://github.com/WolfSoko/wol-sok-mono/commit/28b0e1e5e27f0630a033e7fc31b8c86c2f2511de))
-
+- **deps:** update nx monorepo ([28b0e1e](https://github.com/WolfSoko/wol-sok-mono/commit/28b0e1e5e27f0630a033e7fc31b8c86c2f2511de))
 
 ### Chore
 
-* **deps:** update dependency @module-federation/enhanced to v0.8.3 ([b5a8929](https://github.com/WolfSoko/wol-sok-mono/commit/b5a8929d4ddc639c42b21e636f65476c86116e72))
+- **deps:** update dependency @module-federation/enhanced to v0.8.3 ([b5a8929](https://github.com/WolfSoko/wol-sok-mono/commit/b5a8929d4ddc639c42b21e636f65476c86116e72))
 
 ## [4.69.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.8-non-cdk-deployed...v4.69.9) (2024-12-12)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency superjson to v2.2.2 ([5a527df](https://github.com/WolfSoko/wol-sok-mono/commit/5a527df81c03336c9f3b817ac50a7a3543af6e7c))
+- **deps:** update dependency superjson to v2.2.2 ([5a527df](https://github.com/WolfSoko/wol-sok-mono/commit/5a527df81c03336c9f3b817ac50a7a3543af6e7c))
 
 ## [4.69.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.7-non-cdk-deployed...v4.69.8) (2024-12-12)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency firebase-functions to v6.1.2 ([4c7a973](https://github.com/WolfSoko/wol-sok-mono/commit/4c7a973377e1829088cb73eda597798ee40fb5d4))
-* **deps:** update dependency mathjs to v14.0.1 ([902d3ce](https://github.com/WolfSoko/wol-sok-mono/commit/902d3ce88d6b07c8910e3a86e60fcab5124dab44))
+- **deps:** update dependency firebase-functions to v6.1.2 ([4c7a973](https://github.com/WolfSoko/wol-sok-mono/commit/4c7a973377e1829088cb73eda597798ee40fb5d4))
+- **deps:** update dependency mathjs to v14.0.1 ([902d3ce](https://github.com/WolfSoko/wol-sok-mono/commit/902d3ce88d6b07c8910e3a86e60fcab5124dab44))
 
 ## [4.69.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.6-non-cdk-deployed...v4.69.7) (2024-12-12)
 
-
 ### Chore
 
-* **deps:** update dependency lint-staged to v15.2.11 ([059b61a](https://github.com/WolfSoko/wol-sok-mono/commit/059b61ae95e4fc669a34583459f22d3ad1356413))
+- **deps:** update dependency lint-staged to v15.2.11 ([059b61a](https://github.com/WolfSoko/wol-sok-mono/commit/059b61ae95e4fc669a34583459f22d3ad1356413))
 
 ## [4.69.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.5-non-cdk-deployed...v4.69.6) (2024-12-12)
 
-
 ### Chore
 
-* **deps:** update dependency @types/node to v22.10.2 ([2bbfbfa](https://github.com/WolfSoko/wol-sok-mono/commit/2bbfbfadeb27b08c8694b79455f60bd85409bcc7))
-* **deps:** update dependency angular-eslint to v19.0.2 ([881c350](https://github.com/WolfSoko/wol-sok-mono/commit/881c350500ea607da5f7e93ab0c6e8061959396b))
+- **deps:** update dependency @types/node to v22.10.2 ([2bbfbfa](https://github.com/WolfSoko/wol-sok-mono/commit/2bbfbfadeb27b08c8694b79455f60bd85409bcc7))
+- **deps:** update dependency angular-eslint to v19.0.2 ([881c350](https://github.com/WolfSoko/wol-sok-mono/commit/881c350500ea607da5f7e93ab0c6e8061959396b))
 
 ## [4.69.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.4-non-cdk-deployed...v4.69.5) (2024-12-12)
 
-
 ### Chore
 
-* **deps:** update dependency @playwright/test to v1.49.1 ([f95fb64](https://github.com/WolfSoko/wol-sok-mono/commit/f95fb64c19511e8a9a35635d2cf5b1260b25a39f))
+- **deps:** update dependency @playwright/test to v1.49.1 ([f95fb64](https://github.com/WolfSoko/wol-sok-mono/commit/f95fb64c19511e8a9a35635d2cf5b1260b25a39f))
 
 ## [4.69.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.3-non-cdk-deployed...v4.69.4) (2024-12-12)
 
-
 ### Chore
 
-* **deps:** update dependency @swc/core to v1.10.1 ([2815c10](https://github.com/WolfSoko/wol-sok-mono/commit/2815c10503e84d108ae550394f806348eec6937b))
+- **deps:** update dependency @swc/core to v1.10.1 ([2815c10](https://github.com/WolfSoko/wol-sok-mono/commit/2815c10503e84d108ae550394f806348eec6937b))
 
 ## [4.69.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.2-non-cdk-deployed...v4.69.3) (2024-12-12)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency @sentry/angular-ivy to v7.120.1 ([facf459](https://github.com/WolfSoko/wol-sok-mono/commit/facf459d983ad9e6664a05da46169e5c73b4e915))
-
+- **deps:** update dependency @sentry/angular-ivy to v7.120.1 ([facf459](https://github.com/WolfSoko/wol-sok-mono/commit/facf459d983ad9e6664a05da46169e5c73b4e915))
 
 ### Chore
 
-* **deps:** update dependency @module-federation/enhanced to v0.8.2 ([20b91e3](https://github.com/WolfSoko/wol-sok-mono/commit/20b91e30460691b5debd0cbc290629b52c2c2b1c))
-* **deps:** update dependency cypress to v13.16.1 ([27a4284](https://github.com/WolfSoko/wol-sok-mono/commit/27a428479b885a206140ac179d47546e29a5fca5))
+- **deps:** update dependency @module-federation/enhanced to v0.8.2 ([20b91e3](https://github.com/WolfSoko/wol-sok-mono/commit/20b91e30460691b5debd0cbc290629b52c2c2b1c))
+- **deps:** update dependency cypress to v13.16.1 ([27a4284](https://github.com/WolfSoko/wol-sok-mono/commit/27a428479b885a206140ac179d47546e29a5fca5))
 
 ## [4.69.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.1-non-cdk-deployed...v4.69.2) (2024-12-11)
 
 ## [4.69.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.69.0-non-cdk-deployed...v4.69.1) (2024-12-11)
 
-
 ### Code style
 
-* 🎨 remove allowSignalWrites option from effect ([1447741](https://github.com/WolfSoko/wol-sok-mono/commit/1447741be7b9a2bf4012c6644c77be400ac1a5c3))
-
+- 🎨 remove allowSignalWrites option from effect ([1447741](https://github.com/WolfSoko/wol-sok-mono/commit/1447741be7b9a2bf4012c6644c77be400ac1a5c3))
 
 ### Testing
 
-* 🚨 fix tests ([788923e](https://github.com/WolfSoko/wol-sok-mono/commit/788923ece047728d048d695997daf0e01323240f))
+- 🚨 fix tests ([788923e](https://github.com/WolfSoko/wol-sok-mono/commit/788923ece047728d048d695997daf0e01323240f))
 
 ## [4.69.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.68.1-non-cdk-deployed...v4.69.0) (2024-12-11)
 
-
 ### Features
 
-* **pacetrainer:** ✨  add total repetitions to training-progress.service.ts ([0c6fb2d](https://github.com/WolfSoko/wol-sok-mono/commit/0c6fb2d91693d81ec045e3da3faccf66f79fc8f3))
-* **pacetrainer:** ✨ add total repetitions to training-progress.service.ts ([bba0a7b](https://github.com/WolfSoko/wol-sok-mono/commit/bba0a7b8ac2f77e95345dcab51be51da194277fb))
-* **pacetrainer:** ✨ add total repetitions to training-progress.service.ts ([8308a38](https://github.com/WolfSoko/wol-sok-mono/commit/8308a38091a1ee1bd1d89479debc9fdddf78015d))
-* **pacetrainer:** ✨ better hydrate on viewport ([6aeaa0a](https://github.com/WolfSoko/wol-sok-mono/commit/6aeaa0a9c8a22646e8d34c41ce0be1bd17762534))
-* **pacetrainer:** ✨ fix hydration ([d4469b3](https://github.com/WolfSoko/wol-sok-mono/commit/d4469b342a5412b3e531a8e6d34ecf8444ec4790))
-
+- **pacetrainer:** ✨ add total repetitions to training-progress.service.ts ([0c6fb2d](https://github.com/WolfSoko/wol-sok-mono/commit/0c6fb2d91693d81ec045e3da3faccf66f79fc8f3))
+- **pacetrainer:** ✨ add total repetitions to training-progress.service.ts ([bba0a7b](https://github.com/WolfSoko/wol-sok-mono/commit/bba0a7b8ac2f77e95345dcab51be51da194277fb))
+- **pacetrainer:** ✨ add total repetitions to training-progress.service.ts ([8308a38](https://github.com/WolfSoko/wol-sok-mono/commit/8308a38091a1ee1bd1d89479debc9fdddf78015d))
+- **pacetrainer:** ✨ better hydrate on viewport ([6aeaa0a](https://github.com/WolfSoko/wol-sok-mono/commit/6aeaa0a9c8a22646e8d34c41ce0be1bd17762534))
+- **pacetrainer:** ✨ fix hydration ([d4469b3](https://github.com/WolfSoko/wol-sok-mono/commit/d4469b342a5412b3e531a8e6d34ecf8444ec4790))
 
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.28.1 ([f0860b3](https://github.com/WolfSoko/wol-sok-mono/commit/f0860b3ca224bae3428e4d9c460bdf5f3fabcf69))
-* **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.28.1 ([2b1a982](https://github.com/WolfSoko/wol-sok-mono/commit/2b1a982aecedf2901a1334a83dc58d7adaf6f4d9))
-* **deps:** update dependency angular-eslint to v19.0.1 ([d6a9dfd](https://github.com/WolfSoko/wol-sok-mono/commit/d6a9dfd71415dd5e716a3624094d3ee98947b6bc))
-* **deps:** update dependency rollup to v4.28.1 ([0cff0ee](https://github.com/WolfSoko/wol-sok-mono/commit/0cff0ee3ea5aa5382c61f70a07ecfafb5074d0cf))
-* **deps:** update dependency vite-tsconfig-paths to v5.1.4 ([a636a0b](https://github.com/WolfSoko/wol-sok-mono/commit/a636a0b7afd438058fa60ffc69dc0f80f6955f5b))
-
+- **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.28.1 ([f0860b3](https://github.com/WolfSoko/wol-sok-mono/commit/f0860b3ca224bae3428e4d9c460bdf5f3fabcf69))
+- **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.28.1 ([2b1a982](https://github.com/WolfSoko/wol-sok-mono/commit/2b1a982aecedf2901a1334a83dc58d7adaf6f4d9))
+- **deps:** update dependency angular-eslint to v19.0.1 ([d6a9dfd](https://github.com/WolfSoko/wol-sok-mono/commit/d6a9dfd71415dd5e716a3624094d3ee98947b6bc))
+- **deps:** update dependency rollup to v4.28.1 ([0cff0ee](https://github.com/WolfSoko/wol-sok-mono/commit/0cff0ee3ea5aa5382c61f70a07ecfafb5074d0cf))
+- **deps:** update dependency vite-tsconfig-paths to v5.1.4 ([a636a0b](https://github.com/WolfSoko/wol-sok-mono/commit/a636a0b7afd438058fa60ffc69dc0f80f6955f5b))
 
 ### Code style
 
-* **pacetrainer:** 🎨 remove unused imports ([16eea8f](https://github.com/WolfSoko/wol-sok-mono/commit/16eea8fec8f8e997de3ffd6f8b728d5a488a8349))
-* **rollapolla-analog:** 🎨 optimize imports ([e3d8793](https://github.com/WolfSoko/wol-sok-mono/commit/e3d879389e13161e36a7914da20b5cf7ba3abc68))
-
+- **pacetrainer:** 🎨 remove unused imports ([16eea8f](https://github.com/WolfSoko/wol-sok-mono/commit/16eea8fec8f8e997de3ffd6f8b728d5a488a8349))
+- **rollapolla-analog:** 🎨 optimize imports ([e3d8793](https://github.com/WolfSoko/wol-sok-mono/commit/e3d879389e13161e36a7914da20b5cf7ba3abc68))
 
 ### Testing
 
-* **pacetrainer:** 🚨 make countdown e2e test more stable ([61e196e](https://github.com/WolfSoko/wol-sok-mono/commit/61e196e152bd8591635ddff578ea67f62fbad4d8))
+- **pacetrainer:** 🚨 make countdown e2e test more stable ([61e196e](https://github.com/WolfSoko/wol-sok-mono/commit/61e196e152bd8591635ddff578ea67f62fbad4d8))
 
 ## [4.68.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.68.0-non-cdk-deployed...v4.68.1) (2024-12-05)
 
-
 ### Chore
 
-* **deps:** update dependency @module-federation/enhanced to v0.8.1 ([15db146](https://github.com/WolfSoko/wol-sok-mono/commit/15db146816652bc46c890a84688b3c987a0f2f58))
-* **deps:** update nx monorepo to v20.2.0 ([cb346fc](https://github.com/WolfSoko/wol-sok-mono/commit/cb346fcc7ccb5d886130adc3c97852d87c87a90e))
+- **deps:** update dependency @module-federation/enhanced to v0.8.1 ([15db146](https://github.com/WolfSoko/wol-sok-mono/commit/15db146816652bc46c890a84688b3c987a0f2f58))
+- **deps:** update nx monorepo to v20.2.0 ([cb346fc](https://github.com/WolfSoko/wol-sok-mono/commit/cb346fcc7ccb5d886130adc3c97852d87c87a90e))
 
 ## [4.68.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.21-non-cdk-deployed...v4.68.0) (2024-12-05)
 
-
 ### Features
 
-* ✨ improve hydration ([fe4d80b](https://github.com/WolfSoko/wol-sok-mono/commit/fe4d80b9ed4875f143eed68ca18025f98d5f96c8))
-* ✨ remove empty line ([f2f0e93](https://github.com/WolfSoko/wol-sok-mono/commit/f2f0e9302d8b6d9c627175389480e71dfdd5509e))
-
+- ✨ improve hydration ([fe4d80b](https://github.com/WolfSoko/wol-sok-mono/commit/fe4d80b9ed4875f143eed68ca18025f98d5f96c8))
+- ✨ remove empty line ([f2f0e93](https://github.com/WolfSoko/wol-sok-mono/commit/f2f0e9302d8b6d9c627175389480e71dfdd5509e))
 
 ### Code style
 
-* 🎨 formatted files ([189a428](https://github.com/WolfSoko/wol-sok-mono/commit/189a4287765fe99d0ea3711f12b7f0d35731142f))
+- 🎨 formatted files ([189a428](https://github.com/WolfSoko/wol-sok-mono/commit/189a4287765fe99d0ea3711f12b7f0d35731142f))
 
 ## [4.67.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.20...v4.67.21) (2024-12-05)
 
-
 ### Chore
 
-* **deps:** update nx monorepo ([6513663](https://github.com/WolfSoko/wol-sok-mono/commit/65136637667d02121944c8576c422ff93f5a3402))
+- **deps:** update nx monorepo ([6513663](https://github.com/WolfSoko/wol-sok-mono/commit/65136637667d02121944c8576c422ff93f5a3402))
 
 ## [4.67.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.19...v4.67.20) (2024-12-05)
 
-
 ### Chore
 
-* **deps:** update storybook monorepo to v8.4.7 ([17f071d](https://github.com/WolfSoko/wol-sok-mono/commit/17f071daf4385197df5c737af6c8e1b7db275a99))
+- **deps:** update storybook monorepo to v8.4.7 ([17f071d](https://github.com/WolfSoko/wol-sok-mono/commit/17f071daf4385197df5c737af6c8e1b7db275a99))
 
 ## [4.67.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.18...v4.67.19) (2024-12-05)
 
-
 ### Bug Fixes
 
-* **pacetrainer:** 🐛 angular material theming includes ([910f1c9](https://github.com/WolfSoko/wol-sok-mono/commit/910f1c96d15172f13946ff3c509d0f517a269cdf))
+- **pacetrainer:** 🐛 angular material theming includes ([910f1c9](https://github.com/WolfSoko/wol-sok-mono/commit/910f1c96d15172f13946ff3c509d0f517a269cdf))
 
 ## [4.67.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.17-non-cdk-deployed...v4.67.18) (2024-12-05)
 
-
 ### Bug Fixes
 
-* **rollapolla-analog:** 🐛 fix zoneless ssr rendering ([533a950](https://github.com/WolfSoko/wol-sok-mono/commit/533a95082bb05dbb1d8a3435588f67744670eaf7))
+- **rollapolla-analog:** 🐛 fix zoneless ssr rendering ([533a950](https://github.com/WolfSoko/wol-sok-mono/commit/533a95082bb05dbb1d8a3435588f67744670eaf7))
 
 ## [4.67.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.16-non-cdk-deployed...v4.67.17) (2024-12-05)
 
-
 ### Bug Fixes
 
-* **rollapolla-analog:** 🐛 fix zoneless ssr rendering ([fb8e7ef](https://github.com/WolfSoko/wol-sok-mono/commit/fb8e7ef12c1ad64bdb9b3f3d3a358beca3629a0f))
+- **rollapolla-analog:** 🐛 fix zoneless ssr rendering ([fb8e7ef](https://github.com/WolfSoko/wol-sok-mono/commit/fb8e7ef12c1ad64bdb9b3f3d3a358beca3629a0f))
 
 ## [4.67.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.15...v4.67.16) (2024-12-05)
 
-
 ### Bug Fixes
 
-* **deps:** update nx monorepo ([2607901](https://github.com/WolfSoko/wol-sok-mono/commit/26079017424f6ea0b0d2cff192d2d505e6de28f4))
+- **deps:** update nx monorepo ([2607901](https://github.com/WolfSoko/wol-sok-mono/commit/26079017424f6ea0b0d2cff192d2d505e6de28f4))
 
 ## [4.67.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.14-non-cdk-deployed...v4.67.15) (2024-12-05)
 
-
 ### Code style
 
-* 🎨 fix indentation ([f627e95](https://github.com/WolfSoko/wol-sok-mono/commit/f627e9512697d1d34174154cba8001dc42f19086))
+- 🎨 fix indentation ([f627e95](https://github.com/WolfSoko/wol-sok-mono/commit/f627e9512697d1d34174154cba8001dc42f19086))
 
 ## [4.67.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.13-non-cdk-deployed...v4.67.14) (2024-12-05)
 
-
 ### Chore
 
-* **deps:** update dependency webpack to v5.97.1 ([db6053a](https://github.com/WolfSoko/wol-sok-mono/commit/db6053a9eefb926dc7a71eb9cc96d26cc448978b))
+- **deps:** update dependency webpack to v5.97.1 ([db6053a](https://github.com/WolfSoko/wol-sok-mono/commit/db6053a9eefb926dc7a71eb9cc96d26cc448978b))
 
 ## [4.67.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.12-non-cdk-deployed...v4.67.13) (2024-12-05)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency @sentry/angular-ivy to v7.120.1 ([2ed45de](https://github.com/WolfSoko/wol-sok-mono/commit/2ed45de4f66aec1eccee26dd3b21f597ce3cfc22))
+- **deps:** update dependency @sentry/angular-ivy to v7.120.1 ([2ed45de](https://github.com/WolfSoko/wol-sok-mono/commit/2ed45de4f66aec1eccee26dd3b21f597ce3cfc22))
 
 ## [4.67.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.11-non-cdk-deployed...v4.67.12) (2024-12-05)
 
-
 ### Chore
 
-* **deps:** update dependency firebase-tools to v13.28.0 ([48342ca](https://github.com/WolfSoko/wol-sok-mono/commit/48342ca0b15fed269c1a5f2ba5c40286c7cc3d29))
+- **deps:** update dependency firebase-tools to v13.28.0 ([48342ca](https://github.com/WolfSoko/wol-sok-mono/commit/48342ca0b15fed269c1a5f2ba5c40286c7cc3d29))
 
 ## [4.67.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.10-non-cdk-deployed...v4.67.11) (2024-12-04)
 
-
 ### Chore
 
-* **deps:** update dependency node-gyp to v11 ([93a2961](https://github.com/WolfSoko/wol-sok-mono/commit/93a296155b8624cb77d3a9fbe5c7f84e6234f2c3))
+- **deps:** update dependency node-gyp to v11 ([93a2961](https://github.com/WolfSoko/wol-sok-mono/commit/93a296155b8624cb77d3a9fbe5c7f84e6234f2c3))
 
 ## [4.67.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.9-non-cdk-deployed...v4.67.10) (2024-12-04)
 
-
 ### Bug Fixes
 
-* **deps:** update analog monorepo to v1.10.1 ([8bb18bd](https://github.com/WolfSoko/wol-sok-mono/commit/8bb18bdcd3da4b416be745c8edfed36733cb0065))
+- **deps:** update analog monorepo to v1.10.1 ([8bb18bd](https://github.com/WolfSoko/wol-sok-mono/commit/8bb18bdcd3da4b416be745c8edfed36733cb0065))
 
 ## [4.67.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.8-non-cdk-deployed...v4.67.9) (2024-12-04)
 
-
 ### Chore
 
-* **deps:** update dependency cypress to v13.16.1 ([74cbfdc](https://github.com/WolfSoko/wol-sok-mono/commit/74cbfdcade21b18d8e654f7188e156b14e159b5e))
+- **deps:** update dependency cypress to v13.16.1 ([74cbfdc](https://github.com/WolfSoko/wol-sok-mono/commit/74cbfdcade21b18d8e654f7188e156b14e159b5e))
 
 ## [4.67.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.7-non-cdk-deployed...v4.67.8) (2024-12-04)
 
-
 ### Chore
 
-* **deps:** update dependency @angular-devkit/architect to v0.1900.3 ([b744161](https://github.com/WolfSoko/wol-sok-mono/commit/b744161f67b409fee4d9d257bbe537fa0bef3f88))
+- **deps:** update dependency @angular-devkit/architect to v0.1900.3 ([b744161](https://github.com/WolfSoko/wol-sok-mono/commit/b744161f67b409fee4d9d257bbe537fa0bef3f88))
 
 ## [4.67.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.6-non-cdk-deployed...v4.67.7) (2024-12-04)
 
-
 ### Chore
 
-* **deps:** update dependency @module-federation/enhanced to v0.8.1 ([989be17](https://github.com/WolfSoko/wol-sok-mono/commit/989be173c1d6049ac84987357b9be2f466f8b974))
+- **deps:** update dependency @module-federation/enhanced to v0.8.1 ([989be17](https://github.com/WolfSoko/wol-sok-mono/commit/989be173c1d6049ac84987357b9be2f466f8b974))
 
 ## [4.67.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.5-non-cdk-deployed...v4.67.6) (2024-12-04)
 
-
 ### Chore
 
-* **deps:** update dependency axios to v1.7.9 ([0f46087](https://github.com/WolfSoko/wol-sok-mono/commit/0f460879ae2ccbf980c70e5067b4fbda2a384ae9))
+- **deps:** update dependency axios to v1.7.9 ([0f46087](https://github.com/WolfSoko/wol-sok-mono/commit/0f460879ae2ccbf980c70e5067b4fbda2a384ae9))
 
 ## [4.67.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.4-non-cdk-deployed...v4.67.5) (2024-12-04)
 
-
 ### Chore
 
-* **deps:** update dependency prettier to v3.4.2 ([608d917](https://github.com/WolfSoko/wol-sok-mono/commit/608d917ee50dbcd1e30b5032f0cd178dc8f9e8a3))
+- **deps:** update dependency prettier to v3.4.2 ([608d917](https://github.com/WolfSoko/wol-sok-mono/commit/608d917ee50dbcd1e30b5032f0cd178dc8f9e8a3))
 
 ## [4.67.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.3-non-cdk-deployed...v4.67.4) (2024-12-04)
 
-
 ### Chore
 
-* **deps:** update dependency @swc/core to v1.10.0 ([dc38a7d](https://github.com/WolfSoko/wol-sok-mono/commit/dc38a7d4a99d4a9a3713aff47091913d20d1588f))
+- **deps:** update dependency @swc/core to v1.10.0 ([dc38a7d](https://github.com/WolfSoko/wol-sok-mono/commit/dc38a7d4a99d4a9a3713aff47091913d20d1588f))
 
 ## [4.67.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.2-non-cdk-deployed...v4.67.3) (2024-12-03)
 
-
 ### Testing
 
-* **pacetrainer:** 🚨 try using browser as test env ([fa05881](https://github.com/WolfSoko/wol-sok-mono/commit/fa05881f50c15ab00e37c7045526097fe89487a6))
+- **pacetrainer:** 🚨 try using browser as test env ([fa05881](https://github.com/WolfSoko/wol-sok-mono/commit/fa05881f50c15ab00e37c7045526097fe89487a6))
 
 ## [4.67.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.1-non-cdk-deployed...v4.67.2) (2024-12-03)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency vega-lite to v5.22.0 ([ce83a82](https://github.com/WolfSoko/wol-sok-mono/commit/ce83a823443f88e2107ad0adbc6c5f89e950914a))
+- **deps:** update dependency vega-lite to v5.22.0 ([ce83a82](https://github.com/WolfSoko/wol-sok-mono/commit/ce83a823443f88e2107ad0adbc6c5f89e950914a))
 
 ## [4.67.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.67.0-non-cdk-deployed...v4.67.1) (2024-12-03)
 
 ## [4.67.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.66.3-non-cdk-deployed...v4.67.0) (2024-12-03)
 
-
 ### Features
 
-* ✨ better design of overview. ([5df57a7](https://github.com/WolfSoko/wol-sok-mono/commit/5df57a70c104276bdd122224e7830d114b78866f))
+- ✨ better design of overview. ([5df57a7](https://github.com/WolfSoko/wol-sok-mono/commit/5df57a70c104276bdd122224e7830d114b78866f))
 
 ## [4.66.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.66.2-non-cdk-deployed...v4.66.3) (2024-12-03)
 
-
 ### Bug Fixes
 
-* **deps:** update analog monorepo to v1.10.0 ([1c5e573](https://github.com/WolfSoko/wol-sok-mono/commit/1c5e5733f7f7b3828089102b97bd190a7cb4c111))
+- **deps:** update analog monorepo to v1.10.0 ([1c5e573](https://github.com/WolfSoko/wol-sok-mono/commit/1c5e5733f7f7b3828089102b97bd190a7cb4c111))
 
 ## [4.66.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.66.1-non-cdk-deployed...v4.66.2) (2024-12-03)
 
-
 ### Chore
 
-* **deps:** update dependency jest-preset-angular to v14.4.2 ([3b16efb](https://github.com/WolfSoko/wol-sok-mono/commit/3b16efbdeaa6d3cd407fda93cfadbd24e9555f2f))
+- **deps:** update dependency jest-preset-angular to v14.4.2 ([3b16efb](https://github.com/WolfSoko/wol-sok-mono/commit/3b16efbdeaa6d3cd407fda93cfadbd24e9555f2f))
 
 ## [4.66.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.66.0-non-cdk-deployed...v4.66.1) (2024-12-03)
 
-
 ### Chore
 
-* **deps:** update dependency webpack to v5.97.0 ([b54e674](https://github.com/WolfSoko/wol-sok-mono/commit/b54e674c05abe17a246f7e71260ec0f3b7c39bd6))
+- **deps:** update dependency webpack to v5.97.0 ([b54e674](https://github.com/WolfSoko/wol-sok-mono/commit/b54e674c05abe17a246f7e71260ec0f3b7c39bd6))
 
 ## [4.66.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.65.0-non-cdk-deployed...v4.66.0) (2024-12-03)
 
-
 ### Features
 
-* **pacetrainer:** ✨ extract overview and live-stats into own container ([e300a5b](https://github.com/WolfSoko/wol-sok-mono/commit/e300a5b65fe3d1676f83ca0b68a174f8e50c4fb5))
-
+- **pacetrainer:** ✨ extract overview and live-stats into own container ([e300a5b](https://github.com/WolfSoko/wol-sok-mono/commit/e300a5b65fe3d1676f83ca0b68a174f8e50c4fb5))
 
 ### CI/CD
 
-* 👷 run lint and test on staged files ([aded220](https://github.com/WolfSoko/wol-sok-mono/commit/aded2200467cbe3f6b968650c1aa91cfb48b6bbb))
+- 👷 run lint and test on staged files ([aded220](https://github.com/WolfSoko/wol-sok-mono/commit/aded2200467cbe3f6b968650c1aa91cfb48b6bbb))
 
 ## [4.65.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.64.0-non-cdk-deployed...v4.65.0) (2024-12-03)
 
-
 ### Features
 
-* **pacetrainer:** ✨ extract overview and live-stats into own container ([54f3cc8](https://github.com/WolfSoko/wol-sok-mono/commit/54f3cc86c0a0396dce51579b0dae4d2d1cc089b9))
+- **pacetrainer:** ✨ extract overview and live-stats into own container ([54f3cc8](https://github.com/WolfSoko/wol-sok-mono/commit/54f3cc86c0a0396dce51579b0dae4d2d1cc089b9))
 
 ## [4.64.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.63.2-non-cdk-deployed...v4.64.0) (2024-12-03)
 
-
 ### Features
 
-* **pacetrainer:** ✨ better logic and animation for count-down-circle ([5ca7757](https://github.com/WolfSoko/wol-sok-mono/commit/5ca775761c58aacff6f9e76b50e28d35b356b300))
-* **pacetrainer:** ✨ make reload safe ([1ec8fcf](https://github.com/WolfSoko/wol-sok-mono/commit/1ec8fcfa7a54a2e43a2237cc4516450d266c4ddf))
+- **pacetrainer:** ✨ better logic and animation for count-down-circle ([5ca7757](https://github.com/WolfSoko/wol-sok-mono/commit/5ca775761c58aacff6f9e76b50e28d35b356b300))
+- **pacetrainer:** ✨ make reload safe ([1ec8fcf](https://github.com/WolfSoko/wol-sok-mono/commit/1ec8fcfa7a54a2e43a2237cc4516450d266c4ddf))
 
 ## [4.63.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.63.1-non-cdk-deployed...v4.63.2) (2024-12-03)
 
-
 ### CI/CD
 
-* 👷 use only cache node_modules ([510e4dc](https://github.com/WolfSoko/wol-sok-mono/commit/510e4dc8b1e6806bc04c66599a3f59bc32492bd0))
+- 👷 use only cache node_modules ([510e4dc](https://github.com/WolfSoko/wol-sok-mono/commit/510e4dc8b1e6806bc04c66599a3f59bc32492bd0))
 
 ## [4.63.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.63.0-non-cdk-deployed...v4.63.1) (2024-12-02)
 
-
 ### CI/CD
 
-* 👷 try repair node_modules cache ([4e350a2](https://github.com/WolfSoko/wol-sok-mono/commit/4e350a25cc81191d939d64e130c8ae795e62c568))
-* 👷 use absolute path for caching node_modules ([3e8f7c4](https://github.com/WolfSoko/wol-sok-mono/commit/3e8f7c41108d01ba9c7a743d6250dc29cf6412f4))
+- 👷 try repair node_modules cache ([4e350a2](https://github.com/WolfSoko/wol-sok-mono/commit/4e350a25cc81191d939d64e130c8ae795e62c568))
+- 👷 use absolute path for caching node_modules ([3e8f7c4](https://github.com/WolfSoko/wol-sok-mono/commit/3e8f7c41108d01ba9c7a743d6250dc29cf6412f4))
 
 ## [4.63.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.13...v4.63.0) (2024-12-02)
 
-
 ### Features
 
-* **pacetrainer:** ✨ run training with intervals ([5286e94](https://github.com/WolfSoko/wol-sok-mono/commit/5286e94fa45ede1c5a41de898a82b245f24855f6))
-
+- **pacetrainer:** ✨ run training with intervals ([5286e94](https://github.com/WolfSoko/wol-sok-mono/commit/5286e94fa45ede1c5a41de898a82b245f24855f6))
 
 ### Code style
 
-* 🎨 add todo ([1536311](https://github.com/WolfSoko/wol-sok-mono/commit/15363119620634b12c3cd39c7bc22decad449943))
+- 🎨 add todo ([1536311](https://github.com/WolfSoko/wol-sok-mono/commit/15363119620634b12c3cd39c7bc22decad449943))
 
 ## [4.62.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.12-non-cdk-deployed...v4.62.13) (2024-12-02)
 
-
 ### Chore
 
-* **deps:** update dependency jasmine-core to v5.5.0 ([8552862](https://github.com/WolfSoko/wol-sok-mono/commit/8552862471d389da97e9bab739813d92fc1d43da))
+- **deps:** update dependency jasmine-core to v5.5.0 ([8552862](https://github.com/WolfSoko/wol-sok-mono/commit/8552862471d389da97e9bab739813d92fc1d43da))
 
 ## [4.62.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.11-non-cdk-deployed...v4.62.12) (2024-12-02)
 
-
 ### Chore
 
-* **deps:** update dependency node-gyp to v10.3.1 ([344bee9](https://github.com/WolfSoko/wol-sok-mono/commit/344bee900ed5a71ccaac5627b60e4674bc240659))
+- **deps:** update dependency node-gyp to v10.3.1 ([344bee9](https://github.com/WolfSoko/wol-sok-mono/commit/344bee900ed5a71ccaac5627b60e4674bc240659))
 
 ## [4.62.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.10-non-cdk-deployed...v4.62.11) (2024-12-02)
 
-
 ### Chore
 
-* **deps:** update typescript-eslint monorepo to v8.17.0 ([a76baf4](https://github.com/WolfSoko/wol-sok-mono/commit/a76baf4bbf3733ef00ee6b00dca6eea47a8f3e70))
+- **deps:** update typescript-eslint monorepo to v8.17.0 ([a76baf4](https://github.com/WolfSoko/wol-sok-mono/commit/a76baf4bbf3733ef00ee6b00dca6eea47a8f3e70))
 
 ## [4.62.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.9-non-cdk-deployed...v4.62.10) (2024-12-02)
 
-
 ### Chore
 
-* **deps:** update vitest monorepo to v2.1.8 ([e481d94](https://github.com/WolfSoko/wol-sok-mono/commit/e481d9403cb0c5115cbcdbf539aba72fb904e166))
+- **deps:** update vitest monorepo to v2.1.8 ([e481d94](https://github.com/WolfSoko/wol-sok-mono/commit/e481d9403cb0c5115cbcdbf539aba72fb904e166))
 
 ## [4.62.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.8-non-cdk-deployed...v4.62.9) (2024-12-02)
 
-
 ### Chore
 
-* **deps:** update dependency @storybook/test-runner to v0.20.1 ([33bb3e0](https://github.com/WolfSoko/wol-sok-mono/commit/33bb3e05f87f834b5848a5cc9105921d162767e9))
+- **deps:** update dependency @storybook/test-runner to v0.20.1 ([33bb3e0](https://github.com/WolfSoko/wol-sok-mono/commit/33bb3e05f87f834b5848a5cc9105921d162767e9))
 
 ## [4.62.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.7-non-cdk-deployed...v4.62.8) (2024-12-02)
 
-
 ### Chore
 
-* **deps:** update vitest monorepo to v2.1.7 ([e05dc59](https://github.com/WolfSoko/wol-sok-mono/commit/e05dc5911109aaad51d814e3c8c0b4ed7abf24aa))
+- **deps:** update vitest monorepo to v2.1.7 ([e05dc59](https://github.com/WolfSoko/wol-sok-mono/commit/e05dc5911109aaad51d814e3c8c0b4ed7abf24aa))
 
 ## [4.62.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.6-non-cdk-deployed...v4.62.7) (2024-11-30)
 
-
 ### Chore
 
-* **deps:** update dependency rollup to v4.28.0 ([b28b1f9](https://github.com/WolfSoko/wol-sok-mono/commit/b28b1f9fc2d184eaa924f05659fee169a7d69fa0))
+- **deps:** update dependency rollup to v4.28.0 ([b28b1f9](https://github.com/WolfSoko/wol-sok-mono/commit/b28b1f9fc2d184eaa924f05659fee169a7d69fa0))
 
 ## [4.62.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.5-non-cdk-deployed...v4.62.6) (2024-11-30)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.28.0 ([3d00c54](https://github.com/WolfSoko/wol-sok-mono/commit/3d00c549154496182f8c032ab8d008673227e12b))
+- **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.28.0 ([3d00c54](https://github.com/WolfSoko/wol-sok-mono/commit/3d00c549154496182f8c032ab8d008673227e12b))
 
 ## [4.62.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.4-non-cdk-deployed...v4.62.5) (2024-11-30)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.28.0 ([e75285b](https://github.com/WolfSoko/wol-sok-mono/commit/e75285b004f7439406fcf8d6cf31156b618b9084))
+- **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.28.0 ([e75285b](https://github.com/WolfSoko/wol-sok-mono/commit/e75285b004f7439406fcf8d6cf31156b618b9084))
 
 ## [4.62.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.3-non-cdk-deployed...v4.62.4) (2024-11-30)
 
-
 ### Chore
 
-* **deps:** update dependency angular-eslint to v19 ([0c9a439](https://github.com/WolfSoko/wol-sok-mono/commit/0c9a439c28774e90e05eda7876049fca9a840d78))
+- **deps:** update dependency angular-eslint to v19 ([0c9a439](https://github.com/WolfSoko/wol-sok-mono/commit/0c9a439c28774e90e05eda7876049fca9a840d78))
 
 ## [4.62.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.2-non-cdk-deployed...v4.62.3) (2024-11-30)
 
-
 ### Chore
 
-* **deps:** update eslint monorepo to ~9.16.0 ([81ca491](https://github.com/WolfSoko/wol-sok-mono/commit/81ca49110ccac351f2e46b58ea3643d51d0263ac))
+- **deps:** update eslint monorepo to ~9.16.0 ([81ca491](https://github.com/WolfSoko/wol-sok-mono/commit/81ca49110ccac351f2e46b58ea3643d51d0263ac))
 
 ## [4.62.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.1-non-cdk-deployed...v4.62.2) (2024-11-29)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency three to v0.171.0 ([4b955e6](https://github.com/WolfSoko/wol-sok-mono/commit/4b955e66a1b2c721aedf7af82e889e2d2deeb3e2))
-
+- **deps:** update dependency three to v0.171.0 ([4b955e6](https://github.com/WolfSoko/wol-sok-mono/commit/4b955e66a1b2c721aedf7af82e889e2d2deeb3e2))
 
 ### Chore
 
-* **deps:** update dependency @module-federation/enhanced to ^0.8.0 ([5a6d0dc](https://github.com/WolfSoko/wol-sok-mono/commit/5a6d0dca1d21e5b82b5610997a8017920cf56046))
+- **deps:** update dependency @module-federation/enhanced to ^0.8.0 ([5a6d0dc](https://github.com/WolfSoko/wol-sok-mono/commit/5a6d0dca1d21e5b82b5610997a8017920cf56046))
 
 ## [4.62.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.62.0-non-cdk-deployed...v4.62.1) (2024-11-29)
 
-
 ### Chore
 
-* **deps:** update storybook monorepo to v8.4.6 ([22593f6](https://github.com/WolfSoko/wol-sok-mono/commit/22593f6191c2569208dcb497db91092fa64a0876))
+- **deps:** update storybook monorepo to v8.4.6 ([22593f6](https://github.com/WolfSoko/wol-sok-mono/commit/22593f6191c2569208dcb497db91092fa64a0876))
 
 ## [4.62.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.61.5-non-cdk-deployed...v4.62.0) (2024-11-29)
 
-
 ### Features
 
-* ✨ better overview of sprint training config ([1036878](https://github.com/WolfSoko/wol-sok-mono/commit/10368785f683181fcd74d533a12e21126866098d))
-
+- ✨ better overview of sprint training config ([1036878](https://github.com/WolfSoko/wol-sok-mono/commit/10368785f683181fcd74d533a12e21126866098d))
 
 ### Chore
 
-* **deps:** update nx monorepo to v18.4.3 ([7d266ca](https://github.com/WolfSoko/wol-sok-mono/commit/7d266ca305331c3a937ca7f5999739968c1ab6b5))
+- **deps:** update nx monorepo to v18.4.3 ([7d266ca](https://github.com/WolfSoko/wol-sok-mono/commit/7d266ca305331c3a937ca7f5999739968c1ab6b5))
 
 ## [4.61.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.61.4-non-cdk-deployed...v4.61.5) (2024-11-29)
 
-
 ### Chore
 
-* **deps:** update dependency angular-eslint to v18.4.3 ([61f7d61](https://github.com/WolfSoko/wol-sok-mono/commit/61f7d61afd70ea88e365d9db3229c22ca2f67d85))
+- **deps:** update dependency angular-eslint to v18.4.3 ([61f7d61](https://github.com/WolfSoko/wol-sok-mono/commit/61f7d61afd70ea88e365d9db3229c22ca2f67d85))
 
 ## [4.61.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.61.3-non-cdk-deployed...v4.61.4) (2024-11-29)
 
-
 ### Chore
 
-* **deps:** update dependency @ngneat/spectator to v19.1.2 ([146a183](https://github.com/WolfSoko/wol-sok-mono/commit/146a18323022f151fd02c06b995b762a79f25c5d))
+- **deps:** update dependency @ngneat/spectator to v19.1.2 ([146a183](https://github.com/WolfSoko/wol-sok-mono/commit/146a18323022f151fd02c06b995b762a79f25c5d))
 
 ## [4.61.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.61.2-non-cdk-deployed...v4.61.3) (2024-11-29)
 
-
 ### Performance
 
-* **pacetrainer:** ⚡️ remove zone.js for browser ([bb04333](https://github.com/WolfSoko/wol-sok-mono/commit/bb04333b1f6fd3c78140b8616ab5eeac17e98e54))
-
+- **pacetrainer:** ⚡️ remove zone.js for browser ([bb04333](https://github.com/WolfSoko/wol-sok-mono/commit/bb04333b1f6fd3c78140b8616ab5eeac17e98e54))
 
 ### Testing
 
-* **pacetrainer:** 🚨 add test for data service ([b32311e](https://github.com/WolfSoko/wol-sok-mono/commit/b32311e315b706d14575fa8763c9082f92ef4ba0))
+- **pacetrainer:** 🚨 add test for data service ([b32311e](https://github.com/WolfSoko/wol-sok-mono/commit/b32311e315b706d14575fa8763c9082f92ef4ba0))
 
 ## [4.61.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.61.1-non-cdk-deployed...v4.61.2) (2024-11-29)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency marked to v15.0.3 ([f7791ef](https://github.com/WolfSoko/wol-sok-mono/commit/f7791efe4d29aa90405964e39fc0e63c82c51938))
+- **deps:** update dependency marked to v15.0.3 ([f7791ef](https://github.com/WolfSoko/wol-sok-mono/commit/f7791efe4d29aa90405964e39fc0e63c82c51938))
 
 ## [4.61.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.61.0-non-cdk-deployed...v4.61.1) (2024-11-29)
 
-
 ### Chore
 
-* **deps:** update nx monorepo to v20.1.4 ([18b3866](https://github.com/WolfSoko/wol-sok-mono/commit/18b3866c6532555a39727e8c69ba3f8036d25537))
+- **deps:** update nx monorepo to v20.1.4 ([18b3866](https://github.com/WolfSoko/wol-sok-mono/commit/18b3866c6532555a39727e8c69ba3f8036d25537))
 
 ## [4.61.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.60.6-non-cdk-deployed...v4.61.0) (2024-11-29)
 
-
 ### Features
 
-* **pacetrainer:** ✨ add favicons ([ba4edaa](https://github.com/WolfSoko/wol-sok-mono/commit/ba4edaa72bcf3d8913f0653d000f0a7d7e28694f))
+- **pacetrainer:** ✨ add favicons ([ba4edaa](https://github.com/WolfSoko/wol-sok-mono/commit/ba4edaa72bcf3d8913f0653d000f0a7d7e28694f))
 
 ## [4.60.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.60.5-non-cdk-deployed...v4.60.6) (2024-11-28)
 
-
 ### Refactorings
 
-* **pacetrainer:** ♻️ simplify e2e tests ([b31b488](https://github.com/WolfSoko/wol-sok-mono/commit/b31b488cf5bbb922c949f21de698cfa9218033ec))
+- **pacetrainer:** ♻️ simplify e2e tests ([b31b488](https://github.com/WolfSoko/wol-sok-mono/commit/b31b488cf5bbb922c949f21de698cfa9218033ec))
 
 ## [4.60.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.60.4-non-cdk-deployed...v4.60.5) (2024-11-28)
 
-
 ### Chore
 
-* **deps:** update dependency @types/node to v22.10.1 ([845ef0d](https://github.com/WolfSoko/wol-sok-mono/commit/845ef0d3465b02d5718b775efff877ffbdccae2e))
+- **deps:** update dependency @types/node to v22.10.1 ([845ef0d](https://github.com/WolfSoko/wol-sok-mono/commit/845ef0d3465b02d5718b775efff877ffbdccae2e))
 
 ## [4.60.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.60.3-non-cdk-deployed...v4.60.4) (2024-11-28)
 
-
 ### Chore
 
-* **deps:** update dependency @storybook/test-runner to v0.20.0 ([74485c5](https://github.com/WolfSoko/wol-sok-mono/commit/74485c5b7fb2950d26e46f3394e4f1c3861a42e7))
+- **deps:** update dependency @storybook/test-runner to v0.20.0 ([74485c5](https://github.com/WolfSoko/wol-sok-mono/commit/74485c5b7fb2950d26e46f3394e4f1c3861a42e7))
 
 ## [4.60.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.60.2-non-cdk-deployed...v4.60.3) (2024-11-28)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency p5 to v1.11.2 ([6a1e3af](https://github.com/WolfSoko/wol-sok-mono/commit/6a1e3af44ba6b6130f5a6fe9a60188374e7ae1c4))
-
+- **deps:** update dependency p5 to v1.11.2 ([6a1e3af](https://github.com/WolfSoko/wol-sok-mono/commit/6a1e3af44ba6b6130f5a6fe9a60188374e7ae1c4))
 
 ### Chore
 
-* **deps:** update dependency @ngneat/spectator to v19.1.0 ([43b0cf4](https://github.com/WolfSoko/wol-sok-mono/commit/43b0cf4aaaeb95f3c0322fa55754cd727b285c46))
-* **deps:** update dependency @types/jasmine to v5.1.5 ([9f53345](https://github.com/WolfSoko/wol-sok-mono/commit/9f53345c13ba862d67f316cf8de28112e874e192))
-* **deps:** update dependency jest-preset-angular to v14.4.1 ([7ef2298](https://github.com/WolfSoko/wol-sok-mono/commit/7ef229884da74dedf879c998e91199155a690d1a))
+- **deps:** update dependency @ngneat/spectator to v19.1.0 ([43b0cf4](https://github.com/WolfSoko/wol-sok-mono/commit/43b0cf4aaaeb95f3c0322fa55754cd727b285c46))
+- **deps:** update dependency @types/jasmine to v5.1.5 ([9f53345](https://github.com/WolfSoko/wol-sok-mono/commit/9f53345c13ba862d67f316cf8de28112e874e192))
+- **deps:** update dependency jest-preset-angular to v14.4.1 ([7ef2298](https://github.com/WolfSoko/wol-sok-mono/commit/7ef229884da74dedf879c998e91199155a690d1a))
 
 ## [4.60.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.60.1-non-cdk-deployed...v4.60.2) (2024-11-28)
 
-
 ### Chore
 
-* **deps:** update dependency jest-preset-angular to v14.4.0 ([ae9630e](https://github.com/WolfSoko/wol-sok-mono/commit/ae9630e67c4a0785b52ad3f1af34b416ebd89a90))
+- **deps:** update dependency jest-preset-angular to v14.4.0 ([ae9630e](https://github.com/WolfSoko/wol-sok-mono/commit/ae9630e67c4a0785b52ad3f1af34b416ebd89a90))
 
 ## [4.60.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.60.0-non-cdk-deployed...v4.60.1) (2024-11-28)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency mermaid to v11.4.1 ([81a62f4](https://github.com/WolfSoko/wol-sok-mono/commit/81a62f4f74774288185d99347a0ec5a72a0510ac))
+- **deps:** update dependency mermaid to v11.4.1 ([81a62f4](https://github.com/WolfSoko/wol-sok-mono/commit/81a62f4f74774288185d99347a0ec5a72a0510ac))
 
 ## [4.60.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.59.0-non-cdk-deployed...v4.60.0) (2024-11-28)
 
-
 ### Features
 
-* ✨ pausable countdown ([ee67430](https://github.com/WolfSoko/wol-sok-mono/commit/ee674308ad54df50ed5d3ed18029b09f1e8e4b8e))
-
+- ✨ pausable countdown ([ee67430](https://github.com/WolfSoko/wol-sok-mono/commit/ee674308ad54df50ed5d3ed18029b09f1e8e4b8e))
 
 ### Code style
 
-* 🎨 suppress forbidden non null assertion ([6c64662](https://github.com/WolfSoko/wol-sok-mono/commit/6c64662ec69e8eaeec5ec223b62aa466edafaa19))
+- 🎨 suppress forbidden non null assertion ([6c64662](https://github.com/WolfSoko/wol-sok-mono/commit/6c64662ec69e8eaeec5ec223b62aa466edafaa19))
 
 ## [4.59.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.58.5-non-cdk-deployed...v4.59.0) (2024-11-28)
 
-
 ### Features
 
-* ✨ added countdown timer to sprint training ([a2258c0](https://github.com/WolfSoko/wol-sok-mono/commit/a2258c089402a452662915cdcb6ff25cb60690e9))
+- ✨ added countdown timer to sprint training ([a2258c0](https://github.com/WolfSoko/wol-sok-mono/commit/a2258c089402a452662915cdcb6ff25cb60690e9))
 
 ## [4.58.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.58.4-non-cdk-deployed...v4.58.5) (2024-11-28)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.171.1 ([ee4b1bb](https://github.com/WolfSoko/wol-sok-mono/commit/ee4b1bb32cb5e3328eab8d1fc33faec5fa2b8f10))
+- **deps:** update aws-cdk monorepo to v2.171.1 ([ee4b1bb](https://github.com/WolfSoko/wol-sok-mono/commit/ee4b1bb32cb5e3328eab8d1fc33faec5fa2b8f10))
 
 ## [4.58.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.58.3-non-cdk-deployed...v4.58.4) (2024-11-27)
 
-
 ### Bug Fixes
 
-* **deps:** update nx monorepo to v18.2.13 ([e8ecb2f](https://github.com/WolfSoko/wol-sok-mono/commit/e8ecb2fd9be71ff2f6de802b28678648a06684ad))
+- **deps:** update nx monorepo to v18.2.13 ([e8ecb2f](https://github.com/WolfSoko/wol-sok-mono/commit/e8ecb2fd9be71ff2f6de802b28678648a06684ad))
 
 ## [4.58.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.58.2-non-cdk-deployed...v4.58.3) (2024-11-27)
 
-
 ### CI/CD
 
-* 👷 add --verbose to nx format:check ([b6e9925](https://github.com/WolfSoko/wol-sok-mono/commit/b6e9925787c295b3c684b6b2bbdf1ad75f641bba))
-* 👷 comment out nx format:check ([bec87ff](https://github.com/WolfSoko/wol-sok-mono/commit/bec87ff04991c73c0f8e08fdf7f8d87ac994c881))
-* 👷 nx format:check without cloud-record ([f016c60](https://github.com/WolfSoko/wol-sok-mono/commit/f016c60756321865e9eca056a1cb811b49a026a6))
-
+- 👷 add --verbose to nx format:check ([b6e9925](https://github.com/WolfSoko/wol-sok-mono/commit/b6e9925787c295b3c684b6b2bbdf1ad75f641bba))
+- 👷 comment out nx format:check ([bec87ff](https://github.com/WolfSoko/wol-sok-mono/commit/bec87ff04991c73c0f8e08fdf7f8d87ac994c881))
+- 👷 nx format:check without cloud-record ([f016c60](https://github.com/WolfSoko/wol-sok-mono/commit/f016c60756321865e9eca056a1cb811b49a026a6))
 
 ### Testing
 
-* **pacetrainer:** 🚨 tests states of start stop pause training ([d6c57e5](https://github.com/WolfSoko/wol-sok-mono/commit/d6c57e5e2b3d7dcaf0ecc522054ff66af9519e70))
-* **pacetrainer:** 🚨 tests states of start stop pause training ([fc03644](https://github.com/WolfSoko/wol-sok-mono/commit/fc0364474e0557f7fec30a2570d1c4ba863dbd94))
+- **pacetrainer:** 🚨 tests states of start stop pause training ([d6c57e5](https://github.com/WolfSoko/wol-sok-mono/commit/d6c57e5e2b3d7dcaf0ecc522054ff66af9519e70))
+- **pacetrainer:** 🚨 tests states of start stop pause training ([fc03644](https://github.com/WolfSoko/wol-sok-mono/commit/fc0364474e0557f7fec30a2570d1c4ba863dbd94))
 
 ## [4.58.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.58.1-non-cdk-deployed...v4.58.2) (2024-11-27)
 
-
 ### Testing
 
-* **pacetrainer:** 🚨 split tests ([d9f18d5](https://github.com/WolfSoko/wol-sok-mono/commit/d9f18d522255ec66f4c982adefc99344c04cafbf))
+- **pacetrainer:** 🚨 split tests ([d9f18d5](https://github.com/WolfSoko/wol-sok-mono/commit/d9f18d522255ec66f4c982adefc99344c04cafbf))
 
 ## [4.58.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.58.0-non-cdk-deployed...v4.58.1) (2024-11-27)
 
-
 ### Testing
 
-* **pacetrainer:** 🚨 add e2e tests for training state ([5ed5000](https://github.com/WolfSoko/wol-sok-mono/commit/5ed50007c39b68a0d7dd2ac7e2f5cc0c41234604))
+- **pacetrainer:** 🚨 add e2e tests for training state ([5ed5000](https://github.com/WolfSoko/wol-sok-mono/commit/5ed50007c39b68a0d7dd2ac7e2f5cc0c41234604))
 
 ## [4.58.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.57.0-non-cdk-deployed...v4.58.0) (2024-11-27)
 
-
 ### Features
 
-* **pacetrainer:** ✨ added ctas ([a23c035](https://github.com/WolfSoko/wol-sok-mono/commit/a23c03581f8d3938453747bcc90eb81f834de5cd))
+- **pacetrainer:** ✨ added ctas ([a23c035](https://github.com/WolfSoko/wol-sok-mono/commit/a23c03581f8d3938453747bcc90eb81f834de5cd))
 
 ## [4.57.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.13-non-cdk-deployed...v4.57.0) (2024-11-26)
 
-
 ### Features
 
-* **pacetrainer:** ✨ german text ([d3d1d08](https://github.com/WolfSoko/wol-sok-mono/commit/d3d1d08ab1b87db2ccd0f2016c1f30786bc09289))
+- **pacetrainer:** ✨ german text ([d3d1d08](https://github.com/WolfSoko/wol-sok-mono/commit/d3d1d08ab1b87db2ccd0f2016c1f30786bc09289))
 
 ## [4.56.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.12-non-cdk-deployed...v4.56.13) (2024-11-26)
 
-
 ### Chore
 
-* **deps:** update dependency prettier to v3.4.1 ([6a76bbd](https://github.com/WolfSoko/wol-sok-mono/commit/6a76bbd937cedf540c7527c69d4bd2d6df451230))
+- **deps:** update dependency prettier to v3.4.1 ([6a76bbd](https://github.com/WolfSoko/wol-sok-mono/commit/6a76bbd937cedf540c7527c69d4bd2d6df451230))
 
 ## [4.56.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.11-non-cdk-deployed...v4.56.12) (2024-11-26)
 
-
 ### Chore
 
-* **deps:** update vitest monorepo to v2.1.6 ([5cedc7a](https://github.com/WolfSoko/wol-sok-mono/commit/5cedc7a040dffc7115cf5f6d3462c585960f34aa))
+- **deps:** update vitest monorepo to v2.1.6 ([5cedc7a](https://github.com/WolfSoko/wol-sok-mono/commit/5cedc7a040dffc7115cf5f6d3462c585960f34aa))
 
 ## [4.56.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.10-non-cdk-deployed...v4.56.11) (2024-11-26)
 
-
 ### Chore
 
-* **deps:** update dependency vite to v6 ([e27cd98](https://github.com/WolfSoko/wol-sok-mono/commit/e27cd9885681847693d41b4fa590afffd9c77672))
+- **deps:** update dependency vite to v6 ([e27cd98](https://github.com/WolfSoko/wol-sok-mono/commit/e27cd9885681847693d41b4fa590afffd9c77672))
 
 ## [4.56.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.9-non-cdk-deployed...v4.56.10) (2024-11-26)
 
-
 ### Chore
 
-* **deps:** update dependency @module-federation/enhanced to v0.7.7 ([630b3c7](https://github.com/WolfSoko/wol-sok-mono/commit/630b3c775ce07a830ce04ccebf647346ff37c130))
+- **deps:** update dependency @module-federation/enhanced to v0.7.7 ([630b3c7](https://github.com/WolfSoko/wol-sok-mono/commit/630b3c775ce07a830ce04ccebf647346ff37c130))
 
 ## [4.56.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.8-non-cdk-deployed...v4.56.9) (2024-11-26)
 
-
 ### Chore
 
-* **deps:** update dependency prettier to v3.4.0 ([36b1815](https://github.com/WolfSoko/wol-sok-mono/commit/36b18150055f0fb6788a0b0d665cbf6917c36a0d))
+- **deps:** update dependency prettier to v3.4.0 ([36b1815](https://github.com/WolfSoko/wol-sok-mono/commit/36b18150055f0fb6788a0b0d665cbf6917c36a0d))
 
 ## [4.56.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.7-non-cdk-deployed...v4.56.8) (2024-11-26)
 
-
 ### Chore
 
-* **deps:** update dependency @types/node to v22.10.0 ([44e0b9b](https://github.com/WolfSoko/wol-sok-mono/commit/44e0b9b6db8b3bf22185dfd14e3646a4adb5ae29))
+- **deps:** update dependency @types/node to v22.10.0 ([44e0b9b](https://github.com/WolfSoko/wol-sok-mono/commit/44e0b9b6db8b3bf22185dfd14e3646a4adb5ae29))
 
 ## [4.56.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.6-non-cdk-deployed...v4.56.7) (2024-11-26)
 
-
 ### Chore
 
-* **deps:** update dependency @angular-devkit/architect to v0.1900.2 ([df603e1](https://github.com/WolfSoko/wol-sok-mono/commit/df603e1864829e3ec047890c8a4736f436281046))
+- **deps:** update dependency @angular-devkit/architect to v0.1900.2 ([df603e1](https://github.com/WolfSoko/wol-sok-mono/commit/df603e1864829e3ec047890c8a4736f436281046))
 
 ## [4.56.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.5-non-cdk-deployed...v4.56.6) (2024-11-26)
 
-
 ### Chore
 
-* **deps:** update dependency @types/node to v22.9.4 ([b8ea011](https://github.com/WolfSoko/wol-sok-mono/commit/b8ea0119eece9ba4f23f9169e8dc76691e833c1d))
+- **deps:** update dependency @types/node to v22.9.4 ([b8ea011](https://github.com/WolfSoko/wol-sok-mono/commit/b8ea0119eece9ba4f23f9169e8dc76691e833c1d))
 
 ## [4.56.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.4-non-cdk-deployed...v4.56.5) (2024-11-26)
 
-
 ### Chore
 
-* **deps:** update dependency axios to v1.7.8 ([d99c4ad](https://github.com/WolfSoko/wol-sok-mono/commit/d99c4ad25033f3a9b0cfdf671059209250df7062))
+- **deps:** update dependency axios to v1.7.8 ([d99c4ad](https://github.com/WolfSoko/wol-sok-mono/commit/d99c4ad25033f3a9b0cfdf671059209250df7062))
 
 ## [4.56.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.3-non-cdk-deployed...v4.56.4) (2024-11-26)
 
-
 ### CI/CD
 
-* 👷 run all task parallel ([01165dc](https://github.com/WolfSoko/wol-sok-mono/commit/01165dc4a33f147a1e81b9120b6a5eda4663878c))
+- 👷 run all task parallel ([01165dc](https://github.com/WolfSoko/wol-sok-mono/commit/01165dc4a33f147a1e81b9120b6a5eda4663878c))
 
 ## [4.56.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.2-non-cdk-deployed...v4.56.3) (2024-11-26)
 
-
 ### CI/CD
 
-* 👷 release all apps to sentry ([95beba1](https://github.com/WolfSoko/wol-sok-mono/commit/95beba1c6910caf3e444146828af2c7bfe3f3ab1))
-
+- 👷 release all apps to sentry ([95beba1](https://github.com/WolfSoko/wol-sok-mono/commit/95beba1c6910caf3e444146828af2c7bfe3f3ab1))
 
 ### Chore
 
-* **deps:** update typescript-eslint monorepo to v8.16.0 ([129ebe2](https://github.com/WolfSoko/wol-sok-mono/commit/129ebe21dd7cd8d33bdaeb9ab7a2b0d87689e9fc))
+- **deps:** update typescript-eslint monorepo to v8.16.0 ([129ebe2](https://github.com/WolfSoko/wol-sok-mono/commit/129ebe21dd7cd8d33bdaeb9ab7a2b0d87689e9fc))
 
 ## [4.56.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.1-cdk-deployed...v4.56.2) (2024-11-26)
 
-
 ### CI/CD
 
-* **pacetrainer:** 👷 add sprint training config ([282dd7d](https://github.com/WolfSoko/wol-sok-mono/commit/282dd7dd5462381778177664cb03fc258bd3b39f))
+- **pacetrainer:** 👷 add sprint training config ([282dd7d](https://github.com/WolfSoko/wol-sok-mono/commit/282dd7dd5462381778177664cb03fc258bd3b39f))
 
 ## [4.56.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.56.0-cdk-deployed...v4.56.1) (2024-11-25)
 
-
 ### CI/CD
 
-* 👷 fix releases files ([14507cc](https://github.com/WolfSoko/wol-sok-mono/commit/14507cc8e8b6eb9b1dc0ada9c251917e4c0ced96))
+- 👷 fix releases files ([14507cc](https://github.com/WolfSoko/wol-sok-mono/commit/14507cc8e8b6eb9b1dc0ada9c251917e4c0ced96))
 
 ## [4.56.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.55.2...v4.56.0) (2024-11-25)
 
-
 ### Features
 
-* ✨ simplify firebase tasks ([a0d4f08](https://github.com/WolfSoko/wol-sok-mono/commit/a0d4f083c7e2f61325022563dd76c403bae36ce8))
-
+- ✨ simplify firebase tasks ([a0d4f08](https://github.com/WolfSoko/wol-sok-mono/commit/a0d4f083c7e2f61325022563dd76c403bae36ce8))
 
 ### CI/CD
 
-* 👷 add pactrainer to firebaserc ([bfa5a1a](https://github.com/WolfSoko/wol-sok-mono/commit/bfa5a1a86176217ff28a0e313b1f50d468a3b4e1))
-* 👷 different parallel settings for different jobs ([4c99104](https://github.com/WolfSoko/wol-sok-mono/commit/4c99104f1d9afede2df5fca9b9c5611bd0272e3b))
-* 👷 don't stop parallel deployment if one failed ([8e8e528](https://github.com/WolfSoko/wol-sok-mono/commit/8e8e5285851362a1971e969e490ffb90d17906fe))
+- 👷 add pactrainer to firebaserc ([bfa5a1a](https://github.com/WolfSoko/wol-sok-mono/commit/bfa5a1a86176217ff28a0e313b1f50d468a3b4e1))
+- 👷 different parallel settings for different jobs ([4c99104](https://github.com/WolfSoko/wol-sok-mono/commit/4c99104f1d9afede2df5fca9b9c5611bd0272e3b))
+- 👷 don't stop parallel deployment if one failed ([8e8e528](https://github.com/WolfSoko/wol-sok-mono/commit/8e8e5285851362a1971e969e490ffb90d17906fe))
 
 ## [4.55.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.55.1...v4.55.2) (2024-11-25)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.171.0 ([f63a270](https://github.com/WolfSoko/wol-sok-mono/commit/f63a27052361d6a58d93ce95cb170196916c9c6c))
+- **deps:** update aws-cdk monorepo to v2.171.0 ([f63a270](https://github.com/WolfSoko/wol-sok-mono/commit/f63a27052361d6a58d93ce95cb170196916c9c6c))
 
 ## [4.55.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.55.0...v4.55.1) (2024-11-24)
 
-
 ### CI/CD
 
-* 👷 fix release ([e5d3e50](https://github.com/WolfSoko/wol-sok-mono/commit/e5d3e50f5b8f945da6dc8ebb946ba06aecf8902a))
+- 👷 fix release ([e5d3e50](https://github.com/WolfSoko/wol-sok-mono/commit/e5d3e50f5b8f945da6dc8ebb946ba06aecf8902a))
 
 ## [4.55.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.54.0...v4.55.0) (2024-11-24)
 
-
 ### Features
 
-* **pacetrainer:** ✨ initial styling ([1ecec8e](https://github.com/WolfSoko/wol-sok-mono/commit/1ecec8ef704c1464dd2d191ba5cc766753fc26c7))
-* **pacetrainer:** ✨ try add pacetrainer firebase hosting project ([f7afc21](https://github.com/WolfSoko/wol-sok-mono/commit/f7afc215874327b03496d538e9ffc2645132e2c4))
-* **pacetrainer:** ✨ try add pacetrainer firebase hosting project ([9b0bd2b](https://github.com/WolfSoko/wol-sok-mono/commit/9b0bd2be860eb4bae139cbd85353cb7744bbfd1b))
-
+- **pacetrainer:** ✨ initial styling ([1ecec8e](https://github.com/WolfSoko/wol-sok-mono/commit/1ecec8ef704c1464dd2d191ba5cc766753fc26c7))
+- **pacetrainer:** ✨ try add pacetrainer firebase hosting project ([f7afc21](https://github.com/WolfSoko/wol-sok-mono/commit/f7afc215874327b03496d538e9ffc2645132e2c4))
+- **pacetrainer:** ✨ try add pacetrainer firebase hosting project ([9b0bd2b](https://github.com/WolfSoko/wol-sok-mono/commit/9b0bd2be860eb4bae139cbd85353cb7744bbfd1b))
 
 ### Code style
 
-* 🎨 fix some lint errors ([55d5705](https://github.com/WolfSoko/wol-sok-mono/commit/55d57059302de8081b4a909f275eafb93ac90f75))
+- 🎨 fix some lint errors ([55d5705](https://github.com/WolfSoko/wol-sok-mono/commit/55d57059302de8081b4a909f275eafb93ac90f75))
 
 ## [4.54.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.52-non-cdk-deployed...v4.54.0) (2024-11-23)
 
-
 ### Features
 
-* **pacetrainer:** ✨ add pacetrainer app as analog app with firebase ([287a93c](https://github.com/WolfSoko/wol-sok-mono/commit/287a93c0be169c79ec50e56a8888e370b3ddddd9))
-
+- **pacetrainer:** ✨ add pacetrainer app as analog app with firebase ([287a93c](https://github.com/WolfSoko/wol-sok-mono/commit/287a93c0be169c79ec50e56a8888e370b3ddddd9))
 
 ### Testing
 
-* **pacetrainer:** 🚨 ✨ add pacetrainer e2e tests ([db2b856](https://github.com/WolfSoko/wol-sok-mono/commit/db2b8560f5e7087a412d9408052bd4fea8f6ee04))
+- **pacetrainer:** 🚨 ✨ add pacetrainer e2e tests ([db2b856](https://github.com/WolfSoko/wol-sok-mono/commit/db2b8560f5e7087a412d9408052bd4fea8f6ee04))
 
 ## [4.53.52](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.51-non-cdk-deployed...v4.53.52) (2024-11-23)
 
-
 ### Chore
 
-* **deps:** update dependency angular-eslint to v18.4.2 ([865d581](https://github.com/WolfSoko/wol-sok-mono/commit/865d5817dc6db83b16309afc4860135a42c02c18))
+- **deps:** update dependency angular-eslint to v18.4.2 ([865d581](https://github.com/WolfSoko/wol-sok-mono/commit/865d5817dc6db83b16309afc4860135a42c02c18))
 
 ## [4.53.51](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.50-non-cdk-deployed...v4.53.51) (2024-11-23)
 
-
 ### Chore
 
-* **deps:** update nx monorepo to v18.4.2 ([6a8c9a0](https://github.com/WolfSoko/wol-sok-mono/commit/6a8c9a08dcaa3cda8262e2b32ae4c94b81de7570))
+- **deps:** update nx monorepo to v18.4.2 ([6a8c9a0](https://github.com/WolfSoko/wol-sok-mono/commit/6a8c9a08dcaa3cda8262e2b32ae4c94b81de7570))
 
 ## [4.53.50](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.49-non-cdk-deployed...v4.53.50) (2024-11-23)
 
-
 ### Chore
 
-* **deps:** update dependency rollup to v4.27.4 ([7201bd0](https://github.com/WolfSoko/wol-sok-mono/commit/7201bd0e6e24b110d704a7a8345b46262805fac2))
+- **deps:** update dependency rollup to v4.27.4 ([7201bd0](https://github.com/WolfSoko/wol-sok-mono/commit/7201bd0e6e24b110d704a7a8345b46262805fac2))
 
 ## [4.53.49](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.48-non-cdk-deployed...v4.53.49) (2024-11-23)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.27.4 ([2f29f9b](https://github.com/WolfSoko/wol-sok-mono/commit/2f29f9b1732a5f742006c2f086ae96390bd44735))
+- **deps:** update dependency @rollup/rollup-win32-x64-msvc to v4.27.4 ([2f29f9b](https://github.com/WolfSoko/wol-sok-mono/commit/2f29f9b1732a5f742006c2f086ae96390bd44735))
 
 ## [4.53.48](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.47-non-cdk-deployed...v4.53.48) (2024-11-23)
 
-
 ### Chore
 
-* **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.27.4 ([45d14c3](https://github.com/WolfSoko/wol-sok-mono/commit/45d14c37159dfec2acda6bb5d41a800218294de9))
+- **deps:** update dependency @rollup/rollup-linux-x64-gnu to v4.27.4 ([45d14c3](https://github.com/WolfSoko/wol-sok-mono/commit/45d14c37159dfec2acda6bb5d41a800218294de9))
 
 ## [4.53.47](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.46-non-cdk-deployed...v4.53.47) (2024-11-23)
 
-
 ### Chore
 
-* **deps:** update dependency @types/node to v22.9.3 ([369c5b7](https://github.com/WolfSoko/wol-sok-mono/commit/369c5b732dc9686b2b91e46ebaa7cb780c8ac163))
+- **deps:** update dependency @types/node to v22.9.3 ([369c5b7](https://github.com/WolfSoko/wol-sok-mono/commit/369c5b732dc9686b2b91e46ebaa7cb780c8ac163))
 
 ## [4.53.46](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.45-non-cdk-deployed...v4.53.46) (2024-11-23)
 
-
 ### Chore
 
-* **deps:** update nx monorepo to v20.1.3 ([8ee0c99](https://github.com/WolfSoko/wol-sok-mono/commit/8ee0c990cf10c197b8e02330b5914ebcdc783581))
+- **deps:** update nx monorepo to v20.1.3 ([8ee0c99](https://github.com/WolfSoko/wol-sok-mono/commit/8ee0c990cf10c197b8e02330b5914ebcdc783581))
 
 ## [4.53.45](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.44-non-cdk-deployed...v4.53.45) (2024-11-23)
 
-
 ### Chore
 
-* **deps:** update dependency @types/node to v22.9.2 ([1bf8e1b](https://github.com/WolfSoko/wol-sok-mono/commit/1bf8e1bfe1b2cb4fce46a544156f47aa107724f6))
+- **deps:** update dependency @types/node to v22.9.2 ([1bf8e1b](https://github.com/WolfSoko/wol-sok-mono/commit/1bf8e1bfe1b2cb4fce46a544156f47aa107724f6))
 
 ## [4.53.44](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.43-non-cdk-deployed...v4.53.44) (2024-11-22)
 
-
 ### Chore
 
-* **deps:** update dependency @swc/core to v1.9.3 ([48ed3ba](https://github.com/WolfSoko/wol-sok-mono/commit/48ed3ba2cdfbd35347395e371390f59f0d0ed42c))
+- **deps:** update dependency @swc/core to v1.9.3 ([48ed3ba](https://github.com/WolfSoko/wol-sok-mono/commit/48ed3ba2cdfbd35347395e371390f59f0d0ed42c))
 
 ## [4.53.43](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.42-non-cdk-deployed...v4.53.43) (2024-11-22)
 
-
 ### Chore
 
-* **deps:** update dependency jest-preset-angular to v14.3.3 ([4229c6e](https://github.com/WolfSoko/wol-sok-mono/commit/4229c6e49c88667bbf1fbafc7a8b0a5a87d2ed93))
+- **deps:** update dependency jest-preset-angular to v14.3.3 ([4229c6e](https://github.com/WolfSoko/wol-sok-mono/commit/4229c6e49c88667bbf1fbafc7a8b0a5a87d2ed93))
 
 ## [4.53.42](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.41-non-cdk-deployed...v4.53.42) (2024-11-22)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.170.0 ([b70bfa6](https://github.com/WolfSoko/wol-sok-mono/commit/b70bfa6c5e51bfd27addd54f9f2c7f0f88e0d5fd))
+- **deps:** update aws-cdk monorepo to v2.170.0 ([b70bfa6](https://github.com/WolfSoko/wol-sok-mono/commit/b70bfa6c5e51bfd27addd54f9f2c7f0f88e0d5fd))
 
 ## [4.53.41](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.40-non-cdk-deployed...v4.53.41) (2024-11-21)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency firebase-functions to v6.1.1 ([4bbcee7](https://github.com/WolfSoko/wol-sok-mono/commit/4bbcee7b985b1faf4e15314fcbad86f4dbf0c578))
+- **deps:** update dependency firebase-functions to v6.1.1 ([4bbcee7](https://github.com/WolfSoko/wol-sok-mono/commit/4bbcee7b985b1faf4e15314fcbad86f4dbf0c578))
 
 ## [4.53.40](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.39-non-cdk-deployed...v4.53.40) (2024-11-21)
 
-
 ### Chore
 
-* **deps:** update dependency firebase-tools to v13.27.0 ([7ab3c21](https://github.com/WolfSoko/wol-sok-mono/commit/7ab3c211b6cf0543109835fbd1dab0d2421220f4))
+- **deps:** update dependency firebase-tools to v13.27.0 ([7ab3c21](https://github.com/WolfSoko/wol-sok-mono/commit/7ab3c211b6cf0543109835fbd1dab0d2421220f4))
 
 ## [4.53.39](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.38-non-cdk-deployed...v4.53.39) (2024-11-21)
 
-
 ### Chore
 
-* **deps:** update dependency @angular-devkit/architect to v0.1900.1 ([15a2978](https://github.com/WolfSoko/wol-sok-mono/commit/15a29784ebbd065d2d29c6e968582c487b5c6320))
+- **deps:** update dependency @angular-devkit/architect to v0.1900.1 ([15a2978](https://github.com/WolfSoko/wol-sok-mono/commit/15a29784ebbd065d2d29c6e968582c487b5c6320))
 
 ## [4.53.38](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.37-non-cdk-deployed...v4.53.38) (2024-11-21)
 
-
 ### CI/CD
 
-* 👷 also cache global node cache. ([22df354](https://github.com/WolfSoko/wol-sok-mono/commit/22df3543b7d9a4d190fab0a9d68bb34143a0fa43))
+- 👷 also cache global node cache. ([22df354](https://github.com/WolfSoko/wol-sok-mono/commit/22df3543b7d9a4d190fab0a9d68bb34143a0fa43))
 
 ## [4.53.37](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.36-non-cdk-deployed...v4.53.37) (2024-11-21)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.169.0 ([80b2bdf](https://github.com/WolfSoko/wol-sok-mono/commit/80b2bdf41dd1cac3063d5457811fcbec52b6ea2e))
+- **deps:** update aws-cdk monorepo to v2.169.0 ([80b2bdf](https://github.com/WolfSoko/wol-sok-mono/commit/80b2bdf41dd1cac3063d5457811fcbec52b6ea2e))
 
 ## [4.53.36](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.35-non-cdk-deployed...v4.53.36) (2024-11-20)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency marked to v15.0.2 ([6adaecf](https://github.com/WolfSoko/wol-sok-mono/commit/6adaecf8b0c9c6af934201002f3b84da28ee6a0c))
+- **deps:** update dependency marked to v15.0.2 ([6adaecf](https://github.com/WolfSoko/wol-sok-mono/commit/6adaecf8b0c9c6af934201002f3b84da28ee6a0c))
 
 ## [4.53.35](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.34-non-cdk-deployed...v4.53.35) (2024-11-20)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.168.0 ([f15f80d](https://github.com/WolfSoko/wol-sok-mono/commit/f15f80d51406f23e81f6864643e37c6f34a3a912))
+- **deps:** update aws-cdk monorepo to v2.168.0 ([f15f80d](https://github.com/WolfSoko/wol-sok-mono/commit/f15f80d51406f23e81f6864643e37c6f34a3a912))
 
 ## [4.53.34](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.33-non-cdk-deployed...v4.53.34) (2024-11-20)
 
-
 ### Chore
 
-* **deps:** update storybook monorepo to v8.4.5 ([166e7b7](https://github.com/WolfSoko/wol-sok-mono/commit/166e7b7358eef0c2dd78ce06beb4c57fbe4c879f))
+- **deps:** update storybook monorepo to v8.4.5 ([166e7b7](https://github.com/WolfSoko/wol-sok-mono/commit/166e7b7358eef0c2dd78ce06beb4c57fbe4c879f))
 
 ## [4.53.33](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.32-non-cdk-deployed...v4.53.33) (2024-11-20)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency mathjs to v14 ([58a5eaa](https://github.com/WolfSoko/wol-sok-mono/commit/58a5eaaf81e7e9724b0b01bdb1e6f3c2cdb80359))
+- **deps:** update dependency mathjs to v14 ([58a5eaa](https://github.com/WolfSoko/wol-sok-mono/commit/58a5eaaf81e7e9724b0b01bdb1e6f3c2cdb80359))
 
 ## [4.53.32](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.31-non-cdk-deployed...v4.53.32) (2024-11-20)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency mathjs to v13.2.3 ([ba95d41](https://github.com/WolfSoko/wol-sok-mono/commit/ba95d413b6847e5e5bca5b9c7c075ad8edc06c90))
+- **deps:** update dependency mathjs to v13.2.3 ([ba95d41](https://github.com/WolfSoko/wol-sok-mono/commit/ba95d413b6847e5e5bca5b9c7c075ad8edc06c90))
 
 ## [4.53.31](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.30-non-cdk-deployed...v4.53.31) (2024-11-20)
 
-
 ### Chore
 
-* **deps:** update dependency jest-preset-angular to v14.3.2 ([4722eba](https://github.com/WolfSoko/wol-sok-mono/commit/4722ebab0fdcb6a783811ecc4134d39f099e8426))
+- **deps:** update dependency jest-preset-angular to v14.3.2 ([4722eba](https://github.com/WolfSoko/wol-sok-mono/commit/4722ebab0fdcb6a783811ecc4134d39f099e8426))
 
 ## [4.53.30](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.29-non-cdk-deployed...v4.53.30) (2024-11-20)
 
-
 ### Chore
 
-* **deps:** update dependency firebase-tools to v13.26.0 ([f59cd5c](https://github.com/WolfSoko/wol-sok-mono/commit/f59cd5c8791a7bcfbfab5e860a543ba3027092c1))
+- **deps:** update dependency firebase-tools to v13.26.0 ([f59cd5c](https://github.com/WolfSoko/wol-sok-mono/commit/f59cd5c8791a7bcfbfab5e860a543ba3027092c1))
 
 ## [4.53.29](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.28-non-cdk-deployed...v4.53.29) (2024-11-19)
 
-
 ### Chore
 
-* **deps:** update dependency vite-tsconfig-paths to v5.1.3 ([fe80826](https://github.com/WolfSoko/wol-sok-mono/commit/fe808267b5545e74edc4705423de4e8feafa8554))
+- **deps:** update dependency vite-tsconfig-paths to v5.1.3 ([fe80826](https://github.com/WolfSoko/wol-sok-mono/commit/fe808267b5545e74edc4705423de4e8feafa8554))
 
 ## [4.53.28](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.27-non-cdk-deployed...v4.53.28) (2024-11-19)
 
-
 ### Chore
 
-* **deps:** update dependency cypress to v13.16.0 ([2f20dd8](https://github.com/WolfSoko/wol-sok-mono/commit/2f20dd8d4cbdf0e04656b571702ba863f798d31f))
+- **deps:** update dependency cypress to v13.16.0 ([2f20dd8](https://github.com/WolfSoko/wol-sok-mono/commit/2f20dd8d4cbdf0e04656b571702ba863f798d31f))
 
 ## [4.53.27](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.26-non-cdk-deployed...v4.53.27) (2024-11-19)
 
-
 ### Chore
 
-* **deps:** update actions/checkout action to v4 ([6db2073](https://github.com/WolfSoko/wol-sok-mono/commit/6db2073a2c77e52fd1c9050aef230832360f0e54))
+- **deps:** update actions/checkout action to v4 ([6db2073](https://github.com/WolfSoko/wol-sok-mono/commit/6db2073a2c77e52fd1c9050aef230832360f0e54))
 
 ## [4.53.26](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.25-non-cdk-deployed...v4.53.26) (2024-11-19)
 
-
 ### Chore
 
-* **deps:** update dependency @types/node to v22.9.1 ([b51aeb9](https://github.com/WolfSoko/wol-sok-mono/commit/b51aeb928b4bf12e4258bc1dbcfde3c73750e641))
+- **deps:** update dependency @types/node to v22.9.1 ([b51aeb9](https://github.com/WolfSoko/wol-sok-mono/commit/b51aeb928b4bf12e4258bc1dbcfde3c73750e641))
 
 ## [4.53.25](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.24-non-cdk-deployed...v4.53.25) (2024-11-19)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.167.2 ([ef870fe](https://github.com/WolfSoko/wol-sok-mono/commit/ef870fe015d78af7382f754b5681936116375aa9))
+- **deps:** update aws-cdk monorepo to v2.167.2 ([ef870fe](https://github.com/WolfSoko/wol-sok-mono/commit/ef870fe015d78af7382f754b5681936116375aa9))
 
 ## [4.53.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.23-non-cdk-deployed...v4.53.24) (2024-11-19)
 
-
 ### Chore
 
-* 🔧 add local firebase schema config [skip ci] ([0ea0f28](https://github.com/WolfSoko/wol-sok-mono/commit/0ea0f2846d248d642ccf9e62249a9d34934798da))
-* **deps:** update nx monorepo ([33900f1](https://github.com/WolfSoko/wol-sok-mono/commit/33900f124e9b8a6916fa7c9f1dd5547d4acefb66))
+- 🔧 add local firebase schema config [skip ci] ([0ea0f28](https://github.com/WolfSoko/wol-sok-mono/commit/0ea0f2846d248d642ccf9e62249a9d34934798da))
+- **deps:** update nx monorepo ([33900f1](https://github.com/WolfSoko/wol-sok-mono/commit/33900f124e9b8a6916fa7c9f1dd5547d4acefb66))
 
 ## [4.53.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.22...v4.53.23) (2024-11-19)
 
-
 ### Bug Fixes
 
-* **rollapolla-analog:** 🐛 revert config changes ([94112ea](https://github.com/WolfSoko/wol-sok-mono/commit/94112eaea692a2b846127b893fd93d5563f83c36))
+- **rollapolla-analog:** 🐛 revert config changes ([94112ea](https://github.com/WolfSoko/wol-sok-mono/commit/94112eaea692a2b846127b893fd93d5563f83c36))
 
 ## [4.53.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.21...v4.53.22) (2024-11-19)
 
-
 ### Bug Fixes
 
-* **rollapolla-analog:** 🐛 revert config changes ([f35ca5b](https://github.com/WolfSoko/wol-sok-mono/commit/f35ca5bcb9640522971d54948633d4b7525f6109))
+- **rollapolla-analog:** 🐛 revert config changes ([f35ca5b](https://github.com/WolfSoko/wol-sok-mono/commit/f35ca5bcb9640522971d54948633d4b7525f6109))
 
 ## [4.53.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.20...v4.53.21) (2024-11-19)
 
-
 ### Bug Fixes
 
-* **rollapolla-analog:** 🐛 set correct deploy target ([b6c86f9](https://github.com/WolfSoko/wol-sok-mono/commit/b6c86f946730cc1d654b0d2400b3868c60636de4))
-
+- **rollapolla-analog:** 🐛 set correct deploy target ([b6c86f9](https://github.com/WolfSoko/wol-sok-mono/commit/b6c86f946730cc1d654b0d2400b3868c60636de4))
 
 ### Testing
 
-* **rollapolla-analog:** 🚨 try to fix import.meta but no results ([3e679f0](https://github.com/WolfSoko/wol-sok-mono/commit/3e679f0de165378d752f263d367a6bdc3bc2383d))
+- **rollapolla-analog:** 🚨 try to fix import.meta but no results ([3e679f0](https://github.com/WolfSoko/wol-sok-mono/commit/3e679f0de165378d752f263d367a6bdc3bc2383d))
 
 ## [4.53.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.19...v4.53.20) (2024-11-19)
 
-
 ### CI/CD
 
-* 👷 first checkout repo ([5b797b5](https://github.com/WolfSoko/wol-sok-mono/commit/5b797b5afaf5671d97a8d1d04d3a326011c83aaf))
+- 👷 first checkout repo ([5b797b5](https://github.com/WolfSoko/wol-sok-mono/commit/5b797b5afaf5671d97a8d1d04d3a326011c83aaf))
 
 ## [4.53.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.18...v4.53.19) (2024-11-19)
 
-
 ### CI/CD
 
-* 👷 no need for agents when build release ([5b5f8dd](https://github.com/WolfSoko/wol-sok-mono/commit/5b5f8dd1314d3f9d2bc16d5d6ea6760d8b20c30b))
-* 👷 try target for firestore-config ([e99d4cf](https://github.com/WolfSoko/wol-sok-mono/commit/e99d4cfa1ad5953a79e8dc1cf7c15e60cd60bf73))
-
+- 👷 no need for agents when build release ([5b5f8dd](https://github.com/WolfSoko/wol-sok-mono/commit/5b5f8dd1314d3f9d2bc16d5d6ea6760d8b20c30b))
+- 👷 try target for firestore-config ([e99d4cf](https://github.com/WolfSoko/wol-sok-mono/commit/e99d4cfa1ad5953a79e8dc1cf7c15e60cd60bf73))
 
 ### Chore
 
-* 🔧 add json schema for firebase config [skip-ci] ([8cda4ea](https://github.com/WolfSoko/wol-sok-mono/commit/8cda4eaccab9b178ab9b0dece4af7b59c891331d))
-* 🔧 fix deploy dependencies ([47a3754](https://github.com/WolfSoko/wol-sok-mono/commit/47a3754ead6a4b8ffb0472bf52af7c41870b726e))
+- 🔧 add json schema for firebase config [skip-ci] ([8cda4ea](https://github.com/WolfSoko/wol-sok-mono/commit/8cda4eaccab9b178ab9b0dece4af7b59c891331d))
+- 🔧 fix deploy dependencies ([47a3754](https://github.com/WolfSoko/wol-sok-mono/commit/47a3754ead6a4b8ffb0472bf52af7c41870b726e))
 
 ## [4.53.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.17-non-cdk-deployed...v4.53.18) (2024-11-19)
 
-
 ### Chore
 
-* **rollapolla-analog:** 🔧 👷 better config for firebase ([4e8317e](https://github.com/WolfSoko/wol-sok-mono/commit/4e8317eb126227de6f242fee8dfef23062459cf8))
-* **rollapolla-analog:** 🔧 fix type of vite config ([001c046](https://github.com/WolfSoko/wol-sok-mono/commit/001c04656e0b7bc45a85efed555dc80bfb42b16d))
-* **rollapolla-analog:** 🔧 set package.json type = module ([1c75733](https://github.com/WolfSoko/wol-sok-mono/commit/1c7573305b3d73ef572978f97a09afb414347cc8))
-
+- **rollapolla-analog:** 🔧 👷 better config for firebase ([4e8317e](https://github.com/WolfSoko/wol-sok-mono/commit/4e8317eb126227de6f242fee8dfef23062459cf8))
+- **rollapolla-analog:** 🔧 fix type of vite config ([001c046](https://github.com/WolfSoko/wol-sok-mono/commit/001c04656e0b7bc45a85efed555dc80bfb42b16d))
+- **rollapolla-analog:** 🔧 set package.json type = module ([1c75733](https://github.com/WolfSoko/wol-sok-mono/commit/1c7573305b3d73ef572978f97a09afb414347cc8))
 
 ### Testing
 
-* **rollapolla-analog:** 🚨 fix e2e by using esnext modules ([eb00c83](https://github.com/WolfSoko/wol-sok-mono/commit/eb00c837c2842679bcf9dc047384552d7fd3599c))
+- **rollapolla-analog:** 🚨 fix e2e by using esnext modules ([eb00c83](https://github.com/WolfSoko/wol-sok-mono/commit/eb00c837c2842679bcf9dc047384552d7fd3599c))
 
 ## [4.53.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.16-non-cdk-deployed...v4.53.17) (2024-11-19)
 
-
 ### Chore
 
-* **deps:** update commitlint monorepo to v19.6.0 ([8a2ab8d](https://github.com/WolfSoko/wol-sok-mono/commit/8a2ab8d284c2a21e2750c5234a355d3bb04bd927))
+- **deps:** update commitlint monorepo to v19.6.0 ([8a2ab8d](https://github.com/WolfSoko/wol-sok-mono/commit/8a2ab8d284c2a21e2750c5234a355d3bb04bd927))
 
 ## [4.53.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.15...v4.53.16) (2024-11-19)
 
-
 ### CI/CD
 
-* **rollapolla-analog:** 👷 try with channelId preprod ([beaf934](https://github.com/WolfSoko/wol-sok-mono/commit/beaf9347c4357a79b02664c714eca3c0bdfa4e48))
+- **rollapolla-analog:** 👷 try with channelId preprod ([beaf934](https://github.com/WolfSoko/wol-sok-mono/commit/beaf9347c4357a79b02664c714eca3c0bdfa4e48))
 
 ## [4.53.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.14-non-cdk-deployed...v4.53.15) (2024-11-19)
 
-
 ### CI/CD
 
-* 👷 rename input of installDeps from cypress to browser ([b634ed4](https://github.com/WolfSoko/wol-sok-mono/commit/b634ed4d1795a87891b806bd574da5c9be218d2d))
-* 👷 test if it work without browsers ([070757c](https://github.com/WolfSoko/wol-sok-mono/commit/070757c84bfcc47f27b15cd30d7819aeb85c4f2a))
-* **rollapolla-analog:** 👷 add preview deployment ([1416db0](https://github.com/WolfSoko/wol-sok-mono/commit/1416db0d9d48ee75f7c17f7c583f72ef357df285))
-* **rollapolla-analog:** 👷 add preview deployment ([f468dba](https://github.com/WolfSoko/wol-sok-mono/commit/f468dba7ea0fe64cd18b0aa2bbde18d05c6b2092))
-* **rollapolla-analog:** 👷 create default firebase.json for gh action ([eb837a2](https://github.com/WolfSoko/wol-sok-mono/commit/eb837a2b033e11f42ba9da522d1808e57839f743))
-* **rollapolla-analog:** 👷 fix preview deployment by add missing run to npx nx command ([66f0c30](https://github.com/WolfSoko/wol-sok-mono/commit/66f0c300ada85c673fd3a08e88e104bd120ce724))
-* **rollapolla-analog:** 👷 fix select correct firebase.json ([bf14a9b](https://github.com/WolfSoko/wol-sok-mono/commit/bf14a9b188c008df5bcad7838e4a1c9198855a73))
-* **rollapolla-analog:** 👷 trigger always (for now) ([2faa16e](https://github.com/WolfSoko/wol-sok-mono/commit/2faa16e12b48ad2fddf935a0bd4f504159393699))
+- 👷 rename input of installDeps from cypress to browser ([b634ed4](https://github.com/WolfSoko/wol-sok-mono/commit/b634ed4d1795a87891b806bd574da5c9be218d2d))
+- 👷 test if it work without browsers ([070757c](https://github.com/WolfSoko/wol-sok-mono/commit/070757c84bfcc47f27b15cd30d7819aeb85c4f2a))
+- **rollapolla-analog:** 👷 add preview deployment ([1416db0](https://github.com/WolfSoko/wol-sok-mono/commit/1416db0d9d48ee75f7c17f7c583f72ef357df285))
+- **rollapolla-analog:** 👷 add preview deployment ([f468dba](https://github.com/WolfSoko/wol-sok-mono/commit/f468dba7ea0fe64cd18b0aa2bbde18d05c6b2092))
+- **rollapolla-analog:** 👷 create default firebase.json for gh action ([eb837a2](https://github.com/WolfSoko/wol-sok-mono/commit/eb837a2b033e11f42ba9da522d1808e57839f743))
+- **rollapolla-analog:** 👷 fix preview deployment by add missing run to npx nx command ([66f0c30](https://github.com/WolfSoko/wol-sok-mono/commit/66f0c300ada85c673fd3a08e88e104bd120ce724))
+- **rollapolla-analog:** 👷 fix select correct firebase.json ([bf14a9b](https://github.com/WolfSoko/wol-sok-mono/commit/bf14a9b188c008df5bcad7838e4a1c9198855a73))
+- **rollapolla-analog:** 👷 trigger always (for now) ([2faa16e](https://github.com/WolfSoko/wol-sok-mono/commit/2faa16e12b48ad2fddf935a0bd4f504159393699))
 
 ## [4.53.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.13-non-cdk-deployed...v4.53.14) (2024-11-19)
 
-
 ### Chore
 
-* **deps:** update dependency eslint-plugin-storybook to v0.11.1 ([4bd0a1c](https://github.com/WolfSoko/wol-sok-mono/commit/4bd0a1c6e0ce8afcf0c4b621fd482e0e9c3ba6e7))
-
+- **deps:** update dependency eslint-plugin-storybook to v0.11.1 ([4bd0a1c](https://github.com/WolfSoko/wol-sok-mono/commit/4bd0a1c6e0ce8afcf0c4b621fd482e0e9c3ba6e7))
 
 ### Documentation
 
-* 📚️ add more sections to changelog ([01b346b](https://github.com/WolfSoko/wol-sok-mono/commit/01b346ba301b5015a94b089becccccd73e4f8115))
+- 📚️ add more sections to changelog ([01b346b](https://github.com/WolfSoko/wol-sok-mono/commit/01b346ba301b5015a94b089becccccd73e4f8115))
 
 ## [4.53.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.12-non-cdk-deployed...v4.53.13) (2024-11-19)
 
@@ -3109,10 +2678,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.53.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.3-non-cdk-deployed...v4.53.4) (2024-11-19)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency vega-embed to v6.29.0 ([4044ea4](https://github.com/WolfSoko/wol-sok-mono/commit/4044ea40ac1491351753e9174db56cd19ff80cb2))
+- **deps:** update dependency vega-embed to v6.29.0 ([4044ea4](https://github.com/WolfSoko/wol-sok-mono/commit/4044ea40ac1491351753e9174db56cd19ff80cb2))
 
 ## [4.53.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.53.2-non-cdk-deployed...v4.53.3) (2024-11-19)
 
@@ -3122,11 +2690,10 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.53.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.52.2-non-cdk-deployed...v4.53.0) (2024-11-18)
 
-
 ### Features
 
-* **angular-examples:** ✨ simplify headline animation calls ([2a16be8](https://github.com/WolfSoko/wol-sok-mono/commit/2a16be8340c564fac6510c508ab9308a9c7cc93b))
-* **feat-lazy-tf-examples:** ✨ change order of mnist results. Use signals ([3863e26](https://github.com/WolfSoko/wol-sok-mono/commit/3863e267acefcd52245fc1cf32883d46986162ae))
+- **angular-examples:** ✨ simplify headline animation calls ([2a16be8](https://github.com/WolfSoko/wol-sok-mono/commit/2a16be8340c564fac6510c508ab9308a9c7cc93b))
+- **feat-lazy-tf-examples:** ✨ change order of mnist results. Use signals ([3863e26](https://github.com/WolfSoko/wol-sok-mono/commit/3863e267acefcd52245fc1cf32883d46986162ae))
 
 ## [4.52.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.52.1-non-cdk-deployed...v4.52.2) (2024-11-18)
 
@@ -3134,22 +2701,20 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.52.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.51.11-non-cdk-deployed...v4.52.0) (2024-11-18)
 
-
 ### Features
 
-* ✨ move HeadlineAnimationService into shared lib ([59d9f49](https://github.com/WolfSoko/wol-sok-mono/commit/59d9f49ac302bdb36b567f57b49e0c51b1e28491))
-* **angular-examples:** ✨ rename title ([3c18fc9](https://github.com/WolfSoko/wol-sok-mono/commit/3c18fc935a2caebc1ec6e8ab711def20d577e688))
-* **feat-lazy-tf-examples:** ✨ add missing peer deps ([b0a96f1](https://github.com/WolfSoko/wol-sok-mono/commit/b0a96f105ab35426e3ac3adab17b33fb8cfc69b1))
-* **feat-lazy-tf-examples:** ✨ Only one graph to show all data ([f4b6cf2](https://github.com/WolfSoko/wol-sok-mono/commit/f4b6cf275932c11a56a2fd2eb76e82c769ca544b))
+- ✨ move HeadlineAnimationService into shared lib ([59d9f49](https://github.com/WolfSoko/wol-sok-mono/commit/59d9f49ac302bdb36b567f57b49e0c51b1e28491))
+- **angular-examples:** ✨ rename title ([3c18fc9](https://github.com/WolfSoko/wol-sok-mono/commit/3c18fc935a2caebc1ec6e8ab711def20d577e688))
+- **feat-lazy-tf-examples:** ✨ add missing peer deps ([b0a96f1](https://github.com/WolfSoko/wol-sok-mono/commit/b0a96f105ab35426e3ac3adab17b33fb8cfc69b1))
+- **feat-lazy-tf-examples:** ✨ Only one graph to show all data ([f4b6cf2](https://github.com/WolfSoko/wol-sok-mono/commit/f4b6cf275932c11a56a2fd2eb76e82c769ca544b))
 
 ## [4.51.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.51.10-non-cdk-deployed...v4.51.11) (2024-11-18)
 
 ## [4.51.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.51.9-non-cdk-deployed...v4.51.10) (2024-11-18)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency marked to v15.0.1 ([b902423](https://github.com/WolfSoko/wol-sok-mono/commit/b90242374c5c104bd7f6fbf0ab520cd747a2c515))
+- **deps:** update dependency marked to v15.0.1 ([b902423](https://github.com/WolfSoko/wol-sok-mono/commit/b90242374c5c104bd7f6fbf0ab520cd747a2c515))
 
 ## [4.51.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.51.8-non-cdk-deployed...v4.51.9) (2024-11-17)
 
@@ -3167,19 +2732,17 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.51.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.51.1-non-cdk-deployed...v4.51.2) (2024-11-15)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.167.1 ([805a63f](https://github.com/WolfSoko/wol-sok-mono/commit/805a63fd3a8e16dbc79dcd9ad06aacf66b8ffee6))
+- **deps:** update aws-cdk monorepo to v2.167.1 ([805a63f](https://github.com/WolfSoko/wol-sok-mono/commit/805a63fd3a8e16dbc79dcd9ad06aacf66b8ffee6))
 
 ## [4.51.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.51.0-cdk-deployed...v4.51.1) (2024-11-15)
 
 ## [4.51.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.24-non-cdk-deployed...v4.51.0) (2024-11-15)
 
-
 ### Features
 
-* ✨ fix anchor layout ([58feccf](https://github.com/WolfSoko/wol-sok-mono/commit/58feccff9929824aa9077d020b537db7b6f6ea91))
+- ✨ fix anchor layout ([58feccf](https://github.com/WolfSoko/wol-sok-mono/commit/58feccff9929824aa9077d020b537db7b6f6ea91))
 
 ## [4.50.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.23-non-cdk-deployed...v4.50.24) (2024-11-15)
 
@@ -3191,10 +2754,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.50.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.19-non-cdk-deployed...v4.50.20) (2024-11-15)
 
-
 ### Bug Fixes
 
-* 🐛 don't cache mf-manifests ([01d76c2](https://github.com/WolfSoko/wol-sok-mono/commit/01d76c247a4c6026336f17c7690e1a6a96b873b5))
+- 🐛 don't cache mf-manifests ([01d76c2](https://github.com/WolfSoko/wol-sok-mono/commit/01d76c247a4c6026336f17c7690e1a6a96b873b5))
 
 ## [4.50.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.18-non-cdk-deployed...v4.50.19) (2024-11-15)
 
@@ -3204,19 +2766,17 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.50.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.15...v4.50.16) (2024-11-14)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency ace-builds to v1.36.5 ([aaa95ad](https://github.com/WolfSoko/wol-sok-mono/commit/aaa95ade24c884010c4453d9b93dddee606b6d9b))
+- **deps:** update dependency ace-builds to v1.36.5 ([aaa95ad](https://github.com/WolfSoko/wol-sok-mono/commit/aaa95ade24c884010c4453d9b93dddee606b6d9b))
 
 ### [4.50.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.14...v4.50.15) (2024-11-14)
 
 ### [4.50.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.13...v4.50.14) (2024-11-14)
 
-
 ### Bug Fixes
 
-* 🐛 add necessary dependsOn config ([192d0eb](https://github.com/WolfSoko/wol-sok-mono/commit/192d0ebeb4300640151badda1014b1fc353d7cf6))
+- 🐛 add necessary dependsOn config ([192d0eb](https://github.com/WolfSoko/wol-sok-mono/commit/192d0ebeb4300640151badda1014b1fc353d7cf6))
 
 ### [4.50.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.12...v4.50.13) (2024-11-14)
 
@@ -3228,24 +2788,21 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.50.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.8-non-cdk-deployed...v4.50.9) (2024-11-14)
 
-
 ### Bug Fixes
 
-* **deps:** update nx monorepo to v18.2.13 ([ed6d19b](https://github.com/WolfSoko/wol-sok-mono/commit/ed6d19b0b65d8b649b331ee19c95259ca00efca3))
+- **deps:** update nx monorepo to v18.2.13 ([ed6d19b](https://github.com/WolfSoko/wol-sok-mono/commit/ed6d19b0b65d8b649b331ee19c95259ca00efca3))
 
 ### [4.50.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.7-non-cdk-deployed...v4.50.8) (2024-11-14)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency mathjs to v13.2.2 ([ac8772f](https://github.com/WolfSoko/wol-sok-mono/commit/ac8772f191aebda44662f97b02bf4eb539dea63f))
+- **deps:** update dependency mathjs to v13.2.2 ([ac8772f](https://github.com/WolfSoko/wol-sok-mono/commit/ac8772f191aebda44662f97b02bf4eb539dea63f))
 
 ### [4.50.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.6...v4.50.7) (2024-11-14)
 
-
 ### Bug Fixes
 
-* 🐛 filter all but optimized.wasm ([ab5adef](https://github.com/WolfSoko/wol-sok-mono/commit/ab5adefee5622de04ce351ec8fd6208f024866cc))
+- 🐛 filter all but optimized.wasm ([ab5adef](https://github.com/WolfSoko/wol-sok-mono/commit/ab5adefee5622de04ce351ec8fd6208f024866cc))
 
 ### [4.50.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.5...v4.50.6) (2024-11-14)
 
@@ -3253,54 +2810,47 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.50.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.3...v4.50.4) (2024-11-14)
 
-
 ### Bug Fixes
 
-* 🐛 remove filter ([0fa697a](https://github.com/WolfSoko/wol-sok-mono/commit/0fa697a9166abaedc8b7d1babb021b441666cf57))
+- 🐛 remove filter ([0fa697a](https://github.com/WolfSoko/wol-sok-mono/commit/0fa697a9166abaedc8b7d1babb021b441666cf57))
 
 ### [4.50.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.2-cdk-deployed...v4.50.3) (2024-11-14)
 
-
 ### Bug Fixes
 
-* 🐛 fix wasm content type ([39c613d](https://github.com/WolfSoko/wol-sok-mono/commit/39c613dfd8e65eba75df10cbabd20e216c1d2590))
+- 🐛 fix wasm content type ([39c613d](https://github.com/WolfSoko/wol-sok-mono/commit/39c613dfd8e65eba75df10cbabd20e216c1d2590))
 
 ### [4.50.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.1-cdk-deployed...v4.50.2) (2024-11-14)
 
 ### [4.50.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.50.0-cdk-deployed...v4.50.1) (2024-11-14)
 
-
 ### Bug Fixes
 
-* 🐛 fib wasm absolute path ([93eaaf7](https://github.com/WolfSoko/wol-sok-mono/commit/93eaaf7efaf39cffdebe89ea2893a50a10a4a043))
+- 🐛 fib wasm absolute path ([93eaaf7](https://github.com/WolfSoko/wol-sok-mono/commit/93eaaf7efaf39cffdebe89ea2893a50a10a4a043))
 
 ## [4.50.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.49.0-cdk-deployed...v4.50.0) (2024-11-13)
 
-
 ### Features
 
-* ✨ better contrast for theme toggle ([fa19b56](https://github.com/WolfSoko/wol-sok-mono/commit/fa19b56bb8e4ce6da39dbb5974a700fd1fb2d4c0))
+- ✨ better contrast for theme toggle ([fa19b56](https://github.com/WolfSoko/wol-sok-mono/commit/fa19b56bb8e4ce6da39dbb5974a700fd1fb2d4c0))
 
 ## [4.49.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.48.0-cdk-deployed...v4.49.0) (2024-11-13)
 
-
 ### Features
 
-* ✨ remove impicit dependency for angular example ([d16dc2c](https://github.com/WolfSoko/wol-sok-mono/commit/d16dc2c808819e2b18621e02026c63a011c27236))
+- ✨ remove impicit dependency for angular example ([d16dc2c](https://github.com/WolfSoko/wol-sok-mono/commit/d16dc2c808819e2b18621e02026c63a011c27236))
 
 ## [4.48.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.25-cdk-deployed...v4.48.0) (2024-11-13)
 
-
 ### Features
 
-* ✨ invert shader-examples order for more impressive visuals ([c2de5d6](https://github.com/WolfSoko/wol-sok-mono/commit/c2de5d679cb30c623651d56e54e9e109121d66cf))
+- ✨ invert shader-examples order for more impressive visuals ([c2de5d6](https://github.com/WolfSoko/wol-sok-mono/commit/c2de5d679cb30c623651d56e54e9e109121d66cf))
 
 ### [4.47.25](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.24-non-cdk-deployed...v4.47.25) (2024-11-13)
 
-
 ### Bug Fixes
 
-* 🐛 module federation by providing webpack config a little different ([24d29da](https://github.com/WolfSoko/wol-sok-mono/commit/24d29da7235ae0e63c16e2fb145ec6aa9f3de4c8))
+- 🐛 module federation by providing webpack config a little different ([24d29da](https://github.com/WolfSoko/wol-sok-mono/commit/24d29da7235ae0e63c16e2fb145ec6aa9f3de4c8))
 
 ### [4.47.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.23-non-cdk-deployed...v4.47.24) (2024-11-13)
 
@@ -3312,10 +2862,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.47.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.19-non-cdk-deployed...v4.47.20) (2024-11-12)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency @assemblyscript/loader to v0.27.31 ([467d19b](https://github.com/WolfSoko/wol-sok-mono/commit/467d19b6df6642b38792f5f6bc3ccc814a3b1d39))
+- **deps:** update dependency @assemblyscript/loader to v0.27.31 ([467d19b](https://github.com/WolfSoko/wol-sok-mono/commit/467d19b6df6642b38792f5f6bc3ccc814a3b1d39))
 
 ### [4.47.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.18-non-cdk-deployed...v4.47.19) (2024-11-12)
 
@@ -3323,10 +2872,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.47.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.16-non-cdk-deployed...v4.47.17) (2024-11-11)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency marked to v15 ([362b723](https://github.com/WolfSoko/wol-sok-mono/commit/362b723c51d8bb530c817bc692c998b125525e8a))
+- **deps:** update dependency marked to v15 ([362b723](https://github.com/WolfSoko/wol-sok-mono/commit/362b723c51d8bb530c817bc692c998b125525e8a))
 
 ### [4.47.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.15-non-cdk-deployed...v4.47.16) (2024-11-11)
 
@@ -3340,24 +2888,21 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.47.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.10-non-cdk-deployed...v4.47.11) (2024-11-11)
 
-
 ### Bug Fixes
 
-* 🐛 home routes without 'home/' in routes ([8615ff3](https://github.com/WolfSoko/wol-sok-mono/commit/8615ff390c34a2709f2cd2773f3d549410d27a01))
+- 🐛 home routes without 'home/' in routes ([8615ff3](https://github.com/WolfSoko/wol-sok-mono/commit/8615ff390c34a2709f2cd2773f3d549410d27a01))
 
 ### [4.47.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.9-non-cdk-deployed...v4.47.10) (2024-11-10)
 
-
 ### Bug Fixes
 
-* 🐛 refresh package-lock ([7b80a93](https://github.com/WolfSoko/wol-sok-mono/commit/7b80a93f983e92f32737ea738e3cbc1921c3bb8f))
+- 🐛 refresh package-lock ([7b80a93](https://github.com/WolfSoko/wol-sok-mono/commit/7b80a93f983e92f32737ea738e3cbc1921c3bb8f))
 
 ### [4.47.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.8-non-cdk-deployed...v4.47.9) (2024-11-10)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency firebase-functions to v6 ([4544069](https://github.com/WolfSoko/wol-sok-mono/commit/454406947d932efc2a62e9a9ffe3639ead6a3fac))
+- **deps:** update dependency firebase-functions to v6 ([4544069](https://github.com/WolfSoko/wol-sok-mono/commit/454406947d932efc2a62e9a9ffe3639ead6a3fac))
 
 ### [4.47.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.7-non-cdk-deployed...v4.47.8) (2024-11-10)
 
@@ -3365,48 +2910,42 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.47.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.5-cdk-deployed...v4.47.6) (2024-11-10)
 
-
 ### Bug Fixes
 
-* 🐛 enable experiments top level await for prod ([09c2451](https://github.com/WolfSoko/wol-sok-mono/commit/09c24518c2b20f3b6e91506e02cc003494b4d5a8))
-* 🐛 lint error ([ef0a2dc](https://github.com/WolfSoko/wol-sok-mono/commit/ef0a2dc7e2f95eb5276bcf3e00583a5149c46f9f))
+- 🐛 enable experiments top level await for prod ([09c2451](https://github.com/WolfSoko/wol-sok-mono/commit/09c24518c2b20f3b6e91506e02cc003494b4d5a8))
+- 🐛 lint error ([ef0a2dc](https://github.com/WolfSoko/wol-sok-mono/commit/ef0a2dc7e2f95eb5276bcf3e00583a5149c46f9f))
 
 ### [4.47.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.4-cdk-deployed...v4.47.5) (2024-11-09)
 
-
 ### Bug Fixes
 
-* 🐛 remove static remotes definitions ([8cf9765](https://github.com/WolfSoko/wol-sok-mono/commit/8cf97658c0eebaedc4e19982c5aa55b2d49c6d6e))
+- 🐛 remove static remotes definitions ([8cf9765](https://github.com/WolfSoko/wol-sok-mono/commit/8cf97658c0eebaedc4e19982c5aa55b2d49c6d6e))
 
 ### [4.47.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.3-cdk-deployed...v4.47.4) (2024-11-08)
 
-
 ### Bug Fixes
 
-* 🐛 bacteria-game remote url ([c7055a2](https://github.com/WolfSoko/wol-sok-mono/commit/c7055a2f4b333db215242c57c6772cb1aae2ba5c))
+- 🐛 bacteria-game remote url ([c7055a2](https://github.com/WolfSoko/wol-sok-mono/commit/c7055a2f4b333db215242c57c6772cb1aae2ba5c))
 
 ### [4.47.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.2...v4.47.3) (2024-11-08)
 
-
 ### Bug Fixes
 
-* 🐛 simplify OAC access ([0c4fd53](https://github.com/WolfSoko/wol-sok-mono/commit/0c4fd53af45e3ff6e17445641b3e6f273efe582a))
+- 🐛 simplify OAC access ([0c4fd53](https://github.com/WolfSoko/wol-sok-mono/commit/0c4fd53af45e3ff6e17445641b3e6f273efe582a))
 
 ### [4.47.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.1...v4.47.2) (2024-11-08)
 
-
 ### Bug Fixes
 
-* 🐛 add missing extraAllowedOrigins parameter ([6ff8c1d](https://github.com/WolfSoko/wol-sok-mono/commit/6ff8c1d06ab6c59f95ac147e24603fb316061d9b))
+- 🐛 add missing extraAllowedOrigins parameter ([6ff8c1d](https://github.com/WolfSoko/wol-sok-mono/commit/6ff8c1d06ab6c59f95ac147e24603fb316061d9b))
 
 ### [4.47.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.47.0...v4.47.1) (2024-11-08)
 
 ## [4.47.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.15-non-cdk-deployed...v4.47.0) (2024-11-08)
 
-
 ### Features
 
-* ✨ add allowed origins ([6d65a46](https://github.com/WolfSoko/wol-sok-mono/commit/6d65a4669e85cf978f47089ccd9d0a0c9a0abf99))
+- ✨ add allowed origins ([6d65a46](https://github.com/WolfSoko/wol-sok-mono/commit/6d65a4669e85cf978f47089ccd9d0a0c9a0abf99))
 
 ### [4.46.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.14-non-cdk-deployed...v4.46.15) (2024-11-08)
 
@@ -3418,130 +2957,112 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.46.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.10-non-cdk-deployed...v4.46.11) (2024-11-08)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency vega-lite to v5.21.0 ([33f4fd1](https://github.com/WolfSoko/wol-sok-mono/commit/33f4fd17bba7afb564541bd1060c3f4678f375e9))
+- **deps:** update dependency vega-lite to v5.21.0 ([33f4fd1](https://github.com/WolfSoko/wol-sok-mono/commit/33f4fd17bba7afb564541bd1060c3f4678f375e9))
 
 ### [4.46.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.9-non-cdk-deployed...v4.46.10) (2024-11-08)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency vega-embed to v6.28.0 ([c1fe104](https://github.com/WolfSoko/wol-sok-mono/commit/c1fe104e021f73d2242a42dda493a799b7f80e99))
+- **deps:** update dependency vega-embed to v6.28.0 ([c1fe104](https://github.com/WolfSoko/wol-sok-mono/commit/c1fe104e021f73d2242a42dda493a799b7f80e99))
 
 ### [4.46.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.8-non-cdk-deployed...v4.46.9) (2024-11-08)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency three to v0.170.0 ([abad54a](https://github.com/WolfSoko/wol-sok-mono/commit/abad54a0f8e4797e780c0253dcacf9769dcbc492))
+- **deps:** update dependency three to v0.170.0 ([abad54a](https://github.com/WolfSoko/wol-sok-mono/commit/abad54a0f8e4797e780c0253dcacf9769dcbc492))
 
 ### [4.46.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.7-non-cdk-deployed...v4.46.8) (2024-11-08)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency p5 to v1.11.1 ([58bbd66](https://github.com/WolfSoko/wol-sok-mono/commit/58bbd664b39c96b09e6deca277248a7b6023b2d3))
+- **deps:** update dependency p5 to v1.11.1 ([58bbd66](https://github.com/WolfSoko/wol-sok-mono/commit/58bbd664b39c96b09e6deca277248a7b6023b2d3))
 
 ### [4.46.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.6-non-cdk-deployed...v4.46.7) (2024-11-08)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency mermaid to v11.4.0 ([122441b](https://github.com/WolfSoko/wol-sok-mono/commit/122441b12cbc39876782c2a26f23575aa0382c68))
+- **deps:** update dependency mermaid to v11.4.0 ([122441b](https://github.com/WolfSoko/wol-sok-mono/commit/122441b12cbc39876782c2a26f23575aa0382c68))
 
 ### [4.46.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.5-non-cdk-deployed...v4.46.6) (2024-11-08)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency mathjs to v13.2.1 ([0fee2bf](https://github.com/WolfSoko/wol-sok-mono/commit/0fee2bf33165d5b90103327dbb852b99d2aec523))
+- **deps:** update dependency mathjs to v13.2.1 ([0fee2bf](https://github.com/WolfSoko/wol-sok-mono/commit/0fee2bf33165d5b90103327dbb852b99d2aec523))
 
 ### [4.46.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.4-non-cdk-deployed...v4.46.5) (2024-11-08)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency marked-highlight to v2.2.0 ([07f07e7](https://github.com/WolfSoko/wol-sok-mono/commit/07f07e7aaa1205ec3f45e8384a168a40ee65eb99))
+- **deps:** update dependency marked-highlight to v2.2.0 ([07f07e7](https://github.com/WolfSoko/wol-sok-mono/commit/07f07e7aaa1205ec3f45e8384a168a40ee65eb99))
 
 ### [4.46.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.3-non-cdk-deployed...v4.46.4) (2024-11-08)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency firebase to v10.14.1 ([c16c1da](https://github.com/WolfSoko/wol-sok-mono/commit/c16c1da00ca52d317d6e25f15ef5a62eb16a923a))
+- **deps:** update dependency firebase to v10.14.1 ([c16c1da](https://github.com/WolfSoko/wol-sok-mono/commit/c16c1da00ca52d317d6e25f15ef5a62eb16a923a))
 
 ### [4.46.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.2-non-cdk-deployed...v4.46.3) (2024-11-08)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency marked to v14.1.4 ([24f0a41](https://github.com/WolfSoko/wol-sok-mono/commit/24f0a412c9eb04d017abc3d622db91fc3ba89a6d))
+- **deps:** update dependency marked to v14.1.4 ([24f0a41](https://github.com/WolfSoko/wol-sok-mono/commit/24f0a412c9eb04d017abc3d622db91fc3ba89a6d))
 
 ### [4.46.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.1-non-cdk-deployed...v4.46.2) (2024-11-08)
 
 ### [4.46.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.46.0-non-cdk-deployed...v4.46.1) (2024-11-08)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency core-js to v3.39.0 ([65aefe8](https://github.com/WolfSoko/wol-sok-mono/commit/65aefe8f4fd3bae1adf849017f70cce2eb274b66))
+- **deps:** update dependency core-js to v3.39.0 ([65aefe8](https://github.com/WolfSoko/wol-sok-mono/commit/65aefe8f4fd3bae1adf849017f70cce2eb274b66))
 
 ## [4.46.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.45.5-non-cdk-deployed...v4.46.0) (2024-11-07)
 
-
 ### Features
 
-* ✨ use cors allowed origins for remotes ([772b3a5](https://github.com/WolfSoko/wol-sok-mono/commit/772b3a50167c4d6ff7ed562bccb48ee785c041dc))
-
+- ✨ use cors allowed origins for remotes ([772b3a5](https://github.com/WolfSoko/wol-sok-mono/commit/772b3a50167c4d6ff7ed562bccb48ee785c041dc))
 
 ### Bug Fixes
 
-* **deps:** update dependency browserslist to v4.24.2 ([b80529b](https://github.com/WolfSoko/wol-sok-mono/commit/b80529b2e9c10b4eeff3ee09b072722c46a20f0a))
-* **deps:** update dependency constructs to v10.4.2 ([ff370ab](https://github.com/WolfSoko/wol-sok-mono/commit/ff370ab250a602036ab5a7db690f965c1a60d1d1))
+- **deps:** update dependency browserslist to v4.24.2 ([b80529b](https://github.com/WolfSoko/wol-sok-mono/commit/b80529b2e9c10b4eeff3ee09b072722c46a20f0a))
+- **deps:** update dependency constructs to v10.4.2 ([ff370ab](https://github.com/WolfSoko/wol-sok-mono/commit/ff370ab250a602036ab5a7db690f965c1a60d1d1))
 
 ### [4.45.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.45.4-non-cdk-deployed...v4.45.5) (2024-11-07)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency angulartics2 to v14.1.0 ([12e71a9](https://github.com/WolfSoko/wol-sok-mono/commit/12e71a93266ed967a522fe1a485b3e624ba5d028))
+- **deps:** update dependency angulartics2 to v14.1.0 ([12e71a9](https://github.com/WolfSoko/wol-sok-mono/commit/12e71a93266ed967a522fe1a485b3e624ba5d028))
 
 ### [4.45.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.45.3-non-cdk-deployed...v4.45.4) (2024-11-07)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency ace-builds to v1.36.4 ([5308707](https://github.com/WolfSoko/wol-sok-mono/commit/53087079c6686b93f73a37434cd0d28bcc3af9b6))
+- **deps:** update dependency ace-builds to v1.36.4 ([5308707](https://github.com/WolfSoko/wol-sok-mono/commit/53087079c6686b93f73a37434cd0d28bcc3af9b6))
 
 ### [4.45.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.45.2-non-cdk-deployed...v4.45.3) (2024-11-07)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency @tensorflow/tfjs to v4.22.0 ([b6dcf8d](https://github.com/WolfSoko/wol-sok-mono/commit/b6dcf8d6ff968cf59ad32c31809b078d1d5db75a))
+- **deps:** update dependency @tensorflow/tfjs to v4.22.0 ([b6dcf8d](https://github.com/WolfSoko/wol-sok-mono/commit/b6dcf8d6ff968cf59ad32c31809b078d1d5db75a))
 
 ### [4.45.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.45.1-non-cdk-deployed...v4.45.2) (2024-11-07)
 
-
 ### Bug Fixes
 
-* **deps:** update aws-cdk monorepo to v2.166.0 ([cf52d1d](https://github.com/WolfSoko/wol-sok-mono/commit/cf52d1dda670d2a892af181f0f03b905354c5b31))
+- **deps:** update aws-cdk monorepo to v2.166.0 ([cf52d1d](https://github.com/WolfSoko/wol-sok-mono/commit/cf52d1dda670d2a892af181f0f03b905354c5b31))
 
 ### [4.45.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.45.0-non-cdk-deployed...v4.45.1) (2024-11-07)
 
-
 ### Bug Fixes
 
-* **deps:** update analog monorepo to v1.9.2 ([fa8b436](https://github.com/WolfSoko/wol-sok-mono/commit/fa8b436b2365fd95fb743538777082bbc0f5a851))
+- **deps:** update analog monorepo to v1.9.2 ([fa8b436](https://github.com/WolfSoko/wol-sok-mono/commit/fa8b436b2365fd95fb743538777082bbc0f5a851))
 
 ## [4.45.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.34-non-cdk-deployed...v4.45.0) (2024-11-07)
 
-
 ### Features
 
-* ✨ implement dynamic module federation ([fa039af](https://github.com/WolfSoko/wol-sok-mono/commit/fa039af9e8639d282ac7cfca1e63adbf7f6d5fab))
+- ✨ implement dynamic module federation ([fa039af](https://github.com/WolfSoko/wol-sok-mono/commit/fa039af9e8639d282ac7cfca1e63adbf7f6d5fab))
 
 ### [4.44.34](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.33-non-cdk-deployed...v4.44.34) (2024-11-07)
 
@@ -3577,17 +3098,15 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.44.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.17-non-cdk-deployed...v4.44.18) (2024-11-07)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency marked to v14.1.3 ([2c969ba](https://github.com/WolfSoko/wol-sok-mono/commit/2c969baa5771ac900a8bbfcfd830183029241284))
+- **deps:** update dependency marked to v14.1.3 ([2c969ba](https://github.com/WolfSoko/wol-sok-mono/commit/2c969baa5771ac900a8bbfcfd830183029241284))
 
 ### [4.44.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.16-non-cdk-deployed...v4.44.17) (2024-11-07)
 
-
 ### Bug Fixes
 
-* **deps:** update dependency @assemblyscript/loader to v0.27.30 ([47c66fa](https://github.com/WolfSoko/wol-sok-mono/commit/47c66fac3bf2fb4ba802f612d5d18a824dff5f71))
+- **deps:** update dependency @assemblyscript/loader to v0.27.30 ([47c66fa](https://github.com/WolfSoko/wol-sok-mono/commit/47c66fac3bf2fb4ba802f612d5d18a824dff5f71))
 
 ### [4.44.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.15-non-cdk-deployed...v4.44.16) (2024-11-07)
 
@@ -3597,39 +3116,34 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.44.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.12...v4.44.13) (2024-11-06)
 
-
 ### Bug Fixes
 
-* 🐛  use more memory ([45ea844](https://github.com/WolfSoko/wol-sok-mono/commit/45ea844cafdcf87173702ac75b7928278e0182b4))
+- 🐛 use more memory ([45ea844](https://github.com/WolfSoko/wol-sok-mono/commit/45ea844cafdcf87173702ac75b7928278e0182b4))
 
 ### [4.44.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.11...v4.44.12) (2024-11-06)
 
-
 ### Bug Fixes
 
-* 🐛 fix bucket deployment ids ([af076f6](https://github.com/WolfSoko/wol-sok-mono/commit/af076f62b57de1c8024e3e6cac3f7a4fcca6ed4c))
+- 🐛 fix bucket deployment ids ([af076f6](https://github.com/WolfSoko/wol-sok-mono/commit/af076f62b57de1c8024e3e6cac3f7a4fcca6ed4c))
 
 ### [4.44.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.10...v4.44.11) (2024-11-06)
 
-
 ### Bug Fixes
 
-* 🐛 deploy buckets in series ([7e6d17e](https://github.com/WolfSoko/wol-sok-mono/commit/7e6d17e5df4f01eddbdb31e1c78fdde7f59d16cd))
-* 🐛 try path with ./ for agent node cache ([55a5829](https://github.com/WolfSoko/wol-sok-mono/commit/55a5829291112c193dcb944594dc9b03cc0ef907))
+- 🐛 deploy buckets in series ([7e6d17e](https://github.com/WolfSoko/wol-sok-mono/commit/7e6d17e5df4f01eddbdb31e1c78fdde7f59d16cd))
+- 🐛 try path with ./ for agent node cache ([55a5829](https://github.com/WolfSoko/wol-sok-mono/commit/55a5829291112c193dcb944594dc9b03cc0ef907))
 
 ### [4.44.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.9...v4.44.10) (2024-11-06)
 
-
 ### Bug Fixes
 
-* 🐛 deploy buckets in serie ([71f6334](https://github.com/WolfSoko/wol-sok-mono/commit/71f63340069fb0d076397273f42a56b8d5682c18))
+- 🐛 deploy buckets in serie ([71f6334](https://github.com/WolfSoko/wol-sok-mono/commit/71f63340069fb0d076397273f42a56b8d5682c18))
 
 ### [4.44.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.8-non-cdk-deployed...v4.44.9) (2024-11-06)
 
-
 ### Bug Fixes
 
-* 🐛 fix deployment. Use normal bucket instead of website bucket ([af445b5](https://github.com/WolfSoko/wol-sok-mono/commit/af445b58b7ff1c61ce9a441b4cf573c126691274))
+- 🐛 fix deployment. Use normal bucket instead of website bucket ([af445b5](https://github.com/WolfSoko/wol-sok-mono/commit/af445b58b7ff1c61ce9a441b4cf573c126691274))
 
 ### [4.44.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.7-non-cdk-deployed...v4.44.8) (2024-11-06)
 
@@ -3637,10 +3151,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.44.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.5...v4.44.6) (2024-11-06)
 
-
 ### Bug Fixes
 
-* 🐛 👷 more time for deployments ([4ad3c77](https://github.com/WolfSoko/wol-sok-mono/commit/4ad3c7740493232118cfa20d739913af7ba737fa))
+- 🐛 👷 more time for deployments ([4ad3c77](https://github.com/WolfSoko/wol-sok-mono/commit/4ad3c7740493232118cfa20d739913af7ba737fa))
 
 ### [4.44.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.4...v4.44.5) (2024-11-06)
 
@@ -3648,42 +3161,37 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.44.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.2-cdk-deployed...v4.44.3) (2024-11-06)
 
-
 ### Bug Fixes
 
-* 🐛 fix globals and version ([5f6a6c3](https://github.com/WolfSoko/wol-sok-mono/commit/5f6a6c366d484310c11c11da137a3d196be02823))
-* **spa-cdk-stack:** 🐛 fix release workflow ([4dd7d10](https://github.com/WolfSoko/wol-sok-mono/commit/4dd7d10835acf3601055ce37977ef43af17e8f94))
-* **spa-cdk-stack:** 🐛 fix release workflow ([409fe18](https://github.com/WolfSoko/wol-sok-mono/commit/409fe18d00ed51cb11a5dfc6e0035987a6244d69))
-* **spa-cdk-stack:** 🐛 fix release workflow ([f55796f](https://github.com/WolfSoko/wol-sok-mono/commit/f55796fa2e5a5c666f17548d219110141e0b0237))
-* **spa-cdk-stack:** 🐛 fix release workflow ([64c1a26](https://github.com/WolfSoko/wol-sok-mono/commit/64c1a269bbb10431f6da66a197f272d43e60801e))
+- 🐛 fix globals and version ([5f6a6c3](https://github.com/WolfSoko/wol-sok-mono/commit/5f6a6c366d484310c11c11da137a3d196be02823))
+- **spa-cdk-stack:** 🐛 fix release workflow ([4dd7d10](https://github.com/WolfSoko/wol-sok-mono/commit/4dd7d10835acf3601055ce37977ef43af17e8f94))
+- **spa-cdk-stack:** 🐛 fix release workflow ([409fe18](https://github.com/WolfSoko/wol-sok-mono/commit/409fe18d00ed51cb11a5dfc6e0035987a6244d69))
+- **spa-cdk-stack:** 🐛 fix release workflow ([f55796f](https://github.com/WolfSoko/wol-sok-mono/commit/f55796fa2e5a5c666f17548d219110141e0b0237))
+- **spa-cdk-stack:** 🐛 fix release workflow ([64c1a26](https://github.com/WolfSoko/wol-sok-mono/commit/64c1a269bbb10431f6da66a197f272d43e60801e))
 
 ### [4.44.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.1-cdk-deployed...v4.44.2) (2024-11-06)
 
-
 ### Bug Fixes
 
-* **spa-cdk-stack:** 🐛 fix release workflow ([cae6a27](https://github.com/WolfSoko/wol-sok-mono/commit/cae6a2719a49cbc200bb057ca83603810b1e95c8))
+- **spa-cdk-stack:** 🐛 fix release workflow ([cae6a27](https://github.com/WolfSoko/wol-sok-mono/commit/cae6a2719a49cbc200bb057ca83603810b1e95c8))
 
 ### [4.44.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.44.0-cdk-deployed...v4.44.1) (2024-11-06)
 
-
 ### Bug Fixes
 
-* **spa-cdk-stack:** 🐛 fix responsePagePath ([372efe4](https://github.com/WolfSoko/wol-sok-mono/commit/372efe46e71561d2e3508a974426cec32f0c2df5))
+- **spa-cdk-stack:** 🐛 fix responsePagePath ([372efe4](https://github.com/WolfSoko/wol-sok-mono/commit/372efe46e71561d2e3508a974426cec32f0c2df5))
 
 ## [4.44.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.43.0-cdk-deployed...v4.44.0) (2024-11-06)
 
-
 ### Features
 
-* **spa-cdk-stack:** ✨ add origin path to distribution ([0045dd7](https://github.com/WolfSoko/wol-sok-mono/commit/0045dd798efbcd071710d16bd6a73bef61b97674))
+- **spa-cdk-stack:** ✨ add origin path to distribution ([0045dd7](https://github.com/WolfSoko/wol-sok-mono/commit/0045dd798efbcd071710d16bd6a73bef61b97674))
 
 ## [4.43.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.42.13-non-cdk-deployed...v4.43.0) (2024-11-05)
 
-
 ### Features
 
-* ✨ set static websites for buckets ([d8b69c3](https://github.com/WolfSoko/wol-sok-mono/commit/d8b69c391c14ef5397098eabb0646e3ddd3c0354))
+- ✨ set static websites for buckets ([d8b69c3](https://github.com/WolfSoko/wol-sok-mono/commit/d8b69c391c14ef5397098eabb0646e3ddd3c0354))
 
 ### [4.42.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.42.12...v4.42.13) (2024-11-05)
 
@@ -3713,31 +3221,27 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.42.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.41.9...v4.42.0) (2024-10-11)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ allow write till 2024-31-12 ([9330ab5](https://github.com/WolfSoko/wol-sok-mono/commit/9330ab52bc01372ec66e819a23f32ca1f9119c70))
-
+- **rollapolla-analog:** ✨ allow write till 2024-31-12 ([9330ab5](https://github.com/WolfSoko/wol-sok-mono/commit/9330ab52bc01372ec66e819a23f32ca1f9119c70))
 
 ### Bug Fixes
 
-* **rollapolla-analog:** 🐛 use localhost for e2e tests ([0a8ac2d](https://github.com/WolfSoko/wol-sok-mono/commit/0a8ac2da3edff04a01af51bd18d402ec331fd62c))
+- **rollapolla-analog:** 🐛 use localhost for e2e tests ([0a8ac2d](https://github.com/WolfSoko/wol-sok-mono/commit/0a8ac2da3edff04a01af51bd18d402ec331fd62c))
 
 ### [4.41.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.41.8-deployed...v4.41.9) (2024-10-02)
 
 ### [4.41.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.41.7-deployed...v4.41.8) (2024-09-05)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency marked to v14 ([74e3bcf](https://github.com/WolfSoko/wol-sok-mono/commit/74e3bcf1a24e7eab612e703d1a89ad65ba54e40b))
+- **deps:** :arrow_up: update dependency marked to v14 ([74e3bcf](https://github.com/WolfSoko/wol-sok-mono/commit/74e3bcf1a24e7eab612e703d1a89ad65ba54e40b))
 
 ### [4.41.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.41.6-deployed...v4.41.7) (2024-09-05)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency mermaid to v11 ([e4b64c1](https://github.com/WolfSoko/wol-sok-mono/commit/e4b64c13beb52947ea233afab98ece96f513fc0f))
+- **deps:** :arrow_up: update dependency mermaid to v11 ([e4b64c1](https://github.com/WolfSoko/wol-sok-mono/commit/e4b64c13beb52947ea233afab98ece96f513fc0f))
 
 ### [4.41.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.41.5-deployed...v4.41.6) (2024-09-05)
 
@@ -3745,10 +3249,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.41.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.41.3-deployed...v4.41.4) (2024-09-05)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to v2.148.1 [security] ([b070dcb](https://github.com/WolfSoko/wol-sok-mono/commit/b070dcb19d2bbfbcc035c924b67726c304d25bfb))
+- **deps:** :arrow_up: update dependency aws-cdk to v2.148.1 [security] ([b070dcb](https://github.com/WolfSoko/wol-sok-mono/commit/b070dcb19d2bbfbcc035c924b67726c304d25bfb))
 
 ### [4.41.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.41.2...v4.41.3) (2024-09-05)
 
@@ -3756,23 +3259,20 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.41.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.41.0-deployed...v4.41.1) (2024-09-05)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency zone.js to v0.15.0 ([bc51f99](https://github.com/WolfSoko/wol-sok-mono/commit/bc51f99e36973c2404105bffc034303d7a833c16))
+- **deps:** :arrow_up: update dependency zone.js to v0.15.0 ([bc51f99](https://github.com/WolfSoko/wol-sok-mono/commit/bc51f99e36973c2404105bffc034303d7a833c16))
 
 ## [4.41.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.40.7-deployed...v4.41.0) (2024-09-05)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ update read write rules ([f789b82](https://github.com/WolfSoko/wol-sok-mono/commit/f789b82be982bb9a3793cd99e229a546287c843a))
-
+- **rollapolla-analog:** ✨ update read write rules ([f789b82](https://github.com/WolfSoko/wol-sok-mono/commit/f789b82be982bb9a3793cd99e229a546287c843a))
 
 ### Bug Fixes
 
-* **feat-lazy-poisson:** 🐛 fix linting ([c9b79f7](https://github.com/WolfSoko/wol-sok-mono/commit/c9b79f7a7485e6089e2a2b04f0f327af4f7302a7))
-* **rollapolla-analog:** 🐛 fix possibly undefined errors ([3bda9ca](https://github.com/WolfSoko/wol-sok-mono/commit/3bda9ca9944a464db2f3aa546ae2f1c709a5f491))
+- **feat-lazy-poisson:** 🐛 fix linting ([c9b79f7](https://github.com/WolfSoko/wol-sok-mono/commit/c9b79f7a7485e6089e2a2b04f0f327af4f7302a7))
+- **rollapolla-analog:** 🐛 fix possibly undefined errors ([3bda9ca](https://github.com/WolfSoko/wol-sok-mono/commit/3bda9ca9944a464db2f3aa546ae2f1c709a5f491))
 
 ### [4.40.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.40.6-deployed...v4.40.7) (2024-08-04)
 
@@ -3790,19 +3290,17 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.40.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.39.15...v4.40.0) (2024-06-22)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ add import createpoll to homepage ([abf4f11](https://github.com/WolfSoko/wol-sok-mono/commit/abf4f11295dadd5c91328f65f045b6d92560884d))
+- **rollapolla-analog:** ✨ add import createpoll to homepage ([abf4f11](https://github.com/WolfSoko/wol-sok-mono/commit/abf4f11295dadd5c91328f65f045b6d92560884d))
 
 ### [4.39.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.39.14...v4.39.15) (2024-06-22)
 
 ### [4.39.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.39.13...v4.39.14) (2024-06-22)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency marked-highlight to ^2.1.3 ([5b923de](https://github.com/WolfSoko/wol-sok-mono/commit/5b923de76e343acc7fdfb9a9c3df4d2f8503e7a9))
+- **deps:** :arrow_up: update dependency marked-highlight to ^2.1.3 ([5b923de](https://github.com/WolfSoko/wol-sok-mono/commit/5b923de76e343acc7fdfb9a9c3df4d2f8503e7a9))
 
 ### [4.39.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.39.12...v4.39.13) (2024-06-21)
 
@@ -3826,33 +3324,29 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.39.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.39.2-deployed...v4.39.3) (2024-06-17)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([f2c4715](https://github.com/WolfSoko/wol-sok-mono/commit/f2c47155c0e976c6ba58c1f071c43810d1237fcb))
+- **deps:** :arrow_up: update all non-major dependencies ([f2c4715](https://github.com/WolfSoko/wol-sok-mono/commit/f2c47155c0e976c6ba58c1f071c43810d1237fcb))
 
 ### [4.39.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.39.1-deployed...v4.39.2) (2024-06-17)
 
 ### [4.39.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.39.0-deployed...v4.39.1) (2024-06-17)
 
-
 ### Bug Fixes
 
-* **rollapolla-analog:** 🐛 title ([6d3f6fd](https://github.com/WolfSoko/wol-sok-mono/commit/6d3f6fd0dea677f4852c0c7310a68b5a7a0a6d9d))
+- **rollapolla-analog:** 🐛 title ([6d3f6fd](https://github.com/WolfSoko/wol-sok-mono/commit/6d3f6fd0dea677f4852c0c7310a68b5a7a0a6d9d))
 
 ## [4.39.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.38.0-deployed...v4.39.0) (2024-06-17)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ give server more time to load ([7593202](https://github.com/WolfSoko/wol-sok-mono/commit/75932025cbe805a19cb8cdf0613cbf865ddd3d08))
+- **rollapolla-analog:** ✨ give server more time to load ([7593202](https://github.com/WolfSoko/wol-sok-mono/commit/75932025cbe805a19cb8cdf0613cbf865ddd3d08))
 
 ## [4.38.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.37.5-deployed...v4.38.0) (2024-06-17)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ use zoneless ([bd4cacf](https://github.com/WolfSoko/wol-sok-mono/commit/bd4cacfc564f6d57ce04837a0123152f685f5cb1))
+- **rollapolla-analog:** ✨ use zoneless ([bd4cacf](https://github.com/WolfSoko/wol-sok-mono/commit/bd4cacfc564f6d57ce04837a0123152f685f5cb1))
 
 ### [4.37.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.37.4-deployed...v4.37.5) (2024-06-17)
 
@@ -3866,93 +3360,81 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.37.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.36.0-deployed...v4.37.0) (2024-06-16)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ title improvements ([033ca6e](https://github.com/WolfSoko/wol-sok-mono/commit/033ca6e36c46af5cf0e85dfad6c097510c919c63))
+- **rollapolla-analog:** ✨ title improvements ([033ca6e](https://github.com/WolfSoko/wol-sok-mono/commit/033ca6e36c46af5cf0e85dfad6c097510c919c63))
 
 ## [4.36.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.35.1-deployed...v4.36.0) (2024-06-16)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ enable material typography ([c51b55e](https://github.com/WolfSoko/wol-sok-mono/commit/c51b55e1c67bfbb970190b9cb038a0f0f094e38f))
+- **rollapolla-analog:** ✨ enable material typography ([c51b55e](https://github.com/WolfSoko/wol-sok-mono/commit/c51b55e1c67bfbb970190b9cb038a0f0f094e38f))
 
 ### [4.35.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.35.0-deployed...v4.35.1) (2024-06-16)
 
 ## [4.35.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.34.4-deployed...v4.35.0) (2024-06-16)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ add ctrl Enter for send note ([65727f0](https://github.com/WolfSoko/wol-sok-mono/commit/65727f099b8063e6ca6afc75d7c7e9f6aa8d0bec))
+- **rollapolla-analog:** ✨ add ctrl Enter for send note ([65727f0](https://github.com/WolfSoko/wol-sok-mono/commit/65727f099b8063e6ca6afc75d7c7e9f6aa8d0bec))
 
 ### [4.34.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.34.3-deployed...v4.34.4) (2024-06-16)
 
-
 ### Bug Fixes
 
-* **rollapolla-analog:** 🐛 firestore rules ([93cb4a6](https://github.com/WolfSoko/wol-sok-mono/commit/93cb4a6406df2e73c696d596d4009fc18ee34e18))
-* **rollapolla-analog:** 🐛 firestore ttl ([9f4d186](https://github.com/WolfSoko/wol-sok-mono/commit/9f4d1862d50db336de63b39c469ab19b8770d8b9))
+- **rollapolla-analog:** 🐛 firestore rules ([93cb4a6](https://github.com/WolfSoko/wol-sok-mono/commit/93cb4a6406df2e73c696d596d4009fc18ee34e18))
+- **rollapolla-analog:** 🐛 firestore ttl ([9f4d186](https://github.com/WolfSoko/wol-sok-mono/commit/9f4d1862d50db336de63b39c469ab19b8770d8b9))
 
 ### [4.34.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.34.2-deployed...v4.34.3) (2024-06-16)
 
 ### [4.34.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.34.1-deployed...v4.34.2) (2024-06-16)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency mathjs to v13 ([081b4c0](https://github.com/WolfSoko/wol-sok-mono/commit/081b4c00a86773dca2f5eccdd2c431c1c50d29e6))
+- **deps:** :arrow_up: update dependency mathjs to v13 ([081b4c0](https://github.com/WolfSoko/wol-sok-mono/commit/081b4c00a86773dca2f5eccdd2c431c1c50d29e6))
 
 ### [4.34.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.34.0...v4.34.1) (2024-06-15)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency marked-gfm-heading-id to v4 ([2fadf27](https://github.com/WolfSoko/wol-sok-mono/commit/2fadf272024ff5a39e2ed0a08b23303fe3c7251e))
+- **deps:** :arrow_up: update dependency marked-gfm-heading-id to v4 ([2fadf27](https://github.com/WolfSoko/wol-sok-mono/commit/2fadf272024ff5a39e2ed0a08b23303fe3c7251e))
 
 ## [4.34.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.33.1...v4.34.0) (2024-06-15)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ trim notes ([d2316a8](https://github.com/WolfSoko/wol-sok-mono/commit/d2316a89511cf740c39439d4e7d42c43bb13b449))
+- **rollapolla-analog:** ✨ trim notes ([d2316a8](https://github.com/WolfSoko/wol-sok-mono/commit/d2316a89511cf740c39439d4e7d42c43bb13b449))
 
 ### [4.33.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.33.0-deployed...v4.33.1) (2024-06-15)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency marked to v13 ([ce7a716](https://github.com/WolfSoko/wol-sok-mono/commit/ce7a716c825bb2d113a31c646959d63e9aa23fdb))
+- **deps:** :arrow_up: update dependency marked to v13 ([ce7a716](https://github.com/WolfSoko/wol-sok-mono/commit/ce7a716c825bb2d113a31c646959d63e9aa23fdb))
 
 ## [4.33.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.32.1-deployed...v4.33.0) (2024-06-15)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ moving background, better styling ([f0dae6b](https://github.com/WolfSoko/wol-sok-mono/commit/f0dae6b6a63b65693f673399007708fa3e3d5590))
+- **rollapolla-analog:** ✨ moving background, better styling ([f0dae6b](https://github.com/WolfSoko/wol-sok-mono/commit/f0dae6b6a63b65693f673399007708fa3e3d5590))
 
 ### [4.32.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.32.0-deployed...v4.32.1) (2024-06-15)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency angulartics2 to v14 ([6375855](https://github.com/WolfSoko/wol-sok-mono/commit/63758558836b08712c479a86513588d7c348b877))
+- **deps:** :arrow_up: update dependency angulartics2 to v14 ([6375855](https://github.com/WolfSoko/wol-sok-mono/commit/63758558836b08712c479a86513588d7c348b877))
 
 ## [4.32.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.31.0...v4.32.0) (2024-06-15)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ add ttl for notes ([e05a1d6](https://github.com/WolfSoko/wol-sok-mono/commit/e05a1d65fecb3417f20b9c0e240845df916a70c4))
-* **rollapolla-analog:** ✨ add ttl indices ([48b57e7](https://github.com/WolfSoko/wol-sok-mono/commit/48b57e7e729f1bd71e46e559b94ac8a2072734e4))
+- **rollapolla-analog:** ✨ add ttl for notes ([e05a1d6](https://github.com/WolfSoko/wol-sok-mono/commit/e05a1d65fecb3417f20b9c0e240845df916a70c4))
+- **rollapolla-analog:** ✨ add ttl indices ([48b57e7](https://github.com/WolfSoko/wol-sok-mono/commit/48b57e7e729f1bd71e46e559b94ac8a2072734e4))
 
 ## [4.31.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.30.7-deployed...v4.31.0) (2024-06-15)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ add firebase indices ([c0f2098](https://github.com/WolfSoko/wol-sok-mono/commit/c0f20986ce18e4f74b2e256564d0d23794e9be41))
+- **rollapolla-analog:** ✨ add firebase indices ([c0f2098](https://github.com/WolfSoko/wol-sok-mono/commit/c0f20986ce18e4f74b2e256564d0d23794e9be41))
 
 ### [4.30.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.30.6-deployed...v4.30.7) (2024-06-15)
 
@@ -3970,24 +3452,21 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.30.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.29.0...v4.30.0) (2024-06-15)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ add server mode for firebase ([ed19828](https://github.com/WolfSoko/wol-sok-mono/commit/ed198283eed8ffc3c6bb1a3f403667d80f416f10))
+- **rollapolla-analog:** ✨ add server mode for firebase ([ed19828](https://github.com/WolfSoko/wol-sok-mono/commit/ed198283eed8ffc3c6bb1a3f403667d80f416f10))
 
 ## [4.29.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.28.12...v4.29.0) (2024-06-15)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ add firebase store ([f3daa2b](https://github.com/WolfSoko/wol-sok-mono/commit/f3daa2bb07b9cf1ca7e88fda66c5040ab1053058))
-
+- **rollapolla-analog:** ✨ add firebase store ([f3daa2b](https://github.com/WolfSoko/wol-sok-mono/commit/f3daa2bb07b9cf1ca7e88fda66c5040ab1053058))
 
 ### Bug Fixes
 
-* 🐛 remove commonjs ([482c8ae](https://github.com/WolfSoko/wol-sok-mono/commit/482c8aec77bf4ef3f2bfbd3f5eb08cc694289403))
-* **shared-data-access:** 🐛 add rxjs to peerDeps ([5aa2664](https://github.com/WolfSoko/wol-sok-mono/commit/5aa2664b44030092145de7526ede097fecab1058))
-* **shared-data-access:** 🐛 remove injectable decorator ([5e03b84](https://github.com/WolfSoko/wol-sok-mono/commit/5e03b846fb0755966c995625d6ac5fc692b803c8))
+- 🐛 remove commonjs ([482c8ae](https://github.com/WolfSoko/wol-sok-mono/commit/482c8aec77bf4ef3f2bfbd3f5eb08cc694289403))
+- **shared-data-access:** 🐛 add rxjs to peerDeps ([5aa2664](https://github.com/WolfSoko/wol-sok-mono/commit/5aa2664b44030092145de7526ede097fecab1058))
+- **shared-data-access:** 🐛 remove injectable decorator ([5e03b84](https://github.com/WolfSoko/wol-sok-mono/commit/5e03b846fb0755966c995625d6ac5fc692b803c8))
 
 ### [4.28.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.28.11-deployed...v4.28.12) (2024-06-14)
 
@@ -4007,10 +3486,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.28.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.28.3...v4.28.4) (2024-06-12)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency zone.js to v0.14.7 ([02f8f20](https://github.com/WolfSoko/wol-sok-mono/commit/02f8f205aa3ab3afb91f566c43ee11e55e0b9bcd))
+- **deps:** :arrow_up: update dependency zone.js to v0.14.7 ([02f8f20](https://github.com/WolfSoko/wol-sok-mono/commit/02f8f205aa3ab3afb91f566c43ee11e55e0b9bcd))
 
 ### [4.28.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.28.2-deployed...v4.28.3) (2024-06-12)
 
@@ -4020,54 +3498,47 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.28.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.27.1-deployed...v4.28.0) (2024-06-12)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ better wording for user input ([1b0da47](https://github.com/WolfSoko/wol-sok-mono/commit/1b0da471ff48fe4480ba9dfe5819ec768efd32ae))
-* **rollapolla-analog:** ✨ minor logo optimizations ([51865dd](https://github.com/WolfSoko/wol-sok-mono/commit/51865dd9db42b192cc6dc9de520b834b376a206b))
-
+- **rollapolla-analog:** ✨ better wording for user input ([1b0da47](https://github.com/WolfSoko/wol-sok-mono/commit/1b0da471ff48fe4480ba9dfe5819ec768efd32ae))
+- **rollapolla-analog:** ✨ minor logo optimizations ([51865dd](https://github.com/WolfSoko/wol-sok-mono/commit/51865dd9db42b192cc6dc9de520b834b376a206b))
 
 ### Bug Fixes
 
-* 🐛 update types of DbUtils ([be1f11a](https://github.com/WolfSoko/wol-sok-mono/commit/be1f11a871065632398eae857e599d746707e971))
+- 🐛 update types of DbUtils ([be1f11a](https://github.com/WolfSoko/wol-sok-mono/commit/be1f11a871065632398eae857e599d746707e971))
 
 ### [4.27.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.27.0-deployed...v4.27.1) (2024-06-02)
 
 ## [4.27.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.26.0-deployed...v4.27.0) (2024-06-02)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ center logo ([426a6ec](https://github.com/WolfSoko/wol-sok-mono/commit/426a6ec55a0cd9e1945205fd7e97bcd76b46b532))
+- **rollapolla-analog:** ✨ center logo ([426a6ec](https://github.com/WolfSoko/wol-sok-mono/commit/426a6ec55a0cd9e1945205fd7e97bcd76b46b532))
 
 ## [4.26.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.25.0-deployed...v4.26.0) (2024-06-02)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ nice background transient ([5878134](https://github.com/WolfSoko/wol-sok-mono/commit/587813489df886cb82b61bfbea8004b2fb151047))
+- **rollapolla-analog:** ✨ nice background transient ([5878134](https://github.com/WolfSoko/wol-sok-mono/commit/587813489df886cb82b61bfbea8004b2fb151047))
 
 ## [4.25.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.24.0-deployed...v4.25.0) (2024-06-02)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ add manifest, icons ([92a9551](https://github.com/WolfSoko/wol-sok-mono/commit/92a9551d25c7d06a538f0280c8b1f1ff2b658793))
+- **rollapolla-analog:** ✨ add manifest, icons ([92a9551](https://github.com/WolfSoko/wol-sok-mono/commit/92a9551d25c7d06a538f0280c8b1f1ff2b658793))
 
 ## [4.24.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.23.0-deployed...v4.24.0) (2024-06-02)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ add logo ([a4de98c](https://github.com/WolfSoko/wol-sok-mono/commit/a4de98c20502b46233ba45a7b1426c1077c6262d))
-* **rollapolla-analog:** ✨ change title ([2ca79fc](https://github.com/WolfSoko/wol-sok-mono/commit/2ca79fca707658b59c53df18b6912c2bab3aa6d5))
+- **rollapolla-analog:** ✨ add logo ([a4de98c](https://github.com/WolfSoko/wol-sok-mono/commit/a4de98c20502b46233ba45a7b1426c1077c6262d))
+- **rollapolla-analog:** ✨ change title ([2ca79fc](https://github.com/WolfSoko/wol-sok-mono/commit/2ca79fca707658b59c53df18b6912c2bab3aa6d5))
 
 ## [4.23.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.79-deployed...v4.23.0) (2024-06-02)
 
-
 ### Features
 
-* **rollapolla-analog:** ✨ apply angular material style ([af6e77a](https://github.com/WolfSoko/wol-sok-mono/commit/af6e77a076afaee87248f4113f5b8c04dd60b6e4))
+- **rollapolla-analog:** ✨ apply angular material style ([af6e77a](https://github.com/WolfSoko/wol-sok-mono/commit/af6e77a076afaee87248f4113f5b8c04dd60b6e4))
 
 ### [4.22.79](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.78-deployed...v4.22.79) (2024-06-02)
 
@@ -4087,10 +3558,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.22.71](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.70-deployed...v4.22.71) (2024-06-01)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update nx monorepo to v18.0.1 ([c74ac20](https://github.com/WolfSoko/wol-sok-mono/commit/c74ac2010315fe8ae1f8748ca4288b684557fd9c))
+- **deps:** :arrow_up: update nx monorepo to v18.0.1 ([c74ac20](https://github.com/WolfSoko/wol-sok-mono/commit/c74ac2010315fe8ae1f8748ca4288b684557fd9c))
 
 ### [4.22.70](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.69-deployed...v4.22.70) (2024-06-01)
 
@@ -4126,10 +3596,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.22.54](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.53-deployed...v4.22.54) (2024-05-26)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @angular/cli to ~18.0.1 ([b1e3fbf](https://github.com/WolfSoko/wol-sok-mono/commit/b1e3fbf888986131b2d1baecc4ce9abd4699d7b4))
+- **deps:** :arrow_up: update dependency @angular/cli to ~18.0.1 ([b1e3fbf](https://github.com/WolfSoko/wol-sok-mono/commit/b1e3fbf888986131b2d1baecc4ce9abd4699d7b4))
 
 ### [4.22.53](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.52-deployed...v4.22.53) (2024-05-26)
 
@@ -4141,10 +3610,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.22.49](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.48-deployed...v4.22.49) (2024-05-25)
 
-
 ### Bug Fixes
 
-* 🐛 serve command ([b6ca92b](https://github.com/WolfSoko/wol-sok-mono/commit/b6ca92b7501ed3d829c046c5f22499f0d9fb62c6))
+- 🐛 serve command ([b6ca92b](https://github.com/WolfSoko/wol-sok-mono/commit/b6ca92b7501ed3d829c046c5f22499f0d9fb62c6))
 
 ### [4.22.48](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.47-deployed...v4.22.48) (2024-05-24)
 
@@ -4158,19 +3626,17 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.22.43](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.42-deployed...v4.22.43) (2024-05-24)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency ace-builds to v1.33.3 ([4cb8a7f](https://github.com/WolfSoko/wol-sok-mono/commit/4cb8a7f8e3eaf5e020d5984ff770a7a663c7c2fc))
+- **deps:** :arrow_up: update dependency ace-builds to v1.33.3 ([4cb8a7f](https://github.com/WolfSoko/wol-sok-mono/commit/4cb8a7f8e3eaf5e020d5984ff770a7a663c7c2fc))
 
 ### [4.22.42](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.41-deployed...v4.22.42) (2024-05-24)
 
 ### [4.22.41](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.40-deployed...v4.22.41) (2024-05-24)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency firebase to v10.12.1 ([79a7feb](https://github.com/WolfSoko/wol-sok-mono/commit/79a7feb9476f6a1b307d49dd54345b0c880dc8fb))
+- **deps:** :arrow_up: update dependency firebase to v10.12.1 ([79a7feb](https://github.com/WolfSoko/wol-sok-mono/commit/79a7feb9476f6a1b307d49dd54345b0c880dc8fb))
 
 ### [4.22.40](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.39-deployed...v4.22.40) (2024-05-24)
 
@@ -4188,19 +3654,17 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.22.33](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.32-deployed...v4.22.33) (2024-05-20)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies to ^2.142.1 ([b6badd0](https://github.com/WolfSoko/wol-sok-mono/commit/b6badd092a02f0f576ae13cb44a8bf122396af77))
+- **deps:** :arrow_up: update all non-major dependencies to ^2.142.1 ([b6badd0](https://github.com/WolfSoko/wol-sok-mono/commit/b6badd092a02f0f576ae13cb44a8bf122396af77))
 
 ### [4.22.32](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.31-deployed...v4.22.32) (2024-05-20)
 
 ### [4.22.31](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.30-deployed...v4.22.31) (2024-05-20)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency zone.js to v0.14.6 ([3cbb226](https://github.com/WolfSoko/wol-sok-mono/commit/3cbb2263dca37f2e4ca01816aee50dd7ae17d468))
+- **deps:** :arrow_up: update dependency zone.js to v0.14.6 ([3cbb226](https://github.com/WolfSoko/wol-sok-mono/commit/3cbb2263dca37f2e4ca01816aee50dd7ae17d468))
 
 ### [4.22.30](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.29-deployed...v4.22.30) (2024-05-19)
 
@@ -4210,10 +3674,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.22.27](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.26-deployed...v4.22.27) (2024-05-19)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies to ^2.142.0 ([61e2082](https://github.com/WolfSoko/wol-sok-mono/commit/61e2082200db247ae1cda37069eff8f6584dbc05))
+- **deps:** :arrow_up: update all non-major dependencies to ^2.142.0 ([61e2082](https://github.com/WolfSoko/wol-sok-mono/commit/61e2082200db247ae1cda37069eff8f6584dbc05))
 
 ### [4.22.26](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.25-deployed...v4.22.26) (2024-05-19)
 
@@ -4225,19 +3688,17 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.22.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.21-deployed...v4.22.22) (2024-05-17)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies to ^1.3.1 ([a6b8d33](https://github.com/WolfSoko/wol-sok-mono/commit/a6b8d3358e86f63331948f9ea63bd9ae3e5fc91d))
+- **deps:** :arrow_up: update all non-major dependencies to ^1.3.1 ([a6b8d33](https://github.com/WolfSoko/wol-sok-mono/commit/a6b8d3358e86f63331948f9ea63bd9ae3e5fc91d))
 
 ### [4.22.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.20-deployed...v4.22.21) (2024-05-17)
 
 ### [4.22.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.19-deployed...v4.22.20) (2024-05-17)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([bb82463](https://github.com/WolfSoko/wol-sok-mono/commit/bb82463cfc7f62d49ba7b8958a407f4f5ea858a8))
+- **deps:** :arrow_up: update all non-major dependencies ([bb82463](https://github.com/WolfSoko/wol-sok-mono/commit/bb82463cfc7f62d49ba7b8958a407f4f5ea858a8))
 
 ### [4.22.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.18-deployed...v4.22.19) (2024-05-17)
 
@@ -4247,19 +3708,17 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.22.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.15-deployed...v4.22.16) (2024-05-16)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency firebase to v10.12.0 ([720795d](https://github.com/WolfSoko/wol-sok-mono/commit/720795d61c970a25c0484782b86e3a4535c0ecdd))
+- **deps:** :arrow_up: update dependency firebase to v10.12.0 ([720795d](https://github.com/WolfSoko/wol-sok-mono/commit/720795d61c970a25c0484782b86e3a4535c0ecdd))
 
 ### [4.22.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.14-deployed...v4.22.15) (2024-05-16)
 
 ### [4.22.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.13-deployed...v4.22.14) (2024-05-16)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency ace-builds to v1.33.2 ([275d458](https://github.com/WolfSoko/wol-sok-mono/commit/275d4589301d115c52de6c0f8a5d41f98754dfae))
+- **deps:** :arrow_up: update dependency ace-builds to v1.33.2 ([275d458](https://github.com/WolfSoko/wol-sok-mono/commit/275d4589301d115c52de6c0f8a5d41f98754dfae))
 
 ### [4.22.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.12-deployed...v4.22.13) (2024-05-16)
 
@@ -4273,10 +3732,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.22.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.7-deployed...v4.22.8) (2024-05-13)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency vega to v5.29.0 ([e9a0fa6](https://github.com/WolfSoko/wol-sok-mono/commit/e9a0fa672f6fec1d04b852b85038bb080440ce26))
+- **deps:** :arrow_up: update dependency vega to v5.29.0 ([e9a0fa6](https://github.com/WolfSoko/wol-sok-mono/commit/e9a0fa672f6fec1d04b852b85038bb080440ce26))
 
 ### [4.22.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.6-deployed...v4.22.7) (2024-05-12)
 
@@ -4286,10 +3744,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.22.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.3-deployed...v4.22.4) (2024-05-12)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies to ^2.141.0 ([3d21a42](https://github.com/WolfSoko/wol-sok-mono/commit/3d21a426f51ce7a3f32e157f6a4cdb059aa7b308))
+- **deps:** :arrow_up: update all non-major dependencies to ^2.141.0 ([3d21a42](https://github.com/WolfSoko/wol-sok-mono/commit/3d21a426f51ce7a3f32e157f6a4cdb059aa7b308))
 
 ### [4.22.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.2-deployed...v4.22.3) (2024-05-12)
 
@@ -4297,26 +3754,23 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.22.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.22.0-deployed...v4.22.1) (2024-05-11)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency zod to ^3.23.8 ([8707689](https://github.com/WolfSoko/wol-sok-mono/commit/8707689cf65176e1c227481289ee930dc6af6822))
+- **deps:** :arrow_up: update dependency zod to ^3.23.8 ([8707689](https://github.com/WolfSoko/wol-sok-mono/commit/8707689cf65176e1c227481289ee930dc6af6822))
 
 ## [4.22.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.21.7-deployed...v4.22.0) (2024-05-11)
 
-
 ### Features
 
-* ✨ optimistic update for notes ([0dea45e](https://github.com/WolfSoko/wol-sok-mono/commit/0dea45ed43a668cf1cc5d573cafeedcd1712ce9b))
+- ✨ optimistic update for notes ([0dea45e](https://github.com/WolfSoko/wol-sok-mono/commit/0dea45ed43a668cf1cc5d573cafeedcd1712ce9b))
 
 ### [4.21.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.21.6-deployed...v4.21.7) (2024-05-11)
 
 ### [4.21.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.21.5-deployed...v4.21.6) (2024-05-11)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.114.0 ([621ebfe](https://github.com/WolfSoko/wol-sok-mono/commit/621ebfe7d295b50f1658bf1d6625386e4de92c4c))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.114.0 ([621ebfe](https://github.com/WolfSoko/wol-sok-mono/commit/621ebfe7d295b50f1658bf1d6625386e4de92c4c))
 
 ### [4.21.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.21.4-deployed...v4.21.5) (2024-05-11)
 
@@ -4324,10 +3778,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.21.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.21.2-deployed...v4.21.3) (2024-05-10)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([315f0f9](https://github.com/WolfSoko/wol-sok-mono/commit/315f0f95705d0aa253fb6030aa2ae592970cb42a))
+- **deps:** :arrow_up: update all non-major dependencies ([315f0f9](https://github.com/WolfSoko/wol-sok-mono/commit/315f0f95705d0aa253fb6030aa2ae592970cb42a))
 
 ### [4.21.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.21.1-deployed...v4.21.2) (2024-05-10)
 
@@ -4335,11 +3788,10 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.21.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.20.11-deployed...v4.21.0) (2024-05-09)
 
-
 ### Features
 
-* ✨ set title ([3910cb8](https://github.com/WolfSoko/wol-sok-mono/commit/3910cb80d7dea859046a24a4cc7001183c8e1752))
-* ✨ set title ([95642ba](https://github.com/WolfSoko/wol-sok-mono/commit/95642ba63d9adac8786ec49714768061b8c2f4d5))
+- ✨ set title ([3910cb8](https://github.com/WolfSoko/wol-sok-mono/commit/3910cb80d7dea859046a24a4cc7001183c8e1752))
+- ✨ set title ([95642ba](https://github.com/WolfSoko/wol-sok-mono/commit/95642ba63d9adac8786ec49714768061b8c2f4d5))
 
 ### [4.20.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.20.10-deployed...v4.20.11) (2024-05-07)
 
@@ -4357,17 +3809,15 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.20.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.20.3-deployed...v4.20.4) (2024-05-06)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency zod to ^3.23.6 ([4649dff](https://github.com/WolfSoko/wol-sok-mono/commit/4649dffce8211d37088ab5079b4d18875fd5b915))
+- **deps:** :arrow_up: update dependency zod to ^3.23.6 ([4649dff](https://github.com/WolfSoko/wol-sok-mono/commit/4649dffce8211d37088ab5079b4d18875fd5b915))
 
 ### [4.20.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.20.2-deployed...v4.20.3) (2024-05-05)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies to ^2.140.0 ([b6ad896](https://github.com/WolfSoko/wol-sok-mono/commit/b6ad896e2971d58726b705f73f6dff79c9beb8f3))
+- **deps:** :arrow_up: update all non-major dependencies to ^2.140.0 ([b6ad896](https://github.com/WolfSoko/wol-sok-mono/commit/b6ad896e2971d58726b705f73f6dff79c9beb8f3))
 
 ### [4.20.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.20.1-deployed...v4.20.2) (2024-05-05)
 
@@ -4375,26 +3825,23 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.20.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.19.4-deployed...v4.20.0) (2024-05-05)
 
-
 ### Features
 
-* ✨ add rollapolla-analog as analogjs app ([289cd92](https://github.com/WolfSoko/wol-sok-mono/commit/289cd928792236db639eb848d33311560060da12))
-* ✨ add title and coming soon message ([4c1b90b](https://github.com/WolfSoko/wol-sok-mono/commit/4c1b90bf78830f15b7f2bb7f1a4fb340aa83cbcd))
-* ✨ add twitter link ([89c377e](https://github.com/WolfSoko/wol-sok-mono/commit/89c377e60ada11d51d7e86c28b4118dde7924dd0))
-* ✨ change title ([c3657f9](https://github.com/WolfSoko/wol-sok-mono/commit/c3657f99e2c48b1f820e37fa6a0c5b8b6bd5d02c))
-
+- ✨ add rollapolla-analog as analogjs app ([289cd92](https://github.com/WolfSoko/wol-sok-mono/commit/289cd928792236db639eb848d33311560060da12))
+- ✨ add title and coming soon message ([4c1b90b](https://github.com/WolfSoko/wol-sok-mono/commit/4c1b90bf78830f15b7f2bb7f1a4fb340aa83cbcd))
+- ✨ add twitter link ([89c377e](https://github.com/WolfSoko/wol-sok-mono/commit/89c377e60ada11d51d7e86c28b4118dde7924dd0))
+- ✨ change title ([c3657f9](https://github.com/WolfSoko/wol-sok-mono/commit/c3657f99e2c48b1f820e37fa6a0c5b8b6bd5d02c))
 
 ### Bug Fixes
 
-* 🐛 naming of components ([8d3b1c7](https://github.com/WolfSoko/wol-sok-mono/commit/8d3b1c75c57552370caeb51b72c8f623891e4702))
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.113.0 ([5b0c61c](https://github.com/WolfSoko/wol-sok-mono/commit/5b0c61cef4629db92b3d724ce0aef68aaf1365c5))
+- 🐛 naming of components ([8d3b1c7](https://github.com/WolfSoko/wol-sok-mono/commit/8d3b1c75c57552370caeb51b72c8f623891e4702))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.113.0 ([5b0c61c](https://github.com/WolfSoko/wol-sok-mono/commit/5b0c61cef4629db92b3d724ce0aef68aaf1365c5))
 
 ### [4.19.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.19.3-deployed...v4.19.4) (2024-05-04)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency marked to v12 ([4b5621a](https://github.com/WolfSoko/wol-sok-mono/commit/4b5621aed39c795a23f3b5600b842724546b451c))
+- **deps:** :arrow_up: update dependency marked to v12 ([4b5621a](https://github.com/WolfSoko/wol-sok-mono/commit/4b5621aed39c795a23f3b5600b842724546b451c))
 
 ### [4.19.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.19.2-deployed...v4.19.3) (2024-05-04)
 
@@ -4402,116 +3849,101 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.19.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.19.0-deployed...v4.19.1) (2024-05-04)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([584b41b](https://github.com/WolfSoko/wol-sok-mono/commit/584b41b031d79276a1a3410f33245aac47883cd2))
+- **deps:** :arrow_up: update all non-major dependencies ([584b41b](https://github.com/WolfSoko/wol-sok-mono/commit/584b41b031d79276a1a3410f33245aac47883cd2))
 
 ## [4.19.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.18.1-deployed...v4.19.0) (2024-05-03)
 
-
 ### Features
 
-* ✨ test analogjs ([9800cd3](https://github.com/WolfSoko/wol-sok-mono/commit/9800cd3f804724142db2dd29887bd838fd54d52a))
-
+- ✨ test analogjs ([9800cd3](https://github.com/WolfSoko/wol-sok-mono/commit/9800cd3f804724142db2dd29887bd838fd54d52a))
 
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency zone.js to v0.14.5 ([839e077](https://github.com/WolfSoko/wol-sok-mono/commit/839e077da6c7121e77e54583597031c06199caa3))
+- **deps:** :arrow_up: update dependency zone.js to v0.14.5 ([839e077](https://github.com/WolfSoko/wol-sok-mono/commit/839e077da6c7121e77e54583597031c06199caa3))
 
 ### [4.18.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.18.0-deployed...v4.18.1) (2024-05-03)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @tensorflow/tfjs to v4.19.0 ([d49bc3c](https://github.com/WolfSoko/wol-sok-mono/commit/d49bc3c2552c4777ba5257cbc806dca1f924832e))
+- **deps:** :arrow_up: update dependency @tensorflow/tfjs to v4.19.0 ([d49bc3c](https://github.com/WolfSoko/wol-sok-mono/commit/d49bc3c2552c4777ba5257cbc806dca1f924832e))
 
 ## [4.18.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.17.5-deployed...v4.18.0) (2024-05-03)
 
-
 ### Features
 
-* ✨ provide local next version for development ([d534924](https://github.com/WolfSoko/wol-sok-mono/commit/d53492421d50a497d74a0bd5197f635a985e698b))
-* ✨ simplify version logic ([d2a9564](https://github.com/WolfSoko/wol-sok-mono/commit/d2a95647bff68b6aaa1e103d8f40abad17a4bad3))
+- ✨ provide local next version for development ([d534924](https://github.com/WolfSoko/wol-sok-mono/commit/d53492421d50a497d74a0bd5197f635a985e698b))
+- ✨ simplify version logic ([d2a9564](https://github.com/WolfSoko/wol-sok-mono/commit/d2a95647bff68b6aaa1e103d8f40abad17a4bad3))
 
 ### [4.17.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.17.4-deployed...v4.17.5) (2024-05-03)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update all non-major dependencies ([d451ef4](https://github.com/WolfSoko/wol-sok-mono/commit/d451ef489b7d2420048f2abd8731fe1f343fa4bf))
+- **deps:** :arrow_up: update all non-major dependencies ([d451ef4](https://github.com/WolfSoko/wol-sok-mono/commit/d451ef489b7d2420048f2abd8731fe1f343fa4bf))
 
 ### [4.17.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.17.3-deployed...v4.17.4) (2024-05-02)
 
-
 ### Bug Fixes
 
-* **angular-examples:** 🐛 add version.json to bucket ([566b3e7](https://github.com/WolfSoko/wol-sok-mono/commit/566b3e7a023c4b593d7fd628cfb9d78d8ccef7da))
+- **angular-examples:** 🐛 add version.json to bucket ([566b3e7](https://github.com/WolfSoko/wol-sok-mono/commit/566b3e7a023c4b593d7fd628cfb9d78d8ccef7da))
 
 ### [4.17.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.17.2-deployed...v4.17.3) (2024-05-02)
 
-
 ### Bug Fixes
 
-* **angular-examples:** 🐛 add version to deps for build ([c6e5631](https://github.com/WolfSoko/wol-sok-mono/commit/c6e5631ae2a1e02e414c38312f6b44d5d4ba8028))
+- **angular-examples:** 🐛 add version to deps for build ([c6e5631](https://github.com/WolfSoko/wol-sok-mono/commit/c6e5631ae2a1e02e414c38312f6b44d5d4ba8028))
 
 ### [4.17.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.17.1-deployed...v4.17.2) (2024-05-02)
 
-
 ### Bug Fixes
 
-* **angular-examples:** 🐛 bacteria-game not working ([de8a1b4](https://github.com/WolfSoko/wol-sok-mono/commit/de8a1b4b230b9f19663c5ac306e22c4aa901730d))
+- **angular-examples:** 🐛 bacteria-game not working ([de8a1b4](https://github.com/WolfSoko/wol-sok-mono/commit/de8a1b4b230b9f19663c5ac306e22c4aa901730d))
 
 ### [4.17.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.17.0-deployed...v4.17.1) (2024-05-01)
 
 ## [4.17.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.16.2-deployed...v4.17.0) (2024-05-01)
 
-
 ### Features
 
-* **feat-lazy-poisson:** ✨ add debug infos and fps ([add95ea](https://github.com/WolfSoko/wol-sok-mono/commit/add95ea66bf2cdf7c9edc6af88f6adda8b82d257))
+- **feat-lazy-poisson:** ✨ add debug infos and fps ([add95ea](https://github.com/WolfSoko/wol-sok-mono/commit/add95ea66bf2cdf7c9edc6af88f6adda8b82d257))
 
 ### [4.16.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.16.1-deployed...v4.16.2) (2024-05-01)
 
 ### [4.16.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.16.0-deployed...v4.16.1) (2024-05-01)
 
-
 ### Bug Fixes
 
-* **feat-lazy-poisson:** 🐛 fix lib folders ([638237d](https://github.com/WolfSoko/wol-sok-mono/commit/638237d9323e69fdbb63b1a0f831e1b4a549b652))
+- **feat-lazy-poisson:** 🐛 fix lib folders ([638237d](https://github.com/WolfSoko/wol-sok-mono/commit/638237d9323e69fdbb63b1a0f831e1b4a549b652))
 
 ## [4.16.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.15.0-deployed...v4.16.0) (2024-05-01)
 
-
 ### Features
 
-* **feat-lazy-poisson:** ✨ add step control ([f18e45a](https://github.com/WolfSoko/wol-sok-mono/commit/f18e45a3600292104004c90cf018691024bca2f7))
+- **feat-lazy-poisson:** ✨ add step control ([f18e45a](https://github.com/WolfSoko/wol-sok-mono/commit/f18e45a3600292104004c90cf018691024bca2f7))
 
 ## [4.15.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.14.1-deployed...v4.15.0) (2024-05-01)
 
-
 ### Features
 
-* ✨ extract poisson into lazy lib ([1588343](https://github.com/WolfSoko/wol-sok-mono/commit/1588343e7774b64ebe12de0d9860a8c65f9f0683))
+- ✨ extract poisson into lazy lib ([1588343](https://github.com/WolfSoko/wol-sok-mono/commit/1588343e7774b64ebe12de0d9860a8c65f9f0683))
 
 ### [4.14.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.14.0-deployed...v4.14.1) (2024-05-01)
 
 ## [4.14.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.13.1-deployed...v4.14.0) (2024-04-29)
 
-
 ### Features
 
-* ✨ don't delete other assets for index and extra deployments ([3513b6f](https://github.com/WolfSoko/wol-sok-mono/commit/3513b6fd3bd336545e6ead5b43419db9be623167))
-* ✨ try setting different cache header for index and other assets ([7c21cd6](https://github.com/WolfSoko/wol-sok-mono/commit/7c21cd64bfba09c1ebf2a3e2aafddd250ce56b10))
+- ✨ don't delete other assets for index and extra deployments ([3513b6f](https://github.com/WolfSoko/wol-sok-mono/commit/3513b6fd3bd336545e6ead5b43419db9be623167))
+- ✨ try setting different cache header for index and other assets ([7c21cd6](https://github.com/WolfSoko/wol-sok-mono/commit/7c21cd64bfba09c1ebf2a3e2aafddd250ce56b10))
 
 ### [4.13.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.13.0-deployed...v4.13.1) (2024-04-29)
 
 ## [4.13.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.12.4-deployed...v4.13.0) (2024-04-29)
 
-
 ### Features
 
-* ✨ add caching for assets ([c824e76](https://github.com/WolfSoko/wol-sok-mono/commit/c824e76a57f1f1b10ef76756e0e42b1bf55be03d))
+- ✨ add caching for assets ([c824e76](https://github.com/WolfSoko/wol-sok-mono/commit/c824e76a57f1f1b10ef76756e0e42b1bf55be03d))
 
 ### [4.12.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.12.3-deployed...v4.12.4) (2024-04-23)
 
@@ -4523,32 +3955,28 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.12.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.11.1-deployed...v4.12.0) (2024-03-02)
 
-
 ### Features
 
-* **angular-examples:** ✨ load version after startup ([d408de6](https://github.com/WolfSoko/wol-sok-mono/commit/d408de6332b62f269af7fd6584e64e2e350c31f6))
+- **angular-examples:** ✨ load version after startup ([d408de6](https://github.com/WolfSoko/wol-sok-mono/commit/d408de6332b62f269af7fd6584e64e2e350c31f6))
 
 ### [4.11.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.11.0...v4.11.1) (2024-03-02)
 
 ## [4.11.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.10.0...v4.11.0) (2024-03-02)
 
-
 ### Features
 
-* ✨ add version.json to bucket ([40aee60](https://github.com/WolfSoko/wol-sok-mono/commit/40aee60af27312c773fe8cbbfd5f9c42e30417e5))
+- ✨ add version.json to bucket ([40aee60](https://github.com/WolfSoko/wol-sok-mono/commit/40aee60af27312c773fe8cbbfd5f9c42e30417e5))
 
 ## [4.10.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.17...v4.10.0) (2024-03-02)
 
-
 ### Features
 
-* **angular-examples-cdk:** ✨ add version.json to bucket ([774a2d8](https://github.com/WolfSoko/wol-sok-mono/commit/774a2d8d3c6ed4652f71158f1259ae30cf44e8b8))
-* **spa-cdk-stack:** ✨ add function to upload extra assets ([1f87e7d](https://github.com/WolfSoko/wol-sok-mono/commit/1f87e7d6cdff14c1a375455b08abafd84c4f9d0f))
-
+- **angular-examples-cdk:** ✨ add version.json to bucket ([774a2d8](https://github.com/WolfSoko/wol-sok-mono/commit/774a2d8d3c6ed4652f71158f1259ae30cf44e8b8))
+- **spa-cdk-stack:** ✨ add function to upload extra assets ([1f87e7d](https://github.com/WolfSoko/wol-sok-mono/commit/1f87e7d6cdff14c1a375455b08abafd84c4f9d0f))
 
 ### Bug Fixes
 
-* 🐛 typos ([793cd52](https://github.com/WolfSoko/wol-sok-mono/commit/793cd52c35f4e3049ab62d39c670f6229a9ebb3a))
+- 🐛 typos ([793cd52](https://github.com/WolfSoko/wol-sok-mono/commit/793cd52c35f4e3049ab62d39c670f6229a9ebb3a))
 
 ### [4.9.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.16...v4.9.17) (2024-03-02)
 
@@ -4556,10 +3984,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.9.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.14...v4.9.15) (2024-03-02)
 
-
 ### Bug Fixes
 
-* 🐛 working remote config ([e80d6de](https://github.com/WolfSoko/wol-sok-mono/commit/e80d6de66edbac0264c3fdbdb35430e61089573a))
+- 🐛 working remote config ([e80d6de](https://github.com/WolfSoko/wol-sok-mono/commit/e80d6de66edbac0264c3fdbdb35430e61089573a))
 
 ### [4.9.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.13...v4.9.14) (2024-03-01)
 
@@ -4573,19 +4000,17 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### [4.9.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.8...v4.9.9) (2024-03-01)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.103.0 ([fa36c7f](https://github.com/WolfSoko/wol-sok-mono/commit/fa36c7f2d9138ad5447848a5cbd7cf0523654624))
+- **deps:** :arrow_up: update dependency @sentry/angular-ivy to ^7.103.0 ([fa36c7f](https://github.com/WolfSoko/wol-sok-mono/commit/fa36c7f2d9138ad5447848a5cbd7cf0523654624))
 
 ### [4.9.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.7...v4.9.8) (2024-02-29)
 
 ### [4.9.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.6...v4.9.7) (2024-02-28)
 
-
 ### Bug Fixes
 
-* 🐛 add remotes to implicit deps ([21115ef](https://github.com/WolfSoko/wol-sok-mono/commit/21115ef80e67c1529be82dd46485fb8d0183e25c))
+- 🐛 add remotes to implicit deps ([21115ef](https://github.com/WolfSoko/wol-sok-mono/commit/21115ef80e67c1529be82dd46485fb8d0183e25c))
 
 ### [4.9.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.9.5...v4.9.6) (2024-02-28)
 
@@ -4601,11 +4026,10 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.9.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.8.26...v4.9.0) (2024-02-28)
 
-
 ### Features
 
-* ✨ align urls for remotes ([798a941](https://github.com/WolfSoko/wol-sok-mono/commit/798a941a19adf51acf12f6bc98bfb4e09bda92b4))
-* ✨ create cdks for federated modules ([0bfdd8c](https://github.com/WolfSoko/wol-sok-mono/commit/0bfdd8c735d1df28515bce9ad8e03837b697b759))
+- ✨ align urls for remotes ([798a941](https://github.com/WolfSoko/wol-sok-mono/commit/798a941a19adf51acf12f6bc98bfb4e09bda92b4))
+- ✨ create cdks for federated modules ([0bfdd8c](https://github.com/WolfSoko/wol-sok-mono/commit/0bfdd8c735d1df28515bce9ad8e03837b697b759))
 
 ### [4.8.26](https://github.com/WolfSoko/wol-sok-mono/compare/v4.8.25...v4.8.26) (2024-02-28)
 
@@ -4661,33 +4085,29 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.8.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.7.0...v4.8.0) (2024-02-26)
 
-
 ### Features
 
-* **angular-examples-cdk:** ✨ fix dependency config ([6205ac8](https://github.com/WolfSoko/wol-sok-mono/commit/6205ac8a109450096c85d6170ca14702e3cad22f))
+- **angular-examples-cdk:** ✨ fix dependency config ([6205ac8](https://github.com/WolfSoko/wol-sok-mono/commit/6205ac8a109450096c85d6170ca14702e3cad22f))
 
 ## [4.7.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.6.0...v4.7.0) (2024-02-26)
 
-
 ### Features
 
-* **angular-examples-cdk:** ✨ fix dependency config ([6de902a](https://github.com/WolfSoko/wol-sok-mono/commit/6de902aab09a486affb2eaa686bae0b49ea26193))
+- **angular-examples-cdk:** ✨ fix dependency config ([6de902a](https://github.com/WolfSoko/wol-sok-mono/commit/6de902aab09a486affb2eaa686bae0b49ea26193))
 
 ## [4.6.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.5.5...v4.6.0) (2024-02-26)
 
-
 ### Features
 
-* **angular-examples-cdk:** ✨ fix config ([86f8d05](https://github.com/WolfSoko/wol-sok-mono/commit/86f8d05ed0b02b45c57a62cddcb6d8b95cb49a20))
+- **angular-examples-cdk:** ✨ fix config ([86f8d05](https://github.com/WolfSoko/wol-sok-mono/commit/86f8d05ed0b02b45c57a62cddcb6d8b95cb49a20))
 
 ### [4.5.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.5.4...v4.5.5) (2024-02-26)
 
 ### [4.5.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.5.3...v4.5.4) (2024-02-26)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency aws-cdk to ^2.130.0 ([9b07521](https://github.com/WolfSoko/wol-sok-mono/commit/9b0752168b5c8b8bb115b81ebf473c11c169d91e))
+- **deps:** :arrow_up: update dependency aws-cdk to ^2.130.0 ([9b07521](https://github.com/WolfSoko/wol-sok-mono/commit/9b0752168b5c8b8bb115b81ebf473c11c169d91e))
 
 ### [4.5.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.5.2...v4.5.3) (2024-02-26)
 
@@ -4697,10 +4117,9 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.5.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.4.6...v4.5.0) (2024-02-26)
 
-
 ### Features
 
-* ✨ extract lib for cdk spa stack ([bd97aea](https://github.com/WolfSoko/wol-sok-mono/commit/bd97aea753740c8fb4616e1e79b43abd48abfb2d))
+- ✨ extract lib for cdk spa stack ([bd97aea](https://github.com/WolfSoko/wol-sok-mono/commit/bd97aea753740c8fb4616e1e79b43abd48abfb2d))
 
 ### [4.4.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.4.5...v4.4.6) (2024-02-25)
 
@@ -4716,19 +4135,17 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [4.4.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.3.6...v4.4.0) (2024-02-25)
 
-
 ### Features
 
-* ✨ use new angular logo ([8588d30](https://github.com/WolfSoko/wol-sok-mono/commit/8588d30249f5c6e3cc0660811c308c003c5d41e8))
+- ✨ use new angular logo ([8588d30](https://github.com/WolfSoko/wol-sok-mono/commit/8588d30249f5c6e3cc0660811c308c003c5d41e8))
 
 ### [4.3.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.3.5...v4.3.6) (2024-02-25)
 
 ### [4.3.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.3.4...v4.3.5) (2024-02-25)
 
-
 ### Bug Fixes
 
-* **deps:** :arrow_up: update dependency mathjs to v12.4.0 ([151ed7e](https://github.com/WolfSoko/wol-sok-mono/commit/151ed7ee35c36dbcd7bf815fb90ecb60c22e331a))
+- **deps:** :arrow_up: update dependency mathjs to v12.4.0 ([151ed7e](https://github.com/WolfSoko/wol-sok-mono/commit/151ed7ee35c36dbcd7bf815fb90ecb60c22e331a))
 
 ### [4.3.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.3.3...v4.3.4) (2024-02-25)
 

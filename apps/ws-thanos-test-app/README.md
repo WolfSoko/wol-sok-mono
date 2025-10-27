@@ -5,6 +5,7 @@ This is a dedicated test application for the `@wolsok/ws-thanos` directive. It p
 ## Purpose
 
 The WsThanos directive uses browser-specific features that cannot be properly tested with Jest + jsdom:
+
 - `html2canvas` for capturing DOM elements as canvas
 - Canvas 2D rendering for particle animations
 - `window.getComputedStyle` for CSS transitions
@@ -66,14 +67,17 @@ apps/ws-thanos-test-app/
 The application provides three test scenarios:
 
 ### Test 1: Vaporize and Remove
+
 - Demonstrates element being completely removed from DOM after vaporization
 - Shows completion event firing
 
 ### Test 2: Vaporize and Restore
+
 - Demonstrates element fading back in after vaporization
 - Element remains in DOM with opacity transition
 
 ### Test 3: Multiple Elements
+
 - Three elements that can be vaporized simultaneously
 - Tests directive behavior with multiple instances
 
@@ -99,6 +103,7 @@ Unlike component testing approaches (like Playwright CT with @jscutlery), this a
 ## Future Enhancements
 
 Possible additions:
+
 - Visual regression testing with Playwright screenshots
 - Performance metrics collection
 - Different animation configurations
