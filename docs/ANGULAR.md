@@ -11,11 +11,13 @@ Angular is a web framework that empowers developers to build fast, reliable appl
 ### Component-Based Architecture
 
 Angular applications are built using components as the fundamental building blocks. Each component consists of:
+
 - **TypeScript class** - Contains the component's logic and data
 - **HTML template** - Defines the component's view
 - **CSS styles** - Defines the component's appearance
 
 **Example: Basic Component Definition**
+
 ```typescript
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 @Component({
@@ -25,8 +27,9 @@ export class MyComponent {}
 ```
 
 **Example: Standalone Component (Modern Approach)**
+
 ```typescript
-import {ProfilePhoto} from './profile-photo';
+import { ProfilePhoto } from './profile-photo';
 
 @Component({
   // Import the `ProfilePhoto` component in
@@ -34,7 +37,7 @@ import {ProfilePhoto} from './profile-photo';
   imports: [ProfilePhoto],
   /* ... */
 })
-export class UserProfile { }
+export class UserProfile {}
 ```
 
 ### Dependency Injection
@@ -42,10 +45,13 @@ export class UserProfile { }
 Angular has a powerful built-in dependency injection system. Services and dependencies can be injected using the `inject()` function or constructor injection.
 
 **Using the inject() Function**
-```typescript
-import {inject, Component} from '@angular/core';
 
-@Component({/* ... */})
+```typescript
+import { inject, Component } from '@angular/core';
+
+@Component({
+  /* ... */
+})
 export class UserProfile {
   // You can use the `inject` function in property initializers.
   private userClient = inject(UserClient);
@@ -58,18 +64,20 @@ export class UserProfile {
 ```
 
 **Providing Services at Component Level**
+
 ```typescript
 @Component({
   selector: 'hero-list',
   template: '...',
-  providers: [HeroService]
+  providers: [HeroService],
 })
 class HeroListComponent {}
 ```
 
 **Service with Dependencies**
+
 ```typescript
-import { inject } from "@angular/core";
+import { inject } from '@angular/core';
 
 export class HeroService {
   private heroes: Hero[] = [];
@@ -92,8 +100,9 @@ export class HeroService {
 Signals are Angular's modern reactive primitive for managing state and derived values.
 
 **Creating and Using Signals**
+
 ```typescript
-import {signal} from '@angular/core';
+import { signal } from '@angular/core';
 
 // Create a signal with the `signal` function.
 const firstName = signal('Morgan');
@@ -106,12 +115,13 @@ firstName.set('Jaime');
 
 // You can also use the `update` method to change the value
 // based on the previous value.
-firstName.update(name => name.toUpperCase());
+firstName.update((name) => name.toUpperCase());
 ```
 
 **Computed Signals**
+
 ```typescript
-import {signal, computed} from '@angular/core';
+import { signal, computed } from '@angular/core';
 
 const firstName = signal('Morgan');
 const firstNameCapitalized = computed(() => firstName().toUpperCase());
@@ -123,8 +133,11 @@ console.log(firstNameCapitalized()); // JAIME
 ```
 
 **Signals in Components**
+
 ```typescript
-@Component({/* ... */})
+@Component({
+  /* ... */
+})
 export class UserProfile {
   isTrial = signal(false);
   isTrialExpired = signal(false);
@@ -137,8 +150,11 @@ export class UserProfile {
 ```
 
 **Linked Signals for Dependent State**
+
 ```typescript
-@Component({/* ... */})
+@Component({
+  /* ... */
+})
 export class ShippingMethodPicker {
   shippingOptions: Signal<ShippingMethod[]> = getShippingOptions();
 
@@ -169,6 +185,7 @@ counter.set(1);
 Angular provides seamless integration between Signals and RxJS Observables.
 
 **Converting Signal to Observable**
+
 ```typescript
 import { Component, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
@@ -185,6 +202,7 @@ export class SearchResults {
 ```
 
 **Displaying Asynchronous Data with AsyncPipe**
+
 ```typescript
 import { AsyncPipe } from '@angular/common';
 @Component({
@@ -211,10 +229,11 @@ export class UserProfileComponent {
 ### Templates and Data Binding
 
 **Interpolation**
+
 ```typescript
 @Component({
   selector: 'user-profile',
-  template: `<h1>Profile for {{userName()}}</h1>`,
+  template: `<h1>Profile for {{ userName() }}</h1>`,
 })
 export class TodoListItem {
   userName = signal('pro_programmer_123');
@@ -222,11 +241,13 @@ export class TodoListItem {
 ```
 
 Rendered output:
+
 ```html
 <h1>Profile for pro_programmer_123</h1>
 ```
 
 **Two-Way Binding with Model Inputs**
+
 ```typescript
 @Component({
   /* ... */
@@ -236,7 +257,7 @@ Rendered output:
   template: `<custom-slider [(value)]="volume" />`,
 })
 export class MediaControls {
-  // Create a writable signal for the `volume` local state. 
+  // Create a writable signal for the `volume` local state.
   volume = signal(0);
 }
 ```
@@ -244,6 +265,7 @@ export class MediaControls {
 ### Routing
 
 **Reading Route Parameters**
+
 ```typescript
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -266,6 +288,7 @@ export class ProductDetailComponent {
 ```
 
 **Binding Route Parameters to Component Inputs**
+
 ```typescript
 @Input()
 set id(heroId: string) {
@@ -274,17 +297,15 @@ set id(heroId: string) {
 ```
 
 **Defining Routes with Providers**
+
 ```typescript
 export const ROUTES: Route[] = [
   {
     path: 'admin',
-    providers: [
-      AdminService,
-      {provide: ADMIN_API_KEY, useValue: '12345'},
-    ],
+    providers: [AdminService, { provide: ADMIN_API_KEY, useValue: '12345' }],
     children: [
-      {path: 'users', component: AdminUsersComponent},
-      {path: 'teams', component: AdminTeamsComponent},
+      { path: 'users', component: AdminUsersComponent },
+      { path: 'teams', component: AdminTeamsComponent },
     ],
   },
   // ... other application routes that don't
@@ -293,6 +314,7 @@ export const ROUTES: Route[] = [
 ```
 
 **Router Outlet**
+
 ```html
 <!-- Content rendered on the page when the user visits /admin -->
 <app-header>...</app-header>
@@ -302,11 +324,12 @@ export const ROUTES: Route[] = [
 ```
 
 **Enabling View Transitions**
+
 ```typescript
 // Standalone bootstrap
-bootstrapApplication(MyApp, {providers: [
-  provideRouter(ROUTES, withViewTransitions()),
-]});
+bootstrapApplication(MyApp, {
+  providers: [provideRouter(ROUTES, withViewTransitions())],
+});
 ```
 
 ## Modern Angular Features
@@ -316,24 +339,24 @@ bootstrapApplication(MyApp, {providers: [
 Angular now supports zoneless change detection for improved performance.
 
 **Enabling Zoneless Change Detection**
+
 ```typescript
 // standalone bootstrap
-bootstrapApplication(MyApp, {providers: [
-  provideZonelessChangeDetection(),
-]});
+bootstrapApplication(MyApp, { providers: [provideZonelessChangeDetection()] });
 
 // NgModule bootstrap
 platformBrowser().bootstrapModule(AppModule);
 @NgModule({
-  providers: [provideZonelessChangeDetection()]
+  providers: [provideZonelessChangeDetection()],
 })
 export class AppModule {}
 ```
 
 **Testing with Zoneless Change Detection**
+
 ```typescript
 TestBed.configureTestingModule({
-  providers: [provideZonelessChangeDetection()]
+  providers: [provideZonelessChangeDetection()],
 });
 
 const fixture = TestBed.createComponent(MyComponent);
@@ -343,6 +366,7 @@ await fixture.whenStable();
 ### Change Detection Strategies
 
 **OnPush Change Detection**
+
 ```typescript
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 @Component({
@@ -354,6 +378,7 @@ export class MyComponent {}
 ### Server-Side Rendering (SSR)
 
 **Defining Server Routes**
+
 ```typescript
 // app.routes.server.ts
 import { RenderMode, ServerRoute } from '@angular/ssr';
@@ -379,6 +404,7 @@ export const serverRoutes: ServerRoute[] = [
 ```
 
 **Providing Server Rendering**
+
 ```typescript
 import { provideServerRendering, withRoutes } from '@angular/ssr';
 import { serverRoutes } from './app.routes.server';
@@ -388,11 +414,12 @@ const serverConfig: ApplicationConfig = {
   providers: [
     provideServerRendering(withRoutes(serverRoutes)),
     // ... other providers ...
-  ]
+  ],
 };
 ```
 
 **Accessing Request Object in SSR**
+
 ```typescript
 import { inject, REQUEST } from '@angular/core';
 
@@ -409,6 +436,7 @@ export class MyComponent {
 ```
 
 **Prerendering with Parameters**
+
 ```typescript
 // app.routes.server.ts
 import { RenderMode, ServerRoute } from '@angular/ssr';
@@ -421,7 +449,7 @@ export const serverRoutes: ServerRoute[] = [
       const dataService = inject(PostService);
       const ids = await dataService.getIds(); // Assuming this returns ['1', '2', '3']
 
-      return ids.map(id => ({ id })); // Generates paths like: /post/1, /post/2, /post/3
+      return ids.map((id) => ({ id })); // Generates paths like: /post/1, /post/2, /post/3
     },
   },
   {
@@ -438,6 +466,7 @@ export const serverRoutes: ServerRoute[] = [
 ```
 
 **Client Hydration**
+
 ```typescript
 import {
   bootstrapApplication,
@@ -455,18 +484,18 @@ bootstrapApplication(AppComponent, {
 The Resources API provides a way to load data reactively based on signal parameters.
 
 ```typescript
-import {resource, Signal} from '@angular/core';
+import { resource, Signal } from '@angular/core';
 
 const userId: Signal<string> = getUserId();
 
 const userResource = resource({
   // Define a reactive computation.
   // The params value recomputes whenever any read signals change.
-  params: () => ({id: userId()}),
+  params: () => ({ id: userId() }),
 
   // Define an async loader that retrieves data.
   // The resource calls this function every time the `params` value changes.
-  loader: ({params}) => fetchUser(params),
+  loader: ({ params }) => fetchUser(params),
 });
 
 // Create a computed signal based on the result of the resource's loader function.
@@ -478,6 +507,7 @@ const firstName = computed(() => userResource.value().firstName);
 ### Basic Component Testing
 
 **Testing with Change Detection**
+
 ```typescript
 it('should display original title', () => {
   fixture.detectChanges();
@@ -486,6 +516,7 @@ it('should display original title', () => {
 ```
 
 **Testing with Updated Properties**
+
 ```typescript
 it('should display a different test title', () => {
   component.title = 'New Test Title';
@@ -497,13 +528,12 @@ it('should display a different test title', () => {
 ### Automatic Change Detection in Tests
 
 **Configuring Automatic Change Detection**
+
 ```typescript
 beforeEach(async () => {
   await TestBed.configureTestingModule({
     imports: [BannerComponent],
-    providers: [
-      { provide: ComponentFixtureAutoDetect, useValue: true }
-    ]
+    providers: [{ provide: ComponentFixtureAutoDetect, useValue: true }],
   }).compileComponents();
 
   fixture = TestBed.createComponent(BannerComponent);
@@ -513,6 +543,7 @@ beforeEach(async () => {
 ```
 
 **Tests with Automatic Change Detection**
+
 ```typescript
 it('should display original title', () => {
   // No fixture.detectChanges() needed
@@ -530,6 +561,7 @@ it('should display updated title after property change', async () => {
 ### Manual Change Detection Testing
 
 **Disabling Automatic Change Detection**
+
 ```typescript
 it('checks state while async action is in progress', async () => {
   const buttonHarness = loader.getHarness(MyButtonHarness);
@@ -550,12 +582,15 @@ it('checks state while async action is in progress', async () => {
 This monorepo uses Angular extensively across multiple applications:
 
 ### Version
+
 - **Angular**: 20.3.7 (latest stable)
 - **TypeScript**: For type-safe development
 - **Analog.js**: Meta-framework for Angular providing file-based routing and Vite integration
 
 ### Applications
+
 The repository contains several Angular applications under `apps/`:
+
 - `pacetrainer` - Pace training application
 - `rollapolla-analog` - Analog.js-based application
 - `angular-examples` - Example implementations
@@ -566,19 +601,23 @@ The repository contains several Angular applications under `apps/`:
 ### Key Technologies & Libraries
 
 #### UI Components
+
 - **Angular Material** - Material Design component library
 - **Angular CDK** - Component Development Kit for building custom components
 
 #### State Management
+
 - **Akita** - State management library based on RxJS
 - Observable-based reactive state management
 
 #### Visualization & Graphics
+
 - **Three.js** - 3D graphics
 - **p5.js** - Creative coding library
 - **WebGL** - Custom shader programming
 
 #### Backend & Deployment
+
 - **Firebase** - Backend services and hosting
 - **Angular SSR** - Server-side rendering
 - **Analog.js** - Full-stack capabilities
@@ -588,7 +627,9 @@ The repository contains several Angular applications under `apps/`:
 This monorepo leverages modern Angular features including:
 
 #### 1. Standalone Components
+
 All components use the standalone API without NgModules:
+
 ```typescript
 @Component({
   selector: 'pace-root',
@@ -600,45 +641,54 @@ export class AppComponent {}
 ```
 
 #### 2. Signals
+
 Using Angular's reactive primitives for state management.
 
 #### 3. Zoneless Change Detection
+
 ```typescript
-provideZonelessChangeDetection()  // More efficient change detection
+provideZonelessChangeDetection(); // More efficient change detection
 ```
 
 #### 4. Server-Side Rendering with Hydration
+
 ```typescript
-provideClientHydration(withIncrementalHydration(), withEventReplay())
+provideClientHydration(withIncrementalHydration(), withEventReplay());
 ```
 
 #### 5. File-Based Routing (via Analog.js)
+
 Uses Analog.js file system routing for intuitive route definitions.
 
 ## Development Guidelines
 
 ### Component Structure
+
 - Use `ChangeDetectionStrategy.OnPush` for better performance
 - Keep components focused and single-purpose
 - Use standalone components (modern approach)
 
 ### Styling
+
 - CSS Grid and Flexbox for layouts
 - Angular Material components for UI consistency
 - Component-scoped styles
 
 ### State Management
+
 - Angular Signals for reactive state
 - RxJS observables for async operations
 - Akita for complex state management
 - Services for shared state and business logic
 
 ### Testing
+
 - Jest for unit testing
 - Playwright for end-to-end testing
 - Test files colocated with source files (`.spec.ts`)
 
 ### Build & Development
+
 - **Vite** - Fast build tool (via Analog.js)
 - **Nx** - Monorepo management and build orchestration
 - **ESLint** - Code linting
@@ -647,6 +697,7 @@ Uses Analog.js file system routing for intuitive route definitions.
 ## Nx Commands
 
 ### Development
+
 ```bash
 npx nx serve <project-name>      # Start dev server
 npx nx build <project-name>      # Build production
@@ -656,6 +707,7 @@ npx nx lint <project-name>       # Lint code
 ```
 
 ### Monorepo Commands
+
 ```bash
 npx nx graph                     # Visualize project dependencies
 npx nx affected -t build,test    # Build/test only affected projects
@@ -665,12 +717,14 @@ npx nx run-many -t build         # Run task across multiple projects
 ## Resources
 
 ### Official Angular Documentation
+
 - [Angular Documentation](https://angular.dev) - Official docs
 - [Angular API Reference](https://angular.dev/api) - API documentation
 - [Angular Style Guide](https://angular.dev/style-guide) - Best practices
 - [Angular GitHub Repository](https://github.com/angular/angular) - Source code
 
 ### Technologies Used in This Monorepo
+
 - [Analog.js](https://analogjs.org) - Angular meta-framework
 - [Angular Material](https://material.angular.io) - Material Design components
 - [RxJS](https://rxjs.dev) - Reactive programming
@@ -680,6 +734,7 @@ npx nx run-many -t build         # Run task across multiple projects
 - [p5.js](https://p5js.org) - Creative coding library
 
 ### Learning Resources
+
 - [Angular Tutorial](https://angular.dev/tutorials)
 - [Angular University](https://angular-university.io)
 - [RxJS Documentation](https://rxjs.dev/guide/overview)
@@ -687,6 +742,7 @@ npx nx run-many -t build         # Run task across multiple projects
 ## Contributing
 
 When working with Angular in this repository:
+
 1. Follow the Angular Style Guide
 2. Use standalone components
 3. Implement OnPush change detection where possible
@@ -699,6 +755,7 @@ When working with Angular in this repository:
 ## Architecture Principles
 
 This repository follows these Angular best practices:
+
 - **Separation of Concerns** - Components, services, and state management are clearly separated
 - **Reactive Programming** - Heavy use of Signals and RxJS for data flow
 - **Type Safety** - TypeScript for compile-time type checking
@@ -708,4 +765,4 @@ This repository follows these Angular best practices:
 
 ---
 
-*This document is based on official Angular documentation from [angular.dev](https://angular.dev) and adapted for this monorepo's specific setup. For detailed implementation examples, refer to the code in `apps/` and `libs/` directories.*
+_This document is based on official Angular documentation from [angular.dev](https://angular.dev) and adapted for this monorepo's specific setup. For detailed implementation examples, refer to the code in `apps/` and `libs/` directories._

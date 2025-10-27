@@ -20,6 +20,7 @@ This document provides a prioritized list of documentation issues identified acr
 **Impact**: New developers cannot understand the monorepo structure, application purposes, or how components relate to each other.
 
 **Fix**: Create `ARCHITECTURE.md` with:
+
 - Monorepo structure overview
 - Description of each application and its purpose
 - Library organization and dependency relationships
@@ -37,6 +38,7 @@ This document provides a prioritized list of documentation issues identified acr
 **Impact**: Developers may struggle with initial setup, especially regarding `node-gyp` dependencies.
 
 **Fix**: Create `GETTING_STARTED.md` with:
+
 - Complete prerequisites (Node.js version, system dependencies)
 - Detailed installation steps
 - Common setup issues and solutions
@@ -54,6 +56,7 @@ This document provides a prioritized list of documentation issues identified acr
 **Impact**: Developers don't know testing conventions or how to write proper tests for different project types.
 
 **Fix**: Create `TESTING.md` with:
+
 - Testing philosophy and strategy
 - Unit testing guidelines (Jest)
 - E2E testing guidelines (Playwright)
@@ -74,6 +77,7 @@ This document provides a prioritized list of documentation issues identified acr
 **Impact**: Developers cannot understand library purposes, APIs, or usage patterns without reading source code.
 
 **Fix**: Update all library READMEs to include:
+
 - Purpose and use case
 - Public API overview
 - Usage examples
@@ -81,6 +85,7 @@ This document provides a prioritized list of documentation issues identified acr
 - When to use this library vs alternatives
 
 **Affected Libraries**:
+
 - `libs/utils/decorators`
 - `libs/utils/operators`
 - `libs/utils/math`
@@ -104,6 +109,7 @@ This document provides a prioritized list of documentation issues identified acr
 **Impact**: Users and developers don't know what each application does or how to work with it.
 
 **Fix**: Create README.md for each app:
+
 - `apps/pacetrainer/README.md`
 - `apps/rollapolla-analog/README.md`
 - `apps/angular-examples/README.md`
@@ -112,6 +118,7 @@ This document provides a prioritized list of documentation issues identified acr
 - `apps/shader-examples-remote/README.md`
 
 Each should include:
+
 - Application purpose and features
 - How to run locally
 - How to build for production
@@ -129,6 +136,7 @@ Each should include:
 **Impact**: Maintainers and contributors cannot reliably deploy applications.
 
 **Fix**: Create `DEPLOYMENT.md` with:
+
 - Firebase deployment process for each app
 - AWS CDK deployment process
 - Environment configuration
@@ -147,6 +155,7 @@ Each should include:
 **Impact**: AI agents and developers may not follow consistent patterns.
 
 **Fix**: Enhance AGENTS.md with:
+
 - More explicit file organization rules
 - Clearer examples of common tasks
 - Project-specific patterns per application
@@ -165,6 +174,7 @@ Each should include:
 **Impact**: Contributors don't know how to properly submit changes, what the review process is, or coding standards.
 
 **Fix**: Create `CONTRIBUTING.md` with:
+
 - How to set up development environment
 - Code style and conventions
 - Commit message format (conventional commits)
@@ -179,6 +189,7 @@ Each should include:
 ### 9. ANGULAR.md Inconsistencies
 
 **Issue**: Several inconsistencies in `docs/ANGULAR.md`:
+
 - Line 46: Incorrect import path `'angular/core'` should be `'@angular/core'`
 - Line 206: Constructor syntax `constructor(): void` is unusual (constructors don't have return types in TS)
 - Mix of code examples not all relevant to this specific repository
@@ -186,7 +197,8 @@ Each should include:
 
 **Impact**: Developers may copy incorrect code examples or be confused about what applies to this project.
 
-**Fix**: 
+**Fix**:
+
 - Correct import statement on line 46
 - Fix constructor syntax on line 206
 - Add a section clearly distinguishing generic Angular patterns from monorepo-specific usage
@@ -202,7 +214,8 @@ Each should include:
 
 **Impact**: Developers cannot understand API contracts or how to integrate with services.
 
-**Fix**: 
+**Fix**:
+
 - Create API documentation for tRPC endpoints
 - Document Firebase Functions
 - Create API reference for published libraries (like @wolsok/thanos)
@@ -218,6 +231,7 @@ Each should include:
 **Impact**: Developers struggle when major version updates occur.
 
 **Fix**: Create `MIGRATIONS.md` with:
+
 - Angular version upgrade procedures
 - Nx migration strategies
 - Breaking changes documentation
@@ -230,6 +244,7 @@ Each should include:
 ### 12. README.md Inconsistencies
 
 **Issue**: Root README.md has several issues:
+
 - "maintaied" typo in badge (line 2)
 - Vague project description
 - Link to ANGULAR.md but no other docs
@@ -238,6 +253,7 @@ Each should include:
 **Impact**: Poor first impression, unclear project purpose.
 
 **Fix**:
+
 - Fix typo: "maintaied" → "maintained"
 - Enhance project description with clear value proposition
 - Add "Documentation" section with links to all docs
@@ -254,6 +270,7 @@ Each should include:
 **Impact**: Developers waste time on known issues.
 
 **Fix**: Create `TROUBLESHOOTING.md` with:
+
 - Common build errors and solutions
 - Node.js/npm issues (especially node-gyp)
 - Port conflicts
@@ -274,6 +291,7 @@ Each should include:
 **Impact**: Learning resources are not discoverable.
 
 **Fix**: Create `EXAMPLES.md` documenting:
+
 - What each example demonstrates
 - Key concepts illustrated
 - How to explore and modify examples
@@ -290,6 +308,7 @@ Each should include:
 **Impact**: Developers don't know performance best practices for this monorepo.
 
 **Fix**: Create `PERFORMANCE.md` with:
+
 - OnPush change detection usage
 - Lazy loading strategies
 - Bundle size optimization
@@ -307,6 +326,7 @@ Each should include:
 **Impact**: Developers may introduce security vulnerabilities.
 
 **Fix**: Enhance SECURITY.md with:
+
 - Secrets management best practices
 - Environment variable usage
 - Firebase security rules
@@ -325,6 +345,7 @@ Each should include:
 **Impact**: Code style may be inconsistent.
 
 **Fix**: Create `STYLE_GUIDE.md` with:
+
 - Component structure conventions
 - File naming conventions
 - SCSS/CSS conventions
@@ -343,6 +364,7 @@ Each should include:
 **Impact**: New developers may not understand terminology.
 
 **Fix**: Create `GLOSSARY.md` with definitions of:
+
 - Project-specific terms
 - Technical abbreviations
 - Domain concepts (Fourier analysis, neural networks, etc.)
@@ -358,6 +380,7 @@ Each should include:
 **Impact**: Applications may not be accessible.
 
 **Fix**: Create `ACCESSIBILITY.md` with:
+
 - WCAG compliance goals
 - Angular Material a11y features
 - Testing for accessibility
@@ -374,6 +397,7 @@ Each should include:
 **Impact**: Contributors don't know project direction.
 
 **Fix**: Create `ROADMAP.md` with:
+
 - Current focus areas
 - Planned features
 - Long-term vision
@@ -415,6 +439,7 @@ Each should include:
 ## Progress Update
 
 **Completed in this PR:**
+
 - ✅ Created comprehensive documentation improvements list (this file)
 - ✅ Fixed all Critical Priority issues (3/3)
 - ✅ Fixed all High Priority issues except library/app READMEs (3/5)
@@ -430,6 +455,7 @@ Each should include:
   - README.md typo fix and content enhancement
 
 **Remaining Work:**
+
 - Library README files need content (Issue #4) - ~15 files
 - Application README files need creation (Issue #5) - ~6 files
 - API Documentation (Issue #10)

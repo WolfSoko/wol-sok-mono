@@ -66,6 +66,7 @@ git checkout -b docs/update-testing-guide
 ```
 
 Branch naming conventions:
+
 - `feat/` - New features
 - `fix/` - Bug fixes
 - `docs/` - Documentation changes
