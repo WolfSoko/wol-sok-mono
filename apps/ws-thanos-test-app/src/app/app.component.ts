@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { WsThanosDirective } from '@wolsok/ws-thanos';
+import { WsThanosDirective } from '@wolsok/thanos';
 
 @Component({
   selector: 'app-root',

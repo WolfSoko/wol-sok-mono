@@ -2,7 +2,7 @@ import {
   ApplicationConfig,
   provideZonelessChangeDetection,
 } from '@angular/core';
-import { provideWsThanosOptions } from '@wolsok/ws-thanos';
+import { provideWsThanosOptions } from '@wolsok/thanos';
 
 export const appConfig: ApplicationConfig = {
   providers: [
