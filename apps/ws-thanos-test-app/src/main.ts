@@ -1,15 +1,21 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  provideExperimentalZonelessChangeDetection,
+  signal,
+} from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideWsThanosOptions, WsThanosDirective } from '@wolsok/ws-thanos';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, WsThanosDirective],
+  imports: [WsThanosDirective],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="container">
       <h1>WsThanos Directive Test Application</h1>
+      <p class="subtitle">Modern Angular: Zoneless • Signals • @if syntax</p>
 
       <div class="test-section">
         <h2>Test 1: Vaporize and Remove</h2>
@@ -30,13 +36,9 @@ import { provideWsThanosOptions, WsThanosDirective } from '@wolsok/ws-thanos';
         >
           Vaporize and Remove
         </button>
-        <p
-          *ngIf="completedTests.test1"
-          class="status"
-          data-testid="status-test1"
-        >
-          ✓ Test 1 Complete
-        </p>
+        @if (completedTests().test1) {
+          <p class="status" data-testid="status-test1">✓ Test 1 Complete</p>
+        }
       </div>
 
       <div class="test-section">
@@ -58,13 +60,9 @@ import { provideWsThanosOptions, WsThanosDirective } from '@wolsok/ws-thanos';
         >
           Vaporize and Restore
         </button>
-        <p
-          *ngIf="completedTests.test2"
-          class="status"
-          data-testid="status-test2"
-        >
-          ✓ Test 2 Complete
-        </p>
+        @if (completedTests().test2) {
+          <p class="status" data-testid="status-test2">✓ Test 2 Complete</p>
+        }
       </div>
 
       <div class="test-section">
@@ -116,6 +114,13 @@ import { provideWsThanosOptions, WsThanosDirective } from '@wolsok/ws-thanos';
       h1 {
         color: #333;
         text-align: center;
+        margin-bottom: 0.5rem;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #666;
+        font-size: 0.9rem;
         margin-bottom: 3rem;
       }
 
@@ -189,11 +194,11 @@ import { provideWsThanosOptions, WsThanosDirective } from '@wolsok/ws-thanos';
   ],
 })
 export class AppComponent {
-  completedTests: { [key: string]: boolean } = {};
+  completedTests = signal<{ [key: string]: boolean }>({});
 
   onComplete(testId: string) {
     console.log(`Test ${testId} completed`);
-    this.completedTests[testId] = true;
+    this.completedTests.update((tests) => ({ ...tests, [testId]: true }));
   }
 
   vaporizeMultiple(...directives: any[]) {
@@ -203,6 +208,7 @@ export class AppComponent {
 
 bootstrapApplication(AppComponent, {
   providers: [
+    provideExperimentalZonelessChangeDetection(),
     provideWsThanosOptions({
       maxParticleCount: 500,
       animationLength: 1000,

@@ -2,6 +2,13 @@
 
 This is a dedicated test application for the `@wolsok/ws-thanos` directive. It provides a real browser environment for testing the directive's vaporization effects with Playwright E2E tests.
 
+**Modern Angular Features:**
+
+- ✨ **Zoneless Change Detection** - Uses `provideExperimentalZonelessChangeDetection()`
+- 🎯 **Signals** - State management with Angular signals
+- 🔀 **@if Syntax** - Modern control flow instead of \*ngIf
+- ⚡ **OnPush Strategy** - Optimized change detection
+
 ## Purpose
 
 The WsThanos directive uses browser-specific features that cannot be properly tested with Jest + jsdom:
@@ -83,7 +90,11 @@ The application provides three test scenarios:
 
 ## Implementation Details
 
-- **Standalone Angular Component**: Uses modern Angular standalone API
+- **Zoneless**: Uses `provideExperimentalZonelessChangeDetection()` for better performance
+- **Signals**: State managed with Angular signals instead of traditional properties
+- **@if Syntax**: Modern control flow with @if instead of \*ngIf directives
+- **OnPush Strategy**: Change detection optimized with `ChangeDetectionStrategy.OnPush`
+- **Standalone Component**: Uses modern Angular standalone API
 - **Direct Directive Import**: Imports `WsThanosDirective` from `@wolsok/ws-thanos`
 - **Configuration**: Provides custom options via `provideWsThanosOptions()`
 - **Template References**: Uses `#thanos="thanos"` to access directive instances
@@ -99,6 +110,7 @@ Unlike component testing approaches (like Playwright CT with @jscutlery), this a
 ✅ No experimental dependencies
 ✅ Follows standard Nx monorepo patterns
 ✅ Can be manually tested in the browser
+✅ **Modern Angular** - Zoneless, Signals, @if syntax
 
 ## Future Enhancements
 
