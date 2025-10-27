@@ -1,0 +1,36 @@
+import { defineConfig, devices } from '@playwright/test';
+import { nxE2EPreset } from '@nx/playwright/preset';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const workspaceRoot = join(__dirname, '../..');
+
+const baseURL = process.env['BASE_URL'] || 'http://localhost:4350';
+
+/**
+ * See https://playwright.dev/docs/test-configuration.
+ */
+export default defineConfig({
+  ...nxE2EPreset(__filename, { testDir: './e2e' }),
+  timeout: 120 * 1000,
+  use: {
+    baseURL,
+    testIdAttribute: 'data-testid',
+    trace: 'on-first-retry',
+  },
+  webServer: {
+    command: 'npx nx serve ws-thanos-test-app',
+    url: 'http://localhost:4350',
+    reuseExistingServer: !process.env['CI'],
+    cwd: workspaceRoot,
+    timeout: 120 * 1000,
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+});

@@ -27,11 +27,13 @@
       }
     },
     "test": {
-      "executor": "@angular-devkit/build-angular:karma",
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/public/ws-thanos"],
       "options": {
-        "main": "libs/public/ws-thanos/src/test.ts",
-        "tsConfig": "libs/public/ws-thanos/tsconfig.spec.json",
-        "karmaConfig": "libs/public/ws-thanos/karma.conf.cjs"
+        "jestConfig": "libs/public/ws-thanos/jest.config.ts",
+        "passWithNoTests": false,
+        "codeCoverage": true,
+        "tsConfig": "libs/public/ws-thanos/tsconfig.spec.json"
       }
     }
   }

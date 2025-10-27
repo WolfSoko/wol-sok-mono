@@ -8,6 +8,13 @@ wol-sok-mono repo
 
 A monorepo of Angular applications showcasing interactive visualizations, scientific algorithms, and creative coding experiments.
 
+**Modern Angular Stack:**
+
+- ⚡ **Zoneless Change Detection** - All apps use zoneless mode for better performance
+- 🎯 **Signals** - Reactive state management with Angular signals
+- 🔀 **Modern Control Flow** - @if, @for, @switch syntax throughout
+- 📦 **Standalone Components** - No NgModules, pure standalone architecture
+
 ## About This Project
 
 This repository contains multiple Angular applications demonstrating various topics including:
@@ -17,13 +24,14 @@ This repository contains multiple Angular applications demonstrating various top
 - **Machine Learning**: Neural networks and TensorFlow.js examples
 - **Performance**: WebAssembly integrations and GPU-accelerated calculations
 
-The project emphasizes clean code architecture following the Angular style guide and Nx monorepo best practices, with extensive use of RxJS for reactive programming and Angular Material for consistent UI components.
+The project emphasizes clean code architecture following the Angular style guide and Nx monorepo best practices, with extensive use of RxJS for reactive programming and Angular Material for consistent UI components. **All applications are built with zoneless change detection** for optimal performance.
 
 ## Documentation
 
 - **[Getting Started Guide](./docs/GETTING_STARTED.md)** - Setup instructions and first steps
 - **[Architecture Overview](./docs/ARCHITECTURE.md)** - Repository structure and design principles
 - **[Testing Guide](./docs/TESTING.md)** - Testing practices and guidelines
+- **[E2E Testing with Playwright](./docs/E2E_TESTING.md)** - Guide to end-to-end testing using Playwright
 - **[Angular Framework Overview](./docs/ANGULAR.md)** - Angular patterns used in this monorepo
 - **[Documentation Improvements](./docs/IMPROVEMENTS.md)** - Identified documentation issues and fixes
 

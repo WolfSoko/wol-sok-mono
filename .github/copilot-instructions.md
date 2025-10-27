@@ -2,16 +2,25 @@
 
 This repository is a monorepo of Angular+ experiments and examples, managed with Nx. It showcases science algorithms, shader programming with WebGL, AI examples, and uses Firebase for persistence.
 
+**🔥 IMPORTANT: This repository uses ZONELESS Angular everywhere!**
+
+- All apps use `provideZonelessChangeDetection()`
+- Use signals for state management, not traditional properties
+- Use @if, @for, @switch control flow instead of *ngIf, *ngFor, \*ngSwitch
+- Use OnPush change detection strategy
+- No Zone.js dependency
+
 > **📚 Comprehensive Documentation Available**  
 > For detailed information, see the `docs/` folder with guides on [Getting Started](../docs/GETTING_STARTED.md), [Architecture](../docs/ARCHITECTURE.md), [Testing](../docs/TESTING.md), [Contributing](../docs/CONTRIBUTING.md), and [Deployment](../docs/DEPLOYMENT.md).
 
 ## Repository Overview
 
-- **Tech Stack**: Angular 20+, TypeScript 5.9+, Nx 22+, RxJS 7+, Angular Material, Firebase
+- **Tech Stack**: Angular 20+ (Zoneless), TypeScript 5.9+, Nx 22+, RxJS 7+, Angular Material, Firebase
 - **Key Libraries**: TensorFlow.js, Three.js, p5.js, GPU.js, MathJS
 - **Monorepo Manager**: Nx (not Lerna or Turborepo)
 - **Testing**: Jest (unit), Playwright (E2E)
 - **Code Style**: ESLint + Prettier, 2-space indentation, kebab-case filenames
+- **Change Detection**: Zoneless with signals (no Zone.js)
 
 ## Project Structure
 
@@ -79,6 +88,16 @@ npx nx affected -t lint                   # Lint affected projects
 
 ### TypeScript/Angular Guidelines
 
+**CRITICAL: This repo is ZONELESS - follow these rules:**
+
+- ✅ **Use signals** for reactive state: `myValue = signal(0)`
+- ✅ **Use @if/@for/@switch** instead of *ngIf/*ngFor/\*ngSwitch
+- ✅ **Use OnPush** change detection strategy on all components
+- ✅ **Use provideZonelessChangeDetection()** in bootstrapApplication
+- ❌ **DO NOT use Zone.js** or traditional change detection
+- ❌ **DO NOT use *ngIf, *ngFor, \*ngSwitch** - use @if, @for, @switch instead
+- ❌ **DO NOT use traditional properties** - use signals instead
+
 - Use **strongly typed APIs** - avoid `any` unless absolutely necessary
 - Mark class members as `public` or `private` explicitly
 - Follow Angular style guide conventions
@@ -88,11 +107,14 @@ npx nx affected -t lint                   # Lint affected projects
 ### Code Style
 
 - **2-space indentation** (enforced by Prettier)
+- **ALWAYS run `npx nx format:write` before committing** to ensure all files are properly formatted
 - Run Prettier and ESLint before committing (via Husky pre-commit hooks)
 - Follow existing patterns in the codebase
 
 ### State Management
 
+- This repo uses **Signals** for local component state
+- This repo uses **Akita** and **Elf** for global state management
 - This repo uses **Akita** and **Elf** for state management
 - Follow existing state management patterns when working with stores
 
@@ -177,7 +199,7 @@ npx nx graph                              # Visualize dependency graph
 
 ## Documentation
 
-- **[Angular Framework Overview](./docs/ANGULAR.md)** - Comprehensive Angular guide
+- **[Angular Framework Overview](../docs/ANGULAR.md)** - Comprehensive Angular guide
 - **[SECURITY.md](../SECURITY.md)** - Security guidelines
 - **[AGENTS.md](../AGENTS.md)** - Additional agent instructions
 

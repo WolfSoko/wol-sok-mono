@@ -79,7 +79,6 @@
       "inputs": [
         "default",
         "^production",
-        "{workspaceRoot}/karma.conf.js",
         "{workspaceRoot}/jest.preset.js",
         "{workspaceRoot}/jest.config.ts",
         "{workspaceRoot}/.codecov.yml"
@@ -93,7 +92,7 @@
       }
     },
     "test-integration": {
-      "inputs": ["default", "^production", "{workspaceRoot}/karma.conf.js"],
+      "inputs": ["default", "^production"],
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "cache": true,
       "configurations": {
@@ -115,7 +114,6 @@
       "inputs": [
         "default",
         "^production",
-        "{workspaceRoot}/karma.conf.js",
         "{workspaceRoot}/jest.preset.js",
         "{workspaceRoot}/jest.config.ts",
         "{workspaceRoot}/.codecov.yml"
