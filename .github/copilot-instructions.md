@@ -108,6 +108,7 @@ npx nx affected -t lint                   # Lint affected projects
 
 - **2-space indentation** (enforced by Prettier)
 - **ALWAYS run `npx nx format:write` before committing** to ensure all files are properly formatted
+- **ALWAYS run `npx nx affected -t lint` before pushing** to verify all linting issues are resolved and prevent CI failures
 - Run Prettier and ESLint before committing (via Husky pre-commit hooks)
 - Follow existing patterns in the codebase
 
