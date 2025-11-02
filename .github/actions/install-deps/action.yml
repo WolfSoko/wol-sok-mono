@@ -22,16 +22,12 @@ runs:
       if: inputs.apt-packages == 'true'
       shell: bash
       run: ./.github/actions/install-deps/install-ubuntu-packages.sh
+
     - uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
         cache: npm
-    - name: Cache node_modules
-      id: cache
-      uses: actions/cache@v4
-      with:
-        path: node_modules
-        key: node-modules-${{ hashFiles('package-lock.json') }}
+
     - name: Cache Playwright binaries
       id: cache-playwright-binary
       if: inputs.browser == 'true'

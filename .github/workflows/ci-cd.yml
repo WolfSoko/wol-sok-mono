@@ -40,6 +40,11 @@ jobs:
         run: |
           printenv
 
+      - name: Install Deps
+        uses: ./.github/actions/install-deps
+        with:
+          apt-packages: 'false'
+
       - uses: nrwl/nx-set-shas@v4
       - run: |
           echo "BASE: ${{ env.NX_BASE }}"
@@ -53,17 +58,12 @@ jobs:
             --distribute-on=".nx/workflows/dynamic-changesets.yml" \
             --stop-agents-after="e2e-ci"
 
-      - name: Install Deps
-        uses: ./.github/actions/install-deps
-        with:
-          apt-packages: 'false'
-
       # This line is needed for nx affected to work when CI is running on a PR
       - run: git branch --track main origin/main
         if: github.event_name == 'pull_request'
 
       - run: |
-          npx nx-cloud record -- npx nx format:check --verbose
+          npx nx-cloud record -- npx nx format:check
           npx nx-cloud record -- npx nx sync:check
       - name: run-checks in parallel on nx agents
         run: |
