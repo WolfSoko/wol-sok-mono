@@ -45,7 +45,7 @@ jobs:
         with:
           run-scripts: 'true'
           browser: 'false'
-          apt-packages: 'false'
+          apt-packages: 'true'
 
       - uses: nrwl/nx-set-shas@v4
       - run: |
