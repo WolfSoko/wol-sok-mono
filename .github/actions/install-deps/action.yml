@@ -44,15 +44,14 @@ runs:
         path: ~/.cache/ms-playwright
         key: playwright-binary-${{ hashFiles('package-lock.json') }}
 
-    - name: Install dependencies (no browser)
-      if: steps.cache-playwright-binary.outputs.cache-hit != 'true' && inputs.browser == 'false'
+    # WICHTIG: npm ci muss IMMER laufen. Vorheriger Zustand übersprang Installation bei Cache-Hit -> Nx konnte nicht gefunden werden.
+    - name: Install dependencies
       shell: bash
       run: |
         npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
 
-    - name: Install dependencies (with browser)
-      if: steps.cache-playwright-binary.outputs.cache-hit != 'true' && inputs.browser != 'false'
+    - name: Install Playwright browsers (only if needed)
+      if: inputs.browser == 'true' && steps.cache-playwright-binary.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
         npx playwright install --with-deps
