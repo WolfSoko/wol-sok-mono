@@ -28,6 +28,13 @@ runs:
         node-version-file: '.nvmrc'
         cache: npm
 
+    - name: Workaround gl build (force include <cstdint>)
+      shell: bash
+      run: |
+        echo 'CXXFLAGS=-include cstdint' >> $GITHUB_ENV
+        echo 'CPPFLAGS=-include cstdint' >> $GITHUB_ENV
+        echo 'Applied CXXFLAGS workaround for gl angleutils uintptr_t build failure'
+
     - name: Cache Playwright binaries
       id: cache-playwright-binary
       if: inputs.browser == 'true'
@@ -36,15 +43,15 @@ runs:
         path: ~/.cache/ms-playwright
         key: playwright-binary-${{ hashFiles('package-lock.json') }}
 
-    - name: Install dependencies
-      if: steps.cache.outputs.cache-hit != 'true' && inputs.browser == 'false'
+    - name: Install dependencies (no browser)
+      if: steps.cache-playwright-binary.outputs.cache-hit != 'true' && inputs.browser == 'false'
       shell: bash
       run: |
-        npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+        npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
 
-    - name: Install dependencies
-      if: steps.cache.outputs.cache-hit != 'true' && inputs.browser != 'false'
+    - name: Install dependencies (with browser)
+      if: steps.cache-playwright-binary.outputs.cache-hit != 'true' && inputs.browser != 'false'
       shell: bash
       run: |
-        npm install --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+        npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
         npx playwright install --with-deps
