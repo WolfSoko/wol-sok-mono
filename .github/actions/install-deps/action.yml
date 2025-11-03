@@ -28,12 +28,13 @@ runs:
         node-version-file: '.nvmrc'
         cache: npm
 
-    - name: Workaround gl build (force include <cstdint>)
+    - name: Workaround gl build (force include uintptr_t definition)
       shell: bash
       run: |
-        echo 'CXXFLAGS=-include cstdint' >> $GITHUB_ENV
-        echo 'CPPFLAGS=-include cstdint' >> $GITHUB_ENV
-        echo 'Applied CXXFLAGS workaround for gl angleutils uintptr_t build failure'
+        # stdint.h funktioniert für C und C++ (uintptr_t); cstdint würde beim C-Compiler fehlschlagen
+        echo 'CXXFLAGS=-include stdint.h' >> $GITHUB_ENV
+        echo 'CPPFLAGS=-include stdint.h' >> $GITHUB_ENV
+        echo 'Applied CXXFLAGS workaround (-include stdint.h) for gl angleutils uintptr_t build failure'
 
     - name: Cache Playwright binaries
       id: cache-playwright-binary
