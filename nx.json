@@ -45,7 +45,8 @@
       "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
       "!{projectRoot}/src/*test-setup.[jt]s",
       "!{projectRoot}/playwright.config.[jt]s",
-      "!{projectRoot}/eslint.config.[jt]s"
+      "!{projectRoot}/eslint.config.[jt]s",
+      "!{projectRoot}/eslint.config.mjs"
     ],
     "sharedGlobals": [
       "{workspaceRoot}/.github/**",
@@ -134,7 +135,8 @@
       "inputs": [
         "default",
         "{workspaceRoot}/.eslintrc.json",
-        "{workspaceRoot}/eslint*.config.js"
+        "{workspaceRoot}/eslint*.config.js",
+        "{workspaceRoot}/eslint*.config.mjs"
       ],
       "cache": true,
       "outputs": ["{options.outputFile}"],
