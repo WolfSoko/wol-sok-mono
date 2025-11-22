@@ -1,6 +1,5 @@
 {
   "nxCloudUrl": "https://cloud.nx.app",
-  "nxCloudAccessToken": "ZDIxOTJiNDctZjhhNS00NDYzLWFiNzQtODg0NDJkYTMyYzBlfHJlYWQtb25seQ==",
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "pluginsConfig": {
     "@nx/js": {
@@ -262,5 +261,6 @@
   },
   "defaultProject": "angular-examples",
   "parallel": 6,
-  "defaultBase": "main"
+  "defaultBase": "main",
+  "nxCloudId": "618e4d8c68fbe32b7809b7ab"
 }
