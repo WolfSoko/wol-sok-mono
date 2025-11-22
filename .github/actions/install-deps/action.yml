@@ -49,6 +49,7 @@ runs:
       shell: bash
       run: |
         npm ci --ignore-scripts=${{ inputs.run-scripts == 'false' }}
+        npx playwright install
 
     - name: Install Playwright browsers (only if needed)
       if: inputs.browser == 'true' && steps.cache-playwright-binary.outputs.cache-hit != 'true'
