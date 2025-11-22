@@ -41,7 +41,7 @@ jobs:
           printenv
 
       - name: install deps
-        uses: ./.github/actions/install-deps/action.yml
+        uses: ./.github/actions/install-deps
         with:
           apt-packages: 'true'
           browser: 'true'
