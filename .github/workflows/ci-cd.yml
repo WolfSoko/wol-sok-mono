@@ -43,9 +43,13 @@ jobs:
       - name: Install Deps
         uses: ./.github/actions/install-deps
         with:
-          run-scripts: 'true'
+          run-scripts: 'false'
           browser: 'false'
-          apt-packages: 'true'
+          apt-packages: 'false'
+
+      # This line is needed for nx affected to work when CI is running on a PR
+      - run: git branch --track main origin/main
+        if: github.event_name == 'pull_request'
 
       - uses: nrwl/nx-set-shas@v4
       - run: |
@@ -59,10 +63,6 @@ jobs:
             --auto-apply-fixes="*format*,*lint*,*test*,*build*,*e2e-ci*" \
             --distribute-on=".nx/workflows/dynamic-changesets.yml" \
             --stop-agents-after="e2e-ci"
-
-      # This line is needed for nx affected to work when CI is running on a PR
-      - run: git branch --track main origin/main
-        if: github.event_name == 'pull_request'
 
       - run: |
           npx nx format:check
