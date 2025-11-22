@@ -1,6 +1,5 @@
 {
   "nxCloudUrl": "https://cloud.nx.app",
-  "nxCloudAccessToken": "ZDIxOTJiNDctZjhhNS00NDYzLWFiNzQtODg0NDJkYTMyYzBlfHJlYWQtb25seQ==",
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "pluginsConfig": {
     "@nx/js": {
@@ -8,12 +7,6 @@
     }
   },
   "plugins": [
-    {
-      "plugin": "@nx/playwright/plugin",
-      "options": {
-        "targetName": "e2e"
-      }
-    },
     {
       "plugin": "@nx/eslint/plugin",
       "options": {
@@ -27,6 +20,12 @@
         "serveStorybookTargetName": "storybook",
         "testStorybookTargetName": "test-storybook",
         "staticStorybookTargetName": "static-storybook"
+      }
+    },
+    {
+      "plugin": "@nx/playwright/plugin",
+      "options": {
+        "targetName": "e2e"
       }
     }
   ],
@@ -45,7 +44,8 @@
       "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
       "!{projectRoot}/src/*test-setup.[jt]s",
       "!{projectRoot}/playwright.config.[jt]s",
-      "!{projectRoot}/eslint.config.[jt]s"
+      "!{projectRoot}/eslint.config.[jt]s",
+      "!{projectRoot}/eslint.config.mjs"
     ],
     "sharedGlobals": [
       "{workspaceRoot}/.github/**",
@@ -134,7 +134,8 @@
       "inputs": [
         "default",
         "{workspaceRoot}/.eslintrc.json",
-        "{workspaceRoot}/eslint*.config.js"
+        "{workspaceRoot}/eslint*.config.js",
+        "{workspaceRoot}/eslint*.config.mjs"
       ],
       "cache": true,
       "outputs": ["{options.outputFile}"],
@@ -260,5 +261,6 @@
   },
   "defaultProject": "angular-examples",
   "parallel": 6,
-  "defaultBase": "main"
+  "defaultBase": "main",
+  "nxCloudId": "618e4d8c68fbe32b7809b7ab"
 }

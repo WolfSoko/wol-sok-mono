@@ -1,8 +1,13 @@
 import { FlatCompat } from '@eslint/eslintrc';
-// @ts-expect-error import error but it works
+import baseConfig from '../../eslint.config.mjs';
 import js from '@eslint/js';
 
-import baseConfig from '../../eslint.config.mjs';
+import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
+
+// Convert import.meta.url to a file path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
@@ -27,7 +32,7 @@ export default [
           'error',
           {
             type: 'attribute',
-            prefix: 'rap',
+            prefix: 'app',
             style: 'camelCase',
           },
         ],
@@ -35,7 +40,7 @@ export default [
           'error',
           {
             type: 'element',
-            prefix: 'rap',
+            prefix: 'app',
             style: 'kebab-case',
           },
         ],
@@ -54,11 +59,15 @@ export default [
     .config({ extends: ['plugin:playwright/recommended'] })
     .map((config) => ({
       ...config,
-      files: ['e2e/**/*.{ts,js,tsx,jsx}'],
+      files: ['e2e/**/*.{ts,tsx,js,jsx}'],
       rules: {
         ...config.rules,
-        'playwright/no-standalone-expect': 'off',
-        'playwright/expect-expect': 'off',
       },
     })),
+  {
+    files: ['**/*.ts'],
+    rules: {
+      '@angular-eslint/prefer-standalone': 'off',
+    },
+  },
 ];

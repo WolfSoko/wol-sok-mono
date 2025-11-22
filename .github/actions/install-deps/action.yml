@@ -54,4 +54,4 @@ runs:
       if: inputs.browser == 'true' && steps.cache-playwright-binary.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        npx playwright install --with-deps
+        sudo npx playwright install --with-deps

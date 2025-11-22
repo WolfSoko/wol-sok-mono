@@ -24,6 +24,7 @@ env:
   HUSKY: 0
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
   NODE_OPTIONS: '--max_old_space_size=4096'
+  NX_VERBOSE_LOGGING: true
 
 jobs:
   main:
@@ -40,12 +41,16 @@ jobs:
         run: |
           printenv
 
-      - name: Install Deps
+      - name: install deps
         uses: ./.github/actions/install-deps
         with:
-          run-scripts: 'true'
-          browser: 'false'
           apt-packages: 'true'
+          browser: 'false'
+          run-scripts: 'true'
+
+      # This line is needed for nx affected to work when CI is running on a PR
+      - run: git branch --track main origin/main
+        if: github.event_name == 'pull_request'
 
       - uses: nrwl/nx-set-shas@v4
       - run: |
@@ -59,10 +64,6 @@ jobs:
             --auto-apply-fixes="*format*,*lint*,*test*,*build*,*e2e-ci*" \
             --distribute-on=".nx/workflows/dynamic-changesets.yml" \
             --stop-agents-after="e2e-ci"
-
-      # This line is needed for nx affected to work when CI is running on a PR
-      - run: git branch --track main origin/main
-        if: github.event_name == 'pull_request'
 
       - run: |
           npx nx format:check
