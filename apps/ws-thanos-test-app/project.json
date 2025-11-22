@@ -4,7 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/ws-thanos-test-app/src",
   "prefix": "app",
-  "tags": ["type:test-app"],
+  "tags": ["type:test-app", "app"],
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:browser",

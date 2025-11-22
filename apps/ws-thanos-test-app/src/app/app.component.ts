@@ -16,7 +16,7 @@ export class AppComponent {
     this.completedTests.update((tests) => ({ ...tests, [testId]: true }));
   }
 
-  vaporizeMultiple(...directives: any[]) {
+  vaporizeMultiple(...directives: WsThanosDirective[]) {
     directives.forEach((dir) => dir.vaporize(true));
   }
 }
