@@ -3,13 +3,48 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { HeadlineAnimationService } from '@wolsok/headline-animation';
-import { of } from 'rxjs';
 import { MainToolbarComponent } from './main-toolbar.component';
 
 describe('MainToolbarComponent', () => {
   let component: MainToolbarComponent;
   let fixture: ComponentFixture<MainToolbarComponent>;
   let mockHeadlineAnimationService: jest.Mocked<HeadlineAnimationService>;
+
+  class MockIntersectionObserver implements IntersectionObserver {
+    readonly root: Element | Document | null = null;
+    readonly rootMargin = '';
+    readonly thresholds: ReadonlyArray<number> = [];
+
+    constructor(private readonly callback: IntersectionObserverCallback) {}
+
+    disconnect(): void {}
+
+    observe(_target: Element): void {
+      this.callback([], this);
+    }
+
+    takeRecords(): IntersectionObserverEntry[] {
+      return [];
+    }
+
+    unobserve(_target: Element): void {}
+  }
+
+  const mockIdleCallback = (
+    callback: (deadline: { didTimeout: boolean; timeRemaining: () => number }) => void
+  ) => {
+    return setTimeout(() => callback({ didTimeout: false, timeRemaining: () => 0 }), 0) as unknown as number;
+  };
+
+  beforeAll(() => {
+    (globalThis as any).IntersectionObserver = MockIntersectionObserver;
+    (globalThis as any).requestIdleCallback = mockIdleCallback;
+  });
+
+  afterAll(() => {
+    delete (globalThis as any).IntersectionObserver;
+    delete (globalThis as any).requestIdleCallback;
+  });
 
   beforeEach(async () => {
     mockHeadlineAnimationService = {

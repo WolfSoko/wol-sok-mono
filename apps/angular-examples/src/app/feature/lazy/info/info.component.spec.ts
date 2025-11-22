@@ -1,10 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject } from 'rxjs';
 import { InfoComponent } from './info.component';
-import { TechnologyComponent } from './technology/technology.component';
 
 describe('InfoComponent', () => {
   let component: InfoComponent;
@@ -121,9 +119,11 @@ describe('InfoComponent', () => {
   it('should handle demo lifecycle with techCards', (done) => {
     // Given: Component has tech cards initialized
     // Mock techCards with vaporize method
-    const mockVaporize$ = of({ state: 'completed' } as any);
+    const vaporizeSubject = new Subject<{ state: string }>();
     const mockTechCard = {
-      vaporizeAndScrollIntoView: jest.fn().mockReturnValue(mockVaporize$),
+      vaporizeAndScrollIntoView: jest
+        .fn()
+        .mockReturnValue(vaporizeSubject.asObservable()),
     } as any;
 
     // Mock QueryList
@@ -137,12 +137,15 @@ describe('InfoComponent', () => {
     // Then: Demo should be running
     expect(component.demoRunning()).toBe(true);
 
-    // Wait for demo to complete
+    // Wait for demo to complete asynchronously
     setTimeout(() => {
+      vaporizeSubject.next({ state: 'completed' });
+      vaporizeSubject.complete();
+
       // Then: Demo should stop after completion
       expect(component.demoRunning()).toBe(false);
       done();
-    }, 100);
+    }, 50);
   });
 
   it('should clean up on destroy', () => {
