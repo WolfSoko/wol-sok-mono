@@ -40,10 +40,12 @@ jobs:
         run: |
           printenv
 
-      - name: Install Deps
-        run: |
-          npm ci
-          npx playwright install --with-deps
+      - name: install deps
+        uses: ./.github/actions/install-deps/action.yml
+        with:
+          apt-packages: 'true'
+          browser: 'true'
+          run-scripts: 'true'
 
       # This line is needed for nx affected to work when CI is running on a PR
       - run: git branch --track main origin/main
