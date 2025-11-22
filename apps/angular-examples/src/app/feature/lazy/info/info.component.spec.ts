@@ -1,10 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject } from 'rxjs';
 import { InfoComponent } from './info.component';
-import { TechnologyComponent } from './technology/technology.component';
 
 describe('InfoComponent', () => {
   let component: InfoComponent;
@@ -120,10 +118,10 @@ describe('InfoComponent', () => {
 
   it('should handle demo lifecycle with techCards', (done) => {
     // Given: Component has tech cards initialized
-    // Mock techCards with vaporize method
-    const mockVaporize$ = of({ state: 'completed' } as any);
+    // Mock techCards with vaporize method using async observable
+    const mockVaporize$ = new Subject<any>();
     const mockTechCard = {
-      vaporizeAndScrollIntoView: jest.fn().mockReturnValue(mockVaporize$),
+      vaporizeAndScrollIntoView: jest.fn().mockReturnValue(mockVaporize$.asObservable()),
     } as any;
 
     // Mock QueryList
@@ -134,21 +132,25 @@ describe('InfoComponent', () => {
     // When: Starting demo
     component.startDemo();
 
-    // Then: Demo should be running
+    // Then: Demo should be running immediately after start
     expect(component.demoRunning()).toBe(true);
 
-    // Wait for demo to complete
+    // Simulate async vaporization completion
     setTimeout(() => {
-      // Then: Demo should stop after completion
-      expect(component.demoRunning()).toBe(false);
-      done();
-    }, 100);
+      mockVaporize$.next({ state: 'completed' });
+      mockVaporize$.complete();
+      
+      // Wait for completion handler to execute
+      setTimeout(() => {
+        // Then: Demo should stop after completion
+        expect(component.demoRunning()).toBe(false);
+        done();
+      }, 10);
+    }, 50);
   });
 
   it('should clean up on destroy', () => {
     // Given: Component is initialized
-    const component = fixture.componentInstance;
-
     // When: Component is destroyed
     fixture.destroy();
 

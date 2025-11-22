@@ -3,7 +3,13 @@ import { test, expect } from './fixtures/home-page.fixture';
 test.describe('Navigation Menu Functionality', () => {
   test('should toggle side navigation on menu button click', async ({
     homePage,
+    page,
   }) => {
+    // Set viewport to small screen to ensure side nav starts closed
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.reload();
+    await homePage.expectPageLoaded();
+
     // Given: User is on the home page with side nav closed
     await homePage.expectSideNavClosed();
 

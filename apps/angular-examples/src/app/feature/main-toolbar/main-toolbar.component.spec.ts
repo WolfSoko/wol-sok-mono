@@ -1,9 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { HeadlineAnimationService } from '@wolsok/headline-animation';
-import { of } from 'rxjs';
 import { MainToolbarComponent } from './main-toolbar.component';
 
 describe('MainToolbarComponent', () => {
@@ -12,6 +10,23 @@ describe('MainToolbarComponent', () => {
   let mockHeadlineAnimationService: jest.Mocked<HeadlineAnimationService>;
 
   beforeEach(async () => {
+    // Mock IntersectionObserver for stopHeadlineAnimationWhenNotVisible
+    global.IntersectionObserver = jest.fn().mockImplementation(() => ({
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+      root: null,
+      rootMargin: '',
+      thresholds: [],
+      takeRecords: jest.fn(),
+    })) as any;
+
+    // Mock requestIdleCallback for stopHeadlineAnimationWhenNotVisible
+    global.requestIdleCallback = jest.fn((callback) => {
+      setTimeout(() => callback({ didTimeout: false, timeRemaining: () => 50 } as any), 0);
+      return 0;
+    }) as any;
+
     mockHeadlineAnimationService = {
       runAnimation: jest.fn(),
       startAnimation: jest.fn(),
@@ -133,8 +148,6 @@ describe('MainToolbarComponent', () => {
 
   it('should handle navigation events', () => {
     // Given: Component is initialized with router
-    const router = TestBed.inject(Router);
-
     // When: Component is created
     // Then: Should be subscribed to router events
     expect(component.isHandset).toBeDefined();
