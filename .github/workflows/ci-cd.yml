@@ -41,11 +41,9 @@ jobs:
           printenv
 
       - name: Install Deps
-        uses: ./.github/actions/install-deps
-        with:
-          run-scripts: 'true'
-          browser: 'false'
-          apt-packages: 'true'
+        run: |
+          npm ci
+          npx playwright install --with-deps
 
       # This line is needed for nx affected to work when CI is running on a PR
       - run: git branch --track main origin/main
@@ -64,6 +62,9 @@ jobs:
             --distribute-on=".nx/workflows/dynamic-changesets.yml" \
             --stop-agents-after="e2e-ci"
 
+      - run: |
+          npx nx format:check
+          npx nx sync:check
       - name: run-checks in parallel on nx agents
         run: |
           npx nx affected -t lint -c=ci \
