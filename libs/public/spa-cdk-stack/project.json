@@ -3,6 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/public/spa-cdk-stack/src",
   "projectType": "library",
+  "tags": ["infra-shared", "published"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -17,6 +18,5 @@
     "test": {
       "executor": "@nx/vite:test"
     }
-  },
-  "tags": ["infra-shared", "published"]
+  }
 }
