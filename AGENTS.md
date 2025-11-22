@@ -24,6 +24,7 @@
 - Prefer strongly typed APIs and explicit `public`/`private` in classes.
 - Linting: ESLint (`eslint*.config.*`). Formatting: Prettier (`.prettierrc.json`). Pre-commit runs via Husky + lint-staged.
 - **IMPORTANT**: Always run `npx nx format:write` before committing to ensure all files are properly formatted.
+- **REQUIRED**: Run `npx nx affected -t lint` before pushing to verify all linting issues are resolved. This prevents CI failures.
 
 ## Testing Guidelines
 

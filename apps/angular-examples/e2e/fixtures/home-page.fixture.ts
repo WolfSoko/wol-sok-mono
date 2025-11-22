@@ -4,6 +4,7 @@ import { HomePage } from '../po/home.page';
 const test = testBase.extend<{ homePage: HomePage }>({
   homePage: async ({ page }, use) => {
     await page.setViewportSize({ width: 1023, height: 720 });
+
     const homePage = new HomePage(page);
     await homePage.goto();
     await homePage.expectPageLoaded();

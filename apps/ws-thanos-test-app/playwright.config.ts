@@ -1,11 +1,6 @@
-import { defineConfig, devices } from '@playwright/test';
+import { workspaceRoot } from '@nx/devkit';
 import { nxE2EPreset } from '@nx/playwright/preset';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const workspaceRoot = join(__dirname, '../..');
+import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env['BASE_URL'] || 'http://localhost:4350';
 

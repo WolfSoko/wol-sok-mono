@@ -40,6 +40,13 @@ jobs:
         run: |
           printenv
 
+      - name: Install Deps
+        uses: ./.github/actions/install-deps
+        with:
+          run-scripts: 'true'
+          browser: 'false'
+          apt-packages: 'true'
+
       - uses: nrwl/nx-set-shas@v4
       - run: |
           echo "BASE: ${{ env.NX_BASE }}"
@@ -49,49 +56,24 @@ jobs:
       # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "e2e-ci" targets have been requested
       - run: |
           npx nx-cloud start-ci-run \
-            --auto-apply-fixes="*format*,*lint*" \
+            --auto-apply-fixes="*format*,*lint*,*test*,*build*,*e2e-ci*" \
             --distribute-on=".nx/workflows/dynamic-changesets.yml" \
             --stop-agents-after="e2e-ci"
 
-      - name: Install Deps
-        uses: ./.github/actions/install-deps
-        with:
-          apt-packages: 'false'
-
       # This line is needed for nx affected to work when CI is running on a PR
-      #      - run: git branch --track main origin/main
-      #        if: github.event_name == 'pull_request'
+      - run: git branch --track main origin/main
+        if: github.event_name == 'pull_request'
 
       - run: |
-          npx nx-cloud record -- npx nx format:check --verbose
-          npx nx-cloud record -- npx nx sync:check
+          npx nx format:check
+          npx nx sync:check
       - name: run-checks in parallel on nx agents
         run: |
-          # Start task in parallel and capture PIDs
-          npx nx affected -t=lint -c=ci --parallel=3 &
-          LINT_PID=$!
-          npx nx affected -t=test -c=ci --parallel=3 &
-          TEST_PID=$!
-          npx nx affected -t=build -c=ci --parallel=3 &
-          BUILD_PID=$!
-          npx nx affected -t=e2e-ci --parallel=1 &
-          E2E_CI_PID=$!
+          npx nx affected -t lint -c=ci \
+          & npx nx affected -t test -c=ci \
+          & npx nx affected -t build -c ci \
+          & npx nx affected -t e2e-ci -c=ci
 
-          # Wait for all background jobs to finish and capture their exit codes
-          wait $LINT_PID
-          LINT_STATUS=$?
-          wait $TEST_PID
-          TEST_STATUS=$?
-          wait $BUILD_PID
-          BUILD_STATUS=$?
-          wait $E2E_CI_PID
-          E2E_CI_STATUS=$?
-
-          # Check exit codes and fail the step if any task failed
-          if [ $LINT_STATUS -ne 0 ] || [ $TEST_STATUS -ne 0 ] || [ $BUILD_STATUS -ne 0 ] || [ $E2E_CI_STATUS -ne 0 ]; then
-            echo "One or more checks failed."
-            exit 1
-          fi
       - name: Auto Fix CI
         if: always()
         run: npx nx fix-ci
