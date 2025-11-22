@@ -20,5 +20,3 @@ export default [
   },
   { ignores: ['test-build-path/**'] },
 ];
-
-
