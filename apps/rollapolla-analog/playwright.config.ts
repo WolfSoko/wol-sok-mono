@@ -15,8 +15,16 @@ const baseURL = process.env['BASE_URL'] || 'http://localhost:4300';
  */
 export default defineConfig({
   ...nxE2EPreset(__filename, { testDir: './e2e' }),
-  reporter: [['html', { open: 'never' }]],
-  timeout: 120 * 1000,
+  reporter: [
+    [
+      'html',
+      {
+        open: 'never',
+        outputFolder: '../../reports/playwright/apps/rollapolla-analog',
+      },
+    ],
+  ],
+  timeout: (process.env['CI'] ? 720 : 120) * 1000,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     baseURL,
@@ -29,7 +37,7 @@ export default defineConfig({
     url: 'http://localhost:4300',
     reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,
-    timeout: (process.env['CI'] ? 360 : 120) * 1000,
+    timeout: (process.env['CI'] ? 720 : 120) * 1000,
   },
 
   projects: [
