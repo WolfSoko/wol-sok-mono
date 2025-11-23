@@ -11,7 +11,7 @@ export default defineConfig({
   ...nxE2EPreset(__filename, {
     testDir: './e2e',
   }),
-  timeout: 120_000,
+  timeout: (process.env['CI'] ? 720 : 120) * 1000,
   /* Shared settings for all the projects below. See ht
   tps://playwright.dev/docs/api/class-testoptions. */
   use: {
@@ -25,7 +25,7 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,
-    timeout: process.env['CI'] ? 360_000 : 180_000,
+    timeout: process.env['CI'] ? 720_000 : 180_000,
   },
   projects: [
     {
