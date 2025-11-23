@@ -1,7 +1,7 @@
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 // Convert import.meta.url to a file path
 const __filename = fileURLToPath(import.meta.url);
@@ -19,9 +19,16 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {
+      enabled: process.env.NX_TASK_TARGET_CONFIGURATION === 'ci',
       reporter: ['lcov', 'html', 'text-summary'],
       reportsDirectory: '../../../coverage/libs/shared/data-access',
       provider: 'v8',
+      exclude: [
+        'node_modules/',
+        'src/test-setup.ts',
+        '**/*.spec.ts',
+        '**/*.test.ts',
+      ],
     },
   },
 });

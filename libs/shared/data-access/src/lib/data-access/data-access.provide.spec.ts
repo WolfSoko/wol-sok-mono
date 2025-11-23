@@ -1,30 +1,29 @@
-import {
-  FirebaseApp,
-  initializeApp,
-  provideFirebaseApp,
-} from '@angular/fire/app';
-import {
-  connectFirestoreEmulator,
-  Firestore,
-  getFirestore,
-  provideFirestore,
-} from '@angular/fire/firestore';
+import { FirebaseApp } from '@angular/fire/app';
+import { Firestore } from '@angular/fire/firestore';
 import { describe, expect, it, vi } from 'vitest';
 import { environment } from '../../environments/environment';
 import { provideDataAccess } from './data-access.provide';
 import { mock, MockProxy } from 'vitest-mock-extended';
 import { EnvironmentProviders, Injector } from '@angular/core';
 
-vi.mock('@angular/fire/app', async (importOriginal) => ({
-  ...(await importOriginal()),
+const mocks = vi.hoisted(() => ({
   initializeApp: vi.fn(),
   provideFirebaseApp: vi.fn((fn) => fn()),
-}));
-
-vi.mock('@angular/fire/firestore', () => ({
   connectFirestoreEmulator: vi.fn(),
   getFirestore: vi.fn(() => ({})),
   provideFirestore: vi.fn(),
+}));
+
+vi.mock('@angular/fire/app', () => ({
+  FirebaseApp: vi.fn(),
+  initializeApp: mocks.initializeApp,
+  provideFirebaseApp: mocks.provideFirebaseApp,
+}));
+
+vi.mock('@angular/fire/firestore', () => ({
+  connectFirestoreEmulator: mocks.connectFirestoreEmulator,
+  getFirestore: mocks.getFirestore,
+  provideFirestore: mocks.provideFirestore,
 }));
 
 describe('provideDataAccess', () => {
@@ -36,9 +35,9 @@ describe('provideDataAccess', () => {
     vi.resetAllMocks();
     firestore = mock<Firestore>();
     injectorMock = mock<Injector>();
-    vi.mocked(getFirestore).mockReturnValue(firestore);
+    mocks.getFirestore.mockReturnValue(firestore);
 
-    vi.mocked(provideFirestore).mockImplementation(
+    mocks.provideFirestore.mockImplementation(
       (callback: (injector: Injector) => Firestore): EnvironmentProviders => {
         provideFirebaseCallbackResult = callback(injectorMock, ...[]);
         return provideFirebaseCallbackResult as unknown as EnvironmentProviders;
@@ -51,8 +50,10 @@ describe('provideDataAccess', () => {
     provideDataAccess();
 
     // Then
-    expect(initializeApp).toHaveBeenCalledWith(environment.firebaseConfig);
-    expect(provideFirebaseApp).toHaveBeenCalled();
+    expect(mocks.initializeApp).toHaveBeenCalledWith(
+      environment.firebaseConfig
+    );
+    expect(mocks.provideFirebaseApp).toHaveBeenCalled();
     expect(injectorMock.get).toHaveBeenCalledWith(FirebaseApp);
     expect(provideFirebaseCallbackResult).toEqual(firestore);
   });
@@ -65,7 +66,7 @@ describe('provideDataAccess', () => {
     provideDataAccess(options);
 
     // Then
-    expect(initializeApp).toHaveBeenCalledWith(options);
+    expect(mocks.initializeApp).toHaveBeenCalledWith(options);
   });
 
   it('should connect to Firestore emulator when emulated', () => {
@@ -80,7 +81,7 @@ describe('provideDataAccess', () => {
     provideDataAccess(undefined, firestoreEmulatorOptions);
 
     // Then
-    expect(connectFirestoreEmulator).toHaveBeenCalledWith(
+    expect(mocks.connectFirestoreEmulator).toHaveBeenCalledWith(
       expect.any(Object),
       'localhost',
       8080
@@ -99,6 +100,6 @@ describe('provideDataAccess', () => {
     provideDataAccess(undefined, firestoreEmulatorOptions);
 
     // Then
-    expect(connectFirestoreEmulator).not.toHaveBeenCalled();
+    expect(mocks.connectFirestoreEmulator).not.toHaveBeenCalled();
   });
 });

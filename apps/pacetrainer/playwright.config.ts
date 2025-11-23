@@ -15,7 +15,15 @@ const baseURL = process.env['BASE_URL'] || 'http://localhost:4301';
  */
 export default defineConfig({
   ...nxE2EPreset(__filename, { testDir: './e2e' }),
-  reporter: [['html', { open: 'never' }]],
+  reporter: [
+    [
+      'html',
+      {
+        open: 'never',
+        outputFolder: '../../reports/playwright/apps/pacetrainer',
+      },
+    ],
+  ],
   timeout: 120 * 1000,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {

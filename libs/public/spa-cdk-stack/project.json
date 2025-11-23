@@ -14,9 +14,6 @@
         "tsConfig": "libs/public/spa-cdk-stack/tsconfig.lib.json",
         "assets": ["libs/public/spa-cdk-stack/*.md"]
       }
-    },
-    "test": {
-      "executor": "@nx/vite:test"
     }
   }
 }

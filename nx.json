@@ -27,6 +27,16 @@
       "options": {
         "targetName": "e2e"
       }
+    },
+    {
+      "plugin": "@nx/vite/plugin",
+      "options": {
+        "buildTargetName": "build",
+        "previewTargetName": "preview",
+        "testTargetName": "test",
+        "serveTargetName": "serve",
+        "serveStaticTargetName": "serve-static"
+      }
     }
   ],
   "namedInputs": {
@@ -45,7 +55,8 @@
       "!{projectRoot}/src/*test-setup.[jt]s",
       "!{projectRoot}/playwright.config.[jt]s",
       "!{projectRoot}/eslint.config.[jt]s",
-      "!{projectRoot}/eslint.config.mjs"
+      "!{projectRoot}/eslint.config.mjs",
+      "!{projectRoot}/tsconfig.spec.json"
     ],
     "sharedGlobals": [
       "{workspaceRoot}/.github/**",
@@ -163,7 +174,7 @@
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "configurations": {
         "ci": {
-          "coverage": true
+          "coverage.enabled": true
         },
         "watch": {
           "watch": true

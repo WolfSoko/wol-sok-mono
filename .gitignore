@@ -11,6 +11,7 @@
 
 # dependencies
 /node_modules
+**/node_modules/*
 
 # IDEs and editors
 .project
@@ -81,3 +82,4 @@ vitest.config.*.timestamp*
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 **/playwright-report
+apps/pacetrainer/node_modules/.vite/vitest/da39a3ee5e6b4b0d3255bfef95601890afd80709/deps___vitest_vm__/_metadata.json
