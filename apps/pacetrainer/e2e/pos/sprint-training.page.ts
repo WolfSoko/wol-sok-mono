@@ -82,11 +82,17 @@ export class SprintTrainingPage {
     sprintTime: Seconds;
     recoveryTime: Seconds;
   }): Promise<void> {
-    await this.sprintTraining.getByTestId('repetitions').fill('' + repetitions);
-    await this.sprintTraining.getByTestId('sprintTime').fill('' + sprintTime);
-    await this.sprintTraining
-      .getByTestId('recoveryTime')
-      .fill('' + recoveryTime);
+    const repetitionsInput = this.sprintTraining.getByTestId('repetitions');
+    await repetitionsInput.fill('' + repetitions);
+    await repetitionsInput.blur();
+
+    const sprintTimeInput = this.sprintTraining.getByTestId('sprintTime');
+    await sprintTimeInput.fill('' + sprintTime);
+    await sprintTimeInput.blur();
+
+    const recoveryTimeInput = this.sprintTraining.getByTestId('recoveryTime');
+    await recoveryTimeInput.fill('' + recoveryTime);
+    await recoveryTimeInput.blur();
   }
 
   async startTraining(): Promise<void> {
@@ -107,6 +113,7 @@ export class SprintTrainingPage {
 
   async expectTrainingStateStoppable(): Promise<void> {
     await this.stopTrainingCta.isEnabled({ timeout: 10000 });
+    await expect(this.stopTrainingCta).toBeVisible();
     await expect(this.stopTrainingCta).toContainText('Training beenden');
   }
 
@@ -120,6 +127,9 @@ export class SprintTrainingPage {
 
   async stopTraining(): Promise<void> {
     await this.expectTrainingStateStoppable();
+    // Wait for any potential animations or state updates
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await this.page.waitForTimeout(500);
     await this.stopTrainingCta.click();
     await this.expectTrainingStateStartable();
   }
