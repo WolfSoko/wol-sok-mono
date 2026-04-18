@@ -1,0 +1,260 @@
+From 594a07acfd7b972c9f30eeb88f9965d750d5f8b7 Mon Sep 17 00:00:00 2001
+From: Einstein Openclaw <einstein-openclaw@gmail.com>
+Date: Sat, 18 Apr 2026 12:35:39 +0000
+Subject: [PATCH] docs: add PLAN.md tracking build chunks and locked-in design
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Living plan doc. Covers goal, tech stack, the four design decisions
+(Discord auth model, DO storage, EU region, session-scoped MCP) plus
+agent-agnostic framing, MVP tool scope, module layout, the two-legged
+OAuth sequence diagram, the five-chunk build plan with chunk 1 marked
+done, the sandbox → patches → manual-replay delivery mechanism, and
+open items (signing, compat-date drift, callback shape matrix).
+
+Updated after every chunk.
+---
+ PLAN.md | 230 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 230 insertions(+)
+ create mode 100644 PLAN.md
+
+diff --git a/PLAN.md b/PLAN.md
+new file mode 100644
+index 0000000..86e45c9
+--- /dev/null
++++ b/PLAN.md
+@@ -0,0 +1,230 @@
++# PLAN.md — discord-mcp-oauth
++
++Living build plan. Updated after every chunk. If this file disagrees with the
++code, the code wins — flag and update it.
++
++## Goal
++
++A remote [Model Context Protocol](https://modelcontextprotocol.io) server
++that bridges Discord with any MCP-compatible client (Claude.ai, Claude Code,
++Cursor, Cline, Zed, `mcp-remote`) via **multi-user OAuth**, deployed to
++**Cloudflare Workers**.
++
++Differentiators vs. existing community Discord MCP servers:
++
++- Per-user OAuth, no shared hardcoded token.
++- Serverless; no Docker/VPS.
++- Streamable HTTP transport (SSE is deprecated).
++- Client-agnostic (registered via Dynamic Client Registration, RFC 7591).
++- Production-grade defaults; intended as a portfolio showcase.
++
++## Tech stack — locked in
++
++| Concern       | Choice                                                                                                                                           |
++| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
++| Language      | TypeScript, strict mode (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noPropertyAccessFromIndexSignature`, `verbatimModuleSyntax`) |
++| Runtime       | Cloudflare Workers                                                                                                                               |
++| MCP           | `@modelcontextprotocol/sdk` + custom Streamable HTTP adapter                                                                                     |
++| HTTP router   | Hono                                                                                                                                             |
++| Schemas       | Zod 4                                                                                                                                            |
++| Token storage | Durable Objects (one DO per Discord user)                                                                                                        |
++| MCP OAuth     | `@modelcontextprotocol/sdk` primitives wrapped in a Workers-native provider                                                                      |
++| Discord OAuth | Hand-rolled (50 LOC, no extra dep surface)                                                                                                       |
++| Discord API   | Typed REST client wrapper (no `discord.js` — it assumes a gateway connection Workers cannot hold)                                                |
++| Tests         | Vitest (node pool now; Workers pool added in chunk 3 for DO tests)                                                                               |
++| Deploy        | Wrangler                                                                                                                                         |
++| Lint/format   | ESLint 9 flat + typescript-eslint strict-type-checked, Prettier                                                                                  |
++
++## Design decisions — locked in
++
++1. **Discord auth model:** shared-bot + user-OAuth. Users grant `identify guilds`;
++   the bot token (Worker secret) performs data-plane calls. Authorization
++   guard: `guild_id ∈ user.GET /users/@me/guilds` before any guild-scoped
++   tool call. Bot must be invited to each target guild; error messages
++   surface a ready-to-click invite URL when absent.
++2. **Token storage:** Durable Objects, keyed by `discord_user_id`. Avoids
++   KV's lost-update race on concurrent refresh. Refresh is serialized inside
++   the DO; 60s skew window; rotated refresh tokens persisted atomically.
++3. **Region:** EU (`locationHint: "weur"`) by default for GDPR posture, with
++   a `WORKER_REGION` knob for forks.
++4. **MCP session model:** session-scoped, keyed by `Mcp-Session-Id`. A
++   lighter `SessionDO` maps `session_id → discord_user_id`. Session TTL 24h
++   sliding; Discord refresh token proactively rotated inside `UserTokenDO`
++   regardless of session activity.
++5. **Agent-agnostic:** no hardcoded client names or redirect URIs. DCR
++   drives everything. Consent page renders the registered `client_name`
++   dynamically. README ships quickstarts for multiple clients in
++   `docs/clients.md`.
++
++## MVP tool scope — locked in
++
++Each tool: Zod input schema, descriptive error mapping, `{ content: [...] }`
++response.
++
++| Tool                               | Purpose                                                |
++| ---------------------------------- | ------------------------------------------------------ |
++| `list_guilds`                      | Servers the authenticated user is a member of.         |
++| `list_channels`                    | Channels in a guild (text/forum/thread).               |
++| `send_message`                     | Post a message to a channel.                           |
++| `read_recent_messages`             | Last N (cap 100) messages from a channel.              |
++| `search_messages`                  | Query by text, author, date range; cap 100, paginated. |
++| `add_reaction` / `remove_reaction` | Manage reactions on a message.                         |
++| `create_thread`                    | From a message or standalone.                          |
++| `get_user_info`                    | Current authenticated Discord identity.                |
++
++**Out of scope (MVP):** role management, voice, webhook CRUD, slash command
++registration, forum post CRUD, DMs.
++
++**Bot permissions requested on invite:** `View Channels`, `Send Messages`,
++`Read Message History`, `Add Reactions`, `Create Public Threads`. No
++`Manage Messages`.
++
++## Module layout
++
++```
++src/
++├── index.ts                      # Worker fetch handler, router
++├── env.ts                        # Zod-validated env/bindings             [chunk 1]
++├── mcp/
++│   ├── server.ts                 # MCP Server + tool registration
++│   ├── transport.ts              # Streamable HTTP adapter
++│   └── errors.ts                 # MCP error helpers
++├── oauth/
++│   ├── mcp-provider.ts           # What the MCP client authenticates against
++│   ├── discord-client.ts         # Discord OAuth2: authorize, exchange, refresh, PKCE
++│   └── bridge.ts                 # MCP auth code ↔ Discord identity
++├── discord/
++│   ├── rest-client.ts            # Typed fetch wrapper, auth header, retry
++│   ├── rate-limiter.ts           # X-RateLimit-* + Retry-After bucket tracking
++│   ├── errors.ts                 # DiscordPermissionError, NotFound, RateLimit, …
++│   └── schemas.ts                # Zod schemas for Discord REST payloads
++├── tools/
++│   ├── registry.ts               # Binds all tools to the MCP server
++│   └── <one file per tool>
++├── authz/
++│   └── guild-membership.ts       # "user ∈ guild?" guard
++├── storage/
++│   ├── user-token-do.ts          # Per-user token state, serialized refresh
++│   ├── session-do.ts             # MCP session → user mapping
++│   └── schema.ts                 # Stored-record Zod schemas
++└── lib/
++    ├── logger.ts                 # Structured JSON, PII-redacting          [chunk 1]
++    ├── result.ts                 # Result<T, E>                            [chunk 1]
++    └── time.ts                   # Clock seam for tests
++```
++
++## OAuth sequence (two-legged)
++
++```mermaid
++sequenceDiagram
++    actor U as User
++    participant C as MCP Client
++    participant W as MCP Worker
++    participant MO as MCP OAuth
++    participant D as Discord OAuth
++    participant UDO as UserTokenDO
++    participant SDO as SessionDO
++
++    Note over C,W: Phase 1 — Registration
++    C->>W: GET /.well-known/oauth-authorization-server
++    W-->>C: OAuth 2.1 metadata (PKCE required)
++    C->>MO: POST /register (DCR, RFC 7591)
++    MO-->>C: {client_id, client_secret}
++
++    Note over U,D: Phase 2 — Authorization (two legs)
++    C->>MO: GET /authorize?client_id=...&code_challenge=...&state=S1
++    MO->>W: render consent ("Connect Discord")
++    U->>W: Authorize
++    W->>D: 302 /oauth2/authorize?scope=identify+guilds&state=S2&code_challenge=...
++    U->>D: Login + approve
++    D-->>W: 302 /discord/callback?code=DC&state=S2
++    W->>D: POST /oauth2/token (code + PKCE verifier)
++    D-->>W: {access_token, refresh_token, expires_in}
++    W->>D: GET /users/@me
++    D-->>W: {id=U123, username}
++    W->>UDO: put(U123, {tokens, expires_at})
++    W->>MO: mint MCP auth code MC, bind MC↔U123
++    MO-->>C: 302 redirect_uri?code=MC&state=S1
++
++    Note over C,W: Phase 3 — Token exchange
++    C->>MO: POST /token (code=MC, PKCE verifier)
++    MO->>SDO: create session SID, bind SID↔U123
++    MO-->>C: {access_token=SID, token_type=Bearer}
++
++    Note over C,W: Phase 4 — Tool call
++    C->>W: POST /mcp (Authorization: Bearer SID, Mcp-Session-Id: SID)
++    W->>SDO: lookup(SID) → U123
++    W->>UDO: getValidToken(U123)
++    alt expires_at - now < 60s
++        UDO->>D: POST /oauth2/token (refresh_token)
++        D-->>UDO: {new access, new refresh, expires_in}
++        UDO->>UDO: atomic put (rotation)
++    end
++    UDO-->>W: access_token
++    W->>W: authz guard (guild membership)
++    W->>D: Data-plane call with `Bot ${BOT_TOKEN}`
++    D-->>W: response
++    W-->>C: MCP result { content: [...] }
++```
++
++Key invariant: the user's access token is only used for **identity +
++authorization** (`/users/@me`, `/users/@me/guilds`). Data-plane calls
++(send/read messages, reactions, threads) use the **bot token**. The MCP
++client never sees a Discord token.
++
++## Build plan — chunks
++
++Each chunk must build, typecheck, pass tests, and lint independently. Each
++chunk is exported as a `git format-patch` to
++`wol-sok-mono/patches/discord-mcp-oauth/chunk-<N>/` for manual replay (see
++sandbox note below).
++
++- [x] **Chunk 1 — Scaffold + foundations.** TS strict, Vitest (node pool),
++      ESLint, Prettier, `wrangler.toml` with DO bindings, `.dev.vars.example`;
++      `src/env.ts`, `src/lib/logger.ts`, `src/lib/result.ts`. 24 passing tests.
++- [ ] **Chunk 2 — Discord REST client.** `discord/errors.ts` (typed
++      hierarchy), `discord/rate-limiter.ts` (X-RateLimit-\* + Retry-After),
++      `discord/rest-client.ts` (typed fetch wrapper), `discord/schemas.ts`
++      (Zod for the payloads this project touches). Unit tests with `fetch` mocks
++      covering happy path, 429 backoff, 403/404 mapping, and schema drift.
++- [ ] **Chunk 3 — OAuth + storage.** `storage/user-token-do.ts` (atomic
++      rotation), `storage/session-do.ts`, `oauth/discord-client.ts` (PKCE,
++      exchange, refresh), `oauth/mcp-provider.ts`, `oauth/bridge.ts`. Vitest
++      Workers pool added here for DO tests. Test: OAuth happy path, refresh
++      rotation, concurrent-refresh serialization.
++- [ ] **Chunk 4 — MCP server + tools.** `mcp/server.ts`, `mcp/transport.ts`,
++      `authz/guild-membership.ts`, and the eight tools under `tools/` with
++      one-happy + one-error test each.
++- [ ] **Chunk 5 — Entry point + docs.** `src/index.ts` (Hono router wiring
++      all the above), `README.md` (quickstart + client setup), `ARCHITECTURE.md`
++      (this plan's successor as the shipping doc), `docs/clients.md`,
++      `docs/admin.md` (bot invite + permissions), GitHub Actions CI workflow,
++      badges.
++
++## Delivery mechanism
++
++Sandbox outbound git is restricted to `wolfsoko/wol-sok-mono`. The project
++itself lives at `wolfsoko/discord-mcp-oauth`. Workflow:
++
++1. Claude commits chunks locally in the sandbox at `/root/repos/discord-mcp-oauth`.
++2. Each chunk is exported via `git format-patch` to
++   `wol-sok-mono/patches/discord-mcp-oauth/chunk-<N>/`.
++3. The patch is committed on `claude/discord-mcp-oauth-FO3GL` and pushed to
++   `wol-sok-mono`.
++4. The maintainer applies the patch locally in the target repo and pushes.
++
++Apply instructions: `patches/discord-mcp-oauth/README.md` in `wol-sok-mono`.
++
++## Open items / deferred decisions
++
++- **Commit signing.** Disabled locally in the sandbox clone (`git config
++commit.gpgsign false`) because the sandbox signing infra isn't aware of
++  this repo. When the patch is replayed locally, the maintainer's own
++  signing kicks in.
++- **Compat date drift.** `wrangler.toml` targets `2026-04-01`. Local
++  `workerd` only supports up to `2025-10-11` today and warns; it's a
++  local-dev-only gap and will resolve when Miniflare/workerd updates.
++- **Claude.ai vs. Claude Code vs. mcp-remote callback shapes.** Covered by
++  DCR in principle; chunk 4 adds an integration test matrix to catch
++  regressions.
++- **Forum post CRUD.** Stretch goal, not in MVP.
+-- 
+2.43.0
+

@@ -34,6 +34,6 @@ be signed at apply time with your local key.
 
 ## Chunk index
 
-| Chunk | Description | Files |
-| --- | --- | --- |
-| 1 | Project scaffold: TS strict, Vitest, ESLint, Prettier, wrangler.toml; `env.ts` + `lib/logger.ts` + `lib/result.ts` with 24 tests. | `chunk-1/0001-*.patch` |
+| Chunk | Description                                                                                                                                                              | Files                    |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
+| 1     | Project scaffold: TS strict, Vitest, ESLint, Prettier, wrangler.toml; `env.ts` + `lib/logger.ts` + `lib/result.ts` with 24 tests. Plus `PLAN.md` tracking the full build. | `chunk-1/0001-*`, `0002-*` |
