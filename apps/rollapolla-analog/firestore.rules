@@ -1,27 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2026, 12, 31);
-    }
+
+    // notes collection: world-readable (legacy notes displayed in chat),
+    // anyone can add a new note (no auth required, matching prior behaviour).
+    // No updates or deletes allowed from clients.
     match /notes/{noteId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['message', 'createdAt']) &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.message is string &&
+        request.resource.data.message.size() > 0 &&
+        request.resource.data.message.size() <= 1000;
+      allow update, delete: if false;
+    }
+
+    // chatMessages collection: world-readable, anyone can create a message
+    // provided it passes field validation (mirrors the app's existing checks).
+    // Updates and deletes are not exposed by the app — deny them.
+    match /chatMessages/{messageId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['message', 'createdAt', 'ttl']) &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.ttl is timestamp &&
+        request.resource.data.ttl > request.resource.data.createdAt &&
+        request.resource.data.message is string &&
+        request.resource.data.message.size() > 9 &&
+        request.resource.data.message.size() < 1001;
+      allow update, delete: if false;
+    }
+
+    // Deny everything else by default (no world-open catch-all rule).
+    match /{document=**} {
       allow read, write: if false;
     }
-    match /chatMessages/{messageId} {
-     allow create, update: if request.resource.data.createdAt is timestamp &&
-       request.resource.data.ttl is timestamp &&
-       request.resource.data.ttl > request.resource.data.createdAt &&
-       request.resource.data.message.size() > 9 &&
-       request.resource.data.message.size() < 1001
-    }
+
   }
 }
