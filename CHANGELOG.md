@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.0-non-cdk-deployed...v4.79.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* **github:** 🐛 skip deploy failure when no previous deployment tag exists ([792d6dd](https://github.com/WolfSoko/wol-sok-mono/commit/792d6dd2f7d8ecc6339eb152a80934df204ed708))
+
+
+### Chore
+
+* **deps:** update dependency eslint-plugin-html to v8.1.4 ([#2110](https://github.com/WolfSoko/wol-sok-mono/issues/2110)) ([9eb74a6](https://github.com/WolfSoko/wol-sok-mono/commit/9eb74a6b6b5f594685aaed8912f90a9bcb531bae))
+
 ## [4.79.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.78.0-cdk-deployed...v4.79.0) (2026-04-22)
 
 
