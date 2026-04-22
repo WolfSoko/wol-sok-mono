@@ -71,10 +71,8 @@ jobs:
           npx nx sync:check
 
       - name: run-checks in parallel on nx agents
-        env:
-          NX_SKIP_NX_CACHE: 'true'
         run: |
-          npx nx affected -t="lint,test,build,e2e-ci" -c=ci --skip-nx-cache
+          npx nx affected -t="lint,test,build,e2e-ci" -c=ci
 
       - name: Auto Fix CI
         if: always()

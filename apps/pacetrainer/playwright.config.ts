@@ -35,11 +35,13 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command:
-      'echo "=== E2E DIAG pacetrainer ===" ; pwd ; whoami ; env | grep -E "^(CI|NX_|HUSKY|NODE|PATH)" 2>&1 | head -10 ; node -v ; ls node_modules/sass-embedded-linux-x64/ 2>&1 | head -3 || echo "MISSING sass-embedded-linux-x64" ; echo "=== START SERVE pacetrainer ===" ; exec npx nx serve pacetrainer',
+      '{ echo "=== E2E DIAG pacetrainer ===" ; pwd ; whoami ; env | grep -E "^(CI|NX_|HUSKY|NODE|PATH)" | head -10 ; node -v ; ls node_modules/sass-embedded-linux-x64/ | head -3 || echo "MISSING sass-embedded-linux-x64" ; echo "=== START SERVE pacetrainer ===" ; } 1>&2 ; exec npx nx serve pacetrainer',
     url: 'http://localhost:4301',
     reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,
     timeout: (process.env['CI'] ? 360 : 120) * 1000,
+    stdout: 'pipe',
+    stderr: 'pipe',
   },
   projects: [
     {

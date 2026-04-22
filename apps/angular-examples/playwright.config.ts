@@ -22,11 +22,13 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command:
-      'echo "=== E2E DIAG angular-examples ===" ; pwd ; whoami ; env | grep -E "^(CI|NX_|HUSKY|NODE|PATH)" 2>&1 | head -10 ; node -v ; npm -v ; ls node_modules/@nx/angular/package.json 2>&1 ; ls node_modules/@module-federation/enhanced/package.json 2>&1 ; free -h 2>&1 | head -3 ; echo "=== START SERVE angular-examples ===" ; exec npx nx run angular-examples:serve',
+      '{ echo "=== E2E DIAG angular-examples ===" ; pwd ; whoami ; env | grep -E "^(CI|NX_|HUSKY|NODE|PATH)" | head -10 ; node -v ; npm -v ; ls node_modules/@nx/angular/package.json ; ls node_modules/@module-federation/enhanced/package.json ; free -h | head -3 ; echo "=== START SERVE angular-examples ===" ; } 1>&2 ; exec npx nx run angular-examples:serve',
     url: baseURL,
     reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,
     timeout: process.env['CI'] ? 720_000 : 180_000,
+    stdout: 'pipe',
+    stderr: 'pipe',
   },
   projects: [
     {
