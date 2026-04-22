@@ -35,7 +35,7 @@ export function latestVersionTag(
     );
     try {
       // get current commit hash
-      return execSync('git rev-parse --short HEAD').toString();
+      return execSync('git rev-parse --short HEAD').toString().trim();
     } catch (error) {
       console.error(
         'Error while getting head commit hash. Returning a timestamp version',

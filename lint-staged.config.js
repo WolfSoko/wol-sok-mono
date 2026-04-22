@@ -7,9 +7,8 @@ export default {
       .join(',');
 
     const formatCommand = `npx nx format:write --files="${relativeFilePaths}"`;
-    const syncCommand = `npx nx sync:check`;
     const lintCommand = `npx nx affected -t="lint" --output-style=static --fix --files="${relativeFilePaths}"`;
 
-    return [syncCommand, formatCommand, lintCommand];
+    return [formatCommand, lintCommand];
   },
 };
