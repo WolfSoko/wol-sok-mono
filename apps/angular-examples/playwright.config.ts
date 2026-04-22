@@ -21,7 +21,9 @@ export default defineConfig({
   },
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npx nx run angular-examples:serve',
+    command: process.env['CI']
+      ? 'echo "=== E2E DIAG angular-examples ===" && node -v && npm -v ; ls node_modules/@nx/angular/package.json 2>&1 ; ls node_modules/@module-federation/enhanced/package.json 2>&1 ; free -h 2>&1 | head -3 ; echo "=== START SERVE ===" ; stdbuf -oL -eL npx nx run angular-examples:serve 2>&1'
+      : 'npx nx run angular-examples:serve',
     url: baseURL,
     reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,

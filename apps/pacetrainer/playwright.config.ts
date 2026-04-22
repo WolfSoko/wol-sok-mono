@@ -34,7 +34,9 @@ export default defineConfig({
   },
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npx nx serve pacetrainer',
+    command: process.env['CI']
+      ? 'echo "=== E2E DIAG pacetrainer ===" && node -v && ls node_modules/sass-embedded-linux-x64/ 2>&1 | head -3 || echo "MISSING sass-embedded-linux-x64" ; ls node_modules/sass-embedded/dist/ 2>&1 | head -3 ; node -e "try{const s=require(\'sass-embedded\');s.compileString(\'a{b:c}\');console.log(\'sass-embedded OK\')}catch(e){console.log(\'sass-embedded FAIL:\',e.message)}" ; echo "=== START SERVE ===" ; npx nx serve pacetrainer'
+      : 'npx nx serve pacetrainer',
     url: 'http://localhost:4301',
     reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,
