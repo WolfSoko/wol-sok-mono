@@ -29,6 +29,7 @@ env:
 jobs:
   main:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     outputs:
       shouldTriggerRelease: ${{ steps.shouldTriggerRelease.outputs.triggerRelease }}
     steps:
