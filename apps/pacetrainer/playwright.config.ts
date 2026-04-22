@@ -35,9 +35,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command:
-      process.env['CI'] || process.env['NX_CLOUD_ACCESS_TOKEN']
-        ? 'echo "=== E2E DIAG pacetrainer ===" ; env | grep -E "^(CI|NX_|HUSKY|NODE)" 2>&1 | head -10 ; node -v ; ls node_modules/sass-embedded-linux-x64/ 2>&1 | head -3 || echo "MISSING sass-embedded-linux-x64" ; ls node_modules/sass-embedded/dist/ 2>&1 | head -3 ; node -e "try{const s=require(\'sass-embedded\');s.compileString(\'a{b:c}\');console.log(\'sass-embedded OK\')}catch(e){console.log(\'sass-embedded FAIL:\',e.message)}" ; echo "=== START SERVE pacetrainer ===" ; stdbuf -oL -eL npx nx serve pacetrainer 2>&1'
-        : 'npx nx serve pacetrainer',
+      'echo "=== E2E DIAG pacetrainer ===" ; pwd ; whoami ; env | grep -E "^(CI|NX_|HUSKY|NODE|PATH)" 2>&1 | head -10 ; node -v ; ls node_modules/sass-embedded-linux-x64/ 2>&1 | head -3 || echo "MISSING sass-embedded-linux-x64" ; echo "=== START SERVE pacetrainer ===" ; exec npx nx serve pacetrainer',
     url: 'http://localhost:4301',
     reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,
