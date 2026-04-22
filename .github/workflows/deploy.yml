@@ -75,9 +75,13 @@ jobs:
         id: previous_deployment
         run: |
           echo "Determining SHAs for affected projects"
-          PREVIOUS_DEPLOYMENT=$(git describe --tags --abbrev=0 --match="*-${{ matrix.config.deploy-tag-suffix }}")
-          echo "Previous release: $PREVIOUS_DEPLOYMENT"
-          echo "NX_BASE=$PREVIOUS_DEPLOYMENT" >> $GITHUB_ENV
+          if PREVIOUS_DEPLOYMENT=$(git describe --tags --abbrev=0 --match="*-${{ matrix.config.deploy-tag-suffix }}" 2>/dev/null); then
+            echo "Previous release: $PREVIOUS_DEPLOYMENT"
+            echo "NX_BASE=$PREVIOUS_DEPLOYMENT" >> $GITHUB_ENV
+          else
+            echo "No previous '*-${{ matrix.config.deploy-tag-suffix }}' tag found - treating as initial deployment (all projects affected)."
+            echo "NX_BASE=$(git hash-object -t tree /dev/null)" >> $GITHUB_ENV
+          fi
           echo "NX_HEAD=$RELEASE_VERSION" >> $GITHUB_ENV
 
       - name: Show affected projects and set triggerRelease
