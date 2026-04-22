@@ -5,15 +5,11 @@
   </mat-card-header>
   <br />
   <mat-card-content>
-    @defer (hydrate on idle) {
-      <rap-chat-message-form
-        [minMessageLength]="minLength()"
-        [maxMessageLength]="maxLength()"
-        (messageAdded)="addChatMessage($event)"
-      ></rap-chat-message-form>
-    } @placeholder {
-      <mat-spinner></mat-spinner>
-    }
+    <rap-chat-message-form
+      [minMessageLength]="minLength()"
+      [maxMessageLength]="maxLength()"
+      (messageAdded)="addChatMessage($event)"
+    ></rap-chat-message-form>
   </mat-card-content>
 </mat-card>
 <mat-card class="notes">

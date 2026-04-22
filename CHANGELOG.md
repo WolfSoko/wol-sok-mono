@@ -2,6 +2,131 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.78.0-cdk-deployed...v4.79.0) (2026-04-22)
+
+
+### Features
+
+* ✨ add AppComponent with Thanos directive integration and test completion logic ([34e9448](https://github.com/WolfSoko/wol-sok-mono/commit/34e9448c925518afd99b8147adec52a991413c1d))
+* ✨ Add initial Firestore security rules with temporary broad access and specific validation for chat messages. ([90dd85a](https://github.com/WolfSoko/wol-sok-mono/commit/90dd85a4d20818dcf283d093064cd83b0017e30b))
+* ✨ add missing lib ([cf9d7f0](https://github.com/WolfSoko/wol-sok-mono/commit/cf9d7f0e26a256b1575983e1dfc1f920c9d892d9))
+* ✨ change order of some scripts and don't install apt-packages ([84e4e06](https://github.com/WolfSoko/wol-sok-mono/commit/84e4e060d3179aa8003457bcbbdcd7fc8132c568))
+* ✨ install deps directly ([dee8594](https://github.com/WolfSoko/wol-sok-mono/commit/dee85941edfd024a4f40125e02a14b9c2150d227))
+* ✨ install playwright also to make sure natives are available for nx playwright plugin ([15ed3eb](https://github.com/WolfSoko/wol-sok-mono/commit/15ed3eb29f4845a3f7ace6f6fe57e49a92fe5dac))
+* ✨ introduce CI/CD workflow and reusable action for dependency installation. ([1411f5c](https://github.com/WolfSoko/wol-sok-mono/commit/1411f5c73bd38a829b8c0266925e1340d4919c1a))
+* ✨ make draw method asynchronous ([4131087](https://github.com/WolfSoko/wol-sok-mono/commit/4131087aa268cd64437488b33370b3788e3c82f2))
+* ✨ more runners for big changeset ([5a0e5de](https://github.com/WolfSoko/wol-sok-mono/commit/5a0e5debd3a007e58683fbaf82934c6ff7078e90))
+* ✨ remove zone ([2126302](https://github.com/WolfSoko/wol-sok-mono/commit/2126302ecf2992d94b09378f7a6ec26a49237125))
+* ✨ update player tracking in statistics display ([680dd99](https://github.com/WolfSoko/wol-sok-mono/commit/680dd99bb4d8c2a77ecfaae1c80c74e7a2751f78))
+* ✨ zoneless change detection ([a42952d](https://github.com/WolfSoko/wol-sok-mono/commit/a42952d8fb26b76d0208907f05a5f307bfad34ae))
+* complete karma removal Migrate to Playwright (E2E) and Jest (unit tests) with modern Angular (Zoneless, Signals, [@if](https://github.com/if)) ([#2095](https://github.com/WolfSoko/wol-sok-mono/issues/2095)) ([e29c917](https://github.com/WolfSoko/wol-sok-mono/commit/e29c9175069410431746c9c3abe5870902a75384))
+* **ws-thanos:** add Nx deploy target for npm publishing ([a108990](https://github.com/WolfSoko/wol-sok-mono/commit/a108990ed4aa56134c231c523f3895265c8628f5))
+
+
+### Bug Fixes
+
+* 🐛 add missing comma in component metadata ([6aa9f69](https://github.com/WolfSoko/wol-sok-mono/commit/6aa9f6985e24c921d0fac9efdab2ca72736635f4))
+* 🐛 add workaround for gl build and optimize dependency installation steps ([3fb6d03](https://github.com/WolfSoko/wol-sok-mono/commit/3fb6d03ef69e4de630de0316c101a434b74ee592))
+* 🐛 correct command syntax for nx-cloud recording ([3a838b8](https://github.com/WolfSoko/wol-sok-mono/commit/3a838b85c9471414415992a59dfeaac0ce4bec7e))
+* 🐛 enable run on save for Prettier configuration ([17c04f3](https://github.com/WolfSoko/wol-sok-mono/commit/17c04f39000cef5e84aba095285f279cfbda39c6))
+* 🐛 enhance install script for node-gyp by adding missing X11 and OpenGL dependencies ([3d25ec7](https://github.com/WolfSoko/wol-sok-mono/commit/3d25ec74edecf9e31dcada956cee6819235ff506))
+* 🐛 node version ([d7b64de](https://github.com/WolfSoko/wol-sok-mono/commit/d7b64def9cd529612bb4ee8534d19f6e3313dcc5))
+* 🐛 refactor tests to use async/await and improve zoneless change detection setup ([2746787](https://github.com/WolfSoko/wol-sok-mono/commit/274678757f95c81e9cc62f113e99db1c8c017e11))
+* 🐛 remove unused blocking navigation from file router configuration ([0351aed](https://github.com/WolfSoko/wol-sok-mono/commit/0351aed987846a86d1671400e8e289be093e3139))
+* 🐛 streamline dependency installation in CI/CD workflow ([fd904f0](https://github.com/WolfSoko/wol-sok-mono/commit/fd904f044b3ff2ae8e390fd115bca004b2b752d9))
+* 🐛 update action.yml to ensure npm ci always runs for dependency installation ([ef6d541](https://github.com/WolfSoko/wol-sok-mono/commit/ef6d5415ca614a4c98eebca335c165b8f0afadc5))
+* 🐛 update appVersion and thanosDemo to use signals for reactive updates ([73aa07a](https://github.com/WolfSoko/wol-sok-mono/commit/73aa07a197fbdae15085081c43f935bac68ba330))
+* 🐛 update appVersion and thanosDemo to use signals for reactive updates ([936bfff](https://github.com/WolfSoko/wol-sok-mono/commit/936bfffc058aac9ef86b1a3fb62440ab9ad7263f))
+* 🐛 update install script to include x11 package for node-gyp compilation ([6734ded](https://github.com/WolfSoko/wol-sok-mono/commit/6734dedbfa1590e529330be0b1ae5cd5369dd576))
+* 🐛 update package-lock.json to include additional esbuild dependencies for Linux ([7d323c5](https://github.com/WolfSoko/wol-sok-mono/commit/7d323c5bf8154ffbb27bbb279007e17e94eacc28))
+* 🐛 update package-lock.json to include additional esbuild dependencies for Linux ([763ac71](https://github.com/WolfSoko/wol-sok-mono/commit/763ac7182bf10a4d48971501dae3838148c7dc56))
+* 🐛 update ShowFpsComponent to use input() for properties and refactor tests ([52977ae](https://github.com/WolfSoko/wol-sok-mono/commit/52977ae65e40205635fa98948386ef2886870da8))
+* 🐛 update vite to version 7.1.11 in package.json and package-lock.json ([5fa08f3](https://github.com/WolfSoko/wol-sok-mono/commit/5fa08f3d372518640e91289a4c16feea77871892))
+* add 'app' tag to project.json ([9fa7c60](https://github.com/WolfSoko/wol-sok-mono/commit/9fa7c60d919b90e15de3f2cef82a51778025dfc6))
+* **ci:** resolve project graph error and E2E test failures ([#2105](https://github.com/WolfSoko/wol-sok-mono/issues/2105)) ([e05993d](https://github.com/WolfSoko/wol-sok-mono/commit/e05993d5a83a8700bfae5e682d668fac5f8382f4))
+* **deps:** 🐛 add @swc/core-linux-x64-gnu to optionalDependencies ([1806cfe](https://github.com/WolfSoko/wol-sok-mono/commit/1806cfe82edba554dde9c1e0bd8b9d5def5efce6))
+* **deps:** 🐛 pin @rspack/binding-linux-x64-gnu + sass-embedded-linux-x64 ([c735611](https://github.com/WolfSoko/wol-sok-mono/commit/c7356117954f3f57997cd88a366085b1d3446569)), closes [npm/cli#4828](https://github.com/npm/cli/issues/4828)
+* **deps:** update dependency browserslist to v4.27.0 ([2890d77](https://github.com/WolfSoko/wol-sok-mono/commit/2890d771829e9b3d03478ed71515e75b7c11ccc6))
+* **deps:** update dependency zone.js to v0.15.1 ([2855383](https://github.com/WolfSoko/wol-sok-mono/commit/2855383994dc1b0fe995351409dff8ab06686bab))
+* **deps:** update nx monorepo ([e1f7b48](https://github.com/WolfSoko/wol-sok-mono/commit/e1f7b481c49ebd384e55cc0666b8ada38a2d1f92))
+* **deps:** update trpc monorepo to v11.7.1 ([f0a89c6](https://github.com/WolfSoko/wol-sok-mono/commit/f0a89c641fd176b52a9f93804cf42d8f0419e17e))
+* **nx:** 🐛 add missing native deps to agents and restore main runner env ([98d18ff](https://github.com/WolfSoko/wol-sok-mono/commit/98d18ff130bff2b9d84b059494debeca89d5fcef))
+* **nx:** 🐛 repair vitest ci target for shared-data-access and spa-cdk-stack ([ffc3928](https://github.com/WolfSoko/wol-sok-mono/commit/ffc3928058748e181853e426ea242f25c980a2f5))
+* **nx:** 🐛 restore small-changeset agent pool (22wolsokmono typo) and ramp distribution ([28e3130](https://github.com/WolfSoko/wol-sok-mono/commit/28e31301f8236ef8b517c1215e497c30e188412f))
+* **rollapolla-analog:** 🐛 hydrate chat message form eagerly ([480c0b7](https://github.com/WolfSoko/wol-sok-mono/commit/480c0b7ee05e83dd7c8ffcce0f917025d1ebc145))
+* **tools:** 🐛 trim commit-hash fallback in latest-version-tag ([b611fd2](https://github.com/WolfSoko/wol-sok-mono/commit/b611fd20e0260508a687482870c1f47bdbadd85b))
+* use root .npmrc for npm authentication ([0106700](https://github.com/WolfSoko/wol-sok-mono/commit/0106700e97862cdb79336da917e933c0f13e908a))
+
+
+### Refactorings
+
+* ♻️ Migrate ESLint configurations to the new flat config format across the monorepo. ([b88801b](https://github.com/WolfSoko/wol-sok-mono/commit/b88801b44955c88e6ca06d08ca6d6a1a171a8c53))
+* integrate Nx Release for npm package publishing ([82db8a4](https://github.com/WolfSoko/wol-sok-mono/commit/82db8a420a9603857d4a0499cfcff47f0741ab2d))
+* use setup-node action for npm authentication ([a1878ab](https://github.com/WolfSoko/wol-sok-mono/commit/a1878ab0c422a7e31ea0562abf5bbcefbdc3a144))
+
+
+### CI/CD
+
+* 👷 Add Nx Cloud workflow agent configuration for `wolsokmono-linux-extra-large`. ([ff58a66](https://github.com/WolfSoko/wol-sok-mono/commit/ff58a666b000f01f2280e561f4662eb6b761ee57))
+* 👷 add playwright install ([0645842](https://github.com/WolfSoko/wol-sok-mono/commit/06458424b0d0278cd015501f1dcf6ce6c9fe386f))
+* 👷 add verbose logging ([fca36cf](https://github.com/WolfSoko/wol-sok-mono/commit/fca36cf7e24637b539b7befa2e424f0f380ceff0))
+* 👷 fix action path ([d2e1d3d](https://github.com/WolfSoko/wol-sok-mono/commit/d2e1d3dcf0472e2722c0928a2edbf84f27b8f42a))
+* 👷 install playwright-deps also ([3e9d922](https://github.com/WolfSoko/wol-sok-mono/commit/3e9d922443f1710474b0a8adbf1b5694be80e268))
+* 👷 remove nx format checks to see if rest of ci works ([adb5563](https://github.com/WolfSoko/wol-sok-mono/commit/adb5563076076bd27e862a58fc8672b279e7954d))
+* 👷 update CI/CD workflow to enable script execution, expand auto-fixes, and simplify parallel task execution ([4f7f04c](https://github.com/WolfSoko/wol-sok-mono/commit/4f7f04c107f3dec89ec9750425779a51ee9e2f33))
+* 👷 use install action again ([11a0cfe](https://github.com/WolfSoko/wol-sok-mono/commit/11a0cfe8d72101b0a6b4e267fdac794c9080c470))
+
+
+### Chore
+
+* 🔧 order of project configuration for `spa-cdk-stack` library ([a98caf5](https://github.com/WolfSoko/wol-sok-mono/commit/a98caf5ee346cbdd07963ae63888c38a0b6ea83b))
+* 🔧 remove nxCloudAccessToken and add nxCloudId to nx.json ([ca8cfed](https://github.com/WolfSoko/wol-sok-mono/commit/ca8cfed86891ceaa0bbe698171da231854420b0d))
+* 🔧 update .gitignore to include reports directory and settings.local.json ([fbe2954](https://github.com/WolfSoko/wol-sok-mono/commit/fbe2954a08d723699778b6cca6e63ba12ae88883))
+* 🔧 update optional dependencies versions ([2839f80](https://github.com/WolfSoko/wol-sok-mono/commit/2839f80079c2d0ab9efde9949cee2ba0fb251038))
+* add CLAUDE.md for Claude Code context ([751efde](https://github.com/WolfSoko/wol-sok-mono/commit/751efde9510b08f7d29235887238170b0f0a2329))
+* add new configuration files and update settings for Nx plugins ([8b44d38](https://github.com/WolfSoko/wol-sok-mono/commit/8b44d384c2c8987ec918148d8fe4f9cec9bdaae9))
+* **deps:** bump vite from 6.2.4 to 6.3.5 in /libs/shared/data-access ([ec22b8b](https://github.com/WolfSoko/wol-sok-mono/commit/ec22b8b35869a5c47fe45a3a3c71244c6f939104))
+* **deps:** update actions/setup-node action to v6 ([#2103](https://github.com/WolfSoko/wol-sok-mono/issues/2103)) ([d3ec930](https://github.com/WolfSoko/wol-sok-mono/commit/d3ec93006c3127763325fd1342ed042b8db53abb))
+* **deps:** update dependency aws-cdk-lib to v2.221.0 ([32a66c0](https://github.com/WolfSoko/wol-sok-mono/commit/32a66c004c74d420fb67eae8f2a8229bfb04a0d6))
+* **deps:** update dependency inquirer to v12 ([b7d0bdd](https://github.com/WolfSoko/wol-sok-mono/commit/b7d0bddb142ed1e4933dfd079b5a5748d4a517b7))
+* **deps:** update dependency lint-staged to v16 ([7b7720f](https://github.com/WolfSoko/wol-sok-mono/commit/7b7720f68ec460e2c0e0426f2efa64b2ef32b885))
+* **deps:** update dependency vite to v7.1.12 ([1ca83d0](https://github.com/WolfSoko/wol-sok-mono/commit/1ca83d0797abd9cf20d76efebd433b34060e4ecc))
+* **deps:** update snapshots for aws-cdk-lib v2.221.0 ([d679e90](https://github.com/WolfSoko/wol-sok-mono/commit/d679e90ae0947e238f4700f386ef3c8477a6fea3))
+* migrate nx to latest ([b7fa8f1](https://github.com/WolfSoko/wol-sok-mono/commit/b7fa8f13be92ed2da8c7a5e6f4ca67837d2b8aef))
+* remove backup file ([b55c312](https://github.com/WolfSoko/wol-sok-mono/commit/b55c31285e4c4fe5f366c866ac3ebca197066e57))
+
+
+### Documentation
+
+* 📚️ ✏️ update documentation to improve clarity and formatting ([22985b8](https://github.com/WolfSoko/wol-sok-mono/commit/22985b865e92dfec082d3f4d6039fe770295fbcb))
+* add comprehensive Angular framework documentation ([770918e](https://github.com/WolfSoko/wol-sok-mono/commit/770918e6318c31e6068c47803c1addb26bddb91a))
+* add comprehensive deployment guides ([95c5d66](https://github.com/WolfSoko/wol-sok-mono/commit/95c5d66a91196f38893420acceb8e76cd82ac459))
+* add contributing and deployment guides, update improvements ([f20d7de](https://github.com/WolfSoko/wol-sok-mono/commit/f20d7de5b5478bbf519441d14a077ef157f44fed))
+* add critical documentation files and fix issues ([4d3f41a](https://github.com/WolfSoko/wol-sok-mono/commit/4d3f41acbfcbe17c790890411756c549db069e4d))
+* add GitHub Copilot instructions file ([7a787a8](https://github.com/WolfSoko/wol-sok-mono/commit/7a787a828c09bb5c26eb0c30cc15932704e33af1))
+* create comprehensive improvements list ([b7844cd](https://github.com/WolfSoko/wol-sok-mono/commit/b7844cdcdcbb840a30f174215a21c03bec82ef4d))
+* fix Angular version and Akita documentation URL ([8278ebc](https://github.com/WolfSoko/wol-sok-mono/commit/8278ebc920709a4ee6145aa9a64a9f45d1dcaf38))
+* integrate new documentation into copilot instructions ([a3b73b4](https://github.com/WolfSoko/wol-sok-mono/commit/a3b73b43b9495f6dfa6303ea29818dd77cd27915))
+* move ANGULAR.md to docs folder ([00f9426](https://github.com/WolfSoko/wol-sok-mono/commit/00f942600a56217940d4c48be8688a3a45c203c8))
+* update Angular documentation using Context7 official sources ([3356e87](https://github.com/WolfSoko/wol-sok-mono/commit/3356e87435815b2ae90f2fc22584be09ae6f827c))
+
+
+### Code style
+
+* 🎨 fix formatting in eslint.config.mjs ([7952c77](https://github.com/WolfSoko/wol-sok-mono/commit/7952c77e90d181d64d45f21945c058e943d7d828))
+* format files with Prettier to fix CI/CD failures ([b89868d](https://github.com/WolfSoko/wol-sok-mono/commit/b89868d533b723536cd1659a8f73770b74e99522))
+
+
+### Testing
+
+* 🚨 add explicit change detection for zoneless tests ([2447534](https://github.com/WolfSoko/wol-sok-mono/commit/2447534346c77acd26e8da182ba0bc0280136bb3))
+* 🚨 fix shared-data-access tests. ([b4b43bd](https://github.com/WolfSoko/wol-sok-mono/commit/b4b43bd4660ea6356b6b628c40a9de06a4c8b8c0))
+* 🚨 fix some tests for zoneless ([7a2a20a](https://github.com/WolfSoko/wol-sok-mono/commit/7a2a20a27afbaa4d28c005729b839818023031fa))
+* 🚨 more robust sprint training e2e tests ([d34681f](https://github.com/WolfSoko/wol-sok-mono/commit/d34681f746daa7083f57a723194345473576f20a))
+* 🚨 raise timeouts for CI ([6cddde2](https://github.com/WolfSoko/wol-sok-mono/commit/6cddde22590ea7e01f46b6aa4a260dc1a09fd428))
+* 🚨 raise timeouts for CI ([70f1f1b](https://github.com/WolfSoko/wol-sok-mono/commit/70f1f1bb526f87675492e33388b3e1183977991f))
+* 🚨 remove fakeAsync from LetDirective test case ([69e6099](https://github.com/WolfSoko/wol-sok-mono/commit/69e60993edb2922fbf546ae44c561a1e8d33b839))
+
 ## [4.78.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.77.47-non-cdk-deployed...v4.78.0) (2025-10-25)
 
 ### Features

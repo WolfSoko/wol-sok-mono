@@ -6,7 +6,6 @@ import {
   Signal,
 } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ChatMessage } from '../../../shared/chat.message';
 import { ChatMessagesRepoPort } from '../../ports/chat-messages-repo.port';
 import { ChatMessageFormComponent } from './chat-message-form.component';
@@ -15,12 +14,7 @@ import { MessagesListComponent } from './messages-list.component';
 @Component({
   selector: 'rap-chat-live-stream',
 
-  imports: [
-    MatCardModule,
-    MessagesListComponent,
-    ChatMessageFormComponent,
-    MatProgressSpinnerModule,
-  ],
+  imports: [MatCardModule, MessagesListComponent, ChatMessageFormComponent],
   templateUrl: './chat-live-stream.component.html',
   styles: `
     :host {
