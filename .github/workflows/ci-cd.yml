@@ -66,9 +66,11 @@ jobs:
             --distribute-on=".nx/workflows/dynamic-changesets.yml" \
             --stop-agents-after="e2e-ci"
 
-      - run: |
-          npx nx format:check
-          npx nx sync:check
+      - name: Format check
+        run: npx nx format:check
+
+      - name: Sync check
+        run: npx nx sync:check
 
       - name: run-checks in parallel on nx agents
         run: |
