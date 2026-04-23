@@ -1,0 +1,13 @@
+# Browsers supported by this monorepo — shared across all apps and libs.
+# Docs: https://github.com/browserslist/browserslist#queries
+# Angular reference: https://angular.dev/reference/versions
+# Inspect resolved browser list with:
+#   npx browserslist
+
+last 2 Chrome versions
+last 2 Firefox versions
+last 2 Edge major versions
+last 2 Safari major versions
+last 2 iOS major versions
+Firefox ESR
+not dead
