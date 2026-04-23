@@ -49,11 +49,9 @@
       }
     },
     "test": {
-      "executor": "@analogjs/vitest-angular:build-test",
+      "executor": "@nx/vitest:test",
       "options": {
-        "tsConfig": "{projectRoot}/tsconfig.spec.json",
-        "setupFile": "{projectRoot}/src/test-setup.ts",
-        "configFile": "vite.config.ts"
+        "configFile": "apps/pacetrainer/vite.config.ts"
       }
     },
     "lint": {
