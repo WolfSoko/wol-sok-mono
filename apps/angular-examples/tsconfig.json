@@ -19,7 +19,6 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2022",
     "emitDecoratorMetadata": false
   },
   "angularCompilerOptions": {
