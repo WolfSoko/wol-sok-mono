@@ -2,17 +2,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // notes collection: world-readable (legacy notes displayed in chat),
-    // anyone can add a new note (no auth required, matching prior behaviour).
-    // No updates or deletes allowed from clients.
+    // notes collection: world-readable (legacy notes displayed in chat).
+    // The app never writes to notes (read-only adapter) — deny all mutations.
     match /notes/{noteId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasAll(['message', 'createdAt']) &&
-        request.resource.data.createdAt is timestamp &&
-        request.resource.data.message is string &&
-        request.resource.data.message.size() > 0 &&
-        request.resource.data.message.size() <= 1000;
-      allow update, delete: if false;
+      allow create, update, delete: if false;
     }
 
     // chatMessages collection: world-readable, anyone can create a message
@@ -21,9 +15,12 @@ service cloud.firestore {
     match /chatMessages/{messageId} {
       allow read: if true;
       allow create: if request.resource.data.keys().hasAll(['message', 'createdAt', 'ttl']) &&
+        request.resource.data.keys().hasOnly(['message', 'createdAt', 'ttl']) &&
         request.resource.data.createdAt is timestamp &&
+        request.resource.data.createdAt >= request.time - duration.value(5, 'm') &&
+        request.resource.data.createdAt <= request.time + duration.value(5, 'm') &&
         request.resource.data.ttl is timestamp &&
-        request.resource.data.ttl > request.resource.data.createdAt &&
+        request.resource.data.ttl == request.resource.data.createdAt + duration.value(7, 'd') &&
         request.resource.data.message is string &&
         request.resource.data.message.size() > 9 &&
         request.resource.data.message.size() < 1001;
