@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.3-non-cdk-deployed...v4.79.4) (2026-04-23)
+
+
+### Bug Fixes
+
+* **ci:** re-add nx format:check step ([c21fbb5](https://github.com/WolfSoko/wol-sok-mono/commit/c21fbb59fbb29c0a81b49c2fd9e247680c79ca39))
+
 ## [4.79.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.2-non-cdk-deployed...v4.79.3) (2026-04-23)
 
 
