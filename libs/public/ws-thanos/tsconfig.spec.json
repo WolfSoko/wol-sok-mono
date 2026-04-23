@@ -3,7 +3,9 @@
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
     "types": ["jest", "node"],
-    "module": "commonjs"
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "isolatedModules": true
   },
   "files": ["src/test-setup.ts"],
   "include": ["**/*.spec.ts", "**/*.test.ts", "**/*.d.ts"]

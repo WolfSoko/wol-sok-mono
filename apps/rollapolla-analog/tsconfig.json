@@ -19,7 +19,7 @@
   ],
   "compilerOptions": {
     "target": "es2022",
-    "module": "ESNext",
+    "module": "preserve",
     "useDefineForClassFields": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -29,7 +29,8 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "noFallthroughCasesInSwitch": true,
-    "allowJs": true
+    "allowJs": true,
+    "moduleResolution": "bundler"
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
