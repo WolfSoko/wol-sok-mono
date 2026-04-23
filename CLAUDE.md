@@ -90,6 +90,17 @@ public      → (own deps only, published packages)
 
 Do not create circular dependencies. Run `npx nx graph` to verify.
 
+## Target Policy
+
+- Root `.browserslistrc` and `tsconfig.base.json` govern everything — apps/libs inherit.
+- **Do not bump targets in `libs/public/*`** — published packages, held back for consumer compat.
+- **`apps/*-cdk` use `target: "ESNext"`** intentionally (Node runtime) — exclude from browser-target changes.
+
+## Module Federation
+
+- Host `angular-examples` has both `module-federation.config.ts` (dev) and `module-federation.prod.config.ts` (prod). Mirror shared-dep overrides in both.
+- Remotes: `fourier-analysis-remote`, `bacteria-game-remote`, `shader-examples-remote`.
+
 ## Testing
 
 - **Unit (Jest)**: colocated as `<file>.spec.ts`; mock external services; keep fast and deterministic
@@ -100,6 +111,7 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 ## Commits & PRs
 
 - **Conventional Commits** enforced by commitlint: `feat(scope): ...`, `fix(scope): ...`, `chore(scope): ...`
+- **Valid scopes** = any Nx project name (`npx nx show projects`) + `release`, `nx`, `github`, `dev-deps`, `deps`, `tools`. No free-form scopes (e.g. `mf`, `ui` will be rejected).
 - Pre-commit: Husky + lint-staged (runs automatically)
 - **Before every commit**:
   1. `npx nx format:write`
