@@ -2,12 +2,12 @@
   "name": "@wolsok/ui-kit",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "20.3.7",
-    "@angular/core": "20.3.7",
+    "@angular/common": "21.2.9",
+    "@angular/core": "21.2.9",
     "rxjs": "7.8.2",
     "@wolsok/ws-gl": "0.0.1",
     "@wolsok/utils-measure-fps": "0.0.1",
-    "@angular/material": "20.2.10"
+    "@angular/material": "21.2.8"
   },
   "devDependencies": {
     "tslib": "2.5.2"

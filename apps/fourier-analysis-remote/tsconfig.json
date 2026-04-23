@@ -21,7 +21,9 @@
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "module": "preserve",
+    "moduleResolution": "bundler"
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

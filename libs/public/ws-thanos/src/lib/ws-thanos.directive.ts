@@ -7,6 +7,7 @@ import type { WsThanosOptions } from './ws-thanos.options';
 import { WsThanosService } from './ws-thanos.service';
 
 @Directive({
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: '[wsThanos], ws-thanos',
   exportAs: 'thanos',
 })

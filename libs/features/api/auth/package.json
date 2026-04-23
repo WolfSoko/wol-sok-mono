@@ -2,12 +2,12 @@
   "name": "@wolsok/feat-api-auth",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/core": "20.3.7",
+    "@angular/core": "21.2.9",
     "@angular/fire": "20.0.1",
     "rxjs": "7.8.2",
-    "@angular/router": "20.3.7",
+    "@angular/router": "21.2.9",
     "angulartics2": "14.1.0",
-    "@angular/material": "20.2.10",
+    "@angular/material": "21.2.8",
     "@ngneat/elf": "^2.5.1"
   },
   "devDependencies": {

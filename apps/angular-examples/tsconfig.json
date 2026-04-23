@@ -20,7 +20,9 @@
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
     "target": "ES2022",
-    "emitDecoratorMetadata": false
+    "emitDecoratorMetadata": false,
+    "module": "preserve",
+    "moduleResolution": "bundler"
   },
   "angularCompilerOptions": {
     "strictInjectionParameters": true,

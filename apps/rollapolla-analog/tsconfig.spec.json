@@ -9,7 +9,8 @@
       "node",
       "vitest"
     ],
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "isolatedModules": true
   },
   "files": ["src/test-setup.ts"],
   "include": ["src/**/*.spec.ts", "src/**/*.mock.ts", "**/*.d.ts"]

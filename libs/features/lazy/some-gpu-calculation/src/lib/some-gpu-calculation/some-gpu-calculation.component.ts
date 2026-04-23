@@ -72,7 +72,7 @@ interface Configuration {
     ShowFpsComponent,
   ],
   providers: [{ provide: MeasureFps, useValue: new MeasureFps() }],
-  selector: 'lazy-feat-gpu-calc',
+  selector: 'lazy-feat-gpu-calc-root',
   templateUrl: './some-gpu-calculation.component.html',
   styleUrls: ['./some-gpu-calculation.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

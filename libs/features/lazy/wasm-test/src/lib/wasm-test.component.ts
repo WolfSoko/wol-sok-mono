@@ -37,7 +37,7 @@ import { FibResult, WasmTestState } from './state/wasm-test.store';
     MatButtonModule,
     MatProgressSpinnerModule,
   ],
-  selector: 'lazy-feat-wasm-test',
+  selector: 'lazy-feat-wasm-test-root',
   templateUrl: './wasm-test.component.html',
   styleUrls: ['./wasm-test.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
