@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.4-non-cdk-deployed...v4.79.5) (2026-04-26)
+
+
+### Bug Fixes
+
+* **release:** fall back to disk version when no git tag matches ([ff743d8](https://github.com/WolfSoko/wol-sok-mono/commit/ff743d8be469abb9f01925684aec7ecbfa5bec55))
+
+
+### Chore
+
+* **release:** publish ([cecc8d4](https://github.com/WolfSoko/wol-sok-mono/commit/cecc8d4decc88d547b2dc738a4885fd7a541985f))
+
 ## [4.79.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.3-non-cdk-deployed...v4.79.4) (2026-04-23)
 
 

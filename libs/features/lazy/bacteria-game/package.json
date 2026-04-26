@@ -6,7 +6,7 @@
     "@angular/core": "20.3.7",
     "@angular/material": "20.2.10",
     "@ngneat/until-destroy": "10.0.0",
-    "@wolsok/thanos": "16.1.0",
+    "@wolsok/thanos": "17.0.0",
     "@wolsok/ui-kit": "0.0.1",
     "rxjs": "7.8.2",
     "@angular/router": "20.3.7",
