@@ -26,15 +26,15 @@ describe('SideNavComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should have a drawer component', () => {
+  it('should have a sidenav component', () => {
     // Given: Component is rendered
     fixture.detectChanges();
 
-    // When: Checking for drawer element
-    const drawer = fixture.nativeElement.querySelector('mat-drawer');
+    // When: Checking for sidenav element
+    const sidenav = fixture.nativeElement.querySelector('mat-sidenav');
 
-    // Then: Drawer should exist
-    expect(drawer).toBeTruthy();
+    // Then: Sidenav should exist
+    expect(sidenav).toBeTruthy();
   });
 
   it('should have toggle method', () => {
@@ -48,29 +48,29 @@ describe('SideNavComponent', () => {
   });
 
   it('should toggle drawer when toggle is called', async () => {
-    // Given: Component is initialized with drawer
+    // Given: Component is initialized with initial state
     await fixture.whenStable();
+    const initialShowSidebar = component.showSidebar();
 
     // When: toggle method is called
     component.toggle();
     await fixture.whenStable();
 
     // Then: Drawer state should change
-    // Note: Actual drawer state testing would require accessing the MatDrawer instance
-    expect(component).toBeTruthy();
+    expect(component.showSidebar()).toBe(!initialShowSidebar);
   });
 
-  it('should render navigation content in drawer', () => {
+  it('should render navigation content in sidenav container', () => {
     // Given: Component is rendered
     fixture.detectChanges();
 
-    // When: Checking drawer content
-    const drawerContent = fixture.nativeElement.querySelector(
-      'mat-drawer-content'
+    // When: Checking sidenav content
+    const sidenavContent = fixture.nativeElement.querySelector(
+      'mat-sidenav-container'
     );
 
-    // Then: Drawer content should exist
-    expect(drawerContent).toBeTruthy();
+    // Then: Sidenav container should exist
+    expect(sidenavContent).toBeTruthy();
   });
 
   it('should have navigation list in drawer', () => {
@@ -88,11 +88,11 @@ describe('SideNavComponent', () => {
     // Given: Component is rendered
     fixture.detectChanges();
 
-    // When: Checking for content projection
-    const content = fixture.nativeElement.querySelector('mat-drawer-content');
+    // When: Checking for ng-content projection
+    const container = fixture.nativeElement.querySelector('mat-sidenav-container');
 
-    // Then: Content area should exist for router outlet
-    expect(content).toBeTruthy();
+    // Then: Container should exist for content projection
+    expect(container).toBeTruthy();
   });
 
   it('should handle responsive layout changes', () => {
@@ -100,17 +100,14 @@ describe('SideNavComponent', () => {
     // When: Component is rendered
     fixture.detectChanges();
 
-    // Then: Component should be responsive (has drawer component)
-    const drawer = fixture.nativeElement.querySelector('mat-drawer-container');
-    expect(drawer).toBeTruthy();
+    // Then: Component should be responsive (has sidenav container component)
+    const sidenavContainer = fixture.nativeElement.querySelector('mat-sidenav-container');
+    expect(sidenavContainer).toBeTruthy();
   });
 
   it('should cleanup on destroy', () => {
     // Given: Component is initialized
-    // When: Component is destroyed
-    fixture.destroy();
-
-    // Then: Should destroy without errors
-    expect(fixture.componentInstance).toBeTruthy();
+    // When/Then: Component should destroy without errors
+    expect(() => fixture.destroy()).not.toThrow();
   });
 });

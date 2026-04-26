@@ -14,7 +14,6 @@ test.describe('Thanos Demo Feature Interaction', () => {
 
   test('should start demo when clicking start button', async ({
     homePage,
-    page,
   }) => {
     // Given: User is on the home page with thanos button visible
     await homePage.expectTechnologyCardsVisible();
@@ -25,15 +24,10 @@ test.describe('Thanos Demo Feature Interaction', () => {
 
     // Then: Button icon should change to stop
     await homePage.expectThanosButtonShowsStop();
-
-    // And: Demo should be running (button shows stop icon)
-    await page.waitForTimeout(500); // Give time for demo to start
-    await homePage.expectThanosButtonShowsStop();
   });
 
   test('should stop demo when clicking stop button', async ({
     homePage,
-    page,
   }) => {
     // Given: User has started the thanos demo
     await homePage.expectTechnologyCardsVisible();
@@ -42,7 +36,6 @@ test.describe('Thanos Demo Feature Interaction', () => {
     await homePage.expectThanosButtonShowsStop();
 
     // When: User clicks the stop button
-    await page.waitForTimeout(500); // Wait a bit for demo to be running
     await homePage.clickThanosToggle();
 
     // Then: Button should return to start icon
@@ -51,7 +44,6 @@ test.describe('Thanos Demo Feature Interaction', () => {
 
   test('should vaporize technology cards during demo', async ({
     homePage,
-    page,
   }) => {
     // Given: User is on the home page with technology cards visible
     await homePage.expectTechnologyCardsVisible();
@@ -60,7 +52,6 @@ test.describe('Thanos Demo Feature Interaction', () => {
 
     // When: User starts the thanos demo
     await homePage.clickThanosToggle();
-    await page.waitForTimeout(1000); // Wait for first card to start vaporizing
 
     // Then: Demo should be running
     await homePage.expectThanosButtonShowsStop();

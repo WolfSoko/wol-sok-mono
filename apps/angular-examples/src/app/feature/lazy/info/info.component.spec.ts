@@ -116,7 +116,7 @@ describe('InfoComponent', () => {
     expect(component.thanosDemo()).toBe(true);
   });
 
-  it('should handle demo lifecycle with techCards', (done) => {
+  it('should handle demo lifecycle with techCards', () => {
     // Given: Component has tech cards initialized
     // Mock techCards with vaporize method using async observable
     const mockVaporize$ = new Subject<any>();
@@ -136,25 +136,16 @@ describe('InfoComponent', () => {
     expect(component.demoRunning()).toBe(true);
 
     // Simulate async vaporization completion
-    setTimeout(() => {
-      mockVaporize$.next({ state: 'completed' });
-      mockVaporize$.complete();
-      
-      // Wait for completion handler to execute
-      setTimeout(() => {
-        // Then: Demo should stop after completion
-        expect(component.demoRunning()).toBe(false);
-        done();
-      }, 10);
-    }, 50);
+    mockVaporize$.next({ state: 'completed' });
+    mockVaporize$.complete();
+
+    // Then: Demo should stop after completion
+    expect(component.demoRunning()).toBe(false);
   });
 
   it('should clean up on destroy', () => {
     // Given: Component is initialized
-    // When: Component is destroyed
-    fixture.destroy();
-
-    // Then: Component should be destroyed without errors
-    expect(fixture.componentInstance).toBeTruthy();
+    // When/Then: Component should destroy without errors
+    expect(() => fixture.destroy()).not.toThrow();
   });
 });

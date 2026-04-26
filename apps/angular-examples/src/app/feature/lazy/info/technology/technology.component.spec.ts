@@ -98,56 +98,66 @@ describe('TechnologyComponent', () => {
     expect(typeof method).toBe('function');
   });
 
-  it('should call vaporize when autoVaporize is true', (done) => {
-    // Given: Component with autoVaporize enabled and short delay
-    fixture.componentRef.setInput('title', 'Test');
-    fixture.componentRef.setInput('link', 'https://test.com');
-    fixture.componentRef.setInput('image', 'test.png');
-    fixture.componentRef.setInput('autoVaporize', true);
-    fixture.componentRef.setInput('autoVaporizeAfter', 100);
+  it('should call vaporize when autoVaporize is true', () => {
+    jest.useFakeTimers();
 
-    // Mock the thanos directive
-    const mockVaporize$ = of({ state: 'completed' } as any);
-    const thanosDirective = {
-      vaporize$: jest.fn().mockReturnValue(mockVaporize$),
-    };
+    try {
+      // Given: Component with autoVaporize enabled and short delay
+      fixture.componentRef.setInput('title', 'Test');
+      fixture.componentRef.setInput('link', 'https://test.com');
+      fixture.componentRef.setInput('image', 'test.png');
+      fixture.componentRef.setInput('autoVaporize', true);
+      fixture.componentRef.setInput('autoVaporizeAfter', 100);
 
-    // When: Component initializes
-    fixture.detectChanges();
-    component.thanos = thanosDirective as any;
-    component.ngOnInit();
+      // Mock the thanos directive before detectChanges
+      const mockVaporize$ = of({ state: 'completed' } as any);
+      const thanosDirective = {
+        vaporize$: jest.fn().mockReturnValue(mockVaporize$),
+      };
+      component.thanos = thanosDirective as any;
 
-    // Then: After timeout, vaporize should be triggered
-    setTimeout(() => {
+      // When: Component initializes (detectChanges calls ngOnInit)
+      fixture.detectChanges();
+
+      // Fast-forward time to trigger the timer
+      jest.advanceTimersByTime(150);
+
+      // Then: vaporize should be triggered
       expect(thanosDirective.vaporize$).toHaveBeenCalled();
-      done();
-    }, 150);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
-  it('should not call vaporize when autoVaporize is false', (done) => {
-    // Given: Component with autoVaporize disabled
-    fixture.componentRef.setInput('title', 'Test');
-    fixture.componentRef.setInput('link', 'https://test.com');
-    fixture.componentRef.setInput('image', 'test.png');
-    fixture.componentRef.setInput('autoVaporize', false);
-    fixture.componentRef.setInput('autoVaporizeAfter', 100);
+  it('should not call vaporize when autoVaporize is false', () => {
+    jest.useFakeTimers();
 
-    // Mock the thanos directive
-    const mockVaporize$ = of({ state: 'completed' } as any);
-    const thanosDirective = {
-      vaporize$: jest.fn().mockReturnValue(mockVaporize$),
-    };
+    try {
+      // Given: Component with autoVaporize disabled
+      fixture.componentRef.setInput('title', 'Test');
+      fixture.componentRef.setInput('link', 'https://test.com');
+      fixture.componentRef.setInput('image', 'test.png');
+      fixture.componentRef.setInput('autoVaporize', false);
+      fixture.componentRef.setInput('autoVaporizeAfter', 100);
 
-    // When: Component initializes
-    fixture.detectChanges();
-    component.thanos = thanosDirective as any;
-    component.ngOnInit();
+      // Mock the thanos directive before detectChanges
+      const mockVaporize$ = of({ state: 'completed' } as any);
+      const thanosDirective = {
+        vaporize$: jest.fn().mockReturnValue(mockVaporize$),
+      };
+      component.thanos = thanosDirective as any;
 
-    // Then: Vaporize should not be called
-    setTimeout(() => {
+      // When: Component initializes (detectChanges calls ngOnInit)
+      fixture.detectChanges();
+
+      // Fast-forward time
+      jest.advanceTimersByTime(150);
+
+      // Then: Vaporize should not be called
       expect(thanosDirective.vaporize$).not.toHaveBeenCalled();
-      done();
-    }, 150);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('should scroll element into view when vaporizing', () => {

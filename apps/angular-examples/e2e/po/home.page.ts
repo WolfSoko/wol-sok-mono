@@ -13,9 +13,9 @@ export class HomePage {
   constructor(page: Page) {
     this.page = page;
     this.mainToolbar = page.locator('#main-toolbar');
-    this.sideNavToggleButton = page.locator('button[aria-label*="menu"]').first();
-    this.sideNav = page.locator('mat-drawer');
-    this.navigationLinks = page.locator('mat-drawer a[routerLink]');
+    this.sideNavToggleButton = page.locator('button[title="main-menu"]');
+    this.sideNav = page.locator('mat-sidenav');
+    this.navigationLinks = page.locator('mat-sidenav a');
     this.aboutSection = page.locator('app-about');
     this.technologyCards = page.locator('app-technology');
     this.thanosToggleButton = page.locator(
@@ -29,7 +29,7 @@ export class HomePage {
 
   async expectPageLoaded() {
     await expect(this.mainToolbar).toBeVisible();
-    await expect(this.page).toHaveTitle(/WolSok|Experiments/);
+    await expect(this.page).toHaveTitle(/Angular Examples|angular-examples/i);
   }
 
   async expectTitleVisible() {
@@ -39,32 +39,34 @@ export class HomePage {
 
   async openSideNav() {
     const isOpen = await this.sideNav.evaluate((el: HTMLElement) => {
-      return el.classList.contains('mat-drawer-opened');
+      return el.classList.contains('mat-drawer-opened') ||
+             el.classList.contains('mat-sidenav-opened');
     });
-    
+
     if (!isOpen) {
       await this.sideNavToggleButton.click();
-      await expect(this.sideNav).toHaveClass(/mat-drawer-opened/);
+      await expect(this.sideNav).toHaveClass(/mat-(drawer|sidenav)-opened/);
     }
   }
 
   async closeSideNav() {
     const isOpen = await this.sideNav.evaluate((el: HTMLElement) => {
-      return el.classList.contains('mat-drawer-opened');
+      return el.classList.contains('mat-drawer-opened') ||
+             el.classList.contains('mat-sidenav-opened');
     });
-    
+
     if (isOpen) {
       await this.sideNavToggleButton.click();
-      await expect(this.sideNav).not.toHaveClass(/mat-drawer-opened/);
+      await expect(this.sideNav).not.toHaveClass(/mat-(drawer|sidenav)-opened/);
     }
   }
 
   async expectSideNavOpen() {
-    await expect(this.sideNav).toHaveClass(/mat-drawer-opened/);
+    await expect(this.sideNav).toHaveClass(/mat-(drawer|sidenav)-opened/);
   }
 
   async expectSideNavClosed() {
-    await expect(this.sideNav).not.toHaveClass(/mat-drawer-opened/);
+    await expect(this.sideNav).not.toHaveClass(/mat-(drawer|sidenav)-opened/);
   }
 
   async expectNavigationLinksVisible() {

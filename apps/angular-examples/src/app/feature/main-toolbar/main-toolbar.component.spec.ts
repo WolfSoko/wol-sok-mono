@@ -8,8 +8,14 @@ describe('MainToolbarComponent', () => {
   let component: MainToolbarComponent;
   let fixture: ComponentFixture<MainToolbarComponent>;
   let mockHeadlineAnimationService: jest.Mocked<HeadlineAnimationService>;
+  let originalIntersectionObserver: any;
+  let originalRequestIdleCallback: any;
 
   beforeEach(async () => {
+    // Store originals
+    originalIntersectionObserver = global.IntersectionObserver;
+    originalRequestIdleCallback = global.requestIdleCallback;
+
     // Mock IntersectionObserver for stopHeadlineAnimationWhenNotVisible
     global.IntersectionObserver = jest.fn().mockImplementation(() => ({
       observe: jest.fn(),
@@ -21,14 +27,15 @@ describe('MainToolbarComponent', () => {
       takeRecords: jest.fn(),
     })) as any;
 
-    // Mock requestIdleCallback for stopHeadlineAnimationWhenNotVisible
+    // Mock requestIdleCallback for stopHeadlineAnimationWhenNotVisible - synchronous execution
     global.requestIdleCallback = jest.fn((callback) => {
-      setTimeout(() => callback({ didTimeout: false, timeRemaining: () => 50 } as any), 0);
+      callback({ didTimeout: false, timeRemaining: () => 50 } as any);
       return 0;
     }) as any;
 
     mockHeadlineAnimationService = {
       runAnimation: jest.fn(),
+      updateAnimation: jest.fn(),
       startAnimation: jest.fn(),
       stopAnimation: jest.fn(),
     } as any;
@@ -52,6 +59,12 @@ describe('MainToolbarComponent', () => {
     fixture.detectChanges();
   });
 
+  afterEach(() => {
+    // Restore originals
+    global.IntersectionObserver = originalIntersectionObserver;
+    global.requestIdleCallback = originalRequestIdleCallback;
+  });
+
   it('should create', () => {
     // Given: Component is initialized
     // When: Component is created
@@ -60,16 +73,18 @@ describe('MainToolbarComponent', () => {
   });
 
   it('should emit clickSideNav event on button click', () => {
-    // Given: Component is initialized
+    // Given: Component is initialized and subscriber is set up
     const clickSpy = jest.fn();
     component.clickSideNav.subscribe(clickSpy);
 
-    // When: clickSideNav output is emitted
-    const mockEvent = new Event('click');
-    component.clickSideNav.emit(mockEvent);
+    // When: Menu button is clicked
+    const menuButton = fixture.nativeElement.querySelector('button[title="main-menu"]');
+    expect(menuButton).toBeTruthy();
+    menuButton.click();
+    fixture.detectChanges();
 
     // Then: Event should be emitted
-    expect(clickSpy).toHaveBeenCalledWith(mockEvent);
+    expect(clickSpy).toHaveBeenCalled();
   });
 
   it('should have shader code defined', () => {
@@ -162,10 +177,7 @@ describe('MainToolbarComponent', () => {
 
   it('should cleanup on destroy', () => {
     // Given: Component is initialized
-    // When: Component is destroyed
-    fixture.destroy();
-
-    // Then: Should destroy without errors
-    expect(fixture.componentInstance).toBeTruthy();
+    // When/Then: Component should destroy without errors
+    expect(() => fixture.destroy()).not.toThrow();
   });
 });

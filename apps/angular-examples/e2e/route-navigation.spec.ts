@@ -1,12 +1,12 @@
 import { test, expect } from './fixtures/home-page.fixture';
 
 test.describe('Route Navigation and Lazy Loading', () => {
-  test('should navigate to home route by default', async ({ homePage, page }) => {
-    // Given: User navigates to the app
-    // (setup done by fixture - goes to /home)
+  test('should navigate to home route by default', async ({ page }) => {
+    // Given: User navigates to the app root
+    await page.goto('/');
 
-    // When: Page has loaded
-    await homePage.expectPageLoaded();
+    // When: Default route navigation completes
+    await page.waitForURL(/\/home$/, { timeout: 10000 });
 
     // Then: URL should contain 'home'
     expect(page.url()).toContain('/home');
@@ -28,8 +28,7 @@ test.describe('Route Navigation and Lazy Loading', () => {
     expect(page.url()).toContain('tensorflowExamples');
 
     // And: Page should load lazy-loaded content
-    // Wait for lazy module to load and render
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle');
     await expect(page.locator('body')).toBeVisible();
   });
 
@@ -130,10 +129,9 @@ test.describe('Route Navigation and Lazy Loading', () => {
 
       // Then: Route should load successfully
       expect(page.url()).toContain(route.url);
-      
-      // And: Page should not have console errors (checked via logs fixture)
-      // Wait for content to load
-      await page.waitForTimeout(1000);
+
+      // And: Wait for content to load
+      await page.waitForLoadState('networkidle');
     }
   });
 });
