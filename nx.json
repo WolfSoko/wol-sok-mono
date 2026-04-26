@@ -74,7 +74,7 @@
     ]
   },
   "targetDefaults": {
-    "release": {
+    "nx-release-publish": {
       "dependsOn": ["build"]
     },
     "deploy": {
@@ -280,7 +280,11 @@
       }
     },
     "version": {
-      "conventionalCommits": true
+      "conventionalCommits": true,
+      "git": {
+        "commit": true,
+        "tag": true
+      }
     }
   },
   "defaultProject": "angular-examples",
