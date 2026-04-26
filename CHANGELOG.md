@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.4](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.3-non-cdk-deployed...v4.79.4) (2026-04-23)
+
+
+### Bug Fixes
+
+* **ci:** re-add nx format:check step ([c21fbb5](https://github.com/WolfSoko/wol-sok-mono/commit/c21fbb59fbb29c0a81b49c2fd9e247680c79ca39))
+
+## [4.79.3](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.2-non-cdk-deployed...v4.79.3) (2026-04-23)
+
+
+### Bug Fixes
+
+* **angular-examples:** 🐛 loosen p5 singleton across federation ([93887c7](https://github.com/WolfSoko/wol-sok-mono/commit/93887c768b7fe0ea344d3649a0aad6c53a4db1f1))
+* **release:** 🐛 🚀 publish scoped packages with public access ([369c1bc](https://github.com/WolfSoko/wol-sok-mono/commit/369c1bc1cd78a2c4560f7bd2660cffeacff8f71a))
+
+
+### Chore
+
+* **nx:** 🔧 modernize TypeScript target and consolidate browserslist ([b4e3980](https://github.com/WolfSoko/wol-sok-mono/commit/b4e39801ffe1775cccc19aee81cdcc3d1ce0690c))
+
+
+### Documentation
+
+* **nx:** 📚️ 📝 add commit scope rules and target/MF policy ([7644dfe](https://github.com/WolfSoko/wol-sok-mono/commit/7644dfe3f96520dee45979f0d1c0df7e694e20d7))
+
 ## [4.79.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.1-non-cdk-deployed...v4.79.2) (2026-04-22)
 
 
