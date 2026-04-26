@@ -24,16 +24,7 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.no-reply.github.com"
           git config --local user.name "github-actions[bot]"
-
-          first_release_flag=""
-          for project in $(npx nx show projects --projects='tag:published'); do
-            if [[ -z "$(git tag -l "${project}@*")" ]]; then
-              first_release_flag="--first-release"
-              break
-            fi
-          done
-
-          npx nx release version $first_release_flag
+          npx nx release version
           npx commit-and-tag-version
 
       - name: Push changes
