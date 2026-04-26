@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.5-non-cdk-deployed...v4.79.6) (2026-04-26)
+
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** align @wolsok/thanos peer dep with installed 17.0.0 ([1d95d9d](https://github.com/WolfSoko/wol-sok-mono/commit/1d95d9db8cd569a8cc2dea952d7dab312762595e))
+* **release:** switch npm publish to OIDC trusted publishing ([efc012c](https://github.com/WolfSoko/wol-sok-mono/commit/efc012c4e92183f567ef0d60d96395ce0cc924b2))
+
+
+### Chore
+
+* 🔧 add CI monitor subagent with command specifications and guidelines ([d80115a](https://github.com/WolfSoko/wol-sok-mono/commit/d80115a4cf4c54257f0cb1f056cb78b129ca8c04))
+* **release:** publish ([3dda49e](https://github.com/WolfSoko/wol-sok-mono/commit/3dda49e18fccbfd65a709b47de27e66ae29c4ea8))
+
 ## [4.79.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.4-non-cdk-deployed...v4.79.5) (2026-04-26)
 
 
