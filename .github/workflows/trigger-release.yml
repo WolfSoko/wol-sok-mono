@@ -21,10 +21,14 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
 
+      - name: install dependencies
+        run: npm ci --ignore-scripts
+
       - name: trigger release
         run: |
           git config --local user.email "github-actions[bot]@users.no-reply.github.com"
           git config --local user.name "github-actions[bot]"
+          npx nx release version
           npx commit-and-tag-version
 
       - name: Push changes
