@@ -24,7 +24,11 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.no-reply.github.com"
           git config --local user.name "github-actions[bot]"
-          npx nx release version
+          if [[ -z "$(git tag -l 'ws-thanos@*' 'spa-cdk-stack@*')" ]]; then
+            npx nx release version --first-release
+          else
+            npx nx release version
+          fi
           npx commit-and-tag-version
 
       - name: Push changes
