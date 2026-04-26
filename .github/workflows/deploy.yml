@@ -113,6 +113,11 @@ jobs:
               "No deployable projects affected." \
               "Deployable projects affected. Start deployment!!!"
           fi
+
+      - name: Build npm packages
+        if: success() && env.triggerRelease == 'true' && matrix.config.app-type == 'npm-packages'
+        run: npx nx run-many -t build --projects='tag:published'
+
       - name: Publish npm packages
         if: success() && env.triggerRelease == 'true' && matrix.config.app-type == 'npm-packages'
         run: npx nx release publish
