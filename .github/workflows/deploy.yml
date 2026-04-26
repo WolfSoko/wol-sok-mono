@@ -28,7 +28,6 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 jobs:
   deploy:
@@ -68,8 +67,12 @@ jobs:
         if: matrix.config.app-type == 'npm-packages'
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org/'
+
+      - name: Upgrade npm for OIDC trusted publishing
+        if: matrix.config.app-type == 'npm-packages'
+        run: npm install -g npm@latest
 
       - name: Find previous deployment tag
         id: previous_deployment
@@ -113,9 +116,6 @@ jobs:
       - name: Publish npm packages
         if: success() && env.triggerRelease == 'true' && matrix.config.app-type == 'npm-packages'
         run: npx nx release publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
 
       - name: Deploy Apps
         if: success() && env.triggerRelease == 'true' && matrix.config.app-type != 'npm-packages'
