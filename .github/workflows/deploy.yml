@@ -113,7 +113,7 @@ jobs:
 
       - name: Build npm packages
         if: success() && env.triggerRelease == 'true' && matrix.config.app-type == 'npm-packages'
-        run: npx nx run-many -t build --projects='tag:published'
+        run: npx nx run-many -t build --projects='${{ matrix.config.projects-filter }}'
 
       - name: Publish npm packages
         if: success() && env.triggerRelease == 'true' && matrix.config.app-type == 'npm-packages'
