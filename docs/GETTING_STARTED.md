@@ -16,7 +16,7 @@ Welcome to the wol-sok-mono repository! This guide will help you set up your dev
 ### Required Software
 
 1. **Node.js**
-   - Version: **20.x** (as specified in `.nvmrc`)
+   - Version: **24.x** (as specified in `.nvmrc`)
    - Download: [nodejs.org](https://nodejs.org/)
    - Or use [nvm](https://github.com/nvm-sh/nvm): `nvm install`
 
@@ -79,7 +79,7 @@ nvm use
 Verify Node version:
 
 ```bash
-node --version  # Should output v20.x.x
+node --version  # Should output v24.x.x
 ```
 
 ### 3. Install Dependencies
