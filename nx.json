@@ -74,7 +74,7 @@
     ]
   },
   "targetDefaults": {
-    "release": {
+    "nx-release-publish": {
       "dependsOn": ["build"]
     },
     "deploy": {
@@ -181,6 +181,19 @@
         }
       }
     },
+    "@nx/vitest:test": {
+      "cache": true,
+      "inputs": ["default", "^production"],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "configurations": {
+        "ci": {
+          "coverage.enabled": true
+        },
+        "watch": {
+          "watch": true
+        }
+      }
+    },
     "@nx/angular:ng-packagr-lite": {
       "cache": true,
       "dependsOn": ["^build"],
@@ -267,7 +280,12 @@
       }
     },
     "version": {
-      "conventionalCommits": true
+      "conventionalCommits": true,
+      "fallbackCurrentVersionResolver": "disk",
+      "git": {
+        "commit": true,
+        "tag": true
+      }
     }
   },
   "defaultProject": "angular-examples",

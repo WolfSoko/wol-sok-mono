@@ -28,7 +28,6 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 jobs:
   deploy:
@@ -68,16 +67,24 @@ jobs:
         if: matrix.config.app-type == 'npm-packages'
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org/'
+
+      - name: Upgrade npm for OIDC trusted publishing
+        if: matrix.config.app-type == 'npm-packages'
+        run: npm install -g npm@latest
 
       - name: Find previous deployment tag
         id: previous_deployment
         run: |
           echo "Determining SHAs for affected projects"
-          PREVIOUS_DEPLOYMENT=$(git describe --tags --abbrev=0 --match="*-${{ matrix.config.deploy-tag-suffix }}")
-          echo "Previous release: $PREVIOUS_DEPLOYMENT"
-          echo "NX_BASE=$PREVIOUS_DEPLOYMENT" >> $GITHUB_ENV
+          if PREVIOUS_DEPLOYMENT=$(git describe --tags --abbrev=0 --match="*-${{ matrix.config.deploy-tag-suffix }}" 2>/dev/null); then
+            echo "Previous release: $PREVIOUS_DEPLOYMENT"
+            echo "NX_BASE=$PREVIOUS_DEPLOYMENT" >> $GITHUB_ENV
+          else
+            echo "No previous '*-${{ matrix.config.deploy-tag-suffix }}' tag found - treating as initial deployment (all projects affected)."
+            echo "NX_BASE=$(git hash-object -t tree /dev/null)" >> $GITHUB_ENV
+          fi
           echo "NX_HEAD=$RELEASE_VERSION" >> $GITHUB_ENV
 
       - name: Show affected projects and set triggerRelease
@@ -106,12 +113,14 @@ jobs:
               "No deployable projects affected." \
               "Deployable projects affected. Start deployment!!!"
           fi
+
+      - name: Build npm packages
+        if: success() && env.triggerRelease == 'true' && matrix.config.app-type == 'npm-packages'
+        run: npx nx run-many -t build --projects='${{ matrix.config.projects-filter }}'
+
       - name: Publish npm packages
         if: success() && env.triggerRelease == 'true' && matrix.config.app-type == 'npm-packages'
         run: npx nx release publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
 
       - name: Deploy Apps
         if: success() && env.triggerRelease == 'true' && matrix.config.app-type != 'npm-packages'

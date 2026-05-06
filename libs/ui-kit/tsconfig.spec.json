@@ -2,8 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "types": ["jest", "node", "dom"],
-    "target": "ES2022"
+    "types": ["jest", "node", "dom"]
   },
   "files": ["src/test-setup.ts"],
   "include": ["**/*.test.ts", "**/*.spec.ts", "**/*.d.ts", "jest.config.ts"],

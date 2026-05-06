@@ -4,7 +4,6 @@ import {
   Component,
   effect,
   ElementRef,
-  inject,
   input,
   OnDestroy,
   SimpleChange,
@@ -355,22 +354,16 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
       fourierCircleImg.beginShape();
       for (let n = 0; n < drawSamplesLength; n += stepSize) {
         const tIndex = Math.floor(
-          fourierCircleImg.map(
-            n,
-            0,
-            drawSamplesLength,
-            0,
-            this.wave().points.length
-          )
+          sketch.map(n, 0, drawSamplesLength, 0, this.wave().points.length)
         );
-        const t = fourierCircleImg.map(
+        const t = sketch.map(
           n,
           0,
           drawSamplesLength,
           0,
           this.wave().lengthInMs / 1000
         );
-        const normalizedSamplePoint = fourierCircleImg.map(
+        const normalizedSamplePoint = sketch.map(
           this.wave().points[tIndex],
           -1,
           1,

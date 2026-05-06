@@ -90,6 +90,17 @@ public      → (own deps only, published packages)
 
 Do not create circular dependencies. Run `npx nx graph` to verify.
 
+## Target Policy
+
+- Root `.browserslistrc` and `tsconfig.base.json` govern everything — apps/libs inherit.
+- **Do not bump targets in `libs/public/*`** — published packages, held back for consumer compat.
+- **`apps/*-cdk` use `target: "ESNext"`** intentionally (Node runtime) — exclude from browser-target changes.
+
+## Module Federation
+
+- Host `angular-examples` has both `module-federation.config.ts` (dev) and `module-federation.prod.config.ts` (prod). Mirror shared-dep overrides in both.
+- Remotes: `fourier-analysis-remote`, `bacteria-game-remote`, `shader-examples-remote`.
+
 ## Testing
 
 - **Unit (Jest)**: colocated as `<file>.spec.ts`; mock external services; keep fast and deterministic
@@ -100,6 +111,7 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 ## Commits & PRs
 
 - **Conventional Commits** enforced by commitlint: `feat(scope): ...`, `fix(scope): ...`, `chore(scope): ...`
+- **Valid scopes** = any Nx project name (`npx nx show projects`) + `release`, `nx`, `github`, `dev-deps`, `deps`, `tools`. No free-form scopes (e.g. `mf`, `ui` will be rejected).
 - Pre-commit: Husky + lint-staged (runs automatically)
 - **Before every commit**:
   1. `npx nx format:write`
@@ -112,6 +124,47 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - Review `SECURITY.md` for guidelines.
 - Don't commit `.env` files or Firebase service account keys.
 
-## Git Author
+## General Guidelines for working with Nx
 
-Use `Einstein Openclaw <einstein-openclaw@gmail.com>` as the git author for commits.
+- For navigating/exploring the workspace, invoke the `nx-workspace` skill first - it has patterns for querying projects, targets, and dependencies
+- When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
+- Prefix nx commands with the workspace's package manager (e.g., `pnpm nx build`, `npm exec nx test`) - avoids using globally installed CLI
+- You have access to the Nx MCP server and its tools, use them to help the user
+- For Nx plugin best practices, check `node_modules/@nx/<plugin>/PLUGIN.md`. Not all plugins have this file - proceed without it if unavailable.
+- NEVER guess CLI flags - always check nx_docs or `--help` first when unsure
+
+## Scaffolding & Generators
+
+- For scaffolding tasks (creating apps, libs, project structure, setup), ALWAYS invoke the `nx-generate` skill FIRST before exploring or calling MCP tools
+
+## When to use nx_docs
+
+- USE for: advanced config options, unfamiliar flags, migration guides, plugin configuration, edge cases
+- DON'T USE for: basic generator syntax (`nx g @nx/react:app`), standard commands, things you already know
+- The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
+
+<!-- nx configuration end-->
+
+<!-- nx configuration start-->
+<!-- Leave the start & end comments to automatically receive updates. -->
+
+## General Guidelines for working with Nx
+
+- For navigating/exploring the workspace, invoke the `nx-workspace` skill first - it has patterns for querying projects, targets, and dependencies
+- When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
+- Prefix nx commands with the workspace's package manager (e.g., `pnpm nx build`, `npm exec nx test`) - avoids using globally installed CLI
+- You have access to the Nx MCP server and its tools, use them to help the user
+- For Nx plugin best practices, check `node_modules/@nx/<plugin>/PLUGIN.md`. Not all plugins have this file - proceed without it if unavailable.
+- NEVER guess CLI flags - always check nx_docs or `--help` first when unsure
+
+## Scaffolding & Generators
+
+- For scaffolding tasks (creating apps, libs, project structure, setup), ALWAYS invoke the `nx-generate` skill FIRST before exploring or calling MCP tools
+
+## When to use nx_docs
+
+- USE for: advanced config options, unfamiliar flags, migration guides, plugin configuration, edge cases
+- DON'T USE for: basic generator syntax (`nx g @nx/react:app`), standard commands, things you already know
+- The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
+
+<!-- nx configuration end-->

@@ -24,6 +24,12 @@
       "options": {
         "args": ["./**/*.ts"]
       }
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "options": {
+        "configFile": "libs/shared/data-access/vite.config.ts"
+      }
     }
   }
 }

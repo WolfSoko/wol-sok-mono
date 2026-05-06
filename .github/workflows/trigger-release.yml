@@ -16,15 +16,15 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
+
+      - name: Install Deps
+        uses: ./.github/actions/install-deps
 
       - name: trigger release
         run: |
           git config --local user.email "github-actions[bot]@users.no-reply.github.com"
           git config --local user.name "github-actions[bot]"
+          npx nx release version
           npx commit-and-tag-version
 
       - name: Push changes

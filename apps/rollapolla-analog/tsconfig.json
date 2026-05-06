@@ -18,7 +18,6 @@
     }
   ],
   "compilerOptions": {
-    "target": "es2022",
     "module": "ESNext",
     "useDefineForClassFields": true,
     "forceConsistentCasingInFileNames": true,
