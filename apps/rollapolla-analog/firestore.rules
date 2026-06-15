@@ -17,8 +17,6 @@ service cloud.firestore {
       allow create: if request.resource.data.keys().hasAll(['message', 'createdAt', 'ttl']) &&
         request.resource.data.keys().hasOnly(['message', 'createdAt', 'ttl']) &&
         request.resource.data.createdAt is timestamp &&
-        request.resource.data.createdAt >= request.time - duration.value(5, 'm') &&
-        request.resource.data.createdAt <= request.time + duration.value(5, 'm') &&
         request.resource.data.ttl is timestamp &&
         request.resource.data.ttl == request.resource.data.createdAt + duration.value(7, 'd') &&
         request.resource.data.message is string &&
