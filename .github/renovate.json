@@ -14,6 +14,7 @@
   "platformAutomerge": true,
   "prCreation": "immediate",
   "rebaseWhen": "conflicted",
+  "internalPackagePatterns": ["@wolsok/*"],
   "packageRules": [
     {
       "matchPackageNames": ["esbuild", "eslint-plugin-playwright"],
