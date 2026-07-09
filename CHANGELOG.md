@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.6-non-cdk-deployed...v4.79.7) (2026-07-07)
+
+
+### Bug Fixes
+
+* **ci:** fix npm publish pipeline for @wolsok/* scoped packages ([9462c76](https://github.com/WolfSoko/wol-sok-mono/commit/9462c7607e50a69410486d94cad292d571c5857a))
+* **feat-lazy-bacteria-game:** fix lint error to restore main CI ([6593ae8](https://github.com/WolfSoko/wol-sok-mono/commit/6593ae84750d8c694a014e3f5930f6fe1bc0ea1b))
+* **security:** replace world-open Firestore rules with per-collection access control ([b739e9f](https://github.com/WolfSoko/wol-sok-mono/commit/b739e9fe41e510c123132d82919e6a0d8b6f6aa0))
+* **security:** tighten Firestore rules — remove notes create, add chatMessages field/TTL validation ([4233d26](https://github.com/WolfSoko/wol-sok-mono/commit/4233d2683f13c15181081bb134d25021a5043da6))
+
+
+### Chore
+
+* **release:** publish ([67b3799](https://github.com/WolfSoko/wol-sok-mono/commit/67b3799343df1c6d4de38cef270334ef2c56b377))
+
 ## [4.79.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.5-non-cdk-deployed...v4.79.6) (2026-04-26)
 
 
