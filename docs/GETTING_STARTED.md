@@ -17,6 +17,7 @@ Welcome to the wol-sok-mono repository! This guide will help you set up your dev
 
 1. **Node.js**
    - Version: **22.x** (as specified in `.nvmrc`)
+   - **Note**: Node 24 is not supported — the `gl` headless-gl add-on relies on `nan`, which depends on a `v8::ScriptOrigin` constructor removed in Node 24's V8 13.x. Node 22 LTS ships V8 12.4 and is supported until April 2027.
    - Download: [nodejs.org](https://nodejs.org/)
    - Or use [nvm](https://github.com/nvm-sh/nvm): `nvm install`
 
