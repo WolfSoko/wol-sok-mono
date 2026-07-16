@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'feat-lazy-shader-examples',
   preset: '../../../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],

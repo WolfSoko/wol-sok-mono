@@ -5,6 +5,12 @@
     "moduleResolution": "bundler"
   },
   "angularCompilerOptions": {
-    "compilationMode": "full"
+    "compilationMode": "full",
+    "extendedDiagnostics": {
+      "checks": {
+        "nullishCoalescingNotNullable": "suppress",
+        "optionalChainNotNullable": "suppress"
+      }
+    }
   }
 }

@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'angular-examples-cdk',
   preset: '../../jest.preset.cjs',
   testEnvironment: 'node',

@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'bacteria-game-remote-cdk',
   preset: '../../jest.preset.cjs',
   testEnvironment: 'node',

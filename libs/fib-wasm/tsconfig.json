@@ -4,6 +4,7 @@
   "compilerOptions": {
     "outDir": "../../build",
     "module": "esnext",
-    "declaration": true
+    "declaration": true,
+    "rootDir": "src/assembly"
   }
 }
