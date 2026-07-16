@@ -1,4 +1,4 @@
-const { JestConfigWithTsJest } = require('ts-jest');
+import type { JestConfigWithTsJest } from 'ts-jest';
 
 module.exports = {
   displayName: 'ui-kit',
