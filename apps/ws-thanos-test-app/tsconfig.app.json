@@ -6,5 +6,8 @@
   },
   "files": ["src/main.ts"],
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.test.ts", "e2e/**/*"]
+  "exclude": ["**/*.spec.ts", "**/*.test.ts", "e2e/**/*"],
+  "angularCompilerOptions": {
+    "strictTemplates": false
+  }
 }

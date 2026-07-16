@@ -1,3 +1,5 @@
+import nxPlugin from '@nx/eslint-plugin';
+import angular from 'angular-eslint';
 import { FlatCompat } from '@eslint/eslintrc';
 import baseConfig from '../../eslint.config.mjs';
 import baseConfig1 from '../../eslint.base.config.mjs';
@@ -18,48 +20,40 @@ const compat = new FlatCompat({
 export default [
   ...baseConfig,
   ...baseConfig1,
-  ...compat
-    .config({
-      extends: [
-        'plugin:@nx/angular',
-        'plugin:@angular-eslint/template/process-inline-templates',
+  { files: ['**/*.ts'], processor: angular.processInlineTemplates },
+  ...nxPlugin.configs['flat/angular'].map((config) => ({
+    ...config,
+    files: ['**/*.ts'],
+    rules: {
+      ...config.rules,
+      '@angular-eslint/directive-selector': [
+        'error',
+        {
+          type: 'attribute',
+          prefix: 'shApiFibWasm',
+          style: 'camelCase',
+        },
       ],
-    })
-    .map((config) => ({
-      ...config,
-      files: ['**/*.ts'],
-      rules: {
-        ...config.rules,
-        '@angular-eslint/directive-selector': [
-          'error',
-          {
-            type: 'attribute',
-            prefix: 'shApiFibWasm',
-            style: 'camelCase',
-          },
-        ],
-        '@angular-eslint/component-selector': [
-          'error',
-          {
-            type: 'element',
-            prefix: 'sh-api-fib-wasm',
-            style: 'kebab-case',
-          },
-        ],
-      },
-      languageOptions: {
-        parserOptions: { project: ['libs/fib-wasm-api/tsconfig.*?.json'] },
-      },
-    })),
-  ...compat
-    .config({ extends: ['plugin:@nx/angular-template'] })
-    .map((config) => ({
-      ...config,
-      files: ['**/*.html'],
-      rules: {
-        ...config.rules,
-      },
-    })),
+      '@angular-eslint/component-selector': [
+        'error',
+        {
+          type: 'element',
+          prefix: 'sh-api-fib-wasm',
+          style: 'kebab-case',
+        },
+      ],
+    },
+    languageOptions: {
+      parserOptions: { project: ['libs/fib-wasm-api/tsconfig.*?.json'] },
+    },
+  })),
+  ...nxPlugin.configs['flat/angular-template'].map((config) => ({
+    ...config,
+    files: ['**/*.html'],
+    rules: {
+      ...config.rules,
+    },
+  })),
   {
     files: ['**/*.ts'],
     rules: {

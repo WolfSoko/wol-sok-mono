@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { enableProdMode, provideZonelessChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { enableAkitaProdMode } from '@datorama/akita';
@@ -42,7 +42,7 @@ bootstrapApplication(AppComponent, {
   providers: [
     provideZonelessChangeDetection(),
     provideAppRouter(),
-    provideHttpClient(),
+    provideHttpClient(withXhr()),
     provideCore(),
     [
       provideWsThanosOptions({

@@ -1,3 +1,5 @@
+import nxPlugin from '@nx/eslint-plugin';
+import angular from 'angular-eslint';
 import { FlatCompat } from '@eslint/eslintrc';
 import baseConfig from '../../../../eslint.config.mjs';
 import baseConfig1 from '../../../../eslint.base.config.mjs';
@@ -18,45 +20,40 @@ const compat = new FlatCompat({
 export default [
   ...baseConfig,
   ...baseConfig1,
-  ...compat
-    .config({
-      extends: [
-        'plugin:@nx/angular',
-        'plugin:@angular-eslint/template/process-inline-templates',
+  { files: ['**/*.ts'], processor: angular.processInlineTemplates },
+  ...nxPlugin.configs['flat/angular'].map((config) => ({
+    ...config,
+    files: ['**/*.ts'],
+    rules: {
+      ...config.rules,
+      '@angular-eslint/directive-selector': [
+        'error',
+        {
+          type: 'attribute',
+          prefix: 'featLazyReactDiff',
+          style: 'camelCase',
+        },
       ],
-    })
-    .map((config) => ({
-      ...config,
-      files: ['**/*.ts'],
-      rules: {
-        ...config.rules,
-        '@angular-eslint/directive-selector': [
-          'error',
-          {
-            type: 'attribute',
-            prefix: 'featLazyReactDiff',
-            style: 'camelCase',
-          },
-        ],
-        '@angular-eslint/component-selector': [
-          'error',
-          {
-            type: 'element',
-            prefix: 'feat-lazy-react-diff',
-            style: 'kebab-case',
-          },
-        ],
-      },
-    })),
-  ...compat
-    .config({ extends: ['plugin:@nx/angular-template'] })
-    .map((config) => ({
-      ...config,
-      files: ['**/*.html'],
-      rules: {
-        ...config.rules,
-      },
-    })),
+      '@angular-eslint/component-selector': [
+        'error',
+        {
+          type: 'element',
+          prefix: 'feat-lazy-react-diff',
+          style: 'kebab-case',
+        },
+      ],
+    },
+  })),
+  ...nxPlugin.configs['flat/angular-template'].map((config) => ({
+    ...config,
+    files: ['**/*.html'],
+    rules: {
+      ...config.rules,
+      // Newly enabled by the Angular ESLint v22 preset; preserve the previous lint baseline.
+      '@angular-eslint/template/click-events-have-key-events': 'off',
+      '@angular-eslint/template/interactive-supports-focus': 'off',
+    },
+  })),
   {
     files: ['**/*.ts'],
     rules: {

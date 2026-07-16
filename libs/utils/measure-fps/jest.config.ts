@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'utils-measure-fps',
   preset: '../../../jest.preset.cjs',
   globals: {},

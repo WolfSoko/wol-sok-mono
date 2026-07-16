@@ -1,3 +1,5 @@
+import nxPlugin from '@nx/eslint-plugin';
+import angular from 'angular-eslint';
 import { FlatCompat } from '@eslint/eslintrc';
 import baseConfig from '../../eslint.config.mjs';
 import baseConfig1 from '../../eslint.base.config.mjs';
@@ -18,44 +20,36 @@ const compat = new FlatCompat({
 export default [
   ...baseConfig,
   ...baseConfig1,
-  ...compat
-    .config({
-      extends: [
-        'plugin:@nx/angular',
-        'plugin:@angular-eslint/template/process-inline-templates',
+  { files: ['**/*.ts'], processor: angular.processInlineTemplates },
+  ...nxPlugin.configs['flat/angular'].map((config) => ({
+    ...config,
+    files: ['**/*.ts'],
+    rules: {
+      '@angular-eslint/directive-selector': [
+        'error',
+        {
+          type: 'attribute',
+          prefix: 'wsSharedUi',
+          style: 'camelCase',
+        },
       ],
-    })
-    .map((config) => ({
-      ...config,
-      files: ['**/*.ts'],
-      rules: {
-        '@angular-eslint/directive-selector': [
-          'error',
-          {
-            type: 'attribute',
-            prefix: 'wsSharedUi',
-            style: 'camelCase',
-          },
-        ],
-        '@angular-eslint/component-selector': [
-          'error',
-          {
-            type: 'element',
-            prefix: 'ws-shared-ui',
-            style: 'kebab-case',
-          },
-        ],
-      },
-    })),
-  ...compat
-    .config({ extends: ['plugin:@nx/angular-template'] })
-    .map((config) => ({
-      ...config,
-      files: ['**/*.html'],
-      rules: {
-        ...config.rules,
-      },
-    })),
+      '@angular-eslint/component-selector': [
+        'error',
+        {
+          type: 'element',
+          prefix: 'ws-shared-ui',
+          style: 'kebab-case',
+        },
+      ],
+    },
+  })),
+  ...nxPlugin.configs['flat/angular-template'].map((config) => ({
+    ...config,
+    files: ['**/*.html'],
+    rules: {
+      ...config.rules,
+    },
+  })),
   {
     files: ['**/*.ts'],
     rules: {
