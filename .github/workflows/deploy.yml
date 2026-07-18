@@ -70,10 +70,6 @@ jobs:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org/'
 
-      - name: Upgrade npm for OIDC trusted publishing
-        if: matrix.config.app-type == 'npm-packages'
-        run: npm install -g npm@latest
-
       - name: Find previous deployment tag
         id: previous_deployment
         run: |
