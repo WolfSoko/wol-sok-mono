@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.8-non-cdk-deployed...v4.79.9) (2026-07-20)
+
+
+### Bug Fixes
+
+* **ci:** remove unsupported internalPackagePatterns from renovate config ([0fec03f](https://github.com/WolfSoko/wol-sok-mono/commit/0fec03f6e4fd9c0864ebaa5893534c1176ac3f3d))
+
+
+### Chore
+
+* **release:** publish ([bb35c44](https://github.com/WolfSoko/wol-sok-mono/commit/bb35c444b8dc690c02d7f8cb3b6a2424dec20842))
+
 ## [4.79.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.7-non-cdk-deployed...v4.79.8) (2026-07-17)
 
 
