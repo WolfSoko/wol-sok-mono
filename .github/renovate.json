@@ -14,6 +14,18 @@
   "platformAutomerge": true,
   "prCreation": "immediate",
   "rebaseWhen": "conflicted",
+  "internalPackagePatterns": [
+    "@wolsok/feat-*",
+    "@wolsok/fib-*",
+    "@wolsok/headline-*",
+    "@wolsok/shared-*",
+    "@wolsok/spa-*",
+    "@wolsok/test-*",
+    "@wolsok/thanos",
+    "@wolsok/ui-*",
+    "@wolsok/utils-*",
+    "@wolsok/ws-*"
+  ],
   "packageRules": [
     {
       "matchPackageNames": ["esbuild", "eslint-plugin-playwright"],

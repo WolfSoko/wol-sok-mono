@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.7-non-cdk-deployed...v4.79.8) (2026-07-17)
+
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** use peerDep range ^17.0.0 to unblock PR CI (mirrors PR [#2148](https://github.com/WolfSoko/wol-sok-mono/issues/2148)) ([6a0d271](https://github.com/WolfSoko/wol-sok-mono/commit/6a0d271f45888a02af55e03ea8a5f0de8bea856a))
+
+
+### Chore
+
+* add nightshift label-setup workflow ([58a3fd8](https://github.com/WolfSoko/wol-sok-mono/commit/58a3fd8dea1572989739b0c9577cbd773ae0dfc8))
+* **github:** narrow internalPackagePatterns to exclude @wolsok/nx-aws-cdk-v2 ([6029b56](https://github.com/WolfSoko/wol-sok-mono/commit/6029b56bce98b53afa21ebca7f9380d842141d64))
+* **github:** suppress Renovate lookup failures for internal @wolsok/* packages ([da445c1](https://github.com/WolfSoko/wol-sok-mono/commit/da445c1d14b455e0a129d3ec581f1f7e1ddd8c5f)), closes [#2144](https://github.com/WolfSoko/wol-sok-mono/issues/2144)
+* **release:** publish ([0f9f24f](https://github.com/WolfSoko/wol-sok-mono/commit/0f9f24fa6c0cd710429755edbabe0d317fd567b7))
+* remove nightshift label-setup workflow ([2e0a55d](https://github.com/WolfSoko/wol-sok-mono/commit/2e0a55d4265111e4d5057da5d8451a6fe170b4c9))
+* trigger nightshift label creation ([e10edb7](https://github.com/WolfSoko/wol-sok-mono/commit/e10edb7da84bf3294b0f2ec0db023c112d417ee2))
+
 ## [4.79.7](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.6-non-cdk-deployed...v4.79.7) (2026-07-07)
 
 
