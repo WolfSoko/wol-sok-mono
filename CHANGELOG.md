@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.11-non-cdk-deployed...v4.79.12) (2026-07-23)
+
+
+### Chore
+
+* **deps:** update dependency @eslint/eslintrc to v3.3.6 ([#2164](https://github.com/WolfSoko/wol-sok-mono/issues/2164)) ([9d3126a](https://github.com/WolfSoko/wol-sok-mono/commit/9d3126a062a17ab03e77e119217ac681b3060313))
+* **release:** publish ([a25cc4c](https://github.com/WolfSoko/wol-sok-mono/commit/a25cc4c94a45e0befb468e377ec32c1fae263f99))
+
 ## [4.79.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.10-non-cdk-deployed...v4.79.11) (2026-07-22)
 
 
