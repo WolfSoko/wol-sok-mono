@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.11-non-cdk-deployed...v4.79.12) (2026-07-23)
+
+
+### Chore
+
+* **deps:** update dependency @eslint/eslintrc to v3.3.6 ([#2164](https://github.com/WolfSoko/wol-sok-mono/issues/2164)) ([9d3126a](https://github.com/WolfSoko/wol-sok-mono/commit/9d3126a062a17ab03e77e119217ac681b3060313))
+* **release:** publish ([a25cc4c](https://github.com/WolfSoko/wol-sok-mono/commit/a25cc4c94a45e0befb468e377ec32c1fae263f99))
+
+## [4.79.11](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.10-non-cdk-deployed...v4.79.11) (2026-07-22)
+
+
+### Chore
+
+* **deps:** update dependency @esbuild/linux-x64 to v0.28.1 ([#2162](https://github.com/WolfSoko/wol-sok-mono/issues/2162)) ([9630055](https://github.com/WolfSoko/wol-sok-mono/commit/96300555c2274cab7f91336261f7bb9820c28b6e))
+* **release:** publish ([f81ef71](https://github.com/WolfSoko/wol-sok-mono/commit/f81ef71a3762601a03879cab1ad41ea920543867))
+
+## [4.79.10](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.9-non-cdk-deployed...v4.79.10) (2026-07-21)
+
+
+### Chore
+
+* **deps:** update dependency @chromatic-com/storybook to v4.1.3 ([#2160](https://github.com/WolfSoko/wol-sok-mono/issues/2160)) ([4a53809](https://github.com/WolfSoko/wol-sok-mono/commit/4a53809a99ccd0f7d17408766344f44053d88645))
+* **release:** publish ([6f07f9a](https://github.com/WolfSoko/wol-sok-mono/commit/6f07f9a8dd842ac69c02a2af51c59e8a352b2754))
+
+## [4.79.9](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.8-non-cdk-deployed...v4.79.9) (2026-07-20)
+
+
+### Bug Fixes
+
+* **ci:** remove unsupported internalPackagePatterns from renovate config ([0fec03f](https://github.com/WolfSoko/wol-sok-mono/commit/0fec03f6e4fd9c0864ebaa5893534c1176ac3f3d))
+
+
+### Chore
+
+* **release:** publish ([bb35c44](https://github.com/WolfSoko/wol-sok-mono/commit/bb35c444b8dc690c02d7f8cb3b6a2424dec20842))
+
 ## [4.79.8](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.7-non-cdk-deployed...v4.79.8) (2026-07-17)
 
 
