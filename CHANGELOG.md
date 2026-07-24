@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.12-non-cdk-deployed...v4.79.13) (2026-07-24)
+
+
+### Bug Fixes
+
+* **github:** upgrade Node to 22 and drop npm@latest install in deploy workflow ([b5bf6dd](https://github.com/WolfSoko/wol-sok-mono/commit/b5bf6dda37ba27b639c74c811cbaabb2285dda62)), closes [#2153](https://github.com/WolfSoko/wol-sok-mono/issues/2153)
+
+
+### Chore
+
+* **release:** publish ([68bcf04](https://github.com/WolfSoko/wol-sok-mono/commit/68bcf04d310454d93bd0ca49255397d7eb13f53d))
+
 ## [4.79.12](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.11-non-cdk-deployed...v4.79.12) (2026-07-23)
 
 
