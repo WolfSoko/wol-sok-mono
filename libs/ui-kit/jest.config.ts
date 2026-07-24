@@ -1,6 +1,6 @@
-import { JestConfigWithTsJest } from 'ts-jest';
+const { JestConfigWithTsJest } = require('ts-jest');
 
-export default {
+module.exports = {
   displayName: 'ui-kit',
   preset: '../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
