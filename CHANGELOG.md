@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.13-non-cdk-deployed...v4.79.14) (2026-07-24)
+
+
+### Chore
+
+* **deps:** update dependency @types/jasmine to v5.1.15 ([#2167](https://github.com/WolfSoko/wol-sok-mono/issues/2167)) ([3876eb2](https://github.com/WolfSoko/wol-sok-mono/commit/3876eb28314eb9da6b2f387494fa7dd73b2e91e7))
+* **release:** publish ([13517f3](https://github.com/WolfSoko/wol-sok-mono/commit/13517f305264f29048c3a44e02ff793d2879be9d))
+
 ## [4.79.13](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.12-non-cdk-deployed...v4.79.13) (2026-07-24)
 
 
