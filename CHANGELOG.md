@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.14-non-cdk-deployed...v4.79.15) (2026-07-25)
+
+
+### Chore
+
+* **deps:** update dependency @types/lodash to v4.17.24 ([#2169](https://github.com/WolfSoko/wol-sok-mono/issues/2169)) ([20ac74c](https://github.com/WolfSoko/wol-sok-mono/commit/20ac74c4cc1a3393e38c02e21c76c8cdec7806dd))
+* **release:** publish ([bb82b9f](https://github.com/WolfSoko/wol-sok-mono/commit/bb82b9f6dbd02bb7b834ce4296cf0c0a9485ea28))
+
 ## [4.79.14](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.13-non-cdk-deployed...v4.79.14) (2026-07-24)
 
 
