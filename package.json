@@ -161,7 +161,7 @@
     "@vitest/ui": "4.0.3",
     "@wolsok/nx-aws-cdk-v2": "2.5.0",
     "angular-eslint": "20.4.0",
-    "assemblyscript": "0.28.9",
+    "assemblyscript": "0.28.20",
     "autoprefixer": "10.4.21",
     "aws-cdk": "2.1031.0",
     "aws-cdk-lib": "2.221.0",
