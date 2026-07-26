@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.15-non-cdk-deployed...v4.79.16) (2026-07-26)
+
+
+### Chore
+
+* **deps:** update dependency assemblyscript to v0.28.20 ([#2171](https://github.com/WolfSoko/wol-sok-mono/issues/2171)) ([ddea949](https://github.com/WolfSoko/wol-sok-mono/commit/ddea949a9e8b787c70434d2b2a464d562bdfe3f3))
+* **release:** publish ([daf407f](https://github.com/WolfSoko/wol-sok-mono/commit/daf407f4a8dd49b287a775b7966a4b14cadac179))
+
 ## [4.79.15](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.14-non-cdk-deployed...v4.79.15) (2026-07-25)
 
 
