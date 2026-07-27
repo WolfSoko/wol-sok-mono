@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.17](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.16-non-cdk-deployed...v4.79.17) (2026-07-27)
+
+
+### Chore
+
+* **deps:** update dependency chai to v6.2.2 ([#2175](https://github.com/WolfSoko/wol-sok-mono/issues/2175)) ([7127fbd](https://github.com/WolfSoko/wol-sok-mono/commit/7127fbd9c962bb8d5bfdb31a327af004dd4d5023))
+* **release:** publish ([6bde0bd](https://github.com/WolfSoko/wol-sok-mono/commit/6bde0bd6c9aa6da0841cf051d3cffd5fb39ab58c))
+
 ## [4.79.16](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.15-non-cdk-deployed...v4.79.16) (2026-07-26)
 
 
