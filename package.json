@@ -177,7 +177,7 @@
     "eslint-plugin-cdk": "1.8.0",
     "eslint-plugin-html": "8.1.4",
     "eslint-plugin-playwright": "1.8.3",
-    "eslint-plugin-prettier": "5.5.4",
+    "eslint-plugin-prettier": "5.5.6",
     "eslint-plugin-storybook": "9.1.15",
     "firebase-admin": "13.5.0",
     "firebase-functions-test": "3.4.1",
