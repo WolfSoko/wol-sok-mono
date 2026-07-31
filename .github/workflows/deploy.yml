@@ -72,7 +72,7 @@ jobs:
 
       - name: Upgrade npm for OIDC trusted publishing
         if: matrix.config.app-type == 'npm-packages'
-        run: npm install -g npm@^11.5.1
+        run: npm install -g npm@11.5.1
 
       - name: Find previous deployment tag
         id: previous_deployment
