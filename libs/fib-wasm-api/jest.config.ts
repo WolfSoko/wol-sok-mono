@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'fib-wasm-api',
 
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],

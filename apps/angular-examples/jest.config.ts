@@ -1,6 +1,6 @@
 import type { JestConfigWithTsJest } from 'ts-jest';
 
-export default {
+module.exports = {
   displayName: 'angular-examples',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   globals: {
