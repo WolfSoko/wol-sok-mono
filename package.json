@@ -19,10 +19,10 @@
   },
   "private": true,
   "dependencies": {
-    "@analogjs/content": "2.2.3",
-    "@analogjs/router": "2.2.3",
-    "@analogjs/vite-plugin-angular": "2.2.3",
-    "@analogjs/vite-plugin-nitro": "2.2.3",
+    "@analogjs/content": "2.6.4",
+    "@analogjs/router": "2.6.4",
+    "@analogjs/vite-plugin-angular": "2.6.4",
+    "@analogjs/vite-plugin-nitro": "2.6.4",
     "@angular/animations": "21.2.9",
     "@angular/cdk": "21.2.9",
     "@angular/common": "21.2.9",
@@ -95,8 +95,8 @@
     "zod": "4.1.12"
   },
   "devDependencies": {
-    "@analogjs/platform": "2.2.3",
-    "@analogjs/vitest-angular": "2.2.3",
+    "@analogjs/platform": "2.6.4",
+    "@analogjs/vitest-angular": "2.6.4",
     "@angular-builders/custom-webpack": "20.0.0",
     "@angular-devkit/architect": "0.2201.3",
     "@angular-devkit/build-angular": "21.2.9",

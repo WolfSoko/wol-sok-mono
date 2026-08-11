@@ -42,7 +42,7 @@ export default [
           'error',
           {
             type: 'element',
-            prefix: 'lazy-feat-wasm-test',
+            prefix: 'lazy-feat',
             style: 'kebab-case',
           },
         ],

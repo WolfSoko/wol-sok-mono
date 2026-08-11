@@ -32,7 +32,7 @@ export default [
           'error',
           {
             type: 'attribute',
-            prefix: 'wsThanos',
+            prefix: 'ws',
             style: 'camelCase',
           },
         ],
