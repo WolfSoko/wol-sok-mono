@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.18-non-cdk-deployed...v4.79.19) (2026-08-14)
+
+
+### Bug Fixes
+
+* **release:** pin npm to exact version 11.5.1 for CI determinism ([317cb92](https://github.com/WolfSoko/wol-sok-mono/commit/317cb9293fb6b1ed2ca19023cb2ee73b9dd49a23))
+* **release:** pin npm@^11.5.1 instead of npm@latest for deterministic OIDC publishing ([c4957b2](https://github.com/WolfSoko/wol-sok-mono/commit/c4957b2a5cb43b61873ac5cc4c6ee836f315fccc))
+* **release:** restore npm upgrade step for OIDC trusted publishing ([93f5eef](https://github.com/WolfSoko/wol-sok-mono/commit/93f5eefa58cd52e84c352b75b2c56fd0f7297252)), closes [#2173](https://github.com/WolfSoko/wol-sok-mono/issues/2173)
+
+
+### Chore
+
+* **release:** publish ([39e2fdc](https://github.com/WolfSoko/wol-sok-mono/commit/39e2fdc183a1ea0625ebe6ba13dcc6917c3f6e67))
+
 ## [4.79.18](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.17-non-cdk-deployed...v4.79.18) (2026-07-28)
 
 
