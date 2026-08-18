@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.19-non-cdk-deployed...v4.79.20) (2026-08-18)
+
+
+### Bug Fixes
+
+* **deps:** apply non-breaking npm audit fixes ([e154806](https://github.com/WolfSoko/wol-sok-mono/commit/e1548069afd60d28fa26cbf70714f30868fa90c1)), closes [#2149](https://github.com/WolfSoko/wol-sok-mono/issues/2149)
+
+
+### Chore
+
+* **release:** publish ([8d2b448](https://github.com/WolfSoko/wol-sok-mono/commit/8d2b448cbb8cd8156da01ba702d45c0908cd2dcc))
+
 ## [4.79.19](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.18-non-cdk-deployed...v4.79.19) (2026-08-14)
 
 
