@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.21-npm-deployed...v4.79.22) (2026-08-19)
+
+
+### Chore
+
+* **deps:** update actions/cache action to v6 ([#2187](https://github.com/WolfSoko/wol-sok-mono/issues/2187)) ([c46397c](https://github.com/WolfSoko/wol-sok-mono/commit/c46397cecd62c5bb2a11afc72118d11081d96a1f))
+* **release:** publish ([d689ed3](https://github.com/WolfSoko/wol-sok-mono/commit/d689ed3951bb4b3e3f03e3d3b41028170e319a8f))
+
 ## [4.79.21](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.20...v4.79.21) (2026-08-18)
 
 ## [4.79.20](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.19-non-cdk-deployed...v4.79.20) (2026-08-18)
