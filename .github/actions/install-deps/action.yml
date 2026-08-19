@@ -39,7 +39,7 @@ runs:
     - name: Cache Playwright binaries
       id: cache-playwright-binary
       if: inputs.browser == 'true'
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.cache/ms-playwright
         key: playwright-binary-${{ hashFiles('package-lock.json') }}
