@@ -1,7 +1,19 @@
 {
-  "name": "aws-cdk-v2-e2e",
+  "name": "nx-aws-cdk-v2-e2e",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "implicitDependencies": ["aws-cdk-v2"],
-  "tags": []
+  "implicitDependencies": ["nx-aws-cdk-v2"],
+  "tags": ["e2e"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/jest:jest",
+      "dependsOn": ["nx-aws-cdk-v2:build"],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/nx-aws-cdk-v2-e2e/jest.config.ts",
+        "runInBand": true,
+        "passWithNoTests": false
+      }
+    }
+  }
 }

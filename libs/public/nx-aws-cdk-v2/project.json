@@ -1,41 +1,41 @@
 {
-  "name": "aws-cdk-v2",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/aws-cdk-v2/src",
+  "name": "nx-aws-cdk-v2",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/public/nx-aws-cdk-v2/src",
   "projectType": "library",
-  "tags": [],
+  "tags": ["infra-shared", "published"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/aws-cdk-v2",
-        "main": "packages/aws-cdk-v2/src/index.ts",
-        "tsConfig": "packages/aws-cdk-v2/tsconfig.lib.json",
+        "outputPath": "dist/libs/public/nx-aws-cdk-v2",
+        "main": "libs/public/nx-aws-cdk-v2/src/index.ts",
+        "tsConfig": "libs/public/nx-aws-cdk-v2/tsconfig.lib.json",
         "assets": [
-          "packages/aws-cdk-v2/*.md",
+          "libs/public/nx-aws-cdk-v2/*.md",
           {
-            "input": "./packages/aws-cdk-v2/src",
+            "input": "./libs/public/nx-aws-cdk-v2/src",
             "glob": "**/!(*.ts)",
             "output": "./src"
           },
           {
-            "input": "./packages/aws-cdk-v2/src",
+            "input": "./libs/public/nx-aws-cdk-v2/src",
             "glob": "**/*.d.ts",
             "output": "./src"
           },
           {
-            "input": "./packages/aws-cdk-v2",
+            "input": "./libs/public/nx-aws-cdk-v2",
             "glob": "generators.json",
             "output": "."
           },
           {
-            "input": "./packages/aws-cdk-v2",
+            "input": "./libs/public/nx-aws-cdk-v2",
             "glob": "executors.json",
             "output": "."
           },
           {
-            "input": "./packages/aws-cdk-v2",
+            "input": "./libs/public/nx-aws-cdk-v2",
             "glob": "migrations.json",
             "output": "."
           },
@@ -49,27 +49,21 @@
     },
     "lint": {
       "options": {
-        "args": ["**/*.ts", "generators.json", "executors.json", "migrations.json", "package.json"]
+        "args": [
+          "**/*.ts",
+          "generators.json",
+          "executors.json",
+          "migrations.json",
+          "package.json"
+        ]
       }
     },
     "test": {
-      "inputs": [
-        "default",
-        "^default",
-        "{workspaceRoot}/jest.preset.js",
-        {
-          "externalDependencies": ["jest"]
-        }
-      ],
-      "outputs": ["{workspaceRoot}/coverage/packages/aws-cdk-v2"],
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/public/nx-aws-cdk-v2"],
       "options": {
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "coverage": true
-        }
+        "jestConfig": "libs/public/nx-aws-cdk-v2/jest.config.ts",
+        "passWithNoTests": false
       }
     }
   }

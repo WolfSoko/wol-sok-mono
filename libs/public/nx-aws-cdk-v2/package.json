@@ -23,18 +23,21 @@
     "Node"
   ],
   "author": "Wolfram Sokollek",
-  "homepage": "https://github.com/WolfSoko/nx-aws-cdk-v2/tree/main/packages/aws-cdk-v2#readme",
+  "homepage": "https://github.com/WolfSoko/wol-sok-mono/tree/main/libs/public/nx-aws-cdk-v2#readme",
   "bugs": {
-    "url": "https://github.com/WolfSoko/nx-aws-cdk-v2/issues"
+    "url": "https://github.com/WolfSoko/wol-sok-mono/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/WolfSoko/nx-aws-cdk-v2.git",
-    "directory": "packages/aws-cdk-v2"
+    "url": "git+https://github.com/WolfSoko/wol-sok-mono.git",
+    "directory": "libs/public/nx-aws-cdk-v2"
   },
   "license": "MIT",
   "engines": {
     "node": ">=20.19.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
   },
   "peerDependencies": {
     "@nx/devkit": ">=21.0.0",
@@ -44,5 +47,8 @@
     "@nx/jest": {
       "optional": true
     }
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
