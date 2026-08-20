@@ -20,7 +20,7 @@ name to an implementation file and a JSON schema; Nx reads them when it resolves
 `@wolsok/nx-aws-cdk-v2:deploy`.
 
 ```text
-packages/aws-cdk-v2/
+libs/public/nx-aws-cdk-v2/
 ├── generators.json           # application, init
 ├── executors.json            # deploy, destroy, synth, bootstrap
 ├── migrations.json           # entry point for `nx migrate`
@@ -71,7 +71,10 @@ Nx flushes the tree, which is what makes `--dry-run` work for free.
 All four executors have the same three-step shape:
 
 ```ts
-export default async function runExecutor(options: Schema, context: ExecutorContext) {
+export default async function runExecutor(
+  options: Schema,
+  context: ExecutorContext
+) {
   const normalized = normalizeOptions(options, context); // schema options + project paths
   const command = createCommand('deploy', normalized); // build the cdk command line
   return { success: await runCommandProcess(command, context.root) };
@@ -144,11 +147,11 @@ plugin does not depend on `aws-cdk` itself, so consumers control the CLI version
 
 ## Testing strategy
 
-**Unit tests** (`packages/aws-cdk-v2/**/*.spec.ts`, `nx test aws-cdk-v2`) run generators against an
+**Unit tests** (`libs/public/nx-aws-cdk-v2/**/*.spec.ts`, `nx test nx-aws-cdk-v2`) run generators against an
 in-memory tree and executors against a mocked `child_process.exec`, asserting the exact command line
 that would have been run. They are fast and cover option handling.
 
-**e2e tests** (`e2e/aws-cdk-v2-e2e`, `nx e2e aws-cdk-v2-e2e`) build the plugin, install it into a
+**e2e tests** (`apps/nx-aws-cdk-v2-e2e`, `nx e2e nx-aws-cdk-v2-e2e`) build the plugin, install it into a
 throwaway Nx workspace with `ensureNxProject`, and run real `nx generate` / `nx run` commands:
 
 - `synth` runs the **real** CDK CLI and asserts against the emitted `cdk.out/manifest.json`.

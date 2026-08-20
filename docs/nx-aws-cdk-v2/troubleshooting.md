@@ -41,7 +41,7 @@ npm install --save-dev @wolsok/nx-aws-cdk-v2
 
 Check that it appears in `devDependencies`, and that you are in the workspace root. If you are
 testing a local build via `npm link`, re-link after every rebuild — `npm link` points at the build
-output, which `nx build aws-cdk-v2` replaces.
+output, which `nx build nx-aws-cdk-v2` replaces.
 
 ### `ERESOLVE could not resolve` while installing
 

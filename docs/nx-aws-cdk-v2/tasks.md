@@ -1,7 +1,7 @@
 # Maintainer backlog
 
 Internal improvement backlog for the repository. This is **not** consumer documentation — start at
-the [package README](../packages/aws-cdk-v2/README.md) if you are using the plugin.
+the [package README](../../libs/public/nx-aws-cdk-v2/README.md) if you are using the plugin.
 
 `[x]` means done and on `main`.
 

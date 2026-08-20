@@ -132,7 +132,10 @@ export class AppStack extends Stack {
     "deploy": { "executor": "@wolsok/nx-aws-cdk-v2:deploy", "options": {} },
     "synth": { "executor": "@wolsok/nx-aws-cdk-v2:synth", "options": {} },
     "destroy": { "executor": "@wolsok/nx-aws-cdk-v2:destroy", "options": {} },
-    "bootstrap": { "executor": "@wolsok/nx-aws-cdk-v2:bootstrap", "options": {} }
+    "bootstrap": {
+      "executor": "@wolsok/nx-aws-cdk-v2:bootstrap",
+      "options": {}
+    }
   }
 }
 ```
@@ -319,7 +322,7 @@ instead of `ts-node` automatically. Nothing to configure.
 
 ## Where to next
 
-- [Package README](../packages/aws-cdk-v2/README.md) — every option in one place
+- [Package README](../../libs/public/nx-aws-cdk-v2/README.md) — every option in one place
 - [API reference](./api-documentation.md) — schemas and defaults
 - [Architecture](./architecture.md) — how the plugin works internally
 - [Troubleshooting](./troubleshooting.md) — when something goes wrong

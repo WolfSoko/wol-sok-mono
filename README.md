@@ -63,6 +63,15 @@ Readme under: [README.md](./libs/public/ws-thanos/README.md)
 
 A running version can be found on GitHub pages: https://angularexamples.wolsok.de/
 
+## nx-aws-cdk-v2
+
+The Nx plugin that powers the `*-cdk` infrastructure projects in this repo lives here too, as
+`libs/public/nx-aws-cdk-v2`. It provides `deploy`, `destroy`, `synth` and `bootstrap` executors plus an
+application generator for AWS CDK v2 apps.
+[@wolsok/nx-aws-cdk-v2 on npm](https://www.npmjs.com/package/@wolsok/nx-aws-cdk-v2)
+
+Readme under: [README.md](./libs/public/nx-aws-cdk-v2/README.md), docs under [docs/nx-aws-cdk-v2](./docs/nx-aws-cdk-v2).
+
 ## Technology Stack
 
 This monorepo leverages modern web technologies:

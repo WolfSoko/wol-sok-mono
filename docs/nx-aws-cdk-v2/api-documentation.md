@@ -228,7 +228,10 @@ import {
   type ApplicationSchema,
 } from '@wolsok/nx-aws-cdk-v2';
 
-export default async function myGenerator(tree: Tree, options: ApplicationSchema) {
+export default async function myGenerator(
+  tree: Tree,
+  options: ApplicationSchema
+) {
   await applicationGenerator(tree, options);
   // ...your own additions
 }

@@ -227,15 +227,15 @@ Run any target with `--verbose` to see the exact command that is executed.
 
 ## Documentation
 
-- [Getting started](https://github.com/WolfSoko/nx-aws-cdk-v2/blob/main/docs/getting-started.md)
-- [API reference](https://github.com/WolfSoko/nx-aws-cdk-v2/blob/main/docs/api-documentation.md)
-- [Architecture](https://github.com/WolfSoko/nx-aws-cdk-v2/blob/main/docs/architecture.md)
-- [Troubleshooting](https://github.com/WolfSoko/nx-aws-cdk-v2/blob/main/docs/troubleshooting.md)
+- [Getting started](https://github.com/WolfSoko/wol-sok-mono/blob/main/docs/nx-aws-cdk-v2/getting-started.md)
+- [API reference](https://github.com/WolfSoko/wol-sok-mono/blob/main/docs/nx-aws-cdk-v2/api-documentation.md)
+- [Architecture](https://github.com/WolfSoko/wol-sok-mono/blob/main/docs/nx-aws-cdk-v2/architecture.md)
+- [Troubleshooting](https://github.com/WolfSoko/wol-sok-mono/blob/main/docs/nx-aws-cdk-v2/troubleshooting.md)
 
 ## Contributing
 
 Issues and pull requests are welcome — see
-[CONTRIBUTING.md](https://github.com/WolfSoko/nx-aws-cdk-v2/blob/main/CONTRIBUTING.md).
+[CONTRIBUTING.md](https://github.com/WolfSoko/wol-sok-mono/blob/main/docs/CONTRIBUTING.md).
 
 ## License
 
