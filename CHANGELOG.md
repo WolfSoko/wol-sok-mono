@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.22-non-cdk-deployed...v4.79.23) (2026-08-20)
+
+
+### Chore
+
+* **deps:** update actions/checkout action to v7 ([#2188](https://github.com/WolfSoko/wol-sok-mono/issues/2188)) ([dac27d5](https://github.com/WolfSoko/wol-sok-mono/commit/dac27d57d4eb518863374259d5481f702910d64c))
+* **deps:** update actions/setup-node action to v7 ([#2190](https://github.com/WolfSoko/wol-sok-mono/issues/2190)) ([028bedf](https://github.com/WolfSoko/wol-sok-mono/commit/028bedf7134f2e9c2d2d6d3e948c7577e1de0d7a))
+* **release:** publish ([02581ac](https://github.com/WolfSoko/wol-sok-mono/commit/02581ac1737eb8266783df5968f2540f19297e5b))
+
 ## [4.79.22](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.21-npm-deployed...v4.79.22) (2026-08-19)
 
 
