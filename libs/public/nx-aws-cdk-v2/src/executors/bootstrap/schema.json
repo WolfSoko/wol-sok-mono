@@ -9,7 +9,10 @@
       "description": "Name of the AWS profile (from ~/.aws/credentials or ~/.aws/config) to bootstrap with."
     },
     "context": {
-      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }],
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ],
       "description": "Additional CDK context values as KEY=VALUE pairs. Pass the option multiple times for multiple values.",
       "alias": "c"
     }

@@ -31,7 +31,7 @@ describe('aws-cdk-v2 synth Executor', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('run cdk synth command', async () => {
-    const execMock = (childProcess.exec as unknown) as jest.Mock;
+    const execMock = childProcess.exec as unknown as jest.Mock;
     let mockProcess;
     execMock.mockImplementation(() => {
       mockProcess = new MockChildProcess();
@@ -48,11 +48,13 @@ describe('aws-cdk-v2 synth Executor', () => {
         maxBuffer: LARGE_BUFFER,
       })
     );
-    expect(logger.debug).toHaveBeenLastCalledWith(`Executing command: ${nodeCommandWithRelativePath}`);
+    expect(logger.debug).toHaveBeenLastCalledWith(
+      `Executing command: ${nodeCommandWithRelativePath}`
+    );
   });
 
   it('run cdk synth command stack', async () => {
-    const execMock = (childProcess.exec as unknown) as jest.Mock;
+    const execMock = childProcess.exec as unknown as jest.Mock;
     let mockProcess;
     execMock.mockImplementation(() => {
       mockProcess = new MockChildProcess();
@@ -72,11 +74,13 @@ describe('aws-cdk-v2 synth Executor', () => {
       })
     );
 
-    expect(logger.debug).toHaveBeenLastCalledWith(`Executing command: ${nodeCommandWithRelativePath} ${stackName}`);
+    expect(logger.debug).toHaveBeenLastCalledWith(
+      `Executing command: ${nodeCommandWithRelativePath} ${stackName}`
+    );
   });
 
   it('run cdk synth command context options', async () => {
-    const execMock = (childProcess.exec as unknown) as jest.Mock;
+    const execMock = childProcess.exec as unknown as jest.Mock;
     let mockProcess;
     execMock.mockImplementation(() => {
       mockProcess = new MockChildProcess();
@@ -102,7 +106,7 @@ describe('aws-cdk-v2 synth Executor', () => {
   });
 
   it('run cdk synth command with multiple context options', async () => {
-    const execMock = (childProcess.exec as unknown) as jest.Mock;
+    const execMock = childProcess.exec as unknown as jest.Mock;
     let mockProcess;
     execMock.mockImplementation(() => {
       mockProcess = new MockChildProcess();
@@ -114,7 +118,9 @@ describe('aws-cdk-v2 synth Executor', () => {
     const promise = executor(option, context);
     mockProcess.emit('close', 0);
     await promise;
-    const contextCmd = contextOptions.map((option) => `--context ${option}`).join(' ');
+    const contextCmd = contextOptions
+      .map((option) => `--context ${option}`)
+      .join(' ');
     expect(childProcess.exec).toHaveBeenCalledWith(
       `${nodeCommandWithRelativePath} ${contextCmd}`,
       expect.objectContaining({
@@ -123,11 +129,13 @@ describe('aws-cdk-v2 synth Executor', () => {
       })
     );
 
-    expect(logger.debug).toHaveBeenLastCalledWith(`Executing command: ${nodeCommandWithRelativePath} ${contextCmd}`);
+    expect(logger.debug).toHaveBeenLastCalledWith(
+      `Executing command: ${nodeCommandWithRelativePath} ${contextCmd}`
+    );
   });
 
   it('run cdk synth command with boolean context option', async () => {
-    const execMock = (childProcess.exec as unknown) as jest.Mock;
+    const execMock = childProcess.exec as unknown as jest.Mock;
     let mockProcess;
     execMock.mockImplementation(() => {
       mockProcess = new MockChildProcess();
@@ -146,6 +154,8 @@ describe('aws-cdk-v2 synth Executor', () => {
       })
     );
 
-    expect(logger.debug).toHaveBeenLastCalledWith(`Executing command: ${nodeCommandWithRelativePath} --exclusively true`);
+    expect(logger.debug).toHaveBeenLastCalledWith(
+      `Executing command: ${nodeCommandWithRelativePath} --exclusively true`
+    );
   });
 });

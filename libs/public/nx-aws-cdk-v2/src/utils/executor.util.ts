@@ -2,7 +2,12 @@ import { exec } from 'child_process';
 
 import { DeployExecutorSchema } from '../executors/deploy/schema';
 import { ParsedExecutorInterface } from '../interfaces/parsed-executor.interface';
-import { logger, detectPackageManager, readJsonFile, workspaceRoot } from '@nx/devkit';
+import {
+  logger,
+  detectPackageManager,
+  readJsonFile,
+  workspaceRoot,
+} from '@nx/devkit';
 import { BootstrapExecutorSchema } from '../executors/bootstrap/schema';
 import { SynthExecutorSchema } from '../executors/synth/schema';
 import { existsSync } from 'node:fs';
@@ -27,7 +32,8 @@ function getWorkspaceRoot(): string {
 
 export function generateCommandString(command: string, appPath: string) {
   const packageManager = detectPackageManager();
-  const packageManagerExecutor = packageManager === 'npm' ? 'npx' : packageManager;
+  const packageManagerExecutor =
+    packageManager === 'npm' ? 'npx' : packageManager;
 
   const projectPath = path.join(getWorkspaceRoot(), appPath);
   const moduleType = getModuleType(projectPath);
@@ -56,10 +62,16 @@ export function parseArgs(
     );
 }
 
-export function createCommand(command: string, options: ParsedExecutorInterface): string {
+export function createCommand(
+  command: string,
+  options: ParsedExecutorInterface
+): string {
   logger.debug(`Normalized executor options: ${JSON.stringify(options)}`);
 
-  const nodeCommandWithRelativePath = generateCommandString(command, options.root);
+  const nodeCommandWithRelativePath = generateCommandString(
+    command,
+    options.root
+  );
   const commands = [nodeCommandWithRelativePath];
 
   if (typeof options.stacks === 'string') {
@@ -83,7 +95,10 @@ export function createCommand(command: string, options: ParsedExecutorInterface)
   return commands.join(' ');
 }
 
-export function runCommandProcess(command: string, cwd: string): Promise<boolean> {
+export function runCommandProcess(
+  command: string,
+  cwd: string
+): Promise<boolean> {
   return new Promise((resolve) => {
     logger.debug(`Executing command: ${command}`);
 
@@ -137,7 +152,11 @@ function getModuleType(projectPath: string) {
     logger.debug(`Module type from ${packageJsonPath}: ${appPackageJson.type}`);
     return appPackageJson.type;
   }
-  const globalPackageJson = getPackageJson(path.join(getWorkspaceRoot(), 'package.json'));
-  logger.debug(`Module type from workspace package.json: ${globalPackageJson.type ?? 'commonjs'}`);
+  const globalPackageJson = getPackageJson(
+    path.join(getWorkspaceRoot(), 'package.json')
+  );
+  logger.debug(
+    `Module type from workspace package.json: ${globalPackageJson.type ?? 'commonjs'}`
+  );
   return globalPackageJson.type;
 }

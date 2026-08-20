@@ -1,6 +1,9 @@
 import { ExecutorContext } from '@nx/devkit';
 
-export function mockExecutorContext(executorName: string, workspaceVersion = 2): ExecutorContext {
+export function mockExecutorContext(
+  executorName: string,
+  workspaceVersion = 2
+): ExecutorContext {
   return {
     projectName: 'proj',
     root: '/root',

@@ -1,4 +1,10 @@
-import { addDependenciesToPackageJson, convertNxGenerator, formatFiles, GeneratorCallback, Tree } from '@nx/devkit';
+import {
+  addDependenciesToPackageJson,
+  convertNxGenerator,
+  formatFiles,
+  GeneratorCallback,
+  Tree,
+} from '@nx/devkit';
 import { jestInitGenerator } from '@nx/jest';
 
 import { InitGeneratorSchema } from './schema';

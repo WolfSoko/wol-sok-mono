@@ -1,5 +1,9 @@
 import { DeployExecutorSchema } from './schema';
-import { createCommand, runCommandProcess, parseArgs } from '../../utils/executor.util';
+import {
+  createCommand,
+  runCommandProcess,
+  parseArgs,
+} from '../../utils/executor.util';
 import { ParsedExecutorInterface } from '../../interfaces/parsed-executor.interface';
 import { ExecutorContext } from '@nx/devkit';
 
@@ -9,7 +13,10 @@ export interface ParsedDeployExecutorOption extends ParsedExecutorInterface {
   root: string;
 }
 
-export default async function runExecutor(options: DeployExecutorSchema, context: ExecutorContext) {
+export default async function runExecutor(
+  options: DeployExecutorSchema,
+  context: ExecutorContext
+) {
   const normalizedOptions = normalizeOptions(options, context);
   const result = await runDeploy(normalizedOptions, context);
 
@@ -18,12 +25,18 @@ export default async function runExecutor(options: DeployExecutorSchema, context
   };
 }
 
-async function runDeploy(options: ParsedDeployExecutorOption, context: ExecutorContext) {
+async function runDeploy(
+  options: ParsedDeployExecutorOption,
+  context: ExecutorContext
+) {
   const command = createCommand('deploy', options);
   return runCommandProcess(command, context.root);
 }
 
-function normalizeOptions(options: DeployExecutorSchema, context: ExecutorContext): ParsedDeployExecutorOption {
+function normalizeOptions(
+  options: DeployExecutorSchema,
+  context: ExecutorContext
+): ParsedDeployExecutorOption {
   const parsedArgs = parseArgs(options);
   let stacks;
 
@@ -31,7 +44,8 @@ function normalizeOptions(options: DeployExecutorSchema, context: ExecutorContex
     stacks = options.stacks;
   }
 
-  const { sourceRoot, root } = context?.projectsConfigurations?.projects[context.projectName] ?? {};
+  const { sourceRoot, root } =
+    context?.projectsConfigurations?.projects[context.projectName] ?? {};
 
   return {
     ...options,

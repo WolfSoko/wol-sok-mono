@@ -20,7 +20,10 @@ jest.mock('child_process', () => ({
 
 const options: DestroyExecutorSchema = {};
 
-const nodeCommandWithRelativePath = generateCommandString('destroy', 'apps/proj');
+const nodeCommandWithRelativePath = generateCommandString(
+  'destroy',
+  'apps/proj'
+);
 
 describe('aws-cdk-v2 Destroy Executor', () => {
   const context = mockExecutorContext('destroy');
@@ -32,7 +35,7 @@ describe('aws-cdk-v2 Destroy Executor', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('run cdk destroy command', async () => {
-    const execMock = (childProcess.exec as unknown) as jest.Mock;
+    const execMock = childProcess.exec as unknown as jest.Mock;
     let mockProcess;
     execMock.mockImplementation(() => {
       mockProcess = new MockChildProcess();
@@ -49,11 +52,13 @@ describe('aws-cdk-v2 Destroy Executor', () => {
         maxBuffer: LARGE_BUFFER,
       })
     );
-    expect(logger.debug).toHaveBeenLastCalledWith(`Executing command: ${nodeCommandWithRelativePath}`);
+    expect(logger.debug).toHaveBeenLastCalledWith(
+      `Executing command: ${nodeCommandWithRelativePath}`
+    );
   });
 
   it('run cdk destroy command stack', async () => {
-    const execMock = (childProcess.exec as unknown) as jest.Mock;
+    const execMock = childProcess.exec as unknown as jest.Mock;
     let mockProcess;
     execMock.mockImplementation(() => {
       mockProcess = new MockChildProcess();
@@ -72,6 +77,8 @@ describe('aws-cdk-v2 Destroy Executor', () => {
         maxBuffer: LARGE_BUFFER,
       })
     );
-    expect(logger.debug).toHaveBeenLastCalledWith(`Executing command: ${nodeCommandWithRelativePath} ${stackName}`);
+    expect(logger.debug).toHaveBeenLastCalledWith(
+      `Executing command: ${nodeCommandWithRelativePath} ${stackName}`
+    );
   });
 });

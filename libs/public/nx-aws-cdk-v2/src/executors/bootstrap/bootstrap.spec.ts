@@ -20,7 +20,10 @@ jest.mock('child_process', () => ({
 
 const options: BootstrapExecutorSchema = {};
 
-const nodeCommandWithRelativePath = generateCommandString('bootstrap', 'apps/proj');
+const nodeCommandWithRelativePath = generateCommandString(
+  'bootstrap',
+  'apps/proj'
+);
 
 describe('aws-cdk-v2 Bootstrap Executor', () => {
   const context = mockExecutorContext('bootstrap');
@@ -32,7 +35,7 @@ describe('aws-cdk-v2 Bootstrap Executor', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('run cdk bootstrap command', async () => {
-    const execMock = (childProcess.exec as unknown) as jest.Mock;
+    const execMock = childProcess.exec as unknown as jest.Mock;
     let mockProcess;
     execMock.mockImplementation(() => {
       mockProcess = new MockChildProcess();
@@ -49,11 +52,13 @@ describe('aws-cdk-v2 Bootstrap Executor', () => {
         maxBuffer: LARGE_BUFFER,
       })
     );
-    expect(logger.debug).toHaveBeenLastCalledWith(`Executing command: ${nodeCommandWithRelativePath}`);
+    expect(logger.debug).toHaveBeenLastCalledWith(
+      `Executing command: ${nodeCommandWithRelativePath}`
+    );
   });
 
   it('run cdk bootstrap command profile', async () => {
-    const execMock = (childProcess.exec as unknown) as jest.Mock;
+    const execMock = childProcess.exec as unknown as jest.Mock;
     let mockProcess;
     execMock.mockImplementation(() => {
       mockProcess = new MockChildProcess();

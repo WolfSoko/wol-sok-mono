@@ -1,5 +1,9 @@
 import { BootstrapExecutorSchema } from './schema';
-import { createCommand, parseArgs, runCommandProcess } from '../../utils/executor.util';
+import {
+  createCommand,
+  parseArgs,
+  runCommandProcess,
+} from '../../utils/executor.util';
 import { ParsedExecutorInterface } from '../../interfaces/parsed-executor.interface';
 import { ExecutorContext } from '@nx/devkit';
 
@@ -10,7 +14,10 @@ export interface ParsedBootstrapExecutorOption extends ParsedExecutorInterface {
   root: string;
 }
 
-export default async function runExecutor(options: BootstrapExecutorSchema, context: ExecutorContext) {
+export default async function runExecutor(
+  options: BootstrapExecutorSchema,
+  context: ExecutorContext
+) {
   const normalizedOptions = normalizeOptions(options, context);
   const result = await runBootstrap(normalizedOptions, context);
 
@@ -19,12 +26,18 @@ export default async function runExecutor(options: BootstrapExecutorSchema, cont
   };
 }
 
-function runBootstrap(options: ParsedBootstrapExecutorOption, context: ExecutorContext) {
+function runBootstrap(
+  options: ParsedBootstrapExecutorOption,
+  context: ExecutorContext
+) {
   const command = createCommand('bootstrap', options);
   return runCommandProcess(command, context.root);
 }
 
-function normalizeOptions(options: BootstrapExecutorSchema, context: ExecutorContext): ParsedBootstrapExecutorOption {
+function normalizeOptions(
+  options: BootstrapExecutorSchema,
+  context: ExecutorContext
+): ParsedBootstrapExecutorOption {
   const parsedArgs = parseArgs(options);
   let profile;
 
@@ -32,8 +45,9 @@ function normalizeOptions(options: BootstrapExecutorSchema, context: ExecutorCon
     profile = `--profile ${options.profile}`;
   }
 
-  // eslint-disable-next-line no-unsafe-optional-chaining
-  const { sourceRoot, root } = context?.projectsConfigurations?.projects[context.projectName];
+  const { sourceRoot, root } =
+    // eslint-disable-next-line no-unsafe-optional-chaining
+    context?.projectsConfigurations?.projects[context.projectName];
 
   return {
     ...options,

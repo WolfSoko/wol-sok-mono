@@ -22,10 +22,16 @@ describe('aws-cdk generator', () => {
     await generator(appTree, options);
     const config = readProjectConfiguration(appTree, 'test');
 
-    expect(config.targets?.deploy?.executor).toBe('@wolsok/nx-aws-cdk-v2:deploy');
+    expect(config.targets?.deploy?.executor).toBe(
+      '@wolsok/nx-aws-cdk-v2:deploy'
+    );
     expect(config.targets?.synth?.executor).toBe('@wolsok/nx-aws-cdk-v2:synth');
-    expect(config.targets?.destroy?.executor).toBe('@wolsok/nx-aws-cdk-v2:destroy');
-    expect(config.targets?.bootstrap?.executor).toBe('@wolsok/nx-aws-cdk-v2:bootstrap');
+    expect(config.targets?.destroy?.executor).toBe(
+      '@wolsok/nx-aws-cdk-v2:destroy'
+    );
+    expect(config.targets?.bootstrap?.executor).toBe(
+      '@wolsok/nx-aws-cdk-v2:bootstrap'
+    );
   });
 
   it('directory option', async () => {

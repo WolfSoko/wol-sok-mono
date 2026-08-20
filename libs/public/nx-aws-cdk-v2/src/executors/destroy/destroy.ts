@@ -1,5 +1,9 @@
 import { DestroyExecutorSchema } from './schema';
-import { createCommand, parseArgs, runCommandProcess } from '../../utils/executor.util';
+import {
+  createCommand,
+  parseArgs,
+  runCommandProcess,
+} from '../../utils/executor.util';
 import { ParsedExecutorInterface } from '../../interfaces/parsed-executor.interface';
 import { ExecutorContext } from '@nx/devkit';
 
@@ -10,7 +14,10 @@ export interface ParsedDestroyExecutorOption extends ParsedExecutorInterface {
   root: string;
 }
 
-export default async function runExecutor(options: DestroyExecutorSchema, context: ExecutorContext) {
+export default async function runExecutor(
+  options: DestroyExecutorSchema,
+  context: ExecutorContext
+) {
   const normalizedOptions = normalizeOptions(options, context);
   const result = await runDestroy(normalizedOptions, context);
 
@@ -19,12 +26,18 @@ export default async function runExecutor(options: DestroyExecutorSchema, contex
   };
 }
 
-function runDestroy(options: ParsedDestroyExecutorOption, context: ExecutorContext) {
+function runDestroy(
+  options: ParsedDestroyExecutorOption,
+  context: ExecutorContext
+) {
   const command = createCommand('destroy', options);
   return runCommandProcess(command, context.root);
 }
 
-function normalizeOptions(options: DestroyExecutorSchema, context: ExecutorContext): ParsedDestroyExecutorOption {
+function normalizeOptions(
+  options: DestroyExecutorSchema,
+  context: ExecutorContext
+): ParsedDestroyExecutorOption {
   const parsedArgs = parseArgs(options);
   let stacks;
 
@@ -32,8 +45,9 @@ function normalizeOptions(options: DestroyExecutorSchema, context: ExecutorConte
     stacks = options.stacks;
   }
 
-  // eslint-disable-next-line no-unsafe-optional-chaining
-  const { sourceRoot, root } = context?.projectsConfigurations?.projects[context.projectName];
+  const { sourceRoot, root } =
+    // eslint-disable-next-line no-unsafe-optional-chaining
+    context?.projectsConfigurations?.projects[context.projectName];
 
   return {
     ...options,

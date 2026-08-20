@@ -5,7 +5,10 @@
  * `executors.json`; the exports below are for consumers who want to compose the
  * generators from their own Nx plugin, or reuse the option types.
  */
-export { applicationGenerator, applicationSchematic } from './generators/application/application';
+export {
+  applicationGenerator,
+  applicationSchematic,
+} from './generators/application/application';
 export { initGenerator, initSchematic } from './generators/init/init';
 
 export type { ApplicationSchema } from './generators/application/schema';

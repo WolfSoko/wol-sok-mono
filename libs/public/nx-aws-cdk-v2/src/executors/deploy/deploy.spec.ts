@@ -19,7 +19,10 @@ jest.mock('child_process', () => ({
 
 const options: DeployExecutorSchema = {};
 
-const nodeCommandWithRelativePath = generateCommandString('deploy', 'apps/proj');
+const nodeCommandWithRelativePath = generateCommandString(
+  'deploy',
+  'apps/proj'
+);
 
 describe('aws-cdk-v2 deploy Executor', () => {
   const context = mockExecutorContext('deploy');
@@ -48,7 +51,9 @@ describe('aws-cdk-v2 deploy Executor', () => {
         maxBuffer: LARGE_BUFFER,
       })
     );
-    expect(logger.debug).toHaveBeenLastCalledWith(`Executing command: ${nodeCommandWithRelativePath}`);
+    expect(logger.debug).toHaveBeenLastCalledWith(
+      `Executing command: ${nodeCommandWithRelativePath}`
+    );
   });
 
   it('run cdk deploy command stack', async () => {
@@ -72,7 +77,9 @@ describe('aws-cdk-v2 deploy Executor', () => {
       })
     );
 
-    expect(logger.debug).toHaveBeenLastCalledWith(`Executing command: ${nodeCommandWithRelativePath} ${stackName}`);
+    expect(logger.debug).toHaveBeenLastCalledWith(
+      `Executing command: ${nodeCommandWithRelativePath} ${stackName}`
+    );
   });
 
   it('run cdk deploy command context options', async () => {
@@ -114,7 +121,9 @@ describe('aws-cdk-v2 deploy Executor', () => {
     const promise = executor(option, context);
     mockProcess.emit('close', 0);
     await promise;
-    const contextCmd = contextOptions.map((option) => `--context ${option}`).join(' ');
+    const contextCmd = contextOptions
+      .map((option) => `--context ${option}`)
+      .join(' ');
     expect(childProcess.exec).toHaveBeenCalledWith(
       `${nodeCommandWithRelativePath} ${contextCmd}`,
       expect.objectContaining({
@@ -123,7 +132,9 @@ describe('aws-cdk-v2 deploy Executor', () => {
       })
     );
 
-    expect(logger.debug).toHaveBeenLastCalledWith(`Executing command: ${nodeCommandWithRelativePath} ${contextCmd}`);
+    expect(logger.debug).toHaveBeenLastCalledWith(
+      `Executing command: ${nodeCommandWithRelativePath} ${contextCmd}`
+    );
   });
 
   it('forwards options that are not part of the schema to the cdk cli', async () => {
@@ -146,6 +157,8 @@ describe('aws-cdk-v2 deploy Executor', () => {
       })
     );
 
-    expect(logger.debug).toHaveBeenLastCalledWith(`Executing command: ${nodeCommandWithRelativePath} --hotswap true`);
+    expect(logger.debug).toHaveBeenLastCalledWith(
+      `Executing command: ${nodeCommandWithRelativePath} --hotswap true`
+    );
   });
 });
