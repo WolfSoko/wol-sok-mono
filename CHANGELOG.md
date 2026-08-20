@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.23-non-cdk-deployed...v4.79.24) (2026-08-20)
+
+
+### Bug Fixes
+
+* **release:** publish npm packages from dist, not source root ([eb8f7b2](https://github.com/WolfSoko/wol-sok-mono/commit/eb8f7b2b2bc4e6fdbc2c68a9a3fc8a18ac581dcc)), closes [#2132](https://github.com/WolfSoko/wol-sok-mono/issues/2132)
+* **spa-cdk-stack:** add repository field for npm provenance ([#2194](https://github.com/WolfSoko/wol-sok-mono/issues/2194)) ([98d9d06](https://github.com/WolfSoko/wol-sok-mono/commit/98d9d06f63ecdb8acc3c4f0ca02722bf165c78f5))
+
+
+### Chore
+
+* **release:** publish ([8a33535](https://github.com/WolfSoko/wol-sok-mono/commit/8a33535f486673b409e353ebf783c40f7fe5db21))
+
 ## [4.79.23](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.22-non-cdk-deployed...v4.79.23) (2026-08-20)
 
 
