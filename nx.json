@@ -75,7 +75,10 @@
   },
   "targetDefaults": {
     "nx-release-publish": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build"],
+      "options": {
+        "packageRoot": "{workspaceRoot}/dist/{projectRoot}"
+      }
     },
     "deploy": {
       "dependsOn": ["^build"]
