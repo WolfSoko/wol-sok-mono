@@ -5,9 +5,10 @@ on:
       - main
     paths-ignore:
       - '**/version.json'
-      - '**/CHANGELOG.MD'
+      - '**/CHANGELOG.md'
     tags-ignore:
       - 'v*'
+      - '*@*'
   pull_request:
 
 concurrency:
@@ -28,6 +29,7 @@ env:
 
 jobs:
   main:
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip ci]') && contains(github.event.head_commit.message || '', 'chore(release):') }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     outputs:
