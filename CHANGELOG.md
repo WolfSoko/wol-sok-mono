@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.79.25](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.24-npm-deployed...v4.79.25) (2026-08-21)
+
+
+### Chore
+
+* **deps:** update codecov/codecov-action action to v7 ([#2191](https://github.com/WolfSoko/wol-sok-mono/issues/2191)) ([13aad40](https://github.com/WolfSoko/wol-sok-mono/commit/13aad40e3390c0e0283739d223a02780d1a90dd0))
+* **release:** publish ([fb0adba](https://github.com/WolfSoko/wol-sok-mono/commit/fb0adbad760f9de640eab5a823c514aa3bb12909))
+
 ## [4.79.24](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.23-non-cdk-deployed...v4.79.24) (2026-08-20)
 
 
