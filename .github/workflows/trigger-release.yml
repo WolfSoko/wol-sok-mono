@@ -14,11 +14,14 @@ jobs:
       - uses: actions/checkout@v7
         name: 'Checkout branch'
         with:
-          persist-credentials: false
+          token: ${{ secrets.PAT_TOKEN }}
           fetch-depth: 0
 
       - name: Install Deps
         uses: ./.github/actions/install-deps
+
+      - name: Snapshot tags before versioning
+        run: git tag --list | LC_ALL=C sort > "$RUNNER_TEMP/tags-before.txt"
 
       - name: trigger release
         run: |
@@ -27,9 +30,67 @@ jobs:
           npx nx release version
           npx commit-and-tag-version
 
+          # GitHub Actions honors [skip ci] in the commit message. This keeps the
+          # branch push from the release tooling from triggering CI, while tag pushes
+          # still trigger the release workflow.
+          git commit --amend --no-edit -m "$(git log -1 --pretty=%B) [skip ci]"
+
       - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          branch: ${{ github.ref }}
-          tags: true
-          github_token: ${{ secrets.PAT_TOKEN }}
+        run: git push origin HEAD:${{ github.ref }}
+
+      # Independent versioning tags every released project, so this run can create
+      # more than three tags at once. GitHub does not run push-triggered workflows
+      # when more than three tags are pushed simultaneously, which would silently
+      # stop the v* tag from firing release.yml. Push the project tags in batches
+      # of three, then the v* release tag last and on its own.
+      # https://nx.dev/docs/guides/nx-release/publish-in-ci-cd#alternative-approaches-for-independent-versioning
+      - name: Push tags in batches
+        run: |
+          git tag --list | LC_ALL=C sort > "$RUNNER_TEMP/tags-after.txt"
+          mapfile -t new_tags < <(comm -13 "$RUNNER_TEMP/tags-before.txt" "$RUNNER_TEMP/tags-after.txt")
+
+          if [[ ${#new_tags[@]} -eq 0 ]]; then
+            echo "No new tags were created, nothing to push."
+            echo 'No new tags were created.' >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+          project_tags=()
+          release_tags=()
+          for tag in "${new_tags[@]}"; do
+            if [[ "$tag" == v[0-9]* ]]; then
+              release_tags+=("$tag")
+            else
+              project_tags+=("$tag")
+            fi
+          done
+
+          echo "New project tags: ${project_tags[*]:-none}"
+          echo "New release tags: ${release_tags[*]:-none}"
+
+          batch=()
+          push_batch() {
+            if [[ ${#batch[@]} -gt 0 ]]; then
+              echo "Pushing tag batch: ${batch[*]}"
+              git push origin "${batch[@]}"
+              batch=()
+              sleep 5
+            fi
+          }
+
+          for tag in "${project_tags[@]}"; do
+            batch+=("$tag")
+            if [[ ${#batch[@]} -eq 3 ]]; then
+              push_batch
+            fi
+          done
+          push_batch
+
+          # Pushed last and one at a time, so this push is guaranteed to trigger release.yml
+          for tag in "${release_tags[@]}"; do
+            echo "Pushing release tag: $tag"
+            git push origin "$tag"
+            sleep 5
+          done
+
+          echo "Pushed ${#new_tags[@]} new tag(s) in batches of at most 3." >> $GITHUB_STEP_SUMMARY
