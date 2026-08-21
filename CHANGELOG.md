@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.80.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.25-npm-deployed...v4.80.0) (2026-08-21)
+
+
+### Features
+
+* **nx-aws-cdk-v2:** move WolfSoko/nx-aws-cdk-v2 into the workspace ([#2196](https://github.com/WolfSoko/wol-sok-mono/issues/2196)) ([0cb5278](https://github.com/WolfSoko/wol-sok-mono/commit/0cb5278c17e3753685e34dcdf82c2e3d2ca70073)), closes [#376](https://github.com/WolfSoko/wol-sok-mono/issues/376) [#376](https://github.com/WolfSoko/wol-sok-mono/issues/376) [#376](https://github.com/WolfSoko/wol-sok-mono/issues/376) [#376](https://github.com/WolfSoko/wol-sok-mono/issues/376) [#387](https://github.com/WolfSoko/wol-sok-mono/issues/387) [#726](https://github.com/WolfSoko/wol-sok-mono/issues/726) [#753](https://github.com/WolfSoko/wol-sok-mono/issues/753)
+
+
+### Chore
+
+* **release:** publish ([fcd6873](https://github.com/WolfSoko/wol-sok-mono/commit/fcd6873ededd61ab9e4623dc5b562884ee5f2c8f))
+
 ## [4.79.25](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.24-npm-deployed...v4.79.25) (2026-08-21)
 
 
