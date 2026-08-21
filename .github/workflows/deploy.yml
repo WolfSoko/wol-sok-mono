@@ -59,6 +59,7 @@ jobs:
           ref: ${{ env.RELEASE_VERSION }}
           fetch-depth: 0
           fetch-tags: true
+          filter: tree:0
 
       - name: Install Deps
         uses: ./.github/actions/install-deps

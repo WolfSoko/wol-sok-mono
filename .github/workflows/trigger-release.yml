@@ -16,6 +16,7 @@ jobs:
         with:
           token: ${{ secrets.PAT_TOKEN }}
           fetch-depth: 0
+          filter: tree:0
 
       - name: Install Deps
         uses: ./.github/actions/install-deps
