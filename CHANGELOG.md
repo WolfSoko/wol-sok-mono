@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.80.2](https://github.com/WolfSoko/wol-sok-mono/compare/v4.80.1...v4.80.2) (2026-08-21)
+
+
+### Chore
+
+* **cicd:** 🔧 push tags in batches of max 3 to avoid github limitations ([42d317f](https://github.com/WolfSoko/wol-sok-mono/commit/42d317f2dceefddf3718304559e8629308c872e7))
+* **release:** publish ([b7655b8](https://github.com/WolfSoko/wol-sok-mono/commit/b7655b8a086cf9ea2f3bf3e2ea29759611f5040b))
+
 ## [4.80.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.80.0...v4.80.1) (2026-08-21)
 
 
