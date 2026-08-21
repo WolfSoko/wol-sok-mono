@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "node16",
+    "moduleResolution": "node16",
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "outDir": "../../../dist/out-tsc",
+    "types": ["jest", "node"]
+  },
+  "include": ["**/*.spec.ts", "**/*.test.ts", "**/*.d.ts", "jest.config.ts"]
+}

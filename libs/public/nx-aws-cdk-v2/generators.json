@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "name": "aws-cdk-v2",
+  "version": "0.0.1",
+  "generators": {
+    "init": {
+      "factory": "./src/generators/init/init",
+      "schema": "./src/generators/init/schema.json",
+      "description": "Add the AWS CDK dependencies to the workspace. Runs automatically as part of the application generator.",
+      "aliases": ["ng-add"],
+      "hidden": true
+    },
+    "application": {
+      "factory": "./src/generators/application/application",
+      "schema": "./src/generators/application/schema.json",
+      "aliases": ["app"],
+      "description": "Create an AWS CDK v2 application with deploy, destroy, synth and bootstrap targets."
+    }
+  }
+}

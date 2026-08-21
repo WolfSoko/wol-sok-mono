@@ -1,0 +1,13 @@
+import { App } from 'aws-cdk-lib';
+import { Template } from 'aws-cdk-lib/assertions';
+import { AppStack } from './stacks/app-stack';
+
+describe('<%= className %>', () => {
+  it('synthesizes an empty stack', () => {
+    const app = new App();
+
+    const stack = new AppStack(app, '<%= projectName %>TestStack');
+
+    Template.fromStack(stack).templateMatches({ Resources: {} });
+  });
+});

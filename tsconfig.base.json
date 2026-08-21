@@ -53,6 +53,7 @@
       "@wolsok/headline-animation": [
         "libs/shared/headline-animation/src/index.ts"
       ],
+      "@wolsok/nx-aws-cdk-v2": ["libs/public/nx-aws-cdk-v2/src/index.ts"],
       "@wolsok/shared-data-access": ["libs/shared/data-access/src/index.ts"],
       "@wolsok/spa-cdk-stack": ["libs/public/spa-cdk-stack/src/index.ts"],
       "@wolsok/test-helper": ["libs/test-helper/src/index.ts"],
