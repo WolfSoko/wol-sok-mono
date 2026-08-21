@@ -88,15 +88,19 @@ jobs:
           flags: unittests
           fail_ci_if_error: true
           verbose: true
-      - name: determine if deployables are affected and a release should be triggered
+      - name: determine if deployables or published packages are affected and a release should be triggered
         if: success() && github.ref_name == 'main'
         id: shouldTriggerRelease
         run: |
-          projects=$(npx nx show projects --affected -t deploy);
-          echo $projects
-          triggerRelease=$([[ -z $projects ]] && echo "false" || echo "true")
-          echo "triggerRelease=$triggerRelease" >> $GITHUB_OUTPUT
-          echo "$([[ -z $projects ]] && echo 'No deployable projects affected, no need for a release' || echo 'Deployable projects affected. Trigger release!!!')" >> $GITHUB_STEP_SUMMARY
+          projects=$(npx nx show projects --affected --projects='tag:cdk,tag:type:firebase,tag:published')
+          echo "Affected releasable projects: $projects"
+          if [[ -z "$projects" ]]; then
+            echo "triggerRelease=false" >> $GITHUB_OUTPUT
+            echo 'No deployable projects or published packages affected, no need for a release' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "triggerRelease=true" >> $GITHUB_OUTPUT
+            echo 'Deployable projects or published packages affected. Trigger release!!!' >> $GITHUB_STEP_SUMMARY
+          fi
       - run: npx nx-cloud stop-all-agents
         if: ${{ always() }}
   # as the main workflow is mandatory for the branch protection we need a separate job

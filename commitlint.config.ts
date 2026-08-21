@@ -13,6 +13,8 @@ export default {
         'dev-deps',
         'deps',
         'tools',
+        'ci',
+        'cicd',
       ],
     ],
   },
