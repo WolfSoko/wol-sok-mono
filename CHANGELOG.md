@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.80.1](https://github.com/WolfSoko/wol-sok-mono/compare/v4.80.0...v4.80.1) (2026-08-21)
+
+
+### Chore
+
+* **cicd:** 🔧 enhance release trigger logic to include published packages ([c2ab0c5](https://github.com/WolfSoko/wol-sok-mono/commit/c2ab0c5aeba76019e1672a1fc3cb70b213ea722a))
+* **release:** publish ([f3797f1](https://github.com/WolfSoko/wol-sok-mono/commit/f3797f126d63dc3635ae9eb745377333a91cd59f))
+
 ## [4.80.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.79.25-npm-deployed...v4.80.0) (2026-08-21)
 
 
