@@ -58,7 +58,7 @@
       "!{projectRoot}/eslint.config.mjs",
       "!{projectRoot}/tsconfig.spec.json"
     ],
-    "sharedGlobals": ["{workspaceRoot}/.nx/workflows/**"],
+    "sharedGlobals": [],
     "non-cdk-deployed-version": [
       {
         "runtime": "npx tsx ./tools/version-handling/latest-non-cdk-deployed-tag.ts"
