@@ -2,8 +2,13 @@ name: Create release
 on:
   push:
     # Pattern matched against refs/tags
+    # Exclude deploy-marker tags pushed by deploy.yml (e.g. v1.2.3-cdk-deployed) so
+    # they don't re-trigger this workflow and cascade into another release/deploy.
     tags:
       - 'v*'
+      - '!v*-cdk-deployed'
+      - '!v*-non-cdk-deployed'
+      - '!v*-npm-deployed'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
