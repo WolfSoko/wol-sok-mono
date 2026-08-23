@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.80.6](https://github.com/WolfSoko/wol-sok-mono/compare/v4.80.1...v4.80.6) (2026-08-23)
+
+
+### Bug Fixes
+
+* **github:** format code-ql-analysis.yml and stop deploy tags re-triggering release ([bb4fd62](https://github.com/WolfSoko/wol-sok-mono/commit/bb4fd6291786ebeca3e718963ad9525bfd6766f1))
+* **github:** pass PAT_TOKEN to checkout in deploy workflow ([e4c234d](https://github.com/WolfSoko/wol-sok-mono/commit/e4c234db832210dd32194aa097254eb6d75975e5))
+* **nx:** drop .github/** from sharedGlobals ([b247024](https://github.com/WolfSoko/wol-sok-mono/commit/b247024d2d16de4ea22168335275970ba0b742e9))
+* **nx:** empty sharedGlobals, drop .nx/workflows/** too ([0088d21](https://github.com/WolfSoko/wol-sok-mono/commit/0088d21c1fa944b39731c8e2d40c0c3854cfc5ce))
+
+
+### Chore
+
+* **ci:** 🔧 👷 update checkout configurations to disable shallow clones and apply tree filter ([b012a63](https://github.com/WolfSoko/wol-sok-mono/commit/b012a63dee30dd07a454177280858269d3ea21a3))
+* **ci:** 🔧 👷 update CI job condition to exclude 'chore(release):' commits ([837b9c5](https://github.com/WolfSoko/wol-sok-mono/commit/837b9c58d364c6a00ba14b374fd994d7b47b80f6))
+* **ci:** 🔧 👷 update GITHUB_TOKEN to use PAT_TOKEN for deployment ([702bbdd](https://github.com/WolfSoko/wol-sok-mono/commit/702bbdd32e301973bc8dc12cbed53aa402835e12))
+* **cicd:** 🔧 push tags in batches of max 3 to avoid github limitations ([42d317f](https://github.com/WolfSoko/wol-sok-mono/commit/42d317f2dceefddf3718304559e8629308c872e7))
+* **cicd:** 🔧 update CI configuration to ignore CHANGELOG.md and specific tags ([cc2c647](https://github.com/WolfSoko/wol-sok-mono/commit/cc2c6473a4b329ff5af117ed70659f1147a371c8))
+* **deps:** update actions/github-script action to v9 ([#2189](https://github.com/WolfSoko/wol-sok-mono/issues/2189)) ([860aa00](https://github.com/WolfSoko/wol-sok-mono/commit/860aa00b6685e2f58c00d4f6026179df33fdeb7a))
+* **deps:** update dependency @esbuild/linux-x64 to v0.28.2 ([#2186](https://github.com/WolfSoko/wol-sok-mono/issues/2186)) ([7ef6c00](https://github.com/WolfSoko/wol-sok-mono/commit/7ef6c0006bb2b1398a3fe0a032fe9e6f3f43780d))
+* **release:** 4.80.2 [skip ci] ([6a74f7a](https://github.com/WolfSoko/wol-sok-mono/commit/6a74f7a04715df9e0fb35bd12ff57cef7fc73247))
+* **release:** 4.80.3 [skip ci] ([e1a9c46](https://github.com/WolfSoko/wol-sok-mono/commit/e1a9c46c91aa45f721218a4e2d1b5ea0625980c0))
+* **release:** 4.80.4 [skip ci] ([57ec79e](https://github.com/WolfSoko/wol-sok-mono/commit/57ec79ec1d921f1996cf283b80423f4210de4277))
+* **release:** 4.80.5 [skip ci] ([505a797](https://github.com/WolfSoko/wol-sok-mono/commit/505a79739fc4a48a067ae0491592103f20c0ca0e))
+* **release:** publish ([a7b0d0a](https://github.com/WolfSoko/wol-sok-mono/commit/a7b0d0a9d2f33239d44e52c42667798739081339))
+* **release:** publish ([9741167](https://github.com/WolfSoko/wol-sok-mono/commit/9741167a57bd5d566aaeee3ae02591cc9db1675a))
+* **release:** publish ([aa6db3f](https://github.com/WolfSoko/wol-sok-mono/commit/aa6db3f2517fec977a8ddd74aac143fdc08e073c))
+* **release:** publish ([b7655b8](https://github.com/WolfSoko/wol-sok-mono/commit/b7655b8a086cf9ea2f3bf3e2ea29759611f5040b))
+
 ## [4.80.5](https://github.com/WolfSoko/wol-sok-mono/compare/v4.80.1...v4.80.5) (2026-08-22)
 
 
