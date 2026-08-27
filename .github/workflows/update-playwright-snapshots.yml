@@ -31,8 +31,13 @@ jobs:
         uses: ./.github/actions/install-deps
         with:
           apt-packages: 'true'
-          browser: 'true'
+          browser: 'false'
           run-scripts: 'true'
+
+      # Not the composite action's browser install: that one runs under sudo,
+      # so the binaries land in root's cache and the test step cannot see them.
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Update screenshot baselines
         working-directory: apps/rollapolla-analog
