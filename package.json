@@ -114,7 +114,7 @@
     "@commitlint/config-nx-scopes": "20.0.0",
     "@eslint/eslintrc": "3.3.6",
     "@eslint/js": "9.38.0",
-    "@module-federation/enhanced": "0.21.1",
+    "@module-federation/enhanced": "2.9.0",
     "@ngneat/spectator": "22.0.0",
     "@nx/angular": "23.1.2",
     "@nx/devkit": "23.1.2",
