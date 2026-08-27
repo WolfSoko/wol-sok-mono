@@ -1,0 +1,51 @@
+# TEMPORARY workflow: regenerates the rollapolla-analog Playwright screenshot
+# baselines on CI hardware. Removed again once the snapshots are committed.
+name: Update Playwright Snapshots
+
+on:
+  push:
+    branches:
+      - claude/font-awesome-v7-pr-a9vkcl
+
+concurrency:
+  group: update-snapshots-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  HUSKY: 0
+  NODE_OPTIONS: '--max_old_space_size=4096'
+
+jobs:
+  update-snapshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: install deps
+        uses: ./.github/actions/install-deps
+        with:
+          apt-packages: 'true'
+          browser: 'true'
+          run-scripts: 'true'
+
+      - name: Update screenshot baselines
+        working-directory: apps/rollapolla-analog
+        run: npx playwright test --update-snapshots home.spec.ts
+
+      - name: Commit updated baselines
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/rollapolla-analog/e2e/home.spec.ts-snapshots
+          if git diff --cached --quiet; then
+            echo 'Screenshot baselines already up to date.' >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+          git commit -m 'test(rollapolla-analog): update screenshot baselines for font awesome v7 [skip ci]'
+          git push origin HEAD:${{ github.ref_name }}
