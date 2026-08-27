@@ -1,0 +1,64 @@
+# TEMPORARY workflow: regenerates the rollapolla-analog Playwright screenshot
+# baselines. Runs on ubuntu-22.04 to match the ubuntu22.04 image the Nx Cloud
+# agents use for e2e-ci (see .nx/workflows/agents.yml) — the 24.04 GitHub
+# runner renders text differently. Removed once the baselines are committed.
+name: Update Playwright Snapshots
+
+on:
+  push:
+    branches:
+      - claude/font-awesome-v7-pr-a9vkcl
+
+concurrency:
+  group: update-snapshots-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  HUSKY: 0
+  NODE_OPTIONS: '--max_old_space_size=4096'
+
+jobs:
+  update-snapshots:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: install deps
+        uses: ./.github/actions/install-deps
+        with:
+          apt-packages: 'true'
+          browser: 'false'
+          run-scripts: 'true'
+
+      # Not the composite action's browser install: that one runs under sudo,
+      # so the binaries land in root's cache and the test step cannot see them.
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      # Diagnostic: how far is this runner from the committed baselines?
+      - name: Measure drift against committed baselines
+        continue-on-error: true
+        working-directory: apps/rollapolla-analog
+        run: npx playwright test home.spec.ts
+
+      - name: Update screenshot baselines
+        working-directory: apps/rollapolla-analog
+        run: npx playwright test home.spec.ts --update-snapshots=all
+
+      - name: Commit updated baselines
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/rollapolla-analog/e2e/home.spec.ts-snapshots
+          if git diff --cached --quiet; then
+            echo 'Screenshot baselines already up to date.' >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+          git commit -m 'test(rollapolla-analog): update screenshot baselines for font awesome v7 [skip ci]'
+          git push origin HEAD:${{ github.ref_name }}
