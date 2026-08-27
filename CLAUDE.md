@@ -5,7 +5,7 @@ Angular + Nx monorepo. Read this before touching anything.
 ## Stack
 
 - **Angular 20** — standalone components, zoneless change detection, Signals, `@if`/`@for`/`@switch` control flow
-- **Nx 22** — monorepo orchestration, caching, affected commands
+- **Nx 23** — monorepo orchestration, caching, affected commands
 - **TypeScript 5.9** — strict mode
 - **Build**: Vite (Analog/Vitest apps), Webpack + Module Federation (angular-examples)
 - **Testing**: Jest (most unit tests), Vitest (Vite projects), Playwright (E2E)
@@ -104,7 +104,7 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 ## Testing
 
 - **Unit (Jest)**: colocated as `<file>.spec.ts`; mock external services; keep fast and deterministic
-- **Unit (Vitest)**: used in Vite-based projects (check `project.json` for `@nx/vite:test` executor)
+- **Unit (Vitest)**: used in Vite-based projects (check `project.json` for the `@nx/vitest` plugin / `@nx/vitest:test` executor)
 - **E2E (Playwright)**: in `apps/<app>/e2e/`; page objects in `e2e/pos/`, fixtures in `e2e/fixtures/`
 - **Plugin E2E (Jest)**: `apps/nx-aws-cdk-v2-e2e` exercises `@wolsok/nx-aws-cdk-v2` in a generated throwaway workspace. Its target is `e2e` (not `e2e-ci`), so CI does not run it — run `npx nx e2e nx-aws-cdk-v2-e2e` by hand after changing the plugin
 - Run `npx nx affected -t test` before pushing

@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'test-helper',
   preset: '../../jest.preset.cjs',
   testEnvironment: 'node',

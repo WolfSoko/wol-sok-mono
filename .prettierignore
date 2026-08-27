@@ -17,3 +17,5 @@ CHANGELOG.md
 
 # EJS templates rendered by the nx-aws-cdk-v2 application generator - not valid TS/JSON on their own
 **/*__template__
+
+.nx/self-healing

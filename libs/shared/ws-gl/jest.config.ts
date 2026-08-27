@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'ws-gl',
   preset: '../../../jest.preset.cjs',
   testEnvironment: 'jsdom',

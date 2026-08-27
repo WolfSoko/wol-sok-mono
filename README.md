@@ -78,7 +78,7 @@ This monorepo leverages modern web technologies:
 
 - **Framework**: Angular 20 with Signals, Standalone Components, and Zoneless Change Detection
 - **Meta-framework**: Analog.js for SSR and file-based routing
-- **Build Tools**: Nx 22, Vite, Webpack with Module Federation
+- **Build Tools**: Nx 23, Vite, Webpack with Module Federation
 - **State Management**: Angular Signals, RxJS, Akita
 - **UI**: Angular Material, Angular CDK
 - **Graphics**: Three.js, p5.js, WebGL

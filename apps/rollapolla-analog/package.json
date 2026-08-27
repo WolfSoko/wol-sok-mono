@@ -17,11 +17,11 @@
     "@angular/forms": "20.3.7",
     "@fortawesome/free-brands-svg-icons": "^6.7.2 || ^7.0.0",
     "@fortawesome/fontawesome-svg-core": "^6.7.2 || ^7.0.0",
-    "@nx/vite": "22.1.1",
+    "@nx/vite": "23.1.2",
     "@playwright/test": "^1.48.0",
     "h3": "^1.15.11",
     "vite": "7.1.12",
-    "vitest": "4.0.3",
+    "vitest": "4.1.9",
     "@wolsok/shared-data-access": "*",
     "@angular/ssr": "20.3.7"
   }

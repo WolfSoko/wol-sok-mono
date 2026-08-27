@@ -15,7 +15,7 @@ This repository is a monorepo of Angular+ experiments and examples, managed with
 
 ## Repository Overview
 
-- **Tech Stack**: Angular 20+ (Zoneless), TypeScript 5.9+, Nx 22+, RxJS 7+, Angular Material, Firebase
+- **Tech Stack**: Angular 20+ (Zoneless), TypeScript 5.9+, Nx 23+, RxJS 7+, Angular Material, Firebase
 - **Key Libraries**: TensorFlow.js, Three.js, p5.js, GPU.js, MathJS
 - **Monorepo Manager**: Nx (not Lerna or Turborepo)
 - **Testing**: Jest (unit), Playwright (E2E)
