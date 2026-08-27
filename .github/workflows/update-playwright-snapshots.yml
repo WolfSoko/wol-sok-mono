@@ -36,7 +36,7 @@ jobs:
 
       - name: Update screenshot baselines
         working-directory: apps/rollapolla-analog
-        run: npx playwright test --update-snapshots home.spec.ts
+        run: npx playwright test home.spec.ts --update-snapshots=all
 
       - name: Commit updated baselines
         run: |
