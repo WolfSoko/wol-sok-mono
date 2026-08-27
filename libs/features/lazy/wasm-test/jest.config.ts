@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'feat-lazy-wasm-test',
 
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],

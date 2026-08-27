@@ -1,6 +1,6 @@
-import { JestConfigWithTsJest } from 'ts-jest';
+import type { JestConfigWithTsJest } from 'ts-jest';
 
-export default {
+module.exports = {
   displayName: 'nx-aws-cdk-v2',
   preset: '../../../jest.preset.cjs',
   testEnvironment: 'node',

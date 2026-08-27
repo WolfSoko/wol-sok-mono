@@ -33,9 +33,14 @@
       "options": {
         "buildTargetName": "build",
         "previewTargetName": "preview",
-        "testTargetName": "test",
         "serveTargetName": "serve",
         "serveStaticTargetName": "serve-static"
+      }
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testTargetName": "test"
       }
     }
   ],
@@ -144,9 +149,11 @@
     "@nx/eslint:lint": {
       "inputs": [
         "default",
+        "^default",
         "{workspaceRoot}/.eslintrc.json",
         "{workspaceRoot}/eslint*.config.js",
-        "{workspaceRoot}/eslint*.config.mjs"
+        "{workspaceRoot}/eslint*.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
       ],
       "cache": true,
       "outputs": ["{options.outputFile}"],
@@ -167,19 +174,6 @@
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
-    },
-    "@nx/vite:test": {
-      "cache": true,
-      "inputs": ["default", "^production"],
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "configurations": {
-        "ci": {
-          "coverage.enabled": true
-        },
-        "watch": {
-          "watch": true
-        }
-      }
     },
     "@nx/vitest:test": {
       "cache": true,

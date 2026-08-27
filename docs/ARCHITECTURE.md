@@ -169,7 +169,7 @@ Published npm packages:
 
 ### Build Tools
 
-- **Nx 22.0.1**: Monorepo orchestration and caching
+- **Nx 23.1.2**: Monorepo orchestration and caching
 - **Vite 7.1.9**: Fast build tool (for Analog.js apps)
 - **Webpack 5**: Build tool (for angular-examples)
 - **esbuild**: Fast JavaScript bundler
