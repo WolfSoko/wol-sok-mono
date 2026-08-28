@@ -1,23 +1,7 @@
-import { registerRemotes } from '@module-federation/enhanced/runtime';
-import { environment } from './environments/environment';
-
-const mfFileName = `module-federation.manifest${
-  environment.production ? '.prod' : ''
-}.json`;
-
-try {
-  const res = await fetch(`/assets/${mfFileName}`);
-  const definitions: Array<{ name: string; entry: string }> = await res.json();
-  // The webpack plugin already initialised the runtime with the remotes from
-  // module-federation.config.ts, so re-running init() here throws RUNTIME-010.
-  // registerRemotes overrides those entries with the ones for this environment.
-  registerRemotes(definitions, { force: true });
-} catch (err) {
-  console.error('Failed to load module federation manifest:', err);
-  console.log(
-    'Continuing with app bootstrap without module federation remotes'
-  );
-}
-
-// Always bootstrap the app, even if module federation fails
-await import('./bootstrap');
+// Module Federation needs an async boundary before the app touches any shared
+// dependency. The remotes are registered lazily by the routes that use them
+// (see ./app/remote-definitions.ts) - registering them here, before the app
+// bootstraps, leaves the page with two copies of @angular/core.
+import('./bootstrap').catch((err) =>
+  console.error('Failed to bootstrap the application:', err)
+);
