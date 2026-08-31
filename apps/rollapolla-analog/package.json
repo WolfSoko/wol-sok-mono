@@ -8,13 +8,13 @@
     "@analogjs/router": "1.22.1",
     "@analogjs/platform": "1.22.1",
     "@angular/fire": "20.0.1",
-    "@angular/core": "20.3.7",
-    "@angular/common": "20.3.7",
-    "@angular/platform-browser": "20.3.7",
-    "@angular/router": "20.3.7",
-    "@angular/platform-server": "20.3.7",
-    "@angular/material": "20.2.10",
-    "@angular/forms": "20.3.7",
+    "@angular/core": "22.1.4",
+    "@angular/common": "22.1.4",
+    "@angular/platform-browser": "22.1.4",
+    "@angular/router": "22.1.4",
+    "@angular/platform-server": "22.1.4",
+    "@angular/material": "22.1.4",
+    "@angular/forms": "22.1.4",
     "@fortawesome/free-brands-svg-icons": "^6.7.2 || ^7.0.0",
     "@fortawesome/fontawesome-svg-core": "^6.7.2 || ^7.0.0",
     "@nx/vite": "23.1.2",
@@ -23,6 +23,6 @@
     "vite": "7.1.12",
     "vitest": "4.1.9",
     "@wolsok/shared-data-access": "*",
-    "@angular/ssr": "20.3.7"
+    "@angular/ssr": "22.1.6"
   }
 }
