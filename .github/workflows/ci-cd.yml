@@ -55,7 +55,7 @@ jobs:
       - run: git branch --track main origin/main
         if: github.event_name == 'pull_request'
 
-      - uses: nrwl/nx-set-shas@v4
+      - uses: nrwl/nx-set-shas@v5
       - run: |
           echo "BASE: ${{ env.NX_BASE }}"
           echo "HEAD: ${{ env.NX_HEAD }}"

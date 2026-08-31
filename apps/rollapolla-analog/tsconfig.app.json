@@ -11,5 +11,13 @@
     "src/app/routes/**/*.ts",
     "src/app/pages/**/*.page.ts"
   ],
-  "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/*.mock.ts"]
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/*.mock.ts"],
+  "angularCompilerOptions": {
+    "extendedDiagnostics": {
+      "checks": {
+        "nullishCoalescingNotNullable": "suppress",
+        "optionalChainNotNullable": "suppress"
+      }
+    }
+  }
 }

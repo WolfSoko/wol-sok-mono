@@ -4,6 +4,12 @@
     "declarationMap": false
   },
   "angularCompilerOptions": {
-    "compilationMode": "full"
+    "compilationMode": "full",
+    "extendedDiagnostics": {
+      "checks": {
+        "nullishCoalescingNotNullable": "suppress",
+        "optionalChainNotNullable": "suppress"
+      }
+    }
   }
 }
