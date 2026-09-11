@@ -41,13 +41,11 @@ export class GameStateService {
   }
 
   private static determineWinner(players: Player[]): Player | null {
-    const hasBacteriasPlayers = players.filter(
-      (value) => value.bacterias.length > 0
-    );
-    if (hasBacteriasPlayers.length === 1) {
-      return players[0];
+    if (players.length < 2) {
+      return null;
     }
-    return null;
+    const survivors = players.filter((player) => player.bacteriaCount > 0);
+    return survivors.length === 1 ? survivors[0] : null;
   }
 
   init(width: number, height: number) {

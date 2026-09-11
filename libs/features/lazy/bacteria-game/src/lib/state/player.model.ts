@@ -1,15 +1,26 @@
+import { gameBalance } from './game-balance';
+
 export type PlayerColorArray = [number, number, number, number];
 
-export const bacteriumMaxEnergy = 1.0;
-export const bacteriumEnergyRestoreTimeInSec = 30.0;
-
+/**
+ * A player is only the crosshair plus the score. The bacteria themselves are
+ * owned by the simulation - they change every frame and must stay mutable, so
+ * they are deliberately kept out of the (frozen) store.
+ */
 export interface Player {
   id: number;
   x: number;
   y: number;
   color: PlayerColorArray;
   maxSpeed: number; // px / second
-  bacterias: Bacteria[];
+  /** Living bacteria of this player. */
+  bacteriaCount: number;
+  /** Enemy bacteria eaten since the game started. */
+  captured: number;
+  /** Own bacteria lost since the game started. */
+  lost: number;
+  /** Average energy of the colony, relative to {@link GameBalance.maxEnergy}. */
+  averageEnergy: number;
 }
 
 export interface Bacteria {
@@ -27,41 +38,33 @@ export function createPlayer(params: Partial<Player>): Player {
   return {
     id: playerId++,
     maxSpeed: 150,
+    bacteriaCount: 0,
+    captured: 0,
+    lost: 0,
+    averageEnergy: 1,
     ...params,
   } as Player;
 }
 
-export function createPlayerWithBacterias(
-  id: number,
+/** A solid disc of full energy bacteria, one per grid cell. */
+export function createBacteriaBlob(
   x: number,
   y: number,
-  color: PlayerColorArray,
-  startBacteriaRadius: number
-): Player {
-  return createPlayer({
-    id,
-    x,
-    y,
-    color,
-    bacterias: createPlayerBacterias(x, y, startBacteriaRadius),
-  });
-}
-
-function createPlayerBacterias(
-  x: number,
-  y: number,
-  startBacteriaRadius: number
+  radius: number
 ): Bacteria[] {
-  const result = [];
-  const rPow = startBacteriaRadius * startBacteriaRadius;
-  for (let i = 0; i < startBacteriaRadius * 2; i++) {
-    for (let j = 0; j < startBacteriaRadius * 2; j++) {
-      const testX = i - startBacteriaRadius;
-      const testY = j - startBacteriaRadius;
+  const result: Bacteria[] = [];
+  const radiusPow = radius * radius;
+  for (let i = 0; i < radius * 2; i++) {
+    for (let j = 0; j < radius * 2; j++) {
+      const testX = i - radius;
+      const testY = j - radius;
 
-      if (testX * testX + testY * testY <= rPow) {
-        const bac = { x: testX + x, y: testY + y, energy: bacteriumMaxEnergy };
-        result.push(bac);
+      if (testX * testX + testY * testY <= radiusPow) {
+        result.push({
+          x: Math.round(testX + x),
+          y: Math.round(testY + y),
+          energy: gameBalance.maxEnergy,
+        });
       }
     }
   }

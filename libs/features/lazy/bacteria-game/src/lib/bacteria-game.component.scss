@@ -1,3 +1,49 @@
+.statistics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem 1.5rem;
+  margin-bottom: 0.5rem;
+
+  .game-time {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .colony {
+    display: grid;
+    grid-template-columns: auto;
+    gap: 0.15rem;
+    min-width: 12rem;
+  }
+
+  .colony-name {
+    font-weight: 600;
+  }
+
+  .colony-count,
+  .colony-detail {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .colony-detail {
+    opacity: 0.75;
+  }
+
+  .colony-bar {
+    display: block;
+    height: 4px;
+    border-radius: 2px;
+    background: rgb(0 0 0 / 20%);
+    overflow: hidden;
+  }
+
+  .colony-bar-fill {
+    display: block;
+    height: 100%;
+    transition: width 120ms linear;
+  }
+}
+
 .canvas-container {
   .thanos-container {
     height: 100%;
