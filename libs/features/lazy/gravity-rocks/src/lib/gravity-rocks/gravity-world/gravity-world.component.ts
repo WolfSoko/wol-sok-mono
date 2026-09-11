@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   ElementRef,
   Signal,
@@ -18,7 +19,9 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSliderModule } from '@angular/material/slider';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { vec2, Vector2d } from '@wolsok/utils-math';
@@ -32,6 +35,11 @@ import {
 import { GravityWorldService } from './domain/gravity-world.service';
 import { Force, SpringForce } from './domain/world-objects/force';
 import { Planet } from './domain/world-objects/planet';
+import {
+  defaultOrbitDistance,
+  orbitAround,
+  satelliteMass,
+} from './domain/world-objects/orbit';
 import { Sun } from './domain/world-objects/sun';
 import { SvgPath, TrailSegment } from './domain/world-objects/svg-path';
 import {
@@ -39,7 +47,7 @@ import {
   toSvgPath,
   trailToSvgSegments,
 } from './domain/world-objects/toSvgPath';
-import { WorldObject } from './domain/world-objects/world-object';
+import { MAX_VELOCITY, WorldObject } from './domain/world-objects/world-object';
 
 const SVG_VIEW_PORT_SIZE = 3000;
 
@@ -50,6 +58,13 @@ const WHEEL_ZOOM_STEP = 1.15;
 const TRAIL_WIDTH_RATIO = 0.8;
 /** How far the cursor may travel between press and release to still be a click. */
 const CLICK_TOLERANCE_PX = 4;
+/** How long a touch has to rest on an object to open its menu. */
+const LONG_PRESS_MS = 450;
+const RIGHT_BUTTON = 2;
+
+export const MIN_MASS_EXPONENT = 1;
+export const MAX_MASS_EXPONENT = 5;
+export const MAX_SPEED = MAX_VELOCITY;
 
 @Component({
   selector: 'feat-lazy-gravity-world',
@@ -68,6 +83,8 @@ const CLICK_TOLERANCE_PX = 4;
     MatTooltipModule,
     GravityConfigComponent,
     MatSidenavModule,
+    MatMenuModule,
+    MatSliderModule,
   ],
 })
 export class GravityWorldComponent {
@@ -81,6 +98,9 @@ export class GravityWorldComponent {
 
   @ViewChild('svgWorld')
   svgWorld!: ElementRef<SVGSVGElement>;
+
+  @ViewChild(MatMenuTrigger)
+  objectMenu!: MatMenuTrigger;
 
   settings: WritableSignal<GravityWorldConfig>;
 
@@ -136,6 +156,13 @@ export class GravityWorldComponent {
       .join(' ');
   });
 
+  /** World object the view sticks to while the simulation runs, if any. */
+  private readonly followed: WritableSignal<WorldObject | null> = signal(null);
+  /** Id of the followed object, for the template. */
+  readonly followedId: Signal<string | null> = computed(
+    () => this.followed()?.id ?? null
+  );
+
   readonly zoomPercent: Signal<number> = computed(() =>
     Math.round(this.zoom() * 100)
   );
@@ -164,8 +191,41 @@ export class GravityWorldComponent {
 
   private panStart: { x: number; y: number; center: Vector2d } | null = null;
 
+  /** World object whose menu is open, and where the menu is anchored. */
+  readonly menuTarget: WritableSignal<WorldObject | null> = signal(null);
+  readonly menuPosition: WritableSignal<{ x: number; y: number }> = signal({
+    x: 0,
+    y: 0,
+  });
+
+  /**
+   * Mass of the menu target on a log scale, so every size is reachable. The
+   * sliders own this state - the world objects are mutable, a signal reading
+   * their fields would not notice a change.
+   */
+  readonly menuMassExponent: WritableSignal<number> = signal(MIN_MASS_EXPONENT);
+  /**
+   * Mass of the menu target. Kept next to the exponent rather than derived
+   * from it: a mass typed into the settings can sit outside the slider range,
+   * and then the label still has to tell the truth.
+   */
+  readonly menuMass: WritableSignal<number> = signal(0);
+  readonly menuSpeed: WritableSignal<number> = signal(0);
+  /** Whether the simulation was running when the menu took over. */
+  private pausedForMenu = false;
+  /** What a satellite of the menu target would be: a planet, or a moon. */
+  readonly satelliteName: Signal<string> = computed(() =>
+    this.menuTarget() === this.sun ? 'planet' : 'moon'
+  );
+
+  readonly minMassExponent = MIN_MASS_EXPONENT;
+  readonly maxMassExponent = MAX_MASS_EXPONENT;
+  readonly maxSpeed = MAX_SPEED;
+
   /** World object pressed on, and where it was pressed, until the mouse is released. */
   private pressed: { wo: WorldObject; x: number; y: number } | null = null;
+
+  private longPressTimer: ReturnType<typeof setTimeout> | null = null;
 
   drag$: Observable<{ end: Vector2d }> = this.mouseDown$.asObservable().pipe(
     take(1),
@@ -182,6 +242,7 @@ export class GravityWorldComponent {
   trackByPlanet: TrackByFunction<Planet> = (index, planet) => planet.pos;
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.cancelLongPress());
     this.settings = signal(this.initialConfig);
     this.initializeSunAndPlanets();
     this.updateSignals();
@@ -245,6 +306,11 @@ export class GravityWorldComponent {
    * without dragging centers the object that was pressed on.
    */
   mouseDown($event: MouseEvent): void {
+    if ($event.button === RIGHT_BUTTON) {
+      // the object menu owns the right button; its overlay backdrop swallows
+      // the mouseup, so a gesture started here would never be unwound
+      return;
+    }
     if (this.isPanGesture($event)) {
       this.startPan($event);
       return;
@@ -278,18 +344,18 @@ export class GravityWorldComponent {
     this.updateSignals();
   }
 
-  /** Ends the current pan or drag gesture, centering a clicked object. */
+  /** Ends the current pan or drag gesture, following a clicked object. */
   mouseUp($event: MouseEvent): void {
     const pressed = this.pressed;
     this.panStart = null;
     this.pressed = null;
     this.mouseUp$.next($event);
     if (pressed && this.isWithinClickTolerance(pressed, $event)) {
-      this.centerOn(pressed.wo);
+      this.toggleFollow(pressed.wo);
     }
   }
 
-  /** Ends the gesture without centering, the cursor left the world. */
+  /** Ends the gesture without following, the cursor left the world. */
   mouseLeave($event: MouseEvent): void {
     this.pressed = null;
     this.mouseUp($event);
@@ -317,8 +383,12 @@ export class GravityWorldComponent {
     $event.preventDefault();
     const factor: number =
       $event.deltaY < 0 ? WHEEL_ZOOM_STEP : 1 / WHEEL_ZOOM_STEP;
-    // keep the world point under the cursor in place while zooming
-    this.zoomBy(factor, this.toWorldCoordinates($event));
+    // keep the world point under the cursor in place while zooming - unless an
+    // object is followed, then zoom around that instead of losing it
+    const focus: Vector2d = this.followed()
+      ? this.viewCenter()
+      : this.toWorldCoordinates($event);
+    this.zoomBy(factor, focus);
   }
 
   /** Zooms one step in around the center of the current view. */
@@ -331,8 +401,9 @@ export class GravityWorldComponent {
     this.zoomBy(1 / ZOOM_STEP);
   }
 
-  /** Shows the whole world again, centered and unzoomed. */
+  /** Shows the whole world again, centered, unzoomed and following nothing. */
   resetView(): void {
+    this.stopFollowing();
     this.zoom.set(1);
     this.viewCenter.set(this.canvasSize().div(2));
   }
@@ -366,6 +437,8 @@ export class GravityWorldComponent {
   /** Remembers where the pan gesture started, in client and world coordinates. */
   private startPan($event: MouseEvent): void {
     $event.preventDefault();
+    // panning is manual control, it wins over following
+    this.stopFollowing();
     this.panStart = {
       x: $event.clientX,
       y: $event.clientY,
@@ -388,6 +461,24 @@ export class GravityWorldComponent {
     this.viewCenter.set(this.clampToViewBounds(panStart.center.sub(moved)));
   }
 
+  /**
+   * Follows the given object, or lets go of it when it is already followed.
+   * The view stays where it is when following ends.
+   */
+  private toggleFollow(wo: WorldObject): void {
+    if (this.followed() === wo) {
+      this.stopFollowing();
+      return;
+    }
+    this.followed.set(wo);
+    this.centerOn(wo);
+  }
+
+  /** Lets go of the followed object, leaving the view where it is. */
+  stopFollowing(): void {
+    this.followed.set(null);
+  }
+
   /** Moves the view so the given object sits in the middle of it. */
   private centerOn(wo: WorldObject): void {
     this.viewCenter.set(this.clampToViewBounds(wo.pos));
@@ -408,6 +499,151 @@ export class GravityWorldComponent {
   private clampToViewBounds({ x, y }: Vector2d): Vector2d {
     const { min, max } = this.viewBounds();
     return vec2(clamp(x, min.x, max.x), clamp(y, min.y, max.y));
+  }
+
+  /** Opens the menu of the object under the cursor on a right click. */
+  contextMenu($event: MouseEvent): void {
+    const wo: WorldObject | undefined = this.findWorldObject(
+      $event.target as SVGElement
+    );
+    if (!wo) {
+      return;
+    }
+    $event.preventDefault();
+    this.openMenuFor(wo, $event.clientX, $event.clientY);
+  }
+
+  /** A touch resting on an object opens its menu, like a right click. */
+  touchStart($event: TouchEvent): void {
+    const touch: Touch | undefined = $event.touches[0];
+    const wo: WorldObject | undefined = this.findWorldObject(
+      $event.target as SVGElement
+    );
+    if (!touch || !wo) {
+      return;
+    }
+    const { clientX, clientY } = touch;
+    // a second finger must not orphan the timer of the first
+    this.cancelLongPress();
+    this.longPressTimer = setTimeout(
+      () => this.openMenuFor(wo, clientX, clientY),
+      LONG_PRESS_MS
+    );
+  }
+
+  /** A moving or ending touch is a drag or a tap, not a long press. */
+  cancelLongPress(): void {
+    if (this.longPressTimer !== null) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
+  }
+
+  private openMenuFor(wo: WorldObject, x: number, y: number): void {
+    this.cancelLongPress();
+    // a menu on a moving object would run away from what it acts on
+    this.pausedForMenu = this.running();
+    this.stopSim();
+    this.menuTarget.set(wo);
+    this.menuPosition.set({ x, y });
+    this.menuMass.set(wo.mass);
+    this.menuMassExponent.set(
+      clamp(
+        wo.mass > 0 ? Math.log10(wo.mass) : MIN_MASS_EXPONENT,
+        MIN_MASS_EXPONENT,
+        MAX_MASS_EXPONENT
+      )
+    );
+    this.menuSpeed.set(Math.round(wo.vel.length()));
+    this.objectMenu?.openMenu();
+  }
+
+  /** Forgets the target and picks the simulation back up where it left off. */
+  menuClosed(): void {
+    this.menuTarget.set(null);
+    if (this.pausedForMenu) {
+      this.pausedForMenu = false;
+      this.running.set(true);
+    }
+  }
+
+  /** Puts a satellite in a circular orbit around the object of the menu. */
+  addSatellite(): void {
+    const parent: WorldObject | null = this.menuTarget();
+    if (!parent) {
+      return;
+    }
+    const satellite: Planet = new Planet(
+      parent.pos,
+      undefined,
+      satelliteMass(parent)
+    );
+    const { pos, vel } = orbitAround(
+      parent,
+      // the sun holds everything else, so it decides how far a moon may sit
+      defaultOrbitDistance(
+        parent,
+        parent === this.sun ? undefined : this.sun,
+        satellite.radius
+      ),
+      Math.random() * 2 * Math.PI,
+      this.settings().gravitationalConstant,
+      // the satellite will pair up with every object that is already there
+      this.worldService.getWorldObjects().length
+    );
+    satellite.pos = pos;
+    satellite.vel = vel;
+    this.worldService.addWorldObject(satellite);
+    this.updateSignals();
+  }
+
+  /** Sets the mass of the menu target from the log scale of the slider. */
+  setMassExponent(exponent: number): void {
+    const target: WorldObject | null = this.menuTarget();
+    if (!target) {
+      return;
+    }
+    this.menuMassExponent.set(
+      clamp(exponent, MIN_MASS_EXPONENT, MAX_MASS_EXPONENT)
+    );
+    const mass: number = Math.round(10 ** this.menuMassExponent());
+    this.menuMass.set(mass);
+    if (target === this.sun) {
+      // the sun takes its mass from the settings, so it has to change there
+      this.settings.update((settings) => ({ ...settings, massOfSun: mass }));
+    } else {
+      target.mass = mass;
+    }
+    this.updateSignals();
+  }
+
+  /**
+   * Sets how fast the menu target travels, keeping its direction. An object at
+   * rest is sent into the direction it would need to orbit the sun.
+   */
+  setSpeed(speed: number): void {
+    const target: WorldObject | null = this.menuTarget();
+    // a static object never moves, a speed on it would only be inherited by
+    // the satellites added to it
+    if (!target || target.isStatic) {
+      return;
+    }
+    const direction: Vector2d =
+      target.vel.length() > 0
+        ? target.vel.norm()
+        : this.orbitDirectionAroundSun(target);
+    const clamped: number = clamp(speed, 0, MAX_SPEED);
+    this.menuSpeed.set(clamped);
+    target.vel = direction.mul(clamped);
+    this.updateSignals();
+  }
+
+  /** Direction an object at its place would orbit the sun in. */
+  private orbitDirectionAroundSun(wo: WorldObject): Vector2d {
+    if (wo === this.sun || wo.pos.dist(this.sun.pos) === 0) {
+      return vec2(1, 0);
+    }
+    return wo.pos.orthogonalTo(this.sun.pos);
   }
 
   stopSim(): void {
@@ -438,6 +674,11 @@ export class GravityWorldComponent {
     const { showTrail, trailLength } = this.settings();
     this.worldService.recordTrails(showTrail ? trailLength : 0);
     this.updateSignals();
+    const followed: WorldObject | null = this.followed();
+    if (followed) {
+      // the planets have moved, so the view has to move with the followed one
+      this.centerOn(followed);
+    }
   }
 
   /** Clears the world, resets the view and places sun and planets again. */
@@ -478,6 +719,9 @@ export class GravityWorldComponent {
 
   /** Takes the planet out of the world. */
   removePlanet(planet: Planet): void {
+    if (this.followed() === planet) {
+      this.stopFollowing();
+    }
     this.worldService.removeWorldObject(planet);
     this.updateSignals();
   }

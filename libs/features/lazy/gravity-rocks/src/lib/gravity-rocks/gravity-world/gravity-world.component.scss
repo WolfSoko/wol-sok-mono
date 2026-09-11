@@ -40,8 +40,17 @@
   }
 }
 
+.gravitational-force-card {
+  // the card must not be widened by its own toolbar, or the buttons at its
+  // end are pushed out of the viewport
+  max-width: 100%;
+}
+
 .content-title {
   display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
   gap: 1rem;
   align-items: center;
   font-size: clamp(0.3rem, 2vw, 1.2rem);
@@ -52,13 +61,21 @@
     transition: rotate 0.5s ease-in-out;
   }
   .hint {
+    // the only part that gives way when the row runs out of space
+    flex: 1 1 6rem;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .config-button,
+  .reset-button,
+  .start-button {
+    flex: 0 0 auto;
+  }
   .zoom-controls {
     display: flex;
+    flex: 0 0 auto;
     align-items: center;
     gap: 0.1rem;
     margin-left: auto;
@@ -99,6 +116,31 @@
 
 .world-object {
   cursor: grab;
+}
+
+.menu-anchor {
+  position: fixed;
+  width: 0;
+  height: 0;
+  visibility: hidden;
+}
+
+.object-menu-slider {
+  display: flex;
+  flex-direction: column;
+  padding: 0 1rem;
+
+  mat-slider {
+    width: 14rem;
+  }
+}
+
+// the object the view is stuck to
+.world-object.followed {
+  stroke: #ffffff;
+  stroke-opacity: 0.75;
+  stroke-width: 5;
+  stroke-dasharray: 16 10;
 }
 
 // decoration only: never swallow a click meant for a planet below it

@@ -2,7 +2,8 @@ import { uuid, vec2, Vector2d } from '@wolsok/utils-math';
 
 const MAX_ACCELERATION = 3000;
 
-const MAX_VELOCITY = 1000;
+/** No object may move faster than this, the integrator would lose track. */
+export const MAX_VELOCITY = 1000;
 
 /**
  * Minimal distance between two recorded trail points. Keeps the trail from
