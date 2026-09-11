@@ -1,4 +1,5 @@
 import {
+  exitFullscreen,
   fitInside,
   fullscreenElementOf,
   isFullscreen,
@@ -61,6 +62,37 @@ describe('isFullscreenSupported', () => {
     expect(isFullscreenSupported({ fullscreenEnabled: true }, null)).toBe(
       false
     );
+  });
+});
+
+describe('exitFullscreen', () => {
+  it('leaves fullscreen', () => {
+    const exit = jest.fn().mockResolvedValue(undefined);
+
+    expect(
+      exitFullscreen({ fullscreenElement: {} as Element, exitFullscreen: exit })
+    ).toBe(true);
+    expect(exit).toHaveBeenCalled();
+  });
+
+  it('does nothing while no element fills the screen', () => {
+    const exit = jest.fn();
+
+    expect(
+      exitFullscreen({ fullscreenElement: null, exitFullscreen: exit })
+    ).toBe(false);
+    expect(exit).not.toHaveBeenCalled();
+  });
+
+  it('uses the prefixed call when it is the only one', () => {
+    const webkitExitFullscreen = jest.fn();
+
+    exitFullscreen({
+      webkitFullscreenElement: {} as Element,
+      webkitExitFullscreen,
+    });
+
+    expect(webkitExitFullscreen).toHaveBeenCalled();
   });
 });
 

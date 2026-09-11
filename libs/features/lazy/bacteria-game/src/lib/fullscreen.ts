@@ -58,6 +58,22 @@ export function isFullscreenSupported(
 }
 
 /**
+ * Takes whatever fills the screen off it again. Returns whether a call was
+ * made at all.
+ */
+export function exitFullscreen(doc: FullscreenDocument): boolean {
+  if (!isFullscreen(doc)) {
+    return false;
+  }
+  const exit = doc.exitFullscreen ?? doc.webkitExitFullscreen;
+  if (exit == null) {
+    return false;
+  }
+  void Promise.resolve(exit.call(doc)).catch(() => undefined);
+  return true;
+}
+
+/**
  * Puts the element on the screen, or takes it off again when it is already
  * there. Returns whether a request was made at all, so a caller can tell that
  * the browser refused the feature outright.
@@ -70,12 +86,7 @@ export function toggleFullscreen(
   element: FullscreenElement | null | undefined
 ): boolean {
   if (isFullscreen(doc)) {
-    const exit = doc.exitFullscreen ?? doc.webkitExitFullscreen;
-    if (exit == null) {
-      return false;
-    }
-    void Promise.resolve(exit.call(doc)).catch(() => undefined);
-    return true;
+    return exitFullscreen(doc);
   }
 
   if (element == null) {

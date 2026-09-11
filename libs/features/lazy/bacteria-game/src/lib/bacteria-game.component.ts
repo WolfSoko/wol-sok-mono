@@ -13,6 +13,10 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import {
+  FullscreenOverlayContainer,
+  OverlayContainer,
+} from '@angular/cdk/overlay';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -37,6 +41,7 @@ import {
   tap,
 } from 'rxjs/operators';
 import {
+  exitFullscreen,
   fitInside,
   isFullscreen,
   isFullscreenSupported,
@@ -145,6 +150,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private playerService = inject(PlayerService);
   private playerQuery = inject(PlayerQuery);
   private matDialog = inject(MatDialog);
+  private overlayContainer = inject(OverlayContainer);
 
   @ViewChild('canvasElement', { static: true })
   private canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -249,6 +255,26 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         untilDestroyed(this)
       )
       .subscribe();
+  }
+
+  /**
+   * Leaves fullscreen before the winner dialog opens, unless the application
+   * moves the overlay container into the fullscreen element.
+   *
+   * The browser only paints the element that fills the screen and its
+   * children. A dialog rendered into the CDK overlay container next to it on
+   * the body would be invisible - and it traps the focus, so the match could
+   * not be left at all. An application that provides `FullscreenOverlayContainer`
+   * has no such problem and keeps the dialog inside the arena.
+   */
+  private leaveFullscreenForDialog(): void {
+    if (
+      !this.fullscreen() ||
+      this.overlayContainer instanceof FullscreenOverlayContainer
+    ) {
+      return;
+    }
+    exitFullscreen(document);
   }
 
   /**
@@ -544,14 +570,24 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 }
 
-/** True while the key went to a form control rather than to the game. */
+/**
+ * True while the key went to a control rather than to the game.
+ *
+ * Anything inside an overlay counts too: the level picker is a combobox whose
+ * panel lives in the CDK overlay container, and typing a level name there must
+ * not throw the page into fullscreen.
+ */
 function isTypingTarget(target: EventTarget | null): boolean {
   const element = target as HTMLElement | null;
-  if (element == null) {
+  if (element == null || typeof element.closest !== 'function') {
     return false;
   }
-  const tag = element.tagName?.toLowerCase();
-  return tag === 'input' || tag === 'textarea' || element.isContentEditable;
+  return (
+    element.isContentEditable ||
+    element.closest(
+      'input, textarea, select, [contenteditable="true"], [role="combobox"], [role="listbox"], [role="option"], .cdk-overlay-container'
+    ) != null
+  );
 }
 
 /** Turns the stored players into the numbers the scoreboard renders. */
