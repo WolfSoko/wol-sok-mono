@@ -127,7 +127,8 @@
         }
       },
       "defaultConfiguration": "development",
-      "continuous": true
+      "continuous": true,
+      "dependsOn": ["generate-version"]
     },
     "serve": {
       "executor": "@angular-architects/native-federation:build",
@@ -138,7 +139,8 @@
         "port": 4200,
         "open": false
       },
-      "continuous": true
+      "continuous": true,
+      "dependsOn": ["generate-version"]
     },
     "serve-all": {
       "executor": "nx:run-commands",
