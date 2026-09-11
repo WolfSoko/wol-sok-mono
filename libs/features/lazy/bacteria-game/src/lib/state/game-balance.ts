@@ -10,8 +10,11 @@ export interface GameBalance {
   /** Hard cap so a runaway colony cannot starve the frame budget. */
   maxBacteriaPerPlayer: number;
   /**
-   * Carrying capacity of the whole arena. Once it is reached nobody can divide
-   * any more, so the only way to grow is to take bacteria away from the enemy.
+   * Carrying capacity of the whole arena, split evenly between the colonies.
+   *
+   * Every colony gets its own share of it, so a colony that has grown to its
+   * limit can never take the room to divide away from the other one - it has
+   * to go and take bacteria off the enemy instead.
    */
   maxTotalBacteria: number;
 
@@ -100,47 +103,3 @@ export const gameBalance: GameBalance = {
   nutrientRadius: 2,
   nutrientRespawnDelaySec: 2.5,
 };
-
-export interface Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-const WALL_THICKNESS = 8;
-const WALL_INSET = 44;
-const WALL_GAP = 26;
-
-/**
- * Two vertical walls around the middle of the arena, each with a narrow gap.
- * The colonies have to funnel through them, which turns the middle into the
- * place where the fighting happens.
- *
- * The layout is point symmetric to the centre of the arena, so mirroring the
- * map maps one player's side exactly onto the other one - neither of them gets
- * the better half.
- */
-export function createWalls(width: number, height: number): Rect[] {
-  const leftX = Math.round(width / 2) - WALL_INSET;
-  const rightX = width - leftX - WALL_THICKNESS;
-  const leftGapY = Math.round(height / 2) - 28;
-  const rightGapY = height - leftGapY - WALL_GAP;
-
-  return [
-    { x: leftX, y: 0, width: WALL_THICKNESS, height: leftGapY },
-    {
-      x: leftX,
-      y: leftGapY + WALL_GAP,
-      width: WALL_THICKNESS,
-      height: height - leftGapY - WALL_GAP,
-    },
-    { x: rightX, y: 0, width: WALL_THICKNESS, height: rightGapY },
-    {
-      x: rightX,
-      y: rightGapY + WALL_GAP,
-      width: WALL_THICKNESS,
-      height: height - rightGapY - WALL_GAP,
-    },
-  ].filter((rect) => rect.width > 0 && rect.height > 0);
-}

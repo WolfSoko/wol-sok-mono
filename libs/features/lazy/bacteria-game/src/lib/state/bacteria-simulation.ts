@@ -1,4 +1,5 @@
-import { createWalls, GameBalance, gameBalance } from './game-balance';
+import { GameBalance, gameBalance } from './game-balance';
+import { GameMap, getMap } from './maps';
 import {
   Bacteria,
   createBacteriaBlob,
@@ -102,6 +103,8 @@ export class BacteriaSimulation {
   private colonies: Colony[] = [];
   private nutrients: Nutrient[] = [];
   private respawnTimers: number[] = [];
+  /** Wall layout the match is fought on. */
+  private map: GameMap = getMap('corridors');
 
   constructor(
     balance: GameBalance = gameBalance,
@@ -109,6 +112,20 @@ export class BacteriaSimulation {
   ) {
     this.balance = balance;
     this.random = random;
+  }
+
+  /**
+   * Swaps the wall layout. The walls are stamped into the grid again right
+   * away, so a map can be picked before the arena has its final size as well
+   * as after.
+   */
+  public setMap(map: GameMap): void {
+    if (this.map === map) {
+      return;
+    }
+    this.map = map;
+    this.stampWalls();
+    this.reset();
   }
 
   /** The nutrient pellets currently on the map, for rendering. */
@@ -155,15 +172,7 @@ export class BacteriaSimulation {
     this.nutrientBonus = new Float32Array(cells);
     this.feed = new Float32Array(cells);
 
-    for (const wall of createWalls(width, height)) {
-      const xMax = Math.min(wall.x + wall.width, width);
-      const yMax = Math.min(wall.y + wall.height, height);
-      for (let y = Math.max(wall.y, 0); y < yMax; y++) {
-        for (let x = Math.max(wall.x, 0); x < xMax; x++) {
-          this.baseOwner[y * width + x] = WALL_CELL;
-        }
-      }
-    }
+    this.stampWalls();
 
     const cellSize = this.balance.influenceCellSize;
     this.influenceWidth = Math.ceil(width / cellSize);
@@ -173,6 +182,23 @@ export class BacteriaSimulation {
     );
 
     this.reset();
+  }
+
+  /** Rebuilds the pristine grid: empty everywhere but inside the walls. */
+  private stampWalls(): void {
+    if (this.width === 0 || this.height === 0) {
+      return;
+    }
+    this.baseOwner.fill(EMPTY_CELL);
+    for (const wall of this.map.createWalls(this.width, this.height)) {
+      const xMax = Math.min(wall.x + wall.width, this.width);
+      const yMax = Math.min(wall.y + wall.height, this.height);
+      for (let y = Math.max(wall.y, 0); y < yMax; y++) {
+        for (let x = Math.max(wall.x, 0); x < xMax; x++) {
+          this.baseOwner[y * this.width + x] = WALL_CELL;
+        }
+      }
+    }
   }
 
   /** Drops all nutrients and respawns a fresh set. */
@@ -556,9 +582,15 @@ export class BacteriaSimulation {
       maxTotalBacteria,
     } = this.balance;
     const chance = divideChancePerSec * deltaTimeSec;
-    let total = colonies.reduce(
-      (sum, colony) => sum + colony.bacterias.length,
-      0
+    // Every colony gets its own share of the arena's carrying capacity. A
+    // single budget for all of them would let the bigger colony use it up and
+    // freeze the smaller one out of dividing altogether.
+    const capacity = Math.max(
+      1,
+      Math.min(
+        maxBacteriaPerPlayer,
+        Math.floor(maxTotalBacteria / Math.max(1, this.colonies.length))
+      )
     );
 
     for (const colony of colonies) {
@@ -566,11 +598,7 @@ export class BacteriaSimulation {
       const bacterias = colony.bacterias;
       let count = bacterias.length;
       const parents = count;
-      for (
-        let i = 0;
-        i < parents && count < maxBacteriaPerPlayer && total < maxTotalBacteria;
-        i++
-      ) {
+      for (let i = 0; i < parents && count < capacity; i++) {
         const bacterium = bacterias[i];
         if (bacterium.energy < divideEnergyThreshold) {
           continue;
@@ -593,7 +621,6 @@ export class BacteriaSimulation {
         this.energy[cell] = childEnergy;
         bacterias.push(child);
         count++;
-        total++;
       }
     }
   }

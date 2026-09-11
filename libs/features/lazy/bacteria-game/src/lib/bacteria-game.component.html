@@ -1,6 +1,20 @@
 <mat-toolbar color="primary">
   <mat-toolbar-row>
     <h1>Bacteria War Game</h1>
+    <span class="toolbar-spacer"></span>
+    @if (fullscreenSupported()) {
+      <button
+        mat-icon-button
+        type="button"
+        [attr.aria-label]="fullscreen() ? 'Leave fullscreen' : 'Fullscreen'"
+        [matTooltip]="fullscreen() ? 'Leave fullscreen (F)' : 'Fullscreen (F)'"
+        (click)="toggleFullscreen()"
+      >
+        <mat-icon>{{
+          fullscreen() ? "fullscreen_exit" : "fullscreen"
+        }}</mat-icon>
+      </button>
+    }
   </mat-toolbar-row>
 </mat-toolbar>
 <mat-card appearance="raised">
@@ -9,40 +23,75 @@
       This is a game is for 2 players.<br />
       Surround the other colony to eat it. Well fed bacteria divide, and the
       green nutrients supercharge whoever grabs them first.<br />
-      Orange uses <b>WASD</b>, Blue uses the <b>arrow keys</b>,
-      <b>P</b> pauses.<br />
+      Orange uses <b>WASD</b>, Blue uses the <b>arrow keys</b>, <b>P</b> pauses,
+      <b>F</b> goes fullscreen.<br />
       On a touchscreen just drag the crosshairs - one finger each, so both
       players can share the screen.
     </mat-card-title>
   </mat-card-header>
   <mat-card-content>
+    <div class="level-picker">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Level</mat-label>
+        <mat-select
+          [value]="level().id"
+          [disabled]="(isRunning$ | async) ?? false"
+          (selectionChange)="selectLevel($event.value)"
+        >
+          @for (option of levels; track option.id) {
+            <mat-option [value]="option.id">{{ option.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <p class="level-description">{{ level().description }}</p>
+    </div>
+
     @if (state()) {
-      <div class="statistics">
-        <span class="game-time">{{ "Game time: " + state()?.timePassed }}</span>
-        @for (colony of stats(); track colony.id) {
-          <div class="colony">
-            <span class="colony-name" [style.color]="colony.css"
-              >Player {{ colony.id + 1 }}</span
-            >
-            <span class="colony-count">{{ colony.bacterias }} bacterias</span>
-            <span class="colony-detail"
-              >⚡ {{ colony.energy }}% · 🍽 {{ colony.captured }} · ☠
-              {{ colony.lost }}</span
-            >
-            <span class="colony-bar">
-              <span
-                class="colony-bar-fill"
-                [style.width.%]="colony.share"
-                [style.backgroundColor]="colony.css"
-              ></span>
-            </span>
-          </div>
-        }
-      </div>
+      <ng-container *ngTemplateOutlet="scoreboard"></ng-container>
     } @else {
       <mat-spinner>Loading</mat-spinner>
     }
-    <div class="canvas-container">
+
+    <div #arenaStage class="canvas-container" [class.fullscreen]="fullscreen()">
+      @if (fullscreen()) {
+        <div class="arena-hud">
+          <span class="hud-level">{{ level().name }}</span>
+          <ng-container *ngTemplateOutlet="scoreboard"></ng-container>
+          <span class="hud-actions">
+            <button
+              mat-icon-button
+              type="button"
+              [attr.aria-label]="(isPaused$ | async) ? 'Resume' : 'Pause'"
+              matTooltip="Pause (P)"
+              [disabled]="(isRunning$ | async) === false"
+              (click)="togglePause()"
+            >
+              <mat-icon>{{
+                (isPaused$ | async) ? "play_arrow" : "pause"
+              }}</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Start"
+              matTooltip="Start"
+              [disabled]="(isRunning$ | async) ?? false"
+              (click)="startGame()"
+            >
+              <mat-icon>replay</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Leave fullscreen"
+              matTooltip="Leave fullscreen (F)"
+              (click)="toggleFullscreen()"
+            >
+              <mat-icon>fullscreen_exit</mat-icon>
+            </button>
+          </span>
+        </div>
+      }
       <div wsThanos class="thanos-container">
         <ws-shared-ui-show-fps
           [show]="true"
@@ -53,6 +102,8 @@
           id="canvasElement"
           width="{{ width }}"
           height="{{ height }}"
+          [style.width.px]="canvasSize()?.width"
+          [style.height.px]="canvasSize()?.height"
           (pointerdown)="onPointerDown($event)"
           (pointermove)="onPointerMove($event)"
           (pointerup)="onPointerUp($event)"
@@ -86,3 +137,31 @@
     </button>
   </mat-card-actions>
 </mat-card>
+
+<!-- Rendered both in the page and in the fullscreen overlay. -->
+<ng-template #scoreboard>
+  <div class="statistics">
+    <span class="game-time">{{
+      "Game time: " + (state()?.timePassed ?? 0)
+    }}</span>
+    @for (colony of stats(); track colony.id) {
+      <div class="colony">
+        <span class="colony-name" [style.color]="colony.css"
+          >Player {{ colony.id + 1 }}</span
+        >
+        <span class="colony-count">{{ colony.bacterias }} bacterias</span>
+        <span class="colony-detail"
+          >⚡ {{ colony.energy }}% · 🍽 {{ colony.captured }} · ☠
+          {{ colony.lost }}</span
+        >
+        <span class="colony-bar">
+          <span
+            class="colony-bar-fill"
+            [style.width.%]="colony.share"
+            [style.backgroundColor]="colony.css"
+          ></span>
+        </span>
+      </div>
+    }
+  </div>
+</ng-template>
