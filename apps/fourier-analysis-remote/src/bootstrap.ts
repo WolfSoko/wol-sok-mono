@@ -2,7 +2,7 @@ import { enableProdMode } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { devTools } from '@ngneat/elf-devtools';
 import { appConfig } from './app/app.config';
-import { RemoteEntryComponent } from './app/remote-entry/entry.component';
+import { RemoteEntryComponent } from './app/entry.component';
 import { environment } from './environments/environment';
 
 if (environment.production) {
