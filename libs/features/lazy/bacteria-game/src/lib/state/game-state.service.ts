@@ -169,7 +169,8 @@ export class GameStateService {
     }));
   }
 
-  private togglePause(): void {
+  /** Switches between RUNNING and PAUSED - bound to the P key and the button. */
+  togglePause(): void {
     this.gameStateStore.update((state) => {
       if (state.currentState === GameState.RUNNING) {
         return { currentState: GameState.PAUSED };

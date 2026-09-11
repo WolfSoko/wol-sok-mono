@@ -15,6 +15,8 @@ export class PlayerService {
   private playerQuery = inject(PlayerQuery);
 
   private simulation = new BacteriaSimulation();
+  /** Arena position a player is currently dragging their crosshair towards. */
+  private dragTargets = new Map<number, { x: number; y: number }>();
 
   constructor() {
     this.gameStateQuery
@@ -42,6 +44,7 @@ export class PlayerService {
       )
     );
     this.setActive(0);
+    this.dragTargets.clear();
     this.simulation.init(
       playersData.map((playerData, index) => ({
         playerId: index,
@@ -62,6 +65,20 @@ export class PlayerService {
   /** Adds a player to the store. */
   add(player: Player) {
     this.playerStore.add(player);
+  }
+
+  /**
+   * Steers a crosshair towards an arena position, for pointer and touch input.
+   *
+   * The crosshair travels there at `maxSpeed` instead of jumping, so dragging
+   * is no faster than the keyboard and the two input methods stay comparable.
+   *
+   * The target outlives the gesture, so a tap sends the crosshair across the
+   * arena instead of nudging it for a single frame. It is dropped once the
+   * crosshair arrives, or as soon as the player touches a key.
+   */
+  setDragTarget(playerId: number, x: number, y: number) {
+    this.dragTargets.set(playerId, { x, y });
   }
 
   /** The nutrient pellets currently on the map - used for rendering only. */
@@ -140,18 +157,45 @@ export class PlayerService {
     this.movePlayer(1, xDir1, yDir1, deltaTimeInSec);
   }
 
-  /** Moves one crosshair, kept inside the arena. */
+  /**
+   * Moves one crosshair, kept inside the arena.
+   *
+   * A held key wins over a drag target - pressing a key drops the target, so a
+   * stale one cannot keep pulling the crosshair back.
+   */
   private movePlayer(
     id: ID,
     xDir: number,
     yDir: number,
     deltaTimeInSec: number
   ) {
+    const playerId = Number(id);
+    if (xDir !== 0 || yDir !== 0) {
+      this.dragTargets.delete(playerId);
+    }
+    const target = this.dragTargets.get(playerId);
     const { width, height } = this.gameStateQuery.getValue();
-    this.playerStore.update(id, (state) => ({
-      x: clamp(state.x + xDir * (state.maxSpeed * deltaTimeInSec), 0, width),
-      y: clamp(state.y + yDir * (state.maxSpeed * deltaTimeInSec), 0, height),
-    }));
+
+    this.playerStore.update(id, (state) => {
+      const step = state.maxSpeed * deltaTimeInSec;
+      if (target == null) {
+        return {
+          x: clamp(state.x + xDir * step, 0, width),
+          y: clamp(state.y + yDir * step, 0, height),
+        };
+      }
+      const dX = target.x - state.x;
+      const dY = target.y - state.y;
+      const distance = Math.hypot(dX, dY);
+      if (distance <= step || distance === 0) {
+        this.dragTargets.delete(playerId);
+        return { x: target.x, y: target.y };
+      }
+      return {
+        x: state.x + (dX / distance) * step,
+        y: state.y + (dY / distance) * step,
+      };
+    });
   }
 }
 
