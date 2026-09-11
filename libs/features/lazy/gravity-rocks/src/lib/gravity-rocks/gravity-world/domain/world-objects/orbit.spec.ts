@@ -65,6 +65,29 @@ describe('orbitAround', () => {
     expect(crowded.pos).toEqual(alone.pos);
   });
 
+  it('should not carry the velocity of a static parent', () => {
+    const still = new Sun(vec2(0, 0), undefined, 80000);
+    const drifting = new Sun(vec2(0, 0), vec2(400, 0), 80000);
+
+    // a static object does not move, so nothing of its velocity is inherited
+    expect(orbitAround(drifting, 400, 0, G).vel).toEqual(
+      orbitAround(still, 400, 0, G).vel
+    );
+  });
+
+  it('should budget for the velocity it carries from a moving parent', () => {
+    const fast = new Planet(vec2(0, 0), vec2(MAX_VELOCITY - 20, 0), 1e7);
+
+    const { vel } = orbitAround(fast, 1, 0, G);
+
+    // the orbital part plus the carried part must stay within the cap, or the
+    // integrator renormalises the velocity and the orbit is lost
+    expect(vel.length()).toBeLessThanOrEqual(MAX_VELOCITY);
+    expect(minOrbitDistance(fast, G, 1, MAX_VELOCITY - 20)).toBeGreaterThan(
+      minOrbitDistance(fast, G, 1, 0)
+    );
+  });
+
   it('should not ask for more speed than the simulation allows', () => {
     const heavy = new Sun(vec2(0, 0), undefined, 1e9);
 

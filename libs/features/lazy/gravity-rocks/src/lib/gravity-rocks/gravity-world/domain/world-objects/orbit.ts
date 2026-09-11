@@ -10,6 +10,8 @@ const STABLE_HILL_FRACTION = 0.4;
 /** Mass of a new satellite, as a fraction of its parent's mass. */
 const SATELLITE_MASS_RATIO = 1 / 20;
 const MIN_SATELLITE_MASS = 30;
+/** Speed a satellite may always spend on its orbit, however fast its parent. */
+const MIN_SPEED_BUDGET = 1;
 
 /**
  * Where a satellite has to start, and how fast, to circle its parent once
@@ -31,9 +33,11 @@ export function orbitAround(
   stepsPerTick = 1
 ): { pos: Vector2d; vel: Vector2d } {
   const steps: number = Math.max(1, stepsPerTick);
+  // a static parent stays where it is, whatever velocity it carries around
+  const carried: Vector2d = parent.isStatic ? Vector2d.zero : parent.vel;
   const radius: number = Math.max(
     distance,
-    minOrbitDistance(parent, gravitationalConstant, steps)
+    minOrbitDistance(parent, gravitationalConstant, steps, carried.length())
   );
   const outwards: Vector2d = Vector2d.create(Math.cos(angle), Math.sin(angle));
   const speed: number = Math.sqrt(
@@ -42,22 +46,29 @@ export function orbitAround(
   return {
     pos: parent.pos.add(outwards.mul(radius)),
     // a circular orbit runs perpendicular to the line towards the parent
-    vel: Vector2d.create(outwards.y, -outwards.x).mul(speed).add(parent.vel),
+    vel: Vector2d.create(outwards.y, -outwards.x).mul(speed).add(carried),
   };
 }
 
 /**
  * Closest a satellite can orbit before it would have to outrun `MAX_VELOCITY`,
- * which the simulation caps and would turn the orbit into a crash.
+ * which the simulation caps - it would renormalise the velocity and turn the
+ * orbit into a crash. The satellite also carries its parent's velocity, and in
+ * the worst case both point the same way, so that speed is budgeted for too.
  */
 export function minOrbitDistance(
   parent: WorldObject,
   gravitationalConstant: number,
-  stepsPerTick = 1
+  stepsPerTick = 1,
+  carriedSpeed = 0
 ): number {
+  const budget: number = Math.max(
+    MIN_SPEED_BUDGET,
+    MAX_VELOCITY - Math.abs(carriedSpeed)
+  );
   return (
     (gravitationalConstant * parent.mass) /
-    (Math.max(1, stepsPerTick) * MAX_VELOCITY ** 2)
+    (Math.max(1, stepsPerTick) * budget ** 2)
   );
 }
 

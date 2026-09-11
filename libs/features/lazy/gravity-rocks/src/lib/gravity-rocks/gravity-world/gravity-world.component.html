@@ -244,20 +244,23 @@
             />
           </mat-slider>
         </div>
-        <div class="object-menu-slider" (click)="$event.stopPropagation()">
-          <label for="menu-speed-slider"
-            >Speed: {{ menuSpeed() | number }}</label
-          >
-          <mat-slider [max]="maxSpeed" [min]="0" [step]="10">
-            <input
-              id="menu-speed-slider"
-              matSliderThumb
-              data-qa="menu-speed"
-              [value]="menuSpeed()"
-              (valueChange)="setSpeed($event)"
-            />
-          </mat-slider>
-        </div>
+        <!-- a static object never moves, its speed is not a thing to change -->
+        @if (!menuTarget()?.isStatic) {
+          <div class="object-menu-slider" (click)="$event.stopPropagation()">
+            <label for="menu-speed-slider"
+              >Speed: {{ menuSpeed() | number }}</label
+            >
+            <mat-slider [max]="maxSpeed" [min]="0" [step]="10">
+              <input
+                id="menu-speed-slider"
+                matSliderThumb
+                data-qa="menu-speed"
+                [value]="menuSpeed()"
+                (valueChange)="setSpeed($event)"
+              />
+            </mat-slider>
+          </div>
+        }
       </ng-template>
     </mat-menu>
   </mat-card>

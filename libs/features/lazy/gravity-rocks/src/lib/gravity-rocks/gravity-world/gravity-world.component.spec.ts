@@ -9,6 +9,7 @@ import { INITIAL_CONFIG } from './domain/gravity-world-config';
 // minimal mock service (if needed could be expanded) but we rely on real implementation for now
 import {
   GravityWorldComponent,
+  MAX_MASS_EXPONENT,
   MAX_SPEED,
   MAX_ZOOM,
   MIN_ZOOM,
@@ -574,6 +575,97 @@ describe('GravityWorldComponent', () => {
       jest.advanceTimersByTime(500);
 
       expect(component.menuTarget()).toBeNull();
+    });
+
+    it('should leave the gestures alone on a right click', () => {
+      const planet = component.planets()[0];
+      const centerBefore = component.viewCenter();
+      const forcesBefore = component.worldService.getForces().length;
+      const planetsBefore = component.planets().length;
+
+      // a right click both opens the menu and reaches mouseDown; the overlay
+      // backdrop then swallows the mouseup that would unwind a gesture
+      const press = eventOn(planet.id, 'mousedown');
+      Object.defineProperty(press, 'button', { value: 2 });
+      component.mouseDown(press);
+
+      expect(component.worldService.getForces().length).toBe(forcesBefore);
+      expect(component.planets().length).toBe(planetsBefore);
+      expect(component.followedId()).toBeNull();
+      component.mouseMove(eventOn(planet.id, 'mousemove'));
+      expect(component.viewCenter()).toEqual(centerBefore);
+    });
+
+    it('should not start a pan on a right click with a modifier', () => {
+      const centerBefore = component.viewCenter();
+      const press = eventOn(component.planets()[0].id, 'mousedown');
+      Object.defineProperty(press, 'button', { value: 2 });
+      Object.defineProperty(press, 'shiftKey', { value: true });
+
+      component.mouseDown(press);
+      component.mouseMove(mouseEvent(0, 0, { shiftKey: true }));
+
+      expect(component.viewCenter()).toEqual(centerBefore);
+    });
+
+    it('should pick the simulation back up when the menu closes', () => {
+      component.toggleSim();
+      component.contextMenu(eventOn(component.planets()[0].id));
+      expect(component.running()).toBe(false);
+
+      component.menuClosed();
+
+      expect(component.running()).toBe(true);
+    });
+
+    it('should leave a paused simulation paused', () => {
+      component.contextMenu(eventOn(component.planets()[0].id));
+      component.menuClosed();
+      expect(component.running()).toBe(false);
+    });
+
+    it('should not change the speed of the static sun', () => {
+      component.contextMenu(eventOn(component.sun.id));
+
+      component.setSpeed(400);
+
+      expect(component.sun.vel).toEqual(vec2(0, 0));
+    });
+
+    it('should not let a satellite inherit the speed of a static sun', () => {
+      component.sun.vel = vec2(400, 0);
+      component.contextMenu(eventOn(component.sun.id));
+
+      component.addSatellite();
+
+      const satellite = component.planets()[component.planets().length - 1];
+      // the orbital speed only, nothing carried over from the static sun
+      expect(satellite.vel.length()).toBeLessThan(100);
+    });
+
+    it('should keep the mass slider within its scale', () => {
+      component.settings.update((settings) => ({
+        ...settings,
+        massOfSun: 500000,
+      }));
+      fixture.detectChanges();
+
+      component.contextMenu(eventOn(component.sun.id));
+
+      // the slider cannot show that mass, but the label still tells the truth
+      expect(component.menuMassExponent()).toBe(MAX_MASS_EXPONENT);
+      expect(component.menuMass()).toBe(500000);
+    });
+
+    it('should not open two menus from two touches', () => {
+      const [first, second] = component.planets();
+
+      component.touchStart(touchOn(first.id));
+      component.touchStart(touchOn(second.id));
+      jest.advanceTimersByTime(500);
+
+      // the first timer was replaced, not orphaned
+      expect(component.menuTarget()).toBe(second);
     });
 
     it('should forget the target when the menu closes', () => {

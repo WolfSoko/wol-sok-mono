@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   ElementRef,
   Signal,
@@ -59,6 +60,7 @@ const TRAIL_WIDTH_RATIO = 0.8;
 const CLICK_TOLERANCE_PX = 4;
 /** How long a touch has to rest on an object to open its menu. */
 const LONG_PRESS_MS = 450;
+const RIGHT_BUTTON = 2;
 
 export const MIN_MASS_EXPONENT = 1;
 export const MAX_MASS_EXPONENT = 5;
@@ -202,10 +204,15 @@ export class GravityWorldComponent {
    * their fields would not notice a change.
    */
   readonly menuMassExponent: WritableSignal<number> = signal(MIN_MASS_EXPONENT);
-  readonly menuMass: Signal<number> = computed(() =>
-    Math.round(10 ** this.menuMassExponent())
-  );
+  /**
+   * Mass of the menu target. Kept next to the exponent rather than derived
+   * from it: a mass typed into the settings can sit outside the slider range,
+   * and then the label still has to tell the truth.
+   */
+  readonly menuMass: WritableSignal<number> = signal(0);
   readonly menuSpeed: WritableSignal<number> = signal(0);
+  /** Whether the simulation was running when the menu took over. */
+  private pausedForMenu = false;
   /** What a satellite of the menu target would be: a planet, or a moon. */
   readonly satelliteName: Signal<string> = computed(() =>
     this.menuTarget() === this.sun ? 'planet' : 'moon'
@@ -235,6 +242,7 @@ export class GravityWorldComponent {
   trackByPlanet: TrackByFunction<Planet> = (index, planet) => planet.pos;
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.cancelLongPress());
     this.settings = signal(this.initialConfig);
     this.initializeSunAndPlanets();
     this.updateSignals();
@@ -298,6 +306,11 @@ export class GravityWorldComponent {
    * without dragging centers the object that was pressed on.
    */
   mouseDown($event: MouseEvent): void {
+    if ($event.button === RIGHT_BUTTON) {
+      // the object menu owns the right button; its overlay backdrop swallows
+      // the mouseup, so a gesture started here would never be unwound
+      return;
+    }
     if (this.isPanGesture($event)) {
       this.startPan($event);
       return;
@@ -510,6 +523,8 @@ export class GravityWorldComponent {
       return;
     }
     const { clientX, clientY } = touch;
+    // a second finger must not orphan the timer of the first
+    this.cancelLongPress();
     this.longPressTimer = setTimeout(
       () => this.openMenuFor(wo, clientX, clientY),
       LONG_PRESS_MS
@@ -527,19 +542,29 @@ export class GravityWorldComponent {
   private openMenuFor(wo: WorldObject, x: number, y: number): void {
     this.cancelLongPress();
     // a menu on a moving object would run away from what it acts on
+    this.pausedForMenu = this.running();
     this.stopSim();
     this.menuTarget.set(wo);
     this.menuPosition.set({ x, y });
+    this.menuMass.set(wo.mass);
     this.menuMassExponent.set(
-      wo.mass > 0 ? Math.log10(wo.mass) : MIN_MASS_EXPONENT
+      clamp(
+        wo.mass > 0 ? Math.log10(wo.mass) : MIN_MASS_EXPONENT,
+        MIN_MASS_EXPONENT,
+        MAX_MASS_EXPONENT
+      )
     );
     this.menuSpeed.set(Math.round(wo.vel.length()));
     this.objectMenu?.openMenu();
   }
 
-  /** Forgets the menu target once the menu is gone. */
+  /** Forgets the target and picks the simulation back up where it left off. */
   menuClosed(): void {
     this.menuTarget.set(null);
+    if (this.pausedForMenu) {
+      this.pausedForMenu = false;
+      this.running.set(true);
+    }
   }
 
   /** Puts a satellite in a circular orbit around the object of the menu. */
@@ -578,8 +603,11 @@ export class GravityWorldComponent {
     if (!target) {
       return;
     }
-    this.menuMassExponent.set(exponent);
-    const mass: number = this.menuMass();
+    this.menuMassExponent.set(
+      clamp(exponent, MIN_MASS_EXPONENT, MAX_MASS_EXPONENT)
+    );
+    const mass: number = Math.round(10 ** this.menuMassExponent());
+    this.menuMass.set(mass);
     if (target === this.sun) {
       // the sun takes its mass from the settings, so it has to change there
       this.settings.update((settings) => ({ ...settings, massOfSun: mass }));
@@ -595,7 +623,9 @@ export class GravityWorldComponent {
    */
   setSpeed(speed: number): void {
     const target: WorldObject | null = this.menuTarget();
-    if (!target) {
+    // a static object never moves, a speed on it would only be inherited by
+    // the satellites added to it
+    if (!target || target.isStatic) {
       return;
     }
     const direction: Vector2d =
