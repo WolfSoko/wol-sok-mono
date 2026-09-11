@@ -21,10 +21,15 @@ const USAGE =
   'Usage: write-version-tag.ts <cdk-deployed|non-cdk-deployed> <outFile>';
 
 function parsePrefix(value: string | undefined): DeployPrefix {
-  if (!DEPLOY_PREFIXES.includes(value as DeployPrefix)) {
-    throw new Error(`Unknown deploy prefix "${value}". ${USAGE}`);
+  // Returns a literal rather than the argument itself: the prefix reaches a
+  // RegExp in latestVersionTag, so nothing may flow there from the command line.
+  if (value === 'cdk-deployed') {
+    return 'cdk-deployed';
   }
-  return value as DeployPrefix;
+  if (value === 'non-cdk-deployed') {
+    return 'non-cdk-deployed';
+  }
+  throw new Error(`Unknown deploy prefix "${value}". ${USAGE}`);
 }
 
 /**
