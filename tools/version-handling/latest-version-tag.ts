@@ -1,6 +1,11 @@
 import { execSync } from 'node:child_process';
 import { version } from '../../version.json';
 
+/** Escapes a string so it matches literally inside a regular expression. */
+function escapeForRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /**
  * @returns {string} An app version like v1.0.0 a githash or a timestamp
  *
@@ -21,7 +26,7 @@ export function latestVersionTag(
       .toString()
       .trim();
     const isDeployedRegex = new RegExp(
-      'v[0-9]*.[0-9]*.[0-9]-' + appDeployedPrefix
+      String.raw`v\d+\.\d+\.\d-` + escapeForRegExp(appDeployedPrefix)
     );
     if (!isDeployedRegex.test(latestVersionTag)) {
       return latestVersionTag;

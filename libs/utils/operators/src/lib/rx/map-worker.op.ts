@@ -1,6 +1,4 @@
-import { Observable, OperatorFunction, Subscriber } from 'rxjs';
-import { createOperatorSubscriber } from 'rxjs/internal/operators/OperatorSubscriber';
-import { operate } from 'rxjs/internal/util/lift';
+import { Observable, OperatorFunction } from 'rxjs';
 
 export interface WorkerPostParams<T> {
   data: T;
@@ -31,32 +29,20 @@ function createWorker<T, R>(fn: (input: T) => WorkerPostParams<R>) {
 export function mapWorkerOp<T, R>(
   workerFunction: (value: T) => WorkerPostParams<R>
 ): OperatorFunction<T | WorkerPostParams<T>, R> {
-  return operate(
-    (
-      source: Observable<T | WorkerPostParams<T>>,
-      subscriber: Subscriber<R>
-    ) => {
+  return (source: Observable<T | WorkerPostParams<T>>) =>
+    new Observable<R>((subscriber) => {
       const worker: Worker = createWorker(workerFunction);
-      const listensForWorkerMessages = false;
+      worker.onmessage = (event: MessageEvent) =>
+        subscriber.next(event.data as R);
+      worker.onerror = (error) => subscriber.error(error);
 
-      // Subscribe to the source, all errors and completions are sent along
-      // to the consumer.
-      source.subscribe(
-        createOperatorSubscriber(
-          subscriber,
-          (value: T | WorkerPostParams<T>) => {
-            if (!listensForWorkerMessages) {
-              worker.onmessage = (event: MessageEvent) =>
-                subscriber.next(event.data as R);
-              worker.onerror = (error) => subscriber.error(error);
-            }
-            postMessage(value);
-          },
-          undefined,
-          undefined,
-          () => worker.terminate()
-        )
-      );
+      // Errors and completions of the source are passed straight through; only
+      // the values take the detour through the worker.
+      const subscription = source.subscribe({
+        next: (value) => postMessage(value),
+        error: (error: unknown) => subscriber.error(error),
+        complete: () => subscriber.complete(),
+      });
 
       function postMessage(value: T | WorkerPostParams<T>): void {
         if (!hasTransferList(value)) {
@@ -64,7 +50,6 @@ export function mapWorkerOp<T, R>(
           return;
         }
         worker.postMessage(value.data, value.transferList);
-        return;
       }
 
       function hasTransferList(
@@ -77,6 +62,10 @@ export function mapWorkerOp<T, R>(
           value.transferList.length > 0
         );
       }
-    }
-  );
+
+      return () => {
+        subscription.unsubscribe();
+        worker.terminate();
+      };
+    });
 }

@@ -17,10 +17,7 @@ export class SpaStack extends Stack {
     spa.addExtraAssets(
       [
         Source.asset(buildOutputPath, {
-          exclude: ['**', '!mf-manifest.json'],
-        }),
-        Source.asset(buildOutputPath, {
-          exclude: ['**', '!mf-stats.json'],
+          exclude: ['**', '!remoteEntry.json'],
         }),
       ],
       CacheControl.noCache()

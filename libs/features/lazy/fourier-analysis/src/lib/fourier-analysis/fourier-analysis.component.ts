@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { ElemResizedDirective, ResizedEvent } from '@wolsok/ui-kit';
+import { circleCanvasHeightFor } from '../circle-analysis/circle-canvas/circle-canvas.layout';
 import { CircleAnalysisComponent } from '../circle-analysis/circle-analysis.component';
 import { InputWaveComponent } from '../input-wave/input-wave.component';
 import { WaveOptionsComponent } from '../input-wave/wave-options/wave-options.component';
@@ -42,7 +43,7 @@ export class FourierAnalysisComponent {
   );
 
   circleCanvasHeight = computed(() =>
-    Math.max(250, this.circleCanvasWidth() * (9 / 94))
+    circleCanvasHeightFor(this.circleCanvasWidth())
   );
 
   onResize($event: ResizedEvent) {
