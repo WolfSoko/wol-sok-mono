@@ -6,25 +6,37 @@
   "prefix": "app",
   "tags": ["app", "type:host"],
   "targets": {
-    "build": {
-      "executor": "@nx/angular:webpack-browser",
+    "generate-version": {
+      "executor": "nx:run-commands",
+      "inputs": [
+        "cdk-deployed-version",
+        "{workspaceRoot}/tools/version-handling/**/*",
+        "{workspaceRoot}/version.json"
+      ],
+      "outputs": ["{projectRoot}/src/environments/version-tag.generated.ts"],
+      "cache": true,
+      "options": {
+        "command": "tsx ./tools/version-handling/write-version-tag.ts cdk-deployed apps/angular-examples/src/environments/version-tag.generated.ts"
+      }
+    },
+    "esbuild": {
+      "executor": "@angular/build:application",
       "inputs": [
         "production",
         "sharedGlobals",
         "^production",
         "cdk-deployed-version"
       ],
-      "dependsOn": ["^build"],
-      "outputs": ["{options.outputPath}"],
+      "dependsOn": ["^build", "generate-version"],
+      "outputs": ["{workspaceRoot}/dist/apps/angular-examples"],
       "options": {
-        "outputPath": "dist/apps/angular-examples",
+        "outputPath": {
+          "base": "dist/apps/angular-examples",
+          "browser": ""
+        },
         "index": "apps/angular-examples/src/index.html",
-        "main": "apps/angular-examples/src/main.ts",
         "tsConfig": "apps/angular-examples/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
-        "customWebpackConfig": {
-          "path": "apps/angular-examples/webpack.config.ts"
-        },
         "assets": [
           {
             "glob": "*.*",
@@ -43,8 +55,9 @@
           ]
         },
         "allowedCommonJsDependencies": [],
-        "buildLibsFromSource": true,
-        "sourceMap": true
+        "sourceMap": true,
+        "browser": "apps/angular-examples/src/main.ts",
+        "polyfills": ["es-module-shims"]
       },
       "configurations": {
         "production": {
@@ -72,39 +85,67 @@
               "with": "apps/angular-examples/src/environments/environment.prod.ts"
             }
           ],
-          "serviceWorker": true,
-          "ngswConfigPath": "apps/angular-examples/ngsw-config.json",
-          "outputHashing": "all",
-          "customWebpackConfig": {
-            "path": "apps/angular-examples/webpack.prod.config.ts"
-          }
+          "serviceWorker": "apps/angular-examples/ngsw-config.json",
+          "outputHashing": "all"
         },
         "development": {
           "preserveSymlinks": true,
-          "buildOptimizer": true,
           "optimization": false,
-          "vendorChunk": true,
           "extractLicenses": false,
-          "sourceMap": true,
-          "namedChunks": true
+          "sourceMap": true
         }
       },
       "defaultConfiguration": "production"
     },
-    "serve": {
-      "executor": "@nx/angular:module-federation-dev-server",
+    "build": {
+      "executor": "@angular-architects/native-federation:build",
+      "outputs": ["{workspaceRoot}/dist/apps/angular-examples"],
+      "dependsOn": ["^build", "generate-version"],
+      "options": {},
       "configurations": {
         "production": {
-          "buildTarget": "angular-examples:build:production"
+          "target": "angular-examples:esbuild:production"
         },
         "development": {
-          "buildTarget": "angular-examples:build:development"
+          "target": "angular-examples:esbuild:development",
+          "dev": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve-original": {
+      "executor": "@angular/build:dev-server",
+      "options": {
+        "port": 4200
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "angular-examples:esbuild:production"
+        },
+        "development": {
+          "buildTarget": "angular-examples:esbuild:development"
         }
       },
       "defaultConfiguration": "development",
+      "continuous": true
+    },
+    "serve": {
+      "executor": "@angular-architects/native-federation:build",
       "options": {
-        "publicHost": "http://localhost:4200",
-        "devRemotes": []
+        "target": "angular-examples:serve-original:development",
+        "rebuildDelay": 500,
+        "dev": true,
+        "port": 4200,
+        "open": false
+      },
+      "continuous": true
+    },
+    "serve-all": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run-many -t serve -p angular-examples fourier-analysis-remote bacteria-game-remote shader-examples-remote"
+        ]
       },
       "continuous": true
     },

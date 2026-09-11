@@ -96,10 +96,14 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - **Do not bump targets in `libs/public/*`** — published packages, held back for consumer compat.
 - **`apps/*-cdk` use `target: "ESNext"`** intentionally (Node runtime) — exclude from browser-target changes.
 
-## Module Federation
+## Native Federation
 
-- Host `angular-examples` has both `module-federation.config.ts` (dev) and `module-federation.prod.config.ts` (prod). Mirror shared-dep overrides in both.
-- Remotes: `fourier-analysis-remote`, `bacteria-game-remote`, `shader-examples-remote`.
+- `angular-examples` is the shell, remotes are `fourier-analysis-remote`, `bacteria-game-remote`, `shader-examples-remote`.
+- Shared setup lives in `tools/federation/workspace-federation.js`; each app's `federation.config.js` only adds its name and `exposes`. A package skipped in one app must be skipped in all of them, or the shell and a remote disagree about the import map.
+- `exposes` paths resolve from the workspace root (`./apps/<app>/src/...`), not the project root.
+- Remotes are listed in `apps/angular-examples/src/assets/federation.manifest.json` (dev) and `federation.manifest.prod.json` (prod).
+- Each app has an `esbuild` target (`@angular/build:application`) wrapped by a `build`/`serve` target from `@angular-architects/native-federation`. Change build options on `esbuild`.
+- `nx serve angular-examples` only serves the shell. Use `nx run angular-examples:serve-all` to boot the shell plus all remotes (ports 4200-4203).
 
 ## Testing
 
