@@ -17,4 +17,26 @@
       formControlName="massOfSun"
     />
   </mat-form-field>
+  <mat-slide-toggle data-qa="showTrail" formControlName="showTrail">
+    Show trail
+  </mat-slide-toggle>
+  <div class="trail-length">
+    <label for="trail-length-slider">
+      Trail length: {{ form.controls.trailLength.value }}
+    </label>
+    <mat-slider
+      class="config-slider"
+      discrete="true"
+      [max]="maxTrailLength"
+      [min]="minTrailLength"
+      [step]="10"
+    >
+      <input
+        id="trail-length-slider"
+        matSliderThumb
+        data-qa="trailLength"
+        formControlName="trailLength"
+      />
+    </mat-slider>
+  </div>
 </form>
