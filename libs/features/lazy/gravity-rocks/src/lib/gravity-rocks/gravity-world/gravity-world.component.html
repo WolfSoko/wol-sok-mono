@@ -56,7 +56,8 @@
         <mat-icon>build</mat-icon>
       </button>
       <span class="hint"
-        >Click and drag to manipulate. Scroll to zoom, shift-drag to pan.</span
+        >Click a planet to center it, drag it to manipulate. Scroll to zoom,
+        shift-drag to pan.</span
       >
       <div class="zoom-controls">
         <button
@@ -120,7 +121,7 @@
       (mousedown)="mouseDown($event)"
       (mousemove)="mouseMove($event)"
       (mouseup)="mouseUp($event)"
-      (mouseleave)="mouseUp($event)"
+      (mouseleave)="mouseLeave($event)"
       (wheel)="wheel($event)"
       [attr.viewBox]="viewBox()"
     >
