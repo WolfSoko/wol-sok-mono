@@ -55,7 +55,46 @@
       >
         <mat-icon>build</mat-icon>
       </button>
-      <span>Click and drag to manipulate.</span>
+      <span class="hint"
+        >Click and drag to manipulate. Scroll to zoom, shift-drag to pan.</span
+      >
+      <div class="zoom-controls">
+        <button
+          data-qa="cta-zoom-out"
+          mat-icon-button
+          type="button"
+          matTooltip="Zoom out"
+          aria-label="Zoom out"
+          [disabled]="!canZoomOut()"
+          (click)="zoomOut()"
+        >
+          <mat-icon>zoom_out</mat-icon>
+        </button>
+        <span class="zoom-level" data-qa="zoom-level"
+          >{{ zoomPercent() }}%</span
+        >
+        <button
+          data-qa="cta-zoom-in"
+          mat-icon-button
+          type="button"
+          matTooltip="Zoom in"
+          aria-label="Zoom in"
+          [disabled]="!canZoomIn()"
+          (click)="zoomIn()"
+        >
+          <mat-icon>zoom_in</mat-icon>
+        </button>
+        <button
+          data-qa="cta-reset-view"
+          mat-icon-button
+          type="button"
+          matTooltip="Reset view"
+          aria-label="Reset view"
+          (click)="resetView()"
+        >
+          <mat-icon>center_focus_strong</mat-icon>
+        </button>
+      </div>
       <button
         class="reset-button"
         data-qa="cta-reset"
@@ -81,7 +120,9 @@
       (mousedown)="mouseDown($event)"
       (mousemove)="mouseMove($event)"
       (mouseup)="mouseUp($event)"
-      [attr.viewBox]="'0 0 ' + canvasSize().x + ' ' + canvasSize().y"
+      (mouseleave)="mouseUp($event)"
+      (wheel)="wheel($event)"
+      [attr.viewBox]="viewBox()"
     >
       <defs>
         <marker
@@ -96,6 +137,18 @@
         </marker>
       </defs>
       <g>
+        @for (trail of trailSegments(); track trail.id) {
+          <path
+            class="planet-trail"
+            fill="none"
+            stroke-linecap="butt"
+            stroke-linejoin="round"
+            [attr.d]="trail.path"
+            [attr.stroke]="trail.color"
+            [attr.stroke-width]="trail.width"
+            [attr.stroke-opacity]="trail.opacity"
+          />
+        }
         @for (planet of planets(); track planet.id) {
           <circle
             class="world-object"

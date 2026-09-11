@@ -51,8 +51,23 @@
     animation-fill-mode: backwards;
     transition: rotate 0.5s ease-in-out;
   }
-  .reset-button {
+  .hint {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.1rem;
     margin-left: auto;
+
+    .zoom-level {
+      min-width: 3.5ch;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
   }
   .start-button {
     margin-right: 2rem;
@@ -84,4 +99,8 @@
 
 .world-object {
   cursor: grab;
+}
+
+.planet-trail {
+  pointer-events: none;
 }
