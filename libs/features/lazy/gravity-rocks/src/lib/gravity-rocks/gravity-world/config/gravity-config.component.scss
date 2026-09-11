@@ -1,4 +1,14 @@
 form {
   display: flex;
+  flex-flow: column wrap;
   gap: 1rem;
+}
+
+.trail-length {
+  display: flex;
+  flex-direction: column;
+
+  .config-slider {
+    width: 100%;
+  }
 }

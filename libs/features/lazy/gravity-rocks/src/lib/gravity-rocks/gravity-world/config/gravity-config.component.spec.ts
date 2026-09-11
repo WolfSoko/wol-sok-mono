@@ -18,6 +18,8 @@ describe('GravityConfigComponent', () => {
   const initialConfig: GravityWorldConfig = {
     gravitationalConstant: 10,
     massOfSun: 10000,
+    showTrail: true,
+    trailLength: 100,
   };
   let emitted: GravityWorldConfig[];
 
@@ -44,6 +46,8 @@ describe('GravityConfigComponent', () => {
   it('should have inputs', () => {
     expect(getByQa<HTMLInputElement>(fixture, 'gConstant')).toBeTruthy();
     expect(getByQa<HTMLInputElement>(fixture, 'massOfSun')).toBeTruthy();
+    expect(getByQa(fixture, 'showTrail')).toBeTruthy();
+    expect(getByQa<HTMLInputElement>(fixture, 'trailLength')).toBeTruthy();
   });
 
   it('should set initial form values', () => {
@@ -55,7 +59,11 @@ describe('GravityConfigComponent', () => {
   });
 
   it('should patch when config input changes', () => {
-    component.config = { gravitationalConstant: 20, massOfSun: 20000 };
+    component.config = {
+      ...initialConfig,
+      gravitationalConstant: 20,
+      massOfSun: 20000,
+    };
     fixture.detectChanges();
     const gInput = getByQa<HTMLInputElement>(fixture, 'gConstant');
     const massInput = getByQa<HTMLInputElement>(fixture, 'massOfSun');
@@ -76,6 +84,26 @@ describe('GravityConfigComponent', () => {
     const last = emitted[emitted.length - 1];
     expect(last.gravitationalConstant).toBe(20);
     expect(last.massOfSun).toBe(20000000);
+  });
+
+  it('should set the initial trail values', () => {
+    const trailInput = getByQa<HTMLInputElement>(fixture, 'trailLength');
+    expect(trailInput?.value).toBe('' + initialConfig.trailLength);
+    expect(component.form.controls.showTrail.value).toBe(
+      initialConfig.showTrail
+    );
+  });
+
+  it('should emit when the trail is switched off', () => {
+    component.form.controls.showTrail.setValue(false);
+    fixture.detectChanges();
+    expect(emitted[emitted.length - 1].showTrail).toBe(false);
+  });
+
+  it('should emit when the trail length changes', () => {
+    component.form.controls.trailLength.setValue(300);
+    fixture.detectChanges();
+    expect(emitted[emitted.length - 1].trailLength).toBe(300);
   });
 
   it('should not emit for duplicate value', () => {

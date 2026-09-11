@@ -104,6 +104,32 @@ describe('GravityWorldService', () => {
     expect(planet2.pos.y).toBeCloseTo(98.498187, 3);
   });
 
+  it('should record trails for moving objects only', () => {
+    const sun: WorldObject = new Sun(vec2(0, 0), undefined, 1000);
+    const planet: WorldObject = new Planet(vec2(100, 0), undefined, 10);
+    service.addWorldObject(sun);
+    service.addWorldObject(planet);
+    service.setUniverse(1000, 1000, 10);
+
+    service.recordTrails(10);
+    service.calcNextTick(1);
+    service.calcNextTick(1);
+    service.recordTrails(10);
+
+    expect(sun.trail).toEqual([]);
+    expect(planet.trail).toEqual([vec2(100, 0), planet.pos]);
+  });
+
+  it('should clear the trails for a maximum of zero', () => {
+    const planet: WorldObject = new Planet(vec2(100, 0), undefined, 10);
+    service.addWorldObject(planet);
+
+    service.recordTrails(10);
+    service.recordTrails(0);
+
+    expect(planet.trail).toEqual([]);
+  });
+
   it('should expose the world objects', () => {
     const planet1: WorldObject = new Planet(vec2(0, 100), undefined, 10);
     service.addWorldObject(planet1);
