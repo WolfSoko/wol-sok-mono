@@ -51,7 +51,8 @@ import { MAX_VELOCITY, WorldObject } from './domain/world-objects/world-object';
 
 const SVG_VIEW_PORT_SIZE = 3000;
 
-export const MIN_ZOOM = 0.25;
+/** Furthest zoom out, shown as 0.1% - enough to watch planets fly far away. */
+export const MIN_ZOOM = 0.001;
 export const MAX_ZOOM = 20;
 const ZOOM_STEP = 1.3;
 const WHEEL_ZOOM_STEP = 1.15;
@@ -163,9 +164,11 @@ export class GravityWorldComponent {
     () => this.followed()?.id ?? null
   );
 
-  readonly zoomPercent: Signal<number> = computed(() =>
-    Math.round(this.zoom() * 100)
-  );
+  /** Zoom as a percentage, with one decimal while zoomed far out. */
+  readonly zoomPercent: Signal<number> = computed(() => {
+    const percent: number = this.zoom() * 100;
+    return percent < 10 ? Math.round(percent * 10) / 10 : Math.round(percent);
+  });
   readonly canZoomIn: Signal<boolean> = computed(() => this.zoom() < MAX_ZOOM);
   readonly canZoomOut: Signal<boolean> = computed(() => this.zoom() > MIN_ZOOM);
 

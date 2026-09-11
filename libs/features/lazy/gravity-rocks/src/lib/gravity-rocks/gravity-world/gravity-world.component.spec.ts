@@ -170,6 +170,21 @@ describe('GravityWorldComponent', () => {
       expect(component.canZoomOut()).toBe(false);
     });
 
+    it('should zoom out down to 0.1 percent', () => {
+      for (let i = 0; i < 100; i++) {
+        component.zoomOut();
+      }
+      fixture.detectChanges();
+      expect(component.zoom()).toBe(0.001);
+      expect(component.zoomPercent()).toBe(0.1);
+      expect(
+        query(fixture, qaSelector('zoom-level'))?.textContent?.trim()
+      ).toBe('0.1%');
+      // the whole world fits into a tiny part of the viewport now
+      const [, , width] = component.viewBox().split(' ').map(Number);
+      expect(width).toBe(component.canvasSize().x / 0.001);
+    });
+
     it('should have zoom buttons', () => {
       const zoomIn = query<HTMLButtonElement>(
         fixture,
