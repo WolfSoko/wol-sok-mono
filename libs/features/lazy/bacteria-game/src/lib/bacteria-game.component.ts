@@ -23,6 +23,7 @@ import { ShowFpsComponent } from '@wolsok/ui-kit';
 import { Observable } from 'rxjs';
 import { filter, map, switchMap, take } from 'rxjs/operators';
 import { Nutrient } from './state/bacteria-simulation';
+import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
 import { createWalls, gameBalance } from './state/game-balance';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
@@ -120,6 +121,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   stats: Signal<ColonyStats[]>;
   fps$: Observable<number>;
   isRunning$: Observable<boolean>;
+  isPaused$: Observable<boolean>;
+
+  /** Which crosshair each active pointer is dragging: pointerId -> playerId. */
+  private readonly draggedBy = new Map<number, number>();
 
   constructor() {
     this.state = toSignal(this.query.select());
@@ -138,6 +143,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           (state) => state === GameState.RUNNING || state === GameState.PAUSED
         )
       );
+    this.isPaused$ = this.query.selectIsPaused();
 
     this.query
       .selectTimeDelta()
@@ -274,6 +280,72 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.gameStateService.cleanup();
+  }
+
+  /** Toggles pause - the touch equivalent of the P key. */
+  togglePause() {
+    this.gameStateService.togglePause();
+  }
+
+  /**
+   * Grabs the crosshair nearest to the touch and starts dragging it.
+   *
+   * Two pointers can be active at once, one per player, so both can play on the
+   * same screen.
+   */
+  onPointerDown(event: PointerEvent) {
+    const point = this.toArenaPoint(event);
+    if (point == null) {
+      return;
+    }
+    const playerId = nearestFreeCrosshair(
+      this.playerQuery.getAll(),
+      point,
+      new Set(this.draggedBy.values())
+    );
+    if (playerId == null) {
+      return;
+    }
+    this.draggedBy.set(event.pointerId, playerId);
+    // Keep receiving moves once the finger slides off the canvas.
+    (event.target as Element).setPointerCapture?.(event.pointerId);
+    this.playerService.setDragTarget(playerId, point.x, point.y);
+    event.preventDefault();
+  }
+
+  onPointerMove(event: PointerEvent) {
+    const playerId = this.draggedBy.get(event.pointerId);
+    if (playerId == null) {
+      return;
+    }
+    const point = this.toArenaPoint(event);
+    if (point == null) {
+      return;
+    }
+    this.playerService.setDragTarget(playerId, point.x, point.y);
+    event.preventDefault();
+  }
+
+  /**
+   * Releases the crosshair so another finger can grab it. The target itself
+   * stays, so the crosshair finishes travelling to where the finger left it.
+   */
+  onPointerUp(event: PointerEvent) {
+    this.draggedBy.delete(event.pointerId);
+  }
+
+  private toArenaPoint(event: PointerEvent) {
+    const canvas = this.canvasRef?.nativeElement as HTMLCanvasElement | null;
+    if (canvas == null) {
+      return null;
+    }
+    return arenaPointFromClient(
+      event.clientX,
+      event.clientY,
+      canvas.getBoundingClientRect(),
+      this.width,
+      this.height
+    );
   }
 
   @HostListener('document:keydown', ['$event'])

@@ -36,6 +36,13 @@ export class GameStateQuery extends Query<GameStateState> {
     return this.select((store) => store.winner);
   }
 
+  /** Emits true while the match is paused. */
+  selectIsPaused(): Observable<boolean> {
+    return this.select((store) => store.currentState === GameState.PAUSED).pipe(
+      distinctUntilChanged()
+    );
+  }
+
   /** Emits true once a match is over, a draw included. */
   selectMatchEnded(): Observable<boolean> {
     return this.select((store) => store.matchEnded).pipe(

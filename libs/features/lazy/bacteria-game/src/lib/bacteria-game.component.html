@@ -9,7 +9,10 @@
       This is a game is for 2 players.<br />
       Surround the other colony to eat it. Well fed bacteria divide, and the
       green nutrients supercharge whoever grabs them first.<br />
-      Orange uses <b>WASD</b>, Blue uses the <b>arrow keys</b>, <b>P</b> pauses.
+      Orange uses <b>WASD</b>, Blue uses the <b>arrow keys</b>,
+      <b>P</b> pauses.<br />
+      On a touchscreen just drag the crosshairs - one finger each, so both
+      players can share the screen.
     </mat-card-title>
   </mat-card-header>
   <mat-card-content>
@@ -50,6 +53,10 @@
           id="canvasElement"
           width="{{ width }}"
           height="{{ height }}"
+          (pointerdown)="onPointerDown($event)"
+          (pointermove)="onPointerMove($event)"
+          (pointerup)="onPointerUp($event)"
+          (pointercancel)="onPointerUp($event)"
         >
         </canvas>
       </div>
@@ -62,6 +69,13 @@
       [disabled]="isRunning$ | async"
     >
       Start
+    </button>
+    <button
+      mat-raised-button
+      (click)="togglePause()"
+      [disabled]="(isRunning$ | async) === false"
+    >
+      {{ (isPaused$ | async) ? "Resume" : "Pause" }}
     </button>
     <button
       mat-raised-button
