@@ -1,3 +1,24 @@
+.toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+.level-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+
+  mat-form-field {
+    min-width: 14rem;
+  }
+
+  .level-description {
+    margin: 0;
+    opacity: 0.8;
+  }
+}
+
 .statistics {
   display: flex;
   flex-wrap: wrap;
@@ -45,14 +66,87 @@
 }
 
 .canvas-container {
+  position: relative;
+
   .thanos-container {
     height: 100%;
   }
 
   canvas {
+    display: block;
     width: 100%;
     image-rendering: pixelated;
     // Dragging a crosshair must not scroll or zoom the page underneath.
     touch-action: none;
+  }
+
+  // The element that is handed to the fullscreen API. The class is driven by
+  // the fullscreenchange event rather than by the `:fullscreen` pseudo class,
+  // which browsers that only know the prefixed one would not match.
+  &.fullscreen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: #000;
+
+    .thanos-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    // Out of the flex flow, otherwise the badge sits next to the arena and
+    // pushes it off centre.
+    ws-shared-ui-show-fps {
+      position: absolute;
+      right: 0.75rem;
+      bottom: 0.5rem;
+      color: #fff;
+    }
+
+    // The size comes from the component, which fits the arena into the screen
+    // without letterboxing inside the element - see `updateCanvasSize()`.
+    canvas {
+      width: auto;
+      max-width: 100%;
+      max-height: 100%;
+    }
+  }
+}
+
+.arena-hud {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  padding: 0.5rem 1rem;
+  color: #fff;
+  background: rgb(0 0 0 / 55%);
+  // The arena underneath has to stay draggable - only the buttons take input.
+  pointer-events: none;
+
+  .hud-level {
+    font-weight: 600;
+  }
+
+  .hud-actions {
+    margin-left: auto;
+    pointer-events: auto;
+  }
+
+  .statistics {
+    margin-bottom: 0;
+  }
+
+  .colony-bar {
+    background: rgb(255 255 255 / 25%);
   }
 }

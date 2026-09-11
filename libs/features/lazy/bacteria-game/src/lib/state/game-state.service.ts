@@ -15,6 +15,12 @@ import {
 } from 'rxjs';
 import { GameStateQuery } from './game-state.query';
 import { GameState, GameStateStore } from './game.states';
+import {
+  getLevel,
+  levelBalance,
+  levelCrosshairSpeed,
+  levelMap,
+} from './levels';
 import { Player } from './player.model';
 
 /** How a match ended. `winner` is null when both colonies died together. */
@@ -133,16 +139,50 @@ export class GameStateService {
     );
   }
 
+  /** Spawns both colonies with the map and the balance of the current level. */
   private initPlayers() {
-    const { width, height } = this.gameStateQuery.getValue();
-    this.playerService.init([
-      { x: width / 4, y: height / 2, color: [255, 100, 20, 255] },
+    const { width, height, levelId } = this.gameStateQuery.getValue();
+    const level = getLevel(levelId);
+    this.playerService.init(
+      [
+        { x: width / 4, y: height / 2, color: [255, 100, 20, 255] },
+        {
+          x: (width / 4) * 3,
+          y: height / 2,
+          color: [0, 100, 230, 255],
+        },
+      ],
       {
-        x: (width / 4) * 3,
-        y: height / 2,
-        color: [0, 100, 230, 255],
-      },
-    ]);
+        balance: levelBalance(level),
+        map: levelMap(level),
+        crosshairSpeed: levelCrosshairSpeed(level),
+      }
+    );
+  }
+
+  /**
+   * Tells the store how big the arena is.
+   *
+   * The colonies are spawned again right away, so the start screen shows both
+   * blobs where the next match will actually begin - before that the store
+   * still has its default size and would put them outside the canvas.
+   */
+  setArenaSize(width: number, height: number): void {
+    this.gameStateStore.update({ width, height });
+    this.initPlayers();
+  }
+
+  /**
+   * Picks the level the next match is played on.
+   *
+   * A running match keeps the rules it started with: the colonies are only
+   * spawned again - with the new map and balance - while nobody is playing.
+   */
+  setLevel(levelId: string): void {
+    this.gameStateStore.update({ levelId: getLevel(levelId).id });
+    if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
+      this.initPlayers();
+    }
   }
 
   start() {

@@ -11,7 +11,8 @@
     "rxjs": "7.8.2",
     "@angular/router": "20.3.7",
     "@datorama/akita": "8.0.1",
-    "@wolsok/utils-measure-fps": "0.0.1"
+    "@wolsok/utils-measure-fps": "0.0.1",
+    "@angular/cdk": "20.2.10"
   },
   "devDependencies": {
     "tslib": "2.5.2"

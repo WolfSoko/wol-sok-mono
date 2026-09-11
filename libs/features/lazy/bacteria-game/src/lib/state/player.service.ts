@@ -1,9 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { ID, transaction } from '@datorama/akita';
 import { BacteriaSimulation, Colony, Nutrient } from './bacteria-simulation';
-import { gameBalance } from './game-balance';
+import { GameBalance, gameBalance } from './game-balance';
 import { GameStateQuery } from './game-state.query';
 import { GameState } from './game.states';
+import { DEFAULT_CROSSHAIR_SPEED } from './levels';
+import { GameMap, getMap } from './maps';
 import { createPlayer, Player, PlayerColorArray } from './player.model';
 import { PlayerQuery } from './player.query';
 import { PlayerStore } from './player.store';
@@ -27,11 +29,26 @@ export class PlayerService {
   }
 
   @transaction()
-  /** Starts a fresh match: new players in the store, new colonies in the simulation. */
+  /**
+   * Starts a fresh match: new players in the store, new colonies in the
+   * simulation.
+   *
+   * The level decides the wall layout and the balance, so the simulation is
+   * rebuilt with them - its balance is fixed for the lifetime of a match on
+   * purpose, nothing may change the rules while the colonies are fighting.
+   */
   init(
     playersData: { x: number; y: number; color: PlayerColorArray }[],
-    radius = gameBalance.startBacteriaRadius
+    options: {
+      balance?: GameBalance;
+      map?: GameMap;
+      crosshairSpeed?: number;
+    } = {}
   ) {
+    const balance = options.balance ?? gameBalance;
+    const map = options.map ?? getMap('corridors');
+    const radius = balance.startBacteriaRadius;
+
     this.playerStore.remove();
     playersData.forEach((playerData, index) =>
       this.add(
@@ -40,11 +57,14 @@ export class PlayerService {
           x: playerData.x,
           y: playerData.y,
           color: playerData.color,
+          maxSpeed: options.crosshairSpeed ?? DEFAULT_CROSSHAIR_SPEED,
         })
       )
     );
     this.setActive(0);
     this.dragTargets.clear();
+    this.simulation = new BacteriaSimulation(balance);
+    this.simulation.setMap(map);
     this.simulation.init(
       playersData.map((playerData, index) => ({
         playerId: index,

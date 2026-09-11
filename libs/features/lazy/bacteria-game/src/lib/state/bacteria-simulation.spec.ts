@@ -1,11 +1,17 @@
 import { BacteriaSimulation, Colony } from './bacteria-simulation';
-import { createWalls, GameBalance, gameBalance } from './game-balance';
+import { GameBalance, gameBalance } from './game-balance';
+import { getMap } from './maps';
 import { Bacteria, createPlayer, Player } from './player.model';
 
 // The production canvas size. Smaller arenas push the walls outside the grid,
 // which would make every wall test pass without a single wall cell existing.
 const WIDTH = 320;
 const HEIGHT = 140;
+
+/** The layout the simulation is on by default, and what the tests expect. */
+const corridors = getMap('corridors');
+const createWalls = (width: number, height: number) =>
+  corridors.createWalls(width, height);
 
 function balance(overrides: Partial<GameBalance> = {}): GameBalance {
   return { ...gameBalance, nutrientCount: 0, ...overrides };
@@ -202,20 +208,39 @@ describe('BacteriaSimulation', () => {
       expect(colonies[0].bacterias).toHaveLength(1);
     });
 
-    it('stops dividing once the arena is at its carrying capacity', () => {
+    it('stops dividing once a colony has used up its share of the arena', () => {
       const { simulation, colonies, players } = setup(
         [[bacterium(20, 20)], [bacterium(40, 20)]],
         {
-          balance: { divideChancePerSec: 1, maxTotalBacteria: 2 },
+          // Four cells for the whole arena, so two per colony.
+          balance: { divideChancePerSec: 1, maxTotalBacteria: 4 },
           random: () => 0,
         }
       );
 
       simulation.step(players, 0.5);
 
-      expect(colonies[0].bacterias.length + colonies[1].bacterias.length).toBe(
-        2
+      expect(colonies[0].bacterias).toHaveLength(2);
+      expect(colonies[1].bacterias).toHaveLength(2);
+    });
+
+    it('still lets a small colony grow while the other one is at its limit', () => {
+      const big = Array.from({ length: 6 }, (_, i) =>
+        bacterium(20 + i * 2, 20)
       );
+      const { simulation, colonies, players } = setup(
+        [big, [bacterium(60, 60)]],
+        {
+          // A shared budget of 8 would already be used up by the big colony.
+          balance: { divideChancePerSec: 1, maxTotalBacteria: 8 },
+          random: () => 0,
+        }
+      );
+
+      simulation.step(players, 0.5);
+
+      expect(colonies[0].bacterias).toHaveLength(6);
+      expect(colonies[1].bacterias.length).toBeGreaterThan(1);
     });
 
     it('respects the per player cap', () => {
@@ -429,22 +454,40 @@ describe('BacteriaSimulation', () => {
   });
 });
 
-describe('createWalls', () => {
-  it('is point symmetric so neither player gets the better half', () => {
-    const walls = createWalls(WIDTH, HEIGHT);
-    const solid = (x: number, y: number) =>
-      walls.some(
-        (rect) =>
-          x >= rect.x &&
-          x < rect.x + rect.width &&
-          y >= rect.y &&
-          y < rect.y + rect.height
-      );
+describe('maps', () => {
+  it('stamps the walls of the map the simulation was given', () => {
+    const simulation = new BacteriaSimulation(balance(), () => 0.5);
+    simulation.resize(WIDTH, HEIGHT);
+    simulation.setMap(getMap('hourglass'));
+    const wall = getMap('hourglass').createWalls(WIDTH, HEIGHT)[0];
 
-    for (let y = 0; y < HEIGHT; y++) {
-      for (let x = 0; x < WIDTH; x++) {
-        expect(solid(x, y)).toBe(solid(WIDTH - 1 - x, HEIGHT - 1 - y));
-      }
+    const blocked = bacterium(wall.x + 1, wall.y + 1);
+    simulation.init([
+      {
+        playerId: 0,
+        color: [255, 0, 0, 255],
+        x: 0,
+        y: 0,
+        radius: 0,
+      },
+    ]);
+    const colonies = simulation.getColonies() as Colony[];
+    colonies[0].bacterias = [bacterium(wall.x - 2, wall.y + 1)];
+    const player = createPlayer({
+      id: 0,
+      x: WIDTH,
+      y: wall.y + 1,
+      color: [255, 0, 0, 255],
+    });
+
+    for (let frame = 0; frame < 40; frame++) {
+      simulation.step([player], 1 / 60);
     }
+
+    expect(
+      colonies[0].bacterias.some(
+        (bac) => bac.x === blocked.x && bac.y === blocked.y
+      )
+    ).toBe(false);
   });
 });

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Query } from '@datorama/akita';
 import { distinctUntilChanged, filter, map, Observable } from 'rxjs';
 import { GameState, GameStateState, GameStateStore } from './game.states';
+import { getLevel, Level } from './levels';
 
 @Injectable({ providedIn: 'root' })
 export class GameStateQuery extends Query<GameStateState> {
@@ -30,6 +31,14 @@ export class GameStateQuery extends Query<GameStateState> {
 
   selectFps(): Observable<number> {
     return this.select('fps');
+  }
+
+  /** The level that is selected, resolved from the stored id. */
+  selectLevel(): Observable<Level> {
+    return this.select((store) => store.levelId).pipe(
+      distinctUntilChanged(),
+      map((levelId) => getLevel(levelId))
+    );
   }
 
   selectWinnerId() {

@@ -5,3 +5,13 @@
     It is a draw - both colonies wiped each other out!
   }
 </mat-toolbar>
+<p class="level-info">{{ level().name }}</p>
+<div class="actions" mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="undefined">Back to start</button>
+  <button mat-raised-button [mat-dialog-close]="'again'">Play again</button>
+  @if (upcoming(); as next) {
+    <button mat-raised-button color="primary" [mat-dialog-close]="'next'">
+      Next: {{ next.name }}
+    </button>
+  }
+</div>

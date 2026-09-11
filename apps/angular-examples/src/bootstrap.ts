@@ -1,3 +1,7 @@
+import {
+  FullscreenOverlayContainer,
+  OverlayContainer,
+} from '@angular/cdk/overlay';
 import { provideHttpClient } from '@angular/common/http';
 import { enableProdMode, provideZonelessChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
@@ -50,5 +54,8 @@ bootstrapApplication(AppComponent, {
         animationLength: 5000,
       }),
     ],
+    // Only the element that fills the screen is painted, so dialogs and
+    // tooltips have to move into it while a page is fullscreen.
+    { provide: OverlayContainer, useClass: FullscreenOverlayContainer },
   ],
 }).catch((err) => console.error(err));
