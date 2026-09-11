@@ -29,16 +29,23 @@ export const HOME_VIEW: FractalView = {
 export const MAX_SCALE = 4;
 
 /**
- * Deepest view we allow. A double-single pair carries ~48 mantissa bits, so
- * this keeps roughly two bits of headroom per pixel at 10^13 magnification.
+ * Deepest view we allow (~6.2e11 magnification).
+ *
+ * A double-single pair resolves complex coordinates to roughly 3e-16 near the
+ * interesting part of the plane; below a per-pixel spacing of about 1e-15
+ * neighbouring pixels start collapsing onto the same coordinate and the image
+ * turns blocky. `scale` is a half height, so the spacing on a canvas `h` pixels
+ * tall is `2 * scale / h`: at this limit even a 1440px tall stage still gets
+ * ~2.8e-15 per pixel, several times the resolution floor.
  */
-export const MIN_SCALE = 1e-13;
+export const MIN_SCALE = 2e-12;
 
 /** Below this scale single precision floats start to show visible blocking. */
 export const HIGH_PRECISION_SCALE = 5e-5;
 
 export const MIN_ITERATIONS = 60;
-export const MAX_ITERATIONS = 2000;
+/** Must stay below MAX_STEPS in the fragment shader. */
+export const MAX_ITERATIONS = 4000;
 
 export const COLOR_MODES = ['smooth', 'trap', 'distance'] as const;
 export type ColorMode = (typeof COLOR_MODES)[number];
@@ -127,12 +134,13 @@ export function panByPixels(
 
 /**
  * Iteration budget that keeps deep zooms resolved without wasting cycles on
- * shallow ones: the boundary needs roughly a constant number of extra
- * iterations per decade of magnification.
+ * shallow ones. Filament density grows faster than linearly with the zoom
+ * depth, so the budget is quadratic in the number of decades: a linear ramp
+ * starves the deepest views and paints them as flat blobs.
  */
 export function autoIterations(scale: number): number {
   const decades = Math.max(0, Math.log10(HOME_VIEW.scale / clampScale(scale)));
-  const iterations = 180 + decades * 150;
+  const iterations = 200 + decades * 150 + decades * decades * 12;
   return Math.round(
     Math.min(MAX_ITERATIONS, Math.max(MIN_ITERATIONS, iterations))
   );

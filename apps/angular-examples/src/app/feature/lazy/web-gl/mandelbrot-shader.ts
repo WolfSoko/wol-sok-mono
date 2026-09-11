@@ -8,7 +8,7 @@
  *   to clump together at roughly 10^5 magnification.
  * - `1`: the orbit is iterated in emulated 64 bit floats (a "double-single"
  *   pair of 32 bit floats). Roughly four times slower, but it keeps the image
- *   sharp down to ~10^13 magnification.
+ *   sharp down to ~6e11 magnification (see MIN_SCALE in fractal-view.ts).
  *
  * Both flavours share a single code path via the `S*` macros below, so the
  * escape time loop only exists once.

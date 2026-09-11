@@ -1,8 +1,10 @@
 import { FRACTAL_PRESETS } from './fractal-presets';
+import { MANDELBROT_FRAGMENT_SHADER } from './mandelbrot-shader';
 import {
   FractalView,
   HOME_VIEW,
   MAX_ITERATIONS,
+  MIN_ITERATIONS,
   MAX_SCALE,
   MIN_SCALE,
   autoIterations,
@@ -139,6 +141,38 @@ describe('autoIterations', () => {
     for (const scale of [4, 1, 1e-3, 1e-8, 1e-13]) {
       expect(autoIterations(scale)).toBeLessThanOrEqual(MAX_ITERATIONS);
     }
+  });
+});
+
+describe('precision budget', () => {
+  /**
+   * Measured resolution of the shader's double-single arithmetic around the
+   * interesting part of the plane: below roughly this spacing neighbouring
+   * pixels collapse onto the same complex coordinate.
+   */
+  const EMULATED_DOUBLE_RESOLUTION = 3e-16;
+
+  it('keeps the per-pixel spacing representable at the deepest view', () => {
+    for (const canvasHeight of [720, 1440, 2160]) {
+      const perPixel = (2 * MIN_SCALE) / canvasHeight;
+
+      expect(perPixel).toBeGreaterThan(EMULATED_DOUBLE_RESOLUTION * 3);
+    }
+  });
+
+  it('never asks the shader for more iterations than its loop runs', () => {
+    const maxSteps = Number(
+      /#define MAX_STEPS (\d+)/.exec(MANDELBROT_FRAGMENT_SHADER)?.[1]
+    );
+
+    expect(maxSteps).toBeGreaterThan(0);
+    expect(MAX_ITERATIONS).toBeLessThanOrEqual(maxSteps);
+    expect(MIN_ITERATIONS).toBeLessThan(MAX_ITERATIONS);
+  });
+
+  it('gives the deepest reachable view a budget that resolves it', () => {
+    // A linear ramp starves views past ~10^11 and paints them as flat blobs.
+    expect(autoIterations(MIN_SCALE)).toBeGreaterThan(3000);
   });
 });
 
