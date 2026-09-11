@@ -56,10 +56,22 @@
         <mat-icon>build</mat-icon>
       </button>
       <span class="hint"
-        >Click a planet to center it, drag it to manipulate. Scroll to zoom,
+        >Click a planet to follow it, drag it to manipulate. Scroll to zoom,
         shift-drag to pan.</span
       >
       <div class="zoom-controls">
+        @if (followedId()) {
+          <button
+            data-qa="cta-stop-follow"
+            mat-icon-button
+            type="button"
+            matTooltip="Stop following"
+            aria-label="Stop following"
+            (click)="stopFollowing()"
+          >
+            <mat-icon>gps_fixed</mat-icon>
+          </button>
+        }
         <button
           data-qa="cta-zoom-out"
           mat-icon-button
@@ -153,6 +165,7 @@
         @for (planet of planets(); track planet.id) {
           <circle
             class="world-object"
+            [class.followed]="planet.id === followedId()"
             [id]="planet.id"
             [attr.cx]="planet.pos.x"
             [attr.cy]="planet.pos.y"
@@ -162,6 +175,7 @@
         }
         <circle
           class="world-object sun"
+          [class.followed]="sun.id === followedId()"
           [id]="sun.id"
           [attr.cx]="sun.pos.x"
           [attr.cy]="sun.pos.y"

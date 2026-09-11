@@ -253,7 +253,7 @@ describe('GravityWorldComponent', () => {
     });
   });
 
-  describe('centering on click', () => {
+  describe('following on click', () => {
     const rect = {
       left: 0,
       top: 0,
@@ -290,14 +290,127 @@ describe('GravityWorldComponent', () => {
 
     afterEach(() => jest.restoreAllMocks());
 
+    /** Presses and releases on the given world object without moving. */
+    function clickOn(id: string): void {
+      component.mouseDown(eventOn(id, 100, 100));
+      component.mouseUp(eventOn(id, 100, 100));
+    }
+
     it('should center a planet that is clicked', () => {
       const planet = component.planets()[0];
       expect(planet.pos).not.toEqual(component.viewCenter());
 
-      component.mouseDown(eventOn(planet.id, 100, 100));
-      component.mouseUp(eventOn(planet.id, 100, 100));
+      clickOn(planet.id);
 
       expect(component.viewCenter()).toEqual(planet.pos);
+      expect(component.followedId()).toBe(planet.id);
+    });
+
+    it('should keep the followed planet centered while it moves', () => {
+      const planet = component.planets()[0];
+      clickOn(planet.id);
+
+      for (let frame = 0; frame < 30; frame++) {
+        component.step(1 / 60);
+        expect(component.viewCenter()).toEqual(planet.pos);
+      }
+      // the planet really did move, so this was not a standstill
+      expect(planet.pos).not.toEqual(component.canvasSize().div(2));
+    });
+
+    it('should not move the view for a planet it does not follow', () => {
+      const [planet, other] = component.planets();
+      clickOn(planet.id);
+      const centerBefore = component.viewCenter();
+
+      component.step(1 / 60);
+
+      expect(component.viewCenter()).not.toEqual(other.pos);
+      expect(component.viewCenter()).not.toEqual(centerBefore);
+    });
+
+    it('should let go of the planet when it is clicked again', () => {
+      const planet = component.planets()[0];
+      clickOn(planet.id);
+      clickOn(planet.id);
+      expect(component.followedId()).toBeNull();
+
+      // the view stays where following left it
+      const centerBefore = component.viewCenter();
+      component.step(1 / 60);
+      expect(component.viewCenter()).toEqual(centerBefore);
+    });
+
+    it('should switch to another planet that is clicked', () => {
+      const [planet, other] = component.planets();
+      clickOn(planet.id);
+      clickOn(other.id);
+
+      expect(component.followedId()).toBe(other.id);
+      expect(component.viewCenter()).toEqual(other.pos);
+    });
+
+    it('should let go when the view is reset', () => {
+      clickOn(component.planets()[0].id);
+      component.resetView();
+      expect(component.followedId()).toBeNull();
+    });
+
+    it('should let go when panning takes over', () => {
+      clickOn(component.planets()[0].id);
+
+      component.mouseDown(mouseEvent(250, 150, { shiftKey: true }));
+      component.mouseMove(mouseEvent(200, 150, { shiftKey: true }));
+      component.mouseUp(mouseEvent(200, 150));
+
+      expect(component.followedId()).toBeNull();
+    });
+
+    it('should let go when the followed planet is removed', () => {
+      const planet = component.planets()[0];
+      clickOn(planet.id);
+
+      component.removePlanet(planet);
+
+      expect(component.followedId()).toBeNull();
+    });
+
+    it('should keep the followed planet centered while zooming', () => {
+      const planet = component.planets()[0];
+      clickOn(planet.id);
+
+      component.wheel(wheelEvent(-100, 0, 0));
+
+      expect(component.zoom()).toBeGreaterThan(1);
+      expect(component.viewCenter()).toEqual(planet.pos);
+    });
+
+    it('should offer a button to stop following', () => {
+      clickOn(component.planets()[0].id);
+      fixture.detectChanges();
+
+      const stop = query<HTMLButtonElement>(
+        fixture,
+        qaSelector('cta-stop-follow')
+      )!;
+      stop.click();
+      fixture.detectChanges();
+
+      expect(component.followedId()).toBeNull();
+      expect(query(fixture, qaSelector('cta-stop-follow'))).toBeNull();
+    });
+
+    it('should mark the followed planet in the svg', () => {
+      const planet = component.planets()[0];
+      clickOn(planet.id);
+      fixture.detectChanges();
+
+      expect(
+        query(fixture, `[id="${planet.id}"]`)?.classList.contains('followed')
+      ).toBe(true);
+      expect(query(fixture, 'circle.sun')?.classList.contains('followed')).toBe(
+        false
+      );
     });
 
     it('should tolerate a tiny cursor movement while clicking', () => {
@@ -310,12 +423,12 @@ describe('GravityWorldComponent', () => {
       expect(component.viewCenter()).toEqual(planet.pos);
     });
 
-    it('should center the sun as well', () => {
+    it('should center and follow the sun as well', () => {
       component.zoomIn();
-      component.mouseDown(eventOn(component.sun.id, 100, 100));
-      component.mouseUp(eventOn(component.sun.id, 100, 100));
+      clickOn(component.sun.id);
 
       expect(component.viewCenter()).toEqual(component.sun.pos);
+      expect(component.followedId()).toBe(component.sun.id);
     });
 
     it('should not center when a drag returns to where it started', () => {
@@ -350,6 +463,7 @@ describe('GravityWorldComponent', () => {
 
       expect(component.planets().length).toBe(planetsBefore + 1);
       expect(component.viewCenter()).toEqual(centerBefore);
+      expect(component.followedId()).toBeNull();
     });
 
     it('should not center when the cursor leaves the world', () => {

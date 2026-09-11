@@ -101,6 +101,14 @@
   cursor: grab;
 }
 
+// the object the view is stuck to
+.world-object.followed {
+  stroke: #ffffff;
+  stroke-opacity: 0.75;
+  stroke-width: 5;
+  stroke-dasharray: 16 10;
+}
+
 // decoration only: never swallow a click meant for a planet below it
 .planet-trail,
 .line-line {

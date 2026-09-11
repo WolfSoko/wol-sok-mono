@@ -136,6 +136,13 @@ export class GravityWorldComponent {
       .join(' ');
   });
 
+  /** World object the view sticks to while the simulation runs, if any. */
+  private readonly followed: WritableSignal<WorldObject | null> = signal(null);
+  /** Id of the followed object, for the template. */
+  readonly followedId: Signal<string | null> = computed(
+    () => this.followed()?.id ?? null
+  );
+
   readonly zoomPercent: Signal<number> = computed(() =>
     Math.round(this.zoom() * 100)
   );
@@ -278,18 +285,18 @@ export class GravityWorldComponent {
     this.updateSignals();
   }
 
-  /** Ends the current pan or drag gesture, centering a clicked object. */
+  /** Ends the current pan or drag gesture, following a clicked object. */
   mouseUp($event: MouseEvent): void {
     const pressed = this.pressed;
     this.panStart = null;
     this.pressed = null;
     this.mouseUp$.next($event);
     if (pressed && this.isWithinClickTolerance(pressed, $event)) {
-      this.centerOn(pressed.wo);
+      this.toggleFollow(pressed.wo);
     }
   }
 
-  /** Ends the gesture without centering, the cursor left the world. */
+  /** Ends the gesture without following, the cursor left the world. */
   mouseLeave($event: MouseEvent): void {
     this.pressed = null;
     this.mouseUp($event);
@@ -317,8 +324,12 @@ export class GravityWorldComponent {
     $event.preventDefault();
     const factor: number =
       $event.deltaY < 0 ? WHEEL_ZOOM_STEP : 1 / WHEEL_ZOOM_STEP;
-    // keep the world point under the cursor in place while zooming
-    this.zoomBy(factor, this.toWorldCoordinates($event));
+    // keep the world point under the cursor in place while zooming - unless an
+    // object is followed, then zoom around that instead of losing it
+    const focus: Vector2d = this.followed()
+      ? this.viewCenter()
+      : this.toWorldCoordinates($event);
+    this.zoomBy(factor, focus);
   }
 
   /** Zooms one step in around the center of the current view. */
@@ -331,8 +342,9 @@ export class GravityWorldComponent {
     this.zoomBy(1 / ZOOM_STEP);
   }
 
-  /** Shows the whole world again, centered and unzoomed. */
+  /** Shows the whole world again, centered, unzoomed and following nothing. */
   resetView(): void {
+    this.stopFollowing();
     this.zoom.set(1);
     this.viewCenter.set(this.canvasSize().div(2));
   }
@@ -366,6 +378,8 @@ export class GravityWorldComponent {
   /** Remembers where the pan gesture started, in client and world coordinates. */
   private startPan($event: MouseEvent): void {
     $event.preventDefault();
+    // panning is manual control, it wins over following
+    this.stopFollowing();
     this.panStart = {
       x: $event.clientX,
       y: $event.clientY,
@@ -386,6 +400,24 @@ export class GravityWorldComponent {
       (($event.clientY - panStart.y) / rect.height) * size.y
     );
     this.viewCenter.set(this.clampToViewBounds(panStart.center.sub(moved)));
+  }
+
+  /**
+   * Follows the given object, or lets go of it when it is already followed.
+   * The view stays where it is when following ends.
+   */
+  private toggleFollow(wo: WorldObject): void {
+    if (this.followed() === wo) {
+      this.stopFollowing();
+      return;
+    }
+    this.followed.set(wo);
+    this.centerOn(wo);
+  }
+
+  /** Lets go of the followed object, leaving the view where it is. */
+  stopFollowing(): void {
+    this.followed.set(null);
   }
 
   /** Moves the view so the given object sits in the middle of it. */
@@ -438,6 +470,11 @@ export class GravityWorldComponent {
     const { showTrail, trailLength } = this.settings();
     this.worldService.recordTrails(showTrail ? trailLength : 0);
     this.updateSignals();
+    const followed: WorldObject | null = this.followed();
+    if (followed) {
+      // the planets have moved, so the view has to move with the followed one
+      this.centerOn(followed);
+    }
   }
 
   /** Clears the world, resets the view and places sun and planets again. */
@@ -478,6 +515,9 @@ export class GravityWorldComponent {
 
   /** Takes the planet out of the world. */
   removePlanet(planet: Planet): void {
+    if (this.followed() === planet) {
+      this.stopFollowing();
+    }
     this.worldService.removeWorldObject(planet);
     this.updateSignals();
   }
