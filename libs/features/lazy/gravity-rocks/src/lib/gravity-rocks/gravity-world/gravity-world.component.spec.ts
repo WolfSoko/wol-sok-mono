@@ -127,7 +127,7 @@ describe('GravityWorldComponent', () => {
 
     it('should show the whole world initially', () => {
       expect(component.zoom()).toBe(1);
-      expect(component.zoomPercent()).toBe(100);
+      expect(component.zoomLabel()).toBe('100%');
       expect(component.viewBox()).toBe(
         `0 0 ${component.canvasSize().x} ${component.canvasSize().y}`
       );
@@ -176,13 +176,22 @@ describe('GravityWorldComponent', () => {
       }
       fixture.detectChanges();
       expect(component.zoom()).toBe(0.001);
-      expect(component.zoomPercent()).toBe(0.1);
+      expect(component.zoomLabel()).toBe('0.1%');
       expect(
         query(fixture, qaSelector('zoom-level'))?.textContent?.trim()
       ).toBe('0.1%');
       // the whole world fits into a tiny part of the viewport now
       const [, , width] = component.viewBox().split(' ').map(Number);
       expect(width).toBe(component.canvasSize().x / 0.001);
+    });
+
+    it('should show one decimal for every zoom level below ten percent', () => {
+      component.zoom.set(0.01);
+      fixture.detectChanges();
+      expect(component.zoomLabel()).toBe('1.0%');
+      expect(
+        query(fixture, qaSelector('zoom-level'))?.textContent?.trim()
+      ).toBe('1.0%');
     });
 
     it('should have zoom buttons', () => {
@@ -200,7 +209,7 @@ describe('GravityWorldComponent', () => {
       expect(zoomedIn).toBeGreaterThan(1);
       expect(
         query(fixture, qaSelector('zoom-level'))?.textContent?.trim()
-      ).toBe(`${component.zoomPercent()}%`);
+      ).toBe(component.zoomLabel());
 
       zoomOut.click();
       fixture.detectChanges();

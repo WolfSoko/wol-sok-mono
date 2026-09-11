@@ -164,10 +164,10 @@ export class GravityWorldComponent {
     () => this.followed()?.id ?? null
   );
 
-  /** Zoom as a percentage, with one decimal while zoomed far out. */
-  readonly zoomPercent: Signal<number> = computed(() => {
+  /** Zoom as a percentage label, with one decimal while zoomed far out. */
+  readonly zoomLabel: Signal<string> = computed(() => {
     const percent: number = this.zoom() * 100;
-    return percent < 10 ? Math.round(percent * 10) / 10 : Math.round(percent);
+    return percent < 10 ? `${percent.toFixed(1)}%` : `${Math.round(percent)}%`;
   });
   readonly canZoomIn: Signal<boolean> = computed(() => this.zoom() < MAX_ZOOM);
   readonly canZoomOut: Signal<boolean> = computed(() => this.zoom() > MIN_ZOOM);
