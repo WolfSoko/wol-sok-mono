@@ -175,7 +175,8 @@
     "lint": {
       "options": {
         "args": ["./**/*.ts", "./**/*.html"]
-      }
+      },
+      "dependsOn": ["generate-version"]
     },
     "test": {
       "executor": "@nx/jest:jest",
@@ -185,7 +186,8 @@
         "passWithNoTests": false,
         "codeCoverage": true,
         "tsConfig": "apps/angular-examples/tsconfig.spec.json"
-      }
+      },
+      "dependsOn": ["generate-version"]
     }
   }
 }
