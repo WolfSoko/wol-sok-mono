@@ -17,6 +17,8 @@ export interface GameStateState {
   width: number;
   height: number;
   winner: Player | null;
+  /** True once a match is over - also for a draw, where `winner` stays null. */
+  matchEnded: boolean;
   keysPressed: string[];
 }
 
@@ -29,6 +31,7 @@ export function createInitialState(): GameStateState {
     width: 480,
     height: 320,
     winner: null,
+    matchEnded: false,
     keysPressed: [],
   };
 }

@@ -1,22 +1,25 @@
-import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Signal,
+  inject,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { Observable } from 'rxjs';
 import { GameStateQuery } from '../state/game-state.query';
 import { Player } from '../state/player.model';
 
 @Component({
-  imports: [CommonModule, MatToolbarModule],
+  imports: [MatToolbarModule],
   templateUrl: './winner.component.html',
   styleUrls: ['./winner.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WinnerComponent {
-  winner$: Observable<Player | null>;
-
   private state = inject(GameStateQuery);
 
-  constructor() {
-    this.winner$ = this.state.selectWinnerId();
-  }
+  /** Null when both colonies wiped each other out in the same step. */
+  public winner: Signal<Player | null | undefined> = toSignal(
+    this.state.selectWinnerId()
+  );
 }

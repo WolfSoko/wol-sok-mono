@@ -1,3 +1,7 @@
 <mat-toolbar color="accent">
-  {{ "Congratulation!! The winner is Player: " + ((winner$ | async)!.id + 1) }}
+  @if (winner(); as player) {
+    Congratulation!! The winner is Player: {{ player.id + 1 }}
+  } @else {
+    It is a draw - both colonies wiped each other out!
+  }
 </mat-toolbar>
