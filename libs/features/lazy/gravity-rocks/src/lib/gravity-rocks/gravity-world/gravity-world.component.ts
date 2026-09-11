@@ -18,7 +18,9 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSliderModule } from '@angular/material/slider';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { vec2, Vector2d } from '@wolsok/utils-math';
@@ -32,6 +34,11 @@ import {
 import { GravityWorldService } from './domain/gravity-world.service';
 import { Force, SpringForce } from './domain/world-objects/force';
 import { Planet } from './domain/world-objects/planet';
+import {
+  defaultOrbitDistance,
+  orbitAround,
+  satelliteMass,
+} from './domain/world-objects/orbit';
 import { Sun } from './domain/world-objects/sun';
 import { SvgPath, TrailSegment } from './domain/world-objects/svg-path';
 import {
@@ -39,7 +46,7 @@ import {
   toSvgPath,
   trailToSvgSegments,
 } from './domain/world-objects/toSvgPath';
-import { WorldObject } from './domain/world-objects/world-object';
+import { MAX_VELOCITY, WorldObject } from './domain/world-objects/world-object';
 
 const SVG_VIEW_PORT_SIZE = 3000;
 
@@ -50,6 +57,12 @@ const WHEEL_ZOOM_STEP = 1.15;
 const TRAIL_WIDTH_RATIO = 0.8;
 /** How far the cursor may travel between press and release to still be a click. */
 const CLICK_TOLERANCE_PX = 4;
+/** How long a touch has to rest on an object to open its menu. */
+const LONG_PRESS_MS = 450;
+
+export const MIN_MASS_EXPONENT = 1;
+export const MAX_MASS_EXPONENT = 5;
+export const MAX_SPEED = MAX_VELOCITY;
 
 @Component({
   selector: 'feat-lazy-gravity-world',
@@ -68,6 +81,8 @@ const CLICK_TOLERANCE_PX = 4;
     MatTooltipModule,
     GravityConfigComponent,
     MatSidenavModule,
+    MatMenuModule,
+    MatSliderModule,
   ],
 })
 export class GravityWorldComponent {
@@ -81,6 +96,9 @@ export class GravityWorldComponent {
 
   @ViewChild('svgWorld')
   svgWorld!: ElementRef<SVGSVGElement>;
+
+  @ViewChild(MatMenuTrigger)
+  objectMenu!: MatMenuTrigger;
 
   settings: WritableSignal<GravityWorldConfig>;
 
@@ -171,8 +189,36 @@ export class GravityWorldComponent {
 
   private panStart: { x: number; y: number; center: Vector2d } | null = null;
 
+  /** World object whose menu is open, and where the menu is anchored. */
+  readonly menuTarget: WritableSignal<WorldObject | null> = signal(null);
+  readonly menuPosition: WritableSignal<{ x: number; y: number }> = signal({
+    x: 0,
+    y: 0,
+  });
+
+  /**
+   * Mass of the menu target on a log scale, so every size is reachable. The
+   * sliders own this state - the world objects are mutable, a signal reading
+   * their fields would not notice a change.
+   */
+  readonly menuMassExponent: WritableSignal<number> = signal(MIN_MASS_EXPONENT);
+  readonly menuMass: Signal<number> = computed(() =>
+    Math.round(10 ** this.menuMassExponent())
+  );
+  readonly menuSpeed: WritableSignal<number> = signal(0);
+  /** What a satellite of the menu target would be: a planet, or a moon. */
+  readonly satelliteName: Signal<string> = computed(() =>
+    this.menuTarget() === this.sun ? 'planet' : 'moon'
+  );
+
+  readonly minMassExponent = MIN_MASS_EXPONENT;
+  readonly maxMassExponent = MAX_MASS_EXPONENT;
+  readonly maxSpeed = MAX_SPEED;
+
   /** World object pressed on, and where it was pressed, until the mouse is released. */
   private pressed: { wo: WorldObject; x: number; y: number } | null = null;
+
+  private longPressTimer: ReturnType<typeof setTimeout> | null = null;
 
   drag$: Observable<{ end: Vector2d }> = this.mouseDown$.asObservable().pipe(
     take(1),
@@ -440,6 +486,134 @@ export class GravityWorldComponent {
   private clampToViewBounds({ x, y }: Vector2d): Vector2d {
     const { min, max } = this.viewBounds();
     return vec2(clamp(x, min.x, max.x), clamp(y, min.y, max.y));
+  }
+
+  /** Opens the menu of the object under the cursor on a right click. */
+  contextMenu($event: MouseEvent): void {
+    const wo: WorldObject | undefined = this.findWorldObject(
+      $event.target as SVGElement
+    );
+    if (!wo) {
+      return;
+    }
+    $event.preventDefault();
+    this.openMenuFor(wo, $event.clientX, $event.clientY);
+  }
+
+  /** A touch resting on an object opens its menu, like a right click. */
+  touchStart($event: TouchEvent): void {
+    const touch: Touch | undefined = $event.touches[0];
+    const wo: WorldObject | undefined = this.findWorldObject(
+      $event.target as SVGElement
+    );
+    if (!touch || !wo) {
+      return;
+    }
+    const { clientX, clientY } = touch;
+    this.longPressTimer = setTimeout(
+      () => this.openMenuFor(wo, clientX, clientY),
+      LONG_PRESS_MS
+    );
+  }
+
+  /** A moving or ending touch is a drag or a tap, not a long press. */
+  cancelLongPress(): void {
+    if (this.longPressTimer !== null) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
+  }
+
+  private openMenuFor(wo: WorldObject, x: number, y: number): void {
+    this.cancelLongPress();
+    // a menu on a moving object would run away from what it acts on
+    this.stopSim();
+    this.menuTarget.set(wo);
+    this.menuPosition.set({ x, y });
+    this.menuMassExponent.set(
+      wo.mass > 0 ? Math.log10(wo.mass) : MIN_MASS_EXPONENT
+    );
+    this.menuSpeed.set(Math.round(wo.vel.length()));
+    this.objectMenu?.openMenu();
+  }
+
+  /** Forgets the menu target once the menu is gone. */
+  menuClosed(): void {
+    this.menuTarget.set(null);
+  }
+
+  /** Puts a satellite in a circular orbit around the object of the menu. */
+  addSatellite(): void {
+    const parent: WorldObject | null = this.menuTarget();
+    if (!parent) {
+      return;
+    }
+    const satellite: Planet = new Planet(
+      parent.pos,
+      undefined,
+      satelliteMass(parent)
+    );
+    const { pos, vel } = orbitAround(
+      parent,
+      // the sun holds everything else, so it decides how far a moon may sit
+      defaultOrbitDistance(
+        parent,
+        parent === this.sun ? undefined : this.sun,
+        satellite.radius
+      ),
+      Math.random() * 2 * Math.PI,
+      this.settings().gravitationalConstant,
+      // the satellite will pair up with every object that is already there
+      this.worldService.getWorldObjects().length
+    );
+    satellite.pos = pos;
+    satellite.vel = vel;
+    this.worldService.addWorldObject(satellite);
+    this.updateSignals();
+  }
+
+  /** Sets the mass of the menu target from the log scale of the slider. */
+  setMassExponent(exponent: number): void {
+    const target: WorldObject | null = this.menuTarget();
+    if (!target) {
+      return;
+    }
+    this.menuMassExponent.set(exponent);
+    const mass: number = this.menuMass();
+    if (target === this.sun) {
+      // the sun takes its mass from the settings, so it has to change there
+      this.settings.update((settings) => ({ ...settings, massOfSun: mass }));
+    } else {
+      target.mass = mass;
+    }
+    this.updateSignals();
+  }
+
+  /**
+   * Sets how fast the menu target travels, keeping its direction. An object at
+   * rest is sent into the direction it would need to orbit the sun.
+   */
+  setSpeed(speed: number): void {
+    const target: WorldObject | null = this.menuTarget();
+    if (!target) {
+      return;
+    }
+    const direction: Vector2d =
+      target.vel.length() > 0
+        ? target.vel.norm()
+        : this.orbitDirectionAroundSun(target);
+    const clamped: number = clamp(speed, 0, MAX_SPEED);
+    this.menuSpeed.set(clamped);
+    target.vel = direction.mul(clamped);
+    this.updateSignals();
+  }
+
+  /** Direction an object at its place would orbit the sun in. */
+  private orbitDirectionAroundSun(wo: WorldObject): Vector2d {
+    if (wo === this.sun || wo.pos.dist(this.sun.pos) === 0) {
+      return vec2(1, 0);
+    }
+    return wo.pos.orthogonalTo(this.sun.pos);
   }
 
   stopSim(): void {

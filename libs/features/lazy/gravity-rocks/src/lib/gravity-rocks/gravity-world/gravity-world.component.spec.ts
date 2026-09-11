@@ -9,6 +9,7 @@ import { INITIAL_CONFIG } from './domain/gravity-world-config';
 // minimal mock service (if needed could be expanded) but we rely on real implementation for now
 import {
   GravityWorldComponent,
+  MAX_SPEED,
   MAX_ZOOM,
   MIN_ZOOM,
 } from './gravity-world.component';
@@ -486,6 +487,200 @@ describe('GravityWorldComponent', () => {
       component.mouseUp(eventOn(planet.id, 100, 100));
 
       expect(component.viewCenter()).toEqual(planet.pos);
+    });
+  });
+
+  describe('object menu', () => {
+    /** Event targeting the svg element of the given world object. */
+    function eventOn(id: string, type = 'contextmenu'): MouseEvent {
+      const event = new MouseEvent(type, {
+        clientX: 120,
+        clientY: 90,
+        cancelable: true,
+      });
+      Object.defineProperty(event, 'target', {
+        value: query(fixture, `[id="${id}"]`)!,
+      });
+      return event;
+    }
+
+    /** Touch event resting on the svg element of the given world object. */
+    function touchOn(id: string): TouchEvent {
+      const event = new TouchEvent('touchstart', { cancelable: true });
+      Object.defineProperty(event, 'touches', {
+        value: [{ clientX: 120, clientY: 90 }],
+      });
+      Object.defineProperty(event, 'target', {
+        value: query(fixture, `[id="${id}"]`)!,
+      });
+      return event;
+    }
+
+    beforeEach(() => jest.useFakeTimers());
+
+    afterEach(() => {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    });
+
+    it('should open the menu of a planet on right click', () => {
+      const planet = component.planets()[0];
+      const event = eventOn(planet.id);
+
+      component.contextMenu(event);
+
+      expect(component.menuTarget()).toBe(planet);
+      expect(component.menuPosition()).toEqual({ x: 120, y: 90 });
+      // the browser menu must not open on top of it
+      expect(event.defaultPrevented).toBe(true);
+    });
+
+    it('should leave the browser menu alone off the objects', () => {
+      // the empty svg background carries no id, so it is no world object
+      const event = new MouseEvent('contextmenu', { cancelable: true });
+      Object.defineProperty(event, 'target', {
+        value: query(fixture, 'svg')!,
+      });
+
+      component.contextMenu(event);
+
+      expect(component.menuTarget()).toBeNull();
+      expect(event.defaultPrevented).toBe(false);
+    });
+
+    it('should pause the simulation while the menu is open', () => {
+      component.toggleSim();
+      expect(component.running()).toBe(true);
+
+      component.contextMenu(eventOn(component.planets()[0].id));
+
+      expect(component.running()).toBe(false);
+    });
+
+    it('should open the menu after a long touch', () => {
+      const planet = component.planets()[0];
+
+      component.touchStart(touchOn(planet.id));
+      expect(component.menuTarget()).toBeNull();
+      jest.advanceTimersByTime(500);
+
+      expect(component.menuTarget()).toBe(planet);
+      expect(component.menuPosition()).toEqual({ x: 120, y: 90 });
+    });
+
+    it('should not open the menu when the touch moves or ends early', () => {
+      component.touchStart(touchOn(component.planets()[0].id));
+      component.cancelLongPress();
+      jest.advanceTimersByTime(500);
+
+      expect(component.menuTarget()).toBeNull();
+    });
+
+    it('should forget the target when the menu closes', () => {
+      component.contextMenu(eventOn(component.planets()[0].id));
+      component.menuClosed();
+      expect(component.menuTarget()).toBeNull();
+    });
+
+    it('should describe a satellite of the sun as a planet', () => {
+      component.contextMenu(eventOn(component.sun.id));
+      expect(component.satelliteName()).toBe('planet');
+
+      component.contextMenu(eventOn(component.planets()[0].id));
+      expect(component.satelliteName()).toBe('moon');
+    });
+
+    it('should add a satellite in orbit around the menu target', () => {
+      const parent = component.planets()[0];
+      component.contextMenu(eventOn(parent.id));
+      const planetsBefore = component.planets().length;
+
+      component.addSatellite();
+
+      expect(component.planets().length).toBe(planetsBefore + 1);
+      const satellite = component
+        .planets()
+        .find((p) => !p.trail.length && p !== parent && p.mass < parent.mass)!;
+      const distance = satellite.pos.dist(parent.pos);
+      // the discs must not overlap, and the moon must stay in reach of its
+      // planet: with these masses the hill radius is the tighter of the two
+      expect(distance).toBeGreaterThanOrEqual(parent.radius + satellite.radius);
+      expect(distance).toBeLessThanOrEqual(parent.radius * 4);
+      const hill =
+        parent.pos.dist(component.sun.pos) *
+        Math.cbrt(parent.mass / component.sun.mass);
+      expect(distance).toBeLessThanOrEqual(hill * 0.4 + 1e-9);
+      // the speed of a circular orbit, on top of the parent's own travel and
+      // slowed down for the pairs the satellite has with the sun and the two
+      // planets that were already there
+      const pairs = 3;
+      const orbitSpeed = Math.sqrt(
+        (component.settings().gravitationalConstant * parent.mass) /
+          (pairs * distance)
+      );
+      expect(satellite.vel.sub(parent.vel).length()).toBeCloseTo(orbitSpeed, 6);
+    });
+
+    it('should not add anything without a menu target', () => {
+      const planetsBefore = component.planets().length;
+      component.addSatellite();
+      expect(component.planets().length).toBe(planetsBefore);
+    });
+
+    it('should change the mass of a planet from the slider', () => {
+      const planet = component.planets()[0];
+      component.contextMenu(eventOn(planet.id));
+
+      component.setMassExponent(3);
+
+      expect(planet.mass).toBe(1000);
+      expect(component.menuMass()).toBe(1000);
+      // the slider shows the mass it is set to
+      expect(component.menuMassExponent()).toBeCloseTo(3, 6);
+    });
+
+    it('should change the mass of the sun through the settings', () => {
+      component.contextMenu(eventOn(component.sun.id));
+
+      component.setMassExponent(4);
+      fixture.detectChanges();
+
+      expect(component.settings().massOfSun).toBe(10000);
+      expect(component.sun.mass).toBe(10000);
+    });
+
+    it('should change the speed of a planet, keeping its direction', () => {
+      const planet = component.planets()[0];
+      const direction = planet.vel.norm();
+      component.contextMenu(eventOn(planet.id));
+
+      component.setSpeed(250);
+
+      expect(planet.vel.length()).toBeCloseTo(250, 6);
+      expect(planet.vel.norm().x).toBeCloseTo(direction.x, 6);
+      expect(planet.vel.norm().y).toBeCloseTo(direction.y, 6);
+    });
+
+    it('should send a resting object onto an orbit around the sun', () => {
+      const planet = component.planets()[0];
+      planet.vel = vec2(0, 0);
+      component.contextMenu(eventOn(planet.id));
+
+      component.setSpeed(120);
+
+      expect(planet.vel.length()).toBeCloseTo(120, 6);
+      // an orbit runs perpendicular to the line towards the sun
+      const towardsSun = planet.pos.sub(component.sun.pos).norm();
+      expect(towardsSun.scalar(planet.vel.norm())).toBeCloseTo(0, 6);
+    });
+
+    it('should not let the speed exceed what the simulation allows', () => {
+      const planet = component.planets()[0];
+      component.contextMenu(eventOn(planet.id));
+
+      component.setSpeed(99999);
+
+      expect(planet.vel.length()).toBeCloseTo(MAX_SPEED, 6);
     });
   });
 

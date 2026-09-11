@@ -56,8 +56,8 @@
         <mat-icon>build</mat-icon>
       </button>
       <span class="hint"
-        >Click a planet to follow it, drag it to manipulate. Scroll to zoom,
-        shift-drag to pan.</span
+        >Click a planet to follow it, drag it to manipulate, right-click it for
+        more. Scroll to zoom, shift-drag to pan.</span
       >
       <div class="zoom-controls">
         @if (followedId()) {
@@ -135,6 +135,11 @@
       (mouseup)="mouseUp($event)"
       (mouseleave)="mouseLeave($event)"
       (wheel)="wheel($event)"
+      (contextmenu)="contextMenu($event)"
+      (touchstart)="touchStart($event)"
+      (touchmove)="cancelLongPress()"
+      (touchend)="cancelLongPress()"
+      (touchcancel)="cancelLongPress()"
       [attr.viewBox]="viewBox()"
     >
       <defs>
@@ -204,5 +209,56 @@
         }
       </g>
     </svg>
+
+    <!-- anchors the object menu where the right click or long press happened -->
+    <div
+      class="menu-anchor"
+      [style.left.px]="menuPosition().x"
+      [style.top.px]="menuPosition().y"
+      [matMenuTriggerFor]="objectMenuPanel"
+    ></div>
+    <mat-menu #objectMenuPanel (closed)="menuClosed()">
+      <ng-template matMenuContent>
+        <button
+          mat-menu-item
+          type="button"
+          data-qa="cta-add-satellite"
+          (click)="addSatellite()"
+        >
+          <mat-icon>add_circle_outline</mat-icon>
+          <span>Add orbiting {{ satelliteName() }}</span>
+        </button>
+        <div class="object-menu-slider" (click)="$event.stopPropagation()">
+          <label for="menu-mass-slider">Mass: {{ menuMass() | number }}</label>
+          <mat-slider
+            [max]="maxMassExponent"
+            [min]="minMassExponent"
+            [step]="0.05"
+          >
+            <input
+              id="menu-mass-slider"
+              matSliderThumb
+              data-qa="menu-mass"
+              [value]="menuMassExponent()"
+              (valueChange)="setMassExponent($event)"
+            />
+          </mat-slider>
+        </div>
+        <div class="object-menu-slider" (click)="$event.stopPropagation()">
+          <label for="menu-speed-slider"
+            >Speed: {{ menuSpeed() | number }}</label
+          >
+          <mat-slider [max]="maxSpeed" [min]="0" [step]="10">
+            <input
+              id="menu-speed-slider"
+              matSliderThumb
+              data-qa="menu-speed"
+              [value]="menuSpeed()"
+              (valueChange)="setSpeed($event)"
+            />
+          </mat-slider>
+        </div>
+      </ng-template>
+    </mat-menu>
   </mat-card>
 </mat-drawer-container>
