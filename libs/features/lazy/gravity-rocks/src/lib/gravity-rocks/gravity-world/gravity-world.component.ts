@@ -284,7 +284,7 @@ export class GravityWorldComponent {
     this.panStart = null;
     this.pressed = null;
     this.mouseUp$.next($event);
-    if (pressed && this.isClick(pressed, $event)) {
+    if (pressed && this.isWithinClickTolerance(pressed, $event)) {
       this.centerOn(pressed.wo);
     }
   }
@@ -300,6 +300,11 @@ export class GravityWorldComponent {
     if (this.panStart) {
       this.pan($event);
       return;
+    }
+    if (this.pressed && !this.isWithinClickTolerance(this.pressed, $event)) {
+      // the gesture has become a drag, releasing it must not center anything,
+      // not even when the cursor comes back to where it started
+      this.pressed = null;
     }
     this.mouseMove$.next($event);
   }
@@ -388,8 +393,8 @@ export class GravityWorldComponent {
     this.viewCenter.set(this.clampToViewBounds(wo.pos));
   }
 
-  /** A press and release at (almost) the same spot counts as a click. */
-  private isClick(
+  /** Whether the cursor is still (almost) on the spot it was pressed down on. */
+  private isWithinClickTolerance(
     pressed: { x: number; y: number },
     $event: MouseEvent
   ): boolean {

@@ -271,6 +271,7 @@ describe('GravityWorldComponent', () => {
       return eventOnElement(query(fixture, 'svg')!, clientX, clientY);
     }
 
+    /** Mouse event at the given client position, targeting that element. */
     function eventOnElement(
       target: Element,
       clientX: number,
@@ -315,6 +316,18 @@ describe('GravityWorldComponent', () => {
       component.mouseUp(eventOn(component.sun.id, 100, 100));
 
       expect(component.viewCenter()).toEqual(component.sun.pos);
+    });
+
+    it('should not center when a drag returns to where it started', () => {
+      const planet = component.planets()[0];
+      const centerBefore = component.viewCenter();
+
+      component.mouseDown(eventOn(planet.id, 100, 100));
+      component.mouseMove(eventOn(planet.id, 260, 180));
+      component.mouseMove(eventOn(planet.id, 100, 100));
+      component.mouseUp(eventOn(planet.id, 100, 100));
+
+      expect(component.viewCenter()).toEqual(centerBefore);
     });
 
     it('should not center when the planet is dragged', () => {
