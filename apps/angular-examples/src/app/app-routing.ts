@@ -105,7 +105,7 @@ export const APP_ROUTES: MainNavRoutes = [
   {
     path: 'webGl',
     loadChildren: () => import('./feature/lazy/web-gl/web-gl.routes'),
-    data: { linkText: 'Mandelbrot plane, lights objects (three.js)' },
+    data: { linkText: 'Mandelbrot Deep Zoom Explorer (three.js)' },
   },
   {
     path: 'neuralNetwork',

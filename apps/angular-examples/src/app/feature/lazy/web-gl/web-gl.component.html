@@ -1,17 +1,189 @@
 <mat-card appearance="raised" wsSharedUiElevateCard>
   <mat-card-header>
-    <mat-card-title> Example for three.js. </mat-card-title>
+    <mat-card-title>Mandelbrot deep zoom explorer</mat-card-title>
     <mat-card-subtitle>
-      Just some objects, lights and a plane with a custom mandelbrot shader.
+      A three.js full screen shader that iterates the escape time fractal on the
+      GPU - with emulated 64 bit precision, distance estimation and a live
+      Mandelbrot to Julia morph.
     </mat-card-subtitle>
   </mat-card-header>
+
   <mat-card-content class="content">
-    <canvas
-      #webGlCanvas
-      (mouseup)="mouseup$.emit($event)"
-      (mousedown)="mousedown$.emit($event)"
-    >
-    </canvas>
+    <div #stage class="stage">
+      <canvas
+        #webGlCanvas
+        class="fractal-canvas"
+        [class.picking]="pickJuliaC()"
+      ></canvas>
+
+      <div class="readout">
+        <span class="badge">{{ status().magnification }}&times;</span>
+        <span class="badge coordinates">{{ status().coordinates }}</span>
+        <span class="badge">{{ status().iterations }} iter</span>
+        @if (status().highPrecision) {
+          <span
+            class="badge accent"
+            matTooltip="Orbits are iterated with a pair of 32 bit floats (~48 mantissa bits)"
+          >
+            float64 emulation
+          </span>
+        }
+        @if (fps() > 0) {
+          <span class="badge">{{ fps() }} fps</span>
+        }
+      </div>
+
+      <div class="hint">
+        drag to pan &middot; wheel or pinch to zoom &middot; double click to
+        dive
+      </div>
+
+      <div class="stage-actions">
+        <button mat-mini-fab matTooltip="Zoom in" (click)="zoomBy(0.5)">
+          <mat-icon>add</mat-icon>
+        </button>
+        <button mat-mini-fab matTooltip="Zoom out" (click)="zoomBy(2)">
+          <mat-icon>remove</mat-icon>
+        </button>
+        <button mat-mini-fab matTooltip="Reset view" (click)="resetView()">
+          <mat-icon>home</mat-icon>
+        </button>
+        <button mat-mini-fab matTooltip="Save as PNG" (click)="saveImage()">
+          <mat-icon>photo_camera</mat-icon>
+        </button>
+        <button
+          mat-mini-fab
+          matTooltip="Fullscreen"
+          (click)="toggleFullscreen()"
+        >
+          <mat-icon>fullscreen</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <mat-form-field appearance="outline" class="control">
+        <mat-label>Landmark</mat-label>
+        <mat-select
+          [value]="presetId()"
+          (selectionChange)="onPresetChange($event.value)"
+        >
+          @for (preset of presets; track preset.id) {
+            <mat-option [value]="preset.id">{{ preset.label }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>{{ presetHint() }}</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="control">
+        <mat-label>Palette</mat-label>
+        <mat-select
+          [value]="palette()"
+          (selectionChange)="palette.set($event.value)"
+        >
+          @for (name of palettes; track name; let index = $index) {
+            <mat-option [value]="index">{{ name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="control toggles">
+        <span class="control-label">Coloring</span>
+        <mat-button-toggle-group
+          hideSingleSelectionIndicator
+          [value]="colorMode()"
+          (change)="colorMode.set($event.value)"
+        >
+          @for (mode of colorModes; track mode) {
+            <mat-button-toggle [value]="mode">{{ mode }}</mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+      </div>
+
+      <div class="control toggles">
+        <span class="control-label">Anti aliasing</span>
+        <mat-button-toggle-group
+          hideSingleSelectionIndicator
+          [value]="samples()"
+          (change)="setSamples($event.value)"
+        >
+          <mat-button-toggle [value]="1">1&times;</mat-button-toggle>
+          <mat-button-toggle [value]="2">4&times;</mat-button-toggle>
+          <mat-button-toggle [value]="3">9&times;</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <div class="control slider">
+        <span class="control-label">
+          Julia morph
+          <em>{{ juliaLabel() }}</em>
+        </span>
+        <mat-slider [min]="0" [max]="1" [step]="0.005" discrete>
+          <input
+            matSliderThumb
+            [value]="morph()"
+            (valueChange)="morph.set($event)"
+          />
+        </mat-slider>
+      </div>
+
+      <div class="control slider">
+        <span class="control-label">
+          Color density
+          <em>{{ density().toFixed(2) }}</em>
+        </span>
+        <mat-slider [min]="0.2" [max]="4" [step]="0.05" discrete>
+          <input
+            matSliderThumb
+            [value]="density()"
+            (valueChange)="density.set($event)"
+          />
+        </mat-slider>
+      </div>
+
+      <div class="control slider">
+        <span class="control-label">
+          Iterations
+          <em>
+            {{ useAutoIterations() ? "auto" : "" }} {{ status().iterations }}
+          </em>
+        </span>
+        <mat-slider
+          [min]="minIterations"
+          [max]="maxIterations"
+          [step]="20"
+          [disabled]="useAutoIterations()"
+          discrete
+        >
+          <input
+            matSliderThumb
+            [value]="manualIterations()"
+            (valueChange)="setIterations($event)"
+          />
+        </mat-slider>
+      </div>
+
+      <div class="control switches">
+        <mat-slide-toggle
+          [checked]="useAutoIterations()"
+          (change)="toggleAutoIterations($event.checked)"
+        >
+          Auto detail
+        </mat-slide-toggle>
+        <mat-slide-toggle
+          [checked]="cycleColors()"
+          (change)="cycleColors.set($event.checked)"
+        >
+          Cycle colors
+        </mat-slide-toggle>
+        <mat-slide-toggle
+          [checked]="pickJuliaC()"
+          (change)="togglePickJuliaC($event.checked)"
+          matTooltip="Move the pointer over the canvas to choose the Julia constant"
+        >
+          Pick Julia c
+        </mat-slide-toggle>
+      </div>
+    </div>
   </mat-card-content>
-  <mat-card-footer></mat-card-footer>
 </mat-card>
