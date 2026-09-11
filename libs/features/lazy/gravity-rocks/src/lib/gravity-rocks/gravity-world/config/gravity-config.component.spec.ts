@@ -5,6 +5,7 @@ import { take } from 'rxjs';
 import { GravityWorldConfig } from '../domain/gravity-world-config';
 import { GravityConfigComponent } from './gravity-config.component';
 
+/** Element carrying the given `data-qa` attribute, or null. */
 function getByQa<T extends HTMLElement>(
   fixture: ComponentFixture<GravityConfigComponent>,
   qa: string

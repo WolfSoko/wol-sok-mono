@@ -12,6 +12,7 @@ import {
   MIN_ZOOM,
 } from './gravity-world.component';
 
+/** First element in the rendered component matching the css selector. */
 function query<T extends Element>(
   fixture: ComponentFixture<GravityWorldComponent>,
   sel: string
@@ -252,6 +253,7 @@ describe('GravityWorldComponent', () => {
   });
 
   describe('planet trails', () => {
+    /** Advances the simulation by the given number of frames. */
     function runFrames(frames: number): void {
       for (let frame = 0; frame < frames; frame++) {
         component.step(1 / 60);
@@ -323,6 +325,7 @@ describe('GravityWorldComponent', () => {
       );
     });
 
+    /** Number of points drawn by all given trail segments together. */
     function countPoints(segments: { path: string }[]): number {
       return segments.reduce(
         (sum, { path }) => sum + path.split(/[ML]/).length - 1,
@@ -332,6 +335,7 @@ describe('GravityWorldComponent', () => {
   });
 });
 
+/** Mouse event at the given client position, e.g. `{ shiftKey: true }` to pan. */
 function mouseEvent(
   clientX: number,
   clientY: number,
@@ -340,6 +344,7 @@ function mouseEvent(
   return new MouseEvent('mousedown', { clientX, clientY, ...init });
 }
 
+/** Wheel event at the given client position; a negative `deltaY` zooms in. */
 function wheelEvent(
   deltaY: number,
   clientX: number,

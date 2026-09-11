@@ -226,6 +226,10 @@ export class GravityWorldComponent {
       .find((wo) => wo.id === target.id);
   }
 
+  /**
+   * Starts panning, or grabs the world object under the cursor with a spring -
+   * creating a new planet first when the cursor is on empty space.
+   */
   mouseDown($event: MouseEvent): void {
     if (this.isPanGesture($event)) {
       this.startPan($event);
@@ -263,11 +267,13 @@ export class GravityWorldComponent {
     this.updateSignals();
   }
 
+  /** Ends the current pan or drag gesture. */
   mouseUp($event: MouseEvent): void {
     this.panStart = null;
     this.mouseUp$.next($event);
   }
 
+  /** Moves the view while panning, otherwise feeds the drag gesture. */
   mouseMove($event: MouseEvent): void {
     if (this.panStart) {
       this.pan($event);
@@ -330,6 +336,7 @@ export class GravityWorldComponent {
     );
   }
 
+  /** Remembers where the pan gesture started, in client and world coordinates. */
   private startPan($event: MouseEvent): void {
     $event.preventDefault();
     this.panStart = {
@@ -339,6 +346,7 @@ export class GravityWorldComponent {
     };
   }
 
+  /** Moves the view center by the distance the cursor travelled since `startPan`. */
   private pan($event: MouseEvent): void {
     const panStart = this.panStart;
     const rect: DOMRect | undefined = this.svgRect();
@@ -367,6 +375,7 @@ export class GravityWorldComponent {
     this.running.update((running) => !running);
   }
 
+  /** Advances the simulation once per animation frame while it is running. */
   private gameLoop(lastFrameTime?: number): void | null {
     requestAnimationFrame((time) => {
       if (!this.running()) {
@@ -388,6 +397,7 @@ export class GravityWorldComponent {
     this.updateSignals();
   }
 
+  /** Clears the world, resets the view and places sun and planets again. */
   reset(): void {
     this.stopSim();
     this.worldService.removeAll();
@@ -412,21 +422,25 @@ export class GravityWorldComponent {
     );
   }
 
+  /** The css box of the svg, or undefined before it is rendered. */
   private svgRect(): DOMRect | undefined {
     return this.svgWorld?.nativeElement?.getBoundingClientRect();
   }
 
+  /** Creates a planet of random mass at the given world position. */
   private createRandomPlanetAt(pos: Vector2d): Planet {
     const planet: Planet = new Planet(pos, undefined, Math.random() * 400 + 30);
     return planet;
   }
 
+  /** Takes the planet out of the world. */
   removePlanet(planet: Planet): void {
     this.worldService.removeWorldObject(planet);
     this.updateSignals();
   }
 }
 
+/** Restricts a value to the closed interval between `min` and `max`. */
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }

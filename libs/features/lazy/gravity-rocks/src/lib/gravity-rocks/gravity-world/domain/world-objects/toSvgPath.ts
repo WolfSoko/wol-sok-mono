@@ -74,12 +74,14 @@ export function trailToSvgSegments(
   return segments;
 }
 
+/** Joins the points into an svg polyline path, rounded to keep it short. */
 function toPolylinePath(points: readonly Vector2d[]): string {
   return points
     .map(({ x, y }, i) => `${i === 0 ? 'M' : 'L'}${round(x, 1)} ${round(y, 1)}`)
     .join(' ');
 }
 
+/** Rounds to the given number of decimal digits. */
 function round(value: number, digits: number): number {
   const factor: number = 10 ** digits;
   return Math.round(value * factor) / factor;

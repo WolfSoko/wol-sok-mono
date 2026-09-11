@@ -20,6 +20,7 @@ describe('toSvgPath', () => {
 });
 
 describe('trailToSvgSegments', () => {
+  /** Straight trail of evenly spaced points, oldest first. */
   function trailOf(pointCount: number): Vector2d[] {
     return Array.from({ length: pointCount }, (_, i) => vec2(i * 10, 0));
   }
