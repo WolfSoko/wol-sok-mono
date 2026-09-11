@@ -2,6 +2,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { qaSelector } from '@wolsok/test-helper';
+import { vec2 } from '@wolsok/utils-math';
 import { GravityConfigComponent } from './config/gravity-config.component';
 import { INITIAL_CONFIG } from './domain/gravity-world-config';
 
@@ -249,6 +250,115 @@ describe('GravityWorldComponent', () => {
       component.mouseMove(mouseEvent(-5000, -5000, { shiftKey: true }));
       expect(component.viewCenter().x).toBe(component.canvasSize().x);
       expect(component.viewCenter().y).toBe(component.canvasSize().y);
+    });
+  });
+
+  describe('centering on click', () => {
+    const rect = {
+      left: 0,
+      top: 0,
+      width: 500,
+      height: 300,
+    } as DOMRect;
+
+    /** Mouse event targeting the svg element of the given world object. */
+    function eventOn(id: string, clientX: number, clientY: number): MouseEvent {
+      return eventOnElement(query(fixture, `[id="${id}"]`)!, clientX, clientY);
+    }
+
+    /** Mouse event targeting the empty svg background, as a browser would. */
+    function eventOnBackground(clientX: number, clientY: number): MouseEvent {
+      return eventOnElement(query(fixture, 'svg')!, clientX, clientY);
+    }
+
+    function eventOnElement(
+      target: Element,
+      clientX: number,
+      clientY: number
+    ): MouseEvent {
+      const event = mouseEvent(clientX, clientY);
+      Object.defineProperty(event, 'target', { value: target });
+      return event;
+    }
+
+    beforeEach(() => {
+      jest
+        .spyOn(component.svgWorld.nativeElement, 'getBoundingClientRect')
+        .mockReturnValue(rect);
+    });
+
+    afterEach(() => jest.restoreAllMocks());
+
+    it('should center a planet that is clicked', () => {
+      const planet = component.planets()[0];
+      expect(planet.pos).not.toEqual(component.viewCenter());
+
+      component.mouseDown(eventOn(planet.id, 100, 100));
+      component.mouseUp(eventOn(planet.id, 100, 100));
+
+      expect(component.viewCenter()).toEqual(planet.pos);
+    });
+
+    it('should tolerate a tiny cursor movement while clicking', () => {
+      const planet = component.planets()[0];
+
+      component.mouseDown(eventOn(planet.id, 100, 100));
+      component.mouseMove(eventOn(planet.id, 102, 101));
+      component.mouseUp(eventOn(planet.id, 102, 101));
+
+      expect(component.viewCenter()).toEqual(planet.pos);
+    });
+
+    it('should center the sun as well', () => {
+      component.zoomIn();
+      component.mouseDown(eventOn(component.sun.id, 100, 100));
+      component.mouseUp(eventOn(component.sun.id, 100, 100));
+
+      expect(component.viewCenter()).toEqual(component.sun.pos);
+    });
+
+    it('should not center when the planet is dragged', () => {
+      const planet = component.planets()[0];
+      const centerBefore = component.viewCenter();
+
+      component.mouseDown(eventOn(planet.id, 100, 100));
+      component.mouseMove(eventOn(planet.id, 200, 150));
+      component.mouseUp(eventOn(planet.id, 200, 150));
+
+      expect(component.viewCenter()).toEqual(centerBefore);
+    });
+
+    it('should not center when a new planet is placed on empty space', () => {
+      const centerBefore = component.viewCenter();
+      const planetsBefore = component.planets().length;
+
+      component.mouseDown(eventOnBackground(100, 100));
+      component.mouseUp(eventOnBackground(100, 100));
+
+      expect(component.planets().length).toBe(planetsBefore + 1);
+      expect(component.viewCenter()).toEqual(centerBefore);
+    });
+
+    it('should not center when the cursor leaves the world', () => {
+      const planet = component.planets()[0];
+      const centerBefore = component.viewCenter();
+
+      component.mouseDown(eventOn(planet.id, 100, 100));
+      component.mouseLeave(eventOn(planet.id, 100, 100));
+
+      expect(component.viewCenter()).toEqual(centerBefore);
+    });
+
+    it('should center a planet that left the world bounds', () => {
+      const planet = component.planets()[0];
+      planet.pos = component.canvasSize().add(vec2(500, 400));
+      // refresh the planets signal through a public api
+      component.step(0);
+
+      component.mouseDown(eventOn(planet.id, 100, 100));
+      component.mouseUp(eventOn(planet.id, 100, 100));
+
+      expect(component.viewCenter()).toEqual(planet.pos);
     });
   });
 

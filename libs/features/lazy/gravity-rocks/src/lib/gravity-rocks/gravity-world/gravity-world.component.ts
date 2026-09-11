@@ -48,6 +48,8 @@ export const MAX_ZOOM = 20;
 const ZOOM_STEP = 1.3;
 const WHEEL_ZOOM_STEP = 1.15;
 const TRAIL_WIDTH_RATIO = 0.8;
+/** How far the cursor may travel between press and release to still be a click. */
+const CLICK_TOLERANCE_PX = 4;
 
 @Component({
   selector: 'feat-lazy-gravity-world',
@@ -110,6 +112,22 @@ export class GravityWorldComponent {
     this.canvasSize().div(this.zoom())
   );
 
+  /**
+   * Area the view may be centered on: the world, grown to cover every planet.
+   * Planets can be flung out of the world, and they should stay reachable.
+   */
+  private readonly viewBounds: Signal<{ min: Vector2d; max: Vector2d }> =
+    computed(() => {
+      const world: Vector2d = this.canvasSize();
+      let min: Vector2d = vec2(0, 0);
+      let max: Vector2d = world;
+      for (const { pos } of this.planets()) {
+        min = vec2(Math.min(min.x, pos.x), Math.min(min.y, pos.y));
+        max = vec2(Math.max(max.x, pos.x), Math.max(max.y, pos.y));
+      }
+      return { min, max };
+    });
+
   readonly viewBox: Signal<string> = computed(() => {
     const size: Vector2d = this.viewSize();
     const origin: Vector2d = this.viewCenter().sub(size.div(2));
@@ -146,6 +164,9 @@ export class GravityWorldComponent {
 
   private panStart: { x: number; y: number; center: Vector2d } | null = null;
 
+  /** World object pressed on, and where it was pressed, until the mouse is released. */
+  private pressed: { wo: WorldObject; x: number; y: number } | null = null;
+
   drag$: Observable<{ end: Vector2d }> = this.mouseDown$.asObservable().pipe(
     take(1),
     switchMap(() =>
@@ -158,14 +179,6 @@ export class GravityWorldComponent {
     )
   );
 
-  private noDrag$: Observable<MouseEvent> = this.mouseDown$.asObservable().pipe(
-    take(1),
-    switchMap(() =>
-      this.mouseUp$
-        .asObservable()
-        .pipe(takeUntil(this.mouseMove$.asObservable()))
-    )
-  );
   trackByPlanet: TrackByFunction<Planet> = (index, planet) => planet.pos;
 
   constructor() {
@@ -228,7 +241,8 @@ export class GravityWorldComponent {
 
   /**
    * Starts panning, or grabs the world object under the cursor with a spring -
-   * creating a new planet first when the cursor is on empty space.
+   * creating a new planet first when the cursor is on empty space. Releasing
+   * without dragging centers the object that was pressed on.
    */
   mouseDown($event: MouseEvent): void {
     if (this.isPanGesture($event)) {
@@ -236,19 +250,16 @@ export class GravityWorldComponent {
       return;
     }
     let wo = this.findWorldObject($event.target as SVGElement);
-    if (!wo) {
+    if (wo) {
+      this.pressed = { wo, x: $event.clientX, y: $event.clientY };
+    } else {
+      // a click on empty space places a planet, it does not move the view
       wo = this.createRandomPlanetAt(this.toWorldCoordinates($event));
       this.worldService.addWorldObject(wo);
     }
     const springForce = new SpringForce(wo);
     this.worldService.addForceObject(springForce);
     this.updateSignals();
-
-    /*this.noDrag$.subscribe({
-      next: (event: MouseEvent) => console.log('noDrag$ next', event),
-      error: (error) => console.error('error while no dragging', error),
-      complete: () => console.log('end noDrag$ click'),
-    });*/
 
     this.drag$.subscribe({
       next: ({ end }) => springForce.updateSpringEnd(end),
@@ -267,10 +278,21 @@ export class GravityWorldComponent {
     this.updateSignals();
   }
 
-  /** Ends the current pan or drag gesture. */
+  /** Ends the current pan or drag gesture, centering a clicked object. */
   mouseUp($event: MouseEvent): void {
+    const pressed = this.pressed;
     this.panStart = null;
+    this.pressed = null;
     this.mouseUp$.next($event);
+    if (pressed && this.isClick(pressed, $event)) {
+      this.centerOn(pressed.wo);
+    }
+  }
+
+  /** Ends the gesture without centering, the cursor left the world. */
+  mouseLeave($event: MouseEvent): void {
+    this.pressed = null;
+    this.mouseUp($event);
   }
 
   /** Moves the view while panning, otherwise feeds the drag gesture. */
@@ -319,7 +341,7 @@ export class GravityWorldComponent {
     }
     this.zoom.set(nextZoom);
     this.viewCenter.set(
-      this.clampToWorld(
+      this.clampToViewBounds(
         focus.add(
           this.viewCenter()
             .sub(focus)
@@ -358,13 +380,29 @@ export class GravityWorldComponent {
       (($event.clientX - panStart.x) / rect.width) * size.x,
       (($event.clientY - panStart.y) / rect.height) * size.y
     );
-    this.viewCenter.set(this.clampToWorld(panStart.center.sub(moved)));
+    this.viewCenter.set(this.clampToViewBounds(panStart.center.sub(moved)));
   }
 
-  /** Keeps the given view center within the bounds of the world. */
-  private clampToWorld({ x, y }: Vector2d): Vector2d {
-    const world: Vector2d = this.canvasSize();
-    return vec2(clamp(x, 0, world.x), clamp(y, 0, world.y));
+  /** Moves the view so the given object sits in the middle of it. */
+  private centerOn(wo: WorldObject): void {
+    this.viewCenter.set(this.clampToViewBounds(wo.pos));
+  }
+
+  /** A press and release at (almost) the same spot counts as a click. */
+  private isClick(
+    pressed: { x: number; y: number },
+    $event: MouseEvent
+  ): boolean {
+    return (
+      Math.abs($event.clientX - pressed.x) <= CLICK_TOLERANCE_PX &&
+      Math.abs($event.clientY - pressed.y) <= CLICK_TOLERANCE_PX
+    );
+  }
+
+  /** Keeps the given view center within the reachable area of the world. */
+  private clampToViewBounds({ x, y }: Vector2d): Vector2d {
+    const { min, max } = this.viewBounds();
+    return vec2(clamp(x, min.x, max.x), clamp(y, min.y, max.y));
   }
 
   stopSim(): void {

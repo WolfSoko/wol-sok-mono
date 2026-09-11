@@ -101,6 +101,8 @@
   cursor: grab;
 }
 
-.planet-trail {
+// decoration only: never swallow a click meant for a planet below it
+.planet-trail,
+.line-line {
   pointer-events: none;
 }
