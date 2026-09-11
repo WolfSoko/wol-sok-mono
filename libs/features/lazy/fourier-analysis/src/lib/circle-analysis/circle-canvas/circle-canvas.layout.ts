@@ -59,11 +59,7 @@ export function circleCanvasLayout(
   if (isStackedCircleCanvasLayout(width)) {
     const circleSize = Math.max(
       MIN_CIRCLE_SIZE,
-      Math.min(
-        stackedCircleSize(width),
-        height - MIN_STACKED_GRAPH_HEIGHT,
-        height
-      )
+      Math.min(stackedCircleSize(width), height - MIN_STACKED_GRAPH_HEIGHT)
     );
     return {
       stacked: true,

@@ -26,6 +26,12 @@ interface CenterData {
   imag: number;
 }
 
+/** A point of the frequency graph the pointer is currently over. */
+interface GraphPoint {
+  index: number;
+  frequency: number;
+}
+
 @Component({
   imports: [],
   selector: 'lazy-feat-fanal-circle-canvas',
@@ -43,6 +49,12 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
   wave = input.required<InputWave>();
 
   private sketch: P5 | null = null;
+  /**
+   * Offscreen buffer the wrapped wave circle is drawn into. Kept on the
+   * component (not inside `initSketch`) so re-initialising the sketch for a new
+   * wave does not orphan the previous buffer.
+   */
+  private fourierCircleImg: Graphics | null = null;
   private frequencyToTest = 20;
   private centersOfFrequencies: { [key: number]: CenterData } = {};
   private centers: number[] = [];
@@ -86,6 +98,9 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
 
   initSketch(sketch: P5) {
     this.sketch = sketch;
+    // A previous run (wave change) may have left a buffer behind.
+    this.fourierCircleImg?.remove();
+    this.fourierCircleImg = null;
 
     const padding = CIRCLE_CANVAS_PADDING;
     const minFrequencyToTest = 20;
@@ -94,7 +109,6 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
     const frequencySteps =
       (maxFrequencyToTest - minFrequencyToTest) * frequencyStepWidth;
     let calcNextGenerator: Generator<undefined> | null = null;
-    let fourierCircleImg: Graphics;
     const samplesToTake = 3000;
 
     let layout: CircleCanvasLayout = circleCanvasLayout(
@@ -124,7 +138,7 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
 
       if (
         previousCircleSize !== layout.circleSize &&
-        fourierCircleImg != null
+        this.fourierCircleImg != null
       ) {
         setFrequencyToTest.call(this, this.frequencyToTest);
       }
@@ -140,8 +154,8 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
       }
 
       function drawCircle(this: CircleCanvasComponent) {
-        if (fourierCircleImg != null) {
-          sketch.image(fourierCircleImg, layout.circleX, layout.circleY);
+        if (this.fourierCircleImg != null) {
+          sketch.image(this.fourierCircleImg, layout.circleX, layout.circleY);
         }
       }
 
@@ -300,19 +314,22 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
       x: number,
       y: number
     ) {
-      const frequency = frequencyAt.call(this, x, y);
-      if (frequency != null && this.finished) {
-        setFrequencyToTest.call(this, frequency);
+      const point = graphPointAt.call(this, x, y);
+      if (point != null && this.finished) {
+        setFrequencyToTest.call(this, point.frequency);
         sketch.redraw();
       }
     }
 
-    /** Frequency the given canvas position points at, or `null` if outside the graph. */
-    function frequencyAt(
+    /**
+     * Graph point the given canvas position points at, or `null` when the
+     * position is outside the frequency graph.
+     */
+    function graphPointAt(
       this: CircleCanvasComponent,
       x: number,
       y: number
-    ): number | null {
+    ): GraphPoint | null {
       if (
         x < layout.graphLeft ||
         x > layout.graphRight ||
@@ -327,35 +344,6 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
       if (index >= this.centers.length) {
         return null;
       }
-      return math.round(
-        sketch.map(
-          index,
-          0,
-          frequencySteps,
-          minFrequencyToTest,
-          maxFrequencyToTest
-        ),
-        3
-      ) as number;
-    }
-
-    function drawMouseOverInfo(this: CircleCanvasComponent) {
-      const mX = sketch.mouseX;
-      const mY = sketch.mouseY;
-      if (
-        mX < layout.graphLeft ||
-        mX > layout.graphRight ||
-        mY < layout.graphTop ||
-        mY > layout.graphBottom
-      ) {
-        return;
-      }
-      const index = Math.floor(
-        sketch.map(mX, layout.graphLeft, layout.graphRight, 0, frequencySteps)
-      );
-      if (index >= this.centers.length) {
-        return;
-      }
       const frequency = math.round(
         sketch.map(
           index,
@@ -366,6 +354,16 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
         ),
         3
       ) as number;
+      return { index, frequency };
+    }
+
+    function drawMouseOverInfo(this: CircleCanvasComponent) {
+      const mX = sketch.mouseX;
+      const point = graphPointAt.call(this, mX, sketch.mouseY);
+      if (point == null) {
+        return;
+      }
+      const { index, frequency } = point;
       const y = sketch.map(
         this.centers[index],
         this.centerMin,
@@ -394,13 +392,14 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
       const circleSize = layout.circleSize;
       const radius = (circleSize - padding * 2) / 2;
       if (
-        fourierCircleImg == null ||
-        fourierCircleImg.width !== circleSize ||
-        fourierCircleImg.height !== circleSize
+        this.fourierCircleImg == null ||
+        this.fourierCircleImg.width !== circleSize ||
+        this.fourierCircleImg.height !== circleSize
       ) {
-        fourierCircleImg?.remove();
-        fourierCircleImg = sketch.createGraphics(circleSize, circleSize);
+        this.fourierCircleImg?.remove();
+        this.fourierCircleImg = sketch.createGraphics(circleSize, circleSize);
       }
+      const fourierCircleImg = this.fourierCircleImg;
       const drawSamplesLength = this.wave().points.length;
       const stepSize = Math.max(
         1,
@@ -476,6 +475,8 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.fourierCircleImg?.remove();
+    this.fourierCircleImg = null;
     if (this.sketch != null) {
       this.sketch.remove();
     }
