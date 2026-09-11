@@ -46,6 +46,19 @@ export class GravityWorldService {
     }
   }
 
+  /**
+   * Appends the current position of every moving object to its trail.
+   * Pass a `maxTrailPoints` of zero or less to switch trails off and clear them.
+   */
+  recordTrails(maxTrailPoints: number): void {
+    for (const wo of this.worldObjects) {
+      if (wo.isStatic) {
+        continue;
+      }
+      wo.recordTrail(maxTrailPoints);
+    }
+  }
+
   getWorldObjects(): Array<WorldObject> {
     return Array.from(this.worldObjects);
   }

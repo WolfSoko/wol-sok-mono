@@ -124,6 +124,8 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
   1. `npx nx format:write`
   2. `npx nx affected -t lint`
 - PR scope: include summary, UI screenshots if visual, linked issue; no unrelated refactors
+- **Always request a CodeRabbit review** after opening a PR: this repo gets no automatic reviews
+  (fewer than 10 stars), so comment `@coderabbitai review` on the PR and work through the findings
 
 ## Security
 
