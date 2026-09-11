@@ -1,11 +1,136 @@
 .content {
   display: flex;
-  justify-content: center;
-  align-items: stretch;
-  height: calc(100vh - 250px);
+  flex-direction: column;
+  gap: 1rem;
 }
 
-canvas {
+.stage {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: clamp(320px, calc(100vh - 420px), 720px);
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+
+  &:fullscreen {
+    height: 100%;
+    border-radius: 0;
+  }
+}
+
+.fractal-canvas {
   flex: 1 1 100%;
-  max-width: 1024px;
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &.picking {
+    cursor: crosshair;
+  }
+}
+
+.readout,
+.hint,
+.stage-actions {
+  position: absolute;
+  pointer-events: none;
+}
+
+.readout {
+  top: 0.5rem;
+  left: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.badge {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 55%);
+  color: #e8f1ff;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  backdrop-filter: blur(2px);
+
+  &.accent {
+    background: rgb(64 132 255 / 65%);
+    pointer-events: auto;
+  }
+}
+
+.coordinates {
+  max-width: min(100%, 34rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hint {
+  bottom: 0.5rem;
+  left: 0.5rem;
+  color: rgb(232 241 255 / 65%);
+  font-size: 0.72rem;
+}
+
+.stage-actions {
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  pointer-events: auto;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.75rem 1.25rem;
+  align-items: end;
+}
+
+.control {
+  min-width: 0;
+}
+
+.control-label {
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+  font-size: 0.78rem;
+  opacity: 0.8;
+
+  em {
+    font-family: 'Roboto Mono', monospace;
+    font-style: normal;
+    opacity: 0.7;
+  }
+}
+
+.slider mat-slider {
+  width: 100%;
+}
+
+.toggles,
+.slider,
+.switches {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.switches {
+  gap: 0.5rem;
+}
+
+.toggles mat-button-toggle {
+  text-transform: capitalize;
 }
