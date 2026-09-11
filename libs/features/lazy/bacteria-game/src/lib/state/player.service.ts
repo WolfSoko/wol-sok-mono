@@ -25,6 +25,7 @@ export class PlayerService {
   }
 
   @transaction()
+  /** Starts a fresh match: new players in the store, new colonies in the simulation. */
   init(
     playersData: { x: number; y: number; color: PlayerColorArray }[],
     radius = gameBalance.startBacteriaRadius
@@ -53,14 +54,17 @@ export class PlayerService {
     this.syncColonyStats();
   }
 
+  /** Marks a player as the active one in the store. */
   setActive(playerId: ID) {
     this.playerStore.setActive(playerId);
   }
 
+  /** Adds a player to the store. */
   add(player: Player) {
     this.playerStore.add(player);
   }
 
+  /** The nutrient pellets currently on the map - used for rendering only. */
   getNutrients(): Nutrient[] {
     return this.simulation.getNutrients();
   }
@@ -93,6 +97,7 @@ export class PlayerService {
   }
 
   @transaction()
+  /** Moves both crosshairs according to the keys that are currently held. */
   private updatePlayerPos(keysPressed: string[], deltaTimeInSec: number) {
     let xDir0 = 0;
     let yDir0 = 0;
@@ -135,6 +140,7 @@ export class PlayerService {
     this.movePlayer(1, xDir1, yDir1, deltaTimeInSec);
   }
 
+  /** Moves one crosshair, kept inside the arena. */
   private movePlayer(
     id: ID,
     xDir: number,

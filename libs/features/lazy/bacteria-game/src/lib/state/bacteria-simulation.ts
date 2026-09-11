@@ -111,10 +111,12 @@ export class BacteriaSimulation {
     this.random = random;
   }
 
+  /** The nutrient pellets currently on the map, for rendering. */
   public getNutrients(): Nutrient[] {
     return this.nutrients;
   }
 
+  /** The live colonies, including their mutable bacteria, for rendering. */
   public getColonies(): readonly Colony[] {
     return this.colonies;
   }
@@ -135,6 +137,10 @@ export class BacteriaSimulation {
     this.reset();
   }
 
+  /**
+   * Reallocates the grids for a new arena size and rebuilds the wall mask.
+   * A no-op when the size is unchanged.
+   */
   public resize(width: number, height: number): void {
     if (this.width === width && this.height === height) {
       return;
@@ -219,6 +225,7 @@ export class BacteriaSimulation {
     }
   }
 
+  /** The colonies in random order, so no colony is always handled first. */
   private shuffled(): Colony[] {
     const result = [...this.colonies];
     for (let i = result.length - 1; i > 0; i--) {
@@ -228,6 +235,11 @@ export class BacteriaSimulation {
     return result;
   }
 
+  /**
+   * Rebuilds the occupancy grid, the energy snapshot and the coarse density
+   * field from the current bacteria. Combat reads the snapshot rather than the
+   * live values, which keeps a frame independent of the iteration order.
+   */
   private buildGrid(): void {
     this.owner.set(this.baseOwner);
     this.energy.fill(0);
@@ -312,6 +324,10 @@ export class BacteriaSimulation {
     }
   }
 
+  /**
+   * Lets every bacterium standing on a pellet drain it, and respawns pellets
+   * that have been emptied.
+   */
   private updateNutrients(deltaTimeSec: number): void {
     this.nutrientBonus.fill(0);
     const { nutrientRadius, nutrientDrainPerSec, nutrientRespawnDelaySec } =
@@ -322,7 +338,14 @@ export class BacteriaSimulation {
       const nutrient = this.nutrients[n];
       if (nutrient.amount <= 0) {
         this.respawnTimers[n] -= deltaTimeSec;
-        if (this.respawnTimers[n] <= 0) {
+        // Respawning moves both halves of the pair, so wait until the partner
+        // is empty too - otherwise a pellet someone is still eating is yanked
+        // away and refilled.
+        const partner = this.nutrients[n ^ 1];
+        if (
+          this.respawnTimers[n] <= 0 &&
+          (partner == null || partner.amount <= 0)
+        ) {
           this.spawnNutrientPair(n - (n % 2));
         }
         continue;
@@ -355,6 +378,10 @@ export class BacteriaSimulation {
     }
   }
 
+  /**
+   * Applies nutrient gain, combat drain and regeneration to every bacterium and
+   * collects the ones that ran out of energy.
+   */
   private runCombat(deltaTimeSec: number): Capture[] {
     const {
       defenceFactor,
@@ -451,6 +478,10 @@ export class BacteriaSimulation {
     return captures;
   }
 
+  /**
+   * Hands every killed bacterium to its killer, or digests it entirely, and
+   * leaves energy behind on the cell either way.
+   */
   private applyCaptures(captures: Capture[]): void {
     this.feed.fill(0);
     if (captures.length === 0) {
@@ -512,6 +543,10 @@ export class BacteriaSimulation {
     }
   }
 
+  /**
+   * Lets well fed bacteria clone themselves into a free neighbouring cell until
+   * the arena reaches its carrying capacity.
+   */
   private divide(colonies: Colony[], deltaTimeSec: number): void {
     const {
       divideEnergyThreshold,
@@ -563,6 +598,7 @@ export class BacteriaSimulation {
     }
   }
 
+  /** Index of a random free neighbouring cell, or -1 when there is none. */
   private findFreeNeighbour(x: number, y: number): number {
     const start = Math.floor(this.random() * NEIGHBOURS.length);
     for (let k = 0; k < NEIGHBOURS.length; k++) {
@@ -580,6 +616,10 @@ export class BacteriaSimulation {
     return -1;
   }
 
+  /**
+   * Moves every bacterium towards its player's crosshair, biased towards nearby
+   * enemies so the colonies actively seek each other out.
+   */
   private move(
     colonies: Colony[],
     targets: (Player | null)[],
@@ -639,6 +679,13 @@ export class BacteriaSimulation {
     }
   }
 
+  /**
+   * Moves a bacterium as far along `dir` as it can get.
+   *
+   * The ray is walked outwards cell by cell and stops at the first blocked one.
+   * Jumping straight to the furthest cell would let a bacterium tunnel through a
+   * wall whenever a long frame makes `maxStep` exceed the wall thickness.
+   */
   private tryMove(
     bacterium: Bacteria,
     colonyIndex: number,
@@ -646,17 +693,22 @@ export class BacteriaSimulation {
     dirY: number,
     maxStep: number
   ): boolean {
-    for (let step = maxStep; step >= 1; step--) {
-      if (
-        this.occupy(
-          bacterium,
-          colonyIndex,
-          Math.round(dirX * step),
-          Math.round(dirY * step)
-        )
-      ) {
-        return true;
+    let reachedX = 0;
+    let reachedY = 0;
+    for (let step = 1; step <= maxStep; step++) {
+      const dx = Math.round(dirX * step);
+      const dy = Math.round(dirY * step);
+      if (dx === reachedX && dy === reachedY) {
+        continue;
       }
+      if (!this.isFree(bacterium.x + dx, bacterium.y + dy)) {
+        break;
+      }
+      reachedX = dx;
+      reachedY = dy;
+    }
+    if (this.occupy(bacterium, colonyIndex, reachedX, reachedY)) {
+      return true;
     }
     // Blocked head on - slide along the wall instead of piling up in front of it.
     const slideFirst = this.random() < 0.5;
@@ -676,6 +728,15 @@ export class BacteriaSimulation {
     return this.occupy(bacterium, colonyIndex, dx, dy);
   }
 
+  /** True when the cell is inside the arena and neither wall nor bacterium. */
+  private isFree(x: number, y: number): boolean {
+    if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
+      return false;
+    }
+    return this.owner[y * this.width + x] === EMPTY_CELL;
+  }
+
+  /** Moves a bacterium by the given offset if the target cell is free. */
   private occupy(
     bacterium: Bacteria,
     colonyIndex: number,
@@ -725,6 +786,7 @@ export class BacteriaSimulation {
     }
   }
 
+  /** A random spot that is inside the arena and not inside a wall. */
   private findNutrientSpot(): { x: number; y: number } {
     const margin = this.balance.nutrientRadius + 2;
     const spanX = Math.max(1, this.width - 2 * margin);
@@ -741,6 +803,7 @@ export class BacteriaSimulation {
   }
 }
 
+/** Index of the enemy colony with the most energy around a cell, else -1. */
 function strongestEnemy(enemyStrength: Float32Array, ownIndex: number): number {
   let winner = -1;
   let best = 0;

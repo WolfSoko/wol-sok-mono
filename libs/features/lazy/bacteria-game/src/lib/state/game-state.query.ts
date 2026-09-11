@@ -36,6 +36,13 @@ export class GameStateQuery extends Query<GameStateState> {
     return this.select((store) => store.winner);
   }
 
+  /** Emits true once a match is over, a draw included. */
+  selectMatchEnded(): Observable<boolean> {
+    return this.select((store) => store.matchEnded).pipe(
+      distinctUntilChanged()
+    );
+  }
+
   selectKeysPressed(): Observable<{
     keysPressed: string[];
     deltaTimeSec: number;

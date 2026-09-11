@@ -21,13 +21,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { WsThanosDirective } from '@wolsok/thanos';
 import { ShowFpsComponent } from '@wolsok/ui-kit';
 import { Observable } from 'rxjs';
-import {
-  distinctUntilChanged,
-  filter,
-  map,
-  switchMap,
-  take,
-} from 'rxjs/operators';
+import { filter, map, switchMap, take } from 'rxjs/operators';
 import { Nutrient } from './state/bacteria-simulation';
 import { createWalls, gameBalance } from './state/game-balance';
 import { GameStateQuery } from './state/game-state.query';
@@ -53,6 +47,10 @@ export interface ColonyStats {
 
 const ENERGY_RANGE = gameBalance.superChargedMaxEnergy - gameBalance.maxEnergy;
 
+/**
+ * Stamps one colony into the canvas pixel buffer. Weak bacteria fade out and
+ * supercharged ones burn white, so the state of a fight is visible at a glance.
+ */
 export function createImageDataFromBacterias(
   data8: Uint8ClampedArray,
   width: number,
@@ -149,11 +147,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         this.draw(Math.min(dTSec, 0.1));
       });
 
+    // Triggered by the match ending rather than by a winner: a draw ends the
+    // match with no winner at all and still has to show the dialog.
     this.query
-      .selectWinnerId()
+      .selectMatchEnded()
       .pipe(
-        filter((value) => value != null),
-        distinctUntilChanged(),
+        filter((ended) => ended),
         switchMap(() => this.matDialog.open(WinnerComponent).afterClosed()),
         untilDestroyed(this)
       )
@@ -171,6 +170,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.cx.fillRect(0, 0, this.width, this.height);
   }
 
+  /** The canvas element and its 2d context, throwing when there is none. */
   private getRenderingContext() {
     const canvasEl: HTMLCanvasElement = this.canvasRef.nativeElement;
 
@@ -181,6 +181,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     return { canvasEl, context };
   }
 
+  /** Clears the arena and starts a fresh match. */
   startGame() {
     this.cx.fillStyle = 'rgb(0,0,0)';
     this.cx.fillRect(0, 0, this.width, this.height);
@@ -193,6 +194,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     return this.thanos.vaporize(false).pipe(take(1));
   }
 
+  /** Pauses, vaporizes the canvas and returns to the start screen. */
   resetGame() {
     this.query
       .selectCurrentGameState(GameState.PAUSED)
@@ -209,6 +211,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.gameStateService.pause();
   }
 
+  /** Advances the simulation by one frame and renders the arena. */
   private draw(deltaTimeInSec: number) {
     if (this.cx == null) {
       return;
@@ -245,6 +248,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  /** Draws the pellets as small green crosses that dim as they are eaten. */
   private drawNutrients(nutrients: Nutrient[]): void {
     for (const nutrient of nutrients) {
       if (nutrient.amount <= 0) {
@@ -259,6 +263,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  /** Draws each player's crosshair in their own colour. */
   private drawPlayerCursors(): void {
     for (const player of this.playerQuery.getAll()) {
       this.cx.fillStyle = `rgba(${player.color.join(',')})`;
@@ -282,6 +287,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 }
 
+/** Turns the stored players into the numbers the scoreboard renders. */
 function toColonyStats(players: Player[]): ColonyStats[] {
   const total = players.reduce((sum, player) => sum + player.bacteriaCount, 0);
   return players.map((player) => ({

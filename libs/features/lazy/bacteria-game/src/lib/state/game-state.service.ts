@@ -16,6 +16,11 @@ import {
 import { GameStateQuery } from './game-state.query';
 import { GameState, GameStateStore } from './game.states';
 import { Player } from './player.model';
+
+/** How a match ended. `winner` is null when both colonies died together. */
+interface MatchOutcome {
+  winner: Player | null;
+}
 import { PlayerQuery } from './player.query';
 import { PlayerService } from './player.service';
 
@@ -40,16 +45,35 @@ export class GameStateService {
     );
   }
 
-  private static determineWinner(players: Player[]): Player | null {
+  /**
+   * Decides whether the match is over.
+   *
+   * Returns `null` while it is still running, otherwise the outcome. Both
+   * colonies can wipe each other out in the same step, which is a draw and
+   * still has to end the match - hence the outcome wrapper instead of a bare
+   * winner, which cannot tell "draw" from "not finished".
+   */
+  private static determineOutcome(players: Player[]): MatchOutcome | null {
     if (players.length < 2) {
       return null;
     }
     const survivors = players.filter((player) => player.bacteriaCount > 0);
-    return survivors.length === 1 ? survivors[0] : null;
+    if (survivors.length === 1) {
+      return { winner: survivors[0] };
+    }
+    // Only a match that saw losses can be a draw - at kick off nobody has
+    // bacteria yet either, and that is not an outcome.
+    const fought = players.some((player) => player.lost > 0);
+    return survivors.length === 0 && fought ? { winner: null } : null;
   }
 
   init(width: number, height: number) {
-    this.gameStateStore.update({ width, height, winner: null });
+    this.gameStateStore.update({
+      width,
+      height,
+      winner: null,
+      matchEnded: false,
+    });
     // subscribe update time passed when game running
     const running$ = this.gameStateQuery.selectCurrentGameState(
       GameState.RUNNING
@@ -94,13 +118,16 @@ export class GameStateService {
                 )
               )
           ),
-          map((players) => GameStateService.determineWinner(players)),
-          filter((winner) => winner != null)
+          map((players) => GameStateService.determineOutcome(players)),
+          filter((outcome) => outcome != null)
         )
-        .subscribe((winner) =>
+        .subscribe((outcome) =>
           applyTransaction(() => {
             this.gameStateStore.update({ currentState: GameState.END });
-            this.gameStateStore.update({ winner: winner });
+            this.gameStateStore.update({
+              winner: outcome.winner,
+              matchEnded: true,
+            });
           })
         )
     );
@@ -122,6 +149,8 @@ export class GameStateService {
     this.initPlayers();
     this.gameStateStore.update(() => ({
       currentState: GameState.RUNNING,
+      winner: null,
+      matchEnded: false,
     }));
   }
 
@@ -135,6 +164,8 @@ export class GameStateService {
       currentState: GameState.START,
       timePassed: 0,
       timeDelta: 1,
+      winner: null,
+      matchEnded: false,
     }));
   }
 

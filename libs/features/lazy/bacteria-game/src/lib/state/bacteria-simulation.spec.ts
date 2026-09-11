@@ -2,8 +2,10 @@ import { BacteriaSimulation, Colony } from './bacteria-simulation';
 import { createWalls, GameBalance, gameBalance } from './game-balance';
 import { Bacteria, createPlayer, Player } from './player.model';
 
-const WIDTH = 60;
-const HEIGHT = 40;
+// The production canvas size. Smaller arenas push the walls outside the grid,
+// which would make every wall test pass without a single wall cell existing.
+const WIDTH = 320;
+const HEIGHT = 140;
 
 function balance(overrides: Partial<GameBalance> = {}): GameBalance {
   return { ...gameBalance, nutrientCount: 0, ...overrides };
@@ -259,6 +261,21 @@ describe('BacteriaSimulation', () => {
       expect(isInWall).toBe(false);
     });
 
+    it('does not tunnel through a wall on a long frame', () => {
+      const wall = createWalls(WIDTH, HEIGHT)[0];
+      const runner = bacterium(wall.x - 2, wall.y + 1);
+      const { simulation, players } = setup([[runner]], {
+        balance: { divideChancePerSec: 0 },
+        targets: [{ x: WIDTH - 1, y: wall.y + 1 }],
+      });
+
+      // A long frame (tab switch, load spike) is clamped to 0.1s, which is
+      // 15 cells of travel - almost twice the wall thickness.
+      simulation.step(players, 0.1);
+
+      expect(runner.x).toBeLessThan(wall.x);
+    });
+
     it('keeps every bacterium inside the arena', () => {
       const { simulation, colonies, players } = setup([[bacterium(1, 1)]], {
         targets: [{ x: -50, y: -50 }],
@@ -340,9 +357,33 @@ describe('BacteriaSimulation', () => {
       }
     });
 
+    it('keeps a half eaten nutrient in place while its partner respawns', () => {
+      const simulation = new BacteriaSimulation(
+        balance({ nutrientCount: 2, divideChancePerSec: 0 })
+      );
+      simulation.resize(WIDTH, HEIGHT);
+      simulation.init([
+        { playerId: 0, color: [255, 0, 0, 255], x: 0, y: 0, radius: 0 },
+      ]);
+      const nutrients = simulation.getNutrients();
+      nutrients[0].amount = 0;
+      nutrients[1].amount = gameBalance.nutrientEnergy / 2;
+      const partner = { ...nutrients[1] };
+
+      for (let frame = 0; frame < 40; frame++) {
+        simulation.step(
+          [createPlayer({ id: 0, x: 0, y: 0, color: [255, 0, 0, 255] })],
+          gameBalance.nutrientRespawnDelaySec / 4
+        );
+      }
+
+      expect(simulation.getNutrients()[1]).toEqual(partner);
+      expect(simulation.getNutrients()[0].amount).toBe(0);
+    });
+
     it('never spawns a nutrient inside a wall', () => {
       const walls = createWalls(WIDTH, HEIGHT);
-      const simulation = new BacteriaSimulation(balance({ nutrientCount: 24 }));
+      const simulation = new BacteriaSimulation(balance({ nutrientCount: 8 }));
       simulation.resize(WIDTH, HEIGHT);
 
       for (const nutrient of simulation.getNutrients()) {
