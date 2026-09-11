@@ -276,6 +276,7 @@ export class GravityWorldComponent {
     this.mouseMove$.next($event);
   }
 
+  /** Zooms towards the cursor, so the world point under it stays in place. */
   wheel($event: WheelEvent): void {
     if ($event.deltaY === 0) {
       return;
@@ -287,14 +288,17 @@ export class GravityWorldComponent {
     this.zoomBy(factor, this.toWorldCoordinates($event));
   }
 
+  /** Zooms one step in around the center of the current view. */
   zoomIn(): void {
     this.zoomBy(ZOOM_STEP);
   }
 
+  /** Zooms one step out around the center of the current view. */
   zoomOut(): void {
     this.zoomBy(1 / ZOOM_STEP);
   }
 
+  /** Shows the whole world again, centered and unzoomed. */
   resetView(): void {
     this.zoom.set(1);
     this.viewCenter.set(this.canvasSize().div(2));
@@ -319,6 +323,7 @@ export class GravityWorldComponent {
     );
   }
 
+  /** Panning is the middle mouse button, or a drag with a modifier held. */
   private isPanGesture($event: MouseEvent): boolean {
     return (
       $event.button === 1 || $event.shiftKey || $event.ctrlKey || $event.metaKey
@@ -348,6 +353,7 @@ export class GravityWorldComponent {
     this.viewCenter.set(this.clampToWorld(panStart.center.sub(moved)));
   }
 
+  /** Keeps the given view center within the bounds of the world. */
   private clampToWorld({ x, y }: Vector2d): Vector2d {
     const world: Vector2d = this.canvasSize();
     return vec2(clamp(x, 0, world.x), clamp(y, 0, world.y));

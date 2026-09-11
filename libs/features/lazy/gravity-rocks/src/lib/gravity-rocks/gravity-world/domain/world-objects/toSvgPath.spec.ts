@@ -70,6 +70,40 @@ describe('trailToSvgSegments', () => {
     ]);
   });
 
+  it('should never return more segments than requested', () => {
+    for (const pointCount of [2, 3, 12, 41, 42, 60, 100, 150]) {
+      for (const segmentCount of [1, 4, 16]) {
+        const segments: TrailSegment[] = trailToSvgSegments(
+          'p',
+          trailOf(pointCount),
+          'red',
+          10,
+          segmentCount
+        );
+
+        expect(segments.length).toBeLessThanOrEqual(segmentCount);
+        // the whole trail is still covered, up to its newest point
+        expect(segments[segments.length - 1].path).toContain(
+          `L${(pointCount - 1) * 10} 0`
+        );
+      }
+    }
+  });
+
+  it('should keep the requested segment count for an uneven trail', () => {
+    // 42 points do not divide evenly into 4 segments
+    const segments: TrailSegment[] = trailToSvgSegments(
+      'p',
+      trailOf(42),
+      'red',
+      10,
+      4
+    );
+
+    expect(segments).toHaveLength(4);
+    expect(segments[segments.length - 1].path).toContain('L410 0');
+  });
+
   it('should let the segments overlap so there are no gaps', () => {
     const segments: TrailSegment[] = trailToSvgSegments(
       'p',

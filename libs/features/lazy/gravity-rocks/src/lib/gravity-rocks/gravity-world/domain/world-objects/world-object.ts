@@ -78,6 +78,7 @@ export class WorldObject {
     }
   }
 
+  /** Forgets all recorded trail positions. */
   clearTrail(): void {
     this.trailPoints = [];
   }

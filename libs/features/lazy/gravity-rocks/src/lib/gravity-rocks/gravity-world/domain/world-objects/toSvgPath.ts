@@ -27,8 +27,9 @@ export function svgPathForVelocity(
 }
 
 /**
- * Turns a recorded trail (oldest point first) into a few overlapping segments.
- * The newer a segment, the wider and more opaque it is drawn.
+ * Turns a recorded trail (oldest point first) into at most `segmentCount`
+ * overlapping segments. The newer a segment, the wider and more opaque it is
+ * drawn.
  */
 export function trailToSvgSegments(
   id: string,
@@ -40,9 +41,11 @@ export function trailToSvgSegments(
   if (trail.length < 2 || maxWidth <= 0) {
     return [];
   }
+  // segments share a point with their neighbour, so they cover one point more
+  // than the intervals they span
   const pointsPerSegment: number = Math.max(
     2,
-    Math.ceil(trail.length / Math.max(1, segmentCount))
+    Math.ceil((trail.length - 1) / Math.max(1, segmentCount)) + 1
   );
   const segments: TrailSegment[] = [];
   const lastIndex: number = trail.length - 1;
