@@ -337,6 +337,47 @@ describe('GravityWorldComponent', () => {
       expect(component.worldService.getForces()).toEqual([]);
     });
 
+    it('should capture both fingers of a pinch', () => {
+      const svg = component.svgWorld.nativeElement;
+      svg.setPointerCapture = jest.fn();
+
+      component.pointerDown(touch(1, 200, 150));
+      component.pointerDown(touch(2, 300, 150));
+
+      // a finger that leaves the svg keeps feeding the gesture
+      expect(svg.setPointerCapture).toHaveBeenCalledWith(1);
+      expect(svg.setPointerCapture).toHaveBeenCalledWith(2);
+    });
+
+    it('should ignore a third finger', () => {
+      component.pointerDown(touch(1, 200, 150));
+      component.pointerDown(touch(2, 300, 150));
+      const zoomOfTwoFingers = component.zoom();
+
+      component.pointerDown(touch(3, 100, 400));
+      component.pointerMove(touch(3, 50, 500));
+
+      // the pinch stays with the two fingers that started it
+      expect(component.zoom()).toBe(zoomOfTwoFingers);
+
+      // and a third finger lifting does not end their gesture either
+      component.pointerUp(touch(3, 50, 500));
+      component.pointerMove(touch(1, 150, 150));
+      component.pointerMove(touch(2, 350, 150));
+      expect(component.zoom()).toBeGreaterThan(zoomOfTwoFingers);
+    });
+
+    it('should release only a capture it holds', () => {
+      const svg = component.svgWorld.nativeElement;
+      svg.hasPointerCapture = jest.fn().mockReturnValue(false);
+      svg.releasePointerCapture = jest.fn();
+
+      component.pointerDown(touch(1, 200, 150));
+      component.pointerUp(touch(1, 200, 150));
+
+      expect(svg.releasePointerCapture).not.toHaveBeenCalled();
+    });
+
     /** Finger `id` on the empty background at the given client position. */
     function touch(id: number, clientX: number, clientY: number): PointerEvent {
       const event = pointerEvent(clientX, clientY, {

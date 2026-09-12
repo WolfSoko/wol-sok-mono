@@ -69,14 +69,17 @@ interface ClientPoint {
   clientY: number;
 }
 
+/** Copy of a position, so a moving pointer does not change what was stored. */
 function clientPoint({ clientX, clientY }: ClientPoint): ClientPoint {
   return { clientX, clientY };
 }
 
+/** How far two pointers are apart, in client pixels. */
 function distanceBetween(a: ClientPoint, b: ClientPoint): number {
   return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
 }
 
+/** The point exactly between two pointers, which a pinch is anchored on. */
 function midpointOf(a: ClientPoint, b: ClientPoint): ClientPoint {
   return {
     clientX: (a.clientX + b.clientX) / 2,
@@ -356,18 +359,20 @@ export class GravityWorldComponent {
       // the pointerup, so a gesture started here would never be unwound
       return;
     }
+    if (this.activePointers.size >= 2) {
+      // two fingers already own the gesture, a third would only confuse it
+      return;
+    }
     this.activePointers.set($event.pointerId, clientPoint($event));
+    // keep receiving moves once the gesture wanders off the svg - the second
+    // finger needs that just as much as the first
+    this.svgWorld?.nativeElement?.setPointerCapture?.($event.pointerId);
     if (this.activePointers.size === 2) {
       // the first finger was only ever the start of a two finger gesture
       this.cancelDrag();
       this.startPinch();
       return;
     }
-    if (this.activePointers.size > 2) {
-      return;
-    }
-    // keep receiving moves once the gesture wanders off the svg
-    this.svgWorld?.nativeElement?.setPointerCapture?.($event.pointerId);
     if (this.isPanGesture($event)) {
       this.startPan($event);
       return;
@@ -434,7 +439,10 @@ export class GravityWorldComponent {
     $event: PointerEvent
   ): { wo: WorldObject; x: number; y: number } | null {
     this.activePointers.delete($event.pointerId);
-    this.svgWorld?.nativeElement?.releasePointerCapture?.($event.pointerId);
+    const svg: SVGSVGElement | undefined = this.svgWorld?.nativeElement;
+    if (svg?.hasPointerCapture?.($event.pointerId)) {
+      svg.releasePointerCapture($event.pointerId);
+    }
     this.cancelLongPress();
     if (this.pinchStart) {
       // the finger left over must not carry on as a drag of its own
