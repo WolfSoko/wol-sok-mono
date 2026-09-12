@@ -53,7 +53,8 @@
   max-width: 100%;
   gap: 1rem;
   align-items: center;
-  font-size: clamp(0.3rem, 2vw, 1.2rem);
+  // 2vw alone leaves 8px of unreadable text on a phone
+  font-size: clamp(0.75rem, 2vw, 1.2rem);
   .config-button {
     scale: 0.7;
     animation: wiggle 0.2s linear 1s 30;
@@ -91,6 +92,24 @@
   }
 }
 
+// on a phone the row has no width to give away: the hint takes a line of its
+// own instead of shrinking to an ellipsis, and the controls keep their place
+@media (max-width: 599px) {
+  .content-title {
+    gap: 0.25rem;
+
+    .hint {
+      flex: 1 1 100%;
+      order: 1;
+      white-space: normal;
+      text-overflow: clip;
+    }
+    .start-button {
+      margin-right: 0;
+    }
+  }
+}
+
 .config-visible .config-button {
   transition: rotate 0.5s ease-in-out;
   rotate: 180deg;
@@ -112,6 +131,9 @@
   width: 100%;
   aspect-ratio: 5 / 3;
   background-color: black;
+  // every gesture on the world is ours: without this the browser scrolls the
+  // page instead of dragging, and the pointermove events stop coming
+  touch-action: none;
 }
 
 .world-object {
