@@ -56,8 +56,9 @@
         <mat-icon>build</mat-icon>
       </button>
       <span class="hint"
-        >Click a planet to follow it, drag it to manipulate, right-click it for
-        more. Scroll to zoom, shift-drag to pan.</span
+        >Tap a planet to follow it, drag it to fling it, long-press or
+        right-click it for more. Pinch or scroll to zoom, drag with two fingers
+        or shift to pan.</span
       >
       <div class="zoom-controls">
         @if (followedId()) {
@@ -128,16 +129,12 @@
     <svg
       #svgWorld
       class="world-svg"
-      (mousedown)="mouseDown($event)"
-      (mousemove)="mouseMove($event)"
-      (mouseup)="mouseUp($event)"
-      (mouseleave)="mouseLeave($event)"
+      (pointerdown)="pointerDown($event)"
+      (pointermove)="pointerMove($event)"
+      (pointerup)="pointerUp($event)"
+      (pointercancel)="pointerCancel($event)"
       (wheel)="wheel($event)"
       (contextmenu)="contextMenu($event)"
-      (touchstart)="touchStart($event)"
-      (touchmove)="cancelLongPress()"
-      (touchend)="cancelLongPress()"
-      (touchcancel)="cancelLongPress()"
       [attr.viewBox]="viewBox()"
     >
       <defs>

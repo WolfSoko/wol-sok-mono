@@ -63,6 +63,30 @@ const CLICK_TOLERANCE_PX = 4;
 const LONG_PRESS_MS = 450;
 const RIGHT_BUTTON = 2;
 
+/** Anything that carries a position in client (viewport) coordinates. */
+interface ClientPoint {
+  clientX: number;
+  clientY: number;
+}
+
+/** Copy of a position, so a moving pointer does not change what was stored. */
+function clientPoint({ clientX, clientY }: ClientPoint): ClientPoint {
+  return { clientX, clientY };
+}
+
+/** How far two pointers are apart, in client pixels. */
+function distanceBetween(a: ClientPoint, b: ClientPoint): number {
+  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+}
+
+/** The point exactly between two pointers, which a pinch is anchored on. */
+function midpointOf(a: ClientPoint, b: ClientPoint): ClientPoint {
+  return {
+    clientX: (a.clientX + b.clientX) / 2,
+    clientY: (a.clientY + b.clientY) / 2,
+  };
+}
+
 export const MIN_MASS_EXPONENT = 1;
 export const MAX_MASS_EXPONENT = 5;
 export const MAX_SPEED = MAX_VELOCITY;
@@ -188,11 +212,31 @@ export class GravityWorldComponent {
     );
   });
 
-  private mouseDown$: Subject<MouseEvent> = new Subject();
-  private mouseMove$: Subject<MouseEvent> = new Subject();
-  private mouseUp$: Subject<MouseEvent> = new Subject();
+  private pointerDown$: Subject<PointerEvent> = new Subject();
+  private pointerMove$: Subject<PointerEvent> = new Subject();
+  /** Emits whenever the running gesture ends, however it ends. */
+  private gestureEnd$: Subject<void> = new Subject();
 
   private panStart: { x: number; y: number; center: Vector2d } | null = null;
+
+  /** Pointers currently pressed on the world, by pointer id. */
+  private readonly activePointers = new Map<number, ClientPoint>();
+
+  /** The pointer driving the current drag, and the planet it created. */
+  private dragPointerId: number | null = null;
+  private createdByDrag: Planet | null = null;
+
+  /** What the drag holds, where it started, and where it has been taken. */
+  private dragObject: WorldObject | null = null;
+  private dragOrigin: ClientPoint | null = null;
+  private dragEnd: Vector2d | null = null;
+
+  /** What the view looked like when the two finger gesture started. */
+  private pinchStart: {
+    distance: number;
+    focus: Vector2d;
+    zoom: number;
+  } | null = null;
 
   /** World object whose menu is open, and where the menu is anchored. */
   readonly menuTarget: WritableSignal<WorldObject | null> = signal(null);
@@ -230,14 +274,14 @@ export class GravityWorldComponent {
 
   private longPressTimer: ReturnType<typeof setTimeout> | null = null;
 
-  drag$: Observable<{ end: Vector2d }> = this.mouseDown$.asObservable().pipe(
+  drag$: Observable<{ end: Vector2d }> = this.pointerDown$.asObservable().pipe(
     take(1),
     switchMap(() =>
-      this.mouseMove$.asObservable().pipe(
-        map((mm: MouseEvent) => ({
-          end: this.toWorldCoordinates(mm),
+      this.pointerMove$.asObservable().pipe(
+        map((pm: PointerEvent) => ({
+          end: this.toWorldCoordinates(pm),
         })),
-        takeUntil(this.mouseUp$.asObservable())
+        takeUntil(this.gestureEnd$.asObservable())
       )
     )
   );
@@ -304,14 +348,29 @@ export class GravityWorldComponent {
   }
 
   /**
-   * Starts panning, or grabs the world object under the cursor with a spring -
-   * creating a new planet first when the cursor is on empty space. Releasing
-   * without dragging centers the object that was pressed on.
+   * Starts panning, or grabs the world object under the pointer with a spring -
+   * creating a new planet first when the pointer is on empty space. Releasing
+   * without dragging centers the object that was pressed on. A second finger
+   * turns the gesture into pinch zoom and pan instead.
    */
-  mouseDown($event: MouseEvent): void {
+  pointerDown($event: PointerEvent): void {
     if ($event.button === RIGHT_BUTTON) {
       // the object menu owns the right button; its overlay backdrop swallows
-      // the mouseup, so a gesture started here would never be unwound
+      // the pointerup, so a gesture started here would never be unwound
+      return;
+    }
+    if (this.activePointers.size >= 2) {
+      // two fingers already own the gesture, a third would only confuse it
+      return;
+    }
+    this.activePointers.set($event.pointerId, clientPoint($event));
+    // keep receiving moves once the gesture wanders off the svg - the second
+    // finger needs that just as much as the first
+    this.svgWorld?.nativeElement?.setPointerCapture?.($event.pointerId);
+    if (this.activePointers.size === 2) {
+      // the first finger was only ever the start of a two finger gesture
+      this.cancelDrag();
+      this.startPinch();
       return;
     }
     if (this.isPanGesture($event)) {
@@ -321,11 +380,23 @@ export class GravityWorldComponent {
     let wo = this.findWorldObject($event.target as SVGElement);
     if (wo) {
       this.pressed = { wo, x: $event.clientX, y: $event.clientY };
+      if ($event.pointerType !== 'mouse') {
+        // touch has no right button, so resting on an object opens the menu
+        this.startLongPress(wo, $event);
+      }
     } else {
       // a click on empty space places a planet, it does not move the view
-      wo = this.createRandomPlanetAt(this.toWorldCoordinates($event));
-      this.worldService.addWorldObject(wo);
+      const created: Planet = this.createRandomPlanetAt(
+        this.toWorldCoordinates($event)
+      );
+      this.worldService.addWorldObject(created);
+      this.createdByDrag = created;
+      wo = created;
     }
+    this.dragPointerId = $event.pointerId;
+    this.dragObject = wo;
+    this.dragOrigin = clientPoint($event);
+    this.dragEnd = null;
     const springForce = new SpringForce(wo);
     this.worldService.addForceObject(springForce);
     this.updateSignals();
@@ -339,7 +410,7 @@ export class GravityWorldComponent {
       },
       complete: () => this.removeForce(springForce),
     });
-    this.mouseDown$.next($event);
+    this.pointerDown$.next($event);
   }
 
   private removeForce(springForce: SpringForce): void {
@@ -347,35 +418,127 @@ export class GravityWorldComponent {
     this.updateSignals();
   }
 
-  /** Ends the current pan or drag gesture, following a clicked object. */
-  mouseUp($event: MouseEvent): void {
-    const pressed = this.pressed;
-    this.panStart = null;
-    this.pressed = null;
-    this.mouseUp$.next($event);
+  /** Ends the current pan or drag gesture, following a tapped object. */
+  pointerUp($event: PointerEvent): void {
+    const pressed = this.endGesture($event);
     if (pressed && this.isWithinClickTolerance(pressed, $event)) {
       this.toggleFollow(pressed.wo);
     }
   }
 
-  /** Ends the gesture without following, the cursor left the world. */
-  mouseLeave($event: MouseEvent): void {
-    this.pressed = null;
-    this.mouseUp($event);
+  /** Ends the gesture without following, the system took the pointer away. */
+  pointerCancel($event: PointerEvent): void {
+    this.endGesture($event);
   }
 
-  /** Moves the view while panning, otherwise feeds the drag gesture. */
-  mouseMove($event: MouseEvent): void {
+  /**
+   * Unwinds everything this pointer started and reports the object it was
+   * pressed on, as long as the gesture stayed within the click tolerance.
+   */
+  private endGesture(
+    $event: PointerEvent
+  ): { wo: WorldObject; x: number; y: number } | null {
+    this.activePointers.delete($event.pointerId);
+    const svg: SVGSVGElement | undefined = this.svgWorld?.nativeElement;
+    if (svg?.hasPointerCapture?.($event.pointerId)) {
+      svg.releasePointerCapture($event.pointerId);
+    }
+    this.cancelLongPress();
+    if (this.pinchStart) {
+      // the finger left over must not carry on as a drag of its own
+      if (this.activePointers.size < 2) {
+        this.pinchStart = null;
+      }
+      return null;
+    }
+    const pressed = this.pressed;
+    this.panStart = null;
+    this.pressed = null;
+    this.dragPointerId = null;
+    this.createdByDrag = null;
+    this.gestureEnd$.next();
+    this.throwDragged();
+    return pressed;
+  }
+
+  /**
+   * Hands the dragged object the speed of the gesture that let go of it.
+   * A running simulation gets that from the spring, whose acceleration works
+   * out to the distance it is stretched by - mass cancels out of `-mass *
+   * distance`. A paused world never ticks, so the same stretch is turned into
+   * a velocity here instead, once, when the gesture ends.
+   */
+  private throwDragged(): void {
+    const wo: WorldObject | null = this.dragObject;
+    const end: Vector2d | null = this.dragEnd;
+    this.dragObject = null;
+    this.dragOrigin = null;
+    this.dragEnd = null;
+    if (!wo || !end || wo.isStatic || this.running()) {
+      return;
+    }
+    const thrown: Vector2d = end.sub(wo.pos);
+    const speed: number = Math.min(thrown.length(), MAX_VELOCITY);
+    if (speed <= 0) {
+      return;
+    }
+    wo.vel = thrown.norm().mul(speed);
+    this.updateSignals();
+  }
+
+  /** Drops the running drag, taking back the planet it has just created. */
+  private cancelDrag(): void {
+    this.cancelLongPress();
+    const created = this.createdByDrag;
+    this.panStart = null;
+    this.pressed = null;
+    this.dragPointerId = null;
+    this.createdByDrag = null;
+    // an abandoned gesture is not a throw
+    this.dragObject = null;
+    this.dragOrigin = null;
+    this.dragEnd = null;
+    this.gestureEnd$.next();
+    if (created) {
+      this.removePlanet(created);
+    }
+  }
+
+  /** Zooms and pans with two fingers, moves the view while panning, and
+   * otherwise feeds the drag gesture. */
+  pointerMove($event: PointerEvent): void {
+    const active = this.activePointers.get($event.pointerId);
+    if (active) {
+      this.activePointers.set($event.pointerId, clientPoint($event));
+    }
+    if (this.pinchStart) {
+      this.pinch();
+      return;
+    }
     if (this.panStart) {
       this.pan($event);
       return;
     }
     if (this.pressed && !this.isWithinClickTolerance(this.pressed, $event)) {
       // the gesture has become a drag, releasing it must not center anything,
-      // not even when the cursor comes back to where it started
+      // not even when the pointer comes back to where it started
       this.pressed = null;
+      this.cancelLongPress();
     }
-    this.mouseMove$.next($event);
+    if (this.dragPointerId === $event.pointerId) {
+      const origin: ClientPoint | null = this.dragOrigin;
+      if (
+        origin &&
+        !this.isWithinClickTolerance(
+          { x: origin.clientX, y: origin.clientY },
+          $event
+        )
+      ) {
+        // a gesture this long is a drag, and a drag can throw
+        this.dragEnd = this.toWorldCoordinates($event);
+      }
+      this.pointerMove$.next($event);
+    }
   }
 
   /** Zooms towards the cursor, so the world point under it stays in place. */
@@ -431,14 +594,14 @@ export class GravityWorldComponent {
   }
 
   /** Panning is the middle mouse button, or a drag with a modifier held. */
-  private isPanGesture($event: MouseEvent): boolean {
+  private isPanGesture($event: PointerEvent): boolean {
     return (
       $event.button === 1 || $event.shiftKey || $event.ctrlKey || $event.metaKey
     );
   }
 
   /** Remembers where the pan gesture started, in client and world coordinates. */
-  private startPan($event: MouseEvent): void {
+  private startPan($event: PointerEvent): void {
     $event.preventDefault();
     // panning is manual control, it wins over following
     this.stopFollowing();
@@ -449,8 +612,8 @@ export class GravityWorldComponent {
     };
   }
 
-  /** Moves the view center by the distance the cursor travelled since `startPan`. */
-  private pan($event: MouseEvent): void {
+  /** Moves the view center by the distance the pointer travelled since `startPan`. */
+  private pan($event: PointerEvent): void {
     const panStart = this.panStart;
     const rect: DOMRect | undefined = this.svgRect();
     if (!panStart || !rect?.width || !rect.height) {
@@ -462,6 +625,54 @@ export class GravityWorldComponent {
       (($event.clientY - panStart.y) / rect.height) * size.y
     );
     this.viewCenter.set(this.clampToViewBounds(panStart.center.sub(moved)));
+  }
+
+  /** Remembers the spread of the two fingers and the world point between them. */
+  private startPinch(): void {
+    const [first, second] = [...this.activePointers.values()];
+    if (!first || !second) {
+      return;
+    }
+    // pinching is manual control, it wins over following
+    this.stopFollowing();
+    this.pinchStart = {
+      // a pinch that starts with the fingers on one spot must not divide by 0
+      distance: Math.max(distanceBetween(first, second), 1),
+      focus: this.toWorldCoordinates(midpointOf(first, second)),
+      zoom: this.zoom(),
+    };
+  }
+
+  /**
+   * Zooms by how far the fingers have spread and pans by where they moved,
+   * so the world point that started between them stays between them.
+   */
+  private pinch(): void {
+    const pinchStart = this.pinchStart;
+    const [first, second] = [...this.activePointers.values()];
+    if (!pinchStart || !first || !second) {
+      return;
+    }
+    const spread: number = distanceBetween(first, second) / pinchStart.distance;
+    this.zoom.set(clamp(pinchStart.zoom * spread, MIN_ZOOM, MAX_ZOOM));
+    this.viewCenter.set(
+      this.clampToViewBounds(
+        this.centerKeeping(pinchStart.focus, midpointOf(first, second))
+      )
+    );
+  }
+
+  /** View center that puts `focus` (world coordinates) under `client`. */
+  private centerKeeping(focus: Vector2d, client: ClientPoint): Vector2d {
+    const rect: DOMRect | undefined = this.svgRect();
+    if (!rect?.width || !rect.height) {
+      return this.viewCenter();
+    }
+    const size: Vector2d = this.viewSize();
+    return vec2(
+      focus.x - ((client.clientX - rect.left) / rect.width - 0.5) * size.x,
+      focus.y - ((client.clientY - rect.top) / rect.height - 0.5) * size.y
+    );
   }
 
   /**
@@ -516,25 +727,20 @@ export class GravityWorldComponent {
     this.openMenuFor(wo, $event.clientX, $event.clientY);
   }
 
-  /** A touch resting on an object opens its menu, like a right click. */
-  touchStart($event: TouchEvent): void {
-    const touch: Touch | undefined = $event.touches[0];
-    const wo: WorldObject | undefined = this.findWorldObject(
-      $event.target as SVGElement
-    );
-    if (!touch || !wo) {
-      return;
-    }
-    const { clientX, clientY } = touch;
+  /** A finger resting on an object opens its menu, like a right click. */
+  private startLongPress(wo: WorldObject, $event: PointerEvent): void {
+    const { clientX, clientY } = $event;
     // a second finger must not orphan the timer of the first
     this.cancelLongPress();
-    this.longPressTimer = setTimeout(
-      () => this.openMenuFor(wo, clientX, clientY),
-      LONG_PRESS_MS
-    );
+    this.longPressTimer = setTimeout(() => {
+      // the finger is still down, so let go of the object before the menu
+      // takes over - otherwise it would be flung when the finger lifts
+      this.cancelDrag();
+      this.openMenuFor(wo, clientX, clientY);
+    }, LONG_PRESS_MS);
   }
 
-  /** A moving or ending touch is a drag or a tap, not a long press. */
+  /** A moving or ending pointer is a drag or a tap, not a long press. */
   cancelLongPress(): void {
     if (this.longPressTimer !== null) {
       clearTimeout(this.longPressTimer);
@@ -693,10 +899,10 @@ export class GravityWorldComponent {
   }
 
   /**
-   * Converts the position of a mouse event into world (svg viewBox) coordinates.
-   * The viewBox keeps the aspect ratio of the css box, so the mapping is linear.
+   * Converts a client position into world (svg viewBox) coordinates. The
+   * viewBox keeps the aspect ratio of the css box, so the mapping is linear.
    */
-  private toWorldCoordinates($event: MouseEvent): Vector2d {
+  private toWorldCoordinates($event: ClientPoint): Vector2d {
     const rect: DOMRect | undefined = this.svgRect();
     if (!rect || !rect.width || !rect.height) {
       return this.viewCenter();

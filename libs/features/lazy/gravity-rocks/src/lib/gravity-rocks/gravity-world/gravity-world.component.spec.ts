@@ -5,6 +5,7 @@ import { qaSelector } from '@wolsok/test-helper';
 import { vec2 } from '@wolsok/utils-math';
 import { GravityConfigComponent } from './config/gravity-config.component';
 import { INITIAL_CONFIG } from './domain/gravity-world-config';
+import { Planet } from './domain/world-objects/planet';
 
 // minimal mock service (if needed could be expanded) but we rely on real implementation for now
 import {
@@ -259,24 +260,135 @@ describe('GravityWorldComponent', () => {
       const planetsBefore = component.planets().length;
       const centerBefore = component.viewCenter();
 
-      component.mouseDown(mouseEvent(250, 150, { shiftKey: true }));
-      component.mouseMove(mouseEvent(200, 150, { shiftKey: true }));
+      component.pointerDown(pointerEvent(250, 150, { shiftKey: true }));
+      component.pointerMove(pointerEvent(200, 150, { shiftKey: true }));
 
       expect(component.planets().length).toBe(planetsBefore);
       expect(component.viewCenter().x).toBeGreaterThan(centerBefore.x);
 
-      component.mouseUp(mouseEvent(200, 150));
+      component.pointerUp(pointerEvent(200, 150));
       const centerAfterUp = component.viewCenter();
-      component.mouseMove(mouseEvent(100, 150));
+      component.pointerMove(pointerEvent(100, 150));
       expect(component.viewCenter()).toEqual(centerAfterUp);
     });
 
     it('should keep the view center inside the world while panning', () => {
-      component.mouseDown(mouseEvent(250, 150, { shiftKey: true }));
-      component.mouseMove(mouseEvent(-5000, -5000, { shiftKey: true }));
+      component.pointerDown(pointerEvent(250, 150, { shiftKey: true }));
+      component.pointerMove(pointerEvent(-5000, -5000, { shiftKey: true }));
       expect(component.viewCenter().x).toBe(component.canvasSize().x);
       expect(component.viewCenter().y).toBe(component.canvasSize().y);
     });
+
+    it('should zoom out when two fingers pinch together', () => {
+      component.pointerDown(touch(1, 150, 150));
+      component.pointerDown(touch(2, 350, 150));
+      component.pointerMove(touch(1, 230, 150));
+      component.pointerMove(touch(2, 270, 150));
+
+      // the fingers ended up five times closer together
+      expect(component.zoom()).toBeCloseTo(0.2, 5);
+    });
+
+    it('should zoom in when two fingers spread apart', () => {
+      component.pointerDown(touch(1, 240, 150));
+      component.pointerDown(touch(2, 260, 150));
+      component.pointerMove(touch(1, 150, 150));
+      component.pointerMove(touch(2, 350, 150));
+
+      expect(component.zoom()).toBeCloseTo(10, 5);
+    });
+
+    it('should pan when two fingers move together', () => {
+      component.zoomIn();
+      const centerBefore = component.viewCenter();
+
+      component.pointerDown(touch(1, 200, 150));
+      component.pointerDown(touch(2, 300, 150));
+      component.pointerMove(touch(1, 150, 150));
+      component.pointerMove(touch(2, 250, 150));
+
+      // the fingers kept their distance, so only the view moved
+      expect(component.zoom()).toBeCloseTo(1.3, 5);
+      expect(component.viewCenter().x).toBeGreaterThan(centerBefore.x);
+      expect(component.viewCenter().y).toBe(centerBefore.y);
+    });
+
+    it('should take back the planet the first finger of a pinch created', () => {
+      const planetsBefore = component.planets().length;
+
+      component.pointerDown(touch(1, 200, 150));
+      expect(component.planets().length).toBe(planetsBefore + 1);
+
+      component.pointerDown(touch(2, 300, 150));
+
+      expect(component.planets().length).toBe(planetsBefore);
+      expect(component.worldService.getForces()).toEqual([]);
+    });
+
+    it('should not resume dragging when one finger of a pinch lifts', () => {
+      component.pointerDown(touch(1, 200, 150));
+      component.pointerDown(touch(2, 300, 150));
+      component.pointerUp(touch(2, 300, 150));
+      const zoomAfterPinch = component.zoom();
+
+      component.pointerMove(touch(1, 100, 150));
+
+      expect(component.zoom()).toBe(zoomAfterPinch);
+      expect(component.worldService.getForces()).toEqual([]);
+    });
+
+    it('should capture both fingers of a pinch', () => {
+      const svg = component.svgWorld.nativeElement;
+      svg.setPointerCapture = jest.fn();
+
+      component.pointerDown(touch(1, 200, 150));
+      component.pointerDown(touch(2, 300, 150));
+
+      // a finger that leaves the svg keeps feeding the gesture
+      expect(svg.setPointerCapture).toHaveBeenCalledWith(1);
+      expect(svg.setPointerCapture).toHaveBeenCalledWith(2);
+    });
+
+    it('should ignore a third finger', () => {
+      component.pointerDown(touch(1, 200, 150));
+      component.pointerDown(touch(2, 300, 150));
+      const zoomOfTwoFingers = component.zoom();
+
+      component.pointerDown(touch(3, 100, 400));
+      component.pointerMove(touch(3, 50, 500));
+
+      // the pinch stays with the two fingers that started it
+      expect(component.zoom()).toBe(zoomOfTwoFingers);
+
+      // and a third finger lifting does not end their gesture either
+      component.pointerUp(touch(3, 50, 500));
+      component.pointerMove(touch(1, 150, 150));
+      component.pointerMove(touch(2, 350, 150));
+      expect(component.zoom()).toBeGreaterThan(zoomOfTwoFingers);
+    });
+
+    it('should release only a capture it holds', () => {
+      const svg = component.svgWorld.nativeElement;
+      svg.hasPointerCapture = jest.fn().mockReturnValue(false);
+      svg.releasePointerCapture = jest.fn();
+
+      component.pointerDown(touch(1, 200, 150));
+      component.pointerUp(touch(1, 200, 150));
+
+      expect(svg.releasePointerCapture).not.toHaveBeenCalled();
+    });
+
+    /** Finger `id` on the empty background at the given client position. */
+    function touch(id: number, clientX: number, clientY: number): PointerEvent {
+      const event = pointerEvent(clientX, clientY, {
+        pointerId: id,
+        pointerType: 'touch',
+      });
+      Object.defineProperty(event, 'target', {
+        value: query(fixture, 'svg')!,
+      });
+      return event;
+    }
   });
 
   describe('following on click', () => {
@@ -288,22 +400,37 @@ describe('GravityWorldComponent', () => {
     } as DOMRect;
 
     /** Mouse event targeting the svg element of the given world object. */
-    function eventOn(id: string, clientX: number, clientY: number): MouseEvent {
-      return eventOnElement(query(fixture, `[id="${id}"]`)!, clientX, clientY);
+    function eventOn(
+      id: string,
+      clientX: number,
+      clientY: number,
+      init: MouseEventInit & { pointerId?: number; pointerType?: string } = {}
+    ): PointerEvent {
+      return eventOnElement(
+        query(fixture, `[id="${id}"]`)!,
+        clientX,
+        clientY,
+        init
+      );
     }
 
-    /** Mouse event targeting the empty svg background, as a browser would. */
-    function eventOnBackground(clientX: number, clientY: number): MouseEvent {
-      return eventOnElement(query(fixture, 'svg')!, clientX, clientY);
+    /** Pointer event targeting the empty svg background, as a browser would. */
+    function eventOnBackground(
+      clientX: number,
+      clientY: number,
+      init: MouseEventInit & { pointerId?: number; pointerType?: string } = {}
+    ): PointerEvent {
+      return eventOnElement(query(fixture, 'svg')!, clientX, clientY, init);
     }
 
-    /** Mouse event at the given client position, targeting that element. */
+    /** Pointer event at the given client position, targeting that element. */
     function eventOnElement(
       target: Element,
       clientX: number,
-      clientY: number
-    ): MouseEvent {
-      const event = mouseEvent(clientX, clientY);
+      clientY: number,
+      init: MouseEventInit & { pointerId?: number; pointerType?: string } = {}
+    ): PointerEvent {
+      const event = pointerEvent(clientX, clientY, init);
       Object.defineProperty(event, 'target', { value: target });
       return event;
     }
@@ -318,8 +445,8 @@ describe('GravityWorldComponent', () => {
 
     /** Presses and releases on the given world object without moving. */
     function clickOn(id: string): void {
-      component.mouseDown(eventOn(id, 100, 100));
-      component.mouseUp(eventOn(id, 100, 100));
+      component.pointerDown(eventOn(id, 100, 100));
+      component.pointerUp(eventOn(id, 100, 100));
     }
 
     it('should center a planet that is clicked', () => {
@@ -385,9 +512,9 @@ describe('GravityWorldComponent', () => {
     it('should let go when panning takes over', () => {
       clickOn(component.planets()[0].id);
 
-      component.mouseDown(mouseEvent(250, 150, { shiftKey: true }));
-      component.mouseMove(mouseEvent(200, 150, { shiftKey: true }));
-      component.mouseUp(mouseEvent(200, 150));
+      component.pointerDown(pointerEvent(250, 150, { shiftKey: true }));
+      component.pointerMove(pointerEvent(200, 150, { shiftKey: true }));
+      component.pointerUp(pointerEvent(200, 150));
 
       expect(component.followedId()).toBeNull();
     });
@@ -442,9 +569,9 @@ describe('GravityWorldComponent', () => {
     it('should tolerate a tiny cursor movement while clicking', () => {
       const planet = component.planets()[0];
 
-      component.mouseDown(eventOn(planet.id, 100, 100));
-      component.mouseMove(eventOn(planet.id, 102, 101));
-      component.mouseUp(eventOn(planet.id, 102, 101));
+      component.pointerDown(eventOn(planet.id, 100, 100));
+      component.pointerMove(eventOn(planet.id, 102, 101));
+      component.pointerUp(eventOn(planet.id, 102, 101));
 
       expect(component.viewCenter()).toEqual(planet.pos);
     });
@@ -461,10 +588,10 @@ describe('GravityWorldComponent', () => {
       const planet = component.planets()[0];
       const centerBefore = component.viewCenter();
 
-      component.mouseDown(eventOn(planet.id, 100, 100));
-      component.mouseMove(eventOn(planet.id, 260, 180));
-      component.mouseMove(eventOn(planet.id, 100, 100));
-      component.mouseUp(eventOn(planet.id, 100, 100));
+      component.pointerDown(eventOn(planet.id, 100, 100));
+      component.pointerMove(eventOn(planet.id, 260, 180));
+      component.pointerMove(eventOn(planet.id, 100, 100));
+      component.pointerUp(eventOn(planet.id, 100, 100));
 
       expect(component.viewCenter()).toEqual(centerBefore);
     });
@@ -473,31 +600,140 @@ describe('GravityWorldComponent', () => {
       const planet = component.planets()[0];
       const centerBefore = component.viewCenter();
 
-      component.mouseDown(eventOn(planet.id, 100, 100));
-      component.mouseMove(eventOn(planet.id, 200, 150));
-      component.mouseUp(eventOn(planet.id, 200, 150));
+      component.pointerDown(eventOn(planet.id, 100, 100));
+      component.pointerMove(eventOn(planet.id, 200, 150));
+      component.pointerUp(eventOn(planet.id, 200, 150));
 
       expect(component.viewCenter()).toEqual(centerBefore);
     });
+
+    it('should fling a new planet with the drag that created it', () => {
+      const planetsBefore = component.planets().length;
+
+      dragTouch({ from: [100, 100], to: [180, 140] });
+
+      expect(component.planets().length).toBe(planetsBefore + 1);
+      const created = component.planets()[component.planets().length - 1];
+      // thrown towards the finger, which went right and down
+      expect(created.vel.x).toBeGreaterThan(0);
+      expect(created.vel.y).toBeGreaterThan(0);
+    });
+
+    it('should throw a planet while the simulation is paused', () => {
+      expect(component.running()).toBe(false);
+      const planet = placePlanetUnder(300, 150);
+
+      // press on the planet and take the finger far to the left
+      component.pointerDown(eventOn(planet.id, 300, 150));
+      component.pointerMove(eventOn(planet.id, 100, 150));
+      component.pointerUp(eventOn(planet.id, 100, 150));
+
+      // the spring never ticked, the release throws instead: 200px left is
+      // 1200 world units, more than a world object may ever travel
+      expect(planet.vel.x).toBeLessThan(0);
+      expect(Math.abs(planet.vel.y)).toBeLessThan(1);
+      expect(planet.vel.length()).toBeCloseTo(MAX_SPEED, 6);
+    });
+
+    it('should throw as far as the gesture stretched the spring', () => {
+      const planet = placePlanetUnder(300, 150);
+
+      component.pointerDown(eventOn(planet.id, 300, 150));
+      component.pointerMove(eventOn(planet.id, 350, 150));
+      component.pointerUp(eventOn(planet.id, 350, 150));
+
+      // the spring pulls as hard as it is stretched, so the throw is as fast:
+      // 50px of a 500px wide view is 300 units of a 3000 unit wide world
+      expect(planet.vel.x).toBeCloseTo(300, 6);
+      expect(planet.vel.y).toBeCloseTo(0, 6);
+    });
+
+    /** Moves the first planet to rest exactly under the given client point. */
+    function placePlanetUnder(clientX: number, clientY: number): Planet {
+      const planet = component.planets()[0];
+      // the whole world is on screen, so client maps to world by the ratio of
+      // the two: 3000 / 500 across and 1800 / 300 down
+      planet.pos = vec2(clientX * 6, clientY * 6);
+      planet.vel = vec2(0, 0);
+      // refresh the planets signal through a public api
+      component.step(0);
+      return planet;
+    }
+
+    it('should not throw a planet that was only tapped', () => {
+      const planet = component.planets()[0];
+      const velBefore = planet.vel;
+
+      component.pointerDown(eventOn(planet.id, 100, 100));
+      component.pointerMove(eventOn(planet.id, 102, 101));
+      component.pointerUp(eventOn(planet.id, 102, 101));
+
+      expect(planet.vel).toEqual(velBefore);
+    });
+
+    it('should leave the throw to the spring while the simulation runs', () => {
+      component.toggleSim();
+      expect(component.running()).toBe(true);
+      const planet = component.planets()[0];
+      planet.vel = vec2(0, 0);
+
+      component.pointerDown(eventOn(planet.id, 100, 150));
+      component.pointerMove(eventOn(planet.id, 300, 150));
+      component.pointerUp(eventOn(planet.id, 300, 150));
+
+      // no frame was rendered, so the spring had no chance to act - and the
+      // release must not step in for it
+      expect(planet.vel).toEqual(vec2(0, 0));
+    });
+
+    it('should not throw when a second finger cancels the gesture', () => {
+      const planetsBefore = component.planets().length;
+
+      component.pointerDown(
+        eventOnBackground(100, 100, { pointerId: 1, pointerType: 'touch' })
+      );
+      component.pointerMove(
+        eventOnBackground(200, 150, { pointerId: 1, pointerType: 'touch' })
+      );
+      component.pointerDown(
+        eventOnBackground(300, 150, { pointerId: 2, pointerType: 'touch' })
+      );
+
+      expect(component.planets().length).toBe(planetsBefore);
+    });
+
+    /** Presses, drags and releases one finger over the empty background. */
+    function dragTouch({
+      from,
+      to,
+    }: {
+      from: [number, number];
+      to: [number, number];
+    }): void {
+      const finger = { pointerId: 1, pointerType: 'touch' };
+      component.pointerDown(eventOnBackground(from[0], from[1], finger));
+      component.pointerMove(eventOnBackground(to[0], to[1], finger));
+      component.pointerUp(eventOnBackground(to[0], to[1], finger));
+    }
 
     it('should not center when a new planet is placed on empty space', () => {
       const centerBefore = component.viewCenter();
       const planetsBefore = component.planets().length;
 
-      component.mouseDown(eventOnBackground(100, 100));
-      component.mouseUp(eventOnBackground(100, 100));
+      component.pointerDown(eventOnBackground(100, 100));
+      component.pointerUp(eventOnBackground(100, 100));
 
       expect(component.planets().length).toBe(planetsBefore + 1);
       expect(component.viewCenter()).toEqual(centerBefore);
       expect(component.followedId()).toBeNull();
     });
 
-    it('should not center when the cursor leaves the world', () => {
+    it('should not center when the pointer is taken away', () => {
       const planet = component.planets()[0];
       const centerBefore = component.viewCenter();
 
-      component.mouseDown(eventOn(planet.id, 100, 100));
-      component.mouseLeave(eventOn(planet.id, 100, 100));
+      component.pointerDown(eventOn(planet.id, 100, 100));
+      component.pointerCancel(eventOn(planet.id, 100, 100));
 
       expect(component.viewCenter()).toEqual(centerBefore);
     });
@@ -508,8 +744,8 @@ describe('GravityWorldComponent', () => {
       // refresh the planets signal through a public api
       component.step(0);
 
-      component.mouseDown(eventOn(planet.id, 100, 100));
-      component.mouseUp(eventOn(planet.id, 100, 100));
+      component.pointerDown(eventOn(planet.id, 100, 100));
+      component.pointerUp(eventOn(planet.id, 100, 100));
 
       expect(component.viewCenter()).toEqual(planet.pos);
     });
@@ -529,16 +765,19 @@ describe('GravityWorldComponent', () => {
       return event;
     }
 
-    /** Touch event resting on the svg element of the given world object. */
-    function touchOn(id: string): TouchEvent {
-      const event = new TouchEvent('touchstart', { cancelable: true });
-      Object.defineProperty(event, 'touches', {
-        value: [{ clientX: 120, clientY: 90 }],
+    /** Finger resting on the svg element of the given world object. */
+    function touchOn(id: string, pointerId = 1): PointerEvent {
+      const event = new MouseEvent('pointerdown', {
+        clientX: 120,
+        clientY: 90,
+        cancelable: true,
       });
+      Object.defineProperty(event, 'pointerId', { value: pointerId });
+      Object.defineProperty(event, 'pointerType', { value: 'touch' });
       Object.defineProperty(event, 'target', {
         value: query(fixture, `[id="${id}"]`)!,
       });
-      return event;
+      return event as PointerEvent;
     }
 
     beforeEach(() => jest.useFakeTimers());
@@ -585,17 +824,32 @@ describe('GravityWorldComponent', () => {
     it('should open the menu after a long touch', () => {
       const planet = component.planets()[0];
 
-      component.touchStart(touchOn(planet.id));
+      const forcesBefore = component.worldService.getForces().length;
+
+      component.pointerDown(touchOn(planet.id));
       expect(component.menuTarget()).toBeNull();
       jest.advanceTimersByTime(500);
 
       expect(component.menuTarget()).toBe(planet);
       expect(component.menuPosition()).toEqual({ x: 120, y: 90 });
+      // the planet is let go of, so lifting the finger does not fling it
+      expect(component.worldService.getForces().length).toBe(forcesBefore);
     });
 
-    it('should not open the menu when the touch moves or ends early', () => {
-      component.touchStart(touchOn(component.planets()[0].id));
-      component.cancelLongPress();
+    it('should not open the menu when the touch ends early', () => {
+      component.pointerDown(touchOn(component.planets()[0].id));
+      component.pointerUp(touchOn(component.planets()[0].id));
+      jest.advanceTimersByTime(500);
+
+      expect(component.menuTarget()).toBeNull();
+    });
+
+    it('should not open the menu when a mouse rests on an object', () => {
+      const press = eventOn(component.planets()[0].id, 'mousedown');
+      Object.defineProperty(press, 'pointerId', { value: 1 });
+      Object.defineProperty(press, 'pointerType', { value: 'mouse' });
+
+      component.pointerDown(press as PointerEvent);
       jest.advanceTimersByTime(500);
 
       expect(component.menuTarget()).toBeNull();
@@ -608,15 +862,15 @@ describe('GravityWorldComponent', () => {
       const planetsBefore = component.planets().length;
 
       // a right click both opens the menu and reaches mouseDown; the overlay
-      // backdrop then swallows the mouseup that would unwind a gesture
+      // backdrop then swallows the pointerup that would unwind a gesture
       const press = eventOn(planet.id, 'mousedown');
       Object.defineProperty(press, 'button', { value: 2 });
-      component.mouseDown(press);
+      component.pointerDown(press as PointerEvent);
 
       expect(component.worldService.getForces().length).toBe(forcesBefore);
       expect(component.planets().length).toBe(planetsBefore);
       expect(component.followedId()).toBeNull();
-      component.mouseMove(eventOn(planet.id, 'mousemove'));
+      component.pointerMove(eventOn(planet.id, 'mousemove') as PointerEvent);
       expect(component.viewCenter()).toEqual(centerBefore);
     });
 
@@ -626,8 +880,8 @@ describe('GravityWorldComponent', () => {
       Object.defineProperty(press, 'button', { value: 2 });
       Object.defineProperty(press, 'shiftKey', { value: true });
 
-      component.mouseDown(press);
-      component.mouseMove(mouseEvent(0, 0, { shiftKey: true }));
+      component.pointerDown(press as PointerEvent);
+      component.pointerMove(pointerEvent(0, 0, { shiftKey: true }));
 
       expect(component.viewCenter()).toEqual(centerBefore);
     });
@@ -681,15 +935,15 @@ describe('GravityWorldComponent', () => {
       expect(component.menuMass()).toBe(500000);
     });
 
-    it('should not open two menus from two touches', () => {
+    it('should open no menu at all once a second finger joins', () => {
       const [first, second] = component.planets();
 
-      component.touchStart(touchOn(first.id));
-      component.touchStart(touchOn(second.id));
+      component.pointerDown(touchOn(first.id));
+      component.pointerDown(touchOn(second.id, 2));
       jest.advanceTimersByTime(500);
 
-      // the first timer was replaced, not orphaned
-      expect(component.menuTarget()).toBe(second);
+      // two fingers are a pinch, and a pinch is not a long press
+      expect(component.menuTarget()).toBeNull();
     });
 
     it('should forget the target when the menu closes', () => {
@@ -883,13 +1137,25 @@ describe('GravityWorldComponent', () => {
   });
 });
 
-/** Mouse event at the given client position, e.g. `{ shiftKey: true }` to pan. */
-function mouseEvent(
+/**
+ * Pointer event at the given client position, e.g. `{ shiftKey: true }` to pan
+ * or `{ pointerType: 'touch', pointerId: 2 }` for a second finger. jsdom has no
+ * PointerEvent, so a MouseEvent carries the pointer properties instead.
+ */
+function pointerEvent(
   clientX: number,
   clientY: number,
-  init: MouseEventInit = {}
-): MouseEvent {
-  return new MouseEvent('mousedown', { clientX, clientY, ...init });
+  init: MouseEventInit & { pointerId?: number; pointerType?: string } = {}
+): PointerEvent {
+  const { pointerId = 1, pointerType = 'mouse', ...mouseInit } = init;
+  const event = new MouseEvent('pointerdown', {
+    clientX,
+    clientY,
+    ...mouseInit,
+  });
+  Object.defineProperty(event, 'pointerId', { value: pointerId });
+  Object.defineProperty(event, 'pointerType', { value: pointerType });
+  return event as PointerEvent;
 }
 
 /** Wheel event at the given client position; a negative `deltaY` zooms in. */
