@@ -223,6 +223,11 @@ export class GravityWorldComponent {
   private dragPointerId: number | null = null;
   private createdByDrag: Planet | null = null;
 
+  /** What the drag holds, where it started, and where it has been taken. */
+  private dragObject: WorldObject | null = null;
+  private dragOrigin: ClientPoint | null = null;
+  private dragEnd: Vector2d | null = null;
+
   /** What the view looked like when the two finger gesture started. */
   private pinchStart: {
     distance: number;
@@ -384,6 +389,9 @@ export class GravityWorldComponent {
       wo = created;
     }
     this.dragPointerId = $event.pointerId;
+    this.dragObject = wo;
+    this.dragOrigin = clientPoint($event);
+    this.dragEnd = null;
     const springForce = new SpringForce(wo);
     this.worldService.addForceObject(springForce);
     this.updateSignals();
@@ -441,7 +449,33 @@ export class GravityWorldComponent {
     this.dragPointerId = null;
     this.createdByDrag = null;
     this.gestureEnd$.next();
+    this.throwDragged();
     return pressed;
+  }
+
+  /**
+   * Hands the dragged object the speed of the gesture that let go of it.
+   * A running simulation gets that from the spring, whose acceleration works
+   * out to the distance it is stretched by - mass cancels out of `-mass *
+   * distance`. A paused world never ticks, so the same stretch is turned into
+   * a velocity here instead, once, when the gesture ends.
+   */
+  private throwDragged(): void {
+    const wo: WorldObject | null = this.dragObject;
+    const end: Vector2d | null = this.dragEnd;
+    this.dragObject = null;
+    this.dragOrigin = null;
+    this.dragEnd = null;
+    if (!wo || !end || wo.isStatic || this.running()) {
+      return;
+    }
+    const thrown: Vector2d = end.sub(wo.pos);
+    const speed: number = Math.min(thrown.length(), MAX_VELOCITY);
+    if (speed <= 0) {
+      return;
+    }
+    wo.vel = thrown.norm().mul(speed);
+    this.updateSignals();
   }
 
   /** Drops the running drag, taking back the planet it has just created. */
@@ -452,6 +486,10 @@ export class GravityWorldComponent {
     this.pressed = null;
     this.dragPointerId = null;
     this.createdByDrag = null;
+    // an abandoned gesture is not a throw
+    this.dragObject = null;
+    this.dragOrigin = null;
+    this.dragEnd = null;
     this.gestureEnd$.next();
     if (created) {
       this.removePlanet(created);
@@ -480,6 +518,17 @@ export class GravityWorldComponent {
       this.cancelLongPress();
     }
     if (this.dragPointerId === $event.pointerId) {
+      const origin: ClientPoint | null = this.dragOrigin;
+      if (
+        origin &&
+        !this.isWithinClickTolerance(
+          { x: origin.clientX, y: origin.clientY },
+          $event
+        )
+      ) {
+        // a gesture this long is a drag, and a drag can throw
+        this.dragEnd = this.toWorldCoordinates($event);
+      }
       this.pointerMove$.next($event);
     }
   }

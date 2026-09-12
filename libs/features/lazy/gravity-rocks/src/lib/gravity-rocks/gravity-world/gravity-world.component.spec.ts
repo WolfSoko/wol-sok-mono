@@ -5,6 +5,7 @@ import { qaSelector } from '@wolsok/test-helper';
 import { vec2 } from '@wolsok/utils-math';
 import { GravityConfigComponent } from './config/gravity-config.component';
 import { INITIAL_CONFIG } from './domain/gravity-world-config';
+import { Planet } from './domain/world-objects/planet';
 
 // minimal mock service (if needed could be expanded) but we rely on real implementation for now
 import {
@@ -568,22 +569,111 @@ describe('GravityWorldComponent', () => {
     it('should fling a new planet with the drag that created it', () => {
       const planetsBefore = component.planets().length;
 
+      dragTouch({ from: [100, 100], to: [180, 140] });
+
+      expect(component.planets().length).toBe(planetsBefore + 1);
+      const created = component.planets()[component.planets().length - 1];
+      // thrown towards the finger, which went right and down
+      expect(created.vel.x).toBeGreaterThan(0);
+      expect(created.vel.y).toBeGreaterThan(0);
+    });
+
+    it('should throw a planet while the simulation is paused', () => {
+      expect(component.running()).toBe(false);
+      const planet = placePlanetUnder(300, 150);
+
+      // press on the planet and take the finger far to the left
+      component.pointerDown(eventOn(planet.id, 300, 150));
+      component.pointerMove(eventOn(planet.id, 100, 150));
+      component.pointerUp(eventOn(planet.id, 100, 150));
+
+      // the spring never ticked, the release throws instead: 200px left is
+      // 1200 world units, more than a world object may ever travel
+      expect(planet.vel.x).toBeLessThan(0);
+      expect(Math.abs(planet.vel.y)).toBeLessThan(1);
+      expect(planet.vel.length()).toBeCloseTo(MAX_SPEED, 6);
+    });
+
+    it('should throw as far as the gesture stretched the spring', () => {
+      const planet = placePlanetUnder(300, 150);
+
+      component.pointerDown(eventOn(planet.id, 300, 150));
+      component.pointerMove(eventOn(planet.id, 350, 150));
+      component.pointerUp(eventOn(planet.id, 350, 150));
+
+      // the spring pulls as hard as it is stretched, so the throw is as fast:
+      // 50px of a 500px wide view is 300 units of a 3000 unit wide world
+      expect(planet.vel.x).toBeCloseTo(300, 6);
+      expect(planet.vel.y).toBeCloseTo(0, 6);
+    });
+
+    /** Moves the first planet to rest exactly under the given client point. */
+    function placePlanetUnder(clientX: number, clientY: number): Planet {
+      const planet = component.planets()[0];
+      // the whole world is on screen, so client maps to world by the ratio of
+      // the two: 3000 / 500 across and 1800 / 300 down
+      planet.pos = vec2(clientX * 6, clientY * 6);
+      planet.vel = vec2(0, 0);
+      // refresh the planets signal through a public api
+      component.step(0);
+      return planet;
+    }
+
+    it('should not throw a planet that was only tapped', () => {
+      const planet = component.planets()[0];
+      const velBefore = planet.vel;
+
+      component.pointerDown(eventOn(planet.id, 100, 100));
+      component.pointerMove(eventOn(planet.id, 102, 101));
+      component.pointerUp(eventOn(planet.id, 102, 101));
+
+      expect(planet.vel).toEqual(velBefore);
+    });
+
+    it('should leave the throw to the spring while the simulation runs', () => {
+      component.toggleSim();
+      expect(component.running()).toBe(true);
+      const planet = component.planets()[0];
+      planet.vel = vec2(0, 0);
+
+      component.pointerDown(eventOn(planet.id, 100, 150));
+      component.pointerMove(eventOn(planet.id, 300, 150));
+      component.pointerUp(eventOn(planet.id, 300, 150));
+
+      // no frame was rendered, so the spring had no chance to act - and the
+      // release must not step in for it
+      expect(planet.vel).toEqual(vec2(0, 0));
+    });
+
+    it('should not throw when a second finger cancels the gesture', () => {
+      const planetsBefore = component.planets().length;
+
       component.pointerDown(
         eventOnBackground(100, 100, { pointerId: 1, pointerType: 'touch' })
       );
       component.pointerMove(
-        eventOnBackground(180, 140, { pointerId: 1, pointerType: 'touch' })
+        eventOnBackground(200, 150, { pointerId: 1, pointerType: 'touch' })
       );
-      // the spring pulls the planet towards the finger while it is held
-      component.step(0.1);
-      component.pointerUp(
-        eventOnBackground(180, 140, { pointerId: 1, pointerType: 'touch' })
+      component.pointerDown(
+        eventOnBackground(300, 150, { pointerId: 2, pointerType: 'touch' })
       );
 
-      expect(component.planets().length).toBe(planetsBefore + 1);
-      const created = component.planets()[component.planets().length - 1];
-      expect(created.vel.length()).toBeGreaterThan(0);
+      expect(component.planets().length).toBe(planetsBefore);
     });
+
+    /** Presses, drags and releases one finger over the empty background. */
+    function dragTouch({
+      from,
+      to,
+    }: {
+      from: [number, number];
+      to: [number, number];
+    }): void {
+      const finger = { pointerId: 1, pointerType: 'touch' };
+      component.pointerDown(eventOnBackground(from[0], from[1], finger));
+      component.pointerMove(eventOnBackground(to[0], to[1], finger));
+      component.pointerUp(eventOnBackground(to[0], to[1], finger));
+    }
 
     it('should not center when a new planet is placed on empty space', () => {
       const centerBefore = component.viewCenter();
