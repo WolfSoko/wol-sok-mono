@@ -4,13 +4,18 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { qaSelector } from '@wolsok/test-helper';
 import { vec2 } from '@wolsok/utils-math';
 import { GravityConfigComponent } from './config/gravity-config.component';
-import { INITIAL_CONFIG } from './domain/gravity-world-config';
+import {
+  INITIAL_CONFIG,
+  MAX_SIMULATION_SPEED,
+} from './domain/gravity-world-config';
 import { Planet } from './domain/world-objects/planet';
 
 // minimal mock service (if needed could be expanded) but we rely on real implementation for now
 import {
   GravityWorldComponent,
   MAX_MASS_EXPONENT,
+  MAX_TICK_SECONDS,
+  MAX_TICKS_PER_FRAME,
   MAX_SPEED,
   MAX_ZOOM,
   MIN_MASS_EXPONENT,
@@ -47,6 +52,7 @@ describe('GravityWorldComponent', () => {
             massOfSun: 10000,
             showTrail: true,
             trailLength: 100,
+            simulationSpeed: 1,
           },
         },
       ],
@@ -1165,6 +1171,161 @@ describe('GravityWorldComponent', () => {
 
       expect(planet.vel.length()).toBeCloseTo(MAX_SPEED, 6);
     });
+  });
+
+  describe('simulation speed', () => {
+    /** How far the first planet travels over a second of frames. */
+    function distanceOverASecond(): number {
+      component.reset();
+      const planet = component.planets()[0];
+      const from = planet.pos;
+      for (let frame = 0; frame < 60; frame++) {
+        component.step(1 / 60);
+      }
+      return planet.pos.dist(from);
+    }
+
+    function setSpeed(simulationSpeed: number): void {
+      component.settings.update((settings) => ({
+        ...settings,
+        simulationSpeed,
+      }));
+    }
+
+    it('should cover more world in a frame the faster it runs', () => {
+      setSpeed(1);
+      const normal = distanceOverASecond();
+
+      setSpeed(4);
+      const fast = distanceOverASecond();
+
+      setSpeed(0.25);
+      const slow = distanceOverASecond();
+
+      expect(fast).toBeGreaterThan(normal);
+      expect(slow).toBeLessThan(normal);
+    });
+
+    it('should keep a planet on its orbit at speed', () => {
+      const sunMass = component.sun.mass;
+      setSpeed(1);
+      component.contextMenu(eventOnSun());
+      component.addSatellite();
+      const satellite = component.planets()[component.planets().length - 1];
+      const orbit = satellite.pos.dist(component.sun.pos);
+
+      setSpeed(MAX_SIMULATION_SPEED);
+      for (let frame = 0; frame < 120; frame++) {
+        component.step(1 / 60);
+      }
+
+      // a frame ten times as wide would have thrown it off the orbit; in
+      // slices it stays in the same ring around its unchanged sun
+      expect(component.sun.mass).toBe(sunMass);
+      expect(satellite.pos.dist(component.sun.pos)).toBeGreaterThan(orbit / 2);
+      expect(satellite.pos.dist(component.sun.pos)).toBeLessThan(orbit * 2);
+    });
+
+    it('should leave a frame at the usual speed in one piece', () => {
+      const tick = jest.spyOn(component.worldService, 'calcNextTick');
+      setSpeed(1);
+
+      // a 60Hz frame, and the same frame arriving a little late as they do
+      for (const frame of [1 / 60, 1 / 60 + 0.002, 1 / 59]) {
+        tick.mockClear();
+        component.step(frame);
+        expect(tick).toHaveBeenCalledTimes(1);
+        expect(tick.mock.calls[0][0]).toBeCloseTo(frame, 9);
+      }
+    });
+
+    it('should cut a fast frame into slices', () => {
+      const tick = jest.spyOn(component.worldService, 'calcNextTick');
+      setSpeed(8);
+
+      component.step(1 / 60);
+
+      // eight times a 60Hz frame is more world time than one slice may hold
+      expect(tick.mock.calls.length).toBeGreaterThan(1);
+      expect(
+        tick.mock.calls.every(([dt]) => dt <= MAX_TICK_SECONDS + 1e-9)
+      ).toBe(true);
+      const simulated = tick.mock.calls.reduce((sum, [dt]) => sum + dt, 0);
+      expect(simulated).toBeCloseTo(8 / 60, 9);
+    });
+
+    it('should hold its speed through the frame rates a screen reaches', () => {
+      const tick = jest.spyOn(component.worldService, 'calcNextTick');
+      setSpeed(MAX_SIMULATION_SPEED);
+
+      // down to 20fps the world still runs at the speed that is asked for
+      for (const frame of [1 / 60, 1 / 30, 1 / 20]) {
+        tick.mockClear();
+        component.step(frame);
+        const simulated = tick.mock.calls.reduce((sum, [dt]) => sum + dt, 0);
+        expect(simulated).toBeCloseTo(frame * MAX_SIMULATION_SPEED, 9);
+      }
+    });
+
+    it('should let the world fall behind rather than take a huge step', () => {
+      const tick = jest.spyOn(component.worldService, 'calcNextTick');
+      setSpeed(MAX_SIMULATION_SPEED);
+
+      // a frame this long only happens when the tab was away for a while
+      component.step(10);
+
+      // neither more slices than a frame can afford nor a slice so wide the
+      // integrator loses the orbit - the world simply misses that time
+      expect(tick.mock.calls.length).toBeLessThanOrEqual(MAX_TICKS_PER_FRAME);
+      expect(
+        tick.mock.calls.every(([dt]) => dt <= MAX_TICK_SECONDS + 1e-9)
+      ).toBe(true);
+      const simulated = tick.mock.calls.reduce((sum, [dt]) => sum + dt, 0);
+      expect(simulated).toBeCloseTo(MAX_TICKS_PER_FRAME * MAX_TICK_SECONDS, 9);
+    });
+
+    it('should clear a switched off trail once a frame, not once a slice', () => {
+      const record = jest.spyOn(component.worldService, 'recordTrails');
+      component.settings.update((settings) => ({
+        ...settings,
+        showTrail: false,
+        simulationSpeed: MAX_SIMULATION_SPEED,
+      }));
+
+      component.step(1 / 60);
+
+      expect(record).toHaveBeenCalledTimes(1);
+      expect(record).toHaveBeenCalledWith(0);
+    });
+
+    it('should run at normal speed when the config carries none', () => {
+      const tick = jest.spyOn(component.worldService, 'calcNextTick');
+      component.settings.update(
+        (settings) =>
+          ({
+            ...settings,
+            simulationSpeed: undefined,
+          }) as unknown as typeof settings
+      );
+
+      component.step(1 / 60);
+
+      expect(tick).toHaveBeenCalledTimes(1);
+      expect(tick.mock.calls[0][0]).toBeCloseTo(1 / 60, 9);
+    });
+
+    /** Right click on the sun, to open its menu. */
+    function eventOnSun(): MouseEvent {
+      const event = new MouseEvent('contextmenu', {
+        clientX: 10,
+        clientY: 10,
+        cancelable: true,
+      });
+      Object.defineProperty(event, 'target', {
+        value: query(fixture, `[id="${component.sun.id}"]`)!,
+      });
+      return event;
+    }
   });
 
   describe('planet trails', () => {
