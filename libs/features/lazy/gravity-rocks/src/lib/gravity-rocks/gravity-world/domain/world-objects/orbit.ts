@@ -10,6 +10,9 @@ const STABLE_HILL_FRACTION = 0.4;
 /** Mass of a new satellite, as a fraction of its parent's mass. */
 const SATELLITE_MASS_RATIO = 1 / 20;
 const MIN_SATELLITE_MASS = 30;
+/** Mass of a planet placed by hand, as a fraction of the sun it will circle. */
+const PLACED_MASS_MIN_RATIO = 1 / 1000;
+const PLACED_MASS_MAX_RATIO = 1 / 200;
 /** Speed a satellite may always spend on its orbit, however fast its parent. */
 const MIN_SPEED_BUDGET = 1;
 
@@ -90,13 +93,59 @@ export function defaultOrbitDistance(
   satelliteRadius = 0
 ): number {
   const wide: number = parent.radius * ORBIT_DISTANCE_IN_RADII;
-  const clearance: number =
-    parent.radius * (1 + MIN_GAP_IN_RADII) + satelliteRadius;
-  if (!primary || primary === parent || primary.mass <= 0) {
+  const clearance: number = clearanceDistance(parent, satelliteRadius);
+  if (!holdsSatellitesFor(parent, primary)) {
     return Math.max(clearance, wide);
   }
   const stable: number = hillRadius(parent, primary) * STABLE_HILL_FRACTION;
   return Math.max(clearance, Math.min(wide, stable));
+}
+
+/**
+ * How far from its parent a satellite may be placed: from the two discs just
+ * clearing each other - or `floor`, whichever is further out - to where the
+ * `primary` would steal it, and never beyond `reach`.
+ *
+ * `floor` is what `orbitAround` would push a satellite out to anyway, so an
+ * orbit offered below it would not be the one that is placed.
+ *
+ * The near end wins when the two disagree, for the same reason
+ * `defaultOrbitDistance` lets the clearance win: a light planet is drawn far
+ * bigger than its mass deserves, and then every orbit it can offer is one the
+ * primary eventually takes over.
+ */
+export function orbitDistanceRange(
+  parent: WorldObject,
+  primary: WorldObject | undefined,
+  satelliteRadius = 0,
+  reach = Number.POSITIVE_INFINITY,
+  floor = 0
+): { min: number; max: number } {
+  const min: number = Math.max(
+    clearanceDistance(parent, satelliteRadius),
+    floor
+  );
+  const outer: number = holdsSatellitesFor(parent, primary)
+    ? // a satellite beyond the world is as lost as one the primary takes
+      Math.min(hillRadius(parent, primary) * STABLE_HILL_FRACTION, reach)
+    : reach;
+  return { min, max: Math.max(min, outer) };
+}
+
+/** Closest the two discs can be without overlapping. */
+function clearanceDistance(
+  parent: WorldObject,
+  satelliteRadius: number
+): number {
+  return parent.radius * (1 + MIN_GAP_IN_RADII) + satelliteRadius;
+}
+
+/** Whether `primary` is a body the parent orbits, and so has to share with. */
+function holdsSatellitesFor(
+  parent: WorldObject,
+  primary?: WorldObject
+): primary is WorldObject {
+  return !!primary && primary !== parent && primary.mass > 0;
 }
 
 /**
@@ -113,4 +162,20 @@ export function hillRadius(parent: WorldObject, primary: WorldObject): number {
  */
 export function satelliteMass(parent: WorldObject): number {
   return Math.max(MIN_SATELLITE_MASS, parent.mass * SATELLITE_MASS_RATIO);
+}
+
+/**
+ * Mass for a planet placed by hand, so that it stays a planet next to the sun
+ * however heavy that sun is set to be: a fraction of it, picked by `share`
+ * (0 to 1) out of the range a planet may have.
+ */
+export function placedPlanetMass(
+  sunMass: number,
+  share = Math.random()
+): number {
+  const ratio: number =
+    PLACED_MASS_MIN_RATIO +
+    Math.min(Math.max(share, 0), 1) *
+      (PLACED_MASS_MAX_RATIO - PLACED_MASS_MIN_RATIO);
+  return Math.max(MIN_SATELLITE_MASS, sunMass * ratio);
 }

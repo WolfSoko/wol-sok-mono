@@ -13,6 +13,7 @@ import {
   MAX_MASS_EXPONENT,
   MAX_SPEED,
   MAX_ZOOM,
+  MIN_MASS_EXPONENT,
   MIN_ZOOM,
 } from './gravity-world.component';
 
@@ -716,6 +717,31 @@ describe('GravityWorldComponent', () => {
       component.pointerUp(eventOnBackground(to[0], to[1], finger));
     }
 
+    it('should size a placed planet by the mass of the sun', () => {
+      const massesFor = (massOfSun: number): number[] => {
+        component.reset();
+        component.settings.update((settings) => ({ ...settings, massOfSun }));
+        fixture.detectChanges();
+        const before = component.planets().length;
+        for (let i = 0; i < 10; i++) {
+          component.pointerDown(eventOnBackground(100 + i * 10, 100));
+          component.pointerUp(eventOnBackground(100 + i * 10, 100));
+        }
+        return component
+          .planets()
+          .slice(before)
+          .map((planet) => planet.mass);
+      };
+
+      const lightSun = massesFor(8000);
+      const heavySun = massesFor(800000);
+
+      // every planet of the heavy sun outweighs every planet of the light one
+      expect(Math.max(...lightSun)).toBeLessThan(Math.min(...heavySun));
+      // and each one stays a planet next to its sun, never a rival
+      expect(Math.max(...heavySun)).toBeLessThan(800000 / 100);
+    });
+
     it('should not center when a new planet is placed on empty space', () => {
       const centerBefore = component.viewCenter();
       const planetsBefore = component.planets().length;
@@ -919,6 +945,93 @@ describe('GravityWorldComponent', () => {
       const satellite = component.planets()[component.planets().length - 1];
       // the orbital speed only, nothing carried over from the static sun
       expect(satellite.vel.length()).toBeLessThan(100);
+    });
+
+    it('should offer the default distance as the orbit of the next satellite', () => {
+      const parent = component.planets()[0];
+
+      component.contextMenu(eventOn(parent.id));
+
+      const { min, max } = component.orbitRange();
+      expect(min).toBeLessThan(max);
+      expect(component.menuOrbit()).toBeGreaterThanOrEqual(min);
+      expect(component.menuOrbit()).toBeLessThanOrEqual(max);
+    });
+
+    it('should place the satellite at the distance the slider is set to', () => {
+      component.contextMenu(eventOn(component.sun.id));
+      const { min, max } = component.orbitRange();
+      const wanted = (min + max) / 2;
+
+      component.setOrbitDistance(wanted);
+      component.addSatellite();
+
+      const satellite = component.planets()[component.planets().length - 1];
+      expect(satellite.pos.dist(component.sun.pos)).toBeCloseTo(wanted, 6);
+    });
+
+    it('should keep the orbit within the range the target allows', () => {
+      component.contextMenu(eventOn(component.sun.id));
+      const { min, max } = component.orbitRange();
+
+      component.setOrbitDistance(max * 10);
+      expect(component.menuOrbit()).toBe(max);
+
+      component.setOrbitDistance(0);
+      expect(component.menuOrbit()).toBe(min);
+    });
+
+    it('should widen the orbit range with the mass of the target', () => {
+      const parent = component.planets()[0];
+      component.contextMenu(eventOn(parent.id));
+      const before = component.orbitRange();
+
+      // a heavier planet holds on to a moon further out
+      component.setMassExponent(MAX_MASS_EXPONENT);
+
+      expect(component.orbitRange().max).toBeGreaterThan(before.max);
+    });
+
+    it('should pull the orbit back in when the target loses mass', () => {
+      const parent = component.planets()[0];
+      component.contextMenu(eventOn(parent.id));
+      component.setOrbitDistance(component.orbitRange().max);
+      const wideOrbit = component.menuOrbit();
+
+      component.setMassExponent(MIN_MASS_EXPONENT);
+
+      expect(component.menuOrbit()).toBeLessThan(wideOrbit);
+      expect(component.menuOrbit()).toBe(component.orbitRange().max);
+    });
+
+    it('should follow the sun out when its mass is raised', () => {
+      component.contextMenu(eventOn(component.sun.id));
+      const before = component.orbitRange();
+
+      component.setMassExponent(MAX_MASS_EXPONENT);
+
+      // a heavier sun is a bigger disc, so its satellites start further out
+      expect(component.sun.mass).toBe(10 ** MAX_MASS_EXPONENT);
+      expect(component.orbitRange().min).toBeGreaterThan(before.min);
+      expect(component.menuOrbit()).toBeGreaterThanOrEqual(
+        component.orbitRange().min
+      );
+    });
+
+    it('should not offer an orbit the placement would overrule', () => {
+      const planet = component.planets()[0];
+      component.contextMenu(eventOn(planet.id));
+
+      // a fast parent carries its satellite along, which needs room
+      component.setSpeed(MAX_SPEED);
+      component.setOrbitDistance(component.orbitRange().min);
+      component.addSatellite();
+
+      const satellite = component.planets()[component.planets().length - 1];
+      expect(satellite.pos.dist(planet.pos)).toBeCloseTo(
+        component.menuOrbit(),
+        6
+      );
     });
 
     it('should keep the mass slider within its scale', () => {
