@@ -95,9 +95,9 @@ const SYNTHETIC_CLICK_MS = 700;
 export const YEARS_PER_SECOND = 0.1;
 /**
  * Longest slice of world time the integrator can follow in one go, in years.
- * A third of a day: mercury needs 88 of them for a lap, so even the fastest
- * planet is carried through its orbit in hundreds of steps rather than tens,
- * and the ellipse stays put instead of creeping.
+ * A third of a day, so mercury's 88-day year is two hundred and forty of them:
+ * even the fastest planet is carried through its orbit in hundreds of steps
+ * rather than tens, and its ellipse stays put instead of creeping.
  */
 export const MAX_TICK_YEARS = 0.001;
 /**
@@ -136,7 +136,7 @@ function midpointOf(a: ClientPoint, b: ClientPoint): ClientPoint {
 
 /**
  * The mass slider runs on the log scale of earth masses: from a thousandth
- * of one, which is asteroid country, to a million, which is three suns.
+ * of one, which is half a pluto, to a million, which is three suns.
  */
 export const MIN_MASS_EXPONENT = -3;
 export const MAX_MASS_EXPONENT = 6;

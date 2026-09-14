@@ -10,13 +10,15 @@ const MIN_GAP_IN_RADII = 0.2;
  * radius is where the primary wins outright; a satellite has to stay well
  * inside it, because the primary pulls on its orbit long before that. A
  * quarter holds: simulated over twenty years a moon of jupiter placed there
- * keeps its distance, while a third of the way out it is gone within five.
+ * stays within a third of where it started, while one a third of the way out
+ * is four times as far away inside ten.
  */
 export const STABLE_HILL_FRACTION = 0.25;
 /**
  * Mass of a new satellite, as a fraction of its parent's mass. A thousandth
- * is what jupiter is to the sun, and the moon is a little more than that to
- * the earth, so one ratio does for both.
+ * is what jupiter is to the sun; our moon is ten times more than that to the
+ * earth, so this errs towards a satellite that is plainly the smaller of the
+ * two - which is what a planet of a sun and a moon of a planet both are.
  */
 const SATELLITE_MASS_RATIO = 1 / 1000;
 /** Nothing smaller than a large moon, in solar masses. */

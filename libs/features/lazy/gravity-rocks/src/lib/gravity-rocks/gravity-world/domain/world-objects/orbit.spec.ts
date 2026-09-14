@@ -222,8 +222,8 @@ describe('a moon of a planet', () => {
 
   it('should be stolen by the sun from a planet too light to keep it', () => {
     // documents what real masses cost this world: the earth's grip reaches
-    // 0.019 AU, and it is drawn 0.031 AU across, so a moon clear of its disc
-    // is already the sun's. Raising the planet's mass is what fixes that.
+    // 0.014 AU, and it is drawn with a radius of 0.031, so a moon clear of
+    // its disc is already the sun's. Raising its mass is what fixes that.
     const { start, samples } = simulateMoon(EARTH_MASS, 1, 5);
 
     // not an orbit at all - the sun swings it about, far past where it began
