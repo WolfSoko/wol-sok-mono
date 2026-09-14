@@ -2,7 +2,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { qaSelector } from '@wolsok/test-helper';
 import { take } from 'rxjs';
-import { GravityWorldConfig } from '../domain/gravity-world-config';
+import {
+  GravityWorldConfig,
+  INITIAL_GRAVITY_CONSTANT,
+  INITIAL_MASS_OF_SUN,
+} from '../domain/gravity-world-config';
 import { GravityConfigComponent } from './gravity-config.component';
 
 /** Element carrying the given `data-qa` attribute, or null. */
@@ -17,8 +21,8 @@ describe('GravityConfigComponent', () => {
   let fixture: ComponentFixture<GravityConfigComponent>;
   let component: GravityConfigComponent;
   const initialConfig: GravityWorldConfig = {
-    gravitationalConstant: 10,
-    massOfSun: 10000,
+    gravitationalConstant: INITIAL_GRAVITY_CONSTANT,
+    massOfSun: INITIAL_MASS_OF_SUN,
     showTrail: true,
     trailLength: 100,
     simulationSpeed: 1,
@@ -35,6 +39,16 @@ describe('GravityConfigComponent', () => {
     component.configChange.pipe(take(10)).subscribe((c) => emitted.push(c));
     component.config = initialConfig;
     fixture.detectChanges();
+  });
+
+  it('should not call its own values invalid', () => {
+    // a `step` the value is not a multiple of makes the browser mark the
+    // field wrong the moment it is opened - and gravity is 39.4784
+    for (const qa of ['gConstant', 'massOfSun']) {
+      const input = getByQa<HTMLInputElement>(fixture, qa)!;
+      expect(input.getAttribute('step')).toBe('any');
+      expect(input.validity?.stepMismatch ?? false).toBe(false);
+    }
   });
 
   it('should create', () => {
