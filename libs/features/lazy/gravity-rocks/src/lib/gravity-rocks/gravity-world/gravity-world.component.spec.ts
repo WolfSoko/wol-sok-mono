@@ -7,6 +7,7 @@ import { GravityConfigComponent } from './config/gravity-config.component';
 import {
   INITIAL_CONFIG,
   INITIAL_MASS_OF_SUN,
+  INITIAL_SHOW_VELOCITY,
   MAX_SIMULATION_SPEED,
 } from './domain/gravity-world-config';
 import {
@@ -59,6 +60,7 @@ describe('GravityWorldComponent', () => {
             gravitationalConstant: GRAVITATIONAL_CONSTANT,
             massOfSun: INITIAL_MASS_OF_SUN,
             showTrail: true,
+            showVelocity: INITIAL_SHOW_VELOCITY,
             trailLength: 100,
             simulationSpeed: 1,
           },
@@ -123,6 +125,77 @@ describe('GravityWorldComponent', () => {
       (d) => d.componentInstance instanceof GravityConfigComponent
     );
     expect(config).toBeTruthy();
+  });
+
+  describe('velocity arrows', () => {
+    it('should draw none of them until they are switched on', () => {
+      // the planets are small at this scale and an arrow on each is most of
+      // what would be on the screen, so the world starts without them
+      expect(INITIAL_SHOW_VELOCITY).toBe(false);
+      expect(component.velocitySvgPath()).toEqual([]);
+      expect(
+        fixture.nativeElement.querySelectorAll('path.line-line').length
+      ).toBe(0);
+    });
+
+    it('should draw one per planet once they are', () => {
+      component.settings.update((settings) => ({
+        ...settings,
+        showVelocity: true,
+      }));
+      fixture.detectChanges();
+
+      const arrows = component.velocitySvgPath();
+      expect(arrows.length).toBe(component.planets().length);
+      expect(arrows.map(({ id }) => id)).toEqual(
+        component.planets().map(({ id }) => id)
+      );
+      expect(
+        fixture.nativeElement.querySelectorAll('path.line-line').length
+      ).toBe(arrows.length);
+    });
+
+    it('should take them away again when switched back off', () => {
+      component.settings.update((settings) => ({
+        ...settings,
+        showVelocity: true,
+      }));
+      expect(component.velocitySvgPath().length).toBeGreaterThan(0);
+
+      component.settings.update((settings) => ({
+        ...settings,
+        showVelocity: false,
+      }));
+
+      expect(component.velocitySvgPath()).toEqual([]);
+    });
+
+    it('should show the spring of a drag whatever the setting says', () => {
+      // the arrow a drag draws is what the gesture is doing, not an overlay
+      // on the physics, so it is not what this switch is about
+      const planet = component.planets()[0];
+      component.pointerDown(pointerOn(planet.id, 100, 100));
+      component.pointerMove(pointerOn(planet.id, 160, 140));
+      fixture.detectChanges();
+
+      expect(component.settings().showVelocity).toBe(false);
+      expect(component.forcesSvgPaths().length).toBe(1);
+    });
+
+    /** Pointer event on the svg element of the given object. */
+    function pointerOn(
+      id: string,
+      clientX: number,
+      clientY: number
+    ): PointerEvent {
+      const event = new MouseEvent('pointerdown', { clientX, clientY });
+      Object.defineProperty(event, 'target', {
+        value: Object.assign(document.createElement('div'), { id }),
+      });
+      Object.defineProperty(event, 'pointerId', { value: 1 });
+      Object.defineProperty(event, 'pointerType', { value: 'mouse' });
+      return event as PointerEvent;
+    }
   });
 
   describe('zooming and panning', () => {
