@@ -1,21 +1,25 @@
 <form [formGroup]="form" class="configuration" data-qa="form">
   <mat-form-field appearance="outline">
-    <mat-label>Gravitational Force</mat-label>
+    <mat-label>Gravity in AU³/M☉/yr²</mat-label>
     <input
       matInput
       data-qa="gConstant"
       type="number"
+      step="1"
       formControlName="gravitationalConstant"
     />
+    <mat-hint>Ours is 4π², which is {{ realGravity }}</mat-hint>
   </mat-form-field>
   <mat-form-field appearance="outline">
-    <mat-label>Mass of Sun</mat-label>
+    <mat-label>Mass of sun in M☉</mat-label>
     <input
       matInput
       data-qa="massOfSun"
       type="number"
+      step="0.1"
       formControlName="massOfSun"
     />
+    <mat-hint>Ours weighs 1, the earth a third of a millionth</mat-hint>
   </mat-form-field>
   <div class="trail-length">
     <label for="simulation-speed-slider">

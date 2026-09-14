@@ -1,7 +1,10 @@
 import { InjectionToken } from '@angular/core';
+import { GRAVITATIONAL_CONSTANT } from './solar-system';
 
-export const INITIAL_MASS_OF_SUN = 80000.0;
-export const INITIAL_GRAVITY_CONSTANT = 80;
+/** One solar mass: the world measures mass in them, so the sun weighs 1. */
+export const INITIAL_MASS_OF_SUN = 1;
+/** The real one, in the units of the world - see `solar-system.ts`. */
+export const INITIAL_GRAVITY_CONSTANT = GRAVITATIONAL_CONSTANT;
 export const INITIAL_SHOW_TRAIL = true;
 export const INITIAL_TRAIL_LENGTH = 150;
 export const MIN_TRAIL_LENGTH = 10;

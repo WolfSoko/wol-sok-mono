@@ -5,46 +5,54 @@ import { MAX_VELOCITY, WorldObject } from './world-object';
 const ORBIT_DISTANCE_IN_RADII = 4;
 /** Gap kept between the discs of parent and satellite, in parent radii. */
 const MIN_GAP_IN_RADII = 0.2;
-/** Share of the hill radius a satellite may use and still stay bound. */
-const STABLE_HILL_FRACTION = 0.4;
-/** Mass of a new satellite, as a fraction of its parent's mass. */
-const SATELLITE_MASS_RATIO = 1 / 20;
-const MIN_SATELLITE_MASS = 30;
-/** Mass of a planet placed by hand, as a fraction of the sun it will circle. */
-const PLACED_MASS_MIN_RATIO = 1 / 1000;
-const PLACED_MASS_MAX_RATIO = 1 / 200;
+/**
+ * Share of the hill radius a satellite may use and still stay bound. The hill
+ * radius is where the primary wins outright; a satellite has to stay well
+ * inside it, because the primary pulls on its orbit long before that. A
+ * quarter holds: simulated over twenty years a moon of jupiter placed there
+ * keeps its distance, while a third of the way out it is gone within five.
+ */
+export const STABLE_HILL_FRACTION = 0.25;
+/**
+ * Mass of a new satellite, as a fraction of its parent's mass. A thousandth
+ * is what jupiter is to the sun, and the moon is a little more than that to
+ * the earth, so one ratio does for both.
+ */
+const SATELLITE_MASS_RATIO = 1 / 1000;
+/** Nothing smaller than a large moon, in solar masses. */
+const MIN_SATELLITE_MASS = 1e-8;
+/**
+ * Mass of a planet placed by hand, as a fraction of the sun it will circle:
+ * from about an earth to about a jupiter.
+ */
+const PLACED_MASS_MIN_RATIO = 1 / 333000;
+const PLACED_MASS_MAX_RATIO = 1 / 1000;
 /** Speed a satellite may always spend on its orbit, however fast its parent. */
-const MIN_SPEED_BUDGET = 1;
+const MIN_SPEED_BUDGET = 0.1;
 
 /**
  * Where a satellite has to start, and how fast, to circle its parent once
  * placed `distance` away from it at `angle` radians. The parent's own velocity
  * is added on top, so a satellite of a moving planet travels along with it.
  *
- * `stepsPerTick` is how often the simulation moves an object during one tick:
- * `GravityWorldService` integrates once per pair of objects, so an object
- * travels that many times its velocity per tick while its velocity only picks
- * each acceleration up once. A circular orbit therefore needs
- * `v = sqrt(G * parentMass / (stepsPerTick * distance))`; pass the number of
- * pairs the satellite will have, or its orbit spirals outwards.
+ * A circular orbit is `v = sqrt(G * parentMass / distance)`, the same formula
+ * the world itself runs on - see `circularOrbitSpeed`.
  */
 export function orbitAround(
   parent: WorldObject,
   distance: number,
   angle: number,
-  gravitationalConstant: number,
-  stepsPerTick = 1
+  gravitationalConstant: number
 ): { pos: Vector2d; vel: Vector2d } {
-  const steps: number = Math.max(1, stepsPerTick);
   // a static parent stays where it is, whatever velocity it carries around
   const carried: Vector2d = parent.isStatic ? Vector2d.zero : parent.vel;
   const radius: number = Math.max(
     distance,
-    minOrbitDistance(parent, gravitationalConstant, steps, carried.length())
+    minOrbitDistance(parent, gravitationalConstant, carried.length())
   );
   const outwards: Vector2d = Vector2d.create(Math.cos(angle), Math.sin(angle));
   const speed: number = Math.sqrt(
-    (gravitationalConstant * parent.mass) / (steps * radius)
+    (gravitationalConstant * parent.mass) / radius
   );
   return {
     pos: parent.pos.add(outwards.mul(radius)),
@@ -62,17 +70,13 @@ export function orbitAround(
 export function minOrbitDistance(
   parent: WorldObject,
   gravitationalConstant: number,
-  stepsPerTick = 1,
   carriedSpeed = 0
 ): number {
   const budget: number = Math.max(
     MIN_SPEED_BUDGET,
     MAX_VELOCITY - Math.abs(carriedSpeed)
   );
-  return (
-    (gravitationalConstant * parent.mass) /
-    (Math.max(1, stepsPerTick) * budget ** 2)
-  );
+  return (gravitationalConstant * parent.mass) / budget ** 2;
 }
 
 /**

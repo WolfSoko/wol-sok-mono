@@ -58,16 +58,17 @@ describe('GravityWorldService', () => {
     const planet: WorldObject = new Planet(vec2(0, 100), undefined, 10);
     service.addWorldObject(planet);
 
+    // pulled at one per tick squared, and carried by the velocity that makes
     service.calcNextTick(1);
     expect(planet.pos.x).toBe(0);
-    expect(planet.pos.y).toBe(99.5);
+    expect(planet.pos.y).toBe(99);
 
     expect(sun.pos.x).toBe(0);
     expect(sun.pos.y).toBe(0);
 
     service.calcNextTick(1);
     expect(planet.pos.x).toBe(0);
-    expect(planet.pos.y).toBeCloseTo(97.994962, 6);
+    expect(planet.pos.y).toBeCloseTo(96.979696, 6);
   });
 
   it('should update the x position for a step for the planet', () => {
@@ -78,11 +79,11 @@ describe('GravityWorldService', () => {
     service.addWorldObject(planet);
 
     service.calcNextTick(1);
-    expect(planet.pos.x).toBe(99.5);
+    expect(planet.pos.x).toBe(99);
     expect(planet.pos.y).toBe(0);
 
     service.calcNextTick(1);
-    expect(planet.pos.x).toBeCloseTo(97.994962, 6);
+    expect(planet.pos.x).toBeCloseTo(96.979696, 6);
     expect(planet.pos.y).toBe(0);
   });
 
@@ -97,11 +98,29 @@ describe('GravityWorldService', () => {
 
     service.calcNextTick(1);
 
-    expect(planet.pos.x).toBeCloseTo(98.498, 3);
-    expect(planet.pos.y).toBeCloseTo(0.001781, 3);
+    // the pull of the sun, and a much smaller one from the other planet
+    expect(planet.pos.x).toBeCloseTo(98.996464, 6);
+    expect(planet.pos.y).toBeCloseTo(0.003536, 6);
 
-    expect(planet2.pos.x).toBeCloseTo(0.001795, 3);
-    expect(planet2.pos.y).toBeCloseTo(98.498187, 3);
+    expect(planet2.pos.x).toBeCloseTo(0.003536, 6);
+    expect(planet2.pos.y).toBeCloseTo(98.996464, 6);
+  });
+
+  it('should move an object once a tick, not once per other object', () => {
+    service.setUniverse(1000, 1000, 0);
+    const coasting: WorldObject = new Planet(vec2(0, 0), vec2(3, 0), 10);
+    service.addWorldObject(coasting);
+
+    service.calcNextTick(1);
+    expect(coasting.pos).toEqual(vec2(3, 0));
+
+    // three more objects to pair up with, and still one step of its velocity
+    for (let i = 0; i < 3; i++) {
+      service.addWorldObject(new Planet(vec2(0, 500 + i), undefined, 10));
+    }
+    service.calcNextTick(1);
+
+    expect(coasting.pos).toEqual(vec2(6, 0));
   });
 
   it('should record trails for moving objects only', () => {
@@ -179,7 +198,7 @@ describe('GravityWorldService', () => {
     service.calcNextTick(dT);
 
     expect(testForce.applyForceFor).toHaveBeenCalledTimes(1);
-    expect(testForce.applyForceFor).toHaveBeenCalledWith(planet, dT);
+    expect(testForce.applyForceFor).toHaveBeenCalledWith(planet);
     (testForce.applyForceFor as jest.Mock).mockClear();
 
     const planet2: WorldObject = new Planet(vec2(0, 50), undefined, 10);
@@ -187,8 +206,8 @@ describe('GravityWorldService', () => {
     service.calcNextTick(dT);
 
     expect(testForce.applyForceFor).toHaveBeenCalledTimes(2);
-    expect(testForce.applyForceFor).toHaveBeenCalledWith(planet, dT);
-    expect(testForce.applyForceFor).toHaveBeenCalledWith(planet2, dT);
+    expect(testForce.applyForceFor).toHaveBeenCalledWith(planet);
+    expect(testForce.applyForceFor).toHaveBeenCalledWith(planet2);
   });
 
   function createMockedForce(id = '123'): Force {

@@ -4,6 +4,15 @@ import { SvgPath, TrailSegment } from './svg-path';
 
 /** Number of chunks a trail is split into to fake a fading, tapering tail. */
 export const TRAIL_SEGMENT_COUNT = 16;
+/**
+ * How far ahead a velocity arrow reaches, in years. Drawing the velocity
+ * itself would put the earth's arrow six AU across the world; eighteen days
+ * of travel is a length that fits, and one that means something: where the
+ * body will be shortly.
+ */
+export const VELOCITY_ARROW_YEARS = 0.05;
+/** Digits kept in a path, enough for AU to stay smooth under deep zoom. */
+const PATH_DIGITS = 5;
 const TRAIL_MAX_OPACITY = 0.8;
 const TRAIL_MIN_WIDTH_RATIO = 0.15;
 
@@ -22,7 +31,7 @@ export function svgPathForVelocity(
   vel: Vector2d
 ): SvgPath {
   const { x, y } = pos;
-  const { x: x2, y: y2 } = pos.add(vel);
+  const { x: x2, y: y2 } = pos.add(vel.mul(VELOCITY_ARROW_YEARS));
   return { id, path: `M${x} ${y} ${x2} ${y2}` };
 }
 
@@ -67,7 +76,7 @@ export function trailToSvgSegments(
       opacity: round(TRAIL_MAX_OPACITY * age, 2),
       width: round(
         maxWidth * (TRAIL_MIN_WIDTH_RATIO + (1 - TRAIL_MIN_WIDTH_RATIO) * age),
-        2
+        PATH_DIGITS
       ),
     });
   }
@@ -77,7 +86,10 @@ export function trailToSvgSegments(
 /** Joins the points into an svg polyline path, rounded to keep it short. */
 function toPolylinePath(points: readonly Vector2d[]): string {
   return points
-    .map(({ x, y }, i) => `${i === 0 ? 'M' : 'L'}${round(x, 1)} ${round(y, 1)}`)
+    .map(
+      ({ x, y }, i) =>
+        `${i === 0 ? 'M' : 'L'}${round(x, PATH_DIGITS)} ${round(y, PATH_DIGITS)}`
+    )
     .join(' ');
 }
 
