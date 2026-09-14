@@ -762,13 +762,15 @@ describe('GravityWorldComponent', () => {
           .map((planet) => planet.mass);
       };
 
-      const lightSun = massesFor(0.5);
-      const heavySun = massesFor(50);
+      // a thousand times apart, which is more than the range of masses one
+      // sun can hand out - so the two sets cannot overlap whatever is drawn
+      const lightSun = massesFor(0.1);
+      const heavySun = massesFor(100);
 
       // every planet of the heavy sun outweighs every planet of the light one
       expect(Math.max(...lightSun)).toBeLessThan(Math.min(...heavySun));
       // and each one stays a planet next to its sun, never a rival
-      expect(Math.max(...heavySun)).toBeLessThan(50 / 100);
+      expect(Math.max(...heavySun)).toBeLessThan(100 / 100);
     });
 
     it('should not center when a new planet is placed on empty space', () => {
@@ -898,6 +900,63 @@ describe('GravityWorldComponent', () => {
       expect(component.menuPosition()).toEqual({ x: 120, y: 90 });
       // the planet is let go of, so lifting the finger does not fling it
       expect(component.worldService.getForces().length).toBe(forcesBefore);
+    });
+
+    it('should swallow the click that lifting the finger turns into', () => {
+      component.pointerDown(touchOn(component.planets()[0].id));
+      jest.advanceTimersByTime(500);
+      component.pointerUp(touchOn(component.planets()[0].id));
+
+      // the browser fires it a moment later, at the point the finger was -
+      // which is the backdrop of the menu that has just opened
+      const click = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+      });
+      const reached = jest.fn();
+      document.addEventListener('click', reached);
+      document.body.dispatchEvent(click);
+      document.removeEventListener('click', reached);
+
+      expect(reached).not.toHaveBeenCalled();
+      expect(click.defaultPrevented).toBe(true);
+    });
+
+    it('should swallow only that one click', () => {
+      component.pointerDown(touchOn(component.planets()[0].id));
+      jest.advanceTimersByTime(500);
+      component.pointerUp(touchOn(component.planets()[0].id));
+      document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+      const later = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+      });
+      const reached = jest.fn();
+      document.addEventListener('click', reached);
+      document.body.dispatchEvent(later);
+      document.removeEventListener('click', reached);
+
+      expect(reached).toHaveBeenCalled();
+    });
+
+    it('should stop waiting for a click that never comes', () => {
+      component.pointerDown(touchOn(component.planets()[0].id));
+      jest.advanceTimersByTime(500);
+      component.pointerUp(touchOn(component.planets()[0].id));
+
+      // long past anything the browser could still be turning into a click
+      jest.advanceTimersByTime(2000);
+      const later = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+      });
+      const reached = jest.fn();
+      document.addEventListener('click', reached);
+      document.body.dispatchEvent(later);
+      document.removeEventListener('click', reached);
+
+      expect(reached).toHaveBeenCalled();
     });
 
     it('should not open the menu when the touch ends early', () => {
@@ -1202,9 +1261,9 @@ describe('GravityWorldComponent', () => {
       planet.vel = vec2(0, 0);
       component.contextMenu(eventOn(planet.id));
 
-      component.setSpeed(120);
+      component.setSpeed(12);
 
-      expect(planet.vel.length()).toBeCloseTo(120, 6);
+      expect(planet.vel.length()).toBeCloseTo(12, 6);
       // an orbit runs perpendicular to the line towards the sun
       const towardsSun = planet.pos.sub(component.sun.pos).norm();
       expect(towardsSun.scalar(planet.vel.norm())).toBeCloseTo(0, 6);

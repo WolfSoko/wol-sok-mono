@@ -82,6 +82,12 @@ const CLICK_TOLERANCE_PX = 4;
 /** How long a touch has to rest on an object to open its menu. */
 const LONG_PRESS_MS = 450;
 /**
+ * How long the browser may take to turn a lifted finger into a click. It fires
+ * one a moment after the touch ends, at the point the finger was - which by
+ * then is the backdrop of the menu the long press has just opened.
+ */
+const SYNTHETIC_CLICK_MS = 700;
+/**
  * World time one second of watching is worth, in years. A tenth takes the
  * earth ten seconds to go round the sun at the usual speed - slow enough to
  * follow, fast enough not to wait for mars.
@@ -134,7 +140,14 @@ function midpointOf(a: ClientPoint, b: ClientPoint): ClientPoint {
  */
 export const MIN_MASS_EXPONENT = -3;
 export const MAX_MASS_EXPONENT = 6;
-export const MAX_SPEED = MAX_VELOCITY;
+/**
+ * Fastest the speed slider goes, in AU/year. Not the ceiling the integrator
+ * keeps - that is `MAX_VELOCITY`, eight times higher, and a drag can still
+ * reach it - but the fastest a body here is worth setting by hand: not quite
+ * twice what it takes to leave the sun from the orbit of mercury, where the
+ * earth travels at 6.3 and mercury at 10.
+ */
+export const MAX_SPEED = 25;
 
 @Component({
   selector: 'feat-lazy-gravity-world',
@@ -841,7 +854,34 @@ export class GravityWorldComponent {
       // takes over - otherwise it would be flung when the finger lifts
       this.cancelDrag();
       this.openMenuFor(wo, clientX, clientY);
+      // and it is still down now, so the click it turns into is still coming
+      this.swallowNextClick();
     }, LONG_PRESS_MS);
+  }
+
+  /**
+   * Eats the one click a lifted finger is turned into. Without it the menu a
+   * long press opens is shut again the moment the finger comes off: the click
+   * lands on the backdrop, and a click on the backdrop is how a menu is
+   * dismissed. Nothing else is swallowed - the listener gives up on the first
+   * click, or after the browser can no longer be sending that one.
+   */
+  private swallowNextClick(): void {
+    const swallow = (event: MouseEvent): void => {
+      event.stopPropagation();
+      event.preventDefault();
+      stop();
+    };
+    // both close over `timer`, which is set by the time either of them runs
+    const stop = (): void => {
+      document.removeEventListener('click', swallow, true);
+      clearTimeout(timer);
+    };
+    const timer: ReturnType<typeof setTimeout> = setTimeout(
+      stop,
+      SYNTHETIC_CLICK_MS
+    );
+    document.addEventListener('click', swallow, true);
   }
 
   /** A moving or ending pointer is a drag or a tap, not a long press. */
