@@ -37,6 +37,7 @@ import { Force, SpringForce } from './domain/world-objects/force';
 import { Planet } from './domain/world-objects/planet';
 import {
   defaultOrbitDistance,
+  minOrbitDistance,
   orbitAround,
   orbitDistanceRange,
   placedPlanetMass,
@@ -264,15 +265,19 @@ export class GravityWorldComponent {
   readonly menuOrbit: WritableSignal<number> = signal(0);
   /** Whether the simulation was running when the menu took over. */
   private pausedForMenu = false;
-  /** What a satellite of the menu target would be: a planet, or a moon. */
   /**
-   * How far a satellite of the menu target may sit from it. The mass decides
-   * both discs and the reach of the target's gravity, so it is read here to
-   * let the range follow the mass slider.
+   * How far a satellite of the menu target may sit from it. Mass decides both
+   * discs and the reach of the target's gravity, speed decides how tightly a
+   * satellite may circle it, so the range follows both sliders - and the sun
+   * carries its mass in the settings, which is read for the same reason.
    */
   readonly orbitRange: Signal<{ min: number; max: number }> = computed(() => {
     const target: WorldObject | null = this.menuTarget();
     const mass: number = this.menuMass();
+    const { gravitationalConstant } = this.settings();
+    // every object in the world pairs up with the satellite: the planets and
+    // the sun, which is what `addSatellite` counts
+    const pairs: number = this.planets().length + 1;
     if (!target || mass <= 0) {
       return { min: 0, max: 0 };
     }
@@ -282,10 +287,17 @@ export class GravityWorldComponent {
       target === this.sun ? undefined : this.sun,
       this.satelliteFor(target).radius,
       // a satellite beyond the world would leave nothing to look at
-      this.canvasSize().x / 2
+      this.canvasSize().x / 2,
+      minOrbitDistance(
+        target,
+        gravitationalConstant,
+        pairs,
+        target.isStatic ? 0 : this.menuSpeed()
+      )
     );
   });
 
+  /** What a satellite of the menu target would be: a planet, or a moon. */
   readonly satelliteName: Signal<string> = computed(() =>
     this.menuTarget() === this.sun ? 'planet' : 'moon'
   );
@@ -856,7 +868,10 @@ export class GravityWorldComponent {
     const mass: number = Math.round(10 ** this.menuMassExponent());
     this.menuMass.set(mass);
     if (target === this.sun) {
-      // the sun takes its mass from the settings, so it has to change there
+      // the sun takes its mass from the settings, so it has to change there -
+      // but the effect handing it over only runs once this turn is done, and
+      // the orbit range below reads the sun's radius right away
+      this.sun.mass = mass;
       this.settings.update((settings) => ({ ...settings, massOfSun: mass }));
     } else {
       target.mass = mass;

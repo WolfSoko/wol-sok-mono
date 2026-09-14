@@ -1004,6 +1004,36 @@ describe('GravityWorldComponent', () => {
       expect(component.menuOrbit()).toBe(component.orbitRange().max);
     });
 
+    it('should follow the sun out when its mass is raised', () => {
+      component.contextMenu(eventOn(component.sun.id));
+      const before = component.orbitRange();
+
+      component.setMassExponent(MAX_MASS_EXPONENT);
+
+      // a heavier sun is a bigger disc, so its satellites start further out
+      expect(component.sun.mass).toBe(10 ** MAX_MASS_EXPONENT);
+      expect(component.orbitRange().min).toBeGreaterThan(before.min);
+      expect(component.menuOrbit()).toBeGreaterThanOrEqual(
+        component.orbitRange().min
+      );
+    });
+
+    it('should not offer an orbit the placement would overrule', () => {
+      const planet = component.planets()[0];
+      component.contextMenu(eventOn(planet.id));
+
+      // a fast parent carries its satellite along, which needs room
+      component.setSpeed(MAX_SPEED);
+      component.setOrbitDistance(component.orbitRange().min);
+      component.addSatellite();
+
+      const satellite = component.planets()[component.planets().length - 1];
+      expect(satellite.pos.dist(planet.pos)).toBeCloseTo(
+        component.menuOrbit(),
+        6
+      );
+    });
+
     it('should keep the mass slider within its scale', () => {
       component.settings.update((settings) => ({
         ...settings,

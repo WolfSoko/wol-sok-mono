@@ -103,23 +103,31 @@ export function defaultOrbitDistance(
 
 /**
  * How far from its parent a satellite may be placed: from the two discs just
- * clearing each other out to where the `primary` would steal it - or, for a
- * parent that orbits nothing, out to `reach`.
+ * clearing each other - or `floor`, whichever is further out - to where the
+ * `primary` would steal it, and never beyond `reach`.
  *
- * The clearance wins when the two ends disagree, for the same reason
- * `defaultOrbitDistance` lets it win: a light planet is drawn far bigger than
- * its mass deserves, and then every orbit it can offer is one the primary
- * eventually takes over.
+ * `floor` is what `orbitAround` would push a satellite out to anyway, so an
+ * orbit offered below it would not be the one that is placed.
+ *
+ * The near end wins when the two disagree, for the same reason
+ * `defaultOrbitDistance` lets the clearance win: a light planet is drawn far
+ * bigger than its mass deserves, and then every orbit it can offer is one the
+ * primary eventually takes over.
  */
 export function orbitDistanceRange(
   parent: WorldObject,
   primary: WorldObject | undefined,
   satelliteRadius = 0,
-  reach = Number.POSITIVE_INFINITY
+  reach = Number.POSITIVE_INFINITY,
+  floor = 0
 ): { min: number; max: number } {
-  const min: number = clearanceDistance(parent, satelliteRadius);
+  const min: number = Math.max(
+    clearanceDistance(parent, satelliteRadius),
+    floor
+  );
   const outer: number = holdsSatellitesFor(parent, primary)
-    ? hillRadius(parent, primary) * STABLE_HILL_FRACTION
+    ? // a satellite beyond the world is as lost as one the primary takes
+      Math.min(hillRadius(parent, primary) * STABLE_HILL_FRACTION, reach)
     : reach;
   return { min, max: Math.max(min, outer) };
 }

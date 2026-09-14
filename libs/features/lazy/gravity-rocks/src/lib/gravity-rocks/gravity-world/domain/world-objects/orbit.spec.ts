@@ -305,6 +305,27 @@ describe('satellite defaults', () => {
       expect(orbitDistanceRange(sun, sun, 0, 1500).max).toBe(1500);
     });
 
+    it('should stay inside the reach even when the primary is far away', () => {
+      // a sun this light barely holds on to anything, so the hill radius of a
+      // planet orbiting it reaches beyond the world
+      const featherSun = new Sun(vec2(0, 0), undefined, 1);
+      const planet = new Planet(vec2(1000, 0), undefined, 2000);
+      expect(hillRadius(planet, featherSun) * 0.4).toBeGreaterThan(1500);
+
+      expect(orbitDistanceRange(planet, featherSun, 0, 1500).max).toBe(1500);
+    });
+
+    it('should start no closer than the floor it is given', () => {
+      const sun = new Sun(vec2(0, 0), undefined, 80000);
+      const { min: withoutFloor } = orbitDistanceRange(sun, undefined, 0, 1500);
+
+      const { min, max } = orbitDistanceRange(sun, undefined, 0, 1500, 400);
+
+      expect(withoutFloor).toBeLessThan(400);
+      expect(min).toBe(400);
+      expect(max).toBeGreaterThanOrEqual(min);
+    });
+
     it('should never end before it starts', () => {
       const sun = new Sun(vec2(0, 0), undefined, 80000);
       // drawn far bigger than its mass deserves, and right next to the sun
