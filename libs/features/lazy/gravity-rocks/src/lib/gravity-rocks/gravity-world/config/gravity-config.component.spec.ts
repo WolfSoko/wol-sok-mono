@@ -21,6 +21,7 @@ describe('GravityConfigComponent', () => {
     massOfSun: 10000,
     showTrail: true,
     trailLength: 100,
+    simulationSpeed: 1,
   };
   let emitted: GravityWorldConfig[];
 
@@ -49,6 +50,35 @@ describe('GravityConfigComponent', () => {
     expect(getByQa<HTMLInputElement>(fixture, 'massOfSun')).toBeTruthy();
     expect(getByQa(fixture, 'showTrail')).toBeTruthy();
     expect(getByQa<HTMLInputElement>(fixture, 'trailLength')).toBeTruthy();
+    expect(getByQa<HTMLInputElement>(fixture, 'simulationSpeed')).toBeTruthy();
+  });
+
+  it('should put the speed slider on the log scale of the speed', () => {
+    component.config = { ...initialConfig, simulationSpeed: 10 };
+    expect(component.speedExponent).toBe(1);
+
+    component.config = { ...initialConfig, simulationSpeed: 0.1 };
+    expect(component.speedExponent).toBe(-1);
+  });
+
+  it('should read a speed back off the slider', () => {
+    component.setSpeedExponent(0);
+    expect(component.form.controls.simulationSpeed.value).toBe(1);
+
+    component.setSpeedExponent(-1);
+    expect(component.form.controls.simulationSpeed.value).toBe(0.1);
+
+    component.setSpeedExponent(0.5);
+    // rounded to what the label shows
+    expect(component.form.controls.simulationSpeed.value).toBe(3.16);
+  });
+
+  it('should fall back to the normal speed when there is none', () => {
+    component.config = { ...initialConfig, simulationSpeed: 0 };
+
+    // the same fallback the simulation makes, so the label tells the truth
+    expect(component.simulationSpeed).toBe(1);
+    expect(component.speedExponent).toBe(0);
   });
 
   it('should set initial form values', () => {

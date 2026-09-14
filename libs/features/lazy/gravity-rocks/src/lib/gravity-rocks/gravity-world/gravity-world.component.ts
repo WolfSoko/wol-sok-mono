@@ -31,6 +31,9 @@ import { GravityConfigComponent } from './config/gravity-config.component';
 import {
   GravityWorldConfig,
   INITIAL_CONFIG,
+  INITIAL_SIMULATION_SPEED,
+  MAX_SIMULATION_SPEED,
+  MIN_SIMULATION_SPEED,
 } from './domain/gravity-world-config';
 import { GravityWorldService } from './domain/gravity-world.service';
 import { Force, SpringForce } from './domain/world-objects/force';
@@ -64,6 +67,10 @@ const TRAIL_WIDTH_RATIO = 0.8;
 const CLICK_TOLERANCE_PX = 4;
 /** How long a touch has to rest on an object to open its menu. */
 const LONG_PRESS_MS = 450;
+/** Longest slice of world time the integrator can follow in one go. */
+const MAX_TICK_SECONDS = 1 / 60;
+/** Slices one frame may be cut into, so speed cannot stall the browser. */
+const MAX_TICKS_PER_FRAME = 20;
 const RIGHT_BUTTON = 2;
 
 /** Anything that carries a position in client (viewport) coordinates. */
@@ -932,11 +939,37 @@ export class GravityWorldComponent {
     });
   }
 
-  /** Advances the simulation by a single frame. */
+  /**
+   * Advances the simulation by a single frame of the given length. The
+   * simulation speed decides how much world time that frame is worth, and
+   * that time is cut into slices the integrator can still follow: at ten
+   * times speed one step would be ten frames wide and the orbits would fly
+   * apart. At the usual speed on a 60Hz screen a frame is exactly one slice.
+   */
   step(deltaTime: number): void {
-    this.worldService.calcNextTick(deltaTime);
-    const { showTrail, trailLength } = this.settings();
-    this.worldService.recordTrails(showTrail ? trailLength : 0);
+    const { showTrail, trailLength, simulationSpeed } = this.settings();
+    // the config is an injection token, so a speed can be missing entirely
+    const speed: number = clamp(
+      simulationSpeed > 0 ? simulationSpeed : INITIAL_SIMULATION_SPEED,
+      MIN_SIMULATION_SPEED,
+      MAX_SIMULATION_SPEED
+    );
+    // a frame the tab slept through would otherwise arrive as one enormous
+    // slice per tick: the world falls behind instead, which it can catch up
+    // on, where a planet thrown out of its orbit never comes back
+    const seconds: number = Math.min(
+      deltaTime * speed,
+      MAX_TICKS_PER_FRAME * MAX_TICK_SECONDS
+    );
+    const ticks: number = clamp(
+      Math.ceil(seconds / MAX_TICK_SECONDS),
+      1,
+      MAX_TICKS_PER_FRAME
+    );
+    for (let tick = 0; tick < ticks; tick++) {
+      this.worldService.calcNextTick(seconds / ticks);
+      this.worldService.recordTrails(showTrail ? trailLength : 0);
+    }
     this.updateSignals();
     const followed: WorldObject | null = this.followed();
     if (followed) {

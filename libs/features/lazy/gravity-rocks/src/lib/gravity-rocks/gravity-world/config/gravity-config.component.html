@@ -17,6 +17,26 @@
       formControlName="massOfSun"
     />
   </mat-form-field>
+  <div class="trail-length">
+    <label for="simulation-speed-slider">
+      Simulation speed:
+      {{ simulationSpeed | number: "1.1-2" }}&times;
+    </label>
+    <mat-slider
+      class="config-slider"
+      [max]="maxSpeedExponent"
+      [min]="minSpeedExponent"
+      [step]="0.05"
+    >
+      <input
+        id="simulation-speed-slider"
+        matSliderThumb
+        data-qa="simulationSpeed"
+        [value]="speedExponent"
+        (valueChange)="setSpeedExponent($event)"
+      />
+    </mat-slider>
+  </div>
   <mat-slide-toggle data-qa="showTrail" formControlName="showTrail">
     Show trail
   </mat-slide-toggle>
