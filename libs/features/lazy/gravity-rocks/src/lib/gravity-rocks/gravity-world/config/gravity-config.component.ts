@@ -20,6 +20,7 @@ import { distinctUntilChanged, map, Observable } from 'rxjs';
 import {
   compareGravityWorldConfig,
   GravityWorldConfig,
+  INITIAL_SHOW_VELOCITY,
   INITIAL_SIMULATION_SPEED,
   MAX_SIMULATION_SPEED,
   MAX_TRAIL_LENGTH,
@@ -59,6 +60,7 @@ export class GravityConfigComponent {
     gravitationalConstant: FormControl<number>;
     massOfSun: FormControl<number>;
     showTrail: FormControl<boolean>;
+    showVelocity: FormControl<boolean>;
     trailLength: FormControl<number>;
     simulationSpeed: FormControl<number>;
   }>;
@@ -96,6 +98,7 @@ export class GravityConfigComponent {
       gravitationalConstant: 0,
       massOfSun: 0,
       showTrail: nNfB.control<boolean>(true),
+      showVelocity: nNfB.control<boolean>(INITIAL_SHOW_VELOCITY),
       trailLength: MIN_TRAIL_LENGTH,
       simulationSpeed: INITIAL_SIMULATION_SPEED,
     });

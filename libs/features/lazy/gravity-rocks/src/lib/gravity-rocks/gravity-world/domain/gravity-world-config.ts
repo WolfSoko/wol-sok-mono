@@ -6,6 +6,13 @@ export const INITIAL_MASS_OF_SUN = 1;
 /** The real one, in the units of the world - see `solar-system.ts`. */
 export const INITIAL_GRAVITY_CONSTANT = GRAVITATIONAL_CONSTANT;
 export const INITIAL_SHOW_TRAIL = true;
+/**
+ * Whether every body carries an arrow showing where it is headed. Off: with
+ * the planets drawn as small as this scale makes them, an arrow on each one
+ * is most of what is on the screen, and the trails already say which way the
+ * world is turning.
+ */
+export const INITIAL_SHOW_VELOCITY = false;
 export const INITIAL_TRAIL_LENGTH = 150;
 export const MIN_TRAIL_LENGTH = 10;
 export const MAX_TRAIL_LENGTH = 600;
@@ -18,6 +25,7 @@ export interface GravityWorldConfig {
   gravitationalConstant: number;
   massOfSun: number;
   showTrail: boolean;
+  showVelocity: boolean;
   trailLength: number;
   simulationSpeed: number;
 }
@@ -30,6 +38,7 @@ export const INITIAL_CONFIG: InjectionToken<GravityWorldConfig> =
         gravitationalConstant: INITIAL_GRAVITY_CONSTANT,
         massOfSun: INITIAL_MASS_OF_SUN,
         showTrail: INITIAL_SHOW_TRAIL,
+        showVelocity: INITIAL_SHOW_VELOCITY,
         trailLength: INITIAL_TRAIL_LENGTH,
         simulationSpeed: INITIAL_SIMULATION_SPEED,
       }),
@@ -45,6 +54,7 @@ export function compareGravityWorldConfig(
     c1.massOfSun === c2.massOfSun &&
     c1.gravitationalConstant === c2.gravitationalConstant &&
     c1.showTrail === c2.showTrail &&
+    c1.showVelocity === c2.showVelocity &&
     c1.trailLength === c2.trailLength &&
     c1.simulationSpeed === c2.simulationSpeed
   );
