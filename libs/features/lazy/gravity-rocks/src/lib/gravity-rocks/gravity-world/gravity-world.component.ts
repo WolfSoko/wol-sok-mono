@@ -423,11 +423,16 @@ export class GravityWorldComponent {
     this.worldService.addWorldObject(this.sun);
 
     const centralMass: number = this.sun.mass;
+    const { gravitationalConstant } = this.settings();
     PLANETS.forEach((body, index) => {
       // an eighth of a turn between neighbours, so no two of them line up
       const angle: number = (index * Math.PI) / 4;
       const outwards: Vector2d = vec2(Math.cos(angle), Math.sin(angle));
-      const speed: number = circularOrbitSpeed(centralMass, body.orbit);
+      const speed: number = circularOrbitSpeed(
+        centralMass,
+        body.orbit,
+        gravitationalConstant
+      );
       this.worldService.addWorldObject(
         new Planet(
           this.calcCenteredVec(outwards.mul(body.orbit)),

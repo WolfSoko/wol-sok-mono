@@ -269,6 +269,29 @@ describe('GravityWorldComponent', () => {
       expect(component.viewCenter()).toEqual(component.canvasSize().div(2));
     });
 
+    it('should start the planets on the gravity that is set', () => {
+      component.settings.update((settings) => ({
+        ...settings,
+        gravitationalConstant: GRAVITATIONAL_CONSTANT * 4,
+      }));
+
+      component.reset();
+
+      // the world integrates with the gravity from the settings, so a planet
+      // started on the speed the default one would need is not on a circle -
+      // four times the gravity is twice the speed
+      component.planets().forEach((planet, index) => {
+        const distance = planet.pos.dist(component.sun.pos);
+        expect(distance).toBeCloseTo(PLANETS[index].orbit, 9);
+        expect(planet.vel.length()).toBeCloseTo(
+          Math.sqrt(
+            (GRAVITATIONAL_CONSTANT * 4 * component.sun.mass) / distance
+          ),
+          9
+        );
+      });
+    });
+
     it('should pan with shift and drag without creating a planet', () => {
       component.zoomIn();
       const planetsBefore = component.planets().length;

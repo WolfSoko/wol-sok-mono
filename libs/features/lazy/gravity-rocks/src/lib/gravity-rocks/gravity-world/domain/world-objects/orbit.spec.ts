@@ -412,6 +412,60 @@ describe('satellite defaults', () => {
   });
 });
 
+describe('a planet born with a radius of its own', () => {
+  const earth = PLANETS[2];
+
+  it('should keep that radius at the mass it came with', () => {
+    const planet = new Planet(
+      vec2(0, 0),
+      undefined,
+      earth.mass,
+      'Earth',
+      earth.radius
+    );
+
+    expect(planet.bodyRadius).toBe(earth.radius);
+    // and not what the earth's density would make of its own mass, which is
+    // the same thing here, but for jupiter would not be
+    const jupiter = new Planet(
+      vec2(0, 0),
+      undefined,
+      JUPITER_MASS,
+      'j',
+      4.7789e-4
+    );
+    expect(jupiter.bodyRadius).toBe(4.7789e-4);
+  });
+
+  it('should grow and shrink with the mass it is given', () => {
+    const planet = new Planet(
+      vec2(0, 0),
+      undefined,
+      earth.mass,
+      'Earth',
+      earth.radius
+    );
+    const wasDrawn = planet.radius;
+
+    planet.mass = earth.mass * 8;
+
+    // eight times the mass at the same density is twice the radius, and the
+    // drawn disc follows it - or a planet set to three suns would still be
+    // drawn the size of the earth, and offer a moon the orbits of one
+    expect(planet.bodyRadius).toBeCloseTo(earth.radius * 2, 12);
+    expect(planet.radius).toBeGreaterThan(wasDrawn);
+  });
+
+  it('should not pretend to a radius it never had', () => {
+    const placed = new Planet(vec2(0, 0), undefined, earth.mass);
+
+    // placed by hand, so it is sized from its mass like anything else
+    expect(placed.bodyRadius).toBeCloseTo(earth.radius, 6);
+    placed.mass = earth.mass * 8;
+    expect(placed.bodyRadius).toBeCloseTo(earth.radius * 2, 6);
+  });
+});
+
 describe('the solar system the world starts with', () => {
   it('should carry the real masses of its planets', () => {
     const [mercury, , earth] = PLANETS;

@@ -106,13 +106,19 @@ export function radiusOfMass(mass: number): number {
   return mass > 0 ? EARTH_DENSITY_RADIUS * mass ** (1 / 3) : 0;
 }
 
-/** Speed a body needs to circle `centralMass` at `distance`, in AU/year. */
+/**
+ * Speed a body needs to circle `centralMass` at `distance`, in AU/year. The
+ * gravitational constant is asked for rather than taken from here: the world
+ * runs on the one in the settings, which a person may have changed, and a
+ * planet started on a speed for a different one would not be on a circle.
+ */
 export function circularOrbitSpeed(
   centralMass: number,
-  distance: number
+  distance: number,
+  gravitationalConstant: number
 ): number {
   if (distance <= 0) {
     return 0;
   }
-  return Math.sqrt((GRAVITATIONAL_CONSTANT * centralMass) / distance);
+  return Math.sqrt((gravitationalConstant * centralMass) / distance);
 }
