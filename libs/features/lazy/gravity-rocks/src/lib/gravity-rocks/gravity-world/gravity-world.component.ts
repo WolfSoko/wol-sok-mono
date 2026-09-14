@@ -198,10 +198,16 @@ export class GravityWorldComponent {
       .filter(notNil)
   );
 
+  /**
+   * An arrow per body showing where its velocity takes it next, or nothing
+   * at all while the setting is off - which it is until someone asks for it.
+   */
   velocitySvgPath: Signal<SvgPath[]> = computed(() =>
-    this.planets().map((planet) =>
-      svgPathForVelocity(planet.id, planet.pos, planet.vel)
-    )
+    this.settings().showVelocity
+      ? this.planets().map((planet) =>
+          svgPathForVelocity(planet.id, planet.pos, planet.vel)
+        )
+      : []
   );
 
   canvasSize: WritableSignal<Vector2d> = signal(this.MAX_DIM);

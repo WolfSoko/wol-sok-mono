@@ -6,6 +6,7 @@ import {
   GravityWorldConfig,
   INITIAL_GRAVITY_CONSTANT,
   INITIAL_MASS_OF_SUN,
+  INITIAL_SHOW_VELOCITY,
 } from '../domain/gravity-world-config';
 import { GravityConfigComponent } from './gravity-config.component';
 
@@ -24,6 +25,7 @@ describe('GravityConfigComponent', () => {
     gravitationalConstant: INITIAL_GRAVITY_CONSTANT,
     massOfSun: INITIAL_MASS_OF_SUN,
     showTrail: true,
+    showVelocity: INITIAL_SHOW_VELOCITY,
     trailLength: 100,
     simulationSpeed: 1,
   };
@@ -137,6 +139,17 @@ describe('GravityConfigComponent', () => {
     expect(component.form.controls.showTrail.value).toBe(
       initialConfig.showTrail
     );
+  });
+
+  it('should offer the velocity arrows as a switch of their own', () => {
+    expect(getByQa(fixture, 'showVelocity')).toBeTruthy();
+    // off to begin with, so the config it starts from is what it shows
+    expect(component.form.controls.showVelocity.value).toBe(false);
+
+    component.form.controls.showVelocity.setValue(true);
+    fixture.detectChanges();
+
+    expect(emitted[emitted.length - 1].showVelocity).toBe(true);
   });
 
   it('should emit when the trail is switched off', () => {
