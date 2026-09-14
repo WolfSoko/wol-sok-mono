@@ -5,6 +5,8 @@ import {
   hillRadius,
   minOrbitDistance,
   orbitAround,
+  orbitDistanceRange,
+  placedPlanetMass,
   satelliteMass,
 } from './orbit';
 import { Planet } from './planet';
@@ -245,5 +247,88 @@ describe('satellite defaults', () => {
   it('should never make a satellite smaller than the minimum', () => {
     const tiny = new Planet(vec2(0, 0), undefined, 1);
     expect(satelliteMass(tiny)).toBe(30);
+  });
+
+  describe('mass of a planet placed by hand', () => {
+    it('should grow with the sun it will circle', () => {
+      // the same share of a ten times heavier sun is ten times the planet
+      expect(placedPlanetMass(80000, 0)).toBe(80);
+      expect(placedPlanetMass(800000, 0)).toBe(800);
+    });
+
+    it('should span from a light planet to a heavy one', () => {
+      expect(placedPlanetMass(80000, 0)).toBe(80);
+      expect(placedPlanetMass(80000, 1)).toBe(400);
+      expect(placedPlanetMass(80000, 0.5)).toBe(240);
+    });
+
+    it('should stay visible next to a tiny sun', () => {
+      expect(placedPlanetMass(100, 0)).toBe(30);
+    });
+
+    it('should keep a share out of range within it', () => {
+      expect(placedPlanetMass(80000, -1)).toBe(placedPlanetMass(80000, 0));
+      expect(placedPlanetMass(80000, 2)).toBe(placedPlanetMass(80000, 1));
+    });
+
+    it('should pick its own share when none is given', () => {
+      const mass = placedPlanetMass(80000);
+      expect(mass).toBeGreaterThanOrEqual(80);
+      expect(mass).toBeLessThanOrEqual(400);
+    });
+  });
+
+  describe('range a satellite may be placed in', () => {
+    it('should start where the two discs clear each other', () => {
+      const sun = new Sun(vec2(0, 0), undefined, 80000);
+      const moonRadius = 25;
+
+      const { min } = orbitDistanceRange(sun, undefined, moonRadius);
+
+      expect(min).toBe(sun.radius * 1.2 + moonRadius);
+    });
+
+    it('should end where the primary would steal the satellite', () => {
+      const sun = new Sun(vec2(0, 0), undefined, 80000);
+      const planet = new Planet(vec2(4000, 0), undefined, 4000);
+
+      const { max } = orbitDistanceRange(planet, sun);
+
+      expect(max).toBeCloseTo(hillRadius(planet, sun) * 0.4, 6);
+    });
+
+    it('should reach as far as it is allowed to without a primary', () => {
+      const sun = new Sun(vec2(0, 0), undefined, 80000);
+
+      expect(orbitDistanceRange(sun, undefined, 0, 1500).max).toBe(1500);
+      // the sun is no primary of its own
+      expect(orbitDistanceRange(sun, sun, 0, 1500).max).toBe(1500);
+    });
+
+    it('should never end before it starts', () => {
+      const sun = new Sun(vec2(0, 0), undefined, 80000);
+      // drawn far bigger than its mass deserves, and right next to the sun
+      const feather = new Planet(vec2(300, 0), undefined, 30);
+
+      const { min, max } = orbitDistanceRange(feather, sun);
+
+      expect(hillRadius(feather, sun) * 0.4).toBeLessThan(min);
+      expect(max).toBe(min);
+    });
+
+    it('should hold the distance a satellite is placed at by default', () => {
+      const sun = new Sun(vec2(0, 0), undefined, 80000);
+      const planet = new Planet(vec2(4000, 0), undefined, 4000);
+
+      for (const [parent, primary] of [
+        [sun, undefined],
+        [planet, sun],
+      ] as const) {
+        const { min, max } = orbitDistanceRange(parent, primary, 0, 1500);
+        const fallback = defaultOrbitDistance(parent, primary);
+        expect(fallback).toBeGreaterThanOrEqual(min);
+        expect(fallback).toBeLessThanOrEqual(max);
+      }
+    });
   });
 });

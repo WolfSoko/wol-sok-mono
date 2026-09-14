@@ -224,6 +224,25 @@
           <span>Add orbiting {{ satelliteName() }}</span>
         </button>
         <div class="object-menu-slider" (click)="$event.stopPropagation()">
+          <label for="menu-orbit-slider"
+            >Orbit of the next {{ satelliteName() }}:
+            {{ menuOrbit() | number: "1.0-0" }}</label
+          >
+          <mat-slider
+            [max]="orbitRange().max"
+            [min]="orbitRange().min"
+            [step]="1"
+          >
+            <input
+              id="menu-orbit-slider"
+              matSliderThumb
+              data-qa="menu-orbit"
+              [value]="menuOrbit()"
+              (valueChange)="setOrbitDistance($event)"
+            />
+          </mat-slider>
+        </div>
+        <div class="object-menu-slider" (click)="$event.stopPropagation()">
           <label for="menu-mass-slider">Mass: {{ menuMass() | number }}</label>
           <mat-slider
             [max]="maxMassExponent"

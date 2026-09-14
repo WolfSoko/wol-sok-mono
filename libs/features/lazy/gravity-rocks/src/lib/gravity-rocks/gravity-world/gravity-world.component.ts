@@ -38,6 +38,8 @@ import { Planet } from './domain/world-objects/planet';
 import {
   defaultOrbitDistance,
   orbitAround,
+  orbitDistanceRange,
+  placedPlanetMass,
   satelliteMass,
 } from './domain/world-objects/orbit';
 import { Sun } from './domain/world-objects/sun';
@@ -258,9 +260,32 @@ export class GravityWorldComponent {
    */
   readonly menuMass: WritableSignal<number> = signal(0);
   readonly menuSpeed: WritableSignal<number> = signal(0);
+  /** How far from the menu target its next satellite is placed. */
+  readonly menuOrbit: WritableSignal<number> = signal(0);
   /** Whether the simulation was running when the menu took over. */
   private pausedForMenu = false;
   /** What a satellite of the menu target would be: a planet, or a moon. */
+  /**
+   * How far a satellite of the menu target may sit from it. The mass decides
+   * both discs and the reach of the target's gravity, so it is read here to
+   * let the range follow the mass slider.
+   */
+  readonly orbitRange: Signal<{ min: number; max: number }> = computed(() => {
+    const target: WorldObject | null = this.menuTarget();
+    const mass: number = this.menuMass();
+    if (!target || mass <= 0) {
+      return { min: 0, max: 0 };
+    }
+    return orbitDistanceRange(
+      target,
+      // the sun holds everything else, so it decides how far a moon may sit
+      target === this.sun ? undefined : this.sun,
+      this.satelliteFor(target).radius,
+      // a satellite beyond the world would leave nothing to look at
+      this.canvasSize().x / 2
+    );
+  });
+
   readonly satelliteName: Signal<string> = computed(() =>
     this.menuTarget() === this.sun ? 'planet' : 'moon'
   );
@@ -764,6 +789,17 @@ export class GravityWorldComponent {
       )
     );
     this.menuSpeed.set(Math.round(wo.vel.length()));
+    this.menuOrbit.set(
+      clamp(
+        defaultOrbitDistance(
+          wo,
+          wo === this.sun ? undefined : this.sun,
+          this.satelliteFor(wo).radius
+        ),
+        this.orbitRange().min,
+        this.orbitRange().max
+      )
+    );
     this.objectMenu?.openMenu();
   }
 
@@ -782,19 +818,10 @@ export class GravityWorldComponent {
     if (!parent) {
       return;
     }
-    const satellite: Planet = new Planet(
-      parent.pos,
-      undefined,
-      satelliteMass(parent)
-    );
+    const satellite: Planet = this.satelliteFor(parent);
     const { pos, vel } = orbitAround(
       parent,
-      // the sun holds everything else, so it decides how far a moon may sit
-      defaultOrbitDistance(
-        parent,
-        parent === this.sun ? undefined : this.sun,
-        satellite.radius
-      ),
+      this.menuOrbit(),
       Math.random() * 2 * Math.PI,
       this.settings().gravitationalConstant,
       // the satellite will pair up with every object that is already there
@@ -804,6 +831,17 @@ export class GravityWorldComponent {
     satellite.vel = vel;
     this.worldService.addWorldObject(satellite);
     this.updateSignals();
+  }
+
+  /** Sets how far from the menu target its next satellite will be placed. */
+  setOrbitDistance(distance: number): void {
+    const { min, max } = this.orbitRange();
+    this.menuOrbit.set(clamp(distance, min, max));
+  }
+
+  /** The satellite the menu target would be given: its moon, or its planet. */
+  private satelliteFor(parent: WorldObject): Planet {
+    return new Planet(parent.pos, undefined, satelliteMass(parent));
   }
 
   /** Sets the mass of the menu target from the log scale of the slider. */
@@ -823,6 +861,8 @@ export class GravityWorldComponent {
     } else {
       target.mass = mass;
     }
+    // both discs and the reach of the target's gravity have just changed
+    this.setOrbitDistance(this.menuOrbit());
     this.updateSignals();
   }
 
@@ -922,8 +962,12 @@ export class GravityWorldComponent {
 
   /** Creates a planet of random mass at the given world position. */
   private createRandomPlanetAt(pos: Vector2d): Planet {
-    const planet: Planet = new Planet(pos, undefined, Math.random() * 400 + 30);
-    return planet;
+    // a planet keeps its place next to the sun however heavy the sun is set
+    return new Planet(
+      pos,
+      undefined,
+      placedPlanetMass(this.settings().massOfSun)
+    );
   }
 
   /** Takes the planet out of the world. */
