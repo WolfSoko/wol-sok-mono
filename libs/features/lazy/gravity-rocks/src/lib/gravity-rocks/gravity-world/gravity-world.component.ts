@@ -67,10 +67,18 @@ const TRAIL_WIDTH_RATIO = 0.8;
 const CLICK_TOLERANCE_PX = 4;
 /** How long a touch has to rest on an object to open its menu. */
 const LONG_PRESS_MS = 450;
-/** Longest slice of world time the integrator can follow in one go. */
-const MAX_TICK_SECONDS = 1 / 60;
-/** Slices one frame may be cut into, so speed cannot stall the browser. */
-const MAX_TICKS_PER_FRAME = 20;
+/**
+ * Longest slice of world time the integrator can follow in one go. A hair
+ * wider than a 60Hz frame, so the jitter on one does not buy it a second
+ * slice and twice the work at the usual speed.
+ */
+export const MAX_TICK_SECONDS = 1 / 50;
+/**
+ * Slices one frame may be cut into, so speed cannot stall the browser. Enough
+ * that the fastest simulation still runs at its full speed while frames take
+ * up to `MAX_TICKS_PER_FRAME * MAX_TICK_SECONDS / MAX_SIMULATION_SPEED`.
+ */
+export const MAX_TICKS_PER_FRAME = 30;
 const RIGHT_BUTTON = 2;
 
 /** Anything that carries a position in client (viewport) coordinates. */
@@ -944,7 +952,7 @@ export class GravityWorldComponent {
    * simulation speed decides how much world time that frame is worth, and
    * that time is cut into slices the integrator can still follow: at ten
    * times speed one step would be ten frames wide and the orbits would fly
-   * apart. At the usual speed on a 60Hz screen a frame is exactly one slice.
+   * apart. At the usual speed a frame stays a single slice.
    */
   step(deltaTime: number): void {
     const { showTrail, trailLength, simulationSpeed } = this.settings();
@@ -955,8 +963,9 @@ export class GravityWorldComponent {
       MAX_SIMULATION_SPEED
     );
     // a frame the tab slept through would otherwise arrive as one enormous
-    // slice per tick: the world falls behind instead, which it can catch up
-    // on, where a planet thrown out of its orbit never comes back
+    // slice per tick: that time is dropped instead, which costs the world a
+    // moment of its history, where a planet thrown out of its orbit is gone
+    // for good
     const seconds: number = Math.min(
       deltaTime * speed,
       MAX_TICKS_PER_FRAME * MAX_TICK_SECONDS
@@ -968,7 +977,14 @@ export class GravityWorldComponent {
     );
     for (let tick = 0; tick < ticks; tick++) {
       this.worldService.calcNextTick(seconds / ticks);
-      this.worldService.recordTrails(showTrail ? trailLength : 0);
+      // every slice leaves its own mark, or a fast world draws a polygon
+      if (showTrail) {
+        this.worldService.recordTrails(trailLength);
+      }
+    }
+    if (!showTrail) {
+      // clearing what is there is a job for once a frame, not once a slice
+      this.worldService.recordTrails(0);
     }
     this.updateSignals();
     const followed: WorldObject | null = this.followed();

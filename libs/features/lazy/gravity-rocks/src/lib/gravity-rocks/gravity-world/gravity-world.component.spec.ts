@@ -14,6 +14,8 @@ import { Planet } from './domain/world-objects/planet';
 import {
   GravityWorldComponent,
   MAX_MASS_EXPONENT,
+  MAX_TICK_SECONDS,
+  MAX_TICKS_PER_FRAME,
   MAX_SPEED,
   MAX_ZOOM,
   MIN_MASS_EXPONENT,
@@ -1224,19 +1226,45 @@ describe('GravityWorldComponent', () => {
       expect(satellite.pos.dist(component.sun.pos)).toBeLessThan(orbit * 2);
     });
 
+    it('should leave a frame at the usual speed in one piece', () => {
+      const tick = jest.spyOn(component.worldService, 'calcNextTick');
+      setSpeed(1);
+
+      // a 60Hz frame, and the same frame arriving a little late as they do
+      for (const frame of [1 / 60, 1 / 60 + 0.002, 1 / 59]) {
+        tick.mockClear();
+        component.step(frame);
+        expect(tick).toHaveBeenCalledTimes(1);
+        expect(tick.mock.calls[0][0]).toBeCloseTo(frame, 9);
+      }
+    });
+
     it('should cut a fast frame into slices', () => {
       const tick = jest.spyOn(component.worldService, 'calcNextTick');
-
-      setSpeed(1);
-      component.step(1 / 60);
-      expect(tick).toHaveBeenCalledTimes(1);
-
-      // a 60Hz frame at eight times speed is eight slices of world time
-      tick.mockClear();
       setSpeed(8);
+
       component.step(1 / 60);
-      expect(tick).toHaveBeenCalledTimes(8);
-      expect(tick.mock.calls.every(([dt]) => dt <= 1 / 60 + 1e-9)).toBe(true);
+
+      // eight times a 60Hz frame is more world time than one slice may hold
+      expect(tick.mock.calls.length).toBeGreaterThan(1);
+      expect(
+        tick.mock.calls.every(([dt]) => dt <= MAX_TICK_SECONDS + 1e-9)
+      ).toBe(true);
+      const simulated = tick.mock.calls.reduce((sum, [dt]) => sum + dt, 0);
+      expect(simulated).toBeCloseTo(8 / 60, 9);
+    });
+
+    it('should hold its speed through the frame rates a screen reaches', () => {
+      const tick = jest.spyOn(component.worldService, 'calcNextTick');
+      setSpeed(MAX_SIMULATION_SPEED);
+
+      // down to 20fps the world still runs at the speed that is asked for
+      for (const frame of [1 / 60, 1 / 30, 1 / 20]) {
+        tick.mockClear();
+        component.step(frame);
+        const simulated = tick.mock.calls.reduce((sum, [dt]) => sum + dt, 0);
+        expect(simulated).toBeCloseTo(frame * MAX_SIMULATION_SPEED, 9);
+      }
     });
 
     it('should let the world fall behind rather than take a huge step', () => {
@@ -1248,10 +1276,26 @@ describe('GravityWorldComponent', () => {
 
       // neither more slices than a frame can afford nor a slice so wide the
       // integrator loses the orbit - the world simply misses that time
-      expect(tick.mock.calls.length).toBeLessThanOrEqual(20);
-      expect(tick.mock.calls.every(([dt]) => dt <= 1 / 60 + 1e-9)).toBe(true);
+      expect(tick.mock.calls.length).toBeLessThanOrEqual(MAX_TICKS_PER_FRAME);
+      expect(
+        tick.mock.calls.every(([dt]) => dt <= MAX_TICK_SECONDS + 1e-9)
+      ).toBe(true);
       const simulated = tick.mock.calls.reduce((sum, [dt]) => sum + dt, 0);
-      expect(simulated).toBeCloseTo(20 / 60, 9);
+      expect(simulated).toBeCloseTo(MAX_TICKS_PER_FRAME * MAX_TICK_SECONDS, 9);
+    });
+
+    it('should clear a switched off trail once a frame, not once a slice', () => {
+      const record = jest.spyOn(component.worldService, 'recordTrails');
+      component.settings.update((settings) => ({
+        ...settings,
+        showTrail: false,
+        simulationSpeed: MAX_SIMULATION_SPEED,
+      }));
+
+      component.step(1 / 60);
+
+      expect(record).toHaveBeenCalledTimes(1);
+      expect(record).toHaveBeenCalledWith(0);
     });
 
     it('should run at normal speed when the config carries none', () => {
