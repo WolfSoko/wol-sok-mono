@@ -36,7 +36,11 @@ import {
   MIN_SIMULATION_SPEED,
 } from './domain/gravity-world-config';
 import { GravityWorldService } from './domain/gravity-world.service';
-import { Force, SpringForce } from './domain/world-objects/force';
+import {
+  Force,
+  SPRING_SPEED_PER_AU,
+  SpringForce,
+} from './domain/world-objects/force';
 import { Planet } from './domain/world-objects/planet';
 import {
   defaultOrbitDistance,
@@ -46,6 +50,12 @@ import {
   placedPlanetMass,
   satelliteMass,
 } from './domain/world-objects/orbit';
+import {
+  circularOrbitSpeed,
+  EARTH_MASS,
+  PLANET_NAMES,
+  PLANETS,
+} from './domain/solar-system';
 import { Sun } from './domain/world-objects/sun';
 import { SvgPath, TrailSegment } from './domain/world-objects/svg-path';
 import {
@@ -55,7 +65,11 @@ import {
 } from './domain/world-objects/toSvgPath';
 import { MAX_VELOCITY, WorldObject } from './domain/world-objects/world-object';
 
-const SVG_VIEW_PORT_SIZE = 3000;
+/**
+ * Width of the world in AU. Six puts the orbit of mars, the outermost planet
+ * the world starts with, inside the frame with room to spare.
+ */
+const SVG_VIEW_PORT_SIZE = 6;
 
 /** Furthest zoom out, shown as 0.1% - enough to watch planets fly far away. */
 export const MIN_ZOOM = 0.001;
@@ -68,17 +82,32 @@ const CLICK_TOLERANCE_PX = 4;
 /** How long a touch has to rest on an object to open its menu. */
 const LONG_PRESS_MS = 450;
 /**
- * Longest slice of world time the integrator can follow in one go. A hair
- * wider than a 60Hz frame, so the jitter on one does not buy it a second
- * slice and twice the work at the usual speed.
+ * How long the browser may take to turn a lifted finger into a click. It fires
+ * one a moment after the touch ends, at the point the finger was - which by
+ * then is the backdrop of the menu the long press has just opened.
  */
-export const MAX_TICK_SECONDS = 1 / 50;
+const SYNTHETIC_CLICK_MS = 700;
+/**
+ * World time one second of watching is worth, in years. A tenth takes the
+ * earth ten seconds to go round the sun at the usual speed - slow enough to
+ * follow, fast enough not to wait for mars.
+ */
+export const YEARS_PER_SECOND = 0.1;
+/**
+ * Longest slice of world time the integrator can follow in one go, in years.
+ * A third of a day, so mercury's 88-day year is two hundred and forty of them:
+ * even the fastest planet is carried through its orbit in hundreds of steps
+ * rather than tens, and its ellipse stays put instead of creeping.
+ */
+export const MAX_TICK_YEARS = 0.001;
 /**
  * Slices one frame may be cut into, so speed cannot stall the browser. Enough
  * that the fastest simulation still runs at its full speed while frames take
- * up to `MAX_TICKS_PER_FRAME * MAX_TICK_SECONDS / MAX_SIMULATION_SPEED`.
+ * up to `MAX_TICKS_PER_FRAME * MAX_TICK_YEARS / (YEARS_PER_SECOND *
+ * MAX_SIMULATION_SPEED)` - a twentieth of a second, which is as slow as a
+ * screen gets before nothing looks right anyway.
  */
-export const MAX_TICKS_PER_FRAME = 30;
+export const MAX_TICKS_PER_FRAME = 60;
 const RIGHT_BUTTON = 2;
 
 /** Anything that carries a position in client (viewport) coordinates. */
@@ -105,9 +134,20 @@ function midpointOf(a: ClientPoint, b: ClientPoint): ClientPoint {
   };
 }
 
-export const MIN_MASS_EXPONENT = 1;
-export const MAX_MASS_EXPONENT = 5;
-export const MAX_SPEED = MAX_VELOCITY;
+/**
+ * The mass slider runs on the log scale of earth masses: from a thousandth
+ * of one, which is half a pluto, to a million, which is three suns.
+ */
+export const MIN_MASS_EXPONENT = -3;
+export const MAX_MASS_EXPONENT = 6;
+/**
+ * Fastest the speed slider goes, in AU/year. Not the ceiling the integrator
+ * keeps - that is `MAX_VELOCITY`, eight times higher, and a drag can still
+ * reach it - but the fastest a body here is worth setting by hand: not quite
+ * twice what it takes to leave the sun from the orbit of mercury, where the
+ * earth travels at 6.3 and mercury at 10.
+ */
+export const MAX_SPEED = 25;
 
 @Component({
   selector: 'feat-lazy-gravity-world',
@@ -194,9 +234,12 @@ export class GravityWorldComponent {
   readonly viewBox: Signal<string> = computed(() => {
     const size: Vector2d = this.viewSize();
     const origin: Vector2d = this.viewCenter().sub(size.div(2));
-    return [origin.x, origin.y, size.x, size.y]
-      .map((value) => Math.round(value * 100) / 100)
-      .join(' ');
+    return (
+      [origin.x, origin.y, size.x, size.y]
+        // AU, so a hundredth would be a million kilometres of jitter
+        .map((value) => Math.round(value * 1e6) / 1e6)
+        .join(' ')
+    );
   });
 
   /** World object the view sticks to while the simulation runs, if any. */
@@ -288,11 +331,10 @@ export class GravityWorldComponent {
    */
   readonly orbitRange: Signal<{ min: number; max: number }> = computed(() => {
     const target: WorldObject | null = this.menuTarget();
+    // in earth masses, read only to follow the slider - the sizes below come
+    // from the object, which the slider has already updated
     const mass: number = this.menuMass();
     const { gravitationalConstant } = this.settings();
-    // every object in the world pairs up with the satellite: the planets and
-    // the sun, which is what `addSatellite` counts
-    const pairs: number = this.planets().length + 1;
     if (!target || mass <= 0) {
       return { min: 0, max: 0 };
     }
@@ -306,10 +348,20 @@ export class GravityWorldComponent {
       minOrbitDistance(
         target,
         gravitationalConstant,
-        pairs,
         target.isStatic ? 0 : this.menuSpeed()
       )
     );
+  });
+
+  /**
+   * Step of the orbit slider: a hundredth of what it can cover. A fixed step
+   * cannot do, the range is a few hundredths of an AU around a planet and a
+   * few whole ones around the sun.
+   */
+  readonly orbitStep: Signal<number> = computed(() => {
+    const { min, max } = this.orbitRange();
+    // a range with nothing to choose still needs a step the slider accepts
+    return Math.max((max - min) / 100, 1e-4);
   });
 
   /** What a satellite of the menu target would be: a planet, or a moon. */
@@ -357,26 +409,41 @@ export class GravityWorldComponent {
     effect(() => (this.running() ? this.gameLoop() : null));
   }
 
+  /**
+   * Puts the sun in the middle and the inner planets around it, each on its
+   * real orbit with the speed that orbit takes, spread out so they do not
+   * start in a row. Mercury through mars: the ones that fit in the frame.
+   */
   private initializeSunAndPlanets(): void {
     this.sun = new Sun(
       this.calcCenteredVec(),
       undefined,
       this.settings().massOfSun
     );
-
     this.worldService.addWorldObject(this.sun);
 
-    this.worldService.addWorldObject(
-      new Planet(this.calcCenteredVec(vec2(0, 450)), vec2(-100, 0), 1000)
-    );
-    const planet2Pos: Vector2d = vec2(-300, -250);
-    this.worldService.addWorldObject(
-      new Planet(
-        this.calcCenteredVec(planet2Pos),
-        planet2Pos.orthogonalTo(this.sun.pos).mul(100),
-        2000
-      )
-    );
+    const centralMass: number = this.sun.mass;
+    const { gravitationalConstant } = this.settings();
+    PLANETS.forEach((body, index) => {
+      // an eighth of a turn between neighbours, so no two of them line up
+      const angle: number = (index * Math.PI) / 4;
+      const outwards: Vector2d = vec2(Math.cos(angle), Math.sin(angle));
+      const speed: number = circularOrbitSpeed(
+        centralMass,
+        body.orbit,
+        gravitationalConstant
+      );
+      this.worldService.addWorldObject(
+        new Planet(
+          this.calcCenteredVec(outwards.mul(body.orbit)),
+          // a circular orbit runs perpendicular to the line to the sun
+          vec2(outwards.y, -outwards.x).mul(speed),
+          body.mass,
+          body.name,
+          body.radius
+        )
+      );
+    });
     this.updateSignals();
   }
 
@@ -516,9 +583,9 @@ export class GravityWorldComponent {
   /**
    * Hands the dragged object the speed of the gesture that let go of it.
    * A running simulation gets that from the spring, whose acceleration works
-   * out to the distance it is stretched by - mass cancels out of `-mass *
-   * distance`. A paused world never ticks, so the same stretch is turned into
-   * a velocity here instead, once, when the gesture ends.
+   * out to the stretch times `SPRING_SPEED_PER_AU` - mass cancels out of
+   * `-mass * stiffness * distance`. A paused world never ticks, so the same
+   * stretch is turned into a velocity here instead, once, on release.
    */
   private throwDragged(): void {
     const wo: WorldObject | null = this.dragObject;
@@ -529,12 +596,15 @@ export class GravityWorldComponent {
     if (!wo || !end || wo.isStatic || this.running()) {
       return;
     }
-    const thrown: Vector2d = end.sub(wo.pos);
-    const speed: number = Math.min(thrown.length(), MAX_VELOCITY);
+    const stretch: Vector2d = end.sub(wo.pos);
+    const speed: number = Math.min(
+      stretch.length() * SPRING_SPEED_PER_AU,
+      MAX_VELOCITY
+    );
     if (speed <= 0) {
       return;
     }
-    wo.vel = thrown.norm().mul(speed);
+    wo.vel = stretch.norm().mul(speed);
     this.updateSignals();
   }
 
@@ -789,7 +859,34 @@ export class GravityWorldComponent {
       // takes over - otherwise it would be flung when the finger lifts
       this.cancelDrag();
       this.openMenuFor(wo, clientX, clientY);
+      // and it is still down now, so the click it turns into is still coming
+      this.swallowNextClick();
     }, LONG_PRESS_MS);
+  }
+
+  /**
+   * Eats the one click a lifted finger is turned into. Without it the menu a
+   * long press opens is shut again the moment the finger comes off: the click
+   * lands on the backdrop, and a click on the backdrop is how a menu is
+   * dismissed. Nothing else is swallowed - the listener gives up on the first
+   * click, or after the browser can no longer be sending that one.
+   */
+  private swallowNextClick(): void {
+    const swallow = (event: MouseEvent): void => {
+      event.stopPropagation();
+      event.preventDefault();
+      stop();
+    };
+    // both close over `timer`, which is set by the time either of them runs
+    const stop = (): void => {
+      document.removeEventListener('click', swallow, true);
+      clearTimeout(timer);
+    };
+    const timer: ReturnType<typeof setTimeout> = setTimeout(
+      stop,
+      SYNTHETIC_CLICK_MS
+    );
+    document.addEventListener('click', swallow, true);
   }
 
   /** A moving or ending pointer is a drag or a tap, not a long press. */
@@ -807,15 +904,16 @@ export class GravityWorldComponent {
     this.stopSim();
     this.menuTarget.set(wo);
     this.menuPosition.set({ x, y });
-    this.menuMass.set(wo.mass);
+    const earthMasses: number = wo.mass / EARTH_MASS;
+    this.menuMass.set(earthMasses);
     this.menuMassExponent.set(
       clamp(
-        wo.mass > 0 ? Math.log10(wo.mass) : MIN_MASS_EXPONENT,
+        earthMasses > 0 ? Math.log10(earthMasses) : MIN_MASS_EXPONENT,
         MIN_MASS_EXPONENT,
         MAX_MASS_EXPONENT
       )
     );
-    this.menuSpeed.set(Math.round(wo.vel.length()));
+    this.menuSpeed.set(wo.vel.length());
     this.menuOrbit.set(
       clamp(
         defaultOrbitDistance(
@@ -850,9 +948,7 @@ export class GravityWorldComponent {
       parent,
       this.menuOrbit(),
       Math.random() * 2 * Math.PI,
-      this.settings().gravitationalConstant,
-      // the satellite will pair up with every object that is already there
-      this.worldService.getWorldObjects().length
+      this.settings().gravitationalConstant
     );
     satellite.pos = pos;
     satellite.vel = vel;
@@ -871,7 +967,11 @@ export class GravityWorldComponent {
     return new Planet(parent.pos, undefined, satelliteMass(parent));
   }
 
-  /** Sets the mass of the menu target from the log scale of the slider. */
+  /**
+   * Sets the mass of the menu target from the log scale of the slider, which
+   * counts in earth masses - a scale a person can hold on to, where the solar
+   * masses the world runs on would be millionths.
+   */
   setMassExponent(exponent: number): void {
     const target: WorldObject | null = this.menuTarget();
     if (!target) {
@@ -880,8 +980,9 @@ export class GravityWorldComponent {
     this.menuMassExponent.set(
       clamp(exponent, MIN_MASS_EXPONENT, MAX_MASS_EXPONENT)
     );
-    const mass: number = Math.round(10 ** this.menuMassExponent());
-    this.menuMass.set(mass);
+    const earthMasses: number = 10 ** this.menuMassExponent();
+    this.menuMass.set(earthMasses);
+    const mass: number = earthMasses * EARTH_MASS;
     if (target === this.sun) {
       // the sun takes its mass from the settings, so it has to change there -
       // but the effect handing it over only runs once this turn is done, and
@@ -966,17 +1067,17 @@ export class GravityWorldComponent {
     // slice per tick: that time is dropped instead, which costs the world a
     // moment of its history, where a planet thrown out of its orbit is gone
     // for good
-    const seconds: number = Math.min(
-      deltaTime * speed,
-      MAX_TICKS_PER_FRAME * MAX_TICK_SECONDS
+    const years: number = Math.min(
+      deltaTime * speed * YEARS_PER_SECOND,
+      MAX_TICKS_PER_FRAME * MAX_TICK_YEARS
     );
     const ticks: number = clamp(
-      Math.ceil(seconds / MAX_TICK_SECONDS),
+      Math.ceil(years / MAX_TICK_YEARS),
       1,
       MAX_TICKS_PER_FRAME
     );
     for (let tick = 0; tick < ticks; tick++) {
-      this.worldService.calcNextTick(seconds / ticks);
+      this.worldService.calcNextTick(years / ticks);
       // every slice leaves its own mark, or a fast world draws a polygon
       if (showTrail) {
         this.worldService.recordTrails(trailLength);
@@ -992,6 +1093,19 @@ export class GravityWorldComponent {
       // the planets have moved, so the view has to move with the followed one
       this.centerOn(followed);
     }
+  }
+
+  /**
+   * What to call a planet in the list: the name it was born with, or its
+   * place in the list for one that was put there by hand.
+   */
+  planetName(planet: Planet, index: number): string {
+    return PLANET_NAMES.has(planet.id) ? planet.id : `Planet ${index + 1}`;
+  }
+
+  /** How far a planet is from the sun, in AU - what its orbit amounts to. */
+  distanceFromSun(planet: Planet): number {
+    return planet.pos.dist(this.sun.pos);
   }
 
   /** Clears the world, resets the view and places sun and planets again. */

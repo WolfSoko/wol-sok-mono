@@ -26,6 +26,7 @@ import {
   MIN_SIMULATION_SPEED,
   MIN_TRAIL_LENGTH,
 } from '../domain/gravity-world-config';
+import { GRAVITATIONAL_CONSTANT } from '../domain/solar-system';
 
 @Component({
   selector: 'feat-lazy-gravity-config',
@@ -43,6 +44,8 @@ import {
 })
 export class GravityConfigComponent {
   readonly minTrailLength = MIN_TRAIL_LENGTH;
+  /** What gravity really is, so a changed one can be put back. */
+  readonly realGravity = GRAVITATIONAL_CONSTANT;
   readonly maxTrailLength = MAX_TRAIL_LENGTH;
   /**
    * The speed slider runs on a log scale: the slow half of it would be a

@@ -137,7 +137,25 @@
 }
 
 .world-object {
+  // the touch target below it takes the pointer, so a planet too small to
+  // hit is still grabbed by the halo around it
+  pointer-events: none;
+}
+
+/**
+ * The area a body answers a pointer in. Its stroke does not scale with the
+ * view, so it is always the same number of css pixels wide however far the
+ * world is zoomed out - a finger's worth of halo around a planet that may be
+ * three pixels across.
+ */
+.touch-target {
   cursor: grab;
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 28;
+  vector-effect: non-scaling-stroke;
+  // the halo is invisible, so hit it whether it is painted or not
+  pointer-events: all;
 }
 
 .menu-anchor {
@@ -157,12 +175,14 @@
   }
 }
 
-// the object the view is stuck to
+// the object the view is stuck to. The world is measured in AU, so the ring
+// is kept in css pixels instead of shrinking away as the view zooms out
 .world-object.followed {
   stroke: #ffffff;
   stroke-opacity: 0.75;
-  stroke-width: 5;
-  stroke-dasharray: 16 10;
+  stroke-width: 2;
+  stroke-dasharray: 7 4;
+  vector-effect: non-scaling-stroke;
 }
 
 // decoration only: never swallow a click meant for a planet below it

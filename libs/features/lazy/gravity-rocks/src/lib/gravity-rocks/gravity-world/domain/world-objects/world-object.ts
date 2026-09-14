@@ -1,20 +1,29 @@
 import { uuid, vec2, Vector2d } from '@wolsok/utils-math';
-
-const MAX_ACCELERATION = 3000;
-
-/** No object may move faster than this, the integrator would lose track. */
-export const MAX_VELOCITY = 1000;
+import { displayRadius, radiusOfMass } from '../solar-system';
 
 /**
- * Minimal distance between two recorded trail points. Keeps the trail from
- * piling up hundreds of points on top of each other for slow moving objects.
+ * Ceilings the integrator needs, in the units of the world: AU per year and
+ * AU per year squared. Both sit far beyond anything the solar system does -
+ * mercury travels at 10 AU/year and is pulled at 260 AU/year² - so they only
+ * ever catch a body that has fallen into another one.
  */
-const MIN_TRAIL_POINT_DISTANCE = 2;
+const MAX_ACCELERATION = 1e6;
+
+/** No object may move faster than this, the integrator would lose track. */
+export const MAX_VELOCITY = 200;
+
+/**
+ * Minimal distance between two recorded trail points, in AU. Keeps the trail
+ * from piling up hundreds of points on top of each other for slow movers.
+ */
+const MIN_TRAIL_POINT_DISTANCE = 0.004;
 
 export class WorldObject {
   public pos: Vector2d;
   vel: Vector2d = vec2(0, 0);
   private acc: Vector2d = vec2(0, 0);
+  /** Whether something pulled on the body since the last `integrate`. */
+  private pulled = false;
   public isStatic = false;
   private trailPoints: Vector2d[] = [];
 
@@ -28,8 +37,17 @@ export class WorldObject {
     this.vel = vel;
   }
 
+  /**
+   * Radius of the body itself in AU, from its mass at the density of the
+   * earth. A body that knows its own radius overrides this.
+   */
+  get bodyRadius(): number {
+    return radiusOfMass(this.mass);
+  }
+
+  /** Radius the body is drawn with in AU, stretched to stay visible. */
   get radius(): number {
-    return 5 + Math.sqrt(this.mass);
+    return displayRadius(this.bodyRadius);
   }
 
   /** Recorded positions, oldest first. */
@@ -37,7 +55,14 @@ export class WorldObject {
     return this.trailPoints;
   }
 
-  applyForce(vector: Vector2d, dT: number, overrideIsStatic = false): void {
+  /**
+   * Adds a force to what is pulling on the body this tick. Nothing moves
+   * until `integrate` is called: a body is pulled on once per other body in
+   * the world, and moving it on every one of those would carry it that many
+   * times as far as its velocity says - the world would run at a speed that
+   * depends on how many planets are in it.
+   */
+  addForce(vector: Vector2d, overrideIsStatic = false): void {
     if (this.isStatic && !overrideIsStatic) {
       return;
     }
@@ -45,18 +70,35 @@ export class WorldObject {
     if (this.acc.length() > MAX_ACCELERATION) {
       this.acc = this.acc.norm().mul(MAX_ACCELERATION);
     }
-    const dVelocityHalf: Vector2d = this.acc.mul(dT).div(2);
-    // adding first half of acceleration to velocity and moving the object
-    this.vel = this.vel.add(dVelocityHalf);
-    this.pos = this.pos.add(this.vel.mul(dT));
-    // adding second half of acceleration to velocity.
-    // This is the method of Verlet integration for better accuracy
-    this.vel = this.vel.add(dVelocityHalf);
+    this.pulled = true;
+  }
+
+  /**
+   * Moves the body through `dT` of world time, by everything that has pulled
+   * on it since the last tick. A static body stays where it is unless it was
+   * pulled by a force that overrules that - the spring of a drag.
+   *
+   * The pull goes into the velocity first and the new velocity carries the
+   * body - a leapfrog, which is what keeps an orbit an orbit. Splitting the
+   * pull around the move instead reads like better arithmetic and is not: it
+   * leaves out the pull at the far end of the step, and the small surplus
+   * that leaves behind is paid into the orbit every time round. Over five
+   * years of world time it carries mercury more than twice as far out as it
+   * started, while this keeps it inside two percent of its orbit.
+   */
+  integrate(dT: number): void {
+    const acc: Vector2d = this.acc;
+    const pulled: boolean = this.pulled;
+    this.acc = vec2(0, 0);
+    this.pulled = false;
+    if (this.isStatic && !pulled) {
+      return;
+    }
+    this.vel = this.vel.add(acc.mul(dT));
     if (this.vel.length() > MAX_VELOCITY) {
       this.vel = this.vel.norm().mul(MAX_VELOCITY);
     }
-
-    this.acc = vec2(0, 0);
+    this.pos = this.pos.add(this.vel.mul(dT));
   }
 
   /**

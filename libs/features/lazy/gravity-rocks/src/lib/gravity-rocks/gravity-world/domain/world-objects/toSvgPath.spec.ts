@@ -1,7 +1,12 @@
 import { vec2, Vector2d } from '@wolsok/utils-math';
 import { SpringForce } from './force';
 import { TrailSegment } from './svg-path';
-import { svgPathForVelocity, toSvgPath, trailToSvgSegments } from './toSvgPath';
+import {
+  VELOCITY_ARROW_YEARS,
+  svgPathForVelocity,
+  toSvgPath,
+  trailToSvgSegments,
+} from './toSvgPath';
 import { WorldObject } from './world-object';
 
 describe('toSvgPath', () => {
@@ -12,9 +17,11 @@ describe('toSvgPath', () => {
     expect(toSvgPath(force)?.path).toBe('M10 20 30 40');
   });
 
-  it('should draw the velocity of an object', () => {
-    expect(svgPathForVelocity('id', vec2(10, 20), vec2(5, 5)).path).toBe(
-      'M10 20 15 25'
+  it('should draw where the velocity takes an object next', () => {
+    // the arrow is the travel of `VELOCITY_ARROW_YEARS`, not the velocity
+    // itself, which at solar system speeds would cross the whole world
+    expect(svgPathForVelocity('id', vec2(1, 2), vec2(4, 8)).path).toBe(
+      `M1 2 ${1 + 4 * VELOCITY_ARROW_YEARS} ${2 + 8 * VELOCITY_ARROW_YEARS}`
     );
   });
 });
