@@ -2,6 +2,91 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [4.100.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.80.1...v4.100.0) (2026-09-15)
+
+
+### Features
+
+* **angular-examples:** migrate module federation to native federation ([#2212](https://github.com/WolfSoko/wol-sok-mono/issues/2212)) ([f307d88](https://github.com/WolfSoko/wol-sok-mono/commit/f307d88a22665cde08be90944a85971a78d5e221))
+* **angular-examples:** rebuild the three.js mandelbrot example as a deep zoom explorer ([#2211](https://github.com/WolfSoko/wol-sok-mono/issues/2211)) ([2bd6498](https://github.com/WolfSoko/wol-sok-mono/commit/2bd64986569aac4c9e1f8343d6bcd3874be19b6c))
+* **feat-lazy-bacteria-game:** fullscreen, seven maps and levels, per player growth cap ([#2221](https://github.com/WolfSoko/wol-sok-mono/issues/2221)) ([f56872d](https://github.com/WolfSoko/wol-sok-mono/commit/f56872d3e0f7f7ec885c1d2b7a9b36c8e6964332))
+* **feat-lazy-bacteria-game:** make the colonies actually eat each other ([#2216](https://github.com/WolfSoko/wol-sok-mono/issues/2216)) ([cec1f96](https://github.com/WolfSoko/wol-sok-mono/commit/cec1f9661867fdc985311754fc4abffa3b8e6b23))
+* **feat-lazy-bacteria-game:** steer the crosshairs by touch ([#2219](https://github.com/WolfSoko/wol-sok-mono/issues/2219)) ([d102ad4](https://github.com/WolfSoko/wol-sok-mono/commit/d102ad4d6db56c0540e04973ecc4b04fb8601d2c))
+* **feat-lazy-gravity-rocks:** allow zooming out to 0.1 percent ([#2220](https://github.com/WolfSoko/wol-sok-mono/issues/2220)) ([ff118c2](https://github.com/WolfSoko/wol-sok-mono/commit/ff118c24c730dfd9dd4e17172e6d14db107b038a))
+* **feat-lazy-gravity-rocks:** center a planet when it is clicked ([#2217](https://github.com/WolfSoko/wol-sok-mono/issues/2217)) ([83baaa6](https://github.com/WolfSoko/wol-sok-mono/commit/83baaa6ed77a70e05462a5b64c55486008587ccd))
+* **feat-lazy-gravity-rocks:** follow a clicked planet, and an object menu for satellites, mass and speed ([#2218](https://github.com/WolfSoko/wol-sok-mono/issues/2218)) ([cf928a8](https://github.com/WolfSoko/wol-sok-mono/commit/cf928a8406d8d4e8c14a56d825ce9f81622c3c51))
+* **feat-lazy-gravity-rocks:** let the simulation run slower and faster ([#2232](https://github.com/WolfSoko/wol-sok-mono/issues/2232)) ([695265e](https://github.com/WolfSoko/wol-sok-mono/commit/695265e37620dc9adf1ae802847bae0093b21331))
+* **feat-lazy-gravity-rocks:** make the velocity arrows a setting, off by default ([#2234](https://github.com/WolfSoko/wol-sok-mono/issues/2234)) ([dd8ceb7](https://github.com/WolfSoko/wol-sok-mono/commit/dd8ceb7b6b2f919381a56034f0e26bb553755c88))
+* **feat-lazy-gravity-rocks:** make the world usable with touch ([#2222](https://github.com/WolfSoko/wol-sok-mono/issues/2222)) ([8b0deae](https://github.com/WolfSoko/wol-sok-mono/commit/8b0deaed76292adc070e7e6f6527165af51850d6))
+* **feat-lazy-gravity-rocks:** run the gravity world on real astronomy ([#2233](https://github.com/WolfSoko/wol-sok-mono/issues/2233)) ([e92d768](https://github.com/WolfSoko/wol-sok-mono/commit/e92d768f9a4fa48bf73da6d48fcee90d636b729b))
+* **feat-lazy-gravity-rocks:** size placed planets by the sun, pick the orbit ([#2229](https://github.com/WolfSoko/wol-sok-mono/issues/2229)) ([4f0368d](https://github.com/WolfSoko/wol-sok-mono/commit/4f0368d2c86db9e35ded041c9149fc54115309b2))
+* **feat-lazy-gravity-rocks:** zooming and planet trails in the gravity world ([#2215](https://github.com/WolfSoko/wol-sok-mono/issues/2215)) ([a1410c1](https://github.com/WolfSoko/wol-sok-mono/commit/a1410c1a97e02211927183ccb6f533c0416ff59a))
+
+
+### Bug Fixes
+
+* **angular-examples:** register MF remotes lazily to stop duplicate Angular (NG0908) ([#2207](https://github.com/WolfSoko/wol-sok-mono/issues/2207)) ([0683518](https://github.com/WolfSoko/wol-sok-mono/commit/0683518a0bde4ac9c533e8f941aa42d4330ef2f0))
+* **deps:** update font awesome to v7 ([#2203](https://github.com/WolfSoko/wol-sok-mono/issues/2203)) ([79cc145](https://github.com/WolfSoko/wol-sok-mono/commit/79cc145abf9dc1e7947c599d4f55be60bb80a24a)), closes [#2192](https://github.com/WolfSoko/wol-sok-mono/issues/2192)
+* **feat-lazy-fourier-analysis:** stack circle analysis graph below circle on mobile ([#2214](https://github.com/WolfSoko/wol-sok-mono/issues/2214)) ([8f3984c](https://github.com/WolfSoko/wol-sok-mono/commit/8f3984c1bb7b016534c18073e1c374abd57a8ee4))
+* **feat-lazy-gravity-rocks:** let a moon's orbit and mass be adjusted ([#2238](https://github.com/WolfSoko/wol-sok-mono/issues/2238)) ([d32b876](https://github.com/WolfSoko/wol-sok-mono/commit/d32b876430497d0bf5f08a1a750ff450b406b526))
+* **github:** format code-ql-analysis.yml and stop deploy tags re-triggering release ([bb4fd62](https://github.com/WolfSoko/wol-sok-mono/commit/bb4fd6291786ebeca3e718963ad9525bfd6766f1))
+* **github:** pass PAT_TOKEN to checkout in deploy workflow ([e4c234d](https://github.com/WolfSoko/wol-sok-mono/commit/e4c234db832210dd32194aa097254eb6d75975e5))
+* **nx:** drop .github/** from sharedGlobals ([b247024](https://github.com/WolfSoko/wol-sok-mono/commit/b247024d2d16de4ea22168335275970ba0b742e9))
+* **nx:** empty sharedGlobals, drop .nx/workflows/** too ([0088d21](https://github.com/WolfSoko/wol-sok-mono/commit/0088d21c1fa944b39731c8e2d40c0c3854cfc5ce))
+* **pacetrainer:** stop horizontal scroll on mobile by hiding toolbar subtitle ([#2235](https://github.com/WolfSoko/wol-sok-mono/issues/2235)) ([32517d7](https://github.com/WolfSoko/wol-sok-mono/commit/32517d7b9ab364c922062b230bd0da54ae8a2a5d))
+
+
+### Chore
+
+* **ci:** 🔧 👷 update checkout configurations to disable shallow clones and apply tree filter ([b012a63](https://github.com/WolfSoko/wol-sok-mono/commit/b012a63dee30dd07a454177280858269d3ea21a3))
+* **ci:** 🔧 👷 update CI job condition to exclude 'chore(release):' commits ([837b9c5](https://github.com/WolfSoko/wol-sok-mono/commit/837b9c58d364c6a00ba14b374fd994d7b47b80f6))
+* **ci:** 🔧 👷 update GITHUB_TOKEN to use PAT_TOKEN for deployment ([702bbdd](https://github.com/WolfSoko/wol-sok-mono/commit/702bbdd32e301973bc8dc12cbed53aa402835e12))
+* **cicd:** 🔧 push tags in batches of max 3 to avoid github limitations ([42d317f](https://github.com/WolfSoko/wol-sok-mono/commit/42d317f2dceefddf3718304559e8629308c872e7))
+* **cicd:** 🔧 update CI configuration to ignore CHANGELOG.md and specific tags ([cc2c647](https://github.com/WolfSoko/wol-sok-mono/commit/cc2c6473a4b329ff5af117ed70659f1147a371c8))
+* **deps:** update actions/github-script action to v9 ([#2189](https://github.com/WolfSoko/wol-sok-mono/issues/2189)) ([860aa00](https://github.com/WolfSoko/wol-sok-mono/commit/860aa00b6685e2f58c00d4f6026179df33fdeb7a))
+* **deps:** update dependency @esbuild/linux-x64 to v0.28.2 ([#2186](https://github.com/WolfSoko/wol-sok-mono/issues/2186)) ([7ef6c00](https://github.com/WolfSoko/wol-sok-mono/commit/7ef6c0006bb2b1398a3fe0a032fe9e6f3f43780d))
+* **deps:** update dependency @eslint/eslintrc to v3.3.7 ([#2213](https://github.com/WolfSoko/wol-sok-mono/issues/2213)) ([c662f8c](https://github.com/WolfSoko/wol-sok-mono/commit/c662f8c27dbdab7350279816a8b3fb6a20787063))
+* **deps:** update dependency @types/lodash to v4.17.25 ([#2205](https://github.com/WolfSoko/wol-sok-mono/issues/2205)) ([038735b](https://github.com/WolfSoko/wol-sok-mono/commit/038735bd404d0294ef9a4c049a0404879a62224e))
+* **deps:** update dependency html-webpack-plugin to v5.6.8 ([#2224](https://github.com/WolfSoko/wol-sok-mono/issues/2224)) ([7eb0a25](https://github.com/WolfSoko/wol-sok-mono/commit/7eb0a2554966397d2f7f0cad145f836426cbe098))
+* **deps:** update dependency jest-canvas-mock to v2.5.8 ([#2227](https://github.com/WolfSoko/wol-sok-mono/issues/2227)) ([b0cd073](https://github.com/WolfSoko/wol-sok-mono/commit/b0cd073df0b102292f9ac7f4c47e51e17c31bef0))
+* **deps:** update dependency jsonc-eslint-parser to v2.4.2 ([#2230](https://github.com/WolfSoko/wol-sok-mono/issues/2230)) ([6af4ecf](https://github.com/WolfSoko/wol-sok-mono/commit/6af4ecf83b048e9bdf90bc40e7293cc7b6fc6e7f))
+* **nx:** migrate workspace to latest Nx version ([#2223](https://github.com/WolfSoko/wol-sok-mono/issues/2223)) ([03c7b0d](https://github.com/WolfSoko/wol-sok-mono/commit/03c7b0d838e6e23fa6dc6c3edecdb8c0a6bfab96))
+* **nx:** update nx workspace to 23.1.2 ([#2204](https://github.com/WolfSoko/wol-sok-mono/issues/2204)) ([54a24ec](https://github.com/WolfSoko/wol-sok-mono/commit/54a24ec0032d868bb509eef7ad571d83ef0caa9a))
+* **release:** 4.80.10 [skip ci] ([676a541](https://github.com/WolfSoko/wol-sok-mono/commit/676a541b95ff6c86e48d2124c9baab69f07c7829))
+* **release:** 4.80.2 [skip ci] ([6a74f7a](https://github.com/WolfSoko/wol-sok-mono/commit/6a74f7a04715df9e0fb35bd12ff57cef7fc73247))
+* **release:** 4.80.3 [skip ci] ([e1a9c46](https://github.com/WolfSoko/wol-sok-mono/commit/e1a9c46c91aa45f721218a4e2d1b5ea0625980c0))
+* **release:** 4.80.4 [skip ci] ([57ec79e](https://github.com/WolfSoko/wol-sok-mono/commit/57ec79ec1d921f1996cf283b80423f4210de4277))
+* **release:** 4.80.5 [skip ci] ([505a797](https://github.com/WolfSoko/wol-sok-mono/commit/505a79739fc4a48a067ae0491592103f20c0ca0e))
+* **release:** 4.80.6 [skip ci] ([d3c4eed](https://github.com/WolfSoko/wol-sok-mono/commit/d3c4eed6c07b4abebfadd0d918be2a80bc79adba))
+* **release:** 4.80.7 [skip ci] ([57e9711](https://github.com/WolfSoko/wol-sok-mono/commit/57e97116a90d1141b0221854c0368ead7c5b022c))
+* **release:** 4.80.8 [skip ci] ([777f181](https://github.com/WolfSoko/wol-sok-mono/commit/777f1815ab5e57b8747c122694bae54d2029bed8))
+* **release:** 4.80.9 [skip ci] ([a351dc5](https://github.com/WolfSoko/wol-sok-mono/commit/a351dc52c125aa0ea2b029d57df3e5c9772cdecd))
+* **release:** 4.81.0 [skip ci] ([913bb7a](https://github.com/WolfSoko/wol-sok-mono/commit/913bb7a39f4f2e372ddf7b64b5fa4e358ca39133))
+* **release:** 4.82.0 [skip ci] ([5f57837](https://github.com/WolfSoko/wol-sok-mono/commit/5f57837f4d64ed04e2634dd0735056c136d057e0))
+* **release:** 4.83.0 [skip ci] ([7d1fd92](https://github.com/WolfSoko/wol-sok-mono/commit/7d1fd9236b648671cdfbadaaed89f555fe1c61d0))
+* **release:** 4.84.0 [skip ci] ([254f027](https://github.com/WolfSoko/wol-sok-mono/commit/254f02700ea7e1afae23625a804f5c9537408903))
+* **release:** 4.85.0 [skip ci] ([5d49f17](https://github.com/WolfSoko/wol-sok-mono/commit/5d49f17a81476fb28dbdda7ae4519496f15c7a41))
+* **release:** 4.86.0 [skip ci] ([47b66e6](https://github.com/WolfSoko/wol-sok-mono/commit/47b66e6365cc63cf19087310ee591ffc1c2a39d5))
+* **release:** 4.87.0 [skip ci] ([11b3931](https://github.com/WolfSoko/wol-sok-mono/commit/11b39313ee7f7859740d1673437cd054ffc4f77d))
+* **release:** 4.88.0 [skip ci] ([30da95c](https://github.com/WolfSoko/wol-sok-mono/commit/30da95c4ac7c8df6c20c82c138888915bda113ed))
+* **release:** 4.89.0 [skip ci] ([914430a](https://github.com/WolfSoko/wol-sok-mono/commit/914430a29554ace6cfe4234ad51bdb68984ee186))
+* **release:** 4.90.0 [skip ci] ([8292945](https://github.com/WolfSoko/wol-sok-mono/commit/8292945522f6be14027b8b267cb2ea5f6bdc6d1f))
+* **release:** 4.91.0 [skip ci] ([1d47723](https://github.com/WolfSoko/wol-sok-mono/commit/1d47723f4c0eef22fd45d264af31d7825220ffbb))
+* **release:** 4.92.0 [skip ci] ([c79f7ba](https://github.com/WolfSoko/wol-sok-mono/commit/c79f7ba8d632ad9f9a874c1ce71a98dd9646df1d))
+* **release:** 4.93.0 [skip ci] ([06eac9b](https://github.com/WolfSoko/wol-sok-mono/commit/06eac9be4cc16257b2e0708cef11d9df3f74cf83))
+* **release:** 4.94.0 [skip ci] ([b084cb2](https://github.com/WolfSoko/wol-sok-mono/commit/b084cb2334e9ab5c1f6d2fd7d195dcf3d4a81a9b))
+* **release:** 4.95.0 [skip ci] ([862ae0d](https://github.com/WolfSoko/wol-sok-mono/commit/862ae0d3c9c12526d8913aa9c8ef3a410eec5bb0))
+* **release:** 4.96.0 [skip ci] ([27fd43f](https://github.com/WolfSoko/wol-sok-mono/commit/27fd43f558da4eaebcce3dabc67d57c044c41ed3))
+* **release:** 4.97.0 [skip ci] ([a6da3ce](https://github.com/WolfSoko/wol-sok-mono/commit/a6da3ce0fadde6978359b02c183d0dec029f0a7a))
+* **release:** 4.98.0 [skip ci] ([dbce246](https://github.com/WolfSoko/wol-sok-mono/commit/dbce246b256d7d11394fc7b0cfc98f842f07efef))
+* **release:** 4.99.0 [skip ci] ([e94eb0d](https://github.com/WolfSoko/wol-sok-mono/commit/e94eb0dd5fb1ef4094d28d402a259841250190a0))
+* **release:** publish ([332da83](https://github.com/WolfSoko/wol-sok-mono/commit/332da8369fa88791cb74ef6147c369ad2d427014))
+* **release:** publish ([b723e88](https://github.com/WolfSoko/wol-sok-mono/commit/b723e880d35b2ea8edc01bb0e91f82655799bbf2))
+* **release:** publish ([a7b0d0a](https://github.com/WolfSoko/wol-sok-mono/commit/a7b0d0a9d2f33239d44e52c42667798739081339))
+* **release:** publish ([9741167](https://github.com/WolfSoko/wol-sok-mono/commit/9741167a57bd5d566aaeee3ae02591cc9db1675a))
+* **release:** publish ([aa6db3f](https://github.com/WolfSoko/wol-sok-mono/commit/aa6db3f2517fec977a8ddd74aac143fdc08e073c))
+* **release:** publish ([b7655b8](https://github.com/WolfSoko/wol-sok-mono/commit/b7655b8a086cf9ea2f3bf3e2ea29759611f5040b))
+
 ## [4.99.0](https://github.com/WolfSoko/wol-sok-mono/compare/v4.80.1...v4.99.0) (2026-09-15)
 
 
