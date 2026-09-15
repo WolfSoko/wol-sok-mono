@@ -174,6 +174,44 @@
   mat-button-toggle-group {
     background-color: rgba(0, 0, 0, 0.6);
   }
+
+  .tool-hint {
+    max-width: 14rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 0.8rem;
+  }
+}
+
+// the orbit the orbit tool draws, kept a few css pixels wide at any zoom and
+// never in the way of the pointer that is placing it
+.orbit-preview,
+.orbit-preview-satellite {
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.orbit-preview {
+  fill: none;
+  stroke: #ffffff;
+  stroke-opacity: 0.7;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+
+  &.unheld {
+    stroke: #ff8a65;
+  }
+}
+
+.orbit-preview-satellite {
+  fill: #ffffff;
+  fill-opacity: 0.6;
+
+  &.unheld {
+    fill: #ff8a65;
+  }
 }
 
 .object-panel {

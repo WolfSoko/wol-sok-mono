@@ -195,6 +195,23 @@
             [attr.cy]="sun.pos.y"
             [attr.r]="sun.radius"
           ></circle>
+          @if (orbitPreview(); as preview) {
+            <circle
+              class="orbit-preview"
+              data-qa="orbit-preview"
+              [class.unheld]="!preview.held"
+              [attr.cx]="preview.center.x"
+              [attr.cy]="preview.center.y"
+              [attr.r]="preview.radius"
+            ></circle>
+            <circle
+              class="orbit-preview-satellite"
+              [class.unheld]="!preview.held"
+              [attr.cx]="preview.satellite.x"
+              [attr.cy]="preview.satellite.y"
+              [attr.r]="preview.satelliteRadius"
+            ></circle>
+          }
           @for (force of forcesSvgPaths(); track force.id) {
             <path
               class="line-line"
@@ -224,7 +241,7 @@
           hideSingleSelectionIndicator
           aria-label="Tool"
           [value]="tool()"
-          (change)="tool.set($event.value)"
+          (change)="pickTool($event.value)"
         >
           @for (item of tools; track item.id) {
             <mat-button-toggle
@@ -238,6 +255,16 @@
             </mat-button-toggle>
           }
         </mat-button-toggle-group>
+        @if (tool() === "orbit") {
+          <span class="tool-hint" data-qa="orbit-tool-hint">
+            @if (orbitParent()) {
+              Press beside it and drag the orbit, let go to add the
+              {{ orbitParent() === sun ? "planet" : "moon" }}
+            } @else {
+              Tap a body to give it a satellite
+            }
+          </span>
+        }
         @if (tool() === "add") {
           <mat-button-toggle-group
             class="kind-picker"
