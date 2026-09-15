@@ -5,6 +5,12 @@ export class Planet extends WorldObject {
   color = uuidToColor(this.id);
 
   /**
+   * What this planet orbits: the sun for a planet, the planet for a moon.
+   * `null` for one nobody has placed around anything yet.
+   */
+  public parent: WorldObject | null = null;
+
+  /**
    * Radius of the planet itself in AU, as it really is, and the mass it
    * really has. A planet of the solar system is born with both; one placed by
    * hand has neither and takes its radius from its mass at the earth's
