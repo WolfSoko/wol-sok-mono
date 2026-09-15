@@ -1145,6 +1145,13 @@ export class GravityWorldComponent {
 
   /** Opens the settings of the object under the cursor on a right click. */
   contextMenu($event: MouseEvent): void {
+    if (this.orbitPointerId !== null) {
+      // a finger resting on the drawn orbit is still holding it - the
+      // browser's long press must neither show its menu nor cut the gesture
+      // short, the satellite follows on release as it would have
+      $event.preventDefault();
+      return;
+    }
     const wo: WorldObject | undefined = this.findWorldObject(
       $event.target as SVGElement
     );

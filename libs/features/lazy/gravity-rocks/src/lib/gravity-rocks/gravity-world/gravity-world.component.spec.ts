@@ -1827,6 +1827,30 @@ describe('GravityWorldComponent', () => {
       expect(component.orbitParent()).toBeNull();
     });
 
+    it("should keep holding the drawn orbit through the browser's long press", () => {
+      component.tool.set('orbit');
+      tapOn(component.sun.id);
+      const planetsBefore = component.planets().length;
+      const svg = query(fixture, 'svg')!;
+      const finger = { pointerId: 1, pointerType: 'touch' };
+      const press = pointerEvent(400, 150, finger);
+      Object.defineProperty(press, 'target', { value: svg });
+      component.pointerDown(press);
+
+      // a finger resting on the background makes the browser ask for a menu
+      const menu = new MouseEvent('contextmenu', { cancelable: true });
+      Object.defineProperty(menu, 'target', { value: svg });
+      component.contextMenu(menu);
+
+      expect(menu.defaultPrevented).toBe(true);
+      expect(component.menuTarget()).toBeNull();
+      // the orbit is still held, so letting go still adds the satellite
+      const lift = pointerEvent(400, 150, finger);
+      Object.defineProperty(lift, 'target', { value: svg });
+      component.pointerUp(lift);
+      expect(component.planets().length).toBe(planetsBefore + 1);
+    });
+
     it('should add nothing when the system cuts the orbit gesture short', () => {
       component.tool.set('orbit');
       tapOn(component.sun.id);
