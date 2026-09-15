@@ -4,6 +4,7 @@ import { EARTH_MASS, GRAVITATIONAL_CONSTANT, PLANETS } from '../solar-system';
 import {
   defaultOrbitDistance,
   hillRadius,
+  keepsSatelliteAt,
   minOrbitDistance,
   orbitAround,
   orbitDistanceRange,
@@ -384,15 +385,41 @@ describe('satellite defaults', () => {
       expect(max).toBeGreaterThanOrEqual(min);
     });
 
-    it('should never end before it starts', () => {
+    it('should offer a few radii where the primary takes everything anyway', () => {
       const sun = new Sun(vec2(0, 0), undefined, SUN_MASS);
       // drawn far bigger than its mass deserves, and right next to the sun
       const feather = new Planet(vec2(0.4, 0), undefined, EARTH_MASS / 1000);
 
       const { min, max } = orbitDistanceRange(feather, sun);
 
+      // no orbit it can offer is one it keeps, so it offers the usual ones
       expect(hillRadius(feather, sun) * STABLE_HILL_FRACTION).toBeLessThan(min);
-      expect(max).toBe(min);
+      expect(min).toBeLessThan(max);
+      expect(max).toBe(feather.radius * 4);
+      expect(keepsSatelliteAt(feather, sun, min)).toBe(false);
+      expect(keepsSatelliteAt(feather, sun, max)).toBe(false);
+    });
+
+    it('should still stay inside the reach where the primary takes everything', () => {
+      const sun = new Sun(vec2(0, 0), undefined, SUN_MASS);
+      const feather = new Planet(vec2(0.4, 0), undefined, EARTH_MASS / 1000);
+      const reach = feather.radius * 2;
+
+      const { min, max } = orbitDistanceRange(feather, sun, 0, reach);
+
+      expect(max).toBe(Math.max(min, reach));
+    });
+
+    it('should tell an orbit the parent keeps from one the primary takes', () => {
+      const sun = new Sun(vec2(0, 0), undefined, SUN_MASS);
+      const jupiter = new Planet(vec2(5.2, 0), undefined, JUPITER_MASS);
+      const held = hillRadius(jupiter, sun) * STABLE_HILL_FRACTION;
+
+      expect(keepsSatelliteAt(jupiter, sun, held * 0.9)).toBe(true);
+      expect(keepsSatelliteAt(jupiter, sun, held * 1.1)).toBe(false);
+      // the sun has no primary, so it keeps whatever circles it
+      expect(keepsSatelliteAt(sun, undefined, 1000)).toBe(true);
+      expect(keepsSatelliteAt(sun, sun, 1000)).toBe(true);
     });
 
     it('should hold the distance a satellite is placed at by default', () => {

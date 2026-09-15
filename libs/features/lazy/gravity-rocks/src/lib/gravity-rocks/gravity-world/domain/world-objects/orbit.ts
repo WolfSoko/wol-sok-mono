@@ -115,10 +115,13 @@ export function defaultOrbitDistance(
  * `floor` is what `orbitAround` would push a satellite out to anyway, so an
  * orbit offered below it would not be the one that is placed.
  *
- * The near end wins when the two disagree, for the same reason
+ * When the two ends disagree the near end wins, for the same reason
  * `defaultOrbitDistance` lets the clearance win: a light planet is drawn far
  * bigger than its mass deserves, and then every orbit it can offer is one the
- * primary eventually takes over.
+ * primary eventually takes over. The usual few radii are offered all the same
+ * - a slider with nothing to choose looks broken, and where the satellite is
+ * lost anyway it may as well be lost from where it was asked for. Ask
+ * `keepsSatelliteAt` to tell the two cases apart.
  */
 export function orbitDistanceRange(
   parent: WorldObject,
@@ -135,7 +138,26 @@ export function orbitDistanceRange(
     ? // a satellite beyond the world is as lost as one the primary takes
       Math.min(hillRadius(parent, primary) * STABLE_HILL_FRACTION, reach)
     : reach;
-  return { min, max: Math.max(min, outer) };
+  if (outer >= min) {
+    return { min, max: outer };
+  }
+  const wide: number = Math.min(parent.radius * ORBIT_DISTANCE_IN_RADII, reach);
+  return { min, max: Math.max(min, wide) };
+}
+
+/**
+ * Whether a satellite `distance` from its parent is one the parent keeps -
+ * rather than one the `primary` the parent orbits pulls away in time.
+ */
+export function keepsSatelliteAt(
+  parent: WorldObject,
+  primary: WorldObject | undefined,
+  distance: number
+): boolean {
+  return (
+    !holdsSatellitesFor(parent, primary) ||
+    distance <= hillRadius(parent, primary) * STABLE_HILL_FRACTION
+  );
 }
 
 /** Closest the two discs can be without overlapping. */
