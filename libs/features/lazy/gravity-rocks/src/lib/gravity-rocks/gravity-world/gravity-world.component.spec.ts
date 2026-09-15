@@ -1458,6 +1458,38 @@ describe('GravityWorldComponent', () => {
       expect(moon.vel.sub(planet.vel).length()).toBeCloseTo(orbitSpeed, 6);
     });
 
+    it('should move a moon back into a valid orbit if growing its own mass leaves it too close', () => {
+      const { planet, moon } = addMoonToOutermostPlanet();
+      component.contextMenu(eventOn(moon.id));
+      const before = moon.pos.dist(planet.pos);
+
+      // a moon grown this heavy has a disc that no longer clears the planet
+      // from where it started - the mass slider alone must not leave it
+      // overlapping its planet, nor just report a distance it is not at
+      component.setMassExponent(MAX_MASS_EXPONENT);
+
+      const after = moon.pos.dist(planet.pos);
+      expect(after).toBeGreaterThan(before);
+      expect(after).toBeCloseTo(component.menuDistance(), 6);
+      expect(after).toBeCloseTo(component.menuDistanceRange().min, 6);
+    });
+
+    it('should leave the moon where it is when a mass change does not crowd it', () => {
+      const { planet, moon } = addMoonToOutermostPlanet();
+      component.contextMenu(eventOn(moon.id));
+      const before = moon.pos;
+
+      // lightening the moon only ever widens the range, never shrinks it past
+      // where the moon already sits - nothing here needs moving
+      component.setMassExponent(MIN_MASS_EXPONENT);
+
+      expect(moon.pos).toBe(before);
+      expect(moon.pos.dist(planet.pos)).toBeCloseTo(
+        component.menuDistance(),
+        6
+      );
+    });
+
     it('should keep the distance within the range the moon allows', () => {
       const { moon } = addMoonToOutermostPlanet();
       component.contextMenu(eventOn(moon.id));

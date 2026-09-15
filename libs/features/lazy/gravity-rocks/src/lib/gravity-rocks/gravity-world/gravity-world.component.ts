@@ -1112,11 +1112,20 @@ export class GravityWorldComponent {
     }
     // both discs and the reach of the target's gravity have just changed
     this.setOrbitDistance(this.menuOrbit());
-    // the target's own disc has changed too, which can narrow how far it may
-    // sit from its parent - reclamp the label, without moving it by itself
-    this.menuDistance.update((value) =>
-      clamp(value, this.menuDistanceRange().min, this.menuDistanceRange().max)
-    );
+    // the target's own disc has changed too, which can grow it into its
+    // parent's - move it back onto a valid orbit if its real place no longer
+    // is one, otherwise leave it be: a mass tweak is not a request to move it
+    const parent: WorldObject | undefined = this.primaryOf(target);
+    if (parent) {
+      const current: number = target.pos.dist(parent.pos);
+      const { min, max } = this.menuDistanceRange();
+      const clamped: number = clamp(current, min, max);
+      if (clamped === current) {
+        this.menuDistance.set(current);
+      } else {
+        this.setDistance(clamped);
+      }
+    }
     this.updateSignals();
   }
 
