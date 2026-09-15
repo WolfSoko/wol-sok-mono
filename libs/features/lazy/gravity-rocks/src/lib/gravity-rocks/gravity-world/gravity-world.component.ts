@@ -346,8 +346,9 @@ export class GravityWorldComponent {
     }
     return orbitDistanceRange(
       target,
-      // the sun holds everything else, so it decides how far a moon may sit
-      target === this.sun ? undefined : this.sun,
+      // what holds the target itself decides how far its own satellite may
+      // sit - the sun for a planet, but the planet for a moon, not the sun
+      this.primaryOf(target),
       this.satelliteFor(target).radius,
       // a satellite beyond the world would leave nothing to look at
       this.canvasSize().x / 2,
@@ -357,6 +358,63 @@ export class GravityWorldComponent {
         target.isStatic ? 0 : this.menuSpeed()
       )
     );
+  });
+
+  /**
+   * How far the menu target itself currently sits from its own parent - the
+   * sun for a planet, the planet for a moon. The sliders own this state for
+   * the same reason `menuMass` does: the world objects are mutable, and a
+   * signal reading their fields would not notice a change.
+   */
+  readonly menuDistance: WritableSignal<number> = signal(0);
+
+  /**
+   * How far the menu target may be moved from its own parent: from its disc
+   * just clearing its parent's, to where its parent's own primary would pull
+   * it away instead - the same rule `orbitRange` places a new satellite by,
+   * applied to the target itself.
+   */
+  readonly menuDistanceRange: Signal<{ min: number; max: number }> = computed(
+    () => {
+      const target: WorldObject | null = this.menuTarget();
+      // read only to follow the mass slider - the sizes below come from the
+      // objects themselves, which the slider has already updated
+      const mass: number = this.menuMass();
+      const { gravitationalConstant } = this.settings();
+      const parent: WorldObject | undefined = target
+        ? this.primaryOf(target)
+        : undefined;
+      if (!target || !parent || mass <= 0) {
+        // the sun has no parent to move against
+        return { min: 0, max: 0 };
+      }
+      return orbitDistanceRange(
+        parent,
+        this.primaryOf(parent),
+        target.radius,
+        this.canvasSize().x / 2,
+        minOrbitDistance(
+          parent,
+          gravitationalConstant,
+          parent.isStatic ? 0 : parent.vel.length()
+        )
+      );
+    }
+  );
+
+  /** Step of the distance slider, on the same hundredth-of-the-range rule as `orbitStep`. */
+  readonly menuDistanceStep: Signal<number> = computed(() => {
+    const { min, max } = this.menuDistanceRange();
+    return Math.max((max - min) / 100, 1e-4);
+  });
+
+  /** What the menu target orbits: the sun, or a planet. Empty for the sun itself. */
+  readonly parentName: Signal<string> = computed(() => {
+    const target: WorldObject | null = this.menuTarget();
+    if (!target || target === this.sun) {
+      return '';
+    }
+    return this.primaryOf(target) === this.sun ? 'sun' : 'planet';
   });
 
   /**
@@ -439,16 +497,16 @@ export class GravityWorldComponent {
         body.orbit,
         gravitationalConstant
       );
-      this.worldService.addWorldObject(
-        new Planet(
-          this.calcCenteredVec(outwards.mul(body.orbit)),
-          // a circular orbit runs perpendicular to the line to the sun
-          vec2(outwards.y, -outwards.x).mul(speed),
-          body.mass,
-          body.name,
-          body.radius
-        )
+      const planet: Planet = new Planet(
+        this.calcCenteredVec(outwards.mul(body.orbit)),
+        // a circular orbit runs perpendicular to the line to the sun
+        vec2(outwards.y, -outwards.x).mul(speed),
+        body.mass,
+        body.name,
+        body.radius
       );
+      planet.parent = this.sun;
+      this.worldService.addWorldObject(planet);
     });
     this.updateSignals();
   }
@@ -920,18 +978,35 @@ export class GravityWorldComponent {
       )
     );
     this.menuSpeed.set(wo.vel.length());
+    const primary: WorldObject | undefined = this.primaryOf(wo);
     this.menuOrbit.set(
       clamp(
-        defaultOrbitDistance(
-          wo,
-          wo === this.sun ? undefined : this.sun,
-          this.satelliteFor(wo).radius
-        ),
+        defaultOrbitDistance(wo, primary, this.satelliteFor(wo).radius),
         this.orbitRange().min,
         this.orbitRange().max
       )
     );
+    this.menuDistance.set(
+      primary
+        ? clamp(
+            wo.pos.dist(primary.pos),
+            this.menuDistanceRange().min,
+            this.menuDistanceRange().max
+          )
+        : 0
+    );
     this.objectMenu?.openMenu();
+  }
+
+  /**
+   * What holds `target` on its own orbit: the sun for a planet, the planet
+   * for a moon, `undefined` for the sun itself, which has no parent.
+   */
+  private primaryOf(target: WorldObject): WorldObject | undefined {
+    if (target === this.sun) {
+      return undefined;
+    }
+    return target instanceof Planet ? (target.parent ?? this.sun) : this.sun;
   }
 
   /** Forgets the target and picks the simulation back up where it left off. */
@@ -968,9 +1043,46 @@ export class GravityWorldComponent {
     this.menuOrbit.set(clamp(distance, min, max));
   }
 
+  /**
+   * Moves the menu target itself to `distance` from its own parent, onto a
+   * circular orbit at the angle it already sits at - the sun has no parent to
+   * move against, so this does nothing for it.
+   */
+  setDistance(distance: number): void {
+    const target: WorldObject | null = this.menuTarget();
+    const parent: WorldObject | undefined = target
+      ? this.primaryOf(target)
+      : undefined;
+    if (!target || !parent) {
+      return;
+    }
+    const { min, max } = this.menuDistanceRange();
+    const clamped: number = clamp(distance, min, max);
+    const angle: number = Math.atan2(
+      target.pos.y - parent.pos.y,
+      target.pos.x - parent.pos.x
+    );
+    const { pos, vel } = orbitAround(
+      parent,
+      clamped,
+      angle,
+      this.settings().gravitationalConstant
+    );
+    target.pos = pos;
+    target.vel = vel;
+    this.menuDistance.set(clamped);
+    this.updateSignals();
+  }
+
   /** The satellite the menu target would be given: its moon, or its planet. */
   private satelliteFor(parent: WorldObject): Planet {
-    return new Planet(parent.pos, undefined, satelliteMass(parent));
+    const satellite: Planet = new Planet(
+      parent.pos,
+      undefined,
+      satelliteMass(parent)
+    );
+    satellite.parent = parent;
+    return satellite;
   }
 
   /**
@@ -1000,6 +1112,20 @@ export class GravityWorldComponent {
     }
     // both discs and the reach of the target's gravity have just changed
     this.setOrbitDistance(this.menuOrbit());
+    // the target's own disc has changed too, which can grow it into its
+    // parent's - move it back onto a valid orbit if its real place no longer
+    // is one, otherwise leave it be: a mass tweak is not a request to move it
+    const parent: WorldObject | undefined = this.primaryOf(target);
+    if (parent) {
+      const current: number = target.pos.dist(parent.pos);
+      const { min, max } = this.menuDistanceRange();
+      const clamped: number = clamp(current, min, max);
+      if (clamped === current) {
+        this.menuDistance.set(current);
+      } else {
+        this.setDistance(clamped);
+      }
+    }
     this.updateSignals();
   }
 
@@ -1147,11 +1273,13 @@ export class GravityWorldComponent {
   /** Creates a planet of random mass at the given world position. */
   private createRandomPlanetAt(pos: Vector2d): Planet {
     // a planet keeps its place next to the sun however heavy the sun is set
-    return new Planet(
+    const planet: Planet = new Planet(
       pos,
       undefined,
       placedPlanetMass(this.settings().massOfSun)
     );
+    planet.parent = this.sun;
+    return planet;
   }
 
   /** Takes the planet out of the world. */

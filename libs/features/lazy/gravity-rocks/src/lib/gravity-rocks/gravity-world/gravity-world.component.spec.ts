@@ -1375,6 +1375,154 @@ describe('GravityWorldComponent', () => {
     });
   });
 
+  describe('distance of a moon from its planet', () => {
+    /** Event targeting the svg element of the given world object. */
+    function eventOn(id: string, type = 'contextmenu'): MouseEvent {
+      const event = new MouseEvent(type, {
+        clientX: 120,
+        clientY: 90,
+        cancelable: true,
+      });
+      Object.defineProperty(event, 'target', {
+        value: query(fixture, `[id="${id}"]`)!,
+      });
+      return event;
+    }
+
+    /**
+     * Gives the outermost planet enough mass to hold a moon, adds one, and
+     * renders it - so it can be found by id like any other world object.
+     */
+    function addMoonToOutermostPlanet(): { planet: Planet; moon: Planet } {
+      const planet = component.planets()[PLANETS.length - 1];
+      component.contextMenu(eventOn(planet.id));
+      component.setMassExponent(MAX_MASS_EXPONENT);
+      component.addSatellite();
+      fixture.detectChanges();
+      const moon = component.planets()[component.planets().length - 1];
+      return { planet, moon };
+    }
+
+    it('should offer no distance slider for the sun, which has no parent', () => {
+      component.contextMenu(eventOn(component.sun.id));
+
+      expect(component.parentName()).toBe('');
+      expect(component.menuDistanceRange()).toEqual({ min: 0, max: 0 });
+    });
+
+    it('should name a planet as what a moon orbits', () => {
+      const { moon } = addMoonToOutermostPlanet();
+      component.contextMenu(eventOn(moon.id));
+
+      expect(component.parentName()).toBe('planet');
+    });
+
+    it('should name the sun as what a planet orbits', () => {
+      component.contextMenu(eventOn(component.planets()[0].id));
+
+      expect(component.parentName()).toBe('sun');
+    });
+
+    it('should offer a moon a range of distance from its own planet, not the sun', () => {
+      const { moon } = addMoonToOutermostPlanet();
+      component.contextMenu(eventOn(moon.id));
+
+      // a range checked against the sun instead of the planet would collapse:
+      // the moon is far too light next to the sun to hold anything out there
+      const { min, max } = component.menuDistanceRange();
+      expect(min).toBeLessThan(max);
+    });
+
+    it('should move the moon to the distance the slider is set to', () => {
+      const { planet, moon } = addMoonToOutermostPlanet();
+      component.contextMenu(eventOn(moon.id));
+      const { min, max } = component.menuDistanceRange();
+      const wanted = (min + max) / 2;
+
+      component.setDistance(wanted);
+
+      expect(moon.pos.dist(planet.pos)).toBeCloseTo(wanted, 6);
+      expect(component.menuDistance()).toBeCloseTo(wanted, 6);
+    });
+
+    it('should keep the moved moon on a circular orbit around its planet', () => {
+      const { planet, moon } = addMoonToOutermostPlanet();
+      component.contextMenu(eventOn(moon.id));
+      const { max } = component.menuDistanceRange();
+
+      component.setDistance(max);
+
+      const orbitSpeed = Math.sqrt(
+        (component.settings().gravitationalConstant * planet.mass) / max
+      );
+      expect(moon.vel.sub(planet.vel).length()).toBeCloseTo(orbitSpeed, 6);
+    });
+
+    it('should move a moon back into a valid orbit if growing its own mass leaves it too close', () => {
+      const { planet, moon } = addMoonToOutermostPlanet();
+      component.contextMenu(eventOn(moon.id));
+      const before = moon.pos.dist(planet.pos);
+
+      // a moon grown this heavy has a disc that no longer clears the planet
+      // from where it started - the mass slider alone must not leave it
+      // overlapping its planet, nor just report a distance it is not at
+      component.setMassExponent(MAX_MASS_EXPONENT);
+
+      const after = moon.pos.dist(planet.pos);
+      expect(after).toBeGreaterThan(before);
+      expect(after).toBeCloseTo(component.menuDistance(), 6);
+      expect(after).toBeCloseTo(component.menuDistanceRange().min, 6);
+    });
+
+    it('should leave the moon where it is when a mass change does not crowd it', () => {
+      const { planet, moon } = addMoonToOutermostPlanet();
+      component.contextMenu(eventOn(moon.id));
+      const before = moon.pos;
+
+      // lightening the moon only ever widens the range, never shrinks it past
+      // where the moon already sits - nothing here needs moving
+      component.setMassExponent(MIN_MASS_EXPONENT);
+
+      expect(moon.pos).toBe(before);
+      expect(moon.pos.dist(planet.pos)).toBeCloseTo(
+        component.menuDistance(),
+        6
+      );
+    });
+
+    it('should keep the distance within the range the moon allows', () => {
+      const { moon } = addMoonToOutermostPlanet();
+      component.contextMenu(eventOn(moon.id));
+      const { min, max } = component.menuDistanceRange();
+
+      component.setDistance(max * 10);
+      expect(component.menuDistance()).toBe(max);
+
+      component.setDistance(0);
+      expect(component.menuDistance()).toBe(min);
+    });
+
+    it('should move a planet relative to the sun the same way', () => {
+      const planet = component.planets()[0];
+      component.contextMenu(eventOn(planet.id));
+      const { min, max } = component.menuDistanceRange();
+      const wanted = (min + max) / 2;
+
+      component.setDistance(wanted);
+
+      expect(planet.pos.dist(component.sun.pos)).toBeCloseTo(wanted, 6);
+    });
+
+    it('should do nothing for the sun, which has no parent to move against', () => {
+      component.contextMenu(eventOn(component.sun.id));
+      const before = component.sun.pos;
+
+      component.setDistance(1);
+
+      expect(component.sun.pos).toBe(before);
+    });
+  });
+
   describe('simulation speed', () => {
     /**
      * How far the first planet travels over a second of frames, along its
