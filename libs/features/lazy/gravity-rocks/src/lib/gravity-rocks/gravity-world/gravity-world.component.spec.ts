@@ -1652,6 +1652,19 @@ describe('GravityWorldComponent', () => {
       expect(placed('planet').parent).toBe(component.sun);
     });
 
+    it('should take back a body whose placement the system cut short', () => {
+      component.tool.set('add');
+      const planetsBefore = component.planets().length;
+      const svg = query(fixture, 'svg')!;
+
+      component.pointerDown(on(svg, 100, 100));
+      expect(component.planets().length).toBe(planetsBefore + 1);
+      component.pointerCancel(on(svg, 100, 100));
+
+      expect(component.planets().length).toBe(planetsBefore);
+      expect(component.worldService.getForces()).toEqual([]);
+    });
+
     it('should give a tapped body a satellite with the orbit tool', () => {
       component.tool.set('orbit');
       const parent = component.planets()[PLANETS.length - 1];
@@ -1854,6 +1867,30 @@ describe('GravityWorldComponent', () => {
       rightClickOn(component.planets()[0].id);
       component.reset();
       expect(component.menuTarget()).toBeNull();
+    });
+
+    it('should still run the world on after moving from one body to another', () => {
+      component.toggleSim();
+      rightClickOn(component.planets()[0].id);
+      rightClickOn(component.planets()[1].id);
+      expect(component.running()).toBe(false);
+
+      component.menuClosed();
+
+      expect(component.running()).toBe(true);
+    });
+
+    it('should let the orbit hint follow the body while the world runs', () => {
+      const planet = component.planets()[PLANETS.length - 1];
+      rightClickOn(planet.id);
+      component.setMassExponent(MAX_MASS_EXPONENT);
+      expect(component.orbitHeld()).toBe(true);
+
+      // carried in next to the sun, whose grip now reaches past the moon
+      planet.pos = component.sun.pos.add(vec2(planet.radius * 3, 0));
+      component.step(0);
+
+      expect(component.orbitHeld()).toBe(false);
     });
 
     it('should call a moon a moon, and a placed planet a planet', () => {

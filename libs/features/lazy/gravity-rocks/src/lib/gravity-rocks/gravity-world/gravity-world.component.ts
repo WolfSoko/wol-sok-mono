@@ -517,8 +517,10 @@ export class GravityWorldComponent {
    */
   readonly orbitHeld: Signal<boolean> = computed(() => {
     const target: WorldObject | null = this.menuTarget();
-    // read only to follow the mass slider, like `orbitRange` does
+    // read only to follow the mass slider, like `orbitRange` does - and the
+    // distance to the primary, which `step` keeps up while the world runs
     this.menuMass();
+    this.menuDistance();
     return (
       !target ||
       keepsSatelliteAt(target, this.primaryOf(target), this.menuOrbit())
@@ -731,7 +733,12 @@ export class GravityWorldComponent {
 
   /** Ends the gesture without following, the system took the pointer away. */
   pointerCancel($event: PointerEvent): void {
+    // a placement the system cut short was never finished
+    const created: Planet | null = this.createdByDrag;
     this.endGesture($event);
+    if (created) {
+      this.removePlanet(created);
+    }
   }
 
   /**
@@ -1083,8 +1090,10 @@ export class GravityWorldComponent {
   /** Opens the settings panel for the given object, pausing the world. */
   private openMenuFor(wo: WorldObject): void {
     this.cancelLongPress();
-    // sliders on a moving object would set what has already moved on
-    this.pausedForMenu = this.running();
+    // sliders on a moving object would set what has already moved on - and a
+    // world the panel already paused for one body stays owed its restart
+    // when the panel moves on to another
+    this.pausedForMenu = this.pausedForMenu || this.running();
     this.stopSim();
     this.menuTarget.set(wo);
     const earthMasses: number = wo.mass / EARTH_MASS;
