@@ -1004,6 +1004,38 @@ describe('GravityWorldComponent', () => {
       expect(component.worldService.getForces().length).toBe(forcesBefore);
     });
 
+    it("should let go of a grabbed body when the browser's own long press opens its settings", () => {
+      const planet = component.planets()[0];
+      const velBefore = planet.vel;
+      component.pointerDown(touchOn(planet.id));
+      expect(component.worldService.getForces().length).toBe(1);
+
+      // the browser fires contextmenu before our own long press timer is up
+      component.contextMenu(eventOn(planet.id));
+
+      expect(component.menuTarget()).toBe(planet);
+      expect(component.worldService.getForces()).toEqual([]);
+
+      // the finger wanders off and lifts far away: no fling, the drag is gone
+      const far = new MouseEvent('pointerup', { clientX: 300, clientY: 150 });
+      Object.defineProperty(far, 'pointerId', { value: 1 });
+      Object.defineProperty(far, 'pointerType', { value: 'touch' });
+      Object.defineProperty(far, 'target', {
+        value: query(fixture, `[id="${planet.id}"]`)!,
+      });
+      component.pointerMove(far as PointerEvent);
+      component.pointerUp(far as PointerEvent);
+      expect(planet.vel).toBe(velBefore);
+
+      // and the click the lift turns into is eaten, as after our own timer
+      const click = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+      });
+      document.body.dispatchEvent(click);
+      expect(click.defaultPrevented).toBe(true);
+    });
+
     it('should swallow the click that lifting the finger turns into', () => {
       component.pointerDown(touchOn(component.planets()[0].id));
       jest.advanceTimersByTime(500);
@@ -1665,29 +1697,160 @@ describe('GravityWorldComponent', () => {
       expect(component.worldService.getForces()).toEqual([]);
     });
 
-    it('should give a tapped body a satellite with the orbit tool', () => {
+    /**
+     * Picks the body with the orbit tool, then presses on the background at
+     * the given client point, drags a little and lets go there.
+     */
+    function drawOrbit(id: string, clientX: number, clientY: number): Planet {
+      component.tool.set('orbit');
+      tapOn(id);
+      const svg = query(fixture, 'svg')!;
+      component.pointerDown(on(svg, clientX - 20, clientY));
+      component.pointerMove(on(svg, clientX, clientY));
+      component.pointerUp(on(svg, clientX, clientY));
+      return component.planets()[component.planets().length - 1];
+    }
+
+    it('should pick a tapped body with the orbit tool and draw its orbit', () => {
       component.tool.set('orbit');
       const parent = component.planets()[PLANETS.length - 1];
       const planetsBefore = component.planets().length;
 
       tapOn(parent.id);
+      fixture.detectChanges();
 
-      expect(component.planets().length).toBe(planetsBefore + 1);
-      const moon = component.planets()[component.planets().length - 1];
-      expect(moon.parent).toBe(parent);
-      expect(moon.pos.dist(parent.pos)).toBeGreaterThan(parent.radius);
+      // nothing is added yet, the orbit is only drawn
+      expect(component.planets().length).toBe(planetsBefore);
+      expect(component.orbitParent()).toBe(parent);
+      const preview = component.orbitPreview()!;
+      expect(preview.center).toBe(parent.pos);
+      expect(preview.radius).toBeGreaterThan(parent.radius);
+      expect(query(fixture, qaSelector('orbit-preview'))).toBeTruthy();
       expect(component.followedId()).toBeNull();
     });
 
-    it('should give the sun a planet with the orbit tool', () => {
-      component.tool.set('orbit');
+    it('should let a satellite go onto the drawn orbit where the pointer lets go', () => {
       const planetsBefore = component.planets().length;
 
-      tapOn(component.sun.id);
+      // two AU to the right of the sun, which sits at (250, 150) on screen
+      const planet = drawOrbit(component.sun.id, 250 + (2 / 6) * 500, 150);
 
       expect(component.planets().length).toBe(planetsBefore + 1);
-      const planet = component.planets()[component.planets().length - 1];
       expect(planet.parent).toBe(component.sun);
+      expect(planet.pos.dist(component.sun.pos)).toBeCloseTo(2, 6);
+      expect(planet.pos.x).toBeGreaterThan(component.sun.pos.x);
+      expect(planet.pos.y).toBeCloseTo(component.sun.pos.y, 6);
+      // the sun stays picked, so the next one can follow at once
+      expect(component.orbitParent()).toBe(component.sun);
+    });
+
+    it('should keep the drawn orbit within what the body can offer', () => {
+      const parent = component.planets()[PLANETS.length - 1];
+
+      // far beyond any orbit mars can hold on to
+      const moon = drawOrbit(parent.id, 490, 20);
+
+      expect(moon.parent).toBe(parent);
+      const preview = component.orbitPreview()!;
+      expect(moon.pos.dist(parent.pos)).toBeCloseTo(preview.radius, 6);
+      expect(preview.radius).toBeLessThan(1);
+      expect(preview.radius).toBeGreaterThan(parent.radius);
+    });
+
+    it('should follow a hovering mouse with the drawn orbit', () => {
+      component.tool.set('orbit');
+      tapOn(component.sun.id);
+      const svg = query(fixture, 'svg')!;
+
+      // straight up from the sun, 100px of 300 is 1.2 of 3.6 AU
+      component.pointerMove(on(svg, 250, 50));
+
+      const preview = component.orbitPreview()!;
+      expect(preview.radius).toBeCloseTo(1.2, 6);
+      expect(preview.angle).toBeCloseTo(-Math.PI / 2, 6);
+      expect(preview.satellite.y).toBeLessThan(component.sun.pos.y);
+    });
+
+    it('should mark a drawn orbit the body cannot keep', () => {
+      component.tool.set('orbit');
+      tapOn(component.planets()[0].id);
+      expect(component.orbitPreview()!.held).toBe(false);
+
+      tapOn(component.sun.id);
+      expect(component.orbitPreview()!.held).toBe(true);
+    });
+
+    it('should move the drawn orbit to another tapped body', () => {
+      component.tool.set('orbit');
+      const [first, second] = component.planets();
+      tapOn(first.id);
+      tapOn(second.id);
+      expect(component.orbitParent()).toBe(second);
+    });
+
+    it('should pick a tapped body after a satellite was let go, not place another', () => {
+      drawOrbit(component.sun.id, 250 + (2 / 6) * 500, 150);
+      const planetsAfterOne = component.planets().length;
+      const mercury = component.planets()[0];
+
+      // the same pointer id comes back for every mouse press
+      tapOn(mercury.id);
+
+      expect(component.planets().length).toBe(planetsAfterOne);
+      expect(component.orbitParent()).toBe(mercury);
+    });
+
+    it('should drop the drawn orbit when the tool is put down', () => {
+      component.tool.set('orbit');
+      tapOn(component.sun.id);
+
+      component.pickTool('grab');
+
+      expect(component.orbitParent()).toBeNull();
+      expect(component.orbitPreview()).toBeNull();
+    });
+
+    it('should drop the drawn orbit when its body is taken away', () => {
+      component.tool.set('orbit');
+      const planet = component.planets()[0];
+      tapOn(planet.id);
+
+      component.removePlanet(planet);
+
+      expect(component.orbitParent()).toBeNull();
+    });
+
+    it('should drop the drawn orbit on reset', () => {
+      component.tool.set('orbit');
+      tapOn(component.sun.id);
+      component.reset();
+      expect(component.orbitParent()).toBeNull();
+    });
+
+    it('should add nothing when the system cuts the orbit gesture short', () => {
+      component.tool.set('orbit');
+      tapOn(component.sun.id);
+      const planetsBefore = component.planets().length;
+      const svg = query(fixture, 'svg')!;
+
+      component.pointerDown(on(svg, 400, 150));
+      component.pointerCancel(on(svg, 400, 150));
+
+      expect(component.planets().length).toBe(planetsBefore);
+    });
+
+    it('should pan rather than draw an orbit before a body is picked', () => {
+      component.tool.set('orbit');
+      component.zoomIn();
+      const centerBefore = component.viewCenter();
+      const svg = query(fixture, 'svg')!;
+
+      component.pointerDown(on(svg, 250, 150));
+      component.pointerMove(on(svg, 200, 150));
+      component.pointerUp(on(svg, 200, 150));
+
+      expect(component.viewCenter().x).toBeGreaterThan(centerBefore.x);
+      expect(component.orbitPreview()).toBeNull();
     });
 
     it('should take a tapped planet out of the world with the delete tool', () => {
@@ -1706,10 +1869,8 @@ describe('GravityWorldComponent', () => {
     });
 
     it('should hand the moons of a deleted planet on to the sun', () => {
-      component.tool.set('orbit');
       const parent = component.planets()[PLANETS.length - 1];
-      tapOn(parent.id);
-      const moon = component.planets()[component.planets().length - 1];
+      const moon = drawOrbit(parent.id, 490, 20);
       expect(moon.parent).toBe(parent);
 
       component.removePlanet(parent);

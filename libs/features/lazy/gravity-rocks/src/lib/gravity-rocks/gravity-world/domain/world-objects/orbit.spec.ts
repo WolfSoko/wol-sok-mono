@@ -344,14 +344,48 @@ describe('satellite defaults', () => {
 
     it('should end where the primary would steal the satellite', () => {
       const sun = new Sun(vec2(0, 0), undefined, SUN_MASS);
-      const jupiter = new Planet(vec2(5.2, 0), undefined, JUPITER_MASS);
+      // far enough out that jupiter's grip reaches well past its disc
+      const jupiter = new Planet(vec2(30, 0), undefined, JUPITER_MASS);
+      const held = hillRadius(jupiter, sun) * STABLE_HILL_FRACTION;
+      expect(held).toBeGreaterThan(jupiter.radius * 4);
 
       const { max } = orbitDistanceRange(jupiter, sun);
 
-      expect(max).toBeCloseTo(
-        hillRadius(jupiter, sun) * STABLE_HILL_FRACTION,
-        6
-      );
+      expect(max).toBeCloseTo(held, 6);
+    });
+
+    it('should offer the usual few radii even past where the primary steals', () => {
+      const sun = new Sun(vec2(0, 0), undefined, SUN_MASS);
+      // at 5.2 AU the sun lets jupiter keep less than four of its radii
+      const jupiter = new Planet(vec2(5.2, 0), undefined, JUPITER_MASS);
+      const held = hillRadius(jupiter, sun) * STABLE_HILL_FRACTION;
+      expect(held).toBeLessThan(jupiter.radius * 4);
+
+      const { min, max } = orbitDistanceRange(jupiter, sun);
+
+      expect(min).toBeLessThan(held);
+      expect(max).toBe(jupiter.radius * 4);
+      expect(keepsSatelliteAt(jupiter, sun, held)).toBe(true);
+      expect(keepsSatelliteAt(jupiter, sun, max)).toBe(false);
+    });
+
+    it('should not shrink to nothing as the grip falls to the disc', () => {
+      const sun = new Sun(vec2(0, 0), undefined, SUN_MASS);
+      // ever lighter planets at one place: the range must not pinch shut
+      // where the hill radius crosses the disc clearance
+      let previous = Number.POSITIVE_INFINITY;
+      for (let exponent = 3; exponent >= -3; exponent -= 0.05) {
+        const planet = new Planet(
+          vec2(5.2, 0),
+          undefined,
+          EARTH_MASS * 10 ** exponent
+        );
+        const { min, max } = orbitDistanceRange(planet, sun, 0, 3);
+        expect(max - min).toBeGreaterThanOrEqual(planet.radius * 2.8 - 1e-9);
+        // and the far end only ever comes in as the planet gets lighter
+        expect(max).toBeLessThanOrEqual(previous + 1e-9);
+        previous = max;
+      }
     });
 
     it('should reach as far as it is allowed to without a primary', () => {
@@ -408,6 +442,7 @@ describe('satellite defaults', () => {
       const { min, max } = orbitDistanceRange(feather, sun, 0, reach);
 
       expect(max).toBe(Math.max(min, reach));
+      expect(max).toBeLessThan(feather.radius * 4);
     });
 
     it('should tell an orbit the parent keeps from one the primary takes', () => {
