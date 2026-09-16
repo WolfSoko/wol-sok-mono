@@ -52,6 +52,11 @@ import { EARTH_MASS, PLANET_NAMES } from './domain/solar-system';
 import { ObjectPanelComponent } from './object-panel/object-panel.component';
 import { OrbitTool } from './orbit-tool/orbit-tool';
 import { ClientPoint, clientPoint, WorldCamera } from './camera/world-camera';
+import {
+  isWithinClickTolerance,
+  PointerTracker,
+} from './interaction/pointer-tracker';
+import { swallowNextClick } from './interaction/swallow-next-click';
 import { ToolbeltComponent } from './toolbelt/toolbelt.component';
 import { ObjectKind, Tool } from './toolbelt/tools';
 import { Sun } from './domain/world-objects/sun';
@@ -70,16 +75,6 @@ import { MAX_VELOCITY, WorldObject } from './domain/world-objects/world-object';
 const SVG_VIEW_PORT_SIZE = 6;
 
 const TRAIL_WIDTH_RATIO = 0.8;
-/** How far the cursor may travel between press and release to still be a click. */
-const CLICK_TOLERANCE_PX = 4;
-/** How long a touch has to rest on an object to open its menu. */
-const LONG_PRESS_MS = 450;
-/**
- * How long the browser may take to turn a lifted finger into a click. It fires
- * one a moment after the touch ends, at the point the finger was - which by
- * then is the backdrop of the menu the long press has just opened.
- */
-const SYNTHETIC_CLICK_MS = 700;
 /**
  * World time one second of watching is worth, in years. A tenth takes the
  * earth ten seconds to go round the sun at the usual speed - slow enough to
@@ -188,8 +183,8 @@ export class GravityWorldComponent {
   /** Emits whenever the running gesture ends, however it ends. */
   private gestureEnd$: Subject<void> = new Subject();
 
-  /** Pointers currently pressed on the world, by pointer id. */
-  private readonly activePointers = new Map<number, ClientPoint>();
+  /** The pointers on the world, and what they went down on. */
+  private readonly pointers = new PointerTracker<WorldObject>();
 
   /** The pointer driving the current drag, and the planet it created. */
   private dragPointerId: number | null = null;
@@ -241,11 +236,6 @@ export class GravityWorldComponent {
     return `Press beside it and drag the orbit, let go to add the ${satellite}`;
   });
 
-  /** World object pressed on, and where it was pressed, until the mouse is released. */
-  private pressed: { wo: WorldObject; x: number; y: number } | null = null;
-
-  private longPressTimer: ReturnType<typeof setTimeout> | null = null;
-
   drag$: Observable<{ end: Vector2d }> = this.pointerDown$.asObservable().pipe(
     take(1),
     switchMap(() =>
@@ -259,7 +249,7 @@ export class GravityWorldComponent {
   );
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => this.cancelLongPress());
+    inject(DestroyRef).onDestroy(() => this.pointers.cancelLongPress());
     this.settings = signal(this.initialConfig);
     this.initializeSunAndPlanets();
 
@@ -303,21 +293,19 @@ export class GravityWorldComponent {
       // the right button opens the settings panel, see `contextMenu`
       return;
     }
-    if (this.activePointers.size >= 2) {
+    if (this.pointers.count >= 2) {
       // two fingers already own the gesture, a third would only confuse it
       return;
     }
-    this.activePointers.set($event.pointerId, clientPoint($event));
+    this.pointers.add($event.pointerId, $event);
     // keep receiving moves once the gesture wanders off the svg - the second
     // finger needs that just as much as the first
     this.svgWorld?.nativeElement?.setPointerCapture?.($event.pointerId);
-    if (this.activePointers.size === 2) {
+    const pair = this.pointers.pair;
+    if (pair) {
       // the first finger was only ever the start of a two finger gesture
       this.cancelDrag();
-      const [first, second] = [...this.activePointers.values()];
-      if (first && second) {
-        this.camera.startPinch(first, second);
-      }
+      this.camera.startPinch(...pair);
       return;
     }
     if (this.isPanGesture($event)) {
@@ -327,7 +315,7 @@ export class GravityWorldComponent {
     const tool: Tool = this.tool();
     let wo = this.findWorldObject($event.target as SVGElement);
     if (wo) {
-      this.pressed = { wo, x: $event.clientX, y: $event.clientY };
+      this.pointers.pressOn(wo, $event);
       if ($event.pointerType !== 'mouse') {
         // touch has no right button, so resting on an object opens the panel
         this.startLongPress(wo);
@@ -392,8 +380,8 @@ export class GravityWorldComponent {
           placed.orbit.angle
         );
       }
-    } else if (pressed && this.isWithinClickTolerance(pressed, $event)) {
-      this.tap(pressed.wo);
+    } else if (pressed && isWithinClickTolerance(pressed.at, $event)) {
+      this.tap(pressed.subject);
     }
   }
 
@@ -436,23 +424,22 @@ export class GravityWorldComponent {
    */
   private endGesture(
     $event: PointerEvent
-  ): { wo: WorldObject; x: number; y: number } | null {
-    this.activePointers.delete($event.pointerId);
+  ): { subject: WorldObject; at: ClientPoint } | null {
+    this.pointers.remove($event.pointerId);
     const svg: SVGSVGElement | undefined = this.svgWorld?.nativeElement;
     if (svg?.hasPointerCapture?.($event.pointerId)) {
       svg.releasePointerCapture($event.pointerId);
     }
-    this.cancelLongPress();
+    this.pointers.cancelLongPress();
     if (this.camera.isPinching) {
       // the finger left over must not carry on as a drag of its own
-      if (this.activePointers.size < 2) {
+      if (this.pointers.count < 2) {
         this.camera.endGesture();
       }
       return null;
     }
-    const pressed = this.pressed;
+    const pressed = this.pointers.takePress();
     this.camera.endGesture();
-    this.pressed = null;
     this.dragPointerId = null;
     this.createdByDrag = null;
     this.gestureEnd$.next();
@@ -490,10 +477,10 @@ export class GravityWorldComponent {
 
   /** Drops the running drag, taking back the planet it has just created. */
   private cancelDrag(): void {
-    this.cancelLongPress();
+    this.pointers.cancelLongPress();
     const created = this.createdByDrag;
     this.camera.endGesture();
-    this.pressed = null;
+    this.pointers.dropPress();
     this.dragPointerId = null;
     this.orbitTool.letGo();
     this.createdByDrag = null;
@@ -510,14 +497,11 @@ export class GravityWorldComponent {
   /** Zooms and pans with two fingers, moves the view while panning, and
    * otherwise feeds the drag gesture. */
   pointerMove($event: PointerEvent): void {
-    const active = this.activePointers.get($event.pointerId);
-    if (active) {
-      this.activePointers.set($event.pointerId, clientPoint($event));
-    }
+    this.pointers.moveTo($event.pointerId, $event);
     if (this.camera.isPinching) {
-      const [first, second] = [...this.activePointers.values()];
-      if (first && second) {
-        this.camera.pinchTo(first, second);
+      const pair = this.pointers.pair;
+      if (pair) {
+        this.camera.pinchTo(...pair);
       }
       return;
     }
@@ -529,26 +513,19 @@ export class GravityWorldComponent {
       this.orbitTool.parent() &&
       this.tool() === 'orbit' &&
       // the pointer holding the orbit, or a mouse hovering with none pressed
-      (this.orbitTool.isHeldBy($event.pointerId) ||
-        this.activePointers.size === 0)
+      (this.orbitTool.isHeldBy($event.pointerId) || this.pointers.count === 0)
     ) {
       this.orbitTool.moveTo(this.camera.toWorld($event));
     }
-    if (this.pressed && !this.isWithinClickTolerance(this.pressed, $event)) {
+    if (this.pointers.hasWandered($event)) {
       // the gesture has become a drag, releasing it must not center anything,
       // not even when the pointer comes back to where it started
-      this.pressed = null;
-      this.cancelLongPress();
+      this.pointers.dropPress();
+      this.pointers.cancelLongPress();
     }
     if (this.dragPointerId === $event.pointerId) {
       const origin: ClientPoint | null = this.dragOrigin;
-      if (
-        origin &&
-        !this.isWithinClickTolerance(
-          { x: origin.clientX, y: origin.clientY },
-          $event
-        )
-      ) {
+      if (origin && !isWithinClickTolerance(origin, $event)) {
         // a gesture this long is a drag, and a drag can throw
         this.dragEnd = this.camera.toWorld($event);
       }
@@ -578,17 +555,6 @@ export class GravityWorldComponent {
     this.camera.startPan($event);
   }
 
-  /** Whether the cursor is still (almost) on the spot it was pressed down on. */
-  private isWithinClickTolerance(
-    pressed: { x: number; y: number },
-    $event: MouseEvent
-  ): boolean {
-    return (
-      Math.abs($event.clientX - pressed.x) <= CLICK_TOLERANCE_PX &&
-      Math.abs($event.clientY - pressed.y) <= CLICK_TOLERANCE_PX
-    );
-  }
-
   /** Opens the settings of the object under the cursor on a right click. */
   contextMenu($event: MouseEvent): void {
     if (this.orbitTool.isHeld) {
@@ -605,66 +571,31 @@ export class GravityWorldComponent {
       return;
     }
     $event.preventDefault();
-    if (this.activePointers.size > 0) {
+    if (this.pointers.count > 0) {
       // a finger is still down: the browser's own long press got here before
       // ours, so let go of the body as `startLongPress` would, or lifting the
       // finger flings it - and eat the click that lift turns into
       this.cancelDrag();
-      this.swallowNextClick();
+      swallowNextClick();
     }
     this.openMenuFor(wo);
   }
 
   /** A finger resting on an object opens its settings, like a right click. */
   private startLongPress(wo: WorldObject): void {
-    // a second finger must not orphan the timer of the first
-    this.cancelLongPress();
-    this.longPressTimer = setTimeout(() => {
+    this.pointers.startLongPress(() => {
       // the finger is still down, so let go of the object before the panel
       // takes over - otherwise it would be flung when the finger lifts
       this.cancelDrag();
       this.openMenuFor(wo);
       // and it is still down now, so the click it turns into is still coming
-      this.swallowNextClick();
-    }, LONG_PRESS_MS);
-  }
-
-  /**
-   * Eats the one click a lifted finger is turned into. It lands where the
-   * finger was, which by then may be under the panel the long press has just
-   * opened - on a slider, or on the button that closes it again. Nothing
-   * else is swallowed: the listener gives up on the first click, or after
-   * the browser can no longer be sending that one.
-   */
-  private swallowNextClick(): void {
-    const swallow = (event: MouseEvent): void => {
-      event.stopPropagation();
-      event.preventDefault();
-      stop();
-    };
-    // both close over `timer`, which is set by the time either of them runs
-    const stop = (): void => {
-      document.removeEventListener('click', swallow, true);
-      clearTimeout(timer);
-    };
-    const timer: ReturnType<typeof setTimeout> = setTimeout(
-      stop,
-      SYNTHETIC_CLICK_MS
-    );
-    document.addEventListener('click', swallow, true);
-  }
-
-  /** A moving or ending pointer is a drag or a tap, not a long press. */
-  cancelLongPress(): void {
-    if (this.longPressTimer !== null) {
-      clearTimeout(this.longPressTimer);
-      this.longPressTimer = null;
-    }
+      swallowNextClick();
+    });
   }
 
   /** Opens the settings panel for the given object, pausing the world. */
   private openMenuFor(wo: WorldObject): void {
-    this.cancelLongPress();
+    this.pointers.cancelLongPress();
     // sliders on a moving object would set what has already moved on - and a
     // world the panel already paused for one body stays owed its restart
     // when the panel moves on to another
