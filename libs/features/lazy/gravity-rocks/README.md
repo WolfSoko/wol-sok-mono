@@ -28,22 +28,35 @@ drawn in the right place.
 ```
 gravity-rocks.component.ts        shell, hosts the world
 gravity-world/
-  gravity-world.component.ts      the world: svg, tools, gestures
+  gravity-world.component.ts      the svg, and what a gesture means here
   config/                         the settings form
+  object-panel/                   the settings of one body
+  toolbelt/                       the tools, and what each one is
+  orbit-tool/                     picking a body and drawing an orbit on it
+  camera/                         zoom, pan, pinch, follow, AU to pixels
+  interaction/                    what the hand does, not what the world is
+    pointer-tracker.ts            raw pointers in, gestures out
+    spring-force.ts               the rubber band a drag hooks onto a body
+    swallow-next-click.ts         the click a lifted finger turns into
   domain/                         physics and geometry, no Angular
     gravity-world.service.ts      the world itself: bodies, forces, ticks
     solar-system.ts               real bodies, real constants, display sizes
+    create-solar-system.ts        the sun and the inner planets, ready to add
     world-objects/
       world-object.ts             position, velocity, integration, trail
       planet.ts, sun.ts           the bodies the world holds
       orbit.ts                    where a satellite may go and what keeps it
       force.ts                    what else pulls on a body
       svg-paths.ts                trails and velocity arrows as svg
-  interaction/                    what the hand does, not what the world is
-    spring-force.ts               the rubber band a drag hooks onto a body
 ```
 
-`domain/` knows nothing about Angular or the DOM and is tested without either.
+Only the four `*.component.ts` files and the templates next to them are
+Angular. Everything else - the world, the camera, the orbit tool, the pointer
+tracker, all of `domain/` - is plain TypeScript with signals, and is tested
+without a component or a DOM.
+
+The world is provided by `GravityWorldComponent`, not in the root injector:
+leaving the route takes its planets with it.
 
 ## Tools
 

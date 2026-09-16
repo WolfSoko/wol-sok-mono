@@ -34,7 +34,6 @@ import {
   GravityWorldComponent,
   YEARS_PER_SECOND,
 } from './gravity-world.component';
-import { MAX_ZOOM, MIN_ZOOM } from './camera/world-camera';
 import { OBJECT_KINDS, ObjectKind, TOOLS } from './toolbelt/tools';
 
 /** First element in the rendered component matching the css selector. */
@@ -235,48 +234,11 @@ describe('GravityWorldComponent', () => {
 
     afterEach(() => jest.restoreAllMocks());
 
-    it('should show the whole world initially', () => {
-      expect(component.camera.zoom()).toBe(1);
-      expect(component.camera.zoomLabel()).toBe('100%');
-      // six by three point six AU, rounded as the viewBox rounds
-      expect(component.camera.viewBox()).toBe('0 0 6 3.6');
-    });
-
     it('should render the viewBox of the current viewport', () => {
       const svg = query<SVGSVGElement>(fixture, 'svg')!;
       component.camera.zoomIn();
       fixture.detectChanges();
       expect(svg.getAttribute('viewBox')).toBe(component.camera.viewBox());
-    });
-
-    it('should zoom in around the view center', () => {
-      component.camera.zoomIn();
-      expect(component.camera.zoom()).toBeGreaterThan(1);
-      // the center stays put, the visible area shrinks
-      expect(component.camera.center()).toEqual(component.canvasSize().div(2));
-      const [, , width] = component.camera.viewBox().split(' ').map(Number);
-      expect(width).toBeLessThan(component.canvasSize().x);
-    });
-
-    it('should zoom out again', () => {
-      component.camera.zoomIn();
-      const zoomedIn = component.camera.zoom();
-      component.camera.zoomOut();
-      expect(component.camera.zoom()).toBeLessThan(zoomedIn);
-    });
-
-    it('should not zoom beyond the limits', () => {
-      for (let i = 0; i < 50; i++) {
-        component.camera.zoomIn();
-      }
-      expect(component.camera.zoom()).toBe(MAX_ZOOM);
-      expect(component.camera.canZoomIn()).toBe(false);
-
-      for (let i = 0; i < 100; i++) {
-        component.camera.zoomOut();
-      }
-      expect(component.camera.zoom()).toBe(MIN_ZOOM);
-      expect(component.camera.canZoomOut()).toBe(false);
     });
 
     it('should zoom out down to 0.1 percent', () => {
@@ -292,15 +254,6 @@ describe('GravityWorldComponent', () => {
       // the whole world fits into a tiny part of the viewport now
       const [, , width] = component.camera.viewBox().split(' ').map(Number);
       expect(width).toBe(component.canvasSize().x / 0.001);
-    });
-
-    it('should show one decimal for every zoom level below ten percent', () => {
-      component.camera.zoomBy(0.01 / component.camera.zoom());
-      fixture.detectChanges();
-      expect(component.camera.zoomLabel()).toBe('1.0%');
-      expect(
-        query(fixture, qaSelector('zoom-level'))?.textContent?.trim()
-      ).toBe('1.0%');
     });
 
     it('should have zoom buttons', () => {
@@ -633,12 +586,6 @@ describe('GravityWorldComponent', () => {
 
       expect(component.camera.followedId()).toBe(other.id);
       expect(component.camera.center()).toEqual(other.pos);
-    });
-
-    it('should let go when the view is reset', () => {
-      clickOn(component.planets()[0].id);
-      component.camera.reset();
-      expect(component.camera.followedId()).toBeNull();
     });
 
     it('should let go when panning takes over', () => {
