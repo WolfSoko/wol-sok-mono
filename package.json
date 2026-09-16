@@ -111,7 +111,7 @@
     "@commitlint/cli": "20.1.0",
     "@commitlint/config-conventional": "20.0.0",
     "@commitlint/config-nx-scopes": "20.0.0",
-    "@ngneat/spectator": "22.0.0",
+    "@ngneat/spectator": "22.1.0",
     "@nx/angular": "23.2.1",
     "@nx/devkit": "23.2.1",
     "@nx/esbuild": "23.2.1",
