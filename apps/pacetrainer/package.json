@@ -3,20 +3,20 @@
   "peerDependencies": {
     "@analogjs/platform": "1.22.1",
     "@analogjs/router": "1.22.1",
-    "@angular/common": "20.3.7",
-    "@angular/core": "20.3.7",
-    "@angular/material": "20.2.10",
-    "@angular/platform-browser": "20.3.7",
-    "@angular/platform-server": "20.3.7",
-    "@angular/router": "20.3.7",
+    "@angular/common": "21.2.23",
+    "@angular/core": "21.2.23",
+    "@angular/material": "21.2.14",
+    "@angular/platform-browser": "21.2.23",
+    "@angular/platform-server": "21.2.23",
+    "@angular/router": "21.2.23",
     "@nx/vite": "23.1.2",
     "h3": "^1.15.11",
     "vite": "7.1.12",
     "vitest": "4.1.9",
     "@playwright/test": "^1.56.1",
-    "@angular/forms": "20.3.7",
+    "@angular/forms": "21.2.23",
     "rxjs": "7.8.2",
-    "@angular/animations": "20.3.7",
-    "@angular/ssr": "20.3.7"
+    "@angular/animations": "21.2.23",
+    "@angular/ssr": "21.2.24"
   }
 }

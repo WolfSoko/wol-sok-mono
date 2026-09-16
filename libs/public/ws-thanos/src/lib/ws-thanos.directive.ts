@@ -7,6 +7,8 @@ import type { WsThanosOptions } from './ws-thanos.options';
 import { WsThanosService } from './ws-thanos.service';
 
 @Directive({
+  // Bare prefix is the published public API of @wolsok/thanos; renaming it would be breaking.
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: '[wsThanos], ws-thanos',
   exportAs: 'thanos',
 })
