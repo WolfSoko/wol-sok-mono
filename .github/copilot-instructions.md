@@ -73,7 +73,7 @@ npx nx affected -t test                   # Test affected projects
 ```bash
 npm run lint                              # Lint and fix all projects
 npx nx lint <project> --fix              # Lint specific project
-npx nx affected -t lint                   # Lint affected projects
+npx nx affected -t lint,lint-templates    # Lint affected projects (oxlint + template rules)
 ```
 
 ## Coding Standards

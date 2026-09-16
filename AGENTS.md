@@ -22,9 +22,9 @@
 - TypeScript + Angular/Analog. Use 2-space indentation.
 - Filenames: kebab-case (e.g., `training-live-state.component.ts`); tests end with `.spec.ts`.
 - Prefer strongly typed APIs and explicit `public`/`private` in classes.
-- Linting: oxlint with type-aware rules (`.oxlintrc.json`, inferred `lint` targets via `@nx/oxlint`). Formatting: oxfmt (`.oxfmtrc.json`, run through `nx format`). Pre-commit runs via Husky + lint-staged.
+- Linting: oxlint with type-aware rules (`.oxlintrc.json`, inferred `lint` targets via `@nx/oxlint`) plus angular-eslint for templates only (`eslint.config.mjs`, inferred `lint-templates` targets). Formatting: oxfmt (`.oxfmtrc.json`, run through `nx format`). Pre-commit runs via Husky + lint-staged.
 - **IMPORTANT**: Always run `npx nx format:write` before committing to ensure all files are properly formatted.
-- **REQUIRED**: Run `npx nx affected -t lint` before pushing to verify all linting issues are resolved. This prevents CI failures.
+- **REQUIRED**: Run `npx nx affected -t lint,lint-templates` before pushing to verify all linting issues are resolved. This prevents CI failures.
 
 ## Testing Guidelines
 
