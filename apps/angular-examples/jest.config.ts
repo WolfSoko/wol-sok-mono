@@ -17,7 +17,7 @@ module.exports = {
   // @angular-architects/native-federation re-exports the runtime as plain
   // ESM from a .js file, so it has to go through the transform as well.
   transformIgnorePatterns: [
-    'node_modules/(?!.*.mjs$|@datorama/akita|@angular-architects/native-federation|@softarc/native-federation-runtime)',
+    'node_modules/(?!.*.mjs$|@datorama/akita|@angular-architects/native-federation|@softarc/native-federation)',
   ],
   snapshotSerializers: [
     'jest-preset-angular/build/serializers/no-ng-attributes',
