@@ -14,6 +14,13 @@
       }
     },
     {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint-templates",
+        "extensions": ["ts", "html"]
+      }
+    },
+    {
       "plugin": "@nx/storybook/plugin",
       "options": {
         "buildStorybookTargetName": "build-storybook",
@@ -60,6 +67,7 @@
       "!{projectRoot}/src/*test-setup.[jt]s",
       "!{projectRoot}/playwright.config.[jt]s",
       "!{projectRoot}/.oxlintrc.json",
+      "!{projectRoot}/eslint.config.mjs",
       "!{projectRoot}/tsconfig.spec.json"
     ],
     "sharedGlobals": [],

@@ -76,7 +76,7 @@ jobs:
 
       - name: run-checks in parallel on nx agents
         run: |
-          npx nx affected -t="lint,test,build,e2e-ci" -c=ci
+          npx nx affected -t="lint,lint-templates,test,build,e2e-ci" -c=ci
 
       - name: Auto Fix CI
         if: always()

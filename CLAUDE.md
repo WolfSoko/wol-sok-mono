@@ -9,7 +9,7 @@ Angular + Nx monorepo. Read this before touching anything.
 - **TypeScript 5.9** — strict mode
 - **Build**: Vite (Analog/Vitest apps), Webpack + Module Federation (angular-examples)
 - **Testing**: Jest (most unit tests), Vitest (Vite projects), Playwright (E2E)
-- **Lint / Format**: oxlint (`.oxlintrc.json`, targets inferred by `@nx/oxlint`) and oxfmt (`.oxfmtrc.json`, driven by `nx format`)
+- **Lint / Format**: oxlint (`.oxlintrc.json`, targets inferred by `@nx/oxlint`), angular-eslint for templates only (`eslint.config.mjs`, target `lint-templates`) and oxfmt (`.oxfmtrc.json`, driven by `nx format`)
 - **UI**: Angular Material + CDK everywhere (no custom primitives if AM covers it)
 - **State**: Angular Signals (local/sync), RxJS (async), Akita/Elf (app-wide stores)
 - **Backend**: Firebase (Hosting, Auth, DB), AWS CDK (S3/CloudFront infra)
@@ -54,14 +54,15 @@ npx nx test <project>
 npx nx run <project>:e2e
 
 # Lint (always --fix)
-npx nx lint <project> --fix
-npm run lint                          # all projects
+npx nx lint <project> --fix            # oxlint
+npx nx lint-templates <project> --fix  # angular-eslint template rules
+npm run lint                          # all projects, both targets
 
 # Format (REQUIRED before committing)
 npx nx format:write
 
 # Affected only (prefer in CI / large PRs)
-npx nx affected -t build,test,lint
+npx nx affected -t build,test,lint,lint-templates
 
 # Dependency graph
 npx nx graph
@@ -84,7 +85,7 @@ npx nx graph
 - One workspace-wide `.oxlintrc.json`; there are no per-project lint configs. Add project-specific rules through `overrides` with a `files` glob.
 - Type-aware linting is on (`options.typeAware`, backed by `oxlint-tsgolint`). It reads each project's `tsconfig.json` with TypeScript 7 semantics: no `baseUrl`, `paths` relative to `tsconfig.base.json` (`./libs/...`), and no `moduleResolution: node`/`node10`. Keep new tsconfigs on that layout or lint reports `tsconfig-error`.
 - `@nx/enforce-module-boundaries` runs inside oxlint through the `@nx/oxlint/boundaries-plugin` bridge; tag constraints live in `.oxlintrc.json`.
-- oxlint only lints JS/TS. Angular template rules, component/directive selector checks and the JSON-based `@nx/dependency-checks` rule from the old ESLint setup are gone; keep selectors and package.json deps correct by hand.
+- oxlint only lints JS/TS. Angular templates are covered by a second, template-only ESLint setup: the root `eslint.config.mjs` (angular-eslint template rules for `.html` and inline templates, plus the per-project component/directive selector prefixes) is inferred as the `lint-templates` target by `@nx/eslint/plugin`. New Angular projects get their selector prefix added to `selectorPrefixes` in that file. The JSON-based `@nx/dependency-checks` rule is gone; keep package.json deps correct by hand.
 - `nx format:write` / `nx format:check` run oxfmt (HTML, SCSS, Markdown and YAML are formatted through its Prettier-backed path).
 
 ## Dependency Constraints
@@ -131,7 +132,7 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - Pre-commit: Husky + lint-staged (runs automatically)
 - **Before every commit**:
   1. `npx nx format:write`
-  2. `npx nx affected -t lint`
+  2. `npx nx affected -t lint,lint-templates`
 - PR scope: include summary, UI screenshots if visual, linked issue; no unrelated refactors
 - **Always request a CodeRabbit review** after opening a PR: this repo gets no automatic reviews
   (fewer than 10 stars), so comment `@coderabbitai review` on the PR and work through the findings
