@@ -63,6 +63,18 @@ describe('PointerTracker', () => {
     expect(tracker.pair).toBeNull();
   });
 
+  it('should offer no pair for three fingers, which are not a pinch', () => {
+    tracker.add(1, { clientX: 0, clientY: 0 });
+    tracker.add(2, { clientX: 10, clientY: 0 });
+    tracker.add(3, { clientX: 20, clientY: 0 });
+
+    expect(tracker.pair).toBeNull();
+
+    // and it is a pinch again once the third finger is lifted
+    tracker.remove(3);
+    expect(tracker.pair).not.toBeNull();
+  });
+
   it('should keep a copy, so a moving pointer does not rewrite the past', () => {
     const live = { clientX: 0, clientY: 0 };
     tracker.add(1, live);

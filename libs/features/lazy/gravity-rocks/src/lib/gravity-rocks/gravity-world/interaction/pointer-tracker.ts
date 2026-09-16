@@ -35,8 +35,15 @@ export class PointerTracker<T> {
     return this.active.size;
   }
 
-  /** The two pointers of a two finger gesture, if there are two. */
+  /**
+   * The two pointers of a two finger gesture, and only when there are exactly
+   * two of them: three fingers are not a pinch, and handing out the first two
+   * of them would turn one into a pinch its owner never asked for.
+   */
   get pair(): readonly [ClientPoint, ClientPoint] | null {
+    if (this.active.size !== 2) {
+      return null;
+    }
     const [first, second] = [...this.active.values()];
     return first && second ? [first, second] : null;
   }

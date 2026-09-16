@@ -204,6 +204,39 @@ describe('ObjectPanelComponent', () => {
     expect(panel.speed()).toBeCloseTo(3, 6);
   });
 
+  it('should follow the primary the world carries outwards', () => {
+    // how far a moon may be moved is decided by the grip its planet has, and
+    // that grip grows with the planet's own distance from the sun - which a
+    // running world changes every frame
+    planet.mass = 0.1;
+    planet.pos = CENTER.add(vec2(4, 0));
+    const moon = new Planet(
+      planet.pos.add(vec2(0.5, 0)),
+      undefined,
+      EARTH_MASS / 100
+    );
+    moon.parent = planet;
+    fixture.componentRef.setInput('reach', 30);
+    show(moon);
+    const before: number = panel.distanceRange().max;
+
+    planet.pos = CENTER.add(vec2(8, 0));
+    worldMoved();
+
+    expect(panel.distanceRange().max).toBeGreaterThan(before);
+  });
+
+  it('should drop the warning as the world carries the body out of reach', () => {
+    // an earth at one AU keeps nothing the sun does not eventually steal;
+    // the same earth far out holds the very same orbit
+    expect(panel.held()).toBe(false);
+
+    planet.pos = CENTER.add(vec2(20, 0));
+    worldMoved();
+
+    expect(panel.held()).toBe(true);
+  });
+
   it('should warn that a light body cannot keep the orbit it offers', () => {
     // an earth is drawn a thousand times wider than it is, so its grip on
     // anything clear of its own disc is one the sun takes over

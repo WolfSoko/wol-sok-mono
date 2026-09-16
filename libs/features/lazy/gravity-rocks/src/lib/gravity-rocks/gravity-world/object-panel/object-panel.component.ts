@@ -141,11 +141,17 @@ export class ObjectPanelComponent {
    * discs and the reach of the target's gravity, speed decides how tightly a
    * satellite may circle it, so the range follows both sliders - which are
    * read here only to follow them, the sizes come from the target itself.
+   *
+   * The world is read for the same reason: where the target sits relative to
+   * its own primary is half of what it can hold on to, and a running world
+   * moves it every frame. Following the sliders alone would not do it - a
+   * slider set to the number it already held reports no change at all.
    */
   readonly orbitRange: Signal<{ min: number; max: number }> = computed(() => {
     const target: WorldObject = this.target();
     const mass: number = this.mass();
     this.speed();
+    this.world();
     if (mass <= 0) {
       return { min: 0, max: 0 };
     }
@@ -160,7 +166,8 @@ export class ObjectPanelComponent {
 
   /**
    * How far the target itself may be moved from its own primary: the same
-   * rule `orbitRange` places a new satellite by, applied to the target.
+   * rule `orbitRange` places a new satellite by, applied to the target, and
+   * following the same two things.
    */
   readonly distanceRange: Signal<{ min: number; max: number }> = computed(
     () => {
@@ -168,6 +175,8 @@ export class ObjectPanelComponent {
       const primary: WorldObject | undefined = this.primary();
       // read only to follow the mass slider, like `orbitRange` does
       const mass: number = this.mass();
+      // and the world, which keeps moving the primary this is measured from
+      this.world();
       if (!primary || mass <= 0) {
         // the sun has no parent to move against
         return { min: 0, max: 0 };
@@ -200,10 +209,10 @@ export class ObjectPanelComponent {
    * planet can offer, and what its mass slider is there to fix.
    */
   readonly held: Signal<boolean> = computed(() => {
-    // read to follow the mass slider, and the distance to the primary, which
-    // a running world keeps moving
+    // read to follow the mass slider, and the world, which keeps moving the
+    // target away from and towards the primary that would steal its satellite
     this.mass();
-    this.distance();
+    this.world();
     return keepsSatelliteAt(this.target(), this.primary(), this.orbit());
   });
 
