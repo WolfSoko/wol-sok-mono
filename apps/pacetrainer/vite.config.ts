@@ -48,7 +48,12 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
           },
           preset: 'firebase',
           firebase: {
-            nodeVersion: '22',
+            // nodejs24 is GA on Cloud Run functions (decommission 2028-10-31,
+            // a year beyond nodejs22) and matches the toolchain in .nvmrc.
+            // nitropack 2.13.4 still types this union as 22 | 20 | 18 | 16, so
+            // an editor may flag it; the value only ends up in engines.node of
+            // the generated functions package.json, which builds correctly.
+            nodeVersion: '24',
             gen: 2,
             httpsOptions: {
               region: 'europe-central2',
