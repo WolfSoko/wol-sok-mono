@@ -226,7 +226,7 @@
     "@rollup/rollup-win32-x64-msvc": "4.53.3",
     "@rspack/binding-linux-x64-gnu": "1.5.8",
     "@swc/core-linux-x64-gnu": "1.16.1",
-    "sass-embedded-linux-x64": "1.93.3"
+    "sass-embedded-linux-x64": "1.104.1"
   },
   "akitaCli": {
     "customFolderName": "true",
