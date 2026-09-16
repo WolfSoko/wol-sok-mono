@@ -163,28 +163,6 @@
   position: relative;
 }
 
-.toolbelt {
-  position: absolute;
-  top: 0.5rem;
-  left: 0.5rem;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-
-  mat-button-toggle-group {
-    background-color: rgba(0, 0, 0, 0.6);
-  }
-
-  .tool-hint {
-    max-width: 14rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    background-color: rgba(0, 0, 0, 0.6);
-    color: #fff;
-    font-size: 0.8rem;
-  }
-}
-
 // the orbit the orbit tool draws, kept a few css pixels wide at any zoom and
 // never in the way of the pointer that is placing it
 .orbit-preview,

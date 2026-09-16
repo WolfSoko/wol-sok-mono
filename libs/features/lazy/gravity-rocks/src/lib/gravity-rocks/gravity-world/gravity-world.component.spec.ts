@@ -34,11 +34,9 @@ import {
   GravityWorldComponent,
   MAX_ZOOM,
   MIN_ZOOM,
-  OBJECT_KINDS,
-  ObjectKind,
-  TOOLS,
   YEARS_PER_SECOND,
 } from './gravity-world.component';
+import { OBJECT_KINDS, ObjectKind, TOOLS } from './toolbelt/tools';
 
 /** First element in the rendered component matching the css selector. */
 function query<T extends Element>(

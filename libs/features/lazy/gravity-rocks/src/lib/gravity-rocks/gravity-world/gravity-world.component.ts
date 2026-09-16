@@ -13,7 +13,6 @@ import {
   inject,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
@@ -51,6 +50,8 @@ import {
 } from './domain/world-objects/orbit';
 import { EARTH_MASS, PLANET_NAMES } from './domain/solar-system';
 import { ObjectPanelComponent } from './object-panel/object-panel.component';
+import { ToolbeltComponent } from './toolbelt/toolbelt.component';
+import { ObjectKind, Tool } from './toolbelt/tools';
 import { Sun } from './domain/world-objects/sun';
 import {
   SvgPath,
@@ -114,50 +115,6 @@ function midpointOf(a: ClientPoint, b: ClientPoint): ClientPoint {
   };
 }
 
-/** What a press on the world does - picked from the toolbelt. */
-export type Tool = 'grab' | 'select' | 'add' | 'orbit' | 'delete';
-
-/** What the add tool puts down on empty space. */
-export type ObjectKind = 'asteroid' | 'planet' | 'giant' | 'star';
-
-export const TOOLS: readonly {
-  id: Tool;
-  icon: string;
-  label: string;
-  hint: string;
-}[] = [
-  {
-    id: 'grab',
-    icon: 'pan_tool',
-    label: 'Grab',
-    hint: 'Grab: drag a body to fling it, tap it to follow it',
-  },
-  {
-    id: 'select',
-    icon: 'ads_click',
-    label: 'Select',
-    hint: 'Select: tap a body to open its settings',
-  },
-  {
-    id: 'add',
-    icon: 'add_circle',
-    label: 'Add',
-    hint: 'Add: tap empty space to put a body there, drag to fling it',
-  },
-  {
-    id: 'orbit',
-    icon: 'track_changes',
-    label: 'Put in orbit',
-    hint: 'Put in orbit: tap a body, then press beside it and drag the orbit - let go to add the satellite',
-  },
-  {
-    id: 'delete',
-    icon: 'delete',
-    label: 'Delete',
-    hint: 'Delete: tap a body to take it out of the world',
-  },
-];
-
 /**
  * A thousandth of an earth, the lightest the mass slider goes; a jupiter, at
  * 318 earths; and a star weighs whatever the sun is set to.
@@ -179,17 +136,6 @@ export interface OrbitPreview {
   held: boolean;
 }
 
-export const OBJECT_KINDS: readonly {
-  id: ObjectKind;
-  icon: string;
-  label: string;
-}[] = [
-  { id: 'asteroid', icon: 'grain', label: 'Asteroid' },
-  { id: 'planet', icon: 'public', label: 'Planet' },
-  { id: 'giant', icon: 'lens', label: 'Gas giant' },
-  { id: 'star', icon: 'star', label: 'Star' },
-];
-
 @Component({
   selector: 'feat-lazy-gravity-world',
   templateUrl: 'gravity-world.component.html',
@@ -206,8 +152,8 @@ export const OBJECT_KINDS: readonly {
     MatTooltipModule,
     GravityConfigComponent,
     MatSidenavModule,
-    MatButtonToggleModule,
     ObjectPanelComponent,
+    ToolbeltComponent,
   ],
 })
 export class GravityWorldComponent {
@@ -224,8 +170,6 @@ export class GravityWorldComponent {
 
   settings: WritableSignal<GravityWorldConfig>;
 
-  readonly tools = TOOLS;
-  readonly objectKinds = OBJECT_KINDS;
   /** What a press on the world does. */
   readonly tool: WritableSignal<Tool> = signal('grab');
   /** What the add tool puts down. */
@@ -376,6 +320,19 @@ export class GravityWorldComponent {
   private readonly orbitPointer: WritableSignal<Vector2d | null> = signal(null);
   /** The pointer holding the drawn orbit, while one is pressed on it. */
   private orbitPointerId: number | null = null;
+
+  /** What the tool in hand is waiting for, shown next to the toolbelt. */
+  readonly toolHint: Signal<string | null> = computed(() => {
+    if (this.tool() !== 'orbit') {
+      return null;
+    }
+    const parent: WorldObject | null = this.orbitParent();
+    if (!parent) {
+      return 'Tap a body to give it a satellite';
+    }
+    const satellite: string = parent === this.sun ? 'planet' : 'moon';
+    return `Press beside it and drag the orbit, let go to add the ${satellite}`;
+  });
 
   /**
    * The orbit the orbit tool draws around its parent: as far out as the
