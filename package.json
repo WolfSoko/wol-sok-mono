@@ -222,7 +222,7 @@
   "optionalDependencies": {
     "@esbuild/linux-x64": "0.28.2",
     "@nx/nx-linux-x64-gnu": "23.1.2",
-    "@rollup/rollup-linux-x64-gnu": "4.53.3",
+    "@rollup/rollup-linux-x64-gnu": "4.63.3",
     "@rollup/rollup-win32-x64-msvc": "4.53.3",
     "@rspack/binding-linux-x64-gnu": "1.5.8",
     "@swc/core-linux-x64-gnu": "1.16.1",
