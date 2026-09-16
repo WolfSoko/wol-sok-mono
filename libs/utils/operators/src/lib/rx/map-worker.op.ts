@@ -9,7 +9,7 @@ export interface WorkerPostParams<T> {
 function createWorker<T, R>(fn: (input: T) => WorkerPostParams<R>) {
   /* tslint:disable:no-trailing-whitespace*/
   const webWorkerTemplate = `
-    self.cb = ${fn};
+    self.cb = ${fn.toString()};
     self.onmessage = function (e) {
       const result =  self.cb(e.data);
       if(result.transferList || result.data){

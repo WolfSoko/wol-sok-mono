@@ -28,7 +28,7 @@ export class PlaneGeometry extends Geometry {
         -absX + x, -absY + y, // V2: Bottom left
         absX + x, absY + y,  // V3: Top right
         absX + x, -absY + y, // V4: Bottom right
-    )
+    );
   }
 
   override update(ctx: RenderingContextWithProgram): RenderingContext {

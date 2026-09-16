@@ -41,7 +41,7 @@ export class ReactionDiffGpuCalcService implements ReactionDiffCalculator {
     speed$: Observable<number>,
     private gpuJs: GpuAdapterService
   ) {
-    this.gpuJs.setUseGPU(true).then(() => {
+    void this.gpuJs.setUseGPU(true).then(() => {
       calcParams$.subscribe((calcParams) => {
         this.setCalcParams(calcParams);
       });

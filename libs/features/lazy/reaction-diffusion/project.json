@@ -31,11 +31,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/features/lazy/reaction-diffusion/tsconfig.spec.json"
       }
-    },
-    "lint": {
-      "options": {
-        "args": ["./**/*.ts", "./**/*.html"]
-      }
     }
   }
 }

@@ -237,7 +237,7 @@ export class GameStateService {
 
   removeKeyPress(key: string): void {
     this.gameStateStore.update((state) => ({
-      keysPressed: [...state.keysPressed.filter((keys) => key !== keys)],
+      keysPressed: state.keysPressed.filter((keys) => key !== keys),
     }));
   }
 

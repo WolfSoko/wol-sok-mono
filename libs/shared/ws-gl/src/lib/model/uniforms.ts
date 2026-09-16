@@ -13,8 +13,9 @@ export interface Uniform2f extends GenericUniform<[number, number]> {
   type: '2f';
 }
 
-export interface Uniform4f
-  extends GenericUniform<[number, number, number, number]> {
+export interface Uniform4f extends GenericUniform<
+  [number, number, number, number]
+> {
   type: '4f';
 }
 

@@ -8,7 +8,7 @@
   },
   "plugins": [
     {
-      "plugin": "@nx/eslint/plugin",
+      "plugin": "@nx/oxlint",
       "options": {
         "targetName": "lint"
       }
@@ -59,8 +59,7 @@
       "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
       "!{projectRoot}/src/*test-setup.[jt]s",
       "!{projectRoot}/playwright.config.[jt]s",
-      "!{projectRoot}/eslint.config.[jt]s",
-      "!{projectRoot}/eslint.config.mjs",
+      "!{projectRoot}/.oxlintrc.json",
       "!{projectRoot}/tsconfig.spec.json"
     ],
     "sharedGlobals": [],
@@ -146,21 +145,6 @@
         }
       }
     },
-    "@nx/eslint:lint": {
-      "inputs": [
-        "default",
-        "^default",
-        "{workspaceRoot}/.eslintrc.json",
-        "{workspaceRoot}/eslint*.config.js",
-        "{workspaceRoot}/eslint*.config.mjs",
-        "{workspaceRoot}/tools/eslint-rules/**/*"
-      ],
-      "cache": true,
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": ["{projectRoot}/**/*.ts", "{projectRoot}/**/*.html"]
-      }
-    },
     "@nx/angular:webpack-browser": {
       "inputs": [
         {
@@ -200,12 +184,12 @@
   "generators": {
     "@nx/angular:application": {
       "style": "scss",
-      "linter": "eslint",
+      "linter": "none",
       "unitTestRunner": "jest",
       "e2eTestRunner": "playwright"
     },
     "@nx/angular:library": {
-      "linter": "eslint",
+      "linter": "none",
       "unitTestRunner": "jest"
     },
     "@nx/angular:component": {

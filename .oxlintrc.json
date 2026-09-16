@@ -1,0 +1,142 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import"],
+  "jsPlugins": ["@nx/oxlint/boundaries-plugin"],
+  "options": {
+    "typeAware": true
+  },
+  "categories": {
+    "correctness": "error"
+  },
+  "env": {
+    "builtin": true,
+    "browser": true,
+    "node": true
+  },
+  "ignorePatterns": [
+    "dist/**",
+    "distS3/**",
+    "coverage/**",
+    "tmp/**",
+    "out-tsc/**",
+    ".angular/**",
+    ".nx/**",
+    "cdk.out/**",
+    "storybook-static/**",
+    "**/test-build-path/**",
+    "**/*__template__",
+    "**/vite.config.*.timestamp*",
+    "**/vitest.config.*.timestamp*"
+  ],
+  "rules": {
+    "no-unused-vars": "warn",
+    "typescript/no-explicit-any": "warn",
+    "typescript/no-empty-object-type": "error",
+    "typescript/no-unsafe-function-type": "error",
+    "typescript/no-wrapper-object-types": "error",
+    "typescript/no-namespace": "error",
+    "typescript/no-this-alias": "error",
+    "typescript/prefer-as-const": "error",
+    "typescript/no-inferrable-types": "error",
+    "typescript/no-non-null-asserted-optional-chain": "error",
+    "typescript/ban-ts-comment": [
+      "error",
+      {
+        "ts-expect-error": "allow-with-description",
+        "ts-ignore": "allow-with-description",
+        "ts-nocheck": "allow-with-description",
+        "ts-check": false
+      }
+    ],
+    "@nx/enforce-module-boundaries": [
+      "error",
+      {
+        "allow": [],
+        "depConstraints": [
+          {
+            "sourceTag": "app",
+            "onlyDependOnLibsWithTags": [
+              "shared",
+              "feature",
+              "feature:lazy",
+              "api",
+              "type:remote"
+            ]
+          },
+          {
+            "sourceTag": "infra",
+            "onlyDependOnLibsWithTags": ["infra-shared"]
+          },
+          {
+            "sourceTag": "infra-shared",
+            "onlyDependOnLibsWithTags": ["infra-shared"]
+          },
+          {
+            "sourceTag": "e2e",
+            "onlyDependOnLibsWithTags": ["shared"]
+          },
+          {
+            "sourceTag": "feature",
+            "onlyDependOnLibsWithTags": ["feat-shared", "shared", "api"]
+          },
+          {
+            "sourceTag": "feature:lazy",
+            "onlyDependOnLibsWithTags": ["feat-shared", "shared", "api"]
+          },
+          {
+            "sourceTag": "feat-shared",
+            "onlyDependOnLibsWithTags": ["shared", "api"]
+          },
+          {
+            "sourceTag": "shared",
+            "onlyDependOnLibsWithTags": ["shared", "api"]
+          },
+          {
+            "sourceTag": "api",
+            "onlyDependOnLibsWithTags": ["api"]
+          }
+        ]
+      }
+    ],
+    "unicorn/no-new-array": "off",
+    "typescript/unbound-method": [
+      "error",
+      {
+        "ignoreStatic": true
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "apps/{angular-examples,*-remote,*-cdk,nx-aws-cdk-v2-e2e,ws-thanos-test-app}/**/*.spec.ts",
+        "libs/**/*.spec.ts",
+        "tools/**/*.spec.ts"
+      ],
+      "plugins": ["jest"],
+      "env": {
+        "jest": true
+      },
+      "rules": {
+        "jest/expect-expect": "off",
+        "jest/require-to-throw-message": "off",
+        "jest/no-disabled-tests": "warn",
+        "typescript/unbound-method": "off"
+      }
+    },
+    {
+      "files": ["apps/{pacetrainer,rollapolla-analog}/**/*.spec.ts"],
+      "plugins": ["vitest"],
+      "env": {
+        "vitest": true
+      },
+      "rules": {
+        "vitest/expect-expect": "off",
+        "vitest/require-to-throw-message": "off",
+        "vitest/require-mock-type-parameters": "off",
+        "vitest/no-disabled-tests": "warn",
+        "typescript/unbound-method": "off"
+      }
+    }
+  ]
+}

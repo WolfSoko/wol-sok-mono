@@ -29,11 +29,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/features/lazy/gravity-rocks/tsconfig.spec.json"
       }
-    },
-    "lint": {
-      "options": {
-        "args": ["./**/*.ts", "./**/*.html"]
-      }
     }
   }
 }

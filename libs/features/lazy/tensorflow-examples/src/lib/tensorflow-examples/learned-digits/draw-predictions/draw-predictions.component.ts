@@ -70,7 +70,7 @@ export class DrawPredictionsComponent implements OnChanges {
       void this.plotAccuracies(this.accuracyValues);
     }
     if (changes['lossValues'] && changes['lossValues'].currentValue) {
-      this.plotLosses(this.lossValues);
+      void this.plotLosses(this.lossValues);
     }
     if (changes['labels'] && changes['labels'].currentValue) {
       if (this.batch == null) {

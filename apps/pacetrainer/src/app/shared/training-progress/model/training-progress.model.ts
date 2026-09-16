@@ -18,9 +18,7 @@ import { StartAndEnd } from './start-and-end';
 import { State } from './state';
 
 export interface TrainingProgress
-  extends WithElapsedDuration,
-    StartAndEnd,
-    State {
+  extends WithElapsedDuration, StartAndEnd, State {
   training: TrainingConfigWithDuration;
   activeExerciseIndex: number;
   exercises: ExerciseProgress[];

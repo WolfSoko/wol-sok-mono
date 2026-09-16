@@ -28,11 +28,6 @@
         "jestConfig": "libs/features/lazy/neural-networks/jest.config.ts",
         "tsConfig": "libs/features/lazy/neural-networks/tsconfig.spec.json"
       }
-    },
-    "lint": {
-      "options": {
-        "args": ["./**/*.ts", "./**/*.html"]
-      }
     }
   }
 }
