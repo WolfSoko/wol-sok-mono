@@ -212,6 +212,7 @@ import { UserService } from './user.service';
 Code is automatically linted and formatted:
 
 - **oxlint**: Linting JavaScript/TypeScript (via `@nx/oxlint`)
+- **angular-eslint**: Angular template rules and selector prefixes only (`lint-templates` target)
 - **oxfmt**: Code formatting (via `nx format`)
 - **Husky**: Pre-commit hooks
 - **lint-staged**: Lint only changed files

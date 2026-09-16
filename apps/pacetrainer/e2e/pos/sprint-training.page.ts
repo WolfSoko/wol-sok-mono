@@ -128,7 +128,6 @@ export class SprintTrainingPage {
   async stopTraining(): Promise<void> {
     await this.expectTrainingStateStoppable();
     // Wait for any potential animations or state updates
-    // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(500);
     await this.stopTrainingCta.click();
     await this.expectTrainingStateStartable();
