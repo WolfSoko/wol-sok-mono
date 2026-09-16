@@ -156,7 +156,7 @@
     "assemblyscript": "0.28.20",
     "autoprefixer": "10.4.21",
     "aws-cdk": "2.1031.0",
-    "aws-cdk-lib": "2.221.0",
+    "aws-cdk-lib": "2.269.0",
     "aws-sdk": "2.1692.0",
     "axios": "1.12.2",
     "chai": "6.2.2",
