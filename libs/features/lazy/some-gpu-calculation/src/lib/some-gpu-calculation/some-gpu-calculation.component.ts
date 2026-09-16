@@ -72,6 +72,7 @@ interface Configuration {
     ShowFpsComponent,
   ],
   providers: [{ provide: MeasureFps, useValue: new MeasureFps() }],
+  // eslint-disable-next-line @angular-eslint/component-selector -- selector is the lib prefix itself
   selector: 'lazy-feat-gpu-calc',
   templateUrl: './some-gpu-calculation.component.html',
   styleUrls: ['./some-gpu-calculation.component.scss'],
