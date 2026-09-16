@@ -18,6 +18,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
+import { clamp } from '../domain/clamp';
 import { EARTH_MASS } from '../domain/solar-system';
 import {
   defaultOrbitDistance,
@@ -44,11 +45,6 @@ export const MAX_MASS_EXPONENT = 6;
 export const MAX_SPEED = 25;
 /** Smallest step a slider may take, so a range with nothing in it still works. */
 const MIN_SLIDER_STEP = 1e-4;
-
-/** Restricts a value to the closed interval between `min` and `max`. */
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 /**
  * Everything one body can be told to be: how far out it sits, how heavy it

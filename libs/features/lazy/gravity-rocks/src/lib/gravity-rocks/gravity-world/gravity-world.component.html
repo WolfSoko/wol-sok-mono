@@ -192,7 +192,7 @@
             [attr.cy]="sun.pos.y"
             [attr.r]="sun.radius"
           ></circle>
-          @if (orbitPreview(); as preview) {
+          @if (orbitTool.preview(); as preview) {
             <circle
               class="orbit-preview"
               data-qa="orbit-preview"

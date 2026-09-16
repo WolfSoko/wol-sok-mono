@@ -29,6 +29,7 @@ import {
   MAX_SIMULATION_SPEED,
   MIN_SIMULATION_SPEED,
 } from './domain/gravity-world-config';
+import { clamp } from './domain/clamp';
 import { createSolarSystem } from './domain/create-solar-system';
 import {
   GravityWorldService,
@@ -40,7 +41,6 @@ import { SPRING_SPEED_PER_AU, SpringForce } from './interaction/spring-force';
 import { Planet } from './domain/world-objects/planet';
 import {
   defaultOrbitDistance,
-  keepsSatelliteAt,
   orbitAround,
   placedPlanetMass,
   placementRange,
@@ -50,6 +50,7 @@ import {
 } from './domain/world-objects/orbit';
 import { EARTH_MASS, PLANET_NAMES } from './domain/solar-system';
 import { ObjectPanelComponent } from './object-panel/object-panel.component';
+import { OrbitTool } from './orbit-tool/orbit-tool';
 import { ToolbeltComponent } from './toolbelt/toolbelt.component';
 import { ObjectKind, Tool } from './toolbelt/tools';
 import { Sun } from './domain/world-objects/sun';
@@ -121,20 +122,6 @@ function midpointOf(a: ClientPoint, b: ClientPoint): ClientPoint {
  */
 const ASTEROID_MASS = EARTH_MASS / 1000;
 const GIANT_MASS = EARTH_MASS * 318;
-
-/** The orbit the orbit tool draws before a satellite is let go onto it. */
-export interface OrbitPreview {
-  center: Vector2d;
-  /** Distance of the orbit from its parent, in AU. */
-  radius: number;
-  /** Where on the orbit the satellite is put, in radians. */
-  angle: number;
-  /** Where the satellite is shown, and how big. */
-  satellite: Vector2d;
-  satelliteRadius: number;
-  /** Whether the parent keeps a satellite there, see `keepsSatelliteAt`. */
-  held: boolean;
-}
 
 @Component({
   selector: 'feat-lazy-gravity-world',
@@ -312,71 +299,27 @@ export class GravityWorldComponent {
   /** Whether the simulation was running when the menu took over. */
   private pausedForMenu = false;
 
-  /**
-   * Body the orbit tool has picked to circle, and where its pointer was seen
-   * last - together they draw the orbit the next satellite is let go onto.
-   */
-  readonly orbitParent: WritableSignal<WorldObject | null> = signal(null);
-  private readonly orbitPointer: WritableSignal<Vector2d | null> = signal(null);
-  /** The pointer holding the drawn orbit, while one is pressed on it. */
-  private orbitPointerId: number | null = null;
+  /** Putting a body in orbit around another, in two presses. */
+  readonly orbitTool: OrbitTool = new OrbitTool({
+    sun: () => this.sun,
+    bodies: this.worldService.worldObjects,
+    gravitationalConstant: computed(
+      () => this.settings().gravitationalConstant
+    ),
+    reach: computed(() => this.canvasSize().x / 2),
+  });
 
   /** What the tool in hand is waiting for, shown next to the toolbelt. */
   readonly toolHint: Signal<string | null> = computed(() => {
     if (this.tool() !== 'orbit') {
       return null;
     }
-    const parent: WorldObject | null = this.orbitParent();
+    const parent: WorldObject | null = this.orbitTool.parent();
     if (!parent) {
       return 'Tap a body to give it a satellite';
     }
     const satellite: string = parent === this.sun ? 'planet' : 'moon';
     return `Press beside it and drag the orbit, let go to add the ${satellite}`;
-  });
-
-  /**
-   * The orbit the orbit tool draws around its parent: as far out as the
-   * pointer, within what the parent can offer, with the satellite shown where
-   * the pointer is. Nothing until a parent is picked.
-   */
-  readonly orbitPreview: Signal<OrbitPreview | null> = computed(() => {
-    const parent: WorldObject | null = this.orbitParent();
-    // the parent moves while the world runs, and `planets` is set each frame
-    this.planets();
-    if (!parent) {
-      return null;
-    }
-    const { gravitationalConstant } = this.settings();
-    const primary: WorldObject | undefined = this.primaryOf(parent);
-    const radiusOfSatellite: number = satelliteRadiusFor(parent);
-    const { min, max } = placementRange(
-      parent,
-      primary,
-      radiusOfSatellite,
-      gravitationalConstant,
-      this.canvasSize().x / 2
-    );
-    const pointer: Vector2d | null = this.orbitPointer();
-    const towards: Vector2d | null =
-      pointer && pointer.dist(parent.pos) > 0 ? pointer.sub(parent.pos) : null;
-    const radius: number = clamp(
-      towards
-        ? towards.length()
-        : defaultOrbitDistance(parent, primary, radiusOfSatellite),
-      min,
-      max
-    );
-    const angle: number = towards ? Math.atan2(towards.y, towards.x) : 0;
-    return {
-      center: parent.pos,
-      radius,
-      angle,
-      satellite: parent.pos.add(
-        vec2(Math.cos(angle), Math.sin(angle)).mul(radius)
-      ),
-      satelliteRadius: radiusOfSatellite,
-      held: keepsSatelliteAt(parent, primary, radius),
-    };
   });
 
   /** World object pressed on, and where it was pressed, until the mouse is released. */
@@ -471,10 +414,9 @@ export class GravityWorldComponent {
         // the other tools act on the tap, there is nothing to drag
         return;
       }
-    } else if (tool === 'orbit' && this.orbitParent()) {
+    } else if (tool === 'orbit' && this.orbitTool.parent()) {
       // a press beside the picked body takes hold of the drawn orbit
-      this.orbitPointerId = $event.pointerId;
-      this.orbitPointer.set(this.toWorldCoordinates($event));
+      this.orbitTool.grab($event.pointerId, this.toWorldCoordinates($event));
       return;
     } else if (tool === 'add') {
       // a click on empty space places a body, it does not move the view
@@ -517,24 +459,19 @@ export class GravityWorldComponent {
    * lets a satellite go onto the orbit the pointer was holding.
    */
   pointerUp($event: PointerEvent): void {
-    const heldOrbit: boolean = this.orbitPointerId === $event.pointerId;
+    const heldOrbit: boolean = this.orbitTool.isHeldBy($event.pointerId);
     const pressed = this.endGesture($event);
     if (heldOrbit) {
-      // a mouse keeps its pointer id, so the next press must start afresh
-      this.orbitPointerId = null;
-      this.orbitPointer.set(this.toWorldCoordinates($event));
-      this.placeOnDrawnOrbit();
+      const placed = this.orbitTool.release(this.toWorldCoordinates($event));
+      if (placed) {
+        this.addSatelliteTo(
+          placed.parent,
+          placed.orbit.radius,
+          placed.orbit.angle
+        );
+      }
     } else if (pressed && this.isWithinClickTolerance(pressed, $event)) {
       this.tap(pressed.wo);
-    }
-  }
-
-  /** Puts a satellite where the drawn orbit shows it. */
-  private placeOnDrawnOrbit(): void {
-    const parent: WorldObject | null = this.orbitParent();
-    const preview: OrbitPreview | null = this.orbitPreview();
-    if (parent && preview) {
-      this.addSatelliteTo(parent, preview.radius, preview.angle);
     }
   }
 
@@ -546,8 +483,7 @@ export class GravityWorldComponent {
         break;
       case 'orbit':
         // the orbit is drawn from here on, the satellite follows on release
-        this.orbitParent.set(wo);
-        this.orbitPointer.set(null);
+        this.orbitTool.pick(wo);
         break;
       case 'delete':
         if (wo instanceof Planet) {
@@ -563,8 +499,8 @@ export class GravityWorldComponent {
   pointerCancel($event: PointerEvent): void {
     // a placement the system cut short was never finished
     const created: Planet | null = this.createdByDrag;
-    if (this.orbitPointerId === $event.pointerId) {
-      this.orbitPointerId = null;
+    if (this.orbitTool.isHeldBy($event.pointerId)) {
+      this.orbitTool.letGo();
     }
     this.endGesture($event);
     if (created) {
@@ -637,7 +573,7 @@ export class GravityWorldComponent {
     this.panStart = null;
     this.pressed = null;
     this.dragPointerId = null;
-    this.orbitPointerId = null;
+    this.orbitTool.letGo();
     this.createdByDrag = null;
     // an abandoned gesture is not a throw
     this.dragObject = null;
@@ -665,13 +601,13 @@ export class GravityWorldComponent {
       return;
     }
     if (
-      this.orbitParent() &&
+      this.orbitTool.parent() &&
       this.tool() === 'orbit' &&
       // the pointer holding the orbit, or a mouse hovering with none pressed
-      (this.orbitPointerId === $event.pointerId ||
+      (this.orbitTool.isHeldBy($event.pointerId) ||
         this.activePointers.size === 0)
     ) {
-      this.orbitPointer.set(this.toWorldCoordinates($event));
+      this.orbitTool.moveTo(this.toWorldCoordinates($event));
     }
     if (this.pressed && !this.isWithinClickTolerance(this.pressed, $event)) {
       // the gesture has become a drag, releasing it must not center anything,
@@ -871,7 +807,7 @@ export class GravityWorldComponent {
 
   /** Opens the settings of the object under the cursor on a right click. */
   contextMenu($event: MouseEvent): void {
-    if (this.orbitPointerId !== null) {
+    if (this.orbitTool.isHeld) {
       // a finger resting on the drawn orbit is still holding it - the
       // browser's long press must neither show its menu nor cut the gesture
       // short, the satellite follows on release as it would have
@@ -1177,9 +1113,7 @@ export class GravityWorldComponent {
   /** Puts the given tool in hand, dropping what the orbit tool had picked. */
   pickTool(tool: Tool): void {
     this.tool.set(tool);
-    this.orbitParent.set(null);
-    this.orbitPointer.set(null);
-    this.orbitPointerId = null;
+    this.orbitTool.clear();
   }
 
   /** Clears the world, resets the view and places sun and planets again. */
@@ -1187,8 +1121,7 @@ export class GravityWorldComponent {
     this.stopSim();
     this.pausedForMenu = false;
     this.menuTarget.set(null);
-    this.orbitParent.set(null);
-    this.orbitPointer.set(null);
+    this.orbitTool.clear();
     this.worldService.removeAll();
     this.resetView();
     this.initializeSunAndPlanets();
@@ -1247,9 +1180,7 @@ export class GravityWorldComponent {
     if (this.menuTarget() === planet) {
       this.menuClosed();
     }
-    if (this.orbitParent() === planet) {
-      this.orbitParent.set(null);
-    }
+    this.orbitTool.forget(planet);
     for (const other of this.planets()) {
       if (other.parent === planet) {
         other.parent = planet.parent ?? this.sun;
@@ -1257,9 +1188,4 @@ export class GravityWorldComponent {
     }
     this.worldService.removeWorldObject(planet);
   }
-}
-
-/** Restricts a value to the closed interval between `min` and `max`. */
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
 }

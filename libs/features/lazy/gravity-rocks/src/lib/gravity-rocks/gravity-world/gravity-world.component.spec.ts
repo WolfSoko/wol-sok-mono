@@ -1734,8 +1734,8 @@ describe('GravityWorldComponent', () => {
 
       // nothing is added yet, the orbit is only drawn
       expect(component.planets().length).toBe(planetsBefore);
-      expect(component.orbitParent()).toBe(parent);
-      const preview = component.orbitPreview()!;
+      expect(component.orbitTool.parent()).toBe(parent);
+      const preview = component.orbitTool.preview()!;
       expect(preview.center).toBe(parent.pos);
       expect(preview.radius).toBeGreaterThan(parent.radius);
       expect(query(fixture, qaSelector('orbit-preview'))).toBeTruthy();
@@ -1754,7 +1754,7 @@ describe('GravityWorldComponent', () => {
       expect(planet.pos.x).toBeGreaterThan(component.sun.pos.x);
       expect(planet.pos.y).toBeCloseTo(component.sun.pos.y, 6);
       // the sun stays picked, so the next one can follow at once
-      expect(component.orbitParent()).toBe(component.sun);
+      expect(component.orbitTool.parent()).toBe(component.sun);
     });
 
     it('should keep the drawn orbit within what the body can offer', () => {
@@ -1764,7 +1764,7 @@ describe('GravityWorldComponent', () => {
       const moon = drawOrbit(parent.id, 490, 20);
 
       expect(moon.parent).toBe(parent);
-      const preview = component.orbitPreview()!;
+      const preview = component.orbitTool.preview()!;
       expect(moon.pos.dist(parent.pos)).toBeCloseTo(preview.radius, 6);
       expect(preview.radius).toBeLessThan(1);
       expect(preview.radius).toBeGreaterThan(parent.radius);
@@ -1778,7 +1778,7 @@ describe('GravityWorldComponent', () => {
       // straight up from the sun, 100px of 300 is 1.2 of 3.6 AU
       component.pointerMove(on(svg, 250, 50));
 
-      const preview = component.orbitPreview()!;
+      const preview = component.orbitTool.preview()!;
       expect(preview.radius).toBeCloseTo(1.2, 6);
       expect(preview.angle).toBeCloseTo(-Math.PI / 2, 6);
       expect(preview.satellite.y).toBeLessThan(component.sun.pos.y);
@@ -1787,10 +1787,10 @@ describe('GravityWorldComponent', () => {
     it('should mark a drawn orbit the body cannot keep', () => {
       component.tool.set('orbit');
       tapOn(component.planets()[0].id);
-      expect(component.orbitPreview()!.held).toBe(false);
+      expect(component.orbitTool.preview()!.held).toBe(false);
 
       tapOn(component.sun.id);
-      expect(component.orbitPreview()!.held).toBe(true);
+      expect(component.orbitTool.preview()!.held).toBe(true);
     });
 
     it('should move the drawn orbit to another tapped body', () => {
@@ -1798,7 +1798,7 @@ describe('GravityWorldComponent', () => {
       const [first, second] = component.planets();
       tapOn(first.id);
       tapOn(second.id);
-      expect(component.orbitParent()).toBe(second);
+      expect(component.orbitTool.parent()).toBe(second);
     });
 
     it('should pick a tapped body after a satellite was let go, not place another', () => {
@@ -1810,7 +1810,7 @@ describe('GravityWorldComponent', () => {
       tapOn(mercury.id);
 
       expect(component.planets().length).toBe(planetsAfterOne);
-      expect(component.orbitParent()).toBe(mercury);
+      expect(component.orbitTool.parent()).toBe(mercury);
     });
 
     it('should drop the drawn orbit when the tool is put down', () => {
@@ -1819,8 +1819,8 @@ describe('GravityWorldComponent', () => {
 
       component.pickTool('grab');
 
-      expect(component.orbitParent()).toBeNull();
-      expect(component.orbitPreview()).toBeNull();
+      expect(component.orbitTool.parent()).toBeNull();
+      expect(component.orbitTool.preview()).toBeNull();
     });
 
     it('should drop the drawn orbit when its body is taken away', () => {
@@ -1830,14 +1830,14 @@ describe('GravityWorldComponent', () => {
 
       component.removePlanet(planet);
 
-      expect(component.orbitParent()).toBeNull();
+      expect(component.orbitTool.parent()).toBeNull();
     });
 
     it('should drop the drawn orbit on reset', () => {
       component.tool.set('orbit');
       tapOn(component.sun.id);
       component.reset();
-      expect(component.orbitParent()).toBeNull();
+      expect(component.orbitTool.parent()).toBeNull();
     });
 
     it("should keep holding the drawn orbit through the browser's long press", () => {
@@ -1887,7 +1887,7 @@ describe('GravityWorldComponent', () => {
       component.pointerUp(on(svg, 200, 150));
 
       expect(component.viewCenter().x).toBeGreaterThan(centerBefore.x);
-      expect(component.orbitPreview()).toBeNull();
+      expect(component.orbitTool.preview()).toBeNull();
     });
 
     it('should take a tapped planet out of the world with the delete tool', () => {
