@@ -12,7 +12,7 @@
     "@angular/forms": "20.3.7",
     "rxjs": "7.8.2",
     "@ngneat/elf": "^2.5.1",
-    "lodash": "4.17.21",
+    "lodash": "4.18.1",
     "@ngneat/elf-entities": "^5.0.2"
   },
   "devDependencies": {
