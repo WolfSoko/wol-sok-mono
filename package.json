@@ -264,7 +264,7 @@
     "@swc/core@1.16.1": true,
     "core-js": true,
     "aws-sdk": true,
-    "gl": true,
+    "gl": false,
     "msgpackr-extract@3.0.4": true,
     "nx@23.2.1": true,
     "protobufjs": true,
