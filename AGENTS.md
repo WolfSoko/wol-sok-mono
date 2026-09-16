@@ -40,7 +40,7 @@
 ## Security & Configuration Tips
 
 - Do not commit secrets. Review `SECURITY.md` and use environment files under `apps/<app>/src/environments/` for config.
-- Prefer Nx caching defaults; avoid custom scripts unless necessary. Use `npx nx affected -t build,test,lint` before merging.
+- Prefer Nx caching defaults; avoid custom scripts unless necessary. Use `npx nx affected -t build,test,lint,lint-templates` before merging.
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->

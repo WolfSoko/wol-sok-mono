@@ -62,7 +62,7 @@ npm run lint                          # all projects, both targets
 npx nx format:write
 
 # Affected only (prefer in CI / large PRs)
-npx nx affected -t build,test,lint
+npx nx affected -t build,test,lint,lint-templates
 
 # Dependency graph
 npx nx graph
@@ -132,7 +132,7 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - Pre-commit: Husky + lint-staged (runs automatically)
 - **Before every commit**:
   1. `npx nx format:write`
-  2. `npx nx affected -t lint`
+  2. `npx nx affected -t lint,lint-templates`
 - PR scope: include summary, UI screenshots if visual, linked issue; no unrelated refactors
 - **Always request a CodeRabbit review** after opening a PR: this repo gets no automatic reviews
   (fewer than 10 stars), so comment `@coderabbitai review` on the PR and work through the findings
