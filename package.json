@@ -139,7 +139,7 @@
     "@storybook/test": "8.6.14",
     "@storybook/test-runner": "0.24.5",
     "@swc-node/register": "1.12.1",
-    "@swc/core": "1.16.1",
+    "@swc/core": "1.16.2",
     "@swc/helpers": "0.5.23",
     "@types/chai": "5.2.3",
     "@types/jasmine": "5.1.15",
@@ -225,7 +225,7 @@
     "@rollup/rollup-linux-x64-gnu": "4.53.3",
     "@rollup/rollup-win32-x64-msvc": "4.53.3",
     "@rspack/binding-linux-x64-gnu": "1.5.8",
-    "@swc/core-linux-x64-gnu": "1.16.1",
+    "@swc/core-linux-x64-gnu": "1.16.2",
     "sass-embedded-linux-x64": "1.93.3"
   },
   "akitaCli": {
