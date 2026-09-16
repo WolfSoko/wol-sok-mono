@@ -15,6 +15,9 @@ function workspaceFederation(config) {
     ...config,
 
     shared: {
+      // shareAll() returns a plain config object; the array form of its
+      // `Config` type is only produced by share().
+      // oxlint-disable-next-line typescript/no-misused-spread
       ...shareAll({
         singleton: true,
         strictVersion: true,

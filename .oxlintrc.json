@@ -2,6 +2,9 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "unicorn", "oxc", "import"],
   "jsPlugins": ["@nx/oxlint/boundaries-plugin"],
+  "options": {
+    "typeAware": true
+  },
   "categories": {
     "correctness": "error"
   },
@@ -95,7 +98,13 @@
         ]
       }
     ],
-    "unicorn/no-new-array": "off"
+    "unicorn/no-new-array": "off",
+    "typescript/unbound-method": [
+      "error",
+      {
+        "ignoreStatic": true
+      }
+    ]
   },
   "overrides": [
     {
@@ -111,7 +120,8 @@
       "rules": {
         "jest/expect-expect": "off",
         "jest/require-to-throw-message": "off",
-        "jest/no-disabled-tests": "warn"
+        "jest/no-disabled-tests": "warn",
+        "typescript/unbound-method": "off"
       }
     },
     {
@@ -124,7 +134,8 @@
         "vitest/expect-expect": "off",
         "vitest/require-to-throw-message": "off",
         "vitest/require-mock-type-parameters": "off",
-        "vitest/no-disabled-tests": "warn"
+        "vitest/no-disabled-tests": "warn",
+        "typescript/unbound-method": "off"
       }
     }
   ]

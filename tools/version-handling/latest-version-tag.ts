@@ -9,12 +9,11 @@ function escapeForRegExp(value: string): string {
 /**
  * @returns {string} An app version like v1.0.0 a githash or a timestamp
  *
- * @param appDeployedPrefix filter to find the appropriate version tag
+ * @param appDeployedPrefix filter to find the appropriate version tag, e.g.
+ *   'non-cdk-deployed' or 'cdk-deployed'
  *
  */
-export function latestVersionTag(
-  appDeployedPrefix: string | 'non-cdk-deployed' | 'cdk-deployed'
-): string {
+export function latestVersionTag(appDeployedPrefix: string): string {
   // read version from version.json
   if (!appDeployedPrefix) return version;
 
