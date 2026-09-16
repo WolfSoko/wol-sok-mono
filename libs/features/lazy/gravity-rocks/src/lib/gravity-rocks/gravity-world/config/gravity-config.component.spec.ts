@@ -2,7 +2,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { qaSelector } from '@wolsok/test-helper';
 import { take } from 'rxjs';
-import { GravityWorldConfig } from '../domain/gravity-world-config';
+import {
+  GravityWorldConfig,
+  INITIAL_GRAVITY_CONSTANT,
+  INITIAL_MASS_OF_SUN,
+  INITIAL_SHOW_VELOCITY,
+} from '../domain/gravity-world-config';
 import { GravityConfigComponent } from './gravity-config.component';
 
 /** Element carrying the given `data-qa` attribute, or null. */
@@ -17,10 +22,12 @@ describe('GravityConfigComponent', () => {
   let fixture: ComponentFixture<GravityConfigComponent>;
   let component: GravityConfigComponent;
   const initialConfig: GravityWorldConfig = {
-    gravitationalConstant: 10,
-    massOfSun: 10000,
+    gravitationalConstant: INITIAL_GRAVITY_CONSTANT,
+    massOfSun: INITIAL_MASS_OF_SUN,
     showTrail: true,
+    showVelocity: INITIAL_SHOW_VELOCITY,
     trailLength: 100,
+    simulationSpeed: 1,
   };
   let emitted: GravityWorldConfig[];
 
@@ -36,6 +43,16 @@ describe('GravityConfigComponent', () => {
     fixture.detectChanges();
   });
 
+  it('should not call its own values invalid', () => {
+    // a `step` the value is not a multiple of makes the browser mark the
+    // field wrong the moment it is opened - and gravity is 39.4784
+    for (const qa of ['gConstant', 'massOfSun']) {
+      const input = getByQa<HTMLInputElement>(fixture, qa)!;
+      expect(input.getAttribute('step')).toBe('any');
+      expect(input.validity?.stepMismatch ?? false).toBe(false);
+    }
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -49,6 +66,35 @@ describe('GravityConfigComponent', () => {
     expect(getByQa<HTMLInputElement>(fixture, 'massOfSun')).toBeTruthy();
     expect(getByQa(fixture, 'showTrail')).toBeTruthy();
     expect(getByQa<HTMLInputElement>(fixture, 'trailLength')).toBeTruthy();
+    expect(getByQa<HTMLInputElement>(fixture, 'simulationSpeed')).toBeTruthy();
+  });
+
+  it('should put the speed slider on the log scale of the speed', () => {
+    component.config = { ...initialConfig, simulationSpeed: 10 };
+    expect(component.speedExponent).toBe(1);
+
+    component.config = { ...initialConfig, simulationSpeed: 0.1 };
+    expect(component.speedExponent).toBe(-1);
+  });
+
+  it('should read a speed back off the slider', () => {
+    component.setSpeedExponent(0);
+    expect(component.form.controls.simulationSpeed.value).toBe(1);
+
+    component.setSpeedExponent(-1);
+    expect(component.form.controls.simulationSpeed.value).toBe(0.1);
+
+    component.setSpeedExponent(0.5);
+    // rounded to what the label shows
+    expect(component.form.controls.simulationSpeed.value).toBe(3.16);
+  });
+
+  it('should fall back to the normal speed when there is none', () => {
+    component.config = { ...initialConfig, simulationSpeed: 0 };
+
+    // the same fallback the simulation makes, so the label tells the truth
+    expect(component.simulationSpeed).toBe(1);
+    expect(component.speedExponent).toBe(0);
   });
 
   it('should set initial form values', () => {
@@ -93,6 +139,17 @@ describe('GravityConfigComponent', () => {
     expect(component.form.controls.showTrail.value).toBe(
       initialConfig.showTrail
     );
+  });
+
+  it('should offer the velocity arrows as a switch of their own', () => {
+    expect(getByQa(fixture, 'showVelocity')).toBeTruthy();
+    // off to begin with, so the config it starts from is what it shows
+    expect(component.form.controls.showVelocity.value).toBe(false);
+
+    component.form.controls.showVelocity.setValue(true);
+    fixture.detectChanges();
+
+    expect(emitted[emitted.length - 1].showVelocity).toBe(true);
   });
 
   it('should emit when the trail is switched off', () => {

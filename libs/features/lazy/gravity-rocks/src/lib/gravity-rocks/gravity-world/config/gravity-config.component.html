@@ -1,22 +1,46 @@
 <form [formGroup]="form" class="configuration" data-qa="form">
   <mat-form-field appearance="outline">
-    <mat-label>Gravitational Force</mat-label>
+    <mat-label>Gravity in AU³/M☉/yr²</mat-label>
     <input
       matInput
       data-qa="gConstant"
       type="number"
+      step="any"
       formControlName="gravitationalConstant"
     />
+    <mat-hint>Ours is 4π², which is {{ realGravity }}</mat-hint>
   </mat-form-field>
   <mat-form-field appearance="outline">
-    <mat-label>Mass of Sun</mat-label>
+    <mat-label>Mass of sun in M☉</mat-label>
     <input
       matInput
       data-qa="massOfSun"
       type="number"
+      step="any"
       formControlName="massOfSun"
     />
+    <mat-hint>Ours weighs 1, the earth a third of a millionth</mat-hint>
   </mat-form-field>
+  <div class="trail-length">
+    <label for="simulation-speed-slider">
+      Simulation speed:
+      {{ simulationSpeed | number: "1.1-2" }}&times;
+    </label>
+    <mat-slider
+      class="config-slider"
+      [max]="maxSpeedExponent"
+      [min]="minSpeedExponent"
+      [step]="0.05"
+    >
+      <input
+        id="simulation-speed-slider"
+        matSliderThumb
+        data-qa="simulationSpeed"
+        [value]="speedExponent"
+        (valueChange)="setSpeedExponent($event)"
+      />
+    </mat-slider>
+  </div>
   <mat-slide-toggle data-qa="showTrail" formControlName="showTrail">
     Show trail
   </mat-slide-toggle>
@@ -39,4 +63,7 @@
       />
     </mat-slider>
   </div>
+  <mat-slide-toggle data-qa="showVelocity" formControlName="showVelocity">
+    Show velocity arrows
+  </mat-slide-toggle>
 </form>

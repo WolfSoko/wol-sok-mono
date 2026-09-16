@@ -25,6 +25,12 @@ export class GravityWorldService {
     this.universe = { width, height, G: gravitationalConstant };
   }
 
+  /**
+   * Moves the world on by `dT` of world time: every pair of objects pulls on
+   * each other, then every object is moved once by the sum of what pulled on
+   * it. Gathering first and moving after is what keeps an orbit the same
+   * whether the world holds two bodies or twenty.
+   */
   calcNextTick(dT: number): void {
     // apply gravity between all objects
     for (let i = 0; i < this.worldObjects.length; i++) {
@@ -37,12 +43,15 @@ export class GravityWorldService {
         const forceDirection = current.directionTo(other);
         const directedForce = forceDirection.mul(forceMagnitude);
 
-        current.applyForce(directedForce, dT);
-        other.applyForce(directedForce.mul(-1), dT);
+        current.addForce(directedForce);
+        other.addForce(directedForce.mul(-1));
       }
       for (const force of this.forces) {
-        force.applyForceFor(current, dT);
+        force.applyForceFor(current);
       }
+    }
+    for (const wo of this.worldObjects) {
+      wo.integrate(dT);
     }
   }
 
