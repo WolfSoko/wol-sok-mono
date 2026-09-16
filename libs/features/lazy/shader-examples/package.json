@@ -1,13 +1,10 @@
 {
   "name": "@wolsok/feat-shader-examples",
   "version": "0.0.1",
-  "devDependencies": {
-    "tslib": "2.5.2"
-  },
   "peerDependencies": {
     "@angular/animations": "20.3.7",
-    "@angular/cdk": "20.2.10",
     "@angular/common": "20.3.7",
+    "@angular/cdk": "20.2.10",
     "@angular/core": "20.3.7",
     "@angular/forms": "20.3.7",
     "@angular/material": "20.2.10",
@@ -18,5 +15,8 @@
     "@wolsok/ui-kit": "0.0.1",
     "ngx-ace-editor-wrapper": "9.1.12",
     "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "tslib": "2.5.2"
   }
 }
