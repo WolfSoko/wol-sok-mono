@@ -152,7 +152,7 @@
     "@vitest/browser": "4.1.9",
     "@vitest/coverage-v8": "4.1.9",
     "@vitest/ui": "4.1.9",
-    "angular-eslint": "^20.4.0",
+    "angular-eslint": "^22.0.0",
     "assemblyscript": "0.28.20",
     "autoprefixer": "10.4.21",
     "aws-cdk": "2.1031.0",
