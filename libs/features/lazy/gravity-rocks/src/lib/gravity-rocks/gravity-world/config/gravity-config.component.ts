@@ -1,10 +1,11 @@
 import {
-  Component,
-  Input,
-  Output,
-  inject,
   ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  model,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormControl,
   FormGroup,
@@ -16,7 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { DecimalPipe } from '@angular/common';
-import { distinctUntilChanged, map, Observable } from 'rxjs';
+import { map } from 'rxjs';
 import {
   compareGravityWorldConfig,
   GravityWorldConfig,
@@ -85,11 +86,12 @@ export class GravityConfigComponent {
     );
   }
 
-  @Input() set config(config: GravityWorldConfig) {
-    this.form.patchValue(config);
-  }
-
-  @Output() readonly configChange: Observable<GravityWorldConfig>;
+  /**
+   * The settings the form shows, written back as the controls are used. A
+   * two-way model rather than an input and an output of its own: what the
+   * form holds and what the world runs on are the same thing.
+   */
+  readonly config = model.required<GravityWorldConfig>();
 
   constructor() {
     const nNfB = inject(NonNullableFormBuilder);
@@ -102,9 +104,25 @@ export class GravityConfigComponent {
       trailLength: MIN_TRAIL_LENGTH,
       simulationSpeed: INITIAL_SIMULATION_SPEED,
     });
-    this.configChange = this.form.valueChanges.pipe(
-      map(() => this.form.getRawValue()),
-      distinctUntilChanged(compareGravityWorldConfig)
-    );
+    // the form follows the settings it is handed - silently, or patching it
+    // would report the very value that was just given back as a change
+    effect(() => {
+      const config: GravityWorldConfig = this.config();
+      if (!compareGravityWorldConfig(this.form.getRawValue(), config)) {
+        this.form.patchValue(config, { emitEvent: false });
+      }
+    });
+    this.form.valueChanges
+      .pipe(
+        map(() => this.form.getRawValue()),
+        takeUntilDestroyed()
+      )
+      .subscribe((config: GravityWorldConfig) => {
+        // a control set to what it already held is not a change, and a
+        // settings object that is new only by identity restarts the world
+        if (!compareGravityWorldConfig(this.config(), config)) {
+          this.config.set(config);
+        }
+      });
   }
 }

@@ -1,0 +1,44 @@
+<mat-button-toggle-group
+  vertical
+  hideSingleSelectionIndicator
+  aria-label="Tool"
+  [value]="tool()"
+  (change)="tool.set($event.value)"
+>
+  @for (item of tools; track item.id) {
+    <mat-button-toggle
+      [value]="item.id"
+      [attr.data-qa]="'tool-' + item.id"
+      [attr.aria-label]="item.label"
+      [matTooltip]="item.hint"
+      matTooltipPosition="right"
+    >
+      <mat-icon>{{ item.icon }}</mat-icon>
+    </mat-button-toggle>
+  }
+</mat-button-toggle-group>
+@if (hint(); as caption) {
+  <span class="tool-hint" data-qa="orbit-tool-hint">{{ caption }}</span>
+}
+@if (tool() === "add") {
+  <mat-button-toggle-group
+    class="kind-picker"
+    vertical
+    hideSingleSelectionIndicator
+    aria-label="What to add"
+    [value]="addKind()"
+    (change)="addKind.set($event.value)"
+  >
+    @for (kind of objectKinds; track kind.id) {
+      <mat-button-toggle
+        [value]="kind.id"
+        [attr.data-qa]="'kind-' + kind.id"
+        [attr.aria-label]="kind.label"
+        [matTooltip]="kind.label"
+        matTooltipPosition="right"
+      >
+        <mat-icon>{{ kind.icon }}</mat-icon>
+      </mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+}

@@ -1,7 +1,12 @@
+import { effect } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { vec2 } from '@wolsok/utils-math';
 
-import { GravityWorldService } from './gravity-world.service';
+import {
+  GravityWorldService,
+  MAX_TICK_YEARS,
+  MAX_TICKS_PER_FRAME,
+} from './gravity-world.service';
 import { Force } from './world-objects/force';
 import { Planet } from './world-objects/planet';
 import { Sun } from './world-objects/sun';
@@ -11,7 +16,8 @@ describe('GravityWorldService', () => {
   let service: GravityWorldService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    // a world belongs to whoever shows it, so it has to be provided
+    TestBed.configureTestingModule({ providers: [GravityWorldService] });
     service = TestBed.inject(GravityWorldService);
   });
 
@@ -34,13 +40,13 @@ describe('GravityWorldService', () => {
     ).not.toThrow();
   });
 
-  it('should let me set the universe size', () => {
-    expect(() => service.setUniverse(1000, 600, 6.7)).not.toThrow();
+  it('should let me set the gravity it runs on', () => {
+    expect(() => service.setGravitationalConstant(6.7)).not.toThrow();
   });
 
   it('should not update the suns position', () => {
     const sun: WorldObject = new Sun(vec2(0, 0), undefined, 1000);
-    service.setUniverse(1000, 1000, 10);
+    service.setGravitationalConstant(10);
     service.addWorldObject(sun);
     const planet: WorldObject = new Planet(vec2(0, 100), undefined, 10);
     service.addWorldObject(planet);
@@ -53,7 +59,7 @@ describe('GravityWorldService', () => {
 
   it('should update the y position for a step for the planet', () => {
     const sun: WorldObject = new Sun(vec2(0, 0), undefined, 1000);
-    service.setUniverse(1000, 1000, 10);
+    service.setGravitationalConstant(10);
     service.addWorldObject(sun);
     const planet: WorldObject = new Planet(vec2(0, 100), undefined, 10);
     service.addWorldObject(planet);
@@ -73,7 +79,7 @@ describe('GravityWorldService', () => {
 
   it('should update the x position for a step for the planet', () => {
     const sun: WorldObject = new Sun(vec2(0, 0), undefined, 1000);
-    service.setUniverse(1000, 1000, 10);
+    service.setGravitationalConstant(10);
     service.addWorldObject(sun);
     const planet: WorldObject = new Planet(vec2(100, 0), undefined, 10);
     service.addWorldObject(planet);
@@ -89,7 +95,7 @@ describe('GravityWorldService', () => {
 
   it('should handle multiple planets', () => {
     const sun: WorldObject = new Sun(vec2(0, 0), undefined, 1000);
-    service.setUniverse(1000, 1000, 10);
+    service.setGravitationalConstant(10);
     service.addWorldObject(sun);
     const planet: WorldObject = new Planet(vec2(100, 0), undefined, 10);
     service.addWorldObject(planet);
@@ -107,7 +113,7 @@ describe('GravityWorldService', () => {
   });
 
   it('should move an object once a tick, not once per other object', () => {
-    service.setUniverse(1000, 1000, 0);
+    service.setGravitationalConstant(0);
     const coasting: WorldObject = new Planet(vec2(0, 0), vec2(3, 0), 10);
     service.addWorldObject(coasting);
 
@@ -128,7 +134,7 @@ describe('GravityWorldService', () => {
     const planet: WorldObject = new Planet(vec2(100, 0), undefined, 10);
     service.addWorldObject(sun);
     service.addWorldObject(planet);
-    service.setUniverse(1000, 1000, 10);
+    service.setGravitationalConstant(10);
 
     service.recordTrails(10);
     service.calcNextTick(1);
@@ -149,10 +155,62 @@ describe('GravityWorldService', () => {
     expect(planet.trail).toEqual([]);
   });
 
+  it('should cut a frame into slices the integrator can follow', () => {
+    const planet: WorldObject = new Planet(vec2(0, 100), undefined, 10);
+    service.addWorldObject(planet);
+    const tick = jest.spyOn(service, 'calcNextTick');
+
+    service.advance(MAX_TICK_YEARS * 4);
+
+    expect(tick).toHaveBeenCalledTimes(4);
+    expect(tick.mock.calls.every(([dT]) => dT <= MAX_TICK_YEARS + 1e-9)).toBe(
+      true
+    );
+  });
+
+  it('should never cut a frame into more slices than it can afford', () => {
+    service.addWorldObject(new Planet(vec2(0, 100), undefined, 10));
+    const tick = jest.spyOn(service, 'calcNextTick');
+
+    service.advance(MAX_TICK_YEARS * MAX_TICKS_PER_FRAME * 10);
+
+    expect(tick).toHaveBeenCalledTimes(MAX_TICKS_PER_FRAME);
+  });
+
+  it('should report a frame as one change, however many slices it took', () => {
+    service.addWorldObject(new Planet(vec2(0, 100), undefined, 10));
+    let published = 0;
+    TestBed.runInInjectionContext(() =>
+      effect(() => {
+        service.worldObjects();
+        published++;
+      })
+    );
+    TestBed.tick();
+
+    service.advance(MAX_TICK_YEARS * 10);
+    TestBed.tick();
+
+    // once for the first run of the effect, once for the frame
+    expect(published).toBe(2);
+  });
+
+  it('should record a trail point per slice, and clear on a length of zero', () => {
+    const planet: WorldObject = new Planet(vec2(100, 0), undefined, 10);
+    service.addWorldObject(planet);
+    service.setGravitationalConstant(0);
+
+    service.advance(MAX_TICK_YEARS * 3, 10);
+    expect(planet.trail.length).toBeGreaterThan(0);
+
+    service.advance(MAX_TICK_YEARS, 0);
+    expect(planet.trail).toEqual([]);
+  });
+
   it('should expose the world objects', () => {
     const planet1: WorldObject = new Planet(vec2(0, 100), undefined, 10);
     service.addWorldObject(planet1);
-    expect(service.getWorldObjects()).toEqual([planet1]);
+    expect(service.worldObjects()).toEqual([planet1]);
   });
 
   it('should remove a world object', () => {
@@ -163,15 +221,15 @@ describe('GravityWorldService', () => {
 
     service.removeWorldObject(planet1);
 
-    expect(service.getWorldObjects()).toEqual([planet2]);
+    expect(service.worldObjects()).toEqual([planet2]);
   });
 
   it('should removeAll world objects', () => {
     service.addWorldObject(new Planet(vec2(0, 100), undefined, 10));
     service.addForceObject(createMockedForce());
     service.removeAll();
-    expect(service.getWorldObjects()).toEqual([]);
-    expect(service.getForces()).toEqual([]);
+    expect(service.worldObjects()).toEqual([]);
+    expect(service.forces()).toEqual([]);
   });
 
   it('should add a force object', () => {
@@ -184,7 +242,7 @@ describe('GravityWorldService', () => {
     service.addForceObject(forceObj1);
     service.addForceObject(forceObj2);
     service.removeForceObject(forceObj2);
-    expect(service.getForces()).toEqual([forceObj1]);
+    expect(service.forces()).toEqual([forceObj1]);
   });
 
   it('should call the force for all objects on nextTick', () => {
@@ -192,7 +250,7 @@ describe('GravityWorldService', () => {
     service.addForceObject(testForce);
     const planet: WorldObject = new Planet(vec2(100, 100), undefined, 10);
     service.addWorldObject(planet);
-    service.setUniverse(1000, 1000, 0);
+    service.setGravitationalConstant(0);
     const dT = 1;
 
     service.calcNextTick(dT);
@@ -214,6 +272,7 @@ describe('GravityWorldService', () => {
     return {
       id,
       applyForceFor: jest.fn(),
+      svgPath: () => null,
     };
   }
 });

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { qaSelector } from '@wolsok/test-helper';
-import { take } from 'rxjs';
 import {
   GravityWorldConfig,
   INITIAL_GRAVITY_CONSTANT,
@@ -38,10 +37,16 @@ describe('GravityConfigComponent', () => {
     fixture = TestBed.createComponent(GravityConfigComponent);
     component = fixture.componentInstance;
     emitted = [];
-    component.configChange.pipe(take(10)).subscribe((c) => emitted.push(c));
-    component.config = initialConfig;
-    fixture.detectChanges();
+    // a model signal is an output too, and reports every change the form makes
+    component.config.subscribe((c) => emitted.push(c));
+    setConfig(initialConfig);
   });
+
+  /** Hands the component a config the way a parent template would. */
+  function setConfig(config: GravityWorldConfig): void {
+    fixture.componentRef.setInput('config', config);
+    fixture.detectChanges();
+  }
 
   it('should not call its own values invalid', () => {
     // a `step` the value is not a multiple of makes the browser mark the
@@ -70,10 +75,10 @@ describe('GravityConfigComponent', () => {
   });
 
   it('should put the speed slider on the log scale of the speed', () => {
-    component.config = { ...initialConfig, simulationSpeed: 10 };
+    setConfig({ ...initialConfig, simulationSpeed: 10 });
     expect(component.speedExponent).toBe(1);
 
-    component.config = { ...initialConfig, simulationSpeed: 0.1 };
+    setConfig({ ...initialConfig, simulationSpeed: 0.1 });
     expect(component.speedExponent).toBe(-1);
   });
 
@@ -90,7 +95,7 @@ describe('GravityConfigComponent', () => {
   });
 
   it('should fall back to the normal speed when there is none', () => {
-    component.config = { ...initialConfig, simulationSpeed: 0 };
+    setConfig({ ...initialConfig, simulationSpeed: 0 });
 
     // the same fallback the simulation makes, so the label tells the truth
     expect(component.simulationSpeed).toBe(1);
@@ -106,12 +111,11 @@ describe('GravityConfigComponent', () => {
   });
 
   it('should patch when config input changes', () => {
-    component.config = {
+    setConfig({
       ...initialConfig,
       gravitationalConstant: 20,
       massOfSun: 20000,
-    };
-    fixture.detectChanges();
+    });
     const gInput = getByQa<HTMLInputElement>(fixture, 'gConstant');
     const massInput = getByQa<HTMLInputElement>(fixture, 'massOfSun');
     expect(gInput?.value).toBe('20');

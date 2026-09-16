@@ -10,17 +10,14 @@
           <mat-card-title>Play with the values</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <feat-lazy-gravity-config
-            [config]="settings()"
-            (configChange)="settings.set($event)"
-          />
+          <feat-lazy-gravity-config [(config)]="settings" />
           <mat-list class="info-list">
             <h4 mat-subheader>Infos</h4>
             <mat-list-item>
               <span>Planets = {{ planets().length }}</span>
             </mat-list-item>
             <mat-list-item>
-              <span>Forces = {{ worldService.getForces().length }}</span>
+              <span>Forces = {{ forces().length }}</span>
             </mat-list-item>
             @for (planet of planets(); track planet.id; let i = $index) {
               <mat-list-item>
@@ -60,14 +57,14 @@
         pan.</span
       >
       <div class="zoom-controls">
-        @if (followedId()) {
+        @if (camera.followedId()) {
           <button
             data-qa="cta-stop-follow"
             mat-icon-button
             type="button"
             matTooltip="Stop following"
             aria-label="Stop following"
-            (click)="stopFollowing()"
+            (click)="camera.stopFollowing()"
           >
             <mat-icon>gps_fixed</mat-icon>
           </button>
@@ -78,20 +75,22 @@
           type="button"
           matTooltip="Zoom out"
           aria-label="Zoom out"
-          [disabled]="!canZoomOut()"
-          (click)="zoomOut()"
+          [disabled]="!camera.canZoomOut()"
+          (click)="camera.zoomOut()"
         >
           <mat-icon>zoom_out</mat-icon>
         </button>
-        <span class="zoom-level" data-qa="zoom-level">{{ zoomLabel() }}</span>
+        <span class="zoom-level" data-qa="zoom-level">{{
+          camera.zoomLabel()
+        }}</span>
         <button
           data-qa="cta-zoom-in"
           mat-icon-button
           type="button"
           matTooltip="Zoom in"
           aria-label="Zoom in"
-          [disabled]="!canZoomIn()"
-          (click)="zoomIn()"
+          [disabled]="!camera.canZoomIn()"
+          (click)="camera.zoomIn()"
         >
           <mat-icon>zoom_in</mat-icon>
         </button>
@@ -101,7 +100,7 @@
           type="button"
           matTooltip="Reset view"
           aria-label="Reset view"
-          (click)="resetView()"
+          (click)="camera.reset()"
         >
           <mat-icon>center_focus_strong</mat-icon>
         </button>
@@ -135,7 +134,7 @@
         (pointercancel)="pointerCancel($event)"
         (wheel)="wheel($event)"
         (contextmenu)="contextMenu($event)"
-        [attr.viewBox]="viewBox()"
+        [attr.viewBox]="camera.viewBox()"
       >
         <defs>
           <marker
@@ -165,7 +164,7 @@
           @for (planet of planets(); track planet.id) {
             <circle
               class="world-object"
-              [class.followed]="planet.id === followedId()"
+              [class.followed]="planet.id === camera.followedId()"
               [attr.cx]="planet.pos.x"
               [attr.cy]="planet.pos.y"
               [attr.r]="planet.radius"
@@ -182,7 +181,7 @@
           }
           <circle
             class="world-object sun"
-            [class.followed]="sun.id === followedId()"
+            [class.followed]="sun.id === camera.followedId()"
             [attr.cx]="sun.pos.x"
             [attr.cy]="sun.pos.y"
             [attr.r]="sun.radius"
@@ -195,7 +194,7 @@
             [attr.cy]="sun.pos.y"
             [attr.r]="sun.radius"
           ></circle>
-          @if (orbitPreview(); as preview) {
+          @if (orbitTool.preview(); as preview) {
             <circle
               class="orbit-preview"
               data-qa="orbit-preview"
@@ -235,189 +234,28 @@
         </g>
       </svg>
 
-      <div class="toolbelt">
-        <mat-button-toggle-group
-          vertical
-          hideSingleSelectionIndicator
-          aria-label="Tool"
-          [value]="tool()"
-          (change)="pickTool($event.value)"
-        >
-          @for (item of tools; track item.id) {
-            <mat-button-toggle
-              [value]="item.id"
-              [attr.data-qa]="'tool-' + item.id"
-              [attr.aria-label]="item.label"
-              [matTooltip]="item.hint"
-              matTooltipPosition="right"
-            >
-              <mat-icon>{{ item.icon }}</mat-icon>
-            </mat-button-toggle>
-          }
-        </mat-button-toggle-group>
-        @if (tool() === "orbit") {
-          <span class="tool-hint" data-qa="orbit-tool-hint">
-            @if (orbitParent()) {
-              Press beside it and drag the orbit, let go to add the
-              {{ orbitParent() === sun ? "planet" : "moon" }}
-            } @else {
-              Tap a body to give it a satellite
-            }
-          </span>
-        }
-        @if (tool() === "add") {
-          <mat-button-toggle-group
-            class="kind-picker"
-            vertical
-            hideSingleSelectionIndicator
-            aria-label="What to add"
-            [value]="addKind()"
-            (change)="addKind.set($event.value)"
-          >
-            @for (kind of objectKinds; track kind.id) {
-              <mat-button-toggle
-                [value]="kind.id"
-                [attr.data-qa]="'kind-' + kind.id"
-                [attr.aria-label]="kind.label"
-                [matTooltip]="kind.label"
-                matTooltipPosition="right"
-              >
-                <mat-icon>{{ kind.icon }}</mat-icon>
-              </mat-button-toggle>
-            }
-          </mat-button-toggle-group>
-        }
-      </div>
+      <feat-lazy-gravity-toolbelt
+        [tool]="tool()"
+        (toolChange)="pickTool($event)"
+        [(addKind)]="addKind"
+        [hint]="toolHint()"
+      />
 
       @if (menuTarget(); as target) {
-        <mat-card
-          appearance="raised"
-          class="object-panel"
-          data-qa="object-panel"
-        >
-          <div class="object-panel-header">
-            <span class="object-panel-title" data-qa="object-panel-title">{{
-              menuTitle()
-            }}</span>
-            <button
-              mat-icon-button
-              type="button"
-              data-qa="cta-close-panel"
-              aria-label="Close"
-              (click)="menuClosed()"
-            >
-              <mat-icon>close</mat-icon>
-            </button>
-          </div>
-          <mat-card-content class="object-panel-content">
-            @if (parentName()) {
-              <div class="panel-slider">
-                <label for="menu-distance-slider"
-                  >Distance from the {{ parentName() }}:
-                  {{ menuDistance() | number: "1.3-3" }} AU</label
-                >
-                <mat-slider
-                  [max]="menuDistanceRange().max"
-                  [min]="menuDistanceRange().min"
-                  [step]="menuDistanceStep()"
-                >
-                  <input
-                    id="menu-distance-slider"
-                    matSliderThumb
-                    data-qa="menu-distance"
-                    [value]="menuDistance()"
-                    (valueChange)="setDistance($event)"
-                  />
-                </mat-slider>
-              </div>
-            }
-            <div class="panel-slider">
-              <label for="menu-mass-slider"
-                >Mass: {{ menuMass() | number: "1.0-3" }} &times; Earth</label
-              >
-              <mat-slider
-                [max]="maxMassExponent"
-                [min]="minMassExponent"
-                [step]="0.05"
-              >
-                <input
-                  id="menu-mass-slider"
-                  matSliderThumb
-                  data-qa="menu-mass"
-                  [value]="menuMassExponent()"
-                  (valueChange)="setMassExponent($event)"
-                />
-              </mat-slider>
-            </div>
-            <!-- a static object never moves, its speed is not a thing to change -->
-            @if (!target.isStatic) {
-              <div class="panel-slider">
-                <label for="menu-speed-slider"
-                  >Speed: {{ menuSpeed() | number: "1.2-2" }} AU/year</label
-                >
-                <mat-slider [max]="maxSpeed" [min]="0" [step]="0.1">
-                  <input
-                    id="menu-speed-slider"
-                    matSliderThumb
-                    data-qa="menu-speed"
-                    [value]="menuSpeed()"
-                    (valueChange)="setSpeed($event)"
-                  />
-                </mat-slider>
-              </div>
-            }
-
-            <mat-divider />
-            <h4 class="panel-subheader">Next {{ satelliteName() }}</h4>
-            <div class="panel-slider">
-              <label for="menu-orbit-slider"
-                >Orbit: {{ menuOrbit() | number: "1.3-3" }} AU</label
-              >
-              <mat-slider
-                [max]="orbitRange().max"
-                [min]="orbitRange().min"
-                [step]="orbitStep()"
-              >
-                <input
-                  id="menu-orbit-slider"
-                  matSliderThumb
-                  data-qa="menu-orbit"
-                  [value]="menuOrbit()"
-                  (valueChange)="setOrbitDistance($event)"
-                />
-              </mat-slider>
-              @if (!orbitHeld()) {
-                <p class="panel-hint" data-qa="orbit-hint">
-                  Too light to keep a {{ satelliteName() }} out there - the
-                  {{ parentName() }} will take it. Raise the mass to hold one.
-                </p>
-              }
-            </div>
-            <button
-              mat-stroked-button
-              type="button"
-              data-qa="cta-add-satellite"
-              (click)="addSatellite()"
-            >
-              <mat-icon>add_circle_outline</mat-icon>
-              Add orbiting {{ satelliteName() }}
-            </button>
-
-            @if (target !== sun) {
-              <mat-divider />
-              <button
-                mat-button
-                type="button"
-                color="warn"
-                data-qa="cta-remove-target"
-                (click)="removeTarget()"
-              >
-                <mat-icon>delete_forever</mat-icon>
-                Remove
-              </button>
-            }
-          </mat-card-content>
-        </mat-card>
+        <feat-lazy-gravity-object-panel
+          [target]="target"
+          [sun]="sun"
+          [title]="menuTitle()"
+          [gravitationalConstant]="settings().gravitationalConstant"
+          [reach]="canvasSize().x / 2"
+          [world]="worldService.worldObjects()"
+          (closed)="menuClosed()"
+          (massChange)="setMass($event)"
+          (distanceChange)="setDistance($event)"
+          (speedChange)="setSpeed($event)"
+          (addSatellite)="addSatelliteTo(target, $event)"
+          (remove)="removeTarget()"
+        />
       }
     </div>
   </mat-card>

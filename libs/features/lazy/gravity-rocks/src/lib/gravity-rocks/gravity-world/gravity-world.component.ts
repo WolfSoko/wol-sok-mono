@@ -8,22 +8,15 @@ import {
   ElementRef,
   Signal,
   signal,
-  TrackByFunction,
   ViewChild,
   WritableSignal,
   inject,
 } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatSliderModule } from '@angular/material/slider';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { vec2, Vector2d } from '@wolsok/utils-math';
 import { notNil } from '@wolsok/utils-operators';
@@ -36,35 +29,43 @@ import {
   MAX_SIMULATION_SPEED,
   MIN_SIMULATION_SPEED,
 } from './domain/gravity-world-config';
-import { GravityWorldService } from './domain/gravity-world.service';
+import { clamp } from './domain/clamp';
+import { createSolarSystem } from './domain/create-solar-system';
 import {
-  Force,
-  SPRING_SPEED_PER_AU,
-  SpringForce,
-} from './domain/world-objects/force';
+  GravityWorldService,
+  MAX_TICK_YEARS,
+  MAX_TICKS_PER_FRAME,
+} from './domain/gravity-world.service';
+import { Force } from './domain/world-objects/force';
+import { SPRING_SPEED_PER_AU, SpringForce } from './interaction/spring-force';
 import { Planet } from './domain/world-objects/planet';
 import {
   defaultOrbitDistance,
-  keepsSatelliteAt,
-  minOrbitDistance,
   orbitAround,
-  orbitDistanceRange,
   placedPlanetMass,
+  placementRange,
+  primaryOf,
   satelliteMass,
+  satelliteRadiusFor,
 } from './domain/world-objects/orbit';
+import { EARTH_MASS, PLANET_NAMES } from './domain/solar-system';
+import { ObjectPanelComponent } from './object-panel/object-panel.component';
+import { OrbitTool } from './orbit-tool/orbit-tool';
+import { ClientPoint, clientPoint, WorldCamera } from './camera/world-camera';
 import {
-  circularOrbitSpeed,
-  EARTH_MASS,
-  PLANET_NAMES,
-  PLANETS,
-} from './domain/solar-system';
+  isWithinClickTolerance,
+  PointerTracker,
+} from './interaction/pointer-tracker';
+import { swallowNextClick } from './interaction/swallow-next-click';
+import { ToolbeltComponent } from './toolbelt/toolbelt.component';
+import { ObjectKind, Tool } from './toolbelt/tools';
 import { Sun } from './domain/world-objects/sun';
-import { SvgPath, TrailSegment } from './domain/world-objects/svg-path';
 import {
+  SvgPath,
+  TrailSegment,
   svgPathForVelocity,
-  toSvgPath,
   trailToSvgSegments,
-} from './domain/world-objects/toSvgPath';
+} from './domain/world-objects/svg-paths';
 import { MAX_VELOCITY, WorldObject } from './domain/world-objects/world-object';
 
 /**
@@ -73,127 +74,14 @@ import { MAX_VELOCITY, WorldObject } from './domain/world-objects/world-object';
  */
 const SVG_VIEW_PORT_SIZE = 6;
 
-/** Furthest zoom out, shown as 0.1% - enough to watch planets fly far away. */
-export const MIN_ZOOM = 0.001;
-export const MAX_ZOOM = 20;
-const ZOOM_STEP = 1.3;
-const WHEEL_ZOOM_STEP = 1.15;
 const TRAIL_WIDTH_RATIO = 0.8;
-/** How far the cursor may travel between press and release to still be a click. */
-const CLICK_TOLERANCE_PX = 4;
-/** How long a touch has to rest on an object to open its menu. */
-const LONG_PRESS_MS = 450;
-/**
- * How long the browser may take to turn a lifted finger into a click. It fires
- * one a moment after the touch ends, at the point the finger was - which by
- * then is the backdrop of the menu the long press has just opened.
- */
-const SYNTHETIC_CLICK_MS = 700;
 /**
  * World time one second of watching is worth, in years. A tenth takes the
  * earth ten seconds to go round the sun at the usual speed - slow enough to
  * follow, fast enough not to wait for mars.
  */
 export const YEARS_PER_SECOND = 0.1;
-/**
- * Longest slice of world time the integrator can follow in one go, in years.
- * A third of a day, so mercury's 88-day year is two hundred and forty of them:
- * even the fastest planet is carried through its orbit in hundreds of steps
- * rather than tens, and its ellipse stays put instead of creeping.
- */
-export const MAX_TICK_YEARS = 0.001;
-/**
- * Slices one frame may be cut into, so speed cannot stall the browser. Enough
- * that the fastest simulation still runs at its full speed while frames take
- * up to `MAX_TICKS_PER_FRAME * MAX_TICK_YEARS / (YEARS_PER_SECOND *
- * MAX_SIMULATION_SPEED)` - a twentieth of a second, which is as slow as a
- * screen gets before nothing looks right anyway.
- */
-export const MAX_TICKS_PER_FRAME = 60;
 const RIGHT_BUTTON = 2;
-
-/** Anything that carries a position in client (viewport) coordinates. */
-interface ClientPoint {
-  clientX: number;
-  clientY: number;
-}
-
-/** Copy of a position, so a moving pointer does not change what was stored. */
-function clientPoint({ clientX, clientY }: ClientPoint): ClientPoint {
-  return { clientX, clientY };
-}
-
-/** How far two pointers are apart, in client pixels. */
-function distanceBetween(a: ClientPoint, b: ClientPoint): number {
-  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
-}
-
-/** The point exactly between two pointers, which a pinch is anchored on. */
-function midpointOf(a: ClientPoint, b: ClientPoint): ClientPoint {
-  return {
-    clientX: (a.clientX + b.clientX) / 2,
-    clientY: (a.clientY + b.clientY) / 2,
-  };
-}
-
-/**
- * The mass slider runs on the log scale of earth masses: from a thousandth
- * of one, which is half a pluto, to a million, which is three suns.
- */
-export const MIN_MASS_EXPONENT = -3;
-export const MAX_MASS_EXPONENT = 6;
-/**
- * Fastest the speed slider goes, in AU/year. Not the ceiling the integrator
- * keeps - that is `MAX_VELOCITY`, eight times higher, and a drag can still
- * reach it - but the fastest a body here is worth setting by hand: not quite
- * twice what it takes to leave the sun from the orbit of mercury, where the
- * earth travels at 6.3 and mercury at 10.
- */
-export const MAX_SPEED = 25;
-
-/** What a press on the world does - picked from the toolbelt. */
-export type Tool = 'grab' | 'select' | 'add' | 'orbit' | 'delete';
-
-/** What the add tool puts down on empty space. */
-export type ObjectKind = 'asteroid' | 'planet' | 'giant' | 'star';
-
-export const TOOLS: readonly {
-  id: Tool;
-  icon: string;
-  label: string;
-  hint: string;
-}[] = [
-  {
-    id: 'grab',
-    icon: 'pan_tool',
-    label: 'Grab',
-    hint: 'Grab: drag a body to fling it, tap it to follow it',
-  },
-  {
-    id: 'select',
-    icon: 'ads_click',
-    label: 'Select',
-    hint: 'Select: tap a body to open its settings',
-  },
-  {
-    id: 'add',
-    icon: 'add_circle',
-    label: 'Add',
-    hint: 'Add: tap empty space to put a body there, drag to fling it',
-  },
-  {
-    id: 'orbit',
-    icon: 'track_changes',
-    label: 'Put in orbit',
-    hint: 'Put in orbit: tap a body, then press beside it and drag the orbit - let go to add the satellite',
-  },
-  {
-    id: 'delete',
-    icon: 'delete',
-    label: 'Delete',
-    hint: 'Delete: tap a body to take it out of the world',
-  },
-];
 
 /**
  * A thousandth of an earth, the lightest the mass slider goes; a jupiter, at
@@ -202,51 +90,24 @@ export const TOOLS: readonly {
 const ASTEROID_MASS = EARTH_MASS / 1000;
 const GIANT_MASS = EARTH_MASS * 318;
 
-/** The orbit the orbit tool draws before a satellite is let go onto it. */
-export interface OrbitPreview {
-  center: Vector2d;
-  /** Distance of the orbit from its parent, in AU. */
-  radius: number;
-  /** Where on the orbit the satellite is put, in radians. */
-  angle: number;
-  /** Where the satellite is shown, and how big. */
-  satellite: Vector2d;
-  satelliteRadius: number;
-  /** Whether the parent keeps a satellite there, see `keepsSatelliteAt`. */
-  held: boolean;
-}
-
-export const OBJECT_KINDS: readonly {
-  id: ObjectKind;
-  icon: string;
-  label: string;
-}[] = [
-  { id: 'asteroid', icon: 'grain', label: 'Asteroid' },
-  { id: 'planet', icon: 'public', label: 'Planet' },
-  { id: 'giant', icon: 'lens', label: 'Gas giant' },
-  { id: 'star', icon: 'star', label: 'Star' },
-];
-
 @Component({
   selector: 'feat-lazy-gravity-world',
   templateUrl: 'gravity-world.component.html',
   styleUrls: ['gravity-world.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // a world of its own, so leaving the route takes its planets with it
+  providers: [GravityWorldService],
   imports: [
     CommonModule,
     MatCardModule,
-    ReactiveFormsModule,
-    MatToolbarModule,
-    MatInputModule,
     MatButtonModule,
     MatListModule,
     MatIconModule,
     MatTooltipModule,
     GravityConfigComponent,
     MatSidenavModule,
-    MatSliderModule,
-    MatButtonToggleModule,
-    MatDividerModule,
+    ObjectPanelComponent,
+    ToolbeltComponent,
   ],
 })
 export class GravityWorldComponent {
@@ -263,8 +124,6 @@ export class GravityWorldComponent {
 
   settings: WritableSignal<GravityWorldConfig>;
 
-  readonly tools = TOOLS;
-  readonly objectKinds = OBJECT_KINDS;
   /** What a press on the world does. */
   readonly tool: WritableSignal<Tool> = signal('grab');
   /** What the add tool puts down. */
@@ -272,12 +131,22 @@ export class GravityWorldComponent {
 
   public running = signal(false);
   sun!: Sun;
-  planets: WritableSignal<Planet[]> = signal([]);
+  /** The bodies of the world, renewed whenever they have moved. */
+  readonly planets: Signal<Planet[]> = this.worldService.planets;
 
-  forces: WritableSignal<Force[]> = signal([]);
+  readonly forces: Signal<readonly Force[]> = this.worldService.forces;
+
+  canvasSize: WritableSignal<Vector2d> = signal(this.MAX_DIM);
+
+  /** Where the world is looked at from: zoom, pan, and the body followed. */
+  readonly camera: WorldCamera = new WorldCamera({
+    size: this.canvasSize,
+    bodies: this.worldService.worldObjects,
+    viewport: () => this.svgWorld?.nativeElement?.getBoundingClientRect(),
+  });
   forcesSvgPaths: Signal<SvgPath[]> = computed(() =>
     this.forces()
-      .map((f) => toSvgPath(f))
+      .map((force) => force.svgPath())
       .filter(notNil)
   );
 
@@ -292,59 +161,6 @@ export class GravityWorldComponent {
         )
       : []
   );
-
-  canvasSize: WritableSignal<Vector2d> = signal(this.MAX_DIM);
-
-  /** Zoom factor of the viewport, 1 shows the whole world. */
-  readonly zoom: WritableSignal<number> = signal(1);
-  /** World coordinate that sits in the middle of the viewport. */
-  readonly viewCenter: WritableSignal<Vector2d> = signal(this.MAX_DIM.div(2));
-
-  private readonly viewSize: Signal<Vector2d> = computed(() =>
-    this.canvasSize().div(this.zoom())
-  );
-
-  /**
-   * Area the view may be centered on: the world, grown to cover every planet.
-   * Planets can be flung out of the world, and they should stay reachable.
-   */
-  private readonly viewBounds: Signal<{ min: Vector2d; max: Vector2d }> =
-    computed(() => {
-      const world: Vector2d = this.canvasSize();
-      let min: Vector2d = vec2(0, 0);
-      let max: Vector2d = world;
-      for (const { pos } of this.planets()) {
-        min = vec2(Math.min(min.x, pos.x), Math.min(min.y, pos.y));
-        max = vec2(Math.max(max.x, pos.x), Math.max(max.y, pos.y));
-      }
-      return { min, max };
-    });
-
-  readonly viewBox: Signal<string> = computed(() => {
-    const size: Vector2d = this.viewSize();
-    const origin: Vector2d = this.viewCenter().sub(size.div(2));
-    return (
-      [origin.x, origin.y, size.x, size.y]
-        // AU, so a hundredth would be a million kilometres of jitter
-        .map((value) => Math.round(value * 1e6) / 1e6)
-        .join(' ')
-    );
-  });
-
-  /** World object the view sticks to while the simulation runs, if any. */
-  private readonly followed: WritableSignal<WorldObject | null> = signal(null);
-  /** Id of the followed object, for the template. */
-  readonly followedId: Signal<string | null> = computed(
-    () => this.followed()?.id ?? null
-  );
-
-  /** Zoom as a percentage label, with one decimal while zoomed far out. */
-  readonly zoomLabel: Signal<string> = computed(() => {
-    const percent: number = this.zoom() * 100;
-    return percent < 10 ? `${percent.toFixed(1)}%` : `${Math.round(percent)}%`;
-  });
-  readonly canZoomIn: Signal<boolean> = computed(() => this.zoom() < MAX_ZOOM);
-  readonly canZoomOut: Signal<boolean> = computed(() => this.zoom() > MIN_ZOOM);
 
   /** Trail chunks of all planets, oldest and faintest first. */
   readonly trailSegments: Signal<TrailSegment[]> = computed(() => {
@@ -367,10 +183,8 @@ export class GravityWorldComponent {
   /** Emits whenever the running gesture ends, however it ends. */
   private gestureEnd$: Subject<void> = new Subject();
 
-  private panStart: { x: number; y: number; center: Vector2d } | null = null;
-
-  /** Pointers currently pressed on the world, by pointer id. */
-  private readonly activePointers = new Map<number, ClientPoint>();
+  /** The pointers on the world, and what they went down on. */
+  private readonly pointers = new PointerTracker<WorldObject>();
 
   /** The pointer driving the current drag, and the planet it created. */
   private dragPointerId: number | null = null;
@@ -380,13 +194,6 @@ export class GravityWorldComponent {
   private dragObject: WorldObject | null = null;
   private dragOrigin: ClientPoint | null = null;
   private dragEnd: Vector2d | null = null;
-
-  /** What the view looked like when the two finger gesture started. */
-  private pinchStart: {
-    distance: number;
-    focus: Vector2d;
-    zoom: number;
-  } | null = null;
 
   /** World object whose settings panel is open, if any. */
   readonly menuTarget: WritableSignal<WorldObject | null> = signal(null);
@@ -403,302 +210,75 @@ export class GravityWorldComponent {
     return this.planetName(target, this.planets().indexOf(target));
   });
 
-  /**
-   * Mass of the menu target on a log scale, so every size is reachable. The
-   * sliders own this state - the world objects are mutable, a signal reading
-   * their fields would not notice a change.
-   */
-  readonly menuMassExponent: WritableSignal<number> = signal(MIN_MASS_EXPONENT);
-  /**
-   * Mass of the menu target. Kept next to the exponent rather than derived
-   * from it: a mass typed into the settings can sit outside the slider range,
-   * and then the label still has to tell the truth.
-   */
-  readonly menuMass: WritableSignal<number> = signal(0);
-  readonly menuSpeed: WritableSignal<number> = signal(0);
-  /** How far from the menu target its next satellite is placed. */
-  readonly menuOrbit: WritableSignal<number> = signal(0);
   /** Whether the simulation was running when the menu took over. */
   private pausedForMenu = false;
-  /**
-   * How far a satellite of the menu target may sit from it. Mass decides both
-   * discs and the reach of the target's gravity, speed decides how tightly a
-   * satellite may circle it, so the range follows both sliders - and the sun
-   * carries its mass in the settings, which is read for the same reason.
-   */
-  readonly orbitRange: Signal<{ min: number; max: number }> = computed(() => {
-    const target: WorldObject | null = this.menuTarget();
-    // in earth masses, read only to follow the slider - the sizes below come
-    // from the object, which the slider has already updated
-    const mass: number = this.menuMass();
-    const { gravitationalConstant } = this.settings();
-    if (!target || mass <= 0) {
-      return { min: 0, max: 0 };
-    }
-    return this.satelliteRange(target, this.menuSpeed(), gravitationalConstant);
+
+  /** Putting a body in orbit around another, in two presses. */
+  readonly orbitTool: OrbitTool = new OrbitTool({
+    sun: () => this.sun,
+    bodies: this.worldService.worldObjects,
+    gravitationalConstant: computed(
+      () => this.settings().gravitationalConstant
+    ),
+    reach: computed(() => this.canvasSize().x / 2),
   });
 
-  /**
-   * Body the orbit tool has picked to circle, and where its pointer was seen
-   * last - together they draw the orbit the next satellite is let go onto.
-   */
-  readonly orbitParent: WritableSignal<WorldObject | null> = signal(null);
-  private readonly orbitPointer: WritableSignal<Vector2d | null> = signal(null);
-  /** The pointer holding the drawn orbit, while one is pressed on it. */
-  private orbitPointerId: number | null = null;
-
-  /**
-   * The orbit the orbit tool draws around its parent: as far out as the
-   * pointer, within what the parent can offer, with the satellite shown where
-   * the pointer is. Nothing until a parent is picked.
-   */
-  readonly orbitPreview: Signal<OrbitPreview | null> = computed(() => {
-    const parent: WorldObject | null = this.orbitParent();
-    // the parent moves while the world runs, and `planets` is set each frame
-    this.planets();
-    if (!parent) {
+  /** What the tool in hand is waiting for, shown next to the toolbelt. */
+  readonly toolHint: Signal<string | null> = computed(() => {
+    if (this.tool() !== 'orbit') {
       return null;
     }
-    const { gravitationalConstant } = this.settings();
-    const primary: WorldObject | undefined = this.primaryOf(parent);
-    const satellite: Planet = this.satelliteFor(parent);
-    const { min, max } = this.satelliteRange(
-      parent,
-      parent.vel.length(),
-      gravitationalConstant
-    );
-    const pointer: Vector2d | null = this.orbitPointer();
-    const towards: Vector2d | null =
-      pointer && pointer.dist(parent.pos) > 0 ? pointer.sub(parent.pos) : null;
-    const radius: number = clamp(
-      towards
-        ? towards.length()
-        : defaultOrbitDistance(parent, primary, satellite.radius),
-      min,
-      max
-    );
-    const angle: number = towards ? Math.atan2(towards.y, towards.x) : 0;
-    return {
-      center: parent.pos,
-      radius,
-      angle,
-      satellite: parent.pos.add(
-        vec2(Math.cos(angle), Math.sin(angle)).mul(radius)
-      ),
-      satelliteRadius: satellite.radius,
-      held: keepsSatelliteAt(parent, primary, radius),
-    };
-  });
-
-  /**
-   * How far a satellite of `parent` may be placed, when the parent travels
-   * at `speed`: from the two discs clearing each other to where what holds
-   * the parent - the sun for a planet, the planet for a moon - would take
-   * the satellite instead, and never beyond the world.
-   */
-  private satelliteRange(
-    parent: WorldObject,
-    speed: number,
-    gravitationalConstant: number
-  ): { min: number; max: number } {
-    return orbitDistanceRange(
-      parent,
-      this.primaryOf(parent),
-      this.satelliteFor(parent).radius,
-      this.canvasSize().x / 2,
-      minOrbitDistance(
-        parent,
-        gravitationalConstant,
-        parent.isStatic ? 0 : speed
-      )
-    );
-  }
-
-  /**
-   * How far the menu target itself currently sits from its own parent - the
-   * sun for a planet, the planet for a moon. The sliders own this state for
-   * the same reason `menuMass` does: the world objects are mutable, and a
-   * signal reading their fields would not notice a change.
-   */
-  readonly menuDistance: WritableSignal<number> = signal(0);
-
-  /**
-   * How far the menu target may be moved from its own parent: from its disc
-   * just clearing its parent's, to where its parent's own primary would pull
-   * it away instead - the same rule `orbitRange` places a new satellite by,
-   * applied to the target itself.
-   */
-  readonly menuDistanceRange: Signal<{ min: number; max: number }> = computed(
-    () => {
-      const target: WorldObject | null = this.menuTarget();
-      // read only to follow the mass slider - the sizes below come from the
-      // objects themselves, which the slider has already updated
-      const mass: number = this.menuMass();
-      const { gravitationalConstant } = this.settings();
-      const parent: WorldObject | undefined = target
-        ? this.primaryOf(target)
-        : undefined;
-      if (!target || !parent || mass <= 0) {
-        // the sun has no parent to move against
-        return { min: 0, max: 0 };
-      }
-      return orbitDistanceRange(
-        parent,
-        this.primaryOf(parent),
-        target.radius,
-        this.canvasSize().x / 2,
-        minOrbitDistance(
-          parent,
-          gravitationalConstant,
-          parent.isStatic ? 0 : parent.vel.length()
-        )
-      );
+    const parent: WorldObject | null = this.orbitTool.parent();
+    if (!parent) {
+      return 'Tap a body to give it a satellite';
     }
-  );
-
-  /** Step of the distance slider, on the same hundredth-of-the-range rule as `orbitStep`. */
-  readonly menuDistanceStep: Signal<number> = computed(() => {
-    const { min, max } = this.menuDistanceRange();
-    return Math.max((max - min) / 100, 1e-4);
+    const satellite: string = parent === this.sun ? 'planet' : 'moon';
+    return `Press beside it and drag the orbit, let go to add the ${satellite}`;
   });
-
-  /** What the menu target orbits: the sun, or a planet. Empty for the sun itself. */
-  readonly parentName: Signal<string> = computed(() => {
-    const target: WorldObject | null = this.menuTarget();
-    if (!target || target === this.sun) {
-      return '';
-    }
-    return this.primaryOf(target) === this.sun ? 'sun' : 'planet';
-  });
-
-  /**
-   * Step of the orbit slider: a hundredth of what it can cover. A fixed step
-   * cannot do, the range is a few hundredths of an AU around a planet and a
-   * few whole ones around the sun.
-   */
-  readonly orbitStep: Signal<number> = computed(() => {
-    const { min, max } = this.orbitRange();
-    // a range with nothing to choose still needs a step the slider accepts
-    return Math.max((max - min) / 100, 1e-4);
-  });
-
-  /** What a satellite of the menu target would be: a planet, or a moon. */
-  readonly satelliteName: Signal<string> = computed(() =>
-    this.menuTarget() === this.sun ? 'planet' : 'moon'
-  );
-
-  /**
-   * Whether the target keeps a satellite on the orbit the slider is set to,
-   * or its own primary takes it away in time - which is every orbit a light
-   * planet can offer, and what its mass slider is there to fix.
-   */
-  readonly orbitHeld: Signal<boolean> = computed(() => {
-    const target: WorldObject | null = this.menuTarget();
-    // read only to follow the mass slider, like `orbitRange` does - and the
-    // distance to the primary, which `step` keeps up while the world runs
-    this.menuMass();
-    this.menuDistance();
-    return (
-      !target ||
-      keepsSatelliteAt(target, this.primaryOf(target), this.menuOrbit())
-    );
-  });
-
-  readonly minMassExponent = MIN_MASS_EXPONENT;
-  readonly maxMassExponent = MAX_MASS_EXPONENT;
-  readonly maxSpeed = MAX_SPEED;
-
-  /** World object pressed on, and where it was pressed, until the mouse is released. */
-  private pressed: { wo: WorldObject; x: number; y: number } | null = null;
-
-  private longPressTimer: ReturnType<typeof setTimeout> | null = null;
 
   drag$: Observable<{ end: Vector2d }> = this.pointerDown$.asObservable().pipe(
     take(1),
     switchMap(() =>
       this.pointerMove$.asObservable().pipe(
         map((pm: PointerEvent) => ({
-          end: this.toWorldCoordinates(pm),
+          end: this.camera.toWorld(pm),
         })),
         takeUntil(this.gestureEnd$.asObservable())
       )
     )
   );
 
-  trackByPlanet: TrackByFunction<Planet> = (index, planet) => planet.pos;
-
   constructor() {
-    inject(DestroyRef).onDestroy(() => this.cancelLongPress());
+    inject(DestroyRef).onDestroy(() => this.pointers.cancelLongPress());
     this.settings = signal(this.initialConfig);
     this.initializeSunAndPlanets();
-    this.updateSignals();
 
-    effect(() => {
-      this.worldService.setUniverse(
-        this.canvasSize().x,
-        this.canvasSize().y,
+    effect(() =>
+      this.worldService.setGravitationalConstant(
         this.settings().gravitationalConstant
-      );
-    });
+      )
+    );
     effect(() => (this.sun.mass = this.settings().massOfSun));
     effect(() => (this.running() ? this.gameLoop() : null));
   }
 
-  /**
-   * Puts the sun in the middle and the inner planets around it, each on its
-   * real orbit with the speed that orbit takes, spread out so they do not
-   * start in a row. Mercury through mars: the ones that fit in the frame.
-   */
+  /** Puts the sun in the middle of the world and the inner planets around it. */
   private initializeSunAndPlanets(): void {
-    this.sun = new Sun(
-      this.calcCenteredVec(),
-      undefined,
-      this.settings().massOfSun
+    const { massOfSun, gravitationalConstant } = this.settings();
+    const { sun, planets } = createSolarSystem(
+      this.canvasSize().div(2),
+      massOfSun,
+      gravitationalConstant
     );
-    this.worldService.addWorldObject(this.sun);
-
-    const centralMass: number = this.sun.mass;
-    const { gravitationalConstant } = this.settings();
-    PLANETS.forEach((body, index) => {
-      // an eighth of a turn between neighbours, so no two of them line up
-      const angle: number = (index * Math.PI) / 4;
-      const outwards: Vector2d = vec2(Math.cos(angle), Math.sin(angle));
-      const speed: number = circularOrbitSpeed(
-        centralMass,
-        body.orbit,
-        gravitationalConstant
-      );
-      const planet: Planet = new Planet(
-        this.calcCenteredVec(outwards.mul(body.orbit)),
-        // a circular orbit runs perpendicular to the line to the sun
-        vec2(outwards.y, -outwards.x).mul(speed),
-        body.mass,
-        body.name,
-        body.radius
-      );
-      planet.parent = this.sun;
+    this.sun = sun;
+    this.worldService.addWorldObject(sun);
+    for (const planet of planets) {
       this.worldService.addWorldObject(planet);
-    });
-    this.updateSignals();
-  }
-
-  private calcCenteredVec(vec: Vector2d = vec2(0, 0)): Vector2d {
-    return this.canvasSize().div(2).add(vec);
-  }
-
-  private updateSignals(): void {
-    this.planets.set(
-      this.worldService
-        .getWorldObjects()
-        .filter((wo) => wo instanceof Planet) as Array<Planet>
-    );
-    this.forces.set(this.worldService.getForces());
+    }
   }
 
   private findWorldObject(target: SVGElement): WorldObject | undefined {
-    return this.worldService
-      .getWorldObjects()
-      .find((wo) => wo.id === target.id);
+    return this.worldService.worldObjects().find((wo) => wo.id === target.id);
   }
 
   /**
@@ -713,28 +293,29 @@ export class GravityWorldComponent {
       // the right button opens the settings panel, see `contextMenu`
       return;
     }
-    if (this.activePointers.size >= 2) {
+    if (this.pointers.count >= 2) {
       // two fingers already own the gesture, a third would only confuse it
       return;
     }
-    this.activePointers.set($event.pointerId, clientPoint($event));
+    this.pointers.add($event.pointerId, $event);
     // keep receiving moves once the gesture wanders off the svg - the second
     // finger needs that just as much as the first
     this.svgWorld?.nativeElement?.setPointerCapture?.($event.pointerId);
-    if (this.activePointers.size === 2) {
+    const pair = this.pointers.pair;
+    if (pair) {
       // the first finger was only ever the start of a two finger gesture
       this.cancelDrag();
-      this.startPinch();
+      this.camera.startPinch(...pair);
       return;
     }
     if (this.isPanGesture($event)) {
-      this.startPan($event);
+      this.startPanning($event);
       return;
     }
     const tool: Tool = this.tool();
     let wo = this.findWorldObject($event.target as SVGElement);
     if (wo) {
-      this.pressed = { wo, x: $event.clientX, y: $event.clientY };
+      this.pointers.pressOn(wo, $event);
       if ($event.pointerType !== 'mouse') {
         // touch has no right button, so resting on an object opens the panel
         this.startLongPress(wo);
@@ -743,22 +324,21 @@ export class GravityWorldComponent {
         // the other tools act on the tap, there is nothing to drag
         return;
       }
-    } else if (tool === 'orbit' && this.orbitParent()) {
+    } else if (tool === 'orbit' && this.orbitTool.parent()) {
       // a press beside the picked body takes hold of the drawn orbit
-      this.orbitPointerId = $event.pointerId;
-      this.orbitPointer.set(this.toWorldCoordinates($event));
+      this.orbitTool.grab($event.pointerId, this.camera.toWorld($event));
       return;
     } else if (tool === 'add') {
       // a click on empty space places a body, it does not move the view
       const created: Planet = this.createObjectAt(
-        this.toWorldCoordinates($event),
+        this.camera.toWorld($event),
         this.addKind()
       );
       this.worldService.addWorldObject(created);
       this.createdByDrag = created;
       wo = created;
     } else {
-      this.startPan($event);
+      this.startPanning($event);
       return;
     }
     this.dragPointerId = $event.pointerId;
@@ -767,7 +347,6 @@ export class GravityWorldComponent {
     this.dragEnd = null;
     const springForce = new SpringForce(wo);
     this.worldService.addForceObject(springForce);
-    this.updateSignals();
 
     this.drag$.subscribe({
       next: ({ end }) => springForce.updateSpringEnd(end),
@@ -783,7 +362,6 @@ export class GravityWorldComponent {
 
   private removeForce(springForce: SpringForce): void {
     this.worldService.removeForceObject(springForce);
-    this.updateSignals();
   }
 
   /**
@@ -791,24 +369,19 @@ export class GravityWorldComponent {
    * lets a satellite go onto the orbit the pointer was holding.
    */
   pointerUp($event: PointerEvent): void {
-    const heldOrbit: boolean = this.orbitPointerId === $event.pointerId;
+    const heldOrbit: boolean = this.orbitTool.isHeldBy($event.pointerId);
     const pressed = this.endGesture($event);
     if (heldOrbit) {
-      // a mouse keeps its pointer id, so the next press must start afresh
-      this.orbitPointerId = null;
-      this.orbitPointer.set(this.toWorldCoordinates($event));
-      this.placeOnDrawnOrbit();
-    } else if (pressed && this.isWithinClickTolerance(pressed, $event)) {
-      this.tap(pressed.wo);
-    }
-  }
-
-  /** Puts a satellite where the drawn orbit shows it. */
-  private placeOnDrawnOrbit(): void {
-    const parent: WorldObject | null = this.orbitParent();
-    const preview: OrbitPreview | null = this.orbitPreview();
-    if (parent && preview) {
-      this.addSatelliteTo(parent, preview.radius, preview.angle);
+      const placed = this.orbitTool.release(this.camera.toWorld($event));
+      if (placed) {
+        this.addSatelliteTo(
+          placed.parent,
+          placed.orbit.radius,
+          placed.orbit.angle
+        );
+      }
+    } else if (pressed && isWithinClickTolerance(pressed.at, $event)) {
+      this.tap(pressed.subject);
     }
   }
 
@@ -820,8 +393,7 @@ export class GravityWorldComponent {
         break;
       case 'orbit':
         // the orbit is drawn from here on, the satellite follows on release
-        this.orbitParent.set(wo);
-        this.orbitPointer.set(null);
+        this.orbitTool.pick(wo);
         break;
       case 'delete':
         if (wo instanceof Planet) {
@@ -829,7 +401,7 @@ export class GravityWorldComponent {
         }
         break;
       default:
-        this.toggleFollow(wo);
+        this.camera.toggleFollow(wo);
     }
   }
 
@@ -837,8 +409,8 @@ export class GravityWorldComponent {
   pointerCancel($event: PointerEvent): void {
     // a placement the system cut short was never finished
     const created: Planet | null = this.createdByDrag;
-    if (this.orbitPointerId === $event.pointerId) {
-      this.orbitPointerId = null;
+    if (this.orbitTool.isHeldBy($event.pointerId)) {
+      this.orbitTool.letGo();
     }
     this.endGesture($event);
     if (created) {
@@ -852,23 +424,22 @@ export class GravityWorldComponent {
    */
   private endGesture(
     $event: PointerEvent
-  ): { wo: WorldObject; x: number; y: number } | null {
-    this.activePointers.delete($event.pointerId);
+  ): { subject: WorldObject; at: ClientPoint } | null {
+    this.pointers.remove($event.pointerId);
     const svg: SVGSVGElement | undefined = this.svgWorld?.nativeElement;
     if (svg?.hasPointerCapture?.($event.pointerId)) {
       svg.releasePointerCapture($event.pointerId);
     }
-    this.cancelLongPress();
-    if (this.pinchStart) {
+    this.pointers.cancelLongPress();
+    if (this.camera.isPinching) {
       // the finger left over must not carry on as a drag of its own
-      if (this.activePointers.size < 2) {
-        this.pinchStart = null;
+      if (this.pointers.count < 2) {
+        this.camera.endGesture();
       }
       return null;
     }
-    const pressed = this.pressed;
-    this.panStart = null;
-    this.pressed = null;
+    const pressed = this.pointers.takePress();
+    this.camera.endGesture();
     this.dragPointerId = null;
     this.createdByDrag = null;
     this.gestureEnd$.next();
@@ -901,17 +472,17 @@ export class GravityWorldComponent {
       return;
     }
     wo.vel = stretch.norm().mul(speed);
-    this.updateSignals();
+    this.worldService.refresh();
   }
 
   /** Drops the running drag, taking back the planet it has just created. */
   private cancelDrag(): void {
-    this.cancelLongPress();
+    this.pointers.cancelLongPress();
     const created = this.createdByDrag;
-    this.panStart = null;
-    this.pressed = null;
+    this.camera.endGesture();
+    this.pointers.dropPress();
     this.dragPointerId = null;
-    this.orbitPointerId = null;
+    this.orbitTool.letGo();
     this.createdByDrag = null;
     // an abandoned gesture is not a throw
     this.dragObject = null;
@@ -926,44 +497,37 @@ export class GravityWorldComponent {
   /** Zooms and pans with two fingers, moves the view while panning, and
    * otherwise feeds the drag gesture. */
   pointerMove($event: PointerEvent): void {
-    const active = this.activePointers.get($event.pointerId);
-    if (active) {
-      this.activePointers.set($event.pointerId, clientPoint($event));
-    }
-    if (this.pinchStart) {
-      this.pinch();
+    this.pointers.moveTo($event.pointerId, $event);
+    if (this.camera.isPinching) {
+      const pair = this.pointers.pair;
+      if (pair) {
+        this.camera.pinchTo(...pair);
+      }
       return;
     }
-    if (this.panStart) {
-      this.pan($event);
+    if (this.camera.isPanning) {
+      this.camera.panTo($event);
       return;
     }
     if (
-      this.orbitParent() &&
+      this.orbitTool.parent() &&
       this.tool() === 'orbit' &&
       // the pointer holding the orbit, or a mouse hovering with none pressed
-      (this.orbitPointerId === $event.pointerId ||
-        this.activePointers.size === 0)
+      (this.orbitTool.isHeldBy($event.pointerId) || this.pointers.count === 0)
     ) {
-      this.orbitPointer.set(this.toWorldCoordinates($event));
+      this.orbitTool.moveTo(this.camera.toWorld($event));
     }
-    if (this.pressed && !this.isWithinClickTolerance(this.pressed, $event)) {
+    if (this.pointers.hasWandered($event)) {
       // the gesture has become a drag, releasing it must not center anything,
       // not even when the pointer comes back to where it started
-      this.pressed = null;
-      this.cancelLongPress();
+      this.pointers.dropPress();
+      this.pointers.cancelLongPress();
     }
     if (this.dragPointerId === $event.pointerId) {
       const origin: ClientPoint | null = this.dragOrigin;
-      if (
-        origin &&
-        !this.isWithinClickTolerance(
-          { x: origin.clientX, y: origin.clientY },
-          $event
-        )
-      ) {
+      if (origin && !isWithinClickTolerance(origin, $event)) {
         // a gesture this long is a drag, and a drag can throw
-        this.dragEnd = this.toWorldCoordinates($event);
+        this.dragEnd = this.camera.toWorld($event);
       }
       this.pointerMove$.next($event);
     }
@@ -975,50 +539,7 @@ export class GravityWorldComponent {
       return;
     }
     $event.preventDefault();
-    const factor: number =
-      $event.deltaY < 0 ? WHEEL_ZOOM_STEP : 1 / WHEEL_ZOOM_STEP;
-    // keep the world point under the cursor in place while zooming - unless an
-    // object is followed, then zoom around that instead of losing it
-    const focus: Vector2d = this.followed()
-      ? this.viewCenter()
-      : this.toWorldCoordinates($event);
-    this.zoomBy(factor, focus);
-  }
-
-  /** Zooms one step in around the center of the current view. */
-  zoomIn(): void {
-    this.zoomBy(ZOOM_STEP);
-  }
-
-  /** Zooms one step out around the center of the current view. */
-  zoomOut(): void {
-    this.zoomBy(1 / ZOOM_STEP);
-  }
-
-  /** Shows the whole world again, centered, unzoomed and following nothing. */
-  resetView(): void {
-    this.stopFollowing();
-    this.zoom.set(1);
-    this.viewCenter.set(this.canvasSize().div(2));
-  }
-
-  /** Zooms by `factor`, keeping `focus` (world coordinates) on the same spot. */
-  private zoomBy(factor: number, focus: Vector2d = this.viewCenter()): void {
-    const currentZoom: number = this.zoom();
-    const nextZoom: number = clamp(currentZoom * factor, MIN_ZOOM, MAX_ZOOM);
-    if (nextZoom === currentZoom) {
-      return;
-    }
-    this.zoom.set(nextZoom);
-    this.viewCenter.set(
-      this.clampToViewBounds(
-        focus.add(
-          this.viewCenter()
-            .sub(focus)
-            .mul(currentZoom / nextZoom)
-        )
-      )
-    );
+    this.camera.zoomAt($event, $event.deltaY < 0);
   }
 
   /** Panning is the middle mouse button, or a drag with a modifier held. */
@@ -1028,124 +549,15 @@ export class GravityWorldComponent {
     );
   }
 
-  /** Remembers where the pan gesture started, in client and world coordinates. */
-  private startPan($event: PointerEvent): void {
+  /** Starts moving the view with the pointer, rather than anything in it. */
+  private startPanning($event: PointerEvent): void {
     $event.preventDefault();
-    // panning is manual control, it wins over following
-    this.stopFollowing();
-    this.panStart = {
-      x: $event.clientX,
-      y: $event.clientY,
-      center: this.viewCenter(),
-    };
-  }
-
-  /** Moves the view center by the distance the pointer travelled since `startPan`. */
-  private pan($event: PointerEvent): void {
-    const panStart = this.panStart;
-    const rect: DOMRect | undefined = this.svgRect();
-    if (!panStart || !rect?.width || !rect.height) {
-      return;
-    }
-    const size: Vector2d = this.viewSize();
-    const moved: Vector2d = vec2(
-      (($event.clientX - panStart.x) / rect.width) * size.x,
-      (($event.clientY - panStart.y) / rect.height) * size.y
-    );
-    this.viewCenter.set(this.clampToViewBounds(panStart.center.sub(moved)));
-  }
-
-  /** Remembers the spread of the two fingers and the world point between them. */
-  private startPinch(): void {
-    const [first, second] = [...this.activePointers.values()];
-    if (!first || !second) {
-      return;
-    }
-    // pinching is manual control, it wins over following
-    this.stopFollowing();
-    this.pinchStart = {
-      // a pinch that starts with the fingers on one spot must not divide by 0
-      distance: Math.max(distanceBetween(first, second), 1),
-      focus: this.toWorldCoordinates(midpointOf(first, second)),
-      zoom: this.zoom(),
-    };
-  }
-
-  /**
-   * Zooms by how far the fingers have spread and pans by where they moved,
-   * so the world point that started between them stays between them.
-   */
-  private pinch(): void {
-    const pinchStart = this.pinchStart;
-    const [first, second] = [...this.activePointers.values()];
-    if (!pinchStart || !first || !second) {
-      return;
-    }
-    const spread: number = distanceBetween(first, second) / pinchStart.distance;
-    this.zoom.set(clamp(pinchStart.zoom * spread, MIN_ZOOM, MAX_ZOOM));
-    this.viewCenter.set(
-      this.clampToViewBounds(
-        this.centerKeeping(pinchStart.focus, midpointOf(first, second))
-      )
-    );
-  }
-
-  /** View center that puts `focus` (world coordinates) under `client`. */
-  private centerKeeping(focus: Vector2d, client: ClientPoint): Vector2d {
-    const rect: DOMRect | undefined = this.svgRect();
-    if (!rect?.width || !rect.height) {
-      return this.viewCenter();
-    }
-    const size: Vector2d = this.viewSize();
-    return vec2(
-      focus.x - ((client.clientX - rect.left) / rect.width - 0.5) * size.x,
-      focus.y - ((client.clientY - rect.top) / rect.height - 0.5) * size.y
-    );
-  }
-
-  /**
-   * Follows the given object, or lets go of it when it is already followed.
-   * The view stays where it is when following ends.
-   */
-  private toggleFollow(wo: WorldObject): void {
-    if (this.followed() === wo) {
-      this.stopFollowing();
-      return;
-    }
-    this.followed.set(wo);
-    this.centerOn(wo);
-  }
-
-  /** Lets go of the followed object, leaving the view where it is. */
-  stopFollowing(): void {
-    this.followed.set(null);
-  }
-
-  /** Moves the view so the given object sits in the middle of it. */
-  private centerOn(wo: WorldObject): void {
-    this.viewCenter.set(this.clampToViewBounds(wo.pos));
-  }
-
-  /** Whether the cursor is still (almost) on the spot it was pressed down on. */
-  private isWithinClickTolerance(
-    pressed: { x: number; y: number },
-    $event: MouseEvent
-  ): boolean {
-    return (
-      Math.abs($event.clientX - pressed.x) <= CLICK_TOLERANCE_PX &&
-      Math.abs($event.clientY - pressed.y) <= CLICK_TOLERANCE_PX
-    );
-  }
-
-  /** Keeps the given view center within the reachable area of the world. */
-  private clampToViewBounds({ x, y }: Vector2d): Vector2d {
-    const { min, max } = this.viewBounds();
-    return vec2(clamp(x, min.x, max.x), clamp(y, min.y, max.y));
+    this.camera.startPan($event);
   }
 
   /** Opens the settings of the object under the cursor on a right click. */
   contextMenu($event: MouseEvent): void {
-    if (this.orbitPointerId !== null) {
+    if (this.orbitTool.isHeld) {
       // a finger resting on the drawn orbit is still holding it - the
       // browser's long press must neither show its menu nor cut the gesture
       // short, the satellite follows on release as it would have
@@ -1159,110 +571,42 @@ export class GravityWorldComponent {
       return;
     }
     $event.preventDefault();
-    if (this.activePointers.size > 0) {
+    if (this.pointers.count > 0) {
       // a finger is still down: the browser's own long press got here before
       // ours, so let go of the body as `startLongPress` would, or lifting the
       // finger flings it - and eat the click that lift turns into
       this.cancelDrag();
-      this.swallowNextClick();
+      swallowNextClick();
     }
     this.openMenuFor(wo);
   }
 
   /** A finger resting on an object opens its settings, like a right click. */
   private startLongPress(wo: WorldObject): void {
-    // a second finger must not orphan the timer of the first
-    this.cancelLongPress();
-    this.longPressTimer = setTimeout(() => {
+    this.pointers.startLongPress(() => {
       // the finger is still down, so let go of the object before the panel
       // takes over - otherwise it would be flung when the finger lifts
       this.cancelDrag();
       this.openMenuFor(wo);
       // and it is still down now, so the click it turns into is still coming
-      this.swallowNextClick();
-    }, LONG_PRESS_MS);
-  }
-
-  /**
-   * Eats the one click a lifted finger is turned into. It lands where the
-   * finger was, which by then may be under the panel the long press has just
-   * opened - on a slider, or on the button that closes it again. Nothing
-   * else is swallowed: the listener gives up on the first click, or after
-   * the browser can no longer be sending that one.
-   */
-  private swallowNextClick(): void {
-    const swallow = (event: MouseEvent): void => {
-      event.stopPropagation();
-      event.preventDefault();
-      stop();
-    };
-    // both close over `timer`, which is set by the time either of them runs
-    const stop = (): void => {
-      document.removeEventListener('click', swallow, true);
-      clearTimeout(timer);
-    };
-    const timer: ReturnType<typeof setTimeout> = setTimeout(
-      stop,
-      SYNTHETIC_CLICK_MS
-    );
-    document.addEventListener('click', swallow, true);
-  }
-
-  /** A moving or ending pointer is a drag or a tap, not a long press. */
-  cancelLongPress(): void {
-    if (this.longPressTimer !== null) {
-      clearTimeout(this.longPressTimer);
-      this.longPressTimer = null;
-    }
+      swallowNextClick();
+    });
   }
 
   /** Opens the settings panel for the given object, pausing the world. */
   private openMenuFor(wo: WorldObject): void {
-    this.cancelLongPress();
+    this.pointers.cancelLongPress();
     // sliders on a moving object would set what has already moved on - and a
     // world the panel already paused for one body stays owed its restart
     // when the panel moves on to another
     this.pausedForMenu = this.pausedForMenu || this.running();
     this.stopSim();
     this.menuTarget.set(wo);
-    const earthMasses: number = wo.mass / EARTH_MASS;
-    this.menuMass.set(earthMasses);
-    this.menuMassExponent.set(
-      clamp(
-        earthMasses > 0 ? Math.log10(earthMasses) : MIN_MASS_EXPONENT,
-        MIN_MASS_EXPONENT,
-        MAX_MASS_EXPONENT
-      )
-    );
-    this.menuSpeed.set(wo.vel.length());
-    const primary: WorldObject | undefined = this.primaryOf(wo);
-    this.menuOrbit.set(
-      clamp(
-        defaultOrbitDistance(wo, primary, this.satelliteFor(wo).radius),
-        this.orbitRange().min,
-        this.orbitRange().max
-      )
-    );
-    this.menuDistance.set(
-      primary
-        ? clamp(
-            wo.pos.dist(primary.pos),
-            this.menuDistanceRange().min,
-            this.menuDistanceRange().max
-          )
-        : 0
-    );
   }
 
-  /**
-   * What holds `target` on its own orbit: the sun for a planet, the planet
-   * for a moon, `undefined` for the sun itself, which has no parent.
-   */
+  /** What holds `target` on its own orbit, with the sun of this world. */
   private primaryOf(target: WorldObject): WorldObject | undefined {
-    if (target === this.sun) {
-      return undefined;
-    }
-    return target instanceof Planet ? (target.parent ?? this.sun) : this.sun;
+    return primaryOf(target, this.sun);
   }
 
   /** Forgets the target and picks the simulation back up where it left off. */
@@ -1274,28 +618,20 @@ export class GravityWorldComponent {
     }
   }
 
-  /** Puts a satellite in a circular orbit around the object of the panel. */
-  addSatellite(): void {
-    const parent: WorldObject | null = this.menuTarget();
-    if (parent) {
-      this.addSatelliteTo(parent, this.menuOrbit());
-    }
-  }
-
   /**
    * Puts a satellite in a circular orbit around `parent`, at `distance` and
    * `angle` - or where one is placed by default, anywhere on the circle.
    */
-  private addSatelliteTo(
+  addSatelliteTo(
     parent: WorldObject,
     distance: number = defaultOrbitDistance(
       parent,
       this.primaryOf(parent),
-      this.satelliteFor(parent).radius
+      satelliteRadiusFor(parent)
     ),
     angle: number = Math.random() * 2 * Math.PI
   ): void {
-    const satellite: Planet = this.satelliteFor(parent);
+    const satellite: Planet = this.createSatelliteFor(parent);
     const { pos, vel } = orbitAround(
       parent,
       distance,
@@ -1305,7 +641,6 @@ export class GravityWorldComponent {
     satellite.pos = pos;
     satellite.vel = vel;
     this.worldService.addWorldObject(satellite);
-    this.updateSignals();
   }
 
   /** Takes the object of the panel out of the world, and the panel with it. */
@@ -1314,12 +649,6 @@ export class GravityWorldComponent {
     if (target instanceof Planet) {
       this.removePlanet(target);
     }
-  }
-
-  /** Sets how far from the menu target its next satellite will be placed. */
-  setOrbitDistance(distance: number): void {
-    const { min, max } = this.orbitRange();
-    this.menuOrbit.set(clamp(distance, min, max));
   }
 
   /**
@@ -1335,26 +664,23 @@ export class GravityWorldComponent {
     if (!target || !parent) {
       return;
     }
-    const { min, max } = this.menuDistanceRange();
-    const clamped: number = clamp(distance, min, max);
     const angle: number = Math.atan2(
       target.pos.y - parent.pos.y,
       target.pos.x - parent.pos.x
     );
     const { pos, vel } = orbitAround(
       parent,
-      clamped,
+      distance,
       angle,
       this.settings().gravitationalConstant
     );
     target.pos = pos;
     target.vel = vel;
-    this.menuDistance.set(clamped);
-    this.updateSignals();
+    this.worldService.refresh();
   }
 
   /** The satellite the menu target would be given: its moon, or its planet. */
-  private satelliteFor(parent: WorldObject): Planet {
+  private createSatelliteFor(parent: WorldObject): Planet {
     const satellite: Planet = new Planet(
       parent.pos,
       undefined,
@@ -1364,48 +690,40 @@ export class GravityWorldComponent {
     return satellite;
   }
 
-  /**
-   * Sets the mass of the menu target from the log scale of the slider, which
-   * counts in earth masses - a scale a person can hold on to, where the solar
-   * masses the world runs on would be millionths.
-   */
-  setMassExponent(exponent: number): void {
+  /** Gives the object of the panel the mass it asks for, in solar masses. */
+  setMass(mass: number): void {
     const target: WorldObject | null = this.menuTarget();
     if (!target) {
       return;
     }
-    this.menuMassExponent.set(
-      clamp(exponent, MIN_MASS_EXPONENT, MAX_MASS_EXPONENT)
-    );
-    const earthMasses: number = 10 ** this.menuMassExponent();
-    this.menuMass.set(earthMasses);
-    const mass: number = earthMasses * EARTH_MASS;
     if (target === this.sun) {
       // the sun takes its mass from the settings, so it has to change there -
       // but the effect handing it over only runs once this turn is done, and
-      // the orbit range below reads the sun's radius right away
+      // the orbit below reads the sun's radius right away
       this.sun.mass = mass;
       this.settings.update((settings) => ({ ...settings, massOfSun: mass }));
     } else {
       target.mass = mass;
     }
-    // both discs and the reach of the target's gravity have just changed
-    this.setOrbitDistance(this.menuOrbit());
-    // the target's own disc has changed too, which can grow it into its
-    // parent's - move it back onto a valid orbit if its real place no longer
-    // is one, otherwise leave it be: a mass tweak is not a request to move it
+    // its disc has changed, which can grow it into its parent's - move it
+    // back onto a valid orbit if its real place no longer is one, otherwise
+    // leave it be: a mass tweak is not a request to move it
     const parent: WorldObject | undefined = this.primaryOf(target);
     if (parent) {
       const current: number = target.pos.dist(parent.pos);
-      const { min, max } = this.menuDistanceRange();
+      const { min, max } = placementRange(
+        parent,
+        this.primaryOf(parent),
+        target.radius,
+        this.settings().gravitationalConstant,
+        this.canvasSize().x / 2
+      );
       const clamped: number = clamp(current, min, max);
-      if (clamped === current) {
-        this.menuDistance.set(current);
-      } else {
+      if (clamped !== current) {
         this.setDistance(clamped);
       }
     }
-    this.updateSignals();
+    this.worldService.refresh();
   }
 
   /**
@@ -1423,10 +741,8 @@ export class GravityWorldComponent {
       target.vel.length() > 0
         ? target.vel.norm()
         : this.orbitDirectionAroundSun(target);
-    const clamped: number = clamp(speed, 0, MAX_SPEED);
-    this.menuSpeed.set(clamped);
-    target.vel = direction.mul(clamped);
-    this.updateSignals();
+    target.vel = direction.mul(speed);
+    this.worldService.refresh();
   }
 
   /** Direction an object at its place would orbit the sun in. */
@@ -1462,11 +778,9 @@ export class GravityWorldComponent {
   }
 
   /**
-   * Advances the simulation by a single frame of the given length. The
-   * simulation speed decides how much world time that frame is worth, and
-   * that time is cut into slices the integrator can still follow: at ten
-   * times speed one step would be ten frames wide and the orbits would fly
-   * apart. At the usual speed a frame stays a single slice.
+   * Advances the simulation by a single frame of the given length. How much
+   * world time that frame is worth is what the simulation speed decides; how
+   * that time is safely integrated is the world's own business.
    */
   step(deltaTime: number): void {
     const { showTrail, trailLength, simulationSpeed } = this.settings();
@@ -1484,35 +798,9 @@ export class GravityWorldComponent {
       deltaTime * speed * YEARS_PER_SECOND,
       MAX_TICKS_PER_FRAME * MAX_TICK_YEARS
     );
-    const ticks: number = clamp(
-      Math.ceil(years / MAX_TICK_YEARS),
-      1,
-      MAX_TICKS_PER_FRAME
-    );
-    for (let tick = 0; tick < ticks; tick++) {
-      this.worldService.calcNextTick(years / ticks);
-      // every slice leaves its own mark, or a fast world draws a polygon
-      if (showTrail) {
-        this.worldService.recordTrails(trailLength);
-      }
-    }
-    if (!showTrail) {
-      // clearing what is there is a job for once a frame, not once a slice
-      this.worldService.recordTrails(0);
-    }
-    this.updateSignals();
-    const followed: WorldObject | null = this.followed();
-    if (followed) {
-      // the planets have moved, so the view has to move with the followed one
-      this.centerOn(followed);
-    }
-    const target: WorldObject | null = this.menuTarget();
-    if (target) {
-      // a panel left open on a running world keeps telling the truth
-      const primary: WorldObject | undefined = this.primaryOf(target);
-      this.menuSpeed.set(target.vel.length());
-      this.menuDistance.set(primary ? target.pos.dist(primary.pos) : 0);
-    }
+    this.worldService.advance(years, showTrail ? trailLength : 0);
+    // the planets have moved, so the view has to move with the followed one
+    this.camera.keepUp();
   }
 
   /**
@@ -1534,46 +822,21 @@ export class GravityWorldComponent {
     return planet.pos.dist(this.sun.pos);
   }
 
-  /** Clears the world, resets the view and places sun and planets again. */
   /** Puts the given tool in hand, dropping what the orbit tool had picked. */
   pickTool(tool: Tool): void {
     this.tool.set(tool);
-    this.orbitParent.set(null);
-    this.orbitPointer.set(null);
-    this.orbitPointerId = null;
+    this.orbitTool.clear();
   }
 
+  /** Clears the world, resets the view and places sun and planets again. */
   reset(): void {
     this.stopSim();
     this.pausedForMenu = false;
     this.menuTarget.set(null);
-    this.orbitParent.set(null);
-    this.orbitPointer.set(null);
+    this.orbitTool.clear();
     this.worldService.removeAll();
-    this.resetView();
+    this.camera.reset();
     this.initializeSunAndPlanets();
-  }
-
-  /**
-   * Converts a client position into world (svg viewBox) coordinates. The
-   * viewBox keeps the aspect ratio of the css box, so the mapping is linear.
-   */
-  private toWorldCoordinates($event: ClientPoint): Vector2d {
-    const rect: DOMRect | undefined = this.svgRect();
-    if (!rect || !rect.width || !rect.height) {
-      return this.viewCenter();
-    }
-    const size: Vector2d = this.viewSize();
-    const origin: Vector2d = this.viewCenter().sub(size.div(2));
-    return vec2(
-      origin.x + (($event.clientX - rect.left) / rect.width) * size.x,
-      origin.y + (($event.clientY - rect.top) / rect.height) * size.y
-    );
-  }
-
-  /** The css box of the svg, or undefined before it is rendered. */
-  private svgRect(): DOMRect | undefined {
-    return this.svgWorld?.nativeElement?.getBoundingClientRect();
   }
 
   /** Creates a body of the given kind at the given world position. */
@@ -1601,26 +864,16 @@ export class GravityWorldComponent {
 
   /** Takes the planet out of the world, handing its moons on to its parent. */
   removePlanet(planet: Planet): void {
-    if (this.followed() === planet) {
-      this.stopFollowing();
-    }
+    this.camera.forget(planet);
     if (this.menuTarget() === planet) {
       this.menuClosed();
     }
-    if (this.orbitParent() === planet) {
-      this.orbitParent.set(null);
-    }
+    this.orbitTool.forget(planet);
     for (const other of this.planets()) {
       if (other.parent === planet) {
         other.parent = planet.parent ?? this.sun;
       }
     }
     this.worldService.removeWorldObject(planet);
-    this.updateSignals();
   }
-}
-
-/** Restricts a value to the closed interval between `min` and `max`. */
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
 }

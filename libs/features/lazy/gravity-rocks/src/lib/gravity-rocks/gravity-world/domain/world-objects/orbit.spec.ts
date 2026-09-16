@@ -101,7 +101,7 @@ describe('orbitAround', () => {
   it('should actually orbit in the simulation', () => {
     const service = new GravityWorldService();
     const sun: WorldObject = new Sun(vec2(3, 1.8), undefined, SUN_MASS);
-    service.setUniverse(6, 3.6, G);
+    service.setGravitationalConstant(G);
     service.addWorldObject(sun);
     const { pos, vel } = orbitAround(sun, 1, 0.3, G);
     const satellite: WorldObject = new Planet(pos, vel, EARTH_MASS);
@@ -122,7 +122,7 @@ describe('orbitAround', () => {
   it('should hold the orbits of the inner planets for years', () => {
     const service = new GravityWorldService();
     const sun: WorldObject = new Sun(vec2(0, 0), undefined, SUN_MASS);
-    service.setUniverse(12, 12, G);
+    service.setGravitationalConstant(G);
     service.addWorldObject(sun);
     const planets: WorldObject[] = PLANETS.map((body, index) => {
       const { pos, vel } = orbitAround(sun, body.orbit, index, G);
@@ -146,7 +146,7 @@ describe('orbitAround', () => {
   it('should take a year for the orbit the earth is on', () => {
     const service = new GravityWorldService();
     const sun: WorldObject = new Sun(vec2(0, 0), undefined, SUN_MASS);
-    service.setUniverse(6, 3.6, G);
+    service.setGravitationalConstant(G);
     service.addWorldObject(sun);
     const { pos, vel } = orbitAround(sun, 1, 0, G);
     const earth: WorldObject = new Planet(pos, vel, EARTH_MASS);
@@ -177,7 +177,7 @@ describe('a moon of a planet', () => {
   ): { start: number; samples: number[] } {
     const service = new GravityWorldService();
     const sun: WorldObject = new Sun(vec2(0, 0), undefined, SUN_MASS);
-    service.setUniverse(24, 24, G);
+    service.setGravitationalConstant(G);
     service.addWorldObject(sun);
     // a planet on a circular orbit around the sun
     const planetSpeed: number = Math.sqrt((G * sun.mass) / sunDistance);

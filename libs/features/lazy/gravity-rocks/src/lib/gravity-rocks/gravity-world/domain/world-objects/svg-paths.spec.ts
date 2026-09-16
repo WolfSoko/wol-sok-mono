@@ -1,22 +1,12 @@
 import { vec2, Vector2d } from '@wolsok/utils-math';
-import { SpringForce } from './force';
-import { TrailSegment } from './svg-path';
 import {
+  TrailSegment,
   VELOCITY_ARROW_YEARS,
   svgPathForVelocity,
-  toSvgPath,
   trailToSvgSegments,
-} from './toSvgPath';
-import { WorldObject } from './world-object';
+} from './svg-paths';
 
-describe('toSvgPath', () => {
-  it('should draw a spring force from the object to the spring end', () => {
-    const force = new SpringForce(new WorldObject(vec2(10, 20), undefined, 1));
-    force.updateSpringEnd(vec2(30, 40));
-
-    expect(toSvgPath(force)?.path).toBe('M10 20 30 40');
-  });
-
+describe('svg paths', () => {
   it('should draw where the velocity takes an object next', () => {
     // the arrow is the travel of `VELOCITY_ARROW_YEARS`, not the velocity
     // itself, which at solar system speeds would cross the whole world
