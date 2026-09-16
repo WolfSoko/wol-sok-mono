@@ -56,11 +56,6 @@
         "configFile": "vite.config.ts"
       }
     },
-    "lint": {
-      "options": {
-        "args": ["./**/*.ts"]
-      }
-    },
     "firebase": {
       "executor": "nx:run-commands",
       "options": {

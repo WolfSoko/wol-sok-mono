@@ -33,11 +33,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/features/lazy/some-gpu-calculation/tsconfig.spec.json"
       }
-    },
-    "lint": {
-      "options": {
-        "args": ["./**/*.ts", "./**/*.html"]
-      }
     }
   }
 }

@@ -59,7 +59,9 @@ export class ServiceWorkerUpdateService {
         verticalPosition: 'bottom',
       });
       snack.onAction().subscribe(() => {
-        this.activateUpdate().then(() => snack.dismiss());
+        this.activateUpdate()
+          .then(() => snack.dismiss())
+          .catch((error) => console.error('Could not activate update', error));
       });
     });
   }

@@ -49,9 +49,7 @@ Angular has a powerful built-in dependency injection system. Services and depend
 ```typescript
 import { inject, Component } from '@angular/core';
 
-@Component({
-  /* ... */
-})
+@Component({/* ... */})
 export class UserProfile {
   // You can use the `inject` function in property initializers.
   private userClient = inject(UserClient);
@@ -135,9 +133,7 @@ console.log(firstNameCapitalized()); // JAIME
 **Signals in Components**
 
 ```typescript
-@Component({
-  /* ... */
-})
+@Component({/* ... */})
 export class UserProfile {
   isTrial = signal(false);
   isTrialExpired = signal(false);
@@ -152,9 +148,7 @@ export class UserProfile {
 **Linked Signals for Dependent State**
 
 ```typescript
-@Component({
-  /* ... */
-})
+@Component({/* ... */})
 export class ShippingMethodPicker {
   shippingOptions: Signal<ShippingMethod[]> = getShippingOptions();
 
@@ -691,8 +685,8 @@ Uses Analog.js file system routing for intuitive route definitions.
 
 - **Vite** - Fast build tool (via Analog.js)
 - **Nx** - Monorepo management and build orchestration
-- **ESLint** - Code linting
-- **Prettier** - Code formatting
+- **oxlint** - Code linting
+- **oxfmt** - Code formatting
 
 ## Nx Commands
 

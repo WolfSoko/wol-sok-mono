@@ -29,11 +29,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/features/lazy/bacteria-game/tsconfig.spec.json"
       }
-    },
-    "lint": {
-      "options": {
-        "args": ["./**/*.ts", "./**/*.html"]
-      }
     }
   }
 }

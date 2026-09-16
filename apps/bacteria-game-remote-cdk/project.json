@@ -22,11 +22,6 @@
       "executor": "@wolsok/nx-aws-cdk-v2:bootstrap",
       "options": {}
     },
-    "lint": {
-      "options": {
-        "args": ["./**/*.ts"]
-      }
-    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

@@ -1,6 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Injectable, inject } from '@angular/core';
-import { PageEvent } from '@angular/material/paginator';
 import { transaction as Transaction } from '@datorama/akita';
 import { EMPTY, Subject, throwError, TimeoutError } from 'rxjs';
 import {
@@ -18,6 +17,7 @@ import { ShaderCodeQuery } from './shader-code.query';
 import { ShaderCodeService } from './shader-code.service';
 import { ShaderExamplesUIQuery } from './shader-examples.query';
 import {
+  PageState,
   ShaderExampleState,
   ShaderExamplesUIStore,
 } from './shader-examples.store';
@@ -96,7 +96,7 @@ export class ShaderExamplesService {
   }
 
   @Transaction()
-  updateCurrentPage(currentPage: Partial<PageEvent>) {
+  updateCurrentPage(currentPage: Partial<PageState>) {
     this.shaderExamplesUIStore.update(this.updatePageEventFn(currentPage));
     this.updatePagedShaders();
   }
@@ -137,7 +137,7 @@ export class ShaderExamplesService {
       });
   }
 
-  private updatePageEventFn(newPageEvent: Partial<PageEvent>) {
+  private updatePageEventFn(newPageEvent: Partial<PageState>) {
     return (state: ShaderExampleState) => ({
       currentPage: { ...state.currentPage, ...newPageEvent },
     });

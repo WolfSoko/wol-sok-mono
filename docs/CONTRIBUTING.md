@@ -174,7 +174,7 @@ import { UserService } from './user.service';
 ### Style Guidelines
 
 - **2-space indentation**: Configure your editor
-- **Single quotes**: For strings (enforced by Prettier)
+- **Single quotes**: For strings (enforced by oxfmt)
 - **Semicolons**: Always use semicolons
 - **No trailing whitespace**: Remove trailing spaces
 - **Max line length**: 120 characters (soft limit)
@@ -211,8 +211,8 @@ import { UserService } from './user.service';
 
 Code is automatically linted and formatted:
 
-- **ESLint**: Linting JavaScript/TypeScript
-- **Prettier**: Code formatting
+- **oxlint**: Linting JavaScript/TypeScript (via `@nx/oxlint`)
+- **oxfmt**: Code formatting (via `nx format`)
 - **Husky**: Pre-commit hooks
 - **lint-staged**: Lint only changed files
 
@@ -222,8 +222,8 @@ Run manually:
 # Lint and auto-fix
 npx nx lint <project> --fix
 
-# Format with Prettier
-npm run format
+# Format with oxfmt
+npx nx format:write
 
 # Check all (runs in CI)
 npm run lint
@@ -327,7 +327,7 @@ Before submitting, ensure:
 
 Your PR will automatically run:
 
-- **Linting**: ESLint checks
+- **Linting**: oxlint checks
 - **Type checking**: TypeScript compilation
 - **Tests**: Unit and E2E tests
 - **Build**: Production build

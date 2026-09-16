@@ -39,7 +39,7 @@ describe('provideDataAccess', () => {
 
     mocks.provideFirestore.mockImplementation(
       (callback: (injector: Injector) => Firestore): EnvironmentProviders => {
-        provideFirebaseCallbackResult = callback(injectorMock, ...[]);
+        provideFirebaseCallbackResult = callback(injectorMock);
         return provideFirebaseCallbackResult as unknown as EnvironmentProviders;
       }
     );

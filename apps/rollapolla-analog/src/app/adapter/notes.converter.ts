@@ -8,7 +8,7 @@ import { NoteDto } from './note.dto';
 
 export const notesConverter: FirestoreDataConverter<ChatMessage, NoteDto> = {
   toFirestore(note: ChatMessage): never {
-    throw new Error(`Don't use this anymore ${note}`);
+    throw new Error(`Don't use this anymore ${JSON.stringify(note)}`);
   },
   fromFirestore(
     snapshot: QueryDocumentSnapshot<NoteDto>,

@@ -9,6 +9,7 @@ Angular + Nx monorepo. Read this before touching anything.
 - **TypeScript 5.9** — strict mode
 - **Build**: Vite (Analog/Vitest apps), Webpack + Module Federation (angular-examples)
 - **Testing**: Jest (most unit tests), Vitest (Vite projects), Playwright (E2E)
+- **Lint / Format**: oxlint (`.oxlintrc.json`, targets inferred by `@nx/oxlint`) and oxfmt (`.oxfmtrc.json`, driven by `nx format`)
 - **UI**: Angular Material + CDK everywhere (no custom primitives if AM covers it)
 - **State**: Angular Signals (local/sync), RxJS (async), Akita/Elf (app-wide stores)
 - **Backend**: Firebase (Hosting, Auth, DB), AWS CDK (S3/CloudFront infra)
@@ -77,6 +78,14 @@ npx nx graph
 7. **2-space indentation**, kebab-case filenames, `*.spec.ts` for tests
 8. **Explicit `public`/`private`** in class members
 9. **Strongly typed** — avoid `any`; use proper generics
+
+## Linting & Formatting
+
+- One workspace-wide `.oxlintrc.json`; there are no per-project lint configs. Add project-specific rules through `overrides` with a `files` glob.
+- Type-aware linting is on (`options.typeAware`, backed by `oxlint-tsgolint`). It reads each project's `tsconfig.json` with TypeScript 7 semantics: no `baseUrl`, `paths` relative to `tsconfig.base.json` (`./libs/...`), and no `moduleResolution: node`/`node10`. Keep new tsconfigs on that layout or lint reports `tsconfig-error`.
+- `@nx/enforce-module-boundaries` runs inside oxlint through the `@nx/oxlint/boundaries-plugin` bridge; tag constraints live in `.oxlintrc.json`.
+- oxlint only lints JS/TS. Angular template rules, component/directive selector checks and the JSON-based `@nx/dependency-checks` rule from the old ESLint setup are gone; keep selectors and package.json deps correct by hand.
+- `nx format:write` / `nx format:check` run oxfmt (HTML, SCSS, Markdown and YAML are formatted through its Prettier-backed path).
 
 ## Dependency Constraints
 

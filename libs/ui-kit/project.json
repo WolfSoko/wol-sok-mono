@@ -29,11 +29,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/ui-kit/tsconfig.spec.json"
       }
-    },
-    "lint": {
-      "options": {
-        "args": ["./**/*.ts", "./**/*.html"]
-      }
     }
   }
 }

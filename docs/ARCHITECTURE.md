@@ -202,8 +202,8 @@ Published npm packages:
 
 ### Code Quality
 
-- **ESLint 9.28.0**: Linting
-- **Prettier 3.6.2**: Code formatting
+- **oxlint**: Linting (via `@nx/oxlint`)
+- **oxfmt**: Code formatting (via `nx format`)
 - **Husky 9.1.7**: Git hooks
 - **lint-staged 16.2.6**: Pre-commit linting
 - **Commitlint**: Conventional commit enforcement

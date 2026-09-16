@@ -23,7 +23,7 @@ async function writeDefaultData() {
 }
 
 writeDefaultData().then(
-  (ignored) => console.log('initialized firestore'),
+  () => console.log('initialized firestore'),
   (error) => {
     console.error('error initializing firestore', error);
     throw error;

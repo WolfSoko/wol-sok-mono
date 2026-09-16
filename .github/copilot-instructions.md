@@ -19,7 +19,7 @@ This repository is a monorepo of Angular+ experiments and examples, managed with
 - **Key Libraries**: TensorFlow.js, Three.js, p5.js, GPU.js, MathJS
 - **Monorepo Manager**: Nx (not Lerna or Turborepo)
 - **Testing**: Jest (unit), Playwright (E2E)
-- **Code Style**: ESLint + Prettier, 2-space indentation, kebab-case filenames
+- **Code Style**: oxlint + oxfmt, 2-space indentation, kebab-case filenames
 - **Change Detection**: Zoneless with signals (no Zone.js)
 
 ## Project Structure
@@ -95,7 +95,7 @@ npx nx affected -t lint                   # Lint affected projects
 - ✅ **Use OnPush** change detection strategy on all components
 - ✅ **Use provideZonelessChangeDetection()** in bootstrapApplication
 - ❌ **DO NOT use Zone.js** or traditional change detection
-- ❌ **DO NOT use *ngIf, *ngFor, \*ngSwitch** - use @if, @for, @switch instead
+- ❌ **DO NOT use _ngIf, *ngFor, \*ngSwitch*_ - use @if, @for, @switch instead
 - ❌ **DO NOT use traditional properties** - use signals instead
 
 - Use **strongly typed APIs** - avoid `any` unless absolutely necessary
@@ -106,10 +106,10 @@ npx nx affected -t lint                   # Lint affected projects
 
 ### Code Style
 
-- **2-space indentation** (enforced by Prettier)
+- **2-space indentation** (enforced by oxfmt)
 - **ALWAYS run `npx nx format:write` before committing** to ensure all files are properly formatted
 - **ALWAYS run `npx nx affected -t lint` before pushing** to verify all linting issues are resolved and prevent CI failures
-- Run Prettier and ESLint before committing (via Husky pre-commit hooks)
+- Run oxfmt and oxlint before committing (via Husky pre-commit hooks)
 - Follow existing patterns in the codebase
 
 ### State Management

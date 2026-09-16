@@ -244,11 +244,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         filter((ended) => ended),
         switchMap(() =>
           this.matDialog
-            .open<
-              WinnerComponent,
-              unknown,
-              MatchEndAction | undefined
-            >(WinnerComponent)
+            .open<WinnerComponent, unknown, MatchEndAction | undefined>(
+              WinnerComponent
+            )
             .afterClosed()
         ),
         switchMap((action) => this.finishMatch(action)),
