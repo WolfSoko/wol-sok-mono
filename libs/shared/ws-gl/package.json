@@ -1,9 +1,9 @@
 {
   "name": "@wolsok/ws-gl",
   "version": "0.0.1",
+  "main": "./src/index.js",
+  "typings": "./src/index.d.ts",
   "dependencies": {
     "tslib": "^2.5.2"
-  },
-  "main": "./src/index.js",
-  "typings": "./src/index.d.ts"
+  }
 }

@@ -2,14 +2,14 @@
   "name": "@wolsok/spa-cdk-stack",
   "version": "1.0.27",
   "repository": "https://github.com/WolfSoko/wol-sok-mono/tree/main/libs/public/spa-cdk-stack",
-  "dependencies": {
-    "tslib": "^2.3.0",
-    "aws-cdk-lib": "^2.146.0",
-    "constructs": "^10.3.0"
-  },
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.146.0",
+    "constructs": "^10.3.0",
+    "tslib": "^2.3.0"
   }
 }

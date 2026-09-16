@@ -2,37 +2,37 @@
   "name": "@wolsok/thanos",
   "version": "17.0.27",
   "description": "Wolf Soko's implementation of a cool Thanos snapping vaporizing effect for destroying dom elements",
-  "bugs": {
-    "url": "https://github.com/WolfSoko/wol-sok-mono/issues"
-  },
-  "homepage": "https://angularexamples.wolsok.de",
-  "repository": "https://github.com/WolfSoko/wol-sok-mono/tree/main/libs/public/ws-thanos",
-  "license": "MIT",
   "keywords": [
-    "wolf soko",
-    "wolsok",
+    "Avengers",
+    "Marvel",
     "angular",
     "angular-lib",
-    "particles",
     "animations",
     "effects",
+    "npm",
+    "particles",
     "thanos",
     "vaporize",
     "vaporizing",
-    "Avengers",
-    "Marvel",
-    "npm"
+    "wolf soko",
+    "wolsok"
   ],
+  "homepage": "https://angularexamples.wolsok.de",
+  "bugs": {
+    "url": "https://github.com/WolfSoko/wol-sok-mono/issues"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/WolfSoko/wol-sok-mono/tree/main/libs/public/ws-thanos",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build:thanos": "nx build ws-thanos"
   },
+  "dependencies": {},
   "peerDependencies": {
     "@angular/core": "20.3.7",
     "html2canvas": "^1.4.1",
     "rxjs": "7.8.2"
-  },
-  "dependencies": {},
-  "publishConfig": {
-    "access": "public"
   }
 }

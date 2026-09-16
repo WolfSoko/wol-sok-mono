@@ -16,7 +16,6 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { map } from 'rxjs';
-import { MainNavRoute } from '../../../app-routing';
 import { ROUTER_LINKS } from '../../../router-links.token';
 import { NavItemComponent } from '../../../shared/nav-item/nav-item.component';
 

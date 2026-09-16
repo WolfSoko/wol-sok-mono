@@ -33,11 +33,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/fib-wasm-api/tsconfig.spec.json"
       }
-    },
-    "lint": {
-      "options": {
-        "args": ["./**/*.ts"]
-      }
     }
   }
 }

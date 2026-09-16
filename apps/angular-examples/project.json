@@ -175,9 +175,6 @@
       }
     },
     "lint": {
-      "options": {
-        "args": ["./**/*.ts", "./**/*.html"]
-      },
       "dependsOn": ["generate-version"]
     },
     "test": {

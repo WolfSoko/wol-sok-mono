@@ -1,13 +1,13 @@
 {
   "name": "@wolsok/fib-wasm-api",
   "version": "0.0.1",
+  "devDependencies": {
+    "assemblyscript": "^0.19.23 || ^0.22.0 || ^0.23.0 || ^0.24.0 || ^0.25.0 || ^0.26.0 || ^0.27.0 || ^0.28.0",
+    "tslib": "2.5.2"
+  },
   "peerDependencies": {
     "@angular/core": "20.3.7",
     "@assemblyscript/loader": "^0.27.31 || ^0.28.0",
     "rxjs": "7.8.2"
-  },
-  "devDependencies": {
-    "tslib": "2.5.2",
-    "assemblyscript": "^0.19.23 || ^0.22.0 || ^0.23.0 || ^0.24.0 || ^0.25.0 || ^0.26.0 || ^0.27.0 || ^0.28.0"
   }
 }

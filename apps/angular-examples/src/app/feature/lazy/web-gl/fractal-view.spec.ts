@@ -274,10 +274,8 @@ describe('fractal presets', () => {
   });
 
   it('ships a julia constant for every morphed preset', () => {
-    for (const preset of FRACTAL_PRESETS) {
-      if (preset.morph) {
-        expect(preset.juliaC).toBeDefined();
-      }
+    for (const preset of FRACTAL_PRESETS.filter((entry) => entry.morph)) {
+      expect(preset.juliaC).toBeDefined();
     }
   });
 });

@@ -62,7 +62,7 @@ describe('MeasureFps', () => {
     expect(nextSpy).toHaveBeenLastCalledWith(20.0);
   });
 
-  it('should ignore 0 measurement ', () => {
+  it('should ignore 0 measurement', () => {
     const nextSpy = jest.fn();
     measureFps.fps$.subscribe(nextSpy);
     warmupMeasurement();
