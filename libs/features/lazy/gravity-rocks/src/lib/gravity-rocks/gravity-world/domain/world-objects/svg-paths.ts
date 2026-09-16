@@ -1,6 +1,19 @@
 import { Vector2d } from '@wolsok/utils-math';
-import { Force, SpringForce } from './force';
-import { SvgPath, TrailSegment } from './svg-path';
+
+export interface SvgPath {
+  id: string;
+  path: string;
+}
+
+/**
+ * One chunk of a planet trail. Splitting a trail into a handful of chunks lets
+ * the tail fade out and taper towards its oldest end with plain SVG strokes.
+ */
+export interface TrailSegment extends SvgPath {
+  color: string;
+  opacity: number;
+  width: number;
+}
 
 /** Number of chunks a trail is split into to fake a fading, tapering tail. */
 export const TRAIL_SEGMENT_COUNT = 16;
@@ -15,15 +28,6 @@ export const VELOCITY_ARROW_YEARS = 0.05;
 const PATH_DIGITS = 5;
 const TRAIL_MAX_OPACITY = 0.8;
 const TRAIL_MIN_WIDTH_RATIO = 0.15;
-
-export function toSvgPath(force: Force): SvgPath | null {
-  if (force instanceof SpringForce) {
-    const { x, y } = force.wo.pos;
-    const { x: x2, y: y2 } = force.springEnd;
-    return { id: force.id, path: `M${x} ${y} ${x2} ${y2}` };
-  }
-  return null;
-}
 
 export function svgPathForVelocity(
   id: string,

@@ -8,7 +8,6 @@ import {
   ElementRef,
   Signal,
   signal,
-  TrackByFunction,
   ViewChild,
   WritableSignal,
   inject,
@@ -37,11 +36,8 @@ import {
   MIN_SIMULATION_SPEED,
 } from './domain/gravity-world-config';
 import { GravityWorldService } from './domain/gravity-world.service';
-import {
-  Force,
-  SPRING_SPEED_PER_AU,
-  SpringForce,
-} from './domain/world-objects/force';
+import { Force } from './domain/world-objects/force';
+import { SPRING_SPEED_PER_AU, SpringForce } from './interaction/spring-force';
 import { Planet } from './domain/world-objects/planet';
 import {
   defaultOrbitDistance,
@@ -51,6 +47,7 @@ import {
   orbitDistanceRange,
   placedPlanetMass,
   satelliteMass,
+  satelliteRadiusFor,
 } from './domain/world-objects/orbit';
 import {
   circularOrbitSpeed,
@@ -59,12 +56,12 @@ import {
   PLANETS,
 } from './domain/solar-system';
 import { Sun } from './domain/world-objects/sun';
-import { SvgPath, TrailSegment } from './domain/world-objects/svg-path';
 import {
+  SvgPath,
+  TrailSegment,
   svgPathForVelocity,
-  toSvgPath,
   trailToSvgSegments,
-} from './domain/world-objects/toSvgPath';
+} from './domain/world-objects/svg-paths';
 import { MAX_VELOCITY, WorldObject } from './domain/world-objects/world-object';
 
 /**
@@ -277,7 +274,7 @@ export class GravityWorldComponent {
   forces: WritableSignal<Force[]> = signal([]);
   forcesSvgPaths: Signal<SvgPath[]> = computed(() =>
     this.forces()
-      .map((f) => toSvgPath(f))
+      .map((force) => force.svgPath())
       .filter(notNil)
   );
 
@@ -461,7 +458,7 @@ export class GravityWorldComponent {
     }
     const { gravitationalConstant } = this.settings();
     const primary: WorldObject | undefined = this.primaryOf(parent);
-    const satellite: Planet = this.satelliteFor(parent);
+    const radiusOfSatellite: number = satelliteRadiusFor(parent);
     const { min, max } = this.satelliteRange(
       parent,
       parent.vel.length(),
@@ -473,7 +470,7 @@ export class GravityWorldComponent {
     const radius: number = clamp(
       towards
         ? towards.length()
-        : defaultOrbitDistance(parent, primary, satellite.radius),
+        : defaultOrbitDistance(parent, primary, radiusOfSatellite),
       min,
       max
     );
@@ -485,7 +482,7 @@ export class GravityWorldComponent {
       satellite: parent.pos.add(
         vec2(Math.cos(angle), Math.sin(angle)).mul(radius)
       ),
-      satelliteRadius: satellite.radius,
+      satelliteRadius: radiusOfSatellite,
       held: keepsSatelliteAt(parent, primary, radius),
     };
   });
@@ -504,7 +501,7 @@ export class GravityWorldComponent {
     return orbitDistanceRange(
       parent,
       this.primaryOf(parent),
-      this.satelliteFor(parent).radius,
+      satelliteRadiusFor(parent),
       this.canvasSize().x / 2,
       minOrbitDistance(
         parent,
@@ -624,8 +621,6 @@ export class GravityWorldComponent {
       )
     )
   );
-
-  trackByPlanet: TrackByFunction<Planet> = (index, planet) => planet.pos;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.cancelLongPress());
@@ -1238,7 +1233,7 @@ export class GravityWorldComponent {
     const primary: WorldObject | undefined = this.primaryOf(wo);
     this.menuOrbit.set(
       clamp(
-        defaultOrbitDistance(wo, primary, this.satelliteFor(wo).radius),
+        defaultOrbitDistance(wo, primary, satelliteRadiusFor(wo)),
         this.orbitRange().min,
         this.orbitRange().max
       )
@@ -1291,11 +1286,11 @@ export class GravityWorldComponent {
     distance: number = defaultOrbitDistance(
       parent,
       this.primaryOf(parent),
-      this.satelliteFor(parent).radius
+      satelliteRadiusFor(parent)
     ),
     angle: number = Math.random() * 2 * Math.PI
   ): void {
-    const satellite: Planet = this.satelliteFor(parent);
+    const satellite: Planet = this.createSatelliteFor(parent);
     const { pos, vel } = orbitAround(
       parent,
       distance,
@@ -1354,7 +1349,7 @@ export class GravityWorldComponent {
   }
 
   /** The satellite the menu target would be given: its moon, or its planet. */
-  private satelliteFor(parent: WorldObject): Planet {
+  private createSatelliteFor(parent: WorldObject): Planet {
     const satellite: Planet = new Planet(
       parent.pos,
       undefined,
@@ -1534,7 +1529,6 @@ export class GravityWorldComponent {
     return planet.pos.dist(this.sun.pos);
   }
 
-  /** Clears the world, resets the view and places sun and planets again. */
   /** Puts the given tool in hand, dropping what the orbit tool had picked. */
   pickTool(tool: Tool): void {
     this.tool.set(tool);
@@ -1543,6 +1537,7 @@ export class GravityWorldComponent {
     this.orbitPointerId = null;
   }
 
+  /** Clears the world, resets the view and places sun and planets again. */
   reset(): void {
     this.stopSim();
     this.pausedForMenu = false;

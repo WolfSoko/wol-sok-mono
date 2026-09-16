@@ -15,7 +15,7 @@ import {
   GRAVITATIONAL_CONSTANT,
   PLANETS,
 } from './domain/solar-system';
-import { SPRING_SPEED_PER_AU } from './domain/world-objects/force';
+import { SPRING_SPEED_PER_AU } from './interaction/spring-force';
 import { Planet } from './domain/world-objects/planet';
 
 // minimal mock service (if needed could be expanded) but we rely on real implementation for now

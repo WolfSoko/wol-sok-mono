@@ -10,10 +10,7 @@
           <mat-card-title>Play with the values</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <feat-lazy-gravity-config
-            [config]="settings()"
-            (configChange)="settings.set($event)"
-          />
+          <feat-lazy-gravity-config [(config)]="settings" />
           <mat-list class="info-list">
             <h4 mat-subheader>Infos</h4>
             <mat-list-item>

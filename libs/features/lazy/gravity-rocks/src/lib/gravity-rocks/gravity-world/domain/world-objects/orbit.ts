@@ -1,4 +1,5 @@
 import { Vector2d } from '@wolsok/utils-math';
+import { displayRadius, radiusOfMass } from '../solar-system';
 import { MAX_VELOCITY, WorldObject } from './world-object';
 
 /** Distance of a new satellite from its parent, in parent radii. */
@@ -187,6 +188,15 @@ export function hillRadius(parent: WorldObject, primary: WorldObject): number {
  */
 export function satelliteMass(parent: WorldObject): number {
   return Math.max(MIN_SATELLITE_MASS, parent.mass * SATELLITE_MASS_RATIO);
+}
+
+/**
+ * Radius a satellite of the given parent would be drawn with, in AU. The
+ * orbit it is offered has to clear that disc, and asking for the number is
+ * cheaper than building the satellite to measure it.
+ */
+export function satelliteRadiusFor(parent: WorldObject): number {
+  return displayRadius(radiusOfMass(satelliteMass(parent)));
 }
 
 /**
