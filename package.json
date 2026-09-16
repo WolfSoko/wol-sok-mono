@@ -256,5 +256,20 @@
   },
   "nx": {
     "includedScripts": []
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "@firebase/util": true,
+    "@parcel/watcher@2.6.0": true,
+    "@swc/core@1.16.1": true,
+    "core-js": true,
+    "aws-sdk": true,
+    "gl": true,
+    "lmdb@3.5.1": true,
+    "msgpackr-extract@3.0.4": true,
+    "nx@23.2.1": true,
+    "protobufjs": true,
+    "re2": true,
+    "unrs-resolver@1.12.2": true
   }
 }
