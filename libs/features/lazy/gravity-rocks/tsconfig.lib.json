@@ -16,13 +16,5 @@
     "**/*.stories.ts",
     "**/*.stories.js"
   ],
-  "include": ["**/*.ts"],
-  "angularCompilerOptions": {
-    "extendedDiagnostics": {
-      "checks": {
-        "nullishCoalescingNotNullable": "suppress",
-        "optionalChainNotNullable": "suppress"
-      }
-    }
-  }
+  "include": ["**/*.ts"]
 }

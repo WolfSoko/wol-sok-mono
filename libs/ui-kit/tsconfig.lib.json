@@ -15,13 +15,5 @@
     "**/*.test.ts",
     "jest.config.ts"
   ],
-  "include": ["**/*.ts", "**/*.d.ts"],
-  "angularCompilerOptions": {
-    "extendedDiagnostics": {
-      "checks": {
-        "nullishCoalescingNotNullable": "suppress",
-        "optionalChainNotNullable": "suppress"
-      }
-    }
-  }
+  "include": ["**/*.ts", "**/*.d.ts"]
 }
