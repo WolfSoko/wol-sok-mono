@@ -19,9 +19,13 @@ import { RouterLink } from '@angular/router';
   template: `
     @defer (hydrate on interaction) {
       <mat-toolbar color="primary">
-        <span role="heading" class="title mat-title-large">
-          <a routerLink="/"
-            ><img src="/android-chrome-192x192.png" height="32px" width="32px"
+        <span role="heading" aria-level="1" class="title mat-title-large">
+          <a routerLink="/" aria-label="Zur Startseite"
+            ><img
+              src="/android-chrome-192x192.png"
+              alt=""
+              height="32px"
+              width="32px"
           /></a>
           Pace-Trainer
         </span>

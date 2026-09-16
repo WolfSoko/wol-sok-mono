@@ -1,3 +1,4 @@
+import nxEslintPlugin from '@nx/eslint-plugin';
 import { FlatCompat } from '@eslint/eslintrc';
 import baseConfig from '../../../eslint.config.mjs';
 import js from '@eslint/js';
@@ -16,45 +17,29 @@ const compat = new FlatCompat({
 
 export default [
   ...baseConfig,
-  ...compat
-    .config({
-      extends: [
-        'plugin:@nx/angular',
-        'plugin:@angular-eslint/template/process-inline-templates',
+  ...nxEslintPlugin.configs['flat/angular'],
+  {
+    files: ['**/*.ts'],
+    rules: {
+      '@angular-eslint/directive-selector': [
+        'error',
+        {
+          type: 'attribute',
+          prefix: 'lib',
+          style: 'camelCase',
+        },
       ],
-    })
-    .map((config) => ({
-      ...config,
-      files: ['**/*.ts'],
-      rules: {
-        ...config.rules,
-        '@angular-eslint/directive-selector': [
-          'error',
-          {
-            type: 'attribute',
-            prefix: 'lib',
-            style: 'camelCase',
-          },
-        ],
-        '@angular-eslint/component-selector': [
-          'error',
-          {
-            type: 'element',
-            prefix: 'lib',
-            style: 'kebab-case',
-          },
-        ],
-      },
-    })),
-  ...compat
-    .config({ extends: ['plugin:@nx/angular-template'] })
-    .map((config) => ({
-      ...config,
-      files: ['**/*.html'],
-      rules: {
-        ...config.rules,
-      },
-    })),
+      '@angular-eslint/component-selector': [
+        'error',
+        {
+          type: 'element',
+          prefix: 'lib',
+          style: 'kebab-case',
+        },
+      ],
+    },
+  },
+  ...nxEslintPlugin.configs['flat/angular-template'],
   ...compat.config({ parser: 'jsonc-eslint-parser' }).map((config) => ({
     ...config,
     files: ['**/*.json'],

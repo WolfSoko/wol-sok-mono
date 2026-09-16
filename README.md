@@ -76,7 +76,7 @@ Readme under: [README.md](./libs/public/nx-aws-cdk-v2/README.md), docs under [do
 
 This monorepo leverages modern web technologies:
 
-- **Framework**: Angular 20 with Signals, Standalone Components, and Zoneless Change Detection
+- **Framework**: Angular 22 with Signals, Standalone Components, and Zoneless Change Detection
 - **Meta-framework**: Analog.js for SSR and file-based routing
 - **Build Tools**: Nx 23, Vite, Webpack with Module Federation
 - **State Management**: Angular Signals, RxJS, Akita

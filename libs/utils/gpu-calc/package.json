@@ -2,8 +2,8 @@
   "name": "@wolsok/utils-gpu-calc",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "21.2.23",
-    "@angular/core": "21.2.23",
+    "@angular/common": "22.1.6",
+    "@angular/core": "22.1.6",
     "gpu.js": "2.16.0"
   },
   "devDependencies": {

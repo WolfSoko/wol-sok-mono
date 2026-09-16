@@ -53,7 +53,7 @@ export class RenderShaderComponent
   @Input() canvasWidth!: number;
   @Input() canvasHeight!: number;
 
-  @Output() error: EventEmitter<unknown> = new EventEmitter();
+  @Output() renderError: EventEmitter<unknown> = new EventEmitter();
   @ViewChild('canvasContainer', { static: true })
   private canvasContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('webGLCanvas', { static: true })
@@ -224,7 +224,7 @@ export class RenderShaderComponent
         requestAnimationFrame((timestamp) => this.animate(timestamp));
       }
     } catch (e) {
-      this.error.next(e);
+      this.renderError.next(e);
     }
   }
 

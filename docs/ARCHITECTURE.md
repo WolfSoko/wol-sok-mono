@@ -67,7 +67,7 @@ wol-sok-mono/
   - Scientific simulations
 - **Build**: Webpack-based with Module Federation
 - **Deployment**: GitHub Pages and S3
-- **Tech**: Angular 20, Angular Material, Three.js, p5.js
+- **Tech**: Angular 22, Angular Material, Three.js, p5.js
 
 #### 2. **pacetrainer**
 
@@ -75,14 +75,14 @@ wol-sok-mono/
 - **Features**: Pace calculations, training plans, workout tracking
 - **Build**: Vite-based (via Analog.js)
 - **Deployment**: Firebase Hosting
-- **Tech**: Angular 20, Analog.js, Angular Material
+- **Tech**: Angular 22, Analog.js, Angular Material
 
 #### 3. **rollapolla-analog**
 
 - **Purpose**: Experimental application using Analog.js
 - **Build**: Vite-based with SSR support
 - **Deployment**: Firebase Hosting
-- **Tech**: Angular 20, Analog.js, Server-Side Rendering
+- **Tech**: Angular 22, Analog.js, Server-Side Rendering
 
 ### Remote Applications (Module Federation)
 
@@ -150,9 +150,9 @@ Published npm packages:
 
 ### Frontend Framework
 
-- **Angular 20.3.7**: Modern standalone components, Signals API
+- **Angular 22.1.6**: Modern standalone components, Signals API
 - **Analog.js 1.22.1**: Meta-framework for Angular with file-based routing and Vite
-- **TypeScript 5.9.3**: Type-safe development
+- **TypeScript 6.0.3**: Type-safe development
 
 ### State Management
 
@@ -169,7 +169,7 @@ Published npm packages:
 
 ### Build Tools
 
-- **Nx 23.1.2**: Monorepo orchestration and caching
+- **Nx 23.2.1**: Monorepo orchestration and caching
 - **Vite 7.1.9**: Fast build tool (for Analog.js apps)
 - **Webpack 5**: Build tool (for angular-examples)
 - **esbuild**: Fast JavaScript bundler

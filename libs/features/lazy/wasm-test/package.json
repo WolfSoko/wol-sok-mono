@@ -2,15 +2,15 @@
   "name": "@wolsok/feat-wasm-test",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "21.2.23",
-    "@angular/core": "21.2.23",
-    "@angular/material": "21.2.14",
+    "@angular/common": "22.1.6",
+    "@angular/core": "22.1.6",
+    "@angular/material": "22.1.6",
     "@datorama/akita": "^8.0.0",
     "@wolsok/utils-decorators": "0.0.1",
     "rxjs": "7.8.2",
-    "@angular/router": "21.2.23",
+    "@angular/router": "22.1.6",
     "@wolsok/fib-wasm-api": "0.0.1",
-    "@angular/forms": "21.2.23"
+    "@angular/forms": "22.1.6"
   },
   "devDependencies": {
     "tslib": "2.5.2"

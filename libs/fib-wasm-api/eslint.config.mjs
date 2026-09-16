@@ -1,65 +1,36 @@
-import { FlatCompat } from '@eslint/eslintrc';
+import nxEslintPlugin from '@nx/eslint-plugin';
 import baseConfig from '../../eslint.config.mjs';
 import baseConfig1 from '../../eslint.base.config.mjs';
-import js from '@eslint/js';
-
-import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
-
-// Convert import.meta.url to a file path
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-});
 
 export default [
   ...baseConfig,
   ...baseConfig1,
-  ...compat
-    .config({
-      extends: [
-        'plugin:@nx/angular',
-        'plugin:@angular-eslint/template/process-inline-templates',
+  ...nxEslintPlugin.configs['flat/angular'],
+  {
+    files: ['**/*.ts'],
+    rules: {
+      '@angular-eslint/directive-selector': [
+        'error',
+        {
+          type: 'attribute',
+          prefix: 'shApiFibWasm',
+          style: 'camelCase',
+        },
       ],
-    })
-    .map((config) => ({
-      ...config,
-      files: ['**/*.ts'],
-      rules: {
-        ...config.rules,
-        '@angular-eslint/directive-selector': [
-          'error',
-          {
-            type: 'attribute',
-            prefix: 'shApiFibWasm',
-            style: 'camelCase',
-          },
-        ],
-        '@angular-eslint/component-selector': [
-          'error',
-          {
-            type: 'element',
-            prefix: 'sh-api-fib-wasm',
-            style: 'kebab-case',
-          },
-        ],
-      },
-      languageOptions: {
-        parserOptions: { project: ['libs/fib-wasm-api/tsconfig.*?.json'] },
-      },
-    })),
-  ...compat
-    .config({ extends: ['plugin:@nx/angular-template'] })
-    .map((config) => ({
-      ...config,
-      files: ['**/*.html'],
-      rules: {
-        ...config.rules,
-      },
-    })),
+      '@angular-eslint/component-selector': [
+        'error',
+        {
+          type: 'element',
+          prefix: 'sh-api-fib-wasm',
+          style: 'kebab-case',
+        },
+      ],
+    },
+    languageOptions: {
+      parserOptions: { project: ['libs/fib-wasm-api/tsconfig.*?.json'] },
+    },
+  },
+  ...nxEslintPlugin.configs['flat/angular-template'],
   {
     files: ['**/*.ts'],
     rules: {

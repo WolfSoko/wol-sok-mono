@@ -1,3 +1,4 @@
+import nxEslintPlugin from '@nx/eslint-plugin';
 import { FlatCompat } from '@eslint/eslintrc';
 import baseConfig from '../../eslint.config.mjs';
 import baseConfig1 from '../../eslint.base.config.mjs';
@@ -18,45 +19,29 @@ const compat = new FlatCompat({
 export default [
   ...baseConfig,
   ...baseConfig1,
-  ...compat
-    .config({
-      extends: [
-        'plugin:@nx/angular',
-        'plugin:@angular-eslint/template/process-inline-templates',
+  ...nxEslintPlugin.configs['flat/angular'],
+  {
+    files: ['**/*.ts'],
+    rules: {
+      '@angular-eslint/directive-selector': [
+        'error',
+        {
+          type: 'attribute',
+          prefix: 'wolsok',
+          style: 'camelCase',
+        },
       ],
-    })
-    .map((config) => ({
-      ...config,
-      files: ['**/*.ts'],
-      rules: {
-        ...config.rules,
-        '@angular-eslint/directive-selector': [
-          'error',
-          {
-            type: 'attribute',
-            prefix: 'wolsok',
-            style: 'camelCase',
-          },
-        ],
-        '@angular-eslint/component-selector': [
-          'error',
-          {
-            type: 'element',
-            prefix: 'wolsok',
-            style: 'kebab-case',
-          },
-        ],
-      },
-    })),
-  ...compat
-    .config({ extends: ['plugin:@nx/angular-template'] })
-    .map((config) => ({
-      ...config,
-      files: ['**/*.html'],
-      rules: {
-        ...config.rules,
-      },
-    })),
+      '@angular-eslint/component-selector': [
+        'error',
+        {
+          type: 'element',
+          prefix: 'wolsok',
+          style: 'kebab-case',
+        },
+      ],
+    },
+  },
+  ...nxEslintPlugin.configs['flat/angular-template'],
   ...compat
     .config({ extends: ['plugin:playwright/recommended'] })
     .map((config) => ({
