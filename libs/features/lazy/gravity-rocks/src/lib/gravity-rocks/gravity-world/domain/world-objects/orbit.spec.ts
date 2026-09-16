@@ -4,6 +4,7 @@ import { EARTH_MASS, GRAVITATIONAL_CONSTANT, PLANETS } from '../solar-system';
 import {
   defaultOrbitDistance,
   hillRadius,
+  keepsSatelliteAt,
   minOrbitDistance,
   orbitAround,
   orbitDistanceRange,
@@ -343,14 +344,48 @@ describe('satellite defaults', () => {
 
     it('should end where the primary would steal the satellite', () => {
       const sun = new Sun(vec2(0, 0), undefined, SUN_MASS);
-      const jupiter = new Planet(vec2(5.2, 0), undefined, JUPITER_MASS);
+      // far enough out that jupiter's grip reaches well past its disc
+      const jupiter = new Planet(vec2(30, 0), undefined, JUPITER_MASS);
+      const held = hillRadius(jupiter, sun) * STABLE_HILL_FRACTION;
+      expect(held).toBeGreaterThan(jupiter.radius * 4);
 
       const { max } = orbitDistanceRange(jupiter, sun);
 
-      expect(max).toBeCloseTo(
-        hillRadius(jupiter, sun) * STABLE_HILL_FRACTION,
-        6
-      );
+      expect(max).toBeCloseTo(held, 6);
+    });
+
+    it('should offer the usual few radii even past where the primary steals', () => {
+      const sun = new Sun(vec2(0, 0), undefined, SUN_MASS);
+      // at 5.2 AU the sun lets jupiter keep less than four of its radii
+      const jupiter = new Planet(vec2(5.2, 0), undefined, JUPITER_MASS);
+      const held = hillRadius(jupiter, sun) * STABLE_HILL_FRACTION;
+      expect(held).toBeLessThan(jupiter.radius * 4);
+
+      const { min, max } = orbitDistanceRange(jupiter, sun);
+
+      expect(min).toBeLessThan(held);
+      expect(max).toBe(jupiter.radius * 4);
+      expect(keepsSatelliteAt(jupiter, sun, held)).toBe(true);
+      expect(keepsSatelliteAt(jupiter, sun, max)).toBe(false);
+    });
+
+    it('should not shrink to nothing as the grip falls to the disc', () => {
+      const sun = new Sun(vec2(0, 0), undefined, SUN_MASS);
+      // ever lighter planets at one place: the range must not pinch shut
+      // where the hill radius crosses the disc clearance
+      let previous = Number.POSITIVE_INFINITY;
+      for (let exponent = 3; exponent >= -3; exponent -= 0.05) {
+        const planet = new Planet(
+          vec2(5.2, 0),
+          undefined,
+          EARTH_MASS * 10 ** exponent
+        );
+        const { min, max } = orbitDistanceRange(planet, sun, 0, 3);
+        expect(max - min).toBeGreaterThanOrEqual(planet.radius * 2.8 - 1e-9);
+        // and the far end only ever comes in as the planet gets lighter
+        expect(max).toBeLessThanOrEqual(previous + 1e-9);
+        previous = max;
+      }
     });
 
     it('should reach as far as it is allowed to without a primary', () => {
@@ -384,15 +419,42 @@ describe('satellite defaults', () => {
       expect(max).toBeGreaterThanOrEqual(min);
     });
 
-    it('should never end before it starts', () => {
+    it('should offer a few radii where the primary takes everything anyway', () => {
       const sun = new Sun(vec2(0, 0), undefined, SUN_MASS);
       // drawn far bigger than its mass deserves, and right next to the sun
       const feather = new Planet(vec2(0.4, 0), undefined, EARTH_MASS / 1000);
 
       const { min, max } = orbitDistanceRange(feather, sun);
 
+      // no orbit it can offer is one it keeps, so it offers the usual ones
       expect(hillRadius(feather, sun) * STABLE_HILL_FRACTION).toBeLessThan(min);
-      expect(max).toBe(min);
+      expect(min).toBeLessThan(max);
+      expect(max).toBe(feather.radius * 4);
+      expect(keepsSatelliteAt(feather, sun, min)).toBe(false);
+      expect(keepsSatelliteAt(feather, sun, max)).toBe(false);
+    });
+
+    it('should still stay inside the reach where the primary takes everything', () => {
+      const sun = new Sun(vec2(0, 0), undefined, SUN_MASS);
+      const feather = new Planet(vec2(0.4, 0), undefined, EARTH_MASS / 1000);
+      const reach = feather.radius * 2;
+
+      const { min, max } = orbitDistanceRange(feather, sun, 0, reach);
+
+      expect(max).toBe(Math.max(min, reach));
+      expect(max).toBeLessThan(feather.radius * 4);
+    });
+
+    it('should tell an orbit the parent keeps from one the primary takes', () => {
+      const sun = new Sun(vec2(0, 0), undefined, SUN_MASS);
+      const jupiter = new Planet(vec2(5.2, 0), undefined, JUPITER_MASS);
+      const held = hillRadius(jupiter, sun) * STABLE_HILL_FRACTION;
+
+      expect(keepsSatelliteAt(jupiter, sun, held * 0.9)).toBe(true);
+      expect(keepsSatelliteAt(jupiter, sun, held * 1.1)).toBe(false);
+      // the sun has no primary, so it keeps whatever circles it
+      expect(keepsSatelliteAt(sun, undefined, 1000)).toBe(true);
+      expect(keepsSatelliteAt(sun, sun, 1000)).toBe(true);
     });
 
     it('should hold the distance a satellite is placed at by default', () => {
