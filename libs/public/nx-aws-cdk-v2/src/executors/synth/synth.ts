@@ -3,13 +3,14 @@ import { ExecutorContext } from '@nx/devkit';
 import { ParsedExecutorInterface } from '../../interfaces/parsed-executor.interface';
 import {
   createCommand,
+  resolveProjectPaths,
   parseArgs,
   runCommandProcess,
 } from '../../utils/executor.util';
 import { SynthExecutorSchema } from './schema';
 
 export interface ParsedSynthExecutorOption extends ParsedExecutorInterface {
-  stacks?: string[];
+  stacks?: string;
   sourceRoot: string;
   root: string;
 }
@@ -45,8 +46,7 @@ function normalizeOptions(
     stacks = options.stacks;
   }
 
-  const { sourceRoot, root } =
-    context?.projectsConfigurations?.projects[context.projectName] ?? {};
+  const { sourceRoot, root } = resolveProjectPaths(context);
 
   return {
     ...options,

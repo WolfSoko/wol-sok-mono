@@ -37,6 +37,7 @@ import { FibResult, WasmTestState } from './state/wasm-test.store';
     MatButtonModule,
     MatProgressSpinnerModule,
   ],
+  // eslint-disable-next-line @angular-eslint/component-selector -- selector is the lib prefix itself
   selector: 'lazy-feat-wasm-test',
   templateUrl: './wasm-test.component.html',
   styleUrls: ['./wasm-test.component.scss'],

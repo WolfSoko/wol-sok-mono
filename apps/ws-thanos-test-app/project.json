@@ -7,16 +7,16 @@
   "tags": ["type:test-app", "app"],
   "targets": {
     "build": {
-      "executor": "@angular-devkit/build-angular:browser",
+      "executor": "@angular/build:application",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/ws-thanos-test-app",
         "index": "apps/ws-thanos-test-app/src/index.html",
-        "main": "apps/ws-thanos-test-app/src/main.ts",
         "tsConfig": "apps/ws-thanos-test-app/tsconfig.app.json",
         "assets": [],
         "styles": ["apps/ws-thanos-test-app/src/styles.css"],
-        "scripts": []
+        "scripts": [],
+        "browser": "apps/ws-thanos-test-app/src/main.ts"
       },
       "configurations": {
         "production": {
@@ -24,14 +24,10 @@
           "outputHashing": "all",
           "sourceMap": false,
           "namedChunks": false,
-          "extractLicenses": true,
-          "vendorChunk": false,
-          "buildOptimizer": true
+          "extractLicenses": true
         },
         "development": {
-          "buildOptimizer": false,
           "optimization": false,
-          "vendorChunk": true,
           "extractLicenses": false,
           "sourceMap": true,
           "namedChunks": true
@@ -40,7 +36,7 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "@angular-devkit/build-angular:dev-server",
+      "executor": "@angular/build:dev-server",
       "configurations": {
         "production": {
           "buildTarget": "ws-thanos-test-app:build:production"

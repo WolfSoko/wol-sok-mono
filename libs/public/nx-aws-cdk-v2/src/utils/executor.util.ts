@@ -3,6 +3,7 @@ import { exec } from 'child_process';
 import { DeployExecutorSchema } from '../executors/deploy/schema';
 import { ParsedExecutorInterface } from '../interfaces/parsed-executor.interface';
 import {
+  ExecutorContext,
   logger,
   detectPackageManager,
   readJsonFile,
@@ -15,6 +16,30 @@ import * as path from 'node:path';
 
 function getPackageJson(packageJsonPath: string): { type?: string } {
   return existsSync(packageJsonPath) ? readJsonFile(packageJsonPath) : {};
+}
+
+/**
+ * Project paths the CDK command is built from. Every executor needs both, so a
+ * context without a resolvable project configuration is a hard error rather
+ * than an `undefined` that only surfaces later in a malformed command.
+ */
+export function resolveProjectPaths(context: ExecutorContext): {
+  sourceRoot: string;
+  root: string;
+} {
+  const project = context.projectName
+    ? context.projectsConfigurations?.projects[context.projectName]
+    : undefined;
+
+  if (!project) {
+    throw new Error(
+      `Cannot resolve the project configuration for "${
+        context.projectName ?? '<unknown project>'
+      }".`
+    );
+  }
+
+  return { sourceRoot: project.sourceRoot ?? project.root, root: project.root };
 }
 
 export const executorPropKeys = ['stacks'];
@@ -55,7 +80,7 @@ export function parseArgs(
     .filter((prop) => executorPropKeys.indexOf(prop) < 0)
     .reduce(
       (acc, key) => {
-        acc[key] = options[key];
+        acc[key] = (options as Record<string, string | string[]>)[key];
         return acc;
       },
       {} as Record<string, string | string[]>
@@ -114,15 +139,15 @@ export function runCommandProcess(
     process.on('SIGTERM', processExitListener);
 
     process.stdin.on('data', (data) => {
-      childProcess.stdin.write(data);
-      childProcess.stdin.end();
+      childProcess.stdin?.write(data);
+      childProcess.stdin?.end();
     });
 
-    childProcess.stdout.on('data', (data) => {
+    childProcess.stdout?.on('data', (data) => {
       process.stdout.write(data);
     });
 
-    childProcess.stderr.on('data', (err) => {
+    childProcess.stderr?.on('data', (err) => {
       process.stderr.write(err);
     });
 

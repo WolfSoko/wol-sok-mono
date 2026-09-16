@@ -49,10 +49,8 @@
       }
     },
     "test": {
-      "executor": "@analogjs/vitest-angular:build-test",
+      "executor": "@analogjs/vitest-angular:test",
       "options": {
-        "tsConfig": "{projectRoot}/tsconfig.spec.json",
-        "setupFile": "{projectRoot}/src/test-setup.ts",
         "configFile": "vite.config.ts"
       }
     },

@@ -1,6 +1,6 @@
 const {
   withNativeFederation,
-  shareAll,
+  fromPackageJson,
 } = require('@angular-architects/native-federation/config');
 
 /**
@@ -14,15 +14,36 @@ function workspaceFederation(config) {
   return withNativeFederation({
     ...config,
 
+    // Native federation infers the platform of *every* shared bundle from the
+    // shared dependency names: a single `@angular/ssr` or
+    // `@angular/platform-server` entry flips the default to 'node'. Both are
+    // root dependencies here (for pacetrainer and rollapolla-analog, neither of
+    // which is federated), so without this the shared packages would be bundled
+    // with esbuild's Node export conditions - firebase/firestore then resolves
+    // to its Node build and imports the builtin `util`, which an import map
+    // cannot provide. None of the federated apps is server-rendered.
+    platform: config.platform ?? 'browser',
+
     shared: {
-      // shareAll() returns a plain config object; the array form of its
+      // fromPackageJson() returns a plain config object; the array form of its
       // `Config` type is only produced by share().
       // oxlint-disable-next-line typescript/no-misused-spread
-      ...shareAll({
+      ...fromPackageJson({
         singleton: true,
         strictVersion: true,
         requiredVersion: 'auto',
-      }),
+      })
+        // `ignoreUnusedDeps` prunes the import map down to what the *exposed*
+        // module imports, but esbuild keeps every subpath of an external
+        // package external. The remotes only reach
+        // '@angular/platform-browser/animations' from their standalone
+        // bootstrap, so the secondary was pruned while its import survived and
+        // a remote served on its own port failed to bootstrap. Keeping the
+        // secondaries of @angular/platform-browser restores it.
+        .patch(['@angular/platform-browser'], {
+          includeSecondaries: { keepAll: true },
+        })
+        .get(),
       // p5 keeps global state per instance and breaks when two sketches share
       // one copy, so every federated app brings its own - the same exception
       // the webpack module federation config carried.
