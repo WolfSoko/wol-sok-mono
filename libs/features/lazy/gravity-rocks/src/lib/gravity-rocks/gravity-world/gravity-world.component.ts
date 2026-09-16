@@ -51,6 +51,7 @@ import {
 import { EARTH_MASS, PLANET_NAMES } from './domain/solar-system';
 import { ObjectPanelComponent } from './object-panel/object-panel.component';
 import { OrbitTool } from './orbit-tool/orbit-tool';
+import { ClientPoint, clientPoint, WorldCamera } from './camera/world-camera';
 import { ToolbeltComponent } from './toolbelt/toolbelt.component';
 import { ObjectKind, Tool } from './toolbelt/tools';
 import { Sun } from './domain/world-objects/sun';
@@ -68,11 +69,6 @@ import { MAX_VELOCITY, WorldObject } from './domain/world-objects/world-object';
  */
 const SVG_VIEW_PORT_SIZE = 6;
 
-/** Furthest zoom out, shown as 0.1% - enough to watch planets fly far away. */
-export const MIN_ZOOM = 0.001;
-export const MAX_ZOOM = 20;
-const ZOOM_STEP = 1.3;
-const WHEEL_ZOOM_STEP = 1.15;
 const TRAIL_WIDTH_RATIO = 0.8;
 /** How far the cursor may travel between press and release to still be a click. */
 const CLICK_TOLERANCE_PX = 4;
@@ -91,30 +87,6 @@ const SYNTHETIC_CLICK_MS = 700;
  */
 export const YEARS_PER_SECOND = 0.1;
 const RIGHT_BUTTON = 2;
-
-/** Anything that carries a position in client (viewport) coordinates. */
-interface ClientPoint {
-  clientX: number;
-  clientY: number;
-}
-
-/** Copy of a position, so a moving pointer does not change what was stored. */
-function clientPoint({ clientX, clientY }: ClientPoint): ClientPoint {
-  return { clientX, clientY };
-}
-
-/** How far two pointers are apart, in client pixels. */
-function distanceBetween(a: ClientPoint, b: ClientPoint): number {
-  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
-}
-
-/** The point exactly between two pointers, which a pinch is anchored on. */
-function midpointOf(a: ClientPoint, b: ClientPoint): ClientPoint {
-  return {
-    clientX: (a.clientX + b.clientX) / 2,
-    clientY: (a.clientY + b.clientY) / 2,
-  };
-}
 
 /**
  * A thousandth of an earth, the lightest the mass slider goes; a jupiter, at
@@ -168,6 +140,15 @@ export class GravityWorldComponent {
   readonly planets: Signal<Planet[]> = this.worldService.planets;
 
   readonly forces: Signal<readonly Force[]> = this.worldService.forces;
+
+  canvasSize: WritableSignal<Vector2d> = signal(this.MAX_DIM);
+
+  /** Where the world is looked at from: zoom, pan, and the body followed. */
+  readonly camera: WorldCamera = new WorldCamera({
+    size: this.canvasSize,
+    bodies: this.worldService.worldObjects,
+    viewport: () => this.svgWorld?.nativeElement?.getBoundingClientRect(),
+  });
   forcesSvgPaths: Signal<SvgPath[]> = computed(() =>
     this.forces()
       .map((force) => force.svgPath())
@@ -185,59 +166,6 @@ export class GravityWorldComponent {
         )
       : []
   );
-
-  canvasSize: WritableSignal<Vector2d> = signal(this.MAX_DIM);
-
-  /** Zoom factor of the viewport, 1 shows the whole world. */
-  readonly zoom: WritableSignal<number> = signal(1);
-  /** World coordinate that sits in the middle of the viewport. */
-  readonly viewCenter: WritableSignal<Vector2d> = signal(this.MAX_DIM.div(2));
-
-  private readonly viewSize: Signal<Vector2d> = computed(() =>
-    this.canvasSize().div(this.zoom())
-  );
-
-  /**
-   * Area the view may be centered on: the world, grown to cover every planet.
-   * Planets can be flung out of the world, and they should stay reachable.
-   */
-  private readonly viewBounds: Signal<{ min: Vector2d; max: Vector2d }> =
-    computed(() => {
-      const world: Vector2d = this.canvasSize();
-      let min: Vector2d = vec2(0, 0);
-      let max: Vector2d = world;
-      for (const { pos } of this.planets()) {
-        min = vec2(Math.min(min.x, pos.x), Math.min(min.y, pos.y));
-        max = vec2(Math.max(max.x, pos.x), Math.max(max.y, pos.y));
-      }
-      return { min, max };
-    });
-
-  readonly viewBox: Signal<string> = computed(() => {
-    const size: Vector2d = this.viewSize();
-    const origin: Vector2d = this.viewCenter().sub(size.div(2));
-    return (
-      [origin.x, origin.y, size.x, size.y]
-        // AU, so a hundredth would be a million kilometres of jitter
-        .map((value) => Math.round(value * 1e6) / 1e6)
-        .join(' ')
-    );
-  });
-
-  /** World object the view sticks to while the simulation runs, if any. */
-  private readonly followed: WritableSignal<WorldObject | null> = signal(null);
-  /** Id of the followed object, for the template. */
-  readonly followedId: Signal<string | null> = computed(
-    () => this.followed()?.id ?? null
-  );
-
-  /** Zoom as a percentage label, with one decimal while zoomed far out. */
-  readonly zoomLabel: Signal<string> = computed(() => {
-    const percent: number = this.zoom() * 100;
-    return percent < 10 ? `${percent.toFixed(1)}%` : `${Math.round(percent)}%`;
-  });
-  readonly canZoomIn: Signal<boolean> = computed(() => this.zoom() < MAX_ZOOM);
-  readonly canZoomOut: Signal<boolean> = computed(() => this.zoom() > MIN_ZOOM);
 
   /** Trail chunks of all planets, oldest and faintest first. */
   readonly trailSegments: Signal<TrailSegment[]> = computed(() => {
@@ -260,8 +188,6 @@ export class GravityWorldComponent {
   /** Emits whenever the running gesture ends, however it ends. */
   private gestureEnd$: Subject<void> = new Subject();
 
-  private panStart: { x: number; y: number; center: Vector2d } | null = null;
-
   /** Pointers currently pressed on the world, by pointer id. */
   private readonly activePointers = new Map<number, ClientPoint>();
 
@@ -273,13 +199,6 @@ export class GravityWorldComponent {
   private dragObject: WorldObject | null = null;
   private dragOrigin: ClientPoint | null = null;
   private dragEnd: Vector2d | null = null;
-
-  /** What the view looked like when the two finger gesture started. */
-  private pinchStart: {
-    distance: number;
-    focus: Vector2d;
-    zoom: number;
-  } | null = null;
 
   /** World object whose settings panel is open, if any. */
   readonly menuTarget: WritableSignal<WorldObject | null> = signal(null);
@@ -332,7 +251,7 @@ export class GravityWorldComponent {
     switchMap(() =>
       this.pointerMove$.asObservable().pipe(
         map((pm: PointerEvent) => ({
-          end: this.toWorldCoordinates(pm),
+          end: this.camera.toWorld(pm),
         })),
         takeUntil(this.gestureEnd$.asObservable())
       )
@@ -395,11 +314,14 @@ export class GravityWorldComponent {
     if (this.activePointers.size === 2) {
       // the first finger was only ever the start of a two finger gesture
       this.cancelDrag();
-      this.startPinch();
+      const [first, second] = [...this.activePointers.values()];
+      if (first && second) {
+        this.camera.startPinch(first, second);
+      }
       return;
     }
     if (this.isPanGesture($event)) {
-      this.startPan($event);
+      this.startPanning($event);
       return;
     }
     const tool: Tool = this.tool();
@@ -416,19 +338,19 @@ export class GravityWorldComponent {
       }
     } else if (tool === 'orbit' && this.orbitTool.parent()) {
       // a press beside the picked body takes hold of the drawn orbit
-      this.orbitTool.grab($event.pointerId, this.toWorldCoordinates($event));
+      this.orbitTool.grab($event.pointerId, this.camera.toWorld($event));
       return;
     } else if (tool === 'add') {
       // a click on empty space places a body, it does not move the view
       const created: Planet = this.createObjectAt(
-        this.toWorldCoordinates($event),
+        this.camera.toWorld($event),
         this.addKind()
       );
       this.worldService.addWorldObject(created);
       this.createdByDrag = created;
       wo = created;
     } else {
-      this.startPan($event);
+      this.startPanning($event);
       return;
     }
     this.dragPointerId = $event.pointerId;
@@ -462,7 +384,7 @@ export class GravityWorldComponent {
     const heldOrbit: boolean = this.orbitTool.isHeldBy($event.pointerId);
     const pressed = this.endGesture($event);
     if (heldOrbit) {
-      const placed = this.orbitTool.release(this.toWorldCoordinates($event));
+      const placed = this.orbitTool.release(this.camera.toWorld($event));
       if (placed) {
         this.addSatelliteTo(
           placed.parent,
@@ -491,7 +413,7 @@ export class GravityWorldComponent {
         }
         break;
       default:
-        this.toggleFollow(wo);
+        this.camera.toggleFollow(wo);
     }
   }
 
@@ -521,15 +443,15 @@ export class GravityWorldComponent {
       svg.releasePointerCapture($event.pointerId);
     }
     this.cancelLongPress();
-    if (this.pinchStart) {
+    if (this.camera.isPinching) {
       // the finger left over must not carry on as a drag of its own
       if (this.activePointers.size < 2) {
-        this.pinchStart = null;
+        this.camera.endGesture();
       }
       return null;
     }
     const pressed = this.pressed;
-    this.panStart = null;
+    this.camera.endGesture();
     this.pressed = null;
     this.dragPointerId = null;
     this.createdByDrag = null;
@@ -570,7 +492,7 @@ export class GravityWorldComponent {
   private cancelDrag(): void {
     this.cancelLongPress();
     const created = this.createdByDrag;
-    this.panStart = null;
+    this.camera.endGesture();
     this.pressed = null;
     this.dragPointerId = null;
     this.orbitTool.letGo();
@@ -592,12 +514,15 @@ export class GravityWorldComponent {
     if (active) {
       this.activePointers.set($event.pointerId, clientPoint($event));
     }
-    if (this.pinchStart) {
-      this.pinch();
+    if (this.camera.isPinching) {
+      const [first, second] = [...this.activePointers.values()];
+      if (first && second) {
+        this.camera.pinchTo(first, second);
+      }
       return;
     }
-    if (this.panStart) {
-      this.pan($event);
+    if (this.camera.isPanning) {
+      this.camera.panTo($event);
       return;
     }
     if (
@@ -607,7 +532,7 @@ export class GravityWorldComponent {
       (this.orbitTool.isHeldBy($event.pointerId) ||
         this.activePointers.size === 0)
     ) {
-      this.orbitTool.moveTo(this.toWorldCoordinates($event));
+      this.orbitTool.moveTo(this.camera.toWorld($event));
     }
     if (this.pressed && !this.isWithinClickTolerance(this.pressed, $event)) {
       // the gesture has become a drag, releasing it must not center anything,
@@ -625,7 +550,7 @@ export class GravityWorldComponent {
         )
       ) {
         // a gesture this long is a drag, and a drag can throw
-        this.dragEnd = this.toWorldCoordinates($event);
+        this.dragEnd = this.camera.toWorld($event);
       }
       this.pointerMove$.next($event);
     }
@@ -637,50 +562,7 @@ export class GravityWorldComponent {
       return;
     }
     $event.preventDefault();
-    const factor: number =
-      $event.deltaY < 0 ? WHEEL_ZOOM_STEP : 1 / WHEEL_ZOOM_STEP;
-    // keep the world point under the cursor in place while zooming - unless an
-    // object is followed, then zoom around that instead of losing it
-    const focus: Vector2d = this.followed()
-      ? this.viewCenter()
-      : this.toWorldCoordinates($event);
-    this.zoomBy(factor, focus);
-  }
-
-  /** Zooms one step in around the center of the current view. */
-  zoomIn(): void {
-    this.zoomBy(ZOOM_STEP);
-  }
-
-  /** Zooms one step out around the center of the current view. */
-  zoomOut(): void {
-    this.zoomBy(1 / ZOOM_STEP);
-  }
-
-  /** Shows the whole world again, centered, unzoomed and following nothing. */
-  resetView(): void {
-    this.stopFollowing();
-    this.zoom.set(1);
-    this.viewCenter.set(this.canvasSize().div(2));
-  }
-
-  /** Zooms by `factor`, keeping `focus` (world coordinates) on the same spot. */
-  private zoomBy(factor: number, focus: Vector2d = this.viewCenter()): void {
-    const currentZoom: number = this.zoom();
-    const nextZoom: number = clamp(currentZoom * factor, MIN_ZOOM, MAX_ZOOM);
-    if (nextZoom === currentZoom) {
-      return;
-    }
-    this.zoom.set(nextZoom);
-    this.viewCenter.set(
-      this.clampToViewBounds(
-        focus.add(
-          this.viewCenter()
-            .sub(focus)
-            .mul(currentZoom / nextZoom)
-        )
-      )
-    );
+    this.camera.zoomAt($event, $event.deltaY < 0);
   }
 
   /** Panning is the middle mouse button, or a drag with a modifier held. */
@@ -690,102 +572,10 @@ export class GravityWorldComponent {
     );
   }
 
-  /** Remembers where the pan gesture started, in client and world coordinates. */
-  private startPan($event: PointerEvent): void {
+  /** Starts moving the view with the pointer, rather than anything in it. */
+  private startPanning($event: PointerEvent): void {
     $event.preventDefault();
-    // panning is manual control, it wins over following
-    this.stopFollowing();
-    this.panStart = {
-      x: $event.clientX,
-      y: $event.clientY,
-      center: this.viewCenter(),
-    };
-  }
-
-  /** Moves the view center by the distance the pointer travelled since `startPan`. */
-  private pan($event: PointerEvent): void {
-    const panStart = this.panStart;
-    const rect: DOMRect | undefined = this.svgRect();
-    if (!panStart || !rect?.width || !rect.height) {
-      return;
-    }
-    const size: Vector2d = this.viewSize();
-    const moved: Vector2d = vec2(
-      (($event.clientX - panStart.x) / rect.width) * size.x,
-      (($event.clientY - panStart.y) / rect.height) * size.y
-    );
-    this.viewCenter.set(this.clampToViewBounds(panStart.center.sub(moved)));
-  }
-
-  /** Remembers the spread of the two fingers and the world point between them. */
-  private startPinch(): void {
-    const [first, second] = [...this.activePointers.values()];
-    if (!first || !second) {
-      return;
-    }
-    // pinching is manual control, it wins over following
-    this.stopFollowing();
-    this.pinchStart = {
-      // a pinch that starts with the fingers on one spot must not divide by 0
-      distance: Math.max(distanceBetween(first, second), 1),
-      focus: this.toWorldCoordinates(midpointOf(first, second)),
-      zoom: this.zoom(),
-    };
-  }
-
-  /**
-   * Zooms by how far the fingers have spread and pans by where they moved,
-   * so the world point that started between them stays between them.
-   */
-  private pinch(): void {
-    const pinchStart = this.pinchStart;
-    const [first, second] = [...this.activePointers.values()];
-    if (!pinchStart || !first || !second) {
-      return;
-    }
-    const spread: number = distanceBetween(first, second) / pinchStart.distance;
-    this.zoom.set(clamp(pinchStart.zoom * spread, MIN_ZOOM, MAX_ZOOM));
-    this.viewCenter.set(
-      this.clampToViewBounds(
-        this.centerKeeping(pinchStart.focus, midpointOf(first, second))
-      )
-    );
-  }
-
-  /** View center that puts `focus` (world coordinates) under `client`. */
-  private centerKeeping(focus: Vector2d, client: ClientPoint): Vector2d {
-    const rect: DOMRect | undefined = this.svgRect();
-    if (!rect?.width || !rect.height) {
-      return this.viewCenter();
-    }
-    const size: Vector2d = this.viewSize();
-    return vec2(
-      focus.x - ((client.clientX - rect.left) / rect.width - 0.5) * size.x,
-      focus.y - ((client.clientY - rect.top) / rect.height - 0.5) * size.y
-    );
-  }
-
-  /**
-   * Follows the given object, or lets go of it when it is already followed.
-   * The view stays where it is when following ends.
-   */
-  private toggleFollow(wo: WorldObject): void {
-    if (this.followed() === wo) {
-      this.stopFollowing();
-      return;
-    }
-    this.followed.set(wo);
-    this.centerOn(wo);
-  }
-
-  /** Lets go of the followed object, leaving the view where it is. */
-  stopFollowing(): void {
-    this.followed.set(null);
-  }
-
-  /** Moves the view so the given object sits in the middle of it. */
-  private centerOn(wo: WorldObject): void {
-    this.viewCenter.set(this.clampToViewBounds(wo.pos));
+    this.camera.startPan($event);
   }
 
   /** Whether the cursor is still (almost) on the spot it was pressed down on. */
@@ -797,12 +587,6 @@ export class GravityWorldComponent {
       Math.abs($event.clientX - pressed.x) <= CLICK_TOLERANCE_PX &&
       Math.abs($event.clientY - pressed.y) <= CLICK_TOLERANCE_PX
     );
-  }
-
-  /** Keeps the given view center within the reachable area of the world. */
-  private clampToViewBounds({ x, y }: Vector2d): Vector2d {
-    const { min, max } = this.viewBounds();
-    return vec2(clamp(x, min.x, max.x), clamp(y, min.y, max.y));
   }
 
   /** Opens the settings of the object under the cursor on a right click. */
@@ -1084,11 +868,8 @@ export class GravityWorldComponent {
       MAX_TICKS_PER_FRAME * MAX_TICK_YEARS
     );
     this.worldService.advance(years, showTrail ? trailLength : 0);
-    const followed: WorldObject | null = this.followed();
-    if (followed) {
-      // the planets have moved, so the view has to move with the followed one
-      this.centerOn(followed);
-    }
+    // the planets have moved, so the view has to move with the followed one
+    this.camera.keepUp();
   }
 
   /**
@@ -1123,30 +904,8 @@ export class GravityWorldComponent {
     this.menuTarget.set(null);
     this.orbitTool.clear();
     this.worldService.removeAll();
-    this.resetView();
+    this.camera.reset();
     this.initializeSunAndPlanets();
-  }
-
-  /**
-   * Converts a client position into world (svg viewBox) coordinates. The
-   * viewBox keeps the aspect ratio of the css box, so the mapping is linear.
-   */
-  private toWorldCoordinates($event: ClientPoint): Vector2d {
-    const rect: DOMRect | undefined = this.svgRect();
-    if (!rect || !rect.width || !rect.height) {
-      return this.viewCenter();
-    }
-    const size: Vector2d = this.viewSize();
-    const origin: Vector2d = this.viewCenter().sub(size.div(2));
-    return vec2(
-      origin.x + (($event.clientX - rect.left) / rect.width) * size.x,
-      origin.y + (($event.clientY - rect.top) / rect.height) * size.y
-    );
-  }
-
-  /** The css box of the svg, or undefined before it is rendered. */
-  private svgRect(): DOMRect | undefined {
-    return this.svgWorld?.nativeElement?.getBoundingClientRect();
   }
 
   /** Creates a body of the given kind at the given world position. */
@@ -1174,9 +933,7 @@ export class GravityWorldComponent {
 
   /** Takes the planet out of the world, handing its moons on to its parent. */
   removePlanet(planet: Planet): void {
-    if (this.followed() === planet) {
-      this.stopFollowing();
-    }
+    this.camera.forget(planet);
     if (this.menuTarget() === planet) {
       this.menuClosed();
     }

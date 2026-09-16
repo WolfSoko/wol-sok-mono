@@ -32,10 +32,9 @@ import {
 } from './domain/gravity-world.service';
 import {
   GravityWorldComponent,
-  MAX_ZOOM,
-  MIN_ZOOM,
   YEARS_PER_SECOND,
 } from './gravity-world.component';
+import { MAX_ZOOM, MIN_ZOOM } from './camera/world-camera';
 import { OBJECT_KINDS, ObjectKind, TOOLS } from './toolbelt/tools';
 
 /** First element in the rendered component matching the css selector. */
@@ -237,68 +236,68 @@ describe('GravityWorldComponent', () => {
     afterEach(() => jest.restoreAllMocks());
 
     it('should show the whole world initially', () => {
-      expect(component.zoom()).toBe(1);
-      expect(component.zoomLabel()).toBe('100%');
+      expect(component.camera.zoom()).toBe(1);
+      expect(component.camera.zoomLabel()).toBe('100%');
       // six by three point six AU, rounded as the viewBox rounds
-      expect(component.viewBox()).toBe('0 0 6 3.6');
+      expect(component.camera.viewBox()).toBe('0 0 6 3.6');
     });
 
     it('should render the viewBox of the current viewport', () => {
       const svg = query<SVGSVGElement>(fixture, 'svg')!;
-      component.zoomIn();
+      component.camera.zoomIn();
       fixture.detectChanges();
-      expect(svg.getAttribute('viewBox')).toBe(component.viewBox());
+      expect(svg.getAttribute('viewBox')).toBe(component.camera.viewBox());
     });
 
     it('should zoom in around the view center', () => {
-      component.zoomIn();
-      expect(component.zoom()).toBeGreaterThan(1);
+      component.camera.zoomIn();
+      expect(component.camera.zoom()).toBeGreaterThan(1);
       // the center stays put, the visible area shrinks
-      expect(component.viewCenter()).toEqual(component.canvasSize().div(2));
-      const [, , width] = component.viewBox().split(' ').map(Number);
+      expect(component.camera.center()).toEqual(component.canvasSize().div(2));
+      const [, , width] = component.camera.viewBox().split(' ').map(Number);
       expect(width).toBeLessThan(component.canvasSize().x);
     });
 
     it('should zoom out again', () => {
-      component.zoomIn();
-      const zoomedIn = component.zoom();
-      component.zoomOut();
-      expect(component.zoom()).toBeLessThan(zoomedIn);
+      component.camera.zoomIn();
+      const zoomedIn = component.camera.zoom();
+      component.camera.zoomOut();
+      expect(component.camera.zoom()).toBeLessThan(zoomedIn);
     });
 
     it('should not zoom beyond the limits', () => {
       for (let i = 0; i < 50; i++) {
-        component.zoomIn();
+        component.camera.zoomIn();
       }
-      expect(component.zoom()).toBe(MAX_ZOOM);
-      expect(component.canZoomIn()).toBe(false);
+      expect(component.camera.zoom()).toBe(MAX_ZOOM);
+      expect(component.camera.canZoomIn()).toBe(false);
 
       for (let i = 0; i < 100; i++) {
-        component.zoomOut();
+        component.camera.zoomOut();
       }
-      expect(component.zoom()).toBe(MIN_ZOOM);
-      expect(component.canZoomOut()).toBe(false);
+      expect(component.camera.zoom()).toBe(MIN_ZOOM);
+      expect(component.camera.canZoomOut()).toBe(false);
     });
 
     it('should zoom out down to 0.1 percent', () => {
       for (let i = 0; i < 100; i++) {
-        component.zoomOut();
+        component.camera.zoomOut();
       }
       fixture.detectChanges();
-      expect(component.zoom()).toBe(0.001);
-      expect(component.zoomLabel()).toBe('0.1%');
+      expect(component.camera.zoom()).toBe(0.001);
+      expect(component.camera.zoomLabel()).toBe('0.1%');
       expect(
         query(fixture, qaSelector('zoom-level'))?.textContent?.trim()
       ).toBe('0.1%');
       // the whole world fits into a tiny part of the viewport now
-      const [, , width] = component.viewBox().split(' ').map(Number);
+      const [, , width] = component.camera.viewBox().split(' ').map(Number);
       expect(width).toBe(component.canvasSize().x / 0.001);
     });
 
     it('should show one decimal for every zoom level below ten percent', () => {
-      component.zoom.set(0.01);
+      component.camera.zoomBy(0.01 / component.camera.zoom());
       fixture.detectChanges();
-      expect(component.zoomLabel()).toBe('1.0%');
+      expect(component.camera.zoomLabel()).toBe('1.0%');
       expect(
         query(fixture, qaSelector('zoom-level'))?.textContent?.trim()
       ).toBe('1.0%');
@@ -315,34 +314,34 @@ describe('GravityWorldComponent', () => {
       )!;
       zoomIn.click();
       fixture.detectChanges();
-      const zoomedIn = component.zoom();
+      const zoomedIn = component.camera.zoom();
       expect(zoomedIn).toBeGreaterThan(1);
       expect(
         query(fixture, qaSelector('zoom-level'))?.textContent?.trim()
-      ).toBe(component.zoomLabel());
+      ).toBe(component.camera.zoomLabel());
 
       zoomOut.click();
       fixture.detectChanges();
-      expect(component.zoom()).toBeLessThan(zoomedIn);
+      expect(component.camera.zoom()).toBeLessThan(zoomedIn);
     });
 
     it('should zoom towards the mouse position on wheel', () => {
       component.wheel(wheelEvent(-100, 0, 0));
-      expect(component.zoom()).toBeGreaterThan(1);
+      expect(component.camera.zoom()).toBeGreaterThan(1);
       // zoomed towards the top left corner, so the center moves there too
-      expect(component.viewCenter().x).toBeLessThan(
+      expect(component.camera.center().x).toBeLessThan(
         component.canvasSize().x / 2
       );
-      expect(component.viewCenter().y).toBeLessThan(
+      expect(component.camera.center().y).toBeLessThan(
         component.canvasSize().y / 2
       );
     });
 
     it('should zoom out on wheel down', () => {
-      component.zoomIn();
-      const zoomedIn = component.zoom();
+      component.camera.zoomIn();
+      const zoomedIn = component.camera.zoom();
       component.wheel(wheelEvent(100, 250, 150));
-      expect(component.zoom()).toBeLessThan(zoomedIn);
+      expect(component.camera.zoom()).toBeLessThan(zoomedIn);
     });
 
     it('should reset the view', () => {
@@ -353,15 +352,15 @@ describe('GravityWorldComponent', () => {
       )!;
       resetView.click();
       fixture.detectChanges();
-      expect(component.zoom()).toBe(1);
-      expect(component.viewCenter()).toEqual(component.canvasSize().div(2));
+      expect(component.camera.zoom()).toBe(1);
+      expect(component.camera.center()).toEqual(component.canvasSize().div(2));
     });
 
     it('should reset the view when the world is reset', () => {
-      component.zoomIn();
+      component.camera.zoomIn();
       component.reset();
-      expect(component.zoom()).toBe(1);
-      expect(component.viewCenter()).toEqual(component.canvasSize().div(2));
+      expect(component.camera.zoom()).toBe(1);
+      expect(component.camera.center()).toEqual(component.canvasSize().div(2));
     });
 
     it('should start the planets on the gravity that is set', () => {
@@ -388,27 +387,27 @@ describe('GravityWorldComponent', () => {
     });
 
     it('should pan with shift and drag without creating a planet', () => {
-      component.zoomIn();
+      component.camera.zoomIn();
       const planetsBefore = component.planets().length;
-      const centerBefore = component.viewCenter();
+      const centerBefore = component.camera.center();
 
       component.pointerDown(pointerEvent(250, 150, { shiftKey: true }));
       component.pointerMove(pointerEvent(200, 150, { shiftKey: true }));
 
       expect(component.planets().length).toBe(planetsBefore);
-      expect(component.viewCenter().x).toBeGreaterThan(centerBefore.x);
+      expect(component.camera.center().x).toBeGreaterThan(centerBefore.x);
 
       component.pointerUp(pointerEvent(200, 150));
-      const centerAfterUp = component.viewCenter();
+      const centerAfterUp = component.camera.center();
       component.pointerMove(pointerEvent(100, 150));
-      expect(component.viewCenter()).toEqual(centerAfterUp);
+      expect(component.camera.center()).toEqual(centerAfterUp);
     });
 
     it('should keep the view center inside the world while panning', () => {
       component.pointerDown(pointerEvent(250, 150, { shiftKey: true }));
       component.pointerMove(pointerEvent(-5000, -5000, { shiftKey: true }));
-      expect(component.viewCenter().x).toBe(component.canvasSize().x);
-      expect(component.viewCenter().y).toBe(component.canvasSize().y);
+      expect(component.camera.center().x).toBe(component.canvasSize().x);
+      expect(component.camera.center().y).toBe(component.canvasSize().y);
     });
 
     it('should zoom out when two fingers pinch together', () => {
@@ -418,7 +417,7 @@ describe('GravityWorldComponent', () => {
       component.pointerMove(touch(2, 270, 150));
 
       // the fingers ended up five times closer together
-      expect(component.zoom()).toBeCloseTo(0.2, 5);
+      expect(component.camera.zoom()).toBeCloseTo(0.2, 5);
     });
 
     it('should zoom in when two fingers spread apart', () => {
@@ -427,12 +426,12 @@ describe('GravityWorldComponent', () => {
       component.pointerMove(touch(1, 150, 150));
       component.pointerMove(touch(2, 350, 150));
 
-      expect(component.zoom()).toBeCloseTo(10, 5);
+      expect(component.camera.zoom()).toBeCloseTo(10, 5);
     });
 
     it('should pan when two fingers move together', () => {
-      component.zoomIn();
-      const centerBefore = component.viewCenter();
+      component.camera.zoomIn();
+      const centerBefore = component.camera.center();
 
       component.pointerDown(touch(1, 200, 150));
       component.pointerDown(touch(2, 300, 150));
@@ -440,9 +439,9 @@ describe('GravityWorldComponent', () => {
       component.pointerMove(touch(2, 250, 150));
 
       // the fingers kept their distance, so only the view moved
-      expect(component.zoom()).toBeCloseTo(1.3, 5);
-      expect(component.viewCenter().x).toBeGreaterThan(centerBefore.x);
-      expect(component.viewCenter().y).toBe(centerBefore.y);
+      expect(component.camera.zoom()).toBeCloseTo(1.3, 5);
+      expect(component.camera.center().x).toBeGreaterThan(centerBefore.x);
+      expect(component.camera.center().y).toBe(centerBefore.y);
     });
 
     it('should take back the planet the first finger of a pinch created', () => {
@@ -462,11 +461,11 @@ describe('GravityWorldComponent', () => {
       component.pointerDown(touch(1, 200, 150));
       component.pointerDown(touch(2, 300, 150));
       component.pointerUp(touch(2, 300, 150));
-      const zoomAfterPinch = component.zoom();
+      const zoomAfterPinch = component.camera.zoom();
 
       component.pointerMove(touch(1, 100, 150));
 
-      expect(component.zoom()).toBe(zoomAfterPinch);
+      expect(component.camera.zoom()).toBe(zoomAfterPinch);
       expect(component.worldService.forces()).toEqual([]);
     });
 
@@ -485,19 +484,19 @@ describe('GravityWorldComponent', () => {
     it('should ignore a third finger', () => {
       component.pointerDown(touch(1, 200, 150));
       component.pointerDown(touch(2, 300, 150));
-      const zoomOfTwoFingers = component.zoom();
+      const zoomOfTwoFingers = component.camera.zoom();
 
       component.pointerDown(touch(3, 100, 400));
       component.pointerMove(touch(3, 50, 500));
 
       // the pinch stays with the two fingers that started it
-      expect(component.zoom()).toBe(zoomOfTwoFingers);
+      expect(component.camera.zoom()).toBe(zoomOfTwoFingers);
 
       // and a third finger lifting does not end their gesture either
       component.pointerUp(touch(3, 50, 500));
       component.pointerMove(touch(1, 150, 150));
       component.pointerMove(touch(2, 350, 150));
-      expect(component.zoom()).toBeGreaterThan(zoomOfTwoFingers);
+      expect(component.camera.zoom()).toBeGreaterThan(zoomOfTwoFingers);
     });
 
     it('should release only a capture it holds', () => {
@@ -584,12 +583,12 @@ describe('GravityWorldComponent', () => {
 
     it('should center a planet that is clicked', () => {
       const planet = component.planets()[0];
-      expect(planet.pos).not.toEqual(component.viewCenter());
+      expect(planet.pos).not.toEqual(component.camera.center());
 
       clickOn(planet.id);
 
-      expect(component.viewCenter()).toEqual(planet.pos);
-      expect(component.followedId()).toBe(planet.id);
+      expect(component.camera.center()).toEqual(planet.pos);
+      expect(component.camera.followedId()).toBe(planet.id);
     });
 
     it('should keep the followed planet centered while it moves', () => {
@@ -598,7 +597,7 @@ describe('GravityWorldComponent', () => {
 
       for (let frame = 0; frame < 30; frame++) {
         component.step(1 / 60);
-        expect(component.viewCenter()).toEqual(planet.pos);
+        expect(component.camera.center()).toEqual(planet.pos);
       }
       // the planet really did move, so this was not a standstill
       expect(planet.pos).not.toEqual(component.canvasSize().div(2));
@@ -607,24 +606,24 @@ describe('GravityWorldComponent', () => {
     it('should not move the view for a planet it does not follow', () => {
       const [planet, other] = component.planets();
       clickOn(planet.id);
-      const centerBefore = component.viewCenter();
+      const centerBefore = component.camera.center();
 
       component.step(1 / 60);
 
-      expect(component.viewCenter()).not.toEqual(other.pos);
-      expect(component.viewCenter()).not.toEqual(centerBefore);
+      expect(component.camera.center()).not.toEqual(other.pos);
+      expect(component.camera.center()).not.toEqual(centerBefore);
     });
 
     it('should let go of the planet when it is clicked again', () => {
       const planet = component.planets()[0];
       clickOn(planet.id);
       clickOn(planet.id);
-      expect(component.followedId()).toBeNull();
+      expect(component.camera.followedId()).toBeNull();
 
       // the view stays where following left it
-      const centerBefore = component.viewCenter();
+      const centerBefore = component.camera.center();
       component.step(1 / 60);
-      expect(component.viewCenter()).toEqual(centerBefore);
+      expect(component.camera.center()).toEqual(centerBefore);
     });
 
     it('should switch to another planet that is clicked', () => {
@@ -632,14 +631,14 @@ describe('GravityWorldComponent', () => {
       clickOn(planet.id);
       clickOn(other.id);
 
-      expect(component.followedId()).toBe(other.id);
-      expect(component.viewCenter()).toEqual(other.pos);
+      expect(component.camera.followedId()).toBe(other.id);
+      expect(component.camera.center()).toEqual(other.pos);
     });
 
     it('should let go when the view is reset', () => {
       clickOn(component.planets()[0].id);
-      component.resetView();
-      expect(component.followedId()).toBeNull();
+      component.camera.reset();
+      expect(component.camera.followedId()).toBeNull();
     });
 
     it('should let go when panning takes over', () => {
@@ -649,7 +648,7 @@ describe('GravityWorldComponent', () => {
       component.pointerMove(pointerEvent(200, 150, { shiftKey: true }));
       component.pointerUp(pointerEvent(200, 150));
 
-      expect(component.followedId()).toBeNull();
+      expect(component.camera.followedId()).toBeNull();
     });
 
     it('should let go when the followed planet is removed', () => {
@@ -658,7 +657,7 @@ describe('GravityWorldComponent', () => {
 
       component.removePlanet(planet);
 
-      expect(component.followedId()).toBeNull();
+      expect(component.camera.followedId()).toBeNull();
     });
 
     it('should keep the followed planet centered while zooming', () => {
@@ -667,8 +666,8 @@ describe('GravityWorldComponent', () => {
 
       component.wheel(wheelEvent(-100, 0, 0));
 
-      expect(component.zoom()).toBeGreaterThan(1);
-      expect(component.viewCenter()).toEqual(planet.pos);
+      expect(component.camera.zoom()).toBeGreaterThan(1);
+      expect(component.camera.center()).toEqual(planet.pos);
     });
 
     it('should offer a button to stop following', () => {
@@ -682,7 +681,7 @@ describe('GravityWorldComponent', () => {
       stop.click();
       fixture.detectChanges();
 
-      expect(component.followedId()).toBeNull();
+      expect(component.camera.followedId()).toBeNull();
       expect(query(fixture, qaSelector('cta-stop-follow'))).toBeNull();
     });
 
@@ -722,38 +721,38 @@ describe('GravityWorldComponent', () => {
       component.pointerMove(eventOn(planet.id, 102, 101));
       component.pointerUp(eventOn(planet.id, 102, 101));
 
-      expect(component.viewCenter()).toEqual(planet.pos);
+      expect(component.camera.center()).toEqual(planet.pos);
     });
 
     it('should center and follow the sun as well', () => {
-      component.zoomIn();
+      component.camera.zoomIn();
       clickOn(component.sun.id);
 
-      expect(component.viewCenter()).toEqual(component.sun.pos);
-      expect(component.followedId()).toBe(component.sun.id);
+      expect(component.camera.center()).toEqual(component.sun.pos);
+      expect(component.camera.followedId()).toBe(component.sun.id);
     });
 
     it('should not center when a drag returns to where it started', () => {
       const planet = component.planets()[0];
-      const centerBefore = component.viewCenter();
+      const centerBefore = component.camera.center();
 
       component.pointerDown(eventOn(planet.id, 100, 100));
       component.pointerMove(eventOn(planet.id, 260, 180));
       component.pointerMove(eventOn(planet.id, 100, 100));
       component.pointerUp(eventOn(planet.id, 100, 100));
 
-      expect(component.viewCenter()).toEqual(centerBefore);
+      expect(component.camera.center()).toEqual(centerBefore);
     });
 
     it('should not center when the planet is dragged', () => {
       const planet = component.planets()[0];
-      const centerBefore = component.viewCenter();
+      const centerBefore = component.camera.center();
 
       component.pointerDown(eventOn(planet.id, 100, 100));
       component.pointerMove(eventOn(planet.id, 200, 150));
       component.pointerUp(eventOn(planet.id, 200, 150));
 
-      expect(component.viewCenter()).toEqual(centerBefore);
+      expect(component.camera.center()).toEqual(centerBefore);
     });
 
     it('should fling a new planet with the drag that created it', () => {
@@ -897,25 +896,25 @@ describe('GravityWorldComponent', () => {
 
     it('should not center when a new planet is placed on empty space', () => {
       component.tool.set('add');
-      const centerBefore = component.viewCenter();
+      const centerBefore = component.camera.center();
       const planetsBefore = component.planets().length;
 
       component.pointerDown(eventOnBackground(100, 100));
       component.pointerUp(eventOnBackground(100, 100));
 
       expect(component.planets().length).toBe(planetsBefore + 1);
-      expect(component.viewCenter()).toEqual(centerBefore);
-      expect(component.followedId()).toBeNull();
+      expect(component.camera.center()).toEqual(centerBefore);
+      expect(component.camera.followedId()).toBeNull();
     });
 
     it('should not center when the pointer is taken away', () => {
       const planet = component.planets()[0];
-      const centerBefore = component.viewCenter();
+      const centerBefore = component.camera.center();
 
       component.pointerDown(eventOn(planet.id, 100, 100));
       component.pointerCancel(eventOn(planet.id, 100, 100));
 
-      expect(component.viewCenter()).toEqual(centerBefore);
+      expect(component.camera.center()).toEqual(centerBefore);
     });
 
     it('should center a planet that left the world bounds', () => {
@@ -927,7 +926,7 @@ describe('GravityWorldComponent', () => {
       component.pointerDown(eventOn(planet.id, 100, 100));
       component.pointerUp(eventOn(planet.id, 100, 100));
 
-      expect(component.viewCenter()).toEqual(planet.pos);
+      expect(component.camera.center()).toEqual(planet.pos);
     });
   });
 
@@ -1133,7 +1132,7 @@ describe('GravityWorldComponent', () => {
 
     it('should leave the gestures alone on a right click', () => {
       const planet = component.planets()[0];
-      const centerBefore = component.viewCenter();
+      const centerBefore = component.camera.center();
       const forcesBefore = component.worldService.forces().length;
       const planetsBefore = component.planets().length;
 
@@ -1145,13 +1144,13 @@ describe('GravityWorldComponent', () => {
 
       expect(component.worldService.forces().length).toBe(forcesBefore);
       expect(component.planets().length).toBe(planetsBefore);
-      expect(component.followedId()).toBeNull();
+      expect(component.camera.followedId()).toBeNull();
       component.pointerMove(eventOn(planet.id, 'mousemove') as PointerEvent);
-      expect(component.viewCenter()).toEqual(centerBefore);
+      expect(component.camera.center()).toEqual(centerBefore);
     });
 
     it('should not start a pan on a right click with a modifier', () => {
-      const centerBefore = component.viewCenter();
+      const centerBefore = component.camera.center();
       const press = eventOn(component.planets()[0].id, 'mousedown');
       Object.defineProperty(press, 'button', { value: 2 });
       Object.defineProperty(press, 'shiftKey', { value: true });
@@ -1159,7 +1158,7 @@ describe('GravityWorldComponent', () => {
       component.pointerDown(press as PointerEvent);
       component.pointerMove(pointerEvent(0, 0, { shiftKey: true }));
 
-      expect(component.viewCenter()).toEqual(centerBefore);
+      expect(component.camera.center()).toEqual(centerBefore);
     });
 
     it('should pick the simulation back up when the menu closes', () => {
@@ -1643,9 +1642,9 @@ describe('GravityWorldComponent', () => {
     });
 
     it('should pan rather than place a planet when grabbing empty space', () => {
-      component.zoomIn();
+      component.camera.zoomIn();
       const planetsBefore = component.planets().length;
-      const centerBefore = component.viewCenter();
+      const centerBefore = component.camera.center();
       const svg = query(fixture, 'svg')!;
 
       component.pointerDown(on(svg, 250, 150));
@@ -1653,7 +1652,7 @@ describe('GravityWorldComponent', () => {
       component.pointerUp(on(svg, 200, 150));
 
       expect(component.planets().length).toBe(planetsBefore);
-      expect(component.viewCenter().x).toBeGreaterThan(centerBefore.x);
+      expect(component.camera.center().x).toBeGreaterThan(centerBefore.x);
     });
 
     it('should open the settings of a tapped body with the select tool', () => {
@@ -1666,7 +1665,7 @@ describe('GravityWorldComponent', () => {
       expect(component.menuTarget()).toBe(planet);
       expect(query(fixture, qaSelector('object-panel'))).toBeTruthy();
       // selecting is not following
-      expect(component.followedId()).toBeNull();
+      expect(component.camera.followedId()).toBeNull();
       expect(component.worldService.forces()).toEqual([]);
     });
 
@@ -1739,7 +1738,7 @@ describe('GravityWorldComponent', () => {
       expect(preview.center).toBe(parent.pos);
       expect(preview.radius).toBeGreaterThan(parent.radius);
       expect(query(fixture, qaSelector('orbit-preview'))).toBeTruthy();
-      expect(component.followedId()).toBeNull();
+      expect(component.camera.followedId()).toBeNull();
     });
 
     it('should let a satellite go onto the drawn orbit where the pointer lets go', () => {
@@ -1878,15 +1877,15 @@ describe('GravityWorldComponent', () => {
 
     it('should pan rather than draw an orbit before a body is picked', () => {
       component.tool.set('orbit');
-      component.zoomIn();
-      const centerBefore = component.viewCenter();
+      component.camera.zoomIn();
+      const centerBefore = component.camera.center();
       const svg = query(fixture, 'svg')!;
 
       component.pointerDown(on(svg, 250, 150));
       component.pointerMove(on(svg, 200, 150));
       component.pointerUp(on(svg, 200, 150));
 
-      expect(component.viewCenter().x).toBeGreaterThan(centerBefore.x);
+      expect(component.camera.center().x).toBeGreaterThan(centerBefore.x);
       expect(component.orbitTool.preview()).toBeNull();
     });
 

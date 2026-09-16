@@ -57,14 +57,14 @@
         pan.</span
       >
       <div class="zoom-controls">
-        @if (followedId()) {
+        @if (camera.followedId()) {
           <button
             data-qa="cta-stop-follow"
             mat-icon-button
             type="button"
             matTooltip="Stop following"
             aria-label="Stop following"
-            (click)="stopFollowing()"
+            (click)="camera.stopFollowing()"
           >
             <mat-icon>gps_fixed</mat-icon>
           </button>
@@ -75,20 +75,22 @@
           type="button"
           matTooltip="Zoom out"
           aria-label="Zoom out"
-          [disabled]="!canZoomOut()"
-          (click)="zoomOut()"
+          [disabled]="!camera.canZoomOut()"
+          (click)="camera.zoomOut()"
         >
           <mat-icon>zoom_out</mat-icon>
         </button>
-        <span class="zoom-level" data-qa="zoom-level">{{ zoomLabel() }}</span>
+        <span class="zoom-level" data-qa="zoom-level">{{
+          camera.zoomLabel()
+        }}</span>
         <button
           data-qa="cta-zoom-in"
           mat-icon-button
           type="button"
           matTooltip="Zoom in"
           aria-label="Zoom in"
-          [disabled]="!canZoomIn()"
-          (click)="zoomIn()"
+          [disabled]="!camera.canZoomIn()"
+          (click)="camera.zoomIn()"
         >
           <mat-icon>zoom_in</mat-icon>
         </button>
@@ -98,7 +100,7 @@
           type="button"
           matTooltip="Reset view"
           aria-label="Reset view"
-          (click)="resetView()"
+          (click)="camera.reset()"
         >
           <mat-icon>center_focus_strong</mat-icon>
         </button>
@@ -132,7 +134,7 @@
         (pointercancel)="pointerCancel($event)"
         (wheel)="wheel($event)"
         (contextmenu)="contextMenu($event)"
-        [attr.viewBox]="viewBox()"
+        [attr.viewBox]="camera.viewBox()"
       >
         <defs>
           <marker
@@ -162,7 +164,7 @@
           @for (planet of planets(); track planet.id) {
             <circle
               class="world-object"
-              [class.followed]="planet.id === followedId()"
+              [class.followed]="planet.id === camera.followedId()"
               [attr.cx]="planet.pos.x"
               [attr.cy]="planet.pos.y"
               [attr.r]="planet.radius"
@@ -179,7 +181,7 @@
           }
           <circle
             class="world-object sun"
-            [class.followed]="sun.id === followedId()"
+            [class.followed]="sun.id === camera.followedId()"
             [attr.cx]="sun.pos.x"
             [attr.cy]="sun.pos.y"
             [attr.r]="sun.radius"
