@@ -20,10 +20,12 @@ import { Planet } from './domain/world-objects/planet';
 
 // minimal mock service (if needed could be expanded) but we rely on real implementation for now
 import {
-  GravityWorldComponent,
-  MAX_MASS_EXPONENT,
   MAX_TICK_YEARS,
   MAX_TICKS_PER_FRAME,
+} from './domain/gravity-world.service';
+import {
+  GravityWorldComponent,
+  MAX_MASS_EXPONENT,
   MAX_SPEED,
   MAX_ZOOM,
   MIN_MASS_EXPONENT,
@@ -436,7 +438,7 @@ describe('GravityWorldComponent', () => {
       component.pointerDown(touch(2, 300, 150));
 
       expect(component.planets().length).toBe(planetsBefore);
-      expect(component.worldService.getForces()).toEqual([]);
+      expect(component.worldService.forces()).toEqual([]);
     });
 
     it('should not resume dragging when one finger of a pinch lifts', () => {
@@ -448,7 +450,7 @@ describe('GravityWorldComponent', () => {
       component.pointerMove(touch(1, 100, 150));
 
       expect(component.zoom()).toBe(zoomAfterPinch);
-      expect(component.worldService.getForces()).toEqual([]);
+      expect(component.worldService.forces()).toEqual([]);
     });
 
     it('should capture both fingers of a pinch', () => {
@@ -993,7 +995,7 @@ describe('GravityWorldComponent', () => {
     it('should open the menu after a long touch', () => {
       const planet = component.planets()[0];
 
-      const forcesBefore = component.worldService.getForces().length;
+      const forcesBefore = component.worldService.forces().length;
 
       component.pointerDown(touchOn(planet.id));
       expect(component.menuTarget()).toBeNull();
@@ -1001,20 +1003,20 @@ describe('GravityWorldComponent', () => {
 
       expect(component.menuTarget()).toBe(planet);
       // the planet is let go of, so lifting the finger does not fling it
-      expect(component.worldService.getForces().length).toBe(forcesBefore);
+      expect(component.worldService.forces().length).toBe(forcesBefore);
     });
 
     it("should let go of a grabbed body when the browser's own long press opens its settings", () => {
       const planet = component.planets()[0];
       const velBefore = planet.vel;
       component.pointerDown(touchOn(planet.id));
-      expect(component.worldService.getForces().length).toBe(1);
+      expect(component.worldService.forces().length).toBe(1);
 
       // the browser fires contextmenu before our own long press timer is up
       component.contextMenu(eventOn(planet.id));
 
       expect(component.menuTarget()).toBe(planet);
-      expect(component.worldService.getForces()).toEqual([]);
+      expect(component.worldService.forces()).toEqual([]);
 
       // the finger wanders off and lifts far away: no fling, the drag is gone
       const far = new MouseEvent('pointerup', { clientX: 300, clientY: 150 });
@@ -1115,7 +1117,7 @@ describe('GravityWorldComponent', () => {
     it('should leave the gestures alone on a right click', () => {
       const planet = component.planets()[0];
       const centerBefore = component.viewCenter();
-      const forcesBefore = component.worldService.getForces().length;
+      const forcesBefore = component.worldService.forces().length;
       const planetsBefore = component.planets().length;
 
       // a right click both opens the menu and reaches mouseDown; the overlay
@@ -1124,7 +1126,7 @@ describe('GravityWorldComponent', () => {
       Object.defineProperty(press, 'button', { value: 2 });
       component.pointerDown(press as PointerEvent);
 
-      expect(component.worldService.getForces().length).toBe(forcesBefore);
+      expect(component.worldService.forces().length).toBe(forcesBefore);
       expect(component.planets().length).toBe(planetsBefore);
       expect(component.followedId()).toBeNull();
       component.pointerMove(eventOn(planet.id, 'mousemove') as PointerEvent);
@@ -1654,7 +1656,7 @@ describe('GravityWorldComponent', () => {
       expect(query(fixture, qaSelector('object-panel'))).toBeTruthy();
       // selecting is not following
       expect(component.followedId()).toBeNull();
-      expect(component.worldService.getForces()).toEqual([]);
+      expect(component.worldService.forces()).toEqual([]);
     });
 
     it('should show the kinds of body only while adding', () => {
@@ -1694,7 +1696,7 @@ describe('GravityWorldComponent', () => {
       component.pointerCancel(on(svg, 100, 100));
 
       expect(component.planets().length).toBe(planetsBefore);
-      expect(component.worldService.getForces()).toEqual([]);
+      expect(component.worldService.forces()).toEqual([]);
     });
 
     /**
@@ -1889,7 +1891,7 @@ describe('GravityWorldComponent', () => {
     it('should not delete the sun', () => {
       component.tool.set('delete');
       tapOn(component.sun.id);
-      expect(component.worldService.getWorldObjects()).toContain(component.sun);
+      expect(component.worldService.worldObjects()).toContain(component.sun);
     });
 
     it('should hand the moons of a deleted planet on to the sun', () => {
@@ -1907,7 +1909,7 @@ describe('GravityWorldComponent', () => {
         component.tool.set(tool);
         const target = query(fixture, `[id="${component.sun.id}"]`)!;
         component.pointerDown(on(target, 100, 100));
-        expect(component.worldService.getForces()).toEqual([]);
+        expect(component.worldService.forces()).toEqual([]);
         component.pointerMove(on(target, 200, 150));
         component.pointerUp(on(target, 200, 150));
         // moved too far to be a tap, so nothing happened either

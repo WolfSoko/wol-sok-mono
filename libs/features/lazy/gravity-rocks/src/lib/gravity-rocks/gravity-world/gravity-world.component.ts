@@ -35,7 +35,12 @@ import {
   MAX_SIMULATION_SPEED,
   MIN_SIMULATION_SPEED,
 } from './domain/gravity-world-config';
-import { GravityWorldService } from './domain/gravity-world.service';
+import { createSolarSystem } from './domain/create-solar-system';
+import {
+  GravityWorldService,
+  MAX_TICK_YEARS,
+  MAX_TICKS_PER_FRAME,
+} from './domain/gravity-world.service';
 import { Force } from './domain/world-objects/force';
 import { SPRING_SPEED_PER_AU, SpringForce } from './interaction/spring-force';
 import { Planet } from './domain/world-objects/planet';
@@ -49,12 +54,7 @@ import {
   satelliteMass,
   satelliteRadiusFor,
 } from './domain/world-objects/orbit';
-import {
-  circularOrbitSpeed,
-  EARTH_MASS,
-  PLANET_NAMES,
-  PLANETS,
-} from './domain/solar-system';
+import { EARTH_MASS, PLANET_NAMES } from './domain/solar-system';
 import { Sun } from './domain/world-objects/sun';
 import {
   SvgPath,
@@ -92,21 +92,6 @@ const SYNTHETIC_CLICK_MS = 700;
  * follow, fast enough not to wait for mars.
  */
 export const YEARS_PER_SECOND = 0.1;
-/**
- * Longest slice of world time the integrator can follow in one go, in years.
- * A third of a day, so mercury's 88-day year is two hundred and forty of them:
- * even the fastest planet is carried through its orbit in hundreds of steps
- * rather than tens, and its ellipse stays put instead of creeping.
- */
-export const MAX_TICK_YEARS = 0.001;
-/**
- * Slices one frame may be cut into, so speed cannot stall the browser. Enough
- * that the fastest simulation still runs at its full speed while frames take
- * up to `MAX_TICKS_PER_FRAME * MAX_TICK_YEARS / (YEARS_PER_SECOND *
- * MAX_SIMULATION_SPEED)` - a twentieth of a second, which is as slow as a
- * screen gets before nothing looks right anyway.
- */
-export const MAX_TICKS_PER_FRAME = 60;
 const RIGHT_BUTTON = 2;
 
 /** Anything that carries a position in client (viewport) coordinates. */
@@ -229,6 +214,8 @@ export const OBJECT_KINDS: readonly {
   templateUrl: 'gravity-world.component.html',
   styleUrls: ['gravity-world.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // a world of its own, so leaving the route takes its planets with it
+  providers: [GravityWorldService],
   imports: [
     CommonModule,
     MatCardModule,
@@ -269,9 +256,10 @@ export class GravityWorldComponent {
 
   public running = signal(false);
   sun!: Sun;
-  planets: WritableSignal<Planet[]> = signal([]);
+  /** The bodies of the world, renewed whenever they have moved. */
+  readonly planets: Signal<Planet[]> = this.worldService.planets;
 
-  forces: WritableSignal<Force[]> = signal([]);
+  readonly forces: Signal<readonly Force[]> = this.worldService.forces;
   forcesSvgPaths: Signal<SvgPath[]> = computed(() =>
     this.forces()
       .map((force) => force.svgPath())
@@ -626,74 +614,33 @@ export class GravityWorldComponent {
     inject(DestroyRef).onDestroy(() => this.cancelLongPress());
     this.settings = signal(this.initialConfig);
     this.initializeSunAndPlanets();
-    this.updateSignals();
 
-    effect(() => {
-      this.worldService.setUniverse(
-        this.canvasSize().x,
-        this.canvasSize().y,
+    effect(() =>
+      this.worldService.setGravitationalConstant(
         this.settings().gravitationalConstant
-      );
-    });
+      )
+    );
     effect(() => (this.sun.mass = this.settings().massOfSun));
     effect(() => (this.running() ? this.gameLoop() : null));
   }
 
-  /**
-   * Puts the sun in the middle and the inner planets around it, each on its
-   * real orbit with the speed that orbit takes, spread out so they do not
-   * start in a row. Mercury through mars: the ones that fit in the frame.
-   */
+  /** Puts the sun in the middle of the world and the inner planets around it. */
   private initializeSunAndPlanets(): void {
-    this.sun = new Sun(
-      this.calcCenteredVec(),
-      undefined,
-      this.settings().massOfSun
+    const { massOfSun, gravitationalConstant } = this.settings();
+    const { sun, planets } = createSolarSystem(
+      this.canvasSize().div(2),
+      massOfSun,
+      gravitationalConstant
     );
-    this.worldService.addWorldObject(this.sun);
-
-    const centralMass: number = this.sun.mass;
-    const { gravitationalConstant } = this.settings();
-    PLANETS.forEach((body, index) => {
-      // an eighth of a turn between neighbours, so no two of them line up
-      const angle: number = (index * Math.PI) / 4;
-      const outwards: Vector2d = vec2(Math.cos(angle), Math.sin(angle));
-      const speed: number = circularOrbitSpeed(
-        centralMass,
-        body.orbit,
-        gravitationalConstant
-      );
-      const planet: Planet = new Planet(
-        this.calcCenteredVec(outwards.mul(body.orbit)),
-        // a circular orbit runs perpendicular to the line to the sun
-        vec2(outwards.y, -outwards.x).mul(speed),
-        body.mass,
-        body.name,
-        body.radius
-      );
-      planet.parent = this.sun;
+    this.sun = sun;
+    this.worldService.addWorldObject(sun);
+    for (const planet of planets) {
       this.worldService.addWorldObject(planet);
-    });
-    this.updateSignals();
-  }
-
-  private calcCenteredVec(vec: Vector2d = vec2(0, 0)): Vector2d {
-    return this.canvasSize().div(2).add(vec);
-  }
-
-  private updateSignals(): void {
-    this.planets.set(
-      this.worldService
-        .getWorldObjects()
-        .filter((wo) => wo instanceof Planet) as Array<Planet>
-    );
-    this.forces.set(this.worldService.getForces());
+    }
   }
 
   private findWorldObject(target: SVGElement): WorldObject | undefined {
-    return this.worldService
-      .getWorldObjects()
-      .find((wo) => wo.id === target.id);
+    return this.worldService.worldObjects().find((wo) => wo.id === target.id);
   }
 
   /**
@@ -762,7 +709,6 @@ export class GravityWorldComponent {
     this.dragEnd = null;
     const springForce = new SpringForce(wo);
     this.worldService.addForceObject(springForce);
-    this.updateSignals();
 
     this.drag$.subscribe({
       next: ({ end }) => springForce.updateSpringEnd(end),
@@ -778,7 +724,6 @@ export class GravityWorldComponent {
 
   private removeForce(springForce: SpringForce): void {
     this.worldService.removeForceObject(springForce);
-    this.updateSignals();
   }
 
   /**
@@ -896,7 +841,7 @@ export class GravityWorldComponent {
       return;
     }
     wo.vel = stretch.norm().mul(speed);
-    this.updateSignals();
+    this.worldService.refresh();
   }
 
   /** Drops the running drag, taking back the planet it has just created. */
@@ -1300,7 +1245,6 @@ export class GravityWorldComponent {
     satellite.pos = pos;
     satellite.vel = vel;
     this.worldService.addWorldObject(satellite);
-    this.updateSignals();
   }
 
   /** Takes the object of the panel out of the world, and the panel with it. */
@@ -1345,7 +1289,7 @@ export class GravityWorldComponent {
     target.pos = pos;
     target.vel = vel;
     this.menuDistance.set(clamped);
-    this.updateSignals();
+    this.worldService.refresh();
   }
 
   /** The satellite the menu target would be given: its moon, or its planet. */
@@ -1400,7 +1344,7 @@ export class GravityWorldComponent {
         this.setDistance(clamped);
       }
     }
-    this.updateSignals();
+    this.worldService.refresh();
   }
 
   /**
@@ -1421,7 +1365,7 @@ export class GravityWorldComponent {
     const clamped: number = clamp(speed, 0, MAX_SPEED);
     this.menuSpeed.set(clamped);
     target.vel = direction.mul(clamped);
-    this.updateSignals();
+    this.worldService.refresh();
   }
 
   /** Direction an object at its place would orbit the sun in. */
@@ -1457,11 +1401,9 @@ export class GravityWorldComponent {
   }
 
   /**
-   * Advances the simulation by a single frame of the given length. The
-   * simulation speed decides how much world time that frame is worth, and
-   * that time is cut into slices the integrator can still follow: at ten
-   * times speed one step would be ten frames wide and the orbits would fly
-   * apart. At the usual speed a frame stays a single slice.
+   * Advances the simulation by a single frame of the given length. How much
+   * world time that frame is worth is what the simulation speed decides; how
+   * that time is safely integrated is the world's own business.
    */
   step(deltaTime: number): void {
     const { showTrail, trailLength, simulationSpeed } = this.settings();
@@ -1479,23 +1421,7 @@ export class GravityWorldComponent {
       deltaTime * speed * YEARS_PER_SECOND,
       MAX_TICKS_PER_FRAME * MAX_TICK_YEARS
     );
-    const ticks: number = clamp(
-      Math.ceil(years / MAX_TICK_YEARS),
-      1,
-      MAX_TICKS_PER_FRAME
-    );
-    for (let tick = 0; tick < ticks; tick++) {
-      this.worldService.calcNextTick(years / ticks);
-      // every slice leaves its own mark, or a fast world draws a polygon
-      if (showTrail) {
-        this.worldService.recordTrails(trailLength);
-      }
-    }
-    if (!showTrail) {
-      // clearing what is there is a job for once a frame, not once a slice
-      this.worldService.recordTrails(0);
-    }
-    this.updateSignals();
+    this.worldService.advance(years, showTrail ? trailLength : 0);
     const followed: WorldObject | null = this.followed();
     if (followed) {
       // the planets have moved, so the view has to move with the followed one
@@ -1611,7 +1537,6 @@ export class GravityWorldComponent {
       }
     }
     this.worldService.removeWorldObject(planet);
-    this.updateSignals();
   }
 }
 
