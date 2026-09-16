@@ -186,7 +186,7 @@
     "jiti": "2.6.1",
     "jsdom": "27.0.1",
     "kill-port": "2.0.1",
-    "lint-staged": "16.2.6",
+    "lint-staged": "16.4.0",
     "mime-types": "3.0.1",
     "ng-packagr": "20.3.0",
     "node-gyp": "11.5.0",
