@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { qaSelector } from '@wolsok/test-helper';
 import { vec2 } from '@wolsok/utils-math';
@@ -17,6 +18,12 @@ import {
 } from './domain/solar-system';
 import { SPRING_SPEED_PER_AU } from './interaction/spring-force';
 import { Planet } from './domain/world-objects/planet';
+import {
+  MAX_MASS_EXPONENT,
+  MAX_SPEED,
+  MIN_MASS_EXPONENT,
+  ObjectPanelComponent,
+} from './object-panel/object-panel.component';
 
 // minimal mock service (if needed could be expanded) but we rely on real implementation for now
 import {
@@ -25,10 +32,7 @@ import {
 } from './domain/gravity-world.service';
 import {
   GravityWorldComponent,
-  MAX_MASS_EXPONENT,
-  MAX_SPEED,
   MAX_ZOOM,
-  MIN_MASS_EXPONENT,
   MIN_ZOOM,
   OBJECT_KINDS,
   ObjectKind,
@@ -77,6 +81,21 @@ describe('GravityWorldComponent', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
+
+  /**
+   * The settings panel, which only exists while one is open. Rendering it is
+   * what fills its sliders, so the view is brought up to date first.
+   */
+  function panel(): ObjectPanelComponent {
+    fixture.detectChanges();
+    const found = fixture.debugElement.query(
+      By.directive(ObjectPanelComponent)
+    );
+    if (!found) {
+      throw new Error('no settings panel is open');
+    }
+    return found.componentInstance as ObjectPanelComponent;
+  }
 
   it('should create the component', () => {
     expect(component).toBeTruthy();
@@ -1164,7 +1183,7 @@ describe('GravityWorldComponent', () => {
     it('should not change the speed of the static sun', () => {
       component.contextMenu(eventOn(component.sun.id));
 
-      component.setSpeed(400);
+      panel().setSpeed(400);
 
       expect(component.sun.vel).toEqual(vec2(0, 0));
     });
@@ -1173,7 +1192,7 @@ describe('GravityWorldComponent', () => {
       component.sun.vel = vec2(400, 0);
       component.contextMenu(eventOn(component.sun.id));
 
-      component.addSatellite();
+      panel().placeSatellite();
 
       const satellite = component.planets()[component.planets().length - 1];
       // the orbital speed only, nothing carried over from the static sun
@@ -1183,10 +1202,10 @@ describe('GravityWorldComponent', () => {
     it('should offer the default distance as the orbit of the next satellite', () => {
       component.contextMenu(eventOn(component.sun.id));
 
-      const { min, max } = component.orbitRange();
+      const { min, max } = panel().orbitRange();
       expect(min).toBeLessThan(max);
-      expect(component.menuOrbit()).toBeGreaterThanOrEqual(min);
-      expect(component.menuOrbit()).toBeLessThanOrEqual(max);
+      expect(panel().orbit()).toBeGreaterThanOrEqual(min);
+      expect(panel().orbit()).toBeLessThanOrEqual(max);
     });
 
     it('should still let a real planet choose an orbit it cannot hold', () => {
@@ -1195,31 +1214,31 @@ describe('GravityWorldComponent', () => {
       // slider still moves - and says so, until its mass is raised
       component.contextMenu(eventOn(component.planets()[0].id));
 
-      const { min, max } = component.orbitRange();
+      const { min, max } = panel().orbitRange();
       expect(min).toBeLessThan(max);
-      expect(component.menuOrbit()).toBe(min);
-      expect(component.orbitHeld()).toBe(false);
+      expect(panel().orbit()).toBe(min);
+      expect(panel().held()).toBe(false);
 
       // mars is far enough out that, made heavy, its grip clears its disc
       component.contextMenu(eventOn(outermostPlanet().id));
-      component.setMassExponent(MAX_MASS_EXPONENT);
+      panel().setMassExponent(MAX_MASS_EXPONENT);
 
-      expect(component.orbitHeld()).toBe(true);
+      expect(panel().held()).toBe(true);
     });
 
     it('should say when the sun keeps whatever circles it', () => {
       component.contextMenu(eventOn(component.sun.id));
-      component.setOrbitDistance(component.orbitRange().max);
-      expect(component.orbitHeld()).toBe(true);
+      panel().setOrbitDistance(panel().orbitRange().max);
+      expect(panel().held()).toBe(true);
     });
 
     it('should place the satellite at the distance the slider is set to', () => {
       component.contextMenu(eventOn(component.sun.id));
-      const { min, max } = component.orbitRange();
+      const { min, max } = panel().orbitRange();
       const wanted = (min + max) / 2;
 
-      component.setOrbitDistance(wanted);
-      component.addSatellite();
+      panel().setOrbitDistance(wanted);
+      panel().placeSatellite();
 
       const satellite = component.planets()[component.planets().length - 1];
       expect(satellite.pos.dist(component.sun.pos)).toBeCloseTo(wanted, 6);
@@ -1227,23 +1246,23 @@ describe('GravityWorldComponent', () => {
 
     it('should keep the orbit within the range the target allows', () => {
       component.contextMenu(eventOn(component.sun.id));
-      const { min, max } = component.orbitRange();
+      const { min, max } = panel().orbitRange();
 
-      component.setOrbitDistance(max * 10);
-      expect(component.menuOrbit()).toBe(max);
+      panel().setOrbitDistance(max * 10);
+      expect(panel().orbit()).toBe(max);
 
-      component.setOrbitDistance(0);
-      expect(component.menuOrbit()).toBe(min);
+      panel().setOrbitDistance(0);
+      expect(panel().orbit()).toBe(min);
     });
 
     it('should widen the orbit range with the mass of the target', () => {
       component.contextMenu(eventOn(outermostPlanet().id));
-      const before = component.orbitRange();
+      const before = panel().orbitRange();
 
       // a heavier planet holds on to a moon further out
-      component.setMassExponent(MAX_MASS_EXPONENT);
+      panel().setMassExponent(MAX_MASS_EXPONENT);
 
-      const after = component.orbitRange();
+      const after = panel().orbitRange();
       expect(after.max).toBeGreaterThan(before.max);
       // and far enough out that there is a range to choose from at all
       expect(after.min).toBeLessThan(after.max);
@@ -1251,31 +1270,29 @@ describe('GravityWorldComponent', () => {
 
     it('should pull the orbit back in when the target loses mass', () => {
       component.contextMenu(eventOn(outermostPlanet().id));
-      component.setMassExponent(MAX_MASS_EXPONENT);
-      component.setOrbitDistance(component.orbitRange().max);
-      const wideOrbit = component.menuOrbit();
+      panel().setMassExponent(MAX_MASS_EXPONENT);
+      panel().setOrbitDistance(panel().orbitRange().max);
+      const wideOrbit = panel().orbit();
 
-      component.setMassExponent(MIN_MASS_EXPONENT);
+      panel().setMassExponent(MIN_MASS_EXPONENT);
 
-      expect(component.menuOrbit()).toBeLessThan(wideOrbit);
-      expect(component.menuOrbit()).toBe(component.orbitRange().max);
+      expect(panel().orbit()).toBeLessThan(wideOrbit);
+      expect(panel().orbit()).toBe(panel().orbitRange().max);
     });
 
     it('should follow the sun out when its mass is raised', () => {
       component.contextMenu(eventOn(component.sun.id));
-      const before = component.orbitRange();
+      const before = panel().orbitRange();
 
-      component.setMassExponent(MAX_MASS_EXPONENT);
+      panel().setMassExponent(MAX_MASS_EXPONENT);
 
       // a heavier sun is a bigger disc, so its satellites start further out
       expect(component.sun.mass).toBeCloseTo(
         10 ** MAX_MASS_EXPONENT * EARTH_MASS,
         9
       );
-      expect(component.orbitRange().min).toBeGreaterThan(before.min);
-      expect(component.menuOrbit()).toBeGreaterThanOrEqual(
-        component.orbitRange().min
-      );
+      expect(panel().orbitRange().min).toBeGreaterThan(before.min);
+      expect(panel().orbit()).toBeGreaterThanOrEqual(panel().orbitRange().min);
     });
 
     it('should not offer an orbit the placement would overrule', () => {
@@ -1283,15 +1300,12 @@ describe('GravityWorldComponent', () => {
       component.contextMenu(eventOn(planet.id));
 
       // a fast parent carries its satellite along, which needs room
-      component.setSpeed(MAX_SPEED);
-      component.setOrbitDistance(component.orbitRange().min);
-      component.addSatellite();
+      panel().setSpeed(MAX_SPEED);
+      panel().setOrbitDistance(panel().orbitRange().min);
+      panel().placeSatellite();
 
       const satellite = component.planets()[component.planets().length - 1];
-      expect(satellite.pos.dist(planet.pos)).toBeCloseTo(
-        component.menuOrbit(),
-        6
-      );
+      expect(satellite.pos.dist(planet.pos)).toBeCloseTo(panel().orbit(), 6);
     });
 
     it('should keep the mass slider within its scale', () => {
@@ -1305,8 +1319,8 @@ describe('GravityWorldComponent', () => {
 
       // ten suns are millions of earths, past the end of the slider - which
       // stops there, while the label still tells the truth
-      expect(component.menuMassExponent()).toBe(MAX_MASS_EXPONENT);
-      expect(component.menuMass()).toBe(10 / EARTH_MASS);
+      expect(panel().massExponent()).toBe(MAX_MASS_EXPONENT);
+      expect(panel().mass()).toBe(10 / EARTH_MASS);
     });
 
     it('should open no menu at all once a second finger joins', () => {
@@ -1328,20 +1342,20 @@ describe('GravityWorldComponent', () => {
 
     it('should describe a satellite of the sun as a planet', () => {
       component.contextMenu(eventOn(component.sun.id));
-      expect(component.satelliteName()).toBe('planet');
+      expect(panel().satelliteName()).toBe('planet');
 
       component.contextMenu(eventOn(component.planets()[0].id));
-      expect(component.satelliteName()).toBe('moon');
+      expect(panel().satelliteName()).toBe('moon');
     });
 
     it('should add a satellite in orbit around the menu target', () => {
       const parent = outermostPlanet();
       component.contextMenu(eventOn(parent.id));
-      component.setMassExponent(MAX_MASS_EXPONENT);
+      panel().setMassExponent(MAX_MASS_EXPONENT);
       const planetsBefore = component.planets().length;
-      const wanted = component.menuOrbit();
+      const wanted = panel().orbit();
 
-      component.addSatellite();
+      panel().placeSatellite();
 
       expect(component.planets().length).toBe(planetsBefore + 1);
       const satellite = component.planets()[component.planets().length - 1];
@@ -1361,29 +1375,29 @@ describe('GravityWorldComponent', () => {
       expect(satellite.vel.sub(parent.vel).length()).toBeCloseTo(orbitSpeed, 6);
     });
 
-    it('should not add anything without a menu target', () => {
-      const planetsBefore = component.planets().length;
-      component.addSatellite();
-      expect(component.planets().length).toBe(planetsBefore);
+    it('should show no panel at all without a menu target', () => {
+      // nothing can be asked of a body that was never picked
+      expect(component.menuTarget()).toBeNull();
+      expect(query(fixture, qaSelector('object-panel'))).toBeNull();
     });
 
     it('should change the mass of a planet from the slider', () => {
       const planet = component.planets()[0];
       component.contextMenu(eventOn(planet.id));
 
-      component.setMassExponent(3);
+      panel().setMassExponent(3);
 
       // the slider counts in earth masses, the world in solar ones
       expect(planet.mass).toBeCloseTo(1000 * EARTH_MASS, 12);
-      expect(component.menuMass()).toBe(1000);
+      expect(panel().mass()).toBe(1000);
       // the slider shows the mass it is set to
-      expect(component.menuMassExponent()).toBeCloseTo(3, 6);
+      expect(panel().massExponent()).toBeCloseTo(3, 6);
     });
 
     it('should change the mass of the sun through the settings', () => {
       component.contextMenu(eventOn(component.sun.id));
 
-      component.setMassExponent(4);
+      panel().setMassExponent(4);
       fixture.detectChanges();
 
       expect(component.settings().massOfSun).toBeCloseTo(
@@ -1398,7 +1412,7 @@ describe('GravityWorldComponent', () => {
       const direction = planet.vel.norm();
       component.contextMenu(eventOn(planet.id));
 
-      component.setSpeed(25);
+      panel().setSpeed(25);
 
       expect(planet.vel.length()).toBeCloseTo(25, 6);
       expect(planet.vel.norm().x).toBeCloseTo(direction.x, 6);
@@ -1410,7 +1424,7 @@ describe('GravityWorldComponent', () => {
       planet.vel = vec2(0, 0);
       component.contextMenu(eventOn(planet.id));
 
-      component.setSpeed(12);
+      panel().setSpeed(12);
 
       expect(planet.vel.length()).toBeCloseTo(12, 6);
       // an orbit runs perpendicular to the line towards the sun
@@ -1422,7 +1436,7 @@ describe('GravityWorldComponent', () => {
       const planet = component.planets()[0];
       component.contextMenu(eventOn(planet.id));
 
-      component.setSpeed(99999);
+      panel().setSpeed(99999);
 
       expect(planet.vel.length()).toBeCloseTo(MAX_SPEED, 6);
     });
@@ -1449,8 +1463,8 @@ describe('GravityWorldComponent', () => {
     function addMoonToOutermostPlanet(): { planet: Planet; moon: Planet } {
       const planet = component.planets()[PLANETS.length - 1];
       component.contextMenu(eventOn(planet.id));
-      component.setMassExponent(MAX_MASS_EXPONENT);
-      component.addSatellite();
+      panel().setMassExponent(MAX_MASS_EXPONENT);
+      panel().placeSatellite();
       fixture.detectChanges();
       const moon = component.planets()[component.planets().length - 1];
       return { planet, moon };
@@ -1459,21 +1473,21 @@ describe('GravityWorldComponent', () => {
     it('should offer no distance slider for the sun, which has no parent', () => {
       component.contextMenu(eventOn(component.sun.id));
 
-      expect(component.parentName()).toBe('');
-      expect(component.menuDistanceRange()).toEqual({ min: 0, max: 0 });
+      expect(panel().parentName()).toBe('');
+      expect(panel().distanceRange()).toEqual({ min: 0, max: 0 });
     });
 
     it('should name a planet as what a moon orbits', () => {
       const { moon } = addMoonToOutermostPlanet();
       component.contextMenu(eventOn(moon.id));
 
-      expect(component.parentName()).toBe('planet');
+      expect(panel().parentName()).toBe('planet');
     });
 
     it('should name the sun as what a planet orbits', () => {
       component.contextMenu(eventOn(component.planets()[0].id));
 
-      expect(component.parentName()).toBe('sun');
+      expect(panel().parentName()).toBe('sun');
     });
 
     it('should offer a moon a range of distance from its own planet, not the sun', () => {
@@ -1482,28 +1496,28 @@ describe('GravityWorldComponent', () => {
 
       // a range checked against the sun instead of the planet would collapse:
       // the moon is far too light next to the sun to hold anything out there
-      const { min, max } = component.menuDistanceRange();
+      const { min, max } = panel().distanceRange();
       expect(min).toBeLessThan(max);
     });
 
     it('should move the moon to the distance the slider is set to', () => {
       const { planet, moon } = addMoonToOutermostPlanet();
       component.contextMenu(eventOn(moon.id));
-      const { min, max } = component.menuDistanceRange();
+      const { min, max } = panel().distanceRange();
       const wanted = (min + max) / 2;
 
-      component.setDistance(wanted);
+      panel().setDistance(wanted);
 
       expect(moon.pos.dist(planet.pos)).toBeCloseTo(wanted, 6);
-      expect(component.menuDistance()).toBeCloseTo(wanted, 6);
+      expect(panel().distance()).toBeCloseTo(wanted, 6);
     });
 
     it('should keep the moved moon on a circular orbit around its planet', () => {
       const { planet, moon } = addMoonToOutermostPlanet();
       component.contextMenu(eventOn(moon.id));
-      const { max } = component.menuDistanceRange();
+      const { max } = panel().distanceRange();
 
-      component.setDistance(max);
+      panel().setDistance(max);
 
       const orbitSpeed = Math.sqrt(
         (component.settings().gravitationalConstant * planet.mass) / max
@@ -1519,12 +1533,12 @@ describe('GravityWorldComponent', () => {
       // a moon grown this heavy has a disc that no longer clears the planet
       // from where it started - the mass slider alone must not leave it
       // overlapping its planet, nor just report a distance it is not at
-      component.setMassExponent(MAX_MASS_EXPONENT);
+      panel().setMassExponent(MAX_MASS_EXPONENT);
 
       const after = moon.pos.dist(planet.pos);
       expect(after).toBeGreaterThan(before);
-      expect(after).toBeCloseTo(component.menuDistance(), 6);
-      expect(after).toBeCloseTo(component.menuDistanceRange().min, 6);
+      expect(after).toBeCloseTo(panel().distance(), 6);
+      expect(after).toBeCloseTo(panel().distanceRange().min, 6);
     });
 
     it('should leave the moon where it is when a mass change does not crowd it', () => {
@@ -1534,34 +1548,33 @@ describe('GravityWorldComponent', () => {
 
       // lightening the moon only ever widens the range, never shrinks it past
       // where the moon already sits - nothing here needs moving
-      component.setMassExponent(MIN_MASS_EXPONENT);
+      panel().setMassExponent(MIN_MASS_EXPONENT);
 
       expect(moon.pos).toBe(before);
-      expect(moon.pos.dist(planet.pos)).toBeCloseTo(
-        component.menuDistance(),
-        6
-      );
+      expect(moon.pos.dist(planet.pos)).toBeCloseTo(panel().distance(), 6);
     });
 
     it('should keep the distance within the range the moon allows', () => {
       const { moon } = addMoonToOutermostPlanet();
       component.contextMenu(eventOn(moon.id));
-      const { min, max } = component.menuDistanceRange();
+      const { min, max } = panel().distanceRange();
 
-      component.setDistance(max * 10);
-      expect(component.menuDistance()).toBe(max);
+      // the panel reads back where the body really ended up, which is the
+      // orbit it asked for down to the last bit of a double
+      panel().setDistance(max * 10);
+      expect(panel().distance()).toBeCloseTo(max, 9);
 
-      component.setDistance(0);
-      expect(component.menuDistance()).toBe(min);
+      panel().setDistance(0);
+      expect(panel().distance()).toBeCloseTo(min, 9);
     });
 
     it('should move a planet relative to the sun the same way', () => {
       const planet = component.planets()[0];
       component.contextMenu(eventOn(planet.id));
-      const { min, max } = component.menuDistanceRange();
+      const { min, max } = panel().distanceRange();
       const wanted = (min + max) / 2;
 
-      component.setDistance(wanted);
+      panel().setDistance(wanted);
 
       expect(planet.pos.dist(component.sun.pos)).toBeCloseTo(wanted, 6);
     });
@@ -1570,7 +1583,7 @@ describe('GravityWorldComponent', () => {
       component.contextMenu(eventOn(component.sun.id));
       const before = component.sun.pos;
 
-      component.setDistance(1);
+      panel().setDistance(1);
 
       expect(component.sun.pos).toBe(before);
     });
@@ -1980,7 +1993,7 @@ describe('GravityWorldComponent', () => {
       // mars is far enough out that, made heavy, its grip clears its disc
       rightClickOn(component.planets()[PLANETS.length - 1].id);
       expect(query(fixture, qaSelector('orbit-hint'))).toBeTruthy();
-      component.setMassExponent(MAX_MASS_EXPONENT);
+      panel().setMassExponent(MAX_MASS_EXPONENT);
       fixture.detectChanges();
 
       expect(query(fixture, qaSelector('orbit-hint'))).toBeNull();
@@ -2037,17 +2050,17 @@ describe('GravityWorldComponent', () => {
       const planet = component.planets()[0];
       rightClickOn(planet.id);
       component.toggleSim();
-      const distanceBefore = component.menuDistance();
+      const distanceBefore = panel().distance();
       planet.vel = planet.vel.mul(2);
 
       component.step(1 / 60);
 
-      expect(component.menuSpeed()).toBeCloseTo(planet.vel.length(), 6);
-      expect(component.menuDistance()).toBeCloseTo(
+      expect(panel().speed()).toBeCloseTo(planet.vel.length(), 6);
+      expect(panel().distance()).toBeCloseTo(
         planet.pos.dist(component.sun.pos),
         9
       );
-      expect(component.menuDistance()).not.toBe(distanceBefore);
+      expect(panel().distance()).not.toBe(distanceBefore);
     });
 
     it('should go away on reset', () => {
@@ -2070,25 +2083,25 @@ describe('GravityWorldComponent', () => {
     it('should let the orbit hint follow the body while the world runs', () => {
       const planet = component.planets()[PLANETS.length - 1];
       rightClickOn(planet.id);
-      component.setMassExponent(MAX_MASS_EXPONENT);
-      expect(component.orbitHeld()).toBe(true);
+      panel().setMassExponent(MAX_MASS_EXPONENT);
+      expect(panel().held()).toBe(true);
 
       // carried in next to the sun, whose grip now reaches past the moon
       planet.pos = component.sun.pos.add(vec2(planet.radius * 3, 0));
       component.step(0);
 
-      expect(component.orbitHeld()).toBe(false);
+      expect(panel().held()).toBe(false);
     });
 
     it('should call a moon a moon, and a placed planet a planet', () => {
       const parent = component.planets()[PLANETS.length - 1];
       rightClickOn(parent.id);
-      component.addSatellite();
+      panel().placeSatellite();
       const moon = component.planets()[component.planets().length - 1];
       expect(moon.parent).toBe(parent);
 
       rightClickOn(component.sun.id);
-      component.addSatellite();
+      panel().placeSatellite();
       const planet = component.planets()[component.planets().length - 1];
 
       const moonIndex = component.planets().indexOf(moon);
@@ -2152,7 +2165,7 @@ describe('GravityWorldComponent', () => {
       const sunMass = component.sun.mass;
       setSpeed(1);
       component.contextMenu(eventOnSun());
-      component.addSatellite();
+      panel().placeSatellite();
       const satellite = component.planets()[component.planets().length - 1];
       const orbit = satellite.pos.dist(component.sun.pos);
 
@@ -2171,7 +2184,7 @@ describe('GravityWorldComponent', () => {
     it('should hold an orbit whatever else is in the world', () => {
       setSpeed(1);
       component.contextMenu(eventOnSun());
-      component.addSatellite();
+      panel().placeSatellite();
       const satellite = component.planets()[component.planets().length - 1];
       const orbit = satellite.pos.dist(component.sun.pos);
       const speed = satellite.vel.length();

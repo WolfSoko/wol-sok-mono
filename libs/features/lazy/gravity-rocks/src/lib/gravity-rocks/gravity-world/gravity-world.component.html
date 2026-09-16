@@ -287,134 +287,20 @@
       </div>
 
       @if (menuTarget(); as target) {
-        <mat-card
-          appearance="raised"
-          class="object-panel"
-          data-qa="object-panel"
-        >
-          <div class="object-panel-header">
-            <span class="object-panel-title" data-qa="object-panel-title">{{
-              menuTitle()
-            }}</span>
-            <button
-              mat-icon-button
-              type="button"
-              data-qa="cta-close-panel"
-              aria-label="Close"
-              (click)="menuClosed()"
-            >
-              <mat-icon>close</mat-icon>
-            </button>
-          </div>
-          <mat-card-content class="object-panel-content">
-            @if (parentName()) {
-              <div class="panel-slider">
-                <label for="menu-distance-slider"
-                  >Distance from the {{ parentName() }}:
-                  {{ menuDistance() | number: "1.3-3" }} AU</label
-                >
-                <mat-slider
-                  [max]="menuDistanceRange().max"
-                  [min]="menuDistanceRange().min"
-                  [step]="menuDistanceStep()"
-                >
-                  <input
-                    id="menu-distance-slider"
-                    matSliderThumb
-                    data-qa="menu-distance"
-                    [value]="menuDistance()"
-                    (valueChange)="setDistance($event)"
-                  />
-                </mat-slider>
-              </div>
-            }
-            <div class="panel-slider">
-              <label for="menu-mass-slider"
-                >Mass: {{ menuMass() | number: "1.0-3" }} &times; Earth</label
-              >
-              <mat-slider
-                [max]="maxMassExponent"
-                [min]="minMassExponent"
-                [step]="0.05"
-              >
-                <input
-                  id="menu-mass-slider"
-                  matSliderThumb
-                  data-qa="menu-mass"
-                  [value]="menuMassExponent()"
-                  (valueChange)="setMassExponent($event)"
-                />
-              </mat-slider>
-            </div>
-            <!-- a static object never moves, its speed is not a thing to change -->
-            @if (!target.isStatic) {
-              <div class="panel-slider">
-                <label for="menu-speed-slider"
-                  >Speed: {{ menuSpeed() | number: "1.2-2" }} AU/year</label
-                >
-                <mat-slider [max]="maxSpeed" [min]="0" [step]="0.1">
-                  <input
-                    id="menu-speed-slider"
-                    matSliderThumb
-                    data-qa="menu-speed"
-                    [value]="menuSpeed()"
-                    (valueChange)="setSpeed($event)"
-                  />
-                </mat-slider>
-              </div>
-            }
-
-            <mat-divider />
-            <h4 class="panel-subheader">Next {{ satelliteName() }}</h4>
-            <div class="panel-slider">
-              <label for="menu-orbit-slider"
-                >Orbit: {{ menuOrbit() | number: "1.3-3" }} AU</label
-              >
-              <mat-slider
-                [max]="orbitRange().max"
-                [min]="orbitRange().min"
-                [step]="orbitStep()"
-              >
-                <input
-                  id="menu-orbit-slider"
-                  matSliderThumb
-                  data-qa="menu-orbit"
-                  [value]="menuOrbit()"
-                  (valueChange)="setOrbitDistance($event)"
-                />
-              </mat-slider>
-              @if (!orbitHeld()) {
-                <p class="panel-hint" data-qa="orbit-hint">
-                  Too light to keep a {{ satelliteName() }} out there - the
-                  {{ parentName() }} will take it. Raise the mass to hold one.
-                </p>
-              }
-            </div>
-            <button
-              mat-stroked-button
-              type="button"
-              data-qa="cta-add-satellite"
-              (click)="addSatellite()"
-            >
-              <mat-icon>add_circle_outline</mat-icon>
-              Add orbiting {{ satelliteName() }}
-            </button>
-
-            @if (target !== sun) {
-              <mat-divider />
-              <button
-                mat-button
-                type="button"
-                color="warn"
-                data-qa="cta-remove-target"
-                (click)="removeTarget()"
-              >
-                <mat-icon>delete_forever</mat-icon>
-                Remove
-              </button>
-            }
-          </mat-card-content>
-        </mat-card>
+        <feat-lazy-gravity-object-panel
+          [target]="target"
+          [sun]="sun"
+          [title]="menuTitle()"
+          [gravitationalConstant]="settings().gravitationalConstant"
+          [reach]="canvasSize().x / 2"
+          [world]="worldService.worldObjects()"
+          (closed)="menuClosed()"
+          (massChange)="setMass($event)"
+          (distanceChange)="setDistance($event)"
+          (speedChange)="setSpeed($event)"
+          (addSatellite)="addSatelliteTo(target, $event)"
+          (remove)="removeTarget()"
+        />
       }
     </div>
   </mat-card>

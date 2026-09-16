@@ -1,5 +1,6 @@
 import { Vector2d } from '@wolsok/utils-math';
 import { displayRadius, radiusOfMass } from '../solar-system';
+import { Planet } from './planet';
 import { MAX_VELOCITY, WorldObject } from './world-object';
 
 /** Distance of a new satellite from its parent, in parent radii. */
@@ -141,6 +142,52 @@ export function orbitDistanceRange(
     : reach;
   const wide: number = parent.radius * ORBIT_DISTANCE_IN_RADII;
   return { min, max: Math.max(min, Math.min(Math.max(outer, wide), reach)) };
+}
+
+/**
+ * How far from `parent` a satellite of the given radius may be placed, with
+ * everything the world knows folded in: the two discs have to clear each
+ * other, the satellite must not have to outrun the integrator, `primary` must
+ * not steal it, and it may not be put outside `reach` - half the width of the
+ * world.
+ *
+ * This is the one answer both sliders of the settings panel are built on: the
+ * orbit a new satellite is offered, and the orbit the body itself may be
+ * moved to around its own primary.
+ */
+export function placementRange(
+  parent: WorldObject,
+  primary: WorldObject | undefined,
+  satelliteRadius: number,
+  gravitationalConstant: number,
+  reach: number
+): { min: number; max: number } {
+  return orbitDistanceRange(
+    parent,
+    primary,
+    satelliteRadius,
+    reach,
+    minOrbitDistance(
+      parent,
+      gravitationalConstant,
+      // a static body never moves, so it spends nothing on carrying along
+      parent.isStatic ? 0 : parent.vel.length()
+    )
+  );
+}
+
+/**
+ * What holds `target` on its own orbit: the sun for a planet, the planet for
+ * a moon, and nothing at all for the sun itself.
+ */
+export function primaryOf(
+  target: WorldObject,
+  sun: WorldObject
+): WorldObject | undefined {
+  if (target === sun) {
+    return undefined;
+  }
+  return target instanceof Planet ? (target.parent ?? sun) : sun;
 }
 
 /**

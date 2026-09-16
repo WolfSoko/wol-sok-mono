@@ -1,0 +1,70 @@
+// the panel hangs in the top right corner of the world it belongs to
+:host {
+  display: block;
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  width: 17rem;
+  // on a phone the world is not much wider than the panel, leave the
+  // toolbelt and a strip of the world reachable
+  max-width: calc(100% - 5rem);
+}
+
+// a phone has no room next to the world: the panel goes below it instead
+@media (max-width: 599px) {
+  :host {
+    position: static;
+    width: auto;
+    max-width: none;
+    margin-top: 0.5rem;
+  }
+}
+
+.object-panel {
+  box-sizing: border-box;
+  max-height: 100%;
+  overflow: auto;
+  padding: 0;
+}
+
+.object-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0.25rem 0 1rem;
+
+  .object-panel-title {
+    font-weight: 500;
+  }
+}
+
+.object-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 1rem 1rem;
+
+  .panel-subheader {
+    margin: 0;
+    opacity: 0.7;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.panel-slider {
+  display: flex;
+  flex-direction: column;
+
+  mat-slider {
+    width: 100%;
+  }
+
+  .panel-hint {
+    margin: 0;
+    font-size: 0.8rem;
+    opacity: 0.8;
+  }
+}
