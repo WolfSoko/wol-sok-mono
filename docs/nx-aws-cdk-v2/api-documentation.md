@@ -55,7 +55,7 @@ below `<appsDir>` with `/` replaced by `-`. `--directory=aws my-app` therefore p
 | `src/main.ts`             | always                  | CDK app entry point; the executors point `cdk -a` at it.      |
 | `src/stacks/app-stack.ts` | always                  | Empty stack to build on.                                      |
 | `tsconfig.json`           | always                  | Project TypeScript config.                                    |
-| `tsconfig.app.json`       | always                  | Used by `ts-node` when the executors run the app.             |
+| `tsconfig.app.json`       | always                  | Used by `tsx` when the executors run the app.                 |
 | `project.json`            | always                  | Target definitions.                                           |
 | `jest.config.cts`         | `--unitTestRunner=jest` | Jest configuration for the project (extension chosen by Nx).  |
 | `tsconfig.spec.json`      | `--unitTestRunner=jest` | TypeScript config for the test files.                         |
@@ -63,14 +63,12 @@ below `<appsDir>` with `/` replaced by `-`. `--directory=aws my-app` therefore p
 
 **Dependencies added to the workspace**
 
-| Package          | Section           | Why                                                    |
-| ---------------- | ----------------- | ------------------------------------------------------ |
-| `aws-cdk-lib`    | `dependencies`    | The CDK v2 construct library your stacks import.       |
-| `constructs`     | `dependencies`    | Construct programming model, peer of `aws-cdk-lib`.    |
-| `aws-cdk`        | `devDependencies` | CDK Toolkit CLI the executors shell out to.            |
-| `ts-node`        | `devDependencies` | Runs `main.ts` in CommonJS workspaces.                 |
-| `tsconfig-paths` | `devDependencies` | Resolves workspace path aliases for `ts-node`.         |
-| `tsx`            | `devDependencies` | Runs `main.ts` in ESM (`"type": "module"`) workspaces. |
+| Package       | Section           | Why                                                 |
+| ------------- | ----------------- | --------------------------------------------------- |
+| `aws-cdk-lib` | `dependencies`    | The CDK v2 construct library your stacks import.    |
+| `constructs`  | `dependencies`    | Construct programming model, peer of `aws-cdk-lib`. |
+| `aws-cdk`     | `devDependencies` | CDK Toolkit CLI the executors shell out to.         |
+| `tsx`         | `devDependencies` | Runs `main.ts`, CommonJS and ESM alike.             |
 
 ### `init`
 

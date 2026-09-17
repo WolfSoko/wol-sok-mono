@@ -1,5 +1,5 @@
 {
-  "app": "npx tsx src/main.ts",
+  "app": "npx tsx --tsconfig tsconfig.app.json src/main.ts",
   "output": "../../dist/apps/fourier-analysis-remote-cdk",
   "watch": {
     "include": ["**"],
