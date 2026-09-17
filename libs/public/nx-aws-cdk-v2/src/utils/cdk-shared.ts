@@ -12,13 +12,11 @@ export const CDK_LIB_VERSION = '^2.265.0';
 export const CDK_CONSTRUCTS_VERSION = '^10.8.1';
 
 /**
- * TypeScript loaders used to run a CDK app's `main.ts` without a build step.
- * `tsx` is used for ESM workspaces (`"type": "module"`), `ts-node` +
- * `tsconfig-paths` for CommonJS ones — see `generateCommandString`.
+ * TypeScript loader used to run a CDK app's `main.ts` without a build step —
+ * see `generateCommandString`. It handles both CommonJS and ESM workspaces and
+ * resolves the app's tsconfig `paths` itself.
  */
 export const TSX_VERSION = '^4.20.0';
-export const TS_NODE_VERSION = '^10.9.2';
-export const TSCONFIG_PATHS_VERSION = '^4.2.0';
 
 /**
  * @deprecated Use {@link CDK_LIB_VERSION} for `aws-cdk-lib` and

@@ -12,8 +12,6 @@ import {
   CDK_CLI_VERSION,
   CDK_CONSTRUCTS_VERSION,
   CDK_LIB_VERSION,
-  TS_NODE_VERSION,
-  TSCONFIG_PATHS_VERSION,
   TSX_VERSION,
 } from '../../utils/cdk-shared';
 
@@ -39,12 +37,10 @@ export async function initGenerator(host: Tree, options: InitGeneratorSchema) {
       constructs: CDK_CONSTRUCTS_VERSION,
     },
     {
-      // The CDK Toolkit and the TypeScript loaders are only ever invoked by the
+      // The CDK Toolkit and the TypeScript loader are only ever invoked by the
       // executors, so they belong in devDependencies rather than shipping with
       // whatever the workspace publishes.
       'aws-cdk': CDK_CLI_VERSION,
-      'ts-node': TS_NODE_VERSION,
-      'tsconfig-paths': TSCONFIG_PATHS_VERSION,
       tsx: TSX_VERSION,
     }
   );

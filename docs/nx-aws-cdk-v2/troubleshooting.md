@@ -25,7 +25,7 @@ command line the plugin built:
 nx deploy my-app --verbose
 ```
 
-Nx prints the executor's debug log, including `Executing command: npx cdk -a "npx ts-node …" deploy`.
+Nx prints the executor's debug log, including `Executing command: npx cdk -a "npx tsx …" deploy`.
 Copy that command, run it by hand, and you will usually get a much clearer error from the CDK CLI. If
 the hand-run command works and the target does not, the difference is in the target's options.
 
@@ -106,14 +106,13 @@ post-generation install did not complete:
 npm install --save-dev aws-cdk
 ```
 
-### `Cannot find module 'ts-node'` or `tsx: command not found`
+### `tsx: command not found`
 
-The executors run your `main.ts` through a TypeScript loader: `ts-node` (plus `tsconfig-paths`) for
-CommonJS workspaces, `tsx` for workspaces whose `package.json` has `"type": "module"`. The generator
-installs all three; install whichever is missing:
+The executors run your `main.ts` through `tsx`, for CommonJS and ESM workspaces alike. The generator
+installs it; if it is missing:
 
 ```shell
-npm install --save-dev ts-node tsconfig-paths tsx
+npm install --save-dev tsx
 ```
 
 ### `Unknown file extension ".ts"` or `Cannot use import statement outside a module`
@@ -125,11 +124,13 @@ run again.
 
 ### `Cannot find module '@myorg/some-lib'` when synthesizing
 
-Your stack imports a workspace library through a `tsconfig.base.json` path alias. In CommonJS
-workspaces those are resolved by `tsconfig-paths`, loaded through the project's `tsconfig.app.json`
-— make sure that file still extends your workspace's base config. In ESM workspaces, `tsx` does not
-read `paths`; import the library through its package name and make sure it is built, or use a
-relative import.
+Your stack imports a workspace library through a `tsconfig.base.json` path alias. `tsx` resolves
+those from the project's `tsconfig.app.json`, so make sure that file still extends your workspace's
+base config and that the alias is listed there.
+
+Note that the executors pass `--tsconfig` explicitly. Running `tsx` by hand without it makes `tsx`
+read whatever `tsconfig.json` sits next to your current working directory, which is a common way to
+see this error only outside Nx.
 
 ### The target runs but ignores the options in `cdk.json`
 
