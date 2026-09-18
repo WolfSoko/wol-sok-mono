@@ -5,8 +5,8 @@
   "private": true,
   "type": "module",
   "peerDependencies": {
-    "@analogjs/router": "1.22.1",
-    "@analogjs/platform": "1.22.1",
+    "@analogjs/router": "2.7.2",
+    "@analogjs/platform": "2.7.2",
     "@angular/fire": "20.0.1",
     "@angular/core": "20.3.7",
     "@angular/common": "20.3.7",
