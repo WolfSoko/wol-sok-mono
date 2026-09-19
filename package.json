@@ -131,7 +131,7 @@
     "@playwright/test": "1.56.1",
     "@rspack/core": "1.5.8",
     "@schematics/angular": "22.1.8",
-    "@simondotm/nx-firebase": "2.3.0",
+    "@simondotm/nx-firebase": "22.3.3",
     "@storybook/addon-mdx-gfm": "8.6.14",
     "@storybook/angular": "10.6.0",
     "@storybook/core-common": "8.6.14",
