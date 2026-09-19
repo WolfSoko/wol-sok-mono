@@ -129,7 +129,7 @@
     "@nx/webpack": "23.2.1",
     "@nx/workspace": "23.2.1",
     "@playwright/test": "1.56.1",
-    "@rspack/core": "1.5.8",
+    "@rspack/core": "2.2.6",
     "@schematics/angular": "22.1.8",
     "@simondotm/nx-firebase": "2.3.0",
     "@storybook/addon-mdx-gfm": "8.6.14",
@@ -224,7 +224,7 @@
     "@nx/nx-linux-x64-gnu": "23.1.2",
     "@rollup/rollup-linux-x64-gnu": "4.53.3",
     "@rollup/rollup-win32-x64-msvc": "4.53.3",
-    "@rspack/binding-linux-x64-gnu": "1.5.8",
+    "@rspack/binding-linux-x64-gnu": "2.2.6",
     "@swc/core-linux-x64-gnu": "1.16.1",
     "sass-embedded-linux-x64": "1.93.3"
   },
