@@ -72,7 +72,14 @@ function readProjectGraph() {
 function readDepConstraints() {
   const config = JSON.parse(readFileSync(join(ROOT, '.oxlintrc.json'), 'utf8'));
   const rule = config.rules?.['@nx/enforce-module-boundaries'];
-  return (Array.isArray(rule) ? rule[1]?.depConstraints : undefined) ?? [];
+  const constraints = Array.isArray(rule) ? rule[1]?.depConstraints : undefined;
+  // Without rules every boundary check below would silently pass.
+  if (!constraints?.length) {
+    throw new Error(
+      'No @nx/enforce-module-boundaries depConstraints found in .oxlintrc.json.'
+    );
+  }
+  return constraints;
 }
 
 function readFederationRemotes() {
@@ -176,8 +183,16 @@ function findBoundaryViolations(projects, edges, constraints) {
   for (const e of edges.filter((edge) => edge.type !== 'implicit')) {
     const source = byName.get(e.source);
     const target = byName.get(e.target);
-    for (const c of constraints) {
-      if (!c.sourceTag || !source.tags.includes(c.sourceTag)) continue;
+    const matching = constraints.filter(
+      (c) => c.sourceTag && source.tags.includes(c.sourceTag)
+    );
+    // Like the lint rule: a project no constraint applies to may not depend on
+    // any library.
+    if (!matching.length) {
+      violations.push({ ...e, sourceTag: null, allowed: [] });
+      continue;
+    }
+    for (const c of matching) {
       const allowed = c.onlyDependOnLibsWithTags ?? [];
       if (!target.tags.some((t) => allowed.includes(t))) {
         violations.push({ ...e, sourceTag: c.sourceTag, allowed });
@@ -215,7 +230,7 @@ function layerMermaid(constraints) {
   for (const t of [...tags].sort(byText)) lines.push(`  ${id(t)}(["${t}"])`);
   for (const c of constraints) {
     for (const t of c.onlyDependOnLibsWithTags ?? []) {
-      if (t !== c.sourceTag) lines.push(`  ${id(c.sourceTag)} --> ${id(t)}`);
+      lines.push(`  ${id(c.sourceTag)} --> ${id(t)}`);
     }
   }
   lines.push('```');
@@ -278,6 +293,13 @@ function metricsTable(projects) {
   ].join('\n');
 }
 
+function describeViolation(v) {
+  const reason = v.sourceTag
+    ? `\`${v.sourceTag}\` may only use ${v.allowed.map((t) => `\`${t}\``).join(', ')}`
+    : `no constraint matches the tags of \`${v.source}\``;
+  return `\`${v.source}\` → \`${v.target}\` (${reason})`;
+}
+
 function findings(projects, cycles, violations) {
   const out = [];
   const list = (items) => items.map((i) => `  - ${i}`).join('\n');
@@ -289,7 +311,7 @@ function findings(projects, cycles, violations) {
   );
   out.push(
     violations.length
-      ? `- **Tag constraint violations** (\`.oxlintrc.json\`): ${violations.length}\n${list(violations.map((v) => `\`${v.source}\` → \`${v.target}\` (\`${v.sourceTag}\` may only use ${v.allowed.map((t) => `\`${t}\``).join(', ')})`))}`
+      ? `- **Tag constraint violations** (\`.oxlintrc.json\`): ${violations.length}\n${list(violations.map(describeViolation))}`
       : '- **Tag constraint violations** (`.oxlintrc.json`): none'
   );
 
@@ -368,8 +390,8 @@ ${groupMermaid(projects, edges)}
 ## Allowed dependencies (module boundaries)
 
 Tag rules enforced by \`@nx/enforce-module-boundaries\`. An arrow means
-"projects tagged A may depend on projects tagged B" (a tag may always depend on
-itself).
+"projects tagged A may depend on projects tagged B". A tag may only depend on itself where its
+own rule lists it (drawn as a self-loop).
 
 ${layerMermaid(constraints)}
 

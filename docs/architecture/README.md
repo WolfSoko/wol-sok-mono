@@ -49,8 +49,8 @@ flowchart TD
 ## Allowed dependencies (module boundaries)
 
 Tag rules enforced by `@nx/enforce-module-boundaries`. An arrow means
-"projects tagged A may depend on projects tagged B" (a tag may always depend on
-itself).
+"projects tagged A may depend on projects tagged B". A tag may only depend on itself where its
+own rule lists it (drawn as a self-loop).
 
 ```mermaid
 flowchart TD
@@ -70,6 +70,7 @@ flowchart TD
   app --> api
   app --> type_remote
   infra --> infra_shared
+  infra_shared --> infra_shared
   e2e --> shared
   feature --> feat_shared
   feature --> shared
@@ -79,7 +80,9 @@ flowchart TD
   feature_lazy --> api
   feat_shared --> shared
   feat_shared --> api
+  shared --> shared
   shared --> api
+  api --> api
 ```
 
 ## Module Federation topology
