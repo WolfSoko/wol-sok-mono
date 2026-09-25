@@ -2,6 +2,8 @@
 
 This document provides a high-level overview of the wol-sok-mono repository architecture, structure, and design principles.
 
+> **Diagrams:** the generated, always-current dependency graphs, module boundary rules and modularity metrics live in [`docs/architecture/README.md`](architecture/README.md). Regenerate them with `npm run arch:diagrams`; a weekly routine does this automatically and tracks the results in the pinned `architecture` issue.
+
 ## Table of Contents
 
 - [Repository Structure](#repository-structure)
