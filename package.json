@@ -15,7 +15,8 @@
     "test": "nx test",
     "lint": "nx run-many -t lint,lint-templates --fix",
     "e2e": "nx e2e",
-    "prepare": "husky"
+    "prepare": "husky",
+    "arch:diagrams": "node tools/architecture/generate-diagrams.mjs"
   },
   "private": true,
   "dependencies": {
