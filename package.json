@@ -212,7 +212,7 @@
     "vite": "7.1.12",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "4.1.9",
-    "vitest-mock-extended": "^3.0.1",
+    "vitest-mock-extended": "^5.0.0",
     "web-streams-polyfill": "4.2.0",
     "webpack": "5.109.2",
     "webpack-bundle-analyzer": "4.10.2",
