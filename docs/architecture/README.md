@@ -7,7 +7,7 @@ Generated from the Nx project graph, the module boundary rules in
 the architecture routine; for the narrative overview see
 [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md).
 
-**39 projects · 64 internal dependencies · 3 federated remotes**
+**40 projects · 66 internal dependencies · 3 federated remotes**
 
 ## Contents
 
@@ -28,15 +28,15 @@ flowchart TD
   infra["Infrastructure (CDK)<br/>4 projects"]
   apps["Apps<br/>8 projects"]
   public["libs/public (published)<br/>3 projects"]
-  features["libs/features<br/>12 projects"]
+  features["libs/features<br/>13 projects"]
   shared["libs/shared<br/>3 projects"]
   utils["libs/utils<br/>5 projects"]
   other["libs (other)<br/>4 projects"]
-  apps -- 12 --> features
+  apps -- 13 --> features
   apps -- 1 --> other
   apps -- 3 --> public
   apps -- 5 --> shared
-  features -- 10 --> other
+  features -- 11 --> other
   features -- 1 --> public
   features -- 3 --> shared
   features -- 12 --> utils
@@ -143,6 +143,7 @@ flowchart LR
     feat_lazy_some_gpu_calculation["feat-lazy-some-gpu-calculation"]
     feat_lazy_tf_examples["feat-lazy-tf-examples"]
     feat_lazy_wasm_test["feat-lazy-wasm-test"]
+    feat_lazy_web_gl["feat-lazy-web-gl"]
     feat_shared_reaction_diffusion_kernels["feat-shared-reaction-diffusion-kernels"]
     neural_networks["neural-networks"]
   end
@@ -172,6 +173,7 @@ flowchart LR
   angular_examples -.-> feat_lazy_some_gpu_calculation
   angular_examples -.-> feat_lazy_tf_examples
   angular_examples -.-> feat_lazy_wasm_test
+  angular_examples -.-> feat_lazy_web_gl
   angular_examples --> fourier_analysis_remote
   angular_examples --> headline_animation
   angular_examples -.-> neural_networks
@@ -211,6 +213,7 @@ flowchart LR
   feat_lazy_tf_examples --> ui_kit
   feat_lazy_wasm_test --> fib_wasm_api
   feat_lazy_wasm_test --> utils_decorators
+  feat_lazy_web_gl --> ui_kit
   feat_shared_reaction_diffusion_kernels --> utils_gpu_calc
   fib_wasm_api ==> fib_wasm
   fourier_analysis_remote -.-> feat_lazy_fourier_analysis
@@ -240,8 +243,8 @@ flowchart LR
 
 | Project                                  | Group    | Tags                                    | Fan-in (Ca) | Fan-out (Ce) | Instability |
 | ---------------------------------------- | -------- | --------------------------------------- | ----------- | ------------ | ----------- |
-| `angular-examples`                       | apps     | app, type:host                          | 1           | 16           | 0.94        |
-| `ui-kit`                                 | other    | shared, ui                              | 9           | 2            | 0.18        |
+| `angular-examples`                       | apps     | app, type:host                          | 1           | 17           | 0.94        |
+| `ui-kit`                                 | other    | shared, ui                              | 10          | 2            | 0.17        |
 | `feat-lazy-react-diff`                   | features | feature:lazy                            | 1           | 5            | 0.83        |
 | `feat-lazy-some-gpu-calculation`         | features | feature:lazy                            | 1           | 4            | 0.8         |
 | `shader-examples-remote`                 | apps     | app, scope:shader-examples, type:remote | 2           | 3            | 0.6         |
@@ -262,6 +265,7 @@ flowchart LR
 | `utils-gpu-calc`                         | utils    | shared                                  | 3           | 0            | 0           |
 | `ws-thanos`                              | public   | published, shared, ui                   | 3           | 0            | 0           |
 | `feat-lazy-fourier-analysis`             | features | feature:lazy                            | 1           | 1            | 0.5         |
+| `feat-lazy-web-gl`                       | features | feature:lazy                            | 1           | 1            | 0.5         |
 | `feat-shared-reaction-diffusion-kernels` | features | feat-shared                             | 1           | 1            | 0.5         |
 | `fib-wasm-api`                           | other    | api                                     | 1           | 1            | 0.5         |
 | `math`                                   | utils    | shared                                  | 2           | 0            | 0           |

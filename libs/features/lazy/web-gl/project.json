@@ -1,0 +1,33 @@
+{
+  "name": "feat-lazy-web-gl",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/lazy/web-gl/src",
+  "prefix": "feat-lazy-web-gl",
+  "projectType": "library",
+  "tags": ["feature:lazy"],
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "options": {
+        "project": "libs/features/lazy/web-gl/ng-package.json",
+        "tsConfig": "libs/features/lazy/web-gl/tsconfig.lib.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/features/lazy/web-gl/tsconfig.lib.prod.json"
+        },
+        "development": {}
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/features/lazy/web-gl/jest.config.ts",
+        "tsConfig": "libs/features/lazy/web-gl/tsconfig.spec.json"
+      }
+    }
+  }
+}

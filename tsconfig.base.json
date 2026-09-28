@@ -37,6 +37,7 @@
       "@wolsok/feat-lazy-some-gpu-calculation": [
         "./libs/features/lazy/some-gpu-calculation/src/index.ts"
       ],
+      "@wolsok/feat-lazy-web-gl": ["./libs/features/lazy/web-gl/src/index.ts"],
       "@wolsok/feat-lazy-tf-examples": [
         "./libs/features/lazy/tensorflow-examples/src/index.ts"
       ],
