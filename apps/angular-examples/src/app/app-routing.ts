@@ -100,7 +100,8 @@ export const APP_ROUTES: MainNavRoutes = [
   },
   {
     path: 'webGl',
-    loadChildren: () => import('./feature/lazy/web-gl/web-gl.routes'),
+    loadChildren: () =>
+      import('@wolsok/feat-lazy-web-gl').then((m) => m.routes),
     data: { linkText: 'Mandelbrot Deep Zoom Explorer (three.js)' },
   },
   {

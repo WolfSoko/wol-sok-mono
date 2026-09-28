@@ -70,7 +70,7 @@ const MAX_PIXEL_RATIO = 1.5;
 const STATUS_INTERVAL_MS = 120;
 
 @Component({
-  selector: 'app-web-gl',
+  selector: 'feat-lazy-web-gl-mandelbrot',
   templateUrl: './web-gl.component.html',
   styleUrls: ['./web-gl.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -44,6 +44,7 @@ const selectorPrefixes = {
     'featLazyTensor',
     'feat-lazy-tensor',
   ],
+  'libs/features/lazy/web-gl': ['featLazyWebGl', 'feat-lazy-web-gl'],
   'libs/features/lazy/wasm-test': ['lazyFeatWasmTest', 'lazy-feat-wasm-test'],
   'libs/fib-wasm-api': ['shApiFibWasm', 'sh-api-fib-wasm'],
   'libs/public/ws-thanos': ['wsThanos', 'ws-thanos'],
