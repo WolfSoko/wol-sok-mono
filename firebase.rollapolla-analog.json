@@ -1,6 +1,7 @@
 {
   "functions": {
-    "source": "dist/apps/rollapolla-analog/analog/server"
+    "source": "dist/apps/rollapolla-analog/analog/server",
+    "predeploy": ["npm --prefix $RESOURCE_DIR install --omit=dev"]
   },
   "hosting": [
     {
