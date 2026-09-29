@@ -129,7 +129,7 @@
     "@nx/web": "23.2.1",
     "@nx/webpack": "23.2.1",
     "@nx/workspace": "23.2.1",
-    "@playwright/test": "1.63.0",
+    "@playwright/test": "1.56.1",
     "@rspack/core": "2.2.8",
     "@schematics/angular": "22.1.8",
     "@simondotm/nx-firebase": "22.3.3",
