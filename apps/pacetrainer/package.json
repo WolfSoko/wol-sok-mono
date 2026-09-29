@@ -11,7 +11,7 @@
     "@angular/router": "22.2.0",
     "@nx/vite": "23.2.1",
     "h3": "^1.15.11",
-    "vite": "7.1.12",
+    "vite": "8.3.0",
     "vitest": "5.0.2",
     "@playwright/test": "^1.56.1",
     "@angular/forms": "22.2.0",
