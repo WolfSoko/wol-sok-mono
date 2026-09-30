@@ -4,7 +4,7 @@
   "peerDependencies": {
     "@angular/common": "22.2.0",
     "@angular/core": "22.2.0",
-    "@angular/material": "22.2.0",
+    "@angular/material": "22.2.1",
     "@ngneat/until-destroy": "10.0.0",
     "@wolsok/thanos": "^17.0.0",
     "@wolsok/ui-kit": "0.0.1",
@@ -12,7 +12,7 @@
     "@angular/router": "22.2.0",
     "@datorama/akita": "8.0.1",
     "@wolsok/utils-measure-fps": "0.0.1",
-    "@angular/cdk": "22.2.0"
+    "@angular/cdk": "22.2.1"
   },
   "devDependencies": {
     "tslib": "2.5.2"

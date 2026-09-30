@@ -4,7 +4,7 @@
   "peerDependencies": {
     "@angular/common": "22.2.0",
     "@angular/core": "22.2.0",
-    "@angular/material": "22.2.0",
+    "@angular/material": "22.2.1",
     "@angular/forms": "22.2.0",
     "rxjs": "7.8.2",
     "@wolsok/utils-math": "0.0.1",
