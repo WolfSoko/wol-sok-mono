@@ -4,7 +4,7 @@
   "peerDependencies": {
     "@angular/common": "22.2.0",
     "@angular/core": "22.2.0",
-    "@angular/material": "22.2.0",
+    "@angular/material": "22.2.1",
     "@datorama/akita": "^8.0.0",
     "@wolsok/utils-decorators": "0.0.1",
     "rxjs": "7.8.2",

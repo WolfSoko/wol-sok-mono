@@ -5,7 +5,7 @@
     "@analogjs/router": "2.7.5",
     "@angular/common": "22.2.0",
     "@angular/core": "22.2.0",
-    "@angular/material": "22.2.0",
+    "@angular/material": "22.2.1",
     "@angular/platform-browser": "22.2.0",
     "@angular/platform-server": "22.2.0",
     "@angular/router": "22.2.0",
