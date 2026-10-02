@@ -222,6 +222,7 @@ npm run prepare
 
 ```bash
 NX_NO_CLOUD=true NX_CLOUD_ACCESS_TOKEN="" npx nx affected -t test
+NX_NO_CLOUD=true NX_CLOUD_ACCESS_TOKEN="" npx nx run-many -t test
 ```
 
 ## First Steps
