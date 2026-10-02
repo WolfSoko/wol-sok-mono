@@ -214,6 +214,16 @@ nx serve pacetrainer      # ✗ Won't work
 npm run prepare
 ```
 
+#### Issue: `nx affected`/`nx run-many` Fail in Sandboxed Environments
+
+**Symptom**: `[Nx Cloud] Error: Unable to retrieve Nx Cloud bundle`, even when passing `--no-cloud`
+
+**Solution**: In a network-restricted or sandboxed environment, Nx Cloud cannot reach its bundle endpoint. Set these env vars before the command instead of relying on the flag:
+
+```bash
+NX_NO_CLOUD=true NX_CLOUD_ACCESS_TOKEN="" npx nx affected -t test
+```
+
 ## First Steps
 
 ### 1. Explore the Project Structure
