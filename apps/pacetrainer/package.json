@@ -17,6 +17,6 @@
     "@angular/forms": "22.2.1",
     "rxjs": "7.8.2",
     "@angular/animations": "22.2.1",
-    "@angular/ssr": "22.2.0"
+    "@angular/ssr": "22.2.1"
   }
 }
