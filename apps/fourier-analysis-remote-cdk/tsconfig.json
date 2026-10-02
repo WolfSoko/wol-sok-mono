@@ -4,7 +4,8 @@
     "outDir": "../../dist/out-tsc",
     "types": ["node", "jest"],
     "module": "NodeNext",
-    "moduleResolution": "NodeNext"
+    "moduleResolution": "NodeNext",
+    "target": "ESNext"
   },
   "include": [],
   "files": [],
