@@ -152,7 +152,7 @@ describe('SnapSoundService', () => {
   it('should play a sound during the snap', async () => {
     const sound = givenWindow();
 
-    sound.play(2000, 0.5);
+    sound.play(2000, 0.5, 'shards');
     await flushPromises();
 
     expect(startedSources().length).toBeGreaterThan(0);
@@ -167,7 +167,7 @@ describe('SnapSoundService', () => {
   it('should fade out before the animation ends', async () => {
     const sound = givenWindow();
 
-    sound.play(4000, 0.5);
+    sound.play(4000, 0.5, 'shards');
     await flushPromises();
 
     const gains = lastContext().gains.map((gain) => gain.gain);
@@ -282,7 +282,7 @@ describe('SnapSoundService', () => {
   it('should crackle with breaking sounds at the start and with sand later', async () => {
     const sound = givenWindow();
 
-    sound.play(6000, 0.5);
+    sound.play(6000, 0.5, 'shards');
     await flushPromises();
 
     const crackles = lastContext().sources.filter(
@@ -298,7 +298,7 @@ describe('SnapSoundService', () => {
   it('should set the master volume', async () => {
     const sound = givenWindow();
 
-    sound.play(1000, 0.3);
+    sound.play(1000, 0.3, 'shards');
     await flushPromises();
 
     const masterGain = lastContext().gains[0];
@@ -308,7 +308,7 @@ describe('SnapSoundService', () => {
   it('should limit the master output so overlapping snaps stay pleasant', async () => {
     const sound = givenWindow();
 
-    sound.play(1000, 0.5);
+    sound.play(1000, 0.5, 'shards');
     await flushPromises();
 
     const masterGain = lastContext().gains[0];
@@ -322,8 +322,8 @@ describe('SnapSoundService', () => {
   it('should share one audio context between snaps', async () => {
     const sound = givenWindow();
 
-    sound.play(1000, 0.5);
-    sound.play(1000, 0.5);
+    sound.play(1000, 0.5, 'shards');
+    sound.play(1000, 0.5, 'shards');
     await flushPromises();
 
     expect(FakeAudioContext.instances.length).toBe(1);
@@ -332,7 +332,7 @@ describe('SnapSoundService', () => {
   it('should stay silent before the user interacted with the page', async () => {
     const sound = givenWindow({ hasBeenActive: false });
 
-    sound.play(1000, 0.5);
+    sound.play(1000, 0.5, 'shards');
     await flushPromises();
 
     expect(FakeAudioContext.instances.length).toBe(0);
@@ -343,7 +343,7 @@ describe('SnapSoundService', () => {
     FakeAudioContext.resumeTo = 'suspended';
     const sound = givenWindow(undefined);
 
-    sound.play(1000, 0.5);
+    sound.play(1000, 0.5, 'shards');
     await flushPromises();
 
     expect(lastContext().resume).toHaveBeenCalled();
@@ -354,7 +354,7 @@ describe('SnapSoundService', () => {
     FakeAudioContext.initialState = 'suspended';
     const sound = givenWindow();
 
-    sound.play(1000, 0.5);
+    sound.play(1000, 0.5, 'shards');
     await flushPromises();
 
     expect(startedSources().length).toBeGreaterThan(0);
@@ -362,13 +362,13 @@ describe('SnapSoundService', () => {
 
   it('should do nothing without Web Audio support', () => {
     const sound = givenWindow({ hasBeenActive: true }, undefined);
-    expect(() => sound.play(1000, 0.5).stop()).not.toThrow();
+    expect(() => sound.play(1000, 0.5, 'shards').stop()).not.toThrow();
   });
 
   it('should fade out and stop all sources when stopped early', async () => {
     const sound = givenWindow();
 
-    const playing = sound.play(5000, 0.5);
+    const playing = sound.play(5000, 0.5, 'shards');
     await flushPromises();
     const stopCallsBefore = startedSources().map(
       (s) => s.stop.mock.calls.length
@@ -384,7 +384,7 @@ describe('SnapSoundService', () => {
     FakeAudioContext.initialState = 'suspended';
     const sound = givenWindow();
 
-    sound.play(1000, 0.5).stop();
+    sound.play(1000, 0.5, 'shards').stop();
     await flushPromises();
 
     expect(startedSources().length).toBe(0);

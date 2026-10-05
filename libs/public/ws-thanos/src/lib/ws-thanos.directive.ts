@@ -1,6 +1,6 @@
 import { Directive, ElementRef, Output, inject, input } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize, Observable, Subject, Subscription, take, tap } from 'rxjs';
+import { finalize, Observable, Subject, take, tap } from 'rxjs';
 import { AnimationState } from './animation.state';
 import { WS_THANOS_OPTIONS_TOKEN } from './ws-thanos-options.token';
 import type { WsThanosOptions } from './ws-thanos.options';
@@ -22,7 +22,6 @@ export class WsThanosDirective {
   @Output()
   public wsThanosComplete: Observable<void> =
     this.wsThanosCompleteSubject.asObservable();
-  private subscriptions: Subscription = new Subscription();
 
   private readonly vaporizeDomElem: ElementRef<HTMLElement> =
     inject(ElementRef);

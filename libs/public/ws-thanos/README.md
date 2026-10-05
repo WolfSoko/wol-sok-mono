@@ -61,8 +61,15 @@ export class SharedModule {}
 
 #### Sound
 
-Every snap plays a windy, sandy sound, generated live with the Web Audio API (no audio files are downloaded),
-timed to `animationLength` and slightly different every time.
+Every snap plays a sound, generated live with the Web Audio API (no audio files are downloaded),
+timed to `animationLength` and slightly different every time:
+
+1. the element breaks with a crunch of many small cracks and a low rumble,
+2. a gusty wind slowly grows stronger and carries hissing, crackling sand,
+3. wind and sand get weaker in the last third and have faded away at 85% of the animation.
+
+With `crumble: 'dust'` there is no crunch or rumble, the dust only crackles thinly.
+A limiter keeps many simultaneous snaps from getting too loud.
 Browsers only allow audio after the user interacted with the page, so snaps before the first click or tap stay silent.
 Turn it off with `provideWsThanosOptions({ sound: false })`.
 
@@ -104,18 +111,22 @@ or pass them to `WsThanosService.vaporize(element, { crumble: 'cracks' })`.
 Use the directive `wsThanos` on your element and reference it using `@ViewChild(WsThanosDirective)` in your component or
 directly in html via template ref:
 
-```
-<div wsThanos
-  #thanos="thanos"
-  (wsThanosComplete)=onComplete()>
+```html
+<div wsThanos #thanos="thanos" (wsThanosComplete)="onComplete()">
   This div will be vaporized on click
-  </div>
-<button (click)="thanos.vaporizeAndScrollIntoView(removeElement)">
+</div>
+<button (click)="thanos.vaporize(true)">Vaporize</button>
 ```
+
+- `vaporize(removeElem = true)` starts the effect and returns an observable that emits once it is complete.
+  With `removeElem = false` the element fades back in afterwards instead of being removed.
+- `vaporize$(removeElem = true)` returns an observable of the `AnimationState` of every frame. Subscribe to start the effect.
 
 ### `WsThanosService` usage
 
-Inject the 'WsThanosService' into your class. Call 'vaporizeAndScrollIntoView(removeElement)' and subscribe to it.
+Inject the `WsThanosService` into your class and subscribe to `vaporize(element, options?)` to vaporize any element.
+It emits the `AnimationState` of every frame and completes when the effect is done, unsubscribing cancels it.
+The element is not removed, that is up to you.
 
 ## Collaboration
 
@@ -176,6 +187,13 @@ This project uses Nx Release with independent versioning. Version bumps are dete
 See the [Nx Release documentation](https://nx.dev/features/manage-releases) for more details.
 
 ## Migration
+
+To the release with sound and GPU rendering
+
+- The snap sound is on by default. Turn it off with `provideWsThanosOptions({ sound: false })`.
+- Elements crumble into shards by default. Use `provideWsThanosOptions({ crumble: 'dust' })` for the previous look.
+- `maxParticleCount` defaults to 1500000, one particle per device pixel on the GPU.
+  Without WebGL2 at most 400000 particles are used, even if you configured more.
 
 From `1.0.1` to `2.0.0`
 

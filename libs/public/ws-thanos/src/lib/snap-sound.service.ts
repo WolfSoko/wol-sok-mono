@@ -26,6 +26,12 @@ const CRUNCH_SEC = 0.4;
 /** points of the volume curves */
 const CURVE_SAMPLES = 128;
 
+interface SharedAudio {
+  context: AudioContext;
+  master: GainNode;
+  noise: AudioBuffer;
+}
+
 interface UserActivationNavigator {
   userActivation?: { hasBeenActive: boolean };
 }
@@ -42,9 +48,7 @@ export class SnapSoundService {
   private readonly window = inject(DOCUMENT).defaultView as
     | (Window & { AudioContext?: typeof AudioContext })
     | null;
-  private context?: AudioContext;
-  private master?: GainNode;
-  private noise?: AudioBuffer;
+  private audio?: SharedAudio;
 
   /**
    * Play the snap sound. Stays silent when the browser does not allow audio yet,
@@ -53,13 +57,14 @@ export class SnapSoundService {
   public play(
     durationMs: number,
     volume: number,
-    crumble: WsThanosCrumble = 'shards'
+    crumble: WsThanosCrumble
   ): SnapSound {
-    const context = this.getContext();
-    if (context == null || this.master == null) {
+    const audio = this.getAudio();
+    if (audio == null) {
       return SILENT;
     }
-    this.master.gain.setValueAtTime(
+    const { context, master, noise } = audio;
+    master.gain.setValueAtTime(
       Math.min(1, Math.max(0, volume)),
       context.currentTime
     );
@@ -68,7 +73,13 @@ export class SnapSoundService {
     let stopped = false;
     const start = () => {
       if (!stopped && context.state === 'running') {
-        voice = this.createVoice(context, durationMs / 1000, crumble);
+        voice = new SnapVoice(
+          context,
+          master,
+          noise,
+          durationMs / 1000,
+          crumble
+        );
       }
     };
 
@@ -86,9 +97,10 @@ export class SnapSoundService {
     };
   }
 
-  private getContext(): AudioContext | undefined {
-    if (this.context) {
-      return this.context;
+  /** one audio context with master volume and noise, shared by all snaps */
+  private getAudio(): SharedAudio | undefined {
+    if (this.audio) {
+      return this.audio;
     }
     const AudioContextCtor = this.window?.AudioContext;
     const navigator = this.window?.navigator as UserActivationNavigator;
@@ -110,26 +122,10 @@ export class SnapSoundService {
     limiter.release.setValueAtTime(0.3, 0);
     limiter.connect(context.destination);
 
-    this.master = context.createGain();
-    this.master.connect(limiter);
-    this.noise = createNoiseBuffer(context);
-    this.context = context;
-    return context;
-  }
-
-  private createVoice(
-    context: AudioContext,
-    durationSec: number,
-    crumble: WsThanosCrumble
-  ): SnapVoice {
-    // master and noise are created together with the context
-    return new SnapVoice(
-      context,
-      this.master as GainNode,
-      this.noise as AudioBuffer,
-      durationSec,
-      crumble
-    );
+    const master = context.createGain();
+    master.connect(limiter);
+    this.audio = { context, master, noise: createNoiseBuffer(context) };
+    return this.audio;
   }
 }
 
@@ -236,7 +232,7 @@ class SnapVoice {
     filter.Q.setValueAtTime(1.2, start);
     const gain = this.envelopeGain(rumbleEnvelope, 1, RUMBLE_END);
     source.connect(filter).connect(gain).connect(this.output);
-    this.startNoise(source, start, this.at(RUMBLE_END));
+    this.startSource(source, start, this.at(RUMBLE_END));
 
     const thump = context.createOscillator();
     thump.frequency.setValueAtTime(random(55, 70), start);
@@ -280,7 +276,7 @@ class SnapVoice {
 
     const gain = this.envelopeGain(windEnvelope, 0.4);
     source.connect(filter).connect(gusts).connect(gain).connect(this.output);
-    this.startNoise(source, start, this.at(SILENT_AT));
+    this.startSource(source, start, this.at(SILENT_AT));
     this.startSource(gust, start, this.at(SILENT_AT));
   }
 
@@ -294,7 +290,7 @@ class SnapVoice {
     filter.Q.setValueAtTime(0.7, start);
     const gain = this.envelopeGain(sandEnvelope, 0.2);
     source.connect(filter).connect(gain).connect(this.output);
-    this.startNoise(source, start, this.at(SILENT_AT));
+    this.startSource(source, start, this.at(SILENT_AT));
   }
 
   /**
@@ -337,8 +333,7 @@ class SnapVoice {
     { peak, attack, decay, frequency, q }: Burst
   ): void {
     const { context } = this;
-    const source = context.createBufferSource();
-    source.buffer = this.noise;
+    const source = this.noiseSource(false);
 
     const filter = context.createBiquadFilter();
     filter.type = 'bandpass';
@@ -351,7 +346,7 @@ class SnapVoice {
     gain.gain.exponentialRampToValueAtTime(0.0001, when + attack + decay);
 
     source.connect(filter).connect(gain).connect(this.output);
-    this.startNoise(source, when, when + attack + decay);
+    this.startSource(source, when, when + attack + decay);
   }
 
   /** a gain that follows the envelope from the start until the given animation progress */
@@ -369,10 +364,10 @@ class SnapVoice {
     return gain;
   }
 
-  private noiseSource(): AudioBufferSourceNode {
+  private noiseSource(loop = true): AudioBufferSourceNode {
     const source = this.context.createBufferSource();
     source.buffer = this.noise;
-    source.loop = true;
+    source.loop = loop;
     return source;
   }
 
@@ -382,17 +377,15 @@ class SnapVoice {
     when: number,
     until: number
   ): void {
-    source.start(when);
-    this.scheduleStop(source, until);
-  }
-
-  /** start a noise source at a random position of the noise buffer */
-  private startNoise(
-    source: AudioBufferSourceNode,
-    when: number,
-    until: number
-  ): void {
-    source.start(when, random(0, NOISE_SEC - 0.05));
+    if ((source as AudioBufferSourceNode).buffer != null) {
+      // every noise starts at a random position of the noise buffer
+      (source as AudioBufferSourceNode).start(
+        when,
+        random(0, NOISE_SEC - 0.05)
+      );
+    } else {
+      source.start(when);
+    }
     this.scheduleStop(source, until);
   }
 

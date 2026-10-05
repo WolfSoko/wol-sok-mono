@@ -14,7 +14,6 @@ export interface ChooseParticleRendererParams {
 }
 
 export interface ParticleRendererChoice {
-  readonly kind: 'webgl' | 'canvas';
   /** how many particles this renderer can handle */
   readonly maxParticleCount: number;
   /** scale to capture an element of the given css size */
@@ -23,6 +22,8 @@ export interface ParticleRendererChoice {
     particles: Particles,
     params: ParticleRendererParams
   ): ParticleRenderer;
+  /** free what was prepared when no renderer gets created */
+  discard(): void;
 }
 
 /**
@@ -44,16 +45,17 @@ export function chooseParticleRenderer({
   const gl = WebGlParticleRenderer.createContext(canvas);
   if (gl == null) {
     return {
-      kind: 'canvas',
       maxParticleCount: Math.min(maxParticleCount, CANVAS_MAX_PARTICLE_COUNT),
       captureScale: () => 1,
       create: createCanvasRenderer,
+      discard: () => undefined,
     };
   }
 
+  const loseContext = () =>
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
   const maxCanvasSize = WebGlParticleRenderer.maxCanvasSize(gl);
   return {
-    kind: 'webgl',
     maxParticleCount,
     captureScale: (width, height) =>
       computeCaptureScale({ width, height, devicePixelRatio, maxCanvasSize }),
@@ -62,9 +64,10 @@ export function chooseParticleRenderer({
         return new WebGlParticleRenderer(canvas, gl, particles, params);
       } catch (error) {
         console.warn('ws-thanos: falling back to canvas rendering', error);
-        gl.getExtension('WEBGL_lose_context')?.loseContext();
+        loseContext();
         return createCanvasRenderer(particles, params);
       }
     },
+    discard: loseContext,
   };
 }

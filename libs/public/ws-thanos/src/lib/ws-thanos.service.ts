@@ -3,6 +3,7 @@ import { DOCUMENT, Injectable, inject } from '@angular/core';
 import { default as html2canvas } from 'html2canvas';
 import {
   animationFrameScheduler,
+  defer,
   finalize,
   from,
   interval,
@@ -46,7 +47,10 @@ export class WsThanosService {
     elem: HTMLElement,
     options?: Partial<WsThanosOptions>
   ): Observable<AnimationState> {
-    return this.vaporizeIntern(elem, { ...this.thanosOptions, ...options });
+    // nothing is prepared before someone subscribes
+    return defer(() =>
+      this.vaporizeIntern(elem, { ...this.thanosOptions, ...options })
+    );
   }
 
   private vaporizeIntern(
@@ -67,6 +71,7 @@ export class WsThanosService {
     const { width, height } = elem.getBoundingClientRect();
     const scale = rendererChoice.captureScale(width, height);
     const seed = Math.random() * 1000;
+    let effect: RunningEffect | undefined;
 
     const html2CanvasPromise: Promise<HTMLCanvasElement> = html2canvas(elem, {
       backgroundColor: null,
@@ -103,8 +108,8 @@ export class WsThanosService {
           seed,
         });
 
-        this.placeEffectCanvas(elem, renderer.canvas, scale);
-        renderer.canvas.dataset['wsThanosRenderer'] = rendererChoice.kind;
+        this.placeEffectCanvas(elem, renderer.canvas, width, height);
+        renderer.canvas.dataset['wsThanosRenderer'] = renderer.kind;
         renderer.canvas.dataset['wsThanosCrumble'] = renderer.crumble;
         // when every pixel became a particle, the particles replace the element right away
         const fadeOutMs = particles.sampled
@@ -114,7 +119,7 @@ export class WsThanosService {
         elem.style.opacity = '0';
 
         const { sound, soundVolume } = options;
-        return {
+        effect = {
           renderer,
           sound: sound
             ? this.snapSound.play(
@@ -124,52 +129,44 @@ export class WsThanosService {
               )
             : undefined,
         };
+        return effect;
       }),
       switchMap(({ renderer, sound }) => {
         let time = 0;
-        let completed = false;
         return interval(1000 / 60, animationFrameScheduler).pipe(
           timeInterval(),
           tap((deltaT) => (time += deltaT.interval)),
-          map(
-            (deltaT): AnimationState => ({
-              deltaTSec: deltaT.interval / 1000,
-              animationT: time / animationLength,
-              maxWidth: renderer.canvas.width,
-              maxHeight: renderer.canvas.height,
-            })
-          ),
+          map((deltaT): AnimationState => ({
+            deltaTSec: deltaT.interval / 1000,
+            animationT: time / animationLength,
+            maxWidth: renderer.canvas.width,
+            maxHeight: renderer.canvas.height,
+          })),
           tap((animationState) => renderer.render(animationState)),
-          takeWhile((animationState) => {
-            completed = animationState.animationT > 1;
-            return !completed;
-          }),
-          finalize(() => {
-            renderer.dispose();
-            if (!completed) {
-              sound?.stop();
-            }
-          })
+          takeWhile((animationState) => animationState.animationT <= 1),
+          // a completed effect lets the sound blow away, a cancelled one stops it
+          tap({ unsubscribe: () => sound?.stop(), error: () => sound?.stop() })
         );
-      })
+      }),
+      finalize(() =>
+        effect ? effect.renderer.dispose() : rendererChoice.discard()
+      )
     );
   }
 
+  /** the element sits at the bottom left of the larger effect canvas */
   private placeEffectCanvas(
     elem: HTMLElement,
     canvas: HTMLCanvasElement,
-    scale: number
+    width: number,
+    height: number
   ): void {
-    const { left: offsetLeft, top: offsetTop } = this.offsetInParent(elem);
-
-    const cssHeight = canvas.height / scale;
-    // the element sits at the bottom left of the taller effect canvas
-    const elemHeight = cssHeight / EFFECT_HEIGHT_SCALE;
+    const { left, top } = this.offsetInParent(elem);
     canvas.style.position = 'absolute';
-    canvas.style.left = `${offsetLeft}px`;
-    canvas.style.top = `${offsetTop - elemHeight * (EFFECT_HEIGHT_SCALE - 1)}px`;
-    canvas.style.width = `${canvas.width / scale}px`;
-    canvas.style.height = `${cssHeight}px`;
+    canvas.style.left = `${left}px`;
+    canvas.style.top = `${top - height * (EFFECT_HEIGHT_SCALE - 1)}px`;
+    canvas.style.width = `${width * EFFECT_WIDTH_SCALE}px`;
+    canvas.style.height = `${height * EFFECT_HEIGHT_SCALE}px`;
     canvas.style.zIndex = '2000';
     canvas.style.pointerEvents = 'none';
     elem.insertAdjacentElement('beforebegin', canvas);

@@ -1,12 +1,14 @@
 import { AnimationState } from '../animation.state';
 import { EFFECT_HEIGHT_SCALE, EFFECT_WIDTH_SCALE } from '../capture-scale';
+import { crumbleShape } from '../crumble-shape';
 import { ParticleRenderer, ParticleRendererParams } from '../particle-renderer';
-import { WsThanosCrumble } from '../ws-thanos.options';
 import {
   PARTICLE_STATE_LENGTH,
   ParticleStateIndex,
   Particles,
 } from '../particles';
+import { vaporizingFront } from '../vaporizing-front';
+import { WsThanosCrumble } from '../ws-thanos.options';
 import {
   AttributeLocation,
   CRACK_FEEDBACK_VARYINGS,
@@ -28,25 +30,35 @@ const UPDATE_UNIFORMS = [
   'uSize',
   'uDeltaTSec',
   'uAnimationT',
-  'uMaxParticleX',
-  'uMinParticleY',
   'uParticleAcceleration',
   'uSeed',
   'uCrumble',
   'uPixelScale',
+  'uFrontTime',
+  'uFrontRadiusPow',
+  'uFade',
+  'uCoarseCrack',
+  'uFineCrack',
+  'uShardGrow',
 ] as const;
 
-const DRAW_UNIFORMS = [
-  'uSize',
-  'uCrumble',
-  'uAnimationT',
-  'uPixelScale',
-] as const;
+const DRAW_UNIFORMS = ['uSize', 'uPixelScale', 'uShardGrow'] as const;
 
 type Uniforms<T extends readonly string[]> = Record<
   T[number],
   WebGLUniformLocation | null
 >;
+
+/** one vertex attribute read from a buffer */
+interface AttributeBinding {
+  buffer: WebGLBuffer;
+  location: number;
+  size: number;
+  type?: GLenum;
+  normalized?: boolean;
+  stride: number;
+  offset: number;
+}
 
 /** smallest shard size in css pixels */
 const MIN_CELL_SIZE = 28;
@@ -58,14 +70,17 @@ const MIN_CELL_SIZE = 28;
  * Once at the start the crack program computes the shard and crack distances of every particle.
  */
 export class WebGlParticleRenderer implements ParticleRenderer {
+  public readonly kind = 'webgl';
   public readonly crumble: WsThanosCrumble;
+  private readonly count: number;
+  private readonly maxParticleX: number;
+  private readonly minParticleY: number;
   private readonly updateProgram: WebGLProgram;
   private readonly drawProgram: WebGLProgram;
-  private readonly stateBuffers: [WebGLBuffer, WebGLBuffer];
-  private readonly colorBuffer: WebGLBuffer;
-  private readonly crackBuffer: WebGLBuffer;
-  private readonly updateVaos: [WebGLVertexArrayObject, WebGLVertexArrayObject];
-  private readonly drawVaos: [WebGLVertexArrayObject, WebGLVertexArrayObject];
+  private readonly buffers: WebGLBuffer[] = [];
+  private readonly stateBuffers: WebGLBuffer[];
+  private readonly updateVaos: WebGLVertexArrayObject[];
+  private readonly drawVaos: WebGLVertexArrayObject[];
   private readonly updateUniforms: Uniforms<typeof UPDATE_UNIFORMS>;
   private readonly drawUniforms: Uniforms<typeof DRAW_UNIFORMS>;
   private current = 0;
@@ -101,10 +116,14 @@ export class WebGlParticleRenderer implements ParticleRenderer {
   public constructor(
     public readonly canvas: HTMLCanvasElement,
     private readonly gl: WebGL2RenderingContext,
-    private readonly particles: Particles,
+    // only the scalars are kept, the particle arrays live on the GPU
+    particles: Particles,
     private readonly params: ParticleRendererParams
   ) {
     this.crumble = params.crumble;
+    this.count = particles.count;
+    this.maxParticleX = particles.maxParticleX;
+    this.minParticleY = particles.minParticleY;
     canvas.width = params.width;
     canvas.height = params.height;
 
@@ -118,20 +137,65 @@ export class WebGlParticleRenderer implements ParticleRenderer {
       DRAW_FRAGMENT_SHADER
     );
 
+    // the second state buffer is written by the first frame, it needs no data
     this.stateBuffers = [
       this.createBuffer(particles.state, gl.DYNAMIC_COPY),
-      this.createBuffer(particles.state, gl.DYNAMIC_COPY),
+      this.createBuffer(particles.state.byteLength, gl.DYNAMIC_COPY),
     ];
-    this.colorBuffer = this.createBuffer(particles.colors, gl.STATIC_DRAW);
-    this.crackBuffer = this.createCracks();
-    this.updateVaos = [
-      this.createUpdateVao(this.stateBuffers[0]),
-      this.createUpdateVao(this.stateBuffers[1]),
-    ];
-    this.drawVaos = [
-      this.createDrawVao(this.stateBuffers[0]),
-      this.createDrawVao(this.stateBuffers[1]),
-    ];
+    const colorBuffer = this.createBuffer(particles.colors, gl.STATIC_DRAW);
+    // dust has no cracks, the shaders then read the default attribute values
+    const crackBuffer =
+      params.crumble === 'dust' ? undefined : this.createCracks();
+
+    const crackAttributes: AttributeBinding[] = crackBuffer
+      ? [
+          {
+            buffer: crackBuffer,
+            location: AttributeLocation.CRACK,
+            size: 4,
+            stride: CRACK_STRIDE,
+            offset: 0,
+          },
+          {
+            buffer: crackBuffer,
+            location: AttributeLocation.CELL_RANDOM,
+            size: 1,
+            stride: CRACK_STRIDE,
+            offset: 4 * FLOAT_BYTES,
+          },
+        ]
+      : [];
+    this.updateVaos = this.stateBuffers.map((buffer) =>
+      this.createVao([
+        ...stateAttributes(buffer, [
+          [AttributeLocation.POSITION, 2, ParticleStateIndex.X],
+          [AttributeLocation.VELOCITY, 2, ParticleStateIndex.VX],
+          [AttributeLocation.ACCELERATION, 2, ParticleStateIndex.AX],
+          [AttributeLocation.ALPHA, 1, ParticleStateIndex.ALPHA],
+          [AttributeLocation.RELEASED_AT, 1, ParticleStateIndex.RELEASED_AT],
+        ]),
+        ...crackAttributes,
+      ])
+    );
+    this.drawVaos = this.stateBuffers.map((buffer) =>
+      this.createVao([
+        ...stateAttributes(buffer, [
+          [AttributeLocation.POSITION, 2, ParticleStateIndex.X],
+          [AttributeLocation.ALPHA, 1, ParticleStateIndex.ALPHA],
+          [AttributeLocation.RELEASED_AT, 1, ParticleStateIndex.RELEASED_AT],
+        ]),
+        ...crackAttributes,
+        {
+          buffer: colorBuffer,
+          location: AttributeLocation.COLOR,
+          size: 4,
+          type: gl.UNSIGNED_BYTE,
+          normalized: true,
+          stride: 0,
+          offset: 0,
+        },
+      ])
+    );
 
     this.updateUniforms = this.uniformLocations(
       this.updateProgram,
@@ -139,50 +203,60 @@ export class WebGlParticleRenderer implements ParticleRenderer {
     );
     this.drawUniforms = this.uniformLocations(this.drawProgram, DRAW_UNIFORMS);
 
+    // everything that stays the same for the whole animation is set once
+    gl.useProgram(this.updateProgram);
+    gl.uniform2f(this.updateUniforms.uSize, params.width, params.height);
+    gl.uniform1f(
+      this.updateUniforms.uParticleAcceleration,
+      params.particleAcceleration
+    );
+    gl.uniform1f(this.updateUniforms.uSeed, params.seed);
+    gl.uniform1i(this.updateUniforms.uCrumble, CRUMBLE_MODE[params.crumble]);
+    gl.uniform1f(this.updateUniforms.uPixelScale, params.pixelScale);
+    gl.useProgram(this.drawProgram);
+    gl.uniform2f(this.drawUniforms.uSize, params.width, params.height);
+    gl.uniform1f(this.drawUniforms.uPixelScale, params.pixelScale);
+
+    gl.viewport(0, 0, params.width, params.height);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.clearColor(0, 0, 0, 0);
   }
 
   public render({ deltaTSec, animationT }: AnimationState): void {
-    const { gl, particles, params } = this;
+    const { gl, params } = this;
     if (gl.isContextLost()) {
       return;
     }
     const next = 1 - this.current;
-    const { width, height } = this.canvas;
+    const front = vaporizingFront(
+      animationT,
+      this.maxParticleX,
+      this.minParticleY,
+      params.height
+    );
+    const shape = crumbleShape(params.crumble, animationT);
 
     // simulate: read the current state, write the next one
-    gl.useProgram(this.updateProgram);
     const uniforms = this.updateUniforms;
-    gl.uniform2f(uniforms.uSize, width, height);
+    gl.useProgram(this.updateProgram);
     gl.uniform1f(uniforms.uDeltaTSec, deltaTSec);
     gl.uniform1f(uniforms.uAnimationT, animationT);
-    gl.uniform1f(uniforms.uMaxParticleX, particles.maxParticleX);
-    gl.uniform1f(uniforms.uMinParticleY, particles.minParticleY);
-    gl.uniform1f(uniforms.uParticleAcceleration, params.particleAcceleration);
-    gl.uniform1f(uniforms.uSeed, params.seed);
-    gl.uniform1i(uniforms.uCrumble, CRUMBLE_MODE[params.crumble]);
-    gl.uniform1f(uniforms.uPixelScale, params.pixelScale);
+    gl.uniform1f(uniforms.uFrontTime, front.time);
+    gl.uniform1f(uniforms.uFrontRadiusPow, front.radiusPow);
+    gl.uniform1f(uniforms.uFade, front.fade);
+    gl.uniform1f(uniforms.uCoarseCrack, shape.coarseCrack * params.pixelScale);
+    gl.uniform1f(uniforms.uFineCrack, shape.fineCrack * params.pixelScale);
+    gl.uniform1f(uniforms.uShardGrow, shape.shardGrow);
     gl.bindVertexArray(this.updateVaos[this.current]);
-    gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, this.stateBuffers[next]);
-    gl.enable(gl.RASTERIZER_DISCARD);
-    gl.beginTransformFeedback(gl.POINTS);
-    gl.drawArrays(gl.POINTS, 0, particles.count);
-    gl.endTransformFeedback();
-    gl.disable(gl.RASTERIZER_DISCARD);
-    gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
+    this.runTransformFeedback(this.stateBuffers[next]);
 
     // draw the next state
-    gl.viewport(0, 0, width, height);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(this.drawProgram);
-    gl.uniform2f(this.drawUniforms.uSize, width, height);
-    gl.uniform1i(this.drawUniforms.uCrumble, CRUMBLE_MODE[params.crumble]);
-    gl.uniform1f(this.drawUniforms.uAnimationT, animationT);
-    gl.uniform1f(this.drawUniforms.uPixelScale, params.pixelScale);
+    gl.uniform1f(this.drawUniforms.uShardGrow, shape.shardGrow);
     gl.bindVertexArray(this.drawVaos[next]);
-    gl.drawArrays(gl.POINTS, 0, particles.count);
+    gl.drawArrays(gl.POINTS, 0, this.count);
     gl.bindVertexArray(null);
 
     this.current = next;
@@ -193,9 +267,7 @@ export class WebGlParticleRenderer implements ParticleRenderer {
     [...this.updateVaos, ...this.drawVaos].forEach((vao) =>
       gl.deleteVertexArray(vao)
     );
-    [...this.stateBuffers, this.colorBuffer, this.crackBuffer].forEach(
-      (buffer) => gl.deleteBuffer(buffer)
-    );
+    this.buffers.forEach((buffer) => gl.deleteBuffer(buffer));
     gl.deleteProgram(this.updateProgram);
     gl.deleteProgram(this.drawProgram);
     // browsers only allow a few live contexts, free this one right away
@@ -203,11 +275,23 @@ export class WebGlParticleRenderer implements ParticleRenderer {
     this.canvas.remove();
   }
 
+  /** run the bound vertex array through the bound program into the target buffer */
+  private runTransformFeedback(target: WebGLBuffer): void {
+    const { gl } = this;
+    gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, target);
+    gl.enable(gl.RASTERIZER_DISCARD);
+    gl.beginTransformFeedback(gl.POINTS);
+    gl.drawArrays(gl.POINTS, 0, this.count);
+    gl.endTransformFeedback();
+    gl.disable(gl.RASTERIZER_DISCARD);
+    gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
+  }
+
   /** run the crack program once: shard center and crack distances per particle */
   private createCracks(): WebGLBuffer {
-    const { gl, particles, params } = this;
+    const { gl, params } = this;
     const crackBuffer = this.createBuffer(
-      new Float32Array(particles.count * CRACK_LENGTH),
+      this.count * CRACK_STRIDE,
       gl.STATIC_COPY
     );
     const program = this.createProgram(
@@ -223,26 +307,22 @@ export class WebGlParticleRenderer implements ParticleRenderer {
       MIN_CELL_SIZE * params.pixelScale,
       elementSize / 2.2
     );
+    const uniforms = this.uniformLocations(program, [
+      'uCellSize',
+      'uSeed',
+    ] as const);
 
-    const vao = this.createVao();
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.stateBuffers[0]);
-    this.bindStateAttribute(
-      AttributeLocation.POSITION,
-      2,
-      ParticleStateIndex.X
+    // the first state buffer still holds the start positions
+    const vao = this.createVao(
+      stateAttributes(this.stateBuffers[0], [
+        [AttributeLocation.POSITION, 2, ParticleStateIndex.X],
+      ])
     );
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
     gl.useProgram(program);
-    gl.uniform1f(gl.getUniformLocation(program, 'uCellSize'), cellSize);
-    gl.uniform1f(gl.getUniformLocation(program, 'uSeed'), params.seed);
-    gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, crackBuffer);
-    gl.enable(gl.RASTERIZER_DISCARD);
-    gl.beginTransformFeedback(gl.POINTS);
-    gl.drawArrays(gl.POINTS, 0, particles.count);
-    gl.endTransformFeedback();
-    gl.disable(gl.RASTERIZER_DISCARD);
-    gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
+    gl.uniform1f(uniforms.uCellSize, cellSize);
+    gl.uniform1f(uniforms.uSeed, params.seed);
+    gl.bindVertexArray(vao);
+    this.runTransformFeedback(crackBuffer);
     gl.bindVertexArray(null);
 
     gl.deleteVertexArray(vao);
@@ -254,37 +334,11 @@ export class WebGlParticleRenderer implements ParticleRenderer {
     program: WebGLProgram,
     names: T
   ): Uniforms<T> {
-    return names.reduce(
-      (uniforms, name) => ({
-        ...uniforms,
-        [name]: this.gl.getUniformLocation(program, name),
-      }),
-      {} as Uniforms<T>
-    );
-  }
-
-  /** shard center and crack distances (vec4) and the shard random (float) */
-  private bindCrackAttributes(): void {
-    const { gl } = this;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.crackBuffer);
-    gl.enableVertexAttribArray(AttributeLocation.CRACK);
-    gl.vertexAttribPointer(
-      AttributeLocation.CRACK,
-      4,
-      gl.FLOAT,
-      false,
-      CRACK_STRIDE,
-      0
-    );
-    gl.enableVertexAttribArray(AttributeLocation.CELL_RANDOM);
-    gl.vertexAttribPointer(
-      AttributeLocation.CELL_RANDOM,
-      1,
-      gl.FLOAT,
-      false,
-      CRACK_STRIDE,
-      4 * FLOAT_BYTES
-    );
+    const uniforms = {} as Uniforms<T>;
+    for (const name of names) {
+      uniforms[name as T[number]] = this.gl.getUniformLocation(program, name);
+    }
+    return uniforms;
   }
 
   private createProgram(
@@ -338,8 +392,9 @@ export class WebGlParticleRenderer implements ParticleRenderer {
     return shader;
   }
 
+  /** a buffer with the given data, or of the given byte size when it is filled on the GPU */
   private createBuffer(
-    data: Float32Array | Uint8Array,
+    data: Float32Array | Uint8Array | number,
     usage: GLenum
   ): WebGLBuffer {
     const { gl } = this;
@@ -348,104 +403,52 @@ export class WebGlParticleRenderer implements ParticleRenderer {
       throw new Error('Could not create WebGL buffer');
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, usage);
+    // bufferData has separate overloads for a byte size and for data
+    if (typeof data === 'number') {
+      gl.bufferData(gl.ARRAY_BUFFER, data, usage);
+    } else {
+      gl.bufferData(gl.ARRAY_BUFFER, data, usage);
+    }
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    this.buffers.push(buffer);
     return buffer;
   }
 
-  private createVao(): WebGLVertexArrayObject {
-    const vao = this.gl.createVertexArray();
+  private createVao(bindings: AttributeBinding[]): WebGLVertexArrayObject {
+    const { gl } = this;
+    const vao = gl.createVertexArray();
     if (vao == null) {
       throw new Error('Could not create WebGL vertex array');
     }
-    this.gl.bindVertexArray(vao);
-    return vao;
-  }
-
-  private bindStateAttribute(
-    location: number,
-    size: number,
-    stateIndex: ParticleStateIndex
-  ): void {
-    const { gl } = this;
-    gl.enableVertexAttribArray(location);
-    gl.vertexAttribPointer(
-      location,
-      size,
-      gl.FLOAT,
-      false,
-      STATE_STRIDE,
-      stateIndex * FLOAT_BYTES
-    );
-  }
-
-  private createUpdateVao(stateBuffer: WebGLBuffer): WebGLVertexArrayObject {
-    const { gl } = this;
-    const vao = this.createVao();
-    gl.bindBuffer(gl.ARRAY_BUFFER, stateBuffer);
-    this.bindStateAttribute(
-      AttributeLocation.POSITION,
-      2,
-      ParticleStateIndex.X
-    );
-    this.bindStateAttribute(
-      AttributeLocation.VELOCITY,
-      2,
-      ParticleStateIndex.VX
-    );
-    this.bindStateAttribute(
-      AttributeLocation.ACCELERATION,
-      2,
-      ParticleStateIndex.AX
-    );
-    this.bindStateAttribute(
-      AttributeLocation.ALPHA,
-      1,
-      ParticleStateIndex.ALPHA
-    );
-    this.bindStateAttribute(
-      AttributeLocation.RELEASED_AT,
-      1,
-      ParticleStateIndex.RELEASED_AT
-    );
-    this.bindCrackAttributes();
+    gl.bindVertexArray(vao);
+    for (const binding of bindings) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, binding.buffer);
+      gl.enableVertexAttribArray(binding.location);
+      gl.vertexAttribPointer(
+        binding.location,
+        binding.size,
+        binding.type ?? gl.FLOAT,
+        binding.normalized ?? false,
+        binding.stride,
+        binding.offset
+      );
+    }
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     return vao;
   }
+}
 
-  private createDrawVao(stateBuffer: WebGLBuffer): WebGLVertexArrayObject {
-    const { gl } = this;
-    const vao = this.createVao();
-    gl.bindBuffer(gl.ARRAY_BUFFER, stateBuffer);
-    this.bindStateAttribute(
-      AttributeLocation.POSITION,
-      2,
-      ParticleStateIndex.X
-    );
-    this.bindStateAttribute(
-      AttributeLocation.ALPHA,
-      1,
-      ParticleStateIndex.ALPHA
-    );
-    this.bindStateAttribute(
-      AttributeLocation.RELEASED_AT,
-      1,
-      ParticleStateIndex.RELEASED_AT
-    );
-    this.bindCrackAttributes();
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-    gl.enableVertexAttribArray(AttributeLocation.COLOR);
-    gl.vertexAttribPointer(
-      AttributeLocation.COLOR,
-      4,
-      gl.UNSIGNED_BYTE,
-      true,
-      0,
-      0
-    );
-    gl.bindVertexArray(null);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    return vao;
-  }
+/** attributes read from the interleaved particle state */
+function stateAttributes(
+  buffer: WebGLBuffer,
+  attributes: [location: number, size: number, index: ParticleStateIndex][]
+): AttributeBinding[] {
+  return attributes.map(([location, size, index]) => ({
+    buffer,
+    location,
+    size,
+    stride: STATE_STRIDE,
+    offset: index * FLOAT_BYTES,
+  }));
 }

@@ -70,7 +70,7 @@ describe('chooseParticleRenderer', () => {
       });
 
     it('should fall back to the canvas renderer', () => {
-      expect(choose().kind).toBe('canvas');
+      expect(choose().create(particles, rendererParams).kind).toBe('canvas');
       expect(choose().create(particles, rendererParams)).toBeInstanceOf(
         CanvasParticleRenderer
       );
@@ -95,7 +95,7 @@ describe('chooseParticleRenderer', () => {
       });
 
     it('should render on the GPU', () => {
-      expect(choose().kind).toBe('webgl');
+      expect(choose().create(particles, rendererParams).kind).toBe('webgl');
       expect(choose().create(particles, rendererParams)).toBeInstanceOf(
         WebGlParticleRenderer
       );
@@ -118,6 +118,15 @@ describe('chooseParticleRenderer', () => {
         CanvasParticleRenderer
       );
       expect(console.warn).toHaveBeenCalled();
+    });
+
+    it('should free the GPU context when no renderer gets created', () => {
+      const loseContext = jest.fn();
+      const gl = fakeWebGl2({ getExtension: () => ({ loseContext }) });
+
+      choose(gl).discard();
+
+      expect(loseContext).toHaveBeenCalled();
     });
   });
 });

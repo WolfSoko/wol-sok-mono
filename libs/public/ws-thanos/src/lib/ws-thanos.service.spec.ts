@@ -118,7 +118,7 @@ describe('WsThanosService', () => {
     const service = givenService({ animationLength: 10_000 });
     const elem = givenElement();
 
-    vaporize(service, elem);
+    void vaporize(service, elem);
     await untilEffectStarted(elem);
     subscription?.unsubscribe();
 
@@ -129,7 +129,7 @@ describe('WsThanosService', () => {
     const service = givenService({ animationLength: 10_000 });
     const elem = givenElement();
 
-    vaporize(service, elem);
+    void vaporize(service, elem);
     const canvas = await untilEffectStarted(elem);
 
     expect(canvas.dataset['wsThanosRenderer']).toBe('canvas');
@@ -139,7 +139,7 @@ describe('WsThanosService', () => {
     const service = givenService({ animationLength: 10_000 });
     const elem = givenElement();
 
-    vaporize(service, elem);
+    void vaporize(service, elem);
     await untilEffectStarted(elem);
 
     expect(elem.style.transition).toBe('opacity 200ms ease-out');
@@ -153,7 +153,7 @@ describe('WsThanosService', () => {
     });
     const elem = givenElement();
 
-    vaporize(service, elem);
+    void vaporize(service, elem);
     await untilEffectStarted(elem);
 
     expect(elem.style.transition).toBe('opacity 8000ms ease-out');
@@ -174,7 +174,7 @@ describe('WsThanosService', () => {
     const service = givenService({ animationLength: 10_000 });
     const elem = givenElement();
 
-    vaporize(service, elem, { crumble: 'chunks' });
+    void vaporize(service, elem, { crumble: 'chunks' });
     const canvas = await untilEffectStarted(elem);
 
     expect(canvas.dataset['wsThanosCrumble']).toBe('dust');

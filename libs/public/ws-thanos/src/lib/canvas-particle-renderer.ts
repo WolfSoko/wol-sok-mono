@@ -7,6 +7,7 @@ import {
   Particles,
 } from './particles';
 import { SimplexNoise } from './simplex-noise';
+import { FLOW_FIELD, isBehindFront, vaporizingFront } from './vaporizing-front';
 
 /** the CPU can't keep up with more particles than this */
 export const CANVAS_MAX_PARTICLE_COUNT = 400_000;
@@ -23,9 +24,13 @@ export interface UpdateParticlesParams {
 
 /** Fallback renderer that simulates on the CPU and draws with a 2d context. */
 export class CanvasParticleRenderer implements ParticleRenderer {
+  public readonly kind = 'canvas';
   /** the CPU can't afford to simulate cracks and shards */
   public readonly crumble = 'dust';
-  private readonly noise = new SimplexNoise({ frequency: 0.01, min: 0 });
+  private readonly noise = new SimplexNoise({
+    frequency: FLOW_FIELD.frequency,
+    min: 0,
+  });
   private readonly context: CanvasRenderingContext2D;
 
   public constructor(
@@ -82,16 +87,12 @@ export function updateParticlesOnCpu({
   noise,
   seed,
 }: UpdateParticlesParams): void {
-  // the time is used to calculate the vaporization front.
-  const time = Math.sin(animationT * (Math.PI / 2)) * 1.1;
-
-  const startAccelerateX = maxParticleX - time * maxParticleX;
-  const startAccelerateY = time * (maxHeight - minParticleY) + minParticleY;
-
-  const lengthY = maxHeight - startAccelerateY;
-  const accelerateRadiusPow =
-    startAccelerateX * startAccelerateX + lengthY * lengthY;
-  const fade = 1 - Math.pow(animationT, 15);
+  const front = vaporizingFront(
+    animationT,
+    maxParticleX,
+    minParticleY,
+    maxHeight
+  );
 
   for (let i = 0; i < count; i++) {
     const base = i * PARTICLE_STATE_LENGTH;
@@ -102,19 +103,11 @@ export function updateParticlesOnCpu({
     const particleX = state[base + P.X];
     const particleY = state[base + P.Y];
 
-    if (state[base + P.AX] === 0 && state[base + P.AY] === 0) {
-      let pYLength = maxHeight - particleY;
-      let pXLength = particleX;
-
-      // some random looking functions give the vaporizing front a frayed edge.
-      // no tan(): its poles would break off whole rows and columns at once
-      pXLength += (particleX % deltaTSec) * 0.5;
-      pXLength += Math.sin((pXLength / 30 + 723.394) * time + seed * 12.5) * 11;
-      pYLength +=
-        Math.cos((pYLength / 100 + 2323.234) * time + seed * 456.1) * 23;
-
-      const pLength = pXLength * pXLength + pYLength * pYLength;
-      if (pLength > accelerateRadiusPow) {
+    if (state[base + P.RELEASED_AT] === 0) {
+      if (
+        isBehindFront(particleX, particleY, maxHeight, deltaTSec, seed, front)
+      ) {
+        state[base + P.RELEASED_AT] = Math.max(animationT, 0.0001);
         state[base + P.AX] = Math.random();
         state[base + P.AY] = Math.random() * -1;
       }
@@ -123,12 +116,12 @@ export function updateParticlesOnCpu({
       state[base + P.AX] += noise.scaled3D(
         particleX,
         particleY,
-        seed + 33.23,
+        seed + FLOW_FIELD.xSeedOffset,
         FLOW_FIELD_RES
       );
       state[base + P.AY] -= noise.scaled3D(
         particleX,
-        seed / 13.23,
+        seed / FLOW_FIELD.ySeedDivisor,
         particleY,
         FLOW_FIELD_RES
       );
@@ -138,8 +131,7 @@ export function updateParticlesOnCpu({
     state[base + P.VY] += state[base + P.AY] * particleAcceleration * deltaTSec;
     state[base + P.X] += state[base + P.VX] * deltaTSec;
     state[base + P.Y] += state[base + P.VY] * deltaTSec;
-    // fade particle out (very late)
-    state[base + P.ALPHA] *= fade;
+    state[base + P.ALPHA] *= front.fade;
   }
 }
 

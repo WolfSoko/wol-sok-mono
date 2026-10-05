@@ -10,7 +10,7 @@ export enum ParticleStateIndex {
   AX = 4,
   AY = 5,
   ALPHA = 6,
-  /** animationT when the particle broke off, 0 while attached (GPU only) */
+  /** animationT when the particle broke off, 0 while attached, negative while a chunk falls */
   RELEASED_AT = 7,
 }
 
@@ -18,7 +18,7 @@ export const PARTICLE_STATE_LENGTH = 8;
 
 export interface Particles {
   count: number;
-  /** position, velocity, acceleration and alpha (0-255) per particle */
+  /** position, velocity, acceleration, alpha (0-255) and release time per particle */
   state: Float32Array;
   /** rgba (0-255) per particle */
   colors: Uint8Array;
@@ -41,14 +41,26 @@ export function createParticles(
 ): Particles {
   const { width, height, data } = imageData;
 
-  const candidates: number[] = [];
+  const candidates = new Uint32Array(width * height);
+  let candidateCount = 0;
   for (let pixel = 0; pixel < width * height; pixel++) {
     if (data[pixel * 4 + 3] >= MIN_PARTICLE_ALPHA) {
-      candidates.push(pixel);
+      candidates[candidateCount++] = pixel;
     }
   }
 
-  const count = Math.min(candidates.length, maxParticleCount);
+  const count = Math.min(candidateCount, maxParticleCount);
+  const sampled = count < candidateCount;
+  if (sampled) {
+    // partial Fisher-Yates: the first count candidates become a random sample
+    for (let i = 0; i < count; i++) {
+      const j = i + ~~(Math.random() * (candidateCount - i));
+      const swap = candidates[i];
+      candidates[i] = candidates[j];
+      candidates[j] = swap;
+    }
+  }
+
   const state = new Float32Array(count * PARTICLE_STATE_LENGTH);
   const colors = new Uint8Array(count * 4);
   const offsetY = effectHeight - height;
@@ -56,12 +68,7 @@ export function createParticles(
   let maxParticleX = 0;
   let minParticleY = effectHeight;
   for (let i = 0; i < count; i++) {
-    // pick a random candidate and replace it with the last one to prevent double selection
-    const index = ~~(Math.random() * candidates.length);
-    const pixel = candidates[index];
-    candidates[index] = candidates[candidates.length - 1];
-    candidates.pop();
-
+    const pixel = candidates[i];
     const x = pixel % width;
     const y = ~~(pixel / width);
     maxParticleX = Math.max(maxParticleX, x);
@@ -71,8 +78,10 @@ export function createParticles(
     state[base + ParticleStateIndex.X] = x;
     state[base + ParticleStateIndex.Y] = y + offsetY;
     state[base + ParticleStateIndex.ALPHA] = data[pixel * 4 + 3];
-    colors.set(data.subarray(pixel * 4, pixel * 4 + 4), i * 4);
+    colors[i * 4] = data[pixel * 4];
+    colors[i * 4 + 1] = data[pixel * 4 + 1];
+    colors[i * 4 + 2] = data[pixel * 4 + 2];
+    colors[i * 4 + 3] = data[pixel * 4 + 3];
   }
-  const sampled = candidates.length > 0;
   return { count, state, colors, maxParticleX, minParticleY, sampled };
 }

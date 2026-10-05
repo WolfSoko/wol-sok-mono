@@ -1,4 +1,5 @@
 import { MIN_PARTICLE_ALPHA } from '../particles';
+import { FLOW_FIELD, FRONT_FRAY } from '../vaporizing-front';
 import { WsThanosCrumble } from '../ws-thanos.options';
 import { SIMPLEX_NOISE_3D } from './simplex-noise.glsl';
 
@@ -35,11 +36,17 @@ export const CRACK_FEEDBACK_VARYINGS = ['vCrack', 'vCellRandom'];
 /** floats per particle written by the crack program */
 export const CRACK_LENGTH = 5;
 
+const L = AttributeLocation;
+
+/** GLSL float literal */
+const f = (value: number): string =>
+  Number.isInteger(value) ? value.toFixed(1) : String(value);
+
 const IS_VISIBLE_INSIDE = /* glsl */ `
 bool isVisibleInside(vec2 position, float alpha, vec2 size) {
   return position.x <= size.x && position.x >= 0.0 &&
     position.y <= size.y && position.y >= 0.0 &&
-    alpha >= ${MIN_PARTICLE_ALPHA.toFixed(1)};
+    alpha >= ${f(MIN_PARTICLE_ALPHA)};
 }
 `;
 
@@ -59,41 +66,19 @@ float toUnit(uint x) {
 `;
 
 /**
- * How the crumble modes crack and move an attached particle over time.
- * aCrack: shard center (xy), distance to the next coarse (z) and fine (w) crack, all in device pixels.
+ * Shards shift and tilt around their center while uShardGrow rises.
+ * aCrack: shard center (xy), distance to the next coarse (z) and fine (w) crack, in device pixels.
  */
-const CRUMBLE = /* glsl */ `
-const int DUST = 0;
-const int CRACKS = 1;
-const int SHARDS = 2;
-const int CHUNKS = 3;
-
-/** cracks get wider and finer cracks appear while the element decays */
-bool isInCrack(int crumble, vec4 crack, float animationT, float pixelScale) {
-  if (crumble == DUST) {
-    return false;
-  }
-  float coarseWidth = crumble == CHUNKS
-    ? 0.8 + 1.2 * smoothstep(0.0, 0.4, animationT)
-    : 0.8 + 4.0 * smoothstep(0.0, 0.55, animationT);
-  float fineWidth = crumble == CHUNKS
-    ? 0.0
-    : 2.5 * smoothstep(0.12, 0.6, animationT);
-  return crack.z < coarseWidth * 0.5 * pixelScale ||
-    crack.w < fineWidth * 0.5 * pixelScale;
-}
-
-/** shards slowly shift and tilt around their center */
-vec2 shardOffset(int crumble, vec2 position, vec4 crack, float cellRandom, float animationT, float pixelScale) {
-  if (crumble != SHARDS) {
+const SHARD_OFFSET = /* glsl */ `
+vec2 shardOffset(vec2 position, vec4 crack, float cellRandom) {
+  if (uShardGrow == 0.0) {
     return vec2(0.0);
   }
-  float grow = smoothstep(0.03, 0.6, animationT);
-  float angle = (cellRandom - 0.5) * 0.14 * grow;
+  float angle = (cellRandom - 0.5) * 0.14 * uShardGrow;
   vec2 relative = position - crack.xy;
   vec2 rotated = mat2(cos(angle), sin(angle), -sin(angle), cos(angle)) * relative;
   float direction = fract(cellRandom * 7.31) * 6.2831853;
-  vec2 drift = vec2(cos(direction), sin(direction) * 0.6 - 0.4) * 5.0 * pixelScale * grow;
+  vec2 drift = vec2(cos(direction), sin(direction) * 0.6 - 0.4) * 5.0 * uPixelScale * uShardGrow;
   return rotated - relative + drift;
 }
 `;
@@ -103,7 +88,7 @@ export const CRACK_VERTEX_SHADER = /* glsl */ `#version 300 es
 precision highp float;
 precision highp int;
 
-layout(location = 0) in vec2 aPosition;
+layout(location = ${L.POSITION}) in vec2 aPosition;
 
 uniform float uCellSize;
 uniform float uSeed;
@@ -113,14 +98,15 @@ out float vCellRandom;
 
 ${HASH}
 
-vec2 cellRandom(vec2 cell, uint salt) {
+vec2 cellRandom(vec2 cell, uint saltedSeed) {
   uvec2 c = uvec2(ivec2(cell) + 32768);
-  uint h = hash(c.x ^ hash(c.y ^ hash(floatBitsToUint(uSeed) ^ salt)));
+  uint h = hash(c.x ^ hash(c.y ^ saltedSeed));
   return vec2(toUnit(h), toUnit(hash(h)));
 }
 
 /** voronoi cell of p: center (xy), distance to the cell border (z), random (w), in cell units */
 vec4 voronoi(vec2 p, uint salt) {
+  uint saltedSeed = hash(floatBitsToUint(uSeed) ^ salt);
   vec2 n = floor(p);
   vec2 f = fract(p);
   vec2 nearestCell = vec2(0.0);
@@ -129,7 +115,7 @@ vec4 voronoi(vec2 p, uint salt) {
   for (int j = -1; j <= 1; j++) {
     for (int i = -1; i <= 1; i++) {
       vec2 g = vec2(float(i), float(j));
-      vec2 r = g + cellRandom(n + g, salt) - f;
+      vec2 r = g + cellRandom(n + g, saltedSeed) - f;
       float d = dot(r, r);
       if (d < nearestDistance) {
         nearestDistance = d;
@@ -143,14 +129,15 @@ vec4 voronoi(vec2 p, uint salt) {
   for (int j = -2; j <= 2; j++) {
     for (int i = -2; i <= 2; i++) {
       vec2 g = nearestCell + vec2(float(i), float(j));
-      vec2 r = g + cellRandom(n + g, salt) - f;
+      vec2 r = g + cellRandom(n + g, saltedSeed) - f;
       vec2 between = r - nearest;
       if (dot(between, between) > 0.00001) {
         border = min(border, dot(0.5 * (nearest + r), normalize(between)));
       }
     }
   }
-  return vec4(p + nearest, border, cellRandom(n + nearestCell, salt + 7u).x);
+  uint randomSeed = hash(floatBitsToUint(uSeed) ^ (salt + 7u));
+  return vec4(p + nearest, border, cellRandom(n + nearestCell, randomSeed).x);
 }
 
 void main() {
@@ -167,23 +154,29 @@ export const UPDATE_VERTEX_SHADER = /* glsl */ `#version 300 es
 precision highp float;
 precision highp int;
 
-layout(location = 0) in vec2 aPosition;
-layout(location = 1) in vec2 aVelocity;
-layout(location = 2) in vec2 aAcceleration;
-layout(location = 3) in float aAlpha;
-layout(location = 5) in float aReleasedAt;
-layout(location = 6) in vec4 aCrack;
-layout(location = 7) in float aCellRandom;
+layout(location = ${L.POSITION}) in vec2 aPosition;
+layout(location = ${L.VELOCITY}) in vec2 aVelocity;
+layout(location = ${L.ACCELERATION}) in vec2 aAcceleration;
+layout(location = ${L.ALPHA}) in float aAlpha;
+layout(location = ${L.RELEASED_AT}) in float aReleasedAt;
+layout(location = ${L.CRACK}) in vec4 aCrack;
+layout(location = ${L.CELL_RANDOM}) in float aCellRandom;
 
 uniform vec2 uSize;
 uniform float uDeltaTSec;
 uniform float uAnimationT;
-uniform float uMaxParticleX;
-uniform float uMinParticleY;
 uniform float uParticleAcceleration;
 uniform float uSeed;
 uniform int uCrumble;
 uniform float uPixelScale;
+/** see vaporizingFront() */
+uniform float uFrontTime;
+uniform float uFrontRadiusPow;
+uniform float uFade;
+/** see crumbleShape(), in device pixels */
+uniform float uCoarseCrack;
+uniform float uFineCrack;
+uniform float uShardGrow;
 
 out vec2 vPosition;
 out vec2 vVelocity;
@@ -192,9 +185,8 @@ out float vAlpha;
 /** 0 while attached, < 0 while a chunk falls, > 0 once it is dust */
 out float vReleasedAt;
 
-const float PI = 3.141592653589793;
-const float NOISE_FREQUENCY = 0.01;
-/** part of the animation a chunk falls before it crumbles */
+const int CHUNKS = ${CRUMBLE_MODE.chunks};
+/** part of the animation a chunk flies before it crumbles */
 const float CHUNK_LIFE = 0.12;
 /** weak, the effect canvas ends at the bottom of the element, so chunks jump up and arc */
 const float CHUNK_GRAVITY = 4.0;
@@ -202,11 +194,11 @@ const float CHUNK_GRAVITY = 4.0;
 ${IS_VISIBLE_INSIDE}
 ${SIMPLEX_NOISE_3D}
 ${HASH}
-${CRUMBLE}
+${SHARD_OFFSET}
 
 /** simplex noise mapped to [0, 1] like SimplexNoise({ min: 0 }) */
 float noise01(vec3 position) {
-  return snoise(position * NOISE_FREQUENCY) * 0.5 + 0.5;
+  return snoise(position * ${f(FLOW_FIELD.frequency)}) * 0.5 + 0.5;
 }
 
 /** random number in [0, 1] per particle, frame and salt */
@@ -215,24 +207,19 @@ float random(uint salt) {
   return toUnit(hash(uint(gl_VertexID) ^ hash(frame ^ salt)));
 }
 
-/** has the vaporizing front passed this position */
+vec2 dustAcceleration() {
+  return vec2(random(1u), -random(2u));
+}
+
+/** has the vaporizing front passed this position, see isBehindFront() */
 bool isBehindFront(vec2 position) {
-  // the time is used to calculate the vaporization front
-  float time = sin(uAnimationT * (PI / 2.0)) * 1.1;
-  float startAccelerateX = uMaxParticleX - time * uMaxParticleX;
-  float startAccelerateY = time * (uSize.y - uMinParticleY) + uMinParticleY;
-  float lengthY = uSize.y - startAccelerateY;
-  float accelerateRadiusPow = startAccelerateX * startAccelerateX + lengthY * lengthY;
-
-  // some random looking functions give the vaporizing front a frayed edge.
-  // no tan(): its poles would break off whole rows and columns at once
-  float pXLength = position.x;
+  float pXLength = position.x + mod(position.x, uDeltaTSec) * 0.5;
   float pYLength = uSize.y - position.y;
-  pXLength += mod(position.x, uDeltaTSec) * 0.5;
-  pXLength += sin((pXLength / 30.0 + 723.394) * time + uSeed * 12.5) * 11.0;
-  pYLength += cos((pYLength / 100.0 + 2323.234) * time + uSeed * 456.1) * 23.0;
-
-  return pXLength * pXLength + pYLength * pYLength > accelerateRadiusPow;
+  pXLength += sin((pXLength / ${f(FRONT_FRAY.xWave)} + ${f(FRONT_FRAY.xPhase)}) * uFrontTime
+    + uSeed * ${f(FRONT_FRAY.xSeed)}) * ${f(FRONT_FRAY.xAmplitude)};
+  pYLength += cos((pYLength / ${f(FRONT_FRAY.yWave)} + ${f(FRONT_FRAY.yPhase)}) * uFrontTime
+    + uSeed * ${f(FRONT_FRAY.ySeed)}) * ${f(FRONT_FRAY.yAmplitude)};
+  return pXLength * pXLength + pYLength * pYLength > uFrontRadiusPow;
 }
 
 void main() {
@@ -247,50 +234,46 @@ void main() {
     return;
   }
 
-  vec2 dustAcceleration = vec2(random(1u), -random(2u));
   float releaseT = max(uAnimationT, 0.0001);
 
   if (aReleasedAt == 0.0) {
-    bool inCrack = isInCrack(uCrumble, aCrack, uAnimationT, uPixelScale);
+    bool inCrack = aCrack.z < uCoarseCrack || aCrack.w < uFineCrack;
     // chunks break off as a whole, so the shard center decides
     vec2 frontPosition = uCrumble == CHUNKS ? aCrack.xy : aPosition;
 
-    if (inCrack) {
-      // the crack crumbles to dust that trickles out gently
-      vPosition += shardOffset(uCrumble, aPosition, aCrack, aCellRandom, uAnimationT, uPixelScale);
-      vAcceleration = dustAcceleration * 0.3;
+    if (inCrack || isBehindFront(frontPosition)) {
+      vPosition += shardOffset(aPosition, aCrack, aCellRandom);
       vReleasedAt = releaseT;
-    } else if (isBehindFront(frontPosition)) {
-      vPosition += shardOffset(uCrumble, aPosition, aCrack, aCellRandom, uAnimationT, uPixelScale);
-      if (uCrumble == CHUNKS) {
-        // the whole chunk shares velocity and gravity, so it falls in one piece
+      if (inCrack) {
+        // the crack crumbles to dust that trickles out gently
+        vAcceleration = dustAcceleration() * 0.3;
+      } else if (uCrumble == CHUNKS) {
+        // the whole chunk shares velocity and gravity, so it flies in one piece
         float side = fract(aCellRandom * 13.7) - 0.5;
         vVelocity = vec2(side * 90.0, -60.0 - aCellRandom * 70.0) * uPixelScale;
         vAcceleration = vec2(0.0, CHUNK_GRAVITY);
         vReleasedAt = -releaseT;
       } else {
-        vAcceleration = dustAcceleration;
-        vReleasedAt = releaseT;
+        vAcceleration = dustAcceleration();
       }
     }
   } else if (aReleasedAt < 0.0) {
-    // a falling chunk crumbles to dust after a while
+    // a flying chunk crumbles to dust after a while
     if (uAnimationT + aReleasedAt > CHUNK_LIFE + aCellRandom * 0.08) {
-      vAcceleration = dustAcceleration;
+      vAcceleration = dustAcceleration();
       vReleasedAt = releaseT;
     }
   } else {
     // flow along the noise velocity field
     vAcceleration += vec2(
-      noise01(vec3(aPosition.x, aPosition.y, uSeed + 33.23)),
-      -noise01(vec3(aPosition.x, uSeed / 13.23, aPosition.y))
+      noise01(vec3(aPosition.x, aPosition.y, uSeed + ${f(FLOW_FIELD.xSeedOffset)})),
+      -noise01(vec3(aPosition.x, uSeed / ${f(FLOW_FIELD.ySeedDivisor)}, aPosition.y))
     );
   }
 
   vVelocity += vAcceleration * uParticleAcceleration * uDeltaTSec;
   vPosition += vVelocity * uDeltaTSec;
-  // fade particle out (very late)
-  vAlpha *= 1.0 - pow(uAnimationT, 15.0);
+  vAlpha *= uFade;
 }
 `;
 
@@ -308,28 +291,27 @@ export const DRAW_VERTEX_SHADER = /* glsl */ `#version 300 es
 precision highp float;
 precision highp int;
 
-layout(location = 0) in vec2 aPosition;
-layout(location = 3) in float aAlpha;
-layout(location = 4) in vec4 aColor;
-layout(location = 5) in float aReleasedAt;
-layout(location = 6) in vec4 aCrack;
-layout(location = 7) in float aCellRandom;
+layout(location = ${L.POSITION}) in vec2 aPosition;
+layout(location = ${L.ALPHA}) in float aAlpha;
+layout(location = ${L.COLOR}) in vec4 aColor;
+layout(location = ${L.RELEASED_AT}) in float aReleasedAt;
+layout(location = ${L.CRACK}) in vec4 aCrack;
+layout(location = ${L.CELL_RANDOM}) in float aCellRandom;
 
 uniform vec2 uSize;
-uniform int uCrumble;
-uniform float uAnimationT;
 uniform float uPixelScale;
+uniform float uShardGrow;
 
 out vec4 vColor;
 
 ${IS_VISIBLE_INSIDE}
-${CRUMBLE}
+${SHARD_OFFSET}
 
 void main() {
   vec2 position = aPosition;
   if (aReleasedAt == 0.0) {
     // attached shards shift and tilt before they break off
-    position += shardOffset(uCrumble, aPosition, aCrack, aCellRandom, uAnimationT, uPixelScale);
+    position += shardOffset(aPosition, aCrack, aCellRandom);
   }
   if (!isVisibleInside(position, aAlpha, uSize)) {
     // move outside of clip space

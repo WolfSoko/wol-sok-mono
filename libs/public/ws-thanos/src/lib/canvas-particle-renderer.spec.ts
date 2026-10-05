@@ -94,10 +94,9 @@ describe('CanvasParticleRenderer', () => {
         });
       }
 
-      const ax = valuesOf(particles, ParticleStateIndex.AX);
-      const ay = valuesOf(particles, ParticleStateIndex.AY);
-      const released = distance.filter((_, i) => ax[i] !== 0 || ay[i] !== 0);
-      const waiting = distance.filter((_, i) => ax[i] === 0 && ay[i] === 0);
+      const releasedAt = valuesOf(particles, ParticleStateIndex.RELEASED_AT);
+      const released = distance.filter((_, i) => releasedAt[i] > 0);
+      const waiting = distance.filter((_, i) => releasedAt[i] === 0);
       expect(released.length).toBeGreaterThan(0);
       expect(waiting.length).toBeGreaterThan(0);
       // the front frays a bit, but no particle far behind it breaks off early

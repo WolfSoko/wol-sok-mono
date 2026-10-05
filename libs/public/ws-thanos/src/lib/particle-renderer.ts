@@ -3,6 +3,8 @@ import { WsThanosCrumble } from './ws-thanos.options';
 
 /** moves and draws the particles of one vaporizing element */
 export interface ParticleRenderer {
+  /** where the simulation runs */
+  readonly kind: 'webgl' | 'canvas';
   /** the effect canvas, positioned by the caller */
   readonly canvas: HTMLCanvasElement;
   /** how this renderer breaks the element apart */

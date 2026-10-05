@@ -38,7 +38,7 @@ export class AppComponent {
     },
     {
       crumble: 'chunks',
-      description: 'Whole chunks break off, fall and crumble to dust.',
+      description: 'Whole chunks break off, jump away and crumble to dust.',
     },
   ];
   public readonly maxParticleCounts = [
