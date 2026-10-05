@@ -50,11 +50,27 @@ export class SharedModule {}
 
 #### `WsThanosOptions` to configure ws-thanos:
 
-| field                |  type  | default |                        description |
-| -------------------- | :----: | ------: | ---------------------------------: |
-| animationLength      | number |    5000 |         the animation length in ms |
-| maxParticleCount     | number |  400000 |            max amount of particles |
-| particleAcceleration | number |      30 | speed of the particle acceleration |
+| field                |  type   | default |                                                          description |
+| -------------------- | :-----: | ------: | -------------------------------------------------------------------: |
+| animationLength      | number  |    5000 |                                           the animation length in ms |
+| maxParticleCount     | number  | 1500000 | max amount of particles (capped at 400000 without WebGL2, see below) |
+| particleAcceleration | number  |      30 |                                   speed of the particle acceleration |
+| sound                | boolean |    true |                           play a windy, sandy sound while vaporizing |
+| soundVolume          | number  |     0.5 |                                      volume of the sound from 0 to 1 |
+
+#### Sound
+
+Every snap plays a windy, sandy sound, generated live with the Web Audio API (no audio files are downloaded),
+timed to `animationLength` and slightly different every time.
+Browsers only allow audio after the user interacted with the page, so snaps before the first click or tap stay silent.
+Turn it off with `provideWsThanosOptions({ sound: false })`.
+
+#### GPU rendering
+
+The particles are simulated and drawn on the graphics card with WebGL2,
+one particle per device pixel (up to a pixel ratio of 2) for crisp results on high resolution screens.
+Without WebGL2 ws-thanos falls back to the CPU canvas renderer, which captures at css pixels and uses at most 400000 particles.
+The effect canvas has a `data-ws-thanos-renderer` attribute (`webgl` or `canvas`) showing which renderer is in use.
 
 ### `WsThanosDirective` usage
 

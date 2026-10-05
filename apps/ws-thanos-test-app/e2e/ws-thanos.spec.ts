@@ -167,4 +167,79 @@ test.describe('WsThanos Directive E2E Tests', () => {
     await page.waitForTimeout(2000);
     await expect(target).not.toBeAttached();
   });
+  test('should render the particles on the GPU', async ({ page }) => {
+    const fallbackWarnings: string[] = [];
+    page.on('console', (message) => {
+      if (message.text().includes('falling back to canvas')) {
+        fallbackWarnings.push(message.text());
+      }
+    });
+
+    await page.getByTestId('btn-vaporize-restore').click();
+
+    const effectCanvas = page.locator('canvas[data-ws-thanos-renderer]');
+    await expect(effectCanvas).toHaveAttribute(
+      'data-ws-thanos-renderer',
+      'webgl'
+    );
+    expect(fallbackWarnings).toEqual([]);
+  });
+
+  test('should draw visible particles on the GPU canvas', async ({ page }) => {
+    await page.getByTestId('btn-vaporize-restore').click();
+    const effectCanvas = page.locator('canvas[data-ws-thanos-renderer]');
+    await expect(effectCanvas).toBeAttached();
+    await page.waitForTimeout(150);
+    // only the particles should be visible in the screenshot
+    await page.addStyleTag({
+      content: `
+        body * { visibility: hidden !important; }
+        canvas[data-ws-thanos-renderer] { visibility: visible !important; }
+      `,
+    });
+
+    const screenshot = await effectCanvas.screenshot({ omitBackground: true });
+    const visiblePixels = await page.evaluate(async (base64) => {
+      const png = await fetch(`data:image/png;base64,${base64}`);
+      const blob = await png.blob();
+      const bitmap = await createImageBitmap(blob);
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+      const context = canvas.getContext(
+        '2d'
+      ) as OffscreenCanvasRenderingContext2D;
+      context.drawImage(bitmap, 0, 0);
+      const { data } = context.getImageData(0, 0, bitmap.width, bitmap.height);
+      let count = 0;
+      for (let i = 3; i < data.length; i += 4) {
+        count += data[i] > 0 ? 1 : 0;
+      }
+      return count;
+    }, screenshot.toString('base64'));
+    expect(visiblePixels).toBeGreaterThan(50);
+  });
+
+  test('should play the snap sound after a click', async ({ page }) => {
+    await page.addInitScript(() => {
+      const record = window as unknown as { startedSounds: number };
+      record.startedSounds = 0;
+      const start = AudioBufferSourceNode.prototype.start;
+      AudioBufferSourceNode.prototype.start = function (
+        ...args: Parameters<AudioBufferSourceNode['start']>
+      ) {
+        record.startedSounds++;
+        return start.apply(this, args);
+      };
+    });
+    await page.reload();
+
+    await page.getByTestId('btn-vaporize-restore').click();
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as unknown as { startedSounds: number }).startedSounds
+        )
+      )
+      .toBeGreaterThan(0);
+  });
 });
