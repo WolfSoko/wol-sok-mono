@@ -86,4 +86,141 @@
       Vaporize All
     </button>
   </div>
+  <div class="test-section">
+    <h2>Crumble Variants</h2>
+    <div class="crumble-grid">
+      @for (variant of crumbleVariants; track variant.crumble) {
+        <div class="crumble-item">
+          <div
+            class="test-box crumble-card"
+            wsThanos
+            #crumble="thanos"
+            [wsThanosOptions]="{ crumble: variant.crumble }"
+            [attr.data-testid]="'crumble-' + variant.crumble"
+          >
+            <h3>{{ variant.crumble }}</h3>
+            <p>{{ variant.description }}</p>
+          </div>
+          <button
+            class="btn"
+            (click)="crumble.vaporize(false)"
+            [attr.data-testid]="'btn-crumble-' + variant.crumble"
+          >
+            Vaporize {{ variant.crumble }}
+          </button>
+        </div>
+      }
+    </div>
+    <button
+      class="btn"
+      (click)="vaporizeAllVariants()"
+      data-testid="btn-crumble-all"
+    >
+      Vaporize all variants
+    </button>
+  </div>
+
+  <div class="test-section">
+    <h2>Playground</h2>
+    <div class="playground">
+      <div class="controls">
+        <label>
+          Crumble
+          <select
+            data-testid="playground-crumble"
+            (change)="crumble.set($any($event.target).value)"
+          >
+            @for (variant of crumbleVariants; track variant.crumble) {
+              <option
+                [value]="variant.crumble"
+                [selected]="variant.crumble === crumble()"
+              >
+                {{ variant.crumble }}
+              </option>
+            }
+          </select>
+        </label>
+        <label>
+          Duration: {{ animationLength() / 1000 }}s
+          <input
+            type="range"
+            min="1000"
+            max="20000"
+            step="500"
+            data-testid="playground-duration"
+            [value]="animationLength()"
+            (input)="animationLength.set(+$any($event.target).value)"
+          />
+        </label>
+        <label>
+          Acceleration: {{ particleAcceleration() }}
+          <input
+            type="range"
+            min="5"
+            max="200"
+            step="5"
+            data-testid="playground-acceleration"
+            [value]="particleAcceleration()"
+            (input)="particleAcceleration.set(+$any($event.target).value)"
+          />
+        </label>
+        <label>
+          Max particles
+          <select
+            data-testid="playground-particles"
+            (change)="maxParticleCount.set(+$any($event.target).value)"
+          >
+            @for (count of maxParticleCounts; track count) {
+              <option [value]="count" [selected]="count === maxParticleCount()">
+                {{ count.toLocaleString() }}
+              </option>
+            }
+          </select>
+        </label>
+        <label class="checkbox">
+          <input
+            type="checkbox"
+            data-testid="playground-sound"
+            [checked]="sound()"
+            (change)="sound.set($any($event.target).checked)"
+          />
+          Sound
+        </label>
+        <label>
+          Volume: {{ (soundVolume() * 100).toFixed(0) }}%
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            data-testid="playground-volume"
+            [disabled]="!sound()"
+            [value]="soundVolume()"
+            (input)="soundVolume.set(+$any($event.target).value)"
+          />
+        </label>
+      </div>
+      <div class="playground-stage">
+        <div
+          class="test-box playground-card"
+          wsThanos
+          #playground="thanos"
+          [wsThanosOptions]="playgroundOptions()"
+          data-testid="playground"
+        >
+          <h3>Play with me</h3>
+          <p>
+            Pick some options and snap this card away. It comes back afterwards.
+          </p>
+        </div>
+        <button
+          class="btn"
+          (click)="playground.vaporize(false)"
+          data-testid="btn-playground"
+        >
+          Vaporize
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

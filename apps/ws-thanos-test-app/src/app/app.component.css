@@ -83,3 +83,63 @@ h2 {
   font-weight: bold;
   margin-top: 1rem;
 }
+
+.crumble-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.crumble-card {
+  min-height: 140px;
+  margin: 0 0 0.5rem;
+}
+
+.crumble-card h3 {
+  text-transform: capitalize;
+}
+
+.playground {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 2fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 700px) {
+  .playground {
+    grid-template-columns: 1fr;
+  }
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.controls label.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.controls select {
+  padding: 0.4rem;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.playground-card {
+  min-height: 220px;
+  margin-top: 0;
+}
