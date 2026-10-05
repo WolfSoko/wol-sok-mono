@@ -131,7 +131,7 @@ describe('SnapSoundService', () => {
     FakeAudioContext.resumeTo = 'running';
   });
 
-  it('should play a sound for the duration of the snap', async () => {
+  it('should play a sound during the snap', async () => {
     const sound = givenWindow();
 
     sound.play(2000, 0.5);
@@ -141,7 +141,25 @@ describe('SnapSoundService', () => {
     const stopTimes = startedSources().map(
       (source) => source.stop.mock.calls[0]?.[0]
     );
-    expect(Math.max(...stopTimes)).toBeGreaterThanOrEqual(2);
+    // carries most of the 2 second snap, but is gone before it ends
+    expect(Math.max(...stopTimes)).toBeGreaterThanOrEqual(1.6);
+    expect(Math.max(...stopTimes)).toBeLessThanOrEqual(2);
+  });
+
+  it('should fade out before the animation ends', async () => {
+    const sound = givenWindow();
+
+    sound.play(4000, 0.5);
+    await flushPromises();
+
+    const silencedAt = lastContext()
+      .gains.flatMap(
+        (gain) => gain.gain.exponentialRampToValueAtTime.mock.calls
+      )
+      .filter(([value]) => (value as unknown as number) <= 0.001)
+      .map(([, time]) => time as unknown as number);
+    expect(silencedAt.length).toBeGreaterThan(2);
+    expect(Math.max(...silencedAt)).toBeLessThanOrEqual(4 * 0.85);
   });
 
   it('should set the master volume', async () => {

@@ -8,8 +8,8 @@ export interface SnapSound {
 
 const SILENT: SnapSound = { stop: () => undefined };
 
-/** extra seconds after the animation for the sound to blow away */
-const TAIL_SEC = 0.6;
+/** part of the animation after which the sound has blown away */
+const SILENT_AT = 0.85;
 const NOISE_SEC = 2;
 const FADE_OUT_SEC = 0.08;
 const PEAK_GRAINS_PER_SEC = 70;
@@ -129,7 +129,7 @@ const random = (min: number, max: number) => min + Math.random() * (max - min);
 class SnapVoice {
   private readonly output: GainNode;
   private readonly sources: AudioScheduledSourceNode[] = [];
-  private readonly endTime: number;
+  private readonly silentAt: number;
 
   public constructor(
     private readonly context: AudioContext,
@@ -138,7 +138,7 @@ class SnapVoice {
     private readonly durationSec: number
   ) {
     const now = context.currentTime;
-    this.endTime = now + durationSec + TAIL_SEC;
+    this.silentAt = now + durationSec * SILENT_AT;
     this.output = context.createGain();
     this.output.gain.setValueAtTime(1, now);
     this.output.connect(destination);
@@ -190,7 +190,7 @@ class SnapVoice {
 
   /** low rumbling noise with a moving filter and slow gusts */
   private createWind(now: number): void {
-    const { context, durationSec, endTime } = this;
+    const { context, durationSec, silentAt } = this;
     const source = this.noiseSource();
     source.playbackRate.setValueAtTime(random(0.85, 1.15), now);
 
@@ -202,13 +202,13 @@ class SnapVoice {
       random(700, 1000),
       now + durationSec * 0.35
     );
-    filter.frequency.exponentialRampToValueAtTime(220, endTime);
+    filter.frequency.exponentialRampToValueAtTime(220, silentAt);
 
     const gain = context.createGain();
     gain.gain.setValueAtTime(0.0001, now);
     gain.gain.exponentialRampToValueAtTime(0.55, now + durationSec * 0.15);
-    gain.gain.setValueAtTime(0.55, now + durationSec * 0.55);
-    gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
+    gain.gain.setValueAtTime(0.55, now + durationSec * 0.35);
+    gain.gain.exponentialRampToValueAtTime(0.0001, silentAt);
 
     // gusts: a slow oscillator wobbles the wind volume
     const gust = context.createOscillator();
@@ -218,13 +218,13 @@ class SnapVoice {
     gust.connect(gustDepth).connect(gain.gain);
 
     source.connect(filter).connect(gain).connect(this.output);
-    this.startNoise(source, now, endTime);
-    this.startSource(gust, now, endTime);
+    this.startNoise(source, now, silentAt);
+    this.startSource(gust, now, silentAt);
   }
 
   /** bright sand hiss, loudest while the vaporizing front sweeps the element */
   private createHiss(now: number): void {
-    const { context, durationSec, endTime } = this;
+    const { context, durationSec, silentAt } = this;
     const source = this.noiseSource();
 
     const filter = context.createBiquadFilter();
@@ -235,26 +235,31 @@ class SnapVoice {
     const gain = context.createGain();
     gain.gain.setValueAtTime(0.0001, now);
     gain.gain.exponentialRampToValueAtTime(0.22, now + durationSec * 0.3);
-    gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSec * 0.75);
 
     source.connect(filter).connect(gain).connect(this.output);
-    this.startNoise(source, now, endTime);
+    this.startNoise(source, now, silentAt);
   }
 
   /** tiny crackles of sand grains, most dense when the most particles break off */
   private createGrains(now: number): void {
     const { context, durationSec } = this;
+    const grainsEnd = durationSec * SILENT_AT;
+    // grain density rises and falls with the vaporizing front
+    const densityAt = (t: number) => Math.sin((Math.PI * t) / grainsEnd);
     let t = 0;
-    while (t < durationSec) {
-      // grain density rises and falls with the vaporizing front
-      const density = Math.sin(Math.PI * Math.min(1, t / (durationSec * 0.85)));
-      const rate = Math.max(1, PEAK_GRAINS_PER_SEC * density);
+    for (;;) {
+      const rate = Math.max(1, PEAK_GRAINS_PER_SEC * densityAt(t));
       t += -Math.log(1 - Math.random()) / rate;
-      if (t >= durationSec || Math.random() > density) {
+      const length = random(0.004, 0.02);
+      if (t + length > grainsEnd) {
+        break;
+      }
+      const density = densityAt(t);
+      if (Math.random() > density) {
         continue;
       }
       const when = now + t;
-      const length = random(0.004, 0.02);
 
       const source = context.createBufferSource();
       source.buffer = this.noise;

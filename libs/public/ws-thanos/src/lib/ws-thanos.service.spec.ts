@@ -134,6 +134,30 @@ describe('WsThanosService', () => {
     expect(canvas.dataset['wsThanosRenderer']).toBe('canvas');
   });
 
+  it('should hide the element quickly when every pixel became a particle', async () => {
+    const service = givenService({ animationLength: 10_000 });
+    const elem = givenElement();
+
+    vaporize(service, elem);
+    await untilEffectStarted(elem);
+
+    expect(elem.style.transition).toBe('opacity 200ms ease-out');
+    expect(elem.style.opacity).toBe('0');
+  });
+
+  it('should fade the element slowly when only some pixels became particles', async () => {
+    const service = givenService({
+      animationLength: 10_000,
+      maxParticleCount: 5,
+    });
+    const elem = givenElement();
+
+    vaporize(service, elem);
+    await untilEffectStarted(elem);
+
+    expect(elem.style.transition).toBe('opacity 8000ms ease-out');
+  });
+
   it('should remove the effect canvas when done', async () => {
     const service = givenService();
     const elem = givenElement();

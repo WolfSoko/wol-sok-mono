@@ -52,6 +52,26 @@ describe('createParticles', () => {
     expect(Array.from(particles.colors)).toEqual([10, 21, 30, 200]);
   });
 
+  it('should tell when every visible pixel became a particle', () => {
+    expect(
+      createParticles(
+        imageDataOf(4, 4, () => true),
+        16,
+        10
+      ).sampled
+    ).toBe(false);
+  });
+
+  it('should tell when the particles are only a sample of the pixels', () => {
+    expect(
+      createParticles(
+        imageDataOf(4, 4, () => true),
+        15,
+        10
+      ).sampled
+    ).toBe(true);
+  });
+
   it('should start particles at rest', () => {
     const particles = createParticles(
       imageDataOf(3, 3, () => true),

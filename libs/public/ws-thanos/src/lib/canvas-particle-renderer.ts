@@ -104,11 +104,10 @@ export function updateParticlesOnCpu({
       let pYLength = maxHeight - particleY;
       let pXLength = particleX;
 
-      // some random looking functions give the vaporizing front a nice frayed edge
-      pXLength += Math.tan((pXLength / 20.12) * time + seed) * 0.5;
+      // some random looking functions give the vaporizing front a frayed edge.
+      // no tan(): its poles would break off whole rows and columns at once
       pXLength += (particleX % deltaTSec) * 0.5;
       pXLength += Math.sin((pXLength / 30 + 723.394) * time + seed * 12.5) * 11;
-      pYLength += Math.tan((pYLength / 0.45) * time + seed * 1.5) * 0.5;
       pYLength +=
         Math.cos((pYLength / 100 + 2323.234) * time + seed * 456.1) * 23;
 

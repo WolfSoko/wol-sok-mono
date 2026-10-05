@@ -161,13 +161,12 @@ void main() {
     float lengthY = uSize.y - startAccelerateY;
     float accelerateRadiusPow = startAccelerateX * startAccelerateX + lengthY * lengthY;
 
-    // some random looking functions give the vaporizing front a nice frayed edge
+    // some random looking functions give the vaporizing front a frayed edge.
+    // no tan(): its poles would break off whole rows and columns at once
     float pXLength = aPosition.x;
     float pYLength = uSize.y - aPosition.y;
-    pXLength += tan((pXLength / 20.12) * time + uSeed) * 0.5;
     pXLength += mod(aPosition.x, uDeltaTSec) * 0.5;
     pXLength += sin((pXLength / 30.0 + 723.394) * time + uSeed * 12.5) * 11.0;
-    pYLength += tan((pYLength / 0.45) * time + uSeed * 1.5) * 0.5;
     pYLength += cos((pYLength / 100.0 + 2323.234) * time + uSeed * 456.1) * 23.0;
 
     if (pXLength * pXLength + pYLength * pYLength > accelerateRadiusPow) {

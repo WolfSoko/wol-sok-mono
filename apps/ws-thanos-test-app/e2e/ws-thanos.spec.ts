@@ -185,6 +185,24 @@ test.describe('WsThanos Directive E2E Tests', () => {
     expect(fallbackWarnings).toEqual([]);
   });
 
+  test('should place the particles exactly over the element', async ({
+    page,
+  }) => {
+    // clicking scrolls the page, so measure afterwards
+    await page.getByTestId('btn-vaporize-restore').click();
+    const effectCanvas = page.locator('canvas[data-ws-thanos-renderer]');
+    await expect(effectCanvas).toBeAttached();
+    const element = await page.getByTestId('vaporize-restore').boundingBox();
+    const canvas = await effectCanvas.boundingBox();
+
+    // the particles start at the bottom left of the effect canvas
+    expect(canvas?.x).toBeCloseTo(element?.x ?? NaN, 0);
+    expect((canvas?.y ?? 0) + (canvas?.height ?? 0)).toBeCloseTo(
+      (element?.y ?? 0) + (element?.height ?? 0),
+      0
+    );
+  });
+
   test('should draw visible particles on the GPU canvas', async ({ page }) => {
     await page.getByTestId('btn-vaporize-restore').click();
     const effectCanvas = page.locator('canvas[data-ws-thanos-renderer]');

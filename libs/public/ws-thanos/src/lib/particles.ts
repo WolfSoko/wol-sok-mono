@@ -24,6 +24,8 @@ export interface Particles {
   maxParticleX: number;
   /** top most particle y of the captured image */
   minParticleY: number;
+  /** true when only a random sample of the visible pixels became particles */
+  sampled: boolean;
 }
 
 /**
@@ -69,5 +71,6 @@ export function createParticles(
     state[base + ParticleStateIndex.ALPHA] = data[pixel * 4 + 3];
     colors.set(data.subarray(pixel * 4, pixel * 4 + 4), i * 4);
   }
-  return { count, state, colors, maxParticleX, minParticleY };
+  const sampled = candidates.length > 0;
+  return { count, state, colors, maxParticleX, minParticleY, sampled };
 }

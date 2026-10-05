@@ -60,6 +60,50 @@ describe('CanvasParticleRenderer', () => {
       expect(movedUp).toBeGreaterThan(particles.count * 0.9);
     });
 
+    it('should release particles along a frayed front without stray lines', () => {
+      const width = 200;
+      const height = 100;
+      const data = new Uint8ClampedArray(width * height * 4).fill(255);
+      const particles = createParticles(
+        { width, height, data, colorSpace: 'srgb' } as ImageData,
+        width * height,
+        effectHeight * 5
+      );
+      const big = { maxWidth: width * 2, maxHeight: effectHeight * 5 };
+      // distance from the bottom left corner, where the front ends
+      const distance = valuesOf(particles, ParticleStateIndex.X).map((x, i) =>
+        Math.hypot(
+          x,
+          big.maxHeight - valuesOf(particles, ParticleStateIndex.Y)[i]
+        )
+      );
+      const noise = new SimplexNoise({ frequency: 0.01, min: 0 });
+
+      // the first half of a 6 second animation at 60 fps
+      for (let frame = 0; frame < 180; frame++) {
+        updateParticlesOnCpu({
+          particles,
+          animationState: {
+            animationT: (frame / 180) * 0.5,
+            deltaTSec: 1 / 60,
+            ...big,
+          },
+          particleAcceleration: 30,
+          noise,
+          seed: 42,
+        });
+      }
+
+      const ax = valuesOf(particles, ParticleStateIndex.AX);
+      const ay = valuesOf(particles, ParticleStateIndex.AY);
+      const released = distance.filter((_, i) => ax[i] !== 0 || ay[i] !== 0);
+      const waiting = distance.filter((_, i) => ax[i] === 0 && ay[i] === 0);
+      expect(released.length).toBeGreaterThan(0);
+      expect(waiting.length).toBeGreaterThan(0);
+      // the front frays a bit, but no particle far behind it breaks off early
+      expect(Math.min(...released)).toBeGreaterThan(Math.max(...waiting) - 80);
+    });
+
     it('should fade particles out at the end of the animation', () => {
       const particles = createParticles(opaqueSquare(4), 1000, effectHeight);
       step(particles, 1);
