@@ -50,29 +50,83 @@ export class SharedModule {}
 
 #### `WsThanosOptions` to configure ws-thanos:
 
-| field                |  type  | default |                        description |
-| -------------------- | :----: | ------: | ---------------------------------: |
-| animationLength      | number |    5000 |         the animation length in ms |
-| maxParticleCount     | number |  400000 |            max amount of particles |
-| particleAcceleration | number |      30 | speed of the particle acceleration |
+| field                |  type   | default |                                                          description |
+| -------------------- | :-----: | ------: | -------------------------------------------------------------------: |
+| animationLength      | number  |    5000 |                                           the animation length in ms |
+| maxParticleCount     | number  | 1500000 | max amount of particles (capped at 400000 without WebGL2, see below) |
+| particleAcceleration | number  |      30 |                                   speed of the particle acceleration |
+| sound                | boolean |    true |                           play a windy, sandy sound while vaporizing |
+| soundVolume          | number  |     0.5 |                                      volume of the sound from 0 to 1 |
+| crumble              | string  |  shards |                   how the element breaks apart, see crumble variants |
+
+#### Sound
+
+Every snap plays a sound, generated live with the Web Audio API (no audio files are downloaded),
+timed to `animationLength` and slightly different every time:
+
+1. the element breaks with a crunch of many small cracks and a low rumble,
+2. a gusty wind slowly grows stronger and carries hissing, crackling sand,
+3. wind and sand get weaker in the last third and have faded away at 85% of the animation.
+
+With `crumble: 'dust'` there is no crunch or rumble, the dust only crackles thinly.
+A limiter keeps many simultaneous snaps from getting too loud.
+Browsers only allow audio after the user interacted with the page, so snaps before the first click or tap stay silent.
+Turn it off with `provideWsThanosOptions({ sound: false })`.
+
+#### GPU rendering
+
+The particles are simulated and drawn on the graphics card with WebGL2,
+one particle per device pixel (up to a pixel ratio of 2) for crisp results on high resolution screens.
+Without WebGL2 ws-thanos falls back to the CPU canvas renderer, which captures at css pixels and uses at most 400000 particles.
+The effect canvas has a `data-ws-thanos-renderer` attribute (`webgl` or `canvas`) showing which renderer is in use.
+
+#### Crumble variants
+
+The `crumble` option decides how the element breaks apart while it vaporizes:
+
+| crumble    | effect                                                                       |
+| ---------- | ---------------------------------------------------------------------------- |
+| `'dust'`   | particles blow away along the vaporizing front                               |
+| `'cracks'` | cracks spread through the element and get finer before it turns to dust      |
+| `'shards'` | (default) cracks split it into shards that shift and tilt, then turn to dust |
+| `'chunks'` | whole chunks break off, jump away and crumble to dust                        |
+
+The variants need WebGL2, the canvas fallback always turns into `'dust'`.
+The effect canvas shows the variant in use in its `data-ws-thanos-crumble` attribute.
+
+#### Options per element
+
+Override any option for a single element with the `wsThanosOptions` input:
+
+```html
+<div wsThanos [wsThanosOptions]="{ crumble: 'chunks', animationLength: 8000 }">
+  Breaks into chunks
+</div>
+```
+
+or pass them to `WsThanosService.vaporize(element, { crumble: 'cracks' })`.
 
 ### `WsThanosDirective` usage
 
 Use the directive `wsThanos` on your element and reference it using `@ViewChild(WsThanosDirective)` in your component or
 directly in html via template ref:
 
-```
-<div wsThanos
-  #thanos="thanos"
-  (wsThanosComplete)=onComplete()>
+```html
+<div wsThanos #thanos="thanos" (wsThanosComplete)="onComplete()">
   This div will be vaporized on click
-  </div>
-<button (click)="thanos.vaporizeAndScrollIntoView(removeElement)">
+</div>
+<button (click)="thanos.vaporize(true)">Vaporize</button>
 ```
+
+- `vaporize(removeElem = true)` starts the effect and returns an observable that emits once it is complete.
+  With `removeElem = false` the element fades back in afterwards instead of being removed.
+- `vaporize$(removeElem = true)` returns an observable of the `AnimationState` of every frame. Subscribe to start the effect.
 
 ### `WsThanosService` usage
 
-Inject the 'WsThanosService' into your class. Call 'vaporizeAndScrollIntoView(removeElement)' and subscribe to it.
+Inject the `WsThanosService` into your class and subscribe to `vaporize(element, options?)` to vaporize any element.
+It emits the `AnimationState` of every frame and completes when the effect is done, unsubscribing cancels it.
+The element is not removed, that is up to you.
 
 ## Collaboration
 
@@ -133,6 +187,13 @@ This project uses Nx Release with independent versioning. Version bumps are dete
 See the [Nx Release documentation](https://nx.dev/features/manage-releases) for more details.
 
 ## Migration
+
+To the release with sound and GPU rendering
+
+- The snap sound is on by default. Turn it off with `provideWsThanosOptions({ sound: false })`.
+- Elements crumble into shards by default. Use `provideWsThanosOptions({ crumble: 'dust' })` for the previous look.
+- `maxParticleCount` defaults to 1500000, one particle per device pixel on the GPU.
+  Without WebGL2 at most 400000 particles are used, even if you configured more.
 
 From `1.0.1` to `2.0.0`
 

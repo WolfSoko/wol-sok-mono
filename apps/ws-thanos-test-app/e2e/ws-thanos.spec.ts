@@ -1,4 +1,6 @@
-import { test, expect } from '@playwright/test';
+import { expect, Locator, Page, test } from '@playwright/test';
+
+const EFFECT_CANVAS = 'canvas[data-ws-thanos-renderer]';
 
 test.describe('WsThanos Directive E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -167,4 +169,180 @@ test.describe('WsThanos Directive E2E Tests', () => {
     await page.waitForTimeout(2000);
     await expect(target).not.toBeAttached();
   });
+  test('should render the particles on the GPU', async ({ page }) => {
+    await page.getByTestId('btn-vaporize-restore').click();
+
+    // the renderer reports itself, a fallback to the canvas would show here
+    await expect(effectCanvas(page)).toHaveAttribute(
+      'data-ws-thanos-renderer',
+      'webgl'
+    );
+  });
+
+  test('should place the particles exactly over the element', async ({
+    page,
+  }) => {
+    // clicking scrolls the page, so measure afterwards
+    await page.getByTestId('btn-vaporize-restore').click();
+    await expect(effectCanvas(page)).toBeAttached();
+    const element = await page.getByTestId('vaporize-restore').boundingBox();
+    const canvas = await effectCanvas(page).boundingBox();
+
+    // the particles start at the bottom left of the effect canvas
+    expect(canvas?.x).toBeCloseTo(element?.x ?? NaN, 0);
+    expect((canvas?.y ?? 0) + (canvas?.height ?? 0)).toBeCloseTo(
+      (element?.y ?? 0) + (element?.height ?? 0),
+      0
+    );
+  });
+
+  test('should draw visible particles on the GPU canvas', async ({ page }) => {
+    await page.getByTestId('btn-vaporize-restore').click();
+    await expect(effectCanvas(page)).toBeAttached();
+    await page.waitForTimeout(150);
+    await showOnlyEffectCanvas(page);
+
+    const screenshot = await effectCanvas(page).screenshot({
+      omitBackground: true,
+    });
+    const alphas = await alphaValues(page, screenshot);
+    expect(alphas.filter((alpha) => alpha > 0).length).toBeGreaterThan(50);
+  });
+
+  test('should play the snap sound after a click', async ({ page }) => {
+    await page.addInitScript(() => {
+      const record = window as unknown as { startedSounds: number };
+      record.startedSounds = 0;
+      const start = AudioBufferSourceNode.prototype.start;
+      AudioBufferSourceNode.prototype.start = function (
+        ...args: Parameters<AudioBufferSourceNode['start']>
+      ) {
+        record.startedSounds++;
+        return start.apply(this, args);
+      };
+    });
+    await page.reload();
+
+    await page.getByTestId('btn-vaporize-restore').click();
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as unknown as { startedSounds: number }).startedSounds
+        )
+      )
+      .toBeGreaterThan(0);
+  });
+
+  test.describe('crumble variants', () => {
+    const variants = ['dust', 'cracks', 'shards', 'chunks'] as const;
+
+    test.beforeEach(async ({ page }) => {
+      await page.goto('/?demo');
+    });
+
+    for (const variant of variants) {
+      test(`should crumble with ${variant} on the GPU`, async ({ page }) => {
+        await page.getByTestId(`btn-crumble-${variant}`).click();
+
+        await expect(effectCanvas(page)).toHaveAttribute(
+          'data-ws-thanos-crumble',
+          variant
+        );
+        await expect(effectCanvas(page)).toHaveAttribute(
+          'data-ws-thanos-renderer',
+          'webgl'
+        );
+      });
+    }
+
+    for (const variant of variants) {
+      const cracks = variant !== 'dust';
+      test(`should ${cracks ? '' : 'not '}crack ${variant} before the front reaches it`, async ({
+        page,
+      }) => {
+        const card = page.getByTestId(`crumble-${variant}`);
+        await card.scrollIntoViewIfNeeded();
+        await page.getByTestId(`btn-crumble-${variant}`).click();
+        await expect(effectCanvas(page)).toBeAttached();
+        // 15% of the 10s demo animation, the front is still far from the bottom left
+        await page.waitForTimeout(1500);
+        const box = await card.boundingBox();
+        if (box == null) {
+          throw new Error('card not visible');
+        }
+        await showOnlyEffectCanvas(page);
+
+        // the bottom left quarter of the card
+        const screenshot = await page.screenshot({
+          omitBackground: true,
+          clip: {
+            x: box.x + 4,
+            y: box.y + box.height / 2,
+            width: box.width / 2 - 4,
+            height: box.height / 2 - 4,
+          },
+        });
+        const alphas = await alphaValues(page, screenshot);
+        const holes =
+          alphas.filter((alpha) => alpha < 128).length / alphas.length;
+
+        if (cracks) {
+          expect(holes).toBeGreaterThan(0.01);
+        } else {
+          expect(holes).toBeLessThan(0.002);
+        }
+      });
+    }
+
+    test('should vaporize all variants at once', async ({ page }) => {
+      await page.getByTestId('btn-crumble-all').click();
+
+      await expect(effectCanvas(page)).toHaveCount(4);
+    });
+  });
+
+  test.describe('playground', () => {
+    test('should vaporize with the chosen options', async ({ page }) => {
+      await page.goto('/?demo');
+      await page.getByTestId('playground-crumble').selectOption('chunks');
+
+      await page.getByTestId('btn-playground').click();
+
+      await expect(effectCanvas(page)).toHaveAttribute(
+        'data-ws-thanos-crumble',
+        'chunks'
+      );
+    });
+  });
 });
+
+/** the canvases the particles are drawn on */
+function effectCanvas(page: Page): Locator {
+  return page.locator(EFFECT_CANVAS);
+}
+
+/** hide everything but the particles, so screenshots only show them */
+async function showOnlyEffectCanvas(page: Page): Promise<void> {
+  await page.addStyleTag({
+    content: `
+      body * { visibility: hidden !important; }
+      ${EFFECT_CANVAS} { visibility: visible !important; }
+    `,
+  });
+}
+
+/** the alpha value of every pixel of a png screenshot */
+function alphaValues(page: Page, png: Buffer): Promise<number[]> {
+  return page.evaluate(async (base64) => {
+    const response = await fetch(`data:image/png;base64,${base64}`);
+    const bitmap = await createImageBitmap(await response.blob());
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const context = canvas.getContext(
+      '2d'
+    ) as OffscreenCanvasRenderingContext2D;
+    context.drawImage(bitmap, 0, 0);
+    const { data } = context.getImageData(0, 0, bitmap.width, bitmap.height);
+    return Array.from(data.filter((_, i) => i % 4 === 3));
+  }, png.toString('base64'));
+}

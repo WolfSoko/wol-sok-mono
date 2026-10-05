@@ -11,6 +11,7 @@ import { AnimationState } from './animation.state';
 import { provideWsThanosOptions } from './ws-thanos-options.token';
 import { WsThanosDirective } from './ws-thanos.directive';
 import { WsThanosService } from './ws-thanos.service';
+import type { WsThanosOptions } from './ws-thanos.options';
 
 describe('Integration Test: WsThanosDirective', () => {
   @Component({
@@ -172,4 +173,35 @@ describe('Integration Test: WsThanosDirective', () => {
   function whenVaporizeIsCalled(): void {
     directive.vaporize$(false).subscribe();
   }
+});
+
+describe('WsThanosDirective options input', () => {
+  @Component({
+    template: `<div wsThanos [wsThanosOptions]="options"></div>`,
+    imports: [WsThanosDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+  })
+  class OptionsHostComponent {
+    public options: Partial<WsThanosOptions> = {
+      crumble: 'chunks',
+      animationLength: 1234,
+    };
+
+    @ViewChildren(WsThanosDirective)
+    public thanos!: QueryList<WsThanosDirective>;
+  }
+
+  it('should vaporize with the options of the element', () => {
+    const fixture = TestBed.createComponent(OptionsHostComponent);
+    fixture.detectChanges();
+    const service = TestBed.inject(WsThanosService);
+    jest.spyOn(service, 'vaporize').mockReturnValue(of({} as AnimationState));
+
+    fixture.componentInstance.thanos.first.vaporize$(false).subscribe();
+
+    expect(service.vaporize).toHaveBeenCalledWith(expect.any(HTMLElement), {
+      crumble: 'chunks',
+      animationLength: 1234,
+    });
+  });
 });

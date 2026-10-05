@@ -50,7 +50,6 @@ bootstrapApplication(AppComponent, {
     provideCore(),
     [
       provideWsThanosOptions({
-        maxParticleCount: 50000,
         animationLength: 5000,
       }),
     ],
