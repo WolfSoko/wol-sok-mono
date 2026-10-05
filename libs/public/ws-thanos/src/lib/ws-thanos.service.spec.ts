@@ -95,7 +95,7 @@ describe('WsThanosService', () => {
 
     await vaporize(service, givenElement());
 
-    expect(playSound).toHaveBeenCalledWith(300, 0.7);
+    expect(playSound).toHaveBeenCalledWith(300, 0.7, 'dust');
   });
 
   it('should stay silent when the sound is disabled', async () => {
@@ -167,7 +167,7 @@ describe('WsThanosService', () => {
       soundVolume: 0.2,
     });
 
-    expect(playSound).toHaveBeenCalledWith(100, 0.2);
+    expect(playSound).toHaveBeenCalledWith(100, 0.2, 'dust');
   });
 
   it('should only turn into dust without the GPU', async () => {

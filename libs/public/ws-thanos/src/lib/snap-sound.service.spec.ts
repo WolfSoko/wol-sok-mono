@@ -12,6 +12,17 @@ class FakeAudioParam {
   public exponentialRampToValueAtTime = jest.fn(() => this);
   public setTargetAtTime = jest.fn(() => this);
   public cancelScheduledValues = jest.fn(() => this);
+  public setValueCurveAtTime = jest.fn(
+    (values: Float32Array, startTime: number, duration: number) => {
+      this.curves.push({ values, startTime, duration });
+      return this;
+    }
+  );
+  public readonly curves: {
+    values: Float32Array;
+    startTime: number;
+    duration: number;
+  }[] = [];
 }
 
 class FakeAudioNode {
@@ -60,12 +71,19 @@ class FakeAudioContext {
     return gain;
   }
 
+  public readonly filters: {
+    type: string;
+    frequency: FakeAudioParam;
+  }[] = [];
+
   public createBiquadFilter() {
-    return Object.assign(new FakeAudioNode(), {
+    const filter = Object.assign(new FakeAudioNode(), {
       type: 'lowpass',
       frequency: new FakeAudioParam(),
       Q: new FakeAudioParam(),
     });
+    this.filters.push(filter);
+    return filter;
   }
 
   public createDynamicsCompressor() {
@@ -152,14 +170,129 @@ describe('SnapSoundService', () => {
     sound.play(4000, 0.5);
     await flushPromises();
 
-    const silencedAt = lastContext()
-      .gains.flatMap(
-        (gain) => gain.gain.exponentialRampToValueAtTime.mock.calls
-      )
-      .filter(([value]) => (value as unknown as number) <= 0.001)
+    const gains = lastContext().gains.map((gain) => gain.gain);
+    const curves = gains.flatMap((gain) => gain.curves);
+    expect(curves.length).toBeGreaterThan(2);
+    for (const { values, startTime, duration } of curves) {
+      expect(startTime + duration).toBeLessThanOrEqual(4 * 0.85);
+      expect(values[values.length - 1]).toBe(0);
+    }
+    const grainsSilencedAt = gains
+      .flatMap((gain) => gain.exponentialRampToValueAtTime.mock.calls)
       .map(([, time]) => time as unknown as number);
-    expect(silencedAt.length).toBeGreaterThan(2);
-    expect(Math.max(...silencedAt)).toBeLessThanOrEqual(4 * 0.85);
+    expect(Math.max(...grainsSilencedAt)).toBeLessThanOrEqual(4 * 0.85);
+  });
+
+  it('should break with a low rumble right at the start', async () => {
+    const sound = givenWindow();
+
+    sound.play(6000, 0.5, 'shards');
+    await flushPromises();
+
+    const rumbleFilters = lastContext().filters.filter(
+      (filter) => filter.type === 'lowpass' && filter.frequency.value <= 250
+    );
+    expect(rumbleFilters.length).toBeGreaterThan(0);
+    // the rumble is over within the first third
+    const loopsStopAt = lastContext()
+      .sources.filter((source) => source.loop)
+      .map((source) => source.stop.mock.calls[0]?.[0] as number);
+    expect(Math.min(...loopsStopAt)).toBeLessThanOrEqual(6 * 0.35);
+  });
+
+  /** short bursts (cracks, grains) with their start time and loudest value */
+  function bursts(): { start: number; peak: number }[] {
+    return lastContext()
+      .gains.map((gain) => gain.gain)
+      .filter((gain) =>
+        gain.exponentialRampToValueAtTime.mock.calls.some(
+          ([value]) => (value as unknown as number) <= 0.001
+        )
+      )
+      .map((gain) => {
+        const values = [
+          ...gain.setValueAtTime.mock.calls,
+          ...gain.linearRampToValueAtTime.mock.calls,
+        ] as unknown as [number, number][];
+        return {
+          start: Math.min(...values.map(([, time]) => time)),
+          peak: Math.max(...values.map(([value]) => value)),
+        };
+      });
+  }
+
+  it('should break with a crunch of many cracks instead of a single bang', async () => {
+    const sound = givenWindow();
+
+    sound.play(6000, 0.5, 'shards');
+    await flushPromises();
+
+    const crunch = bursts().filter(({ start }) => start < 0.4);
+    expect(crunch.length).toBeGreaterThanOrEqual(15);
+    expect(Math.max(...crunch.map(({ peak }) => peak))).toBeGreaterThan(0.5);
+    // no single burst as loud as a shot
+    expect(Math.max(...bursts().map(({ peak }) => peak))).toBeLessThan(0.9);
+  });
+
+  it('should rise softly into every crack, a hard edge sounds like a shot', async () => {
+    const sound = givenWindow();
+
+    sound.play(6000, 0.5, 'shards');
+    await flushPromises();
+
+    const loudBursts = lastContext()
+      .gains.map((gain) => gain.gain)
+      .filter((gain) =>
+        gain.setValueAtTime.mock.calls.some(
+          ([value]) => (value as unknown as number) > 0.3
+        )
+      )
+      .filter((gain) =>
+        gain.exponentialRampToValueAtTime.mock.calls.some(
+          ([value]) => (value as unknown as number) <= 0.001
+        )
+      );
+    expect(loudBursts).toEqual([]);
+  });
+
+  it('should only crackle thinly when crumbling to dust', async () => {
+    const sound = givenWindow();
+
+    sound.play(6000, 0.5, 'dust');
+    await flushPromises();
+
+    const rumbleFilters = lastContext().filters.filter(
+      (filter) => filter.type === 'lowpass' && filter.frequency.value <= 250
+    );
+    expect(rumbleFilters).toEqual([]);
+    // no dull thump: an oscillator that drops in pitch
+    const thumps = lastContext().sources.filter(
+      (source) =>
+        source.buffer == null &&
+        source.frequency.exponentialRampToValueAtTime.mock.calls.length > 0
+    );
+    expect(thumps).toEqual([]);
+    const crackles = bursts().filter(({ start }) => start < 6 * 0.3);
+    expect(crackles.length).toBeGreaterThan(0);
+    expect(Math.max(...crackles.map(({ peak }) => peak))).toBeLessThanOrEqual(
+      0.3
+    );
+  });
+
+  it('should crackle with breaking sounds at the start and with sand later', async () => {
+    const sound = givenWindow();
+
+    sound.play(6000, 0.5);
+    await flushPromises();
+
+    const crackles = lastContext().sources.filter(
+      (source) => !source.loop && source.buffer != null
+    );
+    const startTimes = crackles.map(
+      (source) => source.start.mock.calls[0]?.[0] as number
+    );
+    expect(startTimes.some((time) => time < 6 * 0.15)).toBe(true);
+    expect(startTimes.some((time) => time > 6 * 0.4)).toBe(true);
   });
 
   it('should set the master volume', async () => {

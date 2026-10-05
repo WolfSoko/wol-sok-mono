@@ -117,7 +117,11 @@ export class WsThanosService {
         return {
           renderer,
           sound: sound
-            ? this.snapSound.play(animationLength, soundVolume)
+            ? this.snapSound.play(
+                animationLength,
+                soundVolume,
+                renderer.crumble
+              )
             : undefined,
         };
       }),
