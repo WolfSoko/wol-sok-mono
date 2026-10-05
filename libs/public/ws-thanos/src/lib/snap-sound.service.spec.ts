@@ -295,28 +295,33 @@ describe('SnapSoundService', () => {
     expect(startTimes.some((time) => time > 6 * 0.4)).toBe(true);
   });
 
-  it('should set the master volume', async () => {
+  /** the gains of the single snaps, they feed the shared limiter */
+  const snapOutputs = () =>
+    lastContext().gains.filter((gain) =>
+      gain.connections.some((target) => 'ratio' in (target as object))
+    );
+
+  it('should play every snap at its own volume, even when they overlap', async () => {
     const sound = givenWindow();
 
     sound.play(1000, 0.3, 'shards');
+    sound.play(1000, 0.8, 'dust');
     await flushPromises();
 
-    const masterGain = lastContext().gains[0];
-    expect(masterGain.gain.value).toBe(0.3);
+    expect(snapOutputs().map((gain) => gain.gain.value)).toEqual([0.3, 0.8]);
   });
 
-  it('should limit the master output so overlapping snaps stay pleasant', async () => {
+  it('should limit the output so overlapping snaps stay pleasant', async () => {
     const sound = givenWindow();
 
     sound.play(1000, 0.5, 'shards');
     await flushPromises();
 
-    const masterGain = lastContext().gains[0];
-    const limiter = masterGain.connections[0] as { ratio: FakeAudioParam };
+    const limiter = snapOutputs()[0].connections[0] as FakeAudioNode & {
+      ratio: FakeAudioParam;
+    };
     expect(limiter.ratio).toBeDefined();
-    expect((limiter as unknown as FakeAudioNode).connections).toContain(
-      lastContext().destination
-    );
+    expect(limiter.connections).toContain(lastContext().destination);
   });
 
   it('should share one audio context between snaps', async () => {

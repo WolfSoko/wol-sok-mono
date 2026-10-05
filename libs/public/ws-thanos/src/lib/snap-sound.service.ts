@@ -28,7 +28,8 @@ const CURVE_SAMPLES = 128;
 
 interface SharedAudio {
   context: AudioContext;
-  master: GainNode;
+  /** limits all snaps together */
+  limiter: AudioNode;
   noise: AudioBuffer;
 }
 
@@ -63,11 +64,9 @@ export class SnapSoundService {
     if (audio == null) {
       return SILENT;
     }
-    const { context, master, noise } = audio;
-    master.gain.setValueAtTime(
-      Math.min(1, Math.max(0, volume)),
-      context.currentTime
-    );
+    const { context, limiter, noise } = audio;
+    // every snap has its own volume, overlapping snaps don't change each other
+    const snapVolume = Math.min(1, Math.max(0, volume));
 
     let voice: SnapVoice | undefined;
     let stopped = false;
@@ -75,10 +74,11 @@ export class SnapSoundService {
       if (!stopped && context.state === 'running') {
         voice = new SnapVoice(
           context,
-          master,
+          limiter,
           noise,
           durationMs / 1000,
-          crumble
+          crumble,
+          snapVolume
         );
       }
     };
@@ -97,7 +97,7 @@ export class SnapSoundService {
     };
   }
 
-  /** one audio context with master volume and noise, shared by all snaps */
+  /** one audio context with a limiter and noise, shared by all snaps */
   private getAudio(): SharedAudio | undefined {
     if (this.audio) {
       return this.audio;
@@ -122,9 +122,7 @@ export class SnapSoundService {
     limiter.release.setValueAtTime(0.3, 0);
     limiter.connect(context.destination);
 
-    const master = context.createGain();
-    master.connect(limiter);
-    this.audio = { context, master, noise: createNoiseBuffer(context) };
+    this.audio = { context, limiter, noise: createNoiseBuffer(context) };
     return this.audio;
   }
 }
@@ -163,11 +161,12 @@ class SnapVoice {
     destination: AudioNode,
     private readonly noise: AudioBuffer,
     private readonly durationSec: number,
-    crumble: WsThanosCrumble
+    crumble: WsThanosCrumble,
+    volume: number
   ) {
     this.start = context.currentTime;
     this.output = context.createGain();
-    this.output.gain.setValueAtTime(1, this.start);
+    this.output.gain.setValueAtTime(volume, this.start);
     this.output.connect(destination);
 
     if (crumble === 'dust') {

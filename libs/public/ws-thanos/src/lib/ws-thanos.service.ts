@@ -16,7 +16,10 @@ import {
 } from 'rxjs';
 import { AnimationState } from './animation.state';
 import { EFFECT_HEIGHT_SCALE, EFFECT_WIDTH_SCALE } from './capture-scale';
-import { chooseParticleRenderer } from './choose-particle-renderer';
+import {
+  chooseParticleRenderer,
+  GpuContextBudget,
+} from './choose-particle-renderer';
 import { ParticleRenderer } from './particle-renderer';
 import { createParticles } from './particles';
 import { SnapSound, SnapSoundService } from './snap-sound.service';
@@ -38,6 +41,8 @@ export class WsThanosService {
   );
   private readonly document = inject(DOCUMENT);
   private readonly snapSound = inject(SnapSoundService);
+  /** shared by all effects, browsers only allow a few WebGL contexts */
+  private readonly gpuBudget = new GpuContextBudget();
 
   /**
    * start the vaporize-effect.
@@ -67,6 +72,7 @@ export class WsThanosService {
       maxParticleCount,
       devicePixelRatio: window?.devicePixelRatio ?? 1,
       createCanvas: () => this.document.createElement('canvas'),
+      gpuBudget: this.gpuBudget,
     });
     const { width, height } = elem.getBoundingClientRect();
     const scale = rendererChoice.captureScale(width, height);
@@ -148,9 +154,10 @@ export class WsThanosService {
           tap({ unsubscribe: () => sound?.stop(), error: () => sound?.stop() })
         );
       }),
-      finalize(() =>
-        effect ? effect.renderer.dispose() : rendererChoice.discard()
-      )
+      finalize(() => {
+        effect?.renderer.dispose();
+        rendererChoice.release();
+      })
     );
   }
 

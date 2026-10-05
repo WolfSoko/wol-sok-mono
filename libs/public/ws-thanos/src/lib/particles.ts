@@ -85,3 +85,34 @@ export function createParticles(
   }
   return { count, state, colors, maxParticleX, minParticleY, sampled };
 }
+
+/** a random sample of at most maxCount particles, e.g. when the CPU takes over from the GPU */
+export function limitParticles(
+  particles: Particles,
+  maxCount: number
+): Particles {
+  if (particles.count <= maxCount) {
+    return particles;
+  }
+  const indices = new Uint32Array(particles.count);
+  for (let i = 0; i < particles.count; i++) {
+    indices[i] = i;
+  }
+  const state = new Float32Array(maxCount * PARTICLE_STATE_LENGTH);
+  const colors = new Uint8Array(maxCount * 4);
+  for (let i = 0; i < maxCount; i++) {
+    // partial Fisher-Yates over the particle indices
+    const j = i + ~~(Math.random() * (particles.count - i));
+    const picked = indices[j];
+    indices[j] = indices[i];
+    state.set(
+      particles.state.subarray(
+        picked * PARTICLE_STATE_LENGTH,
+        (picked + 1) * PARTICLE_STATE_LENGTH
+      ),
+      i * PARTICLE_STATE_LENGTH
+    );
+    colors.set(particles.colors.subarray(picked * 4, picked * 4 + 4), i * 4);
+  }
+  return { ...particles, count: maxCount, state, colors, sampled: true };
+}

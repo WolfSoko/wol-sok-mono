@@ -2,8 +2,11 @@ import {
   CANVAS_MAX_PARTICLE_COUNT,
   CanvasParticleRenderer,
 } from './canvas-particle-renderer';
-import { chooseParticleRenderer } from './choose-particle-renderer';
-import { createParticles } from './particles';
+import {
+  chooseParticleRenderer,
+  GpuContextBudget,
+} from './choose-particle-renderer';
+import { createParticles, Particles } from './particles';
 import { WebGlParticleRenderer } from './webgl/webgl-particle-renderer';
 
 /** a WebGL2 context that answers every call, enough to set up the renderer */
@@ -124,9 +127,66 @@ describe('chooseParticleRenderer', () => {
       const loseContext = jest.fn();
       const gl = fakeWebGl2({ getExtension: () => ({ loseContext }) });
 
-      choose(gl).discard();
+      choose(gl).release();
 
       expect(loseContext).toHaveBeenCalled();
     });
+  });
+
+  describe('GPU context budget', () => {
+    const chooseWith = (gpuBudget: GpuContextBudget) =>
+      chooseParticleRenderer({
+        maxParticleCount: 1_500_000,
+        devicePixelRatio: 2,
+        createCanvas: () => fakeCanvas({ webgl2: fakeWebGl2(), '2d': fake2d }),
+        gpuBudget,
+      });
+
+    it('should run further effects on the CPU while too many GPU effects run', () => {
+      const budget = new GpuContextBudget(2);
+      chooseWith(budget);
+      chooseWith(budget);
+
+      expect(chooseWith(budget).maxParticleCount).toBe(
+        CANVAS_MAX_PARTICLE_COUNT
+      );
+    });
+
+    it('should hand the GPU to the next effect once one is released', () => {
+      const budget = new GpuContextBudget(1);
+      const first = chooseWith(budget);
+
+      first.release();
+      first.release();
+
+      expect(chooseWith(budget).maxParticleCount).toBe(1_500_000);
+      expect(chooseWith(budget).maxParticleCount).toBe(
+        CANVAS_MAX_PARTICLE_COUNT
+      );
+    });
+  });
+
+  it('should cap the particles when the canvas takes over from a failed GPU setup', () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const size = 700;
+    const many = createParticles(
+      {
+        width: size,
+        height: size,
+        data: new Uint8ClampedArray(size * size * 4).fill(255),
+      } as ImageData,
+      size * size,
+      size * 5
+    );
+    const brokenGl = fakeWebGl2({ getShaderParameter: () => false });
+
+    const renderer = chooseParticleRenderer({
+      maxParticleCount: 1_500_000,
+      devicePixelRatio: 2,
+      createCanvas: () => fakeCanvas({ webgl2: brokenGl, '2d': fake2d }),
+    }).create(many, rendererParams);
+
+    const used = (renderer as unknown as { particles: Particles }).particles;
+    expect(used.count).toBe(CANVAS_MAX_PARTICLE_COUNT);
   });
 });

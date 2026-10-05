@@ -1,5 +1,6 @@
 import {
   createParticles,
+  limitParticles,
   PARTICLE_STATE_LENGTH,
   ParticleStateIndex,
 } from './particles';
@@ -95,5 +96,37 @@ describe('createParticles', () => {
     );
     expect(particles.maxParticleX).toBe(3);
     expect(particles.minParticleY).toBe(2);
+  });
+});
+
+describe('limitParticles', () => {
+  const opaque = (width: number, height: number): ImageData =>
+    ({
+      width,
+      height,
+      data: new Uint8ClampedArray(width * height * 4).fill(255),
+      colorSpace: 'srgb',
+    }) as ImageData;
+
+  it('should keep particles below the limit as they are', () => {
+    const particles = createParticles(opaque(4, 4), 100, 20);
+    expect(limitParticles(particles, 16)).toBe(particles);
+  });
+
+  it('should keep a random sample of the particles above the limit', () => {
+    const particles = createParticles(opaque(10, 10), 1000, 50);
+
+    const limited = limitParticles(particles, 30);
+
+    expect(limited.count).toBe(30);
+    expect(limited.state.length).toBe(30 * PARTICLE_STATE_LENGTH);
+    expect(limited.colors.length).toBe(30 * 4);
+    expect(limited.sampled).toBe(true);
+    // a random sample, not just the top rows
+    const ys = Array.from(
+      { length: 30 },
+      (_, i) => limited.state[i * PARTICLE_STATE_LENGTH + ParticleStateIndex.Y]
+    );
+    expect(Math.max(...ys)).toBeGreaterThan(40 + 4);
   });
 });
