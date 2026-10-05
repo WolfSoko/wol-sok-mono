@@ -23,6 +23,8 @@ export interface UpdateParticlesParams {
 
 /** Fallback renderer that simulates on the CPU and draws with a 2d context. */
 export class CanvasParticleRenderer implements ParticleRenderer {
+  /** the CPU can't afford to simulate cracks and shards */
+  public readonly crumble = 'dust';
   private readonly noise = new SimplexNoise({ frequency: 0.01, min: 0 });
   private readonly context: CanvasRenderingContext2D;
 

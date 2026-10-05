@@ -1,4 +1,4 @@
-import { Directive, ElementRef, Output, inject } from '@angular/core';
+import { Directive, ElementRef, Output, inject, input } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, Observable, Subject, Subscription, take, tap } from 'rxjs';
 import { AnimationState } from './animation.state';
@@ -13,6 +13,9 @@ import { WsThanosService } from './ws-thanos.service';
 export class WsThanosDirective {
   private wsThanosCompleteSubject = new Subject<void>();
   private untilDestroyed = takeUntilDestroyed();
+
+  /** override the provided options for this element */
+  public readonly wsThanosOptions = input<Partial<WsThanosOptions>>();
 
   @Output()
   public wsThanosComplete: Observable<void> =
@@ -36,7 +39,7 @@ export class WsThanosDirective {
    */
   public vaporize$(removeElem = true): Observable<AnimationState> {
     const elem = this.vaporizeDomElem.nativeElement;
-    return this.thanosService.vaporize(elem).pipe(
+    return this.thanosService.vaporize(elem, this.wsThanosOptions()).pipe(
       tap({
         error: (error) => {
           console.error('Error vaporizing', error, {

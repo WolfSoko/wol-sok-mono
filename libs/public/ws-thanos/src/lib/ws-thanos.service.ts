@@ -40,14 +40,21 @@ export class WsThanosService {
 
   /**
    * start the vaporize-effect.
+   * @param options override the provided options for this element
    */
-  public vaporize(elem: HTMLElement): Observable<AnimationState> {
-    return this.vaporizeIntern(elem);
+  public vaporize(
+    elem: HTMLElement,
+    options?: Partial<WsThanosOptions>
+  ): Observable<AnimationState> {
+    return this.vaporizeIntern(elem, { ...this.thanosOptions, ...options });
   }
 
-  private vaporizeIntern(elem: HTMLElement): Observable<AnimationState> {
-    const { animationLength, maxParticleCount, particleAcceleration } =
-      this.thanosOptions;
+  private vaporizeIntern(
+    elem: HTMLElement,
+    options: WsThanosOptions
+  ): Observable<AnimationState> {
+    const { animationLength, maxParticleCount, particleAcceleration, crumble } =
+      options;
     const window = this.document.defaultView;
 
     elem.style.opacity = elem.style.opacity || '1';
@@ -91,11 +98,14 @@ export class WsThanosService {
           height: effectHeight,
           // particles move in device pixels, keep their speed in css pixels
           particleAcceleration: particleAcceleration * scale,
+          pixelScale: scale,
+          crumble,
           seed,
         });
 
         this.placeEffectCanvas(elem, renderer.canvas, scale);
         renderer.canvas.dataset['wsThanosRenderer'] = rendererChoice.kind;
+        renderer.canvas.dataset['wsThanosCrumble'] = renderer.crumble;
         // when every pixel became a particle, the particles replace the element right away
         const fadeOutMs = particles.sampled
           ? Math.floor(animationLength * 0.8)
@@ -103,7 +113,7 @@ export class WsThanosService {
         elem.style.transition = `opacity ${fadeOutMs}ms ease-out`;
         elem.style.opacity = '0';
 
-        const { sound, soundVolume } = this.thanosOptions;
+        const { sound, soundVolume } = options;
         return {
           renderer,
           sound: sound

@@ -10,9 +10,11 @@ export enum ParticleStateIndex {
   AX = 4,
   AY = 5,
   ALPHA = 6,
+  /** animationT when the particle broke off, 0 while attached (GPU only) */
+  RELEASED_AT = 7,
 }
 
-export const PARTICLE_STATE_LENGTH = 7;
+export const PARTICLE_STATE_LENGTH = 8;
 
 export interface Particles {
   count: number;

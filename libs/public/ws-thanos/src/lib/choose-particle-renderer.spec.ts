@@ -55,6 +55,8 @@ const rendererParams = {
   width: 2,
   height: 5,
   particleAcceleration: 30,
+  pixelScale: 1,
+  crumble: 'shards' as const,
   seed: 1,
 };
 

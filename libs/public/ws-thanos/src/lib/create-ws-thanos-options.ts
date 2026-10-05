@@ -9,6 +9,7 @@ export function createWsThanosOptions(
     particleAcceleration: 30,
     sound: true,
     soundVolume: 0.5,
+    crumble: 'shards',
     ...options,
   };
 }

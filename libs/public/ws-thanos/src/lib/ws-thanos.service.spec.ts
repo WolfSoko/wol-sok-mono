@@ -46,10 +46,11 @@ describe('WsThanosService', () => {
 
   function vaporize(
     service: WsThanosService,
-    elem: HTMLElement
+    elem: HTMLElement,
+    options?: Partial<WsThanosOptions>
   ): Promise<void> {
     return new Promise((resolve, reject) => {
-      subscription = service.vaporize(elem).subscribe({
+      subscription = service.vaporize(elem, options).subscribe({
         complete: () => resolve(),
         error: reject,
       });
@@ -156,6 +157,27 @@ describe('WsThanosService', () => {
     await untilEffectStarted(elem);
 
     expect(elem.style.transition).toBe('opacity 8000ms ease-out');
+  });
+
+  it('should let a single vaporize override the options', async () => {
+    const service = givenService({ soundVolume: 0.7 });
+
+    await vaporize(service, givenElement(), {
+      animationLength: 100,
+      soundVolume: 0.2,
+    });
+
+    expect(playSound).toHaveBeenCalledWith(100, 0.2);
+  });
+
+  it('should only turn into dust without the GPU', async () => {
+    const service = givenService({ animationLength: 10_000 });
+    const elem = givenElement();
+
+    vaporize(service, elem, { crumble: 'chunks' });
+    const canvas = await untilEffectStarted(elem);
+
+    expect(canvas.dataset['wsThanosCrumble']).toBe('dust');
   });
 
   it('should remove the effect canvas when done', async () => {

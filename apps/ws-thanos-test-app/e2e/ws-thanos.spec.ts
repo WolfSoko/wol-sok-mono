@@ -260,4 +260,110 @@ test.describe('WsThanos Directive E2E Tests', () => {
       )
       .toBeGreaterThan(0);
   });
+  test.describe('crumble variants', () => {
+    const variants = ['dust', 'cracks', 'shards', 'chunks'] as const;
+
+    test.beforeEach(async ({ page }) => {
+      await page.goto('/?demo');
+    });
+
+    for (const variant of variants) {
+      test(`should crumble with ${variant} on the GPU`, async ({ page }) => {
+        await page.getByTestId(`btn-crumble-${variant}`).click();
+
+        const effectCanvas = page.locator('canvas[data-ws-thanos-renderer]');
+        await expect(effectCanvas).toHaveAttribute(
+          'data-ws-thanos-crumble',
+          variant
+        );
+        await expect(effectCanvas).toHaveAttribute(
+          'data-ws-thanos-renderer',
+          'webgl'
+        );
+      });
+    }
+
+    for (const variant of variants) {
+      const cracks = variant !== 'dust';
+      test(`should ${cracks ? '' : 'not '}crack ${variant} before the front reaches it`, async ({
+        page,
+      }) => {
+        const card = page.getByTestId(`crumble-${variant}`);
+        await card.scrollIntoViewIfNeeded();
+        await page.getByTestId(`btn-crumble-${variant}`).click();
+        await expect(
+          page.locator('canvas[data-ws-thanos-renderer]')
+        ).toBeAttached();
+        // 15% of the 10s demo animation, the front is still far from the bottom left
+        await page.waitForTimeout(1500);
+        const box = await card.boundingBox();
+        if (box == null) {
+          throw new Error('card not visible');
+        }
+        await page.addStyleTag({
+          content: `
+            body * { visibility: hidden !important; }
+            canvas[data-ws-thanos-renderer] { visibility: visible !important; }
+          `,
+        });
+
+        // the bottom left quarter of the card
+        const screenshot = await page.screenshot({
+          omitBackground: true,
+          clip: {
+            x: box.x + 4,
+            y: box.y + box.height / 2,
+            width: box.width / 2 - 4,
+            height: box.height / 2 - 4,
+          },
+        });
+        const holes = await page.evaluate(async (base64) => {
+          const png = await fetch(`data:image/png;base64,${base64}`);
+          const bitmap = await createImageBitmap(await png.blob());
+          const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+          const context = canvas.getContext(
+            '2d'
+          ) as OffscreenCanvasRenderingContext2D;
+          context.drawImage(bitmap, 0, 0);
+          const { data } = context.getImageData(
+            0,
+            0,
+            bitmap.width,
+            bitmap.height
+          );
+          let transparent = 0;
+          for (let i = 3; i < data.length; i += 4) {
+            transparent += data[i] < 128 ? 1 : 0;
+          }
+          return transparent / (data.length / 4);
+        }, screenshot.toString('base64'));
+
+        if (cracks) {
+          expect(holes).toBeGreaterThan(0.01);
+        } else {
+          expect(holes).toBeLessThan(0.002);
+        }
+      });
+    }
+
+    test('should vaporize all variants at once', async ({ page }) => {
+      await page.getByTestId('btn-crumble-all').click();
+
+      const crumbles = page.locator('canvas[data-ws-thanos-crumble]');
+      await expect(crumbles).toHaveCount(4);
+    });
+  });
+
+  test.describe('playground', () => {
+    test('should vaporize with the chosen options', async ({ page }) => {
+      await page.goto('/?demo');
+      await page.getByTestId('playground-crumble').selectOption('chunks');
+
+      await page.getByTestId('btn-playground').click();
+
+      await expect(
+        page.locator('canvas[data-ws-thanos-renderer]')
+      ).toHaveAttribute('data-ws-thanos-crumble', 'chunks');
+    });
+  });
 });

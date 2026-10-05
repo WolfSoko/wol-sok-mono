@@ -13,6 +13,10 @@ describe('createWsThanosOptions', () => {
     expect(createWsThanosOptions().maxParticleCount).toBe(1_500_000);
   });
 
+  it('should crumble into shards by default', () => {
+    expect(createWsThanosOptions().crumble).toBe('shards');
+  });
+
   it('should let callers disable the sound', () => {
     expect(createWsThanosOptions({ sound: false }).sound).toBe(false);
   });

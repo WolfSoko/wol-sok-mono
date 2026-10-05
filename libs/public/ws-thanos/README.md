@@ -57,6 +57,7 @@ export class SharedModule {}
 | particleAcceleration | number  |      30 |                                   speed of the particle acceleration |
 | sound                | boolean |    true |                           play a windy, sandy sound while vaporizing |
 | soundVolume          | number  |     0.5 |                                      volume of the sound from 0 to 1 |
+| crumble              | string  |  shards |                   how the element breaks apart, see crumble variants |
 
 #### Sound
 
@@ -71,6 +72,32 @@ The particles are simulated and drawn on the graphics card with WebGL2,
 one particle per device pixel (up to a pixel ratio of 2) for crisp results on high resolution screens.
 Without WebGL2 ws-thanos falls back to the CPU canvas renderer, which captures at css pixels and uses at most 400000 particles.
 The effect canvas has a `data-ws-thanos-renderer` attribute (`webgl` or `canvas`) showing which renderer is in use.
+
+#### Crumble variants
+
+The `crumble` option decides how the element breaks apart while it vaporizes:
+
+| crumble    | effect                                                                       |
+| ---------- | ---------------------------------------------------------------------------- |
+| `'dust'`   | particles blow away along the vaporizing front                               |
+| `'cracks'` | cracks spread through the element and get finer before it turns to dust      |
+| `'shards'` | (default) cracks split it into shards that shift and tilt, then turn to dust |
+| `'chunks'` | whole chunks break off, jump away and crumble to dust                        |
+
+The variants need WebGL2, the canvas fallback always turns into `'dust'`.
+The effect canvas shows the variant in use in its `data-ws-thanos-crumble` attribute.
+
+#### Options per element
+
+Override any option for a single element with the `wsThanosOptions` input:
+
+```html
+<div wsThanos [wsThanosOptions]="{ crumble: 'chunks', animationLength: 8000 }">
+  Breaks into chunks
+</div>
+```
+
+or pass them to `WsThanosService.vaporize(element, { crumble: 'cracks' })`.
 
 ### `WsThanosDirective` usage
 
