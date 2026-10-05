@@ -42,13 +42,13 @@ export class AppComponent {
     },
   ];
   public readonly maxParticleCounts = [
-    50_000, 200_000, 500_000, 1_500_000, 4_000_000,
+    50_000, 200_000, 500_000, 1_500_000, 3_000_000, 6_000_000,
   ];
 
   public readonly crumble = signal<WsThanosCrumble>('shards');
   public readonly animationLength = signal(6000);
   public readonly particleAcceleration = signal(30);
-  public readonly maxParticleCount = signal(1_500_000);
+  public readonly maxParticleCount = signal(3_000_000);
   public readonly sound = signal(true);
   public readonly soundVolume = signal(0.5);
 

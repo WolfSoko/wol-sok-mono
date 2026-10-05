@@ -53,7 +53,7 @@ export class SharedModule {}
 | field                |  type   | default |                                                          description |
 | -------------------- | :-----: | ------: | -------------------------------------------------------------------: |
 | animationLength      | number  |    5000 |                                           the animation length in ms |
-| maxParticleCount     | number  | 1500000 | max amount of particles (capped at 400000 without WebGL2, see below) |
+| maxParticleCount     | number  | 3000000 | max amount of particles (capped at 400000 without WebGL2, see below) |
 | particleAcceleration | number  |      30 |                                   speed of the particle acceleration |
 | sound                | boolean |    true |                           play a windy, sandy sound while vaporizing |
 | soundVolume          | number  |     0.5 |                                      volume of the sound from 0 to 1 |
@@ -192,7 +192,7 @@ To the release with sound and GPU rendering
 
 - The snap sound is on by default. Turn it off with `provideWsThanosOptions({ sound: false })`.
 - Elements crumble into shards by default. Use `provideWsThanosOptions({ crumble: 'dust' })` for the previous look.
-- `maxParticleCount` defaults to 1500000, one particle per device pixel on the GPU.
+- `maxParticleCount` defaults to 3000000, one particle per device pixel on the GPU.
   Without WebGL2 at most 400000 particles are used, even if you configured more.
 
 From `1.0.1` to `2.0.0`
