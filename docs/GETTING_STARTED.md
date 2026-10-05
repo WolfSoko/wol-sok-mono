@@ -404,27 +404,24 @@ Install these extensions from VS Code marketplace:
 1. **Angular Language Service** (`Angular.ng-template`)
    - Angular template IntelliSense and error checking
 
-2. **ESLint** (`dbaeumer.vscode-eslint`)
-   - Real-time linting in editor
+2. **Oxc** (`oxc.oxc-vscode`)
+   - Real-time oxlint diagnostics and oxfmt formatting on save
 
-3. **Prettier - Code formatter** (`esbenp.prettier-vscode`)
-   - Auto-formatting on save
-
-4. **Nx Console** (`nrwl.angular-console`)
+3. **Nx Console** (`nrwl.angular-console`)
    - Visual interface for Nx commands
 
 #### Recommended Extensions
 
-5. **GitLens** (`eamodio.gitlens`)
+4. **GitLens** (`eamodio.gitlens`)
    - Enhanced Git capabilities
 
-6. **Error Lens** (`usernamehw.errorlens`)
+5. **Error Lens** (`usernamehw.errorlens`)
    - Inline error messages
 
-7. **Auto Rename Tag** (`formulahendry.auto-rename-tag`)
+6. **Auto Rename Tag** (`formulahendry.auto-rename-tag`)
    - Auto-rename paired HTML tags
 
-8. **Path Intellisense** (`christian-kohler.path-intellisense`)
+7. **Path Intellisense** (`christian-kohler.path-intellisense`)
    - Autocomplete file paths
 
 #### Workspace Settings
@@ -434,26 +431,26 @@ Create `.vscode/settings.json`:
 ```json
 {
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.oxc": "explicit"
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "[html]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "[scss]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   }
 }
 ```
@@ -462,8 +459,8 @@ Create `.vscode/settings.json`:
 
 1. **Enable Angular Plugin**: Preferences → Plugins → Install "Angular"
 2. **Set Node Interpreter**: Preferences → Languages & Frameworks → Node.js
-3. **Enable ESLint**: Preferences → Languages & Frameworks → JavaScript → Code Quality Tools → ESLint
-4. **Enable Prettier**: Preferences → Languages & Frameworks → JavaScript → Prettier
+3. **Install the Oxc plugin** (oxlint + oxfmt): Preferences → Plugins → Marketplace → "Oxc"
+4. **Use oxfmt on save**: Preferences → Tools → Actions on Save → Reformat code
 5. **Set TypeScript Version**: Preferences → Languages & Frameworks → TypeScript → Use project TypeScript
 
 ## Next Steps

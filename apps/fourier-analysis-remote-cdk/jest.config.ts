@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'fourier-analysis-remote-cdk',
   preset: '../../jest.preset.cjs',
   testEnvironment: 'node',

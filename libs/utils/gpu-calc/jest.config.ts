@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'utils-gpu-calc',
   preset: '../../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],

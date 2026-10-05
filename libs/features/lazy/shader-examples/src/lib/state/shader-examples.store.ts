@@ -3,10 +3,16 @@ import { Store, StoreConfig } from '@datorama/akita';
 import { PageEvent } from '@angular/material/paginator';
 import { ShaderCode } from '../model/shader-code.model';
 
+/** The paging state we keep; a plain object, not a `PageEvent` instance. */
+export type PageState = Pick<
+  PageEvent,
+  'length' | 'pageIndex' | 'pageSize' | 'previousPageIndex'
+>;
+
 export interface ShaderExampleState {
   showFps: boolean;
   showCodeEditor: boolean;
-  currentPage: PageEvent;
+  currentPage: PageState;
   isSmallScreen: boolean;
   pagedShaders: ShaderCode[];
   animationState: '' | 'fadeOutRight' | 'fadeOutLeft';

@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'shader-examples-remote-cdk',
   preset: '../../jest.preset.cjs',
   testEnvironment: 'node',

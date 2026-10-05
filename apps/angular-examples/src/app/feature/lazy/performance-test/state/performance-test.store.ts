@@ -13,8 +13,7 @@ import {
 } from './performance-test.model';
 
 export interface PerformanceTestState
-  extends EntityState<PerformanceTest>,
-    ActiveState {}
+  extends EntityState<PerformanceTest>, ActiveState {}
 
 const initInitialState = function (): EntityState<PerformanceTest, ID> {
   const arrayReduce = createPerformanceTest({ name: 'Array reduce' });

@@ -5,7 +5,6 @@ import {
   addEntities,
   selectActiveEntity,
   setActiveId,
-  updateEntities,
   withActiveId,
   withEntities,
 } from '@ngneat/elf-entities';

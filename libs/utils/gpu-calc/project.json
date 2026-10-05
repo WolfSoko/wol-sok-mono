@@ -29,11 +29,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/utils/gpu-calc/tsconfig.spec.json"
       }
-    },
-    "lint": {
-      "options": {
-        "args": ["./**/*.ts"]
-      }
     }
   }
 }

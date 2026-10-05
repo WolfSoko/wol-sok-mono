@@ -13,11 +13,32 @@
   "automergeType": "pr",
   "platformAutomerge": true,
   "prCreation": "immediate",
-  "rebaseWhen": "conflicted",
+  "rebaseWhen": "behind-base-branch",
   "packageRules": [
     {
       "matchPackageNames": ["esbuild", "eslint-plugin-playwright"],
       "enabled": false
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchPackageNames": [
+        "!@angular/**",
+        "!@angular-devkit/**",
+        "!@angular-eslint/**",
+        "!@schematics/**",
+        "!@ngrx/**",
+        "!@ng-easy/**",
+        "!@nrwl/**",
+        "!@nx/**",
+        "!@nx-*/**",
+        "!nx",
+        "!ng-packagr",
+        "!zone.js",
+        "!tslib",
+        "!typescript",
+        "!ngx-deploy-npm"
+      ],
+      "groupName": "all non-major dependencies"
     }
   ]
 }

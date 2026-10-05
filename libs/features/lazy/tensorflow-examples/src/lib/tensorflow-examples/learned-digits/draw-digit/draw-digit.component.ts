@@ -5,7 +5,6 @@ import {
   ElementRef,
   output,
   viewChild,
-  inject,
 } from '@angular/core';
 import P5 from 'p5';
 

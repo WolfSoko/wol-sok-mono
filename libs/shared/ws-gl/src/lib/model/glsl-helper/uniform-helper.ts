@@ -31,7 +31,7 @@ export function setUniform(
       );
       break;
     default:
-      throw new Error(`Unsupported uniform: ${uniform}`);
+      throw new Error(`Unsupported uniform: ${JSON.stringify(uniform)}`);
   }
 }
 

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
+import { LEVELS } from './levels';
 import { Player } from './player.model';
 
 export enum GameState {
@@ -17,7 +18,11 @@ export interface GameStateState {
   width: number;
   height: number;
   winner: Player | null;
+  /** True once a match is over - also for a draw, where `winner` stays null. */
+  matchEnded: boolean;
   keysPressed: string[];
+  /** Id of the level that is selected - decides the map and the balance. */
+  levelId: string;
 }
 
 export function createInitialState(): GameStateState {
@@ -29,7 +34,9 @@ export function createInitialState(): GameStateState {
     width: 480,
     height: 320,
     winner: null,
+    matchEnded: false,
     keysPressed: [],
+    levelId: LEVELS[0].id,
   };
 }
 

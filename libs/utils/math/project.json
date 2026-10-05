@@ -15,11 +15,6 @@
         "assets": ["libs/utils/math/*.md"]
       }
     },
-    "lint": {
-      "options": {
-        "args": ["./**/*.ts"]
-      }
-    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

@@ -2,6 +2,8 @@
 
 This document provides a high-level overview of the wol-sok-mono repository architecture, structure, and design principles.
 
+> **Diagrams:** the generated, always-current dependency graphs, module boundary rules and modularity metrics live in [`docs/architecture/README.md`](architecture/README.md). Regenerate them with `npm run arch:diagrams`; a weekly routine does this automatically and tracks the results in the pinned `architecture` issue.
+
 ## Table of Contents
 
 - [Repository Structure](#repository-structure)
@@ -169,7 +171,7 @@ Published npm packages:
 
 ### Build Tools
 
-- **Nx 22.0.1**: Monorepo orchestration and caching
+- **Nx 23.1.2**: Monorepo orchestration and caching
 - **Vite 7.1.9**: Fast build tool (for Analog.js apps)
 - **Webpack 5**: Build tool (for angular-examples)
 - **esbuild**: Fast JavaScript bundler
@@ -202,8 +204,8 @@ Published npm packages:
 
 ### Code Quality
 
-- **ESLint 9.28.0**: Linting
-- **Prettier 3.6.2**: Code formatting
+- **oxlint**: Linting (via `@nx/oxlint`)
+- **oxfmt**: Code formatting (via `nx format`)
 - **Husky 9.1.7**: Git hooks
 - **lint-staged 16.2.6**: Pre-commit linting
 - **Commitlint**: Conventional commit enforcement

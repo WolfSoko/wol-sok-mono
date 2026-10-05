@@ -5,10 +5,11 @@ Angular + Nx monorepo. Read this before touching anything.
 ## Stack
 
 - **Angular 20** — standalone components, zoneless change detection, Signals, `@if`/`@for`/`@switch` control flow
-- **Nx 22** — monorepo orchestration, caching, affected commands
+- **Nx 23** — monorepo orchestration, caching, affected commands
 - **TypeScript 5.9** — strict mode
 - **Build**: Vite (Analog/Vitest apps), Webpack + Module Federation (angular-examples)
 - **Testing**: Jest (most unit tests), Vitest (Vite projects), Playwright (E2E)
+- **Lint / Format**: oxlint (`.oxlintrc.json`, targets inferred by `@nx/oxlint`), angular-eslint for templates only (`eslint.config.mjs`, target `lint-templates`) and oxfmt (`.oxfmtrc.json`, driven by `nx format`)
 - **UI**: Angular Material + CDK everywhere (no custom primitives if AM covers it)
 - **State**: Angular Signals (local/sync), RxJS (async), Akita/Elf (app-wide stores)
 - **Backend**: Firebase (Hosting, Auth, DB), AWS CDK (S3/CloudFront infra)
@@ -53,14 +54,15 @@ npx nx test <project>
 npx nx run <project>:e2e
 
 # Lint (always --fix)
-npx nx lint <project> --fix
-npm run lint                          # all projects
+npx nx lint <project> --fix            # oxlint
+npx nx lint-templates <project> --fix  # angular-eslint template rules
+npm run lint                          # all projects, both targets
 
 # Format (REQUIRED before committing)
 npx nx format:write
 
 # Affected only (prefer in CI / large PRs)
-npx nx affected -t build,test,lint
+npx nx affected -t build,test,lint,lint-templates
 
 # Dependency graph
 npx nx graph
@@ -77,6 +79,14 @@ npx nx graph
 7. **2-space indentation**, kebab-case filenames, `*.spec.ts` for tests
 8. **Explicit `public`/`private`** in class members
 9. **Strongly typed** — avoid `any`; use proper generics
+
+## Linting & Formatting
+
+- One workspace-wide `.oxlintrc.json`; there are no per-project lint configs. Add project-specific rules through `overrides` with a `files` glob.
+- Type-aware linting is on (`options.typeAware`, backed by `oxlint-tsgolint`). It reads each project's `tsconfig.json` with TypeScript 7 semantics: no `baseUrl`, `paths` relative to `tsconfig.base.json` (`./libs/...`), and no `moduleResolution: node`/`node10`. Keep new tsconfigs on that layout or lint reports `tsconfig-error`.
+- `@nx/enforce-module-boundaries` runs inside oxlint through the `@nx/oxlint/boundaries-plugin` bridge; tag constraints live in `.oxlintrc.json`.
+- oxlint only lints JS/TS. Angular templates are covered by a second, template-only ESLint setup: the root `eslint.config.mjs` (angular-eslint template rules for `.html` and inline templates, plus the per-project component/directive selector prefixes) is inferred as the `lint-templates` target by `@nx/eslint/plugin`. New Angular projects get their selector prefix added to `selectorPrefixes` in that file. The JSON-based `@nx/dependency-checks` rule is gone; keep package.json deps correct by hand.
+- `nx format:write` / `nx format:check` run oxfmt (HTML, SCSS, Markdown and YAML are formatted through its Prettier-backed path).
 
 ## Dependency Constraints
 
@@ -96,15 +106,21 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - **Do not bump targets in `libs/public/*`** — published packages, held back for consumer compat.
 - **`apps/*-cdk` use `target: "ESNext"`** intentionally (Node runtime) — exclude from browser-target changes.
 
-## Module Federation
+## Native Federation
 
-- Host `angular-examples` has both `module-federation.config.ts` (dev) and `module-federation.prod.config.ts` (prod). Mirror shared-dep overrides in both.
-- Remotes: `fourier-analysis-remote`, `bacteria-game-remote`, `shader-examples-remote`.
+- `angular-examples` is the shell, remotes are `fourier-analysis-remote`, `bacteria-game-remote`, `shader-examples-remote`.
+- Shared setup lives in `tools/federation/workspace-federation.js`; each app's `federation.config.js` only adds its name and `exposes`. A package skipped in one app must be skipped in all of them, or the shell and a remote disagree about the import map.
+- `exposes` paths resolve from the workspace root (`./apps/<app>/src/...`), not the project root.
+- **Nothing but the exposed module belongs in `src/app/remote-entry/`.** Native Federation maps the whole _directory_ of an exposed file to the remote's public name, so a sibling file imported with a static `import` from outside that folder is rewritten to `<remote>/Routes` and its exports vanish at runtime. That is why each remote's bootstrap component sits in `src/app/`, not next to `entry.routes.ts`.
+- A remote also has to run standalone (its own e2e serves it that way), so check both: loaded through the shell _and_ opened on its own port.
+- Remotes are listed in `apps/angular-examples/src/assets/federation.manifest.json` (dev) and `federation.manifest.prod.json` (prod).
+- Each app has an `esbuild` target (`@angular/build:application`) wrapped by a `build`/`serve` target from `@angular-architects/native-federation`. Change build options on `esbuild`.
+- `nx serve angular-examples` only serves the shell. Use `nx run angular-examples:serve-all` to boot the shell plus all remotes (ports 4200-4203).
 
 ## Testing
 
 - **Unit (Jest)**: colocated as `<file>.spec.ts`; mock external services; keep fast and deterministic
-- **Unit (Vitest)**: used in Vite-based projects (check `project.json` for `@nx/vite:test` executor)
+- **Unit (Vitest)**: used in Vite-based projects (check `project.json` for the `@nx/vitest` plugin / `@nx/vitest:test` executor)
 - **E2E (Playwright)**: in `apps/<app>/e2e/`; page objects in `e2e/pos/`, fixtures in `e2e/fixtures/`
 - **Plugin E2E (Jest)**: `apps/nx-aws-cdk-v2-e2e` exercises `@wolsok/nx-aws-cdk-v2` in a generated throwaway workspace. Its target is `e2e` (not `e2e-ci`), so CI does not run it — run `npx nx e2e nx-aws-cdk-v2-e2e` by hand after changing the plugin
 - Run `npx nx affected -t test` before pushing
@@ -116,8 +132,10 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - Pre-commit: Husky + lint-staged (runs automatically)
 - **Before every commit**:
   1. `npx nx format:write`
-  2. `npx nx affected -t lint`
+  2. `npx nx affected -t lint,lint-templates`
 - PR scope: include summary, UI screenshots if visual, linked issue; no unrelated refactors
+- **Always request a CodeRabbit review** after opening a PR: this repo gets no automatic reviews
+  (fewer than 10 stars), so comment `@coderabbitai review` on the PR and work through the findings
 
 ## Security
 

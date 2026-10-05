@@ -1,4 +1,4 @@
-import { FirebaseOptions } from '@wolsok/feat-api-auth';
+import type { FirebaseOptions } from '@wolsok/feat-api-auth';
 
 export interface Environment {
   version: string;

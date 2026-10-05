@@ -76,8 +76,8 @@ nx g @wolsok/nx-aws-cdk-v2:application my-cdk-app --unitTestRunner=none
 nx g @wolsok/nx-aws-cdk-v2:application my-cdk-app --dry-run
 ```
 
-The generator also adds `aws-cdk-lib` + `constructs` to `dependencies` and `aws-cdk`, `ts-node`,
-`tsconfig-paths` and `tsx` to `devDependencies`, then installs them.
+The generator also adds `aws-cdk-lib` + `constructs` to `dependencies` and `aws-cdk` + `tsx` to
+`devDependencies`, then installs them.
 
 ## 4. Understand what was generated
 
@@ -317,8 +317,7 @@ npx nx deploy my-cdk-app --requireApproval=never   # main
 
 ### ESM workspaces
 
-If your workspace `package.json` has `"type": "module"`, the executors run the app through `tsx`
-instead of `ts-node` automatically. Nothing to configure.
+The executors run the app through `tsx`, which handles both CommonJS and ESM. Nothing to configure.
 
 ## Where to next
 

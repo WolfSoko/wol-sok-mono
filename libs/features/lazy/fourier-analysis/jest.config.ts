@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'feature-lazy-fourier-analysis',
 
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],

@@ -6,10 +6,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import {
-  MAT_TOOLTIP_SCROLL_STRATEGY_FACTORY_PROVIDER,
-  MatTooltipModule,
-} from '@angular/material/tooltip';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   AuthenticationService,
   AuthFacade,
@@ -22,7 +19,6 @@ import {
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [MAT_TOOLTIP_SCROLL_STRATEGY_FACTORY_PROVIDER],
 })
 export class LoginComponent {
   private readonly authService = inject(AuthenticationService);

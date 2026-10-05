@@ -26,6 +26,17 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
     ssr: {
       noExternal: ['firebase/**', 'firebase-functions/**', 'firebase-admin/**'],
     },
+    optimizeDeps: {
+      // Analog's auto-discover-deps plugin crawls every package with an fesm
+      // module, which reaches @angular/fire. That package lists its `ng add`
+      // schematics as runtime dependencies, so the devkit gets dragged into the
+      // browser dependency optimization, where esbuild fails on it.
+      exclude: [
+        '@angular-devkit/core',
+        '@angular-devkit/schematics',
+        '@schematics/angular',
+      ],
+    },
     plugins: [
       analog({
         vite: {

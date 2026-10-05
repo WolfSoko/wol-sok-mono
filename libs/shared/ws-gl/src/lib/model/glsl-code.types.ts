@@ -1,3 +1,4 @@
 export type FragCode = string;
 export type VertCode = string;
-export type GlslCode = FragCode | VertCode;
+/** Either {@link FragCode} or {@link VertCode}. */
+export type GlslCode = string;

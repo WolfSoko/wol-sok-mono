@@ -1,6 +1,7 @@
 import { DeployExecutorSchema } from './schema';
 import {
   createCommand,
+  resolveProjectPaths,
   runCommandProcess,
   parseArgs,
 } from '../../utils/executor.util';
@@ -8,7 +9,7 @@ import { ParsedExecutorInterface } from '../../interfaces/parsed-executor.interf
 import { ExecutorContext } from '@nx/devkit';
 
 export interface ParsedDeployExecutorOption extends ParsedExecutorInterface {
-  stacks?: string[];
+  stacks?: string;
   sourceRoot: string;
   root: string;
 }
@@ -44,8 +45,7 @@ function normalizeOptions(
     stacks = options.stacks;
   }
 
-  const { sourceRoot, root } =
-    context?.projectsConfigurations?.projects[context.projectName] ?? {};
+  const { sourceRoot, root } = resolveProjectPaths(context);
 
   return {
     ...options,

@@ -113,11 +113,11 @@ target rather than throwing.
 <pm-exec> cdk -a "<pm-exec> <loader> <workspace-root>/<project-root>/src/main.ts" <command>
 ```
 
-- **`<pm-exec>`** comes from Nx's `detectPackageManager()`: `npx` for npm, otherwise the package
-  manager binary itself (`pnpm`, `yarn`, `bun`).
-- **`<loader>`** is `tsx` when the nearest `package.json` declares `"type": "module"`, otherwise
-  `ts-node --require tsconfig-paths/register --project <project-root>/tsconfig.app.json`. The
-  project's own `package.json` wins over the workspace one.
+- **`<pm-exec>`** is the `exec` form from Nx's `getPackageManagerCommand()`: `npx` for npm,
+  `pnpm exec` for pnpm (`pnpx` on older versions), `yarn` for yarn, `bun` for bun.
+- **`<loader>`** is always `tsx --tsconfig <project-root>/tsconfig.app.json`. It handles CommonJS and
+  ESM alike and resolves the project's tsconfig `paths` itself, so workspace aliases work without
+  `baseUrl` — which TypeScript 6 deprecates.
 - **The workspace root** is `process.env.NX_WORKSPACE_ROOT` — set by Nx for every task — falling back
   to the devkit's `workspaceRoot`.
 

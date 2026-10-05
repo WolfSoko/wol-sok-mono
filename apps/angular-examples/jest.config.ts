@@ -1,11 +1,8 @@
 import type { JestConfigWithTsJest } from 'ts-jest';
 
-export default {
+module.exports = {
   displayName: 'angular-examples',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-  globals: {
-    VERSION: 'v1.2.3',
-  },
   coverageDirectory: '../../coverage/apps/angular-examples',
 
   transform: {
@@ -17,7 +14,11 @@ export default {
       },
     ],
   },
-  transformIgnorePatterns: ['node_modules/(?!.*.mjs$|@datorama/akita)'],
+  // @angular-architects/native-federation re-exports the runtime as plain
+  // ESM from a .js file, so it has to go through the transform as well.
+  transformIgnorePatterns: [
+    'node_modules/(?!.*.mjs$|@datorama/akita|@angular-architects/native-federation|@softarc/native-federation)',
+  ],
   snapshotSerializers: [
     'jest-preset-angular/build/serializers/no-ng-attributes',
     'jest-preset-angular/build/serializers/ng-snapshot',

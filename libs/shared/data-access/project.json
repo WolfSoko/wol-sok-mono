@@ -20,11 +20,6 @@
       },
       "defaultConfiguration": "production"
     },
-    "lint": {
-      "options": {
-        "args": ["./**/*.ts"]
-      }
-    },
     "test": {
       "executor": "@nx/vitest:test",
       "options": {

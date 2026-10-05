@@ -5,8 +5,8 @@ import {
 } from './ws-thanos-options.token';
 
 describe('WsThanosOptions', () => {
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
+  beforeEach(() => {
+    TestBed.configureTestingModule({
       providers: [provideWsThanosOptions({ maxParticleCount: 12345 })],
     });
   });

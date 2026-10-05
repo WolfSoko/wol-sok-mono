@@ -6,26 +6,30 @@ import {
   ElementRef,
   input,
   OnDestroy,
-  SimpleChange,
-  SimpleChanges,
   ViewChild,
 } from '@angular/core';
 import * as math from 'mathjs';
 import P5, { Graphics } from 'p5';
 import { InputWave } from '../../model/input-wave.model';
+import {
+  CIRCLE_CANVAS_PADDING,
+  CircleCanvasLayout,
+  circleCanvasLayout,
+} from './circle-canvas.layout';
 
 const NEG_TWO_PI = -2 * Math.PI;
 const CIRCLE_DRAW_SAMPLES = 800;
-
-interface CircleCanvasChanges extends SimpleChanges {
-  waveWidth: SimpleChange;
-  waveHeight: SimpleChange;
-  wave: SimpleChange;
-}
+const MIN_AXIS_LABEL_WIDTH = 70;
 
 interface CenterData {
   real: number;
   imag: number;
+}
+
+/** A point of the frequency graph the pointer is currently over. */
+interface GraphPoint {
+  index: number;
+  frequency: number;
 }
 
 @Component({
@@ -45,6 +49,12 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
   wave = input.required<InputWave>();
 
   private sketch: P5 | null = null;
+  /**
+   * Offscreen buffer the wrapped wave circle is drawn into. Kept on the
+   * component (not inside `initSketch`) so re-initialising the sketch for a new
+   * wave does not orphan the previous buffer.
+   */
+  private fourierCircleImg: Graphics | null = null;
   private frequencyToTest = 20;
   private centersOfFrequencies: { [key: number]: CenterData } = {};
   private centers: number[] = [];
@@ -88,17 +98,23 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
 
   initSketch(sketch: P5) {
     this.sketch = sketch;
+    // A previous run (wave change) may have left a buffer behind.
+    this.fourierCircleImg?.remove();
+    this.fourierCircleImg = null;
 
-    const padding = 30;
-    const xCenterGraphLeft = 400;
+    const padding = CIRCLE_CANVAS_PADDING;
     const minFrequencyToTest = 20;
     const maxFrequencyToTest = 500;
     const frequencyStepWidth = 1;
     const frequencySteps =
       (maxFrequencyToTest - minFrequencyToTest) * frequencyStepWidth;
     let calcNextGenerator: Generator<undefined> | null = null;
-    let fourierCircleImg: Graphics;
     const samplesToTake = 3000;
+
+    let layout: CircleCanvasLayout = circleCanvasLayout(
+      this.waveWidth(),
+      this.waveHeight()
+    );
 
     sketch.setup = () => {
       sketch.createCanvas(this.waveWidth(), this.waveHeight());
@@ -112,13 +128,20 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
       ) {
         return;
       }
-      const w = sketch.width;
-      const h = sketch.height;
+      const previousCircleSize = layout.circleSize;
+      layout = circleCanvasLayout(sketch.width, sketch.height);
 
       sketch.background(66);
       sketch.stroke(255, 255, 255);
       sketch.strokeWeight(0.5);
       sketch.noFill();
+
+      if (
+        previousCircleSize !== layout.circleSize &&
+        this.fourierCircleImg != null
+      ) {
+        setFrequencyToTest.call(this, this.frequencyToTest);
+      }
 
       calcNumbers.call(this);
       drawCircle.call(this);
@@ -131,8 +154,8 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
       }
 
       function drawCircle(this: CircleCanvasComponent) {
-        if (fourierCircleImg != null) {
-          sketch.image(fourierCircleImg, 0, 0);
+        if (this.fourierCircleImg != null) {
+          sketch.image(this.fourierCircleImg, layout.circleX, layout.circleY);
         }
       }
 
@@ -205,17 +228,23 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
       function drawFourierTransformationGraph(this: CircleCanvasComponent) {
         sketch.push();
         sketch.beginShape();
-        for (let x = xCenterGraphLeft; x < w; x++) {
+        for (let x = layout.graphLeft; x < layout.graphRight; x++) {
           const xInd = Math.floor(
-            sketch.map(x, xCenterGraphLeft, w, 0, frequencySteps)
+            sketch.map(
+              x,
+              layout.graphLeft,
+              layout.graphRight,
+              0,
+              frequencySteps
+            )
           );
           if (xInd < this.centers.length) {
             const y = sketch.map(
               this.centers[xInd],
               this.centerMin,
               this.centerMax,
-              h - padding,
-              padding
+              layout.graphBottom,
+              layout.graphTop
             );
             sketch.vertex(x, y);
           } else {
@@ -228,14 +257,21 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
 
       function drawXAxis(this: CircleCanvasComponent) {
         sketch.push();
-        sketch.line(xCenterGraphLeft, h - padding + 10, w, h - padding + 10);
+        const axisY = layout.graphBottom + 5;
+        const labelY = axisY + 12;
+        sketch.line(layout.graphLeft, axisY, layout.graphRight, axisY);
         sketch.textAlign('center', 'center');
-        sketch.textSize(12);
+        sketch.textSize(layout.stacked ? 10 : 12);
 
-        const labelAmount = 10;
+        const labelAmount = axisLabelAmount();
         for (let i = 0; i <= labelAmount; i++) {
-          const x = sketch.map(i, 0, labelAmount, xCenterGraphLeft, w);
-          const y = h - padding + 10;
+          const x = sketch.map(
+            i,
+            0,
+            labelAmount,
+            layout.graphLeft,
+            layout.graphRight
+          );
           const frequency = sketch.map(
             i,
             0,
@@ -243,110 +279,145 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
             minFrequencyToTest,
             maxFrequencyToTest
           );
-          sketch.text(frequency.toFixed(2) + 'hz', x, y);
-          sketch.line(x, h - padding + 10, x, h - padding + 5);
+          sketch.line(x, axisY, x, axisY + 4);
+          sketch.text(
+            frequency.toFixed(layout.stacked ? 0 : 2) + 'hz',
+            x,
+            labelY
+          );
         }
         sketch.pop();
+      }
+
+      function axisLabelAmount(): number {
+        const graphWidth = layout.graphRight - layout.graphLeft;
+        return Math.max(
+          2,
+          Math.min(10, Math.floor(graphWidth / MIN_AXIS_LABEL_WIDTH))
+        );
       }
     };
 
     sketch.mouseMoved = () => {
-      const mX = sketch.mouseX;
-      const mY = sketch.mouseY;
-      const w = sketch.width;
-      const h = sketch.height;
-      if (mX > xCenterGraphLeft && mX < w && mY > padding && mY < h - padding) {
-        const index = Math.floor(
-          sketch.map(mX, xCenterGraphLeft, w, 0, frequencySteps)
-        );
-        const frequency = math.round(
-          sketch.map(
-            index,
-            0,
-            frequencySteps,
-            minFrequencyToTest,
-            maxFrequencyToTest
-          ),
-          3
-        ) as number;
-
-        if (index < this.centers.length) {
-          if (this.finished) {
-            setFrequencyToTest.call(this, frequency);
-            sketch.redraw();
-          }
-        }
-      }
+      selectFrequencyAt.call(this, sketch.mouseX, sketch.mouseY);
     };
 
-    function drawMouseOverInfo(this: CircleCanvasComponent) {
-      const mX = sketch.mouseX;
-      const mY = sketch.mouseY;
-      const w = sketch.width;
-      const h = sketch.height;
-      if (mX > xCenterGraphLeft && mX < w && mY > padding && mY < h - padding) {
-        const index = Math.floor(
-          sketch.map(mX, xCenterGraphLeft, w, 0, frequencySteps)
-        );
-        const frequency = math.round(
-          sketch.map(
-            index,
-            0,
-            frequencySteps,
-            minFrequencyToTest,
-            maxFrequencyToTest
-          ),
-          3
-        ) as number;
-        if (index < this.centers.length) {
-          const y = sketch.map(
-            this.centers[index],
-            this.centerMin,
-            this.centerMax,
-            h - padding,
-            padding
-          );
-          sketch.stroke(105, 240, 174);
-          sketch.ellipseMode('center');
-          sketch.ellipse(mX, y, 5);
-          sketch.textAlign('left', 'center');
-          sketch.stroke(255);
-          sketch.text(
-            frequency + ' Hz,' + this.centers[index].toFixed(5),
-            mX + 5,
-            y
-          );
-          sketch.push();
-          sketch.strokeWeight(0.5);
-          sketch.stroke(123, 31, 162);
-          sketch.line(mX, padding, mX, h - padding);
-          sketch.pop();
-        }
+    // Touch devices get no hover, so a tap picks the frequency instead. Returning
+    // `true` keeps the default behaviour so the page can still be scrolled.
+    sketch.touchStarted = () => {
+      selectFrequencyAt.call(this, sketch.mouseX, sketch.mouseY);
+      return true;
+    };
+
+    function selectFrequencyAt(
+      this: CircleCanvasComponent,
+      x: number,
+      y: number
+    ) {
+      const point = graphPointAt.call(this, x, y);
+      if (point != null && this.finished) {
+        setFrequencyToTest.call(this, point.frequency);
+        sketch.redraw();
       }
     }
 
-    function drawCircleToBuffer(this: CircleCanvasComponent) {
-      const radius = (sketch.height - padding * 2) / 2;
-      fourierCircleImg = sketch.createGraphics(
-        2 * (radius + padding),
-        2 * (radius + padding)
+    /**
+     * Graph point the given canvas position points at, or `null` when the
+     * position is outside the frequency graph.
+     */
+    function graphPointAt(
+      this: CircleCanvasComponent,
+      x: number,
+      y: number
+    ): GraphPoint | null {
+      if (
+        x < layout.graphLeft ||
+        x > layout.graphRight ||
+        y < layout.graphTop ||
+        y > layout.graphBottom
+      ) {
+        return null;
+      }
+      const index = Math.floor(
+        sketch.map(x, layout.graphLeft, layout.graphRight, 0, frequencySteps)
       );
+      if (index >= this.centers.length) {
+        return null;
+      }
+      const frequency = math.round(
+        sketch.map(
+          index,
+          0,
+          frequencySteps,
+          minFrequencyToTest,
+          maxFrequencyToTest
+        ),
+        3
+      ) as number;
+      return { index, frequency };
+    }
+
+    function drawMouseOverInfo(this: CircleCanvasComponent) {
+      const mX = sketch.mouseX;
+      const point = graphPointAt.call(this, mX, sketch.mouseY);
+      if (point == null) {
+        return;
+      }
+      const { index, frequency } = point;
+      const y = sketch.map(
+        this.centers[index],
+        this.centerMin,
+        this.centerMax,
+        layout.graphBottom,
+        layout.graphTop
+      );
+      const label = frequency + ' Hz,' + this.centers[index].toFixed(5);
+      sketch.stroke(105, 240, 174);
+      sketch.ellipseMode('center');
+      sketch.ellipse(mX, y, 5);
+      sketch.stroke(255);
+      // Flip the label to the left of the marker when it would leave the canvas.
+      const labelFitsRight =
+        mX + 5 + sketch.textWidth(label) < layout.graphRight;
+      sketch.textAlign(labelFitsRight ? 'left' : 'right', 'center');
+      sketch.text(label, labelFitsRight ? mX + 5 : mX - 5, y);
+      sketch.push();
+      sketch.strokeWeight(0.5);
+      sketch.stroke(123, 31, 162);
+      sketch.line(mX, layout.graphTop, mX, layout.graphBottom);
+      sketch.pop();
+    }
+
+    function drawCircleToBuffer(this: CircleCanvasComponent) {
+      const circleSize = layout.circleSize;
+      const radius = (circleSize - padding * 2) / 2;
+      if (
+        this.fourierCircleImg == null ||
+        this.fourierCircleImg.width !== circleSize ||
+        this.fourierCircleImg.height !== circleSize
+      ) {
+        this.fourierCircleImg?.remove();
+        this.fourierCircleImg = sketch.createGraphics(circleSize, circleSize);
+      }
+      const fourierCircleImg = this.fourierCircleImg;
       const drawSamplesLength = this.wave().points.length;
       const stepSize = Math.max(
         1,
         Math.floor(drawSamplesLength / CIRCLE_DRAW_SAMPLES)
       );
 
+      fourierCircleImg.resetMatrix();
       fourierCircleImg.background(66);
       fourierCircleImg.stroke(255, 255, 255);
       fourierCircleImg.strokeWeight(0.5);
       fourierCircleImg.noFill();
+      fourierCircleImg.textAlign('center', 'center');
       fourierCircleImg.text(
         'Frequency: ' + this.frequencyToTest,
-        radius,
+        circleSize / 2,
         padding / 2
       );
-      fourierCircleImg.translate(radius + padding, radius + padding);
+      fourierCircleImg.translate(circleSize / 2, circleSize / 2);
       fourierCircleImg.ellipseMode('center');
       fourierCircleImg.ellipse(0, 0, radius * 2);
       fourierCircleImg.stroke(255, 255, 255, 60);
@@ -404,6 +475,8 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.fourierCircleImg?.remove();
+    this.fourierCircleImg = null;
     if (this.sketch != null) {
       this.sketch.remove();
     }

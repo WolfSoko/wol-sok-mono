@@ -47,17 +47,6 @@
         ]
       }
     },
-    "lint": {
-      "options": {
-        "args": [
-          "**/*.ts",
-          "generators.json",
-          "executors.json",
-          "migrations.json",
-          "package.json"
-        ]
-      }
-    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/libs/public/nx-aws-cdk-v2"],

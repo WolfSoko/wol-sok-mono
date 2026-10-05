@@ -1,6 +1,7 @@
 import { BootstrapExecutorSchema } from './schema';
 import {
   createCommand,
+  resolveProjectPaths,
   parseArgs,
   runCommandProcess,
 } from '../../utils/executor.util';
@@ -45,9 +46,7 @@ function normalizeOptions(
     profile = `--profile ${options.profile}`;
   }
 
-  const { sourceRoot, root } =
-    // eslint-disable-next-line no-unsafe-optional-chaining
-    context?.projectsConfigurations?.projects[context.projectName];
+  const { sourceRoot, root } = resolveProjectPaths(context);
 
   return {
     ...options,

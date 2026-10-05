@@ -3,18 +3,37 @@ import { exec } from 'child_process';
 import { DeployExecutorSchema } from '../executors/deploy/schema';
 import { ParsedExecutorInterface } from '../interfaces/parsed-executor.interface';
 import {
+  ExecutorContext,
   logger,
-  detectPackageManager,
-  readJsonFile,
+  getPackageManagerCommand,
   workspaceRoot,
 } from '@nx/devkit';
 import { BootstrapExecutorSchema } from '../executors/bootstrap/schema';
 import { SynthExecutorSchema } from '../executors/synth/schema';
-import { existsSync } from 'node:fs';
 import * as path from 'node:path';
 
-function getPackageJson(packageJsonPath: string): { type?: string } {
-  return existsSync(packageJsonPath) ? readJsonFile(packageJsonPath) : {};
+/**
+ * Project paths the CDK command is built from. Every executor needs both, so a
+ * context without a resolvable project configuration is a hard error rather
+ * than an `undefined` that only surfaces later in a malformed command.
+ */
+export function resolveProjectPaths(context: ExecutorContext): {
+  sourceRoot: string;
+  root: string;
+} {
+  const project = context.projectName
+    ? context.projectsConfigurations?.projects[context.projectName]
+    : undefined;
+
+  if (!project) {
+    throw new Error(
+      `Cannot resolve the project configuration for "${
+        context.projectName ?? '<unknown project>'
+      }".`
+    );
+  }
+
+  return { sourceRoot: project.sourceRoot ?? project.root, root: project.root };
 }
 
 export const executorPropKeys = ['stacks'];
@@ -31,19 +50,20 @@ function getWorkspaceRoot(): string {
 }
 
 export function generateCommandString(command: string, appPath: string) {
-  const packageManager = detectPackageManager();
-  const packageManagerExecutor =
-    packageManager === 'npm' ? 'npx' : packageManager;
+  // `exec` is the package manager's "run a binary from node_modules" form:
+  // npx, `pnpm exec` (or pnpx on older pnpm), yarn, bun. Deriving it by hand
+  // produced `pnpm tsx`, which pnpm reads as a script name, not a binary.
+  const { exec: packageManagerExecutor } = getPackageManagerCommand();
 
   const projectPath = path.join(getWorkspaceRoot(), appPath);
-  const moduleType = getModuleType(projectPath);
-  const compileTsPart =
-    moduleType === 'module'
-      ? 'tsx'
-      : `ts-node --require tsconfig-paths/register --project ${path.join(projectPath, 'tsconfig.app.json')}`;
-  // Determine the path to the app's entrypoint
+  // tsx resolves the tsconfig `paths` of the app on its own, so the CDK entry
+  // can import workspace aliases. ts-node needed tsconfig-paths for that, and
+  // tsconfig-paths silently resolves nothing once `baseUrl` is gone — which
+  // TypeScript 6 deprecates. `--tsconfig` is required: without it tsx reads
+  // whatever tsconfig sits next to the current working directory.
+  const tsConfigPath = path.join(projectPath, 'tsconfig.app.json');
   const mainTsPath = path.join(projectPath, 'src', 'main.ts');
-  const generatePath = `${packageManagerExecutor} ${compileTsPart} ${mainTsPath}`;
+  const generatePath = `${packageManagerExecutor} tsx --tsconfig ${tsConfigPath} ${mainTsPath}`;
   return `${packageManagerExecutor} cdk -a "${generatePath}" ${command}`;
 }
 
@@ -55,7 +75,7 @@ export function parseArgs(
     .filter((prop) => executorPropKeys.indexOf(prop) < 0)
     .reduce(
       (acc, key) => {
-        acc[key] = options[key];
+        acc[key] = (options as Record<string, string | string[]>)[key];
         return acc;
       },
       {} as Record<string, string | string[]>
@@ -114,15 +134,15 @@ export function runCommandProcess(
     process.on('SIGTERM', processExitListener);
 
     process.stdin.on('data', (data) => {
-      childProcess.stdin.write(data);
-      childProcess.stdin.end();
+      childProcess.stdin?.write(data);
+      childProcess.stdin?.end();
     });
 
-    childProcess.stdout.on('data', (data) => {
+    childProcess.stdout?.on('data', (data) => {
       process.stdout.write(data);
     });
 
-    childProcess.stderr.on('data', (err) => {
+    childProcess.stderr?.on('data', (err) => {
       process.stderr.write(err);
     });
 
@@ -141,22 +161,4 @@ export function runCommandProcess(
       process.stdin.removeListener('data', processExitListener);
     });
   });
-}
-
-function getModuleType(projectPath: string) {
-  // `projectPath` is already absolute; joining it onto the workspace root again
-  // produced a path that never existed, so an app-level `"type"` was ignored.
-  const packageJsonPath = path.join(projectPath, 'package.json');
-  const appPackageJson = getPackageJson(packageJsonPath);
-  if (appPackageJson?.type) {
-    logger.debug(`Module type from ${packageJsonPath}: ${appPackageJson.type}`);
-    return appPackageJson.type;
-  }
-  const globalPackageJson = getPackageJson(
-    path.join(getWorkspaceRoot(), 'package.json')
-  );
-  logger.debug(
-    `Module type from workspace package.json: ${globalPackageJson.type ?? 'commonjs'}`
-  );
-  return globalPackageJson.type;
 }

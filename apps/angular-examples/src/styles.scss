@@ -1,6 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
 @use 'normalize.css/normalize.css';
-@use 'apps/angular-examples/src/styles/app-loading-style';
+@use 'app-loading-style';
 @use '@angular/material' as mat;
 
 body,

@@ -29,11 +29,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/features/api/auth/tsconfig.spec.json"
       }
-    },
-    "lint": {
-      "options": {
-        "args": ["./**/*.ts"]
-      }
     }
   }
 }

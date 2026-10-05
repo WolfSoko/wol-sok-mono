@@ -1,0 +1,5 @@
+{
+  "fourier-analysis-remote": "http://localhost:4201/remoteEntry.json",
+  "bacteria-game-remote": "http://localhost:4202/remoteEntry.json",
+  "shader-examples-remote": "http://localhost:4203/remoteEntry.json"
+}

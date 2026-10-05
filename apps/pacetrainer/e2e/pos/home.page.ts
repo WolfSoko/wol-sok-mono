@@ -22,8 +22,13 @@ export class HomePage {
         name: 'Pace-Trainer',
       })
     ).toBeVisible();
-    await expect(
-      this.page.getByText('Dein digitaler Laufcoach.')
-    ).toBeVisible();
+    // The tagline is hidden below Angular Material's xs breakpoint (599px)
+    // to prevent horizontal overflow on mobile viewports.
+    const viewportWidth = this.page.viewportSize()?.width ?? Infinity;
+    if (viewportWidth > 599) {
+      await expect(
+        this.page.getByText('Dein digitaler Laufcoach.')
+      ).toBeVisible();
+    }
   }
 }

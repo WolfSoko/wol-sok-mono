@@ -1,43 +1,21 @@
-import { Vector2d } from '@wolsok/utils-math';
 import { WorldObject } from './world-object';
+import { SvgPath } from './svg-paths';
 
+/**
+ * Something that pulls on a world object besides gravity. The world applies
+ * every force it holds to every object once per tick, and each force decides
+ * for itself which objects it acts on.
+ */
 export abstract class Force {
   constructor(public id: string) {}
 
-  abstract applyForceFor(wo: WorldObject, dT: number): void;
-}
+  abstract applyForceFor(wo: WorldObject): void;
 
-export class SpringForce extends Force {
-  springEnd: Vector2d;
-
-  constructor(
-    public wo: WorldObject,
-    private springStrength: number = wo.mass,
-    private dampingStrength: number = wo.mass
-  ) {
-    super('ForceOn:' + wo.id);
-    this.springEnd = wo.pos;
-  }
-
-  applyForceFor(woToApply: WorldObject, dT: number): void {
-    if (this.wo !== woToApply) {
-      return;
-    }
-    const forceDirection: Vector2d = woToApply.pos.directionTo(this.springEnd);
-    const distance: number = woToApply.pos.dist(this.springEnd);
-    if (distance <= 0.01) {
-      return;
-    }
-
-    const forceMagnitude: number = -this.springStrength * distance;
-    const directedForce: Vector2d = forceDirection.mul(forceMagnitude);
-
-    const dampingForce: Vector2d = woToApply.vel.mul(-this.dampingStrength);
-
-    woToApply.applyForce(directedForce.add(dampingForce), dT, true);
-  }
-
-  updateSpringEnd(newSpringEnd: Vector2d): void {
-    this.springEnd = newSpringEnd;
+  /**
+   * The line this force is drawn as, or `null` for one that is not shown.
+   * A force knows its own shape, so nothing else has to ask what it is.
+   */
+  svgPath(): SvgPath | null {
+    return null;
   }
 }

@@ -112,7 +112,7 @@ otherwise the workspace root. The Nx project name is the path below `<appsDir>` 
 ```
 
 The generator also adds `aws-cdk-lib` and `constructs` to `dependencies`, and the `aws-cdk` CLI plus
-the TypeScript loaders (`ts-node`, `tsconfig-paths`, `tsx`) to `devDependencies` of your workspace.
+the TypeScript loader `tsx` to `devDependencies` of your workspace.
 
 > The CDK Toolkit CLI (`aws-cdk`) and the construct library (`aws-cdk-lib`) are released on separate
 > version lines — `2.1xxx.x` for the CLI, `2.x` for the library. They are pinned independently.
@@ -215,10 +215,10 @@ All four executors build the same shape of command and run it **from the workspa
 <pm-exec> cdk -a "<pm-exec> <loader> <workspace-root>/<project-root>/src/main.ts" <command> [stacks] [--flags]
 ```
 
-- `<pm-exec>` is `npx` for npm workspaces, otherwise your package manager (`pnpm`, `yarn`, `bun`),
-  detected by Nx.
-- `<loader>` is `tsx` when the nearest `package.json` has `"type": "module"`, otherwise
-  `ts-node --require tsconfig-paths/register --project <project-root>/tsconfig.app.json`.
+- `<pm-exec>` is the `exec` form Nx reports for your package manager: `npx` for npm, `pnpm exec`
+  for pnpm (`pnpx` on older versions), `yarn` for yarn, `bun` for bun.
+- `<loader>` is always `tsx --tsconfig <project-root>/tsconfig.app.json`. It handles CommonJS and ESM
+  alike and resolves the project's tsconfig `paths` itself.
 - Because `cdk` runs with the workspace root as its working directory, `cdk.out` is written to the
   **workspace root**, and the generated `cdk.json` is _not_ read. That file exists for the times you
   invoke `cdk` yourself from the project directory.

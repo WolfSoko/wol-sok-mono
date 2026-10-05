@@ -1,4 +1,8 @@
 import {
+  FullscreenOverlayContainer,
+  OverlayContainer,
+} from '@angular/cdk/overlay';
+import {
   ApplicationConfig,
   provideZonelessChangeDetection,
 } from '@angular/core';
@@ -14,5 +18,8 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideAnimations(),
     provideRouter(appRoutes, withEnabledBlockingInitialNavigation()),
+    // Only the element that fills the screen is painted, so dialogs and
+    // tooltips have to move into it while a page is fullscreen.
+    { provide: OverlayContainer, useClass: FullscreenOverlayContainer },
   ],
 };

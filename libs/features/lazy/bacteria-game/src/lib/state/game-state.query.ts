@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Query } from '@datorama/akita';
 import { distinctUntilChanged, filter, map, Observable } from 'rxjs';
 import { GameState, GameStateState, GameStateStore } from './game.states';
+import { getLevel, Level } from './levels';
 
 @Injectable({ providedIn: 'root' })
 export class GameStateQuery extends Query<GameStateState> {
@@ -32,8 +33,30 @@ export class GameStateQuery extends Query<GameStateState> {
     return this.select('fps');
   }
 
+  /** The level that is selected, resolved from the stored id. */
+  selectLevel(): Observable<Level> {
+    return this.select((store) => store.levelId).pipe(
+      distinctUntilChanged(),
+      map((levelId) => getLevel(levelId))
+    );
+  }
+
   selectWinnerId() {
     return this.select((store) => store.winner);
+  }
+
+  /** Emits true while the match is paused. */
+  selectIsPaused(): Observable<boolean> {
+    return this.select((store) => store.currentState === GameState.PAUSED).pipe(
+      distinctUntilChanged()
+    );
+  }
+
+  /** Emits true once a match is over, a draw included. */
+  selectMatchEnded(): Observable<boolean> {
+    return this.select((store) => store.matchEnded).pipe(
+      distinctUntilChanged()
+    );
   }
 
   selectKeysPressed(): Observable<{

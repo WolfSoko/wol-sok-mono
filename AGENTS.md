@@ -5,7 +5,7 @@
 - Monorepo managed by Nx. Apps live under `apps/<app-name>` (e.g., `apps/pacetrainer`, `apps/rollapolla-analog`, `apps/fourier-analysis-remote`).
 - Source per app: `src/` (components, routes, styles). Assets under `src/public` or `src/assets`.
 - Unit tests: colocated as `*.spec.ts`. E2E tests: `apps/<app>/e2e` with Playwright configs in each app.
-- Root config: `nx.json`, `package.json`, `eslint*`, `jest*`, `.prettierrc.json`.
+- Root config: `nx.json`, `package.json`, `.oxlintrc.json`, `.oxfmtrc.json`, `jest*`.
 
 ## Build, Test, and Development Commands
 
@@ -22,9 +22,9 @@
 - TypeScript + Angular/Analog. Use 2-space indentation.
 - Filenames: kebab-case (e.g., `training-live-state.component.ts`); tests end with `.spec.ts`.
 - Prefer strongly typed APIs and explicit `public`/`private` in classes.
-- Linting: ESLint (`eslint*.config.*`). Formatting: Prettier (`.prettierrc.json`). Pre-commit runs via Husky + lint-staged.
+- Linting: oxlint with type-aware rules (`.oxlintrc.json`, inferred `lint` targets via `@nx/oxlint`) plus angular-eslint for templates only (`eslint.config.mjs`, inferred `lint-templates` targets). Formatting: oxfmt (`.oxfmtrc.json`, run through `nx format`). Pre-commit runs via Husky + lint-staged.
 - **IMPORTANT**: Always run `npx nx format:write` before committing to ensure all files are properly formatted.
-- **REQUIRED**: Run `npx nx affected -t lint` before pushing to verify all linting issues are resolved. This prevents CI failures.
+- **REQUIRED**: Run `npx nx affected -t lint,lint-templates` before pushing to verify all linting issues are resolved. This prevents CI failures.
 
 ## Testing Guidelines
 
@@ -40,7 +40,7 @@
 ## Security & Configuration Tips
 
 - Do not commit secrets. Review `SECURITY.md` and use environment files under `apps/<app>/src/environments/` for config.
-- Prefer Nx caching defaults; avoid custom scripts unless necessary. Use `npx nx affected -t build,test,lint` before merging.
+- Prefer Nx caching defaults; avoid custom scripts unless necessary. Use `npx nx affected -t build,test,lint,lint-templates` before merging.
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->

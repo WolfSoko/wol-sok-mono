@@ -31,11 +31,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/features/lazy/fourier-analysis/tsconfig.spec.json"
       }
-    },
-    "lint": {
-      "options": {
-        "args": ["./**/*.ts", "./**/*.html"]
-      }
     }
   }
 }

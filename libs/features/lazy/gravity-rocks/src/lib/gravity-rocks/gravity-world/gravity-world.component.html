@@ -10,17 +10,14 @@
           <mat-card-title>Play with the values</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <feat-lazy-gravity-config
-            [config]="settings()"
-            (configChange)="settings.set($event)"
-          />
+          <feat-lazy-gravity-config [(config)]="settings" />
           <mat-list class="info-list">
             <h4 mat-subheader>Infos</h4>
             <mat-list-item>
               <span>Planets = {{ planets().length }}</span>
             </mat-list-item>
             <mat-list-item>
-              <span>Forces = {{ worldService.getForces().length }}</span>
+              <span>Forces = {{ forces().length }}</span>
             </mat-list-item>
             @for (planet of planets(); track planet.id; let i = $index) {
               <mat-list-item>
@@ -31,9 +28,8 @@
                     >
                   </button>
                   <span [style.background-color]="planet.color">
-                    Planet{{ i + 1 }}: x={{
-                      planet.pos.x | number: "1.0-0"
-                    }},y={{ planet.pos.y | number: "1.0-0" }}
+                    {{ planetName(planet, i) }}:
+                    {{ distanceFromSun(planet) | number: "1.3-3" }} AU
                   </span>
                 </div>
               </mat-list-item>
@@ -55,7 +51,60 @@
       >
         <mat-icon>build</mat-icon>
       </button>
-      <span>Click and drag to manipulate.</span>
+      <span class="hint"
+        >Pick a tool on the left. Long-press or right-click a body for its
+        settings. Pinch or scroll to zoom, drag with two fingers or shift to
+        pan.</span
+      >
+      <div class="zoom-controls">
+        @if (camera.followedId()) {
+          <button
+            data-qa="cta-stop-follow"
+            mat-icon-button
+            type="button"
+            matTooltip="Stop following"
+            aria-label="Stop following"
+            (click)="camera.stopFollowing()"
+          >
+            <mat-icon>gps_fixed</mat-icon>
+          </button>
+        }
+        <button
+          data-qa="cta-zoom-out"
+          mat-icon-button
+          type="button"
+          matTooltip="Zoom out"
+          aria-label="Zoom out"
+          [disabled]="!camera.canZoomOut()"
+          (click)="camera.zoomOut()"
+        >
+          <mat-icon>zoom_out</mat-icon>
+        </button>
+        <span class="zoom-level" data-qa="zoom-level">{{
+          camera.zoomLabel()
+        }}</span>
+        <button
+          data-qa="cta-zoom-in"
+          mat-icon-button
+          type="button"
+          matTooltip="Zoom in"
+          aria-label="Zoom in"
+          [disabled]="!camera.canZoomIn()"
+          (click)="camera.zoomIn()"
+        >
+          <mat-icon>zoom_in</mat-icon>
+        </button>
+        <button
+          data-qa="cta-reset-view"
+          mat-icon-button
+          type="button"
+          matTooltip="Reset view"
+          aria-label="Reset view"
+          (click)="camera.reset()"
+        >
+          <mat-icon>center_focus_strong</mat-icon>
+        </button>
+      </div>
       <button
         class="reset-button"
         data-qa="cta-reset"
@@ -75,66 +124,139 @@
         {{ running() ? "Pause" : "Start" }}
       </button>
     </div>
-    <svg
-      #svgWorld
-      class="world-svg"
-      (mousedown)="mouseDown($event)"
-      (mousemove)="mouseMove($event)"
-      (mouseup)="mouseUp($event)"
-      [attr.viewBox]="'0 0 ' + canvasSize().x + ' ' + canvasSize().y"
-    >
-      <defs>
-        <marker
-          id="force-arrow-head"
-          orient="auto"
-          markerWidth="3"
-          markerHeight="4"
-          refX="0.1"
-          refY="2"
-        >
-          <path d="M0,0 V4 L2,2 Z" fill="#348B85" />
-        </marker>
-      </defs>
-      <g>
-        @for (planet of planets(); track planet.id) {
+    <div class="world">
+      <svg
+        #svgWorld
+        class="world-svg"
+        (pointerdown)="pointerDown($event)"
+        (pointermove)="pointerMove($event)"
+        (pointerup)="pointerUp($event)"
+        (pointercancel)="pointerCancel($event)"
+        (wheel)="wheel($event)"
+        (contextmenu)="contextMenu($event)"
+        [attr.viewBox]="camera.viewBox()"
+      >
+        <defs>
+          <marker
+            id="force-arrow-head"
+            orient="auto"
+            markerWidth="3"
+            markerHeight="4"
+            refX="0.1"
+            refY="2"
+          >
+            <path d="M0,0 V4 L2,2 Z" fill="#348B85" />
+          </marker>
+        </defs>
+        <g>
+          @for (trail of trailSegments(); track trail.id) {
+            <path
+              class="planet-trail"
+              fill="none"
+              stroke-linecap="butt"
+              stroke-linejoin="round"
+              [attr.d]="trail.path"
+              [attr.stroke]="trail.color"
+              [attr.stroke-width]="trail.width"
+              [attr.stroke-opacity]="trail.opacity"
+            />
+          }
+          @for (planet of planets(); track planet.id) {
+            <circle
+              class="world-object"
+              [class.followed]="planet.id === camera.followedId()"
+              [attr.cx]="planet.pos.x"
+              [attr.cy]="planet.pos.y"
+              [attr.r]="planet.radius"
+              [attr.fill]="planet.color"
+            ></circle>
+            <!-- what the pointer actually hits: see .touch-target -->
+            <circle
+              class="touch-target"
+              [id]="planet.id"
+              [attr.cx]="planet.pos.x"
+              [attr.cy]="planet.pos.y"
+              [attr.r]="planet.radius"
+            ></circle>
+          }
           <circle
-            class="world-object"
-            [id]="planet.id"
-            [attr.cx]="planet.pos.x"
-            [attr.cy]="planet.pos.y"
-            [attr.r]="planet.radius"
-            [attr.fill]="planet.color"
+            class="world-object sun"
+            [class.followed]="sun.id === camera.followedId()"
+            [attr.cx]="sun.pos.x"
+            [attr.cy]="sun.pos.y"
+            [attr.r]="sun.radius"
+            fill="#ffffab"
           ></circle>
-        }
-        <circle
-          class="world-object sun"
-          [id]="sun.id"
-          [attr.cx]="sun.pos.x"
-          [attr.cy]="sun.pos.y"
-          [attr.r]="sun.radius"
-          fill="#ffffab"
-        ></circle>
-        @for (force of forcesSvgPaths(); track force.id) {
-          <path
-            class="line-line"
-            marker-end="url(#force-arrow-head)"
-            stroke-width="6"
-            fill="none"
-            stroke="#348B85"
-            [attr.d]="force.path"
-          />
-        }
-        @for (velocity of velocitySvgPath(); track velocity.id) {
-          <path
-            class="line-line"
-            marker-end="url(#force-arrow-head)"
-            stroke-width="6"
-            fill="none"
-            stroke="#8B5870"
-            [attr.d]="velocity.path"
-          />
-        }
-      </g>
-    </svg>
+          <circle
+            class="touch-target"
+            [id]="sun.id"
+            [attr.cx]="sun.pos.x"
+            [attr.cy]="sun.pos.y"
+            [attr.r]="sun.radius"
+          ></circle>
+          @if (orbitTool.preview(); as preview) {
+            <circle
+              class="orbit-preview"
+              data-qa="orbit-preview"
+              [class.unheld]="!preview.held"
+              [attr.cx]="preview.center.x"
+              [attr.cy]="preview.center.y"
+              [attr.r]="preview.radius"
+            ></circle>
+            <circle
+              class="orbit-preview-satellite"
+              [class.unheld]="!preview.held"
+              [attr.cx]="preview.satellite.x"
+              [attr.cy]="preview.satellite.y"
+              [attr.r]="preview.satelliteRadius"
+            ></circle>
+          }
+          @for (force of forcesSvgPaths(); track force.id) {
+            <path
+              class="line-line"
+              marker-end="url(#force-arrow-head)"
+              stroke-width="0.01"
+              fill="none"
+              stroke="#348B85"
+              [attr.d]="force.path"
+            />
+          }
+          @for (velocity of velocitySvgPath(); track velocity.id) {
+            <path
+              class="line-line"
+              marker-end="url(#force-arrow-head)"
+              stroke-width="0.01"
+              fill="none"
+              stroke="#8B5870"
+              [attr.d]="velocity.path"
+            />
+          }
+        </g>
+      </svg>
+
+      <feat-lazy-gravity-toolbelt
+        [tool]="tool()"
+        (toolChange)="pickTool($event)"
+        [(addKind)]="addKind"
+        [hint]="toolHint()"
+      />
+
+      @if (menuTarget(); as target) {
+        <feat-lazy-gravity-object-panel
+          [target]="target"
+          [sun]="sun"
+          [title]="menuTitle()"
+          [gravitationalConstant]="settings().gravitationalConstant"
+          [reach]="canvasSize().x / 2"
+          [world]="worldService.worldObjects()"
+          (closed)="menuClosed()"
+          (massChange)="setMass($event)"
+          (distanceChange)="setDistance($event)"
+          (speedChange)="setSpeed($event)"
+          (addSatellite)="addSatelliteTo(target, $event)"
+          (remove)="removeTarget()"
+        />
+      }
+    </div>
   </mat-card>
 </mat-drawer-container>

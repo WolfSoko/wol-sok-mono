@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'features-api-auth',
   preset: '../../../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],

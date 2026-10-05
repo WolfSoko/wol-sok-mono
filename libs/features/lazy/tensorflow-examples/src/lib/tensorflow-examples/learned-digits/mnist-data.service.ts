@@ -100,7 +100,7 @@ export class MnistDataService {
       this.http.get(MNIST_LABELS_PATH, { responseType: 'arraybuffer' })
     );
 
-    this.datasetLabels = new Uint8Array(await labelsResponse);
+    this.datasetLabels = new Uint8Array(labelsResponse);
 
     // Create shuffled indices into the train/test set for when we select a
     // random dataset element for training / validation.

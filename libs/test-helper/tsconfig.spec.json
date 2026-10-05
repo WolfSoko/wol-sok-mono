@@ -2,7 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "types": ["jest", "node"]
+    "types": ["jest", "node"],
+    "module": "node16",
+    "moduleResolution": "node16"
   },
   "include": [
     "jest.config.ts",

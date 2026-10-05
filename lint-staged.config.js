@@ -7,7 +7,7 @@ export default {
       .join(',');
 
     const formatCommand = `npx nx format:write --files="${relativeFilePaths}"`;
-    const lintCommand = `npx nx affected -t="lint" --output-style=static --fix --files="${relativeFilePaths}"`;
+    const lintCommand = `npx nx affected -t="lint,lint-templates" --output-style=static --fix --files="${relativeFilePaths}"`;
 
     return [formatCommand, lintCommand];
   },

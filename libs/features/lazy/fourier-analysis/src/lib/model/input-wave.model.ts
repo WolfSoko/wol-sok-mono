@@ -55,11 +55,13 @@ export function createFrequencyPoints(
     const samples = Math.floor((samplesPerSec * lengthMs) / 1000);
     while (step < samples) {
       const t = step / samplesPerSec;
-      yield Array.from(frequencies).reduce(
-        (previousFreq, currentFreq) =>
-          previousFreq + Math.sin(currentFreq * 2 * Math.PI * t),
-        0
-      ) / frequencies.length;
+      yield (
+        Array.from(frequencies).reduce(
+          (previousFreq, currentFreq) =>
+            previousFreq + Math.sin(currentFreq * 2 * Math.PI * t),
+          0
+        ) / frequencies.length
+      );
       step++;
     }
   }

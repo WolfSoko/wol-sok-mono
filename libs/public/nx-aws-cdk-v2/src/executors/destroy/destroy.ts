@@ -1,6 +1,7 @@
 import { DestroyExecutorSchema } from './schema';
 import {
   createCommand,
+  resolveProjectPaths,
   parseArgs,
   runCommandProcess,
 } from '../../utils/executor.util';
@@ -8,7 +9,7 @@ import { ParsedExecutorInterface } from '../../interfaces/parsed-executor.interf
 import { ExecutorContext } from '@nx/devkit';
 
 export interface ParsedDestroyExecutorOption extends ParsedExecutorInterface {
-  stacks?: string[];
+  stacks?: string;
   app?: string;
   sourceRoot: string;
   root: string;
@@ -45,9 +46,7 @@ function normalizeOptions(
     stacks = options.stacks;
   }
 
-  const { sourceRoot, root } =
-    // eslint-disable-next-line no-unsafe-optional-chaining
-    context?.projectsConfigurations?.projects[context.projectName];
+  const { sourceRoot, root } = resolveProjectPaths(context);
 
   return {
     ...options,

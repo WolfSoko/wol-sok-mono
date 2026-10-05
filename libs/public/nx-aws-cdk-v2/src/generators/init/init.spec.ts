@@ -30,8 +30,6 @@ describe('init', () => {
     const packageJson = readJson(tree, 'package.json');
 
     expect(packageJson.devDependencies['aws-cdk']).toBe(CDK_CLI_VERSION);
-    expect(packageJson.devDependencies['ts-node']).toBeDefined();
-    expect(packageJson.devDependencies['tsconfig-paths']).toBeDefined();
     expect(packageJson.devDependencies['tsx']).toBeDefined();
   });
 

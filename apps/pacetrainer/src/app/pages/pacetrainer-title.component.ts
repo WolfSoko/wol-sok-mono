@@ -14,6 +14,16 @@ import { RouterLink } from '@angular/router';
       .title {
         margin: 0 1em 0 0;
       }
+      .subtitle {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      @media (max-width: 599px) {
+        .subtitle {
+          display: none;
+        }
+      }
     `,
   ],
   template: `
@@ -25,7 +35,7 @@ import { RouterLink } from '@angular/router';
           /></a>
           Pace-Trainer
         </span>
-        <span class="mat-subtitle-2">Dein digitaler Laufcoach.</span>
+        <span class="subtitle mat-subtitle-2">Dein digitaler Laufcoach.</span>
       </mat-toolbar>
       <mat-divider></mat-divider>
     } @placeholder {

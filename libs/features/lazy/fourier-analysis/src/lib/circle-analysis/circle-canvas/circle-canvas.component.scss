@@ -1,0 +1,15 @@
+:host {
+  display: block;
+}
+
+.canvas-container {
+  width: 100%;
+
+  // the canvas is created by p5 inside the container, so it is out of reach of
+  // the component's view encapsulation
+  ::ng-deep canvas {
+    display: block;
+    max-width: 100%;
+    margin-inline: auto;
+  }
+}

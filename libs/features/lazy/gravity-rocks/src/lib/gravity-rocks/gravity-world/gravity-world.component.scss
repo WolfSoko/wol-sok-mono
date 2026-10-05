@@ -40,22 +40,73 @@
   }
 }
 
+.gravitational-force-card {
+  // the card must not be widened by its own toolbar, or the buttons at its
+  // end are pushed out of the viewport
+  max-width: 100%;
+}
+
 .content-title {
   display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
   gap: 1rem;
   align-items: center;
-  font-size: clamp(0.3rem, 2vw, 1.2rem);
+  // 2vw alone leaves 8px of unreadable text on a phone
+  font-size: clamp(0.75rem, 2vw, 1.2rem);
   .config-button {
     scale: 0.7;
     animation: wiggle 0.2s linear 1s 30;
     animation-fill-mode: backwards;
     transition: rotate 0.5s ease-in-out;
   }
-  .reset-button {
+  .hint {
+    // the only part that gives way when the row runs out of space
+    flex: 1 1 6rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .config-button,
+  .reset-button,
+  .start-button {
+    flex: 0 0 auto;
+  }
+  .zoom-controls {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.1rem;
     margin-left: auto;
+
+    .zoom-level {
+      min-width: 4.5ch;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
   }
   .start-button {
     margin-right: 2rem;
+  }
+}
+
+// on a phone the row has no width to give away: the hint takes a line of its
+// own instead of shrinking to an ellipsis, and the controls keep their place
+@media (max-width: 599px) {
+  .content-title {
+    gap: 0.25rem;
+
+    .hint {
+      flex: 1 1 100%;
+      order: 1;
+      white-space: normal;
+      text-overflow: clip;
+    }
+    .start-button {
+      margin-right: 0;
+    }
   }
 }
 
@@ -80,8 +131,79 @@
   width: 100%;
   aspect-ratio: 5 / 3;
   background-color: black;
+  // every gesture on the world is ours: without this the browser scrolls the
+  // page instead of dragging, and the pointermove events stop coming
+  touch-action: none;
 }
 
 .world-object {
+  // the touch target below it takes the pointer, so a planet too small to
+  // hit is still grabbed by the halo around it
+  pointer-events: none;
+}
+
+/**
+ * The area a body answers a pointer in. Its stroke does not scale with the
+ * view, so it is always the same number of css pixels wide however far the
+ * world is zoomed out - a finger's worth of halo around a planet that may be
+ * three pixels across.
+ */
+.touch-target {
   cursor: grab;
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 28;
+  vector-effect: non-scaling-stroke;
+  // the halo is invisible, so hit it whether it is painted or not
+  pointer-events: all;
+}
+
+// the toolbelt and the settings panel float over the world
+.world {
+  position: relative;
+}
+
+// the orbit the orbit tool draws, kept a few css pixels wide at any zoom and
+// never in the way of the pointer that is placing it
+.orbit-preview,
+.orbit-preview-satellite {
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.orbit-preview {
+  fill: none;
+  stroke: #ffffff;
+  stroke-opacity: 0.7;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+
+  &.unheld {
+    stroke: #ff8a65;
+  }
+}
+
+.orbit-preview-satellite {
+  fill: #ffffff;
+  fill-opacity: 0.6;
+
+  &.unheld {
+    fill: #ff8a65;
+  }
+}
+
+// the object the view is stuck to. The world is measured in AU, so the ring
+// is kept in css pixels instead of shrinking away as the view zooms out
+.world-object.followed {
+  stroke: #ffffff;
+  stroke-opacity: 0.75;
+  stroke-width: 2;
+  stroke-dasharray: 7 4;
+  vector-effect: non-scaling-stroke;
+}
+
+// decoration only: never swallow a click meant for a planet below it
+.planet-trail,
+.line-line {
+  pointer-events: none;
 }

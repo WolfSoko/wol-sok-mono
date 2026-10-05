@@ -1,7 +1,11 @@
 {
   "functions": [
     {
-      "source": "dist/apps/pacetrainer/analog/server"
+      "source": "dist/apps/pacetrainer/analog/server",
+      "predeploy": [
+        "rm -rf $RESOURCE_DIR/node_modules",
+        "npm --prefix $RESOURCE_DIR install --omit dev"
+      ]
     }
   ],
   "hosting": [

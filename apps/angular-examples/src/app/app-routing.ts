@@ -8,7 +8,7 @@ import {
   withRouterConfig,
 } from '@angular/router';
 import { InfoComponent } from './feature/lazy/info/info.component';
-import { loadRemote } from '@module-federation/enhanced/runtime';
+import { loadRemoteModule } from '@angular-architects/native-federation';
 
 export interface MainNavRouteData extends Data {
   linkText: string;
@@ -32,9 +32,10 @@ export const APP_ROUTES: MainNavRoutes = [
   {
     path: 'fourierAnalysis',
     loadChildren: () =>
-      loadRemote<typeof import('fourier-analysis-remote/Routes')>(
-        'fourier-analysis-remote/Routes'
-      ).then((routes) => routes?.remoteRoutes ?? []),
+      loadRemoteModule<typeof import('fourier-analysis-remote/Routes')>(
+        'fourier-analysis-remote',
+        './Routes'
+      ).then((routes) => routes.remoteRoutes),
     data: {
       linkText: 'Fourier Analysis Example',
       subTitle: 'Served independently by Module-Federation',
@@ -43,9 +44,10 @@ export const APP_ROUTES: MainNavRoutes = [
   {
     path: 'shaderExamples',
     loadChildren: () =>
-      loadRemote<typeof import('shader-examples-remote/Routes')>(
-        'shader-examples-remote/Routes'
-      ).then((routes) => routes?.remoteRoutes ?? []),
+      loadRemoteModule<typeof import('shader-examples-remote/Routes')>(
+        'shader-examples-remote',
+        './Routes'
+      ).then((routes) => routes.remoteRoutes),
     data: {
       linkText: 'WebGL Shader examples with live code editor (three.js)',
       subTitle: 'Served independently by MF',
@@ -74,9 +76,10 @@ export const APP_ROUTES: MainNavRoutes = [
   {
     path: 'bacteriaGame',
     loadChildren: () =>
-      loadRemote<typeof import('bacteria-game-remote/Routes')>(
-        'bacteria-game-remote/Routes'
-      ).then((routes) => routes?.entryRoutes ?? []),
+      loadRemoteModule<typeof import('bacteria-game-remote/Routes')>(
+        'bacteria-game-remote',
+        './Routes'
+      ).then((routes) => routes.entryRoutes),
     data: { linkText: 'Bacteria Game', subTitle: 'Served independently by MF' },
   },
   {
@@ -97,8 +100,9 @@ export const APP_ROUTES: MainNavRoutes = [
   },
   {
     path: 'webGl',
-    loadChildren: () => import('./feature/lazy/web-gl/web-gl.routes'),
-    data: { linkText: 'Mandelbrot plane, lights objects (three.js)' },
+    loadChildren: () =>
+      import('@wolsok/feat-lazy-web-gl').then((m) => m.routes),
+    data: { linkText: 'Mandelbrot Deep Zoom Explorer (three.js)' },
   },
   {
     path: 'neuralNetwork',
