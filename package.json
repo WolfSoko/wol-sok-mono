@@ -262,7 +262,6 @@
     "esbuild": true,
     "@firebase/util": true,
     "@parcel/watcher@2.6.0": true,
-    "@swc/core@1.16.1": true,
     "core-js": true,
     "aws-sdk": true,
     "gl": false,
@@ -271,6 +270,7 @@
     "protobufjs": true,
     "re2": true,
     "unrs-resolver@1.12.2": true,
-    "lmdb@3.5.6": true
+    "lmdb@3.5.6": true,
+    "@swc/core@1.16.12": true
   }
 }
