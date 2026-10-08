@@ -143,6 +143,20 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - Review `SECURITY.md` for guidelines.
 - Don't commit `.env` files or Firebase service account keys.
 
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues (WolfSoko/wol-sok-mono) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default triage vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one root `CONTEXT.md` plus `docs/adr/`. See `docs/agents/domain.md`.
+
 ## General Guidelines for working with Nx
 
 - For navigating/exploring the workspace, invoke the `nx-workspace` skill first - it has patterns for querying projects, targets, and dependencies
