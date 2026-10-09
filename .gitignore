@@ -94,3 +94,4 @@ apps/pacetrainer/node_modules/.vite/vitest/da39a3ee5e6b4b0d3255bfef95601890afd80
 
 # Written by tools/version-handling/write-version-tag.ts before each build
 apps/angular-examples/src/environments/version-tag.generated.ts
+.vitest
