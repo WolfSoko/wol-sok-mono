@@ -5,8 +5,8 @@
   "private": true,
   "type": "module",
   "peerDependencies": {
-    "@analogjs/router": "2.7.5",
-    "@analogjs/platform": "2.7.5",
+    "@analogjs/router": "2.8.0",
+    "@analogjs/platform": "2.8.0",
     "@angular/fire": "20.1.0",
     "@angular/core": "22.2.2",
     "@angular/common": "22.2.2",
@@ -20,8 +20,8 @@
     "@nx/vite": "23.3.0",
     "@playwright/test": "^1.48.0",
     "h3": "^1.15.11",
-    "vite": "8.3.1",
-    "vitest": "5.0.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.3",
     "@wolsok/shared-data-access": "*",
     "@angular/ssr": "22.2.2"
   }
