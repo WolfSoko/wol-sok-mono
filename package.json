@@ -143,7 +143,7 @@
     "@swc/core": "1.16.12",
     "@swc/helpers": "0.5.23",
     "@types/chai": "5.2.3",
-    "@types/jasmine": "6.0.0",
+    "@types/jasmine": "7.0.0",
     "@types/jasminewd2": "2.0.13",
     "@types/jest": "30.0.0",
     "@types/lodash": "4.17.25",
