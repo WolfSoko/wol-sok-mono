@@ -58,14 +58,10 @@ describe('SpaCdkStack', () => {
   // Cold-start cost: first call into aws-cdk-lib/assertions' Template.fromStack
   // plus module import/JIT warm-up pushes this past Vitest's default 5000ms
   // testTimeout (observed ~9.08s). Not a logic issue - see issue #2432.
-  it(
-    'should match snapshot',
-    () => {
-      const { template } = testStackFactory();
-      expect(template().toJSON()).toMatchSnapshot();
-    },
-    20000
-  );
+  it('should match snapshot', () => {
+    const { template } = testStackFactory();
+    expect(template().toJSON()).toMatchSnapshot();
+  }, 20000);
 
   it('should match snapshot setting bucket removal policy to retain', () => {
     const { template } = testStackFactory({
