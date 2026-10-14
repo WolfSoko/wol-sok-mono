@@ -39,6 +39,19 @@ describe('ScreenWakeLockService', () => {
     resolve(sentinel);
   }
 
+  function startPastVorlauf(): void {
+    run.start(
+      createTrainingWithDuration([
+        createIntervalWithDuration(
+          1,
+          createSprintExercise(sToMs(seconds(60))),
+          createRecoveryExercise(sToMs(seconds(60)))
+        ),
+      ])
+    );
+    vi.advanceTimersByTime(5000);
+  }
+
   async function settle(): Promise<void> {
     TestBed.tick();
     await vi.advanceTimersByTimeAsync(0);
@@ -71,16 +84,7 @@ describe('ScreenWakeLockService', () => {
   });
 
   it('releases every lock after a quick pause and resume', async () => {
-    run.start(
-      createTrainingWithDuration([
-        createIntervalWithDuration(
-          1,
-          createSprintExercise(sToMs(seconds(60))),
-          createRecoveryExercise(sToMs(seconds(60)))
-        ),
-      ])
-    );
-    vi.advanceTimersByTime(5000); // after the Vorlauf: first request pending
+    startPastVorlauf(); // after the Vorlauf: first request pending
     await settle();
     run.toggle(); // paused
     await settle();
@@ -100,16 +104,7 @@ describe('ScreenWakeLockService', () => {
   });
 
   it('asks again when the page came back while a request was pending', async () => {
-    run.start(
-      createTrainingWithDuration([
-        createIntervalWithDuration(
-          1,
-          createSprintExercise(sToMs(seconds(60))),
-          createRecoveryExercise(sToMs(seconds(60)))
-        ),
-      ])
-    );
-    vi.advanceTimersByTime(5000); // after the Vorlauf: request pending
+    startPastVorlauf(); // after the Vorlauf: request pending
     await settle();
     document.dispatchEvent(new Event('visibilitychange'));
     await settle();
@@ -122,16 +117,7 @@ describe('ScreenWakeLockService', () => {
   });
 
   it('does not ask again once the training was paused meanwhile', async () => {
-    run.start(
-      createTrainingWithDuration([
-        createIntervalWithDuration(
-          1,
-          createSprintExercise(sToMs(seconds(60))),
-          createRecoveryExercise(sToMs(seconds(60)))
-        ),
-      ])
-    );
-    vi.advanceTimersByTime(5000); // after the Vorlauf: request pending
+    startPastVorlauf(); // after the Vorlauf: request pending
     await settle();
     document.dispatchEvent(new Event('visibilitychange'));
     await settle();

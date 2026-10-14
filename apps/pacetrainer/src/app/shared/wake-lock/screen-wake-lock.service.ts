@@ -19,7 +19,7 @@ export class ScreenWakeLockService {
 
   constructor() {
     effect(() => {
-      if (this.trainingRun.phase() === 'running') {
+      if (this.isRunning()) {
         void this.request();
       } else {
         void this.release();
@@ -27,10 +27,7 @@ export class ScreenWakeLockService {
     });
 
     const onVisibilityChange = (): void => {
-      if (
-        this.document.visibilityState === 'visible' &&
-        this.trainingRun.phase() === 'running'
-      ) {
+      if (this.document.visibilityState === 'visible' && this.isRunning()) {
         void this.request();
       }
     };
@@ -39,6 +36,10 @@ export class ScreenWakeLockService {
       this.document.removeEventListener('visibilitychange', onVisibilityChange);
       void this.release();
     });
+  }
+
+  private isRunning(): boolean {
+    return this.trainingRun.phase() === 'running';
   }
 
   private async request(): Promise<void> {
@@ -59,7 +60,7 @@ export class ScreenWakeLockService {
     await this.pendingRequest;
     if (this.requestAgain) {
       this.requestAgain = false;
-      if (this.trainingRun.phase() === 'running') {
+      if (this.isRunning()) {
         await this.request();
       }
     }
@@ -68,7 +69,7 @@ export class ScreenWakeLockService {
   private async acquire(wakeLock: WakeLock): Promise<void> {
     try {
       this.sentinel = await wakeLock.request('screen');
-      if (this.trainingRun.phase() !== 'running') {
+      if (!this.isRunning()) {
         // paused or stopped while the request was pending
         await this.release();
       }
