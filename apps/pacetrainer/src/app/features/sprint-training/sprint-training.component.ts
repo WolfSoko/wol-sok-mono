@@ -13,16 +13,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { interval, map, take } from 'rxjs';
-import { IntervalCountdownEventBridge } from '../../shared/interval-countdown/interval-countdown-event-bridge';
 import { IntervalCountdownService } from '../../shared/interval-countdown/interval-countdown.service';
 import { milliseconds } from '../../shared/model/constants/time-utils';
 import {
   CurrentExerciseViewModel,
   mapFromTrainingProgress,
 } from '../../shared/model/training/current-exercise-view.model';
-import { TrainingProgressEventBridge } from '../../shared/training-progress/training-progress-event-bridge';
 import { TrainingProgressService } from '../../shared/training-progress/training-progress.service';
-import { TrainingRunnerEventBridge } from '../../shared/training-runner/training-runner-event-bridge.service';
 import { TrainingRunnerService } from '../../shared/training-runner/training-runner.service';
 import { CountDownCircleComponent } from '../../shared/ui/count-down-circle/count-down-circle.component';
 import { ScreenWakeLockService } from '../../shared/wake-lock/screen-wake-lock.service';
@@ -81,9 +78,6 @@ export class SprintTrainingComponent {
 
   constructor() {
     // inject services for side effects
-    inject(TrainingProgressEventBridge);
-    inject(TrainingRunnerEventBridge);
-    inject(IntervalCountdownEventBridge);
     inject(ScreenWakeLockService);
 
     effect(() => {
