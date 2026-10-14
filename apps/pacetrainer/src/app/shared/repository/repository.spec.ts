@@ -78,6 +78,15 @@ describe('Repository', () => {
       expect(() => service.save({ foo: 'bar' })).not.toThrow();
     });
 
+    it('should clear without failing', () => {
+      vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError');
+      });
+      const service = initRepository(true);
+
+      expect(() => service.clear()).not.toThrow();
+    });
+
     it('should load nothing', () => {
       vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
         throw new DOMException('blocked', 'SecurityError');

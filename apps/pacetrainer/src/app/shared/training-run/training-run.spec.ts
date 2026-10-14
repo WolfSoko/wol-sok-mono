@@ -115,6 +115,31 @@ describe('TrainingRun', () => {
     });
   });
 
+  describe('when the browser refuses to store the run', () => {
+    beforeEach(() => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [provideZonelessChangeDetection()],
+      });
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new DOMException('quota exceeded', 'QuotaExceededError');
+      });
+      run = createRun();
+    });
+
+    afterEach(() => vi.restoreAllMocks());
+
+    it('keeps running after a pause', () => {
+      run.start(konfiguration());
+      advance(5000 + 2000);
+      run.toggle();
+      run.toggle();
+      advance(3000);
+
+      expect(run.state()).toMatchObject({ phase: 'running', elapsed: 5000 });
+    });
+  });
+
   describe('fresh run', () => {
     beforeEach(() => {
       run = createRun();

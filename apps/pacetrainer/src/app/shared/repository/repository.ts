@@ -27,11 +27,15 @@ export class Repository<T extends JSONCompatible<T>> {
     }
   }
 
-  clear(): void {
+  public clear(): void {
     if (!this.saveToLocalStorage) {
       return;
     }
-    localStorage?.removeItem(this.localStorageKey);
+    try {
+      localStorage?.removeItem(this.localStorageKey);
+    } catch {
+      // site data blocked: nothing was stored either
+    }
   }
 
   load(): T | null {
