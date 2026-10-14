@@ -56,6 +56,21 @@ describe('PollVoteComponent', () => {
     );
   });
 
+  it('ignores unusable stored votes', async () => {
+    localStorage.setItem('rap-voted-polls', 'null');
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [PollVoteComponent, NoopAnimationsModule],
+      providers: [{ provide: PollsRepoPort, useValue: repo }],
+    });
+    const poll = await currentPoll();
+    fixture = TestBed.createComponent(PollVoteComponent);
+    fixture.componentRef.setInput('poll', poll);
+    fixture.detectChanges();
+
+    expect(query('vote-button')).not.toBeNull();
+  });
+
   function currentPoll(): Promise<Poll> {
     return firstValueFrom(repo.watchPoll(pollId)) as Promise<Poll>;
   }

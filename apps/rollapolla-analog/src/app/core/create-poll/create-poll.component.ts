@@ -1,9 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import {
+  AbstractControl,
   FormArray,
   FormControl,
   NonNullableFormBuilder,
   ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
   Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -46,7 +49,7 @@ export class CreatePollComponent {
       '',
       [
         Validators.required,
-        Validators.minLength(this.minQuestionLength),
+        trimmedMinLength(this.minQuestionLength),
         Validators.maxLength(this.maxQuestionLength),
       ],
     ],
@@ -86,4 +89,14 @@ export class CreatePollComponent {
       Validators.maxLength(PollsRepoPort.MAX_OPTION_LENGTH),
     ]);
   }
+}
+
+/** Like `Validators.minLength`, but ignores surrounding whitespace, as saving does. */
+function trimmedMinLength(minLength: number): ValidatorFn {
+  return (control: AbstractControl<string>): ValidationErrors | null => {
+    const actualLength = control.value.trim().length;
+    return actualLength < minLength
+      ? { minlength: { requiredLength: minLength, actualLength } }
+      : null;
+  };
 }

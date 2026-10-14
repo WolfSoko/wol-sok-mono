@@ -68,6 +68,20 @@ describe('CreatePollComponent', () => {
     expect(button('create-poll-button').disabled).toBe(true);
   });
 
+  it('does not accept a question that is too short once trimmed', () => {
+    type('poll-option-input-0', 'Pizza');
+    type('poll-option-input-1', 'Pasta');
+
+    type('poll-question-input', '   ab   ');
+    expect(button('create-poll-button').disabled).toBe(true);
+
+    type('poll-question-input', '          ');
+    expect(button('create-poll-button').disabled).toBe(true);
+
+    type('poll-question-input', '  Pizza?  ');
+    expect(button('create-poll-button').disabled).toBe(false);
+  });
+
   function optionInputs(): HTMLInputElement[] {
     return fixture.debugElement
       .queryAll(By.css('[data-testid^="poll-option-input-"]'))

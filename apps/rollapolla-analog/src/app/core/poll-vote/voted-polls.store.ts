@@ -26,8 +26,12 @@ export class VotedPollsStore {
       return {};
     }
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? (JSON.parse(stored) as Record<string, number>) : {};
+      const stored: unknown = JSON.parse(
+        localStorage.getItem(STORAGE_KEY) ?? '{}'
+      );
+      return stored !== null && typeof stored === 'object'
+        ? (stored as Record<string, number>)
+        : {};
     } catch {
       return {};
     }
