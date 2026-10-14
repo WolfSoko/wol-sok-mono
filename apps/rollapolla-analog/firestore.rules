@@ -25,6 +25,79 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // polls collection: unlisted. Anyone with the link (the id) can read a poll
+    // and vote on it, but nobody can list all polls.
+    match /polls/{pollId} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if isValidNewPoll(request.resource.data);
+      allow update: if isSingleVote(request.resource.data, resource.data);
+      allow delete: if false;
+
+      function optionKeys() {
+        return ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+      }
+
+      function isValidOption(options, i) {
+        return options.size() <= i ||
+          (options[i] is string && options[i].size() > 0 && options[i].size() <= 100);
+      }
+
+      function isValidNewPoll(poll) {
+        return poll.keys().hasAll(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl']) &&
+          poll.keys().hasOnly(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl']) &&
+          poll.question is string &&
+          poll.question.size() >= 5 &&
+          poll.question.size() <= 200 &&
+          poll.options is list &&
+          poll.options.size() >= 2 &&
+          poll.options.size() <= 10 &&
+          isValidOption(poll.options, 0) &&
+          isValidOption(poll.options, 1) &&
+          isValidOption(poll.options, 2) &&
+          isValidOption(poll.options, 3) &&
+          isValidOption(poll.options, 4) &&
+          isValidOption(poll.options, 5) &&
+          isValidOption(poll.options, 6) &&
+          isValidOption(poll.options, 7) &&
+          isValidOption(poll.options, 8) &&
+          isValidOption(poll.options, 9) &&
+          poll.counts is map &&
+          poll.counts.size() == poll.options.size() &&
+          poll.counts.keys().hasOnly(optionKeys()[0:poll.options.size()]) &&
+          poll.counts.values().hasOnly([0]) &&
+          poll.totalVotes == 0 &&
+          poll.createdAt is timestamp &&
+          poll.ttl is timestamp &&
+          poll.ttl == poll.createdAt + duration.value(30, 'd');
+      }
+
+      function isUnchangedOrPlusOne(newCounts, oldCounts, key) {
+        return !(key in oldCounts) ||
+          newCounts[key] == oldCounts[key] ||
+          newCounts[key] == oldCounts[key] + 1;
+      }
+
+      // A vote raises exactly one existing option count and the total by one.
+      function isSingleVote(newPoll, oldPoll) {
+        return newPoll.diff(oldPoll).affectedKeys().hasOnly(['counts', 'totalVotes']) &&
+          newPoll.totalVotes == oldPoll.totalVotes + 1 &&
+          newPoll.counts.diff(oldPoll.counts).addedKeys().size() == 0 &&
+          newPoll.counts.diff(oldPoll.counts).removedKeys().size() == 0 &&
+          newPoll.counts.diff(oldPoll.counts).changedKeys().size() == 1 &&
+          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '0') &&
+          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '1') &&
+          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '2') &&
+          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '3') &&
+          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '4') &&
+          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '5') &&
+          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '6') &&
+          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '7') &&
+          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '8') &&
+          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '9');
+      }
+    }
+
     // Deny everything else by default (no world-open catch-all rule).
     match /{document=**} {
       allow read, write: if false;

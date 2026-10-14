@@ -1,0 +1,69 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title data-testid="poll-question">{{
+      poll().question
+    }}</mat-card-title>
+    <mat-card-subtitle data-testid="poll-total-votes">
+      {{ poll().totalVotes }}
+      {{ poll().totalVotes === 1 ? "vote" : "votes" }}
+    </mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    @if (hasVoted()) {
+      <ul class="results" data-testid="poll-results">
+        @for (result of results(); track result.index) {
+          <li
+            class="result"
+            [class.own-vote]="result.index === votedOption()"
+            [attr.data-testid]="'poll-result-' + result.index"
+          >
+            <div class="result-label">
+              <span>
+                {{ result.label }}
+                @if (result.index === votedOption()) {
+                  <mat-icon class="own-vote-icon" aria-label="Your vote"
+                    >check</mat-icon
+                  >
+                }
+              </span>
+              <span>{{ result.percent }}% ({{ result.count }})</span>
+            </div>
+            <mat-progress-bar mode="determinate" [value]="result.percent" />
+          </li>
+        }
+      </ul>
+    } @else {
+      <form class="vote-form" (ngSubmit)="vote()">
+        <mat-radio-group
+          class="options"
+          name="option"
+          aria-label="Pick an option"
+          [ngModel]="selectedOption()"
+          (ngModelChange)="selectedOption.set($event)"
+        >
+          @for (result of results(); track result.index) {
+            <mat-radio-button
+              [value]="result.index"
+              [attr.data-testid]="'poll-option-' + result.index"
+              >{{ result.label }}</mat-radio-button
+            >
+          }
+        </mat-radio-group>
+        <button
+          mat-flat-button
+          type="submit"
+          [disabled]="selectedOption() === undefined"
+          data-testid="vote-button"
+        >
+          Vote
+        </button>
+      </form>
+    }
+  </mat-card-content>
+  <mat-card-actions align="end">
+    <button mat-button type="button" (click)="copyLink()">
+      <mat-icon>{{ linkCopied() ? "check" : "share" }}</mat-icon>
+      {{ linkCopied() ? "Link copied" : "Copy link" }}
+    </button>
+  </mat-card-actions>
+</mat-card>

@@ -65,6 +65,12 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],
       include: ['src/**/*.spec.ts'],
+      server: {
+        deps: {
+          // @angular/fire ships extensionless ESM imports Node can't load directly
+          inline: ['@angular/fire'],
+        },
+      },
       reporters: ['default'],
       coverage: {
         reportsDirectory: '../../coverage/apps/rollapolla-analog',
