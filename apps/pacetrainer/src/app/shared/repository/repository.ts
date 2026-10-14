@@ -20,14 +20,23 @@ export class Repository<T extends JSONCompatible<T>> {
     if (!this.saveToLocalStorage) {
       return;
     }
-    localStorage?.setItem(this.localStorageKey, safeJsonStringify(data));
+    try {
+      localStorage?.setItem(this.localStorageKey, safeJsonStringify(data));
+    } catch {
+      // quota exceeded or site data blocked: the app keeps working unsaved
+    }
   }
 
   load(): T | null {
     if (!this.saveToLocalStorage) {
       return null;
     }
-    const data = localStorage?.getItem(this.localStorageKey);
-    return data ? (safeJsonParse(data) as T) : null;
+    try {
+      const data = localStorage?.getItem(this.localStorageKey);
+      return data ? (safeJsonParse(data) as T) : null;
+    } catch {
+      // site data blocked or not written by this app: start without it
+      return null;
+    }
   }
 }
