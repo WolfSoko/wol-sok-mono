@@ -11,7 +11,7 @@ export class LiveChatPoComp {
     await leaveMessageInput.click();
     await leaveMessageInput.fill(message);
 
-    await this.page.click('button[type="submit"]');
+    await this.page.getByRole('button', { name: 'Send message' }).click();
     return message;
   }
 

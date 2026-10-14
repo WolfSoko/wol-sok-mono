@@ -1,3 +1,28 @@
 :host {
   display: block;
+  text-align: start;
+}
+
+.create-poll-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.option-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }

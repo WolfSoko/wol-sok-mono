@@ -22,9 +22,9 @@ export class HomePage {
     ).toBeVisible();
   }
 
-  async expectComingSoonVisible() {
-    await expect(this.page.getByTestId('coming-soon')).toContainText(
-      'Coming Soon!'
+  async expectIntroDescriptionVisible() {
+    await expect(this.page.getByTestId('intro-description')).toContainText(
+      'Create a poll'
     );
   }
 

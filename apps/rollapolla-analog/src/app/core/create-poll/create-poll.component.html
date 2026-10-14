@@ -1,1 +1,87 @@
-<p>create-poll works!</p>
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Create a poll</mat-card-title>
+    <mat-card-subtitle>Ask a question, share the link.</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <form
+      class="create-poll-form"
+      [formGroup]="form"
+      (ngSubmit)="createPoll()"
+      data-testid="create-poll-form"
+    >
+      <mat-form-field class="full-width">
+        <mat-label>Question</mat-label>
+        <input
+          matInput
+          formControlName="question"
+          data-testid="poll-question-input"
+          placeholder="What should we have for lunch?"
+        />
+        <mat-hint align="end">
+          {{ form.controls.question.value.length }}/{{ maxQuestionLength }}
+        </mat-hint>
+        @if (form.controls.question.hasError("required")) {
+          <mat-error>Please ask a question</mat-error>
+        } @else if (form.controls.question.errors?.["minlength"]; as error) {
+          <mat-error>
+            Minimal length is {{ error.requiredLength }} characters
+          </mat-error>
+        } @else if (form.controls.question.errors?.["maxlength"]; as error) {
+          <mat-error>
+            Maximum length is {{ error.requiredLength }} characters
+          </mat-error>
+        }
+      </mat-form-field>
+
+      <div formArrayName="options" class="options">
+        @for (option of options.controls; track option; let i = $index) {
+          <div class="option-row">
+            <mat-form-field class="full-width">
+              <mat-label>Option {{ i + 1 }}</mat-label>
+              <input
+                matInput
+                [formControlName]="i"
+                [attr.data-testid]="'poll-option-input-' + i"
+                [maxlength]="maxOptionLength"
+              />
+              @if (option.invalid) {
+                <mat-error>Please enter an option</mat-error>
+              }
+            </mat-form-field>
+            <button
+              mat-icon-button
+              type="button"
+              [disabled]="options.length <= minOptions"
+              (click)="removeOption(i)"
+              [attr.aria-label]="'Remove option ' + (i + 1)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+
+      <div class="actions">
+        <button
+          mat-button
+          type="button"
+          [disabled]="options.length >= maxOptions"
+          (click)="addOption()"
+          data-testid="add-option-button"
+        >
+          <mat-icon>add</mat-icon>
+          Add option
+        </button>
+        <button
+          mat-flat-button
+          type="submit"
+          [disabled]="form.invalid"
+          data-testid="create-poll-button"
+        >
+          Create poll
+        </button>
+      </div>
+    </form>
+  </mat-card-content>
+</mat-card>
