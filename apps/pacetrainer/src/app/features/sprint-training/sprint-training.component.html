@@ -24,7 +24,9 @@
         </div>
       }
       @case ("finished") {
-        <pace-run-summary [summary]="state.summary"></pace-run-summary>
+        <pace-zusammenfassung
+          [zusammenfassung]="state.zusammenfassung"
+        ></pace-zusammenfassung>
       }
       @default {
         <div class="runner">

@@ -16,7 +16,7 @@ import { SprintTrainingDataService } from '../training-configuration/data/sprint
 import { SprintFormComponent } from '../training-configuration/sprint-training-form.component';
 import { SprintTrainingOverviewComponent } from '../training-configuration/sprint-training-overview.component';
 import { TrainingLiveStateComponent } from '../training-live-state/training-live-state.component';
-import { RunSummaryComponent } from './run-summary.component';
+import { ZusammenfassungComponent } from './zusammenfassung.component';
 
 /** Ansagen start at most this long before the next Intervall */
 const ANSAGE_WINDOW = milliseconds(5000);
@@ -44,7 +44,7 @@ const ANSAGE_WINDOW = milliseconds(5000);
     SprintFormComponent,
     CountDownCircleComponent,
     TrainingLiveStateComponent,
-    RunSummaryComponent,
+    ZusammenfassungComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

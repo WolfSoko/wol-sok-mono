@@ -212,7 +212,7 @@ describe('TrainingRun', () => {
 
       expect(run.state()).toMatchObject({
         phase: 'finished',
-        summary: { elapsed: 30_000, completion: 'complete' },
+        zusammenfassung: { elapsed: 30_000, completion: 'complete' },
       });
     });
 
@@ -252,7 +252,7 @@ describe('TrainingRun', () => {
 
       expect(run.state()).toEqual({
         phase: 'finished',
-        summary: {
+        zusammenfassung: {
           elapsed: 30_000,
           sprintsCompleted: 2,
           sprintsTotal: 2,
@@ -270,7 +270,7 @@ describe('TrainingRun', () => {
 
       expect(run.state()).toEqual({
         phase: 'finished',
-        summary: {
+        zusammenfassung: {
           elapsed: 16_000,
           sprintsCompleted: 1,
           sprintsTotal: 2,
@@ -288,7 +288,7 @@ describe('TrainingRun', () => {
 
       expect(run.state()).toMatchObject({
         phase: 'finished',
-        summary: { elapsed: 12_000, completion: 'endedEarly' },
+        zusammenfassung: { elapsed: 12_000, completion: 'endedEarly' },
       });
     });
 

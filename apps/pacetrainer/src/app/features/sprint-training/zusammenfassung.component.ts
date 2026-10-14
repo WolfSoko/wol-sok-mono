@@ -4,10 +4,10 @@ import { Zusammenfassung } from '../../shared/training-run/training-run';
 import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
 
 @Component({
-  selector: 'pace-run-summary',
+  selector: 'pace-zusammenfassung',
   template: `
-    @let s = summary();
-    <div class="summary" data-qa="run-summary">
+    @let s = zusammenfassung();
+    <div class="zusammenfassung" data-qa="zusammenfassung">
       <span class="mat-title-large">
         @if (s.completion === 'complete') {
           Training geschafft!
@@ -27,7 +27,7 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
     </div>
   `,
   styles: `
-    .summary {
+    .zusammenfassung {
       display: flex;
       flex-flow: column;
       align-items: center;
@@ -37,6 +37,6 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
   imports: [MatListModule, TrainingTimePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RunSummaryComponent {
-  public readonly summary = input.required<Zusammenfassung>();
+export class ZusammenfassungComponent {
+  public readonly zusammenfassung = input.required<Zusammenfassung>();
 }

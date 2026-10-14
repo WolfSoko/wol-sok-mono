@@ -11,7 +11,7 @@ export class SprintTrainingPage {
   readonly sprintTraining: Locator;
   readonly toggleTrainingCta: Locator;
   readonly stopTrainingCta: Locator;
-  readonly summary: Locator;
+  readonly zusammenfassung: Locator;
   private countdownTimer: Locator;
 
   constructor(page: Page) {
@@ -21,7 +21,7 @@ export class SprintTrainingPage {
     this.toggleTrainingCta = this.sprintTraining.getByTestId('toggle-training');
     this.stopTrainingCta = this.sprintTraining.getByTestId('stop-training');
     this.countdownTimer = this.sprintTraining.getByTestId('countdown-timer');
-    this.summary = this.sprintTraining.getByTestId('run-summary');
+    this.zusammenfassung = this.sprintTraining.getByTestId('zusammenfassung');
   }
 
   async goto(): Promise<void> {
@@ -135,7 +135,7 @@ export class SprintTrainingPage {
     });
     await this.expectTrainingStateStoppable();
     await this.stopTrainingCta.click();
-    await expect(this.summary).toBeVisible();
+    await expect(this.zusammenfassung).toBeVisible();
     await expect(this.toggleTrainingCta).toContainText('Neues Training');
   }
 
@@ -146,7 +146,7 @@ export class SprintTrainingPage {
     await expect(this.stopTrainingCta).toBeVisible({ timeout: 1000 });
     await this.stopTrainingCta.click();
     await this.expectTrainingStateStartable();
-    await expect(this.summary).toBeHidden();
+    await expect(this.zusammenfassung).toBeHidden();
   }
 
   async startNewTraining(): Promise<void> {
@@ -154,7 +154,7 @@ export class SprintTrainingPage {
     await this.expectTrainingStateStartable();
   }
 
-  async expectSummary({
+  async expectZusammenfassung({
     sprintsCompleted,
     sprintsTotal,
     completion,
@@ -163,10 +163,10 @@ export class SprintTrainingPage {
     sprintsTotal: number;
     completion: string;
   }): Promise<void> {
-    await expect(this.summary).toContainText(
+    await expect(this.zusammenfassung).toContainText(
       `${sprintsCompleted} von ${sprintsTotal} Sprints`
     );
-    await expect(this.summary).toContainText(completion);
+    await expect(this.zusammenfassung).toContainText(completion);
   }
 
   async reload(): Promise<void> {

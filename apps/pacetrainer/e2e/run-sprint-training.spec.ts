@@ -20,7 +20,7 @@ test.describe('Run Sprint Training', () => {
   }) => {
     await sprintTraining.startTraining();
     await sprintTraining.stopTraining();
-    await sprintTraining.expectSummary({
+    await sprintTraining.expectZusammenfassung({
       sprintsCompleted: 0,
       sprintsTotal: 4,
       completion: 'Vorzeitig beendet',
