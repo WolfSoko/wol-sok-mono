@@ -3,7 +3,7 @@
     als Nächstes: {{ countdownTo | trainingName }}
   </div>
 }
-@if (trainingState() !== "stopped" || trainingState() !== "initial") {
+@if (trainingState() !== "stopped" && trainingState() !== "initial") {
   @if (currentExercise(); as current) {
     <span class="mat-title-large">
       {{ current.name | trainingName }}

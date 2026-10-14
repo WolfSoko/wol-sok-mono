@@ -24,7 +24,7 @@ import { SprintTrainingData } from './sprint-training.data';
 export class SprintTrainingDataService {
   private readonly repositoryService = inject(
     RepositoryFactory
-  ).create<SprintTrainingInputData>('sprint-training-data');
+  ).create<SprintTrainingInputData>('sprint-training-data', true);
 
   // Define signals for the state
   repetitions = signal(4);
@@ -48,10 +48,7 @@ export class SprintTrainingDataService {
 
   constructor() {
     this.loadFromRepository();
-    effect(() => {
-      console.log('Save data');
-      this.saveToRepository();
-    });
+    effect(() => this.saveToRepository());
   }
 
   private initSprintTrainingConfig(

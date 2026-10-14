@@ -110,8 +110,6 @@ export function finishTraining(
   training: TrainingProgress,
   elapsedTrainingTime: Milliseconds
 ): TrainingProgress {
-  console.log('finishTraining', training.state);
-
   if (!['started', 'finished', 'clean'].includes(training.state)) {
     throw new Error("Can't finish training because it has not started");
   }

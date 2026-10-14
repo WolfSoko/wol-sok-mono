@@ -27,7 +27,8 @@ export function mapFromTrainingProgress(
   const activeExercise = getActiveExercise(trainingProgress);
   const nextExercise = findNextExercise(trainingProgress);
   const leftDuration = activeExercise.timing.leftDuration;
-  const countdown = !!nextExercise;
+  // the last exercise counts down to the end of the training
+  const countdown = trainingProgress.state === 'started';
 
   return {
     duration: activeExercise.timing.duration,
