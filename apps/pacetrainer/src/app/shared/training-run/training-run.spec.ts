@@ -192,6 +192,16 @@ describe('TrainingRun', () => {
       expect(vi.getTimerCount()).toBe(0);
     });
 
+    it('does not run backwards when the system clock is set back', () => {
+      run.start(konfiguration());
+      advance(5000 + 3000);
+
+      vi.setSystemTime(Date.now() - 60_000);
+      advance(1000);
+
+      expect(run.state()).toMatchObject({ phase: 'running', elapsed: 3950 });
+    });
+
     it('ends at the total time even after a long gap between ticks', () => {
       run.start(konfiguration());
       advance(5000 + 1000);

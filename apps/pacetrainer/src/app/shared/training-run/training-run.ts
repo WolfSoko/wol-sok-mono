@@ -178,7 +178,8 @@ export class TrainingRun {
 
   private tick(): void {
     const now = Date.now();
-    const delta = milliseconds(now - this.lastTick);
+    // Date.now() can jump back (clock set back, NTP): never run backwards
+    const delta = milliseconds(Math.max(0, now - this.lastTick));
     this.lastTick = now;
     const run = this.run();
     if (run.phase === 'leadIn') {
