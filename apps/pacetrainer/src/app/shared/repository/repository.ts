@@ -23,6 +23,13 @@ export class Repository<T extends JSONCompatible<T>> {
     localStorage?.setItem(this.localStorageKey, safeJsonStringify(data));
   }
 
+  clear(): void {
+    if (!this.saveToLocalStorage) {
+      return;
+    }
+    localStorage?.removeItem(this.localStorageKey);
+  }
+
   load(): T | null {
     if (!this.saveToLocalStorage) {
       return null;

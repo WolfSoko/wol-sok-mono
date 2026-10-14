@@ -38,6 +38,10 @@ export class RepositoryMock<T extends JSONCompatible<T>> extends Repository<T> {
     this.savedData = data;
   }
 
+  override clear(): void {
+    this.savedData = undefined;
+  }
+
   override load(): T | null {
     return this.savedData ?? null;
   }

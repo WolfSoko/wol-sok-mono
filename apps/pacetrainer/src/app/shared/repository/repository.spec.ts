@@ -57,6 +57,15 @@ describe('Repository', () => {
     expect(loadedData).toBeNull();
   });
 
+  it('should remove saved data on clear', () => {
+    const service = initRepository(true);
+    service.save({ foo: 'bar' });
+
+    service.clear();
+
+    expect(service.load()).toBeNull();
+  });
+
   function thenDataWasSaved(data: TestData) {
     expect(localStorage.getItem(KEY)).toEqual(JSON.stringify(data));
   }
