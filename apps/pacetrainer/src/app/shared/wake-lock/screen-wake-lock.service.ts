@@ -14,6 +14,7 @@ export class ScreenWakeLockService {
   private readonly document = inject(DOCUMENT);
   private readonly trainingRun = inject(TrainingRun);
   private sentinel: WakeLockSentinel | null = null;
+  private pendingRequest: Promise<void> | null = null;
 
   constructor() {
     effect(() => {
@@ -41,9 +42,21 @@ export class ScreenWakeLockService {
 
   private async request(): Promise<void> {
     const wakeLock = this.document.defaultView?.navigator.wakeLock;
-    if (!wakeLock || (this.sentinel && !this.sentinel.released)) {
+    if (
+      !wakeLock ||
+      this.pendingRequest ||
+      (this.sentinel && !this.sentinel.released)
+    ) {
+      // one lock at a time: a second one would never be released
       return;
     }
+    this.pendingRequest = this.acquire(wakeLock).finally(() => {
+      this.pendingRequest = null;
+    });
+    await this.pendingRequest;
+  }
+
+  private async acquire(wakeLock: WakeLock): Promise<void> {
     try {
       this.sentinel = await wakeLock.request('screen');
       if (this.trainingRun.phase() !== 'running') {

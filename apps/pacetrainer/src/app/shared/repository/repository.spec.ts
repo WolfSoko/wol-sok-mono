@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LOCAL_STORAGE_KEY_PREFIX, Repository } from './repository';
 
 // Mock isPlatformBrowser
@@ -62,6 +62,35 @@ describe('Repository', () => {
     service.save({ foo: 'bar' });
 
     service.clear();
+
+    expect(service.load()).toBeNull();
+  });
+
+  describe('when the browser refuses storage access', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it('should keep working without saving', () => {
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new DOMException('quota exceeded', 'QuotaExceededError');
+      });
+      const service = initRepository(true);
+
+      expect(() => service.save({ foo: 'bar' })).not.toThrow();
+    });
+
+    it('should load nothing', () => {
+      vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError');
+      });
+      const service = initRepository(true);
+
+      expect(service.load()).toBeNull();
+    });
+  });
+
+  it('should load nothing when the stored data is not JSON', () => {
+    const service = initRepository(true);
+    localStorage.setItem(KEY, '{not json');
 
     expect(service.load()).toBeNull();
   });
