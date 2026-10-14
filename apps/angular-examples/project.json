@@ -45,6 +45,8 @@
           },
           "apps/angular-examples/src/favicon.ico",
           "apps/angular-examples/src/manifest.json",
+          "apps/angular-examples/src/robots.txt",
+          "apps/angular-examples/src/sitemap.xml",
           "apps/angular-examples/src/assets"
         ],
         "styles": ["apps/angular-examples/src/styles.scss"],
