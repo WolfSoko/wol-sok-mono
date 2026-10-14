@@ -15,6 +15,7 @@ export class ScreenWakeLockService {
   private readonly runnerService = inject(TrainingRunnerService);
   private sentinel: WakeLockSentinel | null = null;
   private pendingRequest: Promise<void> | null = null;
+  private requestAgain = false;
 
   constructor() {
     effect(() => {
@@ -42,18 +43,26 @@ export class ScreenWakeLockService {
 
   private async request(): Promise<void> {
     const wakeLock = this.document.defaultView?.navigator.wakeLock;
-    if (
-      !wakeLock ||
-      this.pendingRequest ||
-      (this.sentinel && !this.sentinel.released)
-    ) {
-      // one lock at a time: a second one would never be released
+    if (!wakeLock || (this.sentinel && !this.sentinel.released)) {
+      return;
+    }
+    if (this.pendingRequest) {
+      // one lock at a time: a second one would never be released. The
+      // pending one may still come back released (page hidden meanwhile),
+      // so check again once it settles.
+      this.requestAgain = true;
       return;
     }
     this.pendingRequest = this.acquire(wakeLock).finally(() => {
       this.pendingRequest = null;
     });
     await this.pendingRequest;
+    if (this.requestAgain) {
+      this.requestAgain = false;
+      if (this.runnerService.trainingState() === 'running') {
+        await this.request();
+      }
+    }
   }
 
   private async acquire(wakeLock: WakeLock): Promise<void> {
