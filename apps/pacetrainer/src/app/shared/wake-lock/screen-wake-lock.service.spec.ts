@@ -22,13 +22,15 @@ describe('ScreenWakeLockService', () => {
   let granted: FakeSentinel[];
   let run: TrainingRun;
 
-  function grantNext(): void {
+  let requests: number;
+
+  function grantNext(released = false): void {
     const resolve = pending.shift();
     if (!resolve) {
       return;
     }
     const sentinel: FakeSentinel = {
-      released: false,
+      released,
       release: async () => {
         sentinel.released = true;
       },
@@ -46,11 +48,14 @@ describe('ScreenWakeLockService', () => {
     vi.useFakeTimers();
     pending = [];
     granted = [];
+    requests = 0;
     Object.defineProperty(navigator, 'wakeLock', {
       configurable: true,
       value: {
-        request: () =>
-          new Promise<FakeSentinel>((resolve) => pending.push(resolve)),
+        request: () => {
+          requests++;
+          return new Promise<FakeSentinel>((resolve) => pending.push(resolve));
+        },
       },
     });
     TestBed.configureTestingModule({
@@ -92,5 +97,50 @@ describe('ScreenWakeLockService', () => {
 
     expect(granted.length).toBeGreaterThan(0);
     expect(granted.every((sentinel) => sentinel.released)).toBe(true);
+  });
+
+  it('asks again when the page came back while a request was pending', async () => {
+    run.start(
+      createTrainingWithDuration([
+        createIntervalWithDuration(
+          1,
+          createSprintExercise(sToMs(seconds(60))),
+          createRecoveryExercise(sToMs(seconds(60)))
+        ),
+      ])
+    );
+    vi.advanceTimersByTime(5000); // after the Vorlauf: request pending
+    await settle();
+    document.dispatchEvent(new Event('visibilitychange'));
+    await settle();
+
+    // the browser dropped the lock while the page was hidden
+    grantNext(true);
+    await settle();
+
+    expect(requests).toBe(2);
+  });
+
+  it('does not ask again once the training was paused meanwhile', async () => {
+    run.start(
+      createTrainingWithDuration([
+        createIntervalWithDuration(
+          1,
+          createSprintExercise(sToMs(seconds(60))),
+          createRecoveryExercise(sToMs(seconds(60)))
+        ),
+      ])
+    );
+    vi.advanceTimersByTime(5000); // after the Vorlauf: request pending
+    await settle();
+    document.dispatchEvent(new Event('visibilitychange'));
+    await settle();
+    run.toggle(); // paused
+    await settle();
+
+    grantNext(true);
+    await settle();
+
+    expect(requests).toBe(1);
   });
 });

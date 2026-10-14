@@ -16,7 +16,7 @@ export class Repository<T extends JSONCompatible<T>> {
     this.localStorageKey = LOCAL_STORAGE_KEY_PREFIX + localStorageKey;
   }
 
-  save(data: T): void {
+  public save(data: T): void {
     if (!this.saveToLocalStorage) {
       return;
     }
@@ -38,7 +38,7 @@ export class Repository<T extends JSONCompatible<T>> {
     }
   }
 
-  load(): T | null {
+  public load(): T | null {
     if (!this.saveToLocalStorage) {
       return null;
     }
