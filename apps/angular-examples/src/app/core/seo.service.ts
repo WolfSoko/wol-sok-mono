@@ -1,6 +1,7 @@
 import { DOCUMENT, Injectable, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { merge, of } from 'rxjs';
 import { filter, map, switchMap } from 'rxjs/operators';
 
 import type { MainNavRouteData } from '../app-routing';
@@ -25,9 +26,16 @@ export class SeoService {
   private readonly document = inject(DOCUMENT);
 
   constructor() {
-    this.router.events
+    const navigationEnd$ = this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd)
+    );
+    // also cover a navigation that finished before this service was created
+    const alreadyNavigated$ = of(null).pipe(
+      filter(() => this.router.navigated)
+    );
+
+    merge(alreadyNavigated$, navigationEnd$)
       .pipe(
-        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
         switchMap(() => this.deepestPrimaryRoute().data),
         map((data) => data as Partial<MainNavRouteData>)
       )

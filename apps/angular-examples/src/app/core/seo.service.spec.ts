@@ -83,6 +83,28 @@ describe('SeoService', () => {
     );
   });
 
+  it('applies the active route when created after the first navigation', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([
+          {
+            path: 'poisson',
+            component: DummyComponent,
+            data: { linkText: 'Poisson', description: 'Poisson description' },
+          },
+        ]),
+      ],
+    });
+    await TestBed.inject(Router).navigateByUrl('/poisson');
+
+    TestBed.inject(SeoService);
+
+    expect(TestBed.inject(Title).getTitle()).toBe(`Poisson | ${SITE_NAME}`);
+    expect(TestBed.inject(Meta).getTag('name="description"')?.content).toBe(
+      'Poisson description'
+    );
+  });
+
   it('gives every main route a description', () => {
     const missing = APP_ROUTES.filter((route) => !route.data.description);
 
