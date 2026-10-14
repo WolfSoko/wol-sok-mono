@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { DestroyRef, effect, inject, Injectable } from '@angular/core';
-import { TrainingRunnerService } from '../training-runner/training-runner.service';
+import { TrainingRun } from '../training-run/training-run';
 
 /**
  * Keeps the screen on while a training is running. Without it phones dim and
@@ -12,12 +12,12 @@ import { TrainingRunnerService } from '../training-runner/training-runner.servic
 @Injectable({ providedIn: 'root' })
 export class ScreenWakeLockService {
   private readonly document = inject(DOCUMENT);
-  private readonly runnerService = inject(TrainingRunnerService);
+  private readonly trainingRun = inject(TrainingRun);
   private sentinel: WakeLockSentinel | null = null;
 
   constructor() {
     effect(() => {
-      if (this.runnerService.trainingState() === 'running') {
+      if (this.trainingRun.phase() === 'running') {
         void this.request();
       } else {
         void this.release();
@@ -27,7 +27,7 @@ export class ScreenWakeLockService {
     const onVisibilityChange = (): void => {
       if (
         this.document.visibilityState === 'visible' &&
-        this.runnerService.trainingState() === 'running'
+        this.trainingRun.phase() === 'running'
       ) {
         void this.request();
       }
@@ -46,7 +46,7 @@ export class ScreenWakeLockService {
     }
     try {
       this.sentinel = await wakeLock.request('screen');
-      if (this.runnerService.trainingState() !== 'running') {
+      if (this.trainingRun.phase() !== 'running') {
         // paused or stopped while the request was pending
         await this.release();
       }

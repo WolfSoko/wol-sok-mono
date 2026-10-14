@@ -2,32 +2,24 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
-  DestroyRef,
   effect,
   inject,
-  signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { interval, map, take } from 'rxjs';
 import { IntervalCountdownService } from '../../shared/interval-countdown/interval-countdown.service';
 import { milliseconds } from '../../shared/model/constants/time-utils';
-import {
-  CurrentExerciseViewModel,
-  mapFromTrainingProgress,
-} from '../../shared/model/training/current-exercise-view.model';
-import { TrainingProgressService } from '../../shared/training-progress/training-progress.service';
-import { TrainingRunnerService } from '../../shared/training-runner/training-runner.service';
+import { TrainingRun } from '../../shared/training-run/training-run';
 import { CountDownCircleComponent } from '../../shared/ui/count-down-circle/count-down-circle.component';
 import { ScreenWakeLockService } from '../../shared/wake-lock/screen-wake-lock.service';
+import { SprintTrainingDataService } from '../training-configuration/data/sprint-training-data.service';
 import { SprintFormComponent } from '../training-configuration/sprint-training-form.component';
 import { SprintTrainingOverviewComponent } from '../training-configuration/sprint-training-overview.component';
 import { TrainingLiveStateComponent } from '../training-live-state/training-live-state.component';
+import { RunSummaryComponent } from './run-summary.component';
 
-const START_TRAINING_COUNTDOWN = milliseconds(5000);
+/** Ansagen start at most this long before the next Intervall */
+const ANSAGE_WINDOW = milliseconds(5000);
 
 @Component({
   selector: 'pace-sprint-training',
@@ -48,95 +40,68 @@ const START_TRAINING_COUNTDOWN = milliseconds(5000);
   imports: [
     MatCardModule,
     MatButtonModule,
-    MatProgressSpinnerModule,
     SprintTrainingOverviewComponent,
     SprintFormComponent,
     CountDownCircleComponent,
     TrainingLiveStateComponent,
+    RunSummaryComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SprintTrainingComponent {
-  private readonly destroyRef = inject(DestroyRef);
-
-  private readonly sprintTrainingRunnerService = inject(TrainingRunnerService);
-  private readonly trainingProgressService = inject(TrainingProgressService);
+  private readonly trainingRun = inject(TrainingRun);
+  private readonly sprintTrainingData = inject(SprintTrainingDataService);
   private readonly countdownService = inject(IntervalCountdownService);
-  readonly countdown = this.countdownService.countdown;
-  readonly startingTraining = signal(false);
 
-  trainingState = this.sprintTrainingRunnerService.trainingState;
-  currentExercise = computed(() => {
-    const training = this.trainingProgressService.trainingProgress();
-    if (!training || training.state === 'clean') {
-      return null;
-    }
-    const currentExerciseViewModel: null | CurrentExerciseViewModel =
-      mapFromTrainingProgress(training);
-    return currentExerciseViewModel;
-  });
+  protected readonly run = this.trainingRun.state;
+  protected readonly countdown = this.countdownService.countdown;
 
   constructor() {
-    // inject services for side effects
     inject(ScreenWakeLockService);
 
+    // feeds the Ansagen with the time left until the next Intervall
     effect(() => {
-      const currentExercise = this.currentExercise();
-      if (!currentExercise) {
-        return;
-      }
-      const { countdown, nextIntervalName } = currentExercise;
-      const nextName = nextIntervalName ?? 'finished';
-      if (currentExercise && countdown) {
-        this.countdownService.updateCountdown(
-          milliseconds(
-            Math.min(
-              START_TRAINING_COUNTDOWN,
-              currentExercise.duration ?? START_TRAINING_COUNTDOWN
-            )
-          ),
-          currentExercise.leftDuration,
-          nextName
-        );
-      } else {
-        this.countdownService.endCountdown();
+      const run = this.run();
+      switch (run.phase) {
+        case 'leadIn':
+          this.countdownService.updateCountdown(
+            run.total,
+            run.left,
+            'getready'
+          );
+          break;
+        case 'running':
+        case 'paused':
+          this.countdownService.updateCountdown(
+            milliseconds(Math.min(ANSAGE_WINDOW, run.current.duration)),
+            run.current.left,
+            run.next
+          );
+          break;
+        default:
+          this.countdownService.endCountdown();
       }
     });
   }
 
-  toggleTraining(): void {
+  protected primaryAction(): void {
     // runs inside the click handler, so the browser allows audio afterwards
     this.countdownService.unlockAudio();
-    if (['stopped', 'initial'].includes(this.trainingState())) {
-      this.startingTraining.set(true);
-      interval(50)
-        .pipe(
-          take(Math.floor(5000 / 50)),
-          map((i) => milliseconds(i * 50)),
-          takeUntilDestroyed(this.destroyRef)
-        )
-        .subscribe({
-          next: (time) => {
-            this.countdownService.updateCountdown(
-              START_TRAINING_COUNTDOWN,
-              milliseconds(Math.max(START_TRAINING_COUNTDOWN - time, 0)),
-              'getready'
-            );
-          },
-          error: (e) =>
-            console.error('Error when trying to start training: ', e),
-          complete: () => {
-            this.countdownService.endCountdown();
-            this.startingTraining.set(false);
-            this.sprintTrainingRunnerService.toggleTraining();
-          },
-        });
-    } else {
-      this.sprintTrainingRunnerService.toggleTraining();
+    switch (this.trainingRun.phase()) {
+      case 'ready':
+        this.trainingRun.start(this.sprintTrainingData.sprintTrainingConfig());
+        break;
+      case 'running':
+      case 'paused':
+        this.trainingRun.toggle();
+        break;
+      case 'finished':
+        this.trainingRun.reset();
+        break;
     }
   }
 
-  endTraining(): void {
-    this.sprintTrainingRunnerService.endTraining();
+  protected endTraining(): void {
+    this.trainingRun.end();
   }
 }

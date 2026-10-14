@@ -1,73 +1,74 @@
+@let state = run();
 <mat-card data-qa="sprint-training">
-  @let state = trainingState();
-  @let isInitialOrStopped = state === "stopped" || state === "initial";
   <mat-card-header>
     <mat-card-title>Sprint Training</mat-card-title>
   </mat-card-header>
   <mat-card-content>
-    @if (isInitialOrStopped) {
-      @if (countdown(); as countdown) {
-        <pace-countdown-circle
-          @myInsertRemoveTrigger
-          [duration]="countdown.countdownTime"
-          [timeLeft]="countdown.timeLeft"
-        ></pace-countdown-circle>
-        <pace-training-live-state
-          [countdown]="countdown"
-          [trainingState]="state"
-        ></pace-training-live-state>
-      }
-    } @else {
-      @defer (hydrate on viewport) {
-        <div class="runner">
-          @if (currentExercise(); as exercise) {
-            @if (exercise.duration) {
-              <pace-countdown-circle
-                @myInsertRemoveTrigger
-                [duration]="exercise.duration"
-                [timeLeft]="exercise.leftDuration"
-              ></pace-countdown-circle>
-            }
-            <pace-training-live-state
-              [countdown]="countdown()"
-              [currentExercise]="exercise"
-              [trainingState]="state"
-            ></pace-training-live-state>
-          }
+    @switch (state.phase) {
+      @case ("ready") {
+        <div class="configurator">
+          <pace-sprint-form @myInsertRemoveTrigger></pace-sprint-form>
         </div>
-      } @placeholder {
-        <mat-spinner></mat-spinner>
       }
-    }
-    @if (isInitialOrStopped) {
-      <div class="configurator">
-        <pace-sprint-form @myInsertRemoveTrigger></pace-sprint-form>
-      </div>
+      @case ("leadIn") {
+        <div class="runner">
+          <pace-countdown-circle
+            @myInsertRemoveTrigger
+            [duration]="state.total"
+            [timeLeft]="state.left"
+          ></pace-countdown-circle>
+          <pace-training-live-state
+            [countdown]="countdown()"
+            [phase]="state.phase"
+          ></pace-training-live-state>
+        </div>
+      }
+      @case ("finished") {
+        <pace-run-summary [summary]="state.summary"></pace-run-summary>
+      }
+      @default {
+        <div class="runner">
+          <pace-countdown-circle
+            [duration]="state.current.duration"
+            [timeLeft]="state.current.left"
+          ></pace-countdown-circle>
+          <pace-training-live-state
+            [countdown]="countdown()"
+            [phase]="state.phase"
+            [current]="state.current"
+            [elapsed]="state.elapsed"
+          ></pace-training-live-state>
+        </div>
+      }
     }
   </mat-card-content>
   <mat-card-actions class="ctas">
     <button
       mat-raised-button
-      (click)="toggleTraining()"
-      [disabled]="startingTraining()"
+      (click)="primaryAction()"
+      [disabled]="state.phase === 'leadIn'"
       data-qa="toggle-training"
     >
-      @switch (state) {
-        @case ("stopped") {
-          Go Go Go
-        }
-        @case ("initial") {
-          Go Go Go
+      @switch (state.phase) {
+        @case ("running") {
+          Pausieren
         }
         @case ("paused") {
           Weiter
         }
-        @case ("running") {
-          Pausieren
+        @case ("finished") {
+          Neues Training
+        }
+        @default {
+          Go Go Go
         }
       }
     </button>
-    @if (!isInitialOrStopped) {
+    @if (
+      state.phase === "leadIn" ||
+      state.phase === "running" ||
+      state.phase === "paused"
+    ) {
       <button mat-raised-button (click)="endTraining()" data-qa="stop-training">
         Training beenden
       </button>
@@ -78,7 +79,7 @@
   <mat-card-content>
     <div class="overview">
       <pace-sprint-training-overview
-        [open]="isInitialOrStopped"
+        [open]="state.phase === 'ready'"
       ></pace-sprint-training-overview>
     </div>
   </mat-card-content>
