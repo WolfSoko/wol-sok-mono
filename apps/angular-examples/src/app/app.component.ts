@@ -9,7 +9,7 @@ import { Angulartics2GoogleTagManager } from 'angulartics2';
 import { Environment } from '../environments/environment.type';
 import { MainNavRoutes } from './app-routing';
 import { ENV_TOKEN } from './core/env.token';
-import { TitleService } from './core/title.service';
+import { SeoService } from './core/seo.service';
 import { MainToolbarComponent } from './feature/main-toolbar/main-toolbar.component';
 import { SideNavComponent } from './feature/navigation/side-nav/side-nav.component';
 import { ROUTER_LINKS } from './router-links.token';
@@ -22,8 +22,8 @@ import { ROUTER_LINKS } from './router-links.token';
   imports: [MainToolbarComponent, SideNavComponent, RouterOutlet],
 })
 export class AppComponent {
-  // inject title service to trigger setting of title
-  private _titleService = inject(TitleService);
+  // inject seo service to keep title and meta tags in sync with the route
+  private _seoService = inject(SeoService);
   routerLinks = inject<MainNavRoutes>(ROUTER_LINKS);
   private env = inject<Environment>(ENV_TOKEN);
 
