@@ -13,3 +13,10 @@ export type NewPoll = {
   question: string;
   options: string[];
 };
+
+/** Polls take votes for 30 days; then Firestore deletes them (TTL). */
+export const POLL_LIFETIME_MS: number = 1000 * 60 * 60 * 24 * 30;
+
+export function pollClosesAt(poll: Pick<Poll, 'createdAt'>): Date {
+  return new Date(poll.createdAt.getTime() + POLL_LIFETIME_MS);
+}

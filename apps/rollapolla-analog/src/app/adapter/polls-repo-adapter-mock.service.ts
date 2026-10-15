@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
 import { NewPoll, Poll } from '../../shared/poll';
 import { PollsRepoPort, VoteReceipt } from '../ports/polls-repo.port';
 
@@ -35,6 +35,21 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
 
   public watchPoll(pollId: string): Observable<Poll | null> {
     return this.polls$.pipe(map((polls) => polls[pollId] ?? null));
+  }
+
+  /** `null` plays a visitor who is not signed in. */
+  public readonly creatorUid$ = new BehaviorSubject<string | null>('mock-user');
+
+  public watchMyPolls(): Observable<Poll[] | null> {
+    return combineLatest([this.creatorUid$, this.polls$]).pipe(
+      map(([uid, polls]) =>
+        uid === null
+          ? null
+          : Object.values(polls)
+              .filter((poll) => poll.creatorUid === uid)
+              .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      )
+    );
   }
 
   public watchOwnVote(pollId: string): Observable<number | undefined> {

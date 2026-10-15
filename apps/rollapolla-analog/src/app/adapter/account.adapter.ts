@@ -14,6 +14,7 @@ import {
 import { map, merge, Observable, of, Subject } from 'rxjs';
 import { Account } from '../../shared/account';
 import { AccountPort, SignInCancelled } from '../ports/account.port';
+import { adoptGoogleProfile } from './ensure-signed-in';
 
 const CANCELLED_CODES = new Set([
   'auth/popup-closed-by-user',
@@ -63,7 +64,8 @@ export class AccountAdapter extends AccountPort {
     provider: GoogleAuthProvider
   ): Promise<void> {
     try {
-      await linkWithPopup(anonymous, provider);
+      const { user } = await linkWithPopup(anonymous, provider);
+      await adoptGoogleProfile(user);
     } catch (error) {
       const credential =
         (error as AuthError).code === 'auth/credential-already-in-use'

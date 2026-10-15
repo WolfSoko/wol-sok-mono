@@ -4,10 +4,10 @@ import {
   SnapshotOptions,
   Timestamp,
 } from '@angular/fire/firestore';
-import { Poll } from '../../shared/poll';
+import { Poll, POLL_LIFETIME_MS } from '../../shared/poll';
 import { PollDto } from './poll.dto';
 
-export const POLL_TTL_MS: number = 1000 * 60 * 60 * 24 * 30;
+export const POLL_TTL_MS: number = POLL_LIFETIME_MS;
 
 export function pollTtl(poll: Pick<Poll, 'createdAt'>): Timestamp {
   return Timestamp.fromMillis(poll.createdAt.getTime() + POLL_TTL_MS);

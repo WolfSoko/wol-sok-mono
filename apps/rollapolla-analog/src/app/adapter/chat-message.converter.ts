@@ -17,6 +17,8 @@ export const chatMessageConverter: FirestoreDataConverter<
       message: chatMessage.message,
       createdAt: Timestamp.fromDate(chatMessage.createdAt),
       ttl: Timestamp.fromMillis(chatMessage.createdAt.getTime() + SEVEN_DAYS),
+      ...(chatMessage.authorUid ? { authorUid: chatMessage.authorUid } : {}),
+      ...(chatMessage.authorName ? { authorName: chatMessage.authorName } : {}),
     };
   },
   fromFirestore(
@@ -28,6 +30,8 @@ export const chatMessageConverter: FirestoreDataConverter<
       id: snapshot.id,
       message: data.message,
       createdAt: new Date(data.createdAt.toDate()),
+      authorUid: data.authorUid,
+      authorName: data.authorName ?? null,
     };
   },
 };

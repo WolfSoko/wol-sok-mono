@@ -1,3 +1,15 @@
+@if (account()) {
+  <a
+    mat-button
+    routerLink="/my-polls"
+    aria-label="My polls"
+    title="My polls"
+    data-testid="my-polls-link"
+  >
+    <mat-icon>ballot</mat-icon>
+    <span class="label-long">My polls</span>
+  </a>
+}
 @if (googleAccount(); as account) {
   <div class="signed-in" data-testid="account-signed-in">
     @if (account.photoUrl) {

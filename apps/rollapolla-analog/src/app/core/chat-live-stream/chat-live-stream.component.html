@@ -9,6 +9,11 @@
       [maxMessageLength]="maxLength()"
       (messageAdded)="addChatMessage($event)"
     ></rap-chat-message-form>
+    @if (postFailed()) {
+      <p class="error" role="alert" data-testid="chat-error">
+        Your message could not be posted. Please try again.
+      </p>
+    }
   </mat-card-content>
 </mat-card>
 <mat-card appearance="outlined" class="notes">

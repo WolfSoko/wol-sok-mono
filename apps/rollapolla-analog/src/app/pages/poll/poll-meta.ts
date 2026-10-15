@@ -2,32 +2,9 @@ import { DOCUMENT } from '@angular/common';
 import { DestroyRef, effect, inject, Signal } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { Poll } from '../../../shared/poll';
+import { PageTags, SITE_TAGS, SITE_URL } from '../site-tags';
 
-const SITE_URL = 'https://rollapolla.com';
 const MAX_DESCRIPTION_LENGTH = 200;
-
-type PageTags = {
-  title: string;
-  description: string;
-  /** og:description, the text link previews show. */
-  socialDescription: string;
-  url: string;
-  robots: string;
-};
-
-/**
- * The site-wide tags from index.html, keep them in sync. Not read from the DOM:
- * after a server-rendered poll page the DOM already holds that poll's tags.
- */
-const SITE_TAGS: PageTags = {
-  title: 'Polls for everyone | RollaPolla.com',
-  description:
-    'RollaPolla – easy polling for everyone: create a poll in seconds, share it and see live what others think.',
-  socialDescription:
-    'Easy polling for everyone: create a poll in seconds, share it and see live what others think.',
-  url: `${SITE_URL}/`,
-  robots: 'index, follow',
-};
 
 /**
  * Gives a poll page its own title and link preview, keeps it out of search

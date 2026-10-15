@@ -1,6 +1,6 @@
 import { isPlatformServer } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { Auth, authState, signInAnonymously } from '@angular/fire/auth';
+import { Auth, authState } from '@angular/fire/auth';
 import {
   collection,
   CollectionReference,
@@ -8,16 +8,23 @@ import {
   docData,
   Firestore,
   increment,
+  limit,
+  orderBy,
+  query,
   setDoc,
   Timestamp,
+  where,
   writeBatch,
 } from '@angular/fire/firestore';
 import { onSnapshot } from 'firebase/firestore';
-import { catchError, map, Observable, of, switchMap } from 'rxjs';
+import { catchError, map, NEVER, Observable, of, switchMap } from 'rxjs';
 import { NewPoll, Poll } from '../../shared/poll';
 import { PollsRepoPort, VoteReceipt } from '../ports/polls-repo.port';
+import { ensureSignedIn } from './ensure-signed-in';
 import { pollConverter, pollTtl } from './poll.converter';
 import { PollDto, VoteDto } from './poll.dto';
+
+const MY_POLLS_LIMIT = 50;
 
 @Injectable()
 export class PollsRepoAdapter extends PollsRepoPort {
@@ -67,6 +74,32 @@ export class PollsRepoAdapter extends PollsRepoPort {
     );
   }
 
+  public watchMyPolls(): Observable<Poll[] | null> {
+    if (this.isServer) {
+      // only the browser knows who is signed in
+      return NEVER;
+    }
+    return authState(this.auth).pipe(
+      switchMap((user) =>
+        user
+          ? new Observable<Poll[]>((subscriber) =>
+              onSnapshot(
+                query(
+                  this.pollsCol,
+                  where('creatorUid', '==', user.uid),
+                  orderBy('createdAt', 'desc'),
+                  limit(MY_POLLS_LIMIT)
+                ),
+                (snapshot) =>
+                  subscriber.next(snapshot.docs.map((poll) => poll.data())),
+                (error) => subscriber.error(error)
+              )
+            )
+          : of(null)
+      )
+    );
+  }
+
   public watchOwnVote(pollId: string): Observable<number | undefined> {
     if (this.isServer) {
       // nobody is signed in while rendering on the server
@@ -107,9 +140,6 @@ export class PollsRepoAdapter extends PollsRepoPort {
   }
 
   private async currentUid(): Promise<string> {
-    await this.auth.authStateReady();
-    const user =
-      this.auth.currentUser ?? (await signInAnonymously(this.auth)).user;
-    return user.uid;
+    return (await ensureSignedIn(this.auth)).uid;
   }
 }

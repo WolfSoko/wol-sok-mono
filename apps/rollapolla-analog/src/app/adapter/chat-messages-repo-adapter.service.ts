@@ -1,5 +1,6 @@
 import { computed, effect, inject, Injectable, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { Auth } from '@angular/fire/auth';
 
 import {
   addDoc,
@@ -16,11 +17,13 @@ import { ChatMessagesRepoPort } from '../ports/chat-messages-repo.port';
 import { NotesRepoPort } from '../ports/notes-repo.port';
 import { addPendingTaskForServer } from './add-pending-task-for-server';
 import { chatMessageConverter } from './chat-message.converter';
+import { adoptGoogleProfile, ensureSignedIn } from './ensure-signed-in';
 import { ChatMessageDto } from './chat-message.dto';
 
 @Injectable()
 export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
   private readonly fs: Firestore = inject(Firestore);
+  private readonly auth: Auth = inject(Auth);
   private readonly chatMessages: Signal<ChatMessage[] | undefined>;
   private readonly chatMessagesCol: CollectionReference<
     ChatMessage,
@@ -76,11 +79,20 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
     if (!this.validateMessage(message)) {
       return;
     }
+    // accounts linked to Google before the name was copied get it now
+    const author = await adoptGoogleProfile(await ensureSignedIn(this.auth));
     const chatMessage: ChatMessage = {
       id: '-1',
       message,
       createdAt: new Date(),
+      authorUid: author.uid,
+      // the rules accept only the name from the sign-in token, which is this one
+      authorName: author.isAnonymous ? null : author.displayName,
     };
-    await addDoc(this.chatMessagesCol, chatMessage);
+    // Not awaited: Firestore shows the message right away and resolves only
+    // once the backend acknowledged it.
+    addDoc(this.chatMessagesCol, chatMessage).catch((error) =>
+      console.error('Could not save chat message', error)
+    );
   }
 }

@@ -9,13 +9,18 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
-    // chatMessages collection: world-readable, anyone can create a message
-    // provided it passes field validation (mirrors the app's existing checks).
+    // chatMessages collection: world-readable. Writing needs a (usually
+    // anonymous) sign-in, so every message belongs to a uid; a name, if given,
+    // must be the one Google put into the sign-in token.
     // Updates and deletes are not exposed by the app — deny them.
     match /chatMessages/{messageId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasAll(['message', 'createdAt', 'ttl']) &&
-        request.resource.data.keys().hasOnly(['message', 'createdAt', 'ttl']) &&
+      allow create: if request.auth != null &&
+        request.resource.data.keys().hasAll(['message', 'createdAt', 'ttl', 'authorUid']) &&
+        request.resource.data.keys().hasOnly(['message', 'createdAt', 'ttl', 'authorUid', 'authorName']) &&
+        request.resource.data.authorUid == request.auth.uid &&
+        (!('authorName' in request.resource.data) ||
+          request.resource.data.authorName == request.auth.token.name) &&
         request.resource.data.createdAt is timestamp &&
         request.resource.data.ttl is timestamp &&
         request.resource.data.ttl == request.resource.data.createdAt + duration.value(7, 'd') &&
@@ -25,13 +30,16 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // polls collection: unlisted. Anyone with the link (the id) can read a poll.
+    // polls collection: unlisted. Anyone with the link (the id) can read a poll,
+    // and creators can list their own.
     // Creating and voting need a (usually anonymous) sign-in, so each uid votes
     // at most once per poll: a vote is a batch that creates
     // polls/{pollId}/votes/{uid} and raises the matching count by one.
     match /polls/{pollId} {
       allow get: if true;
-      allow list: if false;
+      // only your own polls ("My polls"); the query must filter on creatorUid
+      allow list: if request.auth != null &&
+        resource.data.creatorUid == request.auth.uid;
       allow create: if request.auth != null && isValidNewPoll(request.resource.data);
       // No votes once the poll expired: TTL deletion lags and is not atomic, so
       // a vote document may be gone while its poll is still there.

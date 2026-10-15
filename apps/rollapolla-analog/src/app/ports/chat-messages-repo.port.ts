@@ -13,5 +13,9 @@ export abstract class ChatMessagesRepoPort {
   }
 
   abstract getChatMessages(): Signal<ChatMessage[] | undefined>;
-  abstract addChatMessage(newMessage: string): void;
+  /**
+   * Signs the visitor in if needed and posts the message. Resolves once it is
+   * applied locally; rejects if signing in fails.
+   */
+  abstract addChatMessage(newMessage: string): Promise<void>;
 }

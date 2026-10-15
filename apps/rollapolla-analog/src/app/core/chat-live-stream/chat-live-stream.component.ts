@@ -16,6 +16,10 @@ import { MessagesListComponent } from './messages-list.component';
   imports: [MatCardModule, MessagesListComponent, ChatMessageFormComponent],
   templateUrl: './chat-live-stream.component.html',
   styles: `
+    .error {
+      margin: 0.5rem 0 0;
+      color: var(--mat-sys-error);
+    }
     :host {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
@@ -48,7 +52,15 @@ export class ChatLiveStreamComponent {
   chatMessages: Signal<ChatMessage[] | undefined> =
     this.chatMessagesRepo.getChatMessages();
 
-  addChatMessage(message: string) {
-    this.chatMessagesRepo.addChatMessage(message.trim());
+  protected readonly postFailed = signal(false);
+
+  protected async addChatMessage(message: string): Promise<void> {
+    this.postFailed.set(false);
+    try {
+      await this.chatMessagesRepo.addChatMessage(message.trim());
+    } catch (error) {
+      console.error('Could not post chat message', error);
+      this.postFailed.set(true);
+    }
   }
 }
