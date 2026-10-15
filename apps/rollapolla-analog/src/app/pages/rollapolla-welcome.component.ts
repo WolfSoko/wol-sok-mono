@@ -1,21 +1,15 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { CreatePollComponent } from '../core/create-poll/create-poll.component';
 import { ChatLiveStreamComponent } from '../core/chat-live-stream/chat-live-stream.component';
+import { CreatePollComponent } from '../core/create-poll/create-poll.component';
+
+type Step = { icon: string; title: string; text: string };
 
 @Component({
   selector: 'rap-welcome',
   imports: [
-    FormsModule,
-    MatInputModule,
     MatIconModule,
-    MatButtonModule,
-    MatCardModule,
     MatProgressSpinnerModule,
     ChatLiveStreamComponent,
     CreatePollComponent,
@@ -24,4 +18,22 @@ import { ChatLiveStreamComponent } from '../core/chat-live-stream/chat-live-stre
   templateUrl: './rollapolla-welcome.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RollapollaWelcomeComponent {}
+export class RollapollaWelcomeComponent {
+  protected readonly steps: Step[] = [
+    {
+      icon: 'edit_note',
+      title: 'Ask',
+      text: 'Type a question and the answers to pick from.',
+    },
+    {
+      icon: 'ios_share',
+      title: 'Share',
+      text: 'Send the link to friends, team or chat.',
+    },
+    {
+      icon: 'insights',
+      title: 'Watch',
+      text: 'Results update live with every vote.',
+    },
+  ];
+}

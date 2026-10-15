@@ -1,4 +1,4 @@
-<mat-card>
+<mat-card appearance="outlined" class="card">
   <mat-card-header>
     <mat-card-title>Create a poll</mat-card-title>
     <mat-card-subtitle>Ask a question, share the link.</mat-card-subtitle>
@@ -34,9 +34,16 @@
         }
       </mat-form-field>
 
-      <div formArrayName="options" class="options">
+      <fieldset formArrayName="options" class="options">
+        <legend class="options-legend">
+          Answers
+          <span class="options-count"
+            >{{ options.length }}/{{ maxOptions }}</span
+          >
+        </legend>
         @for (option of options.controls; track option; let i = $index) {
           <div class="option-row">
+            <span class="option-badge" aria-hidden="true">{{ i + 1 }}</span>
             <mat-form-field class="full-width">
               <mat-label>Option {{ i + 1 }}</mat-label>
               <input
@@ -52,15 +59,16 @@
             <button
               mat-icon-button
               type="button"
+              class="remove-button"
               [disabled]="options.length <= minOptions"
               (click)="removeOption(i)"
               [attr.aria-label]="'Remove option ' + (i + 1)"
             >
-              <mat-icon>delete</mat-icon>
+              <mat-icon>close</mat-icon>
             </button>
           </div>
         }
-      </div>
+      </fieldset>
 
       <div class="actions">
         <button
@@ -76,10 +84,12 @@
         <button
           mat-flat-button
           type="submit"
+          class="submit-button"
           [disabled]="form.invalid || creating()"
           data-testid="create-poll-button"
         >
           Create poll
+          <mat-icon iconPositionEnd>arrow_forward</mat-icon>
         </button>
       </div>
       @if (createFailed()) {
