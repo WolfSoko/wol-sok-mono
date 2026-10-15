@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { By, Meta, Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { BehaviorSubject, throwError } from 'rxjs';
+import { BehaviorSubject, defer, throwError } from 'rxjs';
 import { Poll } from '../../shared/poll';
 import { PollsRepoAdapterMock } from '../adapter/polls-repo-adapter-mock.service';
 import { PollsRepoPort } from '../ports/polls-repo.port';
@@ -88,15 +88,37 @@ describe('MyPollsPageComponent', () => {
     expect(fixture.nativeElement.textContent).not.toContain("Ada's poll?");
   });
 
-  it('says so when the polls cannot be loaded', async () => {
-    vi.spyOn(repo, 'watchMyPolls').mockReturnValue(
-      throwError(() => new Error('failed-precondition: index building'))
-    );
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  it('says so when the polls cannot be loaded and recovers by itself', async () => {
+    vi.useFakeTimers();
+    try {
+      let failures = 1;
+      const watchMyPolls = repo.watchMyPolls.bind(repo);
+      vi.spyOn(repo, 'watchMyPolls').mockReturnValue(
+        defer(() =>
+          failures-- > 0
+            ? throwError(() => new Error('failed-precondition: index building'))
+            : watchMyPolls()
+        )
+      );
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      await repo.createPoll({ question: "Ada's poll?", options: ['a', 'b'] });
 
-    const page = await render();
+      const fixture = TestBed.createComponent(MyPollsPageComponent);
+      fixture.detectChanges();
+      expect(
+        fixture.debugElement.query(By.css('[data-testid="my-polls-error"]'))
+      ).not.toBeNull();
 
-    expect(page.query(By.css('[data-testid="my-polls-error"]'))).not.toBeNull();
+      await vi.advanceTimersByTimeAsync(10_000);
+      fixture.detectChanges();
+
+      expect(
+        fixture.debugElement.query(By.css('[data-testid="my-polls-error"]'))
+      ).toBeNull();
+      expect(fixture.nativeElement.textContent).toContain("Ada's poll?");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('is not for search engines and restores the site tags on leaving', async () => {

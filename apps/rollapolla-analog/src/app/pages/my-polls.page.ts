@@ -5,6 +5,7 @@ import {
   computed,
   DestroyRef,
   inject,
+  signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,10 +16,11 @@ import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { pollClosesAt } from '../../shared/poll';
 import { PollsRepoPort } from '../ports/polls-repo.port';
-import { catchError, of } from 'rxjs';
+import { retry, tap, timer } from 'rxjs';
 import { SITE_TAGS } from './site-tags';
 
-const LOAD_FAILED = 'load-failed' as const;
+/** How long to wait before listening again after loading failed. */
+const RETRY_DELAY_MS = 10_000;
 
 @Component({
   selector: 'rap-my-polls-page',
@@ -39,7 +41,11 @@ const LOAD_FAILED = 'load-failed' as const;
           devices.
         </p>
       </header>
-      @if (polls(); as polls) {
+      @if (loadFailed()) {
+        <p class="error" role="alert" data-testid="my-polls-error">
+          Your polls could not be loaded. Trying again…
+        </p>
+      } @else if (polls(); as polls) {
         @if (polls.length) {
           <ul class="polls" data-testid="my-polls-list">
             @for (poll of polls; track poll.id) {
@@ -83,10 +89,6 @@ const LOAD_FAILED = 'load-failed' as const;
             </mat-card-actions>
           </mat-card>
         }
-      } @else if (loadFailed()) {
-        <p class="error" role="alert" data-testid="my-polls-error">
-          Your polls could not be loaded. Please try again later.
-        </p>
       } @else {
         <mat-spinner class="spinner" diameter="40" />
       }
@@ -168,26 +170,34 @@ const LOAD_FAILED = 'load-failed' as const;
 export default class MyPollsPageComponent {
   protected readonly now = new Date();
 
+  /** Stays set until polls (or the signed-out state) load again. */
+  protected readonly loadFailed = signal(false);
+
   private readonly myPolls = toSignal(
     inject(PollsRepoPort)
       .watchMyPolls()
       .pipe(
-        // e.g. a missing index right after a deploy; toSignal would rethrow
-        catchError((error: unknown) => {
-          console.error('Could not load my polls', error);
-          return of(LOAD_FAILED);
+        tap((polls) => {
+          if (polls !== undefined) {
+            this.loadFailed.set(false);
+          }
+        }),
+        // e.g. the index still building right after a deploy. Listening again
+        // also picks up a sign-in or account switch made in the meantime.
+        retry({
+          delay: (error: unknown) => {
+            console.error('Could not load my polls', error);
+            this.loadFailed.set(true);
+            return timer(RETRY_DELAY_MS);
+          },
         })
       )
-  );
-
-  protected readonly loadFailed = computed(
-    () => this.myPolls() === LOAD_FAILED
   );
 
   /** `undefined` while loading; an empty list when signed out. */
   protected readonly polls = computed(() => {
     const polls = this.myPolls();
-    if (polls === undefined || polls === LOAD_FAILED) {
+    if (polls === undefined) {
       return undefined;
     }
     return (polls ?? []).map((poll) => ({
