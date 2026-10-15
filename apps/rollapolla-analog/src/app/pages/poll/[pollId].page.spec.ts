@@ -1,3 +1,4 @@
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By, Meta, Title } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -6,7 +7,7 @@ import {
   convertToParamMap,
   provideRouter,
 } from '@angular/router';
-import { BehaviorSubject, map } from 'rxjs';
+import { BehaviorSubject, map, NEVER } from 'rxjs';
 import { PollsRepoAdapterMock } from '../../adapter/polls-repo-adapter-mock.service';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import PollPageComponent from './[pollId].page';
@@ -88,6 +89,27 @@ describe('PollPageComponent', () => {
     expect(meta.getTag('property="og:url"')?.content).toBe(
       'https://rollapolla.com/'
     );
+  });
+
+  it('drops the previous poll while the next one loads', async () => {
+    const pollId = await repo.createPoll({
+      question: 'Pizza or pasta?',
+      options: ['Pizza', 'Pasta'],
+    });
+    vi.spyOn(repo, 'watchPoll').mockImplementation((id) =>
+      id === 'slow-poll' ? NEVER : repo.polls$.pipe(map((p) => p[id] ?? null))
+    );
+    const element = await render(pollId);
+    expect(TestBed.inject(Title).getTitle()).toBe(
+      'Pizza or pasta? | RollaPolla'
+    );
+
+    routePollId.next('slow-poll');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(element.query(By.css('[data-testid="poll-question"]'))).toBeNull();
+    expect(element.query(By.css('mat-spinner'))).not.toBeNull();
+    expect(TestBed.inject(Title).getTitle()).not.toContain('Pizza or pasta?');
   });
 
   async function render(pollId: string) {

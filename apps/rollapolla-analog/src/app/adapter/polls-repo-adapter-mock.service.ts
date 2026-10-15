@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map, Observable } from 'rxjs';
 import { NewPoll, Poll } from '../../shared/poll';
-import { PollsRepoPort } from '../ports/polls-repo.port';
+import { PollsRepoPort, VoteReceipt } from '../ports/polls-repo.port';
 
 @Injectable()
 export class PollsRepoAdapterMock extends PollsRepoPort {
-  private readonly polls$ = new BehaviorSubject<Record<string, Poll>>({});
+  public readonly polls$ = new BehaviorSubject<Record<string, Poll>>({});
   /** The mock visitor's votes by poll id. */
   public readonly ownVotes$ = new BehaviorSubject<Record<string, number>>({});
 
@@ -41,10 +41,10 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
     return this.ownVotes$.pipe(map((votes) => votes[pollId]));
   }
 
-  public async vote({ id }: Poll, optionIndex: number): Promise<void> {
+  public async vote({ id }: Poll, optionIndex: number): Promise<VoteReceipt> {
     const poll = this.polls()[id];
     if (!poll || this.ownVotes$.value[id] !== undefined) {
-      return;
+      return { saved: Promise.reject(new Error('Already voted')) };
     }
     this.ownVotes$.next({ ...this.ownVotes$.value, [id]: optionIndex });
     this.polls$.next({
@@ -57,5 +57,6 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
         totalVotes: poll.totalVotes + 1,
       },
     });
+    return { saved: Promise.resolve() };
   }
 }

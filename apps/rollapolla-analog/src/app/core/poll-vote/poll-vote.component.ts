@@ -99,13 +99,26 @@ export class PollVoteComponent {
     this.voting.set(true);
     this.voteFailed.set(false);
     try {
-      await this.pollsRepo.vote(poll, optionIndex);
+      const { saved } = await this.pollsRepo.vote(poll, optionIndex);
       this.votedPolls.rememberVote(poll.id, optionIndex);
+      saved.catch((error: unknown) => this.voteRejected(poll.id, error));
     } catch (error) {
       console.error('Could not vote', error);
       this.voteFailed.set(true);
     } finally {
       this.voting.set(false);
+    }
+  }
+
+  /**
+   * The backend refused the vote after it was already shown. If this visitor
+   * voted before (another tab), the stored vote takes over; otherwise retry.
+   */
+  private voteRejected(pollId: string, error: unknown): void {
+    console.error('Vote was rejected', error);
+    this.votedPolls.forgetVote(pollId);
+    if (this.ownVote() === undefined) {
+      this.voteFailed.set(true);
     }
   }
 

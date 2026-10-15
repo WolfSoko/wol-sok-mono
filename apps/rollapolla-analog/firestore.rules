@@ -33,7 +33,10 @@ service cloud.firestore {
       allow get: if true;
       allow list: if false;
       allow create: if request.auth != null && isValidNewPoll(request.resource.data);
-      allow update: if request.auth != null && isFirstVoteOfUser(pollId) &&
+      // No votes once the poll expired: TTL deletion lags and is not atomic, so
+      // a vote document may be gone while its poll is still there.
+      allow update: if request.auth != null && request.time < resource.data.ttl &&
+        isFirstVoteOfUser(pollId) &&
         isSingleVote(request.resource.data, resource.data, voteAfter(pollId).option);
       allow delete: if false;
 

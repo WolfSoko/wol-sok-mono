@@ -1,6 +1,8 @@
 import { Observable } from 'rxjs';
 import { NewPoll, Poll } from '../../shared/poll';
 
+export type VoteReceipt = { saved: Promise<void> };
+
 export abstract class PollsRepoPort {
   static readonly MIN_QUESTION_LENGTH: number = 5;
   static readonly MAX_QUESTION_LENGTH: number = 200;
@@ -41,6 +43,8 @@ export abstract class PollsRepoPort {
   /**
    * Signs the visitor in if needed and records their one vote on the poll.
    * Resolves once the vote is applied locally; rejects if signing in fails.
+   * `saved` settles once the backend accepted the vote or rejected it, e.g.
+   * because this visitor already voted from another tab.
    */
-  abstract vote(poll: Poll, optionIndex: number): Promise<void>;
+  abstract vote(poll: Poll, optionIndex: number): Promise<VoteReceipt>;
 }

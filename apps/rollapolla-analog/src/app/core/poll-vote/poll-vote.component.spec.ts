@@ -104,6 +104,44 @@ describe('PollVoteComponent', () => {
     );
   });
 
+  it('forgets the vote and offers a retry when the backend rejects it', async () => {
+    vi.spyOn(repo, 'vote').mockResolvedValueOnce({
+      saved: Promise.reject(new Error('permission-denied')),
+    });
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    query('poll-option-1').query(By.css('input')).nativeElement.click();
+    fixture.detectChanges();
+    query('vote-button').nativeElement.click();
+    await fixture.whenStable();
+
+    expect(query('vote-error')).not.toBeNull();
+    expect(query('vote-button')).not.toBeNull();
+    expect(JSON.parse(localStorage.getItem('rap-voted-polls') ?? '{}')).toEqual(
+      {}
+    );
+  });
+
+  it('shows the stored vote when the backend rejects a second vote', async () => {
+    vi.spyOn(repo, 'vote').mockImplementationOnce(async () => {
+      // this visitor already voted for option 0 in another tab
+      repo.ownVotes$.next({ [pollId]: 0 });
+      return { saved: Promise.reject(new Error('permission-denied')) };
+    });
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    query('poll-option-1').query(By.css('input')).nativeElement.click();
+    fixture.detectChanges();
+    query('vote-button').nativeElement.click();
+    await fixture.whenStable();
+
+    expect(query('vote-error')).toBeNull();
+    expect(query('poll-result-0').nativeElement.classList).toContain(
+      'own-vote'
+    );
+    expect(JSON.parse(localStorage.getItem('rap-voted-polls') ?? '{}')).toEqual(
+      {}
+    );
+  });
+
   it('shows an error and lets the visitor retry when voting fails', async () => {
     vi.spyOn(repo, 'vote').mockRejectedValueOnce(new Error('offline'));
     vi.spyOn(console, 'error').mockImplementation(() => undefined);

@@ -9,7 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { map, switchMap } from 'rxjs';
+import { map, startWith, switchMap } from 'rxjs';
 import { pendingUntilFirstValue } from '../../adapter/pending-until-first-value';
 import { PollVoteComponent } from '../../core/poll-vote/poll-vote.component';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
@@ -75,9 +75,11 @@ export default class PollPageComponent {
   protected readonly poll = toSignal(
     this.pollId$.pipe(
       switchMap((pollId) =>
-        this.pollsRepo
-          .watchPoll(pollId)
-          .pipe(pendingUntilFirstValue(this.injector, SSR_POLL_TIMEOUT_MS))
+        this.pollsRepo.watchPoll(pollId).pipe(
+          pendingUntilFirstValue(this.injector, SSR_POLL_TIMEOUT_MS),
+          // forget the previous poll while the next one loads
+          startWith(undefined)
+        )
       )
     )
   );

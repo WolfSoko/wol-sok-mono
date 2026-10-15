@@ -15,7 +15,7 @@ import {
 import { onSnapshot } from 'firebase/firestore';
 import { catchError, map, Observable, of, switchMap } from 'rxjs';
 import { NewPoll, Poll } from '../../shared/poll';
-import { PollsRepoPort } from '../ports/polls-repo.port';
+import { PollsRepoPort, VoteReceipt } from '../ports/polls-repo.port';
 import { pollConverter, pollTtl } from './poll.converter';
 import { PollDto, VoteDto } from './poll.dto';
 
@@ -85,7 +85,7 @@ export class PollsRepoAdapter extends PollsRepoPort {
     );
   }
 
-  public async vote(poll: Poll, optionIndex: number): Promise<void> {
+  public async vote(poll: Poll, optionIndex: number): Promise<VoteReceipt> {
     const uid = await this.currentUid();
     const pollRef = doc(this.fs, 'polls', poll.id);
     const vote: VoteDto = {
@@ -101,9 +101,9 @@ export class PollsRepoAdapter extends PollsRepoPort {
       [`counts.${optionIndex}`]: increment(1),
       totalVotes: increment(1),
     });
-    batch
-      .commit()
-      .catch((error) => console.error('Could not save vote', error));
+    // Not awaited: the batch applies locally right away, the backend may still
+    // reject it later.
+    return { saved: batch.commit() };
   }
 
   private async currentUid(): Promise<string> {
