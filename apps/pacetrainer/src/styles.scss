@@ -2,70 +2,79 @@
 
 @import 'normalize.css/normalize.css';
 
-@include mat.elevation-classes();
-@include mat.app-background();
-
-$theme: mat.define-theme(
-  (
-    color: (
-      theme-type: light,
-      primary: mat.$azure-palette,
-    ),
-  )
-);
-
-$dark-theme: mat.define-theme(
-  (
-    color: (
-      theme-type: dark,
-      primary: mat.$azure-palette,
-    ),
-  )
-);
-
 html {
-  @include mat.toolbar-theme($theme);
-  @include mat.button-theme($theme);
-  @include mat.form-field-theme($theme);
-  @include mat.input-theme($theme);
-  @include mat.card-theme($theme);
-  @include mat.list-theme($theme);
-  @include mat.progress-spinner-theme($theme);
-  @include mat.expansion-theme($theme);
+  // One Material 3 theme for light and dark: every system color is emitted
+  // with light-dark(), so the page and all components follow the OS setting.
+  color-scheme: light dark;
 
-  @include mat.typography-hierarchy($theme);
-
-  // Apply the light theme only when the user prefers light themes.
-  @media (prefers-color-scheme: dark) {
-    // Use the `-color` mixins to only apply color styles without reapplying the same
-    // typography and density styles.
-    @include mat.toolbar-color($dark-theme);
-    @include mat.button-color($dark-theme);
-    @include mat.form-field-color($dark-theme);
-    @include mat.input-color($dark-theme);
-    @include mat.card-color($dark-theme);
-    @include mat.list-color($dark-theme);
-    @include mat.progress-spinner-color($dark-theme);
-    @include mat.expansion-color($dark-theme);
-    @include mat.typography-hierarchy($dark-theme);
-  }
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$orange-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
 }
 
-body,
-html {
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
-  * {
-    box-sizing: border-box;
+// Accent per Phase of the Trainingslauf; components read --pace-accent*.
+// Without a tone they fall back to neutral colors.
+[data-tone='sprint'] {
+  --pace-accent: var(--mat-sys-tertiary);
+  --pace-accent-container: var(--mat-sys-tertiary-container);
+}
+[data-tone='recovery'] {
+  --pace-accent: var(--mat-sys-primary);
+  --pace-accent-container: var(--mat-sys-primary-container);
+}
 
-    &:before,
-    &:after {
-      box-sizing: border-box;
-    }
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
-  max-width: 1024px;
-  margin: 0 auto;
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-large);
   text-wrap: pretty;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+}
+
+// Figures shown side by side: live times during a run, results after it.
+.pace-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+}
+
+.pace-tile {
+  display: flex;
+  flex-flow: column;
+  gap: 4px;
+  padding: 12px 16px;
+}
+
+.pace-tile-value {
+  font: var(--mat-sys-title-large);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pace-tile-label {
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
 }

@@ -10,8 +10,9 @@ import { SprintTrainingComponent } from '../features/sprint-training/sprint-trai
     <pace-sprint-training></pace-sprint-training>`,
   styles: `
     :host {
-      display: block;
-      margin-top: 1rem;
+      display: flex;
+      flex-flow: column;
+      min-height: 100dvh;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

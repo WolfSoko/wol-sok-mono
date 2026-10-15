@@ -4,13 +4,27 @@
     <meta charset="utf-8" />
     <title>Pace-Trainer</title>
     <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <!-- mirror --mat-sys-surface of the azure theme in styles.scss -->
+    <meta
+      name="theme-color"
+      content="#f9f9ff"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#111318"
+      media="(prefers-color-scheme: dark)"
+    />
     <meta
       name="description"
       content="Pace-Trainer – dein digitaler Laufcoach: Plane Sprint-Intervalle mit Wiederholungen, Sprint- und Erholungszeiten und trainiere mit akustischen Signalen direkt im Browser."
     />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#abc7ff" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Pace-Trainer" />
     <meta property="og:locale" content="de_DE" />
@@ -31,15 +45,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
   </head>
-  <body class="mat-typography mat-app-background">
+  <body>
     <pace-root></pace-root>
     <script type="module" src="/src/main.ts"></script>
   </body>

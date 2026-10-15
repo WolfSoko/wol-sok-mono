@@ -1,11 +1,5 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  input,
-} from '@angular/core';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatList, MatListItem } from '@angular/material/list';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { MatCardModule } from '@angular/material/card';
 import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
 import { SprintTrainingDataService } from './data/sprint-training-data.service';
 
@@ -13,35 +7,62 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
   selector: 'pace-sprint-training-overview',
   template: `
     @let conf = data();
-    @let repetitions = conf.repetitions;
-    @let sprintTime = conf.sprintTime;
-    @let recoveryTime = conf.recoveryTime;
-    @let totalTime = conf.totalTime;
-
-    <mat-expansion-panel [expanded]="open()" data-qa="training-overview">
-      <mat-expansion-panel-header>
-        <mat-panel-title>Übersicht</mat-panel-title>
-        <mat-panel-description class="mat-body-medium">
-          Training Konfiguration
-        </mat-panel-description>
-      </mat-expansion-panel-header>
-      <mat-list>
-        <mat-list-item>{{ repetitions }} Wiederholungen</mat-list-item>
-        <mat-list-item>{{ sprintTime | trainingTime }} - Sprint</mat-list-item>
-        <mat-list-item
-          >{{ recoveryTime | trainingTime }} - Gehen/Stehen</mat-list-item
-        >
-        <mat-list-item class="mat-body-strong">
-          Gesamtzeit: {{ totalTime | trainingTime }}
-        </mat-list-item>
-      </mat-list>
-    </mat-expansion-panel>
+    <mat-card appearance="filled" data-qa="training-overview">
+      <mat-card-header>
+        <mat-card-title>Übersicht</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <ul class="plan">
+          <li>{{ conf.repetitions }} Wiederholungen</li>
+          <li>
+            <span class="dot sprint"></span
+            >{{ conf.sprintTime | trainingTime }} - Sprint
+          </li>
+          <li>
+            <span class="dot recovery"></span
+            >{{ conf.recoveryTime | trainingTime }} - Gehen/Stehen
+          </li>
+        </ul>
+        <p class="total">Gesamtzeit: {{ conf.totalTime | trainingTime }}</p>
+      </mat-card-content>
+    </mat-card>
   `,
-  styles: [``],
-  imports: [MatExpansionModule, MatList, MatListItem, TrainingTimePipe],
+  styles: `
+    .plan {
+      display: flex;
+      flex-flow: column;
+      gap: 6px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font: var(--mat-sys-body-large);
+      color: var(--mat-sys-on-surface-variant);
+    }
+    .plan li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .dot.sprint {
+      background: var(--mat-sys-tertiary);
+    }
+    .dot.recovery {
+      background: var(--mat-sys-primary);
+    }
+    .total {
+      margin: 12px 0 0;
+      font: var(--mat-sys-title-large);
+      font-weight: 600;
+    }
+  `,
+  imports: [MatCardModule, TrainingTimePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SprintTrainingOverviewComponent {
-  open = input<boolean>(false);
-  data = inject(SprintTrainingDataService).data;
+  public readonly data = inject(SprintTrainingDataService).data;
 }

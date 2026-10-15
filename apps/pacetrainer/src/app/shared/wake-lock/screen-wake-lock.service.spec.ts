@@ -2,7 +2,14 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { provideRepositoryMock } from '../repository/provide-repository.mock';
-import { TrainingRunnerService } from '../training-runner/training-runner.service';
+import { seconds, sToMs } from '../model/constants/time-utils';
+import {
+  createRecoveryExercise,
+  createSprintExercise,
+} from '../model/training/excercise';
+import { createIntervalWithDuration } from '../model/training/interval';
+import { createTrainingWithDuration } from '../model/training/training-config-with.duration';
+import { TrainingRun } from '../training-run/training-run';
 import { ScreenWakeLockService } from './screen-wake-lock.service';
 
 interface FakeSentinel {
@@ -13,7 +20,7 @@ interface FakeSentinel {
 describe('ScreenWakeLockService', () => {
   let pending: ((sentinel: FakeSentinel) => void)[];
   let granted: FakeSentinel[];
-  let runner: TrainingRunnerService;
+  let run: TrainingRun;
 
   let requests: number;
 
@@ -32,12 +39,26 @@ describe('ScreenWakeLockService', () => {
     resolve(sentinel);
   }
 
+  function startPastVorlauf(): void {
+    run.start(
+      createTrainingWithDuration([
+        createIntervalWithDuration(
+          1,
+          createSprintExercise(sToMs(seconds(60))),
+          createRecoveryExercise(sToMs(seconds(60)))
+        ),
+      ])
+    );
+    vi.advanceTimersByTime(5000);
+  }
+
   async function settle(): Promise<void> {
     TestBed.tick();
-    await new Promise((resolve) => setTimeout(resolve));
+    await vi.advanceTimersByTimeAsync(0);
   }
 
   beforeEach(() => {
+    vi.useFakeTimers();
     pending = [];
     granted = [];
     requests = 0;
@@ -53,20 +74,21 @@ describe('ScreenWakeLockService', () => {
     TestBed.configureTestingModule({
       providers: [provideZonelessChangeDetection(), provideRepositoryMock()],
     });
-    runner = TestBed.inject(TrainingRunnerService);
+    run = TestBed.inject(TrainingRun);
     TestBed.inject(ScreenWakeLockService);
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     delete (navigator as { wakeLock?: unknown }).wakeLock;
   });
 
   it('releases every lock after a quick pause and resume', async () => {
-    runner.toggleTraining(); // running: first request pending
+    startPastVorlauf(); // after the Vorlauf: first request pending
     await settle();
-    runner.toggleTraining(); // paused
+    run.toggle(); // paused
     await settle();
-    runner.toggleTraining(); // running again
+    run.toggle(); // running again
     await settle();
 
     grantNext();
@@ -74,7 +96,7 @@ describe('ScreenWakeLockService', () => {
     grantNext();
     await settle();
 
-    runner.endTraining();
+    run.end();
     await settle();
 
     expect(granted.length).toBeGreaterThan(0);
@@ -82,7 +104,7 @@ describe('ScreenWakeLockService', () => {
   });
 
   it('asks again when the page came back while a request was pending', async () => {
-    runner.toggleTraining(); // running: request pending
+    startPastVorlauf(); // after the Vorlauf: request pending
     await settle();
     document.dispatchEvent(new Event('visibilitychange'));
     await settle();
@@ -95,11 +117,11 @@ describe('ScreenWakeLockService', () => {
   });
 
   it('does not ask again once the training was paused meanwhile', async () => {
-    runner.toggleTraining(); // running: request pending
+    startPastVorlauf(); // after the Vorlauf: request pending
     await settle();
     document.dispatchEvent(new Event('visibilitychange'));
     await settle();
-    runner.toggleTraining(); // paused
+    run.toggle(); // paused
     await settle();
 
     grantNext(true);

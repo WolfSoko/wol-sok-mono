@@ -5,7 +5,6 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { debounceTime, map } from 'rxjs';
 import { msToS, sToMs } from '../../shared/model/constants/time-utils';
@@ -15,48 +14,62 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
   selector: 'pace-sprint-form',
   template: `
     <form [formGroup]="sprintForm" class="sprint-form" data-qa="sprint-form">
-      <mat-form-field appearance="fill">
+      <mat-form-field appearance="outline" class="full">
         <mat-label>Wiederholungen</mat-label>
         <input
           matInput
           data-qa="repetitions"
           formControlName="repetitions"
           type="number"
+          inputmode="numeric"
           placeholder="Wiederholungen"
         />
       </mat-form-field>
 
-      <mat-form-field appearance="fill">
-        <mat-label>Sprintzeit in Sekunden</mat-label>
+      <mat-form-field appearance="outline">
+        <mat-label>Sprintzeit</mat-label>
         <input
           matInput
           data-qa="sprintTime"
           formControlName="sprintTime"
           type="number"
+          inputmode="numeric"
           placeholder="Sprintzeit (s)"
         />
+        <span matTextSuffix>s</span>
       </mat-form-field>
 
-      <mat-form-field appearance="fill">
-        <mat-label>Erholungszeit in Sekunden</mat-label>
+      <mat-form-field appearance="outline">
+        <mat-label>Erholungszeit</mat-label>
         <input
           matInput
           data-qa="recoveryTime"
           formControlName="recoveryTime"
           type="number"
+          inputmode="numeric"
           placeholder="Erholungszeit (s)"
         />
+        <span matTextSuffix>s</span>
       </mat-form-field>
     </form>
   `,
   styles: [
     `
       .sprint-form {
-        width: 200px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 12px;
+        width: 100%;
+      }
+      .full {
+        grid-column: 1 / -1;
+      }
+      mat-form-field {
+        width: 100%;
       }
     `,
   ],
-  imports: [MatCardModule, ReactiveFormsModule, MatInputModule],
+  imports: [ReactiveFormsModule, MatInputModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SprintFormComponent {

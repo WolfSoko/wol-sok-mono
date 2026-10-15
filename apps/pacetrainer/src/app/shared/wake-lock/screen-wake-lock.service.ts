@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { DestroyRef, effect, inject, Injectable } from '@angular/core';
-import { TrainingRunnerService } from '../training-runner/training-runner.service';
+import { TrainingRun } from '../training-run/training-run';
 
 /**
  * Keeps the screen on while a training is running. Without it phones dim and
@@ -12,14 +12,14 @@ import { TrainingRunnerService } from '../training-runner/training-runner.servic
 @Injectable({ providedIn: 'root' })
 export class ScreenWakeLockService {
   private readonly document = inject(DOCUMENT);
-  private readonly runnerService = inject(TrainingRunnerService);
+  private readonly trainingRun = inject(TrainingRun);
   private sentinel: WakeLockSentinel | null = null;
   private pendingRequest: Promise<void> | null = null;
   private requestAgain = false;
 
   constructor() {
     effect(() => {
-      if (this.runnerService.trainingState() === 'running') {
+      if (this.isRunning()) {
         void this.request();
       } else {
         void this.release();
@@ -27,10 +27,7 @@ export class ScreenWakeLockService {
     });
 
     const onVisibilityChange = (): void => {
-      if (
-        this.document.visibilityState === 'visible' &&
-        this.runnerService.trainingState() === 'running'
-      ) {
+      if (this.document.visibilityState === 'visible' && this.isRunning()) {
         void this.request();
       }
     };
@@ -39,6 +36,10 @@ export class ScreenWakeLockService {
       this.document.removeEventListener('visibilitychange', onVisibilityChange);
       void this.release();
     });
+  }
+
+  private isRunning(): boolean {
+    return this.trainingRun.phase() === 'running';
   }
 
   private async request(): Promise<void> {
@@ -59,7 +60,7 @@ export class ScreenWakeLockService {
     await this.pendingRequest;
     if (this.requestAgain) {
       this.requestAgain = false;
-      if (this.runnerService.trainingState() === 'running') {
+      if (this.isRunning()) {
         await this.request();
       }
     }
@@ -68,7 +69,7 @@ export class ScreenWakeLockService {
   private async acquire(wakeLock: WakeLock): Promise<void> {
     try {
       this.sentinel = await wakeLock.request('screen');
-      if (this.runnerService.trainingState() !== 'running') {
+      if (!this.isRunning()) {
         // paused or stopped while the request was pending
         await this.release();
       }

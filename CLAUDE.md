@@ -75,6 +75,7 @@ npx nx graph
 3. **Signals for state** — prefer `signal()`/`computed()`/`effect()` over manual subscriptions where possible
 4. **OnPush everywhere** — `changeDetection: ChangeDetectionStrategy.OnPush`
 5. **Angular Material** — use AM components consistently; don't roll custom UI that AM already covers
+   - Exception (pacetrainer): the countdown ring (`pace-countdown-circle`) is a custom SVG, since `mat-progress-spinner` has no track ring
 6. **Modern control flow** — `@if`, `@for`, `@switch` (not `*ngIf`, `*ngFor`, `*ngSwitch`)
 7. **2-space indentation**, kebab-case filenames, `*.spec.ts` for tests
 8. **Explicit `public`/`private`** in class members
@@ -136,6 +137,8 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - PR scope: include summary, UI screenshots if visual, linked issue; no unrelated refactors
 - **Always request a CodeRabbit review** after opening a PR: this repo gets no automatic reviews
   (fewer than 10 stars), so comment `@coderabbitai review` on the PR and work through the findings
+- **When CodeRabbit and Codex are both rate-limited**, don't wait for them: review the change
+  yourself (`/code-review`) and run `/simplify` on it, then fix what they find
 
 ## Security
 

@@ -57,6 +57,15 @@ describe('Repository', () => {
     expect(loadedData).toBeNull();
   });
 
+  it('should remove saved data on clear', () => {
+    const service = initRepository(true);
+    service.save({ foo: 'bar' });
+
+    service.clear();
+
+    expect(service.load()).toBeNull();
+  });
+
   describe('when the browser refuses storage access', () => {
     afterEach(() => vi.restoreAllMocks());
 
@@ -67,6 +76,15 @@ describe('Repository', () => {
       const service = initRepository(true);
 
       expect(() => service.save({ foo: 'bar' })).not.toThrow();
+    });
+
+    it('should clear without failing', () => {
+      vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError');
+      });
+      const service = initRepository(true);
+
+      expect(() => service.clear()).not.toThrow();
     });
 
     it('should load nothing', () => {
