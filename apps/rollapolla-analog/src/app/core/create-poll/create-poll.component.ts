@@ -16,11 +16,13 @@ import {
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Router } from '@angular/router';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
+import { CREATED_POLL_ID } from './created-poll-id';
 
 @Component({
   selector: 'rap-create-poll',
@@ -28,6 +30,7 @@ import { PollsRepoPort } from '../../ports/polls-repo.port';
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
+    MatCheckboxModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -62,6 +65,8 @@ export class CreatePollComponent {
       ],
     ],
     options: this.fb.array([this.createOption(), this.createOption()]),
+    /** Public by default; unticked, only people with the link find it. */
+    listed: [true],
   });
 
   protected get options(): FormArray<FormControl<string>> {
@@ -85,12 +90,18 @@ export class CreatePollComponent {
       this.form.markAllAsTouched();
       return;
     }
-    const { question, options } = this.form.getRawValue();
+    const { question, options, listed } = this.form.getRawValue();
     this.creating.set(true);
     this.createFailed.set(false);
     try {
-      const pollId = await this.pollsRepo.createPoll({ question, options });
-      await this.router.navigate(['/poll', pollId]);
+      const pollId = await this.pollsRepo.createPoll({
+        question,
+        options,
+        listed,
+      });
+      await this.router.navigate(['/poll', pollId], {
+        state: { [CREATED_POLL_ID]: pollId },
+      });
     } catch (error) {
       console.error('Could not create poll', error);
       this.createFailed.set(true);

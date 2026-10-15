@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable } from 'rxjs';
-import { NewPoll, Poll } from '../../shared/poll';
+import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
+import {
+  featuredPoll,
+  pollOrFeaturedDraft,
+  storedFeaturedPoll,
+} from '../../shared/featured-polls';
+import { isOpen, NewPoll, Poll, POLL_LIFETIME_MS } from '../../shared/poll';
 import { PollsRepoPort, VoteReceipt } from '../ports/polls-repo.port';
 
 @Injectable()
@@ -18,6 +23,7 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
       throw new Error('Invalid poll');
     }
     const id = `poll-${Object.keys(this.polls()).length + 1}`;
+    const createdAt = new Date();
     this.polls$.next({
       ...this.polls(),
       [id]: {
@@ -26,22 +32,76 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
         options: newPoll.options.map((option) => option.trim()),
         counts: newPoll.options.map(() => 0),
         totalVotes: 0,
-        createdAt: new Date(),
+        createdAt,
+        closesAt: new Date(createdAt.getTime() + POLL_LIFETIME_MS),
         creatorUid: 'mock-user',
+        listed: newPoll.listed ?? false,
       },
     });
     return id;
   }
 
   public watchPoll(pollId: string): Observable<Poll | null> {
-    return this.polls$.pipe(map((polls) => polls[pollId] ?? null));
+    return this.polls$.pipe(
+      map((polls) => pollOrFeaturedDraft(pollId, polls[pollId]))
+    );
+  }
+
+  public watchHotPolls(count: number): Observable<Poll[]> {
+    return this.listedPolls((a, b) => b.totalVotes - a.totalVotes, count);
+  }
+
+  public watchPublicPolls(): Observable<Poll[]> {
+    return this.listedPolls(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+      PollsRepoPort.PUBLIC_POLLS_LIMIT
+    );
+  }
+
+  private listedPolls(
+    order: (a: Poll, b: Poll) => number,
+    count: number
+  ): Observable<Poll[]> {
+    return this.polls$.pipe(
+      map((polls) =>
+        Object.values(polls)
+          .filter((poll) => poll.listed && isOpen(poll))
+          .sort(order)
+          .slice(0, count)
+      )
+    );
+  }
+
+  /** `null` plays a visitor who is not signed in. */
+  public readonly creatorUid$ = new BehaviorSubject<string | null>('mock-user');
+
+  public watchMyPolls(): Observable<Poll[] | null | undefined> {
+    return combineLatest([this.creatorUid$, this.polls$]).pipe(
+      map(([uid, polls]) =>
+        uid === null
+          ? null
+          : Object.values(polls)
+              .filter((poll) => poll.creatorUid === uid)
+              .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      )
+    );
   }
 
   public watchOwnVote(pollId: string): Observable<number | undefined> {
     return this.ownVotes$.pipe(map((votes) => votes[pollId]));
   }
 
-  public async vote({ id }: Poll, optionIndex: number): Promise<VoteReceipt> {
+  public async vote(
+    { id, unsaved }: Poll,
+    optionIndex: number
+  ): Promise<VoteReceipt> {
+    const featured = featuredPoll(id);
+    if (unsaved && featured && !this.polls()[id]) {
+      this.polls$.next({
+        ...this.polls(),
+        [id]: storedFeaturedPoll(featured),
+      });
+    }
     const poll = this.polls()[id];
     if (!poll || this.ownVotes$.value[id] !== undefined) {
       return { saved: Promise.reject(new Error('Already voted')) };

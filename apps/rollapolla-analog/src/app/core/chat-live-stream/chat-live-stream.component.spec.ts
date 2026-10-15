@@ -51,6 +51,75 @@ describe('ChatLiveStreamComponent', () => {
     );
   });
 
+  it('shows who wrote a message, "Anonymous" without a name', () => {
+    vi.spyOn(
+      TestBed.inject(ChatMessagesRepoPort),
+      'getChatMessages'
+    ).mockReturnValue(
+      signal<ChatMessage[]>([
+        {
+          id: '1',
+          message: 'Signed in',
+          createdAt: new Date(),
+          authorName: 'Ada Lovelace',
+        },
+        {
+          id: '2',
+          message: 'Anonymous',
+          createdAt: new Date(),
+          authorName: null,
+        },
+        { id: '3', message: 'From before sign-in', createdAt: new Date() },
+      ])
+    );
+    createComponent();
+
+    const author = (id: string) =>
+      fixture.debugElement
+        .query(By.css(`[data-testid="message-author-${id}"]`))
+        .nativeElement.textContent.trim();
+    expect(author('1')).toBe('Ada Lovelace');
+    expect(author('2')).toBe('Anonymous');
+    expect(author('3')).toBe('Anonymous');
+  });
+
+  it('says so when a message cannot be posted', async () => {
+    vi.spyOn(
+      TestBed.inject(ChatMessagesRepoPort),
+      'addChatMessage'
+    ).mockRejectedValueOnce(new Error('auth/admin-restricted-operation'));
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    fixture.debugElement
+      .query(By.css('rap-chat-message-form'))
+      .triggerEventHandler('messageAdded', 'Hello there, everyone!');
+    await fixture.whenStable();
+
+    expect(
+      fixture.debugElement.query(By.css('[data-testid="chat-error"]'))
+    ).not.toBeNull();
+  });
+
+  it('says so when the backend rejects a posted message', async () => {
+    vi.spyOn(
+      TestBed.inject(ChatMessagesRepoPort),
+      'addChatMessage'
+    ).mockResolvedValueOnce({
+      saved: Promise.reject(new Error('permission-denied')),
+    });
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    fixture.debugElement
+      .query(By.css('rap-chat-message-form'))
+      .triggerEventHandler('messageAdded', 'Hello there, everyone!');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(
+      fixture.debugElement.query(By.css('[data-testid="chat-error"]'))
+    ).not.toBeNull();
+  });
+
   function createComponent(): void {
     fixture = TestBed.createComponent(ChatLiveStreamComponent);
     component = fixture.componentInstance;

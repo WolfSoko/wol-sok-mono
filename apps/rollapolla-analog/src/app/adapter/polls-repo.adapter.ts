@@ -1,6 +1,6 @@
 import { isPlatformServer } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { Auth, authState, signInAnonymously } from '@angular/fire/auth';
+import { Auth, authState } from '@angular/fire/auth';
 import {
   collection,
   CollectionReference,
@@ -8,16 +8,36 @@ import {
   docData,
   Firestore,
   increment,
+  limit,
+  orderBy,
+  query,
   setDoc,
   Timestamp,
+  where,
   writeBatch,
 } from '@angular/fire/firestore';
-import { onSnapshot } from 'firebase/firestore';
-import { catchError, map, Observable, of, switchMap } from 'rxjs';
-import { NewPoll, Poll } from '../../shared/poll';
+import {
+  catchError,
+  map,
+  NEVER,
+  Observable,
+  of,
+  startWith,
+  switchMap,
+} from 'rxjs';
+import { pollOrFeaturedDraft } from '../../shared/featured-polls';
+import { isOpen, NewPoll, Poll, POLL_LIFETIME_MS } from '../../shared/poll';
+import { sortPolls } from '../../shared/poll-search';
 import { PollsRepoPort, VoteReceipt } from '../ports/polls-repo.port';
-import { pollConverter, pollTtl } from './poll.converter';
+import { ensureSignedIn } from './ensure-signed-in';
+import { saveFeaturedPoll } from './featured-poll-doc';
+import { pollConverter } from './poll.converter';
 import { PollDto, VoteDto } from './poll.dto';
+import { docSnapshots, queryData } from './snapshots';
+
+const MY_POLLS_LIMIT = 50;
+/** Extra listed polls read in case some are closed but not yet deleted. */
+const LISTED_POLLS_SLACK = 10;
 
 @Injectable()
 export class PollsRepoAdapter extends PollsRepoPort {
@@ -36,14 +56,17 @@ export class PollsRepoAdapter extends PollsRepoPort {
     const creatorUid = await this.currentUid();
     const pollRef = doc(this.pollsCol);
     const options = newPoll.options.map((option) => option.trim());
+    const createdAt = new Date();
     const poll: Poll = {
       id: pollRef.id,
       question: newPoll.question.trim(),
       options,
       counts: options.map(() => 0),
       totalVotes: 0,
-      createdAt: new Date(),
+      createdAt,
+      closesAt: new Date(createdAt.getTime() + POLL_LIFETIME_MS),
       creatorUid,
+      listed: newPoll.listed ?? false,
     };
     // Not awaited: Firestore applies the write locally right away and resolves
     // only once the backend acknowledged it.
@@ -53,16 +76,59 @@ export class PollsRepoAdapter extends PollsRepoPort {
     return pollRef.id;
   }
 
-  /**
-   * Not AngularFire's `docData`: on the server that keeps rendering waiting until
-   * Firestore answers, however long it takes. Callers decide how long to wait.
-   */
   public watchPoll(pollId: string): Observable<Poll | null> {
-    return new Observable<Poll | null>((subscriber) =>
-      onSnapshot(
-        doc(this.pollsCol, pollId),
-        (snapshot) => subscriber.next(snapshot.data() ?? null),
-        (error) => subscriber.error(error)
+    return docSnapshots(doc(this.pollsCol, pollId)).pipe(
+      map((snapshot) => pollOrFeaturedDraft(pollId, snapshot.data()))
+    );
+  }
+
+  /**
+   * The open listed polls with the most votes, among the newest
+   * {@link PollsRepoPort.PUBLIC_POLLS_LIMIT}. Sorting the query by votes
+   * instead would let closed polls the TTL has not deleted yet crowd out the
+   * open ones; by age they are the oldest and fall off the end.
+   */
+  public watchHotPolls(count: number): Observable<Poll[]> {
+    return this.watchPublicPolls().pipe(
+      map((polls) => sortPolls(polls, 'hot').slice(0, count))
+    );
+  }
+
+  public watchPublicPolls(): Observable<Poll[]> {
+    const count = PollsRepoPort.PUBLIC_POLLS_LIMIT;
+    return queryData(
+      query(
+        this.pollsCol,
+        where('listed', '==', true),
+        orderBy('createdAt', 'desc'),
+        // closed polls linger until the TTL deletes them
+        limit(count + LISTED_POLLS_SLACK)
+      )
+    ).pipe(
+      map((polls) => {
+        const now = new Date();
+        return polls.filter((poll) => isOpen(poll, now)).slice(0, count);
+      })
+    );
+  }
+
+  public watchMyPolls(): Observable<Poll[] | null | undefined> {
+    if (this.isServer) {
+      // only the browser knows who is signed in
+      return NEVER;
+    }
+    return authState(this.auth).pipe(
+      switchMap((user) =>
+        user
+          ? queryData(
+              query(
+                this.pollsCol,
+                where('creatorUid', '==', user.uid),
+                orderBy('createdAt', 'desc'),
+                limit(MY_POLLS_LIMIT)
+              )
+            ).pipe(startWith(undefined))
+          : of(null)
       )
     );
   }
@@ -87,11 +153,12 @@ export class PollsRepoAdapter extends PollsRepoPort {
 
   public async vote(poll: Poll, optionIndex: number): Promise<VoteReceipt> {
     const uid = await this.currentUid();
+    const stored = poll.unsaved ? saveFeaturedPoll(this.fs, poll) : poll;
     const pollRef = doc(this.fs, 'polls', poll.id);
     const vote: VoteDto = {
       option: optionIndex,
       createdAt: Timestamp.now(),
-      ttl: pollTtl(poll),
+      ttl: Timestamp.fromDate(stored.closesAt),
     };
     // Both writes or none: the rules only accept a count change together with
     // the creation of this user's vote document.
@@ -107,9 +174,6 @@ export class PollsRepoAdapter extends PollsRepoPort {
   }
 
   private async currentUid(): Promise<string> {
-    await this.auth.authStateReady();
-    const user =
-      this.auth.currentUser ?? (await signInAnonymously(this.auth)).user;
-    return user.uid;
+    return (await ensureSignedIn(this.auth)).uid;
   }
 }

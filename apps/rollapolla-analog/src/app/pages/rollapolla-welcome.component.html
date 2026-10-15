@@ -37,6 +37,39 @@
     </div>
   </section>
 
+  <section class="discover-section" aria-labelledby="hot-title">
+    <header class="section-header">
+      <p class="rap-eyebrow">
+        <span class="rap-live-dot" aria-hidden="true"></span>
+        Trending
+      </p>
+      <h2 id="hot-title" class="section-title">Hottest polls</h2>
+      <p class="section-subtitle">Where everyone is voting right now.</p>
+    </header>
+    @defer (hydrate on viewport) {
+      <rap-hot-polls />
+    } @placeholder {
+      <mat-spinner class="spinner" diameter="40" />
+    }
+  </section>
+
+  <section class="discover-section" aria-labelledby="featured-title">
+    <header class="section-header">
+      <p class="rap-eyebrow">Classics</p>
+      <h2 id="featured-title" class="section-title">
+        Settle these once and for all
+      </h2>
+      <p class="section-subtitle">
+        Our evergreen polls. Pick a side and see who agrees.
+      </p>
+    </header>
+    @defer (hydrate on viewport) {
+      <rap-featured-polls />
+    } @placeholder {
+      <mat-spinner class="spinner" diameter="40" />
+    }
+  </section>
+
   <section class="chat-section" aria-labelledby="chat-title">
     <header class="section-header">
       <p class="rap-eyebrow">Community</p>

@@ -9,6 +9,7 @@ import { MatCardModule } from '@angular/material/card';
 import { ChatMessage } from '../../../shared/chat.message';
 import { ChatMessagesRepoPort } from '../../ports/chat-messages-repo.port';
 import { ChatMessageFormComponent } from './chat-message-form.component';
+import { PostTracker } from './post-tracker';
 import { MessagesListComponent } from './messages-list.component';
 
 @Component({
@@ -16,6 +17,10 @@ import { MessagesListComponent } from './messages-list.component';
   imports: [MatCardModule, MessagesListComponent, ChatMessageFormComponent],
   templateUrl: './chat-live-stream.component.html',
   styles: `
+    .error {
+      margin: 0.5rem 0 0;
+      color: var(--mat-sys-error);
+    }
     :host {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
@@ -48,7 +53,12 @@ export class ChatLiveStreamComponent {
   chatMessages: Signal<ChatMessage[] | undefined> =
     this.chatMessagesRepo.getChatMessages();
 
-  addChatMessage(message: string) {
-    this.chatMessagesRepo.addChatMessage(message.trim());
+  private readonly posts = new PostTracker();
+  protected readonly postFailed = this.posts.failed;
+
+  protected addChatMessage(message: string): Promise<void> {
+    return this.posts.post(() =>
+      this.chatMessagesRepo.addChatMessage(message.trim())
+    );
   }
 }

@@ -7,12 +7,6 @@ import {
 import { Poll } from '../../shared/poll';
 import { PollDto } from './poll.dto';
 
-export const POLL_TTL_MS: number = 1000 * 60 * 60 * 24 * 30;
-
-export function pollTtl(poll: Pick<Poll, 'createdAt'>): Timestamp {
-  return Timestamp.fromMillis(poll.createdAt.getTime() + POLL_TTL_MS);
-}
-
 export const pollConverter: FirestoreDataConverter<Poll, PollDto> = {
   toFirestore(poll: Poll): PollDto {
     return {
@@ -23,15 +17,20 @@ export const pollConverter: FirestoreDataConverter<Poll, PollDto> = {
       ),
       totalVotes: poll.totalVotes,
       createdAt: Timestamp.fromDate(poll.createdAt),
-      ttl: pollTtl(poll),
+      ttl: Timestamp.fromDate(poll.closesAt),
       creatorUid: poll.creatorUid,
+      listed: poll.listed,
     };
   },
   fromFirestore(
     snapshot: QueryDocumentSnapshot<PollDto>,
     options?: SnapshotOptions
   ): Poll {
-    const data = snapshot.data(options) as PollDto;
+    // a featured poll's createdAt is a server timestamp, pending until written
+    const data = snapshot.data({
+      ...options,
+      serverTimestamps: 'estimate',
+    }) as PollDto;
     return {
       id: snapshot.id,
       question: data.question,
@@ -39,7 +38,9 @@ export const pollConverter: FirestoreDataConverter<Poll, PollDto> = {
       counts: data.options.map((_, index) => data.counts[String(index)] ?? 0),
       totalVotes: data.totalVotes,
       createdAt: new Date(data.createdAt.toDate()),
+      closesAt: new Date(data.ttl.toDate()),
       creatorUid: data.creatorUid,
+      listed: data.listed ?? false,
     };
   },
 };

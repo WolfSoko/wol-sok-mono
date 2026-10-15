@@ -9,30 +9,44 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
-    // chatMessages collection: world-readable, anyone can create a message
-    // provided it passes field validation (mirrors the app's existing checks).
+    // chatMessages collection: world-readable. Writing needs a (usually
+    // anonymous) sign-in, so every message belongs to a uid; a name, if given,
+    // must be the one Google put into the sign-in token.
     // Updates and deletes are not exposed by the app — deny them.
     match /chatMessages/{messageId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasAll(['message', 'createdAt', 'ttl']) &&
-        request.resource.data.keys().hasOnly(['message', 'createdAt', 'ttl']) &&
-        request.resource.data.createdAt is timestamp &&
-        request.resource.data.ttl is timestamp &&
-        request.resource.data.ttl == request.resource.data.createdAt + duration.value(7, 'd') &&
-        request.resource.data.message is string &&
-        request.resource.data.message.size() > 9 &&
-        request.resource.data.message.size() < 1001;
+      allow create: if request.auth != null &&
+        isValidChatMessage(request.resource.data) &&
+        request.resource.data.ttl == request.resource.data.createdAt + duration.value(7, 'd');
       allow update, delete: if false;
     }
 
-    // polls collection: unlisted. Anyone with the link (the id) can read a poll.
+    function isValidChatMessage(message) {
+      return message.keys().hasAll(['message', 'createdAt', 'ttl', 'authorUid']) &&
+        message.keys().hasOnly(['message', 'createdAt', 'ttl', 'authorUid', 'authorName']) &&
+        message.authorUid == request.auth.uid &&
+        (!('authorName' in message) || message.authorName == request.auth.token.name) &&
+        message.createdAt is timestamp &&
+        message.ttl is timestamp &&
+        message.message is string &&
+        message.message.size() > 9 &&
+        message.message.size() < 1001;
+    }
+
+    // polls collection. Anyone with the link (the id) can read a poll. Listed
+    // polls (home page, search) can be listed by anyone, the others only by
+    // their creator ("My polls").
     // Creating and voting need a (usually anonymous) sign-in, so each uid votes
     // at most once per poll: a vote is a batch that creates
     // polls/{pollId}/votes/{uid} and raises the matching count by one.
     match /polls/{pollId} {
       allow get: if true;
-      allow list: if false;
-      allow create: if request.auth != null && isValidNewPoll(request.resource.data);
+      // the query must filter on listed == true or on creatorUid
+      allow list: if resource.data.listed == true ||
+        (request.auth != null && resource.data.creatorUid == request.auth.uid);
+      allow create: if request.auth != null && (
+        (!pollId.matches('featured-.*') && isValidNewPoll(request.resource.data)) ||
+        isValidFeaturedPoll(pollId, request.resource.data));
       // No votes once the poll expired: TTL deletion lags and is not atomic, so
       // a vote document may be gone while its poll is still there.
       allow update: if request.auth != null && request.time < resource.data.ttl &&
@@ -51,8 +65,9 @@ service cloud.firestore {
 
       function isValidNewPoll(poll) {
         return poll.keys().hasAll(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl', 'creatorUid']) &&
-          poll.keys().hasOnly(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl', 'creatorUid']) &&
+          poll.keys().hasOnly(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl', 'creatorUid', 'listed']) &&
           poll.creatorUid == request.auth.uid &&
+          (!('listed' in poll) || poll.listed is bool) &&
           poll.question is string &&
           poll.question.size() >= 5 &&
           poll.question.size() <= 200 &&
@@ -69,14 +84,48 @@ service cloud.firestore {
           isValidOption(poll.options, 7) &&
           isValidOption(poll.options, 8) &&
           isValidOption(poll.options, 9) &&
-          poll.counts is map &&
-          poll.counts.size() == poll.options.size() &&
-          poll.counts.keys().hasOnly(optionKeys()[0:poll.options.size()]) &&
-          poll.counts.values().hasOnly([0]) &&
-          poll.totalVotes == 0 &&
+          hasNoVotes(poll) &&
           poll.createdAt is timestamp &&
           poll.ttl is timestamp &&
           poll.ttl == poll.createdAt + duration.value(30, 'd');
+      }
+
+      function hasNoVotes(poll) {
+        return poll.counts is map &&
+          poll.counts.size() == poll.options.size() &&
+          poll.counts.keys().hasOnly(optionKeys()[0:poll.options.size()]) &&
+          poll.counts.values().hasOnly([0]) &&
+          poll.totalVotes == 0;
+      }
+
+      // RollaPolla's own polls. Keep in sync with FEATURED_POLLS in
+      // src/shared/featured-polls.ts (featured-polls.spec.ts checks it).
+      function featuredPolls() {
+        return {
+          'featured-pineapple-pizza': {'question': 'Does pineapple belong on pizza?', 'options': ['Yes, absolutely', 'No, never', 'Only with ham']},
+          'featured-superpower': {'question': 'Which superpower would you pick?', 'options': ['Flying', 'Invisibility', 'Teleportation', 'Time travel', 'Reading minds']},
+          'featured-tabs-or-spaces': {'question': 'Tabs or spaces?', 'options': ['Tabs', 'Spaces', 'Whatever the formatter says']},
+          'featured-hot-dog-sandwich': {'question': 'Is a hot dog a sandwich?', 'options': ['Yes', 'No', 'It is a taco']},
+          'featured-morning-fuel': {'question': 'What gets you going in the morning?', 'options': ['Coffee', 'Tea', 'Mate', 'Just water', 'Nothing, I am a night owl']},
+          'featured-ai-code': {'question': 'Will AI write most of the code by 2030?', 'options': ['Yes', 'No', 'It already does']}
+        };
+      }
+
+      // Whoever votes or chats first stores a featured poll, exactly as defined
+      // above. createdAt is the server's time (serverTimestamp), so no client
+      // clock can date it; the poll runs until the next 1 January, a date
+      // every client computes alike, so concurrent first votes agree on it.
+      function isValidFeaturedPoll(pollId, poll) {
+        return pollId in featuredPolls() &&
+          poll.keys().hasAll(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl', 'creatorUid', 'listed']) &&
+          poll.keys().hasOnly(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl', 'creatorUid', 'listed']) &&
+          poll.question == featuredPolls()[pollId].question &&
+          poll.options == featuredPolls()[pollId].options &&
+          poll.creatorUid == 'rollapolla' &&
+          poll.listed == true &&
+          hasNoVotes(poll) &&
+          poll.createdAt == request.time &&
+          poll.ttl == timestamp.date(request.time.year() + 1, 1, 1);
       }
 
       function votePath(pollId) {
@@ -118,6 +167,17 @@ service cloud.firestore {
             vote.createdAt is timestamp &&
             vote.ttl == poll.ttl;
         }
+      }
+
+      // The poll's own chat thread: like the lobby chat, but only while the
+      // poll is open, and its messages expire with the poll.
+      match /chatMessages/{messageId} {
+        allow read: if true;
+        allow create: if request.auth != null &&
+          request.time < get(/databases/$(database)/documents/polls/$(pollId)).data.ttl &&
+          isValidChatMessage(request.resource.data) &&
+          request.resource.data.ttl == get(/databases/$(database)/documents/polls/$(pollId)).data.ttl;
+        allow update, delete: if false;
       }
     }
 

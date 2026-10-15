@@ -173,9 +173,12 @@ mat-progress-bar {
   padding-top: 1rem;
 }
 
-.share-hint {
-  color: var(--mat-sys-on-surface-variant);
-  font: var(--mat-sys-body-medium);
+.share {
+  flex: 1;
+}
+
+.created-share {
+  margin-bottom: 1rem;
 }
 
 .error {

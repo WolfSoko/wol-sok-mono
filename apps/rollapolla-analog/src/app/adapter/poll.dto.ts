@@ -7,8 +7,11 @@ export interface PollDto {
   counts: Record<string, number>;
   totalVotes: number;
   createdAt: Timestamp;
+  /** When the poll closes; Firestore deletes it afterwards. */
   ttl: Timestamp;
   creatorUid: string;
+  /** Missing on polls from before listing existed: those stay unlisted. */
+  listed?: boolean;
 }
 
 export interface VoteDto {
