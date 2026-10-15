@@ -17,16 +17,16 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
           Vorzeitig beendet
         }
       </h3>
-      <div class="tiles">
-        <div class="tile">
-          <span class="value">{{ s.elapsed | trainingTime }}</span>
-          <span class="label">Gesamtzeit</span>
+      <div class="pace-tiles">
+        <div class="pace-tile">
+          <span class="pace-tile-value">{{ s.elapsed | trainingTime }}</span>
+          <span class="pace-tile-label">Gesamtzeit</span>
         </div>
-        <div class="tile">
-          <span class="value"
+        <div class="pace-tile">
+          <span class="pace-tile-value"
             >{{ s.sprintsCompleted }} von {{ s.sprintsTotal }} Sprints</span
           >
-          <span class="label">geschafft</span>
+          <span class="pace-tile-label">geschafft</span>
         </div>
       </div>
     </div>
@@ -50,34 +50,11 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
       background: var(--mat-sys-surface-container-high);
     }
     .badge.complete {
-      background: var(--pace-sprint-container);
+      background: var(--mat-sys-tertiary-container);
     }
     .headline {
       font: var(--mat-sys-headline-medium);
       font-weight: 700;
-    }
-    .tiles {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      width: 100%;
-    }
-    .tile {
-      display: flex;
-      flex-flow: column;
-      gap: 4px;
-      padding: 16px;
-      border-radius: var(--pace-radius-medium);
-      background: var(--mat-sys-surface-container);
-    }
-    .value {
-      font: var(--mat-sys-title-large);
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-    }
-    .label {
-      font: var(--mat-sys-label-large);
-      color: var(--mat-sys-on-surface-variant);
     }
   `,
   imports: [TrainingTimePipe],

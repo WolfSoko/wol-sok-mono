@@ -1,14 +1,18 @@
+@use '@angular/material' as mat;
+
 :host {
-  display: block;
+  flex: 1;
+  display: flex;
   padding: 0 16px;
 }
 
 .trainer {
+  flex: 1;
   display: flex;
   flex-flow: column;
   gap: 16px;
+  width: 100%;
   max-width: 560px;
-  min-height: calc(100dvh - 72px);
   margin: 0 auto;
 }
 
@@ -27,7 +31,7 @@
   justify-content: center;
 }
 
-.stage:has(.setup) {
+.setup-stage {
   justify-content: flex-start;
   padding-top: 8px;
 }
@@ -41,7 +45,6 @@
 
 .paused pace-countdown-circle {
   opacity: 0.55;
-  transition: opacity 200ms ease;
 }
 
 .actions {
@@ -51,12 +54,17 @@
   gap: 12px;
   padding: 16px 0 max(env(safe-area-inset-bottom), 16px);
   background: linear-gradient(transparent, var(--mat-sys-surface) 24px);
-}
 
-.primary-action,
-.secondary-action {
-  width: 100%;
-  height: 56px;
-  border-radius: 999px;
-  font: var(--mat-sys-title-medium);
+  @include mat.button-overrides(
+    (
+      filled-container-height: 56px,
+      outlined-container-height: 56px,
+      filled-label-text-size: var(--mat-sys-title-medium-size),
+      outlined-label-text-size: var(--mat-sys-title-medium-size),
+    )
+  );
+
+  button {
+    width: 100%;
+  }
 }

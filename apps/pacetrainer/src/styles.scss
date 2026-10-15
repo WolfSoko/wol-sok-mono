@@ -2,16 +2,6 @@
 
 @import 'normalize.css/normalize.css';
 
-// Typography classes (mat-title-large, …) still used in a few templates.
-$typography-theme: mat.define-theme(
-  (
-    typography: (
-      brand-family: 'Roboto',
-      plain-family: 'Roboto',
-    ),
-  )
-);
-
 html {
   // One Material 3 theme for light and dark: every system color is emitted
   // with light-dark(), so the page and all components follow the OS setting.
@@ -27,38 +17,17 @@ html {
       density: 0,
     )
   );
-  @include mat.typography-hierarchy($typography-theme);
-
-  // Accent per Phase of the Trainingslauf. Components pick one through
-  // [data-tone] and read --pace-accent*.
-  --pace-sprint: var(--mat-sys-tertiary);
-  --pace-sprint-container: var(--mat-sys-tertiary-container);
-  --pace-on-sprint-container: var(--mat-sys-on-tertiary-container);
-  --pace-recovery: var(--mat-sys-primary);
-  --pace-recovery-container: var(--mat-sys-primary-container);
-  --pace-on-recovery-container: var(--mat-sys-on-primary-container);
-  --pace-calm: var(--mat-sys-outline);
-  --pace-calm-container: var(--mat-sys-surface-container-high);
-  --pace-on-calm-container: var(--mat-sys-on-surface);
-
-  --pace-radius-large: 28px;
-  --pace-radius-medium: 16px;
 }
 
-[data-tone] {
-  --pace-accent: var(--pace-calm);
-  --pace-accent-container: var(--pace-calm-container);
-  --pace-on-accent-container: var(--pace-on-calm-container);
-}
+// Accent per Phase of the Trainingslauf; components read --pace-accent*.
+// Without a tone they fall back to neutral colors.
 [data-tone='sprint'] {
-  --pace-accent: var(--pace-sprint);
-  --pace-accent-container: var(--pace-sprint-container);
-  --pace-on-accent-container: var(--pace-on-sprint-container);
+  --pace-accent: var(--mat-sys-tertiary);
+  --pace-accent-container: var(--mat-sys-tertiary-container);
 }
 [data-tone='recovery'] {
-  --pace-accent: var(--pace-recovery);
-  --pace-accent-container: var(--pace-recovery-container);
-  --pace-on-accent-container: var(--pace-on-recovery-container);
+  --pace-accent: var(--mat-sys-primary);
+  --pace-accent-container: var(--mat-sys-primary-container);
 }
 
 *,
@@ -81,4 +50,38 @@ h1,
 h2,
 h3 {
   margin: 0;
+}
+
+// Figures shown side by side: live times during a run, results after it.
+.pace-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+}
+
+.pace-tile {
+  display: flex;
+  flex-flow: column;
+  gap: 4px;
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: var(--mat-sys-corner-large);
+  background: var(--mat-sys-surface-container);
+}
+
+.pace-tile dd {
+  margin: 0;
+}
+
+.pace-tile-value {
+  font: var(--mat-sys-title-large);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pace-tile-label {
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
 }

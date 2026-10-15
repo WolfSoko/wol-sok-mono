@@ -1,6 +1,5 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { IntervalCountdownService } from '../../shared/interval-countdown/interval-countdown.service';
 import { seconds, sToMs } from '../../shared/model/constants/time-utils';
@@ -30,11 +29,7 @@ describe('SprintTrainingComponent Ansagen', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     TestBed.configureTestingModule({
       imports: [SprintTrainingComponent],
-      providers: [
-        provideZonelessChangeDetection(),
-        provideNoopAnimations(),
-        provideRepositoryMock(),
-      ],
+      providers: [provideZonelessChangeDetection(), provideRepositoryMock()],
     });
     // 1 × (10 s sprint + 3 s recovery)
     TestBed.inject(SprintTrainingDataService).updateState({

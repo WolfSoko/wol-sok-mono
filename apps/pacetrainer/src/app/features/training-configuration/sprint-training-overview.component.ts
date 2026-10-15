@@ -10,12 +10,13 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
       <h3 class="title">Übersicht</h3>
       <ul class="plan">
         <li>{{ conf.repetitions }} Wiederholungen</li>
-        <li data-tone="sprint">
-          <span class="dot"></span>{{ conf.sprintTime | trainingTime }} - Sprint
+        <li>
+          <span class="dot sprint"></span>{{ conf.sprintTime | trainingTime }} -
+          Sprint
         </li>
-        <li data-tone="recovery">
-          <span class="dot"></span>{{ conf.recoveryTime | trainingTime }} -
-          Gehen/Stehen
+        <li>
+          <span class="dot recovery"></span
+          >{{ conf.recoveryTime | trainingTime }} - Gehen/Stehen
         </li>
       </ul>
       <p class="total">Gesamtzeit: {{ conf.totalTime | trainingTime }}</p>
@@ -24,7 +25,7 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
   styles: `
     .overview {
       padding: 16px 20px;
-      border-radius: var(--pace-radius-large);
+      border-radius: var(--mat-sys-corner-extra-large);
       background: var(--mat-sys-surface-container);
     }
     .title {
@@ -50,7 +51,12 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background: var(--pace-accent);
+    }
+    .dot.sprint {
+      background: var(--mat-sys-tertiary);
+    }
+    .dot.recovery {
+      background: var(--mat-sys-primary);
     }
     .total {
       margin: 12px 0 0;

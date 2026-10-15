@@ -47,7 +47,7 @@ export class SprintTrainingComponent {
     if (run.phase === 'running' || run.phase === 'paused') {
       return run.current.name === 'sprint' ? 'sprint' : 'recovery';
     }
-    return 'calm';
+    return null;
   });
 
   constructor() {

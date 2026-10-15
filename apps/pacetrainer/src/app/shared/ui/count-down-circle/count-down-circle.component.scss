@@ -9,6 +9,7 @@
   aspect-ratio: 1;
   display: grid;
   place-items: center;
+  contain: strict;
 }
 
 svg {
@@ -34,9 +35,6 @@ circle {
 .progress {
   stroke: var(--pace-accent, var(--mat-sys-primary));
   stroke-linecap: round;
-  transition:
-    stroke-dashoffset 60ms linear,
-    stroke 300ms ease;
 }
 
 .time {

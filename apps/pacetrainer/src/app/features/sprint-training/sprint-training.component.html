@@ -7,7 +7,7 @@
 >
   <h2 class="eyebrow">Sprint Training</h2>
 
-  <div class="stage">
+  <div class="stage" [class.setup-stage]="state.phase === 'ready'">
     @switch (state.phase) {
       @case ("ready") {
         <div class="setup">

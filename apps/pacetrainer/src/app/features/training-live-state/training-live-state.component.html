@@ -22,17 +22,17 @@
 </p>
 
 @if (current(); as current) {
-  <dl class="stats">
-    <div class="stat">
-      <dt>Gesamtzeit</dt>
-      <dd>{{ elapsed() | trainingTime }}</dd>
+  <dl class="pace-tiles">
+    <div class="pace-tile">
+      <dt class="pace-tile-label">Gesamtzeit</dt>
+      <dd class="pace-tile-value">{{ elapsed() | trainingTime }}</dd>
     </div>
-    <div class="stat">
-      <dt>Intervallzeit</dt>
-      <dd>
+    <div class="pace-tile">
+      <dt class="pace-tile-label">Intervallzeit</dt>
+      <dd class="pace-tile-value">
         {{ current.elapsed | trainingTime }}
-        <span class="of">von {{ current.duration | trainingTime }}</span>
       </dd>
+      <dd class="pace-tile-label">von {{ current.duration | trainingTime }}</dd>
     </div>
   </dl>
 }
