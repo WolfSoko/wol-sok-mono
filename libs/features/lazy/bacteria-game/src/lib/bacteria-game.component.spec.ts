@@ -138,6 +138,17 @@ describe('BacteriaGameComponent', () => {
       expect(boostOf(0)).toBe(0);
     });
 
+    it('leaves Space to the page while no match is on', () => {
+      create();
+      TestBed.inject(GameStateService).setArenaSize(320, 140);
+      const event = keyEvent(' ', document.body);
+
+      component.onKeyDown(event);
+
+      expect(event.preventDefault).not.toHaveBeenCalled();
+      expect(boostOf(0)).toBe(0);
+    });
+
     it('leaves Enter to a focused control', () => {
       startMatch('two-players');
       const input = document.createElement('input');

@@ -48,12 +48,12 @@ export class GameStateQuery extends Query<GameStateState> {
   }
 
   /** Who steers the second crosshair. */
-  selectMode(): Observable<GameMode> {
+  public selectMode(): Observable<GameMode> {
     return this.select((store) => store.mode).pipe(distinctUntilChanged());
   }
 
   /** How hard the computer plays. */
-  selectDifficulty(): Observable<BotDifficulty> {
+  public selectDifficulty(): Observable<BotDifficulty> {
     return this.select((store) => store.difficulty).pipe(
       distinctUntilChanged()
     );

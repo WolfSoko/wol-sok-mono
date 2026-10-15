@@ -2,45 +2,6 @@
   flex: 1 1 auto;
 }
 
-.match-setup {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1rem;
-  margin-bottom: 0.75rem;
-
-  .mode-picker mat-icon {
-    margin-right: 0.25rem;
-    vertical-align: middle;
-  }
-
-  mat-form-field {
-    min-width: 10rem;
-  }
-
-  .difficulty-description {
-    margin: 0;
-    opacity: 0.8;
-  }
-}
-
-.level-picker {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1rem;
-  margin-bottom: 0.75rem;
-
-  mat-form-field {
-    min-width: 14rem;
-  }
-
-  .level-description {
-    margin: 0;
-    opacity: 0.8;
-  }
-}
-
 .statistics {
   display: flex;
   flex-wrap: wrap;

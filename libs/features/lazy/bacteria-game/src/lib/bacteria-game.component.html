@@ -39,56 +39,15 @@
     </mat-card-title>
   </mat-card-header>
   <mat-card-content>
-    <div class="match-setup">
-      <mat-button-toggle-group
-        class="mode-picker"
-        aria-label="Opponent"
-        hideSingleSelectionIndicator
-        [value]="mode()"
-        [disabled]="(isRunning$ | async) ?? false"
-        (change)="selectMode($event.value)"
-      >
-        <mat-button-toggle value="vs-computer">
-          <mat-icon>smart_toy</mat-icon> vs Computer
-        </mat-button-toggle>
-        <mat-button-toggle value="two-players">
-          <mat-icon>group</mat-icon> 2 Players
-        </mat-button-toggle>
-      </mat-button-toggle-group>
-      @if (mode() === "vs-computer") {
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Difficulty</mat-label>
-          <mat-select
-            class="difficulty-select"
-            [value]="difficulty()"
-            [disabled]="(isRunning$ | async) ?? false"
-            (selectionChange)="selectDifficulty($event.value)"
-          >
-            @for (option of difficulties; track option.id) {
-              <mat-option [value]="option.id">{{ option.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <p class="difficulty-description">{{ difficultyDescription() }}</p>
-      }
-    </div>
-
-    <div class="level-picker">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Level</mat-label>
-        <mat-select
-          class="level-select"
-          [value]="level().id"
-          [disabled]="(isRunning$ | async) ?? false"
-          (selectionChange)="selectLevel($event.value)"
-        >
-          @for (option of levels; track option.id) {
-            <mat-option [value]="option.id">{{ option.name }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <p class="level-description">{{ level().description }}</p>
-    </div>
+    <feat-lazy-bac-game-match-setup
+      [mode]="mode()"
+      [difficulty]="difficulty()"
+      [level]="level()"
+      [disabled]="(isRunning$ | async) ?? false"
+      (modeChange)="selectMode($event)"
+      (difficultyChange)="selectDifficulty($event)"
+      (levelChange)="selectLevel($event)"
+    />
 
     @if (state()) {
       <ng-container *ngTemplateOutlet="scoreboard"></ng-container>

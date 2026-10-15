@@ -62,7 +62,7 @@ describe('PlayerService', () => {
       expect(player?.boostCooldownSec).toBe(gameBalance.boostCooldownSec);
     });
 
-    it('counts both timers down with the game loop', () => {
+    it('runs the boost down first and leaves the cooldown untouched', () => {
       service.boost(0);
 
       run(1, 0.5);
@@ -71,12 +71,23 @@ describe('PlayerService', () => {
       expect(player?.boostActiveSec).toBeCloseTo(
         gameBalance.boostDurationSec - 0.5
       );
+      expect(player?.boostCooldownSec).toBe(gameBalance.boostCooldownSec);
+    });
+
+    it('starts recharging once the boost is over', () => {
+      service.boost(0);
+      run(1, gameBalance.boostDurationSec);
+
+      run(1, 0.5);
+
+      const player = playerQuery.getEntity(0);
+      expect(player?.boostActiveSec).toBe(0);
       expect(player?.boostCooldownSec).toBeCloseTo(
         gameBalance.boostCooldownSec - 0.5
       );
     });
 
-    it('refuses a second boost until the cooldown is over', () => {
+    it('refuses a second boost while the first one is still recharging', () => {
       service.boost(0);
       run(1, gameBalance.boostDurationSec + 0.1);
 
@@ -85,8 +96,9 @@ describe('PlayerService', () => {
       expect(playerQuery.getEntity(0)?.boostActiveSec).toBe(0);
     });
 
-    it('allows a boost again once the cooldown has run out', () => {
+    it('allows a boost again after the boost plus the full cooldown', () => {
       service.boost(0);
+      run(1, gameBalance.boostDurationSec);
       run(1, gameBalance.boostCooldownSec);
 
       service.boost(0);

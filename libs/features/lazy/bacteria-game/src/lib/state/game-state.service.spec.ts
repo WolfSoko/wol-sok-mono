@@ -110,6 +110,17 @@ describe('GameStateService', () => {
       expect(playerQuery.getAll().some((player) => player.isBot)).toBe(false);
       expect(query.getValue().mode).toBe('vs-computer');
     });
+
+    it('leaves a paused match alone as well', () => {
+      service.setArenaSize(WIDTH, HEIGHT);
+      service.setMode('two-players');
+      service.start();
+      service.togglePause();
+
+      service.setMode('vs-computer');
+
+      expect(playerQuery.getAll().some((player) => player.isBot)).toBe(false);
+    });
   });
 
   describe('setDifficulty', () => {

@@ -1,4 +1,5 @@
-import { Nutrient } from './bacteria-simulation';
+import { Colony, Nutrient } from './bacteria-simulation';
+import { clamp, distance, Point } from './geometry';
 
 /**
  * The computer opponent.
@@ -13,6 +14,9 @@ import { Nutrient } from './bacteria-simulation';
  */
 
 export type BotDifficulty = 'easy' | 'normal' | 'hard';
+
+/** The difficulty a fresh game starts with. */
+export const DEFAULT_DIFFICULTY: BotDifficulty = 'normal';
 
 export const BOT_DIFFICULTIES: readonly {
   id: BotDifficulty;
@@ -34,15 +38,12 @@ export const BOT_DIFFICULTIES: readonly {
     id: 'hard',
     name: 'Hard',
     description:
-      'Reacts fast, takes even fights, aims at your weakest spot and boosts on contact.',
+      'Reacts fast, takes even fights, charges your nearest bacteria and boosts on contact.',
   },
 ];
 
 /** A colony as the bot sees it: where it is and how strong. */
-export interface ColonyView {
-  /** Centre of mass of the bacteria. */
-  x: number;
-  y: number;
+export interface ColonyView extends Point {
   count: number;
   /** Average energy relative to the normal maximum, 0..1 and beyond. */
   energy: number;
@@ -56,19 +57,19 @@ export interface BotView {
   /** The strongest enemy colony, null once there is none left. */
   enemy: ColonyView | null;
   /** The enemy bacterium closest to the own centre of mass, if any. */
-  nearestEnemy: { x: number; y: number } | null;
+  nearestEnemy: Point | null;
   nutrients: readonly Nutrient[];
   boostReady: boolean;
 }
 
 export interface BotDecision {
   /** Where the crosshair should travel to, null to leave it where it is. */
-  target: { x: number; y: number } | null;
+  target: Point | null;
   /** True when the bot wants to fire its boost now. */
   boost: boolean;
 }
 
-interface Profile {
+interface DifficultyProfile {
   /** Seconds between two decisions. */
   reactionSec: number;
   /** The bot attacks once its colony is this many times the enemy's size. */
@@ -81,7 +82,7 @@ interface Profile {
   boostRange: number;
 }
 
-const PROFILES: Record<BotDifficulty, Profile> = {
+const PROFILES: Record<BotDifficulty, DifficultyProfile> = {
   easy: {
     reactionSec: 1.2,
     attackRatio: 1.5,
@@ -113,7 +114,7 @@ const CONTESTED_PENALTY = 60;
 const HUNGRY_ENERGY = 0.65;
 
 export class BotController {
-  private readonly profile: Profile;
+  private readonly profile: DifficultyProfile;
   private readonly random: () => number;
   /** Seconds left until the next decision. 0 makes the first one immediate. */
   private cooldown = 0;
@@ -141,38 +142,36 @@ export class BotController {
     if (own.count === 0) {
       return { target: null, boost: false };
     }
+    const food = this.bestNutrient(view);
     if (enemy == null || enemy.count === 0) {
-      return {
-        target: this.aim(view, this.bestNutrient(view) ?? own),
-        boost: false,
-      };
+      return { target: this.aim(view, food ?? own), boost: false };
     }
 
     const stronger = own.count >= enemy.count * this.profile.attackRatio;
     const hungry = own.energy < HUNGRY_ENERGY;
-    const food = this.bestNutrient(view);
 
     if (stronger && !hungry) {
-      const distance = Math.hypot(enemy.x - own.x, enemy.y - own.y);
       const boost =
         this.profile.usesBoost &&
         view.boostReady &&
-        distance <= this.profile.boostRange;
-      return { target: this.aim(view, this.attackPoint(view)), boost };
+        distance(own, enemy) <= this.profile.boostRange;
+      return { target: this.aim(view, this.attackPoint(view, enemy)), boost };
     }
     if (food != null) {
       return { target: this.aim(view, food), boost: false };
     }
-    return { target: this.aim(view, this.retreatPoint(view)), boost: false };
+    return {
+      target: this.aim(view, this.retreatPoint(own, enemy)),
+      boost: false,
+    };
   }
 
   /**
-   * Where to send the colony when attacking: the hard bot goes for the nearest
-   * enemy bacteria, which is the thinnest part of the front, the others charge
-   * the enemy's centre of mass.
+   * Where to send the colony when attacking: the hard bot charges the enemy
+   * bacterium nearest to its own colony, the others charge the enemy's centre
+   * of mass.
    */
-  private attackPoint(view: BotView): { x: number; y: number } {
-    const enemy = view.enemy as ColonyView;
+  private attackPoint(view: BotView, enemy: ColonyView): Point {
     if (this.difficulty === 'hard' && view.nearestEnemy != null) {
       return view.nearestEnemy;
     }
@@ -190,19 +189,10 @@ export class BotController {
       if (nutrient.amount <= 0) {
         continue;
       }
-      const ownDistance = Math.hypot(
-        nutrient.x - view.own.x,
-        nutrient.y - view.own.y
-      );
+      const ownDistance = distance(nutrient, view.own);
       let cost = ownDistance;
-      if (view.enemy != null) {
-        const enemyDistance = Math.hypot(
-          nutrient.x - view.enemy.x,
-          nutrient.y - view.enemy.y
-        );
-        if (enemyDistance < ownDistance) {
-          cost += CONTESTED_PENALTY;
-        }
+      if (view.enemy != null && distance(nutrient, view.enemy) < ownDistance) {
+        cost += CONTESTED_PENALTY;
       }
       if (cost < bestCost) {
         bestCost = cost;
@@ -213,11 +203,7 @@ export class BotController {
   }
 
   /** A point straight away from the enemy, so the colony can regroup. */
-  private retreatPoint(view: BotView): { x: number; y: number } {
-    const { own, enemy } = view;
-    if (enemy == null) {
-      return own;
-    }
+  private retreatPoint(own: ColonyView, enemy: ColonyView): Point {
     let dx = own.x - enemy.x;
     let dy = own.y - enemy.y;
     const length = Math.hypot(dx, dy);
@@ -235,10 +221,7 @@ export class BotController {
   }
 
   /** Adds the profile's aiming error and keeps the point inside the arena. */
-  private aim(
-    view: BotView,
-    point: { x: number; y: number }
-  ): { x: number; y: number } {
+  private aim(view: BotView, point: Point): Point {
     const noise = this.profile.aimNoise;
     return {
       x: clamp(point.x + (this.random() - 0.5) * 2 * noise, 0, view.width),
@@ -247,6 +230,75 @@ export class BotController {
   }
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return value < min ? min : value > max ? max : value;
+/**
+ * Condenses the live colonies into what the bot is allowed to look at: centres
+ * of mass, sizes, average energy and the enemy bacterium closest to its own
+ * colony.
+ */
+export function buildBotView(
+  width: number,
+  height: number,
+  own: Colony,
+  colonies: readonly Colony[],
+  nutrients: readonly Nutrient[],
+  boostReady: boolean,
+  maxEnergy: number
+): BotView {
+  const ownView = colonyView(own, maxEnergy);
+  let enemy: ColonyView | null = null;
+  let enemyColony: Colony | null = null;
+  for (const colony of colonies) {
+    if (colony === own || colony.bacterias.length === 0) {
+      continue;
+    }
+    const view = colonyView(colony, maxEnergy);
+    if (enemy == null || view.count > enemy.count) {
+      enemy = view;
+      enemyColony = colony;
+    }
+  }
+
+  let nearestEnemy: Point | null = null;
+  if (enemyColony != null) {
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    for (const bacterium of enemyColony.bacterias) {
+      const dx = bacterium.x - ownView.x;
+      const dy = bacterium.y - ownView.y;
+      const squared = dx * dx + dy * dy;
+      if (squared < nearestDistance) {
+        nearestDistance = squared;
+        nearestEnemy = { x: bacterium.x, y: bacterium.y };
+      }
+    }
+  }
+
+  return {
+    width,
+    height,
+    own: ownView,
+    enemy,
+    nearestEnemy,
+    nutrients,
+    boostReady,
+  };
+}
+
+/** Centre of mass, size and average energy of a colony. */
+function colonyView(colony: Colony, maxEnergy: number): ColonyView {
+  const count = colony.bacterias.length;
+  if (count === 0) {
+    return { x: 0, y: 0, count: 0, energy: 0 };
+  }
+  let sumX = 0;
+  let sumY = 0;
+  for (const bacterium of colony.bacterias) {
+    sumX += bacterium.x;
+    sumY += bacterium.y;
+  }
+  return {
+    x: sumX / count,
+    y: sumY / count,
+    count,
+    energy: colony.totalEnergy / count / maxEnergy,
+  };
 }

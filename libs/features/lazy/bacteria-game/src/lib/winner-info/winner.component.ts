@@ -10,7 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { GameStateQuery } from '../state/game-state.query';
-import { GameMode } from '../state/game.states';
+import { DEFAULT_MODE, GameMode } from '../state/game.states';
 import { Level, LEVELS, nextLevel } from '../state/levels';
 import { Player } from '../state/player.model';
 
@@ -42,7 +42,7 @@ export class WinnerComponent {
   );
 
   private mode: Signal<GameMode> = toSignal(this.state.selectMode(), {
-    initialValue: 'two-players' as GameMode,
+    initialValue: DEFAULT_MODE,
   });
 
   /**

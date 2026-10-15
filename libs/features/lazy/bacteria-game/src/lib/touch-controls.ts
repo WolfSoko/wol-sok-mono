@@ -5,10 +5,9 @@
  * pointer-to-player assignment can be tested on their own.
  */
 
-export interface ArenaPoint {
-  x: number;
-  y: number;
-}
+import { clamp, Point } from './state/geometry';
+
+export type ArenaPoint = Point;
 
 /** The part of a DOMRect these helpers need. */
 export interface ElementBounds {
@@ -85,8 +84,4 @@ export function nearestFreeCrosshair(
   }
 
   return nearest;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return value < min ? min : value > max ? max : value;
 }

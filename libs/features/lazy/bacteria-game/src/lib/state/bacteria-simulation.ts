@@ -1,4 +1,5 @@
 import { GameBalance, gameBalance } from './game-balance';
+import { clamp } from './geometry';
 import { GameMap, getMap } from './maps';
 import {
   Bacteria,
@@ -234,16 +235,16 @@ export class BacteriaSimulation {
 
     // A boosted colony hits harder - the factor is read per attacking colony
     // in the combat phase, so it is resolved once here.
-    const attack = new Float32Array(this.colonies.length).fill(1);
+    const attackFactor = new Float32Array(this.colonies.length).fill(1);
     targets.forEach((target, index) => {
       if (isBoosted(target)) {
-        attack[index] = this.balance.boostAttackFactor;
+        attackFactor[index] = this.balance.boostAttackFactor;
       }
     });
 
     this.buildGrid();
     this.updateNutrients(deltaTimeSec);
-    const captures = this.runCombat(deltaTimeSec, attack);
+    const captures = this.runCombat(deltaTimeSec, attackFactor);
     this.applyCaptures(captures);
     this.compact(captures);
     // Division and movement compete for the same free cells, so whoever is
@@ -417,10 +418,13 @@ export class BacteriaSimulation {
    * Applies nutrient gain, combat drain and regeneration to every bacterium and
    * collects the ones that ran out of energy.
    *
-   * `attack` scales the pressure each colony exerts - a boosted colony's
+   * `attackFactor` scales the pressure each colony exerts - a boosted colony's
    * bacteria count for more than their energy alone.
    */
-  private runCombat(deltaTimeSec: number, attack: Float32Array): Capture[] {
+  private runCombat(
+    deltaTimeSec: number,
+    attackFactor: Float32Array
+  ): Capture[] {
     const {
       defenceFactor,
       frontlinePressure,
@@ -463,7 +467,7 @@ export class BacteriaSimulation {
           if (neighbour === colonyIndex) {
             own += neighbourEnergy;
           } else {
-            const strength = neighbourEnergy * attack[neighbour];
+            const strength = neighbourEnergy * attackFactor[neighbour];
             enemy += strength;
             enemyStrength[neighbour] += strength;
           }
@@ -873,8 +877,4 @@ function strongestEnemy(enemyStrength: Float32Array, ownIndex: number): number {
     }
   }
   return winner;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return value < min ? min : value > max ? max : value;
 }

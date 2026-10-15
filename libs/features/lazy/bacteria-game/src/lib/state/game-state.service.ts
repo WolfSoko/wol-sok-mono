@@ -15,7 +15,12 @@ import {
 } from 'rxjs';
 import { BotDifficulty } from './bot-controller';
 import { GameStateQuery } from './game-state.query';
-import { GameMode, GameState, GameStateStore } from './game.states';
+import {
+  GameMode,
+  GameState,
+  GameStateState,
+  GameStateStore,
+} from './game.states';
 import {
   getLevel,
   levelBalance,
@@ -191,39 +196,48 @@ export class GameStateService {
   }
 
   /**
-   * Picks the level the next match is played on.
-   *
-   * A running match keeps the rules it started with: the colonies are only
-   * spawned again - with the new map and balance - while nobody is playing.
+   * True while nobody is playing - the only time the colonies may be spawned
+   * again. A paused match is still a match and keeps its colonies.
    */
-  setLevel(levelId: string): void {
-    this.gameStateStore.update({ levelId: getLevel(levelId).id });
-    if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
-      this.initPlayers();
-    }
+  private isIdle(): boolean {
+    const { currentState } = this.gameStateQuery.getValue();
+    return (
+      currentState !== GameState.RUNNING && currentState !== GameState.PAUSED
+    );
   }
 
   /**
-   * Switches between two humans and human versus computer. Like the level, a
-   * running match keeps the opponent it started with.
+   * Changes how the next match is set up - level, opponent or difficulty.
+   *
+   * A match keeps the rules it started with: the colonies are only spawned
+   * again - with the new map, balance and opponent - while nobody is playing.
    */
-  setMode(mode: GameMode): void {
-    this.gameStateStore.update({ mode });
-    if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
+  private updateSetup(
+    setup: Partial<Pick<GameStateState, 'levelId' | 'mode' | 'difficulty'>>
+  ): void {
+    this.gameStateStore.update(setup);
+    if (this.isIdle()) {
       this.initPlayers();
     }
   }
 
-  /** Picks how hard the computer plays - takes effect with the next match. */
-  setDifficulty(difficulty: BotDifficulty): void {
-    this.gameStateStore.update({ difficulty });
-    if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
-      this.initPlayers();
-    }
+  /** Picks the level the next match is played on. */
+  public setLevel(levelId: string): void {
+    this.updateSetup({ levelId: getLevel(levelId).id });
+  }
+
+  /** Switches between two humans and human versus computer. */
+  public setMode(mode: GameMode): void {
+    this.updateSetup({ mode });
+  }
+
+  /** Picks how hard the computer plays. */
+  public setDifficulty(difficulty: BotDifficulty): void {
+    this.updateSetup({ difficulty });
   }
 
   /** Fires the boost of a player - the touch equivalent of Space / Enter. */
-  boost(playerId: number): void {
+  public boost(playerId: number): void {
     if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
       return;
     }
