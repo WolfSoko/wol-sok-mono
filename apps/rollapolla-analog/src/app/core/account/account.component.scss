@@ -39,6 +39,19 @@ button,
   .label-short {
     display: inline;
   }
+
+  :host {
+    --mat-button-text-horizontal-padding: 0.5rem;
+    --mat-button-text-with-icon-horizontal-padding: 0.5rem;
+  }
+
+  .my-polls-link {
+    min-width: 0;
+
+    .mat-icon {
+      margin: 0;
+    }
+  }
 }
 
 .error {

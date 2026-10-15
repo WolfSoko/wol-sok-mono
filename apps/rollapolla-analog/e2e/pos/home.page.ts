@@ -31,7 +31,7 @@ export class HomePage {
 
   async expectXLinkVisible() {
     const twitterLink = this.page.getByRole('link', {
-      name: 'Follow',
+      name: 'Follow RollaPolla on X',
     });
     await expect(twitterLink).toBeVisible();
     expect(await twitterLink.getAttribute('href')).toContain(
@@ -41,7 +41,7 @@ export class HomePage {
     // Structure, not pixels: a screenshot baseline differs per OS, browser
     // build and font rasterizer, so it can't be authored outside CI.
     await expect(twitterLink).toMatchAriaSnapshot(`
-      - link "Follow":
+      - link "Follow RollaPolla on X":
         - /url: https://x.com/rollapolla
     `);
   }

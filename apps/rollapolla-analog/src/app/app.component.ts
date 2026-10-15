@@ -42,9 +42,10 @@ import { AccountComponent } from './core/account/account.component';
             target="_blank"
             rel="noopener"
             href="https://x.com/rollapolla"
+            aria-label="Follow RollaPolla on X"
           >
             <mat-icon svgIcon="fa:xTwitter" />
-            Follow
+            <span class="follow-label">Follow</span>
           </a>
         </div>
       </div>
@@ -102,6 +103,19 @@ import { AccountComponent } from './core/account/account.component';
       display: flex;
       align-items: center;
       gap: 0.5rem;
+    }
+    /* phones: brand, account bar and this link have to share one row */
+    @media (max-width: 599.98px) {
+      .follow-link {
+        min-width: 0;
+        padding-inline: 0.75rem;
+      }
+      .follow-link .mat-icon {
+        margin: 0;
+      }
+      .follow-label {
+        display: none;
+      }
     }
     .page {
       flex: 1 0 auto;
