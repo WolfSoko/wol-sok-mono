@@ -5,10 +5,17 @@ import { DomSanitizer, Title } from '@angular/platform-browser';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
 import { icon } from '@fortawesome/fontawesome-svg-core';
+import { AccountComponent } from './core/account/account.component';
 
 @Component({
   selector: 'rap-root',
-  imports: [MatButtonModule, MatIconModule, RouterLink, RouterOutlet],
+  imports: [
+    AccountComponent,
+    MatButtonModule,
+    MatIconModule,
+    RouterLink,
+    RouterOutlet,
+  ],
   template: `
     <header class="site-header">
       <div class="rap-container header-inner">
@@ -27,16 +34,19 @@ import { icon } from '@fortawesome/fontawesome-svg-core';
           />
           <span class="brand-name">RollaPolla</span>
         </a>
-        <a
-          mat-stroked-button
-          class="follow-link"
-          target="_blank"
-          rel="noopener"
-          href="https://x.com/rollapolla"
-        >
-          <mat-icon svgIcon="fa:xTwitter" />
-          Follow
-        </a>
+        <div class="header-actions">
+          <rap-account />
+          <a
+            mat-stroked-button
+            class="follow-link"
+            target="_blank"
+            rel="noopener"
+            href="https://x.com/rollapolla"
+          >
+            <mat-icon svgIcon="fa:xTwitter" />
+            Follow
+          </a>
+        </div>
       </div>
     </header>
     <div class="page">
@@ -87,6 +97,11 @@ import { icon } from '@fortawesome/fontawesome-svg-core';
       font: var(--mat-sys-title-large);
       font-weight: 800;
       letter-spacing: -0.02em;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     .page {
       flex: 1 0 auto;
