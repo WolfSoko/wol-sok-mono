@@ -26,3 +26,8 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+.error {
+  color: var(--mat-form-field-error-text-color, #ffb4ab);
+  margin: 0;
+}

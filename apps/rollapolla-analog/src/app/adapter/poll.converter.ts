@@ -9,6 +9,10 @@ import { PollDto } from './poll.dto';
 
 export const POLL_TTL_MS: number = 1000 * 60 * 60 * 24 * 30;
 
+export function pollTtl(poll: Pick<Poll, 'createdAt'>): Timestamp {
+  return Timestamp.fromMillis(poll.createdAt.getTime() + POLL_TTL_MS);
+}
+
 export const pollConverter: FirestoreDataConverter<Poll, PollDto> = {
   toFirestore(poll: Poll): PollDto {
     return {
@@ -19,7 +23,8 @@ export const pollConverter: FirestoreDataConverter<Poll, PollDto> = {
       ),
       totalVotes: poll.totalVotes,
       createdAt: Timestamp.fromDate(poll.createdAt),
-      ttl: Timestamp.fromMillis(poll.createdAt.getTime() + POLL_TTL_MS),
+      ttl: pollTtl(poll),
+      creatorUid: poll.creatorUid,
     };
   },
   fromFirestore(
@@ -34,6 +39,7 @@ export const pollConverter: FirestoreDataConverter<Poll, PollDto> = {
       counts: data.options.map((_, index) => data.counts[String(index)] ?? 0),
       totalVotes: data.totalVotes,
       createdAt: new Date(data.createdAt.toDate()),
+      creatorUid: data.creatorUid,
     };
   },
 };

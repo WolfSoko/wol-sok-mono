@@ -52,11 +52,16 @@
         <button
           mat-flat-button
           type="submit"
-          [disabled]="selectedOption() === undefined"
+          [disabled]="selectedOption() === undefined || voting()"
           data-testid="vote-button"
         >
           Vote
         </button>
+        @if (voteFailed()) {
+          <p class="error" role="alert" data-testid="vote-error">
+            Could not save your vote. Please try again.
+          </p>
+        }
       </form>
     }
   </mat-card-content>

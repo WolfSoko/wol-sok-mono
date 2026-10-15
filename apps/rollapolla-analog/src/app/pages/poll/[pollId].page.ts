@@ -4,14 +4,19 @@ import {
   inject,
   Injector,
 } from '@angular/core';
-import { pendingUntilEvent, toSignal } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { map, switchMap } from 'rxjs';
+import { map, startWith, switchMap } from 'rxjs';
+import { pendingUntilFirstValue } from '../../adapter/pending-until-first-value';
 import { PollVoteComponent } from '../../core/poll-vote/poll-vote.component';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
+import { usePollMetaTags } from './poll-meta';
+
+/** Longest the server waits for the poll before it renders the page without it. */
+const SSR_POLL_TIMEOUT_MS = 1500;
 
 @Component({
   selector: 'rap-poll-page',
@@ -62,13 +67,24 @@ export default class PollPageComponent {
   private readonly pollsRepo = inject(PollsRepoPort);
   private readonly injector = inject(Injector);
 
+  private readonly pollId$ = inject(ActivatedRoute).paramMap.pipe(
+    map((params) => params.get('pollId') ?? '')
+  );
+  private readonly pollId = toSignal(this.pollId$, { initialValue: '' });
+
   protected readonly poll = toSignal(
-    inject(ActivatedRoute).paramMap.pipe(
-      map((params) => params.get('pollId') ?? ''),
-      // keeps server rendering waiting until the poll arrived
+    this.pollId$.pipe(
       switchMap((pollId) =>
-        this.pollsRepo.watchPoll(pollId).pipe(pendingUntilEvent(this.injector))
+        this.pollsRepo.watchPoll(pollId).pipe(
+          pendingUntilFirstValue(this.injector, SSR_POLL_TIMEOUT_MS),
+          // forget the previous poll while the next one loads
+          startWith(undefined)
+        )
       )
     )
   );
+
+  constructor() {
+    usePollMetaTags(this.poll, this.pollId);
+  }
 }

@@ -8,4 +8,12 @@ export interface PollDto {
   totalVotes: number;
   createdAt: Timestamp;
   ttl: Timestamp;
+  creatorUid: string;
+}
+
+export interface VoteDto {
+  option: number;
+  createdAt: Timestamp;
+  /** Same as the poll's, so the vote expires with it. */
+  ttl: Timestamp;
 }

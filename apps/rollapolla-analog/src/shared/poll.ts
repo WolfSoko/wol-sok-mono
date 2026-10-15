@@ -6,6 +6,7 @@ export type Poll = {
   counts: number[];
   totalVotes: number;
   createdAt: Date;
+  creatorUid: string;
 };
 
 export type NewPoll = {
