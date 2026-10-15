@@ -82,6 +82,23 @@ describe('CreatePollComponent', () => {
     expect(button('create-poll-button').disabled).toBe(false);
   });
 
+  it('shows an error when the poll cannot be created', async () => {
+    vi.spyOn(repo, 'createPoll').mockRejectedValueOnce(new Error('offline'));
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    type('poll-question-input', 'Pizza or pasta?');
+    type('poll-option-input-0', 'Pizza');
+    type('poll-option-input-1', 'Pasta');
+
+    button('create-poll-button').click();
+    await fixture.whenStable();
+
+    expect(
+      fixture.debugElement.query(By.css('[data-testid="create-poll-error"]'))
+    ).not.toBeNull();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(button('create-poll-button').disabled).toBe(false);
+  });
+
   function optionInputs(): HTMLInputElement[] {
     return fixture.debugElement
       .queryAll(By.css('[data-testid^="poll-option-input-"]'))

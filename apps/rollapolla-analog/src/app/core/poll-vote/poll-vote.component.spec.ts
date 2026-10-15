@@ -1,3 +1,4 @@
+import { Clipboard } from '@angular/cdk/clipboard';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -20,7 +21,7 @@ describe('PollVoteComponent', () => {
     }).compileComponents();
 
     repo = TestBed.inject(PollsRepoPort) as PollsRepoAdapterMock;
-    pollId = repo.createPoll({
+    pollId = await repo.createPoll({
       question: 'Pizza or pasta?',
       options: ['Pizza', 'Pasta'],
     });
@@ -41,6 +42,7 @@ describe('PollVoteComponent', () => {
     query('poll-option-1').query(By.css('input')).nativeElement.click();
     fixture.detectChanges();
     query('vote-button').nativeElement.click();
+    await fixture.whenStable();
 
     const poll = await currentPoll();
     expect(poll.counts).toEqual([0, 1]);
@@ -69,6 +71,70 @@ describe('PollVoteComponent', () => {
     fixture.detectChanges();
 
     expect(query('vote-button')).not.toBeNull();
+  });
+
+  it('marks the vote stored on the server, not the local hint', async () => {
+    localStorage.setItem('rap-voted-polls', JSON.stringify({ [pollId]: 0 }));
+    repo.ownVotes$.next({ [pollId]: 1 });
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [PollVoteComponent, NoopAnimationsModule],
+      providers: [{ provide: PollsRepoPort, useValue: repo }],
+    });
+    const poll = await currentPoll();
+    fixture = TestBed.createComponent(PollVoteComponent);
+    fixture.componentRef.setInput('poll', poll);
+    await fixture.whenStable();
+
+    expect(query('poll-result-1').nativeElement.classList).toContain(
+      'own-vote'
+    );
+    expect(query('poll-result-0').nativeElement.classList).not.toContain(
+      'own-vote'
+    );
+  });
+
+  it('shows the results when the server knows the vote but this browser does not', async () => {
+    repo.ownVotes$.next({ [pollId]: 0 });
+    await fixture.whenStable();
+
+    expect(query('vote-button')).toBeNull();
+    expect(query('poll-result-0').nativeElement.classList).toContain(
+      'own-vote'
+    );
+  });
+
+  it('shows an error and lets the visitor retry when voting fails', async () => {
+    vi.spyOn(repo, 'vote').mockRejectedValueOnce(new Error('offline'));
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    query('poll-option-0').query(By.css('input')).nativeElement.click();
+    fixture.detectChanges();
+    query('vote-button').nativeElement.click();
+    await fixture.whenStable();
+
+    expect(query('vote-error')).not.toBeNull();
+    expect(query('vote-button').nativeElement.disabled).toBe(false);
+    expect(localStorage.getItem('rap-voted-polls')).toBeNull();
+  });
+
+  it('resets "Link copied" after a moment', () => {
+    vi.useFakeTimers();
+    try {
+      vi.spyOn(TestBed.inject(Clipboard), 'copy').mockReturnValue(true);
+      const shareButton = fixture.debugElement.query(
+        By.css('mat-card-actions button')
+      ).nativeElement as HTMLButtonElement;
+
+      shareButton.click();
+      fixture.detectChanges();
+      expect(shareButton.textContent).toContain('Link copied');
+
+      vi.advanceTimersByTime(2000);
+      fixture.detectChanges();
+      expect(shareButton.textContent).toContain('Copy link');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   function currentPoll(): Promise<Poll> {

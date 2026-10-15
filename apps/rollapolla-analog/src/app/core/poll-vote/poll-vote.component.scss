@@ -41,3 +41,8 @@
   width: 1rem;
   vertical-align: middle;
 }
+
+.error {
+  color: var(--mat-form-field-error-text-color, #ffb4ab);
+  margin: 0;
+}

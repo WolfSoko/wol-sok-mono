@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
+import { By, Meta, Title } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import {
   ActivatedRoute,
@@ -35,7 +35,7 @@ describe('PollPageComponent', () => {
   });
 
   it('shows the poll from the route', async () => {
-    const pollId = repo.createPoll({
+    const pollId = await repo.createPoll({
       question: 'Pizza or pasta?',
       options: ['Pizza', 'Pasta'],
     });
@@ -54,6 +54,40 @@ describe('PollPageComponent', () => {
     expect(
       element.query(By.css('[data-testid="poll-not-found"]'))
     ).not.toBeNull();
+  });
+
+  it('gives the poll page its own title and keeps it out of search indexes', async () => {
+    const title = TestBed.inject(Title);
+    const meta = TestBed.inject(Meta);
+    // as after server rendering: the DOM already holds a poll page's tags
+    title.setTitle('Some poll | RollaPolla');
+    meta.updateTag({ name: 'robots', content: 'noindex' });
+    const pollId = await repo.createPoll({
+      question: 'Pizza or pasta?',
+      options: ['Pizza', 'Pasta'],
+    });
+
+    await render(pollId);
+
+    expect(title.getTitle()).toBe('Pizza or pasta? | RollaPolla');
+    expect(meta.getTag('property="og:title"')?.content).toBe(
+      'Pizza or pasta? | RollaPolla'
+    );
+    expect(meta.getTag('property="og:description"')?.content).toBe(
+      'Vote now: Pizza · Pasta'
+    );
+    expect(meta.getTag('property="og:url"')?.content).toBe(
+      `https://rollapolla.com/poll/${pollId}`
+    );
+    expect(meta.getTag('name="robots"')?.content).toBe('noindex');
+
+    TestBed.resetTestingModule();
+
+    expect(title.getTitle()).toBe('Polls for everyone | RollaPolla.com');
+    expect(meta.getTag('name="robots"')?.content).toBe('index, follow');
+    expect(meta.getTag('property="og:url"')?.content).toBe(
+      'https://rollapolla.com/'
+    );
   });
 
   async function render(pollId: string) {

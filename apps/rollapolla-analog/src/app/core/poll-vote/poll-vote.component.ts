@@ -4,19 +4,25 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   input,
   signal,
 } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatRadioModule } from '@angular/material/radio';
+import { distinctUntilChanged, map, switchMap } from 'rxjs';
 import { Poll } from '../../../shared/poll';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
+import { percentages } from './percentages';
 import { VotedPollsStore } from './voted-polls.store';
+
+const LINK_COPIED_RESET_MS = 2000;
 
 type OptionResult = {
   index: number;
@@ -48,39 +54,70 @@ export class PollVoteComponent {
   private readonly document = inject(DOCUMENT);
 
   protected readonly selectedOption = signal<number | undefined>(undefined);
+  protected readonly voting = signal(false);
+  protected readonly voteFailed = signal(false);
   protected readonly linkCopied = signal(false);
+  private linkCopiedTimer: ReturnType<typeof setTimeout> | undefined;
 
-  protected readonly votedOption = computed(() =>
-    this.votedPolls.votedOption(this.poll().id)
+  constructor() {
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.linkCopiedTimer));
+  }
+
+  /** The vote stored on the server wins over the hint this browser remembers. */
+  private readonly ownVote = toSignal(
+    toObservable(this.poll).pipe(
+      map((poll) => poll.id),
+      distinctUntilChanged(),
+      switchMap((pollId) => this.pollsRepo.watchOwnVote(pollId))
+    )
+  );
+  protected readonly votedOption = computed(
+    () => this.ownVote() ?? this.votedPolls.votedOption(this.poll().id)
   );
   protected readonly hasVoted = computed(
     () => this.votedOption() !== undefined
   );
 
   protected readonly results = computed<OptionResult[]>(() => {
-    const { options, counts, totalVotes } = this.poll();
-    return options.map((label, index) => {
-      const count = counts[index] ?? 0;
-      return {
-        index,
-        label,
-        count,
-        percent: totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0,
-      };
-    });
+    const { options, counts } = this.poll();
+    const optionCounts = options.map((_, index) => counts[index] ?? 0);
+    const percents = percentages(optionCounts);
+    return options.map((label, index) => ({
+      index,
+      label,
+      count: optionCounts[index],
+      percent: percents[index],
+    }));
   });
 
-  protected vote(): void {
+  protected async vote(): Promise<void> {
     const optionIndex = this.selectedOption();
-    if (optionIndex === undefined || this.hasVoted()) {
+    if (optionIndex === undefined || this.hasVoted() || this.voting()) {
       return;
     }
-    const pollId = this.poll().id;
-    this.pollsRepo.vote(pollId, optionIndex);
-    this.votedPolls.rememberVote(pollId, optionIndex);
+    const poll = this.poll();
+    this.voting.set(true);
+    this.voteFailed.set(false);
+    try {
+      await this.pollsRepo.vote(poll, optionIndex);
+      this.votedPolls.rememberVote(poll.id, optionIndex);
+    } catch (error) {
+      console.error('Could not vote', error);
+      this.voteFailed.set(true);
+    } finally {
+      this.voting.set(false);
+    }
   }
 
   protected copyLink(): void {
-    this.linkCopied.set(this.clipboard.copy(this.document.location.href));
+    clearTimeout(this.linkCopiedTimer);
+    const copied = this.clipboard.copy(this.document.location.href);
+    this.linkCopied.set(copied);
+    if (copied) {
+      this.linkCopiedTimer = setTimeout(
+        () => this.linkCopied.set(false),
+        LINK_COPIED_RESET_MS
+      );
+    }
   }
 }

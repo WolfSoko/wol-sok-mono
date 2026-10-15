@@ -6,12 +6,14 @@ import { PollsRepoPort } from '../ports/polls-repo.port';
 @Injectable()
 export class PollsRepoAdapterMock extends PollsRepoPort {
   private readonly polls$ = new BehaviorSubject<Record<string, Poll>>({});
+  /** The mock visitor's votes by poll id. */
+  public readonly ownVotes$ = new BehaviorSubject<Record<string, number>>({});
 
   public polls(): Record<string, Poll> {
     return this.polls$.value;
   }
 
-  public createPoll(newPoll: NewPoll): string {
+  public async createPoll(newPoll: NewPoll): Promise<string> {
     if (!this.validateNewPoll(newPoll)) {
       throw new Error('Invalid poll');
     }
@@ -25,6 +27,7 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
         counts: newPoll.options.map(() => 0),
         totalVotes: 0,
         createdAt: new Date(),
+        creatorUid: 'mock-user',
       },
     });
     return id;
@@ -34,14 +37,19 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
     return this.polls$.pipe(map((polls) => polls[pollId] ?? null));
   }
 
-  public vote(pollId: string, optionIndex: number): void {
-    const poll = this.polls()[pollId];
-    if (!poll) {
+  public watchOwnVote(pollId: string): Observable<number | undefined> {
+    return this.ownVotes$.pipe(map((votes) => votes[pollId]));
+  }
+
+  public async vote({ id }: Poll, optionIndex: number): Promise<void> {
+    const poll = this.polls()[id];
+    if (!poll || this.ownVotes$.value[id] !== undefined) {
       return;
     }
+    this.ownVotes$.next({ ...this.ownVotes$.value, [id]: optionIndex });
     this.polls$.next({
       ...this.polls(),
-      [pollId]: {
+      [id]: {
         ...poll,
         counts: poll.counts.map((count, index) =>
           index === optionIndex ? count + 1 : count

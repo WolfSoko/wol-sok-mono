@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
 import {
   AbstractControl,
   FormArray,
@@ -44,6 +49,9 @@ export class CreatePollComponent {
   private readonly pollsRepo = inject(PollsRepoPort);
   private readonly router = inject(Router);
 
+  protected readonly creating = signal(false);
+  protected readonly createFailed = signal(false);
+
   protected readonly form = this.fb.group({
     question: [
       '',
@@ -78,8 +86,17 @@ export class CreatePollComponent {
       return;
     }
     const { question, options } = this.form.getRawValue();
-    const pollId = this.pollsRepo.createPoll({ question, options });
-    await this.router.navigate(['/poll', pollId]);
+    this.creating.set(true);
+    this.createFailed.set(false);
+    try {
+      const pollId = await this.pollsRepo.createPoll({ question, options });
+      await this.router.navigate(['/poll', pollId]);
+    } catch (error) {
+      console.error('Could not create poll', error);
+      this.createFailed.set(true);
+    } finally {
+      this.creating.set(false);
+    }
   }
 
   private createOption(): FormControl<string> {
