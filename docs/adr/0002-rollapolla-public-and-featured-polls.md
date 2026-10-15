@@ -22,8 +22,9 @@ must filter on it.
 **Search runs in the browser.** Firestore has no full-text search. `/polls`
 loads the newest `PUBLIC_POLLS_LIMIT` (200) open listed polls and filters
 them by every word of the search, ignoring case and accents
-(`shared/poll-search.ts`). Hot polls are the same polls sorted by votes, so
-closed polls the TTL has not deleted yet cannot crowd them out. Both drop polls that have closed but are not yet deleted by the TTL.
+(`shared/poll-search.ts`). Hot polls are the same polls sorted by votes.
+Both drop polls that have closed but are not yet deleted by the TTL, so
+those cannot crowd out open polls.
 
 **Featured polls live in the code and are stored by their first vote.** They
 are defined in `shared/featured-polls.ts` with fixed ids (`featured-…`).
