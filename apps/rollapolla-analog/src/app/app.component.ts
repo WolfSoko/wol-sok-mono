@@ -4,11 +4,21 @@ import { DomSanitizer, Title } from '@angular/platform-browser';
 import { RouterOutlet } from '@angular/router';
 import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
 import { icon } from '@fortawesome/fontawesome-svg-core';
+import { AccountComponent } from './core/account/account.component';
 
 @Component({
   selector: 'rap-root',
-  imports: [RouterOutlet],
-  template: `<router-outlet></router-outlet>`,
+  imports: [AccountComponent, RouterOutlet],
+  template: `
+    <header class="account-bar"><rap-account /></header>
+    <router-outlet></router-outlet>
+  `,
+  styles: `
+    .account-bar {
+      display: flex;
+      justify-content: flex-end;
+    }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {

@@ -1,0 +1,43 @@
+@if (googleAccount(); as account) {
+  <div class="signed-in" data-testid="account-signed-in">
+    @if (account.photoUrl) {
+      <img
+        class="avatar"
+        [src]="account.photoUrl"
+        alt=""
+        width="28"
+        height="28"
+        referrerpolicy="no-referrer"
+      />
+    }
+    <span class="name" data-testid="account-name">{{
+      account.displayName ?? "Signed in"
+    }}</span>
+    <button
+      mat-button
+      type="button"
+      [disabled]="busy()"
+      (click)="signOut()"
+      data-testid="sign-out-button"
+    >
+      Sign out
+    </button>
+  </div>
+} @else {
+  <button
+    mat-button
+    type="button"
+    [disabled]="busy()"
+    (click)="signIn()"
+    title="Keep your votes and polls on all your devices"
+    data-testid="sign-in-button"
+  >
+    <mat-icon>login</mat-icon>
+    Sign in with Google
+  </button>
+}
+@if (failed()) {
+  <p class="error" role="alert" data-testid="account-error">
+    That did not work. Please try again.
+  </p>
+}

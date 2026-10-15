@@ -3,13 +3,18 @@ import { TestBed } from '@angular/core/testing';
 import { MatIconRegistry } from '@angular/material/icon';
 import { Title } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
+import { AccountAdapterMock } from './adapter/account-adapter-mock.service';
 import { AppComponent } from './app.component';
+import { AccountPort } from './ports/account.port';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [RouterModule, AppComponent],
-      providers: [provideZonelessChangeDetection()],
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: AccountPort, useClass: AccountAdapterMock },
+      ],
     }).compileComponents();
   });
 
