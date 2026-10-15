@@ -22,8 +22,8 @@ import { icon } from '@fortawesome/fontawesome-svg-core';
             class="brand-logo"
             src="/assets/logos/logo.svg"
             alt=""
-            width="44"
-            height="32"
+            width="36"
+            height="36"
           />
           <span class="brand-name">RollaPolla</span>
         </a>
@@ -80,8 +80,8 @@ import { icon } from '@fortawesome/fontawesome-svg-core';
     }
     .brand-logo {
       display: block;
-      width: 44px;
-      height: auto;
+      width: 36px;
+      height: 36px;
     }
     .brand-name {
       font: var(--mat-sys-title-large);
