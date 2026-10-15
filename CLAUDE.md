@@ -139,6 +139,9 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
   (fewer than 10 stars), so comment `@coderabbitai review` on the PR and work through the findings
 - **When CodeRabbit and Codex are both rate-limited**, don't wait for them: review the change
   yourself (`/code-review`) and run `/simplify` on it, then fix what they find
+- **Merge it yourself once it is done**: `/code-review` and `/simplify` findings applied, every
+  review thread answered or resolved, and CI green on the current head. Squash-merge (the
+  history on `main` is one commit per PR). A human approval is not part of "done" here
 
 ## Security
 
