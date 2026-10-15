@@ -136,6 +136,8 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - PR scope: include summary, UI screenshots if visual, linked issue; no unrelated refactors
 - **Always request a CodeRabbit review** after opening a PR: this repo gets no automatic reviews
   (fewer than 10 stars), so comment `@coderabbitai review` on the PR and work through the findings
+- **When CodeRabbit and Codex are both rate-limited**, don't wait for them: review the change
+  yourself (`/code-review`) and run `/simplify` on it, then fix what they find
 
 ## Security
 
