@@ -52,8 +52,11 @@ export class PollVoteComponent {
   private readonly votedPolls = inject(VotedPollsStore);
 
   /** Dropped when the creator edits the poll: the answers may have changed. */
-  protected readonly selectedOption = linkedSignal<string, number | undefined>({
-    source: () => `${this.poll().id}#${this.poll().round}`,
+  protected readonly selectedOption = linkedSignal<Poll, number | undefined>({
+    // a live vote count is no reason to drop it, only another poll or round
+    source: computed(() => this.poll(), {
+      equal: (a, b) => a.id === b.id && a.round === b.round,
+    }),
     computation: () => undefined,
   });
   protected readonly voting = signal(false);

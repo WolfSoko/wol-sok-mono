@@ -170,6 +170,17 @@ describe('PollVoteComponent', () => {
     );
   });
 
+  it('keeps the picked option while other votes come in', async () => {
+    query('poll-option-1').query(By.css('input')).nativeElement.click();
+    fixture.detectChanges();
+
+    const poll = await currentPoll();
+    fixture.componentRef.setInput('poll', { ...poll, totalVotes: 5 });
+    await fixture.whenStable();
+
+    expect(query('vote-button').nativeElement.disabled).toBe(false);
+  });
+
   it('drops the picked option when the creator edits the poll', async () => {
     query('poll-option-1').query(By.css('input')).nativeElement.click();
     fixture.detectChanges();

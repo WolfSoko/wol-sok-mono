@@ -11,6 +11,17 @@ export type OwnVote = { option: number; round: number };
 /** The first polls of a list; `hasMore` when asking for more would find some. */
 export type PollPage = { polls: Poll[]; hasMore: boolean };
 
+/** The first `count` of `found`, which holds one more if there are more. */
+export function toPollPage(found: Poll[], count: number): PollPage {
+  return { polls: found.slice(0, count), hasMore: found.length > count };
+}
+
+/** What creating or editing a poll stores: its content and no votes. */
+export type PollContent = Pick<
+  Poll,
+  'question' | 'options' | 'counts' | 'totalVotes' | 'listed'
+>;
+
 export abstract class PollsRepoPort {
   static readonly MIN_QUESTION_LENGTH: number = 5;
   static readonly MAX_QUESTION_LENGTH: number = 200;
@@ -18,10 +29,11 @@ export abstract class PollsRepoPort {
   static readonly MAX_OPTIONS: number = 10;
   static readonly MAX_OPTION_LENGTH: number = 100;
 
-  protected validateNewPoll(newPoll: NewPoll): boolean {
+  /** Trimmed and checked; throws if the poll is invalid. */
+  protected pollContent(newPoll: NewPoll): PollContent {
     const question = newPoll.question.trim();
     const options = newPoll.options.map((option) => option.trim());
-    return (
+    const valid =
       question.length >= PollsRepoPort.MIN_QUESTION_LENGTH &&
       question.length <= PollsRepoPort.MAX_QUESTION_LENGTH &&
       options.length >= PollsRepoPort.MIN_OPTIONS &&
@@ -29,8 +41,17 @@ export abstract class PollsRepoPort {
       options.every(
         (option) =>
           option.length > 0 && option.length <= PollsRepoPort.MAX_OPTION_LENGTH
-      )
-    );
+      );
+    if (!valid) {
+      throw new Error('Invalid poll');
+    }
+    return {
+      question,
+      options,
+      counts: options.map(() => 0),
+      totalVotes: 0,
+      listed: newPoll.listed ?? false,
+    };
   }
 
   /**

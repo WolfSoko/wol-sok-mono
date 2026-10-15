@@ -2,7 +2,7 @@ import { effect, signal } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 /** How many more items each step of the endless scroll asks for. */
-export const ENDLESS_SCROLL_PAGE_SIZE = 20;
+const ENDLESS_SCROLL_PAGE_SIZE = 20;
 
 /**
  * Endless scroll over a live query: while the end of the list is in view and

@@ -7,13 +7,20 @@ import {
 import { Poll } from '../../shared/poll';
 import { PollDto } from './poll.dto';
 
+/** Votes keyed by option index ('0', '1', ...), as the rules expect. */
+export function countsToDto(counts: number[]): Record<string, number> {
+  return Object.fromEntries(
+    counts.map((count, index) => [String(index), count])
+  );
+}
+
 export const pollConverter: FirestoreDataConverter<Poll, PollDto> = {
   toFirestore(poll: Poll): PollDto {
     return {
       question: poll.question,
       options: poll.options,
-      counts: Object.fromEntries(
-        poll.options.map((_, index) => [String(index), poll.counts[index] ?? 0])
+      counts: countsToDto(
+        poll.options.map((_, index) => poll.counts[index] ?? 0)
       ),
       totalVotes: poll.totalVotes,
       createdAt: Timestamp.fromDate(poll.createdAt),

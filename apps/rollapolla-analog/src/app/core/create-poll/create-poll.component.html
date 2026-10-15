@@ -104,8 +104,8 @@
           <mat-icon>add</mat-icon>
           Add option
         </button>
-        @if (poll()) {
-          <span class="edit-buttons">
+        <span class="submit-buttons">
+          @if (poll()) {
             <button
               mat-button
               type="button"
@@ -114,28 +114,26 @@
             >
               Cancel
             </button>
-            <button
-              mat-flat-button
-              type="submit"
-              [disabled]="form.invalid || saving()"
-              data-testid="save-poll-button"
-            >
-              <mat-icon>restart_alt</mat-icon>
-              Save and reset votes
-            </button>
-          </span>
-        } @else {
+          }
           <button
             mat-flat-button
             type="submit"
             class="submit-button"
             [disabled]="form.invalid || saving()"
-            data-testid="create-poll-button"
+            [attr.data-testid]="
+              poll() ? 'save-poll-button' : 'create-poll-button'
+            "
           >
-            Create poll
-            <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+            <!-- one element per @if, so the icons land in their button slots -->
+            @if (poll()) {
+              <mat-icon>restart_alt</mat-icon>
+            }
+            {{ poll() ? "Save and reset votes" : "Create poll" }}
+            @if (!poll()) {
+              <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+            }
           </button>
-        }
+        </span>
       </div>
       @if (saveFailed()) {
         <p class="error" role="alert" data-testid="create-poll-error">

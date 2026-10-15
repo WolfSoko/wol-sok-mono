@@ -35,11 +35,12 @@ import {
   OwnVote,
   PollPage,
   PollsRepoPort,
+  toPollPage,
   WriteReceipt,
 } from '../ports/polls-repo.port';
 import { ensureSignedIn } from './ensure-signed-in';
 import { saveFeaturedPoll } from './featured-poll-doc';
-import { pollConverter } from './poll.converter';
+import { countsToDto, pollConverter } from './poll.converter';
 import { PollDto, VoteDto } from './poll.dto';
 import { docSnapshots, queryData } from './snapshots';
 
@@ -57,23 +58,16 @@ export class PollsRepoAdapter extends PollsRepoPort {
   ).withConverter<Poll, PollDto>(pollConverter);
 
   public async createPoll(newPoll: NewPoll): Promise<string> {
-    if (!this.validateNewPoll(newPoll)) {
-      throw new Error('Invalid poll');
-    }
+    const content = this.pollContent(newPoll);
     const creatorUid = await this.currentUid();
     const pollRef = doc(this.pollsCol);
-    const options = newPoll.options.map((option) => option.trim());
     const createdAt = new Date();
     const poll: Poll = {
       id: pollRef.id,
-      question: newPoll.question.trim(),
-      options,
-      counts: options.map(() => 0),
-      totalVotes: 0,
+      ...content,
       createdAt,
       closesAt: new Date(createdAt.getTime() + POLL_LIFETIME_MS),
       creatorUid,
-      listed: newPoll.listed ?? false,
       round: 0,
     };
     // Not awaited: Firestore applies the write locally right away and resolves
@@ -85,16 +79,10 @@ export class PollsRepoAdapter extends PollsRepoPort {
   }
 
   public updatePoll(pollId: string, changes: NewPoll): WriteReceipt {
-    if (!this.validateNewPoll(changes)) {
-      throw new Error('Invalid poll');
-    }
-    const options = changes.options.map((option) => option.trim());
+    const { counts, ...content } = this.pollContent(changes);
     const update: Partial<Record<keyof PollDto, unknown>> = {
-      question: changes.question.trim(),
-      options,
-      counts: Object.fromEntries(options.map((_, index) => [String(index), 0])),
-      totalVotes: 0,
-      listed: changes.listed ?? false,
+      ...content,
+      counts: countsToDto(counts),
       // the rules accept exactly the next round, whatever this client last saw
       round: increment(1),
     };
@@ -213,10 +201,7 @@ export class PollsRepoAdapter extends PollsRepoPort {
     count: number
   ): Observable<PollPage> {
     return queryData(query(polls, limit(count + 1))).pipe(
-      map((found) => ({
-        polls: found.slice(0, count),
-        hasMore: found.length > count,
-      }))
+      map((found) => toPollPage(found, count))
     );
   }
 

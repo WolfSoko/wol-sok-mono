@@ -11,6 +11,7 @@ import {
   OwnVote,
   PollPage,
   PollsRepoPort,
+  toPollPage,
   WriteReceipt,
 } from '../ports/polls-repo.port';
 
@@ -25,23 +26,17 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
   }
 
   public async createPoll(newPoll: NewPoll): Promise<string> {
-    if (!this.validateNewPoll(newPoll)) {
-      throw new Error('Invalid poll');
-    }
+    const content = this.pollContent(newPoll);
     const id = `poll-${Object.keys(this.polls()).length + 1}`;
     const createdAt = new Date();
     this.polls$.next({
       ...this.polls(),
       [id]: {
         id,
-        question: newPoll.question.trim(),
-        options: newPoll.options.map((option) => option.trim()),
-        counts: newPoll.options.map(() => 0),
-        totalVotes: 0,
+        ...content,
         createdAt,
         closesAt: new Date(createdAt.getTime() + POLL_LIFETIME_MS),
         creatorUid: 'mock-user',
-        listed: newPoll.listed ?? false,
         round: 0,
       },
     });
@@ -50,18 +45,14 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
 
   public updatePoll(pollId: string, changes: NewPoll): WriteReceipt {
     const poll = this.polls()[pollId];
-    if (!poll || !this.validateNewPoll(changes)) {
-      throw new Error('Invalid poll');
+    if (!poll) {
+      throw new Error('No such poll');
     }
     this.polls$.next({
       ...this.polls(),
       [pollId]: {
         ...poll,
-        question: changes.question.trim(),
-        options: changes.options.map((option) => option.trim()),
-        counts: changes.options.map(() => 0),
-        totalVotes: 0,
-        listed: changes.listed ?? false,
+        ...this.pollContent(changes),
         round: poll.round + 1,
       },
     });
@@ -87,7 +78,7 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
   public watchPublicPolls(sort: PollSort, count: number): Observable<PollPage> {
     return this.polls$.pipe(
       map((polls) =>
-        page(
+        toPollPage(
           sortPolls(
             Object.values(polls).filter((poll) => poll.listed && isOpen(poll)),
             sort
@@ -108,7 +99,7 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
       map(([uid, polls, count]) =>
         uid === null
           ? null
-          : page(
+          : toPollPage(
               sortPolls(
                 Object.values(polls).filter((poll) => poll.creatorUid === uid),
                 'new'
@@ -154,8 +145,4 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
     });
     return { saved: Promise.resolve() };
   }
-}
-
-function page(polls: Poll[], count: number): PollPage {
-  return { polls: polls.slice(0, count), hasMore: polls.length > count };
 }
