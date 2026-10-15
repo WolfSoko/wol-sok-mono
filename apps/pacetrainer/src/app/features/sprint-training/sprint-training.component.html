@@ -1,27 +1,30 @@
 @let state = run();
-<mat-card data-qa="sprint-training">
-  <mat-card-header>
-    <mat-card-title>Sprint Training</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
+<section
+  class="trainer"
+  data-qa="sprint-training"
+  [attr.data-tone]="tone()"
+  [class.paused]="state.phase === 'paused'"
+>
+  <h2 class="eyebrow">Sprint Training</h2>
+
+  <div class="stage">
     @switch (state.phase) {
       @case ("ready") {
-        <div class="configurator">
-          <pace-sprint-form @myInsertRemoveTrigger></pace-sprint-form>
+        <div class="setup">
+          <pace-sprint-form></pace-sprint-form>
+          <pace-sprint-training-overview></pace-sprint-training-overview>
         </div>
       }
       @case ("leadIn") {
-        <div class="runner">
+        <pace-training-live-state
+          [countdown]="countdown()"
+          [phase]="state.phase"
+        >
           <pace-countdown-circle
-            @myInsertRemoveTrigger
             [duration]="state.total"
             [timeLeft]="state.left"
           ></pace-countdown-circle>
-          <pace-training-live-state
-            [countdown]="countdown()"
-            [phase]="state.phase"
-          ></pace-training-live-state>
-        </div>
+        </pace-training-live-state>
       }
       @case ("finished") {
         <pace-zusammenfassung
@@ -29,24 +32,25 @@
         ></pace-zusammenfassung>
       }
       @default {
-        <div class="runner">
+        <pace-training-live-state
+          [countdown]="countdown()"
+          [phase]="state.phase"
+          [current]="state.current"
+          [elapsed]="state.elapsed"
+        >
           <pace-countdown-circle
             [duration]="state.current.duration"
             [timeLeft]="state.current.left"
           ></pace-countdown-circle>
-          <pace-training-live-state
-            [countdown]="countdown()"
-            [phase]="state.phase"
-            [current]="state.current"
-            [elapsed]="state.elapsed"
-          ></pace-training-live-state>
-        </div>
+        </pace-training-live-state>
       }
     }
-  </mat-card-content>
-  <mat-card-actions class="ctas">
+  </div>
+
+  <div class="actions">
     <button
-      mat-raised-button
+      mat-flat-button
+      class="primary-action"
       (click)="primaryAction()"
       [disabled]="state.phase === 'leadIn'"
       data-qa="toggle-training"
@@ -71,18 +75,14 @@
       state.phase === "running" ||
       state.phase === "paused"
     ) {
-      <button mat-raised-button (click)="endTraining()" data-qa="stop-training">
+      <button
+        mat-stroked-button
+        class="secondary-action"
+        (click)="endTraining()"
+        data-qa="stop-training"
+      >
         Training beenden
       </button>
     }
-  </mat-card-actions>
-</mat-card>
-<mat-card>
-  <mat-card-content>
-    <div class="overview">
-      <pace-sprint-training-overview
-        [open]="state.phase === 'ready'"
-      ></pace-sprint-training-overview>
-    </div>
-  </mat-card-content>
-</mat-card>
+  </div>
+</section>

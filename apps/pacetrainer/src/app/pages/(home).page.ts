@@ -11,7 +11,7 @@ import { SprintTrainingComponent } from '../features/sprint-training/sprint-trai
   styles: `
     :host {
       display: block;
-      margin-top: 1rem;
+      min-height: 100dvh;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

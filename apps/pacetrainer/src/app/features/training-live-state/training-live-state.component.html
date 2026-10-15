@@ -1,24 +1,38 @@
-@if (countdown()?.countdownTo; as countdownTo) {
-  <div class="next-training-name">
+<header class="now">
+  @if (current(); as current) {
+    <span class="phase-name">{{ current.name | trainingName }}</span>
+    <span class="counter">
+      Intervall {{ current.index + 1 }} / {{ current.count }}
+      @if (phase() === "paused") {
+        <span class="paused-chip">pausiert</span>
+      }
+    </span>
+  } @else {
+    <span class="phase-name">Gleich geht's los</span>
+    <span class="counter">Mach dich bereit</span>
+  }
+</header>
+
+<ng-content></ng-content>
+
+<p class="next">
+  @if (countdown()?.countdownTo; as countdownTo) {
     als Nächstes: {{ countdownTo | trainingName }}
-  </div>
-}
+  }
+</p>
+
 @if (current(); as current) {
-  <span class="mat-title-large">
-    {{ current.name | trainingName }}
-    [{{ current.index + 1 }}/{{ current.count }}]
-    @if (phase() === "paused") {
-      - pausiert
-    }
-  </span>
-  <mat-list class="stats-list">
-    <mat-list-item>
-      Gesamtzeit:
-      {{ elapsed() | trainingTime }}
-    </mat-list-item>
-    <mat-list-item>
-      Intervallzeit: {{ current.elapsed | trainingTime }} von
-      {{ current.duration | trainingTime }}
-    </mat-list-item>
-  </mat-list>
+  <dl class="stats">
+    <div class="stat">
+      <dt>Gesamtzeit</dt>
+      <dd>{{ elapsed() | trainingTime }}</dd>
+    </div>
+    <div class="stat">
+      <dt>Intervallzeit</dt>
+      <dd>
+        {{ current.elapsed | trainingTime }}
+        <span class="of">von {{ current.duration | trainingTime }}</span>
+      </dd>
+    </div>
+  </dl>
 }

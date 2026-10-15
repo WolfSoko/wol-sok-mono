@@ -1,12 +1,11 @@
-import { animate, style, transition, trigger } from '@angular/animations';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { IntervalCountdownService } from '../../shared/interval-countdown/interval-countdown.service';
 import { milliseconds } from '../../shared/model/constants/time-utils';
 import { TrainingRun } from '../../shared/training-run/training-run';
@@ -24,21 +23,8 @@ const ANSAGE_WINDOW = milliseconds(5000);
 @Component({
   selector: 'pace-sprint-training',
   templateUrl: './sprint-training.component.html',
-  animations: [
-    trigger('myInsertRemoveTrigger', [
-      transition(':enter', [
-        style({ opacity: 0, height: 0 }),
-        animate('100ms ease-out', style({ opacity: 1, height: 100 })),
-      ]),
-      transition(':leave', [
-        style({ opacity: 1, height: 100 }),
-        animate('100ms ease-in', style({ opacity: 0, height: 0 })),
-      ]),
-    ]),
-  ],
   styleUrl: './sprint-training.component.scss',
   imports: [
-    MatCardModule,
     MatButtonModule,
     SprintTrainingOverviewComponent,
     SprintFormComponent,
@@ -55,6 +41,14 @@ export class SprintTrainingComponent {
 
   protected readonly run = this.trainingRun.state;
   protected readonly countdown = this.countdownService.countdown;
+  /** colors the screen after what the runner does right now */
+  protected readonly tone = computed(() => {
+    const run = this.run();
+    if (run.phase === 'running' || run.phase === 'paused') {
+      return run.current.name === 'sprint' ? 'sprint' : 'recovery';
+    }
+    return 'calm';
+  });
 
   constructor() {
     inject(ScreenWakeLockService);

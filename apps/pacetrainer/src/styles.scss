@@ -2,70 +2,83 @@
 
 @import 'normalize.css/normalize.css';
 
-@include mat.elevation-classes();
-@include mat.app-background();
-
-$theme: mat.define-theme(
+// Typography classes (mat-title-large, …) still used in a few templates.
+$typography-theme: mat.define-theme(
   (
-    color: (
-      theme-type: light,
-      primary: mat.$azure-palette,
-    ),
-  )
-);
-
-$dark-theme: mat.define-theme(
-  (
-    color: (
-      theme-type: dark,
-      primary: mat.$azure-palette,
+    typography: (
+      brand-family: 'Roboto',
+      plain-family: 'Roboto',
     ),
   )
 );
 
 html {
-  @include mat.toolbar-theme($theme);
-  @include mat.button-theme($theme);
-  @include mat.form-field-theme($theme);
-  @include mat.input-theme($theme);
-  @include mat.card-theme($theme);
-  @include mat.list-theme($theme);
-  @include mat.progress-spinner-theme($theme);
-  @include mat.expansion-theme($theme);
+  // One Material 3 theme for light and dark: every system color is emitted
+  // with light-dark(), so the page and all components follow the OS setting.
+  color-scheme: light dark;
 
-  @include mat.typography-hierarchy($theme);
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$orange-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+  @include mat.typography-hierarchy($typography-theme);
 
-  // Apply the light theme only when the user prefers light themes.
-  @media (prefers-color-scheme: dark) {
-    // Use the `-color` mixins to only apply color styles without reapplying the same
-    // typography and density styles.
-    @include mat.toolbar-color($dark-theme);
-    @include mat.button-color($dark-theme);
-    @include mat.form-field-color($dark-theme);
-    @include mat.input-color($dark-theme);
-    @include mat.card-color($dark-theme);
-    @include mat.list-color($dark-theme);
-    @include mat.progress-spinner-color($dark-theme);
-    @include mat.expansion-color($dark-theme);
-    @include mat.typography-hierarchy($dark-theme);
-  }
+  // Accent per Phase of the Trainingslauf. Components pick one through
+  // [data-tone] and read --pace-accent*.
+  --pace-sprint: var(--mat-sys-tertiary);
+  --pace-sprint-container: var(--mat-sys-tertiary-container);
+  --pace-on-sprint-container: var(--mat-sys-on-tertiary-container);
+  --pace-recovery: var(--mat-sys-primary);
+  --pace-recovery-container: var(--mat-sys-primary-container);
+  --pace-on-recovery-container: var(--mat-sys-on-primary-container);
+  --pace-calm: var(--mat-sys-outline);
+  --pace-calm-container: var(--mat-sys-surface-container-high);
+  --pace-on-calm-container: var(--mat-sys-on-surface);
+
+  --pace-radius-large: 28px;
+  --pace-radius-medium: 16px;
 }
 
-body,
-html {
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
-  * {
-    box-sizing: border-box;
+[data-tone] {
+  --pace-accent: var(--pace-calm);
+  --pace-accent-container: var(--pace-calm-container);
+  --pace-on-accent-container: var(--pace-on-calm-container);
+}
+[data-tone='sprint'] {
+  --pace-accent: var(--pace-sprint);
+  --pace-accent-container: var(--pace-sprint-container);
+  --pace-on-accent-container: var(--pace-on-sprint-container);
+}
+[data-tone='recovery'] {
+  --pace-accent: var(--pace-recovery);
+  --pace-accent-container: var(--pace-recovery-container);
+  --pace-on-accent-container: var(--pace-on-recovery-container);
+}
 
-    &:before,
-    &:after {
-      box-sizing: border-box;
-    }
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
-  max-width: 1024px;
-  margin: 0 auto;
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-large);
   text-wrap: pretty;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
 }
