@@ -18,6 +18,7 @@
       type="button"
       [disabled]="busy()"
       (click)="signOut()"
+      [title]="'Signed in as ' + (account.displayName ?? 'you')"
       data-testid="sign-out-button"
     >
       Sign out
@@ -33,7 +34,8 @@
     data-testid="sign-in-button"
   >
     <mat-icon>login</mat-icon>
-    Sign in with Google
+    <span class="label-long">Sign in with Google</span>
+    <span class="label-short">Sign in</span>
   </button>
 }
 @if (failed()) {

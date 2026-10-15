@@ -12,13 +12,14 @@ export class HomePage {
   }
 
   async expectTitleVisible() {
+    await expect(this.page.getByTestId('home-link')).toContainText(
+      'RollaPolla'
+    );
     await expect(
       this.page.getByRole('heading', {
-        name: 'RollaPolla',
+        level: 1,
+        name: 'Easy Polling for Everyone!',
       })
-    ).toBeVisible();
-    await expect(
-      this.page.getByText('Easy Polling for Everyone!')
     ).toBeVisible();
   }
 
@@ -37,6 +38,11 @@ export class HomePage {
       'https://x.com/rollapolla'
     );
     await expect(twitterLink).toHaveAttribute('target', '_blank');
-    await expect(twitterLink).toHaveScreenshot();
+    // Structure, not pixels: a screenshot baseline differs per OS, browser
+    // build and font rasterizer, so it can't be authored outside CI.
+    await expect(twitterLink).toMatchAriaSnapshot(`
+      - link "Follow":
+        - /url: https://x.com/rollapolla
+    `);
   }
 }

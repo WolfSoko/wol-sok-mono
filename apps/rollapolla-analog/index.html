@@ -10,7 +10,16 @@
       content="RollaPolla – easy polling for everyone: create a poll in seconds, share it and see live what others think."
     />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#59A959" />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: light)"
+      content="#f6fbf3"
+    />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: dark)"
+      content="#101510"
+    />
     <link rel="canonical" href="https://rollapolla.com/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="RollaPolla" />
@@ -33,7 +42,11 @@
       name="twitter:image"
       content="https://rollapolla.com/assets/logos/android-chrome-512x512.png"
     />
-    <link rel="icon" href="/assets/logos/favicon.ico" sizes="32x32" />
+    <link
+      rel="icon"
+      href="/assets/logos/favicon.ico"
+      sizes="16x16 32x32 48x48"
+    />
     <link rel="icon" href="/assets/logos/logo.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/assets/logos/apple-touch-icon.png" />
     <!-- 180×180 -->
@@ -42,7 +55,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link
@@ -50,7 +63,7 @@
       rel="stylesheet"
     />
   </head>
-  <body class="mat-typography mat-app-background">
+  <body>
     <rap-root></rap-root>
     <script type="module" src="/src/main.ts"></script>
   </body>
