@@ -8,8 +8,7 @@ export class LiveChatPoComp {
     await expect(leaveMessageInput).toBeVisible();
     await leaveMessageInput.scrollIntoViewIfNeeded();
 
-    await leaveMessageInput.click();
-    await leaveMessageInput.fill(message);
+    await this.fillOnceHydrated(leaveMessageInput, message);
 
     await this.page.getByRole('button', { name: 'Send message' }).click();
     return message;
@@ -20,13 +19,25 @@ export class LiveChatPoComp {
     await expect(leaveMessageInput).toBeVisible();
     await leaveMessageInput.scrollIntoViewIfNeeded();
 
-    await leaveMessageInput.click();
-    await leaveMessageInput.fill(message);
+    await this.fillOnceHydrated(leaveMessageInput, message);
 
     await leaveMessageInput.press('Control+Enter');
   }
 
   findMessageInChat(message: string): Locator {
     return this.page.getByTestId('messages-list').getByText(message);
+  }
+
+  // The chat hydrates once it is in the viewport; typing earlier is lost.
+  private async fillOnceHydrated(
+    input: Locator,
+    message: string
+  ): Promise<void> {
+    await expect(async () => {
+      await input.fill(message);
+      await expect(
+        this.page.getByText(`${message.length}/`, { exact: false })
+      ).toBeVisible({ timeout: 1000 });
+    }).toPass();
   }
 }
