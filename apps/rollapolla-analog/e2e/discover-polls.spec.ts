@@ -14,7 +14,10 @@ test.describe('Discover polls', () => {
     await expect(classic).toContainText('Tabs or spaces?');
     await classic.click();
 
-    await expect(page).toHaveURL(/\/poll\/featured-tabs-or-spaces$/);
+    // a cold dev server compiles the lazy poll route on its first visit
+    await expect(page).toHaveURL(/\/poll\/featured-tabs-or-spaces$/, {
+      timeout: 15_000,
+    });
     await expect(page.getByTestId('poll-question')).toHaveText(
       'Tabs or spaces?'
     );

@@ -6,39 +6,63 @@ import {
   storedFeaturedPoll,
 } from '../../shared/featured-polls';
 import { isOpen, NewPoll, Poll, POLL_LIFETIME_MS } from '../../shared/poll';
-import { PollsRepoPort, VoteReceipt } from '../ports/polls-repo.port';
+import { PollSort, sortPolls } from '../../shared/poll-search';
+import {
+  OwnVote,
+  PollPage,
+  PollsRepoPort,
+  toPollPage,
+  WriteReceipt,
+} from '../ports/polls-repo.port';
 
 @Injectable()
 export class PollsRepoAdapterMock extends PollsRepoPort {
   public readonly polls$ = new BehaviorSubject<Record<string, Poll>>({});
   /** The mock visitor's votes by poll id. */
-  public readonly ownVotes$ = new BehaviorSubject<Record<string, number>>({});
+  public readonly ownVotes$ = new BehaviorSubject<Record<string, OwnVote>>({});
 
   public polls(): Record<string, Poll> {
     return this.polls$.value;
   }
 
   public async createPoll(newPoll: NewPoll): Promise<string> {
-    if (!this.validateNewPoll(newPoll)) {
-      throw new Error('Invalid poll');
-    }
+    const content = this.pollContent(newPoll);
     const id = `poll-${Object.keys(this.polls()).length + 1}`;
     const createdAt = new Date();
     this.polls$.next({
       ...this.polls(),
       [id]: {
         id,
-        question: newPoll.question.trim(),
-        options: newPoll.options.map((option) => option.trim()),
-        counts: newPoll.options.map(() => 0),
-        totalVotes: 0,
+        ...content,
         createdAt,
         closesAt: new Date(createdAt.getTime() + POLL_LIFETIME_MS),
         creatorUid: 'mock-user',
-        listed: newPoll.listed ?? false,
+        round: 0,
       },
     });
     return id;
+  }
+
+  public updatePoll(pollId: string, changes: NewPoll): WriteReceipt {
+    const poll = this.polls()[pollId];
+    if (!poll) {
+      throw new Error('No such poll');
+    }
+    this.polls$.next({
+      ...this.polls(),
+      [pollId]: {
+        ...poll,
+        ...this.pollContent(changes),
+        round: poll.round + 1,
+      },
+    });
+    return { saved: Promise.resolve() };
+  }
+
+  public deletePoll(pollId: string): WriteReceipt {
+    const { [pollId]: _deleted, ...polls } = this.polls();
+    this.polls$.next(polls);
+    return { saved: Promise.resolve() };
   }
 
   public watchPoll(pollId: string): Observable<Poll | null> {
@@ -48,26 +72,19 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
   }
 
   public watchHotPolls(count: number): Observable<Poll[]> {
-    return this.listedPolls((a, b) => b.totalVotes - a.totalVotes, count);
+    return this.watchPublicPolls('hot', count).pipe(map(({ polls }) => polls));
   }
 
-  public watchPublicPolls(): Observable<Poll[]> {
-    return this.listedPolls(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
-      PollsRepoPort.PUBLIC_POLLS_LIMIT
-    );
-  }
-
-  private listedPolls(
-    order: (a: Poll, b: Poll) => number,
-    count: number
-  ): Observable<Poll[]> {
+  public watchPublicPolls(sort: PollSort, count: number): Observable<PollPage> {
     return this.polls$.pipe(
       map((polls) =>
-        Object.values(polls)
-          .filter((poll) => poll.listed && isOpen(poll))
-          .sort(order)
-          .slice(0, count)
+        toPollPage(
+          sortPolls(
+            Object.values(polls).filter((poll) => poll.listed && isOpen(poll)),
+            sort
+          ),
+          count
+        )
       )
     );
   }
@@ -75,26 +92,32 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
   /** `null` plays a visitor who is not signed in. */
   public readonly creatorUid$ = new BehaviorSubject<string | null>('mock-user');
 
-  public watchMyPolls(): Observable<Poll[] | null | undefined> {
-    return combineLatest([this.creatorUid$, this.polls$]).pipe(
-      map(([uid, polls]) =>
+  public watchMyPolls(
+    counts: Observable<number>
+  ): Observable<PollPage | null | undefined> {
+    return combineLatest([this.creatorUid$, this.polls$, counts]).pipe(
+      map(([uid, polls, count]) =>
         uid === null
           ? null
-          : Object.values(polls)
-              .filter((poll) => poll.creatorUid === uid)
-              .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+          : toPollPage(
+              sortPolls(
+                Object.values(polls).filter((poll) => poll.creatorUid === uid),
+                'new'
+              ),
+              count
+            )
       )
     );
   }
 
-  public watchOwnVote(pollId: string): Observable<number | undefined> {
+  public watchOwnVote(pollId: string): Observable<OwnVote | undefined> {
     return this.ownVotes$.pipe(map((votes) => votes[pollId]));
   }
 
   public async vote(
     { id, unsaved }: Poll,
     optionIndex: number
-  ): Promise<VoteReceipt> {
+  ): Promise<WriteReceipt> {
     const featured = featuredPoll(id);
     if (unsaved && featured && !this.polls()[id]) {
       this.polls$.next({
@@ -103,10 +126,13 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
       });
     }
     const poll = this.polls()[id];
-    if (!poll || this.ownVotes$.value[id] !== undefined) {
+    if (!poll || this.ownVotes$.value[id]?.round === poll.round) {
       return { saved: Promise.reject(new Error('Already voted')) };
     }
-    this.ownVotes$.next({ ...this.ownVotes$.value, [id]: optionIndex });
+    this.ownVotes$.next({
+      ...this.ownVotes$.value,
+      [id]: { option: optionIndex, round: poll.round },
+    });
     this.polls$.next({
       ...this.polls(),
       [id]: {

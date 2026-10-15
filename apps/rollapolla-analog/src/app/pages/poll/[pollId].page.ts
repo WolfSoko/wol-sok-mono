@@ -4,6 +4,7 @@ import {
   computed,
   inject,
   Injector,
+  linkedSignal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,20 +17,25 @@ import {
   pendingUntilFirstValue,
   SSR_DATA_TIMEOUT_MS,
 } from '../../adapter/pending-until-first-value';
+import { CreatePollComponent } from '../../core/create-poll/create-poll.component';
 import { CREATED_POLL_ID } from '../../core/create-poll/created-poll-id';
 import { PollChatComponent } from '../../core/poll-chat/poll-chat.component';
+import { PollOwnerActionsComponent } from '../../core/poll-owner-actions/poll-owner-actions.component';
 import { PollVoteComponent } from '../../core/poll-vote/poll-vote.component';
+import { AccountPort } from '../../ports/account.port';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import { usePollMetaTags } from './poll-meta';
 
 @Component({
   selector: 'rap-poll-page',
   imports: [
+    CreatePollComponent,
     MatButtonModule,
     MatCardModule,
     MatIconModule,
     MatProgressSpinnerModule,
     PollChatComponent,
+    PollOwnerActionsComponent,
     PollVoteComponent,
     RouterLink,
   ],
@@ -48,7 +54,14 @@ import { usePollMetaTags } from './poll-meta';
       @if (poll() === undefined) {
         <mat-spinner class="spinner" diameter="40" />
       } @else if (poll(); as poll) {
-        <rap-poll-vote [poll]="poll" [justCreated]="justCreated()" />
+        @if (editing()) {
+          <rap-create-poll [poll]="poll" (editDone)="editing.set(false)" />
+        } @else {
+          @if (isOwnPoll()) {
+            <rap-poll-owner-actions [poll]="poll" (edit)="editing.set(true)" />
+          }
+          <rap-poll-vote [poll]="poll" [justCreated]="justCreated()" />
+        }
         @defer (on viewport) {
           <rap-poll-chat [poll]="poll" />
         } @placeholder {
@@ -134,6 +147,18 @@ export default class PollPageComponent {
       )
     )
   );
+
+  private readonly account = toSignal(inject(AccountPort).account$);
+  /** Featured polls belong to RollaPolla, never to a visitor. */
+  protected readonly isOwnPoll = computed(() => {
+    const poll = this.poll();
+    return !!poll && poll.creatorUid === this.account()?.uid;
+  });
+  /** The creator edits the poll in place; another poll ends the editing. */
+  protected readonly editing = linkedSignal({
+    source: this.pollId,
+    computation: () => false,
+  });
 
   constructor() {
     usePollMetaTags(this.poll, this.pollId);

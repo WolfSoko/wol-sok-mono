@@ -69,4 +69,6 @@ TTL settings.
   closed.
 - Search covers the newest 200 open listed polls. More than that needs a
   search index (e.g. a keyword array, or an external search service).
+  (Superseded by [ADR 0004](0004-rollapolla-endless-scroll.md): the lists
+  load page by page instead.)
 - Listed polls are public user content with no moderation yet.

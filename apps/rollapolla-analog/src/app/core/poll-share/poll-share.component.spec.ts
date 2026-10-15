@@ -19,6 +19,7 @@ const poll: Poll = {
   closesAt: new Date(Date.now() + 24 * 3600_000),
   creatorUid: 'creator',
   listed: true,
+  round: 0,
 };
 
 const chatTarget: ShareTarget = {

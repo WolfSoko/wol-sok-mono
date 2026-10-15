@@ -7,7 +7,7 @@ import {
   Injector,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,12 +16,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, of } from 'rxjs';
-import { PollSort, searchPolls, sortPolls } from '../../shared/poll-search';
+import { catchError, of, switchMap, tap } from 'rxjs';
+import { PollSort, searchPolls } from '../../shared/poll-search';
 import {
   pendingUntilFirstValue,
   SSR_DATA_TIMEOUT_MS,
 } from '../adapter/pending-until-first-value';
+import { EndlessScroll } from '../core/endless-scroll/endless-scroll';
+import { EndlessScrollEndComponent } from '../core/endless-scroll/endless-scroll-end.component';
 import { PollListComponent } from '../core/poll-list/poll-list.component';
 import { PollsRepoPort } from '../ports/polls-repo.port';
 import { SITE_TAGS, SITE_URL } from './site-tags';
@@ -30,6 +32,7 @@ import { SITE_TAGS, SITE_URL } from './site-tags';
 @Component({
   selector: 'rap-polls-page',
   imports: [
+    EndlessScrollEndComponent,
     MatButtonModule,
     MatButtonToggleModule,
     MatFormFieldModule,
@@ -86,7 +89,8 @@ import { SITE_TAGS, SITE_URL } from './site-tags';
       </div>
       @if (results(); as results) {
         <p class="count" role="status" data-testid="poll-search-count">
-          {{ results.length }} {{ results.length === 1 ? 'poll' : 'polls' }}
+          {{ results.length }}{{ scroll.hasMore() ? '+' : '' }}
+          {{ results.length === 1 && !scroll.hasMore() ? 'poll' : 'polls' }}
           @if (search().trim()) {
             for “{{ search().trim() }}”
           }
@@ -97,7 +101,7 @@ import { SITE_TAGS, SITE_URL } from './site-tags';
             testIdPrefix="search-result-"
             data-testid="poll-search-results"
           />
-        } @else {
+        } @else if (!scroll.hasMore()) {
           <div class="empty" data-testid="poll-search-empty">
             <mat-icon class="empty-icon" aria-hidden="true"
               >search_off</mat-icon
@@ -106,6 +110,7 @@ import { SITE_TAGS, SITE_URL } from './site-tags';
             <a mat-flat-button routerLink="/">Create a poll</a>
           </div>
         }
+        <rap-endless-scroll-end [scroll]="scroll" />
       } @else if (loadFailed()) {
         <p class="error" role="alert" data-testid="poll-search-error">
           The polls could not be loaded. Please try again later.
@@ -187,25 +192,35 @@ export default class PollsPageComponent {
     this.route.snapshot.queryParamMap.get('sort') === 'new' ? 'new' : 'hot'
   );
 
+  private readonly pollsRepo = inject(PollsRepoPort);
+  /** Search filters the polls loaded so far and keeps loading while few match. */
+  protected readonly scroll = new EndlessScroll();
   private readonly polls = toSignal(
-    inject(PollsRepoPort)
-      .watchPublicPolls()
-      .pipe(
-        pendingUntilFirstValue(inject(Injector), SSR_DATA_TIMEOUT_MS),
-        catchError((error: unknown) => {
-          console.error('Could not load polls', error);
-          return of(null);
-        })
-      )
+    toObservable(this.sort).pipe(
+      switchMap((sort) => {
+        this.scroll.restart();
+        return this.scroll.counts.pipe(
+          // Firestore sorts, so a hot poll shows up first however old it is
+          switchMap((count) => this.pollsRepo.watchPublicPolls(sort, count)),
+          tap((page) => this.scroll.answered(page.hasMore)),
+          // e.g. an index still building right after a deploy; the other
+          // order may work, so switching it tries again
+          catchError((error: unknown) => {
+            console.error('Could not load polls', error);
+            return of(null);
+          })
+        );
+      }),
+      pendingUntilFirstValue(inject(Injector), SSR_DATA_TIMEOUT_MS)
+    )
   );
   protected readonly loadFailed = computed(() => this.polls() === null);
 
   /** `undefined` while loading. */
   protected readonly results = computed(() => {
-    const polls = this.polls();
-    return polls
-      ? sortPolls(searchPolls(polls, this.search()), this.sort())
-      : undefined;
+    const page = this.polls();
+    // in the order Firestore sorted them
+    return page ? searchPolls(page.polls, this.search()) : undefined;
   });
 
   constructor() {

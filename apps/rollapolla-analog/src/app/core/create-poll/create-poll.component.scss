@@ -84,6 +84,12 @@
   min-width: 10rem;
 }
 
+.submit-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
 .error {
   color: var(--mat-sys-error);
   margin: 0;

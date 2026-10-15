@@ -2,9 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { By, Title } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter, Router } from '@angular/router';
+import { throwError } from 'rxjs';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { PollsRepoAdapterMock } from '../adapter/polls-repo-adapter-mock.service';
 import { PollsRepoPort } from '../ports/polls-repo.port';
+import { stubIntersectionObserver } from '../core/endless-scroll/intersection-observer.mock';
 import PollsPageComponent from './polls.page';
 
 describe('PollsPageComponent', () => {
@@ -70,6 +72,50 @@ describe('PollsPageComponent', () => {
     expect(query('poll-search-count').nativeElement.textContent).toContain(
       '0 polls'
     );
+  });
+
+  it('loads the next polls when the end of the list comes into view', async () => {
+    const endInView = stubIntersectionObserver();
+    for (let i = 1; i <= 25; i++) {
+      await repo.createPoll({
+        question: `Extra poll ${i}?`,
+        options: ['a', 'b'],
+        listed: true,
+      });
+    }
+    await harness.navigateByUrl('/polls');
+
+    expect(results()).toHaveLength(20);
+    expect(query('poll-search-count').nativeElement.textContent).toContain(
+      '20+ polls'
+    );
+
+    endInView(true);
+    await harness.fixture.whenStable();
+
+    expect(results()).toHaveLength(27);
+    expect(query('poll-search-count').nativeElement.textContent).toContain(
+      '27 polls'
+    );
+    expect(query('endless-scroll-end').query(By.css('mat-spinner'))).toBeNull();
+  });
+
+  it('tries again when the visitor switches the order after a failed load', async () => {
+    const watchPublicPolls = repo.watchPublicPolls.bind(repo);
+    vi.spyOn(repo, 'watchPublicPolls').mockImplementation((sort, count) =>
+      sort === 'hot'
+        ? throwError(() => new Error('failed-precondition: index building'))
+        : watchPublicPolls(sort, count)
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await harness.navigateByUrl('/polls');
+    expect(query('poll-search-error')).not.toBeNull();
+
+    query('sort-new').query(By.css('button')).nativeElement.click();
+    await harness.fixture.whenStable();
+
+    expect(query('poll-search-error')).toBeNull();
+    expect(results()).toEqual(['Best hiking area?', 'Pizza or pasta?']);
   });
 
   function results(): string[] {

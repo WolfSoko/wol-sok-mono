@@ -2,6 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   inject,
+  input,
+  OnInit,
+  output,
   signal,
 } from '@angular/core';
 import {
@@ -20,7 +23,9 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+import { Poll } from '../../../shared/poll';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import { CREATED_POLL_ID } from './created-poll-id';
 
@@ -39,7 +44,12 @@ import { CREATED_POLL_ID } from './created-poll-id';
   styleUrl: './create-poll.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreatePollComponent {
+export class CreatePollComponent implements OnInit {
+  /** Edits this poll instead of creating one; saving resets its votes. */
+  public readonly poll = input<Poll>();
+  /** Editing finished: saved or cancelled. */
+  public readonly editDone = output<void>();
+
   protected readonly minQuestionLength: number =
     PollsRepoPort.MIN_QUESTION_LENGTH;
   protected readonly maxQuestionLength: number =
@@ -51,9 +61,10 @@ export class CreatePollComponent {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly pollsRepo = inject(PollsRepoPort);
   private readonly router = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
 
-  protected readonly creating = signal(false);
-  protected readonly createFailed = signal(false);
+  protected readonly saving = signal(false);
+  protected readonly saveFailed = signal(false);
 
   protected readonly form = this.fb.group({
     question: [
@@ -68,6 +79,19 @@ export class CreatePollComponent {
     /** Public by default; unticked, only people with the link find it. */
     listed: [true],
   });
+
+  public ngOnInit(): void {
+    const poll = this.poll();
+    if (poll) {
+      this.options.clear();
+      poll.options.forEach(() => this.options.push(this.createOption()));
+      this.form.setValue({
+        question: poll.question,
+        options: poll.options,
+        listed: poll.listed,
+      });
+    }
+  }
 
   protected get options(): FormArray<FormControl<string>> {
     return this.form.controls.options;
@@ -85,28 +109,36 @@ export class CreatePollComponent {
     }
   }
 
-  protected async createPoll(): Promise<void> {
+  protected async save(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-    const { question, options, listed } = this.form.getRawValue();
-    this.creating.set(true);
-    this.createFailed.set(false);
+    const newPoll = this.form.getRawValue();
+    const poll = this.poll();
+    this.saving.set(true);
+    this.saveFailed.set(false);
     try {
-      const pollId = await this.pollsRepo.createPoll({
-        question,
-        options,
-        listed,
-      });
-      await this.router.navigate(['/poll', pollId], {
-        state: { [CREATED_POLL_ID]: pollId },
-      });
+      if (poll) {
+        // applied locally at once; the backend may still refuse it later,
+        // which brings back the previous version
+        const { saved } = this.pollsRepo.updatePoll(poll.id, newPoll);
+        saved.catch((error: unknown) => {
+          console.error('Poll changes were rejected', error);
+          this.snackBar.open('Could not save your changes to the poll.', 'OK');
+        });
+        this.editDone.emit();
+      } else {
+        const pollId = await this.pollsRepo.createPoll(newPoll);
+        await this.router.navigate(['/poll', pollId], {
+          state: { [CREATED_POLL_ID]: pollId },
+        });
+      }
     } catch (error) {
-      console.error('Could not create poll', error);
-      this.createFailed.set(true);
+      console.error('Could not save poll', error);
+      this.saveFailed.set(true);
     } finally {
-      this.creating.set(false);
+      this.saving.set(false);
     }
   }
 

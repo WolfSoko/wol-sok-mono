@@ -12,6 +12,11 @@ export type Poll = {
   /** Shown on the home page and in search. Unlisted polls need the link. */
   listed: boolean;
   /**
+   * Starts at 0; editing the poll starts the next round, which resets the
+   * counts. Only votes cast in the current round count.
+   */
+  round: number;
+  /**
    * A featured poll nobody has voted on yet: it exists only in the code, the
    * first vote or chat message stores it.
    */

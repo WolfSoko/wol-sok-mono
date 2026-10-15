@@ -1,7 +1,26 @@
 import { Observable } from 'rxjs';
 import { NewPoll, Poll } from '../../shared/poll';
+import { PollSort } from '../../shared/poll-search';
 
-export type VoteReceipt = { saved: Promise<void> };
+/** `saved` settles once the backend accepted the write or rejected it. */
+export type WriteReceipt = { saved: Promise<void> };
+
+/** A vote counts only while the poll is still in the round it was cast in. */
+export type OwnVote = { option: number; round: number };
+
+/** The first polls of a list; `hasMore` when asking for more would find some. */
+export type PollPage = { polls: Poll[]; hasMore: boolean };
+
+/** The first `count` of `found`, which holds one more if there are more. */
+export function toPollPage(found: Poll[], count: number): PollPage {
+  return { polls: found.slice(0, count), hasMore: found.length > count };
+}
+
+/** What creating or editing a poll stores: its content and no votes. */
+export type PollContent = Pick<
+  Poll,
+  'question' | 'options' | 'counts' | 'totalVotes' | 'listed'
+>;
 
 export abstract class PollsRepoPort {
   static readonly MIN_QUESTION_LENGTH: number = 5;
@@ -9,13 +28,12 @@ export abstract class PollsRepoPort {
   static readonly MIN_OPTIONS: number = 2;
   static readonly MAX_OPTIONS: number = 10;
   static readonly MAX_OPTION_LENGTH: number = 100;
-  /** The most polls search looks through, newest first. */
-  static readonly PUBLIC_POLLS_LIMIT: number = 200;
 
-  protected validateNewPoll(newPoll: NewPoll): boolean {
+  /** Trimmed and checked; throws if the poll is invalid. */
+  protected pollContent(newPoll: NewPoll): PollContent {
     const question = newPoll.question.trim();
     const options = newPoll.options.map((option) => option.trim());
-    return (
+    const valid =
       question.length >= PollsRepoPort.MIN_QUESTION_LENGTH &&
       question.length <= PollsRepoPort.MAX_QUESTION_LENGTH &&
       options.length >= PollsRepoPort.MIN_OPTIONS &&
@@ -23,8 +41,17 @@ export abstract class PollsRepoPort {
       options.every(
         (option) =>
           option.length > 0 && option.length <= PollsRepoPort.MAX_OPTION_LENGTH
-      )
-    );
+      );
+    if (!valid) {
+      throw new Error('Invalid poll');
+    }
+    return {
+      question,
+      options,
+      counts: options.map(() => 0),
+      totalVotes: 0,
+      listed: newPoll.listed ?? false,
+    };
   }
 
   /**
@@ -32,6 +59,20 @@ export abstract class PollsRepoPort {
    * write itself syncs in the background, so the poll shows before it is acknowledged.
    */
   abstract createPoll(newPoll: NewPoll): Promise<string>;
+
+  /**
+   * Replaces the question, answers and listing of the visitor's own open poll
+   * and starts its next round: all counts drop to zero and everybody may vote
+   * again. Applies locally right away; throws if the changes are invalid.
+   */
+  abstract updatePoll(pollId: string, changes: NewPoll): WriteReceipt;
+
+  /**
+   * Deletes the visitor's own poll, locally right away. Its votes and chat
+   * messages stay until the poll's TTL removes them, but nothing shows them
+   * anymore. `saved` settles once the backend accepted or rejected it.
+   */
+  abstract deletePoll(pollId: string): WriteReceipt;
 
   /**
    * Emits the poll on every change, `null` if it does not exist. A featured
@@ -43,24 +84,31 @@ export abstract class PollsRepoPort {
   abstract watchHotPolls(count: number): Observable<Poll[]>;
 
   /**
-   * Emits the open listed polls, newest first, at most
-   * {@link PollsRepoPort.PUBLIC_POLLS_LIMIT}.
+   * Emits the first `count` listed polls in the given order, without the
+   * closed ones the TTL has not deleted yet (so possibly fewer).
    */
-  abstract watchPublicPolls(): Observable<Poll[]>;
+  abstract watchPublicPolls(
+    sort: PollSort,
+    count: number
+  ): Observable<PollPage>;
 
   /**
-   * Emits the polls the signed-in visitor created, newest first, or `null`
-   * when nobody is signed in. Emits `undefined` while a newly signed-in
-   * account's polls load, so the previous account's list never stays visible.
-   * Never emits on the server.
+   * Emits the first `count` polls the signed-in visitor created, newest
+   * first, for the latest of `counts`, or `null` when nobody is signed in.
+   * Emits `undefined` while a newly signed-in account's polls load, so the
+   * previous account's list never stays visible; a new count keeps the
+   * current page until the larger one arrives. Never emits on the server.
    */
-  abstract watchMyPolls(): Observable<Poll[] | null | undefined>;
+  abstract watchMyPolls(
+    counts: Observable<number>
+  ): Observable<PollPage | null | undefined>;
 
   /**
-   * Emits the option the signed-in visitor voted for, `undefined` if they have
-   * not voted or are not signed in. Never signs anyone in.
+   * Emits the signed-in visitor's vote on the poll, in whatever round it was
+   * cast, `undefined` if they have not voted or are not signed in. Never
+   * signs anyone in.
    */
-  abstract watchOwnVote(pollId: string): Observable<number | undefined>;
+  abstract watchOwnVote(pollId: string): Observable<OwnVote | undefined>;
 
   /**
    * Signs the visitor in if needed and records their one vote on the poll;
@@ -69,5 +117,5 @@ export abstract class PollsRepoPort {
    * `saved` settles once the backend accepted the vote or rejected it, e.g.
    * because this visitor already voted from another tab.
    */
-  abstract vote(poll: Poll, optionIndex: number): Promise<VoteReceipt>;
+  abstract vote(poll: Poll, optionIndex: number): Promise<WriteReceipt>;
 }

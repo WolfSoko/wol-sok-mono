@@ -44,8 +44,11 @@ service cloud.firestore {
     // polls (home page, search) can be listed by anyone, the others only by
     // their creator ("My polls").
     // Creating and voting need a (usually anonymous) sign-in, so each uid votes
-    // at most once per poll: a vote is a batch that creates
+    // at most once per poll and round: a vote is a batch that writes
     // polls/{pollId}/votes/{uid} and raises the matching count by one.
+    // The creator may edit their open poll, which starts the next round with
+    // all counts at zero, so everybody may vote again; or delete it. Votes
+    // and chat messages of a deleted poll expire with its TTL.
     match /polls/{pollId} {
       allow get: if true;
       // the query must filter on listed == true or on creatorUid
@@ -56,10 +59,16 @@ service cloud.firestore {
         isValidFeaturedPoll(pollId, request.resource.data));
       // No votes once the poll expired: TTL deletion lags and is not atomic, so
       // a vote document may be gone while its poll is still there.
-      allow update: if request.auth != null && request.time < resource.data.ttl &&
-        isFirstVoteOfUser(pollId) &&
-        isSingleVote(request.resource.data, resource.data, voteAfter(pollId).option);
-      allow delete: if false;
+      allow update: if request.auth != null && request.time < resource.data.ttl && (
+        (isFirstVoteInRound(pollId, roundOf(resource.data)) &&
+          isSingleVote(request.resource.data, resource.data, voteAfter(pollId).option)) ||
+        isValidEdit(request.resource.data, resource.data));
+      allow delete: if request.auth != null && resource.data.creatorUid == request.auth.uid;
+
+      // Missing on polls (and votes) from before polls could be edited.
+      function roundOf(data) {
+        return data.get('round', 0);
+      }
 
       function optionKeys() {
         return ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
@@ -75,7 +84,26 @@ service cloud.firestore {
           poll.keys().hasOnly(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl', 'creatorUid', 'listed']) &&
           poll.creatorUid == request.auth.uid &&
           (!('listed' in poll) || poll.listed is bool) &&
-          poll.question is string &&
+          hasValidContent(poll) &&
+          hasNoVotes(poll) &&
+          poll.createdAt is timestamp &&
+          poll.ttl is timestamp &&
+          poll.ttl == poll.createdAt + duration.value(30, 'd');
+      }
+
+      // The creator replaces question, answers and listing and starts the
+      // next round; creation time, TTL and creator stay.
+      function isValidEdit(newPoll, oldPoll) {
+        return oldPoll.creatorUid == request.auth.uid &&
+          newPoll.diff(oldPoll).affectedKeys().hasOnly(['question', 'options', 'counts', 'totalVotes', 'listed', 'round']) &&
+          newPoll.listed is bool &&
+          newPoll.round == roundOf(oldPoll) + 1 &&
+          hasValidContent(newPoll) &&
+          hasNoVotes(newPoll);
+      }
+
+      function hasValidContent(poll) {
+        return poll.question is string &&
           poll.question.size() >= 5 &&
           poll.question.size() <= 200 &&
           poll.options is list &&
@@ -90,11 +118,7 @@ service cloud.firestore {
           isValidOption(poll.options, 6) &&
           isValidOption(poll.options, 7) &&
           isValidOption(poll.options, 8) &&
-          isValidOption(poll.options, 9) &&
-          hasNoVotes(poll) &&
-          poll.createdAt is timestamp &&
-          poll.ttl is timestamp &&
-          poll.ttl == poll.createdAt + duration.value(30, 'd');
+          isValidOption(poll.options, 9);
       }
 
       function hasNoVotes(poll) {
@@ -143,9 +167,12 @@ service cloud.firestore {
         return getAfter(votePath(pollId)).data;
       }
 
-      // The user's vote document is created by this very batch.
-      function isFirstVoteOfUser(pollId) {
-        return !exists(votePath(pollId)) && existsAfter(votePath(pollId));
+      // This very batch writes the user's vote for the current round, either
+      // their first or replacing one from an earlier round.
+      function isFirstVoteInRound(pollId, round) {
+        return (!exists(votePath(pollId)) || roundOf(get(votePath(pollId)).data) != round) &&
+          existsAfter(votePath(pollId)) &&
+          roundOf(voteAfter(pollId)) == round;
       }
 
       // A vote raises exactly the voted option's count and the total by one.
@@ -156,21 +183,34 @@ service cloud.firestore {
           newPoll.counts[string(option)] == oldPoll.counts[string(option)] + 1;
       }
 
-      // One vote per user and poll; the poll update above checks the counts.
+      // One vote per user, poll and round; the poll update above checks the
+      // counts. A vote from an earlier round may be replaced.
       match /votes/{uid} {
         allow get: if request.auth != null && request.auth.uid == uid;
         allow list: if false;
         allow create: if request.auth != null && request.auth.uid == uid &&
-          isValidVote(request.resource.data, get(/databases/$(database)/documents/polls/$(pollId)).data) &&
-          getAfter(/databases/$(database)/documents/polls/$(pollId)).data.totalVotes ==
-            get(/databases/$(database)/documents/polls/$(pollId)).data.totalVotes + 1;
-        allow update, delete: if false;
+          isCountedVote(request.resource.data);
+        allow update: if request.auth != null && request.auth.uid == uid &&
+          roundOf(resource.data) != roundOf(pollBefore()) &&
+          isCountedVote(request.resource.data);
+        allow delete: if false;
+
+        function pollBefore() {
+          return get(/databases/$(database)/documents/polls/$(pollId)).data;
+        }
+
+        function isCountedVote(vote) {
+          return isValidVote(vote, pollBefore()) &&
+            getAfter(/databases/$(database)/documents/polls/$(pollId)).data.totalVotes ==
+              pollBefore().totalVotes + 1;
+        }
 
         function isValidVote(vote, poll) {
           return vote.keys().hasAll(['option', 'createdAt', 'ttl']) &&
-            vote.keys().hasOnly(['option', 'createdAt', 'ttl']) &&
+            vote.keys().hasOnly(['option', 'round', 'createdAt', 'ttl']) &&
             vote.option is int &&
             string(vote.option) in poll.counts &&
+            roundOf(vote) == roundOf(poll) &&
             vote.createdAt is timestamp &&
             vote.ttl == poll.ttl;
         }

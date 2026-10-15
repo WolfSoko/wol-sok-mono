@@ -88,6 +88,7 @@ export function storedFeaturedPoll(
     closesAt: featuredPollClosesAt(now),
     creatorUid: FEATURED_CREATOR_UID,
     listed: true,
+    round: 0,
   };
 }
 

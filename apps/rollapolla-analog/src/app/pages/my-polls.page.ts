@@ -14,6 +14,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
+import { EndlessScroll } from '../core/endless-scroll/endless-scroll';
+import { EndlessScrollEndComponent } from '../core/endless-scroll/endless-scroll-end.component';
 import { PollsRepoPort } from '../ports/polls-repo.port';
 import { retry, tap, timer } from 'rxjs';
 import { SITE_TAGS } from './site-tags';
@@ -25,6 +27,7 @@ const RETRY_DELAY_MS = 10_000;
   selector: 'rap-my-polls-page',
   imports: [
     DatePipe,
+    EndlessScrollEndComponent,
     MatButtonModule,
     MatCardModule,
     MatIconModule,
@@ -70,6 +73,7 @@ const RETRY_DELAY_MS = 10_000;
               </li>
             }
           </ul>
+          <rap-endless-scroll-end [scroll]="scroll" />
         } @else {
           <mat-card
             appearance="outlined"
@@ -172,34 +176,35 @@ export default class MyPollsPageComponent {
   /** Stays set until polls (or the signed-out state) load again. */
   protected readonly loadFailed = signal(false);
 
+  protected readonly scroll = new EndlessScroll();
+  private readonly pollsRepo = inject(PollsRepoPort);
   private readonly myPolls = toSignal(
-    inject(PollsRepoPort)
-      .watchMyPolls()
-      .pipe(
-        tap((polls) => {
-          if (polls !== undefined) {
-            this.loadFailed.set(false);
-          }
-        }),
-        // e.g. the index still building right after a deploy. Listening again
-        // also picks up a sign-in or account switch made in the meantime.
-        retry({
-          delay: (error: unknown) => {
-            console.error('Could not load my polls', error);
-            this.loadFailed.set(true);
-            return timer(RETRY_DELAY_MS);
-          },
-        })
-      )
+    this.pollsRepo.watchMyPolls(this.scroll.counts).pipe(
+      tap((page) => {
+        if (page !== undefined) {
+          this.loadFailed.set(false);
+          this.scroll.answered(!!page?.hasMore);
+        }
+      }),
+      // e.g. the index still building right after a deploy. Listening again
+      // also picks up a sign-in or account switch made in the meantime.
+      retry({
+        delay: (error: unknown) => {
+          console.error('Could not load my polls', error);
+          this.loadFailed.set(true);
+          return timer(RETRY_DELAY_MS);
+        },
+      })
+    )
   );
 
   /** `undefined` while loading; an empty list when signed out. */
   protected readonly polls = computed(() => {
-    const polls = this.myPolls();
-    if (polls === undefined) {
+    const page = this.myPolls();
+    if (page === undefined) {
       return undefined;
     }
-    return polls ?? [];
+    return page?.polls ?? [];
   });
 
   constructor() {
