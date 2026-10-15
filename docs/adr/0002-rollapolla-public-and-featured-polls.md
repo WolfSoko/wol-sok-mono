@@ -32,8 +32,10 @@ exists. The first vote or chat message stores it with
 `creatorUid: 'rollapolla'`, `listed: true` and a lifetime of a year.
 
 The rules accept that document only if its question and options match
-`featuredPolls()` in `firestore.rules` exactly, it has no votes, and it was
-created within the last five minutes. They refuse any other poll whose id
+`featuredPolls()` in `firestore.rules` exactly, it has no votes, and its
+`createdAt` is within a day of the server time. The day allows for a client
+clock that is off; the year-long `ttl` is fixed to `createdAt`, so a skewed
+clock can move a featured poll's end by at most a day. They refuse any other poll whose id
 starts with `featured-`, so nobody can occupy a featured id with their own
 question. `featured-polls.spec.ts` checks that the code and the rules list the
 same polls.

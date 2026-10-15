@@ -112,7 +112,8 @@ service cloud.firestore {
       }
 
       // Whoever votes or chats first stores a featured poll, exactly as defined
-      // above, created just now and running for a year.
+      // above, created now (give or take a day of client clock skew) and
+      // running for a year.
       function isValidFeaturedPoll(pollId, poll) {
         return pollId in featuredPolls() &&
           poll.keys().hasAll(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl', 'creatorUid', 'listed']) &&
@@ -123,8 +124,8 @@ service cloud.firestore {
           poll.listed == true &&
           hasNoVotes(poll) &&
           poll.createdAt is timestamp &&
-          poll.createdAt > request.time - duration.value(5, 'm') &&
-          poll.createdAt < request.time + duration.value(5, 'm') &&
+          poll.createdAt > request.time - duration.value(1, 'd') &&
+          poll.createdAt < request.time + duration.value(1, 'd') &&
           poll.ttl == poll.createdAt + duration.value(365, 'd');
       }
 

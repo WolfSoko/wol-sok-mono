@@ -147,7 +147,10 @@ describe('PollPageComponent after creating a poll', () => {
     await harness.fixture.whenStable();
     expect(ready()).not.toBeNull();
 
+    // the empty URL needs no route; leaving the poll page forgets the state
     await harness.navigateByUrl('/');
+    expect(TestBed.inject(Router).url).toBe('/');
+    expect(ready()).toBeFalsy();
     await harness.navigateByUrl(`/poll/${pollId}`);
     await harness.fixture.whenStable();
     expect(ready()).toBeNull();

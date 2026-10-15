@@ -91,3 +91,21 @@
     color: var(--mat-sys-primary);
   }
 }
+
+.copy-failed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  flex-basis: 100%;
+  color: var(--mat-sys-error);
+  font: var(--mat-sys-body-medium);
+}
+
+.manual-link {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: var(--rap-radius-md);
+  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-surface-container-lowest);
+  font: var(--mat-sys-body-medium);
+}

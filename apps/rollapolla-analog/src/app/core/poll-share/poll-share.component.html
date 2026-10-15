@@ -40,6 +40,19 @@
       linkCopied() ? "Link copied to the clipboard" : ""
     }}</span>
   </div>
+  @if (copyFailed()) {
+    <label class="copy-failed" data-testid="copy-failed">
+      <span role="alert">Could not copy. Select the link and copy it:</span>
+      <input
+        #manualLink
+        class="manual-link"
+        readonly
+        [value]="content().url"
+        (focus)="manualLink.select()"
+        data-testid="manual-link"
+      />
+    </label>
+  }
   @if (links().length) {
     <ul class="targets" aria-label="Share on">
       @for (link of links(); track link.id) {

@@ -143,6 +143,22 @@ describe('PollShareComponent', () => {
     expect(button.textContent).toContain('Copy link');
   });
 
+  it('shows the link to copy by hand when copying fails', async () => {
+    await render();
+    vi.spyOn(TestBed.inject(Clipboard), 'copy').mockReturnValue(false);
+
+    query('copy-link').nativeElement.click();
+    fixture.detectChanges();
+
+    expect(query('copy-failed').nativeElement.textContent).toContain(
+      'Could not copy'
+    );
+    expect((query('manual-link').nativeElement as HTMLInputElement).value).toBe(
+      pollUrl
+    );
+    expect(query('copy-link').nativeElement.textContent).toContain('Copy link');
+  });
+
   it('greets the creator when highlighted', async () => {
     await render();
     expect(query('poll-ready')).toBeNull();

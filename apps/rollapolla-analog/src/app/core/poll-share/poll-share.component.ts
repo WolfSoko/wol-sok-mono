@@ -65,6 +65,8 @@ export class PollShareComponent {
   /** Only known in the browser, so the server renders without it. */
   protected readonly canShareNatively = signal(false);
   protected readonly linkCopied = signal(false);
+  /** The browser refused to copy: the link is shown to copy by hand. */
+  protected readonly copyFailed = signal(false);
   private linkCopiedTimer: ReturnType<typeof setTimeout> | undefined;
 
   protected readonly content = computed<ShareContent>(() => {
@@ -117,6 +119,7 @@ export class PollShareComponent {
     clearTimeout(this.linkCopiedTimer);
     const copied = this.clipboard.copy(this.content().url);
     this.linkCopied.set(copied);
+    this.copyFailed.set(!copied);
     if (copied) {
       this.linkCopiedTimer = setTimeout(
         () => this.linkCopied.set(false),
