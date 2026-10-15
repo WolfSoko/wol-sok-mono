@@ -21,10 +21,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -48,12 +46,19 @@ import {
   Size,
   toggleFullscreen as requestToggleFullscreen,
 } from './fullscreen';
+import { MatchSetupComponent } from './match-setup/match-setup.component';
 import { Nutrient } from './state/bacteria-simulation';
+import { BotDifficulty, DEFAULT_DIFFICULTY } from './state/bot-controller';
 import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
 import { GameBalance, gameBalance } from './state/game-balance';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
-import { GameState, GameStateState } from './state/game.states';
+import {
+  DEFAULT_MODE,
+  GameMode,
+  GameState,
+  GameStateState,
+} from './state/game.states';
 import {
   Level,
   LEVELS,
@@ -61,6 +66,7 @@ import {
   levelMap,
   nextLevel,
 } from './state/levels';
+import { isBoostReady } from './state/player.service';
 import { Rect } from './state/maps';
 import { Bacteria, Player } from './state/player.model';
 import { PlayerQuery } from './state/player.query';
@@ -73,6 +79,8 @@ import {
 /** Statistics of one colony, ready to be rendered by the template. */
 export interface ColonyStats {
   id: number;
+  name: string;
+  isBot: boolean;
   css: string;
   bacterias: number;
   captured: number;
@@ -81,6 +89,45 @@ export interface ColonyStats {
   energy: number;
   /** Share of all living bacteria in percent. */
   share: number;
+  /** True while the boost of this colony is running. */
+  boosting: boolean;
+  /** Whole seconds until the boost can be fired again, 0 when it is ready. */
+  boostCooldown: number;
+  /** The key that fires the boost, for the button label. */
+  boostKey: BoostKey;
+}
+
+/** The keys that fire a boost: Space for the first human, Enter for the second. */
+export type BoostKey = 'Space' | 'Enter';
+const BOOST_KEYS: readonly BoostKey[] = ['Space', 'Enter'];
+
+/**
+ * The boost key of a human player: the keys are handed out in player order.
+ * With a single human both keys belong to that player, so the label shows the
+ * primary one.
+ */
+export function boostKeyOf(
+  humans: readonly Player[],
+  player: Player
+): BoostKey {
+  const index = humans.indexOf(player);
+  return BOOST_KEYS[Math.max(0, Math.min(index, BOOST_KEYS.length - 1))];
+}
+
+/**
+ * The human whose boost a key fires, null for any other key. Each key goes to
+ * the human it is handed out to; with fewer humans than keys the last human
+ * takes the rest, so against the computer Enter works as well as Space.
+ */
+export function humanForBoostKey(
+  humans: readonly Player[],
+  key: string
+): Player | null {
+  const index = BOOST_KEYS.indexOf(key === ' ' ? 'Space' : (key as BoostKey));
+  if (index < 0 || humans.length === 0) {
+    return null;
+  }
+  return humans[Math.min(index, humans.length - 1)];
 }
 
 /**
@@ -137,8 +184,7 @@ export function createImageDataFromBacterias(
     MatToolbarModule,
     MatIconModule,
     MatTooltipModule,
-    MatFormFieldModule,
-    MatSelectModule,
+    MatchSetupComponent,
   ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
@@ -169,8 +215,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   isRunning$: Observable<boolean>;
   isPaused$: Observable<boolean>;
 
-  /** All levels, in the order they are meant to be played. */
-  protected readonly levels = LEVELS;
   /** The level the next match is played on. */
   protected readonly level: Signal<Level>;
   /** Balance of the selected level - drives both rendering and the scoreboard. */
@@ -179,6 +223,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly walls: Signal<Rect[]>;
   /** The level that follows the selected one, null at the end of the list. */
   protected readonly upcomingLevel: Signal<Level | null>;
+  /** Two humans or one human against the computer. */
+  protected readonly mode: Signal<GameMode>;
+  /** How hard the computer plays. */
+  protected readonly difficulty: Signal<BotDifficulty>;
+  /** The crosshairs a finger or a key may steer - never the computer's. */
+  private readonly humans: Signal<Player[]>;
 
   /** True while the arena fills the screen. */
   protected readonly fullscreen = signal(false);
@@ -207,9 +257,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     );
     this.upcomingLevel = computed(() => nextLevel(this.level().id));
 
+    this.mode = toSignal(this.query.selectMode(), {
+      initialValue: DEFAULT_MODE,
+    });
+    this.difficulty = toSignal(this.query.selectDifficulty(), {
+      initialValue: DEFAULT_DIFFICULTY,
+    });
+
     const players = toSignal(this.playerQuery.selectAll(), {
       initialValue: [] as Player[],
     });
+    this.humans = computed(() => players().filter((player) => !player.isBot));
     this.stats = computed(() => toColonyStats(players(), this.balance()));
 
     // Repaint as soon as another level puts different walls into the arena, so
@@ -421,12 +479,26 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  /** Draws each player's crosshair in their own colour. */
+  /**
+   * Draws each player's crosshair in their own colour, with a pulsing ring
+   * around it while the player's boost is running.
+   */
   private drawPlayerCursors(): void {
+    const boostDuration = this.balance().boostDurationSec;
     for (const player of this.playerQuery.getAll()) {
-      this.cx.fillStyle = `rgba(${player.color.join(',')})`;
+      const css = `rgba(${player.color.join(',')})`;
+      this.cx.fillStyle = css;
       this.cx.fillRect(player.x - 6, player.y - 0.5, 13, 2);
       this.cx.fillRect(player.x - 0.5, player.y - 6, 2, 13);
+
+      if (player.boostActiveSec > 0 && boostDuration > 0) {
+        const left = player.boostActiveSec / boostDuration;
+        this.cx.strokeStyle = css;
+        this.cx.lineWidth = 1.5;
+        this.cx.beginPath();
+        this.cx.arc(player.x, player.y, 9 + 4 * (1 - left), 0, Math.PI * 2);
+        this.cx.stroke();
+      }
     }
   }
 
@@ -442,6 +514,21 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Picks the level the next match is played on. */
   protected selectLevel(levelId: string): void {
     this.gameStateService.setLevel(levelId);
+  }
+
+  /** Switches between two humans and human versus computer. */
+  protected selectMode(mode: GameMode): void {
+    this.gameStateService.setMode(mode);
+  }
+
+  /** Picks how hard the computer plays. */
+  protected selectDifficulty(difficulty: BotDifficulty): void {
+    this.gameStateService.setDifficulty(difficulty);
+  }
+
+  /** Fires a player's boost - the button equivalent of Space / Enter. */
+  protected boost(playerId: number): void {
+    this.gameStateService.boost(playerId);
   }
 
   /** Puts the arena on the whole screen, or brings it back into the page. */
@@ -498,7 +585,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const playerId = nearestFreeCrosshair(
-      this.playerQuery.getAll(),
+      this.humans(),
       point,
       new Set(this.draggedBy.values())
     );
@@ -549,14 +636,29 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown($event: KeyboardEvent) {
+    if (isTypingTarget($event.target)) {
+      return;
+    }
     // F is handled here rather than in the store: the fullscreen request has
     // to happen inside the key event, browsers reject it otherwise.
-    if (
-      $event.key.toLowerCase() === 'f' &&
-      !$event.repeat &&
-      !isTypingTarget($event.target)
-    ) {
+    if ($event.key.toLowerCase() === 'f' && !$event.repeat) {
       this.toggleFullscreen();
+      return;
+    }
+    // The boost keys belong to the game only while a match is on, and never
+    // while a button has the focus: a keyboard user pressing Enter on "Reset"
+    // expects a reset, not a boost. Outside of a match Space still scrolls.
+    const boosted =
+      this.query.getValue().currentState === GameState.RUNNING &&
+      !isInteractiveTarget($event.target)
+        ? humanForBoostKey(this.humans(), $event.key)
+        : null;
+    if (boosted != null) {
+      // Space would scroll the page.
+      $event.preventDefault();
+      if (!$event.repeat) {
+        this.boost(boosted.id);
+      }
       return;
     }
     this.gameStateService.addKeyPress($event.key);
@@ -588,19 +690,50 @@ function isTypingTarget(target: EventTarget | null): boolean {
   );
 }
 
+/**
+ * True while the key went to a focused control that Space or Enter activates,
+ * such as a button or a toggle. A disabled control cannot be activated, so a
+ * key pressed on it still belongs to the game - the Start button keeps the
+ * focus after it kicked off the match and gets disabled.
+ */
+function isInteractiveTarget(target: EventTarget | null): boolean {
+  const element = target as HTMLElement | null;
+  if (element == null || typeof element.closest !== 'function') {
+    return false;
+  }
+  const control = element.closest<HTMLElement>(
+    'button, a[href], [role="button"], [role="radio"], [role="checkbox"], [role="switch"], [role="tab"], [role="menuitem"]'
+  );
+  if (control == null) {
+    return false;
+  }
+  return !(
+    (control as HTMLButtonElement).disabled ||
+    control.getAttribute('aria-disabled') === 'true'
+  );
+}
+
 /** Turns the stored players into the numbers the scoreboard renders. */
 function toColonyStats(
   players: Player[],
   balance: GameBalance = gameBalance
 ): ColonyStats[] {
   const total = players.reduce((sum, player) => sum + player.bacteriaCount, 0);
+  const humans = players.filter((player) => !player.isBot);
   return players.map((player) => ({
     id: player.id,
+    name: player.name,
+    isBot: player.isBot,
     css: `rgba(${player.color.join(',')})`,
     bacterias: player.bacteriaCount,
     captured: player.captured,
     lost: player.lost,
     energy: Math.round((player.averageEnergy / balance.maxEnergy) * 100),
     share: total > 0 ? (player.bacteriaCount / total) * 100 : 0,
+    boosting: player.boostActiveSec > 0,
+    boostCooldown: isBoostReady(player)
+      ? 0
+      : Math.ceil(player.boostCooldownSec),
+    boostKey: boostKeyOf(humans, player),
   }));
 }

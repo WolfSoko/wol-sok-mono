@@ -1,0 +1,183 @@
+import { TestBed } from '@angular/core/testing';
+import { gameBalance } from './game-balance';
+import { GameState, GameStateStore } from './game.states';
+import { getMap } from './maps';
+import { PlayerColorArray } from './player.model';
+import { PlayerQuery } from './player.query';
+import { PlayerService, PlayerSpawn } from './player.service';
+
+const WIDTH = 320;
+const HEIGHT = 140;
+const ORANGE: PlayerColorArray = [255, 100, 20, 255];
+const BLUE: PlayerColorArray = [0, 100, 230, 255];
+
+function spawns(versusComputer: boolean): PlayerSpawn[] {
+  return [
+    { x: 80, y: 70, color: ORANGE, name: 'You', isBot: false },
+    { x: 240, y: 70, color: BLUE, name: 'Computer', isBot: versusComputer },
+  ];
+}
+
+describe('PlayerService', () => {
+  let service: PlayerService;
+  let playerQuery: PlayerQuery;
+  let store: GameStateStore;
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    service = TestBed.inject(PlayerService);
+    playerQuery = TestBed.inject(PlayerQuery);
+    store = TestBed.inject(GameStateStore);
+    store.update({
+      width: WIDTH,
+      height: HEIGHT,
+      currentState: GameState.RUNNING,
+    });
+  });
+
+  /**
+   * One frame of the real game loop: the simulation step plus the tick the
+   * game state store publishes, which is what moves the crosshairs.
+   */
+  function run(frames: number, deltaTimeSec = 1 / 30) {
+    for (let frame = 0; frame < frames; frame++) {
+      service.gameLoop(WIDTH, HEIGHT, deltaTimeSec);
+      store.update((state) => ({
+        timeDelta: deltaTimeSec * 1000,
+        timePassed: state.timePassed + deltaTimeSec * 1000,
+      }));
+    }
+  }
+
+  describe('boost', () => {
+    beforeEach(() => {
+      service.init(spawns(false), { map: getMap('open-field') });
+    });
+
+    it('starts the boost and the cooldown together', () => {
+      service.boost(0);
+
+      const player = playerQuery.getEntity(0);
+      expect(player?.boostActiveSec).toBe(gameBalance.boostDurationSec);
+      expect(player?.boostCooldownSec).toBe(gameBalance.boostCooldownSec);
+    });
+
+    it('runs the boost down first and leaves the cooldown untouched', () => {
+      service.boost(0);
+
+      run(1, 0.5);
+
+      const player = playerQuery.getEntity(0);
+      expect(player?.boostActiveSec).toBeCloseTo(
+        gameBalance.boostDurationSec - 0.5
+      );
+      expect(player?.boostCooldownSec).toBe(gameBalance.boostCooldownSec);
+    });
+
+    it('starts recharging once the boost is over', () => {
+      service.boost(0);
+      run(1, gameBalance.boostDurationSec);
+
+      run(1, 0.5);
+
+      const player = playerQuery.getEntity(0);
+      expect(player?.boostActiveSec).toBe(0);
+      expect(player?.boostCooldownSec).toBeCloseTo(
+        gameBalance.boostCooldownSec - 0.5
+      );
+    });
+
+    it('refuses a second boost while the first one is still recharging', () => {
+      service.boost(0);
+      run(1, gameBalance.boostDurationSec + 0.1);
+
+      service.boost(0);
+
+      expect(playerQuery.getEntity(0)?.boostActiveSec).toBe(0);
+    });
+
+    it('allows a boost again after the boost plus the full cooldown', () => {
+      service.boost(0);
+      run(1, gameBalance.boostDurationSec);
+      run(1, gameBalance.boostCooldownSec);
+
+      service.boost(0);
+
+      expect(playerQuery.getEntity(0)?.boostActiveSec).toBe(
+        gameBalance.boostDurationSec
+      );
+    });
+
+    it('leaves the other player alone', () => {
+      service.boost(0);
+
+      expect(playerQuery.getEntity(1)?.boostActiveSec).toBe(0);
+    });
+  });
+
+  describe('against the computer', () => {
+    beforeEach(() => {
+      service.init(spawns(true), {
+        map: getMap('open-field'),
+        difficulty: 'hard',
+      });
+    });
+
+    it('marks the second player as the bot', () => {
+      expect(playerQuery.getEntity(0)?.isBot).toBe(false);
+      expect(playerQuery.getEntity(1)?.isBot).toBe(true);
+      expect(playerQuery.getEntity(1)?.name).toBe('Computer');
+    });
+
+    it('steers the computer crosshair on its own', () => {
+      const before = playerQuery.getEntity(1) as { x: number; y: number };
+
+      run(30);
+
+      const after = playerQuery.getEntity(1) as { x: number; y: number };
+      expect(after.x !== before.x || after.y !== before.y).toBe(true);
+    });
+
+    it('lets the human steer with the arrow keys as well', () => {
+      const before = playerQuery.getEntity(0)?.x ?? 0;
+
+      store.update({ keysPressed: ['ArrowRight'], timeDelta: 100 });
+
+      expect(playerQuery.getEntity(0)?.x).toBeGreaterThan(before);
+    });
+
+    it('keeps the keys away from the computer crosshair', () => {
+      const bot = playerQuery.getEntity(1);
+
+      store.update({ keysPressed: ['ArrowRight'], timeDelta: 100 });
+
+      expect(playerQuery.getEntity(1)?.x).toBe(bot?.x);
+    });
+  });
+
+  describe('with two humans', () => {
+    beforeEach(() => {
+      service.init(spawns(false), { map: getMap('open-field') });
+    });
+
+    it('gives the arrow keys to the second player', () => {
+      const first = playerQuery.getEntity(0)?.x ?? 0;
+      const second = playerQuery.getEntity(1)?.x ?? 0;
+
+      store.update({ keysPressed: ['ArrowRight'], timeDelta: 100 });
+
+      expect(playerQuery.getEntity(0)?.x).toBe(first);
+      expect(playerQuery.getEntity(1)?.x).toBeGreaterThan(second);
+    });
+
+    it('leaves both crosshairs where they are without a bot', () => {
+      const before = playerQuery.getAll().map((player) => [player.x, player.y]);
+
+      run(10);
+
+      expect(
+        playerQuery.getAll().map((player) => [player.x, player.y])
+      ).toEqual(before);
+    });
+  });
+});

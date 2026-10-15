@@ -1,14 +1,56 @@
 import { Injectable, inject } from '@angular/core';
 import { ID, transaction } from '@datorama/akita';
 import { BacteriaSimulation, Colony, Nutrient } from './bacteria-simulation';
+import {
+  BotController,
+  BotDifficulty,
+  buildBotView,
+  DEFAULT_DIFFICULTY,
+} from './bot-controller';
 import { GameBalance, gameBalance } from './game-balance';
 import { GameStateQuery } from './game-state.query';
 import { GameState } from './game.states';
+import { clamp, Point } from './geometry';
 import { DEFAULT_CROSSHAIR_SPEED } from './levels';
 import { GameMap, getMap } from './maps';
 import { createPlayer, Player, PlayerColorArray } from './player.model';
 import { PlayerQuery } from './player.query';
 import { PlayerStore } from './player.store';
+
+/** What a match needs to know about one player before it starts. */
+export interface PlayerSpawn {
+  x: number;
+  y: number;
+  color: PlayerColorArray;
+  name: string;
+  /** True when the computer steers this crosshair. */
+  isBot: boolean;
+}
+
+/** A direction a key set asks for, each axis -1, 0 or 1. */
+interface Direction {
+  x: number;
+  y: number;
+}
+
+/**
+ * The keys that steer a crosshair, one set per human player: WASD for the
+ * first one, the arrow keys for the second one.
+ */
+const KEY_SETS: readonly Record<string, Direction>[] = [
+  {
+    w: { x: 0, y: -1 },
+    s: { x: 0, y: 1 },
+    a: { x: -1, y: 0 },
+    d: { x: 1, y: 0 },
+  },
+  {
+    arrowup: { x: 0, y: -1 },
+    arrowdown: { x: 0, y: 1 },
+    arrowleft: { x: -1, y: 0 },
+    arrowright: { x: 1, y: 0 },
+  },
+];
 
 @Injectable({ providedIn: 'root' })
 export class PlayerService {
@@ -17,8 +59,11 @@ export class PlayerService {
   private playerQuery = inject(PlayerQuery);
 
   private simulation = new BacteriaSimulation();
+  private balance: GameBalance = gameBalance;
   /** Arena position a player is currently dragging their crosshair towards. */
-  private dragTargets = new Map<number, { x: number; y: number }>();
+  private dragTargets = new Map<number, Point>();
+  /** The computer opponents, one per bot player. */
+  private bots = new Map<number, BotController>();
 
   constructor() {
     this.gameStateQuery
@@ -37,32 +82,43 @@ export class PlayerService {
    * rebuilt with them - its balance is fixed for the lifetime of a match on
    * purpose, nothing may change the rules while the colonies are fighting.
    */
-  init(
-    playersData: { x: number; y: number; color: PlayerColorArray }[],
+  public init(
+    playersData: PlayerSpawn[],
     options: {
       balance?: GameBalance;
       map?: GameMap;
       crosshairSpeed?: number;
+      difficulty?: BotDifficulty;
     } = {}
-  ) {
+  ): void {
     const balance = options.balance ?? gameBalance;
     const map = options.map ?? getMap('corridors');
     const radius = balance.startBacteriaRadius;
 
     this.playerStore.remove();
-    playersData.forEach((playerData, index) =>
+    this.bots.clear();
+    playersData.forEach((playerData, index) => {
       this.add(
         createPlayer({
           id: index,
           x: playerData.x,
           y: playerData.y,
           color: playerData.color,
+          name: playerData.name,
+          isBot: playerData.isBot,
           maxSpeed: options.crosshairSpeed ?? DEFAULT_CROSSHAIR_SPEED,
         })
-      )
-    );
+      );
+      if (playerData.isBot) {
+        this.bots.set(
+          index,
+          new BotController(options.difficulty ?? DEFAULT_DIFFICULTY)
+        );
+      }
+    });
     this.setActive(0);
     this.dragTargets.clear();
+    this.balance = balance;
     this.simulation = new BacteriaSimulation(balance);
     this.simulation.setMap(map);
     this.simulation.init(
@@ -78,12 +134,12 @@ export class PlayerService {
   }
 
   /** Marks a player as the active one in the store. */
-  setActive(playerId: ID) {
+  public setActive(playerId: ID): void {
     this.playerStore.setActive(playerId);
   }
 
   /** Adds a player to the store. */
-  add(player: Player) {
+  public add(player: Player): void {
     this.playerStore.add(player);
   }
 
@@ -97,30 +153,97 @@ export class PlayerService {
    * arena instead of nudging it for a single frame. It is dropped once the
    * crosshair arrives, or as soon as the player touches a key.
    */
-  setDragTarget(playerId: number, x: number, y: number) {
+  public setDragTarget(playerId: number, x: number, y: number): void {
     this.dragTargets.set(playerId, { x, y });
   }
 
+  /**
+   * Fires a player's boost. Nothing happens while one is running or the
+   * previous one is still recharging, so hammering the key does not help.
+   */
+  public boost(playerId: number): void {
+    const player = this.playerQuery.getEntity(playerId);
+    if (player == null || !isBoostReady(player)) {
+      return;
+    }
+    this.playerStore.update(playerId, {
+      boostActiveSec: this.balance.boostDurationSec,
+      boostCooldownSec: this.balance.boostCooldownSec,
+    });
+  }
+
   /** The nutrient pellets currently on the map - used for rendering only. */
-  getNutrients(): Nutrient[] {
+  public getNutrients(): Nutrient[] {
     return this.simulation.getNutrients();
   }
 
   /** The live bacteria of every colony - used for rendering only. */
-  getColonies(): readonly Colony[] {
+  public getColonies(): readonly Colony[] {
     return this.simulation.getColonies();
   }
 
   /** Advances the whole colony war by one frame. */
-  gameLoop(width: number, height: number, deltaTimeSec: number) {
+  public gameLoop(width: number, height: number, deltaTimeSec: number): void {
     this.simulation.resize(width, height);
+    this.tickBoosts(deltaTimeSec);
+    this.runBots(width, height, deltaTimeSec);
     this.simulation.step(this.playerQuery.getAll(), deltaTimeSec);
     this.syncColonyStats();
   }
 
+  /**
+   * Counts the boost timers down. The boost runs out first, only then does
+   * the recharge start - so a player waits the full cooldown after a boost.
+   */
+  @transaction()
+  private tickBoosts(deltaTimeSec: number): void {
+    for (const player of this.playerQuery.getAll()) {
+      if (player.boostActiveSec > 0) {
+        this.playerStore.update(player.id, {
+          boostActiveSec: Math.max(0, player.boostActiveSec - deltaTimeSec),
+        });
+      } else if (player.boostCooldownSec > 0) {
+        this.playerStore.update(player.id, {
+          boostCooldownSec: Math.max(0, player.boostCooldownSec - deltaTimeSec),
+        });
+      }
+    }
+  }
+
+  /** Lets every computer opponent look at the arena and steer its crosshair. */
+  private runBots(width: number, height: number, deltaTimeSec: number): void {
+    if (this.bots.size === 0) {
+      return;
+    }
+    const colonies = this.simulation.getColonies();
+    for (const [playerId, bot] of this.bots) {
+      const player = this.playerQuery.getEntity(playerId);
+      const own = colonies.find((colony) => colony.playerId === playerId);
+      if (player == null || own == null) {
+        continue;
+      }
+      const view = buildBotView(
+        width,
+        height,
+        own,
+        colonies,
+        this.simulation.getNutrients(),
+        isBoostReady(player),
+        this.balance.maxEnergy
+      );
+      const decision = bot.decide(view, deltaTimeSec);
+      if (decision.target != null) {
+        this.setDragTarget(playerId, decision.target.x, decision.target.y);
+      }
+      if (decision.boost) {
+        this.boost(playerId);
+      }
+    }
+  }
+
   /** Mirrors the colony scoreboard into the store, the bacteria stay out of it. */
   @transaction()
-  private syncColonyStats() {
+  private syncColonyStats(): void {
     for (const colony of this.simulation.getColonies()) {
       const bacteriaCount = colony.bacterias.length;
       this.playerStore.update(colony.playerId, {
@@ -134,47 +257,44 @@ export class PlayerService {
   }
 
   @transaction()
-  /** Moves both crosshairs according to the keys that are currently held. */
-  private updatePlayerPos(keysPressed: string[], deltaTimeInSec: number) {
-    let xDir0 = 0;
-    let yDir0 = 0;
-    let xDir1 = 0;
-    let yDir1 = 0;
-
-    keysPressed.forEach((key) => {
-      switch (key.toLowerCase()) {
-        case 'arrowup':
-          yDir1 = yDir1 - 1;
-          break;
-        case 'arrowdown':
-          yDir1 = yDir1 + 1;
-          break;
-        case 'arrowright':
-          xDir1 = xDir1 + 1;
-          break;
-        case 'arrowleft':
-          xDir1 = xDir1 - 1;
-          break;
-        case 'w':
-          yDir0 = yDir0 - 1;
-          break;
-        case 's':
-          yDir0 = yDir0 + 1;
-          break;
-        case 'd':
-          xDir0 = xDir0 + 1;
-          break;
-        case 'a':
-          xDir0 = xDir0 - 1;
-          break;
-      }
-    });
-    const gameState = this.gameStateQuery.getValue();
-    if (gameState.currentState !== GameState.RUNNING) {
+  /**
+   * Moves the crosshairs according to the keys that are currently held.
+   *
+   * Each key set belongs to one human player, in order. With a single human
+   * every set steers that one crosshair, so against the computer WASD and the
+   * arrow keys both work - and the keys never touch a bot's crosshair.
+   */
+  private updatePlayerPos(keysPressed: string[], deltaTimeInSec: number): void {
+    if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
       return;
     }
-    this.movePlayer(0, xDir0, yDir0, deltaTimeInSec);
-    this.movePlayer(1, xDir1, yDir1, deltaTimeInSec);
+    const humans = this.playerQuery.getAll().filter((player) => !player.isBot);
+    const directions = humans.map(() => ({ x: 0, y: 0 }));
+
+    KEY_SETS.forEach((keySet, setIndex) => {
+      const direction = directions[Math.min(setIndex, directions.length - 1)];
+      if (direction == null) {
+        return;
+      }
+      for (const key of keysPressed) {
+        const step = keySet[key.toLowerCase()];
+        if (step != null) {
+          direction.x += step.x;
+          direction.y += step.y;
+        }
+      }
+    });
+
+    for (const player of this.playerQuery.getAll()) {
+      const index = humans.indexOf(player);
+      const direction = index >= 0 ? directions[index] : { x: 0, y: 0 };
+      this.movePlayer(
+        player.id,
+        Math.sign(direction.x),
+        Math.sign(direction.y),
+        deltaTimeInSec
+      );
+    }
   }
 
   /**
@@ -188,7 +308,7 @@ export class PlayerService {
     xDir: number,
     yDir: number,
     deltaTimeInSec: number
-  ) {
+  ): void {
     const playerId = Number(id);
     if (xDir !== 0 || yDir !== 0) {
       this.dragTargets.delete(playerId);
@@ -219,6 +339,7 @@ export class PlayerService {
   }
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(Math.min(value, max), min);
+/** True when the player can fire a boost right now. */
+export function isBoostReady(player: Player): boolean {
+  return player.boostActiveSec <= 0 && player.boostCooldownSec <= 0;
 }

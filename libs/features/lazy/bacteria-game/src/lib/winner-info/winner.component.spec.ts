@@ -25,9 +25,33 @@ describe('WinnerComponent', () => {
   }
 
   it('names the winner', () => {
-    store.update({ winner: createPlayer({ id: 1 }), levelId: LEVELS[0].id });
+    store.update({
+      mode: 'two-players',
+      winner: createPlayer({ id: 1, name: 'Blue' }),
+      levelId: LEVELS[0].id,
+    });
 
-    expect(text()).toContain('The winner is Player: 2');
+    expect(text()).toContain('Blue wins');
+  });
+
+  it('congratulates the human who beat the computer', () => {
+    store.update({
+      mode: 'vs-computer',
+      winner: createPlayer({ id: 0, name: 'You' }),
+      levelId: LEVELS[0].id,
+    });
+
+    expect(text()).toContain('You win');
+  });
+
+  it('tells the human that the computer won', () => {
+    store.update({
+      mode: 'vs-computer',
+      winner: createPlayer({ id: 1, name: 'Computer', isBot: true }),
+      levelId: LEVELS[0].id,
+    });
+
+    expect(text()).toContain('The computer wins');
   });
 
   it('calls a match without a winner a draw', () => {

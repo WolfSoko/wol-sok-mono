@@ -1,0 +1,50 @@
+<div class="match-setup">
+  <mat-button-toggle-group
+    class="mode-picker"
+    aria-label="Opponent"
+    hideSingleSelectionIndicator
+    [value]="mode()"
+    [disabled]="disabled()"
+    (change)="modeChange.emit($event.value)"
+  >
+    <mat-button-toggle value="vs-computer">
+      <mat-icon>smart_toy</mat-icon> vs Computer
+    </mat-button-toggle>
+    <mat-button-toggle value="two-players">
+      <mat-icon>group</mat-icon> 2 Players
+    </mat-button-toggle>
+  </mat-button-toggle-group>
+  @if (mode() === "vs-computer") {
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Difficulty</mat-label>
+      <mat-select
+        class="difficulty-select"
+        [value]="difficulty()"
+        [disabled]="disabled()"
+        (selectionChange)="difficultyChange.emit($event.value)"
+      >
+        @for (option of difficulties; track option.id) {
+          <mat-option [value]="option.id">{{ option.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <p class="difficulty-description">{{ difficultyDescription() }}</p>
+  }
+</div>
+
+<div class="level-picker">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Level</mat-label>
+    <mat-select
+      class="level-select"
+      [value]="level().id"
+      [disabled]="disabled()"
+      (selectionChange)="levelChange.emit($event.value)"
+    >
+      @for (option of levels; track option.id) {
+        <mat-option [value]="option.id">{{ option.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <p class="level-description">{{ level().description }}</p>
+</div>

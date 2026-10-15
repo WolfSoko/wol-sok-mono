@@ -10,6 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { GameStateQuery } from '../state/game-state.query';
+import { DEFAULT_MODE, GameMode } from '../state/game.states';
 import { Level, LEVELS, nextLevel } from '../state/levels';
 import { Player } from '../state/player.model';
 
@@ -39,4 +40,26 @@ export class WinnerComponent {
   public upcoming: Signal<Level | null> = computed(() =>
     nextLevel(this.level().id)
   );
+
+  private mode: Signal<GameMode> = toSignal(this.state.selectMode(), {
+    initialValue: DEFAULT_MODE,
+  });
+
+  /**
+   * One line on how the match ended, addressed to whoever is reading it: a
+   * single human against the computer is "you", two humans go by colour.
+   */
+  public headline: Signal<string> = computed(() => {
+    const player = this.winner();
+    if (player == null) {
+      return 'It is a draw - both colonies wiped each other out!';
+    }
+    if (player.isBot) {
+      return 'The computer wins - your colony was eaten!';
+    }
+    if (this.mode() === 'vs-computer') {
+      return 'You win - the computer colony is gone!';
+    }
+    return `Congratulations! ${player.name} wins the match!`;
+  });
 }

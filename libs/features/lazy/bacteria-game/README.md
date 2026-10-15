@@ -1,7 +1,28 @@
 # feat-lazy-bacteria-game
 
-Two player bacteria war. Each player steers a crosshair, the colony follows it
-and tries to eat the other one.
+Bacteria war for one or two players. Each player steers a crosshair, the colony
+follows it and tries to eat the other one. Play against the computer or share
+one screen (and keyboard) with a second human.
+
+## Modes
+
+- **vs Computer** - one human against a [`BotController`](./src/lib/state/bot-controller.ts)
+  in three difficulties. The bot only does what a human can do: it picks a point
+  for its crosshair and fires its boost. Easy reacts slowly and only attacks when
+  far ahead, Normal feeds first and attacks when stronger, Hard takes even
+  fights, charges the enemy bacteria nearest to its own colony and boosts on
+  contact. The human may use WASD or the arrow keys.
+- **2 Players** - Orange on WASD, Blue on the arrow keys, or one finger each on
+  a touchscreen.
+
+## Boost
+
+Every player has a boost (Space for the first player, Enter for the second, or
+the button next to the scoreboard). For `boostDurationSec` the colony moves
+`boostSpeedFactor` times faster, hunts with `boostAggression` and its bacteria
+exert `boostAttackFactor` times their energy as pressure. Once the boost is
+over it recharges for `boostCooldownSec` before it can be fired again. Fire it
+to break a frontline or to grab a contested pellet.
 
 ## Mechanics
 

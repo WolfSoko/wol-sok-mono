@@ -1,7 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { Query } from '@datorama/akita';
 import { distinctUntilChanged, filter, map, Observable } from 'rxjs';
-import { GameState, GameStateState, GameStateStore } from './game.states';
+import { BotDifficulty } from './bot-controller';
+import {
+  GameMode,
+  GameState,
+  GameStateState,
+  GameStateStore,
+} from './game.states';
 import { getLevel, Level } from './levels';
 
 @Injectable({ providedIn: 'root' })
@@ -38,6 +44,18 @@ export class GameStateQuery extends Query<GameStateState> {
     return this.select((store) => store.levelId).pipe(
       distinctUntilChanged(),
       map((levelId) => getLevel(levelId))
+    );
+  }
+
+  /** Who steers the second crosshair. */
+  public selectMode(): Observable<GameMode> {
+    return this.select((store) => store.mode).pipe(distinctUntilChanged());
+  }
+
+  /** How hard the computer plays. */
+  public selectDifficulty(): Observable<BotDifficulty> {
+    return this.select((store) => store.difficulty).pipe(
+      distinctUntilChanged()
     );
   }
 

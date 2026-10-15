@@ -1,4 +1,5 @@
 import { GameBalance, gameBalance } from './game-balance';
+import { clamp } from './geometry';
 import { GameMap, getMap } from './maps';
 import {
   Bacteria,
@@ -232,9 +233,18 @@ export class BacteriaSimulation {
         players.find((player) => player.id === colony.playerId) ?? null
     );
 
+    // A boosted colony hits harder - the factor is read per attacking colony
+    // in the combat phase, so it is resolved once here.
+    const attackFactor = new Float32Array(this.colonies.length).fill(1);
+    targets.forEach((target, index) => {
+      if (isBoosted(target)) {
+        attackFactor[index] = this.balance.boostAttackFactor;
+      }
+    });
+
     this.buildGrid();
     this.updateNutrients(deltaTimeSec);
-    const captures = this.runCombat(deltaTimeSec);
+    const captures = this.runCombat(deltaTimeSec, attackFactor);
     this.applyCaptures(captures);
     this.compact(captures);
     // Division and movement compete for the same free cells, so whoever is
@@ -407,8 +417,14 @@ export class BacteriaSimulation {
   /**
    * Applies nutrient gain, combat drain and regeneration to every bacterium and
    * collects the ones that ran out of energy.
+   *
+   * `attackFactor` scales the pressure each colony exerts - a boosted colony's
+   * bacteria count for more than their energy alone.
    */
-  private runCombat(deltaTimeSec: number): Capture[] {
+  private runCombat(
+    deltaTimeSec: number,
+    attackFactor: Float32Array
+  ): Capture[] {
     const {
       defenceFactor,
       frontlinePressure,
@@ -451,8 +467,9 @@ export class BacteriaSimulation {
           if (neighbour === colonyIndex) {
             own += neighbourEnergy;
           } else {
-            enemy += neighbourEnergy;
-            enemyStrength[neighbour] += neighbourEnergy;
+            const strength = neighbourEnergy * attackFactor[neighbour];
+            enemy += strength;
+            enemyStrength[neighbour] += strength;
           }
         }
 
@@ -646,13 +663,21 @@ export class BacteriaSimulation {
   /**
    * Moves every bacterium towards its player's crosshair, biased towards nearby
    * enemies so the colonies actively seek each other out.
+   *
+   * A boosted colony moves faster and hunts harder for as long as the boost
+   * lasts - that is the whole point of firing one.
    */
   private move(
     colonies: Colony[],
     targets: (Player | null)[],
     deltaTimeSec: number
   ): void {
-    const { aggression, jitter, influenceCellSize: cellSize } = this.balance;
+    const {
+      jitter,
+      influenceCellSize: cellSize,
+      boostSpeedFactor,
+      boostAggression,
+    } = this.balance;
     const cells = this.influenceWidth * this.influenceHeight;
 
     for (const colony of colonies) {
@@ -666,7 +691,10 @@ export class BacteriaSimulation {
       if (isNaN(targetX) || isNaN(targetY)) {
         continue;
       }
-      const maxStep = Math.max(1, Math.round(maxSpeed * deltaTimeSec));
+      const boosted = isBoosted(target);
+      const aggression = boosted ? boostAggression : this.balance.aggression;
+      const speed = boosted ? maxSpeed * boostSpeedFactor : maxSpeed;
+      const maxStep = Math.max(1, Math.round(speed * deltaTimeSec));
 
       for (const bacterium of colony.bacterias) {
         let dirX = targetX - bacterium.x;
@@ -830,6 +858,11 @@ export class BacteriaSimulation {
   }
 }
 
+/** True while the player's boost is running. */
+function isBoosted(player: Player | null): boolean {
+  return player != null && player.boostActiveSec > 0;
+}
+
 /** Index of the enemy colony with the most energy around a cell, else -1. */
 function strongestEnemy(enemyStrength: Float32Array, ownIndex: number): number {
   let winner = -1;
@@ -844,8 +877,4 @@ function strongestEnemy(enemyStrength: Float32Array, ownIndex: number): number {
     }
   }
   return winner;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return value < min ? min : value > max ? max : value;
 }
