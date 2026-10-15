@@ -8,30 +8,20 @@ import { ChatMessage } from '../../shared/chat.message';
 import { ChatMessageDto } from './chat-message.dto';
 
 const SEVEN_DAYS: number = 1000 * 60 * 60 * 24 * 7;
-
-/** A message to store now, written by the signed-in visitor `authorUid`. */
-export function newChatMessageDto(
-  message: string,
-  authorUid: string,
-  createdAt: Date = new Date()
-): ChatMessageDto {
-  return {
-    message,
-    createdAt: Timestamp.fromDate(createdAt),
-    ttl: Timestamp.fromMillis(createdAt.getTime() + SEVEN_DAYS),
-    authorUid,
-  };
-}
-
-/** Reads chat messages. Writing goes through `newChatMessageDto`. */
 export const chatMessageConverter: FirestoreDataConverter<
   ChatMessage,
   ChatMessageDto
 > = {
-  toFirestore(chatMessage: ChatMessage): never {
-    throw new Error(
-      `Write a ChatMessageDto instead ${JSON.stringify(chatMessage)}`
-    );
+  toFirestore(chatMessage: ChatMessage): ChatMessageDto {
+    return {
+      message: chatMessage.message,
+      createdAt: Timestamp.fromDate(chatMessage.createdAt),
+      ttl: chatMessage.expiresAt
+        ? Timestamp.fromDate(chatMessage.expiresAt)
+        : Timestamp.fromMillis(chatMessage.createdAt.getTime() + SEVEN_DAYS),
+      ...(chatMessage.authorUid ? { authorUid: chatMessage.authorUid } : {}),
+      ...(chatMessage.authorName ? { authorName: chatMessage.authorName } : {}),
+    };
   },
   fromFirestore(
     snapshot: QueryDocumentSnapshot<ChatMessageDto>,
@@ -42,6 +32,8 @@ export const chatMessageConverter: FirestoreDataConverter<
       id: snapshot.id,
       message: data.message,
       createdAt: new Date(data.createdAt.toDate()),
+      authorUid: data.authorUid,
+      authorName: data.authorName ?? null,
     };
   },
 };

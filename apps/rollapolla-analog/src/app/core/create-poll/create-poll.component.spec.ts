@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { PollsRepoAdapterMock } from '../../adapter/polls-repo-adapter-mock.service';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import { CreatePollComponent } from './create-poll.component';
+import { CREATED_POLL_ID } from './created-poll-id';
 
 describe('CreatePollComponent', () => {
   let fixture: ComponentFixture<CreatePollComponent>;
@@ -56,8 +57,26 @@ describe('CreatePollComponent', () => {
       options: ['Pizza', 'Pasta'],
       counts: [0, 0],
       totalVotes: 0,
+      listed: true,
     });
-    expect(navigate).toHaveBeenCalledWith(['/poll', polls[0].id]);
+    expect(navigate).toHaveBeenCalledWith(['/poll', polls[0].id], {
+      state: { [CREATED_POLL_ID]: polls[0].id },
+    });
+  });
+
+  it('creates an unlisted poll when "show it" is unticked', async () => {
+    type('poll-question-input', 'Only for my team?');
+    type('poll-option-input-0', 'Yes');
+    type('poll-option-input-1', 'No');
+    fixture.debugElement
+      .query(By.css('[data-testid="poll-listed-checkbox"] input'))
+      .nativeElement.click();
+    fixture.detectChanges();
+
+    button('create-poll-button').click();
+    await fixture.whenStable();
+
+    expect(Object.values(repo.polls())[0].listed).toBe(false);
   });
 
   it('does not create a poll with a blank option', () => {

@@ -6,8 +6,11 @@ import {
   ActivatedRoute,
   convertToParamMap,
   provideRouter,
+  Router,
 } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { BehaviorSubject, map, NEVER } from 'rxjs';
+import { CREATED_POLL_ID } from '../../core/create-poll/created-poll-id';
 import { PollsRepoAdapterMock } from '../../adapter/polls-repo-adapter-mock.service';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import PollPageComponent from './[pollId].page';
@@ -57,7 +60,7 @@ describe('PollPageComponent', () => {
     ).not.toBeNull();
   });
 
-  it('gives the poll page its own title and keeps it out of search indexes', async () => {
+  it('gives the poll page its own title and keeps unlisted polls out of search indexes', async () => {
     const title = TestBed.inject(Title);
     const meta = TestBed.inject(Meta);
     // as after server rendering: the DOM already holds a poll page's tags
@@ -91,6 +94,20 @@ describe('PollPageComponent', () => {
     );
   });
 
+  it('lets search engines index listed polls', async () => {
+    const pollId = await repo.createPoll({
+      question: 'Pizza or pasta?',
+      options: ['Pizza', 'Pasta'],
+      listed: true,
+    });
+
+    await render(pollId);
+
+    expect(TestBed.inject(Meta).getTag('name="robots"')?.content).toBe(
+      'index, follow'
+    );
+  });
+
   it('drops the previous poll while the next one loads', async () => {
     const pollId = await repo.createPoll({
       question: 'Pizza or pasta?',
@@ -118,4 +135,37 @@ describe('PollPageComponent', () => {
     await fixture.whenStable();
     return fixture.debugElement;
   }
+});
+
+describe('PollPageComponent after creating a poll', () => {
+  it('greets the creator with the share box, but not other visitors', async () => {
+    TestBed.configureTestingModule({
+      imports: [NoopAnimationsModule],
+      providers: [
+        provideRouter([{ path: 'poll/:pollId', component: PollPageComponent }]),
+        { provide: PollsRepoPort, useClass: PollsRepoAdapterMock },
+      ],
+    });
+    const repo = TestBed.inject(PollsRepoPort);
+    const pollId = await repo.createPoll({
+      question: 'Pizza or pasta?',
+      options: ['Pizza', 'Pasta'],
+    });
+    const harness = await RouterTestingHarness.create();
+    const ready = () =>
+      harness.routeDebugElement?.query(By.css('[data-testid="poll-ready"]'));
+
+    await TestBed.inject(Router).navigate(['/poll', pollId], {
+      state: { [CREATED_POLL_ID]: pollId },
+    });
+    await harness.fixture.whenStable();
+    expect(ready()).not.toBeNull();
+
+    // a navigation without the state, as when following a shared link
+    await harness.navigateByUrl('/');
+    expect(TestBed.inject(Router).url).toBe('/');
+    await harness.navigateByUrl(`/poll/${pollId}`);
+    await harness.fixture.whenStable();
+    expect(ready()).toBeNull();
+  });
 });

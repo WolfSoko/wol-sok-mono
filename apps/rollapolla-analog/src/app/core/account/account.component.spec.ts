@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { AccountAdapterMock } from '../../adapter/account-adapter-mock.service';
 import { AccountPort, SignInCancelled } from '../../ports/account.port';
 import { AccountComponent } from './account.component';
@@ -11,7 +12,10 @@ describe('AccountComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AccountComponent],
-      providers: [{ provide: AccountPort, useClass: AccountAdapterMock }],
+      providers: [
+        provideRouter([]),
+        { provide: AccountPort, useClass: AccountAdapterMock },
+      ],
     }).compileComponents();
     account = TestBed.inject(AccountPort) as AccountAdapterMock;
     fixture = TestBed.createComponent(AccountComponent);
@@ -33,6 +37,22 @@ describe('AccountComponent', () => {
     await fixture.whenStable();
 
     expect(query('sign-in-button')).not.toBeNull();
+  });
+
+  it('links to "My polls" once there is an account, anonymous too', async () => {
+    expect(query('my-polls-link')).toBeNull();
+
+    account.accountSubject.next({
+      uid: 'anon',
+      isAnonymous: true,
+      displayName: null,
+      photoUrl: null,
+    });
+    await fixture.whenStable();
+
+    expect(query('my-polls-link').nativeElement.getAttribute('href')).toBe(
+      '/my-polls'
+    );
   });
 
   it('signs in with Google and shows the name', async () => {

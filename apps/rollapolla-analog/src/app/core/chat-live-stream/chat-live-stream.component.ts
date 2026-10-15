@@ -16,6 +16,7 @@ import { AccountPort } from '../../ports/account.port';
 import { ChatMessagesRepoPort } from '../../ports/chat-messages-repo.port';
 import { AccountAction } from '../account/account-action';
 import { ChatMessageFormComponent } from './chat-message-form.component';
+import { PostTracker } from './post-tracker';
 import { MessagesListComponent } from './messages-list.component';
 
 @Component({
@@ -29,6 +30,21 @@ import { MessagesListComponent } from './messages-list.component';
   ],
   templateUrl: './chat-live-stream.component.html',
   styles: `
+    .error {
+      margin: 0.5rem 0 0;
+      color: var(--mat-sys-error);
+    }
+    .sign-in {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 0.5rem 0.25rem 0.25rem;
+    }
+    .hint {
+      margin: 0;
+      color: var(--mat-sys-on-surface-variant);
+    }
     :host {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
@@ -44,17 +60,6 @@ import { MessagesListComponent } from './messages-list.component';
     }
     .content {
       padding-top: 1rem;
-    }
-    .sign-in {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 1rem;
-      padding: 0.5rem 0.25rem 0.25rem;
-    }
-    .hint {
-      margin: 0;
-      color: var(--mat-sys-on-surface-variant);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -79,16 +84,14 @@ export class ChatLiveStreamComponent {
   /** Only a visitor signed in with Google may post; everyone can read. */
   protected readonly canChat = computed(() => isGoogleAccount(this.account()));
   protected readonly signInAction = new AccountAction();
-  protected readonly postFailed = signal(false);
 
-  public addChatMessage(message: string): void {
-    this.postFailed.set(false);
-    // Not awaited: Firestore shows the message locally right away and resolves
-    // only once the backend acknowledged it.
-    this.chatMessagesRepo.addChatMessage(message.trim()).catch((error) => {
-      console.error('Could not send message', error);
-      this.postFailed.set(true);
-    });
+  private readonly posts = new PostTracker();
+  protected readonly postFailed = this.posts.failed;
+
+  protected addChatMessage(message: string): Promise<void> {
+    return this.posts.post(() =>
+      this.chatMessagesRepo.addChatMessage(message.trim())
+    );
   }
 
   protected signIn(): Promise<void> {

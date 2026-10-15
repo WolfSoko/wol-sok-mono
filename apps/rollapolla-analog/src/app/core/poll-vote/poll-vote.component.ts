@@ -1,10 +1,7 @@
-import { DOCUMENT } from '@angular/common';
-import { Clipboard } from '@angular/cdk/clipboard';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   inject,
   input,
   signal,
@@ -19,10 +16,9 @@ import { MatRadioModule } from '@angular/material/radio';
 import { distinctUntilChanged, map, switchMap } from 'rxjs';
 import { Poll } from '../../../shared/poll';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
+import { PollShareComponent } from '../poll-share/poll-share.component';
 import { percentages } from './percentages';
 import { VotedPollsStore } from './voted-polls.store';
-
-const LINK_COPIED_RESET_MS = 2000;
 
 type OptionResult = {
   index: number;
@@ -40,6 +36,7 @@ type OptionResult = {
     MatIconModule,
     MatProgressBarModule,
     MatRadioModule,
+    PollShareComponent,
   ],
   templateUrl: './poll-vote.component.html',
   styleUrl: './poll-vote.component.scss',
@@ -47,21 +44,15 @@ type OptionResult = {
 })
 export class PollVoteComponent {
   public readonly poll = input.required<Poll>();
+  /** The visitor just created this poll: put sharing first. */
+  public readonly justCreated = input(false);
 
   private readonly pollsRepo = inject(PollsRepoPort);
   private readonly votedPolls = inject(VotedPollsStore);
-  private readonly clipboard = inject(Clipboard);
-  private readonly document = inject(DOCUMENT);
 
   protected readonly selectedOption = signal<number | undefined>(undefined);
   protected readonly voting = signal(false);
   protected readonly voteFailed = signal(false);
-  protected readonly linkCopied = signal(false);
-  private linkCopiedTimer: ReturnType<typeof setTimeout> | undefined;
-
-  constructor() {
-    inject(DestroyRef).onDestroy(() => clearTimeout(this.linkCopiedTimer));
-  }
 
   /** The vote stored on the server wins over the hint this browser remembers. */
   private readonly ownVote = toSignal(
@@ -119,18 +110,6 @@ export class PollVoteComponent {
     this.votedPolls.forgetVote(pollId);
     if (this.ownVote() === undefined) {
       this.voteFailed.set(true);
-    }
-  }
-
-  protected copyLink(): void {
-    clearTimeout(this.linkCopiedTimer);
-    const copied = this.clipboard.copy(this.document.location.href);
-    this.linkCopied.set(copied);
-    if (copied) {
-      this.linkCopiedTimer = setTimeout(
-        () => this.linkCopied.set(false),
-        LINK_COPIED_RESET_MS
-      );
     }
   }
 }

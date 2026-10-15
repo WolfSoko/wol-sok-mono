@@ -3,6 +3,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ChatLiveStreamComponent } from '../core/chat-live-stream/chat-live-stream.component';
 import { CreatePollComponent } from '../core/create-poll/create-poll.component';
+import { FeaturedPollsComponent } from '../core/featured-polls/featured-polls.component';
+import { HotPollsComponent } from '../core/hot-polls/hot-polls.component';
 
 type Step = { icon: string; title: string; text: string };
 
@@ -13,6 +15,8 @@ type Step = { icon: string; title: string; text: string };
     MatProgressSpinnerModule,
     ChatLiveStreamComponent,
     CreatePollComponent,
+    FeaturedPollsComponent,
+    HotPollsComponent,
   ],
   styleUrl: './rollapolla-welcome.component.scss',
   templateUrl: './rollapolla-welcome.component.html',

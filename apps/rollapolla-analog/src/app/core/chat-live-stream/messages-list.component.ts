@@ -14,6 +14,11 @@ import { ChatMessage } from '../../../shared/chat.message';
               <mat-icon>chat_bubble_outline</mat-icon>
             </span>
             <div class="bubble">
+              <span
+                class="author"
+                [attr.data-testid]="'message-author-' + message.id"
+                >{{ message.authorName ?? 'Anonymous' }}</span
+              >
               <p
                 class="text"
                 [attr.data-testid]="'message-item-' + message.id"
@@ -82,6 +87,12 @@ import { ChatMessage } from '../../../shared/chat.message';
       padding: 0.625rem 0.875rem;
       border-radius: 4px var(--rap-radius-md) var(--rap-radius-md);
       background: var(--mat-sys-surface-container-high);
+    }
+    .author {
+      display: block;
+      margin-bottom: 0.125rem;
+      font: var(--mat-sys-label-medium);
+      color: var(--mat-sys-on-surface-variant);
     }
     .text {
       margin: 0;

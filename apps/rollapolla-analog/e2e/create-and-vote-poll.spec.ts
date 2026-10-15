@@ -13,6 +13,13 @@ test.describe('Create and vote on a poll', () => {
     await poll.createPoll(question, ['Pizza', 'Pasta', 'Both']);
     await poll.expectPollPage(question);
 
+    // the creator is asked to share the poll first
+    await expect(page.getByTestId('poll-ready')).toBeVisible();
+    await expect(page.getByTestId('share-whatsapp')).toHaveAttribute(
+      'href',
+      new RegExp(`^https://wa\\.me/\\?text=.*${encodeURIComponent(page.url())}`)
+    );
+
     await poll.vote(2);
 
     await expect(page.getByTestId('poll-total-votes')).toHaveText('1 vote');

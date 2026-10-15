@@ -11,8 +11,8 @@
         (messageAdded)="addChatMessage($event)"
       ></rap-chat-message-form>
       @if (postFailed()) {
-        <p class="rap-error" role="alert" data-testid="chat-post-error">
-          Your message could not be sent. Please try again.
+        <p class="error" role="alert" data-testid="chat-error">
+          Your message could not be posted. Please try again.
         </p>
       }
     } @else {
@@ -31,7 +31,7 @@
           Sign in with Google
         </button>
         @if (signInAction.failed()) {
-          <p class="rap-error" role="alert" data-testid="chat-sign-in-error">
+          <p class="error" role="alert" data-testid="chat-sign-in-error">
             That did not work. Please try again.
           </p>
         }

@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   Injector,
 } from '@angular/core';
@@ -9,15 +10,17 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map, startWith, switchMap } from 'rxjs';
-import { pendingUntilFirstValue } from '../../adapter/pending-until-first-value';
+import {
+  pendingUntilFirstValue,
+  SSR_DATA_TIMEOUT_MS,
+} from '../../adapter/pending-until-first-value';
+import { CREATED_POLL_ID } from '../../core/create-poll/created-poll-id';
+import { PollChatComponent } from '../../core/poll-chat/poll-chat.component';
 import { PollVoteComponent } from '../../core/poll-vote/poll-vote.component';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import { usePollMetaTags } from './poll-meta';
-
-/** Longest the server waits for the poll before it renders the page without it. */
-const SSR_POLL_TIMEOUT_MS = 1500;
 
 @Component({
   selector: 'rap-poll-page',
@@ -26,6 +29,7 @@ const SSR_POLL_TIMEOUT_MS = 1500;
     MatCardModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    PollChatComponent,
     PollVoteComponent,
     RouterLink,
   ],
@@ -36,11 +40,20 @@ const SSR_POLL_TIMEOUT_MS = 1500;
           <mat-icon>arrow_back</mat-icon>
           Create your own poll
         </a>
+        <a mat-button routerLink="/polls" data-testid="browse-polls-link">
+          <mat-icon>search</mat-icon>
+          More polls
+        </a>
       </nav>
       @if (poll() === undefined) {
         <mat-spinner class="spinner" diameter="40" />
       } @else if (poll(); as poll) {
-        <rap-poll-vote [poll]="poll" />
+        <rap-poll-vote [poll]="poll" [justCreated]="justCreated()" />
+        @defer (on viewport) {
+          <rap-poll-chat [poll]="poll" />
+        } @placeholder {
+          <mat-spinner class="spinner" diameter="40" />
+        }
       } @else {
         <mat-card
           appearance="outlined"
@@ -72,7 +85,10 @@ const SSR_POLL_TIMEOUT_MS = 1500;
       padding-block: clamp(1.5rem, 5vw, 3rem) 0;
     }
     nav {
-      margin-inline-start: -0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      margin-inline: -0.75rem;
     }
     .spinner {
       align-self: center;
@@ -101,12 +117,17 @@ export default class PollPageComponent {
     map((params) => params.get('pollId') ?? '')
   );
   private readonly pollId = toSignal(this.pollId$, { initialValue: '' });
+  private readonly createdPollId =
+    inject(Router).currentNavigation()?.extras.state?.[CREATED_POLL_ID];
+  protected readonly justCreated = computed(
+    () => this.pollId() === this.createdPollId
+  );
 
   protected readonly poll = toSignal(
     this.pollId$.pipe(
       switchMap((pollId) =>
         this.pollsRepo.watchPoll(pollId).pipe(
-          pendingUntilFirstValue(this.injector, SSR_POLL_TIMEOUT_MS),
+          pendingUntilFirstValue(this.injector, SSR_DATA_TIMEOUT_MS),
           // forget the previous poll while the next one loads
           startWith(undefined)
         )

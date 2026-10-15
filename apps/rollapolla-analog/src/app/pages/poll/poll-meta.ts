@@ -2,37 +2,15 @@ import { DOCUMENT } from '@angular/common';
 import { DestroyRef, effect, inject, Signal } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { Poll } from '../../../shared/poll';
+import { PageTags, pollUrl, SITE_TAGS } from '../site-tags';
 
-const SITE_URL = 'https://rollapolla.com';
 const MAX_DESCRIPTION_LENGTH = 200;
 
-type PageTags = {
-  title: string;
-  description: string;
-  /** og:description, the text link previews show. */
-  socialDescription: string;
-  url: string;
-  robots: string;
-};
-
 /**
- * The site-wide tags from index.html, keep them in sync. Not read from the DOM:
- * after a server-rendered poll page the DOM already holds that poll's tags.
- */
-const SITE_TAGS: PageTags = {
-  title: 'Polls for everyone | RollaPolla.com',
-  description:
-    'RollaPolla – easy polling for everyone: create a poll in seconds, share it and see live what others think.',
-  socialDescription:
-    'Easy polling for everyone: create a poll in seconds, share it and see live what others think.',
-  url: `${SITE_URL}/`,
-  robots: 'index, follow',
-};
-
-/**
- * Gives a poll page its own title and link preview, keeps it out of search
- * indexes (polls are unlisted) and restores the site defaults when leaving.
- * Must run in an injection context.
+ * Gives a poll page its own title and link preview and restores the site
+ * defaults when leaving. Listed polls are public (home page, search), so
+ * search engines may index them; unlisted ones are only for those with the
+ * link and stay out. Must run in an injection context.
  */
 export function usePollMetaTags(
   poll: Signal<Poll | null | undefined>,
@@ -60,7 +38,7 @@ export function usePollMetaTags(
 
   effect(() => {
     const current = poll();
-    const url = `${SITE_URL}/poll/${pollId()}`;
+    const url = pollUrl(pollId());
     apply(
       current
         ? {
@@ -68,7 +46,7 @@ export function usePollMetaTags(
             description: pollDescription(current),
             socialDescription: pollDescription(current),
             url,
-            robots: 'noindex',
+            robots: current.listed ? SITE_TAGS.robots : 'noindex',
           }
         : { ...SITE_TAGS, url, robots: 'noindex' }
     );

@@ -11,6 +11,7 @@ vi.mock('@angular/fire/auth', async (importOriginal) => {
   return {
     ...original,
     linkWithPopup: vi.fn(),
+    updateProfile: vi.fn(),
     signInWithPopup: vi.fn(),
     signInWithCredential: vi.fn(),
     signOut: vi.fn(),
@@ -41,6 +42,9 @@ describe('AccountAdapter', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(fireAuth.linkWithPopup).mockResolvedValue({
+      user: { ...anonymousUser, displayName: 'set', providerData: [] },
+    } as unknown as fireAuth.UserCredential);
     auth = {
       currentUser: anonymousUser,
       authStateReady: async () => undefined,

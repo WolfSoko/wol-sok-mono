@@ -1,7 +1,13 @@
 :host {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.error {
+  flex-basis: 100%;
+  text-align: end;
 }
 
 .signed-in {
@@ -32,6 +38,19 @@ button,
 
   .label-short {
     display: inline;
+  }
+
+  :host {
+    --mat-button-text-horizontal-padding: 0.5rem;
+    --mat-button-text-with-icon-horizontal-padding: 0.5rem;
+  }
+
+  .my-polls-link {
+    min-width: 0;
+
+    .mat-icon {
+      margin: 0;
+    }
   }
 }
 
