@@ -1,4 +1,12 @@
-import { InjectionToken, Provider } from '@angular/core';
+import {
+  EnvironmentProviders,
+  inject,
+  InjectionToken,
+  Provider,
+  provideEnvironmentInitializer,
+} from '@angular/core';
+import { MatIconRegistry } from '@angular/material/icon';
+import { DomSanitizer } from '@angular/platform-browser';
 
 /** What gets shared. Every target receives the same content. */
 export type ShareContent = {
@@ -31,10 +39,31 @@ export const SHARE_TARGETS = new InjectionToken<readonly ShareTarget[]>(
   'SHARE_TARGETS'
 );
 
-export function provideShareTargets(...targets: ShareTarget[]): Provider[] {
-  return targets.map((target) => ({
-    provide: SHARE_TARGETS,
-    useValue: target,
-    multi: true,
-  }));
+/** Namespace of the registered SVG icons: `share:<target id>`. */
+export const SHARE_ICON_NAMESPACE = 'share';
+
+/** Registers the targets and, once per app, their SVG icons. */
+export function provideShareTargets(
+  ...targets: ShareTarget[]
+): (Provider | EnvironmentProviders)[] {
+  return [
+    ...targets.map((target) => ({
+      provide: SHARE_TARGETS,
+      useValue: target,
+      multi: true,
+    })),
+    provideEnvironmentInitializer(() => {
+      const registry = inject(MatIconRegistry);
+      const sanitizer = inject(DomSanitizer);
+      for (const { id, icon } of targets) {
+        if (icon.kind === 'svg') {
+          registry.addSvgIconLiteralInNamespace(
+            SHARE_ICON_NAMESPACE,
+            id,
+            sanitizer.bypassSecurityTrustHtml(icon.svg)
+          );
+        }
+      }
+    }),
+  ];
 }

@@ -1,5 +1,9 @@
 export const SITE_URL = 'https://rollapolla.com';
 
+export function pollUrl(pollId: string, origin: string = SITE_URL): string {
+  return `${origin}/poll/${pollId}`;
+}
+
 export type PageTags = {
   title: string;
   description: string;

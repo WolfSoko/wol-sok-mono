@@ -10,6 +10,7 @@ import {
 } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { BehaviorSubject, map, NEVER } from 'rxjs';
+import { CREATED_POLL_ID } from '../../core/create-poll/created-poll-id';
 import { PollsRepoAdapterMock } from '../../adapter/polls-repo-adapter-mock.service';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import PollPageComponent from './[pollId].page';
@@ -141,7 +142,7 @@ describe('PollPageComponent after creating a poll', () => {
       harness.routeDebugElement?.query(By.css('[data-testid="poll-ready"]'));
 
     await TestBed.inject(Router).navigate(['/poll', pollId], {
-      state: { createdPollId: pollId },
+      state: { [CREATED_POLL_ID]: pollId },
     });
     await harness.fixture.whenStable();
     expect(ready()).not.toBeNull();

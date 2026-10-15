@@ -54,10 +54,10 @@
             [matTooltip]="link.label"
             [attr.data-testid]="'share-' + link.id"
           >
-            @if (link.svgIcon) {
+            @if (link.icon.kind === "svg") {
               <mat-icon [svgIcon]="link.svgIcon" />
             } @else {
-              <mat-icon>{{ link.fontIcon }}</mat-icon>
+              <mat-icon>{{ link.icon.name }}</mat-icon>
             }
           </a>
         </li>

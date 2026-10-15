@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { PollsRepoAdapterMock } from '../../adapter/polls-repo-adapter-mock.service';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import { CreatePollComponent } from './create-poll.component';
+import { CREATED_POLL_ID } from './created-poll-id';
 
 describe('CreatePollComponent', () => {
   let fixture: ComponentFixture<CreatePollComponent>;
@@ -58,7 +59,7 @@ describe('CreatePollComponent', () => {
       totalVotes: 0,
     });
     expect(navigate).toHaveBeenCalledWith(['/poll', polls[0].id], {
-      state: { createdPollId: polls[0].id },
+      state: { [CREATED_POLL_ID]: polls[0].id },
     });
   });
 

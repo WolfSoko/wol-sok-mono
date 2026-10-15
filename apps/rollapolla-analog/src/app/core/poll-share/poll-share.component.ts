@@ -13,19 +13,19 @@ import {
   signal,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
+import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { DomSanitizer } from '@angular/platform-browser';
 import { Poll } from '../../../shared/poll';
-import { SITE_URL } from '../../pages/site-tags';
+import { pollUrl, SITE_URL } from '../../pages/site-tags';
 import {
+  SHARE_ICON_NAMESPACE,
   SHARE_TARGETS,
   ShareContent,
+  ShareIcon,
   ShareTarget,
 } from '../../ports/share-target.port';
 
 const LINK_COPIED_RESET_MS = 2000;
-const ICON_NAMESPACE = 'share';
 
 type ShareLink = {
   id: string;
@@ -33,8 +33,9 @@ type ShareLink = {
   href: string;
   /** Web links open in a new tab, mailto: and app links in place. */
   newTab: boolean;
-  fontIcon?: string;
-  svgIcon?: string;
+  icon: ShareIcon;
+  /** The registered name, for SVG icons. */
+  svgIcon: string;
 };
 
 /**
@@ -69,7 +70,7 @@ export class PollShareComponent {
   protected readonly content = computed<ShareContent>(() => {
     const { id, question } = this.poll();
     return {
-      url: `${this.origin}/poll/${id}`,
+      url: pollUrl(id, this.origin),
       title: question,
       text: `Vote now: ${question}`,
     };
@@ -84,17 +85,13 @@ export class PollShareComponent {
         label: target.label,
         href,
         newTab: /^https?:/.test(href),
-        fontIcon: target.icon.kind === 'font' ? target.icon.name : undefined,
-        svgIcon:
-          target.icon.kind === 'svg'
-            ? `${ICON_NAMESPACE}:${target.id}`
-            : undefined,
+        icon: target.icon,
+        svgIcon: `${SHARE_ICON_NAMESPACE}:${target.id}`,
       };
     });
   });
 
   constructor() {
-    this.registerIcons();
     afterNextRender(() =>
       this.canShareNatively.set(
         typeof this.document.defaultView?.navigator.share === 'function'
@@ -125,20 +122,6 @@ export class PollShareComponent {
         () => this.linkCopied.set(false),
         LINK_COPIED_RESET_MS
       );
-    }
-  }
-
-  private registerIcons(): void {
-    const registry = inject(MatIconRegistry);
-    const sanitizer = inject(DomSanitizer);
-    for (const target of this.targets) {
-      if (target.icon.kind === 'svg') {
-        registry.addSvgIconLiteralInNamespace(
-          ICON_NAMESPACE,
-          target.id,
-          sanitizer.bypassSecurityTrustHtml(target.icon.svg)
-        );
-      }
     }
   }
 }

@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { DestroyRef, effect, inject, Signal } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { Poll } from '../../../shared/poll';
-import { PageTags, SITE_TAGS, SITE_URL } from '../site-tags';
+import { PageTags, pollUrl, SITE_TAGS } from '../site-tags';
 
 const MAX_DESCRIPTION_LENGTH = 200;
 
@@ -37,7 +37,7 @@ export function usePollMetaTags(
 
   effect(() => {
     const current = poll();
-    const url = `${SITE_URL}/poll/${pollId()}`;
+    const url = pollUrl(pollId());
     apply(
       current
         ? {

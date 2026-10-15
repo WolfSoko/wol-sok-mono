@@ -94,9 +94,6 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
     };
     // Not awaited: Firestore shows the message right away and settles only
     // once the backend acknowledged it.
-    const saved = addDoc(this.chatMessagesCol, chatMessage).then(
-      () => undefined
-    );
-    return { saved };
+    return { saved: addDoc(this.chatMessagesCol, chatMessage) };
   }
 }

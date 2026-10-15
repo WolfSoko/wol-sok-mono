@@ -1,7 +1,7 @@
 import { Signal } from '@angular/core';
 import { ChatMessage } from '../../shared/chat.message';
 
-export type PostReceipt = { saved: Promise<void> };
+export type PostReceipt = { saved: Promise<unknown> };
 
 export abstract class ChatMessagesRepoPort {
   static readonly MAX_MESSAGE_LENGTH: number = 1000;
