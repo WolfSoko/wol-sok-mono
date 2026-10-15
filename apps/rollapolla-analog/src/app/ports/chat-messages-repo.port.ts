@@ -13,5 +13,17 @@ export abstract class ChatMessagesRepoPort {
   }
 
   abstract getChatMessages(): Signal<ChatMessage[] | undefined>;
-  abstract addChatMessage(newMessage: string): void;
+
+  /**
+   * Posts a message as the signed-in visitor. Rejects with `SignInRequired`
+   * when nobody is signed in with Google: the rules refuse anonymous authors.
+   */
+  abstract addChatMessage(newMessage: string): Promise<void>;
+}
+
+export class SignInRequired extends Error {
+  constructor() {
+    super('Sign in with Google to chat');
+    this.name = 'SignInRequired';
+  }
 }

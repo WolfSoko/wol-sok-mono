@@ -3,10 +3,16 @@ import { expect, Locator, Page } from '@playwright/test';
 export class LiveChatPoComp {
   constructor(private readonly page: Page) {}
 
+  /** Nobody is signed in with Google: the chat offers sign-in, not the form. */
+  async expectSignInRequired() {
+    await this.scrollChatIntoView();
+    await expect(this.page.getByTestId('chat-sign-in')).toBeVisible();
+    await expect(this.page.getByTestId('chat-sign-in-button')).toBeVisible();
+    await expect(this.page.getByTestId('message-input')).toHaveCount(0);
+  }
+
   async enterUntrimmedMessage(message: string) {
-    const leaveMessageInput: Locator = this.page.getByTestId('message-input');
-    await expect(leaveMessageInput).toBeVisible();
-    await leaveMessageInput.scrollIntoViewIfNeeded();
+    const leaveMessageInput = await this.openMessageInput();
 
     await this.fillOnceHydrated(leaveMessageInput, message);
 
@@ -15,9 +21,7 @@ export class LiveChatPoComp {
   }
 
   async sendMessageByKeypress(message: string) {
-    const leaveMessageInput: Locator = this.page.getByTestId('message-input');
-    await expect(leaveMessageInput).toBeVisible();
-    await leaveMessageInput.scrollIntoViewIfNeeded();
+    const leaveMessageInput = await this.openMessageInput();
 
     await this.fillOnceHydrated(leaveMessageInput, message);
 
@@ -26,6 +30,19 @@ export class LiveChatPoComp {
 
   findMessageInChat(message: string): Locator {
     return this.page.getByTestId('messages-list').getByText(message);
+  }
+
+  // The chat hydrates once it is in the viewport. Until then it shows the
+  // server-rendered sign-in offer, even to a signed-in visitor.
+  private async scrollChatIntoView(): Promise<void> {
+    await this.page.getByTestId('live-chat').scrollIntoViewIfNeeded();
+  }
+
+  private async openMessageInput(): Promise<Locator> {
+    await this.scrollChatIntoView();
+    const messageInput: Locator = this.page.getByTestId('message-input');
+    await expect(messageInput).toBeVisible();
+    return messageInput;
   }
 
   // The chat hydrates once it is in the viewport; typing earlier is lost.

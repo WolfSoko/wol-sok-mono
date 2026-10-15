@@ -9,13 +9,16 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
-    // chatMessages collection: world-readable, anyone can create a message
-    // provided it passes field validation (mirrors the app's existing checks).
+    // chatMessages collection: world-readable. Only a visitor signed in with
+    // Google may create a message, under their own uid, provided it passes
+    // field validation (mirrors the app's existing checks).
     // Updates and deletes are not exposed by the app — deny them.
     match /chatMessages/{messageId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasAll(['message', 'createdAt', 'ttl']) &&
-        request.resource.data.keys().hasOnly(['message', 'createdAt', 'ttl']) &&
+      allow create: if isSignedInWithGoogle() &&
+        request.resource.data.keys().hasAll(['message', 'createdAt', 'ttl', 'authorUid']) &&
+        request.resource.data.keys().hasOnly(['message', 'createdAt', 'ttl', 'authorUid']) &&
+        request.resource.data.authorUid == request.auth.uid &&
         request.resource.data.createdAt is timestamp &&
         request.resource.data.ttl is timestamp &&
         request.resource.data.ttl == request.resource.data.createdAt + duration.value(7, 'd') &&
@@ -23,6 +26,13 @@ service cloud.firestore {
         request.resource.data.message.size() > 9 &&
         request.resource.data.message.size() < 1001;
       allow update, delete: if false;
+
+      // Not the automatic anonymous sign-in: the token lists the linked
+      // providers, so an anonymous visitor who linked Google passes as well.
+      function isSignedInWithGoogle() {
+        return request.auth != null &&
+          'google.com' in request.auth.token.firebase.identities;
+      }
     }
 
     // polls collection: unlisted. Anyone with the link (the id) can read a poll.
