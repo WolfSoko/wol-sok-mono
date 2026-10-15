@@ -1,1 +1,102 @@
-<p>create-poll works!</p>
+<mat-card appearance="outlined" class="card">
+  <mat-card-header>
+    <mat-card-title>Create a poll</mat-card-title>
+    <mat-card-subtitle>Ask a question, share the link.</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <form
+      class="create-poll-form"
+      [formGroup]="form"
+      (ngSubmit)="createPoll()"
+      data-testid="create-poll-form"
+    >
+      <mat-form-field class="full-width">
+        <mat-label>Question</mat-label>
+        <input
+          matInput
+          formControlName="question"
+          data-testid="poll-question-input"
+          placeholder="What should we have for lunch?"
+        />
+        <mat-hint align="end">
+          {{ form.controls.question.value.length }}/{{ maxQuestionLength }}
+        </mat-hint>
+        @if (form.controls.question.hasError("required")) {
+          <mat-error>Please ask a question</mat-error>
+        } @else if (form.controls.question.errors?.["minlength"]; as error) {
+          <mat-error>
+            Minimal length is {{ error.requiredLength }} characters
+          </mat-error>
+        } @else if (form.controls.question.errors?.["maxlength"]; as error) {
+          <mat-error>
+            Maximum length is {{ error.requiredLength }} characters
+          </mat-error>
+        }
+      </mat-form-field>
+
+      <fieldset formArrayName="options" class="options">
+        <legend class="options-legend">
+          Answers
+          <span class="options-count"
+            >{{ options.length }}/{{ maxOptions }}</span
+          >
+        </legend>
+        @for (option of options.controls; track option; let i = $index) {
+          <div class="option-row">
+            <span class="option-badge" aria-hidden="true">{{ i + 1 }}</span>
+            <mat-form-field class="full-width">
+              <mat-label>Option {{ i + 1 }}</mat-label>
+              <input
+                matInput
+                [formControlName]="i"
+                [attr.data-testid]="'poll-option-input-' + i"
+                [maxlength]="maxOptionLength"
+              />
+              @if (option.invalid) {
+                <mat-error>Please enter an option</mat-error>
+              }
+            </mat-form-field>
+            <button
+              mat-icon-button
+              type="button"
+              class="remove-button"
+              [disabled]="options.length <= minOptions"
+              (click)="removeOption(i)"
+              [attr.aria-label]="'Remove option ' + (i + 1)"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        }
+      </fieldset>
+
+      <div class="actions">
+        <button
+          mat-button
+          type="button"
+          [disabled]="options.length >= maxOptions"
+          (click)="addOption()"
+          data-testid="add-option-button"
+        >
+          <mat-icon>add</mat-icon>
+          Add option
+        </button>
+        <button
+          mat-flat-button
+          type="submit"
+          class="submit-button"
+          [disabled]="form.invalid || creating()"
+          data-testid="create-poll-button"
+        >
+          Create poll
+          <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+        </button>
+      </div>
+      @if (createFailed()) {
+        <p class="error" role="alert" data-testid="create-poll-error">
+          Could not create the poll. Please try again.
+        </p>
+      }
+    </form>
+  </mat-card-content>
+</mat-card>

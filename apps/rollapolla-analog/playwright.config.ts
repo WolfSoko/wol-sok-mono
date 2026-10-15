@@ -32,13 +32,25 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npx nx serve rollapolla-analog',
-    url: 'http://localhost:4300',
-    reuseExistingServer: !process.env['CI'],
-    cwd: workspaceRoot,
-    timeout: (process.env['CI'] ? 720 : 120) * 1000,
-  },
+  webServer: [
+    {
+      command: 'npx nx serve rollapolla-analog',
+      url: 'http://localhost:4300',
+      reuseExistingServer: !process.env['CI'],
+      cwd: workspaceRoot,
+      timeout: (process.env['CI'] ? 720 : 120) * 1000,
+    },
+    {
+      // Voting and creating polls sign in anonymously. The Auth emulator runs on
+      // Node alone; Firestore stays offline in e2e and applies writes locally.
+      command:
+        'npx firebase emulators:start --only auth --project rollapolla-v1 --config firebase.rollapolla-analog.json',
+      url: 'http://127.0.0.1:9099',
+      reuseExistingServer: !process.env['CI'],
+      cwd: workspaceRoot,
+      timeout: 120 * 1000,
+    },
+  ],
 
   projects: [
     {

@@ -1,44 +1,54 @@
-<main class="main text-centered">
-  <section class="page-header">
-    <img
-      mat-card-image
-      class="intro-logo"
-      src="/assets/logos/logo.svg"
-      alt="RollaPolla logo. A springgreen circle, with text RaP in front"
-    />
-    <h1>RollaPolla</h1>
+<main class="rap-container main">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <p class="rap-eyebrow">
+        <span class="rap-live-dot" aria-hidden="true"></span>
+        Live results · no sign-up
+      </p>
+      <h1 id="hero-title" class="hero-title">
+        Easy Polling for <span class="highlight">Everyone!</span>
+      </h1>
+      <p class="hero-subtitle">
+        Share your opinions and see what others think.
+      </p>
+      <p class="intro-description" data-testid="intro-description">
+        Create a poll, share the link and watch the votes roll in.
+      </p>
+      <ol class="steps">
+        @for (step of steps; track step.title; let i = $index) {
+          <li class="step">
+            <span class="step-icon" aria-hidden="true">
+              <mat-icon>{{ step.icon }}</mat-icon>
+            </span>
+            <span class="step-text">
+              <strong>{{ i + 1 }}. {{ step.title }}</strong>
+              <span>{{ step.text }}</span>
+            </span>
+          </li>
+        }
+      </ol>
+    </div>
+    <div class="hero-form">
+      @defer (hydrate on viewport) {
+        <rap-create-poll />
+      } @placeholder {
+        <mat-spinner class="spinner" diameter="40" />
+      }
+    </div>
   </section>
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title-group class="hero-title">
-        <mat-card-title>Easy Polling for Everyone!</mat-card-title>
-        <mat-card-subtitle>
-          Share your opinions and see what others think.
-        </mat-card-subtitle>
-      </mat-card-title-group>
-    </mat-card-header>
-    <mat-card-content>
-      <a
-        mat-button
-        class="intro-badge"
-        target="_blank"
-        href="https://x.com/rollapolla"
-      >
-        <mat-icon svgIcon="fa:xTwitter"> </mat-icon>
-        Follow
-      </a>
-      <p class="intro-description" data-testid="coming-soon">Coming Soon!</p>
-    </mat-card-content>
-  </mat-card>
-  @defer (hydrate on viewport) {
-    <rap-create-poll />
-  } @placeholder {
-    <mat-spinner />
-  }
-  <br />
-  @defer (hydrate on viewport) {
-    <rap-chat-live-stream />
-  } @placeholder {
-    <mat-spinner />
-  }
+
+  <section class="chat-section" aria-labelledby="chat-title">
+    <header class="section-header">
+      <p class="rap-eyebrow">Community</p>
+      <h2 id="chat-title" class="section-title">Join the conversation</h2>
+      <p class="section-subtitle">
+        Got an idea for the next big poll? Drop it in the live chat.
+      </p>
+    </header>
+    @defer (hydrate on viewport) {
+      <rap-chat-live-stream />
+    } @placeholder {
+      <mat-spinner class="spinner" diameter="40" />
+    }
+  </section>
 </main>

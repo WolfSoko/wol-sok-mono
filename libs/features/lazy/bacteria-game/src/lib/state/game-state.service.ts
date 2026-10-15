@@ -13,8 +13,14 @@ import {
   takeUntil,
   timestamp,
 } from 'rxjs';
+import { BotDifficulty } from './bot-controller';
 import { GameStateQuery } from './game-state.query';
-import { GameState, GameStateStore } from './game.states';
+import {
+  GameMode,
+  GameState,
+  GameStateState,
+  GameStateStore,
+} from './game.states';
 import {
   getLevel,
   levelBalance,
@@ -23,12 +29,13 @@ import {
 } from './levels';
 import { Player } from './player.model';
 
+import { PlayerQuery } from './player.query';
+import { PlayerService } from './player.service';
+
 /** How a match ended. `winner` is null when both colonies died together. */
 interface MatchOutcome {
   winner: Player | null;
 }
-import { PlayerQuery } from './player.query';
-import { PlayerService } from './player.service';
 
 const FPS = 60;
 
@@ -139,23 +146,39 @@ export class GameStateService {
     );
   }
 
-  /** Spawns both colonies with the map and the balance of the current level. */
+  /**
+   * Spawns both colonies with the map and the balance of the current level.
+   *
+   * In `vs-computer` mode the second crosshair belongs to the bot, and the
+   * names change with it so the scoreboard reads "You" and "Computer".
+   */
   private initPlayers() {
-    const { width, height, levelId } = this.gameStateQuery.getValue();
+    const { width, height, levelId, mode, difficulty } =
+      this.gameStateQuery.getValue();
     const level = getLevel(levelId);
+    const versusComputer = mode === 'vs-computer';
     this.playerService.init(
       [
-        { x: width / 4, y: height / 2, color: [255, 100, 20, 255] },
+        {
+          x: width / 4,
+          y: height / 2,
+          color: [255, 100, 20, 255],
+          name: versusComputer ? 'You' : 'Orange',
+          isBot: false,
+        },
         {
           x: (width / 4) * 3,
           y: height / 2,
           color: [0, 100, 230, 255],
+          name: versusComputer ? 'Computer' : 'Blue',
+          isBot: versusComputer,
         },
       ],
       {
         balance: levelBalance(level),
         map: levelMap(level),
         crosshairSpeed: levelCrosshairSpeed(level),
+        difficulty,
       }
     );
   }
@@ -173,16 +196,52 @@ export class GameStateService {
   }
 
   /**
-   * Picks the level the next match is played on.
-   *
-   * A running match keeps the rules it started with: the colonies are only
-   * spawned again - with the new map and balance - while nobody is playing.
+   * True while nobody is playing - the only time the colonies may be spawned
+   * again. A paused match is still a match and keeps its colonies.
    */
-  setLevel(levelId: string): void {
-    this.gameStateStore.update({ levelId: getLevel(levelId).id });
-    if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
+  private isIdle(): boolean {
+    const { currentState } = this.gameStateQuery.getValue();
+    return (
+      currentState !== GameState.RUNNING && currentState !== GameState.PAUSED
+    );
+  }
+
+  /**
+   * Changes how the next match is set up - level, opponent or difficulty.
+   *
+   * A match keeps the rules it started with: the colonies are only spawned
+   * again - with the new map, balance and opponent - while nobody is playing.
+   */
+  private updateSetup(
+    setup: Partial<Pick<GameStateState, 'levelId' | 'mode' | 'difficulty'>>
+  ): void {
+    this.gameStateStore.update(setup);
+    if (this.isIdle()) {
       this.initPlayers();
     }
+  }
+
+  /** Picks the level the next match is played on. */
+  public setLevel(levelId: string): void {
+    this.updateSetup({ levelId: getLevel(levelId).id });
+  }
+
+  /** Switches between two humans and human versus computer. */
+  public setMode(mode: GameMode): void {
+    this.updateSetup({ mode });
+  }
+
+  /** Picks how hard the computer plays. */
+  public setDifficulty(difficulty: BotDifficulty): void {
+    this.updateSetup({ difficulty });
+  }
+
+  /** Fires the boost of a player - the touch equivalent of Space / Enter. */
+  public boost(playerId: number): void {
+    if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
+      return;
+    }
+    this.playerService.boost(playerId);
   }
 
   start() {

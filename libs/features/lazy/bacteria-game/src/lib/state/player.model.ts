@@ -9,10 +9,18 @@ export type PlayerColorArray = [number, number, number, number];
  */
 export interface Player {
   id: number;
+  /** Shown on the scoreboard and in the winner dialog. */
+  name: string;
+  /** True when the computer steers this crosshair. */
+  isBot: boolean;
   x: number;
   y: number;
   color: PlayerColorArray;
   maxSpeed: number; // px / second
+  /** Seconds the current boost keeps running, 0 while there is none. */
+  boostActiveSec: number;
+  /** Seconds until the next boost can be fired, 0 when it is ready. */
+  boostCooldownSec: number;
   /** Living bacteria of this player. */
   bacteriaCount: number;
   /** Enemy bacteria eaten since the game started. */
@@ -37,7 +45,11 @@ let playerId = 0;
 export function createPlayer(params: Partial<Player>): Player {
   return {
     id: playerId++,
+    name: '',
+    isBot: false,
     maxSpeed: 150,
+    boostActiveSec: 0,
+    boostCooldownSec: 0,
     bacteriaCount: 0,
     captured: 0,
     lost: 0,

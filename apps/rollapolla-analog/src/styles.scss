@@ -1,107 +1,140 @@
 @use '@angular/material' as mat;
 @import 'normalize.css/normalize.css';
 
-@include mat.elevation-classes();
-@include mat.app-background();
-
-$theme: mat.define-theme(
-  (
-    color: (
-      theme-type: light,
-      primary: mat.$spring-green-palette,
-    ),
-  )
-);
-
-$dark-theme: mat.define-theme(
-  (
-    color: (
-      theme-type: dark,
-      primary: mat.$spring-green-palette,
-    ),
-  )
-);
-
+// Material 3 system tokens (`--mat-sys-*`). `color-scheme: light dark` makes
+// every token follow the visitor's OS preference via `light-dark()`.
 html {
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
-  @include mat.app-background();
-  @include mat.elevation-classes();
-  @include mat.app-background();
-  @include mat.toolbar-theme($dark-theme);
-  @include mat.button-theme($dark-theme);
-  @include mat.form-field-theme($dark-theme);
-  @include mat.input-theme($dark-theme);
-  @include mat.card-theme($dark-theme);
-  @include mat.list-theme($dark-theme);
-  @include mat.typography-hierarchy($dark-theme);
+  color-scheme: light dark;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$spring-green-palette,
+        tertiary: mat.$orange-palette,
+      ),
+      typography: (
+        plain-family:
+          "'Plus Jakarta Sans', Roboto, 'Helvetica Neue', sans-serif",
+        brand-family:
+          "'Plus Jakarta Sans', Roboto, 'Helvetica Neue', sans-serif",
+        bold-weight: 800,
+        medium-weight: 600,
+        regular-weight: 400,
+      ),
+      density: 0,
+    )
+  );
 
-  // Apply the light theme only when the user prefers light themes.
-  @media (prefers-color-scheme: light) {
-    // Use the `-color` mixins to only apply color styles without reapplying the same
-    // typography and density styles.
-    @include mat.elevation-classes();
-    @include mat.app-background();
-    @include mat.toolbar-color($theme);
-    @include mat.button-color($theme);
-    @include mat.form-field-color($theme);
-    @include mat.input-color($theme);
-    @include mat.card-color($theme);
-    @include mat.list-color($theme);
-  }
+  @include mat.card-overrides(
+    (
+      outlined-container-shape: var(--rap-radius-lg),
+      outlined-container-color: var(--rap-card-surface),
+      outlined-outline-color: var(--mat-sys-outline-variant),
+      title-text-size: var(--mat-sys-title-large-size),
+      title-text-weight: 700,
+    )
+  );
+  @include mat.progress-bar-overrides(
+    (
+      track-height: 10px,
+      active-indicator-height: 10px,
+      track-shape: 999px,
+    )
+  );
+
+  --rap-radius-lg: 24px;
+  --rap-radius-md: 16px;
+  --rap-content-width: 1120px;
+  --rap-card-surface: light-dark(rgb(255 255 255 / 0.82), rgb(26 31 27 / 0.78));
+  --rap-brand-gradient: linear-gradient(
+    100deg,
+    var(--mat-sys-primary) 0%,
+    #7ccf4f 45%,
+    #ffb347 100%
+  );
 }
 
-body,
-html {
-  * {
-    box-sizing: border-box;
-    &:before,
-    &:after {
-      box-sizing: border-box;
-    }
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  min-height: 100dvh;
+  font: var(--mat-sys-body-large);
+  color: var(--mat-sys-on-surface);
+  background-color: var(--mat-sys-surface);
+  background-image:
+    radial-gradient(
+      48rem 32rem at 0% -8rem,
+      color-mix(in srgb, var(--mat-sys-primary) 22%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      40rem 28rem at 100% 4rem,
+      color-mix(in srgb, var(--mat-sys-tertiary) 16%, transparent),
+      transparent 70%
+    );
+  background-repeat: no-repeat;
   text-wrap: pretty;
-  background: linear-gradient(
-      to right,
-      #008040,
-      #006633 24%,
-      #004d26 27%,
-      #00331a 30%,
-      #001a0d 33.3333%,
-      #00331a 37%,
-      #004d26 40%,
-      #006633 43%,
-      #008040 66.66%,
-      #006633 91%,
-      #004d26 94%,
-      #00331a 97%,
-      #001a0d 100%
-    )
-    repeat-y;
-  background-size: 300% 100%;
-  animation: gradient-move 10s ease-in-out infinite;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+rap-root {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  height: 100vh;
-  width: 100%;
-  padding: 1rem;
+  min-height: 100dvh;
+}
 
-  @keyframes gradient-move {
-    0% {
-      background-position: 0 50%;
-    }
-    100% {
-      background-position: 100% 50%;
-    }
+.rap-container {
+  width: 100%;
+  max-width: var(--rap-content-width);
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2rem);
+}
+
+.rap-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font: var(--mat-sys-label-large);
+  letter-spacing: 0.02em;
+  color: var(--mat-sys-primary);
+}
+
+.rap-live-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--mat-sys-primary);
+  box-shadow: 0 0 0 0
+    color-mix(in srgb, var(--mat-sys-primary) 60%, transparent);
+  animation: rap-pulse 2s ease-out infinite;
+}
+
+@keyframes rap-pulse {
+  70% {
+    box-shadow: 0 0 0 0.6rem transparent;
   }
-  rap-root {
-    width: 100%;
-    max-width: 800px;
-    margin: auto;
-    height: 100%;
+  100% {
+    box-shadow: 0 0 0 0 transparent;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rap-live-dot {
+    animation: none;
+  }
+}
+
+.mat-mdc-card-outlined {
+  backdrop-filter: blur(12px);
 }

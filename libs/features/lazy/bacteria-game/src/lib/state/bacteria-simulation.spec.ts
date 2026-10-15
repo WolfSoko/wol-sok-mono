@@ -1,5 +1,6 @@
 import { BacteriaSimulation, Colony } from './bacteria-simulation';
 import { GameBalance, gameBalance } from './game-balance';
+import { DEFAULT_CROSSHAIR_SPEED } from './levels';
 import { getMap } from './maps';
 import { Bacteria, createPlayer, Player } from './player.model';
 
@@ -489,5 +490,44 @@ describe('maps', () => {
         (bac) => bac.x === blocked.x && bac.y === blocked.y
       )
     ).toBe(false);
+  });
+});
+
+describe('boost', () => {
+  const far = { x: WIDTH - 1, y: HEIGHT / 2 };
+
+  function distanceTravelled(boostActiveSec: number): number {
+    const { simulation, colonies, players } = setup([[bacterium(20, 20)]], {
+      balance: { jitter: 0, divideChancePerSec: 0 },
+      targets: [far],
+    });
+    players[0] = { ...players[0], boostActiveSec };
+    simulation.step(players, 0.1);
+    return colonies[0].bacterias[0].x - 20;
+  }
+
+  it('moves a boosted colony faster', () => {
+    expect(distanceTravelled(1)).toBeGreaterThan(distanceTravelled(0));
+  });
+
+  it('lets a boosted colony hit harder', () => {
+    function drain(boostActiveSec: number): number {
+      const defender = bacterium(20, 20);
+      const { simulation, players } = setup(
+        [[defender], [bacterium(19, 20), bacterium(21, 20)]],
+        { balance: { divideChancePerSec: 0 } }
+      );
+      players[1] = { ...players[1], boostActiveSec };
+      simulation.step(players, 0.05);
+      return gameBalance.maxEnergy - defender.energy;
+    }
+
+    expect(drain(1)).toBeGreaterThan(drain(0));
+  });
+
+  it('is over once the boost timer has run out', () => {
+    expect(distanceTravelled(0)).toBe(
+      Math.max(1, Math.round(DEFAULT_CROSSHAIR_SPEED * 0.1))
+    );
   });
 });

@@ -1,7 +1,17 @@
 import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
+import { BotDifficulty, DEFAULT_DIFFICULTY } from './bot-controller';
 import { LEVELS } from './levels';
 import { Player } from './player.model';
+
+/** Who steers the second crosshair. */
+export type GameMode = 'two-players' | 'vs-computer';
+
+/**
+ * The mode a fresh game starts in. Against the computer, because that is what
+ * a single person opening the game can play right away.
+ */
+export const DEFAULT_MODE: GameMode = 'vs-computer';
 
 export enum GameState {
   RUNNING,
@@ -23,6 +33,10 @@ export interface GameStateState {
   keysPressed: string[];
   /** Id of the level that is selected - decides the map and the balance. */
   levelId: string;
+  /** Two humans on one screen, or one human against the computer. */
+  mode: GameMode;
+  /** How hard the computer plays in `vs-computer` mode. */
+  difficulty: BotDifficulty;
 }
 
 export function createInitialState(): GameStateState {
@@ -37,6 +51,8 @@ export function createInitialState(): GameStateState {
     matchEnded: false,
     keysPressed: [],
     levelId: LEVELS[0].id,
+    mode: DEFAULT_MODE,
+    difficulty: DEFAULT_DIFFICULTY,
   };
 }
 

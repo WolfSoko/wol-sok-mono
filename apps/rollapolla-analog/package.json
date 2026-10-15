@@ -15,6 +15,7 @@
     "@angular/platform-server": "22.2.2",
     "@angular/material": "22.2.2",
     "@angular/forms": "22.2.2",
+    "@angular/cdk": "22.2.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2 || ^7.0.0",
     "@fortawesome/fontawesome-svg-core": "^6.7.2 || ^7.0.0",
     "@nx/vite": "23.3.0",
@@ -23,6 +24,7 @@
     "vite": "8.3.1",
     "vitest": "5.0.2",
     "@wolsok/shared-data-access": "*",
-    "@angular/ssr": "22.2.2"
+    "@angular/ssr": "22.2.2",
+    "firebase": "11.10.0"
   }
 }
