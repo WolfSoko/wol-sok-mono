@@ -13,8 +13,9 @@ import {
   takeUntil,
   timestamp,
 } from 'rxjs';
+import { BotDifficulty } from './bot-controller';
 import { GameStateQuery } from './game-state.query';
-import { GameState, GameStateStore } from './game.states';
+import { GameMode, GameState, GameStateStore } from './game.states';
 import {
   getLevel,
   levelBalance,
@@ -23,12 +24,13 @@ import {
 } from './levels';
 import { Player } from './player.model';
 
+import { PlayerQuery } from './player.query';
+import { PlayerService } from './player.service';
+
 /** How a match ended. `winner` is null when both colonies died together. */
 interface MatchOutcome {
   winner: Player | null;
 }
-import { PlayerQuery } from './player.query';
-import { PlayerService } from './player.service';
 
 const FPS = 60;
 
@@ -139,23 +141,39 @@ export class GameStateService {
     );
   }
 
-  /** Spawns both colonies with the map and the balance of the current level. */
+  /**
+   * Spawns both colonies with the map and the balance of the current level.
+   *
+   * In `vs-computer` mode the second crosshair belongs to the bot, and the
+   * names change with it so the scoreboard reads "You" and "Computer".
+   */
   private initPlayers() {
-    const { width, height, levelId } = this.gameStateQuery.getValue();
+    const { width, height, levelId, mode, difficulty } =
+      this.gameStateQuery.getValue();
     const level = getLevel(levelId);
+    const versusComputer = mode === 'vs-computer';
     this.playerService.init(
       [
-        { x: width / 4, y: height / 2, color: [255, 100, 20, 255] },
+        {
+          x: width / 4,
+          y: height / 2,
+          color: [255, 100, 20, 255],
+          name: versusComputer ? 'You' : 'Orange',
+          isBot: false,
+        },
         {
           x: (width / 4) * 3,
           y: height / 2,
           color: [0, 100, 230, 255],
+          name: versusComputer ? 'Computer' : 'Blue',
+          isBot: versusComputer,
         },
       ],
       {
         balance: levelBalance(level),
         map: levelMap(level),
         crosshairSpeed: levelCrosshairSpeed(level),
+        difficulty,
       }
     );
   }
@@ -183,6 +201,33 @@ export class GameStateService {
     if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
       this.initPlayers();
     }
+  }
+
+  /**
+   * Switches between two humans and human versus computer. Like the level, a
+   * running match keeps the opponent it started with.
+   */
+  setMode(mode: GameMode): void {
+    this.gameStateStore.update({ mode });
+    if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
+      this.initPlayers();
+    }
+  }
+
+  /** Picks how hard the computer plays - takes effect with the next match. */
+  setDifficulty(difficulty: BotDifficulty): void {
+    this.gameStateStore.update({ difficulty });
+    if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
+      this.initPlayers();
+    }
+  }
+
+  /** Fires the boost of a player - the touch equivalent of Space / Enter. */
+  boost(playerId: number): void {
+    if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
+      return;
+    }
+    this.playerService.boost(playerId);
   }
 
   start() {

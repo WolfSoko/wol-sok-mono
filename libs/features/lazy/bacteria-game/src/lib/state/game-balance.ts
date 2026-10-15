@@ -70,6 +70,17 @@ export interface GameBalance {
   nutrientRadius: number;
   /** Delay before a depleted pellet reappears somewhere else. */
   nutrientRespawnDelaySec: number;
+
+  /** How long a boost lasts once a player fires it. */
+  boostDurationSec: number;
+  /** Seconds a player has to wait after firing a boost before the next one. */
+  boostCooldownSec: number;
+  /** Movement speed multiplier of a boosted colony. */
+  boostSpeedFactor: number;
+  /** Aggression of a boosted colony - replaces `aggression` while it lasts. */
+  boostAggression: number;
+  /** Multiplier on the pressure a boosted bacterium puts on its enemies. */
+  boostAttackFactor: number;
 }
 
 export const gameBalance: GameBalance = {
@@ -102,4 +113,10 @@ export const gameBalance: GameBalance = {
   nutrientDrainPerSec: 2.5,
   nutrientRadius: 2,
   nutrientRespawnDelaySec: 2.5,
+
+  boostDurationSec: 3,
+  boostCooldownSec: 12,
+  boostSpeedFactor: 1.8,
+  boostAggression: 0.85,
+  boostAttackFactor: 1.6,
 };

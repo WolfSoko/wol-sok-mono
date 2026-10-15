@@ -73,4 +73,69 @@ describe('GameStateService', () => {
       expect(query.getValue().levelId).toBe(getLevel('not-a-level').id);
     });
   });
+
+  describe('setMode', () => {
+    it('hands the second crosshair to the computer', () => {
+      service.setArenaSize(WIDTH, HEIGHT);
+
+      service.setMode('vs-computer');
+
+      const [human, computer] = playerQuery.getAll();
+      expect(query.getValue().mode).toBe('vs-computer');
+      expect(human.isBot).toBe(false);
+      expect(human.name).toBe('You');
+      expect(computer.isBot).toBe(true);
+      expect(computer.name).toBe('Computer');
+    });
+
+    it('names both humans by colour', () => {
+      service.setArenaSize(WIDTH, HEIGHT);
+
+      service.setMode('two-players');
+
+      expect(playerQuery.getAll().map((player) => player.name)).toEqual([
+        'Orange',
+        'Blue',
+      ]);
+      expect(playerQuery.getAll().some((player) => player.isBot)).toBe(false);
+    });
+
+    it('leaves a running match alone', () => {
+      service.setArenaSize(WIDTH, HEIGHT);
+      service.setMode('two-players');
+      service.start();
+
+      service.setMode('vs-computer');
+
+      expect(playerQuery.getAll().some((player) => player.isBot)).toBe(false);
+      expect(query.getValue().mode).toBe('vs-computer');
+    });
+  });
+
+  describe('setDifficulty', () => {
+    it('stores the difficulty', () => {
+      service.setDifficulty('hard');
+
+      expect(query.getValue().difficulty).toBe('hard');
+    });
+  });
+
+  describe('boost', () => {
+    it('fires the boost of a running match', () => {
+      service.setArenaSize(WIDTH, HEIGHT);
+      service.start();
+
+      service.boost(0);
+
+      expect(playerQuery.getEntity(0)?.boostActiveSec).toBeGreaterThan(0);
+    });
+
+    it('does nothing on the start screen', () => {
+      service.setArenaSize(WIDTH, HEIGHT);
+
+      service.boost(0);
+
+      expect(playerQuery.getEntity(0)?.boostActiveSec).toBe(0);
+    });
+  });
 });

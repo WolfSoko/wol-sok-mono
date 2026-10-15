@@ -6,6 +6,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { GameStateQuery } from './state/game-state.query';
+import { GameStateService } from './state/game-state.service';
+import { PlayerQuery } from './state/player.query';
 
 /** Lets the helpers believe the arena is on the screen. */
 function stubFullscreen(element: Element | null): jest.Mock {
@@ -83,6 +85,69 @@ describe('BacteriaGameComponent', () => {
     });
   });
 
+  describe('the boost keys', () => {
+    function startMatch(mode: 'two-players' | 'vs-computer') {
+      create();
+      const service = TestBed.inject(GameStateService);
+      service.setArenaSize(320, 140);
+      service.setMode(mode);
+      service.start();
+    }
+
+    function boostOf(playerId: number): number {
+      return (
+        TestBed.inject(PlayerQuery).getEntity(playerId)?.boostActiveSec ?? 0
+      );
+    }
+
+    it('fires the first player with Space and the second with Enter', () => {
+      startMatch('two-players');
+
+      component.onKeyDown(keyEvent(' ', document.body));
+      expect(boostOf(0)).toBeGreaterThan(0);
+      expect(boostOf(1)).toBe(0);
+
+      component.onKeyDown(keyEvent('Enter', document.body));
+      expect(boostOf(1)).toBeGreaterThan(0);
+    });
+
+    it('gives both keys to the human against the computer', () => {
+      startMatch('vs-computer');
+
+      component.onKeyDown(keyEvent('Enter', document.body));
+
+      expect(boostOf(0)).toBeGreaterThan(0);
+      expect(boostOf(1)).toBe(0);
+    });
+
+    it('keeps Space from scrolling the page', () => {
+      startMatch('two-players');
+      const event = keyEvent(' ', document.body);
+
+      component.onKeyDown(event);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(query.getValue().keysPressed).not.toContain(' ');
+    });
+
+    it('ignores a held key', () => {
+      startMatch('two-players');
+
+      component.onKeyDown(keyEvent(' ', document.body, true));
+
+      expect(boostOf(0)).toBe(0);
+    });
+
+    it('leaves Enter to a focused control', () => {
+      startMatch('two-players');
+      const input = document.createElement('input');
+
+      component.onKeyDown(keyEvent('Enter', input));
+
+      expect(boostOf(1)).toBe(0);
+    });
+  });
+
   describe('the winner dialog', () => {
     it('leaves fullscreen while the overlays stay outside of it', () => {
       create();
@@ -120,6 +185,15 @@ function setStage(component: BacteriaGameComponent, nativeElement: unknown) {
   (component as unknown as { stageRef: unknown }).stageRef = { nativeElement };
 }
 
-function keyEvent(key: string, target: EventTarget): KeyboardEvent {
-  return { key, repeat: false, target } as unknown as KeyboardEvent;
+function keyEvent(
+  key: string,
+  target: EventTarget,
+  repeat = false
+): KeyboardEvent {
+  return {
+    key,
+    repeat,
+    target,
+    preventDefault: jest.fn(),
+  } as unknown as KeyboardEvent;
 }

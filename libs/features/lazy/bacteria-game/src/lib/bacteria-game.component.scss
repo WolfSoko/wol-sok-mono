@@ -2,6 +2,28 @@
   flex: 1 1 auto;
 }
 
+.match-setup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+
+  .mode-picker mat-icon {
+    margin-right: 0.25rem;
+    vertical-align: middle;
+  }
+
+  mat-form-field {
+    min-width: 10rem;
+  }
+
+  .difficulty-description {
+    margin: 0;
+    opacity: 0.8;
+  }
+}
+
 .level-picker {
   display: flex;
   flex-wrap: wrap;
@@ -38,7 +60,17 @@
   }
 
   .colony-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
     font-weight: 600;
+  }
+
+  .boost-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+    animation: boost-pulse 0.6s ease-in-out infinite alternate;
   }
 
   .colony-count,
@@ -148,5 +180,43 @@
 
   .colony-bar {
     background: rgb(255 255 255 / 25%);
+  }
+}
+
+mat-card-actions {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  .actions-spacer {
+    flex: 1 1 auto;
+  }
+}
+
+.boost-button {
+  min-width: 7rem;
+  font-variant-numeric: tabular-nums;
+
+  &.boosting {
+    animation: boost-pulse 0.6s ease-in-out infinite alternate;
+  }
+}
+
+.arena-hud .hud-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .boost-button {
+    color: #fff;
+  }
+}
+
+@keyframes boost-pulse {
+  from {
+    opacity: 0.55;
+  }
+
+  to {
+    opacity: 1;
   }
 }
