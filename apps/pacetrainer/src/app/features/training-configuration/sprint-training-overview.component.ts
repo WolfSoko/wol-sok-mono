@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { MatCardModule } from '@angular/material/card';
 import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
 import { SprintTrainingDataService } from './data/sprint-training-data.service';
 
@@ -6,32 +7,27 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
   selector: 'pace-sprint-training-overview',
   template: `
     @let conf = data();
-    <section class="overview" data-qa="training-overview">
-      <h3 class="title">Übersicht</h3>
-      <ul class="plan">
-        <li>{{ conf.repetitions }} Wiederholungen</li>
-        <li>
-          <span class="dot sprint"></span>{{ conf.sprintTime | trainingTime }} -
-          Sprint
-        </li>
-        <li>
-          <span class="dot recovery"></span
-          >{{ conf.recoveryTime | trainingTime }} - Gehen/Stehen
-        </li>
-      </ul>
-      <p class="total">Gesamtzeit: {{ conf.totalTime | trainingTime }}</p>
-    </section>
+    <mat-card appearance="filled" data-qa="training-overview">
+      <mat-card-header>
+        <mat-card-title>Übersicht</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <ul class="plan">
+          <li>{{ conf.repetitions }} Wiederholungen</li>
+          <li>
+            <span class="dot sprint"></span
+            >{{ conf.sprintTime | trainingTime }} - Sprint
+          </li>
+          <li>
+            <span class="dot recovery"></span
+            >{{ conf.recoveryTime | trainingTime }} - Gehen/Stehen
+          </li>
+        </ul>
+        <p class="total">Gesamtzeit: {{ conf.totalTime | trainingTime }}</p>
+      </mat-card-content>
+    </mat-card>
   `,
   styles: `
-    .overview {
-      padding: 16px 20px;
-      border-radius: var(--mat-sys-corner-extra-large);
-      background: var(--mat-sys-surface-container);
-    }
-    .title {
-      font: var(--mat-sys-title-medium);
-      margin-bottom: 8px;
-    }
     .plan {
       display: flex;
       flex-flow: column;
@@ -64,7 +60,7 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
       font-weight: 600;
     }
   `,
-  imports: [TrainingTimePipe],
+  imports: [MatCardModule, TrainingTimePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SprintTrainingOverviewComponent {

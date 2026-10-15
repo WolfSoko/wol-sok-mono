@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { MatCardModule } from '@angular/material/card';
 import { Milliseconds } from '../../shared/model/constants/time-utils';
 import { CountdownModel } from '../../shared/model/training/countdown.model';
 import { IntervalView, RunPhase } from '../../shared/training-run/training-run';
@@ -10,7 +11,7 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
   selector: 'pace-training-live-state',
   styleUrl: 'training-live-state.component.scss',
   templateUrl: 'training-live-state.component.html',
-  imports: [TrainingTimePipe, TrainingNamePipe],
+  imports: [MatCardModule, TrainingTimePipe, TrainingNamePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrainingLiveStateComponent {

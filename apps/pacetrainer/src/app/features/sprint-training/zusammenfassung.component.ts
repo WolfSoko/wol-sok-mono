@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { MatCardModule } from '@angular/material/card';
 import { Zusammenfassung } from '../../shared/training-run/training-run';
 import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
 
@@ -22,16 +23,16 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
         }
       </h3>
       <div class="pace-tiles">
-        <div class="pace-tile">
+        <mat-card appearance="filled" class="pace-tile">
           <span class="pace-tile-value">{{ s.elapsed | trainingTime }}</span>
           <span class="pace-tile-label">Gesamtzeit</span>
-        </div>
-        <div class="pace-tile">
+        </mat-card>
+        <mat-card appearance="filled" class="pace-tile">
           <span class="pace-tile-value"
             >{{ s.sprintsCompleted }} von {{ s.sprintsTotal }} Sprints</span
           >
           <span class="pace-tile-label">geschafft</span>
-        </div>
+        </mat-card>
       </div>
     </div>
   `,
@@ -61,7 +62,7 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
       font-weight: 700;
     }
   `,
-  imports: [TrainingTimePipe],
+  imports: [MatCardModule, TrainingTimePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ZusammenfassungComponent {

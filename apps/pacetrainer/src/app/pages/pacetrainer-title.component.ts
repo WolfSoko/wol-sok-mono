@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -6,14 +7,14 @@ import { RouterLink } from '@angular/router';
   styles: `
     :host {
       display: block;
-      padding: max(env(safe-area-inset-top), 12px) 16px 4px;
+      padding-top: env(safe-area-inset-top);
+      --mat-toolbar-container-background-color: transparent;
     }
     .bar {
-      display: flex;
-      align-items: center;
       gap: 12px;
       max-width: 560px;
       margin: 0 auto;
+      padding: 0 16px;
     }
     .logo {
       display: block;
@@ -39,7 +40,7 @@ import { RouterLink } from '@angular/router';
     }
   `,
   template: `
-    <header class="bar">
+    <mat-toolbar class="bar">
       <a routerLink="/" aria-label="Startseite">
         <img
           class="logo"
@@ -51,9 +52,9 @@ import { RouterLink } from '@angular/router';
       </a>
       <h1 class="title">Pace-Trainer</h1>
       <span class="subtitle">Dein digitaler Laufcoach.</span>
-    </header>
+    </mat-toolbar>
   `,
-  imports: [RouterLink],
+  imports: [MatToolbarModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PacetrainerTitleComponent {}

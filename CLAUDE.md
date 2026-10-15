@@ -75,6 +75,7 @@ npx nx graph
 3. **Signals for state** — prefer `signal()`/`computed()`/`effect()` over manual subscriptions where possible
 4. **OnPush everywhere** — `changeDetection: ChangeDetectionStrategy.OnPush`
 5. **Angular Material** — use AM components consistently; don't roll custom UI that AM already covers
+   - Exception (pacetrainer): the countdown ring (`pace-countdown-circle`) is a custom SVG, since `mat-progress-spinner` has no track ring
 6. **Modern control flow** — `@if`, `@for`, `@switch` (not `*ngIf`, `*ngFor`, `*ngSwitch`)
 7. **2-space indentation**, kebab-case filenames, `*.spec.ts` for tests
 8. **Explicit `public`/`private`** in class members

@@ -22,17 +22,17 @@
 </p>
 
 @if (current(); as current) {
-  <dl class="pace-tiles">
-    <div class="pace-tile">
-      <dt class="pace-tile-label">Gesamtzeit</dt>
-      <dd class="pace-tile-value">{{ elapsed() | trainingTime }}</dd>
-    </div>
-    <div class="pace-tile">
-      <dt class="pace-tile-label">Intervallzeit</dt>
-      <dd class="pace-tile-value">
-        {{ current.elapsed | trainingTime }}
-      </dd>
-      <dd class="pace-tile-label">von {{ current.duration | trainingTime }}</dd>
-    </div>
-  </dl>
+  <div class="pace-tiles">
+    <mat-card appearance="filled" class="pace-tile">
+      <span class="pace-tile-label">Gesamtzeit</span>
+      <span class="pace-tile-value">{{ elapsed() | trainingTime }}</span>
+    </mat-card>
+    <mat-card appearance="filled" class="pace-tile">
+      <span class="pace-tile-label">Intervallzeit</span>
+      <span class="pace-tile-value">{{ current.elapsed | trainingTime }}</span>
+      <span class="pace-tile-label"
+        >von {{ current.duration | trainingTime }}</span
+      >
+    </mat-card>
+  </div>
 }
