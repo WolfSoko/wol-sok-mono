@@ -13,7 +13,10 @@ import {
   query,
 } from '@angular/fire/firestore';
 import { ChatMessage } from '../../shared/chat.message';
-import { ChatMessagesRepoPort } from '../ports/chat-messages-repo.port';
+import {
+  ChatMessagesRepoPort,
+  PostReceipt,
+} from '../ports/chat-messages-repo.port';
 import { NotesRepoPort } from '../ports/notes-repo.port';
 import { addPendingTaskForServer } from './add-pending-task-for-server';
 import { chatMessageConverter } from './chat-message.converter';
@@ -75,9 +78,9 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
     return this.chatMessages;
   }
 
-  async addChatMessage(message: string): Promise<void> {
+  async addChatMessage(message: string): Promise<PostReceipt> {
     if (!this.validateMessage(message)) {
-      return;
+      return { saved: Promise.resolve() };
     }
     // accounts linked to Google before the name was copied get it now
     const author = await adoptGoogleProfile(await ensureSignedIn(this.auth));
@@ -89,10 +92,11 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
       // the rules accept only the name from the sign-in token, which is this one
       authorName: author.isAnonymous ? null : author.displayName,
     };
-    // Not awaited: Firestore shows the message right away and resolves only
+    // Not awaited: Firestore shows the message right away and settles only
     // once the backend acknowledged it.
-    addDoc(this.chatMessagesCol, chatMessage).catch((error) =>
-      console.error('Could not save chat message', error)
+    const saved = addDoc(this.chatMessagesCol, chatMessage).then(
+      () => undefined
     );
+    return { saved };
   }
 }

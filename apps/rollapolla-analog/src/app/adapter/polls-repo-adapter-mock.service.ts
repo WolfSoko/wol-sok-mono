@@ -40,7 +40,7 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
   /** `null` plays a visitor who is not signed in. */
   public readonly creatorUid$ = new BehaviorSubject<string | null>('mock-user');
 
-  public watchMyPolls(): Observable<Poll[] | null> {
+  public watchMyPolls(): Observable<Poll[] | null | undefined> {
     return combineLatest([this.creatorUid$, this.polls$]).pipe(
       map(([uid, polls]) =>
         uid === null

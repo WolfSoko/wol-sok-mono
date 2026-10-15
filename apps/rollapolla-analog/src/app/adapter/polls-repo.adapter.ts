@@ -17,7 +17,15 @@ import {
   writeBatch,
 } from '@angular/fire/firestore';
 import { onSnapshot } from 'firebase/firestore';
-import { catchError, map, NEVER, Observable, of, switchMap } from 'rxjs';
+import {
+  catchError,
+  map,
+  NEVER,
+  Observable,
+  of,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import { NewPoll, Poll } from '../../shared/poll';
 import { PollsRepoPort, VoteReceipt } from '../ports/polls-repo.port';
 import { ensureSignedIn } from './ensure-signed-in';
@@ -74,7 +82,7 @@ export class PollsRepoAdapter extends PollsRepoPort {
     );
   }
 
-  public watchMyPolls(): Observable<Poll[] | null> {
+  public watchMyPolls(): Observable<Poll[] | null | undefined> {
     if (this.isServer) {
       // only the browser knows who is signed in
       return NEVER;
@@ -94,7 +102,7 @@ export class PollsRepoAdapter extends PollsRepoPort {
                   subscriber.next(snapshot.docs.map((poll) => poll.data())),
                 (error) => subscriber.error(error)
               )
-            )
+            ).pipe(startWith(undefined))
           : of(null)
       )
     );

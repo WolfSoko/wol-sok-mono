@@ -57,7 +57,14 @@ export class ChatLiveStreamComponent {
   protected async addChatMessage(message: string): Promise<void> {
     this.postFailed.set(false);
     try {
-      await this.chatMessagesRepo.addChatMessage(message.trim());
+      const { saved } = await this.chatMessagesRepo.addChatMessage(
+        message.trim()
+      );
+      saved.catch((error: unknown) => {
+        // e.g. denied by the rules; the message vanishes from the list again
+        console.error('Chat message was rejected', error);
+        this.postFailed.set(true);
+      });
     } catch (error) {
       console.error('Could not post chat message', error);
       this.postFailed.set(true);

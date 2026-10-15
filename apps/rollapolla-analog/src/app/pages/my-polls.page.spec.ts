@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { By, Meta, Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { throwError } from 'rxjs';
+import { BehaviorSubject, throwError } from 'rxjs';
+import { Poll } from '../../shared/poll';
 import { PollsRepoAdapterMock } from '../adapter/polls-repo-adapter-mock.service';
 import { PollsRepoPort } from '../ports/polls-repo.port';
 import MyPollsPageComponent from './my-polls.page';
@@ -69,6 +70,22 @@ describe('MyPollsPageComponent', () => {
     const page = await render();
 
     expect(page.query(By.css('[data-testid="my-polls-empty"]'))).not.toBeNull();
+  });
+
+  it("hides the previous account's polls while the next account loads", async () => {
+    await repo.createPoll({ question: "Ada's poll?", options: ['a', 'b'] });
+    const myPolls$ = new BehaviorSubject<Poll[] | null | undefined>(
+      Object.values(repo.polls())
+    );
+    vi.spyOn(repo, 'watchMyPolls').mockReturnValue(myPolls$);
+    const fixture = TestBed.createComponent(MyPollsPageComponent);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain("Ada's poll?");
+
+    myPolls$.next(undefined);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).not.toContain("Ada's poll?");
   });
 
   it('says so when the polls cannot be loaded', async () => {

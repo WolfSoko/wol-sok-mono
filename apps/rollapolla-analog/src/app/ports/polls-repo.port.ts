@@ -36,9 +36,11 @@ export abstract class PollsRepoPort {
 
   /**
    * Emits the polls the signed-in visitor created, newest first, or `null`
-   * when nobody is signed in. Never emits on the server.
+   * when nobody is signed in. Emits `undefined` while a newly signed-in
+   * account's polls load, so the previous account's list never stays visible.
+   * Never emits on the server.
    */
-  abstract watchMyPolls(): Observable<Poll[] | null>;
+  abstract watchMyPolls(): Observable<Poll[] | null | undefined>;
 
   /**
    * Emits the option the signed-in visitor voted for, `undefined` if they have

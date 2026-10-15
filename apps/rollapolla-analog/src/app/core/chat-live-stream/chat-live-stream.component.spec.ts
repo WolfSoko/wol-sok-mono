@@ -100,6 +100,26 @@ describe('ChatLiveStreamComponent', () => {
     ).not.toBeNull();
   });
 
+  it('says so when the backend rejects a posted message', async () => {
+    vi.spyOn(
+      TestBed.inject(ChatMessagesRepoPort),
+      'addChatMessage'
+    ).mockResolvedValueOnce({
+      saved: Promise.reject(new Error('permission-denied')),
+    });
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    fixture.debugElement
+      .query(By.css('rap-chat-message-form'))
+      .triggerEventHandler('messageAdded', 'Hello there, everyone!');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(
+      fixture.debugElement.query(By.css('[data-testid="chat-error"]'))
+    ).not.toBeNull();
+  });
+
   function createComponent(): void {
     fixture = TestBed.createComponent(ChatLiveStreamComponent);
     component = fixture.componentInstance;

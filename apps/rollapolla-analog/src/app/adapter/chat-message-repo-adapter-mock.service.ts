@@ -1,6 +1,9 @@
 import { Injectable, signal, Signal, WritableSignal } from '@angular/core';
 import { ChatMessage } from '../../shared/chat.message';
-import { ChatMessagesRepoPort } from '../ports/chat-messages-repo.port';
+import {
+  ChatMessagesRepoPort,
+  PostReceipt,
+} from '../ports/chat-messages-repo.port';
 
 @Injectable()
 export class ChatMessageRepoAdapterMock extends ChatMessagesRepoPort {
@@ -10,7 +13,7 @@ export class ChatMessageRepoAdapterMock extends ChatMessagesRepoPort {
     return this.chatMessages;
   }
 
-  async addChatMessage(message: string): Promise<void> {
+  async addChatMessage(message: string): Promise<PostReceipt> {
     this.chatMessages.update((messages) => [
       ...messages,
       {
@@ -19,5 +22,6 @@ export class ChatMessageRepoAdapterMock extends ChatMessagesRepoPort {
         createdAt: new Date(),
       } as ChatMessage,
     ]);
+    return { saved: Promise.resolve() };
   }
 }
