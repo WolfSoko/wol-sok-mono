@@ -157,6 +157,29 @@ describe('BacteriaGameComponent', () => {
 
       expect(boostOf(1)).toBe(0);
     });
+
+    it('leaves Space and Enter to a focused button', () => {
+      startMatch('two-players');
+      const button = document.createElement('button');
+      const event = keyEvent('Enter', button);
+
+      component.onKeyDown(keyEvent(' ', button));
+      component.onKeyDown(event);
+
+      expect(boostOf(0)).toBe(0);
+      expect(boostOf(1)).toBe(0);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+
+    it('takes the key from a disabled button, which cannot use it', () => {
+      startMatch('two-players');
+      const button = document.createElement('button');
+      button.disabled = true;
+
+      component.onKeyDown(keyEvent(' ', button));
+
+      expect(boostOf(0)).toBeGreaterThan(0);
+    });
   });
 
   describe('the winner dialog', () => {

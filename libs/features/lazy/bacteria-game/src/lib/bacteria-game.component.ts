@@ -645,14 +645,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.toggleFullscreen();
       return;
     }
-    // The boost keys belong to the game only while a match is on - outside of
-    // it Space still scrolls the page and Enter still presses buttons.
+    // The boost keys belong to the game only while a match is on, and never
+    // while a button has the focus: a keyboard user pressing Enter on "Reset"
+    // expects a reset, not a boost. Outside of a match Space still scrolls.
     const boosted =
-      this.query.getValue().currentState === GameState.RUNNING
+      this.query.getValue().currentState === GameState.RUNNING &&
+      !isInteractiveTarget($event.target)
         ? humanForBoostKey(this.humans(), $event.key)
         : null;
     if (boosted != null) {
-      // Space would scroll the page and Enter would press the focused button.
+      // Space would scroll the page.
       $event.preventDefault();
       if (!$event.repeat) {
         this.boost(boosted.id);
@@ -685,6 +687,29 @@ function isTypingTarget(target: EventTarget | null): boolean {
     element.closest(
       'input, textarea, select, [contenteditable="true"], [role="combobox"], [role="listbox"], [role="option"], .cdk-overlay-container'
     ) != null
+  );
+}
+
+/**
+ * True while the key went to a focused control that Space or Enter activates,
+ * such as a button or a toggle. A disabled control cannot be activated, so a
+ * key pressed on it still belongs to the game - the Start button keeps the
+ * focus after it kicked off the match and gets disabled.
+ */
+function isInteractiveTarget(target: EventTarget | null): boolean {
+  const element = target as HTMLElement | null;
+  if (element == null || typeof element.closest !== 'function') {
+    return false;
+  }
+  const control = element.closest<HTMLElement>(
+    'button, a[href], [role="button"], [role="radio"], [role="checkbox"], [role="switch"], [role="tab"], [role="menuitem"]'
+  );
+  if (control == null) {
+    return false;
+  }
+  return !(
+    (control as HTMLButtonElement).disabled ||
+    control.getAttribute('aria-disabled') === 'true'
   );
 }
 
