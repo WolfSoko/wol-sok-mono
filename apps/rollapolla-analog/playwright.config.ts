@@ -36,7 +36,10 @@ export default defineConfig({
     {
       command: 'npx nx serve rollapolla-analog',
       url: 'http://localhost:4300',
-      reuseExistingServer: !process.env['CI'],
+      // The inferred e2e-ci tasks already run `serve` as a dependency and wait
+      // for it. Starting it again from inside such a task is a recursive Nx
+      // invocation, which Nx refuses once an agent runs a second e2e task.
+      reuseExistingServer: true,
       cwd: workspaceRoot,
       timeout: (process.env['CI'] ? 720 : 120) * 1000,
     },
