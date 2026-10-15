@@ -9,16 +9,23 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
-    // chatMessages collection: world-readable. Writing needs a (usually
-    // anonymous) sign-in, so every message belongs to a uid; a name, if given,
+    // chatMessages collection (the live chat): world-readable. Only a visitor
+    // signed in with Google may write, under their own uid; a name, if given,
     // must be the one Google put into the sign-in token.
     // Updates and deletes are not exposed by the app — deny them.
     match /chatMessages/{messageId} {
       allow read: if true;
-      allow create: if request.auth != null &&
+      allow create: if isSignedInWithGoogle() &&
         isValidChatMessage(request.resource.data) &&
         request.resource.data.ttl == request.resource.data.createdAt + duration.value(7, 'd');
       allow update, delete: if false;
+    }
+
+    // Not the automatic anonymous sign-in: the token lists the linked
+    // providers, so an anonymous visitor who linked Google passes as well.
+    function isSignedInWithGoogle() {
+      return request.auth != null &&
+        'google.com' in request.auth.token.firebase.identities;
     }
 
     function isValidChatMessage(message) {

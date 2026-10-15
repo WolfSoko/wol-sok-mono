@@ -1,25 +1,49 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   signal,
   Signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { isGoogleAccount } from '../../../shared/account';
 import { ChatMessage } from '../../../shared/chat.message';
+import { AccountPort } from '../../ports/account.port';
 import { ChatMessagesRepoPort } from '../../ports/chat-messages-repo.port';
+import { AccountAction } from '../account/account-action';
 import { ChatMessageFormComponent } from './chat-message-form.component';
 import { PostTracker } from './post-tracker';
 import { MessagesListComponent } from './messages-list.component';
 
 @Component({
   selector: 'rap-chat-live-stream',
-  imports: [MatCardModule, MessagesListComponent, ChatMessageFormComponent],
+  imports: [
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    MessagesListComponent,
+    ChatMessageFormComponent,
+  ],
   templateUrl: './chat-live-stream.component.html',
   styles: `
     .error {
       margin: 0.5rem 0 0;
       color: var(--mat-sys-error);
+    }
+    .sign-in {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 0.5rem 0.25rem 0.25rem;
+    }
+    .hint {
+      margin: 0;
+      color: var(--mat-sys-on-surface-variant);
     }
     :host {
       display: grid;
@@ -49,9 +73,17 @@ export class ChatLiveStreamComponent {
   ).asReadonly();
 
   private readonly chatMessagesRepo = inject(ChatMessagesRepoPort);
+  private readonly accountPort = inject(AccountPort);
 
   chatMessages: Signal<ChatMessage[] | undefined> =
     this.chatMessagesRepo.getChatMessages();
+
+  private readonly account = toSignal(this.accountPort.account$, {
+    initialValue: null,
+  });
+  /** Only a visitor signed in with Google may post; everyone can read. */
+  protected readonly canChat = computed(() => isGoogleAccount(this.account()));
+  protected readonly signInAction = new AccountAction();
 
   private readonly posts = new PostTracker();
   protected readonly postFailed = this.posts.failed;
@@ -60,5 +92,9 @@ export class ChatLiveStreamComponent {
     return this.posts.post(() =>
       this.chatMessagesRepo.addChatMessage(message.trim())
     );
+  }
+
+  protected signIn(): Promise<void> {
+    return this.signInAction.run(() => this.accountPort.signInWithGoogle());
   }
 }

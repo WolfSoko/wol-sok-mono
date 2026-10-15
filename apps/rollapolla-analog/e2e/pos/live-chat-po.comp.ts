@@ -1,43 +1,37 @@
 import { expect, Locator, Page } from '@playwright/test';
 
+/** The live chat card; the fixture scrolls it into view so it hydrates. */
 export class LiveChatPoComp {
   constructor(private readonly page: Page) {}
 
-  async enterUntrimmedMessage(message: string) {
-    const leaveMessageInput: Locator = this.page.getByTestId('message-input');
-    await expect(leaveMessageInput).toBeVisible();
-    await leaveMessageInput.scrollIntoViewIfNeeded();
+  /** Nobody is signed in with Google: the chat offers sign-in, not the form. */
+  public async expectSignInRequired(): Promise<void> {
+    await expect(this.page.getByTestId('chat-sign-in-button')).toBeVisible();
+    await expect(this.page.getByTestId('message-input')).toHaveCount(0);
+  }
 
-    await this.fillOnceHydrated(leaveMessageInput, message);
-
+  public async enterUntrimmedMessage(message: string): Promise<string> {
+    const messageInput = await this.openMessageInput();
+    await messageInput.fill(message);
     await this.page.getByRole('button', { name: 'Send message' }).click();
     return message;
   }
 
-  async sendMessageByKeypress(message: string) {
-    const leaveMessageInput: Locator = this.page.getByTestId('message-input');
-    await expect(leaveMessageInput).toBeVisible();
-    await leaveMessageInput.scrollIntoViewIfNeeded();
-
-    await this.fillOnceHydrated(leaveMessageInput, message);
-
-    await leaveMessageInput.press('Control+Enter');
+  public async sendMessageByKeypress(message: string): Promise<void> {
+    const messageInput = await this.openMessageInput();
+    await messageInput.fill(message);
+    await messageInput.press('Control+Enter');
   }
 
-  findMessageInChat(message: string): Locator {
+  public findMessageInChat(message: string): Locator {
     return this.page.getByTestId('messages-list').getByText(message);
   }
 
-  // The chat hydrates once it is in the viewport; typing earlier is lost.
-  private async fillOnceHydrated(
-    input: Locator,
-    message: string
-  ): Promise<void> {
-    await expect(async () => {
-      await input.fill(message);
-      await expect(
-        this.page.getByText(`${message.length}/`, { exact: false })
-      ).toBeVisible({ timeout: 1000 });
-    }).toPass();
+  // The input exists only once the chat hydrated and the account is a Google
+  // one: the server renders the sign-in offer.
+  private async openMessageInput(): Promise<Locator> {
+    const messageInput: Locator = this.page.getByTestId('message-input');
+    await expect(messageInput).toBeVisible();
+    return messageInput;
   }
 }

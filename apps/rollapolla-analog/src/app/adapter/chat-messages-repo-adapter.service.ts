@@ -8,7 +8,7 @@ import {
   Signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Auth } from '@angular/fire/auth';
+import { Auth, User } from '@angular/fire/auth';
 
 import {
   addDoc,
@@ -21,6 +21,7 @@ import {
   query,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
+import { isGoogleAccount } from '../../shared/account';
 import { ChatMessage } from '../../shared/chat.message';
 import { Poll } from '../../shared/poll';
 import {
@@ -108,7 +109,7 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
   }
 
   public async addChatMessage(message: string): Promise<PostReceipt> {
-    return this.post(this.chatMessagesCol, message);
+    return this.post(this.chatMessagesCol, message, () => this.googleUser());
   }
 
   public async addPollChatMessage(
@@ -118,21 +119,36 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
     return this.post(
       this.messagesCol('polls', poll.id, 'chatMessages'),
       message,
+      () => ensureSignedIn(this.auth),
       () => (poll.unsaved ? saveFeaturedPoll(this.fs, poll) : poll).closesAt
     );
   }
 
-  /** `expiresAt` runs only once the message is valid and the visitor signed in. */
+  /** The live chat is for Google accounts only; the rules refuse the rest. */
+  private async googleUser(): Promise<User> {
+    await this.auth.authStateReady();
+    const user = this.auth.currentUser;
+    if (!isGoogleAccount(user)) {
+      throw new Error('Sign in with Google to chat');
+    }
+    return user;
+  }
+
+  /**
+   * `signIn` and `expiresAt` run only once the message is valid, `expiresAt`
+   * only once the visitor signed in.
+   */
   private async post(
     col: CollectionReference<ChatMessage, ChatMessageDto>,
     message: string,
+    signIn: () => Promise<User>,
     expiresAt?: () => Date
   ): Promise<PostReceipt> {
     if (!this.validateMessage(message)) {
       return { saved: Promise.resolve() };
     }
     // accounts linked to Google before the name was copied get it now
-    const author = await adoptGoogleProfile(await ensureSignedIn(this.auth));
+    const author = await adoptGoogleProfile(await signIn());
     // The rules compare the name with the token's, which can lag behind the
     // profile (a failed refresh in adoptGoogleProfile), so it comes from there.
     const { claims } = await author.getIdTokenResult();
