@@ -23,11 +23,11 @@
 
 @if (current(); as current) {
   <div class="pace-tiles">
-    <mat-card appearance="filled" class="pace-tile">
+    <mat-card appearance="outlined" class="pace-tile">
       <span class="pace-tile-label">Gesamtzeit</span>
       <span class="pace-tile-value">{{ elapsed() | trainingTime }}</span>
     </mat-card>
-    <mat-card appearance="filled" class="pace-tile">
+    <mat-card appearance="outlined" class="pace-tile">
       <span class="pace-tile-label">Intervallzeit</span>
       <span class="pace-tile-value">{{ current.elapsed | trainingTime }}</span>
       <span class="pace-tile-label"
