@@ -35,9 +35,14 @@ export class PollPo {
   async edit(question: string, addedOption: string): Promise<void> {
     await this.page.getByTestId('edit-poll-button').click();
     await this.page.getByTestId('poll-question-input').fill(question);
+    const optionCount = await this.page
+      .locator('[data-testid^="poll-option-input-"]')
+      .count();
     await this.page.getByTestId('add-option-button').click();
-    const inputs = this.page.locator('[data-testid^="poll-option-input-"]');
-    await inputs.last().fill(addedOption);
+    // by index: right after the click, the last input may still be the old one
+    await this.page
+      .getByTestId(`poll-option-input-${optionCount}`)
+      .fill(addedOption);
     await this.page.getByTestId('save-poll-button').click();
   }
 
