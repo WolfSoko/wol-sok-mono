@@ -49,6 +49,7 @@ export type TrainingRunView =
 
 const LEAD_IN = milliseconds(5000);
 const TICK_PERIOD = 50;
+const SAVE_EVERY = 1000;
 
 interface PlannedIntervall {
   type: ExerciseType;
@@ -87,6 +88,7 @@ export class TrainingRun {
   private readonly run = signal<Run>(this.restore());
   private clock: ReturnType<typeof setInterval> | null = null;
   private lastTick = 0;
+  private lastSavedSecond = -1;
 
   public readonly state: Signal<TrainingRunView> = computed(() =>
     project(this.run())
@@ -134,8 +136,16 @@ export class TrainingRun {
   }
 
   private update(run: Run): void {
+    const previous = this.run().phase;
     this.run.set(run);
     if (run.phase === 'running') {
+      // a reload restores to about the second; every tick would be wasted work
+      const second = Math.floor(run.elapsed / SAVE_EVERY);
+      if (previous !== 'running' || second !== this.lastSavedSecond) {
+        this.lastSavedSecond = second;
+        this.repository.save({ config: run.config, elapsed: run.elapsed });
+      }
+    } else if (run.phase === 'paused' && previous === 'running') {
       this.repository.save({ config: run.config, elapsed: run.elapsed });
     } else if (run.phase === 'finished') {
       this.repository.clear();
@@ -184,18 +194,29 @@ export class TrainingRun {
     const run = this.run();
     if (run.phase === 'leadIn') {
       const elapsed = add(run.elapsed, delta);
-      this.update(
-        elapsed < LEAD_IN
-          ? { ...run, elapsed }
-          : { ...run, phase: 'running', elapsed: ZERO_MS }
+      if (elapsed < LEAD_IN) {
+        this.update({ ...run, elapsed });
+        return;
+      }
+      // a late tick (tab in the background) still counts as training time
+      this.advanceRunning(
+        { ...run, phase: 'running' as const, elapsed: ZERO_MS },
+        subtract(elapsed, LEAD_IN)
       );
     } else if (run.phase === 'running') {
-      const elapsed = add(run.elapsed, delta);
-      if (elapsed < totalDuration(run.intervalle)) {
-        this.update({ ...run, elapsed });
-      } else {
-        this.finish(run.intervalle, totalDuration(run.intervalle), 'complete');
-      }
+      this.advanceRunning(run, delta);
+    }
+  }
+
+  private advanceRunning(
+    run: Extract<Run, { intervalle: PlannedIntervall[] }>,
+    delta: Milliseconds
+  ): void {
+    const elapsed = add(run.elapsed, delta);
+    if (elapsed < totalDuration(run.intervalle)) {
+      this.update({ ...run, elapsed });
+    } else {
+      this.finish(run.intervalle, totalDuration(run.intervalle), 'complete');
     }
   }
 

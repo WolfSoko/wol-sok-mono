@@ -83,6 +83,17 @@ describe('TrainingRun', () => {
       });
     });
 
+    it('restores a paused Trainingslauf at the exact time it was paused', () => {
+      run.start(konfiguration());
+      advance(5000 + 12_300);
+      run.toggle();
+
+      expect(reload().state()).toMatchObject({
+        phase: 'paused',
+        elapsed: 12_300,
+      });
+    });
+
     it('does not bring back a finished Trainingslauf', () => {
       run.start(konfiguration());
       advance(5000 + 12_000);
@@ -112,6 +123,30 @@ describe('TrainingRun', () => {
       TestBed.inject(RepositoryFactoryMock).initialData = stored as never;
 
       expect(createRun().state()).toEqual({ phase: 'ready' });
+    });
+  });
+
+  describe('storing the run', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+      localStorage.clear();
+    });
+
+    it('writes at most about once per second while running', () => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [provideZonelessChangeDetection()],
+      });
+      const setItem = vi.spyOn(Storage.prototype, 'setItem');
+      run = createRun();
+      run.start(konfiguration());
+      advance(5000);
+      setItem.mockClear();
+
+      advance(10_000);
+
+      expect(setItem.mock.calls.length).toBeLessThanOrEqual(11);
+      expect(setItem.mock.calls.length).toBeGreaterThanOrEqual(9);
     });
   });
 
@@ -200,6 +235,33 @@ describe('TrainingRun', () => {
       advance(1000);
 
       expect(run.state()).toMatchObject({ phase: 'running', elapsed: 3950 });
+    });
+
+    it('counts a late first tick after the Vorlauf as training time', () => {
+      run.start(konfiguration());
+      advance(4950);
+
+      // e.g. the tab was in the background when the Vorlauf ended
+      vi.setSystemTime(Date.now() + 3000);
+      advance(50);
+
+      expect(run.state()).toMatchObject({
+        phase: 'running',
+        current: { index: 0, elapsed: 3000 },
+      });
+    });
+
+    it('finishes right away when the Vorlauf ended long ago', () => {
+      run.start(konfiguration());
+      advance(4950);
+
+      vi.setSystemTime(Date.now() + 60_000);
+      advance(50);
+
+      expect(run.state()).toMatchObject({
+        phase: 'finished',
+        zusammenfassung: { elapsed: 30_000, completion: 'complete' },
+      });
     });
 
     it('ends at the total time even after a long gap between ticks', () => {
