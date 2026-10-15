@@ -23,11 +23,11 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
         }
       </h3>
       <div class="pace-tiles">
-        <mat-card appearance="filled" class="pace-tile">
+        <mat-card appearance="outlined" class="pace-tile">
           <span class="pace-tile-value">{{ s.elapsed | trainingTime }}</span>
           <span class="pace-tile-label">Gesamtzeit</span>
         </mat-card>
-        <mat-card appearance="filled" class="pace-tile">
+        <mat-card appearance="outlined" class="pace-tile">
           <span class="pace-tile-value"
             >{{ s.sprintsCompleted }} von {{ s.sprintsTotal }} Sprints</span
           >

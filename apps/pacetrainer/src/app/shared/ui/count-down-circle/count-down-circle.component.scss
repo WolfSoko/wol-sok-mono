@@ -10,6 +10,8 @@
   display: grid;
   place-items: center;
   contain: strict;
+  // own compositor layer: the 50 ms ticks must not re-raster the halo behind it
+  will-change: transform;
 }
 
 svg {
@@ -18,7 +20,6 @@ svg {
   width: 100%;
   height: 100%;
   transform: rotate(-90deg);
-  overflow: visible;
 }
 
 circle {
@@ -36,15 +37,6 @@ circle {
 .progress {
   stroke: var(--pace-accent, var(--mat-sys-primary));
   stroke-linecap: round;
-  filter: drop-shadow(
-    0 0 6px
-      color-mix(
-        in srgb,
-        var(--pace-accent, var(--mat-sys-primary)) 45%,
-        transparent
-      )
-  );
-  transition: stroke-dashoffset 200ms linear;
 }
 
 .time {

@@ -21,7 +21,6 @@
   align-items: center;
   gap: 10px;
   font: var(--mat-sys-label-large);
-  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--mat-sys-on-surface-variant);
@@ -97,7 +96,6 @@
       filled-label-text-size: var(--mat-sys-title-medium-size),
       filled-label-text-weight: 700,
       outlined-label-text-size: var(--mat-sys-title-medium-size),
-      outlined-label-text-weight: 600,
     )
   );
 

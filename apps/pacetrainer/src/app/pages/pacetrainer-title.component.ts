@@ -26,8 +26,7 @@ import { RouterLink } from '@angular/router';
       display: block;
       width: 40px;
       height: 40px;
-      border-radius: 11px;
-      box-shadow: 0 6px 16px -6px rgb(10 21 48 / 0.6);
+      filter: drop-shadow(0 4px 8px rgb(10 21 48 / 0.35));
     }
     .title {
       font: var(--mat-sys-title-large);

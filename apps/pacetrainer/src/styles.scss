@@ -16,9 +16,8 @@ html {
       typography: (
         plain-family: Inter,
         brand-family: Inter,
-        bold-weight: 700,
+        // Inter's 600 reads as Material's "medium" (labels, titles, buttons)
         medium-weight: 600,
-        regular-weight: 400,
       ),
       density: 0,
     )
@@ -27,8 +26,9 @@ html {
   // Softer corners than the Material defaults, shared by all surfaces.
   @include mat.card-overrides(
     (
-      filled-container-shape: var(--mat-sys-corner-large),
-      filled-container-color: var(--mat-sys-surface-container),
+      outlined-container-shape: var(--mat-sys-corner-large),
+      outlined-container-color: var(--mat-sys-surface-container),
+      outlined-outline-color: var(--pace-hairline),
     )
   );
   @include mat.form-field-overrides(
@@ -47,17 +47,6 @@ html {
   --pace-on-recovery: var(--mat-sys-on-primary);
   --pace-recovery-container: var(--mat-sys-primary-container);
 
-  // Brand tints behind the page, drawn from the logo (navy, azure, orange).
-  --pace-glow-primary: color-mix(
-    in srgb,
-    var(--mat-sys-primary) 14%,
-    transparent
-  );
-  --pace-glow-tertiary: color-mix(
-    in srgb,
-    var(--mat-sys-tertiary) 10%,
-    transparent
-  );
   --pace-hairline: color-mix(
     in srgb,
     var(--mat-sys-outline-variant) 60%,
@@ -87,19 +76,19 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
+  // brand tints from the logo: azure top left, orange top right
   background:
     radial-gradient(
       60% 40% at 15% 0%,
-      var(--pace-glow-primary),
+      color-mix(in srgb, var(--mat-sys-primary) 14%, transparent),
       transparent 70%
     ),
     radial-gradient(
-      50% 35% at 100% 100%,
-      var(--pace-glow-tertiary),
+      45% 30% at 100% 0%,
+      color-mix(in srgb, var(--mat-sys-tertiary) 10%, transparent),
       transparent 70%
     ),
     var(--mat-sys-surface);
-  background-attachment: fixed;
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-large);
   text-wrap: pretty;
@@ -126,7 +115,6 @@ h3 {
   flex-flow: column;
   gap: 2px;
   padding: 14px 16px;
-  border: 1px solid var(--pace-hairline);
 }
 
 .pace-tile-value {

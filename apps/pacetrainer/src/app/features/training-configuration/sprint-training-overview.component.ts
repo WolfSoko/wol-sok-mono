@@ -7,7 +7,7 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
   selector: 'pace-sprint-training-overview',
   template: `
     @let conf = data();
-    <mat-card appearance="filled" class="overview" data-qa="training-overview">
+    <mat-card appearance="outlined" data-qa="training-overview">
       <mat-card-header>
         <mat-card-title>Übersicht</mat-card-title>
       </mat-card-header>
@@ -26,8 +26,8 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
           </li>
         </ul>
         <p class="total">
-          <span class="total-label">Gesamtzeit</span>
-          <span class="total-value" data-qa="total-time">{{
+          <span class="pace-tile-label">Gesamtzeit</span>
+          <span class="pace-tile-value" data-qa="total-time">{{
             conf.totalTime | trainingTime
           }}</span>
         </p>
@@ -35,9 +35,6 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
     </mat-card>
   `,
   styles: `
-    .overview {
-      border: 1px solid var(--pace-hairline);
-    }
     .plan {
       display: flex;
       flex-flow: column;
@@ -72,16 +69,6 @@ import { SprintTrainingDataService } from './data/sprint-training-data.service';
       margin: 14px 0 0;
       padding-top: 12px;
       border-top: 1px solid var(--pace-hairline);
-    }
-    .total-label {
-      font: var(--mat-sys-label-large);
-      color: var(--mat-sys-on-surface-variant);
-    }
-    .total-value {
-      font: var(--mat-sys-headline-small);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      font-variant-numeric: tabular-nums;
     }
   `,
   imports: [MatCardModule, TrainingTimePipe],
