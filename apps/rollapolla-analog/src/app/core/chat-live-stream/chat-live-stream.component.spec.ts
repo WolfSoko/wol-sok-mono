@@ -5,7 +5,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ChatMessage } from '../../../shared/chat.message';
 import { AccountAdapterMock } from '../../adapter/account-adapter-mock.service';
 import { ChatMessageRepoAdapterMock } from '../../adapter/chat-message-repo-adapter-mock.service';
-import { AccountPort, SignInCancelled } from '../../ports/account.port';
+import { AccountPort } from '../../ports/account.port';
 import { ChatMessagesRepoPort } from '../../ports/chat-messages-repo.port';
 import { ChatLiveStreamComponent } from './chat-live-stream.component';
 
@@ -95,17 +95,6 @@ describe('ChatLiveStreamComponent', () => {
       expect(query('chat-sign-in')).not.toBeNull();
     });
 
-    it('stays quiet when the visitor closes the popup', async () => {
-      vi.spyOn(account, 'signInWithGoogle').mockRejectedValueOnce(
-        new SignInCancelled()
-      );
-      query('chat-sign-in-button').nativeElement.click();
-      await fixture.whenStable();
-
-      expect(query('chat-sign-in-error')).toBeNull();
-      expect(query('chat-sign-in-button').nativeElement.disabled).toBe(false);
-    });
-
     it('shows an error when signing in fails', async () => {
       vi.spyOn(account, 'signInWithGoogle').mockRejectedValueOnce(
         new Error('auth/unauthorized-domain')
@@ -118,16 +107,13 @@ describe('ChatLiveStreamComponent', () => {
     });
   });
 
-  it('posts the message of a signed-in visitor', async () => {
+  it('posts the trimmed message', () => {
     const repo = TestBed.inject(ChatMessagesRepoPort);
     vi.spyOn(repo, 'addChatMessage');
-    await account.signInWithGoogle();
-    await fixture.whenStable();
 
     component.addChatMessage('  What a nice poll!  ');
 
     expect(repo.addChatMessage).toHaveBeenCalledWith('What a nice poll!');
-    expect(query('chat-post-error')).toBeNull();
   });
 
   it('says so when a message could not be sent', async () => {

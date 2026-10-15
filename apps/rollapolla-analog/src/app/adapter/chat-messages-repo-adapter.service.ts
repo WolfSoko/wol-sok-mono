@@ -11,11 +11,15 @@ import {
   orderBy,
   query,
 } from '@angular/fire/firestore';
+import { isGoogleAccount } from '../../shared/account';
 import { ChatMessage } from '../../shared/chat.message';
 import { ChatMessagesRepoPort } from '../ports/chat-messages-repo.port';
 import { NotesRepoPort } from '../ports/notes-repo.port';
 import { addPendingTaskForServer } from './add-pending-task-for-server';
-import { chatMessageConverter } from './chat-message.converter';
+import {
+  chatMessageConverter,
+  newChatMessageDto,
+} from './chat-message.converter';
 import { ChatMessageDto } from './chat-message.dto';
 
 @Injectable()
@@ -79,15 +83,12 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
     }
     await this.auth.authStateReady();
     const user = this.auth.currentUser;
-    if (!user || user.isAnonymous) {
+    if (!isGoogleAccount(user)) {
       throw new Error('Sign in with Google to chat');
     }
-    const chatMessage: ChatMessage = {
-      id: '-1',
-      message,
-      createdAt: new Date(),
-      authorUid: user.uid,
-    };
-    await addDoc(this.chatMessagesCol, chatMessage);
+    await addDoc(
+      collection(this.fs, 'chatMessages'),
+      newChatMessageDto(message, user.uid)
+    );
   }
 }

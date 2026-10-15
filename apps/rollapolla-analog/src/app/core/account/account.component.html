@@ -16,7 +16,7 @@
     <button
       mat-button
       type="button"
-      [disabled]="busy()"
+      [disabled]="action.busy()"
       (click)="signOut()"
       [title]="'Signed in as ' + (account.displayName ?? 'you')"
       data-testid="sign-out-button"
@@ -28,7 +28,7 @@
   <button
     mat-button
     type="button"
-    [disabled]="busy()"
+    [disabled]="action.busy()"
     (click)="signIn()"
     title="Keep your votes and polls on all your devices"
     data-testid="sign-in-button"
@@ -38,7 +38,7 @@
     <span class="label-short">Sign in</span>
   </button>
 }
-@if (failed()) {
+@if (action.failed()) {
   <p class="error" role="alert" data-testid="account-error">
     That did not work. Please try again.
   </p>

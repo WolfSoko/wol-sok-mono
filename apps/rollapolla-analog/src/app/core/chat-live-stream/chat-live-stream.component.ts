@@ -12,8 +12,9 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { isGoogleAccount } from '../../../shared/account';
 import { ChatMessage } from '../../../shared/chat.message';
-import { AccountPort, SignInCancelled } from '../../ports/account.port';
+import { AccountPort } from '../../ports/account.port';
 import { ChatMessagesRepoPort } from '../../ports/chat-messages-repo.port';
+import { AccountAction } from '../account/account-action';
 import { ChatMessageFormComponent } from './chat-message-form.component';
 import { MessagesListComponent } from './messages-list.component';
 
@@ -50,14 +51,10 @@ import { MessagesListComponent } from './messages-list.component';
       align-items: flex-start;
       gap: 1rem;
       padding: 0.5rem 0.25rem 0.25rem;
-
-      p {
-        margin: 0;
-        color: var(--mat-sys-on-surface-variant);
-      }
     }
-    .error {
-      color: var(--mat-form-field-error-text-color, #ffb4ab);
+    .hint {
+      margin: 0;
+      color: var(--mat-sys-on-surface-variant);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -81,8 +78,7 @@ export class ChatLiveStreamComponent {
   });
   /** Only a visitor signed in with Google may post; everyone can read. */
   protected readonly canChat = computed(() => isGoogleAccount(this.account()));
-  protected readonly signingIn = signal(false);
-  protected readonly signInFailed = signal(false);
+  protected readonly signInAction = new AccountAction();
   protected readonly postFailed = signal(false);
 
   public addChatMessage(message: string): void {
@@ -95,18 +91,7 @@ export class ChatLiveStreamComponent {
     });
   }
 
-  protected async signIn(): Promise<void> {
-    this.signingIn.set(true);
-    this.signInFailed.set(false);
-    try {
-      await this.accountPort.signInWithGoogle();
-    } catch (error) {
-      if (!(error instanceof SignInCancelled)) {
-        console.error('Sign-in failed', error);
-        this.signInFailed.set(true);
-      }
-    } finally {
-      this.signingIn.set(false);
-    }
+  protected signIn(): Promise<void> {
+    return this.signInAction.run(() => this.accountPort.signInWithGoogle());
   }
 }

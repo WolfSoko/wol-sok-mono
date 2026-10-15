@@ -6,13 +6,15 @@ import { AccountPo } from '../pos/account.po';
 import { LiveChatPoComp } from '../pos/live-chat-po.comp';
 
 const test = testBase.extend<{
-  /** The live chat as a guest sees it: reading only. */
+  /** The live chat, hydrated, as a guest sees it: reading only. */
   liveChatComp: LiveChatPoComp;
   /** The live chat signed in with a fresh Google account, so posting works. */
   chatter: LiveChatPoComp;
 }>({
   liveChatComp: async ({ page, homePage }, use) => {
     await homePage.expectTitleVisible();
+    // the chat is deferred: it hydrates once it is in the viewport
+    await page.getByTestId('live-chat').scrollIntoViewIfNeeded();
     const liveChatComp = new LiveChatPoComp(page);
     await use(liveChatComp);
   },

@@ -17,7 +17,6 @@ export class ChatMessageRepoAdapterMock extends ChatMessagesRepoPort {
         id: String(messages.length + 1),
         message,
         createdAt: new Date(),
-        authorUid: 'mock-user',
       } as ChatMessage,
     ]);
   }

@@ -110,6 +110,12 @@ rap-root {
   color: var(--mat-sys-primary);
 }
 
+// inline form or action error, e.g. "That did not work"
+.rap-error {
+  margin: 0;
+  color: var(--mat-sys-error);
+}
+
 .rap-live-dot {
   width: 0.5rem;
   height: 0.5rem;

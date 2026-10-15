@@ -11,7 +11,7 @@ import {
   user,
   User,
 } from '@angular/fire/auth';
-import { map, merge, Observable, of, Subject } from 'rxjs';
+import { map, merge, Observable, of, shareReplay, Subject } from 'rxjs';
 import { Account } from '../../shared/account';
 import { AccountPort, SignInCancelled } from '../ports/account.port';
 
@@ -32,7 +32,9 @@ export class AccountAdapter extends AccountPort {
   )
     ? of(null)
     : merge(user(this.auth), this.linked$).pipe(
-        map(() => toAccount(this.auth.currentUser))
+        map(() => toAccount(this.auth.currentUser)),
+        // one auth listener for all consumers (header, chat)
+        shareReplay({ bufferSize: 1, refCount: true })
       );
 
   public async signInWithGoogle(): Promise<void> {

@@ -7,6 +7,8 @@ export type Account = {
 };
 
 /** Signed in with Google, not just the automatic anonymous sign-in. */
-export function isGoogleAccount(account: Account | null): account is Account {
+export function isGoogleAccount<T extends Pick<Account, 'isAnonymous'>>(
+  account: T | null
+): account is T {
   return account !== null && !account.isAnonymous;
 }

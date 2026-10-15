@@ -3,13 +3,13 @@ import {
   Component,
   computed,
   inject,
-  signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { isGoogleAccount } from '../../../shared/account';
-import { AccountPort, SignInCancelled } from '../../ports/account.port';
+import { AccountPort } from '../../ports/account.port';
+import { AccountAction } from './account-action';
 
 @Component({
   selector: 'rap-account',
@@ -28,29 +28,13 @@ export class AccountComponent {
     const account = this.account();
     return isGoogleAccount(account) ? account : null;
   });
-  protected readonly busy = signal(false);
-  protected readonly failed = signal(false);
+  protected readonly action = new AccountAction();
 
-  protected async signIn(): Promise<void> {
-    await this.run(() => this.accountPort.signInWithGoogle());
+  protected signIn(): Promise<void> {
+    return this.action.run(() => this.accountPort.signInWithGoogle());
   }
 
-  protected async signOut(): Promise<void> {
-    await this.run(() => this.accountPort.signOut());
-  }
-
-  private async run(action: () => Promise<void>): Promise<void> {
-    this.busy.set(true);
-    this.failed.set(false);
-    try {
-      await action();
-    } catch (error) {
-      if (!(error instanceof SignInCancelled)) {
-        console.error('Account action failed', error);
-        this.failed.set(true);
-      }
-    } finally {
-      this.busy.set(false);
-    }
+  protected signOut(): Promise<void> {
+    return this.action.run(() => this.accountPort.signOut());
   }
 }
