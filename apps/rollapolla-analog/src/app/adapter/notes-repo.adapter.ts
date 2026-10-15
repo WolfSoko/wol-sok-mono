@@ -28,7 +28,7 @@ export class NotesRepoAdapter extends NotesRepoPort {
       NoteDto
     >(notesConverter);
 
-    const notes$ = collectionData(
+    const notes$ = collectionData<ChatMessage>(
       query(this.notesCol, orderBy('createdAt', 'desc'), limit(20))
     );
 

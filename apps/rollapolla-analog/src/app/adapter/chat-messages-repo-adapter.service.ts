@@ -37,7 +37,7 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
 
     // load old Notes
     const notes = inject(NotesRepoPort).getNotes();
-    const chatMessages$ = collectionData(
+    const chatMessages$ = collectionData<ChatMessage>(
       query(this.chatMessagesCol, orderBy('createdAt', 'desc'), limit(20))
     );
 
