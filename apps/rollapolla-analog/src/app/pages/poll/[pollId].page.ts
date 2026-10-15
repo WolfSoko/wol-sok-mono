@@ -7,6 +7,7 @@ import {
 import { pendingUntilEvent, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map, switchMap } from 'rxjs';
@@ -18,21 +19,32 @@ import { PollsRepoPort } from '../../ports/polls-repo.port';
   imports: [
     MatButtonModule,
     MatCardModule,
+    MatIconModule,
     MatProgressSpinnerModule,
     PollVoteComponent,
     RouterLink,
   ],
   template: `
-    <main class="main">
+    <main class="rap-container main">
       <nav>
-        <a mat-button routerLink="/" data-testid="home-link">← RollaPolla</a>
+        <a mat-button routerLink="/">
+          <mat-icon>arrow_back</mat-icon>
+          Create your own poll
+        </a>
       </nav>
       @if (poll() === undefined) {
-        <mat-spinner class="spinner" />
+        <mat-spinner class="spinner" diameter="40" />
       } @else if (poll(); as poll) {
         <rap-poll-vote [poll]="poll" />
       } @else {
-        <mat-card data-testid="poll-not-found">
+        <mat-card
+          appearance="outlined"
+          class="not-found"
+          data-testid="poll-not-found"
+        >
+          <mat-icon class="not-found-icon" aria-hidden="true"
+            >search_off</mat-icon
+          >
           <mat-card-header>
             <mat-card-title>Poll not found</mat-card-title>
             <mat-card-subtitle>
@@ -40,7 +52,7 @@ import { PollsRepoPort } from '../../ports/polls-repo.port';
             </mat-card-subtitle>
           </mat-card-header>
           <mat-card-actions>
-            <a mat-button routerLink="/">Create a new poll</a>
+            <a mat-flat-button routerLink="/">Create a new poll</a>
           </mat-card-actions>
         </mat-card>
       }
@@ -51,9 +63,27 @@ import { PollsRepoPort } from '../../ports/polls-repo.port';
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      max-width: 760px;
+      padding-block: clamp(1.5rem, 5vw, 3rem) 0;
+    }
+    nav {
+      margin-inline-start: -0.75rem;
     }
     .spinner {
       align-self: center;
+      margin-block: 3rem;
+    }
+    .not-found {
+      align-items: center;
+      gap: 0.5rem;
+      padding: 2.5rem 1rem 1.5rem;
+      text-align: center;
+    }
+    .not-found-icon {
+      width: 3rem;
+      height: 3rem;
+      font-size: 3rem;
+      color: var(--mat-sys-on-surface-variant);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

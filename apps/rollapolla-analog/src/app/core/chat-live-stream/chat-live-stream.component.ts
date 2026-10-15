@@ -13,20 +13,24 @@ import { MessagesListComponent } from './messages-list.component';
 
 @Component({
   selector: 'rap-chat-live-stream',
-
   imports: [MatCardModule, MessagesListComponent, ChatMessageFormComponent],
   templateUrl: './chat-live-stream.component.html',
   styles: `
     :host {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.2rem;
-      justify-content: stretch;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.5rem;
       align-items: start;
+
+      @media (min-width: 900px) {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+      }
     }
-    .form,
-    .notes {
-      flex: 1 1 auto;
+    mat-card {
+      padding: 0.75rem 0.5rem 0.5rem;
+    }
+    .content {
+      padding-top: 1rem;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

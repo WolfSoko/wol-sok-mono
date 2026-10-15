@@ -12,13 +12,14 @@ export class HomePage {
   }
 
   async expectTitleVisible() {
+    await expect(this.page.getByTestId('home-link')).toContainText(
+      'RollaPolla'
+    );
     await expect(
       this.page.getByRole('heading', {
-        name: 'RollaPolla',
+        level: 1,
+        name: 'Easy Polling for Everyone!',
       })
-    ).toBeVisible();
-    await expect(
-      this.page.getByText('Easy Polling for Everyone!')
     ).toBeVisible();
   }
 
