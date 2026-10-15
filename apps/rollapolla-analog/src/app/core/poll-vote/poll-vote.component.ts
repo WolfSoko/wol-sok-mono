@@ -4,6 +4,7 @@ import {
   computed,
   inject,
   input,
+  linkedSignal,
   signal,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -50,20 +51,29 @@ export class PollVoteComponent {
   private readonly pollsRepo = inject(PollsRepoPort);
   private readonly votedPolls = inject(VotedPollsStore);
 
-  protected readonly selectedOption = signal<number | undefined>(undefined);
+  /** Dropped when the creator edits the poll: the answers may have changed. */
+  protected readonly selectedOption = linkedSignal<string, number | undefined>({
+    source: () => `${this.poll().id}#${this.poll().round}`,
+    computation: () => undefined,
+  });
   protected readonly voting = signal(false);
   protected readonly voteFailed = signal(false);
 
-  /** The vote stored on the server wins over the hint this browser remembers. */
-  private readonly ownVote = toSignal(
+  private readonly storedVote = toSignal(
     toObservable(this.poll).pipe(
       map((poll) => poll.id),
       distinctUntilChanged(),
       switchMap((pollId) => this.pollsRepo.watchOwnVote(pollId))
     )
   );
+  /** The stored vote, if cast in this round: editing the poll resets votes. */
+  private readonly ownVote = computed(() => {
+    const vote = this.storedVote();
+    return vote?.round === this.poll().round ? vote.option : undefined;
+  });
+  /** The vote stored on the server wins over the hint this browser remembers. */
   protected readonly votedOption = computed(
-    () => this.ownVote() ?? this.votedPolls.votedOption(this.poll().id)
+    () => this.ownVote() ?? this.votedPolls.votedOption(this.poll())
   );
   protected readonly hasVoted = computed(
     () => this.votedOption() !== undefined
@@ -91,8 +101,8 @@ export class PollVoteComponent {
     this.voteFailed.set(false);
     try {
       const { saved } = await this.pollsRepo.vote(poll, optionIndex);
-      this.votedPolls.rememberVote(poll.id, optionIndex);
-      saved.catch((error: unknown) => this.voteRejected(poll.id, error));
+      this.votedPolls.rememberVote(poll, optionIndex);
+      saved.catch((error: unknown) => this.voteRejected(poll, error));
     } catch (error) {
       console.error('Could not vote', error);
       this.voteFailed.set(true);
@@ -105,9 +115,9 @@ export class PollVoteComponent {
    * The backend refused the vote after it was already shown. If this visitor
    * voted before (another tab), the stored vote takes over; otherwise retry.
    */
-  private voteRejected(pollId: string, error: unknown): void {
+  private voteRejected(poll: Poll, error: unknown): void {
     console.error('Vote was rejected', error);
-    this.votedPolls.forgetVote(pollId);
+    this.votedPolls.forgetVote(poll);
     if (this.ownVote() === undefined) {
       this.voteFailed.set(true);
     }

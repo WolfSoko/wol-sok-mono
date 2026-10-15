@@ -74,7 +74,7 @@ describe('PollVoteComponent', () => {
 
   it('marks the vote stored on the server, not the local hint', async () => {
     localStorage.setItem('rap-voted-polls', JSON.stringify({ [pollId]: 0 }));
-    repo.ownVotes$.next({ [pollId]: 1 });
+    repo.ownVotes$.next({ [pollId]: { option: 1, round: 0 } });
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [PollVoteComponent, NoopAnimationsModule],
@@ -94,7 +94,7 @@ describe('PollVoteComponent', () => {
   });
 
   it('shows the results when the server knows the vote but this browser does not', async () => {
-    repo.ownVotes$.next({ [pollId]: 0 });
+    repo.ownVotes$.next({ [pollId]: { option: 0, round: 0 } });
     await fixture.whenStable();
 
     expect(query('vote-button')).toBeNull();
@@ -123,7 +123,7 @@ describe('PollVoteComponent', () => {
   it('shows the stored vote when the backend rejects a second vote', async () => {
     vi.spyOn(repo, 'vote').mockImplementationOnce(async () => {
       // this visitor already voted for option 0 in another tab
-      repo.ownVotes$.next({ [pollId]: 0 });
+      repo.ownVotes$.next({ [pollId]: { option: 0, round: 0 } });
       return { saved: Promise.reject(new Error('permission-denied')) };
     });
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -139,6 +139,50 @@ describe('PollVoteComponent', () => {
     expect(JSON.parse(localStorage.getItem('rap-voted-polls') ?? '{}')).toEqual(
       {}
     );
+  });
+
+  it('lets the visitor vote again once the creator edited the poll', async () => {
+    query('poll-option-0').query(By.css('input')).nativeElement.click();
+    fixture.detectChanges();
+    query('vote-button').nativeElement.click();
+    await fixture.whenStable();
+    expect(query('vote-button')).toBeNull();
+
+    repo.updatePoll(pollId, {
+      question: 'Pizza, pasta or salad?',
+      options: ['Pizza', 'Pasta', 'Salad'],
+    });
+    fixture.componentRef.setInput('poll', await currentPoll());
+    await fixture.whenStable();
+
+    expect(text('poll-question')).toBe('Pizza, pasta or salad?');
+    expect(text('poll-total-votes')).toBe('0 votes');
+    expect(query('vote-button')).not.toBeNull();
+
+    query('poll-option-2').query(By.css('input')).nativeElement.click();
+    fixture.detectChanges();
+    query('vote-button').nativeElement.click();
+    await fixture.whenStable();
+
+    expect((await currentPoll()).counts).toEqual([0, 0, 1]);
+    expect(JSON.parse(localStorage.getItem('rap-voted-polls') ?? '{}')).toEqual(
+      { [pollId]: 0, [`${pollId}#1`]: 2 }
+    );
+  });
+
+  it('drops the picked option when the creator edits the poll', async () => {
+    query('poll-option-1').query(By.css('input')).nativeElement.click();
+    fixture.detectChanges();
+    expect(query('vote-button').nativeElement.disabled).toBe(false);
+
+    repo.updatePoll(pollId, {
+      question: 'Pasta or pizza?',
+      options: ['Pasta', 'Pizza'],
+    });
+    fixture.componentRef.setInput('poll', await currentPoll());
+    await fixture.whenStable();
+
+    expect(query('vote-button').nativeElement.disabled).toBe(true);
   });
 
   it('shows an error and lets the visitor retry when voting fails', async () => {

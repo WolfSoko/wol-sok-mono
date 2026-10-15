@@ -4,6 +4,7 @@ import { Auth, authState } from '@angular/fire/auth';
 import {
   collection,
   CollectionReference,
+  deleteDoc,
   doc,
   docData,
   Firestore,
@@ -13,6 +14,7 @@ import {
   query,
   setDoc,
   Timestamp,
+  updateDoc,
   where,
   writeBatch,
 } from '@angular/fire/firestore';
@@ -28,7 +30,7 @@ import {
 import { pollOrFeaturedDraft } from '../../shared/featured-polls';
 import { isOpen, NewPoll, Poll, POLL_LIFETIME_MS } from '../../shared/poll';
 import { sortPolls } from '../../shared/poll-search';
-import { PollsRepoPort, VoteReceipt } from '../ports/polls-repo.port';
+import { OwnVote, PollsRepoPort, WriteReceipt } from '../ports/polls-repo.port';
 import { ensureSignedIn } from './ensure-signed-in';
 import { saveFeaturedPoll } from './featured-poll-doc';
 import { pollConverter } from './poll.converter';
@@ -67,6 +69,7 @@ export class PollsRepoAdapter extends PollsRepoPort {
       closesAt: new Date(createdAt.getTime() + POLL_LIFETIME_MS),
       creatorUid,
       listed: newPoll.listed ?? false,
+      round: 0,
     };
     // Not awaited: Firestore applies the write locally right away and resolves
     // only once the backend acknowledged it.
@@ -74,6 +77,27 @@ export class PollsRepoAdapter extends PollsRepoPort {
       console.error('Could not save poll', error)
     );
     return pollRef.id;
+  }
+
+  public updatePoll(pollId: string, changes: NewPoll): WriteReceipt {
+    if (!this.validateNewPoll(changes)) {
+      throw new Error('Invalid poll');
+    }
+    const options = changes.options.map((option) => option.trim());
+    const update: Partial<Record<keyof PollDto, unknown>> = {
+      question: changes.question.trim(),
+      options,
+      counts: Object.fromEntries(options.map((_, index) => [String(index), 0])),
+      totalVotes: 0,
+      listed: changes.listed ?? false,
+      // the rules accept exactly the next round, whatever this client last saw
+      round: increment(1),
+    };
+    return { saved: updateDoc(doc(this.fs, 'polls', pollId), update) };
+  }
+
+  public deletePoll(pollId: string): WriteReceipt {
+    return { saved: deleteDoc(doc(this.fs, 'polls', pollId)) };
   }
 
   public watchPoll(pollId: string): Observable<Poll | null> {
@@ -133,7 +157,7 @@ export class PollsRepoAdapter extends PollsRepoPort {
     );
   }
 
-  public watchOwnVote(pollId: string): Observable<number | undefined> {
+  public watchOwnVote(pollId: string): Observable<OwnVote | undefined> {
     if (this.isServer) {
       // nobody is signed in while rendering on the server
       return of(undefined);
@@ -142,7 +166,10 @@ export class PollsRepoAdapter extends PollsRepoPort {
       switchMap((user) =>
         user
           ? docData(doc(this.fs, 'polls', pollId, 'votes', user.uid)).pipe(
-              map((vote) => (vote as VoteDto | undefined)?.option)
+              map((data) => {
+                const vote = data as VoteDto | undefined;
+                return vote && { option: vote.option, round: vote.round ?? 0 };
+              })
             )
           : of(undefined)
       ),
@@ -151,17 +178,19 @@ export class PollsRepoAdapter extends PollsRepoPort {
     );
   }
 
-  public async vote(poll: Poll, optionIndex: number): Promise<VoteReceipt> {
+  public async vote(poll: Poll, optionIndex: number): Promise<WriteReceipt> {
     const uid = await this.currentUid();
     const stored = poll.unsaved ? saveFeaturedPoll(this.fs, poll) : poll;
     const pollRef = doc(this.fs, 'polls', poll.id);
     const vote: VoteDto = {
       option: optionIndex,
+      round: poll.round,
       createdAt: Timestamp.now(),
       ttl: Timestamp.fromDate(stored.closesAt),
     };
     // Both writes or none: the rules only accept a count change together with
-    // the creation of this user's vote document.
+    // this user's vote document for the current round (created, or replacing
+    // the one from an earlier round).
     const batch = writeBatch(this.fs);
     batch.set(doc(pollRef, 'votes', uid), vote);
     batch.update(pollRef, {

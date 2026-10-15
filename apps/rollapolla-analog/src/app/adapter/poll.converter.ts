@@ -41,6 +41,7 @@ export const pollConverter: FirestoreDataConverter<Poll, PollDto> = {
       closesAt: new Date(data.ttl.toDate()),
       creatorUid: data.creatorUid,
       listed: data.listed ?? false,
+      round: data.round ?? 0,
     };
   },
 };

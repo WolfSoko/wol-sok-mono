@@ -1,4 +1,4 @@
-import { ApplicationRef } from '@angular/core';
+import { ApplicationRef, DebugElement } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By, Meta, Title } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -10,8 +10,10 @@ import {
 } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { BehaviorSubject, map, NEVER } from 'rxjs';
+import { AccountAdapterMock } from '../../adapter/account-adapter-mock.service';
 import { CREATED_POLL_ID } from '../../core/create-poll/created-poll-id';
 import { PollsRepoAdapterMock } from '../../adapter/polls-repo-adapter-mock.service';
+import { AccountPort } from '../../ports/account.port';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import PollPageComponent from './[pollId].page';
 
@@ -25,6 +27,7 @@ describe('PollPageComponent', () => {
       providers: [
         provideRouter([]),
         { provide: PollsRepoPort, useClass: PollsRepoAdapterMock },
+        { provide: AccountPort, useClass: AccountAdapterMock },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -129,6 +132,122 @@ describe('PollPageComponent', () => {
     expect(TestBed.inject(Title).getTitle()).not.toContain('Pizza or pasta?');
   });
 
+  describe('for the creator', () => {
+    let pollId: string;
+
+    beforeEach(async () => {
+      pollId = await repo.createPoll({
+        question: 'Pizza or pasta?',
+        options: ['Pizza', 'Pasta'],
+      });
+      await repo.vote(repo.polls()[pollId], 0);
+    });
+
+    it('offers editing and deleting only to the creator', async () => {
+      const element = await render(pollId);
+      expect(byTestId(element, 'edit-poll-button')).toBeNull();
+
+      signInAs('mock-user');
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(byTestId(element, 'edit-poll-button')).not.toBeNull();
+      expect(byTestId(element, 'delete-poll-button')).not.toBeNull();
+
+      signInAs('someone-else');
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(byTestId(element, 'delete-poll-button')).toBeNull();
+    });
+
+    it('edits the poll in place and resets its votes', async () => {
+      signInAs('mock-user');
+      const element = await render(pollId);
+      byTestId(element, 'edit-poll-button').nativeElement.click();
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(byTestId(element, 'poll-question')).toBeNull();
+      expect(text(element, 'create-poll-subtitle')).toContain('its 1 vote is');
+      const question = byTestId(element, 'poll-question-input').nativeElement;
+      expect(question.value).toBe('Pizza or pasta?');
+      question.value = 'Pizza, pasta or salad?';
+      question.dispatchEvent(new Event('input'));
+      byTestId(element, 'add-option-button').nativeElement.click();
+      await TestBed.inject(ApplicationRef).whenStable();
+      const salad = byTestId(element, 'poll-option-input-2').nativeElement;
+      salad.value = 'Salad';
+      salad.dispatchEvent(new Event('input'));
+      await TestBed.inject(ApplicationRef).whenStable();
+      byTestId(element, 'save-poll-button').nativeElement.click();
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(repo.polls()[pollId]).toMatchObject({
+        question: 'Pizza, pasta or salad?',
+        options: ['Pizza', 'Pasta', 'Salad'],
+        counts: [0, 0, 0],
+        totalVotes: 0,
+        round: 1,
+      });
+      expect(text(element, 'poll-question')).toBe('Pizza, pasta or salad?');
+      expect(byTestId(element, 'vote-button')).not.toBeNull();
+    });
+
+    it('cancels editing without changing the poll', async () => {
+      signInAs('mock-user');
+      const element = await render(pollId);
+      byTestId(element, 'edit-poll-button').nativeElement.click();
+      await TestBed.inject(ApplicationRef).whenStable();
+      byTestId(element, 'cancel-edit-button').nativeElement.click();
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(text(element, 'poll-question')).toBe('Pizza or pasta?');
+      expect(repo.polls()[pollId].totalVotes).toBe(1);
+    });
+
+    it('deletes the poll after asking and goes to "My polls"', async () => {
+      const navigate = vi
+        .spyOn(TestBed.inject(Router), 'navigate')
+        .mockResolvedValue(true);
+      signInAs('mock-user');
+      const element = await render(pollId);
+      byTestId(element, 'delete-poll-button').nativeElement.click();
+      await TestBed.inject(ApplicationRef).whenStable();
+      byTestId(element, 'delete-poll-cancel').nativeElement.click();
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(repo.polls()[pollId]).toBeDefined();
+
+      byTestId(element, 'delete-poll-button').nativeElement.click();
+      await TestBed.inject(ApplicationRef).whenStable();
+      byTestId(element, 'delete-poll-confirm-button').nativeElement.click();
+
+      expect(repo.polls()[pollId]).toBeUndefined();
+      expect(navigate).toHaveBeenCalledWith(['/my-polls']);
+    });
+
+    it('offers no editing once the poll closed', async () => {
+      repo.polls()[pollId].closesAt = new Date(Date.now() - 1000);
+      signInAs('mock-user');
+      const element = await render(pollId);
+
+      expect(byTestId(element, 'edit-poll-button')).toBeNull();
+      expect(byTestId(element, 'delete-poll-button')).not.toBeNull();
+    });
+
+    function signInAs(uid: string): void {
+      (TestBed.inject(AccountPort) as AccountAdapterMock).accountSubject.next({
+        uid,
+        isAnonymous: true,
+        displayName: null,
+        photoUrl: null,
+      });
+    }
+
+    function text(element: DebugElement, testId: string): string {
+      return byTestId(element, testId).nativeElement.textContent.trim();
+    }
+  });
+
+  function byTestId(element: DebugElement, testId: string): DebugElement {
+    return element.query(By.css(`[data-testid="${testId}"]`));
+  }
+
   async function render(pollId: string) {
     routePollId.next(pollId);
     const fixture = TestBed.createComponent(PollPageComponent);
@@ -144,6 +263,7 @@ describe('PollPageComponent after creating a poll', () => {
       providers: [
         provideRouter([{ path: 'poll/:pollId', component: PollPageComponent }]),
         { provide: PollsRepoPort, useClass: PollsRepoAdapterMock },
+        { provide: AccountPort, useClass: AccountAdapterMock },
       ],
     });
     const repo = TestBed.inject(PollsRepoPort);

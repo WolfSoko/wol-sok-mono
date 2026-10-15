@@ -15,6 +15,7 @@ describe('pollConverter', () => {
     closesAt: new Date(createdAt.getTime() + POLL_LIFETIME_MS),
     creatorUid: 'user-1',
     listed: true,
+    round: 0,
   };
 
   it('stores counts keyed by option index and the closing time as ttl', () => {

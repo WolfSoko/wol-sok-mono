@@ -32,6 +32,20 @@ export class PollPo {
     await this.page.getByTestId('vote-button').click();
   }
 
+  async edit(question: string, addedOption: string): Promise<void> {
+    await this.page.getByTestId('edit-poll-button').click();
+    await this.page.getByTestId('poll-question-input').fill(question);
+    await this.page.getByTestId('add-option-button').click();
+    const inputs = this.page.locator('[data-testid^="poll-option-input-"]');
+    await inputs.last().fill(addedOption);
+    await this.page.getByTestId('save-poll-button').click();
+  }
+
+  async delete(): Promise<void> {
+    await this.page.getByTestId('delete-poll-button').click();
+    await this.page.getByTestId('delete-poll-confirm-button').click();
+  }
+
   result(optionIndex: number): Locator {
     return this.page.getByTestId(`poll-result-${optionIndex}`);
   }

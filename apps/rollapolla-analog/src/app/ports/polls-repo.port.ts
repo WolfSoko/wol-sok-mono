@@ -1,7 +1,11 @@
 import { Observable } from 'rxjs';
 import { NewPoll, Poll } from '../../shared/poll';
 
-export type VoteReceipt = { saved: Promise<void> };
+/** `saved` settles once the backend accepted the write or rejected it. */
+export type WriteReceipt = { saved: Promise<void> };
+
+/** A vote counts only while the poll is still in the round it was cast in. */
+export type OwnVote = { option: number; round: number };
 
 export abstract class PollsRepoPort {
   static readonly MIN_QUESTION_LENGTH: number = 5;
@@ -34,6 +38,20 @@ export abstract class PollsRepoPort {
   abstract createPoll(newPoll: NewPoll): Promise<string>;
 
   /**
+   * Replaces the question, answers and listing of the visitor's own open poll
+   * and starts its next round: all counts drop to zero and everybody may vote
+   * again. Applies locally right away; throws if the changes are invalid.
+   */
+  abstract updatePoll(pollId: string, changes: NewPoll): WriteReceipt;
+
+  /**
+   * Deletes the visitor's own poll, locally right away. Its votes and chat
+   * messages stay until the poll's TTL removes them, but nothing shows them
+   * anymore. `saved` settles once the backend accepted or rejected it.
+   */
+  abstract deletePoll(pollId: string): WriteReceipt;
+
+  /**
    * Emits the poll on every change, `null` if it does not exist. A featured
    * poll nobody voted on yet is emitted as its `unsaved` draft.
    */
@@ -57,10 +75,11 @@ export abstract class PollsRepoPort {
   abstract watchMyPolls(): Observable<Poll[] | null | undefined>;
 
   /**
-   * Emits the option the signed-in visitor voted for, `undefined` if they have
-   * not voted or are not signed in. Never signs anyone in.
+   * Emits the signed-in visitor's vote on the poll, in whatever round it was
+   * cast, `undefined` if they have not voted or are not signed in. Never
+   * signs anyone in.
    */
-  abstract watchOwnVote(pollId: string): Observable<number | undefined>;
+  abstract watchOwnVote(pollId: string): Observable<OwnVote | undefined>;
 
   /**
    * Signs the visitor in if needed and records their one vote on the poll;
@@ -69,5 +88,5 @@ export abstract class PollsRepoPort {
    * `saved` settles once the backend accepted the vote or rejected it, e.g.
    * because this visitor already voted from another tab.
    */
-  abstract vote(poll: Poll, optionIndex: number): Promise<VoteReceipt>;
+  abstract vote(poll: Poll, optionIndex: number): Promise<WriteReceipt>;
 }

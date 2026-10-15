@@ -6,13 +6,13 @@ import {
   storedFeaturedPoll,
 } from '../../shared/featured-polls';
 import { isOpen, NewPoll, Poll, POLL_LIFETIME_MS } from '../../shared/poll';
-import { PollsRepoPort, VoteReceipt } from '../ports/polls-repo.port';
+import { OwnVote, PollsRepoPort, WriteReceipt } from '../ports/polls-repo.port';
 
 @Injectable()
 export class PollsRepoAdapterMock extends PollsRepoPort {
   public readonly polls$ = new BehaviorSubject<Record<string, Poll>>({});
   /** The mock visitor's votes by poll id. */
-  public readonly ownVotes$ = new BehaviorSubject<Record<string, number>>({});
+  public readonly ownVotes$ = new BehaviorSubject<Record<string, OwnVote>>({});
 
   public polls(): Record<string, Poll> {
     return this.polls$.value;
@@ -36,9 +36,36 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
         closesAt: new Date(createdAt.getTime() + POLL_LIFETIME_MS),
         creatorUid: 'mock-user',
         listed: newPoll.listed ?? false,
+        round: 0,
       },
     });
     return id;
+  }
+
+  public updatePoll(pollId: string, changes: NewPoll): WriteReceipt {
+    const poll = this.polls()[pollId];
+    if (!poll || !this.validateNewPoll(changes)) {
+      throw new Error('Invalid poll');
+    }
+    this.polls$.next({
+      ...this.polls(),
+      [pollId]: {
+        ...poll,
+        question: changes.question.trim(),
+        options: changes.options.map((option) => option.trim()),
+        counts: changes.options.map(() => 0),
+        totalVotes: 0,
+        listed: changes.listed ?? false,
+        round: poll.round + 1,
+      },
+    });
+    return { saved: Promise.resolve() };
+  }
+
+  public deletePoll(pollId: string): WriteReceipt {
+    const { [pollId]: _deleted, ...polls } = this.polls();
+    this.polls$.next(polls);
+    return { saved: Promise.resolve() };
   }
 
   public watchPoll(pollId: string): Observable<Poll | null> {
@@ -87,14 +114,14 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
     );
   }
 
-  public watchOwnVote(pollId: string): Observable<number | undefined> {
+  public watchOwnVote(pollId: string): Observable<OwnVote | undefined> {
     return this.ownVotes$.pipe(map((votes) => votes[pollId]));
   }
 
   public async vote(
     { id, unsaved }: Poll,
     optionIndex: number
-  ): Promise<VoteReceipt> {
+  ): Promise<WriteReceipt> {
     const featured = featuredPoll(id);
     if (unsaved && featured && !this.polls()[id]) {
       this.polls$.next({
@@ -103,10 +130,13 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
       });
     }
     const poll = this.polls()[id];
-    if (!poll || this.ownVotes$.value[id] !== undefined) {
+    if (!poll || this.ownVotes$.value[id]?.round === poll.round) {
       return { saved: Promise.reject(new Error('Already voted')) };
     }
-    this.ownVotes$.next({ ...this.ownVotes$.value, [id]: optionIndex });
+    this.ownVotes$.next({
+      ...this.ownVotes$.value,
+      [id]: { option: optionIndex, round: poll.round },
+    });
     this.polls$.next({
       ...this.polls(),
       [id]: {

@@ -1,13 +1,28 @@
 <mat-card appearance="outlined" class="card">
+  <!-- no @if around title and subtitle: it would keep them out of their slots -->
   <mat-card-header>
-    <mat-card-title>Create a poll</mat-card-title>
-    <mat-card-subtitle>Ask a question, share the link.</mat-card-subtitle>
+    <mat-card-title>{{
+      poll() ? "Edit your poll" : "Create a poll"
+    }}</mat-card-title>
+    <mat-card-subtitle data-testid="create-poll-subtitle">
+      @if (poll(); as poll) {
+        Saving starts the poll over:
+        {{
+          poll.totalVotes === 1
+            ? "its 1 vote is"
+            : "all " + poll.totalVotes + " votes are"
+        }}
+        reset and everybody can vote again.
+      } @else {
+        Ask a question, share the link.
+      }
+    </mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
     <form
       class="create-poll-form"
       [formGroup]="form"
-      (ngSubmit)="createPoll()"
+      (ngSubmit)="save()"
       data-testid="create-poll-form"
     >
       <mat-form-field class="full-width">
@@ -89,20 +104,42 @@
           <mat-icon>add</mat-icon>
           Add option
         </button>
-        <button
-          mat-flat-button
-          type="submit"
-          class="submit-button"
-          [disabled]="form.invalid || creating()"
-          data-testid="create-poll-button"
-        >
-          Create poll
-          <mat-icon iconPositionEnd>arrow_forward</mat-icon>
-        </button>
+        @if (poll()) {
+          <span class="edit-buttons">
+            <button
+              mat-button
+              type="button"
+              (click)="editDone.emit()"
+              data-testid="cancel-edit-button"
+            >
+              Cancel
+            </button>
+            <button
+              mat-flat-button
+              type="submit"
+              [disabled]="form.invalid || saving()"
+              data-testid="save-poll-button"
+            >
+              <mat-icon>restart_alt</mat-icon>
+              Save and reset votes
+            </button>
+          </span>
+        } @else {
+          <button
+            mat-flat-button
+            type="submit"
+            class="submit-button"
+            [disabled]="form.invalid || saving()"
+            data-testid="create-poll-button"
+          >
+            Create poll
+            <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+          </button>
+        }
       </div>
-      @if (createFailed()) {
+      @if (saveFailed()) {
         <p class="error" role="alert" data-testid="create-poll-error">
-          Could not create the poll. Please try again.
+          Could not save the poll. Please try again.
         </p>
       }
     </form>
