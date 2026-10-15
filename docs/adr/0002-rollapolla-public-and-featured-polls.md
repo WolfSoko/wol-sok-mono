@@ -22,20 +22,29 @@ must filter on it.
 **Search runs in the browser.** Firestore has no full-text search. `/polls`
 loads the newest `PUBLIC_POLLS_LIMIT` (200) open listed polls and filters
 them by every word of the search, ignoring case and accents
-(`shared/poll-search.ts`). Hot polls are one query ordered by `totalVotes`.
-Both drop polls that have closed but are not yet deleted by the TTL.
+(`shared/poll-search.ts`). Hot polls are the same polls sorted by votes, so
+closed polls the TTL has not deleted yet cannot crowd them out. Both drop polls that have closed but are not yet deleted by the TTL.
 
 **Featured polls live in the code and are stored by their first vote.** They
 are defined in `shared/featured-polls.ts` with fixed ids (`featured-…`).
 `watchPoll` returns an `unsaved` draft for such an id until the document
 exists. The first vote or chat message stores it with
-`creatorUid: 'rollapolla'`, `listed: true` and a lifetime of a year.
+`creatorUid: 'rollapolla'` and `listed: true`, and it runs until the next
+1 January (UTC): featured polls run in yearly seasons.
 
-The rules accept that document only if its question and options match
-`featuredPolls()` in `firestore.rules` exactly, it has no votes, and its
-`createdAt` is within a day of the server time. The day allows for a client
-clock that is off; the year-long `ttl` is fixed to `createdAt`, so a skewed
-clock can move a featured poll's end by at most a day. They refuse any other poll whose id
+The rules accept that document only if:
+
+- its question and options match `featuredPolls()` in `firestore.rules`
+  exactly;
+- it has no votes;
+- its `createdAt` is the server's time (`serverTimestamp()`), so no client
+  clock can date it;
+- its `ttl` is the next 1 January after that time.
+
+Because every client computes the same closing date, two visitors storing the
+poll at the same moment agree on it. The second write is refused, but that
+visitor's vote or message still carries the stored poll's `ttl` and goes
+through. The rules also refuse any other poll whose id
 starts with `featured-`, so nobody can occupy a featured id with their own
 question. `featured-polls.spec.ts` checks that the code and the rules list the
 same polls.
@@ -53,7 +62,10 @@ TTL settings.
   `featuredPolls()` in the rules, then deploy the rules. Changing the text of
   a poll that already has a document does not change that document. Give a
   changed poll a new id.
-- A featured poll restarts with zero votes a year after its first vote.
+- A featured poll restarts with zero votes every year. It closes on
+  1 January, and once the TTL has deleted it (which can take a day or two),
+  the next vote starts the new season. Until then the old poll shows as
+  closed.
 - Search covers the newest 200 open listed polls. More than that needs a
   search index (e.g. a keyword array, or an external search service).
 - Listed polls are public user content with no moderation yet.

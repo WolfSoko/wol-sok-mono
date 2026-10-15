@@ -10,14 +10,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
-import { pendingUntilFirstValue } from '../../adapter/pending-until-first-value';
+import {
+  pendingUntilFirstValue,
+  SSR_DATA_TIMEOUT_MS,
+} from '../../adapter/pending-until-first-value';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import { PollListComponent } from '../poll-list/poll-list.component';
 
 const HOT_POLLS_COUNT = 5;
-/** Longest the server waits for the polls before it renders without them. */
-const SSR_TIMEOUT_MS = 1500;
-
 /** The open listed polls with the most votes. */
 @Component({
   selector: 'rap-hot-polls',
@@ -75,7 +75,7 @@ export class HotPollsComponent {
     inject(PollsRepoPort)
       .watchHotPolls(HOT_POLLS_COUNT)
       .pipe(
-        pendingUntilFirstValue(inject(Injector), SSR_TIMEOUT_MS),
+        pendingUntilFirstValue(inject(Injector), SSR_DATA_TIMEOUT_MS),
         catchError((error: unknown) => {
           console.error('Could not load hot polls', error);
           return of(null);

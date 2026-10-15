@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { throwError } from 'rxjs';
 import {
   featuredPollDraft,
   FEATURED_POLLS,
@@ -65,6 +66,18 @@ describe('PollChatComponent', () => {
     fixture.detectChanges();
 
     expect(query('poll-chat-error')).not.toBeNull();
+  });
+
+  it('says so when the discussion cannot be loaded', async () => {
+    vi.spyOn(repo, 'watchPollChat').mockReturnValue(
+      throwError(() => new Error('permission-denied'))
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    fixture = TestBed.createComponent(PollChatComponent);
+    fixture.componentRef.setInput('poll', poll);
+    await fixture.whenStable();
+
+    expect(query('poll-chat-load-error')).not.toBeNull();
   });
 
   it('takes no new messages once the poll closed', async () => {

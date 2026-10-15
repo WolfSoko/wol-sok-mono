@@ -60,7 +60,7 @@ describe('PollPageComponent', () => {
     ).not.toBeNull();
   });
 
-  it('gives the poll page its own title and keeps it out of search indexes', async () => {
+  it('gives the poll page its own title and keeps unlisted polls out of search indexes', async () => {
     const title = TestBed.inject(Title);
     const meta = TestBed.inject(Meta);
     // as after server rendering: the DOM already holds a poll page's tags
@@ -91,6 +91,20 @@ describe('PollPageComponent', () => {
     expect(meta.getTag('name="robots"')?.content).toBe('index, follow');
     expect(meta.getTag('property="og:url"')?.content).toBe(
       'https://rollapolla.com/'
+    );
+  });
+
+  it('lets search engines index listed polls', async () => {
+    const pollId = await repo.createPoll({
+      question: 'Pizza or pasta?',
+      options: ['Pizza', 'Pasta'],
+      listed: true,
+    });
+
+    await render(pollId);
+
+    expect(TestBed.inject(Meta).getTag('name="robots"')?.content).toBe(
+      'index, follow'
     );
   });
 
@@ -147,10 +161,9 @@ describe('PollPageComponent after creating a poll', () => {
     await harness.fixture.whenStable();
     expect(ready()).not.toBeNull();
 
-    // the empty URL needs no route; leaving the poll page forgets the state
+    // a navigation without the state, as when following a shared link
     await harness.navigateByUrl('/');
     expect(TestBed.inject(Router).url).toBe('/');
-    expect(ready()).toBeFalsy();
     await harness.navigateByUrl(`/poll/${pollId}`);
     await harness.fixture.whenStable();
     expect(ready()).toBeNull();

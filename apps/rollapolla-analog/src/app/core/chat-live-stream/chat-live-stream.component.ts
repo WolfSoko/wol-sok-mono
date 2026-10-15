@@ -9,6 +9,7 @@ import { MatCardModule } from '@angular/material/card';
 import { ChatMessage } from '../../../shared/chat.message';
 import { ChatMessagesRepoPort } from '../../ports/chat-messages-repo.port';
 import { ChatMessageFormComponent } from './chat-message-form.component';
+import { PostTracker } from './post-tracker';
 import { MessagesListComponent } from './messages-list.component';
 
 @Component({
@@ -52,22 +53,12 @@ export class ChatLiveStreamComponent {
   chatMessages: Signal<ChatMessage[] | undefined> =
     this.chatMessagesRepo.getChatMessages();
 
-  protected readonly postFailed = signal(false);
+  private readonly posts = new PostTracker();
+  protected readonly postFailed = this.posts.failed;
 
-  protected async addChatMessage(message: string): Promise<void> {
-    this.postFailed.set(false);
-    try {
-      const { saved } = await this.chatMessagesRepo.addChatMessage(
-        message.trim()
-      );
-      saved.catch((error: unknown) => {
-        // e.g. denied by the rules; the message vanishes from the list again
-        console.error('Chat message was rejected', error);
-        this.postFailed.set(true);
-      });
-    } catch (error) {
-      console.error('Could not post chat message', error);
-      this.postFailed.set(true);
-    }
+  protected addChatMessage(message: string): Promise<void> {
+    return this.posts.post(() =>
+      this.chatMessagesRepo.addChatMessage(message.trim())
+    );
   }
 }

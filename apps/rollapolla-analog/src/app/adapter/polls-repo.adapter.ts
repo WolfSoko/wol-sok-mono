@@ -16,7 +16,6 @@ import {
   where,
   writeBatch,
 } from '@angular/fire/firestore';
-import { onSnapshot } from 'firebase/firestore';
 import {
   catchError,
   map,
@@ -26,13 +25,15 @@ import {
   startWith,
   switchMap,
 } from 'rxjs';
-import { featuredPoll, featuredPollDraft } from '../../shared/featured-polls';
+import { pollOrFeaturedDraft } from '../../shared/featured-polls';
 import { isOpen, NewPoll, Poll, POLL_LIFETIME_MS } from '../../shared/poll';
+import { sortPolls } from '../../shared/poll-search';
 import { PollsRepoPort, VoteReceipt } from '../ports/polls-repo.port';
 import { ensureSignedIn } from './ensure-signed-in';
 import { saveFeaturedPoll } from './featured-poll-doc';
 import { pollConverter } from './poll.converter';
 import { PollDto, VoteDto } from './poll.dto';
+import { docSnapshots, queryData } from './snapshots';
 
 const MY_POLLS_LIMIT = 50;
 /** Extra listed polls read in case some are closed but not yet deleted. */
@@ -75,59 +76,39 @@ export class PollsRepoAdapter extends PollsRepoPort {
     return pollRef.id;
   }
 
-  /**
-   * Not AngularFire's `docData`: on the server that keeps rendering waiting until
-   * Firestore answers, however long it takes. Callers decide how long to wait.
-   */
   public watchPoll(pollId: string): Observable<Poll | null> {
-    const featured = featuredPoll(pollId);
-    return new Observable<Poll | null>((subscriber) =>
-      onSnapshot(
-        doc(this.pollsCol, pollId),
-        (snapshot) =>
-          subscriber.next(
-            snapshot.data() ?? (featured ? featuredPollDraft(featured) : null)
-          ),
-        (error) => subscriber.error(error)
-      )
+    return docSnapshots(doc(this.pollsCol, pollId)).pipe(
+      map((snapshot) => pollOrFeaturedDraft(pollId, snapshot.data()))
     );
   }
 
+  /**
+   * The open listed polls with the most votes, among the newest
+   * {@link PollsRepoPort.PUBLIC_POLLS_LIMIT}. Sorting the query by votes
+   * instead would let closed polls the TTL has not deleted yet crowd out the
+   * open ones; by age they are the oldest and fall off the end.
+   */
   public watchHotPolls(count: number): Observable<Poll[]> {
-    return this.watchListedPolls('totalVotes', count);
+    return this.watchPublicPolls().pipe(
+      map((polls) => sortPolls(polls, 'hot').slice(0, count))
+    );
   }
 
   public watchPublicPolls(): Observable<Poll[]> {
-    return this.watchListedPolls('createdAt', PollsRepoPort.PUBLIC_POLLS_LIMIT);
-  }
-
-  /**
-   * Closed polls linger until the TTL deletes them, so a few more are read
-   * than shown and the closed ones are dropped.
-   */
-  private watchListedPolls(
-    sortBy: 'totalVotes' | 'createdAt',
-    count: number
-  ): Observable<Poll[]> {
-    return new Observable<Poll[]>((subscriber) =>
-      onSnapshot(
-        query(
-          this.pollsCol,
-          where('listed', '==', true),
-          orderBy(sortBy, 'desc'),
-          limit(count + LISTED_POLLS_SLACK)
-        ),
-        (snapshot) => {
-          const now = new Date();
-          subscriber.next(
-            snapshot.docs
-              .map((poll) => poll.data())
-              .filter((poll) => isOpen(poll, now))
-              .slice(0, count)
-          );
-        },
-        (error) => subscriber.error(error)
+    const count = PollsRepoPort.PUBLIC_POLLS_LIMIT;
+    return queryData(
+      query(
+        this.pollsCol,
+        where('listed', '==', true),
+        orderBy('createdAt', 'desc'),
+        // closed polls linger until the TTL deletes them
+        limit(count + LISTED_POLLS_SLACK)
       )
+    ).pipe(
+      map((polls) => {
+        const now = new Date();
+        return polls.filter((poll) => isOpen(poll, now)).slice(0, count);
+      })
     );
   }
 
@@ -139,17 +120,12 @@ export class PollsRepoAdapter extends PollsRepoPort {
     return authState(this.auth).pipe(
       switchMap((user) =>
         user
-          ? new Observable<Poll[]>((subscriber) =>
-              onSnapshot(
-                query(
-                  this.pollsCol,
-                  where('creatorUid', '==', user.uid),
-                  orderBy('createdAt', 'desc'),
-                  limit(MY_POLLS_LIMIT)
-                ),
-                (snapshot) =>
-                  subscriber.next(snapshot.docs.map((poll) => poll.data())),
-                (error) => subscriber.error(error)
+          ? queryData(
+              query(
+                this.pollsCol,
+                where('creatorUid', '==', user.uid),
+                orderBy('createdAt', 'desc'),
+                limit(MY_POLLS_LIMIT)
               )
             ).pipe(startWith(undefined))
           : of(null)

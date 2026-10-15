@@ -12,15 +12,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map, startWith, switchMap } from 'rxjs';
-import { pendingUntilFirstValue } from '../../adapter/pending-until-first-value';
+import {
+  pendingUntilFirstValue,
+  SSR_DATA_TIMEOUT_MS,
+} from '../../adapter/pending-until-first-value';
 import { CREATED_POLL_ID } from '../../core/create-poll/created-poll-id';
 import { PollChatComponent } from '../../core/poll-chat/poll-chat.component';
 import { PollVoteComponent } from '../../core/poll-vote/poll-vote.component';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import { usePollMetaTags } from './poll-meta';
-
-/** Longest the server waits for the poll before it renders the page without it. */
-const SSR_POLL_TIMEOUT_MS = 1500;
 
 @Component({
   selector: 'rap-poll-page',
@@ -127,7 +127,7 @@ export default class PollPageComponent {
     this.pollId$.pipe(
       switchMap((pollId) =>
         this.pollsRepo.watchPoll(pollId).pipe(
-          pendingUntilFirstValue(this.injector, SSR_POLL_TIMEOUT_MS),
+          pendingUntilFirstValue(this.injector, SSR_DATA_TIMEOUT_MS),
           // forget the previous poll while the next one loads
           startWith(undefined)
         )

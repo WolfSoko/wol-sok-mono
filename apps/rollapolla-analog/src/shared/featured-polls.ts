@@ -57,9 +57,6 @@ export type FeaturedPoll = {
   options: string[];
 };
 
-/** Featured polls run for a year; the next vote after that starts them anew. */
-export const FEATURED_POLL_LIFETIME_MS: number = 1000 * 60 * 60 * 24 * 365;
-
 /** Stands in for a creator, so featured polls are nobody's "My polls". */
 export const FEATURED_CREATOR_UID = 'rollapolla';
 
@@ -67,8 +64,17 @@ export function featuredPoll(pollId: string): FeaturedPoll | undefined {
   return FEATURED_POLLS.find(({ id }) => id === pollId);
 }
 
-/** The poll as stored by its first vote; `unsaved` until then. */
-export function featuredPollDraft(
+/**
+ * Featured polls run in yearly seasons: they close at the next 1 January
+ * (UTC), and the first vote after that starts a new season. Every client
+ * gets the same date, so two visitors storing a poll at once agree on it.
+ */
+export function featuredPollClosesAt(now: Date = new Date()): Date {
+  return new Date(Date.UTC(now.getUTCFullYear() + 1, 0, 1));
+}
+
+/** The poll as its first vote or message stores it. */
+export function storedFeaturedPoll(
   { id, question, options }: FeaturedPoll,
   now: Date = new Date()
 ): Poll {
@@ -79,9 +85,28 @@ export function featuredPollDraft(
     counts: options.map(() => 0),
     totalVotes: 0,
     createdAt: now,
-    closesAt: new Date(now.getTime() + FEATURED_POLL_LIFETIME_MS),
+    closesAt: featuredPollClosesAt(now),
     creatorUid: FEATURED_CREATOR_UID,
     listed: true,
-    unsaved: true,
   };
+}
+
+/** What a featured poll nobody voted on yet shows: `unsaved` until stored. */
+export function featuredPollDraft(
+  featured: FeaturedPoll,
+  now: Date = new Date()
+): Poll {
+  return { ...storedFeaturedPoll(featured, now), unsaved: true };
+}
+
+/** The stored poll, else the draft of a featured poll, else `null`. */
+export function pollOrFeaturedDraft(
+  pollId: string,
+  stored: Poll | null | undefined
+): Poll | null {
+  if (stored) {
+    return stored;
+  }
+  const featured = featuredPoll(pollId);
+  return featured ? featuredPollDraft(featured) : null;
 }

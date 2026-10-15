@@ -18,13 +18,13 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { PollSort, searchPolls, sortPolls } from '../../shared/poll-search';
-import { pendingUntilFirstValue } from '../adapter/pending-until-first-value';
+import {
+  pendingUntilFirstValue,
+  SSR_DATA_TIMEOUT_MS,
+} from '../adapter/pending-until-first-value';
 import { PollListComponent } from '../core/poll-list/poll-list.component';
 import { PollsRepoPort } from '../ports/polls-repo.port';
 import { SITE_TAGS, SITE_URL } from './site-tags';
-
-/** Longest the server waits for the polls before it renders without them. */
-const SSR_TIMEOUT_MS = 1500;
 
 /** All open listed polls, searchable. */
 @Component({
@@ -191,7 +191,7 @@ export default class PollsPageComponent {
     inject(PollsRepoPort)
       .watchPublicPolls()
       .pipe(
-        pendingUntilFirstValue(inject(Injector), SSR_TIMEOUT_MS),
+        pendingUntilFirstValue(inject(Injector), SSR_DATA_TIMEOUT_MS),
         catchError((error: unknown) => {
           console.error('Could not load polls', error);
           return of(null);

@@ -2,18 +2,24 @@ import { Clipboard } from '@angular/cdk/clipboard';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   afterNextRender,
+  afterRenderEffect,
   booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
+  ElementRef,
   inject,
   input,
+  linkedSignal,
   PLATFORM_ID,
   signal,
+  viewChild,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Poll } from '../../../shared/poll';
 import { pollUrl, SITE_URL } from '../../pages/site-tags';
@@ -26,6 +32,9 @@ import {
 } from '../../ports/share-target.port';
 
 const LINK_COPIED_RESET_MS = 2000;
+
+/** `failed`: the browser refused to copy, the link is shown to copy by hand. */
+type CopyState = 'idle' | 'copied' | 'failed';
 
 type ShareLink = {
   id: string;
@@ -44,7 +53,13 @@ type ShareLink = {
  */
 @Component({
   selector: 'rap-poll-share',
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatTooltipModule,
+  ],
   templateUrl: './poll-share.component.html',
   styleUrl: './poll-share.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,9 +79,6 @@ export class PollShareComponent {
 
   /** Only known in the browser, so the server renders without it. */
   protected readonly canShareNatively = signal(false);
-  protected readonly linkCopied = signal(false);
-  /** The browser refused to copy: the link is shown to copy by hand. */
-  protected readonly copyFailed = signal(false);
   private linkCopiedTimer: ReturnType<typeof setTimeout> | undefined;
 
   protected readonly content = computed<ShareContent>(() => {
@@ -77,6 +89,14 @@ export class PollShareComponent {
       text: `Vote now: ${question}`,
     };
   });
+
+  /** Starts over for each poll the component is reused for. */
+  protected readonly copyState = linkedSignal<string, CopyState>({
+    source: () => this.content().url,
+    computation: () => 'idle',
+  });
+  private readonly manualLink =
+    viewChild<ElementRef<HTMLInputElement>>('manualLink');
 
   protected readonly links = computed<ShareLink[]>(() => {
     const content = this.content();
@@ -99,6 +119,14 @@ export class PollShareComponent {
         typeof this.document.defaultView?.navigator.share === 'function'
       )
     );
+    // Hand the link over ready to copy: focused and selected.
+    afterRenderEffect(() => {
+      const input = this.manualLink()?.nativeElement;
+      if (input && this.copyState() === 'failed') {
+        input.focus();
+        input.select();
+      }
+    });
     inject(DestroyRef).onDestroy(() => clearTimeout(this.linkCopiedTimer));
   }
 
@@ -118,13 +146,17 @@ export class PollShareComponent {
   protected copyLink(): void {
     clearTimeout(this.linkCopiedTimer);
     const copied = this.clipboard.copy(this.content().url);
-    this.linkCopied.set(copied);
-    this.copyFailed.set(!copied);
+    this.copyState.set(copied ? 'copied' : 'failed');
     if (copied) {
       this.linkCopiedTimer = setTimeout(
-        () => this.linkCopied.set(false),
+        () => this.copyState.set('idle'),
         LINK_COPIED_RESET_MS
       );
     }
+  }
+
+  /** A click's mouseup would undo a selection made on focus. */
+  protected selectAll(event: Event): void {
+    (event.target as HTMLInputElement).select();
   }
 }

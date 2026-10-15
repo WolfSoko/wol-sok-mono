@@ -1,6 +1,9 @@
 import { Injector, PendingTasks } from '@angular/core';
 import { MonoTypeOperatorFunction, Observable } from 'rxjs';
 
+/** Longest the server waits for data before it renders the page without it. */
+export const SSR_DATA_TIMEOUT_MS = 1500;
+
 /**
  * Keeps the app unstable, so server rendering waits, until the source emits,
  * ends, or `timeoutMs` passed. A slow backend then delays the page by at most

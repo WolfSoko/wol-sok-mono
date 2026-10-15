@@ -20,7 +20,6 @@ import {
   orderBy,
   query,
 } from '@angular/fire/firestore';
-import { onSnapshot } from 'firebase/firestore';
 import { Observable } from 'rxjs';
 import { ChatMessage } from '../../shared/chat.message';
 import { Poll } from '../../shared/poll';
@@ -34,6 +33,7 @@ import { chatMessageConverter } from './chat-message.converter';
 import { adoptGoogleProfile, ensureSignedIn } from './ensure-signed-in';
 import { ChatMessageDto } from './chat-message.dto';
 import { saveFeaturedPoll } from './featured-poll-doc';
+import { queryData } from './snapshots';
 
 const CHAT_PAGE_SIZE = 20;
 
@@ -49,7 +49,7 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
   /** The lobby chat, loaded on first use: poll pages don't show it. */
   private lobby: Signal<ChatMessage[] | undefined> | undefined;
 
-  getChatMessages(): Signal<ChatMessage[] | undefined> {
+  public getChatMessages(): Signal<ChatMessage[] | undefined> {
     this.lobby ??= runInInjectionContext(this.injector, () =>
       this.watchLobby()
     );
@@ -97,23 +97,17 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
     return lobby;
   }
 
-  /** Not AngularFire's `collectionData`, see PollsRepoAdapter.watchPoll. */
   public watchPollChat(pollId: string): Observable<ChatMessage[]> {
-    return new Observable<ChatMessage[]>((subscriber) =>
-      onSnapshot(
-        query(
-          this.messagesCol('polls', pollId, 'chatMessages'),
-          orderBy('createdAt', 'desc'),
-          limit(CHAT_PAGE_SIZE)
-        ),
-        (snapshot) =>
-          subscriber.next(snapshot.docs.map((message) => message.data())),
-        (error) => subscriber.error(error)
+    return queryData(
+      query(
+        this.messagesCol('polls', pollId, 'chatMessages'),
+        orderBy('createdAt', 'desc'),
+        limit(CHAT_PAGE_SIZE)
       )
     );
   }
 
-  async addChatMessage(message: string): Promise<PostReceipt> {
+  public async addChatMessage(message: string): Promise<PostReceipt> {
     return this.post(this.chatMessagesCol, message);
   }
 
@@ -139,13 +133,17 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
     }
     // accounts linked to Google before the name was copied get it now
     const author = await adoptGoogleProfile(await ensureSignedIn(this.auth));
+    // The rules compare the name with the token's, which can lag behind the
+    // profile (a failed refresh in adoptGoogleProfile), so it comes from there.
+    const { claims } = await author.getIdTokenResult();
+    const tokenName =
+      typeof claims['name'] === 'string' ? claims['name'] : null;
     const chatMessage: ChatMessage = {
       id: '-1',
       message,
       createdAt: new Date(),
       authorUid: author.uid,
-      // the rules accept only the name from the sign-in token, which is this one
-      authorName: author.isAnonymous ? null : author.displayName,
+      authorName: author.isAnonymous ? null : tokenName,
       expiresAt: expiresAt?.(),
     };
     // Not awaited: Firestore shows the message right away and settles only

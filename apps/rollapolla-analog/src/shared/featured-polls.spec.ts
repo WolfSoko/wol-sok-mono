@@ -1,9 +1,10 @@
 import rules from '../../firestore.rules?raw';
 import {
-  FEATURED_POLL_LIFETIME_MS,
   FEATURED_POLLS,
   featuredPoll,
+  featuredPollClosesAt,
   featuredPollDraft,
+  pollOrFeaturedDraft,
 } from './featured-polls';
 import { PollsRepoPort } from '../app/ports/polls-repo.port';
 
@@ -34,7 +35,7 @@ describe('featured polls', () => {
     }
   });
 
-  it('starts as an unsaved, listed draft that runs for a year', () => {
+  it('starts as an unsaved, listed draft that runs until 1 January', () => {
     const now = new Date('2026-10-15T12:00:00Z');
     const featured = featuredPoll('featured-tabs-or-spaces');
     if (!featured) {
@@ -50,10 +51,24 @@ describe('featured polls', () => {
       listed: true,
       unsaved: true,
       creatorUid: 'rollapolla',
+      closesAt: new Date('2027-01-01T00:00:00Z'),
     });
-    expect(draft.closesAt.getTime() - now.getTime()).toBe(
-      FEATURED_POLL_LIFETIME_MS
-    );
     expect(featuredPoll('some-poll')).toBeUndefined();
+  });
+
+  it('closes every season on the next 1 January (UTC)', () => {
+    expect(featuredPollClosesAt(new Date('2026-12-31T23:59:59Z'))).toEqual(
+      new Date('2027-01-01T00:00:00Z')
+    );
+    expect(featuredPollClosesAt(new Date('2027-01-01T00:00:00Z'))).toEqual(
+      new Date('2028-01-01T00:00:00Z')
+    );
+  });
+
+  it('falls back to the draft only for featured ids', () => {
+    expect(pollOrFeaturedDraft('featured-superpower', null)?.unsaved).toBe(
+      true
+    );
+    expect(pollOrFeaturedDraft('some-poll', null)).toBeNull();
   });
 });

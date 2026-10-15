@@ -112,8 +112,9 @@ service cloud.firestore {
       }
 
       // Whoever votes or chats first stores a featured poll, exactly as defined
-      // above, created now (give or take a day of client clock skew) and
-      // running for a year.
+      // above. createdAt is the server's time (serverTimestamp), so no client
+      // clock can date it; the poll runs until the next 1 January, a date
+      // every client computes alike, so concurrent first votes agree on it.
       function isValidFeaturedPoll(pollId, poll) {
         return pollId in featuredPolls() &&
           poll.keys().hasAll(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl', 'creatorUid', 'listed']) &&
@@ -123,10 +124,8 @@ service cloud.firestore {
           poll.creatorUid == 'rollapolla' &&
           poll.listed == true &&
           hasNoVotes(poll) &&
-          poll.createdAt is timestamp &&
-          poll.createdAt > request.time - duration.value(1, 'd') &&
-          poll.createdAt < request.time + duration.value(1, 'd') &&
-          poll.ttl == poll.createdAt + duration.value(365, 'd');
+          poll.createdAt == request.time &&
+          poll.ttl == timestamp.date(request.time.year() + 1, 1, 1);
       }
 
       function votePath(pollId) {

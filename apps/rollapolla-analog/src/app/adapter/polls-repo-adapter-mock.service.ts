@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
-import { featuredPoll, featuredPollDraft } from '../../shared/featured-polls';
+import {
+  featuredPoll,
+  pollOrFeaturedDraft,
+  storedFeaturedPoll,
+} from '../../shared/featured-polls';
 import { isOpen, NewPoll, Poll, POLL_LIFETIME_MS } from '../../shared/poll';
 import { PollsRepoPort, VoteReceipt } from '../ports/polls-repo.port';
 
@@ -38,12 +42,8 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
   }
 
   public watchPoll(pollId: string): Observable<Poll | null> {
-    const featured = featuredPoll(pollId);
     return this.polls$.pipe(
-      map(
-        (polls) =>
-          polls[pollId] ?? (featured ? featuredPollDraft(featured) : null)
-      )
+      map((polls) => pollOrFeaturedDraft(pollId, polls[pollId]))
     );
   }
 
@@ -97,9 +97,10 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
   ): Promise<VoteReceipt> {
     const featured = featuredPoll(id);
     if (unsaved && featured && !this.polls()[id]) {
-      const stored: Poll = featuredPollDraft(featured);
-      delete stored.unsaved;
-      this.polls$.next({ ...this.polls(), [id]: stored });
+      this.polls$.next({
+        ...this.polls(),
+        [id]: storedFeaturedPoll(featured),
+      });
     }
     const poll = this.polls()[id];
     if (!poll || this.ownVotes$.value[id] !== undefined) {

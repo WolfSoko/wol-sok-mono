@@ -143,20 +143,55 @@ describe('PollShareComponent', () => {
     expect(button.textContent).toContain('Copy link');
   });
 
-  it('shows the link to copy by hand when copying fails', async () => {
+  it('hands over the link selected when copying fails', async () => {
     await render();
-    vi.spyOn(TestBed.inject(Clipboard), 'copy').mockReturnValue(false);
+    const copy = vi.spyOn(TestBed.inject(Clipboard), 'copy');
+    copy.mockReturnValue(false);
 
     query('copy-link').nativeElement.click();
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     expect(query('copy-failed').nativeElement.textContent).toContain(
-      'Could not copy'
+      'Could not copy the link'
     );
-    expect((query('manual-link').nativeElement as HTMLInputElement).value).toBe(
-      pollUrl
-    );
+    const manualLink = query('manual-link').nativeElement as HTMLInputElement;
+    expect(manualLink.value).toBe(pollUrl);
+    expect(document.activeElement).toBe(manualLink);
+    expect(manualLink.selectionStart).toBe(0);
+    expect(manualLink.selectionEnd).toBe(pollUrl.length);
     expect(query('copy-link').nativeElement.textContent).toContain('Copy link');
+
+    copy.mockReturnValue(true);
+    query('copy-link').nativeElement.click();
+    await fixture.whenStable();
+
+    expect(query('copy-failed')).toBeNull();
+  });
+
+  it('falls back to the link to copy by hand when the share sheet fails', async () => {
+    await render(
+      vi.fn().mockRejectedValue(new DOMException('denied', 'NotAllowedError'))
+    );
+    vi.spyOn(TestBed.inject(Clipboard), 'copy').mockReturnValue(false);
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await clickShare();
+    fixture.detectChanges();
+
+    expect(query('copy-failed')).not.toBeNull();
+  });
+
+  it('forgets a failed copy when it shows another poll', async () => {
+    await render();
+    vi.spyOn(TestBed.inject(Clipboard), 'copy').mockReturnValue(false);
+    query('copy-link').nativeElement.click();
+    await fixture.whenStable();
+    expect(query('copy-failed')).not.toBeNull();
+
+    fixture.componentRef.setInput('poll', { ...poll, id: 'poll-2' });
+    await fixture.whenStable();
+
+    expect(query('copy-failed')).toBeNull();
   });
 
   it('greets the creator when highlighted', async () => {

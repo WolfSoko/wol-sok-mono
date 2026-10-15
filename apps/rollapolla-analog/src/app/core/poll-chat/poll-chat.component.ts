@@ -3,14 +3,14 @@ import {
   Component,
   inject,
   input,
-  signal,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
-import { distinctUntilChanged, map, switchMap } from 'rxjs';
+import { catchError, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { isOpen, Poll } from '../../../shared/poll';
 import { ChatMessagesRepoPort } from '../../ports/chat-messages-repo.port';
 import { ChatMessageFormComponent } from '../chat-live-stream/chat-message-form.component';
+import { PostTracker } from '../chat-live-stream/post-tracker';
 import { MessagesListComponent } from '../chat-live-stream/messages-list.component';
 
 /** The poll's own discussion, below the poll. */
@@ -40,7 +40,13 @@ import { MessagesListComponent } from '../chat-live-stream/messages-list.compone
         } @else {
           <p class="closed">This poll is closed, so is its discussion.</p>
         }
-        <rap-messages-list [messages]="messages()" />
+        @if (messages() === null) {
+          <p class="error" role="alert" data-testid="poll-chat-load-error">
+            The discussion could not be loaded. Please reload the page.
+          </p>
+        } @else {
+          <rap-messages-list [messages]="messages() ?? undefined" />
+        }
       </mat-card-content>
     </mat-card>
   `,
@@ -82,31 +88,29 @@ export class PollChatComponent {
   protected readonly maxLength: number =
     ChatMessagesRepoPort.MAX_MESSAGE_LENGTH;
   protected readonly isOpen = isOpen;
-  protected readonly postFailed = signal(false);
+  private readonly posts = new PostTracker();
+  protected readonly postFailed = this.posts.failed;
 
-  /** `undefined` while the thread loads. */
+  /** `undefined` while the thread loads, `null` if it could not be loaded. */
   protected readonly messages = toSignal(
     toObservable(this.poll).pipe(
       map((poll) => poll.id),
       distinctUntilChanged(),
-      switchMap((pollId) => this.chatRepo.watchPollChat(pollId))
+      switchMap((pollId) =>
+        this.chatRepo.watchPollChat(pollId).pipe(
+          // toSignal would rethrow it on every read and break the page
+          catchError((error: unknown) => {
+            console.error('Could not load the discussion', error);
+            return of(null);
+          })
+        )
+      )
     )
   );
 
-  protected async post(message: string): Promise<void> {
-    this.postFailed.set(false);
-    try {
-      const { saved } = await this.chatRepo.addPollChatMessage(
-        this.poll(),
-        message.trim()
-      );
-      saved.catch((error: unknown) => {
-        console.error('Poll chat message was rejected', error);
-        this.postFailed.set(true);
-      });
-    } catch (error) {
-      console.error('Could not post poll chat message', error);
-      this.postFailed.set(true);
-    }
+  protected post(message: string): Promise<void> {
+    return this.posts.post(() =>
+      this.chatRepo.addPollChatMessage(this.poll(), message.trim())
+    );
   }
 }

@@ -23,20 +23,6 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "totalVotes",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "polls",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "listed",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
         }

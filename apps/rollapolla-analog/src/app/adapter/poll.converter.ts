@@ -26,7 +26,11 @@ export const pollConverter: FirestoreDataConverter<Poll, PollDto> = {
     snapshot: QueryDocumentSnapshot<PollDto>,
     options?: SnapshotOptions
   ): Poll {
-    const data = snapshot.data(options) as PollDto;
+    // a featured poll's createdAt is a server timestamp, pending until written
+    const data = snapshot.data({
+      ...options,
+      serverTimestamps: 'estimate',
+    }) as PollDto;
     return {
       id: snapshot.id,
       question: data.question,
