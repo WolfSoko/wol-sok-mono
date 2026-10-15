@@ -13,19 +13,25 @@ import { RouterLink } from '@angular/router';
     .bar {
       gap: 12px;
       max-width: 560px;
+      height: 72px;
       margin: 0 auto;
       padding: 0 16px;
     }
+    .home {
+      display: flex;
+      border-radius: 12px;
+      outline-offset: 3px;
+    }
     .logo {
       display: block;
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
+      width: 40px;
+      height: 40px;
+      filter: drop-shadow(0 4px 8px rgb(10 21 48 / 0.35));
     }
     .title {
       font: var(--mat-sys-title-large);
-      font-weight: 600;
-      letter-spacing: -0.01em;
+      font-weight: 700;
+      letter-spacing: -0.02em;
     }
     .subtitle {
       margin-left: auto;
@@ -41,14 +47,8 @@ import { RouterLink } from '@angular/router';
   `,
   template: `
     <mat-toolbar class="bar">
-      <a routerLink="/" aria-label="Startseite">
-        <img
-          class="logo"
-          src="/android-chrome-192x192.png"
-          alt=""
-          width="36"
-          height="36"
-        />
+      <a routerLink="/" class="home" aria-label="Startseite">
+        <img class="logo" src="/logo.svg" alt="" width="40" height="40" />
       </a>
       <h1 class="title">Pace-Trainer</h1>
       <span class="subtitle">Dein digitaler Laufcoach.</span>

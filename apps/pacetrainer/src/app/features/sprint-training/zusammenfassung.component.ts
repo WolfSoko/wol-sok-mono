@@ -23,11 +23,11 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
         }
       </h3>
       <div class="pace-tiles">
-        <mat-card appearance="filled" class="pace-tile">
+        <mat-card appearance="outlined" class="pace-tile">
           <span class="pace-tile-value">{{ s.elapsed | trainingTime }}</span>
           <span class="pace-tile-label">Gesamtzeit</span>
         </mat-card>
-        <mat-card appearance="filled" class="pace-tile">
+        <mat-card appearance="outlined" class="pace-tile">
           <span class="pace-tile-value"
             >{{ s.sprintsCompleted }} von {{ s.sprintsTotal }} Sprints</span
           >
@@ -48,18 +48,21 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
     .badge {
       display: grid;
       place-items: center;
-      width: 96px;
-      height: 96px;
+      width: 104px;
+      height: 104px;
       border-radius: 50%;
       font-size: 44px;
       background: var(--mat-sys-surface-container-high);
+      border: 4px solid var(--mat-sys-surface-container-highest);
     }
     .badge.complete {
-      background: var(--mat-sys-tertiary-container);
+      background: var(--pace-sprint-container);
+      border-color: var(--pace-sprint);
     }
     .headline {
       font: var(--mat-sys-headline-medium);
-      font-weight: 700;
+      font-weight: 800;
+      letter-spacing: -0.03em;
     }
   `,
   imports: [MatCardModule, TrainingTimePipe],

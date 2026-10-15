@@ -10,6 +10,8 @@
   display: grid;
   place-items: center;
   contain: strict;
+  // own compositor layer: the 50 ms ticks must not re-raster the halo behind it
+  will-change: transform;
 }
 
 svg {
@@ -22,7 +24,7 @@ svg {
 
 circle {
   fill: none;
-  stroke-width: 7;
+  stroke-width: 8;
 }
 
 .track {
@@ -39,10 +41,10 @@ circle {
 
 .time {
   position: relative;
-  font-size: calc(var(--ring-size) * 0.17);
-  font-weight: 600;
+  font-size: calc(var(--ring-size) * 0.19);
+  font-weight: 800;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
   color: var(--mat-sys-on-surface);
 }
