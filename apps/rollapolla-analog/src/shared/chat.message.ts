@@ -6,4 +6,6 @@ export type ChatMessage = {
   authorUid?: string;
   /** The Google name of the author; anonymous authors have none. */
   authorName?: string | null;
+  /** Only when writing: when Firestore deletes it. Defaults to a week. */
+  expiresAt?: Date;
 };

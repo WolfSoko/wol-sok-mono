@@ -4,14 +4,8 @@ import {
   SnapshotOptions,
   Timestamp,
 } from '@angular/fire/firestore';
-import { Poll, POLL_LIFETIME_MS } from '../../shared/poll';
+import { Poll } from '../../shared/poll';
 import { PollDto } from './poll.dto';
-
-export const POLL_TTL_MS: number = POLL_LIFETIME_MS;
-
-export function pollTtl(poll: Pick<Poll, 'createdAt'>): Timestamp {
-  return Timestamp.fromMillis(poll.createdAt.getTime() + POLL_TTL_MS);
-}
 
 export const pollConverter: FirestoreDataConverter<Poll, PollDto> = {
   toFirestore(poll: Poll): PollDto {
@@ -23,8 +17,9 @@ export const pollConverter: FirestoreDataConverter<Poll, PollDto> = {
       ),
       totalVotes: poll.totalVotes,
       createdAt: Timestamp.fromDate(poll.createdAt),
-      ttl: pollTtl(poll),
+      ttl: Timestamp.fromDate(poll.closesAt),
       creatorUid: poll.creatorUid,
+      listed: poll.listed,
     };
   },
   fromFirestore(
@@ -39,7 +34,9 @@ export const pollConverter: FirestoreDataConverter<Poll, PollDto> = {
       counts: data.options.map((_, index) => data.counts[String(index)] ?? 0),
       totalVotes: data.totalVotes,
       createdAt: new Date(data.createdAt.toDate()),
+      closesAt: new Date(data.ttl.toDate()),
       creatorUid: data.creatorUid,
+      listed: data.listed ?? false,
     };
   },
 };

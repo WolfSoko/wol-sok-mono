@@ -49,12 +49,12 @@ describe('MyPollsPageComponent', () => {
     expect(links[0].nativeElement.textContent).toContain('open until');
   });
 
-  it('marks polls past their 30 days as closed', async () => {
+  it('marks closed polls as closed', async () => {
     const id = await repo.createPoll({
       question: 'Old poll?',
       options: ['a', 'b'],
     });
-    repo.polls()[id].createdAt = new Date(Date.now() - 31 * 24 * 3600_000);
+    repo.polls()[id].closesAt = new Date(Date.now() - 24 * 3600_000);
 
     const page = await render();
 

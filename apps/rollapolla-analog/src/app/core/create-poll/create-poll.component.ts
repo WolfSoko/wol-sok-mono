@@ -16,6 +16,7 @@ import {
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -29,6 +30,7 @@ import { CREATED_POLL_ID } from './created-poll-id';
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
+    MatCheckboxModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -63,6 +65,8 @@ export class CreatePollComponent {
       ],
     ],
     options: this.fb.array([this.createOption(), this.createOption()]),
+    /** Public by default; unticked, only people with the link find it. */
+    listed: [true],
   });
 
   protected get options(): FormArray<FormControl<string>> {
@@ -86,11 +90,15 @@ export class CreatePollComponent {
       this.form.markAllAsTouched();
       return;
     }
-    const { question, options } = this.form.getRawValue();
+    const { question, options, listed } = this.form.getRawValue();
     this.creating.set(true);
     this.createFailed.set(false);
     try {
-      const pollId = await this.pollsRepo.createPoll({ question, options });
+      const pollId = await this.pollsRepo.createPoll({
+        question,
+        options,
+        listed,
+      });
       await this.router.navigate(['/poll', pollId], {
         state: { [CREATED_POLL_ID]: pollId },
       });

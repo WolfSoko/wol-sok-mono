@@ -16,7 +16,9 @@ export const chatMessageConverter: FirestoreDataConverter<
     return {
       message: chatMessage.message,
       createdAt: Timestamp.fromDate(chatMessage.createdAt),
-      ttl: Timestamp.fromMillis(chatMessage.createdAt.getTime() + SEVEN_DAYS),
+      ttl: chatMessage.expiresAt
+        ? Timestamp.fromDate(chatMessage.expiresAt)
+        : Timestamp.fromMillis(chatMessage.createdAt.getTime() + SEVEN_DAYS),
       ...(chatMessage.authorUid ? { authorUid: chatMessage.authorUid } : {}),
       ...(chatMessage.authorName ? { authorName: chatMessage.authorName } : {}),
     };

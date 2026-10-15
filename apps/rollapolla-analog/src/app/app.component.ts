@@ -35,6 +35,17 @@ import { AccountComponent } from './core/account/account.component';
           <span class="brand-name">RollaPolla</span>
         </a>
         <div class="header-actions">
+          <a
+            mat-button
+            class="browse-link"
+            routerLink="/polls"
+            aria-label="Browse polls"
+            title="Browse polls"
+            data-testid="header-browse-link"
+          >
+            <mat-icon>search</mat-icon>
+            <span class="browse-label">Browse</span>
+          </a>
           <rap-account />
           <a
             mat-stroked-button
@@ -45,7 +56,7 @@ import { AccountComponent } from './core/account/account.component';
             aria-label="Follow RollaPolla on X"
           >
             <mat-icon svgIcon="fa:xTwitter" />
-            <span class="follow-label">Follow</span>
+            Follow
           </a>
         </div>
       </div>
@@ -56,7 +67,13 @@ import { AccountComponent } from './core/account/account.component';
     <footer class="site-footer">
       <div class="rap-container footer-inner">
         <span>© RollaPolla · Polls for everyone</span>
-        <span>Built with Angular &amp; Analog</span>
+        <nav class="footer-links" aria-label="More">
+          <a routerLink="/polls">Browse polls</a>
+          <a href="https://x.com/rollapolla" target="_blank" rel="noopener"
+            >Follow us on X</a
+          >
+          <span>Built with Angular &amp; Analog</span>
+        </nav>
       </div>
     </footer>
   `,
@@ -104,18 +121,29 @@ import { AccountComponent } from './core/account/account.component';
       align-items: center;
       gap: 0.5rem;
     }
-    /* phones: brand, account bar and this link have to share one row */
+    /* phones: brand, browse link and account bar share one row; following
+       on X moves to the footer */
     @media (max-width: 599.98px) {
-      .follow-link {
+      .browse-link {
         min-width: 0;
-        padding-inline: 0.75rem;
+        --mat-button-text-horizontal-padding: 0.5rem;
+        --mat-button-text-with-icon-horizontal-padding: 0.5rem;
       }
-      .follow-link .mat-icon {
+      .browse-link .mat-icon {
         margin: 0;
       }
-      .follow-label {
+      .browse-label,
+      .follow-link {
         display: none;
       }
+    }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.25rem;
+    }
+    .footer-links a {
+      color: inherit;
     }
     .page {
       flex: 1 0 auto;

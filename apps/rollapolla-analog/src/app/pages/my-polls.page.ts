@@ -14,7 +14,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
-import { pollClosesAt } from '../../shared/poll';
 import { PollsRepoPort } from '../ports/polls-repo.port';
 import { retry, tap, timer } from 'rxjs';
 import { SITE_TAGS } from './site-tags';
@@ -200,10 +199,7 @@ export default class MyPollsPageComponent {
     if (polls === undefined) {
       return undefined;
     }
-    return (polls ?? []).map((poll) => ({
-      ...poll,
-      closesAt: pollClosesAt(poll),
-    }));
+    return polls ?? [];
   });
 
   constructor() {

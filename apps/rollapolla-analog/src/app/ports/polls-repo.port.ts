@@ -9,6 +9,8 @@ export abstract class PollsRepoPort {
   static readonly MIN_OPTIONS: number = 2;
   static readonly MAX_OPTIONS: number = 10;
   static readonly MAX_OPTION_LENGTH: number = 100;
+  /** The most polls search looks through, newest first. */
+  static readonly PUBLIC_POLLS_LIMIT: number = 200;
 
   protected validateNewPoll(newPoll: NewPoll): boolean {
     const question = newPoll.question.trim();
@@ -31,8 +33,20 @@ export abstract class PollsRepoPort {
    */
   abstract createPoll(newPoll: NewPoll): Promise<string>;
 
-  /** Emits the poll on every change, `null` if it does not exist. */
+  /**
+   * Emits the poll on every change, `null` if it does not exist. A featured
+   * poll nobody voted on yet is emitted as its `unsaved` draft.
+   */
   abstract watchPoll(pollId: string): Observable<Poll | null>;
+
+  /** Emits the open listed polls with the most votes, at most `count`. */
+  abstract watchHotPolls(count: number): Observable<Poll[]>;
+
+  /**
+   * Emits the open listed polls, newest first, at most
+   * {@link PollsRepoPort.PUBLIC_POLLS_LIMIT}.
+   */
+  abstract watchPublicPolls(): Observable<Poll[]>;
 
   /**
    * Emits the polls the signed-in visitor created, newest first, or `null`
@@ -49,7 +63,8 @@ export abstract class PollsRepoPort {
   abstract watchOwnVote(pollId: string): Observable<number | undefined>;
 
   /**
-   * Signs the visitor in if needed and records their one vote on the poll.
+   * Signs the visitor in if needed and records their one vote on the poll;
+   * an `unsaved` featured poll is stored first.
    * Resolves once the vote is applied locally; rejects if signing in fails.
    * `saved` settles once the backend accepted the vote or rejected it, e.g.
    * because this visitor already voted from another tab.
