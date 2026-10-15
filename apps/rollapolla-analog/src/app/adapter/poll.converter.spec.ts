@@ -12,6 +12,7 @@ describe('pollConverter', () => {
     counts: [3, 1, 0],
     totalVotes: 4,
     createdAt,
+    creatorUid: 'user-1',
   };
 
   it('stores counts keyed by option index and a ttl', () => {
@@ -19,6 +20,7 @@ describe('pollConverter', () => {
     expect(dto.counts).toEqual({ '0': 3, '1': 1, '2': 0 });
     expect(dto.createdAt.toMillis()).toBe(createdAt.getTime());
     expect(dto.ttl.toMillis()).toBe(createdAt.getTime() + POLL_TTL_MS);
+    expect(dto.creatorUid).toBe('user-1');
     expect(dto).not.toHaveProperty('id');
   });
 
@@ -30,6 +32,7 @@ describe('pollConverter', () => {
       totalVotes: 4,
       createdAt: Timestamp.fromDate(createdAt),
       ttl: Timestamp.fromMillis(createdAt.getTime() + POLL_TTL_MS),
+      creatorUid: 'user-1',
     };
     const snapshot = {
       id: 'abc',

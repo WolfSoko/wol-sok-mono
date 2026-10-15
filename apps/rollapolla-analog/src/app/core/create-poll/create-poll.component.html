@@ -85,13 +85,18 @@
           mat-flat-button
           type="submit"
           class="submit-button"
-          [disabled]="form.invalid"
+          [disabled]="form.invalid || creating()"
           data-testid="create-poll-button"
         >
           Create poll
           <mat-icon iconPositionEnd>arrow_forward</mat-icon>
         </button>
       </div>
+      @if (createFailed()) {
+        <p class="error" role="alert" data-testid="create-poll-error">
+          Could not create the poll. Please try again.
+        </p>
+      }
     </form>
   </mat-card-content>
 </mat-card>

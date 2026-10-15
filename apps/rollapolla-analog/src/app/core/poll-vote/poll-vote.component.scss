@@ -177,3 +177,8 @@ mat-progress-bar {
   color: var(--mat-sys-on-surface-variant);
   font: var(--mat-sys-body-medium);
 }
+
+.error {
+  color: var(--mat-sys-error);
+  margin: 0;
+}

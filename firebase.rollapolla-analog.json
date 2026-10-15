@@ -23,5 +23,9 @@
   "firestore": {
     "rules": "apps/rollapolla-analog/firestore.rules",
     "indexes": "apps/rollapolla-analog/firestore.default.indexes.json"
+  },
+  "emulators": {
+    "auth": { "port": 9099 },
+    "firestore": { "port": 8080 }
   }
 }

@@ -36,6 +36,10 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
         '@angular-devkit/schematics',
         '@schematics/angular',
       ],
+      // Scan every app source, not just the entry: routes and @defer blocks are
+      // lazy, so their dependencies were found only on first use. Vite then
+      // re-bundled them and the page ended up with two copies of Angular (NG0203).
+      entries: ['src/**/*.ts', '!src/**/*.spec.ts'],
     },
     plugins: [
       analog({

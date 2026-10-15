@@ -25,13 +25,19 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // polls collection: unlisted. Anyone with the link (the id) can read a poll
-    // and vote on it, but nobody can list all polls.
+    // polls collection: unlisted. Anyone with the link (the id) can read a poll.
+    // Creating and voting need a (usually anonymous) sign-in, so each uid votes
+    // at most once per poll: a vote is a batch that creates
+    // polls/{pollId}/votes/{uid} and raises the matching count by one.
     match /polls/{pollId} {
       allow get: if true;
       allow list: if false;
-      allow create: if isValidNewPoll(request.resource.data);
-      allow update: if isSingleVote(request.resource.data, resource.data);
+      allow create: if request.auth != null && isValidNewPoll(request.resource.data);
+      // No votes once the poll expired: TTL deletion lags and is not atomic, so
+      // a vote document may be gone while its poll is still there.
+      allow update: if request.auth != null && request.time < resource.data.ttl &&
+        isFirstVoteOfUser(pollId) &&
+        isSingleVote(request.resource.data, resource.data, voteAfter(pollId).option);
       allow delete: if false;
 
       function optionKeys() {
@@ -44,8 +50,9 @@ service cloud.firestore {
       }
 
       function isValidNewPoll(poll) {
-        return poll.keys().hasAll(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl']) &&
-          poll.keys().hasOnly(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl']) &&
+        return poll.keys().hasAll(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl', 'creatorUid']) &&
+          poll.keys().hasOnly(['question', 'options', 'counts', 'totalVotes', 'createdAt', 'ttl', 'creatorUid']) &&
+          poll.creatorUid == request.auth.uid &&
           poll.question is string &&
           poll.question.size() >= 5 &&
           poll.question.size() <= 200 &&
@@ -72,29 +79,45 @@ service cloud.firestore {
           poll.ttl == poll.createdAt + duration.value(30, 'd');
       }
 
-      function isUnchangedOrPlusOne(newCounts, oldCounts, key) {
-        return !(key in oldCounts) ||
-          newCounts[key] == oldCounts[key] ||
-          newCounts[key] == oldCounts[key] + 1;
+      function votePath(pollId) {
+        return /databases/$(database)/documents/polls/$(pollId)/votes/$(request.auth.uid);
       }
 
-      // A vote raises exactly one existing option count and the total by one.
-      function isSingleVote(newPoll, oldPoll) {
+      function voteAfter(pollId) {
+        return getAfter(votePath(pollId)).data;
+      }
+
+      // The user's vote document is created by this very batch.
+      function isFirstVoteOfUser(pollId) {
+        return !exists(votePath(pollId)) && existsAfter(votePath(pollId));
+      }
+
+      // A vote raises exactly the voted option's count and the total by one.
+      function isSingleVote(newPoll, oldPoll, option) {
         return newPoll.diff(oldPoll).affectedKeys().hasOnly(['counts', 'totalVotes']) &&
           newPoll.totalVotes == oldPoll.totalVotes + 1 &&
-          newPoll.counts.diff(oldPoll.counts).addedKeys().size() == 0 &&
-          newPoll.counts.diff(oldPoll.counts).removedKeys().size() == 0 &&
-          newPoll.counts.diff(oldPoll.counts).changedKeys().size() == 1 &&
-          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '0') &&
-          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '1') &&
-          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '2') &&
-          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '3') &&
-          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '4') &&
-          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '5') &&
-          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '6') &&
-          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '7') &&
-          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '8') &&
-          isUnchangedOrPlusOne(newPoll.counts, oldPoll.counts, '9');
+          newPoll.counts.diff(oldPoll.counts).affectedKeys() == [string(option)].toSet() &&
+          newPoll.counts[string(option)] == oldPoll.counts[string(option)] + 1;
+      }
+
+      // One vote per user and poll; the poll update above checks the counts.
+      match /votes/{uid} {
+        allow get: if request.auth != null && request.auth.uid == uid;
+        allow list: if false;
+        allow create: if request.auth != null && request.auth.uid == uid &&
+          isValidVote(request.resource.data, get(/databases/$(database)/documents/polls/$(pollId)).data) &&
+          getAfter(/databases/$(database)/documents/polls/$(pollId)).data.totalVotes ==
+            get(/databases/$(database)/documents/polls/$(pollId)).data.totalVotes + 1;
+        allow update, delete: if false;
+
+        function isValidVote(vote, poll) {
+          return vote.keys().hasAll(['option', 'createdAt', 'ttl']) &&
+            vote.keys().hasOnly(['option', 'createdAt', 'ttl']) &&
+            vote.option is int &&
+            string(vote.option) in poll.counts &&
+            vote.createdAt is timestamp &&
+            vote.ttl == poll.ttl;
+        }
       }
     }
 

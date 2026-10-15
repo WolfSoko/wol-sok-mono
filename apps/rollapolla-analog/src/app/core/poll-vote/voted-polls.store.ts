@@ -21,6 +21,11 @@ export class VotedPollsStore {
     this.save();
   }
 
+  public forgetVote(pollId: string): void {
+    this.votes.update(({ [pollId]: _forgotten, ...votes }) => votes);
+    this.save();
+  }
+
   private load(): Record<string, number> {
     if (!this.isBrowser) {
       return {};
