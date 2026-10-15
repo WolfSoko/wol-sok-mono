@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
 import { NewPoll, Poll } from '../../shared/poll';
+import { PollSort } from '../../shared/poll-search';
 
 /** `saved` settles once the backend accepted the write or rejected it. */
 export type WriteReceipt = { saved: Promise<void> };
@@ -7,14 +8,15 @@ export type WriteReceipt = { saved: Promise<void> };
 /** A vote counts only while the poll is still in the round it was cast in. */
 export type OwnVote = { option: number; round: number };
 
+/** The first polls of a list; `hasMore` when asking for more would find some. */
+export type PollPage = { polls: Poll[]; hasMore: boolean };
+
 export abstract class PollsRepoPort {
   static readonly MIN_QUESTION_LENGTH: number = 5;
   static readonly MAX_QUESTION_LENGTH: number = 200;
   static readonly MIN_OPTIONS: number = 2;
   static readonly MAX_OPTIONS: number = 10;
   static readonly MAX_OPTION_LENGTH: number = 100;
-  /** The most polls search looks through, newest first. */
-  static readonly PUBLIC_POLLS_LIMIT: number = 200;
 
   protected validateNewPoll(newPoll: NewPoll): boolean {
     const question = newPoll.question.trim();
@@ -61,18 +63,21 @@ export abstract class PollsRepoPort {
   abstract watchHotPolls(count: number): Observable<Poll[]>;
 
   /**
-   * Emits the open listed polls, newest first, at most
-   * {@link PollsRepoPort.PUBLIC_POLLS_LIMIT}.
+   * Emits the first `count` listed polls in the given order, without the
+   * closed ones the TTL has not deleted yet (so possibly fewer).
    */
-  abstract watchPublicPolls(): Observable<Poll[]>;
+  abstract watchPublicPolls(
+    sort: PollSort,
+    count: number
+  ): Observable<PollPage>;
 
   /**
-   * Emits the polls the signed-in visitor created, newest first, or `null`
-   * when nobody is signed in. Emits `undefined` while a newly signed-in
-   * account's polls load, so the previous account's list never stays visible.
-   * Never emits on the server.
+   * Emits the first `count` polls the signed-in visitor created, newest
+   * first, or `null` when nobody is signed in. Emits `undefined` while a newly
+   * signed-in account's polls load, so the previous account's list never
+   * stays visible. Never emits on the server.
    */
-  abstract watchMyPolls(): Observable<Poll[] | null | undefined>;
+  abstract watchMyPolls(count: number): Observable<PollPage | null | undefined>;
 
   /**
    * Emits the signed-in visitor's vote on the poll, in whatever round it was

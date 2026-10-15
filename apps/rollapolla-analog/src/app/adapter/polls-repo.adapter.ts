@@ -12,6 +12,7 @@ import {
   limit,
   orderBy,
   query,
+  Query,
   setDoc,
   Timestamp,
   updateDoc,
@@ -29,17 +30,21 @@ import {
 } from 'rxjs';
 import { pollOrFeaturedDraft } from '../../shared/featured-polls';
 import { isOpen, NewPoll, Poll, POLL_LIFETIME_MS } from '../../shared/poll';
-import { sortPolls } from '../../shared/poll-search';
-import { OwnVote, PollsRepoPort, WriteReceipt } from '../ports/polls-repo.port';
+import { PollSort } from '../../shared/poll-search';
+import {
+  OwnVote,
+  PollPage,
+  PollsRepoPort,
+  WriteReceipt,
+} from '../ports/polls-repo.port';
 import { ensureSignedIn } from './ensure-signed-in';
 import { saveFeaturedPoll } from './featured-poll-doc';
 import { pollConverter } from './poll.converter';
 import { PollDto, VoteDto } from './poll.dto';
 import { docSnapshots, queryData } from './snapshots';
 
-const MY_POLLS_LIMIT = 50;
-/** Extra listed polls read in case some are closed but not yet deleted. */
-const LISTED_POLLS_SLACK = 10;
+/** Extra hot polls read in case some are closed but not yet deleted. */
+const HOT_POLLS_SLACK = 10;
 
 @Injectable()
 export class PollsRepoAdapter extends PollsRepoPort {
@@ -106,37 +111,30 @@ export class PollsRepoAdapter extends PollsRepoPort {
     );
   }
 
-  /**
-   * The open listed polls with the most votes, among the newest
-   * {@link PollsRepoPort.PUBLIC_POLLS_LIMIT}. Sorting the query by votes
-   * instead would let closed polls the TTL has not deleted yet crowd out the
-   * open ones; by age they are the oldest and fall off the end.
-   */
   public watchHotPolls(count: number): Observable<Poll[]> {
-    return this.watchPublicPolls().pipe(
-      map((polls) => sortPolls(polls, 'hot').slice(0, count))
+    return this.watchPublicPolls('hot', count + HOT_POLLS_SLACK).pipe(
+      map(({ polls }) => polls.slice(0, count))
     );
   }
 
-  public watchPublicPolls(): Observable<Poll[]> {
-    const count = PollsRepoPort.PUBLIC_POLLS_LIMIT;
-    return queryData(
-      query(
-        this.pollsCol,
-        where('listed', '==', true),
-        orderBy('createdAt', 'desc'),
-        // closed polls linger until the TTL deletes them
-        limit(count + LISTED_POLLS_SLACK)
-      )
+  public watchPublicPolls(sort: PollSort, count: number): Observable<PollPage> {
+    const order =
+      sort === 'hot'
+        ? [orderBy('totalVotes', 'desc'), orderBy('createdAt', 'desc')]
+        : [orderBy('createdAt', 'desc')];
+    return this.watchPage(
+      query(this.pollsCol, where('listed', '==', true), ...order),
+      count
     ).pipe(
-      map((polls) => {
+      map(({ polls, hasMore }) => {
+        // closed polls linger until the TTL deletes them
         const now = new Date();
-        return polls.filter((poll) => isOpen(poll, now)).slice(0, count);
+        return { polls: polls.filter((poll) => isOpen(poll, now)), hasMore };
       })
     );
   }
 
-  public watchMyPolls(): Observable<Poll[] | null | undefined> {
+  public watchMyPolls(count: number): Observable<PollPage | null | undefined> {
     if (this.isServer) {
       // only the browser knows who is signed in
       return NEVER;
@@ -144,13 +142,13 @@ export class PollsRepoAdapter extends PollsRepoPort {
     return authState(this.auth).pipe(
       switchMap((user) =>
         user
-          ? queryData(
+          ? this.watchPage(
               query(
                 this.pollsCol,
                 where('creatorUid', '==', user.uid),
-                orderBy('createdAt', 'desc'),
-                limit(MY_POLLS_LIMIT)
-              )
+                orderBy('createdAt', 'desc')
+              ),
+              count
             ).pipe(startWith(undefined))
           : of(null)
       )
@@ -200,6 +198,19 @@ export class PollsRepoAdapter extends PollsRepoPort {
     // Not awaited: the batch applies locally right away, the backend may still
     // reject it later.
     return { saved: batch.commit() };
+  }
+
+  /** Asks for one more than `count`: whether it comes tells if there are more. */
+  private watchPage(
+    polls: Query<Poll, PollDto>,
+    count: number
+  ): Observable<PollPage> {
+    return queryData(query(polls, limit(count + 1))).pipe(
+      map((found) => ({
+        polls: found.slice(0, count),
+        hasMore: found.length > count,
+      }))
+    );
   }
 
   private async currentUid(): Promise<string> {

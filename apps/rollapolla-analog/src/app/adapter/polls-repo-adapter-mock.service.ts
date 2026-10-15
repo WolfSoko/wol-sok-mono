@@ -6,7 +6,13 @@ import {
   storedFeaturedPoll,
 } from '../../shared/featured-polls';
 import { isOpen, NewPoll, Poll, POLL_LIFETIME_MS } from '../../shared/poll';
-import { OwnVote, PollsRepoPort, WriteReceipt } from '../ports/polls-repo.port';
+import { PollSort, sortPolls } from '../../shared/poll-search';
+import {
+  OwnVote,
+  PollPage,
+  PollsRepoPort,
+  WriteReceipt,
+} from '../ports/polls-repo.port';
 
 @Injectable()
 export class PollsRepoAdapterMock extends PollsRepoPort {
@@ -75,26 +81,19 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
   }
 
   public watchHotPolls(count: number): Observable<Poll[]> {
-    return this.listedPolls((a, b) => b.totalVotes - a.totalVotes, count);
+    return this.watchPublicPolls('hot', count).pipe(map(({ polls }) => polls));
   }
 
-  public watchPublicPolls(): Observable<Poll[]> {
-    return this.listedPolls(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
-      PollsRepoPort.PUBLIC_POLLS_LIMIT
-    );
-  }
-
-  private listedPolls(
-    order: (a: Poll, b: Poll) => number,
-    count: number
-  ): Observable<Poll[]> {
+  public watchPublicPolls(sort: PollSort, count: number): Observable<PollPage> {
     return this.polls$.pipe(
       map((polls) =>
-        Object.values(polls)
-          .filter((poll) => poll.listed && isOpen(poll))
-          .sort(order)
-          .slice(0, count)
+        page(
+          sortPolls(
+            Object.values(polls).filter((poll) => poll.listed && isOpen(poll)),
+            sort
+          ),
+          count
+        )
       )
     );
   }
@@ -102,14 +101,18 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
   /** `null` plays a visitor who is not signed in. */
   public readonly creatorUid$ = new BehaviorSubject<string | null>('mock-user');
 
-  public watchMyPolls(): Observable<Poll[] | null | undefined> {
+  public watchMyPolls(count: number): Observable<PollPage | null | undefined> {
     return combineLatest([this.creatorUid$, this.polls$]).pipe(
       map(([uid, polls]) =>
         uid === null
           ? null
-          : Object.values(polls)
-              .filter((poll) => poll.creatorUid === uid)
-              .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+          : page(
+              sortPolls(
+                Object.values(polls).filter((poll) => poll.creatorUid === uid),
+                'new'
+              ),
+              count
+            )
       )
     );
   }
@@ -149,4 +152,8 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
     });
     return { saved: Promise.resolve() };
   }
+}
+
+function page(polls: Poll[], count: number): PollPage {
+  return { polls: polls.slice(0, count), hasMore: polls.length > count };
 }

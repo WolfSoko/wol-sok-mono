@@ -2,9 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { By, Meta, Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { BehaviorSubject, defer, throwError } from 'rxjs';
-import { Poll } from '../../shared/poll';
+
 import { PollsRepoAdapterMock } from '../adapter/polls-repo-adapter-mock.service';
-import { PollsRepoPort } from '../ports/polls-repo.port';
+import { PollPage, PollsRepoPort } from '../ports/polls-repo.port';
+import { stubIntersectionObserver } from '../core/endless-scroll/intersection-observer.mock';
 import MyPollsPageComponent from './my-polls.page';
 
 describe('MyPollsPageComponent', () => {
@@ -64,6 +65,23 @@ describe('MyPollsPageComponent', () => {
     ).toContain('closed');
   });
 
+  it('loads more polls when the end of the list comes into view', async () => {
+    const endInView = stubIntersectionObserver();
+    for (let i = 1; i <= 21; i++) {
+      await repo.createPoll({ question: `Poll ${i}?`, options: ['a', 'b'] });
+    }
+    const fixture = TestBed.createComponent(MyPollsPageComponent);
+    await fixture.whenStable();
+    const polls = () =>
+      fixture.debugElement.queryAll(By.css('[data-testid^="my-poll-"]'));
+    expect(polls()).toHaveLength(20);
+
+    endInView(true);
+    await fixture.whenStable();
+
+    expect(polls()).toHaveLength(21);
+  });
+
   it('shows an empty state without polls or account', async () => {
     repo.creatorUid$.next(null);
 
@@ -74,9 +92,10 @@ describe('MyPollsPageComponent', () => {
 
   it("hides the previous account's polls while the next account loads", async () => {
     await repo.createPoll({ question: "Ada's poll?", options: ['a', 'b'] });
-    const myPolls$ = new BehaviorSubject<Poll[] | null | undefined>(
-      Object.values(repo.polls())
-    );
+    const myPolls$ = new BehaviorSubject<PollPage | null | undefined>({
+      polls: Object.values(repo.polls()),
+      hasMore: false,
+    });
     vi.spyOn(repo, 'watchMyPolls').mockReturnValue(myPolls$);
     const fixture = TestBed.createComponent(MyPollsPageComponent);
     await fixture.whenStable();
@@ -97,7 +116,7 @@ describe('MyPollsPageComponent', () => {
         defer(() =>
           failures-- > 0
             ? throwError(() => new Error('failed-precondition: index building'))
-            : watchMyPolls()
+            : watchMyPolls(20)
         )
       );
       vi.spyOn(console, 'error').mockImplementation(() => undefined);
