@@ -15,7 +15,10 @@ import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { pollClosesAt } from '../../shared/poll';
 import { PollsRepoPort } from '../ports/polls-repo.port';
+import { catchError, of } from 'rxjs';
 import { SITE_TAGS } from './site-tags';
+
+const LOAD_FAILED = 'load-failed' as const;
 
 @Component({
   selector: 'rap-my-polls-page',
@@ -80,6 +83,10 @@ import { SITE_TAGS } from './site-tags';
             </mat-card-actions>
           </mat-card>
         }
+      } @else if (loadFailed()) {
+        <p class="error" role="alert" data-testid="my-polls-error">
+          Your polls could not be loaded. Please try again later.
+        </p>
       } @else {
         <mat-spinner class="spinner" diameter="40" />
       }
@@ -100,6 +107,10 @@ import { SITE_TAGS } from './site-tags';
     .lead {
       margin: 0.25rem 0 0;
       color: var(--mat-sys-on-surface-variant);
+    }
+    .error {
+      margin: 0;
+      color: var(--mat-sys-error);
     }
     .spinner {
       align-self: center;
@@ -157,12 +168,26 @@ import { SITE_TAGS } from './site-tags';
 export default class MyPollsPageComponent {
   protected readonly now = new Date();
 
-  private readonly myPolls = toSignal(inject(PollsRepoPort).watchMyPolls());
+  private readonly myPolls = toSignal(
+    inject(PollsRepoPort)
+      .watchMyPolls()
+      .pipe(
+        // e.g. a missing index right after a deploy; toSignal would rethrow
+        catchError((error: unknown) => {
+          console.error('Could not load my polls', error);
+          return of(LOAD_FAILED);
+        })
+      )
+  );
+
+  protected readonly loadFailed = computed(
+    () => this.myPolls() === LOAD_FAILED
+  );
 
   /** `undefined` while loading; an empty list when signed out. */
   protected readonly polls = computed(() => {
     const polls = this.myPolls();
-    if (polls === undefined) {
+    if (polls === undefined || polls === LOAD_FAILED) {
       return undefined;
     }
     return (polls ?? []).map((poll) => ({

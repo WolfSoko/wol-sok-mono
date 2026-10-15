@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { By, Meta, Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { throwError } from 'rxjs';
 import { PollsRepoAdapterMock } from '../adapter/polls-repo-adapter-mock.service';
 import { PollsRepoPort } from '../ports/polls-repo.port';
 import MyPollsPageComponent from './my-polls.page';
@@ -68,6 +69,17 @@ describe('MyPollsPageComponent', () => {
     const page = await render();
 
     expect(page.query(By.css('[data-testid="my-polls-empty"]'))).not.toBeNull();
+  });
+
+  it('says so when the polls cannot be loaded', async () => {
+    vi.spyOn(repo, 'watchMyPolls').mockReturnValue(
+      throwError(() => new Error('failed-precondition: index building'))
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const page = await render();
+
+    expect(page.query(By.css('[data-testid="my-polls-error"]'))).not.toBeNull();
   });
 
   it('is not for search engines and restores the site tags on leaving', async () => {
