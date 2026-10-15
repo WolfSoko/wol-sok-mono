@@ -24,7 +24,8 @@ import { TrainingNamePipe } from '../ui/training-name.pipe';
   providedIn: 'root',
 })
 export class IntervalCountdownService {
-  readonly countdown = signal<CountdownModel | null>(null);
+  public readonly countdown = signal<CountdownModel | null>(null);
+  private audioCtx: AudioContext | null = null;
 
   constructor() {
     const trainingNamePipe = inject(TrainingNamePipe);
@@ -46,22 +47,23 @@ export class IntervalCountdownService {
           maxBeepsPrev === maxBeepsNext
       ),
       switchMap(([countdown, secondsLeft, maxBeeps]) => {
+        const isEnd = countdown.countdownTo === 'finished';
         const trainingName = trainingNamePipe.transform(countdown.countdownTo);
         if (secondsLeft === maxBeeps) {
-          return of([
-            440,
-            seconds(0.4),
-            trainingName
-              ? `${trainingName} in ${secondsLeft} Sekunden!`
-              : undefined,
-          ]) as Observable<[number, Seconds, string | undefined]>;
+          const announcement = isEnd
+            ? `Noch ${secondsLeft} Sekunden!`
+            : `${trainingName} in ${secondsLeft} Sekunden!`;
+          return of([440, seconds(0.4), announcement]) as Observable<
+            [number, Seconds, string | undefined]
+          >;
         }
         if (secondsLeft === 0) {
-          return of([
-            660,
-            seconds(0.8),
-            trainingName ? `Jetzt ${trainingName}!` : undefined,
-          ]) as Observable<[number, Seconds, string | undefined]>;
+          const announcement = isEnd
+            ? 'Training beendet. Gut gemacht!'
+            : `Jetzt ${trainingName}!`;
+          return of([660, seconds(0.8), announcement]) as Observable<
+            [number, Seconds, string | undefined]
+          >;
         }
         if (secondsLeft < maxBeeps && secondsLeft > 0) {
           return of([880, seconds(0.4), undefined]) as Observable<
@@ -80,7 +82,18 @@ export class IntervalCountdownService {
     });
   }
 
-  updateCountdown(
+  /**
+   * Browsers (iOS Safari in particular) only allow audio output once it has
+   * been started from a user gesture. Call this from a click handler.
+   */
+  public unlockAudio(): void {
+    const audioCtx = this.getAudioContext();
+    if (audioCtx?.state === 'suspended') {
+      void audioCtx.resume();
+    }
+  }
+
+  public updateCountdown(
     countdownTime: Milliseconds,
     timeLeft: Milliseconds,
     countdownTo: TrainingName
@@ -92,15 +105,14 @@ export class IntervalCountdownService {
     });
   }
 
-  endCountdown(): void {
+  public endCountdown(): void {
     this.countdown.set(null);
   }
   private playBeep(frequency = 440, length: Seconds = seconds(0.2)): void {
-    if (!('AudioContext' in globalThis)) {
-      console.warn('AudioContext not supported in this browser');
+    const audioCtx = this.getAudioContext();
+    if (!audioCtx) {
       return;
     }
-    const audioCtx = new AudioContext();
 
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
@@ -120,7 +132,19 @@ export class IntervalCountdownService {
     oscillator.stop(audioCtx.currentTime + length);
   }
 
-  private textToSpeech(text: string) {
+  private getAudioContext(): AudioContext | null {
+    if (this.audioCtx) {
+      return this.audioCtx;
+    }
+    if (!('AudioContext' in globalThis)) {
+      console.warn('AudioContext not supported in this browser');
+      return null;
+    }
+    this.audioCtx = new AudioContext();
+    return this.audioCtx;
+  }
+
+  private textToSpeech(text: string): void {
     if (!('speechSynthesis' in globalThis)) {
       console.warn('Speech synthesis not supported in this browser.');
       return;

@@ -13,8 +13,9 @@ export class RepositoryFactoryMock<
   repository?: RepositoryMock<RType>;
   initialData?: RType;
 
-  override create<T extends JSONCompatible<T> = RType>(
-    key: string
+  public override create<T extends JSONCompatible<T> = RType>(
+    key: string,
+    _persist = false
   ): RepositoryMock<T> {
     this.key = key;
     const repositoryMock = new RepositoryMock<T>();
@@ -33,11 +34,11 @@ export class RepositoryMock<T extends JSONCompatible<T>> extends Repository<T> {
     super('mock');
   }
 
-  override save(data: T): void {
+  public override save(data: T): void {
     this.savedData = data;
   }
 
-  override load(): T | null {
+  public override load(): T | null {
     return this.savedData ?? null;
   }
 }

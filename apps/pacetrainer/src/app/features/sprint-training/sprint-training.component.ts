@@ -25,6 +25,7 @@ import { TrainingProgressService } from '../../shared/training-progress/training
 import { TrainingRunnerEventBridge } from '../../shared/training-runner/training-runner-event-bridge.service';
 import { TrainingRunnerService } from '../../shared/training-runner/training-runner.service';
 import { CountDownCircleComponent } from '../../shared/ui/count-down-circle/count-down-circle.component';
+import { ScreenWakeLockService } from '../../shared/wake-lock/screen-wake-lock.service';
 import { SprintFormComponent } from '../training-configuration/sprint-training-form.component';
 import { SprintTrainingOverviewComponent } from '../training-configuration/sprint-training-overview.component';
 import { TrainingLiveStateComponent } from '../training-live-state/training-live-state.component';
@@ -83,6 +84,7 @@ export class SprintTrainingComponent {
     inject(TrainingProgressEventBridge);
     inject(TrainingRunnerEventBridge);
     inject(IntervalCountdownEventBridge);
+    inject(ScreenWakeLockService);
 
     effect(() => {
       const currentExercise = this.currentExercise();
@@ -109,6 +111,8 @@ export class SprintTrainingComponent {
   }
 
   toggleTraining(): void {
+    // runs inside the click handler, so the browser allows audio afterwards
+    this.countdownService.unlockAudio();
     if (['stopped', 'initial'].includes(this.trainingState())) {
       this.startingTraining.set(true);
       interval(50)

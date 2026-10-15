@@ -92,6 +92,17 @@ export class TrainingProgressService {
       this.trainingProgressRepo.save(this.trainingProgress());
     });
 
+    // end the run once the last exercise is done
+    effect(() => {
+      const finished = this.trainingProgress().state === 'finished';
+      if (
+        finished &&
+        untracked(this.runnerService.trainingState) === 'running'
+      ) {
+        untracked(() => this.runnerService.endTraining());
+      }
+    });
+
     effect(() => {
       const trainingProgress = untracked(() => this.trainingProgressInternal());
       const elapsedDuration = this.elapsed();
@@ -105,6 +116,14 @@ export class TrainingProgressService {
   }
 
   private startTraining(): void {
+    if (this.trainingProgressInternal().state === 'finished') {
+      // a new run after a finished or stopped one starts from scratch
+      this.trainingProgressInternal.set(
+        createTrainingProgress(
+          this.sprintTrainingDataService.sprintTrainingConfig()
+        )
+      );
+    }
     this.deltaTime$
       .pipe(
         filter(() => this.runnerService.trainingState() === 'running'),
@@ -162,7 +181,8 @@ export class TrainingProgressService {
       }
 
       case 'finished': {
-        return progressElapsedTrainingTime(training, elapsedTrainingTime);
+        // keep the final result; elapsed time is reset when the run is stopped
+        return training;
       }
     }
   }
