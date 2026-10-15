@@ -134,7 +134,9 @@ export class PollsRepoAdapter extends PollsRepoPort {
     );
   }
 
-  public watchMyPolls(count: number): Observable<PollPage | null | undefined> {
+  public watchMyPolls(
+    counts: Observable<number>
+  ): Observable<PollPage | null | undefined> {
     if (this.isServer) {
       // only the browser knows who is signed in
       return NEVER;
@@ -142,14 +144,19 @@ export class PollsRepoAdapter extends PollsRepoPort {
     return authState(this.auth).pipe(
       switchMap((user) =>
         user
-          ? this.watchPage(
-              query(
-                this.pollsCol,
-                where('creatorUid', '==', user.uid),
-                orderBy('createdAt', 'desc')
+          ? counts.pipe(
+              switchMap((count) =>
+                this.watchPage(
+                  query(
+                    this.pollsCol,
+                    where('creatorUid', '==', user.uid),
+                    orderBy('createdAt', 'desc')
+                  ),
+                  count
+                )
               ),
-              count
-            ).pipe(startWith(undefined))
+              startWith(undefined)
+            )
           : of(null)
       )
     );

@@ -52,7 +52,10 @@ export class EndlessScrollEndComponent {
         { rootMargin: AHEAD_MARGIN }
       );
       observer.observe(element);
-      destroyRef.onDestroy(() => observer.disconnect());
+      destroyRef.onDestroy(() => {
+        observer.disconnect();
+        this.scroll().setEndInView(false);
+      });
     });
   }
 }

@@ -112,11 +112,11 @@ describe('MyPollsPageComponent', () => {
     try {
       let failures = 1;
       const watchMyPolls = repo.watchMyPolls.bind(repo);
-      vi.spyOn(repo, 'watchMyPolls').mockReturnValue(
+      vi.spyOn(repo, 'watchMyPolls').mockImplementation((counts) =>
         defer(() =>
           failures-- > 0
             ? throwError(() => new Error('failed-precondition: index building'))
-            : watchMyPolls(20)
+            : watchMyPolls(counts)
         )
       );
       vi.spyOn(console, 'error').mockImplementation(() => undefined);

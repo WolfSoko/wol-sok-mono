@@ -101,9 +101,11 @@ export class PollsRepoAdapterMock extends PollsRepoPort {
   /** `null` plays a visitor who is not signed in. */
   public readonly creatorUid$ = new BehaviorSubject<string | null>('mock-user');
 
-  public watchMyPolls(count: number): Observable<PollPage | null | undefined> {
-    return combineLatest([this.creatorUid$, this.polls$]).pipe(
-      map(([uid, polls]) =>
+  public watchMyPolls(
+    counts: Observable<number>
+  ): Observable<PollPage | null | undefined> {
+    return combineLatest([this.creatorUid$, this.polls$, counts]).pipe(
+      map(([uid, polls, count]) =>
         uid === null
           ? null
           : page(

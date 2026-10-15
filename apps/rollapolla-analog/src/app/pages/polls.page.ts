@@ -16,8 +16,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, of, switchMap } from 'rxjs';
-import { PollSort, searchPolls, sortPolls } from '../../shared/poll-search';
+import { catchError, of, switchMap, tap } from 'rxjs';
+import { PollSort, searchPolls } from '../../shared/poll-search';
 import {
   pendingUntilFirstValue,
   SSR_DATA_TIMEOUT_MS,
@@ -197,18 +197,21 @@ export default class PollsPageComponent {
   protected readonly scroll = new EndlessScroll();
   private readonly polls = toSignal(
     toObservable(this.sort).pipe(
-      // Firestore sorts, so a hot poll shows up first however old it is
-      switchMap((sort) =>
-        this.scroll.load(
-          (count) => this.pollsRepo.watchPublicPolls(sort, count),
-          (page) => page.hasMore
-        )
-      ),
-      pendingUntilFirstValue(inject(Injector), SSR_DATA_TIMEOUT_MS),
-      catchError((error: unknown) => {
-        console.error('Could not load polls', error);
-        return of(null);
-      })
+      switchMap((sort) => {
+        this.scroll.restart();
+        return this.scroll.counts.pipe(
+          // Firestore sorts, so a hot poll shows up first however old it is
+          switchMap((count) => this.pollsRepo.watchPublicPolls(sort, count)),
+          tap((page) => this.scroll.answered(page.hasMore)),
+          // e.g. an index still building right after a deploy; the other
+          // order may work, so switching it tries again
+          catchError((error: unknown) => {
+            console.error('Could not load polls', error);
+            return of(null);
+          })
+        );
+      }),
+      pendingUntilFirstValue(inject(Injector), SSR_DATA_TIMEOUT_MS)
     )
   );
   protected readonly loadFailed = computed(() => this.polls() === null);
@@ -216,10 +219,8 @@ export default class PollsPageComponent {
   /** `undefined` while loading. */
   protected readonly results = computed(() => {
     const page = this.polls();
-    // sorted here too: live vote counts may have reordered them
-    return page
-      ? sortPolls(searchPolls(page.polls, this.search()), this.sort())
-      : undefined;
+    // in the order Firestore sorted them
+    return page ? searchPolls(page.polls, this.search()) : undefined;
   });
 
   constructor() {

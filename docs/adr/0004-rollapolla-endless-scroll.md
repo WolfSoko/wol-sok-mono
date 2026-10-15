@@ -44,4 +44,7 @@ The home page's hot polls stay a short fixed list.
   make live reordering (votes change the "Hot" order) much harder.
 - A search that matches little can load every listed poll. A real search
   index would avoid that once there are many polls.
+- The home page's hot list asks for 10 polls more than it shows. Only if
+  more than 10 closed polls with more votes still wait for the TTL can it
+  show fewer.
 - One more composite index to deploy.

@@ -73,11 +73,14 @@ export abstract class PollsRepoPort {
 
   /**
    * Emits the first `count` polls the signed-in visitor created, newest
-   * first, or `null` when nobody is signed in. Emits `undefined` while a newly
-   * signed-in account's polls load, so the previous account's list never
-   * stays visible. Never emits on the server.
+   * first, for the latest of `counts`, or `null` when nobody is signed in.
+   * Emits `undefined` while a newly signed-in account's polls load, so the
+   * previous account's list never stays visible; a new count keeps the
+   * current page until the larger one arrives. Never emits on the server.
    */
-  abstract watchMyPolls(count: number): Observable<PollPage | null | undefined>;
+  abstract watchMyPolls(
+    counts: Observable<number>
+  ): Observable<PollPage | null | undefined>;
 
   /**
    * Emits the signed-in visitor's vote on the poll, in whatever round it was

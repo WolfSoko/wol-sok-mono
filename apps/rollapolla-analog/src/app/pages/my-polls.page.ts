@@ -179,27 +179,23 @@ export default class MyPollsPageComponent {
   protected readonly scroll = new EndlessScroll();
   private readonly pollsRepo = inject(PollsRepoPort);
   private readonly myPolls = toSignal(
-    this.scroll
-      .load(
-        (count) => this.pollsRepo.watchMyPolls(count),
-        (page) => !!page?.hasMore
-      )
-      .pipe(
-        tap((polls) => {
-          if (polls !== undefined) {
-            this.loadFailed.set(false);
-          }
-        }),
-        // e.g. the index still building right after a deploy. Listening again
-        // also picks up a sign-in or account switch made in the meantime.
-        retry({
-          delay: (error: unknown) => {
-            console.error('Could not load my polls', error);
-            this.loadFailed.set(true);
-            return timer(RETRY_DELAY_MS);
-          },
-        })
-      )
+    this.pollsRepo.watchMyPolls(this.scroll.counts).pipe(
+      tap((page) => {
+        if (page !== undefined) {
+          this.loadFailed.set(false);
+          this.scroll.answered(!!page?.hasMore);
+        }
+      }),
+      // e.g. the index still building right after a deploy. Listening again
+      // also picks up a sign-in or account switch made in the meantime.
+      retry({
+        delay: (error: unknown) => {
+          console.error('Could not load my polls', error);
+          this.loadFailed.set(true);
+          return timer(RETRY_DELAY_MS);
+        },
+      })
+    )
   );
 
   /** `undefined` while loading; an empty list when signed out. */
