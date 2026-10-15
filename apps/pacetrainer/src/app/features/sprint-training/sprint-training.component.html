@@ -50,7 +50,6 @@
   <div class="actions">
     <button
       mat-flat-button
-      class="primary-action"
       (click)="primaryAction()"
       [disabled]="state.phase === 'leadIn'"
       data-qa="toggle-training"
@@ -77,7 +76,6 @@
     ) {
       <button
         mat-stroked-button
-        class="secondary-action"
         (click)="endTraining()"
         data-qa="stop-training"
       >

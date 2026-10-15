@@ -7,7 +7,11 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
   template: `
     @let s = zusammenfassung();
     <div class="zusammenfassung" data-qa="zusammenfassung">
-      <span class="badge" [class.complete]="s.completion === 'complete'">
+      <span
+        class="badge"
+        aria-hidden="true"
+        [class.complete]="s.completion === 'complete'"
+      >
         {{ s.completion === 'complete' ? '🏁' : '⏸' }}
       </span>
       <h3 class="headline">

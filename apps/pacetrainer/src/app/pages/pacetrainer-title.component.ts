@@ -49,7 +49,7 @@ import { RouterLink } from '@angular/router';
           height="36"
         />
       </a>
-      <span role="heading" aria-level="1" class="title">Pace-Trainer</span>
+      <h1 class="title">Pace-Trainer</h1>
       <span class="subtitle">Dein digitaler Laufcoach.</span>
     </header>
   `,

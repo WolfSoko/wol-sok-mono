@@ -16,7 +16,6 @@
     "@playwright/test": "^1.56.1",
     "@angular/forms": "22.2.2",
     "rxjs": "7.8.2",
-    "@angular/animations": "22.2.2",
     "@angular/ssr": "22.2.2"
   }
 }
