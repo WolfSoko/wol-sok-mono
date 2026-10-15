@@ -57,7 +57,9 @@ describe('CreatePollComponent', () => {
       counts: [0, 0],
       totalVotes: 0,
     });
-    expect(navigate).toHaveBeenCalledWith(['/poll', polls[0].id]);
+    expect(navigate).toHaveBeenCalledWith(['/poll', polls[0].id], {
+      state: { createdPollId: polls[0].id },
+    });
   });
 
   it('does not create a poll with a blank option', () => {

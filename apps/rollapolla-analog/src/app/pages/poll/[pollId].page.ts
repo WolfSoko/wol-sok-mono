@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   Injector,
 } from '@angular/core';
@@ -9,9 +10,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map, startWith, switchMap } from 'rxjs';
 import { pendingUntilFirstValue } from '../../adapter/pending-until-first-value';
+import { CREATED_POLL_ID } from '../../core/create-poll/created-poll-id';
 import { PollVoteComponent } from '../../core/poll-vote/poll-vote.component';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import { usePollMetaTags } from './poll-meta';
@@ -40,7 +42,7 @@ const SSR_POLL_TIMEOUT_MS = 1500;
       @if (poll() === undefined) {
         <mat-spinner class="spinner" diameter="40" />
       } @else if (poll(); as poll) {
-        <rap-poll-vote [poll]="poll" />
+        <rap-poll-vote [poll]="poll" [justCreated]="justCreated()" />
       } @else {
         <mat-card
           appearance="outlined"
@@ -101,6 +103,11 @@ export default class PollPageComponent {
     map((params) => params.get('pollId') ?? '')
   );
   private readonly pollId = toSignal(this.pollId$, { initialValue: '' });
+  private readonly createdPollId =
+    inject(Router).currentNavigation()?.extras.state?.[CREATED_POLL_ID];
+  protected readonly justCreated = computed(
+    () => this.pollId() === this.createdPollId
+  );
 
   protected readonly poll = toSignal(
     this.pollId$.pipe(

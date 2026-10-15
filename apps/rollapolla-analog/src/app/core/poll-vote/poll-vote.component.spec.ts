@@ -1,4 +1,3 @@
-import { Clipboard } from '@angular/cdk/clipboard';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -155,24 +154,19 @@ describe('PollVoteComponent', () => {
     expect(localStorage.getItem('rap-voted-polls')).toBeNull();
   });
 
-  it('resets "Link copied" after a moment', () => {
-    vi.useFakeTimers();
-    try {
-      vi.spyOn(TestBed.inject(Clipboard), 'copy').mockReturnValue(true);
-      const shareButton = fixture.debugElement.query(
-        By.css('mat-card-actions button')
-      ).nativeElement as HTMLButtonElement;
+  it('offers sharing below the poll, or first right after creating it', () => {
+    expect(query('poll-ready')).toBeNull();
+    expect(
+      fixture.debugElement.query(By.css('mat-card-actions rap-poll-share'))
+    ).not.toBeNull();
 
-      shareButton.click();
-      fixture.detectChanges();
-      expect(shareButton.textContent).toContain('Link copied');
+    fixture.componentRef.setInput('justCreated', true);
+    fixture.detectChanges();
 
-      vi.advanceTimersByTime(2000);
-      fixture.detectChanges();
-      expect(shareButton.textContent).toContain('Copy link');
-    } finally {
-      vi.useRealTimers();
-    }
+    expect(query('poll-ready')).not.toBeNull();
+    expect(
+      fixture.debugElement.queryAll(By.css('rap-poll-share'))
+    ).toHaveLength(1);
   });
 
   function currentPoll(): Promise<Poll> {

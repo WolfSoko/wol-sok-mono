@@ -6,7 +6,9 @@ import {
   ActivatedRoute,
   convertToParamMap,
   provideRouter,
+  Router,
 } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { BehaviorSubject, map, NEVER } from 'rxjs';
 import { PollsRepoAdapterMock } from '../../adapter/polls-repo-adapter-mock.service';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
@@ -118,4 +120,35 @@ describe('PollPageComponent', () => {
     await fixture.whenStable();
     return fixture.debugElement;
   }
+});
+
+describe('PollPageComponent after creating a poll', () => {
+  it('greets the creator with the share box, but not other visitors', async () => {
+    TestBed.configureTestingModule({
+      imports: [NoopAnimationsModule],
+      providers: [
+        provideRouter([{ path: 'poll/:pollId', component: PollPageComponent }]),
+        { provide: PollsRepoPort, useClass: PollsRepoAdapterMock },
+      ],
+    });
+    const repo = TestBed.inject(PollsRepoPort);
+    const pollId = await repo.createPoll({
+      question: 'Pizza or pasta?',
+      options: ['Pizza', 'Pasta'],
+    });
+    const harness = await RouterTestingHarness.create();
+    const ready = () =>
+      harness.routeDebugElement?.query(By.css('[data-testid="poll-ready"]'));
+
+    await TestBed.inject(Router).navigate(['/poll', pollId], {
+      state: { createdPollId: pollId },
+    });
+    await harness.fixture.whenStable();
+    expect(ready()).not.toBeNull();
+
+    await harness.navigateByUrl('/');
+    await harness.navigateByUrl(`/poll/${pollId}`);
+    await harness.fixture.whenStable();
+    expect(ready()).toBeNull();
+  });
 });

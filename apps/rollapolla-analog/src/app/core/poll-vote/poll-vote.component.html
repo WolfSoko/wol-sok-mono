@@ -1,3 +1,6 @@
+@if (justCreated()) {
+  <rap-poll-share class="created-share" [poll]="poll()" highlighted />
+}
 <mat-card appearance="outlined" class="card">
   <p class="rap-eyebrow eyebrow">
     <span class="rap-live-dot" aria-hidden="true"></span>
@@ -84,11 +87,9 @@
       </form>
     }
   </mat-card-content>
-  <mat-card-actions class="actions">
-    <span class="share-hint">Invite others to vote</span>
-    <button mat-stroked-button type="button" (click)="copyLink()">
-      <mat-icon>{{ linkCopied() ? "check" : "link" }}</mat-icon>
-      {{ linkCopied() ? "Link copied" : "Copy link" }}
-    </button>
-  </mat-card-actions>
+  @if (!justCreated()) {
+    <mat-card-actions class="actions">
+      <rap-poll-share class="share" [poll]="poll()" />
+    </mat-card-actions>
+  }
 </mat-card>

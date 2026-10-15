@@ -21,6 +21,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Router } from '@angular/router';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
+import { CREATED_POLL_ID } from './created-poll-id';
 
 @Component({
   selector: 'rap-create-poll',
@@ -90,7 +91,9 @@ export class CreatePollComponent {
     this.createFailed.set(false);
     try {
       const pollId = await this.pollsRepo.createPoll({ question, options });
-      await this.router.navigate(['/poll', pollId]);
+      await this.router.navigate(['/poll', pollId], {
+        state: { [CREATED_POLL_ID]: pollId },
+      });
     } catch (error) {
       console.error('Could not create poll', error);
       this.createFailed.set(true);
