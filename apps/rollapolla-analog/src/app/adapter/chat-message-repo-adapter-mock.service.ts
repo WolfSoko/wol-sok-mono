@@ -6,11 +6,11 @@ import { ChatMessagesRepoPort } from '../ports/chat-messages-repo.port';
 export class ChatMessageRepoAdapterMock extends ChatMessagesRepoPort {
   private readonly chatMessages: WritableSignal<ChatMessage[]> = signal([]);
 
-  getChatMessages(): Signal<ChatMessage[] | undefined> {
+  public getChatMessages(): Signal<ChatMessage[] | undefined> {
     return this.chatMessages;
   }
 
-  async addChatMessage(message: string): Promise<void> {
+  public async addChatMessage(message: string): Promise<void> {
     this.chatMessages.update((messages) => [
       ...messages,
       {

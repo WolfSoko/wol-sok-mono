@@ -8,6 +8,7 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { isGoogleAccount } from '../../../shared/account';
 import { AccountPort, SignInCancelled } from '../../ports/account.port';
 
 @Component({
@@ -23,10 +24,9 @@ export class AccountComponent {
   protected readonly account = toSignal(this.accountPort.account$, {
     initialValue: null,
   });
-  /** Signed in with Google, not just the automatic anonymous sign-in. */
   protected readonly googleAccount = computed(() => {
     const account = this.account();
-    return account && !account.isAnonymous ? account : null;
+    return isGoogleAccount(account) ? account : null;
   });
   protected readonly busy = signal(false);
   protected readonly failed = signal(false);

@@ -29,6 +29,10 @@ describe('ChatLiveStreamComponent', () => {
     createComponent();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -123,6 +127,24 @@ describe('ChatLiveStreamComponent', () => {
     component.addChatMessage('  What a nice poll!  ');
 
     expect(repo.addChatMessage).toHaveBeenCalledWith('What a nice poll!');
+    expect(query('chat-post-error')).toBeNull();
+  });
+
+  it('says so when a message could not be sent', async () => {
+    vi.spyOn(
+      TestBed.inject(ChatMessagesRepoPort),
+      'addChatMessage'
+    ).mockRejectedValueOnce(new Error('permission-denied'));
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await account.signInWithGoogle();
+    await fixture.whenStable();
+
+    component.addChatMessage('What a nice poll!');
+    // the rejection is handled in a microtask, after the first render
+    await Promise.resolve();
+    await fixture.whenStable();
+
+    expect(query('chat-post-error')).not.toBeNull();
   });
 
   function createComponent(): void {

@@ -13,6 +13,9 @@ export const chatMessageConverter: FirestoreDataConverter<
   ChatMessageDto
 > = {
   toFirestore(chatMessage: ChatMessage): ChatMessageDto {
+    if (!chatMessage.authorUid) {
+      throw new Error('A chat message needs its author');
+    }
     return {
       message: chatMessage.message,
       createdAt: Timestamp.fromDate(chatMessage.createdAt),

@@ -4,14 +4,14 @@ export class LiveChatPoComp {
   constructor(private readonly page: Page) {}
 
   /** Nobody is signed in with Google: the chat offers sign-in, not the form. */
-  async expectSignInRequired() {
+  public async expectSignInRequired(): Promise<void> {
     await this.scrollChatIntoView();
     await expect(this.page.getByTestId('chat-sign-in')).toBeVisible();
     await expect(this.page.getByTestId('chat-sign-in-button')).toBeVisible();
     await expect(this.page.getByTestId('message-input')).toHaveCount(0);
   }
 
-  async enterUntrimmedMessage(message: string) {
+  public async enterUntrimmedMessage(message: string): Promise<string> {
     const leaveMessageInput = await this.openMessageInput();
 
     await this.fillOnceHydrated(leaveMessageInput, message);
@@ -20,7 +20,7 @@ export class LiveChatPoComp {
     return message;
   }
 
-  async sendMessageByKeypress(message: string) {
+  public async sendMessageByKeypress(message: string): Promise<void> {
     const leaveMessageInput = await this.openMessageInput();
 
     await this.fillOnceHydrated(leaveMessageInput, message);
@@ -28,7 +28,7 @@ export class LiveChatPoComp {
     await leaveMessageInput.press('Control+Enter');
   }
 
-  findMessageInChat(message: string): Locator {
+  public findMessageInChat(message: string): Locator {
     return this.page.getByTestId('messages-list').getByText(message);
   }
 

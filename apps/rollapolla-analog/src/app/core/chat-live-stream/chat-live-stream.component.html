@@ -10,6 +10,11 @@
         [maxMessageLength]="maxLength()"
         (messageAdded)="addChatMessage($event)"
       ></rap-chat-message-form>
+      @if (postFailed()) {
+        <p class="error" role="alert" data-testid="chat-post-error">
+          Your message could not be sent. Please try again.
+        </p>
+      }
     } @else {
       <div class="sign-in" data-testid="chat-sign-in">
         <p>Sign in with Google to join the chat. Reading along is free.</p>

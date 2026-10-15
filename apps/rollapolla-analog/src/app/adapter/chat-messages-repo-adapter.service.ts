@@ -12,10 +12,7 @@ import {
   query,
 } from '@angular/fire/firestore';
 import { ChatMessage } from '../../shared/chat.message';
-import {
-  ChatMessagesRepoPort,
-  SignInRequired,
-} from '../ports/chat-messages-repo.port';
+import { ChatMessagesRepoPort } from '../ports/chat-messages-repo.port';
 import { NotesRepoPort } from '../ports/notes-repo.port';
 import { addPendingTaskForServer } from './add-pending-task-for-server';
 import { chatMessageConverter } from './chat-message.converter';
@@ -72,18 +69,18 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
     }
   }
 
-  getChatMessages(): Signal<ChatMessage[] | undefined> {
+  public getChatMessages(): Signal<ChatMessage[] | undefined> {
     return this.chatMessages;
   }
 
-  async addChatMessage(message: string): Promise<void> {
+  public async addChatMessage(message: string): Promise<void> {
     if (!this.validateMessage(message)) {
       return;
     }
     await this.auth.authStateReady();
     const user = this.auth.currentUser;
     if (!user || user.isAnonymous) {
-      throw new SignInRequired();
+      throw new Error('Sign in with Google to chat');
     }
     const chatMessage: ChatMessage = {
       id: '-1',

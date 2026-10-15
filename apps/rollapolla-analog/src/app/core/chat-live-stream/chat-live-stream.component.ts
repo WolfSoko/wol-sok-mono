@@ -10,6 +10,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+import { isGoogleAccount } from '../../../shared/account';
 import { ChatMessage } from '../../../shared/chat.message';
 import { AccountPort, SignInCancelled } from '../../ports/account.port';
 import { ChatMessagesRepoPort } from '../../ports/chat-messages-repo.port';
@@ -79,19 +80,19 @@ export class ChatLiveStreamComponent {
     initialValue: null,
   });
   /** Only a visitor signed in with Google may post; everyone can read. */
-  protected readonly canChat = computed(() => {
-    const account = this.account();
-    return account !== null && !account.isAnonymous;
-  });
+  protected readonly canChat = computed(() => isGoogleAccount(this.account()));
   protected readonly signingIn = signal(false);
   protected readonly signInFailed = signal(false);
+  protected readonly postFailed = signal(false);
 
-  addChatMessage(message: string) {
+  public addChatMessage(message: string): void {
+    this.postFailed.set(false);
     // Not awaited: Firestore shows the message locally right away and resolves
     // only once the backend acknowledged it.
-    this.chatMessagesRepo
-      .addChatMessage(message.trim())
-      .catch((error) => console.error('Could not send message', error));
+    this.chatMessagesRepo.addChatMessage(message.trim()).catch((error) => {
+      console.error('Could not send message', error);
+      this.postFailed.set(true);
+    });
   }
 
   protected async signIn(): Promise<void> {
