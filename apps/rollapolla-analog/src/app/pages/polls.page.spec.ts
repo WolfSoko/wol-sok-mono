@@ -35,6 +35,8 @@ describe('PollsPageComponent', () => {
       options: ['Pizza', 'Sushi'],
     });
     await repo.vote(repo.polls()[pizza], 0);
+    // created in the same millisecond otherwise, which leaves "new" undecided
+    repo.polls()[pizza].createdAt = new Date(Date.now() - 60_000);
     harness = await RouterTestingHarness.create();
   });
 
