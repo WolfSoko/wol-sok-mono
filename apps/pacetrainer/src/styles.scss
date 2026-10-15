@@ -13,21 +13,69 @@ html {
         primary: mat.$azure-palette,
         tertiary: mat.$orange-palette,
       ),
-      typography: Roboto,
+      typography: (
+        plain-family: Inter,
+        brand-family: Inter,
+        bold-weight: 700,
+        medium-weight: 600,
+        regular-weight: 400,
+      ),
       density: 0,
     )
+  );
+
+  // Softer corners than the Material defaults, shared by all surfaces.
+  @include mat.card-overrides(
+    (
+      filled-container-shape: var(--mat-sys-corner-large),
+      filled-container-color: var(--mat-sys-surface-container),
+    )
+  );
+  @include mat.form-field-overrides(
+    (
+      outlined-container-shape: var(--mat-sys-corner-medium),
+    )
+  );
+
+  // The two Intervall colors of the logo ring. Material's orange tone for
+  // light mode reads brown, so the Sprint takes a true orange there (4.5:1
+  // against white) and the palette color in dark mode.
+  --pace-sprint: light-dark(#c2570a, var(--mat-sys-tertiary));
+  --pace-on-sprint: light-dark(#ffffff, var(--mat-sys-on-tertiary));
+  --pace-sprint-container: var(--mat-sys-tertiary-container);
+  --pace-recovery: var(--mat-sys-primary);
+  --pace-on-recovery: var(--mat-sys-on-primary);
+  --pace-recovery-container: var(--mat-sys-primary-container);
+
+  // Brand tints behind the page, drawn from the logo (navy, azure, orange).
+  --pace-glow-primary: color-mix(
+    in srgb,
+    var(--mat-sys-primary) 14%,
+    transparent
+  );
+  --pace-glow-tertiary: color-mix(
+    in srgb,
+    var(--mat-sys-tertiary) 10%,
+    transparent
+  );
+  --pace-hairline: color-mix(
+    in srgb,
+    var(--mat-sys-outline-variant) 60%,
+    transparent
   );
 }
 
 // Accent per Phase of the Trainingslauf; components read --pace-accent*.
 // Without a tone they fall back to neutral colors.
 [data-tone='sprint'] {
-  --pace-accent: var(--mat-sys-tertiary);
-  --pace-accent-container: var(--mat-sys-tertiary-container);
+  --pace-accent: var(--pace-sprint);
+  --pace-on-accent: var(--pace-on-sprint);
+  --pace-accent-container: var(--pace-sprint-container);
 }
 [data-tone='recovery'] {
-  --pace-accent: var(--mat-sys-primary);
-  --pace-accent-container: var(--mat-sys-primary-container);
+  --pace-accent: var(--pace-recovery);
+  --pace-on-accent: var(--pace-on-recovery);
+  --pace-accent-container: var(--pace-recovery-container);
 }
 
 *,
@@ -39,7 +87,19 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--mat-sys-surface);
+  background:
+    radial-gradient(
+      60% 40% at 15% 0%,
+      var(--pace-glow-primary),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 35% at 100% 100%,
+      var(--pace-glow-tertiary),
+      transparent 70%
+    ),
+    var(--mat-sys-surface);
+  background-attachment: fixed;
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-large);
   text-wrap: pretty;
@@ -64,13 +124,15 @@ h3 {
 .pace-tile {
   display: flex;
   flex-flow: column;
-  gap: 4px;
-  padding: 12px 16px;
+  gap: 2px;
+  padding: 14px 16px;
+  border: 1px solid var(--pace-hairline);
 }
 
 .pace-tile-value {
-  font: var(--mat-sys-title-large);
-  font-weight: 600;
+  font: var(--mat-sys-headline-small);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 

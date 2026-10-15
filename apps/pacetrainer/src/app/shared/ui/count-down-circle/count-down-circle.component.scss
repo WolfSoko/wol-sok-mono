@@ -18,11 +18,12 @@ svg {
   width: 100%;
   height: 100%;
   transform: rotate(-90deg);
+  overflow: visible;
 }
 
 circle {
   fill: none;
-  stroke-width: 7;
+  stroke-width: 8;
 }
 
 .track {
@@ -35,14 +36,23 @@ circle {
 .progress {
   stroke: var(--pace-accent, var(--mat-sys-primary));
   stroke-linecap: round;
+  filter: drop-shadow(
+    0 0 6px
+      color-mix(
+        in srgb,
+        var(--pace-accent, var(--mat-sys-primary)) 45%,
+        transparent
+      )
+  );
+  transition: stroke-dashoffset 200ms linear;
 }
 
 .time {
   position: relative;
-  font-size: calc(var(--ring-size) * 0.17);
-  font-weight: 600;
+  font-size: calc(var(--ring-size) * 0.19);
+  font-weight: 800;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
   color: var(--mat-sys-on-surface);
 }

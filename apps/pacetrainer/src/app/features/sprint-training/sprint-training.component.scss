@@ -17,18 +17,51 @@
 }
 
 .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font: var(--mat-sys-label-large);
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--mat-sys-on-surface-variant);
+
+  // a short bar in the phase color, like one segment of the logo ring
+  &::before {
+    content: '';
+    width: 18px;
+    height: 4px;
+    border-radius: var(--mat-sys-corner-full);
+    background: var(--pace-accent, var(--mat-sys-primary));
+  }
 }
 
 .stage {
+  position: relative;
   flex: 1;
   display: flex;
   flex-flow: column;
   align-items: center;
   justify-content: center;
+
+  // a halo in the phase color behind the countdown ring
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(
+      closest-side at 50% 45%,
+      color-mix(in srgb, var(--pace-accent, transparent) 22%, transparent),
+      transparent
+    );
+    opacity: 0;
+    transition: opacity 600ms ease;
+  }
+}
+
+[data-tone] .stage::before {
+  opacity: 1;
 }
 
 .setup-stage {
@@ -57,10 +90,14 @@
 
   @include mat.button-overrides(
     (
-      filled-container-height: 56px,
+      filled-container-height: 60px,
       outlined-container-height: 56px,
+      filled-container-color: var(--pace-accent, var(--mat-sys-primary)),
+      filled-label-text-color: var(--pace-on-accent, var(--mat-sys-on-primary)),
       filled-label-text-size: var(--mat-sys-title-medium-size),
+      filled-label-text-weight: 700,
       outlined-label-text-size: var(--mat-sys-title-medium-size),
+      outlined-label-text-weight: 600,
     )
   );
 

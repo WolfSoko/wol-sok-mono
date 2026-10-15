@@ -54,6 +54,20 @@
         "configFile": "vite.config.ts"
       }
     },
+    "icons": {
+      "executor": "nx:run-commands",
+      "inputs": [
+        "{projectRoot}/src/public/logo.svg",
+        "{workspaceRoot}/tools/pacetrainer/generate-icons.ts"
+      ],
+      "outputs": [
+        "{projectRoot}/src/public/*.png",
+        "{projectRoot}/src/public/favicon.ico"
+      ],
+      "options": {
+        "command": "tsx ./tools/pacetrainer/generate-icons.ts"
+      }
+    },
     "firebase": {
       "executor": "nx:run-commands",
       "options": {

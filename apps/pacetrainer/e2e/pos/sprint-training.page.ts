@@ -53,14 +53,14 @@ export class SprintTrainingPage {
       this.overview.getByText(`${repetitions} Wiederholungen`)
     ).toBeVisible();
     await expect(
-      this.overview.getByText(`${this.formatTime(sprintTime)} - Sprint`)
+      this.overview.getByText(`${this.formatTime(sprintTime)} Sprint`)
     ).toBeVisible();
     await expect(
-      this.overview.getByText(`${this.formatTime(recoveryTime)} - Gehen/Stehen`)
+      this.overview.getByText(`${this.formatTime(recoveryTime)} Gehen/Stehen`)
     ).toBeVisible();
-    await expect(
-      this.overview.getByText(`Gesamtzeit: ${this.formatTime(totalTime)}`)
-    ).toBeVisible();
+    await expect(this.overview.getByTestId('total-time')).toHaveText(
+      this.formatTime(totalTime)
+    );
   }
 
   private formatTime(time: Seconds): string {
