@@ -26,11 +26,10 @@ import {
   map,
   Observable,
   of,
-  retry,
   shareReplay,
   switchMap,
-  timer,
 } from 'rxjs';
+import { count as aggregateCount } from 'firebase/firestore';
 import { isGoogleAccount } from '../../shared/account';
 import {
   AdminChatMessage,
@@ -40,15 +39,15 @@ import {
   toPage,
 } from '../../shared/admin';
 import { FeatureFlag } from '../../shared/app-config';
-import { ChatMessage } from '../../shared/chat.message';
 import { Poll } from '../../shared/poll';
 import { AccountPort } from '../ports/account.port';
 import { AdminPort } from '../ports/admin.port';
-import { WriteReceipt } from '../ports/polls-repo.port';
+import { PollsRepoPort, WriteReceipt } from '../ports/polls-repo.port';
 import { chatMessageConverter } from './chat-message.converter';
 import { ChatMessageDto } from './chat-message.dto';
 import { pollConverter } from './poll.converter';
 import { PollDto } from './poll.dto';
+import { retryAfterDelay } from './retry-after-delay';
 import { docSnapshots, queryData, querySnapshots } from './snapshots';
 import { AdminGrantDto, UserDto } from './user.dto';
 
@@ -58,15 +57,12 @@ const adminMessageConverter: FirestoreDataConverter<
   ChatMessageDto
 > = {
   toFirestore: (message: AdminChatMessage) =>
-    chatMessageConverter.toFirestore(message as ChatMessage),
+    chatMessageConverter.toFirestore(message),
   fromFirestore: (snapshot, options) => ({
     ...chatMessageConverter.fromFirestore(snapshot, options),
     pollId: snapshot.ref.parent.parent?.id ?? null,
   }),
 };
-
-/** How long to wait before listening again after a listener failed. */
-const RETRY_DELAY_MS = 10_000;
 
 type UserWithoutRole = Omit<AppUser, 'isAdmin'>;
 
@@ -92,6 +88,7 @@ const userConverter: FirestoreDataConverter<UserWithoutRole, UserDto> = {
 export class AdminAdapter extends AdminPort {
   private readonly fs: Firestore = inject(Firestore);
   private readonly auth: Auth = inject(Auth);
+  private readonly pollsRepo = inject(PollsRepoPort);
   private readonly pollsCol: CollectionReference<Poll, PollDto> = collection(
     this.fs,
     'polls'
@@ -114,12 +111,7 @@ export class AdminAdapter extends AdminPort {
       uid
         ? docSnapshots(doc(this.fs, 'admins', uid)).pipe(
             map((grant) => grant.exists()),
-            retry({
-              delay: (error: unknown) => {
-                console.error('Could not check the admin rights', error);
-                return timer(RETRY_DELAY_MS);
-              },
-            })
+            retryAfterDelay<boolean>('Could not check the admin rights')
           )
         : of(false)
     ),
@@ -133,7 +125,6 @@ export class AdminAdapter extends AdminPort {
       (await getCountFromServer(counted)).data().count;
     const [
       pollTotals,
-      pollCount,
       listedPolls,
       openPolls,
       lobbyMessages,
@@ -141,8 +132,10 @@ export class AdminAdapter extends AdminPort {
       users,
       admins,
     ] = await Promise.all([
-      getAggregateFromServer(polls, { votes: sum('totalVotes') }),
-      count(polls),
+      getAggregateFromServer(polls, {
+        polls: aggregateCount(),
+        votes: sum('totalVotes'),
+      }),
       count(query(polls, where('listed', '==', true))),
       count(query(polls, where('ttl', '>', Timestamp.now()))),
       count(collection(this.fs, 'chatMessages')),
@@ -152,7 +145,7 @@ export class AdminAdapter extends AdminPort {
       count(collection(this.fs, 'admins')),
     ]);
     return {
-      polls: pollCount,
+      polls: pollTotals.data().polls,
       listedPolls,
       openPolls,
       votes: pollTotals.data().votes ?? 0,
@@ -171,7 +164,8 @@ export class AdminAdapter extends AdminPort {
   }
 
   public deletePoll(pollId: string): WriteReceipt {
-    return { saved: deleteDoc(doc(this.fs, 'polls', pollId)) };
+    // the rules let admins delete any poll, the same way its creator does
+    return this.pollsRepo.deletePoll(pollId);
   }
 
   public watchMessages(

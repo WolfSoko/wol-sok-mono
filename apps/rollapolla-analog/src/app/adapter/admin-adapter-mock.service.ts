@@ -14,8 +14,7 @@ import { WriteReceipt } from '../ports/polls-repo.port';
 
 @Injectable()
 export class AdminAdapterMock extends AdminPort {
-  public readonly isAdminSubject = new BehaviorSubject(false);
-  public readonly isAdmin$: Observable<boolean> = this.isAdminSubject;
+  public readonly isAdmin$ = new BehaviorSubject(false);
   public readonly polls$ = new BehaviorSubject<Poll[]>([]);
   public readonly messages$ = new BehaviorSubject<AdminChatMessage[]>([]);
   public readonly users$ = new BehaviorSubject<AppUser[]>([]);

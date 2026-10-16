@@ -28,6 +28,18 @@ export class AdminWrites {
     return confirmed === true;
   }
 
+  /**
+   * Asks first, then writes. Resolves `true` once the backend accepted it,
+   * `false` if the admin cancelled or the write was refused.
+   */
+  public async confirmed(
+    data: ConfirmData,
+    write: () => WriteReceipt,
+    failure: string
+  ): Promise<boolean> {
+    return (await this.confirm(data)) && this.saved(write(), failure);
+  }
+
   /** Resolves `false` and tells the admin if the write was refused. */
   public async saved(write: WriteReceipt, failure: string): Promise<boolean> {
     try {

@@ -1,28 +1,21 @@
 import { computed, signal, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Observable, retry, tap, timer } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { Page } from '../../../shared/admin';
-import { EndlessScroll } from '../endless-scroll/endless-scroll';
-
-/** How long to wait before listening again after loading failed. */
-const RETRY_DELAY_MS = 10_000;
-
-export type EndlessItems<T> = {
-  /** `undefined` while the first page loads. */
-  items: Signal<T[] | undefined>;
-  /** Stays set until a page loads again. */
-  failed: Signal<boolean>;
-};
+import { retryAfterDelay } from '../../adapter/retry-after-delay';
+import { EndlessScroll } from './endless-scroll';
 
 /**
  * The items of a paged live query, reporting each answer to `scroll` and
  * listening again a while after it failed. Call in an injection context.
+ * `items` is `undefined` while the first page loads; `failed` stays set
+ * until a page loads again.
  */
 export function endlessItems<T>(
   scroll: EndlessScroll,
   pages: Observable<Page<T>>,
   failure: string
-): EndlessItems<T> {
+): { items: Signal<T[] | undefined>; failed: Signal<boolean> } {
   const failed = signal(false);
   const page = toSignal(
     pages.pipe(
@@ -30,13 +23,7 @@ export function endlessItems<T>(
         failed.set(false);
         scroll.answered(hasMore);
       }),
-      retry({
-        delay: (error: unknown) => {
-          console.error(failure, error);
-          failed.set(true);
-          return timer(RETRY_DELAY_MS);
-        },
-      })
+      retryAfterDelay(failure, () => failed.set(true))
     )
   );
   return {

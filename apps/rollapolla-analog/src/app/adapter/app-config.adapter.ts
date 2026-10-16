@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { doc, Firestore } from '@angular/fire/firestore';
-import { map, retry, tap, timer } from 'rxjs';
+import { map, tap } from 'rxjs';
 import {
   DEFAULT_FEATURES,
   FeatureToggles,
@@ -21,12 +21,10 @@ import {
   pendingUntilFirstValue,
   SSR_DATA_TIMEOUT_MS,
 } from './pending-until-first-value';
+import { retryAfterDelay } from './retry-after-delay';
 import { docSnapshots } from './snapshots';
 
 /** The server's toggles, so hydration starts from what the server rendered. */
-/** How long to wait before listening again after loading failed. */
-const RETRY_DELAY_MS = 10_000;
-
 const FEATURES_KEY = makeStateKey<FeatureToggles>('rap-features');
 
 @Injectable()
@@ -45,12 +43,7 @@ export class AppConfigAdapter extends AppConfigPort {
       pendingUntilFirstValue(inject(Injector), SSR_DATA_TIMEOUT_MS),
       // keep the last known toggles meanwhile: a broken config must not
       // break the app
-      retry({
-        delay: (error: unknown) => {
-          console.error('Could not load the app config', error);
-          return timer(RETRY_DELAY_MS);
-        },
-      })
+      retryAfterDelay('Could not load the app config')
     ),
     { initialValue: this.transferState.get(FEATURES_KEY, DEFAULT_FEATURES) }
   );

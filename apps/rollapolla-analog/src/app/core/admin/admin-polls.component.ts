@@ -9,7 +9,7 @@ import { AdminPort } from '../../ports/admin.port';
 import { EndlessScroll } from '../endless-scroll/endless-scroll';
 import { EndlessScrollEndComponent } from '../endless-scroll/endless-scroll-end.component';
 import { AdminWrites } from './admin-writes';
-import { endlessItems } from './endless-items';
+import { endlessItems } from '../endless-scroll/endless-items';
 
 /** Every poll, listed or not, newest first, to delete the unwanted ones. */
 @Component({
@@ -84,16 +84,14 @@ export class AdminPollsComponent {
   protected readonly failed = this.page.failed;
 
   protected async delete(poll: Poll): Promise<void> {
-    const confirmed = await this.writes.confirm({
-      title: 'Delete this poll?',
-      text: poll.question,
-      action: 'Delete',
-    });
-    if (confirmed) {
-      await this.writes.saved(
-        this.admin.deletePoll(poll.id),
-        'The poll could not be deleted.'
-      );
-    }
+    await this.writes.confirmed(
+      {
+        title: 'Delete this poll?',
+        text: poll.question,
+        action: 'Delete',
+      },
+      () => this.admin.deletePoll(poll.id),
+      'The poll could not be deleted.'
+    );
   }
 }

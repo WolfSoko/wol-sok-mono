@@ -3,7 +3,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   inject,
   PLATFORM_ID,
 } from '@angular/core';
@@ -13,7 +12,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { Meta, Title } from '@angular/platform-browser';
 import { isGoogleAccount } from '../../shared/account';
 import { AccountAction } from '../core/account/account-action';
 import { AdminFeaturesComponent } from '../core/admin/admin-features.component';
@@ -23,7 +21,7 @@ import { AdminStatsComponent } from '../core/admin/admin-stats.component';
 import { AdminUsersComponent } from '../core/admin/admin-users.component';
 import { AccountPort } from '../ports/account.port';
 import { AdminPort } from '../ports/admin.port';
-import { SITE_TAGS } from './site-tags';
+import { useNoindexPage } from './site-tags';
 
 type Access = 'loading' | 'signed-out' | 'denied' | 'admin';
 
@@ -46,7 +44,7 @@ type Access = 'loading' | 'signed-out' | 'denied' | 'admin';
       <h1>Admin</h1>
       @switch (access()) {
         @case ('admin') {
-          <mat-tab-group dynamicHeight data-testid="admin-tabs">
+          <mat-tab-group dynamicHeight preserveContent data-testid="admin-tabs">
             <mat-tab label="Statistics">
               <ng-template matTabContent><rap-admin-stats /></ng-template>
             </mat-tab>
@@ -173,14 +171,7 @@ export default class AdminPageComponent {
   });
 
   constructor() {
-    const title = inject(Title);
-    const meta = inject(Meta);
-    title.setTitle('Admin | RollaPolla');
-    meta.updateTag({ name: 'robots', content: 'noindex' });
-    inject(DestroyRef).onDestroy(() => {
-      title.setTitle(SITE_TAGS.title);
-      meta.updateTag({ name: 'robots', content: SITE_TAGS.robots });
-    });
+    useNoindexPage('Admin | RollaPolla');
   }
 
   protected signIn(): Promise<void> {

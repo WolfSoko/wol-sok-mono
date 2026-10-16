@@ -9,7 +9,7 @@ import { AdminPort } from '../../ports/admin.port';
 import { EndlessScroll } from '../endless-scroll/endless-scroll';
 import { EndlessScrollEndComponent } from '../endless-scroll/endless-scroll-end.component';
 import { AdminWrites } from './admin-writes';
-import { endlessItems } from './endless-items';
+import { endlessItems } from '../endless-scroll/endless-items';
 
 /** The live chat and all poll discussions, newest first, for moderation. */
 @Component({
@@ -85,16 +85,14 @@ export class AdminMessagesComponent {
   protected readonly failed = this.page.failed;
 
   protected async delete(message: AdminChatMessage): Promise<void> {
-    const confirmed = await this.writes.confirm({
-      title: 'Delete this message?',
-      text: message.message,
-      action: 'Delete',
-    });
-    if (confirmed) {
-      await this.writes.saved(
-        this.admin.deleteMessage(message),
-        'The message could not be deleted.'
-      );
-    }
+    await this.writes.confirmed(
+      {
+        title: 'Delete this message?',
+        text: message.message,
+        action: 'Delete',
+      },
+      () => this.admin.deleteMessage(message),
+      'The message could not be deleted.'
+    );
   }
 }

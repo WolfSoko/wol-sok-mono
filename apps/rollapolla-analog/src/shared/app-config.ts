@@ -4,7 +4,7 @@ export type FeatureFlag = 'pollCreation' | 'lobbyChat' | 'pollChat';
 /** Which features are on. Stored in Firestore as `appConfig/features`. */
 export type FeatureToggles = Record<FeatureFlag, boolean>;
 
-export type FeatureInfo = {
+type FeatureInfo = {
   flag: FeatureFlag;
   label: string;
   description: string;
@@ -33,11 +33,9 @@ export const FEATURES: readonly FeatureInfo[] = [
 ];
 
 /** Everything is on until an admin switches it off. */
-export const DEFAULT_FEATURES: FeatureToggles = {
-  pollCreation: true,
-  lobbyChat: true,
-  pollChat: true,
-};
+export const DEFAULT_FEATURES = Object.fromEntries(
+  FEATURES.map(({ flag }) => [flag, true])
+) as FeatureToggles;
 
 /** The stored toggles; missing or malformed flags are on. */
 export function toFeatureToggles(

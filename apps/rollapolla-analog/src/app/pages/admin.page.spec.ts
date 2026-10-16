@@ -65,7 +65,7 @@ describe('AdminPageComponent', () => {
 
   it('shows admins the tabs, starting with the statistics', async () => {
     await account.signInWithGoogle();
-    admin.isAdminSubject.next(true);
+    admin.isAdmin$.next(true);
     admin.stats = { ...admin.stats, polls: 1234, votes: 9 };
 
     const fixture = await render();

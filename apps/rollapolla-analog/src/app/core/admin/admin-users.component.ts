@@ -17,7 +17,7 @@ import { AdminPort } from '../../ports/admin.port';
 import { EndlessScroll } from '../endless-scroll/endless-scroll';
 import { EndlessScrollEndComponent } from '../endless-scroll/endless-scroll-end.component';
 import { AdminWrites } from './admin-writes';
-import { endlessItems } from './endless-items';
+import { endlessItems } from '../endless-scroll/endless-items';
 
 /** Visitors who signed in with Google; admins grant and revoke admin rights. */
 @Component({
@@ -115,7 +115,7 @@ export class AdminUsersComponent {
     { checked, source }: MatSlideToggleChange
   ): Promise<void> {
     const name = user.displayName ?? user.uid;
-    const confirmed = await this.writes.confirm(
+    const saved = await this.writes.confirmed(
       checked
         ? {
             title: 'Make an admin?',
@@ -126,14 +126,10 @@ export class AdminUsersComponent {
             title: 'Revoke admin rights?',
             text: `${name} will no longer have access to the admin page.`,
             action: 'Revoke',
-          }
+          },
+      () => this.admin.setAdmin(user.uid, checked),
+      'The admin rights could not be changed.'
     );
-    const saved =
-      confirmed &&
-      (await this.writes.saved(
-        this.admin.setAdmin(user.uid, checked),
-        'The admin rights could not be changed.'
-      ));
     if (!saved) {
       source.checked = !checked;
     }

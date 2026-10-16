@@ -28,7 +28,7 @@ i.e. a Cloud Function; a document is checked by the rules with one
 - _Messages_: one collection group query over the live chat and all poll
   discussions, newest first; delete any. Legacy `notes` are read-only.
 - _Users_: `users/{uid}`, which every visitor signed in with Google writes
-  for themselves on each session (`record-visits.ts`): Firebase Auth cannot
+  for themselves at most once a day (`record-visits.ts`): Firebase Auth cannot
   list users from the browser. Anonymous visitors are not recorded.
 - _Features_: the toggles below.
 
