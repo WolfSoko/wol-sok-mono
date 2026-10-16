@@ -16,8 +16,8 @@
     }
     @if (!poll().listed) {
       <p class="private-hint" data-testid="poll-share-private">
-        <mat-icon class="private-icon" aria-hidden="true">lock</mat-icon>
-        Private: only people with the link can see it and vote.
+        <mat-icon class="rap-icon-sm" aria-hidden="true">lock</mat-icon>
+        {{ privatePollHint }}
       </p>
     }
   </div>

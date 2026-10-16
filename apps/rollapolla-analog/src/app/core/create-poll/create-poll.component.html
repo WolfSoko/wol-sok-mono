@@ -90,12 +90,8 @@
           formControlName="listed"
           aria-label="Who can find the poll"
           hideSingleSelectionIndicator
-          data-testid="poll-visibility"
         >
-          <mat-button-toggle
-            [value]="true"
-            data-testid="poll-visibility-public"
-          >
+          <mat-button-toggle [value]="true">
             <mat-icon>public</mat-icon>
             Public
           </mat-button-toggle>
@@ -111,7 +107,7 @@
           {{
             form.controls.listed.value
               ? "Shown on the home page and in search."
-              : "Only people with the link can see it and vote."
+              : privatePollHint
           }}
         </p>
       </div>

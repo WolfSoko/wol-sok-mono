@@ -1,7 +1,7 @@
 import { Clipboard } from '@angular/cdk/clipboard';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Poll } from '../../../shared/poll';
+import { Poll, PRIVATE_POLL_HINT } from '../../../shared/poll';
 import {
   provideShareTargets,
   ShareContent,
@@ -93,7 +93,7 @@ describe('PollShareComponent', () => {
     await fixture.whenStable();
 
     expect(query('poll-share-private').nativeElement.textContent).toContain(
-      'only people with the link'
+      PRIVATE_POLL_HINT
     );
   });
 

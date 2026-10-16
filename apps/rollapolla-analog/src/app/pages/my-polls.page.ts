@@ -71,7 +71,7 @@ const RETRY_DELAY_MS = 10_000;
                     @if (!poll.listed) {
                       ·
                       <span class="private" data-testid="private-poll-marker">
-                        <mat-icon class="private-icon" aria-hidden="true"
+                        <mat-icon class="rap-icon-sm" aria-hidden="true"
                           >lock</mat-icon
                         >
                         private
@@ -169,11 +169,6 @@ const RETRY_DELAY_MS = 10_000;
       align-items: center;
       gap: 0.125rem;
       vertical-align: bottom;
-    }
-    .private-icon {
-      width: 1rem;
-      height: 1rem;
-      font-size: 1rem;
     }
     .empty {
       align-items: center;

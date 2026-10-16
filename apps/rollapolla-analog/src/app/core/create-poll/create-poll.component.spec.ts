@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
+import { PRIVATE_POLL_HINT } from '../../../shared/poll';
 import { PollsRepoAdapterMock } from '../../adapter/polls-repo-adapter-mock.service';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import { CreatePollComponent } from './create-poll.component';
@@ -72,9 +73,7 @@ describe('CreatePollComponent', () => {
       .query(By.css('[data-testid="poll-visibility-private"] button'))
       .nativeElement.click();
     fixture.detectChanges();
-    expect(text('poll-visibility-hint')).toBe(
-      'Only people with the link can see it and vote.'
-    );
+    expect(text('poll-visibility-hint')).toBe(PRIVATE_POLL_HINT);
 
     button('create-poll-button').click();
     await fixture.whenStable();

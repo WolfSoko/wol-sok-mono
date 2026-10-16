@@ -41,7 +41,7 @@ test.describe('Create and vote on a poll', () => {
 
     await expect(page.getByTestId('poll-private-badge')).toBeVisible();
     await expect(page.getByTestId('poll-share-private')).toContainText(
-      'only people with the link'
+      'Only people with the link'
     );
     await expect(page.getByTestId('copy-link')).toBeVisible();
   });
