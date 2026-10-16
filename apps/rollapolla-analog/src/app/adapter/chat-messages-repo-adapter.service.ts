@@ -34,7 +34,7 @@ import { chatMessageConverter } from './chat-message.converter';
 import {
   adoptGoogleProfile,
   ensureSignedIn,
-  tokenProfile,
+  tokenName,
 } from './ensure-signed-in';
 import { ChatMessageDto } from './chat-message.dto';
 import { saveFeaturedPoll } from './featured-poll-doc';
@@ -155,13 +155,13 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
     const author = await adoptGoogleProfile(await signIn());
     // The rules compare the name with the token's, which can lag behind the
     // profile (a failed refresh in adoptGoogleProfile), so it comes from there.
-    const { name: tokenName } = await tokenProfile(author);
+    const authorName = await tokenName(author);
     const chatMessage: ChatMessage = {
       id: '-1',
       message,
       createdAt: new Date(),
       authorUid: author.uid,
-      authorName: author.isAnonymous ? null : tokenName,
+      authorName: author.isAnonymous ? null : authorName,
       expiresAt: expiresAt?.(),
     };
     // Not awaited: Firestore shows the message right away and settles only

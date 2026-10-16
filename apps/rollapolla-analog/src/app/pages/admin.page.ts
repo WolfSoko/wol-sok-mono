@@ -100,9 +100,22 @@ type Access = 'loading' | 'signed-out' | 'denied' | 'admin';
               <mat-card-subtitle>
                 This account is not an admin. An admin can grant access to user
                 id <code data-testid="admin-own-uid">{{ uid() }}</code
-                >.
+                >; the first admin is granted with the
+                <code>grant-admin</code> script.
               </mat-card-subtitle>
             </mat-card-header>
+            <mat-card-actions>
+              <button
+                mat-button
+                type="button"
+                [disabled]="action.busy()"
+                (click)="recheck()"
+                data-testid="admin-recheck"
+              >
+                <mat-icon>refresh</mat-icon>
+                Check again
+              </button>
+            </mat-card-actions>
           </mat-card>
         }
         @default {
@@ -149,7 +162,8 @@ export default class AdminPageComponent {
   private readonly accountPort = inject(AccountPort);
   private readonly isServer = isPlatformServer(inject(PLATFORM_ID));
   private readonly account = toSignal(this.accountPort.account$);
-  private readonly isAdmin = toSignal(inject(AdminPort).isAdmin$);
+  private readonly admin = inject(AdminPort);
+  private readonly isAdmin = toSignal(this.admin.isAdmin$);
   protected readonly action = new AccountAction();
 
   protected readonly uid = computed(() => this.account()?.uid);
@@ -172,6 +186,18 @@ export default class AdminPageComponent {
 
   constructor() {
     useNoindexPage('Admin | RollaPolla');
+    if (!this.isServer) {
+      // rights granted or revoked in the last hour apply right away here
+      void this.admin
+        .recheckAdmin()
+        .catch((error: unknown) =>
+          console.error('Could not recheck the admin rights', error)
+        );
+    }
+  }
+
+  protected recheck(): Promise<void> {
+    return this.action.run(() => this.admin.recheckAdmin());
   }
 
   protected signIn(): Promise<void> {

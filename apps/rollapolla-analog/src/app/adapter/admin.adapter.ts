@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
 import {
@@ -14,15 +15,15 @@ import {
   orderBy,
   query,
   Query,
-  serverTimestamp,
   setDoc,
   sum,
   Timestamp,
   where,
 } from '@angular/fire/firestore';
 import {
-  combineLatest,
+  defer,
   distinctUntilChanged,
+  firstValueFrom,
   map,
   Observable,
   of,
@@ -37,7 +38,15 @@ import {
   AppUser,
   Page,
   toPage,
+  UsersPage,
 } from '../../shared/admin';
+import {
+  ADMIN_CLAIM,
+  AppUserDto,
+  SetRoleDto,
+  UserStatsDto,
+  UsersPageDto,
+} from '../../shared/admin-api';
 import { FeatureFlag } from '../../shared/app-config';
 import { Poll } from '../../shared/poll';
 import { AccountPort } from '../ports/account.port';
@@ -48,8 +57,7 @@ import { ChatMessageDto } from './chat-message.dto';
 import { pollConverter } from './poll.converter';
 import { PollDto } from './poll.dto';
 import { retryAfterDelay } from './retry-after-delay';
-import { docSnapshots, queryData, querySnapshots } from './snapshots';
-import { AdminGrantDto, UserDto } from './user.dto';
+import { queryData } from './snapshots';
 
 /** Lobby messages live in `chatMessages`, a poll's in `polls/{id}/chatMessages`. */
 const adminMessageConverter: FirestoreDataConverter<
@@ -64,30 +72,19 @@ const adminMessageConverter: FirestoreDataConverter<
   }),
 };
 
-type UserWithoutRole = Omit<AppUser, 'isAdmin'>;
-
-const userConverter: FirestoreDataConverter<UserWithoutRole, UserDto> = {
-  toFirestore: () => {
-    throw new Error('Users record their own visits');
-  },
-  fromFirestore: (snapshot, options) => {
-    const data = snapshot.data({
-      ...options,
-      serverTimestamps: 'estimate',
-    }) as UserDto;
-    return {
-      uid: snapshot.id,
-      displayName: data.displayName ?? null,
-      photoUrl: data.photoUrl ?? null,
-      lastSeenAt: data.lastSeenAt.toDate(),
-    };
-  },
-};
+function toAppUser(user: AppUserDto): AppUser {
+  return {
+    ...user,
+    createdAt: new Date(user.createdAt),
+    lastSignInAt: user.lastSignInAt ? new Date(user.lastSignInAt) : null,
+  };
+}
 
 @Injectable()
 export class AdminAdapter extends AdminPort {
   private readonly fs: Firestore = inject(Firestore);
   private readonly auth: Auth = inject(Auth);
+  private readonly http = inject(HttpClient);
   private readonly pollsRepo = inject(PollsRepoPort);
   private readonly pollsCol: CollectionReference<Poll, PollDto> = collection(
     this.fs,
@@ -100,24 +97,31 @@ export class AdminAdapter extends AdminPort {
 
   /*
    * From the account, not authState: linking an anonymous visitor to Google
-   * keeps the uid, and only AccountPort reports that.
+   * keeps the uid, and only AccountPort reports that. It also emits whenever
+   * the sign-in token changes, e.g. after recheckAdmin().
    */
   public readonly isAdmin$: Observable<boolean> = inject(
     AccountPort
   ).account$.pipe(
-    map((account) => (isGoogleAccount(account) ? account.uid : null)),
-    distinctUntilChanged(),
-    switchMap((uid) =>
-      uid
-        ? docSnapshots(doc(this.fs, 'admins', uid)).pipe(
-            map((grant) => grant.exists()),
-            retryAfterDelay<boolean>('Could not check the admin rights')
-          )
-        : of(false)
-    ),
+    switchMap((account) => {
+      const user = this.auth.currentUser;
+      if (!isGoogleAccount(account) || user?.uid !== account.uid) {
+        return of(false);
+      }
+      // e.g. offline while the token needs a refresh: try again later
+      return defer(() => user.getIdTokenResult()).pipe(
+        map(({ claims }) => claims[ADMIN_CLAIM] === true),
+        retryAfterDelay<boolean>('Could not check the admin rights')
+      );
+    }),
     distinctUntilChanged(),
     shareReplay({ bufferSize: 1, refCount: true })
   );
+
+  public async recheckAdmin(): Promise<void> {
+    await this.auth.authStateReady();
+    await this.auth.currentUser?.getIdToken(true);
+  }
 
   public async loadStats(): Promise<AdminStats> {
     const polls = collection(this.fs, 'polls');
@@ -129,8 +133,7 @@ export class AdminAdapter extends AdminPort {
       openPolls,
       lobbyMessages,
       chatMessages,
-      users,
-      admins,
+      userStats,
     ] = await Promise.all([
       getAggregateFromServer(polls, {
         polls: aggregateCount(),
@@ -141,8 +144,10 @@ export class AdminAdapter extends AdminPort {
       count(collection(this.fs, 'chatMessages')),
       // ordered so it runs on the collection group createdAt index
       count(query(this.messagesGroup, orderBy('createdAt', 'desc'))),
-      count(collection(this.fs, 'users')),
-      count(collection(this.fs, 'admins')),
+      this.api<UserStatsDto>('GET', 'user-stats').catch((error: unknown) => {
+        console.error('Could not count the users', error);
+        return null;
+      }),
     ]);
     return {
       polls: pollTotals.data().polls,
@@ -151,8 +156,9 @@ export class AdminAdapter extends AdminPort {
       votes: pollTotals.data().votes ?? 0,
       lobbyMessages,
       chatMessages,
-      users,
-      admins,
+      users: userStats?.users ?? null,
+      anonymousUsers: userStats?.anonymous ?? null,
+      admins: userStats?.admins ?? null,
     };
   }
 
@@ -184,35 +190,20 @@ export class AdminAdapter extends AdminPort {
     return { saved: deleteDoc(ref) };
   }
 
-  public watchUsers(counts: Observable<number>): Observable<Page<AppUser>> {
-    const users = collection(this.fs, 'users').withConverter(userConverter);
-    const adminUids$ = querySnapshots(collection(this.fs, 'admins')).pipe(
-      map((snapshot) => new Set(snapshot.docs.map((grant) => grant.id)))
+  public async loadUsers(pageToken?: string): Promise<UsersPage> {
+    const page = await this.api<UsersPageDto>(
+      'GET',
+      pageToken ? `users?pageToken=${encodeURIComponent(pageToken)}` : 'users'
     );
-    return combineLatest([
-      this.watchPages(query(users, orderBy('lastSeenAt', 'desc')), counts),
-      adminUids$,
-    ]).pipe(
-      map(([page, adminUids]) => ({
-        ...page,
-        items: page.items.map((user) => ({
-          ...user,
-          isAdmin: adminUids.has(user.uid),
-        })),
-      }))
-    );
+    return {
+      users: page.users.map(toAppUser),
+      nextPageToken: page.nextPageToken,
+    };
   }
 
-  public setAdmin(uid: string, isAdmin: boolean): WriteReceipt {
-    const grantRef = doc(this.fs, 'admins', uid);
-    if (!isAdmin) {
-      return { saved: deleteDoc(grantRef) };
-    }
-    const grant: AdminGrantDto = {
-      grantedAt: serverTimestamp(),
-      grantedBy: this.auth.currentUser?.uid ?? '',
-    };
-    return { saved: setDoc(grantRef, grant) };
+  public async setAdmin(uid: string, isAdmin: boolean): Promise<AppUser> {
+    const body: SetRoleDto = { uid, admin: isAdmin };
+    return toAppUser(await this.api<AppUserDto>('POST', 'role', body));
   }
 
   public setFeature(flag: FeatureFlag, enabled: boolean): WriteReceipt {
@@ -223,6 +214,25 @@ export class AdminAdapter extends AdminPort {
         { merge: true }
       ),
     };
+  }
+
+  /** Calls the admin API with the visitor's sign-in token. */
+  private async api<T>(
+    method: 'GET' | 'POST',
+    path: string,
+    body?: unknown
+  ): Promise<T> {
+    await this.auth.authStateReady();
+    const idToken = await this.auth.currentUser?.getIdToken();
+    if (!idToken) {
+      throw new Error('Sign in first');
+    }
+    return firstValueFrom(
+      this.http.request<T>(method, `/api/v1/admin/${path}`, {
+        body,
+        headers: { Authorization: `Bearer ${idToken}` },
+      })
+    );
   }
 
   /** Asks for one more than each count: whether it comes tells if there are more. */

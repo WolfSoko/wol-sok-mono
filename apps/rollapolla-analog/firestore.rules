@@ -29,40 +29,6 @@ service cloud.firestore {
       allow list: if isAdmin();
     }
 
-    // An admin is signed in with Google and has a document here. The first
-    // admin is added in the Firebase console; admins add and remove the
-    // others, but nobody removes themselves, so one admin always remains.
-    match /admins/{uid} {
-      allow get: if request.auth != null && (request.auth.uid == uid || isAdmin());
-      allow list: if isAdmin();
-      allow create: if isAdmin() &&
-        request.resource.data.keys().hasOnly(['grantedAt', 'grantedBy']) &&
-        request.resource.data.grantedAt == request.time &&
-        request.resource.data.grantedBy == request.auth.uid;
-      allow update: if false;
-      allow delete: if isAdmin() && uid != request.auth.uid;
-    }
-
-    // Visitors signed in with Google record their name and last visit here,
-    // so admins can list them. Only admins read the list. Name and photo are
-    // the ones Google put into the sign-in token, so nobody poses as another.
-    match /users/{uid} {
-      allow get: if request.auth != null && (request.auth.uid == uid || isAdmin());
-      allow list: if isAdmin();
-      allow create, update: if isSignedInWithGoogle() &&
-        request.auth.uid == uid &&
-        isValidUser(request.resource.data);
-      allow delete: if isAdmin();
-
-      function isValidUser(user) {
-        return user.keys().hasAll(['displayName', 'photoUrl', 'lastSeenAt']) &&
-          user.keys().hasOnly(['displayName', 'photoUrl', 'lastSeenAt']) &&
-          user.displayName == request.auth.token.get('name', null) &&
-          user.photoUrl == request.auth.token.get('picture', null) &&
-          user.lastSeenAt == request.time;
-      }
-    }
-
     // Runtime configuration: everybody reads it, admins change it.
     // appConfig/features holds one bool per feature flag; a missing
     // document or flag means on.
@@ -86,9 +52,13 @@ service cloud.firestore {
       return !exists(features) || get(features).data.get(flag, true) != false;
     }
 
+    // The `admin` custom claim, set by the server (src/server/admin) or the
+    // grant-admin script. Users and admins are managed in Firebase Auth, so
+    // there is no collection for them. Keep the claim name in sync with
+    // ADMIN_CLAIM in src/shared/admin-api.ts (admin-api.spec.ts checks it).
     function isAdmin() {
       return isSignedInWithGoogle() &&
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+        request.auth.token.get('admin', false) == true;
     }
 
     // Not the automatic anonymous sign-in: the token lists the linked

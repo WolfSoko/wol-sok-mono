@@ -55,6 +55,7 @@ describe('AdminPageComponent', () => {
     await account.signInWithGoogle();
 
     const fixture = await render();
+    expect(admin.rechecks).toBe(1);
 
     expect(query(fixture, 'admin-denied')).not.toBeNull();
     expect(query(fixture, 'admin-own-uid').nativeElement.textContent).toBe(
@@ -63,10 +64,23 @@ describe('AdminPageComponent', () => {
     expect(query(fixture, 'admin-tabs')).toBeNull();
   });
 
+  it('lets a newly granted admin in after checking again', async () => {
+    await account.signInWithGoogle();
+    const fixture = await render();
+    vi.spyOn(admin, 'recheckAdmin').mockImplementation(async () =>
+      admin.isAdmin$.next(true)
+    );
+
+    query(fixture, 'admin-recheck').nativeElement.click();
+    await fixture.whenStable();
+
+    expect(query(fixture, 'admin-tabs')).not.toBeNull();
+  });
+
   it('shows admins the tabs, starting with the statistics', async () => {
     await account.signInWithGoogle();
     admin.isAdmin$.next(true);
-    admin.stats = { ...admin.stats, polls: 1234, votes: 9 };
+    admin.stats = { ...admin.stats, polls: 1234, votes: 9, users: null };
 
     const fixture = await render();
     await fixture.whenStable();
@@ -77,6 +91,10 @@ describe('AdminPageComponent', () => {
     );
     expect(query(fixture, 'stat-votes').nativeElement.textContent).toContain(
       '9'
+    );
+    // Firebase Auth could not be counted: the other tiles still show
+    expect(query(fixture, 'stat-users').nativeElement.textContent).toContain(
+      '–'
     );
   });
 
