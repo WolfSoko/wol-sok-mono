@@ -30,10 +30,8 @@ import {
   MAX_TICK_YEARS,
   MAX_TICKS_PER_FRAME,
 } from './domain/gravity-world.service';
-import {
-  GravityWorldComponent,
-  YEARS_PER_SECOND,
-} from './gravity-world.component';
+import { YEARS_PER_SECOND } from './domain/simulation-runner';
+import { GravityWorldComponent } from './gravity-world.component';
 import { OBJECT_KINDS, ObjectKind, TOOLS } from './toolbelt/tools';
 
 /** First element in the rendered component matching the css selector. */

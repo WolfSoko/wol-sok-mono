@@ -238,23 +238,23 @@
         [tool]="tool()"
         (toolChange)="pickTool($event)"
         [(addKind)]="addKind"
-        [hint]="toolHint()"
+        [hint]="selection.toolHint()"
       />
 
       @if (menuTarget(); as target) {
         <feat-lazy-gravity-object-panel
           [target]="target"
           [sun]="sun"
-          [title]="menuTitle()"
+          [title]="selection.menuTitle()"
           [gravitationalConstant]="settings().gravitationalConstant"
           [reach]="canvasSize().x / 2"
           [world]="worldService.worldObjects()"
           (closed)="menuClosed()"
-          (massChange)="setMass($event)"
-          (distanceChange)="setDistance($event)"
-          (speedChange)="setSpeed($event)"
-          (addSatellite)="addSatelliteTo(target, $event)"
-          (remove)="removeTarget()"
+          (massChange)="selection.setMass($event)"
+          (distanceChange)="selection.setDistance($event)"
+          (speedChange)="selection.setSpeed($event)"
+          (addSatellite)="selection.addSatelliteTo(target, $event)"
+          (remove)="selection.removeTarget()"
         />
       }
     </div>
