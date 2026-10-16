@@ -23,6 +23,7 @@ import { PollChatComponent } from '../../core/poll-chat/poll-chat.component';
 import { PollOwnerActionsComponent } from '../../core/poll-owner-actions/poll-owner-actions.component';
 import { PollVoteComponent } from '../../core/poll-vote/poll-vote.component';
 import { AccountPort } from '../../ports/account.port';
+import { AppConfigPort } from '../../ports/app-config.port';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import { usePollMetaTags } from './poll-meta';
 
@@ -62,10 +63,12 @@ import { usePollMetaTags } from './poll-meta';
           }
           <rap-poll-vote [poll]="poll" [justCreated]="justCreated()" />
         }
-        @defer (on viewport) {
-          <rap-poll-chat [poll]="poll" />
-        } @placeholder {
-          <mat-spinner class="spinner" diameter="40" />
+        @if (features().pollChat) {
+          @defer (on viewport) {
+            <rap-poll-chat [poll]="poll" />
+          } @placeholder {
+            <mat-spinner class="spinner" diameter="40" />
+          }
         }
       } @else {
         <mat-card
@@ -125,6 +128,7 @@ import { usePollMetaTags } from './poll-meta';
 export default class PollPageComponent {
   private readonly pollsRepo = inject(PollsRepoPort);
   private readonly injector = inject(Injector);
+  protected readonly features = inject(AppConfigPort).features;
 
   private readonly pollId$ = inject(ActivatedRoute).paramMap.pipe(
     map((params) => params.get('pollId') ?? '')

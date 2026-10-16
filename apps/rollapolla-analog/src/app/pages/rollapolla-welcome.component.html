@@ -29,10 +29,26 @@
       </ol>
     </div>
     <div class="hero-form">
-      @defer (hydrate on viewport) {
-        <rap-create-poll />
-      } @placeholder {
-        <mat-spinner class="spinner" diameter="40" />
+      @if (features().pollCreation) {
+        @defer (hydrate on viewport) {
+          <rap-create-poll />
+        } @placeholder {
+          <mat-spinner class="spinner" diameter="40" />
+        }
+      } @else {
+        <mat-card
+          appearance="outlined"
+          class="paused"
+          data-testid="poll-creation-paused"
+        >
+          <mat-card-header>
+            <mat-card-title>New polls are paused</mat-card-title>
+            <mat-card-subtitle>
+              Creating polls is switched off for the moment. You can still vote
+              on the polls below.
+            </mat-card-subtitle>
+          </mat-card-header>
+        </mat-card>
       }
     </div>
   </section>
@@ -70,18 +86,24 @@
     }
   </section>
 
-  <section class="chat-section" aria-labelledby="chat-title">
-    <header class="section-header">
-      <p class="rap-eyebrow">Community</p>
-      <h2 id="chat-title" class="section-title">Join the conversation</h2>
-      <p class="section-subtitle">
-        Got an idea for the next big poll? Drop it in the live chat.
-      </p>
-    </header>
-    @defer (hydrate on viewport) {
-      <rap-chat-live-stream />
-    } @placeholder {
-      <mat-spinner class="spinner" diameter="40" />
-    }
-  </section>
+  @if (features().lobbyChat) {
+    <section
+      class="chat-section"
+      aria-labelledby="chat-title"
+      data-testid="lobby-chat-section"
+    >
+      <header class="section-header">
+        <p class="rap-eyebrow">Community</p>
+        <h2 id="chat-title" class="section-title">Join the conversation</h2>
+        <p class="section-subtitle">
+          Got an idea for the next big poll? Drop it in the live chat.
+        </p>
+      </header>
+      @defer (hydrate on viewport) {
+        <rap-chat-live-stream />
+      } @placeholder {
+        <mat-spinner class="spinner" diameter="40" />
+      }
+    </section>
+  }
 </main>

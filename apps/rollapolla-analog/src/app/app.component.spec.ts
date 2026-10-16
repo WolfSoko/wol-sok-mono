@@ -4,8 +4,10 @@ import { MatIconRegistry } from '@angular/material/icon';
 import { Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { AccountAdapterMock } from './adapter/account-adapter-mock.service';
+import { AdminAdapterMock } from './adapter/admin-adapter-mock.service';
 import { AppComponent } from './app.component';
 import { AccountPort } from './ports/account.port';
+import { AdminPort } from './ports/admin.port';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
@@ -15,6 +17,7 @@ describe('AppComponent', () => {
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: AccountPort, useClass: AccountAdapterMock },
+        { provide: AdminPort, useClass: AdminAdapterMock },
       ],
     }).compileComponents();
   });

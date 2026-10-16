@@ -12,13 +12,82 @@ service cloud.firestore {
     // chatMessages collection (the live chat): world-readable. Only a visitor
     // signed in with Google may write, under their own uid; a name, if given,
     // must be the one Google put into the sign-in token.
-    // Updates and deletes are not exposed by the app — deny them.
+    // Nobody edits a message; admins may delete any. An admin can switch the
+    // chat off (appConfig/features).
     match /chatMessages/{messageId} {
       allow read: if true;
       allow create: if isSignedInWithGoogle() &&
+        isFeatureEnabled('lobbyChat') &&
         isValidChatMessage(request.resource.data) &&
         request.resource.data.ttl == request.resource.data.createdAt + duration.value(7, 'd');
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // The admin page lists the lobby and all poll discussions in one query.
+    match /{path=**}/chatMessages/{messageId} {
+      allow list: if isAdmin();
+    }
+
+    // An admin is signed in with Google and has a document here. The first
+    // admin is added in the Firebase console; admins add and remove the
+    // others, but nobody removes themselves, so one admin always remains.
+    match /admins/{uid} {
+      allow get: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isAdmin() &&
+        request.resource.data.keys().hasOnly(['grantedAt', 'grantedBy']) &&
+        request.resource.data.grantedAt == request.time &&
+        request.resource.data.grantedBy == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin() && uid != request.auth.uid;
+    }
+
+    // Visitors signed in with Google record their name and last visit here,
+    // so admins can list them. Only admins read the list.
+    match /users/{uid} {
+      allow get: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if isSignedInWithGoogle() &&
+        request.auth.uid == uid &&
+        isValidUser(request.resource.data);
+      allow delete: if isAdmin();
+
+      function isValidUser(user) {
+        return user.keys().hasAll(['displayName', 'photoUrl', 'lastSeenAt']) &&
+          user.keys().hasOnly(['displayName', 'photoUrl', 'lastSeenAt']) &&
+          (user.displayName == null || (user.displayName is string && user.displayName.size() <= 200)) &&
+          (user.photoUrl == null || (user.photoUrl is string && user.photoUrl.size() <= 2000)) &&
+          user.lastSeenAt == request.time;
+      }
+    }
+
+    // Runtime configuration: everybody reads it, admins change it.
+    // appConfig/features holds one bool per feature flag; a missing
+    // document or flag means on.
+    match /appConfig/{configId} {
+      allow read: if true;
+      allow create, update: if isAdmin() &&
+        configId == 'features' &&
+        request.resource.data.keys().hasOnly(featureFlags()) &&
+        request.resource.data.values().hasOnly([true, false]);
+      allow delete: if false;
+    }
+
+    // Keep in sync with FEATURES in src/shared/app-config.ts
+    // (app-config.spec.ts checks it).
+    function featureFlags() {
+      return ['pollCreation', 'lobbyChat', 'pollChat'];
+    }
+
+    function isFeatureEnabled(flag) {
+      let features = /databases/$(database)/documents/appConfig/features;
+      return !exists(features) || get(features).data.get(flag, true) != false;
+    }
+
+    function isAdmin() {
+      return isSignedInWithGoogle() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     // Not the automatic anonymous sign-in: the token lists the linked
@@ -49,13 +118,17 @@ service cloud.firestore {
     // The creator may edit their open poll, which starts the next round with
     // all counts at zero, so everybody may vote again; or delete it. Votes
     // and chat messages of a deleted poll expire with its TTL.
+    // Admins list all polls and may delete any; they can also switch the
+    // creation of new polls off (appConfig/features).
     match /polls/{pollId} {
       allow get: if true;
       // the query must filter on listed == true or on creatorUid
       allow list: if resource.data.listed == true ||
-        (request.auth != null && resource.data.creatorUid == request.auth.uid);
+        (request.auth != null && resource.data.creatorUid == request.auth.uid) ||
+        isAdmin();
       allow create: if request.auth != null && (
-        (!pollId.matches('featured-.*') && isValidNewPoll(request.resource.data)) ||
+        (!pollId.matches('featured-.*') && isFeatureEnabled('pollCreation') &&
+          isValidNewPoll(request.resource.data)) ||
         isValidFeaturedPoll(pollId, request.resource.data));
       // No votes once the poll expired: TTL deletion lags and is not atomic, so
       // a vote document may be gone while its poll is still there.
@@ -63,7 +136,8 @@ service cloud.firestore {
         (isFirstVoteInRound(pollId, roundOf(resource.data)) &&
           isSingleVote(request.resource.data, resource.data, voteAfter(pollId).option)) ||
         isValidEdit(request.resource.data, resource.data));
-      allow delete: if request.auth != null && resource.data.creatorUid == request.auth.uid;
+      allow delete: if (request.auth != null && resource.data.creatorUid == request.auth.uid) ||
+        isAdmin();
 
       // Missing on polls (and votes) from before polls could be edited.
       function roundOf(data) {
@@ -221,10 +295,12 @@ service cloud.firestore {
       match /chatMessages/{messageId} {
         allow read: if true;
         allow create: if request.auth != null &&
+          isFeatureEnabled('pollChat') &&
           request.time < get(/databases/$(database)/documents/polls/$(pollId)).data.ttl &&
           isValidChatMessage(request.resource.data) &&
           request.resource.data.ttl == get(/databases/$(database)/documents/polls/$(pollId)).data.ttl;
-        allow update, delete: if false;
+        allow update: if false;
+        allow delete: if isAdmin();
       }
     }
 

@@ -11,9 +11,11 @@ import {
 import { RouterTestingHarness } from '@angular/router/testing';
 import { BehaviorSubject, map, NEVER } from 'rxjs';
 import { AccountAdapterMock } from '../../adapter/account-adapter-mock.service';
+import { AppConfigAdapterMock } from '../../adapter/app-config-adapter-mock.service';
 import { CREATED_POLL_ID } from '../../core/create-poll/created-poll-id';
 import { PollsRepoAdapterMock } from '../../adapter/polls-repo-adapter-mock.service';
 import { AccountPort } from '../../ports/account.port';
+import { AppConfigPort } from '../../ports/app-config.port';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import PollPageComponent from './[pollId].page';
 
@@ -28,6 +30,7 @@ describe('PollPageComponent', () => {
         provideRouter([]),
         { provide: PollsRepoPort, useClass: PollsRepoAdapterMock },
         { provide: AccountPort, useClass: AccountAdapterMock },
+        { provide: AppConfigPort, useClass: AppConfigAdapterMock },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -53,6 +56,23 @@ describe('PollPageComponent', () => {
         .textContent
     ).toContain('Pizza or pasta?');
     expect(element.query(By.css('[data-testid="poll-not-found"]'))).toBeNull();
+  });
+
+  it('leaves the discussion out while an admin switched it off', async () => {
+    const pollId = await repo.createPoll({
+      question: 'Pizza or pasta?',
+      options: ['Pizza', 'Pasta'],
+    });
+    const config = TestBed.inject(AppConfigPort) as AppConfigAdapterMock;
+    config.features.update((features) => ({ ...features, pollChat: false }));
+
+    const element = await render(pollId);
+
+    expect(
+      element.query(By.css('[data-testid="poll-question"]'))
+    ).not.toBeNull();
+    expect(element.query(By.css('rap-poll-chat'))).toBeNull();
+    expect(element.query(By.css('mat-spinner'))).toBeNull();
   });
 
   it('shows a hint when the poll does not exist', async () => {
@@ -264,6 +284,7 @@ describe('PollPageComponent after creating a poll', () => {
         provideRouter([{ path: 'poll/:pollId', component: PollPageComponent }]),
         { provide: PollsRepoPort, useClass: PollsRepoAdapterMock },
         { provide: AccountPort, useClass: AccountAdapterMock },
+        { provide: AppConfigPort, useClass: AppConfigAdapterMock },
       ],
     });
     const repo = TestBed.inject(PollsRepoPort);
