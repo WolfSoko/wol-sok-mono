@@ -64,7 +64,9 @@ flowchart TD
   infra_shared(["infra-shared"])
   shared(["shared"])
   type_remote(["type:remote"])
+  utils(["utils"])
   app --> shared
+  app --> utils
   app --> feature
   app --> feature_lazy
   app --> api
@@ -74,14 +76,19 @@ flowchart TD
   e2e --> shared
   feature --> feat_shared
   feature --> shared
+  feature --> utils
   feature --> api
   feature_lazy --> feat_shared
   feature_lazy --> shared
+  feature_lazy --> utils
   feature_lazy --> api
   feat_shared --> shared
+  feat_shared --> utils
   feat_shared --> api
   shared --> shared
+  shared --> utils
   shared --> api
+  utils --> utils
   api --> api
 ```
 
@@ -248,27 +255,27 @@ flowchart LR
 | `feat-lazy-react-diff`                   | features | feature:lazy                            | 1           | 5            | 0.83        |
 | `feat-lazy-some-gpu-calculation`         | features | feature:lazy                            | 1           | 4            | 0.8         |
 | `shader-examples-remote`                 | apps     | app, scope:shader-examples, type:remote | 2           | 3            | 0.6         |
-| `utils-measure-fps`                      | utils    | shared                                  | 4           | 1            | 0.2         |
+| `utils-measure-fps`                      | utils    | utils                                   | 4           | 1            | 0.2         |
 | `feat-lazy-bacteria-game`                | features | feature:lazy                            | 1           | 3            | 0.75        |
 | `feat-lazy-gravity-rocks`                | features | feature:lazy                            | 1           | 3            | 0.75        |
 | `feat-lazy-poisson`                      | features | feature:lazy                            | 1           | 3            | 0.75        |
 | `feat-lazy-shader-examples`              | features | feature:lazy                            | 1           | 3            | 0.75        |
 | `shared-data-access`                     | shared   | shared                                  | 4           | 0            | 0           |
 | `spa-cdk-stack`                          | public   | infra-shared, published                 | 4           | 0            | 0           |
-| `utils-operators`                        | utils    | shared                                  | 4           | 0            | 0           |
+| `utils-operators`                        | utils    | utils                                   | 4           | 0            | 0           |
 | `bacteria-game-remote`                   | apps     | app, type:remote                        | 2           | 1            | 0.33        |
 | `feat-api-auth`                          | features | api                                     | 3           | 0            | 0           |
 | `feat-lazy-tf-examples`                  | features | feature:lazy                            | 1           | 2            | 0.67        |
 | `feat-lazy-wasm-test`                    | features | feature:lazy                            | 1           | 2            | 0.67        |
 | `fourier-analysis-remote`                | apps     | app, type:remote                        | 2           | 1            | 0.33        |
 | `headline-animation`                     | shared   | shared                                  | 3           | 0            | 0           |
-| `utils-gpu-calc`                         | utils    | shared                                  | 3           | 0            | 0           |
+| `utils-gpu-calc`                         | utils    | utils                                   | 3           | 0            | 0           |
 | `ws-thanos`                              | public   | published, shared, ui                   | 3           | 0            | 0           |
 | `feat-lazy-fourier-analysis`             | features | feature:lazy                            | 1           | 1            | 0.5         |
 | `feat-lazy-web-gl`                       | features | feature:lazy                            | 1           | 1            | 0.5         |
 | `feat-shared-reaction-diffusion-kernels` | features | feat-shared                             | 1           | 1            | 0.5         |
 | `fib-wasm-api`                           | other    | api                                     | 1           | 1            | 0.5         |
-| `math`                                   | utils    | shared                                  | 2           | 0            | 0           |
+| `math`                                   | utils    | utils                                   | 2           | 0            | 0           |
 | `neural-networks`                        | features | feature:lazy                            | 1           | 1            | 0.5         |
 | `ws-gl`                                  | shared   | shared                                  | 2           | 0            | 0           |
 | `fib-wasm`                               | other    | shared                                  | 1           | 0            | 0           |
@@ -276,7 +283,7 @@ flowchart LR
 | `nx-aws-cdk-v2-e2e`                      | apps     | e2e                                     | 0           | 1            | 1           |
 | `rollapolla-analog`                      | apps     | app, type:firebase                      | 0           | 1            | 1           |
 | `test-helper`                            | other    | shared                                  | 1           | 0            | 0           |
-| `utils-decorators`                       | utils    | shared                                  | 1           | 0            | 0           |
+| `utils-decorators`                       | utils    | utils                                   | 1           | 0            | 0           |
 | `ws-thanos-test-app`                     | apps     | app, type:test-app                      | 0           | 1            | 1           |
 | `pacetrainer`                            | apps     | app, type:firebase                      | 0           | 0            | –           |
 
@@ -286,14 +293,5 @@ flowchart LR
 - **Tag constraint violations** (`.oxlintrc.json`): none
 - **Unused libraries:** none
 - **Projects without tags:** none
-- **Layer tags too coarse:** 8 projects in `libs/shared`/`libs/utils` only carry the generic `shared` tag, so the boundary rules cannot tell a utility from a shared domain lib
-  - `headline-animation`
-  - `math`
-  - `shared-data-access`
-  - `utils-decorators`
-  - `utils-gpu-calc`
-  - `utils-measure-fps`
-  - `utils-operators`
-  - `ws-gl`
 - **Libraries with high fan-out (≥ 5):** 1
   - `feat-lazy-react-diff` (5)

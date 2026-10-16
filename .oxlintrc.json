@@ -57,6 +57,7 @@
             "sourceTag": "app",
             "onlyDependOnLibsWithTags": [
               "shared",
+              "utils",
               "feature",
               "feature:lazy",
               "api",
@@ -77,19 +78,33 @@
           },
           {
             "sourceTag": "feature",
-            "onlyDependOnLibsWithTags": ["feat-shared", "shared", "api"]
+            "onlyDependOnLibsWithTags": [
+              "feat-shared",
+              "shared",
+              "utils",
+              "api"
+            ]
           },
           {
             "sourceTag": "feature:lazy",
-            "onlyDependOnLibsWithTags": ["feat-shared", "shared", "api"]
+            "onlyDependOnLibsWithTags": [
+              "feat-shared",
+              "shared",
+              "utils",
+              "api"
+            ]
           },
           {
             "sourceTag": "feat-shared",
-            "onlyDependOnLibsWithTags": ["shared", "api"]
+            "onlyDependOnLibsWithTags": ["shared", "utils", "api"]
           },
           {
             "sourceTag": "shared",
-            "onlyDependOnLibsWithTags": ["shared", "api"]
+            "onlyDependOnLibsWithTags": ["shared", "utils", "api"]
+          },
+          {
+            "sourceTag": "utils",
+            "onlyDependOnLibsWithTags": ["utils"]
           },
           {
             "sourceTag": "api",
