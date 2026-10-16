@@ -11,6 +11,19 @@
     <span class="label-long">My polls</span>
   </a>
 }
+@if (isAdmin()) {
+  <a
+    mat-button
+    class="admin-link"
+    routerLink="/admin"
+    aria-label="Admin"
+    title="Admin"
+    data-testid="admin-link"
+  >
+    <mat-icon>admin_panel_settings</mat-icon>
+    <span class="label-long">Admin</span>
+  </a>
+}
 @if (googleAccount(); as account) {
   <div class="signed-in" data-testid="account-signed-in">
     @if (account.photoUrl) {

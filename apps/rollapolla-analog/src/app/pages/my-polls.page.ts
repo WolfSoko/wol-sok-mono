@@ -3,7 +3,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   inject,
   signal,
 } from '@angular/core';
@@ -12,13 +11,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { EndlessScroll } from '../core/endless-scroll/endless-scroll';
 import { EndlessScrollEndComponent } from '../core/endless-scroll/endless-scroll-end.component';
 import { PollsRepoPort } from '../ports/polls-repo.port';
 import { retry, tap, timer } from 'rxjs';
-import { SITE_TAGS } from './site-tags';
+import { useNoindexPage } from './site-tags';
 
 /** How long to wait before listening again after loading failed. */
 const RETRY_DELAY_MS = 10_000;
@@ -223,14 +221,6 @@ export default class MyPollsPageComponent {
   });
 
   constructor() {
-    const title = inject(Title);
-    const meta = inject(Meta);
-    title.setTitle('My polls | RollaPolla');
-    // personal page, nothing for search engines
-    meta.updateTag({ name: 'robots', content: 'noindex' });
-    inject(DestroyRef).onDestroy(() => {
-      title.setTitle(SITE_TAGS.title);
-      meta.updateTag({ name: 'robots', content: SITE_TAGS.robots });
-    });
+    useNoindexPage('My polls | RollaPolla');
   }
 }

@@ -14,6 +14,7 @@ import {
 } from '@angular/platform-browser';
 import { provideDataAccess } from '@wolsok/shared-data-access';
 import { environment } from '../environments/environment';
+import { provideVisitRecording } from './adapter/record-visits';
 import { providePortsAndAdapter } from './provide-ports-and.adapter';
 
 export const appConfig: ApplicationConfig = {
@@ -41,5 +42,6 @@ export const appConfig: ApplicationConfig = {
       return auth;
     }),
     providePortsAndAdapter(),
+    provideVisitRecording(),
   ],
 };

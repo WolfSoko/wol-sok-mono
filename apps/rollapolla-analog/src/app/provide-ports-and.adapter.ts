@@ -1,10 +1,14 @@
 import { Provider } from '@angular/core';
 import { AccountAdapter } from './adapter/account.adapter';
+import { AdminAdapter } from './adapter/admin.adapter';
+import { AppConfigAdapter } from './adapter/app-config.adapter';
 import { ChatMessagesRepoAdapter } from './adapter/chat-messages-repo-adapter.service';
 import { NotesRepoAdapter } from './adapter/notes-repo.adapter';
 import { PollsRepoAdapter } from './adapter/polls-repo.adapter';
 import { LINK_SHARE_TARGETS } from './adapter/share/link-share-targets';
 import { AccountPort } from './ports/account.port';
+import { AdminPort } from './ports/admin.port';
+import { AppConfigPort } from './ports/app-config.port';
 import { ChatMessagesRepoPort } from './ports/chat-messages-repo.port';
 import { NotesRepoPort } from './ports/notes-repo.port';
 import { PollsRepoPort } from './ports/polls-repo.port';
@@ -16,6 +20,8 @@ export function providePortsAndAdapter(): Provider[] {
     { provide: ChatMessagesRepoPort, useClass: ChatMessagesRepoAdapter },
     { provide: PollsRepoPort, useClass: PollsRepoAdapter },
     { provide: AccountPort, useClass: AccountAdapter },
+    { provide: AppConfigPort, useClass: AppConfigAdapter },
+    { provide: AdminPort, useClass: AdminAdapter },
     provideShareTargets(...LINK_SHARE_TARGETS),
   ];
 }

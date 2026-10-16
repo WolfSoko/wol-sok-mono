@@ -2,7 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { AccountAdapterMock } from '../../adapter/account-adapter-mock.service';
+import { AdminAdapterMock } from '../../adapter/admin-adapter-mock.service';
 import { AccountPort, SignInCancelled } from '../../ports/account.port';
+import { AdminPort } from '../../ports/admin.port';
 import { AccountComponent } from './account.component';
 
 describe('AccountComponent', () => {
@@ -15,6 +17,7 @@ describe('AccountComponent', () => {
       providers: [
         provideRouter([]),
         { provide: AccountPort, useClass: AccountAdapterMock },
+        { provide: AdminPort, useClass: AdminAdapterMock },
       ],
     }).compileComponents();
     account = TestBed.inject(AccountPort) as AccountAdapterMock;

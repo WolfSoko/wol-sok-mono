@@ -6,6 +6,18 @@ import {
   User,
 } from '@angular/fire/auth';
 
+/**
+ * Name and photo as Google put them into the sign-in token. The rules compare
+ * against these, and the token can lag behind the profile, so write these.
+ */
+export async function tokenProfile(
+  user: User
+): Promise<{ name: string | null; picture: string | null }> {
+  const { claims } = await user.getIdTokenResult();
+  const text = (claim: unknown) => (typeof claim === 'string' ? claim : null);
+  return { name: text(claims['name']), picture: text(claims['picture']) };
+}
+
 /** The signed-in user, signing in anonymously first if nobody is. */
 export async function ensureSignedIn(auth: Auth): Promise<User> {
   await auth.authStateReady();

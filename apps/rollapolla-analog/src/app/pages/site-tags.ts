@@ -1,3 +1,6 @@
+import { DestroyRef, inject } from '@angular/core';
+import { Meta, Title } from '@angular/platform-browser';
+
 export const SITE_URL = 'https://rollapolla.com';
 
 export function pollUrl(pollId: string, origin: string = SITE_URL): string {
@@ -26,3 +29,18 @@ export const SITE_TAGS: PageTags = {
   url: `${SITE_URL}/`,
   robots: 'index, follow',
 };
+
+/**
+ * Gives a personal page its own title and keeps it out of search engines;
+ * restores the site tags when the page goes. Call in an injection context.
+ */
+export function useNoindexPage(title: string): void {
+  const titleService = inject(Title);
+  const meta = inject(Meta);
+  titleService.setTitle(title);
+  meta.updateTag({ name: 'robots', content: 'noindex' });
+  inject(DestroyRef).onDestroy(() => {
+    titleService.setTitle(SITE_TAGS.title);
+    meta.updateTag({ name: 'robots', content: SITE_TAGS.robots });
+  });
+}

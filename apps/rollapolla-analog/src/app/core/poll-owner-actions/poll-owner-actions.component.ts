@@ -52,7 +52,7 @@ import { PollsRepoPort } from '../../ports/polls-repo.port';
           Your poll
         </span>
         <span class="buttons">
-          @if (open()) {
+          @if (open() && editable()) {
             <button
               mat-button
               type="button"
@@ -120,6 +120,8 @@ import { PollsRepoPort } from '../../ports/polls-repo.port';
 })
 export class PollOwnerActionsComponent {
   public readonly poll = input.required<Poll>();
+  /** Off while an admin paused poll creation: an edit amounts to a new poll. */
+  public readonly editable = input(true);
   /** The creator wants to edit the poll. */
   public readonly edit = output<void>();
 
