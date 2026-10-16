@@ -5,6 +5,11 @@ import { ConfigEnv, defineConfig, Plugin } from 'vite';
 import { ViteUserConfig } from 'vitest/config';
 
 export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
+  if (mode === 'development') {
+    // the admin API (src/server/admin) uses the Auth emulator, as the browser
+    // does with environment.develop
+    process.env['FIREBASE_AUTH_EMULATOR_HOST'] ??= '127.0.0.1:9099';
+  }
   return {
     root: 'apps/rollapolla-analog',
     publicDir: 'src/public',

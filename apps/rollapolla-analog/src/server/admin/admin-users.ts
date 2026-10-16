@@ -9,6 +9,12 @@ import {
 /** Firebase Auth hands out at most 1000 users per page. */
 const AUTH_PAGE_SIZE = 1000;
 
+/**
+ * Auth pages mix in the anonymous users. A request reads this many pages at
+ * most while looking for Google users, so it never runs for long.
+ */
+const MAX_AUTH_PAGES_PER_REQUEST = 10;
+
 /** Why a request was refused; the routes turn it into the HTTP status. */
 export class AdminApiError extends Error {
   constructor(
@@ -49,7 +55,13 @@ export async function requireAdmin(
   } catch {
     throw new AdminApiError(401, 'Sign in again');
   }
-  const user = await auth.getUser(uid);
+  let user: UserRecord;
+  try {
+    user = await auth.getUser(uid);
+  } catch {
+    // deleted or disabled since the token was issued
+    throw new AdminApiError(401, 'Sign in again');
+  }
   if (!isGoogleUser(user) || !isAdminUser(user)) {
     throw new AdminApiError(403, 'Admins only');
   }
@@ -73,16 +85,26 @@ export function toAppUserDto(user: UserRecord): AppUserDto {
   };
 }
 
-/** One page of Auth users, without the anonymous ones (possibly empty). */
+/**
+ * The next Google users of Firebase Auth. Skips pages holding only
+ * anonymous users, up to {@link MAX_AUTH_PAGES_PER_REQUEST}; so the page is
+ * empty only at the end, or after that many anonymous-only pages.
+ */
 export async function listGoogleUsers(
   auth: Auth,
   pageToken: string | undefined
 ): Promise<UsersPageDto> {
-  const page = await auth.listUsers(AUTH_PAGE_SIZE, pageToken || undefined);
-  return {
-    users: page.users.filter(isGoogleUser).map(toAppUserDto),
-    nextPageToken: page.pageToken ?? null,
-  };
+  let next = pageToken || undefined;
+  const users: AppUserDto[] = [];
+  for (let read = 0; read < MAX_AUTH_PAGES_PER_REQUEST; read++) {
+    const page = await auth.listUsers(AUTH_PAGE_SIZE, next);
+    users.push(...page.users.filter(isGoogleUser).map(toAppUserDto));
+    next = page.pageToken;
+    if (users.length > 0 || !next) {
+      break;
+    }
+  }
+  return { users, nextPageToken: next ?? null };
 }
 
 /** Walks all Auth users: fine for thousands, not for millions. */
@@ -97,7 +119,7 @@ export async function countUsers(auth: Auth): Promise<UserStatsDto> {
       } else {
         stats.anonymous++;
       }
-      if (isAdminUser(user)) {
+      if (isGoogleUser(user) && isAdminUser(user)) {
         stats.admins++;
       }
     }

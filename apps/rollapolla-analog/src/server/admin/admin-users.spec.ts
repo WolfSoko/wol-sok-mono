@@ -94,6 +94,12 @@ describe('admin users', () => {
       ).rejects.toBeInstanceOf(AdminApiError);
     });
 
+    it('asks a deleted user to sign in again', async () => {
+      await expect(
+        requireAdmin(fakeAuth([boss]), 'Bearer token-gone')
+      ).rejects.toMatchObject({ status: 401 });
+    });
+
     it('refuses an admin claim on an account without Google', async () => {
       const auth = fakeAuth([
         userRecord('odd', { google: false, claims: { admin: true } }),
@@ -103,6 +109,17 @@ describe('admin users', () => {
         requireAdmin(auth, 'Bearer token-odd')
       ).rejects.toMatchObject({ status: 403 });
     });
+  });
+
+  it('skips Auth pages holding only anonymous users', async () => {
+    const anons = [1, 2, 3].map((n) =>
+      userRecord(`anon${n}`, { google: false })
+    );
+
+    const page = await listGoogleUsers(fakeAuth([...anons, ada], 1), undefined);
+
+    expect(page.users.map(({ uid }) => uid)).toEqual(['ada']);
+    expect(page.nextPageToken).toBeNull();
   });
 
   it('lists only Google users and passes the page token on', async () => {
@@ -118,11 +135,14 @@ describe('admin users', () => {
   });
 
   it('counts users across all pages', async () => {
-    await expect(countUsers(fakeAuth([boss, anon, ada], 1))).resolves.toEqual({
-      users: 2,
-      anonymous: 1,
-      admins: 1,
+    const oddAdmin = userRecord('odd', {
+      google: false,
+      claims: { admin: true },
     });
+
+    await expect(
+      countUsers(fakeAuth([boss, anon, ada, oddAdmin], 1))
+    ).resolves.toEqual({ users: 2, anonymous: 2, admins: 1 });
   });
 
   describe('setAdmin', () => {

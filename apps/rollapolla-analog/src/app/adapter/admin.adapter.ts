@@ -21,10 +21,12 @@ import {
   where,
 } from '@angular/fire/firestore';
 import {
+  defer,
   distinctUntilChanged,
   firstValueFrom,
   map,
   Observable,
+  of,
   shareReplay,
   switchMap,
 } from 'rxjs';
@@ -54,6 +56,7 @@ import { chatMessageConverter } from './chat-message.converter';
 import { ChatMessageDto } from './chat-message.dto';
 import { pollConverter } from './poll.converter';
 import { PollDto } from './poll.dto';
+import { retryAfterDelay } from './retry-after-delay';
 import { queryData } from './snapshots';
 
 /** Lobby messages live in `chatMessages`, a poll's in `polls/{id}/chatMessages`. */
@@ -100,18 +103,16 @@ export class AdminAdapter extends AdminPort {
   public readonly isAdmin$: Observable<boolean> = inject(
     AccountPort
   ).account$.pipe(
-    switchMap(async (account) => {
+    switchMap((account) => {
       const user = this.auth.currentUser;
       if (!isGoogleAccount(account) || user?.uid !== account.uid) {
-        return false;
+        return of(false);
       }
-      try {
-        const { claims } = await user.getIdTokenResult();
-        return claims[ADMIN_CLAIM] === true;
-      } catch (error) {
-        console.error('Could not check the admin rights', error);
-        return false;
-      }
+      // e.g. offline while the token needs a refresh: try again later
+      return defer(() => user.getIdTokenResult()).pipe(
+        map(({ claims }) => claims[ADMIN_CLAIM] === true),
+        retryAfterDelay<boolean>('Could not check the admin rights')
+      );
     }),
     distinctUntilChanged(),
     shareReplay({ bufferSize: 1, refCount: true })
@@ -143,7 +144,10 @@ export class AdminAdapter extends AdminPort {
       count(collection(this.fs, 'chatMessages')),
       // ordered so it runs on the collection group createdAt index
       count(query(this.messagesGroup, orderBy('createdAt', 'desc'))),
-      this.api<UserStatsDto>('GET', 'user-stats'),
+      this.api<UserStatsDto>('GET', 'user-stats').catch((error: unknown) => {
+        console.error('Could not count the users', error);
+        return null;
+      }),
     ]);
     return {
       polls: pollTotals.data().polls,
@@ -152,9 +156,9 @@ export class AdminAdapter extends AdminPort {
       votes: pollTotals.data().votes ?? 0,
       lobbyMessages,
       chatMessages,
-      users: userStats.users,
-      anonymousUsers: userStats.anonymous,
-      admins: userStats.admins,
+      users: userStats?.users ?? null,
+      anonymousUsers: userStats?.anonymous ?? null,
+      admins: userStats?.admins ?? null,
     };
   }
 

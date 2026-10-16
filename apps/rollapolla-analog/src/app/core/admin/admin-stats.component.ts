@@ -62,7 +62,7 @@ const TILES: readonly Tile[] = [
           <div class="tile">
             <dt>{{ tile.label }}</dt>
             <dd [attr.data-testid]="'stat-' + tile.key">
-              {{ tile.value | number }}
+              {{ (tile.value | number) ?? '–' }}
             </dd>
           </div>
         }

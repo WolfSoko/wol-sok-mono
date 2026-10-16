@@ -9,10 +9,13 @@ export type AdminStats = {
   lobbyMessages: number;
   /** Lobby and poll discussions together. */
   chatMessages: number;
-  /** Signed in with Google; the anonymous ones are counted apart. */
-  users: number;
-  anonymousUsers: number;
-  admins: number;
+  /**
+   * Signed in with Google; the anonymous ones are counted apart. `null`
+   * when Firebase Auth could not be counted: the rest still shows.
+   */
+  users: number | null;
+  anonymousUsers: number | null;
+  admins: number | null;
 };
 
 /** A Firebase Auth user who signed in with Google, as admins see them. */

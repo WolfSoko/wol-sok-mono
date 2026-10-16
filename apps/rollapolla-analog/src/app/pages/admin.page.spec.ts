@@ -80,7 +80,7 @@ describe('AdminPageComponent', () => {
   it('shows admins the tabs, starting with the statistics', async () => {
     await account.signInWithGoogle();
     admin.isAdmin$.next(true);
-    admin.stats = { ...admin.stats, polls: 1234, votes: 9 };
+    admin.stats = { ...admin.stats, polls: 1234, votes: 9, users: null };
 
     const fixture = await render();
     await fixture.whenStable();
@@ -91,6 +91,10 @@ describe('AdminPageComponent', () => {
     );
     expect(query(fixture, 'stat-votes').nativeElement.textContent).toContain(
       '9'
+    );
+    // Firebase Auth could not be counted: the other tiles still show
+    expect(query(fixture, 'stat-users').nativeElement.textContent).toContain(
+      '–'
     );
   });
 
