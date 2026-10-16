@@ -31,22 +31,26 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
-  /* Run your local dev server before starting the tests */
+  /*
+   * Both servers are Nx tasks, and reused: the inferred e2e and e2e-ci tasks
+   * then depend on `serve` and `auth-emulator` (continuous) and wait for both,
+   * so every e2e file on a CI agent shares one dev server and one Auth
+   * emulator. A plain `playwright test` starts them itself.
+   */
   webServer: [
     {
       command: 'npx nx serve rollapolla-analog',
       url: 'http://localhost:4300',
-      reuseExistingServer: !process.env['CI'],
+      reuseExistingServer: true,
       cwd: workspaceRoot,
       timeout: (process.env['CI'] ? 720 : 120) * 1000,
     },
     {
       // Voting and creating polls sign in anonymously. The Auth emulator runs on
       // Node alone; Firestore stays offline in e2e and applies writes locally.
-      command:
-        'npx firebase emulators:start --only auth --project rollapolla-v1 --config firebase.rollapolla-analog.json',
+      command: 'npx nx run rollapolla-analog:auth-emulator',
       url: 'http://127.0.0.1:9099',
-      reuseExistingServer: !process.env['CI'],
+      reuseExistingServer: true,
       cwd: workspaceRoot,
       timeout: 120 * 1000,
     },
