@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { isGoogleAccount } from '../../../shared/account';
 import { AccountPort } from '../../ports/account.port';
+import { AdminPort } from '../../ports/admin.port';
 import { AccountAction } from './account-action';
 
 @Component({
@@ -28,6 +29,9 @@ export class AccountComponent {
   protected readonly googleAccount = computed(() => {
     const account = this.account();
     return isGoogleAccount(account) ? account : null;
+  });
+  protected readonly isAdmin = toSignal(inject(AdminPort).isAdmin$, {
+    initialValue: false,
   });
   protected readonly action = new AccountAction();
 

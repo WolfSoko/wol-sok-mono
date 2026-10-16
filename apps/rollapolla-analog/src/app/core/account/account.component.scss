@@ -45,7 +45,8 @@ button,
     --mat-button-text-with-icon-horizontal-padding: 0.5rem;
   }
 
-  .my-polls-link {
+  .my-polls-link,
+  .admin-link {
     min-width: 0;
 
     .mat-icon {

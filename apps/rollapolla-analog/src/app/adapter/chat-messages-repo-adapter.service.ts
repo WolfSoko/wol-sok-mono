@@ -31,7 +31,11 @@ import {
 import { NotesRepoPort } from '../ports/notes-repo.port';
 import { addPendingTaskForServer } from './add-pending-task-for-server';
 import { chatMessageConverter } from './chat-message.converter';
-import { adoptGoogleProfile, ensureSignedIn } from './ensure-signed-in';
+import {
+  adoptGoogleProfile,
+  ensureSignedIn,
+  tokenProfile,
+} from './ensure-signed-in';
 import { ChatMessageDto } from './chat-message.dto';
 import { saveFeaturedPoll } from './featured-poll-doc';
 import { queryData } from './snapshots';
@@ -151,9 +155,7 @@ export class ChatMessagesRepoAdapter extends ChatMessagesRepoPort {
     const author = await adoptGoogleProfile(await signIn());
     // The rules compare the name with the token's, which can lag behind the
     // profile (a failed refresh in adoptGoogleProfile), so it comes from there.
-    const { claims } = await author.getIdTokenResult();
-    const tokenName =
-      typeof claims['name'] === 'string' ? claims['name'] : null;
+    const { name: tokenName } = await tokenProfile(author);
     const chatMessage: ChatMessage = {
       id: '-1',
       message,
