@@ -23,7 +23,8 @@ export default defineConfig({
   webServer: {
     command: 'npx nx run angular-examples:serve',
     url: baseURL,
-    reuseExistingServer: !process.env['CI'],
+    // an Nx task that e2e-ci depends on and waits for (see CLAUDE.md, Testing)
+    reuseExistingServer: true,
     cwd: workspaceRoot,
     timeout: process.env['CI'] ? 720_000 : 180_000,
   },

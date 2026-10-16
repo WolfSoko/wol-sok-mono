@@ -18,7 +18,8 @@ export default defineConfig({
   webServer: {
     command: 'npx nx serve ws-thanos-test-app',
     url: 'http://localhost:4350',
-    reuseExistingServer: !process.env['CI'],
+    // an Nx task that e2e-ci depends on and waits for (see CLAUDE.md, Testing)
+    reuseExistingServer: true,
     cwd: workspaceRoot,
     timeout: 120 * 1000,
   },

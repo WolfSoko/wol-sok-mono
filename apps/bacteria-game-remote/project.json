@@ -127,17 +127,15 @@
     "serve-static": {
       "executor": "@nx/web:file-server",
       "defaultConfiguration": "development",
+      "dependsOn": ["build"],
       "options": {
-        "buildTarget": "bacteria-game-remote:build",
-        "port": 4202
+        "staticFilePath": "dist/apps/bacteria-game-remote",
+        "port": 4202,
+        "watch": false
       },
       "configurations": {
-        "development": {
-          "buildTarget": "bacteria-game-remote:build:development"
-        },
-        "production": {
-          "buildTarget": "bacteria-game-remote:build:production"
-        }
+        "development": {},
+        "production": {}
       }
     }
   }
