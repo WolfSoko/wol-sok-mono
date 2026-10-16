@@ -48,6 +48,14 @@
         }
       }
     },
+    "auth-emulator": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "options": {
+        "command": "firebase emulators:start --only auth --project rollapolla-v1 --config firebase.rollapolla-analog.json",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "test": {
       "executor": "@analogjs/vitest-angular:test",
       "options": {
