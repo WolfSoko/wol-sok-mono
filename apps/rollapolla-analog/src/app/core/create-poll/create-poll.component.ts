@@ -18,14 +18,14 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
-import { Poll } from '../../../shared/poll';
+import { Poll, PRIVATE_POLL_HINT } from '../../../shared/poll';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
 import { CREATED_POLL_ID } from './created-poll-id';
 
@@ -34,8 +34,8 @@ import { CREATED_POLL_ID } from './created-poll-id';
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
+    MatButtonToggleModule,
     MatCardModule,
-    MatCheckboxModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -57,6 +57,7 @@ export class CreatePollComponent implements OnInit {
   protected readonly minOptions: number = PollsRepoPort.MIN_OPTIONS;
   protected readonly maxOptions: number = PollsRepoPort.MAX_OPTIONS;
   protected readonly maxOptionLength: number = PollsRepoPort.MAX_OPTION_LENGTH;
+  protected readonly privatePollHint: string = PRIVATE_POLL_HINT;
 
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly pollsRepo = inject(PollsRepoPort);
@@ -76,7 +77,7 @@ export class CreatePollComponent implements OnInit {
       ],
     ],
     options: this.fb.array([this.createOption(), this.createOption()]),
-    /** Public by default; unticked, only people with the link find it. */
+    /** Public by default; a private poll is found only through its link. */
     listed: [true],
   });
 

@@ -3,7 +3,11 @@ import { expect, Locator, Page } from '@playwright/test';
 export class PollPo {
   constructor(private readonly page: Page) {}
 
-  async createPoll(question: string, options: string[]): Promise<void> {
+  async createPoll(
+    question: string,
+    options: string[],
+    visibility: 'public' | 'private' = 'public'
+  ): Promise<void> {
     const questionInput = this.page.getByTestId('poll-question-input');
     await questionInput.scrollIntoViewIfNeeded();
     // The form hydrates once it is in the viewport; typing earlier is lost.
@@ -19,6 +23,12 @@ export class PollPo {
       }
       await this.page.getByTestId(`poll-option-input-${i}`).fill(options[i]);
     }
+    await this.page
+      .getByRole('radio', {
+        name: visibility === 'public' ? 'Public' : 'Private',
+        exact: true,
+      })
+      .click();
     await this.page.getByTestId('create-poll-button').click();
   }
 

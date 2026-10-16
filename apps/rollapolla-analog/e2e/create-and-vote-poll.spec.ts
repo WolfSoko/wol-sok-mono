@@ -27,4 +27,22 @@ test.describe('Create and vote on a poll', () => {
     await expect(poll.result(0)).toContainText('0% (0)');
     await expect(page.getByTestId('vote-button')).toHaveCount(0);
   });
+
+  test('creates a private poll, shared by its link', async ({
+    page,
+    homePage,
+  }) => {
+    await homePage.expectTitleVisible();
+    const poll = new PollPo(page);
+    const question = `Only for my team? ${Math.random()}`;
+
+    await poll.createPoll(question, ['Yes', 'No'], 'private');
+    await poll.expectPollPage(question);
+
+    await expect(page.getByTestId('poll-private-badge')).toBeVisible();
+    await expect(page.getByTestId('poll-share-private')).toContainText(
+      'Only people with the link'
+    );
+    await expect(page.getByTestId('copy-link')).toBeVisible();
+  });
 });

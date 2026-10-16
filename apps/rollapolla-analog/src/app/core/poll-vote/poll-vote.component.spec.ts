@@ -37,6 +37,18 @@ describe('PollVoteComponent', () => {
     expect(query('poll-results')).toBeNull();
   });
 
+  it('marks private polls, not public ones', async () => {
+    expect(text('poll-private-badge')).toContain('Private');
+
+    fixture.componentRef.setInput('poll', {
+      ...(await currentPoll()),
+      listed: true,
+    });
+    fixture.detectChanges();
+
+    expect(query('poll-private-badge')).toBeNull();
+  });
+
   it('votes once and shows the results', async () => {
     query('poll-option-1').query(By.css('input')).nativeElement.click();
     fixture.detectChanges();

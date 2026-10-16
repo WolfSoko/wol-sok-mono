@@ -30,6 +30,10 @@ export type NewPoll = {
   listed?: boolean;
 };
 
+/** What a private (unlisted) poll means, wherever the app explains it. */
+export const PRIVATE_POLL_HINT =
+  'Only people with the link can see it and vote.';
+
 /** Polls take votes for 30 days; then Firestore deletes them (TTL). */
 export const POLL_LIFETIME_MS: number = 1000 * 60 * 60 * 24 * 30;
 

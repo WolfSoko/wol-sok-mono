@@ -21,7 +21,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Poll } from '../../../shared/poll';
+import { Poll, PRIVATE_POLL_HINT } from '../../../shared/poll';
 import { pollUrl, SITE_URL } from '../../pages/site-tags';
 import {
   SHARE_ICON_NAMESPACE,
@@ -77,6 +77,7 @@ export class PollShareComponent {
     ? this.document.location.origin
     : SITE_URL;
 
+  protected readonly privatePollHint: string = PRIVATE_POLL_HINT;
   /** Only known in the browser, so the server renders without it. */
   protected readonly canShareNatively = signal(false);
   private linkCopiedTimer: ReturnType<typeof setTimeout> | undefined;

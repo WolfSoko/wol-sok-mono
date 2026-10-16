@@ -1,7 +1,7 @@
 import { Clipboard } from '@angular/cdk/clipboard';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Poll } from '../../../shared/poll';
+import { Poll, PRIVATE_POLL_HINT } from '../../../shared/poll';
 import {
   provideShareTargets,
   ShareContent,
@@ -83,6 +83,18 @@ describe('PollShareComponent', () => {
     expect(
       chat.querySelector('mat-icon')?.getAttribute('data-mat-icon-name')
     ).toBe('chat');
+  });
+
+  it('tells that only people with the link see a private poll', async () => {
+    await render();
+    expect(query('poll-share-private')).toBeNull();
+
+    fixture.componentRef.setInput('poll', { ...poll, listed: false });
+    await fixture.whenStable();
+
+    expect(query('poll-share-private').nativeElement.textContent).toContain(
+      PRIVATE_POLL_HINT
+    );
   });
 
   it('works without any target', async () => {
