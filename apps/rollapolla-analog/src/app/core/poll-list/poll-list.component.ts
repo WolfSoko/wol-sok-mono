@@ -34,6 +34,16 @@ import { Poll } from '../../../shared/poll';
                 {{ poll.totalVotes }}
                 {{ poll.totalVotes === 1 ? 'vote' : 'votes' }} · open until
                 {{ poll.closesAt | date: 'mediumDate' }}
+                @if (!poll.listed) {
+                  ·
+                  <mat-icon
+                    class="meta-icon"
+                    aria-hidden="true"
+                    data-testid="poll-link-private"
+                    >lock</mat-icon
+                  >
+                  private
+                }
               </span>
             </span>
             <mat-icon class="chevron" aria-hidden="true"

@@ -95,7 +95,16 @@
   margin: 0;
 }
 
-.listed {
-  display: block;
-  margin: 0.25rem 0 0 -0.5rem;
+.visibility {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-top: 0.25rem;
+}
+
+.visibility-hint {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
 }

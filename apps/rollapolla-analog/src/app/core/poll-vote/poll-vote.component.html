@@ -5,6 +5,12 @@
   <p class="rap-eyebrow eyebrow">
     <span class="rap-live-dot" aria-hidden="true"></span>
     Live poll
+    @if (!poll().listed) {
+      <span class="private-badge" data-testid="poll-private-badge">
+        <mat-icon class="private-icon" aria-hidden="true">lock</mat-icon>
+        Private
+      </span>
+    }
   </p>
   <mat-card-header class="header">
     <mat-card-title class="question" data-testid="poll-question">{{

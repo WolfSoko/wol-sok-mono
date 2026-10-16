@@ -51,6 +51,22 @@
   font: var(--mat-sys-body-medium);
 }
 
+.private-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0.25rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.private-icon {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
 .highlighted .hint {
   margin-top: 0.25rem;
 }

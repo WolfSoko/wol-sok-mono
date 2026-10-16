@@ -14,6 +14,12 @@
     } @else {
       <h2 id="poll-share-title" class="hint">Invite others to vote</h2>
     }
+    @if (!poll().listed) {
+      <p class="private-hint" data-testid="poll-share-private">
+        <mat-icon class="private-icon" aria-hidden="true">lock</mat-icon>
+        Private: only people with the link can see it and vote.
+      </p>
+    }
   </div>
   <div class="buttons">
     @if (canShareNatively()) {

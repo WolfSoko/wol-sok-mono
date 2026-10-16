@@ -64,14 +64,17 @@ describe('CreatePollComponent', () => {
     });
   });
 
-  it('creates an unlisted poll when "show it" is unticked', async () => {
+  it('creates a private poll, found only through its link', async () => {
     type('poll-question-input', 'Only for my team?');
     type('poll-option-input-0', 'Yes');
     type('poll-option-input-1', 'No');
     fixture.debugElement
-      .query(By.css('[data-testid="poll-listed-checkbox"] input'))
+      .query(By.css('[data-testid="poll-visibility-private"] button'))
       .nativeElement.click();
     fixture.detectChanges();
+    expect(text('poll-visibility-hint')).toBe(
+      'Only people with the link can see it and vote.'
+    );
 
     button('create-poll-button').click();
     await fixture.whenStable();
@@ -127,6 +130,12 @@ describe('CreatePollComponent', () => {
   function button(testId: string): HTMLButtonElement {
     return fixture.debugElement.query(By.css(`[data-testid="${testId}"]`))
       .nativeElement;
+  }
+
+  function text(testId: string): string {
+    return fixture.debugElement
+      .query(By.css(`[data-testid="${testId}"]`))
+      .nativeElement.textContent.trim();
   }
 
   function type(testId: string, value: string): void {

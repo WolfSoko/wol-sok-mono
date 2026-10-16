@@ -85,6 +85,18 @@ describe('PollShareComponent', () => {
     ).toBe('chat');
   });
 
+  it('tells that only people with the link see a private poll', async () => {
+    await render();
+    expect(query('poll-share-private')).toBeNull();
+
+    fixture.componentRef.setInput('poll', { ...poll, listed: false });
+    await fixture.whenStable();
+
+    expect(query('poll-share-private').nativeElement.textContent).toContain(
+      'only people with the link'
+    );
+  });
+
   it('works without any target', async () => {
     await render(undefined, []);
 

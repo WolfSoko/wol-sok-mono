@@ -18,8 +18,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -34,8 +34,8 @@ import { CREATED_POLL_ID } from './created-poll-id';
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
+    MatButtonToggleModule,
     MatCardModule,
-    MatCheckboxModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -76,7 +76,7 @@ export class CreatePollComponent implements OnInit {
       ],
     ],
     options: this.fb.array([this.createOption(), this.createOption()]),
-    /** Public by default; unticked, only people with the link find it. */
+    /** Public by default; a private poll is found only through its link. */
     listed: [true],
   });
 

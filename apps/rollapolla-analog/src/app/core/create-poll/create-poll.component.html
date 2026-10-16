@@ -85,13 +85,36 @@
         }
       </fieldset>
 
-      <mat-checkbox
-        formControlName="listed"
-        class="listed"
-        data-testid="poll-listed-checkbox"
-      >
-        Show it on the home page and in search
-      </mat-checkbox>
+      <div class="visibility">
+        <mat-button-toggle-group
+          formControlName="listed"
+          aria-label="Who can find the poll"
+          hideSingleSelectionIndicator
+          data-testid="poll-visibility"
+        >
+          <mat-button-toggle
+            [value]="true"
+            data-testid="poll-visibility-public"
+          >
+            <mat-icon>public</mat-icon>
+            Public
+          </mat-button-toggle>
+          <mat-button-toggle
+            [value]="false"
+            data-testid="poll-visibility-private"
+          >
+            <mat-icon>lock</mat-icon>
+            Private
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+        <p class="visibility-hint" data-testid="poll-visibility-hint">
+          {{
+            form.controls.listed.value
+              ? "Shown on the home page and in search."
+              : "Only people with the link can see it and vote."
+          }}
+        </p>
+      </div>
 
       <div class="actions">
         <button
