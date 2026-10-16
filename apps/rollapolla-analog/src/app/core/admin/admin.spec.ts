@@ -149,8 +149,10 @@ describe('admin tabs', () => {
     const user = (uid: string, isAdmin: boolean) => ({
       uid,
       displayName: uid,
+      email: `${uid}@example.com`,
       photoUrl: null,
-      lastSeenAt: new Date(),
+      createdAt: new Date(),
+      lastSignInAt: new Date(),
       isAdmin,
     });
 
@@ -169,6 +171,33 @@ describe('admin tabs', () => {
       await clickAndAnswer(fixture, () => toggles()[1].click(), true);
 
       expect(admin.users$.value[1].isAdmin).toBe(true);
+      expect(toggles()[1].getAttribute('aria-checked')).toBe('true');
+    });
+
+    it('loads the next page of users on demand', async () => {
+      admin.usersPageSize = 1;
+      admin.users$.next([user('ada', false), user('grace', false)]);
+      const fixture = await render(AdminUsersComponent);
+      expect(all(fixture, 'admin-toggle')).toHaveLength(1);
+
+      all(fixture, 'admin-users-more')[0].nativeElement.click();
+      await fixture.whenStable();
+
+      expect(all(fixture, 'admin-toggle')).toHaveLength(2);
+      expect(all(fixture, 'admin-users-more')).toHaveLength(0);
+    });
+
+    it('flips the toggle back when the server refuses', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      admin.users$.next([user('grace', false)]);
+      admin.failWrites = true;
+      const fixture = await render(AdminUsersComponent);
+      const toggle = () =>
+        all(fixture, 'admin-toggle')[0].nativeElement.querySelector('button');
+
+      await clickAndAnswer(fixture, () => toggle().click(), true);
+
+      expect(toggle().getAttribute('aria-checked')).toBe('false');
     });
 
     it('flips the toggle back when the admin cancels', async () => {

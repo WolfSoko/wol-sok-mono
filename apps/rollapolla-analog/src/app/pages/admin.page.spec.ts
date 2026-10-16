@@ -55,12 +55,26 @@ describe('AdminPageComponent', () => {
     await account.signInWithGoogle();
 
     const fixture = await render();
+    expect(admin.rechecks).toBe(1);
 
     expect(query(fixture, 'admin-denied')).not.toBeNull();
     expect(query(fixture, 'admin-own-uid').nativeElement.textContent).toBe(
       'mock-user'
     );
     expect(query(fixture, 'admin-tabs')).toBeNull();
+  });
+
+  it('lets a newly granted admin in after checking again', async () => {
+    await account.signInWithGoogle();
+    const fixture = await render();
+    vi.spyOn(admin, 'recheckAdmin').mockImplementation(async () =>
+      admin.isAdmin$.next(true)
+    );
+
+    query(fixture, 'admin-recheck').nativeElement.click();
+    await fixture.whenStable();
+
+    expect(query(fixture, 'admin-tabs')).not.toBeNull();
   });
 
   it('shows admins the tabs, starting with the statistics', async () => {

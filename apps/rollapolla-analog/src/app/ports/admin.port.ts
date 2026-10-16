@@ -4,6 +4,7 @@ import {
   AdminStats,
   AppUser,
   Page,
+  UsersPage,
 } from '../../shared/admin';
 import { FeatureFlag } from '../../shared/app-config';
 import { Poll } from '../../shared/poll';
@@ -11,7 +12,8 @@ import { WriteReceipt } from './polls-repo.port';
 
 /**
  * What only admins may do. An admin is a visitor signed in with Google whose
- * uid has a document in `admins`; the Firestore rules enforce every call.
+ * Firebase Auth user carries the `admin` custom claim; the Firestore rules and
+ * the admin API (src/server/admin) check it on every call.
  */
 export abstract class AdminPort {
   /**
@@ -20,7 +22,13 @@ export abstract class AdminPort {
    */
   abstract readonly isAdmin$: Observable<boolean>;
 
-  /** Counts polls, votes, messages and users on the server. */
+  /**
+   * Fetches a fresh sign-in token, so a claim granted or revoked a moment ago
+   * applies now instead of within the hour; {@link isAdmin$} follows.
+   */
+  abstract recheckAdmin(): Promise<void>;
+
+  /** Counts polls, votes and messages, and the users in Firebase Auth. */
   abstract loadStats(): Promise<AdminStats>;
 
   /** All polls, listed or not, open or closed, newest first. */
@@ -36,11 +44,15 @@ export abstract class AdminPort {
 
   abstract deleteMessage(message: AdminChatMessage): WriteReceipt;
 
-  /** Visitors who signed in with Google, most recently seen first. */
-  abstract watchUsers(counts: Observable<number>): Observable<Page<AppUser>>;
+  /** Users who signed in with Google, a page at a time, in Firebase Auth's order. */
+  abstract loadUsers(pageToken?: string): Promise<UsersPage>;
 
-  /** Grants or revokes admin rights; nobody can revoke their own. */
-  abstract setAdmin(uid: string, isAdmin: boolean): WriteReceipt;
+  /**
+   * Grants or revokes admin rights and resolves with the user as they are
+   * now. Nobody can revoke their own. The user's sign-in token picks the
+   * change up within the hour, or at once if their browser rechecks.
+   */
+  abstract setAdmin(uid: string, isAdmin: boolean): Promise<AppUser>;
 
   abstract setFeature(flag: FeatureFlag, enabled: boolean): WriteReceipt;
 }

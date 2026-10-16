@@ -22,6 +22,7 @@ const TILES: readonly Tile[] = [
   { key: 'chatMessages', label: 'Chat messages' },
   { key: 'lobbyMessages', label: 'Live chat messages' },
   { key: 'users', label: 'Google users' },
+  { key: 'anonymousUsers', label: 'Anonymous users' },
   { key: 'admins', label: 'Admins' },
 ];
 

@@ -6,6 +6,7 @@ import {
   AppUser,
   Page,
   toPage,
+  UsersPage,
 } from '../../shared/admin';
 import { FeatureFlag, FeatureToggles } from '../../shared/app-config';
 import { Poll } from '../../shared/poll';
@@ -28,8 +29,11 @@ export class AdminAdapterMock extends AdminPort {
     lobbyMessages: 0,
     chatMessages: 0,
     users: 0,
+    anonymousUsers: 0,
     admins: 0,
   };
+  /** Users per page in `loadUsers`. */
+  public usersPageSize = 1000;
   /** Set to make the next writes fail on the backend. */
   public failWrites = false;
 
@@ -63,18 +67,34 @@ export class AdminAdapterMock extends AdminPort {
     );
   }
 
-  public watchUsers(counts: Observable<number>): Observable<Page<AppUser>> {
-    return page(this.users$, counts);
+  public async recheckAdmin(): Promise<void> {
+    this.rechecks++;
+  }
+  /** How often `recheckAdmin` was called. */
+  public rechecks = 0;
+
+  public async loadUsers(pageToken?: string): Promise<UsersPage> {
+    const start = Number(pageToken ?? 0);
+    const end = start + this.usersPageSize;
+    return {
+      users: this.users$.value.slice(start, end),
+      nextPageToken: end < this.users$.value.length ? String(end) : null,
+    };
   }
 
-  public setAdmin(uid: string, isAdmin: boolean): WriteReceipt {
-    return this.write(() =>
-      this.users$.next(
-        this.users$.value.map((user) =>
-          user.uid === uid ? { ...user, isAdmin } : user
-        )
-      )
+  public async setAdmin(uid: string, isAdmin: boolean): Promise<AppUser> {
+    if (this.failWrites) {
+      throw new Error('permission-denied');
+    }
+    const users = this.users$.value.map((user) =>
+      user.uid === uid ? { ...user, isAdmin } : user
     );
+    this.users$.next(users);
+    const updated = users.find((user) => user.uid === uid);
+    if (!updated) {
+      throw new Error('No such user');
+    }
+    return updated;
   }
 
   public setFeature(flag: FeatureFlag, enabled: boolean): WriteReceipt {

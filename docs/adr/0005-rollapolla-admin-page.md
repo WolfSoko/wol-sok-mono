@@ -1,6 +1,6 @@
 # 5. RollaPolla has an admin page, backed by Firestore rules alone
 
-- Status: accepted
+- Status: accepted; admins and the users list superseded by [ADR 0006](0006-rollapolla-admin-claim.md)
 - Date: 2026-10-16
 - Scope: `apps/rollapolla-analog`
 
