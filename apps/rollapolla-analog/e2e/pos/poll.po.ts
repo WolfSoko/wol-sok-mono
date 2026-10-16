@@ -26,6 +26,7 @@ export class PollPo {
     await this.page
       .getByRole('radio', {
         name: visibility === 'public' ? 'Public' : 'Private',
+        exact: true,
       })
       .click();
     await this.page.getByTestId('create-poll-button').click();

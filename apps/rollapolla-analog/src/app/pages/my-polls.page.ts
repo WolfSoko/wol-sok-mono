@@ -68,6 +68,15 @@ const RETRY_DELAY_MS = 10_000;
                     } @else {
                       <span class="closed">closed</span>
                     }
+                    @if (!poll.listed) {
+                      ·
+                      <span class="private" data-testid="private-poll-marker">
+                        <mat-icon class="private-icon" aria-hidden="true"
+                          >lock</mat-icon
+                        >
+                        private
+                      </span>
+                    }
                   </span>
                 </a>
               </li>
@@ -154,6 +163,17 @@ const RETRY_DELAY_MS = 10_000;
     }
     .open {
       color: var(--mat-sys-primary);
+    }
+    .private {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.125rem;
+      vertical-align: bottom;
+    }
+    .private-icon {
+      width: 1rem;
+      height: 1rem;
+      font-size: 1rem;
     }
     .empty {
       align-items: center;

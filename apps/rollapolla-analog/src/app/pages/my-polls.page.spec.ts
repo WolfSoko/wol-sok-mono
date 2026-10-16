@@ -65,6 +65,29 @@ describe('MyPollsPageComponent', () => {
     ).toContain('closed');
   });
 
+  it('marks private polls, not public ones', async () => {
+    const privateId = await repo.createPoll({
+      question: 'Only for my team?',
+      options: ['a', 'b'],
+    });
+    const publicId = await repo.createPoll({
+      question: 'For everybody?',
+      options: ['a', 'b'],
+      listed: true,
+    });
+
+    const page = await render();
+
+    const marker = (id: string) =>
+      page.query(
+        By.css(
+          `[data-testid="my-poll-${id}"] [data-testid="private-poll-marker"]`
+        )
+      );
+    expect(marker(privateId).nativeElement.textContent).toContain('private');
+    expect(marker(publicId)).toBeNull();
+  });
+
   it('loads more polls when the end of the list comes into view', async () => {
     const endInView = stubIntersectionObserver();
     for (let i = 1; i <= 21; i++) {
