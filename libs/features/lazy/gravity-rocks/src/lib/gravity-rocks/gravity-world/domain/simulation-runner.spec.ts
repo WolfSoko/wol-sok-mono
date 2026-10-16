@@ -223,5 +223,21 @@ describe('SimulationRunner', () => {
 
       expect(advance).toHaveBeenCalledTimes(1);
     });
+
+    it('should stop stepping and cancel the waiting frame once disposed', () => {
+      const cancel = jest
+        .spyOn(window, 'cancelAnimationFrame')
+        .mockImplementation(() => undefined);
+      runner.toggle();
+      TestBed.tick();
+      frame(1000);
+
+      runner.dispose();
+      frame(1016);
+
+      expect(cancel).toHaveBeenCalled();
+      expect(runner.running()).toBe(false);
+      expect(advance).toHaveBeenCalledTimes(1);
+    });
   });
 });

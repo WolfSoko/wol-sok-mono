@@ -190,7 +190,10 @@ export class GravityWorldComponent {
   });
 
   public constructor() {
-    inject(DestroyRef).onDestroy(() => this.pointer.dispose());
+    inject(DestroyRef).onDestroy(() => {
+      this.pointer.dispose();
+      this.runner.dispose();
+    });
     this.initializeSunAndPlanets();
 
     effect(() =>

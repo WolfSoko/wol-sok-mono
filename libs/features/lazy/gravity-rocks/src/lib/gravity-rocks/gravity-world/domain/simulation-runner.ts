@@ -38,6 +38,8 @@ export class SimulationRunner {
   /** Whether the world was running when something paused it for a while. */
   private suspended = false;
 
+  private pendingFrame: number | undefined;
+
   public constructor(private readonly world: SimulationRunnerWorld) {
     effect(() => (this.running() ? this.loop() : null));
   }
@@ -75,6 +77,15 @@ export class SimulationRunner {
     this.suspended = false;
   }
 
+  /** Stops the world for good and drops the frame it was waiting for. */
+  public dispose(): void {
+    this.reset();
+    if (this.pendingFrame !== undefined) {
+      cancelAnimationFrame(this.pendingFrame);
+      this.pendingFrame = undefined;
+    }
+  }
+
   /**
    * Advances the simulation by a single frame of the given length. How much
    * world time that frame is worth is what the simulation speed decides; how
@@ -102,7 +113,8 @@ export class SimulationRunner {
 
   /** Advances the simulation once per animation frame while it is running. */
   private loop(lastFrameTime?: number): void {
-    requestAnimationFrame((time) => {
+    this.pendingFrame = requestAnimationFrame((time) => {
+      this.pendingFrame = undefined;
       if (!this.running()) {
         return;
       }
