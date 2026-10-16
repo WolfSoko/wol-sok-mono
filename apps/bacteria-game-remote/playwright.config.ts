@@ -21,7 +21,8 @@ export default defineConfig({
   webServer: {
     command: 'npx nx run bacteria-game-remote:serve-static',
     url: 'http://localhost:4202',
-    reuseExistingServer: !process.env['CI'],
+    // an Nx task that e2e-ci depends on and waits for (see CLAUDE.md, Testing)
+    reuseExistingServer: true,
     cwd: workspaceRoot,
     timeout: process.env['CI'] ? 360_000 : 120_000,
   },
