@@ -7,13 +7,14 @@ import {
   provideEnvironmentInitializer,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Auth } from '@angular/fire/auth';
 import {
   doc,
   Firestore,
   serverTimestamp,
   setDoc,
 } from '@angular/fire/firestore';
-import { distinctUntilChanged, filter } from 'rxjs';
+import { distinctUntilChanged, filter, switchMap } from 'rxjs';
 import { Account, isGoogleAccount } from '../../shared/account';
 import { AccountPort } from '../ports/account.port';
 
@@ -28,6 +29,7 @@ export function provideVisitRecording(): EnvironmentProviders {
       return;
     }
     const fs = inject(Firestore);
+    const auth = inject(Auth);
     inject(AccountPort)
       .account$.pipe(
         filter((account): account is Account => isGoogleAccount(account)),
@@ -37,12 +39,31 @@ export function provideVisitRecording(): EnvironmentProviders {
             a.displayName === b.displayName &&
             a.photoUrl === b.photoUrl
         ),
+        // the rules compare name and photo with the token's, which can lag
+        // behind the profile, so they come from there
+        switchMap(async ({ uid }) => {
+          const user = auth.currentUser;
+          try {
+            return user?.uid === uid
+              ? { uid, claims: (await user.getIdTokenResult()).claims }
+              : null;
+          } catch (error) {
+            console.warn('Could not record the visit', error);
+            return null;
+          }
+        }),
         takeUntilDestroyed(inject(DestroyRef))
       )
-      .subscribe(({ uid, displayName, photoUrl }) => {
+      .subscribe((visit) => {
+        if (!visit) {
+          return;
+        }
+        const { uid, claims } = visit;
         setDoc(doc(fs, 'users', uid), {
-          displayName,
-          photoUrl,
+          displayName:
+            typeof claims['name'] === 'string' ? claims['name'] : null,
+          photoUrl:
+            typeof claims['picture'] === 'string' ? claims['picture'] : null,
           lastSeenAt: serverTimestamp(),
         }).catch((error) =>
           // only the admin page misses it

@@ -44,7 +44,8 @@ service cloud.firestore {
     }
 
     // Visitors signed in with Google record their name and last visit here,
-    // so admins can list them. Only admins read the list.
+    // so admins can list them. Only admins read the list. Name and photo are
+    // the ones Google put into the sign-in token, so nobody poses as another.
     match /users/{uid} {
       allow get: if request.auth != null && (request.auth.uid == uid || isAdmin());
       allow list: if isAdmin();
@@ -56,8 +57,8 @@ service cloud.firestore {
       function isValidUser(user) {
         return user.keys().hasAll(['displayName', 'photoUrl', 'lastSeenAt']) &&
           user.keys().hasOnly(['displayName', 'photoUrl', 'lastSeenAt']) &&
-          (user.displayName == null || (user.displayName is string && user.displayName.size() <= 200)) &&
-          (user.photoUrl == null || (user.photoUrl is string && user.photoUrl.size() <= 2000)) &&
+          user.displayName == request.auth.token.get('name', null) &&
+          user.photoUrl == request.auth.token.get('picture', null) &&
           user.lastSeenAt == request.time;
       }
     }
@@ -167,8 +168,10 @@ service cloud.firestore {
 
       // The creator replaces question, answers and listing and starts the
       // next round; creation time, TTL and creator stay.
+      // Paused with poll creation: new content is as good as a new poll.
       function isValidEdit(newPoll, oldPoll) {
         return oldPoll.creatorUid == request.auth.uid &&
+          isFeatureEnabled('pollCreation') &&
           newPoll.diff(oldPoll).affectedKeys().hasOnly(['question', 'options', 'counts', 'totalVotes', 'listed', 'round']) &&
           newPoll.listed is bool &&
           newPoll.round == roundOf(oldPoll) + 1 &&

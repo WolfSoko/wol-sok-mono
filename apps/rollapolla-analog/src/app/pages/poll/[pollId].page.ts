@@ -59,7 +59,11 @@ import { usePollMetaTags } from './poll-meta';
           <rap-create-poll [poll]="poll" (editDone)="editing.set(false)" />
         } @else {
           @if (isOwnPoll()) {
-            <rap-poll-owner-actions [poll]="poll" (edit)="editing.set(true)" />
+            <rap-poll-owner-actions
+              [poll]="poll"
+              [editable]="features().pollCreation"
+              (edit)="editing.set(true)"
+            />
           }
           <rap-poll-vote [poll]="poll" [justCreated]="justCreated()" />
         }

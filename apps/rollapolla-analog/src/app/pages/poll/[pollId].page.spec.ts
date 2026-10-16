@@ -177,6 +177,20 @@ describe('PollPageComponent', () => {
       expect(byTestId(element, 'delete-poll-button')).toBeNull();
     });
 
+    it('offers no editing while an admin paused poll creation', async () => {
+      const config = TestBed.inject(AppConfigPort) as AppConfigAdapterMock;
+      config.features.update((features) => ({
+        ...features,
+        pollCreation: false,
+      }));
+      signInAs('mock-user');
+
+      const element = await render(pollId);
+
+      expect(byTestId(element, 'edit-poll-button')).toBeNull();
+      expect(byTestId(element, 'delete-poll-button')).not.toBeNull();
+    });
+
     it('edits the poll in place and resets its votes', async () => {
       signInAs('mock-user');
       const element = await render(pollId);

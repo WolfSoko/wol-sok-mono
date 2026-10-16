@@ -1,6 +1,5 @@
-import { isPlatformServer } from '@angular/common';
-import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { Auth, authState } from '@angular/fire/auth';
+import { inject, Injectable } from '@angular/core';
+import { Auth } from '@angular/fire/auth';
 import {
   collection,
   collectionGroup,
@@ -22,14 +21,15 @@ import {
   where,
 } from '@angular/fire/firestore';
 import {
-  catchError,
   combineLatest,
   distinctUntilChanged,
   map,
   Observable,
   of,
+  retry,
   shareReplay,
   switchMap,
+  timer,
 } from 'rxjs';
 import { isGoogleAccount } from '../../shared/account';
 import {
@@ -42,6 +42,7 @@ import {
 import { FeatureFlag } from '../../shared/app-config';
 import { ChatMessage } from '../../shared/chat.message';
 import { Poll } from '../../shared/poll';
+import { AccountPort } from '../ports/account.port';
 import { AdminPort } from '../ports/admin.port';
 import { WriteReceipt } from '../ports/polls-repo.port';
 import { chatMessageConverter } from './chat-message.converter';
@@ -63,6 +64,9 @@ const adminMessageConverter: FirestoreDataConverter<
     pollId: snapshot.ref.parent.parent?.id ?? null,
   }),
 };
+
+/** How long to wait before listening again after a listener failed. */
+const RETRY_DELAY_MS = 10_000;
 
 type UserWithoutRole = Omit<AppUser, 'isAdmin'>;
 
@@ -97,22 +101,31 @@ export class AdminAdapter extends AdminPort {
       adminMessageConverter
     );
 
-  public readonly isAdmin$: Observable<boolean> = isPlatformServer(
-    inject(PLATFORM_ID)
-  )
-    ? of(false)
-    : authState(this.auth).pipe(
-        switchMap((user) =>
-          isGoogleAccount(user)
-            ? docSnapshots(doc(this.fs, 'admins', user.uid)).pipe(
-                map((grant) => grant.exists()),
-                catchError(() => of(false))
-              )
-            : of(false)
-        ),
-        distinctUntilChanged(),
-        shareReplay({ bufferSize: 1, refCount: true })
-      );
+  /*
+   * From the account, not authState: linking an anonymous visitor to Google
+   * keeps the uid, and only AccountPort reports that.
+   */
+  public readonly isAdmin$: Observable<boolean> = inject(
+    AccountPort
+  ).account$.pipe(
+    map((account) => (isGoogleAccount(account) ? account.uid : null)),
+    distinctUntilChanged(),
+    switchMap((uid) =>
+      uid
+        ? docSnapshots(doc(this.fs, 'admins', uid)).pipe(
+            map((grant) => grant.exists()),
+            retry({
+              delay: (error: unknown) => {
+                console.error('Could not check the admin rights', error);
+                return timer(RETRY_DELAY_MS);
+              },
+            })
+          )
+        : of(false)
+    ),
+    distinctUntilChanged(),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
 
   public async loadStats(): Promise<AdminStats> {
     const polls = collection(this.fs, 'polls');
