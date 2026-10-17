@@ -68,10 +68,15 @@ export function encodeCells(
 }
 
 /**
- * How far beyond its cells a colony is drawn: the blur spreads it by two
- * cells, the slope of the slime reads one more.
+ * How far beyond its cells each pass of a colony runs. The colony is drawn
+ * 3 cells out - the blur spreads it by two, the slope of the slime reads one
+ * more. Each pass reads past its own box, so the one before it has to cover
+ * that too: the slime reads the vertical blur 1 cell further out, the
+ * vertical blur reads the horizontal one 2 rows further out. A pass that
+ * read past what was blurred this frame would pick up stale density - the
+ * other colony's, where the two meet.
  */
-const COLONY_MARGIN = 3;
+const MARGIN = { colony: 3, verticalBlur: 4, horizontalBlur: 6 } as const;
 
 interface Programs {
   floor: Program;
@@ -273,10 +278,6 @@ export class GlArenaPainter implements ArenaPainter {
     }
     // Only the box around the colony is blurred and drawn - the rest of the
     // arena would be fragments the GPU works on to discard them.
-    const x0 = Math.max(0, bounds.minX - COLONY_MARGIN);
-    const y0 = Math.max(0, bounds.minY - COLONY_MARGIN);
-    const x1 = Math.min(this.width, bounds.maxX + 1 + COLONY_MARGIN);
-    const y1 = Math.min(this.height, bounds.maxY + 1 + COLONY_MARGIN);
     gl.enable(gl.SCISSOR_TEST);
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, cells);
@@ -296,10 +297,10 @@ export class GlArenaPainter implements ArenaPainter {
     if (slime) {
       gl.disable(gl.BLEND);
       gl.viewport(0, 0, this.width, this.height);
-      // The blur targets hold arena row y in their row y.
-      gl.scissor(x0, y0, x1 - x0, y1 - y0);
       this.useFullscreen(programs.blur);
+      this.scissorCells(bounds, MARGIN.horizontalBlur);
       this.blurPass(cells, blur[0], 1, 0);
+      this.scissorCells(bounds, MARGIN.verticalBlur);
       this.blurPass(blur[0].texture, blur[1], 0, 1);
       gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
       gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
@@ -307,6 +308,7 @@ export class GlArenaPainter implements ArenaPainter {
     }
 
     // The frame's row 0 is the bottom of the arena.
+    const [x0, y0, x1, y1] = this.box(bounds, MARGIN.colony);
     const scale = this.canvasWidth / this.width;
     gl.scissor(
       x0 * scale,
@@ -330,6 +332,22 @@ export class GlArenaPainter implements ArenaPainter {
     gl.uniform1f(program.uniforms['uShimmer'], boosted ? frame.timeSec : -1);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.SCISSOR_TEST);
+  }
+
+  /** The colony's cells grown by a margin, clamped to the arena. */
+  private box(bounds: CellBounds, margin: number): number[] {
+    return [
+      Math.max(0, bounds.minX - margin),
+      Math.max(0, bounds.minY - margin),
+      Math.min(this.width, bounds.maxX + 1 + margin),
+      Math.min(this.height, bounds.maxY + 1 + margin),
+    ];
+  }
+
+  /** Scissors a pass on the arena grid - its row y is arena row y. */
+  private scissorCells(bounds: CellBounds, margin: number): void {
+    const [x0, y0, x1, y1] = this.box(bounds, margin);
+    this.gl.scissor(x0, y0, x1 - x0, y1 - y0);
   }
 
   private blurPass(
