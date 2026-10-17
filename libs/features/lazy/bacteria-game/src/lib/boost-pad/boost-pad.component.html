@@ -1,0 +1,33 @@
+<div class="pad">
+  <span class="button-with-ring">
+    <mat-progress-spinner
+      class="charge"
+      mode="determinate"
+      [value]="colony().boostCharge * 100"
+      [diameter]="ringSize"
+      [strokeWidth]="4"
+      aria-label="Boost recharge"
+    />
+    <button
+      mat-fab
+      type="button"
+      class="boost-fab"
+      [attr.aria-label]="'Boost ' + colony().name"
+      [disabled]="disabled() || !colony().boostReady"
+      (click)="boost.emit()"
+    >
+      <mat-icon>bolt</mat-icon>
+      <span class="boost-state">{{ boostLabel(colony()) }}</span>
+    </button>
+  </span>
+  <span class="pad-name">{{ colony().name }}</span>
+  <span class="pad-stats"
+    >{{ colony().bacterias }} · ⚡ {{ colony().energy }}%</span
+  >
+  <mat-progress-bar
+    class="share"
+    mode="determinate"
+    [value]="colony().share"
+    aria-label="Share of all bacteria"
+  />
+</div>

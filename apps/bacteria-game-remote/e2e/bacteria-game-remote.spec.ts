@@ -1,15 +1,34 @@
 import { expect, test } from '@playwright/test';
 import { BacteriaGamePo } from './pos/bacteria-game.po';
 
-test('should display welcome message, game and controls', async ({ page }) => {
+test('should fill the screen with the game and its controls', async ({
+  page,
+}) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
 
-  await expect(po.mainTitle).toContainText('Bacteria War Game');
+  await expect(po.stage).toBeVisible();
   await expect(po.playArea).toBeVisible();
   await expect(po.playCta).toBeVisible();
   await expect(po.resetCta).toBeVisible();
+  await expect(po.leaveFullscreenCta).toBeVisible();
+  await expect(po.intro).toHaveCount(0);
+});
+
+test('should return to the page on request', async ({ page }) => {
+  const po = new BacteriaGamePo(page);
+  await po.goto();
+
+  await po.leaveFullscreenCta.click();
+
+  await expect(po.stage).toHaveCount(0);
+  await expect(po.mainTitle).toContainText('Bacteria War Game');
+  await expect(po.intro).toBeVisible();
   await expect(po.fullscreenCta).toBeVisible();
+
+  await po.fullscreenCta.click();
+
+  await expect(po.stage).toBeVisible();
 });
 
 test('should let the player pick another level', async ({ page }) => {
@@ -22,14 +41,13 @@ test('should let the player pick another level', async ({ page }) => {
   await expect(po.levelDescription).toContainText('winding path');
 });
 
-test('should start against the computer with one boost button', async ({
-  page,
-}) => {
+test('should start against the computer with one seat', async ({ page }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
 
   await expect(po.difficultySelect).toBeVisible();
   await expect(po.boostCta).toHaveCount(1);
+  await expect(po.joysticks).toHaveCount(1);
   await expect(po.colonyNames).toContainText(['You', 'Computer']);
 });
 
@@ -45,9 +63,7 @@ test('should let the player pick how hard the computer plays', async ({
   await expect(po.difficultyDescription).toContainText('Reacts fast');
 });
 
-test('should offer a boost per human in the two player mode', async ({
-  page,
-}) => {
+test('should seat two players at opposite edges', async ({ page }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
 
@@ -55,7 +71,18 @@ test('should offer a boost per human in the two player mode', async ({
 
   await expect(po.difficultySelect).toHaveCount(0);
   await expect(po.boostCta).toHaveCount(2);
+  await expect(po.joysticks).toHaveCount(2);
   await expect(po.colonyNames).toContainText(['Orange', 'Blue']);
+
+  // The near seat sits below the far seat, its stick on the other side.
+  const [nearStick, farStick, nearBoost] = await Promise.all([
+    po.boxOf(po.joystick(0)),
+    po.boxOf(po.joystick(1)),
+    po.boxOf(po.boostOf(0)),
+  ]);
+  expect(nearStick.y).toBeGreaterThan(farStick.y);
+  expect(nearStick.x).toBeLessThan(farStick.x);
+  expect(nearBoost.x).toBeGreaterThan(nearStick.x);
 });
 
 test('should arm the boost once the match runs', async ({ page }) => {
@@ -82,13 +109,32 @@ test('should fire the boost with the keyboard', async ({ page }) => {
   await expect(po.boostCta).toContainText('Boosting');
 });
 
-test('should keep the level picker out of a running match', async ({
+test('should show the stick under the finger while it is pushed', async ({
   page,
 }) => {
+  const po = new BacteriaGamePo(page);
+  await po.goto();
+  await po.playCta.click();
+  await expect(po.boostCta).toBeEnabled();
+
+  await po.push(0, 30, 0);
+
+  await expect(po.heldStick(0)).toBeVisible();
+  await po.release();
+  await expect(po.heldStick(0)).toHaveCount(0);
+});
+
+test('should keep the match setup out of a running match', async ({ page }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
 
   await po.playCta.click();
 
-  await expect(po.levelSelect).toHaveAttribute('aria-disabled', 'true');
+  await expect(po.levelSelect).toHaveCount(0);
+  await expect(po.playCta).toHaveCount(0);
+
+  await po.resetCta.click();
+
+  // The reset first vaporizes the arena, which takes a few seconds.
+  await expect(po.levelSelect).toBeVisible({ timeout: 30_000 });
 });

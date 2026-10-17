@@ -7,6 +7,7 @@ import {
   GameState,
   GameStateState,
   GameStateStore,
+  isMatchOn,
 } from './game.states';
 import { getLevel, Level } from './levels';
 
@@ -61,6 +62,13 @@ export class GameStateQuery extends Query<GameStateState> {
 
   selectWinnerId() {
     return this.select((store) => store.winner);
+  }
+
+  /** Emits true while a match is on, paused or not. */
+  selectIsMatchOn(): Observable<boolean> {
+    return this.select((store) => isMatchOn(store.currentState)).pipe(
+      distinctUntilChanged()
+    );
   }
 
   /** Emits true while the match is paused. */

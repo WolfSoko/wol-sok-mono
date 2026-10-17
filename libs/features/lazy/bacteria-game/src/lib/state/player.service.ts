@@ -10,10 +10,21 @@ import {
 import { GameBalance, gameBalance } from './game-balance';
 import { GameStateQuery } from './game-state.query';
 import { GameState } from './game.states';
-import { clamp, Point } from './geometry';
+import {
+  clamp,
+  clampLength,
+  isSteering,
+  Point,
+  SteeringVector,
+} from './geometry';
 import { DEFAULT_CROSSHAIR_SPEED } from './levels';
 import { GameMap, getMap } from './maps';
-import { createPlayer, Player, PlayerColorArray } from './player.model';
+import {
+  createPlayer,
+  isBoostReady,
+  Player,
+  PlayerColorArray,
+} from './player.model';
 import { PlayerQuery } from './player.query';
 import { PlayerStore } from './player.store';
 
@@ -27,17 +38,13 @@ export interface PlayerSpawn {
   isBot: boolean;
 }
 
-/** A direction a key set asks for, each axis -1, 0 or 1. */
-interface Direction {
-  x: number;
-  y: number;
-}
-
 /**
  * The keys that steer a crosshair, one set per human player: WASD for the
- * first one, the arrow keys for the second one.
+ * first one, the arrow keys for the second one. Each key asks for one axis
+ * at -1 or 1; the keys and the joystick of a player are summed, and
+ * `movePlayer` caps the sum at unit length.
  */
-const KEY_SETS: readonly Record<string, Direction>[] = [
+const KEY_SETS: readonly Record<string, SteeringVector>[] = [
   {
     w: { x: 0, y: -1 },
     s: { x: 0, y: 1 },
@@ -62,6 +69,8 @@ export class PlayerService {
   private balance: GameBalance = gameBalance;
   /** Arena position a player is currently dragging their crosshair towards. */
   private dragTargets = new Map<number, Point>();
+  /** Where each player's joystick is pushed right now, absent while at rest. */
+  private steering = new Map<number, SteeringVector>();
   /** The computer opponents, one per bot player. */
   private bots = new Map<number, BotController>();
 
@@ -118,6 +127,7 @@ export class PlayerService {
     });
     this.setActive(0);
     this.dragTargets.clear();
+    this.steering.clear();
     this.balance = balance;
     this.simulation = new BacteriaSimulation(balance);
     this.simulation.setMap(map);
@@ -155,6 +165,21 @@ export class PlayerService {
    */
   public setDragTarget(playerId: number, x: number, y: number): void {
     this.dragTargets.set(playerId, { x, y });
+  }
+
+  /**
+   * Pushes a player's joystick, for the on-screen sticks of the touch layout.
+   *
+   * The stick works like a held key: the crosshair keeps moving at up to
+   * `maxSpeed` in that direction - slower for a gentle push - until the stick
+   * is released with the zero vector. Like a key it wins over a drag target.
+   */
+  public setSteering(playerId: number, vector: SteeringVector): void {
+    if (isSteering(vector)) {
+      this.steering.set(playerId, vector);
+    } else {
+      this.steering.delete(playerId);
+    }
   }
 
   /**
@@ -258,11 +283,13 @@ export class PlayerService {
 
   @transaction()
   /**
-   * Moves the crosshairs according to the keys that are currently held.
+   * Moves the crosshairs according to the keys that are currently held and
+   * the joysticks that are pushed.
    *
    * Each key set belongs to one human player, in order. With a single human
    * every set steers that one crosshair, so against the computer WASD and the
-   * arrow keys both work - and the keys never touch a bot's crosshair.
+   * arrow keys both work - and the keys never touch a bot's crosshair. A
+   * joystick is bound to its player directly.
    */
   private updatePlayerPos(keysPressed: string[], deltaTimeInSec: number): void {
     if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
@@ -288,29 +315,31 @@ export class PlayerService {
     for (const player of this.playerQuery.getAll()) {
       const index = humans.indexOf(player);
       const direction = index >= 0 ? directions[index] : { x: 0, y: 0 };
-      this.movePlayer(
-        player.id,
-        Math.sign(direction.x),
-        Math.sign(direction.y),
-        deltaTimeInSec
-      );
+      const stick = this.steering.get(player.id);
+      if (stick != null) {
+        direction.x += stick.x;
+        direction.y += stick.y;
+      }
+      this.movePlayer(player.id, direction, deltaTimeInSec);
     }
   }
 
   /**
    * Moves one crosshair, kept inside the arena.
    *
-   * A held key wins over a drag target - pressing a key drops the target, so a
+   * The direction is capped at unit length, so a diagonal - two keys at once,
+   * or a stick pulled to the rim - is no faster than a straight line. A held
+   * key or a pushed stick wins over a drag target - it drops the target, so a
    * stale one cannot keep pulling the crosshair back.
    */
   private movePlayer(
     id: ID,
-    xDir: number,
-    yDir: number,
+    direction: SteeringVector,
     deltaTimeInSec: number
   ): void {
     const playerId = Number(id);
-    if (xDir !== 0 || yDir !== 0) {
+    const { x: xDir, y: yDir } = clampLength(direction, 1);
+    if (isSteering(direction)) {
       this.dragTargets.delete(playerId);
     }
     const target = this.dragTargets.get(playerId);
@@ -337,9 +366,4 @@ export class PlayerService {
       };
     });
   }
-}
-
-/** True when the player can fire a boost right now. */
-export function isBoostReady(player: Player): boolean {
-  return player.boostActiveSec <= 0 && player.boostCooldownSec <= 0;
 }

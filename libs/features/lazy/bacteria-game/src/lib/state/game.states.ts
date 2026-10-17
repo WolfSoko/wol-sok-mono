@@ -20,6 +20,11 @@ export enum GameState {
   START,
 }
 
+/** True while a match is on - a paused match is still a match. */
+export function isMatchOn(state: GameState): boolean {
+  return state === GameState.RUNNING || state === GameState.PAUSED;
+}
+
 export interface GameStateState {
   currentState: GameState;
   timePassed: number;

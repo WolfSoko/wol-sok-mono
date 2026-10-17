@@ -15,6 +15,37 @@ one screen (and keyboard) with a second human.
 - **2 Players** - Orange on WASD, Blue on the arrow keys, or one finger each on
   a touchscreen.
 
+## Touch layout
+
+The page opens in fullscreen: the
+[`BacteriaGameComponent`](./src/lib/bacteria-game.component.ts) lays its stage
+over the whole viewport from the first render and asks the browser's
+Fullscreen API for the rest, where a browser offers it (iPhones do not) - right
+away when a click brought the player here, otherwise with the next gesture the
+game owns (Start, resume, F or the button), because browsers refuse the
+request without a gesture. The stage is a grid
+with the arena in the middle and one _seat_ per human player, made of a
+[joystick zone](./src/lib/joystick/joystick.component.ts) on one side of the
+arena and a [boost pad](./src/lib/boost-pad/boost-pad.component.ts) on the
+other.
+
+Seat 0 sits along the near edge of the phone, seat 1 along the far edge with
+its controls turned by 180°, so two people play with the phone lying flat
+between them and each sees their own controls the right way up. The joystick
+floats: wherever the finger lands becomes the centre of the stick, and the
+crosshair keeps moving in the direction it is pushed - slower for a gentle
+push - until it is released. Dragging a crosshair across the arena still works
+too. In portrait the seats turn into bands along the short edges.
+
+Entering the native fullscreen also locks a phone into landscape. Escape, the
+back gesture or the button in the bar return to the page, where the keyboard
+instructions live.
+
+The host application has to provide the CDK's `FullscreenOverlayContainer` as
+its `OverlayContainer` (both apps in this workspace do): the browser paints
+only the element that fills the screen, so a dialog or a select panel rendered
+on the body would be invisible while the arena is in native fullscreen.
+
 ## Boost
 
 Every player has a boost (Space for the first player, Enter for the second, or

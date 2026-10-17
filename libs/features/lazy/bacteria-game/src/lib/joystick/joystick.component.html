@@ -1,0 +1,16 @@
+<div
+  class="base"
+  [class.idle]="origin() === null"
+  [style.left.px]="origin()?.x"
+  [style.top.px]="origin()?.y"
+  [style.width.px]="radius * 2"
+  [style.height.px]="radius * 2"
+>
+  <div
+    class="knob"
+    [style.transform]="'translate(' + knob().x + 'px, ' + knob().y + 'px)'"
+  ></div>
+</div>
+@if (origin() === null) {
+  <span class="label">{{ label() }}</span>
+}

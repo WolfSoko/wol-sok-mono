@@ -1,0 +1,85 @@
+@use '../colony';
+
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+.pad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  text-align: center;
+}
+
+// The far player looks at the phone from the other side.
+:host(.flipped) .pad {
+  transform: rotate(180deg);
+}
+
+// The button sits in the middle of its recharge ring.
+.button-with-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.charge {
+  --mat-progress-spinner-active-indicator-color: var(--seat-color);
+}
+
+.boost-fab {
+  --mat-fab-container-color: var(--seat-color);
+  --mat-fab-foreground-color: #fff;
+  --mat-fab-container-shape: 50%;
+
+  position: absolute;
+  display: inline-flex;
+  flex-direction: column;
+  width: 88px;
+  height: 88px;
+
+  mat-icon {
+    width: 2rem;
+    height: 2rem;
+    font-size: 2rem;
+  }
+
+  .boost-state {
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+:host(.boosting) .boost-fab {
+  animation: colony.$pulse;
+}
+
+.pad-name {
+  font-weight: 600;
+  color: var(--seat-color);
+}
+
+.pad-stats {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.share {
+  --mat-progress-bar-active-indicator-color: var(--seat-color);
+  --mat-progress-bar-track-color: rgb(255 255 255 / 25%);
+  --mat-progress-bar-track-height: 4px;
+  --mat-progress-bar-active-indicator-height: 4px;
+
+  width: 100%;
+  max-width: 6rem;
+}
+
+@include colony.pulse-keyframes;

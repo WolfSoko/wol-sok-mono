@@ -31,6 +31,11 @@ export interface Player {
   averageEnergy: number;
 }
 
+/** True when the player can fire a boost right now. */
+export function isBoostReady(player: Player): boolean {
+  return player.boostActiveSec <= 0 && player.boostCooldownSec <= 0;
+}
+
 export interface Bacteria {
   x: number;
   y: number;

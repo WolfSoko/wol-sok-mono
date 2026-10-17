@@ -1,3 +1,5 @@
+@use 'colony';
+
 .toolbar-spacer {
   flex: 1 1 auto;
 }
@@ -8,10 +10,6 @@
   align-items: flex-start;
   gap: 0.5rem 1.5rem;
   margin-bottom: 0.5rem;
-
-  .game-time {
-    font-variant-numeric: tabular-nums;
-  }
 
   .colony {
     display: grid;
@@ -24,19 +22,13 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    font-weight: 600;
   }
 
   .boost-icon {
     font-size: 1rem;
     width: 1rem;
     height: 1rem;
-    animation: boost-pulse 0.6s ease-in-out infinite alternate;
-  }
-
-  .colony-count,
-  .colony-detail {
-    font-variant-numeric: tabular-nums;
+    animation: colony.$pulse;
   }
 
   .colony-detail {
@@ -58,11 +50,28 @@
   }
 }
 
-.canvas-container {
+.colony-name {
+  font-weight: 600;
+}
+
+.game-time,
+.colony-count,
+.colony-detail {
+  font-variant-numeric: tabular-nums;
+}
+
+.stage {
   position: relative;
 
+  .center {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+
   .thanos-container {
-    height: 100%;
+    position: relative;
   }
 
   canvas {
@@ -73,37 +82,57 @@
     touch-action: none;
   }
 
-  // The element that is handed to the fullscreen API. The class is driven by
-  // the fullscreenchange event rather than by the `:fullscreen` pseudo class,
-  // which browsers that only know the prefixed one would not match.
+  // The touch layout: the stage covers the viewport and is handed to the
+  // fullscreen API on top. Three columns - a seat column each side of the
+  // arena - and two rows, so the far player's controls sit along the far edge.
   &.fullscreen {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
+    --seat: clamp(5.5rem, 15vw, 10rem);
+    --boost: clamp(4.5rem, 18vmin, 6.5rem);
+
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: grid;
+    grid-template-columns: var(--seat) minmax(0, 1fr) var(--seat);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'boost-1 center stick-1'
+      'stick-0 center boost-0';
+    color: #fff;
     background: #000;
+    touch-action: none;
+    overscroll-behavior: none;
+    user-select: none;
+
+    &.solo {
+      grid-template-rows: minmax(0, 1fr);
+      grid-template-areas: 'stick-0 center boost-0';
+    }
+
+    .center {
+      grid-area: center;
+    }
 
     .thanos-container {
-      position: relative;
       display: flex;
+      flex: 1 1 auto;
       align-items: center;
       justify-content: center;
-      width: 100%;
-      height: 100%;
+      min-height: 0;
     }
 
     // Out of the flex flow, otherwise the badge sits next to the arena and
     // pushes it off centre.
     ws-shared-ui-show-fps {
       position: absolute;
-      right: 0.75rem;
-      bottom: 0.5rem;
-      color: #fff;
+      right: 0.5rem;
+      bottom: 0.25rem;
+      font-size: 0.7rem;
+      opacity: 0.6;
     }
 
-    // The size comes from the component, which fits the arena into the screen
-    // without letterboxing inside the element - see `updateCanvasSize()`.
+    // The size comes from the component, which fits the arena into the box
+    // without letterboxing inside the element - see `canvasSize`.
     canvas {
       width: auto;
       max-width: 100%;
@@ -112,35 +141,100 @@
   }
 }
 
-.arena-hud {
-  position: absolute;
-  inset: 0 0 auto;
-  z-index: 1;
+// Upright phone, or a tablet held that way: the seats become bands along the
+// short edges, which is where the two players sit then.
+@media (orientation: portrait) {
+  .stage.fullscreen {
+    --seat: clamp(5.5rem, 20vh, 9rem);
+
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: var(--seat) minmax(0, 1fr) var(--seat);
+    grid-template-areas:
+      'boost-1 stick-1'
+      'center center'
+      'stick-0 boost-0';
+
+    &.solo {
+      grid-template-rows: minmax(0, 1fr) var(--seat);
+      grid-template-areas:
+        'center center'
+        'stick-0 boost-0';
+    }
+  }
+}
+
+// A seat part may shrink with its grid track instead of overflowing it.
+.seat {
+  min-width: 0;
+  min-height: 0;
+}
+
+.stage-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 1.5rem;
-  padding: 0.5rem 1rem;
-  color: #fff;
-  background: rgb(0 0 0 / 55%);
-  // The arena underneath has to stay draggable - only the buttons take input.
-  pointer-events: none;
+  gap: 0.25rem 0.75rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+  background: rgb(255 255 255 / 6%);
 
   .hud-level {
     font-weight: 600;
   }
 
+  .hud-colonies {
+    display: inline-flex;
+    gap: 0.75rem;
+  }
+
+  .hud-colony {
+    display: inline-flex;
+    gap: 0.3rem;
+
+    &.boosting {
+      animation: colony.$pulse;
+    }
+  }
+
   .hud-actions {
+    display: inline-flex;
+    align-items: center;
     margin-left: auto;
+  }
+}
+
+// Match setup before a match and the pause notice during one, laid over the
+// arena. Only the card takes input, the seats around it stay usable.
+.stage-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  pointer-events: none;
+
+  .panel-card {
+    width: min(100%, 36rem);
+    max-height: 100%;
+    overflow: auto;
     pointer-events: auto;
+    // Touch targets in the panel must not pan the page either.
+    touch-action: manipulation;
   }
 
-  .statistics {
-    margin-bottom: 0;
+  .panel-hint {
+    margin: 0;
+    opacity: 0.8;
   }
 
-  .colony-bar {
-    background: rgb(255 255 255 / 25%);
+  .paused {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
   }
 }
 
@@ -158,26 +252,8 @@ mat-card-actions {
   font-variant-numeric: tabular-nums;
 
   &.boosting {
-    animation: boost-pulse 0.6s ease-in-out infinite alternate;
+    animation: colony.$pulse;
   }
 }
 
-.arena-hud .hud-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  .boost-button {
-    color: #fff;
-  }
-}
-
-@keyframes boost-pulse {
-  from {
-    opacity: 0.55;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
+@include colony.pulse-keyframes;
