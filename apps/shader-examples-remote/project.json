@@ -5,6 +5,9 @@
   "prefix": "app",
   "sourceRoot": "apps/shader-examples-remote/src",
   "tags": ["app", "type:remote", "scope:shader-examples"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals", "federation"]
+  },
   "targets": {
     "esbuild": {
       "executor": "@angular/build:application",

@@ -5,6 +5,9 @@
   "sourceRoot": "apps/bacteria-game-remote/src",
   "prefix": "wolsok",
   "tags": ["app", "type:remote"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals", "federation"]
+  },
   "targets": {
     "esbuild": {
       "executor": "@angular/build:application",

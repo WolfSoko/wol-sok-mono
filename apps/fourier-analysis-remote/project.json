@@ -5,6 +5,9 @@
   "sourceRoot": "apps/fourier-analysis-remote/src",
   "prefix": "wolsok",
   "tags": ["app", "type:remote"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals", "federation"]
+  },
   "targets": {
     "esbuild": {
       "dependsOn": ["^build"],

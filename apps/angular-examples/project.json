@@ -5,6 +5,9 @@
   "sourceRoot": "apps/angular-examples/src",
   "prefix": "app",
   "tags": ["app", "type:host"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals", "federation"]
+  },
   "targets": {
     "generate-version": {
       "executor": "nx:run-commands",
