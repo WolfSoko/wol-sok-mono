@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.3.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.3.1...v74.3.2) (2026-10-17)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡️ run the colony war on the GPU ([#2472](https://github.com/WolfSoko/wol-sok-mono/issues/2472)) ([8ea555b](https://github.com/WolfSoko/wol-sok-mono/commit/8ea555bcb4cca40012863ede5d7a0bf8028edb89))
+
 ## [74.3.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.3.0...v74.3.1) (2026-10-17)
 
 ### Performance
