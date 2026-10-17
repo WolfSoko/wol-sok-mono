@@ -1,6 +1,15 @@
-import { GameBalance, gameBalance } from './game-balance';
-import { clamp } from './geometry';
-import { DynamicWall, GameMap, getMap, Rect } from './maps';
+import type { ColonyLayer } from '../arena/colony-renderer';
+import { colonyCapacity, GameBalance, gameBalance } from './game-balance';
+import { clamp, Point } from './geometry';
+import { NutrientPellets } from './nutrient-pellets';
+import { ColonySummary, Simulation } from './simulation';
+import {
+  compareDynamicWalls,
+  DynamicWall,
+  GameMap,
+  getMap,
+  stampRect,
+} from './maps';
 import {
   Bacteria,
   createBacteriaBlob,
@@ -58,6 +67,28 @@ export interface StepEvents {
 }
 
 /** A frame in which nothing happened. */
+/**
+ * How a colony heads for its crosshair this frame: how keen it is to hunt
+ * and how many cells it travels - null while it aims at nothing.
+ */
+export function colonyIntent(
+  target: Player | null | undefined,
+  balance: GameBalance,
+  deltaTimeSec: number
+): { aggression: number; steps: number } | null {
+  if (target == null || isNaN(target.x) || isNaN(target.y)) {
+    return null;
+  }
+  const boosted = isBoosted(target);
+  const speed = boosted
+    ? target.maxSpeed * balance.boostSpeedFactor
+    : target.maxSpeed;
+  return {
+    aggression: boosted ? balance.boostAggression : balance.aggression,
+    steps: Math.max(1, Math.round(speed * deltaTimeSec)),
+  };
+}
+
 export function noEvents(): StepEvents {
   return {
     captures: 0,
@@ -105,7 +136,8 @@ const NEIGHBOURS: readonly [number, number][] = [
  * 4. division - well fed bacteria clone themselves into free space
  * 5. movement - follow your player, but hunt nearby enemies
  */
-export class BacteriaSimulation {
+export class BacteriaSimulation implements Simulation {
+  public readonly kind = 'cpu';
   private readonly balance: GameBalance;
   private readonly random: () => number;
 
@@ -136,8 +168,9 @@ export class BacteriaSimulation {
   private huntFieldY = new Float32Array(0);
 
   private colonies: Colony[] = [];
-  private nutrients: Nutrient[] = [];
-  private respawnTimers: number[] = [];
+  /** The summaries as of the last step, built when first asked for. */
+  private colonySummaries: ColonySummary[] | null = null;
+  private readonly pellets: NutrientPellets;
   /** Wall layout the match is fought on. */
   private map: GameMap = getMap('corridors');
   /** Match time, which drives the gates and the sliding walls. */
@@ -153,6 +186,7 @@ export class BacteriaSimulation {
   ) {
     this.balance = balance;
     this.random = random;
+    this.pellets = new NutrientPellets(balance, random);
   }
 
   /**
@@ -169,9 +203,13 @@ export class BacteriaSimulation {
     this.reset();
   }
 
+  /** True for a cell inside the arena that no wall covers. */
+  private readonly isOpenCell = (x: number, y: number): boolean =>
+    this.baseOwner[y * this.width + x] === EMPTY_CELL;
+
   /** The nutrient pellets currently on the map, for rendering. */
   public getNutrients(): Nutrient[] {
-    return this.nutrients;
+    return this.pellets.nutrients;
   }
 
   /** The moving walls and gates as they stand right now, for rendering. */
@@ -182,6 +220,68 @@ export class BacteriaSimulation {
   /** What happened during the last frame. */
   public getEvents(): StepEvents {
     return this.events;
+  }
+
+  /** Count, energy, score and centre of mass of every colony. */
+  public summaries(): readonly ColonySummary[] {
+    this.colonySummaries ??= this.summarize();
+    return this.colonySummaries;
+  }
+
+  private summarize(): ColonySummary[] {
+    return this.colonies.map((colony) => {
+      let sumX = 0;
+      let sumY = 0;
+      for (const bacterium of colony.bacterias) {
+        sumX += bacterium.x;
+        sumY += bacterium.y;
+      }
+      const count = colony.bacterias.length;
+      return {
+        playerId: colony.playerId,
+        color: colony.color,
+        count,
+        captured: colony.captured,
+        lost: colony.lost,
+        totalEnergy: colony.totalEnergy,
+        center: count > 0 ? { x: sumX / count, y: sumY / count } : null,
+      };
+    });
+  }
+
+  public colonyLayers(boosted: ReadonlySet<number>): ColonyLayer[] {
+    return this.colonies.map((colony) => ({
+      kind: 'cells',
+      color: colony.color,
+      bacterias: colony.bacterias,
+      boosted: boosted.has(colony.playerId),
+    }));
+  }
+
+  /** The bacterium of another colony closest to a point, null without one. */
+  public nearestEnemy(playerId: number, from: Point): Point | null {
+    let nearest: Point | null = null;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    for (const colony of this.colonies) {
+      if (colony.playerId === playerId) {
+        continue;
+      }
+      for (const bacterium of colony.bacterias) {
+        const dx = bacterium.x - from.x;
+        const dy = bacterium.y - from.y;
+        const squared = dx * dx + dy * dy;
+        if (squared < nearestDistance) {
+          nearestDistance = squared;
+          nearest = { x: bacterium.x, y: bacterium.y };
+        }
+      }
+    }
+    return nearest;
+  }
+
+  /** Nothing to free - everything lives on the JavaScript heap. */
+  public dispose(): void {
+    // The arrays go with the instance.
   }
 
   /** The live colonies, including their mutable bacteria, for rendering. */
@@ -199,6 +299,7 @@ export class BacteriaSimulation {
       lost: 0,
       totalEnergy: 0,
     }));
+    this.colonySummaries = null;
     for (const colony of this.colonies) {
       colony.totalEnergy = colony.bacterias.length * this.balance.maxEnergy;
     }
@@ -247,7 +348,7 @@ export class BacteriaSimulation {
     }
     this.staticOwner.fill(EMPTY_CELL);
     for (const wall of this.map.createWalls(this.width, this.height)) {
-      this.stampRect(this.staticOwner, wall);
+      stampRect(this.staticOwner, this.width, this.height, wall, WALL_CELL);
     }
     this.dynamicWalls =
       this.map.createDynamicWalls?.(this.width, this.height, this.elapsedSec) ??
@@ -260,17 +361,7 @@ export class BacteriaSimulation {
     this.baseOwner.set(this.staticOwner);
     for (const wall of this.dynamicWalls) {
       if (wall.solid) {
-        this.stampRect(this.baseOwner, wall);
-      }
-    }
-  }
-
-  private stampRect(grid: Int32Array, rect: Rect): void {
-    const xMax = Math.min(rect.x + rect.width, this.width);
-    const yMax = Math.min(rect.y + rect.height, this.height);
-    for (let y = Math.max(rect.y, 0); y < yMax; y++) {
-      for (let x = Math.max(rect.x, 0); x < xMax; x++) {
-        grid[y * this.width + x] = WALL_CELL;
+        stampRect(this.baseOwner, this.width, this.height, wall, WALL_CELL);
       }
     }
   }
@@ -291,27 +382,9 @@ export class BacteriaSimulation {
       this.elapsedSec
     );
     this.dynamicWalls = next;
-
-    let changed = next.length !== previous.length;
-    for (let i = 0; i < next.length; i++) {
-      const before = previous[i];
-      const after = next[i];
-      if (before == null) {
-        continue;
-      }
-      if (after.solid && !before.solid) {
-        this.events.gatesClosed++;
-      }
-      if (after.warning > 0 && before.warning === 0) {
-        this.events.gatesWarned++;
-      }
-      changed ||=
-        after.solid !== before.solid ||
-        after.x !== before.x ||
-        after.y !== before.y ||
-        after.width !== before.width ||
-        after.height !== before.height;
-    }
+    const { changed, closed, warned } = compareDynamicWalls(previous, next);
+    this.events.gatesClosed += closed;
+    this.events.gatesWarned += warned;
     if (!changed) {
       return;
     }
@@ -395,19 +468,11 @@ export class BacteriaSimulation {
 
   /** Drops all nutrients and respawns a fresh set. */
   public reset(): void {
-    this.nutrients = [];
-    this.respawnTimers = [];
+    this.pellets.reset(this.width, this.height, this.isOpenCell);
     if (this.width === 0 || this.height === 0) {
       return;
     }
     this.owner.set(this.baseOwner);
-    for (let i = 0; i < this.balance.nutrientCount; i++) {
-      this.nutrients.push({ x: 0, y: 0, amount: 0 });
-      this.respawnTimers.push(0);
-    }
-    for (let i = 0; i < this.nutrients.length; i += 2) {
-      this.spawnNutrientPair(i);
-    }
   }
 
   /**
@@ -418,6 +483,7 @@ export class BacteriaSimulation {
     // Reset before the guard: a frame that does nothing must not report the
     // last frame's events again.
     this.events = noEvents();
+    this.colonySummaries = null;
     if (this.colonies.length === 0 || this.width === 0 || deltaTimeSec <= 0) {
       return;
     }
@@ -563,24 +629,14 @@ export class BacteriaSimulation {
    */
   private updateNutrients(deltaTimeSec: number): void {
     this.nutrientBonus.fill(0);
-    const { nutrientRadius, nutrientDrainPerSec, nutrientRespawnDelaySec } =
-      this.balance;
+    const { nutrientRadius, nutrientDrainPerSec } = this.balance;
     const gain = nutrientDrainPerSec * deltaTimeSec;
+    const nutrients = this.pellets.nutrients;
 
-    for (let n = 0; n < this.nutrients.length; n++) {
-      const nutrient = this.nutrients[n];
+    for (let n = 0; n < nutrients.length; n++) {
+      const nutrient = nutrients[n];
       if (nutrient.amount <= 0) {
-        this.respawnTimers[n] -= deltaTimeSec;
-        // Respawning moves both halves of the pair, so wait until the partner
-        // is empty too - otherwise a pellet someone is still eating is yanked
-        // away and refilled.
-        const partner = this.nutrients[n ^ 1];
-        if (
-          this.respawnTimers[n] <= 0 &&
-          (partner == null || partner.amount <= 0)
-        ) {
-          this.spawnNutrientPair(n - (n % 2));
-        }
+        this.pellets.tickEmpty(n, deltaTimeSec);
         continue;
       }
 
@@ -601,13 +657,8 @@ export class BacteriaSimulation {
         }
       }
 
-      if (eaters > 0) {
-        nutrient.amount -= eaters * gain;
-        if (nutrient.amount <= 0) {
-          nutrient.amount = 0;
-          this.respawnTimers[n] = nutrientRespawnDelaySec;
-          this.events.pelletsEaten++;
-        }
+      if (this.pellets.drain(n, eaters, gain)) {
+        this.events.pelletsEaten++;
       }
     }
   }
@@ -790,24 +841,10 @@ export class BacteriaSimulation {
    * the arena reaches its carrying capacity.
    */
   private divide(colonies: Colony[], deltaTimeSec: number): void {
-    const {
-      divideEnergyThreshold,
-      divideChancePerSec,
-      parentEnergyShare,
-      maxBacteriaPerPlayer,
-      maxTotalBacteria,
-    } = this.balance;
+    const { divideEnergyThreshold, divideChancePerSec, parentEnergyShare } =
+      this.balance;
     const chance = divideChancePerSec * deltaTimeSec;
-    // Every colony gets its own share of the arena's carrying capacity. A
-    // single budget for all of them would let the bigger colony use it up and
-    // freeze the smaller one out of dividing altogether.
-    const capacity = Math.max(
-      1,
-      Math.min(
-        maxBacteriaPerPlayer,
-        Math.floor(maxTotalBacteria / Math.max(1, this.colonies.length))
-      )
-    );
+    const capacity = colonyCapacity(this.balance, this.colonies.length);
 
     for (const colony of colonies) {
       const colonyIndex = this.colonies.indexOf(colony);
@@ -871,29 +908,19 @@ export class BacteriaSimulation {
     targets: (Player | null)[],
     deltaTimeSec: number
   ): void {
-    const {
-      jitter,
-      influenceCellSize: cellSize,
-      boostSpeedFactor,
-      boostAggression,
-    } = this.balance;
+    const { jitter, influenceCellSize: cellSize } = this.balance;
     const cells = this.influenceWidth * this.influenceHeight;
 
     for (const colony of colonies) {
       const colonyIndex = this.colonies.indexOf(colony);
       const target = targets[colonyIndex];
-      if (target == null) {
+      const intent = colonyIntent(target, this.balance, deltaTimeSec);
+      if (target == null || intent == null) {
         continue;
       }
       const huntOffset = colonyIndex * cells;
-      const { x: targetX, y: targetY, maxSpeed } = target;
-      if (isNaN(targetX) || isNaN(targetY)) {
-        continue;
-      }
-      const boosted = isBoosted(target);
-      const aggression = boosted ? boostAggression : this.balance.aggression;
-      const speed = boosted ? maxSpeed * boostSpeedFactor : maxSpeed;
-      const maxStep = Math.max(1, Math.round(speed * deltaTimeSec));
+      const { x: targetX, y: targetY } = target;
+      const { aggression, steps: maxStep } = intent;
 
       for (const bacterium of colony.bacterias) {
         let dirX = targetX - bacterium.x;
@@ -1017,43 +1044,6 @@ export class BacteriaSimulation {
     bacterium.x = toX;
     bacterium.y = toY;
     return true;
-  }
-
-  /**
-   * Places a nutrient and its partner at two points that are mirrored through
-   * the centre of the arena, so both players always get the same offer.
-   */
-  private spawnNutrientPair(first: number): void {
-    const { x, y } = this.findNutrientSpot();
-    const amount = this.balance.nutrientEnergy;
-    this.nutrients[first] = { x, y, amount };
-    this.respawnTimers[first] = 0;
-
-    const partner = first + 1;
-    if (partner < this.nutrients.length) {
-      this.nutrients[partner] = {
-        x: this.width - 1 - x,
-        y: this.height - 1 - y,
-        amount,
-      };
-      this.respawnTimers[partner] = 0;
-    }
-  }
-
-  /** A random spot that is inside the arena and not inside a wall. */
-  private findNutrientSpot(): { x: number; y: number } {
-    const margin = this.balance.nutrientRadius + 2;
-    const spanX = Math.max(1, this.width - 2 * margin);
-    const spanY = Math.max(1, this.height - 2 * margin);
-    for (let attempt = 0; attempt < 40; attempt++) {
-      const x = margin + Math.floor(this.random() * spanX);
-      const y = margin + Math.floor(this.random() * spanY);
-      // The walls are point symmetric, so a free spot has a free mirror image.
-      if (this.baseOwner[y * this.width + x] === EMPTY_CELL) {
-        return { x, y };
-      }
-    }
-    return { x: margin, y: margin };
   }
 }
 

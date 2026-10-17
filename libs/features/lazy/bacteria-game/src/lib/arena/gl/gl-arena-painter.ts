@@ -1,16 +1,35 @@
 import { GameBalance } from '../../state/game-balance';
 import { Bacteria } from '../../state/player.model';
+import { CellBounds } from '../../state/geometry';
 import { ArenaFrame, ArenaPainter } from '../arena-painter';
 import { paintArenaBackground } from '../arena-renderer';
 import { ArenaTheme } from '../arena-theme';
-import { jamDrops, overcharge, strengthOf } from '../colony-renderer';
+import {
+  cellDensity,
+  ColonyLayer,
+  jamDrops,
+  overcharge,
+  StateLayer,
+  strengthOf,
+} from '../colony-renderer';
+import { CELLS_FRAGMENT } from '../../gl/simulation-shaders';
+import { GpuSimulation } from '../../gl/gpu-simulation';
 import { Motes } from '../motes';
+import {
+  bindTexture,
+  createProgram,
+  createQuad,
+  createTarget,
+  createTexture,
+  FULLSCREEN_VERTEX,
+  Program,
+  Target,
+} from '../../gl/gl-utils';
 import {
   BLIT_FRAGMENT,
   BLUR_FRAGMENT,
   COLONY_FRAGMENT,
   FLOOR_FRAGMENT,
-  FULLSCREEN_VERTEX,
   SHAPE_FRAGMENT,
   SHAPE_VERTEX,
 } from './shaders';
@@ -20,14 +39,6 @@ import {
   SHAPE_STRIDE,
   ShapeBatch,
 } from './shape-batch';
-
-/** The cells a colony covers, inclusive, in arena cells. */
-export interface CellBounds {
-  minX: number;
-  minY: number;
-  maxX: number;
-  maxY: number;
-}
 
 /**
  * Packs a colony into the cells texture, two bytes per arena cell: its
@@ -55,9 +66,7 @@ export function encodeCells(
   };
   for (const { x, y, energy } of bacterias) {
     const index = (y * width + x) * 2;
-    out[index] = Math.round(
-      255 * (0.55 + 0.45 * Math.min(1, strengthOf(energy, balance)))
-    );
+    out[index] = Math.round(255 * cellDensity(strengthOf(energy, balance)));
     out[index + 1] = Math.round(255 * overcharge(energy, balance));
     bounds.minX = Math.min(bounds.minX, x);
     bounds.minY = Math.min(bounds.minY, y);
@@ -76,7 +85,13 @@ export function encodeCells(
  * read past what was blurred this frame would pick up stale density - the
  * other colony's, where the two meet.
  */
-const MARGIN = { colony: 3, verticalBlur: 4, horizontalBlur: 6 } as const;
+const MARGIN = {
+  colony: 3,
+  verticalBlur: 4,
+  horizontalBlur: 6,
+  /** The horizontal blur reads the cells 2 columns beyond its box. */
+  cells: 8,
+} as const;
 
 interface Programs {
   floor: Program;
@@ -84,16 +99,8 @@ interface Programs {
   blur: Program;
   colony: Program;
   shape: Program;
-}
-
-interface Program {
-  program: WebGLProgram;
-  uniforms: Record<string, WebGLUniformLocation | null>;
-}
-
-interface Target {
-  texture: WebGLTexture;
-  framebuffer: WebGLFramebuffer;
+  /** A GPU colony's cells out of the simulation's state. */
+  cells: Program;
 }
 
 interface Resources {
@@ -102,7 +109,8 @@ interface Resources {
   shapes: WebGLVertexArrayObject;
   instances: WebGLBuffer;
   floor: WebGLTexture;
-  cells: WebGLTexture;
+  /** One colony's cells - uploaded from the CPU, or drawn from the GPU state. */
+  cells: Target;
   /** The two halves of the separable blur. */
   blur: [Target, Target];
   /** The frame being built - it survives into the next, for the trail. */
@@ -185,6 +193,14 @@ export class GlArenaPainter implements ArenaPainter {
     });
   }
 
+  /**
+   * A simulation that runs the war on this painter's GPU context - its
+   * state is then drawn without leaving the GPU.
+   */
+  public createSimulation(balance: GameBalance): GpuSimulation {
+    return new GpuSimulation(this.gl, balance);
+  }
+
   public setTheme(theme: ArenaTheme): void {
     if (this.theme === theme) {
       return;
@@ -216,7 +232,7 @@ export class GlArenaPainter implements ArenaPainter {
 
     // Lay the floor over the previous frame, so movement leaves a short trail.
     this.useFullscreen(programs.floor);
-    this.bindTexture(0, resources.floor, programs.floor, 'uFloor');
+    bindTexture(gl, 0, resources.floor, programs.floor.uniforms['uFloor']);
     gl.uniform2f(programs.floor.uniforms['uArena'], this.width, this.height);
     gl.uniform1f(programs.floor.uniforms['uAlpha'], frame.clear ? 1 : 0.7);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -232,7 +248,7 @@ export class GlArenaPainter implements ArenaPainter {
     this.drawShapes(this.background);
 
     for (const colony of frame.colonies) {
-      this.drawColony(frame, colony.color, colony.bacterias, colony.boosted);
+      this.drawColony(frame, colony);
     }
 
     this.foreground.clear();
@@ -247,51 +263,41 @@ export class GlArenaPainter implements ArenaPainter {
     gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
     gl.disable(gl.BLEND);
     this.useFullscreen(programs.blit);
-    this.bindTexture(0, resources.trail.texture, programs.blit, 'uImage');
+    bindTexture(
+      gl,
+      0,
+      resources.trail.texture,
+      programs.blit.uniforms['uImage']
+    );
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
   /**
-   * One colony: its cells go up as a texture, are blurred on the arena grid
-   * for the slime look, and are drawn over the frame in a single pass.
+   * One colony: its cells - uploaded from the CPU, or drawn straight from the
+   * GPU simulation's state - are blurred on the arena grid for the slime
+   * look, and drawn over the frame in a single pass.
    */
-  private drawColony(
-    frame: ArenaFrame,
-    color: readonly number[],
-    bacterias: readonly Bacteria[],
-    boosted: boolean
-  ): void {
+  private drawColony(frame: ArenaFrame, layer: ColonyLayer): void {
     const gl = this.gl;
     const resources = this.resources;
     if (resources == null) {
       return;
     }
     const { programs, blur, cells } = resources;
-    const bounds = encodeCells(
-      this.cellBytes,
-      this.width,
-      bacterias,
-      frame.balance
-    );
+    const { color, boosted } = layer;
+    const bounds =
+      layer.kind === 'cells'
+        ? this.uploadCells(layer.bacterias, frame.balance)
+        : layer.bounds;
     if (bounds == null) {
       return;
     }
     // Only the box around the colony is blurred and drawn - the rest of the
     // arena would be fragments the GPU works on to discard them.
     gl.enable(gl.SCISSOR_TEST);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, cells);
-    gl.texSubImage2D(
-      gl.TEXTURE_2D,
-      0,
-      0,
-      0,
-      this.width,
-      this.height,
-      gl.RG,
-      gl.UNSIGNED_BYTE,
-      this.cellBytes
-    );
+    if (layer.kind === 'state') {
+      this.drawCellsFromState(layer, bounds, frame.balance);
+    }
 
     const slime = frame.look === 'slime';
     if (slime) {
@@ -299,7 +305,7 @@ export class GlArenaPainter implements ArenaPainter {
       gl.viewport(0, 0, this.width, this.height);
       this.useFullscreen(programs.blur);
       this.scissorCells(bounds, MARGIN.horizontalBlur);
-      this.blurPass(cells, blur[0], 1, 0);
+      this.blurPass(cells.texture, blur[0], 1, 0);
       this.scissorCells(bounds, MARGIN.verticalBlur);
       this.blurPass(blur[0].texture, blur[1], 0, 1);
       gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
@@ -318,8 +324,8 @@ export class GlArenaPainter implements ArenaPainter {
     );
     const program = programs.colony;
     this.useFullscreen(program);
-    this.bindTexture(0, blur[1].texture, program, 'uDensity');
-    this.bindTexture(1, cells, program, 'uCells');
+    bindTexture(gl, 0, blur[1].texture, program.uniforms['uDensity']);
+    bindTexture(gl, 1, cells.texture, program.uniforms['uCells']);
     gl.uniform2f(program.uniforms['uArena'], this.width, this.height);
     gl.uniform3f(
       program.uniforms['uColor'],
@@ -350,6 +356,68 @@ export class GlArenaPainter implements ArenaPainter {
     this.gl.scissor(x0, y0, x1 - x0, y1 - y0);
   }
 
+  /** Packs a CPU colony into the cells texture and uploads it. */
+  private uploadCells(
+    bacterias: readonly Bacteria[],
+    balance: GameBalance
+  ): CellBounds | null {
+    const gl = this.gl;
+    const cells = this.resources?.cells;
+    const bounds = encodeCells(this.cellBytes, this.width, bacterias, balance);
+    if (cells == null || bounds == null) {
+      return bounds;
+    }
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, cells.texture);
+    gl.texSubImage2D(
+      gl.TEXTURE_2D,
+      0,
+      0,
+      0,
+      this.width,
+      this.height,
+      gl.RG,
+      gl.UNSIGNED_BYTE,
+      this.cellBytes
+    );
+    return bounds;
+  }
+
+  /**
+   * Draws a GPU colony's cells out of the simulation's state into the cells
+   * texture - nothing crosses to the CPU. Only the box the blur reads is
+   * drawn, all of it: cells of other colonies come out empty, so nothing
+   * of them is left in there.
+   */
+  private drawCellsFromState(
+    colony: StateLayer,
+    bounds: CellBounds,
+    balance: GameBalance
+  ): void {
+    const gl = this.gl;
+    const resources = this.resources;
+    if (resources == null) {
+      return;
+    }
+    const program = resources.programs.cells;
+    gl.disable(gl.BLEND);
+    gl.viewport(0, 0, this.width, this.height);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, resources.cells.framebuffer);
+    this.scissorCells(bounds, MARGIN.cells);
+    this.useFullscreen(program);
+    bindTexture(gl, 0, colony.state, program.uniforms['uState']);
+    gl.uniform1ui(program.uniforms['uOwner'], colony.owner);
+    gl.uniform1f(program.uniforms['uMaxEnergy'], balance.maxEnergy);
+    gl.uniform1f(
+      program.uniforms['uSuperMaxEnergy'],
+      balance.superChargedMaxEnergy
+    );
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
+    gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
+    gl.enable(gl.BLEND);
+  }
+
   private blurPass(
     source: WebGLTexture,
     target: Target,
@@ -362,7 +430,7 @@ export class GlArenaPainter implements ArenaPainter {
       return;
     }
     gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
-    this.bindTexture(0, source, program, 'uSource');
+    bindTexture(gl, 0, source, program.uniforms['uSource']);
     gl.uniform2i(program.uniforms['uStep'], stepX, stepY);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
@@ -387,18 +455,6 @@ export class GlArenaPainter implements ArenaPainter {
   private useFullscreen(program: Program): void {
     this.gl.useProgram(program.program);
     this.gl.bindVertexArray(this.resources?.quad ?? null);
-  }
-
-  private bindTexture(
-    unit: number,
-    texture: WebGLTexture,
-    program: Program,
-    uniform: string
-  ): void {
-    const gl = this.gl;
-    gl.activeTexture(gl.TEXTURE0 + unit);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.uniform1i(program.uniforms[uniform], unit);
   }
 
   /** Paints a level's floor once and hands it to the GPU. */
@@ -439,17 +495,17 @@ export class GlArenaPainter implements ArenaPainter {
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
 
     const programs: Programs = {
-      floor: this.program(FULLSCREEN_VERTEX, FLOOR_FRAGMENT, [
+      floor: createProgram(gl, FULLSCREEN_VERTEX, FLOOR_FRAGMENT, [
         'uFloor',
         'uArena',
         'uAlpha',
       ]),
-      blit: this.program(FULLSCREEN_VERTEX, BLIT_FRAGMENT, ['uImage']),
-      blur: this.program(FULLSCREEN_VERTEX, BLUR_FRAGMENT, [
+      blit: createProgram(gl, FULLSCREEN_VERTEX, BLIT_FRAGMENT, ['uImage']),
+      blur: createProgram(gl, FULLSCREEN_VERTEX, BLUR_FRAGMENT, [
         'uSource',
         'uStep',
       ]),
-      colony: this.program(FULLSCREEN_VERTEX, COLONY_FRAGMENT, [
+      colony: createProgram(gl, FULLSCREEN_VERTEX, COLONY_FRAGMENT, [
         'uDensity',
         'uCells',
         'uArena',
@@ -458,21 +514,16 @@ export class GlArenaPainter implements ArenaPainter {
         'uLook',
         'uShimmer',
       ]),
-      shape: this.program(SHAPE_VERTEX, SHAPE_FRAGMENT, ['uArena']),
+      shape: createProgram(gl, SHAPE_VERTEX, SHAPE_FRAGMENT, ['uArena']),
+      cells: createProgram(gl, FULLSCREEN_VERTEX, CELLS_FRAGMENT, [
+        'uState',
+        'uOwner',
+        'uMaxEnergy',
+        'uSuperMaxEnergy',
+      ]),
     };
 
-    const corners = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, corners);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]),
-      gl.STATIC_DRAW
-    );
-
-    const quad = gl.createVertexArray();
-    gl.bindVertexArray(quad);
-    gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    const { vao: quad, corners } = createQuad(gl);
 
     const shapes = gl.createVertexArray();
     gl.bindVertexArray(shapes);
@@ -497,8 +548,14 @@ export class GlArenaPainter implements ArenaPainter {
     }
     gl.bindVertexArray(null);
 
-    const floor = this.texture(gl.RGBA8, this.width, this.height, gl.NEAREST);
-    const cells = this.texture(gl.RG8, this.width, this.height, gl.NEAREST);
+    const floor = createTexture(
+      gl,
+      gl.RGBA8,
+      this.width,
+      this.height,
+      gl.NEAREST
+    );
+    const cells = createTarget(gl, gl.RG8, this.width, this.height);
     const blur: [Target, Target] = [
       this.target(this.width, this.height, gl.LINEAR),
       this.target(this.width, this.height, gl.LINEAR),
@@ -508,77 +565,14 @@ export class GlArenaPainter implements ArenaPainter {
     return { programs, quad, shapes, instances, floor, cells, blur, trail };
   }
 
-  private texture(
-    format: number,
-    width: number,
-    height: number,
-    filter: number
-  ): WebGLTexture {
-    const gl = this.gl;
-    const texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texStorage2D(gl.TEXTURE_2D, 1, format, width, height);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    return texture;
-  }
-
+  /** A target to render into, cleared to black. */
   private target(width: number, height: number, filter: number): Target {
     const gl = this.gl;
-    const texture = this.texture(gl.RGBA8, width, height, filter);
-    const framebuffer = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.TEXTURE_2D,
-      texture,
-      0
-    );
+    const target = createTarget(gl, gl.RGBA8, width, height, filter);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    return { texture, framebuffer };
-  }
-
-  private program(
-    vertexSource: string,
-    fragmentSource: string,
-    uniforms: readonly string[]
-  ): Program {
-    const gl = this.gl;
-    const program = gl.createProgram();
-    gl.attachShader(program, this.shader(gl.VERTEX_SHADER, vertexSource));
-    gl.attachShader(program, this.shader(gl.FRAGMENT_SHADER, fragmentSource));
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      throw new Error(
-        `Arena shader did not link: ${gl.getProgramInfoLog(program)}`
-      );
-    }
-    return {
-      program,
-      uniforms: Object.fromEntries(
-        uniforms.map((name) => [name, gl.getUniformLocation(program, name)])
-      ),
-    };
-  }
-
-  private shader(type: number, source: string): WebGLShader {
-    const gl = this.gl;
-    const shader = gl.createShader(type);
-    if (shader == null) {
-      throw new Error('Could not create an arena shader');
-    }
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      throw new Error(
-        `Arena shader did not compile: ${gl.getShaderInfoLog(shader)}`
-      );
-    }
-    return shader;
+    return target;
   }
 }

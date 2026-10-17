@@ -216,6 +216,21 @@ test('should draw the arena on the GPU and keep it readable', async ({
     .toEqual(expect.objectContaining({ orange: true }));
 });
 
+test('should run the colony war on the GPU', async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium', 'WebGL2 is checked in Chromium');
+  const po = new BacteriaGamePo(page);
+  await po.goto();
+  await expect(po.playArea).toHaveAttribute('data-simulation', 'gpu');
+  const start = await po.colonyCount(0);
+
+  await po.playCta.click();
+
+  // The colonies divide - the GPU steps the war and the numbers come back.
+  await expect.poll(() => po.colonyCount(0)).toBeGreaterThan(start);
+  // ...and nobody won on numbers that were not in yet.
+  await expect(po.winner).toHaveCount(0);
+});
+
 test('should pause into a menu and quit back to the main menu', async ({
   page,
 }) => {

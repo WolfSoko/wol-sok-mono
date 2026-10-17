@@ -1,3 +1,11 @@
+/** The cells a colony covers, inclusive, in arena cells. */
+export interface CellBounds {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
 /** A position in arena pixels. */
 export interface Point {
   x: number;

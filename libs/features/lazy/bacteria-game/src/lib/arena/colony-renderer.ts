@@ -1,4 +1,5 @@
 import { BacteriaLook } from '../settings.service';
+import { CellBounds } from '../state/geometry';
 import { Nutrient } from '../state/bacteria-simulation';
 import { GameBalance, gameBalance } from '../state/game-balance';
 import { clamp } from '../state/geometry';
@@ -7,12 +8,33 @@ import { Rgb } from './arena-theme';
 import { createCanvas, hash, lerp, rgba, smoothstep } from './canvas-math';
 
 /** What the renderer needs to know about one colony. */
-export interface ColonyLayer {
+export type ColonyLayer = CellsLayer | StateLayer;
+
+interface ColonyLayerBase {
   /** RGBA, the alpha from 0 to 255. */
   color: readonly number[];
-  bacterias: readonly Bacteria[];
   /** True while the colony's boost runs - its bacteria shimmer then. */
   boosted: boolean;
+}
+
+/** A colony of the CPU simulation: its bacteria. */
+export interface CellsLayer extends ColonyLayerBase {
+  kind: 'cells';
+  bacterias: readonly Bacteria[];
+}
+
+/**
+ * A colony of the GPU simulation: where it is in the state texture. Only
+ * the WebGL painter, which shares the simulation's context, can draw it.
+ */
+export interface StateLayer extends ColonyLayerBase {
+  kind: 'state';
+  /** The simulation's cell state texture. */
+  state: WebGLTexture;
+  /** The owner value of the colony's cells in the state. */
+  owner: number;
+  /** The coarse box around the colony, null once it is gone. */
+  bounds: CellBounds | null;
 }
 
 /**
@@ -97,7 +119,7 @@ export function colonyDensity(
   let hot = false;
   for (const { x, y, energy } of bacterias) {
     const index = y * width + x;
-    density[index] += 0.55 + 0.45 * Math.min(1, strengthOf(energy, balance));
+    density[index] += cellDensity(strengthOf(energy, balance));
     const over = overcharge(energy, balance);
     if (over > 0) {
       if (!hot) {
@@ -356,6 +378,9 @@ export class ColonyRenderer {
     const data = this.image.data;
     data.fill(0);
     for (const colony of colonies) {
+      if (colony.kind !== 'cells') {
+        continue;
+      }
       const shimmerTime = colony.boosted ? timeSec : null;
       if (look === 'slime') {
         const hot = colonyDensity(
@@ -430,6 +455,14 @@ export function overcharge(energy: number, balance: GameBalance): number {
   return energy > balance.maxEnergy && range > 0
     ? Math.min(1, (energy - balance.maxEnergy) / range)
     : 0;
+}
+
+/** The density of the weakest bacterium; one at full strength has 1. */
+export const MIN_CELL_DENSITY = 0.55;
+
+/** How dense a bacterium of this strength makes its cell. */
+export function cellDensity(strength: number): number {
+  return MIN_CELL_DENSITY + (1 - MIN_CELL_DENSITY) * Math.min(1, strength);
 }
 
 /** A bacterium's energy relative to the normal maximum, never below 0. */
