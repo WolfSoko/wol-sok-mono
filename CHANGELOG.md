@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.2.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.1.0...v74.2.0) (2026-10-17)
+
+### Features
+
+* **neural-networks:** draw the whole network in one diagram with weight-scaled lines ([#2468](https://github.com/WolfSoko/wol-sok-mono/issues/2468)) ([6f9680d](https://github.com/WolfSoko/wol-sok-mono/commit/6f9680d8edbd0aa4bcecf56105971291ebad737c))
+
 ## [74.1.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.0.1...v74.1.0) (2026-10-17)
 
 ### Features
