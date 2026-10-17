@@ -1,22 +1,25 @@
-import { CellBounds } from '../arena/arena-painter';
+import type { StateLayer } from '../arena/colony-renderer';
 import {
   ColonySpawn,
+  colonyIntent,
   noEvents,
   Nutrient,
   StepEvents,
 } from '../state/bacteria-simulation';
-import { GameBalance } from '../state/game-balance';
-import { Point } from '../state/geometry';
-import { DynamicWall, GameMap, getMap, Rect } from '../state/maps';
-import { NutrientPellets } from '../state/nutrient-pellets';
+import { colonyCapacity, GameBalance } from '../state/game-balance';
+import { CellBounds, clamp, Point } from '../state/geometry';
 import {
-  createBacteriaBlob,
-  isBoosted,
-  Player,
-  PlayerColorArray,
-} from '../state/player.model';
+  compareDynamicWalls,
+  DynamicWall,
+  GameMap,
+  getMap,
+  stampRect,
+} from '../state/maps';
+import { NutrientPellets } from '../state/nutrient-pellets';
+import { createBacteriaBlob, isBoosted, Player } from '../state/player.model';
 import { ColonySummary, Simulation } from '../state/simulation';
 import {
+  bindTexture,
   createProgram,
   createQuad,
   createTarget,
@@ -60,15 +63,22 @@ const MAX_MOVE_STEPS = 12;
 /** Read backs in flight at once - the GPU is a frame or two behind. */
 const READBACK_SLOTS = 3;
 
-/**
- * Cells a colony may travel in the frames its last report is behind: it is
- * rendered on one frame, read on the next and taken in a frame or more
- * later - at most as many frames as read backs can be in flight.
- */
-const STALE_MARGIN = MAX_MOVE_STEPS * READBACK_SLOTS;
-
 /** What a pass of the claim and apply pair does. */
 const KIND = { move: 0, escape: 1, divide: 2 } as const;
+
+/**
+ * The texture unit of each sampler. They are the same in every program, so
+ * a texture stays bound for all passes that read it.
+ */
+const UNIT = {
+  state: 0,
+  mask: 1,
+  claims: 2,
+  events: 2,
+  influence: 2,
+  hunt: 3,
+  previous: 3,
+};
 
 interface Programs {
   influence: Program;
@@ -84,10 +94,8 @@ interface Programs {
 interface Readback {
   buffer: WebGLBuffer;
   sync: WebGLSync | null;
-  /** The frame it was requested on, to take the reports in in order. */
-  frame: number;
   /** The pellets as they were when the report was rendered. */
-  generation: number[];
+  generation: readonly number[];
   /** Requested in an earlier match - read, so the buffer is free, but ignored. */
   stale: boolean;
 }
@@ -96,31 +104,34 @@ interface Resources {
   programs: Programs;
   quad: WebGLVertexArrayObject;
   corners: WebGLBuffer;
-  /** Ping and pong of the cell state. */
-  states: [Target, Target];
-  /** The state right after combat - the frame's record of who took whom. */
-  events: Target;
+  /**
+   * The cell state. Combat renders into one of them, which then holds the
+   * frame's record of who took whom until the report is drawn; the passes
+   * after it go back and forth between the other two.
+   */
+  states: [Target, Target, Target];
   claims: Target;
   mask: WebGLTexture;
   influence: Target;
   hunt: Target;
   /** Ping and pong of the report, so the running totals can carry on. */
   reports: [Target, Target];
-  readbacks: Readback[];
+  /** Read back buffers waiting to be used. */
+  freeReadbacks: Readback[];
+  /** Read backs the GPU works on, oldest first. */
+  pendingReadbacks: Readback[];
+  /** Where a finished read back lands. */
+  readbackData: Uint32Array;
 }
 
-/** What each colony wants this frame, as uniform arrays. */
-interface Intents {
-  steps: number[];
-  targets: number[];
-  aggression: number[];
-  canDivide: number[];
-}
-
-/** A colony slot of the GPU state. */
-interface Slot {
-  playerId: number;
-  color: PlayerColorArray;
+/** The uniform arrays of a frame, filled in place. */
+interface FrameUniforms {
+  steps: Int32Array;
+  targets: Float32Array;
+  aggression: Float32Array;
+  attack: Float32Array;
+  canDivide: Int32Array;
+  pellets: Float32Array;
 }
 
 /**
@@ -147,6 +158,7 @@ interface Slot {
  * they are a handful of rects and points.
  */
 export class GpuSimulation implements Simulation {
+  public readonly kind = 'gpu';
   private resources: Resources | null = null;
   private width = 0;
   private height = 0;
@@ -154,9 +166,11 @@ export class GpuSimulation implements Simulation {
   private map: GameMap = getMap('corridors');
   private elapsedSec = 0;
   private frame = 0;
+  /** The state the next pass reads. */
   private current = 0;
+  /** The state combat rendered into this frame. */
+  private eventsIndex = 1;
   private reportIndex = 0;
-  private slots: Slot[] = [];
   private spawns: ColonySpawn[] = [];
   private dynamicWalls: DynamicWall[] = [];
   private mask = new Uint8Array(0);
@@ -164,10 +178,8 @@ export class GpuSimulation implements Simulation {
   private maskDirty = true;
   private escapePending = false;
   private readonly pellets: NutrientPellets;
-  /** Bumped per pellet whenever it respawns, to drop stale eater counts. */
-  private generation: number[] = [];
   /** The pellet generations as of the report rendered last. */
-  private renderedGeneration: number[] = [];
+  private renderedGeneration: readonly number[] = [];
   private events: StepEvents = noEvents();
   private report: Report | null = null;
   private colonySummaries: ColonySummary[] = [];
@@ -177,6 +189,18 @@ export class GpuSimulation implements Simulation {
   private undrainedSec = 0;
   /** True once this match has rendered a report that can be read back. */
   private reportRendered = false;
+  /** The most cells each colony gets per frame, boosted - for its box. */
+  private readonly reach = new Int32Array(MAX_GPU_COLONIES).fill(
+    MAX_MOVE_STEPS
+  );
+  private readonly uniforms: FrameUniforms = {
+    steps: new Int32Array(MAX_GPU_COLONIES),
+    targets: new Float32Array(MAX_GPU_COLONIES * 2),
+    aggression: new Float32Array(MAX_GPU_COLONIES),
+    attack: new Float32Array(MAX_GPU_COLONIES),
+    canDivide: new Int32Array(MAX_GPU_COLONIES),
+    pellets: new Float32Array(MAX_PELLETS * 3),
+  };
 
   public constructor(
     private readonly gl: WebGL2RenderingContext,
@@ -207,42 +231,30 @@ export class GpuSimulation implements Simulation {
       return;
     }
     this.resources = this.setup();
-    this.maskDirty = true;
     if (this.spawns.length > 0) {
       this.init(this.spawns);
     }
   };
 
-  /** The cell state, for the painter. */
-  public stateTexture(): WebGLTexture | null {
-    return this.resources?.states[this.current].texture ?? null;
-  }
-
   /** The state slot of a player's colony, null when it has none. */
   public slotOf(playerId: number): number | null {
-    const slot = this.slots.findIndex((entry) => entry.playerId === playerId);
+    const slot = this.spawns.findIndex((spawn) => spawn.playerId === playerId);
     return slot < 0 ? null : slot;
   }
 
-  /**
-   * The box around a colony, for the painter to scissor to. The report is a
-   * frame or two old, so the box is grown by how far a boosted colony gets
-   * in that time.
-   */
-  public boundsOf(slot: number): CellBounds | null {
-    const bounds =
-      this.report == null
-        ? this.spawnBounds(slot)
-        : (this.report.colonies[slot]?.bounds ?? null);
-    if (bounds == null) {
-      return null;
+  public colonyLayers(boosted: ReadonlySet<number>): StateLayer[] {
+    const state = this.resources?.states[this.current].texture;
+    if (state == null) {
+      return [];
     }
-    return {
-      minX: Math.max(0, bounds.minX - STALE_MARGIN),
-      minY: Math.max(0, bounds.minY - STALE_MARGIN),
-      maxX: Math.min(this.width - 1, bounds.maxX + STALE_MARGIN),
-      maxY: Math.min(this.height - 1, bounds.maxY + STALE_MARGIN),
-    };
+    return this.spawns.map((spawn, slot) => ({
+      kind: 'state',
+      color: spawn.color,
+      boosted: boosted.has(spawn.playerId),
+      state,
+      owner: slot + 1,
+      bounds: this.boundsOf(slot),
+    }));
   }
 
   /** Takes effect with the next `init`, which lays out walls and pellets. */
@@ -271,7 +283,6 @@ export class GpuSimulation implements Simulation {
       );
     }
     this.spawns = spawns;
-    this.slots = spawns.map(({ playerId, color }) => ({ playerId, color }));
     this.elapsedSec = 0;
     this.frame = 0;
     this.events = noEvents();
@@ -280,7 +291,7 @@ export class GpuSimulation implements Simulation {
     this.undrainedSec = 0;
     this.reportRendered = false;
     this.buildMask();
-    this.resetPellets();
+    this.pellets.reset(this.width, this.height, this.isOpenCell);
     this.uploadSpawns(spawns);
   }
 
@@ -311,69 +322,58 @@ export class GpuSimulation implements Simulation {
   public step(players: Player[], deltaTimeSec: number): void {
     this.events = noEvents();
     const resources = this.resources;
-    if (resources == null || this.slots.length === 0 || deltaTimeSec <= 0) {
+    if (resources == null || this.spawns.length === 0 || deltaTimeSec <= 0) {
       return;
     }
     const gl = this.gl;
+    const { programs } = resources;
     this.elapsedSec += deltaTimeSec;
     this.frame++;
     this.advanceDynamicWalls();
     if (this.maskDirty) {
-      this.uploadMask();
+      this.uploadMask(resources);
     }
     this.tickPellets(deltaTimeSec);
+    const mostSteps = this.fillFrameUniforms(players, deltaTimeSec);
 
     gl.disable(gl.BLEND);
     gl.disable(gl.SCISSOR_TEST);
     gl.bindVertexArray(resources.quad);
-
-    const targets = this.slots.map(
-      (slot) => players.find((player) => player.id === slot.playerId) ?? null
-    );
-    const intents = this.intents(targets, deltaTimeSec);
+    bindTexture(gl, UNIT.mask, resources.mask, null);
 
     // 1. Who is where, coarsely - and where each colony hunts.
     gl.viewport(0, 0, this.layout.blocksX, this.layout.blocksY);
-    this.pass(resources.programs.influence, resources.influence, (u) => {
-      gl.uniform1i(u['uCellSize'], this.balance.influenceCellSize);
-    });
-    this.pass(resources.programs.hunt, resources.hunt, (u) => {
-      this.bindTexture(0, resources.influence.texture, u['uInfluence']);
-    });
+    this.pass(resources, programs.influence, resources.influence);
+    bindTexture(gl, UNIT.influence, resources.influence.texture, null);
+    this.pass(resources, programs.hunt, resources.hunt);
+    bindTexture(gl, UNIT.hunt, resources.hunt.texture, null);
 
     gl.viewport(0, 0, this.width, this.height);
     // 2. Out of the way of a wall that moved, or crushed.
     if (this.escapePending) {
       for (let step = 0; step < ESCAPE_STEPS; step++) {
-        this.claimAndApply(KIND.escape, step, intents, deltaTimeSec);
+        this.claimAndApply(resources, KIND.escape, step);
       }
       this.escapePending = false;
     }
-    this.statePass(resources.programs.crush, () => undefined);
+    this.statePass(resources, programs.crush);
 
     // 3. Combat, nutrients and captures - kept as the frame's record.
-    this.statePass(
-      resources.programs.combat,
-      (u) => this.combatUniforms(u, targets, deltaTimeSec),
-      resources.events
-    );
-    this.statePass(resources.programs.feed, (u) => {
-      gl.uniform1f(u['uFeed'], this.balance.feedEnergyPerCapture);
-    });
+    this.eventsIndex = this.current === 0 ? 1 : 0;
+    this.statePass(resources, programs.combat, this.eventsIndex);
+    this.statePass(resources, programs.feed);
 
     // 4. Division, 5. movement.
-    this.claimAndApply(KIND.divide, 0, intents, deltaTimeSec);
-    const mostSteps = Math.max(...intents.steps);
+    this.claimAndApply(resources, KIND.divide, 0);
     for (let step = 0; step < mostSteps; step++) {
-      this.claimAndApply(KIND.move, step, intents, deltaTimeSec);
+      this.claimAndApply(resources, KIND.move, step);
     }
 
     // 6. The report. The one read back is last frame's, which the GPU has
     // finished by now - reading this frame's would make the driver wait.
-    this.collectReadbacks();
-    this.requestReadback();
-    this.renderReport();
-    this.renderedGeneration = [...this.generation];
+    this.collectReadbacks(resources);
+    this.requestReadback(resources);
+    this.renderReport(resources);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindVertexArray(null);
@@ -391,6 +391,28 @@ export class GpuSimulation implements Simulation {
     this.release();
   }
 
+  /**
+   * The box around a colony, for the painter to scissor to. The report is a
+   * frame or two old, so the box is grown by how far the colony gets in the
+   * frames its read back may take.
+   */
+  private boundsOf(slot: number): CellBounds | null {
+    const bounds =
+      this.report == null
+        ? this.spawnBounds(slot)
+        : (this.report.colonies[slot]?.bounds ?? null);
+    if (bounds == null) {
+      return null;
+    }
+    const margin = this.reach[slot] * READBACK_SLOTS;
+    return {
+      minX: clamp(bounds.minX - margin, 0, this.width - 1),
+      minY: clamp(bounds.minY - margin, 0, this.height - 1),
+      maxX: clamp(bounds.maxX + margin, 0, this.width - 1),
+      maxY: clamp(bounds.maxY + margin, 0, this.height - 1),
+    };
+  }
+
   /** Frees the textures and buffers; the context listeners stay. */
   private release(): void {
     const gl = this.gl;
@@ -399,22 +421,17 @@ export class GpuSimulation implements Simulation {
     if (resources == null) {
       return;
     }
-    const targets = [
-      ...resources.states,
-      resources.events,
-      resources.claims,
-      resources.influence,
-      resources.hunt,
-      ...resources.reports,
-    ];
-    for (const target of targets) {
+    for (const target of renderTargets(resources)) {
       gl.deleteFramebuffer(target.framebuffer);
       gl.deleteTexture(target.texture);
     }
     gl.deleteTexture(resources.mask);
     gl.deleteVertexArray(resources.quad);
     gl.deleteBuffer(resources.corners);
-    for (const readback of resources.readbacks) {
+    for (const readback of [
+      ...resources.freeReadbacks,
+      ...resources.pendingReadbacks,
+    ]) {
       gl.deleteBuffer(readback.buffer);
       if (readback.sync != null) {
         gl.deleteSync(readback.sync);
@@ -422,268 +439,220 @@ export class GpuSimulation implements Simulation {
     }
   }
 
-  /** One claim and apply pair - a step of moving, escaping or dividing. */
-  private claimAndApply(
-    kind: number,
-    step: number,
-    intents: Intents,
-    deltaTimeSec: number
-  ): void {
-    const resources = this.resources;
-    if (resources == null) {
-      return;
-    }
+  /**
+   * Fills the uniform arrays of this frame and hands them to the passes that
+   * read them - they keep their values until the next frame. Returns the
+   * most cells a colony travels.
+   */
+  private fillFrameUniforms(players: Player[], deltaTimeSec: number): number {
     const gl = this.gl;
-    const setIntents = (u: Program['uniforms']) =>
-      this.intentUniforms(u, kind, step, intents, deltaTimeSec);
-
-    const claim = resources.programs.claim;
-    gl.useProgram(claim.program);
-    this.stateUniforms(claim.uniforms);
-    setIntents(claim.uniforms);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, resources.claims.framebuffer);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-
-    this.statePass(resources.programs.apply, (u) => {
-      setIntents(u);
-      this.bindTexture(2, resources.claims.texture, u['uClaims']);
+    const b = this.balance;
+    const u = this.uniforms;
+    const programs = this.resources?.programs;
+    if (programs == null) {
+      return 0;
+    }
+    const capacity = colonyCapacity(b, this.spawns.length);
+    u.steps.fill(0);
+    u.targets.fill(NaN);
+    u.canDivide.fill(0);
+    this.spawns.forEach((spawn, slot) => {
+      const target = players.find((player) => player.id === spawn.playerId);
+      const intent = colonyIntent(target, b, deltaTimeSec);
+      u.aggression[slot] = intent?.aggression ?? b.aggression;
+      u.attack[slot] = isBoosted(target ?? null) ? b.boostAttackFactor : 1;
+      u.canDivide[slot] =
+        (this.colonySummaries[slot]?.count ?? 0) < capacity ? 1 : 0;
+      if (target == null || intent == null) {
+        return;
+      }
+      u.steps[slot] = Math.min(MAX_MOVE_STEPS, intent.steps);
+      u.targets[slot * 2] = target.x;
+      u.targets[slot * 2 + 1] = target.y;
+      this.reach[slot] = Math.min(
+        MAX_MOVE_STEPS,
+        Math.max(
+          1,
+          Math.round(target.maxSpeed * b.boostSpeedFactor * deltaTimeSec)
+        )
+      );
     });
-  }
 
-  /** A full grid pass from the current state into the other one. */
-  private statePass(
-    program: Program,
-    setUniforms: (uniforms: Program['uniforms']) => void,
-    into?: Target
-  ): void {
-    const resources = this.resources;
-    if (resources == null) {
-      return;
+    const nutrients = this.pellets.nutrients;
+    u.pellets.fill(0);
+    nutrients.slice(0, MAX_PELLETS).forEach((pellet, n) => {
+      u.pellets[n * 3] = pellet.x;
+      u.pellets[n * 3 + 1] = pellet.y;
+      u.pellets[n * 3 + 2] = pellet.amount > 0 ? 1 : 0;
+    });
+    const pelletCount = Math.min(nutrients.length, MAX_PELLETS);
+
+    for (const program of [programs.claim, programs.apply]) {
+      const at = program.uniforms;
+      gl.useProgram(program.program);
+      gl.uniform1iv(at['uSteps[0]'], u.steps);
+      gl.uniform2fv(at['uTarget[0]'], u.targets);
+      gl.uniform1fv(at['uAggression[0]'], u.aggression);
+      gl.uniform1iv(at['uCanDivide[0]'], u.canDivide);
+      gl.uniform1f(at['uDivideChance'], b.divideChancePerSec * deltaTimeSec);
     }
-    const gl = this.gl;
-    const next = 1 - this.current;
-    const target = into ?? resources.states[next];
-    gl.useProgram(program.program);
-    this.stateUniforms(program.uniforms);
-    setUniforms(program.uniforms);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    if (into == null) {
-      this.current = next;
-    } else {
-      // The record becomes the state the next pass reads: copy it over.
-      this.copyInto(into, resources.states[next]);
-      this.current = next;
+    for (const program of [programs.combat, programs.report]) {
+      gl.useProgram(program.program);
+      gl.uniform3fv(program.uniforms['uPellets[0]'], u.pellets);
+      gl.uniform1i(program.uniforms['uPelletCount'], pelletCount);
     }
-  }
-
-  /** Copies one state texture into another, both the size of the arena. */
-  private copyInto(from: Target, to: Target): void {
-    const gl = this.gl;
-    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, from.framebuffer);
-    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, to.framebuffer);
-    gl.blitFramebuffer(
-      0,
-      0,
-      this.width,
-      this.height,
-      0,
-      0,
-      this.width,
-      this.height,
-      gl.COLOR_BUFFER_BIT,
-      gl.NEAREST
-    );
-    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
-    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
-  }
-
-  /** A pass that does not read the state into a target of its own. */
-  private pass(
-    program: Program,
-    target: Target,
-    setUniforms: (uniforms: Program['uniforms']) => void
-  ): void {
-    const gl = this.gl;
-    gl.useProgram(program.program);
-    this.stateUniforms(program.uniforms);
-    setUniforms(program.uniforms);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-  }
-
-  /** The state, the walls, the arena size and the frame's random seed. */
-  private stateUniforms(u: Program['uniforms']): void {
-    const resources = this.resources;
-    if (resources == null) {
-      return;
-    }
-    const gl = this.gl;
-    this.bindTexture(0, resources.states[this.current].texture, u['uState']);
-    this.bindTexture(1, resources.mask, u['uMask']);
-    gl.uniform2i(u['uSize'], this.width, this.height);
-    gl.uniform1ui(u['uSeed'], (this.frame * 2654435761) >>> 0);
-  }
-
-  private intentUniforms(
-    u: Program['uniforms'],
-    kind: number,
-    step: number,
-    intents: Intents,
-    deltaTimeSec: number
-  ): void {
-    const gl = this.gl;
-    const resources = this.resources;
-    if (resources == null) {
-      return;
-    }
-    const b = this.balance;
-    gl.uniform1i(u['uKind'], kind);
-    gl.uniform1i(u['uStep'], step);
-    gl.uniform1iv(u['uSteps[0]'], intents.steps);
-    gl.uniform2fv(u['uTarget[0]'], intents.targets);
-    gl.uniform1fv(u['uAggression[0]'], intents.aggression);
-    gl.uniform1f(u['uJitter'], b.jitter);
-    gl.uniform1i(u['uCellSize'], b.influenceCellSize);
-    this.bindTexture(3, resources.hunt.texture, u['uHunt']);
-    gl.uniform1f(u['uDivideThreshold'], b.divideEnergyThreshold);
-    gl.uniform1f(u['uDivideChance'], b.divideChancePerSec * deltaTimeSec);
-    gl.uniform1iv(u['uCanDivide[0]'], intents.canDivide);
-    gl.uniform1f(u['uParentShare'], b.parentEnergyShare);
-  }
-
-  private combatUniforms(
-    u: Program['uniforms'],
-    targets: (Player | null)[],
-    deltaTimeSec: number
-  ): void {
-    const gl = this.gl;
-    const b = this.balance;
-    gl.uniform1f(u['uDt'], deltaTimeSec);
-    gl.uniform1fv(
-      u['uAttack[0]'],
-      padded(
-        targets.map((target) => (isBoosted(target) ? b.boostAttackFactor : 1)),
-        MAX_GPU_COLONIES
-      )
-    );
-    this.pelletUniforms(u);
-    gl.uniform1f(u['uNutrientGain'], b.nutrientDrainPerSec * deltaTimeSec);
-    gl.uniform1f(u['uDefenceFactor'], b.defenceFactor);
-    gl.uniform1f(u['uFrontlinePressure'], b.frontlinePressure);
-    gl.uniform1f(u['uCombatDrain'], b.combatDrainPerSec);
-    gl.uniform1f(u['uRegen'], b.energyRegenPerSec);
-    gl.uniform1f(u['uOverchargeDecay'], b.overchargeDecayPerSec);
-    gl.uniform1f(u['uMaxEnergy'], b.maxEnergy);
-    gl.uniform1f(u['uSuperMaxEnergy'], b.superChargedMaxEnergy);
-    gl.uniform1f(u['uConsumeChance'], b.consumeChance);
-    gl.uniform1f(u['uCaptureEnergy'], b.captureEnergy);
-  }
-
-  private pelletUniforms(u: Program['uniforms']): void {
-    const gl = this.gl;
-    const nutrients = this.pellets.nutrients.slice(0, MAX_PELLETS);
-    gl.uniform3fv(
-      u['uPellets[0]'],
-      padded(
-        nutrients.flatMap((pellet) => [
-          pellet.x,
-          pellet.y,
-          pellet.amount > 0 ? 1 : 0,
-        ]),
-        MAX_PELLETS * 3
-      )
-    );
-    gl.uniform1i(u['uPelletCount'], nutrients.length);
-    gl.uniform1i(u['uPelletRadius'], this.balance.nutrientRadius);
-  }
-
-  /** Where each colony heads this frame, how far, and whether it divides. */
-  private intents(targets: (Player | null)[], deltaTimeSec: number): Intents {
-    const b = this.balance;
-    return {
-      steps: this.moveSteps(targets, deltaTimeSec),
-      targets: padded(
-        targets.flatMap((target) =>
-          target == null || isNaN(target.x) || isNaN(target.y)
-            ? [NaN, NaN]
-            : [target.x, target.y]
-        ),
-        MAX_GPU_COLONIES * 2
-      ),
-      aggression: padded(
-        targets.map((target) =>
-          isBoosted(target) ? b.boostAggression : b.aggression
-        ),
-        MAX_GPU_COLONIES
-      ),
-      canDivide: this.divisionAllowed(),
-    };
-  }
-
-  /** Cells each colony travels this frame - a boosted one goes further. */
-  private moveSteps(
-    targets: (Player | null)[],
-    deltaTimeSec: number
-  ): number[] {
-    return padded(
-      targets.map((target) => {
-        if (target == null || isNaN(target.x) || isNaN(target.y)) {
-          return 0;
-        }
-        const speed = isBoosted(target)
-          ? target.maxSpeed * this.balance.boostSpeedFactor
-          : target.maxSpeed;
-        return Math.min(
-          MAX_MOVE_STEPS,
-          Math.max(1, Math.round(speed * deltaTimeSec))
-        );
-      }),
-      MAX_GPU_COLONIES
-    );
+    const combat = programs.combat.uniforms;
+    gl.useProgram(programs.combat.program);
+    gl.uniform1f(combat['uDt'], deltaTimeSec);
+    gl.uniform1fv(combat['uAttack[0]'], u.attack);
+    gl.uniform1f(combat['uNutrientGain'], b.nutrientDrainPerSec * deltaTimeSec);
+    return Math.max(0, ...u.steps);
   }
 
   /**
-   * Whether each colony may still divide: below its share of the arena's
-   * carrying capacity, as of the last report.
+   * Everything that stays the same for the whole match: the sizes, the
+   * balance and which unit each sampler reads.
    */
-  private divisionAllowed(): number[] {
-    const { maxBacteriaPerPlayer, maxTotalBacteria } = this.balance;
-    const capacity = Math.max(
-      1,
-      Math.min(
-        maxBacteriaPerPlayer,
-        Math.floor(maxTotalBacteria / Math.max(1, this.slots.length))
-      )
+  private setMatchUniforms(programs: Programs): void {
+    const gl = this.gl;
+    const b = this.balance;
+    const set = (
+      program: Program,
+      values: Record<string, number>,
+      ints: Record<string, number> = {}
+    ) => {
+      gl.useProgram(program.program);
+      const at = program.uniforms;
+      gl.uniform1i(at['uState'], UNIT.state);
+      gl.uniform1i(at['uMask'], UNIT.mask);
+      gl.uniform2i(at['uSize'], this.width, this.height);
+      for (const [name, value] of Object.entries(values)) {
+        gl.uniform1f(at[name], value);
+      }
+      for (const [name, value] of Object.entries(ints)) {
+        gl.uniform1i(at[name], value);
+      }
+    };
+    const intents = {
+      uJitter: b.jitter,
+      uDivideThreshold: b.divideEnergyThreshold,
+      uParentShare: b.parentEnergyShare,
+    };
+    const cellSize = b.influenceCellSize;
+    set(programs.influence, {}, { uCellSize: cellSize });
+    set(programs.hunt, {}, { uInfluence: UNIT.influence });
+    set(programs.claim, intents, { uCellSize: cellSize, uHunt: UNIT.hunt });
+    set(programs.apply, intents, {
+      uCellSize: cellSize,
+      uHunt: UNIT.hunt,
+      uClaims: UNIT.claims,
+    });
+    set(programs.crush, {});
+    set(
+      programs.combat,
+      {
+        uDefenceFactor: b.defenceFactor,
+        uFrontlinePressure: b.frontlinePressure,
+        uCombatDrain: b.combatDrainPerSec,
+        uRegen: b.energyRegenPerSec,
+        uOverchargeDecay: b.overchargeDecayPerSec,
+        uMaxEnergy: b.maxEnergy,
+        uSuperMaxEnergy: b.superChargedMaxEnergy,
+        uConsumeChance: b.consumeChance,
+        uCaptureEnergy: b.captureEnergy,
+      },
+      { uPelletRadius: b.nutrientRadius }
     );
-    return padded(
-      this.slots.map((_, slot) =>
-        (this.colonySummaries[slot]?.count ?? 0) < capacity ? 1 : 0
-      ),
-      MAX_GPU_COLONIES
+    set(programs.feed, { uFeed: b.feedEnergyPerCapture });
+    set(
+      programs.report,
+      {},
+      {
+        uCellSize: cellSize,
+        uPelletRadius: b.nutrientRadius,
+        uEvents: UNIT.events,
+        uPrevious: UNIT.previous,
+      }
+    );
+    gl.useProgram(programs.report.program);
+    gl.uniform2i(
+      programs.report.uniforms['uBlocks'],
+      this.layout.blocksX,
+      this.layout.blocksY
     );
   }
 
-  private renderReport(): void {
-    const resources = this.resources;
-    if (resources == null) {
-      return;
+  /** One claim and apply pair - a step of moving, escaping or dividing. */
+  private claimAndApply(
+    resources: Resources,
+    kind: number,
+    step: number
+  ): void {
+    const gl = this.gl;
+    const { claim, apply } = resources.programs;
+    for (const program of [claim, apply]) {
+      gl.useProgram(program.program);
+      gl.uniform1i(program.uniforms['uKind'], kind);
+      gl.uniform1i(program.uniforms['uStep'], step);
     }
+    this.pass(resources, claim, resources.claims);
+    bindTexture(gl, UNIT.claims, resources.claims.texture, null);
+    this.statePass(resources, apply);
+  }
+
+  /**
+   * A full grid pass from the current state into another one, which is
+   * current afterwards. Passes after combat leave its record alone.
+   */
+  private statePass(
+    resources: Resources,
+    program: Program,
+    into = this.nextState()
+  ): void {
+    this.pass(resources, program, resources.states[into]);
+    this.current = into;
+  }
+
+  /** The state that is neither read now nor holds the frame's record. */
+  private nextState(): number {
+    for (let index = 0; index < 3; index++) {
+      if (index !== this.current && index !== this.eventsIndex) {
+        return index;
+      }
+    }
+    return (this.current + 1) % 3;
+  }
+
+  /** A pass that reads the current state, into a target. */
+  private pass(resources: Resources, program: Program, target: Target): void {
+    const gl = this.gl;
+    gl.useProgram(program.program);
+    bindTexture(gl, UNIT.state, resources.states[this.current].texture, null);
+    gl.uniform1ui(program.uniforms['uSeed'], (this.frame * 2654435761) >>> 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  private renderReport(resources: Resources): void {
     const gl = this.gl;
     const previous = resources.reports[this.reportIndex];
     this.reportIndex = 1 - this.reportIndex;
-    const target = resources.reports[this.reportIndex];
-    const program = resources.programs.report;
     gl.viewport(0, 0, this.layout.width, this.layout.height);
-    this.reportRendered = true;
-    this.pass(program, target, (u) => {
-      this.bindTexture(2, resources.events.texture, u['uEvents']);
-      this.bindTexture(3, previous.texture, u['uPrevious']);
-      gl.uniform1i(u['uCellSize'], this.balance.influenceCellSize);
-      gl.uniform2i(u['uBlocks'], this.layout.blocksX, this.layout.blocksY);
-      this.pelletUniforms(u);
-    });
+    bindTexture(
+      gl,
+      UNIT.events,
+      resources.states[this.eventsIndex].texture,
+      null
+    );
+    bindTexture(gl, UNIT.previous, previous.texture, null);
+    this.pass(
+      resources,
+      resources.programs.report,
+      resources.reports[this.reportIndex]
+    );
     gl.viewport(0, 0, this.width, this.height);
+    this.reportRendered = true;
+    this.renderedGeneration = this.pellets.generations.slice();
   }
 
   /**
@@ -692,12 +661,11 @@ export class GpuSimulation implements Simulation {
    * started: the fresh one is all zeros, and no bacteria would read as a
    * draw.
    */
-  private requestReadback(): void {
-    const resources = this.resources;
-    if (resources == null || !this.reportRendered) {
+  private requestReadback(resources: Resources): void {
+    if (!this.reportRendered) {
       return;
     }
-    const readback = resources.readbacks.find((entry) => entry.sync == null);
+    const readback = resources.freeReadbacks.pop();
     if (readback == null) {
       return;
     }
@@ -719,10 +687,10 @@ export class GpuSimulation implements Simulation {
     gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
     readback.sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
-    readback.frame = this.frame;
     // The report read is last frame's, so are the pellets it counted at.
     readback.generation = this.renderedGeneration;
     readback.stale = false;
+    resources.pendingReadbacks.push(readback);
     gl.flush();
   }
 
@@ -730,45 +698,41 @@ export class GpuSimulation implements Simulation {
    * Takes in every read back the GPU has finished, oldest first. The GPU
    * finishes them in order, so the first unfinished one ends the round.
    */
-  private collectReadbacks(): void {
-    const resources = this.resources;
-    if (resources == null) {
-      return;
-    }
+  private collectReadbacks(resources: Resources): void {
     const gl = this.gl;
-    const data = new Uint32Array(this.layout.width * this.layout.height * 4);
-    const pending = resources.readbacks
-      .filter((readback) => readback.sync != null)
-      .sort((a, b) => a.frame - b.frame);
-    for (const readback of pending) {
-      if (readback.sync == null) {
+    const data = resources.readbackData;
+    const pending = resources.pendingReadbacks;
+    while (pending.length > 0) {
+      const readback = pending[0];
+      const sync = readback.sync;
+      if (sync != null) {
+        const status = gl.clientWaitSync(sync, 0, 0);
+        if (status === gl.TIMEOUT_EXPIRED || status === gl.WAIT_FAILED) {
+          return;
+        }
+        gl.deleteSync(sync);
+        readback.sync = null;
+      }
+      pending.shift();
+      resources.freeReadbacks.push(readback);
+      if (readback.stale) {
         continue;
       }
-      const status = gl.clientWaitSync(readback.sync, 0, 0);
-      if (status === gl.TIMEOUT_EXPIRED || status === gl.WAIT_FAILED) {
-        break;
-      }
-      gl.deleteSync(readback.sync);
-      readback.sync = null;
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, readback.buffer);
       gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, data);
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-      if (readback.stale) {
-        readback.stale = false;
-        continue;
-      }
       this.takeReport(decodeReport(data, this.layout), readback.generation);
     }
   }
 
   /** Turns a report into the scoreboard, the frame's events and the eaters. */
-  private takeReport(report: Report, generation: number[]): void {
+  private takeReport(report: Report, generation: readonly number[]): void {
     this.report = report;
-    this.colonySummaries = this.slots.map((slot, index) => {
+    this.colonySummaries = this.spawns.map((spawn, index) => {
       const colony = report.colonies[index];
       return {
-        playerId: slot.playerId,
-        color: slot.color,
+        playerId: spawn.playerId,
+        color: spawn.color,
         count: colony.count,
         captured: colony.captured,
         lost: colony.lost,
@@ -791,7 +755,7 @@ export class GpuSimulation implements Simulation {
     const gain = this.balance.nutrientDrainPerSec * this.undrainedSec;
     this.undrainedSec = 0;
     this.pellets.nutrients.forEach((_, n) => {
-      if (generation[n] !== this.generation[n]) {
+      if (generation[n] !== this.pellets.generations[n]) {
         // The pellet moved since this report was taken.
         return;
       }
@@ -805,31 +769,10 @@ export class GpuSimulation implements Simulation {
   private tickPellets(deltaTimeSec: number): void {
     this.undrainedSec += deltaTimeSec;
     this.pellets.nutrients.forEach((nutrient, n) => {
-      if (nutrient.amount > 0) {
-        return;
-      }
-      const respawned = this.pellets.tickEmpty(
-        n,
-        deltaTimeSec,
-        this.width,
-        this.height,
-        this.isOpenCell
-      );
-      if (respawned != null) {
-        for (const m of [respawned, respawned + 1]) {
-          if (m < this.generation.length) {
-            this.generation[m]++;
-          }
-        }
+      if (nutrient.amount <= 0) {
+        this.pellets.tickEmpty(n, deltaTimeSec);
       }
     });
-  }
-
-  private resetPellets(): void {
-    this.pellets.reset(this.width, this.height, this.isOpenCell);
-    this.generation = this.pellets.nutrients.map(
-      (_, n) => (this.generation[n] ?? 0) + 1
-    );
   }
 
   private readonly isOpenCell = (x: number, y: number): boolean =>
@@ -841,31 +784,17 @@ export class GpuSimulation implements Simulation {
       return;
     }
     const previous = this.dynamicWalls;
-    const next = this.map.createDynamicWalls(
+    this.dynamicWalls = this.map.createDynamicWalls(
       this.width,
       this.height,
       this.elapsedSec
     );
-    this.dynamicWalls = next;
-    let changed = next.length !== previous.length;
-    next.forEach((after, i) => {
-      const before = previous[i];
-      if (before == null) {
-        return;
-      }
-      if (after.solid && !before.solid) {
-        this.events.gatesClosed++;
-      }
-      if (after.warning > 0 && before.warning === 0) {
-        this.events.gatesWarned++;
-      }
-      changed ||=
-        after.solid !== before.solid ||
-        after.x !== before.x ||
-        after.y !== before.y ||
-        after.width !== before.width ||
-        after.height !== before.height;
-    });
+    const { changed, closed, warned } = compareDynamicWalls(
+      previous,
+      this.dynamicWalls
+    );
+    this.events.gatesClosed += closed;
+    this.events.gatesWarned += warned;
     if (changed) {
       this.stampMask();
       this.escapePending = true;
@@ -874,10 +803,9 @@ export class GpuSimulation implements Simulation {
 
   /** The static walls, and the moving ones as of the match time. */
   private buildMask(): void {
-    const cells = this.width * this.height;
-    this.staticMask = new Uint8Array(cells);
+    this.staticMask = new Uint8Array(this.width * this.height);
     for (const wall of this.map.createWalls(this.width, this.height)) {
-      stamp(this.staticMask, this.width, this.height, wall);
+      stampRect(this.staticMask, this.width, this.height, wall, 1);
     }
     this.dynamicWalls =
       this.map.createDynamicWalls?.(this.width, this.height, this.elapsedSec) ??
@@ -889,17 +817,13 @@ export class GpuSimulation implements Simulation {
     this.mask = this.staticMask.slice();
     for (const wall of this.dynamicWalls) {
       if (wall.solid) {
-        stamp(this.mask, this.width, this.height, wall);
+        stampRect(this.mask, this.width, this.height, wall, 1);
       }
     }
     this.maskDirty = true;
   }
 
-  private uploadMask(): void {
-    const resources = this.resources;
-    if (resources == null) {
-      return;
-    }
+  private uploadMask(resources: Resources): void {
     const gl = this.gl;
     gl.bindTexture(gl.TEXTURE_2D, resources.mask);
     gl.texSubImage2D(
@@ -975,8 +899,8 @@ export class GpuSimulation implements Simulation {
     }
     // Reads of the last match that are still in flight finish, but count
     // for nothing.
-    for (const readback of resources.readbacks) {
-      readback.stale = readback.sync != null;
+    for (const readback of resources.pendingReadbacks) {
+      readback.stale = true;
     }
     this.colonySummaries = spawns.map((spawn, slot) => ({
       playerId: spawn.playerId,
@@ -997,25 +921,18 @@ export class GpuSimulation implements Simulation {
     }
     const r = spawn.radius + 1;
     return {
-      minX: Math.max(0, Math.floor(spawn.x - r)),
-      minY: Math.max(0, Math.floor(spawn.y - r)),
-      maxX: Math.min(this.width - 1, Math.ceil(spawn.x + r)),
-      maxY: Math.min(this.height - 1, Math.ceil(spawn.y + r)),
+      minX: clamp(Math.floor(spawn.x - r), 0, this.width - 1),
+      minY: clamp(Math.floor(spawn.y - r), 0, this.height - 1),
+      maxX: clamp(Math.ceil(spawn.x + r), 0, this.width - 1),
+      maxY: clamp(Math.ceil(spawn.y + r), 0, this.height - 1),
     };
   }
 
-  private bindTexture(
-    unit: number,
-    texture: WebGLTexture,
-    location: WebGLUniformLocation | null | undefined
-  ): void {
-    const gl = this.gl;
-    gl.activeTexture(gl.TEXTURE0 + unit);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.uniform1i(location ?? null, unit);
-  }
-
-  /** Allocates every texture and buffer; the programs are compiled once. */
+  /**
+   * Allocates every texture and buffer and sets the match's uniforms; the
+   * programs are compiled once per context. Throws when the GPU cannot
+   * render into one of the targets - then the CPU has to run the war.
+   */
   private setup(): Resources {
     const gl = this.gl;
     const programs = compiledPrograms(gl);
@@ -1025,24 +942,26 @@ export class GpuSimulation implements Simulation {
     const layout = this.layout;
     const report = () =>
       createTarget(gl, gl.RGBA32UI, layout.width, layout.height, gl.NEAREST);
-    const readbacks: Readback[] = Array.from({ length: READBACK_SLOTS }, () => {
-      const buffer = gl.createBuffer();
-      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, buffer);
-      gl.bufferData(
-        gl.PIXEL_PACK_BUFFER,
-        layout.width * layout.height * 16,
-        gl.STREAM_READ
-      );
-      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-      return { buffer, sync: null, frame: 0, generation: [], stale: false };
-    });
+    const freeReadbacks: Readback[] = Array.from(
+      { length: READBACK_SLOTS },
+      () => {
+        const buffer = gl.createBuffer();
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, buffer);
+        gl.bufferData(
+          gl.PIXEL_PACK_BUFFER,
+          layout.width * layout.height * 16,
+          gl.STREAM_READ
+        );
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+        return { buffer, sync: null, generation: [], stale: false };
+      }
+    );
 
     const resources: Resources = {
       programs,
       quad,
       corners,
-      states: [state(), state()],
-      events: state(),
+      states: [state(), state(), state()],
       claims: createTarget(gl, gl.R8UI, this.width, this.height, gl.NEAREST),
       mask: createTexture(gl, gl.R8UI, this.width, this.height, gl.NEAREST),
       influence: createTarget(
@@ -1060,19 +979,12 @@ export class GpuSimulation implements Simulation {
         gl.NEAREST
       ),
       reports: [report(), report()],
-      readbacks,
+      freeReadbacks,
+      pendingReadbacks: [],
+      readbackData: new Uint32Array(layout.width * layout.height * 4),
     };
-    // Some drivers cannot render into every integer format - then the CPU
-    // has to run the war.
-    const targets = [
-      ...resources.states,
-      resources.events,
-      resources.claims,
-      resources.influence,
-      resources.hunt,
-      ...resources.reports,
-    ];
-    for (const { framebuffer } of targets) {
+    // Some drivers cannot render into every integer format.
+    for (const { framebuffer } of renderTargets(resources)) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
       const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
       if (status !== gl.FRAMEBUFFER_COMPLETE) {
@@ -1083,44 +995,33 @@ export class GpuSimulation implements Simulation {
       }
     }
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    this.maskDirty = true;
+    this.setMatchUniforms(programs);
     return resources;
   }
 }
 
-/** The values, filled up with zeros to the length a uniform array has. */
-function padded(values: number[], length: number): number[] {
+/** Every target a frame renders into. */
+function renderTargets(resources: Resources): Target[] {
   return [
-    ...values,
-    ...new Array(Math.max(0, length - values.length)).fill(0),
-  ].slice(0, length);
-}
-
-/** Marks the cells a rect covers in a mask. */
-function stamp(
-  mask: Uint8Array,
-  width: number,
-  height: number,
-  rect: Rect
-): void {
-  const xMax = Math.min(rect.x + rect.width, width);
-  const yMax = Math.min(rect.y + rect.height, height);
-  for (let y = Math.max(rect.y, 0); y < yMax; y++) {
-    for (let x = Math.max(rect.x, 0); x < xMax; x++) {
-      mask[y * width + x] = 1;
-    }
-  }
+    ...resources.states,
+    resources.claims,
+    resources.influence,
+    resources.hunt,
+    ...resources.reports,
+  ];
 }
 
 /**
  * The compiled passes of each context. Every match gets a simulation of its
  * own, but compiling the shaders again each time would stall the start of
- * every match - so they are kept as long as the context lives.
+ * every match - so they are kept until the context is lost.
  */
 const PROGRAMS = new WeakMap<WebGL2RenderingContext, Programs>();
 
 function compiledPrograms(gl: WebGL2RenderingContext): Programs {
   const cached = PROGRAMS.get(gl);
-  if (cached != null && !gl.isContextLost()) {
+  if (cached != null) {
     return cached;
   }
   const common = ['uState', 'uMask', 'uSize', 'uSeed'];

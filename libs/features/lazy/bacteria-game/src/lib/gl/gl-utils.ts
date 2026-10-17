@@ -118,6 +118,18 @@ export function createQuad(gl: WebGL2RenderingContext): {
 }
 
 /** A quad over the whole target, for the full screen passes. */
+/** Binds a texture to a unit and points a sampler uniform at it. */
+export function bindTexture(
+  gl: WebGL2RenderingContext,
+  unit: number,
+  texture: WebGLTexture,
+  location: WebGLUniformLocation | null | undefined
+): void {
+  gl.activeTexture(gl.TEXTURE0 + unit);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.uniform1i(location ?? null, unit);
+}
+
 export const FULLSCREEN_VERTEX = `#version 300 es
 layout(location = 0) in vec2 aCorner;
 out vec2 vNdc;

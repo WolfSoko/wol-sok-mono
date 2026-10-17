@@ -1,5 +1,4 @@
-import { CellBounds } from '../arena/arena-painter';
-import { Point } from '../state/geometry';
+import { CellBounds, Point } from '../state/geometry';
 import {
   ENERGY_SCALE,
   MAX_GPU_COLONIES,

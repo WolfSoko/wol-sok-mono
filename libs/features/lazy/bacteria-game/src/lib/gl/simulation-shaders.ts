@@ -20,6 +20,8 @@
  * state with the same seeded random numbers, so they always agree.
  */
 
+import { MIN_CELL_DENSITY } from '../arena/colony-renderer';
+
 /** Fixed point scale of the energy: 1.0 is stored as 16384. */
 export const ENERGY_SCALE = 16384;
 
@@ -547,5 +549,5 @@ void main() {
   float heat = energy > uMaxEnergy && range > 0.0
     ? min(1.0, (energy - uMaxEnergy) / range)
     : 0.0;
-  outCells = vec4(0.55 + 0.45 * strength, heat, 0.0, 1.0);
+  outCells = vec4(mix(${MIN_CELL_DENSITY}, 1.0, strength), heat, 0.0, 1.0);
 }`;

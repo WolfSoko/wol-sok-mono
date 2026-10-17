@@ -54,11 +54,15 @@ describe('NutrientPellets', () => {
     field.drain(0, 1, 100);
 
     // The partner is still being eaten from - nothing moves yet.
-    expect(field.tickEmpty(0, 2, WIDTH, HEIGHT, everywhere)).toBeNull();
+    field.tickEmpty(0, 2);
     expect(field.nutrients[0].amount).toBe(0);
+    const generation = field.generations[0];
 
     field.drain(1, 1, 100);
-    expect(field.tickEmpty(1, 3, WIDTH, HEIGHT, everywhere)).toBe(0);
+    field.tickEmpty(1, 3);
+
+    expect(field.generations[0]).toBe(generation + 1);
+    expect(field.generations[1]).toBe(generation + 1);
 
     expect(field.nutrients[0].amount).toBe(gameBalance.nutrientEnergy);
     expect(field.nutrients[1].amount).toBe(gameBalance.nutrientEnergy);

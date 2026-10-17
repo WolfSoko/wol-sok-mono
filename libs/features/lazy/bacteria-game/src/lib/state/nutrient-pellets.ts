@@ -11,7 +11,15 @@ import { GameBalance } from './game-balance';
  */
 export class NutrientPellets {
   public nutrients: Nutrient[] = [];
+  /**
+   * Bumped per pellet whenever it is placed anew - counts of who eats from
+   * it taken before then are about another spot.
+   */
+  public readonly generations: number[] = [];
   private timers: number[] = [];
+  private width = 0;
+  private height = 0;
+  private isFree: (x: number, y: number) => boolean = () => true;
 
   public constructor(
     private readonly balance: GameBalance,
@@ -19,14 +27,18 @@ export class NutrientPellets {
   ) {}
 
   /**
-   * Drops all pellets and spawns a fresh set. `isFree` tells a cell inside
-   * the arena that no wall covers.
+   * Drops all pellets and spawns a fresh set in an arena of this size.
+   * `isFree` tells a cell inside it that no wall covers; it is asked again
+   * whenever a pellet respawns.
    */
   public reset(
     width: number,
     height: number,
     isFree: (x: number, y: number) => boolean
   ): void {
+    this.width = width;
+    this.height = height;
+    this.isFree = isFree;
     this.nutrients = [];
     this.timers = [];
     if (width === 0 || height === 0) {
@@ -35,9 +47,10 @@ export class NutrientPellets {
     for (let i = 0; i < this.balance.nutrientCount; i++) {
       this.nutrients.push({ x: 0, y: 0, amount: 0 });
       this.timers.push(0);
+      this.generations[i] ??= 0;
     }
     for (let i = 0; i < this.nutrients.length; i += 2) {
-      this.spawnPair(i, width, height, isFree);
+      this.spawnPair(i);
     }
   }
 
@@ -45,24 +58,14 @@ export class NutrientPellets {
    * Counts an eaten pellet's respawn delay down, and brings it back once it
    * is over. Respawning moves both halves of the pair, so it waits until the
    * partner is empty too - otherwise a pellet someone is still eating would
-   * be yanked away and refilled. Returns the first pellet of the pair when
-   * it respawned, null otherwise.
+   * be yanked away and refilled.
    */
-  public tickEmpty(
-    n: number,
-    deltaTimeSec: number,
-    width: number,
-    height: number,
-    isFree: (x: number, y: number) => boolean
-  ): number | null {
+  public tickEmpty(n: number, deltaTimeSec: number): void {
     this.timers[n] -= deltaTimeSec;
     const partner = this.nutrients[n ^ 1];
-    if (this.timers[n] > 0 || (partner != null && partner.amount > 0)) {
-      return null;
+    if (this.timers[n] <= 0 && (partner == null || partner.amount <= 0)) {
+      this.spawnPair(n - (n % 2));
     }
-    const first = n - (n % 2);
-    this.spawnPair(first, width, height, isFree);
-    return first;
   }
 
   /**
@@ -83,34 +86,27 @@ export class NutrientPellets {
     return true;
   }
 
-  private spawnPair(
-    first: number,
-    width: number,
-    height: number,
-    isFree: (x: number, y: number) => boolean
-  ): void {
-    const { x, y } = this.findSpot(width, height, isFree);
+  private spawnPair(first: number): void {
+    const { width, height } = this;
+    const { x, y } = this.findSpot();
     const amount = this.balance.nutrientEnergy;
-    this.nutrients[first] = { x, y, amount };
-    this.timers[first] = 0;
+    this.place(first, { x, y, amount });
 
     const partner = first + 1;
     if (partner < this.nutrients.length) {
-      this.nutrients[partner] = {
-        x: width - 1 - x,
-        y: height - 1 - y,
-        amount,
-      };
-      this.timers[partner] = 0;
+      this.place(partner, { x: width - 1 - x, y: height - 1 - y, amount });
     }
   }
 
+  private place(n: number, nutrient: Nutrient): void {
+    this.nutrients[n] = nutrient;
+    this.timers[n] = 0;
+    this.generations[n]++;
+  }
+
   /** A random spot that is inside the arena and not inside a wall. */
-  private findSpot(
-    width: number,
-    height: number,
-    isFree: (x: number, y: number) => boolean
-  ): { x: number; y: number } {
+  private findSpot(): { x: number; y: number } {
+    const { width, height, isFree } = this;
     const margin = this.balance.nutrientRadius + 2;
     const spanX = Math.max(1, width - 2 * margin);
     const spanY = Math.max(1, height - 2 * margin);

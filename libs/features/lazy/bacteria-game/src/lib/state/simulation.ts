@@ -1,3 +1,4 @@
+import type { ColonyLayer } from '../arena/colony-renderer';
 import { ColonySpawn, Nutrient, StepEvents } from './bacteria-simulation';
 import { GameBalance } from './game-balance';
 import { Point } from './geometry';
@@ -26,6 +27,8 @@ export interface ColonySummary {
  * passes and reports its numbers a frame late.
  */
 export interface Simulation {
+  /** Which processor runs the war. */
+  readonly kind: 'cpu' | 'gpu';
   setMap(map: GameMap): void;
   resize(width: number, height: number): void;
   /** Replaces all colonies with a fresh blob per player. */
@@ -37,6 +40,11 @@ export interface Simulation {
   /** What happened during the last frame. */
   getEvents(): StepEvents;
   summaries(): readonly ColonySummary[];
+  /**
+   * The colonies as the painter draws them; `boosted` holds the players
+   * whose boost runs.
+   */
+  colonyLayers(boosted: ReadonlySet<number>): ColonyLayer[];
   /** The bacterium of another colony closest to a point, null without one. */
   nearestEnemy(playerId: number, from: Point): Point | null;
   /** Frees whatever the simulation holds outside the JavaScript heap. */

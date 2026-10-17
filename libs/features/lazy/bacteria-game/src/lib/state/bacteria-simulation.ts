@@ -1,8 +1,15 @@
-import { GameBalance, gameBalance } from './game-balance';
+import type { ColonyLayer } from '../arena/colony-renderer';
+import { colonyCapacity, GameBalance, gameBalance } from './game-balance';
 import { clamp, Point } from './geometry';
 import { NutrientPellets } from './nutrient-pellets';
 import { ColonySummary, Simulation } from './simulation';
-import { DynamicWall, GameMap, getMap, Rect } from './maps';
+import {
+  compareDynamicWalls,
+  DynamicWall,
+  GameMap,
+  getMap,
+  stampRect,
+} from './maps';
 import {
   Bacteria,
   createBacteriaBlob,
@@ -60,6 +67,28 @@ export interface StepEvents {
 }
 
 /** A frame in which nothing happened. */
+/**
+ * How a colony heads for its crosshair this frame: how keen it is to hunt
+ * and how many cells it travels - null while it aims at nothing.
+ */
+export function colonyIntent(
+  target: Player | null | undefined,
+  balance: GameBalance,
+  deltaTimeSec: number
+): { aggression: number; steps: number } | null {
+  if (target == null || isNaN(target.x) || isNaN(target.y)) {
+    return null;
+  }
+  const boosted = isBoosted(target);
+  const speed = boosted
+    ? target.maxSpeed * balance.boostSpeedFactor
+    : target.maxSpeed;
+  return {
+    aggression: boosted ? balance.boostAggression : balance.aggression,
+    steps: Math.max(1, Math.round(speed * deltaTimeSec)),
+  };
+}
+
 export function noEvents(): StepEvents {
   return {
     captures: 0,
@@ -108,6 +137,7 @@ const NEIGHBOURS: readonly [number, number][] = [
  * 5. movement - follow your player, but hunt nearby enemies
  */
 export class BacteriaSimulation implements Simulation {
+  public readonly kind = 'cpu';
   private readonly balance: GameBalance;
   private readonly random: () => number;
 
@@ -219,6 +249,15 @@ export class BacteriaSimulation implements Simulation {
     });
   }
 
+  public colonyLayers(boosted: ReadonlySet<number>): ColonyLayer[] {
+    return this.colonies.map((colony) => ({
+      kind: 'cells',
+      color: colony.color,
+      bacterias: colony.bacterias,
+      boosted: boosted.has(colony.playerId),
+    }));
+  }
+
   /** The bacterium of another colony closest to a point, null without one. */
   public nearestEnemy(playerId: number, from: Point): Point | null {
     let nearest: Point | null = null;
@@ -309,7 +348,7 @@ export class BacteriaSimulation implements Simulation {
     }
     this.staticOwner.fill(EMPTY_CELL);
     for (const wall of this.map.createWalls(this.width, this.height)) {
-      this.stampRect(this.staticOwner, wall);
+      stampRect(this.staticOwner, this.width, this.height, wall, WALL_CELL);
     }
     this.dynamicWalls =
       this.map.createDynamicWalls?.(this.width, this.height, this.elapsedSec) ??
@@ -322,17 +361,7 @@ export class BacteriaSimulation implements Simulation {
     this.baseOwner.set(this.staticOwner);
     for (const wall of this.dynamicWalls) {
       if (wall.solid) {
-        this.stampRect(this.baseOwner, wall);
-      }
-    }
-  }
-
-  private stampRect(grid: Int32Array, rect: Rect): void {
-    const xMax = Math.min(rect.x + rect.width, this.width);
-    const yMax = Math.min(rect.y + rect.height, this.height);
-    for (let y = Math.max(rect.y, 0); y < yMax; y++) {
-      for (let x = Math.max(rect.x, 0); x < xMax; x++) {
-        grid[y * this.width + x] = WALL_CELL;
+        stampRect(this.baseOwner, this.width, this.height, wall, WALL_CELL);
       }
     }
   }
@@ -353,27 +382,9 @@ export class BacteriaSimulation implements Simulation {
       this.elapsedSec
     );
     this.dynamicWalls = next;
-
-    let changed = next.length !== previous.length;
-    for (let i = 0; i < next.length; i++) {
-      const before = previous[i];
-      const after = next[i];
-      if (before == null) {
-        continue;
-      }
-      if (after.solid && !before.solid) {
-        this.events.gatesClosed++;
-      }
-      if (after.warning > 0 && before.warning === 0) {
-        this.events.gatesWarned++;
-      }
-      changed ||=
-        after.solid !== before.solid ||
-        after.x !== before.x ||
-        after.y !== before.y ||
-        after.width !== before.width ||
-        after.height !== before.height;
-    }
+    const { changed, closed, warned } = compareDynamicWalls(previous, next);
+    this.events.gatesClosed += closed;
+    this.events.gatesWarned += warned;
     if (!changed) {
       return;
     }
@@ -625,13 +636,7 @@ export class BacteriaSimulation implements Simulation {
     for (let n = 0; n < nutrients.length; n++) {
       const nutrient = nutrients[n];
       if (nutrient.amount <= 0) {
-        this.pellets.tickEmpty(
-          n,
-          deltaTimeSec,
-          this.width,
-          this.height,
-          this.isOpenCell
-        );
+        this.pellets.tickEmpty(n, deltaTimeSec);
         continue;
       }
 
@@ -836,24 +841,10 @@ export class BacteriaSimulation implements Simulation {
    * the arena reaches its carrying capacity.
    */
   private divide(colonies: Colony[], deltaTimeSec: number): void {
-    const {
-      divideEnergyThreshold,
-      divideChancePerSec,
-      parentEnergyShare,
-      maxBacteriaPerPlayer,
-      maxTotalBacteria,
-    } = this.balance;
+    const { divideEnergyThreshold, divideChancePerSec, parentEnergyShare } =
+      this.balance;
     const chance = divideChancePerSec * deltaTimeSec;
-    // Every colony gets its own share of the arena's carrying capacity. A
-    // single budget for all of them would let the bigger colony use it up and
-    // freeze the smaller one out of dividing altogether.
-    const capacity = Math.max(
-      1,
-      Math.min(
-        maxBacteriaPerPlayer,
-        Math.floor(maxTotalBacteria / Math.max(1, this.colonies.length))
-      )
-    );
+    const capacity = colonyCapacity(this.balance, this.colonies.length);
 
     for (const colony of colonies) {
       const colonyIndex = this.colonies.indexOf(colony);
@@ -917,29 +908,19 @@ export class BacteriaSimulation implements Simulation {
     targets: (Player | null)[],
     deltaTimeSec: number
   ): void {
-    const {
-      jitter,
-      influenceCellSize: cellSize,
-      boostSpeedFactor,
-      boostAggression,
-    } = this.balance;
+    const { jitter, influenceCellSize: cellSize } = this.balance;
     const cells = this.influenceWidth * this.influenceHeight;
 
     for (const colony of colonies) {
       const colonyIndex = this.colonies.indexOf(colony);
       const target = targets[colonyIndex];
-      if (target == null) {
+      const intent = colonyIntent(target, this.balance, deltaTimeSec);
+      if (target == null || intent == null) {
         continue;
       }
       const huntOffset = colonyIndex * cells;
-      const { x: targetX, y: targetY, maxSpeed } = target;
-      if (isNaN(targetX) || isNaN(targetY)) {
-        continue;
-      }
-      const boosted = isBoosted(target);
-      const aggression = boosted ? boostAggression : this.balance.aggression;
-      const speed = boosted ? maxSpeed * boostSpeedFactor : maxSpeed;
-      const maxStep = Math.max(1, Math.round(speed * deltaTimeSec));
+      const { x: targetX, y: targetY } = target;
+      const { aggression, steps: maxStep } = intent;
 
       for (const bacterium of colony.bacterias) {
         let dirX = targetX - bacterium.x;

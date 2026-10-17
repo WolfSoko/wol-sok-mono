@@ -52,6 +52,62 @@ export interface DynamicWall extends Rect {
   warning: number;
 }
 
+/** Fills the cells a rect covers in a grid of the arena, clipped to it. */
+export function stampRect(
+  grid: Int32Array | Uint8Array,
+  width: number,
+  height: number,
+  rect: Rect,
+  value: number
+): void {
+  const xMax = Math.min(rect.x + rect.width, width);
+  const yMax = Math.min(rect.y + rect.height, height);
+  for (let y = Math.max(rect.y, 0); y < yMax; y++) {
+    grid.fill(value, y * width + Math.max(rect.x, 0), y * width + xMax);
+  }
+}
+
+/** What the moving walls did from one frame to the next. */
+export interface WallChanges {
+  /** True when a wall moved, grew, or opened or closed. */
+  changed: boolean;
+  /** Gates that slammed shut. */
+  closed: number;
+  /** Gates that started to warn. */
+  warned: number;
+}
+
+/** Compares the moving walls of two frames, wall by wall. */
+export function compareDynamicWalls(
+  previous: readonly DynamicWall[],
+  next: readonly DynamicWall[]
+): WallChanges {
+  const changes = {
+    changed: next.length !== previous.length,
+    closed: 0,
+    warned: 0,
+  };
+  next.forEach((after, i) => {
+    const before = previous[i];
+    if (before == null) {
+      return;
+    }
+    if (after.solid && !before.solid) {
+      changes.closed++;
+    }
+    if (after.warning > 0 && before.warning === 0) {
+      changes.warned++;
+    }
+    changes.changed ||=
+      after.solid !== before.solid ||
+      after.x !== before.x ||
+      after.y !== before.y ||
+      after.width !== before.width ||
+      after.height !== before.height;
+  });
+  return changes;
+}
+
 /** When a gate is closed: once per period, for the last `closedSec` of it. */
 export interface GateTiming {
   periodSec: number;

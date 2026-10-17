@@ -120,3 +120,19 @@ export const gameBalance: GameBalance = {
   boostAggression: 0.85,
   boostAttackFactor: 1.6,
 };
+
+/**
+ * How many bacteria each colony may grow to: its even share of the arena's
+ * carrying capacity, never above the per-player cap. A single budget for all
+ * of them would let the bigger colony use it up and freeze the smaller one
+ * out of dividing altogether.
+ */
+export function colonyCapacity(balance: GameBalance, colonies: number): number {
+  return Math.max(
+    1,
+    Math.min(
+      balance.maxBacteriaPerPlayer,
+      Math.floor(balance.maxTotalBacteria / Math.max(1, colonies))
+    )
+  );
+}

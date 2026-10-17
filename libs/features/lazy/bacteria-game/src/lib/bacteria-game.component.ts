@@ -41,7 +41,6 @@ import {
   tap,
 } from 'rxjs/operators';
 import { ArenaFrame, ArenaPainter } from './arena/arena-painter';
-import { colonyLayers } from './arena/colony-layers';
 import { createArenaPainter } from './arena/create-arena-painter';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
@@ -435,7 +434,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.playerService.useSimulation(
       gl == null ? null : (balance) => gl.createSimulation(balance)
     );
-    canvas.dataset['simulation'] = gl == null ? 'cpu' : 'gpu';
     this.painter.setTheme(this.theme());
     this.gameStateService.setArenaSize(this.width, this.height);
     this.draw(1 / 1000, true);
@@ -525,13 +523,20 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const boosted = new Set(
       players.filter(isBoosted).map((player) => player.id)
     );
+    const simulation = this.playerService.getSimulation();
+    // Which processor runs the war - for the e2e tests and for debugging.
+    // The match picks it, so it can fall back to the CPU after a GPU error.
+    const dataset = this.canvasRef.nativeElement.dataset;
+    if (dataset['simulation'] !== simulation.kind) {
+      dataset['simulation'] = simulation.kind;
+    }
     return {
       clear,
       deltaTimeSec,
       timeSec: this.animationSec,
       walls: this.walls(),
       dynamicWalls: this.playerService.getDynamicWalls(),
-      colonies: colonyLayers(this.playerService.getSimulation(), boosted),
+      colonies: simulation.colonyLayers(boosted),
       nutrients: this.playerService.getNutrients(),
       balance,
       look: this.settings.look(),
