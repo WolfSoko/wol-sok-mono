@@ -10,7 +10,7 @@ import { Observable } from 'rxjs';
 import { BrainSettingsComponent } from '../shared/brain-settings/brain-settings.component';
 import { BrainService, diagonalLabel } from '../shared/brain.service';
 import { DataViewComponent } from '../shared/data-view/data-view.component';
-import { PerceptronComponent } from '../shared/perceptron/perceptron.component';
+import { NetworkViewComponent } from '../shared/network-view/network-view.component';
 import { Point } from '../shared/point';
 
 @Component({
@@ -23,7 +23,7 @@ import { Point } from '../shared/point';
     ElevateCardDirective,
     DataViewComponent,
     BrainSettingsComponent,
-    PerceptronComponent,
+    NetworkViewComponent,
   ],
 })
 export class PerceptronTabComponent implements OnInit {
@@ -40,6 +40,10 @@ export class PerceptronTabComponent implements OnInit {
 
   get perceptron() {
     return this.brainService.perceptrons[0][0];
+  }
+
+  get layers() {
+    return this.brainService.perceptrons;
   }
 
   get points() {

@@ -32,22 +32,15 @@
   <feat-lazy-neural-networks-brain-settings
     [perceptronLayers]="perceptronPerLayer"
   />
-  @for (layer of layers; track layer; let last = $last; let i = $index) {
-    <mat-card appearance="raised" [class.hidden-layer]="!last">
-      <mat-card-header>
-        <mat-card-subtitle>
-          {{ last ? "Output layer" : "Hidden layer " + (i + 1) }}
-        </mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content class="layer">
-        @for (perceptron of layer; track perceptron) {
-          <feat-lazy-neural-networks-perceptron
-            [perceptron]="perceptron"
-            [canvasWidth]="200"
-            [canvasHeight]="200"
-          />
-        }
-      </mat-card-content>
-    </mat-card>
-  }
+  <mat-card appearance="raised" class="network-card">
+    <mat-card-header>
+      <mat-card-title>The network</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <feat-lazy-neural-networks-network-view
+        [layers]="layers"
+        [canvasWidth]="560"
+      />
+    </mat-card-content>
+  </mat-card>
 </div>
