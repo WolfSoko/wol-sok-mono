@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { distinctUntilChanged } from 'rxjs';
 import { BOT_DIFFICULTIES, BotDifficulty } from './state/bot-controller';
-import { isColonyColor } from './state/colony-colors';
+import { sameColors, validColorPair } from './state/colony-colors';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
 import { GameMode } from './state/game.states';
@@ -71,8 +71,7 @@ export class GameSettingsService {
             a.mode === b.mode &&
             a.difficulty === b.difficulty &&
             a.levelId === b.levelId &&
-            a.colors[0] === b.colors[0] &&
-            a.colors[1] === b.colors[1]
+            sameColors(a.colors, b.colors)
         )
       )
       .subscribe(() => this.persist());
@@ -105,14 +104,9 @@ export class GameSettingsService {
     if (LEVELS.some((level) => level.id === stored.levelId)) {
       this.gameState.setLevel(stored.levelId as string);
     }
-    const colors = stored.colors;
-    if (
-      Array.isArray(colors) &&
-      colors.length === 2 &&
-      colors.every(isColonyColor) &&
-      colors[0] !== colors[1]
-    ) {
-      this.gameState.setColors([colors[0], colors[1]]);
+    const colors = validColorPair(stored.colors);
+    if (colors != null) {
+      this.gameState.setColors(colors);
     }
     if (BACTERIA_LOOKS.some((option) => option.id === stored.look)) {
       this.look.set(stored.look as BacteriaLook);

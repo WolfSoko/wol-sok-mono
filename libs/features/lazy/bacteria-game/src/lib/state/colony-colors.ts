@@ -42,6 +42,30 @@ export function toPlayerColor(color: ColonyColor): PlayerColorArray {
   return [color.rgb[0], color.rgb[1], color.rgb[2], 255];
 }
 
+/** True when both pairs hold the same colours in the same seats. */
+export function sameColors(
+  a: readonly [string, string],
+  b: readonly [string, string]
+): boolean {
+  return a[0] === b[0] && a[1] === b[1];
+}
+
+/**
+ * The value as a pair of two known, different colour ids - or null when it
+ * is anything else, such as a stored value from an older version.
+ */
+export function validColorPair(value: unknown): [string, string] | null {
+  if (
+    Array.isArray(value) &&
+    value.length === 2 &&
+    value.every(isColonyColor) &&
+    value[0] !== value[1]
+  ) {
+    return [value[0], value[1]];
+  }
+  return null;
+}
+
 /**
  * The seats' colours after one seat picked a new one. Two colonies in the
  * same colour could not be told apart, so a seat that picks the other

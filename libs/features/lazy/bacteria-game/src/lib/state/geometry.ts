@@ -9,6 +9,11 @@ export function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
 }
 
+/** `value` wrapped into `[0, size)`, also for negative values. */
+export function wrap(value: number, size: number): number {
+  return ((value % size) + size) % size;
+}
+
 /** The length of a vector. */
 export function length(vector: Point): number {
   return Math.hypot(vector.x, vector.y);

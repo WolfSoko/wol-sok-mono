@@ -92,7 +92,7 @@ import {
   nextLevel,
 } from './state/levels';
 import { Rect } from './state/maps';
-import { Player } from './state/player.model';
+import { isBoosted, Player } from './state/player.model';
 import { PlayerQuery } from './state/player.query';
 import { PlayerService } from './state/player.service';
 import {
@@ -142,12 +142,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   width = 320;
   height = 140;
-  /**
-   * Canvas pixels per arena cell. The simulation and the pointer maths work
-   * in arena cells; drawing at a finer resolution only makes the slime, the
-   * jam and the crosshairs smooth.
-   */
-  protected readonly renderScale = RENDER_SCALE;
 
   state: Signal<GameStateState | undefined>;
   stats: Signal<ColonyStats[]>;
@@ -398,7 +392,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected setSound(on: boolean): void {
     this.settings.setSound(on);
     if (on) {
-      this.sound.unlock();
       this.sound.click();
     }
   }
@@ -444,7 +437,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private getRenderingContext() {
     const canvasEl: HTMLCanvasElement = this.canvasRef.nativeElement;
 
-    // Nothing reads the canvas back any more, so it may live on the GPU.
     const context = canvasEl.getContext('2d');
     if (context == null) {
       throw new Error('Could not get rendering context');
@@ -458,7 +450,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   startGame() {
     this.requestNativeFullscreen();
-    this.sound.unlock();
     this.sound.matchStart();
     this.renderer.drawFloor(this.cx, true);
     this.gameStateService.cleanup();
@@ -522,10 +513,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
       if (isRunning) {
         this.playerService.gameLoop(this.width, this.height, deltaTimeInSec);
-        this.sound.frame(this.playerService.getStepEvents());
-        for (const isBot of this.playerService.takeFiredBoosts()) {
-          this.sound.boost(isBot);
-        }
+        this.sound.frame(this.playerService.getFrameEvents());
       }
       this.renderer.drawDynamicWalls(
         this.cx,
@@ -553,7 +541,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const boosted = new Set(
       this.playerQuery
         .getAll()
-        .filter((player) => player.boostActiveSec > 0)
+        .filter(isBoosted)
         .map((player) => player.id)
     );
     const layer = this.colonyRenderer.render(
@@ -586,7 +574,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.cx.fillRect(player.x - 6, player.y - 0.5, 13, 2);
       this.cx.fillRect(player.x - 0.5, player.y - 6, 2, 13);
 
-      if (player.boostActiveSec > 0 && boostDuration > 0) {
+      if (isBoosted(player) && boostDuration > 0) {
         const left = player.boostActiveSec / boostDuration;
         this.cx.strokeStyle = css;
         this.cx.lineWidth = 1.5;
@@ -608,7 +596,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Toggles pause - the touch equivalent of the P key. */
   togglePause() {
     this.requestNativeFullscreen();
-    this.sound.unlock();
     this.sound.click();
     this.gameStateService.togglePause();
   }
@@ -635,7 +622,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Fires a player's boost - the button equivalent of Space / Enter. */
   protected boost(playerId: number): void {
-    this.sound.unlock();
     this.gameStateService.boost(playerId);
   }
 
@@ -794,19 +780,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     );
   }
 
-  /**
-   * Wakes the sound on any gesture that lets a page play audio. A touch only
-   * counts once the finger lifts, so the boost pad's press alone - fired on
-   * pointerdown - would not resume a context the phone suspended mid-match.
-   */
-  @HostListener('document:pointerup')
-  protected onPointerReleased(): void {
-    this.sound.unlock();
-  }
-
   @HostListener('document:keydown', ['$event'])
   onKeyDown($event: KeyboardEvent) {
-    this.sound.unlock();
     if (isTypingTarget($event.target)) {
       return;
     }
@@ -867,7 +842,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 }
 
-/** Canvas pixels per arena cell - see {@link BacteriaGameComponent.renderScale}. */
+/**
+ * Canvas pixels per arena cell. The simulation and the pointer maths work in
+ * arena cells; drawing at a finer resolution only makes the slime, the jam
+ * and the crosshairs smooth.
+ */
 const RENDER_SCALE = 3;
 
 /** Room kept free around the arena for its frame, in CSS pixels. */

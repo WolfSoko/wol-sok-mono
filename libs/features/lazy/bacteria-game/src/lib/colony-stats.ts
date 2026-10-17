@@ -1,6 +1,6 @@
 import { GameBalance, gameBalance } from './state/game-balance';
 import { clamp } from './state/geometry';
-import { isBoostReady, Player } from './state/player.model';
+import { isBoosted, isBoostReady, Player } from './state/player.model';
 
 /** Statistics of one colony, ready to be rendered by the template. */
 export interface ColonyStats {
@@ -74,7 +74,7 @@ export function toColonyStats(
     energy: Math.round((player.averageEnergy / balance.maxEnergy) * 100),
     // Whole percent: the bar would move every frame otherwise, invisibly.
     share: total > 0 ? Math.round((player.bacteriaCount / total) * 100) : 0,
-    boosting: player.boostActiveSec > 0,
+    boosting: isBoosted(player),
     boostReady: isBoostReady(player),
     boostCooldown: isBoostReady(player)
       ? 0

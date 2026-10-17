@@ -28,7 +28,7 @@ function slime(bacterias: Bacteria[], shimmerTimeSec: number | null = null) {
   const cells = WIDTH * HEIGHT;
   const density = new Float32Array(cells);
   const heat = new Float32Array(cells);
-  colonyDensity(
+  const hot = colonyDensity(
     density,
     heat,
     new Float32Array(cells),
@@ -37,7 +37,15 @@ function slime(bacterias: Bacteria[], shimmerTimeSec: number | null = null) {
     bacterias
   );
   const data = new Uint8ClampedArray(cells * SLIME_SCALE * SLIME_SCALE * 4);
-  paintSlime(data, density, heat, WIDTH, HEIGHT, ORANGE, shimmerTimeSec);
+  paintSlime(
+    data,
+    density,
+    hot ? heat : null,
+    WIDTH,
+    HEIGHT,
+    ORANGE,
+    shimmerTimeSec
+  );
   return data;
 }
 

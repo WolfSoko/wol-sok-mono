@@ -4,6 +4,7 @@ import { DynamicWall, GameMap, getMap, Rect } from './maps';
 import {
   Bacteria,
   createBacteriaBlob,
+  isBoosted,
   Player,
   PlayerColorArray,
 } from './player.model';
@@ -56,7 +57,8 @@ export interface StepEvents {
   gatesWarned: number;
 }
 
-function noEvents(): StepEvents {
+/** A frame in which nothing happened. */
+export function noEvents(): StepEvents {
   return {
     captures: 0,
     pelletsEaten: 0,
@@ -317,23 +319,35 @@ export class BacteriaSimulation {
     this.evictFromWalls();
   }
 
-  /** Pushes bacteria out of the cells a wall has just moved into. */
+  /**
+   * Pushes bacteria out of the cells a wall has just moved into. Most moves
+   * catch nobody, so the occupancy needed to find free cells is only built
+   * once someone is trapped.
+   */
   private evictFromWalls(): void {
-    this.owner.set(this.baseOwner);
     const trapped: [number, Bacteria][] = [];
     this.colonies.forEach((colony, colonyIndex) => {
       for (const bacterium of colony.bacterias) {
-        const index = bacterium.y * this.width + bacterium.x;
-        if (this.baseOwner[index] === WALL_CELL) {
+        if (
+          this.baseOwner[bacterium.y * this.width + bacterium.x] === WALL_CELL
+        ) {
           trapped.push([colonyIndex, bacterium]);
-        } else {
-          this.owner[index] = colonyIndex;
         }
       }
     });
     if (trapped.length === 0) {
       return;
     }
+
+    this.owner.set(this.baseOwner);
+    this.colonies.forEach((colony, colonyIndex) => {
+      for (const bacterium of colony.bacterias) {
+        const index = bacterium.y * this.width + bacterium.x;
+        if (this.owner[index] !== WALL_CELL) {
+          this.owner[index] = colonyIndex;
+        }
+      }
+    });
 
     const crushed = new Set<Bacteria>();
     for (const [colonyIndex, bacterium] of trapped) {
@@ -1041,11 +1055,6 @@ export class BacteriaSimulation {
     }
     return { x: margin, y: margin };
   }
-}
-
-/** True while the player's boost is running. */
-function isBoosted(player: Player | null): boolean {
-  return player != null && player.boostActiveSec > 0;
 }
 
 /** Index of the enemy colony with the most energy around a cell, else -1. */

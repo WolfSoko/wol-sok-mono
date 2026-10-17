@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { StepEvents } from '../state/bacteria-simulation';
+import { FrameEvents } from '../state/player.service';
 
 /** How a match ended, from the point of view of the people at the screen. */
 export type MatchResult = 'win' | 'loss' | 'draw';
@@ -36,9 +36,11 @@ const CAPTURE_INTERVAL_SEC = 0.07;
  * crackle while colonies eat each other, a whoosh for a boost, a warning
  * beep and a thud for the gates, a hum per level and a jingle at the end.
  *
- * Browsers only let a page make sound after a gesture, so the audio context
- * is created by {@link unlock}, which the game calls from its buttons and
- * keys. Without the Web Audio API every call is a no-op.
+ * Browsers only let a page make sound after a gesture, so the service
+ * listens for the gestures that count - a lifted finger or mouse button, a
+ * key - and creates or wakes its audio context on each one. Nothing else in
+ * the game has to remember to unlock it. Without the Web Audio API every
+ * call is a no-op.
  */
 @Injectable({ providedIn: 'root' })
 export class GameSoundService {
@@ -49,6 +51,16 @@ export class GameSoundService {
   private droneHz: number | null = null;
   private enabled = true;
   private lastCaptureAt = -Infinity;
+
+  public constructor() {
+    if (typeof document !== 'undefined') {
+      // Capture phase: the context is up before any handler of the same
+      // gesture wants to play a sound.
+      const unlock = () => this.unlock();
+      document.addEventListener('pointerup', unlock, { capture: true });
+      document.addEventListener('keydown', unlock, { capture: true });
+    }
+  }
 
   /** Mutes or unmutes everything, the hum included. */
   public setEnabled(enabled: boolean): void {
@@ -62,8 +74,8 @@ export class GameSoundService {
     }
   }
 
-  /** Creates or wakes the audio context. Call it from a user gesture. */
-  public unlock(): void {
+  /** Creates or wakes the audio context, on a user gesture. */
+  private unlock(): void {
     if (this.context == null) {
       const AudioContextClass =
         typeof window === 'undefined'
@@ -91,12 +103,15 @@ export class GameSoundService {
   }
 
   /**
-   * Reacts to what happened in a frame: pellets, captures, crushed bacteria
-   * and the gates.
+   * Reacts to what happened in a frame: boosts, pellets, captures, crushed
+   * bacteria and the gates.
    */
-  public frame(events: StepEvents): void {
+  public frame(events: FrameEvents): void {
     if (!this.audible()) {
       return;
+    }
+    for (const isBot of events.boosts) {
+      this.boost(isBot);
     }
     if (events.pelletsEaten > 0) {
       this.pellet();

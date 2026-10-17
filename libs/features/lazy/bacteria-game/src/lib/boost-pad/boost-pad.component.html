@@ -15,7 +15,7 @@
       [attr.aria-label]="'Boost ' + colony().name"
       [disabled]="disabled() || !colony().boostReady"
       (pointerdown)="onPress($event)"
-      (click)="onClick($event)"
+      (click)="boost.emit()"
     >
       <mat-icon>bolt</mat-icon>
       <span class="boost-state">{{ boostLabel(colony()) }}</span>

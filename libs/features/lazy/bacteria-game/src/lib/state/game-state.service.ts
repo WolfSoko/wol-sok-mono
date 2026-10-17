@@ -14,7 +14,12 @@ import {
   timestamp,
 } from 'rxjs';
 import { BotDifficulty } from './bot-controller';
-import { getColonyColor, pickColor, toPlayerColor } from './colony-colors';
+import {
+  getColonyColor,
+  pickColor,
+  toPlayerColor,
+  validColorPair,
+} from './colony-colors';
 import { GameStateQuery } from './game-state.query';
 import {
   GameMode,
@@ -256,11 +261,14 @@ export class GameStateService {
   }
 
   /**
-   * Gives both colonies their colours at once - for restoring a pair that is
-   * already known to be valid and distinct.
+   * Gives both colonies their colours at once. A pair with an unknown colour
+   * or the same colour twice is ignored.
    */
   public setColors(colors: readonly [string, string]): void {
-    this.updateSetup({ colors: [colors[0], colors[1]] });
+    const valid = validColorPair(colors);
+    if (valid != null) {
+      this.updateSetup({ colors: valid });
+    }
   }
 
   /** Fires the boost of a player - the touch equivalent of Space / Enter. */

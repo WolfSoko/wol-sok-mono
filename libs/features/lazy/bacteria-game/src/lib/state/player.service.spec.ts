@@ -121,8 +121,10 @@ describe('PlayerService', () => {
       service.boost(0);
       service.boost(0);
 
-      expect(service.takeFiredBoosts()).toEqual([false]);
-      expect(service.takeFiredBoosts()).toEqual([]);
+      run(1);
+      expect(service.getFrameEvents().boosts).toEqual([false]);
+      run(1);
+      expect(service.getFrameEvents().boosts).toEqual([]);
     });
 
     it('leaves the other player alone', () => {

@@ -11,6 +11,8 @@
  * describes one half, the other one is generated from it.
  */
 
+import { wrap } from './geometry';
+
 export interface Rect {
   x: number;
   y: number;
@@ -30,7 +32,7 @@ export interface GameMap {
   /**
    * The walls that move or open and close while the match runs, at the given
    * match time. Maps without any leave it out. Like the static walls they are
-   * point symmetric at every moment - see {@link symmetricDynamicWalls}.
+   * point symmetric at every moment - see {@link pointSymmetric}.
    */
   createDynamicWalls?(
     width: number,
@@ -66,7 +68,7 @@ export function gateState(
   timeSec: number
 ): Pick<DynamicWall, 'solid' | 'warning'> {
   const { periodSec, closedSec, offsetSec = 0, warningSec = 1.2 } = timing;
-  const phase = (((timeSec + offsetSec) % periodSec) + periodSec) % periodSec;
+  const phase = wrap(timeSec + offsetSec, periodSec);
   const openSec = periodSec - closedSec;
   if (phase >= openSec) {
     return { solid: true, warning: 0 };
@@ -122,18 +124,22 @@ function clipToArena(rect: Rect, width: number, height: number): Rect | null {
  * mirror image (a block on the centre, say) is kept once. Clipping happens
  * after mirroring, and the arena box is point symmetric itself, so even a
  * layout that hangs over the edge of a small arena stays fair.
+ *
+ * Moving walls go through it as well, at every moment: a gate and its
+ * mirror image open and close together, and a sliding wall's twin slides
+ * the other way.
  */
-export function pointSymmetric(
-  rects: Rect[],
+export function pointSymmetric<T extends Rect>(
+  rects: T[],
   width: number,
   height: number
-): Rect[] {
-  const result: Rect[] = [];
+): T[] {
+  const result: T[] = [];
   const seen = new Set<string>();
 
   for (const rect of [
     ...rects,
-    ...rects.map((r) => mirrorRect(r, width, height)),
+    ...rects.map((r) => ({ ...r, ...mirrorRect(r, width, height) })),
   ]) {
     const clipped = clipToArena(rect, width, height);
     if (clipped == null) {
@@ -144,39 +150,8 @@ export function pointSymmetric(
       continue;
     }
     seen.add(key);
-    result.push(clipped);
-  }
-
-  return result;
-}
-
-/**
- * {@link pointSymmetric} for walls that move: every wall is paired with its
- * 180° rotation in the same state, so a gate and its mirror image always
- * open and close together, and a sliding wall's twin slides the other way.
- */
-export function symmetricDynamicWalls(
-  walls: DynamicWall[],
-  width: number,
-  height: number
-): DynamicWall[] {
-  const result: DynamicWall[] = [];
-  const seen = new Set<string>();
-
-  for (const wall of [
-    ...walls,
-    ...walls.map((w) => ({ ...w, ...mirrorRect(w, width, height) })),
-  ]) {
-    const clipped = clipToArena(wall, width, height);
-    if (clipped == null) {
-      continue;
-    }
-    const key = `${clipped.x}:${clipped.y}:${clipped.width}:${clipped.height}`;
-    if (seen.has(key)) {
-      continue;
-    }
-    seen.add(key);
-    result.push({ ...clipped, solid: wall.solid, warning: wall.warning });
+    // Whatever else the rect carries - a gate's state, say - goes along.
+    result.push({ ...rect, ...clipped });
   }
 
   return result;
@@ -219,7 +194,7 @@ const corridors: GameMap = {
   },
   createDynamicWalls(width, height, timeSec) {
     const { x, gapY, gap } = corridorGap(width, height);
-    return symmetricDynamicWalls(
+    return pointSymmetric(
       [
         {
           x,
@@ -272,7 +247,7 @@ const hourglass: GameMap = {
   createDynamicWalls(width, height, timeSec) {
     const { barWidth, gapHalf } = HOURGLASS;
     const y = Math.round(height / 2) - gapHalf;
-    return symmetricDynamicWalls(
+    return pointSymmetric(
       [
         {
           x: Math.round(width / 2 - barWidth / 2),
@@ -449,7 +424,7 @@ const pistons: GameMap = {
     const length = Math.round(height * 0.4);
     const rest = Math.round(height / 2 - length / 2);
     const amplitude = rest - 6;
-    return symmetricDynamicWalls(
+    return pointSymmetric(
       [
         {
           x: Math.round(width / 2) - 32,

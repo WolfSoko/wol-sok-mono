@@ -4,6 +4,7 @@ import {
   BacteriaSimulation,
   Colony,
   Nutrient,
+  noEvents,
   StepEvents,
 } from './bacteria-simulation';
 import {
@@ -64,6 +65,12 @@ const KEY_SETS: readonly Record<string, SteeringVector>[] = [
   },
 ];
 
+/** What happened during a frame - the simulation's events and the boosts. */
+export interface FrameEvents extends StepEvents {
+  /** One entry per boost fired since the frame before, true for the computer's. */
+  boosts: boolean[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class PlayerService {
   private playerStore = inject(PlayerStore);
@@ -78,8 +85,10 @@ export class PlayerService {
   private steering = new Map<number, SteeringVector>();
   /** The computer opponents, one per bot player. */
   private bots = new Map<number, BotController>();
-  /** Boosts fired since the sound last asked - true for the computer's. */
+  /** Boosts fired since the last frame - true for the computer's. */
   private firedBoosts: boolean[] = [];
+  /** What the last frame did, for the sound. */
+  private frameEvents: FrameEvents = { ...noEvents(), boosts: [] };
 
   constructor() {
     this.gameStateQuery
@@ -143,6 +152,7 @@ export class PlayerService {
     this.steering.clear();
     this.balance = balance;
     this.firedBoosts = [];
+    this.frameEvents = { ...noEvents(), boosts: [] };
     this.simulation = new BacteriaSimulation(balance);
     if (options.arena != null) {
       this.simulation.resize(options.arena.width, options.arena.height);
@@ -215,16 +225,6 @@ export class PlayerService {
     this.firedBoosts.push(player.isBot);
   }
 
-  /**
-   * The boosts fired since the last call, true for each one the computer
-   * fired - used for the sound only.
-   */
-  public takeFiredBoosts(): boolean[] {
-    const fired = this.firedBoosts;
-    this.firedBoosts = [];
-    return fired;
-  }
-
   /** The nutrient pellets currently on the map - used for rendering only. */
   public getNutrients(): Nutrient[] {
     return this.simulation.getNutrients();
@@ -236,8 +236,8 @@ export class PlayerService {
   }
 
   /** What happened during the last frame - used for the sound only. */
-  public getStepEvents(): StepEvents {
-    return this.simulation.getEvents();
+  public getFrameEvents(): FrameEvents {
+    return this.frameEvents;
   }
 
   /** The live bacteria of every colony - used for rendering only. */
@@ -251,6 +251,11 @@ export class PlayerService {
     this.tickBoosts(deltaTimeSec);
     this.runBots(width, height, deltaTimeSec);
     this.simulation.step(this.playerQuery.getAll(), deltaTimeSec);
+    this.frameEvents = {
+      ...this.simulation.getEvents(),
+      boosts: this.firedBoosts,
+    };
+    this.firedBoosts = [];
     this.syncColonyStats();
   }
 

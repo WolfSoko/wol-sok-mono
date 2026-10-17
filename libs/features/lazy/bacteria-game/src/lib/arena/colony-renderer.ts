@@ -4,7 +4,7 @@ import { GameBalance, gameBalance } from '../state/game-balance';
 import { clamp } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
 import { Rgb } from './arena-theme';
-import { hash, rgba, smoothstep } from './canvas-math';
+import { createCanvas, hash, lerp, rgba, smoothstep } from './canvas-math';
 
 /** What the renderer needs to know about one colony. */
 export interface ColonyLayer {
@@ -47,15 +47,11 @@ export function createImageDataFromBacterias(
   shimmerTimeSec: number | null = null
 ): Uint8ClampedArray {
   const [r, g, b, alpha] = color;
-  const energyRange = balance.superChargedMaxEnergy - balance.maxEnergy;
   for (let i = 0; i < bacterias.length; i++) {
     const { x, y, energy } = bacterias[i];
     const data8index = (y * width + x) * 4;
 
-    let heat =
-      energy > balance.maxEnergy && energyRange > 0
-        ? Math.min(1, (energy - balance.maxEnergy) / energyRange)
-        : 0;
+    let heat = overcharge(energy, balance);
     if (shimmerTimeSec != null) {
       heat = Math.max(heat, shimmer(x, y, shimmerTimeSec));
     }
@@ -69,7 +65,7 @@ export function createImageDataFromBacterias(
     }
 
     // Weakened bacteria fade out, but stay visible enough to follow the fight.
-    const strength = Math.max(energy, 0) / balance.maxEnergy;
+    const strength = strengthOf(energy, balance);
     data8[data8index] = r;
     data8[data8index + 1] = g;
     data8[data8index + 2] = b;
@@ -84,6 +80,9 @@ export function createImageDataFromBacterias(
  * strength to its cell, then the field is blurred twice with a 3x3 box -
  * close to a gaussian - so neighbours melt into one blob. `heat` gets the
  * same treatment for the overcharge of each bacterium.
+ *
+ * Returns false when no bacterium is overcharged - `heat` is then left as it
+ * was and must not be read.
  */
 export function colonyDensity(
   density: Float32Array,
@@ -93,22 +92,28 @@ export function colonyDensity(
   height: number,
   bacterias: readonly Bacteria[],
   balance: GameBalance = gameBalance
-): void {
+): boolean {
   density.fill(0);
-  heat.fill(0);
-  const energyRange = balance.superChargedMaxEnergy - balance.maxEnergy;
+  let hot = false;
   for (const { x, y, energy } of bacterias) {
     const index = y * width + x;
-    const strength = Math.min(1, Math.max(energy, 0) / balance.maxEnergy);
-    density[index] += 0.55 + 0.45 * strength;
-    if (energy > balance.maxEnergy && energyRange > 0) {
-      heat[index] += Math.min(1, (energy - balance.maxEnergy) / energyRange);
+    density[index] += 0.55 + 0.45 * Math.min(1, strengthOf(energy, balance));
+    const over = overcharge(energy, balance);
+    if (over > 0) {
+      if (!hot) {
+        heat.fill(0);
+        hot = true;
+      }
+      heat[index] += over;
     }
   }
-  for (const field of [density, heat]) {
-    boxBlur(field, scratch, width, height);
-    boxBlur(field, scratch, width, height);
+  boxBlur(density, scratch, width, height);
+  boxBlur(density, scratch, width, height);
+  if (hot) {
+    boxBlur(heat, scratch, width, height);
+    boxBlur(heat, scratch, width, height);
   }
+  return hot;
 }
 
 /**
@@ -119,12 +124,12 @@ export function colonyDensity(
  * it is boosted, a shimmer running across it with a sparkle here and there.
  *
  * The density is sampled bilinearly between the cells, which is what makes
- * the outline round.
+ * the outline round. `heat` is null when nothing is overcharged.
  */
 export function paintSlime(
   data8: Uint8ClampedArray,
   density: Float32Array,
-  heat: Float32Array,
+  heat: Float32Array | null,
   width: number,
   height: number,
   color: readonly number[],
@@ -140,7 +145,7 @@ export function paintSlime(
     const gy = (py + 0.5) * step - 0.5;
     const y0 = clamp(Math.floor(gy), 0, height - 1);
     const y1 = clamp(y0 + 1, 0, height - 1);
-    const fy = Math.min(1, Math.max(0, gy - y0));
+    const fy = clamp(gy - y0, 0, 1);
     for (let px = 0; px < outWidth; px++) {
       const gx = (px + 0.5) * step - 0.5;
       const x0 = clamp(Math.floor(gx), 0, width - 1);
@@ -156,7 +161,7 @@ export function paintSlime(
       if (d00 + d10 + d01 + d11 < SLIME_EDGE_START) {
         continue;
       }
-      const fx = Math.min(1, Math.max(0, gx - x0));
+      const fx = clamp(gx - x0, 0, 1);
       const top = d00 + (d10 - d00) * fx;
       const bottom = d01 + (d11 - d01) * fx;
       const d = top + (bottom - top) * fy;
@@ -169,21 +174,20 @@ export function paintSlime(
       const slopeX = d10 - d00 + (d11 - d01 - (d10 - d00)) * fy;
       const slopeY = d01 - d00 + (d11 - d10 - (d01 - d00)) * fx;
       const facing = -(slopeX * LIGHT_X + slopeY * LIGHT_Y);
-      const gloss = Math.pow(Math.min(1, Math.max(0, facing * 5)), 3);
+      const lit = clamp(facing * 5, 0, 1);
+      const gloss = lit * lit * lit;
       // Thick slime is deeper in colour; the edge is a darker rim.
       const depth = 0.8 + 0.2 * (1 - Math.min(1, d));
       const rim = 1 - 0.45 * coverage * (1 - coverage) * 4;
       let shade = depth * rim;
 
-      const h00 = heat[i00];
-      const h10 = heat[i10];
-      const hTop = h00 + (h10 - h00) * fx;
-      const hBottom = heat[i01] + (heat[i11] - heat[i01]) * fx;
-      let white = Math.min(
-        1,
-        (hTop + (hBottom - hTop) * fy) / Math.max(d, 0.05)
-      );
-      white = Math.max(white, gloss * 0.75);
+      let white = gloss * 0.75;
+      if (heat != null) {
+        const hTop = lerp(heat[i00], heat[i10], fx);
+        const hBottom = lerp(heat[i01], heat[i11], fx);
+        const hot = Math.min(1, lerp(hTop, hBottom, fy) / Math.max(d, 0.05));
+        white = Math.max(white, hot);
+      }
       if (shimmerTimeSec != null) {
         const wave = shimmer(px * step, py * step, shimmerTimeSec);
         white = Math.max(white, wave * 0.8);
@@ -323,7 +327,7 @@ export class ColonyRenderer {
     for (const colony of colonies) {
       const shimmerTime = colony.boosted ? timeSec : null;
       if (look === 'slime') {
-        colonyDensity(
+        const hot = colonyDensity(
           this.density,
           this.heat,
           this.scratch,
@@ -335,7 +339,7 @@ export class ColonyRenderer {
         paintSlime(
           data,
           this.density,
-          this.heat,
+          hot ? this.heat : null,
           this.width,
           this.height,
           colony.color,
@@ -361,10 +365,10 @@ export class ColonyRenderer {
     if (this.scale === scale && this.canvas != null) {
       return true;
     }
-    if (typeof document === 'undefined') {
+    const canvas = this.canvas ?? createCanvas(0, 0);
+    if (canvas == null) {
       return false;
     }
-    const canvas = this.canvas ?? document.createElement('canvas');
     canvas.width = this.width * scale;
     canvas.height = this.height * scale;
     const context = canvas.getContext?.('2d') ?? null;
@@ -382,7 +386,24 @@ export class ColonyRenderer {
 /** A band of light sweeping diagonally across a boosted colony, 0 to 1. */
 function shimmer(x: number, y: number, timeSec: number): number {
   const wave = 0.5 + 0.5 * Math.sin(timeSec * 9 - (x + y * 0.6) * 0.35);
-  return Math.pow(wave, 6);
+  const squared = wave * wave;
+  return squared * squared * squared;
+}
+
+/**
+ * How far a bacterium is charged beyond its normal maximum, from 0 to 1 at
+ * the supercharged limit - the white heat of both looks.
+ */
+function overcharge(energy: number, balance: GameBalance): number {
+  const range = balance.superChargedMaxEnergy - balance.maxEnergy;
+  return energy > balance.maxEnergy && range > 0
+    ? Math.min(1, (energy - balance.maxEnergy) / range)
+    : 0;
+}
+
+/** A bacterium's energy relative to the normal maximum, never below 0. */
+function strengthOf(energy: number, balance: GameBalance): number {
+  return Math.max(energy, 0) / balance.maxEnergy;
 }
 
 /** True for the few pixels that glint in this tenth of a second. */

@@ -6,12 +6,12 @@ describe('GameSoundService', () => {
     const sound = TestBed.inject(GameSoundService);
 
     expect(() => {
-      sound.unlock();
       sound.setEnabled(false);
       sound.matchStart();
       sound.boost(false);
       sound.setAmbience(50);
       sound.frame({
+        boosts: [true],
         captures: 3,
         pelletsEaten: 1,
         crushed: 2,

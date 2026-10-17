@@ -1,6 +1,7 @@
+import { wrap } from '../state/geometry';
 import { DynamicWall, Rect } from '../state/maps';
-import { ArenaPattern, ArenaTheme, Rgb } from './arena-theme';
-import { hash, rgba, smoothstep } from './canvas-math';
+import { ArenaPattern, ArenaTheme } from './arena-theme';
+import { createCanvas, hash, lerp, mix, rgba, smoothstep } from './canvas-math';
 
 /**
  * Paints the floor of an arena into an RGBA pixel buffer: the theme's floor
@@ -31,27 +32,26 @@ export function paintArenaBackground(
       );
       const vignette = smoothstep(0.45, 1.05, edge);
 
-      let [r, g, b] = mix(theme.floor, theme.rim, vignette);
       const ink =
         pattern(x, y, width, height) *
         theme.patternStrength *
         (1 - 0.6 * vignette);
-      r += (theme.patternColor[0] - r) * ink;
-      g += (theme.patternColor[1] - g) * ink;
-      b += (theme.patternColor[2] - b) * ink;
-
+      const floor = mix(
+        mix(theme.floor, theme.rim, vignette),
+        theme.patternColor,
+        ink
+      );
       const grain = (hash(x, y, 7) - 0.5) * 6;
-      r += grain;
-      g += grain;
-      b += grain;
 
       // The frame: the outermost ring bright, the next one a soft glow.
       const ring = Math.min(x, y, width - 1 - x, height - 1 - y);
       const frame =
         ring === 0 ? 0.85 : ring === 1 ? 0.35 : ring === 2 ? 0.12 : 0;
-      r += (theme.border[0] - r) * frame;
-      g += (theme.border[1] - g) * frame;
-      b += (theme.border[2] - b) * frame;
+      const [r, g, b] = mix(
+        [floor[0] + grain, floor[1] + grain, floor[2] + grain],
+        theme.border,
+        frame
+      );
 
       const index = (y * width + x) * 4;
       data[index] = r;
@@ -86,9 +86,9 @@ export class ArenaRenderer {
   private theme: ArenaTheme | null = null;
   private floor: HTMLCanvasElement | null = null;
   /** Diagonal hazard stripes for the closed gates and sliding walls. */
-  private hazard: HTMLCanvasElement | null = null;
-  /** The stripes as a fill, made once per theme on the first closed wall. */
-  private hazardPattern: CanvasPattern | null = null;
+  private hazard: CanvasPattern | null = null;
+  /** The theme's colours as CSS, built once instead of every frame. */
+  private css = { wall: '', wallEdge: '', border: '', motes: '' };
   private motes: Mote[] = [];
   private timeSec = 0;
 
@@ -106,7 +106,12 @@ export class ArenaRenderer {
     this.theme = theme;
     this.floor = this.paintFloor(theme);
     this.hazard = this.paintHazard(theme);
-    this.hazardPattern = null;
+    this.css = {
+      wall: rgba(theme.wall),
+      wallEdge: rgba(theme.wallEdge),
+      border: rgba(theme.border),
+      motes: rgba(theme.motes),
+    };
     this.motes = Array.from({ length: theme.moteCount }, () => ({
       x: this.random() * this.width,
       y: this.random() * this.height,
@@ -138,9 +143,9 @@ export class ArenaRenderer {
       return;
     }
     for (const wall of walls) {
-      cx.fillStyle = rgba(theme.wall);
+      cx.fillStyle = this.css.wall;
       cx.fillRect(wall.x, wall.y, wall.width, wall.height);
-      cx.fillStyle = rgba(theme.wallEdge);
+      cx.fillStyle = this.css.wallEdge;
       cx.fillRect(wall.x, wall.y, wall.width, 1);
       cx.fillRect(wall.x, wall.y, 1, wall.height);
     }
@@ -163,10 +168,7 @@ export class ArenaRenderer {
       if (wall.solid) {
         // The pattern lives in arena space, so a sliding wall moves under
         // still stripes - like a conveyor, which reads as motion.
-        if (this.hazardPattern == null && this.hazard != null) {
-          this.hazardPattern = cx.createPattern(this.hazard, 'repeat');
-        }
-        cx.fillStyle = this.hazardPattern ?? rgba(theme.border);
+        cx.fillStyle = this.hazard ?? this.css.border;
         cx.fillRect(wall.x, wall.y, wall.width, wall.height);
         continue;
       }
@@ -194,6 +196,7 @@ export class ArenaRenderer {
       return;
     }
     this.timeSec += deltaTimeSec;
+    cx.fillStyle = this.css.motes;
     for (const mote of this.motes) {
       mote.x = wrap(
         mote.x + (theme.current.x + mote.vx) * deltaTimeSec,
@@ -204,16 +207,18 @@ export class ArenaRenderer {
         this.height
       );
       const twinkle = 0.5 + 0.5 * Math.sin(this.timeSec * 1.7 + mote.phase);
-      cx.fillStyle = rgba(theme.motes, 0.12 + 0.3 * twinkle);
+      cx.globalAlpha = 0.12 + 0.3 * twinkle;
       cx.fillRect(Math.floor(mote.x), Math.floor(mote.y), 1, 1);
     }
+    cx.globalAlpha = 1;
   }
 
   /**
-   * One tile of the hazard stripes: the frame colour crossed by dark
-   * diagonals, three cells each, or null where there is no canvas.
+   * The hazard stripes as a fill: a tile of the frame colour crossed by dark
+   * diagonals, three cells each, or null where there is no canvas. A
+   * pattern may fill any canvas, not only the tile's own.
    */
-  private paintHazard(theme: ArenaTheme): HTMLCanvasElement | null {
+  private paintHazard(theme: ArenaTheme): CanvasPattern | null {
     const tile = createCanvas(HAZARD_TILE, HAZARD_TILE);
     const context = tile?.getContext?.('2d');
     if (tile == null || context == null) {
@@ -229,7 +234,7 @@ export class ArenaRenderer {
         }
       }
     }
-    return tile;
+    return context.createPattern(tile, 'repeat');
   }
 
   /** The floor in an offscreen canvas, or null where there is no canvas. */
@@ -248,17 +253,6 @@ export class ArenaRenderer {
 
 /** Width of one hazard stripe tile in arena cells - a dark and a light band. */
 const HAZARD_TILE = 6;
-
-/** An offscreen canvas of that size, or null outside a browser. */
-function createCanvas(width: number, height: number): HTMLCanvasElement | null {
-  if (typeof document === 'undefined') {
-    return null;
-  }
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  return canvas;
-}
 
 /** Each pattern gives the ink at a pixel, from 0 to 1. */
 const PATTERNS: Record<
@@ -357,21 +351,9 @@ function valueNoise(x: number, y: number, seed: number): number {
   const iy = Math.floor(y);
   const fx = x - ix;
   const fy = y - iy;
-  const sx = fx * fx * (3 - 2 * fx);
-  const sy = fy * fy * (3 - 2 * fy);
+  const sx = smoothstep(0, 1, fx);
+  const sy = smoothstep(0, 1, fy);
   const top = lerp(hash(ix, iy, seed), hash(ix + 1, iy, seed), sx);
   const bottom = lerp(hash(ix, iy + 1, seed), hash(ix + 1, iy + 1, seed), sx);
   return lerp(top, bottom, sy);
-}
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
-
-function mix(a: Rgb, b: Rgb, t: number): [number, number, number] {
-  return [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
-}
-
-function wrap(value: number, size: number): number {
-  return ((value % size) + size) % size;
 }

@@ -31,6 +31,11 @@ export interface Player {
   averageEnergy: number;
 }
 
+/** True while the player's boost is running. */
+export function isBoosted(player: Player | null): boolean {
+  return player != null && player.boostActiveSec > 0;
+}
+
 /** True when the player can fire a boost right now. */
 export function isBoostReady(player: Player): boolean {
   return player.boostActiveSec <= 0 && player.boostCooldownSec <= 0;
