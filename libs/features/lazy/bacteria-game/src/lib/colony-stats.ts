@@ -17,6 +17,8 @@ export interface ColonyStats {
   share: number;
   /** True while the boost of this colony is running. */
   boosting: boolean;
+  /** True when the boost can be fired right now. */
+  boostReady: boolean;
   /** Whole seconds until the boost can be fired again, 0 when it is ready. */
   boostCooldown: number;
   /** How far the boost has recharged, 0..1 - the ring around the touch button. */
@@ -34,10 +36,7 @@ const BOOST_KEYS: readonly BoostKey[] = ['Space', 'Enter'];
  * With a single human both keys belong to that player, so the label shows the
  * primary one.
  */
-export function boostKeyOf(
-  humans: readonly Player[],
-  player: Player
-): BoostKey {
+function boostKeyOf(humans: readonly Player[], player: Player): BoostKey {
   return BOOST_KEYS[clamp(humans.indexOf(player), 0, BOOST_KEYS.length - 1)];
 }
 
@@ -76,6 +75,7 @@ export function toColonyStats(
     // Whole percent: the bar would move every frame otherwise, invisibly.
     share: total > 0 ? Math.round((player.bacteriaCount / total) * 100) : 0,
     boosting: player.boostActiveSec > 0,
+    boostReady: isBoostReady(player),
     boostCooldown: isBoostReady(player)
       ? 0
       : Math.ceil(player.boostCooldownSec),
@@ -103,8 +103,8 @@ function boostChargeOf(player: Player, balance: GameBalance): number {
 
 /** What a boost button says: ready, running, or the seconds left to wait. */
 export function boostLabel(colony: ColonyStats): string {
-  if (colony.boosting) {
-    return 'Boosting';
+  if (colony.boostReady) {
+    return 'Boost';
   }
-  return colony.boostCooldown > 0 ? `${colony.boostCooldown}s` : 'Boost';
+  return colony.boosting ? 'Boosting' : `${colony.boostCooldown}s`;
 }

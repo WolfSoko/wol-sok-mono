@@ -20,6 +20,7 @@ import {
   GameState,
   GameStateState,
   GameStateStore,
+  isMatchOn,
 } from './game.states';
 import {
   getLevel,
@@ -200,10 +201,7 @@ export class GameStateService {
    * again. A paused match is still a match and keeps its colonies.
    */
   private isIdle(): boolean {
-    const { currentState } = this.gameStateQuery.getValue();
-    return (
-      currentState !== GameState.RUNNING && currentState !== GameState.PAUSED
-    );
+    return !isMatchOn(this.gameStateQuery.getValue().currentState);
   }
 
   /**

@@ -1,23 +1,6 @@
-// Styles both the game component and the boost pad render for a colony.
-// A partial rather than a global stylesheet: Angular scopes keyframes and
-// rules per component, so each one includes what it uses.
-
-/// The share bar: a thin track with a fill in the colony's colour.
-@mixin bar($track: rgb(0 0 0 / 20%)) {
-  .colony-bar {
-    display: block;
-    height: 4px;
-    border-radius: 2px;
-    background: $track;
-    overflow: hidden;
-  }
-
-  .colony-bar-fill {
-    display: block;
-    height: 100%;
-    transition: width 120ms linear;
-  }
-}
+// The boost pulse, shared by the game component and the boost pad. A partial
+// rather than a global stylesheet: Angular scopes keyframes per component, so
+// each one includes them.
 
 /// Pulses whatever carries a running boost.
 @mixin pulse-keyframes {

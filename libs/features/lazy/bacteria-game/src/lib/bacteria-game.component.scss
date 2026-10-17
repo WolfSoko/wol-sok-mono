@@ -35,7 +35,19 @@
     opacity: 0.75;
   }
 
-  @include colony.bar;
+  .colony-bar {
+    display: block;
+    height: 4px;
+    border-radius: 2px;
+    background: rgb(0 0 0 / 20%);
+    overflow: hidden;
+  }
+
+  .colony-bar-fill {
+    display: block;
+    height: 100%;
+    transition: width 120ms linear;
+  }
 }
 
 .colony-name {

@@ -3,7 +3,6 @@ import {
   fitInside,
   fullscreenElementOf,
   isFullscreen,
-  hasUserActivation,
   isFullscreenSupported,
   lockLandscape,
   requestFullscreen,
@@ -154,26 +153,11 @@ describe('requestFullscreen', () => {
   });
 });
 
-describe('hasUserActivation', () => {
-  it('is true while a gesture may still be spent', () => {
-    expect(hasUserActivation({ userActivation: { isActive: true } })).toBe(
-      true
-    );
-  });
-
-  it('is false once it is spent, and without the API', () => {
-    expect(hasUserActivation({ userActivation: { isActive: false } })).toBe(
-      false
-    );
-    expect(hasUserActivation({})).toBe(false);
-  });
-});
-
 describe('lockLandscape', () => {
   it('asks for landscape', () => {
     const lock = jest.fn().mockResolvedValue(undefined);
 
-    lockLandscape({ orientation: { lock } });
+    void lockLandscape({ orientation: { lock } });
 
     expect(lock).toHaveBeenCalledWith('landscape');
   });
@@ -181,8 +165,9 @@ describe('lockLandscape', () => {
   it('swallows a refusal', async () => {
     const lock = jest.fn().mockRejectedValue(new Error('not supported'));
 
-    expect(() => lockLandscape({ orientation: { lock } })).not.toThrow();
-    await Promise.resolve();
+    await expect(
+      lockLandscape({ orientation: { lock } })
+    ).resolves.toBeUndefined();
   });
 
   it('does nothing without the API', () => {

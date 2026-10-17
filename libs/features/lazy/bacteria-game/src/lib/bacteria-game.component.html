@@ -67,7 +67,7 @@
       @if (fullscreen()) {
         @for (colony of humanStats(); track colony.id; let seat = $index) {
           <feat-lazy-bac-game-joystick
-            class="seat seat-stick"
+            class="seat"
             [style.grid-area]="'stick-' + seat"
             [color]="colony.css"
             [label]="colony.name"
@@ -76,10 +76,10 @@
             (steer)="steer(colony.id, $event)"
           />
           <feat-lazy-bac-game-boost-pad
-            class="seat seat-boost"
+            class="seat"
             [style.grid-area]="'boost-' + seat"
             [colony]="colony"
-            [running]="running()"
+            [disabled]="!running()"
             [flipped]="seat === 1"
             (boost)="boost(colony.id)"
           />
@@ -129,7 +129,7 @@
           <div class="stage-bar">
             <span class="hud-level">{{ level().name }}</span>
             <span class="game-time">{{
-              state()?.timePassed ?? 0 | date: "m:ss" : "UTC"
+              gameSeconds() * 1000 | date: "m:ss" : "UTC"
             }}</span>
             <span class="hud-colonies">
               @for (colony of stats(); track colony.id) {
@@ -221,7 +221,7 @@
           [style.borderColor]="colony.css"
           [attr.aria-label]="'Boost ' + colony.name"
           [matTooltip]="'Boost ' + colony.name + ' (' + colony.boostKey + ')'"
-          [disabled]="!running() || colony.boosting || colony.boostCooldown > 0"
+          [disabled]="!running() || !colony.boostReady"
           (click)="boost(colony.id)"
         >
           <mat-icon>bolt</mat-icon>
@@ -249,7 +249,7 @@
 <ng-template #scoreboard>
   <div class="statistics">
     <span class="game-time">{{
-      "Game time: " + (state()?.timePassed ?? 0 | date: "m:ss" : "UTC")
+      "Game time: " + (gameSeconds() * 1000 | date: "m:ss" : "UTC")
     }}</span>
     @for (colony of stats(); track colony.id) {
       <div class="colony" [class.boosting]="colony.boosting">

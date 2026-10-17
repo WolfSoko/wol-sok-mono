@@ -31,6 +31,7 @@ import {
 import { defer, Observable } from 'rxjs';
 import {
   defaultIfEmpty,
+  distinctUntilChanged,
   filter,
   last,
   map,
@@ -42,7 +43,6 @@ import { BoostPadComponent } from './boost-pad/boost-pad.component';
 import {
   exitFullscreen,
   fitInside,
-  hasUserActivation,
   isFullscreen,
   isFullscreenSupported,
   lockLandscape,
@@ -176,6 +176,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** True while a match is on, paused or not. */
   protected readonly running: Signal<boolean>;
   protected readonly paused: Signal<boolean>;
+  /** Whole seconds of match time, so the clock only re-renders once a second. */
+  protected readonly gameSeconds: Signal<number>;
   protected readonly boostLabel = boostLabel;
 
   /** The level the next match is played on. */
@@ -223,11 +225,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Which crosshair each active pointer is dragging: pointerId -> playerId. */
   private readonly draggedBy = new Map<number, number>();
-  /**
-   * True while a native fullscreen request is waiting for the browser: the
-   * pointerup and the click of one tap must not both ask.
-   */
-  private nativeRequestInFlight = false;
 
   constructor() {
     this.state = toSignal(this.query.select());
@@ -266,19 +263,18 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.draw(1 / 1000, true);
     });
 
-    this.running = toSignal(
-      this.query
-        .selectCurrentGameState()
-        .pipe(
-          map(
-            (state) => state === GameState.RUNNING || state === GameState.PAUSED
-          )
-        ),
-      { initialValue: false }
-    );
+    this.running = toSignal(this.query.selectIsMatchOn(), {
+      initialValue: false,
+    });
     this.paused = toSignal(this.query.selectIsPaused(), {
       initialValue: false,
     });
+    this.gameSeconds = toSignal(
+      this.query
+        .select((state) => Math.floor(state.timePassed / 1000))
+        .pipe(distinctUntilChanged()),
+      { initialValue: 0 }
+    );
 
     this.query
       .selectTimeDelta()
@@ -349,8 +345,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     return { canvasEl, context };
   }
 
-  /** Clears the arena and starts a fresh match. */
+  /**
+   * Clears the arena and starts a fresh match. The tap on Start is the one
+   * gesture nearly every session makes, so it also takes the screen.
+   */
   startGame() {
+    this.requestNativeFullscreen();
     this.cx.fillStyle = 'rgb(0,0,0)';
     this.cx.fillRect(0, 0, this.width, this.height);
     this.gameStateService.cleanup();
@@ -477,14 +477,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.gameStateService.cleanup();
     // Leaving the page must give the screen back as well.
-    if (isFullscreen(document, this.stageRef?.nativeElement ?? undefined)) {
-      exitFullscreen(document);
-    }
+    exitFullscreen(document);
     unlockOrientation(screen);
   }
 
   /** Toggles pause - the touch equivalent of the P key. */
   togglePause() {
+    this.requestNativeFullscreen();
     this.gameStateService.togglePause();
   }
 
@@ -513,15 +512,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.playerService.setSteering(playerId, vector);
   }
 
-  /** Puts the arena on the whole screen, or brings it back into the page. */
-  protected toggleFullscreen(): void {
-    if (this.fullscreen()) {
-      this.leaveFullscreen();
-    } else {
-      this.enterFullscreen();
-    }
-  }
-
   /**
    * Lays the arena over the whole viewport and asks the browser for its
    * fullscreen on top. Called from a gesture - the button or the F key -
@@ -537,10 +527,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * for the browser's fullscreen on top. Without a gesture to spend the
    * browser would refuse and log an error, so the request is only made while
    * one is still fresh - after a navigation started by a click - and otherwise
-   * left to the first tap or key.
+   * left to the next gesture the game owns: Start, resume, F or the button.
    */
   private requestNativeFullscreenOnOpen(): void {
-    if (hasUserActivation(navigator)) {
+    if (navigator.userActivation?.isActive) {
       this.requestNativeFullscreen();
     }
   }
@@ -553,60 +543,44 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /**
    * Asks the browser to put the stage on the whole screen, once a request
-   * stands a chance: only while the layout is up, not without the API, not
-   * while one is already on its way, and not while the stage is on the screen
-   * already. A refusal costs nothing - the next gesture asks again.
+   * stands a chance: only while the layout is up, not without the API, and
+   * not while the stage is on the screen already. A refusal costs nothing -
+   * the next gesture asks again.
    */
   private requestNativeFullscreen(): void {
     const stage = this.stageRef?.nativeElement;
     if (
       !this.fullscreen() ||
-      this.nativeRequestInFlight ||
       !isFullscreenSupported(document, stage) ||
-      isFullscreen(document, stage)
+      this.isNativeFullscreen()
     ) {
       return;
     }
-    this.nativeRequestInFlight = true;
-    void requestFullscreen(stage).then(() => {
-      this.nativeRequestInFlight = false;
-    });
+    void requestFullscreen(stage);
+  }
+
+  /** True while the browser shows the stage, and nothing else, on the screen. */
+  private isNativeFullscreen(): boolean {
+    return isFullscreen(document, this.stageRef?.nativeElement ?? undefined);
   }
 
   /**
-   * Repeats the native fullscreen request on a user gesture, where the
-   * browser grants it. Buttons are left out: their click runs first and
-   * decides for itself - the button that leaves fullscreen must not have
-   * the request sneak in behind it.
-   */
-  @HostListener('document:pointerup', ['$event'])
-  protected onDocumentPointerUp(event: PointerEvent): void {
-    if (!isInteractiveTarget(event.target)) {
-      this.requestNativeFullscreen();
-    }
-  }
-
-  @HostListener('document:click')
-  protected onDocumentClick(): void {
-    this.requestNativeFullscreen();
-  }
-
-  /**
-   * Follows the browser: once it takes the stage off the screen - Escape, the
-   * back gesture, a system dialog - the page layout returns, as the player
-   * asked for exactly that. Entering the native fullscreen locks a phone into
-   * landscape, where the arena and the two seats fit.
+   * Follows the browser both ways. Once it takes the stage off the screen -
+   * Escape, the back gesture, a system dialog - the page layout returns, as
+   * the player asked for exactly that. Once it puts the stage on, the layout
+   * is up as well: a request granted late, after the layout was left, must
+   * not leave a bare stage on the screen. Native fullscreen also locks a
+   * phone into landscape, where the arena and the two seats fit.
    */
   @HostListener('document:fullscreenchange')
   @HostListener('document:webkitfullscreenchange')
   protected onFullscreenChange(): void {
-    if (isFullscreen(document, this.stageRef?.nativeElement ?? undefined)) {
-      lockLandscape(screen);
+    if (this.isNativeFullscreen()) {
+      this.fullscreen.set(true);
+      void lockLandscape(screen);
     } else {
       unlockOrientation(screen);
-      if (this.fullscreen()) {
-        this.leaveFullscreen();
-      }
+      this.leaveFullscreen();
     }
   }
 
@@ -687,22 +661,18 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // F is handled here rather than in the store: the fullscreen request has
     // to happen inside the key event, browsers reject it otherwise.
     if ($event.key.toLowerCase() === 'f' && !$event.repeat) {
-      this.toggleFullscreen();
-      return;
-    }
-    // Escape leaves the native fullscreen through the browser; without one it
-    // has to leave the component's own layout here. The key never counts as
-    // a gesture, so the pending request stays with the next one.
-    if ($event.key === 'Escape') {
       if (this.fullscreen()) {
         this.leaveFullscreen();
+      } else {
+        this.enterFullscreen();
       }
       return;
     }
-    // A key is a gesture too - unless it activates a focused button, which
-    // decides for itself, like a click does (see onDocumentPointerUp).
-    if (!isInteractiveTarget($event.target)) {
-      this.requestNativeFullscreen();
+    // Escape leaves the native fullscreen through the browser; without one it
+    // has to leave the component's own layout here.
+    if ($event.key === 'Escape') {
+      this.leaveFullscreen();
+      return;
     }
     // The boost keys belong to the game only while a match is on, and never
     // while a button has the focus: a keyboard user pressing Enter on "Reset"

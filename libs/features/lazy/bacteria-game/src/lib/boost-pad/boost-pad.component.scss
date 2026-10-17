@@ -21,11 +21,16 @@
   transform: rotate(180deg);
 }
 
-// The recharge ring around the button, filled by a conic gradient.
-.charge {
+// The button sits in the middle of its recharge ring.
+.button-with-ring {
+  position: relative;
   display: inline-flex;
-  padding: 4px;
-  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+}
+
+.charge {
+  --mat-progress-spinner-active-indicator-color: var(--seat-color);
 }
 
 .boost-fab {
@@ -33,11 +38,11 @@
   --mat-fab-foreground-color: #fff;
   --mat-fab-container-shape: 50%;
 
+  position: absolute;
   display: inline-flex;
   flex-direction: column;
-  width: var(--boost, 5rem);
-  height: var(--boost, 5rem);
-  border: 3px solid #000;
+  width: 88px;
+  height: 88px;
 
   mat-icon {
     width: 2rem;
@@ -67,9 +72,12 @@
   opacity: 0.8;
 }
 
-@include colony.bar(rgb(255 255 255 / 25%));
+.share {
+  --mat-progress-bar-active-indicator-color: var(--seat-color);
+  --mat-progress-bar-track-color: rgb(255 255 255 / 25%);
+  --mat-progress-bar-track-height: 4px;
+  --mat-progress-bar-active-indicator-height: 4px;
 
-.colony-bar {
   width: 100%;
   max-width: 6rem;
 }

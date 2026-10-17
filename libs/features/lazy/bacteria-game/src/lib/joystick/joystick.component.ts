@@ -11,6 +11,9 @@ import {
 import { NO_STEERING, Point, SteeringVector } from '../state/geometry';
 import { knobOffset, steeringVector } from '../touch-controls';
 
+/** Finger distance from the centre, in CSS pixels, that counts as full push. */
+export const JOYSTICK_RADIUS = 44;
+
 /**
  * A floating on-screen joystick for one player.
  *
@@ -44,6 +47,7 @@ import { knobOffset, steeringVector } from '../touch-controls';
     '(pointerup)': 'onPointerUp($event)',
     '(pointercancel)': 'onPointerUp($event)',
     '(lostpointercapture)': 'onPointerUp($event)',
+    '(window:resize)': 'onResize()',
   },
 })
 export class JoystickComponent implements OnDestroy {
@@ -55,12 +59,11 @@ export class JoystickComponent implements OnDestroy {
   public readonly flipped = input(false);
   /** True while nobody is playing - the stick then ignores every touch. */
   public readonly disabled = input(false);
-  /** Finger distance from the centre, in CSS pixels, that counts as full push. */
-  public readonly radius = input(44);
 
   /** Where the stick is pushed; the zero vector once it is released. */
   public readonly steer = output<SteeringVector>();
 
+  protected readonly radius = JOYSTICK_RADIUS;
   /** The centre of the stick in element pixels, null while nobody holds it. */
   protected readonly origin = signal<Point | null>(null);
   /** The knob's offset from the centre in element pixels. */
@@ -72,7 +75,9 @@ export class JoystickComponent implements OnDestroy {
   private originClient: Point = { x: 0, y: 0 };
 
   protected onPointerDown(event: PointerEvent): void {
-    if (this.disabled() || this.pointerId != null) {
+    // A right or middle mouse button would open a menu that swallows the
+    // matching pointerup, and the stick would never be let go of.
+    if (this.disabled() || this.pointerId != null || event.button !== 0) {
       return;
     }
     this.pointerId = event.pointerId;
@@ -84,7 +89,6 @@ export class JoystickComponent implements OnDestroy {
       x: event.clientX - bounds.left,
       y: event.clientY - bounds.top,
     });
-    this.knob.set({ x: 0, y: 0 });
     // Keep receiving moves once the finger slides out of the zone.
     this.host.nativeElement.setPointerCapture?.(event.pointerId);
     event.preventDefault();
@@ -99,8 +103,8 @@ export class JoystickComponent implements OnDestroy {
       x: origin.x + event.clientX - this.originClient.x,
       y: origin.y + event.clientY - this.originClient.y,
     };
-    this.knob.set(knobOffset(origin, pointer, this.radius()));
-    this.steer.emit(steeringVector(origin, pointer, this.radius()));
+    this.knob.set(knobOffset(origin, pointer, this.radius));
+    this.steer.emit(steeringVector(origin, pointer, this.radius));
     event.preventDefault();
   }
 
@@ -109,6 +113,24 @@ export class JoystickComponent implements OnDestroy {
       return;
     }
     this.release();
+  }
+
+  /**
+   * The viewport moved under a held finger - the browser went fullscreen or
+   * the phone turned on the other player's gesture. The finger has not moved
+   * in the zone, so the client position of the centre is read again rather
+   * than letting the shift count as a push.
+   */
+  protected onResize(): void {
+    const origin = this.origin();
+    if (origin == null) {
+      return;
+    }
+    const bounds = this.host.nativeElement.getBoundingClientRect();
+    this.originClient = {
+      x: bounds.left + origin.x,
+      y: bounds.top + origin.y,
+    };
   }
 
   public ngOnDestroy(): void {

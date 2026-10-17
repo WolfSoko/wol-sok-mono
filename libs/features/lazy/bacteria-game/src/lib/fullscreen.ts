@@ -81,40 +81,22 @@ export function exitFullscreen(doc: FullscreenDocument): boolean {
  * the `fullscreenchange` event, which fires for every way in and out. The
  * browser refuses a request that does not come from a user gesture, and the
  * API is missing altogether on iPhones; the caller then keeps its own
- * full-viewport layout and asks again on the next gesture.
+ * full-viewport layout and asks again with the next gesture. The call itself
+ * happens synchronously, inside the gesture that triggered it.
  */
-export function requestFullscreen(
+export async function requestFullscreen(
   element: FullscreenElement | null | undefined
 ): Promise<void> {
   const request =
     element?.requestFullscreen ?? element?.webkitRequestFullscreen;
   if (element == null || request == null) {
-    return Promise.resolve();
+    return;
   }
   try {
-    return Promise.resolve(request.call(element)).then(
-      () => undefined,
-      () => undefined
-    );
+    await request.call(element);
   } catch {
-    return Promise.resolve();
+    // Refused: no gesture to spend, or a policy against it.
   }
-}
-
-/** The part of `navigator` the activation check uses. */
-export interface ActivationNavigator {
-  userActivation?: { isActive?: boolean };
-}
-
-/**
- * True while the page may still spend a recent user gesture, for instance
- * right after a navigation started by a click. A fullscreen request stands a
- * chance then and is wasted otherwise - the browser refuses it and logs an
- * error. Browsers without the API report false, and the request waits for
- * the next gesture.
- */
-export function hasUserActivation(nav: ActivationNavigator): boolean {
-  return nav.userActivation?.isActive === true;
 }
 
 /** The part of `screen.orientation` the lock helpers use. */
@@ -131,15 +113,17 @@ export interface OrientationLockScreen {
  * edges. Browsers only honour the lock in fullscreen, and desktops reject it;
  * both are fine, so the failure is swallowed.
  */
-export function lockLandscape(screen: OrientationLockScreen): void {
+export async function lockLandscape(
+  screen: OrientationLockScreen
+): Promise<void> {
   const orientation = screen.orientation;
   if (orientation?.lock == null) {
     return;
   }
   try {
-    void Promise.resolve(orientation.lock('landscape')).catch(() => undefined);
+    await orientation.lock('landscape');
   } catch {
-    // Some browsers throw synchronously instead of rejecting.
+    // Not in fullscreen, or a screen that does not turn.
   }
 }
 

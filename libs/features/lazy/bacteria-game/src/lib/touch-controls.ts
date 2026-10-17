@@ -110,7 +110,7 @@ export function steeringVector(
   radius: number,
   deadZone = 0.15
 ): SteeringVector {
-  if (radius <= 0) {
+  if (radius <= 0 || deadZone >= 1) {
     return NO_STEERING;
   }
   const deflection = distance(origin, pointer) / radius;

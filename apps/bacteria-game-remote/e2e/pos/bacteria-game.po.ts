@@ -34,7 +34,7 @@ export class BacteriaGamePo {
     this.boostCta = page.getByRole('button', { name: /^Boost/ });
     this.colonyNames = page.locator('.colony-name');
     this.stage = page.locator('.stage.fullscreen');
-    this.joysticks = page.locator('feat-lazy-bac-game-joystick');
+    this.joysticks = page.getByLabel(/^Joystick /);
     this.leaveFullscreenCta = page.getByRole('button', {
       name: 'Leave fullscreen',
     });
@@ -76,7 +76,10 @@ export class BacteriaGamePo {
 
   /** The seat's boost button. */
   public boostOf(seat: number): Locator {
-    return this.page.locator('.seat-boost').nth(seat).getByRole('button');
+    return this.page
+      .locator('feat-lazy-bac-game-boost-pad')
+      .nth(seat)
+      .getByRole('button');
   }
 
   /** Where an element is on the screen; it must have a layout. */

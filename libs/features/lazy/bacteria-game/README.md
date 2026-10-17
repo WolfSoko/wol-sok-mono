@@ -21,8 +21,9 @@ The page opens in fullscreen: the
 [`BacteriaGameComponent`](./src/lib/bacteria-game.component.ts) lays its stage
 over the whole viewport from the first render and asks the browser's
 Fullscreen API for the rest, where a browser offers it (iPhones do not) - right
-away when a click brought the player here, otherwise on the first tap or key,
-because browsers refuse the request without a gesture. The stage is a grid
+away when a click brought the player here, otherwise with the next gesture the
+game owns (Start, resume, F or the button), because browsers refuse the
+request without a gesture. The stage is a grid
 with the arena in the middle and one _seat_ per human player, made of a
 [joystick zone](./src/lib/joystick/joystick.component.ts) on one side of the
 arena and a [boost pad](./src/lib/boost-pad/boost-pad.component.ts) on the
