@@ -192,6 +192,7 @@ void main() {
 export const EFFECTS_FRAGMENT = `#version 300 es
 precision highp float;
 precision highp int;
+precision highp sampler2D;
 in vec2 vNdc;
 uniform sampler2D uEffects;
 uniform vec2 uArena;
@@ -200,6 +201,9 @@ uniform float uTime;
 out vec4 outColor;
 ${ARENA_POSITION}
 ${HASH}
+
+const vec2 AXES[4] = vec2[4](vec2(1.0, 0.0), vec2(-1.0, 0.0), vec2(0.0, 1.0), vec2(0.0, -1.0));
+const vec2 DIAGONALS[4] = vec2[4](vec2(0.7, 0.7), vec2(-0.7, 0.7), vec2(0.7, -0.7), vec2(-0.7, -0.7));
 
 float noise(vec2 cell, float t, uint salt) {
   return float(hash(uvec3(uvec2(cell), uint(t) * 7u + salt))) / 4294967295.0;
@@ -210,13 +214,13 @@ void main() {
   vec2 texel = 1.0 / uArena;
   vec2 uv = p / uArena;
   vec4 here = texture(uEffects, uv);
-  // A soft halo: the heat a cell and a half around, and fainter three out.
+  // A soft halo: the heat a cell and a half around, and fainter three out
+  // on the diagonals, so the two rings together come out round.
   vec3 near = vec3(0.0);
   vec3 far = vec3(0.0);
   for (int i = 0; i < 4; i++) {
-    vec2 direction = vec2(i == 0 ? 1.0 : i == 1 ? -1.0 : 0.0, i == 2 ? 1.0 : i == 3 ? -1.0 : 0.0);
-    near += texture(uEffects, uv + direction * 1.5 * texel).rgb;
-    far += texture(uEffects, uv + direction.yx * 3.0 * texel).rgb;
+    near += texture(uEffects, uv + AXES[i] * 1.5 * texel).rgb;
+    far += texture(uEffects, uv + DIAGONALS[i] * 3.0 * texel).rgb;
   }
   near *= 0.25;
   far *= 0.25;

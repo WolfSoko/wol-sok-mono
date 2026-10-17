@@ -182,6 +182,10 @@ export class GpuSimulation implements Simulation {
   private eventsIndex = 1;
   private reportIndex = 0;
   private effectsIndex = 0;
+  /** True when the painter asked for the effects since the last frame. */
+  private effectsWanted = false;
+  /** True while the effects ran last frame, so they know who was where. */
+  private effectsTracking = false;
   private spawns: ColonySpawn[] = [];
   private dynamicWalls: DynamicWall[] = [];
   private mask = new Uint8Array(0);
@@ -268,7 +272,12 @@ export class GpuSimulation implements Simulation {
     }));
   }
 
+  /**
+   * The glow - kept up only while someone asks for it each frame, so nobody
+   * pays for a pass that is not drawn.
+   */
   public effectsTexture(): WebGLTexture | null {
+    this.effectsWanted = true;
     return this.resources?.effects[this.effectsIndex].texture ?? null;
   }
 
@@ -305,6 +314,7 @@ export class GpuSimulation implements Simulation {
     this.reported = { captured: 0, lost: 0 };
     this.undrainedSec = 0;
     this.reportRendered = false;
+    this.effectsTracking = false;
     this.buildMask();
     this.pellets.reset(this.width, this.height, this.isOpenCell);
     this.uploadSpawns(spawns);
@@ -383,7 +393,11 @@ export class GpuSimulation implements Simulation {
     for (let step = 0; step < mostSteps; step++) {
       this.claimAndApply(resources, KIND.move, step);
     }
-    this.renderEffects(resources);
+    if (this.effectsWanted) {
+      this.renderEffects(resources);
+    }
+    this.effectsTracking = this.effectsWanted;
+    this.effectsWanted = false;
 
     // 6. The report. The one read back is last frame's, which the GPU has
     // finished by now - reading this frame's would make the driver wait.
@@ -528,8 +542,6 @@ export class GpuSimulation implements Simulation {
       fade(EFFECT_FADE_PER_SEC.eat),
       fade(EFFECT_FADE_PER_SEC.move)
     );
-    // The first frame would find every starting bacterium freshly arrived.
-    gl.uniform1i(effects['uTrack'], this.frame > 1 ? 1 : 0);
 
     const combat = programs.combat.uniforms;
     gl.useProgram(programs.combat.program);
@@ -705,6 +717,13 @@ export class GpuSimulation implements Simulation {
       null
     );
     bindTexture(gl, UNIT.previous, previous.texture, null);
+    // On the first frame they run every bacterium would look freshly
+    // arrived - no push glows until they know who was where.
+    gl.useProgram(resources.programs.effects.program);
+    gl.uniform1i(
+      resources.programs.effects.uniforms['uTrack'],
+      this.effectsTracking ? 1 : 0
+    );
     this.pass(
       resources,
       resources.programs.effects,

@@ -90,6 +90,8 @@ const MARGIN = {
   colony: 3,
   verticalBlur: 4,
   horizontalBlur: 6,
+  /** The glow's halo reaches three cells out. */
+  effects: 4,
   /** The horizontal blur reads the cells 2 columns beyond its box. */
   cells: 8,
 } as const;
@@ -322,15 +324,7 @@ export class GlArenaPainter implements ArenaPainter {
       gl.enable(gl.BLEND);
     }
 
-    // The frame's row 0 is the bottom of the arena.
-    const [x0, y0, x1, y1] = this.box(bounds, MARGIN.colony);
-    const scale = this.canvasWidth / this.width;
-    gl.scissor(
-      x0 * scale,
-      this.canvasHeight - y1 * scale,
-      (x1 - x0) * scale,
-      (y1 - y0) * scale
-    );
+    this.scissorCanvas(bounds, MARGIN.colony);
     const program = programs.colony;
     this.useFullscreen(program);
     bindTexture(gl, 0, blur[1].texture, program.uniforms['uDensity']);
@@ -357,6 +351,18 @@ export class GlArenaPainter implements ArenaPainter {
       Math.min(this.width, bounds.maxX + 1 + margin),
       Math.min(this.height, bounds.maxY + 1 + margin),
     ];
+  }
+
+  /** Scissors a pass on the canvas, whose row 0 is the bottom of the arena. */
+  private scissorCanvas(bounds: CellBounds, margin: number): void {
+    const [x0, y0, x1, y1] = this.box(bounds, margin);
+    const scale = this.canvasWidth / this.width;
+    this.gl.scissor(
+      x0 * scale,
+      this.canvasHeight - y1 * scale,
+      (x1 - x0) * scale,
+      (y1 - y0) * scale
+    );
   }
 
   /** Scissors a pass on the arena grid - its row y is arena row y. */
@@ -434,15 +440,34 @@ export class GlArenaPainter implements ArenaPainter {
     if (program == null) {
       return;
     }
-    const colors = this.effectColors;
+    // Only around the colonies can anything glow - the box around all of
+    // them spares the GPU the rest of the canvas.
+    const colors = this.effectColors.fill(0);
+    const around = {
+      minX: Infinity,
+      minY: Infinity,
+      maxX: -Infinity,
+      maxY: -Infinity,
+    };
     for (const layer of frame.colonies) {
-      if (layer.kind === 'state' && layer.owner >= 1 && layer.owner <= 2) {
-        colors.set(
-          layer.color.slice(0, 3).map((channel) => channel / 255),
-          (layer.owner - 1) * 3
-        );
+      if (layer.kind !== 'state' || layer.bounds == null) {
+        continue;
       }
+      if (layer.owner >= 1 && layer.owner <= 2) {
+        for (let channel = 0; channel < 3; channel++) {
+          colors[(layer.owner - 1) * 3 + channel] = layer.color[channel] / 255;
+        }
+      }
+      around.minX = Math.min(around.minX, layer.bounds.minX);
+      around.minY = Math.min(around.minY, layer.bounds.minY);
+      around.maxX = Math.max(around.maxX, layer.bounds.maxX);
+      around.maxY = Math.max(around.maxY, layer.bounds.maxY);
     }
+    if (around.minX > around.maxX) {
+      return;
+    }
+    gl.enable(gl.SCISSOR_TEST);
+    this.scissorCanvas(around, MARGIN.effects);
     this.useFullscreen(program);
     bindTexture(gl, 0, effects, program.uniforms['uEffects']);
     gl.uniform2f(program.uniforms['uArena'], this.width, this.height);
@@ -450,6 +475,7 @@ export class GlArenaPainter implements ArenaPainter {
     gl.uniform1f(program.uniforms['uTime'], frame.timeSec);
     gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.disable(gl.SCISSOR_TEST);
     gl.blendFuncSeparate(
       gl.SRC_ALPHA,
       gl.ONE_MINUS_SRC_ALPHA,

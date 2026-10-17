@@ -36,6 +36,8 @@ precision highp float;
 precision highp int;
 precision highp usampler2D;
 precision highp isampler2D;
+// The effects pack owners into 8 bit alpha - lowp could not read them back.
+precision highp sampler2D;
 
 uniform usampler2D uState;
 uniform usampler2D uMask;
