@@ -101,6 +101,12 @@
     },
     "build": {
       "executor": "@angular-architects/native-federation:build",
+      "inputs": [
+        "production",
+        "sharedGlobals",
+        "^production",
+        "cdk-deployed-version"
+      ],
       "outputs": ["{workspaceRoot}/dist/apps/angular-examples"],
       "dependsOn": ["^build", "generate-version"],
       "options": {},
