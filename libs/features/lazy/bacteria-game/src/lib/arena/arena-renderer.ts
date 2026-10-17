@@ -1,4 +1,4 @@
-import { wrap } from '../state/geometry';
+import { Motes } from './motes';
 import { DynamicWall, Rect } from '../state/maps';
 import { ArenaPattern, ArenaTheme } from './arena-theme';
 import { createCanvas, hash, lerp, mix, rgba, smoothstep } from './canvas-math';
@@ -63,17 +63,6 @@ export function paintArenaBackground(
   return data;
 }
 
-/** A speck drifting over the floor. */
-interface Mote {
-  x: number;
-  y: number;
-  /** Its own drift on top of the theme's current. */
-  vx: number;
-  vy: number;
-  /** Where in its twinkle it is, in radians. */
-  phase: number;
-}
-
 /**
  * Draws everything of the arena that is not a colony: the floor, the walls,
  * the gates and sliding walls, and the specks drifting over it all.
@@ -89,14 +78,15 @@ export class ArenaRenderer {
   private hazard: CanvasPattern | null = null;
   /** The theme's colours as CSS, built once instead of every frame. */
   private css = { wall: '', wallEdge: '', border: '', motes: '' };
-  private motes: Mote[] = [];
-  private timeSec = 0;
+  private readonly motes: Motes;
 
   public constructor(
     private readonly width: number,
     private readonly height: number,
-    private readonly random: () => number = Math.random
-  ) {}
+    random: () => number = Math.random
+  ) {
+    this.motes = new Motes(width, height, random);
+  }
 
   /** Switches to another level's look, repainting its floor. */
   public setTheme(theme: ArenaTheme): void {
@@ -112,13 +102,7 @@ export class ArenaRenderer {
       border: rgba(theme.border),
       motes: rgba(theme.motes),
     };
-    this.motes = Array.from({ length: theme.moteCount }, () => ({
-      x: this.random() * this.width,
-      y: this.random() * this.height,
-      vx: (this.random() - 0.5) * 3,
-      vy: (this.random() - 0.5) * 3,
-      phase: this.random() * Math.PI * 2,
-    }));
+    this.motes.reset(theme);
   }
 
   /**
@@ -137,7 +121,7 @@ export class ArenaRenderer {
   }
 
   /** Draws the static walls with a lit top and left edge. */
-  public drawWalls(cx: CanvasRenderingContext2D, walls: Rect[]): void {
+  public drawWalls(cx: CanvasRenderingContext2D, walls: readonly Rect[]): void {
     const theme = this.theme;
     if (theme == null) {
       return;
@@ -172,13 +156,10 @@ export class ArenaRenderer {
         cx.fillRect(wall.x, wall.y, wall.width, wall.height);
         continue;
       }
-      const blink =
-        wall.warning > 0
-          ? 0.5 + 0.5 * Math.sin(this.timeSec * (10 + 30 * wall.warning))
-          : 0;
-      cx.fillStyle = rgba(theme.border, 0.08 + 0.4 * blink * wall.warning);
+      const blink = gateBlink(wall.warning, this.motes.timeSec);
+      cx.fillStyle = rgba(theme.border, openGateFill(wall.warning, blink));
       cx.fillRect(wall.x, wall.y, wall.width, wall.height);
-      cx.strokeStyle = rgba(theme.border, 0.3 + 0.6 * blink);
+      cx.strokeStyle = rgba(theme.border, openGateOutline(blink));
       cx.lineWidth = 1;
       cx.strokeRect(
         wall.x + 0.5,
@@ -195,21 +176,12 @@ export class ArenaRenderer {
     if (theme == null) {
       return;
     }
-    this.timeSec += deltaTimeSec;
+    this.motes.advance(deltaTimeSec);
     cx.fillStyle = this.css.motes;
-    for (const mote of this.motes) {
-      mote.x = wrap(
-        mote.x + (theme.current.x + mote.vx) * deltaTimeSec,
-        this.width
-      );
-      mote.y = wrap(
-        mote.y + (theme.current.y + mote.vy) * deltaTimeSec,
-        this.height
-      );
-      const twinkle = 0.5 + 0.5 * Math.sin(this.timeSec * 1.7 + mote.phase);
-      cx.globalAlpha = 0.12 + 0.3 * twinkle;
-      cx.fillRect(Math.floor(mote.x), Math.floor(mote.y), 1, 1);
-    }
+    this.motes.forEach((x, y, alpha) => {
+      cx.globalAlpha = alpha;
+      cx.fillRect(x, y, 1, 1);
+    });
     cx.globalAlpha = 1;
   }
 
@@ -252,7 +224,25 @@ export class ArenaRenderer {
 }
 
 /** Width of one hazard stripe tile in arena cells - a dark and a light band. */
-const HAZARD_TILE = 6;
+export const HAZARD_TILE = 6;
+
+/**
+ * How bright an open gate blinks, 0 to 1: not at all while it is safe, and
+ * faster and faster the closer it is to slamming shut.
+ */
+export function gateBlink(warning: number, timeSec: number): number {
+  return warning > 0 ? 0.5 + 0.5 * Math.sin(timeSec * (10 + 30 * warning)) : 0;
+}
+
+/** The opacity of an open gate's fill. */
+export function openGateFill(warning: number, blink: number): number {
+  return 0.08 + 0.4 * blink * warning;
+}
+
+/** The opacity of an open gate's outline. */
+export function openGateOutline(blink: number): number {
+  return 0.3 + 0.6 * blink;
+}
 
 /** Each pattern gives the ink at a pixel, from 0 to 1. */
 const PATTERNS: Record<

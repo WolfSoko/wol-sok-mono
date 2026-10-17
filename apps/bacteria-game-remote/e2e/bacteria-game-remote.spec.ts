@@ -197,6 +197,25 @@ test('should let the players pick their colours', async ({ page }) => {
   await expect(po.colonyNames).toContainText(['Green', 'Pink']);
 });
 
+test('should draw the arena on the GPU and keep it readable', async ({
+  page,
+  browserName,
+}) => {
+  const po = new BacteriaGamePo(page);
+  await po.goto();
+  if (browserName === 'chromium') {
+    await expect(po.playArea).toHaveAttribute('data-renderer', 'webgl');
+  }
+
+  await po.playCta.click();
+
+  // Read the arena back as the vaporize effect does - a WebGL canvas that
+  // dropped its drawing buffer would come back black.
+  await expect
+    .poll(() => po.arenaPixel(80, 70))
+    .toEqual(expect.objectContaining({ orange: true }));
+});
+
 test('should pause into a menu and quit back to the main menu', async ({
   page,
 }) => {
