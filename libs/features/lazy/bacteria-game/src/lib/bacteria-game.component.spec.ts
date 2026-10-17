@@ -316,12 +316,33 @@ describe('BacteriaGameComponent', () => {
       expect(arena.requestFullscreen).not.toHaveBeenCalled();
     });
 
-    it('follows the browser when it takes the arena off the screen', () => {
+    it('follows the browser when it takes the arena off the main menu', () => {
       create();
 
       component['onFullscreenChange']();
 
       expect(component['fullscreen']()).toBe(false);
+    });
+
+    it('pauses a running match instead when the browser leaves fullscreen', () => {
+      create();
+      startMatch('vs-computer');
+
+      component['onFullscreenChange']();
+
+      expect(component['paused']()).toBe(true);
+      expect(component['fullscreen']()).toBe(true);
+    });
+
+    it('keeps a screen open when the browser fullscreen toggle goes off', () => {
+      create();
+      component['show']('settings');
+
+      component['setNativeFullscreen'](false);
+      component['onFullscreenChange']();
+
+      expect(component['fullscreen']()).toBe(true);
+      expect(component['panel']()).toBe('settings');
     });
 
     it('follows the browser into a fullscreen granted after the layout was left', () => {
@@ -344,6 +365,88 @@ describe('BacteriaGameComponent', () => {
     });
   });
 
+  describe('the menu', () => {
+    it('opens on the main menu', () => {
+      create();
+
+      expect(component['panel']()).toBe('menu');
+    });
+
+    it('shows a screen and comes back', () => {
+      create();
+
+      component['show']('settings');
+      expect(component['panel']()).toBe('settings');
+
+      component.onKeyDown(keyEvent('Escape', document.body));
+      expect(component['panel']()).toBe('menu');
+    });
+
+    it('leaves the layout on Escape from the main menu only', () => {
+      create();
+
+      component.onKeyDown(keyEvent('Escape', document.body));
+
+      expect(component['fullscreen']()).toBe(false);
+    });
+
+    it('gets out of the way while a match is on', () => {
+      create();
+      startMatch('vs-computer');
+
+      expect(component['panel']()).toBeNull();
+    });
+
+    it('pauses the match on Escape and opens the pause menu', () => {
+      create();
+      startMatch('vs-computer');
+
+      component.onKeyDown(keyEvent('Escape', document.body));
+
+      expect(component['paused']()).toBe(true);
+      expect(component['panel']()).toBe('pause');
+    });
+
+    it('opens the settings over a paused match', () => {
+      create();
+      startMatch('vs-computer');
+      component['togglePause']();
+
+      component['show']('settings');
+      expect(component['panel']()).toBe('settings');
+
+      component.onKeyDown(keyEvent('Escape', document.body));
+      expect(component['panel']()).toBe('pause');
+    });
+
+    it('resumes a paused match on Escape from the pause menu', () => {
+      create();
+      startMatch('vs-computer');
+      component['togglePause']();
+
+      component.onKeyDown(keyEvent('Escape', document.body));
+
+      expect(component['paused']()).toBe(false);
+      expect(component['panel']()).toBeNull();
+    });
+
+    it('shows the result once the match is over', () => {
+      create();
+      startMatch('vs-computer');
+
+      query['store'].update({ matchEnded: true });
+
+      expect(component['panel']()).toBe('over');
+    });
+
+    it('names the difficulty next to the level', () => {
+      create();
+      TestBed.inject(GameStateService).setDifficulty('hard');
+
+      expect(component['difficultyName']()).toBe('Hard');
+    });
+  });
+
   describe('the joysticks', () => {
     it('steer the crosshair of their player', () => {
       create();
@@ -358,10 +461,6 @@ describe('BacteriaGameComponent', () => {
     });
   });
 });
-
-function pointerUp(target: EventTarget): PointerEvent {
-  return { target, pointerId: 1 } as unknown as PointerEvent;
-}
 
 function keyEvent(
   key: string,

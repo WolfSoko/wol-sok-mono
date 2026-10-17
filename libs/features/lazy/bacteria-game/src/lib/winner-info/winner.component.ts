@@ -4,27 +4,36 @@ import {
   Signal,
   computed,
   inject,
+  output,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatIconModule } from '@angular/material/icon';
 import { GameStateQuery } from '../state/game-state.query';
 import { DEFAULT_MODE, GameMode } from '../state/game.states';
 import { Level, LEVELS, nextLevel } from '../state/levels';
 import { Player } from '../state/player.model';
 
 /** What the player picked when the match was over. */
-export type MatchEndAction = 'again' | 'next';
+export type MatchEndAction = 'again' | 'next' | 'menu';
 
+/**
+ * The screen a match ends on: who won, and what to play next. It sits in the
+ * game's own panel rather than in a dialog, so it is painted inside a stage
+ * that fills the screen like everything else.
+ */
 @Component({
-  imports: [MatToolbarModule, MatButtonModule, MatDialogModule],
+  selector: 'feat-lazy-bac-game-winner',
+  imports: [MatButtonModule, MatIconModule],
   templateUrl: './winner.component.html',
   styleUrls: ['./winner.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WinnerComponent {
   private state = inject(GameStateQuery);
+
+  /** What the player wants to do next. */
+  public readonly action = output<MatchEndAction>();
 
   /** Null when both colonies wiped each other out in the same step. */
   public winner: Signal<Player | null | undefined> = toSignal(

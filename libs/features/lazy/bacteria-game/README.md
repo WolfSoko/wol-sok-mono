@@ -43,8 +43,23 @@ instructions live.
 
 The host application has to provide the CDK's `FullscreenOverlayContainer` as
 its `OverlayContainer` (both apps in this workspace do): the browser paints
-only the element that fills the screen, so a dialog or a select panel rendered
-on the body would be invisible while the arena is in native fullscreen.
+only the element that fills the screen, so a select panel rendered on the body
+would be invisible while the arena is in native fullscreen.
+
+## Menu
+
+The stage opens on a main menu - opponent, Play, Settings, How to play - and
+every other screen lives in the same panel over the arena: the settings
+(difficulty, level, frame rate badge, browser fullscreen), the pause menu
+(Resume, Restart, Settings, Quit to menu) and the match result (Play again,
+Next level, Main menu). Escape behaves like in a game: it pauses a match,
+backs out of a screen, and only leaves for the page from the main menu. The
+browser taking its own fullscreen off - its Escape, the back gesture, the
+settings toggle - is treated the same way, since that Escape never reaches
+the game.
+
+[`GameSettingsService`](./src/lib/settings.service.ts) remembers opponent,
+difficulty, level and the frame rate badge in local storage.
 
 ## Boost
 
