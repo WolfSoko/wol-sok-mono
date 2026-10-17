@@ -29,12 +29,12 @@ jobs:
           git config --local user.email "github-actions[bot]@users.no-reply.github.com"
           git config --local user.name "github-actions[bot]"
           npx nx release version
+          # Leave the release commit as it is: the v* tag points at it, so amending
+          # it would leave the tag on a commit that never reaches the branch, and
+          # `git describe` on the branch stops finding new release tags. Don't add
+          # [skip ci] either: the tag push would skip release.yml too. ci-cd.yml
+          # already skips its jobs for `chore(release):` commits.
           npx commit-and-tag-version
-
-          # GitHub Actions honors [skip ci] in the commit message. This keeps the
-          # branch push from the release tooling from triggering CI, while tag pushes
-          # still trigger the release workflow.
-          git commit --amend --no-edit -m "$(git log -1 --pretty=%B) [skip ci]"
 
       - name: Push changes
         run: git push origin HEAD:${{ github.ref }}

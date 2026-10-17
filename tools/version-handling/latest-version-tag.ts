@@ -25,7 +25,7 @@ export function latestVersionTag(appDeployedPrefix: string): string {
       .toString()
       .trim();
     const isDeployedRegex = new RegExp(
-      String.raw`v\d+\.\d+\.\d-` + escapeForRegExp(appDeployedPrefix)
+      String.raw`v\d+\.\d+\.\d+-` + escapeForRegExp(appDeployedPrefix)
     );
     if (!isDeployedRegex.test(latestVersionTag)) {
       return latestVersionTag;
