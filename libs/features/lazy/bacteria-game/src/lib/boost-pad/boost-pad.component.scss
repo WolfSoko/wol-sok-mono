@@ -1,24 +1,52 @@
 @use '../colony';
 
+// The pad fills whatever box the stage gives it and lays itself out by the
+// shape of that box - see the container query below.
 :host {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem;
+  display: block;
+  container-type: size;
 }
 
-.pad {
+.pad,
+.pad-info {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
+}
+
+.pad {
+  box-sizing: border-box;
+  justify-content: center;
   width: 100%;
+  height: 100%;
+  padding: 0.5rem;
   text-align: center;
 }
 
-// The far player looks at the phone from the other side.
-:host(.flipped) .pad {
-  transform: rotate(180deg);
+// As wide as the pad, so the share bar does not follow the text's width.
+.pad-info {
+  align-self: stretch;
+  min-width: 0;
+}
+
+// A band along the player's edge, wider than tall: the ring takes the whole
+// height, so the numbers sit beside the button.
+@container (min-aspect-ratio: 1/1) {
+  .pad {
+    flex-direction: row;
+    gap: 0.75rem;
+    padding: 0 0.5rem;
+    text-align: left;
+  }
+
+  .pad-info {
+    align-items: flex-start;
+  }
+
+  .pad-stats {
+    justify-content: flex-start;
+  }
 }
 
 // The button sits in the middle of its recharge ring.
@@ -66,7 +94,12 @@
   color: var(--seat-color);
 }
 
+// Count and energy side by side where there is room, else one below the other.
 .pad-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 0.35rem;
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   opacity: 0.8;

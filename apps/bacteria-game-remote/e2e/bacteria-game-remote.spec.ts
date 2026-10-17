@@ -93,15 +93,19 @@ test('should seat two players at opposite edges', async ({ page }) => {
   await expect(po.joysticks).toHaveCount(2);
   await expect(po.colonyNames).toContainText(['Orange', 'Blue']);
 
-  // The near seat sits below the far seat, its stick on the other side.
-  const [nearStick, farStick, nearBoost] = await Promise.all([
+  // Seat 0 is the left column, seat 1 the right one, each turned towards
+  // its player: the stick sits in their left hand and the boost pad in their
+  // right, so the pad is below the stick for the left player and above it
+  // for the right one.
+  const [leftStick, leftBoost, rightStick, rightBoost] = await Promise.all([
     po.boxOf(po.joystick(0)),
-    po.boxOf(po.joystick(1)),
     po.boxOf(po.boostOf(0)),
+    po.boxOf(po.joystick(1)),
+    po.boxOf(po.boostOf(1)),
   ]);
-  expect(nearStick.y).toBeGreaterThan(farStick.y);
-  expect(nearStick.x).toBeLessThan(farStick.x);
-  expect(nearBoost.x).toBeGreaterThan(nearStick.x);
+  expect(leftStick.x).toBeLessThan(rightStick.x);
+  expect(leftBoost.y).toBeGreaterThan(leftStick.y);
+  expect(rightBoost.y).toBeLessThan(rightStick.y);
 });
 
 test('should arm the boost once the match runs', async ({ page }) => {

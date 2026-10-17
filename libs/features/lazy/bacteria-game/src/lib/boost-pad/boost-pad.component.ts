@@ -12,16 +12,18 @@ import { boostLabel, ColonyStats } from '../colony-stats';
 
 /** The boost button in CSS pixels; the recharge ring runs just outside it. */
 export const BOOST_BUTTON_SIZE = 88;
+// The stage's seat track (--seat in bacteria-game.component.scss) must hold it.
 export const RECHARGE_RING_SIZE = BOOST_BUTTON_SIZE + 12;
 
 /**
  * One player's boost pad in the touch layout: the boost button, ringed by
  * its recharge, and the colony's own numbers. Together with the joystick
- * zone on the other side of the arena it makes up the player's seat.
+ * zone it makes up the player's seat.
  *
- * The player at the far edge looks at the phone from the other side, so a
- * flipped pad turns its content by 180 degrees. Where the pad sits on the
- * screen is the stage's business - it places the element on its grid.
+ * In a column beside the arena the numbers sit below the button. In a band
+ * along the player's edge there is no room for that, so a pad that is wider
+ * than tall puts them beside the button instead. Where the pad sits on the
+ * screen and which way it is turned is the stage's business.
  */
 @Component({
   selector: 'feat-lazy-bac-game-boost-pad',
@@ -35,7 +37,6 @@ export const RECHARGE_RING_SIZE = BOOST_BUTTON_SIZE + 12;
   styleUrl: './boost-pad.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    '[class.flipped]': 'flipped()',
     '[class.boosting]': 'colony().boosting',
     '[style.--seat-color]': 'colony().css',
   },
@@ -45,9 +46,6 @@ export class BoostPadComponent {
   public readonly colony = input.required<ColonyStats>();
   /** True while nobody is playing - the boost cannot be fired then. */
   public readonly disabled = input(false);
-  /** True for the player at the far edge. */
-  public readonly flipped = input(false);
-
   /** The player fires their boost. */
   public readonly boost = output<void>();
 

@@ -16,11 +16,9 @@
   opacity: 0.35;
 }
 
-:host(.flipped) .label {
-  transform: rotate(180deg);
-}
-
+// Turned towards the player by the stage, which sets --seat-turn on the zone.
 .label {
+  rotate: var(--seat-turn, 0deg);
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.04em;

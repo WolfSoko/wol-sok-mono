@@ -27,6 +27,12 @@ import { NetworkP5Sketch } from './network-p5-sketch';
     .legend {
       max-width: 60ch;
     }
+
+    /* p5 sizes the canvas inline; scale it down on narrow screens (p5 maps the mouse back) */
+    :host ::ng-deep canvas {
+      max-width: 100%;
+      height: auto !important;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

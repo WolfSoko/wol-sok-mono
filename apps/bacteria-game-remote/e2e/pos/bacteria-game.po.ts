@@ -78,7 +78,7 @@ export class BacteriaGamePo {
     await this.page.keyboard.press(key);
   }
 
-  /** The joystick zone of a seat: 0 along the near edge, 1 along the far one. */
+  /** The joystick zone of a seat: 0 at the left edge, 1 at the right one. */
   public joystick(seat: number): Locator {
     return this.joysticks.nth(seat);
   }

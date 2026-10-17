@@ -29,13 +29,21 @@ with the arena in the middle and one _seat_ per human player, made of a
 arena and a [boost pad](./src/lib/boost-pad/boost-pad.component.ts) on the
 other.
 
-Seat 0 sits along the near edge of the phone, seat 1 along the far edge with
-its controls turned by 180°, so two people play with the phone lying flat
-between them and each sees their own controls the right way up. The joystick
-floats: wherever the finger lands becomes the centre of the stick, and the
-crosshair keeps moving in the direction it is pushed - slower for a gentle
-push - until it is released. Dragging a crosshair across the arena still works
-too. In portrait the seats turn into bands along the short edges.
+Two players sit at the short edges of the phone, one at each end, with the
+phone lying flat between them. Each gets the stick in the left hand and the
+boost pad with the colony's numbers in the right, turned towards them: with
+the phone lying across, seat 0 is the left column turned a quarter clockwise
+and seat 1 the right column turned the other way; upright (portrait), the
+seats are bands along the bottom and the top edge, the top one upside down.
+The seating plan is plain CSS in the component's stylesheet - media queries
+pick the orientation, the pad's cell turns the pad and sets `--seat-turn`,
+which the joystick reads for its label. The joystick itself is never turned:
+a stick looks the same from every side, and it reports its push in screen
+space, so no mirroring is needed either - "away from me" moves the crosshair
+away from that player whichever way they sit. The joystick floats: wherever
+the finger lands becomes the centre of the stick, and the crosshair keeps
+moving in the direction it is pushed - slower for a gentle push - until it is
+released. Dragging a crosshair across the arena still works too.
 
 Entering the native fullscreen also locks a phone into landscape. Escape, the
 back gesture or the button in the bar return to the page, where the keyboard

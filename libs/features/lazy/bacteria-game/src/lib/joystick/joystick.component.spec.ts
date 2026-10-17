@@ -61,6 +61,14 @@ describe('JoystickComponent', () => {
     expect(fixture.nativeElement.setPointerCapture).toHaveBeenCalledWith(1);
   });
 
+  it('keeps the knob under a finger inside the rim', () => {
+    down(1, 40, 60);
+
+    move(1, 40 + 20, 60 - 10);
+
+    expect(component['knob']()).toEqual({ x: 20, y: -10 });
+  });
+
   it('steers towards where the finger is dragged', () => {
     down(1, 40, 60);
 
