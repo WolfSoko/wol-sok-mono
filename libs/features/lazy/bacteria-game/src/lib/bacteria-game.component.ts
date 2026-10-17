@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import {
-  afterNextRender,
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
@@ -14,10 +13,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import {
-  FullscreenOverlayContainer,
-  OverlayContainer,
-} from '@angular/cdk/overlay';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -28,7 +23,11 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { WsThanosDirective } from '@wolsok/thanos';
-import { ShowFpsComponent } from '@wolsok/ui-kit';
+import {
+  ElemResizedDirective,
+  ResizedEvent,
+  ShowFpsComponent,
+} from '@wolsok/ui-kit';
 import { defer, Observable } from 'rxjs';
 import {
   defaultIfEmpty,
@@ -39,6 +38,7 @@ import {
   take,
   tap,
 } from 'rxjs/operators';
+import { BoostPadComponent } from './boost-pad/boost-pad.component';
 import {
   exitFullscreen,
   fitInside,
@@ -46,20 +46,23 @@ import {
   isFullscreen,
   isFullscreenSupported,
   lockLandscape,
-  OrientationLockScreen,
   requestFullscreen,
   Size,
   unlockOrientation,
 } from './fullscreen';
 import { JoystickComponent } from './joystick/joystick.component';
 import { MatchSetupComponent } from './match-setup/match-setup.component';
-import { SeatComponent } from './seat/seat.component';
 import { Nutrient } from './state/bacteria-simulation';
 import { BotDifficulty, DEFAULT_DIFFICULTY } from './state/bot-controller';
 import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
-import { ColonyStats, humanForBoostKey, toColonyStats } from './colony-stats';
+import {
+  boostLabel,
+  ColonyStats,
+  humanForBoostKey,
+  toColonyStats,
+} from './colony-stats';
 import { GameBalance, gameBalance } from './state/game-balance';
-import { NO_STEERING, SteeringVector } from './state/geometry';
+import { SteeringVector } from './state/geometry';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
 import {
@@ -140,7 +143,8 @@ export function createImageDataFromBacterias(
     MatTooltipModule,
     MatchSetupComponent,
     JoystickComponent,
-    SeatComponent,
+    BoostPadComponent,
+    ElemResizedDirective,
   ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
@@ -152,15 +156,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private playerService = inject(PlayerService);
   private playerQuery = inject(PlayerQuery);
   private matDialog = inject(MatDialog);
-  private overlayContainer = inject(OverlayContainer);
 
   @ViewChild('canvasElement', { static: true })
   private canvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('arenaStage', { static: true })
   private stageRef!: ElementRef<HTMLElement>;
-  // Read as the element: the box also carries the thanos directive.
-  @ViewChild('arenaBox', { static: true, read: ElementRef })
-  private arenaBoxRef!: ElementRef<HTMLElement>;
   @ViewChild(WsThanosDirective, { static: true })
   private thanos!: WsThanosDirective;
   private cx!: CanvasRenderingContext2D;
@@ -172,11 +172,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   stats: Signal<ColonyStats[]>;
   /** The colonies a finger may steer - one seat each in the touch layout. */
   protected readonly humanStats: Signal<ColonyStats[]>;
-  /** Match time as m:ss, for the fullscreen bar. */
-  protected readonly gameTime: Signal<string>;
   fps$: Observable<number>;
-  isRunning$: Observable<boolean>;
-  isPaused$: Observable<boolean>;
+  /** True while a match is on, paused or not. */
+  protected readonly running: Signal<boolean>;
+  protected readonly paused: Signal<boolean>;
+  protected readonly boostLabel = boostLabel;
 
   /** The level the next match is played on. */
   protected readonly level: Signal<Level>;
@@ -195,36 +195,39 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /**
    * True while the arena fills the screen: the touch layout with a seat per
-   * player, laid over the whole viewport. The page is entered this way.
+   * player, laid over the whole viewport. The page opens this way - a phone
+   * between two players has no room for a page around the game.
    *
    * This is the component's own layout and works everywhere. On top of it the
    * browser's Fullscreen API is used where it exists, to hide the browser
    * chrome as well - see {@link requestNativeFullscreen}.
    */
-  protected readonly fullscreen = signal(false);
+  protected readonly fullscreen = signal(true);
+  /** The box around the canvas in CSS pixels, null before its first layout. */
+  private readonly arenaBoxSize = signal<Size | null>(null);
   /**
-   * Explicit canvas size while fullscreen, null while the normal layout sizes
-   * it by CSS.
+   * Explicit canvas size while fullscreen: the largest box with the arena's
+   * aspect ratio that fits the box around it. Null while the normal layout
+   * sizes the canvas by CSS.
+   *
+   * Letting CSS scale the drawing inside a bigger element would work visually,
+   * but the pointer maths maps a touch through the bounding rect of the canvas
+   * - padding hidden in that rect would offset every crosshair drag.
    */
-  protected readonly canvasSize = signal<Size | null>(null);
+  protected readonly canvasSize = computed(() => {
+    const box = this.arenaBoxSize();
+    return this.fullscreen() && box != null
+      ? fitInside(box.width, box.height, this.width, this.height)
+      : null;
+  });
 
   /** Which crosshair each active pointer is dragging: pointerId -> playerId. */
   private readonly draggedBy = new Map<number, number>();
   /**
-   * True while the native fullscreen still has to be asked for on the next
-   * user gesture: the browser refuses a request that does not come from one,
-   * and the page goes fullscreen on its own when it is entered.
+   * True while a native fullscreen request is waiting for the browser: the
+   * pointerup and the click of one tap must not both ask.
    */
-  private nativeFullscreenPending = false;
-  /** True while a native fullscreen request is waiting for the browser. */
   private nativeRequestInFlight = false;
-  /**
-   * True while the native fullscreen is being given up on purpose, for the
-   * winner dialog, and the component's own layout is meant to stay.
-   */
-  private layoutOutlivesNativeExit = false;
-  /** Refits the canvas whenever the box around it changes size. */
-  private resizeObserver?: ResizeObserver;
 
   constructor() {
     this.state = toSignal(this.query.select());
@@ -255,7 +258,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.humanStats = computed(() =>
       this.stats().filter((colony) => !colony.isBot)
     );
-    this.gameTime = computed(() => formatGameTime(this.state()?.timePassed));
 
     // Repaint as soon as another level puts different walls into the arena, so
     // the start screen always shows the map the next match is fought on.
@@ -264,19 +266,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.draw(1 / 1000, true);
     });
 
-    // The game is played on the whole screen - a phone between two players has
-    // no room for a page around it. After the first render, so the layout
-    // switch is a change of its own rather than one inside the first check.
-    afterNextRender(() => this.enterFullscreenOnOpen());
-
-    this.isRunning$ = this.query
-      .selectCurrentGameState()
-      .pipe(
-        map(
-          (state) => state === GameState.RUNNING || state === GameState.PAUSED
-        )
-      );
-    this.isPaused$ = this.query.selectIsPaused();
+    this.running = toSignal(
+      this.query
+        .selectCurrentGameState()
+        .pipe(
+          map(
+            (state) => state === GameState.RUNNING || state === GameState.PAUSED
+          )
+        ),
+      { initialValue: false }
+    );
+    this.paused = toSignal(this.query.selectIsPaused(), {
+      initialValue: false,
+    });
 
     this.query
       .selectTimeDelta()
@@ -292,7 +294,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       .selectMatchEnded()
       .pipe(
         filter((ended) => ended),
-        tap(() => this.leaveFullscreenForDialog()),
         switchMap(() =>
           this.matDialog
             .open<WinnerComponent, unknown, MatchEndAction | undefined>(
@@ -304,30 +305,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         untilDestroyed(this)
       )
       .subscribe();
-  }
-
-  /**
-   * Leaves fullscreen before the winner dialog opens, unless the application
-   * moves the overlay container into the fullscreen element.
-   *
-   * The browser only paints the element that fills the screen and its
-   * children. A dialog rendered into the CDK overlay container next to it on
-   * the body would be invisible - and it traps the focus, so the match could
-   * not be left at all. An application that provides `FullscreenOverlayContainer`
-   * has no such problem and keeps the dialog inside the arena.
-   *
-   * The component's own full-viewport layout is no problem either: the overlay
-   * container sits above it, so only the native fullscreen is left.
-   */
-  private leaveFullscreenForDialog(): void {
-    if (
-      !this.fullscreen() ||
-      this.overlayContainer instanceof FullscreenOverlayContainer
-    ) {
-      return;
-    }
-    // Only the browser's fullscreen goes, the seats stay for the next match.
-    this.layoutOutlivesNativeExit = exitFullscreen(document);
   }
 
   /**
@@ -358,21 +335,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.cx.fillRect(0, 0, this.width, this.height);
     this.gameStateService.setArenaSize(this.width, this.height);
     this.draw(1 / 1000, true);
-    this.observeArenaBox();
-  }
-
-  /**
-   * Refits the canvas as soon as the box around it changes size: when the
-   * touch layout appears, the phone turns or the seats take their share.
-   * Browsers without the observer fall back to the window resize event.
-   */
-  private observeArenaBox(): void {
-    const box = this.arenaBoxRef?.nativeElement;
-    if (box == null || typeof ResizeObserver === 'undefined') {
-      return;
-    }
-    this.resizeObserver = new ResizeObserver(() => this.updateCanvasSize());
-    this.resizeObserver.observe(box);
+    this.requestNativeFullscreenOnOpen();
   }
 
   /** The canvas element and its 2d context, throwing when there is none. */
@@ -513,12 +476,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.gameStateService.cleanup();
-    this.resizeObserver?.disconnect();
     // Leaving the page must give the screen back as well.
     if (isFullscreen(document, this.stageRef?.nativeElement ?? undefined)) {
       exitFullscreen(document);
     }
-    unlockOrientation(orientationScreen());
+    unlockOrientation(screen);
   }
 
   /** Toggles pause - the touch equivalent of the P key. */
@@ -567,24 +529,18 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   protected enterFullscreen(): void {
     this.fullscreen.set(true);
-    this.nativeFullscreenPending = true;
     this.requestNativeFullscreen();
   }
 
   /**
-   * The same when the page opens. Without a gesture to spend the browser
-   * would refuse the native request and log an error, so it is only made
-   * while one is still fresh - after a navigation started by a click - and
-   * otherwise left to the first tap or key.
+   * The page opens in the layout already (see {@link fullscreen}); this asks
+   * for the browser's fullscreen on top. Without a gesture to spend the
+   * browser would refuse and log an error, so the request is only made while
+   * one is still fresh - after a navigation started by a click - and otherwise
+   * left to the first tap or key.
    */
-  private enterFullscreenOnOpen(): void {
-    this.fullscreen.set(true);
-    this.nativeFullscreenPending = true;
-    if (
-      hasUserActivation(
-        typeof navigator === 'undefined' ? undefined : navigator
-      )
-    ) {
+  private requestNativeFullscreenOnOpen(): void {
+    if (hasUserActivation(navigator)) {
       this.requestNativeFullscreen();
     }
   }
@@ -592,28 +548,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Brings the arena back into the page. */
   protected leaveFullscreen(): void {
     this.fullscreen.set(false);
-    // The player chose to leave: the next tap must not pull them back in.
-    this.nativeFullscreenPending = false;
-    // The sticks vanish with the layout, so a stick that is still held can no
-    // longer be released - and lostpointercapture reaches the document, not
-    // the destroyed component. Let go of every stick here instead.
-    for (const player of this.humans()) {
-      this.playerService.setSteering(player.id, { ...NO_STEERING });
-    }
-    this.updateCanvasSize();
     exitFullscreen(document);
   }
 
   /**
    * Asks the browser to put the stage on the whole screen, once a request
-   * stands a chance: not without the API, not while one is already on its
-   * way, and not while the stage is on the screen already. A refusal leaves
-   * the request pending for the next gesture.
+   * stands a chance: only while the layout is up, not without the API, not
+   * while one is already on its way, and not while the stage is on the screen
+   * already. A refusal costs nothing - the next gesture asks again.
    */
   private requestNativeFullscreen(): void {
     const stage = this.stageRef?.nativeElement;
     if (
-      !this.nativeFullscreenPending ||
+      !this.fullscreen() ||
       this.nativeRequestInFlight ||
       !isFullscreenSupported(document, stage) ||
       isFullscreen(document, stage)
@@ -621,11 +568,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.nativeRequestInFlight = true;
-    void requestFullscreen(document, stage).then((granted) => {
+    void requestFullscreen(stage).then(() => {
       this.nativeRequestInFlight = false;
-      if (granted) {
-        this.nativeFullscreenPending = false;
-      }
     });
   }
 
@@ -637,16 +581,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   @HostListener('document:pointerup', ['$event'])
   protected onDocumentPointerUp(event: PointerEvent): void {
-    if (this.fullscreen() && !isInteractiveTarget(event.target)) {
+    if (!isInteractiveTarget(event.target)) {
       this.requestNativeFullscreen();
     }
   }
 
   @HostListener('document:click')
   protected onDocumentClick(): void {
-    if (this.fullscreen()) {
-      this.requestNativeFullscreen();
-    }
+    this.requestNativeFullscreen();
   }
 
   /**
@@ -658,49 +600,22 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   @HostListener('document:fullscreenchange')
   @HostListener('document:webkitfullscreenchange')
   protected onFullscreenChange(): void {
-    const native = isFullscreen(
-      document,
-      this.stageRef?.nativeElement ?? undefined
-    );
-    if (native) {
-      this.nativeFullscreenPending = false;
-      lockLandscape(orientationScreen());
+    if (isFullscreen(document, this.stageRef?.nativeElement ?? undefined)) {
+      lockLandscape(screen);
     } else {
-      unlockOrientation(orientationScreen());
-      if (this.layoutOutlivesNativeExit) {
-        // Given up for the dialog: keep the seats, and take the screen back
-        // on the next gesture - the dialog's own button, usually.
-        this.layoutOutlivesNativeExit = false;
-        this.nativeFullscreenPending = true;
-      } else if (this.fullscreen()) {
+      unlockOrientation(screen);
+      if (this.fullscreen()) {
         this.leaveFullscreen();
       }
     }
-    this.updateCanvasSize();
-  }
-
-  @HostListener('window:resize')
-  protected onWindowResize(): void {
-    this.updateCanvasSize();
   }
 
   /**
-   * Sizes the canvas element itself to the largest box with the arena's aspect
-   * ratio that fits the screen.
-   *
-   * Letting CSS scale the drawing inside a bigger element would work visually,
-   * but the pointer maths maps a touch through the bounding rect of the canvas
-   * - padding hidden in that rect would offset every crosshair drag.
+   * Remembers the size of the box around the canvas, which the touch layout
+   * fits the canvas into - see {@link canvasSize}.
    */
-  private updateCanvasSize(): void {
-    const box = this.arenaBoxRef?.nativeElement;
-    if (!this.fullscreen() || box == null) {
-      this.canvasSize.set(null);
-      return;
-    }
-    this.canvasSize.set(
-      fitInside(box.clientWidth, box.clientHeight, this.width, this.height)
-    );
+  protected onArenaBoxResized(event: ResizedEvent): void {
+    this.arenaBoxSize.set({ width: event.newWidth, height: event.newHeight });
   }
 
   /**
@@ -786,7 +701,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     // A key is a gesture too - unless it activates a focused button, which
     // decides for itself, like a click does (see onDocumentPointerUp).
-    if (this.fullscreen() && !isInteractiveTarget($event.target)) {
+    if (!isInteractiveTarget($event.target)) {
       this.requestNativeFullscreen();
     }
     // The boost keys belong to the game only while a match is on, and never
@@ -855,19 +770,4 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
     (control as HTMLButtonElement).disabled ||
     control.getAttribute('aria-disabled') === 'true'
   );
-}
-
-/** Milliseconds of match time as m:ss. */
-export function formatGameTime(timePassedMs: number | undefined): string {
-  const totalSeconds = Math.max(0, Math.floor((timePassedMs ?? 0) / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
-
-/** The screen whose orientation is locked, missing outside a browser. */
-function orientationScreen(): OrientationLockScreen | undefined {
-  return typeof screen === 'undefined'
-    ? undefined
-    : (screen as unknown as OrientationLockScreen);
 }

@@ -1,6 +1,6 @@
 import { GameBalance, gameBalance } from './state/game-balance';
-import { Player } from './state/player.model';
-import { isBoostReady } from './state/player.service';
+import { clamp } from './state/geometry';
+import { isBoostReady, Player } from './state/player.model';
 
 /** Statistics of one colony, ready to be rendered by the template. */
 export interface ColonyStats {
@@ -38,8 +38,7 @@ export function boostKeyOf(
   humans: readonly Player[],
   player: Player
 ): BoostKey {
-  const index = humans.indexOf(player);
-  return BOOST_KEYS[Math.max(0, Math.min(index, BOOST_KEYS.length - 1))];
+  return BOOST_KEYS[clamp(humans.indexOf(player), 0, BOOST_KEYS.length - 1)];
 }
 
 /**
@@ -74,7 +73,8 @@ export function toColonyStats(
     captured: player.captured,
     lost: player.lost,
     energy: Math.round((player.averageEnergy / balance.maxEnergy) * 100),
-    share: total > 0 ? (player.bacteriaCount / total) * 100 : 0,
+    // Whole percent: the bar would move every frame otherwise, invisibly.
+    share: total > 0 ? Math.round((player.bacteriaCount / total) * 100) : 0,
     boosting: player.boostActiveSec > 0,
     boostCooldown: isBoostReady(player)
       ? 0
@@ -86,7 +86,9 @@ export function toColonyStats(
 
 /**
  * How far the boost has recharged, 1 while it is ready. A running boost still
- * reads as empty: its cooldown has not started counting yet.
+ * reads as empty: its cooldown has not started counting yet. In hundredths,
+ * so the ring around the button is redrawn a hundred times per cooldown
+ * rather than every frame.
  */
 function boostChargeOf(player: Player, balance: GameBalance): number {
   if (isBoostReady(player)) {
@@ -95,8 +97,14 @@ function boostChargeOf(player: Player, balance: GameBalance): number {
   if (player.boostActiveSec > 0 || balance.boostCooldownSec <= 0) {
     return 0;
   }
-  return Math.max(
-    0,
-    Math.min(1, 1 - player.boostCooldownSec / balance.boostCooldownSec)
-  );
+  const charge = 1 - player.boostCooldownSec / balance.boostCooldownSec;
+  return clamp(Math.round(charge * 100) / 100, 0, 1);
+}
+
+/** What a boost button says: ready, running, or the seconds left to wait. */
+export function boostLabel(colony: ColonyStats): string {
+  if (colony.boosting) {
+    return 'Boosting';
+  }
+  return colony.boostCooldown > 0 ? `${colony.boostCooldown}s` : 'Boost';
 }

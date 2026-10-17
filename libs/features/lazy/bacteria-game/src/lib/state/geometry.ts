@@ -14,6 +14,27 @@ export function distance(a: Point, b: Point): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
+/** The vector from `from` to `to`. */
+export function delta(from: Point, to: Point): Point {
+  return { x: to.x - from.x, y: to.y - from.y };
+}
+
+/** The vector scaled to the given length; the zero vector stays zero. */
+export function scaleTo(vector: Point, length: number): Point {
+  const current = Math.hypot(vector.x, vector.y);
+  if (current === 0) {
+    return { x: 0, y: 0 };
+  }
+  return { x: (vector.x / current) * length, y: (vector.y / current) * length };
+}
+
+/** The vector, shortened to `max` when it is longer than that. */
+export function clampLength(vector: Point, max: number): Point {
+  return Math.hypot(vector.x, vector.y) > max
+    ? scaleTo(vector, max)
+    : { x: vector.x, y: vector.y };
+}
+
 /**
  * Where a player pushes: each axis -1..1 and the vector never longer than 1.
  * The zero vector means "not pushed". A joystick reports one directly, held

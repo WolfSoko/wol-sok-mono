@@ -1,3 +1,5 @@
+@use 'colony';
+
 .toolbar-spacer {
   flex: 1 1 auto;
 }
@@ -26,12 +28,14 @@
     font-size: 1rem;
     width: 1rem;
     height: 1rem;
-    animation: boost-pulse 0.6s ease-in-out infinite alternate;
+    animation: colony.$pulse;
   }
 
   .colony-detail {
     opacity: 0.75;
   }
+
+  @include colony.bar;
 }
 
 .colony-name {
@@ -42,20 +46,6 @@
 .colony-count,
 .colony-detail {
   font-variant-numeric: tabular-nums;
-}
-
-.colony-bar {
-  display: block;
-  height: 4px;
-  border-radius: 2px;
-  background: rgb(0 0 0 / 20%);
-  overflow: hidden;
-}
-
-.colony-bar-fill {
-  display: block;
-  height: 100%;
-  transition: width 120ms linear;
 }
 
 .stage {
@@ -130,7 +120,7 @@
     }
 
     // The size comes from the component, which fits the arena into the box
-    // without letterboxing inside the element - see `updateCanvasSize()`.
+    // without letterboxing inside the element - see `canvasSize`.
     canvas {
       width: auto;
       max-width: 100%;
@@ -161,29 +151,10 @@
   }
 }
 
+// A seat part may shrink with its grid track instead of overflowing it.
 .seat {
   min-width: 0;
   min-height: 0;
-}
-
-.seat-stick {
-  &.seat-0 {
-    grid-area: stick-0;
-  }
-
-  &.seat-1 {
-    grid-area: stick-1;
-  }
-}
-
-.seat-boost {
-  &.seat-0 {
-    grid-area: boost-0;
-  }
-
-  &.seat-1 {
-    grid-area: boost-1;
-  }
 }
 
 .stage-bar {
@@ -209,7 +180,7 @@
     gap: 0.3rem;
 
     &.boosting {
-      animation: boost-pulse 0.6s ease-in-out infinite alternate;
+      animation: colony.$pulse;
     }
   }
 
@@ -269,16 +240,8 @@ mat-card-actions {
   font-variant-numeric: tabular-nums;
 
   &.boosting {
-    animation: boost-pulse 0.6s ease-in-out infinite alternate;
+    animation: colony.$pulse;
   }
 }
 
-@keyframes boost-pulse {
-  from {
-    opacity: 0.55;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
+@include colony.pulse-keyframes;

@@ -1,4 +1,4 @@
-<div class="seat-content">
+<div class="pad">
   <span class="charge" [style.background]="chargeRing()">
     <button
       mat-fab
@@ -9,19 +9,11 @@
       (click)="boost.emit()"
     >
       <mat-icon>bolt</mat-icon>
-      <span class="boost-state">
-        @if (colony().boosting) {
-          Boosting
-        } @else if (colony().boostCooldown > 0) {
-          {{ colony().boostCooldown }}s
-        } @else {
-          Boost
-        }
-      </span>
+      <span class="boost-state">{{ boostLabel(colony()) }}</span>
     </button>
   </span>
-  <span class="seat-name">{{ colony().name }}</span>
-  <span class="seat-stats"
+  <span class="pad-name">{{ colony().name }}</span>
+  <span class="pad-stats"
     >{{ colony().bacterias }} · ⚡ {{ colony().energy }}%</span
   >
   <span class="colony-bar">

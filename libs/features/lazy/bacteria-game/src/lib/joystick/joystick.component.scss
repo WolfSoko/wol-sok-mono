@@ -22,11 +22,6 @@
   justify-content: center;
   gap: 0.5rem;
   pointer-events: none;
-
-  .base {
-    position: static;
-    transform: none;
-  }
 }
 
 :host(.flipped) .hint {
@@ -52,7 +47,10 @@
   transform: translate(-50%, -50%);
   pointer-events: none;
 
+  // At rest the base only hints where to touch, in the middle of the zone.
   &.idle {
+    position: static;
+    transform: none;
     opacity: 0.4;
   }
 }

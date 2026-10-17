@@ -75,12 +75,14 @@ test('should seat two players at opposite edges', async ({ page }) => {
   await expect(po.colonyNames).toContainText(['Orange', 'Blue']);
 
   // The near seat sits below the far seat, its stick on the other side.
-  const nearStick = await po.joystick(0).boundingBox();
-  const farStick = await po.joystick(1).boundingBox();
-  const nearBoost = await po.boostOf(0).boundingBox();
-  expect(nearStick?.y).toBeGreaterThan(farStick?.y ?? Infinity);
-  expect(nearStick?.x).toBeLessThan(farStick?.x ?? -Infinity);
-  expect(nearBoost?.x).toBeGreaterThan(nearStick?.x ?? Infinity);
+  const [nearStick, farStick, nearBoost] = await Promise.all([
+    po.boxOf(po.joystick(0)),
+    po.boxOf(po.joystick(1)),
+    po.boxOf(po.boostOf(0)),
+  ]);
+  expect(nearStick.y).toBeGreaterThan(farStick.y);
+  expect(nearStick.x).toBeLessThan(farStick.x);
+  expect(nearBoost.x).toBeGreaterThan(nearStick.x);
 });
 
 test('should arm the boost once the match runs', async ({ page }) => {
@@ -117,9 +119,9 @@ test('should show the stick under the finger while it is pushed', async ({
 
   await po.push(0, 30, 0);
 
-  await expect(po.joystick(0)).toHaveClass(/active/);
+  await expect(po.heldStick(0)).toBeVisible();
   await po.release();
-  await expect(po.joystick(0)).not.toHaveClass(/active/);
+  await expect(po.heldStick(0)).toHaveCount(0);
 });
 
 test('should keep the match setup out of a running match', async ({ page }) => {

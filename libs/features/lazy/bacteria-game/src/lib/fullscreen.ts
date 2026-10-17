@@ -74,31 +74,30 @@ export function exitFullscreen(doc: FullscreenDocument): boolean {
 }
 
 /**
- * Asks the browser to put the element on the whole screen.
+ * Asks the browser to put the element on the whole screen, and settles once
+ * the browser has answered.
  *
- * Resolves to whether the element fills the screen once the request has
- * settled. The browser refuses a request that does not come from a user
- * gesture, and the API is missing altogether on iPhones; the caller then
- * keeps its own full-viewport layout and may try again on the next gesture.
- *
- * The answer is read from the document rather than from the request: the
- * prefixed Safari call returns nothing and reports a refusal only as an
- * event, so its empty return must not count as granted.
+ * Whether it granted the request is not reported here but by the document:
+ * the `fullscreenchange` event, which fires for every way in and out. The
+ * browser refuses a request that does not come from a user gesture, and the
+ * API is missing altogether on iPhones; the caller then keeps its own
+ * full-viewport layout and asks again on the next gesture.
  */
 export function requestFullscreen(
-  doc: FullscreenDocument,
   element: FullscreenElement | null | undefined
-): Promise<boolean> {
+): Promise<void> {
   const request =
     element?.requestFullscreen ?? element?.webkitRequestFullscreen;
   if (element == null || request == null) {
-    return Promise.resolve(false);
+    return Promise.resolve();
   }
-  const granted = () => isFullscreen(doc, element);
   try {
-    return Promise.resolve(request.call(element)).then(granted, () => false);
+    return Promise.resolve(request.call(element)).then(
+      () => undefined,
+      () => undefined
+    );
   } catch {
-    return Promise.resolve(false);
+    return Promise.resolve();
   }
 }
 
@@ -114,10 +113,8 @@ export interface ActivationNavigator {
  * error. Browsers without the API report false, and the request waits for
  * the next gesture.
  */
-export function hasUserActivation(
-  nav: ActivationNavigator | undefined
-): boolean {
-  return nav?.userActivation?.isActive === true;
+export function hasUserActivation(nav: ActivationNavigator): boolean {
+  return nav.userActivation?.isActive === true;
 }
 
 /** The part of `screen.orientation` the lock helpers use. */
@@ -134,26 +131,22 @@ export interface OrientationLockScreen {
  * edges. Browsers only honour the lock in fullscreen, and desktops reject it;
  * both are fine, so the failure is swallowed.
  */
-export function lockLandscape(screen: OrientationLockScreen | undefined): void {
-  const lock = screen?.orientation?.lock;
-  if (lock == null) {
+export function lockLandscape(screen: OrientationLockScreen): void {
+  const orientation = screen.orientation;
+  if (orientation?.lock == null) {
     return;
   }
   try {
-    void Promise.resolve(lock.call(screen?.orientation, 'landscape')).catch(
-      () => undefined
-    );
+    void Promise.resolve(orientation.lock('landscape')).catch(() => undefined);
   } catch {
     // Some browsers throw synchronously instead of rejecting.
   }
 }
 
 /** Lets the phone rotate freely again. */
-export function unlockOrientation(
-  screen: OrientationLockScreen | undefined
-): void {
+export function unlockOrientation(screen: OrientationLockScreen): void {
   try {
-    screen?.orientation?.unlock?.();
+    screen.orientation?.unlock?.();
   } catch {
     // Not locked, or not supported - nothing to undo either way.
   }

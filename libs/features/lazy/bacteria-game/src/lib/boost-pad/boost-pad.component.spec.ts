@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ColonyStats } from '../colony-stats';
-import { SeatComponent } from './seat.component';
+import { BoostPadComponent } from './boost-pad.component';
 
 const orange: ColonyStats = {
   id: 0,
@@ -19,8 +19,8 @@ const orange: ColonyStats = {
   boostKey: 'Space',
 };
 
-describe('SeatComponent', () => {
-  let fixture: ComponentFixture<SeatComponent>;
+describe('BoostPadComponent', () => {
+  let fixture: ComponentFixture<BoostPadComponent>;
 
   function button(): HTMLButtonElement {
     return fixture.nativeElement.querySelector('button');
@@ -28,9 +28,9 @@ describe('SeatComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SeatComponent, NoopAnimationsModule],
+      imports: [BoostPadComponent, NoopAnimationsModule],
     }).compileComponents();
-    fixture = TestBed.createComponent(SeatComponent);
+    fixture = TestBed.createComponent(BoostPadComponent);
     fixture.componentRef.setInput('colony', orange);
     fixture.componentRef.setInput('running', true);
     await fixture.whenStable();

@@ -42,15 +42,7 @@
   }
   <mat-card-content>
     @if (!fullscreen()) {
-      <feat-lazy-bac-game-match-setup
-        [mode]="mode()"
-        [difficulty]="difficulty()"
-        [level]="level()"
-        [disabled]="(isRunning$ | async) ?? false"
-        (modeChange)="selectMode($event)"
-        (difficultyChange)="selectDifficulty($event)"
-        (levelChange)="selectLevel($event)"
-      />
+      <ng-container *ngTemplateOutlet="matchSetup"></ng-container>
 
       @if (state()) {
         <ng-container *ngTemplateOutlet="scoreboard"></ng-container>
@@ -62,8 +54,8 @@
     <!--
       The stage is the element that fills the screen. Its children are placed
       on a grid: the arena in the middle, one seat per human player with a
-      joystick zone and a boost button. Seat 0 sits along the near edge, seat
-      1 along the far edge with its controls turned round - so two people can
+      joystick zone and a boost pad. Seat 0 sits along the near edge, seat 1
+      along the far edge with its controls turned round - so two people can
       play with the phone lying flat between them.
     -->
     <div
@@ -76,73 +68,57 @@
         @for (colony of humanStats(); track colony.id; let seat = $index) {
           <feat-lazy-bac-game-joystick
             class="seat seat-stick"
-            [class.seat-0]="seat === 0"
-            [class.seat-1]="seat === 1"
+            [style.grid-area]="'stick-' + seat"
             [color]="colony.css"
             [label]="colony.name"
             [flipped]="seat === 1"
-            [disabled]="(isRunning$ | async) !== true"
+            [disabled]="!running()"
             (steer)="steer(colony.id, $event)"
           />
-          <feat-lazy-bac-game-seat
+          <feat-lazy-bac-game-boost-pad
             class="seat seat-boost"
-            [class.seat-0]="seat === 0"
-            [class.seat-1]="seat === 1"
+            [style.grid-area]="'boost-' + seat"
             [colony]="colony"
-            [running]="(isRunning$ | async) === true"
+            [running]="running()"
             [flipped]="seat === 1"
             (boost)="boost(colony.id)"
           />
         }
 
-        @if ((isRunning$ | async) === false) {
+        @if (!running() || paused()) {
           <div class="stage-panel">
             <mat-card class="panel-card" appearance="raised">
-              <mat-card-content>
-                <feat-lazy-bac-game-match-setup
-                  [mode]="mode()"
-                  [difficulty]="difficulty()"
-                  [level]="level()"
-                  (modeChange)="selectMode($event)"
-                  (difficultyChange)="selectDifficulty($event)"
-                  (levelChange)="selectLevel($event)"
-                />
-                <p class="panel-hint">
-                  @if (mode() === "two-players") {
-                    Lay the phone flat between you: each player steers with the
-                    joystick zone and fires the boost at their own edge.
-                  } @else {
-                    Steer with the joystick zone, fire the boost with the button
-                    - or drag your crosshair across the arena.
-                  }
-                </p>
-              </mat-card-content>
-              <mat-card-actions align="end">
-                <button
-                  mat-flat-button
-                  type="button"
-                  class="stage-start"
-                  (click)="startGame()"
-                >
-                  <mat-icon>play_arrow</mat-icon>
-                  Start
-                </button>
-              </mat-card-actions>
-            </mat-card>
-          </div>
-        } @else if (isPaused$ | async) {
-          <div class="stage-panel">
-            <mat-card class="panel-card" appearance="raised">
-              <mat-card-content class="paused">
-                <mat-icon>pause</mat-icon>
-                <span>Paused</span>
-              </mat-card-content>
-              <mat-card-actions align="end">
-                <button mat-flat-button type="button" (click)="togglePause()">
-                  <mat-icon>play_arrow</mat-icon>
-                  Resume
-                </button>
-              </mat-card-actions>
+              @if (!running()) {
+                <mat-card-content>
+                  <ng-container *ngTemplateOutlet="matchSetup"></ng-container>
+                  <p class="panel-hint">
+                    @if (mode() === "two-players") {
+                      Lay the phone flat between you: each player steers with
+                      the joystick zone and fires the boost at their own edge.
+                    } @else {
+                      Steer with the joystick zone, fire the boost with the
+                      button - or drag your crosshair across the arena.
+                    }
+                  </p>
+                </mat-card-content>
+                <mat-card-actions align="end">
+                  <button mat-flat-button type="button" (click)="startGame()">
+                    <mat-icon>play_arrow</mat-icon>
+                    Start
+                  </button>
+                </mat-card-actions>
+              } @else {
+                <mat-card-content class="paused">
+                  <mat-icon>pause</mat-icon>
+                  <span>Paused</span>
+                </mat-card-content>
+                <mat-card-actions align="end">
+                  <button mat-flat-button type="button" (click)="togglePause()">
+                    <mat-icon>play_arrow</mat-icon>
+                    Resume
+                  </button>
+                </mat-card-actions>
+              }
             </mat-card>
           </div>
         }
@@ -152,7 +128,9 @@
         @if (fullscreen()) {
           <div class="stage-bar">
             <span class="hud-level">{{ level().name }}</span>
-            <span class="game-time">{{ gameTime() }}</span>
+            <span class="game-time">{{
+              state()?.timePassed ?? 0 | date: "m:ss" : "UTC"
+            }}</span>
             <span class="hud-colonies">
               @for (colony of stats(); track colony.id) {
                 <span class="hud-colony" [class.boosting]="colony.boosting">
@@ -167,21 +145,19 @@
               <button
                 mat-icon-button
                 type="button"
-                [attr.aria-label]="(isPaused$ | async) ? 'Resume' : 'Pause'"
+                [attr.aria-label]="paused() ? 'Resume' : 'Pause'"
                 matTooltip="Pause (P)"
-                [disabled]="(isRunning$ | async) === false"
+                [disabled]="!running()"
                 (click)="togglePause()"
               >
-                <mat-icon>{{
-                  (isPaused$ | async) ? "play_arrow" : "pause"
-                }}</mat-icon>
+                <mat-icon>{{ paused() ? "play_arrow" : "pause" }}</mat-icon>
               </button>
               <button
                 mat-icon-button
                 type="button"
                 aria-label="Reset"
                 matTooltip="Reset"
-                [disabled]="(isRunning$ | async) === false"
+                [disabled]="!running()"
                 (click)="resetGame()"
               >
                 <mat-icon>stop</mat-icon>
@@ -198,7 +174,11 @@
             </span>
           </div>
         }
-        <div #arenaBox wsThanos class="thanos-container">
+        <div
+          wsThanos
+          class="thanos-container"
+          (wsSharedUiElemResized)="onArenaBoxResized($event)"
+        >
           <ws-shared-ui-show-fps
             [show]="true"
             [fps]="(fps$ | async) ?? 0"
@@ -222,37 +202,55 @@
   </mat-card-content>
   @if (!fullscreen()) {
     <mat-card-actions>
-      <button
-        mat-raised-button
-        (click)="startGame()"
-        [disabled]="isRunning$ | async"
-      >
+      <button mat-raised-button (click)="startGame()" [disabled]="running()">
         Start
       </button>
-      <button
-        mat-raised-button
-        (click)="togglePause()"
-        [disabled]="(isRunning$ | async) === false"
-      >
-        {{ (isPaused$ | async) ? "Resume" : "Pause" }}
+      <button mat-raised-button (click)="togglePause()" [disabled]="!running()">
+        {{ paused() ? "Resume" : "Pause" }}
       </button>
-      <button
-        mat-raised-button
-        (click)="resetGame()"
-        [disabled]="(isRunning$ | async) === false"
-      >
+      <button mat-raised-button (click)="resetGame()" [disabled]="!running()">
         Reset
       </button>
       <span class="actions-spacer"></span>
-      <ng-container *ngTemplateOutlet="boostButtons"></ng-container>
+      @for (colony of humanStats(); track colony.id) {
+        <button
+          mat-stroked-button
+          type="button"
+          class="boost-button"
+          [class.boosting]="colony.boosting"
+          [style.borderColor]="colony.css"
+          [attr.aria-label]="'Boost ' + colony.name"
+          [matTooltip]="'Boost ' + colony.name + ' (' + colony.boostKey + ')'"
+          [disabled]="!running() || colony.boosting || colony.boostCooldown > 0"
+          (click)="boost(colony.id)"
+        >
+          <mat-icon>bolt</mat-icon>
+          {{ boostLabel(colony) }}
+        </button>
+      }
     </mat-card-actions>
   }
 </mat-card>
 
+<!-- Opponent, difficulty and level - in the page and in the stage panel. -->
+<ng-template #matchSetup>
+  <feat-lazy-bac-game-match-setup
+    [mode]="mode()"
+    [difficulty]="difficulty()"
+    [level]="level()"
+    [disabled]="running()"
+    (modeChange)="selectMode($event)"
+    (difficultyChange)="selectDifficulty($event)"
+    (levelChange)="selectLevel($event)"
+  />
+</ng-template>
+
 <!-- The scoreboard of the page layout. -->
 <ng-template #scoreboard>
   <div class="statistics">
-    <span class="game-time">{{ "Game time: " + gameTime() }}</span>
+    <span class="game-time">{{
+      "Game time: " + (state()?.timePassed ?? 0 | date: "m:ss" : "UTC")
+    }}</span>
     @for (colony of stats(); track colony.id) {
       <div class="colony" [class.boosting]="colony.boosting">
         <span class="colony-name" [style.color]="colony.css"
@@ -276,36 +274,4 @@
       </div>
     }
   </div>
-</ng-template>
-
-<!-- One boost button per human player, for the page layout. -->
-<ng-template #boostButtons>
-  @for (colony of stats(); track colony.id) {
-    @if (!colony.isBot) {
-      <button
-        mat-stroked-button
-        type="button"
-        class="boost-button"
-        [class.boosting]="colony.boosting"
-        [style.borderColor]="colony.css"
-        [attr.aria-label]="'Boost ' + colony.name"
-        [matTooltip]="'Boost ' + colony.name + ' (' + colony.boostKey + ')'"
-        [disabled]="
-          (isRunning$ | async) === false ||
-          colony.boosting ||
-          colony.boostCooldown > 0
-        "
-        (click)="boost(colony.id)"
-      >
-        <mat-icon>bolt</mat-icon>
-        @if (colony.boosting) {
-          Boosting
-        } @else if (colony.boostCooldown > 0) {
-          {{ colony.boostCooldown }}s
-        } @else {
-          Boost
-        }
-      </button>
-    }
-  }
 </ng-template>

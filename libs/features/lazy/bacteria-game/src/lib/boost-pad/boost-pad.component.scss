@@ -1,13 +1,13 @@
+@use '../colony';
+
 :host {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 0;
-  min-height: 0;
   padding: 0.5rem;
 }
 
-.seat-content {
+.pad {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -17,7 +17,7 @@
 }
 
 // The far player looks at the phone from the other side.
-:host(.flipped) .seat-content {
+:host(.flipped) .pad {
   transform: rotate(180deg);
 }
 
@@ -53,42 +53,25 @@
 }
 
 :host(.boosting) .boost-fab {
-  animation: boost-pulse 0.6s ease-in-out infinite alternate;
+  animation: colony.$pulse;
 }
 
-.seat-name {
+.pad-name {
   font-weight: 600;
   color: var(--seat-color);
 }
 
-.seat-stats {
+.pad-stats {
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   opacity: 0.8;
 }
 
+@include colony.bar(rgb(255 255 255 / 25%));
+
 .colony-bar {
-  display: block;
   width: 100%;
   max-width: 6rem;
-  height: 4px;
-  border-radius: 2px;
-  background: rgb(255 255 255 / 25%);
-  overflow: hidden;
 }
 
-.colony-bar-fill {
-  display: block;
-  height: 100%;
-  transition: width 120ms linear;
-}
-
-@keyframes boost-pulse {
-  from {
-    opacity: 0.55;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
+@include colony.pulse-keyframes;

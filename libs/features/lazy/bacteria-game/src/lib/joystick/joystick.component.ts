@@ -4,6 +4,7 @@ import {
   ElementRef,
   inject,
   input,
+  OnDestroy,
   output,
   signal,
 } from '@angular/core';
@@ -23,6 +24,10 @@ import { knobOffset, steeringVector } from '../touch-controls';
  * of the phone sees the arena upside down, and so is their push: "away from
  * me" is down on the screen, which moves the crosshair down on the screen -
  * up in their view. The vector therefore needs no mirroring for them.
+ *
+ * A stick that is still held when the component goes away - the layout is
+ * left with F or Escape while a finger is down - lets go first, so the
+ * crosshair does not keep moving on a stick nobody can release any more.
  */
 @Component({
   selector: 'feat-lazy-bac-game-joystick',
@@ -32,7 +37,6 @@ import { knobOffset, steeringVector } from '../touch-controls';
   host: {
     '[class.flipped]': 'flipped()',
     '[class.disabled]': 'disabled()',
-    '[class.active]': 'origin() != null',
     '[style.--joystick-color]': 'color()',
     '[attr.aria-label]': '"Joystick " + label()',
     '(pointerdown)': 'onPointerDown($event)',
@@ -42,7 +46,7 @@ import { knobOffset, steeringVector } from '../touch-controls';
     '(lostpointercapture)': 'onPointerUp($event)',
   },
 })
-export class JoystickComponent {
+export class JoystickComponent implements OnDestroy {
   /** CSS colour of the player, for the ring and the knob. */
   public readonly color = input.required<string>();
   /** The player's name, shown in the zone while the stick is at rest. */
@@ -107,11 +111,17 @@ export class JoystickComponent {
     this.release();
   }
 
+  public ngOnDestroy(): void {
+    if (this.pointerId != null) {
+      this.release();
+    }
+  }
+
   /** Lets go of the stick: the crosshair stops where it is. */
   private release(): void {
     this.pointerId = null;
     this.origin.set(null);
     this.knob.set({ x: 0, y: 0 });
-    this.steer.emit({ ...NO_STEERING });
+    this.steer.emit(NO_STEERING);
   }
 }

@@ -1,7 +1,3 @@
-import {
-  FullscreenOverlayContainer,
-  OverlayContainer,
-} from '@angular/cdk/overlay';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BacteriaGameComponent } from './bacteria-game.component';
@@ -70,18 +66,38 @@ describe('BacteriaGameComponent', () => {
   let component: BacteriaGameComponent;
   let query: GameStateQuery;
 
-  function create(fullscreenAwareOverlay = false) {
+  /**
+   * Creates the component with a stage whose fullscreen request the browser
+   * grants or refuses, and returns that stage. The template is not rendered,
+   * so the stage element is wired up by hand.
+   */
+  function create(granted = false) {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [BacteriaGameComponent, NoopAnimationsModule],
-      providers: fullscreenAwareOverlay
-        ? [{ provide: OverlayContainer, useClass: FullscreenOverlayContainer }]
-        : [],
     });
     query = TestBed.inject(GameStateQuery);
     fixture = TestBed.createComponent(BacteriaGameComponent);
     component = fixture.componentInstance;
+    const arena = stage(granted);
+    (component as unknown as { stageRef: unknown }).stageRef = {
+      nativeElement: arena,
+    };
+    return arena;
   }
+
+  function startMatch(mode: 'two-players' | 'vs-computer'): PlayerQuery {
+    const service = TestBed.inject(GameStateService);
+    service.setArenaSize(320, 140);
+    service.setMode(mode);
+    service.start();
+    return TestBed.inject(PlayerQuery);
+  }
+
+  beforeEach(() => {
+    stubFullscreen(null);
+    stubActivation(false);
+  });
 
   afterEach(() => {
     stubFullscreen(null);
@@ -89,33 +105,38 @@ describe('BacteriaGameComponent', () => {
 
   describe('the F shortcut', () => {
     it('goes fullscreen for a key pressed in the arena', () => {
-      create();
-      const requestFullscreen = jest.fn();
-      setStage(component, { requestFullscreen });
-      stubFullscreen(null);
+      const arena = create();
+      component['fullscreen'].set(false);
 
       component.onKeyDown(keyEvent('f', document.body));
 
-      expect(requestFullscreen).toHaveBeenCalled();
+      expect(component['fullscreen']()).toBe(true);
+      expect(arena.requestFullscreen).toHaveBeenCalled();
       expect(query.getValue().keysPressed).not.toContain('f');
+    });
+
+    it('leaves fullscreen again', () => {
+      create();
+
+      component.onKeyDown(keyEvent('f', document.body));
+
+      expect(component['fullscreen']()).toBe(false);
     });
 
     it('leaves the key to the level picker while that has the focus', () => {
       create();
-      const requestFullscreen = jest.fn();
-      setStage(component, { requestFullscreen });
+      component['fullscreen'].set(false);
       const combobox = document.createElement('div');
       combobox.setAttribute('role', 'combobox');
 
       component.onKeyDown(keyEvent('f', combobox));
 
-      expect(requestFullscreen).not.toHaveBeenCalled();
+      expect(component['fullscreen']()).toBe(false);
     });
 
     it('leaves the key to an overlay, where the picker opens its panel', () => {
       create();
-      const requestFullscreen = jest.fn();
-      setStage(component, { requestFullscreen });
+      component['fullscreen'].set(false);
       const overlay = document.createElement('div');
       overlay.className = 'cdk-overlay-container';
       const option = document.createElement('div');
@@ -123,19 +144,11 @@ describe('BacteriaGameComponent', () => {
 
       component.onKeyDown(keyEvent('f', option));
 
-      expect(requestFullscreen).not.toHaveBeenCalled();
+      expect(component['fullscreen']()).toBe(false);
     });
   });
 
   describe('the boost keys', () => {
-    function startMatch(mode: 'two-players' | 'vs-computer') {
-      create();
-      const service = TestBed.inject(GameStateService);
-      service.setArenaSize(320, 140);
-      service.setMode(mode);
-      service.start();
-    }
-
     function boostOf(playerId: number): number {
       return (
         TestBed.inject(PlayerQuery).getEntity(playerId)?.boostActiveSec ?? 0
@@ -143,6 +156,7 @@ describe('BacteriaGameComponent', () => {
     }
 
     it('fires the first player with Space and the second with Enter', () => {
+      create();
       startMatch('two-players');
 
       component.onKeyDown(keyEvent(' ', document.body));
@@ -154,6 +168,7 @@ describe('BacteriaGameComponent', () => {
     });
 
     it('gives both keys to the human against the computer', () => {
+      create();
       startMatch('vs-computer');
 
       component.onKeyDown(keyEvent('Enter', document.body));
@@ -163,6 +178,7 @@ describe('BacteriaGameComponent', () => {
     });
 
     it('keeps Space from scrolling the page', () => {
+      create();
       startMatch('two-players');
       const event = keyEvent(' ', document.body);
 
@@ -173,6 +189,7 @@ describe('BacteriaGameComponent', () => {
     });
 
     it('ignores a held key', () => {
+      create();
       startMatch('two-players');
 
       component.onKeyDown(keyEvent(' ', document.body, true));
@@ -192,6 +209,7 @@ describe('BacteriaGameComponent', () => {
     });
 
     it('leaves Enter to a focused control', () => {
+      create();
       startMatch('two-players');
       const input = document.createElement('input');
 
@@ -201,6 +219,7 @@ describe('BacteriaGameComponent', () => {
     });
 
     it('leaves Space and Enter to a focused button', () => {
+      create();
       startMatch('two-players');
       const button = document.createElement('button');
       const event = keyEvent('Enter', button);
@@ -214,6 +233,7 @@ describe('BacteriaGameComponent', () => {
     });
 
     it('takes the key from a disabled button, which cannot use it', () => {
+      create();
       startMatch('two-players');
       const button = document.createElement('button');
       button.disabled = true;
@@ -225,79 +245,17 @@ describe('BacteriaGameComponent', () => {
   });
 
   describe('entering the page', () => {
-    it('lays the arena over the whole viewport right away', () => {
+    it('opens in the touch layout', () => {
       create();
-      setStage(component, stage(false));
-      stubFullscreen(null);
-
-      component['enterFullscreen']();
 
       expect(component['fullscreen']()).toBe(true);
     });
 
-    it('asks the browser for its fullscreen as well', () => {
-      create();
-      const arena = stage(true);
-      setStage(component, arena);
-      stubFullscreen(null);
+    it('does not waste the native request on a page opened without a gesture', () => {
+      const arena = create();
 
-      component['enterFullscreen']();
+      component['requestNativeFullscreenOnOpen']();
 
-      expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
-    });
-
-    it('asks again on the first gesture once the browser refused', async () => {
-      create();
-      const arena = stage(false);
-      setStage(component, arena);
-      stubFullscreen(null);
-      component['enterFullscreen']();
-      await settle();
-
-      component['onDocumentPointerUp'](pointerUp(document.body));
-
-      expect(arena.requestFullscreen).toHaveBeenCalledTimes(2);
-    });
-
-    it('leaves a button gesture to the button', async () => {
-      create();
-      const arena = stage(false);
-      setStage(component, arena);
-      stubFullscreen(null);
-      component['enterFullscreen']();
-      await settle();
-
-      component['onDocumentPointerUp'](
-        pointerUp(document.createElement('button'))
-      );
-
-      expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
-    });
-
-    it('stops asking once the browser granted it', async () => {
-      create();
-      const arena = stage(true);
-      setStage(component, arena);
-      stubFullscreen(null);
-      component['enterFullscreen']();
-      await settle();
-
-      component['onDocumentPointerUp'](pointerUp(document.body));
-      component['onDocumentClick']();
-
-      expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
-    });
-
-    it('does not waste the request on a page opened without a gesture', () => {
-      create();
-      const arena = stage(false);
-      setStage(component, arena);
-      stubFullscreen(null);
-      stubActivation(false);
-
-      component['enterFullscreenOnOpen']();
-
-      expect(component['fullscreen']()).toBe(true);
       expect(arena.requestFullscreen).not.toHaveBeenCalled();
 
       component['onDocumentPointerUp'](pointerUp(document.body));
@@ -306,68 +264,26 @@ describe('BacteriaGameComponent', () => {
     });
 
     it('spends the gesture of the navigation that opened the page', () => {
-      create();
-      const arena = stage(true);
-      setStage(component, arena);
-      stubFullscreen(null);
+      const arena = create(true);
       stubActivation(true);
 
-      component['enterFullscreenOnOpen']();
+      component['requestNativeFullscreenOnOpen']();
 
       expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
     });
 
-    it('leaves a key on a focused button to the button', async () => {
-      create();
-      const arena = stage(false);
-      setStage(component, arena);
-      stubFullscreen(null);
-      component['enterFullscreen']();
-      await settle();
-
-      component.onKeyDown(keyEvent('Enter', document.createElement('button')));
-
-      expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
-    });
-
-    it('does not ask at all without the API, as on an iPhone', () => {
-      create();
-      const arena = { webkitRequestFullscreen: undefined };
-      setStage(component, arena);
-      Object.defineProperty(document, 'fullscreenEnabled', {
-        value: undefined,
-        configurable: true,
-      });
-
-      component['enterFullscreen']();
+    it('asks again on the next gesture once the browser refused', async () => {
+      const arena = create();
       component['onDocumentClick']();
-
-      expect(component['fullscreen']()).toBe(true);
-    });
-  });
-
-  describe('leaving fullscreen', () => {
-    it('returns to the page and gives the screen back', () => {
-      create();
-      const arena = stage(true);
-      setStage(component, arena);
-      const exit = stubFullscreen(arena as unknown as Element);
-      component['enterFullscreen']();
-
-      component['leaveFullscreen']();
-
-      expect(component['fullscreen']()).toBe(false);
-      expect(exit).toHaveBeenCalled();
-    });
-
-    it('does not pull the player back in on the next tap', async () => {
-      create();
-      const arena = stage(false);
-      setStage(component, arena);
-      stubFullscreen(null);
-      component['enterFullscreen']();
       await settle();
-      component['leaveFullscreen']();
+
+      component['onDocumentPointerUp'](pointerUp(document.body));
+
+      expect(arena.requestFullscreen).toHaveBeenCalledTimes(2);
+    });
+
+    it('asks once per tap, not for its pointerup and its click both', () => {
+      const arena = create();
 
       component['onDocumentPointerUp'](pointerUp(document.body));
       component['onDocumentClick']();
@@ -375,11 +291,66 @@ describe('BacteriaGameComponent', () => {
       expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
     });
 
+    it('leaves a button gesture to the button', () => {
+      const arena = create();
+
+      component['onDocumentPointerUp'](
+        pointerUp(document.createElement('button'))
+      );
+      component.onKeyDown(keyEvent('Enter', document.createElement('button')));
+
+      expect(arena.requestFullscreen).not.toHaveBeenCalled();
+    });
+
+    it('stops asking once the browser granted it', async () => {
+      const arena = create(true);
+      component['onDocumentClick']();
+      await settle();
+
+      component['onDocumentPointerUp'](pointerUp(document.body));
+      component['onDocumentClick']();
+
+      expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not ask at all without the API, as on an iPhone', () => {
+      create();
+      (component as unknown as { stageRef: unknown }).stageRef = {
+        nativeElement: {},
+      };
+      Object.defineProperty(document, 'fullscreenEnabled', {
+        value: undefined,
+        configurable: true,
+      });
+
+      expect(() => component['onDocumentClick']()).not.toThrow();
+      expect(component['fullscreen']()).toBe(true);
+    });
+  });
+
+  describe('leaving fullscreen', () => {
+    it('returns to the page and gives the screen back', () => {
+      const arena = create(true);
+      const exit = stubFullscreen(arena as unknown as Element);
+
+      component['leaveFullscreen']();
+
+      expect(component['fullscreen']()).toBe(false);
+      expect(exit).toHaveBeenCalled();
+    });
+
+    it('does not pull the player back in on the next tap', () => {
+      const arena = create();
+      component['leaveFullscreen']();
+
+      component['onDocumentPointerUp'](pointerUp(document.body));
+      component['onDocumentClick']();
+
+      expect(arena.requestFullscreen).not.toHaveBeenCalled();
+    });
+
     it('follows the browser when it takes the arena off the screen', () => {
       create();
-      setStage(component, stage(true));
-      stubFullscreen(null);
-      component['fullscreen'].set(true);
 
       component['onFullscreenChange']();
 
@@ -388,40 +359,18 @@ describe('BacteriaGameComponent', () => {
 
     it('leaves on Escape where no browser fullscreen is there to leave', () => {
       create();
-      setStage(component, stage(false));
-      stubFullscreen(null);
-      component['fullscreen'].set(true);
 
       component.onKeyDown(keyEvent('Escape', document.body));
 
       expect(component['fullscreen']()).toBe(false);
       expect(query.getValue().keysPressed).not.toContain('Escape');
     });
-
-    it('toggles with F', () => {
-      create();
-      setStage(component, stage(false));
-      stubFullscreen(null);
-      component['fullscreen'].set(true);
-
-      component.onKeyDown(keyEvent('f', document.body));
-
-      expect(component['fullscreen']()).toBe(false);
-    });
   });
 
   describe('the joysticks', () => {
-    function startTwoPlayerMatch(): PlayerQuery {
-      create();
-      const service = TestBed.inject(GameStateService);
-      service.setArenaSize(320, 140);
-      service.setMode('two-players');
-      service.start();
-      return TestBed.inject(PlayerQuery);
-    }
-
     it('steer the crosshair of their player', () => {
-      const playerQuery = startTwoPlayerMatch();
+      create();
+      const playerQuery = startMatch('two-players');
       const before = playerQuery.getEntity(1)?.x ?? 0;
 
       component['steer'](1, { x: 1, y: 0 });
@@ -430,76 +379,8 @@ describe('BacteriaGameComponent', () => {
       expect(playerQuery.getEntity(1)?.x).toBeGreaterThan(before);
       expect(playerQuery.getEntity(0)?.x).toBe(80);
     });
-
-    it('are let go of when the layout they live in is left', () => {
-      const playerQuery = startTwoPlayerMatch();
-      setStage(component, stage(false));
-      stubFullscreen(null);
-      component['fullscreen'].set(true);
-      component['steer'](1, { x: 1, y: 0 });
-
-      component['leaveFullscreen']();
-      const held = playerQuery.getEntity(1)?.x ?? 0;
-      query['store'].update({ timeDelta: 100 });
-
-      expect(playerQuery.getEntity(1)?.x).toBe(held);
-    });
-  });
-
-  describe('the winner dialog', () => {
-    it('leaves fullscreen while the overlays stay outside of it', () => {
-      create();
-      const exit = stubFullscreen(document.createElement('div'));
-      component['fullscreen'].set(true);
-
-      component['leaveFullscreenForDialog']();
-
-      expect(exit).toHaveBeenCalled();
-    });
-
-    it('keeps the seats when it gave the screen up for the dialog', () => {
-      create();
-      const arena = stage(true);
-      setStage(component, arena);
-      stubFullscreen(document.createElement('div'));
-      component['fullscreen'].set(true);
-      component['leaveFullscreenForDialog']();
-
-      stubFullscreen(null);
-      component['onFullscreenChange']();
-
-      expect(component['fullscreen']()).toBe(true);
-
-      // The dialog's button is the next gesture and takes the screen back.
-      component['onDocumentClick']();
-      expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
-    });
-
-    it('stays fullscreen when the overlays move into the arena', () => {
-      create(true);
-      const exit = stubFullscreen(document.createElement('div'));
-      component['fullscreen'].set(true);
-
-      component['leaveFullscreenForDialog']();
-
-      expect(exit).not.toHaveBeenCalled();
-    });
-
-    it('does nothing while the arena is in the page anyway', () => {
-      create();
-      const exit = stubFullscreen(null);
-
-      component['leaveFullscreenForDialog']();
-
-      expect(exit).not.toHaveBeenCalled();
-    });
   });
 });
-
-/** The stage element is only wired up by the template, which is not rendered here. */
-function setStage(component: BacteriaGameComponent, nativeElement: unknown) {
-  (component as unknown as { stageRef: unknown }).stageRef = { nativeElement };
-}
 
 function pointerUp(target: EventTarget): PointerEvent {
   return { target, pointerId: 1 } as unknown as PointerEvent;

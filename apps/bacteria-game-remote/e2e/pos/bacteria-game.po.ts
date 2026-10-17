@@ -69,9 +69,25 @@ export class BacteriaGamePo {
     return this.joysticks.nth(seat);
   }
 
+  /** The stick itself, shown under the finger while a zone is held. */
+  public heldStick(seat: number): Locator {
+    return this.joystick(seat).locator('.base:not(.idle)');
+  }
+
   /** The seat's boost button. */
   public boostOf(seat: number): Locator {
     return this.page.locator('.seat-boost').nth(seat).getByRole('button');
+  }
+
+  /** Where an element is on the screen; it must have a layout. */
+  public async boxOf(
+    locator: Locator
+  ): Promise<{ x: number; y: number; width: number; height: number }> {
+    const box = await locator.boundingBox();
+    if (box == null) {
+      throw new Error('the element has no layout yet');
+    }
+    return box;
   }
 
   /**
@@ -79,10 +95,7 @@ export class BacteriaGamePo {
    * the zone, drags by the offset and stays there until {@link release}.
    */
   public async push(seat: number, dx: number, dy: number): Promise<void> {
-    const box = await this.joystick(seat).boundingBox();
-    if (box == null) {
-      throw new Error(`joystick ${seat} has no layout`);
-    }
+    const box = await this.boxOf(this.joystick(seat));
     const x = box.x + box.width / 2;
     const y = box.y + box.height / 2;
     await this.page.mouse.move(x, y);

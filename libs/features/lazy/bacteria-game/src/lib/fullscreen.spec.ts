@@ -123,57 +123,34 @@ describe('fitInside', () => {
 });
 
 describe('requestFullscreen', () => {
-  it('resolves true once the element is on the screen', async () => {
-    const doc: { fullscreenElement: Element | null } = {
-      fullscreenElement: null,
-    };
-    const element = {
-      requestFullscreen: jest.fn(() => {
-        doc.fullscreenElement = element as unknown as Element;
-        return Promise.resolve();
-      }),
-    };
+  it('asks the browser and settles once it answered', async () => {
+    const request = jest.fn(() => Promise.resolve());
 
-    await expect(requestFullscreen(doc, element)).resolves.toBe(true);
+    await requestFullscreen({ requestFullscreen: request });
+
+    expect(request).toHaveBeenCalled();
   });
 
-  it('resolves false when the browser rejects it', async () => {
+  it('swallows a refusal', async () => {
     await expect(
-      requestFullscreen(
-        { fullscreenElement: null },
-        {
-          requestFullscreen: () => Promise.reject(new TypeError('no gesture')),
-        }
-      )
-    ).resolves.toBe(false);
+      requestFullscreen({
+        requestFullscreen: () => Promise.reject(new TypeError('no gesture')),
+      })
+    ).resolves.toBeUndefined();
   });
 
-  it('resolves false without the API', async () => {
-    await expect(requestFullscreen({}, {})).resolves.toBe(false);
-    await expect(requestFullscreen({}, null)).resolves.toBe(false);
+  it('settles without the API', async () => {
+    await expect(requestFullscreen({})).resolves.toBeUndefined();
+    await expect(requestFullscreen(null)).resolves.toBeUndefined();
   });
 
-  it('does not take the empty return of the webkit call for a yes', async () => {
+  it('falls back to the webkit call, which returns nothing', async () => {
     const webkitRequestFullscreen = jest.fn();
 
     await expect(
-      requestFullscreen(
-        { fullscreenElement: null },
-        { webkitRequestFullscreen }
-      )
-    ).resolves.toBe(false);
+      requestFullscreen({ webkitRequestFullscreen })
+    ).resolves.toBeUndefined();
     expect(webkitRequestFullscreen).toHaveBeenCalled();
-  });
-
-  it('believes the webkit call once the document shows the element', async () => {
-    const element = { webkitRequestFullscreen: jest.fn() };
-
-    await expect(
-      requestFullscreen(
-        { webkitFullscreenElement: element as unknown as Element },
-        element
-      )
-    ).resolves.toBe(true);
   });
 });
 
@@ -189,7 +166,6 @@ describe('hasUserActivation', () => {
       false
     );
     expect(hasUserActivation({})).toBe(false);
-    expect(hasUserActivation(undefined)).toBe(false);
   });
 });
 
@@ -211,7 +187,6 @@ describe('lockLandscape', () => {
 
   it('does nothing without the API', () => {
     expect(() => lockLandscape({})).not.toThrow();
-    expect(() => lockLandscape(undefined)).not.toThrow();
   });
 });
 

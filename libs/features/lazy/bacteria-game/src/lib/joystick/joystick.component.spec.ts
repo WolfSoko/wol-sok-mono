@@ -95,6 +95,21 @@ describe('JoystickComponent', () => {
     expect(component['origin']()).not.toBeNull();
   });
 
+  it('lets go of a held stick when it is destroyed', () => {
+    down(1, 40, 60);
+    move(1, 90, 60);
+
+    fixture.destroy();
+
+    expect(steered.at(-1)).toEqual({ x: 0, y: 0 });
+  });
+
+  it('stays quiet when destroyed at rest', () => {
+    fixture.destroy();
+
+    expect(steered).toEqual([]);
+  });
+
   it('ignores every touch while disabled', () => {
     fixture.componentRef.setInput('disabled', true);
 

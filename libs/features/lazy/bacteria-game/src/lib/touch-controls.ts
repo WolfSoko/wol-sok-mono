@@ -5,7 +5,16 @@
  * pointer-to-player assignment can be tested on their own.
  */
 
-import { clamp, NO_STEERING, Point, SteeringVector } from './state/geometry';
+import {
+  clamp,
+  clampLength,
+  delta,
+  distance,
+  NO_STEERING,
+  Point,
+  scaleTo,
+  SteeringVector,
+} from './state/geometry';
 
 export type ArenaPoint = Point;
 
@@ -101,18 +110,15 @@ export function steeringVector(
   radius: number,
   deadZone = 0.15
 ): SteeringVector {
-  const dX = pointer.x - origin.x;
-  const dY = pointer.y - origin.y;
-  const distance = Math.hypot(dX, dY);
-  if (distance === 0 || radius <= 0) {
-    return { ...NO_STEERING };
+  if (radius <= 0) {
+    return NO_STEERING;
   }
-  const deflection = distance / radius;
+  const deflection = distance(origin, pointer) / radius;
   if (deflection <= deadZone) {
-    return { ...NO_STEERING };
+    return NO_STEERING;
   }
   const strength = Math.min(1, (deflection - deadZone) / (1 - deadZone));
-  return { x: (dX / distance) * strength, y: (dY / distance) * strength };
+  return scaleTo(delta(origin, pointer), strength);
 }
 
 /**
@@ -124,11 +130,5 @@ export function knobOffset(
   pointer: Point,
   radius: number
 ): Point {
-  const dX = pointer.x - origin.x;
-  const dY = pointer.y - origin.y;
-  const distance = Math.hypot(dX, dY);
-  if (distance <= radius || distance === 0) {
-    return { x: dX, y: dY };
-  }
-  return { x: (dX / distance) * radius, y: (dY / distance) * radius };
+  return clampLength(delta(origin, pointer), radius);
 }

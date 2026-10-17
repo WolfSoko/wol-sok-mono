@@ -10,10 +10,21 @@ import {
 import { GameBalance, gameBalance } from './game-balance';
 import { GameStateQuery } from './game-state.query';
 import { GameState } from './game.states';
-import { clamp, isSteering, Point, SteeringVector } from './geometry';
+import {
+  clamp,
+  clampLength,
+  isSteering,
+  Point,
+  SteeringVector,
+} from './geometry';
 import { DEFAULT_CROSSHAIR_SPEED } from './levels';
 import { GameMap, getMap } from './maps';
-import { createPlayer, Player, PlayerColorArray } from './player.model';
+import {
+  createPlayer,
+  isBoostReady,
+  Player,
+  PlayerColorArray,
+} from './player.model';
 import { PlayerQuery } from './player.query';
 import { PlayerStore } from './player.store';
 
@@ -28,17 +39,12 @@ export interface PlayerSpawn {
 }
 
 /**
- * The direction one key set asks for, each axis -1, 0 or 1. The sets and the
- * joystick of a player are summed, so the result may be longer than one axis
- * allows - `movePlayer` caps it at unit length.
- */
-type Direction = SteeringVector;
-
-/**
  * The keys that steer a crosshair, one set per human player: WASD for the
- * first one, the arrow keys for the second one.
+ * first one, the arrow keys for the second one. Each key asks for one axis
+ * at -1 or 1; the keys and the joystick of a player are summed, and
+ * `movePlayer` caps the sum at unit length.
  */
-const KEY_SETS: readonly Record<string, Direction>[] = [
+const KEY_SETS: readonly Record<string, SteeringVector>[] = [
   {
     w: { x: 0, y: -1 },
     s: { x: 0, y: 1 },
@@ -328,15 +334,12 @@ export class PlayerService {
    */
   private movePlayer(
     id: ID,
-    direction: Direction,
+    direction: SteeringVector,
     deltaTimeInSec: number
   ): void {
     const playerId = Number(id);
-    const length = Math.hypot(direction.x, direction.y);
-    const scale = length > 1 ? 1 / length : 1;
-    const xDir = direction.x * scale;
-    const yDir = direction.y * scale;
-    if (length > 0) {
+    const { x: xDir, y: yDir } = clampLength(direction, 1);
+    if (isSteering(direction)) {
       this.dragTargets.delete(playerId);
     }
     const target = this.dragTargets.get(playerId);
@@ -363,9 +366,4 @@ export class PlayerService {
       };
     });
   }
-}
-
-/** True when the player can fire a boost right now. */
-export function isBoostReady(player: Player): boolean {
-  return player.boostActiveSec <= 0 && player.boostCooldownSec <= 0;
 }
