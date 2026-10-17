@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.3.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.2.1...v74.3.0) (2026-10-17)
+
+### Features
+
+* **feat-lazy-bacteria-game:** level themes, moving walls, sound, slime and colony colours ([#2470](https://github.com/WolfSoko/wol-sok-mono/issues/2470)) ([df7c121](https://github.com/WolfSoko/wol-sok-mono/commit/df7c1215d6a3db1e273d596df093e3518a265d22))
+
 ## [74.2.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.2.0...v74.2.1) (2026-10-17)
 
 ### Bug Fixes
