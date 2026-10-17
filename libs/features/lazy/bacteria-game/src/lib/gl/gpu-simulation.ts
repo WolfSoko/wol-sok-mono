@@ -130,7 +130,7 @@ interface FrameUniforms {
   targets: Float32Array;
   aggression: Float32Array;
   attack: Float32Array;
-  canDivide: Int32Array;
+  divideChance: Float32Array;
   pellets: Float32Array;
 }
 
@@ -198,7 +198,7 @@ export class GpuSimulation implements Simulation {
     targets: new Float32Array(MAX_GPU_COLONIES * 2),
     aggression: new Float32Array(MAX_GPU_COLONIES),
     attack: new Float32Array(MAX_GPU_COLONIES),
-    canDivide: new Int32Array(MAX_GPU_COLONIES),
+    divideChance: new Float32Array(MAX_GPU_COLONIES),
     pellets: new Float32Array(MAX_PELLETS * 3),
   };
 
@@ -455,14 +455,13 @@ export class GpuSimulation implements Simulation {
     const capacity = colonyCapacity(b, this.spawns.length);
     u.steps.fill(0);
     u.targets.fill(NaN);
-    u.canDivide.fill(0);
+    u.divideChance.fill(0);
     this.spawns.forEach((spawn, slot) => {
       const target = players.find((player) => player.id === spawn.playerId);
       const intent = colonyIntent(target, b, deltaTimeSec);
       u.aggression[slot] = intent?.aggression ?? b.aggression;
       u.attack[slot] = isBoosted(target ?? null) ? b.boostAttackFactor : 1;
-      u.canDivide[slot] =
-        (this.colonySummaries[slot]?.count ?? 0) < capacity ? 1 : 0;
+      u.divideChance[slot] = this.divideChance(slot, capacity, deltaTimeSec);
       if (target == null || intent == null) {
         return;
       }
@@ -493,8 +492,7 @@ export class GpuSimulation implements Simulation {
       gl.uniform1iv(at['uSteps[0]'], u.steps);
       gl.uniform2fv(at['uTarget[0]'], u.targets);
       gl.uniform1fv(at['uAggression[0]'], u.aggression);
-      gl.uniform1iv(at['uCanDivide[0]'], u.canDivide);
-      gl.uniform1f(at['uDivideChance'], b.divideChancePerSec * deltaTimeSec);
+      gl.uniform1fv(at['uDivideChance[0]'], u.divideChance);
     }
     for (const program of [programs.combat, programs.report]) {
       gl.useProgram(program.program);
@@ -507,6 +505,27 @@ export class GpuSimulation implements Simulation {
     gl.uniform1fv(combat['uAttack[0]'], u.attack);
     gl.uniform1f(combat['uNutrientGain'], b.nutrientDrainPerSec * deltaTimeSec);
     return Math.max(0, ...u.steps);
+  }
+
+  /**
+   * The chance of each bacterium of a colony to divide this frame. All of
+   * them divide in the same pass, and the count is a few frames old - so
+   * the chance is cut down until even the bacteria born in the frames the
+   * count lags behind fit into the room the colony has left.
+   */
+  private divideChance(
+    slot: number,
+    capacity: number,
+    deltaTimeSec: number
+  ): number {
+    const count = this.colonySummaries[slot]?.count ?? 0;
+    const room = capacity - count;
+    if (room <= 0) {
+      return 0;
+    }
+    const chance = this.balance.divideChancePerSec * deltaTimeSec;
+    const framesBehind = READBACK_SLOTS + 1;
+    return Math.min(chance, room / (Math.max(1, count) * framesBehind));
   }
 
   /**
@@ -1035,8 +1054,7 @@ function compiledPrograms(gl: WebGL2RenderingContext): Programs {
     'uCellSize',
     'uHunt',
     'uDivideThreshold',
-    'uDivideChance',
-    'uCanDivide[0]',
+    'uDivideChance[0]',
     'uParentShare',
   ];
   const pellets = ['uPellets[0]', 'uPelletCount', 'uPelletRadius'];

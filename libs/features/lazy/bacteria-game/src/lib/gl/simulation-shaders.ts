@@ -173,8 +173,7 @@ uniform float uJitter;
 uniform int uCellSize;
 uniform isampler2D uHunt;
 uniform float uDivideThreshold;
-uniform float uDivideChance;
-uniform int uCanDivide[2];
+uniform float uDivideChance[2]; // per bacterium, already within the budget
 uniform float uParentShare;
 
 const float PI = 3.14159265;
@@ -245,10 +244,10 @@ int divideIntent(ivec2 cell) {
     return -1;
   }
   int colony = int(state.r) - 1;
-  if (uCanDivide[colony] == 0 || energyOf(state) < uDivideThreshold) {
+  if (energyOf(state) < uDivideThreshold) {
     return -1;
   }
-  if (random(cell, 21u) >= uDivideChance) {
+  if (random(cell, 21u) >= uDivideChance[colony]) {
     return -1;
   }
   return randomFreeNeighbour(cell, 22u);
