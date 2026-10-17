@@ -57,6 +57,7 @@ import { BotDifficulty, DEFAULT_DIFFICULTY } from './state/bot-controller';
 import {
   arenaPointFromClient,
   nearestFreeCrosshair,
+  NO_STEERING,
   SteeringVector,
 } from './touch-controls';
 import { GameBalance, gameBalance } from './state/game-balance';
@@ -626,6 +627,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.fullscreen.set(false);
     // The player chose to leave: the next tap must not pull them back in.
     this.nativeFullscreenPending = false;
+    // The sticks vanish with the layout, so a stick that is still held can no
+    // longer be released - and lostpointercapture reaches the document, not
+    // the destroyed component. Let go of every stick here instead.
+    for (const player of this.humans()) {
+      this.playerService.setSteering(player.id, { ...NO_STEERING });
+    }
     this.updateCanvasSize();
     exitFullscreen(document);
   }

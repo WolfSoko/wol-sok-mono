@@ -352,13 +352,17 @@ describe('BacteriaGameComponent', () => {
   });
 
   describe('the joysticks', () => {
-    it('steer the crosshair of their player', () => {
+    function startTwoPlayerMatch(): PlayerQuery {
       create();
       const service = TestBed.inject(GameStateService);
       service.setArenaSize(320, 140);
       service.setMode('two-players');
       service.start();
-      const playerQuery = TestBed.inject(PlayerQuery);
+      return TestBed.inject(PlayerQuery);
+    }
+
+    it('steer the crosshair of their player', () => {
+      const playerQuery = startTwoPlayerMatch();
       const before = playerQuery.getEntity(1)?.x ?? 0;
 
       component['steer'](1, { x: 1, y: 0 });
@@ -366,6 +370,20 @@ describe('BacteriaGameComponent', () => {
 
       expect(playerQuery.getEntity(1)?.x).toBeGreaterThan(before);
       expect(playerQuery.getEntity(0)?.x).toBe(80);
+    });
+
+    it('are let go of when the layout they live in is left', () => {
+      const playerQuery = startTwoPlayerMatch();
+      setStage(component, stage(false));
+      stubFullscreen(null);
+      component['fullscreen'].set(true);
+      component['steer'](1, { x: 1, y: 0 });
+
+      component['leaveFullscreen']();
+      const held = playerQuery.getEntity(1)?.x ?? 0;
+      query['store'].update({ timeDelta: 100 });
+
+      expect(playerQuery.getEntity(1)?.x).toBe(held);
     });
   });
 
