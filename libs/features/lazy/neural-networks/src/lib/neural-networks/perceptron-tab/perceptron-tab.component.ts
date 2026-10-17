@@ -42,10 +42,6 @@ export class PerceptronTabComponent implements OnInit {
     return this.brainService.perceptrons[0][0];
   }
 
-  get layers() {
-    return this.brainService.perceptrons;
-  }
-
   get points() {
     return this.brainService.points;
   }

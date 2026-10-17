@@ -182,20 +182,12 @@ export class BrainService {
     return this.points;
   }
 
-  guess(input: number[]): number {
-    if (this.isSinglePerceptron) {
-      return this.perceptrons[0][0].guess(input);
-    }
-    return this.feedForward(input);
-  }
-
   toggleAutoTraining(autoTrainingEnabled: boolean) {
     this.autoLearningSubject.next(autoTrainingEnabled);
   }
 
   addPoint(point: Point) {
     this.points.push(point);
-    this.guess(point.data);
   }
 
   clearPoints() {

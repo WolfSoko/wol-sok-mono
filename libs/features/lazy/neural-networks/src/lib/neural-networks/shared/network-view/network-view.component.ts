@@ -10,7 +10,6 @@ import {
 } from '@angular/core';
 import P5 from 'p5';
 import { BrainService } from '../brain.service';
-import { Perceptron } from '../perceptron';
 import { NetworkP5Sketch } from './network-p5-sketch';
 
 @Component({
@@ -36,9 +35,10 @@ export class NetworkViewComponent implements AfterViewInit, OnDestroy {
   private readonly networkCanvas =
     viewChild.required<ElementRef<HTMLElement>>('networkCanvas');
 
-  public readonly layers = input.required<Perceptron[][]>();
   public readonly canvasWidth = input(400);
   public readonly tileSize = input(44);
+  /** Label every weight and bias with its value, for small nets. */
+  public readonly showValues = input(false);
 
   private sketch?: P5;
 
@@ -49,8 +49,8 @@ export class NetworkViewComponent implements AfterViewInit, OnDestroy {
           p,
           this.canvasWidth(),
           this.tileSize(),
-          this.brainService,
-          () => this.layers()
+          this.showValues(),
+          this.brainService
         ),
       this.networkCanvas().nativeElement
     );

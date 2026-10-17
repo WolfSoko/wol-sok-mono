@@ -1,30 +1,54 @@
 import P5 from 'p5';
 import { BrainService } from '../brain.service';
-import { heatmapColor } from '../data-view/data-p5-sketch';
+import { heatmapColor, setPixel } from '../heatmap';
 import { Perceptron } from '../perceptron';
 
-const positiveColor = [235, 140, 30];
-const negativeColor = [60, 100, 230];
+const inputLabels = ['x', 'y'];
+const positiveLine = [235, 140, 30, 200];
+const negativeLine = [60, 100, 230, 200];
+const positiveBorder = [235, 140, 30];
+const negativeBorder = [60, 100, 230];
 const tileResolution = 20;
 const columnPadding = 40;
 const rowGap = 14;
+const headerHeight = 24;
 const minLineWidth = 0.5;
 const maxLineWidth = 10;
 const maxBorderWidth = 4;
-const headerHeight = 24;
 
-interface Node {
+interface NetworkNode {
   x: number;
   y: number;
-  size: number;
   label: string;
   perceptron?: Perceptron;
 }
 
+interface Column {
+  x: number;
+  title: string;
+  nodes: NetworkNode[];
+}
+
 interface Edge {
-  from: Node;
-  to: Node;
+  from: NetworkNode;
+  to: NetworkNode;
   weight: number;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+/** Everything drawn from one state of the network; rebuilt only when the network changes. */
+interface Scene {
+  layers: Perceptron[][];
+  learnedDataPoints: number;
+  columns: Column[];
+  nodes: NetworkNode[];
+  edges: Edge[];
+  maxAbs: number;
+  // one tile per node, in the order of `nodes`
+  tiles: P5.Image[];
 }
 
 /**
@@ -34,120 +58,150 @@ interface Edge {
  * bias is drawn the same way, as the width and colour of the tile border.
  */
 export class NetworkP5Sketch {
-  private images = new Map<Perceptron | string, P5.Image>();
-  // the network the tiles were computed for, to skip recomputing them while nothing learns
-  private imagesOf?: { layers: Perceptron[][]; learnedDataPoints: number };
+  private scene?: Scene;
 
   constructor(
     private p: P5,
     private width: number,
     private tileSize: number,
-    private brainService: BrainService,
-    private layers: () => Perceptron[][],
-    private inputLabels = ['x', 'y']
+    private showValues: boolean,
+    private brainService: BrainService
   ) {
-    p.setup = () => p.createCanvas(width, this.heightFor(this.layers()));
+    p.setup = () =>
+      p.createCanvas(width, this.heightFor(brainService.perceptrons));
     p.draw = () => this.draw();
   }
 
   private heightFor(layers: Perceptron[][]): number {
     const maxNodes = Math.max(
-      this.inputLabels.length,
+      inputLabels.length,
       ...layers.map((layer) => layer.length)
     );
     return headerHeight + maxNodes * (this.tileSize + rowGap) + rowGap + 20;
   }
 
   private draw(): void {
-    const layers = this.layers();
-    const height = this.heightFor(layers);
-    if (this.p.height !== height) {
-      this.p.resizeCanvas(this.width, height);
-    }
-    this.updateImages(layers);
-
-    const columns = this.layout(layers);
-    const edges = this.edges(columns);
-    const maxAbs = Math.max(
-      1,
-      ...edges.map((edge) => Math.abs(edge.weight)),
-      ...layers.flat().map((perceptron) => Math.abs(perceptron.bias))
-    );
-    const lineWidth = (value: number, maxWidth = maxLineWidth) =>
-      minLineWidth + (maxWidth - minLineWidth) * (Math.abs(value) / maxAbs);
-    const showValues = edges.length <= 4;
+    const scene = this.updateScene();
+    const half = this.tileSize / 2;
 
     this.p.background(255);
-    for (const edge of edges) {
-      this.p.stroke(weightColor(edge.weight, 200));
-      this.p.strokeWeight(lineWidth(edge.weight));
-      this.p.line(
-        edge.from.x + edge.from.size / 2,
-        edge.from.y,
-        edge.to.x - edge.to.size / 2,
-        edge.to.y
-      );
+    for (const edge of scene.edges) {
+      this.p.stroke(edge.weight >= 0 ? positiveLine : negativeLine);
+      this.p.strokeWeight(this.lineWidth(edge.weight, maxLineWidth));
+      this.p.line(edge.x1, edge.y1, edge.x2, edge.y2);
     }
-    if (showValues) {
-      edges.forEach((edge) => this.drawWeightLabel(edge));
+    if (this.showValues) {
+      scene.edges.forEach((edge) => this.drawWeightLabel(edge));
     }
-    this.drawHeaders(columns, layers.length);
+    this.drawHeaders(scene.columns);
 
-    for (const node of columns.flat()) {
-      const image = this.images.get(node.perceptron ?? node.label);
-      const left = node.x - node.size / 2;
-      const top = node.y - node.size / 2;
-      if (image) {
-        this.p.image(image, left, top, node.size, node.size);
-      }
+    scene.nodes.forEach((node, n) => {
+      const left = node.x - half;
+      const top = node.y - half;
+      this.p.image(scene.tiles[n], left, top, this.tileSize, this.tileSize);
       this.p.noFill();
       if (node.perceptron) {
-        // the bias border sits outside the tile, so it never covers the heatmap
-        const border = lineWidth(node.perceptron.bias, maxBorderWidth);
-        this.p.stroke(weightColor(node.perceptron.bias, 255));
-        this.p.strokeWeight(border);
-        this.p.rect(
-          left - border / 2,
-          top - border / 2,
-          node.size + border,
-          node.size + border,
-          4
-        );
-        if (showValues) {
-          this.p.noStroke();
-          this.p.fill(0);
-          this.p.textSize(12);
-          this.p.textAlign(this.p.CENTER, this.p.TOP);
-          this.p.text(
-            `b = ${node.perceptron.bias.toFixed(2)}`,
-            node.x,
-            top + node.size + 6
-          );
-        }
+        this.drawBiasBorder(node.perceptron.bias, left, top);
       } else {
         this.p.stroke(120);
         this.p.strokeWeight(1);
-        this.p.rect(left, top, node.size, node.size, 4);
-
+        this.p.rect(left, top, this.tileSize, this.tileSize, 4);
         this.p.noStroke();
         this.p.fill(0);
         this.p.textAlign(this.p.RIGHT, this.p.CENTER);
         this.p.textSize(14);
         this.p.text(node.label, left - 6, node.y);
       }
-    }
+    });
 
-    this.drawHover(columns, edges);
+    this.drawHover(scene);
   }
 
-  private layout(layers: Perceptron[][]): Node[][] {
+  private lineWidth(value: number, maxWidth: number): number {
+    const maxAbs = this.scene?.maxAbs ?? 1;
+    return (
+      minLineWidth + (maxWidth - minLineWidth) * (Math.abs(value) / maxAbs)
+    );
+  }
+
+  /** The bias border sits outside the tile, so it never covers the heatmap. */
+  private drawBiasBorder(bias: number, left: number, top: number): void {
+    const border = this.lineWidth(bias, maxBorderWidth);
+    this.p.stroke(bias >= 0 ? positiveBorder : negativeBorder);
+    this.p.strokeWeight(border);
+    this.p.rect(
+      left - border / 2,
+      top - border / 2,
+      this.tileSize + border,
+      this.tileSize + border,
+      4
+    );
+    if (this.showValues) {
+      this.p.noStroke();
+      this.p.fill(0);
+      this.p.textSize(12);
+      this.p.textAlign(this.p.CENTER, this.p.TOP);
+      this.p.text(
+        `b = ${bias.toFixed(2)}`,
+        left + this.tileSize / 2,
+        top + this.tileSize + 6
+      );
+    }
+  }
+
+  private updateScene(): Scene {
+    const layers = this.brainService.perceptrons;
+    const { learnedDataPoints } = this.brainService;
+    if (
+      this.scene?.layers === layers &&
+      this.scene.learnedDataPoints === learnedDataPoints
+    ) {
+      return this.scene;
+    }
+
+    const height = this.heightFor(layers);
+    if (this.p.height !== height) {
+      this.p.resizeCanvas(this.width, height);
+    }
+    const columns = this.layout(layers);
+    const nodes = columns.flatMap((column) => column.nodes);
+    const edges = this.edges(columns);
+    const tiles =
+      this.scene?.layers === layers
+        ? this.scene.tiles
+        : nodes.map(() => this.p.createImage(tileResolution, tileResolution));
+    this.renderTiles(tiles);
+
+    this.scene = {
+      layers,
+      learnedDataPoints,
+      columns,
+      nodes,
+      edges,
+      maxAbs: Math.max(
+        1,
+        ...edges.map((edge) => Math.abs(edge.weight)),
+        ...layers.flat().map((perceptron) => Math.abs(perceptron.bias))
+      ),
+      tiles,
+    };
+    return this.scene;
+  }
+
+  private layout(layers: Perceptron[][]): Column[] {
     const columnCount = layers.length + 1;
     const columnX = (column: number) =>
       columnPadding +
       this.tileSize / 2 +
       (column * (this.width - 2 * columnPadding - this.tileSize)) /
         Math.max(1, columnCount - 1);
-    const column = (labels: string[], index: number, layer?: Perceptron[]) => {
+    const column = (
+      index: number,
+      title: string,
+      labels: string[],
+      layer?: Perceptron[]
+    ): Column => {
+      const x = columnX(index);
       const top =
         headerHeight +
         (this.p.height -
@@ -155,65 +209,56 @@ export class NetworkP5Sketch {
           labels.length * (this.tileSize + rowGap)) /
           2 +
         rowGap / 2;
-      return labels.map((label, row) => ({
-        x: columnX(index),
-        y: top + row * (this.tileSize + rowGap) + this.tileSize / 2,
-        size: this.tileSize,
-        label,
-        perceptron: layer?.[row],
-      }));
+      return {
+        x,
+        title,
+        nodes: labels.map((label, row) => ({
+          x,
+          y: top + row * (this.tileSize + rowGap) + this.tileSize / 2,
+          label,
+          perceptron: layer?.[row],
+        })),
+      };
     };
+    const hiddenTitle = (l: number) =>
+      layers.length > 2 ? `Hidden layer ${l + 1}` : 'Hidden layer';
     return [
-      column(this.inputLabels, 0),
-      ...layers.map((layer, l) =>
-        column(
-          layer.map((_, j) =>
-            l === layers.length - 1 ? 'Output' : `Hidden ${l + 1}.${j + 1}`
-          ),
+      column(0, 'Input', inputLabels),
+      ...layers.map((layer, l) => {
+        const isOutput = l === layers.length - 1;
+        const title = isOutput ? 'Output' : hiddenTitle(l);
+        return column(
           l + 1,
+          title,
+          layer.map((_, j) =>
+            isOutput && layer.length === 1 ? title : `${title}, neuron ${j + 1}`
+          ),
           layer
-        )
-      ),
+        );
+      }),
     ];
   }
 
-  private edges(columns: Node[][]): Edge[] {
+  private edges(columns: Column[]): Edge[] {
+    const half = this.tileSize / 2;
     return columns.slice(1).flatMap((column, c) =>
-      column.flatMap((to) =>
-        columns[c].map((from, i) => ({
+      column.nodes.flatMap((to) =>
+        columns[c].nodes.map((from, i) => ({
           from,
           to,
           weight: to.perceptron?.weights[i] ?? 0,
+          x1: from.x + half,
+          y1: from.y,
+          x2: to.x - half,
+          y2: to.y,
         }))
       )
     );
   }
 
-  /** Renders, for every neuron, its output over the data square into a small image. */
-  private updateImages(layers: Perceptron[][]): void {
-    const { learnedDataPoints } = this.brainService;
-    if (
-      this.imagesOf?.layers === layers &&
-      this.imagesOf.learnedDataPoints === learnedDataPoints
-    ) {
-      return;
-    }
-    this.imagesOf = { layers, learnedDataPoints };
-
-    const keys: (Perceptron | string)[] = [
-      ...this.inputLabels,
-      ...layers.flat(),
-    ];
-    const images = keys.map((key) => {
-      let image = this.images.get(key);
-      if (!image) {
-        image = this.p.createImage(tileResolution, tileResolution);
-        this.images.set(key, image);
-      }
-      image.loadPixels();
-      return image;
-    });
-
+  /** Renders, for every node, its output over the data square into its tile. */
+  private renderTiles(tiles: P5.Image[]): void {
+    tiles.forEach((tile) => tile.loadPixels());
     for (let y = 0; y < tileResolution; y++) {
       for (let x = 0; x < tileResolution; x++) {
         const input = [(x + 0.5) / tileResolution, (y + 0.5) / tileResolution];
@@ -221,49 +266,35 @@ export class NetworkP5Sketch {
           ...input,
           ...this.brainService.layerActivationsSilent(input).flat(),
         ];
-        outputs.forEach((output, n) => {
-          const [r, g, b] = heatmapColor(output);
-          const i = (y * tileResolution + x) * 4;
-          const pixels = images[n].pixels;
-          pixels[i] = r;
-          pixels[i + 1] = g;
-          pixels[i + 2] = b;
-          pixels[i + 3] = 255;
-        });
+        outputs.forEach((output, n) =>
+          setPixel(
+            tiles[n].pixels,
+            y * tileResolution + x,
+            heatmapColor(output)
+          )
+        );
       }
     }
-    images.forEach((image) => image.updatePixels());
+    tiles.forEach((tile) => tile.updatePixels());
   }
 
-  private drawHeaders(columns: Node[][], layerCount: number): void {
+  private drawHeaders(columns: Column[]): void {
     this.p.noStroke();
     this.p.fill(60);
     this.p.textSize(13);
     this.p.textAlign(this.p.CENTER, this.p.TOP);
-    columns.forEach((column, c) => {
-      const title =
-        c === 0
-          ? 'Input'
-          : c === layerCount
-            ? 'Output'
-            : `Hidden layer${layerCount > 2 ? ` ${c}` : ''}`;
-      this.p.text(title, column[0].x, 6);
-    });
+    columns.forEach(({ x, title }) => this.p.text(title, x, 6));
   }
 
-  private drawWeightLabel({ from, to, weight }: Edge): void {
+  private drawWeightLabel({ x1, y1, x2, y2, weight }: Edge): void {
     this.p.noStroke();
     this.p.fill(0);
     this.p.textSize(12);
     this.p.textAlign(this.p.CENTER, this.p.BOTTOM);
-    this.p.text(
-      `w = ${weight.toFixed(2)}`,
-      (from.x + to.x) / 2,
-      (from.y + to.y) / 2 - 6
-    );
+    this.p.text(`w = ${weight.toFixed(2)}`, (x1 + x2) / 2, (y1 + y2) / 2 - 6);
   }
 
-  private drawHover(columns: Node[][], edges: Edge[]): void {
+  private drawHover({ nodes, edges }: Scene): void {
     const { mouseX, mouseY } = this.p;
     if (
       mouseX < 0 ||
@@ -273,12 +304,10 @@ export class NetworkP5Sketch {
     ) {
       return;
     }
-    const node = columns
-      .flat()
-      .find(
-        ({ x, y, size }) =>
-          Math.abs(mouseX - x) <= size / 2 && Math.abs(mouseY - y) <= size / 2
-      );
+    const half = this.tileSize / 2;
+    const node = nodes.find(
+      ({ x, y }) => Math.abs(mouseX - x) <= half && Math.abs(mouseY - y) <= half
+    );
     let lines: string[] | undefined;
     if (node?.perceptron) {
       lines = [
@@ -292,15 +321,8 @@ export class NetworkP5Sketch {
       lines = [`input ${node.label}`];
     } else {
       const edge = edges.find(
-        ({ from, to }) =>
-          distanceToSegment(
-            mouseX,
-            mouseY,
-            from.x + from.size / 2,
-            from.y,
-            to.x - to.size / 2,
-            to.y
-          ) < 4
+        ({ x1, y1, x2, y2 }) =>
+          distanceToSegment(mouseX, mouseY, x1, y1, x2, y2) < 4
       );
       if (edge) {
         lines = [
@@ -328,10 +350,6 @@ export class NetworkP5Sketch {
     this.p.fill(0);
     lines.forEach((line, i) => this.p.text(line, left + 6, top + 4 + i * 15));
   }
-}
-
-function weightColor(weight: number, alpha: number): number[] {
-  return [...(weight >= 0 ? positiveColor : negativeColor), alpha];
 }
 
 function distanceToSegment(
