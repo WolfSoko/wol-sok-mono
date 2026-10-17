@@ -36,6 +36,8 @@ precision highp float;
 precision highp int;
 precision highp usampler2D;
 precision highp isampler2D;
+// The effects pack owners into 8 bit alpha - lowp could not read them back.
+precision highp sampler2D;
 
 uniform usampler2D uState;
 uniform usampler2D uMask;
@@ -107,6 +109,25 @@ int randomFreeNeighbour(ivec2 cell, uint salt) {
   return -1;
 }
 `;
+
+/** The pellets, and the one rule for who is within reach of one. */
+const PELLETS = `
+uniform vec3 uPellets[${MAX_PELLETS}];
+uniform int uPelletCount;
+uniform int uPelletRadius;
+
+/** How many pellets that are not eaten up a cell can reach. */
+int pelletsInReach(ivec2 cell) {
+  int count = 0;
+  for (int i = 0; i < uPelletCount; i++) {
+    vec3 pellet = uPellets[i];
+    ivec2 distance = abs(cell - ivec2(pellet.xy));
+    if (pellet.z > 0.0 && max(distance.x, distance.y) <= uPelletRadius) {
+      count++;
+    }
+  }
+  return count;
+}`;
 
 /**
  * Bacteria per colony in each coarse cell - the density field the hunting
@@ -345,9 +366,7 @@ void main() {
 export const COMBAT_FRAGMENT = `${COMMON}
 uniform float uDt;
 uniform float uAttack[2];
-uniform vec3 uPellets[${MAX_PELLETS}];
-uniform int uPelletCount;
-uniform int uPelletRadius;
+${PELLETS}
 uniform float uNutrientGain;
 uniform float uDefenceFactor;
 uniform float uFrontlinePressure;
@@ -387,14 +406,8 @@ void main() {
     }
   }
 
-  float energy = energyOf(state) + float(state.b) / ENERGY_SCALE;
-  for (int i = 0; i < uPelletCount; i++) {
-    vec3 pellet = uPellets[i];
-    ivec2 distance = abs(cell - ivec2(pellet.xy));
-    if (pellet.z > 0.0 && max(distance.x, distance.y) <= uPelletRadius) {
-      energy += uNutrientGain;
-    }
-  }
+  float energy = energyOf(state) + float(state.b) / ENERGY_SCALE
+    + uNutrientGain * float(pelletsInReach(cell));
 
   float pressure = enemy > 0.0 ? enemy + uFrontlinePressure - own * uDefenceFactor : 0.0;
   if (pressure > 0.0) {
@@ -460,9 +473,7 @@ uniform usampler2D uEvents;
 uniform usampler2D uPrevious;
 uniform int uCellSize;
 uniform ivec2 uBlocks;
-uniform vec3 uPellets[${MAX_PELLETS}];
-uniform int uPelletCount;
-uniform int uPelletRadius;
+${PELLETS}
 out uvec4 outValue;
 
 void main() {
@@ -549,4 +560,46 @@ void main() {
     ? min(1.0, (energy - uMaxEnergy) / range)
     : 0.0;
   outCells = vec4(mix(${MIN_CELL_DENSITY}, 1.0, strength), heat, 0.0, 1.0);
+}`;
+
+/**
+ * What the painter makes glow, per cell: in red a fight - a capture or a
+ * loss - in green a bacterium eating from a pellet, in blue the front of a
+ * colony pushing into a cell it did not hold. Each fades by `uFade` per
+ * frame, so a flash lingers for a moment.
+ *
+ * Alpha packs the owner of the cell this frame in bits 0-1, so the next
+ * frame sees who moved in, and the colony that left the glow in bits 2-3,
+ * for its colour.
+ */
+export const EFFECTS_FRAGMENT = `${COMMON}
+uniform usampler2D uEvents;
+uniform sampler2D uPreviousEffects;
+uniform vec3 uFade;
+uniform bool uTrack;
+${PELLETS}
+out vec4 outEffects;
+
+void main() {
+  ivec2 cell = ivec2(gl_FragCoord.xy);
+  vec4 previous = texelFetch(uPreviousEffects, cell, 0);
+  uint packed = uint(round(previous.a * 255.0));
+  uint lastOwner = packed & 3u;
+  uint glowOwner = (packed >> 2u) & 3u;
+  uint owner = texelFetch(uState, cell, 0).r;
+
+  vec3 heat = previous.rgb * uFade;
+  if (texelFetch(uEvents, cell, 0).a != 0u) {
+    heat.r = 1.0;
+  }
+  if (owner != 0u) {
+    if (pelletsInReach(cell) > 0) {
+      heat.g = 1.0;
+    }
+    if (uTrack && owner != lastOwner) {
+      heat.b = 1.0;
+      glowOwner = owner;
+    }
+  }
+  outEffects = vec4(heat, float(owner | (glowOwner << 2u)) / 255.0);
 }`;

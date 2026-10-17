@@ -26,6 +26,8 @@ export interface ArenaFrame {
   walls: readonly Rect[];
   dynamicWalls: readonly DynamicWall[];
   colonies: readonly ColonyLayer[];
+  /** Leave out what flickers - the player asked their system for less motion. */
+  reducedMotion: boolean;
   nutrients: readonly Nutrient[];
   balance: GameBalance;
   look: BacteriaLook;

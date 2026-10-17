@@ -30,7 +30,7 @@ import {
   ResizedEvent,
   ShowFpsComponent,
 } from '@wolsok/ui-kit';
-import { defer, Observable } from 'rxjs';
+import { defer, fromEvent, Observable } from 'rxjs';
 import {
   defaultIfEmpty,
   distinctUntilChanged,
@@ -132,6 +132,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private playerQuery = inject(PlayerQuery);
   protected readonly settings = inject(GameSettingsService);
   private readonly sound = inject(GameSoundService);
+  /** No flickering glow for players who asked their system for less motion. */
+  private readonly reducedMotion = prefersReducedMotion();
 
   @ViewChild('canvasElement', { static: true })
   private canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -301,12 +303,15 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
     // Repaint as soon as another level puts different walls into the arena, or
     // the colonies change colour or look, so the start screen always shows
-    // the map and the colonies the next match is fought with.
+    // the map and the colonies the next match is fought with. A clear frame
+    // also wipes the glow from the trail once the player asks for less
+    // motion, even while the game is paused.
     effect(() => {
       this.painter?.setTheme(this.theme());
       this.walls();
       this.colors();
       this.settings.look();
+      this.reducedMotion();
       this.draw(1 / 1000, true);
     });
 
@@ -537,6 +542,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       walls: this.walls(),
       dynamicWalls: this.playerService.getDynamicWalls(),
       colonies: simulation.colonyLayers(boosted),
+      reducedMotion: this.reducedMotion(),
       nutrients: this.playerService.getNutrients(),
       balance,
       look: this.settings.look(),
@@ -867,5 +873,19 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
   return !(
     (control as HTMLButtonElement).disabled ||
     control.getAttribute('aria-disabled') === 'true'
+  );
+}
+
+/** Whether the system asks for less motion - following it as it changes. */
+function prefersReducedMotion(): Signal<boolean> {
+  if (typeof matchMedia !== 'function') {
+    return signal(false);
+  }
+  const query = matchMedia('(prefers-reduced-motion: reduce)');
+  return toSignal(
+    fromEvent<MediaQueryListEvent>(query, 'change').pipe(
+      map((event) => event.matches)
+    ),
+    { initialValue: query.matches }
   );
 }

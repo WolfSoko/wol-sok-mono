@@ -31,6 +31,11 @@ export interface StateLayer extends ColonyLayerBase {
   kind: 'state';
   /** The simulation's cell state texture. */
   state: WebGLTexture;
+  /**
+   * The glow of fights, meals and pushes - one texture for all colonies,
+   * see the simulation's `EFFECTS_FRAGMENT`.
+   */
+  effects: WebGLTexture;
   /** The owner value of the colony's cells in the state. */
   owner: number;
   /** The coarse box around the colony, null once it is gone. */
