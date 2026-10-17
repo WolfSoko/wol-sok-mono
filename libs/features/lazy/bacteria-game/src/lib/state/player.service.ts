@@ -267,13 +267,16 @@ export class PlayerService {
     balance: GameBalance,
     arena?: { width: number; height: number }
   ): Simulation {
+    let simulation: Simulation | null = null;
     try {
-      const simulation = this.simulationFactory(balance);
+      simulation = this.simulationFactory(balance);
       if (arena != null) {
         simulation.resize(arena.width, arena.height);
       }
       return simulation;
     } catch (error) {
+      // Let go of the context listeners, or a restored context revives it.
+      simulation?.dispose();
       if (this.simulationFactory === cpuSimulation) {
         throw error;
       }
