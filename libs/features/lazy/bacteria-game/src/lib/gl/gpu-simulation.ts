@@ -182,10 +182,6 @@ export class GpuSimulation implements Simulation {
   private eventsIndex = 1;
   private reportIndex = 0;
   private effectsIndex = 0;
-  /** True when the painter asked for the effects since the last frame. */
-  private effectsWanted = false;
-  /** True while the effects ran last frame, so they know who was where. */
-  private effectsTracking = false;
   private spawns: ColonySpawn[] = [];
   private dynamicWalls: DynamicWall[] = [];
   private mask = new Uint8Array(0);
@@ -258,27 +254,21 @@ export class GpuSimulation implements Simulation {
   }
 
   public colonyLayers(boosted: ReadonlySet<number>): StateLayer[] {
-    const state = this.resources?.states[this.current].texture;
-    if (state == null) {
+    const resources = this.resources;
+    if (resources == null) {
       return [];
     }
+    const state = resources.states[this.current].texture;
+    const effects = resources.effects[this.effectsIndex].texture;
     return this.spawns.map((spawn, slot) => ({
       kind: 'state',
       color: spawn.color,
       boosted: boosted.has(spawn.playerId),
       state,
+      effects,
       owner: slot + 1,
       bounds: this.boundsOf(slot),
     }));
-  }
-
-  /**
-   * The glow - kept up only while someone asks for it each frame, so nobody
-   * pays for a pass that is not drawn.
-   */
-  public effectsTexture(): WebGLTexture | null {
-    this.effectsWanted = true;
-    return this.resources?.effects[this.effectsIndex].texture ?? null;
   }
 
   /** Takes effect with the next `init`, which lays out walls and pellets. */
@@ -314,7 +304,6 @@ export class GpuSimulation implements Simulation {
     this.reported = { captured: 0, lost: 0 };
     this.undrainedSec = 0;
     this.reportRendered = false;
-    this.effectsTracking = false;
     this.buildMask();
     this.pellets.reset(this.width, this.height, this.isOpenCell);
     this.uploadSpawns(spawns);
@@ -393,11 +382,7 @@ export class GpuSimulation implements Simulation {
     for (let step = 0; step < mostSteps; step++) {
       this.claimAndApply(resources, KIND.move, step);
     }
-    if (this.effectsWanted) {
-      this.renderEffects(resources);
-    }
-    this.effectsTracking = this.effectsWanted;
-    this.effectsWanted = false;
+    this.renderEffects(resources, deltaTimeSec);
 
     // 6. The report. The one read back is last frame's, which the GPU has
     // finished by now - reading this frame's would make the driver wait.
@@ -533,15 +518,6 @@ export class GpuSimulation implements Simulation {
       gl.uniform3fv(program.uniforms['uPellets[0]'], u.pellets);
       gl.uniform1i(program.uniforms['uPelletCount'], pelletCount);
     }
-    const effects = programs.effects.uniforms;
-    gl.useProgram(programs.effects.program);
-    const fade = (rate: number) => Math.exp(-rate * deltaTimeSec);
-    gl.uniform3f(
-      effects['uFade'],
-      fade(EFFECT_FADE_PER_SEC.fight),
-      fade(EFFECT_FADE_PER_SEC.eat),
-      fade(EFFECT_FADE_PER_SEC.move)
-    );
 
     const combat = programs.combat.uniforms;
     gl.useProgram(programs.combat.program);
@@ -706,8 +682,9 @@ export class GpuSimulation implements Simulation {
   }
 
   /** Lets the glow of the last frames fade and lights what happened now. */
-  private renderEffects(resources: Resources): void {
+  private renderEffects(resources: Resources, deltaTimeSec: number): void {
     const gl = this.gl;
+    const program = resources.programs.effects;
     const previous = resources.effects[this.effectsIndex];
     this.effectsIndex = 1 - this.effectsIndex;
     bindTexture(
@@ -717,18 +694,17 @@ export class GpuSimulation implements Simulation {
       null
     );
     bindTexture(gl, UNIT.previous, previous.texture, null);
-    // On the first frame they run every bacterium would look freshly
-    // arrived - no push glows until they know who was where.
-    gl.useProgram(resources.programs.effects.program);
-    gl.uniform1i(
-      resources.programs.effects.uniforms['uTrack'],
-      this.effectsTracking ? 1 : 0
+    gl.useProgram(program.program);
+    const fade = (rate: number) => Math.exp(-rate * deltaTimeSec);
+    gl.uniform3f(
+      program.uniforms['uFade'],
+      fade(EFFECT_FADE_PER_SEC.fight),
+      fade(EFFECT_FADE_PER_SEC.eat),
+      fade(EFFECT_FADE_PER_SEC.move)
     );
-    this.pass(
-      resources,
-      resources.programs.effects,
-      resources.effects[this.effectsIndex]
-    );
+    // The first frame would find every starting bacterium freshly arrived.
+    gl.uniform1i(program.uniforms['uTrack'], this.frame > 1 ? 1 : 0);
+    this.pass(resources, program, resources.effects[this.effectsIndex]);
   }
 
   private renderReport(resources: Resources): void {

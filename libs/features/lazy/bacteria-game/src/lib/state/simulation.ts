@@ -45,11 +45,6 @@ export interface Simulation {
    * whose boost runs.
    */
   colonyLayers(boosted: ReadonlySet<number>): ColonyLayer[];
-  /**
-   * The glow of fights, meals and pushes the WebGL painter adds over the
-   * colonies - null where the war does not run on the GPU.
-   */
-  effectsTexture(): WebGLTexture | null;
   /** The bacterium of another colony closest to a point, null without one. */
   nearestEnemy(playerId: number, from: Point): Point | null;
   /** Frees whatever the simulation holds outside the JavaScript heap. */

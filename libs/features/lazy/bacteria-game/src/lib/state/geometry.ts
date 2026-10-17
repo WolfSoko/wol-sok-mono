@@ -6,6 +6,25 @@ export interface CellBounds {
   maxY: number;
 }
 
+/** Bounds around nothing yet - see {@link growBounds}. */
+export function emptyBounds(): CellBounds {
+  return { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+}
+
+/** Grows bounds to cover a box of cells - a single cell by default. */
+export function growBounds(
+  into: CellBounds,
+  minX: number,
+  minY: number,
+  maxX = minX,
+  maxY = minY
+): void {
+  into.minX = Math.min(into.minX, minX);
+  into.minY = Math.min(into.minY, minY);
+  into.maxX = Math.max(into.maxX, maxX);
+  into.maxY = Math.max(into.maxY, maxY);
+}
+
 /** A position in arena pixels. */
 export interface Point {
   x: number;

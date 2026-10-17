@@ -1,6 +1,6 @@
 import { GameBalance } from '../../state/game-balance';
 import { Bacteria } from '../../state/player.model';
-import { CellBounds } from '../../state/geometry';
+import { CellBounds, emptyBounds, growBounds } from '../../state/geometry';
 import { ArenaFrame, ArenaPainter } from '../arena-painter';
 import { paintArenaBackground } from '../arena-renderer';
 import { ArenaTheme } from '../arena-theme';
@@ -12,7 +12,7 @@ import {
   StateLayer,
   strengthOf,
 } from '../colony-renderer';
-import { CELLS_FRAGMENT } from '../../gl/simulation-shaders';
+import { CELLS_FRAGMENT, MAX_GPU_COLONIES } from '../../gl/simulation-shaders';
 import { GpuSimulation } from '../../gl/gpu-simulation';
 import { Motes } from '../motes';
 import {
@@ -59,20 +59,12 @@ export function encodeCells(
   if (bacterias.length === 0) {
     return null;
   }
-  const bounds = {
-    minX: Infinity,
-    minY: Infinity,
-    maxX: -Infinity,
-    maxY: -Infinity,
-  };
+  const bounds = emptyBounds();
   for (const { x, y, energy } of bacterias) {
     const index = (y * width + x) * 2;
     out[index] = Math.round(255 * cellDensity(strengthOf(energy, balance)));
     out[index + 1] = Math.round(255 * overcharge(energy, balance));
-    bounds.minX = Math.min(bounds.minX, x);
-    bounds.minY = Math.min(bounds.minY, y);
-    bounds.maxX = Math.max(bounds.maxX, x);
-    bounds.maxY = Math.max(bounds.maxY, y);
+    growBounds(bounds, x, y);
   }
   return bounds;
 }
@@ -199,7 +191,7 @@ export class GlArenaPainter implements ArenaPainter {
   }
 
   /** Each colony's colour for the glow, filled per frame. */
-  private readonly effectColors = new Float32Array(6);
+  private readonly effectColors = new Float32Array(MAX_GPU_COLONIES * 3);
 
   /**
    * A simulation that runs the war on this painter's GPU context - its
@@ -231,12 +223,7 @@ export class GlArenaPainter implements ArenaPainter {
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
     gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
     gl.enable(gl.BLEND);
-    gl.blendFuncSeparate(
-      gl.SRC_ALPHA,
-      gl.ONE_MINUS_SRC_ALPHA,
-      gl.ONE,
-      gl.ONE_MINUS_SRC_ALPHA
-    );
+    this.useAlphaBlend();
 
     // Lay the floor over the previous frame, so movement leaves a short trail.
     this.useFullscreen(programs.floor);
@@ -258,8 +245,8 @@ export class GlArenaPainter implements ArenaPainter {
     for (const colony of frame.colonies) {
       this.drawColony(frame, colony);
     }
-    if (frame.effects != null) {
-      this.drawEffects(frame, frame.effects);
+    if (!frame.reducedMotion) {
+      this.drawEffects(frame);
     }
 
     this.foreground.clear();
@@ -434,7 +421,7 @@ export class GlArenaPainter implements ArenaPainter {
   }
 
   /** Adds the glow of what the colonies do over them, light on light. */
-  private drawEffects(frame: ArenaFrame, effects: WebGLTexture): void {
+  private drawEffects(frame: ArenaFrame): void {
     const gl = this.gl;
     const program = this.resources?.programs.effects;
     if (program == null) {
@@ -443,27 +430,18 @@ export class GlArenaPainter implements ArenaPainter {
     // Only around the colonies can anything glow - the box around all of
     // them spares the GPU the rest of the canvas.
     const colors = this.effectColors.fill(0);
-    const around = {
-      minX: Infinity,
-      minY: Infinity,
-      maxX: -Infinity,
-      maxY: -Infinity,
-    };
+    const around = emptyBounds();
+    let effects: WebGLTexture | null = null;
     for (const layer of frame.colonies) {
       if (layer.kind !== 'state' || layer.bounds == null) {
         continue;
       }
-      if (layer.owner >= 1 && layer.owner <= 2) {
-        for (let channel = 0; channel < 3; channel++) {
-          colors[(layer.owner - 1) * 3 + channel] = layer.color[channel] / 255;
-        }
-      }
-      around.minX = Math.min(around.minX, layer.bounds.minX);
-      around.minY = Math.min(around.minY, layer.bounds.minY);
-      around.maxX = Math.max(around.maxX, layer.bounds.maxX);
-      around.maxY = Math.max(around.maxY, layer.bounds.maxY);
+      effects = layer.effects;
+      colors.set(layer.color.slice(0, 3), (layer.owner - 1) * 3);
+      const { minX, minY, maxX, maxY } = layer.bounds;
+      growBounds(around, minX, minY, maxX, maxY);
     }
-    if (around.minX > around.maxX) {
+    if (effects == null) {
       return;
     }
     gl.enable(gl.SCISSOR_TEST);
@@ -471,11 +449,18 @@ export class GlArenaPainter implements ArenaPainter {
     this.useFullscreen(program);
     bindTexture(gl, 0, effects, program.uniforms['uEffects']);
     gl.uniform2f(program.uniforms['uArena'], this.width, this.height);
+    // The colours go as bytes - the shader scales them.
     gl.uniform3fv(program.uniforms['uColors[0]'], colors);
     gl.uniform1f(program.uniforms['uTime'], frame.timeSec);
     gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.SCISSOR_TEST);
+    this.useAlphaBlend();
+  }
+
+  /** The blending everything but the glow is drawn with. */
+  private useAlphaBlend(): void {
+    const gl = this.gl;
     gl.blendFuncSeparate(
       gl.SRC_ALPHA,
       gl.ONE_MINUS_SRC_ALPHA,

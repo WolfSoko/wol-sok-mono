@@ -110,6 +110,25 @@ int randomFreeNeighbour(ivec2 cell, uint salt) {
 }
 `;
 
+/** The pellets, and the one rule for who is within reach of one. */
+const PELLETS = `
+uniform vec3 uPellets[${MAX_PELLETS}];
+uniform int uPelletCount;
+uniform int uPelletRadius;
+
+/** How many pellets that are not eaten up a cell can reach. */
+int pelletsInReach(ivec2 cell) {
+  int count = 0;
+  for (int i = 0; i < uPelletCount; i++) {
+    vec3 pellet = uPellets[i];
+    ivec2 distance = abs(cell - ivec2(pellet.xy));
+    if (pellet.z > 0.0 && max(distance.x, distance.y) <= uPelletRadius) {
+      count++;
+    }
+  }
+  return count;
+}`;
+
 /**
  * Bacteria per colony in each coarse cell - the density field the hunting
  * reads, and the base of the report.
@@ -347,9 +366,7 @@ void main() {
 export const COMBAT_FRAGMENT = `${COMMON}
 uniform float uDt;
 uniform float uAttack[2];
-uniform vec3 uPellets[${MAX_PELLETS}];
-uniform int uPelletCount;
-uniform int uPelletRadius;
+${PELLETS}
 uniform float uNutrientGain;
 uniform float uDefenceFactor;
 uniform float uFrontlinePressure;
@@ -389,14 +406,8 @@ void main() {
     }
   }
 
-  float energy = energyOf(state) + float(state.b) / ENERGY_SCALE;
-  for (int i = 0; i < uPelletCount; i++) {
-    vec3 pellet = uPellets[i];
-    ivec2 distance = abs(cell - ivec2(pellet.xy));
-    if (pellet.z > 0.0 && max(distance.x, distance.y) <= uPelletRadius) {
-      energy += uNutrientGain;
-    }
-  }
+  float energy = energyOf(state) + float(state.b) / ENERGY_SCALE
+    + uNutrientGain * float(pelletsInReach(cell));
 
   float pressure = enemy > 0.0 ? enemy + uFrontlinePressure - own * uDefenceFactor : 0.0;
   if (pressure > 0.0) {
@@ -462,9 +473,7 @@ uniform usampler2D uEvents;
 uniform usampler2D uPrevious;
 uniform int uCellSize;
 uniform ivec2 uBlocks;
-uniform vec3 uPellets[${MAX_PELLETS}];
-uniform int uPelletCount;
-uniform int uPelletRadius;
+${PELLETS}
 out uvec4 outValue;
 
 void main() {
@@ -568,9 +577,7 @@ uniform usampler2D uEvents;
 uniform sampler2D uPreviousEffects;
 uniform vec3 uFade;
 uniform bool uTrack;
-uniform vec3 uPellets[${MAX_PELLETS}];
-uniform int uPelletCount;
-uniform int uPelletRadius;
+${PELLETS}
 out vec4 outEffects;
 
 void main() {
@@ -586,13 +593,8 @@ void main() {
     heat.r = 1.0;
   }
   if (owner != 0u) {
-    for (int i = 0; i < uPelletCount; i++) {
-      vec3 pellet = uPellets[i];
-      ivec2 distance = abs(cell - ivec2(pellet.xy));
-      if (pellet.z > 0.0 && max(distance.x, distance.y) <= uPelletRadius) {
-        heat.g = 1.0;
-        break;
-      }
+    if (pelletsInReach(cell) > 0) {
+      heat.g = 1.0;
     }
     if (uTrack && owner != lastOwner) {
       heat.b = 1.0;

@@ -539,7 +539,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       walls: this.walls(),
       dynamicWalls: this.playerService.getDynamicWalls(),
       colonies: simulation.colonyLayers(boosted),
-      effects: this.reducedMotion() ? null : simulation.effectsTexture(),
+      reducedMotion: this.reducedMotion(),
       nutrients: this.playerService.getNutrients(),
       balance,
       look: this.settings.look(),

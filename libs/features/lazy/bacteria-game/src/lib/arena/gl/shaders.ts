@@ -4,6 +4,8 @@
  * same coordinates the simulation uses.
  */
 
+import { MAX_GPU_COLONIES } from '../../gl/simulation-shaders';
+
 /** The arena position under a fragment of a full screen pass. */
 const ARENA_POSITION = `
 vec2 arenaPosition(vec2 ndc, vec2 arena) {
@@ -196,7 +198,7 @@ precision highp sampler2D;
 in vec2 vNdc;
 uniform sampler2D uEffects;
 uniform vec2 uArena;
-uniform vec3 uColors[2];
+uniform vec3 uColors[${MAX_GPU_COLONIES}]; // 0 to 255
 uniform float uTime;
 out vec4 outColor;
 ${ARENA_POSITION}
@@ -248,7 +250,7 @@ void main() {
   uint packed = uint(round(texelFetch(uEffects, ivec2(cell), 0).a * 255.0));
   uint owner = (packed >> 2u) & 3u;
   if (owner != 0u) {
-    color += mix(uColors[owner - 1u], vec3(1.0), 0.45) * move * 0.35;
+    color += mix(uColors[owner - 1u] / 255.0, vec3(1.0), 0.45) * move * 0.35;
   }
   outColor = vec4(color, 1.0);
 }`;
