@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   injectSetNotFoundStatus,
   SITE_TAGS,
@@ -66,7 +66,8 @@ export default class NotFoundPageComponent {
     usePageTags({
       ...SITE_TAGS,
       title: 'Page not found | RollaPolla',
-      url: `${SITE_URL}/`,
+      // its own URL: pointing at home would claim the 404 is a copy of it
+      url: SITE_URL + inject(Router).url.split(/[?#]/)[0],
       robots: 'noindex',
     });
     injectSetNotFoundStatus()();

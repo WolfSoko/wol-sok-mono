@@ -1,4 +1,4 @@
-import { getApp, getApps, initializeApp } from 'firebase/app';
+import { getApps, initializeApp } from 'firebase/app';
 import {
   collection,
   connectFirestoreEmulator,
@@ -17,9 +17,10 @@ import { SitemapPoll } from './sitemap';
 /** Sitemaps take up to 50,000 URLs; the newest polls are the ones worth it. */
 const MAX_POLLS = 1000;
 
-const APP_NAME = 'sitemap';
+/** A slow Firestore must not hold up the sitemap, the fallback is better. */
+const TIMEOUT_MS = 5000;
 
-let firestore: Firestore | undefined;
+const APP_NAME = 'sitemap';
 
 /**
  * Reads the newest listed polls the way any visitor can (the rules let
@@ -34,27 +35,36 @@ export async function listedPolls(): Promise<SitemapPoll[]> {
     orderBy('createdAt', 'desc'),
     limit(MAX_POLLS)
   );
-  const snapshot = await getDocs(polls);
-  return snapshot.docs.map((doc) => {
-    const data = doc.data() as { createdAt: Timestamp; ttl: Timestamp };
-    return {
-      id: doc.id,
-      createdAt: data.createdAt.toDate(),
-      closesAt: data.ttl.toDate(),
-    };
+  const snapshot = await withTimeout(getDocs(polls), TIMEOUT_MS);
+  // one malformed poll must not cost the sitemap all the others
+  return snapshot.docs.flatMap((doc) => {
+    const { ttl } = doc.data() as { ttl?: Timestamp };
+    return ttl ? [{ id: doc.id, closesAt: ttl.toDate() }] : [];
   });
 }
 
+/** Its own app, so it never clashes with the one the SSR renderer starts. */
 function db(): Firestore {
-  if (!firestore) {
-    // its own app, so it never clashes with the one the SSR renderer starts
-    const app = getApps().some(({ name }) => name === APP_NAME)
-      ? getApp(APP_NAME)
-      : initializeApp(environment.dataAccessOptions, APP_NAME);
-    firestore = getFirestore(app);
-    if (!environment.prod) {
-      connectFirestoreEmulator(firestore, 'localhost', 8080);
-    }
+  const existing = getApps().find(({ name }) => name === APP_NAME);
+  if (existing) {
+    return getFirestore(existing);
+  }
+  const firestore = getFirestore(
+    initializeApp(environment.dataAccessOptions, APP_NAME)
+  );
+  if (!environment.prod) {
+    connectFirestoreEmulator(firestore, 'localhost', 8080);
   }
   return firestore;
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`no answer within ${ms} ms`)),
+      ms
+    );
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }

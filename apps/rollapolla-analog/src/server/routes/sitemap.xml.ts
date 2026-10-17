@@ -1,10 +1,10 @@
 import { defineEventHandler, setResponseHeaders } from 'h3';
 import { listedPolls } from '../sitemap/listed-polls';
-import { sitemapEntries, SitemapPoll, sitemapXml } from '../sitemap/sitemap';
+import { sitemapUrls, SitemapPoll, sitemapXml } from '../sitemap/sitemap';
 
 /** GET /sitemap.xml, linked from robots.txt */
 export default defineEventHandler(async (event) => {
-  let polls: SitemapPoll[] = [];
+  let polls: SitemapPoll[] | undefined;
   try {
     polls = await listedPolls();
   } catch (error) {
@@ -13,8 +13,10 @@ export default defineEventHandler(async (event) => {
   }
   setResponseHeaders(event, {
     'content-type': 'application/xml; charset=utf-8',
-    // Firebase Hosting's CDN keeps it for an hour
-    'cache-control': 'public, max-age=3600, s-maxage=3600',
+    // Firebase Hosting's CDN keeps it for an hour, a fallback only briefly
+    'cache-control': polls
+      ? 'public, max-age=3600, s-maxage=3600'
+      : 'public, max-age=60, s-maxage=60',
   });
-  return sitemapXml(sitemapEntries(polls));
+  return sitemapXml(sitemapUrls(polls ?? []));
 });

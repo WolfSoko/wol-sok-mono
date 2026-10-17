@@ -1,49 +1,37 @@
 import { FEATURED_POLLS } from '../../shared/featured-polls';
+import { isOpen } from '../../shared/poll';
 import { pollUrl, SITE_URL } from '../../shared/site-url';
 
 /** A listed poll, as far as the sitemap cares. */
 export type SitemapPoll = {
   id: string;
-  createdAt: Date;
   closesAt: Date;
 };
 
-export type SitemapEntry = {
-  loc: string;
-  lastmod?: Date;
-};
-
 /**
- * The indexable pages: home, the poll search, the featured polls and every
+ * The URLs of the indexable pages: home, the poll search, the featured polls and every
  * listed poll that still takes votes. Personal pages (my polls, admin) and
  * unlisted polls are `noindex`, so they stay out.
  */
-export function sitemapEntries(
+export function sitemapUrls(
   polls: readonly SitemapPoll[],
   now: Date = new Date()
-): SitemapEntry[] {
+): string[] {
   const featuredIds = new Set(FEATURED_POLLS.map(({ id }) => id));
   return [
-    { loc: `${SITE_URL}/` },
-    { loc: `${SITE_URL}/polls` },
-    ...FEATURED_POLLS.map(({ id }) => ({ loc: pollUrl(id) })),
+    `${SITE_URL}/`,
+    `${SITE_URL}/polls`,
+    ...FEATURED_POLLS.map(({ id }) => pollUrl(id)),
+    // no lastmod: an edit changes a poll without a date to tell
     ...polls
-      .filter(
-        ({ id, closesAt }) =>
-          !featuredIds.has(id) && closesAt.getTime() > now.getTime()
-      )
-      .map(({ id, createdAt }) => ({ loc: pollUrl(id), lastmod: createdAt })),
+      .filter((poll) => !featuredIds.has(poll.id) && isOpen(poll, now))
+      .map(({ id }) => pollUrl(id)),
   ];
 }
 
-export function sitemapXml(entries: readonly SitemapEntry[]): string {
-  const urls = entries.map(({ loc, lastmod }) =>
-    [
-      '  <url>',
-      `    <loc>${escapeXml(loc)}</loc>`,
-      ...(lastmod ? [`    <lastmod>${lastmod.toISOString()}</lastmod>`] : []),
-      '  </url>',
-    ].join('\n')
+export function sitemapXml(locs: readonly string[]): string {
+  const urls = locs.map(
+    (loc) => `  <url>\n    <loc>${escapeXml(loc)}</loc>\n  </url>`
   );
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
