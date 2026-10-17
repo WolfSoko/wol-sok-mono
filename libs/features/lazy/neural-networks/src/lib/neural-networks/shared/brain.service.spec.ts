@@ -1,6 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { BrainService } from './brain.service';
-import { Point } from './point';
+import { Point, toLabelClass } from './point';
+
+// mulberry32: a tiny seeded PRNG so weights and sampling are the same on every run
+const seededRandom = (seed: number) => () => {
+  seed = (seed + 0x6d2b79f5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), seed | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
 
 describe('BrainService', () => {
   let service: BrainService;
@@ -21,11 +29,14 @@ describe('BrainService', () => {
 
   beforeEach(() => {
     jest.useFakeTimers();
+    jest.spyOn(Math, 'random').mockImplementation(seededRandom(42));
+    TestBed.configureTestingModule({ providers: [BrainService] });
     service = TestBed.inject(BrainService);
   });
 
   afterEach(() => {
     jest.useRealTimers();
+    jest.restoreAllMocks();
   });
 
   it('trains a multi layer net with back propagation', () => {
@@ -46,7 +57,19 @@ describe('BrainService', () => {
 
     expect(activation).toBeGreaterThan(0);
     expect(activation).toBeLessThan(1);
-    expect(service.guessSilent([0.2, 0.7])).toBe(activation < 0.5 ? 0 : 1);
+    expect(service.guessSilent([0.2, 0.7])).toBe(toLabelClass(activation));
+  });
+
+  it('replays the current auto learning state to late subscribers', () => {
+    service.toggleAutoTraining(true);
+
+    let state: boolean | undefined;
+    service.autoLearning$
+      .subscribe((enabled) => (state = enabled))
+      .unsubscribe();
+
+    expect(state).toBe(true);
+    service.toggleAutoTraining(false);
   });
 
   it('trains a single perceptron', () => {

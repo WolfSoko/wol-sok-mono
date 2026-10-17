@@ -1,7 +1,7 @@
 .perceptron-container {
   margin: 1rem;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(min-content, 1fr));
   grid-gap: 1rem;
   align-items: start;
 }
