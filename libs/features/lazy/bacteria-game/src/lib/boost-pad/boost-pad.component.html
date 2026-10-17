@@ -22,9 +22,10 @@
   </span>
   <span class="pad-info">
     <span class="pad-name">{{ colony().name }}</span>
-    <span class="pad-stats"
-      >{{ colony().bacterias }} · ⚡ {{ colony().energy }}%</span
-    >
+    <span class="pad-stats">
+      <span>{{ colony().bacterias }}</span>
+      <span>⚡ {{ colony().energy }}%</span>
+    </span>
     <mat-progress-bar
       class="share"
       mode="determinate"

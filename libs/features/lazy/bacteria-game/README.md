@@ -30,19 +30,20 @@ arena and a [boost pad](./src/lib/boost-pad/boost-pad.component.ts) on the
 other.
 
 Two players sit at the short edges of the phone, one at each end, with the
-phone lying flat between them. Each seat is laid out the way its player sees
-it - the stick in the left hand, the boost pad with the colony's numbers in
-the right - and turned towards them: with the phone lying across, seat 0 is
-the left column turned a quarter clockwise and seat 1 the right column turned
-the other way; upright (portrait), the seats are bands along the bottom and
-the top edge, the top one upside down. The joystick reports its push in
-screen space, so no mirroring is needed - "away from me" moves the crosshair
-away from that player whichever way they sit - and only the drawn knob is
-turned back into the zone's frame (`seatTurn` in
-[`touch-controls.ts`](./src/lib/touch-controls.ts)). The joystick floats:
-wherever the finger lands becomes the centre of the stick, and the crosshair
-keeps moving in the direction it is pushed - slower for a gentle push - until
-it is released. Dragging a crosshair across the arena still works too.
+phone lying flat between them. Each gets the stick in the left hand and the
+boost pad with the colony's numbers in the right, turned towards them: with
+the phone lying across, seat 0 is the left column turned a quarter clockwise
+and seat 1 the right column turned the other way; upright (portrait), the
+seats are bands along the bottom and the top edge, the top one upside down.
+The seating plan is plain CSS in the component's stylesheet - media queries
+pick the orientation, the pad's cell turns the pad and sets `--seat-turn`,
+which the joystick reads for its label. The joystick itself is never turned:
+a stick looks the same from every side, and it reports its push in screen
+space, so no mirroring is needed either - "away from me" moves the crosshair
+away from that player whichever way they sit. The joystick floats: wherever
+the finger lands becomes the centre of the stick, and the crosshair keeps
+moving in the direction it is pushed - slower for a gentle push - until it is
+released. Dragging a crosshair across the arena still works too.
 
 Entering the native fullscreen also locks a phone into landscape. Escape, the
 back gesture or the button in the bar return to the page, where the keyboard

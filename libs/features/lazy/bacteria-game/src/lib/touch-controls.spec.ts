@@ -1,13 +1,8 @@
 import { isSteering } from './state/geometry';
 import {
   arenaPointFromClient,
-  clientPointFromElement,
-  elementPointFromClient,
   nearestFreeCrosshair,
-  seatTurn,
   steeringVector,
-  turnBack,
-  turnPoint,
 } from './touch-controls';
 
 const ARENA_WIDTH = 320;
@@ -128,79 +123,5 @@ describe('steeringVector', () => {
 
     expect(vector.x).toBeCloseTo(vector.y);
     expect(Math.hypot(vector.x, vector.y)).toBeLessThanOrEqual(1);
-  });
-});
-
-describe('seatTurn', () => {
-  it('leaves a single player alone', () => {
-    expect(seatTurn(0, 1, false)).toBe(0);
-    expect(seatTurn(0, 1, true)).toBe(0);
-  });
-
-  it('turns both seats a quarter towards the ends of a phone lying across', () => {
-    expect(seatTurn(0, 2, false)).toBe(90);
-    expect(seatTurn(1, 2, false)).toBe(270);
-  });
-
-  it('turns the top seat upside down on an upright phone', () => {
-    expect(seatTurn(0, 2, true)).toBe(0);
-    expect(seatTurn(1, 2, true)).toBe(180);
-  });
-});
-
-/** The point with every -0 made a plain 0, which `toEqual` tells apart. */
-function plain(point: { x: number; y: number }): { x: number; y: number } {
-  return { x: point.x + 0, y: point.y + 0 };
-}
-
-describe('turnPoint', () => {
-  it('turns right into down, a quarter clockwise', () => {
-    expect(plain(turnPoint({ x: 1, y: 0 }, 90))).toEqual({ x: 0, y: 1 });
-    expect(plain(turnPoint({ x: 1, y: 0 }, 180))).toEqual({ x: -1, y: 0 });
-    expect(plain(turnPoint({ x: 1, y: 0 }, 270))).toEqual({ x: 0, y: -1 });
-    expect(plain(turnPoint({ x: 1, y: 0 }, 0))).toEqual({ x: 1, y: 0 });
-  });
-
-  it('is undone by turning back', () => {
-    for (const turn of [0, 90, 180, 270] as const) {
-      expect(
-        turnPoint(turnPoint({ x: 3, y: 5 }, turn), turnBack(turn))
-      ).toEqual({ x: 3, y: 5 });
-    }
-  });
-});
-
-describe('elementPointFromClient', () => {
-  // A zone of 240 by 150 at the left edge, turned a quarter: on the screen it
-  // is 150 wide and 240 tall.
-  const turned = { left: 0, top: 0, width: 150, height: 240 };
-
-  it('measures from the corner of an element that is not turned', () => {
-    const bounds = { left: 100, top: 200, width: 160, height: 240 };
-
-    expect(elementPointFromClient({ x: 140, y: 260 }, bounds, 0)).toEqual({
-      x: 40,
-      y: 60,
-    });
-  });
-
-  it('finds the left end of a turned zone at the top of the screen', () => {
-    expect(elementPointFromClient({ x: 75, y: 0 }, turned, 90)).toEqual({
-      x: 0,
-      y: 75,
-    });
-    expect(elementPointFromClient({ x: 75, y: 240 }, turned, 270)).toEqual({
-      x: 0,
-      y: 75,
-    });
-  });
-
-  it('is undone by the way back', () => {
-    for (const turn of [0, 90, 180, 270] as const) {
-      const client = { x: 20, y: 50 };
-      const point = elementPointFromClient(client, turned, turn);
-
-      expect(clientPointFromElement(point, turned, turn)).toEqual(client);
-    }
   });
 });

@@ -60,45 +60,37 @@
 
     <!--
       The stage is the element that fills the screen. Its children are placed
-      on a grid: the arena in the middle and one seat per human player, a
-      joystick zone and a boost pad laid out the way that player sees them
-      and turned towards them. Two players sit at the short edges of the
-      phone, so with the phone lying across between them seat 0 is the left
-      column and seat 1 the right one; upright, the seats are the bottom and
-      the top band. A single player gets the stick left of the arena and the
-      boost pad right of it.
+      on a grid: the arena in the middle and, per human player, a joystick
+      zone and a boost pad at that player's edge, turned towards them - the
+      stylesheet has the seating plan.
     -->
     <div
       #arenaStage
       class="stage"
       [class.fullscreen]="fullscreen()"
       [class.solo]="humanStats().length < 2"
-      [class.portrait]="portrait()"
     >
       @if (fullscreen()) {
         @for (colony of humanStats(); track colony.id; let seat = $index) {
+          <feat-lazy-bac-game-joystick
+            class="stick"
+            [style.grid-area]="'stick-' + seat"
+            [attr.data-seat]="seat"
+            [color]="colony.css"
+            [label]="colony.name"
+            [disabled]="!running()"
+            (steer)="steer(colony.id, $event)"
+          />
           <div
             class="seat"
-            [style.grid-area]="'seat-' + seat"
-            [attr.data-turn]="seatTurn(seat)"
+            [style.grid-area]="'boost-' + seat"
+            [attr.data-seat]="seat"
           >
-            <div class="seat-frame">
-              <feat-lazy-bac-game-joystick
-                [style.grid-area]="'stick-' + seat"
-                [color]="colony.css"
-                [label]="colony.name"
-                [turn]="seatTurn(seat)"
-                [disabled]="!running()"
-                (steer)="steer(colony.id, $event)"
-              />
-              <feat-lazy-bac-game-boost-pad
-                [style.grid-area]="'boost-' + seat"
-                [colony]="colony"
-                [disabled]="!running()"
-                [band]="band()"
-                (boost)="boost(colony.id)"
-              />
-            </div>
+            <feat-lazy-bac-game-boost-pad
+              [colony]="colony"
+              [disabled]="!running()"
+              (boost)="boost(colony.id)"
+            />
           </div>
         }
 

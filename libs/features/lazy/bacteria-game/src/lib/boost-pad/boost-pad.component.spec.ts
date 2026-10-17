@@ -76,11 +76,4 @@ describe('BoostPadComponent', () => {
 
     expect(button().disabled).toBe(true);
   });
-
-  it('lies along the edge as a band', async () => {
-    fixture.componentRef.setInput('band', true);
-    await fixture.whenStable();
-
-    expect(fixture.nativeElement.classList.contains('band')).toBe(true);
-  });
 });

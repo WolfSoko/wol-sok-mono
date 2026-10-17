@@ -45,7 +45,6 @@ import {
   fitInside,
   isFullscreen,
   isFullscreenSupported,
-  isPortrait,
   lockLandscape,
   requestFullscreen,
   Size,
@@ -60,12 +59,7 @@ import {
   DEFAULT_DIFFICULTY,
 } from './state/bot-controller';
 import { GameSettingsService } from './settings.service';
-import {
-  arenaPointFromClient,
-  nearestFreeCrosshair,
-  seatTurn,
-  Turn,
-} from './touch-controls';
+import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
 import {
   boostLabel,
   ColonyStats,
@@ -253,20 +247,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * chrome as well - see {@link requestNativeFullscreen}.
    */
   protected readonly fullscreen = signal(true);
-  /**
-   * True while the phone is upright. Two players sit at its short edges: the
-   * seats become bands along the top and bottom edge then, instead of columns
-   * at the left and right edge of a phone lying across between them.
-   */
-  protected readonly portrait = signal(isPortrait());
-  /**
-   * True while the seats are bands along the players' edges, where the boost
-   * pad has no room for its numbers below the button. Only a single player on
-   * a phone lying across gets the pad in a column beside the arena.
-   */
-  protected readonly band = computed(
-    () => this.humanStats().length > 1 || this.portrait()
-  );
   /** The box around the canvas in CSS pixels, null before its first layout. */
   private readonly arenaBoxSize = signal<Size | null>(null);
   /**
@@ -673,17 +653,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     } else if (this.panel() === 'menu') {
       this.leaveFullscreen();
     }
-  }
-
-  /** Which way a seat is turned so that its player can read it. */
-  protected seatTurn(seat: number): Turn {
-    return seatTurn(seat, this.humanStats().length, this.portrait());
-  }
-
-  /** The phone was turned, or the browser chrome came or went. */
-  @HostListener('window:resize')
-  protected onWindowResize(): void {
-    this.portrait.set(isPortrait());
   }
 
   /**
