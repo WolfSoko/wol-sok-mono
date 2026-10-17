@@ -8,8 +8,14 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { NO_STEERING, Point, SteeringVector } from '../state/geometry';
-import { knobOffset, steeringVector } from '../touch-controls';
+import {
+  clampLength,
+  delta,
+  NO_STEERING,
+  Point,
+  SteeringVector,
+} from '../state/geometry';
+import { steeringVector } from '../touch-controls';
 
 /** Finger distance from the centre, in CSS pixels, that counts as full push. */
 export const JOYSTICK_RADIUS = 44;
@@ -23,10 +29,13 @@ export const JOYSTICK_RADIUS = 44;
  * vector. Only one pointer is tracked at a time - the other player's finger
  * belongs to their own stick.
  *
- * Directions are reported in screen space. A player who sits at the far edge
- * of the phone sees the arena upside down, and so is their push: "away from
- * me" is down on the screen, which moves the crosshair down on the screen -
- * up in their view. The vector therefore needs no mirroring for them.
+ * Directions are reported in screen space. A player who sits at another edge
+ * of the phone sees the arena turned, and so is their push: "away from me"
+ * is, say, down on the screen, which moves the crosshair down on the screen -
+ * up in their view. The vector therefore needs no mirroring for them, and the
+ * zone itself is never turned either - a stick looks the same from every
+ * side. Only the label is turned towards the player, by the `--seat-turn`
+ * custom property the stage sets on the zone.
  *
  * A stick that is still held when the component goes away - the layout is
  * left with F or Escape while a finger is down - lets go first, so the
@@ -38,7 +47,6 @@ export const JOYSTICK_RADIUS = 44;
   styleUrl: './joystick.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    '[class.flipped]': 'flipped()',
     '[class.disabled]': 'disabled()',
     '[style.--joystick-color]': 'color()',
     '[attr.aria-label]': '"Joystick " + label()',
@@ -55,8 +63,6 @@ export class JoystickComponent implements OnDestroy {
   public readonly color = input.required<string>();
   /** The player's name, shown in the zone while the stick is at rest. */
   public readonly label = input('');
-  /** True for the player at the far edge, whose label is turned towards them. */
-  public readonly flipped = input(false);
   /** True while nobody is playing - the stick then ignores every touch. */
   public readonly disabled = input(false);
 
@@ -95,16 +101,16 @@ export class JoystickComponent implements OnDestroy {
   }
 
   protected onPointerMove(event: PointerEvent): void {
-    const origin = this.origin();
-    if (origin == null || event.pointerId !== this.pointerId) {
+    if (event.pointerId !== this.pointerId) {
       return;
     }
-    const pointer = {
-      x: origin.x + event.clientX - this.originClient.x,
-      y: origin.y + event.clientY - this.originClient.y,
-    };
-    this.knob.set(knobOffset(origin, pointer, this.radius));
-    this.steer.emit(steeringVector(origin, pointer, this.radius));
+    const push = delta(this.originClient, {
+      x: event.clientX,
+      y: event.clientY,
+    });
+    // The knob follows the finger, but never beyond the rim of the base.
+    this.knob.set(clampLength(push, this.radius));
+    this.steer.emit(steeringVector(push, this.radius));
     event.preventDefault();
   }
 

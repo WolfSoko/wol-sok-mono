@@ -17,7 +17,8 @@ import p5 from 'p5';
 import { BrainService } from '../brain.service';
 import { Perceptron } from '../perceptron';
 import { Point } from '../point';
-import { DataP5Sketch, heatmapColor } from './data-p5-sketch';
+import { heatmapColor } from '../heatmap';
+import { DataP5Sketch } from './data-p5-sketch';
 
 interface ChangeInputs extends SimpleChanges {
   points: SimpleChange;

@@ -35,8 +35,8 @@
         <br />
         On a touchscreen the game fills the screen: every player gets a joystick
         zone and a boost button at their own edge. Lay the phone flat between
-        you - the far player's controls are turned towards them. Dragging a
-        crosshair across the arena works as well.
+        you, one at each end - each player's controls are turned towards them.
+        Dragging a crosshair across the arena works as well.
       </mat-card-title>
     </mat-card-header>
   }
@@ -60,10 +60,9 @@
 
     <!--
       The stage is the element that fills the screen. Its children are placed
-      on a grid: the arena in the middle, one seat per human player with a
-      joystick zone and a boost pad. Seat 0 sits along the near edge, seat 1
-      along the far edge with its controls turned round - so two people can
-      play with the phone lying flat between them.
+      on a grid: the arena in the middle and, per human player, a joystick
+      zone and a boost pad at that player's edge, turned towards them - the
+      stylesheet has the seating plan.
     -->
     <div
       #arenaStage
@@ -74,22 +73,25 @@
       @if (fullscreen()) {
         @for (colony of humanStats(); track colony.id; let seat = $index) {
           <feat-lazy-bac-game-joystick
-            class="seat"
+            class="stick"
             [style.grid-area]="'stick-' + seat"
+            [attr.data-seat]="seat"
             [color]="colony.css"
             [label]="colony.name"
-            [flipped]="seat === 1"
             [disabled]="!running()"
             (steer)="steer(colony.id, $event)"
           />
-          <feat-lazy-bac-game-boost-pad
+          <div
             class="seat"
             [style.grid-area]="'boost-' + seat"
-            [colony]="colony"
-            [disabled]="!running()"
-            [flipped]="seat === 1"
-            (boost)="boost(colony.id)"
-          />
+            [attr.data-seat]="seat"
+          >
+            <feat-lazy-bac-game-boost-pad
+              [colony]="colony"
+              [disabled]="!running()"
+              (boost)="boost(colony.id)"
+            />
+          </div>
         }
 
         @if (panel(); as open) {
@@ -206,8 +208,8 @@
                     <p>
                       <b>Touch:</b> push the joystick zone at your edge, tap the
                       boost button - or drag your crosshair across the arena.
-                      For two players lay the phone flat between you; the far
-                      player's controls are turned towards them.
+                      For two players lay the phone flat between you, one at
+                      each end - each player's controls are turned towards them.
                     </p>
                     <p>
                       <b>Keyboard:</b> Orange uses <b>WASD</b> and <b>Space</b>,

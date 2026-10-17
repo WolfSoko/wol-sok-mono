@@ -9,9 +9,14 @@ export function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
 }
 
+/** The length of a vector. */
+export function length(vector: Point): number {
+  return Math.hypot(vector.x, vector.y);
+}
+
 /** Straight line distance between two points. */
 export function distance(a: Point, b: Point): number {
-  return Math.hypot(a.x - b.x, a.y - b.y);
+  return length(delta(a, b));
 }
 
 /** The vector from `from` to `to`. */
@@ -20,17 +25,17 @@ export function delta(from: Point, to: Point): Point {
 }
 
 /** The vector scaled to the given length; the zero vector stays zero. */
-export function scaleTo(vector: Point, length: number): Point {
-  const current = Math.hypot(vector.x, vector.y);
+export function scaleTo(vector: Point, to: number): Point {
+  const current = length(vector);
   if (current === 0) {
     return { x: 0, y: 0 };
   }
-  return { x: (vector.x / current) * length, y: (vector.y / current) * length };
+  return { x: (vector.x / current) * to, y: (vector.y / current) * to };
 }
 
 /** The vector, shortened to `max` when it is longer than that. */
 export function clampLength(vector: Point, max: number): Point {
-  return Math.hypot(vector.x, vector.y) > max
+  return length(vector) > max
     ? scaleTo(vector, max)
     : { x: vector.x, y: vector.y };
 }

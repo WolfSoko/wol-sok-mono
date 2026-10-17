@@ -7,12 +7,17 @@
 }
 
 .data-card,
-.hidden-layer {
+.network-card {
   grid-column: span 2;
 }
 
-.layer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+@media (max-width: 599.98px) {
+  .perceptron-container {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .data-card,
+  .network-card {
+    grid-column: auto;
+  }
 }

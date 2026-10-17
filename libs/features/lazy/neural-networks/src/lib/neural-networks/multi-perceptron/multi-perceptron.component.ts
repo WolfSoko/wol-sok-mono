@@ -8,7 +8,7 @@ import { MatCardModule } from '@angular/material/card';
 import { BrainSettingsComponent } from '../shared/brain-settings/brain-settings.component';
 import { BrainService, LabelDefinition } from '../shared/brain.service';
 import { DataViewComponent } from '../shared/data-view/data-view.component';
-import { PerceptronComponent } from '../shared/perceptron/perceptron.component';
+import { NetworkViewComponent } from '../shared/network-view/network-view.component';
 import { Point } from '../shared/point';
 
 const circleLabel: LabelDefinition = (x, y) =>
@@ -22,7 +22,7 @@ const circleLabel: LabelDefinition = (x, y) =>
   imports: [
     MatCardModule,
     DataViewComponent,
-    PerceptronComponent,
+    NetworkViewComponent,
     BrainSettingsComponent,
   ],
 })

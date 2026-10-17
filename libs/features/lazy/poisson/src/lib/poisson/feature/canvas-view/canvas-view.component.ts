@@ -78,7 +78,13 @@ export class CanvasViewComponent implements AfterContentInit {
   }
 
   public onClick($event: MouseEvent): void {
-    this.addObject.emit(new Vector($event.offsetX, $event.offsetY));
+    // The canvas shrinks on narrow screens, so map CSS pixels back to canvas pixels
+    const canvas: HTMLCanvasElement = this.canvas.nativeElement;
+    const scaleX = canvas.width / (canvas.clientWidth || canvas.width);
+    const scaleY = canvas.height / (canvas.clientHeight || canvas.height);
+    this.addObject.emit(
+      new Vector($event.offsetX * scaleX, $event.offsetY * scaleY)
+    );
   }
 
   private draw(step: number): void {

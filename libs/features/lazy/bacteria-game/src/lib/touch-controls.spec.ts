@@ -1,7 +1,6 @@
 import { isSteering } from './state/geometry';
 import {
   arenaPointFromClient,
-  knobOffset,
   nearestFreeCrosshair,
   steeringVector,
 } from './touch-controls';
@@ -89,61 +88,40 @@ describe('nearestFreeCrosshair', () => {
 });
 
 describe('steeringVector', () => {
-  const origin = { x: 100, y: 100 };
   const radius = 50;
 
   it('rests while the finger has not moved', () => {
-    expect(steeringVector(origin, origin, radius)).toEqual({ x: 0, y: 0 });
+    expect(steeringVector({ x: 0, y: 0 }, radius)).toEqual({ x: 0, y: 0 });
   });
 
   it('ignores a nudge inside the dead zone', () => {
-    const vector = steeringVector(origin, { x: 105, y: 100 }, radius);
+    const vector = steeringVector({ x: 5, y: 0 }, radius);
 
     expect(isSteering(vector)).toBe(false);
   });
 
   it('is pushed all the way at the rim of the base', () => {
-    expect(steeringVector(origin, { x: 150, y: 100 }, radius)).toEqual({
-      x: 1,
-      y: 0,
-    });
+    expect(steeringVector({ x: 50, y: 0 }, radius)).toEqual({ x: 1, y: 0 });
   });
 
   it('never grows beyond the rim', () => {
-    const vector = steeringVector(origin, { x: 100, y: 400 }, radius);
+    const vector = steeringVector({ x: 0, y: 300 }, radius);
 
     expect(vector).toEqual({ x: 0, y: 1 });
   });
 
   it('grows linearly between the dead zone and the rim', () => {
     // Half way between the dead zone (7.5px) and the rim (50px) along -x.
-    const vector = steeringVector(origin, { x: 100 - 28.75, y: 100 }, radius);
+    const vector = steeringVector({ x: -28.75, y: 0 }, radius);
 
     expect(vector.x).toBeCloseTo(-0.5);
     expect(vector.y).toBeCloseTo(0);
   });
 
   it('keeps the direction of a diagonal pull', () => {
-    const vector = steeringVector(origin, { x: 140, y: 140 }, radius);
+    const vector = steeringVector({ x: 40, y: 40 }, radius);
 
     expect(vector.x).toBeCloseTo(vector.y);
     expect(Math.hypot(vector.x, vector.y)).toBeLessThanOrEqual(1);
-  });
-});
-
-describe('knobOffset', () => {
-  const origin = { x: 100, y: 100 };
-
-  it('follows the finger inside the base', () => {
-    expect(knobOffset(origin, { x: 120, y: 90 }, 50)).toEqual({
-      x: 20,
-      y: -10,
-    });
-  });
-
-  it('stops at the rim once the finger pulls further', () => {
-    const offset = knobOffset(origin, { x: 100, y: 300 }, 50);
-
-    expect(offset).toEqual({ x: 0, y: 50 });
   });
 });

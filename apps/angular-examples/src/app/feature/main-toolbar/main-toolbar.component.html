@@ -17,7 +17,9 @@
   <h1 class="on-top" [class.hide]="isHandset()">
     WolSok Coding&nbsp;-&nbsp;Experiments
   </h1>
-  <h1 class="on-top" [class.hide]="!isHandset()">WolSok`s Experiments</h1>
+  <h1 class="on-top handset-title" [class.hide]="!isHandset()">
+    WolSok's Experiments
+  </h1>
   <span class="toolbar-spacer"></span>
   @defer (on timer(1s)) {
     <mat-slide-toggle
@@ -26,7 +28,10 @@
       (change)="toggleTheme()"
       [checked]="themeMode === 'dark'"
     >
-      <span class="mat-subtitle-2" style="color: black"
+      <span
+        class="mat-subtitle-2"
+        style="color: black"
+        [class.cdk-visually-hidden]="isHandset()"
         >{{ themeMode }} mode</span
       >
     </mat-slide-toggle>
