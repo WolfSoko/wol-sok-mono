@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.4.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.3.2...v74.4.0) (2026-10-17)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ make fights, meals and pushes glow on the GPU ([#2473](https://github.com/WolfSoko/wol-sok-mono/issues/2473)) ([ec8142f](https://github.com/WolfSoko/wol-sok-mono/commit/ec8142f743179a499ee4f91a2c072b1ed326ff3d))
+
 ## [74.3.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.3.1...v74.3.2) (2026-10-17)
 
 ### Performance
