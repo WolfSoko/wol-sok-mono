@@ -87,4 +87,37 @@ describe('GameSettingsService', () => {
     TestBed.resetTestingModule();
     expect(TestBed.inject(GameSettingsService).sound()).toBe(false);
   });
+
+  it('remembers the colours and the look of the bacteria', () => {
+    const service = TestBed.inject(GameSettingsService);
+
+    TestBed.inject(GameStateService).setColor(0, 'purple');
+    service.setLook('pixels');
+
+    expect(stored()).toMatchObject({
+      colors: ['purple', 'blue'],
+      look: 'pixels',
+    });
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(GameSettingsService).look()).toBe('pixels');
+    expect(TestBed.inject(GameStateQuery).getValue().colors).toEqual([
+      'purple',
+      'blue',
+    ]);
+  });
+
+  it('draws slime unless told otherwise, and ignores colours it does not know', () => {
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({ colors: ['gold', 'blue'], look: 'smoke' })
+    );
+
+    const service = TestBed.inject(GameSettingsService);
+
+    expect(service.look()).toBe('slime');
+    expect(TestBed.inject(GameStateQuery).getValue().colors).toEqual([
+      'orange',
+      'blue',
+    ]);
+  });
 });

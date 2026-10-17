@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
 import { BotDifficulty, DEFAULT_DIFFICULTY } from './bot-controller';
+import { DEFAULT_COLORS } from './colony-colors';
 import { LEVELS } from './levels';
 import { Player } from './player.model';
 
@@ -42,6 +43,8 @@ export interface GameStateState {
   mode: GameMode;
   /** How hard the computer plays in `vs-computer` mode. */
   difficulty: BotDifficulty;
+  /** The colour ids of the left and the right colony. */
+  colors: [string, string];
 }
 
 export function createInitialState(): GameStateState {
@@ -58,6 +61,7 @@ export function createInitialState(): GameStateState {
     levelId: LEVELS[0].id,
     mode: DEFAULT_MODE,
     difficulty: DEFAULT_DIFFICULTY,
+    colors: [DEFAULT_COLORS[0], DEFAULT_COLORS[1]],
   };
 }
 

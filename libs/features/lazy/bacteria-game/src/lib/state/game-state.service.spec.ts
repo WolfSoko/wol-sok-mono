@@ -52,6 +52,25 @@ describe('GameStateService', () => {
       }
     });
 
+    it('paints and names the colonies in the colours the players picked', () => {
+      service.setArenaSize(WIDTH, HEIGHT);
+      service.setMode('two-players');
+
+      service.setColor(0, 'green');
+      service.setColor(1, 'pink');
+
+      const [left, right] = playerQuery.getAll();
+      expect([left.name, right.name]).toEqual(['Green', 'Pink']);
+      expect(left.color).toEqual([40, 200, 70, 255]);
+      expect(right.color).toEqual([255, 70, 170, 255]);
+    });
+
+    it('swaps the colours when a seat picks the other one', () => {
+      service.setColor(0, 'blue');
+
+      expect(query.getValue().colors).toEqual(['blue', 'orange']);
+    });
+
     it('leaves a running match alone', () => {
       service.setArenaSize(WIDTH, HEIGHT);
       service.start();

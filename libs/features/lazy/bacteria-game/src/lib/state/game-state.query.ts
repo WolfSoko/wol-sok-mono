@@ -53,6 +53,13 @@ export class GameStateQuery extends Query<GameStateState> {
     return this.select((store) => store.mode).pipe(distinctUntilChanged());
   }
 
+  /** The colour ids of the left and the right colony. */
+  public selectColors(): Observable<[string, string]> {
+    return this.select((store) => store.colors).pipe(
+      distinctUntilChanged((a, b) => a[0] === b[0] && a[1] === b[1])
+    );
+  }
+
   /** How hard the computer plays. */
   public selectDifficulty(): Observable<BotDifficulty> {
     return this.select((store) => store.difficulty).pipe(

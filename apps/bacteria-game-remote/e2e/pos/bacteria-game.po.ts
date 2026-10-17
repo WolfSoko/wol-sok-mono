@@ -124,6 +124,45 @@ export class BacteriaGamePo {
     await this.page.mouse.move(x + dx, y + dy, { steps: 5 });
   }
 
+  /** Picks a colour in the colour picker of a seat, by the seat's label. */
+  public async chooseColor(seat: string, color: string): Promise<void> {
+    await this.page
+      .getByRole('radiogroup', { name: `Colour of ${seat}` })
+      .getByRole('radio', { name: color })
+      .click();
+  }
+
+  /**
+   * Holds a seat's joystick with one finger and taps its boost button with a
+   * second one - two touches at once, as two hands on a phone make them.
+   */
+  public async tapBoostWhileHoldingStick(seat: number): Promise<void> {
+    const stick = await this.boxOf(this.joystick(seat));
+    const boost = await this.boxOf(this.boostOf(seat));
+    const cdp = await this.page.context().newCDPSession(this.page);
+    const finger = {
+      x: stick.x + stick.width / 2,
+      y: stick.y + stick.height / 2,
+      id: 1,
+    };
+    const pushed = { ...finger, x: finger.x + 30 };
+    const tap = {
+      x: boost.x + boost.width / 2,
+      y: boost.y + boost.height / 2,
+      id: 2,
+    };
+    const touch = (
+      type: 'touchStart' | 'touchMove' | 'touchEnd',
+      touchPoints: (typeof finger)[]
+    ) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints });
+
+    await touch('touchStart', [finger]);
+    await touch('touchMove', [pushed]);
+    await touch('touchStart', [pushed, tap]);
+    await touch('touchEnd', [pushed]);
+    await touch('touchEnd', []);
+  }
+
   public async release(): Promise<void> {
     await this.page.mouse.up();
   }
