@@ -1,6 +1,12 @@
 .canvas-container {
   display: grid;
   grid-gap: 0.5rem;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: minmax(0, auto) 1fr;
   justify-content: start;
+}
+
+/* p5 sizes the canvas inline; scale it down on narrow screens (p5 maps clicks back) */
+.canvas-container ::ng-deep canvas {
+  max-width: 100%;
+  height: auto !important;
 }

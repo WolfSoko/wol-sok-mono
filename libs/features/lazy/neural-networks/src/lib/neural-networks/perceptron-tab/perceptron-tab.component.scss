@@ -9,13 +9,16 @@ $dataCardMinWidth: 470px;
   margin: 1rem;
   display: grid;
   grid-gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax($dataCardMinWidth, 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min($dataCardMinWidth, 100%), 1fr)
+  );
   justify-content: start;
   align-content: start;
 }
 
 .data-card {
-  min-width: $dataCardMinWidth;
+  min-width: min($dataCardMinWidth, 100%);
   grid-row-start: 1;
   /* autoprefixer: off */
   grid-row-end: 3;
