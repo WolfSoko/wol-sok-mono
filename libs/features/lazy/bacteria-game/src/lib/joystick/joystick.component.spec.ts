@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SteeringVector } from '../touch-controls';
+import { SteeringVector } from '../state/geometry';
 import { JoystickComponent } from './joystick.component';
 
 /** A pointer event as the zone sees it; the zone sits at (100, 200) on screen. */

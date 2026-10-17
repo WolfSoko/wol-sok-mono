@@ -1,6 +1,6 @@
+import { isSteering } from './state/geometry';
 import {
   arenaPointFromClient,
-  isSteering,
   knobOffset,
   nearestFreeCrosshair,
   steeringVector,
