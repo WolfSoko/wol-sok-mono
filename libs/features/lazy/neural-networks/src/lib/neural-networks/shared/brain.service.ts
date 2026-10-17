@@ -149,19 +149,29 @@ export class BrainService {
    * inputs scaled from 0..1 to -1..1, so the hidden perceptrons start out unsaturated.
    */
   private feedForward(input: number[], silent = false): number {
+    const layers = this.layerOutputs(input, silent);
+    // last layer should always be only one output perceptron
+    return layers[layers.length - 1][0];
+  }
+
+  private layerOutputs(input: number[], silent: boolean): number[][] {
     let layerResult = this.isSinglePerceptron
       ? input
       : input.map((value) => value * 2 - 1);
-    for (const layer of this.perceptrons) {
+    return this.perceptrons.map((layer) => {
       const layerInput = layerResult;
       layerResult = layer.map((perceptron) =>
         silent
           ? perceptron.guessSigSilent(layerInput)
           : perceptron.guessSig(layerInput)
       );
-    }
-    // last layer should always be only one output perceptron
-    return layerResult[0];
+      return layerResult;
+    });
+  }
+
+  /** The output of every perceptron, layer by layer, without changing any perceptron state. */
+  public layerActivationsSilent(data: number[]): number[][] {
+    return this.layerOutputs(data, true);
   }
 
   updateTrainingData(): Point[] {
@@ -172,20 +182,12 @@ export class BrainService {
     return this.points;
   }
 
-  guess(input: number[]): number {
-    if (this.isSinglePerceptron) {
-      return this.perceptrons[0][0].guess(input);
-    }
-    return this.feedForward(input);
-  }
-
   toggleAutoTraining(autoTrainingEnabled: boolean) {
     this.autoLearningSubject.next(autoTrainingEnabled);
   }
 
   addPoint(point: Point) {
     this.points.push(point);
-    this.guess(point.data);
   }
 
   clearPoints() {

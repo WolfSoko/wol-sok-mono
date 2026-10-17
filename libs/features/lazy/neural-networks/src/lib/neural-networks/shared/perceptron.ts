@@ -1,16 +1,12 @@
 import { TrainData } from './train-data';
 import { LabelClass, toLabelClass } from './point';
-import { Subscription, timer } from 'rxjs';
 
 export class Perceptron {
   weights: number[];
   // random like the weights, so the perceptrons of one layer start out different
   bias = Math.random() * 2 - 1;
-  isLearning = false;
   lastGuess = 0;
-  lastLearnRate = 0;
   lastInput: number[] = [];
-  private learnTimeoutSub: Subscription = new Subscription();
 
   private static getRandomWeights(inputConnections: number) {
     const result = [];
@@ -22,12 +18,6 @@ export class Perceptron {
 
   constructor(private inputConnections: number) {
     this.weights = Perceptron.getRandomWeights(inputConnections);
-  }
-
-  guess(inputs: number[]): number {
-    this.lastGuess = this.guessSilent(inputs);
-    this.lastInput = inputs;
-    return this.lastGuess;
   }
 
   guessSilent(inputs: number[]): LabelClass {
@@ -49,16 +39,10 @@ export class Perceptron {
   }
 
   train({ inputs, expected }: TrainData, learnRate: number): number {
-    this.lastLearnRate = learnRate;
-    const guess = this.guess(inputs);
+    const guess = this.guessSilent(inputs);
     const error = expected - guess;
 
     if (error !== 0.0) {
-      this.isLearning = true;
-      this.learnTimeoutSub.unsubscribe();
-      this.learnTimeoutSub.add(
-        timer(500).subscribe(() => (this.isLearning = false))
-      );
       const adjustedWeights = this.weights.map(
         (weight, index) => weight + error * inputs[index] * learnRate
       );
@@ -70,16 +54,7 @@ export class Perceptron {
   }
 
   trainWithLastInput(error: number, learnRate: number): number {
-    this.lastLearnRate = learnRate;
-
     if (error !== 0.0) {
-      this.isLearning = true;
-      if (this.learnTimeoutSub) {
-        this.learnTimeoutSub.unsubscribe();
-      }
-      this.learnTimeoutSub = timer(500).subscribe(
-        () => (this.isLearning = false)
-      );
       const adjustedWeights = this.weights.map(
         (weight, index) => weight + error * this.lastInput[index] * learnRate
       );

@@ -106,6 +106,22 @@ describe('BrainService', () => {
     expect(service.guessSilent([0.2, 0.7])).toBe(toLabelClass(activation));
   });
 
+  it('returns every layer output without changing the perceptrons', () => {
+    service.createMultiPerceptron(2, [3, 1]);
+    const [hidden, output] = service.perceptrons;
+    const lastGuesses = [...hidden, ...output].map((p) => p.lastGuess);
+
+    const layers = service.layerActivationsSilent([0.2, 0.7]);
+
+    expect(layers.map((layer) => layer.length)).toEqual([3, 1]);
+    // the hidden layer sees the inputs scaled to -1..1
+    expect(layers[0]).toEqual(
+      hidden.map((p) => p.guessSigSilent([0.2 * 2 - 1, 0.7 * 2 - 1]))
+    );
+    expect(layers[1][0]).toBe(service.activationSilent([0.2, 0.7]));
+    expect([...hidden, ...output].map((p) => p.lastGuess)).toEqual(lastGuesses);
+  });
+
   it('replays the current auto learning state to late subscribers', () => {
     service.toggleAutoTraining(true);
 
