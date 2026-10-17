@@ -15,20 +15,12 @@
   h1 {
     min-width: 0;
     overflow: hidden;
+    white-space: nowrap;
     text-overflow: ellipsis;
   }
 
   .handset-title {
     font-size: 18px;
-  }
-
-  .visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
   }
 
   .toolbar-spacer {

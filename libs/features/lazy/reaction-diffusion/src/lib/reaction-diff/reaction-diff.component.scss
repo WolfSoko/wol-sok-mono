@@ -23,10 +23,6 @@ app-weights-config {
   gap: 1rem;
   justify-content: flex-start;
   align-items: center;
-}
-
-.sim-controls,
-.sim-options {
   flex-wrap: wrap;
 }
 
@@ -44,7 +40,7 @@ mat-card,
 }
 
 .sim-card {
-  flex: 1 1 min(380px, 100%);
+  flex: 1 1 380px;
 }
 
 feat-lazy-react-diff-p5-view {

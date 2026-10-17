@@ -1,12 +1,16 @@
 .canvas-container {
-  display: grid;
-  grid-gap: 0.5rem;
-  grid-template-columns: minmax(0, auto) 1fr;
-  justify-content: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: start;
+}
+
+.data-canvas {
+  min-width: 0;
 }
 
 /* p5 sizes the canvas inline; scale it down on narrow screens (p5 maps clicks back) */
-.canvas-container ::ng-deep canvas {
+.data-canvas ::ng-deep canvas {
   max-width: 100%;
   height: auto !important;
 }

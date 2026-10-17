@@ -16,3 +16,14 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+@media (max-width: 599.98px) {
+  .perceptron-container {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .data-card,
+  .hidden-layer {
+    grid-column: auto;
+  }
+}
