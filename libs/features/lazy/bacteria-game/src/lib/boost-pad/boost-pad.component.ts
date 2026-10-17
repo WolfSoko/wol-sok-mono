@@ -12,6 +12,7 @@ import { boostLabel, ColonyStats } from '../colony-stats';
 
 /** The boost button in CSS pixels; the recharge ring runs just outside it. */
 export const BOOST_BUTTON_SIZE = 88;
+// The stage's seat track (--seat in bacteria-game.component.scss) must hold it.
 export const RECHARGE_RING_SIZE = BOOST_BUTTON_SIZE + 12;
 
 /**

@@ -86,6 +86,8 @@
   // fullscreen API on top. The arena sits in the middle; the seating plan
   // for the controls around it is below, after the grid.
   &.fullscreen {
+    // The seat track must hold the boost pad's recharge ring (RECHARGE_RING_SIZE
+    // in boost-pad.component.ts, 100px) across its narrow side.
     --seat: clamp(6.5rem, 15vw, 10rem);
 
     position: fixed;
@@ -169,22 +171,26 @@
     }
   }
 
-  &:not(.solo) {
-    [data-seat='0'] {
-      --seat-turn: 90deg;
-    }
+  // The phone lying across: a quarter turn each way, the pad sized with
+  // the cell's width and height swapped.
+  @media (orientation: landscape) {
+    &:not(.solo) {
+      [data-seat='0'] {
+        --seat-turn: 90deg;
+      }
 
-    [data-seat='1'] {
-      --seat-turn: 270deg;
-    }
+      [data-seat='1'] {
+        --seat-turn: 270deg;
+      }
 
-    .seat feat-lazy-bac-game-boost-pad {
-      inset: auto;
-      top: 50%;
-      left: 50%;
-      width: 100cqh;
-      height: 100cqw;
-      transform: translate(-50%, -50%) rotate(var(--seat-turn));
+      .seat feat-lazy-bac-game-boost-pad {
+        inset: auto;
+        top: 50%;
+        left: 50%;
+        width: 100cqh;
+        height: 100cqw;
+        transform: translate(-50%, -50%) rotate(var(--seat-turn));
+      }
     }
   }
 }
@@ -210,21 +216,8 @@
         'stick-0 boost-0';
     }
 
-    &:not(.solo) {
-      [data-seat='0'] {
-        --seat-turn: 0deg;
-      }
-
-      [data-seat='1'] {
-        --seat-turn: 180deg;
-      }
-
-      .seat feat-lazy-bac-game-boost-pad {
-        inset: 0;
-        width: auto;
-        height: auto;
-        transform: rotate(var(--seat-turn));
-      }
+    &:not(.solo) [data-seat='1'] {
+      --seat-turn: 180deg;
     }
   }
 }

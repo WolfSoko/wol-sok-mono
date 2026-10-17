@@ -24,7 +24,9 @@
   text-align: center;
 }
 
+// As wide as the pad, so the share bar does not follow the text's width.
 .pad-info {
+  align-self: stretch;
   min-width: 0;
 }
 

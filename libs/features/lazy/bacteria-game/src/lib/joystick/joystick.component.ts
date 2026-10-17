@@ -101,8 +101,7 @@ export class JoystickComponent implements OnDestroy {
   }
 
   protected onPointerMove(event: PointerEvent): void {
-    const origin = this.origin();
-    if (origin == null || event.pointerId !== this.pointerId) {
+    if (event.pointerId !== this.pointerId) {
       return;
     }
     const push = delta(this.originClient, {

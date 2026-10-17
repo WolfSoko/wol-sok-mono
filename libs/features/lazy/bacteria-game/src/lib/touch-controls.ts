@@ -7,6 +7,8 @@
 
 import {
   clamp,
+  distance,
+  length,
   NO_STEERING,
   Point,
   scaleTo,
@@ -82,9 +84,9 @@ export function nearestFreeCrosshair(
     if (taken.has(crosshair.id)) {
       continue;
     }
-    const distance = Math.hypot(crosshair.x - point.x, crosshair.y - point.y);
-    if (distance < nearestDistance) {
-      nearestDistance = distance;
+    const gap = distance(crosshair, point);
+    if (gap < nearestDistance) {
+      nearestDistance = gap;
       nearest = crosshair.id;
     }
   }
@@ -109,7 +111,7 @@ export function steeringVector(
   if (radius <= 0 || deadZone >= 1) {
     return NO_STEERING;
   }
-  const deflection = Math.hypot(push.x, push.y) / radius;
+  const deflection = length(push) / radius;
   if (deflection <= deadZone) {
     return NO_STEERING;
   }
