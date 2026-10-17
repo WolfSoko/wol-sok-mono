@@ -214,8 +214,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly colonyRenderer = new ColonyRenderer(this.width, this.height);
   /** Seconds of animation, for the wobble of the jam and the boost shimmer. */
   private animationSec = 0;
-  /** Players whose boost was running in the last frame, for its sound. */
-  private readonly boosting = new Set<number>();
   /** The level that follows the selected one, null at the end of the list. */
   protected readonly upcomingLevel: Signal<Level | null>;
   /** Two humans or one human against the computer. */
@@ -446,7 +444,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private getRenderingContext() {
     const canvasEl: HTMLCanvasElement = this.canvasRef.nativeElement;
 
-    const context = canvasEl.getContext('2d', { willReadFrequently: true });
+    // Nothing reads the canvas back any more, so it may live on the GPU.
+    const context = canvasEl.getContext('2d');
     if (context == null) {
       throw new Error('Could not get rendering context');
     }
@@ -461,7 +460,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.requestNativeFullscreen();
     this.sound.unlock();
     this.sound.matchStart();
-    this.boosting.clear();
     this.renderer.drawFloor(this.cx, true);
     this.gameStateService.cleanup();
     this.gameStateService.init(this.width, this.height);
@@ -525,6 +523,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       if (isRunning) {
         this.playerService.gameLoop(this.width, this.height, deltaTimeInSec);
         this.sound.frame(this.playerService.getStepEvents());
+        for (const isBot of this.playerService.takeFiredBoosts()) {
+          this.sound.boost(isBot);
+        }
       }
       this.renderer.drawDynamicWalls(
         this.cx,
@@ -575,22 +576,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /**
    * Draws each player's crosshair in their own colour, with a pulsing ring
-   * around it while the player's boost is running - and sounds the boost the
-   * frame it starts, whoever fired it.
+   * around it while the player's boost is running.
    */
   private drawPlayerCursors(): void {
     const boostDuration = this.balance().boostDurationSec;
     for (const player of this.playerQuery.getAll()) {
-      const boosting = player.boostActiveSec > 0;
-      if (boosting && !this.boosting.has(player.id)) {
-        this.sound.boost(player.isBot);
-      }
-      if (boosting) {
-        this.boosting.add(player.id);
-      } else {
-        this.boosting.delete(player.id);
-      }
-
       const css = `rgba(${player.color.join(',')})`;
       this.cx.fillStyle = css;
       this.cx.fillRect(player.x - 6, player.y - 0.5, 13, 2);
@@ -804,8 +794,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     );
   }
 
+  /**
+   * Wakes the sound on any gesture that lets a page play audio. A touch only
+   * counts once the finger lifts, so the boost pad's press alone - fired on
+   * pointerdown - would not resume a context the phone suspended mid-match.
+   */
+  @HostListener('document:pointerup')
+  protected onPointerReleased(): void {
+    this.sound.unlock();
+  }
+
   @HostListener('document:keydown', ['$event'])
   onKeyDown($event: KeyboardEvent) {
+    this.sound.unlock();
     if (isTypingTarget($event.target)) {
       return;
     }

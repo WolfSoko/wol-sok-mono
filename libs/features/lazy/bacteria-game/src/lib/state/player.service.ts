@@ -78,6 +78,8 @@ export class PlayerService {
   private steering = new Map<number, SteeringVector>();
   /** The computer opponents, one per bot player. */
   private bots = new Map<number, BotController>();
+  /** Boosts fired since the sound last asked - true for the computer's. */
+  private firedBoosts: boolean[] = [];
 
   constructor() {
     this.gameStateQuery
@@ -103,6 +105,12 @@ export class PlayerService {
       map?: GameMap;
       crosshairSpeed?: number;
       difficulty?: BotDifficulty;
+      /**
+       * The arena size, when it is known. The walls are only laid out once
+       * the simulation has a size, and the start screen shows the gates and
+       * sliding walls of the next match as well.
+       */
+      arena?: { width: number; height: number };
     } = {}
   ): void {
     const balance = options.balance ?? gameBalance;
@@ -134,7 +142,11 @@ export class PlayerService {
     this.dragTargets.clear();
     this.steering.clear();
     this.balance = balance;
+    this.firedBoosts = [];
     this.simulation = new BacteriaSimulation(balance);
+    if (options.arena != null) {
+      this.simulation.resize(options.arena.width, options.arena.height);
+    }
     this.simulation.setMap(map);
     this.simulation.init(
       playersData.map((playerData, index) => ({
@@ -200,6 +212,17 @@ export class PlayerService {
       boostActiveSec: this.balance.boostDurationSec,
       boostCooldownSec: this.balance.boostCooldownSec,
     });
+    this.firedBoosts.push(player.isBot);
+  }
+
+  /**
+   * The boosts fired since the last call, true for each one the computer
+   * fired - used for the sound only.
+   */
+  public takeFiredBoosts(): boolean[] {
+    const fired = this.firedBoosts;
+    this.firedBoosts = [];
+    return fired;
   }
 
   /** The nutrient pellets currently on the map - used for rendering only. */

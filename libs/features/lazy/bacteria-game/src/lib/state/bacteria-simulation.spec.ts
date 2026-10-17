@@ -612,6 +612,16 @@ describe('dynamic walls', () => {
     expect(simulation.getDynamicWalls()[0].solid).toBe(true);
   });
 
+  it('reports nothing for a frame that does not advance', () => {
+    const { simulation, players } = onGate([bacterium(10, 10)]);
+    simulation.step(players, 1.1);
+    expect(simulation.getEvents().gatesClosed).toBe(1);
+
+    simulation.step(players, 0);
+
+    expect(simulation.getEvents().gatesClosed).toBe(0);
+  });
+
   it('starts every match with the gates as they are at time zero', () => {
     const { simulation, players } = onGate([bacterium(10, 10)]);
     simulation.step(players, 1.2);

@@ -401,11 +401,13 @@ export class BacteriaSimulation {
    * colony moves towards - the bacteria themselves belong to the simulation.
    */
   public step(players: Player[], deltaTimeSec: number): void {
+    // Reset before the guard: a frame that does nothing must not report the
+    // last frame's events again.
+    this.events = noEvents();
     if (this.colonies.length === 0 || this.width === 0 || deltaTimeSec <= 0) {
       return;
     }
 
-    this.events = noEvents();
     this.elapsedSec += deltaTimeSec;
     this.advanceDynamicWalls();
 

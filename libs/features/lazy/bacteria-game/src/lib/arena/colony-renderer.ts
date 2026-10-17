@@ -1,7 +1,10 @@
 import { BacteriaLook } from '../settings.service';
 import { Nutrient } from '../state/bacteria-simulation';
 import { GameBalance, gameBalance } from '../state/game-balance';
+import { clamp } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
+import { Rgb } from './arena-theme';
+import { hash, rgba, smoothstep } from './canvas-math';
 
 /** What the renderer needs to know about one colony. */
 export interface ColonyLayer {
@@ -135,13 +138,13 @@ export function paintSlime(
   for (let py = 0; py < outHeight; py++) {
     // Pixel centres, in cell units, shifted so a cell's centre is a lattice point.
     const gy = (py + 0.5) * step - 0.5;
-    const y0 = clampIndex(Math.floor(gy), height);
-    const y1 = clampIndex(y0 + 1, height);
+    const y0 = clamp(Math.floor(gy), 0, height - 1);
+    const y1 = clamp(y0 + 1, 0, height - 1);
     const fy = Math.min(1, Math.max(0, gy - y0));
     for (let px = 0; px < outWidth; px++) {
       const gx = (px + 0.5) * step - 0.5;
-      const x0 = clampIndex(Math.floor(gx), width);
-      const x1 = clampIndex(x0 + 1, width);
+      const x0 = clamp(Math.floor(gx), 0, width - 1);
+      const x1 = clamp(x0 + 1, 0, width - 1);
       const i00 = y0 * width + x0;
       const i10 = y0 * width + x1;
       const i01 = y1 * width + x0;
@@ -201,8 +204,8 @@ export function paintSlime(
 
 /** A pellet of food as a drop of jam, in one of a few flavours. */
 interface Jam {
-  body: readonly [number, number, number];
-  light: readonly [number, number, number];
+  body: Rgb;
+  light: Rgb;
 }
 
 /** Strawberry, blueberry, apricot and blackcurrant. */
@@ -384,12 +387,7 @@ function shimmer(x: number, y: number, timeSec: number): number {
 
 /** True for the few pixels that glint in this tenth of a second. */
 function sparkle(x: number, y: number, timeSec: number): boolean {
-  let h =
-    Math.imul(x >> 1, 374761393) ^
-    Math.imul(y >> 1, 668265263) ^
-    Math.imul(Math.floor(timeSec * 10), 1442695041);
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967296 > 0.992;
+  return hash(x >> 1, y >> 1, Math.floor(timeSec * 10)) > 0.992;
 }
 
 /** Blurs the field in place with a 3x3 box, the edges clamped. */
@@ -418,22 +416,6 @@ function boxBlur(
   }
 }
 
-function clampIndex(value: number, size: number): number {
-  return value < 0 ? 0 : value >= size ? size - 1 : value;
-}
-
-function smoothstep(from: number, to: number, value: number): number {
-  const t = Math.min(1, Math.max(0, (value - from) / (to - from)));
-  return t * t * (3 - 2 * t);
-}
-
-function darker([r, g, b]: readonly [number, number, number]) {
-  return [r * 0.55, g * 0.55, b * 0.55] as const;
-}
-
-function rgba(
-  [r, g, b]: readonly [number, number, number],
-  alpha: number
-): string {
-  return `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${alpha})`;
+function darker([r, g, b]: Rgb): Rgb {
+  return [r * 0.55, g * 0.55, b * 0.55];
 }

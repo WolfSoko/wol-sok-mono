@@ -1,5 +1,6 @@
 import { DynamicWall, Rect } from '../state/maps';
 import { ArenaPattern, ArenaTheme, Rgb } from './arena-theme';
+import { hash, rgba, smoothstep } from './canvas-math';
 
 /**
  * Paints the floor of an arena into an RGBA pixel buffer: the theme's floor
@@ -84,6 +85,10 @@ interface Mote {
 export class ArenaRenderer {
   private theme: ArenaTheme | null = null;
   private floor: HTMLCanvasElement | null = null;
+  /** Diagonal hazard stripes for the closed gates and sliding walls. */
+  private hazard: HTMLCanvasElement | null = null;
+  /** The stripes as a fill, made once per theme on the first closed wall. */
+  private hazardPattern: CanvasPattern | null = null;
   private motes: Mote[] = [];
   private timeSec = 0;
 
@@ -100,6 +105,8 @@ export class ArenaRenderer {
     }
     this.theme = theme;
     this.floor = this.paintFloor(theme);
+    this.hazard = this.paintHazard(theme);
+    this.hazardPattern = null;
     this.motes = Array.from({ length: theme.moteCount }, () => ({
       x: this.random() * this.width,
       y: this.random() * this.height,
@@ -118,7 +125,7 @@ export class ArenaRenderer {
     if (this.floor != null) {
       cx.drawImage(this.floor, 0, 0);
     } else {
-      cx.fillStyle = rgb(this.theme?.floor ?? [0, 0, 0]);
+      cx.fillStyle = rgba(this.theme?.floor ?? [0, 0, 0]);
       cx.fillRect(0, 0, this.width, this.height);
     }
     cx.globalAlpha = 1;
@@ -131,9 +138,9 @@ export class ArenaRenderer {
       return;
     }
     for (const wall of walls) {
-      cx.fillStyle = rgb(theme.wall);
+      cx.fillStyle = rgba(theme.wall);
       cx.fillRect(wall.x, wall.y, wall.width, wall.height);
-      cx.fillStyle = rgb(theme.wallEdge);
+      cx.fillStyle = rgba(theme.wallEdge);
       cx.fillRect(wall.x, wall.y, wall.width, 1);
       cx.fillRect(wall.x, wall.y, 1, wall.height);
     }
@@ -154,25 +161,22 @@ export class ArenaRenderer {
     }
     for (const wall of walls) {
       if (wall.solid) {
-        cx.fillStyle = rgb(theme.border);
-        cx.fillRect(wall.x, wall.y, wall.width, wall.height);
-        cx.fillStyle = rgb(theme.rim, 0.75);
-        for (let y = wall.y; y < wall.y + wall.height; y++) {
-          for (let x = wall.x; x < wall.x + wall.width; x++) {
-            if ((x + y) % 6 < 3) {
-              cx.fillRect(x, y, 1, 1);
-            }
-          }
+        // The pattern lives in arena space, so a sliding wall moves under
+        // still stripes - like a conveyor, which reads as motion.
+        if (this.hazardPattern == null && this.hazard != null) {
+          this.hazardPattern = cx.createPattern(this.hazard, 'repeat');
         }
+        cx.fillStyle = this.hazardPattern ?? rgba(theme.border);
+        cx.fillRect(wall.x, wall.y, wall.width, wall.height);
         continue;
       }
       const blink =
         wall.warning > 0
           ? 0.5 + 0.5 * Math.sin(this.timeSec * (10 + 30 * wall.warning))
           : 0;
-      cx.fillStyle = rgb(theme.border, 0.08 + 0.4 * blink * wall.warning);
+      cx.fillStyle = rgba(theme.border, 0.08 + 0.4 * blink * wall.warning);
       cx.fillRect(wall.x, wall.y, wall.width, wall.height);
-      cx.strokeStyle = rgb(theme.border, 0.3 + 0.6 * blink);
+      cx.strokeStyle = rgba(theme.border, 0.3 + 0.6 * blink);
       cx.lineWidth = 1;
       cx.strokeRect(
         wall.x + 0.5,
@@ -200,21 +204,39 @@ export class ArenaRenderer {
         this.height
       );
       const twinkle = 0.5 + 0.5 * Math.sin(this.timeSec * 1.7 + mote.phase);
-      cx.fillStyle = rgb(theme.motes, 0.12 + 0.3 * twinkle);
+      cx.fillStyle = rgba(theme.motes, 0.12 + 0.3 * twinkle);
       cx.fillRect(Math.floor(mote.x), Math.floor(mote.y), 1, 1);
     }
   }
 
-  /** The floor in an offscreen canvas, or null where there is no canvas. */
-  private paintFloor(theme: ArenaTheme): HTMLCanvasElement | null {
-    if (typeof document === 'undefined') {
+  /**
+   * One tile of the hazard stripes: the frame colour crossed by dark
+   * diagonals, three cells each, or null where there is no canvas.
+   */
+  private paintHazard(theme: ArenaTheme): HTMLCanvasElement | null {
+    const tile = createCanvas(HAZARD_TILE, HAZARD_TILE);
+    const context = tile?.getContext?.('2d');
+    if (tile == null || context == null) {
       return null;
     }
-    const canvas = document.createElement('canvas');
-    canvas.width = this.width;
-    canvas.height = this.height;
-    const context = canvas.getContext?.('2d');
-    if (context == null) {
+    context.fillStyle = rgba(theme.border);
+    context.fillRect(0, 0, HAZARD_TILE, HAZARD_TILE);
+    context.fillStyle = rgba(theme.rim, 0.75);
+    for (let y = 0; y < HAZARD_TILE; y++) {
+      for (let x = 0; x < HAZARD_TILE; x++) {
+        if ((x + y) % HAZARD_TILE < HAZARD_TILE / 2) {
+          context.fillRect(x, y, 1, 1);
+        }
+      }
+    }
+    return tile;
+  }
+
+  /** The floor in an offscreen canvas, or null where there is no canvas. */
+  private paintFloor(theme: ArenaTheme): HTMLCanvasElement | null {
+    const canvas = createCanvas(this.width, this.height);
+    const context = canvas?.getContext?.('2d');
+    if (canvas == null || context == null) {
       return null;
     }
     const image = context.createImageData(this.width, this.height);
@@ -222,6 +244,20 @@ export class ArenaRenderer {
     context.putImageData(image, 0, 0);
     return canvas;
   }
+}
+
+/** Width of one hazard stripe tile in arena cells - a dark and a light band. */
+const HAZARD_TILE = 6;
+
+/** An offscreen canvas of that size, or null outside a browser. */
+function createCanvas(width: number, height: number): HTMLCanvasElement | null {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  return canvas;
 }
 
 /** Each pattern gives the ink at a pixel, from 0 to 1. */
@@ -328,19 +364,6 @@ function valueNoise(x: number, y: number, seed: number): number {
   return lerp(top, bottom, sy);
 }
 
-/** A repeatable pseudo random number from 0 to 1 for a lattice point. */
-function hash(x: number, y: number, seed: number): number {
-  let h = Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ (seed * 1442695);
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  h ^= h >>> 16;
-  return (h >>> 0) / 4294967296;
-}
-
-function smoothstep(from: number, to: number, value: number): number {
-  const t = Math.min(1, Math.max(0, (value - from) / (to - from)));
-  return t * t * (3 - 2 * t);
-}
-
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
@@ -351,8 +374,4 @@ function mix(a: Rgb, b: Rgb, t: number): [number, number, number] {
 
 function wrap(value: number, size: number): number {
   return ((value % size) + size) % size;
-}
-
-function rgb([r, g, b]: Rgb, alpha = 1): string {
-  return `rgba(${r},${g},${b},${alpha})`;
 }

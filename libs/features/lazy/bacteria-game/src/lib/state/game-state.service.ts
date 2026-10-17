@@ -183,6 +183,7 @@ export class GameStateService {
         map: levelMap(level),
         crosshairSpeed: levelCrosshairSpeed(level),
         difficulty,
+        arena: { width, height },
       }
     );
   }
@@ -252,6 +253,14 @@ export class GameStateService {
         getColonyColor(colorId).id
       ),
     });
+  }
+
+  /**
+   * Gives both colonies their colours at once - for restoring a pair that is
+   * already known to be valid and distinct.
+   */
+  public setColors(colors: readonly [string, string]): void {
+    this.updateSetup({ colors: [colors[0], colors[1]] });
   }
 
   /** Fires the boost of a player - the touch equivalent of Space / Enter. */

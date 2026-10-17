@@ -49,6 +49,15 @@ describe('PlayerService', () => {
     }
   }
 
+  it('lays out the moving walls before the match starts', () => {
+    service.init(spawns(false), {
+      map: getMap('pistons'),
+      arena: { width: WIDTH, height: HEIGHT },
+    });
+
+    expect(service.getDynamicWalls().length).toBeGreaterThan(0);
+  });
+
   describe('boost', () => {
     beforeEach(() => {
       service.init(spawns(false), { map: getMap('open-field') });
@@ -106,6 +115,14 @@ describe('PlayerService', () => {
       expect(playerQuery.getEntity(0)?.boostActiveSec).toBe(
         gameBalance.boostDurationSec
       );
+    });
+
+    it('reports each fired boost once, for its sound', () => {
+      service.boost(0);
+      service.boost(0);
+
+      expect(service.takeFiredBoosts()).toEqual([false]);
+      expect(service.takeFiredBoosts()).toEqual([]);
     });
 
     it('leaves the other player alone', () => {

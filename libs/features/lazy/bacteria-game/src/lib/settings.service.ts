@@ -112,8 +112,7 @@ export class GameSettingsService {
       colors.every(isColonyColor) &&
       colors[0] !== colors[1]
     ) {
-      this.gameState.setColor(0, colors[0]);
-      this.gameState.setColor(1, colors[1]);
+      this.gameState.setColors([colors[0], colors[1]]);
     }
     if (BACTERIA_LOOKS.some((option) => option.id === stored.look)) {
       this.look.set(stored.look as BacteriaLook);
