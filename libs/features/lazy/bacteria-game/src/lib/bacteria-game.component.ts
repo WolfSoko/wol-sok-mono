@@ -303,12 +303,15 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
     // Repaint as soon as another level puts different walls into the arena, or
     // the colonies change colour or look, so the start screen always shows
-    // the map and the colonies the next match is fought with.
+    // the map and the colonies the next match is fought with. A clear frame
+    // also wipes the glow from the trail once the player asks for less
+    // motion, even while the game is paused.
     effect(() => {
       this.painter?.setTheme(this.theme());
       this.walls();
       this.colors();
       this.settings.look();
+      this.reducedMotion();
       this.draw(1 / 1000, true);
     });
 
