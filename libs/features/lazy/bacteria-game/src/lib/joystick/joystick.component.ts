@@ -1,25 +1,30 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
   inject,
+  Injector,
   input,
   OnDestroy,
   output,
   signal,
 } from '@angular/core';
-import { delta, NO_STEERING, Point, SteeringVector } from '../state/geometry';
+import {
+  clampLength,
+  delta,
+  NO_STEERING,
+  Point,
+  SteeringVector,
+} from '../state/geometry';
 import {
   clientPointFromElement,
   elementPointFromClient,
-  knobOffset,
   steeringVector,
   Turn,
   turnBack,
   turnPoint,
 } from '../touch-controls';
-
-const CENTRE: Point = { x: 0, y: 0 };
 
 /** Finger distance from the centre, in CSS pixels, that counts as full push. */
 export const JOYSTICK_RADIUS = 44;
@@ -82,9 +87,12 @@ export class JoystickComponent implements OnDestroy {
   protected readonly knob = signal<Point>({ x: 0, y: 0 });
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
   private pointerId: number | null = null;
   /** Where the finger landed in client pixels - every move is relative to it. */
   private originClient: Point = { x: 0, y: 0 };
+  /** The seat's turn when the finger landed; `origin` is in that frame. */
+  private originTurn: Turn = 0;
 
   protected onPointerDown(event: PointerEvent): void {
     // A right or middle mouse button would open a menu that swallows the
@@ -97,8 +105,9 @@ export class JoystickComponent implements OnDestroy {
     // The only layout read of a drag: moves are measured from the client
     // position of the touch-down, not from the element's box.
     const bounds = this.host.nativeElement.getBoundingClientRect();
+    this.originTurn = this.turn();
     this.origin.set(
-      elementPointFromClient(this.originClient, bounds, this.turn())
+      elementPointFromClient(this.originClient, bounds, this.originTurn)
     );
     // Keep receiving moves once the finger slides out of the zone.
     this.host.nativeElement.setPointerCapture?.(event.pointerId);
@@ -114,10 +123,12 @@ export class JoystickComponent implements OnDestroy {
       x: event.clientX,
       y: event.clientY,
     });
+    // The knob is drawn in the zone's own frame, under the finger but never
+    // beyond the rim of the base.
     this.knob.set(
-      knobOffset(CENTRE, turnPoint(push, turnBack(this.turn())), this.radius)
+      clampLength(turnPoint(push, turnBack(this.originTurn)), this.radius)
     );
-    this.steer.emit(steeringVector(CENTRE, push, this.radius));
+    this.steer.emit(steeringVector(push, this.radius));
     event.preventDefault();
   }
 
@@ -132,15 +143,30 @@ export class JoystickComponent implements OnDestroy {
    * The viewport moved under a held finger - the browser went fullscreen or
    * the phone turned on the other player's gesture. The finger has not moved
    * in the zone, so the client position of the centre is read again rather
-   * than letting the shift count as a push.
+   * than letting the shift count as a push. That waits for the next render,
+   * because the stage lays its seats out anew on the same event and the
+   * zone's box is only right afterwards. A seat that was turned another way
+   * by then lets go of the stick instead: the finger's spot in the old frame
+   * means nothing in the new one.
    */
   protected onResize(): void {
+    if (this.origin() == null) {
+      return;
+    }
+    afterNextRender(() => this.rebase(), { injector: this.injector });
+  }
+
+  private rebase(): void {
     const origin = this.origin();
     if (origin == null) {
       return;
     }
+    if (this.turn() !== this.originTurn) {
+      this.release();
+      return;
+    }
     const bounds = this.host.nativeElement.getBoundingClientRect();
-    this.originClient = clientPointFromElement(origin, bounds, this.turn());
+    this.originClient = clientPointFromElement(origin, bounds, this.originTurn);
   }
 
   public ngOnDestroy(): void {

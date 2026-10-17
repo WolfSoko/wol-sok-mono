@@ -182,9 +182,15 @@
     align-items: stretch;
   }
 
+  // Either part may shrink with its track instead of overflowing it.
+  feat-lazy-bac-game-joystick,
+  feat-lazy-bac-game-boost-pad {
+    min-width: 0;
+    min-height: 0;
+  }
+
   feat-lazy-bac-game-joystick {
     flex: 1 1 auto;
-    min-width: 0;
   }
 
   feat-lazy-bac-game-boost-pad {

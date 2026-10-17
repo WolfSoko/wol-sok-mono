@@ -94,9 +94,9 @@ test('should seat two players at opposite edges', async ({ page }) => {
   await expect(po.colonyNames).toContainText(['Orange', 'Blue']);
 
   // Seat 0 is the left column, seat 1 the right one, each turned towards
-  // its player: the stick sits in their left hand, the boost pad in their
-  // right - at the top of the screen for the left player, at the bottom for
-  // the right one.
+  // its player: the stick sits in their left hand and the boost pad in their
+  // right, so the pad is below the stick for the left player and above it
+  // for the right one.
   const [leftStick, leftBoost, rightStick, rightBoost] = await Promise.all([
     po.boxOf(po.joystick(0)),
     po.boxOf(po.boostOf(0)),

@@ -675,10 +675,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  /**
-   * Remembers the size of the box around the canvas, which the touch layout
-   * fits the canvas into - see {@link canvasSize}.
-   */
   /** Which way a seat is turned so that its player can read it. */
   protected seatTurn(seat: number): Turn {
     return seatTurn(seat, this.humanStats().length, this.portrait());
@@ -690,6 +686,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.portrait.set(isPortrait());
   }
 
+  /**
+   * Remembers the size of the box around the canvas, which the touch layout
+   * fits the canvas into - see {@link canvasSize}.
+   */
   protected onArenaBoxResized(event: ResizedEvent): void {
     this.arenaBoxSize.set({ width: event.newWidth, height: event.newHeight });
   }

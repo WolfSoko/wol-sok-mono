@@ -98,7 +98,7 @@ describe('JoystickComponent', () => {
     expect(component['origin']()).toBeNull();
   });
 
-  it('keeps a resting finger at rest when the viewport moves under it', () => {
+  it('keeps a resting finger at rest when the viewport moves under it', async () => {
     down(1, 40, 60);
     // The browser chrome goes: the zone is 56px higher on the screen now.
     (fixture.nativeElement.getBoundingClientRect as jest.Mock).mockReturnValue({
@@ -109,9 +109,23 @@ describe('JoystickComponent', () => {
     });
 
     component['onResize']();
+    await fixture.whenStable();
     component['onPointerMove'](pointer(1, 40, 60 - 56));
 
     expect(steered).toEqual([{ x: 0, y: 0 }]);
+  });
+
+  it('lets go of the stick when its seat is turned another way', async () => {
+    down(1, 40, 60);
+    move(1, 40 + RIM, 60);
+
+    // The phone is turned: the seat is a quarter-turned column from now on.
+    component['onResize']();
+    fixture.componentRef.setInput('turn', 90);
+    await fixture.whenStable();
+
+    expect(steered.at(-1)).toEqual({ x: 0, y: 0 });
+    expect(component['origin']()).toBeNull();
   });
 
   it('stops once the finger lifts', () => {
