@@ -1,8 +1,11 @@
-import { DOCUMENT } from '@angular/common';
 import { DestroyRef, effect, inject, Signal } from '@angular/core';
-import { Meta, Title } from '@angular/platform-browser';
 import { Poll } from '../../../shared/poll';
-import { PageTags, pollUrl, SITE_TAGS } from '../site-tags';
+import { pollUrl } from '../../../shared/site-url';
+import {
+  injectApplyPageTags,
+  injectSetNotFoundStatus,
+  SITE_TAGS,
+} from '../site-tags';
 
 const MAX_DESCRIPTION_LENGTH = 200;
 
@@ -10,46 +13,39 @@ const MAX_DESCRIPTION_LENGTH = 200;
  * Gives a poll page its own title and link preview and restores the site
  * defaults when leaving. Listed polls are public (home page, search), so
  * search engines may index them; unlisted ones are only for those with the
- * link and stay out. Must run in an injection context.
+ * link and stay out. A poll that does not exist answers 404 on the server.
+ * Must run in an injection context.
  */
 export function usePollMetaTags(
   poll: Signal<Poll | null | undefined>,
   pollId: Signal<string>
 ): void {
-  const title = inject(Title);
-  const meta = inject(Meta);
-  const document = inject(DOCUMENT);
-  const canonical = document.head.querySelector<HTMLLinkElement>(
-    'link[rel="canonical"]'
-  );
-
-  const apply = (tags: PageTags): void => {
-    title.setTitle(tags.title);
-    meta.updateTag({ property: 'og:title', content: tags.title });
-    meta.updateTag({ name: 'description', content: tags.description });
-    meta.updateTag({
-      property: 'og:description',
-      content: tags.socialDescription,
-    });
-    meta.updateTag({ property: 'og:url', content: tags.url });
-    meta.updateTag({ name: 'robots', content: tags.robots });
-    canonical?.setAttribute('href', tags.url);
-  };
+  const apply = injectApplyPageTags();
+  const setNotFoundStatus = injectSetNotFoundStatus();
 
   effect(() => {
     const current = poll();
     const url = pollUrl(pollId());
-    apply(
-      current
-        ? {
-            title: `${current.question} | RollaPolla`,
-            description: pollDescription(current),
-            socialDescription: pollDescription(current),
-            url,
-            robots: current.listed ? SITE_TAGS.robots : 'noindex',
-          }
-        : { ...SITE_TAGS, url, robots: 'noindex' }
-    );
+    if (current) {
+      apply({
+        title: `${current.question} | RollaPolla`,
+        description: pollDescription(current),
+        socialDescription: pollDescription(current),
+        url,
+        robots: current.listed ? SITE_TAGS.robots : 'noindex',
+      });
+    } else if (current === null) {
+      apply({
+        ...SITE_TAGS,
+        title: 'Poll not found | RollaPolla',
+        url,
+        robots: 'noindex',
+      });
+      setNotFoundStatus();
+    } else {
+      // still loading
+      apply({ ...SITE_TAGS, url, robots: 'noindex' });
+    }
   });
 
   inject(DestroyRef).onDestroy(() => apply(SITE_TAGS));

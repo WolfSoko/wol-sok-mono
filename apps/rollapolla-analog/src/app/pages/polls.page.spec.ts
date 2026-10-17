@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { By, Title } from '@angular/platform-browser';
+import { By, Meta, Title } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter, Router } from '@angular/router';
 import { throwError } from 'rxjs';
@@ -47,6 +47,18 @@ describe('PollsPageComponent', () => {
 
     expect(results()).toEqual(['Pizza or pasta?', 'Best hiking area?']);
     expect(TestBed.inject(Title).getTitle()).toBe('Browse polls | RollaPolla');
+  });
+
+  it('describes the search page as its own page, not as the home page', async () => {
+    await harness.navigateByUrl('/polls?q=pizza');
+    const meta = TestBed.inject(Meta);
+
+    expect(meta.getTag('name="description"')?.content).toContain(
+      'Browse public polls'
+    );
+    expect(meta.getTag('property="og:url"')?.content).toBe(
+      'https://rollapolla.com/polls'
+    );
   });
 
   it('searches as you type and keeps the search in the URL', async () => {

@@ -22,7 +22,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Poll, PRIVATE_POLL_HINT } from '../../../shared/poll';
-import { pollUrl, SITE_URL } from '../../pages/site-tags';
+import { pollUrl, SITE_URL } from '../../../shared/site-url';
 import {
   SHARE_ICON_NAMESPACE,
   SHARE_TARGETS,

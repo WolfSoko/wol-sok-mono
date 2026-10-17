@@ -118,6 +118,14 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - Each app has an `esbuild` target (`@angular/build:application`) wrapped by a `build`/`serve` target from `@angular-architects/native-federation`. Change build options on `esbuild`.
 - `nx serve angular-examples` only serves the shell. Use `nx run angular-examples:serve-all` to boot the shell plus all remotes (ports 4200-4203).
 
+## SEO & Sitemaps
+
+Keep `sitemap.xml` and the SEO tags in shape with every change that adds, renames or removes a page. A page that is public but missing from the sitemap, or listed with the wrong URL, counts as a bug.
+
+- **rollapolla-analog**: `/sitemap.xml` is a Nitro route (`src/server/routes/sitemap.xml.ts`, URLs from `src/server/sitemap/sitemap.ts`). A new indexable page goes into `sitemapUrls`. Every page sets its tags through `usePageTags` / `useNoindexPage` in `src/app/pages/site-tags.ts`: its own title, description and canonical URL, and `noindex` for personal pages. Unknown pages and missing polls answer 404 (`injectSetNotFoundStatus`). Don't put a static `sitemap.xml` in `src/public`, because Firebase Hosting would serve it instead of the route.
+- **angular-examples**: `src/sitemap.xml` is kept by hand. It lists every route in `APP_ROUTES`, or its visible tabs when the route redirects to one, since the canonical URL is the URL after the redirect. Every main route needs a `data.description`. `seo.service.spec.ts` checks both: update it together with the sitemap.
+- Check the server-rendered HTML, not just the browser: title, description, canonical, robots and HTTP status.
+
 ## Testing
 
 - **Unit (Jest)**: colocated as `<file>.spec.ts`; mock external services; keep fast and deterministic

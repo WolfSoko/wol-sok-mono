@@ -9,6 +9,7 @@ import {
   Router,
 } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { RESPONSE, ServerResponse } from '@analogjs/router/tokens';
 import { BehaviorSubject, map, NEVER } from 'rxjs';
 import { AccountAdapterMock } from '../../adapter/account-adapter-mock.service';
 import { AppConfigAdapterMock } from '../../adapter/app-config-adapter-mock.service';
@@ -22,8 +23,10 @@ import PollPageComponent from './[pollId].page';
 describe('PollPageComponent', () => {
   let repo: PollsRepoAdapterMock;
   const routePollId = new BehaviorSubject('');
+  const response = { statusCode: 200, headersSent: false };
 
   beforeEach(() => {
+    response.statusCode = 200;
     TestBed.configureTestingModule({
       imports: [PollPageComponent, NoopAnimationsModule],
       providers: [
@@ -31,6 +34,7 @@ describe('PollPageComponent', () => {
         { provide: PollsRepoPort, useClass: PollsRepoAdapterMock },
         { provide: AccountPort, useClass: AccountAdapterMock },
         { provide: AppConfigPort, useClass: AppConfigAdapterMock },
+        { provide: RESPONSE, useValue: response as unknown as ServerResponse },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -56,6 +60,7 @@ describe('PollPageComponent', () => {
         .textContent
     ).toContain('Pizza or pasta?');
     expect(element.query(By.css('[data-testid="poll-not-found"]'))).toBeNull();
+    expect(response.statusCode).toBe(200);
   });
 
   it('leaves the discussion out while an admin switched it off', async () => {
@@ -81,6 +86,15 @@ describe('PollPageComponent', () => {
     expect(
       element.query(By.css('[data-testid="poll-not-found"]'))
     ).not.toBeNull();
+  });
+
+  it('answers 404 on the server when the poll does not exist', async () => {
+    await render('unknown');
+
+    expect(response.statusCode).toBe(404);
+    expect(TestBed.inject(Title).getTitle()).toBe(
+      'Poll not found | RollaPolla'
+    );
   });
 
   it('gives the poll page its own title and keeps unlisted polls out of search indexes', async () => {

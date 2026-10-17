@@ -16,6 +16,15 @@ jest.mock('@angular-architects/native-federation', () => ({
 @Component({ template: '' })
 class DummyComponent {}
 
+/**
+ * Routes that redirect to a tab list the tabs instead, since the canonical URL
+ * is the one after the redirect. Hidden tabs stay out.
+ */
+const SITEMAP_SUB_PAGES: Record<string, string[]> = {
+  tensorflowExamples: ['polynomialregression', 'learnedDigits'],
+  neuralNetwork: ['perceptron'],
+};
+
 describe('SeoService', () => {
   const setup = async (url: string) => {
     TestBed.configureTestingModule({
@@ -118,8 +127,12 @@ describe('SeoService', () => {
     );
 
     expect(locs).toEqual(
-      APP_ROUTES.map(
-        (route) => `https://angularexamples.wolsok.de/${route.path}`
+      APP_ROUTES.flatMap((route) =>
+        (SITEMAP_SUB_PAGES[route.path] ?? ['']).map((subPage) =>
+          [`https://angularexamples.wolsok.de/${route.path}`, subPage]
+            .filter(Boolean)
+            .join('/')
+        )
       )
     );
   });

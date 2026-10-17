@@ -36,12 +36,46 @@
     />
     <meta property="og:image:width" content="512" />
     <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="RollaPolla logo" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:site" content="@rollapolla" />
     <meta
       name="twitter:image"
       content="https://rollapolla.com/assets/logos/android-chrome-512x512.png"
     />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://rollapolla.com/#website",
+            "name": "RollaPolla",
+            "url": "https://rollapolla.com/",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://rollapolla.com/polls?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "WebApplication",
+            "name": "RollaPolla",
+            "url": "https://rollapolla.com/",
+            "description": "Easy polling for everyone: create a poll in seconds, share it and see live what others think.",
+            "applicationCategory": "SocialNetworkingApplication",
+            "operatingSystem": "Any",
+            "browserRequirements": "Requires JavaScript",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "EUR"
+            },
+            "isPartOf": { "@id": "https://rollapolla.com/#website" }
+          }
+        ]
+      }
+    </script>
     <link
       rel="icon"
       href="/assets/logos/favicon.ico"
