@@ -33,6 +33,7 @@ import {
   CLAIM_FRAGMENT,
   COMBAT_FRAGMENT,
   CRUSH_FRAGMENT,
+  EFFECTS_FRAGMENT,
   ENERGY_SCALE,
   FEED_FRAGMENT,
   HUNT_FRAGMENT,
@@ -63,6 +64,12 @@ const MAX_MOVE_STEPS = 12;
 /** Read backs in flight at once - the GPU is a frame or two behind. */
 const READBACK_SLOTS = 3;
 
+/**
+ * How fast the glow of a fight, a meal and a push fades: the share of it
+ * gone after a second is 1 - e^-rate.
+ */
+const EFFECT_FADE_PER_SEC = { fight: 2.5, eat: 2.5, move: 6 };
+
 /** What a pass of the claim and apply pair does. */
 const KIND = { move: 0, escape: 1, divide: 2 } as const;
 
@@ -89,6 +96,7 @@ interface Programs {
   combat: Program;
   feed: Program;
   report: Program;
+  effects: Program;
 }
 
 interface Readback {
@@ -116,6 +124,8 @@ interface Resources {
   hunt: Target;
   /** Ping and pong of the report, so the running totals can carry on. */
   reports: [Target, Target];
+  /** Ping and pong of the glow the painter adds - see `EFFECTS_FRAGMENT`. */
+  effects: [Target, Target];
   /** Read back buffers waiting to be used. */
   freeReadbacks: Readback[];
   /** Read backs the GPU works on, oldest first. */
@@ -171,6 +181,7 @@ export class GpuSimulation implements Simulation {
   /** The state combat rendered into this frame. */
   private eventsIndex = 1;
   private reportIndex = 0;
+  private effectsIndex = 0;
   private spawns: ColonySpawn[] = [];
   private dynamicWalls: DynamicWall[] = [];
   private mask = new Uint8Array(0);
@@ -255,6 +266,10 @@ export class GpuSimulation implements Simulation {
       owner: slot + 1,
       bounds: this.boundsOf(slot),
     }));
+  }
+
+  public effectsTexture(): WebGLTexture | null {
+    return this.resources?.effects[this.effectsIndex].texture ?? null;
   }
 
   /** Takes effect with the next `init`, which lays out walls and pellets. */
@@ -368,6 +383,7 @@ export class GpuSimulation implements Simulation {
     for (let step = 0; step < mostSteps; step++) {
       this.claimAndApply(resources, KIND.move, step);
     }
+    this.renderEffects(resources);
 
     // 6. The report. The one read back is last frame's, which the GPU has
     // finished by now - reading this frame's would make the driver wait.
@@ -494,11 +510,27 @@ export class GpuSimulation implements Simulation {
       gl.uniform1fv(at['uAggression[0]'], u.aggression);
       gl.uniform1fv(at['uDivideChance[0]'], u.divideChance);
     }
-    for (const program of [programs.combat, programs.report]) {
+    for (const program of [
+      programs.combat,
+      programs.report,
+      programs.effects,
+    ]) {
       gl.useProgram(program.program);
       gl.uniform3fv(program.uniforms['uPellets[0]'], u.pellets);
       gl.uniform1i(program.uniforms['uPelletCount'], pelletCount);
     }
+    const effects = programs.effects.uniforms;
+    gl.useProgram(programs.effects.program);
+    const fade = (rate: number) => Math.exp(-rate * deltaTimeSec);
+    gl.uniform3f(
+      effects['uFade'],
+      fade(EFFECT_FADE_PER_SEC.fight),
+      fade(EFFECT_FADE_PER_SEC.eat),
+      fade(EFFECT_FADE_PER_SEC.move)
+    );
+    // The first frame would find every starting bacterium freshly arrived.
+    gl.uniform1i(effects['uTrack'], this.frame > 1 ? 1 : 0);
+
     const combat = programs.combat.uniforms;
     gl.useProgram(programs.combat.program);
     gl.uniform1f(combat['uDt'], deltaTimeSec);
@@ -593,6 +625,15 @@ export class GpuSimulation implements Simulation {
         uPrevious: UNIT.previous,
       }
     );
+    set(
+      programs.effects,
+      {},
+      {
+        uPelletRadius: b.nutrientRadius,
+        uEvents: UNIT.events,
+        uPreviousEffects: UNIT.previous,
+      }
+    );
     gl.useProgram(programs.report.program);
     gl.uniform2i(
       programs.report.uniforms['uBlocks'],
@@ -650,6 +691,25 @@ export class GpuSimulation implements Simulation {
     gl.uniform1ui(program.uniforms['uSeed'], (this.frame * 2654435761) >>> 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  /** Lets the glow of the last frames fade and lights what happened now. */
+  private renderEffects(resources: Resources): void {
+    const gl = this.gl;
+    const previous = resources.effects[this.effectsIndex];
+    this.effectsIndex = 1 - this.effectsIndex;
+    bindTexture(
+      gl,
+      UNIT.events,
+      resources.states[this.eventsIndex].texture,
+      null
+    );
+    bindTexture(gl, UNIT.previous, previous.texture, null);
+    this.pass(
+      resources,
+      resources.programs.effects,
+      resources.effects[this.effectsIndex]
+    );
   }
 
   private renderReport(resources: Resources): void {
@@ -916,6 +976,13 @@ export class GpuSimulation implements Simulation {
         zeros
       );
     }
+    // No glow left over from the last match.
+    gl.clearColor(0, 0, 0, 0);
+    for (const effects of resources.effects) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, effects.framebuffer);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     // Reads of the last match that are still in flight finish, but count
     // for nothing.
     for (const readback of resources.pendingReadbacks) {
@@ -961,6 +1028,9 @@ export class GpuSimulation implements Simulation {
     const layout = this.layout;
     const report = () =>
       createTarget(gl, gl.RGBA32UI, layout.width, layout.height, gl.NEAREST);
+    // Filtered, so the painter's glow is smooth between the cells.
+    const effects = () =>
+      createTarget(gl, gl.RGBA8, this.width, this.height, gl.LINEAR);
     const freeReadbacks: Readback[] = Array.from(
       { length: READBACK_SLOTS },
       () => {
@@ -998,6 +1068,7 @@ export class GpuSimulation implements Simulation {
         gl.NEAREST
       ),
       reports: [report(), report()],
+      effects: [effects(), effects()],
       freeReadbacks,
       pendingReadbacks: [],
       readbackData: new Uint32Array(layout.width * layout.height * 4),
@@ -1028,6 +1099,7 @@ function renderTargets(resources: Resources): Target[] {
     resources.influence,
     resources.hunt,
     ...resources.reports,
+    ...resources.effects,
   ];
 }
 
@@ -1087,6 +1159,13 @@ function compiledPrograms(gl: WebGL2RenderingContext): Programs {
       'uPrevious',
       'uCellSize',
       'uBlocks',
+      ...pellets,
+    ]),
+    effects: program(EFFECTS_FRAGMENT, [
+      'uEvents',
+      'uPreviousEffects',
+      'uFade',
+      'uTrack',
       ...pellets,
     ]),
   };

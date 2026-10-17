@@ -10,6 +10,18 @@ vec2 arenaPosition(vec2 ndc, vec2 arena) {
   return vec2((ndc.x + 1.0) * 0.5 * arena.x, (1.0 - ndc.y) * 0.5 * arena.y);
 }`;
 
+/** A cheap integer hash, for sparkles that look random. */
+const HASH = `
+uint hash(uvec3 v) {
+  v = v * 1664525u + 1013904223u;
+  v.x += v.y * v.z;
+  v.y += v.z * v.x;
+  v.z += v.x * v.y;
+  v ^= v >> 16u;
+  v.x += v.y * v.z;
+  return v.x;
+}`;
+
 /**
  * Lays the floor over the trail of the last frame - at partial opacity,
  * which fades what moved into a short trail, or fully to clear it.
@@ -103,15 +115,7 @@ float shimmer(vec2 p, float t) {
   return squared * squared * squared;
 }
 
-uint hash(uvec3 v) {
-  v = v * 1664525u + 1013904223u;
-  v.x += v.y * v.z;
-  v.y += v.z * v.x;
-  v.z += v.x * v.y;
-  v ^= v >> 16u;
-  v.x += v.y * v.z;
-  return v.x;
-}
+${HASH}
 
 bool sparkle(vec2 p, float t) {
   uvec3 key = uvec3(uvec2(floor(p)), uint(floor(t * 10.0)));
@@ -174,6 +178,75 @@ void main() {
 
   vec3 body = uColor * shade;
   outColor = vec4(body + (1.0 - body) * white, 0.94 * coverage * uAlpha);
+}`;
+
+/**
+ * The glow of what the colonies do, added over them - from the GPU
+ * simulation's effects (see its `EFFECTS_FRAGMENT`):
+ * - fights spark, white hot where a cell was just taken and orange at the
+ *   rim, flickering as they fade
+ * - eating bacteria bubble in the pink of sweet juice
+ * - a colony pushing forward gleams in its own colour at the front, and
+ *   leaves a fading streak behind
+ */
+export const EFFECTS_FRAGMENT = `#version 300 es
+precision highp float;
+precision highp int;
+in vec2 vNdc;
+uniform sampler2D uEffects;
+uniform vec2 uArena;
+uniform vec3 uColors[2];
+uniform float uTime;
+out vec4 outColor;
+${ARENA_POSITION}
+${HASH}
+
+float noise(vec2 cell, float t, uint salt) {
+  return float(hash(uvec3(uvec2(cell), uint(t) * 7u + salt))) / 4294967295.0;
+}
+
+void main() {
+  vec2 p = arenaPosition(vNdc, uArena);
+  vec2 texel = 1.0 / uArena;
+  vec2 uv = p / uArena;
+  vec4 here = texture(uEffects, uv);
+  // A soft halo: the heat a cell and a half around, and fainter three out.
+  vec3 near = vec3(0.0);
+  vec3 far = vec3(0.0);
+  for (int i = 0; i < 4; i++) {
+    vec2 direction = vec2(i == 0 ? 1.0 : i == 1 ? -1.0 : 0.0, i == 2 ? 1.0 : i == 3 ? -1.0 : 0.0);
+    near += texture(uEffects, uv + direction * 1.5 * texel).rgb;
+    far += texture(uEffects, uv + direction.yx * 3.0 * texel).rgb;
+  }
+  near *= 0.25;
+  far *= 0.25;
+  float fight = max(here.r, max(near.r * 0.8, far.r * 0.45));
+  float eat = max(here.g, near.g * 0.6);
+  float move = here.b;
+  if (fight + eat + move < 0.02) {
+    discard;
+  }
+
+  vec2 cell = floor(p);
+  vec3 color = vec3(0.0);
+  float flicker = 0.55 + 0.45 * noise(cell, uTime * 24.0, 1u);
+  vec3 ember = mix(vec3(1.0, 0.3, 0.04), vec3(1.0, 0.96, 0.82), here.r * here.r);
+  color += ember * fight * flicker * 1.5;
+  // Sparks crackle around a fight: single cells flaring white for a blink.
+  if (fight > 0.08 && noise(cell, uTime * 30.0, 3u) > 0.86) {
+    color += vec3(1.0, 0.9, 0.7) * fight * 1.8;
+  }
+
+  float phase = noise(cell, 0.0, 2u) * 6.2832;
+  float bubble = 0.5 + 0.5 * sin(uTime * 9.0 + phase);
+  color += vec3(1.0, 0.5, 0.78) * eat * (0.25 + 0.45 * bubble * bubble);
+
+  uint packed = uint(round(texelFetch(uEffects, ivec2(cell), 0).a * 255.0));
+  uint owner = (packed >> 2u) & 3u;
+  if (owner != 0u) {
+    color += mix(uColors[owner - 1u], vec3(1.0), 0.45) * move * 0.35;
+  }
+  outColor = vec4(color, 1.0);
 }`;
 
 /** One instance per shape, its rect in arena cells - see `SHAPE`. */

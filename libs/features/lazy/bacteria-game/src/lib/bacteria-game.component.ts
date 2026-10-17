@@ -132,6 +132,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private playerQuery = inject(PlayerQuery);
   protected readonly settings = inject(GameSettingsService);
   private readonly sound = inject(GameSoundService);
+  /** No flickering glow for players who asked their system for less motion. */
+  private readonly reducedMotion =
+    typeof matchMedia === 'function' &&
+    matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   @ViewChild('canvasElement', { static: true })
   private canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -537,6 +541,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       walls: this.walls(),
       dynamicWalls: this.playerService.getDynamicWalls(),
       colonies: simulation.colonyLayers(boosted),
+      effects: this.reducedMotion ? null : simulation.effectsTexture(),
       nutrients: this.playerService.getNutrients(),
       balance,
       look: this.settings.look(),

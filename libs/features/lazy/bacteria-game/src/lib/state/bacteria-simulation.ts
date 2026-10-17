@@ -258,6 +258,11 @@ export class BacteriaSimulation implements Simulation {
     }));
   }
 
+  /** No glow: the CPU does not keep a record per cell of what happened. */
+  public effectsTexture(): null {
+    return null;
+  }
+
   /** The bacterium of another colony closest to a point, null without one. */
   public nearestEnemy(playerId: number, from: Point): Point | null {
     let nearest: Point | null = null;

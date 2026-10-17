@@ -29,6 +29,7 @@ import {
   BLIT_FRAGMENT,
   BLUR_FRAGMENT,
   COLONY_FRAGMENT,
+  EFFECTS_FRAGMENT,
   FLOOR_FRAGMENT,
   SHAPE_FRAGMENT,
   SHAPE_VERTEX,
@@ -101,6 +102,8 @@ interface Programs {
   shape: Program;
   /** A GPU colony's cells out of the simulation's state. */
   cells: Program;
+  /** The glow of fights, meals and pushes. */
+  effects: Program;
 }
 
 interface Resources {
@@ -193,6 +196,9 @@ export class GlArenaPainter implements ArenaPainter {
     });
   }
 
+  /** Each colony's colour for the glow, filled per frame. */
+  private readonly effectColors = new Float32Array(6);
+
   /**
    * A simulation that runs the war on this painter's GPU context - its
    * state is then drawn without leaving the GPU.
@@ -249,6 +255,9 @@ export class GlArenaPainter implements ArenaPainter {
 
     for (const colony of frame.colonies) {
       this.drawColony(frame, colony);
+    }
+    if (frame.effects != null) {
+      this.drawEffects(frame, frame.effects);
     }
 
     this.foreground.clear();
@@ -418,6 +427,37 @@ export class GlArenaPainter implements ArenaPainter {
     gl.enable(gl.BLEND);
   }
 
+  /** Adds the glow of what the colonies do over them, light on light. */
+  private drawEffects(frame: ArenaFrame, effects: WebGLTexture): void {
+    const gl = this.gl;
+    const program = this.resources?.programs.effects;
+    if (program == null) {
+      return;
+    }
+    const colors = this.effectColors;
+    for (const layer of frame.colonies) {
+      if (layer.kind === 'state' && layer.owner >= 1 && layer.owner <= 2) {
+        colors.set(
+          layer.color.slice(0, 3).map((channel) => channel / 255),
+          (layer.owner - 1) * 3
+        );
+      }
+    }
+    this.useFullscreen(program);
+    bindTexture(gl, 0, effects, program.uniforms['uEffects']);
+    gl.uniform2f(program.uniforms['uArena'], this.width, this.height);
+    gl.uniform3fv(program.uniforms['uColors[0]'], colors);
+    gl.uniform1f(program.uniforms['uTime'], frame.timeSec);
+    gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.blendFuncSeparate(
+      gl.SRC_ALPHA,
+      gl.ONE_MINUS_SRC_ALPHA,
+      gl.ONE,
+      gl.ONE_MINUS_SRC_ALPHA
+    );
+  }
+
   private blurPass(
     source: WebGLTexture,
     target: Target,
@@ -520,6 +560,12 @@ export class GlArenaPainter implements ArenaPainter {
         'uOwner',
         'uMaxEnergy',
         'uSuperMaxEnergy',
+      ]),
+      effects: createProgram(gl, FULLSCREEN_VERTEX, EFFECTS_FRAGMENT, [
+        'uEffects',
+        'uArena',
+        'uColors[0]',
+        'uTime',
       ]),
     };
 

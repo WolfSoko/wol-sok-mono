@@ -550,3 +550,52 @@ void main() {
     : 0.0;
   outCells = vec4(mix(${MIN_CELL_DENSITY}, 1.0, strength), heat, 0.0, 1.0);
 }`;
+
+/**
+ * What the painter makes glow, per cell: in red a fight - a capture or a
+ * loss - in green a bacterium eating from a pellet, in blue the front of a
+ * colony pushing into a cell it did not hold. Each fades by `uFade` per
+ * frame, so a flash lingers for a moment.
+ *
+ * Alpha packs the owner of the cell this frame in bits 0-1, so the next
+ * frame sees who moved in, and the colony that left the glow in bits 2-3,
+ * for its colour.
+ */
+export const EFFECTS_FRAGMENT = `${COMMON}
+uniform usampler2D uEvents;
+uniform sampler2D uPreviousEffects;
+uniform vec3 uFade;
+uniform bool uTrack;
+uniform vec3 uPellets[${MAX_PELLETS}];
+uniform int uPelletCount;
+uniform int uPelletRadius;
+out vec4 outEffects;
+
+void main() {
+  ivec2 cell = ivec2(gl_FragCoord.xy);
+  vec4 previous = texelFetch(uPreviousEffects, cell, 0);
+  uint packed = uint(round(previous.a * 255.0));
+  uint lastOwner = packed & 3u;
+  uint glowOwner = (packed >> 2u) & 3u;
+  uint owner = texelFetch(uState, cell, 0).r;
+
+  vec3 heat = previous.rgb * uFade;
+  if (texelFetch(uEvents, cell, 0).a != 0u) {
+    heat.r = 1.0;
+  }
+  if (owner != 0u) {
+    for (int i = 0; i < uPelletCount; i++) {
+      vec3 pellet = uPellets[i];
+      ivec2 distance = abs(cell - ivec2(pellet.xy));
+      if (pellet.z > 0.0 && max(distance.x, distance.y) <= uPelletRadius) {
+        heat.g = 1.0;
+        break;
+      }
+    }
+    if (uTrack && owner != lastOwner) {
+      heat.b = 1.0;
+      glowOwner = owner;
+    }
+  }
+  outEffects = vec4(heat, float(owner | (glowOwner << 2u)) / 255.0);
+}`;

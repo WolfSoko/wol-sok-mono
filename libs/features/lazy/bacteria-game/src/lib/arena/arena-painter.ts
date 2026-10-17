@@ -26,6 +26,11 @@ export interface ArenaFrame {
   walls: readonly Rect[];
   dynamicWalls: readonly DynamicWall[];
   colonies: readonly ColonyLayer[];
+  /**
+   * The glow of what the colonies do, from the GPU simulation - only the
+   * WebGL painter, which shares its context, draws it.
+   */
+  effects: WebGLTexture | null;
   nutrients: readonly Nutrient[];
   balance: GameBalance;
   look: BacteriaLook;
