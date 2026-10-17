@@ -236,6 +236,7 @@
   },
   "overrides": {
     "node-gyp": "13.0.2",
+    "handlebars": "4.7.10",
     "akita-ng-fire": {
       "@angular/common": "^22.2.0",
       "@angular/core": "^22.2.0",
