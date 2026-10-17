@@ -17,7 +17,7 @@ import p5 from 'p5';
 import { BrainService } from '../brain.service';
 import { Perceptron } from '../perceptron';
 import { Point } from '../point';
-import { DataP5Sketch } from './data-p5-sketch';
+import { DataP5Sketch, heatmapColor } from './data-p5-sketch';
 
 interface ChangeInputs extends SimpleChanges {
   points: SimpleChange;
@@ -100,19 +100,13 @@ export class DataViewComponent implements AfterViewInit, OnChanges, OnDestroy {
   private initLegendScetch() {
     this.legendScetch = new p5((p) => {
       p.setup = () => {
-        p.createCanvas(100, this.canvasHeight);
+        p.createCanvas(110, this.canvasHeight);
         p.background(255);
-        p.fill(0);
-        p.stroke(0);
-        p.line(10, 50, 60, 50);
-        p.noStroke();
-        p.text('Class separation', 10, 42);
-
-        p.stroke(255, 200, 200);
-        p.strokeWeight(2);
-        p.line(10, 100, 60, 100);
-        p.noStroke();
-        p.text('Perceptron separation', 10, 68, 20, 80);
+        if (this.showLinearDivider) {
+          drawLinearDividerLegend(p);
+        } else {
+          drawHeatmapLegend(p);
+        }
 
         p.fill(255, 0, 0);
         p.noStroke();
@@ -142,4 +136,40 @@ export class DataViewComponent implements AfterViewInit, OnChanges, OnDestroy {
       };
     }, this.legendCanvas.nativeElement);
   }
+}
+
+function drawLinearDividerLegend(p: p5): void {
+  p.fill(0);
+  p.stroke(0);
+  p.line(10, 50, 60, 50);
+  p.noStroke();
+  p.text('Class separation', 10, 42);
+
+  p.stroke(255, 200, 200);
+  p.strokeWeight(2);
+  p.line(10, 100, 60, 100);
+  p.noStroke();
+  p.text('Perceptron separation', 10, 68, 20, 80);
+}
+
+function drawHeatmapLegend(p: p5): void {
+  p.fill(0);
+  p.noStroke();
+  p.text('Network output', 10, 22);
+  for (let x = 0; x <= 90; x++) {
+    p.stroke(heatmapColor(x / 90));
+    p.line(10 + x, 30, 10 + x, 45);
+  }
+  p.noStroke();
+  p.fill(0);
+  p.text('0', 10, 58);
+  p.text('0.5', 48, 58);
+  p.text('1', 95, 58);
+
+  p.stroke(40);
+  p.strokeWeight(2);
+  p.line(10, 112, 60, 112);
+  p.strokeWeight(1);
+  p.noStroke();
+  p.text('Learned border (output 0.5)', 10, 72, 100, 30);
 }

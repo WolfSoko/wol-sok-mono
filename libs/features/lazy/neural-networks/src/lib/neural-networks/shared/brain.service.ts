@@ -8,8 +8,11 @@ import { TrainData } from './train-data';
 import { TrainDataService } from './train-data.service';
 
 const defaultLearnRate = 0.3;
-// sigmoid back propagation needs a much larger step than the perceptron rule
-const defaultBackPropagationLearnRate = 3;
+const defaultBackPropagationLearnRate = 1;
+
+export type LabelDefinition = (x: number, y: number) => LabelClass;
+
+export const diagonalLabel: LabelDefinition = (x, y) => (x > y ? 1 : 0);
 
 // provided by NeuralNetworkComponent, so its state and auto learning end with the page
 @Injectable()
@@ -18,6 +21,8 @@ export class BrainService {
 
   private readonly _learnedDataPoints = signal(0);
   points: Point[] = [];
+  /** Which class the generated training points belong to. */
+  labelDefinition: LabelDefinition = diagonalLabel;
   perceptrons: Perceptron[][] = [[]];
   isSinglePerceptron = false;
 
@@ -115,8 +120,9 @@ export class BrainService {
       layer.map(() => 0)
     );
     const lastLayer = this.perceptrons.length - 1;
-    deltas[lastLayer][0] =
-      output * (1 - output) * (trainData.expected - output);
+    // cross-entropy loss: the sigmoid derivative cancels out, so a confidently
+    // wrong output still gets a large correction instead of a vanishing one
+    deltas[lastLayer][0] = trainData.expected - output;
     for (let l = lastLayer - 1; l >= 0; l--) {
       const nextLayer = this.perceptrons[l + 1];
       this.perceptrons[l].forEach((perceptron, j) => {
@@ -137,9 +143,15 @@ export class BrainService {
     this._learnedDataPoints.update((count) => count + 1);
   }
 
-  /** Runs the inputs through all layers with sigmoid activation and stores each perceptron's last input and output. */
+  /**
+   * Runs the inputs through all layers with sigmoid activation and, unless silent,
+   * stores each perceptron's last input and output. A multi layer net gets its
+   * inputs scaled from 0..1 to -1..1, so the hidden perceptrons start out unsaturated.
+   */
   private feedForward(input: number[], silent = false): number {
-    let layerResult = input;
+    let layerResult = this.isSinglePerceptron
+      ? input
+      : input.map((value) => value * 2 - 1);
     for (const layer of this.perceptrons) {
       const layerInput = layerResult;
       layerResult = layer.map((perceptron) =>
@@ -153,7 +165,10 @@ export class BrainService {
   }
 
   updateTrainingData(): Point[] {
-    this.points = this.trainDataService.createTestData(100);
+    this.points = this.trainDataService.createTestData(
+      100,
+      this.labelDefinition
+    );
     return this.points;
   }
 
