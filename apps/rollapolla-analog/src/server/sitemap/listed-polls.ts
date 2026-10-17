@@ -8,9 +8,9 @@ import {
   limit,
   orderBy,
   query,
-  Timestamp,
   where,
 } from 'firebase/firestore/lite';
+import type { PollDto } from '../../app/adapter/poll.dto';
 import { environment } from '../../environments/environment';
 import { SitemapPoll } from './sitemap';
 
@@ -38,7 +38,7 @@ export async function listedPolls(): Promise<SitemapPoll[]> {
   const snapshot = await withTimeout(getDocs(polls), TIMEOUT_MS);
   // one malformed poll must not cost the sitemap all the others
   return snapshot.docs.flatMap((doc) => {
-    const { ttl } = doc.data() as { ttl?: Timestamp };
+    const { ttl } = doc.data() as Partial<Pick<PollDto, 'ttl'>>;
     return ttl ? [{ id: doc.id, closesAt: ttl.toDate() }] : [];
   });
 }

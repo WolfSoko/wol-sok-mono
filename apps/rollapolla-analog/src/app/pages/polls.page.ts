@@ -24,7 +24,7 @@ import { EndlessScroll } from '../core/endless-scroll/endless-scroll';
 import { EndlessScrollEndComponent } from '../core/endless-scroll/endless-scroll-end.component';
 import { PollListComponent } from '../core/poll-list/poll-list.component';
 import { PollsRepoPort } from '../ports/polls-repo.port';
-import { SITE_TAGS, SITE_URL, usePageTags } from './site-tags';
+import { SITE_TAGS, usePageTags } from './site-tags';
 
 /** All open listed polls, searchable. */
 @Component({
@@ -228,7 +228,6 @@ export default class PollsPageComponent {
         'Browse public polls on RollaPolla: search the hottest and newest questions, vote and see live results.',
       socialDescription:
         'Search the hottest and newest polls, vote and see live results.',
-      url: `${SITE_URL}/polls`,
       robots: SITE_TAGS.robots,
     });
   }

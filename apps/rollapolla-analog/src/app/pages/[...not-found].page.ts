@@ -1,14 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { Router, RouterLink } from '@angular/router';
-import {
-  injectSetNotFoundStatus,
-  SITE_TAGS,
-  SITE_URL,
-  usePageTags,
-} from './site-tags';
+import { RouterLink } from '@angular/router';
+import { injectSetNotFoundStatus, useNoindexPage } from './site-tags';
 
 /** Every path no other page matches: a real 404, not a copy of the home page. */
 @Component({
@@ -63,13 +58,8 @@ import {
 })
 export default class NotFoundPageComponent {
   constructor() {
-    usePageTags({
-      ...SITE_TAGS,
-      title: 'Page not found | RollaPolla',
-      // its own URL: pointing at home would claim the 404 is a copy of it
-      url: SITE_URL + inject(Router).url.split(/[?#]/)[0],
-      robots: 'noindex',
-    });
+    // its own URL as canonical: pointing at home would call the 404 a copy of it
+    useNoindexPage('Page not found | RollaPolla');
     injectSetNotFoundStatus()();
   }
 }

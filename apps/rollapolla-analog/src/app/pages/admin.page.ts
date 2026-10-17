@@ -185,7 +185,7 @@ export default class AdminPageComponent {
   });
 
   constructor() {
-    useNoindexPage('Admin | RollaPolla', '/admin');
+    useNoindexPage('Admin | RollaPolla');
     if (!this.isServer) {
       // rights granted or revoked in the last hour apply right away here
       void this.admin

@@ -1,9 +1,9 @@
 import { DestroyRef, effect, inject, Signal } from '@angular/core';
 import { Poll } from '../../../shared/poll';
+import { pollUrl } from '../../../shared/site-url';
 import {
   injectApplyPageTags,
   injectSetNotFoundStatus,
-  pollUrl,
   SITE_TAGS,
 } from '../site-tags';
 
@@ -26,24 +26,25 @@ export function usePollMetaTags(
   effect(() => {
     const current = poll();
     const url = pollUrl(pollId());
-    apply(
-      current
-        ? {
-            title: `${current.question} | RollaPolla`,
-            description: pollDescription(current),
-            socialDescription: pollDescription(current),
-            url,
-            robots: current.listed ? SITE_TAGS.robots : 'noindex',
-          }
-        : {
-            ...SITE_TAGS,
-            ...(current === null && { title: 'Poll not found | RollaPolla' }),
-            url,
-            robots: 'noindex',
-          }
-    );
-    if (current === null) {
+    if (current) {
+      apply({
+        title: `${current.question} | RollaPolla`,
+        description: pollDescription(current),
+        socialDescription: pollDescription(current),
+        url,
+        robots: current.listed ? SITE_TAGS.robots : 'noindex',
+      });
+    } else if (current === null) {
+      apply({
+        ...SITE_TAGS,
+        title: 'Poll not found | RollaPolla',
+        url,
+        robots: 'noindex',
+      });
       setNotFoundStatus();
+    } else {
+      // still loading
+      apply({ ...SITE_TAGS, url, robots: 'noindex' });
     }
   });
 

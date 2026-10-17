@@ -221,6 +221,6 @@ export default class MyPollsPageComponent {
   });
 
   constructor() {
-    useNoindexPage('My polls | RollaPolla', '/my-polls');
+    useNoindexPage('My polls | RollaPolla');
   }
 }

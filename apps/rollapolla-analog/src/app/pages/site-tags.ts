@@ -1,10 +1,9 @@
 import { DOCUMENT } from '@angular/common';
 import { DestroyRef, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { injectResponse } from '@analogjs/router/tokens';
 import { SITE_URL } from '../../shared/site-url';
-
-export { pollUrl, SITE_URL } from '../../shared/site-url';
 
 export type PageTags = {
   title: string;
@@ -55,25 +54,24 @@ export function injectApplyPageTags(): (tags: PageTags) => void {
 
 /**
  * Gives a page its own tags and restores the site tags when the page goes.
- * Call in an injection context.
+ * Without a `url` the page gets its own, without query or hash. Call in an
+ * injection context.
  */
-export function usePageTags(tags: PageTags): void {
+export function usePageTags(
+  tags: Omit<PageTags, 'url'> & { url?: string }
+): void {
   const apply = injectApplyPageTags();
-  apply(tags);
+  const url = tags.url ?? SITE_URL + inject(Router).url.split(/[?#]/)[0];
+  apply({ ...tags, url });
   inject(DestroyRef).onDestroy(() => apply(SITE_TAGS));
 }
 
 /**
- * Gives a personal page its own title and keeps it out of search engines.
- * Call in an injection context.
+ * Gives a page its own title and keeps it out of search engines. Call in an
+ * injection context.
  */
-export function useNoindexPage(title: string, path: string): void {
-  usePageTags({
-    ...SITE_TAGS,
-    title,
-    url: `${SITE_URL}${path}`,
-    robots: 'noindex',
-  });
+export function useNoindexPage(title: string): void {
+  usePageTags({ ...SITE_TAGS, url: undefined, title, robots: 'noindex' });
 }
 
 /**
