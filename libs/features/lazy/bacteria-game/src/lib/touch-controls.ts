@@ -7,9 +7,8 @@
 
 import {
   clamp,
-  clampLength,
-  delta,
   distance,
+  length,
   NO_STEERING,
   Point,
   scaleTo,
@@ -85,9 +84,9 @@ export function nearestFreeCrosshair(
     if (taken.has(crosshair.id)) {
       continue;
     }
-    const distance = Math.hypot(crosshair.x - point.x, crosshair.y - point.y);
-    if (distance < nearestDistance) {
-      nearestDistance = distance;
+    const gap = distance(crosshair, point);
+    if (gap < nearestDistance) {
+      nearestDistance = gap;
       nearest = crosshair.id;
     }
   }
@@ -96,8 +95,8 @@ export function nearestFreeCrosshair(
 }
 
 /**
- * Turns the finger's offset from where it first touched down into a steering
- * vector.
+ * Turns the finger's offset from where it first touched down - the push - into
+ * a steering vector.
  *
  * Inside the dead zone the stick counts as centred, so a resting finger does
  * not drift the crosshair. From there the deflection grows linearly and is
@@ -105,30 +104,17 @@ export function nearestFreeCrosshair(
  * pull full speed.
  */
 export function steeringVector(
-  origin: Point,
-  pointer: Point,
+  push: Point,
   radius: number,
   deadZone = 0.15
 ): SteeringVector {
   if (radius <= 0 || deadZone >= 1) {
     return NO_STEERING;
   }
-  const deflection = distance(origin, pointer) / radius;
+  const deflection = length(push) / radius;
   if (deflection <= deadZone) {
     return NO_STEERING;
   }
   const strength = Math.min(1, (deflection - deadZone) / (1 - deadZone));
-  return scaleTo(delta(origin, pointer), strength);
-}
-
-/**
- * Where the knob is drawn relative to the base of the stick: under the finger,
- * but never further out than the rim of the base.
- */
-export function knobOffset(
-  origin: Point,
-  pointer: Point,
-  radius: number
-): Point {
-  return clampLength(delta(origin, pointer), radius);
+  return scaleTo(push, strength);
 }

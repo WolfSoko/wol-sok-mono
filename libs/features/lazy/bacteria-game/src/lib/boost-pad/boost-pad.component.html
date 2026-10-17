@@ -20,14 +20,17 @@
       <span class="boost-state">{{ boostLabel(colony()) }}</span>
     </button>
   </span>
-  <span class="pad-name">{{ colony().name }}</span>
-  <span class="pad-stats"
-    >{{ colony().bacterias }} · ⚡ {{ colony().energy }}%</span
-  >
-  <mat-progress-bar
-    class="share"
-    mode="determinate"
-    [value]="colony().share"
-    aria-label="Share of all bacteria"
-  />
+  <span class="pad-info">
+    <span class="pad-name">{{ colony().name }}</span>
+    <span class="pad-stats">
+      <span>{{ colony().bacterias }}</span>
+      <span>⚡ {{ colony().energy }}%</span>
+    </span>
+    <mat-progress-bar
+      class="share"
+      mode="determinate"
+      [value]="colony().share"
+      aria-label="Share of all bacteria"
+    />
+  </span>
 </div>
