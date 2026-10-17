@@ -52,4 +52,35 @@ export class BoostPadComponent {
   protected readonly boostLabel = boostLabel;
   protected readonly buttonSize = BOOST_BUTTON_SIZE;
   protected readonly ringSize = RECHARGE_RING_SIZE;
+
+  /**
+   * Fires on the touch itself, not on the click after it. While the other
+   * hand holds the joystick the tap is the second finger on the screen, and
+   * browsers send no click for a tap during a multi-touch - the boost would
+   * never fire. A press is also quicker than a click, which waits for the
+   * finger to lift.
+   */
+  protected onPress(event: PointerEvent): void {
+    if (event.button !== 0 || !this.canBoost()) {
+      return;
+    }
+    // Keeps the browser from turning the touch into a click or a focus move.
+    event.preventDefault();
+    this.boost.emit();
+  }
+
+  /**
+   * Only a click from the keyboard - Enter or Space on the focused button -
+   * fires here. A pointer has already fired on its press, and its click
+   * (detail 1 and up) would fire the boost a second time.
+   */
+  protected onClick(event: MouseEvent): void {
+    if (event.detail === 0 && this.canBoost()) {
+      this.boost.emit();
+    }
+  }
+
+  private canBoost(): boolean {
+    return !this.disabled() && this.colony().boostReady;
+  }
 }

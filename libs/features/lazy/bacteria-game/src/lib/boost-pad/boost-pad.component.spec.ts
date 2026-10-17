@@ -42,14 +42,54 @@ describe('BoostPadComponent', () => {
     await fixture.whenStable();
   });
 
-  it('fires the boost of its colony', () => {
+  /** A press of the button, as a finger or a mouse sends it. */
+  function press(): void {
+    button().dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, button: 0 })
+    );
+  }
+
+  it('fires the boost of its colony on the press', () => {
     const fired = jest.fn();
     fixture.componentInstance.boost.subscribe(fired);
 
-    button().click();
+    press();
 
     expect(fired).toHaveBeenCalledTimes(1);
     expect(button().getAttribute('aria-label')).toBe('Boost Orange');
+  });
+
+  it('fires once for a press and the click that follows it', () => {
+    const fired = jest.fn();
+    fixture.componentInstance.boost.subscribe(fired);
+
+    press();
+    button().dispatchEvent(
+      new MouseEvent('click', { bubbles: true, detail: 1 })
+    );
+
+    expect(fired).toHaveBeenCalledTimes(1);
+  });
+
+  it('fires from the keyboard, which only sends a click', () => {
+    const fired = jest.fn();
+    fixture.componentInstance.boost.subscribe(fired);
+
+    // Enter or Space on a focused button: a click with detail 0.
+    button().click();
+
+    expect(fired).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a press while the boost is recharging', async () => {
+    const fired = jest.fn();
+    fixture.componentInstance.boost.subscribe(fired);
+    fixture.componentRef.setInput('colony', { ...orange, boostReady: false });
+    await fixture.whenStable();
+
+    press();
+
+    expect(fired).not.toHaveBeenCalled();
   });
 
   it('shows the recharge and keeps the button down until it is full', async () => {
