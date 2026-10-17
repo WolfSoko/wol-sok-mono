@@ -207,9 +207,49 @@ export function paintSlime(
 }
 
 /** A pellet of food as a drop of jam, in one of a few flavours. */
-interface Jam {
+export interface Jam {
   body: Rgb;
   light: Rgb;
+}
+
+/** Where and how big a pellet's drop of jam is drawn this frame. */
+export interface JamDrop {
+  jam: Jam;
+  /** The centre of the drop, in arena coordinates. */
+  x: number;
+  y: number;
+  radius: number;
+  /** How bright the halo pulses, 0 to 1. */
+  halo: number;
+}
+
+/**
+ * The drops of jam for the pellets that are left: they wobble a little and
+ * shrink as they are eaten. Both pellets of a mirrored pair get the same
+ * flavour.
+ */
+export function jamDrops(
+  nutrients: readonly Nutrient[],
+  nutrientEnergy: number,
+  timeSec: number
+): JamDrop[] {
+  const drops: JamDrop[] = [];
+  for (let n = 0; n < nutrients.length; n++) {
+    const nutrient = nutrients[n];
+    if (nutrient.amount <= 0) {
+      continue;
+    }
+    const left = Math.min(1, nutrient.amount / nutrientEnergy);
+    const wobble = 1 + 0.08 * Math.sin(timeSec * 4 + n * 1.7);
+    drops.push({
+      jam: JAMS[(n >> 1) % JAMS.length],
+      x: nutrient.x + 0.5,
+      y: nutrient.y + 0.5,
+      radius: (1.3 + 1.9 * left) * wobble,
+      halo: 0.5 + 0.5 * Math.sin(timeSec * 2.5 + n),
+    });
+  }
+  return drops;
 }
 
 /** Strawberry, blueberry, apricot and blackcurrant. */
@@ -231,20 +271,11 @@ export function drawJam(
   nutrientEnergy: number,
   timeSec: number
 ): void {
-  for (let n = 0; n < nutrients.length; n++) {
-    const nutrient = nutrients[n];
-    if (nutrient.amount <= 0) {
-      continue;
-    }
-    // Both pellets of a mirrored pair get the same flavour.
-    const jam = JAMS[(n >> 1) % JAMS.length];
-    const left = Math.min(1, nutrient.amount / nutrientEnergy);
-    const wobble = 1 + 0.08 * Math.sin(timeSec * 4 + n * 1.7);
-    const radius = (1.3 + 1.9 * left) * wobble;
-    const x = nutrient.x + 0.5;
-    const y = nutrient.y + 0.5;
-
-    const halo = 0.5 + 0.5 * Math.sin(timeSec * 2.5 + n);
+  for (const { jam, x, y, radius, halo } of jamDrops(
+    nutrients,
+    nutrientEnergy,
+    timeSec
+  )) {
     cx.fillStyle = rgba(jam.light, 0.12 + 0.12 * halo);
     cx.beginPath();
     cx.arc(x, y, radius + 1.5 + halo, 0, Math.PI * 2);
@@ -394,7 +425,7 @@ function shimmer(x: number, y: number, timeSec: number): number {
  * How far a bacterium is charged beyond its normal maximum, from 0 to 1 at
  * the supercharged limit - the white heat of both looks.
  */
-function overcharge(energy: number, balance: GameBalance): number {
+export function overcharge(energy: number, balance: GameBalance): number {
   const range = balance.superChargedMaxEnergy - balance.maxEnergy;
   return energy > balance.maxEnergy && range > 0
     ? Math.min(1, (energy - balance.maxEnergy) / range)
@@ -402,7 +433,7 @@ function overcharge(energy: number, balance: GameBalance): number {
 }
 
 /** A bacterium's energy relative to the normal maximum, never below 0. */
-function strengthOf(energy: number, balance: GameBalance): number {
+export function strengthOf(energy: number, balance: GameBalance): number {
   return Math.max(energy, 0) / balance.maxEnergy;
 }
 
@@ -437,6 +468,6 @@ function boxBlur(
   }
 }
 
-function darker([r, g, b]: Rgb): Rgb {
+export function darker([r, g, b]: Rgb): Rgb {
   return [r * 0.55, g * 0.55, b * 0.55];
 }

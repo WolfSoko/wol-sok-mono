@@ -40,8 +40,8 @@ import {
   take,
   tap,
 } from 'rxjs/operators';
-import { ArenaRenderer } from './arena/arena-renderer';
-import { ColonyRenderer, drawJam } from './arena/colony-renderer';
+import { ArenaFrame, ArenaPainter } from './arena/arena-painter';
+import { createArenaPainter } from './arena/create-arena-painter';
 import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
 import { BoostPadComponent } from './boost-pad/boost-pad.component';
 import {
@@ -138,7 +138,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private stageRef!: ElementRef<HTMLElement>;
   @ViewChild(WsThanosDirective, { static: true })
   private thanos!: WsThanosDirective;
-  private cx!: CanvasRenderingContext2D;
+  /** Draws the arena - on the GPU where the browser can. */
+  private painter: ArenaPainter | null = null;
+  /** Lay the next frame's floor down fully instead of fading into a trail. */
+  private clearNextFrame = true;
 
   width = 320;
   height = 140;
@@ -202,10 +205,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly arenaBorder: Signal<string>;
   /** The darkest floor colour of the arena, for the stage around it. */
   protected readonly arenaRim: Signal<string>;
-  /** Draws the floor, the walls and the drifting specks. */
-  private readonly renderer = new ArenaRenderer(this.width, this.height);
-  /** Draws the colonies, as slime or as pixels. */
-  private readonly colonyRenderer = new ColonyRenderer(this.width, this.height);
   /** Seconds of animation, for the wobble of the jam and the boost shimmer. */
   private animationSec = 0;
   /** The level that follows the selected one, null at the end of the list. */
@@ -303,7 +302,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // the colonies change colour or look, so the start screen always shows
     // the map and the colonies the next match is fought with.
     effect(() => {
-      this.renderer.setTheme(this.theme());
+      this.painter?.setTheme(this.theme());
       this.walls();
       this.colors();
       this.settings.look();
@@ -417,31 +416,25 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    const { canvasEl, context } = this.getRenderingContext();
-    this.cx = context;
-    canvasEl.width = this.width * RENDER_SCALE;
-    canvasEl.height = this.height * RENDER_SCALE;
-    // Everything is drawn in arena cells; the transform scales it up.
-    this.cx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
-    this.cx.imageSmoothingEnabled = false;
-    this.renderer.drawFloor(this.cx, true);
+    const canvas = this.canvasRef.nativeElement;
+    this.painter = createArenaPainter(
+      canvas,
+      this.width,
+      this.height,
+      RENDER_SCALE
+    );
+    if (this.painter == null) {
+      throw new Error('Could not get rendering context');
+    }
+    // Which painter runs - for the e2e tests and for anyone debugging.
+    canvas.dataset['renderer'] = this.painter.kind;
+    this.painter.setTheme(this.theme());
     this.gameStateService.setArenaSize(this.width, this.height);
     this.draw(1 / 1000, true);
     this.nativeFullscreenSupported.set(
       isFullscreenSupported(document, this.stageRef?.nativeElement)
     );
     this.requestNativeFullscreenOnOpen();
-  }
-
-  /** The canvas element and its 2d context, throwing when there is none. */
-  private getRenderingContext() {
-    const canvasEl: HTMLCanvasElement = this.canvasRef.nativeElement;
-
-    const context = canvasEl.getContext('2d');
-    if (context == null) {
-      throw new Error('Could not get rendering context');
-    }
-    return { canvasEl, context };
   }
 
   /**
@@ -451,7 +444,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   startGame() {
     this.requestNativeFullscreen();
     this.sound.matchStart();
-    this.renderer.drawFloor(this.cx, true);
+    this.clearNextFrame = true;
     this.gameStateService.cleanup();
     this.gameStateService.init(this.width, this.height);
     this.gameStateService.start();
@@ -500,89 +493,54 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * alone would leave the walls of the last map as ghosts on the canvas.
    */
   private draw(deltaTimeInSec: number, clear = false) {
-    if (this.cx == null) {
+    if (this.painter == null) {
       return;
     }
     const isRunning = this.query.getValue().currentState === GameState.RUNNING;
 
     requestAnimationFrame(() => {
-      // Lay the floor over the previous frame, so movement leaves a short trail.
-      this.renderer.drawFloor(this.cx, clear);
-      this.renderer.drawMotes(this.cx, deltaTimeInSec);
-      this.renderer.drawWalls(this.cx, this.walls());
-
       if (isRunning) {
         this.playerService.gameLoop(this.width, this.height, deltaTimeInSec);
         this.sound.frame(this.playerService.getFrameEvents());
       }
-      this.renderer.drawDynamicWalls(
-        this.cx,
-        this.playerService.getDynamicWalls()
-      );
-
       this.animationSec += deltaTimeInSec;
-      this.drawColonies();
-      drawJam(
-        this.cx,
-        this.playerService.getNutrients(),
-        this.balance().nutrientEnergy,
-        this.animationSec
-      );
-      this.drawPlayerCursors();
+      const frame = this.frame(deltaTimeInSec, clear || this.clearNextFrame);
+      this.clearNextFrame = false;
+      this.painter?.paint(frame);
     });
   }
 
-  /**
-   * Draws the colonies over the floor in the chosen look. The slime layer is
-   * scaled up smoothly, the pixel layer stays crisp.
-   */
-  private drawColonies(): void {
-    const look = this.settings.look();
+  /** What the arena shows right now, for the painter. */
+  private frame(deltaTimeSec: number, clear: boolean): ArenaFrame {
+    const balance = this.balance();
+    const players = this.playerQuery.getAll();
     const boosted = new Set(
-      this.playerQuery
-        .getAll()
-        .filter(isBoosted)
-        .map((player) => player.id)
+      players.filter(isBoosted).map((player) => player.id)
     );
-    const layer = this.colonyRenderer.render(
-      this.playerService.getColonies().map((colony) => ({
+    return {
+      clear,
+      deltaTimeSec,
+      timeSec: this.animationSec,
+      walls: this.walls(),
+      dynamicWalls: this.playerService.getDynamicWalls(),
+      colonies: this.playerService.getColonies().map((colony) => ({
         color: colony.color,
         bacterias: colony.bacterias,
         boosted: boosted.has(colony.playerId),
       })),
-      this.balance(),
-      look,
-      this.animationSec
-    );
-    if (layer == null) {
-      return;
-    }
-    this.cx.imageSmoothingEnabled = look === 'slime';
-    this.cx.drawImage(layer, 0, 0, this.width, this.height);
-    this.cx.imageSmoothingEnabled = false;
-  }
-
-  /**
-   * Draws each player's crosshair in their own colour, with a pulsing ring
-   * around it while the player's boost is running.
-   */
-  private drawPlayerCursors(): void {
-    const boostDuration = this.balance().boostDurationSec;
-    for (const player of this.playerQuery.getAll()) {
-      const css = `rgba(${player.color.join(',')})`;
-      this.cx.fillStyle = css;
-      this.cx.fillRect(player.x - 6, player.y - 0.5, 13, 2);
-      this.cx.fillRect(player.x - 0.5, player.y - 6, 2, 13);
-
-      if (isBoosted(player) && boostDuration > 0) {
-        const left = player.boostActiveSec / boostDuration;
-        this.cx.strokeStyle = css;
-        this.cx.lineWidth = 1.5;
-        this.cx.beginPath();
-        this.cx.arc(player.x, player.y, 9 + 4 * (1 - left), 0, Math.PI * 2);
-        this.cx.stroke();
-      }
-    }
+      nutrients: this.playerService.getNutrients(),
+      balance,
+      look: this.settings.look(),
+      cursors: players.map((player) => ({
+        x: player.x,
+        y: player.y,
+        color: player.color,
+        boostLeft:
+          isBoosted(player) && balance.boostDurationSec > 0
+            ? player.boostActiveSec / balance.boostDurationSec
+            : null,
+      })),
+    };
   }
 
   ngOnDestroy(): void {
