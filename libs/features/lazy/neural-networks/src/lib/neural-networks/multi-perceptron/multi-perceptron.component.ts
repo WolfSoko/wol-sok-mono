@@ -60,6 +60,7 @@ export class MultiPerceptronComponent implements OnInit {
 
   ngOnInit() {
     this.brainService.createMultiPerceptron(2, this.perceptronPerLayer);
+    this.brainService.updateTrainingData();
   }
 
   addPoint({ x, y, click }: { x: number; y: number; click: 'left' | 'right' }) {

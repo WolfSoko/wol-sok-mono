@@ -14,7 +14,7 @@
       Reset Perceptron
     </button>
     <mat-slide-toggle
-      matTooltip="Each 30ms we learn 10 random point"
+      matTooltip="Every 50ms we learn 10 random points"
       color="primary"
       [ngModel]="autoLearning$ | async"
       (ngModelChange)="toggleAutoLearning($event)"

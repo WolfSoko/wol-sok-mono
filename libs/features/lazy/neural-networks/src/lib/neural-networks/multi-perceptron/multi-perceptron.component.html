@@ -1,5 +1,5 @@
 <div class="perceptron-container">
-  <mat-card>
+  <mat-card appearance="raised" class="data-card">
     <mat-card-header>
       <mat-card-subtitle>Data</mat-card-subtitle>
     </mat-card-header>
@@ -12,16 +12,19 @@
         (dataViewClicked)="addPoint($event)"
         [showLinearDivider]="false"
       />
+      <div>
+        Learnrate: {{ learnRate }}, learned data points: {{ learnedDataPoints }}
+      </div>
     </mat-card-content>
   </mat-card>
+  <feat-lazy-neural-networks-brain-settings
+    [perceptronLayers]="perceptronPerLayer"
+  />
   <mat-card appearance="raised" class="inputLayer">
     <mat-card-header>
       <mat-card-subtitle>Input layer</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <div>
-        Learnrate: {{ learnRate }}, learned data points: {{ learnedDataPoints }}
-      </div>
       @for (perceptron of inputPerceptron; track perceptron) {
         <feat-lazy-neural-networks-perceptron
           [perceptron]="perceptron"
@@ -36,9 +39,6 @@
       <mat-card-subtitle>Hidden layer</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <div>
-        Learnrate: {{ learnRate }}, learned data points: {{ learnedDataPoints }}
-      </div>
       @for (perceptron of hiddenPerceptron; track perceptron) {
         <feat-lazy-neural-networks-perceptron
           [perceptron]="perceptron"
@@ -60,7 +60,4 @@
       />
     </mat-card-content>
   </mat-card>
-  <feat-lazy-neural-networks-brain-settings
-    [perceptronLayers]="perceptronPerLayer"
-  />
 </div>

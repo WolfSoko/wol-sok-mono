@@ -16,20 +16,8 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   ],
 })
 export class NeuralNetworkComponent {
-  constructor() {
-    this._navLinks = [
-      { path: 'perceptron', label: 'Perceptron', hidden: false },
-      {
-        path: 'multiPerceptron',
-        label: 'Multi layer net',
-        hidden: true,
-      },
-    ];
-  }
-
-  private _navLinks: { path: string; label: string; hidden: boolean }[];
-
-  get navLinks() {
-    return this._navLinks.filter((link) => !link.hidden);
-  }
+  public readonly navLinks: { path: string; label: string }[] = [
+    { path: 'perceptron', label: 'Perceptron' },
+    { path: 'multiPerceptron', label: 'Multi layer net' },
+  ];
 }
