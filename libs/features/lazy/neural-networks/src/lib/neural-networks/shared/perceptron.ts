@@ -4,7 +4,8 @@ import { Subscription, timer } from 'rxjs';
 
 export class Perceptron {
   weights: number[];
-  bias = 1.0;
+  // random like the weights, so the perceptrons of one layer start out different
+  bias = Math.random() * 2 - 1;
   isLearning = false;
   lastGuess = 0;
   lastLearnRate = 0;

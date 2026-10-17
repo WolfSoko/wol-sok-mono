@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { BrainService } from './brain.service';
+import { BrainService, diagonalLabel, LabelDefinition } from './brain.service';
+import { TrainData } from './train-data';
 import { Point, toLabelClass } from './point';
 
 // mulberry32: a tiny seeded PRNG so weights and sampling are the same on every run
@@ -13,11 +14,11 @@ const seededRandom = (seed: number) => () => {
 describe('BrainService', () => {
   let service: BrainService;
 
-  const gridPoints = (): Point[] => {
+  const gridPoints = (labelDefinition = diagonalLabel): Point[] => {
     const points: Point[] = [];
     for (let x = 0.05; x < 1; x += 0.1) {
       for (let y = 0.05; y < 1; y += 0.1) {
-        points.push(new Point(x, y));
+        points.push(new Point(x, y, labelDefinition));
       }
     }
     return points;
@@ -39,15 +40,60 @@ describe('BrainService', () => {
     jest.restoreAllMocks();
   });
 
-  it('trains a multi layer net with back propagation', () => {
-    service.createMultiPerceptron(2, [2, 3, 1]);
-    service.points = gridPoints();
+  const circle: LabelDefinition = (x, y) =>
+    (x - 0.5) ** 2 + (y - 0.5) ** 2 < 0.09 ? 1 : 0;
+  const xor: LabelDefinition = (x, y) => (x > 0.5 !== y > 0.5 ? 1 : 0);
 
-    for (let i = 0; i < 2000; i++) {
+  it.each([
+    ['diagonal', diagonalLabel],
+    ['circle', circle],
+    ['xor', xor],
+  ])('learns the %s border with one hidden layer', (_, labelDefinition) => {
+    service.createMultiPerceptron(2, [8, 1]);
+    service.points = gridPoints(labelDefinition);
+
+    for (let i = 0; i < 1500; i++) {
       service.train();
     }
 
     expect(accuracy(service.points)).toBeGreaterThan(0.9);
+  });
+
+  it('changes every weight by -learnRate * gradient of the cross-entropy loss', () => {
+    service.createMultiPerceptron(2, [3, 2, 1]);
+    const trainData = new TrainData([0.3, 0.8], 1);
+    const loss = () => {
+      const output = service.activationSilent(trainData.inputs);
+      return -Math.log(output);
+    };
+    const eps = 1e-6;
+    const parameters = service.perceptrons.flat().flatMap((perceptron) => [
+      ...perceptron.weights.map((_, i) => ({
+        get: () => perceptron.weights[i],
+        set: (value: number) => (perceptron.weights[i] = value),
+      })),
+      {
+        get: () => perceptron.bias,
+        set: (value: number) => (perceptron.bias = value),
+      },
+    ]);
+    const expectedSteps = parameters.map(({ get, set }) => {
+      const value = get();
+      set(value + eps);
+      const lossPlus = loss();
+      set(value - eps);
+      const lossMinus = loss();
+      set(value);
+      return -service.learnRate * ((lossPlus - lossMinus) / (2 * eps));
+    });
+    const before = parameters.map(({ get }) => get());
+
+    service.points = [new Point(0.3, 0.8, () => 1)];
+    service.train(1);
+
+    parameters.forEach(({ get }, i) =>
+      expect(get() - before[i]).toBeCloseTo(expectedSteps[i], 6)
+    );
   });
 
   it('returns the sigmoid output of the multi layer net as activation', () => {

@@ -6,15 +6,13 @@
   align-items: start;
 }
 
-.data-card {
-  grid-column: 1 / span 2;
+.data-card,
+.hidden-layer {
+  grid-column: span 2;
 }
 
-feat-lazy-neural-networks-brain-settings {
-  grid-column: 3 / span 1;
-}
-
-.inputLayer,
-.outputLayer {
-  align-self: center;
+.layer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
