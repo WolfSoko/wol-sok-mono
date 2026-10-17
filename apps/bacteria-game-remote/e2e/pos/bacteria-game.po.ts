@@ -26,6 +26,8 @@ export class BacteriaGamePo {
   public readonly resumeCta: Locator;
   public readonly quitCta: Locator;
   public readonly menuTitle: Locator;
+  public readonly muteCta: Locator;
+  public readonly unmuteCta: Locator;
 
   constructor(private readonly page: Page) {
     this.mainTitle = page.locator('h1');
@@ -53,6 +55,8 @@ export class BacteriaGamePo {
     this.resumeCta = page.getByRole('button', { name: 'Resume' });
     this.quitCta = page.getByRole('button', { name: 'Quit to menu' });
     this.menuTitle = page.locator('.menu-title');
+    this.muteCta = page.getByRole('button', { name: 'Mute', exact: true });
+    this.unmuteCta = page.getByRole('button', { name: 'Unmute' });
   }
 
   public async goto(): Promise<void> {

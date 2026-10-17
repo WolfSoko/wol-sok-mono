@@ -73,4 +73,18 @@ describe('GameSettingsService', () => {
 
     expect(stored().showFps).toBe(true);
   });
+
+  it('makes sound unless an earlier visit muted it', () => {
+    expect(TestBed.inject(GameSettingsService).sound()).toBe(true);
+  });
+
+  it('remembers a muted game', () => {
+    const service = TestBed.inject(GameSettingsService);
+
+    service.setSound(false);
+
+    expect(stored().sound).toBe(false);
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(GameSettingsService).sound()).toBe(false);
+  });
 });

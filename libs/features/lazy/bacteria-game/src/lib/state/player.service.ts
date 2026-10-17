@@ -1,6 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { ID, transaction } from '@datorama/akita';
-import { BacteriaSimulation, Colony, Nutrient } from './bacteria-simulation';
+import {
+  BacteriaSimulation,
+  Colony,
+  Nutrient,
+  StepEvents,
+} from './bacteria-simulation';
 import {
   BotController,
   BotDifficulty,
@@ -18,7 +23,7 @@ import {
   SteeringVector,
 } from './geometry';
 import { DEFAULT_CROSSHAIR_SPEED } from './levels';
-import { GameMap, getMap } from './maps';
+import { DynamicWall, GameMap, getMap } from './maps';
 import {
   createPlayer,
   isBoostReady,
@@ -200,6 +205,16 @@ export class PlayerService {
   /** The nutrient pellets currently on the map - used for rendering only. */
   public getNutrients(): Nutrient[] {
     return this.simulation.getNutrients();
+  }
+
+  /** The gates and sliding walls as they stand - used for rendering only. */
+  public getDynamicWalls(): readonly DynamicWall[] {
+    return this.simulation.getDynamicWalls();
+  }
+
+  /** What happened during the last frame - used for the sound only. */
+  public getStepEvents(): StepEvents {
+    return this.simulation.getEvents();
   }
 
   /** The live bacteria of every colony - used for rendering only. */

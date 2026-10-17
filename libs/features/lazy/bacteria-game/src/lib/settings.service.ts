@@ -12,6 +12,7 @@ export interface StoredSettings {
   difficulty?: BotDifficulty;
   levelId?: string;
   showFps?: boolean;
+  sound?: boolean;
 }
 
 export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
@@ -19,8 +20,8 @@ export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 const MODES: readonly GameMode[] = ['vs-computer', 'two-players'];
 
 /**
- * Keeps the player's choices - opponent, difficulty, level and whether the
- * frame rate is shown - across visits, in the browser's local storage.
+ * Keeps the player's choices - opponent, difficulty, level, whether the frame
+ * rate is shown and whether the game makes sound - across visits, in the browser's local storage.
  *
  * The match settings live in the game state store, as they did; this service
  * only restores them when the game is opened and writes them back whenever
@@ -34,6 +35,8 @@ export class GameSettingsService {
 
   /** True while the frame rate badge is shown on the arena. */
   public readonly showFps = signal(false);
+  /** True while the game makes sound. */
+  public readonly sound = signal(true);
 
   constructor() {
     this.restore();
@@ -59,6 +62,11 @@ export class GameSettingsService {
     this.persist();
   }
 
+  public setSound(on: boolean): void {
+    this.sound.set(on);
+    this.persist();
+  }
+
   /** Applies what an earlier visit stored, ignoring anything it cannot read. */
   private restore(): void {
     const stored = readStoredSettings();
@@ -72,6 +80,7 @@ export class GameSettingsService {
       this.gameState.setLevel(stored.levelId as string);
     }
     this.showFps.set(stored.showFps === true);
+    this.sound.set(stored.sound !== false);
   }
 
   private persist(): void {
@@ -81,6 +90,7 @@ export class GameSettingsService {
       difficulty,
       levelId,
       showFps: this.showFps(),
+      sound: this.sound(),
     };
     try {
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));

@@ -1,7 +1,7 @@
 import { BacteriaSimulation, Colony } from './bacteria-simulation';
 import { GameBalance, gameBalance } from './game-balance';
 import { DEFAULT_CROSSHAIR_SPEED } from './levels';
-import { getMap } from './maps';
+import { GameMap, gateState, getMap } from './maps';
 import { Bacteria, createPlayer, Player } from './player.model';
 
 // The production canvas size. Smaller arenas push the walls outside the grid,
@@ -529,5 +529,97 @@ describe('boost', () => {
     expect(distanceTravelled(0)).toBe(
       Math.max(1, Math.round(DEFAULT_CROSSHAIR_SPEED * 0.1))
     );
+  });
+});
+
+describe('dynamic walls', () => {
+  /** A 4x4 gate that is open for a second, then closed for a second. */
+  const gateMap: GameMap = {
+    id: 'gate',
+    name: 'Gate',
+    description: '',
+    createWalls: () => [],
+    createDynamicWalls: (_width, _height, timeSec) => [
+      {
+        x: 100,
+        y: 50,
+        width: 4,
+        height: 4,
+        ...gateState({ periodSec: 2, closedSec: 1, warningSec: 0.5 }, timeSec),
+      },
+    ],
+  };
+
+  function onGate(bacterias: Bacteria[]) {
+    const scenario = setup([bacterias], {
+      balance: { divideChancePerSec: 0 },
+      targets: [{ x: 102, y: 52 }],
+    });
+    scenario.simulation.setMap(gateMap);
+    // setMap respawns, the colony keeps its hand made bacteria.
+    return scenario;
+  }
+
+  function insideGate(bacterium: Bacteria): boolean {
+    return (
+      bacterium.x >= 100 &&
+      bacterium.x < 104 &&
+      bacterium.y >= 50 &&
+      bacterium.y < 54
+    );
+  }
+
+  it('pushes a bacterium out of a gate that closes on it', () => {
+    const { simulation, colonies, players } = onGate([bacterium(101, 51)]);
+
+    simulation.step(players, 1.2);
+
+    expect(colonies[0].bacterias).toHaveLength(1);
+    expect(insideGate(colonies[0].bacterias[0])).toBe(false);
+    expect(simulation.getEvents().crushed).toBe(0);
+  });
+
+  it('crushes the bacteria a closing gate has no room left for', () => {
+    const packed: Bacteria[] = [];
+    for (let y = 46; y < 58; y++) {
+      for (let x = 96; x < 108; x++) {
+        packed.push(bacterium(x, y));
+      }
+    }
+    const { simulation, colonies, players } = onGate(packed);
+
+    simulation.step(players, 1.2);
+
+    expect(simulation.getEvents().crushed).toBe(16);
+    expect(colonies[0].lost).toBe(16);
+    expect(colonies[0].bacterias.some(insideGate)).toBe(false);
+  });
+
+  it('reports the warning and the moment the gate slams shut', () => {
+    const { simulation, players } = onGate([bacterium(10, 10)]);
+
+    simulation.step(players, 0.6);
+    expect(simulation.getEvents()).toMatchObject({
+      gatesWarned: 1,
+      gatesClosed: 0,
+    });
+
+    simulation.step(players, 0.5);
+    expect(simulation.getEvents()).toMatchObject({
+      gatesWarned: 0,
+      gatesClosed: 1,
+    });
+    expect(simulation.getDynamicWalls()[0].solid).toBe(true);
+  });
+
+  it('starts every match with the gates as they are at time zero', () => {
+    const { simulation, players } = onGate([bacterium(10, 10)]);
+    simulation.step(players, 1.2);
+
+    simulation.init([
+      { playerId: 0, color: [255, 0, 0, 255], x: 20, y: 20, radius: 1 },
+    ]);
+
+    expect(simulation.getDynamicWalls()[0].solid).toBe(false);
   });
 });

@@ -78,6 +78,13 @@
     display: block;
     width: 100%;
     image-rendering: pixelated;
+    // The edge of the arena is a wall too, so it is drawn like one: a frame
+    // in the level's colour with a glow around it. Outline and shadow take
+    // no room, so the pointer maths still maps the canvas rect 1:1.
+    outline: 2px solid rgb(var(--arena-border, 200 200 200));
+    box-shadow:
+      0 0 14px 2px rgb(var(--arena-border, 200 200 200) / 45%),
+      0 0 40px 8px rgb(var(--arena-border, 200 200 200) / 15%);
     // Dragging a crosshair must not scroll or zoom the page underneath.
     touch-action: none;
   }
@@ -100,7 +107,8 @@
       'stick-0 center boost-1'
       'boost-0 center stick-1';
     color: #fff;
-    background: #000;
+    background: rgb(var(--arena-rim, 0 0 0));
+    transition: background-color 400ms ease;
     touch-action: none;
     overscroll-behavior: none;
     user-select: none;

@@ -50,6 +50,23 @@ test('should let the player pick another level in the settings', async ({
   await expect(page.locator('.menu-summary')).toContainText('Serpentine');
 });
 
+test('should mute the game and remember it on the next visit', async ({
+  page,
+}) => {
+  const po = new BacteriaGamePo(page);
+  await po.goto();
+
+  await po.muteCta.click();
+
+  await expect(po.unmuteCta).toBeVisible();
+  await page.reload();
+  await expect(po.unmuteCta).toBeVisible();
+
+  await po.unmuteCta.click();
+
+  await expect(po.muteCta).toBeVisible();
+});
+
 test('should explain the game', async ({ page }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
