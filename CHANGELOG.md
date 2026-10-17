@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.3.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.3.0...v74.3.1) (2026-10-17)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** draw the arena on the GPU with WebGL2 ([#2471](https://github.com/WolfSoko/wol-sok-mono/issues/2471)) ([4fe0f54](https://github.com/WolfSoko/wol-sok-mono/commit/4fe0f54aef90f238579581659fa54557e9404ed2))
+
 ## [74.3.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.2.1...v74.3.0) (2026-10-17)
 
 ### Features
