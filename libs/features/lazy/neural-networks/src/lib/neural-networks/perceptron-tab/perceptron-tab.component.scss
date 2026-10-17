@@ -18,7 +18,6 @@ $dataCardMinWidth: 470px;
 }
 
 .data-card {
-  min-width: min($dataCardMinWidth, 100%);
   grid-row-start: 1;
   /* autoprefixer: off */
   grid-row-end: 3;
