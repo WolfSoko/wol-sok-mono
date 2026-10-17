@@ -16,10 +16,6 @@
   opacity: 0.35;
 }
 
-:host(.flipped) .label {
-  transform: rotate(180deg);
-}
-
 .label {
   font-size: 0.8rem;
   font-weight: 600;

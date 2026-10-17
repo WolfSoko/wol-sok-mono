@@ -83,30 +83,54 @@
   }
 
   // The touch layout: the stage covers the viewport and is handed to the
-  // fullscreen API on top. Three columns - a seat column each side of the
-  // arena - and two rows, so the far player's controls sit along the far edge.
+  // fullscreen API on top. The arena sits in the middle and the seats at the
+  // short edges of the phone, where the two players sit: a column at the
+  // left and the right edge of a phone lying across between them.
   &.fullscreen {
-    --seat: clamp(5.5rem, 15vw, 10rem);
-    --boost: clamp(4.5rem, 18vmin, 6.5rem);
+    --seat: clamp(6.5rem, 15vw, 10rem);
 
     position: fixed;
     inset: 0;
     z-index: 900;
     display: grid;
     grid-template-columns: var(--seat) minmax(0, 1fr) var(--seat);
-    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas:
-      'boost-1 center stick-1'
-      'stick-0 center boost-0';
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: 'seat-0 center seat-1';
     color: #fff;
     background: #000;
     touch-action: none;
     overscroll-behavior: none;
     user-select: none;
 
-    &.solo {
-      grid-template-rows: minmax(0, 1fr);
+    // A single player gets the stick on one side of the arena and the boost
+    // pad on the other: the seat parts are placed on the grid themselves.
+    &.solo:not(.portrait) {
       grid-template-areas: 'stick-0 center boost-0';
+
+      .seat,
+      .seat-frame {
+        display: contents;
+      }
+    }
+
+    // Upright phone, or a tablet held that way: the seats become bands along
+    // the short edges, which are the top and the bottom edge then.
+    &.portrait {
+      --seat: clamp(6.5rem, 20vh, 9rem);
+
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: var(--seat) minmax(0, 1fr) var(--seat);
+      grid-template-areas:
+        'seat-1'
+        'center'
+        'seat-0';
+
+      &.solo {
+        grid-template-rows: minmax(0, 1fr) var(--seat);
+        grid-template-areas:
+          'center'
+          'seat-0';
+      }
     }
 
     .center {
@@ -141,32 +165,49 @@
   }
 }
 
-// Upright phone, or a tablet held that way: the seats become bands along the
-// short edges, which is where the two players sit then.
-@media (orientation: portrait) {
-  .stage.fullscreen {
-    --seat: clamp(5.5rem, 20vh, 9rem);
-
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: var(--seat) minmax(0, 1fr) var(--seat);
-    grid-template-areas:
-      'boost-1 stick-1'
-      'center center'
-      'stick-0 boost-0';
-
-    &.solo {
-      grid-template-rows: minmax(0, 1fr) var(--seat);
-      grid-template-areas:
-        'center center'
-        'stick-0 boost-0';
-    }
-  }
-}
-
-// A seat part may shrink with its grid track instead of overflowing it.
+// A seat is laid out the way its player sees it - the stick in the left
+// hand, the boost pad in the right - and then turned towards them. The frame
+// takes the size of the seat's grid cell with width and height swapped for a
+// quarter turn, so that it fills the cell once it is turned.
 .seat {
+  position: relative;
   min-width: 0;
   min-height: 0;
+  container-type: size;
+
+  .seat-frame {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: stretch;
+  }
+
+  feat-lazy-bac-game-joystick {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  feat-lazy-bac-game-boost-pad {
+    flex: 0 0 auto;
+  }
+
+  &[data-turn='90'] .seat-frame,
+  &[data-turn='270'] .seat-frame {
+    inset: auto;
+    top: 50%;
+    left: 50%;
+    width: 100cqh;
+    height: 100cqw;
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+
+  &[data-turn='270'] .seat-frame {
+    transform: translate(-50%, -50%) rotate(-90deg);
+  }
+
+  &[data-turn='180'] .seat-frame {
+    transform: rotate(180deg);
+  }
 }
 
 .stage-bar {

@@ -77,10 +77,10 @@ describe('BoostPadComponent', () => {
     expect(button().disabled).toBe(true);
   });
 
-  it('turns towards the far player', async () => {
-    fixture.componentRef.setInput('flipped', true);
+  it('lies along the edge as a band', async () => {
+    fixture.componentRef.setInput('band', true);
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.classList.contains('flipped')).toBe(true);
+    expect(fixture.nativeElement.classList.contains('band')).toBe(true);
   });
 });

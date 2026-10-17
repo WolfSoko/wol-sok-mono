@@ -70,6 +70,28 @@ describe('JoystickComponent', () => {
     expect(component['knob']()).toEqual({ x: RIM, y: 0 });
   });
 
+  it("draws the knob in the zone's own frame when its seat is turned", () => {
+    // The seat at the left edge is turned a quarter clockwise: the zone's
+    // left end is at the top of the screen.
+    fixture.componentRef.setInput('turn', 90);
+    (fixture.nativeElement.getBoundingClientRect as jest.Mock).mockReturnValue({
+      left: 100,
+      top: 200,
+      width: 150,
+      height: 240,
+    });
+    down(1, 75, 0);
+
+    move(1, 75 + RIM, 0);
+
+    // The push is reported as it is on the screen, to the right ...
+    expect(steered).toEqual([{ x: 1, y: 0 }]);
+    // ... while in the zone the finger landed at the left end and the knob
+    // moved up, which is right once the seat is turned.
+    expect(component['origin']()).toEqual({ x: 0, y: 75 });
+    expect(component['knob']()).toEqual({ x: 0, y: -RIM });
+  });
+
   it('ignores a mouse button that would open a menu', () => {
     component['onPointerDown'](pointer(1, 40, 60, 2));
 

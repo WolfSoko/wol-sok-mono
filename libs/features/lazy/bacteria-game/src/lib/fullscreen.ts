@@ -171,3 +171,12 @@ export function fitInside(
     height: Math.max(1, Math.floor(arenaHeight * scale)),
   };
 }
+
+/**
+ * True while the viewport is taller than wide: the phone is held upright and
+ * two players sit along its top and bottom edge. False where a browser has no
+ * media queries (tests).
+ */
+export function isPortrait(): boolean {
+  return globalThis.matchMedia?.('(orientation: portrait)').matches ?? false;
+}
