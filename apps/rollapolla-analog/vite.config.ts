@@ -13,7 +13,7 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
   return {
     root: 'apps/rollapolla-analog',
     publicDir: 'src/public',
-    cacheDir: `../../node_modules/.vite`,
+    cacheDir: `../../node_modules/.vite/apps/rollapolla-analog`,
     build: {
       outDir: '../../dist/apps/rollapolla-analog/client',
       reportCompressedSize: true,
