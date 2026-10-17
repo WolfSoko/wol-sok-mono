@@ -1,11 +1,8 @@
 import { DestroyRef, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
+import { SITE_URL } from '../../shared/site-url';
 
-export const SITE_URL = 'https://rollapolla.com';
-
-export function pollUrl(pollId: string, origin: string = SITE_URL): string {
-  return `${origin}/poll/${pollId}`;
-}
+export { pollUrl, SITE_URL } from '../../shared/site-url';
 
 export type PageTags = {
   title: string;
