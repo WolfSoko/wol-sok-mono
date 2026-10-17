@@ -627,12 +627,15 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Follows the browser both ways. Once it takes the stage off the screen -
-   * Escape, the back gesture, a system dialog - the page layout returns, as
-   * the player asked for exactly that. Once it puts the stage on, the layout
-   * is up as well: a request granted late, after the layout was left, must
-   * not leave a bare stage on the screen. Native fullscreen also locks a
-   * phone into landscape, where the arena and the two seats fit.
+   * Follows the browser both ways. Once it puts the stage on the screen, the
+   * layout is up as well: a request granted late, after the layout was left,
+   * must not leave a bare stage on the screen. Native fullscreen also locks
+   * a phone into landscape, where the arena and the two seats fit.
+   *
+   * Once it takes the stage off - Escape, the back gesture, a system dialog,
+   * the settings toggle - the game reacts as it does to Escape, which the
+   * browser consumes before it reaches {@link onKeyDown}: a running match
+   * pauses, a screen stays open, and only the main menu leaves for the page.
    */
   @HostListener('document:fullscreenchange')
   @HostListener('document:webkitfullscreenchange')
@@ -642,8 +645,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (native) {
       this.fullscreen.set(true);
       void lockLandscape(screen);
-    } else {
-      unlockOrientation(screen);
+      return;
+    }
+    unlockOrientation(screen);
+    if (this.running() && !this.paused()) {
+      this.gameStateService.togglePause();
+    } else if (this.panel() === 'menu') {
       this.leaveFullscreen();
     }
   }

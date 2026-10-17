@@ -316,12 +316,33 @@ describe('BacteriaGameComponent', () => {
       expect(arena.requestFullscreen).not.toHaveBeenCalled();
     });
 
-    it('follows the browser when it takes the arena off the screen', () => {
+    it('follows the browser when it takes the arena off the main menu', () => {
       create();
 
       component['onFullscreenChange']();
 
       expect(component['fullscreen']()).toBe(false);
+    });
+
+    it('pauses a running match instead when the browser leaves fullscreen', () => {
+      create();
+      startMatch('vs-computer');
+
+      component['onFullscreenChange']();
+
+      expect(component['paused']()).toBe(true);
+      expect(component['fullscreen']()).toBe(true);
+    });
+
+    it('keeps a screen open when the browser fullscreen toggle goes off', () => {
+      create();
+      component['show']('settings');
+
+      component['setNativeFullscreen'](false);
+      component['onFullscreenChange']();
+
+      expect(component['fullscreen']()).toBe(true);
+      expect(component['panel']()).toBe('settings');
     });
 
     it('follows the browser into a fullscreen granted after the layout was left', () => {
