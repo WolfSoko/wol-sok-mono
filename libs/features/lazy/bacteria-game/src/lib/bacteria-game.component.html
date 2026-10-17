@@ -420,7 +420,6 @@
     mat-icon-button
     type="button"
     [attr.aria-label]="settings.sound() ? 'Mute' : 'Unmute'"
-    [attr.aria-pressed]="!settings.sound()"
     [matTooltip]="settings.sound() ? 'Mute' : 'Unmute'"
     (click)="setSound(!settings.sound())"
   >
