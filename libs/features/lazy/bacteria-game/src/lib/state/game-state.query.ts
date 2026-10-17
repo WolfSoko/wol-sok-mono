@@ -9,6 +9,7 @@ import {
   GameStateStore,
   isMatchOn,
 } from './game.states';
+import { sameColors } from './colony-colors';
 import { getLevel, Level } from './levels';
 
 @Injectable({ providedIn: 'root' })
@@ -51,6 +52,13 @@ export class GameStateQuery extends Query<GameStateState> {
   /** Who steers the second crosshair. */
   public selectMode(): Observable<GameMode> {
     return this.select((store) => store.mode).pipe(distinctUntilChanged());
+  }
+
+  /** The colour ids of the left and the right colony. */
+  public selectColors(): Observable<[string, string]> {
+    return this.select((store) => store.colors).pipe(
+      distinctUntilChanged<[string, string]>(sameColors)
+    );
   }
 
   /** How hard the computer plays. */

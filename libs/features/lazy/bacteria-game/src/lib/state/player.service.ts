@@ -1,6 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { ID, transaction } from '@datorama/akita';
-import { BacteriaSimulation, Colony, Nutrient } from './bacteria-simulation';
+import {
+  BacteriaSimulation,
+  Colony,
+  Nutrient,
+  noEvents,
+  StepEvents,
+} from './bacteria-simulation';
 import {
   BotController,
   BotDifficulty,
@@ -18,7 +24,7 @@ import {
   SteeringVector,
 } from './geometry';
 import { DEFAULT_CROSSHAIR_SPEED } from './levels';
-import { GameMap, getMap } from './maps';
+import { DynamicWall, GameMap, getMap } from './maps';
 import {
   createPlayer,
   isBoostReady,
@@ -59,6 +65,12 @@ const KEY_SETS: readonly Record<string, SteeringVector>[] = [
   },
 ];
 
+/** What happened during a frame - the simulation's events and the boosts. */
+export interface FrameEvents extends StepEvents {
+  /** One entry per boost fired since the frame before, true for the computer's. */
+  boosts: boolean[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class PlayerService {
   private playerStore = inject(PlayerStore);
@@ -73,6 +85,10 @@ export class PlayerService {
   private steering = new Map<number, SteeringVector>();
   /** The computer opponents, one per bot player. */
   private bots = new Map<number, BotController>();
+  /** Boosts fired since the last frame - true for the computer's. */
+  private firedBoosts: boolean[] = [];
+  /** What the last frame did, for the sound. */
+  private frameEvents: FrameEvents = { ...noEvents(), boosts: [] };
 
   constructor() {
     this.gameStateQuery
@@ -98,6 +114,12 @@ export class PlayerService {
       map?: GameMap;
       crosshairSpeed?: number;
       difficulty?: BotDifficulty;
+      /**
+       * The arena size, when it is known. The walls are only laid out once
+       * the simulation has a size, and the start screen shows the gates and
+       * sliding walls of the next match as well.
+       */
+      arena?: { width: number; height: number };
     } = {}
   ): void {
     const balance = options.balance ?? gameBalance;
@@ -129,7 +151,12 @@ export class PlayerService {
     this.dragTargets.clear();
     this.steering.clear();
     this.balance = balance;
+    this.firedBoosts = [];
+    this.frameEvents = { ...noEvents(), boosts: [] };
     this.simulation = new BacteriaSimulation(balance);
+    if (options.arena != null) {
+      this.simulation.resize(options.arena.width, options.arena.height);
+    }
     this.simulation.setMap(map);
     this.simulation.init(
       playersData.map((playerData, index) => ({
@@ -195,11 +222,22 @@ export class PlayerService {
       boostActiveSec: this.balance.boostDurationSec,
       boostCooldownSec: this.balance.boostCooldownSec,
     });
+    this.firedBoosts.push(player.isBot);
   }
 
   /** The nutrient pellets currently on the map - used for rendering only. */
   public getNutrients(): Nutrient[] {
     return this.simulation.getNutrients();
+  }
+
+  /** The gates and sliding walls as they stand - used for rendering only. */
+  public getDynamicWalls(): readonly DynamicWall[] {
+    return this.simulation.getDynamicWalls();
+  }
+
+  /** What happened during the last frame - used for the sound only. */
+  public getFrameEvents(): FrameEvents {
+    return this.frameEvents;
   }
 
   /** The live bacteria of every colony - used for rendering only. */
@@ -213,6 +251,11 @@ export class PlayerService {
     this.tickBoosts(deltaTimeSec);
     this.runBots(width, height, deltaTimeSec);
     this.simulation.step(this.playerQuery.getAll(), deltaTimeSec);
+    this.frameEvents = {
+      ...this.simulation.getEvents(),
+      boosts: this.firedBoosts,
+    };
+    this.firedBoosts = [];
     this.syncColonyStats();
   }
 

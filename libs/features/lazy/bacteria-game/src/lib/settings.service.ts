@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { distinctUntilChanged } from 'rxjs';
 import { BOT_DIFFICULTIES, BotDifficulty } from './state/bot-controller';
+import { sameColors, validColorPair } from './state/colony-colors';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
 import { GameMode } from './state/game.states';
@@ -12,15 +13,31 @@ export interface StoredSettings {
   difficulty?: BotDifficulty;
   levelId?: string;
   showFps?: boolean;
+  sound?: boolean;
+  /** The colour ids of the left and the right colony. */
+  colors?: [string, string];
+  look?: BacteriaLook;
 }
+
+/**
+ * How the bacteria are drawn: as one gooey, glossy slime per colony, or as
+ * the crisp pixels the game started with.
+ */
+export type BacteriaLook = 'slime' | 'pixels';
+
+export const BACTERIA_LOOKS: readonly { id: BacteriaLook; name: string }[] = [
+  { id: 'slime', name: 'Slime' },
+  { id: 'pixels', name: 'Pixels' },
+];
 
 export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 
 const MODES: readonly GameMode[] = ['vs-computer', 'two-players'];
 
 /**
- * Keeps the player's choices - opponent, difficulty, level and whether the
- * frame rate is shown - across visits, in the browser's local storage.
+ * Keeps the player's choices - opponent, difficulty, level, colours, how the
+ * bacteria look, whether the frame rate is shown and whether the game makes
+ * sound - across visits, in the browser's local storage.
  *
  * The match settings live in the game state store, as they did; this service
  * only restores them when the game is opened and writes them back whenever
@@ -34,6 +51,10 @@ export class GameSettingsService {
 
   /** True while the frame rate badge is shown on the arena. */
   public readonly showFps = signal(false);
+  /** True while the game makes sound. */
+  public readonly sound = signal(true);
+  /** How the bacteria are drawn. */
+  public readonly look = signal<BacteriaLook>('slime');
 
   constructor() {
     this.restore();
@@ -42,13 +63,15 @@ export class GameSettingsService {
         mode: state.mode,
         difficulty: state.difficulty,
         levelId: state.levelId,
+        colors: state.colors,
       }))
       .pipe(
         distinctUntilChanged(
           (a, b) =>
             a.mode === b.mode &&
             a.difficulty === b.difficulty &&
-            a.levelId === b.levelId
+            a.levelId === b.levelId &&
+            sameColors(a.colors, b.colors)
         )
       )
       .subscribe(() => this.persist());
@@ -56,6 +79,16 @@ export class GameSettingsService {
 
   public setShowFps(show: boolean): void {
     this.showFps.set(show);
+    this.persist();
+  }
+
+  public setSound(on: boolean): void {
+    this.sound.set(on);
+    this.persist();
+  }
+
+  public setLook(look: BacteriaLook): void {
+    this.look.set(look);
     this.persist();
   }
 
@@ -71,16 +104,27 @@ export class GameSettingsService {
     if (LEVELS.some((level) => level.id === stored.levelId)) {
       this.gameState.setLevel(stored.levelId as string);
     }
+    const colors = validColorPair(stored.colors);
+    if (colors != null) {
+      this.gameState.setColors(colors);
+    }
+    if (BACTERIA_LOOKS.some((option) => option.id === stored.look)) {
+      this.look.set(stored.look as BacteriaLook);
+    }
     this.showFps.set(stored.showFps === true);
+    this.sound.set(stored.sound !== false);
   }
 
   private persist(): void {
-    const { mode, difficulty, levelId } = this.query.getValue();
+    const { mode, difficulty, levelId, colors } = this.query.getValue();
     const settings: StoredSettings = {
       mode,
       difficulty,
       levelId,
+      colors,
+      look: this.look(),
       showFps: this.showFps(),
+      sound: this.sound(),
     };
     try {
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));

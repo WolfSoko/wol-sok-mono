@@ -1,9 +1,10 @@
 import { GameBalance, gameBalance } from './game-balance';
 import { clamp } from './geometry';
-import { GameMap, getMap } from './maps';
+import { DynamicWall, GameMap, getMap, Rect } from './maps';
 import {
   Bacteria,
   createBacteriaBlob,
+  isBoosted,
   Player,
   PlayerColorArray,
 } from './player.model';
@@ -39,6 +40,34 @@ export interface ColonySpawn {
   radius: number;
 }
 
+/**
+ * What happened during one frame - read by the sound, which has no business
+ * looking into the grid itself.
+ */
+export interface StepEvents {
+  /** Bacteria that changed sides or were eaten. */
+  captures: number;
+  /** Pellets that were eaten up. */
+  pelletsEaten: number;
+  /** Bacteria a closing gate or a sliding wall had no room left for. */
+  crushed: number;
+  /** Gates that slammed shut. */
+  gatesClosed: number;
+  /** Gates that started to warn that they are about to close. */
+  gatesWarned: number;
+}
+
+/** A frame in which nothing happened. */
+export function noEvents(): StepEvents {
+  return {
+    captures: 0,
+    pelletsEaten: 0,
+    crushed: 0,
+    gatesClosed: 0,
+    gatesWarned: 0,
+  };
+}
+
 interface Capture {
   bacterium: Bacteria;
   /** Index of the colony that is losing the bacterium. */
@@ -48,6 +77,9 @@ interface Capture {
   /** Index of the colony that killed it. */
   winner: number;
 }
+
+/** How far a moving wall may shove a bacterium before it crushes it. */
+const ESCAPE_RADIUS = 3;
 
 const NEIGHBOURS: readonly [number, number][] = [
   [-1, -1],
@@ -84,6 +116,8 @@ export class BacteriaSimulation {
   private owner = new Int32Array(0);
   /** Pristine grid with only the walls in it, memcopied at the frame start. */
   private baseOwner = new Int32Array(0);
+  /** The static walls alone - the moving ones are stamped on top of it. */
+  private staticOwner = new Int32Array(0);
   /** Energy snapshot of the frame start, read by the combat phase. */
   private energy = new Float32Array(0);
   /** Energy handed out by nutrients this frame. */
@@ -106,6 +140,12 @@ export class BacteriaSimulation {
   private respawnTimers: number[] = [];
   /** Wall layout the match is fought on. */
   private map: GameMap = getMap('corridors');
+  /** Match time, which drives the gates and the sliding walls. */
+  private elapsedSec = 0;
+  /** The moving walls and gates as of the current match time. */
+  private dynamicWalls: DynamicWall[] = [];
+  /** What the last frame did, for the sound. */
+  private events: StepEvents = noEvents();
 
   constructor(
     balance: GameBalance = gameBalance,
@@ -134,6 +174,16 @@ export class BacteriaSimulation {
     return this.nutrients;
   }
 
+  /** The moving walls and gates as they stand right now, for rendering. */
+  public getDynamicWalls(): readonly DynamicWall[] {
+    return this.dynamicWalls;
+  }
+
+  /** What happened during the last frame. */
+  public getEvents(): StepEvents {
+    return this.events;
+  }
+
   /** The live colonies, including their mutable bacteria, for rendering. */
   public getColonies(): readonly Colony[] {
     return this.colonies;
@@ -152,6 +202,9 @@ export class BacteriaSimulation {
     for (const colony of this.colonies) {
       colony.totalEnergy = colony.bacterias.length * this.balance.maxEnergy;
     }
+    this.elapsedSec = 0;
+    this.events = noEvents();
+    this.stampWalls();
     this.reset();
   }
 
@@ -169,6 +222,7 @@ export class BacteriaSimulation {
     const cells = width * height;
     this.owner = new Int32Array(cells);
     this.baseOwner = new Int32Array(cells).fill(EMPTY_CELL);
+    this.staticOwner = new Int32Array(cells).fill(EMPTY_CELL);
     this.energy = new Float32Array(cells);
     this.nutrientBonus = new Float32Array(cells);
     this.feed = new Float32Array(cells);
@@ -188,18 +242,155 @@ export class BacteriaSimulation {
   /** Rebuilds the pristine grid: empty everywhere but inside the walls. */
   private stampWalls(): void {
     if (this.width === 0 || this.height === 0) {
+      this.dynamicWalls = [];
       return;
     }
-    this.baseOwner.fill(EMPTY_CELL);
+    this.staticOwner.fill(EMPTY_CELL);
     for (const wall of this.map.createWalls(this.width, this.height)) {
-      const xMax = Math.min(wall.x + wall.width, this.width);
-      const yMax = Math.min(wall.y + wall.height, this.height);
-      for (let y = Math.max(wall.y, 0); y < yMax; y++) {
-        for (let x = Math.max(wall.x, 0); x < xMax; x++) {
-          this.baseOwner[y * this.width + x] = WALL_CELL;
+      this.stampRect(this.staticOwner, wall);
+    }
+    this.dynamicWalls =
+      this.map.createDynamicWalls?.(this.width, this.height, this.elapsedSec) ??
+      [];
+    this.stampDynamicWalls();
+  }
+
+  /** The static walls plus whatever moving wall blocks right now. */
+  private stampDynamicWalls(): void {
+    this.baseOwner.set(this.staticOwner);
+    for (const wall of this.dynamicWalls) {
+      if (wall.solid) {
+        this.stampRect(this.baseOwner, wall);
+      }
+    }
+  }
+
+  private stampRect(grid: Int32Array, rect: Rect): void {
+    const xMax = Math.min(rect.x + rect.width, this.width);
+    const yMax = Math.min(rect.y + rect.height, this.height);
+    for (let y = Math.max(rect.y, 0); y < yMax; y++) {
+      for (let x = Math.max(rect.x, 0); x < xMax; x++) {
+        grid[y * this.width + x] = WALL_CELL;
+      }
+    }
+  }
+
+  /**
+   * Moves the gates and sliding walls on to the current match time. Bacteria
+   * a wall now covers are pushed into the nearest free cell, and crushed when
+   * there is none - so a gate is worth getting out of before it closes.
+   */
+  private advanceDynamicWalls(): void {
+    if (this.map.createDynamicWalls == null) {
+      return;
+    }
+    const previous = this.dynamicWalls;
+    const next = this.map.createDynamicWalls(
+      this.width,
+      this.height,
+      this.elapsedSec
+    );
+    this.dynamicWalls = next;
+
+    let changed = next.length !== previous.length;
+    for (let i = 0; i < next.length; i++) {
+      const before = previous[i];
+      const after = next[i];
+      if (before == null) {
+        continue;
+      }
+      if (after.solid && !before.solid) {
+        this.events.gatesClosed++;
+      }
+      if (after.warning > 0 && before.warning === 0) {
+        this.events.gatesWarned++;
+      }
+      changed ||=
+        after.solid !== before.solid ||
+        after.x !== before.x ||
+        after.y !== before.y ||
+        after.width !== before.width ||
+        after.height !== before.height;
+    }
+    if (!changed) {
+      return;
+    }
+    this.stampDynamicWalls();
+    this.evictFromWalls();
+  }
+
+  /**
+   * Pushes bacteria out of the cells a wall has just moved into. Most moves
+   * catch nobody, so the occupancy needed to find free cells is only built
+   * once someone is trapped.
+   */
+  private evictFromWalls(): void {
+    const trapped: [number, Bacteria][] = [];
+    this.colonies.forEach((colony, colonyIndex) => {
+      for (const bacterium of colony.bacterias) {
+        if (
+          this.baseOwner[bacterium.y * this.width + bacterium.x] === WALL_CELL
+        ) {
+          trapped.push([colonyIndex, bacterium]);
+        }
+      }
+    });
+    if (trapped.length === 0) {
+      return;
+    }
+
+    this.owner.set(this.baseOwner);
+    this.colonies.forEach((colony, colonyIndex) => {
+      for (const bacterium of colony.bacterias) {
+        const index = bacterium.y * this.width + bacterium.x;
+        if (this.owner[index] !== WALL_CELL) {
+          this.owner[index] = colonyIndex;
+        }
+      }
+    });
+
+    const crushed = new Set<Bacteria>();
+    for (const [colonyIndex, bacterium] of trapped) {
+      const cell = this.findEscape(bacterium.x, bacterium.y);
+      if (cell < 0) {
+        crushed.add(bacterium);
+        this.colonies[colonyIndex].lost++;
+        continue;
+      }
+      bacterium.x = cell % this.width;
+      bacterium.y = Math.floor(cell / this.width);
+      this.owner[cell] = colonyIndex;
+    }
+    if (crushed.size === 0) {
+      return;
+    }
+    this.events.crushed += crushed.size;
+    for (const colony of this.colonies) {
+      colony.bacterias = colony.bacterias.filter((b) => !crushed.has(b));
+    }
+  }
+
+  /** The closest free cell within a few steps, or -1 when it is all packed. */
+  private findEscape(x: number, y: number): number {
+    for (let radius = 1; radius <= ESCAPE_RADIUS; radius++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) {
+            continue;
+          }
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= this.width || ny >= this.height) {
+            continue;
+          }
+          const index = ny * this.width + nx;
+          if (this.owner[index] === EMPTY_CELL) {
+            return index;
+          }
         }
       }
     }
+    return -1;
   }
 
   /** Drops all nutrients and respawns a fresh set. */
@@ -224,9 +415,15 @@ export class BacteriaSimulation {
    * colony moves towards - the bacteria themselves belong to the simulation.
    */
   public step(players: Player[], deltaTimeSec: number): void {
+    // Reset before the guard: a frame that does nothing must not report the
+    // last frame's events again.
+    this.events = noEvents();
     if (this.colonies.length === 0 || this.width === 0 || deltaTimeSec <= 0) {
       return;
     }
+
+    this.elapsedSec += deltaTimeSec;
+    this.advanceDynamicWalls();
 
     const targets = this.colonies.map(
       (colony) =>
@@ -409,6 +606,7 @@ export class BacteriaSimulation {
         if (nutrient.amount <= 0) {
           nutrient.amount = 0;
           this.respawnTimers[n] = nutrientRespawnDelaySec;
+          this.events.pelletsEaten++;
         }
       }
     }
@@ -531,6 +729,7 @@ export class BacteriaSimulation {
       return;
     }
     const { captureEnergy, feedEnergyPerCapture, consumeChance } = this.balance;
+    this.events.captures += captures.length;
 
     for (const capture of captures) {
       const colony = this.colonies[capture.winner];
@@ -856,11 +1055,6 @@ export class BacteriaSimulation {
     }
     return { x: margin, y: margin };
   }
-}
-
-/** True while the player's boost is running. */
-function isBoosted(player: Player | null): boolean {
-  return player != null && player.boostActiveSec > 0;
 }
 
 /** Index of the enemy colony with the most energy around a cell, else -1. */

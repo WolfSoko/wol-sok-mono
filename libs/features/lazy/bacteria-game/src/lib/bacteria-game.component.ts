@@ -12,6 +12,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -39,6 +40,9 @@ import {
   take,
   tap,
 } from 'rxjs/operators';
+import { ArenaRenderer } from './arena/arena-renderer';
+import { ColonyRenderer, drawJam } from './arena/colony-renderer';
+import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
 import { BoostPadComponent } from './boost-pad/boost-pad.component';
 import {
   exitFullscreen,
@@ -51,14 +55,18 @@ import {
   unlockOrientation,
 } from './fullscreen';
 import { JoystickComponent } from './joystick/joystick.component';
-import { MatchSetupComponent } from './match-setup/match-setup.component';
-import { Nutrient } from './state/bacteria-simulation';
+import {
+  ColorChange,
+  MatchSetupComponent,
+} from './match-setup/match-setup.component';
+import { DEFAULT_COLORS, getColonyColor } from './state/colony-colors';
 import {
   BOT_DIFFICULTIES,
   BotDifficulty,
   DEFAULT_DIFFICULTY,
 } from './state/bot-controller';
-import { GameSettingsService } from './settings.service';
+import { BACTERIA_LOOKS, GameSettingsService } from './settings.service';
+import { GameSoundService, MatchResult } from './sound/game-sound.service';
 import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
 import {
   boostLabel,
@@ -66,7 +74,7 @@ import {
   humanForBoostKey,
   toColonyStats,
 } from './colony-stats';
-import { GameBalance, gameBalance } from './state/game-balance';
+import { GameBalance } from './state/game-balance';
 import { SteeringVector } from './state/geometry';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
@@ -84,54 +92,13 @@ import {
   nextLevel,
 } from './state/levels';
 import { Rect } from './state/maps';
-import { Bacteria, Player } from './state/player.model';
+import { isBoosted, Player } from './state/player.model';
 import { PlayerQuery } from './state/player.query';
 import { PlayerService } from './state/player.service';
 import {
   MatchEndAction,
   WinnerComponent,
 } from './winner-info/winner.component';
-
-/**
- * Stamps one colony into the canvas pixel buffer. Weak bacteria fade out and
- * supercharged ones burn white, so the state of a fight is visible at a glance.
- *
- * The energy thresholds come from the balance of the running level, so a level
- * that moves them still renders the fight truthfully.
- */
-export function createImageDataFromBacterias(
-  data8: Uint8ClampedArray,
-  width: number,
-  color: number[],
-  bacterias: Bacteria[],
-  balance: GameBalance = gameBalance
-): Uint8ClampedArray {
-  const [r, g, b, alpha] = color;
-  const energyRange = balance.superChargedMaxEnergy - balance.maxEnergy;
-  for (let i = 0; i < bacterias.length; i++) {
-    const { x, y, energy } = bacterias[i];
-    const data8index = (y * width + x) * 4;
-
-    if (energy > balance.maxEnergy && energyRange > 0) {
-      // Supercharged by a nutrient - burn white so the hotspots are visible.
-      const heat = Math.min(1, (energy - balance.maxEnergy) / energyRange);
-      data8[data8index] = r + (255 - r) * heat;
-      data8[data8index + 1] = g + (255 - g) * heat;
-      data8[data8index + 2] = b + (255 - b) * heat;
-      data8[data8index + 3] = alpha;
-      continue;
-    }
-
-    // Weakened bacteria fade out, but stay visible enough to follow the fight.
-    const strength = Math.max(energy, 0) / balance.maxEnergy;
-    data8[data8index] = r;
-    data8[data8index + 1] = g;
-    data8[data8index + 2] = b;
-    data8[data8index + 3] = alpha * (0.3 + 0.7 * strength * strength);
-  }
-
-  return data8;
-}
 
 @UntilDestroy()
 @Component({
@@ -163,6 +130,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private playerService = inject(PlayerService);
   private playerQuery = inject(PlayerQuery);
   protected readonly settings = inject(GameSettingsService);
+  private readonly sound = inject(GameSoundService);
 
   @ViewChild('canvasElement', { static: true })
   private canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -228,12 +196,32 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly balance: Signal<GameBalance>;
   /** Walls of the selected level, drawn every frame. */
   protected readonly walls: Signal<Rect[]>;
+  /** How the selected level looks and sounds. */
+  protected readonly theme: Signal<ArenaTheme>;
+  /** The frame colour of the arena, as a CSS `rgb()` triple. */
+  protected readonly arenaBorder: Signal<string>;
+  /** The darkest floor colour of the arena, for the stage around it. */
+  protected readonly arenaRim: Signal<string>;
+  /** Draws the floor, the walls and the drifting specks. */
+  private readonly renderer = new ArenaRenderer(this.width, this.height);
+  /** Draws the colonies, as slime or as pixels. */
+  private readonly colonyRenderer = new ColonyRenderer(this.width, this.height);
+  /** Seconds of animation, for the wobble of the jam and the boost shimmer. */
+  private animationSec = 0;
   /** The level that follows the selected one, null at the end of the list. */
   protected readonly upcomingLevel: Signal<Level | null>;
   /** Two humans or one human against the computer. */
   protected readonly mode: Signal<GameMode>;
   /** How hard the computer plays. */
   protected readonly difficulty: Signal<BotDifficulty>;
+  /** The colour ids of the left and the right colony. */
+  protected readonly colors: Signal<[string, string]>;
+  /** The names of the left and the right colour, for the help texts. */
+  protected readonly colorNames = computed(() =>
+    this.colors().map((id) => getColonyColor(id).name)
+  );
+  /** The looks the bacteria can be drawn in. */
+  protected readonly looks = BACTERIA_LOOKS;
   /** The crosshairs a finger or a key may steer - never the computer's. */
   private readonly humans: Signal<Player[]>;
 
@@ -260,8 +248,15 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   protected readonly canvasSize = computed(() => {
     const box = this.arenaBoxSize();
+    // Leave room for the glowing frame around the arena.
+    const frame = 2 * ARENA_FRAME_PX;
     return this.fullscreen() && box != null
-      ? fitInside(box.width, box.height, this.width, this.height)
+      ? fitInside(
+          Math.max(0, box.width - frame),
+          Math.max(0, box.height - frame),
+          this.width,
+          this.height
+        )
       : null;
   });
 
@@ -281,9 +276,15 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       levelMap(this.level()).createWalls(this.width, this.height)
     );
     this.upcomingLevel = computed(() => nextLevel(this.level().id));
+    this.theme = computed(() => arenaTheme(this.level().id));
+    this.arenaBorder = computed(() => cssTriple(this.theme().border));
+    this.arenaRim = computed(() => cssTriple(this.theme().rim));
 
     this.mode = toSignal(this.query.selectMode(), {
       initialValue: DEFAULT_MODE,
+    });
+    this.colors = toSignal(this.query.selectColors(), {
+      initialValue: [DEFAULT_COLORS[0], DEFAULT_COLORS[1]] as [string, string],
     });
     this.difficulty = toSignal(this.query.selectDifficulty(), {
       initialValue: DEFAULT_DIFFICULTY,
@@ -298,10 +299,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.stats().filter((colony) => !colony.isBot)
     );
 
-    // Repaint as soon as another level puts different walls into the arena, so
-    // the start screen always shows the map the next match is fought on.
+    // Repaint as soon as another level puts different walls into the arena, or
+    // the colonies change colour or look, so the start screen always shows
+    // the map and the colonies the next match is fought with.
     effect(() => {
+      this.renderer.setTheme(this.theme());
       this.walls();
+      this.colors();
+      this.settings.look();
       this.draw(1 / 1000, true);
     });
 
@@ -320,6 +325,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.matchOver = toSignal(this.query.selectMatchEnded(), {
       initialValue: false,
     });
+    effect(() => this.sound.setEnabled(this.settings.sound()));
+    // The level hums while the match is on, and falls silent on pause.
+    effect(() =>
+      this.sound.setAmbience(
+        this.running() && !this.paused() ? this.theme().droneHz : null
+      )
+    );
+    effect(() => {
+      if (this.matchOver()) {
+        untracked(() => this.sound.matchEnd(this.matchResult()));
+      }
+    });
+
     this.difficultyName = computed(
       () =>
         BOT_DIFFICULTIES.find((option) => option.id === this.difficulty())
@@ -358,6 +376,26 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       .subscribe();
   }
 
+  /**
+   * How the match ended for the people at the screen: against the computer a
+   * win or a loss, between two players always a win for one of them.
+   */
+  private matchResult(): MatchResult {
+    const winner = this.query.getValue().winner;
+    if (winner == null) {
+      return 'draw';
+    }
+    return winner.isBot ? 'loss' : 'win';
+  }
+
+  /** Turns the sound on or off, and remembers it. */
+  protected setSound(on: boolean): void {
+    this.settings.setSound(on);
+    if (on) {
+      this.sound.click();
+    }
+  }
+
   /** Opens one of the menu screens. */
   protected show(screen: MenuScreen): void {
     this.screen.set(screen);
@@ -381,11 +419,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     const { canvasEl, context } = this.getRenderingContext();
     this.cx = context;
+    canvasEl.width = this.width * RENDER_SCALE;
+    canvasEl.height = this.height * RENDER_SCALE;
+    // Everything is drawn in arena cells; the transform scales it up.
+    this.cx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
     this.cx.imageSmoothingEnabled = false;
-    canvasEl.width = this.width;
-    canvasEl.height = this.height;
-    this.cx.fillStyle = 'rgb(0,0,0)';
-    this.cx.fillRect(0, 0, this.width, this.height);
+    this.renderer.drawFloor(this.cx, true);
     this.gameStateService.setArenaSize(this.width, this.height);
     this.draw(1 / 1000, true);
     this.nativeFullscreenSupported.set(
@@ -398,7 +437,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private getRenderingContext() {
     const canvasEl: HTMLCanvasElement = this.canvasRef.nativeElement;
 
-    const context = canvasEl.getContext('2d', { willReadFrequently: true });
+    const context = canvasEl.getContext('2d');
     if (context == null) {
       throw new Error('Could not get rendering context');
     }
@@ -411,8 +450,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   startGame() {
     this.requestNativeFullscreen();
-    this.cx.fillStyle = 'rgb(0,0,0)';
-    this.cx.fillRect(0, 0, this.width, this.height);
+    this.sound.matchStart();
+    this.renderer.drawFloor(this.cx, true);
     this.gameStateService.cleanup();
     this.gameStateService.init(this.width, this.height);
     this.gameStateService.start();
@@ -467,50 +506,60 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const isRunning = this.query.getValue().currentState === GameState.RUNNING;
 
     requestAnimationFrame(() => {
-      // Fade the previous frame so movement leaves a short trail.
-      this.cx.fillStyle = clear ? 'rgb(0,0,0)' : 'rgba(0,0,0,0.7)';
-      this.cx.fillRect(0, 0, this.width, this.height);
-      this.cx.fillStyle = 'rgb(200,200,200)';
-      for (const wall of this.walls()) {
-        this.cx.fillRect(wall.x, wall.y, wall.width, wall.height);
-      }
+      // Lay the floor over the previous frame, so movement leaves a short trail.
+      this.renderer.drawFloor(this.cx, clear);
+      this.renderer.drawMotes(this.cx, deltaTimeInSec);
+      this.renderer.drawWalls(this.cx, this.walls());
 
       if (isRunning) {
         this.playerService.gameLoop(this.width, this.height, deltaTimeInSec);
+        this.sound.frame(this.playerService.getFrameEvents());
       }
+      this.renderer.drawDynamicWalls(
+        this.cx,
+        this.playerService.getDynamicWalls()
+      );
 
-      const balance = this.balance();
-      const image = this.cx.getImageData(0, 0, this.width, this.height);
-      const data = new Uint8ClampedArray(image.data.buffer);
-      for (const colony of this.playerService.getColonies()) {
-        createImageDataFromBacterias(
-          data,
-          this.width,
-          colony.color,
-          colony.bacterias,
-          balance
-        );
-      }
-      this.cx.putImageData(image, 0, 0);
-
-      this.drawNutrients(this.playerService.getNutrients());
+      this.animationSec += deltaTimeInSec;
+      this.drawColonies();
+      drawJam(
+        this.cx,
+        this.playerService.getNutrients(),
+        this.balance().nutrientEnergy,
+        this.animationSec
+      );
       this.drawPlayerCursors();
     });
   }
 
-  /** Draws the pellets as small green crosses that dim as they are eaten. */
-  private drawNutrients(nutrients: Nutrient[]): void {
-    for (const nutrient of nutrients) {
-      if (nutrient.amount <= 0) {
-        continue;
-      }
-      const left = nutrient.amount / this.balance().nutrientEnergy;
-      this.cx.fillStyle = `rgba(180,255,120,${0.35 + 0.65 * left})`;
-      this.cx.fillRect(nutrient.x - 1, nutrient.y, 3, 1);
-      this.cx.fillRect(nutrient.x, nutrient.y - 1, 1, 3);
-      this.cx.fillStyle = 'rgb(255,255,255)';
-      this.cx.fillRect(nutrient.x, nutrient.y, 1, 1);
+  /**
+   * Draws the colonies over the floor in the chosen look. The slime layer is
+   * scaled up smoothly, the pixel layer stays crisp.
+   */
+  private drawColonies(): void {
+    const look = this.settings.look();
+    const boosted = new Set(
+      this.playerQuery
+        .getAll()
+        .filter(isBoosted)
+        .map((player) => player.id)
+    );
+    const layer = this.colonyRenderer.render(
+      this.playerService.getColonies().map((colony) => ({
+        color: colony.color,
+        bacterias: colony.bacterias,
+        boosted: boosted.has(colony.playerId),
+      })),
+      this.balance(),
+      look,
+      this.animationSec
+    );
+    if (layer == null) {
+      return;
     }
+    this.cx.imageSmoothingEnabled = look === 'slime';
+    this.cx.drawImage(layer, 0, 0, this.width, this.height);
+    this.cx.imageSmoothingEnabled = false;
   }
 
   /**
@@ -525,7 +574,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.cx.fillRect(player.x - 6, player.y - 0.5, 13, 2);
       this.cx.fillRect(player.x - 0.5, player.y - 6, 2, 13);
 
-      if (player.boostActiveSec > 0 && boostDuration > 0) {
+      if (isBoosted(player) && boostDuration > 0) {
         const left = player.boostActiveSec / boostDuration;
         this.cx.strokeStyle = css;
         this.cx.lineWidth = 1.5;
@@ -538,6 +587,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.gameStateService.cleanup();
+    this.sound.setAmbience(null);
     // Leaving the page must give the screen back as well.
     exitFullscreen(document);
     unlockOrientation(screen);
@@ -546,6 +596,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Toggles pause - the touch equivalent of the P key. */
   togglePause() {
     this.requestNativeFullscreen();
+    this.sound.click();
     this.gameStateService.togglePause();
   }
 
@@ -557,6 +608,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Switches between two humans and human versus computer. */
   protected selectMode(mode: GameMode): void {
     this.gameStateService.setMode(mode);
+  }
+
+  /** Gives a seat's colony another colour. */
+  protected selectColor(change: ColorChange): void {
+    this.gameStateService.setColor(change.seat, change.colorId);
   }
 
   /** Picks how hard the computer plays. */
@@ -785,6 +841,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
   }
 }
+
+/**
+ * Canvas pixels per arena cell. The simulation and the pointer maths work in
+ * arena cells; drawing at a finer resolution only makes the slime, the jam
+ * and the crosshairs smooth.
+ */
+const RENDER_SCALE = 3;
+
+/** Room kept free around the arena for its frame, in CSS pixels. */
+const ARENA_FRAME_PX = 6;
 
 /** The screens of the menu that is shown while no match is on. */
 export type MenuScreen = 'menu' | 'settings' | 'help';

@@ -50,6 +50,23 @@ test('should let the player pick another level in the settings', async ({
   await expect(page.locator('.menu-summary')).toContainText('Serpentine');
 });
 
+test('should mute the game and remember it on the next visit', async ({
+  page,
+}) => {
+  const po = new BacteriaGamePo(page);
+  await po.goto();
+
+  await po.muteCta.click();
+
+  await expect(po.unmuteCta).toBeVisible();
+  await page.reload();
+  await expect(po.unmuteCta).toBeVisible();
+
+  await po.unmuteCta.click();
+
+  await expect(po.muteCta).toBeVisible();
+});
+
 test('should explain the game', async ({ page }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
@@ -145,6 +162,39 @@ test('should show the stick under the finger while it is pushed', async ({
   await expect(po.heldStick(0)).toBeVisible();
   await po.release();
   await expect(po.heldStick(0)).toHaveCount(0);
+});
+
+test.describe('on a touchscreen', () => {
+  test.use({ hasTouch: true });
+
+  test('should fire the boost while the other finger holds the joystick', async ({
+    page,
+    browserName,
+  }) => {
+    // Real multi-touch needs the Chrome DevTools protocol.
+    test.skip(browserName !== 'chromium', 'multi-touch is Chromium only');
+    const po = new BacteriaGamePo(page);
+    await po.goto();
+    await po.playCta.click();
+    await expect(po.boostCta).toBeEnabled();
+
+    await po.tapBoostWhileHoldingStick(0);
+
+    await expect(po.boostCta).toContainText('Boosting');
+  });
+});
+
+test('should let the players pick their colours', async ({ page }) => {
+  const po = new BacteriaGamePo(page);
+  await po.goto();
+  await po.chooseMode(/2 Players/);
+  await po.settingsCta.click();
+
+  await po.chooseColor('Left player', 'Green');
+  await po.chooseColor('Right player', 'Pink');
+  await po.backCta.click();
+
+  await expect(po.colonyNames).toContainText(['Green', 'Pink']);
 });
 
 test('should pause into a menu and quit back to the main menu', async ({

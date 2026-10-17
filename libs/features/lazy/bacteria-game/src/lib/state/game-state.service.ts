@@ -14,6 +14,12 @@ import {
   timestamp,
 } from 'rxjs';
 import { BotDifficulty } from './bot-controller';
+import {
+  getColonyColor,
+  pickColor,
+  toPlayerColor,
+  validColorPair,
+} from './colony-colors';
 import { GameStateQuery } from './game-state.query';
 import {
   GameMode,
@@ -152,26 +158,28 @@ export class GameStateService {
    *
    * In `vs-computer` mode the second crosshair belongs to the bot, and the
    * names change with it so the scoreboard reads "You" and "Computer".
+   * Between two players each one is called by their colour.
    */
   private initPlayers() {
-    const { width, height, levelId, mode, difficulty } =
+    const { width, height, levelId, mode, difficulty, colors } =
       this.gameStateQuery.getValue();
     const level = getLevel(levelId);
     const versusComputer = mode === 'vs-computer';
+    const [left, right] = colors.map(getColonyColor);
     this.playerService.init(
       [
         {
           x: width / 4,
           y: height / 2,
-          color: [255, 100, 20, 255],
-          name: versusComputer ? 'You' : 'Orange',
+          color: toPlayerColor(left),
+          name: versusComputer ? 'You' : left.name,
           isBot: false,
         },
         {
           x: (width / 4) * 3,
           y: height / 2,
-          color: [0, 100, 230, 255],
-          name: versusComputer ? 'Computer' : 'Blue',
+          color: toPlayerColor(right),
+          name: versusComputer ? 'Computer' : right.name,
           isBot: versusComputer,
         },
       ],
@@ -180,6 +188,7 @@ export class GameStateService {
         map: levelMap(level),
         crosshairSpeed: levelCrosshairSpeed(level),
         difficulty,
+        arena: { width, height },
       }
     );
   }
@@ -205,13 +214,16 @@ export class GameStateService {
   }
 
   /**
-   * Changes how the next match is set up - level, opponent or difficulty.
+   * Changes how the next match is set up - level, opponent, difficulty or
+   * colours.
    *
    * A match keeps the rules it started with: the colonies are only spawned
    * again - with the new map, balance and opponent - while nobody is playing.
    */
   private updateSetup(
-    setup: Partial<Pick<GameStateState, 'levelId' | 'mode' | 'difficulty'>>
+    setup: Partial<
+      Pick<GameStateState, 'levelId' | 'mode' | 'difficulty' | 'colors'>
+    >
   ): void {
     this.gameStateStore.update(setup);
     if (this.isIdle()) {
@@ -232,6 +244,31 @@ export class GameStateService {
   /** Picks how hard the computer plays. */
   public setDifficulty(difficulty: BotDifficulty): void {
     this.updateSetup({ difficulty });
+  }
+
+  /**
+   * Gives a seat's colony another colour - 0 is the left seat, 1 the right
+   * one. Picking the other seat's colour swaps the two.
+   */
+  public setColor(seat: 0 | 1, colorId: string): void {
+    this.updateSetup({
+      colors: pickColor(
+        this.gameStateQuery.getValue().colors,
+        seat,
+        getColonyColor(colorId).id
+      ),
+    });
+  }
+
+  /**
+   * Gives both colonies their colours at once. A pair with an unknown colour
+   * or the same colour twice is ignored.
+   */
+  public setColors(colors: readonly [string, string]): void {
+    const valid = validColorPair(colors);
+    if (valid != null) {
+      this.updateSetup({ colors: valid });
+    }
   }
 
   /** Fires the boost of a player - the touch equivalent of Space / Enter. */

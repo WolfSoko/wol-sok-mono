@@ -41,14 +41,14 @@ export const LEVELS: readonly Level[] = [
     id: 'corridors',
     name: '2 · Corridors',
     description:
-      'Two walls with offset gaps. Push through one of them before the enemy does.',
+      'Two walls with offset gaps that slam shut every few seconds. Push through before the enemy - or the gate - does.',
     mapId: 'corridors',
   },
   {
     id: 'hourglass',
     name: '3 · Hourglass',
     description:
-      'One narrow waist in the centre, richer food. Holding the gap decides the match.',
+      'One narrow waist in the centre that pinches shut now and then, and richer food. Holding the gap decides the match.',
     mapId: 'hourglass',
     balance: {
       aggression: 0.55,
@@ -109,6 +109,21 @@ export const LEVELS: readonly Level[] = [
     balance: {
       aggression: 0.8,
       divideChancePerSec: 4,
+      combatDrainPerSec: 2.2,
+      nutrientCount: 10,
+      nutrientRespawnDelaySec: 1.5,
+    },
+    crosshairSpeed: 200,
+  },
+  {
+    id: 'pistons',
+    name: '8 · Pistons',
+    description:
+      'Two sliding bars sweep the middle and shove both colonies around. Time your push between them.',
+    mapId: 'pistons',
+    balance: {
+      aggression: 0.75,
+      divideChancePerSec: 3.8,
       combatDrainPerSec: 2.2,
       nutrientCount: 10,
       nutrientRespawnDelaySec: 1.5,

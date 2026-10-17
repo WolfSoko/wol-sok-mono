@@ -9,12 +9,15 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { BOT_DIFFICULTIES, BotDifficulty } from '../state/bot-controller';
+import { COLONY_COLORS } from '../state/colony-colors';
 import { GameMode } from '../state/game.states';
 import { Level, LEVELS } from '../state/levels';
 
 /**
- * The controls that set up the next match: opponent, difficulty and level.
+ * The controls that set up the next match: opponent, difficulty, colours
+ * and level.
  *
  * A dumb component - it only shows what it is given and reports what the
  * player picked. Whether a pick may take effect is the game's decision.
@@ -26,6 +29,7 @@ import { Level, LEVELS } from '../state/levels';
     MatFormFieldModule,
     MatIconModule,
     MatSelectModule,
+    MatTooltipModule,
   ],
   templateUrl: './match-setup.component.html',
   styleUrl: './match-setup.component.scss',
@@ -35,15 +39,30 @@ export class MatchSetupComponent {
   public readonly mode = input.required<GameMode>();
   public readonly difficulty = input.required<BotDifficulty>();
   public readonly level = input.required<Level>();
+  /** The colour ids of the left and the right colony. */
+  public readonly colors = input.required<readonly [string, string]>();
   /** True while a match is on and the setup must not change. */
   public readonly disabled = input(false);
 
   public readonly modeChange = output<GameMode>();
   public readonly difficultyChange = output<BotDifficulty>();
   public readonly levelChange = output<string>();
+  public readonly colorChange = output<ColorChange>();
 
   protected readonly levels = LEVELS;
   protected readonly difficulties = BOT_DIFFICULTIES;
+  protected readonly palette = COLONY_COLORS;
+
+  /** Who sits in each seat, for the label of its colour picker. */
+  protected readonly seats = computed(() =>
+    this.mode() === 'vs-computer'
+      ? (['You', 'Computer'] as const)
+      : (['Left player', 'Right player'] as const)
+  );
+
+  protected pickColor(seat: number, colorId: string): void {
+    this.colorChange.emit({ seat: seat === 0 ? 0 : 1, colorId });
+  }
 
   /** The briefing of the selected difficulty. */
   protected readonly difficultyDescription = computed(
@@ -51,4 +70,10 @@ export class MatchSetupComponent {
       BOT_DIFFICULTIES.find((option) => option.id === this.difficulty())
         ?.description ?? ''
   );
+}
+
+/** A seat - 0 is the left one, 1 the right one - picked another colour. */
+export interface ColorChange {
+  seat: 0 | 1;
+  colorId: string;
 }
