@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   inject,
   Injector,
   signal,
@@ -14,7 +13,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, of, switchMap, tap } from 'rxjs';
 import { PollSort, searchPolls } from '../../shared/poll-search';
@@ -26,7 +24,7 @@ import { EndlessScroll } from '../core/endless-scroll/endless-scroll';
 import { EndlessScrollEndComponent } from '../core/endless-scroll/endless-scroll-end.component';
 import { PollListComponent } from '../core/poll-list/poll-list.component';
 import { PollsRepoPort } from '../ports/polls-repo.port';
-import { SITE_TAGS, SITE_URL } from './site-tags';
+import { SITE_TAGS, SITE_URL, usePageTags } from './site-tags';
 
 /** All open listed polls, searchable. */
 @Component({
@@ -224,18 +222,14 @@ export default class PollsPageComponent {
   });
 
   constructor() {
-    const title = inject(Title);
-    const meta = inject(Meta);
-    title.setTitle('Browse polls | RollaPolla');
-    meta.updateTag({
-      property: 'og:title',
-      content: 'Browse polls | RollaPolla',
-    });
-    meta.updateTag({ property: 'og:url', content: `${SITE_URL}/polls` });
-    inject(DestroyRef).onDestroy(() => {
-      title.setTitle(SITE_TAGS.title);
-      meta.updateTag({ property: 'og:title', content: SITE_TAGS.title });
-      meta.updateTag({ property: 'og:url', content: SITE_TAGS.url });
+    usePageTags({
+      title: 'Browse polls | RollaPolla',
+      description:
+        'Browse public polls on RollaPolla: search the hottest and newest questions, vote and see live results.',
+      socialDescription:
+        'Search the hottest and newest polls, vote and see live results.',
+      url: `${SITE_URL}/polls`,
+      robots: SITE_TAGS.robots,
     });
   }
 

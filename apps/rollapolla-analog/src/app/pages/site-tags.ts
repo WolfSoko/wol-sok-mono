@@ -1,5 +1,7 @@
+import { DOCUMENT } from '@angular/common';
 import { DestroyRef, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
+import { injectResponse } from '@analogjs/router/tokens';
 import { SITE_URL } from '../../shared/site-url';
 
 export { pollUrl, SITE_URL } from '../../shared/site-url';
@@ -28,16 +30,62 @@ export const SITE_TAGS: PageTags = {
 };
 
 /**
- * Gives a personal page its own title and keeps it out of search engines;
- * restores the site tags when the page goes. Call in an injection context.
+ * Returns a function that sets title, description, canonical URL, robots and
+ * the link preview tags. Call in an injection context, use the result anywhere.
  */
-export function useNoindexPage(title: string): void {
-  const titleService = inject(Title);
+export function injectApplyPageTags(): (tags: PageTags) => void {
+  const title = inject(Title);
   const meta = inject(Meta);
-  titleService.setTitle(title);
-  meta.updateTag({ name: 'robots', content: 'noindex' });
-  inject(DestroyRef).onDestroy(() => {
-    titleService.setTitle(SITE_TAGS.title);
-    meta.updateTag({ name: 'robots', content: SITE_TAGS.robots });
+  const document = inject(DOCUMENT);
+  return (tags) => {
+    title.setTitle(tags.title);
+    meta.updateTag({ property: 'og:title', content: tags.title });
+    meta.updateTag({ name: 'description', content: tags.description });
+    meta.updateTag({
+      property: 'og:description',
+      content: tags.socialDescription,
+    });
+    meta.updateTag({ property: 'og:url', content: tags.url });
+    meta.updateTag({ name: 'robots', content: tags.robots });
+    document.head
+      .querySelector<HTMLLinkElement>('link[rel="canonical"]')
+      ?.setAttribute('href', tags.url);
+  };
+}
+
+/**
+ * Gives a page its own tags and restores the site tags when the page goes.
+ * Call in an injection context.
+ */
+export function usePageTags(tags: PageTags): void {
+  const apply = injectApplyPageTags();
+  apply(tags);
+  inject(DestroyRef).onDestroy(() => apply(SITE_TAGS));
+}
+
+/**
+ * Gives a personal page its own title and keeps it out of search engines.
+ * Call in an injection context.
+ */
+export function useNoindexPage(title: string, path: string): void {
+  usePageTags({
+    ...SITE_TAGS,
+    title,
+    url: `${SITE_URL}${path}`,
+    robots: 'noindex',
   });
+}
+
+/**
+ * Answers the server-rendered request with 404, so search engines drop the
+ * page instead of seeing a soft 404. A no-op in the browser. Call in an
+ * injection context.
+ */
+export function injectSetNotFoundStatus(): () => void {
+  const response = injectResponse();
+  return () => {
+    if (response && !response.headersSent) {
+      response.statusCode = 404;
+    }
+  };
 }
