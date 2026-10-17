@@ -25,8 +25,18 @@ export class SpaStack extends Stack {
     spa.addExtraAssets(
       [
         Source.jsonData('version.json', version),
-        Source.asset(props.buildOutputPath + '/assets', {
-          exclude: ['**', '!federation.manifest*.json'],
+        // Federation files keep their names across releases but point at
+        // hashed bundles, so a cached copy pins the old bundles. remoteEntry.json
+        // is the shell's own import map, the manifests list the remotes. The
+        // asset is rooted at the build output so the files keep their paths;
+        // '!assets' re-includes the folder that '**' would skip as a whole.
+        Source.asset(props.buildOutputPath, {
+          exclude: [
+            '**',
+            '!remoteEntry.json',
+            '!assets',
+            '!assets/federation.manifest*.json',
+          ],
         }),
       ],
       CacheControl.noCache()
