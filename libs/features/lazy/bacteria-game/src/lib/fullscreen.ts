@@ -74,6 +74,71 @@ export function exitFullscreen(doc: FullscreenDocument): boolean {
 }
 
 /**
+ * Asks the browser to put the element on the whole screen.
+ *
+ * Resolves to true once the element fills the screen and to false when the
+ * browser refused: because the request did not come from a user gesture, or
+ * because the API is missing altogether, as on iPhones. The caller then keeps
+ * its own full-viewport layout and may try again on the next gesture.
+ */
+export function requestFullscreen(
+  element: FullscreenElement | null | undefined
+): Promise<boolean> {
+  const request =
+    element?.requestFullscreen ?? element?.webkitRequestFullscreen;
+  if (element == null || request == null) {
+    return Promise.resolve(false);
+  }
+  try {
+    return Promise.resolve(request.call(element)).then(
+      () => true,
+      () => false
+    );
+  } catch {
+    return Promise.resolve(false);
+  }
+}
+
+/** The part of `screen.orientation` the lock helpers use. */
+export interface OrientationLockScreen {
+  orientation?: {
+    lock?: (orientation: 'landscape') => Promise<void>;
+    unlock?: () => void;
+  };
+}
+
+/**
+ * Keeps a phone in landscape while the arena fills its screen - the arena is
+ * more than twice as wide as it is tall, and two players sit along its long
+ * edges. Browsers only honour the lock in fullscreen, and desktops reject it;
+ * both are fine, so the failure is swallowed.
+ */
+export function lockLandscape(screen: OrientationLockScreen | undefined): void {
+  const lock = screen?.orientation?.lock;
+  if (lock == null) {
+    return;
+  }
+  try {
+    void Promise.resolve(lock.call(screen?.orientation, 'landscape')).catch(
+      () => undefined
+    );
+  } catch {
+    // Some browsers throw synchronously instead of rejecting.
+  }
+}
+
+/** Lets the phone rotate freely again. */
+export function unlockOrientation(
+  screen: OrientationLockScreen | undefined
+): void {
+  try {
+    screen?.orientation?.unlock?.();
+  } catch {
+    // Not locked, or not supported - nothing to undo either way.
+  }
+}
+
+/**
  * Puts the element on the screen, or takes it off again when it is already
  * there. Returns whether a request was made at all, so a caller can tell that
  * the browser refused the feature outright.

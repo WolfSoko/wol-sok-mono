@@ -179,5 +179,90 @@ describe('PlayerService', () => {
         playerQuery.getAll().map((player) => [player.x, player.y])
       ).toEqual(before);
     });
+
+    it('moves a diagonal no faster than a straight line', () => {
+      const start = playerQuery.getEntity(0) as { x: number; y: number };
+
+      store.update({ keysPressed: ['d', 's'], timeDelta: 100 });
+
+      const after = playerQuery.getEntity(0) as { x: number; y: number };
+      const travelled = Math.hypot(after.x - start.x, after.y - start.y);
+      expect(travelled).toBeCloseTo(150 * 0.1);
+      expect(after.x - start.x).toBeCloseTo(after.y - start.y);
+    });
+  });
+
+  describe('joystick', () => {
+    beforeEach(() => {
+      service.init(spawns(false), { map: getMap('open-field') });
+    });
+
+    function positionOf(playerId: number): { x: number; y: number } {
+      const { x, y } = playerQuery.getEntity(playerId) as {
+        x: number;
+        y: number;
+      };
+      return { x, y };
+    }
+
+    it('keeps the crosshair moving while the stick is held', () => {
+      const start = positionOf(1);
+      service.setSteering(1, { x: 0, y: 1 });
+
+      run(2, 0.1);
+
+      const after = positionOf(1);
+      expect(after.x).toBe(start.x);
+      expect(after.y).toBeCloseTo(start.y + 150 * 0.2);
+    });
+
+    it('moves slower for a gentle push', () => {
+      const start = positionOf(0);
+      service.setSteering(0, { x: 0.5, y: 0 });
+
+      run(1, 0.1);
+
+      expect(positionOf(0).x).toBeCloseTo(start.x + 150 * 0.1 * 0.5);
+    });
+
+    it('stops once the stick is released', () => {
+      service.setSteering(0, { x: 1, y: 0 });
+      run(1, 0.1);
+      const held = positionOf(0);
+
+      service.setSteering(0, { x: 0, y: 0 });
+      run(1, 0.1);
+
+      expect(positionOf(0)).toEqual(held);
+    });
+
+    it('steers only its own crosshair', () => {
+      const other = positionOf(1);
+      service.setSteering(0, { x: 1, y: 0 });
+
+      run(1, 0.1);
+
+      expect(positionOf(1)).toEqual(other);
+    });
+
+    it('wins over a drag target', () => {
+      service.setDragTarget(0, 0, 70);
+      service.setSteering(0, { x: 1, y: 0 });
+      const start = positionOf(0);
+
+      run(1, 0.1);
+
+      expect(positionOf(0).x).toBeGreaterThan(start.x);
+    });
+
+    it('is forgotten when the next match starts', () => {
+      service.setSteering(0, { x: 1, y: 0 });
+
+      service.init(spawns(false), { map: getMap('open-field') });
+      const start = positionOf(0);
+      run(1, 0.1);
+
+      expect(positionOf(0)).toEqual(start);
+    });
   });
 });

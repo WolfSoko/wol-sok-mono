@@ -1,0 +1,25 @@
+@if (origin(); as centre) {
+  <div
+    class="base"
+    [style.left.px]="centre.x"
+    [style.top.px]="centre.y"
+    [style.width.px]="radius() * 2"
+    [style.height.px]="radius() * 2"
+  >
+    <div
+      class="knob"
+      [style.transform]="'translate(' + knob().x + 'px, ' + knob().y + 'px)'"
+    ></div>
+  </div>
+} @else {
+  <div class="hint">
+    <div
+      class="base idle"
+      [style.width.px]="radius() * 2"
+      [style.height.px]="radius() * 2"
+    >
+      <div class="knob"></div>
+    </div>
+    <span class="label">{{ label() }}</span>
+  </div>
+}

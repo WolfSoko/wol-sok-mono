@@ -4,7 +4,10 @@ import {
   fullscreenElementOf,
   isFullscreen,
   isFullscreenSupported,
+  lockLandscape,
+  requestFullscreen,
   toggleFullscreen,
+  unlockOrientation,
 } from './fullscreen';
 
 describe('fullscreenElementOf', () => {
@@ -155,5 +158,71 @@ describe('fitInside', () => {
 
   it('has no size for a box that has no layout yet', () => {
     expect(fitInside(0, 0, 320, 140)).toBeNull();
+  });
+});
+
+describe('requestFullscreen', () => {
+  it('resolves true once the browser granted the request', async () => {
+    await expect(
+      requestFullscreen({ requestFullscreen: () => Promise.resolve() })
+    ).resolves.toBe(true);
+  });
+
+  it('resolves false when the browser rejects it', async () => {
+    await expect(
+      requestFullscreen({
+        requestFullscreen: () => Promise.reject(new TypeError('no gesture')),
+      })
+    ).resolves.toBe(false);
+  });
+
+  it('resolves false without the API', async () => {
+    await expect(requestFullscreen({})).resolves.toBe(false);
+    await expect(requestFullscreen(null)).resolves.toBe(false);
+  });
+
+  it('falls back to the webkit call', async () => {
+    const webkitRequestFullscreen = jest.fn();
+
+    await expect(requestFullscreen({ webkitRequestFullscreen })).resolves.toBe(
+      true
+    );
+    expect(webkitRequestFullscreen).toHaveBeenCalled();
+  });
+});
+
+describe('lockLandscape', () => {
+  it('asks for landscape', () => {
+    const lock = jest.fn().mockResolvedValue(undefined);
+
+    lockLandscape({ orientation: { lock } });
+
+    expect(lock).toHaveBeenCalledWith('landscape');
+  });
+
+  it('swallows a refusal', async () => {
+    const lock = jest.fn().mockRejectedValue(new Error('not supported'));
+
+    expect(() => lockLandscape({ orientation: { lock } })).not.toThrow();
+    await Promise.resolve();
+  });
+
+  it('does nothing without the API', () => {
+    expect(() => lockLandscape({})).not.toThrow();
+    expect(() => lockLandscape(undefined)).not.toThrow();
+  });
+});
+
+describe('unlockOrientation', () => {
+  it('releases the lock', () => {
+    const unlock = jest.fn();
+
+    unlockOrientation({ orientation: { unlock } });
+
+    expect(unlock).toHaveBeenCalled();
+  });
+
+  it('does nothing without the API', () => {
+    expect(() => unlockOrientation({})).not.toThrow();
   });
 });
