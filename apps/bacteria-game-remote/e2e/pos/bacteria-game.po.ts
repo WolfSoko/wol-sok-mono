@@ -27,6 +27,7 @@ export class BacteriaGamePo {
   public readonly quitCta: Locator;
   public readonly menuTitle: Locator;
   public readonly muteCta: Locator;
+  public readonly winner: Locator;
   public readonly unmuteCta: Locator;
 
   constructor(private readonly page: Page) {
@@ -56,6 +57,7 @@ export class BacteriaGamePo {
     this.quitCta = page.getByRole('button', { name: 'Quit to menu' });
     this.menuTitle = page.locator('.menu-title');
     this.muteCta = page.getByRole('button', { name: 'Mute', exact: true });
+    this.winner = page.locator('feat-lazy-bac-game-winner');
     this.unmuteCta = page.getByRole('button', { name: 'Unmute' });
   }
 
@@ -192,6 +194,15 @@ export class BacteriaGamePo {
       },
       [x, y]
     );
+  }
+
+  /** The number of bacteria a colony has, as the stage bar shows it. */
+  public async colonyCount(colony: number): Promise<number> {
+    const text = await this.page
+      .locator('.hud-colony .colony-count')
+      .nth(colony)
+      .innerText();
+    return Number(text);
   }
 
   public async release(): Promise<void> {

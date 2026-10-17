@@ -41,7 +41,9 @@ import {
   tap,
 } from 'rxjs/operators';
 import { ArenaFrame, ArenaPainter } from './arena/arena-painter';
+import { colonyLayers } from './arena/colony-layers';
 import { createArenaPainter } from './arena/create-arena-painter';
+import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
 import { BoostPadComponent } from './boost-pad/boost-pad.component';
 import {
@@ -428,6 +430,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     // Which painter runs - for the e2e tests and for anyone debugging.
     canvas.dataset['renderer'] = this.painter.kind;
+    // With a WebGL2 context the war itself runs on the GPU as well.
+    const gl = this.painter instanceof GlArenaPainter ? this.painter : null;
+    this.playerService.useSimulation(
+      gl == null ? null : (balance) => gl.createSimulation(balance)
+    );
+    canvas.dataset['simulation'] = gl == null ? 'cpu' : 'gpu';
     this.painter.setTheme(this.theme());
     this.gameStateService.setArenaSize(this.width, this.height);
     this.draw(1 / 1000, true);
@@ -523,11 +531,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       timeSec: this.animationSec,
       walls: this.walls(),
       dynamicWalls: this.playerService.getDynamicWalls(),
-      colonies: this.playerService.getColonies().map((colony) => ({
-        color: colony.color,
-        bacterias: colony.bacterias,
-        boosted: boosted.has(colony.playerId),
-      })),
+      colonies: colonyLayers(this.playerService.getSimulation(), boosted),
       nutrients: this.playerService.getNutrients(),
       balance,
       look: this.settings.look(),
@@ -545,6 +549,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.gameStateService.cleanup();
+    // The GPU simulation lives in this canvas's context, which goes with it.
+    this.playerService.useSimulation(null);
     this.sound.setAmbience(null);
     // Leaving the page must give the screen back as well.
     exitFullscreen(document);

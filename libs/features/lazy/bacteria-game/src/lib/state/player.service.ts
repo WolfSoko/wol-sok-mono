@@ -2,11 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import { ID, transaction } from '@datorama/akita';
 import {
   BacteriaSimulation,
-  Colony,
-  Nutrient,
   noEvents,
+  Nutrient,
   StepEvents,
 } from './bacteria-simulation';
+import { Simulation, SimulationFactory } from './simulation';
 import {
   BotController,
   BotDifficulty,
@@ -65,6 +65,10 @@ const KEY_SETS: readonly Record<string, SteeringVector>[] = [
   },
 ];
 
+/** The default: the simulation runs on the CPU. */
+const cpuSimulation: SimulationFactory = (balance) =>
+  new BacteriaSimulation(balance);
+
 /** What happened during a frame - the simulation's events and the boosts. */
 export interface FrameEvents extends StepEvents {
   /** One entry per boost fired since the frame before, true for the computer's. */
@@ -77,7 +81,9 @@ export class PlayerService {
   private gameStateQuery = inject(GameStateQuery);
   private playerQuery = inject(PlayerQuery);
 
-  private simulation = new BacteriaSimulation();
+  /** Builds each match's simulation - on the CPU unless told otherwise. */
+  private simulationFactory: SimulationFactory = cpuSimulation;
+  private simulation: Simulation = new BacteriaSimulation();
   private balance: GameBalance = gameBalance;
   /** Arena position a player is currently dragging their crosshair towards. */
   private dragTargets = new Map<number, Point>();
@@ -153,7 +159,8 @@ export class PlayerService {
     this.balance = balance;
     this.firedBoosts = [];
     this.frameEvents = { ...noEvents(), boosts: [] };
-    this.simulation = new BacteriaSimulation(balance);
+    this.simulation.dispose();
+    this.simulation = this.simulationFactory(balance);
     if (options.arena != null) {
       this.simulation.resize(options.arena.width, options.arena.height);
     }
@@ -240,9 +247,18 @@ export class PlayerService {
     return this.frameEvents;
   }
 
-  /** The live bacteria of every colony - used for rendering only. */
-  public getColonies(): readonly Colony[] {
-    return this.simulation.getColonies();
+  /**
+   * Runs the matches from now on with simulations from this factory - the
+   * GPU one once the arena has a WebGL2 context, the CPU one again for null.
+   * Takes effect with the next match.
+   */
+  public useSimulation(factory: SimulationFactory | null): void {
+    this.simulationFactory = factory ?? cpuSimulation;
+  }
+
+  /** The simulation of the current match - used for rendering only. */
+  public getSimulation(): Simulation {
+    return this.simulation;
   }
 
   /** Advances the whole colony war by one frame. */
@@ -283,7 +299,7 @@ export class PlayerService {
     if (this.bots.size === 0) {
       return;
     }
-    const colonies = this.simulation.getColonies();
+    const colonies = this.simulation.summaries();
     for (const [playerId, bot] of this.bots) {
       const player = this.playerQuery.getEntity(playerId);
       const own = colonies.find((colony) => colony.playerId === playerId);
@@ -295,6 +311,7 @@ export class PlayerService {
         height,
         own,
         colonies,
+        (from) => this.simulation.nearestEnemy(playerId, from),
         this.simulation.getNutrients(),
         isBoostReady(player),
         this.balance.maxEnergy
@@ -312,8 +329,8 @@ export class PlayerService {
   /** Mirrors the colony scoreboard into the store, the bacteria stay out of it. */
   @transaction()
   private syncColonyStats(): void {
-    for (const colony of this.simulation.getColonies()) {
-      const bacteriaCount = colony.bacterias.length;
+    for (const colony of this.simulation.summaries()) {
+      const bacteriaCount = colony.count;
       this.playerStore.update(colony.playerId, {
         bacteriaCount,
         captured: colony.captured,

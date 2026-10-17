@@ -1,4 +1,5 @@
 import { BacteriaLook } from '../settings.service';
+import { CellBounds } from './arena-painter';
 import { Nutrient } from '../state/bacteria-simulation';
 import { GameBalance, gameBalance } from '../state/game-balance';
 import { clamp } from '../state/geometry';
@@ -10,9 +11,22 @@ import { createCanvas, hash, lerp, rgba, smoothstep } from './canvas-math';
 export interface ColonyLayer {
   /** RGBA, the alpha from 0 to 255. */
   color: readonly number[];
+  /** The bacteria, when the war runs on the CPU - empty when it runs on the GPU. */
   bacterias: readonly Bacteria[];
   /** True while the colony's boost runs - its bacteria shimmer then. */
   boosted: boolean;
+  /** Where the colony is in the GPU simulation's state, when it runs there. */
+  gpu?: GpuColony;
+}
+
+/** A colony of the GPU simulation, as the WebGL painter reads it. */
+export interface GpuColony {
+  /** The simulation's cell state texture. */
+  state: WebGLTexture;
+  /** The owner value of the colony's cells in the state. */
+  owner: number;
+  /** The coarse box around the colony, null once it is gone. */
+  bounds: CellBounds | null;
 }
 
 /**

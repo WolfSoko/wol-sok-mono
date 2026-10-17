@@ -5,6 +5,14 @@ import { DynamicWall, Rect } from '../state/maps';
 import { ArenaTheme } from './arena-theme';
 import { ColonyLayer } from './colony-renderer';
 
+/** The cells a colony covers, inclusive, in arena cells. */
+export interface CellBounds {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
 /** A player's crosshair as it is drawn. */
 export interface CursorShape {
   x: number;

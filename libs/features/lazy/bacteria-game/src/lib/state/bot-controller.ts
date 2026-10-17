@@ -1,5 +1,6 @@
-import { Colony, Nutrient } from './bacteria-simulation';
+import { Nutrient } from './bacteria-simulation';
 import { clamp, distance, Point } from './geometry';
+import { ColonySummary } from './simulation';
 
 /**
  * The computer opponent.
@@ -231,44 +232,29 @@ export class BotController {
 }
 
 /**
- * Condenses the live colonies into what the bot is allowed to look at: centres
- * of mass, sizes, average energy and the enemy bacterium closest to its own
- * colony.
+ * What the bot gets to see: its own colony, the strongest enemy colony and
+ * the enemy bacterium closest to its own centre of mass - from the colony
+ * summaries, so it works the same whichever processor runs the war.
  */
 export function buildBotView(
   width: number,
   height: number,
-  own: Colony,
-  colonies: readonly Colony[],
+  own: ColonySummary,
+  colonies: readonly ColonySummary[],
+  nearestEnemy: (from: Point) => Point | null,
   nutrients: readonly Nutrient[],
   boostReady: boolean,
   maxEnergy: number
 ): BotView {
   const ownView = colonyView(own, maxEnergy);
   let enemy: ColonyView | null = null;
-  let enemyColony: Colony | null = null;
   for (const colony of colonies) {
-    if (colony === own || colony.bacterias.length === 0) {
+    if (colony.playerId === own.playerId || colony.count === 0) {
       continue;
     }
     const view = colonyView(colony, maxEnergy);
     if (enemy == null || view.count > enemy.count) {
       enemy = view;
-      enemyColony = colony;
-    }
-  }
-
-  let nearestEnemy: Point | null = null;
-  if (enemyColony != null) {
-    let nearestDistance = Number.POSITIVE_INFINITY;
-    for (const bacterium of enemyColony.bacterias) {
-      const dx = bacterium.x - ownView.x;
-      const dy = bacterium.y - ownView.y;
-      const squared = dx * dx + dy * dy;
-      if (squared < nearestDistance) {
-        nearestDistance = squared;
-        nearestEnemy = { x: bacterium.x, y: bacterium.y };
-      }
     }
   }
 
@@ -277,28 +263,21 @@ export function buildBotView(
     height,
     own: ownView,
     enemy,
-    nearestEnemy,
+    nearestEnemy: enemy == null ? null : nearestEnemy(ownView),
     nutrients,
     boostReady,
   };
 }
 
 /** Centre of mass, size and average energy of a colony. */
-function colonyView(colony: Colony, maxEnergy: number): ColonyView {
-  const count = colony.bacterias.length;
-  if (count === 0) {
+function colonyView(colony: ColonySummary, maxEnergy: number): ColonyView {
+  if (colony.count === 0 || colony.center == null) {
     return { x: 0, y: 0, count: 0, energy: 0 };
   }
-  let sumX = 0;
-  let sumY = 0;
-  for (const bacterium of colony.bacterias) {
-    sumX += bacterium.x;
-    sumY += bacterium.y;
-  }
   return {
-    x: sumX / count,
-    y: sumY / count,
-    count,
-    energy: colony.totalEnergy / count / maxEnergy,
+    x: colony.center.x,
+    y: colony.center.y,
+    count: colony.count,
+    energy: colony.totalEnergy / colony.count / maxEnergy,
   };
 }

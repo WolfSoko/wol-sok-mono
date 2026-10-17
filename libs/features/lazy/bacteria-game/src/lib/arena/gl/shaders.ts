@@ -4,15 +4,6 @@
  * same coordinates the simulation uses.
  */
 
-/** A quad over the whole target, for the full screen passes. */
-export const FULLSCREEN_VERTEX = `#version 300 es
-layout(location = 0) in vec2 aCorner;
-out vec2 vNdc;
-void main() {
-  vNdc = aCorner * 2.0 - 1.0;
-  gl_Position = vec4(vNdc, 0.0, 1.0);
-}`;
-
 /** The arena position under a fragment of a full screen pass. */
 const ARENA_POSITION = `
 vec2 arenaPosition(vec2 ndc, vec2 arena) {
