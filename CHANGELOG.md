@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.2.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.2.0...v74.2.1) (2026-10-17)
+
+### Bug Fixes
+
+* **angular-examples:** serve the current remote features in the shell ([#2469](https://github.com/WolfSoko/wol-sok-mono/issues/2469)) ([cfce3aa](https://github.com/WolfSoko/wol-sok-mono/commit/cfce3aad78ca84fe87dfcbc27c951729aebb8900))
+
+### Chore
+
+* **release:** publish ([aa2a770](https://github.com/WolfSoko/wol-sok-mono/commit/aa2a7706042bb2c8a4b2983f635f95dea56c33e8))
+
 ## [74.2.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.1.0...v74.2.0) (2026-10-17)
 
 ### Features
