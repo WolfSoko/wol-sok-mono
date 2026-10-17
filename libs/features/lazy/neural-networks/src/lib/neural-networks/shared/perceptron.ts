@@ -1,5 +1,5 @@
 import { TrainData } from './train-data';
-import { LabelClass } from './point';
+import { LabelClass, toLabelClass } from './point';
 import { Subscription, timer } from 'rxjs';
 
 export class Perceptron {
@@ -10,10 +10,6 @@ export class Perceptron {
   lastLearnRate = 0;
   lastInput: number[] = [];
   private learnTimeoutSub: Subscription = new Subscription();
-
-  private static outputMapping(activationLevel: number): LabelClass {
-    return activationLevel < 0.5 ? 0 : 1;
-  }
 
   private static getRandomWeights(inputConnections: number) {
     const result = [];
@@ -34,7 +30,7 @@ export class Perceptron {
   }
 
   guessSilent(inputs: number[]): LabelClass {
-    return Perceptron.outputMapping(this.guessSigSilent(inputs));
+    return toLabelClass(this.guessSigSilent(inputs));
   }
 
   guessSigSilent(inputs: number[]): number {

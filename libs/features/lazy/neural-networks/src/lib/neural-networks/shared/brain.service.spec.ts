@@ -1,0 +1,85 @@
+import { TestBed } from '@angular/core/testing';
+import { BrainService } from './brain.service';
+import { Point, toLabelClass } from './point';
+
+// mulberry32: a tiny seeded PRNG so weights and sampling are the same on every run
+const seededRandom = (seed: number) => () => {
+  seed = (seed + 0x6d2b79f5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), seed | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+
+describe('BrainService', () => {
+  let service: BrainService;
+
+  const gridPoints = (): Point[] => {
+    const points: Point[] = [];
+    for (let x = 0.05; x < 1; x += 0.1) {
+      for (let y = 0.05; y < 1; y += 0.1) {
+        points.push(new Point(x, y));
+      }
+    }
+    return points;
+  };
+
+  const accuracy = (points: Point[]) =>
+    points.filter((point) => service.guessSilent(point.data) === point.label)
+      .length / points.length;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.spyOn(Math, 'random').mockImplementation(seededRandom(42));
+    TestBed.configureTestingModule({ providers: [BrainService] });
+    service = TestBed.inject(BrainService);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  it('trains a multi layer net with back propagation', () => {
+    service.createMultiPerceptron(2, [2, 3, 1]);
+    service.points = gridPoints();
+
+    for (let i = 0; i < 2000; i++) {
+      service.train();
+    }
+
+    expect(accuracy(service.points)).toBeGreaterThan(0.9);
+  });
+
+  it('returns the sigmoid output of the multi layer net as activation', () => {
+    service.createMultiPerceptron(2, [2, 3, 1]);
+
+    const activation = service.activationSilent([0.2, 0.7]);
+
+    expect(activation).toBeGreaterThan(0);
+    expect(activation).toBeLessThan(1);
+    expect(service.guessSilent([0.2, 0.7])).toBe(toLabelClass(activation));
+  });
+
+  it('replays the current auto learning state to late subscribers', () => {
+    service.toggleAutoTraining(true);
+
+    let state: boolean | undefined;
+    service.autoLearning$
+      .subscribe((enabled) => (state = enabled))
+      .unsubscribe();
+
+    expect(state).toBe(true);
+    service.toggleAutoTraining(false);
+  });
+
+  it('trains a single perceptron', () => {
+    service.createPerceptron(2);
+    service.points = gridPoints();
+
+    for (let i = 0; i < 500; i++) {
+      service.train();
+    }
+
+    expect(accuracy(service.points)).toBeGreaterThan(0.9);
+  });
+});

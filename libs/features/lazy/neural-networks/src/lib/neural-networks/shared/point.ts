@@ -3,6 +3,10 @@ import * as P5 from 'p5';
 
 export type LabelClass = 0 | 1;
 
+export function toLabelClass(activation: number): LabelClass {
+  return activation < 0.5 ? 0 : 1;
+}
+
 export class Point {
   private _label: LabelClass | null = null;
 
