@@ -30,12 +30,29 @@ function stubFullscreen(element: Element | null): jest.Mock {
   return exit;
 }
 
-/** A stage whose fullscreen request the browser grants or refuses. */
+/** Lets the page believe a user gesture is, or is not, still fresh. */
+function stubActivation(isActive: boolean): void {
+  Object.defineProperty(navigator, 'userActivation', {
+    value: { isActive },
+    configurable: true,
+  });
+}
+
+/**
+ * A stage whose fullscreen request the browser grants or refuses. A granted
+ * request puts the stage on the screen, as the browser would.
+ */
 function stage(granted: boolean) {
-  const requestFullscreen = jest.fn(() =>
-    granted ? Promise.resolve() : Promise.reject(new TypeError('no gesture'))
-  );
-  return { requestFullscreen };
+  const arena = {
+    requestFullscreen: jest.fn(() => {
+      if (!granted) {
+        return Promise.reject(new TypeError('no gesture'));
+      }
+      stubFullscreen(arena as unknown as Element);
+      return Promise.resolve();
+    }),
+  };
+  return arena;
 }
 
 /**
@@ -271,6 +288,48 @@ describe('BacteriaGameComponent', () => {
       expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
     });
 
+    it('does not waste the request on a page opened without a gesture', () => {
+      create();
+      const arena = stage(false);
+      setStage(component, arena);
+      stubFullscreen(null);
+      stubActivation(false);
+
+      component['enterFullscreenOnOpen']();
+
+      expect(component['fullscreen']()).toBe(true);
+      expect(arena.requestFullscreen).not.toHaveBeenCalled();
+
+      component['onDocumentPointerUp'](pointerUp(document.body));
+
+      expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
+    });
+
+    it('spends the gesture of the navigation that opened the page', () => {
+      create();
+      const arena = stage(true);
+      setStage(component, arena);
+      stubFullscreen(null);
+      stubActivation(true);
+
+      component['enterFullscreenOnOpen']();
+
+      expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
+    });
+
+    it('leaves a key on a focused button to the button', async () => {
+      create();
+      const arena = stage(false);
+      setStage(component, arena);
+      stubFullscreen(null);
+      component['enterFullscreen']();
+      await settle();
+
+      component.onKeyDown(keyEvent('Enter', document.createElement('button')));
+
+      expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
+    });
+
     it('does not ask at all without the API, as on an iPhone', () => {
       create();
       const arena = { webkitRequestFullscreen: undefined };
@@ -396,6 +455,24 @@ describe('BacteriaGameComponent', () => {
       component['leaveFullscreenForDialog']();
 
       expect(exit).toHaveBeenCalled();
+    });
+
+    it('keeps the seats when it gave the screen up for the dialog', () => {
+      create();
+      const arena = stage(true);
+      setStage(component, arena);
+      stubFullscreen(document.createElement('div'));
+      component['fullscreen'].set(true);
+      component['leaveFullscreenForDialog']();
+
+      stubFullscreen(null);
+      component['onFullscreenChange']();
+
+      expect(component['fullscreen']()).toBe(true);
+
+      // The dialog's button is the next gesture and takes the screen back.
+      component['onDocumentClick']();
+      expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
     });
 
     it('stays fullscreen when the overlays move into the arena', () => {

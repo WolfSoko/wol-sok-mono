@@ -3,10 +3,10 @@ import {
   fitInside,
   fullscreenElementOf,
   isFullscreen,
+  hasUserActivation,
   isFullscreenSupported,
   lockLandscape,
   requestFullscreen,
-  toggleFullscreen,
   unlockOrientation,
 } from './fullscreen';
 
@@ -99,45 +99,6 @@ describe('exitFullscreen', () => {
   });
 });
 
-describe('toggleFullscreen', () => {
-  it('requests fullscreen for the element', () => {
-    const requestFullscreen = jest.fn().mockResolvedValue(undefined);
-
-    expect(
-      toggleFullscreen({ fullscreenElement: null }, { requestFullscreen })
-    ).toBe(true);
-    expect(requestFullscreen).toHaveBeenCalled();
-  });
-
-  it('exits when something already fills the screen', () => {
-    const exitFullscreen = jest.fn().mockResolvedValue(undefined);
-    const element = {} as Element;
-
-    expect(
-      toggleFullscreen({ fullscreenElement: element, exitFullscreen }, {})
-    ).toBe(true);
-    expect(exitFullscreen).toHaveBeenCalled();
-  });
-
-  it('uses the prefixed calls when they are the only ones', () => {
-    const webkitRequestFullscreen = jest.fn();
-
-    toggleFullscreen({}, { webkitRequestFullscreen });
-
-    expect(webkitRequestFullscreen).toHaveBeenCalled();
-  });
-
-  it('reports that nothing happened when the browser has no API', () => {
-    expect(toggleFullscreen({}, {})).toBe(false);
-  });
-
-  it('swallows a rejected request - a refused gesture must not break the game', () => {
-    const requestFullscreen = jest.fn().mockRejectedValue(new Error('denied'));
-
-    expect(() => toggleFullscreen({}, { requestFullscreen })).not.toThrow();
-  });
-});
-
 describe('fitInside', () => {
   it('fills the width when the box is taller than the arena', () => {
     expect(fitInside(640, 1000, 320, 140)).toEqual({ width: 640, height: 280 });
@@ -162,32 +123,73 @@ describe('fitInside', () => {
 });
 
 describe('requestFullscreen', () => {
-  it('resolves true once the browser granted the request', async () => {
-    await expect(
-      requestFullscreen({ requestFullscreen: () => Promise.resolve() })
-    ).resolves.toBe(true);
+  it('resolves true once the element is on the screen', async () => {
+    const doc: { fullscreenElement: Element | null } = {
+      fullscreenElement: null,
+    };
+    const element = {
+      requestFullscreen: jest.fn(() => {
+        doc.fullscreenElement = element as unknown as Element;
+        return Promise.resolve();
+      }),
+    };
+
+    await expect(requestFullscreen(doc, element)).resolves.toBe(true);
   });
 
   it('resolves false when the browser rejects it', async () => {
     await expect(
-      requestFullscreen({
-        requestFullscreen: () => Promise.reject(new TypeError('no gesture')),
-      })
+      requestFullscreen(
+        { fullscreenElement: null },
+        {
+          requestFullscreen: () => Promise.reject(new TypeError('no gesture')),
+        }
+      )
     ).resolves.toBe(false);
   });
 
   it('resolves false without the API', async () => {
-    await expect(requestFullscreen({})).resolves.toBe(false);
-    await expect(requestFullscreen(null)).resolves.toBe(false);
+    await expect(requestFullscreen({}, {})).resolves.toBe(false);
+    await expect(requestFullscreen({}, null)).resolves.toBe(false);
   });
 
-  it('falls back to the webkit call', async () => {
+  it('does not take the empty return of the webkit call for a yes', async () => {
     const webkitRequestFullscreen = jest.fn();
 
-    await expect(requestFullscreen({ webkitRequestFullscreen })).resolves.toBe(
+    await expect(
+      requestFullscreen(
+        { fullscreenElement: null },
+        { webkitRequestFullscreen }
+      )
+    ).resolves.toBe(false);
+    expect(webkitRequestFullscreen).toHaveBeenCalled();
+  });
+
+  it('believes the webkit call once the document shows the element', async () => {
+    const element = { webkitRequestFullscreen: jest.fn() };
+
+    await expect(
+      requestFullscreen(
+        { webkitFullscreenElement: element as unknown as Element },
+        element
+      )
+    ).resolves.toBe(true);
+  });
+});
+
+describe('hasUserActivation', () => {
+  it('is true while a gesture may still be spent', () => {
+    expect(hasUserActivation({ userActivation: { isActive: true } })).toBe(
       true
     );
-    expect(webkitRequestFullscreen).toHaveBeenCalled();
+  });
+
+  it('is false once it is spent, and without the API', () => {
+    expect(hasUserActivation({ userActivation: { isActive: false } })).toBe(
+      false
+    );
+    expect(hasUserActivation({})).toBe(false);
+    expect(hasUserActivation(undefined)).toBe(false);
   });
 });
 

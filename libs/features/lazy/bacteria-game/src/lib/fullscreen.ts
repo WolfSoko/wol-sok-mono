@@ -76,12 +76,17 @@ export function exitFullscreen(doc: FullscreenDocument): boolean {
 /**
  * Asks the browser to put the element on the whole screen.
  *
- * Resolves to true once the element fills the screen and to false when the
- * browser refused: because the request did not come from a user gesture, or
- * because the API is missing altogether, as on iPhones. The caller then keeps
- * its own full-viewport layout and may try again on the next gesture.
+ * Resolves to whether the element fills the screen once the request has
+ * settled. The browser refuses a request that does not come from a user
+ * gesture, and the API is missing altogether on iPhones; the caller then
+ * keeps its own full-viewport layout and may try again on the next gesture.
+ *
+ * The answer is read from the document rather than from the request: the
+ * prefixed Safari call returns nothing and reports a refusal only as an
+ * event, so its empty return must not count as granted.
  */
 export function requestFullscreen(
+  doc: FullscreenDocument,
   element: FullscreenElement | null | undefined
 ): Promise<boolean> {
   const request =
@@ -89,14 +94,30 @@ export function requestFullscreen(
   if (element == null || request == null) {
     return Promise.resolve(false);
   }
+  const granted = () => isFullscreen(doc, element);
   try {
-    return Promise.resolve(request.call(element)).then(
-      () => true,
-      () => false
-    );
+    return Promise.resolve(request.call(element)).then(granted, () => false);
   } catch {
     return Promise.resolve(false);
   }
+}
+
+/** The part of `navigator` the activation check uses. */
+export interface ActivationNavigator {
+  userActivation?: { isActive?: boolean };
+}
+
+/**
+ * True while the page may still spend a recent user gesture, for instance
+ * right after a navigation started by a click. A fullscreen request stands a
+ * chance then and is wasted otherwise - the browser refuses it and logs an
+ * error. Browsers without the API report false, and the request waits for
+ * the next gesture.
+ */
+export function hasUserActivation(
+  nav: ActivationNavigator | undefined
+): boolean {
+  return nav?.userActivation?.isActive === true;
 }
 
 /** The part of `screen.orientation` the lock helpers use. */
@@ -136,33 +157,6 @@ export function unlockOrientation(
   } catch {
     // Not locked, or not supported - nothing to undo either way.
   }
-}
-
-/**
- * Puts the element on the screen, or takes it off again when it is already
- * there. Returns whether a request was made at all, so a caller can tell that
- * the browser refused the feature outright.
- *
- * Failures are swallowed: a browser rejects the request when it does not come
- * from a user gesture, and that must not break the game loop.
- */
-export function toggleFullscreen(
-  doc: FullscreenDocument,
-  element: FullscreenElement | null | undefined
-): boolean {
-  if (isFullscreen(doc)) {
-    return exitFullscreen(doc);
-  }
-
-  if (element == null) {
-    return false;
-  }
-  const request = element.requestFullscreen ?? element.webkitRequestFullscreen;
-  if (request == null) {
-    return false;
-  }
-  void Promise.resolve(request.call(element)).catch(() => undefined);
-  return true;
 }
 
 /** A width and a height in CSS pixels. */

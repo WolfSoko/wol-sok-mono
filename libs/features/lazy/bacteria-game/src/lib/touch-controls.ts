@@ -5,7 +5,7 @@
  * pointer-to-player assignment can be tested on their own.
  */
 
-import { clamp, Point } from './state/geometry';
+import { clamp, NO_STEERING, Point, SteeringVector } from './state/geometry';
 
 export type ArenaPoint = Point;
 
@@ -84,22 +84,6 @@ export function nearestFreeCrosshair(
   }
 
   return nearest;
-}
-
-/**
- * Where a joystick is pushed: each axis -1..1, the vector never longer than 1.
- * The zero vector means the stick is at rest.
- */
-export interface SteeringVector {
-  x: number;
-  y: number;
-}
-
-export const NO_STEERING: SteeringVector = { x: 0, y: 0 };
-
-/** True while the stick is pushed at all. */
-export function isSteering(vector: SteeringVector): boolean {
-  return vector.x !== 0 || vector.y !== 0;
 }
 
 /**

@@ -7,13 +7,8 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { Point } from '../state/geometry';
-import {
-  knobOffset,
-  NO_STEERING,
-  SteeringVector,
-  steeringVector,
-} from '../touch-controls';
+import { NO_STEERING, Point, SteeringVector } from '../state/geometry';
+import { knobOffset, steeringVector } from '../touch-controls';
 
 /**
  * A floating on-screen joystick for one player.
@@ -69,13 +64,22 @@ export class JoystickComponent {
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private pointerId: number | null = null;
+  /** Where the finger landed in client pixels - every move is relative to it. */
+  private originClient: Point = { x: 0, y: 0 };
 
   protected onPointerDown(event: PointerEvent): void {
     if (this.disabled() || this.pointerId != null) {
       return;
     }
     this.pointerId = event.pointerId;
-    this.origin.set(this.toLocal(event));
+    this.originClient = { x: event.clientX, y: event.clientY };
+    // The only layout read of a drag: moves are measured from the client
+    // position of the touch-down, not from the element's box.
+    const bounds = this.host.nativeElement.getBoundingClientRect();
+    this.origin.set({
+      x: event.clientX - bounds.left,
+      y: event.clientY - bounds.top,
+    });
     this.knob.set({ x: 0, y: 0 });
     // Keep receiving moves once the finger slides out of the zone.
     this.host.nativeElement.setPointerCapture?.(event.pointerId);
@@ -87,7 +91,10 @@ export class JoystickComponent {
     if (origin == null || event.pointerId !== this.pointerId) {
       return;
     }
-    const pointer = this.toLocal(event);
+    const pointer = {
+      x: origin.x + event.clientX - this.originClient.x,
+      y: origin.y + event.clientY - this.originClient.y,
+    };
     this.knob.set(knobOffset(origin, pointer, this.radius()));
     this.steer.emit(steeringVector(origin, pointer, this.radius()));
     event.preventDefault();
@@ -106,10 +113,5 @@ export class JoystickComponent {
     this.origin.set(null);
     this.knob.set({ x: 0, y: 0 });
     this.steer.emit({ ...NO_STEERING });
-  }
-
-  private toLocal(event: PointerEvent): Point {
-    const bounds = this.host.nativeElement.getBoundingClientRect();
-    return { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
   }
 }

@@ -10,13 +10,12 @@ import {
 import { GameBalance, gameBalance } from './game-balance';
 import { GameStateQuery } from './game-state.query';
 import { GameState } from './game.states';
-import { clamp, Point } from './geometry';
+import { clamp, isSteering, Point, SteeringVector } from './geometry';
 import { DEFAULT_CROSSHAIR_SPEED } from './levels';
 import { GameMap, getMap } from './maps';
 import { createPlayer, Player, PlayerColorArray } from './player.model';
 import { PlayerQuery } from './player.query';
 import { PlayerStore } from './player.store';
-import { isSteering, SteeringVector } from '../touch-controls';
 
 /** What a match needs to know about one player before it starts. */
 export interface PlayerSpawn {
@@ -28,7 +27,11 @@ export interface PlayerSpawn {
   isBot: boolean;
 }
 
-/** A direction a key set asks for, each axis -1, 0 or 1. */
+/**
+ * The direction one key set asks for, each axis -1, 0 or 1. The sets and the
+ * joystick of a player are summed, so the result may be longer than one axis
+ * allows - `movePlayer` caps it at unit length.
+ */
 type Direction = SteeringVector;
 
 /**

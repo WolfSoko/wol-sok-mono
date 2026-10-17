@@ -1,0 +1,34 @@
+<div class="seat-content">
+  <span class="charge" [style.background]="chargeRing()">
+    <button
+      mat-fab
+      type="button"
+      class="boost-fab"
+      [attr.aria-label]="'Boost ' + colony().name"
+      [disabled]="!running() || colony().boosting || colony().boostCooldown > 0"
+      (click)="boost.emit()"
+    >
+      <mat-icon>bolt</mat-icon>
+      <span class="boost-state">
+        @if (colony().boosting) {
+          Boosting
+        } @else if (colony().boostCooldown > 0) {
+          {{ colony().boostCooldown }}s
+        } @else {
+          Boost
+        }
+      </span>
+    </button>
+  </span>
+  <span class="seat-name">{{ colony().name }}</span>
+  <span class="seat-stats"
+    >{{ colony().bacterias }} · ⚡ {{ colony().energy }}%</span
+  >
+  <span class="colony-bar">
+    <span
+      class="colony-bar-fill"
+      [style.width.%]="colony().share"
+      [style.backgroundColor]="colony().css"
+    ></span>
+  </span>
+</div>

@@ -84,61 +84,15 @@
             [disabled]="(isRunning$ | async) !== true"
             (steer)="steer(colony.id, $event)"
           />
-          <div
+          <feat-lazy-bac-game-seat
             class="seat seat-boost"
             [class.seat-0]="seat === 0"
             [class.seat-1]="seat === 1"
-            [class.boosting]="colony.boosting"
-            [style.--seat-color]="colony.css"
-          >
-            <div class="seat-content">
-              <span
-                class="charge"
-                [style.background]="
-                  'conic-gradient(' +
-                  colony.css +
-                  ' ' +
-                  colony.boostCharge * 100 +
-                  '%, transparent 0)'
-                "
-              >
-                <button
-                  mat-fab
-                  type="button"
-                  class="boost-fab"
-                  [attr.aria-label]="'Boost ' + colony.name"
-                  [disabled]="
-                    (isRunning$ | async) === false ||
-                    colony.boosting ||
-                    colony.boostCooldown > 0
-                  "
-                  (click)="boost(colony.id)"
-                >
-                  <mat-icon>bolt</mat-icon>
-                  <span class="boost-state">
-                    @if (colony.boosting) {
-                      Boosting
-                    } @else if (colony.boostCooldown > 0) {
-                      {{ colony.boostCooldown }}s
-                    } @else {
-                      Boost
-                    }
-                  </span>
-                </button>
-              </span>
-              <span class="seat-name">{{ colony.name }}</span>
-              <span class="seat-stats"
-                >{{ colony.bacterias }} · ⚡ {{ colony.energy }}%</span
-              >
-              <span class="colony-bar">
-                <span
-                  class="colony-bar-fill"
-                  [style.width.%]="colony.share"
-                  [style.backgroundColor]="colony.css"
-                ></span>
-              </span>
-            </div>
-          </div>
+            [colony]="colony"
+            [running]="(isRunning$ | async) === true"
+            [flipped]="seat === 1"
+            (boost)="boost(colony.id)"
+          />
         }
 
         @if ((isRunning$ | async) === false) {

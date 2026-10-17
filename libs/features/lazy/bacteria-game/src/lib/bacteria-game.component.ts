@@ -42,6 +42,7 @@ import {
 import {
   exitFullscreen,
   fitInside,
+  hasUserActivation,
   isFullscreen,
   isFullscreenSupported,
   lockLandscape,
@@ -52,15 +53,13 @@ import {
 } from './fullscreen';
 import { JoystickComponent } from './joystick/joystick.component';
 import { MatchSetupComponent } from './match-setup/match-setup.component';
+import { SeatComponent } from './seat/seat.component';
 import { Nutrient } from './state/bacteria-simulation';
 import { BotDifficulty, DEFAULT_DIFFICULTY } from './state/bot-controller';
-import {
-  arenaPointFromClient,
-  nearestFreeCrosshair,
-  NO_STEERING,
-  SteeringVector,
-} from './touch-controls';
+import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
+import { ColonyStats, humanForBoostKey, toColonyStats } from './colony-stats';
 import { GameBalance, gameBalance } from './state/game-balance';
+import { NO_STEERING, SteeringVector } from './state/geometry';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
 import {
@@ -76,7 +75,6 @@ import {
   levelMap,
   nextLevel,
 } from './state/levels';
-import { isBoostReady } from './state/player.service';
 import { Rect } from './state/maps';
 import { Bacteria, Player } from './state/player.model';
 import { PlayerQuery } from './state/player.query';
@@ -85,62 +83,6 @@ import {
   MatchEndAction,
   WinnerComponent,
 } from './winner-info/winner.component';
-
-/** Statistics of one colony, ready to be rendered by the template. */
-export interface ColonyStats {
-  id: number;
-  name: string;
-  isBot: boolean;
-  css: string;
-  bacterias: number;
-  captured: number;
-  lost: number;
-  /** Average energy in percent of the normal maximum. */
-  energy: number;
-  /** Share of all living bacteria in percent. */
-  share: number;
-  /** True while the boost of this colony is running. */
-  boosting: boolean;
-  /** Whole seconds until the boost can be fired again, 0 when it is ready. */
-  boostCooldown: number;
-  /** How far the boost has recharged, 0..1 - the ring around the touch button. */
-  boostCharge: number;
-  /** The key that fires the boost, for the button label. */
-  boostKey: BoostKey;
-}
-
-/** The keys that fire a boost: Space for the first human, Enter for the second. */
-export type BoostKey = 'Space' | 'Enter';
-const BOOST_KEYS: readonly BoostKey[] = ['Space', 'Enter'];
-
-/**
- * The boost key of a human player: the keys are handed out in player order.
- * With a single human both keys belong to that player, so the label shows the
- * primary one.
- */
-export function boostKeyOf(
-  humans: readonly Player[],
-  player: Player
-): BoostKey {
-  const index = humans.indexOf(player);
-  return BOOST_KEYS[Math.max(0, Math.min(index, BOOST_KEYS.length - 1))];
-}
-
-/**
- * The human whose boost a key fires, null for any other key. Each key goes to
- * the human it is handed out to; with fewer humans than keys the last human
- * takes the rest, so against the computer Enter works as well as Space.
- */
-export function humanForBoostKey(
-  humans: readonly Player[],
-  key: string
-): Player | null {
-  const index = BOOST_KEYS.indexOf(key === ' ' ? 'Space' : (key as BoostKey));
-  if (index < 0 || humans.length === 0) {
-    return null;
-  }
-  return humans[Math.min(index, humans.length - 1)];
-}
 
 /**
  * Stamps one colony into the canvas pixel buffer. Weak bacteria fade out and
@@ -198,6 +140,7 @@ export function createImageDataFromBacterias(
     MatTooltipModule,
     MatchSetupComponent,
     JoystickComponent,
+    SeatComponent,
   ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
@@ -275,6 +218,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private nativeFullscreenPending = false;
   /** True while a native fullscreen request is waiting for the browser. */
   private nativeRequestInFlight = false;
+  /**
+   * True while the native fullscreen is being given up on purpose, for the
+   * winner dialog, and the component's own layout is meant to stay.
+   */
+  private layoutOutlivesNativeExit = false;
   /** Refits the canvas whenever the box around it changes size. */
   private resizeObserver?: ResizeObserver;
 
@@ -319,7 +267,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // The game is played on the whole screen - a phone between two players has
     // no room for a page around it. After the first render, so the layout
     // switch is a change of its own rather than one inside the first check.
-    afterNextRender(() => this.enterFullscreen());
+    afterNextRender(() => this.enterFullscreenOnOpen());
 
     this.isRunning$ = this.query
       .selectCurrentGameState()
@@ -378,7 +326,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     ) {
       return;
     }
-    exitFullscreen(document);
+    // Only the browser's fullscreen goes, the seats stay for the next match.
+    this.layoutOutlivesNativeExit = exitFullscreen(document);
   }
 
   /**
@@ -613,13 +562,31 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /**
    * Lays the arena over the whole viewport and asks the browser for its
-   * fullscreen on top. Entered when the page opens, so the request is
-   * usually refused there - it is repeated on the first gesture.
+   * fullscreen on top. Called from a gesture - the button or the F key -
+   * where the browser grants the request.
    */
   protected enterFullscreen(): void {
     this.fullscreen.set(true);
     this.nativeFullscreenPending = true;
     this.requestNativeFullscreen();
+  }
+
+  /**
+   * The same when the page opens. Without a gesture to spend the browser
+   * would refuse the native request and log an error, so it is only made
+   * while one is still fresh - after a navigation started by a click - and
+   * otherwise left to the first tap or key.
+   */
+  private enterFullscreenOnOpen(): void {
+    this.fullscreen.set(true);
+    this.nativeFullscreenPending = true;
+    if (
+      hasUserActivation(
+        typeof navigator === 'undefined' ? undefined : navigator
+      )
+    ) {
+      this.requestNativeFullscreen();
+    }
   }
 
   /** Brings the arena back into the page. */
@@ -654,7 +621,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.nativeRequestInFlight = true;
-    void requestFullscreen(stage).then((granted) => {
+    void requestFullscreen(document, stage).then((granted) => {
       this.nativeRequestInFlight = false;
       if (granted) {
         this.nativeFullscreenPending = false;
@@ -700,7 +667,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       lockLandscape(orientationScreen());
     } else {
       unlockOrientation(orientationScreen());
-      if (this.fullscreen()) {
+      if (this.layoutOutlivesNativeExit) {
+        // Given up for the dialog: keep the seats, and take the screen back
+        // on the next gesture - the dialog's own button, usually.
+        this.layoutOutlivesNativeExit = false;
+        this.nativeFullscreenPending = true;
+      } else if (this.fullscreen()) {
         this.leaveFullscreen();
       }
     }
@@ -812,7 +784,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       }
       return;
     }
-    if (this.fullscreen()) {
+    // A key is a gesture too - unless it activates a focused button, which
+    // decides for itself, like a click does (see onDocumentPointerUp).
+    if (this.fullscreen() && !isInteractiveTarget($event.target)) {
       this.requestNativeFullscreen();
     }
     // The boost keys belong to the game only while a match is on, and never
@@ -880,49 +854,6 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
   return !(
     (control as HTMLButtonElement).disabled ||
     control.getAttribute('aria-disabled') === 'true'
-  );
-}
-
-/** Turns the stored players into the numbers the scoreboard renders. */
-function toColonyStats(
-  players: Player[],
-  balance: GameBalance = gameBalance
-): ColonyStats[] {
-  const total = players.reduce((sum, player) => sum + player.bacteriaCount, 0);
-  const humans = players.filter((player) => !player.isBot);
-  return players.map((player) => ({
-    id: player.id,
-    name: player.name,
-    isBot: player.isBot,
-    css: `rgba(${player.color.join(',')})`,
-    bacterias: player.bacteriaCount,
-    captured: player.captured,
-    lost: player.lost,
-    energy: Math.round((player.averageEnergy / balance.maxEnergy) * 100),
-    share: total > 0 ? (player.bacteriaCount / total) * 100 : 0,
-    boosting: player.boostActiveSec > 0,
-    boostCooldown: isBoostReady(player)
-      ? 0
-      : Math.ceil(player.boostCooldownSec),
-    boostCharge: boostChargeOf(player, balance),
-    boostKey: boostKeyOf(humans, player),
-  }));
-}
-
-/**
- * How far the boost has recharged, 1 while it is ready. A running boost still
- * reads as empty: its cooldown has not started counting yet.
- */
-function boostChargeOf(player: Player, balance: GameBalance): number {
-  if (isBoostReady(player)) {
-    return 1;
-  }
-  if (player.boostActiveSec > 0 || balance.boostCooldownSec <= 0) {
-    return 0;
-  }
-  return Math.max(
-    0,
-    Math.min(1, 1 - player.boostCooldownSec / balance.boostCooldownSec)
   );
 }
 
