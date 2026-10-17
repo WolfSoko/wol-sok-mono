@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.1.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.0.1...v74.1.0) (2026-10-17)
+
+### Features
+
+* **feat-lazy-bacteria-game:** turn each seat towards its player at the short edges of the phone ([#2466](https://github.com/WolfSoko/wol-sok-mono/issues/2466)) ([82bb9a3](https://github.com/WolfSoko/wol-sok-mono/commit/82bb9a3a5b5be7d39f6ce82820a1fa3a65b81a6a))
+
 ## [74.0.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.0.0...v74.0.1) (2026-10-17)
 
 ### Bug Fixes
