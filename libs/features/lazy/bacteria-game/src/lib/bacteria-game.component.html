@@ -49,6 +49,13 @@
       } @else {
         <mat-spinner>Loading</mat-spinner>
       }
+
+      @if (matchOver()) {
+        <feat-lazy-bac-game-winner
+          class="page-result"
+          (action)="onMatchEnd($event)"
+        />
+      }
     }
 
     <!--
@@ -85,39 +92,188 @@
           />
         }
 
-        @if (!running() || paused()) {
+        @if (panel(); as open) {
           <div class="stage-panel">
             <mat-card class="panel-card" appearance="raised">
-              @if (!running()) {
-                <mat-card-content>
-                  <ng-container *ngTemplateOutlet="matchSetup"></ng-container>
-                  <p class="panel-hint">
-                    @if (mode() === "two-players") {
-                      Lay the phone flat between you: each player steers with
-                      the joystick zone and fires the boost at their own edge.
-                    } @else {
-                      Steer with the joystick zone, fire the boost with the
-                      button - or drag your crosshair across the arena.
+              @switch (open) {
+                @case ("menu") {
+                  <mat-card-content class="menu">
+                    <h1 class="menu-title">Bacteria War</h1>
+                    <p class="menu-tagline">
+                      Steer your colony, eat the other one.
+                    </p>
+                    <mat-button-toggle-group
+                      class="mode-picker"
+                      aria-label="Opponent"
+                      hideSingleSelectionIndicator
+                      [value]="mode()"
+                      (change)="selectMode($event.value)"
+                    >
+                      <mat-button-toggle value="vs-computer">
+                        <mat-icon>smart_toy</mat-icon> vs Computer
+                      </mat-button-toggle>
+                      <mat-button-toggle value="two-players">
+                        <mat-icon>group</mat-icon> 2 Players
+                      </mat-button-toggle>
+                    </mat-button-toggle-group>
+                    <p class="menu-summary">
+                      {{ level().name }}
+                      @if (mode() === "vs-computer") {
+                        · {{ difficultyName() }}
+                      }
+                    </p>
+                    <button
+                      mat-flat-button
+                      color="primary"
+                      type="button"
+                      class="menu-button"
+                      (click)="startGame()"
+                    >
+                      <mat-icon>play_arrow</mat-icon>
+                      Play
+                    </button>
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      class="menu-button"
+                      (click)="show('settings')"
+                    >
+                      <mat-icon>tune</mat-icon>
+                      Settings
+                    </button>
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      class="menu-button"
+                      (click)="show('help')"
+                    >
+                      <mat-icon>help_outline</mat-icon>
+                      How to play
+                    </button>
+                    <button
+                      mat-button
+                      type="button"
+                      class="menu-link"
+                      (click)="leaveFullscreen()"
+                    >
+                      Back to the page
+                    </button>
+                  </mat-card-content>
+                }
+                @case ("settings") {
+                  <mat-card-content class="settings">
+                    <h2 class="panel-title">Settings</h2>
+                    <ng-container *ngTemplateOutlet="matchSetup"></ng-container>
+                    <mat-slide-toggle
+                      [checked]="settings.showFps()"
+                      (change)="settings.setShowFps($event.checked)"
+                    >
+                      Show the frame rate
+                    </mat-slide-toggle>
+                    @if (nativeFullscreenSupported()) {
+                      <mat-slide-toggle
+                        [checked]="nativeFullscreen()"
+                        (change)="setNativeFullscreen($event.checked)"
+                      >
+                        Browser fullscreen
+                      </mat-slide-toggle>
                     }
-                  </p>
-                </mat-card-content>
-                <mat-card-actions align="end">
-                  <button mat-flat-button type="button" (click)="startGame()">
-                    <mat-icon>play_arrow</mat-icon>
-                    Start
-                  </button>
-                </mat-card-actions>
-              } @else {
-                <mat-card-content class="paused">
-                  <mat-icon>pause</mat-icon>
-                  <span>Paused</span>
-                </mat-card-content>
-                <mat-card-actions align="end">
-                  <button mat-flat-button type="button" (click)="togglePause()">
-                    <mat-icon>play_arrow</mat-icon>
-                    Resume
-                  </button>
-                </mat-card-actions>
+                  </mat-card-content>
+                  <mat-card-actions align="end">
+                    <button
+                      mat-flat-button
+                      type="button"
+                      (click)="show('menu')"
+                    >
+                      <mat-icon>arrow_back</mat-icon>
+                      Back
+                    </button>
+                  </mat-card-actions>
+                }
+                @case ("help") {
+                  <mat-card-content class="help">
+                    <h2 class="panel-title">How to play</h2>
+                    <p>
+                      Steer your colony with the crosshair and surround the
+                      other one to eat it. Well fed bacteria divide, and the
+                      green nutrients supercharge whoever grabs them first.
+                    </p>
+                    <p>
+                      A boost makes your bacteria faster and more aggressive for
+                      a few seconds, then it needs time to recharge - fire it to
+                      break a frontline.
+                    </p>
+                    <p>
+                      <b>Touch:</b> push the joystick zone at your edge, tap the
+                      boost button - or drag your crosshair across the arena.
+                      For two players lay the phone flat between you; the far
+                      player's controls are turned towards them.
+                    </p>
+                    <p>
+                      <b>Keyboard:</b> Orange uses <b>WASD</b> and <b>Space</b>,
+                      Blue the <b>arrow keys</b> and <b>Enter</b>. Against the
+                      computer both sets are yours. <b>P</b> or
+                      <b>Escape</b> pauses, <b>F</b> toggles fullscreen.
+                    </p>
+                  </mat-card-content>
+                  <mat-card-actions align="end">
+                    <button
+                      mat-flat-button
+                      type="button"
+                      (click)="show('menu')"
+                    >
+                      <mat-icon>arrow_back</mat-icon>
+                      Back
+                    </button>
+                  </mat-card-actions>
+                }
+                @case ("pause") {
+                  <mat-card-content class="menu">
+                    <h2 class="panel-title">Paused</h2>
+                    <button
+                      mat-flat-button
+                      color="primary"
+                      type="button"
+                      class="menu-button"
+                      (click)="togglePause()"
+                    >
+                      <mat-icon>play_arrow</mat-icon>
+                      Resume
+                    </button>
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      class="menu-button"
+                      (click)="startGame()"
+                    >
+                      <mat-icon>replay</mat-icon>
+                      Restart
+                    </button>
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      class="menu-button"
+                      (click)="show('settings')"
+                    >
+                      <mat-icon>tune</mat-icon>
+                      Settings
+                    </button>
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      class="menu-button"
+                      (click)="quitToMenu()"
+                    >
+                      <mat-icon>home</mat-icon>
+                      Quit to menu
+                    </button>
+                  </mat-card-content>
+                }
+                @case ("over") {
+                  <mat-card-content>
+                    <feat-lazy-bac-game-winner (action)="onMatchEnd($event)" />
+                  </mat-card-content>
+                }
               }
             </mat-card>
           </div>
@@ -142,35 +298,17 @@
               }
             </span>
             <span class="hud-actions">
-              <button
-                mat-icon-button
-                type="button"
-                [attr.aria-label]="paused() ? 'Resume' : 'Pause'"
-                matTooltip="Pause (P)"
-                [disabled]="!running()"
-                (click)="togglePause()"
-              >
-                <mat-icon>{{ paused() ? "play_arrow" : "pause" }}</mat-icon>
-              </button>
-              <button
-                mat-icon-button
-                type="button"
-                aria-label="Reset"
-                matTooltip="Reset"
-                [disabled]="!running()"
-                (click)="resetGame()"
-              >
-                <mat-icon>stop</mat-icon>
-              </button>
-              <button
-                mat-icon-button
-                type="button"
-                aria-label="Leave fullscreen"
-                matTooltip="Leave fullscreen (F)"
-                (click)="leaveFullscreen()"
-              >
-                <mat-icon>fullscreen_exit</mat-icon>
-              </button>
+              @if (running() && !paused()) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Pause"
+                  matTooltip="Pause (P)"
+                  (click)="togglePause()"
+                >
+                  <mat-icon>pause</mat-icon>
+                </button>
+              }
             </span>
           </div>
         }
@@ -180,7 +318,7 @@
           (wsSharedUiElemResized)="onArenaBoxResized($event)"
         >
           <ws-shared-ui-show-fps
-            [show]="true"
+            [show]="settings.showFps()"
             [fps]="(fps$ | async) ?? 0"
           ></ws-shared-ui-show-fps>
           <canvas

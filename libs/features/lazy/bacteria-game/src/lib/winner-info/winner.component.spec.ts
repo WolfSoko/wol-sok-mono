@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { GameStateStore } from '../state/game.states';
 import { LEVELS } from '../state/levels';
 import { createPlayer } from '../state/player.model';
@@ -11,8 +10,7 @@ describe('WinnerComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [WinnerComponent, MatDialogModule],
-      providers: [{ provide: MatDialogRef, useValue: { close: jest.fn() } }],
+      imports: [WinnerComponent],
     }).compileComponents();
 
     store = TestBed.inject(GameStateStore);
@@ -70,5 +68,25 @@ describe('WinnerComponent', () => {
     store.update({ winner: null, levelId: LEVELS[LEVELS.length - 1].id });
 
     expect(text()).not.toContain('Next:');
+  });
+
+  it('reports what the player picks', () => {
+    store.update({ winner: null, levelId: LEVELS[0].id });
+    const picked = jest.fn();
+    fixture.componentInstance.action.subscribe(picked);
+    fixture.detectChanges();
+
+    const buttons = Array.from(
+      fixture.nativeElement.querySelectorAll('button') as HTMLButtonElement[]
+    );
+    buttons.find((b) => b.textContent?.includes('Play again'))?.click();
+    buttons.find((b) => b.textContent?.includes('Next:'))?.click();
+    buttons.find((b) => b.textContent?.includes('Main menu'))?.click();
+
+    expect(picked.mock.calls.map(([action]) => action)).toEqual([
+      'again',
+      'next',
+      'menu',
+    ]);
   });
 });

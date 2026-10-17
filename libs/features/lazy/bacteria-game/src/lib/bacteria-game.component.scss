@@ -224,18 +224,58 @@
     touch-action: manipulation;
   }
 
-  .panel-hint {
+  .panel-title {
+    margin: 0 0 0.75rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+
+  // The main menu and the pause menu: a stack of big buttons.
+  .menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .menu-title {
+    margin: 0;
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .menu-tagline,
+  .menu-summary {
     margin: 0;
     opacity: 0.8;
   }
 
-  .paused {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1.25rem;
-    font-weight: 600;
+  .menu-button {
+    width: min(100%, 18rem);
+    height: 2.75rem;
+    font-size: 1.05rem;
   }
+
+  .menu-link {
+    opacity: 0.7;
+  }
+
+  .settings {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .help p {
+    margin: 0 0 0.75rem;
+  }
+}
+
+.page-result {
+  margin: 0.5rem 0 1rem;
 }
 
 mat-card-actions {

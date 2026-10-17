@@ -1,10 +1,22 @@
-<mat-toolbar color="accent">{{ headline() }}</mat-toolbar>
+<h2 class="headline">{{ headline() }}</h2>
 <p class="level-info">{{ level().name }}</p>
-<div class="actions" mat-dialog-actions>
-  <button mat-button [mat-dialog-close]="undefined">Back to start</button>
-  <button mat-raised-button [mat-dialog-close]="'again'">Play again</button>
+<div class="actions">
+  <button mat-button type="button" (click)="action.emit('menu')">
+    <mat-icon>home</mat-icon>
+    Main menu
+  </button>
+  <button mat-stroked-button type="button" (click)="action.emit('again')">
+    <mat-icon>replay</mat-icon>
+    Play again
+  </button>
   @if (upcoming(); as next) {
-    <button mat-raised-button color="primary" [mat-dialog-close]="'next'">
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      (click)="action.emit('next')"
+    >
+      <mat-icon>skip_next</mat-icon>
       Next: {{ next.name }}
     </button>
   }

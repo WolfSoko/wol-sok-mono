@@ -16,9 +16,10 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -32,7 +33,6 @@ import { defer, Observable } from 'rxjs';
 import {
   defaultIfEmpty,
   distinctUntilChanged,
-  filter,
   last,
   map,
   switchMap,
@@ -53,7 +53,12 @@ import {
 import { JoystickComponent } from './joystick/joystick.component';
 import { MatchSetupComponent } from './match-setup/match-setup.component';
 import { Nutrient } from './state/bacteria-simulation';
-import { BotDifficulty, DEFAULT_DIFFICULTY } from './state/bot-controller';
+import {
+  BOT_DIFFICULTIES,
+  BotDifficulty,
+  DEFAULT_DIFFICULTY,
+} from './state/bot-controller';
+import { GameSettingsService } from './settings.service';
 import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
 import {
   boostLabel,
@@ -135,7 +140,6 @@ export function createImageDataFromBacterias(
     MatCardModule,
     WsThanosDirective,
     MatButtonModule,
-    MatDialogModule,
     MatProgressSpinnerModule,
     ShowFpsComponent,
     MatToolbarModule,
@@ -145,6 +149,9 @@ export function createImageDataFromBacterias(
     JoystickComponent,
     BoostPadComponent,
     ElemResizedDirective,
+    WinnerComponent,
+    MatButtonToggleModule,
+    MatSlideToggleModule,
   ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
@@ -155,7 +162,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private gameStateService = inject(GameStateService);
   private playerService = inject(PlayerService);
   private playerQuery = inject(PlayerQuery);
-  private matDialog = inject(MatDialog);
+  protected readonly settings = inject(GameSettingsService);
 
   @ViewChild('canvasElement', { static: true })
   private canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -178,7 +185,42 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly paused: Signal<boolean>;
   /** Whole seconds of match time, so the clock only re-renders once a second. */
   protected readonly gameSeconds: Signal<number>;
+  /** True once a match is over and its result is shown, until the next one. */
+  protected readonly matchOver: Signal<boolean>;
+  /** The name of the computer's difficulty, for the menu's summary line. */
+  protected readonly difficultyName: Signal<string>;
   protected readonly boostLabel = boostLabel;
+
+  /**
+   * Which of the menu screens is open while no match runs - and, while one
+   * is paused, whether the settings are open on top of the pause menu.
+   */
+  protected readonly screen = signal<MenuScreen>('menu');
+  /**
+   * True while the arena is being cleared after a match: the state passes
+   * through "paused" then, which is not a pause the player asked for.
+   */
+  private readonly resetting = signal(false);
+  /**
+   * The panel laid over the arena: the match result, the pause menu, one of
+   * the menu screens - or none, while a match is on.
+   */
+  protected readonly panel = computed<StagePanel>(() => {
+    if (this.resetting()) {
+      return null;
+    }
+    if (this.matchOver()) {
+      return 'over';
+    }
+    if (this.paused()) {
+      return this.screen() === 'settings' ? 'settings' : 'pause';
+    }
+    return this.running() ? null : this.screen();
+  });
+  /** True while the browser shows the stage on the whole screen. */
+  protected readonly nativeFullscreen = signal(false);
+  /** False where the browser has no Fullscreen API, as on iPhones. */
+  protected readonly nativeFullscreenSupported = signal(false);
 
   /** The level the next match is played on. */
   protected readonly level: Signal<Level>;
@@ -275,6 +317,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         .pipe(distinctUntilChanged()),
       { initialValue: 0 }
     );
+    this.matchOver = toSignal(this.query.selectMatchEnded(), {
+      initialValue: false,
+    });
+    this.difficultyName = computed(
+      () =>
+        BOT_DIFFICULTIES.find((option) => option.id === this.difficulty())
+          ?.name ?? ''
+    );
 
     this.query
       .selectTimeDelta()
@@ -283,42 +333,49 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         const dTSec = deltaTimeMs / 1000;
         this.draw(Math.min(dTSec, 0.1));
       });
+  }
 
-    // Triggered by the match ending rather than by a winner: a draw ends the
-    // match with no winner at all and still has to show the dialog.
-    this.query
-      .selectMatchEnded()
+  /**
+   * Clears the arena after a match and, unless the player heads back to the
+   * menu, kicks off the next one right away - on the following level for
+   * "next level".
+   */
+  protected onMatchEnd(action: MatchEndAction): void {
+    const next = action === 'next' ? this.upcomingLevel() : null;
+    if (next != null) {
+      this.gameStateService.setLevel(next.id);
+    }
+    this.screen.set('menu');
+    this.resetGame$()
       .pipe(
-        filter((ended) => ended),
-        switchMap(() =>
-          this.matDialog
-            .open<WinnerComponent, unknown, MatchEndAction | undefined>(
-              WinnerComponent
-            )
-            .afterClosed()
-        ),
-        switchMap((action) => this.finishMatch(action)),
+        tap(() => {
+          if (action !== 'menu') {
+            this.startGame();
+          }
+        }),
         untilDestroyed(this)
       )
       .subscribe();
   }
 
-  /**
-   * Clears the arena after a match and, when the dialog asked for it, kicks off
-   * the next one right away - on the following level for "next level".
-   */
-  private finishMatch(action: MatchEndAction | undefined): Observable<void> {
-    const next = action === 'next' ? this.upcomingLevel() : null;
-    if (next != null) {
-      this.gameStateService.setLevel(next.id);
+  /** Opens one of the menu screens. */
+  protected show(screen: MenuScreen): void {
+    this.screen.set(screen);
+  }
+
+  /** Gives the match up and returns to the main menu. */
+  protected quitToMenu(): void {
+    this.screen.set('menu');
+    this.resetGame();
+  }
+
+  /** Puts the stage on the browser's whole screen, or takes it off again. */
+  protected setNativeFullscreen(on: boolean): void {
+    if (on) {
+      this.requestNativeFullscreen();
+    } else {
+      exitFullscreen(document);
     }
-    return this.resetGame$().pipe(
-      tap(() => {
-        if (action != null) {
-          this.startGame();
-        }
-      })
-    );
   }
 
   ngAfterViewInit(): void {
@@ -331,6 +388,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.cx.fillRect(0, 0, this.width, this.height);
     this.gameStateService.setArenaSize(this.width, this.height);
     this.draw(1 / 1000, true);
+    this.nativeFullscreenSupported.set(
+      isFullscreenSupported(document, this.stageRef?.nativeElement)
+    );
     this.requestNativeFullscreenOnOpen();
   }
 
@@ -376,6 +436,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   private resetGame$(): Observable<void> {
     return defer(() => {
+      this.resetting.set(true);
       this.gameStateService.pause();
       return this.query.selectCurrentGameState(GameState.PAUSED).pipe(
         take(1),
@@ -385,6 +446,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         tap(() => {
           this.gameStateService.reset();
           this.draw(1 / 1000, true);
+          this.resetting.set(false);
         }),
         map(() => undefined)
       );
@@ -575,7 +637,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   @HostListener('document:fullscreenchange')
   @HostListener('document:webkitfullscreenchange')
   protected onFullscreenChange(): void {
-    if (this.isNativeFullscreen()) {
+    const native = this.isNativeFullscreen();
+    this.nativeFullscreen.set(native);
+    if (native) {
       this.fullscreen.set(true);
       void lockLandscape(screen);
     } else {
@@ -668,10 +732,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       }
       return;
     }
-    // Escape leaves the native fullscreen through the browser; without one it
-    // has to leave the component's own layout here.
+    // Escape, as in any game: pauses a match, backs out of a screen, and
+    // only from the main menu leaves the layout for the page. The browser
+    // takes its own fullscreen off on Escape before this runs.
     if ($event.key === 'Escape') {
-      this.leaveFullscreen();
+      this.onEscape();
       return;
     }
     // The boost keys belong to the game only while a match is on, and never
@@ -697,7 +762,28 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   onKeyUp($event: KeyboardEvent) {
     this.gameStateService.removeKeyPress($event.key);
   }
+
+  private onEscape(): void {
+    if (this.matchOver() || this.resetting()) {
+      return;
+    }
+    if (this.running() && !this.paused()) {
+      this.togglePause();
+    } else if (this.screen() !== 'menu') {
+      this.screen.set('menu');
+    } else if (this.paused()) {
+      this.togglePause();
+    } else {
+      this.leaveFullscreen();
+    }
+  }
 }
+
+/** The screens of the menu that is shown while no match is on. */
+export type MenuScreen = 'menu' | 'settings' | 'help';
+
+/** What is laid over the arena right now, nothing while a match is on. */
+export type StagePanel = MenuScreen | 'pause' | 'over' | null;
 
 /**
  * True while the key went to a control rather than to the game.

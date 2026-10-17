@@ -1,17 +1,18 @@
 import { expect, test } from '@playwright/test';
 import { BacteriaGamePo } from './pos/bacteria-game.po';
 
-test('should fill the screen with the game and its controls', async ({
+test('should open on the main menu with the game and its controls', async ({
   page,
 }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
 
   await expect(po.stage).toBeVisible();
+  await expect(po.menuTitle).toHaveText('Bacteria War');
   await expect(po.playArea).toBeVisible();
   await expect(po.playCta).toBeVisible();
-  await expect(po.resetCta).toBeVisible();
-  await expect(po.leaveFullscreenCta).toBeVisible();
+  await expect(po.settingsCta).toBeVisible();
+  await expect(po.helpCta).toBeVisible();
   await expect(po.intro).toHaveCount(0);
 });
 
@@ -31,21 +32,39 @@ test('should return to the page on request', async ({ page }) => {
   await expect(po.stage).toBeVisible();
 });
 
-test('should let the player pick another level', async ({ page }) => {
+test('should let the player pick another level in the settings', async ({
+  page,
+}) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
+  await po.settingsCta.click();
 
   await po.chooseLevel(/Serpentine/);
 
   await expect(po.levelSelect).toContainText('Serpentine');
   await expect(po.levelDescription).toContainText('winding path');
+
+  await po.backCta.click();
+
+  await expect(po.playCta).toBeVisible();
+  await expect(page.locator('.menu-summary')).toContainText('Serpentine');
+});
+
+test('should explain the game', async ({ page }) => {
+  const po = new BacteriaGamePo(page);
+  await po.goto();
+
+  await po.helpCta.click();
+
+  await expect(page.locator('.help')).toContainText('joystick');
+  await po.backCta.click();
+  await expect(po.playCta).toBeVisible();
 });
 
 test('should start against the computer with one seat', async ({ page }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
 
-  await expect(po.difficultySelect).toBeVisible();
   await expect(po.boostCta).toHaveCount(1);
   await expect(po.joysticks).toHaveCount(1);
   await expect(po.colonyNames).toContainText(['You', 'Computer']);
@@ -56,6 +75,7 @@ test('should let the player pick how hard the computer plays', async ({
 }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
+  await po.settingsCta.click();
 
   await po.chooseDifficulty(/Hard/);
 
@@ -69,7 +89,6 @@ test('should seat two players at opposite edges', async ({ page }) => {
 
   await po.chooseMode(/2 Players/);
 
-  await expect(po.difficultySelect).toHaveCount(0);
   await expect(po.boostCta).toHaveCount(2);
   await expect(po.joysticks).toHaveCount(2);
   await expect(po.colonyNames).toContainText(['Orange', 'Blue']);
@@ -124,17 +143,24 @@ test('should show the stick under the finger while it is pushed', async ({
   await expect(po.heldStick(0)).toHaveCount(0);
 });
 
-test('should keep the match setup out of a running match', async ({ page }) => {
+test('should pause into a menu and quit back to the main menu', async ({
+  page,
+}) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
 
   await po.playCta.click();
 
-  await expect(po.levelSelect).toHaveCount(0);
   await expect(po.playCta).toHaveCount(0);
+  await expect(po.menuTitle).toHaveCount(0);
 
-  await po.resetCta.click();
+  await po.pauseCta.click();
 
-  // The reset first vaporizes the arena, which takes a few seconds.
-  await expect(po.levelSelect).toBeVisible({ timeout: 30_000 });
+  await expect(po.resumeCta).toBeVisible();
+  await expect(po.quitCta).toBeVisible();
+
+  await po.quitCta.click();
+
+  // The arena is vaporized first, which takes a few seconds.
+  await expect(po.playCta).toBeVisible({ timeout: 30_000 });
 });

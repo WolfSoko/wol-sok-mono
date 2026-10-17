@@ -19,11 +19,18 @@ export class BacteriaGamePo {
   public readonly joysticks: Locator;
   public readonly leaveFullscreenCta: Locator;
   public readonly intro: Locator;
+  public readonly settingsCta: Locator;
+  public readonly helpCta: Locator;
+  public readonly backCta: Locator;
+  public readonly pauseCta: Locator;
+  public readonly resumeCta: Locator;
+  public readonly quitCta: Locator;
+  public readonly menuTitle: Locator;
 
   constructor(private readonly page: Page) {
     this.mainTitle = page.locator('h1');
     this.playArea = page.locator('.stage canvas');
-    this.playCta = page.getByRole('button', { name: 'Start' });
+    this.playCta = page.getByRole('button', { name: 'Play', exact: true });
     this.resetCta = page.getByRole('button', { name: 'Reset' });
     this.levelSelect = page.locator('.level-select');
     this.levelDescription = page.locator('.level-description');
@@ -36,9 +43,16 @@ export class BacteriaGamePo {
     this.stage = page.locator('.stage.fullscreen');
     this.joysticks = page.getByLabel(/^Joystick /);
     this.leaveFullscreenCta = page.getByRole('button', {
-      name: 'Leave fullscreen',
+      name: 'Back to the page',
     });
     this.intro = page.locator('mat-card-header');
+    this.settingsCta = page.getByRole('button', { name: 'Settings' });
+    this.helpCta = page.getByRole('button', { name: 'How to play' });
+    this.backCta = page.getByRole('button', { name: 'Back', exact: true });
+    this.pauseCta = page.getByRole('button', { name: 'Pause', exact: true });
+    this.resumeCta = page.getByRole('button', { name: 'Resume' });
+    this.quitCta = page.getByRole('button', { name: 'Quit to menu' });
+    this.menuTitle = page.locator('.menu-title');
   }
 
   public async goto(): Promise<void> {
