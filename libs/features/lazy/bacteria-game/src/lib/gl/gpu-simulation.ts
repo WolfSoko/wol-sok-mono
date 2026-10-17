@@ -49,9 +49,6 @@ import {
 /** How many steps a moving wall may shove a bacterium before it crushes it. */
 const ESCAPE_STEPS = 3;
 
-/** Cells a colony may travel in the frames its last report is behind. */
-const STALE_MARGIN = 12;
-
 /**
  * The most cells a colony travels in one frame - each one is a claim and an
  * apply pass. Enough for a boosted colony at 30 frames a second; on a device
@@ -62,6 +59,13 @@ const MAX_MOVE_STEPS = 12;
 
 /** Read backs in flight at once - the GPU is a frame or two behind. */
 const READBACK_SLOTS = 3;
+
+/**
+ * Cells a colony may travel in the frames its last report is behind: it is
+ * rendered on one frame, read on the next and taken in a frame or more
+ * later - at most as many frames as read backs can be in flight.
+ */
+const STALE_MARGIN = MAX_MOVE_STEPS * READBACK_SLOTS;
 
 /** What a pass of the claim and apply pair does. */
 const KIND = { move: 0, escape: 1, divide: 2 } as const;
@@ -80,6 +84,8 @@ interface Programs {
 interface Readback {
   buffer: WebGLBuffer;
   sync: WebGLSync | null;
+  /** The frame it was requested on, to take the reports in in order. */
+  frame: number;
   /** The pellets as they were when the report was rendered. */
   generation: number[];
   /** Requested in an earlier match - read, so the buffer is free, but ignored. */
@@ -101,6 +107,14 @@ interface Resources {
   /** Ping and pong of the report, so the running totals can carry on. */
   reports: [Target, Target];
   readbacks: Readback[];
+}
+
+/** What each colony wants this frame, as uniform arrays. */
+interface Intents {
+  steps: number[];
+  targets: number[];
+  aggression: number[];
+  canDivide: number[];
 }
 
 /** A colony slot of the GPU state. */
@@ -152,6 +166,8 @@ export class GpuSimulation implements Simulation {
   private readonly pellets: NutrientPellets;
   /** Bumped per pellet whenever it respawns, to drop stale eater counts. */
   private generation: number[] = [];
+  /** The pellet generations as of the report rendered last. */
+  private renderedGeneration: number[] = [];
   private events: StepEvents = noEvents();
   private report: Report | null = null;
   private colonySummaries: ColonySummary[] = [];
@@ -229,13 +245,9 @@ export class GpuSimulation implements Simulation {
     };
   }
 
+  /** Takes effect with the next `init`, which lays out walls and pellets. */
   public setMap(map: GameMap): void {
-    if (this.map === map) {
-      return;
-    }
     this.map = map;
-    this.buildMask();
-    this.resetPellets();
   }
 
   public resize(width: number, height: number): void {
@@ -245,10 +257,8 @@ export class GpuSimulation implements Simulation {
     this.width = width;
     this.height = height;
     this.layout = reportLayout(width, height, this.balance.influenceCellSize);
-    this.dispose();
+    this.release();
     this.resources = this.setup();
-    this.buildMask();
-    this.resetPellets();
     if (this.spawns.length > 0) {
       this.init(this.spawns);
     }
@@ -320,6 +330,7 @@ export class GpuSimulation implements Simulation {
     const targets = this.slots.map(
       (slot) => players.find((player) => player.id === slot.playerId) ?? null
     );
+    const intents = this.intents(targets, deltaTimeSec);
 
     // 1. Who is where, coarsely - and where each colony hunts.
     gl.viewport(0, 0, this.layout.blocksX, this.layout.blocksY);
@@ -334,7 +345,7 @@ export class GpuSimulation implements Simulation {
     // 2. Out of the way of a wall that moved, or crushed.
     if (this.escapePending) {
       for (let step = 0; step < ESCAPE_STEPS; step++) {
-        this.claimAndApply(KIND.escape, step, targets, deltaTimeSec);
+        this.claimAndApply(KIND.escape, step, intents, deltaTimeSec);
       }
       this.escapePending = false;
     }
@@ -351,11 +362,10 @@ export class GpuSimulation implements Simulation {
     });
 
     // 4. Division, 5. movement.
-    this.claimAndApply(KIND.divide, 0, targets, deltaTimeSec);
-    const steps = this.moveSteps(targets, deltaTimeSec);
-    const mostSteps = Math.max(...steps);
+    this.claimAndApply(KIND.divide, 0, intents, deltaTimeSec);
+    const mostSteps = Math.max(...intents.steps);
     for (let step = 0; step < mostSteps; step++) {
-      this.claimAndApply(KIND.move, step, targets, deltaTimeSec);
+      this.claimAndApply(KIND.move, step, intents, deltaTimeSec);
     }
 
     // 6. The report. The one read back is last frame's, which the GPU has
@@ -363,14 +373,14 @@ export class GpuSimulation implements Simulation {
     this.collectReadbacks();
     this.requestReadback();
     this.renderReport();
+    this.renderedGeneration = [...this.generation];
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindVertexArray(null);
   }
 
   public dispose(): void {
-    const gl = this.gl;
-    const canvas = gl.canvas;
+    const canvas = this.gl.canvas;
     if (canvas instanceof HTMLCanvasElement) {
       canvas.removeEventListener('webglcontextlost', this.onContextLost);
       canvas.removeEventListener(
@@ -378,6 +388,12 @@ export class GpuSimulation implements Simulation {
         this.onContextRestored
       );
     }
+    this.release();
+  }
+
+  /** Frees the textures and buffers; the context listeners stay. */
+  private release(): void {
+    const gl = this.gl;
     const resources = this.resources;
     this.resources = null;
     if (resources == null) {
@@ -410,7 +426,7 @@ export class GpuSimulation implements Simulation {
   private claimAndApply(
     kind: number,
     step: number,
-    targets: (Player | null)[],
+    intents: Intents,
     deltaTimeSec: number
   ): void {
     const resources = this.resources;
@@ -419,7 +435,7 @@ export class GpuSimulation implements Simulation {
     }
     const gl = this.gl;
     const setIntents = (u: Program['uniforms']) =>
-      this.intentUniforms(u, kind, step, targets, deltaTimeSec);
+      this.intentUniforms(u, kind, step, intents, deltaTimeSec);
 
     const claim = resources.programs.claim;
     gl.useProgram(claim.program);
@@ -513,7 +529,7 @@ export class GpuSimulation implements Simulation {
     u: Program['uniforms'],
     kind: number,
     step: number,
-    targets: (Player | null)[],
+    intents: Intents,
     deltaTimeSec: number
   ): void {
     const gl = this.gl;
@@ -524,33 +540,15 @@ export class GpuSimulation implements Simulation {
     const b = this.balance;
     gl.uniform1i(u['uKind'], kind);
     gl.uniform1i(u['uStep'], step);
-    gl.uniform1iv(u['uSteps[0]'], this.moveSteps(targets, deltaTimeSec));
-    gl.uniform2fv(
-      u['uTarget[0]'],
-      padded(
-        targets.flatMap((target) =>
-          target == null || isNaN(target.x) || isNaN(target.y)
-            ? [NaN, NaN]
-            : [target.x, target.y]
-        ),
-        MAX_GPU_COLONIES * 2
-      )
-    );
-    gl.uniform1fv(
-      u['uAggression[0]'],
-      padded(
-        targets.map((target) =>
-          isBoosted(target) ? b.boostAggression : b.aggression
-        ),
-        MAX_GPU_COLONIES
-      )
-    );
+    gl.uniform1iv(u['uSteps[0]'], intents.steps);
+    gl.uniform2fv(u['uTarget[0]'], intents.targets);
+    gl.uniform1fv(u['uAggression[0]'], intents.aggression);
     gl.uniform1f(u['uJitter'], b.jitter);
     gl.uniform1i(u['uCellSize'], b.influenceCellSize);
     this.bindTexture(3, resources.hunt.texture, u['uHunt']);
     gl.uniform1f(u['uDivideThreshold'], b.divideEnergyThreshold);
     gl.uniform1f(u['uDivideChance'], b.divideChancePerSec * deltaTimeSec);
-    gl.uniform1iv(u['uCanDivide[0]'], this.divisionAllowed());
+    gl.uniform1iv(u['uCanDivide[0]'], intents.canDivide);
     gl.uniform1f(u['uParentShare'], b.parentEnergyShare);
   }
 
@@ -598,6 +596,29 @@ export class GpuSimulation implements Simulation {
     );
     gl.uniform1i(u['uPelletCount'], nutrients.length);
     gl.uniform1i(u['uPelletRadius'], this.balance.nutrientRadius);
+  }
+
+  /** Where each colony heads this frame, how far, and whether it divides. */
+  private intents(targets: (Player | null)[], deltaTimeSec: number): Intents {
+    const b = this.balance;
+    return {
+      steps: this.moveSteps(targets, deltaTimeSec),
+      targets: padded(
+        targets.flatMap((target) =>
+          target == null || isNaN(target.x) || isNaN(target.y)
+            ? [NaN, NaN]
+            : [target.x, target.y]
+        ),
+        MAX_GPU_COLONIES * 2
+      ),
+      aggression: padded(
+        targets.map((target) =>
+          isBoosted(target) ? b.boostAggression : b.aggression
+        ),
+        MAX_GPU_COLONIES
+      ),
+      canDivide: this.divisionAllowed(),
+    };
   }
 
   /** Cells each colony travels this frame - a boosted one goes further. */
@@ -698,12 +719,17 @@ export class GpuSimulation implements Simulation {
     gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
     readback.sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
-    readback.generation = [...this.generation];
+    readback.frame = this.frame;
+    // The report read is last frame's, so are the pellets it counted at.
+    readback.generation = this.renderedGeneration;
     readback.stale = false;
     gl.flush();
   }
 
-  /** Takes in every read back the GPU has finished, oldest first. */
+  /**
+   * Takes in every read back the GPU has finished, oldest first. The GPU
+   * finishes them in order, so the first unfinished one ends the round.
+   */
   private collectReadbacks(): void {
     const resources = this.resources;
     if (resources == null) {
@@ -711,13 +737,16 @@ export class GpuSimulation implements Simulation {
     }
     const gl = this.gl;
     const data = new Uint32Array(this.layout.width * this.layout.height * 4);
-    for (const readback of resources.readbacks) {
+    const pending = resources.readbacks
+      .filter((readback) => readback.sync != null)
+      .sort((a, b) => a.frame - b.frame);
+    for (const readback of pending) {
       if (readback.sync == null) {
         continue;
       }
       const status = gl.clientWaitSync(readback.sync, 0, 0);
       if (status === gl.TIMEOUT_EXPIRED || status === gl.WAIT_FAILED) {
-        continue;
+        break;
       }
       gl.deleteSync(readback.sync);
       readback.sync = null;
@@ -779,19 +808,20 @@ export class GpuSimulation implements Simulation {
       if (nutrient.amount > 0) {
         return;
       }
-      const before = this.pellets.nutrients.map((pellet) => pellet);
-      this.pellets.tickEmpty(
+      const respawned = this.pellets.tickEmpty(
         n,
         deltaTimeSec,
         this.width,
         this.height,
         this.isOpenCell
       );
-      this.pellets.nutrients.forEach((pellet, m) => {
-        if (pellet !== before[m]) {
-          this.generation[m] = (this.generation[m] ?? 0) + 1;
+      if (respawned != null) {
+        for (const m of [respawned, respawned + 1]) {
+          if (m < this.generation.length) {
+            this.generation[m]++;
+          }
         }
-      });
+      }
     });
   }
 
@@ -1004,10 +1034,10 @@ export class GpuSimulation implements Simulation {
         gl.STREAM_READ
       );
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-      return { buffer, sync: null, generation: [], stale: false };
+      return { buffer, sync: null, frame: 0, generation: [], stale: false };
     });
 
-    return {
+    const resources: Resources = {
       programs,
       quad,
       corners,
@@ -1032,6 +1062,28 @@ export class GpuSimulation implements Simulation {
       reports: [report(), report()],
       readbacks,
     };
+    // Some drivers cannot render into every integer format - then the CPU
+    // has to run the war.
+    const targets = [
+      ...resources.states,
+      resources.events,
+      resources.claims,
+      resources.influence,
+      resources.hunt,
+      ...resources.reports,
+    ];
+    for (const { framebuffer } of targets) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+      const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+      if (status !== gl.FRAMEBUFFER_COMPLETE) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        this.resources = resources;
+        this.release();
+        throw new Error(`A simulation target is incomplete: ${status}`);
+      }
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return resources;
   }
 }
 

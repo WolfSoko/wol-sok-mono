@@ -138,6 +138,8 @@ export class BacteriaSimulation implements Simulation {
   private huntFieldY = new Float32Array(0);
 
   private colonies: Colony[] = [];
+  /** The summaries as of the last step, built when first asked for. */
+  private colonySummaries: ColonySummary[] | null = null;
   private readonly pellets: NutrientPellets;
   /** Wall layout the match is fought on. */
   private map: GameMap = getMap('corridors');
@@ -191,7 +193,12 @@ export class BacteriaSimulation implements Simulation {
   }
 
   /** Count, energy, score and centre of mass of every colony. */
-  public summaries(): ColonySummary[] {
+  public summaries(): readonly ColonySummary[] {
+    this.colonySummaries ??= this.summarize();
+    return this.colonySummaries;
+  }
+
+  private summarize(): ColonySummary[] {
     return this.colonies.map((colony) => {
       let sumX = 0;
       let sumY = 0;
@@ -253,6 +260,7 @@ export class BacteriaSimulation implements Simulation {
       lost: 0,
       totalEnergy: 0,
     }));
+    this.colonySummaries = null;
     for (const colony of this.colonies) {
       colony.totalEnergy = colony.bacterias.length * this.balance.maxEnergy;
     }
@@ -464,6 +472,7 @@ export class BacteriaSimulation implements Simulation {
     // Reset before the guard: a frame that does nothing must not report the
     // last frame's events again.
     this.events = noEvents();
+    this.colonySummaries = null;
     if (this.colonies.length === 0 || this.width === 0 || deltaTimeSec <= 0) {
       return;
     }

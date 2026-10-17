@@ -160,10 +160,7 @@ export class PlayerService {
     this.firedBoosts = [];
     this.frameEvents = { ...noEvents(), boosts: [] };
     this.simulation.dispose();
-    this.simulation = this.simulationFactory(balance);
-    if (options.arena != null) {
-      this.simulation.resize(options.arena.width, options.arena.height);
-    }
+    this.simulation = this.createSimulation(balance, options.arena);
     this.simulation.setMap(map);
     this.simulation.init(
       playersData.map((playerData, index) => ({
@@ -254,6 +251,36 @@ export class PlayerService {
    */
   public useSimulation(factory: SimulationFactory | null): void {
     this.simulationFactory = factory ?? cpuSimulation;
+    if (factory == null) {
+      // The GPU one may hold a context that is going away: let it go now.
+      this.simulation.dispose();
+      this.simulation = new BacteriaSimulation();
+    }
+  }
+
+  /**
+   * A simulation from the factory, sized to the arena. Should the GPU turn
+   * out not to run it - a shader its driver rejects, a format it cannot
+   * render into - the CPU takes over, for this match and the next ones.
+   */
+  private createSimulation(
+    balance: GameBalance,
+    arena?: { width: number; height: number }
+  ): Simulation {
+    try {
+      const simulation = this.simulationFactory(balance);
+      if (arena != null) {
+        simulation.resize(arena.width, arena.height);
+      }
+      return simulation;
+    } catch (error) {
+      if (this.simulationFactory === cpuSimulation) {
+        throw error;
+      }
+      console.warn('The colony war falls back to the CPU', error);
+      this.simulationFactory = cpuSimulation;
+      return this.createSimulation(balance, arena);
+    }
   }
 
   /** The simulation of the current match - used for rendering only. */

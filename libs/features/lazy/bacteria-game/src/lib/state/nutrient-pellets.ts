@@ -45,7 +45,8 @@ export class NutrientPellets {
    * Counts an eaten pellet's respawn delay down, and brings it back once it
    * is over. Respawning moves both halves of the pair, so it waits until the
    * partner is empty too - otherwise a pellet someone is still eating would
-   * be yanked away and refilled.
+   * be yanked away and refilled. Returns the first pellet of the pair when
+   * it respawned, null otherwise.
    */
   public tickEmpty(
     n: number,
@@ -53,12 +54,15 @@ export class NutrientPellets {
     width: number,
     height: number,
     isFree: (x: number, y: number) => boolean
-  ): void {
+  ): number | null {
     this.timers[n] -= deltaTimeSec;
     const partner = this.nutrients[n ^ 1];
-    if (this.timers[n] <= 0 && (partner == null || partner.amount <= 0)) {
-      this.spawnPair(n - (n % 2), width, height, isFree);
+    if (this.timers[n] > 0 || (partner != null && partner.amount > 0)) {
+      return null;
     }
+    const first = n - (n % 2);
+    this.spawnPair(first, width, height, isFree);
+    return first;
   }
 
   /**

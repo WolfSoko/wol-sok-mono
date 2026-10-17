@@ -52,13 +52,13 @@ describe('NutrientPellets', () => {
   it('brings a pair back once both are eaten and the delay is over', () => {
     const field = pellets();
     field.drain(0, 1, 100);
-    field.tickEmpty(0, 2, WIDTH, HEIGHT, everywhere);
 
     // The partner is still being eaten from - nothing moves yet.
+    expect(field.tickEmpty(0, 2, WIDTH, HEIGHT, everywhere)).toBeNull();
     expect(field.nutrients[0].amount).toBe(0);
 
     field.drain(1, 1, 100);
-    field.tickEmpty(0, 2, WIDTH, HEIGHT, everywhere);
+    expect(field.tickEmpty(1, 3, WIDTH, HEIGHT, everywhere)).toBe(0);
 
     expect(field.nutrients[0].amount).toBe(gameBalance.nutrientEnergy);
     expect(field.nutrients[1].amount).toBe(gameBalance.nutrientEnergy);
