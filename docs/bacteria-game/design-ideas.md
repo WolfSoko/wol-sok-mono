@@ -483,11 +483,12 @@ The cheapest multiplayer that works tonight and needs no server logic:
 ### 5.3 Step two: live 1 v 1, host-authoritative
 
 One browser is the host, runs the simulation (GPU allowed), and sends state to
-the guest; the guest sends its crosshair and boost. Transport is a WebRTC data
-channel (unordered, unreliable for state, reliable for inputs and the match
-start), signalled through Firestore: a room doc with a six-letter code, offer
-and answer written as fields, ICE candidates as a subcollection, documents
-expire by TTL. Firebase anonymous auth keeps the rules simple. No TURN server
+the guest; the guest sends its crosshair and boost. Transport is WebRTC with
+two data channels, since a channel's reliability is fixed when it is created:
+an unordered, unreliable one for state (a lost frame is replaced by the next)
+and an ordered, reliable one for inputs and the match start. Signalling goes
+through Firestore: a room doc with a six-letter code, offer and answer written
+as fields, ICE candidates as a subcollection, documents expire by TTL. Firebase anonymous auth keeps the rules simple. No TURN server
 at first; symmetric NAT cases fall back to "could not connect, try the same
 Wi-Fi".
 
