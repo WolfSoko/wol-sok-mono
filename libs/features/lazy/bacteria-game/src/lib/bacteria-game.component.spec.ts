@@ -457,6 +457,27 @@ describe('BacteriaGameComponent', () => {
       expect(query.getValue().levelId).not.toBe(before);
     });
 
+    it('puts the arena back on the canvas right before it is vaporized', () => {
+      create();
+      startMatch('vs-computer');
+      const calls: string[] = [];
+      (component as unknown as { painter: unknown }).painter = {
+        showLastFrame: () => calls.push('show'),
+        paint: () => undefined,
+        dispose: () => undefined,
+      };
+      (component as unknown as { thanos: unknown }).thanos = {
+        vaporize: () => {
+          calls.push('snapshot');
+          return new Subject<void>();
+        },
+      };
+
+      component.resetGame();
+
+      expect(calls).toEqual(['show', 'snapshot']);
+    });
+
     it('names the difficulty next to the level', () => {
       create();
       TestBed.inject(GameStateService).setDifficulty('hard');

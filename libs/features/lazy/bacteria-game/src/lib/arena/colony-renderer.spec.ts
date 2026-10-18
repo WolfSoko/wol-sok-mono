@@ -1,9 +1,11 @@
 import { gameBalance } from '../state/game-balance';
+import { Point } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
 import {
   colonyDensity,
   createImageDataFromBacterias,
   paintSlime,
+  shimmerAt,
   SLIME_SCALE,
 } from './colony-renderer';
 
@@ -25,6 +27,7 @@ function blob(cx: number, cy: number, radius: number): Bacteria[] {
 }
 
 function slime(bacterias: Bacteria[], shimmerTimeSec: number | null = null) {
+  const target: Point = { x: 30, y: 10 };
   const cells = WIDTH * HEIGHT;
   const density = new Float32Array(cells);
   const heat = new Float32Array(cells);
@@ -44,7 +47,7 @@ function slime(bacterias: Bacteria[], shimmerTimeSec: number | null = null) {
     WIDTH,
     HEIGHT,
     ORANGE,
-    shimmerTimeSec
+    shimmerTimeSec == null ? null : { timeSec: shimmerTimeSec, target, unit: 1 }
   );
   return data;
 }
@@ -101,5 +104,35 @@ describe('createImageDataFromBacterias', () => {
 
     const index = (2 * WIDTH + 3) * 4;
     expect(Array.from(data.slice(index, index + 4))).toEqual(ORANGE);
+  });
+});
+
+describe('shimmerAt', () => {
+  const target = { x: 50, y: 30 };
+
+  it('runs its waves towards the crosshair', () => {
+    const now = { timeSec: 1, target, unit: 1 };
+    const later = { ...now, timeSec: 1.1 };
+    // The waves travel 9 / 0.35 cells a second.
+    const travelled = (9 / 0.35) * 0.1;
+
+    expect(shimmerAt(80, 30, now)).toBeCloseTo(
+      shimmerAt(80 - travelled, 30, later)
+    );
+    expect(shimmerAt(50, 0, now)).toBeCloseTo(shimmerAt(50, travelled, later));
+  });
+
+  it('is the same all around the crosshair', () => {
+    const shimmer = { timeSec: 0.7, target, unit: 1 };
+
+    expect(shimmerAt(40, 30, shimmer)).toBeCloseTo(shimmerAt(60, 30, shimmer));
+    expect(shimmerAt(50, 20, shimmer)).toBeCloseTo(shimmerAt(50, 40, shimmer));
+  });
+
+  it('keeps the waves as wide on a finer grid', () => {
+    const base = { timeSec: 0.4, target, unit: 1 };
+    const fine = { timeSec: 0.4, target: { x: 100, y: 60 }, unit: 2 };
+
+    expect(shimmerAt(170, 60, fine)).toBeCloseTo(shimmerAt(85, 30, base));
   });
 });

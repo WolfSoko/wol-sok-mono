@@ -43,6 +43,12 @@ export interface ArenaPainter {
   /** Switches to another level's look. */
   setTheme(theme: ArenaTheme): void;
   paint(frame: ArenaFrame): void;
+  /**
+   * Puts the last painted frame on the canvas again. A WebGL canvas lets go
+   * of it once the browser has shown it - a snapshot of the canvas taken
+   * right after this call, in the same task, sees the arena.
+   */
+  showLastFrame(): void;
   /** Lets go of what the painter holds on the canvas - it is done drawing. */
   dispose(): void;
 }

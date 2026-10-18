@@ -158,7 +158,9 @@ export class GlArenaPainter implements ArenaPainter {
         depth: false,
         stencil: false,
         premultipliedAlpha: false,
-        preserveDrawingBuffer: true,
+        // Keeping the drawing buffer costs a copy of the canvas every frame
+        // on many GPUs - a snapshot asks for `showLastFrame` instead.
+        preserveDrawingBuffer: false,
       });
     } catch {
       return null;
@@ -281,7 +283,17 @@ export class GlArenaPainter implements ArenaPainter {
       this.unit
     );
     this.drawShapes(this.foreground);
+    this.showLastFrame();
+  }
 
+  /** Copies the frame, kept in the trail, onto the canvas. */
+  public showLastFrame(): void {
+    const gl = this.gl;
+    const resources = this.resources;
+    if (resources == null) {
+      return;
+    }
+    const { programs } = resources;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
     gl.disable(gl.BLEND);
@@ -307,7 +319,7 @@ export class GlArenaPainter implements ArenaPainter {
       return;
     }
     const { programs, blur, cells } = resources;
-    const { color, boosted } = layer;
+    const { color, boostTarget } = layer;
     const bounds =
       layer.kind === 'cells'
         ? this.uploadCells(layer.bacterias, frame.balance)
@@ -350,7 +362,18 @@ export class GlArenaPainter implements ArenaPainter {
     );
     gl.uniform1f(program.uniforms['uAlpha'], (color[3] ?? 255) / 255);
     gl.uniform1i(program.uniforms['uLook'], slime ? 0 : 1);
-    gl.uniform1f(program.uniforms['uShimmer'], boosted ? frame.timeSec : -1);
+    gl.uniform1f(
+      program.uniforms['uShimmer'],
+      boostTarget == null ? -1 : frame.timeSec
+    );
+    if (boostTarget != null) {
+      gl.uniform2f(
+        program.uniforms['uBoostTarget'],
+        boostTarget.x,
+        boostTarget.y
+      );
+      gl.uniform1f(program.uniforms['uUnit'], this.unit);
+    }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.SCISSOR_TEST);
   }
@@ -592,6 +615,8 @@ export class GlArenaPainter implements ArenaPainter {
         'uAlpha',
         'uLook',
         'uShimmer',
+        'uBoostTarget',
+        'uUnit',
       ]),
       shape: createProgram(gl, SHAPE_VERTEX, SHAPE_FRAGMENT, ['uArena']),
       cells: createProgram(gl, FULLSCREEN_VERTEX, CELLS_FRAGMENT, [
