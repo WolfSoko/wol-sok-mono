@@ -1,3 +1,4 @@
+import { scaleOf } from '../../state/arena-size';
 import { GameBalance } from '../../state/game-balance';
 import { Bacteria } from '../../state/player.model';
 import { CellBounds, emptyBounds, growBounds } from '../../state/geometry';
@@ -131,6 +132,8 @@ interface Resources {
 export class GlArenaPainter implements ArenaPainter {
   public readonly kind = 'webgl';
   private resources: Resources | null = null;
+  /** True once the context was handed back - it is not built again then. */
+  private disposed = false;
   private theme: ArenaTheme | null = null;
   private readonly motes: Motes;
   private readonly background = new ShapeBatch();
@@ -178,11 +181,17 @@ export class GlArenaPainter implements ArenaPainter {
     this.resources = this.setup();
 
     canvas.addEventListener('webglcontextlost', (event) => {
+      if (this.disposed) {
+        return;
+      }
       // Without this the browser would never hand the context back.
       event.preventDefault();
       this.resources = null;
     });
     canvas.addEventListener('webglcontextrestored', () => {
+      if (this.disposed) {
+        return;
+      }
       this.resources = this.setup();
       if (this.theme != null) {
         this.uploadFloor(this.theme);
@@ -206,6 +215,7 @@ export class GlArenaPainter implements ArenaPainter {
    * canvas is collected - a page may only hold a few WebGL contexts.
    */
   public dispose(): void {
+    this.disposed = true;
     this.resources = null;
     this.gl.getExtension('WEBGL_lose_context')?.loseContext();
   }
@@ -261,8 +271,14 @@ export class GlArenaPainter implements ArenaPainter {
     this.foreground.clear();
     pushForeground(
       this.foreground,
-      jamDrops(frame.nutrients, frame.balance.nutrientEnergy, frame.timeSec),
-      frame.cursors
+      jamDrops(
+        frame.nutrients,
+        frame.balance.nutrientEnergy,
+        frame.timeSec,
+        scaleOf(this.width)
+      ),
+      frame.cursors,
+      scaleOf(this.width)
     );
     this.drawShapes(this.foreground);
 
@@ -353,11 +369,14 @@ export class GlArenaPainter implements ArenaPainter {
   private scissorCanvas(bounds: CellBounds, margin: number): void {
     const [x0, y0, x1, y1] = this.box(bounds, margin);
     const scale = this.canvasWidth / this.width;
+    // Out to whole pixels - at a scale like 7.5 a cell edge falls inside one.
+    const left = Math.floor(x0 * scale);
+    const bottom = Math.floor(this.canvasHeight - y1 * scale);
     this.gl.scissor(
-      x0 * scale,
-      this.canvasHeight - y1 * scale,
-      (x1 - x0) * scale,
-      (y1 - y0) * scale
+      left,
+      bottom,
+      Math.ceil(x1 * scale) - left,
+      Math.ceil(this.canvasHeight - y0 * scale) - bottom
     );
   }
 

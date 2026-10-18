@@ -187,10 +187,12 @@ function pushBlobs(
 export function pushForeground(
   batch: ShapeBatch,
   drops: readonly JamDrop[],
-  cursors: readonly CursorShape[]
+  cursors: readonly CursorShape[],
+  /** Cells per base cell - the crosshairs are as big on every grid. */
+  unit = 1
 ): void {
   for (const { jam, x, y, radius, halo } of drops) {
-    const haloRadius = radius + 1.5 + halo;
+    const haloRadius = radius + (1.5 + halo) * unit;
     batch.push(
       SHAPE.disc,
       square(x, y, haloRadius),
@@ -234,28 +236,38 @@ export function pushForeground(
     const alpha = (cursor.color[3] ?? 255) / 255;
     batch.push(
       SHAPE.rect,
-      { x: cursor.x - 6, y: cursor.y - 0.5, width: 13, height: 2 },
+      {
+        x: cursor.x - 6 * unit,
+        y: cursor.y - 0.5 * unit,
+        width: 13 * unit,
+        height: 2 * unit,
+      },
       color,
       alpha
     );
     batch.push(
       SHAPE.rect,
-      { x: cursor.x - 0.5, y: cursor.y - 6, width: 2, height: 13 },
+      {
+        x: cursor.x - 0.5 * unit,
+        y: cursor.y - 6 * unit,
+        width: 2 * unit,
+        height: 13 * unit,
+      },
       color,
       alpha
     );
     if (cursor.boostLeft != null) {
-      const radius = boostRingRadius(cursor.boostLeft);
+      const radius = boostRingRadius(cursor.boostLeft) * unit;
       // Room for the line around the circle.
       batch.push(
         SHAPE.ring,
-        square(cursor.x, cursor.y, radius + 1),
+        square(cursor.x, cursor.y, radius + unit),
         color,
         alpha,
         color,
         alpha,
         radius,
-        1.5
+        1.5 * unit
       );
     }
   }

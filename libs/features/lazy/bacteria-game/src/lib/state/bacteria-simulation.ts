@@ -4,6 +4,7 @@ import { clamp, Point } from './geometry';
 import { NutrientPellets } from './nutrient-pellets';
 import { ColonySummary, Simulation } from './simulation';
 import { compareDynamicWalls, DynamicWall, GameMap, stampRect } from './maps';
+import { escapeReach } from './arena-size';
 import { getMap } from './game-maps';
 import {
   Bacteria,
@@ -103,9 +104,6 @@ interface Capture {
   /** Index of the colony that killed it. */
   winner: number;
 }
-
-/** How far a moving wall may shove a bacterium before it crushes it. */
-const ESCAPE_RADIUS = 3;
 
 const NEIGHBOURS: readonly [number, number][] = [
   [-1, -1],
@@ -440,7 +438,8 @@ export class BacteriaSimulation implements Simulation {
 
   /** The closest free cell within a few steps, or -1 when it is all packed. */
   private findEscape(x: number, y: number): number {
-    for (let radius = 1; radius <= ESCAPE_RADIUS; radius++) {
+    const reach = escapeReach(this.width);
+    for (let radius = 1; radius <= reach; radius++) {
       for (let dy = -radius; dy <= radius; dy++) {
         for (let dx = -radius; dx <= radius; dx++) {
           if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) {

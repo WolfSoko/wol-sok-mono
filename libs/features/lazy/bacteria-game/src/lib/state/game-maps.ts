@@ -10,7 +10,12 @@ function scalable(map: GameMap): GameMap {
   return {
     ...map,
     createWalls: (width, height) =>
-      scaled(width, height, (w, h) => map.createWalls(w, h)),
+      scaled(width, height, (w, h) => map.createWalls(w, h)).filter(
+        (wall) =>
+          wall.width > 0 &&
+          wall.height > 0 &&
+          overlapsArena(wall, width, height)
+      ),
     createDynamicWalls:
       map.createDynamicWalls == null
         ? undefined
@@ -25,8 +30,10 @@ function scalable(map: GameMap): GameMap {
 
 /**
  * The walls `create` lays out on the base arena, scaled to an arena of that
- * size. A wall the scaling leaves without a cell in the arena is dropped: one
- * too thin for the grid, or a blob over the edge that no longer reaches in.
+ * size. A static wall the scaling leaves without a cell in the arena - too
+ * thin for the grid, or a blob over the edge that no longer reaches in - is
+ * dropped. The moving ones are all kept, even empty: they are told apart
+ * from one frame to the next by their place in the list.
  */
 function scaled<T extends Rect>(
   width: number,
@@ -37,12 +44,9 @@ function scaled<T extends Rect>(
   if (scale === 1) {
     return create(width, height);
   }
-  return create(BASE_ARENA.width, height / scale)
-    .map((wall) => scaleRect(wall, scale))
-    .filter(
-      (wall) =>
-        wall.width > 0 && wall.height > 0 && overlapsArena(wall, width, height)
-    );
+  return create(BASE_ARENA.width, height / scale).map((wall) =>
+    scaleRect(wall, scale)
+  );
 }
 
 /** Every layout the game can be played on, in the order the levels use them. */

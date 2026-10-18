@@ -73,6 +73,14 @@ export function renderScale(
   return canvasWidth / arenaSize(sim).width;
 }
 
+/**
+ * How far a moving wall may shove a bacterium before it crushes it: 3 cells
+ * of the base arena, more on a finer grid, where a wall moves more cells.
+ */
+export function escapeReach(width: number): number {
+  return Math.max(3, Math.ceil(3 * scaleOf(width)));
+}
+
 /** How many cells an arena of that width has per base cell. */
 export function scaleOf(width: number): number {
   return width / BASE_ARENA.width;

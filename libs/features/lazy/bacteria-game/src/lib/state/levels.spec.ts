@@ -108,6 +108,7 @@ describe('levelBalance on a finer grid', () => {
     expect(fine.maxTotalBacteria).toBe(base.maxTotalBacteria * 4);
     expect(fine.maxBacteriaPerPlayer).toBe(base.maxBacteriaPerPlayer * 4);
     expect(fine.influenceCellSize).toBe(base.influenceCellSize * 2);
+    expect(fine.nutrientEnergy).toBe(base.nutrientEnergy * 4);
     expect(fine.aggression).toBe(base.aggression);
   });
 

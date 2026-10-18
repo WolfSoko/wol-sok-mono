@@ -480,6 +480,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // The GPU simulation lives in the old context: let it go while it lasts.
     this.playerService.useSimulation(null);
     this.painter?.dispose();
+    this.painter = null;
     const { width, height } = this.arena();
     this.painter = createArenaPainter(
       canvas,

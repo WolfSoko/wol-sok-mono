@@ -1,4 +1,5 @@
 import { ArenaFrame, ArenaPainter, boostRingRadius } from './arena-painter';
+import { scaleOf } from '../state/arena-size';
 import { ArenaRenderer } from './arena-renderer';
 import { ArenaTheme } from './arena-theme';
 import { ColonyRenderer, drawJam } from './colony-renderer';
@@ -55,7 +56,13 @@ export class CanvasArenaPainter implements ArenaPainter {
       cx.imageSmoothingEnabled = false;
     }
 
-    drawJam(cx, frame.nutrients, frame.balance.nutrientEnergy, frame.timeSec);
+    drawJam(
+      cx,
+      frame.nutrients,
+      frame.balance.nutrientEnergy,
+      frame.timeSec,
+      scaleOf(this.width)
+    );
     this.drawCursors(frame);
   }
 
@@ -65,20 +72,32 @@ export class CanvasArenaPainter implements ArenaPainter {
    */
   private drawCursors(frame: ArenaFrame): void {
     const cx = this.cx;
+    // As big on every grid.
+    const unit = scaleOf(this.width);
     for (const cursor of frame.cursors) {
       const css = `rgba(${cursor.color.join(',')})`;
       cx.fillStyle = css;
-      cx.fillRect(cursor.x - 6, cursor.y - 0.5, 13, 2);
-      cx.fillRect(cursor.x - 0.5, cursor.y - 6, 2, 13);
+      cx.fillRect(
+        cursor.x - 6 * unit,
+        cursor.y - 0.5 * unit,
+        13 * unit,
+        2 * unit
+      );
+      cx.fillRect(
+        cursor.x - 0.5 * unit,
+        cursor.y - 6 * unit,
+        2 * unit,
+        13 * unit
+      );
 
       if (cursor.boostLeft != null) {
         cx.strokeStyle = css;
-        cx.lineWidth = 1.5;
+        cx.lineWidth = 1.5 * unit;
         cx.beginPath();
         cx.arc(
           cursor.x,
           cursor.y,
-          boostRingRadius(cursor.boostLeft),
+          boostRingRadius(cursor.boostLeft) * unit,
           0,
           Math.PI * 2
         );

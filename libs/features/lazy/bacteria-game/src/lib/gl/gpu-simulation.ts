@@ -14,6 +14,7 @@ import {
   GameMap,
   stampRect,
 } from '../state/maps';
+import { escapeReach } from '../state/arena-size';
 import { getMap } from '../state/game-maps';
 import { NutrientPellets } from '../state/nutrient-pellets';
 import { createBacteriaBlob, isBoosted, Player } from '../state/player.model';
@@ -49,9 +50,6 @@ import {
   ReportLayout,
   reportLayout,
 } from './simulation-report';
-
-/** How many steps a moving wall may shove a bacterium before it crushes it. */
-const ESCAPE_STEPS = 3;
 
 /**
  * The most cells a colony travels in one frame - each one is a claim and an
@@ -365,7 +363,9 @@ export class GpuSimulation implements Simulation {
     gl.viewport(0, 0, this.width, this.height);
     // 2. Out of the way of a wall that moved, or crushed.
     if (this.escapePending) {
-      for (let step = 0; step < ESCAPE_STEPS; step++) {
+      // One cell per step, as far as a wall may shove a bacterium.
+      const steps = escapeReach(this.width);
+      for (let step = 0; step < steps; step++) {
         this.claimAndApply(resources, KIND.escape, step);
       }
       this.escapePending = false;

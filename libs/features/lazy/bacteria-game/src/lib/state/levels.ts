@@ -204,8 +204,10 @@ export function getLevel(id: string): Level {
 
 /**
  * The full balance of a level: the base table with its tweaks applied, for an
- * arena with `scale` cells per base cell. Lengths grow with the cells and
- * the room for bacteria with the area, so a finer grid plays the same match.
+ * arena with `scale` cells per base cell. Lengths grow with the cells, and
+ * the room for bacteria and the food for them with the area. The bacteria
+ * still move and divide a cell at a time, so the fronts cross a finer grid
+ * a little slower.
  */
 export function levelBalance(level: Level, scale = 1): GameBalance {
   const balance = { ...gameBalance, ...level.balance };
@@ -223,6 +225,7 @@ export function levelBalance(level: Level, scale = 1): GameBalance {
       Math.round(balance.influenceCellSize * scale)
     ),
     nutrientRadius: Math.max(1, Math.round(balance.nutrientRadius * scale)),
+    nutrientEnergy: balance.nutrientEnergy * area,
   };
 }
 

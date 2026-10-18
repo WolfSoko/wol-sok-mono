@@ -258,7 +258,9 @@ export interface JamDrop {
 export function jamDrops(
   nutrients: readonly Nutrient[],
   nutrientEnergy: number,
-  timeSec: number
+  timeSec: number,
+  /** Cells per base cell - a drop is as big on every grid. */
+  unit = 1
 ): JamDrop[] {
   const drops: JamDrop[] = [];
   for (let n = 0; n < nutrients.length; n++) {
@@ -272,7 +274,7 @@ export function jamDrops(
       jam: JAMS[(n >> 1) % JAMS.length],
       x: nutrient.x + 0.5,
       y: nutrient.y + 0.5,
-      radius: (1.3 + 1.9 * left) * wobble,
+      radius: (1.3 + 1.9 * left) * wobble * unit,
       halo: 0.5 + 0.5 * Math.sin(timeSec * 2.5 + n),
     });
   }
@@ -296,12 +298,14 @@ export function drawJam(
   cx: CanvasRenderingContext2D,
   nutrients: readonly Nutrient[],
   nutrientEnergy: number,
-  timeSec: number
+  timeSec: number,
+  unit = 1
 ): void {
   for (const { jam, x, y, radius, halo } of jamDrops(
     nutrients,
     nutrientEnergy,
-    timeSec
+    timeSec,
+    unit
   )) {
     cx.fillStyle = rgba(jam.light, 0.12 + 0.12 * halo);
     cx.beginPath();
