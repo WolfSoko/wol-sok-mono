@@ -1,4 +1,5 @@
 import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
+import { isObject } from '../storage';
 import { betterMedal, MatchRecord, MEDAL_TIERS, MedalTier } from './medallions';
 
 /** The best a player has done on one level at one difficulty, once won. */
@@ -92,8 +93,4 @@ function parseLevelRecord(value: unknown): LevelRecord | null {
     wins,
     bestWinSec,
   };
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value != null;
 }

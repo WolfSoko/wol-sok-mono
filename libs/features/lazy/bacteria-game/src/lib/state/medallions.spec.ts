@@ -1,10 +1,12 @@
 import {
   betterMedal,
+  judgeMatch,
   MatchRecord,
+  matchRecord,
   MedalLimits,
   medalFor,
-  medalHint,
 } from './medallions';
+import { createPlayer } from './player.model';
 
 const LIMITS: MedalLimits = { silverSec: 60, goldSec: 40, goldLossShare: 0.3 };
 
@@ -58,7 +60,14 @@ describe('medalFor', () => {
   });
 });
 
-describe('medalHint', () => {
+describe('judgeMatch', () => {
+  const medalHint = (limits: MedalLimits, record: MatchRecord) =>
+    judgeMatch(limits, record).hint;
+
+  it('hands out the medallion medalFor gives', () => {
+    expect(judgeMatch(LIMITS, run({ boostsFired: 1 })).medal).toBe('gold');
+  });
+
   it('asks a lost match for a win', () => {
     expect(medalHint(LIMITS, run({ won: false }))).toBe('Bronze needs a win.');
   });
@@ -81,8 +90,60 @@ describe('medalHint', () => {
     );
   });
 
+  it('names the size platinum asks never to fall below', () => {
+    expect(medalHint(LIMITS, run({ lowestSizeRatio: 0.3 }))).toBe(
+      'Platinum needs a gold win that never falls below 50 % of the computer’s size.'
+    );
+  });
+
   it('has nothing left to ask after platinum', () => {
     expect(medalHint(LIMITS, PLATINUM_RUN)).toBeNull();
+  });
+});
+
+describe('matchRecord', () => {
+  const human = createPlayer({
+    id: 0,
+    isBot: false,
+    lost: 120,
+    boostsFired: 2,
+    peakCount: 300,
+    lowestSizeRatio: 0.4,
+  });
+  const computer = createPlayer({ id: 1, isBot: true });
+  const match = { levelId: 'hourglass', difficulty: 'hard' as const };
+
+  it('takes what the human did from their player', () => {
+    expect(
+      matchRecord([human, computer], {
+        ...match,
+        durationSec: 42,
+        winner: human,
+      })
+    ).toEqual({
+      levelId: 'hourglass',
+      difficulty: 'hard',
+      won: true,
+      durationSec: 42,
+      boostsFired: 2,
+      lost: 120,
+      peakCount: 300,
+      lowestSizeRatio: 0.4,
+    });
+  });
+
+  it('counts a loss and a draw as not won', () => {
+    const players = [human, computer];
+    const result = (winner: typeof human | null) =>
+      matchRecord(players, { ...match, durationSec: 5, winner })?.won;
+    expect(result(computer)).toBe(false);
+    expect(result(null)).toBe(false);
+  });
+
+  it('has nothing to record without a human', () => {
+    expect(
+      matchRecord([computer], { ...match, durationSec: 5, winner: computer })
+    ).toBeNull();
   });
 });
 

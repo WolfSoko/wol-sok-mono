@@ -35,10 +35,12 @@ import {
   levelCrosshairSpeed,
   levelMap,
 } from './levels';
+import { matchRecord } from './medallions';
 import { Player } from './player.model';
 
 import { PlayerQuery } from './player.query';
 import { PlayerService } from './player.service';
+import { ProgressService } from '../progress.service';
 
 /** How a match ended. `winner` is null when both colonies died together. */
 interface MatchOutcome {
@@ -51,6 +53,7 @@ export class GameStateService {
   private gameStateQuery = inject(GameStateQuery);
   private playerQuery = inject(PlayerQuery);
   private playerService = inject(PlayerService);
+  private progress = inject(ProgressService);
 
   /**
    * The milliseconds since the last frame, on the display frames the game
@@ -102,6 +105,7 @@ export class GameStateService {
       height,
       winner: null,
       matchEnded: false,
+      award: null,
     });
     // subscribe update time passed when game running
     const running$ = this.gameStateQuery.selectCurrentGameState(
@@ -151,16 +155,36 @@ export class GameStateService {
           map((players) => GameStateService.determineOutcome(players)),
           filter((outcome) => outcome != null)
         )
-        .subscribe((outcome) =>
-          applyTransaction(() => {
-            this.gameStateStore.update({ currentState: GameState.END });
-            this.gameStateStore.update({
-              winner: outcome.winner,
-              matchEnded: true,
-            });
-          })
-        )
+        .subscribe((outcome) => this.endMatch(outcome))
     );
+  }
+
+  /**
+   * Ends the match with its outcome and, against the computer, the medallion
+   * it earned - judged and remembered right here, so the result and the
+   * award reach the store together.
+   */
+  private endMatch(outcome: MatchOutcome): void {
+    const { mode, levelId, difficulty, timePassed } =
+      this.gameStateQuery.getValue();
+    const record =
+      mode === 'vs-computer'
+        ? matchRecord(this.playerQuery.getAll(), {
+            levelId,
+            difficulty,
+            durationSec: timePassed / 1000,
+            winner: outcome.winner,
+          })
+        : null;
+    const award = record == null ? null : this.progress.recordMatch(record);
+    applyTransaction(() => {
+      this.gameStateStore.update({ currentState: GameState.END });
+      this.gameStateStore.update({
+        winner: outcome.winner,
+        matchEnded: true,
+        award,
+      });
+    });
   }
 
   /**
@@ -296,6 +320,7 @@ export class GameStateService {
       currentState: GameState.RUNNING,
       winner: null,
       matchEnded: false,
+      award: null,
     }));
   }
 
@@ -311,6 +336,7 @@ export class GameStateService {
       timeDelta: 1,
       winner: null,
       matchEnded: false,
+      award: null,
     }));
   }
 

@@ -72,9 +72,12 @@ difficulty, level and the frame rate badge in local storage.
 ## Medallions
 
 A win against the computer earns a medallion for that level and difficulty,
-judged by [`medallions.ts`](./src/lib/state/medallions.ts) on what
-[`MatchTally`](./src/lib/state/match-tally.ts) measured over the match. The
-tiers are nested: each one asks for everything the one below does.
+judged by [`medallions.ts`](./src/lib/state/medallions.ts) on what the
+human's player measured over the match: `PlayerService` keeps the boosts
+fired, the peak colony and the lowest size against the other colony next to
+`captured` and `lost`. `GameStateService` judges the match as it ends and keeps
+the award in the store beside the winner. The tiers are nested: each one asks
+for everything the one below does.
 
 | Tier     | Condition                                                          |
 | -------- | ------------------------------------------------------------------ |

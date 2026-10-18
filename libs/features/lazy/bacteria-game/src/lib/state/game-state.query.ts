@@ -11,6 +11,7 @@ import {
 } from './game.states';
 import { sameColors } from './colony-colors';
 import { getLevel, Level } from './levels';
+import { MedalAward } from './medallions';
 
 @Injectable({ providedIn: 'root' })
 export class GameStateQuery extends Query<GameStateState> {
@@ -66,6 +67,11 @@ export class GameStateQuery extends Query<GameStateState> {
 
   selectWinnerId() {
     return this.select((store) => store.winner);
+  }
+
+  /** What the match that just ended earned, null without a medallion run. */
+  selectAward(): Observable<MedalAward | null> {
+    return this.select((store) => store.award);
   }
 
   /** Emits true while a match is on, paused or not. */

@@ -6,15 +6,15 @@ import {
   inject,
   output,
 } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MedallionComponent } from '../medallion/medallion.component';
-import { ProgressService } from '../progress.service';
 import { GameStateQuery } from '../state/game-state.query';
 import { DEFAULT_MODE, GameMode } from '../state/game.states';
 import { Level, LEVELS, nextLevel } from '../state/levels';
-import { MEDAL_NAMES, medalRank } from '../state/medallions';
+import { MedalAward, MEDAL_NAMES, medalRank } from '../state/medallions';
 import { Player } from '../state/player.model';
 
 /** What the player picked when the match was over. */
@@ -27,14 +27,13 @@ export type MatchEndAction = 'again' | 'next' | 'menu';
  */
 @Component({
   selector: 'feat-lazy-bac-game-winner',
-  imports: [MatButtonModule, MatIconModule, MedallionComponent],
+  imports: [DatePipe, MatButtonModule, MatIconModule, MedallionComponent],
   templateUrl: './winner.component.html',
   styleUrls: ['./winner.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WinnerComponent {
   private state = inject(GameStateQuery);
-  private progress = inject(ProgressService);
 
   /** What the player wants to do next. */
   public readonly action = output<MatchEndAction>();
@@ -59,7 +58,9 @@ export class WinnerComponent {
   });
 
   /** What the match earned against the computer, null between two players. */
-  public award = this.progress.lastAward;
+  public award: Signal<MedalAward | null> = toSignal(this.state.selectAward(), {
+    initialValue: null,
+  });
 
   /** The medallion line of the award: what was won, or that nothing was. */
   public medalTitle: Signal<string> = computed(() => {
@@ -67,31 +68,21 @@ export class WinnerComponent {
     if (award?.medal == null) {
       return 'No medallion this time';
     }
-    return `${MEDAL_NAMES[award.medal]} medallion${award.isNewBest ? ' - a new best!' : ''}`;
+    const newBest = medalRank(award.medal) > medalRank(award.previousBest);
+    return `${MEDAL_NAMES[award.medal]} medallion${newBest ? ' - a new best!' : ''}`;
   });
 
   /**
-   * The better medallion the level already holds at this difficulty, null
+   * The better medallion the level already held at this difficulty, null
    * when this match matched or beat it.
    */
   public heldMedal: Signal<string | null> = computed(() => {
     const award = this.award();
-    if (award == null) {
-      return null;
-    }
-    const held = this.progress.medal(
-      award.record.levelId,
-      award.record.difficulty
-    );
-    return held != null && medalRank(held) > medalRank(award.medal)
-      ? MEDAL_NAMES[held]
+    return award?.previousBest != null &&
+      medalRank(award.previousBest) > medalRank(award.medal)
+      ? MEDAL_NAMES[award.previousBest]
       : null;
   });
-
-  /** How long the match took, as minutes and seconds. */
-  public duration: Signal<string> = computed(() =>
-    formatDuration(this.award()?.record.durationSec ?? 0)
-  );
 
   /**
    * One line on how the match ended, addressed to whoever is reading it: a
@@ -110,10 +101,4 @@ export class WinnerComponent {
     }
     return `Congratulations! ${player.name} wins the match!`;
   });
-}
-
-/** Seconds as `m:ss`. */
-export function formatDuration(seconds: number): string {
-  const whole = Math.round(seconds);
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
 }

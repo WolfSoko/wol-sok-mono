@@ -62,8 +62,8 @@ import {
 } from './match-setup/match-setup.component';
 import { DEFAULT_COLORS, getColonyColor } from './state/colony-colors';
 import {
-  BOT_DIFFICULTIES,
   BotDifficulty,
+  difficultyOption,
   DEFAULT_DIFFICULTY,
 } from './state/bot-controller';
 import { BACTERIA_LOOKS, GameSettingsService } from './settings.service';
@@ -98,7 +98,6 @@ import {
   nextLevel,
 } from './state/levels';
 import { Rect } from './state/maps';
-import { MatchTally } from './state/match-tally';
 import { MedalTier } from './state/medallions';
 import { isBoosted, Player } from './state/player.model';
 import { PlayerQuery } from './state/player.query';
@@ -139,8 +138,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly settings = inject(GameSettingsService);
   private readonly sound = inject(GameSoundService);
   private readonly progress = inject(ProgressService);
-  /** What the running match measures for its medallion. */
-  private tally = new MatchTally();
   /** No flickering glow for players who asked their system for less motion. */
   private readonly reducedMotion = prefersReducedMotion();
 
@@ -399,9 +396,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     });
 
     this.difficultyName = computed(
-      () =>
-        BOT_DIFFICULTIES.find((option) => option.id === this.difficulty())
-          ?.name ?? ''
+      () => difficultyOption(this.difficulty())?.name ?? ''
     );
 
     this.gameStateService.frames$
@@ -436,28 +431,15 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       .subscribe();
   }
 
-  /**
-   * Plays the end of the match and, against the computer, judges it for a
-   * medallion and plays that in as well.
-   */
+  /** Plays the end of the match, and the medallion it earned after it. */
   private finishMatch(): void {
-    this.sound.matchEnd(this.matchResult());
-    const { mode, winner, levelId, difficulty, timePassed } =
-      this.query.getValue();
-    if (mode !== 'vs-computer') {
-      return;
-    }
-    const award = this.progress.recordMatch(
-      this.tally.record(this.playerQuery.getAll(), {
-        levelId,
-        difficulty,
-        winner,
-        durationSec: timePassed / 1000,
-      })
+    const { award, levelId } = this.query.getValue();
+    this.sound.matchEnd(
+      this.matchResult(),
+      award?.medal == null
+        ? null
+        : { tier: award.medal, music: levelMusic(levelId) }
     );
-    if (award.medal != null) {
-      this.sound.medal(award.medal, levelMusic(levelId));
-    }
   }
 
   /**
@@ -549,8 +531,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   startGame() {
     this.requestNativeFullscreen();
     this.sound.matchStart();
-    this.progress.clearAward();
-    this.tally = new MatchTally();
     this.clearNextFrame = true;
     this.gameStateService.cleanup();
     this.gameStateService.init(this.arena().width, this.arena().height);
@@ -604,9 +584,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     const { width, height } = this.arena();
     this.playerService.gameLoop(width, height, deltaTimeSec);
-    const events = this.playerService.getFrameEvents();
-    this.sound.frame(events);
-    this.tally.frame(this.playerQuery.getAll(), events.boosts);
+    this.sound.frame(this.playerService.getFrameEvents());
     this.paint(deltaTimeSec, false);
   }
 

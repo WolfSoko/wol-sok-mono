@@ -21,6 +21,7 @@ describe('GameSoundService', () => {
         gatesWarned: 1,
       });
       sound.matchEnd('win');
+      sound.matchEnd('win', { tier: 'gold', music: levelMusic('heartbeat') });
       sound.setMusic(null);
     }).not.toThrow();
   });

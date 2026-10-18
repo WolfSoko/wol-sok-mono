@@ -1,9 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { GameStateQuery } from './game-state.query';
 import { GameStateService } from './game-state.service';
-import { GameStateStore } from './game.states';
+import { GameState, GameStateStore } from './game.states';
 import { getLevel, levelCrosshairSpeed } from './levels';
 import { PlayerQuery } from './player.query';
+import { PlayerStore } from './player.store';
 
 const WIDTH = 320;
 const HEIGHT = 140;
@@ -166,6 +167,60 @@ describe('GameStateService', () => {
       service.boost(0);
 
       expect(playerQuery.getEntity(0)?.boostActiveSec).toBe(0);
+    });
+  });
+
+  describe('match end', () => {
+    beforeEach(() => localStorage.clear());
+
+    /** Starts a match and lets the computer's colony die out. */
+    function winAgainst(mode: 'vs-computer' | 'two-players'): void {
+      service.setMode(mode);
+      service.setLevel('hourglass');
+      service.setArenaSize(WIDTH, HEIGHT);
+      service.init(WIDTH, HEIGHT);
+      service.start();
+      TestBed.inject(GameStateStore).update({ timePassed: 30_000 });
+      const [human, other] = playerQuery.getAll();
+      const players = TestBed.inject(PlayerStore);
+      players.update(human.id, { bacteriaCount: 400, peakCount: 500 });
+      players.update(other.id, { bacteriaCount: 0, lost: 300 });
+    }
+
+    afterEach(() => service.cleanup());
+
+    it('judges a win against the computer and keeps the award', () => {
+      winAgainst('vs-computer');
+
+      const state = query.getValue();
+      expect(state.currentState).toBe(GameState.END);
+      expect(state.matchEnded).toBe(true);
+      expect(state.award).toEqual(
+        expect.objectContaining({
+          medal: 'platinum',
+          previousBest: null,
+          record: expect.objectContaining({
+            levelId: 'hourglass',
+            won: true,
+            durationSec: 30,
+          }),
+        })
+      );
+    });
+
+    it('awards nothing between two players', () => {
+      winAgainst('two-players');
+
+      expect(query.getValue().matchEnded).toBe(true);
+      expect(query.getValue().award).toBeNull();
+    });
+
+    it('forgets the award as the next match starts', () => {
+      winAgainst('vs-computer');
+
+      service.start();
+
+      expect(query.getValue().award).toBeNull();
     });
   });
 });

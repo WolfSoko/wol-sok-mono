@@ -11,7 +11,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MedallionComponent } from '../medallion/medallion.component';
-import { BOT_DIFFICULTIES, BotDifficulty } from '../state/bot-controller';
+import {
+  BOT_DIFFICULTIES,
+  BotDifficulty,
+  difficultyOption,
+} from '../state/bot-controller';
 import { COLONY_COLORS } from '../state/colony-colors';
 import { GameMode } from '../state/game.states';
 import { Level, LEVELS } from '../state/levels';
@@ -76,9 +80,7 @@ export class MatchSetupComponent {
 
   /** The briefing of the selected difficulty. */
   protected readonly difficultyDescription = computed(
-    () =>
-      BOT_DIFFICULTIES.find((option) => option.id === this.difficulty())
-        ?.description ?? ''
+    () => difficultyOption(this.difficulty())?.description ?? ''
   );
 }
 

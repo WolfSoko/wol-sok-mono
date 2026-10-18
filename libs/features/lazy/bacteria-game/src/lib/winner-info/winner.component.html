@@ -10,8 +10,11 @@
     />
     <div class="award-text">
       <p class="award-title">{{ medalTitle() }}</p>
-      @if (award.record.won) {
-        <p>Won in {{ duration() }}</p>
+      @if (award.medal !== null) {
+        <!-- Floored to the second, as the match clock shows it. -->
+        <p>
+          Won in {{ award.record.durationSec * 1000 | date: "m:ss" : "UTC" }}
+        </p>
       }
       @if (heldMedal(); as held) {
         <p>You hold {{ held }} on this level already.</p>

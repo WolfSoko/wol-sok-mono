@@ -1,4 +1,5 @@
 import { BotDifficulty } from './bot-controller';
+import { Player } from './player.model';
 
 /**
  * The medallions a level can hold, from the easiest to the rarest. They are
@@ -35,7 +36,7 @@ export interface MedalLimits {
 }
 
 /** Platinum asks never to fall below this share of the computer's size. */
-export const PLATINUM_SIZE_RATIO = 0.5;
+const PLATINUM_SIZE_RATIO = 0.5;
 
 /** What a match against the computer measured, for its medallion. */
 export interface MatchRecord {
@@ -54,6 +55,64 @@ export interface MatchRecord {
   lowestSizeRatio: number;
 }
 
+/** What a match against the computer earned, for the result screen. */
+export interface MedalAward {
+  record: MatchRecord;
+  /** The medallion this match earned, null for a loss or a draw. */
+  medal: MedalTier | null;
+  /** The best medallion the level held at this difficulty before. */
+  previousBest: MedalTier | null;
+  /** What the next medallion needs, null after a platinum. */
+  hint: string | null;
+}
+
+/**
+ * What a finished match against the computer measured, from the human's
+ * player as the match left it - null without a human in it.
+ */
+export function matchRecord(
+  players: readonly Player[],
+  match: {
+    levelId: string;
+    difficulty: BotDifficulty;
+    durationSec: number;
+    winner: Player | null;
+  }
+): MatchRecord | null {
+  const human = players.find((player) => !player.isBot);
+  if (human == null) {
+    return null;
+  }
+  const { winner, ...setup } = match;
+  return {
+    ...setup,
+    won: winner != null && !winner.isBot,
+    boostsFired: human.boostsFired,
+    lost: human.lost,
+    peakCount: human.peakCount,
+    lowestSizeRatio: human.lowestSizeRatio,
+  };
+}
+
+/**
+ * Judges a match: the medallion it earned, and what kept it from the next
+ * one as a line for the result screen - null once there is none to earn.
+ */
+export function judgeMatch(
+  limits: MedalLimits,
+  record: MatchRecord
+): { medal: MedalTier | null; hint: string | null } {
+  const medal = medalFor(limits, record);
+  const next = MEDAL_TIERS[medalRank(medal)] ?? null;
+  return {
+    medal,
+    hint:
+      next == null
+        ? null
+        : `${MEDAL_NAMES[next]} needs ${missing(next, limits, record)}.`,
+  };
+}
+
 /** The medallion a match earned, null for a match that was not won. */
 export function medalFor(
   limits: MedalLimits,
@@ -67,22 +126,6 @@ export function medalFor(
     earned = tier;
   }
   return earned;
-}
-
-/**
- * What kept the match from the next medallion, as a line for the result
- * screen - null once there is no better one to earn.
- */
-export function medalHint(
-  limits: MedalLimits,
-  record: MatchRecord
-): string | null {
-  const earned = medalFor(limits, record);
-  const next = earned == null ? 'bronze' : nextTier(earned);
-  if (next == null) {
-    return null;
-  }
-  return `${MEDAL_NAMES[next]} needs ${missing(next, limits, record)}.`;
 }
 
 /** The better of two medallions, either of them possibly none. */
@@ -128,7 +171,7 @@ function missing(
       }
       return record.lowestSizeRatio >= PLATINUM_SIZE_RATIO
         ? null
-        : 'a gold win that never falls below half the computer’s size';
+        : `a gold win that never falls below ${percent(PLATINUM_SIZE_RATIO)} of the computer’s size`;
   }
 }
 
@@ -142,8 +185,4 @@ function slower(durationSec: number, limitSec: number): string | null {
 
 function percent(share: number): string {
   return `${Math.round(share * 100)} %`;
-}
-
-function nextTier(tier: MedalTier): MedalTier | null {
-  return MEDAL_TIERS[MEDAL_TIERS.indexOf(tier) + 1] ?? null;
 }

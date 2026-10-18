@@ -4,8 +4,8 @@ import {
   computed,
   input,
 } from '@angular/core';
-import { BOT_DIFFICULTIES, BotDifficulty } from '../state/bot-controller';
-import { MEDAL_NAMES, medalRank, MedalTier } from '../state/medallions';
+import { BotDifficulty, difficultyOption } from '../state/bot-controller';
+import { MEDAL_NAMES, MedalTier } from '../state/medallions';
 
 /** Highlight, body and rim of each metal. */
 const METALS: Record<MedalTier, readonly [string, string, string]> = {
@@ -15,25 +15,26 @@ const METALS: Record<MedalTier, readonly [string, string, string]> = {
   platinum: ['#ffffff', '#d6f0ff', '#6f97b8'],
 };
 
-/** The bacteria embossed on a medallion: one more per tier. */
-const CELLS: readonly (readonly [number, number, number])[][] = [
-  [[50, 50, 16]],
-  [
-    [39, 50, 12],
-    [61, 50, 12],
-  ],
-  [
-    [50, 38, 11],
-    [39, 58, 11],
-    [61, 58, 11],
-  ],
-  [
-    [39, 39, 10],
-    [61, 39, 10],
-    [39, 61, 10],
-    [61, 61, 10],
-  ],
-];
+/** The bacteria embossed on a medallion, as x, y and radius: one more per tier. */
+const CELLS: Record<MedalTier, readonly (readonly [number, number, number])[]> =
+  {
+    bronze: [[50, 50, 16]],
+    silver: [
+      [39, 50, 12],
+      [61, 50, 12],
+    ],
+    gold: [
+      [50, 38, 11],
+      [39, 58, 11],
+      [61, 58, 11],
+    ],
+    platinum: [
+      [39, 39, 10],
+      [61, 39, 10],
+      [39, 61, 10],
+      [61, 61, 10],
+    ],
+  };
 
 let nextId = 0;
 
@@ -68,13 +69,12 @@ export class MedallionComponent {
     const tier = this.tier();
     return tier == null ? null : METALS[tier];
   });
-  protected readonly cells = computed(
-    () => CELLS[medalRank(this.tier()) - 1] ?? []
-  );
+  protected readonly cells = computed(() => {
+    const tier = this.tier();
+    return tier == null ? [] : CELLS[tier];
+  });
   protected readonly chip = computed(
-    () =>
-      BOT_DIFFICULTIES.find((option) => option.id === this.difficulty())
-        ?.name[0] ?? null
+    () => difficultyOption(this.difficulty())?.name[0] ?? null
   );
   protected readonly label = computed(() => {
     const tier = this.tier();

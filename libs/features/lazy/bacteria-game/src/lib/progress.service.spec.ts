@@ -5,7 +5,8 @@ import { MatchRecord } from './state/medallions';
 
 const LIMITS = getLevel('hourglass').medal;
 
-const WIN: MatchRecord = {
+/** A gold win: in time and clean, but with a boost. */
+const GOLD_WIN: MatchRecord = {
   levelId: 'hourglass',
   difficulty: 'hard',
   won: true,
@@ -17,18 +18,20 @@ const WIN: MatchRecord = {
 };
 
 describe('ProgressService', () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+  });
 
   function create(): ProgressService {
     return TestBed.inject(ProgressService);
   }
 
   it('awards a medallion and remembers it across visits', () => {
-    const award = create().recordMatch(WIN);
-    expect(award).toEqual({
-      record: WIN,
+    expect(create().recordMatch(GOLD_WIN)).toEqual({
+      record: GOLD_WIN,
       medal: 'gold',
-      isNewBest: true,
+      previousBest: null,
       hint: 'Platinum needs a gold win without a boost.',
     });
 
@@ -45,25 +48,25 @@ describe('ProgressService', () => {
     });
   });
 
-  it('keeps the better medallion and says the worse one is no new best', () => {
+  it('keeps the better medallion and names it in the next award', () => {
     const progress = create();
-    progress.recordMatch(WIN);
+    progress.recordMatch(GOLD_WIN);
     const award = progress.recordMatch({
-      ...WIN,
+      ...GOLD_WIN,
       durationSec: LIMITS.silverSec + 1,
     });
 
     expect(award.medal).toBe('bronze');
-    expect(award.isNewBest).toBe(false);
+    expect(award.previousBest).toBe('gold');
     expect(progress.medal('hourglass', 'hard')).toBe('gold');
-    expect(progress.lastAward()).toBe(award);
   });
 
-  it('forgets the last award once the next match starts', () => {
+  it('keeps the levels and difficulties apart', () => {
     const progress = create();
-    progress.recordMatch(WIN);
-    progress.clearAward();
-    expect(progress.lastAward()).toBeNull();
+    progress.recordMatch(GOLD_WIN);
+
+    expect(progress.medal('hourglass', 'normal')).toBeNull();
+    expect(progress.medal('corridors', 'hard')).toBeNull();
   });
 
   it('starts empty from unreadable storage', () => {
