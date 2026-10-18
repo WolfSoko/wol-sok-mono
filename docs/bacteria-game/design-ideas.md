@@ -135,7 +135,8 @@ become possible. Local storage stays the source of truth offline.
 
 ### 1.2 A campaign ladder
 
-Today all eight levels are open. Turn the level list into a **ladder**: level
+Today all twelve levels are open from the first visit. Turn the level list
+into a **ladder**: level
 _n+1_ unlocks once level _n_ has been won at any difficulty. "Free play" keeps
 every level open for people who already know the game (and for two-player
 mode, where there is nothing to prove to the computer). The ladder gives the
@@ -238,7 +239,7 @@ when a better one replaces it.
 ### 2.1 Chapters
 
 Twelve levels on one list is a plateau, not a curve. Group them into chapters
-of four to six, each with one new mechanic and one `ArenaTheme` family. The
+of three to six, each with one new mechanic and one `ArenaTheme` family. The
 first three chapters exist as levels already and only need the grouping:
 
 1. **Petri** (tutorial): Petri Dish, Corridors, Hourglass - steering, boost,
