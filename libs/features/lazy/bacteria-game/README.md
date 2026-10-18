@@ -111,3 +111,7 @@ player gets the better half.
 ## Running unit tests
 
 Run `nx test feat-lazy-bacteria-game` to execute the unit tests.
+
+## Further reading
+
+- [Design ideas](../../../../docs/bacteria-game/design-ideas.md) - motivation systems, chapters and medallions, a level generator, multiplayer, bigger maps and richer graphics that could come next.
