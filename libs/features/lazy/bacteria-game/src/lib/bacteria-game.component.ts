@@ -20,7 +20,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -82,18 +81,14 @@ import {
   boostLabel,
   ColonyStats,
   humanForBoostKey,
+  sameColonyStats,
   toColonyStats,
 } from './colony-stats';
 import { GameBalance } from './state/game-balance';
 import { SteeringVector } from './state/geometry';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
-import {
-  DEFAULT_MODE,
-  GameMode,
-  GameState,
-  GameStateState,
-} from './state/game.states';
+import { DEFAULT_MODE, GameMode, GameState } from './state/game.states';
 import {
   Level,
   LEVELS,
@@ -117,7 +112,6 @@ import {
     MatCardModule,
     WsThanosDirective,
     MatButtonModule,
-    MatProgressSpinnerModule,
     ShowFpsComponent,
     MatToolbarModule,
     MatIconModule,
@@ -173,7 +167,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly simResolutions = SIM_RESOLUTIONS;
   protected readonly screenResolutions = SCREEN_RESOLUTIONS;
 
-  state: Signal<GameStateState | undefined>;
   stats: Signal<ColonyStats[]>;
   /** The colonies a finger may steer - one seat each in the touch layout. */
   protected readonly humanStats: Signal<ColonyStats[]>;
@@ -234,6 +227,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly arenaRim: Signal<string>;
   /** Seconds of animation, for the wobble of the jam and the boost shimmer. */
   private animationSec = 0;
+  /** True while a still frame waits for its animation frame. */
+  private repaintPending = false;
   /** The level that follows the selected one, null at the end of the list. */
   protected readonly upcomingLevel: Signal<Level | null>;
   /** Two humans or one human against the computer. */
@@ -290,7 +285,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly draggedBy = new Map<number, number>();
 
   constructor() {
-    this.state = toSignal(this.query.select());
     this.fps$ = this.query.selectFps();
     this.gameStateService.reset();
 
@@ -323,7 +317,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       initialValue: [] as Player[],
     });
     this.humans = computed(() => players().filter((player) => !player.isBot));
-    this.stats = computed(() => toColonyStats(players(), this.balance()));
+    // The crosshairs move the players every frame - the scoreboard only
+    // renders again once one of its numbers changes.
+    this.stats = computed(() => toColonyStats(players(), this.balance()), {
+      equal: sameColonyStats,
+    });
     this.humanStats = computed(() =>
       this.stats().filter((colony) => !colony.isBot)
     );
@@ -339,7 +337,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.colors();
       this.settings.look();
       this.reducedMotion();
-      this.draw(1 / 1000, true);
+      this.draw();
     });
 
     // A fresh canvas - the first one, or one for another resolution - gets a
@@ -390,13 +388,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           ?.name ?? ''
     );
 
-    this.query
-      .selectTimeDelta()
+    this.gameStateService.frames$
       .pipe(untilDestroyed(this))
-      .subscribe((deltaTimeMs) => {
-        const dTSec = deltaTimeMs / 1000;
-        this.draw(Math.min(dTSec, 0.1));
-      });
+      .subscribe((deltaTimeMs) =>
+        this.runFrame(Math.min(deltaTimeMs / 1000, 0.1))
+      );
   }
 
   /**
@@ -503,7 +499,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     );
     this.painter.setTheme(this.theme());
     this.gameStateService.setArenaSize(width, height);
-    this.draw(1 / 1000, true);
+    this.draw();
   }
 
   /**
@@ -520,6 +516,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private vaporize(): Observable<void> {
+    // The effect takes its snapshot of the canvas right away.
+    this.painter?.showLastFrame();
     return this.thanos.vaporize(false).pipe(take(1));
   }
 
@@ -546,7 +544,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         last(),
         tap(() => {
           this.gameStateService.reset();
-          this.draw(1 / 1000, true);
+          this.draw();
           this.resetting.set(false);
         }),
         map(() => undefined)
@@ -555,37 +553,51 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Advances the simulation by one frame and renders the arena.
-   *
-   * `clear` wipes the previous frame instead of fading it. A single frame is
-   * drawn whenever the arena changes while nobody is playing, and the fade
-   * alone would leave the walls of the last map as ghosts on the canvas.
+   * Advances the war by one frame and paints it - called by the game loop,
+   * inside the animation frame, so what is painted is shown on that frame.
    */
-  private draw(deltaTimeInSec: number, clear = false) {
+  private runFrame(deltaTimeSec: number): void {
     if (this.painter == null) {
       return;
     }
-    const isRunning = this.query.getValue().currentState === GameState.RUNNING;
+    const { width, height } = this.arena();
+    this.playerService.gameLoop(width, height, deltaTimeSec);
+    this.sound.frame(this.playerService.getFrameEvents());
+    this.paint(deltaTimeSec, false);
+  }
 
+  /**
+   * Paints the arena as it stands, on the next animation frame, without
+   * advancing the war - whenever it changes while nobody is playing. The
+   * frame is cleared: the fade alone would leave the walls of the last map
+   * as ghosts on the canvas.
+   */
+  private draw(): void {
+    if (this.painter == null || this.repaintPending) {
+      return;
+    }
+    this.repaintPending = true;
     requestAnimationFrame(() => {
-      if (isRunning) {
-        const { width, height } = this.arena();
-        this.playerService.gameLoop(width, height, deltaTimeInSec);
-        this.sound.frame(this.playerService.getFrameEvents());
-      }
-      this.animationSec += deltaTimeInSec;
-      const frame = this.frame(deltaTimeInSec, clear || this.clearNextFrame);
-      this.clearNextFrame = false;
-      this.painter?.paint(frame);
+      this.repaintPending = false;
+      this.paint(1 / 1000, true);
     });
+  }
+
+  private paint(deltaTimeSec: number, clear: boolean): void {
+    this.animationSec += deltaTimeSec;
+    const frame = this.frame(deltaTimeSec, clear || this.clearNextFrame);
+    this.clearNextFrame = false;
+    this.painter?.paint(frame);
   }
 
   /** What the arena shows right now, for the painter. */
   private frame(deltaTimeSec: number, clear: boolean): ArenaFrame {
     const balance = this.balance();
     const players = this.playerQuery.getAll();
-    const boosted = new Set(
-      players.filter(isBoosted).map((player) => player.id)
+    const boosts = new Map(
+      players
+        .filter(isBoosted)
+        .map((player) => [player.id, { x: player.x, y: player.y }])
     );
     const simulation = this.playerService.getSimulation();
     // Which processor runs the war - for the e2e tests and for debugging.
@@ -600,7 +612,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       timeSec: this.animationSec,
       walls: this.walls(),
       dynamicWalls: this.playerService.getDynamicWalls(),
-      colonies: simulation.colonyLayers(boosted),
+      colonies: simulation.colonyLayers(boosts),
       reducedMotion: this.reducedMotion(),
       nutrients: this.playerService.getNutrients(),
       balance,

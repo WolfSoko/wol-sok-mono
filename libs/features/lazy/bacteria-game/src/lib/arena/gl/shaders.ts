@@ -84,8 +84,8 @@ void main() {
  * outline where it crosses the threshold is a smooth curve at full canvas
  * resolution. A dark rim sits just inside it, a gloss where the surface
  * faces the light, white heat where the colony is overcharged - and while
- * it is boosted, a band of light sweeps across it with a sparkle here and
- * there.
+ * it is boosted, waves of light rush across it towards its crosshair with a
+ * sparkle here and there.
  *
  * Pixels: one crisp cell per bacterium from the raw cells, weak ones faded
  * and hot ones burning white.
@@ -104,6 +104,8 @@ uniform vec3 uColor;
 uniform float uAlpha;
 uniform int uLook;
 uniform float uShimmer;
+uniform vec2 uBoostTarget;
+uniform float uUnit;
 out vec4 outColor;
 ${ARENA_POSITION}
 
@@ -111,8 +113,10 @@ const float EDGE_START = 0.07;
 const float EDGE_END = 0.17;
 const vec2 LIGHT = vec2(-0.6, -0.8);
 
+// Crests closing in on the crosshair - see shimmerAt in colony-renderer.ts.
 float shimmer(vec2 p, float t) {
-  float wave = 0.5 + 0.5 * sin(t * 9.0 - (p.x + p.y * 0.6) * 0.35);
+  float distance = length(p - uBoostTarget) / uUnit;
+  float wave = 0.5 + 0.5 * sin(t * 9.0 + distance * 0.35);
   float squared = wave * wave;
   return squared * squared * squared;
 }

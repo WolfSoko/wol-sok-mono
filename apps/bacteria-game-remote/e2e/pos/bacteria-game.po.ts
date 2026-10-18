@@ -168,30 +168,38 @@ export class BacteriaGamePo {
   /**
    * The colour of the arena at a cell, read back off the canvas by drawing
    * it into another one - and whether it is the orange colony's.
+   *
+   * A WebGL canvas only holds its picture in the frame it was painted in, so
+   * it is read in an animation frame, after the running game painted it.
    */
   public async arenaPixel(
     x: number,
     y: number
   ): Promise<{ r: number; g: number; b: number; orange: boolean }> {
     return this.playArea.evaluate(
-      (canvas: HTMLCanvasElement, [cellX, cellY]) => {
-        const copy = document.createElement('canvas');
-        copy.width = canvas.width;
-        copy.height = canvas.height;
-        const context = copy.getContext('2d');
-        if (context == null) {
-          throw new Error('no 2d context for the copy');
-        }
-        context.drawImage(canvas, 0, 0);
-        const scale = canvas.width / 320;
-        const [r, g, b] = context.getImageData(
-          Math.floor((cellX + 0.5) * scale),
-          Math.floor((cellY + 0.5) * scale),
-          1,
-          1
-        ).data;
-        return { r, g, b, orange: r > 150 && b < 120 && r > g };
-      },
+      (canvas: HTMLCanvasElement, [cellX, cellY]) =>
+        new Promise<{ r: number; g: number; b: number; orange: boolean }>(
+          (resolve, reject) =>
+            requestAnimationFrame(() => {
+              const copy = document.createElement('canvas');
+              copy.width = canvas.width;
+              copy.height = canvas.height;
+              const context = copy.getContext('2d');
+              if (context == null) {
+                reject(new Error('no 2d context for the copy'));
+                return;
+              }
+              context.drawImage(canvas, 0, 0);
+              const scale = canvas.width / 320;
+              const [r, g, b] = context.getImageData(
+                Math.floor((cellX + 0.5) * scale),
+                Math.floor((cellY + 0.5) * scale),
+                1,
+                1
+              ).data;
+              resolve({ r, g, b, orange: r > 150 && b < 120 && r > g });
+            })
+        ),
       [x, y]
     );
   }

@@ -33,10 +33,6 @@ export class GameStateQuery extends Query<GameStateState> {
     );
   }
 
-  selectTimeDelta() {
-    return this.select((store) => store.timeDelta);
-  }
-
   selectFps(): Observable<number> {
     return this.select('fps');
   }

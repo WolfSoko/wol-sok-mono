@@ -251,7 +251,7 @@ export class GpuSimulation implements Simulation {
     return slot < 0 ? null : slot;
   }
 
-  public colonyLayers(boosted: ReadonlySet<number>): StateLayer[] {
+  public colonyLayers(boosts: ReadonlyMap<number, Point>): StateLayer[] {
     const resources = this.resources;
     if (resources == null) {
       return [];
@@ -261,7 +261,7 @@ export class GpuSimulation implements Simulation {
     return this.spawns.map((spawn, slot) => ({
       kind: 'state',
       color: spawn.color,
-      boosted: boosted.has(spawn.playerId),
+      boostTarget: boosts.get(spawn.playerId) ?? null,
       state,
       effects,
       owner: slot + 1,
@@ -888,7 +888,12 @@ export class GpuSimulation implements Simulation {
   }
 
   private stampMask(): void {
-    this.mask = this.staticMask.slice();
+    // A sliding wall changes it every few frames - a fresh copy each time
+    // would keep the garbage collector busy, and its pauses show.
+    if (this.mask.length !== this.staticMask.length) {
+      this.mask = new Uint8Array(this.staticMask.length);
+    }
+    this.mask.set(this.staticMask);
     for (const wall of this.dynamicWalls) {
       if (wall.solid) {
         stampRect(this.mask, this.width, this.height, wall, 1);

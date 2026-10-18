@@ -2,18 +2,18 @@ import { Injectable, inject } from '@angular/core';
 import { applyTransaction } from '@datorama/akita';
 import { MeasureFps } from '@wolsok/utils-measure-fps';
 import {
-  animationFrameScheduler,
+  animationFrames,
+  defer,
   filter,
-  interval,
   map,
   Observable,
-  pairwise,
+  Subject,
   Subscription,
   switchMap,
   takeUntil,
-  timestamp,
 } from 'rxjs';
 import { scaleOf } from './arena-size';
+import { FramePacer } from './frame-pacer';
 import { BotDifficulty } from './bot-controller';
 import {
   getColonyColor,
@@ -45,8 +45,6 @@ interface MatchOutcome {
   winner: Player | null;
 }
 
-const FPS = 60;
-
 @Injectable({ providedIn: 'root' })
 export class GameStateService {
   private gameStateStore = inject(GameStateStore);
@@ -54,17 +52,27 @@ export class GameStateService {
   private playerQuery = inject(PlayerQuery);
   private playerService = inject(PlayerService);
 
-  private gameLoop$: Observable<number>;
+  /**
+   * The milliseconds since the last frame, on the display frames the game
+   * runs on - see {@link FramePacer}.
+   */
+  private gameLoop$: Observable<number> = defer(() => {
+    const pacer = new FramePacer();
+    return animationFrames().pipe(
+      map(({ timestamp }) => pacer.frame(timestamp)),
+      filter((elapsed) => elapsed != null)
+    );
+  });
+  private readonly frames = new Subject<number>();
   private subscriptions?: Subscription;
   private measureFps = new MeasureFps();
 
-  constructor() {
-    this.gameLoop$ = interval(1000 / FPS, animationFrameScheduler).pipe(
-      timestamp(),
-      pairwise(),
-      map(([value1, value2]) => value2.timestamp - value1.timestamp)
-    );
-  }
+  /**
+   * Emits the milliseconds since the last frame on every frame of a running
+   * match - inside the animation frame, after the store has the new time,
+   * so the war can be advanced and painted right there.
+   */
+  public readonly frames$: Observable<number> = this.frames.asObservable();
 
   /**
    * Decides whether the match is over.
@@ -112,6 +120,7 @@ export class GameStateService {
             timePassed: state.timePassed + timeDelta,
             timeDelta,
           }));
+          this.frames.next(timeDelta);
         },
         error: (error) => {
           console.error('error in gameLoop', error);

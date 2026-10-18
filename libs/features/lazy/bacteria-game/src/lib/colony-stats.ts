@@ -56,6 +56,22 @@ export function humanForBoostKey(
   return humans[Math.min(index, humans.length - 1)];
 }
 
+/** True when two scoreboards show the same - every field of every colony. */
+export function sameColonyStats(
+  a: readonly ColonyStats[],
+  b: readonly ColonyStats[]
+): boolean {
+  return (
+    a.length === b.length &&
+    a.every((colony, index) => {
+      const other = b[index];
+      return (Object.keys(colony) as (keyof ColonyStats)[]).every(
+        (key) => colony[key] === other[key]
+      );
+    })
+  );
+}
+
 /** Turns the stored players into the numbers the scoreboard renders. */
 export function toColonyStats(
   players: Player[],

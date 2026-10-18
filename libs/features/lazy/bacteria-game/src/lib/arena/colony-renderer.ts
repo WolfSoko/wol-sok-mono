@@ -1,8 +1,8 @@
 import { BacteriaLook } from '../settings.service';
-import { CellBounds } from '../state/geometry';
+import { scaleOf } from '../state/arena-size';
 import { Nutrient } from '../state/bacteria-simulation';
 import { GameBalance, gameBalance } from '../state/game-balance';
-import { clamp } from '../state/geometry';
+import { CellBounds, clamp, Point } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
 import { Rgb } from './arena-theme';
 import { createCanvas, hash, lerp, rgba, smoothstep } from './canvas-math';
@@ -13,8 +13,20 @@ export type ColonyLayer = CellsLayer | StateLayer;
 interface ColonyLayerBase {
   /** RGBA, the alpha from 0 to 255. */
   color: readonly number[];
-  /** True while the colony's boost runs - its bacteria shimmer then. */
-  boosted: boolean;
+  /**
+   * The crosshair of a colony whose boost runs - waves of light rush across
+   * the colony towards it. Null without a boost.
+   */
+  boostTarget: Point | null;
+}
+
+/** The shimmer of a boosted colony at one moment. */
+export interface BoostShimmer {
+  timeSec: number;
+  /** The crosshair the waves run into, in arena cells. */
+  target: Point;
+  /** Arena cells per cell of the base arena - the waves are as wide on any grid. */
+  unit: number;
 }
 
 /** A colony of the CPU simulation: its bacteria. */
@@ -60,7 +72,7 @@ const LIGHT_Y = -0.8;
  * Stamps one colony into an RGBA pixel buffer the size of the arena, one
  * pixel per bacterium. Weak bacteria fade out and supercharged ones burn
  * white, so the state of a fight is visible at a glance; a boosted colony
- * shimmers with a wave of light running across it.
+ * shimmers with waves of light running towards its crosshair.
  *
  * The energy thresholds come from the balance of the running level, so a
  * level that moves them still renders the fight truthfully.
@@ -71,7 +83,7 @@ export function createImageDataFromBacterias(
   color: readonly number[],
   bacterias: readonly Bacteria[],
   balance: GameBalance = gameBalance,
-  shimmerTimeSec: number | null = null
+  shimmer: BoostShimmer | null = null
 ): Uint8ClampedArray {
   const [r, g, b, alpha] = color;
   for (let i = 0; i < bacterias.length; i++) {
@@ -79,8 +91,8 @@ export function createImageDataFromBacterias(
     const data8index = (y * width + x) * 4;
 
     let heat = overcharge(energy, balance);
-    if (shimmerTimeSec != null) {
-      heat = Math.max(heat, shimmer(x, y, shimmerTimeSec));
+    if (shimmer != null) {
+      heat = Math.max(heat, shimmerAt(x, y, shimmer));
     }
     if (heat > 0) {
       // Supercharged or boosted - burn white so the hotspots are visible.
@@ -148,7 +160,8 @@ export function colonyDensity(
  * times the size of the arena: the outline where the density crosses a
  * threshold, a dark rim just inside it, a glossy highlight where the surface
  * faces the light, white heat where the colony is overcharged - and, while
- * it is boosted, a shimmer running across it with a sparkle here and there.
+ * it is boosted, waves of light running towards its crosshair with a sparkle
+ * here and there.
  *
  * The density is sampled bilinearly between the cells, which is what makes
  * the outline round. `heat` is null when nothing is overcharged.
@@ -160,7 +173,7 @@ export function paintSlime(
   width: number,
   height: number,
   color: readonly number[],
-  shimmerTimeSec: number | null
+  shimmer: BoostShimmer | null
 ): void {
   const [r, g, b] = color;
   const outWidth = width * SLIME_SCALE;
@@ -215,11 +228,11 @@ export function paintSlime(
         const hot = Math.min(1, lerp(hTop, hBottom, fy) / Math.max(d, 0.05));
         white = Math.max(white, hot);
       }
-      if (shimmerTimeSec != null) {
-        const wave = shimmer(px * step, py * step, shimmerTimeSec);
+      if (shimmer != null) {
+        const wave = shimmerAt(px * step, py * step, shimmer);
         white = Math.max(white, wave * 0.8);
         shade = Math.max(shade, 0.85 + 0.15 * wave);
-        if (sparkle(px, py, shimmerTimeSec)) {
+        if (sparkle(px, py, shimmer.timeSec)) {
           white = 1;
         }
       }
@@ -390,7 +403,10 @@ export class ColonyRenderer {
       if (colony.kind !== 'cells') {
         continue;
       }
-      const shimmerTime = colony.boosted ? timeSec : null;
+      const shimmer =
+        colony.boostTarget == null
+          ? null
+          : { timeSec, target: colony.boostTarget, unit: scaleOf(this.width) };
       if (look === 'slime') {
         const hot = colonyDensity(
           this.density,
@@ -408,7 +424,7 @@ export class ColonyRenderer {
           this.width,
           this.height,
           colony.color,
-          shimmerTime
+          shimmer
         );
       } else {
         createImageDataFromBacterias(
@@ -417,7 +433,7 @@ export class ColonyRenderer {
           colony.color,
           colony.bacterias,
           balance,
-          shimmerTime
+          shimmer
         );
       }
     }
@@ -448,9 +464,14 @@ export class ColonyRenderer {
   }
 }
 
-/** A band of light sweeping diagonally across a boosted colony, 0 to 1. */
-function shimmer(x: number, y: number, timeSec: number): number {
-  const wave = 0.5 + 0.5 * Math.sin(timeSec * 9 - (x + y * 0.6) * 0.35);
+/**
+ * The waves of light of a boosted colony at a cell, 0 to 1. Their crests
+ * close in on the crosshair, so the colony visibly rushes towards it.
+ */
+export function shimmerAt(x: number, y: number, shimmer: BoostShimmer): number {
+  const distance =
+    Math.hypot(x - shimmer.target.x, y - shimmer.target.y) / shimmer.unit;
+  const wave = 0.5 + 0.5 * Math.sin(shimmer.timeSec * 9 + distance * 0.35);
   const squared = wave * wave;
   return squared * squared * squared;
 }

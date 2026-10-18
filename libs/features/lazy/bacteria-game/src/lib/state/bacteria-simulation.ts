@@ -242,12 +242,12 @@ export class BacteriaSimulation implements Simulation {
     });
   }
 
-  public colonyLayers(boosted: ReadonlySet<number>): ColonyLayer[] {
+  public colonyLayers(boosts: ReadonlyMap<number, Point>): ColonyLayer[] {
     return this.colonies.map((colony) => ({
       kind: 'cells',
       color: colony.color,
       bacterias: colony.bacterias,
-      boosted: boosted.has(colony.playerId),
+      boostTarget: boosts.get(colony.playerId) ?? null,
     }));
   }
 

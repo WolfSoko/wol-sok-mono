@@ -41,10 +41,10 @@ export interface Simulation {
   getEvents(): StepEvents;
   summaries(): readonly ColonySummary[];
   /**
-   * The colonies as the painter draws them; `boosted` holds the players
-   * whose boost runs.
+   * The colonies as the painter draws them; `boosts` holds the crosshairs
+   * of the players whose boost runs, by player id.
    */
-  colonyLayers(boosted: ReadonlySet<number>): ColonyLayer[];
+  colonyLayers(boosts: ReadonlyMap<number, Point>): ColonyLayer[];
   /** The bacterium of another colony closest to a point, null without one. */
   nearestEnemy(playerId: number, from: Point): Point | null;
   /** Frees whatever the simulation holds outside the JavaScript heap. */

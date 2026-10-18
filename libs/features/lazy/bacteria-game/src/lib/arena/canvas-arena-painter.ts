@@ -43,6 +43,10 @@ export class CanvasArenaPainter implements ArenaPainter {
     this.arena.setTheme(theme);
   }
 
+  public showLastFrame(): void {
+    // A 2D canvas keeps what was drawn on it.
+  }
+
   public paint(frame: ArenaFrame): void {
     const cx = this.cx;
     // Lay the floor over the previous frame, so movement leaves a short trail.

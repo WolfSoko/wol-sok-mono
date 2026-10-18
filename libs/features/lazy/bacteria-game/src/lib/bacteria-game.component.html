@@ -46,11 +46,7 @@
     @if (!fullscreen()) {
       <ng-container *ngTemplateOutlet="matchSetup"></ng-container>
 
-      @if (state()) {
-        <ng-container *ngTemplateOutlet="scoreboard"></ng-container>
-      } @else {
-        <mat-spinner>Loading</mat-spinner>
-      }
+      <ng-container *ngTemplateOutlet="scoreboard"></ng-container>
 
       @if (matchOver()) {
         <feat-lazy-bac-game-winner
