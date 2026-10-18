@@ -6,12 +6,15 @@ import {
   inject,
   output,
 } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MedallionComponent } from '../medallion/medallion.component';
 import { GameStateQuery } from '../state/game-state.query';
 import { DEFAULT_MODE, GameMode } from '../state/game.states';
 import { Level, LEVELS, nextLevel } from '../state/levels';
+import { MedalAward, MEDAL_NAMES, medalRank } from '../state/medallions';
 import { Player } from '../state/player.model';
 
 /** What the player picked when the match was over. */
@@ -24,7 +27,7 @@ export type MatchEndAction = 'again' | 'next' | 'menu';
  */
 @Component({
   selector: 'feat-lazy-bac-game-winner',
-  imports: [MatButtonModule, MatIconModule],
+  imports: [DatePipe, MatButtonModule, MatIconModule, MedallionComponent],
   templateUrl: './winner.component.html',
   styleUrls: ['./winner.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,6 +55,33 @@ export class WinnerComponent {
 
   private mode: Signal<GameMode> = toSignal(this.state.selectMode(), {
     initialValue: DEFAULT_MODE,
+  });
+
+  /** What the match earned against the computer, null between two players. */
+  public award: Signal<MedalAward | null> = toSignal(this.state.selectAward(), {
+    initialValue: null,
+  });
+
+  /** The medallion line of the award: what was won, or that nothing was. */
+  public medalTitle: Signal<string> = computed(() => {
+    const award = this.award();
+    if (award?.medal == null) {
+      return 'No medallion this time';
+    }
+    const newBest = medalRank(award.medal) > medalRank(award.previousBest);
+    return `${MEDAL_NAMES[award.medal]} medallion${newBest ? ' - a new best!' : ''}`;
+  });
+
+  /**
+   * The better medallion the level already held at this difficulty, null
+   * when this match matched or beat it.
+   */
+  public heldMedal: Signal<string | null> = computed(() => {
+    const award = this.award();
+    return award?.previousBest != null &&
+      medalRank(award.previousBest) > medalRank(award.medal)
+      ? MEDAL_NAMES[award.previousBest]
+      : null;
   });
 
   /**

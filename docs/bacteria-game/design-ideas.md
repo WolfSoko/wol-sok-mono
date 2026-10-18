@@ -846,7 +846,11 @@ Ordered by payoff per effort and by what each one needs from the one before.
 | 6     | Online 1 v 1 host-authoritative, daily leaderboard with verified replays, couch controllers                                 | phases 2 and 5           |
 | 7     | Lighting, particles, post-processing, effects preset beside the resolution settings, new looks                              | independent, any time    |
 
-Phase 1 is the one that changes whether people come back and costs the least.
+Phase 1 is the one that changes whether people come back and costs the least. It
+has started: medallions per level and difficulty (section 3, without the
+level map and the medallion's level theme) are built, with the result-screen
+panel, the level list and the bells; the lib's README describes them. The
+limits are a first pass from bot matches and want tuning by play.
 Phase 7 can be sprinkled in between the others; each of its items is a
 self-contained PR. Of the groundwork the phases assumed, three pieces have
 landed since the first version of this document: the seeded generator (for

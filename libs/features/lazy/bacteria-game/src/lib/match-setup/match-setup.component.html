@@ -71,7 +71,17 @@
       (selectionChange)="levelChange.emit($event.value)"
     >
       @for (option of levels; track option.id) {
-        <mat-option [value]="option.id">{{ option.name }}</mat-option>
+        <mat-option [value]="option.id">
+          <span class="level-option">
+            @if (mode() === "vs-computer") {
+              <feat-lazy-bac-game-medallion
+                [tier]="medals()[option.id] ?? null"
+                [size]="22"
+              />
+            }
+            {{ option.name }}
+          </span>
+        </mat-option>
       }
     </mat-select>
   </mat-form-field>

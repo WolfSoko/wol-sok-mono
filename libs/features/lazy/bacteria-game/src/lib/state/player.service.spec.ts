@@ -117,6 +117,18 @@ describe('PlayerService', () => {
       );
     });
 
+    it('counts the boosts each player fired, not the refused ones', () => {
+      service.boost(0);
+      service.boost(0);
+      run(1, gameBalance.boostDurationSec);
+      run(1, gameBalance.boostCooldownSec);
+      service.boost(0);
+
+      const [first, second] = playerQuery.getAll();
+      expect(first.boostsFired).toBe(2);
+      expect(second.boostsFired).toBe(0);
+    });
+
     it('reports each fired boost once, for its sound', () => {
       service.boost(0);
       service.boost(0);
@@ -282,6 +294,44 @@ describe('PlayerService', () => {
       run(1, 0.1);
 
       expect(positionOf(0)).toEqual(start);
+    });
+  });
+
+  describe('match stats', () => {
+    it('keeps each colony’s peak and lowest size against the other', () => {
+      service.init(spawns(true), {
+        map: getMap('open-field'),
+        arena: { width: WIDTH, height: HEIGHT },
+      });
+      const peaks: number[] = [];
+      for (let second = 0; second < 5; second++) {
+        run(30);
+        peaks.push(playerQuery.getAll()[0].bacteriaCount);
+      }
+
+      const [human, computer] = playerQuery.getAll();
+      expect(human.peakCount).toBeGreaterThanOrEqual(Math.max(...peaks));
+      for (const player of [human, computer]) {
+        expect(player.lowestSizeRatio).toBeGreaterThan(0);
+        expect(player.lowestSizeRatio).toBeLessThanOrEqual(1);
+      }
+      // The smaller colony fell behind the bigger one at some point.
+      expect(
+        Math.min(human.lowestSizeRatio, computer.lowestSizeRatio)
+      ).toBeLessThan(1);
+    });
+
+    it('starts every match from scratch', () => {
+      service.init(spawns(false), { map: getMap('open-field') });
+      service.boost(0);
+      run(30);
+
+      service.init(spawns(false), { map: getMap('open-field') });
+
+      const [player] = playerQuery.getAll();
+      expect(player.boostsFired).toBe(0);
+      expect(player.lowestSizeRatio).toBe(1);
+      expect(player.peakCount).toBe(player.bacteriaCount);
     });
   });
 });

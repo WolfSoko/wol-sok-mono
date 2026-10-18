@@ -8,12 +8,13 @@ import {
   SIM_RESOLUTIONS,
   SimResolution,
 } from './state/arena-size';
-import { BOT_DIFFICULTIES, BotDifficulty } from './state/bot-controller';
+import { BotDifficulty, difficultyOption } from './state/bot-controller';
 import { sameColors, validColorPair } from './state/colony-colors';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
 import { GameMode } from './state/game.states';
 import { LEVELS } from './state/levels';
+import { isObject, readStoredJson, storeJson } from './storage';
 
 /** What the game remembers between visits. */
 export interface StoredSettings {
@@ -132,7 +133,7 @@ export class GameSettingsService {
     if (stored.mode != null && MODES.includes(stored.mode)) {
       this.gameState.setMode(stored.mode);
     }
-    if (BOT_DIFFICULTIES.some((option) => option.id === stored.difficulty)) {
+    if (difficultyOption(stored.difficulty ?? null) != null) {
       this.gameState.setDifficulty(stored.difficulty as BotDifficulty);
     }
     if (LEVELS.some((level) => level.id === stored.levelId)) {
@@ -172,23 +173,12 @@ export class GameSettingsService {
       sound: this.sound(),
       music: this.music(),
     };
-    try {
-      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-    } catch {
-      // Storage refused - the settings last for this visit only.
-    }
+    storeJson(SETTINGS_STORAGE_KEY, settings);
   }
 }
 
 /** The stored settings, or nothing when there are none or they are unreadable. */
 function readStoredSettings(): StoredSettings {
-  try {
-    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    const parsed: unknown = raw == null ? null : JSON.parse(raw);
-    return typeof parsed === 'object' && parsed != null
-      ? (parsed as StoredSettings)
-      : {};
-  } catch {
-    return {};
-  }
+  const stored = readStoredJson(SETTINGS_STORAGE_KEY);
+  return isObject(stored) ? (stored as StoredSettings) : {};
 }

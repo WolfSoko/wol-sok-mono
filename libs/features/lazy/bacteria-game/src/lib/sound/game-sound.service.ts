@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { FrameEvents } from '../state/player.service';
-import { LevelMusic } from './level-music';
+import { MedalTier, medalRank } from '../state/medallions';
+import { degreeToMidi, LevelMusic, midiToHz } from './level-music';
 import { MusicPlayer } from './music-player';
 
 /** How a match ended, from the point of view of the people at the screen. */
@@ -23,6 +24,17 @@ interface NoiseOptions {
   sweepTo?: number;
   delay?: number;
 }
+
+/** A medallion to ring in after the end-of-match jingle, in a level's key. */
+export interface MedalBells {
+  tier: MedalTier;
+  music: LevelMusic;
+}
+
+/** Seconds between the notes of the end-of-match jingle. */
+const JINGLE_STEP_SEC = 0.14;
+/** How long the jingle's last note rings. */
+const JINGLE_LAST_NOTE_SEC = 0.45;
 
 /** Captures are heard at most this often, or a fight would be one long hiss. */
 const CAPTURE_INTERVAL_SEC = 0.07;
@@ -215,8 +227,11 @@ export class GameSoundService {
     this.tone(660, 0.04, { type: 'square', volume: 0.04 });
   }
 
-  /** A short jingle for the end of a match. */
-  public matchEnd(result: MatchResult): void {
+  /**
+   * A short jingle for the end of a match, and the bells of the medallion it
+   * earned once the jingle has rung out.
+   */
+  public matchEnd(result: MatchResult, medal: MedalBells | null = null): void {
     const notes =
       result === 'win'
         ? [523, 659, 784, 1047]
@@ -224,12 +239,49 @@ export class GameSoundService {
           ? [392, 330, 262, 196]
           : [392, 392, 330];
     notes.forEach((frequency, step) =>
-      this.tone(frequency, step === notes.length - 1 ? 0.45 : 0.15, {
-        type: result === 'loss' ? 'sawtooth' : 'triangle',
-        volume: result === 'loss' ? 0.06 : 0.12,
-        delay: step * 0.14,
-      })
+      this.tone(
+        frequency,
+        step === notes.length - 1 ? JINGLE_LAST_NOTE_SEC : 0.15,
+        {
+          type: result === 'loss' ? 'sawtooth' : 'triangle',
+          volume: result === 'loss' ? 0.06 : 0.12,
+          delay: step * JINGLE_STEP_SEC,
+        }
+      )
     );
+    if (medal != null) {
+      const jingleSec =
+        (notes.length - 1) * JINGLE_STEP_SEC + JINGLE_LAST_NOTE_SEC;
+      this.medalBells(medal, jingleSec);
+    }
+  }
+
+  /**
+   * Two bars of bells for a medallion, `startSec` from now, in the key of
+   * the level's music - so they sound like the end of its tune. A higher
+   * tier climbs higher.
+   */
+  private medalBells({ tier, music }: MedalBells, startSec: number): void {
+    const degrees = [0, 2, 4, 7, 9, 11, 14].slice(0, 3 + medalRank(tier));
+    // Two octaves above the bass register the root sits in.
+    const notes = degrees.map((degree) =>
+      midiToHz(degreeToMidi(music, degree) + 24)
+    );
+    notes.forEach((frequency, step) => {
+      const last = step === notes.length - 1;
+      const delay = startSec + step * 0.11;
+      this.tone(frequency, last ? 0.8 : 0.18, {
+        type: 'sine',
+        volume: 0.14,
+        delay,
+      });
+      // An overtone an octave up gives the sine a bell's shimmer.
+      this.tone(frequency * 2, last ? 0.5 : 0.1, {
+        type: 'sine',
+        volume: 0.04,
+        delay,
+      });
+    });
   }
 
   /**

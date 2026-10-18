@@ -1,6 +1,7 @@
 import { GameBalance, gameBalance } from './game-balance';
 import { getMap } from './game-maps';
 import { GameMap } from './maps';
+import { MedalLimits } from './medallions';
 
 /**
  * A level is a map plus the tuning that makes it play differently.
@@ -21,8 +22,17 @@ export interface Level {
   balance?: Partial<GameBalance>;
   /** How fast the crosshairs travel, in arena pixels per second. */
   crosshairSpeed?: number;
+  /** How fast and cleanly the level has to be won for each medallion. */
+  medal: MedalLimits;
 }
 
+/*
+ * The medallion limits are a first pass from bot matches - the hard computer
+ * against the normal one, four per level: silver near the median win, gold
+ * near two thirds of it, and the gold losses near the median share lost. The
+ * busy levels lose more bacteria than their colony ever held, hence shares
+ * above 1. Tune them by playing.
+ */
 export const LEVELS: readonly Level[] = [
   {
     id: 'petri-dish',
@@ -30,6 +40,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Open ground and a slow war - room to learn how a colony is steered.',
     mapId: 'open-field',
+    medal: { silverSec: 90, goldSec: 60, goldLossShare: 0.45 },
     balance: {
       aggression: 0.25,
       divideChancePerSec: 2.2,
@@ -44,6 +55,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Two walls with offset gaps that slam shut every few seconds. Push through before the enemy - or the gate - does.',
     mapId: 'corridors',
+    medal: { silverSec: 95, goldSec: 60, goldLossShare: 0.8 },
   },
   {
     id: 'hourglass',
@@ -51,6 +63,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'One narrow waist in the centre that pinches shut now and then, and richer food. Holding the gap decides the match.',
     mapId: 'hourglass',
+    medal: { silverSec: 60, goldSec: 40, goldLossShare: 0.5 },
     balance: {
       aggression: 0.55,
       nutrientCount: 6,
@@ -64,6 +77,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'A walled ring with one door per side, food everywhere and colonies out for a fight.',
     mapId: 'inner-ring',
+    medal: { silverSec: 150, goldSec: 90, goldLossShare: 0.8 },
     balance: {
       aggression: 0.6,
       nutrientCount: 12,
@@ -78,6 +92,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Pillars everywhere and a shorter time to kill - the frontline breaks into pockets.',
     mapId: 'pillar-field',
+    medal: { silverSec: 40, goldSec: 25, goldLossShare: 0.3 },
     balance: {
       aggression: 0.7,
       combatDrainPerSec: 2,
@@ -92,6 +107,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Big colonies boxed in behind their own walls, and captures over kills.',
     mapId: 'twin-chambers',
+    medal: { silverSec: 45, goldSec: 30, goldLossShare: 0.3 },
     balance: {
       startBacteriaRadius: 16,
       consumeChance: 0.35,
@@ -107,6 +123,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'A winding path, relentless colonies and division at full speed. No safe corner left.',
     mapId: 'serpentine',
+    medal: { silverSec: 60, goldSec: 35, goldLossShare: 0.3 },
     balance: {
       aggression: 0.8,
       divideChancePerSec: 4,
@@ -122,6 +139,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Two sliding bars sweep the middle and shove both colonies around. Time your push between them.',
     mapId: 'pistons',
+    medal: { silverSec: 60, goldSec: 40, goldLossShare: 0.9 },
     balance: {
       aggression: 0.75,
       divideChancePerSec: 3.8,
@@ -139,6 +157,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Packed air sacs and nothing straight between them. Thread your colony through the channels before the enemy floods them.',
     mapId: 'alveoli',
+    medal: { silverSec: 100, goldSec: 60, goldLossShare: 0.6 },
     balance: {
       aggression: 0.8,
       divideChancePerSec: 4,
@@ -154,6 +173,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'Fungal threads branch in from both edges - a maze nobody planned, with restless colonies in every pocket.',
     mapId: 'mycelium',
+    medal: { silverSec: 70, goldSec: 45, goldLossShare: 0.35 },
     balance: {
       aggression: 0.85,
       divideChancePerSec: 4.2,
@@ -170,6 +190,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'A heart in the middle swells with every beat and shoves both colonies away. Strike between the beats.',
     mapId: 'heartbeat',
+    medal: { silverSec: 80, goldSec: 50, goldLossShare: 1.8 },
     balance: {
       aggression: 0.9,
       divideChancePerSec: 4.4,
@@ -185,6 +206,7 @@ export const LEVELS: readonly Level[] = [
     description:
       'The lining of a gut: soft fingers sway in from both edges and sweep everything along. The final and fiercest war.',
     mapId: 'villi',
+    medal: { silverSec: 45, goldSec: 30, goldLossShare: 3.4 },
     balance: {
       aggression: 0.95,
       divideChancePerSec: 4.6,

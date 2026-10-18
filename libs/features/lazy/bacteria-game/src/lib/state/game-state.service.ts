@@ -35,10 +35,15 @@ import {
   levelCrosshairSpeed,
   levelMap,
 } from './levels';
+import { matchRecord } from './medallions';
 import { Player } from './player.model';
 
 import { PlayerQuery } from './player.query';
 import { PlayerService } from './player.service';
+import { ProgressService } from '../progress.service';
+
+/** The longest step a frame may take the war, in milliseconds. */
+const MAX_FRAME_MS = 100;
 
 /** How a match ended. `winner` is null when both colonies died together. */
 interface MatchOutcome {
@@ -51,6 +56,7 @@ export class GameStateService {
   private gameStateQuery = inject(GameStateQuery);
   private playerQuery = inject(PlayerQuery);
   private playerService = inject(PlayerService);
+  private progress = inject(ProgressService);
 
   /**
    * The milliseconds since the last frame, on the display frames the game
@@ -60,7 +66,11 @@ export class GameStateService {
     const pacer = new FramePacer();
     return animationFrames().pipe(
       map(({ timestamp }) => pacer.frame(timestamp)),
-      filter((elapsed) => elapsed != null)
+      filter((elapsed) => elapsed != null),
+      // After a hidden tab or a stall the war goes on where it stood rather
+      // than leap ahead - and the match clock, which judges the medallions,
+      // counts only the time that was played.
+      map((elapsed) => Math.min(elapsed, MAX_FRAME_MS))
     );
   });
   private readonly frames = new Subject<number>();
@@ -102,6 +112,7 @@ export class GameStateService {
       height,
       winner: null,
       matchEnded: false,
+      award: null,
     });
     // subscribe update time passed when game running
     const running$ = this.gameStateQuery.selectCurrentGameState(
@@ -151,16 +162,37 @@ export class GameStateService {
           map((players) => GameStateService.determineOutcome(players)),
           filter((outcome) => outcome != null)
         )
-        .subscribe((outcome) =>
-          applyTransaction(() => {
-            this.gameStateStore.update({ currentState: GameState.END });
-            this.gameStateStore.update({
-              winner: outcome.winner,
-              matchEnded: true,
-            });
-          })
-        )
+        .subscribe((outcome) => this.endMatch(outcome))
     );
+  }
+
+  /**
+   * Ends the match with its outcome and, against the computer, the medallion
+   * it earned - judged and remembered right here, so the result and the
+   * award reach the store together.
+   */
+  private endMatch(outcome: MatchOutcome): void {
+    const { mode, levelId, difficulty, timePassed } =
+      this.gameStateQuery.getValue();
+    const record =
+      mode === 'vs-computer'
+        ? matchRecord(this.playerQuery.getAll(), {
+            levelId,
+            difficulty,
+            // Whole seconds, as the match clock shows them.
+            durationSec: Math.floor(timePassed / 1000),
+            winner: outcome.winner,
+          })
+        : null;
+    const award = record == null ? null : this.progress.recordMatch(record);
+    applyTransaction(() => {
+      this.gameStateStore.update({ currentState: GameState.END });
+      this.gameStateStore.update({
+        winner: outcome.winner,
+        matchEnded: true,
+        award,
+      });
+    });
   }
 
   /**
@@ -294,8 +326,11 @@ export class GameStateService {
     this.initPlayers();
     this.gameStateStore.update(() => ({
       currentState: GameState.RUNNING,
+      // Restart from the pause menu starts without a reset in between.
+      timePassed: 0,
       winner: null,
       matchEnded: false,
+      award: null,
     }));
   }
 
@@ -311,6 +346,7 @@ export class GameStateService {
       timeDelta: 1,
       winner: null,
       matchEnded: false,
+      award: null,
     }));
   }
 

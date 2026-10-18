@@ -27,6 +27,15 @@ export interface Player {
   captured: number;
   /** Own bacteria lost since the game started. */
   lost: number;
+  /** Boosts fired since the game started. */
+  boostsFired: number;
+  /** The most bacteria the colony had at once. */
+  peakCount: number;
+  /**
+   * The lowest ratio of own to enemy bacteria so far - 1 until the colony
+   * first fell behind.
+   */
+  lowestSizeRatio: number;
   /** Average energy of the colony, relative to {@link GameBalance.maxEnergy}. */
   averageEnergy: number;
 }
@@ -63,6 +72,9 @@ export function createPlayer(params: Partial<Player>): Player {
     bacteriaCount: 0,
     captured: 0,
     lost: 0,
+    boostsFired: 0,
+    peakCount: 0,
+    lowestSizeRatio: 1,
     averageEnergy: 1,
     ...params,
   } as Player;

@@ -20,11 +20,14 @@ export type BotDifficulty = 'easy' | 'normal' | 'hard';
 /** The difficulty a fresh game starts with. */
 export const DEFAULT_DIFFICULTY: BotDifficulty = 'normal';
 
-export const BOT_DIFFICULTIES: readonly {
+/** A difficulty as the menus show it. */
+export interface BotDifficultyOption {
   id: BotDifficulty;
   name: string;
   description: string;
-}[] = [
+}
+
+export const BOT_DIFFICULTIES: readonly BotDifficultyOption[] = [
   {
     id: 'easy',
     name: 'Easy',
@@ -43,6 +46,13 @@ export const BOT_DIFFICULTIES: readonly {
       'Reacts fast, takes even fights, charges your nearest bacteria and boosts on contact.',
   },
 ];
+
+/** The menu entry of a difficulty, null for none. */
+export function difficultyOption(
+  id: BotDifficulty | null
+): BotDifficultyOption | null {
+  return BOT_DIFFICULTIES.find((option) => option.id === id) ?? null;
+}
 
 /** A colony as the bot sees it: where it is and how strong. */
 export interface ColonyView extends Point {

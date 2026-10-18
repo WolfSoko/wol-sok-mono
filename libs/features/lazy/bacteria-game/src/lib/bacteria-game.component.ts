@@ -62,11 +62,12 @@ import {
 } from './match-setup/match-setup.component';
 import { DEFAULT_COLORS, getColonyColor } from './state/colony-colors';
 import {
-  BOT_DIFFICULTIES,
   BotDifficulty,
+  difficultyOption,
   DEFAULT_DIFFICULTY,
 } from './state/bot-controller';
 import { BACTERIA_LOOKS, GameSettingsService } from './settings.service';
+import { ProgressService } from './progress.service';
 import {
   arenaSize,
   renderScale,
@@ -97,6 +98,7 @@ import {
   nextLevel,
 } from './state/levels';
 import { Rect } from './state/maps';
+import { MedalTier } from './state/medallions';
 import { isBoosted, Player } from './state/player.model';
 import { PlayerQuery } from './state/player.query';
 import { PlayerService } from './state/player.service';
@@ -135,6 +137,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private playerQuery = inject(PlayerQuery);
   protected readonly settings = inject(GameSettingsService);
   private readonly sound = inject(GameSoundService);
+  private readonly progress = inject(ProgressService);
   /** No flickering glow for players who asked their system for less motion. */
   private readonly reducedMotion = prefersReducedMotion();
 
@@ -243,6 +246,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   );
   /** The looks the bacteria can be drawn in. */
   protected readonly looks = BACTERIA_LOOKS;
+  /** The best medallion of every level at the selected difficulty. */
+  protected readonly levelMedals = computed(() => {
+    const difficulty = this.difficulty();
+    return Object.fromEntries(
+      LEVELS.map((level): [string, MedalTier | null] => [
+        level.id,
+        this.progress.medal(level.id, difficulty),
+      ])
+    );
+  });
   /** The crosshairs a finger or a key may steer - never the computer's. */
   private readonly humans: Signal<Player[]>;
 
@@ -378,21 +391,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     });
     effect(() => {
       if (this.matchOver()) {
-        untracked(() => this.sound.matchEnd(this.matchResult()));
+        untracked(() => this.finishMatch());
       }
     });
 
     this.difficultyName = computed(
-      () =>
-        BOT_DIFFICULTIES.find((option) => option.id === this.difficulty())
-          ?.name ?? ''
+      () => difficultyOption(this.difficulty())?.name ?? ''
     );
 
     this.gameStateService.frames$
       .pipe(untilDestroyed(this))
-      .subscribe((deltaTimeMs) =>
-        this.runFrame(Math.min(deltaTimeMs / 1000, 0.1))
-      );
+      .subscribe((deltaTimeMs) => this.runFrame(deltaTimeMs / 1000));
   }
 
   /**
@@ -418,6 +427,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         untilDestroyed(this)
       )
       .subscribe();
+  }
+
+  /** Plays the end of the match, and the medallion it earned after it. */
+  private finishMatch(): void {
+    const { award, levelId } = this.query.getValue();
+    this.sound.matchEnd(
+      this.matchResult(),
+      award?.medal == null
+        ? null
+        : { tier: award.medal, music: levelMusic(levelId) }
+    );
   }
 
   /**

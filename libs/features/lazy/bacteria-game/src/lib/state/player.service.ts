@@ -6,7 +6,7 @@ import {
   Nutrient,
   StepEvents,
 } from './bacteria-simulation';
-import { Simulation, SimulationFactory } from './simulation';
+import { ColonySummary, Simulation, SimulationFactory } from './simulation';
 import {
   BotController,
   BotDifficulty,
@@ -226,6 +226,7 @@ export class PlayerService {
     this.playerStore.update(playerId, {
       boostActiveSec: this.balance.boostDurationSec,
       boostCooldownSec: this.balance.boostCooldownSec,
+      boostsFired: player.boostsFired + 1,
     });
     this.firedBoosts.push(player.isBot);
   }
@@ -357,18 +358,29 @@ export class PlayerService {
     }
   }
 
-  /** Mirrors the colony scoreboard into the store, the bacteria stay out of it. */
+  /**
+   * Mirrors the colony scoreboard into the store, the bacteria stay out of
+   * it - with the peak and the lowest size ratio the match is judged on.
+   */
   @transaction()
   private syncColonyStats(): void {
-    for (const colony of this.simulation.summaries()) {
+    const colonies = this.simulation.summaries();
+    for (const colony of colonies) {
       const bacteriaCount = colony.count;
-      this.playerStore.update(colony.playerId, {
+      const enemyCount = strongestEnemyCount(colonies, colony);
+      this.playerStore.update(colony.playerId, (player) => ({
         bacteriaCount,
         captured: colony.captured,
         lost: colony.lost,
         averageEnergy:
           bacteriaCount > 0 ? colony.totalEnergy / bacteriaCount : 0,
-      });
+        peakCount: Math.max(player.peakCount, bacteriaCount),
+        // A colony that is gone, or not counted yet, has no size to compare.
+        lowestSizeRatio:
+          bacteriaCount > 0 && enemyCount > 0
+            ? Math.min(player.lowestSizeRatio, bacteriaCount / enemyCount)
+            : player.lowestSizeRatio,
+      }));
     }
   }
 
@@ -457,4 +469,18 @@ export class PlayerService {
       };
     });
   }
+}
+
+/** The bacteria of the biggest colony other than `own`. */
+function strongestEnemyCount(
+  colonies: readonly ColonySummary[],
+  own: ColonySummary
+): number {
+  let most = 0;
+  for (const colony of colonies) {
+    if (colony !== own) {
+      most = Math.max(most, colony.count);
+    }
+  }
+  return most;
 }
