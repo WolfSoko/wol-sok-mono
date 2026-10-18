@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.5.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.4.0...v74.5.0) (2026-10-18)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ add level music, organic levels and a bigger arena ([#2475](https://github.com/WolfSoko/wol-sok-mono/issues/2475)) ([098bc0b](https://github.com/WolfSoko/wol-sok-mono/commit/098bc0b42f0a85cdf3908dfc6150e84b119212ef))
+
+### Documentation
+
+* **feat-lazy-bacteria-game:** 📝 design ideas for progression, levels, generator, multiplayer and graphics ([#2474](https://github.com/WolfSoko/wol-sok-mono/issues/2474)) ([3f23315](https://github.com/WolfSoko/wol-sok-mono/commit/3f23315777c4e24cf211af6b719323ac93fc1b37))
+
 ## [74.4.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.3.2...v74.4.0) (2026-10-17)
 
 ### Features
