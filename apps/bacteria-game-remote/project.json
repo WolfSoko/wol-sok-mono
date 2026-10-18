@@ -23,6 +23,8 @@
         "inlineStyleLanguage": "scss",
         "assets": [
           "apps/bacteria-game-remote/src/favicon.ico",
+          "apps/bacteria-game-remote/src/manifest.webmanifest",
+          "apps/bacteria-game-remote/src/icons",
           "apps/bacteria-game-remote/src/assets"
         ],
         "styles": [
@@ -59,6 +61,7 @@
               "with": "apps/bacteria-game-remote/src/environments/environment.prod.ts"
             }
           ],
+          "serviceWorker": "apps/bacteria-game-remote/ngsw-config.json",
           "outputHashing": "all"
         },
         "development": {
@@ -70,9 +73,27 @@
       "defaultConfiguration": "production"
     },
     "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/bacteria-game-remote/ngsw.json"],
+      "dependsOn": ["build-federation"],
+      "options": {
+        "command": "echo No service worker in development builds.",
+        "forwardAllArgs": false
+      },
+      "configurations": {
+        "production": {
+          "command": "ngsw-config dist/apps/bacteria-game-remote apps/bacteria-game-remote/ngsw-config.json /"
+        },
+        "development": {}
+      },
+      "defaultConfiguration": "production"
+    },
+    "build-federation": {
       "executor": "@angular-architects/native-federation:build",
       "outputs": ["{workspaceRoot}/dist/apps/bacteria-game-remote"],
+      "inputs": ["sharedGlobals", "production", "^production"],
       "dependsOn": ["^build"],
+      "cache": true,
       "options": {},
       "configurations": {
         "production": {
@@ -112,10 +133,16 @@
       },
       "continuous": true
     },
+    "icons": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx ./tools/bacteria-game/generate-icons.ts"
+      }
+    },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "buildTarget": "bacteria-game-remote:build"
+        "buildTarget": "bacteria-game-remote:esbuild"
       }
     },
     "test": {

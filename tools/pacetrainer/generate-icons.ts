@@ -7,9 +7,10 @@
  *
  * Run with `npx nx run pacetrainer:icons`.
  */
-import { chromium, Page } from '@playwright/test';
+import { chromium } from '@playwright/test';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { render, toIco } from '../icons/render-icons';
 
 const publicDir = resolve('apps/pacetrainer/src/public');
 
@@ -32,33 +33,6 @@ const PNG_ICONS: Array<{
   { file: 'apple-touch-icon.png', size: 180, fullBleed: true },
   { file: 'maskable-icon-512x512.png', size: 512, fullBleed: true },
 ];
-
-/** Packs PNG images into one .ico container (PNG-in-ICO, every browser reads it). */
-function toIco(images: Array<{ size: number; png: Buffer }>): Buffer {
-  const headerSize = 6;
-  const entrySize = 16;
-  const header = Buffer.alloc(headerSize);
-  header.writeUInt16LE(0, 0); // reserved
-  header.writeUInt16LE(1, 2); // type: icon
-  header.writeUInt16LE(images.length, 4);
-
-  let offset = headerSize + entrySize * images.length;
-  const entries = images.map(({ size, png }) => {
-    const entry = Buffer.alloc(entrySize);
-    entry.writeUInt8(size, 0);
-    entry.writeUInt8(size, 1);
-    entry.writeUInt8(0, 2); // palette
-    entry.writeUInt8(0, 3); // reserved
-    entry.writeUInt16LE(1, 4); // color planes
-    entry.writeUInt16LE(32, 6); // bits per pixel
-    entry.writeUInt32LE(png.length, 8);
-    entry.writeUInt32LE(offset, 12);
-    offset += png.length;
-    return entry;
-  });
-
-  return Buffer.concat([header, ...entries, ...images.map(({ png }) => png)]);
-}
 
 function toDataUrl(svg: string): string {
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
@@ -93,18 +67,6 @@ function ogPage(logo: string): string {
   <img src="${logo}" alt="">
   <div><h1>Pace-Trainer</h1><p>Dein digitaler Laufcoach.</p></div>
 </body></html>`;
-}
-
-async function render(
-  page: Page,
-  html: string,
-  width: number,
-  height: number,
-  omitBackground: boolean
-): Promise<Buffer> {
-  await page.setViewportSize({ width, height });
-  await page.setContent(html);
-  return page.screenshot({ omitBackground, type: 'png' });
 }
 
 async function main(): Promise<void> {

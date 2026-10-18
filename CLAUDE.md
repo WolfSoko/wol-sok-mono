@@ -116,6 +116,7 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - A remote also has to run standalone (its own e2e serves it that way), so check both: loaded through the shell _and_ opened on its own port.
 - Remotes are listed in `apps/angular-examples/src/assets/federation.manifest.json` (dev) and `federation.manifest.prod.json` (prod).
 - Each app has an `esbuild` target (`@angular/build:application`) wrapped by a `build`/`serve` target from `@angular-architects/native-federation`. Change build options on `esbuild`.
+- Exception: `bacteria-game-remote` is also a standalone PWA. Its federation build is `build-federation`; `build` then reruns `ngsw-config`, since the federation builder writes its files after Angular has hashed the output into `ngsw.json`.
 - `nx serve angular-examples` only serves the shell. Use `nx run angular-examples:serve-all` to boot the shell plus all remotes (ports 4200-4203).
 
 ## SEO & Sitemaps

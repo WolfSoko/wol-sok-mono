@@ -22,11 +22,13 @@ class TestSpaStack extends Stack {
   constructor(parent: App, name: string, props: SpaProps & StackProps) {
     super(parent, name, props);
 
-    const { domainName, buildOutputPath, bucketRemovalPolicy } = props;
+    const { domainName, buildOutputPath, bucketRemovalPolicy, noCacheFiles } =
+      props;
     this.spaConstruct = new SpaConstruct(this, name, {
       domainName,
       buildOutputPath,
       bucketRemovalPolicy: bucketRemovalPolicy,
+      noCacheFiles,
     });
   }
 }
@@ -84,6 +86,24 @@ describe('SpaCdkStack', () => {
     template().hasResourceProperties('Custom::CDKBucketDeployment', {
       SourceObjectKeys: Match.arrayEquals([Match.stringLikeRegexp('\\w+.zip')]),
     });
+  });
+
+  it('should upload noCacheFiles with no-cache after the hashed bundles', () => {
+    const { template } = testStackFactory({
+      noCacheFiles: ['test-javascript-asset.js'],
+    });
+    //then
+    template().resourceCountIs('Custom::CDKBucketDeployment', 3);
+    const deployments = Object.values(
+      template().findResources('Custom::CDKBucketDeployment')
+    );
+    const cacheControl = deployments.map(
+      (deployment) => deployment.Properties.SystemMetadata['cache-control']
+    );
+    expect(cacheControl).toEqual(['no-cache', 'max-age=31536000', 'no-cache']);
+    expect(deployments[2].DependsOn).toEqual(
+      expect.arrayContaining([expect.stringMatching(/DeployWithInvalidation2/)])
+    );
   });
 
   it('should create an extra BucketDeployment when using addExtraAssets', () => {

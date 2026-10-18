@@ -1,26 +1,16 @@
 import { SpaConstruct, SpaProps } from '@wolsok/spa-cdk-stack';
 import { App, Stack, StackProps } from 'aws-cdk-lib';
-import { CacheControl, Source } from 'aws-cdk-lib/aws-s3-deployment';
 
 export class SpaStack extends Stack {
   constructor(parent: App, name: string, props: StackProps & SpaProps) {
     super(parent, name, props);
 
-    const buildOutputPath: string = props.buildOutputPath;
-    const spa: SpaConstruct = new SpaConstruct(this, name, {
+    new SpaConstruct(this, name, {
       domainName: props.domainName,
-      buildOutputPath,
+      buildOutputPath: props.buildOutputPath,
       bucketRemovalPolicy: props.bucketRemovalPolicy,
       extraAllowedOrigins: props.extraAllowedOrigins,
+      noCacheFiles: props.noCacheFiles,
     });
-
-    spa.addExtraAssets(
-      [
-        Source.asset(buildOutputPath, {
-          exclude: ['**', '!remoteEntry.json'],
-        }),
-      ],
-      CacheControl.noCache()
-    );
   }
 }

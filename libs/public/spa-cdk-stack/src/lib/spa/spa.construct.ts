@@ -34,6 +34,13 @@ export interface SpaProps {
   buildOutputPath: string;
   bucketRemovalPolicy?: RemovalPolicy;
   extraAllowedOrigins?: string[];
+  /**
+   * Files that keep their names across releases, such as a service worker,
+   * its ngsw.json or an import map, as globs relative to buildOutputPath.
+   * They are served with no-cache instead of the one year max-age the hashed
+   * bundles get, and are uploaded after those bundles.
+   */
+  noCacheFiles?: string[];
 }
 
 const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
@@ -58,7 +65,7 @@ export class SpaConstruct extends Construct {
     super(parent, spaName);
     const removalPolicy: RemovalPolicy =
       props.bucketRemovalPolicy ?? defaultBucketRemovalPolicy;
-    const { buildOutputPath, extraAllowedOrigins } = props;
+    const { buildOutputPath, extraAllowedOrigins, noCacheFiles = [] } = props;
 
     const { mainDomain, siteDomain } = this.extractDomains(props.domainName);
 
@@ -102,7 +109,7 @@ export class SpaConstruct extends Construct {
     );
 
     const deploymentAssets = Source.asset(buildOutputPath, {
-      exclude: ['index.html'],
+      exclude: ['index.html', ...noCacheFiles],
     });
 
     this.bucketDeployments.push(
@@ -118,6 +125,17 @@ export class SpaConstruct extends Construct {
     // Make sure that the index.html is deployed last, as it's needed to
     // serve the SPA so chain the deployments
     this.bucketDeployments[1].node.addDependency(this.bucketDeployments[0]);
+
+    if (noCacheFiles.length > 0) {
+      this.addExtraAssets(
+        [
+          Source.asset(buildOutputPath, {
+            exclude: ['**', ...noCacheFiles.map((file) => '!' + file)],
+          }),
+        ],
+        CacheControl.noCache()
+      );
+    }
   }
 
   /**

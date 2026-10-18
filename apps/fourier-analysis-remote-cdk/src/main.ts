@@ -14,6 +14,8 @@ new SpaStack(app, stackName, {
   domainName: 'fourier-analysis.wolsok.de',
   bucketRemovalPolicy: RemovalPolicy.DESTROY,
   extraAllowedOrigins: ['https://angularexamples.wolsok.de'],
+  // The import map keeps its name across releases.
+  noCacheFiles: ['remoteEntry.json'],
 });
 
 const tags: Tags = Tags.of(app);
