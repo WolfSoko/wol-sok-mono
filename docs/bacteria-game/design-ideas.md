@@ -349,10 +349,13 @@ replayed.
 
 A small seeded PRNG (`mulberry32` or `xoshiro128**`, 20 lines, in
 `state/random.ts`) with helpers `int(min, max)`, `pick(array)`,
-`chance(p)`. The CPU simulation's `random` parameter and `NutrientPellets`'
-spawner take the same function, so a seed decides the pellets as well. (The
-GPU simulation hashes cell and step, so it is deterministic on one machine
-already; see section 5 for why that is not enough across machines.)
+`chance(p)`. One match-scoped generator is handed to everything that draws a
+random number during a match: the CPU simulation's `random` parameter,
+`NutrientPellets`' spawner and the `BotController`'s `random` (today each of
+them defaults to `Math.random` on its own). So a seed decides the pellets and
+the bot's every move as well, which section 5 relies on. (The GPU simulation
+hashes cell and step, so it is deterministic on one machine already; see
+section 5 for why that is not enough across machines.)
 
 ### 4.2 Grammar of a half
 
@@ -457,8 +460,15 @@ devices: floating point and driver differences in the shaders diverge within
 seconds. So:
 
 - **Replays, ghosts and verified leaderboards** run on the CPU simulation at a
-  fixed 30 Hz tick with a seed. It is the reference.
-- **Live play** can keep the GPU simulation when one machine owns the truth.
+  fixed 30 Hz tick with a seed. It is the reference. A match that is to be
+  recorded or ranked therefore runs on the CPU simulation on the player's
+  device from its first tick: the two simulations do not produce the same
+  sequence of states, so a GPU match replayed on the CPU could end at another
+  time or with another winner than the one the player saw. The match setup
+  says so where it matters ("ranked matches run on the reference engine"),
+  and the arena stays small enough for the CPU to hold 30 ticks a second.
+- **Live play** can keep the GPU simulation when one machine owns the truth:
+  free play, big maps (section 6) and the host of an online match (5.3).
 
 Fixed tick is worth doing on its own: it makes the bot and the balance
 independent of the frame rate, and the painter interpolates crosshairs between
@@ -468,17 +478,24 @@ ticks so nothing looks choppier.
 
 The cheapest multiplayer that works tonight and needs no server logic:
 
-- **Replays**: record `(tick, playerId, crosshair, boost)` for a match (a few
-  KB), store the seed and the level id with it. Play it back through the CPU
-  simulation.
+- **Replays**: record `(tick, playerId, crosshair, boost)` for every human
+  player of a match (a few KB) under a header with everything the match was
+  derived from: seed, level id, mode, bot difficulty, colours and the version
+  of the balance table. The bot is not recorded; it is re-derived from the
+  seed, which is why 4.1 seeds its decisions too. Play it back through the
+  CPU simulation.
 - **Ghost bot**: a `GhostController` that implements the same interface as
   `BotController` but feeds a recorded input stream. "Beat my run" links carry
   seed, level and compressed inputs in the URL hash or in a Firestore doc.
 - **Daily leaderboard**: match time on the daily level, submitted with the
-  replay. A Firebase Cloud Function (`firebase-functions` is in the workspace)
-  re-runs the replay with the CPU simulation headless and only accepts the
-  time it computes itself. The simulation is Angular-free, so it runs in Node
-  as it is.
+  replay. There is one board per bot difficulty, since a win against the Easy
+  bot and one against the Hard bot are not the same feat; the difficulty
+  comes from the replay header, and the verifier rejects a header whose
+  level, mode or balance version does not match the day's. A Firebase Cloud
+  Function (`firebase-functions` is in the workspace) re-runs the replay with
+  the CPU simulation and the seeded bot headless and only accepts the time
+  it computes itself. The simulation and the bot are Angular-free, so they
+  run in Node as they are.
 
 ### 5.3 Step two: live 1 v 1, host-authoritative
 
