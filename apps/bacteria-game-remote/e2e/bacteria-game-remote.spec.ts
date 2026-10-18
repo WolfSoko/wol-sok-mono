@@ -210,9 +210,10 @@ test('should draw the arena on the GPU and keep it readable', async ({
   await po.playCta.click();
 
   // Read the arena back as the vaporize effect does - a WebGL canvas that
-  // dropped its drawing buffer would come back black.
+  // dropped its drawing buffer would come back black. The orange colony
+  // starts a quarter across and halfway down the 320x180 arena.
   await expect
-    .poll(() => po.arenaPixel(80, 70))
+    .poll(() => po.arenaPixel(80, 90))
     .toEqual(expect.objectContaining({ orange: true }));
 });
 
