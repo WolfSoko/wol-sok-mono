@@ -215,6 +215,14 @@ describe('GameStateService', () => {
       expect(query.getValue().award).toBeNull();
     });
 
+    it('starts the match clock over on a restart', () => {
+      winAgainst('vs-computer');
+
+      service.start();
+
+      expect(query.getValue().timePassed).toBe(0);
+    });
+
     it('forgets the award as the next match starts', () => {
       winAgainst('vs-computer');
 

@@ -39,13 +39,7 @@ describe('ProgressService', () => {
     expect(create().medal('hourglass', 'hard')).toBe('gold');
     expect(
       JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) ?? '{}')
-    ).toEqual({
-      levels: {
-        hourglass: {
-          hard: { medal: 'gold', wins: 1, bestWinSec: LIMITS.goldSec },
-        },
-      },
-    });
+    ).toEqual({ medals: { hourglass: { hard: 'gold' } } });
   });
 
   it('keeps the better medallion and names it in the next award', () => {
@@ -67,6 +61,25 @@ describe('ProgressService', () => {
 
     expect(progress.medal('hourglass', 'normal')).toBeNull();
     expect(progress.medal('corridors', 'hard')).toBeNull();
+  });
+
+  it('builds on medallions another tab stored meanwhile', () => {
+    const progress = create();
+    localStorage.setItem(
+      PROGRESS_STORAGE_KEY,
+      JSON.stringify({ medals: { corridors: { easy: 'silver' } } })
+    );
+
+    progress.recordMatch(GOLD_WIN);
+
+    expect(progress.medal('corridors', 'easy')).toBe('silver');
+    expect(progress.medal('hourglass', 'hard')).toBe('gold');
+  });
+
+  it('stores nothing for a match without a medallion', () => {
+    create().recordMatch({ ...GOLD_WIN, won: false });
+
+    expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBeNull();
   });
 
   it('starts empty from unreadable storage', () => {

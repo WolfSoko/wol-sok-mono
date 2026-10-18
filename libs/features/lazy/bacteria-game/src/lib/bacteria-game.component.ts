@@ -401,9 +401,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
     this.gameStateService.frames$
       .pipe(untilDestroyed(this))
-      .subscribe((deltaTimeMs) =>
-        this.runFrame(Math.min(deltaTimeMs / 1000, 0.1))
-      );
+      .subscribe((deltaTimeMs) => this.runFrame(deltaTimeMs / 1000));
   }
 
   /**

@@ -8,7 +8,7 @@ import {
   SIM_RESOLUTIONS,
   SimResolution,
 } from './state/arena-size';
-import { BOT_DIFFICULTIES, BotDifficulty } from './state/bot-controller';
+import { BotDifficulty, difficultyOption } from './state/bot-controller';
 import { sameColors, validColorPair } from './state/colony-colors';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
@@ -133,7 +133,7 @@ export class GameSettingsService {
     if (stored.mode != null && MODES.includes(stored.mode)) {
       this.gameState.setMode(stored.mode);
     }
-    if (BOT_DIFFICULTIES.some((option) => option.id === stored.difficulty)) {
+    if (difficultyOption(stored.difficulty ?? null) != null) {
       this.gameState.setDifficulty(stored.difficulty as BotDifficulty);
     }
     if (LEVELS.some((level) => level.id === stored.levelId)) {

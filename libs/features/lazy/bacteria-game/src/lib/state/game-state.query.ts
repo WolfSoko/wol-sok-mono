@@ -70,7 +70,7 @@ export class GameStateQuery extends Query<GameStateState> {
   }
 
   /** What the match that just ended earned, null without a medallion run. */
-  selectAward(): Observable<MedalAward | null> {
+  public selectAward(): Observable<MedalAward | null> {
     return this.select((store) => store.award);
   }
 

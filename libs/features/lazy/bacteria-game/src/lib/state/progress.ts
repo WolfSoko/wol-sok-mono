@@ -1,104 +1,62 @@
-import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
 import { isObject } from '../storage';
-import { betterMedal, MatchRecord, MEDAL_TIERS, MedalTier } from './medallions';
-
-/** The best a player has done on one level at one difficulty, once won. */
-export interface LevelRecord {
-  /** The best medallion earned. */
-  medal: MedalTier | null;
-  wins: number;
-  /** The fastest win in seconds of match time. */
-  bestWinSec: number;
-}
+import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
+import { betterMedal, MEDAL_TIERS, MedalTier } from './medallions';
 
 /** What the game remembers of a player's matches against the computer. */
 export interface Progress {
-  /** By level id, then by difficulty. */
-  levels: Record<string, Partial<Record<BotDifficulty, LevelRecord>>>;
+  /** The best medallion by level id, then by difficulty. */
+  medals: Record<string, Partial<Record<BotDifficulty, MedalTier>>>;
 }
 
-export const EMPTY_PROGRESS: Progress = { levels: {} };
+export const EMPTY_PROGRESS: Progress = { medals: {} };
 
-/** The record of a level at a difficulty, null before it was won. */
-export function levelRecord(
+/** The best medallion of a level at a difficulty, null before the first. */
+export function bestMedal(
   progress: Progress,
   levelId: string,
   difficulty: BotDifficulty
-): LevelRecord | null {
-  return progress.levels[levelId]?.[difficulty] ?? null;
+): MedalTier | null {
+  return progress.medals[levelId]?.[difficulty] ?? null;
 }
 
-/** The progress with one more match in it. A match that was lost leaves no trace. */
-export function applyMatch(
+/** The progress with a medallion won - kept only where it beats the best. */
+export function addMedal(
   progress: Progress,
-  record: MatchRecord,
-  medal: MedalTier | null
+  levelId: string,
+  difficulty: BotDifficulty,
+  medal: MedalTier
 ): Progress {
-  if (!record.won) {
-    return progress;
-  }
-  const before = levelRecord(progress, record.levelId, record.difficulty);
-  const after: LevelRecord = {
-    medal: betterMedal(before?.medal ?? null, medal),
-    wins: (before?.wins ?? 0) + 1,
-    bestWinSec: Math.min(before?.bestWinSec ?? Infinity, record.durationSec),
-  };
+  const best = betterMedal(bestMedal(progress, levelId, difficulty), medal);
   return {
-    ...progress,
-    levels: {
-      ...progress.levels,
-      [record.levelId]: {
-        ...progress.levels[record.levelId],
-        [record.difficulty]: after,
-      },
+    medals: {
+      ...progress.medals,
+      [levelId]: { ...progress.medals[levelId], [difficulty]: best },
     },
   };
 }
 
 /**
- * The progress in a stored value, keeping every record it can read and
+ * The progress in a stored value, keeping every medallion it can read and
  * dropping the rest - a damaged entry must not cost the player the others.
  */
 export function parseProgress(value: unknown): Progress {
-  if (!isObject(value) || !isObject(value['levels'])) {
+  if (!isObject(value) || !isObject(value['medals'])) {
     return EMPTY_PROGRESS;
   }
-  const levels: Progress['levels'] = {};
-  for (const [levelId, byDifficulty] of Object.entries(value['levels'])) {
+  const medals: Progress['medals'] = {};
+  for (const [levelId, byDifficulty] of Object.entries(value['medals'])) {
     if (!isObject(byDifficulty)) {
       continue;
     }
     for (const { id: difficulty } of BOT_DIFFICULTIES) {
-      const record = parseLevelRecord(byDifficulty[difficulty]);
-      if (record != null) {
-        levels[levelId] = { ...levels[levelId], [difficulty]: record };
+      const medal = byDifficulty[difficulty];
+      if (MEDAL_TIERS.includes(medal as MedalTier)) {
+        medals[levelId] = {
+          ...medals[levelId],
+          [difficulty]: medal as MedalTier,
+        };
       }
     }
   }
-  return { levels };
-}
-
-function parseLevelRecord(value: unknown): LevelRecord | null {
-  if (!isObject(value)) {
-    return null;
-  }
-  const { medal, wins, bestWinSec } = value;
-  // A record exists from the first win on, and a time is never negative.
-  if (
-    typeof wins !== 'number' ||
-    !Number.isInteger(wins) ||
-    wins < 1 ||
-    typeof bestWinSec !== 'number' ||
-    !Number.isFinite(bestWinSec) ||
-    bestWinSec < 0
-  ) {
-    return null;
-  }
-  return {
-    medal: MEDAL_TIERS.includes(medal as MedalTier)
-      ? (medal as MedalTier)
-      : null,
-    wins,
-    bestWinSec,
-  };
+  return { medals };
 }

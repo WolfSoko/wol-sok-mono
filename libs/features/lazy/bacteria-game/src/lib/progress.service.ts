@@ -7,39 +7,41 @@ import {
   MedalAward,
   MedalTier,
 } from './state/medallions';
-import {
-  applyMatch,
-  levelRecord,
-  parseProgress,
-  Progress,
-} from './state/progress';
+import { addMedal, bestMedal, parseProgress } from './state/progress';
 import { readStoredJson, storeJson } from './storage';
 
 export const PROGRESS_STORAGE_KEY = 'bacteria-game.progress';
 
 /**
- * Keeps the medallions a player has won against the computer, with the
- * number of wins and the fastest one, per level and difficulty - in local
- * storage under a key of its own, so resetting the settings keeps the
- * progress and the other way round.
+ * Keeps the best medallion a player has won against the computer per level
+ * and difficulty - in local storage under a key of its own, so resetting
+ * the settings keeps the progress and the other way round.
  */
 @Injectable({ providedIn: 'root' })
 export class ProgressService {
-  private readonly progress = signal<Progress>(
-    parseProgress(readStoredJson(PROGRESS_STORAGE_KEY))
-  );
+  private readonly progress = signal(readStoredProgress());
 
   /** The best medallion of a level at a difficulty. */
   public medal(levelId: string, difficulty: BotDifficulty): MedalTier | null {
-    return levelRecord(this.progress(), levelId, difficulty)?.medal ?? null;
+    return bestMedal(this.progress(), levelId, difficulty);
   }
 
-  /** Judges a match that has ended, remembers it and returns its award. */
+  /** Judges a match that has ended, remembers its medallion and returns its award. */
   public recordMatch(record: MatchRecord): MedalAward {
+    // Another tab may have won medallions since: build on what is stored.
+    this.progress.set(readStoredProgress());
     const previousBest = this.medal(record.levelId, record.difficulty);
     const { medal, hint } = judgeMatch(getLevel(record.levelId).medal, record);
-    this.progress.update((progress) => applyMatch(progress, record, medal));
-    storeJson(PROGRESS_STORAGE_KEY, this.progress());
+    if (medal != null) {
+      this.progress.update((progress) =>
+        addMedal(progress, record.levelId, record.difficulty, medal)
+      );
+      storeJson(PROGRESS_STORAGE_KEY, this.progress());
+    }
     return { record, medal, previousBest, hint };
   }
+}
+
+function readStoredProgress() {
+  return parseProgress(readStoredJson(PROGRESS_STORAGE_KEY));
 }

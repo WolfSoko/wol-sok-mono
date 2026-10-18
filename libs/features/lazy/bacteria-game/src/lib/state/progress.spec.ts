@@ -1,60 +1,35 @@
-import { MatchRecord } from './medallions';
-import {
-  applyMatch,
-  EMPTY_PROGRESS,
-  levelRecord,
-  parseProgress,
-} from './progress';
+import { addMedal, bestMedal, EMPTY_PROGRESS, parseProgress } from './progress';
 
-const WIN: MatchRecord = {
-  levelId: 'corridors',
-  difficulty: 'normal',
-  won: true,
-  durationSec: 50,
-  boostsFired: 1,
-  lost: 100,
-  peakCount: 800,
-  lowestSizeRatio: 0.7,
-};
+describe('addMedal', () => {
+  it('records a first medallion', () => {
+    const progress = addMedal(EMPTY_PROGRESS, 'corridors', 'normal', 'silver');
 
-describe('applyMatch', () => {
-  it('records a first win', () => {
-    const progress = applyMatch(EMPTY_PROGRESS, WIN, 'silver');
-    expect(levelRecord(progress, 'corridors', 'normal')).toEqual({
-      medal: 'silver',
-      wins: 1,
-      bestWinSec: 50,
-    });
-    expect(levelRecord(progress, 'corridors', 'hard')).toBeNull();
+    expect(bestMedal(progress, 'corridors', 'normal')).toBe('silver');
+    expect(bestMedal(progress, 'corridors', 'hard')).toBeNull();
+    expect(bestMedal(progress, 'hourglass', 'normal')).toBeNull();
   });
 
-  it('keeps the best medallion and the best time apart', () => {
-    let progress = applyMatch(EMPTY_PROGRESS, WIN, 'gold');
-    progress = applyMatch(progress, { ...WIN, durationSec: 44 }, 'bronze');
-    expect(levelRecord(progress, 'corridors', 'normal')).toEqual({
-      medal: 'gold',
-      wins: 2,
-      bestWinSec: 44,
-    });
-  });
+  it('keeps the better medallion, whichever came first', () => {
+    let progress = addMedal(EMPTY_PROGRESS, 'corridors', 'normal', 'gold');
+    progress = addMedal(progress, 'corridors', 'normal', 'bronze');
+    expect(bestMedal(progress, 'corridors', 'normal')).toBe('gold');
 
-  it('leaves the progress as it was after a loss', () => {
-    expect(applyMatch(EMPTY_PROGRESS, { ...WIN, won: false }, null)).toBe(
-      EMPTY_PROGRESS
-    );
+    progress = addMedal(progress, 'corridors', 'normal', 'platinum');
+    expect(bestMedal(progress, 'corridors', 'normal')).toBe('platinum');
   });
 
   it('keeps the other difficulties of a level', () => {
-    let progress = applyMatch(EMPTY_PROGRESS, WIN, 'bronze');
-    progress = applyMatch(progress, { ...WIN, difficulty: 'hard' }, 'gold');
-    expect(levelRecord(progress, 'corridors', 'normal')?.medal).toBe('bronze');
-    expect(levelRecord(progress, 'corridors', 'hard')?.medal).toBe('gold');
+    let progress = addMedal(EMPTY_PROGRESS, 'corridors', 'normal', 'bronze');
+    progress = addMedal(progress, 'corridors', 'hard', 'gold');
+
+    expect(bestMedal(progress, 'corridors', 'normal')).toBe('bronze');
+    expect(bestMedal(progress, 'corridors', 'hard')).toBe('gold');
   });
 });
 
 describe('parseProgress', () => {
-  it('reads what applyMatch wrote', () => {
-    const progress = applyMatch(EMPTY_PROGRESS, WIN, 'gold');
+  it('reads what addMedal wrote', () => {
+    const progress = addMedal(EMPTY_PROGRESS, 'corridors', 'easy', 'gold');
     expect(parseProgress(JSON.parse(JSON.stringify(progress)))).toEqual(
       progress
     );
@@ -63,32 +38,18 @@ describe('parseProgress', () => {
   it('drops what it cannot read and keeps the rest', () => {
     expect(
       parseProgress({
-        levels: {
-          corridors: {
-            normal: { medal: 'gold', wins: 3, bestWinSec: 41 },
-            hard: { medal: 'gold' },
-            easy: { medal: 'gold', wins: 1.5, bestWinSec: 40 },
-            nightmare: { medal: 'gold', wins: 1, bestWinSec: 1 },
-          },
-          hourglass: {
-            easy: { medal: 'tin', wins: 1, bestWinSec: 70 },
-            normal: { medal: 'gold', wins: 0, bestWinSec: 30 },
-            hard: { medal: 'gold', wins: 2, bestWinSec: -1 },
-          },
+        medals: {
+          corridors: { normal: 'gold', hard: 'tin', nightmare: 'gold' },
+          hourglass: { easy: 3 },
           broken: 'yes',
         },
       })
-    ).toEqual({
-      levels: {
-        corridors: { normal: { medal: 'gold', wins: 3, bestWinSec: 41 } },
-        hourglass: { easy: { medal: null, wins: 1, bestWinSec: 70 } },
-      },
-    });
+    ).toEqual({ medals: { corridors: { normal: 'gold' } } });
   });
 
   it('starts over from anything that is not progress', () => {
     expect(parseProgress(null)).toBe(EMPTY_PROGRESS);
     expect(parseProgress('gold')).toBe(EMPTY_PROGRESS);
-    expect(parseProgress({ levels: 3 })).toBe(EMPTY_PROGRESS);
+    expect(parseProgress({ medals: 3 })).toBe(EMPTY_PROGRESS);
   });
 });

@@ -42,6 +42,9 @@ import { PlayerQuery } from './player.query';
 import { PlayerService } from './player.service';
 import { ProgressService } from '../progress.service';
 
+/** The longest step a frame may take the war, in milliseconds. */
+const MAX_FRAME_MS = 100;
+
 /** How a match ended. `winner` is null when both colonies died together. */
 interface MatchOutcome {
   winner: Player | null;
@@ -63,7 +66,11 @@ export class GameStateService {
     const pacer = new FramePacer();
     return animationFrames().pipe(
       map(({ timestamp }) => pacer.frame(timestamp)),
-      filter((elapsed) => elapsed != null)
+      filter((elapsed) => elapsed != null),
+      // After a hidden tab or a stall the war goes on where it stood rather
+      // than leap ahead - and the match clock, which judges the medallions,
+      // counts only the time that was played.
+      map((elapsed) => Math.min(elapsed, MAX_FRAME_MS))
     );
   });
   private readonly frames = new Subject<number>();
@@ -172,7 +179,8 @@ export class GameStateService {
         ? matchRecord(this.playerQuery.getAll(), {
             levelId,
             difficulty,
-            durationSec: timePassed / 1000,
+            // Whole seconds, as the match clock shows them.
+            durationSec: Math.floor(timePassed / 1000),
             winner: outcome.winner,
           })
         : null;
@@ -318,6 +326,8 @@ export class GameStateService {
     this.initPlayers();
     this.gameStateStore.update(() => ({
       currentState: GameState.RUNNING,
+      // Restart from the pause menu starts without a reset in between.
+      timePassed: 0,
       winner: null,
       matchEnded: false,
       award: null,

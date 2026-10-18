@@ -92,9 +92,14 @@ result screen shows the medallion with what the next one needs, and the level
 list shows the best one of each level at the selected difficulty. Two-player
 matches earn none.
 
-[`ProgressService`](./src/lib/progress.service.ts) keeps the best medallion,
-the number of wins and the fastest win per level and difficulty under its own
-local storage key, `bacteria-game.progress`.
+The match time is counted in whole seconds, as the match clock shows them, and
+a frame adds at most 0.1 s to it - a hidden tab or a stall does not run the
+clock ahead of the war.
+
+[`ProgressService`](./src/lib/progress.service.ts) keeps the best medallion
+per level and difficulty under its own local storage key,
+`bacteria-game.progress`, and re-reads it before it writes, so a second tab
+does not overwrite what the first one won.
 
 ## Boost
 
