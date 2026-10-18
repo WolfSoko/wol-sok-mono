@@ -10,35 +10,88 @@ _Where it hooks in_, naming the code the idea would touch, and the last section
 orders everything into phases. Decisions that get made along the way belong in
 `docs/adr/`.
 
+Last brought up to date with `main` after #2475 (level music, organic levels,
+16:9 arena), #2476 (simulation and screen resolution settings) and #2477 (the
+game loop on display frames). _What the latest changes mean for the plan_
+below lists what they changed.
+
 ## Where the game stands today
 
 - **One match type.** Two colonies, one or both steered by humans, until one
   colony is gone (`GameState.END`, `matchEnded`). A draw is possible.
-- **Eight hand-made levels** (`state/levels.ts`): a `GameMap` (walls, gates,
-  sliders, all point symmetric to the centre, `state/maps.ts`) plus a partial
-  `GameBalance` and a crosshair speed. They are listed in order of difficulty
-  but every level is selectable from the start.
+- **Twelve hand-made levels** (`state/levels.ts`): a `GameMap` plus a partial
+  `GameBalance` and a crosshair speed. Levels 1 to 8 are the classic layouts
+  (walls, gates, sliders, `state/maps.ts`), levels 9 to 12 the organic ones
+  (`state/organic-maps.ts`: Alveoli, Mycelium, Heartbeat, Villi), built from
+  overlapping round walls (`Rect.round`) that a fixed seed grows over one half.
+  Every map is point symmetric to the centre; `state/game-maps.ts` is the
+  registry and scales each layout from the base arena to the grid in use. All
+  twelve are listed in order of difficulty but selectable from the start.
 - **A bot in three difficulties** (`state/bot-controller.ts`) that only does
   what a human can do: aim the crosshair, fire the boost.
 - **Two simulations behind one `Simulation` interface** (`state/simulation.ts`):
   the CPU one (`BacteriaSimulation`, injectable `random`) and the GPU one
   (`gl/gpu-simulation.ts`, WebGL2 shader passes, hash-based per-cell random,
-  `MAX_GPU_COLONIES = 2`). The arena is a grid with one bacterium per cell; the
-  grid is sized to the viewport (`width`/`height` on the component, default
-  320 × 140) and drawn one cell per pixel through `ArenaPainter`.
+  `MAX_GPU_COLONIES = 2`). The arena is a grid with one bacterium per cell. Its
+  shape is the 16:9 **base arena** of 320 × 180 cells (`state/arena-size.ts`);
+  a **simulation resolution** setting runs the same arena on 0.8 to 2 cells
+  per base cell (256 × 144 up to 640 × 360), and balance lengths, carrying
+  capacity, crosshair speed and the bot's distances scale with it
+  (`levelBalance(level, scale)`, `scaleOf`), so every level plays alike on
+  every grid. A separate **screen resolution** setting (640 to 1920 canvas
+  pixels) decides how many pixels a cell is drawn with (`renderScale`): the
+  grid and the screen are no longer the same thing.
+- **A seeded random generator** exists: `seeded(seed)` in `state/geometry.ts`
+  (mulberry32). The organic maps and the level music use it; the simulation,
+  the pellets and the bot still default to `Math.random`.
+- **The game loop runs inside the animation frame** (`state/frame-pacer.ts`):
+  every display frame on a 60 Hz screen, every second one on a 120 Hz screen,
+  so a frame is never shown twice or skipped. The simulation still receives
+  the measured frame delta, not a fixed tick.
 - **A WebGL2 painter** with slime or pixel looks, per-level `ArenaTheme`
-  (floor, pattern, walls, motes, drone pitch), glow for fights, meals and
-  pushes.
+  (floor, one of twelve patterns, walls, motes), round walls drawn as glossy
+  blobs that melt into each other, glow for fights, meals and pushes, and a
+  boost shimmer that runs as waves towards the colony's crosshair. The canvas
+  no longer preserves its drawing buffer; `showLastFrame()` re-blits for
+  snapshots.
 - **Per-frame events** (`StepEvents`: captures, pellets eaten, crushed, gates
   closed and warned; `FrameEvents` adds boosts) and per-colony numbers
   (`ColonySummary`: count, captured, lost, total energy, centre).
 - **Settings in local storage** (`settings.service.ts`): mode, difficulty,
-  level, colours, look, FPS badge, sound. Nothing about a player's history is
-  stored.
-- **Sound synthesised** with the Web Audio API (`sound/game-sound.service.ts`).
+  level, colours, look, simulation and screen resolution, FPS badge, sound,
+  music. Nothing about a player's history is stored.
+- **Sound and music synthesised** with the Web Audio API. Effects live in
+  `sound/game-sound.service.ts`; every level has its own tune
+  (`sound/level-music.ts`): a key, a tempo, a chord progression, instruments
+  and a seed, from which `composeLoop` writes bass, pads, melody and drums as
+  plain data, played ahead of the audio clock by `sound/music-player.ts`.
+  Fights push the music's intensity up, and the Heartbeat level's drums beat
+  in time with its map (`HEART_PERIOD_SEC`).
 - **Touch seats** for two humans at one phone, fullscreen on entry.
 
 Everything below builds on these pieces rather than replacing them.
+
+### What the latest changes mean for the plan
+
+- **The seed is half done.** `seeded()` exists and already drives two kinds of
+  generated content. Section 4 no longer needs its own PRNG module, only the
+  helpers and threading the one generator through the match.
+- **Organic levels pre-empt the cave recipe.** Round walls grown from a seed
+  with spawn clearance (`SPAWN_CLEARANCE`, `nearSpawn`) are exactly the
+  primitive the generator's cave recipe wanted. The wall mask of 4.2 becomes
+  optional; the generator starts from the organic maps' building blocks.
+- **Grid and screen are decoupled.** `renderScale` already draws N pixels per
+  cell. The camera of section 6 is a pan and a variable scale on top of that,
+  not a new rendering path. The resolution settings also gave the first real
+  numbers on what the GPU simulation carries (4× the cells at _Ultra_).
+- **Display-frame pacing is not a fixed tick.** The loop is now in step with
+  the display, which removes doubled and skipped frames, but replays and
+  lockstep still need the fixed tick of section 5.1. The pacer is the place
+  it slots into.
+- **Music is composed from data.** A generated level can get a generated
+  tune, and the medallion jingle of 3.3 can be written in the level's key.
+- **Replays have one more input.** The simulation resolution changes the
+  grid, so it belongs in the replay header (5.2) and in the leaderboard key.
 
 ## 1. Motivation systems
 
@@ -138,7 +191,7 @@ Things that exist already can become rewards:
 - **Colony colours** (`COLONY_COLORS` has eight; orange and blue stay free, the
   rest unlock through medallions or achievements).
 - **Looks** (`BACTERIA_LOOKS`: slime, pixels) and new ones from section 7.
-- **Arena patterns** (`ArenaPattern`, eight of them) usable as an override for
+- **Arena patterns** (`ArenaPattern`, twelve of them) usable as an override for
   any level in free play.
 - **Crosshair shapes** and **boost sounds** - small, cheap variations.
 
@@ -184,16 +237,24 @@ when a better one replaces it.
 
 ### 2.1 Chapters
 
-Eight levels on one list is a plateau, not a curve. Group them into chapters
-of four to six, each with one new mechanic and one `ArenaTheme` family:
+Twelve levels on one list is a plateau, not a curve. Group them into chapters
+of four to six, each with one new mechanic and one `ArenaTheme` family. The
+first three chapters exist as levels already and only need the grouping:
 
-1. **Petri** (tutorial): open field, corridors - steering, boost, pellets.
-2. **Laboratory**: gates and pistons - timing. Today's hourglass, pistons.
-3. **Body**: organic caves from the generator, warm palettes, membranes that
-   let bacteria through one way.
+1. **Petri** (tutorial): Petri Dish, Corridors, Hourglass - steering, boost,
+   pellets, a first gate.
+2. **Laboratory**: Inner Ring, Pillar Field, Twin Chambers, Serpentine,
+   Pistons - cover, chambers and moving walls.
+3. **Body**: Alveoli, Mycelium, Heartbeat, Villi - the organic levels with
+   walls that grow, beat and sway. New here: membranes that let bacteria
+   through one way, and more organic layouts from the generator (section 4).
 4. **Reactor**: antibiotic zones, radiation that speeds division, neutral
    colonies.
 5. **Outbreak**: boss levels with asymmetric balance, endless mode.
+
+Each chapter already has a sound of its own: the level music (`LEVEL_MUSIC`)
+can share a key and a drum style per chapter so the chapters are heard as
+well as seen.
 
 ### 2.2 New mechanics the simulation can carry
 
@@ -321,8 +382,11 @@ off.
 ### 3.3 Sound and ceremony
 
 One short jingle per tier in `GameSoundService` (the end-of-match jingle
-exists; the medallion adds two bars after it). The result screen holds the
-buttons back for a second while the medallion lands, never longer.
+exists; the medallion adds two bars after it). The jingle is written in the
+level's key: `LevelMusic` gives the root and the scale, so the medallion
+sounds like the end of the level's tune rather than a sting on top of it. The
+result screen holds the buttons back for a second while the medallion lands,
+never longer.
 
 ### 3.4 Two-player mode
 
@@ -338,40 +402,53 @@ score (1.8) takes their place. The result screen says so once.
 
 ## 4. Level generator
 
-Today a map is a hand-written list of rects for one half of the arena, which
-`pointSymmetric` completes. A generator produces that same half from a seed,
-checks that the result is playable and interesting, and hands over a `Level`
-like any other. Everything is deterministic from the seed, so a level can be
-shared as a URL (`?seed=7f3a-corridors`), used as the daily level, and
-replayed.
+Today a classic map is a hand-written list of rects for one half of the
+arena, which `pointSymmetric` completes, and an organic map grows round walls
+over one half from a fixed seed (`organic-maps.ts`) before the same mirroring.
+The generator is the organic maps with the seed set free: it produces a half
+from any seed, checks that the result is playable and interesting, and hands
+over a `Level` like any other. Everything is deterministic from the seed, so a
+level can be shared as a URL (`?seed=7f3a-corridors`), used as the daily
+level, and replayed.
+
+Two rules the registry already enforces carry over. A generator lays its half
+out on the **base arena** (320 × 180) and lets `game-maps.ts`'s `scalable`
+grow it to the grid in use, so a seed means the same map on every simulation
+resolution. And it keeps `SPAWN_CLEARANCE` around the two start spots, as
+`nearSpawn` does for the organic maps.
 
 ### 4.1 Random source
 
-A small seeded PRNG (`mulberry32` or `xoshiro128**`, 20 lines, in
-`state/random.ts`) with helpers `int(min, max)`, `pick(array)`,
-`chance(p)`. One match-scoped generator is handed to everything that draws a
-random number during a match: the CPU simulation's `random` parameter,
-`NutrientPellets`' spawner and the `BotController`'s `random` (today each of
-them defaults to `Math.random` on its own). So a seed decides the pellets and
-the bot's every move as well, which section 5 relies on. (The GPU simulation
-hashes cell and step, so it is deterministic on one machine already; see
-section 5 for why that is not enough across machines.)
+`seeded(seed)` in `state/geometry.ts` (mulberry32) is already there and
+already drives the organic maps and the music. It gains the helpers
+`int(min, max)`, `pick(array)` and `chance(p)`. One match-scoped generator is
+handed to everything that draws a random number during a match: the CPU
+simulation's `random` parameter, `NutrientPellets`' spawner and the
+`BotController`'s `random` (today each of them defaults to `Math.random` on
+its own). So a seed decides the pellets and the bot's every move as well,
+which section 5 relies on. (The GPU simulation hashes cell and step, so it is
+deterministic on one machine already; see section 5 for why that is not
+enough across machines.)
 
 ### 4.2 Grammar of a half
 
 A map is built from a handful of **primitives** placed in the left half (or
 the top half for a portrait arena), each with a parameter range:
 
-| Primitive      | Parameters                                   | Gives the match        |
-| -------------- | -------------------------------------------- | ---------------------- |
-| Bar            | position, length, thickness, vertical/horiz. | a front line           |
-| Gap in a bar   | position, width                              | a chokepoint           |
-| Gate in a gap  | `GateTiming` (period, closed, offset)        | timing pressure        |
-| Pillar cluster | centre, count, spacing                       | pockets, cover         |
-| Chamber        | rect with one or two doors                   | a base to defend       |
-| Slider         | rect, amplitude, period                      | a moving hazard        |
-| Zone (2.2)     | kind, shape                                  | a reason to go there   |
-| Cave mask      | cellular automaton fill and smoothing passes | organic, winding paths |
+| Primitive      | Parameters                                     | Gives the match        |
+| -------------- | ---------------------------------------------- | ---------------------- |
+| Bar            | position, length, thickness, vertical/horiz.   | a front line           |
+| Gap in a bar   | position, width                                | a chokepoint           |
+| Gate in a gap  | `GateTiming` (period, closed, offset)          | timing pressure        |
+| Pillar cluster | centre, count, spacing                         | pockets, cover         |
+| Chamber        | rect with one or two doors                     | a base to defend       |
+| Slider         | rect, amplitude, period                        | a moving hazard        |
+| Zone (2.2)     | kind, shape                                    | a reason to go there   |
+| Blob lattice   | spacing, jitter, radius range (Alveoli)        | channels, no straights |
+| Thread         | start edge, angle, taper, branching (Mycelium) | a maze nobody planned  |
+| Beating blob   | centre, radius, period (Heartbeat)             | a rhythm to strike to  |
+| Swaying finger | edge, length, wave period (Villi)              | a sweeping hazard      |
+| Cave mask      | cellular automaton fill and smoothing passes   | organic, winding paths |
 
 A **recipe** picks which primitives and how many; recipes are the generator's
 "styles" (_corridor_, _fortress_, _field_, _cave_, _machine_) and map onto the
@@ -379,12 +456,16 @@ chapters of section 2. A difficulty knob (1 to 10) shifts every range: more
 gates, shorter open periods, narrower gaps, more aggression in the generated
 balance.
 
-The cave recipe needs walls that are not rectangles. `GameMap` grows an
-optional `createWallMask(width, height): Uint8Array` beside `createWalls`;
-`stampRect` already turns rects into a grid for the CPU simulation and the GPU
-uploads the same grid as a texture, so a mask is one step shorter, not longer.
-The painter draws the mask's edge with the same bevel it gives rects once it
-reads from the wall texture instead of rect lists.
+The four organic primitives are the functions the hand-made organic maps are
+built from (`blob`, `movingBlob`, the lattice loop of Alveoli, `grow` of
+Mycelium, the heart and the fingers), lifted out of their fixed seeds and
+given parameter ranges. Round walls (`Rect.round`) are stamped as ellipses and
+drawn as glossy blobs on WebGL and canvas already, so the _cave_ and _body_
+recipes need no new wall kind. The cave mask stays an option for later:
+`GameMap` could grow an optional `createWallMask(width, height): Uint8Array`
+beside `createWalls`, since `stampRect` already turns rects into a grid for the
+CPU simulation and the GPU uploads the same grid as a texture. It is only
+worth it for layouts blobs cannot express.
 
 ### 4.3 Validation
 
@@ -393,13 +474,14 @@ that fails any check is thrown away and the next seed derivative is tried
 (`seed + attempt`), up to a bound, after which the generator falls back to a
 hand-made map so the player never waits:
 
-1. **Spawns are free**: a disc of `startBacteriaRadius + 4` around each spawn
-   has no wall.
+1. **Spawns are free**: a disc of `SPAWN_CLEARANCE` (20 base cells, the
+   largest start radius plus air) around each spawn has no wall - the rule
+   the organic maps apply while growing, checked again on the finished grid.
 2. **Connected**: a flood fill from one spawn reaches the other with every
    gate open; and with every gate shut, each spawn still reaches at least one
    pellet position (nobody can be starved by a closed gate).
 3. **Corridors are wide enough**: the distance transform of the free space
-   (jump flooding on the grid, also useful for ambient occlusion in section 7) has no path narrower than 3 cells between the spawns.
+   (jump flooding on the grid, also useful for ambient occlusion in section 7) has no path narrower than 3 base cells between the spawns.
 4. **Wall share** between 8 % and 35 % of the arena.
 5. **Pellet room**: at least `nutrientCount` mirrored free positions outside
    the spawn discs.
@@ -412,8 +494,8 @@ maze), the number of **chokepoints** (articulation cells on the free-space
 graph, or simpler: cells where the distance transform has a local minimum
 below 5 on the shortest path) and the free area near the centre. A recipe
 states its target for each; the candidate closest to the targets wins. Five
-candidates per request is plenty and runs well under 50 ms on a 320 × 140
-grid.
+candidates per request is plenty and runs well under 50 ms on the 320 × 180
+base grid, which is the only grid the generator ever works on.
 
 ### 4.5 Naming and theming
 
@@ -421,7 +503,10 @@ A generated level gets a name from the seed, two words from recipe-specific
 lists ("Rusty Hourglass", "Quiet Corridors"), a theme picked from the recipe's
 family with the hue jittered by the seed, and a balance derived from the
 difficulty knob within safe bounds taken from the hand-made levels (never
-below the easiest, never above the hardest). The level `id` is
+below the easiest, never above the hardest). It also gets its own **tune**:
+`LevelMusic` is a handful of numbers (root, scale, tempo, progression,
+instruments, seed), so the recipe picks a key and a drum style from its
+chapter and the seed picks the progression and the melody. The level `id` is
 `gen:<recipe>:<seed>:<difficulty>` so medallions and progress key on it like
 on any level.
 
@@ -437,10 +522,15 @@ on any level.
 
 ### Where it hooks in
 
-- `state/random.ts`, `state/level-generator/` (recipes, primitives,
-  validation, scoring, naming; all pure, heavy unit tests with fixed seeds).
-- `maps.ts`: `createWallMask`, `getMap` understands `gen:` ids by generating.
-- `levels.ts`: `getLevel` for `gen:` ids.
+- `state/geometry.ts`: the helpers on `seeded`; `state/level-generator/`
+  (recipes, primitives, validation, scoring, naming, music; all pure, heavy
+  unit tests with fixed seeds). The organic primitives move out of
+  `organic-maps.ts` into it; the four hand-made organic maps become recipes
+  with fixed seeds.
+- `game-maps.ts`: `getMap` understands `gen:` ids by generating, and wraps the
+  result in `scalable` like every other map.
+- `levels.ts`: `getLevel` for `gen:` ids; `sound/level-music.ts`: `LEVEL_MUSIC`
+  looked up by id falls back to the generated tune.
 - URL handling in `bacteria-game.component` (query param → level).
 - The e2e page object gets a deterministic seed so tests stay stable.
 
@@ -454,10 +544,15 @@ kind of remote play to add first. The simulations decide a lot of this.
 Lockstep networking (both sides run the simulation, only inputs are sent)
 needs both sides to compute the same frame from the same inputs. The CPU
 simulation can do that: seeded random (4.1) and a **fixed tick** instead of
-the variable `deltaTimeSec` the game loop passes today (`gameLoop(width,
-height, deltaTimeInSec)`). The GPU simulation cannot promise it across two
-devices: floating point and driver differences in the shaders diverge within
-seconds. So:
+the measured frame delta the loop passes today. Since #2477 the loop runs
+inside the animation frame and `FramePacer` picks the display frames the game
+steps on, but the delta it hands to `gameLoop(width, height, deltaTimeInSec)`
+is still whatever the display measured, so two machines still step
+differently. The fixed tick slots in behind the pacer: an accumulator turns
+the measured delta into whole 30 Hz ticks, and the crosshairs are
+interpolated for the frames in between. The GPU simulation cannot promise
+determinism across two devices either way: floating point and driver
+differences in the shaders diverge within seconds. So:
 
 - **Replays, ghosts and verified leaderboards** run on the CPU simulation at a
   fixed 30 Hz tick with a seed. It is the reference. A match that is to be
@@ -466,7 +561,8 @@ seconds. So:
   sequence of states, so a GPU match replayed on the CPU could end at another
   time or with another winner than the one the player saw. The match setup
   says so where it matters ("ranked matches run on the reference engine"),
-  and the arena stays small enough for the CPU to hold 30 ticks a second.
+  and the match is pinned to the _Normal_ simulation resolution, which the
+  CPU holds at 30 ticks a second and which keeps every ranked grid the same.
 - **Live play** can keep the GPU simulation when one machine owns the truth:
   free play, big maps (section 6) and the host of an online match (5.3).
 
@@ -480,8 +576,8 @@ The cheapest multiplayer that works tonight and needs no server logic:
 
 - **Replays**: record `(tick, playerId, crosshair, boost)` for every human
   player of a match (a few KB) under a header with everything the match was
-  derived from: seed, level id, mode, bot difficulty, colours and the version
-  of the balance table. The bot is not recorded; it is re-derived from the
+  derived from: seed, level id, mode, bot difficulty, simulation resolution,
+  colours and the version of the balance table. The bot is not recorded; it is re-derived from the
   seed, which is why 4.1 seeds its decisions too. Play it back through the
   CPU simulation.
 - **Ghost bot**: a `GhostController` that implements the same interface as
@@ -491,7 +587,8 @@ The cheapest multiplayer that works tonight and needs no server logic:
   replay. There is one board per bot difficulty, since a win against the Easy
   bot and one against the Hard bot are not the same feat; the difficulty
   comes from the replay header, and the verifier rejects a header whose
-  level, mode or balance version does not match the day's. A Firebase Cloud
+  level, mode, simulation resolution or balance version does not match the
+  day's. A Firebase Cloud
   Function (`firebase-functions` is in the workspace) re-runs the replay with
   the CPU simulation and the seeded bot headless and only accepts the time
   it computes itself. The simulation and the bot are Angular-free, so they
@@ -510,9 +607,12 @@ at first; symmetric NAT cases fall back to "could not connect, try the same
 Wi-Fi".
 
 **State on the wire**, 15 times a second: the owner grid as run-length encoded
-bytes (a 320 × 140 arena is 44 800 cells; owners run in long runs and compress
-to a few KB), energy quantised to 4 bits only for cells that changed since the
-last acknowledged packet, pellets, dynamic walls and the summaries. The guest's
+bytes (the base arena is 320 × 180 = 57 600 cells, _Ultra_ four times that;
+owners run in long runs and compress to a few KB), energy quantised to 4 bits
+only for cells that changed since the last acknowledged packet, pellets,
+dynamic walls and the summaries. The host's simulation resolution is part of
+the match start, and the guest draws the grid it receives at its own screen
+resolution - `renderScale` already separates the two. The guest's
 painter draws the last state received and its own crosshair at once, so
 steering feels local; the colony follows with the round-trip delay, which the
 game tolerates because a colony is slow anyway.
@@ -547,8 +647,9 @@ away until the daily leaderboard shows there are enough people online at once.
 
 ### Where it hooks in
 
-- `state/clock.ts`: fixed tick accumulator; `PlayerService.gameLoop` steps the
-  simulation per tick, the component interpolates crosshairs.
+- `state/frame-pacer.ts` grows the fixed tick accumulator (or a sibling
+  `state/clock.ts` takes the pacer's output); `PlayerService.gameLoop` steps
+  the simulation per tick, the component interpolates crosshairs.
 - `state/replay.ts`: recording and `GhostController`.
 - `net/` (new folder in the lib): `room.service.ts` (Firestore signalling),
   `peer.ts` (WebRTC), `state-codec.ts` (RLE and delta encoding, pure, tested
@@ -561,13 +662,18 @@ away until the daily leaderboard shows there are enough people online at once.
 
 ## 6. Bigger maps
 
-### 6.1 Why the arena is small
+### 6.1 Finer is not bigger
 
-The grid is sized to the viewport and drawn one cell per pixel (a phone gets
-roughly 320 × 140 cells inside the frame). Bigger maps mean the simulation grid
-no longer equals the screen: a **camera** with zoom and pan in the painter, and
-a simulation grid chosen by the level (say 960 × 420, or 2048 × 1024 for
-"continent" levels).
+Since #2476 the grid is no longer the screen: the simulation runs on a grid
+of its own (`arenaSize(simResolution)`) and the painter draws each cell with
+`renderScale` pixels. But a finer grid is the **same arena** with smaller
+bacteria - the levels are designed for the 320 × 180 base arena and
+`scalable` grows every layout with the grid, so _Ultra_ does not give the
+colonies more room, only more cells. A bigger map is a level whose layout is
+designed for a bigger base (say 960 × 540, or 2048 × 1152 for "continent"
+levels), and since such a map no longer fits the screen at a readable scale, it
+needs a **camera**: a pan and a scale that changes during the match, on top
+of the fixed `renderScale` of today.
 
 ### 6.2 Camera
 
@@ -586,11 +692,14 @@ a simulation grid chosen by the level (say 960 × 420, or 2048 × 1024 for
 ### 6.3 Simulation cost
 
 The GPU simulation is linear in cells per pass and runs up to `MAX_MOVE_STEPS`
-(12) claim/apply pairs per frame. A 960 × 420 grid is nine times today's cells.
-Measures, in order of payoff:
+(12) claim/apply pairs per frame. The resolution setting is the first
+measurement: _Ultra_ runs 230 400 cells, four times the base, on the devices
+that choose it. A 960 × 540 base map is nine times the base and, at _Normal_,
+about twice _Ultra_. Measures, in order of payoff:
 
-1. **Tick rate below frame rate**: simulate at 30 Hz regardless of the display
-   (section 5.1 wants this anyway).
+1. **Tick rate below frame rate**: `FramePacer` already halves the work on a
+   120 Hz display; a 30 Hz simulation tick (section 5.1) halves it again on
+   every display.
 2. **Activity tiles**: a 16 × 16 tile mask marking tiles that held a bacterium
    or a change last tick, produced by a mip-style reduction; passes run with a
    scissor or an instanced quad per active tile. Empty space costs nothing, so
@@ -599,9 +708,11 @@ Measures, in order of payoff:
    to compensate.
 4. The CPU simulation gets a size cap and a "this level needs WebGL2" notice.
 
-Carrying capacity scales with area (`maxTotalBacteria` per level), and the bot
-needs its distances scaled (`BotView` carries `width`/`height`, so this is
-one factor).
+Carrying capacity and the bot's distances already scale with the grid
+(`levelBalance(level, scale)`, `scaleOf` in the bot); a bigger base arena
+needs the same scaling by _size_ on top of the one by _resolution_, so the two
+factors must stay apart: one keeps the game the same, the other makes it
+bigger.
 
 ### 6.4 What big maps are for
 
@@ -617,8 +728,9 @@ Size alone is not a feature. It pays off with:
 
 ### Where it hooks in
 
-- `Level.arena?: { width, height }`; `PlayerService` and both simulations get
-  the level size instead of the viewport size.
+- `Level.arena?: { width, height }` in base cells, beside `BASE_ARENA`;
+  `arenaSize()` multiplies it by the resolution; `scalable` in `game-maps.ts`
+  lays the map out on the level's base instead of the global one.
 - `arena/`: camera in `ArenaPainter`, LOD in `colony-renderer.ts`, minimap,
   split screen.
 - `gl/gpu-simulation.ts`: activity tiles, tick rate.
@@ -675,7 +787,9 @@ A small chain on the final frame, each stage toggleable:
 ### 7.4 Arena and walls
 
 - Walls get a bevel from the wall distance field, ambient occlusion in the
-  corners, and a highlight edge that follows the theme's `wallEdge`.
+  corners, and a highlight edge that follows the theme's `wallEdge`. The round
+  walls are already drawn as glossy blobs that melt into each other; the
+  rectangular ones catch up with that look.
 - Dynamic walls cast a soft shadow that moves with them, and a gate's
   `warning` drives a red pulse along its edge.
 - Floor patterns get a slow parallax layer (two patterns at different scales
@@ -696,11 +810,17 @@ A small chain on the final frame, each stage toggleable:
 
 ### 7.6 Quality presets
 
-`GameSettingsService.look` grows a `quality: 'auto' | 'low' | 'medium' |
-'high'`. _Auto_ measures the median frame time over the first three seconds of
-a match and steps down until it stays under 14 ms. Low is today's painter;
-medium adds lighting and particles; high adds post-processing and refraction.
-The FPS badge already exists for checking.
+The settings already hold two of the three knobs: the simulation resolution
+(how many cells) and the screen resolution (how many pixels). The third is an
+**effects** preset, `quality: 'auto' | 'low' | 'medium' | 'high'`, next to
+them. _Auto_ measures the median frame time over the first three seconds of a
+match and steps down until it stays under 14 ms, lowering the effects first
+and the screen resolution second, never the simulation resolution (that
+changes the match). Low is today's painter; medium adds lighting and
+particles; high adds post-processing and refraction. The FPS badge already
+exists for checking. The post-processing chain has to live with the canvas
+not preserving its drawing buffer (#2477): it renders into its own
+framebuffer and `showLastFrame()` re-blits from that.
 
 ### Where it hooks in
 
@@ -715,24 +835,28 @@ The FPS badge already exists for checking.
 
 Ordered by payoff per effort and by what each one needs from the one before.
 
-| Phase | Scope                                                                                            | Needs                    |
-| ----- | ------------------------------------------------------------------------------------------------ | ------------------------ |
-| 1     | Progress profile, campaign ladder, medallions, achievements, XP, result-screen ceremony, unlocks | nothing new in the sim   |
-| 2     | Fixed tick, seeded CPU simulation, replays and ghost bot, share links                            | phase 1 for records      |
-| 3     | Level generator with recipes, daily level, endless mode, level map screen                        | seeded random (phase 2)  |
-| 4     | Win conditions, zones, neutral colonies, four GPU colonies, boss levels, chapters                | phase 3 for cave recipe  |
-| 5     | Camera, minimap, big arenas, activity tiles, split screen, fog                                   | phase 4's colonies, tick |
-| 6     | Online 1 v 1 host-authoritative, daily leaderboard with verified replays, couch controllers      | phases 2 and 5           |
-| 7     | Lighting, particles, post-processing, quality presets, new looks                                 | independent, any time    |
+| Phase | Scope                                                                                                                       | Needs                    |
+| ----- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| 1     | Progress profile, campaign ladder, medallions, achievements, XP, result-screen ceremony, unlocks                            | nothing new in the sim   |
+| 2     | Fixed tick behind the frame pacer, one seed through simulation, pellets and bot, replays and ghost bot, share links         | phase 1 for records      |
+| 3     | Level generator with recipes (starting from the organic maps), daily level, endless mode, level map screen, generated tunes | seeded random (phase 2)  |
+| 4     | Win conditions, zones, neutral colonies, four GPU colonies, boss levels, chapters                                           | phase 3 for cave recipe  |
+| 5     | Camera, minimap, big arenas, activity tiles, split screen, fog                                                              | phase 4's colonies, tick |
+| 6     | Online 1 v 1 host-authoritative, daily leaderboard with verified replays, couch controllers                                 | phases 2 and 5           |
+| 7     | Lighting, particles, post-processing, effects preset beside the resolution settings, new looks                              | independent, any time    |
 
 Phase 1 is the one that changes whether people come back and costs the least.
 Phase 7 can be sprinkled in between the others; each of its items is a
-self-contained PR.
+self-contained PR. Of the groundwork the phases assumed, three pieces have
+landed since the first version of this document: the seeded generator (for
+phase 3), the decoupling of grid and screen (for phase 5) and the resolution
+settings (for phase 7).
 
 ### Decisions worth an ADR when their phase starts
 
-- The CPU simulation at a fixed 30 Hz tick with a seed is the **reference
-  simulation** for replays and verification; the GPU one is for playing.
+- The CPU simulation at a fixed 30 Hz tick with a seed, on the _Normal_
+  simulation resolution, is the **reference simulation** for replays and
+  verification; the GPU one is for playing.
 - Progress is stored **locally first**, cloud sync is opt-in and anonymous.
 - Online play is **host-authoritative over WebRTC with Firestore signalling**,
   not lockstep, until four-player lockstep is actually wanted.
