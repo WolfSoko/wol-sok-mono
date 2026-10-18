@@ -43,6 +43,29 @@ export interface ArenaPainter {
   /** Switches to another level's look. */
   setTheme(theme: ArenaTheme): void;
   paint(frame: ArenaFrame): void;
+  /** Lets go of what the painter holds on the canvas - it is done drawing. */
+  dispose(): void;
+}
+
+/**
+ * The two bars of a crosshair, in arena cells, `unit` cells per base cell so
+ * it is as big on every grid.
+ */
+export function crosshairBars(cursor: CursorShape, unit: number): [Rect, Rect] {
+  return [
+    {
+      x: cursor.x - 6 * unit,
+      y: cursor.y - 0.5 * unit,
+      width: 13 * unit,
+      height: 2 * unit,
+    },
+    {
+      x: cursor.x - 0.5 * unit,
+      y: cursor.y - 6 * unit,
+      width: 2 * unit,
+      height: 13 * unit,
+    },
+  ];
 }
 
 /** The radius of the ring around a boosted crosshair - it widens as the boost runs out. */

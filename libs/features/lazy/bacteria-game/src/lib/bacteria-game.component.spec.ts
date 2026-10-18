@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { Subject } from 'rxjs';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
@@ -437,6 +438,23 @@ describe('BacteriaGameComponent', () => {
       query['store'].update({ matchEnded: true });
 
       expect(component['panel']()).toBe('over');
+    });
+
+    it('switches to the next level only once the old arena is vaporized', () => {
+      create();
+      startMatch('vs-computer');
+      const vaporized = new Subject<void>();
+      (component as unknown as { thanos: unknown }).thanos = {
+        vaporize: () => vaporized,
+      };
+      const before = query.getValue().levelId;
+      query['store'].update({ matchEnded: true });
+
+      component['onMatchEnd']('next');
+      expect(query.getValue().levelId).toBe(before);
+
+      vaporized.complete();
+      expect(query.getValue().levelId).not.toBe(before);
     });
 
     it('names the difficulty next to the level', () => {

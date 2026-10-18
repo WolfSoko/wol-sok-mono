@@ -13,6 +13,7 @@ import {
   takeUntil,
   timestamp,
 } from 'rxjs';
+import { scaleOf } from './arena-size';
 import { BotDifficulty } from './bot-controller';
 import {
   getColonyColor,
@@ -164,6 +165,7 @@ export class GameStateService {
     const { width, height, levelId, mode, difficulty, colors } =
       this.gameStateQuery.getValue();
     const level = getLevel(levelId);
+    const scale = scaleOf(width);
     const versusComputer = mode === 'vs-computer';
     const [left, right] = colors.map(getColonyColor);
     this.playerService.init(
@@ -184,9 +186,9 @@ export class GameStateService {
         },
       ],
       {
-        balance: levelBalance(level),
+        balance: levelBalance(level, scale),
         map: levelMap(level),
-        crosshairSpeed: levelCrosshairSpeed(level),
+        crosshairSpeed: levelCrosshairSpeed(level, scale),
         difficulty,
         arena: { width, height },
       }

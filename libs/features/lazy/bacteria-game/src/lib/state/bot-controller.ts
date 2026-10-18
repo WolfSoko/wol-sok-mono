@@ -1,4 +1,5 @@
 import { Nutrient } from './bacteria-simulation';
+import { scaleOf } from './arena-size';
 import { clamp, distance, Point } from './geometry';
 import { ColonySummary } from './simulation';
 
@@ -107,7 +108,10 @@ const PROFILES: Record<BotDifficulty, DifficultyProfile> = {
   },
 };
 
-/** How far a retreating colony moves away from the enemy, in arena pixels. */
+/**
+ * How far a retreating colony moves away from the enemy, in cells of the base
+ * arena - the bot's distances grow with a finer grid.
+ */
 const RETREAT_DISTANCE = 50;
 /** A pellet the enemy is closer to than we are costs this much extra distance. */
 const CONTESTED_PENALTY = 60;
@@ -119,6 +123,8 @@ export class BotController {
   private readonly random: () => number;
   /** Seconds left until the next decision. 0 makes the first one immediate. */
   private cooldown = 0;
+  /** Cells per base cell of the arena the bot last looked at. */
+  private unit = 1;
 
   constructor(
     public readonly difficulty: BotDifficulty,
@@ -138,6 +144,8 @@ export class BotController {
       return { target: null, boost: false };
     }
     this.cooldown = this.profile.reactionSec;
+    // The bot thinks in cells of the base arena.
+    this.unit = scaleOf(view.width);
 
     const { own, enemy } = view;
     if (own.count === 0) {
@@ -155,7 +163,7 @@ export class BotController {
       const boost =
         this.profile.usesBoost &&
         view.boostReady &&
-        distance(own, enemy) <= this.profile.boostRange;
+        distance(own, enemy) <= this.profile.boostRange * this.unit;
       return { target: this.aim(view, this.attackPoint(view, enemy)), boost };
     }
     if (food != null) {
@@ -193,7 +201,7 @@ export class BotController {
       const ownDistance = distance(nutrient, view.own);
       let cost = ownDistance;
       if (view.enemy != null && distance(nutrient, view.enemy) < ownDistance) {
-        cost += CONTESTED_PENALTY;
+        cost += CONTESTED_PENALTY * this.unit;
       }
       if (cost < bestCost) {
         bestCost = cost;
@@ -205,6 +213,7 @@ export class BotController {
 
   /** A point straight away from the enemy, so the colony can regroup. */
   private retreatPoint(own: ColonyView, enemy: ColonyView): Point {
+    const retreat = RETREAT_DISTANCE * this.unit;
     let dx = own.x - enemy.x;
     let dy = own.y - enemy.y;
     const length = Math.hypot(dx, dy);
@@ -216,14 +225,14 @@ export class BotController {
       dy /= length;
     }
     return {
-      x: own.x + dx * RETREAT_DISTANCE,
-      y: own.y + dy * RETREAT_DISTANCE,
+      x: own.x + dx * retreat,
+      y: own.y + dy * retreat,
     };
   }
 
   /** Adds the profile's aiming error and keeps the point inside the arena. */
   private aim(view: BotView, point: Point): Point {
-    const noise = this.profile.aimNoise;
+    const noise = this.profile.aimNoise * this.unit;
     return {
       x: clamp(point.x + (this.random() - 0.5) * 2 * noise, 0, view.width),
       y: clamp(point.y + (this.random() - 0.5) * 2 * noise, 0, view.height),

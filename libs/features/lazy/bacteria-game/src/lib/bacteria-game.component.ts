@@ -13,6 +13,7 @@ import {
   inject,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -67,6 +68,13 @@ import {
   DEFAULT_DIFFICULTY,
 } from './state/bot-controller';
 import { BACTERIA_LOOKS, GameSettingsService } from './settings.service';
+import {
+  arenaSize,
+  renderScale,
+  SCREEN_RESOLUTIONS,
+  scaleOf,
+  SIM_RESOLUTIONS,
+} from './state/arena-size';
 import { GameSoundService, MatchResult } from './sound/game-sound.service';
 import { levelMusic } from './sound/level-music';
 import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
@@ -136,8 +144,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** No flickering glow for players who asked their system for less motion. */
   private readonly reducedMotion = prefersReducedMotion();
 
-  @ViewChild('canvasElement', { static: true })
-  private canvasRef!: ElementRef<HTMLCanvasElement>;
+  /**
+   * The canvas the arena is drawn on. A new resolution gets a new canvas -
+   * see {@link canvasKey} - which is when the painter is built again.
+   */
+  private readonly canvasRef =
+    viewChild<ElementRef<HTMLCanvasElement>>('canvasElement');
   @ViewChild('arenaStage', { static: true })
   private stageRef!: ElementRef<HTMLElement>;
   @ViewChild(WsThanosDirective, { static: true })
@@ -147,10 +159,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Lay the next frame's floor down fully instead of fading into a trail. */
   private clearNextFrame = true;
 
-  // 16:9, the shape of most screens - the arena fills them with little
-  // left over around it.
-  public readonly width = 320;
-  public readonly height = 180;
+  /** The arena in cells, as fine as the simulation resolution asks for. */
+  protected readonly arena = computed(() =>
+    arenaSize(this.settings.simResolution())
+  );
+  /**
+   * One key per pair of resolutions: the canvas is rendered for the key, so
+   * either resolution changing hands the painter a fresh canvas and context.
+   */
+  protected readonly canvasKey = computed(() => [
+    `${this.settings.simResolution()}:${this.settings.screenResolution()}`,
+  ]);
+  protected readonly simResolutions = SIM_RESOLUTIONS;
+  protected readonly screenResolutions = SCREEN_RESOLUTIONS;
 
   state: Signal<GameStateState | undefined>;
   stats: Signal<ColonyStats[]>;
@@ -259,8 +280,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       ? fitInside(
           Math.max(0, box.width - frame),
           Math.max(0, box.height - frame),
-          this.width,
-          this.height
+          this.arena().width,
+          this.arena().height
         )
       : null;
   });
@@ -276,10 +297,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.level = toSignal(this.query.selectLevel(), {
       initialValue: LEVELS[0],
     });
-    this.balance = computed(() => levelBalance(this.level()));
-    this.walls = computed(() =>
-      levelMap(this.level()).createWalls(this.width, this.height)
+    this.balance = computed(() =>
+      levelBalance(this.level(), scaleOf(this.arena().width))
     );
+    this.walls = computed(() => {
+      const { width, height } = this.arena();
+      return levelMap(this.level()).createWalls(width, height);
+    });
     this.upcomingLevel = computed(() => nextLevel(this.level().id));
     this.theme = computed(() => arenaTheme(this.level().id));
     this.arenaBorder = computed(() => cssTriple(this.theme().border));
@@ -316,6 +340,15 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.settings.look();
       this.reducedMotion();
       this.draw(1 / 1000, true);
+    });
+
+    // A fresh canvas - the first one, or one for another resolution - gets a
+    // painter of its own.
+    effect(() => {
+      const canvas = this.canvasRef()?.nativeElement;
+      if (canvas != null) {
+        untracked(() => this.attachPainter(canvas));
+      }
     });
 
     this.running = toSignal(this.query.selectIsMatchOn(), {
@@ -373,13 +406,15 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   protected onMatchEnd(action: MatchEndAction): void {
     const next = action === 'next' ? this.upcomingLevel() : null;
-    if (next != null) {
-      this.gameStateService.setLevel(next.id);
-    }
     this.screen.set('menu');
     this.resetGame$()
       .pipe(
         tap(() => {
+          // Only once the old arena has turned to dust: switched before, the
+          // next level would flash up just to be vaporized with the old one.
+          if (next != null) {
+            this.gameStateService.setLevel(next.id);
+          }
           if (action !== 'menu') {
             this.startGame();
           }
@@ -430,12 +465,31 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    const canvas = this.canvasRef.nativeElement;
+    this.nativeFullscreenSupported.set(
+      isFullscreenSupported(document, this.stageRef?.nativeElement)
+    );
+    this.requestNativeFullscreenOnOpen();
+  }
+
+  /**
+   * Builds the painter for a fresh canvas, at the resolutions it was rendered
+   * for, and lets go of the one before. Resolutions only change between
+   * matches, so the colonies are simply spawned again on the new grid.
+   */
+  private attachPainter(canvas: HTMLCanvasElement): void {
+    // The GPU simulation lives in the old context: let it go while it lasts.
+    this.playerService.useSimulation(null);
+    this.painter?.dispose();
+    this.painter = null;
+    const { width, height } = this.arena();
     this.painter = createArenaPainter(
       canvas,
-      this.width,
-      this.height,
-      RENDER_SCALE
+      width,
+      height,
+      renderScale(
+        this.settings.simResolution(),
+        this.settings.screenResolution()
+      )
     );
     if (this.painter == null) {
       throw new Error('Could not get rendering context');
@@ -448,12 +502,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       gl == null ? null : (balance) => gl.createSimulation(balance)
     );
     this.painter.setTheme(this.theme());
-    this.gameStateService.setArenaSize(this.width, this.height);
+    this.gameStateService.setArenaSize(width, height);
     this.draw(1 / 1000, true);
-    this.nativeFullscreenSupported.set(
-      isFullscreenSupported(document, this.stageRef?.nativeElement)
-    );
-    this.requestNativeFullscreenOnOpen();
   }
 
   /**
@@ -465,7 +515,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.sound.matchStart();
     this.clearNextFrame = true;
     this.gameStateService.cleanup();
-    this.gameStateService.init(this.width, this.height);
+    this.gameStateService.init(this.arena().width, this.arena().height);
     this.gameStateService.start();
   }
 
@@ -519,7 +569,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
     requestAnimationFrame(() => {
       if (isRunning) {
-        this.playerService.gameLoop(this.width, this.height, deltaTimeInSec);
+        const { width, height } = this.arena();
+        this.playerService.gameLoop(width, height, deltaTimeInSec);
         this.sound.frame(this.playerService.getFrameEvents());
       }
       this.animationSec += deltaTimeInSec;
@@ -539,8 +590,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const simulation = this.playerService.getSimulation();
     // Which processor runs the war - for the e2e tests and for debugging.
     // The match picks it, so it can fall back to the CPU after a GPU error.
-    const dataset = this.canvasRef.nativeElement.dataset;
-    if (dataset['simulation'] !== simulation.kind) {
+    const dataset = this.canvasRef()?.nativeElement.dataset;
+    if (dataset != null && dataset['simulation'] !== simulation.kind) {
       dataset['simulation'] = simulation.kind;
     }
     return {
@@ -570,6 +621,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.gameStateService.cleanup();
     // The GPU simulation lives in this canvas's context, which goes with it.
     this.playerService.useSimulation(null);
+    this.painter?.dispose();
     this.sound.setMusic(null);
     // Leaving the page must give the screen back as well.
     exitFullscreen(document);
@@ -750,7 +802,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private toArenaPoint(event: PointerEvent) {
-    const canvas = this.canvasRef?.nativeElement as HTMLCanvasElement | null;
+    const canvas = this.canvasRef()?.nativeElement;
     if (canvas == null) {
       return null;
     }
@@ -758,8 +810,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       event.clientX,
       event.clientY,
       canvas.getBoundingClientRect(),
-      this.width,
-      this.height
+      this.arena().width,
+      this.arena().height
     );
   }
 
@@ -824,13 +876,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
   }
 }
-
-/**
- * Canvas pixels per arena cell. The simulation and the pointer maths work in
- * arena cells; drawing at a finer resolution only makes the slime, the jam
- * and the crosshairs smooth.
- */
-const RENDER_SCALE = 3;
 
 /** Room kept free around the arena for its frame, in CSS pixels. */
 const ARENA_FRAME_PX = 6;

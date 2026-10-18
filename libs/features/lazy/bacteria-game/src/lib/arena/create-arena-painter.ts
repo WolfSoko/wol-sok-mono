@@ -16,9 +16,9 @@ export function createArenaPainter(
   height: number,
   scale: number
 ): ArenaPainter | null {
-  canvas.width = width * scale;
-  canvas.height = height * scale;
-  const gl = GlArenaPainter.create(canvas, width, height, scale);
+  canvas.width = Math.round(width * scale);
+  canvas.height = Math.round(height * scale);
+  const gl = GlArenaPainter.create(canvas, width, height);
   if (gl != null) {
     return gl;
   }

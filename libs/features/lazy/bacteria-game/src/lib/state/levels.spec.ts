@@ -96,3 +96,25 @@ describe('nextLevel', () => {
     expect(nextLevel('nope')).toBeNull();
   });
 });
+
+describe('levelBalance on a finer grid', () => {
+  const level = getLevel('petri-dish');
+
+  it('grows the lengths with the cells and the room with the area', () => {
+    const base = levelBalance(level);
+    const fine = levelBalance(level, 2);
+
+    expect(fine.startBacteriaRadius).toBe(base.startBacteriaRadius * 2);
+    expect(fine.maxTotalBacteria).toBe(base.maxTotalBacteria * 4);
+    expect(fine.maxBacteriaPerPlayer).toBe(base.maxBacteriaPerPlayer * 4);
+    expect(fine.influenceCellSize).toBe(base.influenceCellSize * 2);
+    expect(fine.nutrientEnergy).toBe(base.nutrientEnergy * 4);
+    expect(fine.aggression).toBe(base.aggression);
+  });
+
+  it('speeds the crosshairs up so they cross the arena as fast', () => {
+    expect(levelCrosshairSpeed(level, 1.5)).toBe(
+      levelCrosshairSpeed(level) * 1.5
+    );
+  });
+});

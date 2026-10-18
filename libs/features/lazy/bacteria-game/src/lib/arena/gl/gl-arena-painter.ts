@@ -1,3 +1,4 @@
+import { scaleOf } from '../../state/arena-size';
 import { GameBalance } from '../../state/game-balance';
 import { Bacteria } from '../../state/player.model';
 import { CellBounds, emptyBounds, growBounds } from '../../state/geometry';
@@ -131,6 +132,8 @@ interface Resources {
 export class GlArenaPainter implements ArenaPainter {
   public readonly kind = 'webgl';
   private resources: Resources | null = null;
+  /** True once the context was handed back - it is not built again then. */
+  private disposed = false;
   private theme: ArenaTheme | null = null;
   private readonly motes: Motes;
   private readonly background = new ShapeBatch();
@@ -138,13 +141,14 @@ export class GlArenaPainter implements ArenaPainter {
   private readonly cellBytes: Uint8Array;
   private readonly canvasWidth: number;
   private readonly canvasHeight: number;
+  /** Cells per base cell - the jam and the crosshairs are as big on every grid. */
+  private readonly unit: number;
 
   /** A painter for the canvas, or null where WebGL2 is not available. */
   public static create(
     canvas: HTMLCanvasElement,
     width: number,
-    height: number,
-    scale: number
+    height: number
   ): GlArenaPainter | null {
     let gl: WebGL2RenderingContext | null = null;
     try {
@@ -159,30 +163,35 @@ export class GlArenaPainter implements ArenaPainter {
     } catch {
       return null;
     }
-    return gl == null
-      ? null
-      : new GlArenaPainter(canvas, gl, width, height, scale);
+    return gl == null ? null : new GlArenaPainter(canvas, gl, width, height);
   }
 
   private constructor(
     canvas: HTMLCanvasElement,
     private readonly gl: WebGL2RenderingContext,
     private readonly width: number,
-    private readonly height: number,
-    scale: number
+    private readonly height: number
   ) {
-    this.canvasWidth = width * scale;
-    this.canvasHeight = height * scale;
+    // Sized by `createArenaPainter`.
+    this.canvasWidth = canvas.width;
+    this.canvasHeight = canvas.height;
+    this.unit = scaleOf(width);
     this.motes = new Motes(width, height);
     this.cellBytes = new Uint8Array(width * height * 2);
     this.resources = this.setup();
 
     canvas.addEventListener('webglcontextlost', (event) => {
+      if (this.disposed) {
+        return;
+      }
       // Without this the browser would never hand the context back.
       event.preventDefault();
       this.resources = null;
     });
     canvas.addEventListener('webglcontextrestored', () => {
+      if (this.disposed) {
+        return;
+      }
       this.resources = this.setup();
       if (this.theme != null) {
         this.uploadFloor(this.theme);
@@ -199,6 +208,16 @@ export class GlArenaPainter implements ArenaPainter {
    */
   public createSimulation(balance: GameBalance): GpuSimulation {
     return new GpuSimulation(this.gl, balance);
+  }
+
+  /**
+   * Hands the context back to the browser right away rather than once the
+   * canvas is collected - a page may only hold a few WebGL contexts.
+   */
+  public dispose(): void {
+    this.disposed = true;
+    this.resources = null;
+    this.gl.getExtension('WEBGL_lose_context')?.loseContext();
   }
 
   public setTheme(theme: ArenaTheme): void {
@@ -252,8 +271,14 @@ export class GlArenaPainter implements ArenaPainter {
     this.foreground.clear();
     pushForeground(
       this.foreground,
-      jamDrops(frame.nutrients, frame.balance.nutrientEnergy, frame.timeSec),
-      frame.cursors
+      jamDrops(
+        frame.nutrients,
+        frame.balance.nutrientEnergy,
+        frame.timeSec,
+        this.unit
+      ),
+      frame.cursors,
+      this.unit
     );
     this.drawShapes(this.foreground);
 
@@ -344,11 +369,14 @@ export class GlArenaPainter implements ArenaPainter {
   private scissorCanvas(bounds: CellBounds, margin: number): void {
     const [x0, y0, x1, y1] = this.box(bounds, margin);
     const scale = this.canvasWidth / this.width;
+    // Out to whole pixels - at a scale like 7.5 a cell edge falls inside one.
+    const left = Math.floor(x0 * scale);
+    const bottom = Math.floor(this.canvasHeight - y1 * scale);
     this.gl.scissor(
-      x0 * scale,
-      this.canvasHeight - y1 * scale,
-      (x1 - x0) * scale,
-      (y1 - y0) * scale
+      left,
+      bottom,
+      Math.ceil(x1 * scale) - left,
+      Math.ceil(this.canvasHeight - y0 * scale) - bottom
     );
   }
 
