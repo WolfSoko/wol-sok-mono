@@ -68,6 +68,7 @@ import {
 } from './state/bot-controller';
 import { BACTERIA_LOOKS, GameSettingsService } from './settings.service';
 import { GameSoundService, MatchResult } from './sound/game-sound.service';
+import { levelMusic } from './sound/level-music';
 import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
 import {
   boostLabel,
@@ -146,8 +147,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Lay the next frame's floor down fully instead of fading into a trail. */
   private clearNextFrame = true;
 
+  // 16:9, the shape of most screens - the arena fills them with little
+  // left over around it.
   width = 320;
-  height = 140;
+  height = 180;
 
   state: Signal<GameStateState | undefined>;
   stats: Signal<ColonyStats[]>;
@@ -331,12 +334,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       initialValue: false,
     });
     effect(() => this.sound.setEnabled(this.settings.sound()));
-    // The level hums while the match is on, and falls silent on pause.
-    effect(() =>
-      this.sound.setAmbience(
-        this.running() && !this.paused() ? this.theme().droneHz : null
-      )
-    );
+    effect(() => this.sound.setMusicEnabled(this.settings.music()));
+    // The level's music plays while the match is on and stops on pause. A
+    // resumed match picks it up where the match clock stands, so it stays
+    // in step with a map that moves to it.
+    effect(() => {
+      const music =
+        this.running() && !this.paused() ? levelMusic(this.level().id) : null;
+      untracked(() =>
+        this.sound.setMusic(music, this.query.getValue().timePassed / 1000)
+      );
+    });
     effect(() => {
       if (this.matchOver()) {
         untracked(() => this.sound.matchEnd(this.matchResult()));
@@ -562,7 +570,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.gameStateService.cleanup();
     // The GPU simulation lives in this canvas's context, which goes with it.
     this.playerService.useSimulation(null);
-    this.sound.setAmbience(null);
+    this.sound.setMusic(null);
     // Leaving the page must give the screen back as well.
     exitFullscreen(document);
     unlockOrientation(screen);

@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { GameSoundService } from './game-sound.service';
+import { levelMusic } from './level-music';
 
 describe('GameSoundService', () => {
   it('stays silent without the Web Audio API instead of throwing', () => {
@@ -9,7 +10,8 @@ describe('GameSoundService', () => {
       sound.setEnabled(false);
       sound.matchStart();
       sound.boost(false);
-      sound.setAmbience(50);
+      sound.setMusicEnabled(false);
+      sound.setMusic(levelMusic('heartbeat'), 3);
       sound.frame({
         boosts: [true],
         captures: 3,
@@ -19,7 +21,7 @@ describe('GameSoundService', () => {
         gatesWarned: 1,
       });
       sound.matchEnd('win');
-      sound.setAmbience(null);
+      sound.setMusic(null);
     }).not.toThrow();
   });
 });

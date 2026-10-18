@@ -197,6 +197,13 @@
                     >
                       Sound
                     </mat-slide-toggle>
+                    <mat-slide-toggle
+                      [checked]="settings.music()"
+                      [disabled]="!settings.sound()"
+                      (change)="settings.setMusic($event.checked)"
+                    >
+                      Music
+                    </mat-slide-toggle>
                     @if (nativeFullscreenSupported()) {
                       <mat-slide-toggle
                         [checked]="nativeFullscreen()"

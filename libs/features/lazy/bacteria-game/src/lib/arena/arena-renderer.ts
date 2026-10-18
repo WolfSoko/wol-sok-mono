@@ -2,6 +2,7 @@ import { Motes } from './motes';
 import { DynamicWall, Rect } from '../state/maps';
 import { ArenaPattern, ArenaTheme } from './arena-theme';
 import { createCanvas, hash, lerp, mix, rgba, smoothstep } from './canvas-math';
+import { darker } from './colony-renderer';
 
 /**
  * Paints the floor of an arena into an RGBA pixel buffer: the theme's floor
@@ -77,7 +78,7 @@ export class ArenaRenderer {
   /** Diagonal hazard stripes for the closed gates and sliding walls. */
   private hazard: CanvasPattern | null = null;
   /** The theme's colours as CSS, built once instead of every frame. */
-  private css = { wall: '', wallEdge: '', border: '', motes: '' };
+  private css = { wall: '', wallEdge: '', wallRim: '', border: '', motes: '' };
   private readonly motes: Motes;
 
   public constructor(
@@ -99,6 +100,7 @@ export class ArenaRenderer {
     this.css = {
       wall: rgba(theme.wall),
       wallEdge: rgba(theme.wallEdge),
+      wallRim: rgba(darker(theme.wall)),
       border: rgba(theme.border),
       motes: rgba(theme.motes),
     };
@@ -120,13 +122,20 @@ export class ArenaRenderer {
     cx.globalAlpha = 1;
   }
 
-  /** Draws the static walls with a lit top and left edge. */
+  /**
+   * Draws the static walls with a lit top and left edge - the round ones as
+   * blobs that melt into each other, see {@link blobBody}.
+   */
   public drawWalls(cx: CanvasRenderingContext2D, walls: readonly Rect[]): void {
     const theme = this.theme;
     if (theme == null) {
       return;
     }
+    this.drawBlobs(cx, walls, this.css.wallRim);
     for (const wall of walls) {
+      if (wall.round) {
+        continue;
+      }
       cx.fillStyle = this.css.wall;
       cx.fillRect(wall.x, wall.y, wall.width, wall.height);
       cx.fillStyle = this.css.wallEdge;
@@ -148,7 +157,12 @@ export class ArenaRenderer {
     if (theme == null) {
       return;
     }
+    // Living tissue rather than machinery: rimmed in the frame colour.
+    this.drawBlobs(cx, walls, this.css.border);
     for (const wall of walls) {
+      if (wall.round) {
+        continue;
+      }
       if (wall.solid) {
         // The pattern lives in arena space, so a sliding wall moves under
         // still stripes - like a conveyor, which reads as motion.
@@ -168,6 +182,45 @@ export class ArenaRenderer {
         wall.height - 1
       );
     }
+  }
+
+  /**
+   * The round walls among these: every rim first, then every body over
+   * them, so overlapping blobs read as one lumpy shape without seams - and
+   * a wet shine on each.
+   */
+  private drawBlobs(
+    cx: CanvasRenderingContext2D,
+    walls: readonly Rect[],
+    rim: string
+  ): void {
+    const layers = [
+      { color: rim, alpha: 1, shape: (wall: Rect) => wall },
+      { color: this.css.wall, alpha: 1, shape: blobBody },
+      { color: this.css.wallEdge, alpha: BLOB_GLOSS_ALPHA, shape: blobGloss },
+    ];
+    for (const { color, alpha, shape } of layers) {
+      cx.fillStyle = color;
+      cx.globalAlpha = alpha;
+      cx.beginPath();
+      for (const wall of walls) {
+        if (wall.round) {
+          const { x, y, width, height } = shape(wall);
+          cx.moveTo(x + width, y + height / 2);
+          cx.ellipse(
+            x + width / 2,
+            y + height / 2,
+            width / 2,
+            height / 2,
+            0,
+            0,
+            2 * Math.PI
+          );
+        }
+      }
+      cx.fill();
+    }
+    cx.globalAlpha = 1;
   }
 
   /** Moves the specks along the current and draws them, twinkling. */
@@ -222,6 +275,34 @@ export class ArenaRenderer {
     return canvas;
   }
 }
+
+/**
+ * The body of a round wall: its ellipse pulled in a little, so the rim drawn
+ * underneath shows around it as an outline.
+ */
+export function blobBody(wall: Rect): Rect {
+  return {
+    x: wall.x + 0.7,
+    y: wall.y + 0.7,
+    width: Math.max(0, wall.width - 1.4),
+    height: Math.max(0, wall.height - 1.4),
+  };
+}
+
+/** The wet shine on a round wall: a small ellipse up and to the left. */
+export function blobGloss(wall: Rect): Rect {
+  const rx = wall.width / 2;
+  const ry = wall.height / 2;
+  return {
+    x: wall.x + rx * 0.3,
+    y: wall.y + ry * 0.25,
+    width: rx * 0.8,
+    height: ry * 0.6,
+  };
+}
+
+/** Opacity of the shine on a round wall. */
+export const BLOB_GLOSS_ALPHA = 0.3;
 
 /** Width of one hazard stripe tile in arena cells - a dark and a light band. */
 export const HAZARD_TILE = 6;
@@ -295,6 +376,40 @@ const PATTERNS: Record<
     const pad =
       x % size <= 1 && y % size <= 1 && hash(cx, cy, 17) > 0.7 ? 1 : 0;
     return Math.max(onRow || onColumn ? 0.9 : 0, pad);
+  },
+  // Rings of small air sacs, as in a slice of lung.
+  bubbles: (x, y) => {
+    const size = 14;
+    const cx = Math.floor(x / size);
+    const cy = Math.floor(y / size);
+    const px = (cx + 0.2 + hash(cx, cy, 29) * 0.6) * size;
+    const py = (cy + 0.2 + hash(cx, cy, 31) * 0.6) * size;
+    const radius = size * (0.18 + hash(cx, cy, 37) * 0.2);
+    return (
+      1 - smoothstep(0.4, 1.4, Math.abs(Math.hypot(x - px, y - py) - radius))
+    );
+  },
+  // Fine, tangled threads - ridges of two noises crossing.
+  hyphae: (x, y) => {
+    const fine = Math.abs(fractalNoise(x / 14, y / 14, 41) - 0.5);
+    const coarse = Math.abs(fractalNoise(x / 34, y / 34, 43) - 0.5);
+    return Math.max(
+      1 - smoothstep(0.01, 0.035, fine),
+      0.7 * (1 - smoothstep(0.01, 0.04, coarse))
+    );
+  },
+  // Muscle fibres: long, gently bending stripes.
+  fibres: (x, y) => {
+    const bend = fractalNoise(x / 40, y / 40, 47) * 10;
+    const stripe = Math.sin((y + bend + x * 0.15) * 1.3);
+    return smoothstep(0.55, 0.95, stripe) * (0.6 + 0.4 * hash(x >> 3, y, 53));
+  },
+  // The wrinkles of a gut lining: soft waves running across.
+  folds: (x, y) => {
+    const wave = Math.sin(
+      x / 5 + Math.sin(y / 9) * 2.2 + fractalNoise(x / 24, y / 24, 59) * 4
+    );
+    return smoothstep(0.7, 1, wave);
   },
 };
 

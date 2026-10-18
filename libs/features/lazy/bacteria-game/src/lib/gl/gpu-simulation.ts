@@ -12,9 +12,9 @@ import {
   compareDynamicWalls,
   DynamicWall,
   GameMap,
-  getMap,
   stampRect,
 } from '../state/maps';
+import { getMap } from '../state/game-maps';
 import { NutrientPellets } from '../state/nutrient-pellets';
 import { createBacteriaBlob, isBoosted, Player } from '../state/player.model';
 import { ColonySummary, Simulation } from '../state/simulation';

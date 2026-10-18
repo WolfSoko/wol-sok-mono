@@ -10,11 +10,15 @@ export type ArenaPattern =
   | 'hex'
   | 'cells'
   | 'veins'
-  | 'circuit';
+  | 'circuit'
+  | 'bubbles'
+  | 'hyphae'
+  | 'fibres'
+  | 'folds';
 
 /**
- * How a level looks and sounds: the floor the colonies fight on, its walls,
- * the frame around it and the hum underneath.
+ * How a level looks: the floor the colonies fight on, its walls and the
+ * frame around it. Its music is in `LEVEL_MUSIC`.
  *
  * Every floor stays dark, so the orange and blue colonies always stand out
  * against it - the texture is there to give a level its own place, not to
@@ -40,8 +44,6 @@ export interface ArenaTheme {
   moteCount: number;
   /** Which way and how fast the specks drift, in arena pixels per second. */
   current: { x: number; y: number };
-  /** Base pitch of the level's ambient hum in Hz. */
-  droneHz: number;
 }
 
 const THEMES: Record<string, ArenaTheme> = {
@@ -57,7 +59,6 @@ const THEMES: Record<string, ArenaTheme> = {
     motes: [250, 230, 170],
     moteCount: 26,
     current: { x: 1.5, y: -0.8 },
-    droneHz: 55,
   },
   corridors: {
     floor: [10, 20, 34],
@@ -71,7 +72,6 @@ const THEMES: Record<string, ArenaTheme> = {
     motes: [150, 200, 255],
     moteCount: 20,
     current: { x: 0, y: 2 },
-    droneHz: 49,
   },
   hourglass: {
     floor: [34, 22, 10],
@@ -85,7 +85,6 @@ const THEMES: Record<string, ArenaTheme> = {
     motes: [255, 210, 140],
     moteCount: 34,
     current: { x: 4, y: 0.5 },
-    droneHz: 46,
   },
   'inner-ring': {
     floor: [6, 26, 26],
@@ -99,7 +98,6 @@ const THEMES: Record<string, ArenaTheme> = {
     motes: [150, 255, 235],
     moteCount: 24,
     current: { x: -1.2, y: 1.2 },
-    droneHz: 52,
   },
   'pillar-field': {
     floor: [10, 24, 10],
@@ -113,7 +111,6 @@ const THEMES: Record<string, ArenaTheme> = {
     motes: [190, 255, 170],
     moteCount: 22,
     current: { x: 1, y: 1.5 },
-    droneHz: 58,
   },
   'twin-chambers': {
     floor: [22, 10, 30],
@@ -127,7 +124,6 @@ const THEMES: Record<string, ArenaTheme> = {
     motes: [225, 190, 255],
     moteCount: 22,
     current: { x: -1.5, y: -1 },
-    droneHz: 44,
   },
   serpentine: {
     floor: [30, 6, 9],
@@ -141,7 +137,6 @@ const THEMES: Record<string, ArenaTheme> = {
     motes: [255, 160, 160],
     moteCount: 30,
     current: { x: 2.5, y: 2.5 },
-    droneHz: 41,
   },
   pistons: {
     floor: [17, 17, 20],
@@ -155,7 +150,62 @@ const THEMES: Record<string, ArenaTheme> = {
     motes: [255, 225, 140],
     moteCount: 18,
     current: { x: 0, y: -1.5 },
-    droneHz: 37,
+  },
+  // Pink, wet lung tissue.
+  alveoli: {
+    floor: [34, 10, 18],
+    rim: [10, 2, 5],
+    pattern: 'bubbles',
+    patternColor: [110, 36, 60],
+    patternStrength: 0.55,
+    wall: [205, 120, 140],
+    wallEdge: [255, 200, 210],
+    border: [255, 120, 160],
+    motes: [255, 205, 220],
+    moteCount: 30,
+    current: { x: 0.8, y: -1.6 },
+  },
+  // Pale threads in dark, damp soil.
+  mycelium: {
+    floor: [18, 15, 11],
+    rim: [5, 4, 3],
+    pattern: 'hyphae',
+    patternColor: [86, 78, 60],
+    patternStrength: 0.6,
+    wall: [200, 190, 160],
+    wallEdge: [250, 245, 220],
+    border: [220, 230, 140],
+    motes: [235, 240, 180],
+    moteCount: 34,
+    current: { x: -0.6, y: 0.9 },
+  },
+  // Deep red muscle.
+  heartbeat: {
+    floor: [32, 4, 8],
+    rim: [9, 1, 2],
+    pattern: 'fibres',
+    patternColor: [104, 18, 30],
+    patternStrength: 0.55,
+    wall: [180, 50, 70],
+    wallEdge: [255, 140, 150],
+    border: [255, 60, 90],
+    motes: [255, 150, 160],
+    moteCount: 24,
+    current: { x: 2, y: 0 },
+  },
+  // The soft, folded lining of a gut.
+  villi: {
+    floor: [30, 16, 8],
+    rim: [9, 4, 2],
+    pattern: 'folds',
+    patternColor: [100, 56, 26],
+    patternStrength: 0.55,
+    wall: [215, 150, 110],
+    wallEdge: [255, 215, 180],
+    border: [255, 170, 90],
+    motes: [255, 220, 170],
+    moteCount: 28,
+    current: { x: 3, y: 0 },
   },
 };
 

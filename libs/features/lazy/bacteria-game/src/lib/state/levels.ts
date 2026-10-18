@@ -1,5 +1,6 @@
 import { GameBalance, gameBalance } from './game-balance';
-import { GameMap, getMap } from './maps';
+import { getMap } from './game-maps';
+import { GameMap } from './maps';
 
 /**
  * A level is a map plus the tuning that makes it play differently.
@@ -129,6 +130,70 @@ export const LEVELS: readonly Level[] = [
       nutrientRespawnDelaySec: 1.5,
     },
     crosshairSpeed: 200,
+  },
+  // The organic levels: walls that grew rather than were built, and some
+  // that are alive. The hardest balance of the game.
+  {
+    id: 'alveoli',
+    name: '9 · Alveoli',
+    description:
+      'Packed air sacs and nothing straight between them. Thread your colony through the channels before the enemy floods them.',
+    mapId: 'alveoli',
+    balance: {
+      aggression: 0.8,
+      divideChancePerSec: 4,
+      combatDrainPerSec: 2.2,
+      nutrientCount: 12,
+      nutrientRespawnDelaySec: 1.5,
+    },
+    crosshairSpeed: 200,
+  },
+  {
+    id: 'mycelium',
+    name: '10 · Mycelium',
+    description:
+      'Fungal threads branch in from both edges - a maze nobody planned, with restless colonies in every pocket.',
+    mapId: 'mycelium',
+    balance: {
+      aggression: 0.85,
+      divideChancePerSec: 4.2,
+      combatDrainPerSec: 2.4,
+      jitter: 0.4,
+      nutrientCount: 12,
+      nutrientRespawnDelaySec: 1.4,
+    },
+    crosshairSpeed: 210,
+  },
+  {
+    id: 'heartbeat',
+    name: '11 · Heartbeat',
+    description:
+      'A heart in the middle swells with every beat and shoves both colonies away. Strike between the beats.',
+    mapId: 'heartbeat',
+    balance: {
+      aggression: 0.9,
+      divideChancePerSec: 4.4,
+      combatDrainPerSec: 2.5,
+      nutrientCount: 12,
+      nutrientRespawnDelaySec: 1.2,
+    },
+    crosshairSpeed: 210,
+  },
+  {
+    id: 'villi',
+    name: '12 · Villi',
+    description:
+      'The lining of a gut: soft fingers sway in from both edges and sweep everything along. The final and fiercest war.',
+    mapId: 'villi',
+    balance: {
+      aggression: 0.95,
+      divideChancePerSec: 4.6,
+      combatDrainPerSec: 2.7,
+      captureEnergy: 0.4,
+      nutrientCount: 14,
+      nutrientRespawnDelaySec: 1.2,
+    },
+    crosshairSpeed: 220,
   },
 ];
 

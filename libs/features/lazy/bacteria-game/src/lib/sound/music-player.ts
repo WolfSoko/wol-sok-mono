@@ -1,0 +1,232 @@
+import {
+  composeLoop,
+  Drum,
+  DRUM_LEVEL,
+  LevelMusic,
+  midiToHz,
+  MusicLoop,
+  MusicNote,
+  stepSeconds,
+} from './level-music';
+
+/** How far ahead notes are handed to the audio clock, in seconds. */
+const LOOKAHEAD_SEC = 0.25;
+/** How often the scheduler wakes up to hand them over, in milliseconds. */
+const TICK_MS = 60;
+/** Seconds for the fighting to cool the music back down by two thirds. */
+const COOL_DOWN_SEC = 4;
+
+/** Loudness of each voice at full velocity. */
+const VOLUME = { lead: 0.045, pad: 0.012, bass: 0.07 } as const;
+
+/**
+ * Plays a level's music on a Web Audio context: composes the loop once and
+ * schedules its notes a little ahead of the audio clock, so a busy frame on
+ * the main thread never makes the music stumble.
+ *
+ * The music answers the match: {@link excite} pushes it towards full
+ * intensity - louder drums, a brighter melody - and it cools down again on
+ * its own once the fighting stops.
+ */
+export class MusicPlayer {
+  private readonly loop: MusicLoop;
+  private readonly stepSec: number;
+  private readonly bus: GainNode;
+  private readonly leadFilter: BiquadFilterNode;
+  private readonly drumBus: GainNode;
+  private readonly nodes: AudioNode[] = [];
+  private timer: ReturnType<typeof setInterval> | null = null;
+  /** The sixteenth of the loop that is scheduled next, and when it plays. */
+  private nextStep = 0;
+  private nextStepAt = 0;
+  private intensity = 0;
+  private lastTickAt = 0;
+
+  public constructor(
+    private readonly context: AudioContext,
+    destination: AudioNode,
+    private readonly music: LevelMusic,
+    private readonly noise: () => AudioBuffer
+  ) {
+    this.loop = composeLoop(music);
+    this.stepSec = stepSeconds(music.bpm);
+
+    this.bus = context.createGain();
+    this.bus.gain.value = 0;
+    this.bus.connect(destination);
+
+    // An echo of a dotted eighth, fed back into itself.
+    if (music.echo > 0) {
+      const delay = context.createDelay(1);
+      delay.delayTime.value = this.stepSec * 3;
+      const feedback = context.createGain();
+      feedback.gain.value = music.echo;
+      const wet = context.createGain();
+      wet.gain.value = 0.5;
+      this.bus.connect(delay);
+      delay.connect(feedback);
+      feedback.connect(delay);
+      delay.connect(wet);
+      wet.connect(destination);
+      this.nodes.push(delay, feedback, wet);
+    }
+
+    this.leadFilter = context.createBiquadFilter();
+    this.leadFilter.type = 'lowpass';
+    this.leadFilter.connect(this.bus);
+    this.drumBus = context.createGain();
+    this.drumBus.connect(this.bus);
+    this.nodes.push(this.leadFilter, this.drumBus);
+    this.applyIntensity();
+  }
+
+  /**
+   * Fades the music in, starting `atSec` seconds into it - a resumed match
+   * picks up where its music would be, in step with a map that moves to it.
+   */
+  public start(atSec = 0): void {
+    const now = this.context.currentTime;
+    const firstStep = Math.ceil(atSec / this.stepSec - 1e-6);
+    this.nextStep = firstStep % this.loop.steps;
+    this.nextStepAt = now + 0.05 + (firstStep * this.stepSec - atSec);
+    this.lastTickAt = now;
+    this.bus.gain.cancelScheduledValues(now);
+    this.bus.gain.setTargetAtTime(1, now, 0.4);
+    this.tick();
+    this.timer = setInterval(() => this.tick(), TICK_MS);
+  }
+
+  /** Fades the music out and lets go of its audio nodes. */
+  public stop(): void {
+    if (this.timer != null) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+    const now = this.context.currentTime;
+    this.bus.gain.cancelScheduledValues(now);
+    this.bus.gain.setTargetAtTime(0, now, 0.25);
+    const nodes = [this.bus, ...this.nodes];
+    setTimeout(() => nodes.forEach((node) => node.disconnect()), 2500);
+  }
+
+  /** Heats the music up - by a little for every bacterium that changed sides. */
+  public excite(amount: number): void {
+    this.intensity = Math.min(1, this.intensity + amount);
+  }
+
+  private tick(): void {
+    const now = this.context.currentTime;
+    this.intensity *= Math.exp(-(now - this.lastTickAt) / COOL_DOWN_SEC);
+    this.lastTickAt = now;
+    this.applyIntensity();
+
+    // Throttled in a background tab: skip what is already late rather than
+    // playing a burst of it at once.
+    if (this.nextStepAt < now) {
+      const behind = Math.ceil((now - this.nextStepAt) / this.stepSec);
+      this.nextStep = (this.nextStep + behind) % this.loop.steps;
+      this.nextStepAt += behind * this.stepSec;
+    }
+    while (this.nextStepAt < now + LOOKAHEAD_SEC) {
+      this.playStep(this.nextStep, this.nextStepAt);
+      this.nextStep = (this.nextStep + 1) % this.loop.steps;
+      this.nextStepAt += this.stepSec;
+    }
+  }
+
+  private applyIntensity(): void {
+    const now = this.context.currentTime;
+    const level = Math.min(
+      1,
+      DRUM_LEVEL[this.music.drums] + 0.6 * this.intensity
+    );
+    this.drumBus.gain.setTargetAtTime(level, now, 0.3);
+    this.leadFilter.frequency.setTargetAtTime(
+      1800 + 3200 * this.intensity,
+      now,
+      0.3
+    );
+  }
+
+  private playStep(step: number, at: number): void {
+    for (const note of this.loop.notes) {
+      if (note.step === step) {
+        this.playNote(note, at);
+      }
+    }
+    for (const hit of this.loop.drums) {
+      if (hit.step === step) {
+        this.playDrum(hit.drum, hit.velocity, at);
+      }
+    }
+  }
+
+  private playNote(note: MusicNote, at: number): void {
+    const context = this.context;
+    const duration = note.steps * this.stepSec;
+    const hz = midiToHz(note.midi);
+    const gain = context.createGain();
+    const peak = VOLUME[note.voice] * note.velocity;
+    // Pads swell in and out, the rest plucks.
+    const attack = note.voice === 'pad' ? duration * 0.3 : 0.01;
+    const release = note.voice === 'pad' ? duration * 0.4 : 0.08;
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(peak, at + attack);
+    gain.gain.setTargetAtTime(peak * 0.6, at + attack, duration * 0.3);
+    gain.gain.setTargetAtTime(0.0001, at + duration, release / 3);
+    gain.connect(note.voice === 'lead' ? this.leadFilter : this.bus);
+
+    const voices =
+      note.voice === 'pad'
+        ? // Two voices a few cents apart make the pad shimmer.
+          [
+            { type: 'triangle' as const, detune: -6 },
+            { type: 'triangle' as const, detune: 6 },
+          ]
+        : [
+            {
+              type: note.voice === 'lead' ? this.music.lead : 'triangle',
+              detune: 0,
+            },
+          ];
+    for (const { type, detune } of voices) {
+      const oscillator = context.createOscillator();
+      oscillator.type = type;
+      oscillator.frequency.value = hz;
+      oscillator.detune.value = detune;
+      oscillator.connect(gain);
+      oscillator.start(at);
+      oscillator.stop(at + duration + release + 0.1);
+    }
+  }
+
+  private playDrum(drum: Drum, velocity: number, at: number): void {
+    const context = this.context;
+    const gain = context.createGain();
+    gain.connect(this.drumBus);
+    if (drum === 'kick') {
+      const oscillator = context.createOscillator();
+      oscillator.frequency.setValueAtTime(120, at);
+      oscillator.frequency.exponentialRampToValueAtTime(42, at + 0.14);
+      gain.gain.setValueAtTime(0.16 * velocity, at);
+      gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.22);
+      oscillator.connect(gain);
+      oscillator.start(at);
+      oscillator.stop(at + 0.25);
+      return;
+    }
+    const source = context.createBufferSource();
+    source.buffer = this.noise();
+    const filter = context.createBiquadFilter();
+    const hat = drum === 'hat';
+    filter.type = hat ? 'highpass' : 'bandpass';
+    filter.frequency.value = hat ? 7000 : 1800;
+    const length = hat ? 0.04 : 0.12;
+    gain.gain.setValueAtTime((hat ? 0.025 : 0.05) * velocity, at);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + length);
+    source.connect(filter);
+    filter.connect(gain);
+    source.start(at);
+    source.stop(at + length + 0.02);
+  }
+}

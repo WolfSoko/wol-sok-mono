@@ -1,7 +1,8 @@
 import { BacteriaSimulation, Colony } from './bacteria-simulation';
 import { GameBalance, gameBalance } from './game-balance';
 import { DEFAULT_CROSSHAIR_SPEED } from './levels';
-import { GameMap, gateState, getMap } from './maps';
+import { getMap } from './game-maps';
+import { GameMap, gateState } from './maps';
 import { Bacteria, createPlayer, Player } from './player.model';
 
 // The production canvas size. Smaller arenas push the walls outside the grid,

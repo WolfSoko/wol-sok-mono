@@ -14,6 +14,7 @@ export interface StoredSettings {
   levelId?: string;
   showFps?: boolean;
   sound?: boolean;
+  music?: boolean;
   /** The colour ids of the left and the right colony. */
   colors?: [string, string];
   look?: BacteriaLook;
@@ -37,7 +38,7 @@ const MODES: readonly GameMode[] = ['vs-computer', 'two-players'];
 /**
  * Keeps the player's choices - opponent, difficulty, level, colours, how the
  * bacteria look, whether the frame rate is shown and whether the game makes
- * sound - across visits, in the browser's local storage.
+ * sound and plays music - across visits, in the browser's local storage.
  *
  * The match settings live in the game state store, as they did; this service
  * only restores them when the game is opened and writes them back whenever
@@ -53,6 +54,8 @@ export class GameSettingsService {
   public readonly showFps = signal(false);
   /** True while the game makes sound. */
   public readonly sound = signal(true);
+  /** True while the levels play their music - under the sound switch. */
+  public readonly music = signal(true);
   /** How the bacteria are drawn. */
   public readonly look = signal<BacteriaLook>('slime');
 
@@ -87,6 +90,11 @@ export class GameSettingsService {
     this.persist();
   }
 
+  public setMusic(on: boolean): void {
+    this.music.set(on);
+    this.persist();
+  }
+
   public setLook(look: BacteriaLook): void {
     this.look.set(look);
     this.persist();
@@ -113,6 +121,7 @@ export class GameSettingsService {
     }
     this.showFps.set(stored.showFps === true);
     this.sound.set(stored.sound !== false);
+    this.music.set(stored.music !== false);
   }
 
   private persist(): void {
@@ -125,6 +134,7 @@ export class GameSettingsService {
       look: this.look(),
       showFps: this.showFps(),
       sound: this.sound(),
+      music: this.music(),
     };
     try {
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
