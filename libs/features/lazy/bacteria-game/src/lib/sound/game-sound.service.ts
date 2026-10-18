@@ -49,6 +49,13 @@ export class GameSoundService {
   private player: MusicPlayer | null = null;
   /** The music asked for - also before there is a context to play it in. */
   private music: LevelMusic | null = null;
+  /**
+   * Where that music was to start, and when it was asked for (in ms of
+   * `performance.now()`) - to start it at the right point once it can play.
+   */
+  private musicStart = { atSec: 0, askedAtMs: 0 };
+  /** True while the audio is held because the page is hidden. */
+  private suspendedWhileHidden = false;
   private enabled = true;
   private musicEnabled = true;
   private lastCaptureAt = -Infinity;
@@ -60,6 +67,12 @@ export class GameSoundService {
       const unlock = () => this.unlock();
       document.addEventListener('pointerup', unlock, { capture: true });
       document.addEventListener('keydown', unlock, { capture: true });
+      // A hidden page stops drawing frames, so the match stands still. The
+      // music holds with it - it would stutter anyway, as browsers throttle
+      // the timers of a hidden page - and stays in step with moving maps.
+      document.addEventListener('visibilitychange', () =>
+        this.followVisibility(document.hidden)
+      );
     }
   }
 
@@ -111,10 +124,26 @@ export class GameSoundService {
       void this.context.resume();
     }
     if (this.player == null && this.music != null) {
-      // The music was asked for before there was a context to play it in.
+      // The music was asked for before there was a context to play it in;
+      // the match has gone on since.
       const music = this.music;
+      const { atSec, askedAtMs } = this.musicStart;
       this.music = null;
-      this.setMusic(music);
+      this.setMusic(music, atSec + (performance.now() - askedAtMs) / 1000);
+    }
+  }
+
+  private followVisibility(hidden: boolean): void {
+    const context = this.context;
+    if (context == null) {
+      return;
+    }
+    if (hidden && context.state === 'running') {
+      this.suspendedWhileHidden = true;
+      void context.suspend();
+    } else if (!hidden && this.suspendedWhileHidden) {
+      this.suspendedWhileHidden = false;
+      void context.resume();
     }
   }
 
@@ -216,12 +245,17 @@ export class GameSoundService {
     this.player?.stop();
     this.player = null;
     this.music = music;
+    this.musicStart = { atSec, askedAtMs: performance.now() };
     const context = this.context;
     if (music == null || context == null || this.musicBus == null) {
       return;
     }
-    this.player = new MusicPlayer(context, this.musicBus, music, () =>
-      this.whiteNoise(context)
+    this.player = new MusicPlayer(
+      context,
+      this.musicBus,
+      music,
+      () => this.whiteNoise(context),
+      () => this.enabled && this.musicEnabled
     );
     this.player.start(atSec);
   }

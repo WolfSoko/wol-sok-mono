@@ -186,23 +186,25 @@ function composeMotif(music: LevelMusic, random: () => number): MotifNote[] {
       onsets.push(step);
     }
   }
+  // Degrees count scale notes, so the octave is as far up as the scale is
+  // long - seven for most scales, six for the whole tone scale.
+  const octave = music.scale.length;
+  const chordTones = [0, 2, 4, octave];
   let degree = Math.floor(random() * 3) * 2;
   return onsets.map((step, i) => {
-    degree = clampDegree(degree + Math.round((random() - 0.5) * 4));
+    degree = Math.min(
+      octave + 2,
+      Math.max(-2, degree + Math.round((random() - 0.5) * 4))
+    );
     if (step % 4 === 0) {
-      // Snap to the nearest of root, third and fifth (or the octave).
-      degree = Math.min(7, Math.max(0, Math.round(degree / 2) * 2));
-      if (degree === 6) {
-        degree = random() < 0.5 ? 4 : 7;
-      }
+      // Land on the nearest of root, third, fifth and octave.
+      degree = chordTones.reduce((best, tone) =>
+        Math.abs(tone - degree) < Math.abs(best - degree) ? tone : best
+      );
     }
     const next = onsets[i + 1] ?? STEPS_PER_BAR;
     return { step, steps: Math.min(4, next - step), degree };
   });
-}
-
-function clampDegree(degree: number): number {
-  return Math.min(9, Math.max(-2, degree));
 }
 
 /** The bass of one bar, under the chord built on that degree. */

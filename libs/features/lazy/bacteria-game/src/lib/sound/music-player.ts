@@ -1,6 +1,7 @@
 import {
   composeLoop,
   Drum,
+  DrumHit,
   DRUM_LEVEL,
   LevelMusic,
   midiToHz,
@@ -30,6 +31,9 @@ const VOLUME = { lead: 0.045, pad: 0.012, bass: 0.07 } as const;
  */
 export class MusicPlayer {
   private readonly loop: MusicLoop;
+  /** The loop's notes and drum hits, sorted by the sixteenth they fall on. */
+  private readonly notesByStep: MusicNote[][];
+  private readonly drumsByStep: DrumHit[][];
   private readonly stepSec: number;
   private readonly bus: GainNode;
   private readonly leadFilter: BiquadFilterNode;
@@ -46,9 +50,13 @@ export class MusicPlayer {
     private readonly context: AudioContext,
     destination: AudioNode,
     private readonly music: LevelMusic,
-    private readonly noise: () => AudioBuffer
+    private readonly noise: () => AudioBuffer,
+    /** False while nobody would hear it - the notes are then skipped. */
+    private readonly audible: () => boolean
   ) {
     this.loop = composeLoop(music);
+    this.notesByStep = byStep(this.loop.steps, this.loop.notes);
+    this.drumsByStep = byStep(this.loop.steps, this.loop.drums);
     this.stepSec = stepSeconds(music.bpm);
 
     this.bus = context.createGain();
@@ -85,6 +93,9 @@ export class MusicPlayer {
    * picks up where its music would be, in step with a map that moves to it.
    */
   public start(atSec = 0): void {
+    if (this.timer != null) {
+      clearInterval(this.timer);
+    }
     const now = this.context.currentTime;
     const firstStep = Math.ceil(atSec / this.stepSec - 1e-6);
     this.nextStep = firstStep % this.loop.steps;
@@ -149,15 +160,15 @@ export class MusicPlayer {
   }
 
   private playStep(step: number, at: number): void {
-    for (const note of this.loop.notes) {
-      if (note.step === step) {
-        this.playNote(note, at);
-      }
+    if (!this.audible()) {
+      // Muted: keep time, but build no audio nodes nobody would hear.
+      return;
     }
-    for (const hit of this.loop.drums) {
-      if (hit.step === step) {
-        this.playDrum(hit.drum, hit.velocity, at);
-      }
+    for (const note of this.notesByStep[step]) {
+      this.playNote(note, at);
+    }
+    for (const hit of this.drumsByStep[step]) {
+      this.playDrum(hit.drum, hit.velocity, at);
     }
   }
 
@@ -229,4 +240,13 @@ export class MusicPlayer {
     source.start(at);
     source.stop(at + length + 0.02);
   }
+}
+
+/** Sorts what plays in a loop into one list per sixteenth. */
+function byStep<T extends { step: number }>(steps: number, items: T[]): T[][] {
+  const buckets: T[][] = Array.from({ length: steps }, () => []);
+  for (const item of items) {
+    buckets[item.step].push(item);
+  }
+  return buckets;
 }

@@ -81,6 +81,23 @@ describe('level music', () => {
       }
     });
 
+    it('lands the melody on a chord tone on every beat', () => {
+      const octave = music.scale.length;
+      const pitchClass = (midi: number) =>
+        (((midi - music.root) % 12) + 12) % 12;
+      for (const note of loop.notes) {
+        if (note.voice !== 'lead' || note.step % 4 !== 0) {
+          continue;
+        }
+        const bar = Math.floor(note.step / STEPS_PER_BAR);
+        const chord = music.progression[bar % music.progression.length];
+        const chordTones = [0, 2, 4, octave].map((tone) =>
+          pitchClass(degreeToMidi(music, chord + tone))
+        );
+        expect(chordTones).toContain(pitchClass(note.midi));
+      }
+    });
+
     it('sings in a range a phone speaker can play', () => {
       for (const note of loop.notes) {
         expect(midiToHz(note.midi)).toBeGreaterThan(80);

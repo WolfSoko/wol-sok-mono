@@ -1,9 +1,7 @@
 import { DynamicWall, Rect } from '../../state/maps';
 import { CursorShape, boostRingRadius } from '../arena-painter';
 import {
-  BLOB_GLOSS_ALPHA,
-  blobBody,
-  blobGloss,
+  blobLayers,
   gateBlink,
   HAZARD_TILE,
   openGateFill,
@@ -153,30 +151,18 @@ export function pushBackground(
   }
 }
 
-/**
- * The round walls among these: every rim first, then every body over them,
- * so overlapping blobs read as one lumpy shape without seams - and a wet
- * shine on each.
- */
+/** The round walls among these, as `blobLayers` lays them. */
 function pushBlobs(
   batch: ShapeBatch,
   walls: readonly Rect[],
   rim: Rgb,
   theme: ArenaTheme
 ): void {
-  for (const wall of walls) {
-    if (wall.round) {
-      batch.push(SHAPE.disc, wall, rim);
-    }
-  }
-  for (const wall of walls) {
-    if (wall.round) {
-      batch.push(SHAPE.disc, blobBody(wall), theme.wall);
-    }
-  }
-  for (const wall of walls) {
-    if (wall.round) {
-      batch.push(SHAPE.disc, blobGloss(wall), theme.wallEdge, BLOB_GLOSS_ALPHA);
+  for (const { shape, color, alpha } of blobLayers(rim, theme)) {
+    for (const wall of walls) {
+      if (wall.round) {
+        batch.push(SHAPE.disc, shape(wall), color, alpha);
+      }
     }
   }
 }

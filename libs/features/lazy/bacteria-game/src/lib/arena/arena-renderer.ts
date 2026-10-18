@@ -1,6 +1,6 @@
 import { Motes } from './motes';
 import { DynamicWall, Rect } from '../state/maps';
-import { ArenaPattern, ArenaTheme } from './arena-theme';
+import { ArenaPattern, ArenaTheme, Rgb } from './arena-theme';
 import { createCanvas, hash, lerp, mix, rgba, smoothstep } from './canvas-math';
 import { darker } from './colony-renderer';
 
@@ -78,7 +78,7 @@ export class ArenaRenderer {
   /** Diagonal hazard stripes for the closed gates and sliding walls. */
   private hazard: CanvasPattern | null = null;
   /** The theme's colours as CSS, built once instead of every frame. */
-  private css = { wall: '', wallEdge: '', wallRim: '', border: '', motes: '' };
+  private css = { wall: '', wallEdge: '', border: '', motes: '' };
   private readonly motes: Motes;
 
   public constructor(
@@ -100,7 +100,6 @@ export class ArenaRenderer {
     this.css = {
       wall: rgba(theme.wall),
       wallEdge: rgba(theme.wallEdge),
-      wallRim: rgba(darker(theme.wall)),
       border: rgba(theme.border),
       motes: rgba(theme.motes),
     };
@@ -131,7 +130,7 @@ export class ArenaRenderer {
     if (theme == null) {
       return;
     }
-    this.drawBlobs(cx, walls, this.css.wallRim);
+    this.drawBlobs(cx, walls, darker(theme.wall), theme);
     for (const wall of walls) {
       if (wall.round) {
         continue;
@@ -158,7 +157,7 @@ export class ArenaRenderer {
       return;
     }
     // Living tissue rather than machinery: rimmed in the frame colour.
-    this.drawBlobs(cx, walls, this.css.border);
+    this.drawBlobs(cx, walls, theme.border, theme);
     for (const wall of walls) {
       if (wall.round) {
         continue;
@@ -184,24 +183,15 @@ export class ArenaRenderer {
     }
   }
 
-  /**
-   * The round walls among these: every rim first, then every body over
-   * them, so overlapping blobs read as one lumpy shape without seams - and
-   * a wet shine on each.
-   */
+  /** The round walls among these, as {@link blobLayers} lays them. */
   private drawBlobs(
     cx: CanvasRenderingContext2D,
     walls: readonly Rect[],
-    rim: string
+    rim: Rgb,
+    theme: ArenaTheme
   ): void {
-    const layers = [
-      { color: rim, alpha: 1, shape: (wall: Rect) => wall },
-      { color: this.css.wall, alpha: 1, shape: blobBody },
-      { color: this.css.wallEdge, alpha: BLOB_GLOSS_ALPHA, shape: blobGloss },
-    ];
-    for (const { color, alpha, shape } of layers) {
-      cx.fillStyle = color;
-      cx.globalAlpha = alpha;
+    for (const { shape, color, alpha } of blobLayers(rim, theme)) {
+      cx.fillStyle = rgba(color, alpha);
       cx.beginPath();
       for (const wall of walls) {
         if (wall.round) {
@@ -220,7 +210,6 @@ export class ArenaRenderer {
       }
       cx.fill();
     }
-    cx.globalAlpha = 1;
   }
 
   /** Moves the specks along the current and draws them, twinkling. */
@@ -276,11 +265,32 @@ export class ArenaRenderer {
   }
 }
 
+/** One pass over the round walls - see {@link blobLayers}. */
+export interface BlobLayer {
+  /** The ellipse drawn for a wall in this pass. */
+  shape: (wall: Rect) => Rect;
+  color: Rgb;
+  alpha: number;
+}
+
+/**
+ * How round walls are drawn, pass by pass: every rim first, then every body
+ * over them - so overlapping blobs read as one lumpy shape without seams -
+ * then a wet shine on each.
+ */
+export function blobLayers(rim: Rgb, theme: ArenaTheme): BlobLayer[] {
+  return [
+    { shape: (wall) => wall, color: rim, alpha: 1 },
+    { shape: blobBody, color: theme.wall, alpha: 1 },
+    { shape: blobGloss, color: theme.wallEdge, alpha: 0.3 },
+  ];
+}
+
 /**
  * The body of a round wall: its ellipse pulled in a little, so the rim drawn
  * underneath shows around it as an outline.
  */
-export function blobBody(wall: Rect): Rect {
+function blobBody(wall: Rect): Rect {
   return {
     x: wall.x + 0.7,
     y: wall.y + 0.7,
@@ -290,7 +300,7 @@ export function blobBody(wall: Rect): Rect {
 }
 
 /** The wet shine on a round wall: a small ellipse up and to the left. */
-export function blobGloss(wall: Rect): Rect {
+function blobGloss(wall: Rect): Rect {
   const rx = wall.width / 2;
   const ry = wall.height / 2;
   return {
@@ -300,9 +310,6 @@ export function blobGloss(wall: Rect): Rect {
     height: ry * 0.6,
   };
 }
-
-/** Opacity of the shine on a round wall. */
-export const BLOB_GLOSS_ALPHA = 0.3;
 
 /** Width of one hazard stripe tile in arena cells - a dark and a light band. */
 export const HAZARD_TILE = 6;

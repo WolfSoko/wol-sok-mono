@@ -149,8 +149,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   // 16:9, the shape of most screens - the arena fills them with little
   // left over around it.
-  width = 320;
-  height = 180;
+  public readonly width = 320;
+  public readonly height = 180;
 
   state: Signal<GameStateState | undefined>;
   stats: Signal<ColonyStats[]>;
