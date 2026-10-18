@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.6.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.6.0...v74.6.1) (2026-10-18)
+
+### Performance
+
+* **feat-lazy-bacteria-game:** ⚡ run the game on display frames and let the boost wave run to the crosshair ([#2477](https://github.com/WolfSoko/wol-sok-mono/issues/2477)) ([65c8695](https://github.com/WolfSoko/wol-sok-mono/commit/65c86953c15606b25a9c71e74e302ed4240c78c0))
+
 ## [74.6.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.5.1...v74.6.0) (2026-10-18)
 
 ### Features
