@@ -1,5 +1,5 @@
 import { DynamicWall, Rect } from '../../state/maps';
-import { CursorShape, boostRingRadius } from '../arena-painter';
+import { boostRingRadius, crosshairBars, CursorShape } from '../arena-painter';
 import {
   BLOB_ALPHA,
   blobColor,
@@ -188,8 +188,8 @@ export function pushForeground(
   batch: ShapeBatch,
   drops: readonly JamDrop[],
   cursors: readonly CursorShape[],
-  /** Cells per base cell - the crosshairs are as big on every grid. */
-  unit = 1
+  /** Cells per base cell - the jam and the crosshairs are as big on every grid. */
+  unit: number
 ): void {
   for (const { jam, x, y, radius, halo } of drops) {
     const haloRadius = radius + (1.5 + halo) * unit;
@@ -234,28 +234,9 @@ export function pushForeground(
   for (const cursor of cursors) {
     const color: Rgb = [cursor.color[0], cursor.color[1], cursor.color[2]];
     const alpha = (cursor.color[3] ?? 255) / 255;
-    batch.push(
-      SHAPE.rect,
-      {
-        x: cursor.x - 6 * unit,
-        y: cursor.y - 0.5 * unit,
-        width: 13 * unit,
-        height: 2 * unit,
-      },
-      color,
-      alpha
-    );
-    batch.push(
-      SHAPE.rect,
-      {
-        x: cursor.x - 0.5 * unit,
-        y: cursor.y - 6 * unit,
-        width: 2 * unit,
-        height: 13 * unit,
-      },
-      color,
-      alpha
-    );
+    for (const bar of crosshairBars(cursor, unit)) {
+      batch.push(SHAPE.rect, bar, color, alpha);
+    }
     if (cursor.boostLeft != null) {
       const radius = boostRingRadius(cursor.boostLeft) * unit;
       // Room for the line around the circle.

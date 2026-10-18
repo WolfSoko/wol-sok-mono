@@ -141,13 +141,14 @@ export class GlArenaPainter implements ArenaPainter {
   private readonly cellBytes: Uint8Array;
   private readonly canvasWidth: number;
   private readonly canvasHeight: number;
+  /** Cells per base cell - the jam and the crosshairs are as big on every grid. */
+  private readonly unit: number;
 
   /** A painter for the canvas, or null where WebGL2 is not available. */
   public static create(
     canvas: HTMLCanvasElement,
     width: number,
-    height: number,
-    scale: number
+    height: number
   ): GlArenaPainter | null {
     let gl: WebGL2RenderingContext | null = null;
     try {
@@ -162,20 +163,19 @@ export class GlArenaPainter implements ArenaPainter {
     } catch {
       return null;
     }
-    return gl == null
-      ? null
-      : new GlArenaPainter(canvas, gl, width, height, scale);
+    return gl == null ? null : new GlArenaPainter(canvas, gl, width, height);
   }
 
   private constructor(
     canvas: HTMLCanvasElement,
     private readonly gl: WebGL2RenderingContext,
     private readonly width: number,
-    private readonly height: number,
-    scale: number
+    private readonly height: number
   ) {
-    this.canvasWidth = Math.round(width * scale);
-    this.canvasHeight = Math.round(height * scale);
+    // Sized by `createArenaPainter`.
+    this.canvasWidth = canvas.width;
+    this.canvasHeight = canvas.height;
+    this.unit = scaleOf(width);
     this.motes = new Motes(width, height);
     this.cellBytes = new Uint8Array(width * height * 2);
     this.resources = this.setup();
@@ -275,10 +275,10 @@ export class GlArenaPainter implements ArenaPainter {
         frame.nutrients,
         frame.balance.nutrientEnergy,
         frame.timeSec,
-        scaleOf(this.width)
+        this.unit
       ),
       frame.cursors,
-      scaleOf(this.width)
+      this.unit
     );
     this.drawShapes(this.foreground);
 

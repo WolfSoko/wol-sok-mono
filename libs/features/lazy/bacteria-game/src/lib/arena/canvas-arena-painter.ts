@@ -1,4 +1,9 @@
-import { ArenaFrame, ArenaPainter, boostRingRadius } from './arena-painter';
+import {
+  ArenaFrame,
+  ArenaPainter,
+  boostRingRadius,
+  crosshairBars,
+} from './arena-painter';
 import { scaleOf } from '../state/arena-size';
 import { ArenaRenderer } from './arena-renderer';
 import { ArenaTheme } from './arena-theme';
@@ -13,6 +18,8 @@ export class CanvasArenaPainter implements ArenaPainter {
   public readonly kind = 'canvas';
   private readonly arena: ArenaRenderer;
   private readonly colonies: ColonyRenderer;
+  /** Cells per base cell - the jam and the crosshairs are as big on every grid. */
+  private readonly unit: number;
 
   public constructor(
     private readonly cx: CanvasRenderingContext2D,
@@ -20,6 +27,7 @@ export class CanvasArenaPainter implements ArenaPainter {
     private readonly height: number,
     scale: number
   ) {
+    this.unit = scaleOf(width);
     this.arena = new ArenaRenderer(width, height);
     this.colonies = new ColonyRenderer(width, height);
     // Everything is drawn in arena cells; the transform scales it up.
@@ -61,7 +69,7 @@ export class CanvasArenaPainter implements ArenaPainter {
       frame.nutrients,
       frame.balance.nutrientEnergy,
       frame.timeSec,
-      scaleOf(this.width)
+      this.unit
     );
     this.drawCursors(frame);
   }
@@ -73,31 +81,21 @@ export class CanvasArenaPainter implements ArenaPainter {
   private drawCursors(frame: ArenaFrame): void {
     const cx = this.cx;
     // As big on every grid.
-    const unit = scaleOf(this.width);
     for (const cursor of frame.cursors) {
       const css = `rgba(${cursor.color.join(',')})`;
       cx.fillStyle = css;
-      cx.fillRect(
-        cursor.x - 6 * unit,
-        cursor.y - 0.5 * unit,
-        13 * unit,
-        2 * unit
-      );
-      cx.fillRect(
-        cursor.x - 0.5 * unit,
-        cursor.y - 6 * unit,
-        2 * unit,
-        13 * unit
-      );
+      for (const bar of crosshairBars(cursor, this.unit)) {
+        cx.fillRect(bar.x, bar.y, bar.width, bar.height);
+      }
 
       if (cursor.boostLeft != null) {
         cx.strokeStyle = css;
-        cx.lineWidth = 1.5 * unit;
+        cx.lineWidth = 1.5 * this.unit;
         cx.beginPath();
         cx.arc(
           cursor.x,
           cursor.y,
-          boostRingRadius(cursor.boostLeft) * unit,
+          boostRingRadius(cursor.boostLeft) * this.unit,
           0,
           Math.PI * 2
         );
