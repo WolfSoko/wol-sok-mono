@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.7.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.6.2...v74.7.0) (2026-10-18)
+
+### Features
+
+* **bacteria-game-remote:** ✨ installable offline PWA with its own icon ([fa328bd](https://github.com/WolfSoko/wol-sok-mono/commit/fa328bdff44d5ea1e15ab10d15654aa17611ae56))
+
+### Chore
+
+* **release:** publish ([5738d19](https://github.com/WolfSoko/wol-sok-mono/commit/5738d1916d61ca109866c8cc425b9e3c2e7ba104))
+
 ## [74.6.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.6.1...v74.6.2) (2026-10-18)
 
 ### Documentation
