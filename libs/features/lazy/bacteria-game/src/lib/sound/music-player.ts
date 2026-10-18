@@ -44,6 +44,8 @@ export class MusicPlayer {
   private nextStep = 0;
   private nextStepAt = 0;
   private intensity = 0;
+  /** The intensity the audio params were last steered to. */
+  private appliedIntensity = -1;
   private lastTickAt = 0;
 
   public constructor(
@@ -146,6 +148,12 @@ export class MusicPlayer {
   }
 
   private applyIntensity(): void {
+    // Only steer the params when the music has audibly changed - every tick
+    // would pile up automation events for nothing.
+    if (Math.abs(this.intensity - this.appliedIntensity) < 0.01) {
+      return;
+    }
+    this.appliedIntensity = this.intensity;
     const now = this.context.currentTime;
     const level = Math.min(
       1,

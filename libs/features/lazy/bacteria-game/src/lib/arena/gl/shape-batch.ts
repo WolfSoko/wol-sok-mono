@@ -1,7 +1,10 @@
 import { DynamicWall, Rect } from '../../state/maps';
 import { CursorShape, boostRingRadius } from '../arena-painter';
 import {
-  blobLayers,
+  BLOB_ALPHA,
+  blobColor,
+  blobLayer,
+  BLOB_LAYERS,
   gateBlink,
   HAZARD_TILE,
   openGateFill,
@@ -151,17 +154,26 @@ export function pushBackground(
   }
 }
 
-/** The round walls among these, as `blobLayers` lays them. */
+/** Scratch for one blob's ellipse - `push` copies it straight away. */
+const blobShape: Rect = { x: 0, y: 0, width: 0, height: 0 };
+
+/** The round walls among these, pass by pass - see `blobLayer`. */
 function pushBlobs(
   batch: ShapeBatch,
   walls: readonly Rect[],
   rim: Rgb,
   theme: ArenaTheme
 ): void {
-  for (const { shape, color, alpha } of blobLayers(rim, theme)) {
+  for (let layer = 0; layer < BLOB_LAYERS; layer++) {
+    const color = blobColor(layer, rim, theme);
     for (const wall of walls) {
       if (wall.round) {
-        batch.push(SHAPE.disc, shape(wall), color, alpha);
+        batch.push(
+          SHAPE.disc,
+          blobLayer(layer, wall, blobShape),
+          color,
+          BLOB_ALPHA[layer]
+        );
       }
     }
   }

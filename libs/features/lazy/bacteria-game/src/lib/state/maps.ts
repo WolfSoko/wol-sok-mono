@@ -202,22 +202,31 @@ export function mirrorRect(rect: Rect, width: number, height: number): Rect {
  * dropped when it lies entirely outside.
  */
 function clipToArena(rect: Rect, width: number, height: number): Rect | null {
+  if (!overlapsArena(rect, width, height)) {
+    return null;
+  }
   if (rect.round) {
-    const outside =
-      rect.x >= width ||
-      rect.y >= height ||
-      rect.x + rect.width <= 0 ||
-      rect.y + rect.height <= 0;
-    return outside ? null : rect;
+    return rect;
   }
   const x = Math.max(rect.x, 0);
   const y = Math.max(rect.y, 0);
   const right = Math.min(rect.x + rect.width, width);
   const bottom = Math.min(rect.y + rect.height, height);
-  if (right <= x || bottom <= y) {
-    return null;
-  }
   return { x, y, width: right - x, height: bottom - y };
+}
+
+/** True when the rect reaches into an arena of that size. */
+export function overlapsArena(
+  rect: Rect,
+  width: number,
+  height: number
+): boolean {
+  return (
+    rect.x < width &&
+    rect.y < height &&
+    rect.x + rect.width > 0 &&
+    rect.y + rect.height > 0
+  );
 }
 
 /**

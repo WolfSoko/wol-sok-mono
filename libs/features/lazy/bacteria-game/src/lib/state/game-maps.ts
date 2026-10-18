@@ -6,5 +6,8 @@ export const GAME_MAPS: readonly GameMap[] = [...CLASSIC_MAPS, ...ORGANIC_MAPS];
 
 /** The map with that id, falling back to the corridors layout. */
 export function getMap(id: string): GameMap {
-  return GAME_MAPS.find((map) => map.id === id) ?? CLASSIC_MAPS[1];
+  return (
+    GAME_MAPS.find((map) => map.id === id) ??
+    (GAME_MAPS.find((map) => map.id === 'corridors') as GameMap)
+  );
 }

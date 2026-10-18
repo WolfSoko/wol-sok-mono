@@ -1,4 +1,5 @@
 import { LEVELS } from '../state/levels';
+import { HEART_PERIOD_SEC } from '../state/organic-maps';
 import {
   composeLoop,
   degreeToMidi,
@@ -41,14 +42,16 @@ describe('level music', () => {
   });
 
   it('beats in time with the heart of its map', () => {
-    // The heart beats every 1.6 s: two beats at the tempo of its music.
-    expect(stepSeconds(LEVEL_MUSIC['heartbeat'].bpm) * 8).toBeCloseTo(1.6);
+    // One heartbeat is two beats - eight sixteenths - of its music.
+    expect(stepSeconds(LEVEL_MUSIC['heartbeat'].bpm) * 8).toBeCloseTo(
+      HEART_PERIOD_SEC
+    );
   });
 
   describe.each(Object.entries(LEVEL_MUSIC))('%s', (_id, music) => {
     const loop = composeLoop(music);
-    const inKey = (midi: number) =>
-      music.scale.includes((((midi - music.root) % 12) + 12) % 12);
+    const pitchClass = (midi: number) => (((midi - music.root) % 12) + 12) % 12;
+    const inKey = (midi: number) => music.scale.includes(pitchClass(midi));
 
     it('comes out the same every time', () => {
       expect(composeLoop(music)).toEqual(loop);
@@ -83,8 +86,6 @@ describe('level music', () => {
 
     it('lands the melody on a chord tone on every beat', () => {
       const octave = music.scale.length;
-      const pitchClass = (midi: number) =>
-        (((midi - music.root) % 12) + 12) % 12;
       for (const note of loop.notes) {
         if (note.voice !== 'lead' || note.step % 4 !== 0) {
           continue;

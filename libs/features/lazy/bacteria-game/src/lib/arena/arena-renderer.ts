@@ -183,19 +183,23 @@ export class ArenaRenderer {
     }
   }
 
-  /** The round walls among these, as {@link blobLayers} lays them. */
+  /** The round walls among these, pass by pass - see {@link blobLayer}. */
   private drawBlobs(
     cx: CanvasRenderingContext2D,
     walls: readonly Rect[],
     rim: Rgb,
     theme: ArenaTheme
   ): void {
-    for (const { shape, color, alpha } of blobLayers(rim, theme)) {
-      cx.fillStyle = rgba(color, alpha);
+    if (!walls.some((wall) => wall.round)) {
+      return;
+    }
+    const shape: Rect = { x: 0, y: 0, width: 0, height: 0 };
+    for (let layer = 0; layer < BLOB_LAYERS; layer++) {
+      cx.fillStyle = rgba(blobColor(layer, rim, theme), BLOB_ALPHA[layer]);
       cx.beginPath();
       for (const wall of walls) {
         if (wall.round) {
-          const { x, y, width, height } = shape(wall);
+          const { x, y, width, height } = blobLayer(layer, wall, shape);
           cx.moveTo(x + width, y + height / 2);
           cx.ellipse(
             x + width / 2,
@@ -265,50 +269,45 @@ export class ArenaRenderer {
   }
 }
 
-/** One pass over the round walls - see {@link blobLayers}. */
-export interface BlobLayer {
-  /** The ellipse drawn for a wall in this pass. */
-  shape: (wall: Rect) => Rect;
-  color: Rgb;
-  alpha: number;
-}
-
 /**
  * How round walls are drawn, pass by pass: every rim first, then every body
  * over them - so overlapping blobs read as one lumpy shape without seams -
- * then a wet shine on each.
+ * then a wet shine on each. {@link blobLayer} gives a pass's ellipse.
  */
-export function blobLayers(rim: Rgb, theme: ArenaTheme): BlobLayer[] {
-  return [
-    { shape: (wall) => wall, color: rim, alpha: 1 },
-    { shape: blobBody, color: theme.wall, alpha: 1 },
-    { shape: blobGloss, color: theme.wallEdge, alpha: 0.3 },
-  ];
+export const BLOB_LAYERS = 3;
+
+/** The opacity of each pass. */
+export const BLOB_ALPHA: readonly number[] = [1, 1, 0.3];
+
+/** The colour of each pass: the rim, the wall, the lit edge for the shine. */
+export function blobColor(layer: number, rim: Rgb, theme: ArenaTheme): Rgb {
+  return layer === 0 ? rim : layer === 1 ? theme.wall : theme.wallEdge;
 }
 
 /**
- * The body of a round wall: its ellipse pulled in a little, so the rim drawn
- * underneath shows around it as an outline.
+ * The ellipse of a round wall in one pass, written into `out` so a frame
+ * allocates nothing: the wall itself, the body pulled in a little so the
+ * rim shows around it, or a small shine up and to the left.
  */
-function blobBody(wall: Rect): Rect {
-  return {
-    x: wall.x + 0.7,
-    y: wall.y + 0.7,
-    width: Math.max(0, wall.width - 1.4),
-    height: Math.max(0, wall.height - 1.4),
-  };
-}
-
-/** The wet shine on a round wall: a small ellipse up and to the left. */
-function blobGloss(wall: Rect): Rect {
-  const rx = wall.width / 2;
-  const ry = wall.height / 2;
-  return {
-    x: wall.x + rx * 0.3,
-    y: wall.y + ry * 0.25,
-    width: rx * 0.8,
-    height: ry * 0.6,
-  };
+export function blobLayer(layer: number, wall: Rect, out: Rect): Rect {
+  const { x, y, width, height } = wall;
+  if (layer === 0) {
+    out.x = x;
+    out.y = y;
+    out.width = width;
+    out.height = height;
+  } else if (layer === 1) {
+    out.x = x + 0.7;
+    out.y = y + 0.7;
+    out.width = Math.max(0, width - 1.4);
+    out.height = Math.max(0, height - 1.4);
+  } else {
+    out.x = x + width * 0.15;
+    out.y = y + height * 0.125;
+    out.width = width * 0.4;
+    out.height = height * 0.3;
+  }
+  return out;
 }
 
 /** Width of one hazard stripe tile in arena cells - a dark and a light band. */

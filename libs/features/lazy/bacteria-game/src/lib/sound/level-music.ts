@@ -1,4 +1,5 @@
 import { seeded } from '../state/geometry';
+import { HEART_PERIOD_SEC } from '../state/organic-maps';
 
 /**
  * The background music of a level, composed from a handful of numbers.
@@ -418,12 +419,11 @@ export const LEVEL_MUSIC: Record<string, LevelMusic> = {
     echo: 0.4,
     seed: 10,
   },
-  // In time with the heart of the map: one beat every 1.6 seconds is a
-  // lub-dub on every other beat at 75 bpm.
+  // In time with the heart of its map: a lub-dub on every other beat.
   heartbeat: {
     root: 45,
     scale: HARMONIC_MINOR,
-    bpm: 75,
+    bpm: 120 / HEART_PERIOD_SEC,
     progression: [0, 5, 3, 4],
     lead: 'triangle',
     density: 0.5,

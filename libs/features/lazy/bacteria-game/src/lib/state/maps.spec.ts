@@ -2,6 +2,7 @@ import { GAME_MAPS, getMap } from './game-maps';
 import {
   coversCell,
   gateState,
+  overlapsArena,
   pointSymmetric,
   Rect,
   slideOffset,
@@ -24,12 +25,7 @@ function isSolid(walls: Rect[], x: number, y: number): boolean {
  */
 function insideArena(wall: Rect, width: number, height: number): boolean {
   if (wall.round) {
-    return (
-      wall.x < width &&
-      wall.y < height &&
-      wall.x + wall.width > 0 &&
-      wall.y + wall.height > 0
-    );
+    return overlapsArena(wall, width, height);
   }
   return (
     wall.x >= 0 &&

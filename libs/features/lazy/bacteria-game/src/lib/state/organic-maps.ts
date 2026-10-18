@@ -8,7 +8,7 @@
  * {@link pointSymmetric}. Nothing grows into the spots the colonies start on.
  */
 
-import { seeded, wrap } from './geometry';
+import { distance, seeded, wrap } from './geometry';
 import { DynamicWall, GameMap, pointSymmetric, Rect } from './maps';
 
 /**
@@ -31,7 +31,10 @@ function blob(x: number, y: number, radius: number): Rect {
 
 /** A round wall that is part of a living, moving layout. */
 function movingBlob(x: number, y: number, radius: number): DynamicWall {
-  return { ...blob(x, y, radius), solid: true, warning: 0 };
+  const wall = blob(x, y, radius) as DynamicWall;
+  wall.solid = true;
+  wall.warning = 0;
+  return wall;
 }
 
 /** True when a blob there would reach into one of the two start spots. */
@@ -44,7 +47,8 @@ function nearSpawn(
 ): boolean {
   return [width / 4, (width * 3) / 4].some(
     (spawnX) =>
-      Math.hypot(x - spawnX, y - height / 2) < SPAWN_CLEARANCE + radius
+      distance({ x, y }, { x: spawnX, y: height / 2 }) <
+      SPAWN_CLEARANCE + radius
   );
 }
 
@@ -141,17 +145,20 @@ const mycelium: GameMap = {
 };
 
 /**
- * One heartbeat: the period, and where in it the two beats fall. The music
- * of the level kicks on the same beats - see `LEVEL_MUSIC`.
+ * Seconds from one heartbeat to the next. The music of the level kicks on
+ * the same beats - see `LEVEL_MUSIC`.
  */
-const HEART = { periodSec: 1.6, lub: 0, dub: 0.25, width: 0.06 };
+export const HEART_PERIOD_SEC = 1.6;
+
+/** Where in a heartbeat its two beats fall, and how long each swells. */
+const HEART = { lub: 0, dub: 0.25, width: 0.06 };
 
 /**
  * How far the heart is contracted at that match time, from 0 to 1: a strong
  * beat and a softer one right after it, then a rest - lub-dub.
  */
 export function heartbeat(timeSec: number): number {
-  const phase = wrap(timeSec, HEART.periodSec) / HEART.periodSec;
+  const phase = wrap(timeSec, HEART_PERIOD_SEC) / HEART_PERIOD_SEC;
   const pulse = (at: number) => {
     // Distance around the cycle, so the beat on 0 swells in before it.
     const off = Math.abs(phase - at);
