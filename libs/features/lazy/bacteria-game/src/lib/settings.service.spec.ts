@@ -88,6 +88,19 @@ describe('GameSettingsService', () => {
     expect(TestBed.inject(GameSettingsService).sound()).toBe(false);
   });
 
+  it('remembers music switched off, with the sound still on', () => {
+    const service = TestBed.inject(GameSettingsService);
+
+    expect(service.music()).toBe(true);
+    service.setMusic(false);
+
+    expect(stored().music).toBe(false);
+    TestBed.resetTestingModule();
+    const restored = TestBed.inject(GameSettingsService);
+    expect(restored.music()).toBe(false);
+    expect(restored.sound()).toBe(true);
+  });
+
   it('remembers the colours and the look of the bacteria', () => {
     const service = TestBed.inject(GameSettingsService);
 

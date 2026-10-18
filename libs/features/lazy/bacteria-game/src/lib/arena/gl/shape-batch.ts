@@ -1,6 +1,10 @@
 import { DynamicWall, Rect } from '../../state/maps';
 import { CursorShape, boostRingRadius } from '../arena-painter';
 import {
+  BLOB_ALPHA,
+  blobColor,
+  blobLayer,
+  BLOB_LAYERS,
   gateBlink,
   HAZARD_TILE,
   openGateFill,
@@ -104,7 +108,11 @@ export function pushBackground(
   motes.forEach((x, y, alpha) =>
     batch.push(SHAPE.rect, { x, y, width: 1, height: 1 }, theme.motes, alpha)
   );
+  pushBlobs(batch, walls, darker(theme.wall), theme);
   for (const wall of walls) {
+    if (wall.round) {
+      continue;
+    }
     batch.push(SHAPE.rect, wall, theme.wall);
     batch.push(
       SHAPE.rect,
@@ -117,7 +125,12 @@ export function pushBackground(
       theme.wallEdge
     );
   }
+  // Living tissue rather than machinery: rimmed in the frame colour.
+  pushBlobs(batch, dynamicWalls, theme.border, theme);
   for (const wall of dynamicWalls) {
+    if (wall.round) {
+      continue;
+    }
     if (wall.solid) {
       batch.push(
         SHAPE.hazard,
@@ -138,6 +151,31 @@ export function pushBackground(
       openGateFill(wall.warning, blink)
     );
     batch.push(SHAPE.outline, wall, theme.border, openGateOutline(blink));
+  }
+}
+
+/** Scratch for one blob's ellipse - `push` copies it straight away. */
+const blobShape: Rect = { x: 0, y: 0, width: 0, height: 0 };
+
+/** The round walls among these, pass by pass - see `blobLayer`. */
+function pushBlobs(
+  batch: ShapeBatch,
+  walls: readonly Rect[],
+  rim: Rgb,
+  theme: ArenaTheme
+): void {
+  for (let layer = 0; layer < BLOB_LAYERS; layer++) {
+    const color = blobColor(layer, rim, theme);
+    for (const wall of walls) {
+      if (wall.round) {
+        batch.push(
+          SHAPE.disc,
+          blobLayer(layer, wall, blobShape),
+          color,
+          BLOB_ALPHA[layer]
+        );
+      }
+    }
   }
 }
 

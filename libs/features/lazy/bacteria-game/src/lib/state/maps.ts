@@ -18,6 +18,11 @@ export interface Rect {
   y: number;
   width: number;
   height: number;
+  /**
+   * True for the ellipse inscribed in the rect rather than the rect itself -
+   * the organic layouts are built from overlapping blobs.
+   */
+  round?: boolean;
 }
 
 /** One wall layout, sized to whatever arena it is asked for. */
@@ -52,7 +57,28 @@ export interface DynamicWall extends Rect {
   warning: number;
 }
 
-/** Fills the cells a rect covers in a grid of the arena, clipped to it. */
+/**
+ * True when the wall covers the cell: the cell lies in the rect, and for a
+ * round wall its centre also lies in the ellipse.
+ */
+export function coversCell(rect: Rect, x: number, y: number): boolean {
+  if (
+    x < rect.x ||
+    y < rect.y ||
+    x >= rect.x + rect.width ||
+    y >= rect.y + rect.height
+  ) {
+    return false;
+  }
+  if (!rect.round) {
+    return true;
+  }
+  const dx = (x + 0.5 - rect.x - rect.width / 2) / (rect.width / 2);
+  const dy = (y + 0.5 - rect.y - rect.height / 2) / (rect.height / 2);
+  return dx * dx + dy * dy <= 1;
+}
+
+/** Fills the cells a wall covers in a grid of the arena, clipped to it. */
 export function stampRect(
   grid: Int32Array | Uint8Array,
   width: number,
@@ -60,10 +86,19 @@ export function stampRect(
   rect: Rect,
   value: number
 ): void {
-  const xMax = Math.min(rect.x + rect.width, width);
-  const yMax = Math.min(rect.y + rect.height, height);
-  for (let y = Math.max(rect.y, 0); y < yMax; y++) {
-    grid.fill(value, y * width + Math.max(rect.x, 0), y * width + xMax);
+  const xMin = Math.max(Math.floor(rect.x), 0);
+  const xMax = Math.min(Math.ceil(rect.x + rect.width), width);
+  const yMax = Math.min(Math.ceil(rect.y + rect.height), height);
+  for (let y = Math.max(Math.floor(rect.y), 0); y < yMax; y++) {
+    if (!rect.round) {
+      grid.fill(value, y * width + xMin, y * width + xMax);
+      continue;
+    }
+    for (let x = xMin; x < xMax; x++) {
+      if (coversCell(rect, x, y)) {
+        grid[y * width + x] = value;
+      }
+    }
   }
 }
 
@@ -161,16 +196,37 @@ export function mirrorRect(rect: Rect, width: number, height: number): Rect {
   };
 }
 
-/** The part of the rect that is inside the arena, or null when nothing is. */
+/**
+ * The part of the rect that is inside the arena, or null when nothing is. A
+ * round wall is kept whole - clipping would squash its ellipse - and only
+ * dropped when it lies entirely outside.
+ */
 function clipToArena(rect: Rect, width: number, height: number): Rect | null {
+  if (!overlapsArena(rect, width, height)) {
+    return null;
+  }
+  if (rect.round) {
+    return rect;
+  }
   const x = Math.max(rect.x, 0);
   const y = Math.max(rect.y, 0);
   const right = Math.min(rect.x + rect.width, width);
   const bottom = Math.min(rect.y + rect.height, height);
-  if (right <= x || bottom <= y) {
-    return null;
-  }
   return { x, y, width: right - x, height: bottom - y };
+}
+
+/** True when the rect reaches into an arena of that size. */
+export function overlapsArena(
+  rect: Rect,
+  width: number,
+  height: number
+): boolean {
+  return (
+    rect.x < width &&
+    rect.y < height &&
+    rect.x + rect.width > 0 &&
+    rect.y + rect.height > 0
+  );
 }
 
 /**
@@ -201,7 +257,7 @@ export function pointSymmetric<T extends Rect>(
     if (clipped == null) {
       continue;
     }
-    const key = `${clipped.x}:${clipped.y}:${clipped.width}:${clipped.height}`;
+    const key = `${clipped.x}:${clipped.y}:${clipped.width}:${clipped.height}:${rect.round === true}`;
     if (seen.has(key)) {
       continue;
     }
@@ -497,8 +553,8 @@ const pistons: GameMap = {
   },
 };
 
-/** Every layout the game can be played on, in the order the levels use them. */
-export const GAME_MAPS: readonly GameMap[] = [
+/** The layouts made of straight walls, in the order the levels use them. */
+export const CLASSIC_MAPS: readonly GameMap[] = [
   openField,
   corridors,
   hourglass,
@@ -508,8 +564,3 @@ export const GAME_MAPS: readonly GameMap[] = [
   serpentine,
   pistons,
 ];
-
-/** The map with that id, falling back to the corridors layout. */
-export function getMap(id: string): GameMap {
-  return GAME_MAPS.find((map) => map.id === id) ?? corridors;
-}

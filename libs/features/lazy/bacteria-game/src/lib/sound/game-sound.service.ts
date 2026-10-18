@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { FrameEvents } from '../state/player.service';
+import { LevelMusic } from './level-music';
+import { MusicPlayer } from './music-player';
 
 /** How a match ended, from the point of view of the people at the screen. */
 export type MatchResult = 'win' | 'loss' | 'draw';
@@ -22,11 +24,6 @@ interface NoiseOptions {
   delay?: number;
 }
 
-interface Drone {
-  oscillators: OscillatorNode[];
-  gain: GainNode;
-}
-
 /** Captures are heard at most this often, or a fight would be one long hiss. */
 const CAPTURE_INTERVAL_SEC = 0.07;
 
@@ -34,7 +31,8 @@ const CAPTURE_INTERVAL_SEC = 0.07;
  * The game's sound, synthesised with the Web Audio API - there are no sound
  * files to load. Everything is short and quiet: a blip for a pellet, a
  * crackle while colonies eat each other, a whoosh for a boost, a warning
- * beep and a thud for the gates, a hum per level and a jingle at the end.
+ * beep and a thud for the gates, a jingle at the end - and each level's own
+ * music underneath, composed on the fly (see `MusicPlayer`).
  *
  * Browsers only let a page make sound after a gesture, so the service
  * listens for the gestures that count - a lifted finger or mouse button, a
@@ -47,9 +45,19 @@ export class GameSoundService {
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
   private noiseBuffer: AudioBuffer | null = null;
-  private drone: Drone | null = null;
-  private droneHz: number | null = null;
+  private musicBus: GainNode | null = null;
+  private player: MusicPlayer | null = null;
+  /** The music asked for - also before there is a context to play it in. */
+  private music: LevelMusic | null = null;
+  /**
+   * Where that music was to start, and when it was asked for (in ms of
+   * `performance.now()`) - to start it at the right point once it can play.
+   */
+  private musicStart = { atSec: 0, askedAtMs: 0 };
+  /** True while the audio is held because the page is hidden. */
+  private suspendedWhileHidden = false;
   private enabled = true;
+  private musicEnabled = true;
   private lastCaptureAt = -Infinity;
 
   public constructor() {
@@ -59,10 +67,28 @@ export class GameSoundService {
       const unlock = () => this.unlock();
       document.addEventListener('pointerup', unlock, { capture: true });
       document.addEventListener('keydown', unlock, { capture: true });
+      // A hidden page stops drawing frames, so the match stands still. The
+      // music holds with it - it would stutter anyway, as browsers throttle
+      // the timers of a hidden page - and stays in step with moving maps.
+      document.addEventListener('visibilitychange', () =>
+        this.followVisibility(document.hidden)
+      );
     }
   }
 
-  /** Mutes or unmutes everything, the hum included. */
+  /** Mutes or unmutes the music alone, the sound effects play on. */
+  public setMusicEnabled(enabled: boolean): void {
+    this.musicEnabled = enabled;
+    if (this.musicBus != null && this.context != null) {
+      this.musicBus.gain.setTargetAtTime(
+        enabled ? 1 : 0,
+        this.context.currentTime,
+        0.1
+      );
+    }
+  }
+
+  /** Mutes or unmutes everything, the music included. */
   public setEnabled(enabled: boolean): void {
     this.enabled = enabled;
     if (this.master != null && this.context != null) {
@@ -90,15 +116,34 @@ export class GameSoundService {
       this.master = this.context.createGain();
       this.master.gain.value = this.enabled ? 1 : 0;
       this.master.connect(this.context.destination);
+      this.musicBus = this.context.createGain();
+      this.musicBus.gain.value = this.musicEnabled ? 1 : 0;
+      this.musicBus.connect(this.master);
     }
     if (this.context.state === 'suspended') {
       void this.context.resume();
     }
-    if (this.drone == null && this.droneHz != null) {
-      // The hum was asked for before there was a context to play it in.
-      const droneHz = this.droneHz;
-      this.droneHz = null;
-      this.setAmbience(droneHz);
+    if (this.player == null && this.music != null) {
+      // The music was asked for before there was a context to play it in;
+      // the match has gone on since.
+      const music = this.music;
+      const { atSec, askedAtMs } = this.musicStart;
+      this.music = null;
+      this.setMusic(music, atSec + (performance.now() - askedAtMs) / 1000);
+    }
+  }
+
+  private followVisibility(hidden: boolean): void {
+    const context = this.context;
+    if (context == null) {
+      return;
+    }
+    if (hidden && context.state === 'running') {
+      this.suspendedWhileHidden = true;
+      void context.suspend();
+    } else if (!hidden && this.suspendedWhileHidden) {
+      this.suspendedWhileHidden = false;
+      void context.resume();
     }
   }
 
@@ -118,6 +163,7 @@ export class GameSoundService {
     }
     if (events.captures > 0) {
       this.captures(events.captures);
+      this.player?.excite(Math.min(0.08, events.captures * 0.004));
     }
     if (events.gatesWarned > 0) {
       this.tone(880, 0.08, { type: 'square', volume: 0.05 });
@@ -187,63 +233,31 @@ export class GameSoundService {
   }
 
   /**
-   * Plays the hum of a level underneath the match, or fades it out for null.
-   * Asking for the hum that is already playing changes nothing.
+   * Plays a level's music underneath the match, or fades it out for null.
+   * `atSec` is how far into the match it starts, so a resumed match picks
+   * the music up where it left off. Asking for the music that is already
+   * playing changes nothing.
    */
-  public setAmbience(droneHz: number | null): void {
-    if (droneHz === this.droneHz) {
+  public setMusic(music: LevelMusic | null, atSec = 0): void {
+    if (music === this.music) {
       return;
     }
-    this.stopDrone();
-    this.droneHz = droneHz;
+    this.player?.stop();
+    this.player = null;
+    this.music = music;
+    this.musicStart = { atSec, askedAtMs: performance.now() };
     const context = this.context;
-    if (droneHz == null || context == null || this.master == null) {
+    if (music == null || context == null || this.musicBus == null) {
       return;
     }
-    const gain = context.createGain();
-    gain.gain.value = 0;
-    gain.gain.setTargetAtTime(0.05, context.currentTime, 0.6);
-    const filter = context.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = droneHz * 6;
-    filter.connect(gain);
-    gain.connect(this.master);
-
-    // Two voices a hair apart beat slowly against each other, and a slow
-    // wobble on the filter keeps the hum alive.
-    const oscillators = [droneHz, droneHz * 1.007, droneHz * 1.5].map(
-      (frequency, voice) => {
-        const oscillator = context.createOscillator();
-        oscillator.type = voice === 2 ? 'sine' : 'sawtooth';
-        oscillator.frequency.value = frequency;
-        oscillator.connect(filter);
-        oscillator.start();
-        return oscillator;
-      }
+    this.player = new MusicPlayer(
+      context,
+      this.musicBus,
+      music,
+      () => this.whiteNoise(context),
+      () => this.enabled && this.musicEnabled
     );
-    const lfo = context.createOscillator();
-    const depth = context.createGain();
-    lfo.frequency.value = 0.15;
-    depth.gain.value = droneHz * 3;
-    lfo.connect(depth);
-    depth.connect(filter.frequency);
-    lfo.start();
-    oscillators.push(lfo);
-
-    this.drone = { oscillators, gain };
-  }
-
-  private stopDrone(): void {
-    const drone = this.drone;
-    const context = this.context;
-    this.drone = null;
-    if (drone == null || context == null) {
-      return;
-    }
-    drone.gain.gain.setTargetAtTime(0, context.currentTime, 0.15);
-    for (const oscillator of drone.oscillators) {
-      oscillator.stop(context.currentTime + 0.8);
-    }
+    this.player.start(atSec);
   }
 
   private pellet(): void {

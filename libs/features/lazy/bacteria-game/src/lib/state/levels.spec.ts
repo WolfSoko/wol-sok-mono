@@ -8,7 +8,7 @@ import {
   levelMap,
   nextLevel,
 } from './levels';
-import { GAME_MAPS } from './maps';
+import { GAME_MAPS } from './game-maps';
 
 describe('LEVELS', () => {
   it('uses unique ids', () => {

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { gameBalance } from './game-balance';
 import { GameState, GameStateStore } from './game.states';
-import { getMap } from './maps';
+import { getMap } from './game-maps';
 import { PlayerColorArray } from './player.model';
 import { PlayerQuery } from './player.query';
 import { PlayerService, PlayerSpawn } from './player.service';

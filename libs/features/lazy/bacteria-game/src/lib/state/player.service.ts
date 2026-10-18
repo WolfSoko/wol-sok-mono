@@ -24,7 +24,8 @@ import {
   SteeringVector,
 } from './geometry';
 import { DEFAULT_CROSSHAIR_SPEED } from './levels';
-import { DynamicWall, GameMap, getMap } from './maps';
+import { getMap } from './game-maps';
+import { DynamicWall, GameMap } from './maps';
 import {
   createPlayer,
   isBoostReady,

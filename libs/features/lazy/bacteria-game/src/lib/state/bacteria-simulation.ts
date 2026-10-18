@@ -3,13 +3,8 @@ import { colonyCapacity, GameBalance, gameBalance } from './game-balance';
 import { clamp, Point } from './geometry';
 import { NutrientPellets } from './nutrient-pellets';
 import { ColonySummary, Simulation } from './simulation';
-import {
-  compareDynamicWalls,
-  DynamicWall,
-  GameMap,
-  getMap,
-  stampRect,
-} from './maps';
+import { compareDynamicWalls, DynamicWall, GameMap, stampRect } from './maps';
+import { getMap } from './game-maps';
 import {
   Bacteria,
   createBacteriaBlob,
