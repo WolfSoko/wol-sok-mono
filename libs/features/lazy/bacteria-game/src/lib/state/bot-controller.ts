@@ -1,4 +1,5 @@
 import { Nutrient } from './bacteria-simulation';
+import { scaleOf } from './arena-size';
 import { clamp, distance, Point } from './geometry';
 import { ColonySummary } from './simulation';
 
@@ -107,7 +108,10 @@ const PROFILES: Record<BotDifficulty, DifficultyProfile> = {
   },
 };
 
-/** How far a retreating colony moves away from the enemy, in arena pixels. */
+/**
+ * How far a retreating colony moves away from the enemy, in cells of the base
+ * arena - the bot's distances grow with a finer grid.
+ */
 const RETREAT_DISTANCE = 50;
 /** A pellet the enemy is closer to than we are costs this much extra distance. */
 const CONTESTED_PENALTY = 60;
@@ -155,14 +159,17 @@ export class BotController {
       const boost =
         this.profile.usesBoost &&
         view.boostReady &&
-        distance(own, enemy) <= this.profile.boostRange;
+        distance(own, enemy) <= this.profile.boostRange * scaleOf(view.width);
       return { target: this.aim(view, this.attackPoint(view, enemy)), boost };
     }
     if (food != null) {
       return { target: this.aim(view, food), boost: false };
     }
     return {
-      target: this.aim(view, this.retreatPoint(own, enemy)),
+      target: this.aim(
+        view,
+        this.retreatPoint(own, enemy, RETREAT_DISTANCE * scaleOf(view.width))
+      ),
       boost: false,
     };
   }
@@ -193,7 +200,7 @@ export class BotController {
       const ownDistance = distance(nutrient, view.own);
       let cost = ownDistance;
       if (view.enemy != null && distance(nutrient, view.enemy) < ownDistance) {
-        cost += CONTESTED_PENALTY;
+        cost += CONTESTED_PENALTY * scaleOf(view.width);
       }
       if (cost < bestCost) {
         bestCost = cost;
@@ -204,7 +211,11 @@ export class BotController {
   }
 
   /** A point straight away from the enemy, so the colony can regroup. */
-  private retreatPoint(own: ColonyView, enemy: ColonyView): Point {
+  private retreatPoint(
+    own: ColonyView,
+    enemy: ColonyView,
+    retreat: number
+  ): Point {
     let dx = own.x - enemy.x;
     let dy = own.y - enemy.y;
     const length = Math.hypot(dx, dy);
@@ -216,14 +227,14 @@ export class BotController {
       dy /= length;
     }
     return {
-      x: own.x + dx * RETREAT_DISTANCE,
-      y: own.y + dy * RETREAT_DISTANCE,
+      x: own.x + dx * retreat,
+      y: own.y + dy * retreat,
     };
   }
 
   /** Adds the profile's aiming error and keeps the point inside the arena. */
   private aim(view: BotView, point: Point): Point {
-    const noise = this.profile.aimNoise;
+    const noise = this.profile.aimNoise * scaleOf(view.width);
     return {
       x: clamp(point.x + (this.random() - 0.5) * 2 * noise, 0, view.width),
       y: clamp(point.y + (this.random() - 0.5) * 2 * noise, 0, view.height),

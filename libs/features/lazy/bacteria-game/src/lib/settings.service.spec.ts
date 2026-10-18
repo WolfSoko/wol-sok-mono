@@ -133,4 +133,32 @@ describe('GameSettingsService', () => {
       'blue',
     ]);
   });
+
+  it('remembers both resolutions', () => {
+    const service = TestBed.inject(GameSettingsService);
+
+    service.setSimResolution('high');
+    service.setScreenResolution('full-hd');
+
+    expect(stored()).toMatchObject({
+      simResolution: 'high',
+      screenResolution: 'full-hd',
+    });
+    TestBed.resetTestingModule();
+    const restored = TestBed.inject(GameSettingsService);
+    expect(restored.simResolution()).toBe('high');
+    expect(restored.screenResolution()).toBe('full-hd');
+  });
+
+  it('falls back to the default resolutions for ones it does not know', () => {
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({ simResolution: '8k', screenResolution: 42 })
+    );
+
+    const service = TestBed.inject(GameSettingsService);
+
+    expect(service.simResolution()).toBe('normal');
+    expect(service.screenResolution()).toBe('medium');
+  });
 });

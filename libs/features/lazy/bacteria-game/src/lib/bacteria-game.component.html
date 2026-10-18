@@ -170,8 +170,8 @@
                   <mat-card-content class="settings">
                     <h2 class="panel-title">Settings</h2>
                     <ng-container *ngTemplateOutlet="matchSetup"></ng-container>
-                    <div class="look-picker">
-                      <span class="look-label">Bacteria look</span>
+                    <div class="option-picker">
+                      <span class="option-label">Bacteria look</span>
                       <mat-button-toggle-group
                         aria-label="Bacteria look"
                         hideSingleSelectionIndicator
@@ -185,6 +185,46 @@
                         }
                       </mat-button-toggle-group>
                     </div>
+                    <div class="option-picker">
+                      <span class="option-label">Simulation resolution</span>
+                      <mat-button-toggle-group
+                        aria-label="Simulation resolution"
+                        hideSingleSelectionIndicator
+                        [disabled]="running()"
+                        [value]="settings.simResolution()"
+                        (change)="settings.setSimResolution($event.value)"
+                      >
+                        @for (option of simResolutions; track option.id) {
+                          <mat-button-toggle [value]="option.id">
+                            {{ option.name }}
+                          </mat-button-toggle>
+                        }
+                      </mat-button-toggle-group>
+                      <span class="resolution-hint">
+                        {{ arena().width }} × {{ arena().height }} cells
+                      </span>
+                    </div>
+                    <div class="option-picker">
+                      <span class="option-label">Screen resolution</span>
+                      <mat-button-toggle-group
+                        aria-label="Screen resolution"
+                        hideSingleSelectionIndicator
+                        [disabled]="running()"
+                        [value]="settings.screenResolution()"
+                        (change)="settings.setScreenResolution($event.value)"
+                      >
+                        @for (option of screenResolutions; track option.id) {
+                          <mat-button-toggle [value]="option.id">
+                            {{ option.name }}
+                          </mat-button-toggle>
+                        }
+                      </mat-button-toggle-group>
+                    </div>
+                    @if (running()) {
+                      <span class="resolution-hint">
+                        The resolutions change between matches.
+                      </span>
+                    }
                     <mat-slide-toggle
                       [checked]="settings.showFps()"
                       (change)="settings.setShowFps($event.checked)"
@@ -357,17 +397,19 @@
             [show]="settings.showFps()"
             [fps]="(fps$ | async) ?? 0"
           ></ws-shared-ui-show-fps>
-          <canvas
-            #canvasElement
-            id="canvasElement"
-            [style.width.px]="canvasSize()?.width"
-            [style.height.px]="canvasSize()?.height"
-            (pointerdown)="onPointerDown($event)"
-            (pointermove)="onPointerMove($event)"
-            (pointerup)="onPointerUp($event)"
-            (pointercancel)="onPointerUp($event)"
-          >
-          </canvas>
+          @for (key of canvasKey(); track key) {
+            <canvas
+              #canvasElement
+              id="canvasElement"
+              [style.width.px]="canvasSize()?.width"
+              [style.height.px]="canvasSize()?.height"
+              (pointerdown)="onPointerDown($event)"
+              (pointermove)="onPointerMove($event)"
+              (pointerup)="onPointerUp($event)"
+              (pointercancel)="onPointerUp($event)"
+            >
+            </canvas>
+          }
         </div>
       </div>
     </div>

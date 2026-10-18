@@ -43,6 +43,8 @@ export interface ArenaPainter {
   /** Switches to another level's look. */
   setTheme(theme: ArenaTheme): void;
   paint(frame: ArenaFrame): void;
+  /** Lets go of what the painter holds on the canvas - it is done drawing. */
+  dispose(): void;
 }
 
 /** The radius of the ring around a boosted crosshair - it widens as the boost runs out. */

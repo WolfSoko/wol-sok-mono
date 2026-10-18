@@ -330,16 +330,21 @@
     gap: 0.75rem;
   }
 
-  .look-picker {
+  .option-picker {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem 1rem;
   }
 
-  .look-label {
+  .option-label {
     min-width: 6.5rem;
     opacity: 0.8;
+  }
+
+  .resolution-hint {
+    font-size: 0.8rem;
+    opacity: 0.7;
   }
 
   .help p {

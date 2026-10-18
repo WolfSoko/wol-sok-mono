@@ -171,8 +171,8 @@ export class GlArenaPainter implements ArenaPainter {
     private readonly height: number,
     scale: number
   ) {
-    this.canvasWidth = width * scale;
-    this.canvasHeight = height * scale;
+    this.canvasWidth = Math.round(width * scale);
+    this.canvasHeight = Math.round(height * scale);
     this.motes = new Motes(width, height);
     this.cellBytes = new Uint8Array(width * height * 2);
     this.resources = this.setup();
@@ -199,6 +199,15 @@ export class GlArenaPainter implements ArenaPainter {
    */
   public createSimulation(balance: GameBalance): GpuSimulation {
     return new GpuSimulation(this.gl, balance);
+  }
+
+  /**
+   * Hands the context back to the browser right away rather than once the
+   * canvas is collected - a page may only hold a few WebGL contexts.
+   */
+  public dispose(): void {
+    this.resources = null;
+    this.gl.getExtension('WEBGL_lose_context')?.loseContext();
   }
 
   public setTheme(theme: ArenaTheme): void {

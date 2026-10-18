@@ -26,6 +26,10 @@ export class CanvasArenaPainter implements ArenaPainter {
     cx.imageSmoothingEnabled = false;
   }
 
+  public dispose(): void {
+    // Nothing but the context, which goes with its canvas.
+  }
+
   public setTheme(theme: ArenaTheme): void {
     this.arena.setTheme(theme);
   }

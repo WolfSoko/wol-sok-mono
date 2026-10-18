@@ -1,5 +1,13 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { distinctUntilChanged } from 'rxjs';
+import {
+  DEFAULT_SCREEN_RESOLUTION,
+  DEFAULT_SIM_RESOLUTION,
+  SCREEN_RESOLUTIONS,
+  ScreenResolution,
+  SIM_RESOLUTIONS,
+  SimResolution,
+} from './state/arena-size';
 import { BOT_DIFFICULTIES, BotDifficulty } from './state/bot-controller';
 import { sameColors, validColorPair } from './state/colony-colors';
 import { GameStateQuery } from './state/game-state.query';
@@ -18,6 +26,8 @@ export interface StoredSettings {
   /** The colour ids of the left and the right colony. */
   colors?: [string, string];
   look?: BacteriaLook;
+  simResolution?: SimResolution;
+  screenResolution?: ScreenResolution;
 }
 
 /**
@@ -37,8 +47,8 @@ const MODES: readonly GameMode[] = ['vs-computer', 'two-players'];
 
 /**
  * Keeps the player's choices - opponent, difficulty, level, colours, how the
- * bacteria look, whether the frame rate is shown and whether the game makes
- * sound and plays music - across visits, in the browser's local storage.
+ * bacteria look, the resolutions, whether the frame rate is shown and whether
+ * the game makes sound and plays music - across visits, in the browser's local storage.
  *
  * The match settings live in the game state store, as they did; this service
  * only restores them when the game is opened and writes them back whenever
@@ -58,6 +68,12 @@ export class GameSettingsService {
   public readonly music = signal(true);
   /** How the bacteria are drawn. */
   public readonly look = signal<BacteriaLook>('slime');
+  /** How finely the war is simulated - the arena's size in cells. */
+  public readonly simResolution = signal<SimResolution>(DEFAULT_SIM_RESOLUTION);
+  /** How many pixels the arena is drawn with. */
+  public readonly screenResolution = signal<ScreenResolution>(
+    DEFAULT_SCREEN_RESOLUTION
+  );
 
   constructor() {
     this.restore();
@@ -100,6 +116,16 @@ export class GameSettingsService {
     this.persist();
   }
 
+  public setSimResolution(resolution: SimResolution): void {
+    this.simResolution.set(resolution);
+    this.persist();
+  }
+
+  public setScreenResolution(resolution: ScreenResolution): void {
+    this.screenResolution.set(resolution);
+    this.persist();
+  }
+
   /** Applies what an earlier visit stored, ignoring anything it cannot read. */
   private restore(): void {
     const stored = readStoredSettings();
@@ -119,6 +145,14 @@ export class GameSettingsService {
     if (BACTERIA_LOOKS.some((option) => option.id === stored.look)) {
       this.look.set(stored.look as BacteriaLook);
     }
+    if (SIM_RESOLUTIONS.some((option) => option.id === stored.simResolution)) {
+      this.simResolution.set(stored.simResolution as SimResolution);
+    }
+    if (
+      SCREEN_RESOLUTIONS.some((option) => option.id === stored.screenResolution)
+    ) {
+      this.screenResolution.set(stored.screenResolution as ScreenResolution);
+    }
     this.showFps.set(stored.showFps === true);
     this.sound.set(stored.sound !== false);
     this.music.set(stored.music !== false);
@@ -132,6 +166,8 @@ export class GameSettingsService {
       levelId,
       colors,
       look: this.look(),
+      simResolution: this.simResolution(),
+      screenResolution: this.screenResolution(),
       showFps: this.showFps(),
       sound: this.sound(),
       music: this.music(),
