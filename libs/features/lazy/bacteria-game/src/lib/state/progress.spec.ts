@@ -67,9 +67,14 @@ describe('parseProgress', () => {
           corridors: {
             normal: { medal: 'gold', wins: 3, bestWinSec: 41 },
             hard: { medal: 'gold' },
+            easy: { medal: 'gold', wins: 1.5, bestWinSec: 40 },
             nightmare: { medal: 'gold', wins: 1, bestWinSec: 1 },
           },
-          hourglass: { easy: { medal: 'tin', wins: 1, bestWinSec: 70 } },
+          hourglass: {
+            easy: { medal: 'tin', wins: 1, bestWinSec: 70 },
+            normal: { medal: 'gold', wins: 0, bestWinSec: 30 },
+            hard: { medal: 'gold', wins: 2, bestWinSec: -1 },
+          },
           broken: 'yes',
         },
       })

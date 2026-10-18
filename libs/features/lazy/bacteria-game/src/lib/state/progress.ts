@@ -83,7 +83,15 @@ function parseLevelRecord(value: unknown): LevelRecord | null {
     return null;
   }
   const { medal, wins, bestWinSec } = value;
-  if (typeof wins !== 'number' || typeof bestWinSec !== 'number') {
+  // A record exists from the first win on, and a time is never negative.
+  if (
+    typeof wins !== 'number' ||
+    !Number.isInteger(wins) ||
+    wins < 1 ||
+    typeof bestWinSec !== 'number' ||
+    !Number.isFinite(bestWinSec) ||
+    bestWinSec < 0
+  ) {
     return null;
   }
   return {
