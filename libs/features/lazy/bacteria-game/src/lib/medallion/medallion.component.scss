@@ -1,0 +1,40 @@
+:host {
+  display: inline-block;
+  flex: none;
+  vertical-align: middle;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chip {
+  fill: #ffffff;
+  font: 700 17px/1 sans-serif;
+}
+
+// A glint that sweeps across a platinum medallion now and then.
+.sheen {
+  animation: sheen 3.2s ease-in-out infinite;
+}
+
+@keyframes sheen {
+  0%,
+  55% {
+    translate: 0 0;
+  }
+
+  100% {
+    translate: 180px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheen {
+    animation: none;
+    opacity: 0;
+  }
+}

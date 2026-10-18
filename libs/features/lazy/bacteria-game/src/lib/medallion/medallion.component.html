@@ -1,0 +1,81 @@
+<svg viewBox="0 0 100 100" aria-hidden="true">
+  @if (metal(); as metal) {
+    <defs>
+      <radialGradient [attr.id]="id + '-metal'" cx="35%" cy="30%" r="80%">
+        <stop offset="0" [attr.stop-color]="metal[0]" />
+        <stop offset="0.5" [attr.stop-color]="metal[1]" />
+        <stop offset="1" [attr.stop-color]="metal[2]" />
+      </radialGradient>
+      <linearGradient [attr.id]="id + '-sheen'" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0" />
+        <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.8" />
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+      </linearGradient>
+      <clipPath [attr.id]="id + '-disc'">
+        <circle cx="50" cy="50" r="46" />
+      </clipPath>
+    </defs>
+    <circle cx="50" cy="50" r="47" [attr.fill]="metal[2]" />
+    <circle cx="50" cy="50" r="43" [attr.fill]="'url(#' + id + '-metal)'" />
+    <circle
+      cx="50"
+      cy="50"
+      r="35"
+      fill="none"
+      [attr.stroke]="metal[2]"
+      stroke-width="2.5"
+      opacity="0.6"
+    />
+    @for (cell of cells(); track $index) {
+      <circle
+        [attr.cx]="cell[0]"
+        [attr.cy]="cell[1] + 1.5"
+        [attr.r]="cell[2]"
+        fill="#ffffff"
+        opacity="0.5"
+      />
+      <circle
+        [attr.cx]="cell[0]"
+        [attr.cy]="cell[1]"
+        [attr.r]="cell[2]"
+        [attr.fill]="metal[2]"
+        opacity="0.7"
+      />
+    }
+    @if (tier() === "platinum") {
+      <g [attr.clip-path]="'url(#' + id + '-disc)'">
+        <rect
+          class="sheen"
+          x="-60"
+          y="0"
+          width="40"
+          height="100"
+          [attr.fill]="'url(#' + id + '-sheen)'"
+          transform="skewX(-20)"
+        />
+      </g>
+    }
+    @if (chip(); as chip) {
+      <circle
+        cx="80"
+        cy="80"
+        r="15"
+        fill="#10233b"
+        [attr.stroke]="metal[1]"
+        stroke-width="3"
+      />
+      <text x="80" y="86" text-anchor="middle" class="chip">{{ chip }}</text>
+    }
+  } @else {
+    <circle
+      cx="50"
+      cy="50"
+      r="42"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="5"
+      stroke-dasharray="9 7"
+      opacity="0.35"
+    />
+  }
+</svg>

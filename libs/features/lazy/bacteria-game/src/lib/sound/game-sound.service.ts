@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { FrameEvents } from '../state/player.service';
-import { LevelMusic } from './level-music';
+import { MedalTier, medalRank } from '../state/medallions';
+import { degreeToMidi, LevelMusic, midiToHz } from './level-music';
 import { MusicPlayer } from './music-player';
 
 /** How a match ended, from the point of view of the people at the screen. */
@@ -23,6 +24,9 @@ interface NoiseOptions {
   sweepTo?: number;
   delay?: number;
 }
+
+/** How long the end-of-match jingle takes - the medallion's bells follow it. */
+const MATCH_END_JINGLE_SEC = 1;
 
 /** Captures are heard at most this often, or a fight would be one long hiss. */
 const CAPTURE_INTERVAL_SEC = 0.07;
@@ -230,6 +234,34 @@ export class GameSoundService {
         delay: step * 0.14,
       })
     );
+  }
+
+  /**
+   * Two bars of bells for a medallion, after the end-of-match jingle, in the
+   * key of the level's music - so they sound like the end of its tune. A
+   * higher tier climbs higher.
+   */
+  public medal(tier: MedalTier, music: LevelMusic): void {
+    const degrees = [0, 2, 4, 7, 9, 11, 14].slice(0, 3 + medalRank(tier));
+    // Two octaves above the bass register the root sits in.
+    const notes = degrees.map((degree) =>
+      midiToHz(degreeToMidi(music, degree) + 24)
+    );
+    notes.forEach((frequency, step) => {
+      const last = step === notes.length - 1;
+      const delay = MATCH_END_JINGLE_SEC + step * 0.11;
+      this.tone(frequency, last ? 0.8 : 0.18, {
+        type: 'sine',
+        volume: 0.14,
+        delay,
+      });
+      // An overtone an octave up gives the sine a bell's shimmer.
+      this.tone(frequency * 2, last ? 0.5 : 0.1, {
+        type: 'sine',
+        volume: 0.04,
+        delay,
+      });
+    });
   }
 
   /**

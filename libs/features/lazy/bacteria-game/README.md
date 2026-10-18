@@ -69,6 +69,30 @@ the game.
 [`GameSettingsService`](./src/lib/settings.service.ts) remembers opponent,
 difficulty, level and the frame rate badge in local storage.
 
+## Medallions
+
+A win against the computer earns a medallion for that level and difficulty,
+judged by [`medallions.ts`](./src/lib/state/medallions.ts) on what
+[`MatchTally`](./src/lib/state/match-tally.ts) measured over the match. The
+tiers are nested: each one asks for everything the one below does.
+
+| Tier     | Condition                                                          |
+| -------- | ------------------------------------------------------------------ |
+| Bronze   | A win                                                              |
+| Silver   | Won within the level's `silverSec`                                 |
+| Gold     | Won within `goldSec`, losing less than `goldLossShare` of the peak |
+| Platinum | Gold without a boost, never below half the computer's size         |
+
+The limits are per level (`medal` in [`levels.ts`](./src/lib/state/levels.ts)),
+in seconds of match time, so they hold on every simulation resolution. The
+result screen shows the medallion with what the next one needs, and the level
+list shows the best one of each level at the selected difficulty. Two-player
+matches earn none.
+
+[`ProgressService`](./src/lib/progress.service.ts) keeps the best medallion,
+the number of wins and the fastest win per level and difficulty under its own
+local storage key, `bacteria-game.progress`.
+
 ## Boost
 
 Every player has a boost (Space for the first player, Enter for the second, or

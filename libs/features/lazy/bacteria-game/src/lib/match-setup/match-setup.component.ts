@@ -10,10 +10,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MedallionComponent } from '../medallion/medallion.component';
 import { BOT_DIFFICULTIES, BotDifficulty } from '../state/bot-controller';
 import { COLONY_COLORS } from '../state/colony-colors';
 import { GameMode } from '../state/game.states';
 import { Level, LEVELS } from '../state/levels';
+import { MedalTier } from '../state/medallions';
 
 /**
  * The controls that set up the next match: opponent, difficulty, colours
@@ -30,6 +32,7 @@ import { Level, LEVELS } from '../state/levels';
     MatIconModule,
     MatSelectModule,
     MatTooltipModule,
+    MedallionComponent,
   ],
   templateUrl: './match-setup.component.html',
   styleUrl: './match-setup.component.scss',
@@ -41,6 +44,13 @@ export class MatchSetupComponent {
   public readonly level = input.required<Level>();
   /** The colour ids of the left and the right colony. */
   public readonly colors = input.required<readonly [string, string]>();
+  /**
+   * The best medallion of each level at the selected difficulty, by level
+   * id - shown in the level list against the computer.
+   */
+  public readonly medals = input<Readonly<Record<string, MedalTier | null>>>(
+    {}
+  );
   /** True while a match is on and the setup must not change. */
   public readonly disabled = input(false);
 

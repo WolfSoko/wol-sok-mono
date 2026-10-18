@@ -1,5 +1,27 @@
 <h2 class="headline">{{ headline() }}</h2>
 <p class="level-info">{{ level().name }}</p>
+@if (award(); as award) {
+  <div class="award" [class.earned]="award.medal !== null">
+    <feat-lazy-bac-game-medallion
+      class="award-medal"
+      [tier]="award.medal"
+      [size]="88"
+      [difficulty]="award.record.difficulty"
+    />
+    <div class="award-text">
+      <p class="award-title">{{ medalTitle() }}</p>
+      @if (award.record.won) {
+        <p>Won in {{ duration() }}</p>
+      }
+      @if (heldMedal(); as held) {
+        <p>You hold {{ held }} on this level already.</p>
+      }
+      @if (award.hint; as hint) {
+        <p class="award-hint">{{ hint }}</p>
+      }
+    </div>
+  </div>
+}
 <div class="actions">
   <button mat-button type="button" (click)="action.emit('menu')">
     <mat-icon>home</mat-icon>
