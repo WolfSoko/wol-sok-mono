@@ -1,3 +1,4 @@
+import { AchievementId } from './achievement-ids';
 import { BotDifficulty } from './bot-controller';
 import { Player } from './player.model';
 
@@ -58,6 +59,12 @@ export interface MatchRecord {
   peakCount: number;
   /** The lowest ratio of own to enemy bacteria during the match. */
   lowestSizeRatio: number;
+  /** Enemy bacteria the human's colony captured. */
+  captured: number;
+  /** Bacteria the computer's colony lost - captured or crushed. */
+  enemyLost: number;
+  /** The colony at its peak, as a share of the level's colony capacity. */
+  peakShare: number;
 }
 
 /** What a match against the computer earned, for the result screen. */
@@ -69,6 +76,8 @@ export interface MedalAward {
   previousBest: MedalTier | null;
   /** What the next medallion needs, null after a platinum. */
   hint: string | null;
+  /** The achievements the match earned. */
+  achievements: readonly AchievementId[];
 }
 
 /**
@@ -82,13 +91,16 @@ export function matchRecord(
     difficulty: BotDifficulty;
     durationSec: number;
     winner: Player | null;
+    /** The most bacteria a colony may have on this level and grid. */
+    capacity: number;
   }
 ): MatchRecord | null {
   const human = players.find((player) => !player.isBot);
   if (human == null) {
     return null;
   }
-  const { winner, ...setup } = match;
+  const bot = players.find((player) => player.isBot);
+  const { winner, capacity, ...setup } = match;
   return {
     ...setup,
     won: winner != null && !winner.isBot,
@@ -96,6 +108,9 @@ export function matchRecord(
     lost: human.lost,
     peakCount: human.peakCount,
     lowestSizeRatio: human.lowestSizeRatio,
+    captured: human.captured,
+    enemyLost: bot?.lost ?? 0,
+    peakShare: capacity > 0 ? human.peakCount / capacity : 0,
   };
 }
 

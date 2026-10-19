@@ -17,6 +17,8 @@ import { DEFAULT_MODE, GameMode } from '../state/game.states';
 import { Level, LEVELS, nextLevel } from '../state/levels';
 import { MedalAward, MEDAL_NAMES, medalRank } from '../state/medallions';
 import { Player } from '../state/player.model';
+import { AchievementId } from '../state/achievement-ids';
+import { Achievement, getAchievement } from '../state/achievements';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu';
@@ -69,6 +71,15 @@ export class WinnerComponent {
   /** What the match earned against the computer, null between two players. */
   public award: Signal<MedalAward | null> = toSignal(this.state.selectAward(), {
     initialValue: null,
+  });
+
+  /** The achievements the match earned, with their names and conditions. */
+  public earned: Signal<readonly Achievement[]> = computed(() =>
+    this.achievementIds().map(getAchievement)
+  );
+
+  private achievementIds = toSignal(this.state.selectAchievements(), {
+    initialValue: [] as readonly AchievementId[],
   });
 
   /** The medallion line of the award: what was won, or that nothing was. */

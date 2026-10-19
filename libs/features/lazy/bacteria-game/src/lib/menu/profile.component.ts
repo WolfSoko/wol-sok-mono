@@ -5,20 +5,28 @@ import {
   input,
   output,
 } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { ScreenHeaderComponent } from './screen-header.component';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { LEVELS } from '../state/levels';
 import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
-import { medalTally, Progress } from '../state/progress';
+import { ACHIEVEMENTS } from '../state/achievements';
+import {
+  LifetimeTotals,
+  medalTally,
+  NO_TOTALS,
+  Progress,
+} from '../state/progress';
 
 /**
- * The player's profile: every medallion won, level by level and difficulty
- * by difficulty, and how many of each metal. Kept on this device.
+ * The player's profile: what they have done over all their matches, every
+ * medallion won, level by level and difficulty by difficulty, and the
+ * achievements, earned or still to earn. Kept on this device.
  */
 @Component({
   selector: 'feat-lazy-bac-game-profile',
-  imports: [MedallionComponent, ScreenHeaderComponent],
+  imports: [DatePipe, MedallionComponent, ScreenHeaderComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,6 +34,10 @@ import { medalTally, Progress } from '../state/progress';
 export class ProfileComponent {
   /** Every medallion held, by level id, then by difficulty. */
   public readonly medals = input<Progress['medals']>({});
+  /** The day each achievement was earned. */
+  public readonly achievements = input<Progress['achievements']>({});
+  /** What the player has done over all their matches. */
+  public readonly totals = input<LifetimeTotals>(NO_TOTALS);
 
   public readonly back = output<void>();
 
@@ -67,4 +79,18 @@ export class ProfileComponent {
   );
 
   protected readonly levelCount = LEVELS.length;
+
+  /** Every achievement, earned ones with their day, the rest with their condition. */
+  protected readonly achievementList = computed(() =>
+    ACHIEVEMENTS.map((achievement) => ({
+      ...achievement,
+      earnedOn: this.achievements()[achievement.id] ?? null,
+    }))
+  );
+
+  protected readonly earnedCount = computed(
+    () => this.achievementList().filter((a) => a.earnedOn !== null).length
+  );
+
+  protected readonly achievementCount = ACHIEVEMENTS.length;
 }

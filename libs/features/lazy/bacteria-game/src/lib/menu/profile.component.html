@@ -17,6 +17,24 @@
           {{ heldCount() }} <span class="of">of {{ totalCount }}</span>
         </dd>
       </div>
+      <div class="figure">
+        <dt>Matches won</dt>
+        <dd>
+          {{ totals().wins }} <span class="of">of {{ totals().matches }}</span>
+        </dd>
+      </div>
+      <div class="figure">
+        <dt>Bacteria captured</dt>
+        <dd>{{ totals().captured.toLocaleString("en") }}</dd>
+      </div>
+      <div class="figure">
+        <dt>Crushed by walls</dt>
+        <dd>{{ totals().enemyCrushed.toLocaleString("en") }}</dd>
+      </div>
+      <div class="figure">
+        <dt>Two-player matches</dt>
+        <dd>{{ totals().couchMatches }}</dd>
+      </div>
     </dl>
     <ul class="tally" aria-label="Medallions by metal">
       @for (metal of tally(); track metal.tier) {
@@ -24,6 +42,32 @@
           <feat-lazy-bac-game-medallion [tier]="metal.tier" [size]="40" />
           <span class="tally-count">{{ metal.count }}</span
           >{{ " " }}<span class="tally-name">{{ metal.name }}</span>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="achievements" aria-labelledby="achievements-title">
+    <h3 id="achievements-title" class="section-title">
+      Achievements
+      <span class="of">{{ earnedCount() }} of {{ achievementCount }}</span>
+    </h3>
+    <ul>
+      @for (achievement of achievementList(); track achievement.id) {
+        <li [class.earned]="achievement.earnedOn !== null">
+          <span class="badge" aria-hidden="true">{{
+            achievement.name[0]
+          }}</span>
+          <span class="achievement-text">
+            <span class="achievement-name">{{ achievement.name }}</span>
+            <span class="achievement-note">
+              @if (achievement.earnedOn; as day) {
+                Earned {{ day | date: "d MMM y" }}
+              } @else {
+                {{ achievement.condition }}
+              }
+            </span>
+          </span>
         </li>
       }
     </ul>

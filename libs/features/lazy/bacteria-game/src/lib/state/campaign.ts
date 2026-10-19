@@ -8,6 +8,8 @@ export interface CampaignSummary {
   openLevels: number;
   /** Medallions held per tier, over every level and difficulty. */
   medals: Readonly<Record<MedalTier, number>>;
+  /** Achievements earned. */
+  achievements: number;
   /** "5 · Pillar Field · Normal" - where Continue picks up. */
   continueLabel: string;
 }

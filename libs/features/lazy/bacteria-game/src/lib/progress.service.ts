@@ -10,12 +10,16 @@ import {
   MedalAward,
   MedalTier,
 } from './state/medallions';
+import { AchievementId } from './state/achievement-ids';
+import { earnAchievements } from './state/achievements';
 import {
   addMedal,
+  addTotals,
   bestMedal,
   EMPTY_PROGRESS,
   mergeProgress,
   parseProgress,
+  Progress,
 } from './state/progress';
 import { GameStorage } from './storage/game-storage';
 
@@ -61,20 +65,59 @@ export class ProgressService {
    */
   public readonly ladderLocks = computed(() => ladderLocks(this.progress()));
 
-  /** Judges a match that has ended, remembers its medallion and returns its award. */
+  /** Every achievement earned, with the day it was earned. */
+  public readonly achievements = computed(() => this.progress().achievements);
+
+  /** What the player has done over all their matches. */
+  public readonly totals = computed(() => this.progress().totals);
+
+  /**
+   * Judges a match against the computer that has ended, remembers its
+   * medallion, its numbers and the achievements it earned, and returns its
+   * award.
+   */
   public recordMatch(record: MatchRecord): MedalAward {
     const previousBest = this.medal(record.levelId, record.difficulty);
     const { medal, hint } = judgeMatch(getLevel(record.levelId).medal, record);
-    const progress =
+    let progress =
       medal === null
         ? this.progress()
         : addMedal(this.progress(), record.levelId, record.difficulty, medal);
-    if (progress !== this.progress()) {
-      this.progress.set(progress);
-      this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
-        mergeProgress(parseProgress(stored), progress)
-      );
-    }
-    return { record, medal, previousBest, hint };
+    progress = addTotals(progress, {
+      matches: 1,
+      wins: record.won ? 1 : 0,
+      captured: record.captured,
+      // What the computer lost that nobody captured, the walls crushed.
+      enemyCrushed: Math.max(0, record.enemyLost - record.captured),
+    });
+    const earned = earnAchievements(progress, record, today());
+    this.save(earned.progress);
+    return { record, medal, previousBest, hint, achievements: earned.earned };
   }
+
+  /**
+   * Counts a match between two players that has ended, and returns the
+   * achievements it earned.
+   */
+  public recordCouchMatch(): readonly AchievementId[] {
+    const earned = earnAchievements(
+      addTotals(this.progress(), { couchMatches: 1 }),
+      null,
+      today()
+    );
+    this.save(earned.progress);
+    return earned.earned;
+  }
+
+  private save(progress: Progress): void {
+    this.progress.set(progress);
+    this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
+      mergeProgress(parseProgress(stored), progress)
+    );
+  }
+}
+
+/** Today as an ISO date, "2026-10-19" - the day an achievement is earned. */
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
 }

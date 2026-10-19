@@ -48,6 +48,7 @@ export class CampaignService {
   public readonly summary = computed((): CampaignSummary => ({
     openLevels: LEVELS.length - Object.keys(this.progress.ladderLocks()).length,
     medals: medalTally(this.progress.medals()),
+    achievements: Object.keys(this.progress.achievements()).length,
     continueLabel: `${getLevel(this.furthestLevel()).name} · ${difficultyOption(this.difficulty())?.name ?? ''}`,
   }));
 

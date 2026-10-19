@@ -113,6 +113,7 @@ export class GameStateService {
       winner: null,
       matchEnded: false,
       award: null,
+      achievements: [],
     });
     // subscribe update time passed when game running
     const running$ = this.gameStateQuery.selectCurrentGameState(
@@ -172,7 +173,7 @@ export class GameStateService {
    * award reach the store together.
    */
   private endMatch(outcome: MatchOutcome): void {
-    const { mode, levelId, difficulty, timePassed } =
+    const { mode, levelId, difficulty, timePassed, width } =
       this.gameStateQuery.getValue();
     const record =
       mode === 'vs-computer'
@@ -182,15 +183,21 @@ export class GameStateService {
             // Whole seconds, as the match clock shows them.
             durationSec: Math.floor(timePassed / 1000),
             winner: outcome.winner,
+            capacity: levelBalance(getLevel(levelId), scaleOf(width))
+              .maxBacteriaPerPlayer,
           })
         : null;
     const award = record == null ? null : this.progress.recordMatch(record);
+    const achievements =
+      award?.achievements ??
+      (mode === 'two-players' ? this.progress.recordCouchMatch() : []);
     applyTransaction(() => {
       this.gameStateStore.update({ currentState: GameState.END });
       this.gameStateStore.update({
         winner: outcome.winner,
         matchEnded: true,
         award,
+        achievements,
       });
     });
   }
@@ -331,6 +338,7 @@ export class GameStateService {
       winner: null,
       matchEnded: false,
       award: null,
+      achievements: [],
     }));
   }
 
@@ -347,6 +355,7 @@ export class GameStateService {
       winner: null,
       matchEnded: false,
       award: null,
+      achievements: [],
     }));
   }
 
