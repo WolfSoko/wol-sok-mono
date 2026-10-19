@@ -29,9 +29,10 @@ changes to the services that use it.
   kept, never a worse one. Such a change comes to the same however late or
   often a backend applies it, offline included, so concurrent writers converge
   without a transaction.
-- A late answer must not undo the player: a setting the storage does not
-  hold, one the player changed before it answered, and the setup of a match
-  under way all keep their value.
+- A late answer must not undo the player. A setting the storage does not
+  hold and one the player changed before it answered keep their value. A
+  match under way keeps its setup; the stored setup waits for the menu and is
+  what gets written meanwhile.
 - Backends skip writes that leave the stored value as it is, since every write
   to Firestore is billed. Services do not need to cache the stored value for
   that, but they should not call the port without a change either.

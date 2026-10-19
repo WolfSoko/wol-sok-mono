@@ -228,20 +228,52 @@ describe('GameSettingsService', () => {
       });
     });
 
-    it('leaves the setup of a match under way alone', () => {
+    it('keeps the stored setup of a match under way for the next one', () => {
       const service = createWith({
         levelId: LEVELS[2].id,
         difficulty: 'hard',
         showFps: true,
       });
+      const gameState = TestBed.inject(GameStateService);
+      const query = TestBed.inject(GameStateQuery);
 
-      TestBed.inject(GameStateService).start();
+      gameState.start();
+      storage.flush();
+      service.setSound(false);
       storage.flush();
 
-      const state = TestBed.inject(GameStateQuery).getValue();
-      expect(state.levelId).toBe(LEVELS[0].id);
-      expect(state.difficulty).toBe('normal');
+      expect(query.getValue().levelId).toBe(LEVELS[0].id);
+      expect(query.getValue().difficulty).toBe('normal');
       expect(service.showFps()).toBe(true);
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        levelId: LEVELS[2].id,
+        difficulty: 'hard',
+        sound: false,
+      });
+
+      gameState.reset();
+
+      expect(query.getValue().levelId).toBe(LEVELS[2].id);
+      expect(query.getValue().difficulty).toBe('hard');
+    });
+
+    it('drops the stored setup the player changed during the match', () => {
+      createWith({ levelId: LEVELS[2].id, difficulty: 'hard' });
+      const gameState = TestBed.inject(GameStateService);
+      const query = TestBed.inject(GameStateQuery);
+
+      gameState.start();
+      storage.flush();
+      gameState.setLevel(LEVELS[4].id);
+      gameState.reset();
+      storage.flush();
+
+      expect(query.getValue().levelId).toBe(LEVELS[4].id);
+      expect(query.getValue().difficulty).toBe('hard');
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        levelId: LEVELS[4].id,
+        difficulty: 'hard',
+      });
     });
 
     it('stores the changes made after the settings were restored', () => {
