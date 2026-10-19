@@ -16,12 +16,7 @@ import { scaleOf } from './arena-size';
 import { FramePacer } from './frame-pacer';
 import { GameFrame, TICK_MS, TickClock, ticksToMs } from './fixed-tick';
 import { BotDifficulty } from './bot-controller';
-import {
-  getColonyColor,
-  pickColor,
-  toPlayerColor,
-  validColorPair,
-} from './colony-colors';
+import { getColonyColor, pickColor, validColorPair } from './colony-colors';
 import { GameStateQuery } from './game-state.query';
 import {
   GameMode,
@@ -30,12 +25,7 @@ import {
   GameStateStore,
   isMatchOn,
 } from './game.states';
-import {
-  getLevel,
-  levelBalance,
-  levelCrosshairSpeed,
-  levelMap,
-} from './levels';
+import { getLevel, levelBalance } from './levels';
 import { colonyCapacity } from './game-balance';
 import { MatchEarnings } from './earnings';
 import {
@@ -45,10 +35,13 @@ import {
   Series,
   SeriesLength,
   seriesWinner,
-  startScales,
 } from './rivalry';
 import { matchRecord } from './medallions';
 import { Player } from './player.model';
+import { randomSeed } from './geometry';
+import { MatchOutcome } from './match-engine';
+import { MatchPlan, planMatch } from './match-setup';
+import { Replay, replayOf } from './replay';
 
 import { PlayerQuery } from './player.query';
 import { PlayerService } from './player.service';
@@ -61,11 +54,6 @@ import { ProgressService } from '../progress.service';
  */
 const MAX_FRAME_MS = 3 * TICK_MS;
 
-/** How a match ended. `winner` is null when both colonies died together. */
-interface MatchOutcome {
-  winner: Player | null;
-}
-
 @Injectable({ providedIn: 'root' })
 export class GameStateService {
   private gameStateStore = inject(GameStateStore);
@@ -73,6 +61,10 @@ export class GameStateService {
   private playerQuery = inject(PlayerQuery);
   private playerService = inject(PlayerService);
   private progress = inject(ProgressService);
+  /** What the colonies on the board were spawned from - see `initPlayers`. */
+  private plan: MatchPlan | null = null;
+  /** The recording of the match that ended last, null before one has. */
+  public lastReplay: Replay | null = null;
 
   /**
    * The ticks of the display frames the game runs on - see
@@ -101,28 +93,6 @@ export class GameStateService {
   public readonly frames$: Observable<GameFrame> = this.frames.asObservable();
 
   /**
-   * Decides whether the match is over.
-   *
-   * Returns `null` while it is still running, otherwise the outcome. Both
-   * colonies can wipe each other out in the same step, which is a draw and
-   * still has to end the match - hence the outcome wrapper instead of a bare
-   * winner, which cannot tell "draw" from "not finished".
-   */
-  private static determineOutcome(players: Player[]): MatchOutcome | null {
-    if (players.length < 2) {
-      return null;
-    }
-    const survivors = players.filter((player) => player.bacteriaCount > 0);
-    if (survivors.length === 1) {
-      return { winner: survivors[0] };
-    }
-    // Only a match that saw losses can be a draw - at kick off nobody has
-    // bacteria yet either, and that is not an outcome.
-    const fought = players.some((player) => player.lost > 0);
-    return survivors.length === 0 && fought ? { winner: null } : null;
-  }
-
-  /**
    * Runs the ticks of a display frame. The match may end in any of them;
    * the ones after that are not played, and not counted on the match clock.
    */
@@ -133,6 +103,10 @@ export class GameStateService {
         timePassed: ticksToMs(Math.round(state.timePassed / TICK_MS) + 1),
       }));
       this.playerService.tick(width, height);
+      const outcome = this.playerService.outcome();
+      if (outcome != null) {
+        this.endMatch(outcome);
+      }
     }
     this.playerService.endFrame();
   }
@@ -174,27 +148,6 @@ export class GameStateService {
         this.gameStateStore.update({ fps })
       )
     );
-
-    // subscribe determine Winner
-    this.subscriptions.add(
-      running$
-        .pipe(
-          switchMap(() =>
-            this.playerQuery
-              .selectAll()
-              .pipe(
-                takeUntil(
-                  this.gameStateQuery
-                    .selectCurrentGameState()
-                    .pipe(filter((value) => value !== GameState.RUNNING))
-                )
-              )
-          ),
-          map((players) => GameStateService.determineOutcome(players)),
-          filter((outcome) => outcome != null)
-        )
-        .subscribe((outcome) => this.endMatch(outcome))
-    );
   }
 
   /**
@@ -205,6 +158,7 @@ export class GameStateService {
   private endMatch(outcome: MatchOutcome): void {
     const { series } = this.gameStateQuery.getValue();
     const earnings = this.recordMatch(outcome.winner);
+    this.lastReplay = this.replay();
     applyTransaction(() => {
       this.gameStateStore.update({ currentState: GameState.END });
       this.gameStateStore.update({
@@ -217,6 +171,18 @@ export class GameStateService {
             : addSeriesMatch(series, winnerSeat(outcome.winner)),
       });
     });
+  }
+
+  /** The recording of the match on the board, as far as it got. */
+  private replay(): Replay | null {
+    return this.plan == null
+      ? null
+      : replayOf(
+          this.plan,
+          this.playerService.getSimulation().kind,
+          this.playerService.tickCount,
+          this.playerService.recorded
+        );
   }
 
   /**
@@ -253,49 +219,24 @@ export class GameStateService {
   }
 
   /**
-   * Spawns both colonies with the map and the balance of the current level.
-   *
-   * In `vs-computer` mode the second crosshair belongs to the bot, and the
-   * names change with it so the scoreboard reads "You" and "Computer".
-   * Between two players each one is called by their colour.
+   * Spawns both colonies with the map and the balance of the current level,
+   * from a fresh seed - every spawn is a match that may be played.
    */
   private initPlayers() {
     const { width, height, levelId, mode, difficulty, colors, headStart } =
       this.gameStateQuery.getValue();
-    const level = getLevel(levelId);
-    const scale = scaleOf(width);
-    const versusComputer = mode === 'vs-computer';
-    const [left, right] = colors.map(getColonyColor);
-    const [leftScale, rightScale] = versusComputer
-      ? [1, 1]
-      : startScales(headStart);
-    this.playerService.init(
-      [
-        {
-          x: width / 4,
-          y: height / 2,
-          color: toPlayerColor(left),
-          name: versusComputer ? 'You' : left.name,
-          isBot: false,
-          startScale: leftScale,
-        },
-        {
-          x: (width / 4) * 3,
-          y: height / 2,
-          color: toPlayerColor(right),
-          name: versusComputer ? 'Computer' : right.name,
-          isBot: versusComputer,
-          startScale: rightScale,
-        },
-      ],
-      {
-        balance: levelBalance(level, scale),
-        map: levelMap(level),
-        crosshairSpeed: levelCrosshairSpeed(level, scale),
-        difficulty,
-        arena: { width, height },
-      }
-    );
+    this.plan = {
+      levelId,
+      mode,
+      difficulty,
+      colors,
+      headStart,
+      width,
+      height,
+      seed: randomSeed(),
+    };
+    const { spawns, options } = planMatch(this.plan);
+    this.playerService.init(spawns, options);
   }
 
   /**

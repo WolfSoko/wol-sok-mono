@@ -260,6 +260,30 @@ from the seed itself, each bot from a stream derived from it. On the CPU simulat
 plays the same match - the ground for replays. The GPU simulation takes the
 seed as well, but its shaders do not come out the same on every device.
 
+## Replays
+
+A match runs in a [`MatchEngine`](./src/lib/state/match-engine.ts): the
+players, the bots and the simulation, tick by tick, without Angular or the
+keyboard. `PlayerService` turns the keys and sticks into one steering vector
+per human, and mirrors the engine's players into the store for the UI. The
+engine decides when the match is over, right after the tick that ends it.
+
+While a match runs, the engine records what the humans put in, each input
+once, when it changes: the steering vector from a tick on, a drag target and
+a boost before a tick. The crosshairs follow from those inputs, so a match
+records a few hundred entries rather than a position per tick. When the match
+ends, `GameStateService.lastReplay` holds it as a
+[`Replay`](./src/lib/state/replay.ts): that recording under a header with
+everything the match was derived from (level, mode, difficulty, colours,
+head start, grid size, seed, balance version and which simulation ran it).
+`planMatch` turns the header back into the colonies and the rules, and
+`playReplay` plays the match again on the CPU simulation with nobody
+watching; the bot is not recorded, it decides the same again from the seed.
+A replay of another format or balance version, or one the GPU ran, is refused
+rather than played out wrong, and `parseReplay` refuses anything that is not
+a whole one. Raise `BALANCE_VERSION` with every change that plays a recorded
+match out differently.
+
 ## Tuning
 
 Every number that shapes how the game feels lives in

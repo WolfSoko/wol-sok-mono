@@ -220,6 +220,11 @@ export const LEVELS: readonly Level[] = [
 ];
 
 /** The level with that id, falling back to the first one. */
+/** True for the id of a level of the game. */
+export function isLevelId(value: unknown): value is string {
+  return LEVELS.some((level) => level.id === value);
+}
+
 export function getLevel(id: string): Level {
   return LEVELS.find((level) => level.id === id) ?? LEVELS[0];
 }
