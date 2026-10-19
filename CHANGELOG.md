@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.16.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.15.0...v74.16.0) (2026-10-19)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ fixed 60 Hz tick and one seed per match ([#2493](https://github.com/WolfSoko/wol-sok-mono/issues/2493)) ([23ea4aa](https://github.com/WolfSoko/wol-sok-mono/commit/23ea4aafcd176c3bc6727ee9021c12f3a0036043))
+
 ## [74.15.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.14.0...v74.15.0) (2026-10-19)
 
 ### Features
