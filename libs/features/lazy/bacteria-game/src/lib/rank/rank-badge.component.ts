@@ -22,7 +22,7 @@ import { RANKS } from '../state/ranks';
         {{ name()[0] }}
       </text>
       @for (pip of pips(); track $index) {
-        <circle [attr.cx]="pip" cy="50" r="2.2" class="pip" />
+        <circle [attr.cx]="pip" cy="49" r="1.8" class="pip" />
       }
     </svg>
   `,
@@ -42,10 +42,13 @@ export class RankBadgeComponent {
   /** Width and height in CSS pixels. */
   public readonly size = input(64);
 
-  /** The x of each pip, centred under the initial. */
+  /**
+   * The x of each pip, centred under the initial - eight of them still
+   * inside the hexagon.
+   */
   protected readonly pips = computed(() => {
     const count = Math.min(this.number(), RANKS.length);
-    const gap = 5.5;
+    const gap = 4.4;
     return Array.from(
       { length: count },
       (_, i) => 32 + (i - (count - 1) / 2) * gap

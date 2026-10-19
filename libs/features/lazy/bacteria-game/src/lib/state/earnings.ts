@@ -8,8 +8,11 @@ export interface MatchEarnings {
   award: MedalAward | null;
   achievements: readonly AchievementId[];
   xp: XpGain;
-  /** The XP before this match, for the bar to climb from. */
-  xpBefore: number;
+  /**
+   * The XP before this match, for the bar to climb from - null when the
+   * match ended before the storage told what was held.
+   */
+  xpBefore: number | null;
   /** The levels the match opened on the campaign ladder. */
   unlocked: readonly string[];
 }

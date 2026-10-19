@@ -1,3 +1,5 @@
+@use '../menu/screen';
+
 // The result of a match, in the menu screens' look where the stage panel
 // sets it (menu/_screen.scss), with plain fallbacks in the page layout.
 :host {
@@ -93,13 +95,7 @@
 }
 
 .xp-bar {
-  --mat-progress-bar-active-indicator-color: var(--bw-gold, #e9b949);
-  --mat-progress-bar-track-color: var(--bw-line, #ccc);
-  --mat-progress-bar-track-height: 0.6rem;
-  --mat-progress-bar-active-indicator-height: 0.6rem;
-  --mat-progress-bar-track-shape: 0.3rem;
-
-  border-radius: 0.3rem;
+  @include screen.bar;
 }
 
 // The buffer is the XP this match added - the light end of the gold.
@@ -181,8 +177,7 @@
   color: var(--bw-muted, inherit);
 }
 
-.achievement-name,
-.unlocked-name {
+.chip-name {
   font-weight: 700;
 }
 
@@ -196,11 +191,6 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.5rem;
-}
-
-.next {
-  --mat-button-filled-container-color: var(--bw-player, #ff7a2e);
-  --mat-button-filled-label-text-color: var(--bw-on-player, #140a02);
 }
 
 // Under the buttons: what the locked next level still needs.

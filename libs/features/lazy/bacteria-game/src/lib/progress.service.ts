@@ -2,12 +2,12 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { BotDifficulty } from './state/bot-controller';
-import { ladderLocks } from './state/campaign';
+import { ladderLocks, newlyUnlocked } from './state/campaign';
 import { getLevel } from './state/levels';
 import { judgeMatch, MatchRecord, MedalTier } from './state/medallions';
 import { earnAchievements } from './state/achievements';
 import { MatchEarnings } from './state/earnings';
-import { XpGain, xpForCouchMatch, xpForMatch } from './state/xp';
+import { COUCH_XP, matchXp, xpGain, xpOf } from './state/xp';
 import {
   addMedal,
   addTotals,
@@ -83,6 +83,9 @@ export class ProgressService {
   /** What the player has done over all their matches. */
   public readonly totals = computed(() => this.progress().totals);
 
+  /** The XP the progress is worth, which decides the rank. */
+  public readonly xp = computed(() => xpOf(this.progress()));
+
   /**
    * Judges a match against the computer that has ended, remembers its
    * medallion, its numbers, the achievements and the XP it earned, and
@@ -98,9 +101,8 @@ export class ProgressService {
           medal === null
             ? progress
             : addMedal(progress, record.levelId, record.difficulty, medal),
-        totalsOf(record),
-        record,
-        (achievements) => xpForMatch(record, medal, previousBest, achievements)
+        { ...totalsOf(record), matchXp: matchXp(record) },
+        record
       ),
     };
   }
@@ -111,41 +113,43 @@ export class ProgressService {
       award: null,
       ...this.record(
         (progress) => progress,
-        { couchMatches: 1 },
-        null,
-        xpForCouchMatch
+        { couchMatches: 1, matchXp: COUCH_XP },
+        null
       ),
     };
   }
 
   /**
-   * Applies a match: its medallion, its numbers, the achievements they earn
-   * and the XP for all of it - here, and in the storage.
+   * Applies a match: its medallion, its numbers and the achievements they
+   * earn - here, and in the storage - and works out its XP and the levels
+   * it opened. Before the storage has answered, what was held before is not
+   * known: the match counts all the same, but where it leaves the player is
+   * left out rather than guessed.
    */
   private record(
     gain: (progress: Progress) => Progress,
     match: Partial<LifetimeTotals>,
-    record: MatchRecord | null,
-    xpFor: (achievements: number) => XpGain
+    record: MatchRecord | null
   ): Omit<MatchEarnings, 'award'> {
     const before = this.progress();
+    const locksBefore = this.ladderLocks();
+    const known = this.loaded();
     const { progress, earned } = earnAchievements(
       addTotals(gain(before), match),
       record,
       today()
     );
-    const xp = xpFor(earned.length);
-    const after = addTotals(progress, { xp: xp.total });
-    this.progress.set(after);
-    this.store(after, { ...match, xp: xp.total });
-    const locked = ladderLocks(after);
+    this.progress.set(progress);
+    this.store(progress, match);
     return {
       achievements: earned,
-      xp,
-      xpBefore: before.totals.xp,
-      unlocked: Object.keys(ladderLocks(before)).filter(
-        (id) => !(id in locked)
-      ),
+      xp: xpGain(before, progress, record),
+      xpBefore: known ? xpOf(before) : null,
+      unlocked: known
+        ? newlyUnlocked(locksBefore, this.ladderLocks()).filter(
+            (id) => id !== record?.levelId
+          )
+        : [],
     };
   }
 

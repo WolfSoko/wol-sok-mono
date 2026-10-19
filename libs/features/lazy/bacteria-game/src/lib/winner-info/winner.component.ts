@@ -20,7 +20,7 @@ import { MedalAward, MEDAL_NAMES, medalRank } from '../state/medallions';
 import { Player } from '../state/player.model';
 import { Achievement, getAchievement } from '../state/achievements';
 import { MatchEarnings } from '../state/earnings';
-import { rankFor } from '../state/ranks';
+import { xpClimb } from '../state/ranks';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu';
@@ -98,27 +98,20 @@ export class WinnerComponent {
   );
 
   /**
-   * The XP the match earned and where it leaves the player: the rank, a
-   * new one or not, and the bar towards the next - the part held before,
-   * and the part this match added.
+   * The XP the match earned and, where what was held before is known,
+   * where it leaves the player on the way through the ranks.
    */
   public xp = computed(() => {
     const earnings = this.earnings();
     if (earnings === null) {
       return null;
     }
-    const xp = earnings.xpBefore + earnings.xp.total;
-    const before = rankFor(earnings.xpBefore);
-    const after = rankFor(xp);
-    const rankUp = after.number > before.number;
-    const held = rankUp ? 0 : before.progress;
     return {
       gain: earnings.xp,
-      standing: after,
-      rankUp,
-      heldPercent: 100 * held,
-      gainedPercent: 100 * (after.progress - held),
-      toNext: after.next === null ? null : after.next.xp - xp,
+      climb:
+        earnings.xpBefore === null
+          ? null
+          : xpClimb(earnings.xpBefore, earnings.xp.total),
     };
   });
 

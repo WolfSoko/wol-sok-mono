@@ -93,7 +93,7 @@ describe('WinnerComponent', () => {
     fixture.detectChanges();
 
     const names = Array.from(
-      fixture.nativeElement.querySelectorAll('.achievement-name') as Element[]
+      fixture.nativeElement.querySelectorAll('.chip-name') as Element[]
     ).map((name) => name.textContent?.trim());
     expect(names).toEqual(['Blitz', 'Pacifist']);
   });
@@ -119,6 +119,21 @@ describe('WinnerComponent', () => {
     expect(text()).toContain('Coccus');
     expect(text()).toContain('Rank up!');
     expect(text()).toContain('475 XP to Bacillus');
+  });
+
+  it('leaves the rank out where what was held before is not known', () => {
+    store.update({
+      winner: null,
+      levelId: LEVELS[0].id,
+      earnings: earnings({
+        xp: { parts: [{ label: 'Win · Normal', xp: 125 }], total: 125 },
+        xpBefore: null,
+      }),
+    });
+
+    expect(text()).toContain('+125 XP');
+    expect(fixture.nativeElement.querySelector('.xp-bar')).toBeNull();
+    expect(text()).not.toContain('Rank up!');
   });
 
   it('names the levels the match opened', () => {

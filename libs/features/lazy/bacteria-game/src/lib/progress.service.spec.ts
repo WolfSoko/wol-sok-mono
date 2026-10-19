@@ -54,8 +54,9 @@ describe('ProgressService', () => {
         total: 370,
       },
       xpBefore: 0,
-      // Won without the ladder: the level itself opens, and the one after it.
-      unlocked: ['hourglass', 'inner-ring'],
+      // Won without the ladder: the level after it opens - the level itself
+      // was played, it is no news.
+      unlocked: ['inner-ring'],
     });
 
     TestBed.resetTestingModule();
@@ -75,7 +76,7 @@ describe('ProgressService', () => {
       captured: 350,
       enemyCrushed: 40,
       couchMatches: 0,
-      xp: expect.any(Number),
+      matchXp: 150 + 30,
     });
     expect(stored()['totals']).toEqual(progress.totals());
   });
@@ -116,7 +117,7 @@ describe('ProgressService', () => {
     const second = progress.recordCouchMatch();
 
     expect(second.xpBefore).toBe(first.xp.total);
-    expect(progress.totals().xp).toBe(first.xp.total + second.xp.total);
+    expect(progress.xp()).toBe(first.xp.total + second.xp.total);
   });
 
   it('keeps the better medallion and names it in the next award', () => {
@@ -262,6 +263,27 @@ describe('ProgressService', () => {
         achievements: { 'first-blood': expect.any(String) },
       });
       expect(progress.recordCouchMatch().achievements).toEqual([]);
+    });
+
+    it('counts the XP of a match that ends before the storage answers, without guessing the rank', () => {
+      const progress = createWith({
+        [PROGRESS_STORAGE_KEY]: {
+          medals: { hourglass: { hard: 'gold' } },
+          totals: { matchXp: 4000 },
+          achievements: { 'first-blood': '2026-10-01' },
+        },
+      });
+
+      const earnings = progress.recordMatch(GOLD_WIN);
+      expect(earnings.xpBefore).toBeNull();
+      expect(earnings.unlocked).toEqual([]);
+      storage.flush();
+
+      // The gold was held and First Blood earned: neither pays twice.
+      expect(progress.xp()).toBe(4000 + 150 + 70 + 50 * 3);
+      expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
+        totals: { matchXp: 4150 },
+      });
     });
 
     it('keeps the better medallion when another device stores a worse one', () => {

@@ -1,5 +1,22 @@
-import { BotDifficulty, difficultyOption } from './bot-controller';
-import { MatchRecord, MEDAL_NAMES, medalRank, MedalTier } from './medallions';
+import { ACHIEVEMENT_IDS } from './achievement-ids';
+import {
+  BOT_DIFFICULTIES,
+  BotDifficulty,
+  difficultyOption,
+} from './bot-controller';
+import { LEVELS } from './levels';
+import { MatchRecord, MEDAL_NAMES, MedalTier } from './medallions';
+import { bestMedal, Progress } from './progress';
+
+/**
+ * XP is not stored as such: it follows from the progress. What a match is
+ * worth on its own - finishing, winning, the difficulty - is counted as it
+ * is played (`totals.matchXp`); what the player holds - the best medallion
+ * of each level and difficulty, every achievement - is worth its XP as long
+ * as it is held. So XP merges as cleanly as the progress does, never pays
+ * the same thing twice, and players who held medallions before XP existed
+ * have theirs from the start.
+ */
 
 /** One line of what a match earned in XP, for the result screen. */
 export interface XpPart {
@@ -23,61 +40,75 @@ const DIFFICULTY_FACTOR: Record<BotDifficulty, number> = {
   normal: 1.25,
   hard: 1.5,
 };
-/** XP per medallion tier - in full for a new best, a quarter otherwise. */
+/** XP a held medallion is worth - a better one replaces the one below. */
 const MEDAL_XP: Record<MedalTier, number> = {
   bronze: 20,
   silver: 40,
   gold: 70,
   platinum: 120,
 };
-/** XP per achievement earned. */
+/** XP an achievement is worth. */
 const ACHIEVEMENT_XP = 50;
 /** XP for a match between two players. */
-const COUCH_XP = 15;
+export const COUCH_XP = 15;
 
-/**
- * What a match against the computer earns: finishing, winning - both times
- * the difficulty - its medallion, and its achievements. Even a lost match
- * leaves something behind.
- */
-export function xpForMatch(
-  record: MatchRecord,
-  medal: MedalTier | null,
-  previousBest: MedalTier | null,
-  achievements: number
-): XpGain {
-  const factor = DIFFICULTY_FACTOR[record.difficulty];
-  const difficulty = difficultyOption(record.difficulty)?.name ?? '';
-  const parts: XpPart[] = [
-    {
-      label: record.won ? `Win · ${difficulty}` : `Played · ${difficulty}`,
-      xp: Math.round((FINISH_XP + (record.won ? WIN_XP : 0)) * factor),
-    },
-  ];
-  if (medal !== null) {
-    const newBest = medalRank(medal) > medalRank(previousBest);
-    parts.push({
-      label: `${MEDAL_NAMES[medal]} medallion${newBest ? ', a new best' : ''}`,
-      xp: newBest ? MEDAL_XP[medal] : Math.round(MEDAL_XP[medal] / 4),
-    });
-  }
-  return withAchievements(parts, achievements);
-}
-
-/** What a match between two players earns: playing, and its achievements. */
-export function xpForCouchMatch(achievements: number): XpGain {
-  return withAchievements(
-    [{ label: 'Two players', xp: COUCH_XP }],
-    achievements
+/** What a match against the computer is worth on its own. */
+export function matchXp(record: MatchRecord): number {
+  return Math.round(
+    (FINISH_XP + (record.won ? WIN_XP : 0)) *
+      DIFFICULTY_FACTOR[record.difficulty]
   );
 }
 
-function withAchievements(parts: XpPart[], achievements: number): XpGain {
-  if (achievements > 0) {
+/** The XP a player's progress is worth. */
+export function xpOf(progress: Progress): number {
+  let xp = progress.totals.matchXp;
+  for (const { id: levelId } of LEVELS) {
+    for (const { id: difficulty } of BOT_DIFFICULTIES) {
+      const medal = bestMedal(progress, levelId, difficulty);
+      xp += medal === null ? 0 : MEDAL_XP[medal];
+    }
+  }
+  const achievements = ACHIEVEMENT_IDS.filter(
+    (id) => progress.achievements[id] != null
+  ).length;
+  return xp + achievements * ACHIEVEMENT_XP;
+}
+
+/**
+ * What a match earned, from the progress before and after it, line by
+ * line: the match itself, a better medallion, the achievements.
+ */
+export function xpGain(
+  before: Progress,
+  after: Progress,
+  record: MatchRecord | null
+): XpGain {
+  const parts: XpPart[] = [];
+  if (record === null) {
+    parts.push({ label: 'Two players', xp: COUCH_XP });
+  } else {
+    const difficulty = difficultyOption(record.difficulty)?.name ?? '';
     parts.push({
-      label:
-        achievements === 1 ? 'Achievement' : `${achievements} achievements`,
-      xp: achievements * ACHIEVEMENT_XP,
+      label: `${record.won ? 'Win' : 'Played'} · ${difficulty}`,
+      xp: matchXp(record),
+    });
+    const held = bestMedal(before, record.levelId, record.difficulty);
+    const best = bestMedal(after, record.levelId, record.difficulty);
+    if (best !== null && best !== held) {
+      parts.push({
+        label: `${MEDAL_NAMES[best]} medallion, a new best`,
+        xp: MEDAL_XP[best] - (held === null ? 0 : MEDAL_XP[held]),
+      });
+    }
+  }
+  const earned = ACHIEVEMENT_IDS.filter(
+    (id) => before.achievements[id] == null && after.achievements[id] != null
+  ).length;
+  if (earned > 0) {
+    parts.push({
+      label: earned === 1 ? 'Achievement' : `${earned} achievements`,
+      xp: earned * ACHIEVEMENT_XP,
     });
   }
   return { parts, total: parts.reduce((sum, { xp }) => sum + xp, 0) };

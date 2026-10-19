@@ -140,31 +140,6 @@
   background: var(--bw-surface-glass);
 }
 
-.rank {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.rank-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.rank-name {
-  @include screen.figure;
-
-  font-size: 1.75rem;
-}
-
-.xp-line {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  font-size: 0.9rem;
-  color: var(--bw-soft);
-}
-
 .stat {
   display: flex;
   flex-direction: column;
@@ -191,13 +166,7 @@
 }
 
 .bar {
-  --mat-progress-bar-active-indicator-color: var(--bw-gold);
-  --mat-progress-bar-track-color: var(--bw-line);
-  --mat-progress-bar-track-height: 0.6rem;
-  --mat-progress-bar-active-indicator-height: 0.6rem;
-  --mat-progress-bar-track-shape: 0.3rem;
-
-  border-radius: 0.3rem;
+  @include screen.bar;
 }
 
 .tiers {

@@ -50,6 +50,16 @@ export function ladderLocks(
   return locks;
 }
 
+/** The levels a change of the ladder's locks opened, in the ladder's order. */
+export function newlyUnlocked(
+  before: Readonly<Record<string, string>>,
+  after: Readonly<Record<string, string>>
+): string[] {
+  return LEVELS.filter(({ id }) => id in before && !(id in after)).map(
+    ({ id }) => id
+  );
+}
+
 /** The furthest level the ladder has opened, given its locks. */
 export function furthestOpenLevel(
   locks: Readonly<Record<string, string>>

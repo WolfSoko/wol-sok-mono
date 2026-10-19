@@ -37,22 +37,27 @@
         }
       </span>
     </div>
-    <mat-progress-bar
-      class="xp-bar"
-      mode="buffer"
-      [attr.aria-label]="'XP towards ' + (xp.standing.next?.name ?? 'the top')"
-      [value]="xp.heldPercent"
-      [bufferValue]="xp.heldPercent + xp.gainedPercent"
-    />
-    <p class="xp-rank">
-      @if (xp.rankUp) {
-        <span class="rank-up">Rank up!</span>
-      }
-      {{ xp.standing.rank.name }}
-      @if (xp.toNext !== null) {
-        · {{ xp.toNext }} XP to {{ xp.standing.next?.name }}
-      }
-    </p>
+    @if (xp.climb; as climb) {
+      <mat-progress-bar
+        class="xp-bar"
+        mode="buffer"
+        [attr.aria-label]="
+          'XP towards ' + (climb.standing.next?.name ?? 'the top')
+        "
+        [value]="climb.held"
+        [bufferValue]="climb.held + climb.gained"
+      />
+      <p class="xp-rank">
+        @if (climb.rankUp) {
+          <span class="rank-up">Rank up!</span>
+        }
+        {{ climb.standing.rank.name }}
+        @if (climb.standing.next; as next) {
+          · {{ climb.standing.toNext?.toLocaleString("en") }} XP to
+          {{ next.name }}
+        }
+      </p>
+    }
   </div>
 }
 
@@ -63,7 +68,7 @@
         <mat-icon class="badge" aria-hidden="true">emoji_events</mat-icon>
         <span class="chip-text">
           <span class="chip-label">Achievement</span>
-          <span class="achievement-name">{{ achievement.name }}</span>
+          <span class="chip-name">{{ achievement.name }}</span>
           <span class="chip-note">{{ achievement.condition }}</span>
         </span>
       </li>
@@ -73,7 +78,7 @@
         <mat-icon class="badge" aria-hidden="true">lock_open</mat-icon>
         <span class="chip-text">
           <span class="chip-label">Unlocked</span>
-          <span class="unlocked-name">{{ level.name }}</span>
+          <span class="chip-name">{{ level.name }}</span>
         </span>
       </li>
     }
@@ -98,7 +103,6 @@
   @if (upcoming(); as next) {
     <button
       mat-flat-button
-      class="next"
       type="button"
       [disabled]="upcomingLock() !== null"
       (click)="action.emit('next')"
@@ -108,6 +112,7 @@
     </button>
   }
 </div>
-@if (upcomingLock(); as lock) {
+<!-- Only with a Next button for the reason to explain. -->
+@if (upcoming() !== null && upcomingLock(); as lock) {
   <p class="lock-reason">{{ lock }}</p>
 }

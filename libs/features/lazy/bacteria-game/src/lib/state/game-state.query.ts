@@ -69,7 +69,6 @@ export class GameStateQuery extends Query<GameStateState> {
     return this.select((store) => store.winner);
   }
 
-  /** What the match that just ended earned, null without a medallion run. */
   /** What the match that just ended earned. */
   public selectEarnings(): Observable<MatchEarnings | null> {
     return this.select((store) => store.earnings);

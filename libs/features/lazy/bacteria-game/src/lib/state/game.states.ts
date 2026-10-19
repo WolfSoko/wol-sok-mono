@@ -38,10 +38,9 @@ export interface GameStateState {
   /** True once a match is over - also for a draw, where `winner` stays null. */
   matchEnded: boolean;
   /**
-   * What the match that just ended earned against the computer - null
-   * between two players and until a match is over.
+   * What the match that just ended earned - null until a match is over, and
+   * after one against the computer without a human in it.
    */
-  /** What the match that just ended earned, null before it ends. */
   earnings: MatchEarnings | null;
   keysPressed: string[];
   /** Id of the level that is selected - decides the map and the balance. */

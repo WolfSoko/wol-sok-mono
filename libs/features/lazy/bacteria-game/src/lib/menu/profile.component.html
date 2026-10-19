@@ -4,38 +4,9 @@
 
 <div class="body">
   <section class="summary" aria-label="Rank and totals">
-    @let rank = standing();
-    <div class="rank">
-      <feat-lazy-bac-game-rank-badge
-        [name]="rank.rank.name"
-        [number]="rank.number"
-        [size]="68"
-      />
-      <span class="rank-text">
-        <span class="rank-label"
-          >Rank {{ rank.number }} of {{ ranks.length }}</span
-        >
-        <span class="rank-name">{{ rank.rank.name }}</span>
-      </span>
-    </div>
-    <div class="xp">
-      <span class="xp-line">
-        <span>{{ totals().xp.toLocaleString("en") }} XP</span>
-        @if (rank.next; as next) {
-          <span
-            >{{ (next.xp - totals().xp).toLocaleString("en") }} to
-            {{ next.name }}</span
-          >
-        }
-      </span>
-      <mat-progress-bar
-        class="bar"
-        mode="determinate"
-        aria-label="XP to the next rank"
-        [value]="100 * rank.progress"
-      />
-    </div>
+    <feat-lazy-bac-game-rank-standing [xp]="xp()" [badgeSize]="68" />
     <ol class="ranks" aria-label="Ranks">
+      @let rank = standing();
       @for (each of ranks; track each.name; let i = $index) {
         <li
           [class.reached]="i + 1 < rank.number"

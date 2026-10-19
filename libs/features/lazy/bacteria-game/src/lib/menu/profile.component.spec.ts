@@ -50,7 +50,7 @@ describe('ProfileComponent', () => {
           captured: 18430,
           enemyCrushed: 212,
           couchMatches: 7,
-          xp: 1000,
+          matchXp: 0,
         },
       }
     );
@@ -80,14 +80,7 @@ describe('ProfileComponent', () => {
     const host = render(
       {},
       {
-        totals: {
-          matches: 0,
-          wins: 0,
-          captured: 0,
-          enemyCrushed: 0,
-          couchMatches: 0,
-          xp: 1000,
-        },
+        xp: 1000,
       }
     );
 

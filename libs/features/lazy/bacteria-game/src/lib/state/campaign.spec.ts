@@ -1,4 +1,9 @@
-import { furthestOpenLevel, ladderLocks, levelWon } from './campaign';
+import {
+  furthestOpenLevel,
+  ladderLocks,
+  levelWon,
+  newlyUnlocked,
+} from './campaign';
 import { levelTitle, LEVELS } from './levels';
 import { addMedal, EMPTY_PROGRESS } from './progress';
 
@@ -44,5 +49,15 @@ describe('campaign ladder', () => {
 
   it('knows nothing won of a level it does not know', () => {
     expect(levelWon(EMPTY_PROGRESS, 'moon')).toBe(false);
+  });
+
+  it("names the levels a win opened, in the ladder's order", () => {
+    const before = ladderLocks(EMPTY_PROGRESS);
+    const after = ladderLocks(
+      addMedal(EMPTY_PROGRESS, first.id, 'easy', 'gold')
+    );
+
+    expect(newlyUnlocked(before, after)).toEqual([second.id]);
+    expect(newlyUnlocked(after, after)).toEqual([]);
   });
 });

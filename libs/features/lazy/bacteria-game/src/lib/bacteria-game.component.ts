@@ -284,6 +284,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly medals = this.progress.medals;
   protected readonly achievements = this.progress.achievements;
   protected readonly totals = this.progress.totals;
+  protected readonly xp = this.progress.xp;
   /**
    * The colony colours as RGB and as CSS, with a text colour that reads on
    * the player's - for the menu screens.

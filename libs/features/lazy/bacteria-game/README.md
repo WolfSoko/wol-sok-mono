@@ -146,20 +146,25 @@ two, achievements as the earlier day, so tabs and devices converge.
 
 ## XP and ranks
 
-Every match earns XP ([`xp.ts`](./src/lib/state/xp.ts)), even a lost one:
-finishing and winning, both times the computer's difficulty, its medallion
-(in full as a new best, a quarter otherwise), 50 per achievement, and a
-little for a match between two players. XP climbs eight ranks named after
+Every match earns XP ([`xp.ts`](./src/lib/state/xp.ts)), even a lost one,
+and XP is not stored as such - it follows from the progress. What a match is
+worth on its own (finishing and winning, both times the computer's
+difficulty, or a little for a match between two players) is counted as a
+lifetime total, `matchXp`; what the player holds is worth its XP for as long
+as it is held - the best medallion of every level and difficulty, 50 per
+achievement. So XP merges as cleanly as the progress, never pays the same
+medallion or achievement twice, and a player who held medallions before XP
+existed has theirs from the start. XP climbs eight ranks named after
 microbiology ([`ranks.ts`](./src/lib/state/ranks.ts)), Spore to Superbug,
-and never unlocks gameplay. The XP total is one of the lifetime totals, so
-it is added to the stored value like them.
+and never unlocks gameplay.
 
 The result screen tells the match in order: the medallion with what the next
 one needs, the XP line by line with the bar towards the next rank (and Rank
 up!), the achievements earned and the levels the match opened, then the
-buttons. The main menu's card and the profile show the rank, its emblem
-([`rank-badge`](./src/lib/rank/rank-badge.component.ts)) and the XP to the
-next one.
+buttons. A match that ends before the storage has told what was held shows
+its XP but leaves the rank and the opened levels out rather than guess them.
+The main menu's card and the profile show the rank with its emblem and the
+XP to the next one ([`rank/`](./src/lib/rank)).
 
 ## Campaign ladder
 
