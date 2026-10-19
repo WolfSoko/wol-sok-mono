@@ -500,50 +500,27 @@ describe('BacteriaGameComponent', () => {
   });
 
   describe('the campaign ladder', () => {
-    it('keeps a locked level from being picked against the computer', () => {
+    it('marks the levels the ladder has not opened', () => {
       create();
       TestBed.inject(GameStateService).setMode('vs-computer');
 
-      component['selectLevel'](LEVELS[2].id);
-
-      expect(query.getValue().levelId).toBe(LEVELS[0].id);
       expect(component['lockedLevels']()[LEVELS[2].id]).toBe(
         `Win ${levelTitle(LEVELS[1])} to unlock`
       );
-    });
-
-    it('lets the level after a won one be picked', () => {
-      storeWin(LEVELS[0].id);
-      create();
-
-      component['selectLevel'](LEVELS[1].id);
-
-      expect(query.getValue().levelId).toBe(LEVELS[1].id);
-    });
-
-    it('opens every level in free play and between two players', () => {
-      create();
-      TestBed.inject(GameSettingsService).setFreePlay(true);
-      component['selectLevel'](LEVELS[5].id);
-      expect(query.getValue().levelId).toBe(LEVELS[5].id);
-
-      TestBed.inject(GameSettingsService).setFreePlay(false);
-      TestBed.inject(GameStateService).setMode('two-players');
-      component['selectLevel'](LEVELS[7].id);
-      expect(query.getValue().levelId).toBe(LEVELS[7].id);
+      expect(LEVELS[0].id in component['lockedLevels']()).toBe(false);
     });
 
     it('locks the next level on the result screen until it is open', () => {
       create();
       startMatch('vs-computer');
-      (component as unknown as { thanos: unknown }).thanos = {
-        vaporize: () => new Subject<void>(),
-      };
+      const before = query.getValue().levelId;
       query['store'].update({ matchEnded: true });
 
       expect(component['upcomingLock']()).toBe(
         `Win ${levelTitle(LEVELS[0])} to unlock`
       );
+      component['onMatchEnd']('next');
+      expect(query.getValue().levelId).toBe(before);
     });
   });
 

@@ -287,6 +287,19 @@ describe('GameSettingsService', () => {
       });
     });
 
+    it('restores free play late, unless the player switched it meanwhile', () => {
+      const service = createWith({ freePlay: true });
+      expect(service.freePlay()).toBe(false);
+      storage.flush();
+      expect(service.freePlay()).toBe(true);
+
+      const other =
+        (TestBed.resetTestingModule(), createWith({ freePlay: true }));
+      other.setFreePlay(false);
+      storage.flush();
+      expect(other.freePlay()).toBe(false);
+    });
+
     it('stores the changes made after the settings were restored', () => {
       const service = createWith({ sound: false });
       storage.flush();

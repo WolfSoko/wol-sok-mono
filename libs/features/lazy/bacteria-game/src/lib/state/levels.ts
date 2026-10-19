@@ -261,6 +261,12 @@ export function levelTitle(level: Level): string {
   return level.name.replace(/^\d+ · /, '');
 }
 
+/** The level before this one, or null when it is the first. */
+export function previousLevel(id: string): Level | null {
+  const index = LEVELS.findIndex((level) => level.id === id);
+  return index > 0 ? LEVELS[index - 1] : null;
+}
+
 /** The level after this one, or null when it is the last. */
 export function nextLevel(id: string): Level | null {
   const index = LEVELS.findIndex((level) => level.id === id);

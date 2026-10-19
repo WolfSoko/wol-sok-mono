@@ -70,11 +70,11 @@ describe('ProgressService', () => {
 
   it('opens the next level on the ladder with a win', () => {
     const progress = create();
-    expect(progress.lockedReason('pistons')).not.toBeNull();
+    expect('twin-chambers' in progress.ladderLocks()).toBe(true);
 
     progress.recordMatch({ ...GOLD_WIN, levelId: 'pillar-field' });
 
-    expect(progress.lockedReason('twin-chambers')).toBeNull();
+    expect('twin-chambers' in progress.ladderLocks()).toBe(false);
   });
 
   it('keeps the levels and difficulties apart', () => {

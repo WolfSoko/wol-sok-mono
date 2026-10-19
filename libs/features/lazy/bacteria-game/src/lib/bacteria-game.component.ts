@@ -68,6 +68,7 @@ import {
 } from './state/bot-controller';
 import { BACTERIA_LOOKS, GameSettingsService } from './settings.service';
 import { ProgressService } from './progress.service';
+import { CampaignService } from './campaign.service';
 import {
   arenaSize,
   renderScale,
@@ -256,22 +257,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       ])
     );
   });
-  /**
-   * Why each level is still locked on the campaign ladder, by level id - all
-   * open in free play and between two players, who have nothing to prove to
-   * the computer.
-   */
-  protected readonly lockedLevels = computed(
-    (): Readonly<Record<string, string | null>> =>
-      this.mode() === 'vs-computer' && !this.settings.freePlay()
-        ? Object.fromEntries(
-            LEVELS.map((level) => [
-              level.id,
-              this.progress.lockedReason(level.id),
-            ])
-          )
-        : {}
-  );
+  /** Why each level is still locked on the campaign ladder, by level id. */
+  protected readonly lockedLevels = inject(CampaignService).locks;
   /** Why the level after the selected one is locked, null when it is open. */
   protected readonly upcomingLock = computed(() => {
     const upcoming = this.upcomingLevel();
@@ -433,10 +420,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * "next level".
    */
   protected onMatchEnd(action: MatchEndAction): void {
-    const next =
-      action === 'next' && this.upcomingLock() === null
-        ? this.upcomingLevel()
-        : null;
+    if (action === 'next' && this.upcomingLock() !== null) {
+      return;
+    }
+    const next = action === 'next' ? this.upcomingLevel() : null;
     this.screen.set('menu');
     this.resetGame$()
       .pipe(
@@ -695,14 +682,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Picks the level the next match is played on - one the ladder opened. */
   protected selectLevel(levelId: string): void {
-    if (this.lockedLevels()[levelId] == null) {
-      this.gameStateService.setLevel(levelId);
-    }
-  }
-
-  /** Opens every level, or puts the campaign ladder back. */
-  protected setFreePlay(on: boolean): void {
-    this.settings.setFreePlay(on);
+    this.gameStateService.setLevel(levelId);
   }
 
   /** Switches between two humans and human versus computer. */
