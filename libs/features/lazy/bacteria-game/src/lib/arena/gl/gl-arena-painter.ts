@@ -208,8 +208,11 @@ export class GlArenaPainter implements ArenaPainter {
    * A simulation that runs the war on this painter's GPU context - its
    * state is then drawn without leaving the GPU.
    */
-  public createSimulation(balance: GameBalance): GpuSimulation {
-    return new GpuSimulation(this.gl, balance);
+  public createSimulation(
+    balance: GameBalance,
+    random: () => number
+  ): GpuSimulation {
+    return new GpuSimulation(this.gl, balance, random);
   }
 
   /**

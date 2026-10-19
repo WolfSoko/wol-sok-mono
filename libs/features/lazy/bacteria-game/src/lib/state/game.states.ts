@@ -30,8 +30,8 @@ export function isMatchOn(state: GameState): boolean {
 
 export interface GameStateState {
   currentState: GameState;
+  /** Milliseconds of the match played - whole ticks, see `TICK_MS`. */
   timePassed: number;
-  timeDelta: number;
   fps: number;
   width: number;
   height: number;
@@ -64,7 +64,6 @@ export function createInitialState(): GameStateState {
   return {
     currentState: GameState.START,
     timePassed: 1,
-    timeDelta: 1,
     fps: 0,
     width: 480,
     height: 320,

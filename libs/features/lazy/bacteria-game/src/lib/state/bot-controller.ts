@@ -1,3 +1,4 @@
+import { countDown } from './fixed-tick';
 import { Nutrient } from './bacteria-simulation';
 import { scaleOf } from './arena-size';
 import { clamp, distance, Point } from './geometry';
@@ -149,7 +150,7 @@ export class BotController {
    * Between decisions the crosshair keeps travelling to the last target.
    */
   public decide(view: BotView, deltaTimeSec: number): BotDecision {
-    this.cooldown -= deltaTimeSec;
+    this.cooldown = countDown(this.cooldown, deltaTimeSec);
     if (this.cooldown > 0) {
       return { target: null, boost: false };
     }

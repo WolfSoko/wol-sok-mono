@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { TICK_SEC, TICKS_PER_SEC } from './fixed-tick';
 import { gameBalance } from './game-balance';
 import { GameState, GameStateStore } from './game.states';
 import { getMap } from './game-maps';
@@ -35,18 +36,18 @@ describe('PlayerService', () => {
     });
   });
 
-  /**
-   * One frame of the real game loop: the simulation step plus the tick the
-   * game state store publishes, which is what moves the crosshairs.
-   */
-  function run(frames: number, deltaTimeSec = 1 / 30) {
-    for (let frame = 0; frame < frames; frame++) {
-      service.gameLoop(WIDTH, HEIGHT, deltaTimeSec);
-      store.update((state) => ({
-        timeDelta: deltaTimeSec * 1000,
-        timePassed: state.timePassed + deltaTimeSec * 1000,
-      }));
+  /** Runs the game loop for this long, in whole ticks. */
+  function run(seconds: number) {
+    for (let tick = 0; tick < Math.round(seconds * TICKS_PER_SEC); tick++) {
+      service.tick(WIDTH, HEIGHT);
     }
+    service.endFrame();
+  }
+
+  /** Holds keys down for this long. */
+  function hold(keysPressed: string[], seconds: number) {
+    store.update({ keysPressed });
+    run(seconds);
   }
 
   it('lays out the moving walls before the match starts', () => {
@@ -74,7 +75,7 @@ describe('PlayerService', () => {
     it('runs the boost down first and leaves the cooldown untouched', () => {
       service.boost(0);
 
-      run(1, 0.5);
+      run(0.5);
 
       const player = playerQuery.getEntity(0);
       expect(player?.boostActiveSec).toBeCloseTo(
@@ -85,9 +86,9 @@ describe('PlayerService', () => {
 
     it('starts recharging once the boost is over', () => {
       service.boost(0);
-      run(1, gameBalance.boostDurationSec);
+      run(gameBalance.boostDurationSec);
 
-      run(1, 0.5);
+      run(0.5);
 
       const player = playerQuery.getEntity(0);
       expect(player?.boostActiveSec).toBe(0);
@@ -98,7 +99,7 @@ describe('PlayerService', () => {
 
     it('refuses a second boost while the first one is still recharging', () => {
       service.boost(0);
-      run(1, gameBalance.boostDurationSec + 0.1);
+      run(gameBalance.boostDurationSec + 0.1);
 
       service.boost(0);
 
@@ -107,8 +108,8 @@ describe('PlayerService', () => {
 
     it('allows a boost again after the boost plus the full cooldown', () => {
       service.boost(0);
-      run(1, gameBalance.boostDurationSec);
-      run(1, gameBalance.boostCooldownSec);
+      run(gameBalance.boostDurationSec);
+      run(gameBalance.boostCooldownSec);
 
       service.boost(0);
 
@@ -120,8 +121,8 @@ describe('PlayerService', () => {
     it('counts the boosts each player fired, not the refused ones', () => {
       service.boost(0);
       service.boost(0);
-      run(1, gameBalance.boostDurationSec);
-      run(1, gameBalance.boostCooldownSec);
+      run(gameBalance.boostDurationSec);
+      run(gameBalance.boostCooldownSec);
       service.boost(0);
 
       const [first, second] = playerQuery.getAll();
@@ -133,9 +134,9 @@ describe('PlayerService', () => {
       service.boost(0);
       service.boost(0);
 
-      run(1);
+      run(TICK_SEC);
       expect(service.getFrameEvents().boosts).toEqual([false]);
-      run(1);
+      run(TICK_SEC);
       expect(service.getFrameEvents().boosts).toEqual([]);
     });
 
@@ -163,7 +164,7 @@ describe('PlayerService', () => {
     it('steers the computer crosshair on its own', () => {
       const before = playerQuery.getEntity(1) as { x: number; y: number };
 
-      run(30);
+      run(1);
 
       const after = playerQuery.getEntity(1) as { x: number; y: number };
       expect(after.x !== before.x || after.y !== before.y).toBe(true);
@@ -172,17 +173,22 @@ describe('PlayerService', () => {
     it('lets the human steer with the arrow keys as well', () => {
       const before = playerQuery.getEntity(0)?.x ?? 0;
 
-      store.update({ keysPressed: ['ArrowRight'], timeDelta: 100 });
+      hold(['ArrowRight'], 0.1);
 
       expect(playerQuery.getEntity(0)?.x).toBeGreaterThan(before);
     });
 
     it('keeps the keys away from the computer crosshair', () => {
-      const bot = playerQuery.getEntity(1);
+      // Within its first reaction the bot heads for one target either way.
+      const botAfter = (keysPressed: string[]) => {
+        service.init(spawns(true), { map: getMap('open-field'), seed: 5 });
+        hold(keysPressed, 0.2);
+        return playerQuery.getEntity(1)?.x;
+      };
 
-      store.update({ keysPressed: ['ArrowRight'], timeDelta: 100 });
-
-      expect(playerQuery.getEntity(1)?.x).toBe(bot?.x);
+      const steered = botAfter(['ArrowRight']);
+      expect(steered).not.toBe(spawns(true)[1].x);
+      expect(steered).toBe(botAfter([]));
     });
   });
 
@@ -195,7 +201,7 @@ describe('PlayerService', () => {
       const first = playerQuery.getEntity(0)?.x ?? 0;
       const second = playerQuery.getEntity(1)?.x ?? 0;
 
-      store.update({ keysPressed: ['ArrowRight'], timeDelta: 100 });
+      hold(['ArrowRight'], 0.1);
 
       expect(playerQuery.getEntity(0)?.x).toBe(first);
       expect(playerQuery.getEntity(1)?.x).toBeGreaterThan(second);
@@ -204,7 +210,7 @@ describe('PlayerService', () => {
     it('leaves both crosshairs where they are without a bot', () => {
       const before = playerQuery.getAll().map((player) => [player.x, player.y]);
 
-      run(10);
+      run(1 / 3);
 
       expect(
         playerQuery.getAll().map((player) => [player.x, player.y])
@@ -214,7 +220,7 @@ describe('PlayerService', () => {
     it('moves a diagonal no faster than a straight line', () => {
       const start = playerQuery.getEntity(0) as { x: number; y: number };
 
-      store.update({ keysPressed: ['d', 's'], timeDelta: 100 });
+      hold(['d', 's'], 0.1);
 
       const after = playerQuery.getEntity(0) as { x: number; y: number };
       const travelled = Math.hypot(after.x - start.x, after.y - start.y);
@@ -240,7 +246,7 @@ describe('PlayerService', () => {
       const start = positionOf(1);
       service.setSteering(1, { x: 0, y: 1 });
 
-      run(2, 0.1);
+      run(0.2);
 
       const after = positionOf(1);
       expect(after.x).toBe(start.x);
@@ -251,18 +257,18 @@ describe('PlayerService', () => {
       const start = positionOf(0);
       service.setSteering(0, { x: 0.5, y: 0 });
 
-      run(1, 0.1);
+      run(0.1);
 
       expect(positionOf(0).x).toBeCloseTo(start.x + 150 * 0.1 * 0.5);
     });
 
     it('stops once the stick is released', () => {
       service.setSteering(0, { x: 1, y: 0 });
-      run(1, 0.1);
+      run(0.1);
       const held = positionOf(0);
 
       service.setSteering(0, { x: 0, y: 0 });
-      run(1, 0.1);
+      run(0.1);
 
       expect(positionOf(0)).toEqual(held);
     });
@@ -271,7 +277,7 @@ describe('PlayerService', () => {
       const other = positionOf(1);
       service.setSteering(0, { x: 1, y: 0 });
 
-      run(1, 0.1);
+      run(0.1);
 
       expect(positionOf(1)).toEqual(other);
     });
@@ -281,7 +287,7 @@ describe('PlayerService', () => {
       service.setSteering(0, { x: 1, y: 0 });
       const start = positionOf(0);
 
-      run(1, 0.1);
+      run(0.1);
 
       expect(positionOf(0).x).toBeGreaterThan(start.x);
     });
@@ -291,7 +297,7 @@ describe('PlayerService', () => {
 
       service.init(spawns(false), { map: getMap('open-field') });
       const start = positionOf(0);
-      run(1, 0.1);
+      run(0.1);
 
       expect(positionOf(0)).toEqual(start);
     });
@@ -305,7 +311,7 @@ describe('PlayerService', () => {
       });
       const peaks: number[] = [];
       for (let second = 0; second < 5; second++) {
-        run(30);
+        run(1);
         peaks.push(playerQuery.getAll()[0].bacteriaCount);
       }
 
@@ -324,7 +330,7 @@ describe('PlayerService', () => {
     it('starts every match from scratch', () => {
       service.init(spawns(false), { map: getMap('open-field') });
       service.boost(0);
-      run(30);
+      run(1);
 
       service.init(spawns(false), { map: getMap('open-field') });
 
@@ -332,6 +338,96 @@ describe('PlayerService', () => {
       expect(player.boostsFired).toBe(0);
       expect(player.lowestSizeRatio).toBe(1);
       expect(player.peakCount).toBe(player.bacteriaCount);
+    });
+  });
+
+  describe('ticks', () => {
+    it('draws a crosshair ahead along its last step, between the ticks', () => {
+      service.init(spawns(false), { map: getMap('open-field') });
+      const start = playerQuery.getEntity(0)?.x ?? 0;
+
+      hold(['d'], TICK_SEC);
+
+      const player = playerQuery.getAll()[0];
+      const step = player.x - start;
+      expect(step).toBeGreaterThan(0);
+      expect(service.crosshairAt(player, 0).x).toBeCloseTo(player.x);
+      expect(service.crosshairAt(player, 0.5).x).toBeCloseTo(
+        player.x + step / 2
+      );
+    });
+
+    it('keeps a crosshair drawn ahead inside the arena', () => {
+      service.init(spawns(false), { map: getMap('open-field') });
+
+      hold(['d'], 2);
+
+      const player = playerQuery.getAll()[0];
+      expect(player.x).toBe(WIDTH);
+      expect(service.crosshairAt(player, 0.9).x).toBe(WIDTH);
+    });
+
+    it('draws a fresh crosshair where it stands', () => {
+      service.init(spawns(false), { map: getMap('open-field') });
+      const player = playerQuery.getAll()[0];
+
+      expect(service.crosshairAt(player, 0.5)).toEqual({
+        x: player.x,
+        y: player.y,
+      });
+    });
+
+    it('adds up the events of all ticks of a frame', () => {
+      service.init(spawns(true), {
+        map: getMap('open-field'),
+        arena: { width: WIDTH, height: HEIGHT },
+        seed: 3,
+      });
+      let oneByOne = 0;
+      for (let tick = 0; tick < 3 * TICKS_PER_SEC; tick++) {
+        run(TICK_SEC);
+        oneByOne += service.getFrameEvents().captures;
+      }
+
+      service.init(spawns(true), {
+        map: getMap('open-field'),
+        arena: { width: WIDTH, height: HEIGHT },
+        seed: 3,
+      });
+      run(3);
+
+      expect(oneByOne).toBeGreaterThan(0);
+      expect(service.getFrameEvents().captures).toBe(oneByOne);
+    });
+  });
+
+  describe('seed', () => {
+    /** Plays a few seconds against the hard bot, the human idle. */
+    function play(seed: number): number[][] {
+      service.init(spawns(true), {
+        map: getMap('open-field'),
+        arena: { width: WIDTH, height: HEIGHT },
+        difficulty: 'hard',
+        seed,
+      });
+      run(4);
+      return playerQuery
+        .getAll()
+        .map((player) => [
+          player.x,
+          player.y,
+          player.bacteriaCount,
+          player.captured,
+          player.boostsFired,
+        ]);
+    }
+
+    it('plays the same match from the same seed', () => {
+      expect(play(42)).toEqual(play(42));
+    });
+
+    it('plays another match from another seed', () => {
+      expect(play(42)).not.toEqual(play(43));
     });
   });
 });

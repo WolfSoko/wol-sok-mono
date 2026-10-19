@@ -1,5 +1,7 @@
-/** The rate the game is made for - the steps and timers are tuned to it. */
-const TARGET_FRAME_MS = 1000 / 60;
+import { TICK_MS } from './fixed-tick';
+
+/** The rate the game is painted at - one frame per tick. */
+const TARGET_FRAME_MS = TICK_MS;
 /**
  * How much faster than the target a display may run before frames are left
  * out: a 90 Hz one still runs the game on every frame, a 120 Hz one on every

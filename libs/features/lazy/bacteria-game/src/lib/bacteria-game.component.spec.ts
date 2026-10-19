@@ -570,7 +570,7 @@ describe('BacteriaGameComponent', () => {
       const before = playerQuery.getEntity(1)?.x ?? 0;
 
       component['steer'](1, { x: 1, y: 0 });
-      query['store'].update({ timeDelta: 100 });
+      TestBed.inject(GameStateService).advance(320, 140, 3);
 
       expect(playerQuery.getEntity(1)?.x).toBeGreaterThan(before);
       expect(playerQuery.getEntity(0)?.x).toBe(80);

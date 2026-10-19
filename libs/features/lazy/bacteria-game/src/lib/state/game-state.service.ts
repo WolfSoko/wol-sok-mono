@@ -14,6 +14,7 @@ import {
 } from 'rxjs';
 import { scaleOf } from './arena-size';
 import { FramePacer } from './frame-pacer';
+import { GameFrame, TICK_MS, TickClock, ticksToMs } from './fixed-tick';
 import { BotDifficulty } from './bot-controller';
 import {
   getColonyColor,
@@ -53,8 +54,12 @@ import { PlayerQuery } from './player.query';
 import { PlayerService } from './player.service';
 import { ProgressService } from '../progress.service';
 
-/** The longest step a frame may take the war, in milliseconds. */
-const MAX_FRAME_MS = 100;
+/**
+ * The most time one frame may take the war forward, in milliseconds. A
+ * device slower than that runs the match slower instead of piling up ever
+ * more ticks on ever longer frames.
+ */
+const MAX_FRAME_MS = 3 * TICK_MS;
 
 /** How a match ended. `winner` is null when both colonies died together. */
 interface MatchOutcome {
@@ -70,30 +75,30 @@ export class GameStateService {
   private progress = inject(ProgressService);
 
   /**
-   * The milliseconds since the last frame, on the display frames the game
-   * runs on - see {@link FramePacer}.
+   * The ticks of the display frames the game runs on - see
+   * {@link FramePacer} and {@link TickClock}.
    */
-  private gameLoop$: Observable<number> = defer(() => {
+  private gameLoop$: Observable<GameFrame> = defer(() => {
     const pacer = new FramePacer();
+    const clock = new TickClock();
     return animationFrames().pipe(
       map(({ timestamp }) => pacer.frame(timestamp)),
       filter((elapsed) => elapsed != null),
       // After a hidden tab or a stall the war goes on where it stood rather
       // than leap ahead - and the match clock, which judges the medallions,
       // counts only the time that was played.
-      map((elapsed) => Math.min(elapsed, MAX_FRAME_MS))
+      map((elapsed) => clock.advance(Math.min(elapsed, MAX_FRAME_MS)))
     );
   });
-  private readonly frames = new Subject<number>();
+  private readonly frames = new Subject<GameFrame>();
   private subscriptions?: Subscription;
   private measureFps = new MeasureFps();
 
   /**
-   * Emits the milliseconds since the last frame on every frame of a running
-   * match - inside the animation frame, after the store has the new time,
-   * so the war can be advanced and painted right there.
+   * Emits every frame of a running match - inside the animation frame, so
+   * the war can be advanced with {@link advance} and painted right there.
    */
-  public readonly frames$: Observable<number> = this.frames.asObservable();
+  public readonly frames$: Observable<GameFrame> = this.frames.asObservable();
 
   /**
    * Decides whether the match is over.
@@ -117,6 +122,25 @@ export class GameStateService {
     return survivors.length === 0 && fought ? { winner: null } : null;
   }
 
+  /**
+   * Runs the ticks of a display frame. The match may end in any of them;
+   * the ones after that are not played, and not counted on the match clock.
+   */
+  public advance(width: number, height: number, ticks: number): void {
+    for (let tick = 0; tick < ticks && this.isRunning(); tick++) {
+      // Counted in whole ticks, so the clock lands on every second exactly.
+      this.gameStateStore.update((state) => ({
+        timePassed: ticksToMs(Math.round(state.timePassed / TICK_MS) + 1),
+      }));
+      this.playerService.tick(width, height);
+    }
+    this.playerService.endFrame();
+  }
+
+  private isRunning(): boolean {
+    return this.gameStateQuery.getValue().currentState === GameState.RUNNING;
+  }
+
   init(width: number, height: number) {
     this.gameStateStore.update({
       width,
@@ -136,13 +160,9 @@ export class GameStateService {
     this.subscriptions = running$
       .pipe(switchMap(() => this.gameLoop$.pipe(takeUntil(notRunning$))))
       .subscribe({
-        next: (timeDelta) => {
+        next: (frame) => {
           this.measureFps.signalFrameReady();
-          this.gameStateStore.update((state) => ({
-            timePassed: state.timePassed + timeDelta,
-            timeDelta,
-          }));
-          this.frames.next(timeDelta);
+          this.frames.next(frame);
         },
         error: (error) => {
           console.error('error in gameLoop', error);
@@ -384,7 +404,7 @@ export class GameStateService {
 
   /** Fires the boost of a player - the touch equivalent of Space / Enter. */
   public boost(playerId: number): void {
-    if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
+    if (!this.isRunning()) {
       return;
     }
     this.playerService.boost(playerId);
@@ -412,7 +432,6 @@ export class GameStateService {
     this.gameStateStore.update(() => ({
       currentState: GameState.START,
       timePassed: 0,
-      timeDelta: 1,
       winner: null,
       matchEnded: false,
       earnings: null,

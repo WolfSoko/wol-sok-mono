@@ -224,7 +224,7 @@ to break a frontline or to grab a contested pellet.
 
 The whole simulation lives in
 [`bacteria-simulation.ts`](./src/lib/state/bacteria-simulation.ts) and runs on an
-occupancy grid with one bacterium per cell. Every frame is processed in fixed
+occupancy grid with one bacterium per cell. Every tick is processed in fixed
 phases, so the outcome never depends on the order the players are iterated in:
 
 1. **Grid** - the occupancy grid and a coarse enemy density field are rebuilt.
@@ -242,6 +242,23 @@ phases, so the outcome never depends on the order the players are iterated in:
 Because captures conserve the population while digestion does not, battles free
 up carrying capacity, both sides regrow into the gap and the stronger colony
 slowly squeezes the weaker one out.
+
+## Ticks and seeds
+
+The war advances in fixed ticks of 1/60 second
+([`fixed-tick.ts`](./src/lib/state/fixed-tick.ts)), whatever the display
+shows: `FramePacer` picks the display frames the game runs on, and a
+`TickClock` turns the time between them into whole ticks. Each tick moves the
+crosshairs, counts the boosts down, lets the bot think and steps the
+simulation, all by the same length. On a frame that falls between two ticks
+the painter carries each crosshair ahead along its last step, so it glides
+without being drawn a tick late. The match clock, which judges the
+medallions, counts ticks.
+
+Every match draws its chances from one seed: the simulation and its pellets
+from the seed itself, each bot from a stream derived from it. On the CPU simulation, the same seed with the same inputs
+plays the same match - the ground for replays. The GPU simulation takes the
+seed as well, but its shaders do not come out the same on every device.
 
 ## Tuning
 

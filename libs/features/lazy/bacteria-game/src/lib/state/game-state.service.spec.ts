@@ -1,10 +1,12 @@
 import { ProgressService } from '../progress.service';
 import { TestBed } from '@angular/core/testing';
+import { TICK_MS } from './fixed-tick';
 import { GameStateQuery } from './game-state.query';
 import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
 import { getLevel, levelCrosshairSpeed } from './levels';
 import { PlayerQuery } from './player.query';
+import { PlayerService } from './player.service';
 import { PlayerStore } from './player.store';
 
 const WIDTH = 320;
@@ -196,6 +198,51 @@ describe('GameStateService', () => {
       const [human, computer] = startingCounts();
 
       expect(human).toBe(computer);
+    });
+  });
+
+  describe('advance', () => {
+    afterEach(() => service.cleanup());
+
+    it('counts the ticks of a frame on the match clock', () => {
+      service.setArenaSize(WIDTH, HEIGHT);
+      service.init(WIDTH, HEIGHT);
+      service.start();
+
+      service.advance(WIDTH, HEIGHT, 3);
+
+      expect(query.getValue().timePassed).toBeCloseTo(3 * TICK_MS);
+    });
+
+    it('lands on every second exactly', () => {
+      service.setArenaSize(WIDTH, HEIGHT);
+      service.init(WIDTH, HEIGHT);
+      service.start();
+
+      for (let frame = 0; frame < 60; frame++) {
+        service.advance(WIDTH, HEIGHT, 1);
+      }
+
+      expect(query.getValue().timePassed).toBe(1000);
+    });
+
+    it('plays no tick of the frame after the one that ended the match', () => {
+      service.setArenaSize(WIDTH, HEIGHT);
+      service.init(WIDTH, HEIGHT);
+      service.start();
+      const players = TestBed.inject(PlayerService);
+      const tick = jest.spyOn(players, 'tick').mockImplementation(() => {
+        if (tick.mock.calls.length === 2) {
+          TestBed.inject(GameStateStore).update({
+            currentState: GameState.END,
+          });
+        }
+      });
+
+      service.advance(WIDTH, HEIGHT, 5);
+
+      expect(tick).toHaveBeenCalledTimes(2);
+      expect(query.getValue().timePassed).toBeCloseTo(2 * TICK_MS);
     });
   });
 
