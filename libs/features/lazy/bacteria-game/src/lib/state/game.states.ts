@@ -16,6 +16,10 @@ export type GameMode = 'two-players' | 'vs-computer';
  */
 export const DEFAULT_MODE: GameMode = 'vs-computer';
 
+export function isGameMode(value: unknown): value is GameMode {
+  return value === 'vs-computer' || value === 'two-players';
+}
+
 export enum GameState {
   RUNNING,
   PAUSED,

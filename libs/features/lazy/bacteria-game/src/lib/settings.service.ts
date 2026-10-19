@@ -12,8 +12,13 @@ import { BotDifficulty, difficultyOption } from './state/bot-controller';
 import { sameColors, validColorPair } from './state/colony-colors';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService, MatchSetup } from './state/game-state.service';
-import { GameMode, GameState, isMatchOn } from './state/game.states';
-import { LEVELS } from './state/levels';
+import {
+  GameMode,
+  GameState,
+  isGameMode,
+  isMatchOn,
+} from './state/game.states';
+import { isLevelId } from './state/levels';
 import {
   HeadStart,
   isHeadStart,
@@ -59,8 +64,6 @@ export const BACTERIA_LOOKS: readonly { id: BacteriaLook; name: string }[] = [
 ];
 
 export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
-
-const MODES: readonly GameMode[] = ['vs-computer', 'two-players'];
 
 /** The settings that set up a match - kept in the game state store. */
 const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
@@ -230,11 +233,8 @@ export class GameSettingsService {
     if (restores('showFps') && typeof stored.showFps === 'boolean') {
       this.showFps.set(stored.showFps);
     }
-    if (
-      restores('arena') &&
-      LEVELS.some((level) => level.id === stored.arena)
-    ) {
-      this.arena.set(stored.arena as string);
+    if (restores('arena') && isLevelId(stored.arena)) {
+      this.arena.set(stored.arena);
     }
     if (restores('freePlay') && typeof stored.freePlay === 'boolean') {
       this.freePlay.set(stored.freePlay);
@@ -268,11 +268,7 @@ export class GameSettingsService {
   private restoreMatchSetup(stored: StoredSettings): void {
     const restores = (key: keyof MatchSetup) => !this.touched.has(key);
     const setup: Partial<MatchSetup> = {};
-    if (
-      restores('mode') &&
-      stored.mode != null &&
-      MODES.includes(stored.mode)
-    ) {
+    if (restores('mode') && isGameMode(stored.mode)) {
       setup.mode = stored.mode;
     }
     if (
@@ -281,11 +277,8 @@ export class GameSettingsService {
     ) {
       setup.difficulty = stored.difficulty as BotDifficulty;
     }
-    if (
-      restores('levelId') &&
-      LEVELS.some((level) => level.id === stored.levelId)
-    ) {
-      setup.levelId = stored.levelId as string;
+    if (restores('levelId') && isLevelId(stored.levelId)) {
+      setup.levelId = stored.levelId;
     }
     const colors = validColorPair(stored.colors);
     if (restores('colors') && colors != null) {

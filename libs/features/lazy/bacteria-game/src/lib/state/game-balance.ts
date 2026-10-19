@@ -83,6 +83,14 @@ export interface GameBalance {
   boostAttackFactor: number;
 }
 
+/**
+ * The version of the balance table and of the rules the simulation applies
+ * with it. Raise it with every change that plays a recorded match out
+ * differently: a replay only plays again under the version it was recorded
+ * with.
+ */
+export const BALANCE_VERSION = 1;
+
 export const gameBalance: GameBalance = {
   startBacteriaRadius: 14,
   maxBacteriaPerPlayer: 5000,

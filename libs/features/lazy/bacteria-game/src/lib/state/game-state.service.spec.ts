@@ -6,7 +6,9 @@ import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
 import { getLevel, levelCrosshairSpeed } from './levels';
 import { PlayerQuery } from './player.query';
+import { matchOutcome } from './match-engine';
 import { PlayerService } from './player.service';
+import { playReplay, Replay, REPLAY_VERSION } from './replay';
 import { PlayerStore } from './player.store';
 
 const WIDTH = 320;
@@ -226,6 +228,38 @@ describe('GameStateService', () => {
       expect(query.getValue().timePassed).toBe(1000);
     });
 
+    it('records a replay that plays the match out the same', () => {
+      service.setMode('vs-computer');
+      service.setDifficulty('hard');
+      service.setArenaSize(WIDTH, HEIGHT);
+      service.init(WIDTH, HEIGHT);
+      service.start();
+      const store = TestBed.inject(GameStateStore);
+      const players = TestBed.inject(PlayerService);
+
+      store.update({ keysPressed: ['d'] });
+      service.advance(WIDTH, HEIGHT, 3);
+      store.update({ keysPressed: [] });
+      players.setDragTarget(0, 40, 20);
+      service.boost(0);
+      service.advance(WIDTH, HEIGHT, 3);
+      for (let frame = 0; frame < 100; frame++) {
+        service.advance(WIDTH, HEIGHT, 3);
+      }
+
+      const replay = service['replay']() as Replay;
+      expect(replay.header).toEqual(
+        expect.objectContaining({
+          version: REPLAY_VERSION,
+          mode: 'vs-computer',
+          difficulty: 'hard',
+          simulation: 'cpu',
+          ticks: 306,
+        })
+      );
+      expect(playReplay(replay)?.players).toEqual(playerQuery.getAll());
+    });
+
     it('plays no tick of the frame after the one that ended the match', () => {
       service.setArenaSize(WIDTH, HEIGHT);
       service.init(WIDTH, HEIGHT);
@@ -258,11 +292,19 @@ describe('GameStateService', () => {
       service.setArenaSize(WIDTH, HEIGHT);
       service.init(WIDTH, HEIGHT);
       service.start();
-      TestBed.inject(GameStateStore).update({ timePassed: 30_000 });
+      TestBed.inject(GameStateStore).update({ timePassed: 30_000 - TICK_MS });
       const [human, other] = playerQuery.getAll();
       const players = TestBed.inject(PlayerStore);
       players.update(human.id, { bacteriaCount: 400, peakCount: 500 });
       players.update(other.id, { bacteriaCount: 0, lost: 300 });
+      // The next tick finds the colonies as set here, and the match over.
+      const playerService = TestBed.inject(PlayerService);
+      jest.spyOn(playerService, 'tick').mockImplementation(() => undefined);
+      jest
+        .spyOn(playerService, 'outcome')
+        .mockImplementation(() => matchOutcome(playerQuery.getAll()));
+      service.advance(WIDTH, HEIGHT, 1);
+      jest.restoreAllMocks();
     }
 
     afterEach(() => service.cleanup());
@@ -273,6 +315,7 @@ describe('GameStateService', () => {
       const state = query.getValue();
       expect(state.currentState).toBe(GameState.END);
       expect(state.matchEnded).toBe(true);
+      expect(service.lastReplay?.header.levelId).toBe('hourglass');
       expect(state.earnings?.award).toEqual(
         expect.objectContaining({
           medal: 'platinum',
