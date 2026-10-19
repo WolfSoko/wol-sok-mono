@@ -6,6 +6,7 @@ import {
   output,
 } from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { COLONY_COLORS } from '../state/colony-colors';
 import { GameMode } from '../state/game.states';
@@ -18,11 +19,12 @@ export interface ColorChange {
 
 /**
  * A row of colour swatches per seat, named after who sits there. Picking the
- * other seat's colour is the game's to resolve - it swaps the two.
+ * other seat's colour is the game's to resolve - it swaps the two. Colours
+ * still to earn show a lock and what opens them.
  */
 @Component({
   selector: 'feat-lazy-bac-game-colony-colors',
-  imports: [MatButtonToggleModule, MatTooltipModule],
+  imports: [MatButtonToggleModule, MatIconModule, MatTooltipModule],
   templateUrl: './colony-colors.component.html',
   styleUrl: './colony-colors.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,6 +34,11 @@ export class ColonyColorsComponent {
   /** The colour ids of the left and the right colony. */
   public readonly colors = input.required<readonly [string, string]>();
   public readonly disabled = input(false);
+  /**
+   * Why each colour still to earn is locked, by colour id. A locked colour
+   * cannot be picked - but one a seat already has stays.
+   */
+  public readonly locks = input<Readonly<Record<string, string>>>({});
 
   public readonly colorChange = output<ColorChange>();
 

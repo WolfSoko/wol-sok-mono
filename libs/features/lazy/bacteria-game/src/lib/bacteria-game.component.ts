@@ -285,6 +285,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly achievements = this.progress.achievements;
   protected readonly totals = this.progress.totals;
   protected readonly xp = this.progress.xp;
+  protected readonly colorLocks = this.progress.colorLocks;
+  protected readonly arenaLocks = this.progress.arenaLocks;
   /**
    * The colony colours as RGB and as CSS, with a text colour that reads on
    * the player's - for the menu screens.
@@ -366,7 +368,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return levelMap(this.level()).createWalls(width, height);
     });
     this.upcomingLevel = computed(() => nextLevel(this.level().id));
-    this.theme = computed(() => arenaTheme(this.level().id));
+    // An arena the player chose and earned dresses every level; otherwise
+    // each level is drawn in its own.
+    this.theme = computed(() => {
+      const arena = this.settings.arena();
+      return arenaTheme(
+        arena !== null && !(arena in this.progress.arenaLocks())
+          ? arena
+          : this.level().id
+      );
+    });
     this.arenaBorder = computed(() => cssTriple(this.theme().border));
     this.arenaRim = computed(() => cssTriple(this.theme().rim));
 

@@ -11,12 +11,36 @@
       [mode]="mode()"
       [colors]="colors()"
       [disabled]="locked()"
+      [locks]="colorLocks()"
       (colorChange)="colorChange.emit($event)"
     />
     <p class="section-note">Picking the other colony's colour swaps the two.</p>
   </section>
   <section class="screen-section" aria-labelledby="settings-display">
     <h3 id="settings-display" class="section-title">Display</h3>
+    <mat-form-field
+      class="arena-picker"
+      appearance="outline"
+      subscriptSizing="dynamic"
+    >
+      <mat-label>Arena</mat-label>
+      <mat-select
+        panelWidth=""
+        [value]="settings.arena() ?? ownArena"
+        (selectionChange)="pickArena($event.value)"
+      >
+        <mat-option [value]="ownArena">Each level its own</mat-option>
+        @for (level of levels; track level.id) {
+          @let lock = arenaLocks()[level.id];
+          <mat-option [value]="level.id" [disabled]="!!lock">
+            {{ level.name }}
+            @if (lock) {
+              <small class="arena-lock">- {{ lock }}</small>
+            }
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
     <div class="option-picker">
       <span class="option-label">Bacteria look</span>
       <mat-button-toggle-group

@@ -30,6 +30,8 @@ export interface StoredSettings {
   showFps?: boolean;
   /** Every level open against the computer, instead of the campaign ladder. */
   freePlay?: boolean;
+  /** The id of the level whose arena every level is drawn in, absent for each its own. */
+  arena?: string;
   sound?: boolean;
   music?: boolean;
   /** The colour ids of the left and the right colony. */
@@ -69,7 +71,8 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
 
 /**
  * Keeps the player's choices - opponent, difficulty, level, colours, free
- * play or the campaign ladder, how the bacteria look, the resolutions,
+ * play or the campaign ladder, the arena, how the bacteria look, the
+ * resolutions,
  * whether the frame rate is shown and whether the game makes sound and plays
  * music - across visits, in the game storage.
  *
@@ -96,6 +99,11 @@ export class GameSettingsService {
   public readonly showFps = signal(false);
   /** True while every level is open, instead of the campaign ladder. */
   public readonly freePlay = signal(false);
+  /**
+   * The level whose arena every level is drawn in, null for each its own.
+   * Only an arena the player has earned is used (see the game component).
+   */
+  public readonly arena = signal<string | null>(null);
   /** True while the game makes sound. */
   public readonly sound = signal(true);
   /** True while the levels play their music - under the sound switch. */
@@ -137,6 +145,11 @@ export class GameSettingsService {
   public setShowFps(show: boolean): void {
     this.showFps.set(show);
     this.changed('showFps');
+  }
+
+  public setArena(levelId: string | null): void {
+    this.arena.set(levelId);
+    this.changed('arena');
   }
 
   public setFreePlay(on: boolean): void {
@@ -213,6 +226,12 @@ export class GameSettingsService {
     if (restores('showFps') && typeof stored.showFps === 'boolean') {
       this.showFps.set(stored.showFps);
     }
+    if (
+      restores('arena') &&
+      LEVELS.some((level) => level.id === stored.arena)
+    ) {
+      this.arena.set(stored.arena as string);
+    }
     if (restores('freePlay') && typeof stored.freePlay === 'boolean') {
       this.freePlay.set(stored.freePlay);
     }
@@ -271,6 +290,7 @@ export class GameSettingsService {
       screenResolution: this.screenResolution(),
       showFps: this.showFps(),
       freePlay: this.freePlay(),
+      arena: this.arena() ?? undefined,
       sound: this.sound(),
       music: this.music(),
     };

@@ -91,6 +91,23 @@ describe('GameSettingsService', () => {
     expect(TestBed.inject(GameSettingsService).freePlay()).toBe(true);
   });
 
+  it('remembers the arena, and ignores one it does not know', () => {
+    const service = TestBed.inject(GameSettingsService);
+    expect(service.arena()).toBeNull();
+
+    service.setArena(LEVELS[3].id);
+    expect(stored().arena).toBe(LEVELS[3].id);
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(GameSettingsService).arena()).toBe(LEVELS[3].id);
+
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({ arena: 'moon' })
+    );
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(GameSettingsService).arena()).toBeNull();
+  });
+
   it('makes sound unless an earlier visit muted it', () => {
     expect(TestBed.inject(GameSettingsService).sound()).toBe(true);
   });

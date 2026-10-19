@@ -166,6 +166,23 @@ its XP but leaves the rank and the opened levels out rather than guess them.
 The main menu's card and the profile show the rank with its emblem and the
 XP to the next one ([`rank/`](./src/lib/rank)).
 
+## Unlocks
+
+Cosmetics are earned, never bought, and never make a colony stronger
+([`unlocks.ts`](./src/lib/state/unlocks.ts)). Like XP they follow from the
+progress, so nothing about them is stored:
+
+- **Colony colours** - orange and blue are free; green comes with First
+  Blood, yellow with a gold medallion, cyan with Pacifist, pink and purple
+  with the ranks Bacillus and Biofilm, red with Hard Boiled. A locked colour
+  shows a lock and what opens it, and cannot be picked - a seat that has one
+  already keeps it.
+- **Arenas** - a gold medallion on a level opens its arena for every other
+  level: _Arena_ in the settings dresses all levels in it, or leaves each in
+  its own.
+
+The result screen names what a match opened.
+
 ## Campaign ladder
 
 Against the computer, the levels open one by one

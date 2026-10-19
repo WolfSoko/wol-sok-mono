@@ -27,6 +27,7 @@ describe('WinnerComponent', () => {
       xp: { parts: [], total: 0 },
       xpBefore: 0,
       unlocked: [],
+      cosmetics: [],
       ...changes,
     };
   }
@@ -134,6 +135,16 @@ describe('WinnerComponent', () => {
     expect(text()).toContain('+125 XP');
     expect(fixture.nativeElement.querySelector('.xp-bar')).toBeNull();
     expect(text()).not.toContain('Rank up!');
+  });
+
+  it('names the cosmetics the match opened', () => {
+    store.update({
+      winner: null,
+      levelId: LEVELS[0].id,
+      earnings: earnings({ cosmetics: ['Green colonies'] }),
+    });
+
+    expect(text()).toContain('Green colonies');
   });
 
   it('names the levels the match opened', () => {

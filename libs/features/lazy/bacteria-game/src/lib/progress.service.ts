@@ -7,6 +7,7 @@ import { getLevel } from './state/levels';
 import { judgeMatch, MatchRecord, MedalTier } from './state/medallions';
 import { earnAchievements } from './state/achievements';
 import { MatchEarnings } from './state/earnings';
+import { arenaLocks, colorLocks, newCosmetics } from './state/unlocks';
 import { COUCH_XP, matchXp, xpGain, xpOf } from './state/xp';
 import {
   addMedal,
@@ -86,6 +87,12 @@ export class ProgressService {
   /** The XP the progress is worth, which decides the rank. */
   public readonly xp = computed(() => xpOf(this.progress()));
 
+  /** Why each colony colour still to earn is locked, by colour id. */
+  public readonly colorLocks = computed(() => colorLocks(this.progress()));
+
+  /** Why each level's arena is still locked, by level id. */
+  public readonly arenaLocks = computed(() => arenaLocks(this.progress()));
+
   /**
    * Judges a match against the computer that has ended, remembers its
    * medallion, its numbers, the achievements and the XP it earned, and
@@ -150,6 +157,7 @@ export class ProgressService {
             (id) => id !== record?.levelId
           )
         : [],
+      cosmetics: known ? newCosmetics(before, progress) : [],
     };
   }
 

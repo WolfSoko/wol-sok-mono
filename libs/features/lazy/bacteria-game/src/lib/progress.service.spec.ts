@@ -57,6 +57,7 @@ describe('ProgressService', () => {
       // Won without the ladder: the level after it opens - the level itself
       // was played, it is no news.
       unlocked: ['inner-ring'],
+      cosmetics: ['Green colonies', 'Yellow colonies', 'Hourglass arena'],
     });
 
     TestBed.resetTestingModule();

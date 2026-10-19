@@ -53,6 +53,7 @@
         [medals]="levelMedals()"
         [locked]="lockedLevels()"
         [freePlay]="settings.freePlay()"
+        [colorLocks]="colorLocks()"
         [disabled]="running()"
         (modeChange)="selectMode($event)"
         (difficultyChange)="selectDifficulty($event)"
@@ -234,6 +235,8 @@
                     [backLabel]="paused() ? 'Pause menu' : 'Menu'"
                     (colorChange)="selectColor($event)"
                     (soundChange)="setSound($event)"
+                    [colorLocks]="colorLocks()"
+                    [arenaLocks]="arenaLocks()"
                     (nativeFullscreenChange)="setNativeFullscreen($event)"
                     (back)="show('menu')"
                   />
