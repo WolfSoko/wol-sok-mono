@@ -19,6 +19,12 @@
 .swatches {
   --mat-button-toggle-height: 36px;
 
+  // Material's room beside each swatch, until a phone held upright is too
+  // narrow for eight of them in a row - then less of it, so they still fit.
+  ::ng-deep .mat-button-toggle-label-content {
+    padding: 0 clamp(0.25rem, (100vw - 230px) / 16, 12px);
+  }
+
   .mat-button-toggle-checked .swatch {
     box-shadow:
       0 0 0 2px var(--mat-sys-surface, #fff),
