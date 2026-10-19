@@ -1,8 +1,19 @@
-import { Injectable } from '@angular/core';
-import { Store, StoreConfig } from '@datorama/akita';
+import { computed, Injector, untracked } from '@angular/core';
+import {
+  getState,
+  patchState,
+  PartialStateUpdater,
+  signalStore,
+  StateSource,
+  watchState,
+  withComputed,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
+import { Observable } from 'rxjs';
 import { BotDifficulty, DEFAULT_DIFFICULTY } from './bot-controller';
 import { DEFAULT_COLORS } from './colony-colors';
-import { LEVELS } from './levels';
+import { getLevel, LEVELS } from './levels';
 import { MatchEarnings } from './earnings';
 import { HeadStart, Series, SeriesLength } from './rivalry';
 import { Player } from './player.model';
@@ -85,10 +96,58 @@ export function createInitialState(): GameStateState {
   };
 }
 
-@Injectable({ providedIn: 'root' })
-@StoreConfig({ name: 'game-state' })
-export class GameStateStore extends Store<GameStateState> {
-  constructor() {
-    super(createInitialState());
-  }
+/**
+ * The state of the game page: the match under way and the setup of the next
+ * one. Only {@link GameStateService} and the settings change it; everything
+ * else reads its signals.
+ */
+export const GameStateStore = signalStore(
+  { providedIn: 'root' },
+  withState(createInitialState),
+  withComputed(({ currentState, levelId, timePassed }) => ({
+    /** The level that is selected, resolved from the stored id. */
+    level: computed(() => getLevel(levelId())),
+    /** True while a match is on, paused or not. */
+    isMatchOn: computed(() => isMatchOn(currentState())),
+    /** True while the match is running - not paused, not over. */
+    isRunning: computed(() => currentState() === GameState.RUNNING),
+    /** True while the match is paused. */
+    isPaused: computed(() => currentState() === GameState.PAUSED),
+    /** Whole seconds of the match played, as the match clock shows them. */
+    gameSeconds: computed(() => Math.floor(timePassed() / 1000)),
+  })),
+  withMethods((store) => ({
+    /** Changes the state - several updaters land as one change. */
+    update(
+      ...updaters: (
+        | Partial<GameStateState>
+        | PartialStateUpdater<GameStateState>
+      )[]
+    ): void {
+      patchState(store, ...updaters);
+    },
+    /** The state as it stands, without tracking it in a reactive context. */
+    snapshot(): GameStateState {
+      return untracked(() => getState(store));
+    },
+  }))
+);
+export type GameStateStore = InstanceType<typeof GameStateStore>;
+
+/**
+ * Every state of a store from the subscription on - the current one first,
+ * then each change synchronously, inside the update that made it. Unlike
+ * `toObservable`, nothing waits for change detection, so a subscriber sees
+ * every state on the way, as the game loop and the settings need.
+ */
+export function stateChanges<State extends object>(
+  store: StateSource<State>,
+  injector: Injector
+): Observable<State> {
+  return new Observable<State>((subscriber) => {
+    const watcher = watchState(store, (state) => subscriber.next(state), {
+      injector,
+    });
+    return () => watcher.destroy();
+  });
 }

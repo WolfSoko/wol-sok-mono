@@ -1,5 +1,5 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { distinctUntilChanged, filter, pairwise, take } from 'rxjs';
+import { Injectable, Injector, inject, signal } from '@angular/core';
+import { distinctUntilChanged, filter, map, pairwise, take } from 'rxjs';
 import {
   DEFAULT_SCREEN_RESOLUTION,
   DEFAULT_SIM_RESOLUTION,
@@ -10,13 +10,14 @@ import {
 } from './state/arena-size';
 import { BotDifficulty, difficultyOption } from './state/bot-controller';
 import { sameColors, validColorPair } from './state/colony-colors';
-import { GameStateQuery } from './state/game-state.query';
 import { GameStateService, MatchSetup } from './state/game-state.service';
 import {
   GameMode,
   GameState,
+  GameStateStore,
   isGameMode,
   isMatchOn,
+  stateChanges,
 } from './state/game.states';
 import { isLevelId } from './state/levels';
 import {
@@ -93,7 +94,7 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
 @Injectable({ providedIn: 'root' })
 export class GameSettingsService {
   private readonly gameState = inject(GameStateService);
-  private readonly query = inject(GameStateQuery);
+  private readonly store = inject(GameStateStore);
   private readonly storage = inject(GameStorage);
   private restored = false;
   /** The settings the player changed - what restoring must keep. */
@@ -125,9 +126,10 @@ export class GameSettingsService {
   );
 
   constructor() {
-    this.query
-      .select(matchSetup)
-      .pipe(distinctUntilChanged(sameMatchSetup), pairwise())
+    // Synchronous, so a change is told apart from a restored setup.
+    const state$ = stateChanges(this.store, inject(Injector));
+    state$
+      .pipe(map(matchSetup), distinctUntilChanged(sameMatchSetup), pairwise())
       .subscribe(([before, after]) =>
         this.changed(
           ...MATCH_SETUP_KEYS.filter(
@@ -143,9 +145,12 @@ export class GameSettingsService {
         this.restored = true;
         this.persist();
       });
-    this.query
-      .select((state) => state.currentState)
-      .pipe(filter((state) => state === GameState.START))
+    state$
+      .pipe(
+        map((state) => state.currentState),
+        distinctUntilChanged(),
+        filter((state) => state === GameState.START)
+      )
       .subscribe(() => this.restorePendingSetup());
   }
 
@@ -206,7 +211,7 @@ export class GameSettingsService {
    * their value; the match setup waits while a match is on.
    */
   private restore(stored: StoredSettings): void {
-    if (isMatchOn(this.query.getValue().currentState)) {
+    if (isMatchOn(this.store.snapshot().currentState)) {
       this.pendingSetup = stored;
     } else {
       this.restoreMatchSetup(stored);
@@ -252,7 +257,7 @@ export class GameSettingsService {
     const stored = this.pendingSetup;
     // A series under way keeps its setup too - the stored one waits for it
     // to end.
-    const { series } = this.query.getValue();
+    const { series } = this.store.snapshot();
     if (stored !== null && (series === null || seriesWinner(series) !== null)) {
       // Still pending while it is applied, so the write on the way stores
       // the same setup - and the backend skips it.
@@ -313,7 +318,7 @@ export class GameSettingsService {
    * waits for the menu, its values for what the player has not changed.
    */
   private matchSetupToStore(): MatchSetup {
-    const setup = matchSetup(this.query.getValue());
+    const setup = matchSetup(this.store.snapshot());
     const pending = this.pendingSetup;
     if (pending === null) {
       return setup;

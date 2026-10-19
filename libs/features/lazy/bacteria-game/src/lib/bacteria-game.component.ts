@@ -29,15 +29,7 @@ import {
   ShowFpsComponent,
 } from '@wolsok/ui-kit';
 import { defer, fromEvent, Observable } from 'rxjs';
-import {
-  defaultIfEmpty,
-  distinctUntilChanged,
-  last,
-  map,
-  switchMap,
-  take,
-  tap,
-} from 'rxjs/operators';
+import { defaultIfEmpty, last, map, take, tap } from 'rxjs/operators';
 import { ArenaFrame, ArenaPainter } from './arena/arena-painter';
 import { createArenaPainter } from './arena/create-arena-painter';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
@@ -67,16 +59,12 @@ import { ProfileComponent } from './menu/profile.component';
 import { SettingsComponent } from './menu/settings.component';
 import { SwarmComponent } from './menu/swarm.component';
 import {
-  DEFAULT_COLORS,
   getColonyColor,
   pickColor,
   readableOn,
+  sameColors,
 } from './state/colony-colors';
-import {
-  BotDifficulty,
-  difficultyOption,
-  DEFAULT_DIFFICULTY,
-} from './state/bot-controller';
+import { BotDifficulty, difficultyOption } from './state/bot-controller';
 import { GameSettingsService } from './settings.service';
 import { ProgressService } from './progress.service';
 import { CampaignService } from './campaign.service';
@@ -97,9 +85,8 @@ import {
 import { GameBalance } from './state/game-balance';
 import { GameFrame } from './state/fixed-tick';
 import { SteeringVector } from './state/geometry';
-import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
-import { DEFAULT_MODE, GameMode, GameState } from './state/game.states';
+import { GameMode, GameState, GameStateStore } from './state/game.states';
 import {
   Level,
   LEVELS,
@@ -110,7 +97,7 @@ import {
 import { Rect } from './state/maps';
 import { MedalTier } from './state/medallions';
 import { isBoosted, Player } from './state/player.model';
-import { PlayerQuery } from './state/player.query';
+import { PlayerStore } from './state/player.store';
 import { PlayerService } from './state/player.service';
 import {
   MatchEndAction,
@@ -146,10 +133,10 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
-  private query = inject(GameStateQuery);
+  private store = inject(GameStateStore);
   private gameStateService = inject(GameStateService);
   private playerService = inject(PlayerService);
-  private playerQuery = inject(PlayerQuery);
+  private playerStore = inject(PlayerStore);
   protected readonly settings = inject(GameSettingsService);
   private readonly sound = inject(GameSoundService);
   private readonly progress = inject(ProgressService);
@@ -186,7 +173,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   stats: Signal<ColonyStats[]>;
   /** The colonies a finger may steer - one seat each in the touch layout. */
   protected readonly humanStats: Signal<ColonyStats[]>;
-  fps$: Observable<number>;
+  protected readonly fps = this.store.fps;
   /** True while a match is on, paused or not. */
   protected readonly running: Signal<boolean>;
   protected readonly paused: Signal<boolean>;
@@ -285,14 +272,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly campaign = inject(CampaignService);
   protected readonly lockedLevels = this.campaign.locks;
   /** Between two players: the series length, the head start, the series. */
-  protected readonly seriesLength = toSignal(
-    this.query.select((state) => state.seriesLength),
-    { requireSync: true }
-  );
-  protected readonly headStart = toSignal(
-    this.query.select((state) => state.headStart),
-    { requireSync: true }
-  );
+  protected readonly seriesLength = this.store.seriesLength;
+  protected readonly headStart = this.store.headStart;
   /** The lifetime wins of the two colours between two players. */
   protected readonly rivalry = computed(() =>
     rivalryScore(this.progress.couchWins(), this.colors())
@@ -371,15 +352,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   constructor() {
     loadFonts(document);
-    this.fps$ = this.query.selectFps();
     this.gameStateService.reset();
     // A series lasts for a visit of the page: one left unfinished last time
     // does not carry over.
     this.gameStateService.endSeries();
 
-    this.level = toSignal(this.query.selectLevel(), {
-      initialValue: LEVELS[0],
-    });
+    this.level = this.store.level;
     this.balance = computed(() =>
       levelBalance(this.level(), scaleOf(this.arena().width))
     );
@@ -394,19 +372,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.arenaBorder = computed(() => cssTriple(this.theme().border));
     this.arenaRim = computed(() => cssTriple(this.theme().rim));
 
-    this.mode = toSignal(this.query.selectMode(), {
-      initialValue: DEFAULT_MODE,
-    });
-    this.colors = toSignal(this.query.selectColors(), {
-      initialValue: [DEFAULT_COLORS[0], DEFAULT_COLORS[1]] as [string, string],
-    });
-    this.difficulty = toSignal(this.query.selectDifficulty(), {
-      initialValue: DEFAULT_DIFFICULTY,
-    });
+    this.mode = this.store.mode;
+    // The same pair again is no change - it would only repaint the arena.
+    this.colors = computed(() => this.store.colors(), { equal: sameColors });
+    this.difficulty = this.store.difficulty;
 
-    const players = toSignal(this.playerQuery.selectAll(), {
-      initialValue: [] as Player[],
-    });
+    const players = this.playerStore.entities;
     this.humans = computed(() => players().filter((player) => !player.isBot));
     // The crosshairs move the players every frame - the scoreboard only
     // renders again once one of its numbers changes.
@@ -440,21 +411,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       }
     });
 
-    this.running = toSignal(this.query.selectIsMatchOn(), {
-      initialValue: false,
-    });
-    this.paused = toSignal(this.query.selectIsPaused(), {
-      initialValue: false,
-    });
-    this.gameSeconds = toSignal(
-      this.query
-        .select((state) => Math.floor(state.timePassed / 1000))
-        .pipe(distinctUntilChanged()),
-      { initialValue: 0 }
-    );
-    this.matchOver = toSignal(this.query.selectMatchEnded(), {
-      initialValue: false,
-    });
+    this.running = this.store.isMatchOn;
+    this.paused = this.store.isPaused;
+    this.gameSeconds = this.store.gameSeconds;
+    this.matchOver = this.store.matchEnded;
     effect(() => this.sound.setEnabled(this.settings.sound()));
     effect(() => this.sound.setMusicEnabled(this.settings.music()));
     // The level's music plays while the match is on and stops on pause. A
@@ -464,7 +424,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       const music =
         this.running() && !this.paused() ? levelMusic(this.level().id) : null;
       untracked(() =>
-        this.sound.setMusic(music, this.query.getValue().timePassed / 1000)
+        this.sound.setMusic(music, this.store.snapshot().timePassed / 1000)
       );
     });
     effect(() => {
@@ -515,7 +475,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Plays the end of the match, and the medallion it earned after it. */
   private finishMatch(): void {
-    const { earnings, levelId } = this.query.getValue();
+    const { earnings, levelId } = this.store.snapshot();
     const award = earnings?.award;
     this.sound.matchEnd(
       this.matchResult(),
@@ -530,7 +490,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * win or a loss, between two players always a win for one of them.
    */
   private matchResult(): MatchResult {
-    const winner = this.query.getValue().winner;
+    const winner = this.store.snapshot().winner;
     if (winner == null) {
       return 'draw';
     }
@@ -669,9 +629,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     return defer(() => {
       this.resetting.set(true);
       this.gameStateService.pause();
-      return this.query.selectCurrentGameState(GameState.PAUSED).pipe(
-        take(1),
-        switchMap(() => this.vaporize()),
+      return this.vaporize().pipe(
         defaultIfEmpty(undefined),
         last(),
         tap(() => {
@@ -731,7 +689,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     alpha: number
   ): ArenaFrame {
     const balance = this.balance();
-    const players = this.playerQuery.getAll();
+    const players = untracked(this.playerStore.entities);
     const drawn = players.map((player) => ({
       player,
       at: this.playerService.crosshairAt(player, alpha),
@@ -1003,7 +961,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // while a button has the focus: a keyboard user pressing Enter on "Reset"
     // expects a reset, not a boost. Outside of a match Space still scrolls.
     const boosted =
-      this.query.getValue().currentState === GameState.RUNNING &&
+      this.store.snapshot().currentState === GameState.RUNNING &&
       !isInteractiveTarget($event.target)
         ? humanForBoostKey(this.humans(), $event.key)
         : null;

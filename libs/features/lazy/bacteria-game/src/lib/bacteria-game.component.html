@@ -305,7 +305,7 @@
         >
           <ws-shared-ui-show-fps
             [show]="settings.showFps()"
-            [fps]="(fps$ | async) ?? 0"
+            [fps]="fps()"
           ></ws-shared-ui-show-fps>
           @for (key of canvasKey(); track key) {
             <canvas

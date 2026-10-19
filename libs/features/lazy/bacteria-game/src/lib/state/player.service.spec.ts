@@ -4,7 +4,7 @@ import { gameBalance } from './game-balance';
 import { GameState, GameStateStore } from './game.states';
 import { getMap } from './game-maps';
 import { PlayerColorArray } from './player.model';
-import { PlayerQuery } from './player.query';
+import { PlayerStore } from './player.store';
 import { PlayerService, PlayerSpawn } from './player.service';
 
 const WIDTH = 320;
@@ -21,13 +21,13 @@ function spawns(versusComputer: boolean): PlayerSpawn[] {
 
 describe('PlayerService', () => {
   let service: PlayerService;
-  let playerQuery: PlayerQuery;
+  let playerStore: PlayerStore;
   let store: GameStateStore;
 
   beforeEach(() => {
     TestBed.resetTestingModule();
     service = TestBed.inject(PlayerService);
-    playerQuery = TestBed.inject(PlayerQuery);
+    playerStore = TestBed.inject(PlayerStore);
     store = TestBed.inject(GameStateStore);
     store.update({
       width: WIDTH,
@@ -67,7 +67,7 @@ describe('PlayerService', () => {
     it('starts the boost and the cooldown together', () => {
       service.boost(0);
 
-      const player = playerQuery.getEntity(0);
+      const player = playerStore.entityMap()[0];
       expect(player?.boostActiveSec).toBe(gameBalance.boostDurationSec);
       expect(player?.boostCooldownSec).toBe(gameBalance.boostCooldownSec);
     });
@@ -77,7 +77,7 @@ describe('PlayerService', () => {
 
       run(0.5);
 
-      const player = playerQuery.getEntity(0);
+      const player = playerStore.entityMap()[0];
       expect(player?.boostActiveSec).toBeCloseTo(
         gameBalance.boostDurationSec - 0.5
       );
@@ -90,7 +90,7 @@ describe('PlayerService', () => {
 
       run(0.5);
 
-      const player = playerQuery.getEntity(0);
+      const player = playerStore.entityMap()[0];
       expect(player?.boostActiveSec).toBe(0);
       expect(player?.boostCooldownSec).toBeCloseTo(
         gameBalance.boostCooldownSec - 0.5
@@ -103,7 +103,7 @@ describe('PlayerService', () => {
 
       service.boost(0);
 
-      expect(playerQuery.getEntity(0)?.boostActiveSec).toBe(0);
+      expect(playerStore.entityMap()[0]?.boostActiveSec).toBe(0);
     });
 
     it('allows a boost again after the boost plus the full cooldown', () => {
@@ -113,7 +113,7 @@ describe('PlayerService', () => {
 
       service.boost(0);
 
-      expect(playerQuery.getEntity(0)?.boostActiveSec).toBe(
+      expect(playerStore.entityMap()[0]?.boostActiveSec).toBe(
         gameBalance.boostDurationSec
       );
     });
@@ -125,7 +125,7 @@ describe('PlayerService', () => {
       run(gameBalance.boostCooldownSec);
       service.boost(0);
 
-      const [first, second] = playerQuery.getAll();
+      const [first, second] = playerStore.entities();
       expect(first.boostsFired).toBe(2);
       expect(second.boostsFired).toBe(0);
     });
@@ -143,7 +143,7 @@ describe('PlayerService', () => {
     it('leaves the other player alone', () => {
       service.boost(0);
 
-      expect(playerQuery.getEntity(1)?.boostActiveSec).toBe(0);
+      expect(playerStore.entityMap()[1]?.boostActiveSec).toBe(0);
     });
   });
 
@@ -156,26 +156,26 @@ describe('PlayerService', () => {
     });
 
     it('marks the second player as the bot', () => {
-      expect(playerQuery.getEntity(0)?.isBot).toBe(false);
-      expect(playerQuery.getEntity(1)?.isBot).toBe(true);
-      expect(playerQuery.getEntity(1)?.name).toBe('Computer');
+      expect(playerStore.entityMap()[0]?.isBot).toBe(false);
+      expect(playerStore.entityMap()[1]?.isBot).toBe(true);
+      expect(playerStore.entityMap()[1]?.name).toBe('Computer');
     });
 
     it('steers the computer crosshair on its own', () => {
-      const before = playerQuery.getEntity(1) as { x: number; y: number };
+      const before = playerStore.entityMap()[1] as { x: number; y: number };
 
       run(1);
 
-      const after = playerQuery.getEntity(1) as { x: number; y: number };
+      const after = playerStore.entityMap()[1] as { x: number; y: number };
       expect(after.x !== before.x || after.y !== before.y).toBe(true);
     });
 
     it('lets the human steer with the arrow keys as well', () => {
-      const before = playerQuery.getEntity(0)?.x ?? 0;
+      const before = playerStore.entityMap()[0]?.x ?? 0;
 
       hold(['ArrowRight'], 0.1);
 
-      expect(playerQuery.getEntity(0)?.x).toBeGreaterThan(before);
+      expect(playerStore.entityMap()[0]?.x).toBeGreaterThan(before);
     });
 
     it('keeps the keys away from the computer crosshair', () => {
@@ -183,7 +183,7 @@ describe('PlayerService', () => {
       const botAfter = (keysPressed: string[]) => {
         service.init(spawns(true), { map: getMap('open-field'), seed: 5 });
         hold(keysPressed, 0.2);
-        return playerQuery.getEntity(1)?.x;
+        return playerStore.entityMap()[1]?.x;
       };
 
       const steered = botAfter(['ArrowRight']);
@@ -198,31 +198,33 @@ describe('PlayerService', () => {
     });
 
     it('gives the arrow keys to the second player', () => {
-      const first = playerQuery.getEntity(0)?.x ?? 0;
-      const second = playerQuery.getEntity(1)?.x ?? 0;
+      const first = playerStore.entityMap()[0]?.x ?? 0;
+      const second = playerStore.entityMap()[1]?.x ?? 0;
 
       hold(['ArrowRight'], 0.1);
 
-      expect(playerQuery.getEntity(0)?.x).toBe(first);
-      expect(playerQuery.getEntity(1)?.x).toBeGreaterThan(second);
+      expect(playerStore.entityMap()[0]?.x).toBe(first);
+      expect(playerStore.entityMap()[1]?.x).toBeGreaterThan(second);
     });
 
     it('leaves both crosshairs where they are without a bot', () => {
-      const before = playerQuery.getAll().map((player) => [player.x, player.y]);
+      const before = playerStore
+        .entities()
+        .map((player) => [player.x, player.y]);
 
       run(1 / 3);
 
       expect(
-        playerQuery.getAll().map((player) => [player.x, player.y])
+        playerStore.entities().map((player) => [player.x, player.y])
       ).toEqual(before);
     });
 
     it('moves a diagonal no faster than a straight line', () => {
-      const start = playerQuery.getEntity(0) as { x: number; y: number };
+      const start = playerStore.entityMap()[0] as { x: number; y: number };
 
       hold(['d', 's'], 0.1);
 
-      const after = playerQuery.getEntity(0) as { x: number; y: number };
+      const after = playerStore.entityMap()[0] as { x: number; y: number };
       const travelled = Math.hypot(after.x - start.x, after.y - start.y);
       expect(travelled).toBeCloseTo(150 * 0.1);
       expect(after.x - start.x).toBeCloseTo(after.y - start.y);
@@ -235,7 +237,7 @@ describe('PlayerService', () => {
     });
 
     function positionOf(playerId: number): { x: number; y: number } {
-      const { x, y } = playerQuery.getEntity(playerId) as {
+      const { x, y } = playerStore.entityMap()[playerId] as {
         x: number;
         y: number;
       };
@@ -312,10 +314,10 @@ describe('PlayerService', () => {
       const peaks: number[] = [];
       for (let second = 0; second < 5; second++) {
         run(1);
-        peaks.push(playerQuery.getAll()[0].bacteriaCount);
+        peaks.push(playerStore.entities()[0].bacteriaCount);
       }
 
-      const [human, computer] = playerQuery.getAll();
+      const [human, computer] = playerStore.entities();
       expect(human.peakCount).toBeGreaterThanOrEqual(Math.max(...peaks));
       for (const player of [human, computer]) {
         expect(player.lowestSizeRatio).toBeGreaterThan(0);
@@ -334,7 +336,7 @@ describe('PlayerService', () => {
 
       service.init(spawns(false), { map: getMap('open-field') });
 
-      const [player] = playerQuery.getAll();
+      const [player] = playerStore.entities();
       expect(player.boostsFired).toBe(0);
       expect(player.lowestSizeRatio).toBe(1);
       expect(player.peakCount).toBe(player.bacteriaCount);
@@ -344,11 +346,11 @@ describe('PlayerService', () => {
   describe('ticks', () => {
     it('draws a crosshair ahead along its last step, between the ticks', () => {
       service.init(spawns(false), { map: getMap('open-field') });
-      const start = playerQuery.getEntity(0)?.x ?? 0;
+      const start = playerStore.entityMap()[0]?.x ?? 0;
 
       hold(['d'], TICK_SEC);
 
-      const player = playerQuery.getAll()[0];
+      const player = playerStore.entities()[0];
       const step = player.x - start;
       expect(step).toBeGreaterThan(0);
       expect(service.crosshairAt(player, 0).x).toBeCloseTo(player.x);
@@ -362,14 +364,14 @@ describe('PlayerService', () => {
 
       hold(['d'], 2);
 
-      const player = playerQuery.getAll()[0];
+      const player = playerStore.entities()[0];
       expect(player.x).toBe(WIDTH);
       expect(service.crosshairAt(player, 0.9).x).toBe(WIDTH);
     });
 
     it('draws a fresh crosshair where it stands', () => {
       service.init(spawns(false), { map: getMap('open-field') });
-      const player = playerQuery.getAll()[0];
+      const player = playerStore.entities()[0];
 
       expect(service.crosshairAt(player, 0.5)).toEqual({
         x: player.x,
@@ -411,8 +413,8 @@ describe('PlayerService', () => {
         seed,
       });
       run(4);
-      return playerQuery
-        .getAll()
+      return playerStore
+        .entities()
         .map((player) => [
           player.x,
           player.y,

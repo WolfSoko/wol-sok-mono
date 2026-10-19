@@ -1,9 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { transaction } from '@datorama/akita';
 import { Nutrient } from './bacteria-simulation';
 import { Simulation, SimulationFactory } from './simulation';
 import { GameBalance } from './game-balance';
-import { GameStateQuery } from './game-state.query';
 import { isSteering, Point, randomSeed, SteeringVector } from './geometry';
 import { DynamicWall } from './maps';
 import {
@@ -15,6 +13,7 @@ import {
   noFrameEvents,
   PlayerSpawn,
 } from './match-engine';
+import { GameStateStore } from './game.states';
 import { Player } from './player.model';
 import { PlayerStore } from './player.store';
 import { ReplayInputs } from './replay';
@@ -50,7 +49,7 @@ const KEY_SETS: readonly Record<string, SteeringVector>[] = [
 @Injectable({ providedIn: 'root' })
 export class PlayerService {
   private playerStore = inject(PlayerStore);
-  private gameStateQuery = inject(GameStateQuery);
+  private gameStateStore = inject(GameStateStore);
 
   /** Builds each match's simulation - on the CPU unless told otherwise. */
   private simulationFactory: SimulationFactory = cpuSimulation;
@@ -70,7 +69,6 @@ export class PlayerService {
    * rebuilt with them - its balance is fixed for the lifetime of a match on
    * purpose, nothing may change the rules while the colonies are fighting.
    */
-  @transaction()
   public init(
     spawns: PlayerSpawn[],
     options: Omit<MatchOptions, 'seed' | 'simulation' | 'replay'> & {
@@ -90,8 +88,7 @@ export class PlayerService {
     this.sticks.clear();
     this.frameEvents = noFrameEvents();
     this.mirrored = this.engine.players;
-    this.playerStore.set(this.mirrored.slice());
-    this.playerStore.setActive(0);
+    this.playerStore.setPlayers(this.mirrored);
   }
 
   /** See {@link MatchEngine.setDragTarget}. */
@@ -124,7 +121,7 @@ export class PlayerService {
    * the bots and the war.
    */
   public tick(width: number, height: number): void {
-    this.steerHumans(this.gameStateQuery.getValue().keysPressed);
+    this.steerHumans(this.gameStateStore.snapshot().keysPressed);
     this.engine.tick(width, height);
     this.mirror();
   }
@@ -144,7 +141,7 @@ export class PlayerService {
 
   /** See {@link MatchEngine.crosshairAt}. */
   public crosshairAt(player: Player, alpha: number): Point {
-    const { width, height } = this.gameStateQuery.getValue();
+    const { width, height } = this.gameStateStore.snapshot();
     return this.engine.crosshairAt(player, alpha, width, height);
   }
 
@@ -255,7 +252,7 @@ export class PlayerService {
     const players = this.engine.players;
     if (players !== this.mirrored) {
       this.mirrored = players;
-      this.playerStore.upsertMany(players.slice());
+      this.playerStore.upsertPlayers(players);
     }
   }
 }
