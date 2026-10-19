@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.17.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.17.0...v74.17.1) (2026-10-19)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** 🐛 settings fit a phone held sideways ([#2496](https://github.com/WolfSoko/wol-sok-mono/issues/2496)) ([f0ae68a](https://github.com/WolfSoko/wol-sok-mono/commit/f0ae68a8f5f655a797174b2c08259754500cc16d))
+
 ## [74.17.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.16.0...v74.17.0) (2026-10-19)
 
 ### Features
