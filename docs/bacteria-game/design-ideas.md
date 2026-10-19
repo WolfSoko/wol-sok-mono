@@ -850,8 +850,11 @@ Phase 1 is the one that changes whether people come back and costs the least. It
 has started: medallions per level and difficulty (section 3, without the
 level map and the medallion's level theme) are built, with the result-screen
 panel, the level list and the bells, the campaign ladder (1.2) with free
-play, the menu screens with the level choice and the profile, and lifetime
-totals with thirteen achievements (1.4); the lib's README describes them.
+play, the menu screens with the level choice and the profile, lifetime
+totals with thirteen achievements (1.4), and XP with eight ranks (1.5) told
+on a result screen in the order of 1.9; the lib's README describes them.
+What phase 1 still has open: the unlockable cosmetics (1.6) and the
+two-player rivalry (1.8).
 Glutton waits for pellets counted per colony, which the GPU report does not
 give yet - Flawless (a platinum medallion) takes its place - and Petri
 Scholar asks gold on levels 1 to 4 until chapters exist. The medallion limits are a first

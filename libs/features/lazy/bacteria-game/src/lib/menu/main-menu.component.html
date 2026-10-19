@@ -67,6 +67,34 @@
 
   <aside class="card" aria-label="Your campaign">
     @let summary = campaign();
+    @let rank = standing();
+    <div class="rank">
+      <feat-lazy-bac-game-rank-badge
+        [name]="rank.rank.name"
+        [number]="rank.number"
+        [size]="60"
+      />
+      <span class="rank-text">
+        <span class="stat-label"
+          >Rank {{ rank.number }} of {{ rankCount }}</span
+        >
+        <span class="rank-name">{{ rank.rank.name }}</span>
+      </span>
+    </div>
+    <div class="stat">
+      <span class="xp-line">
+        <span>{{ summary.xp.toLocaleString("en") }} XP</span>
+        @if (rank.next; as next) {
+          <span>{{ next.name }} at {{ next.xp.toLocaleString("en") }}</span>
+        }
+      </span>
+      <mat-progress-bar
+        class="bar"
+        mode="determinate"
+        aria-label="XP to the next rank"
+        [value]="100 * rank.progress"
+      />
+    </div>
     <div class="stat">
       <span class="stat-label">Campaign</span>
       <span class="stat-value"

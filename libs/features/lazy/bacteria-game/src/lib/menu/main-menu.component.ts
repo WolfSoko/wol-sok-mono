@@ -13,6 +13,8 @@ import { GameMode } from '../state/game.states';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { ACHIEVEMENTS } from '../state/achievements';
 import { CampaignSummary } from '../state/campaign';
+import { rankFor, RANKS } from '../state/ranks';
+import { RankBadgeComponent } from '../rank/rank-badge.component';
 import { LEVELS } from '../state/levels';
 import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 
@@ -34,6 +36,7 @@ export type MenuPage = 'profile' | 'settings' | 'help';
     MatIconModule,
     MatProgressBarModule,
     MatTooltipModule,
+    RankBadgeComponent,
   ],
   templateUrl: './main-menu.component.html',
   styleUrl: './main-menu.component.scss',
@@ -51,6 +54,10 @@ export class MainMenuComponent {
   public readonly soundChange = output<boolean>();
   /** Back to the page around the game. */
   public readonly leave = output<void>();
+
+  /** The rank the XP has reached, and the way to the next. */
+  protected readonly standing = computed(() => rankFor(this.campaign().xp));
+  protected readonly rankCount = RANKS.length;
 
   protected readonly medalCount = computed(() =>
     Object.values(this.campaign().medals).reduce((sum, n) => sum + n, 0)

@@ -49,6 +49,7 @@ export class CampaignService {
     openLevels: LEVELS.length - Object.keys(this.progress.ladderLocks()).length,
     medals: medalTally(this.progress.medals()),
     achievements: Object.keys(this.progress.achievements()).length,
+    xp: this.progress.totals().xp,
     continueLabel: `${getLevel(this.furthestLevel()).name} · ${difficultyOption(this.difficulty())?.name ?? ''}`,
   }));
 

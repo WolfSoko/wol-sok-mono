@@ -50,6 +50,7 @@ describe('ProfileComponent', () => {
           captured: 18430,
           enemyCrushed: 212,
           couchMatches: 7,
+          xp: 1000,
         },
       }
     );
@@ -72,6 +73,30 @@ describe('ProfileComponent', () => {
     expect(siege?.textContent).toContain('5 minutes or more');
     expect(host.querySelector('.achievements h3')?.textContent).toContain(
       '1 of 13'
+    );
+  });
+
+  it('shows the rank and the way to the next', () => {
+    const host = render(
+      {},
+      {
+        totals: {
+          matches: 0,
+          wins: 0,
+          captured: 0,
+          enemyCrushed: 0,
+          couchMatches: 0,
+          xp: 1000,
+        },
+      }
+    );
+
+    expect(host.querySelector('.rank-name')?.textContent).toContain('Bacillus');
+    expect(host.querySelector('.xp-line')?.textContent).toContain(
+      '500 to Spirillum'
+    );
+    expect(host.querySelector('.ranks .current')?.textContent?.trim()).toBe(
+      'Bacillus'
     );
   });
 });

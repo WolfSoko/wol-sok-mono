@@ -487,7 +487,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Plays the end of the match, and the medallion it earned after it. */
   private finishMatch(): void {
-    const { award, levelId } = this.query.getValue();
+    const { earnings, levelId } = this.query.getValue();
+    const award = earnings?.award;
     this.sound.matchEnd(
       this.matchResult(),
       award?.medal == null

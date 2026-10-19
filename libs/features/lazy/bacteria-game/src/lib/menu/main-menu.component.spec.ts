@@ -6,6 +6,7 @@ const CAMPAIGN: CampaignSummary = {
   openLevels: 5,
   medals: { bronze: 2, silver: 4, gold: 3, platinum: 0 },
   achievements: 5,
+  xp: 1000,
   continueLabel: '5 · Pillar Field · Normal',
 };
 

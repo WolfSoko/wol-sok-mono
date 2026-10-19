@@ -10,6 +10,8 @@ export interface CampaignSummary {
   medals: Readonly<Record<MedalTier, number>>;
   /** Achievements earned. */
   achievements: number;
+  /** Experience so far, which decides the rank. */
+  xp: number;
   /** "5 · Pillar Field · Normal" - where Continue picks up. */
   continueLabel: string;
 }

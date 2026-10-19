@@ -28,6 +28,82 @@
   padding: 1.25rem;
 }
 
+.rank {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.rank-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.rank-label {
+  font-size: 0.8rem;
+  color: var(--bw-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.rank-name {
+  @include screen.figure;
+
+  font-size: 1.9rem;
+}
+
+.xp {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.xp-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--bw-soft);
+}
+
+.bar {
+  --mat-progress-bar-active-indicator-color: var(--bw-gold);
+  --mat-progress-bar-track-color: var(--bw-line);
+  --mat-progress-bar-track-height: 0.6rem;
+  --mat-progress-bar-active-indicator-height: 0.6rem;
+  --mat-progress-bar-track-shape: 0.3rem;
+
+  border-radius: 0.3rem;
+}
+
+.ranks {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.75rem;
+  text-align: center;
+
+  li {
+    padding: 0.35rem 0.15rem;
+    border-radius: 0.5rem;
+    background: var(--bw-surface-raised);
+    color: var(--bw-muted);
+
+    &.reached {
+      color: var(--bw-gold);
+    }
+
+    &.current {
+      background: var(--bw-gold);
+      color: var(--bw-ground);
+      font-weight: 700;
+    }
+  }
+}
+
 .figures {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

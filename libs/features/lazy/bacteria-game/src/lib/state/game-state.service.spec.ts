@@ -198,7 +198,7 @@ describe('GameStateService', () => {
       const state = query.getValue();
       expect(state.currentState).toBe(GameState.END);
       expect(state.matchEnded).toBe(true);
-      expect(state.award).toEqual(
+      expect(state.earnings?.award).toEqual(
         expect.objectContaining({
           medal: 'platinum',
           previousBest: null,
@@ -215,15 +215,15 @@ describe('GameStateService', () => {
       winAgainst('two-players');
 
       expect(query.getValue().matchEnded).toBe(true);
-      expect(query.getValue().award).toBeNull();
+      expect(query.getValue().earnings?.award).toBeNull();
     });
 
     it('keeps the achievements the match earned, in either mode', () => {
       winAgainst('vs-computer');
-      expect(query.getValue().achievements).toContain('first-blood');
+      expect(query.getValue().earnings?.achievements).toContain('first-blood');
 
       service.start();
-      expect(query.getValue().achievements).toEqual([]);
+      expect(query.getValue().earnings).toBeNull();
     });
 
     it('counts a match between two players', () => {
@@ -235,13 +235,15 @@ describe('GameStateService', () => {
     it('records what the colonies did against the computer', () => {
       winAgainst('vs-computer');
 
-      expect(query.getValue().award?.record).toEqual(
+      expect(query.getValue().earnings?.award?.record).toEqual(
         expect.objectContaining({
           enemyCrushed: 300,
           peakShare: expect.any(Number),
         })
       );
-      expect(query.getValue().award?.record.peakShare).toBeGreaterThan(0);
+      expect(
+        query.getValue().earnings?.award?.record.peakShare
+      ).toBeGreaterThan(0);
     });
 
     it('starts the match clock over on a restart', () => {
@@ -257,7 +259,7 @@ describe('GameStateService', () => {
 
       service.start();
 
-      expect(query.getValue().award).toBeNull();
+      expect(query.getValue().earnings).toBeNull();
     });
   });
 });

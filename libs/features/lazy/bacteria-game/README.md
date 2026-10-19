@@ -144,6 +144,23 @@ the ones a match earned, the profile all of them with the day or the
 condition, and the main menu's card how many. Totals merge as the higher of
 two, achievements as the earlier day, so tabs and devices converge.
 
+## XP and ranks
+
+Every match earns XP ([`xp.ts`](./src/lib/state/xp.ts)), even a lost one:
+finishing and winning, both times the computer's difficulty, its medallion
+(in full as a new best, a quarter otherwise), 50 per achievement, and a
+little for a match between two players. XP climbs eight ranks named after
+microbiology ([`ranks.ts`](./src/lib/state/ranks.ts)), Spore to Superbug,
+and never unlocks gameplay. The XP total is one of the lifetime totals, so
+it is added to the stored value like them.
+
+The result screen tells the match in order: the medallion with what the next
+one needs, the XP line by line with the bar towards the next rank (and Rank
+up!), the achievements earned and the levels the match opened, then the
+buttons. The main menu's card and the profile show the rank, its emblem
+([`rank-badge`](./src/lib/rank/rank-badge.component.ts)) and the XP to the
+next one.
+
 ## Campaign ladder
 
 Against the computer, the levels open one by one

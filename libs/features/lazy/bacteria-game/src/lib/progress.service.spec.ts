@@ -45,6 +45,17 @@ describe('ProgressService', () => {
         hint: 'Platinum needs a gold win without a boost.',
       },
       achievements: ['first-blood', 'blitz', 'clean-sweep'],
+      xp: {
+        parts: [
+          { label: 'Win · Hard', xp: 150 },
+          { label: 'Gold medallion, a new best', xp: 70 },
+          { label: '3 achievements', xp: 150 },
+        ],
+        total: 370,
+      },
+      xpBefore: 0,
+      // Won without the ladder: the level itself opens, and the one after it.
+      unlocked: ['hourglass', 'inner-ring'],
     });
 
     TestBed.resetTestingModule();
@@ -64,6 +75,7 @@ describe('ProgressService', () => {
       captured: 350,
       enemyCrushed: 40,
       couchMatches: 0,
+      xp: expect.any(Number),
     });
     expect(stored()['totals']).toEqual(progress.totals());
   });
@@ -87,13 +99,24 @@ describe('ProgressService', () => {
   it('counts the matches between two players towards Couch War', () => {
     const progress = create();
 
-    const earned = Array.from({ length: 10 }, () =>
-      progress.recordCouchMatch()
+    const earned = Array.from(
+      { length: 10 },
+      () => progress.recordCouchMatch().achievements
     );
 
     expect(progress.totals().couchMatches).toBe(10);
     expect(earned.slice(0, 9).flat()).toEqual([]);
     expect(earned[9]).toEqual(['couch-war']);
+  });
+
+  it('adds the XP every match earns to the totals', () => {
+    const progress = create();
+
+    const first = progress.recordMatch(GOLD_WIN);
+    const second = progress.recordCouchMatch();
+
+    expect(second.xpBefore).toBe(first.xp.total);
+    expect(progress.totals().xp).toBe(first.xp.total + second.xp.total);
   });
 
   it('keeps the better medallion and names it in the next award', () => {
@@ -238,7 +261,7 @@ describe('ProgressService', () => {
       expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
         achievements: { 'first-blood': expect.any(String) },
       });
-      expect(progress.recordCouchMatch()).toEqual([]);
+      expect(progress.recordCouchMatch().achievements).toEqual([]);
     });
 
     it('keeps the better medallion when another device stores a worse one', () => {

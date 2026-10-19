@@ -12,6 +12,9 @@ import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { LEVELS } from '../state/levels';
 import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 import { ACHIEVEMENTS } from '../state/achievements';
+import { rankFor, RANKS } from '../state/ranks';
+import { RankBadgeComponent } from '../rank/rank-badge.component';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import {
   LifetimeTotals,
   medalTally,
@@ -26,7 +29,13 @@ import {
  */
 @Component({
   selector: 'feat-lazy-bac-game-profile',
-  imports: [DatePipe, MedallionComponent, ScreenHeaderComponent],
+  imports: [
+    DatePipe,
+    MatProgressBarModule,
+    MedallionComponent,
+    RankBadgeComponent,
+    ScreenHeaderComponent,
+  ],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -79,6 +88,10 @@ export class ProfileComponent {
   );
 
   protected readonly levelCount = LEVELS.length;
+
+  /** The rank the XP has reached, and the way to the next. */
+  protected readonly standing = computed(() => rankFor(this.totals().xp));
+  protected readonly ranks = RANKS;
 
   /** Every achievement, earned ones with their day, the rest with their condition. */
   protected readonly achievementList = computed(() =>

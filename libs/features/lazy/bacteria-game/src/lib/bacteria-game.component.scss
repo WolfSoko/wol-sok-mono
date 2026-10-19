@@ -268,6 +268,8 @@
 // The pause menu and the match result, cards laid over the arena - and the
 // menu screens, which fill it (.screens). Only the panel takes input.
 .stage-panel {
+  @include screen.tokens;
+
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -277,8 +279,18 @@
   padding: 1rem;
   pointer-events: none;
 
+  // The way forward is the player's colour, here as on the menu screens.
+  --mat-button-filled-container-color: var(--bw-player);
+  --mat-button-filled-label-text-color: var(--bw-on-player);
+
   .panel-card {
-    width: min(100%, 36rem);
+    --mat-card-elevated-container-color: var(--bw-surface);
+
+    width: min(100%, 40rem);
+    border: 1px solid var(--bw-line);
+    border-radius: 1.5rem;
+    color: var(--bw-text);
+    font-family: var(--bw-body);
     max-height: 100%;
     overflow: auto;
     pointer-events: auto;
@@ -287,9 +299,9 @@
   }
 
   .panel-title {
+    @include screen.title;
+
     margin: 0 0 0.75rem;
-    font-size: 1.4rem;
-    font-weight: 700;
   }
 
   // The pause menu: a stack of big buttons.
@@ -313,8 +325,6 @@
 // lab dish, gold for progress and the player's colony colour - bound in the
 // template - for the way forward.
 .stage-panel.screens {
-  @include screen.tokens;
-
   display: block;
   padding: 0;
   background: var(--bw-ground);

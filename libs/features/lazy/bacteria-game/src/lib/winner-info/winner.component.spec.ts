@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GameStateStore } from '../state/game.states';
 import { LEVELS } from '../state/levels';
+import { MatchEarnings } from '../state/earnings';
 import { MatchRecord, MedalAward } from '../state/medallions';
 import { createPlayer } from '../state/player.model';
 import { WinnerComponent } from './winner.component';
@@ -17,6 +18,18 @@ describe('WinnerComponent', () => {
     store = TestBed.inject(GameStateStore);
     fixture = TestBed.createComponent(WinnerComponent);
   });
+
+  /** What a match earned: only the given parts, nothing else. */
+  function earnings(changes: Partial<MatchEarnings>): MatchEarnings {
+    return {
+      award: null,
+      achievements: [],
+      xp: { parts: [], total: 0 },
+      xpBefore: 0,
+      unlocked: [],
+      ...changes,
+    };
+  }
 
   function text(): string {
     fixture.detectChanges();
@@ -75,7 +88,7 @@ describe('WinnerComponent', () => {
     store.update({
       winner: null,
       levelId: LEVELS[0].id,
-      achievements: ['blitz', 'pacifist'],
+      earnings: earnings({ achievements: ['blitz', 'pacifist'] }),
     });
     fixture.detectChanges();
 
@@ -83,6 +96,40 @@ describe('WinnerComponent', () => {
       fixture.nativeElement.querySelectorAll('.achievement-name') as Element[]
     ).map((name) => name.textContent?.trim());
     expect(names).toEqual(['Blitz', 'Pacifist']);
+  });
+
+  it('adds up the XP and shows the way to the next rank', () => {
+    store.update({
+      winner: null,
+      levelId: LEVELS[0].id,
+      earnings: earnings({
+        xp: {
+          parts: [
+            { label: 'Win · Normal', xp: 125 },
+            { label: 'Achievement', xp: 50 },
+          ],
+          total: 175,
+        },
+        xpBefore: 100,
+      }),
+    });
+
+    expect(text()).toContain('+175 XP');
+    expect(text()).toContain('Win · Normal 125');
+    expect(text()).toContain('Coccus');
+    expect(text()).toContain('Rank up!');
+    expect(text()).toContain('475 XP to Bacillus');
+  });
+
+  it('names the levels the match opened', () => {
+    store.update({
+      winner: null,
+      levelId: LEVELS[0].id,
+      earnings: earnings({ unlocked: [LEVELS[1].id] }),
+    });
+
+    expect(text()).toContain('Unlocked');
+    expect(text()).toContain(LEVELS[1].name);
   });
 
   it('locks the next level until the ladder opens it', () => {
@@ -165,7 +212,7 @@ describe('WinnerComponent', () => {
     });
 
     it('shows the medallion the match earned and what the next one needs', () => {
-      store.update({ award: award({}) });
+      store.update({ earnings: earnings({ award: award({}) }) });
 
       expect(text()).toContain('Silver medallion - a new best!');
       expect(text()).toContain('Gold needs a win 20 s faster.');
@@ -177,14 +224,16 @@ describe('WinnerComponent', () => {
     });
 
     it('floors the match time to the second, as the match clock does', () => {
-      store.update({ award: award({}) });
+      store.update({ earnings: earnings({ award: award({}) }) });
 
       expect(text()).toContain('Won in 0:59');
     });
 
     it('reminds the player of a better medallion held already', () => {
       store.update({
-        award: award({ medal: 'bronze', previousBest: 'gold' }),
+        earnings: earnings({
+          award: award({ medal: 'bronze', previousBest: 'gold' }),
+        }),
       });
 
       expect(text()).toContain('Bronze medallion');
@@ -193,7 +242,9 @@ describe('WinnerComponent', () => {
     });
 
     it('calls an equal medallion no new best', () => {
-      store.update({ award: award({ previousBest: 'silver' }) });
+      store.update({
+        earnings: earnings({ award: award({ previousBest: 'silver' }) }),
+      });
 
       expect(text()).not.toContain('new best');
       expect(text()).not.toContain('You hold');
@@ -201,10 +252,12 @@ describe('WinnerComponent', () => {
 
     it('has no medallion for a lost match', () => {
       store.update({
-        award: award({
-          record: { ...win, won: false },
-          medal: null,
-          hint: 'Bronze needs a win.',
+        earnings: earnings({
+          award: award({
+            record: { ...win, won: false },
+            medal: null,
+            hint: 'Bronze needs a win.',
+          }),
         }),
       });
 

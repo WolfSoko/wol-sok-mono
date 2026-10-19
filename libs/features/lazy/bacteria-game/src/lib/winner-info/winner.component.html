@@ -1,5 +1,6 @@
 <h2 class="headline">{{ headline() }}</h2>
 <p class="level-info">{{ level().name }}</p>
+
 @if (award(); as award) {
   <div class="award" [class.earned]="award.medal !== null">
     <feat-lazy-bac-game-medallion
@@ -25,20 +26,60 @@
     </div>
   </div>
 }
-@if (earned().length > 0) {
-  <ul class="achievements" aria-label="Achievements earned">
+
+@if (xp(); as xp) {
+  <div class="xp">
+    <div class="xp-head">
+      <span class="xp-total">+{{ xp.gain.total }} XP</span>
+      <span class="xp-parts">
+        @for (part of xp.gain.parts; track part.label) {
+          <span class="xp-part">{{ part.label }} {{ part.xp }}</span>
+        }
+      </span>
+    </div>
+    <mat-progress-bar
+      class="xp-bar"
+      mode="buffer"
+      [attr.aria-label]="'XP towards ' + (xp.standing.next?.name ?? 'the top')"
+      [value]="xp.heldPercent"
+      [bufferValue]="xp.heldPercent + xp.gainedPercent"
+    />
+    <p class="xp-rank">
+      @if (xp.rankUp) {
+        <span class="rank-up">Rank up!</span>
+      }
+      {{ xp.standing.rank.name }}
+      @if (xp.toNext !== null) {
+        · {{ xp.toNext }} XP to {{ xp.standing.next?.name }}
+      }
+    </p>
+  </div>
+}
+
+@if (earned().length > 0 || unlocked().length > 0) {
+  <ul class="news" aria-label="New this match">
     @for (achievement of earned(); track achievement.id) {
-      <li class="achievement">
+      <li class="chip">
         <mat-icon class="badge" aria-hidden="true">emoji_events</mat-icon>
-        <span class="achievement-text">
-          <span class="achievement-label">Achievement</span>
+        <span class="chip-text">
+          <span class="chip-label">Achievement</span>
           <span class="achievement-name">{{ achievement.name }}</span>
-          <span class="achievement-condition">{{ achievement.condition }}</span>
+          <span class="chip-note">{{ achievement.condition }}</span>
+        </span>
+      </li>
+    }
+    @for (level of unlocked(); track level.id) {
+      <li class="chip unlock">
+        <mat-icon class="badge" aria-hidden="true">lock_open</mat-icon>
+        <span class="chip-text">
+          <span class="chip-label">Unlocked</span>
+          <span class="unlocked-name">{{ level.name }}</span>
         </span>
       </li>
     }
   </ul>
 }
+
 <div class="actions">
   <button mat-button type="button" (click)="action.emit('menu')">
     <mat-icon>home</mat-icon>
@@ -57,7 +98,7 @@
   @if (upcoming(); as next) {
     <button
       mat-flat-button
-      color="primary"
+      class="next"
       type="button"
       [disabled]="upcomingLock() !== null"
       (click)="action.emit('next')"
@@ -67,6 +108,6 @@
     </button>
   }
 </div>
-@if (upcoming() !== null && upcomingLock(); as lock) {
+@if (upcomingLock(); as lock) {
   <p class="lock-reason">{{ lock }}</p>
 }

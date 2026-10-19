@@ -140,6 +140,31 @@
   background: var(--bw-surface-glass);
 }
 
+.rank {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.rank-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.rank-name {
+  @include screen.figure;
+
+  font-size: 1.75rem;
+}
+
+.xp-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--bw-soft);
+}
+
 .stat {
   display: flex;
   flex-direction: column;
