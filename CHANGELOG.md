@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.8.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.8.0...v74.8.1) (2026-10-19)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** ♻️ storage port, ready to swap for firebase ([#2484](https://github.com/WolfSoko/wol-sok-mono/issues/2484)) ([9f44812](https://github.com/WolfSoko/wol-sok-mono/commit/9f44812a75e8fc5da96a7775781df7341bd570b9))
+
 ## [74.8.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.7.0...v74.8.0) (2026-10-18)
 
 ### Features
