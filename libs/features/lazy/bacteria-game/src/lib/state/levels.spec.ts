@@ -6,6 +6,7 @@ import {
   levelBalance,
   levelCrosshairSpeed,
   levelMap,
+  levelTitle,
   nextLevel,
 } from './levels';
 import { GAME_MAPS } from './game-maps';
@@ -116,5 +117,12 @@ describe('levelBalance on a finer grid', () => {
     expect(levelCrosshairSpeed(level, 1.5)).toBe(
       levelCrosshairSpeed(level) * 1.5
     );
+  });
+});
+
+describe('levelTitle', () => {
+  it('drops the number from the name', () => {
+    expect(levelTitle(getLevel('hourglass'))).toBe('Hourglass');
+    expect(LEVELS.every((level) => !/\d/.test(levelTitle(level)))).toBe(true);
   });
 });

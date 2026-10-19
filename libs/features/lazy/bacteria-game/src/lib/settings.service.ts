@@ -28,6 +28,8 @@ export interface StoredSettings {
   difficulty?: BotDifficulty;
   levelId?: string;
   showFps?: boolean;
+  /** Every level open against the computer, instead of the campaign ladder. */
+  freePlay?: boolean;
   sound?: boolean;
   music?: boolean;
   /** The colour ids of the left and the right colony. */
@@ -66,9 +68,10 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
 ];
 
 /**
- * Keeps the player's choices - opponent, difficulty, level, colours, how the
- * bacteria look, the resolutions, whether the frame rate is shown and whether
- * the game makes sound and plays music - across visits, in the game storage.
+ * Keeps the player's choices - opponent, difficulty, level, colours, free
+ * play or the campaign ladder, how the bacteria look, the resolutions,
+ * whether the frame rate is shown and whether the game makes sound and plays
+ * music - across visits, in the game storage.
  *
  * The match settings live in the game state store, as they did; this service
  * only restores them once the storage answers and writes them back whenever
@@ -91,6 +94,8 @@ export class GameSettingsService {
 
   /** True while the frame rate badge is shown on the arena. */
   public readonly showFps = signal(false);
+  /** True while every level is open, instead of the campaign ladder. */
+  public readonly freePlay = signal(false);
   /** True while the game makes sound. */
   public readonly sound = signal(true);
   /** True while the levels play their music - under the sound switch. */
@@ -132,6 +137,11 @@ export class GameSettingsService {
   public setShowFps(show: boolean): void {
     this.showFps.set(show);
     this.changed('showFps');
+  }
+
+  public setFreePlay(on: boolean): void {
+    this.freePlay.set(on);
+    this.changed('freePlay');
   }
 
   public setSound(on: boolean): void {
@@ -203,6 +213,9 @@ export class GameSettingsService {
     if (restores('showFps') && typeof stored.showFps === 'boolean') {
       this.showFps.set(stored.showFps);
     }
+    if (restores('freePlay') && typeof stored.freePlay === 'boolean') {
+      this.freePlay.set(stored.freePlay);
+    }
     if (restores('sound') && typeof stored.sound === 'boolean') {
       this.sound.set(stored.sound);
     }
@@ -257,6 +270,7 @@ export class GameSettingsService {
       simResolution: this.simResolution(),
       screenResolution: this.screenResolution(),
       showFps: this.showFps(),
+      freePlay: this.freePlay(),
       sound: this.sound(),
       music: this.music(),
     };

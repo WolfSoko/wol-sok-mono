@@ -3,7 +3,10 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject } from 'rxjs';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { GameStateQuery } from './state/game-state.query';
+import { PROGRESS_STORAGE_KEY } from './progress.service';
+import { GameSettingsService } from './settings.service';
 import { GameStateService } from './state/game-state.service';
+import { levelTitle, LEVELS } from './state/levels';
 import { PlayerQuery } from './state/player.query';
 
 /**
@@ -96,9 +99,18 @@ describe('BacteriaGameComponent', () => {
   }
 
   beforeEach(() => {
+    localStorage.clear();
     stubFullscreen(null);
     stubActivation(false);
   });
+
+  /** Stores a win on a level, as an earlier visit would have. */
+  function storeWin(levelId: string): void {
+    localStorage.setItem(
+      PROGRESS_STORAGE_KEY,
+      JSON.stringify({ medals: { [levelId]: { easy: 'bronze' } } })
+    );
+  }
 
   describe('the F shortcut', () => {
     it('goes fullscreen for a key pressed in the arena', () => {
@@ -441,6 +453,7 @@ describe('BacteriaGameComponent', () => {
     });
 
     it('switches to the next level only once the old arena is vaporized', () => {
+      storeWin(LEVELS[0].id);
       create();
       startMatch('vs-computer');
       const vaporized = new Subject<void>();
@@ -483,6 +496,54 @@ describe('BacteriaGameComponent', () => {
       TestBed.inject(GameStateService).setDifficulty('hard');
 
       expect(component['difficultyName']()).toBe('Hard');
+    });
+  });
+
+  describe('the campaign ladder', () => {
+    it('keeps a locked level from being picked against the computer', () => {
+      create();
+      TestBed.inject(GameStateService).setMode('vs-computer');
+
+      component['selectLevel'](LEVELS[2].id);
+
+      expect(query.getValue().levelId).toBe(LEVELS[0].id);
+      expect(component['lockedLevels']()[LEVELS[2].id]).toBe(
+        `Win ${levelTitle(LEVELS[1])} to unlock`
+      );
+    });
+
+    it('lets the level after a won one be picked', () => {
+      storeWin(LEVELS[0].id);
+      create();
+
+      component['selectLevel'](LEVELS[1].id);
+
+      expect(query.getValue().levelId).toBe(LEVELS[1].id);
+    });
+
+    it('opens every level in free play and between two players', () => {
+      create();
+      TestBed.inject(GameSettingsService).setFreePlay(true);
+      component['selectLevel'](LEVELS[5].id);
+      expect(query.getValue().levelId).toBe(LEVELS[5].id);
+
+      TestBed.inject(GameSettingsService).setFreePlay(false);
+      TestBed.inject(GameStateService).setMode('two-players');
+      component['selectLevel'](LEVELS[7].id);
+      expect(query.getValue().levelId).toBe(LEVELS[7].id);
+    });
+
+    it('locks the next level on the result screen until it is open', () => {
+      create();
+      startMatch('vs-computer');
+      (component as unknown as { thanos: unknown }).thanos = {
+        vaporize: () => new Subject<void>(),
+      };
+      query['store'].update({ matchEnded: true });
+
+      expect(component['upcomingLock']()).toBe(
+        `Win ${levelTitle(LEVELS[0])} to unlock`
+      );
     });
   });
 

@@ -39,10 +39,14 @@
       mat-flat-button
       color="primary"
       type="button"
+      [disabled]="upcomingLock() !== null"
       (click)="action.emit('next')"
     >
-      <mat-icon>skip_next</mat-icon>
+      <mat-icon>{{ upcomingLock() === null ? "skip_next" : "lock" }}</mat-icon>
       Next: {{ next.name }}
     </button>
   }
 </div>
+@if (upcoming() !== null && upcomingLock(); as lock) {
+  <p class="lock-reason">{{ lock }}</p>
+}

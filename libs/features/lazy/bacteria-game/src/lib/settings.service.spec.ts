@@ -80,6 +80,17 @@ describe('GameSettingsService', () => {
     expect(stored().showFps).toBe(true);
   });
 
+  it('remembers free play, with the campaign ladder by default', () => {
+    const service = TestBed.inject(GameSettingsService);
+    expect(service.freePlay()).toBe(false);
+
+    service.setFreePlay(true);
+
+    expect(stored().freePlay).toBe(true);
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(GameSettingsService).freePlay()).toBe(true);
+  });
+
   it('makes sound unless an earlier visit muted it', () => {
     expect(TestBed.inject(GameSettingsService).sound()).toBe(true);
   });

@@ -4,6 +4,7 @@ import {
   Signal,
   computed,
   inject,
+  input,
   output,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
@@ -34,6 +35,12 @@ export type MatchEndAction = 'again' | 'next' | 'menu';
 })
 export class WinnerComponent {
   private state = inject(GameStateQuery);
+
+  /**
+   * Why the next level is still locked on the campaign ladder, null when it
+   * is open.
+   */
+  public readonly upcomingLock = input<string | null>(null);
 
   /** What the player wants to do next. */
   public readonly action = output<MatchEndAction>();

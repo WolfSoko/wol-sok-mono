@@ -68,6 +68,15 @@ describe('ProgressService', () => {
     setItem.mockRestore();
   });
 
+  it('opens the next level on the ladder with a win', () => {
+    const progress = create();
+    expect(progress.lockedReason('pistons')).not.toBeNull();
+
+    progress.recordMatch({ ...GOLD_WIN, levelId: 'pillar-field' });
+
+    expect(progress.lockedReason('twin-chambers')).toBeNull();
+  });
+
   it('keeps the levels and difficulties apart', () => {
     const progress = create();
     progress.recordMatch(GOLD_WIN);

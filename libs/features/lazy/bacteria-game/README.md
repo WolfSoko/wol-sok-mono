@@ -109,6 +109,17 @@ per level and difficulty under its own storage key, `bacteria-game.progress`.
 Stored and won medallions are merged, never replaced, so a second tab or
 device cannot overwrite what the first one won.
 
+## Campaign ladder
+
+Against the computer, the levels open one by one
+([`campaign.ts`](./src/lib/state/campaign.ts)). The first is open from the
+start, and every other opens once the level before it has been won at any
+difficulty; a win always earns at least bronze, so the medallions tell which
+levels were won. A locked level shows a lock and what opens it in the level
+list, and the result screen's _Next_ button stays locked until it is open.
+_Free play_ beside the level list opens every level, for players who know the
+game already. Two players always have every level open.
+
 ## Boost
 
 Every player has a boost (Space for the first player, Enter for the second, or

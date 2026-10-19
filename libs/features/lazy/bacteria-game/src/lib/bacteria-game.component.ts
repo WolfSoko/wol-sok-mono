@@ -256,6 +256,29 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       ])
     );
   });
+  /**
+   * Why each level is still locked on the campaign ladder, by level id - all
+   * open in free play and between two players, who have nothing to prove to
+   * the computer.
+   */
+  protected readonly lockedLevels = computed(
+    (): Readonly<Record<string, string | null>> =>
+      this.mode() === 'vs-computer' && !this.settings.freePlay()
+        ? Object.fromEntries(
+            LEVELS.map((level) => [
+              level.id,
+              this.progress.lockedReason(level.id),
+            ])
+          )
+        : {}
+  );
+  /** Why the level after the selected one is locked, null when it is open. */
+  protected readonly upcomingLock = computed(() => {
+    const upcoming = this.upcomingLevel();
+    return upcoming === null
+      ? null
+      : (this.lockedLevels()[upcoming.id] ?? null);
+  });
   /** The crosshairs a finger or a key may steer - never the computer's. */
   private readonly humans: Signal<Player[]>;
 
@@ -410,7 +433,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * "next level".
    */
   protected onMatchEnd(action: MatchEndAction): void {
-    const next = action === 'next' ? this.upcomingLevel() : null;
+    const next =
+      action === 'next' && this.upcomingLock() === null
+        ? this.upcomingLevel()
+        : null;
     this.screen.set('menu');
     this.resetGame$()
       .pipe(
@@ -667,9 +693,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.gameStateService.togglePause();
   }
 
-  /** Picks the level the next match is played on. */
+  /** Picks the level the next match is played on - one the ladder opened. */
   protected selectLevel(levelId: string): void {
-    this.gameStateService.setLevel(levelId);
+    if (this.lockedLevels()[levelId] == null) {
+      this.gameStateService.setLevel(levelId);
+    }
+  }
+
+  /** Opens every level, or puts the campaign ladder back. */
+  protected setFreePlay(on: boolean): void {
+    this.settings.setFreePlay(on);
   }
 
   /** Switches between two humans and human versus computer. */

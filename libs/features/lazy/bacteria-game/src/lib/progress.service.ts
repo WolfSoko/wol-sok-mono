@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { BotDifficulty } from './state/bot-controller';
+import { lockedReason } from './state/campaign';
 import { getLevel } from './state/levels';
 import {
   judgeMatch,
@@ -46,6 +47,14 @@ export class ProgressService {
   /** The best medallion of a level at a difficulty. */
   public medal(levelId: string, difficulty: BotDifficulty): MedalTier | null {
     return bestMedal(this.progress(), levelId, difficulty);
+  }
+
+  /**
+   * Why a level is still locked on the campaign ladder, null when it is open.
+   * Read in a computed, it follows every medallion won.
+   */
+  public lockedReason(levelId: string): string | null {
+    return lockedReason(this.progress(), levelId);
   }
 
   /** Judges a match that has ended, remembers its medallion and returns its award. */

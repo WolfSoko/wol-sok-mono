@@ -66,24 +66,43 @@
     <mat-label>Level</mat-label>
     <mat-select
       class="level-select"
+      panelWidth=""
       [value]="level().id"
       [disabled]="disabled()"
       (selectionChange)="levelChange.emit($event.value)"
     >
       @for (option of levels; track option.id) {
-        <mat-option [value]="option.id">
+        @let lock = locked()[option.id] ?? null;
+        <mat-option [value]="option.id" [disabled]="lock !== null">
           <span class="level-option">
-            @if (mode() === "vs-computer") {
+            @if (lock !== null) {
+              <mat-icon class="lock" aria-hidden="true">lock</mat-icon>
+            } @else if (mode() === "vs-computer") {
               <feat-lazy-bac-game-medallion
                 [tier]="medals()[option.id] ?? null"
                 [size]="22"
               />
             }
-            {{ option.name }}
+            <span class="level-name">
+              {{ option.name }}
+              @if (lock !== null) {
+                <small class="lock-reason">{{ lock }}</small>
+              }
+            </span>
           </span>
         </mat-option>
       }
     </mat-select>
   </mat-form-field>
+  @if (mode() === "vs-computer") {
+    <mat-slide-toggle
+      class="free-play"
+      [checked]="freePlay()"
+      [disabled]="disabled()"
+      (change)="freePlayChange.emit($event.checked)"
+    >
+      Free play
+    </mat-slide-toggle>
+  }
   <p class="level-description">{{ level().description }}</p>
 </div>

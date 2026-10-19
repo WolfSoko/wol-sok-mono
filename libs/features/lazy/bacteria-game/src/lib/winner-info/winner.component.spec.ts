@@ -71,6 +71,18 @@ describe('WinnerComponent', () => {
     expect(text()).not.toContain('Next:');
   });
 
+  it('locks the next level until the ladder opens it', () => {
+    store.update({ winner: null, levelId: LEVELS[0].id });
+    fixture.componentRef.setInput('upcomingLock', 'Win Petri Dish to unlock');
+    fixture.detectChanges();
+
+    const next = Array.from(
+      fixture.nativeElement.querySelectorAll('button') as HTMLButtonElement[]
+    ).find((b) => b.textContent?.includes('Next:'));
+    expect(next?.disabled).toBe(true);
+    expect(text()).toContain('Win Petri Dish to unlock');
+  });
+
   it('reports what the player picks', () => {
     store.update({ winner: null, levelId: LEVELS[0].id });
     const picked = jest.fn();
