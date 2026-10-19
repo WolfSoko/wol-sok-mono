@@ -94,10 +94,11 @@
   font-weight: 800;
 }
 
-// A grid of sections that wrap as the screen narrows.
+// A grid of sections that wrap as the screen narrows - one column, as wide
+// as the screen, where not even one of `$min` fits.
 @mixin sections($min: 17rem) {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax($min, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min($min, 100%), 1fr));
   gap: 1.25rem;
 }
 
