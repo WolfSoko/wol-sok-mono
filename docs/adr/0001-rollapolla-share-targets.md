@@ -38,8 +38,10 @@ interface ShareTarget {
 Targets are registered as a multi provider through `provideShareTargets(...)`
 in `provide-ports-and.adapter.ts`. The current adapters live in
 `src/app/adapter/share/link-share-targets.ts`: WhatsApp, Telegram, Microsoft
-Teams, email and X. `PollShareComponent` (`core/poll-share/`) renders whatever is
-registered; it knows no channel by name.
+Teams, email and X. `ShareComponent` (`core/share/`) renders whatever is
+registered for any `ShareContent`; it knows no channel by name.
+`PollShareComponent` (`core/poll-share/`) wraps it for a poll, and the landing
+page uses it to share RollaPolla itself.
 
 Right after creating a poll, the creator lands on the poll page with the share
 box at the top ("Your poll is ready – share it"). The create form passes the

@@ -126,3 +126,16 @@
   margin: 0;
   color: var(--mat-sys-on-surface-variant);
 }
+
+.share-section {
+  --rap-share-intro-basis: 20rem;
+
+  padding: clamp(1.25rem, 4vw, 2rem);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--rap-radius-md);
+  background: var(--mat-sys-surface-container-low);
+}
+
+.share-header {
+  margin-bottom: 0;
+}

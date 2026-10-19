@@ -3,7 +3,7 @@ import { DestroyRef, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { injectResponse } from '@analogjs/router/tokens';
-import { SITE_URL } from '../../shared/site-url';
+import { homeUrl, SITE_URL } from '../../shared/site-url';
 
 export type PageTags = {
   title: string;
@@ -24,7 +24,7 @@ export const SITE_TAGS: PageTags = {
     'RollaPolla – easy polling for everyone: create a poll in seconds, share it and see live what others think.',
   socialDescription:
     'Easy polling for everyone: create a poll in seconds, share it and see live what others think.',
-  url: `${SITE_URL}/`,
+  url: homeUrl(),
   robots: 'index, follow',
 };
 

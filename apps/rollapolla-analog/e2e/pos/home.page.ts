@@ -29,6 +29,30 @@ export class HomePage {
     );
   }
 
+  async expectShareLinksVisible() {
+    const share = this.page.getByTestId('site-share');
+    await expect(
+      share.getByRole('heading', { name: 'Share RollaPolla' })
+    ).toBeVisible();
+    await expect(share.getByTestId('copy-link')).toBeVisible();
+    // Hydrated on viewport: the server builds the links on the site's origin,
+    // the browser on its own once the box scrolled into view.
+    await share.scrollIntoViewIfNeeded();
+    const homeUrl = new URL('/', this.page.url()).href;
+    const whatsApp = share.getByTestId('share-whatsapp');
+    await expect(whatsApp).toHaveAttribute(
+      'href',
+      /^https:\/\/wa\.me\/\?text=/
+    );
+    // The link ends the message, and it is the home page, no deeper page.
+    await expect
+      .poll(async () => {
+        const href = (await whatsApp.getAttribute('href')) ?? '';
+        return new URL(href).searchParams.get('text')?.split('\n').at(-1);
+      })
+      .toBe(homeUrl);
+  }
+
   async expectXLinkVisible() {
     const twitterLink = this.page.getByRole('link', {
       name: 'Follow RollaPolla on X',
