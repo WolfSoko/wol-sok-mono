@@ -59,14 +59,24 @@ below lists what they changed.
   (`ColonySummary`: count, captured, lost, total energy, centre).
 - **Settings in local storage** (`settings.service.ts`): mode, difficulty,
   level, colours, look, simulation and screen resolution, FPS badge, sound,
-  music. Nothing about a player's history is stored.
+  music and effects with a switch and a volume each, vibration. Nothing
+  about a player's history is stored.
 - **Sound and music synthesised** with the Web Audio API. Effects live in
-  `sound/game-sound.service.ts`; every level has its own tune
+  `sound/game-sound.service.ts`, written in the key of the level that plays
+  (the start and end jingles, the pellet blips that climb a ladder for
+  pellets eaten in a row); music and effects sit on buses of their own under
+  a master and a compressor. Every level has its own tune
   (`sound/level-music.ts`): a key, a tempo, a chord progression, instruments
   and a seed, from which `composeLoop` writes bass, pads, melody and drums as
-  plain data, played ahead of the audio clock by `sound/music-player.ts`.
-  Fights push the music's intensity up, and the Heartbeat level's drums beat
-  in time with its map (`HEART_PERIOD_SEC`).
+  plain data, played ahead of the audio clock by `sound/music-player.ts` on
+  the `sound/step-scheduler.ts` clock. Fights push the music's intensity up,
+  and the Heartbeat level's drums beat in time with its map
+  (`HEART_PERIOD_SEC`). The menu has an ambient piece of its own
+  (`sound/menu-music.ts`, `sound/menu-music-player.ts`): eight chords held
+  by pads over a sub bass, with seeded bells and breaths of noise, composed
+  afresh on every pass.
+- **Vibration** (`haptics.service.ts`) through the Vibration API where the
+  device has it: boosts, gates, the start and the end of a match, medallions.
 - **Touch seats** for two humans at one phone, fullscreen on entry.
 
 Everything below builds on these pieces rather than replacing them.

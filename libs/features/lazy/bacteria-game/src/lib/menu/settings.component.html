@@ -100,20 +100,77 @@
     }
   </section>
   <section class="screen-section switches" aria-labelledby="settings-sound">
-    <h3 id="settings-sound" class="section-title">Sound and screen</h3>
+    <h3 id="settings-sound" class="section-title">Sound</h3>
     <mat-slide-toggle
       [checked]="settings.sound()"
       (change)="soundChange.emit($event.checked)"
     >
       Sound
     </mat-slide-toggle>
-    <mat-slide-toggle
-      [checked]="settings.music()"
-      [disabled]="!settings.sound()"
-      (change)="settings.setMusic($event.checked)"
-    >
-      Music
-    </mat-slide-toggle>
+    <div class="volume">
+      <mat-slide-toggle
+        [checked]="settings.music()"
+        [disabled]="!settings.sound()"
+        (change)="settings.setMusic($event.checked)"
+      >
+        Music
+      </mat-slide-toggle>
+      <mat-slider
+        class="volume-slider"
+        [min]="0"
+        [max]="maxVolume"
+        [step]="5"
+        [displayWith]="percent"
+        [disabled]="!settings.sound() || !settings.music()"
+        discrete
+      >
+        <input
+          matSliderThumb
+          aria-label="Music volume"
+          [value]="settings.musicVolume()"
+          (valueChange)="settings.setMusicVolume($event)"
+        />
+      </mat-slider>
+    </div>
+    <div class="volume">
+      <mat-slide-toggle
+        [checked]="settings.effects()"
+        [disabled]="!settings.sound()"
+        (change)="effectsChange.emit($event.checked)"
+      >
+        Sound effects
+      </mat-slide-toggle>
+      <mat-slider
+        class="volume-slider"
+        [min]="0"
+        [max]="maxVolume"
+        [step]="5"
+        [displayWith]="percent"
+        [disabled]="!settings.sound() || !settings.effects()"
+        discrete
+      >
+        <input
+          matSliderThumb
+          aria-label="Effects volume"
+          [value]="settings.effectsVolume()"
+          (valueChange)="setEffectsVolume($event)"
+        />
+      </mat-slider>
+    </div>
+    @if (vibrationSupported()) {
+      <mat-slide-toggle
+        [checked]="settings.vibration()"
+        (change)="vibrationChange.emit($event.checked)"
+      >
+        Vibration
+      </mat-slide-toggle>
+      <p class="section-note">
+        A buzz for a boost, a thud for a gate, a flourish for a medallion.
+      </p>
+    }
+  </section>
+  <section class="screen-section switches" aria-labelledby="settings-screen">
+    <h3 id="settings-screen" class="section-title">Screen</h3>
     <mat-slide-toggle
       [checked]="settings.showFps()"
       (change)="settings.setShowFps($event.checked)"
