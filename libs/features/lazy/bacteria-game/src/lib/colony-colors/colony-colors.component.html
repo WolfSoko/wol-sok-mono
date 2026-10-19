@@ -14,6 +14,7 @@
         <mat-button-toggle
           [value]="color.id"
           [disabled]="!!lock && colors()[index] !== color.id"
+          [disabledInteractive]="true"
           [aria-label]="lock ? color.name + ', locked: ' + lock : color.name"
           [matTooltip]="lock ? color.name + ' - ' + lock : color.name"
           [class.locked]="!!lock"
@@ -30,4 +31,18 @@
       }
     </mat-button-toggle-group>
   </div>
+}
+@if (lockedList().length > 0) {
+  <ul class="locked-list" aria-label="Colours still to earn">
+    @for (locked of lockedList(); track locked.id) {
+      <li>
+        <span
+          class="swatch small"
+          [style.background-color]="locked.css"
+          aria-hidden="true"
+        ></span>
+        {{ locked.name }} - {{ locked.lock }}
+      </li>
+    }
+  </ul>
 }

@@ -93,6 +93,10 @@ export class ProgressService {
   /** Why each level's arena is still locked, by level id. */
   public readonly arenaLocks = computed(() => arenaLocks(this.progress()));
 
+  private cosmeticLocks() {
+    return { colors: this.colorLocks(), arenas: this.arenaLocks() };
+  }
+
   /**
    * Judges a match against the computer that has ended, remembers its
    * medallion, its numbers, the achievements and the XP it earned, and
@@ -140,6 +144,7 @@ export class ProgressService {
   ): Omit<MatchEarnings, 'award'> {
     const before = this.progress();
     const locksBefore = this.ladderLocks();
+    const cosmeticsBefore = this.cosmeticLocks();
     const known = this.loaded();
     const { progress, earned } = earnAchievements(
       addTotals(gain(before), match),
@@ -157,7 +162,9 @@ export class ProgressService {
             (id) => id !== record?.levelId
           )
         : [],
-      cosmetics: known ? newCosmetics(before, progress) : [],
+      cosmetics: known
+        ? newCosmetics(cosmeticsBefore, this.cosmeticLocks())
+        : [],
     };
   }
 

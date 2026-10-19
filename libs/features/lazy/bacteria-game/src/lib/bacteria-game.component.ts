@@ -69,6 +69,7 @@ import { SwarmComponent } from './menu/swarm.component';
 import {
   DEFAULT_COLORS,
   getColonyColor,
+  pickColor,
   readableOn,
 } from './state/colony-colors';
 import {
@@ -368,16 +369,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return levelMap(this.level()).createWalls(width, height);
     });
     this.upcomingLevel = computed(() => nextLevel(this.level().id));
-    // An arena the player chose and earned dresses every level; otherwise
-    // each level is drawn in its own.
-    this.theme = computed(() => {
-      const arena = this.settings.arena();
-      return arenaTheme(
-        arena !== null && !(arena in this.progress.arenaLocks())
-          ? arena
-          : this.level().id
-      );
-    });
+    this.theme = computed(() =>
+      arenaTheme(this.campaign.activeArena() ?? this.level().id)
+    );
     this.arenaBorder = computed(() => cssTriple(this.theme().border));
     this.arenaRim = computed(() => cssTriple(this.theme().rim));
 
@@ -764,6 +758,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Gives a seat's colony another colour. */
   protected selectColor(change: ColorChange): void {
+    // Neither seat may end up with a colour still to earn - a swap would
+    // hand the other seat one just as well. A colour a seat has, it keeps.
+    const colors = this.colors();
+    const next = pickColor(colors, change.seat, change.colorId);
+    const locks = this.colorLocks();
+    if (next.some((id, seat) => id !== colors[seat] && id in locks)) {
+      return;
+    }
     this.gameStateService.setColor(change.seat, change.colorId);
   }
 

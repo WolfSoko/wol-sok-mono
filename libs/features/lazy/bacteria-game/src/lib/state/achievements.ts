@@ -1,8 +1,7 @@
 import { ACHIEVEMENT_IDS, AchievementId } from './achievement-ids';
-import { BOT_DIFFICULTIES } from './bot-controller';
-import { levelWon } from './campaign';
+import { goldOn, levelWon } from './campaign';
 import { LEVELS } from './levels';
-import { MatchRecord, medalRank } from './medallions';
+import { MatchRecord } from './medallions';
 import { bestMedal, medalTally, Progress } from './progress';
 
 /**
@@ -98,13 +97,7 @@ const RULES: Record<AchievementId, Omit<Achievement, 'id'>> = {
     name: 'Petri Scholar',
     condition: 'Gold on levels 1 to 4',
     earned: (progress) =>
-      SCHOLAR_LEVELS.every(({ id }) =>
-        BOT_DIFFICULTIES.some(
-          (difficulty) =>
-            medalRank(bestMedal(progress, id, difficulty.id)) >=
-            medalRank('gold')
-        )
-      ),
+      SCHOLAR_LEVELS.every(({ id }) => goldOn(progress, id)),
   },
   'hard-boiled': {
     name: 'Hard Boiled',

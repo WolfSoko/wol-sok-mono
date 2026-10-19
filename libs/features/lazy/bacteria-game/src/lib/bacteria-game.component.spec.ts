@@ -544,6 +544,25 @@ describe('BacteriaGameComponent', () => {
     });
   });
 
+  describe('the colony colours', () => {
+    it('keeps a colour still to earn from either seat, also by a swap', () => {
+      create();
+      const gameState = TestBed.inject(GameStateService);
+      gameState.setMode('two-players');
+      // Settings from before the lock: the right seat plays green.
+      gameState.setColors(['orange', 'green']);
+
+      component['selectColor']({ seat: 0, colorId: 'green' });
+      expect(query.getValue().colors).toEqual(['orange', 'green']);
+
+      component['selectColor']({ seat: 1, colorId: 'orange' });
+      expect(query.getValue().colors).toEqual(['orange', 'green']);
+
+      component['selectColor']({ seat: 1, colorId: 'blue' });
+      expect(query.getValue().colors).toEqual(['orange', 'blue']);
+    });
+  });
+
   describe('the joysticks', () => {
     it('steer the crosshair of their player', () => {
       create();

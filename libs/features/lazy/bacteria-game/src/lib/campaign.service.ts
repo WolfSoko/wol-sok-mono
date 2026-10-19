@@ -4,6 +4,7 @@ import { ProgressService } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import { difficultyOption } from './state/bot-controller';
 import { CampaignSummary, furthestOpenLevel } from './state/campaign';
+import { activeArena } from './state/unlocks';
 import { getLevel, LEVELS } from './state/levels';
 import { medalTally } from './state/progress';
 import { GameStateQuery } from './state/game-state.query';
@@ -38,6 +39,14 @@ export class CampaignService {
   private readonly difficulty = toSignal(this.query.selectDifficulty(), {
     requireSync: true,
   });
+
+  /**
+   * The arena every level is drawn in - the one chosen in the settings once
+   * it is earned - null for each level its own.
+   */
+  public readonly activeArena = computed(() =>
+    activeArena(this.settings.arena(), this.progress.arenaLocks())
+  );
 
   /** The furthest level the ladder has opened - where Continue picks up. */
   public readonly furthestLevel = computed(() =>

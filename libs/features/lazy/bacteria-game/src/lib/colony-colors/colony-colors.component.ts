@@ -51,6 +51,18 @@ export class ColonyColorsComponent {
       : (['Left player', 'Right player'] as const)
   );
 
+  /** The colours still to earn, with what opens each - written out, for touch and keyboard. */
+  protected readonly lockedList = computed(() =>
+    this.palette
+      .filter(({ id }) => id in this.locks())
+      .map(({ id, name, rgb }) => ({
+        id,
+        name,
+        lock: this.locks()[id],
+        css: `rgb(${rgb.join(',')})`,
+      }))
+  );
+
   protected pick(seat: number, colorId: string): void {
     this.colorChange.emit({ seat: seat === 0 ? 0 : 1, colorId });
   }

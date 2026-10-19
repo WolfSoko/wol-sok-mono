@@ -1,11 +1,11 @@
 import { AchievementId } from './achievement-ids';
 import { getAchievement } from './achievements';
-import { BOT_DIFFICULTIES } from './bot-controller';
+import { goldOn, newlyUnlocked } from './campaign';
 import { COLONY_COLORS } from './colony-colors';
-import { levelTitle, LEVELS } from './levels';
-import { medalRank, MEDAL_NAMES } from './medallions';
-import { bestMedal, medalTally, Progress } from './progress';
-import { RANKS } from './ranks';
+import { getLevel, levelTitle, LEVELS } from './levels';
+import { MEDAL_NAMES } from './medallions';
+import { Progress } from './progress';
+import { Rank, RANKS } from './ranks';
 import { xpOf } from './xp';
 
 /**
@@ -14,6 +14,9 @@ import { xpOf } from './xp';
  * and never make a colony stronger. Orange and blue are free from the
  * start, every level's own arena too.
  */
+
+/** Why each locked cosmetic is locked, by id; the open ones are absent. */
+export type Locks = Readonly<Record<string, string>>;
 
 /** What opens a colour, and the test of it. */
 interface ColorUnlock {
@@ -26,34 +29,34 @@ const achieved = (id: AchievementId): ColorUnlock => ({
   open: (progress) => progress.achievements[id] != null,
 });
 
-const rank = (name: string): ColorUnlock => {
-  const xp = RANKS.find((r) => r.name === name)?.xp ?? 0;
-  return {
-    condition: `Reach the rank ${name}`,
-    open: (progress) => xpOf(progress) >= xp,
-  };
+const reached = (rank: Rank): ColorUnlock => ({
+  condition: `Reach the rank ${rank.name}`,
+  open: (progress) => xpOf(progress) >= rank.xp,
+});
+
+const rankNamed = (name: string): Rank => {
+  const rank = RANKS.find((r) => r.name === name);
+  if (rank == null) {
+    throw new Error(`No rank ${name}`);
+  }
+  return rank;
 };
 
 /** The colours that have to be earned, by colour id. */
 const COLOR_UNLOCKS: Readonly<Record<string, ColorUnlock>> = {
   green: achieved('first-blood'),
   yellow: {
-    condition: 'Earn a gold medallion',
-    open: (progress) => {
-      const tally = medalTally(progress.medals);
-      return tally.gold + tally.platinum > 0;
-    },
+    condition: `Earn a ${MEDAL_NAMES.gold.toLowerCase()} medallion`,
+    open: (progress) => LEVELS.some(({ id }) => goldOn(progress, id)),
   },
   cyan: achieved('pacifist'),
-  pink: rank('Bacillus'),
-  purple: rank('Biofilm'),
+  pink: reached(rankNamed('Bacillus')),
+  purple: reached(rankNamed('Biofilm')),
   red: achieved('hard-boiled'),
 };
 
 /** Why each locked colour is locked - "Earn Pacifist" - by colour id. */
-export function colorLocks(
-  progress: Progress
-): Readonly<Record<string, string>> {
+export function colorLocks(progress: Progress): Locks {
   const locks: Record<string, string> = {};
   for (const { id } of COLONY_COLORS) {
     const unlock = COLOR_UNLOCKS[id];
@@ -69,37 +72,38 @@ export function colorLocks(
  * level it belongs to. A level's arena opens for every other level with a
  * gold medallion on it, at any difficulty.
  */
-export function arenaLocks(
-  progress: Progress
-): Readonly<Record<string, string>> {
+export function arenaLocks(progress: Progress): Locks {
   const locks: Record<string, string> = {};
   for (const level of LEVELS) {
-    const gold = BOT_DIFFICULTIES.some(
-      ({ id }) =>
-        medalRank(bestMedal(progress, level.id, id)) >= medalRank('gold')
-    );
-    if (!gold) {
+    if (!goldOn(progress, level.id)) {
       locks[level.id] = `${MEDAL_NAMES.gold} on ${levelTitle(level)}`;
     }
   }
   return locks;
 }
 
+/** The arena a choice draws in: the chosen one once earned, else none. */
+export function activeArena(
+  chosen: string | null,
+  locks: Locks
+): string | null {
+  return chosen !== null && !(chosen in locks) ? chosen : null;
+}
+
 /**
- * The cosmetics a change of the progress opened, named for the result
- * screen - "Green colonies", "Hourglass arena".
+ * The cosmetics a change of the locks opened, named for the result screen
+ * - "Green colonies", "Hourglass arena".
  */
-export function newCosmetics(before: Progress, after: Progress): string[] {
-  const colors = colorLocks(before);
-  const nowColors = colorLocks(after);
-  const arenas = arenaLocks(before);
-  const nowArenas = arenaLocks(after);
+export function newCosmetics(
+  before: { colors: Locks; arenas: Locks },
+  after: { colors: Locks; arenas: Locks }
+): string[] {
   return [
-    ...COLONY_COLORS.filter(({ id }) => id in colors && !(id in nowColors)).map(
-      ({ name }) => `${name} colonies`
-    ),
-    ...LEVELS.filter(({ id }) => id in arenas && !(id in nowArenas)).map(
-      (level) => `${levelTitle(level)} arena`
+    ...COLONY_COLORS.filter(
+      ({ id }) => id in before.colors && !(id in after.colors)
+    ).map(({ name }) => `${name} colonies`),
+    ...newlyUnlocked(before.arenas, after.arenas).map(
+      (id) => `${levelTitle(getLevel(id))} arena`
     ),
   ];
 }

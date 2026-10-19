@@ -47,3 +47,27 @@
   font-size: 0.8rem;
   color: #fff;
 }
+
+// The colours still to earn, written out under the swatches.
+.locked-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+  opacity: 0.8;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+}
+
+.swatch.small {
+  width: 0.7rem;
+  height: 0.7rem;
+}

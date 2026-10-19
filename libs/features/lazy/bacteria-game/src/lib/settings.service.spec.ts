@@ -317,6 +317,19 @@ describe('GameSettingsService', () => {
       expect(other.freePlay()).toBe(false);
     });
 
+    it('keeps an arena picked before the storage answered', () => {
+      const service = createWith({ arena: LEVELS[2].id });
+
+      service.setArena(LEVELS[5].id);
+      storage.flush();
+      storage.flush();
+
+      expect(service.arena()).toBe(LEVELS[5].id);
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        arena: LEVELS[5].id,
+      });
+    });
+
     it('stores the changes made after the settings were restored', () => {
       const service = createWith({ sound: false });
       storage.flush();

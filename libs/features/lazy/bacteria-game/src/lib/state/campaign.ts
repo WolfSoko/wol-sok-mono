@@ -1,6 +1,6 @@
 import { BOT_DIFFICULTIES } from './bot-controller';
 import { levelTitle, LEVELS } from './levels';
-import { MedalTier } from './medallions';
+import { medalRank, MedalTier } from './medallions';
 import { bestMedal, Progress } from './progress';
 
 /** Where the player stands on the campaign ladder, for the main menu. */
@@ -28,6 +28,13 @@ export interface CampaignSummary {
 export function levelWon(progress: Progress, levelId: string): boolean {
   return BOT_DIFFICULTIES.some(
     ({ id }) => bestMedal(progress, levelId, id) !== null
+  );
+}
+
+/** True once a level holds gold or better at any difficulty. */
+export function goldOn(progress: Progress, levelId: string): boolean {
+  return BOT_DIFFICULTIES.some(
+    ({ id }) => medalRank(bestMedal(progress, levelId, id)) >= medalRank('gold')
   );
 }
 

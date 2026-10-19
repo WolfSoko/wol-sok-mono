@@ -58,6 +58,8 @@ export class SettingsComponent {
   public readonly colorLocks = input<Readonly<Record<string, string>>>({});
   /** Why each level's arena is still locked, by level id. */
   public readonly arenaLocks = input<Readonly<Record<string, string>>>({});
+  /** The arena every level is drawn in, null for each its own. */
+  public readonly activeArena = input<string | null>(null);
 
   public readonly colorChange = output<ColorChange>();
   public readonly soundChange = output<boolean>();

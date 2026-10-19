@@ -1,4 +1,4 @@
-import { arenaLocks, colorLocks, newCosmetics } from './unlocks';
+import { activeArena, arenaLocks, colorLocks, newCosmetics } from './unlocks';
 import { LEVELS } from './levels';
 import { addMedal, addTotals, EMPTY_PROGRESS, Progress } from './progress';
 
@@ -44,18 +44,30 @@ describe('arenaLocks', () => {
   });
 });
 
+describe('activeArena', () => {
+  it('draws a chosen arena once it is earned', () => {
+    expect(activeArena('villi', {})).toBe('villi');
+    expect(activeArena('villi', { villi: 'Gold on Villi' })).toBeNull();
+    expect(activeArena(null, {})).toBeNull();
+  });
+});
+
 describe('newCosmetics', () => {
   it('names what a change of the progress opened', () => {
     const after: Progress = {
       ...addMedal(EMPTY_PROGRESS, 'hourglass', 'normal', 'gold'),
       achievements: { 'first-blood': '2026-10-19' },
     };
+    const locks = (progress: Progress) => ({
+      colors: colorLocks(progress),
+      arenas: arenaLocks(progress),
+    });
 
-    expect(newCosmetics(EMPTY_PROGRESS, after)).toEqual([
+    expect(newCosmetics(locks(EMPTY_PROGRESS), locks(after))).toEqual([
       'Green colonies',
       'Yellow colonies',
       'Hourglass arena',
     ]);
-    expect(newCosmetics(after, after)).toEqual([]);
+    expect(newCosmetics(locks(after), locks(after))).toEqual([]);
   });
 });

@@ -54,10 +54,14 @@ describe('ColonyColorsComponent', () => {
         'button[aria-label^="Green"]'
       );
 
-    expect(greenOf(0)?.disabled).toBe(true);
+    expect(greenOf(0)?.getAttribute('aria-disabled')).toBe('true');
     expect(greenOf(0)?.getAttribute('aria-label')).toBe(
       'Green, locked: Earn First Blood'
     );
-    expect(greenOf(1)?.disabled).toBe(false);
+    expect(greenOf(1)?.getAttribute('aria-disabled')).not.toBe('true');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('.locked-list')
+        ?.textContent
+    ).toContain('Green - Earn First Blood');
   });
 });

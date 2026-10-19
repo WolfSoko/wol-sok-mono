@@ -100,8 +100,9 @@ export class GameSettingsService {
   /** True while every level is open, instead of the campaign ladder. */
   public readonly freePlay = signal(false);
   /**
-   * The level whose arena every level is drawn in, null for each its own.
-   * Only an arena the player has earned is used (see the game component).
+   * The level whose arena every level is drawn in, null for each its own -
+   * as chosen. Only an arena the player has earned is drawn
+   * (CampaignService.activeArena).
    */
   public readonly arena = signal<string | null>(null);
   /** True while the game makes sound. */

@@ -26,7 +26,8 @@
       <mat-label>Arena</mat-label>
       <mat-select
         panelWidth=""
-        [value]="settings.arena() ?? ownArena"
+        [disabled]="locked()"
+        [value]="activeArena() ?? ownArena"
         (selectionChange)="pickArena($event.value)"
       >
         <mat-option [value]="ownArena">Each level its own</mat-option>
