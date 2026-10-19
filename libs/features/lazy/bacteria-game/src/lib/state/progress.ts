@@ -2,7 +2,7 @@ import { AchievementId, isAchievementId } from './achievement-ids';
 import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
 import { isObject } from './is-object';
 import { LEVELS } from './levels';
-import { betterMedal, MEDAL_TIERS, MedalTier } from './medallions';
+import { betterMedal, MatchRecord, MEDAL_TIERS, MedalTier } from './medallions';
 
 /** What a player has done over all their matches. */
 export interface LifetimeTotals {
@@ -99,6 +99,16 @@ export function addMedal(
   };
 }
 
+/** What a match against the computer adds to the lifetime totals. */
+export function totalsOf(record: MatchRecord): Partial<LifetimeTotals> {
+  return {
+    matches: 1,
+    wins: record.won ? 1 : 0,
+    captured: record.captured,
+    enemyCrushed: record.enemyCrushed,
+  };
+}
+
 /** The progress with a match's numbers added to the lifetime totals. */
 export function addTotals(
   progress: Progress,
@@ -118,9 +128,9 @@ export function addTotals(
  * devices converges whatever order it is merged in. Without a gain it is
  * the progress given.
  *
- * A total takes the higher of the two, not their sum, so a device that
- * catches up on another's matches counts them once. Matches played on two
- * devices at the same time, offline, count only on the one that played more.
+ * A total takes the higher of the two - a match's numbers are added to the
+ * stored totals when it is written (ProgressService), so the higher one is
+ * the one that counted more of the matches.
  */
 export function mergeProgress(progress: Progress, other: Progress): Progress {
   let merged = progress;
@@ -132,10 +142,13 @@ export function mergeProgress(progress: Progress, other: Progress): Progress {
       }
     }
   }
-  if (TOTAL_KEYS.some((key) => other.totals[key] > merged.totals[key])) {
+  const higher = TOTAL_KEYS.filter(
+    (key) => other.totals[key] > merged.totals[key]
+  );
+  if (higher.length > 0) {
     const totals = { ...merged.totals };
-    for (const key of TOTAL_KEYS) {
-      totals[key] = Math.max(totals[key], other.totals[key]);
+    for (const key of higher) {
+      totals[key] = other.totals[key];
     }
     merged = { ...merged, totals };
   }
@@ -206,13 +219,20 @@ function parseTotals(value: unknown): LifetimeTotals {
   return totals;
 }
 
+/** A day as an achievement stores it, "2026-10-19". */
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
 function parseAchievements(value: unknown): Progress['achievements'] {
   const achievements: Progress['achievements'] = {};
   if (!isObject(value)) {
     return achievements;
   }
   for (const [id, date] of Object.entries(value)) {
-    if (isAchievementId(id) && typeof date === 'string') {
+    if (
+      isAchievementId(id) &&
+      typeof date === 'string' &&
+      ISO_DATE.test(date)
+    ) {
       achievements[id] = date;
     }
   }

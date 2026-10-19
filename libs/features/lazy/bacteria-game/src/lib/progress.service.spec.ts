@@ -18,7 +18,7 @@ const GOLD_WIN: MatchRecord = {
   peakCount: 1000,
   lowestSizeRatio: 1,
   captured: 0,
-  enemyLost: 0,
+  enemyCrushed: 0,
   peakShare: 0,
 };
 
@@ -38,10 +38,12 @@ describe('ProgressService', () => {
 
   it('awards a medallion and remembers it across visits', () => {
     expect(create().recordMatch(GOLD_WIN)).toEqual({
-      record: GOLD_WIN,
-      medal: 'gold',
-      previousBest: null,
-      hint: 'Platinum needs a gold win without a boost.',
+      award: {
+        record: GOLD_WIN,
+        medal: 'gold',
+        previousBest: null,
+        hint: 'Platinum needs a gold win without a boost.',
+      },
       achievements: ['first-blood', 'blitz', 'clean-sweep'],
     });
 
@@ -53,7 +55,7 @@ describe('ProgressService', () => {
   it('counts every match and what it captured and crushed', () => {
     const progress = create();
 
-    progress.recordMatch({ ...GOLD_WIN, captured: 300, enemyLost: 340 });
+    progress.recordMatch({ ...GOLD_WIN, captured: 300, enemyCrushed: 40 });
     progress.recordMatch({ ...GOLD_WIN, won: false, captured: 50 });
 
     expect(progress.totals()).toEqual({
@@ -97,7 +99,7 @@ describe('ProgressService', () => {
   it('keeps the better medallion and names it in the next award', () => {
     const progress = create();
     progress.recordMatch(GOLD_WIN);
-    const award = progress.recordMatch({
+    const { award } = progress.recordMatch({
       ...GOLD_WIN,
       durationSec: LIMITS.silverSec + 1,
     });
@@ -193,7 +195,7 @@ describe('ProgressService', () => {
         [PROGRESS_STORAGE_KEY]: { medals: { corridors: { easy: 'silver' } } },
       });
 
-      expect(progress.recordMatch(GOLD_WIN).medal).toBe('gold');
+      expect(progress.recordMatch(GOLD_WIN).award.medal).toBe('gold');
       storage.flush();
 
       expect(progress.medal('hourglass', 'hard')).toBe('gold');
@@ -202,6 +204,41 @@ describe('ProgressService', () => {
         medals: { corridors: { easy: 'silver' }, hourglass: { hard: 'gold' } },
         totals: { matches: 1, wins: 1 },
       });
+    });
+
+    it('adds a match to the stored totals, whenever they arrive', () => {
+      const progress = createWith({
+        [PROGRESS_STORAGE_KEY]: {
+          medals: {},
+          totals: { matches: 50, wins: 30 },
+        },
+      });
+
+      progress.recordMatch(GOLD_WIN);
+      storage.flush();
+
+      expect(progress.totals()).toMatchObject({ matches: 51, wins: 31 });
+      expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
+        totals: { matches: 51, wins: 31 },
+      });
+    });
+
+    it('earns what the stored progress earns on its own, as it loads', () => {
+      const progress = createWith({
+        [PROGRESS_STORAGE_KEY]: { medals: { villi: { easy: 'platinum' } } },
+      });
+
+      storage.flush();
+      storage.flush();
+
+      expect(Object.keys(progress.achievements())).toEqual([
+        'first-blood',
+        'flawless',
+      ]);
+      expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
+        achievements: { 'first-blood': expect.any(String) },
+      });
+      expect(progress.recordCouchMatch()).toEqual([]);
     });
 
     it('keeps the better medallion when another device stores a worse one', () => {

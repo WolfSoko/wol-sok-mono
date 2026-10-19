@@ -1,13 +1,15 @@
-import { AchievementId } from './achievement-ids';
+import { ACHIEVEMENT_IDS, AchievementId } from './achievement-ids';
 import { BOT_DIFFICULTIES } from './bot-controller';
+import { levelWon } from './campaign';
 import { LEVELS } from './levels';
-import { MatchRecord } from './medallions';
-import { bestMedal, Progress } from './progress';
+import { MatchRecord, medalRank } from './medallions';
+import { bestMedal, medalTally, Progress } from './progress';
 
 /**
  * A lifetime goal: a short name, a one-line condition, and the test of it
- * against the progress after a match - and the match itself, null for one
- * between two players.
+ * against the progress after a match - and the match itself, null when
+ * there is none to judge: a match between two players, or the stored
+ * progress as it loads.
  */
 export interface Achievement {
   id: AchievementId;
@@ -18,13 +20,13 @@ export interface Achievement {
 
 /** Wins this short earn Blitz, in seconds of match time. */
 const BLITZ_SEC = 45;
-/** Wins this long earn Siege. */
+/** Wins this long earn Siege - whole seconds, as the match clock counts. */
 const SIEGE_SEC = 5 * 60;
 /** Comeback asks to have fallen below this share of the computer's size. */
 const COMEBACK_RATIO = 0.25;
 /** Clean Sweep asks to lose fewer than this share of the peak colony. */
 const CLEAN_SWEEP_LOSS_SHARE = 0.1;
-/** Full Dish asks for a colony this close to the level's capacity. */
+/** Full Dish asks for a colony this close to its capacity. */
 const FULL_DISH_SHARE = 0.95;
 const GATEKEEPER_CRUSHED = 500;
 const CONVERTER_CAPTURED = 10_000;
@@ -35,47 +37,36 @@ const SCHOLAR_LEVELS = LEVELS.slice(0, 4);
 const won = (match: MatchRecord | null): match is MatchRecord =>
   match?.won === true;
 
-const holds = (
-  progress: Progress,
-  levelId: string,
-  accept: (tier: string | null) => boolean
-): boolean =>
-  BOT_DIFFICULTIES.some(({ id }) => accept(bestMedal(progress, levelId, id)));
-
-/** Every achievement, in the order of the ids in achievement-ids.ts. */
-export const ACHIEVEMENTS: readonly Achievement[] = [
-  {
-    id: 'first-blood',
+const RULES: Record<AchievementId, Omit<Achievement, 'id'>> = {
+  'first-blood': {
     name: 'First Blood',
     condition: 'Win a match against the computer',
-    earned: (progress) => progress.totals.wins > 0,
+    // A medallion is a win too - one won before the totals were counted.
+    earned: (progress) =>
+      progress.totals.wins > 0 ||
+      LEVELS.some(({ id }) => levelWon(progress, id)),
   },
-  {
-    id: 'pacifist',
+  pacifist: {
     name: 'Pacifist',
     condition: 'Win without firing a boost',
     earned: (_, match) => won(match) && match.boostsFired === 0,
   },
-  {
-    id: 'blitz',
+  blitz: {
     name: 'Blitz',
     condition: `Win in under ${BLITZ_SEC} seconds`,
     earned: (_, match) => won(match) && match.durationSec < BLITZ_SEC,
   },
-  {
-    id: 'comeback',
+  comeback: {
     name: 'Comeback',
     condition: 'Win after falling below a quarter of the enemy’s size',
     earned: (_, match) => won(match) && match.lowestSizeRatio < COMEBACK_RATIO,
   },
-  {
-    id: 'siege',
+  siege: {
     name: 'Siege',
-    condition: 'Win a match longer than 5 minutes',
-    earned: (_, match) => won(match) && match.durationSec > SIEGE_SEC,
+    condition: 'Win a match of 5 minutes or more',
+    earned: (_, match) => won(match) && match.durationSec >= SIEGE_SEC,
   },
-  {
-    id: 'clean-sweep',
+  'clean-sweep': {
     name: 'Clean Sweep',
     condition: 'Win losing under 10 % of your colony at its peak',
     earned: (_, match) =>
@@ -83,69 +74,65 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
       match.peakCount > 0 &&
       match.lost < CLEAN_SWEEP_LOSS_SHARE * match.peakCount,
   },
-  {
-    id: 'full-dish',
+  'full-dish': {
     name: 'Full Dish',
-    condition: 'Grow your colony to the level’s capacity',
+    condition: 'Grow your colony as big as the dish lets it',
     earned: (_, match) => match !== null && match.peakShare >= FULL_DISH_SHARE,
   },
-  {
-    id: 'gatekeeper',
+  gatekeeper: {
     name: 'Gatekeeper',
     condition: `Let walls crush ${GATEKEEPER_CRUSHED} enemy bacteria`,
     earned: (progress) => progress.totals.enemyCrushed >= GATEKEEPER_CRUSHED,
   },
-  {
-    id: 'converter',
+  converter: {
     name: 'Converter',
     condition: 'Capture 10,000 enemy bacteria',
     earned: (progress) => progress.totals.captured >= CONVERTER_CAPTURED,
   },
-  {
-    id: 'flawless',
+  flawless: {
     name: 'Flawless',
     condition: 'Earn a platinum medallion',
-    earned: (progress) =>
-      LEVELS.some(({ id }) =>
-        holds(progress, id, (tier) => tier === 'platinum')
-      ),
+    earned: (progress) => medalTally(progress.medals).platinum > 0,
   },
-  {
-    id: 'petri-scholar',
+  'petri-scholar': {
     name: 'Petri Scholar',
     condition: 'Gold on levels 1 to 4',
     earned: (progress) =>
       SCHOLAR_LEVELS.every(({ id }) =>
-        holds(progress, id, (tier) => tier === 'gold' || tier === 'platinum')
+        BOT_DIFFICULTIES.some(
+          (difficulty) =>
+            medalRank(bestMedal(progress, id, difficulty.id)) >=
+            medalRank('gold')
+        )
       ),
   },
-  {
-    id: 'hard-boiled',
+  'hard-boiled': {
     name: 'Hard Boiled',
     condition: 'Win every level on Hard',
     earned: (progress) =>
       LEVELS.every(({ id }) => bestMedal(progress, id, 'hard') !== null),
   },
-  {
-    id: 'couch-war',
+  'couch-war': {
     name: 'Couch War',
     condition: `Play ${COUCH_WAR_MATCHES} matches between two players`,
     earned: (progress) => progress.totals.couchMatches >= COUCH_WAR_MATCHES,
   },
-];
+};
+
+/** Every achievement, in the order of {@link ACHIEVEMENT_IDS}. */
+export const ACHIEVEMENTS: readonly Achievement[] = ACHIEVEMENT_IDS.map(
+  (id) => ({ id, ...RULES[id] })
+);
 
 /** The achievement with that id. */
 export function getAchievement(id: AchievementId): Achievement {
-  const achievement = ACHIEVEMENTS.find((a) => a.id === id);
-  if (achievement == null) {
-    throw new Error(`No achievement ${id}`);
-  }
-  return achievement;
+  return { id, ...RULES[id] };
 }
 
 /**
  * The progress with every achievement the match earned marked on the day
- * given, and those achievements - none twice.
+ * given, and those achievements - none twice. Without one, the progress
+ * itself is checked.
  */
 export function earnAchievements(
   progress: Progress,

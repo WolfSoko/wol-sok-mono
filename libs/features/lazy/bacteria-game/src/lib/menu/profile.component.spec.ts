@@ -69,7 +69,7 @@ describe('ProfileComponent', () => {
     expect(blitz?.classList.contains('earned')).toBe(true);
     expect(blitz?.textContent).toContain('Earned 19 Oct 2026');
     const siege = items.find((li) => li.textContent?.includes('Siege'));
-    expect(siege?.textContent).toContain('longer than 5 minutes');
+    expect(siege?.textContent).toContain('5 minutes or more');
     expect(host.querySelector('.achievements h3')?.textContent).toContain(
       '1 of 13'
     );

@@ -8,6 +8,7 @@ import {
   NO_TOTALS,
   parseProgress,
   Progress,
+  totalsOf,
 } from './progress';
 
 describe('addMedal', () => {
@@ -105,6 +106,26 @@ describe('addTotals', () => {
   });
 });
 
+describe('totalsOf', () => {
+  it('counts a match against the computer', () => {
+    expect(
+      totalsOf({
+        levelId: 'villi',
+        difficulty: 'hard',
+        won: true,
+        durationSec: 60,
+        boostsFired: 1,
+        lost: 10,
+        peakCount: 100,
+        lowestSizeRatio: 1,
+        captured: 70,
+        enemyCrushed: 12,
+        peakShare: 0.3,
+      })
+    ).toEqual({ matches: 1, wins: 1, captured: 70, enemyCrushed: 12 });
+  });
+});
+
 describe('parseProgress', () => {
   it('reads what it wrote', () => {
     const progress: Progress = {
@@ -132,7 +153,13 @@ describe('parseProgress', () => {
           broken: 'yes',
         },
         totals: { matches: 4.7, wins: -2, captured: 'lots', couchMatches: 3 },
-        achievements: { blitz: '2026-10-19', moonwalk: '2026-10-19', siege: 7 },
+        achievements: {
+          blitz: '2026-10-19',
+          moonwalk: '2026-10-19',
+          siege: 7,
+          pacifist: 'oops',
+          comeback: '',
+        },
       })
     ).toEqual({
       medals: { corridors: { normal: 'gold' } },

@@ -89,7 +89,7 @@ export class ProfileComponent {
   );
 
   protected readonly earnedCount = computed(
-    () => this.achievementList().filter((a) => a.earnedOn !== null).length
+    () => Object.keys(this.achievements()).length
   );
 
   protected readonly achievementCount = ACHIEVEMENTS.length;

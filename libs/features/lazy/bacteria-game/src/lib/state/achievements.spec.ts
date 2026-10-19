@@ -15,7 +15,7 @@ const WIN: MatchRecord = {
   peakCount: 1000,
   lowestSizeRatio: 0.8,
   captured: 400,
-  enemyLost: 450,
+  enemyCrushed: 50,
   peakShare: 0.5,
 };
 
@@ -42,7 +42,7 @@ describe('achievements', () => {
     ['pacifist', { boostsFired: 0 }],
     ['blitz', { durationSec: 44 }],
     ['comeback', { lowestSizeRatio: 0.2 }],
-    ['siege', { durationSec: 301 }],
+    ['siege', { durationSec: 300 }],
     ['clean-sweep', { lost: 99 }],
     ['full-dish', { peakShare: 0.96 }],
   ] as const)('earns %s for a match that does it', (id, changes) => {
@@ -82,7 +82,11 @@ describe('achievements', () => {
     for (const level of LEVELS.slice(0, 4)) {
       progress = addMedal(progress, level.id, 'easy', 'gold');
     }
-    expect(earnedBy(null, progress)).toEqual(['flawless', 'petri-scholar']);
+    expect(earnedBy(null, progress)).toEqual([
+      'first-blood',
+      'flawless',
+      'petri-scholar',
+    ]);
 
     for (const level of LEVELS) {
       progress = addMedal(progress, level.id, 'hard', 'bronze');

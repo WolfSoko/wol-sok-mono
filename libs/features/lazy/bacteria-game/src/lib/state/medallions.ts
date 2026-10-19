@@ -1,4 +1,3 @@
-import { AchievementId } from './achievement-ids';
 import { BotDifficulty } from './bot-controller';
 import { Player } from './player.model';
 
@@ -61,8 +60,8 @@ export interface MatchRecord {
   lowestSizeRatio: number;
   /** Enemy bacteria the human's colony captured. */
   captured: number;
-  /** Bacteria the computer's colony lost - captured or crushed. */
-  enemyLost: number;
+  /** Enemy bacteria the walls crushed - what the computer lost that nobody captured. */
+  enemyCrushed: number;
   /** The colony at its peak, as a share of the level's colony capacity. */
   peakShare: number;
 }
@@ -76,8 +75,6 @@ export interface MedalAward {
   previousBest: MedalTier | null;
   /** What the next medallion needs, null after a platinum. */
   hint: string | null;
-  /** The achievements the match earned. */
-  achievements: readonly AchievementId[];
 }
 
 /**
@@ -109,7 +106,7 @@ export function matchRecord(
     peakCount: human.peakCount,
     lowestSizeRatio: human.lowestSizeRatio,
     captured: human.captured,
-    enemyLost: bot?.lost ?? 0,
+    enemyCrushed: Math.max(0, (bot?.lost ?? 0) - human.captured),
     peakShare: capacity > 0 ? human.peakCount / capacity : 0,
   };
 }

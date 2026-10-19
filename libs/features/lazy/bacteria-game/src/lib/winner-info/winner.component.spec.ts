@@ -137,7 +137,7 @@ describe('WinnerComponent', () => {
       peakCount: 500,
       lowestSizeRatio: 1,
       captured: 0,
-      enemyLost: 0,
+      enemyCrushed: 0,
       peakShare: 0,
     };
 

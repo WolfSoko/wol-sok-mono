@@ -22,7 +22,7 @@ const PLATINUM_RUN: MatchRecord = {
   peakCount: 1000,
   lowestSizeRatio: 0.9,
   captured: 800,
-  enemyLost: 900,
+  enemyCrushed: 100,
   peakShare: 0.5,
 };
 
@@ -139,7 +139,7 @@ describe('matchRecord', () => {
       peakCount: 300,
       lowestSizeRatio: 0.4,
       captured: 250,
-      enemyLost: 270,
+      enemyCrushed: 20,
       peakShare: 0.5,
     });
   });

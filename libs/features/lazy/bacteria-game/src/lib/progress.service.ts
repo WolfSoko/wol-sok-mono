@@ -17,9 +17,12 @@ import {
   addTotals,
   bestMedal,
   EMPTY_PROGRESS,
+  LifetimeTotals,
   mergeProgress,
+  NO_TOTALS,
   parseProgress,
   Progress,
+  totalsOf,
 } from './state/progress';
 import { GameStorage } from './storage/game-storage';
 
@@ -30,9 +33,11 @@ export const PROGRESS_STORAGE_KEY = 'bacteria-game.progress';
  * and difficulty - in the game storage under a key of its own, so resetting
  * the settings keeps the progress and the other way round.
  *
- * The medallions won here and the stored ones are merged, never replaced:
- * whatever another tab or device stores, and whenever the storage answers,
- * no medallion is lost.
+ * Also counts what every match did and earns the achievements. Medallions
+ * and achievements won here and the stored ones are merged, never
+ * replaced, and a match's numbers are added to the stored totals: whatever
+ * another tab or device stores, and whenever the storage answers, nothing
+ * is lost.
  */
 @Injectable({ providedIn: 'root' })
 export class ProgressService {
@@ -46,8 +51,19 @@ export class ProgressService {
       .watch(PROGRESS_STORAGE_KEY)
       .pipe(map(parseProgress), takeUntilDestroyed())
       .subscribe((stored) => {
-        this.progress.update((progress) => mergeProgress(progress, stored));
+        // What the stored progress earns on its own - a medallion won before
+        // the achievement existed, say - is earned now, quietly, rather
+        // than credited to whichever match comes next.
+        const { progress, earned } = earnAchievements(
+          mergeProgress(this.progress(), stored),
+          null,
+          today()
+        );
+        this.progress.set(progress);
         this.loaded.set(true);
+        if (earned.length > 0) {
+          this.store(progress, {});
+        }
       });
   }
 
@@ -74,25 +90,23 @@ export class ProgressService {
   /**
    * Judges a match against the computer that has ended, remembers its
    * medallion, its numbers and the achievements it earned, and returns its
-   * award.
+   * award with those achievements.
    */
-  public recordMatch(record: MatchRecord): MedalAward {
+  public recordMatch(record: MatchRecord): {
+    award: MedalAward;
+    achievements: readonly AchievementId[];
+  } {
     const previousBest = this.medal(record.levelId, record.difficulty);
     const { medal, hint } = judgeMatch(getLevel(record.levelId).medal, record);
-    let progress =
-      medal === null
-        ? this.progress()
-        : addMedal(this.progress(), record.levelId, record.difficulty, medal);
-    progress = addTotals(progress, {
-      matches: 1,
-      wins: record.won ? 1 : 0,
-      captured: record.captured,
-      // What the computer lost that nobody captured, the walls crushed.
-      enemyCrushed: Math.max(0, record.enemyLost - record.captured),
-    });
-    const earned = earnAchievements(progress, record, today());
-    this.save(earned.progress);
-    return { record, medal, previousBest, hint, achievements: earned.earned };
+    const achievements = this.record(
+      (progress) =>
+        medal === null
+          ? progress
+          : addMedal(progress, record.levelId, record.difficulty, medal),
+      totalsOf(record),
+      record
+    );
+    return { award: { record, medal, previousBest, hint }, achievements };
   }
 
   /**
@@ -100,24 +114,45 @@ export class ProgressService {
    * achievements it earned.
    */
   public recordCouchMatch(): readonly AchievementId[] {
-    const earned = earnAchievements(
-      addTotals(this.progress(), { couchMatches: 1 }),
-      null,
-      today()
-    );
-    this.save(earned.progress);
-    return earned.earned;
+    return this.record((progress) => progress, { couchMatches: 1 }, null);
   }
 
-  private save(progress: Progress): void {
+  /**
+   * Applies a match: its medallion, its numbers and the achievements they
+   * earn - here, and in the storage.
+   */
+  private record(
+    gain: (progress: Progress) => Progress,
+    match: Partial<LifetimeTotals>,
+    record: MatchRecord | null
+  ): readonly AchievementId[] {
+    const { progress, earned } = earnAchievements(
+      addTotals(gain(this.progress()), match),
+      record,
+      today()
+    );
     this.progress.set(progress);
+    this.store(progress, match);
+    return earned;
+  }
+
+  /**
+   * Writes the progress: medallions and achievements merge with the stored
+   * ones, the match's numbers are added to the stored totals - not to the
+   * ones here, which miss what the storage has not told yet. So no match is
+   * lost, whenever the storage answers and whoever else writes.
+   */
+  private store(progress: Progress, match: Partial<LifetimeTotals>): void {
+    const gains = { ...progress, totals: NO_TOTALS };
     this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
-      mergeProgress(parseProgress(stored), progress)
+      mergeProgress(addTotals(parseProgress(stored), match), gains)
     );
   }
 }
 
-/** Today as an ISO date, "2026-10-19" - the day an achievement is earned. */
+/** Today as an ISO date in the player's time zone, "2026-10-19". */
 function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const two = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
 }

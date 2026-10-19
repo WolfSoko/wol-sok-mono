@@ -237,7 +237,7 @@ describe('GameStateService', () => {
 
       expect(query.getValue().award?.record).toEqual(
         expect.objectContaining({
-          enemyLost: 300,
+          enemyCrushed: 300,
           peakShare: expect.any(Number),
         })
       );

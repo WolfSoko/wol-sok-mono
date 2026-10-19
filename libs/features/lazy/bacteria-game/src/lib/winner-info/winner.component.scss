@@ -86,13 +86,13 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 0.9rem 0.5rem 0.5rem;
-  border: 1px solid rgb(233 185 73 / 50%);
+  border: 1px solid color-mix(in srgb, var(--bw-gold, #e9b949) 50%, transparent);
   border-radius: 0.75rem;
-  background: rgb(233 185 73 / 10%);
+  background: color-mix(in srgb, var(--bw-gold, #e9b949) 10%, transparent);
 }
 
 .badge {
-  color: #e9b949;
+  color: var(--bw-gold, #e9b949);
 }
 
 .achievement-text {
