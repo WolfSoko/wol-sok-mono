@@ -1,5 +1,5 @@
-import { Injectable, Injector, inject, signal } from '@angular/core';
-import { distinctUntilChanged, filter, map, pairwise, take } from 'rxjs';
+import { Injectable, inject, signal, untracked } from '@angular/core';
+import { filter, pairwise, take } from 'rxjs';
 import {
   DEFAULT_SCREEN_RESOLUTION,
   DEFAULT_SIM_RESOLUTION,
@@ -17,7 +17,6 @@ import {
   GameStateStore,
   isGameMode,
   isMatchOn,
-  stateChanges,
 } from './state/game.states';
 import { isLevelId } from './state/levels';
 import {
@@ -127,9 +126,9 @@ export class GameSettingsService {
 
   constructor() {
     // Synchronous, so a change is told apart from a restored setup.
-    const state$ = stateChanges(this.store, inject(Injector));
-    state$
-      .pipe(map(matchSetup), distinctUntilChanged(sameMatchSetup), pairwise())
+    this.store
+      .select$(() => this.currentMatchSetup(), sameMatchSetup)
+      .pipe(pairwise())
       .subscribe(([before, after]) =>
         this.changed(
           ...MATCH_SETUP_KEYS.filter(
@@ -145,12 +144,9 @@ export class GameSettingsService {
         this.restored = true;
         this.persist();
       });
-    state$
-      .pipe(
-        map((state) => state.currentState),
-        distinctUntilChanged(),
-        filter((state) => state === GameState.START)
-      )
+    this.store
+      .select$(() => this.store.currentState())
+      .pipe(filter((state) => state === GameState.START))
       .subscribe(() => this.restorePendingSetup());
   }
 
@@ -313,12 +309,26 @@ export class GameSettingsService {
     this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }
 
+  /** The match setup as it stands, without tracking it. */
+  private currentMatchSetup(): MatchSetup {
+    const { mode, difficulty, levelId, colors, seriesLength, headStart } =
+      this.store;
+    return untracked(() => ({
+      mode: mode(),
+      difficulty: difficulty(),
+      levelId: levelId(),
+      colors: colors(),
+      seriesLength: seriesLength(),
+      headStart: headStart(),
+    }));
+  }
+
   /**
    * The match setup to store: the current one, but while a stored setup
    * waits for the menu, its values for what the player has not changed.
    */
   private matchSetupToStore(): MatchSetup {
-    const setup = matchSetup(this.store.snapshot());
+    const setup = this.currentMatchSetup();
     const pending = this.pendingSetup;
     if (pending === null) {
       return setup;
@@ -328,11 +338,6 @@ export class GameSettingsService {
     ).map((key) => [key, pending[key]]);
     return { ...setup, ...Object.fromEntries(kept) };
   }
-}
-
-function matchSetup(state: MatchSetup): MatchSetup {
-  const { mode, difficulty, levelId, colors, seriesLength, headStart } = state;
-  return { mode, difficulty, levelId, colors, seriesLength, headStart };
 }
 
 function sameMatchSetup(a: MatchSetup, b: MatchSetup): boolean {

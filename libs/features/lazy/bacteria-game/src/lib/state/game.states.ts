@@ -1,16 +1,16 @@
-import { computed, Injector, untracked } from '@angular/core';
+import { computed, untracked } from '@angular/core';
 import {
   getState,
   patchState,
   PartialStateUpdater,
   signalStore,
-  StateSource,
   watchState,
   withComputed,
   withMethods,
+  withProps,
   withState,
 } from '@ngrx/signals';
-import { Observable } from 'rxjs';
+import { distinctUntilChanged, Observable } from 'rxjs';
 import { BotDifficulty, DEFAULT_DIFFICULTY } from './bot-controller';
 import { DEFAULT_COLORS } from './colony-colors';
 import { getLevel, LEVELS } from './levels';
@@ -109,22 +109,51 @@ export const GameStateStore = signalStore(
     level: computed(() => getLevel(levelId())),
     /** True while a match is on, paused or not. */
     isMatchOn: computed(() => isMatchOn(currentState())),
-    /** True while the match is running - not paused, not over. */
-    isRunning: computed(() => currentState() === GameState.RUNNING),
     /** True while the match is paused. */
     isPaused: computed(() => currentState() === GameState.PAUSED),
     /** Whole seconds of the match played, as the match clock shows them. */
     gameSeconds: computed(() => Math.floor(timePassed() / 1000)),
   })),
+  withProps((store) => {
+    const listeners = new Set<() => void>();
+    // One watcher for the lifetime of the store: each watchState call adds a
+    // destroy hook to the injector, so it must not be one per subscription.
+    watchState(store, () => {
+      // A copy: one subscribed during the loop has had its value already.
+      for (const listener of Array.from(listeners)) {
+        // Skips one that a listener before it unsubscribed.
+        if (listeners.has(listener)) {
+          listener();
+        }
+      }
+    });
+    return { _listeners: listeners };
+  }),
   withMethods((store) => ({
-    /** Changes the state - several updaters land as one change. */
+    /** Changes the state. */
     update(
-      ...updaters: (
-        | Partial<GameStateState>
-        | PartialStateUpdater<GameStateState>
-      )[]
+      change: Partial<GameStateState> | PartialStateUpdater<GameStateState>
     ): void {
-      patchState(store, ...updaters);
+      patchState(store, change);
+    },
+    /**
+     * What `read` returns from the subscription on: now, then after every
+     * change in which it differs - synchronously, inside the update that
+     * made it, as the Akita `select` did. Unlike `toObservable`, nothing
+     * waits for change detection, so the game loop stops inside the update
+     * that ends the match. Each subscriber reads the state afresh, so one
+     * that changes the state in turn never leaves another with an older one.
+     */
+    select$<T>(
+      read: () => T,
+      equal: (a: T, b: T) => boolean = Object.is
+    ): Observable<T> {
+      return new Observable<T>((subscriber) => {
+        const emit = () => subscriber.next(untracked(read));
+        emit();
+        store._listeners.add(emit);
+        return () => store._listeners.delete(emit);
+      }).pipe(distinctUntilChanged(equal));
     },
     /** The state as it stands, without tracking it in a reactive context. */
     snapshot(): GameStateState {
@@ -133,21 +162,3 @@ export const GameStateStore = signalStore(
   }))
 );
 export type GameStateStore = InstanceType<typeof GameStateStore>;
-
-/**
- * Every state of a store from the subscription on - the current one first,
- * then each change synchronously, inside the update that made it. Unlike
- * `toObservable`, nothing waits for change detection, so a subscriber sees
- * every state on the way, as the game loop and the settings need.
- */
-export function stateChanges<State extends object>(
-  store: StateSource<State>,
-  injector: Injector
-): Observable<State> {
-  return new Observable<State>((subscriber) => {
-    const watcher = watchState(store, (state) => subscriber.next(state), {
-      injector,
-    });
-    return () => watcher.destroy();
-  });
-}

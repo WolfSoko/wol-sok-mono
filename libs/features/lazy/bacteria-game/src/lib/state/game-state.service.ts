@@ -1,9 +1,8 @@
-import { Injectable, Injector, inject, untracked } from '@angular/core';
+import { Injectable, inject, untracked } from '@angular/core';
 import { MeasureFps } from '@wolsok/utils-measure-fps';
 import {
   animationFrames,
   defer,
-  distinctUntilChanged,
   filter,
   map,
   Observable,
@@ -16,14 +15,18 @@ import { scaleOf } from './arena-size';
 import { FramePacer } from './frame-pacer';
 import { GameFrame, TICK_MS, TickClock, ticksToMs } from './fixed-tick';
 import { BotDifficulty } from './bot-controller';
-import { getColonyColor, pickColor, validColorPair } from './colony-colors';
+import {
+  getColonyColor,
+  pickColor,
+  sameColors,
+  validColorPair,
+} from './colony-colors';
 import {
   GameMode,
   GameState,
   GameStateState,
   GameStateStore,
   isMatchOn,
-  stateChanges,
 } from './game.states';
 import { getLevel, levelBalance } from './levels';
 import { colonyCapacity } from './game-balance';
@@ -55,7 +58,6 @@ const MAX_FRAME_MS = 3 * TICK_MS;
 
 @Injectable({ providedIn: 'root' })
 export class GameStateService {
-  private injector = inject(Injector);
   private gameStateStore = inject(GameStateStore);
   private playerStore = inject(PlayerStore);
   private playerService = inject(PlayerService);
@@ -111,7 +113,7 @@ export class GameStateService {
   }
 
   private isRunning(): boolean {
-    return untracked(this.gameStateStore.isRunning);
+    return untracked(this.gameStateStore.currentState) === GameState.RUNNING;
   }
 
   init(width: number, height: number) {
@@ -124,9 +126,8 @@ export class GameStateService {
     });
     // subscribe update time passed when game running
     // Synchronous, so the loop stops inside the update that ends the match.
-    const currentState$ = stateChanges(this.gameStateStore, this.injector).pipe(
-      map((state) => state.currentState),
-      distinctUntilChanged()
+    const currentState$ = this.gameStateStore.select$(() =>
+      this.gameStateStore.currentState()
     );
     const running$ = currentState$.pipe(
       filter((value) => value === GameState.RUNNING)
@@ -271,6 +272,10 @@ export class GameStateService {
    */
   private updateSetup(setup: Partial<MatchSetup>): void {
     const current = this.gameStateStore.snapshot();
+    // The same pair again is no change - readers would only redo their work.
+    if (setup.colors && sameColors(setup.colors, current.colors)) {
+      setup = { ...setup, colors: current.colors };
+    }
     // A series is played with one setup: changing it ends the one under way.
     const changed = SERIES_SETUP_KEYS.some(
       (key) =>

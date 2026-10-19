@@ -11,7 +11,7 @@ Angular + Nx monorepo. Read this before touching anything.
 - **Testing**: Jest (most unit tests), Vitest (Vite projects), Playwright (E2E)
 - **Lint / Format**: oxlint (`.oxlintrc.json`, targets inferred by `@nx/oxlint`), angular-eslint for templates only (`eslint.config.mjs`, target `lint-templates`) and oxfmt (`.oxfmtrc.json`, driven by `nx format`)
 - **UI**: Angular Material + CDK everywhere (no custom primitives if AM covers it)
-- **State**: Angular Signals (local/sync), RxJS (async), Akita/Elf (app-wide stores)
+- **State**: Angular Signals (local/sync), RxJS (async), NgRx Signal Store (bacteria game), Akita/Elf (older app-wide stores)
 - **Backend**: Firebase (Hosting, Auth, DB), AWS CDK (S3/CloudFront infra)
 - **Package manager**: npm (use `npm ci`, never yarn/pnpm)
 

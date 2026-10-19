@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, untracked } from '@angular/core';
 import { Nutrient } from './bacteria-simulation';
 import { Simulation, SimulationFactory } from './simulation';
 import { GameBalance } from './game-balance';
@@ -121,7 +121,7 @@ export class PlayerService {
    * the bots and the war.
    */
   public tick(width: number, height: number): void {
-    this.steerHumans(this.gameStateStore.snapshot().keysPressed);
+    this.steerHumans(untracked(this.gameStateStore.keysPressed));
     this.engine.tick(width, height);
     this.mirror();
   }
@@ -141,8 +141,12 @@ export class PlayerService {
 
   /** See {@link MatchEngine.crosshairAt}. */
   public crosshairAt(player: Player, alpha: number): Point {
-    const { width, height } = this.gameStateStore.snapshot();
-    return this.engine.crosshairAt(player, alpha, width, height);
+    return this.engine.crosshairAt(
+      player,
+      alpha,
+      untracked(this.gameStateStore.width),
+      untracked(this.gameStateStore.height)
+    );
   }
 
   /** How the match ended, null while it is still on. */

@@ -58,12 +58,7 @@ import { HelpComponent } from './menu/help.component';
 import { ProfileComponent } from './menu/profile.component';
 import { SettingsComponent } from './menu/settings.component';
 import { SwarmComponent } from './menu/swarm.component';
-import {
-  getColonyColor,
-  pickColor,
-  readableOn,
-  sameColors,
-} from './state/colony-colors';
+import { getColonyColor, pickColor, readableOn } from './state/colony-colors';
 import { BotDifficulty, difficultyOption } from './state/bot-controller';
 import { GameSettingsService } from './settings.service';
 import { ProgressService } from './progress.service';
@@ -373,8 +368,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.arenaRim = computed(() => cssTriple(this.theme().rim));
 
     this.mode = this.store.mode;
-    // The same pair again is no change - it would only repaint the arena.
-    this.colors = computed(() => this.store.colors(), { equal: sameColors });
+    this.colors = this.store.colors;
     this.difficulty = this.store.difficulty;
 
     const players = this.playerStore.entities;
