@@ -6,12 +6,12 @@ export class BacteriaGamePo {
   public readonly playArea: Locator;
   public readonly playCta: Locator;
   public readonly resetCta: Locator;
-  public readonly levelSelect: Locator;
-  public readonly levelDescription: Locator;
+  public readonly twoPlayersCta: Locator;
+  public readonly startCta: Locator;
+  public readonly profileCta: Locator;
+  public readonly levelDetails: Locator;
   public readonly fullscreenCta: Locator;
-  public readonly modePicker: Locator;
-  public readonly difficultySelect: Locator;
-  public readonly difficultyDescription: Locator;
+  public readonly difficultyPicker: Locator;
   public readonly boostCta: Locator;
   public readonly colonyNames: Locator;
   /** The stage that fills the screen, with a seat per player. */
@@ -34,15 +34,19 @@ export class BacteriaGamePo {
   constructor(private readonly page: Page) {
     this.mainTitle = page.locator('h1');
     this.playArea = page.locator('.stage canvas');
-    this.playCta = page.getByRole('button', { name: 'Play', exact: true });
+    this.playCta = page.getByRole('button', { name: /^Play\b/ });
+    this.twoPlayersCta = page.getByRole('button', {
+      name: 'Two players, one screen',
+    });
+    this.startCta = page.getByRole('button', { name: /^Start / });
+    this.profileCta = page.getByRole('button', { name: 'Profile' });
     this.resetCta = page.getByRole('button', { name: 'Reset' });
-    this.levelSelect = page.locator('.level-select');
+    this.levelDetails = page.locator(
+      'feat-lazy-bac-game-level-select .details'
+    );
     this.freePlayToggle = page.getByRole('switch', { name: 'Free play' });
-    this.levelDescription = page.locator('.level-description');
     this.fullscreenCta = page.getByRole('button', { name: /fullscreen/i });
-    this.modePicker = page.locator('.mode-picker');
-    this.difficultySelect = page.locator('.difficulty-select');
-    this.difficultyDescription = page.locator('.difficulty-description');
+    this.difficultyPicker = page.locator('.difficulty-picker');
     this.boostCta = page.getByRole('button', { name: /^Boost/ });
     this.colonyNames = page.locator('.colony-name');
     this.stage = page.locator('.stage.fullscreen');
@@ -53,11 +57,11 @@ export class BacteriaGamePo {
     this.intro = page.locator('mat-card-header');
     this.settingsCta = page.getByRole('button', { name: 'Settings' });
     this.helpCta = page.getByRole('button', { name: 'How to play' });
-    this.backCta = page.getByRole('button', { name: 'Back', exact: true });
+    this.backCta = page.getByRole('button', { name: 'Menu', exact: true });
     this.pauseCta = page.getByRole('button', { name: 'Pause', exact: true });
     this.resumeCta = page.getByRole('button', { name: 'Resume' });
     this.quitCta = page.getByRole('button', { name: 'Quit to menu' });
-    this.menuTitle = page.locator('.menu-title');
+    this.menuTitle = page.locator('feat-lazy-bac-game-main-menu h1');
     this.muteCta = page.getByRole('button', { name: 'Mute', exact: true });
     this.winner = page.locator('feat-lazy-bac-game-winner');
     this.unmuteCta = page.getByRole('button', { name: 'Unmute' });
@@ -67,19 +71,25 @@ export class BacteriaGamePo {
     await this.page.goto('/');
   }
 
-  public async chooseLevel(name: RegExp): Promise<void> {
-    await this.levelSelect.click();
-    await this.page.getByRole('option', { name }).click();
+  /** A level's card in the level choice, by the level's title. */
+  public levelCard(title: string): Locator {
+    return this.page
+      .locator('.levels')
+      .getByRole('button', { name: new RegExp(`^\\d+ ${title}\\b`) });
   }
 
-  /** The toggles are a radio group, so the options have the radio role. */
-  public async chooseMode(name: RegExp): Promise<void> {
-    await this.modePicker.getByRole('radio', { name }).click();
+  public async chooseLevel(title: string): Promise<void> {
+    await this.levelCard(title).click();
+  }
+
+  /** Play, then Start on the level the level choice offers. */
+  public async startMatch(): Promise<void> {
+    await this.playCta.click();
+    await this.startCta.click();
   }
 
   public async chooseDifficulty(name: RegExp): Promise<void> {
-    await this.difficultySelect.click();
-    await this.page.getByRole('option', { name }).click();
+    await this.difficultyPicker.getByRole('radio', { name }).click();
   }
 
   public async pressBoostKey(key: 'Space' | 'Enter'): Promise<void> {

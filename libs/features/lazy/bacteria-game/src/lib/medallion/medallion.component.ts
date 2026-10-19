@@ -38,6 +38,9 @@ const CELLS: Record<MedalTier, readonly (readonly [number, number, number])[]> =
 
 let nextId = 0;
 
+/** The smallest medallion, in CSS pixels, that carries a readable chip. */
+const CHIP_MIN_SIZE = 40;
+
 /**
  * A medallion drawn in code - a disc in the tier's metal with as many
  * bacteria embossed as the tier is high - or an empty slot while the level
@@ -60,7 +63,10 @@ export class MedallionComponent {
   public readonly tier = input.required<MedalTier | null>();
   /** Width and height in CSS pixels. */
   public readonly size = input(24);
-  /** The difficulty it was won at, shown as a chip - none on small ones. */
+  /**
+   * The difficulty it was won at: a chip on a big medallion, the letter in
+   * an empty slot, and part of the label either way.
+   */
   public readonly difficulty = input<BotDifficulty | null>(null);
 
   /** Keeps the gradients of several medallions on one page apart. */
@@ -73,11 +79,19 @@ export class MedallionComponent {
     const tier = this.tier();
     return tier == null ? [] : CELLS[tier];
   });
-  protected readonly chip = computed(
+  /** The difficulty's letter, null without one. */
+  protected readonly letter = computed(
     () => difficultyOption(this.difficulty())?.name[0] ?? null
+  );
+  /** The chip in the corner - too small to read on a small medallion. */
+  protected readonly chip = computed(() =>
+    this.size() >= CHIP_MIN_SIZE ? this.letter() : null
   );
   protected readonly label = computed(() => {
     const tier = this.tier();
-    return tier == null ? 'No medallion yet' : `${MEDAL_NAMES[tier]} medallion`;
+    const medal =
+      tier == null ? 'No medallion yet' : `${MEDAL_NAMES[tier]} medallion`;
+    const difficulty = difficultyOption(this.difficulty());
+    return difficulty == null ? medal : `${medal}, ${difficulty.name}`;
   });
 }

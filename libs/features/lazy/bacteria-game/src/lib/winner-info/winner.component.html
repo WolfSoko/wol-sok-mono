@@ -30,6 +30,10 @@
     <mat-icon>home</mat-icon>
     Main menu
   </button>
+  <button mat-stroked-button type="button" (click)="action.emit('levels')">
+    <mat-icon>grid_view</mat-icon>
+    Choose a level
+  </button>
   <button mat-stroked-button type="button" (click)="action.emit('again')">
     <mat-icon>replay</mat-icon>
     Play again

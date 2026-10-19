@@ -147,7 +147,7 @@ describe('WinnerComponent', () => {
         fixture.nativeElement
           .querySelector('feat-lazy-bac-game-medallion')
           .getAttribute('aria-label')
-      ).toBe('Silver medallion');
+      ).toBe('Silver medallion, Normal');
     });
 
     it('floors the match time to the second, as the match clock does', () => {

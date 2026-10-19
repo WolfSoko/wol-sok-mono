@@ -1,0 +1,280 @@
+@use 'screen';
+
+:host {
+  @include screen.screen;
+}
+
+.screen-header {
+  @include screen.header;
+}
+
+.screen-title {
+  @include screen.title;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-left: auto;
+}
+
+.body {
+  flex: 1 1 auto;
+  display: flex;
+  gap: 1.25rem;
+  min-height: 0;
+}
+
+.levels {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  align-content: start;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.25rem;
+  overflow: auto;
+  list-style: none;
+
+  li {
+    display: flex;
+  }
+}
+
+.level-card {
+  @include screen.panel;
+
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 7.5rem;
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  color: var(--bw-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--bw-line-strong);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--bw-gold);
+    outline-offset: 2px;
+  }
+
+  &.current {
+    background: var(--bw-surface-raised);
+    border: 2px solid var(--bw-player);
+
+    .number {
+      color: var(--bw-player);
+    }
+  }
+
+  &.locked {
+    background: rgb(11 15 20 / 85%);
+    border-style: dashed;
+    color: var(--bw-muted);
+    cursor: not-allowed;
+
+    .number {
+      color: var(--bw-faint);
+    }
+  }
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.number {
+  @include screen.figure;
+
+  font-size: 1.6rem;
+  color: var(--bw-gold);
+}
+
+.lock {
+  font-size: 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 22px;
+  margin-top: auto;
+  color: var(--bw-muted);
+}
+
+.lock-reason {
+  font-size: 0.8rem;
+}
+
+.details {
+  @include screen.panel;
+
+  flex: 0 0 20rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  overflow: auto;
+}
+
+.details-number {
+  font-size: 0.85rem;
+  color: var(--bw-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.details-title {
+  @include screen.title;
+
+  font-size: 1.75rem;
+}
+
+.details-description {
+  margin: 0;
+  line-height: 1.45;
+  color: var(--bw-soft);
+}
+
+.opponent {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--bw-muted);
+
+  mat-icon {
+    flex: none;
+    font-size: 1.2rem;
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+}
+
+.best {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.9rem;
+  background: var(--bw-surface-raised);
+}
+
+.best-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.best-label {
+  font-size: 0.8rem;
+  color: var(--bw-muted);
+}
+
+.best-name {
+  font-weight: 700;
+}
+
+.goal {
+  font-size: 0.9rem;
+  color: var(--bw-soft);
+}
+
+.start {
+  @include screen.primary;
+
+  // Always in reach, however far the details scroll.
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  flex: none;
+}
+
+// Narrow screens stack the details under the list, and the whole screen
+// scrolls instead of the list.
+@media (max-width: 52rem) {
+  .body {
+    flex: none;
+    flex-direction: column;
+  }
+
+  .levels {
+    flex: none;
+    overflow: visible;
+  }
+
+  .details {
+    flex: none;
+  }
+}
+
+// A phone held across: one row of cards to swipe, the details beside it.
+@media (max-height: 30rem) {
+  .body {
+    flex-direction: row;
+  }
+
+  .levels {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-template-rows: 1fr;
+    grid-auto-columns: 9rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .details {
+    flex: 0 0 15rem;
+    padding: 0.9rem;
+  }
+
+  .details-number,
+  .details-description,
+  .opponent {
+    display: none;
+  }
+
+  .screen-title {
+    font-size: 1.4rem;
+  }
+
+  .screen-header,
+  .body {
+    gap: 0.5rem 0.75rem;
+  }
+
+  .level-card {
+    min-height: 0;
+  }
+
+  .controls {
+    --mat-button-toggle-height: 36px;
+  }
+
+  .best {
+    padding: 0.6rem 0.75rem;
+
+    feat-lazy-bac-game-medallion {
+      display: none;
+    }
+  }
+}

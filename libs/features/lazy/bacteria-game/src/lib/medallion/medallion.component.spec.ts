@@ -52,6 +52,25 @@ describe('MedallionComponent', () => {
     expect(render('bronze').nativeElement.querySelector('text')).toBeNull();
   });
 
+  it('names the difficulty in the label, and in an empty slot', () => {
+    expect(
+      render('gold', 'hard').nativeElement.getAttribute('aria-label')
+    ).toBe('Gold medallion, Hard');
+    const slot: HTMLElement = render(null, 'easy').nativeElement;
+    expect(slot.getAttribute('aria-label')).toBe('No medallion yet, Easy');
+    expect(slot.querySelector('.slot-letter')?.textContent?.trim()).toBe('E');
+  });
+
+  it('leaves the chip off a medallion too small to read it', () => {
+    const fixture = TestBed.createComponent(MedallionComponent);
+    fixture.componentRef.setInput('tier', 'gold');
+    fixture.componentRef.setInput('difficulty', 'hard');
+    fixture.componentRef.setInput('size', 22);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.chip')).toBeNull();
+  });
+
   it('lets only platinum shine', () => {
     expect(
       render('platinum').nativeElement.querySelector('.sheen')

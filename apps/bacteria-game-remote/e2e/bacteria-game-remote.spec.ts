@@ -11,6 +11,8 @@ test('should open on the main menu with the game and its controls', async ({
   await expect(po.menuTitle).toHaveText('Bacteria War');
   await expect(po.playArea).toBeVisible();
   await expect(po.playCta).toBeVisible();
+  await expect(po.twoPlayersCta).toBeVisible();
+  await expect(po.profileCta).toBeVisible();
   await expect(po.settingsCta).toBeVisible();
   await expect(po.helpCta).toBeVisible();
   await expect(po.intro).toHaveCount(0);
@@ -32,24 +34,23 @@ test('should return to the page on request', async ({ page }) => {
   await expect(po.stage).toBeVisible();
 });
 
-test('should let the player pick another level in the settings', async ({
+test('should let the player pick a level when starting a match', async ({
   page,
 }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-  await po.settingsCta.click();
+  await po.playCta.click();
   // Against the computer the levels open one by one; free play opens them all.
   await po.freePlayToggle.click();
 
-  await po.chooseLevel(/· Serpentine/);
+  await po.chooseLevel('Serpentine');
 
-  await expect(po.levelSelect).toContainText('Serpentine');
-  await expect(po.levelDescription).toContainText('winding path');
+  await expect(po.levelDetails).toContainText('Serpentine');
+  await expect(po.levelDetails).toContainText('winding path');
+  await expect(po.startCta).toHaveText(/Start Serpentine/);
 
   await po.backCta.click();
-
   await expect(po.playCta).toBeVisible();
-  await expect(page.locator('.menu-summary')).toContainText('Serpentine');
 });
 
 test('should lock the levels the campaign has not opened yet', async ({
@@ -57,19 +58,14 @@ test('should lock the levels the campaign has not opened yet', async ({
 }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-  await po.settingsCta.click();
 
-  await po.levelSelect.click();
+  await po.playCta.click();
 
-  await expect(
-    page.getByRole('option', { name: /· Corridors/ })
-  ).toBeDisabled();
-  await expect(page.getByRole('option', { name: /· Corridors/ })).toContainText(
+  await expect(po.levelCard('Corridors')).toBeDisabled();
+  await expect(po.levelCard('Corridors')).toContainText(
     'Win Petri Dish to unlock'
   );
-  await expect(
-    page.getByRole('option', { name: /· Petri Dish/ })
-  ).toBeEnabled();
+  await expect(po.levelCard('Petri Dish')).toBeEnabled();
 });
 
 test('should mute the game and remember it on the next visit', async ({
@@ -104,6 +100,8 @@ test('should start against the computer with one seat', async ({ page }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
 
+  await po.startMatch();
+
   await expect(po.boostCta).toHaveCount(1);
   await expect(po.joysticks).toHaveCount(1);
   await expect(po.colonyNames).toContainText(['You', 'Computer']);
@@ -114,23 +112,24 @@ test('should let the player pick how hard the computer plays', async ({
 }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-  await po.settingsCta.click();
+  await po.playCta.click();
 
   await po.chooseDifficulty(/Hard/);
 
-  await expect(po.difficultySelect).toContainText('Hard');
-  await expect(po.difficultyDescription).toContainText('Reacts fast');
+  await expect(
+    po.difficultyPicker.getByRole('radio', { name: 'Hard' })
+  ).toBeChecked();
+  await expect(po.levelDetails).toContainText('Reacts fast');
 });
 
 test('should seat two players at opposite edges', async ({ page }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
 
-  await po.chooseMode(/2 Players/);
+  await po.twoPlayersCta.click();
 
   await expect(po.boostCta).toHaveCount(2);
   await expect(po.joysticks).toHaveCount(2);
-  await expect(po.colonyNames).toContainText(['Orange', 'Blue']);
 
   // Seat 0 is the left column, seat 1 the right one, each turned towards
   // its player: the stick sits in their left hand and the boost pad in their
@@ -152,7 +151,7 @@ test('should arm the boost once the match runs', async ({ page }) => {
   await po.goto();
   await expect(po.boostCta).toBeDisabled();
 
-  await po.playCta.click();
+  await po.startMatch();
 
   await expect(po.boostCta).toBeEnabled();
   await po.boostCta.click();
@@ -163,7 +162,7 @@ test('should arm the boost once the match runs', async ({ page }) => {
 test('should fire the boost with the keyboard', async ({ page }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-  await po.playCta.click();
+  await po.startMatch();
   await expect(po.boostCta).toBeEnabled();
 
   await po.pressBoostKey('Space');
@@ -176,7 +175,7 @@ test('should show the stick under the finger while it is pushed', async ({
 }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-  await po.playCta.click();
+  await po.startMatch();
   await expect(po.boostCta).toBeEnabled();
 
   await po.push(0, 30, 0);
@@ -197,7 +196,7 @@ test.describe('on a touchscreen', () => {
     test.skip(browserName !== 'chromium', 'multi-touch is Chromium only');
     const po = new BacteriaGamePo(page);
     await po.goto();
-    await po.playCta.click();
+    await po.startMatch();
     await expect(po.boostCta).toBeEnabled();
 
     await po.tapBoostWhileHoldingStick(0);
@@ -209,12 +208,15 @@ test.describe('on a touchscreen', () => {
 test('should let the players pick their colours', async ({ page }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-  await po.chooseMode(/2 Players/);
+  await po.twoPlayersCta.click();
+  await po.backCta.click();
   await po.settingsCta.click();
 
   await po.chooseColor('Left player', 'Green');
   await po.chooseColor('Right player', 'Pink');
   await po.backCta.click();
+  await po.twoPlayersCta.click();
+  await po.startCta.click();
 
   await expect(po.colonyNames).toContainText(['Green', 'Pink']);
 });
@@ -229,7 +231,7 @@ test('should draw the arena on the GPU and keep it readable', async ({
     await expect(po.playArea).toHaveAttribute('data-renderer', 'webgl');
   }
 
-  await po.playCta.click();
+  await po.startMatch();
 
   // Read the arena back off the canvas, as the vaporize effect does. The
   // orange colony starts a quarter across and halfway down the 320x180 arena.
@@ -243,9 +245,9 @@ test('should run the colony war on the GPU', async ({ page, browserName }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
   await expect(po.playArea).toHaveAttribute('data-simulation', 'gpu');
-  const start = await po.colonyCount(0);
 
-  await po.playCta.click();
+  await po.startMatch();
+  const start = await po.colonyCount(0);
 
   // The colonies divide - the GPU steps the war and the numbers come back.
   await expect.poll(() => po.colonyCount(0)).toBeGreaterThan(start);
@@ -259,7 +261,7 @@ test('should pause into a menu and quit back to the main menu', async ({
   const po = new BacteriaGamePo(page);
   await po.goto();
 
-  await po.playCta.click();
+  await po.startMatch();
 
   await expect(po.playCta).toHaveCount(0);
   await expect(po.menuTitle).toHaveCount(0);

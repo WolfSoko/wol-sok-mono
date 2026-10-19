@@ -56,15 +56,36 @@ would be invisible while the arena is in native fullscreen.
 
 ## Menu
 
-The stage opens on a main menu - opponent, Play, Settings, How to play - and
-every other screen lives in the same panel over the arena: the settings
-(difficulty, level, frame rate badge, browser fullscreen), the pause menu
-(Resume, Restart, Settings, Quit to menu) and the match result (Play again,
-Next level, Main menu). Escape behaves like in a game: it pauses a match,
-backs out of a screen, and only leaves for the page from the main menu. The
-browser taking its own fullscreen off - its Escape, the back gesture, the
-settings toggle - is treated the same way, since that Escape never reaches
-the game.
+The stage opens on the menu screens ([`menu/`](./src/lib/menu)), which fill
+it, opaque, over a swarm of bacteria drifting in the players' colours (plain
+CSS animation, still for players who ask for less motion):
+
+- **Main menu** - the title, _Play_ against the computer, _Two players, one
+  screen_, the way to Profile, Settings and How to play, and a card with the
+  campaign so far: levels open, medallions per metal and _Continue the
+  campaign_, which starts the furthest open level right away.
+- **Choose a level** - opened by both Play buttons. Opponent, difficulty and
+  free play at the top, a card per level with its medallion per difficulty
+  or the lock of the ladder, and the chosen level beside them: its briefing,
+  the computer's, the best medallion held and what the next one needs, and
+  _Start_.
+- **Profile** - levels won, medallions per metal and every medallion level by
+  level.
+- **Settings** - colony colours, how the bacteria look, the two resolutions,
+  sound, music, the frame rate badge and browser fullscreen.
+- **How to play** - the rules in three steps, the keys and the touch layout.
+
+While a screen is open, the arena, its bar and the seats under it are inert.
+The pause menu (Resume, Restart, Settings, Quit to menu) and the match result
+(Main menu, Choose a level, Play again, Next) stay cards over the arena.
+Escape behaves like in a game: it pauses a match, backs out of a screen, and
+only leaves for the page from the main menu. The browser taking its own
+fullscreen off - its Escape, the back gesture, the settings toggle - is
+treated the same way, since that Escape never reaches the game.
+
+The standalone app shows a loading screen while the game downloads - the
+spinning petri dish of its icon and the title - which the game takes down
+once its first view is up ([`splash.ts`](./src/lib/splash.ts)).
 
 [`GameSettingsService`](./src/lib/settings.service.ts) remembers opponent,
 difficulty, level and the frame rate badge in the game storage.
