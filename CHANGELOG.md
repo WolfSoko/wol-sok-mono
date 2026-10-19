@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.8.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.7.0...v74.8.0) (2026-10-18)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ medallions per level and difficulty ([#2479](https://github.com/WolfSoko/wol-sok-mono/issues/2479)) ([b9fc9fc](https://github.com/WolfSoko/wol-sok-mono/commit/b9fc9fc26c22a522ceab0c3fd47bf532fc0cc4f7))
+
 ## [74.7.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.6.2...v74.7.0) (2026-10-18)
 
 ### Features
