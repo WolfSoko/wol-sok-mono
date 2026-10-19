@@ -11,6 +11,7 @@ import {
   ShareComponent,
 } from '../core/share/share.component';
 import { AppConfigPort } from '../ports/app-config.port';
+import { homeUrl } from '../../shared/site-url';
 import { ShareContent } from '../ports/share-target.port';
 import { SITE_TAGS } from './site-tags';
 
@@ -35,8 +36,8 @@ type Step = { icon: string; title: string; text: string };
 export class RollapollaWelcomeComponent {
   protected readonly features = inject(AppConfigPort).features;
   protected readonly shareContent: ShareContent = {
-    url: `${injectShareOrigin()}/`,
-    title: 'RollaPolla – easy polling for everyone',
+    url: homeUrl(injectShareOrigin()),
+    title: SITE_TAGS.title,
     text: SITE_TAGS.socialDescription,
   };
   protected readonly steps: Step[] = [

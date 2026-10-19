@@ -54,7 +54,7 @@
           class="target"
           [href]="link.href"
           [attr.target]="link.newTab ? '_blank' : null"
-          [attr.rel]="link.newTab ? 'noopener noreferrer' : null"
+          [attr.rel]="link.newTab ? 'noopener noreferrer nofollow' : null"
           [attr.aria-label]="'Share on ' + link.label"
           [matTooltip]="link.label"
           [attr.data-testid]="'share-' + link.id"

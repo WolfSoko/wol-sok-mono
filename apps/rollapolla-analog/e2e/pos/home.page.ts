@@ -35,11 +35,12 @@ export class HomePage {
       share.getByRole('heading', { name: 'Share RollaPolla' })
     ).toBeVisible();
     await expect(share.getByTestId('copy-link')).toBeVisible();
-    const homeUrl = encodeURIComponent(new URL('/', this.page.url()).href);
-    await expect(share.getByTestId('share-whatsapp')).toHaveAttribute(
-      'href',
-      new RegExp(`^https://wa\\.me/\\?text=.*${homeUrl}`)
-    );
+    // The link ends the message, and it is the home page, no deeper page.
+    const homeUrl = new URL('/', this.page.url()).href;
+    const href = await share.getByTestId('share-whatsapp').getAttribute('href');
+    expect(href).toMatch(/^https:\/\/wa\.me\/\?text=/);
+    const text = new URL(href ?? '').searchParams.get('text');
+    expect(text?.split('\n').at(-1)).toBe(homeUrl);
   }
 
   async expectXLinkVisible() {

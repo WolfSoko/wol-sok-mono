@@ -64,7 +64,7 @@ describe('ShareComponent', () => {
       `https://chat.example/share?u=${encodeURIComponent(content.url)}&t=${encodeURIComponent('Vote now: Pizza or pasta?')}`
     );
     expect(chat.target).toBe('_blank');
-    expect(chat.rel).toBe('noopener noreferrer');
+    expect(chat.rel).toBe('noopener noreferrer nofollow');
     expect(chat.getAttribute('aria-label')).toBe('Share on Chat');
 
     const mail = query('share-mail').nativeElement as HTMLAnchorElement;

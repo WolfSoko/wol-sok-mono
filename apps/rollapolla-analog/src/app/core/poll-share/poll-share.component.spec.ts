@@ -1,11 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Poll, PRIVATE_POLL_HINT } from '../../../shared/poll';
-import {
-  provideShareTargets,
-  ShareContent,
-  ShareTarget,
-} from '../../ports/share-target.port';
 import { ShareComponent } from '../share/share.component';
 import { PollShareComponent } from './poll-share.component';
 
@@ -22,14 +17,6 @@ const poll: Poll = {
   round: 0,
 };
 
-const chatTarget: ShareTarget = {
-  id: 'chat',
-  label: 'Chat',
-  icon: { kind: 'font', name: 'chat' },
-  shareUrl: ({ url, text }: ShareContent) =>
-    `https://chat.example/share?u=${encodeURIComponent(url)}&t=${encodeURIComponent(text)}`,
-};
-
 describe('PollShareComponent', () => {
   let fixture: ComponentFixture<PollShareComponent>;
   const pollUrl = `${location.origin}/poll/poll-1`;
@@ -37,7 +24,6 @@ describe('PollShareComponent', () => {
   beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [PollShareComponent],
-      providers: [provideShareTargets(chatTarget)],
     });
     fixture = TestBed.createComponent(PollShareComponent);
     fixture.componentRef.setInput('poll', poll);
@@ -50,9 +36,6 @@ describe('PollShareComponent', () => {
       title: 'Pizza or pasta?',
       text: 'Vote now: Pizza or pasta?',
     });
-    expect((query('share-chat').nativeElement as HTMLAnchorElement).href).toBe(
-      `https://chat.example/share?u=${encodeURIComponent(pollUrl)}&t=${encodeURIComponent('Vote now: Pizza or pasta?')}`
-    );
   });
 
   it('tells that only people with the link see a private poll', async () => {
