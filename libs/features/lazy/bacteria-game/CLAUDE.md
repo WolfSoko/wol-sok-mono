@@ -29,13 +29,18 @@ changes to the services that use it.
   kept, never a worse one. Such a change comes to the same however late or
   often a backend applies it, offline included, so concurrent writers converge
   without a transaction.
-- A setting the storage does not hold must not be reset when the storage
-  answers late. Writes that change nothing are skipped, since every write to
-  Firestore is billed.
-- Settings are read once per visit, while progress follows every change. When
-  Firebase sign-in arrives, the backend re-emits `watch` for the new user.
-  Progress follows that on its own; settings then have to decide whether they
-  follow the account too.
-- Specs for a service that stores data also run it against an asynchronous
-  fake `GameStorage`, so a service that depends on local storage answering
+- A late answer must not undo the player: a setting the storage does not
+  hold, one the player changed before it answered, and the setup of a match
+  under way all keep their value.
+- Backends skip writes that leave the stored value as it is, since every write
+  to Firestore is billed. Services do not need to cache the stored value for
+  that, but they should not call the port without a change either.
+- Account switches are not handled yet. Settings are read once per visit, and
+  progress only ever merges, so a second account would inherit the medallions
+  of the first. When Firebase sign-in arrives, it has to:
+  - reset the services' state on a switch (merging anonymous progress into the
+    account once on the first sign-in is fine), and
+  - decide whether settings follow the account.
+- Specs for a service that stores data also run it against `LateGameStorage`
+  (`src/testing/`, kept out of the lib build), an asynchronous fake, so a service that depends on local storage answering
   synchronously fails a test.

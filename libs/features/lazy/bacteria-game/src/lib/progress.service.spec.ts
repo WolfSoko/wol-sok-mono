@@ -3,7 +3,7 @@ import { PROGRESS_STORAGE_KEY, ProgressService } from './progress.service';
 import { getLevel } from './state/levels';
 import { MatchRecord } from './state/medallions';
 import { GameStorage } from './storage/game-storage';
-import { LateGameStorage } from './storage/late-game-storage';
+import { LateGameStorage } from '../testing/late-game-storage';
 
 const LIMITS = getLevel('hourglass').medal;
 
@@ -55,6 +55,17 @@ describe('ProgressService', () => {
     expect(award.medal).toBe('bronze');
     expect(award.previousBest).toBe('gold');
     expect(progress.medal('hourglass', 'hard')).toBe('gold');
+  });
+
+  it('does not touch the storage for a medallion no better than the best', () => {
+    const progress = create();
+    progress.recordMatch(GOLD_WIN);
+    const setItem = jest.spyOn(Storage.prototype, 'setItem');
+
+    progress.recordMatch({ ...GOLD_WIN, durationSec: LIMITS.silverSec + 1 });
+
+    expect(setItem).not.toHaveBeenCalled();
+    setItem.mockRestore();
   });
 
   it('keeps the levels and difficulties apart', () => {

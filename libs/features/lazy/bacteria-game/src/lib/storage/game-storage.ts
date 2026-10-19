@@ -24,12 +24,17 @@ export abstract class GameStorage {
    */
   public abstract watch(key: string): Observable<unknown>;
 
-  /** Stores a value under a key, replacing what was there. */
+  /**
+   * Stores a value under a key, replacing what was there. A value equal to
+   * the stored one is no write at all - a Firestore backend compares with its
+   * latest snapshot, as every write there is billed.
+   */
   public abstract write(key: string, value: unknown): void;
 
   /**
    * Stores what `change` makes of the latest value stored under a key - null
-   * when there is none. A backend shared between devices may apply it later,
+   * when there is none - and skips the write when that changes nothing, as
+   * `write` does. A backend shared between devices may apply it later,
    * once it is online, and call `change` more than once, so `change` must not
    * have side effects. Changes that merge and can only gain need no
    * transaction: applied late or twice, they come to the same.

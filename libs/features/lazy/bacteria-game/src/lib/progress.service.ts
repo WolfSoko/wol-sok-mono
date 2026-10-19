@@ -52,11 +52,12 @@ export class ProgressService {
   public recordMatch(record: MatchRecord): MedalAward {
     const previousBest = this.medal(record.levelId, record.difficulty);
     const { medal, hint } = judgeMatch(getLevel(record.levelId).medal, record);
-    if (medal !== null) {
-      this.progress.update((progress) =>
-        addMedal(progress, record.levelId, record.difficulty, medal)
-      );
-      const progress = this.progress();
+    const progress =
+      medal === null
+        ? this.progress()
+        : addMedal(this.progress(), record.levelId, record.difficulty, medal);
+    if (progress !== this.progress()) {
+      this.progress.set(progress);
       this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
         mergeProgress(parseProgress(stored), progress)
       );

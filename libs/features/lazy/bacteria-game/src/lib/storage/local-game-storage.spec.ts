@@ -52,6 +52,16 @@ describe('LocalGameStorage', () => {
     expect(values).toEqual([null, 2, null]);
   });
 
+  it('skips a write that changes nothing', () => {
+    storage.write('key', { a: 1 });
+    const setItem = jest.spyOn(Storage.prototype, 'setItem');
+
+    storage.write('key', { a: 1 });
+    storage.update('key', (stored) => stored);
+
+    expect(setItem).not.toHaveBeenCalled();
+  });
+
   it('updates the stored value with what the change makes of it', () => {
     storage.update('count', (stored) => (stored == null ? 1 : 0));
     storage.update('count', (stored) => (stored as number) + 1);

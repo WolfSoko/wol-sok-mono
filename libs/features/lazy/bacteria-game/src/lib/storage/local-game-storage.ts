@@ -21,7 +21,10 @@ export class LocalGameStorage implements GameStorage {
 
   public write(key: string, value: unknown): void {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      const json = JSON.stringify(value);
+      if (localStorage.getItem(key) !== json) {
+        localStorage.setItem(key, json);
+      }
     } catch {
       // Storage refused - the value lasts for this visit only.
     }

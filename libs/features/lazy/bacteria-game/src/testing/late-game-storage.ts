@@ -1,5 +1,5 @@
 import { filter, Observable, Subject } from 'rxjs';
-import type { GameStorage } from './game-storage';
+import type { GameStorage } from '../lib/storage/game-storage';
 
 /**
  * A storage for specs that answers late, as a Firebase backend would: no
@@ -50,7 +50,10 @@ export class LateGameStorage implements GameStorage {
   }
 
   private store(key: string, value: unknown): void {
-    this.values.set(key, JSON.stringify(value));
-    this.changed.next(key);
+    const json = JSON.stringify(value);
+    if (this.values.get(key) !== json) {
+      this.values.set(key, json);
+      this.changed.next(key);
+    }
   }
 }

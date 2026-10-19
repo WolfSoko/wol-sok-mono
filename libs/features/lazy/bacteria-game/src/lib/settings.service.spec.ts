@@ -8,7 +8,7 @@ import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
 import { LEVELS } from './state/levels';
 import { GameStorage } from './storage/game-storage';
-import { LateGameStorage } from './storage/late-game-storage';
+import { LateGameStorage } from '../testing/late-game-storage';
 
 describe('GameSettingsService', () => {
   beforeEach(() => {
@@ -204,32 +204,44 @@ describe('GameSettingsService', () => {
       });
     });
 
-    it('keeps a change made before the storage answered, unless it holds that setting', () => {
-      const service = createWith({ sound: false });
+    it('keeps what the player changed before the storage answered', () => {
+      const service = createWith({
+        sound: false,
+        look: 'pixels',
+        levelId: LEVELS[2].id,
+      });
 
       service.setSound(true);
-      service.setShowFps(true);
+      TestBed.inject(GameStateService).setLevel(LEVELS[3].id);
       storage.flush();
       storage.flush();
 
-      expect(service.sound()).toBe(false);
-      expect(service.showFps()).toBe(true);
+      expect(service.sound()).toBe(true);
+      expect(service.look()).toBe('pixels');
+      expect(TestBed.inject(GameStateQuery).getValue().levelId).toBe(
+        LEVELS[3].id
+      );
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
-        sound: false,
-        showFps: true,
+        sound: true,
+        look: 'pixels',
+        levelId: LEVELS[3].id,
       });
     });
 
-    it('writes nothing back when the settings did not change', () => {
-      const service = createWith({});
-      storage.flush();
-      storage.flush();
-      const write = jest.spyOn(storage, 'write');
+    it('leaves the setup of a match under way alone', () => {
+      const service = createWith({
+        levelId: LEVELS[2].id,
+        difficulty: 'hard',
+        showFps: true,
+      });
 
-      service.setShowFps(service.showFps());
-      service.setSound(service.sound());
+      TestBed.inject(GameStateService).start();
+      storage.flush();
 
-      expect(write).not.toHaveBeenCalled();
+      const state = TestBed.inject(GameStateQuery).getValue();
+      expect(state.levelId).toBe(LEVELS[0].id);
+      expect(state.difficulty).toBe('normal');
+      expect(service.showFps()).toBe(true);
     });
 
     it('stores the changes made after the settings were restored', () => {

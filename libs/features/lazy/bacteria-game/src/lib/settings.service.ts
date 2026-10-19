@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { distinctUntilChanged, take } from 'rxjs';
+import { distinctUntilChanged, pairwise, take } from 'rxjs';
 import {
   DEFAULT_SCREEN_RESOLUTION,
   DEFAULT_SIM_RESOLUTION,
@@ -12,7 +12,7 @@ import { BotDifficulty, difficultyOption } from './state/bot-controller';
 import { sameColors, validColorPair } from './state/colony-colors';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
-import { GameMode } from './state/game.states';
+import { GameMode, GameStateState, isMatchOn } from './state/game.states';
 import { LEVELS } from './state/levels';
 import { isObject } from './state/is-object';
 import { GameStorage } from './storage/game-storage';
@@ -47,6 +47,19 @@ export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 
 const MODES: readonly GameMode[] = ['vs-computer', 'two-players'];
 
+/** The settings that set up a match - kept in the game state store. */
+type MatchSetup = Pick<
+  GameStateState,
+  'mode' | 'difficulty' | 'levelId' | 'colors'
+>;
+
+const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
+  'mode',
+  'difficulty',
+  'levelId',
+  'colors',
+];
+
 /**
  * Keeps the player's choices - opponent, difficulty, level, colours, how the
  * bacteria look, the resolutions, whether the frame rate is shown and whether
@@ -55,9 +68,9 @@ const MODES: readonly GameMode[] = ['vs-computer', 'two-players'];
  * The match settings live in the game state store, as they did; this service
  * only restores them once the storage answers and writes them back whenever
  * they change after that - never before, so the defaults the game starts
- * with cannot overwrite the stored settings. What the storage holds wins
- * over a change made before it answered; the other changes are kept and
- * written then. Storage that fails simply forgets them.
+ * with cannot overwrite the stored settings. A setting the player changed
+ * before the storage answered keeps the player's choice, and a match under
+ * way keeps its setup. Storage that fails simply forgets them.
  */
 @Injectable({ providedIn: 'root' })
 export class GameSettingsService {
@@ -65,8 +78,8 @@ export class GameSettingsService {
   private readonly query = inject(GameStateQuery);
   private readonly storage = inject(GameStorage);
   private restored = false;
-  /** The settings as last written or read, to skip writes that change nothing. */
-  private stored: string | null = null;
+  /** The settings the player changed before the storage answered. */
+  private readonly touched = new Set<keyof StoredSettings>();
 
   /** True while the frame rate badge is shown on the arena. */
   public readonly showFps = signal(false);
@@ -84,113 +97,132 @@ export class GameSettingsService {
   );
 
   constructor() {
+    this.query
+      .select(matchSetup)
+      .pipe(distinctUntilChanged(sameMatchSetup), pairwise())
+      .subscribe(([before, after]) =>
+        this.changed(
+          ...MATCH_SETUP_KEYS.filter(
+            (key) => JSON.stringify(before[key]) !== JSON.stringify(after[key])
+          )
+        )
+      );
     this.storage
       .watch(SETTINGS_STORAGE_KEY)
       .pipe(take(1))
       .subscribe((stored) => {
         this.restore(isObject(stored) ? (stored as StoredSettings) : {});
-        this.stored = JSON.stringify(stored);
         this.restored = true;
-        this.persistMatchSetup();
+        this.persist();
       });
   }
 
   public setShowFps(show: boolean): void {
     this.showFps.set(show);
-    this.persist();
+    this.changed('showFps');
   }
 
   public setSound(on: boolean): void {
     this.sound.set(on);
-    this.persist();
+    this.changed('sound');
   }
 
   public setMusic(on: boolean): void {
     this.music.set(on);
-    this.persist();
+    this.changed('music');
   }
 
   public setLook(look: BacteriaLook): void {
     this.look.set(look);
-    this.persist();
+    this.changed('look');
   }
 
   public setSimResolution(resolution: SimResolution): void {
     this.simResolution.set(resolution);
-    this.persist();
+    this.changed('simResolution');
   }
 
   public setScreenResolution(resolution: ScreenResolution): void {
     this.screenResolution.set(resolution);
-    this.persist();
+    this.changed('screenResolution');
+  }
+
+  /**
+   * Writes the settings back once they are restored; before that, remembers
+   * which ones the player changed, so restoring keeps them.
+   */
+  private changed(...keys: (keyof StoredSettings)[]): void {
+    if (this.restored) {
+      this.persist();
+    } else {
+      keys.forEach((key) => this.touched.add(key));
+    }
   }
 
   /**
    * Applies what an earlier visit stored, ignoring anything it cannot read.
-   * A setting it does not hold keeps its value - a change made before the
-   * storage answered as much as a default.
+   * A setting it does not hold, one the player changed meanwhile, and the
+   * setup of a match under way keep their value.
    */
   private restore(stored: StoredSettings): void {
-    if (stored.mode != null && MODES.includes(stored.mode)) {
+    const matchOn = isMatchOn(this.query.getValue().currentState);
+    const restores = (key: keyof StoredSettings) =>
+      !this.touched.has(key) &&
+      !(matchOn && (MATCH_SETUP_KEYS as readonly string[]).includes(key));
+
+    if (
+      restores('mode') &&
+      stored.mode != null &&
+      MODES.includes(stored.mode)
+    ) {
       this.gameState.setMode(stored.mode);
     }
-    if (difficultyOption(stored.difficulty ?? null) != null) {
+    if (
+      restores('difficulty') &&
+      difficultyOption(stored.difficulty ?? null) != null
+    ) {
       this.gameState.setDifficulty(stored.difficulty as BotDifficulty);
     }
-    if (LEVELS.some((level) => level.id === stored.levelId)) {
+    if (
+      restores('levelId') &&
+      LEVELS.some((level) => level.id === stored.levelId)
+    ) {
       this.gameState.setLevel(stored.levelId as string);
     }
     const colors = validColorPair(stored.colors);
-    if (colors != null) {
+    if (restores('colors') && colors != null) {
       this.gameState.setColors(colors);
     }
-    if (BACTERIA_LOOKS.some((option) => option.id === stored.look)) {
+    if (
+      restores('look') &&
+      BACTERIA_LOOKS.some((option) => option.id === stored.look)
+    ) {
       this.look.set(stored.look as BacteriaLook);
     }
-    if (SIM_RESOLUTIONS.some((option) => option.id === stored.simResolution)) {
+    if (
+      restores('simResolution') &&
+      SIM_RESOLUTIONS.some((option) => option.id === stored.simResolution)
+    ) {
       this.simResolution.set(stored.simResolution as SimResolution);
     }
     if (
+      restores('screenResolution') &&
       SCREEN_RESOLUTIONS.some((option) => option.id === stored.screenResolution)
     ) {
       this.screenResolution.set(stored.screenResolution as ScreenResolution);
     }
-    if (typeof stored.showFps === 'boolean') {
+    if (restores('showFps') && typeof stored.showFps === 'boolean') {
       this.showFps.set(stored.showFps);
     }
-    if (typeof stored.sound === 'boolean') {
+    if (restores('sound') && typeof stored.sound === 'boolean') {
       this.sound.set(stored.sound);
     }
-    if (typeof stored.music === 'boolean') {
+    if (restores('music') && typeof stored.music === 'boolean') {
       this.music.set(stored.music);
     }
   }
 
-  /** Writes the settings back whenever the match setup in the game state changes. */
-  private persistMatchSetup(): void {
-    this.query
-      .select((state) => ({
-        mode: state.mode,
-        difficulty: state.difficulty,
-        levelId: state.levelId,
-        colors: state.colors,
-      }))
-      .pipe(
-        distinctUntilChanged(
-          (a, b) =>
-            a.mode === b.mode &&
-            a.difficulty === b.difficulty &&
-            a.levelId === b.levelId &&
-            sameColors(a.colors, b.colors)
-        )
-      )
-      .subscribe(() => this.persist());
-  }
-
   private persist(): void {
-    if (!this.restored) {
-      return;
-    }
     const { mode, difficulty, levelId, colors } = this.query.getValue();
     const settings: StoredSettings = {
       mode,
@@ -204,10 +236,20 @@ export class GameSettingsService {
       sound: this.sound(),
       music: this.music(),
     };
-    const json = JSON.stringify(settings);
-    if (json !== this.stored) {
-      this.stored = json;
-      this.storage.write(SETTINGS_STORAGE_KEY, settings);
-    }
+    this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }
+}
+
+function matchSetup(state: MatchSetup): MatchSetup {
+  const { mode, difficulty, levelId, colors } = state;
+  return { mode, difficulty, levelId, colors };
+}
+
+function sameMatchSetup(a: MatchSetup, b: MatchSetup): boolean {
+  return (
+    a.mode === b.mode &&
+    a.difficulty === b.difficulty &&
+    a.levelId === b.levelId &&
+    sameColors(a.colors, b.colors)
+  );
 }
