@@ -63,6 +63,21 @@ export class ColonyColorsComponent {
       }))
   );
 
+  /**
+   * True where a seat may not pick a colour: one still to earn that the
+   * seat does not have, or the other seat's colour where the swap would
+   * hand that seat one still to earn.
+   */
+  protected blocked(seat: number, colorId: string): boolean {
+    const own = this.colors()[seat];
+    const other = this.colors()[1 - seat];
+    const locks = this.locks();
+    return (
+      (colorId in locks && colorId !== own) ||
+      (colorId === other && own in locks)
+    );
+  }
+
   protected pick(seat: number, colorId: string): void {
     this.colorChange.emit({ seat: seat === 0 ? 0 : 1, colorId });
   }

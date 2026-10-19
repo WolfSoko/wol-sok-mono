@@ -59,6 +59,11 @@ describe('ColonyColorsComponent', () => {
       'Green, locked: Earn First Blood'
     );
     expect(greenOf(1)?.getAttribute('aria-disabled')).not.toBe('true');
+    // The right seat taking orange would swap the locked green to the left.
+    const orangeOfRight = groups[1].querySelector<HTMLButtonElement>(
+      'button[aria-label="Orange"]'
+    );
+    expect(orangeOfRight?.getAttribute('aria-disabled')).toBe('true');
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('.locked-list')
         ?.textContent
