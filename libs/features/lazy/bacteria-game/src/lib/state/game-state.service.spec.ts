@@ -301,6 +301,15 @@ describe('GameStateService', () => {
       expect(query.getValue().series).toBeNull();
     });
 
+    it('carries a series from level to level', () => {
+      service.setSeriesLength(3);
+      winAgainst('two-players');
+
+      service.setLevel('corridors');
+
+      expect(query.getValue().series?.wins).toEqual([1, 0]);
+    });
+
     it('plays single matches without a series', () => {
       winAgainst('two-players');
 

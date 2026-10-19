@@ -134,10 +134,7 @@
       </div>
       <p class="rivalry">
         <span class="best-label">Rivalry</span>
-        <span class="rivalry-score"
-          >{{ colonyNames()[0] }} {{ rivalry()[0] }} : {{ rivalry()[1] }}
-          {{ colonyNames()[1] }}</span
-        >
+        <span class="rivalry-score">{{ rivalryLine() }}</span>
       </p>
     }
     <button mat-flat-button type="button" class="start" (click)="start.emit()">

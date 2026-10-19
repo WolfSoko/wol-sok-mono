@@ -6,6 +6,7 @@ import {
 } from './settings.service';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
+import { GameStateStore } from './state/game.states';
 import { LEVELS } from './state/levels';
 import { GameStorage } from './storage/game-storage';
 import { LateGameStorage } from '../testing/late-game-storage';
@@ -299,6 +300,28 @@ describe('GameSettingsService', () => {
 
       expect(query.getValue().levelId).toBe(LEVELS[2].id);
       expect(query.getValue().difficulty).toBe('hard');
+    });
+
+    it('lets a stored setup wait for a series under way to end', () => {
+      createWith({ colors: ['green', 'pink'] });
+      const gameState = TestBed.inject(GameStateService);
+      const query = TestBed.inject(GameStateQuery);
+      gameState.setMode('two-players');
+      gameState.setSeriesLength(3);
+
+      gameState.start();
+      storage.flush();
+      TestBed.inject(GameStateStore).update({
+        series: { bestOf: 3, wins: [1, 0] },
+      });
+      gameState.reset();
+
+      expect(query.getValue().colors).toEqual(['orange', 'blue']);
+      expect(query.getValue().series?.wins).toEqual([1, 0]);
+
+      gameState.endSeries();
+      gameState.reset();
+      expect(query.getValue().colors).toEqual(['green', 'pink']);
     });
 
     it('drops the stored setup the player changed during the match', () => {

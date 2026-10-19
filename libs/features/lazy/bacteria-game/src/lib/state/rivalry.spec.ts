@@ -1,5 +1,8 @@
 import {
   addSeriesMatch,
+  formatScore,
+  headStartLabel,
+  rivalryScore,
   isHeadStart,
   isSeriesLength,
   newSeries,
@@ -41,5 +44,20 @@ describe('head start', () => {
     expect(startScales(1)).toEqual([0.85, 1]);
     expect(isHeadStart(2)).toBe(true);
     expect(isHeadStart(3)).toBe(false);
+  });
+});
+
+describe('rivalry', () => {
+  it('names a head start after the colony that gets it', () => {
+    expect(headStartLabel(-2, ['Orange', 'Blue'])).toBe('Orange ++');
+    expect(headStartLabel(1, ['Orange', 'Blue'])).toBe('Blue +');
+    expect(headStartLabel(0, ['Orange', 'Blue'])).toBe('Even');
+  });
+
+  it('scores two colours from the wins per colour', () => {
+    const score = rivalryScore({ orange: 14, green: 3 }, ['orange', 'blue']);
+
+    expect(score).toEqual([14, 0]);
+    expect(formatScore(['Orange', 'Blue'], score)).toBe('Orange 14 : 0 Blue');
   });
 });

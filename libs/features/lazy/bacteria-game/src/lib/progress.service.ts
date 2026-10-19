@@ -15,7 +15,6 @@ import {
   addTotals,
   bestMedal,
   EMPTY_PROGRESS,
-  LifetimeTotals,
   mergeProgress,
   NO_TOTALS,
   parseProgress,
@@ -60,7 +59,7 @@ export class ProgressService {
         this.progress.set(progress);
         this.loaded.set(true);
         if (earned.length > 0) {
-          this.store(progress, {});
+          this.store(progress, (stored) => stored);
         }
       });
   }
@@ -113,7 +112,11 @@ export class ProgressService {
           medal === null
             ? progress
             : addMedal(progress, record.levelId, record.difficulty, medal),
-        { ...totalsOf(record), matchXp: matchXp(record) },
+        (progress) =>
+          addTotals(progress, {
+            ...totalsOf(record),
+            matchXp: matchXp(record),
+          }),
         record
       ),
     };
@@ -127,11 +130,17 @@ export class ProgressService {
     return {
       award: null,
       ...this.record(
-        (progress) =>
-          winnerColor === null ? progress : addCouchWin(progress, winnerColor),
-        { couchMatches: 1, matchXp: COUCH_XP },
-        null,
-        winnerColor
+        (progress) => progress,
+        (progress) => {
+          const counted = addTotals(progress, {
+            couchMatches: 1,
+            matchXp: COUCH_XP,
+          });
+          return winnerColor === null
+            ? counted
+            : addCouchWin(counted, winnerColor);
+        },
+        null
       ),
     };
   }
@@ -140,29 +149,29 @@ export class ProgressService {
   public readonly couchWins = computed(() => this.progress().couchWins);
 
   /**
-   * Applies a match: its medallion, its numbers and the achievements they
-   * earn - here, and in the storage - and works out its XP and the levels
-   * it opened. Before the storage has answered, what was held before is not
+   * Applies a match - what it won that merges (`gain`: a medallion) and
+   * what it adds to the counts (`count`: the totals, a colour's win), with
+   * the achievements they earn - here, and in the storage - and works out
+   * its XP and what it opened. Before the storage has answered, what was held before is not
    * known: the match counts all the same, but where it leaves the player is
    * left out rather than guessed.
    */
   private record(
     gain: (progress: Progress) => Progress,
-    match: Partial<LifetimeTotals>,
-    record: MatchRecord | null,
-    couchWinner: string | null = null
+    count: (progress: Progress) => Progress,
+    record: MatchRecord | null
   ): Omit<MatchEarnings, 'award'> {
     const before = this.progress();
     const locksBefore = this.ladderLocks();
     const cosmeticsBefore = this.cosmeticLocks();
     const known = this.loaded();
     const { progress, earned } = earnAchievements(
-      addTotals(gain(before), match),
+      count(gain(before)),
       record,
       today()
     );
     this.progress.set(progress);
-    this.store(progress, match, couchWinner);
+    this.store(progress, count);
     return {
       achievements: earned,
       xp: xpGain(before, progress, record),
@@ -180,23 +189,18 @@ export class ProgressService {
 
   /**
    * Writes the progress: medallions and achievements merge with the stored
-   * ones, the match's numbers are added to the stored totals - not to the
+   * ones, the match's counts are added to the stored ones - not to the
    * ones here, which miss what the storage has not told yet. So no match is
    * lost, whenever the storage answers and whoever else writes.
    */
   private store(
     progress: Progress,
-    match: Partial<LifetimeTotals>,
-    couchWinner: string | null = null
+    count: (progress: Progress) => Progress
   ): void {
     const gains = { ...progress, totals: NO_TOTALS, couchWins: {} };
-    this.storage.update(PROGRESS_STORAGE_KEY, (stored) => {
-      const counted = addTotals(parseProgress(stored), match);
-      return mergeProgress(
-        couchWinner === null ? counted : addCouchWin(counted, couchWinner),
-        gains
-      );
-    });
+    this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
+      mergeProgress(count(parseProgress(stored)), gains)
+    );
   }
 }
 

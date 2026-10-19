@@ -21,8 +21,10 @@ import { getLevel, levelTitle, LEVELS } from '../state/levels';
 import { MEDAL_NAMES, medalGoal } from '../state/medallions';
 import { Progress } from '../state/progress';
 import {
+  formatScore,
   HEAD_STARTS,
   HeadStart,
+  headStartLabel,
   SERIES_LENGTHS,
   SeriesLength,
 } from '../state/rivalry';
@@ -84,15 +86,16 @@ export class LevelSelectComponent {
   protected readonly difficulties = BOT_DIFFICULTIES;
   protected readonly seriesLengths = SERIES_LENGTHS;
 
+  /** The lifetime score of the two colours, "Orange 14 : 9 Blue". */
+  protected readonly rivalryLine = computed(() =>
+    formatScore(this.colonyNames(), this.rivalry())
+  );
+
   /** The head starts on offer, named after the colony that gets it. */
   protected readonly headStarts = computed(() => {
-    const [left, right] = this.colonyNames();
     return HEAD_STARTS.map((value) => ({
       value,
-      label:
-        value === 0
-          ? 'Even'
-          : `${value < 0 ? left : right} ${'+'.repeat(Math.abs(value))}`,
+      label: headStartLabel(value, this.colonyNames()),
     }));
   });
 

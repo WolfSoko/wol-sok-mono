@@ -81,7 +81,7 @@ import { GameSettingsService } from './settings.service';
 import { ProgressService } from './progress.service';
 import { CampaignService } from './campaign.service';
 import { dismissSplash } from './splash';
-import { HeadStart, SeriesLength } from './state/rivalry';
+import { HeadStart, rivalryScore, SeriesLength } from './state/rivalry';
 import { loadFonts } from './fonts';
 import { arenaSize, renderScale, scaleOf } from './state/arena-size';
 import { GameSoundService, MatchResult } from './sound/game-sound.service';
@@ -266,9 +266,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** The colour ids of the left and the right colony. */
   protected readonly colors: Signal<[string, string]>;
   /** The names of the left and the right colour, for the help texts. */
-  protected readonly colorNames = computed(() =>
-    this.colors().map((id) => getColonyColor(id).name)
-  );
+  protected readonly colorNames = computed((): [string, string] => {
+    const [left, right] = this.colors();
+    return [getColonyColor(left).name, getColonyColor(right).name];
+  });
   /** The best medallion of every level at the selected difficulty. */
   protected readonly levelMedals = computed(() => {
     const difficulty = this.difficulty();
@@ -291,16 +292,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.query.select((state) => state.headStart),
     { requireSync: true }
   );
-  /** The names of the left and the right colour, as a pair. */
-  protected readonly colorNamePair = computed(
-    () => this.colorNames() as [string, string]
-  );
   /** The lifetime wins of the two colours between two players. */
-  protected readonly rivalry = computed((): [number, number] => {
-    const wins = this.progress.couchWins();
-    const [left, right] = this.colors();
-    return [wins[left] ?? 0, wins[right] ?? 0];
-  });
+  protected readonly rivalry = computed(() =>
+    rivalryScore(this.progress.couchWins(), this.colors())
+  );
   /** Every medallion held, by level id, then by difficulty. */
   protected readonly medals = this.progress.medals;
   protected readonly achievements = this.progress.achievements;
@@ -377,6 +372,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     loadFonts(document);
     this.fps$ = this.query.selectFps();
     this.gameStateService.reset();
+    // A series lasts for a visit of the page: one left unfinished last time
+    // does not carry over.
+    this.gameStateService.endSeries();
 
     this.level = toSignal(this.query.selectLevel(), {
       initialValue: LEVELS[0],
@@ -494,7 +492,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     const next = action === 'next' ? this.upcomingLevel() : null;
     this.screen.set(action === 'levels' ? 'levels' : 'menu');
-    if (action === 'menu' || action === 'levels') {
+    if (action === 'menu') {
       this.gameStateService.endSeries();
     }
     this.resetGame$()
@@ -761,6 +759,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.gameStateService.endSeries();
     this.gameStateService.cleanup();
     // The GPU simulation lives in this canvas's context, which goes with it.
     this.playerService.useSimulation(null);

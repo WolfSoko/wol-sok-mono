@@ -18,7 +18,6 @@ import { BotDifficulty } from './bot-controller';
 import {
   getColonyColor,
   pickColor,
-  sameColors,
   toPlayerColor,
   validColorPair,
 } from './colony-colors';
@@ -306,24 +305,26 @@ export class GameStateService {
    * A match keeps the rules it started with: the colonies are only spawned
    * again - with the new map, balance and opponent - while nobody is playing.
    */
-  private updateSetup(
-    setup: Partial<
-      Pick<
-        GameStateState,
-        | 'levelId'
-        | 'mode'
-        | 'difficulty'
-        | 'colors'
-        | 'seriesLength'
-        | 'headStart'
-        | 'series'
-      >
-    >
-  ): void {
-    this.gameStateStore.update(setup);
+  private updateSetup(setup: Partial<MatchSetup>): void {
+    const current = this.gameStateQuery.getValue();
+    // A series is played with one setup: changing it ends the one under way.
+    const changed = SERIES_SETUP_KEYS.some(
+      (key) =>
+        setup[key] !== undefined &&
+        JSON.stringify(setup[key]) !== JSON.stringify(current[key])
+    );
+    this.gameStateStore.update(changed ? { ...setup, series: null } : setup);
     if (this.isIdle()) {
       this.initPlayers();
     }
+  }
+
+  /**
+   * Applies several parts of the setup at once - the colonies are spawned
+   * again only once. The values must be valid; the settings check them.
+   */
+  public applySetup(setup: Partial<MatchSetup>): void {
+    this.updateSetup(setup);
   }
 
   /** Picks the level the next match is played on. */
@@ -333,35 +334,17 @@ export class GameStateService {
 
   /** Switches between two humans and human versus computer. */
   public setMode(mode: GameMode): void {
-    this.updateSetup({
-      mode,
-      ...this.seriesEndsUnless(mode === this.gameStateQuery.getValue().mode),
-    });
+    this.updateSetup({ mode });
   }
 
   /** Picks how many matches a series between two players is the best of. */
   public setSeriesLength(seriesLength: SeriesLength): void {
-    this.updateSetup({
-      seriesLength,
-      ...this.seriesEndsUnless(
-        seriesLength === this.gameStateQuery.getValue().seriesLength
-      ),
-    });
+    this.updateSetup({ seriesLength });
   }
 
   /** Gives one of two players a head start - or neither. */
   public setHeadStart(headStart: HeadStart): void {
-    this.updateSetup({
-      headStart,
-      ...this.seriesEndsUnless(
-        headStart === this.gameStateQuery.getValue().headStart
-      ),
-    });
-  }
-
-  /** A series ends when its setup changes - nothing, when it stays. */
-  private seriesEndsUnless(unchanged: boolean): { series?: null } {
-    return unchanged ? {} : { series: null };
+    this.updateSetup({ headStart });
   }
 
   /** Ends the series under way - the next match starts a new one. */
@@ -379,11 +362,12 @@ export class GameStateService {
    * one. Picking the other seat's colour swaps the two.
    */
   public setColor(seat: 0 | 1, colorId: string): void {
-    const { colors } = this.gameStateQuery.getValue();
-    const picked = pickColor(colors, seat, getColonyColor(colorId).id);
     this.updateSetup({
-      colors: picked,
-      ...this.seriesEndsUnless(sameColors(picked, colors)),
+      colors: pickColor(
+        this.gameStateQuery.getValue().colors,
+        seat,
+        getColonyColor(colorId).id
+      ),
     });
   }
 
@@ -394,12 +378,7 @@ export class GameStateService {
   public setColors(colors: readonly [string, string]): void {
     const valid = validColorPair(colors);
     if (valid != null) {
-      this.updateSetup({
-        colors: valid,
-        ...this.seriesEndsUnless(
-          sameColors(valid, this.gameStateQuery.getValue().colors)
-        ),
-      });
+      this.updateSetup({ colors: valid });
     }
   }
 
@@ -501,3 +480,20 @@ function nextSeries(state: GameStateState): Series | null {
 function winnerSeat(winner: Player | null): 0 | 1 | null {
   return winner === null ? null : winner.id === 0 ? 0 : 1;
 }
+
+/** The parts of the setup a match is started with. */
+export type MatchSetup = Pick<
+  GameStateState,
+  'levelId' | 'mode' | 'difficulty' | 'colors' | 'seriesLength' | 'headStart'
+>;
+
+/**
+ * The parts of the setup a series is played with - not the level, which a
+ * series moves through, nor the computer's difficulty.
+ */
+const SERIES_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
+  'mode',
+  'colors',
+  'seriesLength',
+  'headStart',
+];

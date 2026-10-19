@@ -21,10 +21,9 @@ import { Player } from '../state/player.model';
 import { Achievement, getAchievement } from '../state/achievements';
 import { MatchEarnings } from '../state/earnings';
 import { xpClimb } from '../state/ranks';
-import { seriesWinner } from '../state/rivalry';
+import { formatScore, rivalryScore, seriesWinner } from '../state/rivalry';
 import { getColonyColor } from '../state/colony-colors';
 import { ProgressService } from '../progress.service';
-import { map } from 'rxjs';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu';
@@ -102,12 +101,9 @@ export class WinnerComponent {
   );
 
   private series = toSignal(this.state.selectSeries(), { initialValue: null });
-  private colorNames = toSignal(
-    this.state
-      .selectColors()
-      .pipe(map((colors) => colors.map((id) => getColonyColor(id).name))),
-    { initialValue: ['', ''] }
-  );
+  private colors = toSignal(this.state.selectColors(), {
+    initialValue: ['', ''] as [string, string],
+  });
   private couchWins = inject(ProgressService).couchWins;
 
   /**
@@ -118,28 +114,26 @@ export class WinnerComponent {
     if (this.mode() !== 'two-players') {
       return null;
     }
-    const [left, right] = this.colorNames();
+    const colors = this.colors();
+    const names: [string, string] = [
+      getColonyColor(colors[0]).name,
+      getColonyColor(colors[1]).name,
+    ];
     const series = this.series();
     const taker = series === null ? null : seriesWinner(series);
-    const wins = this.couchWins();
-    const colors = this.colors();
     return {
       series:
         series === null
           ? null
           : {
-              score: `${left} ${series.wins[0]} : ${series.wins[1]} ${right}`,
+              score: formatScore(names, series.wins),
               note:
                 taker === null
                   ? `Best of ${series.bestOf}`
-                  : `${taker === 0 ? left : right} takes the series!`,
+                  : `${names[taker]} takes the series!`,
             },
-      rivalry: `${left} ${wins[colors[0]] ?? 0} : ${wins[colors[1]] ?? 0} ${right}`,
+      rivalry: formatScore(names, rivalryScore(this.couchWins(), colors)),
     };
-  });
-
-  private colors = toSignal(this.state.selectColors(), {
-    initialValue: ['', ''] as [string, string],
   });
 
   /** The levels the match opened on the campaign ladder. */

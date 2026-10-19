@@ -59,12 +59,13 @@ export type HeadStart = -2 | -1 | 0 | 1 | 2;
 
 export const HEAD_STARTS: readonly HeadStart[] = [-2, -1, 0, 1, 2];
 
-/** How much each step of head start shrinks the other colony. */
+/** How much each step of head start shrinks the other colony's start area. */
 const HEAD_START_STEP = 0.15;
 
 /**
- * How each seat's colony starts, as a share of the level's start size: the
- * seat without the head start begins smaller, by a step per point.
+ * How each seat's colony starts, as a share of the level's start area -
+ * about its bacteria: the seat without the head start begins with 15 %
+ * fewer per point.
  */
 export function startScales(headStart: HeadStart): [number, number] {
   const behind = 1 - HEAD_START_STEP * Math.abs(headStart);
@@ -85,4 +86,31 @@ export function isHeadStart(value: unknown): value is HeadStart {
 /** True for a series length the game offers. */
 export function isSeriesLength(value: unknown): value is SeriesLength {
   return SERIES_LENGTHS.some(({ id }) => id === value);
+}
+
+/** A head start named after the colony that gets it - "Orange ++", "Even". */
+export function headStartLabel(
+  headStart: HeadStart,
+  names: readonly [string, string]
+): string {
+  if (headStart === 0) {
+    return 'Even';
+  }
+  return `${names[headStart < 0 ? 0 : 1]} ${'+'.repeat(Math.abs(headStart))}`;
+}
+
+/** The lifetime wins of the two colours, from the wins per colour. */
+export function rivalryScore(
+  couchWins: Partial<Record<string, number>>,
+  colors: readonly [string, string]
+): [number, number] {
+  return [couchWins[colors[0]] ?? 0, couchWins[colors[1]] ?? 0];
+}
+
+/** A score between two colonies, "Orange 2 : 1 Blue". */
+export function formatScore(
+  names: readonly [string, string],
+  score: readonly [number, number]
+): string {
+  return `${names[0]} ${score[0]} : ${score[1]} ${names[1]}`;
 }
