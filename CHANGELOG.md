@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.10.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.9.0...v74.10.0) (2026-10-19)
+
+### Features
+
+* **rollapolla-analog:** ✨ share links on the landing page ([#2486](https://github.com/WolfSoko/wol-sok-mono/issues/2486)) ([2069bf9](https://github.com/WolfSoko/wol-sok-mono/commit/2069bf9924ecb310c8c78c9b8d249ba82c6a2365))
+
 ## [74.9.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.8.1...v74.9.0) (2026-10-19)
 
 ### Features
