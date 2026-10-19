@@ -7,24 +7,16 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { GameMode } from '../state/game.states';
-import { MEDAL_NAMES, MedalTier } from '../state/medallions';
+import { BOT_DIFFICULTIES } from '../state/bot-controller';
+import { CampaignSummary } from '../state/campaign';
+import { LEVELS } from '../state/levels';
+import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 
 /** The sub screens the main menu opens. */
 export type MenuPage = 'profile' | 'settings' | 'help';
-
-/** Where the player stands on the campaign ladder, for the menu's card. */
-export interface CampaignSummary {
-  openLevels: number;
-  totalLevels: number;
-  /** Medallions held per tier, over every level and difficulty. */
-  medals: Readonly<Record<MedalTier, number>>;
-  /** Every medallion there is to win. */
-  totalMedals: number;
-  /** "5 · Pillar Field · Normal" - where Continue picks up. */
-  continueLabel: string;
-}
 
 /**
  * The landing screen of the fullscreen game: the title, Play for a match
@@ -36,7 +28,12 @@ export interface CampaignSummary {
  */
 @Component({
   selector: 'feat-lazy-bac-game-main-menu',
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [
+    MatButtonModule,
+    MatIconModule,
+    MatProgressBarModule,
+    MatTooltipModule,
+  ],
   templateUrl: './main-menu.component.html',
   styleUrl: './main-menu.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,10 +56,7 @@ export class MainMenuComponent {
   );
 
   protected readonly names = MEDAL_NAMES;
-  protected readonly tiers: readonly MedalTier[] = [
-    'platinum',
-    'gold',
-    'silver',
-    'bronze',
-  ];
+  protected readonly tiers = MEDAL_TIERS_RAREST_FIRST;
+  protected readonly totalLevels = LEVELS.length;
+  protected readonly totalMedals = LEVELS.length * BOT_DIFFICULTIES.length;
 }

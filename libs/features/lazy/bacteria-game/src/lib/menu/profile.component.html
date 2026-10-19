@@ -1,11 +1,6 @@
-<header class="screen-header">
-  <button mat-stroked-button type="button" class="back" (click)="back.emit()">
-    <mat-icon>arrow_back</mat-icon>
-    Menu
-  </button>
-  <h2 class="screen-title">Profile</h2>
+<feat-lazy-bac-game-screen-header title="Profile" (back)="back.emit()">
   <span class="kept">Kept on this device</span>
-</header>
+</feat-lazy-bac-game-screen-header>
 
 <div class="body">
   <section class="summary" aria-label="Totals">

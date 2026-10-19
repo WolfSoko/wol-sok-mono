@@ -19,8 +19,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -44,6 +42,7 @@ import { ArenaFrame, ArenaPainter } from './arena/arena-painter';
 import { createArenaPainter } from './arena/create-arena-painter';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
+import { rgba } from './arena/canvas-math';
 import { BoostPadComponent } from './boost-pad/boost-pad.component';
 import {
   exitFullscreen,
@@ -62,28 +61,27 @@ import {
 } from './colony-colors/colony-colors.component';
 import { MatchSetupComponent } from './match-setup/match-setup.component';
 import { LevelSelectComponent } from './menu/level-select.component';
-import { CampaignSummary, MainMenuComponent } from './menu/main-menu.component';
+import { MainMenuComponent } from './menu/main-menu.component';
+import { HelpComponent } from './menu/help.component';
 import { ProfileComponent } from './menu/profile.component';
+import { SettingsComponent } from './menu/settings.component';
 import { SwarmComponent } from './menu/swarm.component';
-import { DEFAULT_COLORS, getColonyColor } from './state/colony-colors';
 import {
-  BOT_DIFFICULTIES,
+  DEFAULT_COLORS,
+  getColonyColor,
+  readableOn,
+} from './state/colony-colors';
+import {
   BotDifficulty,
   difficultyOption,
   DEFAULT_DIFFICULTY,
 } from './state/bot-controller';
-import { BACTERIA_LOOKS, GameSettingsService } from './settings.service';
+import { GameSettingsService } from './settings.service';
 import { ProgressService } from './progress.service';
 import { CampaignService } from './campaign.service';
-import { furthestOpenLevel } from './state/campaign';
 import { dismissSplash } from './splash';
-import {
-  arenaSize,
-  renderScale,
-  SCREEN_RESOLUTIONS,
-  scaleOf,
-  SIM_RESOLUTIONS,
-} from './state/arena-size';
+import { loadFonts } from './fonts';
+import { arenaSize, renderScale, scaleOf } from './state/arena-size';
 import { GameSoundService, MatchResult } from './sound/game-sound.service';
 import { levelMusic } from './sound/level-music';
 import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
@@ -100,7 +98,6 @@ import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
 import { DEFAULT_MODE, GameMode, GameState } from './state/game.states';
 import {
-  getLevel,
   Level,
   LEVELS,
   levelBalance,
@@ -108,7 +105,7 @@ import {
   nextLevel,
 } from './state/levels';
 import { Rect } from './state/maps';
-import { MEDAL_TIERS, MedalTier } from './state/medallions';
+import { MedalTier } from './state/medallions';
 import { isBoosted, Player } from './state/player.model';
 import { PlayerQuery } from './state/player.query';
 import { PlayerService } from './state/player.service';
@@ -133,9 +130,9 @@ import {
     BoostPadComponent,
     ElemResizedDirective,
     WinnerComponent,
-    MatButtonToggleModule,
-    MatSlideToggleModule,
     SwarmComponent,
+    SettingsComponent,
+    HelpComponent,
     MainMenuComponent,
     LevelSelectComponent,
     ProfileComponent,
@@ -182,8 +179,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly canvasKey = computed(() => [
     `${this.settings.simResolution()}:${this.settings.screenResolution()}`,
   ]);
-  protected readonly simResolutions = SIM_RESOLUTIONS;
-  protected readonly screenResolutions = SCREEN_RESOLUTIONS;
 
   stats: Signal<ColonyStats[]>;
   /** The colonies a finger may steer - one seat each in the touch layout. */
@@ -232,7 +227,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   protected readonly screenOpen = computed(() => {
     const panel = this.panel();
-    return panel !== null && panel !== 'pause' && panel !== 'over';
+    return (
+      this.fullscreen() &&
+      panel !== null &&
+      panel !== 'pause' &&
+      panel !== 'over'
+    );
   });
   /** True while the browser shows the stage on the whole screen. */
   protected readonly nativeFullscreen = signal(false);
@@ -267,8 +267,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly colorNames = computed(() =>
     this.colors().map((id) => getColonyColor(id).name)
   );
-  /** The looks the bacteria can be drawn in. */
-  protected readonly looks = BACTERIA_LOOKS;
   /** The best medallion of every level at the selected difficulty. */
   protected readonly levelMedals = computed(() => {
     const difficulty = this.difficulty();
@@ -280,26 +278,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     );
   });
   /** Why each level is still locked on the campaign ladder, by level id. */
-  protected readonly lockedLevels = inject(CampaignService).locks;
+  protected readonly campaign = inject(CampaignService);
+  protected readonly lockedLevels = this.campaign.locks;
   /** Every medallion held, by level id, then by difficulty. */
   protected readonly medals = this.progress.medals;
-  /** Where the player stands on the ladder, for the main menu's card. */
-  protected readonly campaign = computed((): CampaignSummary => {
-    const locks = this.progress.ladderLocks();
-    const held = Object.values(this.medals()).flatMap((byDifficulty) =>
-      Object.values(byDifficulty)
-    );
-    const furthest = getLevel(furthestOpenLevel(locks));
-    return {
-      openLevels: LEVELS.length - Object.keys(locks).length,
-      totalLevels: LEVELS.length,
-      medals: Object.fromEntries(
-        MEDAL_TIERS.map((tier) => [tier, held.filter((t) => t === tier).length])
-      ) as Record<MedalTier, number>,
-      totalMedals: LEVELS.length * BOT_DIFFICULTIES.length,
-      continueLabel: `${furthest.name} · ${this.difficultyName()}`,
-    };
-  });
   /**
    * The colony colours as RGB and as CSS, with a text colour that reads on
    * the player's - for the menu screens.
@@ -312,7 +294,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       ]
   );
   protected readonly colonyCss = computed(() =>
-    this.colonyRgb().map(([r, g, b]) => `rgb(${r}, ${g}, ${b})`)
+    this.colonyRgb().map((rgb) => rgba(rgb))
   );
   protected readonly onPlayerColor = computed(() =>
     readableOn(this.colonyRgb()[0])
@@ -366,6 +348,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly draggedBy = new Map<number, number>();
 
   constructor() {
+    loadFonts(document);
     this.fps$ = this.query.selectFps();
     this.gameStateService.reset();
 
@@ -545,9 +528,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Starts a match on the furthest level the campaign ladder has opened. */
   protected continueCampaign(): void {
     this.selectMode('vs-computer');
-    this.gameStateService.setLevel(
-      furthestOpenLevel(this.progress.ladderLocks())
-    );
+    this.gameStateService.setLevel(this.campaign.furthestLevel());
     this.startGame();
   }
 
@@ -614,6 +595,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * gesture nearly every session makes, so it also takes the screen.
    */
   startGame() {
+    // A match started from the level choice backs out to the main menu.
+    this.screen.set('menu');
     this.requestNativeFullscreen();
     this.sound.matchStart();
     this.clearNextFrame = true;
@@ -1060,20 +1043,4 @@ function prefersReducedMotion(): Signal<boolean> {
     ),
     { initialValue: query.matches }
   );
-}
-
-/**
- * Black or white, whichever reads better on a colour - by the WCAG contrast
- * of each against it.
- */
-function readableOn([r, g, b]: readonly [number, number, number]): string {
-  const channel = (c: number) => {
-    const s = c / 255;
-    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  };
-  const luminance =
-    0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
-  return (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05)
-    ? '#140a02'
-    : '#ffffff';
 }

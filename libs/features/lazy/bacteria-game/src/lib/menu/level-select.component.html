@@ -1,9 +1,4 @@
-<header class="screen-header">
-  <button mat-stroked-button type="button" class="back" (click)="back.emit()">
-    <mat-icon>arrow_back</mat-icon>
-    Menu
-  </button>
-  <h2 class="screen-title">Choose a level</h2>
+<feat-lazy-bac-game-screen-header title="Choose a level" (back)="back.emit()">
   <div class="controls">
     <mat-button-toggle-group
       class="mode-picker"
@@ -38,7 +33,7 @@
       </mat-slide-toggle>
     }
   </div>
-</header>
+</feat-lazy-bac-game-screen-header>
 
 <div class="body">
   <ul class="levels" aria-label="Levels">
@@ -56,7 +51,7 @@
           <span class="card-top">
             <span class="number">{{ card.number }}</span>
             @if (card.lock !== null) {
-              <mat-icon class="lock" aria-label="Locked">lock</mat-icon>
+              <mat-icon class="lock">lock</mat-icon>
             }
           </span>
           <span class="title">{{ card.title }}</span>

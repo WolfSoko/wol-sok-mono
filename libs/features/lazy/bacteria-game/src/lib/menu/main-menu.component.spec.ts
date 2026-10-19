@@ -1,11 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CampaignSummary, MainMenuComponent } from './main-menu.component';
+import { CampaignSummary } from '../state/campaign';
+import { MainMenuComponent } from './main-menu.component';
 
 const CAMPAIGN: CampaignSummary = {
   openLevels: 5,
-  totalLevels: 12,
   medals: { bronze: 2, silver: 4, gold: 3, platinum: 0 },
-  totalMedals: 36,
   continueLabel: '5 · Pillar Field · Normal',
 };
 

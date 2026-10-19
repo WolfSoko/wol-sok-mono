@@ -1,5 +1,6 @@
 import { isObject } from './is-object';
 import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
+import { LEVELS } from './levels';
 import { betterMedal, MEDAL_TIERS, MedalTier } from './medallions';
 
 /** What the game remembers of a player's matches against the computer. */
@@ -9,6 +10,28 @@ export interface Progress {
 }
 
 export const EMPTY_PROGRESS: Progress = { medals: {} };
+
+/**
+ * How many medallions of each tier are held, over the levels and the
+ * difficulties of the game - a level the stored progress knows but the game
+ * no longer has does not count.
+ */
+export function medalTally(
+  medals: Progress['medals']
+): Record<MedalTier, number> {
+  const tally: Record<MedalTier, number> = {
+    bronze: 0,
+    silver: 0,
+    gold: 0,
+    platinum: 0,
+  };
+  for (const { id } of LEVELS) {
+    for (const tier of Object.values(medals[id] ?? {})) {
+      tally[tier]++;
+    }
+  }
+  return tally;
+}
 
 /** The best medallion of a level at a difficulty, null before the first. */
 export function bestMedal(

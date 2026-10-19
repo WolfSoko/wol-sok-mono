@@ -71,34 +71,26 @@
       <span class="stat-label">Campaign</span>
       <span class="stat-value"
         >{{ summary.openLevels }}
-        <span class="of">of {{ summary.totalLevels }} levels open</span></span
+        <span class="of">of {{ totalLevels }} levels open</span></span
       >
-      <span
+      <mat-progress-bar
         class="bar"
-        role="progressbar"
+        mode="determinate"
         aria-label="Levels open"
-        aria-valuemin="0"
-        [attr.aria-valuemax]="summary.totalLevels"
-        [attr.aria-valuenow]="summary.openLevels"
-      >
-        <span
-          class="bar-fill"
-          [style.width.%]="(100 * summary.openLevels) / summary.totalLevels"
-        ></span>
-      </span>
+        [value]="(100 * summary.openLevels) / totalLevels"
+      />
     </div>
     <div class="stat">
       <span class="stat-label">Medallions</span>
       <span class="stat-value"
-        >{{ medalCount() }}
-        <span class="of">of {{ summary.totalMedals }}</span></span
+        >{{ medalCount() }} <span class="of">of {{ totalMedals }}</span></span
       >
       <span class="tiers">
         @for (tier of tiers; track tier) {
           <span class="tier" [attr.data-tier]="tier"
             ><span class="dot" aria-hidden="true"></span
             >{{ summary.medals[tier] }}
-            <span class="visually-hidden">{{ names[tier] }}</span></span
+            <span class="cdk-visually-hidden">{{ names[tier] }}</span></span
           >
         }
       </span>

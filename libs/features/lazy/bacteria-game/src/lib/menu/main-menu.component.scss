@@ -1,4 +1,7 @@
+@use '@angular/cdk';
 @use 'screen';
+
+@include cdk.a11y-visually-hidden;
 
 :host {
   @include screen.screen;
@@ -163,18 +166,13 @@
 }
 
 .bar {
-  display: block;
-  height: 0.6rem;
-  border-radius: 0.3rem;
-  background: var(--bw-line);
-  overflow: hidden;
-}
+  --mat-progress-bar-active-indicator-color: var(--bw-gold);
+  --mat-progress-bar-track-color: var(--bw-line);
+  --mat-progress-bar-track-height: 0.6rem;
+  --mat-progress-bar-active-indicator-height: 0.6rem;
+  --mat-progress-bar-track-shape: 0.3rem;
 
-.bar-fill {
-  display: block;
-  height: 100%;
   border-radius: 0.3rem;
-  background: var(--bw-gold);
 }
 
 .tiers {
@@ -211,15 +209,6 @@
 
 .tier[data-tier='bronze'] .dot {
   background: var(--bw-bronze);
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
 }
 
 .continue {

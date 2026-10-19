@@ -83,6 +83,15 @@ describe('WinnerComponent', () => {
     expect(text()).toContain('Win Petri Dish to unlock');
   });
 
+  it('leaves Choose a level out where there is no level choice', () => {
+    store.update({ winner: null, levelId: LEVELS[0].id });
+    expect(text()).toContain('Choose a level');
+
+    fixture.componentRef.setInput('canChooseLevel', false);
+
+    expect(text()).not.toContain('Choose a level');
+  });
+
   it('reports what the player picks', () => {
     store.update({ winner: null, levelId: LEVELS[0].id });
     const picked = jest.fn();

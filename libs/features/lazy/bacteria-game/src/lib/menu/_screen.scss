@@ -1,6 +1,40 @@
 // The look the menu screens share - a dark lab dish, gold for progress, the
 // player's colony colour for the way forward. The colours and fonts are
-// custom properties the stage panel sets (bacteria-game.component.scss).
+// custom properties `tokens` declares on the stage panel; the player's and
+// the opponent's colours (--bw-player, --bw-on-player, --bw-opponent) the
+// game binds there itself.
+
+@mixin tokens {
+  --bw-ground: #0b0f14;
+  --bw-surface: #121821;
+  --bw-surface-raised: #19212c;
+  --bw-surface-glass: rgb(18 24 33 / 92%);
+  --bw-line: #263142;
+  --bw-line-strong: #3a4659;
+  --bw-text: #e8eef5;
+  --bw-soft: #b7c3d0;
+  --bw-muted: #9aa8b8;
+  --bw-faint: #5b6878;
+  --bw-gold: #e9b949;
+  --bw-silver: #c4ccd6;
+  --bw-bronze: #c27a45;
+  --bw-platinum: #b9e6f0;
+  --bw-display: 'Bricolage Grotesque', 'Roboto', sans-serif;
+  --bw-body: 'Atkinson Hyperlegible', 'Roboto', sans-serif;
+
+  // Material's controls speak the screens' language too.
+  --mat-button-filled-label-text-font: var(--bw-body);
+  --mat-button-outlined-label-text-font: var(--bw-body);
+  --mat-button-text-label-text-font: var(--bw-body);
+  --mat-button-toggle-label-text-font: var(--bw-body);
+  --mat-slide-toggle-label-text-font: var(--bw-body);
+  --mat-button-outlined-label-text-color: var(--bw-text);
+  --mat-button-outlined-outline-color: var(--bw-line-strong);
+  --mat-button-filled-label-text-tracking: normal;
+  --mat-button-outlined-label-text-tracking: normal;
+  --mat-button-text-label-text-tracking: normal;
+  --mat-slide-toggle-label-text-tracking: normal;
+}
 
 // A screen filling the stage panel, scrolling when it does not fit.
 @mixin screen {
@@ -55,4 +89,33 @@
 @mixin figure {
   font-family: var(--bw-display);
   font-weight: 800;
+}
+
+// A grid of sections that wrap as the screen narrows.
+@mixin sections($min: 17rem) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax($min, 1fr));
+  gap: 1.25rem;
+}
+
+// One section of a screen: a panel with a title and some prose.
+@mixin section {
+  @include panel;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.25rem;
+
+  p {
+    margin: 0;
+    line-height: 1.5;
+    color: var(--bw-soft);
+  }
+}
+
+@mixin section-title {
+  @include title;
+
+  font-size: 1.3rem;
 }

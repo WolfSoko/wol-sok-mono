@@ -1,0 +1,47 @@
+@use 'screen';
+
+:host {
+  @include screen.screen;
+}
+
+.screen-sections {
+  @include screen.sections;
+}
+
+.screen-section {
+  @include screen.section;
+}
+
+.section-title {
+  @include screen.section-title;
+}
+
+.section-note {
+  font-size: 0.85rem;
+}
+
+// Seats under each other, so the swatches fit a third of the screen.
+.stacked {
+  flex-direction: column;
+}
+
+.option-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.option-label {
+  font-size: 0.9rem;
+  color: var(--bw-muted);
+}
+
+.resolution-hint {
+  font-size: 0.85rem;
+  color: var(--bw-muted);
+}
+
+.switches mat-slide-toggle {
+  min-height: 2.75rem;
+}

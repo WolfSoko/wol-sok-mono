@@ -24,6 +24,15 @@
   }
 }
 
+// Half the swarm - two of every four, so both colonies keep theirs - where
+// a phone has to draw it.
+@media (max-width: 40rem), (max-height: 30rem) {
+  .cell:nth-child(4n + 3),
+  .cell:nth-child(4n + 4) {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cell {
     animation: none;

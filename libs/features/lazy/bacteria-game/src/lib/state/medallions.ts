@@ -14,6 +14,11 @@ export const MEDAL_TIERS: readonly MedalTier[] = [
   'platinum',
 ];
 
+/** The tiers as a cabinet shows them, the rarest first. */
+export const MEDAL_TIERS_RAREST_FIRST: readonly MedalTier[] = [
+  ...MEDAL_TIERS,
+].reverse();
+
 export const MEDAL_NAMES: Record<MedalTier, string> = {
   bronze: 'Bronze',
   silver: 'Silver',

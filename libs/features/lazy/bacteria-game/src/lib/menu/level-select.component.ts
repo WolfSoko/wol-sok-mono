@@ -10,6 +10,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MedallionComponent } from '../medallion/medallion.component';
+import { ScreenHeaderComponent } from './screen-header.component';
 import {
   BOT_DIFFICULTIES,
   BotDifficulty,
@@ -36,6 +37,7 @@ import { Progress } from '../state/progress';
     MatIconModule,
     MatSlideToggleModule,
     MedallionComponent,
+    ScreenHeaderComponent,
   ],
   templateUrl: './level-select.component.html',
   styleUrl: './level-select.component.scss',

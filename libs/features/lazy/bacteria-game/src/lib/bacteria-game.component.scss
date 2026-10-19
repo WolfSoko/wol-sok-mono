@@ -265,8 +265,8 @@
   }
 }
 
-// Match setup before a match and the pause notice during one, laid over the
-// arena. Only the card takes input, the seats around it stay usable.
+// The pause menu and the match result, cards laid over the arena - and the
+// menu screens, which fill it (.screens). Only the panel takes input.
 .stage-panel {
   position: absolute;
   inset: 0;
@@ -292,7 +292,7 @@
     font-weight: 700;
   }
 
-  // The main menu and the pause menu: a stack of big buttons.
+  // The pause menu: a stack of big buttons.
   .menu {
     display: flex;
     flex-direction: column;
@@ -313,35 +313,7 @@
 // lab dish, gold for progress and the player's colony colour - bound in the
 // template - for the way forward.
 .stage-panel.screens {
-  --bw-ground: #0b0f14;
-  --bw-surface: #121821;
-  --bw-surface-raised: #19212c;
-  --bw-surface-glass: rgb(18 24 33 / 92%);
-  --bw-line: #263142;
-  --bw-line-strong: #3a4659;
-  --bw-text: #e8eef5;
-  --bw-soft: #b7c3d0;
-  --bw-muted: #9aa8b8;
-  --bw-faint: #5b6878;
-  --bw-gold: #e9b949;
-  --bw-silver: #c4ccd6;
-  --bw-bronze: #c27a45;
-  --bw-platinum: #b9e6f0;
-  --bw-display: 'Bricolage Grotesque', 'Roboto', sans-serif;
-  --bw-body: 'Atkinson Hyperlegible', 'Roboto', sans-serif;
-
-  // Material's controls speak the screens' language too.
-  --mat-button-filled-label-text-font: var(--bw-body);
-  --mat-button-outlined-label-text-font: var(--bw-body);
-  --mat-button-text-label-text-font: var(--bw-body);
-  --mat-button-toggle-label-text-font: var(--bw-body);
-  --mat-slide-toggle-label-text-font: var(--bw-body);
-  --mat-button-outlined-label-text-color: var(--bw-text);
-  --mat-button-outlined-outline-color: var(--bw-line-strong);
-  --mat-button-filled-label-text-tracking: normal;
-  --mat-button-outlined-label-text-tracking: normal;
-  --mat-button-text-label-text-tracking: normal;
-  --mat-slide-toggle-label-text-tracking: normal;
+  @include screen.tokens;
 
   display: block;
   padding: 0;
@@ -353,113 +325,6 @@
   .screen {
     position: relative;
     height: 100%;
-  }
-
-  // The settings and the help, written into this template.
-  .settings,
-  .help {
-    @include screen.screen;
-  }
-
-  .screen-header {
-    @include screen.header;
-  }
-
-  .screen-title {
-    @include screen.title;
-  }
-
-  .screen-sections {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
-    gap: 1.25rem;
-  }
-
-  .screen-section {
-    @include screen.panel;
-
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
-    padding: 1.25rem;
-
-    p {
-      margin: 0;
-      line-height: 1.5;
-      color: var(--bw-soft);
-    }
-  }
-
-  .section-title {
-    @include screen.title;
-
-    font-size: 1.3rem;
-  }
-
-  .section-note {
-    font-size: 0.85rem;
-  }
-
-  // Seats under each other, so the swatches fit a third of the screen.
-  .stacked {
-    flex-direction: column;
-  }
-
-  .option-picker {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.4rem;
-  }
-
-  .option-label {
-    font-size: 0.9rem;
-    color: var(--bw-muted);
-  }
-
-  .resolution-hint {
-    font-size: 0.85rem;
-    color: var(--bw-muted);
-  }
-
-  .switches mat-slide-toggle {
-    min-height: 2.75rem;
-  }
-
-  .steps {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-    gap: 1.25rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .step-number {
-    @include screen.figure;
-
-    font-size: 2.25rem;
-    line-height: 1;
-    color: var(--bw-gold);
-  }
-
-  .steps li:first-child .step-number {
-    color: var(--bw-player);
-  }
-
-  .steps li:last-child .step-number {
-    color: var(--bw-opponent);
-  }
-
-  kbd {
-    padding: 0.1rem 0.45rem;
-    border: 1px solid var(--bw-line-strong);
-    border-radius: 0.35rem;
-    background: var(--bw-surface-raised);
-    color: var(--bw-text);
-    font: inherit;
-    font-size: 0.9em;
-    white-space: nowrap;
   }
 }
 

@@ -5,13 +5,12 @@ import {
   input,
   output,
 } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MedallionComponent } from '../medallion/medallion.component';
+import { ScreenHeaderComponent } from './screen-header.component';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { LEVELS } from '../state/levels';
-import { MEDAL_NAMES, MEDAL_TIERS } from '../state/medallions';
-import { Progress } from '../state/progress';
+import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
+import { medalTally, Progress } from '../state/progress';
 
 /**
  * The player's profile: every medallion won, level by level and difficulty
@@ -19,7 +18,7 @@ import { Progress } from '../state/progress';
  */
 @Component({
   selector: 'feat-lazy-bac-game-profile',
-  imports: [MatButtonModule, MatIconModule, MedallionComponent],
+  imports: [MedallionComponent, ScreenHeaderComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,11 +45,11 @@ export class ProfileComponent {
 
   /** How many medallions of each metal, rarest first. */
   protected readonly tally = computed(() => {
-    const held = this.cabinet().flatMap((row) => row.slots.map((s) => s.tier));
-    return [...MEDAL_TIERS].reverse().map((tier) => ({
+    const tally = medalTally(this.medals());
+    return MEDAL_TIERS_RAREST_FIRST.map((tier) => ({
       tier,
       name: MEDAL_NAMES[tier],
-      count: held.filter((t) => t === tier).length,
+      count: tally[tier],
     }));
   });
 

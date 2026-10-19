@@ -91,7 +91,9 @@ test('should explain the game', async ({ page }) => {
 
   await po.helpCta.click();
 
-  await expect(page.locator('.help')).toContainText('joystick');
+  await expect(page.locator('feat-lazy-bac-game-help')).toContainText(
+    'joystick'
+  );
   await po.backCta.click();
   await expect(po.playCta).toBeVisible();
 });

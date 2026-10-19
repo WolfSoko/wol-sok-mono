@@ -1,0 +1,52 @@
+@use 'screen';
+
+:host {
+  @include screen.screen;
+}
+
+.screen-sections {
+  @include screen.sections;
+}
+
+.screen-section {
+  @include screen.section;
+}
+
+.section-title {
+  @include screen.section-title;
+}
+
+.steps {
+  @include screen.sections(14rem);
+
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step-number {
+  @include screen.figure;
+
+  font-size: 2.25rem;
+  line-height: 1;
+  color: var(--bw-gold);
+}
+
+.steps li:first-child .step-number {
+  color: var(--bw-player);
+}
+
+.steps li:last-child .step-number {
+  color: var(--bw-opponent);
+}
+
+kbd {
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--bw-line-strong);
+  border-radius: 0.35rem;
+  background: var(--bw-surface-raised);
+  color: var(--bw-text);
+  font: inherit;
+  font-size: 0.9em;
+  white-space: nowrap;
+}

@@ -18,11 +18,11 @@ describe('swarm', () => {
 
     expect(left.every((cell) => cell.left <= 55 && cell.dx > 0)).toBe(true);
     expect(
-      left.every((cell) => cell.background.includes('rgb(255, 100, 20)'))
+      left.every((cell) => cell.background.includes('rgba(255,100,20,1)'))
     ).toBe(true);
     expect(right.every((cell) => cell.left >= 45 && cell.dx < 0)).toBe(true);
     expect(
-      right.every((cell) => cell.background.includes('rgb(0, 100, 230)'))
+      right.every((cell) => cell.background.includes('rgba(0,100,230,1)'))
     ).toBe(true);
   });
 });

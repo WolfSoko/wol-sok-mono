@@ -4,14 +4,6 @@
   @include screen.screen;
 }
 
-.screen-header {
-  @include screen.header;
-}
-
-.screen-title {
-  @include screen.title;
-}
-
 .kept {
   margin-left: auto;
   font-size: 0.9rem;

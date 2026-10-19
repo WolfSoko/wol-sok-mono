@@ -4,14 +4,7 @@
   @include screen.screen;
 }
 
-.screen-header {
-  @include screen.header;
-}
-
-.screen-title {
-  @include screen.title;
-}
-
+// Projected into the header, after the title.
 .controls {
   display: flex;
   flex-wrap: wrap;
@@ -253,11 +246,6 @@
     display: none;
   }
 
-  .screen-title {
-    font-size: 1.4rem;
-  }
-
-  .screen-header,
   .body {
     gap: 0.5rem 0.75rem;
   }
@@ -266,6 +254,7 @@
     min-height: 0;
   }
 
+  // Projected into the header, after the title.
   .controls {
     --mat-button-toggle-height: 36px;
   }
