@@ -1,29 +1,27 @@
 import { ProgressService } from '../progress.service';
 import { TestBed } from '@angular/core/testing';
 import { TICK_MS } from './fixed-tick';
-import { GameStateQuery } from './game-state.query';
 import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
 import { getLevel, levelCrosshairSpeed } from './levels';
-import { PlayerQuery } from './player.query';
+import { PlayerStore } from './player.store';
 import { matchOutcome } from './match-engine';
 import { PlayerService } from './player.service';
 import { playReplay, Replay, REPLAY_VERSION } from './replay';
-import { PlayerStore } from './player.store';
 
 const WIDTH = 320;
 const HEIGHT = 140;
 
 describe('GameStateService', () => {
   let service: GameStateService;
-  let query: GameStateQuery;
-  let playerQuery: PlayerQuery;
+  let store: GameStateStore;
+  let playerStore: PlayerStore;
 
   beforeEach(() => {
     TestBed.resetTestingModule();
     service = TestBed.inject(GameStateService);
-    query = TestBed.inject(GameStateQuery);
-    playerQuery = TestBed.inject(PlayerQuery);
+    store = TestBed.inject(GameStateStore);
+    playerStore = TestBed.inject(PlayerStore);
     TestBed.inject(GameStateStore).update({ width: WIDTH, height: HEIGHT });
   });
 
@@ -31,7 +29,7 @@ describe('GameStateService', () => {
     it('spawns both colonies inside the arena', () => {
       service.setArenaSize(WIDTH, HEIGHT);
 
-      for (const player of playerQuery.getAll()) {
+      for (const player of playerStore.entities()) {
         expect(player.x).toBeGreaterThan(0);
         expect(player.x).toBeLessThan(WIDTH);
         expect(player.y).toBeGreaterThan(0);
@@ -44,7 +42,7 @@ describe('GameStateService', () => {
     it('stores the level', () => {
       service.setLevel('serpentine');
 
-      expect(query.getValue().levelId).toBe('serpentine');
+      expect(store.snapshot().levelId).toBe('serpentine');
     });
 
     it('gives the crosshairs the speed of the level', () => {
@@ -53,7 +51,7 @@ describe('GameStateService', () => {
       service.setLevel('serpentine');
 
       const speed = levelCrosshairSpeed(getLevel('serpentine'));
-      for (const player of playerQuery.getAll()) {
+      for (const player of playerStore.entities()) {
         expect(player.maxSpeed).toBe(speed);
       }
     });
@@ -65,7 +63,7 @@ describe('GameStateService', () => {
       service.setColor(0, 'green');
       service.setColor(1, 'pink');
 
-      const [left, right] = playerQuery.getAll();
+      const [left, right] = playerStore.entities();
       expect([left.name, right.name]).toEqual(['Green', 'Pink']);
       expect(left.color).toEqual([40, 200, 70, 255]);
       expect(right.color).toEqual([255, 70, 170, 255]);
@@ -74,20 +72,20 @@ describe('GameStateService', () => {
     it('swaps the colours when a seat picks the other one', () => {
       service.setColor(0, 'blue');
 
-      expect(query.getValue().colors).toEqual(['blue', 'orange']);
+      expect(store.snapshot().colors).toEqual(['blue', 'orange']);
     });
 
     it('leaves a running match alone', () => {
       service.setArenaSize(WIDTH, HEIGHT);
       service.start();
-      const before = playerQuery.getAll().map((player) => player.maxSpeed);
+      const before = playerStore.entities().map((player) => player.maxSpeed);
 
       service.setLevel('serpentine');
 
-      expect(playerQuery.getAll().map((player) => player.maxSpeed)).toEqual(
+      expect(playerStore.entities().map((player) => player.maxSpeed)).toEqual(
         before
       );
-      expect(query.getValue().levelId).toBe('serpentine');
+      expect(store.snapshot().levelId).toBe('serpentine');
     });
 
     it('keeps the current level for an id that does not exist', () => {
@@ -95,7 +93,7 @@ describe('GameStateService', () => {
 
       service.setLevel('not-a-level');
 
-      expect(query.getValue().levelId).toBe(getLevel('not-a-level').id);
+      expect(store.snapshot().levelId).toBe(getLevel('not-a-level').id);
     });
   });
 
@@ -105,8 +103,8 @@ describe('GameStateService', () => {
 
       service.setMode('vs-computer');
 
-      const [human, computer] = playerQuery.getAll();
-      expect(query.getValue().mode).toBe('vs-computer');
+      const [human, computer] = playerStore.entities();
+      expect(store.snapshot().mode).toBe('vs-computer');
       expect(human.isBot).toBe(false);
       expect(human.name).toBe('You');
       expect(computer.isBot).toBe(true);
@@ -118,11 +116,11 @@ describe('GameStateService', () => {
 
       service.setMode('two-players');
 
-      expect(playerQuery.getAll().map((player) => player.name)).toEqual([
+      expect(playerStore.entities().map((player) => player.name)).toEqual([
         'Orange',
         'Blue',
       ]);
-      expect(playerQuery.getAll().some((player) => player.isBot)).toBe(false);
+      expect(playerStore.entities().some((player) => player.isBot)).toBe(false);
     });
 
     it('leaves a running match alone', () => {
@@ -132,8 +130,8 @@ describe('GameStateService', () => {
 
       service.setMode('vs-computer');
 
-      expect(playerQuery.getAll().some((player) => player.isBot)).toBe(false);
-      expect(query.getValue().mode).toBe('vs-computer');
+      expect(playerStore.entities().some((player) => player.isBot)).toBe(false);
+      expect(store.snapshot().mode).toBe('vs-computer');
     });
 
     it('leaves a paused match alone as well', () => {
@@ -144,7 +142,7 @@ describe('GameStateService', () => {
 
       service.setMode('vs-computer');
 
-      expect(playerQuery.getAll().some((player) => player.isBot)).toBe(false);
+      expect(playerStore.entities().some((player) => player.isBot)).toBe(false);
     });
   });
 
@@ -152,7 +150,7 @@ describe('GameStateService', () => {
     it('stores the difficulty', () => {
       service.setDifficulty('hard');
 
-      expect(query.getValue().difficulty).toBe('hard');
+      expect(store.snapshot().difficulty).toBe('hard');
     });
   });
 
@@ -163,7 +161,7 @@ describe('GameStateService', () => {
 
       service.boost(0);
 
-      expect(playerQuery.getEntity(0)?.boostActiveSec).toBeGreaterThan(0);
+      expect(playerStore.entityMap()[0]?.boostActiveSec).toBeGreaterThan(0);
     });
 
     it('does nothing on the start screen', () => {
@@ -171,13 +169,13 @@ describe('GameStateService', () => {
 
       service.boost(0);
 
-      expect(playerQuery.getEntity(0)?.boostActiveSec).toBe(0);
+      expect(playerStore.entityMap()[0]?.boostActiveSec).toBe(0);
     });
   });
 
   describe('head start', () => {
     function startingCounts(): number[] {
-      return playerQuery.getAll().map((player) => player.bacteriaCount);
+      return playerStore.entities().map((player) => player.bacteriaCount);
     }
 
     it('starts the colony of the seat without it smaller', () => {
@@ -213,7 +211,7 @@ describe('GameStateService', () => {
 
       service.advance(WIDTH, HEIGHT, 3);
 
-      expect(query.getValue().timePassed).toBeCloseTo(3 * TICK_MS);
+      expect(store.snapshot().timePassed).toBeCloseTo(3 * TICK_MS);
     });
 
     it('lands on every second exactly', () => {
@@ -225,7 +223,7 @@ describe('GameStateService', () => {
         service.advance(WIDTH, HEIGHT, 1);
       }
 
-      expect(query.getValue().timePassed).toBe(1000);
+      expect(store.snapshot().timePassed).toBe(1000);
     });
 
     it('records a replay that plays the match out the same', () => {
@@ -234,7 +232,6 @@ describe('GameStateService', () => {
       service.setArenaSize(WIDTH, HEIGHT);
       service.init(WIDTH, HEIGHT);
       service.start();
-      const store = TestBed.inject(GameStateStore);
       const players = TestBed.inject(PlayerService);
 
       store.update({ keysPressed: ['d'] });
@@ -257,7 +254,7 @@ describe('GameStateService', () => {
           ticks: 306,
         })
       );
-      expect(playReplay(replay)?.players).toEqual(playerQuery.getAll());
+      expect(playReplay(replay)?.players).toEqual(playerStore.entities());
     });
 
     it('plays no tick of the frame after the one that ended the match', () => {
@@ -276,7 +273,7 @@ describe('GameStateService', () => {
       service.advance(WIDTH, HEIGHT, 5);
 
       expect(tick).toHaveBeenCalledTimes(2);
-      expect(query.getValue().timePassed).toBeCloseTo(2 * TICK_MS);
+      expect(store.snapshot().timePassed).toBeCloseTo(2 * TICK_MS);
     });
   });
 
@@ -293,16 +290,17 @@ describe('GameStateService', () => {
       service.init(WIDTH, HEIGHT);
       service.start();
       TestBed.inject(GameStateStore).update({ timePassed: 30_000 - TICK_MS });
-      const [human, other] = playerQuery.getAll();
-      const players = TestBed.inject(PlayerStore);
-      players.update(human.id, { bacteriaCount: 400, peakCount: 500 });
-      players.update(other.id, { bacteriaCount: 0, lost: 300 });
+      const [human, other] = playerStore.entities();
+      playerStore.upsertPlayers([
+        { ...human, bacteriaCount: 400, peakCount: 500 },
+        { ...other, bacteriaCount: 0, lost: 300 },
+      ]);
       // The next tick finds the colonies as set here, and the match over.
       const playerService = TestBed.inject(PlayerService);
       jest.spyOn(playerService, 'tick').mockImplementation(() => undefined);
       jest
         .spyOn(playerService, 'outcome')
-        .mockImplementation(() => matchOutcome(playerQuery.getAll()));
+        .mockImplementation(() => matchOutcome(playerStore.entities()));
       service.advance(WIDTH, HEIGHT, 1);
       jest.restoreAllMocks();
     }
@@ -312,7 +310,7 @@ describe('GameStateService', () => {
     it('judges a win against the computer and keeps the award', () => {
       winAgainst('vs-computer');
 
-      const state = query.getValue();
+      const state = store.snapshot();
       expect(state.currentState).toBe(GameState.END);
       expect(state.matchEnded).toBe(true);
       expect(service.lastReplay?.header.levelId).toBe('hourglass');
@@ -332,16 +330,16 @@ describe('GameStateService', () => {
     it('awards nothing between two players', () => {
       winAgainst('two-players');
 
-      expect(query.getValue().matchEnded).toBe(true);
-      expect(query.getValue().earnings?.award).toBeNull();
+      expect(store.snapshot().matchEnded).toBe(true);
+      expect(store.snapshot().earnings?.award).toBeNull();
     });
 
     it('keeps the achievements the match earned, in either mode', () => {
       winAgainst('vs-computer');
-      expect(query.getValue().earnings?.achievements).toContain('first-blood');
+      expect(store.snapshot().earnings?.achievements).toContain('first-blood');
 
       service.start();
-      expect(query.getValue().earnings).toBeNull();
+      expect(store.snapshot().earnings).toBeNull();
     });
 
     it('counts a match between two players', () => {
@@ -353,28 +351,28 @@ describe('GameStateService', () => {
     it('records what the colonies did against the computer', () => {
       winAgainst('vs-computer');
 
-      expect(query.getValue().earnings?.award?.record).toEqual(
+      expect(store.snapshot().earnings?.award?.record).toEqual(
         expect.objectContaining({
           enemyCrushed: 300,
           peakShare: expect.any(Number),
         })
       );
       expect(
-        query.getValue().earnings?.award?.record.peakShare
+        store.snapshot().earnings?.award?.record.peakShare
       ).toBeGreaterThan(0);
     });
 
     it('plays a series between two players to the end', () => {
       service.setSeriesLength(3);
       winAgainst('two-players');
-      expect(query.getValue().series?.wins).toEqual([1, 0]);
+      expect(store.snapshot().series?.wins).toEqual([1, 0]);
 
       winAgainst('two-players');
-      expect(query.getValue().series).toEqual({ bestOf: 3, wins: [2, 0] });
+      expect(store.snapshot().series).toEqual({ bestOf: 3, wins: [2, 0] });
 
       // Taken: the next match starts a new one.
       service.start();
-      expect(query.getValue().series?.wins).toEqual([0, 0]);
+      expect(store.snapshot().series?.wins).toEqual([0, 0]);
     });
 
     it('ends a series when its setup changes, or on request', () => {
@@ -382,13 +380,13 @@ describe('GameStateService', () => {
       winAgainst('two-players');
 
       service.setColor(0, 'orange');
-      expect(query.getValue().series).not.toBeNull();
+      expect(store.snapshot().series).not.toBeNull();
       service.setHeadStart(1);
-      expect(query.getValue().series).toBeNull();
+      expect(store.snapshot().series).toBeNull();
 
       winAgainst('two-players');
       service.endSeries();
-      expect(query.getValue().series).toBeNull();
+      expect(store.snapshot().series).toBeNull();
     });
 
     it('carries a series from level to level', () => {
@@ -397,13 +395,13 @@ describe('GameStateService', () => {
 
       service.setLevel('corridors');
 
-      expect(query.getValue().series?.wins).toEqual([1, 0]);
+      expect(store.snapshot().series?.wins).toEqual([1, 0]);
     });
 
     it('plays single matches without a series', () => {
       winAgainst('two-players');
 
-      expect(query.getValue().series).toBeNull();
+      expect(store.snapshot().series).toBeNull();
     });
 
     it('counts the win for the winning colour', () => {
@@ -419,7 +417,7 @@ describe('GameStateService', () => {
 
       service.start();
 
-      expect(query.getValue().timePassed).toBe(0);
+      expect(store.snapshot().timePassed).toBe(0);
     });
 
     it('forgets the award as the next match starts', () => {
@@ -427,7 +425,7 @@ describe('GameStateService', () => {
 
       service.start();
 
-      expect(query.getValue().earnings).toBeNull();
+      expect(store.snapshot().earnings).toBeNull();
     });
   });
 });

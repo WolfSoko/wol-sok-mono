@@ -1,5 +1,4 @@
-import { Injectable, inject } from '@angular/core';
-import { applyTransaction } from '@datorama/akita';
+import { Injectable, inject, untracked } from '@angular/core';
 import { MeasureFps } from '@wolsok/utils-measure-fps';
 import {
   animationFrames,
@@ -16,8 +15,12 @@ import { scaleOf } from './arena-size';
 import { FramePacer } from './frame-pacer';
 import { GameFrame, TICK_MS, TickClock, ticksToMs } from './fixed-tick';
 import { BotDifficulty } from './bot-controller';
-import { getColonyColor, pickColor, validColorPair } from './colony-colors';
-import { GameStateQuery } from './game-state.query';
+import {
+  getColonyColor,
+  pickColor,
+  sameColors,
+  validColorPair,
+} from './colony-colors';
 import {
   GameMode,
   GameState,
@@ -42,8 +45,7 @@ import { randomSeed } from './geometry';
 import { MatchOutcome } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import { Replay, replayOf } from './replay';
-
-import { PlayerQuery } from './player.query';
+import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
 import { ProgressService } from '../progress.service';
 
@@ -57,8 +59,7 @@ const MAX_FRAME_MS = 3 * TICK_MS;
 @Injectable({ providedIn: 'root' })
 export class GameStateService {
   private gameStateStore = inject(GameStateStore);
-  private gameStateQuery = inject(GameStateQuery);
-  private playerQuery = inject(PlayerQuery);
+  private playerStore = inject(PlayerStore);
   private playerService = inject(PlayerService);
   private progress = inject(ProgressService);
   /** What the colonies on the board were spawned from - see `initPlayers`. */
@@ -112,7 +113,7 @@ export class GameStateService {
   }
 
   private isRunning(): boolean {
-    return this.gameStateQuery.getValue().currentState === GameState.RUNNING;
+    return untracked(this.gameStateStore.currentState) === GameState.RUNNING;
   }
 
   init(width: number, height: number) {
@@ -124,12 +125,16 @@ export class GameStateService {
       earnings: null,
     });
     // subscribe update time passed when game running
-    const running$ = this.gameStateQuery.selectCurrentGameState(
-      GameState.RUNNING
+    // Synchronous, so the loop stops inside the update that ends the match.
+    const currentState$ = this.gameStateStore.select$(() =>
+      this.gameStateStore.currentState()
     );
-    const notRunning$ = this.gameStateQuery
-      .selectCurrentGameState()
-      .pipe(filter((value) => value !== GameState.RUNNING));
+    const running$ = currentState$.pipe(
+      filter((value) => value === GameState.RUNNING)
+    );
+    const notRunning$ = currentState$.pipe(
+      filter((value) => value !== GameState.RUNNING)
+    );
 
     this.subscriptions = running$
       .pipe(switchMap(() => this.gameLoop$.pipe(takeUntil(notRunning$))))
@@ -156,20 +161,19 @@ export class GameStateService {
    * award reach the store together.
    */
   private endMatch(outcome: MatchOutcome): void {
-    const { series } = this.gameStateQuery.getValue();
+    const { series } = this.gameStateStore.snapshot();
     const earnings = this.recordMatch(outcome.winner);
     this.lastReplay = this.replay();
-    applyTransaction(() => {
-      this.gameStateStore.update({ currentState: GameState.END });
-      this.gameStateStore.update({
-        winner: outcome.winner,
-        matchEnded: true,
-        earnings,
-        series:
-          series === null
-            ? null
-            : addSeriesMatch(series, winnerSeat(outcome.winner)),
-      });
+    // One update, so the result and the award reach the readers together.
+    this.gameStateStore.update({
+      currentState: GameState.END,
+      winner: outcome.winner,
+      matchEnded: true,
+      earnings,
+      series:
+        series === null
+          ? null
+          : addSeriesMatch(series, winnerSeat(outcome.winner)),
     });
   }
 
@@ -192,7 +196,7 @@ export class GameStateService {
    */
   private recordMatch(winner: Player | null): MatchEarnings | null {
     const { mode, levelId, difficulty, timePassed, width, colors } =
-      this.gameStateQuery.getValue();
+      this.gameStateStore.snapshot();
     switch (mode) {
       case 'two-players': {
         const seat = winnerSeat(winner);
@@ -201,7 +205,7 @@ export class GameStateService {
         );
       }
       case 'vs-computer': {
-        const record = matchRecord(this.playerQuery.getAll(), {
+        const record = matchRecord(untracked(this.playerStore.entities), {
           levelId,
           difficulty,
           // Whole seconds, as the match clock shows them.
@@ -224,7 +228,7 @@ export class GameStateService {
    */
   private initPlayers() {
     const { width, height, levelId, mode, difficulty, colors, headStart } =
-      this.gameStateQuery.getValue();
+      this.gameStateStore.snapshot();
     this.plan = {
       levelId,
       mode,
@@ -256,7 +260,7 @@ export class GameStateService {
    * again. A paused match is still a match and keeps its colonies.
    */
   private isIdle(): boolean {
-    return !isMatchOn(this.gameStateQuery.getValue().currentState);
+    return !isMatchOn(this.gameStateStore.snapshot().currentState);
   }
 
   /**
@@ -267,7 +271,11 @@ export class GameStateService {
    * again - with the new map, balance and opponent - while nobody is playing.
    */
   private updateSetup(setup: Partial<MatchSetup>): void {
-    const current = this.gameStateQuery.getValue();
+    const current = this.gameStateStore.snapshot();
+    // The same pair again is no change - readers would only redo their work.
+    if (setup.colors && sameColors(setup.colors, current.colors)) {
+      setup = { ...setup, colors: current.colors };
+    }
     // A series is played with one setup: changing it ends the one under way.
     const changed = SERIES_SETUP_KEYS.some(
       (key) =>
@@ -325,7 +333,7 @@ export class GameStateService {
   public setColor(seat: 0 | 1, colorId: string): void {
     this.updateSetup({
       colors: pickColor(
-        this.gameStateQuery.getValue().colors,
+        this.gameStateStore.snapshot().colors,
         seat,
         getColonyColor(colorId).id
       ),

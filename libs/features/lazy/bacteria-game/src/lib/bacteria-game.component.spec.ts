@@ -3,12 +3,12 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject } from 'rxjs';
 import { arenaTheme } from './arena/arena-theme';
 import { BacteriaGameComponent } from './bacteria-game.component';
-import { GameStateQuery } from './state/game-state.query';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import { GameStateService } from './state/game-state.service';
+import { GameStateStore } from './state/game.states';
 import { levelTitle, LEVELS } from './state/levels';
-import { PlayerQuery } from './state/player.query';
+import { PlayerStore } from './state/player.store';
 
 /**
  * Lets the helpers believe the browser offers the API and that the given
@@ -69,7 +69,7 @@ async function settle(): Promise<void> {
 describe('BacteriaGameComponent', () => {
   let fixture: ComponentFixture<BacteriaGameComponent>;
   let component: BacteriaGameComponent;
-  let query: GameStateQuery;
+  let store: GameStateStore;
 
   /**
    * Creates the component with a stage whose fullscreen request the browser
@@ -81,7 +81,7 @@ describe('BacteriaGameComponent', () => {
     TestBed.configureTestingModule({
       imports: [BacteriaGameComponent, NoopAnimationsModule],
     });
-    query = TestBed.inject(GameStateQuery);
+    store = TestBed.inject(GameStateStore);
     fixture = TestBed.createComponent(BacteriaGameComponent);
     component = fixture.componentInstance;
     const arena = stage(granted);
@@ -91,12 +91,12 @@ describe('BacteriaGameComponent', () => {
     return arena;
   }
 
-  function startMatch(mode: 'two-players' | 'vs-computer'): PlayerQuery {
+  function startMatch(mode: 'two-players' | 'vs-computer'): PlayerStore {
     const service = TestBed.inject(GameStateService);
     service.setArenaSize(320, 140);
     service.setMode(mode);
     service.start();
-    return TestBed.inject(PlayerQuery);
+    return TestBed.inject(PlayerStore);
   }
 
   beforeEach(() => {
@@ -122,7 +122,7 @@ describe('BacteriaGameComponent', () => {
 
       expect(component['fullscreen']()).toBe(true);
       expect(arena.requestFullscreen).toHaveBeenCalled();
-      expect(query.getValue().keysPressed).not.toContain('f');
+      expect(store.snapshot().keysPressed).not.toContain('f');
     });
 
     it('leaves fullscreen again', () => {
@@ -161,7 +161,7 @@ describe('BacteriaGameComponent', () => {
   describe('the boost keys', () => {
     function boostOf(playerId: number): number {
       return (
-        TestBed.inject(PlayerQuery).getEntity(playerId)?.boostActiveSec ?? 0
+        TestBed.inject(PlayerStore).entityMap()[playerId]?.boostActiveSec ?? 0
       );
     }
 
@@ -195,7 +195,7 @@ describe('BacteriaGameComponent', () => {
       component.onKeyDown(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
-      expect(query.getValue().keysPressed).not.toContain(' ');
+      expect(store.snapshot().keysPressed).not.toContain(' ');
     });
 
     it('ignores a held key', () => {
@@ -375,7 +375,7 @@ describe('BacteriaGameComponent', () => {
       component.onKeyDown(keyEvent('Escape', document.body));
 
       expect(component['fullscreen']()).toBe(false);
-      expect(query.getValue().keysPressed).not.toContain('Escape');
+      expect(store.snapshot().keysPressed).not.toContain('Escape');
     });
   });
 
@@ -448,7 +448,7 @@ describe('BacteriaGameComponent', () => {
       create();
       startMatch('vs-computer');
 
-      query['store'].update({ matchEnded: true });
+      store.update({ matchEnded: true });
 
       expect(component['panel']()).toBe('over');
     });
@@ -461,14 +461,14 @@ describe('BacteriaGameComponent', () => {
       (component as unknown as { thanos: unknown }).thanos = {
         vaporize: () => vaporized,
       };
-      const before = query.getValue().levelId;
-      query['store'].update({ matchEnded: true });
+      const before = store.snapshot().levelId;
+      store.update({ matchEnded: true });
 
       component['onMatchEnd']('next');
-      expect(query.getValue().levelId).toBe(before);
+      expect(store.snapshot().levelId).toBe(before);
 
       vaporized.complete();
-      expect(query.getValue().levelId).not.toBe(before);
+      expect(store.snapshot().levelId).not.toBe(before);
     });
 
     it('puts the arena back on the canvas right before it is vaporized', () => {
@@ -514,14 +514,14 @@ describe('BacteriaGameComponent', () => {
     it('locks the next level on the result screen until it is open', () => {
       create();
       startMatch('vs-computer');
-      const before = query.getValue().levelId;
-      query['store'].update({ matchEnded: true });
+      const before = store.snapshot().levelId;
+      store.update({ matchEnded: true });
 
       expect(component['upcomingLock']()).toBe(
         `Win ${levelTitle(LEVELS[0])} to unlock`
       );
       component['onMatchEnd']('next');
-      expect(query.getValue().levelId).toBe(before);
+      expect(store.snapshot().levelId).toBe(before);
     });
   });
 
@@ -553,27 +553,27 @@ describe('BacteriaGameComponent', () => {
       gameState.setColors(['orange', 'green']);
 
       component['selectColor']({ seat: 0, colorId: 'green' });
-      expect(query.getValue().colors).toEqual(['orange', 'green']);
+      expect(store.snapshot().colors).toEqual(['orange', 'green']);
 
       component['selectColor']({ seat: 1, colorId: 'orange' });
-      expect(query.getValue().colors).toEqual(['orange', 'green']);
+      expect(store.snapshot().colors).toEqual(['orange', 'green']);
 
       component['selectColor']({ seat: 1, colorId: 'blue' });
-      expect(query.getValue().colors).toEqual(['orange', 'blue']);
+      expect(store.snapshot().colors).toEqual(['orange', 'blue']);
     });
   });
 
   describe('the joysticks', () => {
     it('steer the crosshair of their player', () => {
       create();
-      const playerQuery = startMatch('two-players');
-      const before = playerQuery.getEntity(1)?.x ?? 0;
+      const playerStore = startMatch('two-players');
+      const before = playerStore.entityMap()[1]?.x ?? 0;
 
       component['steer'](1, { x: 1, y: 0 });
       TestBed.inject(GameStateService).advance(320, 140, 3);
 
-      expect(playerQuery.getEntity(1)?.x).toBeGreaterThan(before);
-      expect(playerQuery.getEntity(0)?.x).toBe(80);
+      expect(playerStore.entityMap()[1]?.x).toBeGreaterThan(before);
+      expect(playerStore.entityMap()[0]?.x).toBe(80);
     });
   });
 });

@@ -2,15 +2,15 @@ import { TestBed } from '@angular/core/testing';
 import { CampaignService } from './campaign.service';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { GameSettingsService } from './settings.service';
-import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
+import { GameStateStore } from './state/game.states';
 import { levelTitle, LEVELS } from './state/levels';
 import { GameStorage } from './storage/game-storage';
 import { LateGameStorage } from '../testing/late-game-storage';
 
 describe('CampaignService', () => {
   let gameState: GameStateService;
-  let query: GameStateQuery;
+  let store: GameStateStore;
   let settings: GameSettingsService;
 
   beforeEach(() => {
@@ -21,7 +21,7 @@ describe('CampaignService', () => {
   function create(): CampaignService {
     const campaign = TestBed.inject(CampaignService);
     gameState = TestBed.inject(GameStateService);
-    query = TestBed.inject(GameStateQuery);
+    store = TestBed.inject(GameStateStore);
     settings = TestBed.inject(GameSettingsService);
     gameState.setMode('vs-computer');
     TestBed.tick();
@@ -59,12 +59,12 @@ describe('CampaignService', () => {
     gameState.setMode('two-players');
     gameState.setLevel(LEVELS[6].id);
     TestBed.tick();
-    expect(query.getValue().levelId).toBe(LEVELS[6].id);
+    expect(store.snapshot().levelId).toBe(LEVELS[6].id);
 
     gameState.setMode('vs-computer');
     TestBed.tick();
 
-    expect(query.getValue().levelId).toBe(LEVELS[1].id);
+    expect(store.snapshot().levelId).toBe(LEVELS[1].id);
   });
 
   it('puts the ladder back on an open level when free play ends', () => {
@@ -72,12 +72,12 @@ describe('CampaignService', () => {
     settings.setFreePlay(true);
     gameState.setLevel(LEVELS[5].id);
     TestBed.tick();
-    expect(query.getValue().levelId).toBe(LEVELS[5].id);
+    expect(store.snapshot().levelId).toBe(LEVELS[5].id);
 
     settings.setFreePlay(false);
     TestBed.tick();
 
-    expect(query.getValue().levelId).toBe(LEVELS[0].id);
+    expect(store.snapshot().levelId).toBe(LEVELS[0].id);
   });
 
   it('does not change the level of a match under way', () => {
@@ -89,7 +89,7 @@ describe('CampaignService', () => {
     settings.setFreePlay(false);
     TestBed.tick();
 
-    expect(query.getValue().levelId).toBe(LEVELS[5].id);
+    expect(store.snapshot().levelId).toBe(LEVELS[5].id);
   });
 
   it('waits for the progress before it moves a level', () => {
@@ -103,11 +103,11 @@ describe('CampaignService', () => {
     create();
     gameState.setLevel(LEVELS[5].id);
     TestBed.tick();
-    expect(query.getValue().levelId).toBe(LEVELS[5].id);
+    expect(store.snapshot().levelId).toBe(LEVELS[5].id);
 
     storage.flush();
     TestBed.tick();
 
-    expect(query.getValue().levelId).toBe(LEVELS[5].id);
+    expect(store.snapshot().levelId).toBe(LEVELS[5].id);
   });
 });
