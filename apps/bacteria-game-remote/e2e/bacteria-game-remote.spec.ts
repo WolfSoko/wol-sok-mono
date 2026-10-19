@@ -209,6 +209,16 @@ test.describe('on a touchscreen', () => {
 
 test('should let the players pick their colours', async ({ page }) => {
   const po = new BacteriaGamePo(page);
+  // A player who earned green (First Blood) and pink (the rank Bacillus).
+  await page.addInitScript(() =>
+    localStorage.setItem(
+      'bacteria-game.progress',
+      JSON.stringify({
+        totals: { matchXp: 1000 },
+        achievements: { 'first-blood': '2026-10-19' },
+      })
+    )
+  );
   await po.goto();
   await po.twoPlayersCta.click();
   await po.backCta.click();
@@ -277,4 +287,20 @@ test('should pause into a menu and quit back to the main menu', async ({
 
   // The arena is vaporized first, which takes a few seconds.
   await expect(po.playCta).toBeVisible({ timeout: 30_000 });
+});
+
+test('should keep the colours still to earn locked, saying what opens them', async ({
+  page,
+}) => {
+  const po = new BacteriaGamePo(page);
+  await po.goto();
+  await po.settingsCta.click();
+
+  const green = page
+    .getByRole('radiogroup', { name: 'Colour of You' })
+    .getByRole('radio', { name: /^Green, locked/ });
+  await expect(green).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.locator('.locked-list')).toContainText(
+    'Green - Earn First Blood'
+  );
 });
