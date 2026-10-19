@@ -215,8 +215,10 @@ export class GameSettingsService {
   private restorePendingSetup(): void {
     const stored = this.pendingSetup;
     if (stored !== null) {
-      this.pendingSetup = null;
+      // Still pending while it is applied, so every write on the way stores
+      // the same setup - and the backend skips all but the first.
       this.restoreMatchSetup(stored);
+      this.pendingSetup = null;
     }
   }
 
