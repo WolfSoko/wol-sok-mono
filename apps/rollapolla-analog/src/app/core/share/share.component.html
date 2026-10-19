@@ -1,0 +1,71 @@
+<div class="intro">
+  <ng-content />
+</div>
+<div class="buttons">
+  @if (canShareNatively()) {
+    <button
+      matButton="filled"
+      type="button"
+      (click)="shareNatively()"
+      data-testid="share-native"
+    >
+      <mat-icon>share</mat-icon>
+      Share
+    </button>
+  }
+  <button
+    [matButton]="canShareNatively() || !highlighted() ? 'outlined' : 'filled'"
+    type="button"
+    (click)="copyLink()"
+    data-testid="copy-link"
+  >
+    <mat-icon>{{ copyState() === "copied" ? "check" : "link" }}</mat-icon>
+    {{ copyState() === "copied" ? "Link copied" : "Copy link" }}
+  </button>
+  <span class="copied-status" role="status">{{
+    copyState() === "copied" ? "Link copied to the clipboard" : ""
+  }}</span>
+</div>
+@if (copyState() === "failed") {
+  <div class="copy-failed" data-testid="copy-failed">
+    <p class="copy-failed-text" role="alert">
+      Could not copy the link. It is selected below, copy it yourself.
+    </p>
+    <mat-form-field class="manual-link" subscriptSizing="dynamic">
+      <mat-label>{{ linkLabel() }}</mat-label>
+      <input
+        #manualLink
+        matInput
+        readonly
+        [value]="content().url"
+        (click)="selectAll($event)"
+        (focus)="selectAll($event)"
+        data-testid="manual-link"
+      />
+    </mat-form-field>
+  </div>
+}
+@if (links().length) {
+  <ul class="targets" aria-label="Share on">
+    @for (link of links(); track link.id) {
+      <li>
+        <a
+          mat-icon-button
+          class="target"
+          [href]="link.href"
+          [attr.target]="link.newTab ? '_blank' : null"
+          [attr.rel]="link.newTab ? 'noopener noreferrer nofollow' : null"
+          [attr.aria-label]="'Share on ' + link.label"
+          [matTooltip]="link.label"
+          [attr.data-testid]="'share-' + link.id"
+        >
+          @if (link.icon.kind === "svg") {
+            <mat-icon [svgIcon]="link.svgIcon" />
+          } @else {
+            <mat-icon>{{ link.icon.name }}</mat-icon>
+          }
+        </a>
+      </li>
+    }
+  </ul>
+}
