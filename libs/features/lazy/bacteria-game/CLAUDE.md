@@ -26,8 +26,16 @@ changes to the services that use it.
   a damaged or older entry never throws.
 - Data that more than one tab or device writes, such as progress, goes
   through `update` with a merge that can only gain: a better medallion is
-  kept, never a worse one. That lets a Firestore backend run `update` as a
-  transaction, and lets concurrent writers converge.
+  kept, never a worse one. Such a change comes to the same however late or
+  often a backend applies it, offline included, so concurrent writers converge
+  without a transaction.
+- A setting the storage does not hold must not be reset when the storage
+  answers late. Writes that change nothing are skipped, since every write to
+  Firestore is billed.
+- Settings are read once per visit, while progress follows every change. When
+  Firebase sign-in arrives, the backend re-emits `watch` for the new user.
+  Progress follows that on its own; settings then have to decide whether they
+  follow the account too.
 - Specs for a service that stores data also run it against an asynchronous
   fake `GameStorage`, so a service that depends on local storage answering
   synchronously fails a test.

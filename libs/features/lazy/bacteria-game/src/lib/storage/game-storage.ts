@@ -9,7 +9,8 @@ import { LocalGameStorage } from './local-game-storage';
  * `{ provide: GameStorage, useClass: FirestoreGameStorage }`.
  *
  * Every backend may answer late, so the services keep their state in
- * signals and never wait on storage. A backend that fails - no network, a
+ * signals and never wait on storage. Values are plain JSON - what
+ * `JSON.stringify` keeps - so every backend can store them. A backend that fails - no network, a
  * browser that refuses storage - reads as nothing stored and lets a write go,
  * so the value lasts for this visit only. None of the calls throws or errors.
  */
@@ -27,17 +28,14 @@ export abstract class GameStorage {
   public abstract write(key: string, value: unknown): void;
 
   /**
-   * Stores what `change` makes of the value stored under a key - null when
-   * there is none. A backend shared between devices runs it as a transaction
-   * and may call `change` more than once, so it must not have side effects.
+   * Stores what `change` makes of the latest value stored under a key - null
+   * when there is none. A backend shared between devices may apply it later,
+   * once it is online, and call `change` more than once, so `change` must not
+   * have side effects. Changes that merge and can only gain need no
+   * transaction: applied late or twice, they come to the same.
    */
   public abstract update(
     key: string,
     change: (stored: unknown) => unknown
   ): void;
-}
-
-/** True for anything a stored object's fields can be read from. */
-export function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value != null;
 }

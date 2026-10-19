@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { GameStorage, isObject } from './game-storage';
+import { GameStorage } from './game-storage';
 import { LocalGameStorage } from './local-game-storage';
 
 describe('LocalGameStorage', () => {
@@ -68,14 +68,5 @@ describe('LocalGameStorage', () => {
     expect(() => storage.write('key', 1)).not.toThrow();
     expect(() => storage.update('key', () => 1)).not.toThrow();
     expect(watched('key')).toEqual([null]);
-  });
-});
-
-describe('isObject', () => {
-  it('tells objects from everything else', () => {
-    expect(isObject({})).toBe(true);
-    expect(isObject([])).toBe(true);
-    expect(isObject(null)).toBe(false);
-    expect(isObject('x')).toBe(false);
   });
 });

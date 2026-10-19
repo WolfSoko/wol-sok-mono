@@ -149,7 +149,8 @@ describe('ProgressService', () => {
       progress.recordMatch(GOLD_WIN);
       storage.flush();
 
-      storage.writeElsewhere(PROGRESS_STORAGE_KEY, {
+      // Another device writes - this service hears of it as any watcher would.
+      storage.write(PROGRESS_STORAGE_KEY, {
         medals: { hourglass: { hard: 'bronze' }, villi: { easy: 'gold' } },
       });
       storage.flush();

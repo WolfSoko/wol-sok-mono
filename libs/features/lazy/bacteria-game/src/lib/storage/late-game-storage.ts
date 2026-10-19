@@ -36,11 +36,6 @@ export class LateGameStorage implements GameStorage {
     this.pending.push(() => this.store(key, change(this.stored(key))));
   }
 
-  /** Stores a value as another device would - watchers hear of it at the next flush. */
-  public writeElsewhere(key: string, value: unknown): void {
-    this.write(key, value);
-  }
-
   /** Answers everything asked so far. */
   public flush(): void {
     const pending = this.pending;

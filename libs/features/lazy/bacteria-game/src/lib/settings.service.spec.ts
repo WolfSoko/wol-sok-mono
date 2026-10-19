@@ -204,6 +204,34 @@ describe('GameSettingsService', () => {
       });
     });
 
+    it('keeps a change made before the storage answered, unless it holds that setting', () => {
+      const service = createWith({ sound: false });
+
+      service.setSound(true);
+      service.setShowFps(true);
+      storage.flush();
+      storage.flush();
+
+      expect(service.sound()).toBe(false);
+      expect(service.showFps()).toBe(true);
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        sound: false,
+        showFps: true,
+      });
+    });
+
+    it('writes nothing back when the settings did not change', () => {
+      const service = createWith({});
+      storage.flush();
+      storage.flush();
+      const write = jest.spyOn(storage, 'write');
+
+      service.setShowFps(service.showFps());
+      service.setSound(service.sound());
+
+      expect(write).not.toHaveBeenCalled();
+    });
+
     it('stores the changes made after the settings were restored', () => {
       const service = createWith({ sound: false });
       storage.flush();

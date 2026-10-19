@@ -25,6 +25,13 @@ describe('addMedal', () => {
     expect(bestMedal(progress, 'corridors', 'normal')).toBe('platinum');
   });
 
+  it('is the progress given when the medallion is no better', () => {
+    const progress = addMedal(EMPTY_PROGRESS, 'corridors', 'normal', 'gold');
+
+    expect(addMedal(progress, 'corridors', 'normal', 'silver')).toBe(progress);
+    expect(addMedal(progress, 'corridors', 'normal', 'gold')).toBe(progress);
+  });
+
   it('keeps the other difficulties of a level', () => {
     let progress = addMedal(EMPTY_PROGRESS, 'corridors', 'normal', 'bronze');
     progress = addMedal(progress, 'corridors', 'hard', 'gold');
@@ -60,8 +67,9 @@ describe('mergeProgress', () => {
     );
   });
 
-  it('changes nothing when merging empty progress', () => {
-    expect(mergeProgress(here, EMPTY_PROGRESS)).toEqual(here);
+  it('is the progress given when the other adds nothing', () => {
+    expect(mergeProgress(here, EMPTY_PROGRESS)).toBe(here);
+    expect(mergeProgress(here, here)).toBe(here);
     expect(mergeProgress(EMPTY_PROGRESS, here)).toEqual(here);
   });
 });

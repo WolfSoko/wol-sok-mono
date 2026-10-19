@@ -14,7 +14,8 @@ import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
 import { GameMode } from './state/game.states';
 import { LEVELS } from './state/levels';
-import { GameStorage, isObject } from './storage/game-storage';
+import { isObject } from './state/is-object';
+import { GameStorage } from './storage/game-storage';
 
 /** What the game remembers between visits. */
 export interface StoredSettings {
@@ -54,8 +55,9 @@ const MODES: readonly GameMode[] = ['vs-computer', 'two-players'];
  * The match settings live in the game state store, as they did; this service
  * only restores them once the storage answers and writes them back whenever
  * they change after that - never before, so the defaults the game starts
- * with cannot overwrite the stored settings. Storage that fails simply
- * forgets them.
+ * with cannot overwrite the stored settings. What the storage holds wins
+ * over a change made before it answered; the other changes are kept and
+ * written then. Storage that fails simply forgets them.
  */
 @Injectable({ providedIn: 'root' })
 export class GameSettingsService {
@@ -63,6 +65,8 @@ export class GameSettingsService {
   private readonly query = inject(GameStateQuery);
   private readonly storage = inject(GameStorage);
   private restored = false;
+  /** The settings as last written or read, to skip writes that change nothing. */
+  private stored: string | null = null;
 
   /** True while the frame rate badge is shown on the arena. */
   public readonly showFps = signal(false);
@@ -85,6 +89,7 @@ export class GameSettingsService {
       .pipe(take(1))
       .subscribe((stored) => {
         this.restore(isObject(stored) ? (stored as StoredSettings) : {});
+        this.stored = JSON.stringify(stored);
         this.restored = true;
         this.persistMatchSetup();
       });
@@ -120,7 +125,11 @@ export class GameSettingsService {
     this.persist();
   }
 
-  /** Applies what an earlier visit stored, ignoring anything it cannot read. */
+  /**
+   * Applies what an earlier visit stored, ignoring anything it cannot read.
+   * A setting it does not hold keeps its value - a change made before the
+   * storage answered as much as a default.
+   */
   private restore(stored: StoredSettings): void {
     if (stored.mode != null && MODES.includes(stored.mode)) {
       this.gameState.setMode(stored.mode);
@@ -146,9 +155,15 @@ export class GameSettingsService {
     ) {
       this.screenResolution.set(stored.screenResolution as ScreenResolution);
     }
-    this.showFps.set(stored.showFps === true);
-    this.sound.set(stored.sound !== false);
-    this.music.set(stored.music !== false);
+    if (typeof stored.showFps === 'boolean') {
+      this.showFps.set(stored.showFps);
+    }
+    if (typeof stored.sound === 'boolean') {
+      this.sound.set(stored.sound);
+    }
+    if (typeof stored.music === 'boolean') {
+      this.music.set(stored.music);
+    }
   }
 
   /** Writes the settings back whenever the match setup in the game state changes. */
@@ -189,6 +204,10 @@ export class GameSettingsService {
       sound: this.sound(),
       music: this.music(),
     };
-    this.storage.write(SETTINGS_STORAGE_KEY, settings);
+    const json = JSON.stringify(settings);
+    if (json !== this.stored) {
+      this.stored = json;
+      this.storage.write(SETTINGS_STORAGE_KEY, settings);
+    }
   }
 }
