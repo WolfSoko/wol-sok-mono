@@ -30,10 +30,25 @@ export class LocalGameStorage implements GameStorage {
     }
   }
 
+  /**
+   * Reads, changes and writes the value under a lock all tabs share, where
+   * the browser has Web Locks: two tabs ending a match at once would both
+   * read the old count, and one match would be lost.
+   */
   public update(key: string, change: (stored: unknown) => unknown): void {
-    this.write(key, change(readStoredJson(key)));
+    const apply = () => this.write(key, change(readStoredJson(key)));
+    const locks = globalThis.navigator?.locks;
+    if (locks == null) {
+      apply();
+      return;
+    }
+    // A browser that refuses the lock still gets the change.
+    locks.request(`${LOCK_PREFIX}${key}`, apply).catch(apply);
   }
 }
+
+/** Names the Web Lock that guards a key, apart from other locks of the origin. */
+const LOCK_PREFIX = 'bacteria-game-storage:';
 
 /** The JSON stored under a key, null when there is none or it is unreadable. */
 function readStoredJson(key: string): unknown {

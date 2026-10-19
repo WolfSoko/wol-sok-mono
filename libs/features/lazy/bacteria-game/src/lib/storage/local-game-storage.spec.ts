@@ -68,6 +68,49 @@ describe('LocalGameStorage', () => {
     expect(watched('count')).toEqual([2]);
   });
 
+  it('changes the value under a lock all tabs share, where there is one', async () => {
+    const held: string[] = [];
+    const request = jest.fn(async (name: string, callback: () => void) => {
+      held.push(name);
+      callback();
+    });
+    Object.defineProperty(navigator, 'locks', {
+      value: { request },
+      configurable: true,
+    });
+    try {
+      storage.update('count', () => 1);
+      await Promise.resolve();
+
+      expect(held).toEqual(['bacteria-game-storage:count']);
+      expect(watched('count')).toEqual([1]);
+    } finally {
+      Object.defineProperty(navigator, 'locks', {
+        value: undefined,
+        configurable: true,
+      });
+    }
+  });
+
+  it('still changes the value when the browser refuses the lock', async () => {
+    Object.defineProperty(navigator, 'locks', {
+      value: { request: () => Promise.reject(new Error('denied')) },
+      configurable: true,
+    });
+    try {
+      storage.update('count', () => 2);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(watched('count')).toEqual([2]);
+    } finally {
+      Object.defineProperty(navigator, 'locks', {
+        value: undefined,
+        configurable: true,
+      });
+    }
+  });
+
   it('shrugs off a browser that refuses storage', () => {
     jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('quota', 'QuotaExceededError');
