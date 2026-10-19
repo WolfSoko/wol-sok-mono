@@ -1,4 +1,4 @@
-import { seeded } from '../state/geometry';
+import { clamp, seeded } from '../state/geometry';
 import { STEPS_PER_BAR, stepSeconds } from './level-music';
 
 /**
@@ -127,9 +127,10 @@ export function composeMenuMusic(seed: number): MenuScore {
       if (random() >= chance) {
         continue;
       }
-      bellIndex = Math.min(
-        chord.length - 1,
-        Math.max(0, bellIndex + Math.round((random() - 0.5) * 3))
+      bellIndex = clamp(
+        bellIndex + Math.round((random() - 0.5) * 3),
+        0,
+        chord.length - 1
       );
       notes.push({
         voice: 'bell',

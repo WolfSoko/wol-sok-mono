@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { GameHapticsService } from './haptics.service';
+import { GameSettingsService } from './settings.service';
 import { FrameEvents } from './state/match-engine';
 
 const QUIET: FrameEvents = {
@@ -16,6 +17,7 @@ describe('GameHapticsService', () => {
   let now: number;
 
   beforeEach(() => {
+    localStorage.clear();
     now = 1000;
     jest.spyOn(performance, 'now').mockImplementation(() => now);
     vibrate = jest.fn(() => true);
@@ -47,7 +49,7 @@ describe('GameHapticsService', () => {
       haptics.frame({ ...QUIET, boosts: [false] });
       haptics.matchEnd('win', true);
       haptics.tap();
-      haptics.setEnabled(false);
+      haptics.stop();
     }).not.toThrow();
   });
 
@@ -97,10 +99,12 @@ describe('GameHapticsService', () => {
     expect(medal.slice(0, win.length)).toEqual(win);
   });
 
-  it('keeps still once switched off, and stops what was playing', () => {
+  it('keeps still while the setting is off, and stops what was playing', () => {
     const haptics = TestBed.inject(GameHapticsService);
+    const settings = TestBed.inject(GameSettingsService);
 
-    haptics.setEnabled(false);
+    settings.setVibration(false);
+    haptics.stop();
     expect(vibrate).toHaveBeenCalledWith(0);
     vibrate.mockClear();
 
@@ -109,7 +113,7 @@ describe('GameHapticsService', () => {
     haptics.tap();
     expect(vibrate).not.toHaveBeenCalled();
 
-    haptics.setEnabled(true);
+    settings.setVibration(true);
     haptics.tap();
     expect(vibrate).toHaveBeenCalledWith([12]);
   });

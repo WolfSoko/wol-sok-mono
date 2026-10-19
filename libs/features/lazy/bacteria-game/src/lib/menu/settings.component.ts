@@ -74,12 +74,8 @@ export class SettingsComponent {
   public readonly colorChange = output<ColorChange>();
   public readonly soundChange = output<boolean>();
   public readonly effectsChange = output<boolean>();
-  /**
-   * The volumes as their sliders are dragged, before they are let go of -
-   * to hear the music and a tick at the new volume meanwhile.
-   */
-  public readonly musicVolumePreview = output<number>();
-  public readonly effectsVolumePreview = output<number>();
+  /** The effects slider moved - for a tick at the new volume. */
+  public readonly effectsVolumePreview = output<void>();
   public readonly vibrationChange = output<boolean>();
   public readonly nativeFullscreenChange = output<boolean>();
   public readonly back = output<void>();
@@ -95,11 +91,6 @@ export class SettingsComponent {
   }
   protected readonly simResolutions = SIM_RESOLUTIONS;
   protected readonly screenResolutions = SCREEN_RESOLUTIONS;
-
-  /** The volume a slider is being dragged to. */
-  protected sliderValue(event: Event): number {
-    return (event.target as HTMLInputElement).valueAsNumber;
-  }
 
   /** The slider's label: a volume as a percentage. */
   protected readonly percent = (volume: number): string => `${volume}%`;

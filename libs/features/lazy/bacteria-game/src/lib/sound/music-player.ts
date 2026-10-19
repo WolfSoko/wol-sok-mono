@@ -1,4 +1,10 @@
 import {
+  fadeIn,
+  fadeOutAndRelease,
+  feedbackEcho,
+  SoundtrackPlayer,
+} from './audio-nodes';
+import {
   composeLoop,
   Drum,
   DrumHit,
@@ -26,7 +32,7 @@ const VOLUME = { lead: 0.045, pad: 0.012, bass: 0.07 } as const;
  * intensity - louder drums, a brighter melody - and it cools down again on
  * its own once the fighting stops.
  */
-export class MusicPlayer {
+export class MusicPlayer implements SoundtrackPlayer {
   private readonly loop: MusicLoop;
   /** The loop's notes and drum hits, sorted by the sixteenth they fall on. */
   private readonly notesByStep: MusicNote[][];
@@ -67,18 +73,13 @@ export class MusicPlayer {
 
     // An echo of a dotted eighth, fed back into itself.
     if (music.echo > 0) {
-      const delay = context.createDelay(1);
-      delay.delayTime.value = this.stepSec * 3;
-      const feedback = context.createGain();
-      feedback.gain.value = music.echo;
-      const wet = context.createGain();
-      wet.gain.value = 0.5;
-      this.bus.connect(delay);
-      delay.connect(feedback);
-      feedback.connect(delay);
-      delay.connect(wet);
-      wet.connect(destination);
-      this.nodes.push(delay, feedback, wet);
+      this.nodes.push(
+        ...feedbackEcho(context, this.bus, destination, {
+          delaySec: this.stepSec * 3,
+          feedback: music.echo,
+          wet: 0.5,
+        })
+      );
     }
 
     this.leadFilter = context.createBiquadFilter();
@@ -95,21 +96,14 @@ export class MusicPlayer {
    * picks up where its music would be, in step with a map that moves to it.
    */
   public start(atSec = 0): void {
-    const now = this.context.currentTime;
-    this.lastTickAt = now;
-    this.bus.gain.cancelScheduledValues(now);
-    this.bus.gain.setTargetAtTime(1, now, 0.4);
+    this.lastTickAt = this.context.currentTime;
+    fadeIn(this.context, this.bus, 0.4);
     this.scheduler.start(atSec);
   }
 
-  /** Fades the music out and lets go of its audio nodes. */
   public stop(): void {
     this.scheduler.stop();
-    const now = this.context.currentTime;
-    this.bus.gain.cancelScheduledValues(now);
-    this.bus.gain.setTargetAtTime(0, now, 0.25);
-    const nodes = [this.bus, ...this.nodes];
-    setTimeout(() => nodes.forEach((node) => node.disconnect()), 2500);
+    fadeOutAndRelease(this.context, this.bus, this.nodes, 0.25, 2500);
   }
 
   /** Heats the music up - by a little for every bacterium that changed sides. */

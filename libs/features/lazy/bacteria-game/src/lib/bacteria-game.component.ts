@@ -77,7 +77,7 @@ import {
   difficultyOption,
   DEFAULT_DIFFICULTY,
 } from './state/bot-controller';
-import { GameSettingsService, MAX_VOLUME } from './settings.service';
+import { GameSettingsService } from './settings.service';
 import { ProgressService } from './progress.service';
 import { CampaignService } from './campaign.service';
 import { dismissSplash } from './splash';
@@ -85,7 +85,8 @@ import { HeadStart, rivalryScore, SeriesLength } from './state/rivalry';
 import { loadFonts } from './fonts';
 import { arenaSize, renderScale, scaleOf } from './state/arena-size';
 import { GameHapticsService } from './haptics.service';
-import { GameSoundService, MatchResult } from './sound/game-sound.service';
+import { GameSoundService, Soundtrack } from './sound/game-sound.service';
+import { MatchResult } from './state/match-engine';
 import { levelMusic } from './sound/level-music';
 import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
 import {
@@ -152,7 +153,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private playerService = inject(PlayerService);
   private playerQuery = inject(PlayerQuery);
   protected readonly settings = inject(GameSettingsService);
-  private readonly sound = inject(GameSoundService);
+  protected readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
   private readonly progress = inject(ProgressService);
   /** No flickering glow for players who asked their system for less motion. */
@@ -210,6 +211,22 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * through "paused" then, which is not a pause the player asked for.
    */
   private readonly resetting = signal(false);
+  /**
+   * What plays underneath: the level's music while the match is on, the
+   * menu's between matches while the game fills the stage, and nothing
+   * on the pause menu and at the end of a match.
+   */
+  private readonly soundtrack = computed<Soundtrack | null>(() => {
+    if (this.running() && !this.paused()) {
+      return levelMusic(this.level().id);
+    }
+    const inMenu =
+      this.fullscreen() &&
+      !this.running() &&
+      !this.matchOver() &&
+      !this.resetting();
+    return inMenu ? 'menu' : null;
+  });
   /**
    * The panel laid over the arena: the match result, the pause menu, one of
    * the menu screens - or none, while a match is on.
@@ -459,31 +476,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.matchOver = toSignal(this.query.selectMatchEnded(), {
       initialValue: false,
     });
-    effect(() => this.sound.setEnabled(this.settings.sound()));
-    effect(() => this.sound.setMusicEnabled(this.settings.music()));
-    effect(() => this.sound.setEffectsEnabled(this.settings.effects()));
-    effect(() =>
-      this.sound.setMusicVolume(this.settings.musicVolume() / MAX_VOLUME)
-    );
-    effect(() =>
-      this.sound.setEffectsVolume(this.settings.effectsVolume() / MAX_VOLUME)
-    );
-    effect(() => this.haptics.setEnabled(this.settings.vibration()));
-    // The level's music plays while the match is on and stops on pause. A
-    // resumed match picks it up where the match clock stands, so it stays
-    // in step with a map that moves to it. Between matches, while the game
-    // fills the stage, the menu has music of its own; the end of a match
-    // and the pause menu are quiet.
+    // A resumed match picks its music up where the match clock stands, so
+    // it stays in step with a map that moves to it.
     effect(() => {
-      const music =
-        this.running() && !this.paused()
-          ? levelMusic(this.level().id)
-          : this.fullscreen() &&
-              !this.running() &&
-              !this.matchOver() &&
-              !this.resetting()
-            ? 'menu'
-            : null;
+      const music = this.soundtrack();
       untracked(() =>
         this.sound.setMusic(music, this.query.getValue().timePassed / 1000)
       );
@@ -536,10 +532,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Plays the end of the match, and the medallion it earned after it. */
   private finishMatch(): void {
-    const { earnings, levelId } = this.query.getValue();
-    const medal = earnings?.award?.medal ?? null;
+    const medal = this.query.getValue().earnings?.award?.medal ?? null;
     const result = this.matchResult();
-    this.sound.matchEnd(result, levelMusic(levelId), medal);
+    this.sound.matchEnd(result, medal);
     this.haptics.matchEnd(result, medal != null);
   }
 
@@ -555,14 +550,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     return winner.isBot ? 'loss' : 'win';
   }
 
-  /**
-   * Turns the sound on or off, and remembers it - with a tick to show it is
-   * on. The service is told right away: the effect that follows the setting
-   * runs later, after the tick would have been dropped.
-   */
+  /** Turns the sound on or off - with a tick to show it is on. */
   protected setSound(on: boolean): void {
     this.settings.setSound(on);
-    this.sound.setEnabled(on);
     if (on) {
       this.sound.tick();
     }
@@ -571,29 +561,18 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Turns the sound effects on or off - with a tick to show they are on. */
   protected setEffects(on: boolean): void {
     this.settings.setEffects(on);
-    this.sound.setEffectsEnabled(on);
     if (on) {
       this.sound.tick();
     }
   }
 
-  /** The music at the volume its slider is dragged to, before it is let go. */
-  protected previewMusicVolume(volume: number): void {
-    this.sound.setMusicVolume(volume / MAX_VOLUME);
-  }
-
-  /** A tick at the volume the effects slider is dragged to. */
-  protected previewEffectsVolume(volume: number): void {
-    this.sound.setEffectsVolume(volume / MAX_VOLUME);
-    this.sound.previewEffects();
-  }
-
   /** Turns the vibration on or off - with a buzz to show it is on. */
   protected setVibration(on: boolean): void {
     this.settings.setVibration(on);
-    this.haptics.setEnabled(on);
     if (on) {
       this.haptics.tap();
+    } else {
+      this.haptics.stop();
     }
   }
 

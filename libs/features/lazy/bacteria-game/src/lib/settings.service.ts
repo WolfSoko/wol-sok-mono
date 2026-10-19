@@ -26,6 +26,7 @@ import {
   SeriesLength,
   seriesWinner,
 } from './state/rivalry';
+import { clamp } from './state/geometry';
 import { isObject } from './state/is-object';
 import { GameStorage } from './storage/game-storage';
 
@@ -201,13 +202,25 @@ export class GameSettingsService {
   }
 
   public setMusicVolume(volume: number): void {
-    this.musicVolume.set(clampVolume(volume, DEFAULT_MUSIC_VOLUME));
+    this.previewMusicVolume(volume);
     this.changed('musicVolume');
   }
 
   public setEffectsVolume(volume: number): void {
-    this.effectsVolume.set(clampVolume(volume, DEFAULT_EFFECTS_VOLUME));
+    this.previewEffectsVolume(volume);
     this.changed('effectsVolume');
+  }
+
+  /**
+   * A volume while its slider is still being dragged: heard right away,
+   * but not written until the slider is let go of.
+   */
+  public previewMusicVolume(volume: number): void {
+    this.musicVolume.set(clampVolume(volume, DEFAULT_MUSIC_VOLUME));
+  }
+
+  public previewEffectsVolume(volume: number): void {
+    this.effectsVolume.set(clampVolume(volume, DEFAULT_EFFECTS_VOLUME));
   }
 
   public setVibration(on: boolean): void {
@@ -395,7 +408,7 @@ function isVolume(value: unknown): value is number {
 /** A whole number on the slider - or the default for what is no number. */
 function clampVolume(volume: number, fallback: number): number {
   return Number.isFinite(volume)
-    ? Math.round(Math.min(MAX_VOLUME, Math.max(0, volume)))
+    ? Math.round(clamp(volume, 0, MAX_VOLUME))
     : fallback;
 }
 

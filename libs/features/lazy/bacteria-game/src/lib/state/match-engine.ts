@@ -84,6 +84,9 @@ export interface FrameEvents extends StepEvents {
   boosts: boolean[];
 }
 
+/** How a match ended, from the point of view of the people at the screen. */
+export type MatchResult = 'win' | 'loss' | 'draw';
+
 /** How a match ended: the winner, or null for a draw. */
 export interface MatchOutcome {
   winner: Player | null;

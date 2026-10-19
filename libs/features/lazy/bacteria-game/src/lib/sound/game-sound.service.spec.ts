@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { GameSettingsService } from '../settings.service';
 import { GameSoundService } from './game-sound.service';
 import { levelMusic } from './level-music';
 import { MusicPlayer } from './music-player';
@@ -8,12 +9,6 @@ describe('GameSoundService', () => {
     const sound = TestBed.inject(GameSoundService);
 
     expect(() => {
-      sound.setEnabled(false);
-      sound.setMusicEnabled(false);
-      sound.setEffectsEnabled(false);
-      sound.setMusicVolume(0.5);
-      sound.setEffectsVolume(2);
-      sound.setEffectsVolume(Number.NaN);
       sound.matchStart(levelMusic('serpentine'));
       sound.boost(false);
       sound.setMusic('menu');
@@ -32,18 +27,20 @@ describe('GameSoundService', () => {
       sound.navigate();
       sound.previewEffects();
       sound.matchEnd('win');
-      sound.matchEnd('loss', levelMusic('villi'));
-      sound.matchEnd('draw', levelMusic('villi'));
-      sound.matchEnd('win', levelMusic('heartbeat'), 'gold');
+      sound.matchEnd('loss');
+      sound.matchEnd('draw');
+      sound.matchEnd('win', 'gold');
       sound.setMusic(null);
     }).not.toThrow();
   });
 
   describe('with the Web Audio API', () => {
     let sound: GameSoundService;
+    let settings: GameSettingsService;
     let context: FakeAudioContext;
 
     beforeEach(() => {
+      localStorage.clear();
       jest.useFakeTimers();
       context = new FakeAudioContext();
       Object.defineProperty(window, 'AudioContext', {
@@ -52,6 +49,7 @@ describe('GameSoundService', () => {
       });
       TestBed.resetTestingModule();
       sound = TestBed.inject(GameSoundService);
+      settings = TestBed.inject(GameSettingsService);
       // The gesture that wakes the audio, without waking the services of
       // the tests before, which still listen to the document.
       (sound as unknown as { unlock(): void }).unlock();
@@ -91,20 +89,32 @@ describe('GameSoundService', () => {
     });
 
     it('makes no effect nodes while the effects are off', () => {
-      sound.setEffectsEnabled(false);
+      settings.setEffects(false);
       sound.boost(false);
       sound.matchEnd('win');
       expect(context.started).toBe(0);
 
-      sound.setEffectsEnabled(true);
+      settings.setEffects(true);
       sound.boost(false);
       expect(context.started).toBeGreaterThan(0);
+    });
+
+    it('follows the switches without waiting for an effect to run', () => {
+      settings.setSound(false);
+      sound.tick();
+      expect(context.started).toBe(0);
+
+      settings.setSound(true);
+      sound.tick();
+      expect(context.started).toBe(1);
+      // The master bus was steered up by the tick itself.
+      expect(context.gains[0].targets).toEqual([0, 1]);
     });
 
     it('heats the level music up with the fighting even with the effects off', () => {
       const excite = jest.spyOn(MusicPlayer.prototype, 'excite');
       sound.setMusic(levelMusic('corridors'));
-      sound.setEffectsEnabled(false);
+      settings.setEffects(false);
 
       sound.frame({
         boosts: [],
@@ -119,7 +129,7 @@ describe('GameSoundService', () => {
     });
 
     it('makes no effect nodes at volume zero either', () => {
-      sound.setEffectsVolume(0);
+      settings.setEffectsVolume(0);
       sound.pause();
       expect(context.started).toBe(0);
     });
@@ -154,7 +164,7 @@ class FakeAudioContext {
   public time = 0;
   public resumed = false;
   public state = 'suspended';
-  public gains: FakeParamNode[] = [];
+  public gains: FakeGainNode[] = [];
   public compressors = 0;
   /** Sources started, oscillators and buffers alike. */
   public started = 0;
@@ -178,8 +188,8 @@ class FakeAudioContext {
     return Promise.resolve();
   }
 
-  public createGain(): FakeParamNode {
-    const node = new FakeParamNode(['gain']);
+  public createGain(): FakeGainNode {
+    const node = new FakeGainNode();
     this.gains.push(node);
     return node;
   }
@@ -205,6 +215,10 @@ class FakeAudioContext {
 
   public createStereoPanner(): FakeParamNode {
     return new FakeParamNode(['pan']);
+  }
+
+  public createPeriodicWave(): object {
+    return {};
   }
 
   public createOscillator(): FakeSource {
@@ -248,7 +262,7 @@ class FakeParam {
   public exponentialRampToValueAtTime(): FakeParam {
     return this;
   }
-  public setTargetAtTime(): FakeParam {
+  public setTargetAtTime(_value?: number): FakeParam {
     return this;
   }
   public cancelScheduledValues(): FakeParam {
@@ -267,10 +281,26 @@ class FakeParamNode extends FakeNode {
   }
 }
 
+/** A gain node that remembers where its gain was steered to. */
+class FakeGainNode extends FakeParamNode {
+  public readonly targets: number[] = [];
+
+  public constructor() {
+    super(['gain']);
+    const gain = this.gain as FakeParam;
+    gain.setTargetAtTime = (value: number) => {
+      this.targets.push(value);
+      return gain;
+    };
+  }
+}
+
 class FakeSource extends FakeParamNode {
   public type = 'sine';
   public buffer: unknown = null;
   public loop = false;
+
+  public setPeriodicWave(): void {}
 
   public constructor(
     private readonly context: FakeAudioContext,

@@ -199,6 +199,23 @@ describe('GameSettingsService', () => {
     expect(service.effectsVolume()).toBe(DEFAULT_EFFECTS_VOLUME);
   });
 
+  it('previews a volume without writing it', () => {
+    const service = TestBed.inject(GameSettingsService);
+
+    service.previewMusicVolume(20);
+    service.previewEffectsVolume(30);
+
+    expect(service.musicVolume()).toBe(20);
+    expect(service.effectsVolume()).toBe(30);
+    expect(stored()).toMatchObject({
+      musicVolume: DEFAULT_MUSIC_VOLUME,
+      effectsVolume: DEFAULT_EFFECTS_VOLUME,
+    });
+
+    service.setMusicVolume(25);
+    expect(stored()).toMatchObject({ musicVolume: 25, effectsVolume: 30 });
+  });
+
   it('ignores volumes it cannot read', () => {
     localStorage.setItem(
       SETTINGS_STORAGE_KEY,

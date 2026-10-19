@@ -1,12 +1,11 @@
-import { Injectable } from '@angular/core';
-import { FrameEvents } from '../state/player.service';
+import { Injectable, effect, inject } from '@angular/core';
+import { GameSettingsService, MAX_VOLUME } from '../settings.service';
+import { FrameEvents, MatchResult } from '../state/match-engine';
 import { MedalTier, medalRank } from '../state/medallions';
+import { SoundtrackPlayer } from './audio-nodes';
 import { degreeToMidi, LevelMusic, levelMusic, midiToHz } from './level-music';
 import { MenuMusicPlayer } from './menu-music-player';
 import { MusicPlayer } from './music-player';
-
-/** How a match ended, from the point of view of the people at the screen. */
-export type MatchResult = 'win' | 'loss' | 'draw';
 
 /** What plays underneath: a level's music, the menu's, or nothing. */
 export type Soundtrack = LevelMusic | 'menu';
@@ -60,9 +59,10 @@ const MENU_MUSIC_SEED = 2024;
  * each level's own music, composed on the fly (see `MusicPlayer`), or the
  * menu's ambient piece between matches (`MenuMusicPlayer`).
  *
- * Music and effects run on buses of their own, each with a switch and a
- * volume, under a master switch and a compressor that keeps a busy fight
- * from clipping.
+ * Music and effects run on buses of their own under a master and a
+ * compressor that keeps a busy fight from clipping. The buses follow the
+ * sound settings: the switches and volumes are read from there, so a
+ * switch just flipped is heard at once.
  *
  * Browsers only let a page make sound after a gesture, so the service
  * listens for the gestures that count - a lifted finger or mouse button, a
@@ -72,12 +72,13 @@ const MENU_MUSIC_SEED = 2024;
  */
 @Injectable({ providedIn: 'root' })
 export class GameSoundService {
+  private readonly settings = inject(GameSettingsService);
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
   private musicBus: GainNode | null = null;
   private effectsBus: GainNode | null = null;
   private noiseBuffer: AudioBuffer | null = null;
-  private player: MusicPlayer | MenuMusicPlayer | null = null;
+  private player: SoundtrackPlayer | null = null;
   /** The music asked for - also before there is a context to play it in. */
   private music: Soundtrack | null = null;
   /**
@@ -85,20 +86,17 @@ export class GameSoundService {
    * `performance.now()`) - to start it at the right point once it can play.
    */
   private musicStart = { atSec: 0, askedAtMs: 0 };
+  /** The key of the match under way - what its effects are written in. */
+  private key = levelMusic('petri-dish');
   /** True while the audio is held because the page is hidden. */
   private suspendedWhileHidden = false;
-  private enabled = true;
-  private musicEnabled = true;
-  private effectsEnabled = true;
-  /** Volumes from 0 to 1, as the player set them. */
-  private musicVolume = 1;
-  private effectsVolume = 1;
   private lastCaptureAt = -Infinity;
   private lastPelletAt = -Infinity;
   private pelletStreak = 0;
   private lastPreviewAt = -Infinity;
 
   public constructor() {
+    effect(() => this.followSettings());
     if (typeof document !== 'undefined') {
       // Capture phase: the context is up before any handler of the same
       // gesture wants to play a sound.
@@ -114,56 +112,28 @@ export class GameSoundService {
     }
   }
 
-  /** Mutes or unmutes everything, the music included. */
-  public setEnabled(enabled: boolean): void {
-    this.enabled = enabled;
-    this.steer(this.master, enabled ? 1 : 0, 0.02);
-  }
-
-  /** Mutes or unmutes the music alone, the sound effects play on. */
-  public setMusicEnabled(enabled: boolean): void {
-    this.musicEnabled = enabled;
-    this.applyMusicLevel();
-  }
-
-  /** Mutes or unmutes the sound effects alone, the music plays on. */
-  public setEffectsEnabled(enabled: boolean): void {
-    this.effectsEnabled = enabled;
-    this.applyEffectsLevel();
-  }
-
-  /** How loud the music plays, from 0 to 1. */
-  public setMusicVolume(volume: number): void {
-    this.musicVolume = clampVolume(volume);
-    this.applyMusicLevel();
-  }
-
-  /** How loud the sound effects play, from 0 to 1. */
-  public setEffectsVolume(volume: number): void {
-    this.effectsVolume = clampVolume(volume);
-    this.applyEffectsLevel();
-  }
-
-  private applyMusicLevel(): void {
-    this.steer(
-      this.musicBus,
-      this.musicEnabled ? perceived(this.musicVolume) : 0,
-      0.1
-    );
-  }
-
-  private applyEffectsLevel(): void {
-    this.steer(
-      this.effectsBus,
-      this.effectsEnabled ? perceived(this.effectsVolume) : 0,
-      0.05
-    );
-  }
-
-  private steer(bus: GainNode | null, level: number, seconds: number): void {
-    if (bus != null && this.context != null) {
-      bus.gain.setTargetAtTime(level, this.context.currentTime, seconds);
+  /** Steers the buses to where the sound settings stand. */
+  private followSettings(): void {
+    const context = this.context;
+    if (context == null) {
+      return;
     }
+    const now = context.currentTime;
+    this.master?.gain.setTargetAtTime(this.settings.sound() ? 1 : 0, now, 0.02);
+    this.musicBus?.gain.setTargetAtTime(this.musicLevel(), now, 0.1);
+    this.effectsBus?.gain.setTargetAtTime(this.effectsLevel(), now, 0.05);
+  }
+
+  private musicLevel(): number {
+    return this.settings.music()
+      ? perceived(this.settings.musicVolume() / MAX_VOLUME)
+      : 0;
+  }
+
+  private effectsLevel(): number {
+    return this.settings.effects()
+      ? perceived(this.settings.effectsVolume() / MAX_VOLUME)
+      : 0;
   }
 
   /** Creates or wakes the audio context, on a user gesture. */
@@ -181,7 +151,7 @@ export class GameSoundService {
       const context = new AudioContextClass();
       this.context = context;
       this.master = context.createGain();
-      this.master.gain.value = this.enabled ? 1 : 0;
+      this.master.gain.value = this.settings.sound() ? 1 : 0;
       // A gentle compressor: a dozen effects over the music stay clear
       // instead of clipping.
       const compressor = context.createDynamicsCompressor();
@@ -193,14 +163,10 @@ export class GameSoundService {
       this.master.connect(compressor);
       compressor.connect(context.destination);
       this.musicBus = context.createGain();
-      this.musicBus.gain.value = this.musicEnabled
-        ? perceived(this.musicVolume)
-        : 0;
+      this.musicBus.gain.value = this.musicLevel();
       this.musicBus.connect(this.master);
       this.effectsBus = context.createGain();
-      this.effectsBus.gain.value = this.effectsEnabled
-        ? perceived(this.effectsVolume)
-        : 0;
+      this.effectsBus.gain.value = this.effectsLevel();
       this.effectsBus.connect(this.master);
     }
     if (this.context.state === 'suspended') {
@@ -236,8 +202,8 @@ export class GameSoundService {
    */
   public frame(events: FrameEvents): void {
     // The music heats up with the fighting whether or not the effects play.
-    if (events.captures > 0 && this.player instanceof MusicPlayer) {
-      this.player.excite(Math.min(0.08, events.captures * 0.004));
+    if (events.captures > 0) {
+      this.player?.excite(Math.min(0.08, events.captures * 0.004));
     }
     if (!this.audible()) {
       return;
@@ -291,13 +257,14 @@ export class GameSoundService {
 
   /**
    * A rising arpeggio as a match starts, in the key of the level's music -
-   * so it leads straight into the tune.
+   * so it leads straight into the tune. The key stays the match's: its
+   * pellets and its end are written in it too.
    */
-  public matchStart(music: LevelMusic = levelMusic('petri-dish')): void {
+  public matchStart(music: LevelMusic): void {
+    this.key = music;
     this.pelletStreak = 0;
     [0, 2, 4, 7].forEach((degree, step) => {
-      const hz = midiToHz(degreeToMidi(music, degree) + 24);
-      this.tone(hz, step === 3 ? 0.4 : 0.14, {
+      this.tone(this.hz(degree, 2), step === 3 ? 0.4 : 0.14, {
         type: 'triangle',
         volume: 0.12,
         delay: step * 0.09,
@@ -363,14 +330,16 @@ export class GameSoundService {
     });
   }
 
-  /** A tick for a switch flipped on. */
+  /** A tick for a switch just flipped on. */
   public tick(): void {
+    // The switch is read right away, ahead of the settings effect.
+    this.followSettings();
     this.tone(1320, 0.05, { type: 'sine', volume: 0.08, slideTo: 1760 });
   }
 
   /**
-   * A short tick at the effects' current volume, for the slider that sets
-   * it - at most a few times a second while it is dragged or stepped.
+   * A short tick at the effects' volume, for the slider that sets it - at
+   * most a few times a second while it is dragged or stepped.
    */
   public previewEffects(): void {
     const now = this.context?.currentTime ?? 0;
@@ -378,6 +347,7 @@ export class GameSoundService {
       return;
     }
     this.lastPreviewAt = now;
+    this.followSettings();
     this.tone(880, 0.07, { type: 'triangle', volume: 0.12 });
   }
 
@@ -385,11 +355,7 @@ export class GameSoundService {
    * A short jingle for the end of a match, in the key of the level's music,
    * and the bells of the medallion it earned once the jingle has rung out.
    */
-  public matchEnd(
-    result: MatchResult,
-    music: LevelMusic = levelMusic('petri-dish'),
-    medal: MedalTier | null = null
-  ): void {
+  public matchEnd(result: MatchResult, medal: MedalTier | null = null): void {
     this.pelletStreak = 0;
     // Degrees of the scale, two octaves up: a climb to the octave for a
     // win, a fall below the root for a loss, a shrug for a draw.
@@ -399,11 +365,10 @@ export class GameSoundService {
         : result === 'loss'
           ? [4, 2, 0, -3]
           : [4, 4, 2];
-    const octave = result === 'loss' ? 12 : 24;
+    const octaves = result === 'loss' ? 1 : 2;
     degrees.forEach((degree, step) => {
       const last = step === degrees.length - 1;
-      const hz = midiToHz(degreeToMidi(music, degree) + octave);
-      this.tone(hz, last ? JINGLE_LAST_NOTE_SEC : 0.15, {
+      this.tone(this.hz(degree, octaves), last ? JINGLE_LAST_NOTE_SEC : 0.15, {
         type: result === 'loss' ? 'sawtooth' : 'triangle',
         volume: result === 'loss' ? 0.06 : 0.12,
         delay: step * JINGLE_STEP_SEC,
@@ -414,7 +379,7 @@ export class GameSoundService {
     if (result === 'win') {
       const at = (degrees.length - 1) * JINGLE_STEP_SEC;
       for (const degree of [0, 2, 4]) {
-        this.tone(midiToHz(degreeToMidi(music, degree) + 12), 1.1, {
+        this.tone(this.hz(degree, 1), 1.1, {
           type: 'triangle',
           volume: 0.05,
           delay: at,
@@ -426,7 +391,7 @@ export class GameSoundService {
     if (medal != null) {
       const jingleSec =
         (degrees.length - 1) * JINGLE_STEP_SEC + JINGLE_LAST_NOTE_SEC;
-      this.medalBells(medal, music, jingleSec);
+      this.medalBells(medal, jingleSec);
     }
   }
 
@@ -435,19 +400,13 @@ export class GameSoundService {
    * the level's music - so they sound like the end of its tune. A higher
    * tier climbs higher.
    */
-  private medalBells(
-    tier: MedalTier,
-    music: LevelMusic,
-    startSec: number
-  ): void {
+  private medalBells(tier: MedalTier, startSec: number): void {
     const degrees = [0, 2, 4, 7, 9, 11, 14].slice(0, 3 + medalRank(tier));
-    // Two octaves above the bass register the root sits in.
-    const notes = degrees.map((degree) =>
-      midiToHz(degreeToMidi(music, degree) + 24)
-    );
-    notes.forEach((frequency, step) => {
-      const last = step === notes.length - 1;
+    degrees.forEach((degree, step) => {
+      const last = step === degrees.length - 1;
       const delay = startSec + step * 0.11;
+      // Two octaves above the bass register the root sits in.
+      const frequency = this.hz(degree, 2);
       this.tone(frequency, last ? 0.8 : 0.18, {
         type: 'sine',
         volume: 0.14,
@@ -481,34 +440,23 @@ export class GameSoundService {
       return;
     }
     const noise = () => this.whiteNoise(context);
-    const audible = () =>
-      this.enabled && this.musicEnabled && this.musicVolume > 0;
-    if (music === 'menu') {
-      this.player = new MenuMusicPlayer(
-        context,
-        this.musicBus,
-        MENU_MUSIC_SEED,
-        noise,
-        audible
-      );
-      this.player.start();
-    } else {
-      this.player = new MusicPlayer(
-        context,
-        this.musicBus,
-        music,
-        noise,
-        audible
-      );
-      this.player.start(atSec);
-    }
+    const audible = () => this.settings.sound() && this.musicLevel() > 0;
+    this.player =
+      music === 'menu'
+        ? new MenuMusicPlayer(
+            context,
+            this.musicBus,
+            MENU_MUSIC_SEED,
+            noise,
+            audible
+          )
+        : new MusicPlayer(context, this.musicBus, music, noise, audible);
+    this.player.start(atSec);
   }
 
-  /** The key the effects are written in: the level's that is playing. */
-  private key(): LevelMusic {
-    return typeof this.music === 'object' && this.music != null
-      ? this.music
-      : levelMusic('petri-dish');
+  /** The frequency of a scale degree of the match's key, octaves up. */
+  private hz(degree: number, octaves: number): number {
+    return midiToHz(degreeToMidi(this.key, degree, octaves));
   }
 
   /**
@@ -522,8 +470,7 @@ export class GameSoundService {
         ? Math.min(PELLET_LADDER.length - 1, this.pelletStreak + 1)
         : 0;
     this.lastPelletAt = now;
-    const degree = PELLET_LADDER[this.pelletStreak];
-    const hz = midiToHz(degreeToMidi(this.key(), degree) + 36);
+    const hz = this.hz(PELLET_LADDER[this.pelletStreak], 3);
     this.tone(hz, 0.1, { type: 'sine', volume: 0.12, slideTo: hz * 1.25 });
     this.tone(hz * 2, 0.07, { type: 'sine', volume: 0.04, delay: 0.04 });
   }
@@ -542,19 +489,16 @@ export class GameSoundService {
     });
   }
 
+  /** True while an effect would be heard: no nodes are built otherwise. */
   private audible(): boolean {
     return (
-      this.enabled &&
-      this.effectsEnabled &&
-      this.effectsVolume > 0 &&
-      this.context != null &&
-      this.effectsBus != null
+      this.context != null && this.settings.sound() && this.effectsLevel() > 0
     );
   }
 
   private tone(frequency: number, duration: number, options: ToneOptions = {}) {
     const context = this.context;
-    if (!this.audible() || context == null) {
+    if (context == null || !this.audible()) {
       return;
     }
     const {
@@ -591,7 +535,7 @@ export class GameSoundService {
 
   private noise(duration: number, options: NoiseOptions = {}) {
     const context = this.context;
-    if (!this.audible() || context == null) {
+    if (context == null || !this.audible()) {
       return;
     }
     const {
@@ -632,7 +576,9 @@ export class GameSoundService {
       start + Math.min(attack, duration / 2)
     );
     gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-    gain.connect(this.effectsBus as GainNode);
+    if (this.effectsBus != null) {
+      gain.connect(this.effectsBus);
+    }
     return gain;
   }
 
@@ -652,10 +598,6 @@ export class GameSoundService {
     }
     return this.noiseBuffer;
   }
-}
-
-function clampVolume(volume: number): number {
-  return Number.isFinite(volume) ? Math.min(1, Math.max(0, volume)) : 1;
 }
 
 /**

@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
-import { FrameEvents } from './state/match-engine';
-import { MatchResult } from './sound/game-sound.service';
+import { Injectable, inject } from '@angular/core';
+import { GameSettingsService } from './settings.service';
+import { FrameEvents, MatchResult } from './state/match-engine';
 
 /** A short buzz is skipped this close after the last one, in milliseconds. */
 const BUZZ_INTERVAL_MS = 90;
@@ -8,7 +8,7 @@ const BUZZ_INTERVAL_MS = 90;
 /**
  * The game felt through the phone: a tap for a boost, a thud for a gate, a
  * flourish for a medallion - where the device can vibrate at all, and only
- * while the player wants it to.
+ * while the vibration setting is on.
  *
  * Everything goes through the Vibration API, which plays one pattern at a
  * time: a new call cuts the one before off. So a short buzz is dropped
@@ -17,23 +17,18 @@ const BUZZ_INTERVAL_MS = 90;
  */
 @Injectable({ providedIn: 'root' })
 export class GameHapticsService {
+  private readonly settings = inject(GameSettingsService);
   /** True where the browser can vibrate the device - an iPhone cannot. */
   public readonly supported =
     typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';
-  private enabled = true;
   /** When the pattern that is playing ends, in ms of `performance.now()`. */
   private busyUntilMs = 0;
 
-  public setEnabled(enabled: boolean): void {
-    this.enabled = enabled;
-    if (!enabled && this.supported) {
-      // Whatever is still playing stops with the switch.
+  /** Stops whatever is still playing - for the setting switched off. */
+  public stop(): void {
+    if (this.supported) {
       this.busyUntilMs = 0;
-      try {
-        navigator.vibrate(0);
-      } catch {
-        // A browser that has the API but refuses it - in an iframe, say.
-      }
+      this.vibrate(0);
     }
   }
 
@@ -71,29 +66,26 @@ export class GameHapticsService {
 
   /** A short buzz, unless one just played or a pattern still does. */
   private buzz(ms: number): void {
-    const now = performance.now();
-    if (!this.active() || now < this.busyUntilMs) {
+    if (performance.now() < this.busyUntilMs) {
       return;
     }
-    this.busyUntilMs = now + ms + BUZZ_INTERVAL_MS;
-    this.vibrate([ms]);
+    this.pattern([ms], BUZZ_INTERVAL_MS);
   }
 
-  /** A pattern of buzzes and pauses, cutting off whatever plays. */
-  private pattern(pattern: number[]): void {
-    if (!this.active()) {
+  /**
+   * A pattern of buzzes and pauses, cutting off whatever plays, and holding
+   * short buzzes off until it and `gapMs` more have passed.
+   */
+  private pattern(pattern: number[], gapMs = 0): void {
+    if (!this.supported || !this.settings.vibration()) {
       return;
     }
     this.busyUntilMs =
-      performance.now() + pattern.reduce((sum, ms) => sum + ms, 0);
+      performance.now() + pattern.reduce((sum, ms) => sum + ms, gapMs);
     this.vibrate(pattern);
   }
 
-  private active(): boolean {
-    return this.supported && this.enabled;
-  }
-
-  private vibrate(pattern: number[]): void {
+  private vibrate(pattern: number | number[]): void {
     try {
       navigator.vibrate(pattern);
     } catch {
