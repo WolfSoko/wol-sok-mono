@@ -19,7 +19,7 @@ import { MedalAward, MEDAL_NAMES, medalRank } from '../state/medallions';
 import { Player } from '../state/player.model';
 
 /** What the player picked when the match was over. */
-export type MatchEndAction = 'again' | 'next' | 'menu';
+export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu';
 
 /**
  * The screen a match ends on: who won, and what to play next. It sits in the
@@ -41,6 +41,8 @@ export class WinnerComponent {
    * is open.
    */
   public readonly upcomingLock = input<string | null>(null);
+  /** False where there is no level choice to go to, as in the page layout. */
+  public readonly canChooseLevel = input(true);
 
   /** What the player wants to do next. */
   public readonly action = output<MatchEndAction>();

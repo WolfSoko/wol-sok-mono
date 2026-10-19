@@ -19,8 +19,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -44,6 +42,7 @@ import { ArenaFrame, ArenaPainter } from './arena/arena-painter';
 import { createArenaPainter } from './arena/create-arena-painter';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
+import { rgba } from './arena/canvas-math';
 import { BoostPadComponent } from './boost-pad/boost-pad.component';
 import {
   exitFullscreen,
@@ -57,25 +56,32 @@ import {
 } from './fullscreen';
 import { JoystickComponent } from './joystick/joystick.component';
 import {
+  ColonyColorsComponent,
   ColorChange,
-  MatchSetupComponent,
-} from './match-setup/match-setup.component';
-import { DEFAULT_COLORS, getColonyColor } from './state/colony-colors';
+} from './colony-colors/colony-colors.component';
+import { MatchSetupComponent } from './match-setup/match-setup.component';
+import { LevelSelectComponent } from './menu/level-select.component';
+import { MainMenuComponent } from './menu/main-menu.component';
+import { HelpComponent } from './menu/help.component';
+import { ProfileComponent } from './menu/profile.component';
+import { SettingsComponent } from './menu/settings.component';
+import { SwarmComponent } from './menu/swarm.component';
+import {
+  DEFAULT_COLORS,
+  getColonyColor,
+  readableOn,
+} from './state/colony-colors';
 import {
   BotDifficulty,
   difficultyOption,
   DEFAULT_DIFFICULTY,
 } from './state/bot-controller';
-import { BACTERIA_LOOKS, GameSettingsService } from './settings.service';
+import { GameSettingsService } from './settings.service';
 import { ProgressService } from './progress.service';
 import { CampaignService } from './campaign.service';
-import {
-  arenaSize,
-  renderScale,
-  SCREEN_RESOLUTIONS,
-  scaleOf,
-  SIM_RESOLUTIONS,
-} from './state/arena-size';
+import { dismissSplash } from './splash';
+import { loadFonts } from './fonts';
+import { arenaSize, renderScale, scaleOf } from './state/arena-size';
 import { GameSoundService, MatchResult } from './sound/game-sound.service';
 import { levelMusic } from './sound/level-music';
 import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
@@ -124,8 +130,13 @@ import {
     BoostPadComponent,
     ElemResizedDirective,
     WinnerComponent,
-    MatButtonToggleModule,
-    MatSlideToggleModule,
+    SwarmComponent,
+    SettingsComponent,
+    HelpComponent,
+    MainMenuComponent,
+    LevelSelectComponent,
+    ProfileComponent,
+    ColonyColorsComponent,
   ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
@@ -168,8 +179,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly canvasKey = computed(() => [
     `${this.settings.simResolution()}:${this.settings.screenResolution()}`,
   ]);
-  protected readonly simResolutions = SIM_RESOLUTIONS;
-  protected readonly screenResolutions = SCREEN_RESOLUTIONS;
 
   stats: Signal<ColonyStats[]>;
   /** The colonies a finger may steer - one seat each in the touch layout. */
@@ -212,6 +221,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     return this.running() ? null : this.screen();
   });
+  /**
+   * True while a menu screen fills the stage: what lies under it - the
+   * arena, its bar and the seats - is out of reach then.
+   */
+  protected readonly screenOpen = computed(() => {
+    const panel = this.panel();
+    return (
+      this.fullscreen() &&
+      panel !== null &&
+      panel !== 'pause' &&
+      panel !== 'over'
+    );
+  });
   /** True while the browser shows the stage on the whole screen. */
   protected readonly nativeFullscreen = signal(false);
   /** False where the browser has no Fullscreen API, as on iPhones. */
@@ -245,8 +267,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly colorNames = computed(() =>
     this.colors().map((id) => getColonyColor(id).name)
   );
-  /** The looks the bacteria can be drawn in. */
-  protected readonly looks = BACTERIA_LOOKS;
   /** The best medallion of every level at the selected difficulty. */
   protected readonly levelMedals = computed(() => {
     const difficulty = this.difficulty();
@@ -258,7 +278,27 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     );
   });
   /** Why each level is still locked on the campaign ladder, by level id. */
-  protected readonly lockedLevels = inject(CampaignService).locks;
+  protected readonly campaign = inject(CampaignService);
+  protected readonly lockedLevels = this.campaign.locks;
+  /** Every medallion held, by level id, then by difficulty. */
+  protected readonly medals = this.progress.medals;
+  /**
+   * The colony colours as RGB and as CSS, with a text colour that reads on
+   * the player's - for the menu screens.
+   */
+  protected readonly colonyRgb = computed(
+    () =>
+      this.colors().map((id) => getColonyColor(id).rgb) as [
+        readonly [number, number, number],
+        readonly [number, number, number],
+      ]
+  );
+  protected readonly colonyCss = computed(() =>
+    this.colonyRgb().map((rgb) => rgba(rgb))
+  );
+  protected readonly onPlayerColor = computed(() =>
+    readableOn(this.colonyRgb()[0])
+  );
   /** Why the level after the selected one is locked, null when it is open. */
   protected readonly upcomingLock = computed(() => {
     const upcoming = this.upcomingLevel();
@@ -308,6 +348,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly draggedBy = new Map<number, number>();
 
   constructor() {
+    loadFonts(document);
     this.fps$ = this.query.selectFps();
     this.gameStateService.reset();
 
@@ -424,7 +465,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const next = action === 'next' ? this.upcomingLevel() : null;
-    this.screen.set('menu');
+    this.screen.set(action === 'levels' ? 'levels' : 'menu');
     this.resetGame$()
       .pipe(
         tap(() => {
@@ -433,7 +474,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           if (next != null) {
             this.gameStateService.setLevel(next.id);
           }
-          if (action !== 'menu') {
+          if (action === 'again' || action === 'next') {
             this.startGame();
           }
         }),
@@ -478,6 +519,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.screen.set(screen);
   }
 
+  /** Sets a match up against the computer or between two players. */
+  protected chooseLevel(mode: GameMode): void {
+    this.selectMode(mode);
+    this.show('levels');
+  }
+
+  /** Starts a match on the furthest level the campaign ladder has opened. */
+  protected continueCampaign(): void {
+    this.selectMode('vs-computer');
+    this.gameStateService.setLevel(this.campaign.furthestLevel());
+    this.startGame();
+  }
+
   /** Gives the match up and returns to the main menu. */
   protected quitToMenu(): void {
     this.screen.set('menu');
@@ -494,6 +548,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    dismissSplash(document);
     this.nativeFullscreenSupported.set(
       isFullscreenSupported(document, this.stageRef?.nativeElement)
     );
@@ -540,6 +595,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * gesture nearly every session makes, so it also takes the screen.
    */
   startGame() {
+    // A match started from the level choice backs out to the main menu.
+    this.screen.set('menu');
     this.requestNativeFullscreen();
     this.sound.matchStart();
     this.clearNextFrame = true;
@@ -926,7 +983,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 const ARENA_FRAME_PX = 6;
 
 /** The screens of the menu that is shown while no match is on. */
-export type MenuScreen = 'menu' | 'settings' | 'help';
+export type MenuScreen = 'menu' | 'levels' | 'profile' | 'settings' | 'help';
 
 /** What is laid over the arena right now, nothing while a match is on. */
 export type StagePanel = MenuScreen | 'pause' | 'over' | null;

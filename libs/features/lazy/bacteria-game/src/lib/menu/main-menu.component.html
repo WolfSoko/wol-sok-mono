@@ -1,0 +1,111 @@
+<header class="top">
+  <button
+    mat-icon-button
+    type="button"
+    [attr.aria-label]="sound() ? 'Mute' : 'Unmute'"
+    [matTooltip]="sound() ? 'Mute' : 'Unmute'"
+    (click)="soundChange.emit(!sound())"
+  >
+    <mat-icon>{{ sound() ? "volume_up" : "volume_off" }}</mat-icon>
+  </button>
+  <button
+    mat-icon-button
+    type="button"
+    aria-label="Back to the page"
+    matTooltip="Back to the page"
+    (click)="leave.emit()"
+  >
+    <mat-icon>fullscreen_exit</mat-icon>
+  </button>
+</header>
+
+<div class="layout">
+  <section class="hero">
+    <h1 class="title">Bacteria <span class="war">War</span></h1>
+    <p class="tagline">
+      Steer your colony, swallow theirs. Twelve dishes, three opponents, one
+      survivor.
+    </p>
+
+    <div class="actions">
+      <button
+        mat-flat-button
+        type="button"
+        class="play"
+        (click)="play.emit('vs-computer')"
+      >
+        <mat-icon>play_arrow</mat-icon>
+        Play
+        <span class="play-note">vs Computer · choose a level</span>
+      </button>
+      <button
+        mat-stroked-button
+        type="button"
+        class="two-players"
+        (click)="play.emit('two-players')"
+      >
+        <mat-icon>group</mat-icon>
+        Two players, one screen
+      </button>
+    </div>
+
+    <nav class="tiles" aria-label="More">
+      <button type="button" class="tile" (click)="open.emit('profile')">
+        <mat-icon class="gold">person</mat-icon>
+        Profile
+      </button>
+      <button type="button" class="tile" (click)="open.emit('settings')">
+        <mat-icon>tune</mat-icon>
+        Settings
+      </button>
+      <button type="button" class="tile" (click)="open.emit('help')">
+        <mat-icon>help_outline</mat-icon>
+        How to play
+      </button>
+    </nav>
+  </section>
+
+  <aside class="card" aria-label="Your campaign">
+    @let summary = campaign();
+    <div class="stat">
+      <span class="stat-label">Campaign</span>
+      <span class="stat-value"
+        >{{ summary.openLevels }}
+        <span class="of">of {{ totalLevels }} levels open</span></span
+      >
+      <mat-progress-bar
+        class="bar"
+        mode="determinate"
+        aria-label="Levels open"
+        [value]="(100 * summary.openLevels) / totalLevels"
+      />
+    </div>
+    <div class="stat">
+      <span class="stat-label">Medallions</span>
+      <span class="stat-value"
+        >{{ medalCount() }} <span class="of">of {{ totalMedals }}</span></span
+      >
+      <span class="tiers">
+        @for (tier of tiers; track tier) {
+          <span class="tier" [attr.data-tier]="tier"
+            ><span class="dot" aria-hidden="true"></span
+            >{{ summary.medals[tier] }}
+            <span class="cdk-visually-hidden">{{ names[tier] }}</span></span
+          >
+        }
+      </span>
+    </div>
+    <button
+      mat-stroked-button
+      type="button"
+      class="continue"
+      (click)="continueCampaign.emit()"
+    >
+      <mat-icon>arrow_forward</mat-icon>
+      <span class="continue-text">
+        <span class="continue-title">Continue the campaign</span>
+        <span class="continue-level">{{ summary.continueLabel }}</span>
+      </span>
+    </button>
+  </aside>
+</div>

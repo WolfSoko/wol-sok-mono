@@ -16,6 +16,13 @@ svg {
   font: 700 17px/1 sans-serif;
 }
 
+// The difficulty in an empty slot, as faint as the dashed ring.
+.slot-letter {
+  fill: currentColor;
+  opacity: 0.6;
+  font: 700 40px/1 sans-serif;
+}
+
 // A glint that sweeps across a platinum medallion now and then.
 .sheen {
   animation: sheen 3.2s ease-in-out infinite;

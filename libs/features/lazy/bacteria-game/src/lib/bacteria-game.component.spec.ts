@@ -4,7 +4,6 @@ import { Subject } from 'rxjs';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { GameStateQuery } from './state/game-state.query';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
-import { GameSettingsService } from './settings.service';
 import { GameStateService } from './state/game-state.service';
 import { levelTitle, LEVELS } from './state/levels';
 import { PlayerQuery } from './state/player.query';

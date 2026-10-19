@@ -5,6 +5,7 @@ import {
   matchRecord,
   MedalLimits,
   medalFor,
+  medalGoal,
 } from './medallions';
 import { createPlayer } from './player.model';
 
@@ -154,5 +155,22 @@ describe('betterMedal', () => {
     expect(betterMedal(null, 'bronze')).toBe('bronze');
     expect(betterMedal('silver', null)).toBe('silver');
     expect(betterMedal(null, null)).toBeNull();
+  });
+});
+
+describe('medalGoal', () => {
+  const limits = { silverSec: 90, goldSec: 65, goldLossShare: 0.45 };
+
+  it('names what the next medallion asks for', () => {
+    expect(medalGoal(limits, null)).toBe('Bronze needs a win.');
+    expect(medalGoal(limits, 'bronze')).toBe('Silver needs a win within 1:30.');
+    expect(medalGoal(limits, 'silver')).toBe(
+      'Gold needs a win within 1:05, losing under 45 % of your peak colony.'
+    );
+    expect(medalGoal(limits, 'gold')).toContain('without a boost');
+  });
+
+  it('has nothing left to ask after platinum', () => {
+    expect(medalGoal(limits, 'platinum')).toBeNull();
   });
 });

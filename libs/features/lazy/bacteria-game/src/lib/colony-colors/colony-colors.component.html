@@ -1,0 +1,26 @@
+@for (seat of seats(); track $index; let index = $index) {
+  <div class="seat-colors">
+    <span class="seat-name">{{ seat }}</span>
+    <mat-button-toggle-group
+      class="swatches"
+      hideSingleSelectionIndicator
+      [attr.aria-label]="'Colour of ' + seat"
+      [value]="colors()[index]"
+      [disabled]="disabled()"
+      (change)="pick(index, $event.value)"
+    >
+      @for (color of palette; track color.id) {
+        <mat-button-toggle
+          [value]="color.id"
+          [aria-label]="color.name"
+          [matTooltip]="color.name"
+        >
+          <span
+            class="swatch"
+            [style.background-color]="'rgb(' + color.rgb.join(',') + ')'"
+          ></span>
+        </mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+  </div>
+}

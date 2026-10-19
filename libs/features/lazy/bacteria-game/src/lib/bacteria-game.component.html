@@ -44,13 +44,29 @@
   }
   <mat-card-content>
     @if (!fullscreen()) {
-      <ng-container *ngTemplateOutlet="matchSetup"></ng-container>
+      <!-- Opponent, difficulty and level for the page layout. -->
+      <feat-lazy-bac-game-match-setup
+        [mode]="mode()"
+        [difficulty]="difficulty()"
+        [level]="level()"
+        [colors]="colors()"
+        [medals]="levelMedals()"
+        [locked]="lockedLevels()"
+        [freePlay]="settings.freePlay()"
+        [disabled]="running()"
+        (modeChange)="selectMode($event)"
+        (difficultyChange)="selectDifficulty($event)"
+        (levelChange)="selectLevel($event)"
+        (freePlayChange)="settings.setFreePlay($event)"
+        (colorChange)="selectColor($event)"
+      />
 
       <ng-container *ngTemplateOutlet="scoreboard"></ng-container>
 
       @if (matchOver()) {
         <feat-lazy-bac-game-winner
           class="page-result"
+          [canChooseLevel]="false"
           [upcomingLock]="upcomingLock()"
           (action)="onMatchEnd($event)"
         />
@@ -75,6 +91,7 @@
         @for (colony of humanStats(); track colony.id; let seat = $index) {
           <feat-lazy-bac-game-joystick
             class="stick"
+            [attr.inert]="screenOpen() ? '' : null"
             [style.grid-area]="'stick-' + seat"
             [attr.data-seat]="seat"
             [color]="colony.css"
@@ -84,6 +101,7 @@
           />
           <div
             class="seat"
+            [attr.inert]="screenOpen() ? '' : null"
             [style.grid-area]="'boost-' + seat"
             [attr.data-seat]="seat"
           >
@@ -96,211 +114,10 @@
         }
 
         @if (panel(); as open) {
-          <div class="stage-panel">
-            <mat-card class="panel-card" appearance="raised">
-              @switch (open) {
-                @case ("menu") {
-                  <mat-card-content class="menu">
-                    <h1 class="menu-title">Bacteria War</h1>
-                    <p class="menu-tagline">
-                      Steer your colony, eat the other one.
-                    </p>
-                    <mat-button-toggle-group
-                      class="mode-picker"
-                      aria-label="Opponent"
-                      hideSingleSelectionIndicator
-                      [value]="mode()"
-                      (change)="selectMode($event.value)"
-                    >
-                      <mat-button-toggle value="vs-computer">
-                        <mat-icon>smart_toy</mat-icon> vs Computer
-                      </mat-button-toggle>
-                      <mat-button-toggle value="two-players">
-                        <mat-icon>group</mat-icon> 2 Players
-                      </mat-button-toggle>
-                    </mat-button-toggle-group>
-                    <p class="menu-summary">
-                      {{ level().name }}
-                      @if (mode() === "vs-computer") {
-                        · {{ difficultyName() }}
-                      }
-                    </p>
-                    <button
-                      mat-flat-button
-                      color="primary"
-                      type="button"
-                      class="menu-button"
-                      (click)="startGame()"
-                    >
-                      <mat-icon>play_arrow</mat-icon>
-                      Play
-                    </button>
-                    <button
-                      mat-stroked-button
-                      type="button"
-                      class="menu-button"
-                      (click)="show('settings')"
-                    >
-                      <mat-icon>tune</mat-icon>
-                      Settings
-                    </button>
-                    <button
-                      mat-stroked-button
-                      type="button"
-                      class="menu-button"
-                      (click)="show('help')"
-                    >
-                      <mat-icon>help_outline</mat-icon>
-                      How to play
-                    </button>
-                    <button
-                      mat-button
-                      type="button"
-                      class="menu-link"
-                      (click)="leaveFullscreen()"
-                    >
-                      Back to the page
-                    </button>
-                  </mat-card-content>
-                }
-                @case ("settings") {
-                  <mat-card-content class="settings">
-                    <h2 class="panel-title">Settings</h2>
-                    <ng-container *ngTemplateOutlet="matchSetup"></ng-container>
-                    <div class="option-picker">
-                      <span class="option-label">Bacteria look</span>
-                      <mat-button-toggle-group
-                        aria-label="Bacteria look"
-                        hideSingleSelectionIndicator
-                        [value]="settings.look()"
-                        (change)="settings.setLook($event.value)"
-                      >
-                        @for (option of looks; track option.id) {
-                          <mat-button-toggle [value]="option.id">
-                            {{ option.name }}
-                          </mat-button-toggle>
-                        }
-                      </mat-button-toggle-group>
-                    </div>
-                    <div class="option-picker">
-                      <span class="option-label">Simulation resolution</span>
-                      <mat-button-toggle-group
-                        aria-label="Simulation resolution"
-                        hideSingleSelectionIndicator
-                        [disabled]="running()"
-                        [value]="settings.simResolution()"
-                        (change)="settings.setSimResolution($event.value)"
-                      >
-                        @for (option of simResolutions; track option.id) {
-                          <mat-button-toggle [value]="option.id">
-                            {{ option.name }}
-                          </mat-button-toggle>
-                        }
-                      </mat-button-toggle-group>
-                      <span class="resolution-hint">
-                        {{ arena().width }} × {{ arena().height }} cells
-                      </span>
-                    </div>
-                    <div class="option-picker">
-                      <span class="option-label">Screen resolution</span>
-                      <mat-button-toggle-group
-                        aria-label="Screen resolution"
-                        hideSingleSelectionIndicator
-                        [disabled]="running()"
-                        [value]="settings.screenResolution()"
-                        (change)="settings.setScreenResolution($event.value)"
-                      >
-                        @for (option of screenResolutions; track option.id) {
-                          <mat-button-toggle [value]="option.id">
-                            {{ option.name }}
-                          </mat-button-toggle>
-                        }
-                      </mat-button-toggle-group>
-                    </div>
-                    @if (running()) {
-                      <span class="resolution-hint">
-                        Pick the resolutions before a match - they stay as they
-                        are while one is on.
-                      </span>
-                    }
-                    <mat-slide-toggle
-                      [checked]="settings.showFps()"
-                      (change)="settings.setShowFps($event.checked)"
-                    >
-                      Show the frame rate
-                    </mat-slide-toggle>
-                    <mat-slide-toggle
-                      [checked]="settings.sound()"
-                      (change)="setSound($event.checked)"
-                    >
-                      Sound
-                    </mat-slide-toggle>
-                    <mat-slide-toggle
-                      [checked]="settings.music()"
-                      [disabled]="!settings.sound()"
-                      (change)="settings.setMusic($event.checked)"
-                    >
-                      Music
-                    </mat-slide-toggle>
-                    @if (nativeFullscreenSupported()) {
-                      <mat-slide-toggle
-                        [checked]="nativeFullscreen()"
-                        (change)="setNativeFullscreen($event.checked)"
-                      >
-                        Browser fullscreen
-                      </mat-slide-toggle>
-                    }
-                  </mat-card-content>
-                  <mat-card-actions align="end">
-                    <button
-                      mat-flat-button
-                      type="button"
-                      (click)="show('menu')"
-                    >
-                      <mat-icon>arrow_back</mat-icon>
-                      Back
-                    </button>
-                  </mat-card-actions>
-                }
-                @case ("help") {
-                  <mat-card-content class="help">
-                    <h2 class="panel-title">How to play</h2>
-                    <p>
-                      Steer your colony with the crosshair and surround the
-                      other one to eat it. Well fed bacteria divide, and the
-                      drops of jam supercharge whoever grabs them first.
-                    </p>
-                    <p>
-                      A boost makes your bacteria faster and more aggressive for
-                      a few seconds, then it needs time to recharge - fire it to
-                      break a frontline.
-                    </p>
-                    <p>
-                      <b>Touch:</b> push the joystick zone at your edge, tap the
-                      boost button - or drag your crosshair across the arena.
-                      For two players lay the phone flat between you, one at
-                      each end - each player's controls are turned towards them.
-                    </p>
-                    <p>
-                      <b>Keyboard:</b> {{ colorNames()[0] }} uses
-                      <b>WASD</b> and <b>Space</b>, {{ colorNames()[1] }} the
-                      <b>arrow keys</b> and <b>Enter</b>. Against the computer
-                      both sets are yours. <b>P</b> or <b>Escape</b> pauses,
-                      <b>F</b> toggles fullscreen.
-                    </p>
-                  </mat-card-content>
-                  <mat-card-actions align="end">
-                    <button
-                      mat-flat-button
-                      type="button"
-                      (click)="show('menu')"
-                    >
-                      <mat-icon>arrow_back</mat-icon>
-                      Back
-                    </button>
-                  </mat-card-actions>
-                }
-                @case ("pause") {
+          @if (open === "pause" || open === "over") {
+            <div class="stage-panel">
+              <mat-card class="panel-card" appearance="raised">
+                @if (open === "pause") {
                   <mat-card-content class="menu">
                     <h2 class="panel-title">Paused</h2>
                     <button
@@ -341,8 +158,7 @@
                       Quit to menu
                     </button>
                   </mat-card-content>
-                }
-                @case ("over") {
+                } @else {
                   <mat-card-content>
                     <feat-lazy-bac-game-winner
                       [upcomingLock]="upcomingLock()"
@@ -350,14 +166,85 @@
                     />
                   </mat-card-content>
                 }
+              </mat-card>
+            </div>
+          } @else {
+            <!-- The menu screens fill the stage, over a drifting swarm. -->
+            <div
+              class="stage-panel screens"
+              [style.--bw-player]="colonyCss()[0]"
+              [style.--bw-opponent]="colonyCss()[1]"
+              [style.--bw-on-player]="onPlayerColor()"
+            >
+              <feat-lazy-bac-game-swarm [colors]="colonyRgb()" />
+              @switch (open) {
+                @case ("menu") {
+                  <feat-lazy-bac-game-main-menu
+                    class="screen"
+                    [campaign]="campaign.summary()"
+                    [sound]="settings.sound()"
+                    (play)="chooseLevel($event)"
+                    (continueCampaign)="continueCampaign()"
+                    (open)="show($event)"
+                    (soundChange)="setSound($event)"
+                    (leave)="leaveFullscreen()"
+                  />
+                }
+                @case ("levels") {
+                  <feat-lazy-bac-game-level-select
+                    class="screen"
+                    [mode]="mode()"
+                    [difficulty]="difficulty()"
+                    [levelId]="level().id"
+                    [medals]="medals()"
+                    [locks]="lockedLevels()"
+                    [freePlay]="settings.freePlay()"
+                    (modeChange)="selectMode($event)"
+                    (difficultyChange)="selectDifficulty($event)"
+                    (levelChange)="selectLevel($event)"
+                    (freePlayChange)="settings.setFreePlay($event)"
+                    (start)="startGame()"
+                    (back)="show('menu')"
+                  />
+                }
+                @case ("profile") {
+                  <feat-lazy-bac-game-profile
+                    class="screen"
+                    [medals]="medals()"
+                    (back)="show('menu')"
+                  />
+                }
+                @case ("settings") {
+                  <feat-lazy-bac-game-settings
+                    class="screen"
+                    [mode]="mode()"
+                    [colors]="colors()"
+                    [locked]="running()"
+                    [arenaSize]="arena()"
+                    [nativeFullscreenSupported]="nativeFullscreenSupported()"
+                    [nativeFullscreen]="nativeFullscreen()"
+                    [backLabel]="paused() ? 'Pause menu' : 'Menu'"
+                    (colorChange)="selectColor($event)"
+                    (soundChange)="setSound($event)"
+                    (nativeFullscreenChange)="setNativeFullscreen($event)"
+                    (back)="show('menu')"
+                  />
+                }
+                @case ("help") {
+                  <feat-lazy-bac-game-help
+                    class="screen"
+                    [colorNames]="colorNames()"
+                    (back)="show('menu')"
+                  />
+                }
               }
-            </mat-card>
-          </div>
+            </div>
+          }
         }
       }
 
-      <div class="center">
-        @if (fullscreen()) {
+      <div class="center" [attr.inert]="screenOpen() ? '' : null">
+        @if (fullscreen() && !screenOpen()) {
           <div class="stage-bar">
             <span class="hud-level">{{ level().name }}</span>
             <span class="game-time">{{
@@ -446,25 +333,6 @@
     </mat-card-actions>
   }
 </mat-card>
-
-<!-- Opponent, difficulty and level - in the page and in the stage panel. -->
-<ng-template #matchSetup>
-  <feat-lazy-bac-game-match-setup
-    [mode]="mode()"
-    [difficulty]="difficulty()"
-    [level]="level()"
-    [colors]="colors()"
-    [medals]="levelMedals()"
-    [locked]="lockedLevels()"
-    [freePlay]="settings.freePlay()"
-    [disabled]="running()"
-    (modeChange)="selectMode($event)"
-    (difficultyChange)="selectDifficulty($event)"
-    (levelChange)="selectLevel($event)"
-    (freePlayChange)="settings.setFreePlay($event)"
-    (colorChange)="selectColor($event)"
-  />
-</ng-template>
 
 <!-- Mutes and unmutes the game - in the toolbar and in the stage bar. -->
 <ng-template #soundButton>

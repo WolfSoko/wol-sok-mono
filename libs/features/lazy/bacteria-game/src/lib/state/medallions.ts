@@ -14,6 +14,11 @@ export const MEDAL_TIERS: readonly MedalTier[] = [
   'platinum',
 ];
 
+/** The tiers as a cabinet shows them, the rarest first. */
+export const MEDAL_TIERS_RAREST_FIRST: readonly MedalTier[] = [
+  ...MEDAL_TIERS,
+].reverse();
+
 export const MEDAL_NAMES: Record<MedalTier, string> = {
   bronze: 'Bronze',
   silver: 'Silver',
@@ -128,6 +133,28 @@ export function medalFor(
   return earned;
 }
 
+/**
+ * What the next medallion after the one held asks for, before a match is
+ * played - null once platinum is held.
+ */
+export function medalGoal(
+  limits: MedalLimits,
+  held: MedalTier | null
+): string | null {
+  switch (held) {
+    case null:
+      return 'Bronze needs a win.';
+    case 'bronze':
+      return `Silver needs a win within ${clock(limits.silverSec)}.`;
+    case 'silver':
+      return `Gold needs a win within ${clock(limits.goldSec)}, losing under ${percent(limits.goldLossShare)} of your peak colony.`;
+    case 'gold':
+      return `Platinum needs a gold win without a boost that never falls below ${percent(PLATINUM_SIZE_RATIO)} of the computer’s size.`;
+    case 'platinum':
+      return null;
+  }
+}
+
 /** The better of two medallions, either of them possibly none. */
 export function betterMedal(
   a: MedalTier | null,
@@ -185,4 +212,9 @@ function slower(durationSec: number, limitSec: number): string | null {
 
 function percent(share: number): string {
   return `${Math.round(share * 100)} %`;
+}
+
+/** Seconds as the match clock shows them, "1:05". */
+function clock(seconds: number): string {
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }

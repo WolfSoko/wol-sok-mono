@@ -1,4 +1,5 @@
 @use 'colony';
+@use 'menu/screen';
 
 .toolbar-spacer {
   flex: 1 1 auto;
@@ -264,8 +265,8 @@
   }
 }
 
-// Match setup before a match and the pause notice during one, laid over the
-// arena. Only the card takes input, the seats around it stay usable.
+// The pause menu and the match result, cards laid over the arena - and the
+// menu screens, which fill it (.screens). Only the panel takes input.
 .stage-panel {
   position: absolute;
   inset: 0;
@@ -291,7 +292,7 @@
     font-weight: 700;
   }
 
-  // The main menu and the pause menu: a stack of big buttons.
+  // The pause menu: a stack of big buttons.
   .menu {
     display: flex;
     flex-direction: column;
@@ -300,55 +301,30 @@
     text-align: center;
   }
 
-  .menu-title {
-    margin: 0;
-    font-size: 2.2rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .menu-tagline,
-  .menu-summary {
-    margin: 0;
-    opacity: 0.8;
-  }
-
   .menu-button {
     width: min(100%, 18rem);
     height: 2.75rem;
     font-size: 1.05rem;
   }
+}
 
-  .menu-link {
-    opacity: 0.7;
-  }
+// The menu screens fill the stage, opaque, over a drifting swarm. They set
+// the look every screen shares (menu/_screen.scss): the colours of a dark
+// lab dish, gold for progress and the player's colony colour - bound in the
+// template - for the way forward.
+.stage-panel.screens {
+  @include screen.tokens;
 
-  .settings {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
+  display: block;
+  padding: 0;
+  background: var(--bw-ground);
+  color: var(--bw-text);
+  pointer-events: auto;
+  touch-action: manipulation;
 
-  .option-picker {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 1rem;
-  }
-
-  .option-label {
-    min-width: 6.5rem;
-    opacity: 0.8;
-  }
-
-  .resolution-hint {
-    font-size: 0.8rem;
-    opacity: 0.7;
-  }
-
-  .help p {
-    margin: 0 0 0.75rem;
+  .screen {
+    position: relative;
+    height: 100%;
   }
 }
 

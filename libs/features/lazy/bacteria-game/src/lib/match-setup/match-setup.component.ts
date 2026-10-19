@@ -10,14 +10,16 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import {
+  ColonyColorsComponent,
+  ColorChange,
+} from '../colony-colors/colony-colors.component';
 import { MedallionComponent } from '../medallion/medallion.component';
 import {
   BOT_DIFFICULTIES,
   BotDifficulty,
   difficultyOption,
 } from '../state/bot-controller';
-import { COLONY_COLORS } from '../state/colony-colors';
 import { GameMode } from '../state/game.states';
 import { Level, LEVELS } from '../state/levels';
 import { MedalTier } from '../state/medallions';
@@ -37,8 +39,8 @@ import { MedalTier } from '../state/medallions';
     MatIconModule,
     MatSelectModule,
     MatSlideToggleModule,
-    MatTooltipModule,
     MedallionComponent,
+    ColonyColorsComponent,
   ],
   templateUrl: './match-setup.component.html',
   styleUrl: './match-setup.component.scss',
@@ -75,27 +77,9 @@ export class MatchSetupComponent {
 
   protected readonly levels = LEVELS;
   protected readonly difficulties = BOT_DIFFICULTIES;
-  protected readonly palette = COLONY_COLORS;
-
-  /** Who sits in each seat, for the label of its colour picker. */
-  protected readonly seats = computed(() =>
-    this.mode() === 'vs-computer'
-      ? (['You', 'Computer'] as const)
-      : (['Left player', 'Right player'] as const)
-  );
-
-  protected pickColor(seat: number, colorId: string): void {
-    this.colorChange.emit({ seat: seat === 0 ? 0 : 1, colorId });
-  }
 
   /** The briefing of the selected difficulty. */
   protected readonly difficultyDescription = computed(
     () => difficultyOption(this.difficulty())?.description ?? ''
   );
-}
-
-/** A seat - 0 is the left one, 1 the right one - picked another colour. */
-export interface ColorChange {
-  seat: 0 | 1;
-  colorId: string;
 }

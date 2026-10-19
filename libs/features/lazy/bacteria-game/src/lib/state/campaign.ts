@@ -1,6 +1,16 @@
 import { BOT_DIFFICULTIES } from './bot-controller';
 import { levelTitle, LEVELS } from './levels';
+import { MedalTier } from './medallions';
 import { bestMedal, Progress } from './progress';
+
+/** Where the player stands on the campaign ladder, for the main menu. */
+export interface CampaignSummary {
+  openLevels: number;
+  /** Medallions held per tier, over every level and difficulty. */
+  medals: Readonly<Record<MedalTier, number>>;
+  /** "5 · Pillar Field · Normal" - where Continue picks up. */
+  continueLabel: string;
+}
 
 /**
  * The campaign ladder: against the computer the first level is open, and

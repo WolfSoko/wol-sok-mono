@@ -1,0 +1,63 @@
+<feat-lazy-bac-game-screen-header title="Profile" (back)="back.emit()">
+  <span class="kept">Kept on this device</span>
+</feat-lazy-bac-game-screen-header>
+
+<div class="body">
+  <section class="summary" aria-label="Totals">
+    <dl class="figures">
+      <div class="figure">
+        <dt>Levels won</dt>
+        <dd>
+          {{ levelsWon() }} <span class="of">of {{ levelCount }}</span>
+        </dd>
+      </div>
+      <div class="figure">
+        <dt>Medallions</dt>
+        <dd>
+          {{ heldCount() }} <span class="of">of {{ totalCount }}</span>
+        </dd>
+      </div>
+    </dl>
+    <ul class="tally" aria-label="Medallions by metal">
+      @for (metal of tally(); track metal.tier) {
+        <li>
+          <feat-lazy-bac-game-medallion [tier]="metal.tier" [size]="40" />
+          <span class="tally-count">{{ metal.count }}</span
+          >{{ " " }}<span class="tally-name">{{ metal.name }}</span>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="cabinet" aria-labelledby="cabinet-title">
+    <h3 id="cabinet-title" class="section-title">Medallions</h3>
+    <div class="table-box">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Level</th>
+            @for (difficulty of difficulties; track difficulty.id) {
+              <th scope="col">{{ difficulty.name }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of cabinet(); track row.id) {
+            <tr>
+              <th scope="row">{{ row.name }}</th>
+              @for (slot of row.slots; track slot.difficulty) {
+                <td>
+                  <feat-lazy-bac-game-medallion
+                    [tier]="slot.tier"
+                    [size]="24"
+                    [difficulty]="slot.difficulty"
+                  />
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

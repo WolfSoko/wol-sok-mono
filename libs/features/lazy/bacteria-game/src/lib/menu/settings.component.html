@@ -1,0 +1,107 @@
+<feat-lazy-bac-game-screen-header
+  title="Settings"
+  [backLabel]="backLabel()"
+  (back)="back.emit()"
+/>
+<div class="screen-sections">
+  <section class="screen-section" aria-labelledby="settings-colonies">
+    <h3 id="settings-colonies" class="section-title">Colonies</h3>
+    <feat-lazy-bac-game-colony-colors
+      class="stacked"
+      [mode]="mode()"
+      [colors]="colors()"
+      [disabled]="locked()"
+      (colorChange)="colorChange.emit($event)"
+    />
+    <p class="section-note">Picking the other colony's colour swaps the two.</p>
+  </section>
+  <section class="screen-section" aria-labelledby="settings-display">
+    <h3 id="settings-display" class="section-title">Display</h3>
+    <div class="option-picker">
+      <span class="option-label">Bacteria look</span>
+      <mat-button-toggle-group
+        aria-label="Bacteria look"
+        hideSingleSelectionIndicator
+        [value]="settings.look()"
+        (change)="settings.setLook($event.value)"
+      >
+        @for (option of looks; track option.id) {
+          <mat-button-toggle [value]="option.id">
+            {{ option.name }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    </div>
+    <div class="option-picker">
+      <span class="option-label">Simulation resolution</span>
+      <mat-button-toggle-group
+        aria-label="Simulation resolution"
+        hideSingleSelectionIndicator
+        [disabled]="locked()"
+        [value]="settings.simResolution()"
+        (change)="settings.setSimResolution($event.value)"
+      >
+        @for (option of simResolutions; track option.id) {
+          <mat-button-toggle [value]="option.id">
+            {{ option.name }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+      <span class="resolution-hint">
+        {{ arenaSize().width }} × {{ arenaSize().height }} cells
+      </span>
+    </div>
+    <div class="option-picker">
+      <span class="option-label">Screen resolution</span>
+      <mat-button-toggle-group
+        aria-label="Screen resolution"
+        hideSingleSelectionIndicator
+        [disabled]="locked()"
+        [value]="settings.screenResolution()"
+        (change)="settings.setScreenResolution($event.value)"
+      >
+        @for (option of screenResolutions; track option.id) {
+          <mat-button-toggle [value]="option.id">
+            {{ option.name }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    </div>
+    @if (locked()) {
+      <span class="resolution-hint">
+        Pick the colours and resolutions before a match - they stay as they are
+        while one is on.
+      </span>
+    }
+  </section>
+  <section class="screen-section switches" aria-labelledby="settings-sound">
+    <h3 id="settings-sound" class="section-title">Sound and screen</h3>
+    <mat-slide-toggle
+      [checked]="settings.sound()"
+      (change)="soundChange.emit($event.checked)"
+    >
+      Sound
+    </mat-slide-toggle>
+    <mat-slide-toggle
+      [checked]="settings.music()"
+      [disabled]="!settings.sound()"
+      (change)="settings.setMusic($event.checked)"
+    >
+      Music
+    </mat-slide-toggle>
+    <mat-slide-toggle
+      [checked]="settings.showFps()"
+      (change)="settings.setShowFps($event.checked)"
+    >
+      Show the frame rate
+    </mat-slide-toggle>
+    @if (nativeFullscreenSupported()) {
+      <mat-slide-toggle
+        [checked]="nativeFullscreen()"
+        (change)="nativeFullscreenChange.emit($event.checked)"
+      >
+        Browser fullscreen
+      </mat-slide-toggle>
+    }
+  </section>
+</div>

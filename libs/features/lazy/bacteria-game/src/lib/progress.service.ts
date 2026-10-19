@@ -47,6 +47,9 @@ export class ProgressService {
       });
   }
 
+  /** Every medallion held, by level id, then by difficulty. */
+  public readonly medals = computed(() => this.progress().medals);
+
   /** The best medallion of a level at a difficulty. */
   public medal(levelId: string, difficulty: BotDifficulty): MedalTier | null {
     return bestMedal(this.progress(), levelId, difficulty);

@@ -1,0 +1,141 @@
+@use 'screen';
+
+:host {
+  @include screen.screen;
+}
+
+.kept {
+  margin-left: auto;
+  font-size: 0.9rem;
+  color: var(--bw-muted);
+}
+
+.body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  min-height: 0;
+}
+
+.summary {
+  @include screen.panel;
+
+  flex: 1 1 18rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.25rem;
+}
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.figure {
+  padding: 0.85rem 1rem;
+  border-radius: 0.9rem;
+  background: var(--bw-surface-raised);
+
+  dt {
+    font-size: 0.85rem;
+    color: var(--bw-muted);
+  }
+
+  dd {
+    @include screen.figure;
+
+    margin: 0.15rem 0 0;
+    font-size: 1.6rem;
+  }
+
+  .of {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--bw-muted);
+  }
+}
+
+.tally {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+}
+
+.tally-count {
+  @include screen.figure;
+
+  font-size: 1.4rem;
+}
+
+.tally-name {
+  color: var(--bw-muted);
+}
+
+.cabinet {
+  @include screen.panel;
+
+  flex: 2 1 24rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+  padding: 1.25rem;
+}
+
+.section-title {
+  @include screen.title;
+
+  font-size: 1.35rem;
+}
+
+.table-box {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+thead th {
+  padding-bottom: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bw-muted);
+}
+
+tbody tr {
+  border-top: 1px solid var(--bw-line);
+}
+
+th[scope='row'] {
+  padding: 0.3rem 0;
+  font-weight: 400;
+  text-align: left;
+}
+
+th[scope='col']:first-child {
+  text-align: left;
+}
+
+td {
+  width: 4.5rem;
+  text-align: center;
+  color: var(--bw-muted);
+}
