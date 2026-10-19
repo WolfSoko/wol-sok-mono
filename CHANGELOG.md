@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.15.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.14.0...v74.15.0) (2026-10-19)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ two-player rivalry: series, head start, wins per colour ([#2492](https://github.com/WolfSoko/wol-sok-mono/issues/2492)) ([1fddac2](https://github.com/WolfSoko/wol-sok-mono/commit/1fddac286b557ef730099b10f5238417bc3a51c7))
+
 ## [74.14.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.13.0...v74.14.0) (2026-10-19)
 
 ### Features
