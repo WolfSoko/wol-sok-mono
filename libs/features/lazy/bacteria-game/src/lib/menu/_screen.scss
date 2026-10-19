@@ -120,10 +120,17 @@
 }
 
 // A row of toggles that breaks onto a second line rather than run out of
-// its section.
-@mixin wrapping-toggles {
+// its section - with `$padding` beside each option's label, where the
+// default room would make them wrap needlessly.
+@mixin wrapping-toggles($padding: null) {
   flex-wrap: wrap;
   max-width: 100%;
+
+  @if $padding {
+    ::ng-deep .mat-button-toggle-label-content {
+      padding: 0 $padding;
+    }
+  }
 }
 
 @mixin section-title {

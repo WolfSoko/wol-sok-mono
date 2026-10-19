@@ -1,3 +1,5 @@
+@use '../menu/screen';
+
 :host {
   display: flex;
   flex-wrap: wrap;
@@ -10,7 +12,6 @@
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
-  max-width: 100%;
 }
 
 .seat-name {
@@ -23,12 +24,7 @@
 
   // Eight colours in a row only fit a third of a phone held sideways with
   // little room around each - narrower still, they wrap.
-  flex-wrap: wrap;
-  max-width: 100%;
-
-  ::ng-deep .mat-button-toggle-label-content {
-    padding: 0 0.3rem;
-  }
+  @include screen.wrapping-toggles(0.3rem);
 
   .mat-button-toggle-checked .swatch {
     box-shadow:

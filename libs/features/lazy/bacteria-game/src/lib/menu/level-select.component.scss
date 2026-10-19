@@ -201,7 +201,7 @@
   .head-start-picker {
     --mat-button-toggle-height: 36px;
 
-    flex-wrap: wrap;
+    @include screen.wrapping-toggles;
   }
 }
 

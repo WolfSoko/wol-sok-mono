@@ -34,17 +34,13 @@
   // The options share the width of the section, with no more room around
   // their names than they need - a third of a phone held sideways is enough.
   mat-button-toggle-group {
-    @include screen.wrapping-toggles;
+    @include screen.wrapping-toggles(0.5rem);
 
     width: 100%;
   }
 
   mat-button-toggle {
     flex: 1 1 auto;
-  }
-
-  ::ng-deep .mat-button-toggle-label-content {
-    padding: 0 0.5rem;
   }
 }
 
