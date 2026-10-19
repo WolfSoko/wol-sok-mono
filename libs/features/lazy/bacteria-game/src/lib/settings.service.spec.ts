@@ -80,6 +80,17 @@ describe('GameSettingsService', () => {
     expect(stored().showFps).toBe(true);
   });
 
+  it('remembers free play, with the campaign ladder by default', () => {
+    const service = TestBed.inject(GameSettingsService);
+    expect(service.freePlay()).toBe(false);
+
+    service.setFreePlay(true);
+
+    expect(stored().freePlay).toBe(true);
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(GameSettingsService).freePlay()).toBe(true);
+  });
+
   it('makes sound unless an earlier visit muted it', () => {
     expect(TestBed.inject(GameSettingsService).sound()).toBe(true);
   });
@@ -274,6 +285,19 @@ describe('GameSettingsService', () => {
         levelId: LEVELS[4].id,
         difficulty: 'hard',
       });
+    });
+
+    it('restores free play late, unless the player switched it meanwhile', () => {
+      const service = createWith({ freePlay: true });
+      expect(service.freePlay()).toBe(false);
+      storage.flush();
+      expect(service.freePlay()).toBe(true);
+
+      const other =
+        (TestBed.resetTestingModule(), createWith({ freePlay: true }));
+      other.setFreePlay(false);
+      storage.flush();
+      expect(other.freePlay()).toBe(false);
     });
 
     it('stores the changes made after the settings were restored', () => {

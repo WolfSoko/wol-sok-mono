@@ -51,6 +51,7 @@
       @if (matchOver()) {
         <feat-lazy-bac-game-winner
           class="page-result"
+          [upcomingLock]="upcomingLock()"
           (action)="onMatchEnd($event)"
         />
       }
@@ -343,7 +344,10 @@
                 }
                 @case ("over") {
                   <mat-card-content>
-                    <feat-lazy-bac-game-winner (action)="onMatchEnd($event)" />
+                    <feat-lazy-bac-game-winner
+                      [upcomingLock]="upcomingLock()"
+                      (action)="onMatchEnd($event)"
+                    />
                   </mat-card-content>
                 }
               }
@@ -451,10 +455,13 @@
     [level]="level()"
     [colors]="colors()"
     [medals]="levelMedals()"
+    [locked]="lockedLevels()"
+    [freePlay]="settings.freePlay()"
     [disabled]="running()"
     (modeChange)="selectMode($event)"
     (difficultyChange)="selectDifficulty($event)"
     (levelChange)="selectLevel($event)"
+    (freePlayChange)="settings.setFreePlay($event)"
     (colorChange)="selectColor($event)"
   />
 </ng-template>

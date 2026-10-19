@@ -9,6 +9,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MedallionComponent } from '../medallion/medallion.component';
 import {
@@ -35,6 +36,7 @@ import { MedalTier } from '../state/medallions';
     MatFormFieldModule,
     MatIconModule,
     MatSelectModule,
+    MatSlideToggleModule,
     MatTooltipModule,
     MedallionComponent,
   ],
@@ -55,12 +57,20 @@ export class MatchSetupComponent {
   public readonly medals = input<Readonly<Record<string, MedalTier | null>>>(
     {}
   );
+  /**
+   * Why a level is still locked on the campaign ladder, by level id - a
+   * level missing or null is open.
+   */
+  public readonly locked = input<Readonly<Record<string, string | null>>>({});
+  /** True while every level is open against the computer. */
+  public readonly freePlay = input(false);
   /** True while a match is on and the setup must not change. */
   public readonly disabled = input(false);
 
   public readonly modeChange = output<GameMode>();
   public readonly difficultyChange = output<BotDifficulty>();
   public readonly levelChange = output<string>();
+  public readonly freePlayChange = output<boolean>();
   public readonly colorChange = output<ColorChange>();
 
   protected readonly levels = LEVELS;

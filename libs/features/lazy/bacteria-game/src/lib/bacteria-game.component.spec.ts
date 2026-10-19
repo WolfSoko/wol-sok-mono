@@ -3,7 +3,10 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject } from 'rxjs';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { GameStateQuery } from './state/game-state.query';
+import { PROGRESS_STORAGE_KEY } from './progress.service';
+import { GameSettingsService } from './settings.service';
 import { GameStateService } from './state/game-state.service';
+import { levelTitle, LEVELS } from './state/levels';
 import { PlayerQuery } from './state/player.query';
 
 /**
@@ -96,9 +99,18 @@ describe('BacteriaGameComponent', () => {
   }
 
   beforeEach(() => {
+    localStorage.clear();
     stubFullscreen(null);
     stubActivation(false);
   });
+
+  /** Stores a win on a level, as an earlier visit would have. */
+  function storeWin(levelId: string): void {
+    localStorage.setItem(
+      PROGRESS_STORAGE_KEY,
+      JSON.stringify({ medals: { [levelId]: { easy: 'bronze' } } })
+    );
+  }
 
   describe('the F shortcut', () => {
     it('goes fullscreen for a key pressed in the arena', () => {
@@ -441,6 +453,7 @@ describe('BacteriaGameComponent', () => {
     });
 
     it('switches to the next level only once the old arena is vaporized', () => {
+      storeWin(LEVELS[0].id);
       create();
       startMatch('vs-computer');
       const vaporized = new Subject<void>();
@@ -483,6 +496,31 @@ describe('BacteriaGameComponent', () => {
       TestBed.inject(GameStateService).setDifficulty('hard');
 
       expect(component['difficultyName']()).toBe('Hard');
+    });
+  });
+
+  describe('the campaign ladder', () => {
+    it('marks the levels the ladder has not opened', () => {
+      create();
+      TestBed.inject(GameStateService).setMode('vs-computer');
+
+      expect(component['lockedLevels']()[LEVELS[2].id]).toBe(
+        `Win ${levelTitle(LEVELS[1])} to unlock`
+      );
+      expect(LEVELS[0].id in component['lockedLevels']()).toBe(false);
+    });
+
+    it('locks the next level on the result screen until it is open', () => {
+      create();
+      startMatch('vs-computer');
+      const before = query.getValue().levelId;
+      query['store'].update({ matchEnded: true });
+
+      expect(component['upcomingLock']()).toBe(
+        `Win ${levelTitle(LEVELS[0])} to unlock`
+      );
+      component['onMatchEnd']('next');
+      expect(query.getValue().levelId).toBe(before);
     });
   });
 

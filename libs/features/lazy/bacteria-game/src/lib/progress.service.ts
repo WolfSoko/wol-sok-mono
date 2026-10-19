@@ -1,7 +1,8 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { BotDifficulty } from './state/bot-controller';
+import { ladderLocks } from './state/campaign';
 import { getLevel } from './state/levels';
 import {
   judgeMatch,
@@ -33,20 +34,29 @@ export const PROGRESS_STORAGE_KEY = 'bacteria-game.progress';
 export class ProgressService {
   private readonly storage = inject(GameStorage);
   private readonly progress = signal(EMPTY_PROGRESS);
+  /** True once the storage has answered - before, nothing is known yet. */
+  public readonly loaded = signal(false);
 
   constructor() {
     this.storage
       .watch(PROGRESS_STORAGE_KEY)
       .pipe(map(parseProgress), takeUntilDestroyed())
-      .subscribe((stored) =>
-        this.progress.update((progress) => mergeProgress(progress, stored))
-      );
+      .subscribe((stored) => {
+        this.progress.update((progress) => mergeProgress(progress, stored));
+        this.loaded.set(true);
+      });
   }
 
   /** The best medallion of a level at a difficulty. */
   public medal(levelId: string, difficulty: BotDifficulty): MedalTier | null {
     return bestMedal(this.progress(), levelId, difficulty);
   }
+
+  /**
+   * Why each level is still locked on the campaign ladder, by level id - the
+   * open ones are absent. It follows every medallion won.
+   */
+  public readonly ladderLocks = computed(() => ladderLocks(this.progress()));
 
   /** Judges a match that has ended, remembers its medallion and returns its award. */
   public recordMatch(record: MatchRecord): MedalAward {

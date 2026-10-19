@@ -38,8 +38,10 @@ test('should let the player pick another level in the settings', async ({
   const po = new BacteriaGamePo(page);
   await po.goto();
   await po.settingsCta.click();
+  // Against the computer the levels open one by one; free play opens them all.
+  await po.freePlayToggle.click();
 
-  await po.chooseLevel(/Serpentine/);
+  await po.chooseLevel(/· Serpentine/);
 
   await expect(po.levelSelect).toContainText('Serpentine');
   await expect(po.levelDescription).toContainText('winding path');
@@ -48,6 +50,26 @@ test('should let the player pick another level in the settings', async ({
 
   await expect(po.playCta).toBeVisible();
   await expect(page.locator('.menu-summary')).toContainText('Serpentine');
+});
+
+test('should lock the levels the campaign has not opened yet', async ({
+  page,
+}) => {
+  const po = new BacteriaGamePo(page);
+  await po.goto();
+  await po.settingsCta.click();
+
+  await po.levelSelect.click();
+
+  await expect(
+    page.getByRole('option', { name: /· Corridors/ })
+  ).toBeDisabled();
+  await expect(page.getByRole('option', { name: /· Corridors/ })).toContainText(
+    'Win Petri Dish to unlock'
+  );
+  await expect(
+    page.getByRole('option', { name: /· Petri Dish/ })
+  ).toBeEnabled();
 });
 
 test('should mute the game and remember it on the next visit', async ({

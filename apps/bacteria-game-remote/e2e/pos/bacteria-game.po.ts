@@ -29,6 +29,7 @@ export class BacteriaGamePo {
   public readonly muteCta: Locator;
   public readonly winner: Locator;
   public readonly unmuteCta: Locator;
+  public readonly freePlayToggle: Locator;
 
   constructor(private readonly page: Page) {
     this.mainTitle = page.locator('h1');
@@ -36,6 +37,7 @@ export class BacteriaGamePo {
     this.playCta = page.getByRole('button', { name: 'Play', exact: true });
     this.resetCta = page.getByRole('button', { name: 'Reset' });
     this.levelSelect = page.locator('.level-select');
+    this.freePlayToggle = page.getByRole('switch', { name: 'Free play' });
     this.levelDescription = page.locator('.level-description');
     this.fullscreenCta = page.getByRole('button', { name: /fullscreen/i });
     this.modePicker = page.locator('.mode-picker');

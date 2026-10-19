@@ -68,6 +68,7 @@ import {
 } from './state/bot-controller';
 import { BACTERIA_LOOKS, GameSettingsService } from './settings.service';
 import { ProgressService } from './progress.service';
+import { CampaignService } from './campaign.service';
 import {
   arenaSize,
   renderScale,
@@ -256,6 +257,15 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       ])
     );
   });
+  /** Why each level is still locked on the campaign ladder, by level id. */
+  protected readonly lockedLevels = inject(CampaignService).locks;
+  /** Why the level after the selected one is locked, null when it is open. */
+  protected readonly upcomingLock = computed(() => {
+    const upcoming = this.upcomingLevel();
+    return upcoming === null
+      ? null
+      : (this.lockedLevels()[upcoming.id] ?? null);
+  });
   /** The crosshairs a finger or a key may steer - never the computer's. */
   private readonly humans: Signal<Player[]>;
 
@@ -410,6 +420,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * "next level".
    */
   protected onMatchEnd(action: MatchEndAction): void {
+    if (action === 'next' && this.upcomingLock() !== null) {
+      return;
+    }
     const next = action === 'next' ? this.upcomingLevel() : null;
     this.screen.set('menu');
     this.resetGame$()
@@ -667,7 +680,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.gameStateService.togglePause();
   }
 
-  /** Picks the level the next match is played on. */
+  /** Picks the level the next match is played on - one the ladder opened. */
   protected selectLevel(levelId: string): void {
     this.gameStateService.setLevel(levelId);
   }
