@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.17.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.17.1...v74.17.2) (2026-10-19)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** ♻️ NgRx signal stores instead of Akita ([#2495](https://github.com/WolfSoko/wol-sok-mono/issues/2495)) ([01526cd](https://github.com/WolfSoko/wol-sok-mono/commit/01526cdba4fa720de8642ad5c9985b3534902f4f))
+
 ## [74.17.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.17.0...v74.17.1) (2026-10-19)
 
 ### Bug Fixes
