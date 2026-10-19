@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.9.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.8.1...v74.9.0) (2026-10-19)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ campaign ladder with free play ([#2485](https://github.com/WolfSoko/wol-sok-mono/issues/2485)) ([01b8da0](https://github.com/WolfSoko/wol-sok-mono/commit/01b8da0b225b61432d31cc39241fdbbb951c0a6b))
+
 ## [74.8.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.8.0...v74.8.1) (2026-10-19)
 
 ### Refactorings
