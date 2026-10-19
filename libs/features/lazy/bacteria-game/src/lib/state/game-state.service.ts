@@ -35,7 +35,9 @@ import {
   levelCrosshairSpeed,
   levelMap,
 } from './levels';
-import { matchRecord } from './medallions';
+import { AchievementId } from './achievement-ids';
+import { colonyCapacity } from './game-balance';
+import { matchRecord, MedalAward } from './medallions';
 import { Player } from './player.model';
 
 import { PlayerQuery } from './player.query';
@@ -113,6 +115,7 @@ export class GameStateService {
       winner: null,
       matchEnded: false,
       award: null,
+      achievements: [],
     });
     // subscribe update time passed when game running
     const running$ = this.gameStateQuery.selectCurrentGameState(
@@ -172,27 +175,50 @@ export class GameStateService {
    * award reach the store together.
    */
   private endMatch(outcome: MatchOutcome): void {
-    const { mode, levelId, difficulty, timePassed } =
-      this.gameStateQuery.getValue();
-    const record =
-      mode === 'vs-computer'
-        ? matchRecord(this.playerQuery.getAll(), {
-            levelId,
-            difficulty,
-            // Whole seconds, as the match clock shows them.
-            durationSec: Math.floor(timePassed / 1000),
-            winner: outcome.winner,
-          })
-        : null;
-    const award = record == null ? null : this.progress.recordMatch(record);
+    const { award, achievements } = this.recordMatch(outcome.winner);
     applyTransaction(() => {
       this.gameStateStore.update({ currentState: GameState.END });
       this.gameStateStore.update({
         winner: outcome.winner,
         matchEnded: true,
         award,
+        achievements,
       });
     });
+  }
+
+  /**
+   * Remembers a match that has ended: against the computer its medallion and
+   * numbers, between two players that it was played - with the achievements
+   * either earned.
+   */
+  private recordMatch(winner: Player | null): {
+    award: MedalAward | null;
+    achievements: readonly AchievementId[];
+  } {
+    const { mode, levelId, difficulty, timePassed, width } =
+      this.gameStateQuery.getValue();
+    switch (mode) {
+      case 'two-players':
+        return { award: null, achievements: this.progress.recordCouchMatch() };
+      case 'vs-computer': {
+        const record = matchRecord(this.playerQuery.getAll(), {
+          levelId,
+          difficulty,
+          // Whole seconds, as the match clock shows them.
+          durationSec: Math.floor(timePassed / 1000),
+          winner,
+          // The cap the simulation holds each of the two colonies to.
+          capacity: colonyCapacity(
+            levelBalance(getLevel(levelId), scaleOf(width)),
+            2
+          ),
+        });
+        return record === null
+          ? { award: null, achievements: [] }
+          : this.progress.recordMatch(record);
+      }
+    }
   }
 
   /**
@@ -331,6 +357,7 @@ export class GameStateService {
       winner: null,
       matchEnded: false,
       award: null,
+      achievements: [],
     }));
   }
 
@@ -347,6 +374,7 @@ export class GameStateService {
       winner: null,
       matchEnded: false,
       award: null,
+      achievements: [],
     }));
   }
 

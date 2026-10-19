@@ -1,3 +1,4 @@
+import { ProgressService } from '../progress.service';
 import { TestBed } from '@angular/core/testing';
 import { GameStateQuery } from './game-state.query';
 import { GameStateService } from './game-state.service';
@@ -171,7 +172,9 @@ describe('GameStateService', () => {
   });
 
   describe('match end', () => {
-    beforeEach(() => localStorage.clear());
+    // The progress service reads the storage as it is built, before any
+    // beforeEach here runs: clear up after each match instead.
+    afterEach(() => localStorage.clear());
 
     /** Starts a match and lets the computer's colony die out. */
     function winAgainst(mode: 'vs-computer' | 'two-players'): void {
@@ -213,6 +216,32 @@ describe('GameStateService', () => {
 
       expect(query.getValue().matchEnded).toBe(true);
       expect(query.getValue().award).toBeNull();
+    });
+
+    it('keeps the achievements the match earned, in either mode', () => {
+      winAgainst('vs-computer');
+      expect(query.getValue().achievements).toContain('first-blood');
+
+      service.start();
+      expect(query.getValue().achievements).toEqual([]);
+    });
+
+    it('counts a match between two players', () => {
+      winAgainst('two-players');
+
+      expect(TestBed.inject(ProgressService).totals().couchMatches).toBe(1);
+    });
+
+    it('records what the colonies did against the computer', () => {
+      winAgainst('vs-computer');
+
+      expect(query.getValue().award?.record).toEqual(
+        expect.objectContaining({
+          enemyCrushed: 300,
+          peakShare: expect.any(Number),
+        })
+      );
+      expect(query.getValue().award?.record.peakShare).toBeGreaterThan(0);
     });
 
     it('starts the match clock over on a restart', () => {

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Query } from '@datorama/akita';
 import { distinctUntilChanged, filter, map, Observable } from 'rxjs';
+import { AchievementId } from './achievement-ids';
 import { BotDifficulty } from './bot-controller';
 import {
   GameMode,
@@ -72,6 +73,11 @@ export class GameStateQuery extends Query<GameStateState> {
   /** What the match that just ended earned, null without a medallion run. */
   public selectAward(): Observable<MedalAward | null> {
     return this.select((store) => store.award);
+  }
+
+  /** The achievements the match that just ended earned. */
+  public selectAchievements(): Observable<readonly AchievementId[]> {
+    return this.select((store) => store.achievements);
   }
 
   /** Emits true while a match is on, paused or not. */

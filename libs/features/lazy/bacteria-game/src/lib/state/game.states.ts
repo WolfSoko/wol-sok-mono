@@ -3,6 +3,7 @@ import { Store, StoreConfig } from '@datorama/akita';
 import { BotDifficulty, DEFAULT_DIFFICULTY } from './bot-controller';
 import { DEFAULT_COLORS } from './colony-colors';
 import { LEVELS } from './levels';
+import { AchievementId } from './achievement-ids';
 import { MedalAward } from './medallions';
 import { Player } from './player.model';
 
@@ -42,6 +43,8 @@ export interface GameStateState {
    * between two players and until a match is over.
    */
   award: MedalAward | null;
+  /** The achievements the match that just ended earned, in either mode. */
+  achievements: readonly AchievementId[];
   keysPressed: string[];
   /** Id of the level that is selected - decides the map and the balance. */
   levelId: string;
@@ -64,6 +67,7 @@ export function createInitialState(): GameStateState {
     winner: null,
     matchEnded: false,
     award: null,
+    achievements: [],
     keysPressed: [],
     levelId: LEVELS[0].id,
     mode: DEFAULT_MODE,

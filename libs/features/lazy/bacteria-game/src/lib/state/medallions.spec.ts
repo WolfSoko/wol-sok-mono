@@ -21,6 +21,9 @@ const PLATINUM_RUN: MatchRecord = {
   lost: 10,
   peakCount: 1000,
   lowestSizeRatio: 0.9,
+  captured: 800,
+  enemyCrushed: 100,
+  peakShare: 0.5,
 };
 
 function run(changes: Partial<MatchRecord>): MatchRecord {
@@ -110,9 +113,14 @@ describe('matchRecord', () => {
     boostsFired: 2,
     peakCount: 300,
     lowestSizeRatio: 0.4,
+    captured: 250,
   });
-  const computer = createPlayer({ id: 1, isBot: true });
-  const match = { levelId: 'hourglass', difficulty: 'hard' as const };
+  const computer = createPlayer({ id: 1, isBot: true, lost: 270 });
+  const match = {
+    levelId: 'hourglass',
+    difficulty: 'hard' as const,
+    capacity: 600,
+  };
 
   it('takes what the human did from their player', () => {
     expect(
@@ -130,6 +138,9 @@ describe('matchRecord', () => {
       lost: 120,
       peakCount: 300,
       lowestSizeRatio: 0.4,
+      captured: 250,
+      enemyCrushed: 20,
+      peakShare: 0.5,
     });
   });
 

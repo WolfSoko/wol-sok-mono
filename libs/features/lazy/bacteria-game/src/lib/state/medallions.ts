@@ -58,6 +58,12 @@ export interface MatchRecord {
   peakCount: number;
   /** The lowest ratio of own to enemy bacteria during the match. */
   lowestSizeRatio: number;
+  /** Enemy bacteria the human's colony captured. */
+  captured: number;
+  /** Enemy bacteria the walls crushed - what the computer lost that nobody captured. */
+  enemyCrushed: number;
+  /** The colony at its peak, as a share of the level's colony capacity. */
+  peakShare: number;
 }
 
 /** What a match against the computer earned, for the result screen. */
@@ -82,13 +88,16 @@ export function matchRecord(
     difficulty: BotDifficulty;
     durationSec: number;
     winner: Player | null;
+    /** The most bacteria a colony may have on this level and grid. */
+    capacity: number;
   }
 ): MatchRecord | null {
   const human = players.find((player) => !player.isBot);
   if (human == null) {
     return null;
   }
-  const { winner, ...setup } = match;
+  const bot = players.find((player) => player.isBot);
+  const { winner, capacity, ...setup } = match;
   return {
     ...setup,
     won: winner != null && !winner.isBot,
@@ -96,6 +105,9 @@ export function matchRecord(
     lost: human.lost,
     peakCount: human.peakCount,
     lowestSizeRatio: human.lowestSizeRatio,
+    captured: human.captured,
+    enemyCrushed: Math.max(0, (bot?.lost ?? 0) - human.captured),
+    peakShare: capacity > 0 ? human.peakCount / capacity : 0,
   };
 }
 

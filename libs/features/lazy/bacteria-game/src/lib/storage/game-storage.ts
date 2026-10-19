@@ -36,8 +36,9 @@ export abstract class GameStorage {
    * when there is none - and skips the write when that changes nothing, as
    * `write` does. A backend shared between devices may apply it later,
    * once it is online, and call `change` more than once, so `change` must not
-   * have side effects. Changes that merge and can only gain need no
-   * transaction: applied late or twice, they come to the same.
+   * have side effects. Changes that merge and can only gain come to the same
+   * however often they land; a change that adds to a count must land exactly
+   * once - a transaction does that.
    */
   public abstract update(
     key: string,

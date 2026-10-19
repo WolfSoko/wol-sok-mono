@@ -25,6 +25,20 @@
     </div>
   </div>
 }
+@if (earned().length > 0) {
+  <ul class="achievements" aria-label="Achievements earned">
+    @for (achievement of earned(); track achievement.id) {
+      <li class="achievement">
+        <mat-icon class="badge" aria-hidden="true">emoji_events</mat-icon>
+        <span class="achievement-text">
+          <span class="achievement-label">Achievement</span>
+          <span class="achievement-name">{{ achievement.name }}</span>
+          <span class="achievement-condition">{{ achievement.condition }}</span>
+        </span>
+      </li>
+    }
+  </ul>
+}
 <div class="actions">
   <button mat-button type="button" (click)="action.emit('menu')">
     <mat-icon>home</mat-icon>

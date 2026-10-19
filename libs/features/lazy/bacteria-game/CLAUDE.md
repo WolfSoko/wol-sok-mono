@@ -25,10 +25,15 @@ changes to the services that use it.
   for example). The parser keeps whatever it can read and drops the rest, so
   a damaged or older entry never throws.
 - Data that more than one tab or device writes, such as progress, goes
-  through `update` with a merge that can only gain: a better medallion is
-  kept, never a worse one. Such a change comes to the same however late or
-  often a backend applies it, offline included, so concurrent writers converge
-  without a transaction.
+  through `update`, applied to the latest stored value:
+  - Medallions and achievements merge in a way that can only gain: a better
+    medallion is kept, never a worse one, and an achievement keeps its
+    earliest day. Such a change comes to the same however late or often a
+    backend applies it.
+  - Counts (the lifetime totals) are added to the stored value, never taken
+    from memory, which misses what the storage has not told yet. An adding
+    change must land exactly once, so a Firestore backend runs `update` as
+    a transaction. Offline, it queues the change and applies it once online.
 - A late answer must not undo the player. A setting the storage does not
   hold and one the player changed before it answered keep their value. A
   match under way keeps its setup; the stored setup waits for the menu and is

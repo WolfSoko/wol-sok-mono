@@ -71,6 +71,20 @@ describe('WinnerComponent', () => {
     expect(text()).not.toContain('Next:');
   });
 
+  it('lists the achievements the match earned', () => {
+    store.update({
+      winner: null,
+      levelId: LEVELS[0].id,
+      achievements: ['blitz', 'pacifist'],
+    });
+    fixture.detectChanges();
+
+    const names = Array.from(
+      fixture.nativeElement.querySelectorAll('.achievement-name') as Element[]
+    ).map((name) => name.textContent?.trim());
+    expect(names).toEqual(['Blitz', 'Pacifist']);
+  });
+
   it('locks the next level until the ladder opens it', () => {
     store.update({ winner: null, levelId: LEVELS[0].id });
     fixture.componentRef.setInput('upcomingLock', 'Win Petri Dish to unlock');
@@ -122,6 +136,9 @@ describe('WinnerComponent', () => {
       lost: 0,
       peakCount: 500,
       lowestSizeRatio: 1,
+      captured: 0,
+      enemyCrushed: 0,
+      peakShare: 0,
     };
 
     function award(changes: Partial<MedalAward>): MedalAward {

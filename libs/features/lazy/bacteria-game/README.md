@@ -130,6 +130,20 @@ per level and difficulty under its own storage key, `bacteria-game.progress`.
 Stored and won medallions are merged, never replaced, so a second tab or
 device cannot overwrite what the first one won.
 
+## Lifetime totals and achievements
+
+[`ProgressService`](./src/lib/progress.service.ts) also counts what every
+match did - matches and wins against the computer, enemy bacteria captured,
+enemy bacteria the walls crushed (what the computer lost that nobody
+captured), matches between two players - and checks the thirteen
+achievements of [`achievements.ts`](./src/lib/state/achievements.ts) after
+each one: First Blood, Pacifist, Blitz, Comeback, Siege, Clean Sweep, Full
+Dish, Gatekeeper, Converter, Flawless, Petri Scholar, Hard Boiled and Couch
+War. Each is earned once, on the day it is earned; the result screen lists
+the ones a match earned, the profile all of them with the day or the
+condition, and the main menu's card how many. Totals merge as the higher of
+two, achievements as the earlier day, so tabs and devices converge.
+
 ## Campaign ladder
 
 Against the computer, the levels open one by one

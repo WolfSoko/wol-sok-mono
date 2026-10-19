@@ -17,6 +17,9 @@ const GOLD_WIN: MatchRecord = {
   lost: 0,
   peakCount: 1000,
   lowestSizeRatio: 1,
+  captured: 0,
+  enemyCrushed: 0,
+  peakShare: 0,
 };
 
 describe('ProgressService', () => {
@@ -29,25 +32,74 @@ describe('ProgressService', () => {
     return TestBed.inject(ProgressService);
   }
 
+  function stored(): Record<string, unknown> {
+    return JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) ?? '{}');
+  }
+
   it('awards a medallion and remembers it across visits', () => {
     expect(create().recordMatch(GOLD_WIN)).toEqual({
-      record: GOLD_WIN,
-      medal: 'gold',
-      previousBest: null,
-      hint: 'Platinum needs a gold win without a boost.',
+      award: {
+        record: GOLD_WIN,
+        medal: 'gold',
+        previousBest: null,
+        hint: 'Platinum needs a gold win without a boost.',
+      },
+      achievements: ['first-blood', 'blitz', 'clean-sweep'],
     });
 
     TestBed.resetTestingModule();
     expect(create().medal('hourglass', 'hard')).toBe('gold');
-    expect(
-      JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) ?? '{}')
-    ).toEqual({ medals: { hourglass: { hard: 'gold' } } });
+    expect(stored()['medals']).toEqual({ hourglass: { hard: 'gold' } });
+  });
+
+  it('counts every match and what it captured and crushed', () => {
+    const progress = create();
+
+    progress.recordMatch({ ...GOLD_WIN, captured: 300, enemyCrushed: 40 });
+    progress.recordMatch({ ...GOLD_WIN, won: false, captured: 50 });
+
+    expect(progress.totals()).toEqual({
+      matches: 2,
+      wins: 1,
+      captured: 350,
+      enemyCrushed: 40,
+      couchMatches: 0,
+    });
+    expect(stored()['totals']).toEqual(progress.totals());
+  });
+
+  it('earns an achievement once, on the day it is earned', () => {
+    jest.useFakeTimers({ now: new Date('2026-10-19T12:00:00Z') });
+    const progress = create();
+
+    expect(progress.recordMatch(GOLD_WIN).achievements).toContain(
+      'first-blood'
+    );
+    jest.setSystemTime(new Date('2026-10-20T12:00:00Z'));
+    expect(progress.recordMatch(GOLD_WIN).achievements).not.toContain(
+      'first-blood'
+    );
+
+    expect(progress.achievements()['first-blood']).toBe('2026-10-19');
+    jest.useRealTimers();
+  });
+
+  it('counts the matches between two players towards Couch War', () => {
+    const progress = create();
+
+    const earned = Array.from({ length: 10 }, () =>
+      progress.recordCouchMatch()
+    );
+
+    expect(progress.totals().couchMatches).toBe(10);
+    expect(earned.slice(0, 9).flat()).toEqual([]);
+    expect(earned[9]).toEqual(['couch-war']);
   });
 
   it('keeps the better medallion and names it in the next award', () => {
     const progress = create();
     progress.recordMatch(GOLD_WIN);
-    const award = progress.recordMatch({
+    const { award } = progress.recordMatch({
       ...GOLD_WIN,
       durationSec: LIMITS.silverSec + 1,
     });
@@ -55,17 +107,6 @@ describe('ProgressService', () => {
     expect(award.medal).toBe('bronze');
     expect(award.previousBest).toBe('gold');
     expect(progress.medal('hourglass', 'hard')).toBe('gold');
-  });
-
-  it('does not touch the storage for a medallion no better than the best', () => {
-    const progress = create();
-    progress.recordMatch(GOLD_WIN);
-    const setItem = jest.spyOn(Storage.prototype, 'setItem');
-
-    progress.recordMatch({ ...GOLD_WIN, durationSec: LIMITS.silverSec + 1 });
-
-    expect(setItem).not.toHaveBeenCalled();
-    setItem.mockRestore();
   });
 
   it('opens the next level on the ladder with a win', () => {
@@ -109,17 +150,17 @@ describe('ProgressService', () => {
 
     progress.recordMatch(GOLD_WIN);
 
-    expect(
-      JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) ?? '{}')
-    ).toEqual({
-      medals: { corridors: { easy: 'silver' }, hourglass: { hard: 'gold' } },
+    expect(stored()['medals']).toEqual({
+      corridors: { easy: 'silver' },
+      hourglass: { hard: 'gold' },
     });
   });
 
-  it('stores nothing for a match without a medallion', () => {
+  it('stores no medallion for a lost match, but counts it', () => {
     create().recordMatch({ ...GOLD_WIN, won: false });
 
-    expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBeNull();
+    expect(stored()['medals']).toEqual({});
+    expect(stored()['totals']).toMatchObject({ matches: 1, wins: 0 });
   });
 
   it('starts empty from unreadable storage', () => {
@@ -154,14 +195,50 @@ describe('ProgressService', () => {
         [PROGRESS_STORAGE_KEY]: { medals: { corridors: { easy: 'silver' } } },
       });
 
-      expect(progress.recordMatch(GOLD_WIN).medal).toBe('gold');
+      expect(progress.recordMatch(GOLD_WIN).award.medal).toBe('gold');
       storage.flush();
 
       expect(progress.medal('hourglass', 'hard')).toBe('gold');
       expect(progress.medal('corridors', 'easy')).toBe('silver');
-      expect(storage.stored(PROGRESS_STORAGE_KEY)).toEqual({
+      expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
         medals: { corridors: { easy: 'silver' }, hourglass: { hard: 'gold' } },
+        totals: { matches: 1, wins: 1 },
       });
+    });
+
+    it('adds a match to the stored totals, whenever they arrive', () => {
+      const progress = createWith({
+        [PROGRESS_STORAGE_KEY]: {
+          medals: {},
+          totals: { matches: 50, wins: 30 },
+        },
+      });
+
+      progress.recordMatch(GOLD_WIN);
+      storage.flush();
+
+      expect(progress.totals()).toMatchObject({ matches: 51, wins: 31 });
+      expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
+        totals: { matches: 51, wins: 31 },
+      });
+    });
+
+    it('earns what the stored progress earns on its own, as it loads', () => {
+      const progress = createWith({
+        [PROGRESS_STORAGE_KEY]: { medals: { villi: { easy: 'platinum' } } },
+      });
+
+      storage.flush();
+      storage.flush();
+
+      expect(Object.keys(progress.achievements())).toEqual([
+        'first-blood',
+        'flawless',
+      ]);
+      expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
+        achievements: { 'first-blood': expect.any(String) },
+      });
+      expect(progress.recordCouchMatch()).toEqual([]);
     });
 
     it('keeps the better medallion when another device stores a worse one', () => {

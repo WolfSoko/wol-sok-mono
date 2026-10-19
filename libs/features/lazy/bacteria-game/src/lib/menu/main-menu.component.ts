@@ -11,6 +11,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { GameMode } from '../state/game.states';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
+import { ACHIEVEMENTS } from '../state/achievements';
 import { CampaignSummary } from '../state/campaign';
 import { LEVELS } from '../state/levels';
 import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
@@ -59,4 +60,5 @@ export class MainMenuComponent {
   protected readonly tiers = MEDAL_TIERS_RAREST_FIRST;
   protected readonly totalLevels = LEVELS.length;
   protected readonly totalMedals = LEVELS.length * BOT_DIFFICULTIES.length;
+  protected readonly totalAchievements = ACHIEVEMENTS.length;
 }
