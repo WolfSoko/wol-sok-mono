@@ -5,7 +5,9 @@
 }
 
 .screen-sections {
-  @include screen.sections;
+  // Wide enough for the eight colour swatches and four resolutions side by
+  // side: a phone held sideways gets two columns, not three cramped ones.
+  @include screen.sections(22rem);
 }
 
 .screen-section {
@@ -30,18 +32,6 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.4rem;
-
-  // The options share the width of the section, with no more room around
-  // their names than they need - a third of a phone held sideways is enough.
-  mat-button-toggle-group {
-    @include screen.wrapping-toggles(0.5rem);
-
-    width: 100%;
-  }
-
-  mat-button-toggle {
-    flex: 1 1 auto;
-  }
 }
 
 .option-label {
