@@ -1,8 +1,14 @@
 import { TestBed } from '@angular/core/testing';
-import { GameSettingsService, SETTINGS_STORAGE_KEY } from './settings.service';
+import {
+  GameSettingsService,
+  SETTINGS_STORAGE_KEY,
+  StoredSettings,
+} from './settings.service';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
 import { LEVELS } from './state/levels';
+import { GameStorage } from './storage/game-storage';
+import { LateGameStorage } from './storage/late-game-storage';
 
 describe('GameSettingsService', () => {
   beforeEach(() => {
@@ -160,5 +166,55 @@ describe('GameSettingsService', () => {
 
     expect(service.simResolution()).toBe('normal');
     expect(service.screenResolution()).toBe('medium');
+  });
+
+  describe('with storage that answers late', () => {
+    let storage: LateGameStorage;
+
+    function createWith(stored: StoredSettings): GameSettingsService {
+      storage = new LateGameStorage({ [SETTINGS_STORAGE_KEY]: stored });
+      TestBed.configureTestingModule({
+        providers: [{ provide: GameStorage, useValue: storage }],
+      });
+      return TestBed.inject(GameSettingsService);
+    }
+
+    it('restores the settings once the storage answers', () => {
+      const service = createWith({ levelId: LEVELS[2].id, sound: false });
+      expect(service.sound()).toBe(true);
+
+      storage.flush();
+
+      expect(service.sound()).toBe(false);
+      expect(TestBed.inject(GameStateQuery).getValue().levelId).toBe(
+        LEVELS[2].id
+      );
+    });
+
+    it('does not overwrite the stored settings with the defaults meanwhile', () => {
+      const service = createWith({ levelId: LEVELS[2].id, sound: false });
+
+      service.setShowFps(true);
+      storage.flush();
+      storage.flush();
+
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        levelId: LEVELS[2].id,
+        sound: false,
+      });
+    });
+
+    it('stores the changes made after the settings were restored', () => {
+      const service = createWith({ sound: false });
+      storage.flush();
+
+      service.setMusic(false);
+      storage.flush();
+
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        sound: false,
+        music: false,
+      });
+    });
   });
 });

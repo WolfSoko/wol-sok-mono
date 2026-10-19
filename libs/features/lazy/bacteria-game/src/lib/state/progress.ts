@@ -1,4 +1,4 @@
-import { isObject } from '../storage';
+import { isObject } from '../storage/game-storage';
 import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
 import { betterMedal, MEDAL_TIERS, MedalTier } from './medallions';
 
@@ -33,6 +33,24 @@ export function addMedal(
       [levelId]: { ...progress.medals[levelId], [difficulty]: best },
     },
   };
+}
+
+/**
+ * The progress with the best medallion of either, per level and difficulty.
+ * Merging can only gain, so progress from several tabs or devices converges
+ * whatever order it is merged in.
+ */
+export function mergeProgress(progress: Progress, other: Progress): Progress {
+  let merged = progress;
+  for (const [levelId, byDifficulty] of Object.entries(other.medals)) {
+    for (const { id: difficulty } of BOT_DIFFICULTIES) {
+      const medal = byDifficulty[difficulty];
+      if (medal != null) {
+        merged = addMedal(merged, levelId, difficulty, medal);
+      }
+    }
+  }
+  return merged;
 }
 
 /**

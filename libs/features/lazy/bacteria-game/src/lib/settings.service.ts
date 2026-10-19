@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { distinctUntilChanged } from 'rxjs';
+import { distinctUntilChanged, take } from 'rxjs';
 import {
   DEFAULT_SCREEN_RESOLUTION,
   DEFAULT_SIM_RESOLUTION,
@@ -14,7 +14,7 @@ import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
 import { GameMode } from './state/game.states';
 import { LEVELS } from './state/levels';
-import { isObject, readStoredJson, storeJson } from './storage';
+import { GameStorage, isObject } from './storage/game-storage';
 
 /** What the game remembers between visits. */
 export interface StoredSettings {
@@ -49,17 +49,20 @@ const MODES: readonly GameMode[] = ['vs-computer', 'two-players'];
 /**
  * Keeps the player's choices - opponent, difficulty, level, colours, how the
  * bacteria look, the resolutions, whether the frame rate is shown and whether
- * the game makes sound and plays music - across visits, in the browser's local storage.
+ * the game makes sound and plays music - across visits, in the game storage.
  *
  * The match settings live in the game state store, as they did; this service
- * only restores them when the game is opened and writes them back whenever
- * they change. A browser that refuses storage (private mode, a blocked site)
- * simply forgets them.
+ * only restores them once the storage answers and writes them back whenever
+ * they change after that - never before, so the defaults the game starts
+ * with cannot overwrite the stored settings. Storage that fails simply
+ * forgets them.
  */
 @Injectable({ providedIn: 'root' })
 export class GameSettingsService {
   private readonly gameState = inject(GameStateService);
   private readonly query = inject(GameStateQuery);
+  private readonly storage = inject(GameStorage);
+  private restored = false;
 
   /** True while the frame rate badge is shown on the arena. */
   public readonly showFps = signal(false);
@@ -77,24 +80,14 @@ export class GameSettingsService {
   );
 
   constructor() {
-    this.restore();
-    this.query
-      .select((state) => ({
-        mode: state.mode,
-        difficulty: state.difficulty,
-        levelId: state.levelId,
-        colors: state.colors,
-      }))
-      .pipe(
-        distinctUntilChanged(
-          (a, b) =>
-            a.mode === b.mode &&
-            a.difficulty === b.difficulty &&
-            a.levelId === b.levelId &&
-            sameColors(a.colors, b.colors)
-        )
-      )
-      .subscribe(() => this.persist());
+    this.storage
+      .watch(SETTINGS_STORAGE_KEY)
+      .pipe(take(1))
+      .subscribe((stored) => {
+        this.restore(isObject(stored) ? (stored as StoredSettings) : {});
+        this.restored = true;
+        this.persistMatchSetup();
+      });
   }
 
   public setShowFps(show: boolean): void {
@@ -128,8 +121,7 @@ export class GameSettingsService {
   }
 
   /** Applies what an earlier visit stored, ignoring anything it cannot read. */
-  private restore(): void {
-    const stored = readStoredSettings();
+  private restore(stored: StoredSettings): void {
     if (stored.mode != null && MODES.includes(stored.mode)) {
       this.gameState.setMode(stored.mode);
     }
@@ -159,7 +151,31 @@ export class GameSettingsService {
     this.music.set(stored.music !== false);
   }
 
+  /** Writes the settings back whenever the match setup in the game state changes. */
+  private persistMatchSetup(): void {
+    this.query
+      .select((state) => ({
+        mode: state.mode,
+        difficulty: state.difficulty,
+        levelId: state.levelId,
+        colors: state.colors,
+      }))
+      .pipe(
+        distinctUntilChanged(
+          (a, b) =>
+            a.mode === b.mode &&
+            a.difficulty === b.difficulty &&
+            a.levelId === b.levelId &&
+            sameColors(a.colors, b.colors)
+        )
+      )
+      .subscribe(() => this.persist());
+  }
+
   private persist(): void {
+    if (!this.restored) {
+      return;
+    }
     const { mode, difficulty, levelId, colors } = this.query.getValue();
     const settings: StoredSettings = {
       mode,
@@ -173,12 +189,6 @@ export class GameSettingsService {
       sound: this.sound(),
       music: this.music(),
     };
-    storeJson(SETTINGS_STORAGE_KEY, settings);
+    this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }
-}
-
-/** The stored settings, or nothing when there are none or they are unreadable. */
-function readStoredSettings(): StoredSettings {
-  const stored = readStoredJson(SETTINGS_STORAGE_KEY);
-  return isObject(stored) ? (stored as StoredSettings) : {};
 }

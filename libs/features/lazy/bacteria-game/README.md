@@ -67,7 +67,23 @@ settings toggle - is treated the same way, since that Escape never reaches
 the game.
 
 [`GameSettingsService`](./src/lib/settings.service.ts) remembers opponent,
-difficulty, level and the frame rate badge in local storage.
+difficulty, level and the frame rate badge in the game storage.
+
+## Storage
+
+Everything the game remembers goes through
+[`GameStorage`](./src/lib/storage/game-storage.ts), a port with three calls:
+`watch` a key, `write` a value, and `update` a value from the stored one. By
+default it is
+[`LocalGameStorage`](./src/lib/storage/local-game-storage.ts), which keeps one
+JSON value per key in local storage and passes on the changes other tabs
+make. A Firebase backend can replace it later with
+`{ provide: GameStorage, useClass: FirestoreGameStorage }`, with no change to
+the services. They treat the port as one that may answer late: their state
+lives in signals, and settings are only written back once they have been
+restored. Their specs also run against
+[`LateGameStorage`](./src/lib/storage/late-game-storage.ts), which answers
+only when told to. [`CLAUDE.md`](./CLAUDE.md) has the rules.
 
 ## Medallions
 
@@ -97,9 +113,10 @@ a frame adds at most 0.1 s to it - a hidden tab or a stall does not run the
 clock ahead of the war.
 
 [`ProgressService`](./src/lib/progress.service.ts) keeps the best medallion
-per level and difficulty under its own local storage key,
-`bacteria-game.progress`, and re-reads it before it writes, so a second tab
-does not overwrite what the first one won.
+per level and difficulty under its own storage key, `bacteria-game.progress`.
+It merges the stored medallions with the ones won here and never replaces
+them. A write goes through `update`, which merges with what is stored, so a
+second tab or device cannot overwrite what the first one won.
 
 ## Boost
 
