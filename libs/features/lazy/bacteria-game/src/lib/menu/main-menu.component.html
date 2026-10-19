@@ -67,6 +67,7 @@
 
   <aside class="card" aria-label="Your campaign">
     @let summary = campaign();
+    <feat-lazy-bac-game-rank-standing [xp]="summary.xp" [badgeSize]="60" />
     <div class="stat">
       <span class="stat-label">Campaign</span>
       <span class="stat-value"

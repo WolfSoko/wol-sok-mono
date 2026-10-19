@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Query } from '@datorama/akita';
 import { distinctUntilChanged, filter, map, Observable } from 'rxjs';
-import { AchievementId } from './achievement-ids';
 import { BotDifficulty } from './bot-controller';
 import {
   GameMode,
@@ -12,7 +11,7 @@ import {
 } from './game.states';
 import { sameColors } from './colony-colors';
 import { getLevel, Level } from './levels';
-import { MedalAward } from './medallions';
+import { MatchEarnings } from './earnings';
 
 @Injectable({ providedIn: 'root' })
 export class GameStateQuery extends Query<GameStateState> {
@@ -70,14 +69,9 @@ export class GameStateQuery extends Query<GameStateState> {
     return this.select((store) => store.winner);
   }
 
-  /** What the match that just ended earned, null without a medallion run. */
-  public selectAward(): Observable<MedalAward | null> {
-    return this.select((store) => store.award);
-  }
-
-  /** The achievements the match that just ended earned. */
-  public selectAchievements(): Observable<readonly AchievementId[]> {
-    return this.select((store) => store.achievements);
+  /** What the match that just ended earned. */
+  public selectEarnings(): Observable<MatchEarnings | null> {
+    return this.select((store) => store.earnings);
   }
 
   /** Emits true while a match is on, paused or not. */

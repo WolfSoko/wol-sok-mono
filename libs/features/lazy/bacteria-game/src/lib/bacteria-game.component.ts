@@ -284,6 +284,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly medals = this.progress.medals;
   protected readonly achievements = this.progress.achievements;
   protected readonly totals = this.progress.totals;
+  protected readonly xp = this.progress.xp;
   /**
    * The colony colours as RGB and as CSS, with a text colour that reads on
    * the player's - for the menu screens.
@@ -487,7 +488,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Plays the end of the match, and the medallion it earned after it. */
   private finishMatch(): void {
-    const { award, levelId } = this.query.getValue();
+    const { earnings, levelId } = this.query.getValue();
+    const award = earnings?.award;
     this.sound.matchEnd(
       this.matchResult(),
       award?.medal == null

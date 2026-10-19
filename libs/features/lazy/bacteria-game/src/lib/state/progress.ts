@@ -16,6 +16,11 @@ export interface LifetimeTotals {
   enemyCrushed: number;
   /** Matches between two players played to the end. */
   couchMatches: number;
+  /**
+   * The XP the matches were worth on their own - finishing, winning, the
+   * difficulty. The rest of the XP follows from what is held (xp.ts).
+   */
+  matchXp: number;
 }
 
 /** What the game remembers of a player's matches. */
@@ -33,6 +38,7 @@ export const NO_TOTALS: LifetimeTotals = {
   captured: 0,
   enemyCrushed: 0,
   couchMatches: 0,
+  matchXp: 0,
 };
 
 const TOTAL_KEYS = Object.keys(NO_TOTALS) as (keyof LifetimeTotals)[];

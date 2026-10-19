@@ -13,6 +13,7 @@ import { GameMode } from '../state/game.states';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { ACHIEVEMENTS } from '../state/achievements';
 import { CampaignSummary } from '../state/campaign';
+import { RankStandingComponent } from '../rank/rank-standing.component';
 import { LEVELS } from '../state/levels';
 import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 
@@ -34,6 +35,7 @@ export type MenuPage = 'profile' | 'settings' | 'help';
     MatIconModule,
     MatProgressBarModule,
     MatTooltipModule,
+    RankStandingComponent,
   ],
   templateUrl: './main-menu.component.html',
   styleUrl: './main-menu.component.scss',

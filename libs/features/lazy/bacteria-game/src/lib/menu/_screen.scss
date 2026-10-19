@@ -119,3 +119,15 @@
 
   font-size: 1.3rem;
 }
+
+// A gold bar on the screens' track - XP, levels open. The fallbacks serve
+// where it is drawn outside the stage panel's tokens.
+@mixin bar {
+  --mat-progress-bar-active-indicator-color: var(--bw-gold, #e9b949);
+  --mat-progress-bar-track-color: var(--bw-line, #d0d4da);
+  --mat-progress-bar-track-height: 0.6rem;
+  --mat-progress-bar-active-indicator-height: 0.6rem;
+  --mat-progress-bar-track-shape: 0.3rem;
+
+  border-radius: 0.3rem;
+}

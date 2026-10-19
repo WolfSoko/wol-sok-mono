@@ -115,7 +115,12 @@
 
         @if (panel(); as open) {
           @if (open === "pause" || open === "over") {
-            <div class="stage-panel">
+            <div
+              class="stage-panel"
+              [style.--bw-player]="colonyCss()[0]"
+              [style.--bw-opponent]="colonyCss()[1]"
+              [style.--bw-on-player]="onPlayerColor()"
+            >
               <mat-card class="panel-card" appearance="raised">
                 @if (open === "pause") {
                   <mat-card-content class="menu">
@@ -213,6 +218,7 @@
                     [medals]="medals()"
                     [achievements]="achievements()"
                     [totals]="totals()"
+                    [xp]="xp()"
                     (back)="show('menu')"
                   />
                 }

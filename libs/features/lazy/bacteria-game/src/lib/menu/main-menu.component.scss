@@ -166,13 +166,7 @@
 }
 
 .bar {
-  --mat-progress-bar-active-indicator-color: var(--bw-gold);
-  --mat-progress-bar-track-color: var(--bw-line);
-  --mat-progress-bar-track-height: 0.6rem;
-  --mat-progress-bar-active-indicator-height: 0.6rem;
-  --mat-progress-bar-track-shape: 0.3rem;
-
-  border-radius: 0.3rem;
+  @include screen.bar;
 }
 
 .tiers {

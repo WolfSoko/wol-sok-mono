@@ -11,14 +11,16 @@ import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { GameStateQuery } from '../state/game-state.query';
 import { DEFAULT_MODE, GameMode } from '../state/game.states';
-import { Level, LEVELS, nextLevel } from '../state/levels';
+import { getLevel, Level, LEVELS, nextLevel } from '../state/levels';
 import { MedalAward, MEDAL_NAMES, medalRank } from '../state/medallions';
 import { Player } from '../state/player.model';
-import { AchievementId } from '../state/achievement-ids';
 import { Achievement, getAchievement } from '../state/achievements';
+import { MatchEarnings } from '../state/earnings';
+import { xpClimb } from '../state/ranks';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu';
@@ -30,7 +32,13 @@ export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu';
  */
 @Component({
   selector: 'feat-lazy-bac-game-winner',
-  imports: [DatePipe, MatButtonModule, MatIconModule, MedallionComponent],
+  imports: [
+    DatePipe,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressBarModule,
+    MedallionComponent,
+  ],
   templateUrl: './winner.component.html',
   styleUrls: ['./winner.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,18 +76,43 @@ export class WinnerComponent {
     initialValue: DEFAULT_MODE,
   });
 
+  /** Everything the match earned, null until it has ended. */
+  public earnings: Signal<MatchEarnings | null> = toSignal(
+    this.state.selectEarnings(),
+    { initialValue: null }
+  );
+
   /** What the match earned against the computer, null between two players. */
-  public award: Signal<MedalAward | null> = toSignal(this.state.selectAward(), {
-    initialValue: null,
-  });
+  public award: Signal<MedalAward | null> = computed(
+    () => this.earnings()?.award ?? null
+  );
 
   /** The achievements the match earned, with their names and conditions. */
   public earned: Signal<readonly Achievement[]> = computed(() =>
-    this.achievementIds().map(getAchievement)
+    (this.earnings()?.achievements ?? []).map(getAchievement)
   );
 
-  private achievementIds = toSignal(this.state.selectAchievements(), {
-    initialValue: [] as readonly AchievementId[],
+  /** The levels the match opened on the campaign ladder. */
+  public unlocked: Signal<readonly Level[]> = computed(() =>
+    (this.earnings()?.unlocked ?? []).map(getLevel)
+  );
+
+  /**
+   * The XP the match earned and, where what was held before is known,
+   * where it leaves the player on the way through the ranks.
+   */
+  public xp = computed(() => {
+    const earnings = this.earnings();
+    if (earnings === null) {
+      return null;
+    }
+    return {
+      gain: earnings.xp,
+      climb:
+        earnings.xpBefore === null
+          ? null
+          : xpClimb(earnings.xpBefore, earnings.xp.total),
+    };
   });
 
   /** The medallion line of the award: what was won, or that nothing was. */

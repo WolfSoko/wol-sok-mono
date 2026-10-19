@@ -28,6 +28,34 @@
   padding: 1.25rem;
 }
 
+.ranks {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.75rem;
+  text-align: center;
+
+  li {
+    padding: 0.35rem 0.15rem;
+    border-radius: 0.5rem;
+    background: var(--bw-surface-raised);
+    color: var(--bw-muted);
+
+    &.reached {
+      color: var(--bw-gold);
+    }
+
+    &.current {
+      background: var(--bw-gold);
+      color: var(--bw-ground);
+      font-weight: 700;
+    }
+  }
+}
+
 .figures {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

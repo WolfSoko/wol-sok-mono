@@ -32,7 +32,7 @@ export class BacteriaGamePo {
   public readonly freePlayToggle: Locator;
 
   constructor(private readonly page: Page) {
-    this.mainTitle = page.locator('h1');
+    this.mainTitle = page.locator('mat-toolbar h1');
     this.playArea = page.locator('.stage canvas');
     this.playCta = page.getByRole('button', { name: /^Play\b/ });
     this.twoPlayersCta = page.getByRole('button', {

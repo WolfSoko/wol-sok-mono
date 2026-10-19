@@ -3,7 +3,20 @@
 </feat-lazy-bac-game-screen-header>
 
 <div class="body">
-  <section class="summary" aria-label="Totals">
+  <section class="summary" aria-label="Rank and totals">
+    <feat-lazy-bac-game-rank-standing [xp]="xp()" [badgeSize]="68" />
+    <ol class="ranks" aria-label="Ranks">
+      @let rank = standing();
+      @for (each of ranks; track each.name; let i = $index) {
+        <li
+          [class.reached]="i + 1 < rank.number"
+          [class.current]="i + 1 === rank.number"
+          [attr.aria-current]="i + 1 === rank.number ? 'step' : null"
+        >
+          {{ each.name }}
+        </li>
+      }
+    </ol>
     <dl class="figures">
       <div class="figure">
         <dt>Levels won</dt>

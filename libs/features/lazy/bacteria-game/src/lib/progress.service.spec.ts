@@ -45,6 +45,18 @@ describe('ProgressService', () => {
         hint: 'Platinum needs a gold win without a boost.',
       },
       achievements: ['first-blood', 'blitz', 'clean-sweep'],
+      xp: {
+        parts: [
+          { label: 'Win · Hard', xp: 150 },
+          { label: 'Gold medallion, a new best', xp: 70 },
+          { label: '3 achievements', xp: 150 },
+        ],
+        total: 370,
+      },
+      xpBefore: 0,
+      // Won without the ladder: the level after it opens - the level itself
+      // was played, it is no news.
+      unlocked: ['inner-ring'],
     });
 
     TestBed.resetTestingModule();
@@ -64,6 +76,7 @@ describe('ProgressService', () => {
       captured: 350,
       enemyCrushed: 40,
       couchMatches: 0,
+      matchXp: 150 + 30,
     });
     expect(stored()['totals']).toEqual(progress.totals());
   });
@@ -87,13 +100,24 @@ describe('ProgressService', () => {
   it('counts the matches between two players towards Couch War', () => {
     const progress = create();
 
-    const earned = Array.from({ length: 10 }, () =>
-      progress.recordCouchMatch()
+    const earned = Array.from(
+      { length: 10 },
+      () => progress.recordCouchMatch().achievements
     );
 
     expect(progress.totals().couchMatches).toBe(10);
     expect(earned.slice(0, 9).flat()).toEqual([]);
     expect(earned[9]).toEqual(['couch-war']);
+  });
+
+  it('adds the XP every match earns to the totals', () => {
+    const progress = create();
+
+    const first = progress.recordMatch(GOLD_WIN);
+    const second = progress.recordCouchMatch();
+
+    expect(second.xpBefore).toBe(first.xp.total);
+    expect(progress.xp()).toBe(first.xp.total + second.xp.total);
   });
 
   it('keeps the better medallion and names it in the next award', () => {
@@ -238,7 +262,28 @@ describe('ProgressService', () => {
       expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
         achievements: { 'first-blood': expect.any(String) },
       });
-      expect(progress.recordCouchMatch()).toEqual([]);
+      expect(progress.recordCouchMatch().achievements).toEqual([]);
+    });
+
+    it('counts the XP of a match that ends before the storage answers, without guessing the rank', () => {
+      const progress = createWith({
+        [PROGRESS_STORAGE_KEY]: {
+          medals: { hourglass: { hard: 'gold' } },
+          totals: { matchXp: 4000 },
+          achievements: { 'first-blood': '2026-10-01' },
+        },
+      });
+
+      const earnings = progress.recordMatch(GOLD_WIN);
+      expect(earnings.xpBefore).toBeNull();
+      expect(earnings.unlocked).toEqual([]);
+      storage.flush();
+
+      // The gold was held and First Blood earned: neither pays twice.
+      expect(progress.xp()).toBe(4000 + 150 + 70 + 50 * 3);
+      expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
+        totals: { matchXp: 4150 },
+      });
     });
 
     it('keeps the better medallion when another device stores a worse one', () => {

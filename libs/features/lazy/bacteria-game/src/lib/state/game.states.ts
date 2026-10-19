@@ -3,8 +3,7 @@ import { Store, StoreConfig } from '@datorama/akita';
 import { BotDifficulty, DEFAULT_DIFFICULTY } from './bot-controller';
 import { DEFAULT_COLORS } from './colony-colors';
 import { LEVELS } from './levels';
-import { AchievementId } from './achievement-ids';
-import { MedalAward } from './medallions';
+import { MatchEarnings } from './earnings';
 import { Player } from './player.model';
 
 /** Who steers the second crosshair. */
@@ -39,12 +38,10 @@ export interface GameStateState {
   /** True once a match is over - also for a draw, where `winner` stays null. */
   matchEnded: boolean;
   /**
-   * What the match that just ended earned against the computer - null
-   * between two players and until a match is over.
+   * What the match that just ended earned - null until a match is over, and
+   * after one against the computer without a human in it.
    */
-  award: MedalAward | null;
-  /** The achievements the match that just ended earned, in either mode. */
-  achievements: readonly AchievementId[];
+  earnings: MatchEarnings | null;
   keysPressed: string[];
   /** Id of the level that is selected - decides the map and the balance. */
   levelId: string;
@@ -66,8 +63,7 @@ export function createInitialState(): GameStateState {
     height: 320,
     winner: null,
     matchEnded: false,
-    award: null,
-    achievements: [],
+    earnings: null,
     keysPressed: [],
     levelId: LEVELS[0].id,
     mode: DEFAULT_MODE,

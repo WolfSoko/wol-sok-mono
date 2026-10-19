@@ -1,24 +1,35 @@
+@use '../menu/screen';
+
+// The result of a match, in the menu screens' look where the stage panel
+// sets it (menu/_screen.scss), with plain fallbacks in the page layout.
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  font-family: var(--bw-body, inherit);
 }
 
 .headline {
   margin: 0;
-  font-size: 1.4rem;
-  font-weight: 700;
-  line-height: 1.3;
+  font-family: var(--bw-display, inherit);
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 .level-info {
-  margin: 0.5rem 0 0;
-  opacity: 0.8;
+  margin: -0.75rem 0 0;
+  color: var(--bw-muted, inherit);
 }
 
 .award {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 1.25rem;
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
+  background: var(--bw-surface-raised, transparent);
 
   p {
     margin: 0.15rem 0;
@@ -26,11 +37,13 @@
 }
 
 .award-title {
-  font-weight: 700;
+  font-family: var(--bw-display, inherit);
+  font-size: 1.25rem;
+  font-weight: 800;
 }
 
 .award-hint {
-  opacity: 0.8;
+  color: var(--bw-gold, inherit);
 }
 
 // The medallion lands with a little bounce - only one that was earned.
@@ -50,38 +63,80 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .earned .award-medal {
-    animation: none;
+// The XP the match earned, and the bar towards the next rank: the part
+// held before, and - fainter - the part this match added.
+.xp {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.xp-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+}
+
+.xp-total {
+  font-family: var(--bw-display, inherit);
+  font-size: 1.2rem;
+  font-weight: 800;
+  animation: xp-in 0.5s 0.4s ease-out both;
+}
+
+.xp-parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--bw-muted, inherit);
+}
+
+.xp-bar {
+  @include screen.bar;
+}
+
+// The buffer is the XP this match added - the light end of the gold.
+.xp-bar ::ng-deep .mdc-linear-progress__buffer-bar {
+  background: color-mix(in srgb, var(--bw-gold, #e9b949) 45%, white);
+}
+
+.xp-bar ::ng-deep .mdc-linear-progress__buffer-dots {
+  display: none;
+}
+
+.xp-rank {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--bw-muted, inherit);
+}
+
+.rank-up {
+  margin-right: 0.35rem;
+  color: var(--bw-gold, inherit);
+  font-weight: 700;
+}
+
+@keyframes xp-in {
+  from {
+    opacity: 0;
+    translate: 0 0.5rem;
   }
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-// Under the buttons: what the locked next level still needs.
-.lock-reason {
-  margin: 0.5rem 0 0;
-  text-align: right;
-  opacity: 0.8;
-}
-
-// The achievements the match earned, as chips under the medallion.
-.achievements {
+// What else the match brought: achievements and levels it opened.
+.news {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin: 1rem 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.achievement {
+.chip {
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -89,27 +144,65 @@
   border: 1px solid color-mix(in srgb, var(--bw-gold, #e9b949) 50%, transparent);
   border-radius: 0.75rem;
   background: color-mix(in srgb, var(--bw-gold, #e9b949) 10%, transparent);
+
+  &.unlock {
+    border-color: color-mix(
+      in srgb,
+      var(--bw-opponent, #4c8dff) 60%,
+      transparent
+    );
+    background: color-mix(
+      in srgb,
+      var(--bw-opponent, #4c8dff) 10%,
+      transparent
+    );
+
+    .badge {
+      color: var(--bw-opponent, inherit);
+    }
+  }
 }
 
 .badge {
   color: var(--bw-gold, #e9b949);
 }
 
-.achievement-text {
+.chip-text {
   display: flex;
   flex-direction: column;
 }
 
-.achievement-label {
+.chip-label {
   font-size: 0.75rem;
-  opacity: 0.75;
+  color: var(--bw-muted, inherit);
 }
 
-.achievement-name {
+.chip-name {
   font-weight: 700;
 }
 
-.achievement-condition {
+.chip-note {
   font-size: 0.8rem;
-  opacity: 0.8;
+  color: var(--bw-muted, inherit);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+// Under the buttons: what the locked next level still needs.
+.lock-reason {
+  margin: -0.5rem 0 0;
+  text-align: right;
+  color: var(--bw-muted, inherit);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .earned .award-medal,
+  .xp-total {
+    animation: none;
+  }
 }

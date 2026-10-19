@@ -35,9 +35,9 @@ import {
   levelCrosshairSpeed,
   levelMap,
 } from './levels';
-import { AchievementId } from './achievement-ids';
 import { colonyCapacity } from './game-balance';
-import { matchRecord, MedalAward } from './medallions';
+import { MatchEarnings } from './earnings';
+import { matchRecord } from './medallions';
 import { Player } from './player.model';
 
 import { PlayerQuery } from './player.query';
@@ -114,8 +114,7 @@ export class GameStateService {
       height,
       winner: null,
       matchEnded: false,
-      award: null,
-      achievements: [],
+      earnings: null,
     });
     // subscribe update time passed when game running
     const running$ = this.gameStateQuery.selectCurrentGameState(
@@ -175,32 +174,28 @@ export class GameStateService {
    * award reach the store together.
    */
   private endMatch(outcome: MatchOutcome): void {
-    const { award, achievements } = this.recordMatch(outcome.winner);
+    const earnings = this.recordMatch(outcome.winner);
     applyTransaction(() => {
       this.gameStateStore.update({ currentState: GameState.END });
       this.gameStateStore.update({
         winner: outcome.winner,
         matchEnded: true,
-        award,
-        achievements,
+        earnings,
       });
     });
   }
 
   /**
-   * Remembers a match that has ended: against the computer its medallion and
-   * numbers, between two players that it was played - with the achievements
-   * either earned.
+   * Remembers a match that has ended - against the computer its medallion
+   * and numbers, between two players that it was played - and returns what
+   * it earned. Null for a match against the computer without a human in it.
    */
-  private recordMatch(winner: Player | null): {
-    award: MedalAward | null;
-    achievements: readonly AchievementId[];
-  } {
+  private recordMatch(winner: Player | null): MatchEarnings | null {
     const { mode, levelId, difficulty, timePassed, width } =
       this.gameStateQuery.getValue();
     switch (mode) {
       case 'two-players':
-        return { award: null, achievements: this.progress.recordCouchMatch() };
+        return this.progress.recordCouchMatch();
       case 'vs-computer': {
         const record = matchRecord(this.playerQuery.getAll(), {
           levelId,
@@ -214,9 +209,7 @@ export class GameStateService {
             2
           ),
         });
-        return record === null
-          ? { award: null, achievements: [] }
-          : this.progress.recordMatch(record);
+        return record === null ? null : this.progress.recordMatch(record);
       }
     }
   }
@@ -356,8 +349,7 @@ export class GameStateService {
       timePassed: 0,
       winner: null,
       matchEnded: false,
-      award: null,
-      achievements: [],
+      earnings: null,
     }));
   }
 
@@ -373,8 +365,7 @@ export class GameStateService {
       timeDelta: 1,
       winner: null,
       matchEnded: false,
-      award: null,
-      achievements: [],
+      earnings: null,
     }));
   }
 

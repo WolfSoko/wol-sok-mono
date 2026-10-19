@@ -10,6 +10,8 @@ export interface CampaignSummary {
   medals: Readonly<Record<MedalTier, number>>;
   /** Achievements earned. */
   achievements: number;
+  /** Experience so far, which decides the rank. */
+  xp: number;
   /** "5 · Pillar Field · Normal" - where Continue picks up. */
   continueLabel: string;
 }
@@ -46,6 +48,16 @@ export function ladderLocks(
     previous = { title: levelTitle(level), won };
   }
   return locks;
+}
+
+/** The levels a change of the ladder's locks opened, in the ladder's order. */
+export function newlyUnlocked(
+  before: Readonly<Record<string, string>>,
+  after: Readonly<Record<string, string>>
+): string[] {
+  return LEVELS.filter(({ id }) => id in before && !(id in after)).map(
+    ({ id }) => id
+  );
 }
 
 /** The furthest level the ladder has opened, given its locks. */

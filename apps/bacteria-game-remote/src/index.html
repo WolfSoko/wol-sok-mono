@@ -60,7 +60,7 @@
           0 0 60px rgb(233 185 73 / 35%);
         animation: splash-spin 7s linear infinite;
       }
-      #bacteria-game-splash h1 {
+      #bacteria-game-splash .title {
         margin: 0;
         font-family: "Bricolage Grotesque", "Roboto", sans-serif;
         font-weight: 800;
@@ -69,7 +69,7 @@
         letter-spacing: -0.035em;
         text-align: center;
       }
-      #bacteria-game-splash h1 span {
+      #bacteria-game-splash .title span {
         color: #ff7a2e;
       }
       #bacteria-game-splash .bar {
@@ -87,7 +87,7 @@
         background: #e9b949;
         animation: splash-load 1.4s ease-in-out infinite;
       }
-      #bacteria-game-splash p {
+      #bacteria-game-splash .note {
         margin: -16px 0 0;
         color: #b7c3d0;
       }
@@ -120,9 +120,9 @@
         src="icons/icon-192.png"
         alt="Bacteria War logo: a petri dish of orange and blue colonies"
       />
-      <h1>Bacteria <span>War</span></h1>
+      <p class="title">Bacteria <span>War</span></p>
       <div class="bar" aria-hidden="true"><span></span></div>
-      <p>Growing the colonies…</p>
+      <p class="note">Growing the colonies…</p>
     </div>
     <script>
       setTimeout(function () {
