@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.11.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.10.0...v74.11.0) (2026-10-19)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ menu screens, level choice and loading screen ([#2487](https://github.com/WolfSoko/wol-sok-mono/issues/2487)) ([c6525e0](https://github.com/WolfSoko/wol-sok-mono/commit/c6525e0d10d3f957863bb7fe9ebe5b290ca8a414))
+
 ## [74.10.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.9.0...v74.10.0) (2026-10-19)
 
 ### Features
