@@ -150,8 +150,9 @@ export const GameStateStore = signalStore(
     ): Observable<T> {
       return new Observable<T>((subscriber) => {
         const emit = () => subscriber.next(untracked(read));
-        emit();
+        // Listening first, so a change made on the first value still arrives.
         store._listeners.add(emit);
+        emit();
         return () => store._listeners.delete(emit);
       }).pipe(distinctUntilChanged(equal));
     },

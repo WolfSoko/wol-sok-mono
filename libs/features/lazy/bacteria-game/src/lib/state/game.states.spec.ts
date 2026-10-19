@@ -52,4 +52,19 @@ describe('GameStateStore.select$', () => {
     first.unsubscribe();
     second.unsubscribe();
   });
+
+  it('also tells a change made on the first value', () => {
+    const states: GameState[] = [];
+    const subscription = store
+      .select$(() => store.currentState())
+      .subscribe((state) => {
+        states.push(state);
+        if (state === GameState.START) {
+          store.update({ currentState: GameState.RUNNING });
+        }
+      });
+
+    expect(states).toEqual([GameState.START, GameState.RUNNING]);
+    subscription.unsubscribe();
+  });
 });
