@@ -171,6 +171,34 @@ describe('GameStateService', () => {
     });
   });
 
+  describe('head start', () => {
+    function startingCounts(): number[] {
+      return playerQuery.getAll().map((player) => player.bacteriaCount);
+    }
+
+    it('starts the colony of the seat without it smaller', () => {
+      service.setMode('two-players');
+      service.setArenaSize(WIDTH, HEIGHT);
+      const [left, right] = startingCounts();
+      expect(left).toBe(right);
+
+      service.setHeadStart(-2);
+      const [ahead, behind] = startingCounts();
+
+      expect(ahead).toBe(left);
+      expect(behind).toBeLessThan(right);
+    });
+
+    it('gives the computer none', () => {
+      service.setHeadStart(2);
+      service.setMode('vs-computer');
+      service.setArenaSize(WIDTH, HEIGHT);
+      const [human, computer] = startingCounts();
+
+      expect(human).toBe(computer);
+    });
+  });
+
   describe('match end', () => {
     // The progress service reads the storage as it is built, before any
     // beforeEach here runs: clear up after each match instead.
@@ -244,6 +272,47 @@ describe('GameStateService', () => {
       expect(
         query.getValue().earnings?.award?.record.peakShare
       ).toBeGreaterThan(0);
+    });
+
+    it('plays a series between two players to the end', () => {
+      service.setSeriesLength(3);
+      winAgainst('two-players');
+      expect(query.getValue().series?.wins).toEqual([1, 0]);
+
+      winAgainst('two-players');
+      expect(query.getValue().series).toEqual({ bestOf: 3, wins: [2, 0] });
+
+      // Taken: the next match starts a new one.
+      service.start();
+      expect(query.getValue().series?.wins).toEqual([0, 0]);
+    });
+
+    it('ends a series when its setup changes, or on request', () => {
+      service.setSeriesLength(3);
+      winAgainst('two-players');
+
+      service.setColor(0, 'orange');
+      expect(query.getValue().series).not.toBeNull();
+      service.setHeadStart(1);
+      expect(query.getValue().series).toBeNull();
+
+      winAgainst('two-players');
+      service.endSeries();
+      expect(query.getValue().series).toBeNull();
+    });
+
+    it('plays single matches without a series', () => {
+      winAgainst('two-players');
+
+      expect(query.getValue().series).toBeNull();
+    });
+
+    it('counts the win for the winning colour', () => {
+      winAgainst('two-players');
+
+      expect(TestBed.inject(ProgressService).couchWins()).toEqual({
+        orange: 1,
+      });
     });
 
     it('starts the match clock over on a restart', () => {

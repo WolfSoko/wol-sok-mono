@@ -27,6 +27,22 @@
   </div>
 }
 
+@if (duel(); as duel) {
+  <div class="duel">
+    @if (duel.series; as series) {
+      <p class="series">
+        <span class="duel-label">Series</span>
+        <span class="duel-score">{{ series.score }}</span>
+        <span class="duel-note">{{ series.note }}</span>
+      </p>
+    }
+    <p class="rivalry">
+      <span class="duel-label">Rivalry</span>
+      <span class="duel-score">{{ duel.rivalry }}</span>
+    </p>
+  </div>
+}
+
 @if (xp(); as xp) {
   <div class="xp">
     <div class="xp-head">

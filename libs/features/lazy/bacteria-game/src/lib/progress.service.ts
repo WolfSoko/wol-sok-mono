@@ -10,6 +10,7 @@ import { MatchEarnings } from './state/earnings';
 import { arenaLocks, colorLocks, newCosmetics } from './state/unlocks';
 import { COUCH_XP, matchXp, xpGain, xpOf } from './state/xp';
 import {
+  addCouchWin,
   addMedal,
   addTotals,
   bestMedal,
@@ -118,17 +119,25 @@ export class ProgressService {
     };
   }
 
-  /** Counts a match between two players that has ended, and returns what it earned. */
-  public recordCouchMatch(): MatchEarnings {
+  /**
+   * Counts a match between two players that has ended - won by the colony
+   * of that colour, null for a draw - and returns what it earned.
+   */
+  public recordCouchMatch(winnerColor: string | null): MatchEarnings {
     return {
       award: null,
       ...this.record(
-        (progress) => progress,
+        (progress) =>
+          winnerColor === null ? progress : addCouchWin(progress, winnerColor),
         { couchMatches: 1, matchXp: COUCH_XP },
-        null
+        null,
+        winnerColor
       ),
     };
   }
+
+  /** The wins between two players, by the winning colony's colour. */
+  public readonly couchWins = computed(() => this.progress().couchWins);
 
   /**
    * Applies a match: its medallion, its numbers and the achievements they
@@ -140,7 +149,8 @@ export class ProgressService {
   private record(
     gain: (progress: Progress) => Progress,
     match: Partial<LifetimeTotals>,
-    record: MatchRecord | null
+    record: MatchRecord | null,
+    couchWinner: string | null = null
   ): Omit<MatchEarnings, 'award'> {
     const before = this.progress();
     const locksBefore = this.ladderLocks();
@@ -152,7 +162,7 @@ export class ProgressService {
       today()
     );
     this.progress.set(progress);
-    this.store(progress, match);
+    this.store(progress, match, couchWinner);
     return {
       achievements: earned,
       xp: xpGain(before, progress, record),
@@ -174,11 +184,19 @@ export class ProgressService {
    * ones here, which miss what the storage has not told yet. So no match is
    * lost, whenever the storage answers and whoever else writes.
    */
-  private store(progress: Progress, match: Partial<LifetimeTotals>): void {
-    const gains = { ...progress, totals: NO_TOTALS };
-    this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
-      mergeProgress(addTotals(parseProgress(stored), match), gains)
-    );
+  private store(
+    progress: Progress,
+    match: Partial<LifetimeTotals>,
+    couchWinner: string | null = null
+  ): void {
+    const gains = { ...progress, totals: NO_TOTALS, couchWins: {} };
+    this.storage.update(PROGRESS_STORAGE_KEY, (stored) => {
+      const counted = addTotals(parseProgress(stored), match);
+      return mergeProgress(
+        couchWinner === null ? counted : addCouchWin(counted, couchWinner),
+        gains
+      );
+    });
   }
 }
 

@@ -81,6 +81,7 @@ import { GameSettingsService } from './settings.service';
 import { ProgressService } from './progress.service';
 import { CampaignService } from './campaign.service';
 import { dismissSplash } from './splash';
+import { HeadStart, SeriesLength } from './state/rivalry';
 import { loadFonts } from './fonts';
 import { arenaSize, renderScale, scaleOf } from './state/arena-size';
 import { GameSoundService, MatchResult } from './sound/game-sound.service';
@@ -281,6 +282,25 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Why each level is still locked on the campaign ladder, by level id. */
   protected readonly campaign = inject(CampaignService);
   protected readonly lockedLevels = this.campaign.locks;
+  /** Between two players: the series length, the head start, the series. */
+  protected readonly seriesLength = toSignal(
+    this.query.select((state) => state.seriesLength),
+    { requireSync: true }
+  );
+  protected readonly headStart = toSignal(
+    this.query.select((state) => state.headStart),
+    { requireSync: true }
+  );
+  /** The names of the left and the right colour, as a pair. */
+  protected readonly colorNamePair = computed(
+    () => this.colorNames() as [string, string]
+  );
+  /** The lifetime wins of the two colours between two players. */
+  protected readonly rivalry = computed((): [number, number] => {
+    const wins = this.progress.couchWins();
+    const [left, right] = this.colors();
+    return [wins[left] ?? 0, wins[right] ?? 0];
+  });
   /** Every medallion held, by level id, then by difficulty. */
   protected readonly medals = this.progress.medals;
   protected readonly achievements = this.progress.achievements;
@@ -474,6 +494,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     const next = action === 'next' ? this.upcomingLevel() : null;
     this.screen.set(action === 'levels' ? 'levels' : 'menu');
+    if (action === 'menu' || action === 'levels') {
+      this.gameStateService.endSeries();
+    }
     this.resetGame$()
       .pipe(
         tap(() => {
@@ -528,6 +551,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.screen.set(screen);
   }
 
+  protected selectSeriesLength(length: SeriesLength): void {
+    this.gameStateService.setSeriesLength(length);
+  }
+
+  protected selectHeadStart(headStart: HeadStart): void {
+    this.gameStateService.setHeadStart(headStart);
+  }
+
   /** Sets a match up against the computer or between two players. */
   protected chooseLevel(mode: GameMode): void {
     this.selectMode(mode);
@@ -544,6 +575,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Gives the match up and returns to the main menu. */
   protected quitToMenu(): void {
     this.screen.set('menu');
+    this.gameStateService.endSeries();
     this.resetGame();
   }
 

@@ -126,6 +126,41 @@
   }
 }
 
+// Between two players: the series and the lifetime rivalry.
+.duel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 1rem;
+  background: var(--bw-surface-raised, transparent);
+
+  p {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin: 0;
+  }
+}
+
+.duel-label {
+  font-size: 0.75rem;
+  color: var(--bw-muted, inherit);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.duel-score {
+  font-family: var(--bw-display, inherit);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.duel-note {
+  font-size: 0.85rem;
+  color: var(--bw-gold, inherit);
+}
+
 // What else the match brought: achievements and levels it opened.
 .news {
   display: flex;

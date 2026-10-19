@@ -209,6 +209,12 @@
                     (difficultyChange)="selectDifficulty($event)"
                     (levelChange)="selectLevel($event)"
                     (freePlayChange)="settings.setFreePlay($event)"
+                    [seriesLength]="seriesLength()"
+                    [headStart]="headStart()"
+                    [colonyNames]="colorNamePair()"
+                    [rivalry]="rivalry()"
+                    (seriesLengthChange)="selectSeriesLength($event)"
+                    (headStartChange)="selectHeadStart($event)"
                     (start)="startGame()"
                     (back)="show('menu')"
                   />

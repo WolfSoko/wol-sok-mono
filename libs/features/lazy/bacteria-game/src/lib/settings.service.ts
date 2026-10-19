@@ -19,6 +19,12 @@ import {
   isMatchOn,
 } from './state/game.states';
 import { LEVELS } from './state/levels';
+import {
+  HeadStart,
+  isHeadStart,
+  isSeriesLength,
+  SeriesLength,
+} from './state/rivalry';
 import { isObject } from './state/is-object';
 import { GameStorage } from './storage/game-storage';
 
@@ -36,6 +42,10 @@ export interface StoredSettings {
   music?: boolean;
   /** The colour ids of the left and the right colony. */
   colors?: [string, string];
+  /** Between two players: how many matches a series is the best of. */
+  seriesLength?: SeriesLength;
+  /** Between two players: who starts bigger. */
+  headStart?: HeadStart;
   look?: BacteriaLook;
   simResolution?: SimResolution;
   screenResolution?: ScreenResolution;
@@ -59,7 +69,7 @@ const MODES: readonly GameMode[] = ['vs-computer', 'two-players'];
 /** The settings that set up a match - kept in the game state store. */
 type MatchSetup = Pick<
   GameStateState,
-  'mode' | 'difficulty' | 'levelId' | 'colors'
+  'mode' | 'difficulty' | 'levelId' | 'colors' | 'seriesLength' | 'headStart'
 >;
 
 const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
@@ -67,14 +77,16 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
   'difficulty',
   'levelId',
   'colors',
+  'seriesLength',
+  'headStart',
 ];
 
 /**
- * Keeps the player's choices - opponent, difficulty, level, colours, free
- * play or the campaign ladder, the arena, how the bacteria look, the
- * resolutions,
- * whether the frame rate is shown and whether the game makes sound and plays
- * music - across visits, in the game storage.
+ * Keeps the player's choices - opponent, difficulty, level, colours, the
+ * series and the head start between two players, free play or the campaign
+ * ladder, the arena, how the bacteria look, the resolutions, whether the
+ * frame rate is shown and whether the game makes sound and plays music -
+ * across visits, in the game storage.
  *
  * The match settings live in the game state store, as they did; this service
  * only restores them once the storage answers and writes them back whenever
@@ -281,6 +293,12 @@ export class GameSettingsService {
     if (restores('colors') && colors != null) {
       this.gameState.setColors(colors);
     }
+    if (restores('seriesLength') && isSeriesLength(stored.seriesLength)) {
+      this.gameState.setSeriesLength(stored.seriesLength);
+    }
+    if (restores('headStart') && isHeadStart(stored.headStart)) {
+      this.gameState.setHeadStart(stored.headStart);
+    }
   }
 
   private persist(): void {
@@ -316,8 +334,8 @@ export class GameSettingsService {
 }
 
 function matchSetup(state: MatchSetup): MatchSetup {
-  const { mode, difficulty, levelId, colors } = state;
-  return { mode, difficulty, levelId, colors };
+  const { mode, difficulty, levelId, colors, seriesLength, headStart } = state;
+  return { mode, difficulty, levelId, colors, seriesLength, headStart };
 }
 
 function sameMatchSetup(a: MatchSetup, b: MatchSetup): boolean {
@@ -325,6 +343,8 @@ function sameMatchSetup(a: MatchSetup, b: MatchSetup): boolean {
     a.mode === b.mode &&
     a.difficulty === b.difficulty &&
     a.levelId === b.levelId &&
-    sameColors(a.colors, b.colors)
+    sameColors(a.colors, b.colors) &&
+    a.seriesLength === b.seriesLength &&
+    a.headStart === b.headStart
   );
 }

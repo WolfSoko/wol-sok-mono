@@ -83,4 +83,33 @@ describe('LevelSelectComponent', () => {
     expect(started).toHaveBeenCalled();
     expect(back).toHaveBeenCalled();
   });
+
+  it('offers a series, a head start and the rivalry between two players', () => {
+    const host = render({
+      mode: 'two-players',
+      colonyNames: ['Orange', 'Blue'],
+      rivalry: [14, 9],
+    });
+    const series = jest.fn();
+    const headStart = jest.fn();
+    fixture.componentInstance.seriesLengthChange.subscribe(series);
+    fixture.componentInstance.headStartChange.subscribe(headStart);
+
+    Array.from(
+      host.querySelectorAll<HTMLButtonElement>('.series-picker button')
+    )
+      .find((b) => b.textContent?.includes('Best of 3'))
+      ?.click();
+    Array.from(
+      host.querySelectorAll<HTMLButtonElement>('.head-start-picker button')
+    )
+      .find((b) => b.textContent?.includes('Orange ++'))
+      ?.click();
+
+    expect(host.querySelector('.rivalry')?.textContent).toContain(
+      'Orange 14 : 9 Blue'
+    );
+    expect(series).toHaveBeenCalledWith(3);
+    expect(headStart).toHaveBeenCalledWith(-2);
+  });
 });

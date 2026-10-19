@@ -192,6 +192,32 @@
   color: var(--bw-soft);
 }
 
+.head-start {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+
+  .head-start-picker {
+    --mat-button-toggle-height: 36px;
+
+    flex-wrap: wrap;
+  }
+}
+
+.rivalry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0;
+}
+
+.rivalry-score {
+  @include screen.figure;
+
+  font-size: 1.3rem;
+}
+
 .start {
   @include screen.primary;
 

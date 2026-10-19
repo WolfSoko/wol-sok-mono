@@ -21,6 +21,10 @@ import { Player } from '../state/player.model';
 import { Achievement, getAchievement } from '../state/achievements';
 import { MatchEarnings } from '../state/earnings';
 import { xpClimb } from '../state/ranks';
+import { seriesWinner } from '../state/rivalry';
+import { getColonyColor } from '../state/colony-colors';
+import { ProgressService } from '../progress.service';
+import { map } from 'rxjs';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu';
@@ -96,6 +100,47 @@ export class WinnerComponent {
   public cosmetics: Signal<readonly string[]> = computed(
     () => this.earnings()?.cosmetics ?? []
   );
+
+  private series = toSignal(this.state.selectSeries(), { initialValue: null });
+  private colorNames = toSignal(
+    this.state
+      .selectColors()
+      .pipe(map((colors) => colors.map((id) => getColonyColor(id).name))),
+    { initialValue: ['', ''] }
+  );
+  private couchWins = inject(ProgressService).couchWins;
+
+  /**
+   * Between two players: the series score - and who took it, once decided
+   * - and the lifetime rivalry of the two colours.
+   */
+  public duel = computed(() => {
+    if (this.mode() !== 'two-players') {
+      return null;
+    }
+    const [left, right] = this.colorNames();
+    const series = this.series();
+    const taker = series === null ? null : seriesWinner(series);
+    const wins = this.couchWins();
+    const colors = this.colors();
+    return {
+      series:
+        series === null
+          ? null
+          : {
+              score: `${left} ${series.wins[0]} : ${series.wins[1]} ${right}`,
+              note:
+                taker === null
+                  ? `Best of ${series.bestOf}`
+                  : `${taker === 0 ? left : right} takes the series!`,
+            },
+      rivalry: `${left} ${wins[colors[0]] ?? 0} : ${wins[colors[1]] ?? 0} ${right}`,
+    };
+  });
+
+  private colors = toSignal(this.state.selectColors(), {
+    initialValue: ['', ''] as [string, string],
+  });
 
   /** The levels the match opened on the campaign ladder. */
   public unlocked: Signal<readonly Level[]> = computed(() =>

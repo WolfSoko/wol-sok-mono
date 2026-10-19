@@ -108,6 +108,22 @@ describe('GameSettingsService', () => {
     expect(TestBed.inject(GameSettingsService).arena()).toBeNull();
   });
 
+  it('remembers the series and the head start between two players', () => {
+    TestBed.inject(GameSettingsService);
+    const gameState = TestBed.inject(GameStateService);
+
+    gameState.setSeriesLength(5);
+    gameState.setHeadStart(-1);
+
+    expect(stored()).toMatchObject({ seriesLength: 5, headStart: -1 });
+    TestBed.resetTestingModule();
+    TestBed.inject(GameSettingsService);
+    expect(TestBed.inject(GameStateQuery).getValue()).toMatchObject({
+      seriesLength: 5,
+      headStart: -1,
+    });
+  });
+
   it('makes sound unless an earlier visit muted it', () => {
     expect(TestBed.inject(GameSettingsService).sound()).toBe(true);
   });

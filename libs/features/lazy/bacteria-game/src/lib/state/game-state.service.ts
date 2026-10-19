@@ -18,6 +18,7 @@ import { BotDifficulty } from './bot-controller';
 import {
   getColonyColor,
   pickColor,
+  sameColors,
   toPlayerColor,
   validColorPair,
 } from './colony-colors';
@@ -37,6 +38,15 @@ import {
 } from './levels';
 import { colonyCapacity } from './game-balance';
 import { MatchEarnings } from './earnings';
+import {
+  addSeriesMatch,
+  HeadStart,
+  newSeries,
+  Series,
+  SeriesLength,
+  seriesWinner,
+  startScales,
+} from './rivalry';
 import { matchRecord } from './medallions';
 import { Player } from './player.model';
 
@@ -174,6 +184,7 @@ export class GameStateService {
    * award reach the store together.
    */
   private endMatch(outcome: MatchOutcome): void {
+    const { series } = this.gameStateQuery.getValue();
     const earnings = this.recordMatch(outcome.winner);
     applyTransaction(() => {
       this.gameStateStore.update({ currentState: GameState.END });
@@ -181,6 +192,10 @@ export class GameStateService {
         winner: outcome.winner,
         matchEnded: true,
         earnings,
+        series:
+          series === null
+            ? null
+            : addSeriesMatch(series, winnerSeat(outcome.winner)),
       });
     });
   }
@@ -191,11 +206,15 @@ export class GameStateService {
    * it earned. Null for a match against the computer without a human in it.
    */
   private recordMatch(winner: Player | null): MatchEarnings | null {
-    const { mode, levelId, difficulty, timePassed, width } =
+    const { mode, levelId, difficulty, timePassed, width, colors } =
       this.gameStateQuery.getValue();
     switch (mode) {
-      case 'two-players':
-        return this.progress.recordCouchMatch();
+      case 'two-players': {
+        const seat = winnerSeat(winner);
+        return this.progress.recordCouchMatch(
+          seat === null ? null : colors[seat]
+        );
+      }
       case 'vs-computer': {
         const record = matchRecord(this.playerQuery.getAll(), {
           levelId,
@@ -222,12 +241,15 @@ export class GameStateService {
    * Between two players each one is called by their colour.
    */
   private initPlayers() {
-    const { width, height, levelId, mode, difficulty, colors } =
+    const { width, height, levelId, mode, difficulty, colors, headStart } =
       this.gameStateQuery.getValue();
     const level = getLevel(levelId);
     const scale = scaleOf(width);
     const versusComputer = mode === 'vs-computer';
     const [left, right] = colors.map(getColonyColor);
+    const [leftScale, rightScale] = versusComputer
+      ? [1, 1]
+      : startScales(headStart);
     this.playerService.init(
       [
         {
@@ -236,6 +258,7 @@ export class GameStateService {
           color: toPlayerColor(left),
           name: versusComputer ? 'You' : left.name,
           isBot: false,
+          startScale: leftScale,
         },
         {
           x: (width / 4) * 3,
@@ -243,6 +266,7 @@ export class GameStateService {
           color: toPlayerColor(right),
           name: versusComputer ? 'Computer' : right.name,
           isBot: versusComputer,
+          startScale: rightScale,
         },
       ],
       {
@@ -284,7 +308,16 @@ export class GameStateService {
    */
   private updateSetup(
     setup: Partial<
-      Pick<GameStateState, 'levelId' | 'mode' | 'difficulty' | 'colors'>
+      Pick<
+        GameStateState,
+        | 'levelId'
+        | 'mode'
+        | 'difficulty'
+        | 'colors'
+        | 'seriesLength'
+        | 'headStart'
+        | 'series'
+      >
     >
   ): void {
     this.gameStateStore.update(setup);
@@ -300,7 +333,40 @@ export class GameStateService {
 
   /** Switches between two humans and human versus computer. */
   public setMode(mode: GameMode): void {
-    this.updateSetup({ mode });
+    this.updateSetup({
+      mode,
+      ...this.seriesEndsUnless(mode === this.gameStateQuery.getValue().mode),
+    });
+  }
+
+  /** Picks how many matches a series between two players is the best of. */
+  public setSeriesLength(seriesLength: SeriesLength): void {
+    this.updateSetup({
+      seriesLength,
+      ...this.seriesEndsUnless(
+        seriesLength === this.gameStateQuery.getValue().seriesLength
+      ),
+    });
+  }
+
+  /** Gives one of two players a head start - or neither. */
+  public setHeadStart(headStart: HeadStart): void {
+    this.updateSetup({
+      headStart,
+      ...this.seriesEndsUnless(
+        headStart === this.gameStateQuery.getValue().headStart
+      ),
+    });
+  }
+
+  /** A series ends when its setup changes - nothing, when it stays. */
+  private seriesEndsUnless(unchanged: boolean): { series?: null } {
+    return unchanged ? {} : { series: null };
+  }
+
+  /** Ends the series under way - the next match starts a new one. */
+  public endSeries(): void {
+    this.gameStateStore.update({ series: null });
   }
 
   /** Picks how hard the computer plays. */
@@ -313,12 +379,11 @@ export class GameStateService {
    * one. Picking the other seat's colour swaps the two.
    */
   public setColor(seat: 0 | 1, colorId: string): void {
+    const { colors } = this.gameStateQuery.getValue();
+    const picked = pickColor(colors, seat, getColonyColor(colorId).id);
     this.updateSetup({
-      colors: pickColor(
-        this.gameStateQuery.getValue().colors,
-        seat,
-        getColonyColor(colorId).id
-      ),
+      colors: picked,
+      ...this.seriesEndsUnless(sameColors(picked, colors)),
     });
   }
 
@@ -329,7 +394,12 @@ export class GameStateService {
   public setColors(colors: readonly [string, string]): void {
     const valid = validColorPair(colors);
     if (valid != null) {
-      this.updateSetup({ colors: valid });
+      this.updateSetup({
+        colors: valid,
+        ...this.seriesEndsUnless(
+          sameColors(valid, this.gameStateQuery.getValue().colors)
+        ),
+      });
     }
   }
 
@@ -343,8 +413,9 @@ export class GameStateService {
 
   start() {
     this.initPlayers();
-    this.gameStateStore.update(() => ({
+    this.gameStateStore.update((state) => ({
       currentState: GameState.RUNNING,
+      series: nextSeries(state),
       // Restart from the pause menu starts without a reset in between.
       timePassed: 0,
       winner: null,
@@ -410,4 +481,23 @@ export class GameStateService {
   pause() {
     this.gameStateStore.update({ currentState: GameState.PAUSED });
   }
+}
+
+/**
+ * The series the next match belongs to: the one under way between two
+ * players, a new one once it has been decided - none for single matches or
+ * against the computer.
+ */
+function nextSeries(state: GameStateState): Series | null {
+  if (state.mode !== 'two-players' || state.seriesLength === 1) {
+    return null;
+  }
+  return state.series !== null && seriesWinner(state.series) === null
+    ? state.series
+    : newSeries(state.seriesLength);
+}
+
+/** The seat of the player who won - 0 left, 1 right - null for a draw. */
+function winnerSeat(winner: Player | null): 0 | 1 | null {
+  return winner === null ? null : winner.id === 0 ? 0 : 1;
 }

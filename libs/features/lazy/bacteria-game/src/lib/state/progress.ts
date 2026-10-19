@@ -1,5 +1,6 @@
 import { AchievementId, isAchievementId } from './achievement-ids';
 import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
+import { isColonyColor } from './colony-colors';
 import { isObject } from './is-object';
 import { LEVELS } from './levels';
 import { betterMedal, MatchRecord, MEDAL_TIERS, MedalTier } from './medallions';
@@ -30,6 +31,11 @@ export interface Progress {
   totals: LifetimeTotals;
   /** The day each achievement was earned, as an ISO date. */
   achievements: Partial<Record<AchievementId, string>>;
+  /**
+   * Matches between two players won, by the colour of the winning colony -
+   * the rivalry on this device, "Orange leads 14 : 9".
+   */
+  couchWins: Partial<Record<string, number>>;
 }
 
 export const NO_TOTALS: LifetimeTotals = {
@@ -47,6 +53,7 @@ export const EMPTY_PROGRESS: Progress = {
   medals: {},
   totals: NO_TOTALS,
   achievements: {},
+  couchWins: {},
 };
 
 /**
@@ -127,10 +134,21 @@ export function addTotals(
   return { ...progress, totals };
 }
 
+/** The progress with a match between two players won by a colour. */
+export function addCouchWin(progress: Progress, colorId: string): Progress {
+  return {
+    ...progress,
+    couchWins: {
+      ...progress.couchWins,
+      [colorId]: (progress.couchWins[colorId] ?? 0) + 1,
+    },
+  };
+}
+
 /**
  * The progress with the best of either: the better medallion per level and
- * difficulty, the higher of each total and the earlier day of each
- * achievement. Merging can only gain, so progress from several tabs or
+ * difficulty, the higher of each total and of each colour's wins, and the
+ * earlier day of each achievement. Merging can only gain, so progress from several tabs or
  * devices converges whatever order it is merged in. Without a gain it is
  * the progress given.
  *
@@ -170,6 +188,15 @@ export function mergeProgress(progress: Progress, other: Progress): Progress {
       achievements: { ...merged.achievements, ...Object.fromEntries(earlier) },
     };
   }
+  const moreWins = Object.entries(other.couchWins).filter(
+    ([colorId, wins]) => (wins ?? 0) > (merged.couchWins[colorId] ?? 0)
+  );
+  if (moreWins.length > 0) {
+    merged = {
+      ...merged,
+      couchWins: { ...merged.couchWins, ...Object.fromEntries(moreWins) },
+    };
+  }
   return merged;
 }
 
@@ -186,6 +213,7 @@ export function parseProgress(value: unknown): Progress {
     medals: parseMedals(value['medals']),
     totals: parseTotals(value['totals']),
     achievements: parseAchievements(value['achievements']),
+    couchWins: parseCouchWins(value['couchWins']),
   };
 }
 
@@ -223,6 +251,24 @@ function parseTotals(value: unknown): LifetimeTotals {
     }
   }
   return totals;
+}
+
+function parseCouchWins(value: unknown): Progress['couchWins'] {
+  const wins: Progress['couchWins'] = {};
+  if (!isObject(value)) {
+    return wins;
+  }
+  for (const [colorId, count] of Object.entries(value)) {
+    if (
+      isColonyColor(colorId) &&
+      typeof count === 'number' &&
+      Number.isFinite(count) &&
+      count > 0
+    ) {
+      wins[colorId] = Math.floor(count);
+    }
+  }
+  return wins;
 }
 
 /** A day as an achievement stores it, "2026-10-19". */

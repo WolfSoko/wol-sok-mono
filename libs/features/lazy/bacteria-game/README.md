@@ -183,6 +183,21 @@ progress, so nothing about them is stored:
 
 The result screen names what a match opened.
 
+## Two-player rivalry
+
+Two players on one screen get a loop of their own
+([`rivalry.ts`](./src/lib/state/rivalry.ts)), set up on the level choice:
+
+- **Series** - single matches, or the best of 3 or 5. The result screen
+  shows the score and who took it; the next match after that starts a new
+  series, and changing the opponent, the colours, the length or the head
+  start, or leaving for the menu ends the one under way.
+- **Head start** - the stronger player can give the other a chance: each
+  step shrinks the other colony's start by 15 %.
+- **Rivalry** - the wins of each colony colour are counted with the progress
+  (`couchWins`), so the level choice and the result read "Orange 14 : 9
+  Blue".
+
 ## Campaign ladder
 
 Against the computer, the levels open one by one
