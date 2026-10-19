@@ -15,6 +15,14 @@ export const TICK_SEC = 1 / TICKS_PER_SEC;
 export const TICK_MS = 1000 / TICKS_PER_SEC;
 
 /**
+ * The milliseconds of whole ticks - exact on every second, where adding
+ * {@link TICK_MS} up would leave 60 ticks a hair short of 1000.
+ */
+export function ticksToMs(ticks: number): number {
+  return (ticks * 1000) / TICKS_PER_SEC;
+}
+
+/**
  * How close to a tick the clock may be and still run it. Display frames
  * jitter by a millisecond or so; without the slack a 60 Hz display would
  * now and then run no tick on one frame and two on the next.

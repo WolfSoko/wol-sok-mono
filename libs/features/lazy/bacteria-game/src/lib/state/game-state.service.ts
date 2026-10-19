@@ -14,7 +14,7 @@ import {
 } from 'rxjs';
 import { scaleOf } from './arena-size';
 import { FramePacer } from './frame-pacer';
-import { GameFrame, TICK_MS, TickClock } from './fixed-tick';
+import { GameFrame, TICK_MS, TickClock, ticksToMs } from './fixed-tick';
 import { BotDifficulty } from './bot-controller';
 import {
   getColonyColor,
@@ -128,8 +128,9 @@ export class GameStateService {
    */
   public advance(width: number, height: number, ticks: number): void {
     for (let tick = 0; tick < ticks && this.isRunning(); tick++) {
+      // Counted in whole ticks, so the clock lands on every second exactly.
       this.gameStateStore.update((state) => ({
-        timePassed: state.timePassed + TICK_MS,
+        timePassed: ticksToMs(Math.round(state.timePassed / TICK_MS) + 1),
       }));
       this.playerService.tick(width, height);
     }

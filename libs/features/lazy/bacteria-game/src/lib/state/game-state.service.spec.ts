@@ -214,6 +214,18 @@ describe('GameStateService', () => {
       expect(query.getValue().timePassed).toBeCloseTo(3 * TICK_MS);
     });
 
+    it('lands on every second exactly', () => {
+      service.setArenaSize(WIDTH, HEIGHT);
+      service.init(WIDTH, HEIGHT);
+      service.start();
+
+      for (let frame = 0; frame < 60; frame++) {
+        service.advance(WIDTH, HEIGHT, 1);
+      }
+
+      expect(query.getValue().timePassed).toBe(1000);
+    });
+
     it('plays no tick of the frame after the one that ended the match', () => {
       service.setArenaSize(WIDTH, HEIGHT);
       service.init(WIDTH, HEIGHT);
