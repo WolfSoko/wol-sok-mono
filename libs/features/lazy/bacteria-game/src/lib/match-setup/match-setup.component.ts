@@ -64,6 +64,8 @@ export class MatchSetupComponent {
    * level missing or null is open.
    */
   public readonly locked = input<Readonly<Record<string, string | null>>>({});
+  /** Why each colony colour still to earn is locked, by colour id. */
+  public readonly colorLocks = input<Readonly<Record<string, string>>>({});
   /** True while every level is open against the computer. */
   public readonly freePlay = input(false);
   /** True while a match is on and the setup must not change. */

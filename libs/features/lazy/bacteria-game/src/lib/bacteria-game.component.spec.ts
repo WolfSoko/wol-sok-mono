@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject } from 'rxjs';
+import { arenaTheme } from './arena/arena-theme';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { GameStateQuery } from './state/game-state.query';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
+import { GameSettingsService } from './settings.service';
 import { GameStateService } from './state/game-state.service';
 import { levelTitle, LEVELS } from './state/levels';
 import { PlayerQuery } from './state/player.query';
@@ -520,6 +522,44 @@ describe('BacteriaGameComponent', () => {
       );
       component['onMatchEnd']('next');
       expect(query.getValue().levelId).toBe(before);
+    });
+  });
+
+  describe('the arena', () => {
+    it('draws a level in an arena the player earned, in its own otherwise', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+      const own = component['theme']();
+
+      settings.setArena(LEVELS[2].id);
+      expect(component['theme']()).toEqual(own);
+
+      localStorage.setItem(
+        PROGRESS_STORAGE_KEY,
+        JSON.stringify({ medals: { [LEVELS[2].id]: { easy: 'gold' } } })
+      );
+      create();
+      TestBed.inject(GameSettingsService).setArena(LEVELS[2].id);
+      expect(component['theme']()).toEqual(arenaTheme(LEVELS[2].id));
+    });
+  });
+
+  describe('the colony colours', () => {
+    it('keeps a colour still to earn from either seat, also by a swap', () => {
+      create();
+      const gameState = TestBed.inject(GameStateService);
+      gameState.setMode('two-players');
+      // Settings from before the lock: the right seat plays green.
+      gameState.setColors(['orange', 'green']);
+
+      component['selectColor']({ seat: 0, colorId: 'green' });
+      expect(query.getValue().colors).toEqual(['orange', 'green']);
+
+      component['selectColor']({ seat: 1, colorId: 'orange' });
+      expect(query.getValue().colors).toEqual(['orange', 'green']);
+
+      component['selectColor']({ seat: 1, colorId: 'blue' });
+      expect(query.getValue().colors).toEqual(['orange', 'blue']);
     });
   });
 

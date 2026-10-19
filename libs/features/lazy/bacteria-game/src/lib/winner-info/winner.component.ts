@@ -92,6 +92,11 @@ export class WinnerComponent {
     (this.earnings()?.achievements ?? []).map(getAchievement)
   );
 
+  /** The cosmetics the match opened, named. */
+  public cosmetics: Signal<readonly string[]> = computed(
+    () => this.earnings()?.cosmetics ?? []
+  );
+
   /** The levels the match opened on the campaign ladder. */
   public unlocked: Signal<readonly Level[]> = computed(() =>
     (this.earnings()?.unlocked ?? []).map(getLevel)

@@ -15,4 +15,6 @@ export interface MatchEarnings {
   xpBefore: number | null;
   /** The levels the match opened on the campaign ladder. */
   unlocked: readonly string[];
+  /** The cosmetics the match opened, named - "Green colonies". */
+  cosmetics: readonly string[];
 }

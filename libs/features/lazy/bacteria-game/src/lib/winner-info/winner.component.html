@@ -61,7 +61,7 @@
   </div>
 }
 
-@if (earned().length > 0 || unlocked().length > 0) {
+@if (earned().length > 0 || unlocked().length > 0 || cosmetics().length > 0) {
   <ul class="news" aria-label="New this match">
     @for (achievement of earned(); track achievement.id) {
       <li class="chip">
@@ -70,6 +70,15 @@
           <span class="chip-label">Achievement</span>
           <span class="chip-name">{{ achievement.name }}</span>
           <span class="chip-note">{{ achievement.condition }}</span>
+        </span>
+      </li>
+    }
+    @for (cosmetic of cosmetics(); track cosmetic) {
+      <li class="chip unlock">
+        <mat-icon class="badge" aria-hidden="true">palette</mat-icon>
+        <span class="chip-text">
+          <span class="chip-label">Unlocked</span>
+          <span class="chip-name">{{ cosmetic }}</span>
         </span>
       </li>
     }
