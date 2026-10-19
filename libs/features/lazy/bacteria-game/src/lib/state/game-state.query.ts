@@ -12,6 +12,7 @@ import {
 import { sameColors } from './colony-colors';
 import { getLevel, Level } from './levels';
 import { MatchEarnings } from './earnings';
+import { Series } from './rivalry';
 
 @Injectable({ providedIn: 'root' })
 export class GameStateQuery extends Query<GameStateState> {
@@ -67,6 +68,11 @@ export class GameStateQuery extends Query<GameStateState> {
 
   selectWinnerId() {
     return this.select((store) => store.winner);
+  }
+
+  /** The series two players have under way, null outside one. */
+  public selectSeries(): Observable<Series | null> {
+    return this.select((store) => store.series);
   }
 
   /** What the match that just ended earned. */

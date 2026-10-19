@@ -80,7 +80,11 @@ export function createPlayer(params: Partial<Player>): Player {
   } as Player;
 }
 
-/** A solid disc of full energy bacteria, one per grid cell. */
+/**
+ * A solid disc of full energy bacteria, one per grid cell. The radius may
+ * be fractional - a head start shrinks it by area - and the disc steps
+ * through whole cells either way.
+ */
 export function createBacteriaBlob(
   x: number,
   y: number,
@@ -88,15 +92,13 @@ export function createBacteriaBlob(
 ): Bacteria[] {
   const result: Bacteria[] = [];
   const radiusPow = radius * radius;
-  for (let i = 0; i < radius * 2; i++) {
-    for (let j = 0; j < radius * 2; j++) {
-      const testX = i - radius;
-      const testY = j - radius;
-
-      if (testX * testX + testY * testY <= radiusPow) {
+  const reach = Math.ceil(radius);
+  for (let dx = -reach; dx < reach; dx++) {
+    for (let dy = -reach; dy < reach; dy++) {
+      if (dx * dx + dy * dy <= radiusPow) {
         result.push({
-          x: Math.round(testX + x),
-          y: Math.round(testY + y),
+          x: Math.round(dx + x),
+          y: Math.round(dy + y),
           energy: gameBalance.maxEnergy,
         });
       }

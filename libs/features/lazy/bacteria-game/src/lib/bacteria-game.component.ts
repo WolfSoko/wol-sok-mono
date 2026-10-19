@@ -81,6 +81,7 @@ import { GameSettingsService } from './settings.service';
 import { ProgressService } from './progress.service';
 import { CampaignService } from './campaign.service';
 import { dismissSplash } from './splash';
+import { HeadStart, rivalryScore, SeriesLength } from './state/rivalry';
 import { loadFonts } from './fonts';
 import { arenaSize, renderScale, scaleOf } from './state/arena-size';
 import { GameSoundService, MatchResult } from './sound/game-sound.service';
@@ -265,9 +266,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** The colour ids of the left and the right colony. */
   protected readonly colors: Signal<[string, string]>;
   /** The names of the left and the right colour, for the help texts. */
-  protected readonly colorNames = computed(() =>
-    this.colors().map((id) => getColonyColor(id).name)
-  );
+  protected readonly colorNames = computed((): [string, string] => {
+    const [left, right] = this.colors();
+    return [getColonyColor(left).name, getColonyColor(right).name];
+  });
   /** The best medallion of every level at the selected difficulty. */
   protected readonly levelMedals = computed(() => {
     const difficulty = this.difficulty();
@@ -281,6 +283,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Why each level is still locked on the campaign ladder, by level id. */
   protected readonly campaign = inject(CampaignService);
   protected readonly lockedLevels = this.campaign.locks;
+  /** Between two players: the series length, the head start, the series. */
+  protected readonly seriesLength = toSignal(
+    this.query.select((state) => state.seriesLength),
+    { requireSync: true }
+  );
+  protected readonly headStart = toSignal(
+    this.query.select((state) => state.headStart),
+    { requireSync: true }
+  );
+  /** The lifetime wins of the two colours between two players. */
+  protected readonly rivalry = computed(() =>
+    rivalryScore(this.progress.couchWins(), this.colors())
+  );
   /** Every medallion held, by level id, then by difficulty. */
   protected readonly medals = this.progress.medals;
   protected readonly achievements = this.progress.achievements;
@@ -357,6 +372,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     loadFonts(document);
     this.fps$ = this.query.selectFps();
     this.gameStateService.reset();
+    // A series lasts for a visit of the page: one left unfinished last time
+    // does not carry over.
+    this.gameStateService.endSeries();
 
     this.level = toSignal(this.query.selectLevel(), {
       initialValue: LEVELS[0],
@@ -474,6 +492,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     const next = action === 'next' ? this.upcomingLevel() : null;
     this.screen.set(action === 'levels' ? 'levels' : 'menu');
+    if (action === 'menu') {
+      this.gameStateService.endSeries();
+    }
     this.resetGame$()
       .pipe(
         tap(() => {
@@ -528,6 +549,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.screen.set(screen);
   }
 
+  protected selectSeriesLength(length: SeriesLength): void {
+    this.gameStateService.setSeriesLength(length);
+  }
+
+  protected selectHeadStart(headStart: HeadStart): void {
+    this.gameStateService.setHeadStart(headStart);
+  }
+
   /** Sets a match up against the computer or between two players. */
   protected chooseLevel(mode: GameMode): void {
     this.selectMode(mode);
@@ -544,6 +573,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Gives the match up and returns to the main menu. */
   protected quitToMenu(): void {
     this.screen.set('menu');
+    this.gameStateService.endSeries();
     this.resetGame();
   }
 
@@ -729,6 +759,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.gameStateService.endSeries();
     this.gameStateService.cleanup();
     // The GPU simulation lives in this canvas's context, which goes with it.
     this.playerService.useSimulation(null);

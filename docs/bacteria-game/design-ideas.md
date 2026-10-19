@@ -854,8 +854,11 @@ play, the menu screens with the level choice and the profile, lifetime
 totals with thirteen achievements (1.4), XP with eight ranks (1.5) told on
 a result screen in the order of 1.9, and colony colours and arenas to unlock
 (1.6, without crosshair shapes and boost sounds; an earned arena dresses
-every level, not only in free play); the lib's README describes them. What
-phase 1 still has open: the two-player rivalry (1.8).
+every level, not only in free play), and the two-player rivalry (1.8: series,
+head start, wins per colour); the lib's README describes them. Phase 1 is
+done, apart from the cloud profile of 1.1, which waits for a Firebase backend
+of the GameStorage port, and the daily level of 1.7, which needs the level
+generator of phase 3.
 Glutton waits for pellets counted per colony, which the GPU report does not
 give yet - Flawless (a platinum medallion) takes its place - and Petri
 Scholar asks gold on levels 1 to 4 until chapters exist. The medallion limits are a first

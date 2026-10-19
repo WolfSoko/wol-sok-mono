@@ -43,6 +43,8 @@ export interface PlayerSpawn {
   name: string;
   /** True when the computer steers this crosshair. */
   isBot: boolean;
+  /** The colony's start area as a share of the level's - 1 when absent. */
+  startScale?: number;
 }
 
 /**
@@ -169,7 +171,8 @@ export class PlayerService {
         color: playerData.color,
         x: playerData.x,
         y: playerData.y,
-        radius,
+        // The scale is one of area: the radius shrinks by its root.
+        radius: Math.max(1, radius * Math.sqrt(playerData.startScale ?? 1)),
       }))
     );
     this.syncColonyStats();

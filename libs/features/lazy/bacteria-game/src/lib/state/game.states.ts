@@ -4,6 +4,7 @@ import { BotDifficulty, DEFAULT_DIFFICULTY } from './bot-controller';
 import { DEFAULT_COLORS } from './colony-colors';
 import { LEVELS } from './levels';
 import { MatchEarnings } from './earnings';
+import { HeadStart, Series, SeriesLength } from './rivalry';
 import { Player } from './player.model';
 
 /** Who steers the second crosshair. */
@@ -51,6 +52,12 @@ export interface GameStateState {
   difficulty: BotDifficulty;
   /** The colour ids of the left and the right colony. */
   colors: [string, string];
+  /** Between two players: how many matches a series is the best of. */
+  seriesLength: SeriesLength;
+  /** Between two players: who starts bigger. */
+  headStart: HeadStart;
+  /** The series two players have under way, null outside one. */
+  series: Series | null;
 }
 
 export function createInitialState(): GameStateState {
@@ -69,6 +76,9 @@ export function createInitialState(): GameStateState {
     mode: DEFAULT_MODE,
     difficulty: DEFAULT_DIFFICULTY,
     colors: [DEFAULT_COLORS[0], DEFAULT_COLORS[1]],
+    seriesLength: 1,
+    headStart: 0,
+    series: null,
   };
 }
 

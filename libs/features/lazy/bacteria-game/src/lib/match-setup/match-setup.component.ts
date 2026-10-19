@@ -20,7 +20,15 @@ import {
   BotDifficulty,
   difficultyOption,
 } from '../state/bot-controller';
+import { getColonyColor } from '../state/colony-colors';
 import { GameMode } from '../state/game.states';
+import {
+  HEAD_STARTS,
+  HeadStart,
+  headStartLabel,
+  SERIES_LENGTHS,
+  SeriesLength,
+} from '../state/rivalry';
 import { Level, LEVELS } from '../state/levels';
 import { MedalTier } from '../state/medallions';
 
@@ -64,6 +72,10 @@ export class MatchSetupComponent {
    * level missing or null is open.
    */
   public readonly locked = input<Readonly<Record<string, string | null>>>({});
+  /** Between two players: how many matches a series is the best of. */
+  public readonly seriesLength = input<SeriesLength>(1);
+  /** Between two players: who starts bigger. */
+  public readonly headStart = input<HeadStart>(0);
   /** Why each colony colour still to earn is locked, by colour id. */
   public readonly colorLocks = input<Readonly<Record<string, string>>>({});
   /** True while every level is open against the computer. */
@@ -75,6 +87,23 @@ export class MatchSetupComponent {
   public readonly difficultyChange = output<BotDifficulty>();
   public readonly levelChange = output<string>();
   public readonly freePlayChange = output<boolean>();
+  public readonly seriesLengthChange = output<SeriesLength>();
+  public readonly headStartChange = output<HeadStart>();
+
+  protected readonly seriesLengths = SERIES_LENGTHS;
+
+  /** The head starts on offer, named after the colony that gets it. */
+  protected readonly headStarts = computed(() => {
+    const [left, right] = this.colors();
+    const names: [string, string] = [
+      getColonyColor(left).name,
+      getColonyColor(right).name,
+    ];
+    return HEAD_STARTS.map((value) => ({
+      value,
+      label: headStartLabel(value, names),
+    }));
+  });
   public readonly colorChange = output<ColorChange>();
 
   protected readonly levels = LEVELS;

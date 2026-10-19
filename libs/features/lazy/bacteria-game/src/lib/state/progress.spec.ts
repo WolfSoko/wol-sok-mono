@@ -1,4 +1,5 @@
 import {
+  addCouchWin,
   addMedal,
   addTotals,
   bestMedal,
@@ -55,6 +56,7 @@ describe('mergeProgress', () => {
     medals: { corridors: { normal: 'gold', hard: 'bronze' } },
     totals: { ...NO_TOTALS, matches: 7, wins: 5 },
     achievements: { 'first-blood': '2026-10-01', blitz: '2026-10-09' },
+    couchWins: { orange: 4, blue: 2 },
   };
   const elsewhere: Progress = {
     medals: {
@@ -63,6 +65,7 @@ describe('mergeProgress', () => {
     },
     totals: { ...NO_TOTALS, matches: 9, wins: 4, couchMatches: 2 },
     achievements: { blitz: '2026-10-03', siege: '2026-10-04' },
+    couchWins: { orange: 3, green: 1 },
   };
 
   it('keeps the better medallion, the higher total and the earlier day', () => {
@@ -77,6 +80,7 @@ describe('mergeProgress', () => {
         blitz: '2026-10-03',
         siege: '2026-10-04',
       },
+      couchWins: { orange: 4, blue: 2, green: 1 },
     });
   });
 
@@ -90,6 +94,20 @@ describe('mergeProgress', () => {
     expect(mergeProgress(here, EMPTY_PROGRESS)).toBe(here);
     expect(mergeProgress(here, here)).toBe(here);
     expect(mergeProgress(EMPTY_PROGRESS, here)).toEqual(here);
+  });
+});
+
+describe('addCouchWin', () => {
+  it('counts a win between two players for the winning colour', () => {
+    const progress = addCouchWin(
+      addCouchWin(EMPTY_PROGRESS, 'orange'),
+      'orange'
+    );
+
+    expect(addCouchWin(progress, 'blue').couchWins).toEqual({
+      orange: 2,
+      blue: 1,
+    });
   });
 });
 
@@ -132,6 +150,7 @@ describe('parseProgress', () => {
       medals: { corridors: { easy: 'gold' } },
       totals: { ...NO_TOTALS, matches: 3, wins: 2 },
       achievements: { pacifist: '2026-10-19' },
+      couchWins: { purple: 7 },
     };
     expect(parseProgress(JSON.parse(JSON.stringify(progress)))).toEqual(
       progress
@@ -160,11 +179,13 @@ describe('parseProgress', () => {
           pacifist: 'oops',
           comeback: '',
         },
+        couchWins: { red: 2.5, mauve: 4, blue: -1 },
       })
     ).toEqual({
       medals: { corridors: { normal: 'gold' } },
       totals: { ...NO_TOTALS, matches: 4, couchMatches: 3 },
       achievements: { blitz: '2026-10-19' },
+      couchWins: { red: 2 },
     });
   });
 

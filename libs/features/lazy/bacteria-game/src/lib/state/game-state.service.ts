@@ -37,6 +37,15 @@ import {
 } from './levels';
 import { colonyCapacity } from './game-balance';
 import { MatchEarnings } from './earnings';
+import {
+  addSeriesMatch,
+  HeadStart,
+  newSeries,
+  Series,
+  SeriesLength,
+  seriesWinner,
+  startScales,
+} from './rivalry';
 import { matchRecord } from './medallions';
 import { Player } from './player.model';
 
@@ -174,6 +183,7 @@ export class GameStateService {
    * award reach the store together.
    */
   private endMatch(outcome: MatchOutcome): void {
+    const { series } = this.gameStateQuery.getValue();
     const earnings = this.recordMatch(outcome.winner);
     applyTransaction(() => {
       this.gameStateStore.update({ currentState: GameState.END });
@@ -181,6 +191,10 @@ export class GameStateService {
         winner: outcome.winner,
         matchEnded: true,
         earnings,
+        series:
+          series === null
+            ? null
+            : addSeriesMatch(series, winnerSeat(outcome.winner)),
       });
     });
   }
@@ -191,11 +205,15 @@ export class GameStateService {
    * it earned. Null for a match against the computer without a human in it.
    */
   private recordMatch(winner: Player | null): MatchEarnings | null {
-    const { mode, levelId, difficulty, timePassed, width } =
+    const { mode, levelId, difficulty, timePassed, width, colors } =
       this.gameStateQuery.getValue();
     switch (mode) {
-      case 'two-players':
-        return this.progress.recordCouchMatch();
+      case 'two-players': {
+        const seat = winnerSeat(winner);
+        return this.progress.recordCouchMatch(
+          seat === null ? null : colors[seat]
+        );
+      }
       case 'vs-computer': {
         const record = matchRecord(this.playerQuery.getAll(), {
           levelId,
@@ -222,12 +240,15 @@ export class GameStateService {
    * Between two players each one is called by their colour.
    */
   private initPlayers() {
-    const { width, height, levelId, mode, difficulty, colors } =
+    const { width, height, levelId, mode, difficulty, colors, headStart } =
       this.gameStateQuery.getValue();
     const level = getLevel(levelId);
     const scale = scaleOf(width);
     const versusComputer = mode === 'vs-computer';
     const [left, right] = colors.map(getColonyColor);
+    const [leftScale, rightScale] = versusComputer
+      ? [1, 1]
+      : startScales(headStart);
     this.playerService.init(
       [
         {
@@ -236,6 +257,7 @@ export class GameStateService {
           color: toPlayerColor(left),
           name: versusComputer ? 'You' : left.name,
           isBot: false,
+          startScale: leftScale,
         },
         {
           x: (width / 4) * 3,
@@ -243,6 +265,7 @@ export class GameStateService {
           color: toPlayerColor(right),
           name: versusComputer ? 'Computer' : right.name,
           isBot: versusComputer,
+          startScale: rightScale,
         },
       ],
       {
@@ -282,15 +305,26 @@ export class GameStateService {
    * A match keeps the rules it started with: the colonies are only spawned
    * again - with the new map, balance and opponent - while nobody is playing.
    */
-  private updateSetup(
-    setup: Partial<
-      Pick<GameStateState, 'levelId' | 'mode' | 'difficulty' | 'colors'>
-    >
-  ): void {
-    this.gameStateStore.update(setup);
+  private updateSetup(setup: Partial<MatchSetup>): void {
+    const current = this.gameStateQuery.getValue();
+    // A series is played with one setup: changing it ends the one under way.
+    const changed = SERIES_SETUP_KEYS.some(
+      (key) =>
+        setup[key] !== undefined &&
+        JSON.stringify(setup[key]) !== JSON.stringify(current[key])
+    );
+    this.gameStateStore.update(changed ? { ...setup, series: null } : setup);
     if (this.isIdle()) {
       this.initPlayers();
     }
+  }
+
+  /**
+   * Applies several parts of the setup at once - the colonies are spawned
+   * again only once. The values must be valid; the settings check them.
+   */
+  public applySetup(setup: Partial<MatchSetup>): void {
+    this.updateSetup(setup);
   }
 
   /** Picks the level the next match is played on. */
@@ -301,6 +335,21 @@ export class GameStateService {
   /** Switches between two humans and human versus computer. */
   public setMode(mode: GameMode): void {
     this.updateSetup({ mode });
+  }
+
+  /** Picks how many matches a series between two players is the best of. */
+  public setSeriesLength(seriesLength: SeriesLength): void {
+    this.updateSetup({ seriesLength });
+  }
+
+  /** Gives one of two players a head start - or neither. */
+  public setHeadStart(headStart: HeadStart): void {
+    this.updateSetup({ headStart });
+  }
+
+  /** Ends the series under way - the next match starts a new one. */
+  public endSeries(): void {
+    this.gameStateStore.update({ series: null });
   }
 
   /** Picks how hard the computer plays. */
@@ -343,8 +392,9 @@ export class GameStateService {
 
   start() {
     this.initPlayers();
-    this.gameStateStore.update(() => ({
+    this.gameStateStore.update((state) => ({
       currentState: GameState.RUNNING,
+      series: nextSeries(state),
       // Restart from the pause menu starts without a reset in between.
       timePassed: 0,
       winner: null,
@@ -411,3 +461,39 @@ export class GameStateService {
     this.gameStateStore.update({ currentState: GameState.PAUSED });
   }
 }
+
+/**
+ * The series the next match belongs to: the one under way between two
+ * players, a new one once it has been decided - none for single matches or
+ * against the computer.
+ */
+function nextSeries(state: GameStateState): Series | null {
+  if (state.mode !== 'two-players' || state.seriesLength === 1) {
+    return null;
+  }
+  return state.series !== null && seriesWinner(state.series) === null
+    ? state.series
+    : newSeries(state.seriesLength);
+}
+
+/** The seat of the player who won - 0 left, 1 right - null for a draw. */
+function winnerSeat(winner: Player | null): 0 | 1 | null {
+  return winner === null ? null : winner.id === 0 ? 0 : 1;
+}
+
+/** The parts of the setup a match is started with. */
+export type MatchSetup = Pick<
+  GameStateState,
+  'levelId' | 'mode' | 'difficulty' | 'colors' | 'seriesLength' | 'headStart'
+>;
+
+/**
+ * The parts of the setup a series is played with - not the level, which a
+ * series moves through, nor the computer's difficulty.
+ */
+const SERIES_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
+  'mode',
+  'colors',
+  'seriesLength',
+  'headStart',
+];

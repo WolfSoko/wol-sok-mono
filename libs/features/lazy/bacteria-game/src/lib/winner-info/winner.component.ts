@@ -21,6 +21,9 @@ import { Player } from '../state/player.model';
 import { Achievement, getAchievement } from '../state/achievements';
 import { MatchEarnings } from '../state/earnings';
 import { xpClimb } from '../state/ranks';
+import { formatScore, rivalryScore, seriesWinner } from '../state/rivalry';
+import { getColonyColor } from '../state/colony-colors';
+import { ProgressService } from '../progress.service';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu';
@@ -96,6 +99,42 @@ export class WinnerComponent {
   public cosmetics: Signal<readonly string[]> = computed(
     () => this.earnings()?.cosmetics ?? []
   );
+
+  private series = toSignal(this.state.selectSeries(), { initialValue: null });
+  private colors = toSignal(this.state.selectColors(), {
+    initialValue: ['', ''] as [string, string],
+  });
+  private couchWins = inject(ProgressService).couchWins;
+
+  /**
+   * Between two players: the series score - and who took it, once decided
+   * - and the lifetime rivalry of the two colours.
+   */
+  public duel = computed(() => {
+    if (this.mode() !== 'two-players') {
+      return null;
+    }
+    const colors = this.colors();
+    const names: [string, string] = [
+      getColonyColor(colors[0]).name,
+      getColonyColor(colors[1]).name,
+    ];
+    const series = this.series();
+    const taker = series === null ? null : seriesWinner(series);
+    return {
+      series:
+        series === null
+          ? null
+          : {
+              score: formatScore(names, series.wins),
+              note:
+                taker === null
+                  ? `Best of ${series.bestOf}`
+                  : `${names[taker]} takes the series!`,
+            },
+      rivalry: formatScore(names, rivalryScore(this.couchWins(), colors)),
+    };
+  });
 
   /** The levels the match opened on the campaign ladder. */
   public unlocked: Signal<readonly Level[]> = computed(() =>

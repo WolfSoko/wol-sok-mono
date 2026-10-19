@@ -137,6 +137,32 @@ describe('WinnerComponent', () => {
     expect(text()).not.toContain('Rank up!');
   });
 
+  it('shows the series and the rivalry between two players', () => {
+    store.update({
+      mode: 'two-players',
+      colors: ['orange', 'blue'],
+      winner: createPlayer({ id: 0, name: 'Orange' }),
+      levelId: LEVELS[0].id,
+      series: { bestOf: 3, wins: [2, 1] },
+      earnings: earnings({}),
+    });
+
+    expect(text()).toContain('Orange 2 : 1 Blue');
+    expect(text()).toContain('Orange takes the series!');
+    expect(text()).toContain('Rivalry');
+  });
+
+  it('leaves the series and the rivalry out against the computer', () => {
+    store.update({
+      mode: 'vs-computer',
+      winner: null,
+      levelId: LEVELS[0].id,
+      earnings: earnings({}),
+    });
+
+    expect(text()).not.toContain('Rivalry');
+  });
+
   it('names the cosmetics the match opened', () => {
     store.update({
       winner: null,

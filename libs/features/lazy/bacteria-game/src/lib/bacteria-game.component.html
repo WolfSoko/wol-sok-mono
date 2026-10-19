@@ -54,11 +54,15 @@
         [locked]="lockedLevels()"
         [freePlay]="settings.freePlay()"
         [colorLocks]="colorLocks()"
+        [seriesLength]="seriesLength()"
+        [headStart]="headStart()"
         [disabled]="running()"
         (modeChange)="selectMode($event)"
         (difficultyChange)="selectDifficulty($event)"
         (levelChange)="selectLevel($event)"
         (freePlayChange)="settings.setFreePlay($event)"
+        (seriesLengthChange)="selectSeriesLength($event)"
+        (headStartChange)="selectHeadStart($event)"
         (colorChange)="selectColor($event)"
       />
 
@@ -209,6 +213,12 @@
                     (difficultyChange)="selectDifficulty($event)"
                     (levelChange)="selectLevel($event)"
                     (freePlayChange)="settings.setFreePlay($event)"
+                    [seriesLength]="seriesLength()"
+                    [headStart]="headStart()"
+                    [colonyNames]="colorNames()"
+                    [rivalry]="rivalry()"
+                    (seriesLengthChange)="selectSeriesLength($event)"
+                    (headStartChange)="selectHeadStart($event)"
                     (start)="startGame()"
                     (back)="show('menu')"
                   />

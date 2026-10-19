@@ -11,14 +11,16 @@ import {
 import { BotDifficulty, difficultyOption } from './state/bot-controller';
 import { sameColors, validColorPair } from './state/colony-colors';
 import { GameStateQuery } from './state/game-state.query';
-import { GameStateService } from './state/game-state.service';
-import {
-  GameMode,
-  GameState,
-  GameStateState,
-  isMatchOn,
-} from './state/game.states';
+import { GameStateService, MatchSetup } from './state/game-state.service';
+import { GameMode, GameState, isMatchOn } from './state/game.states';
 import { LEVELS } from './state/levels';
+import {
+  HeadStart,
+  isHeadStart,
+  isSeriesLength,
+  SeriesLength,
+  seriesWinner,
+} from './state/rivalry';
 import { isObject } from './state/is-object';
 import { GameStorage } from './storage/game-storage';
 
@@ -36,6 +38,10 @@ export interface StoredSettings {
   music?: boolean;
   /** The colour ids of the left and the right colony. */
   colors?: [string, string];
+  /** Between two players: how many matches a series is the best of. */
+  seriesLength?: SeriesLength;
+  /** Between two players: who starts bigger. */
+  headStart?: HeadStart;
   look?: BacteriaLook;
   simResolution?: SimResolution;
   screenResolution?: ScreenResolution;
@@ -57,24 +63,21 @@ export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 const MODES: readonly GameMode[] = ['vs-computer', 'two-players'];
 
 /** The settings that set up a match - kept in the game state store. */
-type MatchSetup = Pick<
-  GameStateState,
-  'mode' | 'difficulty' | 'levelId' | 'colors'
->;
-
 const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
   'mode',
   'difficulty',
   'levelId',
   'colors',
+  'seriesLength',
+  'headStart',
 ];
 
 /**
- * Keeps the player's choices - opponent, difficulty, level, colours, free
- * play or the campaign ladder, the arena, how the bacteria look, the
- * resolutions,
- * whether the frame rate is shown and whether the game makes sound and plays
- * music - across visits, in the game storage.
+ * Keeps the player's choices - opponent, difficulty, level, colours, the
+ * series and the head start between two players, free play or the campaign
+ * ladder, the arena, how the bacteria look, the resolutions, whether the
+ * frame rate is shown and whether the game makes sound and plays music -
+ * across visits, in the game storage.
  *
  * The match settings live in the game state store, as they did; this service
  * only restores them once the storage answers and writes them back whenever
@@ -247,40 +250,54 @@ export class GameSettingsService {
   /** The stored setup of the match a late answer found under way. */
   private restorePendingSetup(): void {
     const stored = this.pendingSetup;
-    if (stored !== null) {
-      // Still pending while it is applied, so every write on the way stores
-      // the same setup - and the backend skips all but the first.
+    // A series under way keeps its setup too - the stored one waits for it
+    // to end.
+    const { series } = this.query.getValue();
+    if (stored !== null && (series === null || seriesWinner(series) !== null)) {
+      // Still pending while it is applied, so the write on the way stores
+      // the same setup - and the backend skips it.
       this.restoreMatchSetup(stored);
       this.pendingSetup = null;
     }
   }
 
-  /** Applies a stored match setup, keeping what the player changed. */
+  /**
+   * Applies a stored match setup, keeping what the player changed - all of
+   * it at once, so the colonies are spawned again only once.
+   */
   private restoreMatchSetup(stored: StoredSettings): void {
     const restores = (key: keyof MatchSetup) => !this.touched.has(key);
+    const setup: Partial<MatchSetup> = {};
     if (
       restores('mode') &&
       stored.mode != null &&
       MODES.includes(stored.mode)
     ) {
-      this.gameState.setMode(stored.mode);
+      setup.mode = stored.mode;
     }
     if (
       restores('difficulty') &&
       difficultyOption(stored.difficulty ?? null) != null
     ) {
-      this.gameState.setDifficulty(stored.difficulty as BotDifficulty);
+      setup.difficulty = stored.difficulty as BotDifficulty;
     }
     if (
       restores('levelId') &&
       LEVELS.some((level) => level.id === stored.levelId)
     ) {
-      this.gameState.setLevel(stored.levelId as string);
+      setup.levelId = stored.levelId as string;
     }
     const colors = validColorPair(stored.colors);
     if (restores('colors') && colors != null) {
-      this.gameState.setColors(colors);
+      setup.colors = colors;
     }
+    if (restores('seriesLength') && isSeriesLength(stored.seriesLength)) {
+      setup.seriesLength = stored.seriesLength;
+    }
+    if (restores('headStart') && isHeadStart(stored.headStart)) {
+      setup.headStart = stored.headStart;
+    }
+    this.gameState.applySetup(setup);
   }
 
   private persist(): void {
@@ -316,8 +333,8 @@ export class GameSettingsService {
 }
 
 function matchSetup(state: MatchSetup): MatchSetup {
-  const { mode, difficulty, levelId, colors } = state;
-  return { mode, difficulty, levelId, colors };
+  const { mode, difficulty, levelId, colors, seriesLength, headStart } = state;
+  return { mode, difficulty, levelId, colors, seriesLength, headStart };
 }
 
 function sameMatchSetup(a: MatchSetup, b: MatchSetup): boolean {
@@ -325,6 +342,8 @@ function sameMatchSetup(a: MatchSetup, b: MatchSetup): boolean {
     a.mode === b.mode &&
     a.difficulty === b.difficulty &&
     a.levelId === b.levelId &&
-    sameColors(a.colors, b.colors)
+    sameColors(a.colors, b.colors) &&
+    a.seriesLength === b.seriesLength &&
+    a.headStart === b.headStart
   );
 }

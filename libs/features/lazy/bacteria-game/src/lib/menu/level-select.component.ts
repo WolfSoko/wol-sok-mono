@@ -20,6 +20,14 @@ import { GameMode } from '../state/game.states';
 import { getLevel, levelTitle, LEVELS } from '../state/levels';
 import { MEDAL_NAMES, medalGoal } from '../state/medallions';
 import { Progress } from '../state/progress';
+import {
+  formatScore,
+  HEAD_STARTS,
+  HeadStart,
+  headStartLabel,
+  SERIES_LENGTHS,
+  SeriesLength,
+} from '../state/rivalry';
 
 /**
  * The screen a match starts from: who plays, how hard the computer plays,
@@ -54,15 +62,42 @@ export class LevelSelectComponent {
   public readonly locks = input<Readonly<Record<string, string>>>({});
   /** True while every level is open against the computer. */
   public readonly freePlay = input(false);
+  /** Between two players: how many matches a series is the best of. */
+  public readonly seriesLength = input<SeriesLength>(1);
+  /** Between two players: who starts bigger. */
+  public readonly headStart = input<HeadStart>(0);
+  /** The names of the left and the right colony, for the head start. */
+  public readonly colonyNames = input<readonly [string, string]>([
+    'Left',
+    'Right',
+  ]);
+  /** The lifetime wins of the two colonies' colours - the rivalry. */
+  public readonly rivalry = input<readonly [number, number]>([0, 0]);
 
   public readonly modeChange = output<GameMode>();
   public readonly difficultyChange = output<BotDifficulty>();
   public readonly levelChange = output<string>();
   public readonly freePlayChange = output<boolean>();
+  public readonly seriesLengthChange = output<SeriesLength>();
+  public readonly headStartChange = output<HeadStart>();
   public readonly start = output<void>();
   public readonly back = output<void>();
 
   protected readonly difficulties = BOT_DIFFICULTIES;
+  protected readonly seriesLengths = SERIES_LENGTHS;
+
+  /** The lifetime score of the two colours, "Orange 14 : 9 Blue". */
+  protected readonly rivalryLine = computed(() =>
+    formatScore(this.colonyNames(), this.rivalry())
+  );
+
+  /** The head starts on offer, named after the colony that gets it. */
+  protected readonly headStarts = computed(() => {
+    return HEAD_STARTS.map((value) => ({
+      value,
+      label: headStartLabel(value, this.colonyNames()),
+    }));
+  });
 
   protected readonly vsComputer = computed(() => this.mode() === 'vs-computer');
 
