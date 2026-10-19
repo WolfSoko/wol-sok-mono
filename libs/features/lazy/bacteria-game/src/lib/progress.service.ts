@@ -1,4 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { BotDifficulty } from './state/bot-controller';
 import { getLevel } from './state/levels';
 import {
@@ -7,19 +9,39 @@ import {
   MedalAward,
   MedalTier,
 } from './state/medallions';
-import { addMedal, bestMedal, parseProgress } from './state/progress';
-import { readStoredJson, storeJson } from './storage';
+import {
+  addMedal,
+  bestMedal,
+  EMPTY_PROGRESS,
+  mergeProgress,
+  parseProgress,
+} from './state/progress';
+import { GameStorage } from './storage/game-storage';
 
 export const PROGRESS_STORAGE_KEY = 'bacteria-game.progress';
 
 /**
  * Keeps the best medallion a player has won against the computer per level
- * and difficulty - in local storage under a key of its own, so resetting
+ * and difficulty - in the game storage under a key of its own, so resetting
  * the settings keeps the progress and the other way round.
+ *
+ * The medallions won here and the stored ones are merged, never replaced:
+ * whatever another tab or device stores, and whenever the storage answers,
+ * no medallion is lost.
  */
 @Injectable({ providedIn: 'root' })
 export class ProgressService {
-  private readonly progress = signal(readStoredProgress());
+  private readonly storage = inject(GameStorage);
+  private readonly progress = signal(EMPTY_PROGRESS);
+
+  constructor() {
+    this.storage
+      .watch(PROGRESS_STORAGE_KEY)
+      .pipe(map(parseProgress), takeUntilDestroyed())
+      .subscribe((stored) =>
+        this.progress.update((progress) => mergeProgress(progress, stored))
+      );
+  }
 
   /** The best medallion of a level at a difficulty. */
   public medal(levelId: string, difficulty: BotDifficulty): MedalTier | null {
@@ -28,20 +50,18 @@ export class ProgressService {
 
   /** Judges a match that has ended, remembers its medallion and returns its award. */
   public recordMatch(record: MatchRecord): MedalAward {
-    // Another tab may have won medallions since: build on what is stored.
-    this.progress.set(readStoredProgress());
     const previousBest = this.medal(record.levelId, record.difficulty);
     const { medal, hint } = judgeMatch(getLevel(record.levelId).medal, record);
-    if (medal != null) {
-      this.progress.update((progress) =>
-        addMedal(progress, record.levelId, record.difficulty, medal)
+    const progress =
+      medal === null
+        ? this.progress()
+        : addMedal(this.progress(), record.levelId, record.difficulty, medal);
+    if (progress !== this.progress()) {
+      this.progress.set(progress);
+      this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
+        mergeProgress(parseProgress(stored), progress)
       );
-      storeJson(PROGRESS_STORAGE_KEY, this.progress());
     }
     return { record, medal, previousBest, hint };
   }
-}
-
-function readStoredProgress() {
-  return parseProgress(readStoredJson(PROGRESS_STORAGE_KEY));
 }

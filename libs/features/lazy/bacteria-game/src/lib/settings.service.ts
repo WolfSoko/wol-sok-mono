@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { distinctUntilChanged } from 'rxjs';
+import { distinctUntilChanged, filter, pairwise, take } from 'rxjs';
 import {
   DEFAULT_SCREEN_RESOLUTION,
   DEFAULT_SIM_RESOLUTION,
@@ -12,9 +12,15 @@ import { BotDifficulty, difficultyOption } from './state/bot-controller';
 import { sameColors, validColorPair } from './state/colony-colors';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
-import { GameMode } from './state/game.states';
+import {
+  GameMode,
+  GameState,
+  GameStateState,
+  isMatchOn,
+} from './state/game.states';
 import { LEVELS } from './state/levels';
-import { isObject, readStoredJson, storeJson } from './storage';
+import { isObject } from './state/is-object';
+import { GameStorage } from './storage/game-storage';
 
 /** What the game remembers between visits. */
 export interface StoredSettings {
@@ -46,20 +52,42 @@ export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 
 const MODES: readonly GameMode[] = ['vs-computer', 'two-players'];
 
+/** The settings that set up a match - kept in the game state store. */
+type MatchSetup = Pick<
+  GameStateState,
+  'mode' | 'difficulty' | 'levelId' | 'colors'
+>;
+
+const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
+  'mode',
+  'difficulty',
+  'levelId',
+  'colors',
+];
+
 /**
  * Keeps the player's choices - opponent, difficulty, level, colours, how the
  * bacteria look, the resolutions, whether the frame rate is shown and whether
- * the game makes sound and plays music - across visits, in the browser's local storage.
+ * the game makes sound and plays music - across visits, in the game storage.
  *
  * The match settings live in the game state store, as they did; this service
- * only restores them when the game is opened and writes them back whenever
- * they change. A browser that refuses storage (private mode, a blocked site)
- * simply forgets them.
+ * only restores them once the storage answers and writes them back whenever
+ * they change after that - never before, so the defaults the game starts
+ * with cannot overwrite the stored settings. A setting the player changed
+ * before the storage answered keeps the player's choice. A match under way
+ * keeps its setup: the stored one waits for the menu, and is what gets
+ * written meanwhile. Storage that fails simply forgets them.
  */
 @Injectable({ providedIn: 'root' })
 export class GameSettingsService {
   private readonly gameState = inject(GameStateService);
   private readonly query = inject(GameStateQuery);
+  private readonly storage = inject(GameStorage);
+  private restored = false;
+  /** The settings the player changed - what restoring must keep. */
+  private readonly touched = new Set<keyof StoredSettings>();
+  /** A stored match setup that arrived during a match, for the next one. */
+  private pendingSetup: StoredSettings | null = null;
 
   /** True while the frame rate badge is shown on the arena. */
   public readonly showFps = signal(false);
@@ -77,95 +105,154 @@ export class GameSettingsService {
   );
 
   constructor() {
-    this.restore();
     this.query
-      .select((state) => ({
-        mode: state.mode,
-        difficulty: state.difficulty,
-        levelId: state.levelId,
-        colors: state.colors,
-      }))
-      .pipe(
-        distinctUntilChanged(
-          (a, b) =>
-            a.mode === b.mode &&
-            a.difficulty === b.difficulty &&
-            a.levelId === b.levelId &&
-            sameColors(a.colors, b.colors)
+      .select(matchSetup)
+      .pipe(distinctUntilChanged(sameMatchSetup), pairwise())
+      .subscribe(([before, after]) =>
+        this.changed(
+          ...MATCH_SETUP_KEYS.filter(
+            (key) => JSON.stringify(before[key]) !== JSON.stringify(after[key])
+          )
         )
-      )
-      .subscribe(() => this.persist());
+      );
+    this.storage
+      .watch(SETTINGS_STORAGE_KEY)
+      .pipe(take(1))
+      .subscribe((stored) => {
+        this.restore(isObject(stored) ? (stored as StoredSettings) : {});
+        this.restored = true;
+        this.persist();
+      });
+    this.query
+      .select((state) => state.currentState)
+      .pipe(filter((state) => state === GameState.START))
+      .subscribe(() => this.restorePendingSetup());
   }
 
   public setShowFps(show: boolean): void {
     this.showFps.set(show);
-    this.persist();
+    this.changed('showFps');
   }
 
   public setSound(on: boolean): void {
     this.sound.set(on);
-    this.persist();
+    this.changed('sound');
   }
 
   public setMusic(on: boolean): void {
     this.music.set(on);
-    this.persist();
+    this.changed('music');
   }
 
   public setLook(look: BacteriaLook): void {
     this.look.set(look);
-    this.persist();
+    this.changed('look');
   }
 
   public setSimResolution(resolution: SimResolution): void {
     this.simResolution.set(resolution);
-    this.persist();
+    this.changed('simResolution');
   }
 
   public setScreenResolution(resolution: ScreenResolution): void {
     this.screenResolution.set(resolution);
-    this.persist();
+    this.changed('screenResolution');
   }
 
-  /** Applies what an earlier visit stored, ignoring anything it cannot read. */
-  private restore(): void {
-    const stored = readStoredSettings();
-    if (stored.mode != null && MODES.includes(stored.mode)) {
-      this.gameState.setMode(stored.mode);
+  /**
+   * Remembers which settings the player changed, so restoring keeps them,
+   * and writes the settings back once they are restored.
+   */
+  private changed(...keys: (keyof StoredSettings)[]): void {
+    keys.forEach((key) => this.touched.add(key));
+    if (this.restored) {
+      this.persist();
     }
-    if (difficultyOption(stored.difficulty ?? null) != null) {
-      this.gameState.setDifficulty(stored.difficulty as BotDifficulty);
+  }
+
+  /**
+   * Applies what an earlier visit stored, ignoring anything it cannot read.
+   * A setting it does not hold and one the player changed meanwhile keep
+   * their value; the match setup waits while a match is on.
+   */
+  private restore(stored: StoredSettings): void {
+    if (isMatchOn(this.query.getValue().currentState)) {
+      this.pendingSetup = stored;
+    } else {
+      this.restoreMatchSetup(stored);
     }
-    if (LEVELS.some((level) => level.id === stored.levelId)) {
-      this.gameState.setLevel(stored.levelId as string);
-    }
-    const colors = validColorPair(stored.colors);
-    if (colors != null) {
-      this.gameState.setColors(colors);
-    }
-    if (BACTERIA_LOOKS.some((option) => option.id === stored.look)) {
+    const restores = (key: keyof StoredSettings) => !this.touched.has(key);
+    if (
+      restores('look') &&
+      BACTERIA_LOOKS.some((option) => option.id === stored.look)
+    ) {
       this.look.set(stored.look as BacteriaLook);
     }
-    if (SIM_RESOLUTIONS.some((option) => option.id === stored.simResolution)) {
+    if (
+      restores('simResolution') &&
+      SIM_RESOLUTIONS.some((option) => option.id === stored.simResolution)
+    ) {
       this.simResolution.set(stored.simResolution as SimResolution);
     }
     if (
+      restores('screenResolution') &&
       SCREEN_RESOLUTIONS.some((option) => option.id === stored.screenResolution)
     ) {
       this.screenResolution.set(stored.screenResolution as ScreenResolution);
     }
-    this.showFps.set(stored.showFps === true);
-    this.sound.set(stored.sound !== false);
-    this.music.set(stored.music !== false);
+    if (restores('showFps') && typeof stored.showFps === 'boolean') {
+      this.showFps.set(stored.showFps);
+    }
+    if (restores('sound') && typeof stored.sound === 'boolean') {
+      this.sound.set(stored.sound);
+    }
+    if (restores('music') && typeof stored.music === 'boolean') {
+      this.music.set(stored.music);
+    }
+  }
+
+  /** The stored setup of the match a late answer found under way. */
+  private restorePendingSetup(): void {
+    const stored = this.pendingSetup;
+    if (stored !== null) {
+      // Still pending while it is applied, so every write on the way stores
+      // the same setup - and the backend skips all but the first.
+      this.restoreMatchSetup(stored);
+      this.pendingSetup = null;
+    }
+  }
+
+  /** Applies a stored match setup, keeping what the player changed. */
+  private restoreMatchSetup(stored: StoredSettings): void {
+    const restores = (key: keyof MatchSetup) => !this.touched.has(key);
+    if (
+      restores('mode') &&
+      stored.mode != null &&
+      MODES.includes(stored.mode)
+    ) {
+      this.gameState.setMode(stored.mode);
+    }
+    if (
+      restores('difficulty') &&
+      difficultyOption(stored.difficulty ?? null) != null
+    ) {
+      this.gameState.setDifficulty(stored.difficulty as BotDifficulty);
+    }
+    if (
+      restores('levelId') &&
+      LEVELS.some((level) => level.id === stored.levelId)
+    ) {
+      this.gameState.setLevel(stored.levelId as string);
+    }
+    const colors = validColorPair(stored.colors);
+    if (restores('colors') && colors != null) {
+      this.gameState.setColors(colors);
+    }
   }
 
   private persist(): void {
-    const { mode, difficulty, levelId, colors } = this.query.getValue();
     const settings: StoredSettings = {
-      mode,
-      difficulty,
-      levelId,
-      colors,
+      ...this.matchSetupToStore(),
       look: this.look(),
       simResolution: this.simResolution(),
       screenResolution: this.screenResolution(),
@@ -173,12 +260,36 @@ export class GameSettingsService {
       sound: this.sound(),
       music: this.music(),
     };
-    storeJson(SETTINGS_STORAGE_KEY, settings);
+    this.storage.write(SETTINGS_STORAGE_KEY, settings);
+  }
+
+  /**
+   * The match setup to store: the current one, but while a stored setup
+   * waits for the menu, its values for what the player has not changed.
+   */
+  private matchSetupToStore(): MatchSetup {
+    const setup = matchSetup(this.query.getValue());
+    const pending = this.pendingSetup;
+    if (pending === null) {
+      return setup;
+    }
+    const kept = MATCH_SETUP_KEYS.filter(
+      (key) => !this.touched.has(key) && pending[key] !== undefined
+    ).map((key) => [key, pending[key]]);
+    return { ...setup, ...Object.fromEntries(kept) };
   }
 }
 
-/** The stored settings, or nothing when there are none or they are unreadable. */
-function readStoredSettings(): StoredSettings {
-  const stored = readStoredJson(SETTINGS_STORAGE_KEY);
-  return isObject(stored) ? (stored as StoredSettings) : {};
+function matchSetup(state: MatchSetup): MatchSetup {
+  const { mode, difficulty, levelId, colors } = state;
+  return { mode, difficulty, levelId, colors };
+}
+
+function sameMatchSetup(a: MatchSetup, b: MatchSetup): boolean {
+  return (
+    a.mode === b.mode &&
+    a.difficulty === b.difficulty &&
+    a.levelId === b.levelId &&
+    sameColors(a.colors, b.colors)
+  );
 }

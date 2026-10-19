@@ -1,4 +1,4 @@
-import { isObject } from '../storage';
+import { isObject } from './is-object';
 import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
 import { betterMedal, MEDAL_TIERS, MedalTier } from './medallions';
 
@@ -19,20 +19,46 @@ export function bestMedal(
   return progress.medals[levelId]?.[difficulty] ?? null;
 }
 
-/** The progress with a medallion won - kept only where it beats the best. */
+/**
+ * The progress with a medallion won - kept only where it beats the best.
+ * Without a better medallion it is the progress given, so a signal holding
+ * it does not notify for nothing.
+ */
 export function addMedal(
   progress: Progress,
   levelId: string,
   difficulty: BotDifficulty,
   medal: MedalTier
 ): Progress {
-  const best = betterMedal(bestMedal(progress, levelId, difficulty), medal);
+  const held = bestMedal(progress, levelId, difficulty);
+  const best = betterMedal(held, medal);
+  if (best === held) {
+    return progress;
+  }
   return {
     medals: {
       ...progress.medals,
       [levelId]: { ...progress.medals[levelId], [difficulty]: best },
     },
   };
+}
+
+/**
+ * The progress with the best medallion of either, per level and difficulty.
+ * Merging can only gain, so progress from several tabs or devices converges
+ * whatever order it is merged in. Without a gain it is the progress given.
+ */
+export function mergeProgress(progress: Progress, other: Progress): Progress {
+  let merged = progress;
+  for (const [levelId, byDifficulty] of Object.entries(other.medals)) {
+    for (const { id: difficulty } of BOT_DIFFICULTIES) {
+      const medal = byDifficulty[difficulty];
+      if (medal != null) {
+        merged = addMedal(merged, levelId, difficulty, medal);
+      }
+    }
+  }
+  return merged;
 }
 
 /**

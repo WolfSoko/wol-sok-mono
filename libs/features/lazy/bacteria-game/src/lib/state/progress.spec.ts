@@ -1,4 +1,11 @@
-import { addMedal, bestMedal, EMPTY_PROGRESS, parseProgress } from './progress';
+import {
+  addMedal,
+  bestMedal,
+  EMPTY_PROGRESS,
+  mergeProgress,
+  parseProgress,
+  Progress,
+} from './progress';
 
 describe('addMedal', () => {
   it('records a first medallion', () => {
@@ -18,12 +25,52 @@ describe('addMedal', () => {
     expect(bestMedal(progress, 'corridors', 'normal')).toBe('platinum');
   });
 
+  it('is the progress given when the medallion is no better', () => {
+    const progress = addMedal(EMPTY_PROGRESS, 'corridors', 'normal', 'gold');
+
+    expect(addMedal(progress, 'corridors', 'normal', 'silver')).toBe(progress);
+    expect(addMedal(progress, 'corridors', 'normal', 'gold')).toBe(progress);
+  });
+
   it('keeps the other difficulties of a level', () => {
     let progress = addMedal(EMPTY_PROGRESS, 'corridors', 'normal', 'bronze');
     progress = addMedal(progress, 'corridors', 'hard', 'gold');
 
     expect(bestMedal(progress, 'corridors', 'normal')).toBe('bronze');
     expect(bestMedal(progress, 'corridors', 'hard')).toBe('gold');
+  });
+});
+
+describe('mergeProgress', () => {
+  const here: Progress = {
+    medals: { corridors: { normal: 'gold', hard: 'bronze' } },
+  };
+  const elsewhere: Progress = {
+    medals: {
+      corridors: { normal: 'silver', hard: 'platinum' },
+      villi: { easy: 'bronze' },
+    },
+  };
+
+  it('keeps the better medallion of either, per level and difficulty', () => {
+    expect(mergeProgress(here, elsewhere)).toEqual({
+      medals: {
+        corridors: { normal: 'gold', hard: 'platinum' },
+        villi: { easy: 'bronze' },
+      },
+    });
+  });
+
+  it('comes to the same, whichever way round it merges', () => {
+    expect(mergeProgress(elsewhere, here)).toEqual(
+      mergeProgress(here, elsewhere)
+    );
+  });
+
+  it('is the progress given when the other adds nothing', () => {
+    expect(mergeProgress(here, EMPTY_PROGRESS)).toBe(here);
+    expect(mergeProgress(here, here)).toBe(here);
+    expect(mergeProgress(EMPTY_PROGRESS, here)).toEqual(here);
   });
 });
 

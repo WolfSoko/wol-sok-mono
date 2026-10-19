@@ -1,8 +1,14 @@
 import { TestBed } from '@angular/core/testing';
-import { GameSettingsService, SETTINGS_STORAGE_KEY } from './settings.service';
+import {
+  GameSettingsService,
+  SETTINGS_STORAGE_KEY,
+  StoredSettings,
+} from './settings.service';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
 import { LEVELS } from './state/levels';
+import { GameStorage } from './storage/game-storage';
+import { LateGameStorage } from '../testing/late-game-storage';
 
 describe('GameSettingsService', () => {
   beforeEach(() => {
@@ -160,5 +166,127 @@ describe('GameSettingsService', () => {
 
     expect(service.simResolution()).toBe('normal');
     expect(service.screenResolution()).toBe('medium');
+  });
+
+  describe('with storage that answers late', () => {
+    let storage: LateGameStorage;
+
+    function createWith(stored: StoredSettings): GameSettingsService {
+      storage = new LateGameStorage({ [SETTINGS_STORAGE_KEY]: stored });
+      TestBed.configureTestingModule({
+        providers: [{ provide: GameStorage, useValue: storage }],
+      });
+      return TestBed.inject(GameSettingsService);
+    }
+
+    it('restores the settings once the storage answers', () => {
+      const service = createWith({ levelId: LEVELS[2].id, sound: false });
+      expect(service.sound()).toBe(true);
+
+      storage.flush();
+
+      expect(service.sound()).toBe(false);
+      expect(TestBed.inject(GameStateQuery).getValue().levelId).toBe(
+        LEVELS[2].id
+      );
+    });
+
+    it('does not overwrite the stored settings with the defaults meanwhile', () => {
+      const service = createWith({ levelId: LEVELS[2].id, sound: false });
+
+      service.setShowFps(true);
+      storage.flush();
+      storage.flush();
+
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        levelId: LEVELS[2].id,
+        sound: false,
+      });
+    });
+
+    it('keeps what the player changed before the storage answered', () => {
+      const service = createWith({
+        sound: false,
+        look: 'pixels',
+        levelId: LEVELS[2].id,
+      });
+
+      service.setSound(true);
+      TestBed.inject(GameStateService).setLevel(LEVELS[3].id);
+      storage.flush();
+      storage.flush();
+
+      expect(service.sound()).toBe(true);
+      expect(service.look()).toBe('pixels');
+      expect(TestBed.inject(GameStateQuery).getValue().levelId).toBe(
+        LEVELS[3].id
+      );
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        sound: true,
+        look: 'pixels',
+        levelId: LEVELS[3].id,
+      });
+    });
+
+    it('keeps the stored setup of a match under way for the next one', () => {
+      const service = createWith({
+        levelId: LEVELS[2].id,
+        difficulty: 'hard',
+        showFps: true,
+      });
+      const gameState = TestBed.inject(GameStateService);
+      const query = TestBed.inject(GameStateQuery);
+
+      gameState.start();
+      storage.flush();
+      service.setSound(false);
+      storage.flush();
+
+      expect(query.getValue().levelId).toBe(LEVELS[0].id);
+      expect(query.getValue().difficulty).toBe('normal');
+      expect(service.showFps()).toBe(true);
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        levelId: LEVELS[2].id,
+        difficulty: 'hard',
+        sound: false,
+      });
+
+      gameState.reset();
+
+      expect(query.getValue().levelId).toBe(LEVELS[2].id);
+      expect(query.getValue().difficulty).toBe('hard');
+    });
+
+    it('drops the stored setup the player changed during the match', () => {
+      createWith({ levelId: LEVELS[2].id, difficulty: 'hard' });
+      const gameState = TestBed.inject(GameStateService);
+      const query = TestBed.inject(GameStateQuery);
+
+      gameState.start();
+      storage.flush();
+      gameState.setLevel(LEVELS[4].id);
+      gameState.reset();
+      storage.flush();
+
+      expect(query.getValue().levelId).toBe(LEVELS[4].id);
+      expect(query.getValue().difficulty).toBe('hard');
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        levelId: LEVELS[4].id,
+        difficulty: 'hard',
+      });
+    });
+
+    it('stores the changes made after the settings were restored', () => {
+      const service = createWith({ sound: false });
+      storage.flush();
+
+      service.setMusic(false);
+      storage.flush();
+
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        sound: false,
+        music: false,
+      });
+    });
   });
 });
