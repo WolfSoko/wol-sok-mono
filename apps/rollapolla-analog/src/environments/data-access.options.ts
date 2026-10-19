@@ -6,4 +6,5 @@ export const dataAccessOptions: FirebaseOptions = {
   storageBucket: 'rollapolla-v1.appspot.com',
   messagingSenderId: '368144624370',
   appId: '1:368144624370:web:a29654bf620dd22a1ebe6b',
+  measurementId: 'G-6ZM8TB6QCY',
 };

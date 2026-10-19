@@ -1,52 +1,57 @@
-import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   EnvironmentProviders,
   inject,
-  PLATFORM_ID,
+  makeEnvironmentProviders,
   provideEnvironmentInitializer,
 } from '@angular/core';
-
-type GtagWindow = Window & {
-  dataLayer?: unknown[];
-  gtag?: (...args: unknown[]) => void;
-};
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  Analytics,
+  getAnalytics,
+  logEvent,
+  provideAnalytics,
+} from '@angular/fire/analytics';
+import { FirebaseApp } from '@angular/fire/app';
+import { Title } from '@angular/platform-browser';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs';
 
 /**
- * Loads the Google tag (gtag.js) for a GA4 measurement id, in the browser
- * only. Without an id nothing is loaded, so `nx serve` and the e2e tests
- * (environment.develop) send no traffic. Page views on in-app navigation come
- * from GA4's enhanced measurement, which listens to the history API.
+ * Firebase Analytics for the GA4 property of the Firebase app (its
+ * `measurementId`), browser only: AngularFire provides no instance on the
+ * server. Disabled, nothing is provided, so `nx serve` and the e2e tests
+ * (environment.develop) send no traffic.
  */
-export function provideGoogleAnalytics(
-  measurementId: string | undefined
-): EnvironmentProviders {
-  return provideEnvironmentInitializer(() => {
-    if (!measurementId || !isPlatformBrowser(inject(PLATFORM_ID))) {
-      return;
-    }
-    installGoogleTag(inject(DOCUMENT), measurementId);
-  });
+export function provideGoogleAnalytics(enabled: boolean): EnvironmentProviders {
+  if (!enabled) {
+    return makeEnvironmentProviders([]);
+  }
+  return makeEnvironmentProviders([
+    provideAnalytics((injector) => getAnalytics(injector.get(FirebaseApp))),
+    provideEnvironmentInitializer(trackScreenViews),
+  ]);
 }
 
-/** The Google tag snippet, as `gtag.js` expects it. */
-export function installGoogleTag(
-  document: Document,
-  measurementId: string
-): void {
-  const window = document.defaultView as GtagWindow | null;
-  if (!window) {
+/**
+ * Logs a `screen_view` per navigation, as AngularFire's ScreenTrackingService
+ * would. That service injects ComponentFactoryResolver, which Angular 22
+ * removed, so it cannot be created here.
+ */
+function trackScreenViews(): void {
+  const analytics: Analytics | null = inject(Analytics);
+  if (!analytics) {
     return;
   }
-  const dataLayer = (window.dataLayer ??= []);
-  // gtag.js only processes `arguments` objects on the data layer, not arrays
-  window.gtag ??= function () {
-    dataLayer.push(arguments);
-  };
-  window.gtag('js', new Date());
-  window.gtag('config', measurementId);
-
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
-  document.head.appendChild(script);
+  const title = inject(Title);
+  inject(Router)
+    .events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      takeUntilDestroyed()
+    )
+    .subscribe((event) => {
+      logEvent(analytics, 'screen_view', {
+        firebase_screen: event.urlAfterRedirects,
+        firebase_screen_class: title.getTitle(),
+      });
+    });
 }

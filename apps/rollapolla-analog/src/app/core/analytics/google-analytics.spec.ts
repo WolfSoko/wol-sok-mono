@@ -1,79 +1,58 @@
-import { DOCUMENT } from '@angular/common';
-import { PLATFORM_ID, Provider } from '@angular/core';
+import { Component, PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Analytics, logEvent } from '@angular/fire/analytics';
+import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
+import { Title } from '@angular/platform-browser';
+import { provideRouter, Router } from '@angular/router';
 import { provideGoogleAnalytics } from './google-analytics';
 
-const MEASUREMENT_ID = 'G-TEST123';
-const SCRIPT_SELECTOR =
-  'script[src^="https://www.googletagmanager.com/gtag/js"]';
+vi.mock('@angular/fire/analytics', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@angular/fire/analytics')>()),
+  getAnalytics: vi.fn(() => ({ app: {} })),
+  logEvent: vi.fn(),
+}));
 
-type GtagWindow = Window & {
-  dataLayer?: unknown[];
-  gtag?: (...args: unknown[]) => void;
-};
+@Component({ template: '' })
+class PageComponent {}
 
 describe('provideGoogleAnalytics', () => {
-  afterEach(() => {
-    const window = globalThis as unknown as GtagWindow;
-    delete window.dataLayer;
-    delete window.gtag;
-    document.querySelectorAll(SCRIPT_SELECTOR).forEach((el) => el.remove());
-  });
-
-  function setup(
-    measurementId: string | undefined,
-    providers: Provider[] = []
-  ): Document {
+  function setup(enabled: boolean, platformId = 'browser'): void {
     TestBed.configureTestingModule({
-      providers: [provideGoogleAnalytics(measurementId), ...providers],
+      providers: [
+        provideRouter([{ path: 'polls', component: PageComponent }]),
+        provideFirebaseApp(() => initializeApp({ appId: 'test' }, 'analytics')),
+        { provide: PLATFORM_ID, useValue: platformId },
+        provideGoogleAnalytics(enabled),
+      ],
     });
-    return TestBed.inject(DOCUMENT);
   }
 
-  it('loads gtag.js for the measurement id and configures it', () => {
-    const document = setup(MEASUREMENT_ID);
+  it('provides nothing when disabled', async () => {
+    setup(false);
 
-    const script =
-      document.head.querySelector<HTMLScriptElement>(SCRIPT_SELECTOR);
-    expect(script?.src).toBe(
-      `https://www.googletagmanager.com/gtag/js?id=${MEASUREMENT_ID}`
-    );
-    expect(script?.async).toBe(true);
-
-    const dataLayer = (document.defaultView as GtagWindow).dataLayer ?? [];
-    expect(dataLayer).toHaveLength(2);
-    expect(Array.from(dataLayer[0] as ArrayLike<unknown>)).toEqual([
-      'js',
-      expect.any(Date),
-    ]);
-    expect(Array.from(dataLayer[1] as ArrayLike<unknown>)).toEqual([
-      'config',
-      MEASUREMENT_ID,
-    ]);
+    expect(TestBed.inject(Analytics, null)).toBeNull();
+    await TestBed.inject(Router).navigateByUrl('/polls');
+    expect(logEvent).not.toHaveBeenCalled();
   });
 
-  it('pushes arguments objects, which is what gtag.js reads', () => {
-    const document = setup(MEASUREMENT_ID);
+  it('has no analytics instance on the server', async () => {
+    setup(true, 'server');
 
-    const dataLayer = (document.defaultView as GtagWindow).dataLayer ?? [];
-    expect(Object.prototype.toString.call(dataLayer[0])).toBe(
-      '[object Arguments]'
-    );
+    expect(TestBed.inject(Analytics, null)).toBeNull();
+    await TestBed.inject(Router).navigateByUrl('/polls');
+    expect(logEvent).not.toHaveBeenCalled();
   });
 
-  it('loads nothing without a measurement id', () => {
-    const document = setup(undefined);
+  it('logs a screen view per navigation in the browser', async () => {
+    setup(true);
+    const analytics = TestBed.inject(Analytics);
+    TestBed.inject(Title).setTitle('Browse polls');
 
-    expect(document.querySelector(SCRIPT_SELECTOR)).toBeNull();
-    expect((document.defaultView as GtagWindow).dataLayer).toBeUndefined();
-  });
+    await TestBed.inject(Router).navigateByUrl('/polls?order=hot');
 
-  it('loads nothing on the server', () => {
-    const document = setup(MEASUREMENT_ID, [
-      { provide: PLATFORM_ID, useValue: 'server' },
-    ]);
-
-    expect(document.querySelector(SCRIPT_SELECTOR)).toBeNull();
-    expect((document.defaultView as GtagWindow).dataLayer).toBeUndefined();
+    expect(logEvent).toHaveBeenCalledExactlyOnceWith(analytics, 'screen_view', {
+      firebase_screen: '/polls?order=hot',
+      firebase_screen_class: 'Browse polls',
+    });
   });
 });

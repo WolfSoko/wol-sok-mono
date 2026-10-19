@@ -42,6 +42,6 @@ export const appConfig: ApplicationConfig = {
       return auth;
     }),
     providePortsAndAdapter(),
-    provideGoogleAnalytics(environment.googleAnalyticsMeasurementId),
+    provideGoogleAnalytics(environment.prod),
   ],
 };
