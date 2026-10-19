@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.14.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.13.0...v74.14.0) (2026-10-19)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ colony colours and arenas to unlock ([#2491](https://github.com/WolfSoko/wol-sok-mono/issues/2491)) ([ea9e847](https://github.com/WolfSoko/wol-sok-mono/commit/ea9e8471ca06b44925103a1d66c1d60a660779f5))
+
 ## [74.13.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.12.0...v74.13.0) (2026-10-19)
 
 ### Features
