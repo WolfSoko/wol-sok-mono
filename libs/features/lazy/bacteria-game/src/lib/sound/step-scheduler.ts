@@ -24,6 +24,18 @@ export interface StepSchedule {
  * Throttled in a background tab, it skips what is already late rather than
  * playing a burst of it at once.
  */
+/** Sorts what plays in a loop into one list per step. */
+export function byStep<T extends { step: number }>(
+  steps: number,
+  items: readonly T[]
+): T[][] {
+  const buckets: T[][] = Array.from({ length: steps }, () => []);
+  for (const item of items) {
+    buckets[item.step].push(item);
+  }
+  return buckets;
+}
+
 export class StepScheduler {
   private timer: ReturnType<typeof setInterval> | null = null;
   /** The step that is scheduled next, and when it plays. */
@@ -60,8 +72,12 @@ export class StepScheduler {
     this.schedule.tick?.(now);
     if (this.nextStepAt < now) {
       const behind = Math.ceil((now - this.nextStepAt) / stepSec);
+      const wrapped = this.nextStep + behind >= steps;
       this.nextStep = (this.nextStep + behind) % steps;
       this.nextStepAt += behind * stepSec;
+      if (wrapped) {
+        this.schedule.wrap?.();
+      }
     }
     while (this.nextStepAt < now + LOOKAHEAD_SEC) {
       this.schedule.play(this.nextStep, this.nextStepAt);

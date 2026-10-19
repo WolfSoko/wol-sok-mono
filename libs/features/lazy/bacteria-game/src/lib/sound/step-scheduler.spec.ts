@@ -84,6 +84,17 @@ describe('StepScheduler', () => {
     scheduler.stop();
   });
 
+  it('says so when the loop wrapped while it was catching up', () => {
+    const { scheduler, wrap } = schedule();
+    scheduler.start();
+
+    time = 11.3;
+    jest.advanceTimersByTime(60);
+
+    expect(wrap).toHaveBeenCalledTimes(1);
+    scheduler.stop();
+  });
+
   it('stops', () => {
     const { scheduler, played } = schedule();
     scheduler.start();

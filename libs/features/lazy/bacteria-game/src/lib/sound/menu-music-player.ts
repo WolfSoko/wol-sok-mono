@@ -1,11 +1,6 @@
 import { midiToHz } from './level-music';
-import {
-  composeMenuMusic,
-  MenuNote,
-  MenuScore,
-  MENU_STEP_SEC,
-} from './menu-music';
-import { StepScheduler } from './step-scheduler';
+import { composeMenuMusic, MenuNote, MENU_STEP_SEC } from './menu-music';
+import { byStep, StepScheduler } from './step-scheduler';
 
 /** Loudness of each voice at full velocity. */
 const VOLUME = { pad: 0.022, bass: 0.055, bell: 0.06, breath: 0.014 } as const;
@@ -38,7 +33,7 @@ export class MenuMusicPlayer {
     private readonly audible: () => boolean
   ) {
     const score = composeMenuMusic(seed);
-    this.notesByStep = byStep(score);
+    this.notesByStep = byStep(score.steps, score.notes);
     this.scheduler = new StepScheduler(context, {
       steps: score.steps,
       stepSec: MENU_STEP_SEC,
@@ -109,7 +104,8 @@ export class MenuMusicPlayer {
   /** Fresh bells for the next pass of the chords. */
   private nextPass(): void {
     this.pass++;
-    this.notesByStep = byStep(composeMenuMusic(this.seed + this.pass));
+    const score = composeMenuMusic(this.seed + this.pass);
+    this.notesByStep = byStep(score.steps, score.notes);
   }
 
   private playStep(step: number, at: number): void {
@@ -253,13 +249,4 @@ export class MenuMusicPlayer {
     panner.connect(this.bus);
     return panner;
   }
-}
-
-/** Sorts what plays in a pass into one list per sixteenth. */
-function byStep(score: MenuScore): MenuNote[][] {
-  const buckets: MenuNote[][] = Array.from({ length: score.steps }, () => []);
-  for (const note of score.notes) {
-    buckets[note.step].push(note);
-  }
-  return buckets;
 }

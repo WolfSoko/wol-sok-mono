@@ -201,12 +201,12 @@ export class GameSettingsService {
   }
 
   public setMusicVolume(volume: number): void {
-    this.musicVolume.set(clampVolume(volume));
+    this.musicVolume.set(clampVolume(volume, DEFAULT_MUSIC_VOLUME));
     this.changed('musicVolume');
   }
 
   public setEffectsVolume(volume: number): void {
-    this.effectsVolume.set(clampVolume(volume));
+    this.effectsVolume.set(clampVolume(volume, DEFAULT_EFFECTS_VOLUME));
     this.changed('effectsVolume');
   }
 
@@ -392,10 +392,11 @@ function isVolume(value: unknown): value is number {
   );
 }
 
-function clampVolume(volume: number): number {
+/** A whole number on the slider - or the default for what is no number. */
+function clampVolume(volume: number, fallback: number): number {
   return Number.isFinite(volume)
     ? Math.round(Math.min(MAX_VOLUME, Math.max(0, volume)))
-    : DEFAULT_EFFECTS_VOLUME;
+    : fallback;
 }
 
 function matchSetup(state: MatchSetup): MatchSetup {

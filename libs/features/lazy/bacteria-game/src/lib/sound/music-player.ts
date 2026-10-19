@@ -9,7 +9,7 @@ import {
   MusicNote,
   stepSeconds,
 } from './level-music';
-import { StepScheduler } from './step-scheduler';
+import { byStep, StepScheduler } from './step-scheduler';
 
 /** Seconds for the fighting to cool the music back down by two thirds. */
 const COOL_DOWN_SEC = 4;
@@ -225,13 +225,4 @@ export class MusicPlayer {
     source.start(at);
     source.stop(at + length + 0.02);
   }
-}
-
-/** Sorts what plays in a loop into one list per sixteenth. */
-function byStep<T extends { step: number }>(steps: number, items: T[]): T[][] {
-  const buckets: T[][] = Array.from({ length: steps }, () => []);
-  for (const item of items) {
-    buckets[item.step].push(item);
-  }
-  return buckets;
 }

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { GameSoundService } from './game-sound.service';
 import { levelMusic } from './level-music';
+import { MusicPlayer } from './music-player';
 
 describe('GameSoundService', () => {
   it('stays silent without the Web Audio API instead of throwing', () => {
@@ -98,6 +99,23 @@ describe('GameSoundService', () => {
       sound.setEffectsEnabled(true);
       sound.boost(false);
       expect(context.started).toBeGreaterThan(0);
+    });
+
+    it('heats the level music up with the fighting even with the effects off', () => {
+      const excite = jest.spyOn(MusicPlayer.prototype, 'excite');
+      sound.setMusic(levelMusic('corridors'));
+      sound.setEffectsEnabled(false);
+
+      sound.frame({
+        boosts: [],
+        captures: 10,
+        pelletsEaten: 0,
+        crushed: 0,
+        gatesClosed: 0,
+        gatesWarned: 0,
+      });
+
+      expect(excite).toHaveBeenCalledWith(0.04);
     });
 
     it('makes no effect nodes at volume zero either', () => {

@@ -235,6 +235,10 @@ export class GameSoundService {
    * bacteria and the gates.
    */
   public frame(events: FrameEvents): void {
+    // The music heats up with the fighting whether or not the effects play.
+    if (events.captures > 0 && this.player instanceof MusicPlayer) {
+      this.player.excite(Math.min(0.08, events.captures * 0.004));
+    }
     if (!this.audible()) {
       return;
     }
@@ -246,9 +250,6 @@ export class GameSoundService {
     }
     if (events.captures > 0) {
       this.captures(events.captures);
-      if (this.player instanceof MusicPlayer) {
-        this.player.excite(Math.min(0.08, events.captures * 0.004));
-      }
     }
     if (events.gatesWarned > 0) {
       // Two soft beeps, a fifth apart - a warning, not an alarm.
@@ -369,7 +370,7 @@ export class GameSoundService {
 
   /**
    * A short tick at the effects' current volume, for the slider that sets
-   * it - at most a few times a second while it is dragged.
+   * it - at most a few times a second while it is dragged or stepped.
    */
   public previewEffects(): void {
     const now = this.context?.currentTime ?? 0;

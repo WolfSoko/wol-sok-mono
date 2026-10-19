@@ -192,6 +192,11 @@ describe('GameSettingsService', () => {
 
     service.setMusicVolume(33.4);
     expect(service.musicVolume()).toBe(33);
+
+    service.setMusicVolume(Number.NaN);
+    service.setEffectsVolume(Number.NaN);
+    expect(service.musicVolume()).toBe(DEFAULT_MUSIC_VOLUME);
+    expect(service.effectsVolume()).toBe(DEFAULT_EFFECTS_VOLUME);
   });
 
   it('ignores volumes it cannot read', () => {

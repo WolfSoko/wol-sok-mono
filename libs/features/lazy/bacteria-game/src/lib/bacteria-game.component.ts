@@ -555,9 +555,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     return winner.isBot ? 'loss' : 'win';
   }
 
-  /** Turns the sound on or off, and remembers it. */
+  /**
+   * Turns the sound on or off, and remembers it - with a tick to show it is
+   * on. The service is told right away: the effect that follows the setting
+   * runs later, after the tick would have been dropped.
+   */
   protected setSound(on: boolean): void {
     this.settings.setSound(on);
+    this.sound.setEnabled(on);
     if (on) {
       this.sound.tick();
     }
@@ -566,19 +571,27 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Turns the sound effects on or off - with a tick to show they are on. */
   protected setEffects(on: boolean): void {
     this.settings.setEffects(on);
+    this.sound.setEffectsEnabled(on);
     if (on) {
       this.sound.tick();
     }
   }
 
-  /** A tick at the volume the slider is dragged to. */
-  protected previewEffectsVolume(): void {
+  /** The music at the volume its slider is dragged to, before it is let go. */
+  protected previewMusicVolume(volume: number): void {
+    this.sound.setMusicVolume(volume / MAX_VOLUME);
+  }
+
+  /** A tick at the volume the effects slider is dragged to. */
+  protected previewEffectsVolume(volume: number): void {
+    this.sound.setEffectsVolume(volume / MAX_VOLUME);
     this.sound.previewEffects();
   }
 
   /** Turns the vibration on or off - with a buzz to show it is on. */
   protected setVibration(on: boolean): void {
     this.settings.setVibration(on);
+    this.haptics.setEnabled(on);
     if (on) {
       this.haptics.tap();
     }
