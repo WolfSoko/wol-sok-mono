@@ -29,6 +29,19 @@ export class HomePage {
     );
   }
 
+  async expectShareLinksVisible() {
+    const share = this.page.getByTestId('site-share');
+    await expect(
+      share.getByRole('heading', { name: 'Share RollaPolla' })
+    ).toBeVisible();
+    await expect(share.getByTestId('copy-link')).toBeVisible();
+    const homeUrl = encodeURIComponent(new URL('/', this.page.url()).href);
+    await expect(share.getByTestId('share-whatsapp')).toHaveAttribute(
+      'href',
+      new RegExp(`^https://wa\\.me/\\?text=.*${homeUrl}`)
+    );
+  }
+
   async expectXLinkVisible() {
     const twitterLink = this.page.getByRole('link', {
       name: 'Follow RollaPolla on X',

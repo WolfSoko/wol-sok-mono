@@ -9,6 +9,10 @@ test.describe('Home', () => {
     await homePage.expectIntroDescriptionVisible();
   });
 
+  test('offers to share RollaPolla', async ({ homePage }) => {
+    await homePage.expectShareLinksVisible();
+  });
+
   test('has a cta to follow X', async ({ homePage }) => {
     await homePage.expectXLinkVisible();
   });
