@@ -95,6 +95,7 @@ import {
   toColonyStats,
 } from './colony-stats';
 import { GameBalance } from './state/game-balance';
+import { GameFrame } from './state/fixed-tick';
 import { SteeringVector } from './state/geometry';
 import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
@@ -478,7 +479,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
     this.gameStateService.frames$
       .pipe(untilDestroyed(this))
-      .subscribe((deltaTimeMs) => this.runFrame(deltaTimeMs / 1000));
+      .subscribe((frame) => this.runFrame(frame));
   }
 
   /**
@@ -622,7 +623,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // With a WebGL2 context the war itself runs on the GPU as well.
     const gl = this.painter instanceof GlArenaPainter ? this.painter : null;
     this.playerService.useSimulation(
-      gl == null ? null : (balance) => gl.createSimulation(balance)
+      gl == null
+        ? null
+        : (balance, random) => gl.createSimulation(balance, random)
     );
     this.painter.setTheme(this.theme());
     this.gameStateService.setArenaSize(width, height);
@@ -682,17 +685,18 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Advances the war by one frame and paints it - called by the game loop,
-   * inside the animation frame, so what is painted is shown on that frame.
+   * Advances the war by the frame's ticks and paints it - called by the game
+   * loop, inside the animation frame, so what is painted is shown on that
+   * frame.
    */
-  private runFrame(deltaTimeSec: number): void {
+  private runFrame(frame: GameFrame): void {
     if (this.painter == null) {
       return;
     }
     const { width, height } = this.arena();
-    this.playerService.gameLoop(width, height, deltaTimeSec);
+    this.gameStateService.advance(width, height, frame.ticks);
     this.sound.frame(this.playerService.getFrameEvents());
-    this.paint(deltaTimeSec, false);
+    this.paint(frame.elapsedSec, false, frame.alpha);
   }
 
   /**
@@ -708,25 +712,34 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.repaintPending = true;
     requestAnimationFrame(() => {
       this.repaintPending = false;
-      this.paint(1 / 1000, true);
+      this.paint(1 / 1000, true, 1);
     });
   }
 
-  private paint(deltaTimeSec: number, clear: boolean): void {
+  /** `alpha` is how far the crosshairs are drawn along their last tick. */
+  private paint(deltaTimeSec: number, clear: boolean, alpha: number): void {
     this.animationSec += deltaTimeSec;
-    const frame = this.frame(deltaTimeSec, clear || this.clearNextFrame);
+    const frame = this.frame(deltaTimeSec, clear || this.clearNextFrame, alpha);
     this.clearNextFrame = false;
     this.painter?.paint(frame);
   }
 
   /** What the arena shows right now, for the painter. */
-  private frame(deltaTimeSec: number, clear: boolean): ArenaFrame {
+  private frame(
+    deltaTimeSec: number,
+    clear: boolean,
+    alpha: number
+  ): ArenaFrame {
     const balance = this.balance();
     const players = this.playerQuery.getAll();
+    const drawn = players.map((player) => ({
+      player,
+      at: this.playerService.crosshairAt(player, alpha),
+    }));
     const boosts = new Map(
-      players
-        .filter(isBoosted)
-        .map((player) => [player.id, { x: player.x, y: player.y }])
+      drawn
+        .filter(({ player }) => isBoosted(player))
+        .map(({ player, at }) => [player.id, at])
     );
     const simulation = this.playerService.getSimulation();
     // Which processor runs the war - for the e2e tests and for debugging.
@@ -746,9 +759,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       nutrients: this.playerService.getNutrients(),
       balance,
       look: this.settings.look(),
-      cursors: players.map((player) => ({
-        x: player.x,
-        y: player.y,
+      cursors: drawn.map(({ player, at }) => ({
+        ...at,
         color: player.color,
         boostLeft:
           isBoosted(player) && balance.boostDurationSec > 0

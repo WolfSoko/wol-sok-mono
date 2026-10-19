@@ -33,11 +33,11 @@ export interface Simulation {
   resize(width: number, height: number): void;
   /** Replaces all colonies with a fresh blob per player. */
   init(spawns: ColonySpawn[]): void;
-  /** Advances the war by one frame towards the players' crosshairs. */
+  /** Advances the war by one tick towards the players' crosshairs. */
   step(players: Player[], deltaTimeSec: number): void;
   getNutrients(): Nutrient[];
   getDynamicWalls(): readonly DynamicWall[];
-  /** What happened during the last frame. */
+  /** What happened during the last tick. */
   getEvents(): StepEvents;
   summaries(): readonly ColonySummary[];
   /**
@@ -51,5 +51,11 @@ export interface Simulation {
   dispose(): void;
 }
 
-/** Builds the simulation of one match. */
-export type SimulationFactory = (balance: GameBalance) => Simulation;
+/**
+ * Builds the simulation of one match, drawing every chance - the pellets
+ * included - from `random`.
+ */
+export type SimulationFactory = (
+  balance: GameBalance,
+  random: () => number
+) => Simulation;

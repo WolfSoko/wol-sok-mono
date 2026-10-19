@@ -545,25 +545,26 @@ kind of remote play to add first. The simulations decide a lot of this.
 Lockstep networking (both sides run the simulation, only inputs are sent)
 needs both sides to compute the same frame from the same inputs. The CPU
 simulation can do that: seeded random (4.1) and a **fixed tick** instead of
-the measured frame delta the loop passes today. Since #2477 the loop runs
-inside the animation frame and `FramePacer` picks the display frames the game
-steps on, but the delta it hands to `gameLoop(width, height, deltaTimeInSec)`
-is still whatever the display measured, so two machines still step
-differently. The fixed tick slots in behind the pacer: an accumulator turns
-the measured delta into whole 30 Hz ticks, and the crosshairs are
-interpolated for the frames in between. The GPU simulation cannot promise
-determinism across two devices either way: floating point and driver
-differences in the shaders diverge within seconds. So:
+the measured frame delta. Both are built: `FramePacer` picks the display
+frames the game steps on, a `TickClock` behind it turns the measured delta
+into whole ticks, the crosshairs are carried ahead along their last step on
+the frames in between, and every match has a seed that the simulation, its
+pellets and the bot draw from. The tick runs at 60 Hz, not the 30 Hz first
+planned: the balance is tuned per step, and at 30 Hz a match of the hard bot
+against an idle colony took 1.5 to 2.5 times as long, which would have upset
+the medallion limits. A 30 Hz tick needs a retuned balance first. The GPU
+simulation cannot promise determinism across two devices either way:
+floating point and driver differences in the shaders diverge within seconds. So:
 
 - **Replays, ghosts and verified leaderboards** run on the CPU simulation at a
-  fixed 30 Hz tick with a seed. It is the reference. A match that is to be
+  fixed 60 Hz tick with a seed. It is the reference. A match that is to be
   recorded or ranked therefore runs on the CPU simulation on the player's
   device from its first tick: the two simulations do not produce the same
   sequence of states, so a GPU match replayed on the CPU could end at another
   time or with another winner than the one the player saw. The match setup
   says so where it matters ("ranked matches run on the reference engine"),
   and the match is pinned to the _Normal_ simulation resolution, which the
-  CPU holds at 30 ticks a second and which keeps every ranked grid the same.
+  CPU holds at 60 ticks a second and which keeps every ranked grid the same.
 - **Live play** can keep the GPU simulation when one machine owns the truth:
   free play, big maps (section 6) and the host of an online match (5.3).
 
@@ -699,8 +700,8 @@ that choose it. A 960 × 540 base map is nine times the base and, at _Normal_,
 about twice _Ultra_. Measures, in order of payoff:
 
 1. **Tick rate below frame rate**: `FramePacer` already halves the work on a
-   120 Hz display; a 30 Hz simulation tick (section 5.1) halves it again on
-   every display.
+   120 Hz display; a 30 Hz simulation tick would halve it again on every
+   display, once the balance is tuned to it (section 5.1).
 2. **Activity tiles**: a 16 × 16 tile mask marking tiles that held a bacterium
    or a change last tick, produced by a mip-style reduction; passes run with a
    scissor or an instanced quad per active tile. Empty space costs nothing, so
@@ -865,6 +866,9 @@ Scholar asks gold on levels 1 to 4 until chapters exist. The medallion limits ar
 pass from bot matches and want tuning by play. Everything is stored through
 the `GameStorage` port, so the cloud profile of 1.1 is a backend to provide,
 not a change to the services.
+Phase 2 has started with its groundwork: the fixed 60 Hz tick behind the
+frame pacer and one seed per match through the simulation, the pellets and
+the bot (5.1). Replays, the ghost bot and share links build on it.
 Phase 7 can be sprinkled in between the others; each of its items is a
 self-contained PR. Of the groundwork the phases assumed, three pieces have
 landed since the first version of this document: the seeded generator (for
@@ -873,7 +877,7 @@ settings (for phase 7).
 
 ### Decisions worth an ADR when their phase starts
 
-- The CPU simulation at a fixed 30 Hz tick with a seed, on the _Normal_
+- The CPU simulation at a fixed 60 Hz tick with a seed, on the _Normal_
   simulation resolution, is the **reference simulation** for replays and
   verification; the GPU one is for playing.
 - Progress is stored **locally first**, cloud sync is opt-in and anonymous.

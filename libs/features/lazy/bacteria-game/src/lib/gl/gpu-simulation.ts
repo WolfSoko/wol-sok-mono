@@ -59,7 +59,7 @@ import {
  */
 const MAX_MOVE_STEPS = 12;
 
-/** Read backs in flight at once - the GPU is a frame or two behind. */
+/** Read backs in flight at once - the GPU is a step or two behind. */
 const READBACK_SLOTS = 3;
 
 /**
@@ -102,6 +102,8 @@ interface Readback {
   sync: WebGLSync | null;
   /** The pellets as they were when the report was rendered. */
   generation: readonly number[];
+  /** The step the report was rendered in. */
+  step: number;
   /** Requested in an earlier match - read, so the buffer is free, but ignored. */
   stale: boolean;
 }
@@ -173,7 +175,8 @@ export class GpuSimulation implements Simulation {
   private layout: ReportLayout;
   private map: GameMap = getMap('corridors');
   private elapsedSec = 0;
-  private frame = 0;
+  /** Steps run in this match. */
+  private steps = 0;
   /** The state the next pass reads. */
   private current = 0;
   /** The state combat rendered into this frame. */
@@ -191,6 +194,8 @@ export class GpuSimulation implements Simulation {
   private renderedGeneration: readonly number[] = [];
   private events: StepEvents = noEvents();
   private report: Report | null = null;
+  /** The step the report in hand was rendered in. */
+  private reportStep = 0;
   private colonySummaries: ColonySummary[] = [];
   /** Totals of the last report, to turn them into this frame's events. */
   private reported = { captured: 0, lost: 0 };
@@ -296,7 +301,7 @@ export class GpuSimulation implements Simulation {
     }
     this.spawns = spawns;
     this.elapsedSec = 0;
-    this.frame = 0;
+    this.steps = 0;
     this.events = noEvents();
     this.report = null;
     this.reported = { captured: 0, lost: 0 };
@@ -340,7 +345,7 @@ export class GpuSimulation implements Simulation {
     const gl = this.gl;
     const { programs } = resources;
     this.elapsedSec += deltaTimeSec;
-    this.frame++;
+    this.steps++;
     this.advanceDynamicWalls();
     if (this.maskDirty) {
       this.uploadMask(resources);
@@ -408,8 +413,7 @@ export class GpuSimulation implements Simulation {
 
   /**
    * The box around a colony, for the painter to scissor to. The report is a
-   * frame or two old, so the box is grown by how far the colony gets in the
-   * frames its read back may take.
+   * few steps old, so the box is grown by how far the colony gets in them.
    */
   private boundsOf(slot: number): CellBounds | null {
     const bounds =
@@ -419,7 +423,7 @@ export class GpuSimulation implements Simulation {
     if (bounds == null) {
       return null;
     }
-    const margin = this.reach[slot] * READBACK_SLOTS;
+    const margin = this.reach[slot] * this.stepsBehind();
     return {
       minX: clamp(bounds.minX - margin, 0, this.width - 1),
       minY: clamp(bounds.minY - margin, 0, this.height - 1),
@@ -544,8 +548,20 @@ export class GpuSimulation implements Simulation {
       return 0;
     }
     const chance = this.balance.divideChancePerSec * deltaTimeSec;
-    const framesBehind = READBACK_SLOTS + 1;
-    return Math.min(chance, room / (Math.max(1, count) * framesBehind));
+    return Math.min(
+      chance,
+      room / (Math.max(1, count) * (this.stepsBehind() + 1))
+    );
+  }
+
+  /**
+   * How many steps the report in hand lags behind the war - at least the
+   * read backs in flight. A display frame may run several steps, and the GPU
+   * finishes no read back between the steps of one frame.
+   */
+  private stepsBehind(): number {
+    const behind = this.report == null ? 0 : this.steps - this.reportStep;
+    return Math.max(READBACK_SLOTS, behind);
   }
 
   /**
@@ -676,7 +692,7 @@ export class GpuSimulation implements Simulation {
     const gl = this.gl;
     gl.useProgram(program.program);
     bindTexture(gl, UNIT.state, resources.states[this.current].texture, null);
-    gl.uniform1ui(program.uniforms['uSeed'], (this.frame * 2654435761) >>> 0);
+    gl.uniform1ui(program.uniforms['uSeed'], (this.steps * 2654435761) >>> 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
@@ -703,7 +719,7 @@ export class GpuSimulation implements Simulation {
       fade(EFFECT_FADE_PER_SEC.move)
     );
     // The first frame would find every starting bacterium freshly arrived.
-    gl.uniform1i(program.uniforms['uTrack'], this.frame > 1 ? 1 : 0);
+    gl.uniform1i(program.uniforms['uTrack'], this.steps > 1 ? 1 : 0);
     this.pass(resources, program, resources.effects[this.effectsIndex]);
   }
 
@@ -763,6 +779,7 @@ export class GpuSimulation implements Simulation {
     readback.sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
     // The report read is last frame's, so are the pellets it counted at.
     readback.generation = this.renderedGeneration;
+    readback.step = this.steps - 1;
     readback.stale = false;
     resources.pendingReadbacks.push(readback);
     gl.flush();
@@ -795,6 +812,7 @@ export class GpuSimulation implements Simulation {
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, readback.buffer);
       gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, data);
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+      this.reportStep = readback.step;
       this.takeReport(decodeReport(data, this.layout), readback.generation);
     }
   }
@@ -1042,7 +1060,7 @@ export class GpuSimulation implements Simulation {
           gl.STREAM_READ
         );
         gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-        return { buffer, sync: null, generation: [], stale: false };
+        return { buffer, sync: null, generation: [], step: 0, stale: false };
       }
     );
 

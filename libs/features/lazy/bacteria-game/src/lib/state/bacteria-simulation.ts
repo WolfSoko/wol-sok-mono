@@ -46,7 +46,7 @@ export interface ColonySpawn {
 }
 
 /**
- * What happened during one frame - read by the sound, which has no business
+ * What happened during one step - read by the sound, which has no business
  * looking into the grid itself.
  */
 export interface StepEvents {
@@ -62,7 +62,7 @@ export interface StepEvents {
   gatesWarned: number;
 }
 
-/** A frame in which nothing happened. */
+/** A step in which nothing happened. */
 /**
  * How a colony heads for its crosshair this frame: how keen it is to hunt
  * and how many cells it travels - null while it aims at nothing.
@@ -92,6 +92,17 @@ export function noEvents(): StepEvents {
     crushed: 0,
     gatesClosed: 0,
     gatesWarned: 0,
+  };
+}
+
+/** The events of two steps together. */
+export function addEvents(a: StepEvents, b: StepEvents): StepEvents {
+  return {
+    captures: a.captures + b.captures,
+    pelletsEaten: a.pelletsEaten + b.pelletsEaten,
+    crushed: a.crushed + b.crushed,
+    gatesClosed: a.gatesClosed + b.gatesClosed,
+    gatesWarned: a.gatesWarned + b.gatesWarned,
   };
 }
 
@@ -170,7 +181,7 @@ export class BacteriaSimulation implements Simulation {
   private elapsedSec = 0;
   /** The moving walls and gates as of the current match time. */
   private dynamicWalls: DynamicWall[] = [];
-  /** What the last frame did, for the sound. */
+  /** What the last step did, for the sound. */
   private events: StepEvents = noEvents();
 
   constructor(
@@ -210,7 +221,7 @@ export class BacteriaSimulation implements Simulation {
     return this.dynamicWalls;
   }
 
-  /** What happened during the last frame. */
+  /** What happened during the last step. */
   public getEvents(): StepEvents {
     return this.events;
   }
@@ -470,7 +481,7 @@ export class BacteriaSimulation implements Simulation {
   }
 
   /**
-   * Advances the war by one frame. `players` only provides the crosshair each
+   * Advances the war by one step. `players` only provides the crosshair each
    * colony moves towards - the bacteria themselves belong to the simulation.
    */
   public step(players: Player[], deltaTimeSec: number): void {

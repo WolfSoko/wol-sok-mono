@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ID, transaction } from '@datorama/akita';
 import {
+  addEvents,
   BacteriaSimulation,
   noEvents,
   Nutrient,
@@ -14,14 +15,17 @@ import {
   DEFAULT_DIFFICULTY,
 } from './bot-controller';
 import { GameBalance, gameBalance } from './game-balance';
+import { countDown, TICK_SEC } from './fixed-tick';
 import { GameStateQuery } from './game-state.query';
-import { GameState } from './game.states';
 import {
   clamp,
   clampLength,
   isSteering,
   Point,
+  randomSeed,
+  seeded,
   SteeringVector,
+  streamSeed,
 } from './geometry';
 import { DEFAULT_CROSSHAIR_SPEED } from './levels';
 import { getMap } from './game-maps';
@@ -69,8 +73,8 @@ const KEY_SETS: readonly Record<string, SteeringVector>[] = [
 ];
 
 /** The default: the simulation runs on the CPU. */
-const cpuSimulation: SimulationFactory = (balance) =>
-  new BacteriaSimulation(balance);
+const cpuSimulation: SimulationFactory = (balance, random) =>
+  new BacteriaSimulation(balance, random);
 
 /** What happened during a frame - the simulation's events and the boosts. */
 export interface FrameEvents extends StepEvents {
@@ -98,14 +102,10 @@ export class PlayerService {
   private firedBoosts: boolean[] = [];
   /** What the last frame did, for the sound. */
   private frameEvents: FrameEvents = { ...noEvents(), boosts: [] };
-
-  constructor() {
-    this.gameStateQuery
-      .selectKeysPressed()
-      .subscribe((value) =>
-        this.updatePlayerPos(value.keysPressed, value.deltaTimeSec)
-      );
-  }
+  /** Where each crosshair stood before the last tick, for drawing between ticks. */
+  private lastCrosshairs = new Map<number, Point>();
+  /** What the ticks of the frame under way did so far. */
+  private tickEvents: StepEvents = noEvents();
 
   @transaction()
   /**
@@ -129,9 +129,12 @@ export class PlayerService {
        * sliding walls of the next match as well.
        */
       arena?: { width: number; height: number };
+      /** Where every chance of the match comes from - a fresh one when absent. */
+      seed?: number;
     } = {}
   ): void {
     const balance = options.balance ?? gameBalance;
+    const seed = options.seed ?? randomSeed();
     const map = options.map ?? getMap('corridors');
     const radius = balance.startBacteriaRadius;
 
@@ -152,18 +155,27 @@ export class PlayerService {
       if (playerData.isBot) {
         this.bots.set(
           index,
-          new BotController(options.difficulty ?? DEFAULT_DIFFICULTY)
+          new BotController(
+            options.difficulty ?? DEFAULT_DIFFICULTY,
+            seeded(streamSeed(seed, index + 1))
+          )
         );
       }
     });
     this.setActive(0);
     this.dragTargets.clear();
     this.steering.clear();
+    this.lastCrosshairs.clear();
     this.balance = balance;
     this.firedBoosts = [];
     this.frameEvents = { ...noEvents(), boosts: [] };
+    this.tickEvents = noEvents();
     this.simulation.dispose();
-    this.simulation = this.createSimulation(balance, options.arena);
+    this.simulation = this.createSimulation(
+      balance,
+      seeded(seed),
+      options.arena
+    );
     this.simulation.setMap(map);
     this.simulation.init(
       playersData.map((playerData, index) => ({
@@ -244,7 +256,7 @@ export class PlayerService {
     return this.simulation.getDynamicWalls();
   }
 
-  /** What happened during the last frame - used for the sound only. */
+  /** What happened during the ticks of the last frame - used for the sound only. */
   public getFrameEvents(): FrameEvents {
     return this.frameEvents;
   }
@@ -270,11 +282,12 @@ export class PlayerService {
    */
   private createSimulation(
     balance: GameBalance,
+    random: () => number,
     arena?: { width: number; height: number }
   ): Simulation {
     let simulation: Simulation | null = null;
     try {
-      simulation = this.simulationFactory(balance);
+      simulation = this.simulationFactory(balance, random);
       if (arena != null) {
         simulation.resize(arena.width, arena.height);
       }
@@ -287,7 +300,7 @@ export class PlayerService {
       }
       console.warn('The colony war falls back to the CPU', error);
       this.simulationFactory = cpuSimulation;
-      return this.createSimulation(balance, arena);
+      return this.createSimulation(balance, random, arena);
     }
   }
 
@@ -296,18 +309,47 @@ export class PlayerService {
     return this.simulation;
   }
 
-  /** Advances the whole colony war by one frame. */
-  public gameLoop(width: number, height: number, deltaTimeSec: number): void {
+  /**
+   * Advances the whole colony war by one tick of {@link TICK_SEC}: the
+   * crosshairs, the boosts, the bots and the war.
+   */
+  @transaction()
+  public tick(width: number, height: number): void {
+    // The entities are replaced on every change, never changed in place.
+    for (const player of this.playerQuery.getAll()) {
+      this.lastCrosshairs.set(player.id, player);
+    }
+    this.updatePlayerPos(this.gameStateQuery.getValue().keysPressed);
     this.simulation.resize(width, height);
-    this.tickBoosts(deltaTimeSec);
-    this.runBots(width, height, deltaTimeSec);
-    this.simulation.step(this.playerQuery.getAll(), deltaTimeSec);
-    this.frameEvents = {
-      ...this.simulation.getEvents(),
-      boosts: this.firedBoosts,
-    };
-    this.firedBoosts = [];
+    this.tickBoosts();
+    this.runBots(width, height);
+    this.simulation.step(this.playerQuery.getAll(), TICK_SEC);
+    this.tickEvents = addEvents(this.tickEvents, this.simulation.getEvents());
     this.syncColonyStats();
+  }
+
+  /**
+   * Closes a display frame: what its ticks did, and the boosts fired since
+   * the last one, become the frame's events.
+   */
+  public endFrame(): void {
+    this.frameEvents = { ...this.tickEvents, boosts: this.firedBoosts };
+    this.tickEvents = noEvents();
+    this.firedBoosts = [];
+  }
+
+  /**
+   * Where a crosshair is drawn: `alpha` of its last step further on, so it
+   * glides on a display whose frames fall between the ticks - and is not
+   * drawn a tick behind on one whose frames do not.
+   */
+  public crosshairAt(player: Player, alpha: number): Point {
+    const from = this.lastCrosshairs.get(player.id) ?? player;
+    const { width, height } = this.gameStateQuery.getValue();
+    return {
+      x: clamp(player.x + (player.x - from.x) * alpha, 0, width),
+      y: clamp(player.y + (player.y - from.y) * alpha, 0, height),
+    };
   }
 
   /**
@@ -315,22 +357,22 @@ export class PlayerService {
    * the recharge start - so a player waits the full cooldown after a boost.
    */
   @transaction()
-  private tickBoosts(deltaTimeSec: number): void {
+  private tickBoosts(): void {
     for (const player of this.playerQuery.getAll()) {
       if (player.boostActiveSec > 0) {
         this.playerStore.update(player.id, {
-          boostActiveSec: Math.max(0, player.boostActiveSec - deltaTimeSec),
+          boostActiveSec: countDown(player.boostActiveSec),
         });
       } else if (player.boostCooldownSec > 0) {
         this.playerStore.update(player.id, {
-          boostCooldownSec: Math.max(0, player.boostCooldownSec - deltaTimeSec),
+          boostCooldownSec: countDown(player.boostCooldownSec),
         });
       }
     }
   }
 
   /** Lets every computer opponent look at the arena and steer its crosshair. */
-  private runBots(width: number, height: number, deltaTimeSec: number): void {
+  private runBots(width: number, height: number): void {
     if (this.bots.size === 0) {
       return;
     }
@@ -351,7 +393,7 @@ export class PlayerService {
         isBoostReady(player),
         this.balance.maxEnergy
       );
-      const decision = bot.decide(view, deltaTimeSec);
+      const decision = bot.decide(view, TICK_SEC);
       if (decision.target != null) {
         this.setDragTarget(playerId, decision.target.x, decision.target.y);
       }
@@ -397,10 +439,7 @@ export class PlayerService {
    * arrow keys both work - and the keys never touch a bot's crosshair. A
    * joystick is bound to its player directly.
    */
-  private updatePlayerPos(keysPressed: string[], deltaTimeInSec: number): void {
-    if (this.gameStateQuery.getValue().currentState !== GameState.RUNNING) {
-      return;
-    }
+  private updatePlayerPos(keysPressed: string[]): void {
     const humans = this.playerQuery.getAll().filter((player) => !player.isBot);
     const directions = humans.map(() => ({ x: 0, y: 0 }));
 
@@ -426,7 +465,7 @@ export class PlayerService {
         direction.x += stick.x;
         direction.y += stick.y;
       }
-      this.movePlayer(player.id, direction, deltaTimeInSec);
+      this.movePlayer(player.id, direction);
     }
   }
 
@@ -438,21 +477,20 @@ export class PlayerService {
    * key or a pushed stick wins over a drag target - it drops the target, so a
    * stale one cannot keep pulling the crosshair back.
    */
-  private movePlayer(
-    id: ID,
-    direction: SteeringVector,
-    deltaTimeInSec: number
-  ): void {
+  private movePlayer(id: ID, direction: SteeringVector): void {
     const playerId = Number(id);
     const { x: xDir, y: yDir } = clampLength(direction, 1);
     if (isSteering(direction)) {
       this.dragTargets.delete(playerId);
     }
     const target = this.dragTargets.get(playerId);
+    if (target == null && !isSteering(direction)) {
+      return;
+    }
     const { width, height } = this.gameStateQuery.getValue();
 
     this.playerStore.update(id, (state) => {
-      const step = state.maxSpeed * deltaTimeInSec;
+      const step = state.maxSpeed * TICK_SEC;
       if (target == null) {
         return {
           x: clamp(state.x + xDir * step, 0, width),
