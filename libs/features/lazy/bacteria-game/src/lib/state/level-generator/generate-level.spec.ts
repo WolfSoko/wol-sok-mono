@@ -53,6 +53,7 @@ describe('generated levels', () => {
       'gen:cave:99999999999:5',
       'gen:cave:-1:5',
       'gen:cave:1:5:extra',
+      'gen:field:007:03',
     ])('refuse %s', (id) => {
       expect(parseGeneratedId(id)).toBeNull();
       expect(generatedLevel(id)).toBeNull();
@@ -114,7 +115,9 @@ describe('generated levels', () => {
       expect(getMap(level.mapId).createWalls(640, 360).length).toBeGreaterThan(
         0
       );
-      expect(levelMusic(id).seed).toBe(12345);
+      expect(levelMusic(id).seed).toBe(generatedLevel(id)?.seed);
+      // The same tune each time: the player restarts one handed anew.
+      expect(levelMusic(id)).toBe(levelMusic(id));
     });
 
     it('borrows the look and the sound of a hand-made level of its style', () => {
@@ -122,7 +125,11 @@ describe('generated levels', () => {
 
       expect(LEVELS.some((level) => level.id === family)).toBe(true);
       expect(arenaTheme(id)).toBe(arenaTheme(family));
-      expect(levelMusic(id)).toEqual({ ...LEVEL_MUSIC[family], seed: 12345 });
+      expect(levelMusic(id)).toEqual({
+        ...LEVEL_MUSIC[family],
+        seed: generatedLevel(id)?.seed,
+      });
+      expect(levelMusic(id).seed).not.toBe(LEVEL_MUSIC[family].seed);
     });
   });
 });
@@ -150,9 +157,39 @@ describe('checkLayout', () => {
   });
 
   it('measures how far round the walls the way goes', () => {
-    const open = checkLayout([], WIDTH, HEIGHT);
+    // Blocks at the top and the bottom leave the middle straight.
+    const straight = checkLayout(
+      [
+        { x: 150, y: 0, width: 20, height: 60 },
+        { x: 150, y: 120, width: 20, height: 60 },
+      ],
+      WIDTH,
+      HEIGHT
+    );
+    // A wall across the middle with a gap at the top makes a detour.
+    const winding = checkLayout(
+      [{ x: 150, y: 30, width: 20, height: 150 }],
+      WIDTH,
+      HEIGHT
+    );
 
-    expect(open.detour).toBe(1);
-    expect(open.wallShare).toBe(0);
+    expect(straight.detour).toBe(1);
+    expect(winding.detour).toBeGreaterThan(1.2);
+  });
+
+  it('refuses a bare arena or a walled-up one', () => {
+    expect(isPlayable(checkLayout([], WIDTH, HEIGHT))).toBe(false);
+    expect(
+      isPlayable(
+        checkLayout(
+          [
+            { x: 0, y: 0, width: 320, height: 65 },
+            { x: 0, y: 115, width: 320, height: 65 },
+          ],
+          WIDTH,
+          HEIGHT
+        )
+      )
+    ).toBe(false);
   });
 });

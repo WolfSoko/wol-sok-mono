@@ -459,13 +459,28 @@ export const LEVEL_MUSIC: Record<string, LevelMusic> = {
  * melody of its own seed.
  */
 export function levelMusic(levelId: string): LevelMusic {
-  const handMade = LEVEL_MUSIC[levelId];
-  if (handMade !== undefined) {
-    return handMade;
-  }
+  return (
+    LEVEL_MUSIC[levelId] ?? generatedMusic(levelId) ?? LEVEL_MUSIC['petri-dish']
+  );
+}
+
+/**
+ * The music of a generated level, kept with the level: the player restarts a
+ * tune it is handed anew.
+ */
+const generatedTunes = new WeakMap<object, LevelMusic>();
+
+/** The family's music with the level's own melody, for a generated level. */
+function generatedMusic(levelId: string): LevelMusic | undefined {
   const made = generatedLevel(levelId);
   const family = made === null ? undefined : LEVEL_MUSIC[made.family];
-  return family === undefined || made === null
-    ? LEVEL_MUSIC['petri-dish']
-    : { ...family, seed: made.seed };
+  if (family === undefined || made === null) {
+    return undefined;
+  }
+  let tune = generatedTunes.get(made);
+  if (tune === undefined) {
+    tune = { ...family, seed: made.seed };
+    generatedTunes.set(made, tune);
+  }
+  return tune;
 }

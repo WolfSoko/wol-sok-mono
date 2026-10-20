@@ -1,16 +1,16 @@
 import { Rect } from '../maps';
+import {
+  blob,
+  growThread,
+  hexLattice,
+  rectNearSpawn,
+  spawnSpots,
+} from '../shapes';
 import { Rng } from './rng';
-import { blob, nearSpawn, rectNearSpawn, spawnSpots } from './shapes';
 
 /** The kinds of layout the generator makes - its styles. */
-export type RecipeId = 'field' | 'corridor' | 'fortress' | 'cave';
-
-export const RECIPE_IDS: readonly RecipeId[] = [
-  'field',
-  'corridor',
-  'fortress',
-  'cave',
-];
+export const RECIPE_IDS = ['field', 'corridor', 'fortress', 'cave'] as const;
+export type RecipeId = (typeof RECIPE_IDS)[number];
 
 export function isRecipeId(value: unknown): value is RecipeId {
   return RECIPE_IDS.includes(value as RecipeId);
@@ -21,7 +21,6 @@ export function isRecipeId(value: unknown): value is RecipeId {
  * the generator mirrors it into the right one - and what it aims at.
  */
 export interface Recipe {
-  id: RecipeId;
   /** The second word of a generated name - "Quiet Corridors". */
   nouns: readonly string[];
   /** The briefing of a generated level. */
@@ -95,7 +94,6 @@ function bar(
  * and bigger the hotter the level.
  */
 const field: Recipe = {
-  id: 'field',
   nouns: ['Meadow', 'Flats', 'Garden', 'Plain', 'Shallows'],
   description: 'Open ground with pillars for cover - mass beats cleverness.',
   detour: 1.1,
@@ -113,7 +111,6 @@ const field: Recipe = {
  * the gaps narrower the hotter the level.
  */
 const corridor: Recipe = {
-  id: 'corridor',
   nouns: ['Corridors', 'Halls', 'Passage', 'Lanes', 'Locks'],
   description: 'Walls from edge to edge, with gaps to push through.',
   detour: 1.35,
@@ -148,7 +145,6 @@ const corridor: Recipe = {
  * the field between - a base to hold, a door to storm.
  */
 const fortress: Recipe = {
-  id: 'fortress',
   nouns: ['Keep', 'Bastion', 'Citadel', 'Ramparts', 'Redoubt'],
   description: 'A keep around each colony, with doors to hold or to storm.',
   detour: 1.45,
@@ -159,66 +155,53 @@ const fortress: Recipe = {
     const thickness = rng.int(4, 6);
     const door = Math.round(26 - heat * 8);
     const left = spawn.x - reach;
-    const right = spawn.x + reach;
     const top = spawn.y - reach;
-    const bottom = spawn.y + reach;
-    const span = right - left;
-    // The side towards the enemy always has a door, the others now and then.
-    const sides: Rect[][] = [
-      withDoor(
-        { x: right, y: top, width: thickness, height: span + thickness },
-        door,
-        rng,
-        'vertical'
+    const span = 2 * reach;
+    const side = (wall: Rect, hasDoor: boolean) =>
+      hasDoor ? withDoor(wall, door, rng) : [wall];
+    // The side towards the enemy always has a door, top and bottom now and
+    // then, and the back - against the arena's edge - none, if it is there.
+    const walls = [
+      ...side(
+        { x: left + span, y: top, width: thickness, height: span + thickness },
+        true
       ),
-      rng.chance(0.5)
-        ? withDoor(
-            { x: left, y: top, width: span, height: thickness },
-            door,
-            rng,
-            'horizontal'
-          )
-        : [{ x: left, y: top, width: span, height: thickness }],
-      rng.chance(0.5)
-        ? withDoor(
-            { x: left, y: bottom, width: span, height: thickness },
-            door,
-            rng,
-            'horizontal'
-          )
-        : [{ x: left, y: bottom, width: span, height: thickness }],
+      ...side(
+        { x: left, y: top, width: span, height: thickness },
+        rng.chance(0.5)
+      ),
+      ...side(
+        { x: left, y: top + span, width: span, height: thickness },
+        rng.chance(0.5)
+      ),
     ];
     if (rng.chance(0.35)) {
-      sides.push([{ x: left, y: top, width: thickness, height: span }]);
+      walls.push({ x: left, y: top, width: thickness, height: span });
     }
     return [
-      ...sides.flat(),
+      ...walls,
       ...pillars(rng, width, height, rng.int(2, 6), { min: 5, max: 10 }).filter(
-        (pillar) => pillar.x > right + thickness + 4
+        (pillar) => pillar.x > left + span + thickness + 4
       ),
     ];
   },
 };
 
-/** A straight wall with a door of that size somewhere along it. */
-function withDoor(
-  wall: Rect,
-  door: number,
-  rng: Rng,
-  direction: 'vertical' | 'horizontal'
-): Rect[] {
-  const length = direction === 'vertical' ? wall.height : wall.width;
+/** A straight wall with a door of that size somewhere along its length. */
+function withDoor(wall: Rect, door: number, rng: Rng): Rect[] {
+  const upright = wall.height > wall.width;
+  const length = upright ? wall.height : wall.width;
   const at = rng.int(6, Math.max(6, length - door - 6));
-  if (direction === 'vertical') {
-    return [
-      { ...wall, height: at },
-      { ...wall, y: wall.y + at + door, height: length - at - door },
-    ];
-  }
-  return [
-    { ...wall, width: at },
-    { ...wall, x: wall.x + at + door, width: length - at - door },
-  ];
+  const rest = length - at - door;
+  return upright
+    ? [
+        { ...wall, height: at },
+        { ...wall, y: wall.y + at + door, height: rest },
+      ]
+    : [
+        { ...wall, width: at },
+        { ...wall, x: wall.x + at + door, width: rest },
+      ];
 }
 
 /**
@@ -226,7 +209,6 @@ function withDoor(
  * growing in from the edges - channels and no straight line anywhere.
  */
 const cave: Recipe = {
-  id: 'cave',
   nouns: ['Caverns', 'Grotto', 'Hollows', 'Burrow', 'Tissue'],
   description:
     'Round walls like living tissue - winding channels, no straights.',
@@ -239,34 +221,23 @@ const cave: Recipe = {
   },
 };
 
-/** Blobs on a shaken hexagonal lattice over the left half. */
+/** Air sacs on a lattice, packed tighter the hotter the level. */
 function lattice(
   rng: Rng,
   width: number,
   height: number,
   heat: number
 ): Rect[] {
-  const spacing = height / rng.range(3.4, 4.8);
-  const fill = 0.18 + heat * 0.08;
-  const walls: Rect[] = [];
-  for (let row = 0; row * spacing * 0.87 < height + spacing; row++) {
-    const y = row * spacing * 0.87;
-    for (let x = (row % 2) * (spacing / 2); x < width / 2; x += spacing) {
-      if (rng.chance(0.2)) {
-        continue;
-      }
-      const cx = x + (rng.float() - 0.5) * spacing * 0.35;
-      const cy = y + (rng.float() - 0.5) * spacing * 0.35;
-      const radius = spacing * (fill + rng.float() * 0.12);
-      if (!nearSpawn(cx, cy, radius, width, height)) {
-        walls.push(blob(cx, cy, radius));
-      }
-    }
-  }
-  return walls;
+  return hexLattice(() => rng.float(), width, height, {
+    spacing: height / rng.range(3.4, 4.8),
+    jitter: 0.35,
+    fill: 0.18 + heat * 0.08,
+    spread: 0.12,
+    skip: 0.2,
+  });
 }
 
-/** Threads that grow in from the top edge, wander and branch. */
+/** Threads that grow in from the top edge over the left half. */
 function threads(
   rng: Rng,
   width: number,
@@ -274,50 +245,16 @@ function threads(
   heat: number
 ): Rect[] {
   const walls: Rect[] = [];
-  const grow = (
-    x: number,
-    y: number,
-    angle: number,
-    radius: number,
-    length: number,
-    canBranch: boolean
-  ): void => {
-    const branchAt = length * rng.range(0.35, 0.55);
-    for (let travelled = 0; travelled < length; travelled += 3) {
-      const taper = 1 - (travelled / length) * 0.6;
-      if (nearSpawn(x, y, radius * taper, width, height)) {
-        return;
-      }
-      walls.push(blob(x, y, Math.max(2, radius * taper)));
-      if (canBranch && travelled >= branchAt) {
-        canBranch = false;
-        grow(
-          x,
-          y,
-          angle + (rng.chance(0.5) ? -1 : 1) * rng.range(0.7, 1.1),
-          radius * taper * 0.8,
-          (length - travelled) * 0.7,
-          false
-        );
-      }
-      // Wander, but keep growing away from the edge.
-      angle += (rng.float() - 0.5) * 0.5;
-      angle += (Math.PI / 2 - angle) * 0.08;
-      x += Math.cos(angle) * 3;
-      y += Math.sin(angle) * 3;
-    }
-  };
   const count = rng.int(3, 4);
   for (let i = 0; i < count; i++) {
-    // From the top over the left half; the mirror grows them from the bottom.
-    grow(
-      ((width / 2) * (i + 0.5)) / count + rng.range(-8, 8),
-      -2,
-      Math.PI / 2 + rng.range(-0.3, 0.3),
-      rng.range(4, 6),
-      height * rng.range(0.4, 0.5 + heat * 0.15),
-      true
-    );
+    // The mirror grows them in from the bottom on the right.
+    growThread(() => rng.float(), walls, width, height, {
+      x: ((width / 2) * (i + 0.5)) / count + rng.range(-8, 8),
+      y: -2,
+      angle: Math.PI / 2 + rng.range(-0.3, 0.3),
+      radius: rng.range(4, 6),
+      length: height * rng.range(0.4, 0.5 + heat * 0.15),
+    });
   }
   return walls;
 }

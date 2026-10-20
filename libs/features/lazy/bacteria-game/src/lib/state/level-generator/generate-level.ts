@@ -14,6 +14,8 @@ export const MAX_DIFFICULTY = 10;
 /** Layouts tried per level, and valid ones compared, before falling back. */
 const MAX_ATTEMPTS = 24;
 const CANDIDATES = 5;
+/** A detour this close to the recipe's is as good as it gets. */
+const CLOSE_ENOUGH = 0.05;
 
 /** What a generated level is made from - its id says it all. */
 export interface LevelRecipe {
@@ -51,7 +53,9 @@ export function parseGeneratedId(id: string): LevelRecipe | null {
   ) {
     return null;
   }
-  return { recipe: match[1], seed, difficulty };
+  const recipe: LevelRecipe = { recipe: match[1], seed, difficulty };
+  // One level, one id: "gen:field:007:03" is not "gen:field:7:3".
+  return generatedLevelId(recipe) === id ? recipe : null;
 }
 
 /** A generated level with everything it is played and dressed with. */
@@ -61,20 +65,50 @@ export interface GeneratedLevel {
   map: GameMap;
   /** The hand-made level whose look and music it borrows. */
   family: string;
-  /** Seed of its tune and of the look borrowed from the family. */
+  /** Seed of its melody. */
   seed: number;
 }
 
-const generated = new Map<string, GeneratedLevel | null>();
+/**
+ * The generated levels asked for lately. A daily or an endless run asks for
+ * ever new ones, so the oldest are let go - generating one again is cheap.
+ */
+const generated = new Map<string, GeneratedLevel>();
+const KEPT_LEVELS = 32;
 
 /** The generated level with that id, null for any other id. */
 export function generatedLevel(id: string): GeneratedLevel | null {
-  if (!generated.has(id)) {
-    const recipe = parseGeneratedId(id);
-    generated.set(id, recipe === null ? null : generate(recipe));
+  const kept = generated.get(id);
+  if (kept !== undefined) {
+    return kept;
   }
-  return generated.get(id) ?? null;
+  const recipe = parseGeneratedId(id);
+  if (recipe === null) {
+    return null;
+  }
+  const level = generate(recipe);
+  generated.set(id, level);
+  if (generated.size > KEPT_LEVELS) {
+    generated.delete(generated.keys().next().value as string);
+  }
+  return level;
 }
+
+/** The first word of a generated name. */
+const ADJECTIVES: readonly string[] = [
+  'Quiet',
+  'Rusty',
+  'Hollow',
+  'Bitter',
+  'Silent',
+  'Restless',
+  'Pale',
+  'Hungry',
+  'Crooked',
+  'Sunken',
+  'Feral',
+  'Glassy',
+];
 
 function generate(made: LevelRecipe): GeneratedLevel {
   const recipe = RECIPES[made.recipe];
@@ -105,12 +139,13 @@ function generate(made: LevelRecipe): GeneratedLevel {
       description: recipe.description,
       mapId: id,
       balance: balanceFor(heat),
-      crosshairSpeed: Math.round(150 + heat * 60),
+      crosshairSpeed: Math.round(lerp(150, 220, heat)),
       medal: medalLimitsFor(heat),
     },
     map,
     family: rng.pick(recipe.family),
-    seed: made.seed,
+    // Mixed, so a low seed does not play a hand-made tune note for note.
+    seed: streamSeed(made.seed, 3),
   };
 }
 
@@ -141,13 +176,16 @@ function bestLayout(
       height
     );
     const report = checkLayout(walls, width, height);
-    if (!isPlayable(report) || report.detour === null) {
+    if (!isPlayable(report)) {
       continue;
     }
     found++;
     const miss = Math.abs(report.detour - recipe.detour);
     if (best === null || miss < best.miss) {
       best = { walls, miss };
+    }
+    if (miss < CLOSE_ENOUGH) {
+      break;
     }
   }
   return best?.walls ?? [];
@@ -158,37 +196,27 @@ function bestLayout(
  * the hand-made ones.
  */
 function balanceFor(heat: number): Partial<GameBalance> {
-  const lerp = (calm: number, frantic: number) =>
-    calm + (frantic - calm) * heat;
   return {
-    aggression: lerp(0.3, 0.75),
-    divideChancePerSec: lerp(2.6, 3.6),
-    nutrientCount: Math.round(lerp(5, 14)),
-    nutrientRespawnDelaySec: lerp(3, 1.2),
+    aggression: lerp(0.3, 0.95, heat),
+    divideChancePerSec: lerp(2.6, 4.6, heat),
+    nutrientCount: Math.round(lerp(5, 14, heat)),
+    nutrientRespawnDelaySec: lerp(3, 1.2, heat),
   };
 }
 
-/** Medallion limits that tighten with the difficulty, like the ladder's. */
+/**
+ * Medallion limits like the ladder's: a busier level is over sooner, and
+ * loses more of its colony on the way - gold asks for less of either.
+ */
 function medalLimitsFor(heat: number): MedalLimits {
   return {
-    silverSec: Math.round(100 - heat * 50),
-    goldSec: Math.round(65 - heat * 33),
-    goldLossShare: Math.round((0.6 - heat * 0.2) * 100) / 100,
+    silverSec: Math.round(lerp(100, 50, heat)),
+    goldSec: Math.round(lerp(65, 32, heat)),
+    goldLossShare: Math.round(lerp(0.5, 1.2, heat) * 100) / 100,
   };
 }
 
-/** The first word of a generated name. */
-const ADJECTIVES: readonly string[] = [
-  'Quiet',
-  'Rusty',
-  'Hollow',
-  'Bitter',
-  'Silent',
-  'Restless',
-  'Pale',
-  'Hungry',
-  'Crooked',
-  'Sunken',
-  'Feral',
-  'Glassy',
-];
+/** `heat` of the way from the calm value to the frantic one. */
+function lerp(calm: number, frantic: number, heat: number): number {
+  return calm + (frantic - calm) * heat;
+}

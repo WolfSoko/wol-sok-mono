@@ -56,7 +56,7 @@ export const GAME_MAPS: readonly GameMap[] = [
   ...ORGANIC_MAPS,
 ].map(scalable);
 
-const generatedMaps = new Map<string, GameMap>();
+const CORRIDORS = GAME_MAPS.find((map) => map.id === 'corridors') as GameMap;
 
 /**
  * The map with that id - a hand-made one, or a generated one for a `gen:`
@@ -67,14 +67,7 @@ export function getMap(id: string): GameMap {
   if (handMade !== undefined) {
     return handMade;
   }
-  let map = generatedMaps.get(id);
-  if (map === undefined) {
-    const made = generatedLevel(id)?.map;
-    if (made === undefined) {
-      return GAME_MAPS.find((map) => map.id === 'corridors') as GameMap;
-    }
-    map = scalable(made);
-    generatedMaps.set(id, map);
-  }
-  return map;
+  // The generator keeps the layouts: the wrapper only scales them.
+  const made = generatedLevel(id)?.map;
+  return made === undefined ? CORRIDORS : scalable(made);
 }
