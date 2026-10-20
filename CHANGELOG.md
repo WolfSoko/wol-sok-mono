@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.20.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.19.0...v74.20.0) (2026-10-20)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ fight your own ghost ([#2499](https://github.com/WolfSoko/wol-sok-mono/issues/2499)) ([af17237](https://github.com/WolfSoko/wol-sok-mono/commit/af172370ede4a43c76773384fa3654d0ae117be3))
+
 ## [74.19.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.18.0...v74.19.0) (2026-10-20)
 
 ### Features
