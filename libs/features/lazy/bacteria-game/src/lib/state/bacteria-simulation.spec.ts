@@ -715,8 +715,10 @@ describe('zones', () => {
     expect(plain.colonies[0].bacterias[0].x).toBeGreaterThan(50);
   });
 
-  it('makes a colony on hot ground hunt harder, up to all out', () => {
-    expect(heatedAggression(0.45)).toBeCloseTo(0.8);
-    expect(heatedAggression(0.9)).toBe(1);
+  it('makes a colony on hot ground hunt harder, never beyond the crosshair', () => {
+    expect(heatedAggression(0.45)).toBeCloseTo(0.7);
+    expect(heatedAggression(0.85)).toBe(0.95);
+    // A boost that hunts harder already keeps its own.
+    expect(heatedAggression(0.98)).toBe(0.98);
   });
 });

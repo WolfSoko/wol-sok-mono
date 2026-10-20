@@ -244,7 +244,8 @@ one kind:
   a bacterium that lingers dies, lost without anybody capturing it.
 - **Agar** (golden) doubles the chance to divide.
 - **Ice** (pale blue) makes a bacterium sit every other movement step out.
-- **Heat** (red) raises the colony's aggression by 0.35 there.
+- **Heat** (red) raises the colony's aggression by 0.25 there, up to 0.95 -
+  the crosshair keeps a pull.
 
 The CPU simulation keeps a zone code per cell; the GPU one keeps it above
 the wall bit of its wall mask, so no texture is added. Both painters tint

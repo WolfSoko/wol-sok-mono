@@ -4,7 +4,7 @@ import { ArenaPattern, ArenaTheme, Rgb } from './arena-theme';
 import { createCanvas, hash, lerp, mix, rgba, smoothstep } from './canvas-math';
 import { darker } from './colony-renderer';
 import { Zone } from '../state/zones';
-import { ZONE_COLORS, ZONE_EDGE_ALPHA, ZONE_FILL_ALPHA } from './zone-look';
+import { ZONE_CSS } from './zone-look';
 
 /**
  * Paints the floor of an arena into an RGBA pixel buffer: the theme's floor
@@ -127,9 +127,9 @@ export class ArenaRenderer {
   public drawZones(cx: CanvasRenderingContext2D, zones: readonly Zone[]): void {
     cx.lineWidth = 1;
     for (const zone of zones) {
-      const color = ZONE_COLORS[zone.kind];
-      cx.fillStyle = rgba(color, ZONE_FILL_ALPHA);
-      cx.strokeStyle = rgba(color, ZONE_EDGE_ALPHA);
+      const css = ZONE_CSS[zone.kind];
+      cx.fillStyle = css.fill;
+      cx.strokeStyle = css.edge;
       if (zone.round) {
         cx.beginPath();
         cx.ellipse(

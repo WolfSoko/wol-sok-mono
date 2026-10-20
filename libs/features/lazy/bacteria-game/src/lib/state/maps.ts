@@ -272,7 +272,9 @@ export function pointSymmetric<T extends Rect>(
     if (clipped == null) {
       continue;
     }
-    const key = `${clipped.x}:${clipped.y}:${clipped.width}:${clipped.height}:${rect.round === true}`;
+    // A zone of another kind on the same spot is another rect.
+    const kind = 'kind' in rect ? String(rect.kind) : '';
+    const key = `${clipped.x}:${clipped.y}:${clipped.width}:${clipped.height}:${rect.round === true}:${kind}`;
     if (seen.has(key)) {
       continue;
     }

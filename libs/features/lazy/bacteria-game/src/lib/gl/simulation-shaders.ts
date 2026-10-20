@@ -8,7 +8,7 @@
  * - b: food left by a kill, eaten in the next frame's combat
  * - a: what happened to the cell this frame - the slot + 1 of the colony
  *   that captured it in bits 0-1, the slot + 1 of the colony that lost it
- *   in bits 2-3
+ *   in bits 2-3, and bit 4 set when an antibiotic killed it
  *
  * Walls live in a separate R8UI mask, so a wall is never in the state: bit
  * 0 is the wall, the bits above it the zone under the cell (`ZONE_CODE`).
@@ -26,6 +26,8 @@ import { ZONE_CODE, ZONE_EFFECTS } from '../state/zones';
 
 /** The bit of the mask that marks a wall - the zone sits above it. */
 export const WALL_BIT = 1;
+/** How far the zone code is shifted up in the mask, past the wall bit. */
+export const ZONE_SHIFT = 1;
 
 /** A number as a GLSL float literal - "2.0", never the int "2". */
 function glslFloat(value: number): string {
@@ -56,6 +58,9 @@ uniform uint uSeed;
 
 const float ENERGY_SCALE = ${ENERGY_SCALE}.0;
 const uint WALL_BIT = ${WALL_BIT}u;
+const uint ZONE_SHIFT = ${ZONE_SHIFT}u;
+/** The bit of an event record that marks a death by antibiotic. */
+const uint POISONED = 16u;
 const uint ANTIBIOTIC = ${ZONE_CODE.antibiotic}u;
 const uint AGAR = ${ZONE_CODE.agar}u;
 const uint ICE = ${ZONE_CODE.ice}u;
@@ -79,7 +84,7 @@ bool wallAt(ivec2 cell) {
 
 /** The zone under a cell - see \`ZONE_CODE\` - 0 for none. */
 uint zoneAt(ivec2 cell) {
-  return inside(cell) ? texelFetch(uMask, cell, 0).r >> 1u : 0u;
+  return inside(cell) ? texelFetch(uMask, cell, 0).r >> ZONE_SHIFT : 0u;
 }
 
 bool freeAt(ivec2 cell) {
@@ -245,7 +250,7 @@ int moveIntent(ivec2 cell) {
     return -1;
   }
   float aggression = zone == HEAT
-    ? min(1.0, uAggression[colony] + ${glslFloat(ZONE_EFFECTS.heatAggression)})
+    ? max(uAggression[colony], min(${glslFloat(ZONE_EFFECTS.heatMaxAggression)}, uAggression[colony] + ${glslFloat(ZONE_EFFECTS.heatAggression)}))
     : uAggression[colony];
   vec2 towards = uTarget[colony] - vec2(cell);
   vec2 direction = length(towards) > 0.0 ? normalize(towards) : vec2(0.0);
@@ -461,7 +466,7 @@ void main() {
     : (strength.x >= strength.y ? 1u : 2u);
   if (winner == 0u && poisoned) {
     // The antibiotic killed it: lost, and nobody captured it.
-    outState = uvec4(0u, 0u, 0u, owner << 2u);
+    outState = uvec4(0u, 0u, 0u, (owner << 2u) | POISONED);
     return;
   }
   if (winner == 0u || winner == owner) {
@@ -627,7 +632,9 @@ void main() {
   uint owner = texelFetch(uState, cell, 0).r;
 
   vec3 heat = previous.rgb * uFade;
-  if (texelFetch(uEvents, cell, 0).a != 0u) {
+  // A fight or a crush flashes - a quiet death by antibiotic does not.
+  uint record = texelFetch(uEvents, cell, 0).a;
+  if (record != 0u && (record & POISONED) == 0u) {
     heat.r = 1.0;
   }
   if (owner != 0u) {

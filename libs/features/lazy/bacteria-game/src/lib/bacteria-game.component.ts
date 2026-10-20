@@ -97,7 +97,7 @@ import {
   nextLevel,
 } from './state/levels';
 import { Rect } from './state/maps';
-import { Zone } from './state/zones';
+import { mapZones, Zone } from './state/zones';
 import { MedalTier } from './state/medallions';
 import { isBoosted, Player } from './state/player.model';
 import { PlayerStore } from './state/player.store';
@@ -409,7 +409,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     });
     this.zones = computed(() => {
       const { width, height } = this.arena();
-      return levelMap(this.level()).createZones?.(width, height) ?? [];
+      return mapZones(levelMap(this.level()), width, height);
     });
     this.upcomingLevel = computed(() => nextLevel(this.level().id));
     void this.takeChallenge();

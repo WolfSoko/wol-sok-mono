@@ -8,6 +8,7 @@ import {
   slideOffset,
   stampRect,
 } from './maps';
+import { rectNearSpawn } from './shapes';
 import { stampZones } from './zones';
 
 // The production canvas size. A smaller arena pushes most layouts outside the
@@ -170,9 +171,9 @@ describe('GAME_MAPS', () => {
         (zone) => zone.kind === 'antibiotic'
       );
 
-      for (const x of [WIDTH / 4, (WIDTH / 4) * 3]) {
-        expect(isSolid(poison, x, HEIGHT / 2)).toBe(false);
-      }
+      expect(
+        poison.filter((zone) => rectNearSpawn(zone, WIDTH, HEIGHT))
+      ).toEqual([]);
     }
   );
 

@@ -1,4 +1,4 @@
-import { stampZones } from '../state/zones';
+import { mapZones, stampZones } from '../state/zones';
 import type { StateLayer } from '../arena/colony-renderer';
 import {
   ColonySpawn,
@@ -44,6 +44,7 @@ import {
   MAX_PELLETS,
   REPORT_FRAGMENT,
   WALL_BIT,
+  ZONE_SHIFT,
 } from './simulation-shaders';
 import {
   decodeReport,
@@ -903,8 +904,8 @@ export class GpuSimulation implements Simulation {
       this.staticMask,
       this.width,
       this.height,
-      this.map.createZones?.(this.width, this.height) ?? [],
-      1
+      mapZones(this.map, this.width, this.height),
+      ZONE_SHIFT
     );
     for (const wall of this.map.createWalls(this.width, this.height)) {
       stampRect(this.staticMask, this.width, this.height, wall, WALL_BIT);

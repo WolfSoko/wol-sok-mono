@@ -1,4 +1,4 @@
-import { Rect, stampRect } from './maps';
+import { GameMap, Rect, stampRect } from './maps';
 
 /**
  * The kinds of ground a level can lay out besides walls:
@@ -10,13 +10,6 @@ import { Rect, stampRect } from './maps';
  * - `heat`: bacteria on it hunt the enemy harder.
  */
 export type ZoneKind = 'antibiotic' | 'agar' | 'ice' | 'heat';
-
-export const ZONE_KINDS: readonly ZoneKind[] = [
-  'antibiotic',
-  'agar',
-  'ice',
-  'heat',
-];
 
 /** A stretch of ground of one kind - a rect, or the ellipse in it. */
 export interface Zone extends Rect {
@@ -31,14 +24,16 @@ export const ZONE_EFFECTS = {
   agarDivideFactor: 2,
   /** The chance a bacterium on ice sits a movement step out. */
   iceStayChance: 0.5,
-  /** Aggression a colony gains on hot ground, up to 1. */
-  heatAggression: 0.35,
+  /** Aggression a colony gains on hot ground... */
+  heatAggression: 0.25,
+  /**
+   * ...up to this much: below 1, so the crosshair still pulls the colony
+   * across hot ground. A boost hunting harder already keeps its own.
+   */
+  heatMaxAggression: 0.95,
 } as const;
 
-/**
- * The code of a kind in a zone grid, 0 for no zone. The GPU simulation
- * keeps it above the wall bit of its mask, so it fits in three bits.
- */
+/** The code of a kind in a zone grid, 0 for no zone. */
 export const ZONE_CODE: Readonly<Record<ZoneKind, number>> = {
   antibiotic: 1,
   agar: 2,
@@ -62,7 +57,16 @@ export function stampZones(
   }
 }
 
+/** The zones of a map on an arena of that size - none for most maps. */
+export function mapZones(map: GameMap, width: number, height: number): Zone[] {
+  return map.createZones?.(width, height) ?? [];
+}
+
 /** The aggression a colony hunts with on hot ground. */
 export function heatedAggression(aggression: number): number {
-  return Math.min(1, aggression + ZONE_EFFECTS.heatAggression);
+  const { heatAggression, heatMaxAggression } = ZONE_EFFECTS;
+  return Math.max(
+    aggression,
+    Math.min(heatMaxAggression, aggression + heatAggression)
+  );
 }

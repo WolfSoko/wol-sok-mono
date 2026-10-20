@@ -123,7 +123,7 @@ export function pushBackground(
         ZONE_EDGE_ALPHA,
         color,
         ZONE_EDGE_ALPHA,
-        zone.width / 2 - 0.5,
+        Math.min(zone.width, zone.height) / 2 - 0.5,
         1
       );
       continue;

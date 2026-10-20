@@ -4,22 +4,34 @@ import {
   input,
   output,
 } from '@angular/core';
-import { cssTriple } from '../arena/arena-theme';
+import { rgba } from '../arena/canvas-math';
 import { ZONE_COLORS } from '../arena/zone-look';
-import { ZoneKind } from '../state/zones';
+import { ZONE_EFFECTS, ZoneKind } from '../state/zones';
 import { ScreenHeaderComponent } from './screen-header.component';
 
-/** What each kind of ground does, for the rules. */
-const ZONE_RULES: readonly { kind: ZoneKind; name: string; rule: string }[] = [
-  { kind: 'agar', name: 'Agar', rule: 'bacteria divide twice as fast.' },
-  {
-    kind: 'antibiotic',
+const { agarDivideFactor, iceStayChance } = ZONE_EFFECTS;
+
+/** "twice", "3 times". */
+function timesAsFast(factor: number): string {
+  return factor === 2 ? 'twice' : `${String(factor)} times`;
+}
+
+/** What each kind of ground does, for the rules - every kind has one. */
+const ZONE_RULES: Readonly<Record<ZoneKind, { name: string; rule: string }>> = {
+  agar: {
+    name: 'Agar',
+    rule: `bacteria divide ${timesAsFast(agarDivideFactor)} as fast.`,
+  },
+  antibiotic: {
     name: 'Antibiotic',
     rule: 'drains energy - linger and your bacteria die.',
   },
-  { kind: 'ice', name: 'Ice', rule: 'bacteria crawl at half the speed.' },
-  { kind: 'heat', name: 'Heat', rule: 'bacteria go for the enemy harder.' },
-];
+  ice: {
+    name: 'Ice',
+    rule: `bacteria crawl at ${Math.round((1 - iceStayChance) * 100)} % of their speed.`,
+  },
+  heat: { name: 'Heat', rule: 'bacteria go for the enemy harder.' },
+};
 
 /**
  * How to play: the rules in three steps, the ground some levels lay out,
@@ -38,8 +50,9 @@ export class HelpComponent {
 
   public readonly back = output<void>();
 
-  protected readonly zones = ZONE_RULES.map((zone) => ({
+  protected readonly zones = Object.entries(ZONE_RULES).map(([kind, zone]) => ({
+    kind,
     ...zone,
-    css: `rgb(${cssTriple(ZONE_COLORS[zone.kind])})`,
+    css: rgba(ZONE_COLORS[kind as ZoneKind]),
   }));
 }
