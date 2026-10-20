@@ -6,11 +6,15 @@ import { RouterLink, RouterOutlet } from '@angular/router';
 import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
 import { icon } from '@fortawesome/fontawesome-svg-core';
 import { AccountComponent } from './core/account/account.component';
+import { ConsentBannerComponent } from './core/analytics/consent-banner.component';
+import { ConsentSettingsComponent } from './core/analytics/consent-settings.component';
 
 @Component({
   selector: 'rap-root',
   imports: [
     AccountComponent,
+    ConsentBannerComponent,
+    ConsentSettingsComponent,
     MatButtonModule,
     MatIconModule,
     RouterLink,
@@ -72,10 +76,12 @@ import { AccountComponent } from './core/account/account.component';
           <a href="https://x.com/rollapolla" target="_blank" rel="noopener"
             >Follow us on X</a
           >
+          <rap-consent-settings />
           <span>Built with Angular &amp; Analog</span>
         </nav>
       </div>
     </footer>
+    <rap-consent-banner />
   `,
   styles: `
     .site-header {
