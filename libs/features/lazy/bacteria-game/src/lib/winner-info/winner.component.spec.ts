@@ -258,6 +258,88 @@ describe('WinnerComponent', () => {
       expect(ghostButton()).toBeUndefined();
     });
 
+    describe('sharing', () => {
+      const navigator = window.navigator as Navigator & {
+        share?: unknown;
+        clipboard?: unknown;
+      };
+
+      afterEach(() => {
+        delete navigator.share;
+        delete navigator.clipboard;
+      });
+
+      function shareButton(): HTMLButtonElement | undefined {
+        fixture.detectChanges();
+        return Array.from(
+          (fixture.nativeElement as HTMLElement).querySelectorAll('button')
+        ).find((button) => button.textContent?.includes('Share your run'));
+      }
+
+      async function settle(): Promise<void> {
+        for (let turn = 0; turn < 20; turn++) {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+      }
+
+      beforeEach(() => {
+        store.update({
+          mode: 'vs-computer',
+          winner: createPlayer({ id: 0, name: 'You' }),
+          levelId: LEVELS[0].id,
+          lastReplay: run,
+        });
+      });
+
+      it('copies a link to the run where there is no share sheet', async () => {
+        const writeText = jest.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, 'clipboard', {
+          configurable: true,
+          value: { writeText },
+        });
+
+        shareButton()?.click();
+        await settle();
+
+        expect(writeText).toHaveBeenCalledWith(
+          expect.stringMatching(/#ghost=[\w-]+$/)
+        );
+        expect(text()).toContain('Link copied');
+      });
+
+      it('hands the link to the share sheet where there is one', async () => {
+        const share = jest.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, 'share', {
+          configurable: true,
+          value: share,
+        });
+
+        shareButton()?.click();
+        await settle();
+
+        expect(share).toHaveBeenCalledWith(
+          expect.objectContaining({
+            url: expect.stringContaining('#ghost='),
+            text: expect.stringContaining(LEVELS[0].name),
+          })
+        );
+      });
+
+      it('takes a closed share sheet for no failure', async () => {
+        Object.defineProperty(navigator, 'share', {
+          configurable: true,
+          value: jest
+            .fn()
+            .mockRejectedValue(new DOMException('closed', 'AbortError')),
+        });
+
+        shareButton()?.click();
+        await settle();
+
+        expect(text()).not.toContain('could not be shared');
+      });
+    });
+
     it('tells who won against the ghost, and offers it again', () => {
       store.update({
         mode: 'vs-computer',
@@ -267,12 +349,12 @@ describe('WinnerComponent', () => {
         ghost: run,
       });
 
-      expect(text()).toContain('Your ghost wins');
+      expect(text()).toContain('The ghost wins');
       expect(text()).toContain('Fight it again');
       expect(ghostButton()).toBeUndefined();
 
       store.update({ winner: createPlayer({ id: 0, name: 'You' }) });
-      expect(text()).toContain('You beat your ghost');
+      expect(text()).toContain('You beat the ghost');
     });
   });
 

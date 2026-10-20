@@ -1,0 +1,14 @@
+<mat-icon class="icon" aria-hidden="true">blur_on</mat-icon>
+<div class="text">
+  <p class="title">A ghost challenge</p>
+  <p>
+    Someone shared their run on <b>{{ level().name }}</b
+    >. Their colony plays it again - can you beat it?
+  </p>
+</div>
+<div class="buttons">
+  <button mat-flat-button type="button" class="fight" (click)="fight.emit()">
+    Fight it
+  </button>
+  <button mat-button type="button" (click)="dismiss.emit()">Not now</button>
+</div>

@@ -44,6 +44,14 @@
   }
   <mat-card-content>
     @if (!fullscreen()) {
+      @if (challengeLevel(); as level) {
+        <feat-lazy-bac-game-ghost-challenge
+          class="page-challenge"
+          [level]="level"
+          (fight)="fightChallenge()"
+          (dismiss)="dismissChallenge()"
+        />
+      }
       <!-- Opponent, difficulty and level for the page layout. -->
       <feat-lazy-bac-game-match-setup
         [mode]="mode()"
@@ -198,6 +206,9 @@
                     (open)="show($event)"
                     (soundChange)="setSound($event)"
                     (leave)="leaveFullscreen()"
+                    [challenge]="challengeLevel()"
+                    (fightChallenge)="fightChallenge()"
+                    (dismissChallenge)="dismissChallenge()"
                   />
                 }
                 @case ("levels") {

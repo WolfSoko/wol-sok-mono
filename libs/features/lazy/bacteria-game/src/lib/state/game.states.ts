@@ -82,6 +82,8 @@ export interface GameStateState {
    * for the one match it was set for.
    */
   ghost: Replay | null;
+  /** A run someone shared in a link, offered as a ghost to fight. */
+  challenge: Replay | null;
 }
 
 export function createInitialState(): GameStateState {
@@ -104,6 +106,7 @@ export function createInitialState(): GameStateState {
     series: null,
     lastReplay: null,
     ghost: null,
+    challenge: null,
   };
 }
 

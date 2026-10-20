@@ -117,6 +117,19 @@ export function matchOutcome(players: readonly Player[]): MatchOutcome | null {
   return survivors.length === 0 && fought ? { winner: null } : null;
 }
 
+/**
+ * The grid the humans' inputs are kept on: a stick push in steps of 1/16,
+ * a drag target in quarter cells. What is played is what is recorded, and a
+ * recording - a link to a ghost in particular - stays small.
+ */
+export const STEER_STEPS = 16;
+export const DRAG_STEPS = 4;
+
+function onGrid(value: number, steps: number): number {
+  // `|| 0` turns a rounded -0 into 0, as it comes back from a link.
+  return Math.round(value * steps) / steps || 0;
+}
+
 /** A crosshair nobody steers. */
 const AT_REST: SteeringVector = Object.freeze({ x: 0, y: 0 });
 
@@ -239,8 +252,9 @@ export class MatchEngine {
     if (!this.isLive(playerId)) {
       return;
     }
-    this.dragTargets.set(playerId, { x, y });
-    this.newDrags.set(playerId, { x, y });
+    const target = { x: onGrid(x, DRAG_STEPS), y: onGrid(y, DRAG_STEPS) };
+    this.dragTargets.set(playerId, target);
+    this.newDrags.set(playerId, target);
   }
 
   /**
@@ -253,7 +267,10 @@ export class MatchEngine {
     if (!this.isLive(playerId)) {
       return;
     }
-    this.steer(playerId, vector);
+    this.steer(playerId, {
+      x: onGrid(vector.x, STEER_STEPS),
+      y: onGrid(vector.y, STEER_STEPS),
+    });
   }
 
   /**

@@ -1,13 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  signal,
   Signal,
   computed,
   inject,
   input,
   output,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DOCUMENT } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -22,6 +23,7 @@ import { xpClimb } from '../state/ranks';
 import { formatScore, rivalryScore, seriesWinner } from '../state/rivalry';
 import { getColonyColor } from '../state/colony-colors';
 import { ProgressService } from '../progress.service';
+import { replayLink } from '../state/replay-link';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu' | 'ghost';
@@ -46,6 +48,7 @@ export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu' | 'ghost';
 })
 export class WinnerComponent {
   private state = inject(GameStateStore);
+  private document = inject(DOCUMENT);
 
   /**
    * Why the next level is still locked on the campaign ladder, null when it
@@ -80,6 +83,42 @@ export class WinnerComponent {
    * True when the run just played can come back as a ghost - after a match
    * against the computer, not against a ghost already.
    */
+  /** What sharing the run came to, under the buttons - null before. */
+  public readonly shareNote = signal<string | null>(null);
+
+  /**
+   * Shares a link to the run just played, for a friend to fight as a ghost:
+   * through the system's share sheet where there is one, else copied.
+   */
+  public async shareRun(): Promise<void> {
+    const run = this.state.lastReplay();
+    const navigator = this.document.defaultView?.navigator;
+    if (run === null || navigator == null) {
+      return;
+    }
+    const url = await replayLink(this.document.location.href, run);
+    try {
+      if (typeof navigator.share === 'function') {
+        await navigator.share({
+          title: 'Bacteria War',
+          text: `Beat my run on ${getLevel(run.header.levelId).name}!`,
+          url,
+        });
+        this.shareNote.set(null);
+      } else {
+        await navigator.clipboard.writeText(url);
+        this.shareNote.set(
+          'Link copied - send it to a friend to fight your ghost.'
+        );
+      }
+    } catch (error) {
+      // Closing the share sheet is no failure.
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        this.shareNote.set('The link could not be shared.');
+      }
+    }
+  }
+
   public canFightGhost: Signal<boolean> = computed(
     () =>
       !this.againstGhost() &&
@@ -194,8 +233,8 @@ export class WinnerComponent {
     }
     if (this.againstGhost()) {
       return player.isBot
-        ? 'Your ghost wins - your old run ate you!'
-        : 'You beat your ghost!';
+        ? 'The ghost wins - its run ate your colony!'
+        : 'You beat the ghost!';
     }
     if (player.isBot) {
       return 'The computer wins - your colony was eaten!';

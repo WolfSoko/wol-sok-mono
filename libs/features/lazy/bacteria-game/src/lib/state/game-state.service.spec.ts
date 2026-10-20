@@ -7,7 +7,8 @@ import { getLevel, levelCrosshairSpeed } from './levels';
 import { PlayerStore } from './player.store';
 import { matchOutcome } from './match-engine';
 import { PlayerService } from './player.service';
-import { playReplay, Replay, REPLAY_VERSION } from './replay';
+import { playReplay, Replay, REPLAY_VERSION, replayOf } from './replay';
+import { replayLink } from './replay-link';
 
 const WIDTH = 320;
 const HEIGHT = 140;
@@ -274,6 +275,46 @@ describe('GameStateService', () => {
 
       expect(tick).toHaveBeenCalledTimes(2);
       expect(store.snapshot().timePassed).toBeCloseTo(2 * TICK_MS);
+    });
+  });
+
+  describe('offerChallenge', () => {
+    const run = replayOf(
+      {
+        levelId: 'corridors',
+        mode: 'vs-computer',
+        difficulty: 'hard',
+        colors: ['orange', 'blue'],
+        headStart: 0,
+        width: WIDTH,
+        height: HEIGHT,
+        seed: 3,
+      },
+      'cpu',
+      120,
+      { steers: [[0, 0, 1, 0]], drags: [], boosts: [] }
+    );
+
+    async function hashOf(replay: Replay): Promise<string> {
+      return new URL(await replayLink('http://localhost/game', replay)).hash;
+    }
+
+    it('offers the run a link carries as a ghost to fight', async () => {
+      expect(await service.offerChallenge(await hashOf(run))).toBe(true);
+
+      expect(store.challenge()).toEqual(run);
+    });
+
+    it('offers nothing for a broken link or a run between two players', async () => {
+      const couch = {
+        ...run,
+        header: { ...run.header, mode: 'two-players' as const },
+      };
+
+      expect(await service.offerChallenge('#ghost=broken')).toBe(false);
+      expect(await service.offerChallenge(await hashOf(couch))).toBe(false);
+      expect(await service.offerChallenge('')).toBe(false);
+      expect(store.challenge()).toBeNull();
     });
   });
 

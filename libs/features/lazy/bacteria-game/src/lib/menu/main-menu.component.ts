@@ -14,7 +14,8 @@ import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { ACHIEVEMENTS } from '../state/achievements';
 import { CampaignSummary } from '../state/campaign';
 import { RankStandingComponent } from '../rank/rank-standing.component';
-import { LEVELS } from '../state/levels';
+import { Level, LEVELS } from '../state/levels';
+import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
 import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 
 /** The sub screens the main menu opens. */
@@ -36,6 +37,7 @@ export type MenuPage = 'profile' | 'settings' | 'help';
     MatProgressBarModule,
     MatTooltipModule,
     RankStandingComponent,
+    GhostChallengeComponent,
   ],
   templateUrl: './main-menu.component.html',
   styleUrl: './main-menu.component.scss',
@@ -44,6 +46,8 @@ export type MenuPage = 'profile' | 'settings' | 'help';
 export class MainMenuComponent {
   public readonly campaign = input.required<CampaignSummary>();
   public readonly sound = input(true);
+  /** The level of a run someone shared, to fight as a ghost - null without. */
+  public readonly challenge = input<Level | null>(null);
 
   /** A match against the computer or between two players, to set up. */
   public readonly play = output<GameMode>();
@@ -53,6 +57,8 @@ export class MainMenuComponent {
   public readonly soundChange = output<boolean>();
   /** Back to the page around the game. */
   public readonly leave = output<void>();
+  public readonly fightChallenge = output<void>();
+  public readonly dismissChallenge = output<void>();
 
   protected readonly medalCount = computed(() =>
     Object.values(this.campaign().medals).reduce((sum, n) => sum + n, 0)
