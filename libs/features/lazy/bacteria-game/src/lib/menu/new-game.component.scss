@@ -52,9 +52,8 @@
 
 // The modes, a card each.
 .modes {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
-  gap: 1rem;
+  @include screen.sections(15rem);
+
   overflow: auto;
   padding: 0.25rem;
 }

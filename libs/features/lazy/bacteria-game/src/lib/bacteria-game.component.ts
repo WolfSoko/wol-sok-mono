@@ -92,6 +92,7 @@ import { GameMode, GameState, GameStateStore } from './state/game.states';
 import {
   getLevel,
   Level,
+  isLadderLevel,
   LEVELS,
   levelBalance,
   levelMap,
@@ -723,8 +724,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (kind === 'campaign' || kind === 'free') {
       this.settings.setFreePlay(kind === 'free');
     }
-    const onLadder = LEVELS.some(({ id }) => id === this.store.levelId());
-    if (kind === 'campaign' && !onLadder) {
+    if (kind === 'campaign' && !isLadderLevel(this.store.levelId())) {
       this.gameStateService.setLevel(this.campaign.furthestLevel());
     }
   }

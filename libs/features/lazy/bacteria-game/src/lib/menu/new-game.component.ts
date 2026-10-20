@@ -10,7 +10,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatStepperModule } from '@angular/material/stepper';
-import { arenaTheme, cssTriple } from '../arena/arena-theme';
 import { rgba } from '../arena/canvas-math';
 import { ZONE_COLORS } from '../arena/zone-look';
 import { BASE_ARENA } from '../state/arena-size';
@@ -24,7 +23,7 @@ import { ENDLESS_LIVES } from '../state/endless';
 import { parseGeneratedId } from '../state/level-generator/generate-level';
 import { RECIPES } from '../state/level-generator/recipes';
 import { getLevel, Level, levelMap, levelTitle } from '../state/levels';
-import { mapZones, ZoneKind } from '../state/zones';
+import { mapZones, ZONE_NAMES } from '../state/zones';
 import { MEDAL_NAMES, medalGoal } from '../state/medallions';
 import { Progress } from '../state/progress';
 import {
@@ -37,7 +36,7 @@ import {
 } from '../state/rivalry';
 import { ruleNote, winRuleOf } from '../state/win-conditions';
 import { LevelMapComponent } from './level-map.component';
-import { DailyCard, endlessNote } from './menu-cards';
+import { DailyCard, endlessNote, levelColors } from './menu-cards';
 import {
   NewGameEntry,
   NewGameStep,
@@ -113,12 +112,11 @@ export class NewGameComponent {
   /** The mode picked, null until one is. */
   protected readonly kind = linkedSignal(() => this.entry().kind);
   protected readonly steps = computed(() => stepsOf(this.kind()));
-  /** Where in the steps the player is. */
-  protected readonly index = linkedSignal(() =>
-    Math.max(0, stepsOf(this.entry().kind).indexOf(this.entry().step))
-  );
-  protected readonly step = computed(
-    (): NewGameStep => this.steps()[this.index()] ?? 'mode'
+  /** The step the player is on - one the mode has, else its first. */
+  protected readonly step = linkedSignal((): NewGameStep => this.entry().step);
+  /** Where in the mode's steps that is, for the stepper. */
+  protected readonly index = computed(() =>
+    Math.max(0, this.steps().indexOf(this.step()))
   );
   protected readonly stepLabels = STEP_LABELS;
   protected readonly difficulties = BOT_DIFFICULTIES;
@@ -135,21 +133,26 @@ export class NewGameComponent {
 
   protected readonly vsComputer = computed(() => this.kind() !== 'two-players');
 
-  /** The level the match is played on - none for an endless run. */
-  protected readonly briefing = computed(() => {
-    const kind = this.kind();
-    if (kind === 'endless') {
-      return null;
+  /** The id of the level the match is played on - none for a run. */
+  private readonly briefedId = computed(() => {
+    switch (this.kind()) {
+      case 'endless':
+        return null;
+      case 'daily':
+        return this.daily()?.levelId ?? null;
+      default:
+        return this.levelId();
     }
-    const id =
-      kind === 'daily' ? (this.daily()?.levelId ?? null) : this.levelId();
+  });
+
+  /** The level the match is played on, as the briefing tells it. */
+  protected readonly briefing = computed(() => {
+    const id = this.briefedId();
     if (id === null) {
       return null;
     }
     const level = getLevel(id);
     const made = parseGeneratedId(id);
-    const best = this.medals()[id]?.[this.difficulty()] ?? null;
-    const theme = arenaTheme(id);
     return {
       level,
       // The ladder's number and name, or what was rolled.
@@ -157,10 +160,24 @@ export class NewGameComponent {
         made === null
           ? level.name
           : `${RECIPES[made.recipe].label} · difficulty ${made.difficulty}`,
-      floor: cssTriple(theme.floor),
-      edge: cssTriple(theme.border),
+      ...levelColors(id),
       facts: levelFacts(level),
       title: levelTitle(level),
+    };
+  });
+
+  /**
+   * The best medallion of that level at the difficulty picked, and what
+   * the next one needs - apart, so a new difficulty leaves the rest be.
+   */
+  protected readonly standing = computed(() => {
+    const brief = this.briefing();
+    if (brief === null) {
+      return null;
+    }
+    const { level } = brief;
+    const best = this.medals()[level.id]?.[this.difficulty()] ?? null;
+    return {
       best,
       bestName:
         best === null ? 'No medallion yet' : `${MEDAL_NAMES[best]} medallion`,
@@ -212,28 +229,28 @@ export class NewGameComponent {
   protected pickKind(kind: PlayKind): void {
     this.kind.set(kind);
     this.kindChange.emit(kind);
-    this.index.set(1);
+    this.step.set(stepsOf(kind)[1]);
   }
 
   /** Picks a level and goes on to the start. */
   protected pickLevel(id: string): void {
     this.levelChange.emit(id);
-    this.index.set(this.steps().indexOf('start'));
+    this.step.set('start');
   }
 
   protected goTo(index: number): void {
-    this.index.set(index);
+    this.step.set(this.steps()[index] ?? 'mode');
   }
 
   protected next(): void {
-    this.index.update((index) => Math.min(index + 1, this.steps().length - 1));
+    this.goTo(Math.min(this.index() + 1, this.steps().length - 1));
   }
 
   protected goBack(): void {
     if (this.index() === 0) {
       this.back.emit();
     } else {
-      this.index.update((index) => index - 1);
+      this.goTo(this.index() - 1);
     }
   }
 
@@ -252,9 +269,7 @@ export class NewGameComponent {
       case 'daily':
         return this.daily()?.note ?? 'Not today';
       case 'endless':
-        return this.endlessBest() > 0
-          ? `Best run: ${this.endlessBest()} levels`
-          : `${ENDLESS_LIVES} lives`;
+        return endlessNote(this.endlessBest());
       case 'free':
         return 'Any difficulty, any level';
       case 'two-players':
@@ -268,13 +283,6 @@ interface LevelFact {
   label: string;
   color: string | null;
 }
-
-const ZONE_NAMES: Readonly<Record<ZoneKind, string>> = {
-  antibiotic: 'Antibiotic',
-  agar: 'Agar',
-  ice: 'Ice',
-  heat: 'Heat',
-};
 
 /** What sets a level apart besides its walls: its clock and its zones. */
 function levelFacts(level: Level): LevelFact[] {

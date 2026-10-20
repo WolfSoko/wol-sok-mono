@@ -10,7 +10,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
-import { arenaTheme, cssTriple } from '../arena/arena-theme';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { CHAPTERS } from '../state/chapters';
 import {
@@ -27,6 +26,7 @@ import {
 import { getLevel, levelTitle, LEVELS } from '../state/levels';
 import { Progress } from '../state/progress';
 import { LevelCard, LevelCardComponent } from './level-card.component';
+import { levelColors } from './menu-cards';
 
 /**
  * The levels to pick from: the ladder chapter by chapter, a card per level
@@ -120,7 +120,6 @@ export class LevelMapComponent {
    */
   private card(id: string): LevelCard {
     const level = getLevel(id);
-    const theme = arenaTheme(id);
     const made = parseGeneratedId(id);
     return {
       id,
@@ -130,8 +129,7 @@ export class LevelMapComponent {
           : RECIPES[made.recipe].label,
       title: made === null ? levelTitle(level) : level.name,
       lock: this.locks()[id] ?? null,
-      floor: cssTriple(theme.floor),
-      edge: cssTriple(theme.border),
+      ...levelColors(id),
       medals: BOT_DIFFICULTIES.map((difficulty) => ({
         difficulty: difficulty.id,
         tier: this.medals()[id]?.[difficulty.id] ?? null,

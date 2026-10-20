@@ -41,7 +41,7 @@ export const PLAY_MODES: readonly PlayMode[] = [
     kind: 'endless',
     name: 'Endless run',
     icon: 'all_inclusive',
-    blurb: 'Generated levels one after the other - three lives.',
+    blurb: 'Generated levels one after the other - how deep can you get?',
   },
   {
     kind: 'free',

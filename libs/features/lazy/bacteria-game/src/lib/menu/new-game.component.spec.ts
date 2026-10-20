@@ -61,7 +61,7 @@ describe('NewGameComponent', () => {
     expect(modes).toHaveLength(5);
     expect(modes[0]).toContain('5 of 14 levels open');
     expect(modes[1]).toContain('3 of 3 attempts left');
-    expect(modes[2]).toContain('Best run: 4 levels');
+    expect(modes[2]).toContain('best 4');
     expect(stepLabels()).toEqual(['Mode', 'Level', 'Start']);
   });
 
