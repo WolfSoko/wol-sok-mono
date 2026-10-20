@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.24.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.23.0...v74.24.0) (2026-10-20)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ endless run ([#2503](https://github.com/WolfSoko/wol-sok-mono/issues/2503)) ([2bad0e5](https://github.com/WolfSoko/wol-sok-mono/commit/2bad0e57a10506d3a1b115917c84d2989d179e9f))
+
 ## [74.23.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.22.0...v74.23.0) (2026-10-20)
 
 ### Features
