@@ -58,6 +58,8 @@ export interface Report {
   eaters: number[];
   /** Bacteria per colony per coarse cell, for the nearest enemy. */
   blockCounts: Uint32Array[];
+  /** Bacteria an antibiotic killed since the match started, all colonies. */
+  poisoned: number;
 }
 
 /** Turns the raw read back - four 32 bit integers per texel - into numbers. */
@@ -126,7 +128,11 @@ export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
   for (let i = 0; i < MAX_PELLETS; i++) {
     eaters.push(data[(blocksY * width + i) * 4]);
   }
-  return { colonies, eaters, blockCounts };
+  let poisoned = 0;
+  for (let bx = 0; bx < blocksX; bx++) {
+    poisoned += data[(blocksY * width + bx) * 4 + 1];
+  }
+  return { colonies, eaters, blockCounts, poisoned };
 }
 
 /**

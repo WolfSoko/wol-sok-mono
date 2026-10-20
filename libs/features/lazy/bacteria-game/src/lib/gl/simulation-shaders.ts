@@ -219,7 +219,8 @@ uniform float uJitter;
 uniform int uCellSize;
 uniform isampler2D uHunt;
 uniform float uDivideThreshold;
-uniform float uDivideChance[2]; // per bacterium, already within the budget
+uniform float uDivideChance[2]; // per bacterium, on plain ground
+uniform float uDivideBudget[2]; // the most it may be anywhere - see divideBudget
 uniform float uParentShare;
 
 const float PI = 3.14159265;
@@ -300,8 +301,11 @@ int divideIntent(ivec2 cell) {
   if (energyOf(state) < uDivideThreshold) {
     return -1;
   }
-  float chance = uDivideChance[colony]
-    * (zoneAt(cell) == AGAR ? ${glslFloat(ZONE_EFFECTS.agarDivideFactor)} : 1.0);
+  float chance = min(
+    uDivideBudget[colony],
+    uDivideChance[colony]
+      * (zoneAt(cell) == AGAR ? ${glslFloat(ZONE_EFFECTS.agarDivideFactor)} : 1.0)
+  );
   if (random(cell, 21u) >= chance) {
     return -1;
   }
@@ -544,6 +548,19 @@ void main() {
     return;
   }
   if (at.y == uBlocks.y) {
+    // The pellets' eaters - and, running on, the deaths by antibiotic in
+    // this column of the arena.
+    uint poisoned = texelFetch(uPrevious, at, 0).y;
+    if (at.x < uBlocks.x) {
+      for (int y = 0; y < uSize.y; y++) {
+        for (int x = 0; x < uCellSize; x++) {
+          ivec2 cell = ivec2(at.x * uCellSize + x, y);
+          if (inside(cell) && (texelFetch(uEvents, cell, 0).a & POISONED) != 0u) {
+            poisoned++;
+          }
+        }
+      }
+    }
     uint eaters = 0u;
     if (at.x < uPelletCount) {
       ivec2 pellet = ivec2(uPellets[at.x].xy);
@@ -553,7 +570,7 @@ void main() {
         }
       }
     }
-    outValue = uvec4(eaters, 0u, 0u, 0u);
+    outValue = uvec4(eaters, poisoned, 0u, 0u);
     return;
   }
   uvec4 totals = texelFetch(uPrevious, at, 0);

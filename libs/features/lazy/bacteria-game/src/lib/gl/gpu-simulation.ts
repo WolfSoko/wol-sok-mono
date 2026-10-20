@@ -144,6 +144,7 @@ interface FrameUniforms {
   aggression: Float32Array;
   attack: Float32Array;
   divideChance: Float32Array;
+  divideBudget: Float32Array;
   pellets: Float32Array;
 }
 
@@ -201,7 +202,7 @@ export class GpuSimulation implements Simulation {
   private reportStep = 0;
   private colonySummaries: ColonySummary[] = [];
   /** Totals of the last report, to turn them into this frame's events. */
-  private reported = { captured: 0, lost: 0 };
+  private reported = { captured: 0, lost: 0, poisoned: 0 };
   /** Seconds the pellets have not been drained for, waiting on a report. */
   private undrainedSec = 0;
   /** True once this match has rendered a report that can be read back. */
@@ -216,6 +217,7 @@ export class GpuSimulation implements Simulation {
     aggression: new Float32Array(MAX_GPU_COLONIES),
     attack: new Float32Array(MAX_GPU_COLONIES),
     divideChance: new Float32Array(MAX_GPU_COLONIES),
+    divideBudget: new Float32Array(MAX_GPU_COLONIES),
     pellets: new Float32Array(MAX_PELLETS * 3),
   };
 
@@ -307,7 +309,7 @@ export class GpuSimulation implements Simulation {
     this.steps = 0;
     this.events = noEvents();
     this.report = null;
-    this.reported = { captured: 0, lost: 0 };
+    this.reported = { captured: 0, lost: 0, poisoned: 0 };
     this.undrainedSec = 0;
     this.reportRendered = false;
     this.buildMask();
@@ -477,13 +479,13 @@ export class GpuSimulation implements Simulation {
     const capacity = colonyCapacity(b, this.spawns.length);
     u.steps.fill(0);
     u.targets.fill(NaN);
-    u.divideChance.fill(0);
+    u.divideChance.fill(b.divideChancePerSec * deltaTimeSec);
     this.spawns.forEach((spawn, slot) => {
       const target = players.find((player) => player.id === spawn.playerId);
       const intent = colonyIntent(target, b, deltaTimeSec);
       u.aggression[slot] = intent?.aggression ?? b.aggression;
       u.attack[slot] = isBoosted(target ?? null) ? b.boostAttackFactor : 1;
-      u.divideChance[slot] = this.divideChance(slot, capacity, deltaTimeSec);
+      u.divideBudget[slot] = this.divideBudget(slot, capacity);
       if (target == null || intent == null) {
         return;
       }
@@ -515,6 +517,7 @@ export class GpuSimulation implements Simulation {
       gl.uniform2fv(at['uTarget[0]'], u.targets);
       gl.uniform1fv(at['uAggression[0]'], u.aggression);
       gl.uniform1fv(at['uDivideChance[0]'], u.divideChance);
+      gl.uniform1fv(at['uDivideBudget[0]'], u.divideBudget);
     }
     for (const program of [
       programs.combat,
@@ -535,26 +538,18 @@ export class GpuSimulation implements Simulation {
   }
 
   /**
-   * The chance of each bacterium of a colony to divide this frame. All of
-   * them divide in the same pass, and the count is a few frames old - so
-   * the chance is cut down until even the bacteria born in the frames the
-   * count lags behind fit into the room the colony has left.
+   * The most a bacterium of a colony may divide with this frame, whatever
+   * ground it is on. All of them divide in the same pass, and the count is
+   * a few frames old - so the chance is cut down until even the bacteria
+   * born in the frames the count lags behind fit into the room the colony
+   * has left.
    */
-  private divideChance(
-    slot: number,
-    capacity: number,
-    deltaTimeSec: number
-  ): number {
+  private divideBudget(slot: number, capacity: number): number {
     const count = this.colonySummaries[slot]?.count ?? 0;
     const room = capacity - count;
-    if (room <= 0) {
-      return 0;
-    }
-    const chance = this.balance.divideChancePerSec * deltaTimeSec;
-    return Math.min(
-      chance,
-      room / (Math.max(1, count) * (this.stepsBehind() + 1))
-    );
+    return room <= 0
+      ? 0
+      : room / (Math.max(1, count) * (this.stepsBehind() + 1));
   }
 
   /**
@@ -838,12 +833,15 @@ export class GpuSimulation implements Simulation {
 
     const captured = report.colonies.reduce((sum, c) => sum + c.captured, 0);
     const lost = report.colonies.reduce((sum, c) => sum + c.lost, 0);
+    const { poisoned } = report;
     const newCaptures = captured - this.reported.captured;
     const newLosses = lost - this.reported.lost;
+    const newPoisoned = poisoned - this.reported.poisoned;
     this.events.captures += newCaptures;
-    // A loss nobody captured is a bacterium a wall crushed.
-    this.events.crushed += Math.max(0, newLosses - newCaptures);
-    this.reported = { captured, lost };
+    // A loss nobody captured is a bacterium a wall crushed - or one an
+    // antibiotic killed, which makes no noise.
+    this.events.crushed += Math.max(0, newLosses - newCaptures - newPoisoned);
+    this.reported = { captured, lost, poisoned };
 
     // The eaters drain the pellets for all the time since the last report,
     // however many frames that was.
@@ -1156,6 +1154,7 @@ function compiledPrograms(gl: WebGL2RenderingContext): Programs {
     'uHunt',
     'uDivideThreshold',
     'uDivideChance[0]',
+    'uDivideBudget[0]',
     'uParentShare',
   ];
   const pellets = ['uPellets[0]', 'uPelletCount', 'uPelletRadius'];

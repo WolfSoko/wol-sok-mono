@@ -87,6 +87,22 @@ describe('decodeReport', () => {
   });
 });
 
+describe('decodeReport poisoned', () => {
+  it('sums the deaths by antibiotic over the columns of the pellet row', () => {
+    const report = decodeReport(
+      readBack([
+        { x: 0, y: 2, value: [7, 2, 0, 0] },
+        { x: 3, y: 2, value: [0, 5, 0, 0] },
+        // Beyond the arena's columns: a pellet's eaters only.
+        { x: 9, y: 2, value: [1, 99, 0, 0] },
+      ]),
+      layout
+    );
+
+    expect(report.poisoned).toBe(7);
+  });
+});
+
 describe('nearestEnemyBlock', () => {
   it('finds the closest coarse cell of the other colony', () => {
     const report = decodeReport(

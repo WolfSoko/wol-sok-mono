@@ -243,7 +243,8 @@ one kind:
 - **Antibiotic** (violet) drains 0.5 energy a second and stops regeneration -
   a bacterium that lingers dies, lost without anybody capturing it.
 - **Agar** (golden) doubles the chance to divide.
-- **Ice** (pale blue) makes a bacterium sit every other movement step out.
+- **Ice** (pale blue) gives a bacterium a 50 % chance to sit each movement
+  step out.
 - **Heat** (red) raises the colony's aggression by 0.25 there, up to 0.95 -
   the crosshair keeps a pull.
 
