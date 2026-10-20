@@ -1,5 +1,13 @@
-import { generatedLevel } from '../state/level-generator/generate-level';
-import { seeded } from '../state/geometry';
+import {
+  heatOf,
+  lerp,
+  parseGeneratedId,
+  tuneSeed,
+} from '../state/level-generator/generate-level';
+import { keepRecent } from '../state/recent-cache';
+import { Rng } from '../state/level-generator/rng';
+import type { RecipeId } from '../state/level-generator/recipes';
+import { seeded, streamSeed } from '../state/geometry';
 import { HEART_PERIOD_SEC } from '../state/organic-maps';
 
 /**
@@ -455,8 +463,7 @@ export const LEVEL_MUSIC: Record<string, LevelMusic> = {
 
 /**
  * The music of the level with that id, falling back to the first level's. A
- * generated level plays the music of a hand-made one of its style, with a
- * melody of its own seed.
+ * generated level gets a tune of its own - see {@link generatedMusic}.
  */
 export function levelMusic(levelId: string): LevelMusic {
   return (
@@ -465,22 +472,93 @@ export function levelMusic(levelId: string): LevelMusic {
 }
 
 /**
- * The music of a generated level, kept with the level: the player restarts a
- * tune it is handed anew.
+ * The tunes of the generated levels asked for lately, by id: the player
+ * restarts a tune it is handed anew, so one id keeps one tune. Built from
+ * the id alone - a tune needs no layout.
  */
-const generatedTunes = new WeakMap<object, LevelMusic>();
+const generatedTunes = new Map<string, LevelMusic>();
+const KEPT_TUNES = 32;
 
-/** The family's music with the level's own melody, for a generated level. */
+/**
+ * How each style of the generator sounds: the mood of its key, its groove
+ * and its instruments - the seed then picks the chords, the key's pitch and
+ * the melody, the difficulty the tempo.
+ */
+const STYLE_SOUNDS: Record<
+  RecipeId,
+  Pick<LevelMusic, 'root' | 'scale' | 'lead' | 'bass' | 'drums' | 'echo'>
+> = {
+  // Open ground: bright and calm.
+  field: {
+    root: 45,
+    scale: MAJOR,
+    lead: 'triangle',
+    bass: 'root',
+    drums: 'soft',
+    echo: 0.3,
+  },
+  // Walls and gates: driving, mechanical.
+  corridor: {
+    root: 45,
+    scale: MINOR,
+    lead: 'square',
+    bass: 'pulse',
+    drums: 'drive',
+    echo: 0.35,
+  },
+  // Keeps to hold: a marching walk.
+  fortress: {
+    root: 43,
+    scale: DORIAN,
+    lead: 'sawtooth',
+    bass: 'walk',
+    drums: 'drive',
+    echo: 0.25,
+  },
+  // Living tissue: dark, wet, a pulse.
+  cave: {
+    root: 41,
+    scale: HARMONIC_MINOR,
+    lead: 'sine',
+    bass: 'drone',
+    drums: 'heart',
+    echo: 0.45,
+  },
+};
+
+/** The chord progressions a generated tune picks from - a few of the hand-made tunes'. */
+const PROGRESSIONS: readonly (readonly number[])[] = [
+  [0, 5, 3, 4],
+  [0, 3, 6, 4],
+  [0, 5, 2, 6],
+  [0, 2, 5, 4],
+  [0, 1, 0, 4],
+  [0, 6, 3, 0],
+];
+
+/** The tune of a generated level: its style's sound, its seed's chords. */
 function generatedMusic(levelId: string): LevelMusic | undefined {
-  const made = generatedLevel(levelId);
-  const family = made === null ? undefined : LEVEL_MUSIC[made.family];
-  if (family === undefined || made === null) {
+  const kept = generatedTunes.get(levelId);
+  if (kept !== undefined) {
+    return kept;
+  }
+  const made = parseGeneratedId(levelId);
+  if (made === null) {
     return undefined;
   }
-  let tune = generatedTunes.get(made);
-  if (tune === undefined) {
-    tune = { ...family, seed: made.seed };
-    generatedTunes.set(made, tune);
-  }
-  return tune;
+  const seed = tuneSeed(made);
+  // Another stream than the melody's, so the two do not go hand in hand.
+  const rng = new Rng(streamSeed(seed, 1));
+  const sound = STYLE_SOUNDS[made.recipe];
+  const tune: LevelMusic = {
+    ...sound,
+    // A step or two up or down: another key, the same mood.
+    root: sound.root + rng.int(-2, 2),
+    progression: rng.pick(PROGRESSIONS),
+    density: rng.range(0.3, 0.6),
+    // A hotter level, a faster beat.
+    bpm: Math.round(lerp(84, 134, heatOf(made))),
+    seed,
+  };
+  return keepRecent(generatedTunes, levelId, tune, KEPT_TUNES);
 }

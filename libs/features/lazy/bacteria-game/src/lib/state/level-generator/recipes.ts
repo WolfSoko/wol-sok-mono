@@ -29,7 +29,7 @@ export interface Recipe {
   description: string;
   /** How winding the way between the start spots should be - see `detour`. */
   detour: number;
-  /** Hand-made levels whose look and music a generated one borrows. */
+  /** Hand-made levels whose look a generated one borrows. */
   family: readonly string[];
   /**
    * The walls of the left half on an arena of that size; `heat` runs from 0

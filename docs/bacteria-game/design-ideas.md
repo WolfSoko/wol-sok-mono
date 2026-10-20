@@ -899,7 +899,11 @@ pauses. Endless mode (4.6) as well: generated levels one after the other,
 each win a step harder, three lives, the best depth kept. The level choice
 is a map (2.5): the ladder in the chapters of 2.1, cards in their arena's
 colours, and the daily level, the endless run and "Generate a level" as the
-side branches. Two follow-ups
+side branches. Generated levels play tunes of their own (4.5): the style
+sets the key's mood, the groove and the instruments, the seed the chords
+and the melody, the difficulty the tempo. With that, phase 3 is done; the
+mutate mode of 4.6, gates and sliders in the recipes, and levels shared by
+link are what is left of section 4. Two follow-ups
 from the generator's review: one resolver for level ids (the hand-made
 tables and the generator are asked in `getLevel`, `getMap`, `arenaTheme` and
 `levelMusic` alike), and the hand-made organic maps as recipes with fixed
