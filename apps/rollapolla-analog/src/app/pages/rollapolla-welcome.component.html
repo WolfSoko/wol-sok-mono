@@ -8,12 +8,14 @@
       <rap-share [content]="shareContent" linkLabel="RollaPolla link">
         <header class="section-header share-header">
           <p class="rap-eyebrow">Spread the word</p>
-          <h2 id="share-title" class="section-title">Share RollaPolla</h2>
+          <p id="share-title" class="section-title">Share RollaPolla</p>
           <p class="section-subtitle">
             Know a group that can never decide? Send them RollaPolla.
           </p>
         </header>
       </rap-share>
+    } @placeholder {
+      <mat-spinner class="spinner" diameter="40" />
     }
   </section>
 

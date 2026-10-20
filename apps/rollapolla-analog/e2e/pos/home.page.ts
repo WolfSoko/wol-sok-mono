@@ -31,13 +31,10 @@ export class HomePage {
 
   async expectShareLinksVisible() {
     const share = this.page.getByTestId('site-share');
-    await expect(
-      share.getByRole('heading', { name: 'Share RollaPolla' })
-    ).toBeVisible();
+    await expect(share.getByText('Share RollaPolla')).toBeVisible();
     await expect(share.getByTestId('copy-link')).toBeVisible();
     // Hydrated on viewport: the server builds the links on the site's origin,
-    // the browser on its own once the box scrolled into view.
-    await share.scrollIntoViewIfNeeded();
+    // the browser on its own once it has hydrated the box.
     const homeUrl = new URL('/', this.page.url()).href;
     const whatsApp = share.getByTestId('share-whatsapp');
     await expect(whatsApp).toHaveAttribute(
