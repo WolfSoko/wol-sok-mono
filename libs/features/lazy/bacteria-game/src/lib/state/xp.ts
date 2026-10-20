@@ -4,7 +4,7 @@ import {
   BotDifficulty,
   difficultyOption,
 } from './bot-controller';
-import { LEVELS } from './levels';
+import { isLadderLevel, LEVELS } from './levels';
 import { MatchRecord, MEDAL_NAMES, MedalTier } from './medallions';
 import { bestMedal, Progress } from './progress';
 
@@ -96,7 +96,7 @@ export function xpGain(
     const held = bestMedal(before, record.levelId, record.difficulty);
     const best = bestMedal(after, record.levelId, record.difficulty);
     // Only the ladder's medallions pay XP - see xpOf.
-    const onLadder = LEVELS.some(({ id }) => id === record.levelId);
+    const onLadder = isLadderLevel(record.levelId);
     if (onLadder && best !== null && best !== held) {
       parts.push({
         label: `${MEDAL_NAMES[best]} medallion, a new best`,

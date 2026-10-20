@@ -11,7 +11,6 @@ test('should open on the main menu with the game and its controls', async ({
   await expect(po.menuTitle).toHaveText('Bacteria War');
   await expect(po.playArea).toBeVisible();
   await expect(po.playCta).toBeVisible();
-  await expect(po.twoPlayersCta).toBeVisible();
   await expect(po.profileCta).toBeVisible();
   await expect(po.settingsCta).toBeVisible();
   await expect(po.helpCta).toBeVisible();
@@ -40,15 +39,17 @@ test('should let the player pick a level when starting a match', async ({
   const po = new BacteriaGamePo(page);
   await po.goto();
   await po.playCta.click();
-  // Against the computer the levels open one by one; free play opens them all.
-  await po.freePlayToggle.click();
+  // In the campaign the levels open one by one; free play opens them all.
+  await po.chooseMode('Free play');
 
   await po.chooseLevel('Serpentine');
 
-  await expect(po.levelDetails).toContainText('Serpentine');
-  await expect(po.levelDetails).toContainText('winding path');
+  await expect(po.startStep).toContainText('Serpentine');
+  await expect(po.startStep).toContainText('winding path');
   await expect(po.startCta).toHaveText(/Start Serpentine/);
 
+  await po.stepBackCta.click();
+  await po.stepBackCta.click();
   await po.backCta.click();
   await expect(po.playCta).toBeVisible();
 });
@@ -60,6 +61,7 @@ test('should lock the levels the campaign has not opened yet', async ({
   await po.goto();
 
   await po.playCta.click();
+  await po.chooseMode('Campaign');
 
   await expect(po.levelCard('Corridors')).toBeDisabled();
   await expect(po.levelCard('Corridors')).toContainText(
@@ -114,21 +116,22 @@ test('should let the player pick how hard the computer plays', async ({
 }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-  await po.playCta.click();
+  await po.setUp();
 
   await po.chooseDifficulty(/Hard/);
 
   await expect(
     po.difficultyPicker.getByRole('radio', { name: 'Hard' })
   ).toBeChecked();
-  await expect(po.levelDetails).toContainText('Reacts fast');
+  await expect(po.startStep).toContainText('Reacts fast');
 });
 
 test('should seat two players at opposite edges', async ({ page }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
 
-  await po.twoPlayersCta.click();
+  await po.playCta.click();
+  await po.chooseMode('Two players');
 
   await expect(po.boostCta).toHaveCount(2);
   await expect(po.joysticks).toHaveCount(2);
@@ -220,14 +223,16 @@ test('should let the players pick their colours', async ({ page }) => {
     )
   );
   await po.goto();
-  await po.twoPlayersCta.click();
+  await po.playCta.click();
+  await po.chooseMode('Two players');
+  await po.stepBackCta.click();
   await po.backCta.click();
   await po.settingsCta.click();
 
   await po.chooseColor('Left player', 'Green');
   await po.chooseColor('Right player', 'Pink');
   await po.backCta.click();
-  await po.twoPlayersCta.click();
+  await po.setUp('Two players');
   await po.startCta.click();
 
   await expect(po.colonyNames).toContainText(['Green', 'Pink']);

@@ -11,6 +11,14 @@ import { GameMap, Rect, stampRect } from './maps';
  */
 export type ZoneKind = 'antibiotic' | 'agar' | 'ice' | 'heat';
 
+/** The kinds as the menus name them. */
+export const ZONE_NAMES: Readonly<Record<ZoneKind, string>> = {
+  antibiotic: 'Antibiotic',
+  agar: 'Agar',
+  ice: 'Ice',
+  heat: 'Heat',
+};
+
 /** A stretch of ground of one kind - a rect, or the ellipse in it. */
 export interface Zone extends Rect {
   kind: ZoneKind;

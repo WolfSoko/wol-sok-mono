@@ -260,10 +260,15 @@ export const LEVELS: readonly Level[] = [
   },
 ];
 
+/** True for the id of a hand-made level - one of the campaign's ladder. */
+export function isLadderLevel(id: string): boolean {
+  return LEVELS.some((level) => level.id === id);
+}
+
 /** True for the id of a level of the game - a generated one included. */
 export function isLevelId(value: unknown): value is string {
   return (
-    LEVELS.some((level) => level.id === value) ||
+    (typeof value === 'string' && isLadderLevel(value)) ||
     (typeof value === 'string' && parseGeneratedId(value) !== null)
   );
 }

@@ -9,7 +9,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { BotDifficulty } from './state/bot-controller';
 import { ladderLocks, newlyUnlocked } from './state/campaign';
-import { getLevel, LEVELS } from './state/levels';
+import { getLevel, isLadderLevel, LEVELS } from './state/levels';
 import { judgeMatch, MatchRecord, MedalTier } from './state/medallions';
 import { earnAchievements } from './state/achievements';
 import { MatchEarnings } from './state/earnings';
@@ -162,8 +162,7 @@ export class ProgressService {
     // Only the ladder's levels and the daily level keep a medallion: an
     // endless or a rolled level is new every time, there is no second go.
     const keepsMedal =
-      !endless &&
-      (dailyDay !== null || LEVELS.some(({ id }) => id === record.levelId));
+      !endless && (dailyDay !== null || isLadderLevel(record.levelId));
     const withMatch = (progress: Progress, medalCounts: boolean) => {
       const counted = addTotals(progress, {
         ...totalsOf(record),

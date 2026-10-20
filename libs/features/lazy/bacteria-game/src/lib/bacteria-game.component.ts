@@ -55,7 +55,8 @@ import {
   ColorChange,
 } from './colony-colors/colony-colors.component';
 import { MatchSetupComponent } from './match-setup/match-setup.component';
-import { LevelSelectComponent } from './menu/level-select.component';
+import { NewGameComponent } from './menu/new-game.component';
+import { NewGameEntry, opponentOf, PlayKind, stepsOf } from './menu/play-modes';
 import { MainMenuComponent } from './menu/main-menu.component';
 import { DailyCard } from './menu/menu-cards';
 import { HelpComponent } from './menu/help.component';
@@ -130,7 +131,7 @@ const RUNNING_OUT_SEC = 10;
     SettingsComponent,
     HelpComponent,
     MainMenuComponent,
-    LevelSelectComponent,
+    NewGameComponent,
     ProfileComponent,
     ColonyColorsComponent,
     GhostChallengeComponent,
@@ -519,6 +520,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         ? `${attemptsLeft} of ${DAILY_ATTEMPTS} attempts left`
         : 'Attempts used - practice until 00:00 UTC';
     return {
+      levelId,
       name: getLevel(levelId).name,
       note: streak > 0 ? `${attempts} · ${streak}-day streak` : attempts,
     };
@@ -574,7 +576,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // The reset ends a match set outside the setup: a rematch sets it again.
     const rematch =
       action === 'again' ? this.gameStateService.oneMatch() : null;
-    this.screen.set(action === 'levels' ? 'levels' : 'menu');
+    if (action === 'levels') {
+      // The daily level and an endless run have no level to choose: their
+      // mode then, to pick another.
+      const kind = this.playKind();
+      this.newGameEntry.set({
+        kind,
+        step: stepsOf(kind).includes('level') ? 'level' : 'mode',
+      });
+    }
+    this.screen.set(action === 'levels' ? 'new-game' : 'menu');
     if (action === 'menu') {
       this.gameStateService.endSeries();
     }
@@ -670,10 +681,77 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.gameStateService.setHeadStart(headStart);
   }
 
-  /** Sets a match up against the computer or between two players. */
-  protected chooseLevel(mode: GameMode): void {
-    this.selectMode(mode);
-    this.show('levels');
+  /** The level picked for the next match, beside the daily and the run. */
+  protected readonly selectedLevelId = this.store.levelId;
+
+  /** Where a new game opens - on the mode last played, to pick another. */
+  protected readonly newGameEntry = signal<NewGameEntry>({
+    kind: null,
+    step: 'mode',
+  });
+
+  /** "5 of 14 levels open" - the campaign so far, for its mode card. */
+  protected readonly campaignNote = computed(
+    () =>
+      `${this.campaign.summary().openLevels} of ${LEVELS.length} levels open`
+  );
+
+  /** The mode picked in a new game this visit, null before. */
+  private readonly lastKind = signal<PlayKind | null>(null);
+
+  /**
+   * The mode last played: the one picked in a new game, else the daily
+   * level or an endless run while one is on, else who plays and whether
+   * the ladder applies.
+   */
+  private readonly playKind = computed((): PlayKind => {
+    const last = this.lastKind();
+    if (last !== null) {
+      return last;
+    }
+    if (this.store.dailyDay() !== null) {
+      return 'daily';
+    }
+    if (this.store.endlessMatch()) {
+      return 'endless';
+    }
+    if (this.mode() === 'two-players') {
+      return 'two-players';
+    }
+    return this.settings.freePlay() ? 'free' : 'campaign';
+  });
+
+  /** Opens a new game on its first step. */
+  protected openNewGame(): void {
+    this.newGameEntry.set({ kind: this.playKind(), step: 'mode' });
+    this.show('new-game');
+  }
+
+  /**
+   * Sets the game up for a mode: who plays, and whether the ladder's locks
+   * apply - the campaign service keeps the next match on an open ladder
+   * level while they do.
+   */
+  protected setPlayKind(kind: PlayKind): void {
+    this.lastKind.set(kind);
+    this.selectMode(opponentOf(kind));
+    if (kind === 'campaign' || kind === 'free') {
+      this.settings.setFreePlay(kind === 'free');
+    }
+  }
+
+  /** Starts what a new game set up: a match, the daily level or a run. */
+  protected startNewGame(kind: PlayKind): void {
+    switch (kind) {
+      case 'daily':
+        this.playDaily();
+        return;
+      case 'endless':
+        this.playEndless();
+        return;
+      default:
+        this.startGame();
+    }
   }
 
   /** Starts a match on the furthest level the campaign ladder has opened. */
@@ -1162,7 +1240,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 const ARENA_FRAME_PX = 6;
 
 /** The screens of the menu that is shown while no match is on. */
-export type MenuScreen = 'menu' | 'levels' | 'profile' | 'settings' | 'help';
+export type MenuScreen = 'menu' | 'new-game' | 'profile' | 'settings' | 'help';
 
 /** What is laid over the arena right now, nothing while a match is on. */
 export type StagePanel = MenuScreen | 'pause' | 'over' | null;

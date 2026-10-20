@@ -39,21 +39,20 @@ describe('MainMenuComponent', () => {
   });
 
   it('reports what the player picks', () => {
-    const play = jest.fn();
+    const newGame = jest.fn();
     const open = jest.fn();
     const resume = jest.fn();
-    fixture.componentInstance.play.subscribe(play);
+    fixture.componentInstance.newGame.subscribe(newGame);
     fixture.componentInstance.open.subscribe(open);
     fixture.componentInstance.continueCampaign.subscribe(resume);
 
-    button('Play').click();
-    button('Two players').click();
+    button('New game').click();
     button('Profile').click();
     button('Settings').click();
     button('How to play').click();
     button('Continue the campaign').click();
 
-    expect(play.mock.calls).toEqual([['vs-computer'], ['two-players']]);
+    expect(newGame).toHaveBeenCalledTimes(1);
     expect(open.mock.calls).toEqual([['profile'], ['settings'], ['help']]);
     expect(resume).toHaveBeenCalled();
   });
@@ -71,39 +70,5 @@ describe('MainMenuComponent', () => {
 
     expect(sound).toHaveBeenCalledWith(false);
     expect(leave).toHaveBeenCalled();
-  });
-
-  it('offers the daily level with its attempts and streak', () => {
-    fixture.componentRef.setInput('daily', {
-      name: 'Hungry Locks',
-      note: '2 of 3 attempts left · 4-day streak',
-    });
-    fixture.detectChanges();
-    const daily = jest.fn();
-    fixture.componentInstance.playDaily.subscribe(daily);
-
-    const card = button('Daily level');
-    card.click();
-
-    expect(card.textContent).toContain('Hungry Locks');
-    expect(card.textContent).toContain('4-day streak');
-    expect(daily).toHaveBeenCalled();
-  });
-
-  it('leaves the daily level out without one', () => {
-    expect(host.textContent).not.toContain('Daily level');
-  });
-
-  it('offers an endless run with the best one so far', () => {
-    fixture.componentRef.setInput('endlessBest', 7);
-    fixture.detectChanges();
-    const endless = jest.fn();
-    fixture.componentInstance.playEndless.subscribe(endless);
-
-    const card = button('Endless run');
-    card.click();
-
-    expect(card.textContent).toContain('best 7');
-    expect(endless).toHaveBeenCalled();
   });
 });
