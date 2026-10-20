@@ -35,6 +35,7 @@ import {
 } from '../state/bot-controller';
 import { GameMode } from '../state/game.states';
 import { getLevel, levelTitle, LEVELS } from '../state/levels';
+import { ruleNote } from '../state/win-conditions';
 import { MEDAL_NAMES, medalGoal } from '../state/medallions';
 import { Progress } from '../state/progress';
 import {
@@ -217,11 +218,16 @@ export class LevelSelectComponent {
     const made = parseGeneratedId(level.id);
     return {
       level,
-      // Above the name: the ladder's number and name, or what was rolled.
-      kicker:
+      // Above the name: the ladder's number and name, or what was rolled -
+      // and the clock of a timed level.
+      kicker: [
         made === null
           ? level.name
           : `${RECIPES[made.recipe].label} · difficulty ${made.difficulty}`,
+        ruleNote(level.win),
+      ]
+        .filter((part) => part !== null)
+        .join(' · '),
       title: levelTitle(level),
       best,
       bestName:

@@ -11,7 +11,7 @@ import {
   buildBotView,
   DEFAULT_DIFFICULTY,
 } from './bot-controller';
-import { countDown, TICK_SEC } from './fixed-tick';
+import { countDown, TICK_SEC, TICKS_PER_SEC } from './fixed-tick';
 import { GameBalance, gameBalance } from './game-balance';
 import {
   clamp,
@@ -33,6 +33,12 @@ import {
 } from './player.model';
 import type { GhostController } from './ghost';
 import type { ReplayInputs } from './replay';
+import {
+  ANNIHILATION,
+  judgeOutcome,
+  MatchOutcome,
+  WinRule,
+} from './win-conditions';
 
 /** What a match needs to know about one player before it starts. */
 export interface PlayerSpawn {
@@ -74,6 +80,8 @@ export interface MatchOptions {
    * the screen.
    */
   ghosts?: ReadonlyMap<number, GhostController>;
+  /** How the match is won - by annihilation when absent. */
+  win?: WinRule;
 }
 
 /** A frame in which nothing happened. */
@@ -89,33 +97,6 @@ export interface FrameEvents extends StepEvents {
 
 /** How a match ended, from the point of view of the people at the screen. */
 export type MatchResult = 'win' | 'loss' | 'draw';
-
-/** How a match ended: the winner, or null for a draw. */
-export interface MatchOutcome {
-  winner: Player | null;
-}
-
-/**
- * Decides whether the match is over.
- *
- * Returns `null` while it is still running, otherwise the outcome. Both
- * colonies can wipe each other out in the same step, which is a draw and
- * still has to end the match - hence the outcome wrapper instead of a bare
- * winner, which cannot tell "draw" from "not finished".
- */
-export function matchOutcome(players: readonly Player[]): MatchOutcome | null {
-  if (players.length < 2) {
-    return null;
-  }
-  const survivors = players.filter((player) => player.bacteriaCount > 0);
-  if (survivors.length === 1) {
-    return { winner: survivors[0] };
-  }
-  // Only a match that saw losses can be a draw - at kick off nobody has
-  // bacteria yet either, and that is not an outcome.
-  const fought = players.some((player) => player.lost > 0);
-  return survivors.length === 0 && fought ? { winner: null } : null;
-}
 
 /**
  * The grid the humans' inputs are kept on: a stick push in steps of 1/16,
@@ -174,11 +155,13 @@ export class MatchEngine {
   private readonly inputs: ReplayInputs = { steers: [], drags: [], boosts: [] };
   /** The players a recording drives, by seat. */
   private readonly ghosts: ReadonlyMap<number, GhostController>;
+  private readonly win: WinRule;
 
   public constructor(spawns: readonly PlayerSpawn[], options: MatchOptions) {
     this.seed = options.seed;
     this.balance = options.balance ?? gameBalance;
     this.ghosts = options.ghosts ?? new Map();
+    this.win = options.win ?? ANNIHILATION;
     this.playerList = spawns.map((spawn, index) => {
       if (spawn.isBot && !this.ghosts.has(index)) {
         this.bots.set(
@@ -344,7 +327,7 @@ export class MatchEngine {
 
   /** How the match ended, null while it is still on. */
   public outcome(): MatchOutcome | null {
-    return matchOutcome(this.playerList);
+    return judgeOutcome(this.win, this.playerList, this.ticks / TICKS_PER_SEC);
   }
 
   public dispose(): void {

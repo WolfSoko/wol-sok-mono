@@ -66,7 +66,7 @@ CSS animation, still for players who ask for less motion):
   campaign_, which starts the furthest open level right away.
 - **Choose a level** - opened by both Play buttons, a map of the levels.
   Opponent, difficulty and free play at the top; the ladder in chapters
-  (Petri, Laboratory, Body - [`state/chapters.ts`](./src/lib/state/chapters.ts))
+  (Petri, Laboratory, Body, Reactor - [`state/chapters.ts`](./src/lib/state/chapters.ts))
   with the levels open in each, a card per level in its arena's colours with
   its medallion per difficulty or the lock of the ladder; and _Beyond the
   ladder_: the daily level and an endless run against the computer, and
@@ -219,6 +219,20 @@ levels were won. A locked level shows a lock and what opens it in the level
 list, and the result screen's _Next_ button stays locked until it is open.
 _Free play_ beside the level list opens every level, for players who know the
 game already. Two players always have every level open.
+
+## Win conditions
+
+How a match ends is the level's `win` rule
+([`win-conditions.ts`](./src/lib/state/win-conditions.ts)), judged by the
+`MatchEngine` after every tick. Without one it is _annihilation_: the last
+colony left wins, and both gone in the same tick is a draw. A _timed_ level
+also ends once its `limitSec` of match time have passed, and then the bigger
+colony wins (equal ones draw); a colony wiped out before still ends it at
+once. The match clock counts down on a timed level and turns red in its last
+ten seconds, the level choice notes the limit ("Timed · 2:30") and the result
+screen says that time was up. The first timed level, _Half-Life_, opens the
+Reactor chapter. The rule is part of the level, so a replay plays it again
+with its level.
 
 ## Boost
 

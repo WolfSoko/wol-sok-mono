@@ -42,7 +42,7 @@ import {
 import { matchRecord } from './medallions';
 import { Player } from './player.model';
 import { randomSeed } from './geometry';
-import { MatchOutcome } from './match-engine';
+import { MatchOutcome } from './win-conditions';
 import { MatchPlan, planMatch } from './match-setup';
 import { Replay, replayOf } from './replay';
 import { dailyLevelId } from './daily';
@@ -138,7 +138,7 @@ export class GameStateService {
       width,
       height,
       winner: null,
-      matchEnded: false,
+      endedBy: null,
       earnings: null,
     });
     // subscribe update time passed when game running
@@ -193,7 +193,7 @@ export class GameStateService {
       endless: run,
       currentState: GameState.END,
       winner: outcome.winner,
-      matchEnded: true,
+      endedBy: outcome.reason,
       earnings,
       series:
         series === null
@@ -516,7 +516,7 @@ export class GameStateService {
       // Restart from the pause menu starts without a reset in between.
       timePassed: 0,
       winner: null,
-      matchEnded: false,
+      endedBy: null,
       earnings: null,
     }));
   }
@@ -532,7 +532,7 @@ export class GameStateService {
       currentState: GameState.START,
       timePassed: 0,
       winner: null,
-      matchEnded: false,
+      endedBy: null,
       earnings: null,
     }));
   }

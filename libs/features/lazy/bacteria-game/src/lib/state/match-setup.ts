@@ -81,6 +81,7 @@ export function planMatch(
       difficulty: plan.difficulty,
       arena: { width, height },
       seed: plan.seed,
+      win: level.win,
       // The run was played from the left: the ghost plays it from the right.
       ghosts:
         ghost === null

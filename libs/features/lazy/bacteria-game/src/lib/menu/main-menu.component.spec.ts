@@ -33,8 +33,8 @@ describe('MainMenuComponent', () => {
 
   it('shows the campaign so far', () => {
     const card = host.querySelector('.card')?.textContent ?? '';
-    expect(card).toContain('5 of 12 levels open');
-    expect(card).toContain('9 of 36');
+    expect(card).toContain('5 of 13 levels open');
+    expect(card).toContain('9 of 39');
     expect(card).toContain('5 · Pillar Field · Normal');
   });
 

@@ -61,6 +61,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.game-time.running-out {
+  color: var(--mat-sys-error);
+  font-weight: 700;
+}
+
 .stage {
   position: relative;
 

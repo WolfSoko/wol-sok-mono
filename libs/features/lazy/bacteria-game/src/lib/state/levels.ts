@@ -2,6 +2,7 @@ import { GameBalance, gameBalance } from './game-balance';
 import { getMap } from './game-maps';
 import { GameMap } from './maps';
 import { MedalLimits } from './medallions';
+import { WinRule } from './win-conditions';
 import {
   generatedLevel,
   parseGeneratedId,
@@ -28,6 +29,8 @@ export interface Level {
   crosshairSpeed?: number;
   /** How fast and cleanly the level has to be won for each medallion. */
   medal: MedalLimits;
+  /** How the level is won - by annihilation when absent. */
+  win?: WinRule;
 }
 
 /*
@@ -220,6 +223,24 @@ export const LEVELS: readonly Level[] = [
       nutrientRespawnDelaySec: 1.2,
     },
     crosshairSpeed: 220,
+  },
+  // The reactor: the match no longer waits for a colony to be wiped out.
+  {
+    id: 'half-life',
+    name: '13 · Half-Life',
+    description:
+      'The reactor shuts down after two and a half minutes - whoever holds the bigger colony then wins. Wipe the enemy out sooner for the better medallions.',
+    mapId: 'reactor-core',
+    medal: { silverSec: 100, goldSec: 65, goldLossShare: 1.2 },
+    win: { kind: 'timed', limitSec: 150 },
+    balance: {
+      aggression: 0.85,
+      divideChancePerSec: 4.2,
+      combatDrainPerSec: 2.4,
+      nutrientCount: 12,
+      nutrientRespawnDelaySec: 1.4,
+    },
+    crosshairSpeed: 210,
   },
 ];
 

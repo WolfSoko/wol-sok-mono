@@ -6,7 +6,7 @@ import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
 import { getLevel, levelCrosshairSpeed } from './levels';
 import { PlayerStore } from './player.store';
-import { matchOutcome } from './match-engine';
+import { ANNIHILATION, judgeOutcome } from './win-conditions';
 import { PlayerService } from './player.service';
 import { playReplay, Replay, REPLAY_VERSION, replayOf } from './replay';
 import { replayLink } from './replay-link';
@@ -347,7 +347,9 @@ describe('GameStateService', () => {
       jest.spyOn(playerService, 'tick').mockImplementation(() => undefined);
       jest
         .spyOn(playerService, 'outcome')
-        .mockImplementation(() => matchOutcome(playerStore.entities()));
+        .mockImplementation(() =>
+          judgeOutcome(ANNIHILATION, playerStore.entities(), 0)
+        );
       service.advance(WIDTH, HEIGHT, 1);
       jest.restoreAllMocks();
     }
@@ -367,7 +369,9 @@ describe('GameStateService', () => {
         jest.spyOn(players, 'tick').mockImplementation(() => undefined);
         jest
           .spyOn(players, 'outcome')
-          .mockImplementation(() => matchOutcome(playerStore.entities()));
+          .mockImplementation(() =>
+            judgeOutcome(ANNIHILATION, playerStore.entities(), 0)
+          );
         service.advance(WIDTH, HEIGHT, 1);
         jest.restoreAllMocks();
         if (reset) {
@@ -560,7 +564,7 @@ describe('GameStateService', () => {
 
       const state = store.snapshot();
       expect(state.currentState).toBe(GameState.END);
-      expect(state.matchEnded).toBe(true);
+      expect(state.endedBy).toBe('annihilation');
       expect(state.lastReplay?.header.levelId).toBe('hourglass');
       expect(state.earnings?.award).toEqual(
         expect.objectContaining({
@@ -578,7 +582,7 @@ describe('GameStateService', () => {
     it('awards nothing between two players', () => {
       winAgainst('two-players');
 
-      expect(store.snapshot().matchEnded).toBe(true);
+      expect(store.snapshot().endedBy).toBe('annihilation');
       expect(store.snapshot().earnings?.award).toBeNull();
     });
 
