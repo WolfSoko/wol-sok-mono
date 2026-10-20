@@ -208,6 +208,8 @@
                     (leave)="leaveFullscreen()"
                     [challenge]="challengeLevel()"
                     [daily]="dailyCard()"
+                    [endlessBest]="progress.endlessBest()"
+                    (playEndless)="playEndless()"
                     (playDaily)="playDaily()"
                     (fightChallenge)="fightChallenge()"
                     (dismissChallenge)="dismissChallenge()"

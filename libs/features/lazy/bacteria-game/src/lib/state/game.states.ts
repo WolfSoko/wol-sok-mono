@@ -18,6 +18,7 @@ import { MatchEarnings } from './earnings';
 import { HeadStart, Series, SeriesLength } from './rivalry';
 import { Player } from './player.model';
 import type { Replay } from './replay';
+import type { EndlessRun } from './endless';
 
 /** Who steers the second crosshair. */
 export type GameMode = 'two-players' | 'vs-computer';
@@ -92,6 +93,8 @@ export interface GameStateState {
   matchLevel: string | null;
   /** The UTC day of the daily level the match is played as, null otherwise. */
   dailyDay: string | null;
+  /** The endless run under way, null outside one - it outlasts a match. */
+  endless: EndlessRun | null;
 }
 
 export function createInitialState(): GameStateState {
@@ -117,6 +120,7 @@ export function createInitialState(): GameStateState {
     challenge: null,
     matchLevel: null,
     dailyDay: null,
+    endless: null,
   };
 }
 

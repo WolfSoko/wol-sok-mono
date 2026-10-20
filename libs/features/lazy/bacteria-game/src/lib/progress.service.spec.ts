@@ -194,6 +194,16 @@ describe('ProgressService', () => {
     expect(create().medal('hourglass', 'hard')).toBeNull();
   });
 
+  it('keeps the deepest endless run, and only that', () => {
+    const progress = create();
+
+    progress.recordEndlessRun(4);
+    progress.recordEndlessRun(2);
+
+    expect(progress.endlessBest()).toBe(4);
+    expect(stored()['endlessBest']).toBe(4);
+  });
+
   describe('the daily level', () => {
     const DAY = '2026-10-20';
     const daily = (won: boolean, day = DAY): MatchRecord => ({

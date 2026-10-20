@@ -26,6 +26,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { WsThanosDirective } from '@wolsok/thanos';
 import { GhostChallengeComponent } from './ghost/ghost-challenge.component';
 import { DAILY_ATTEMPTS } from './state/daily';
+import { isRunOver } from './state/endless';
 import {
   ElemResizedDirective,
   ResizedEvent,
@@ -142,7 +143,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly settings = inject(GameSettingsService);
   protected readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
-  private readonly progress = inject(ProgressService);
+  protected readonly progress = inject(ProgressService);
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
   /** No flickering glow for players who asked their system for less motion. */
@@ -495,6 +496,25 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     };
   });
 
+  /** Starts a new endless run, on its first level. */
+  protected playEndless(): void {
+    if (this.resetting()) {
+      return;
+    }
+    this.gameStateService.startEndless();
+    this.startGame();
+  }
+
+  /** The next match of the endless run - or a new run, once it is over. */
+  private takeEndlessOn(): void {
+    const run = this.store.snapshot().endless;
+    if (run === null || isRunOver(run)) {
+      this.gameStateService.startEndless();
+    } else {
+      this.gameStateService.continueEndless();
+    }
+  }
+
   /** Starts a match on today's daily level, against the computer. */
   protected playDaily(): void {
     // Not while the last match still turns to dust - the reset would end it.
@@ -550,7 +570,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           } else if (rematch !== null) {
             this.gameStateService.replayOneMatch(rematch);
           }
-          if (action === 'again' || action === 'next' || action === 'ghost') {
+          if (action === 'endless') {
+            this.takeEndlessOn();
+          } else if (action === 'menu' || action === 'levels') {
+            this.gameStateService.endEndless();
+          }
+          if (
+            action === 'again' ||
+            action === 'next' ||
+            action === 'ghost' ||
+            action === 'endless'
+          ) {
             this.startGame();
           }
         }),

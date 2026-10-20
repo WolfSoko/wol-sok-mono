@@ -354,6 +354,71 @@ describe('GameStateService', () => {
 
     afterEach(() => service.cleanup());
 
+    describe('an endless run', () => {
+      /** Ends the match on the run's level, won by the human or the bot. */
+      function finish(humanWins: boolean): void {
+        service.start();
+        const [human, bot] = playerStore.entities();
+        playerStore.upsertPlayers([
+          { ...human, bacteriaCount: humanWins ? 400 : 0, lost: 300 },
+          { ...bot, bacteriaCount: humanWins ? 0 : 400, lost: 300 },
+        ]);
+        const players = TestBed.inject(PlayerService);
+        jest.spyOn(players, 'tick').mockImplementation(() => undefined);
+        jest
+          .spyOn(players, 'outcome')
+          .mockImplementation(() => matchOutcome(playerStore.entities()));
+        service.advance(WIDTH, HEIGHT, 1);
+        jest.restoreAllMocks();
+        service.reset();
+      }
+
+      beforeEach(() => {
+        service.setArenaSize(WIDTH, HEIGHT);
+        service.init(WIDTH, HEIGHT);
+      });
+
+      it('climbs a level with every win and keeps the best run', () => {
+        service.startEndless();
+        const first = store.level().id;
+
+        finish(true);
+        service.continueEndless();
+
+        expect(store.snapshot().endless?.wins).toBe(1);
+        expect(store.level().id).not.toBe(first);
+        expect(TestBed.inject(ProgressService).endlessBest()).toBe(1);
+      });
+
+      it('costs a life on a defeat, on the same level, until it is over', () => {
+        service.startEndless();
+        const level = store.level().id;
+
+        finish(false);
+        service.continueEndless();
+        expect(store.snapshot().endless?.lives).toBe(2);
+        expect(store.level().id).toBe(level);
+
+        finish(false);
+        service.continueEndless();
+        finish(false);
+        service.continueEndless();
+
+        expect(store.snapshot().endless?.lives).toBe(0);
+        // Over: no level is set for it any more.
+        expect(store.snapshot().matchLevel).toBeNull();
+      });
+
+      it('outlasts the reset between its matches, until it is left', () => {
+        service.startEndless();
+        service.reset();
+        expect(store.snapshot().endless).not.toBeNull();
+
+        service.endEndless();
+        expect(store.snapshot().endless).toBeNull();
+      });
+    });
+
     describe('a level for one match', () => {
       it('plays it against the computer, leaving the setup as it is', () => {
         service.setMode('two-players');

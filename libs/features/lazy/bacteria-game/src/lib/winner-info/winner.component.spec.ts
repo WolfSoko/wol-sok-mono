@@ -380,6 +380,49 @@ describe('WinnerComponent', () => {
     expect(text()).toContain('Daily level · practice');
   });
 
+  describe('in an endless run', () => {
+    function endlessButton(): HTMLButtonElement | undefined {
+      fixture.detectChanges();
+      return Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('button')
+      ).find(
+        (button) =>
+          button.querySelector('mat-icon')?.textContent === 'all_inclusive'
+      );
+    }
+
+    it('tells the depth and the lives, and leads on to the next level', () => {
+      store.update({
+        mode: 'vs-computer',
+        winner: createPlayer({ id: 0, name: 'You', isBot: false }),
+        levelId: LEVELS[0].id,
+        endless: { seed: 1, wins: 3, lives: 2 },
+      });
+      const picked = jest.fn();
+      fixture.componentInstance.action.subscribe(picked);
+
+      expect(text()).toContain('Endless run · 3 levels beaten · 2 lives left');
+      expect(endlessButton()?.textContent).toContain('Next level');
+      expect(text()).not.toContain('Play again');
+      endlessButton()?.click();
+      expect(picked).toHaveBeenCalledWith('endless');
+    });
+
+    it('offers the same level again after a defeat, a new run at the end', () => {
+      store.update({
+        mode: 'vs-computer',
+        winner: createPlayer({ id: 1, name: 'Computer', isBot: true }),
+        levelId: LEVELS[0].id,
+        endless: { seed: 1, wins: 3, lives: 1 },
+      });
+      expect(endlessButton()?.textContent).toContain('Try it again');
+
+      store.update({ endless: { seed: 1, wins: 3, lives: 0 } });
+      expect(text()).toContain('Endless run over · 3 levels beaten');
+      expect(endlessButton()?.textContent).toContain('New run');
+    });
+  });
+
   it('reports what the player picks', () => {
     store.update({ winner: null, levelId: LEVELS[0].id });
     const picked = jest.fn();

@@ -25,6 +25,7 @@ import {
 import {
   addCouchWin,
   addDailyAttempt,
+  addEndlessRun,
   addMedal,
   addTotals,
   bestMedal,
@@ -182,6 +183,15 @@ export class ProgressService {
             streak: standingStreak(this.progress().daily, dailyDay),
           },
         };
+  }
+
+  /** The most levels beaten in one endless run. */
+  public readonly endlessBest = computed(() => this.progress().endlessBest);
+
+  /** Remembers how deep an endless run got, if deeper than ever before. */
+  public recordEndlessRun(wins: number): void {
+    this.progress.update((progress) => addEndlessRun(progress, wins));
+    this.store(this.progress(), (progress) => progress);
   }
 
   /**

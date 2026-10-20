@@ -46,6 +46,7 @@ import { MatchOutcome } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import { Replay, replayOf } from './replay';
 import { dailyLevelId } from './daily';
+import { afterMatch, endlessLevelId, isRunOver, newRun } from './endless';
 import { replayFromHash } from './replay-link';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
@@ -176,12 +177,22 @@ export class GameStateService {
    * award reach the store together.
    */
   private endMatch(outcome: MatchOutcome): void {
-    const { series, ghost } = this.gameStateStore.snapshot();
+    const { series, ghost, endless, matchLevel } =
+      this.gameStateStore.snapshot();
     const earnings = this.recordMatch(outcome.winner);
+    // A match on the endless run's level takes the run on - a draw is no win.
+    const run =
+      endless !== null && matchLevel === endlessLevelId(endless)
+        ? afterMatch(endless, outcome.winner?.isBot === false)
+        : endless;
+    if (run !== null && run.wins > (endless?.wins ?? 0)) {
+      this.progress.recordEndlessRun(run.wins);
+    }
     // One update, so the result and the award reach the readers together.
     this.gameStateStore.update({
       // A ghost match is no match to play again: its opponent is no bot.
       ...(ghost === null ? { lastReplay: this.replay() } : {}),
+      endless: run,
       currentState: GameState.END,
       winner: outcome.winner,
       matchEnded: true,
@@ -289,6 +300,31 @@ export class GameStateService {
       matchLevel: dailyLevelId(day),
       dailyDay: day,
     });
+  }
+
+  /** Starts a new endless run, set up for its first match. */
+  public startEndless(): void {
+    this.gameStateStore.update({ endless: newRun(randomSeed()) });
+    this.continueEndless();
+  }
+
+  /**
+   * Sets the next match on the level the endless run is at - the next one
+   * after a win, the same again after a defeat. Nothing once it is over.
+   */
+  public continueEndless(): void {
+    const { endless } = this.gameStateStore.snapshot();
+    if (endless !== null && !isRunOver(endless)) {
+      this.gameStateStore.update({
+        ...NO_ONE_MATCH,
+        matchLevel: endlessLevelId(endless),
+      });
+    }
+  }
+
+  /** Leaves the endless run. */
+  public endEndless(): void {
+    this.gameStateStore.update({ endless: null });
   }
 
   /** What the next match is set to outside the setup - see {@link reset}. */

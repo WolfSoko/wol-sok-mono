@@ -54,6 +54,25 @@
         <mat-icon>group</mat-icon>
         Two players, one screen
       </button>
+      <button
+        mat-stroked-button
+        type="button"
+        class="continue endless"
+        (click)="playEndless.emit()"
+      >
+        <mat-icon>all_inclusive</mat-icon>
+        <span class="continue-text">
+          <span class="continue-title">Endless run</span>
+          <span class="continue-level">
+            @if (endlessBest() > 0) {
+              Generated levels, harder with every win · best
+              {{ endlessBest() }}
+            } @else {
+              Generated levels, harder with every win - three lives
+            }
+          </span>
+        </span>
+      </button>
       @if (daily(); as card) {
         <button
           mat-stroked-button

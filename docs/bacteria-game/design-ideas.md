@@ -895,7 +895,9 @@ as levels, maps, looks and tunes. Gates, sliders and zones are not in the
 recipes yet; the daily level, endless mode and the level map build on it.
 The daily level (1.7) is in: one generated level a day for everyone,
 three attempts towards its medallion, a streak that one missed day only
-pauses. Two follow-ups from the generator's review: one resolver for level ids (the hand-made
+pauses. Endless mode (4.6) as well: generated levels one after the other,
+each win a step harder, three lives, the best depth kept. Two follow-ups
+from the generator's review: one resolver for level ids (the hand-made
 tables and the generator are asked in `getLevel`, `getMap`, `arenaTheme` and
 `levelMusic` alike), and the hand-made organic maps as recipes with fixed
 seeds - they share `hexLattice` and `growThread` with the generator already,
