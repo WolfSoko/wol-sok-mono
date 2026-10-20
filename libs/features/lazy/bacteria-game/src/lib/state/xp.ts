@@ -95,7 +95,9 @@ export function xpGain(
     });
     const held = bestMedal(before, record.levelId, record.difficulty);
     const best = bestMedal(after, record.levelId, record.difficulty);
-    if (best !== null && best !== held) {
+    // Only the ladder's medallions pay XP - see xpOf.
+    const onLadder = LEVELS.some(({ id }) => id === record.levelId);
+    if (onLadder && best !== null && best !== held) {
       parts.push({
         label: `${MEDAL_NAMES[best]} medallion, a new best`,
         xp: MEDAL_XP[best] - (held === null ? 0 : MEDAL_XP[held]),

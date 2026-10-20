@@ -8,26 +8,9 @@
  * {@link pointSymmetric}. Nothing grows into the spots the colonies start on.
  */
 
-import { distance, seeded, wrap } from './geometry';
+import { seeded, wrap } from './geometry';
+import { blob, growThread, hexLattice } from './shapes';
 import { DynamicWall, GameMap, pointSymmetric, Rect } from './maps';
-
-/**
- * How far a blob stays from where a colony starts: the largest start radius
- * any level uses, plus a few cells of air.
- */
-const SPAWN_CLEARANCE = 20;
-
-/** A round wall around a point, on whole cells so its mirror image is exact. */
-function blob(x: number, y: number, radius: number): Rect {
-  const r = Math.max(1, Math.round(radius));
-  return {
-    x: Math.round(x) - r,
-    y: Math.round(y) - r,
-    width: 2 * r,
-    height: 2 * r,
-    round: true,
-  };
-}
 
 /** A round wall that is part of a living, moving layout. */
 function movingBlob(x: number, y: number, radius: number): DynamicWall {
@@ -35,21 +18,6 @@ function movingBlob(x: number, y: number, radius: number): DynamicWall {
   wall.solid = true;
   wall.warning = 0;
   return wall;
-}
-
-/** True when a blob there would reach into one of the two start spots. */
-function nearSpawn(
-  x: number,
-  y: number,
-  radius: number,
-  width: number,
-  height: number
-): boolean {
-  return [width / 4, (width * 3) / 4].some(
-    (spawnX) =>
-      distance({ x, y }, { x: spawnX, y: height / 2 }) <
-      SPAWN_CLEARANCE + radius
-  );
 }
 
 /**
@@ -62,22 +30,16 @@ const alveoli: GameMap = {
   name: 'Alveoli',
   description: 'Packed air sacs with winding channels between them.',
   createWalls(width, height) {
-    const random = seeded(7);
-    const spacing = height / 4.2;
-    const blobs: Rect[] = [];
-    // A hexagonal lattice, shaken up a little, over the left half.
-    for (let row = 0; row * spacing * 0.87 < height + spacing; row++) {
-      const y = row * spacing * 0.87;
-      for (let x = (row % 2) * (spacing / 2); x < width / 2; x += spacing) {
-        const cx = x + (random() - 0.5) * spacing * 0.3;
-        const cy = y + (random() - 0.5) * spacing * 0.3;
-        const radius = spacing * (0.22 + random() * 0.14);
-        if (!nearSpawn(cx, cy, radius, width, height)) {
-          blobs.push(blob(cx, cy, radius));
-        }
-      }
-    }
-    return pointSymmetric(blobs, width, height);
+    return pointSymmetric(
+      hexLattice(seeded(7), width, height, {
+        spacing: height / 4.2,
+        jitter: 0.3,
+        fill: 0.22,
+        spread: 0.14,
+      }),
+      width,
+      height
+    );
   },
 };
 
@@ -93,52 +55,16 @@ const mycelium: GameMap = {
     const random = seeded(11);
     const threads = 6;
     const blobs: Rect[] = [];
-
-    const grow = (
-      x: number,
-      y: number,
-      angle: number,
-      radius: number,
-      length: number,
-      canBranch: boolean
-    ) => {
-      const branchAt = length * (0.35 + random() * 0.2);
-      for (let travelled = 0; travelled < length; travelled += 3) {
-        const taper = 1 - (travelled / length) * 0.6;
-        if (nearSpawn(x, y, radius * taper, width, height)) {
-          return;
-        }
-        blobs.push(blob(x, y, Math.max(2, radius * taper)));
-        if (canBranch && travelled >= branchAt) {
-          canBranch = false;
-          const side = random() < 0.5 ? -1 : 1;
-          grow(
-            x,
-            y,
-            angle + side * (0.7 + random() * 0.4),
-            radius * taper * 0.8,
-            (length - travelled) * 0.7,
-            false
-          );
-        }
-        // Wander, but keep growing away from the edge.
-        angle += (random() - 0.5) * 0.5;
-        angle += (Math.PI / 2 - angle) * 0.08;
-        x += Math.cos(angle) * 3;
-        y += Math.sin(angle) * 3;
-      }
-    };
-
     for (let i = 0; i < threads; i++) {
-      grow(
-        (width * (i + 0.5)) / threads +
+      growThread(random, blobs, width, height, {
+        x:
+          (width * (i + 0.5)) / threads +
           (random() - 0.5) * (width / threads) * 0.4,
-        -2,
-        Math.PI / 2 + (random() - 0.5) * 0.6,
-        4 + random() * 2,
-        height * (0.38 + random() * 0.14),
-        true
-      );
+        y: -2,
+        angle: Math.PI / 2 + (random() - 0.5) * 0.6,
+        radius: 4 + random() * 2,
+        length: height * (0.38 + random() * 0.14),
+      });
     }
     return pointSymmetric(blobs, width, height);
   },

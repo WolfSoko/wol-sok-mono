@@ -1,5 +1,6 @@
 import { BASE_ARENA, scaleOf, scaleRect } from './arena-size';
 import { CLASSIC_MAPS, GameMap, overlapsArena, Rect } from './maps';
+import { generatedLevel } from './level-generator/generate-level';
 import { ORGANIC_MAPS } from './organic-maps';
 
 /**
@@ -55,10 +56,18 @@ export const GAME_MAPS: readonly GameMap[] = [
   ...ORGANIC_MAPS,
 ].map(scalable);
 
-/** The map with that id, falling back to the corridors layout. */
+const CORRIDORS = GAME_MAPS.find((map) => map.id === 'corridors') as GameMap;
+
+/**
+ * The map with that id - a hand-made one, or a generated one for a `gen:`
+ * id - falling back to the corridors layout.
+ */
 export function getMap(id: string): GameMap {
-  return (
-    GAME_MAPS.find((map) => map.id === id) ??
-    (GAME_MAPS.find((map) => map.id === 'corridors') as GameMap)
-  );
+  const handMade = GAME_MAPS.find((map) => map.id === id);
+  if (handMade !== undefined) {
+    return handMade;
+  }
+  // The generator keeps the layouts: the wrapper only scales them.
+  const made = generatedLevel(id)?.map;
+  return made === undefined ? CORRIDORS : scalable(made);
 }

@@ -2,6 +2,10 @@ import { GameBalance, gameBalance } from './game-balance';
 import { getMap } from './game-maps';
 import { GameMap } from './maps';
 import { MedalLimits } from './medallions';
+import {
+  generatedLevel,
+  parseGeneratedId,
+} from './level-generator/generate-level';
 
 /**
  * A level is a map plus the tuning that makes it play differently.
@@ -219,14 +223,24 @@ export const LEVELS: readonly Level[] = [
   },
 ];
 
-/** The level with that id, falling back to the first one. */
-/** True for the id of a level of the game. */
+/** True for the id of a level of the game - a generated one included. */
 export function isLevelId(value: unknown): value is string {
-  return LEVELS.some((level) => level.id === value);
+  return (
+    LEVELS.some((level) => level.id === value) ||
+    (typeof value === 'string' && parseGeneratedId(value) !== null)
+  );
 }
 
+/**
+ * The level with that id - a generated one for a `gen:` id - falling back to
+ * the first one.
+ */
 export function getLevel(id: string): Level {
-  return LEVELS.find((level) => level.id === id) ?? LEVELS[0];
+  return (
+    LEVELS.find((level) => level.id === id) ??
+    generatedLevel(id)?.level ??
+    LEVELS[0]
+  );
 }
 
 /**

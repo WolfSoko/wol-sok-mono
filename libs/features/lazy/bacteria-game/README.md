@@ -313,6 +313,30 @@ the hash is taken out of the address once read. The engine keeps a stick push
 in steps of 1/16 and a drag target in quarter cells, so what is played is
 exactly what the link carries.
 
+## Level generator
+
+[`state/level-generator/`](./src/lib/state/level-generator) makes levels
+from a seed. A **recipe** lays out the left half of the base arena (320 × 180) - _field_ scatters pillars, _corridor_ runs walls from edge to edge
+with gaps, _fortress_ builds a keep with doors around each start spot,
+_cave_ grows round walls like tissue - and the generator mirrors it through
+the centre like every hand-made map. A layout is only kept when it is
+playable: no wall reaches into a start spot, a way at least three cells wide
+leads from one start spot to the other, and the walls take between 3 % and
+35 % of the arena. Of up to five playable layouts, the one whose way between
+the start spots winds most like the recipe wants is taken.
+
+A generated level's id says what it is made from -
+`gen:<recipe>:<seed>:<difficulty>`, the difficulty from 1 to 10 - and is
+stable for good: `getLevel`, `getMap`, `arenaTheme` and `levelMusic`
+understand it like any hand-made id, and a medallion, a replay or a link can
+name it. The difficulty sets the rules between the calmest and the busiest
+hand-made level and tightens the medallion limits. A generated level is named
+from its seed ("Hungry Locks") and borrows the look and the music of a
+hand-made level of its style, with a melody of its own seed. Its medallions
+are kept like any other, but count neither towards the campaign's tally nor
+towards XP. A change to a recipe that would lay out an old id differently
+needs a new recipe name instead.
+
 ## Tuning
 
 Every number that shapes how the game feels lives in

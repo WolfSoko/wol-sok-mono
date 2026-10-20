@@ -11,6 +11,7 @@ import {
 import { MatchOptions, PlayerSpawn } from './match-engine';
 import { GhostController, turnedOnto } from './ghost';
 import { HeadStart, startScales } from './rivalry';
+import { spawnSpots } from './shapes';
 import type { Replay } from './replay';
 
 /**
@@ -54,19 +55,18 @@ export function planMatch(
   const [leftScale, rightScale] = versusComputer
     ? [1, 1]
     : startScales(plan.headStart);
+  const [leftSpot, rightSpot] = spawnSpots(width, height);
   return {
     spawns: [
       {
-        x: width / 4,
-        y: height / 2,
+        ...leftSpot,
         color: toPlayerColor(left),
         name: versusComputer ? 'You' : left.name,
         isBot: false,
         startScale: leftScale,
       },
       {
-        x: (width / 4) * 3,
-        y: height / 2,
+        ...rightSpot,
         color: toPlayerColor(right),
         name:
           ghost !== null ? 'Ghost' : versusComputer ? 'Computer' : right.name,

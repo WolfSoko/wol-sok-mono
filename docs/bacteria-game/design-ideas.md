@@ -887,6 +887,17 @@ the hash of the address (packed, a few KB for a minute of play), and opening
 one offers the ghost as a challenge. Phase 2 is done, apart from the daily
 leaderboard of 5.2, which waits for the daily level of phase 3 and a
 Firebase backend.
+Phase 3 has started with the generator itself: four recipes (field,
+corridor, fortress, cave) lay out a half from a seed, validation keeps only
+playable layouts (free spawns, a way at least three cells wide, 3 to 35 %
+walls) and the closest of five to the recipe's detour wins. `gen:` ids work
+as levels, maps, looks and tunes. Gates, sliders and zones are not in the
+recipes yet; the daily level, endless mode and the level map build on it.
+Two follow-ups from its review: one resolver for level ids (the hand-made
+tables and the generator are asked in `getLevel`, `getMap`, `arenaTheme` and
+`levelMusic` alike), and the hand-made organic maps as recipes with fixed
+seeds - they share `hexLattice` and `growThread` with the generator already,
+but moving walls are no part of a recipe yet.
 Phase 7 can be sprinkled in between the others; each of its items is a
 self-contained PR. Of the groundwork the phases assumed, three pieces have
 landed since the first version of this document: the seeded generator (for

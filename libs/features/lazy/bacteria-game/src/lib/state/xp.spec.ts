@@ -70,6 +70,19 @@ describe('xpGain', () => {
     expect(gain.total).toBe(xpOf(after) - xpOf(before));
   });
 
+  it('pays no medallion on a generated level, as the XP does not count it', () => {
+    const level = 'gen:cave:9:5';
+    const won = { ...WIN, levelId: level };
+    const after = addTotals(addMedal(EMPTY_PROGRESS, level, 'normal', 'gold'), {
+      matchXp: matchXp(won),
+    });
+
+    const gain = xpGain(EMPTY_PROGRESS, after, won);
+
+    expect(gain.parts).toEqual([{ label: 'Win · Normal', xp: 125 }]);
+    expect(gain.total).toBe(xpOf(after) - xpOf(EMPTY_PROGRESS));
+  });
+
   it('pays a little for a match between two players', () => {
     const after = addTotals(EMPTY_PROGRESS, { matchXp: 15, couchMatches: 1 });
 

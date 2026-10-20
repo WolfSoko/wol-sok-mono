@@ -1,3 +1,5 @@
+import { generatedLevel } from '../state/level-generator/generate-level';
+
 /** A colour as red, green and blue from 0 to 255. */
 export type Rgb = readonly [number, number, number];
 
@@ -209,9 +211,16 @@ const THEMES: Record<string, ArenaTheme> = {
   },
 };
 
-/** The look of the level with that id, falling back to the petri dish. */
+/**
+ * The look of the level with that id - a generated level borrows the look of
+ * a hand-made one of its style - falling back to the petri dish.
+ */
 export function arenaTheme(levelId: string): ArenaTheme {
-  return THEMES[levelId] ?? THEMES['petri-dish'];
+  return (
+    THEMES[levelId] ??
+    THEMES[generatedLevel(levelId)?.family ?? ''] ??
+    THEMES['petri-dish']
+  );
 }
 
 /** The colour as the space separated triple CSS `rgb()` takes. */
