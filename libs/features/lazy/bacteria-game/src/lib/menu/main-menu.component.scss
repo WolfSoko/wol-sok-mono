@@ -75,21 +75,6 @@
   }
 }
 
-.two-players {
-  --mat-button-outlined-outline-color: var(--bw-opponent);
-  --mat-button-outlined-label-text-color: var(--bw-text);
-  --mat-button-outlined-container-shape: 0.9rem;
-
-  height: 3.5rem;
-  justify-content: flex-start;
-  font-weight: 700;
-  font-size: 1.05rem;
-
-  mat-icon {
-    color: var(--bw-opponent);
-  }
-}
-
 .tiles {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -219,11 +204,6 @@
   mat-icon {
     color: var(--bw-player);
   }
-}
-
-.daily mat-icon,
-.endless mat-icon {
-  color: var(--bw-gold);
 }
 
 .continue-text {

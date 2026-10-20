@@ -1,0 +1,332 @@
+@use 'screen';
+
+:host {
+  @include screen.screen;
+}
+
+// Material's step header in the screens' colours: gold for where the
+// player is and what is done.
+.stepper {
+  --mat-stepper-container-color: transparent;
+  --mat-stepper-header-label-text-color: var(--bw-muted);
+  --mat-stepper-header-selected-state-label-text-color: var(--bw-text);
+  --mat-stepper-header-icon-background-color: var(--bw-line-strong);
+  --mat-stepper-header-icon-foreground-color: var(--bw-text);
+  --mat-stepper-header-selected-state-icon-background-color: var(--bw-gold);
+  --mat-stepper-header-selected-state-icon-foreground-color: var(--bw-ground);
+  --mat-stepper-header-done-state-icon-background-color: var(--bw-gold);
+  --mat-stepper-header-done-state-icon-foreground-color: var(--bw-ground);
+  --mat-stepper-header-edit-state-icon-background-color: var(--bw-gold);
+  --mat-stepper-header-edit-state-icon-foreground-color: var(--bw-ground);
+  --mat-stepper-line-color: var(--bw-line-strong);
+  --mat-stepper-header-label-text-font: var(--bw-body);
+  --mat-stepper-header-hover-state-layer-color: rgb(255 255 255 / 6%);
+  --mat-stepper-header-focus-state-layer-color: transparent;
+  --mat-stepper-header-height: 56px;
+
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  // The steps' contents take the room the header leaves, and scroll on
+  // their own.
+  ::ng-deep .mat-horizontal-content-container {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0.75rem 0 0;
+  }
+
+  ::ng-deep
+    .mat-horizontal-stepper-content:not(
+      .mat-horizontal-stepper-content-inactive
+    ) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+}
+
+// The modes, a card each.
+.modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+  gap: 1rem;
+  overflow: auto;
+  padding: 0.25rem;
+}
+
+.mode {
+  @include screen.panel;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 1.1rem 1.25rem;
+  color: var(--bw-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  mat-icon {
+    width: 2rem;
+    height: 2rem;
+    font-size: 2rem;
+    color: var(--bw-gold);
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--bw-line-strong);
+    background: var(--bw-surface-raised);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--bw-gold);
+    outline-offset: 2px;
+  }
+
+  &.current {
+    border-color: var(--bw-gold);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+}
+
+.mode-name {
+  @include screen.figure;
+
+  font-size: 1.25rem;
+}
+
+.mode-blurb {
+  line-height: 1.4;
+  color: var(--bw-soft);
+}
+
+.mode-note {
+  margin-top: auto;
+  font-size: 0.85rem;
+  color: var(--bw-gold);
+}
+
+// The level map, with the way on below it.
+.level-step {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+}
+
+.next {
+  @include screen.primary;
+
+  flex: none;
+  align-self: flex-end;
+  min-width: 10rem;
+}
+
+// The briefing beside the setup and the way to start.
+.start-step {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+  align-items: start;
+  gap: 1.25rem;
+  min-height: 0;
+}
+
+// The rule and the zones of the level, each in its colour.
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fact {
+  --fact-color: var(--bw-gold);
+
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--fact-color);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fact-color) 18%, transparent);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.setup {
+  @include screen.panel;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.25rem;
+  overflow: auto;
+}
+
+.note {
+  margin: 0;
+  color: var(--bw-gold);
+}
+
+.details {
+  @include screen.panel;
+
+  // In the colours of the level's arena: its floor, its frame.
+  border-color: rgb(var(--level-edge, 38 49 66) / 70%);
+  background:
+    radial-gradient(
+      circle at 85% 0%,
+      rgb(var(--level-edge, 38 49 66) / 18%),
+      transparent 60%
+    ),
+    rgb(var(--level-floor, 18 24 33));
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  overflow: auto;
+}
+
+.details-number {
+  font-size: 0.85rem;
+  color: var(--bw-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.details-title {
+  @include screen.title;
+
+  font-size: 1.75rem;
+}
+
+.details-description {
+  margin: 0;
+  line-height: 1.45;
+  color: var(--bw-soft);
+}
+
+.opponent {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--bw-muted);
+
+  mat-icon {
+    flex: none;
+    font-size: 1.2rem;
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+}
+
+.best {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.9rem;
+  background: var(--bw-surface-raised);
+}
+
+.best-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.best-label {
+  font-size: 0.8rem;
+  color: var(--bw-muted);
+}
+
+.best-name {
+  font-weight: 700;
+}
+
+.goal {
+  font-size: 0.9rem;
+  color: var(--bw-soft);
+}
+
+.head-start-picker,
+.series-picker,
+.difficulty-picker {
+  --mat-button-toggle-height: 40px;
+
+  flex-wrap: wrap;
+  align-self: flex-start;
+}
+
+.rivalry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0;
+}
+
+.rivalry-score {
+  @include screen.figure;
+
+  font-size: 1.3rem;
+}
+
+.start {
+  @include screen.primary;
+
+  // Always in reach, however far the setup scrolls.
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  flex: none;
+}
+
+// Narrow screens stack the setup under the briefing, and the whole screen
+// scrolls.
+@media (max-width: 52rem) {
+  .start-step {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+// A phone held across: a slim step header, the briefing cut to its title.
+@media (max-height: 30rem) {
+  :host {
+    gap: 0.5rem;
+  }
+
+  .stepper {
+    --mat-stepper-header-height: 40px;
+  }
+
+  .mode {
+    padding: 0.75rem 1rem;
+  }
+
+  .mode-blurb,
+  .details-description,
+  .opponent {
+    display: none;
+  }
+
+  .best {
+    padding: 0.6rem 0.75rem;
+
+    feat-lazy-bac-game-medallion {
+      display: none;
+    }
+  }
+}

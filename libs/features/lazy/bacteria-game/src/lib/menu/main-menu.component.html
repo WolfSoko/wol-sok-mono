@@ -23,8 +23,8 @@
   <section class="hero">
     <h1 class="title">Bacteria <span class="war">War</span></h1>
     <p class="tagline">
-      Steer your colony, swallow theirs. Twelve dishes, three opponents, one
-      survivor.
+      Steer your colony, swallow theirs. {{ totalLevels }} dishes, a level a
+      day, endless runs - and a friend to beat.
     </p>
 
     @if (challenge(); as level) {
@@ -39,47 +39,14 @@
         mat-flat-button
         type="button"
         class="play"
-        (click)="play.emit('vs-computer')"
+        (click)="newGame.emit()"
       >
         <mat-icon>play_arrow</mat-icon>
-        Play
-        <span class="play-note">vs Computer · choose a level</span>
-      </button>
-      <button
-        mat-stroked-button
-        type="button"
-        class="two-players"
-        (click)="play.emit('two-players')"
-      >
-        <mat-icon>group</mat-icon>
-        Two players, one screen
-      </button>
-      <button
-        mat-stroked-button
-        type="button"
-        class="continue endless"
-        (click)="playEndless.emit()"
-      >
-        <mat-icon>all_inclusive</mat-icon>
-        <span class="continue-text">
-          <span class="continue-title">Endless run</span>
-          <span class="continue-level">{{ endlessNote(endlessBest()) }}</span>
-        </span>
-      </button>
-      @if (daily(); as card) {
-        <button
-          mat-stroked-button
-          type="button"
-          class="continue daily"
-          (click)="playDaily.emit()"
+        New game
+        <span class="play-note"
+          >Campaign, daily, endless, free, two players</span
         >
-          <mat-icon>today</mat-icon>
-          <span class="continue-text">
-            <span class="continue-title">Daily level · {{ card.name }}</span>
-            <span class="continue-level">{{ card.note }}</span>
-          </span>
-        </button>
-      }
+      </button>
     </div>
 
     <nav class="tiles" aria-label="More">

@@ -1,5 +1,6 @@
 /** Today's daily level as the menus show it. */
 export interface DailyCard {
+  levelId: string;
   name: string;
   /** Attempts left and the streak, in a line. */
   note: string;

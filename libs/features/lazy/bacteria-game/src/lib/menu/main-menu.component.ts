@@ -9,13 +9,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { GameMode } from '../state/game.states';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { ACHIEVEMENTS } from '../state/achievements';
 import { CampaignSummary } from '../state/campaign';
 import { RankStandingComponent } from '../rank/rank-standing.component';
 import { Level, LEVELS } from '../state/levels';
-import { DailyCard, endlessNote } from './menu-cards';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
 import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 
@@ -23,9 +21,9 @@ import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 export type MenuPage = 'profile' | 'settings' | 'help';
 
 /**
- * The landing screen of the fullscreen game: the title, Play for a match
- * against the computer, a match between two players, the way to the other
- * screens and a card with the campaign so far.
+ * The landing screen of the fullscreen game: the title, a new game, the
+ * way to the other screens and a card with the campaign so far - and the
+ * way straight on with it.
  *
  * A dumb component - it shows what it is given and reports what the player
  * picks.
@@ -47,23 +45,17 @@ export type MenuPage = 'profile' | 'settings' | 'help';
 export class MainMenuComponent {
   public readonly campaign = input.required<CampaignSummary>();
   public readonly sound = input(true);
-  /** The most levels beaten in one endless run. */
-  public readonly endlessBest = input(0);
-  /** Today's daily level, null to leave it out. */
-  public readonly daily = input<DailyCard | null>(null);
   /** The level of a run someone shared, to fight as a ghost - null without. */
   public readonly challenge = input<Level | null>(null);
 
-  /** A match against the computer or between two players, to set up. */
-  public readonly play = output<GameMode>();
+  /** A new game, to set up step by step. */
+  public readonly newGame = output<void>();
   /** Straight into the furthest level the campaign has opened. */
   public readonly continueCampaign = output<void>();
   public readonly open = output<MenuPage>();
   public readonly soundChange = output<boolean>();
   /** Back to the page around the game. */
   public readonly leave = output<void>();
-  public readonly playDaily = output<void>();
-  public readonly playEndless = output<void>();
   public readonly fightChallenge = output<void>();
   public readonly dismissChallenge = output<void>();
 
@@ -76,5 +68,4 @@ export class MainMenuComponent {
   protected readonly totalLevels = LEVELS.length;
   protected readonly totalMedals = LEVELS.length * BOT_DIFFICULTIES.length;
   protected readonly totalAchievements = ACHIEVEMENTS.length;
-  protected readonly endlessNote = endlessNote;
 }

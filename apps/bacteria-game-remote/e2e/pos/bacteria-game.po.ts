@@ -6,10 +6,13 @@ export class BacteriaGamePo {
   public readonly playArea: Locator;
   public readonly playCta: Locator;
   public readonly resetCta: Locator;
-  public readonly twoPlayersCta: Locator;
   public readonly startCta: Locator;
   public readonly profileCta: Locator;
-  public readonly levelDetails: Locator;
+  /** The last step of a new game: the briefing, the opponent, Start. */
+  public readonly startStep: Locator;
+  public readonly nextCta: Locator;
+  /** One step back in a new game. */
+  public readonly stepBackCta: Locator;
   public readonly fullscreenCta: Locator;
   public readonly difficultyPicker: Locator;
   public readonly boostCta: Locator;
@@ -29,22 +32,17 @@ export class BacteriaGamePo {
   public readonly muteCta: Locator;
   public readonly winner: Locator;
   public readonly unmuteCta: Locator;
-  public readonly freePlayToggle: Locator;
 
   constructor(private readonly page: Page) {
     this.mainTitle = page.locator('mat-toolbar h1');
     this.playArea = page.locator('.stage canvas');
-    this.playCta = page.getByRole('button', { name: /^Play\b/ });
-    this.twoPlayersCta = page.getByRole('button', {
-      name: 'Two players, one screen',
-    });
+    this.playCta = page.getByRole('button', { name: /New game/ });
     this.startCta = page.getByRole('button', { name: /^Start / });
     this.profileCta = page.getByRole('button', { name: 'Profile' });
     this.resetCta = page.getByRole('button', { name: 'Reset' });
-    this.levelDetails = page.locator(
-      'feat-lazy-bac-game-level-select .details'
-    );
-    this.freePlayToggle = page.getByRole('switch', { name: 'Free play' });
+    this.startStep = page.locator('feat-lazy-bac-game-new-game .start-step');
+    this.nextCta = page.getByRole('button', { name: /^Next/ });
+    this.stepBackCta = page.getByRole('button', { name: 'Back', exact: true });
     this.fullscreenCta = page.getByRole('button', { name: /fullscreen/i });
     this.difficultyPicker = page.locator('.difficulty-picker');
     this.boostCta = page.getByRole('button', { name: /^Boost/ });
@@ -82,9 +80,24 @@ export class BacteriaGamePo {
     await this.levelCard(title).click();
   }
 
-  /** Play, then Start on the level the level choice offers. */
-  public async startMatch(): Promise<void> {
+  /** A mode of a new game, by its name - "Campaign", "Two players". */
+  public async chooseMode(name: string): Promise<void> {
+    await this.page
+      .locator('feat-lazy-bac-game-new-game .mode')
+      .filter({ hasText: name })
+      .click();
+  }
+
+  /** A new game in a mode, on to its start with the level it offers. */
+  public async setUp(mode = 'Campaign'): Promise<void> {
     await this.playCta.click();
+    await this.chooseMode(mode);
+    await this.nextCta.click();
+  }
+
+  /** A new campaign game, started on the level the ladder offers. */
+  public async startMatch(): Promise<void> {
+    await this.setUp();
     await this.startCta.click();
   }
 

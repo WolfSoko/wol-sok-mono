@@ -60,22 +60,38 @@ The stage opens on the menu screens ([`menu/`](./src/lib/menu)), which fill
 it, opaque, over a swarm of bacteria drifting in the players' colours (plain
 CSS animation, still for players who ask for less motion):
 
-- **Main menu** - the title, _Play_ against the computer, _Two players, one
-  screen_, the way to Profile, Settings and How to play, and a card with the
-  campaign so far: levels open, medallions per metal and _Continue the
-  campaign_, which starts the furthest open level right away.
-- **Choose a level** - opened by both Play buttons, a map of the levels.
-  Opponent, difficulty and free play at the top; the ladder in chapters
-  (Petri, Laboratory, Body, Reactor - [`state/chapters.ts`](./src/lib/state/chapters.ts))
-  with the levels open in each, a card per level in its arena's colours with
-  its medallion per difficulty or the lock of the ladder; and _Beyond the
-  ladder_: the daily level and an endless run against the computer, and
-  _Generate a level_ - a style and a difficulty from 1 to 10, rolled into a
-  generated level that is then picked like any other and stays offered while
-  another is picked. Generated levels are open from the start and, like
-  endless ones, keep no medallion - there is no second go at a rolled seed. Beside them the chosen
-  level: its briefing, the computer's, the best medallion held and what the
-  next one needs, and _Start_.
+- **Main menu** - the title, _New game_, the way to Profile, Settings and
+  How to play, and a card with the campaign so far: levels open, medallions
+  per metal and _Continue the campaign_, which starts the furthest open
+  level right away.
+- **New game** ([`new-game.component.ts`](./src/lib/menu/new-game.component.ts)) -
+  a Material stepper that goes through only the steps the mode picked needs
+  ([`play-modes.ts`](./src/lib/menu/play-modes.ts)):
+  - _Mode_: a card each for the **campaign** (levels open), the **daily
+    level** (attempts and streak), the **endless run** (the best one), **free
+    play** and **two players** (the rivalry).
+  - _Level_ - for the campaign, free play and two players: the
+    [level map](./src/lib/menu/level-map.component.ts), the ladder in
+    chapters (Petri, Laboratory, Body, Reactor -
+    [`state/chapters.ts`](./src/lib/state/chapters.ts)), a card per level in
+    its arena's colours with its medallion per difficulty. The campaign keeps
+    the ladder's locks; free play and two players open every level and add
+    _Generate a level_ - a style and a difficulty from 1 to 10, rolled into a
+    generated level that is then picked like any other and stays offered
+    while another is picked. Generated levels, like endless ones, keep no
+    medallion - there is no second go at a rolled seed. Picking a level moves
+    on to the start.
+  - _Start_: the briefing in the level's arena colours, with its clock and
+    its zones as chips - or the endless run's rules - beside the opponent:
+    the computer's difficulty with the best medallion held and what the next
+    one needs, or between two players the series, the head start and the
+    rivalry. Then _Start_.
+
+  Picking a mode sets the game up for it: who plays, and whether the
+  ladder's locks apply (free play is the stored switch it always was). The
+  screen opens on the mode last played; _Choose a level_ on the result
+  screen opens it on that mode's levels.
+
 - **Profile** - levels won, medallions per metal and every medallion level by
   level.
 - **Settings** - colony colours, how the bacteria look, the two resolutions,

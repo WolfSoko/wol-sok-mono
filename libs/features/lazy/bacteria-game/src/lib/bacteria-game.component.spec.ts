@@ -501,6 +501,50 @@ describe('BacteriaGameComponent', () => {
     });
   });
 
+  describe('a new game', () => {
+    it('sets the game up for the mode picked', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+
+      component['setPlayKind']('two-players');
+      expect(store.snapshot().mode).toBe('two-players');
+
+      component['setPlayKind']('free');
+      expect(store.snapshot().mode).toBe('vs-computer');
+      expect(settings.freePlay()).toBe(true);
+
+      component['setPlayKind']('campaign');
+      expect(settings.freePlay()).toBe(false);
+    });
+
+    it('puts the campaign back on the ladder from a generated level', () => {
+      create();
+      TestBed.inject(GameStateService).setLevel('gen:field:7:3');
+
+      component['setPlayKind']('campaign');
+
+      expect(store.snapshot().levelId).toBe(LEVELS[0].id);
+    });
+
+    it('opens on the mode last played, and its levels after a match', () => {
+      create();
+      component['setPlayKind']('free');
+
+      component['openNewGame']();
+      expect(component['panel']()).toBe('new-game');
+      expect(component['newGameEntry']()).toEqual({
+        kind: 'free',
+        step: 'mode',
+      });
+
+      component['onMatchEnd']('levels');
+      expect(component['newGameEntry']()).toEqual({
+        kind: 'free',
+        step: 'level',
+      });
+    });
+  });
+
   describe('the campaign ladder', () => {
     it('marks the levels the ladder has not opened', () => {
       create();

@@ -1,0 +1,198 @@
+<feat-lazy-bac-game-screen-header
+  title="New game"
+  [backLabel]="backLabel()"
+  (back)="goBack()"
+/>
+
+<!--
+  Linear only until a mode is picked: nothing lies ahead of it before. Set
+  before the index, so picking a mode can move on at once.
+-->
+<mat-stepper
+  class="stepper"
+  [linear]="kind() === null"
+  [selectedIndex]="index()"
+  (selectionChange)="goTo($event.selectedIndex)"
+>
+  <!-- A step keeps its number, done or not - the steps differ per mode. -->
+  <ng-template matStepperIcon="edit" let-index="index">{{
+    index + 1
+  }}</ng-template>
+  <ng-template matStepperIcon="done" let-index="index">{{
+    index + 1
+  }}</ng-template>
+  @for (id of steps(); track id; let position = $index) {
+    <!-- Done once passed - and nothing is, before a mode is picked. -->
+    <mat-step
+      [label]="stepLabels[id]"
+      [completed]="kind() !== null && position < index()"
+    >
+      <ng-template matStepContent>
+        @switch (id) {
+          @case ("mode") {
+            <div class="modes">
+              @for (mode of modes(); track mode.kind) {
+                <button
+                  type="button"
+                  class="mode"
+                  [class.current]="mode.kind === kind()"
+                  [disabled]="mode.disabled"
+                  (click)="pickKind(mode.kind)"
+                >
+                  <mat-icon aria-hidden="true">{{ mode.icon }}</mat-icon>
+                  <span class="mode-name">{{ mode.name }}</span>
+                  <span class="mode-blurb">{{ mode.blurb }}</span>
+                  <span class="mode-note">{{ mode.note }}</span>
+                </button>
+              }
+            </div>
+          }
+          @case ("level") {
+            <div class="level-step">
+              <feat-lazy-bac-game-level-map
+                [levelId]="levelId()"
+                [medals]="medals()"
+                [locks]="kind() === 'campaign' ? locks() : {}"
+                [laddered]="kind() === 'campaign'"
+                [showMedals]="vsComputer()"
+                [generator]="kind() !== 'campaign'"
+                (pick)="pickLevel($event)"
+              />
+              <button
+                mat-flat-button
+                type="button"
+                class="next"
+                (click)="next()"
+              >
+                Next
+                <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+              </button>
+            </div>
+          }
+          @case ("start") {
+            <div class="start-step">
+              <section
+                class="details"
+                aria-label="Briefing"
+                [style.--level-floor]="briefing()?.floor"
+                [style.--level-edge]="briefing()?.edge"
+              >
+                @if (briefing(); as chosen) {
+                  <span class="details-number">{{ chosen.kicker }}</span>
+                  <h3 class="details-title">{{ chosen.title }}</h3>
+                  @if (chosen.facts.length > 0) {
+                    <ul class="facts">
+                      @for (fact of chosen.facts; track fact.label) {
+                        <li class="fact" [style.--fact-color]="fact.color">
+                          {{ fact.label }}
+                        </li>
+                      }
+                    </ul>
+                  }
+                  <p class="details-description">
+                    {{ chosen.level.description }}
+                  </p>
+                  @if (kind() === "daily") {
+                    <p class="note">{{ daily()?.note }}</p>
+                  }
+                } @else {
+                  <span class="details-number">Endless run</span>
+                  <h3 class="details-title">As deep as you can</h3>
+                  <p class="details-description">
+                    Generated levels one after the other, each win a step
+                    harder. A defeat costs one of {{ endlessLives }} lives.
+                  </p>
+                  <p class="note">{{ endlessNote(endlessBest()) }}</p>
+                }
+              </section>
+
+              <section class="setup" aria-label="Opponent">
+                @if (vsComputer()) {
+                  <span class="best-label">Opponent</span>
+                  <mat-button-toggle-group
+                    class="difficulty-picker"
+                    aria-label="Difficulty"
+                    hideSingleSelectionIndicator
+                    [value]="difficulty()"
+                    (change)="difficultyChange.emit($event.value)"
+                  >
+                    @for (option of difficulties; track option.id) {
+                      <mat-button-toggle [value]="option.id">{{
+                        option.name
+                      }}</mat-button-toggle>
+                    }
+                  </mat-button-toggle-group>
+                  <p class="opponent">
+                    <mat-icon aria-hidden="true">smart_toy</mat-icon>
+                    <span>{{ difficultyOption()?.description }}</span>
+                  </p>
+                  @if (briefing(); as chosen) {
+                    <div class="best">
+                      <feat-lazy-bac-game-medallion
+                        [tier]="chosen.best"
+                        [size]="56"
+                        [difficulty]="difficulty()"
+                      />
+                      <div class="best-text">
+                        <span class="best-label"
+                          >Your best on {{ difficultyOption()?.name }}</span
+                        >
+                        <span class="best-name">{{ chosen.bestName }}</span>
+                        <span class="goal">{{ chosen.goal }}</span>
+                      </div>
+                    </div>
+                  }
+                } @else {
+                  <span class="best-label">Series</span>
+                  <mat-button-toggle-group
+                    class="series-picker"
+                    aria-label="Series"
+                    hideSingleSelectionIndicator
+                    [value]="seriesLength()"
+                    (change)="seriesLengthChange.emit($event.value)"
+                  >
+                    @for (option of seriesLengths; track option.id) {
+                      <mat-button-toggle [value]="option.id">{{
+                        option.name
+                      }}</mat-button-toggle>
+                    }
+                  </mat-button-toggle-group>
+                  <span class="best-label">Head start</span>
+                  <mat-button-toggle-group
+                    class="head-start-picker"
+                    aria-label="Head start"
+                    hideSingleSelectionIndicator
+                    [value]="headStart()"
+                    (change)="headStartChange.emit($event.value)"
+                  >
+                    @for (option of headStarts(); track option.value) {
+                      <mat-button-toggle [value]="option.value">{{
+                        option.label
+                      }}</mat-button-toggle>
+                    }
+                  </mat-button-toggle-group>
+                  <span class="goal"
+                    >The other colony starts smaller - a step per +.</span
+                  >
+                  <p class="rivalry">
+                    <span class="best-label">Rivalry</span>
+                    <span class="rivalry-score">{{ rivalryLine() }}</span>
+                  </p>
+                }
+                <button
+                  mat-flat-button
+                  type="button"
+                  class="start"
+                  (click)="startGame()"
+                >
+                  <mat-icon>play_arrow</mat-icon>
+                  {{ startLabel() }}
+                </button>
+              </section>
+            </div>
+          }
+        }
+      </ng-template>
+    </mat-step>
+  }
+</mat-stepper>
