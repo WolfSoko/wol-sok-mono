@@ -252,9 +252,16 @@ export class BacteriaSimulation implements Simulation {
     return this.colonies.map((colony) => {
       let sumX = 0;
       let sumY = 0;
+      let onHill = 0;
       for (const bacterium of colony.bacterias) {
         sumX += bacterium.x;
         sumY += bacterium.y;
+        if (
+          this.hasZones &&
+          this.zone[bacterium.y * this.width + bacterium.x] === ZONE_CODE.hill
+        ) {
+          onHill++;
+        }
       }
       const count = colony.bacterias.length;
       return {
@@ -265,6 +272,7 @@ export class BacteriaSimulation implements Simulation {
         lost: colony.lost,
         totalEnergy: colony.totalEnergy,
         center: count > 0 ? { x: sumX / count, y: sumY / count } : null,
+        onHill,
       };
     });
   }

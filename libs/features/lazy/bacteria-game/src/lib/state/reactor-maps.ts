@@ -102,5 +102,45 @@ const containment: GameMap = {
   },
 };
 
+/**
+ * The control room: the zone to hold in the middle, behind four shields
+ * with gaps between them - a colony has to come through one to take it.
+ */
+const controlRoom: GameMap = {
+  id: 'control-room',
+  name: 'Control Room',
+  description: 'A zone to hold in the middle, behind four shields.',
+  createWalls(width, height) {
+    const thickness = 6;
+    const reach = Math.round(height * 0.3);
+    return pointSymmetric(
+      [
+        // Left of the zone, and above it - their mirrors close the ring.
+        {
+          x: Math.round(width / 2 - reach),
+          y: Math.round(height / 2 - reach * 0.55),
+          width: thickness,
+          height: Math.round(reach * 1.1),
+        },
+        {
+          x: Math.round(width / 2 - reach * 0.55),
+          y: Math.round(height / 2 - reach),
+          width: Math.round(reach * 1.1),
+          height: thickness,
+        },
+      ],
+      width,
+      height
+    );
+  },
+  createZones(width, height) {
+    return [disc('hill', width / 2, height / 2, height * 0.16)];
+  },
+};
+
 /** The reactor's layouts, in the order the levels use them. */
-export const REACTOR_MAPS: readonly GameMap[] = [reactorCore, containment];
+export const REACTOR_MAPS: readonly GameMap[] = [
+  reactorCore,
+  containment,
+  controlRoom,
+];

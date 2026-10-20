@@ -38,7 +38,9 @@ import {
   MatchOutcome,
   WinRule,
   winRuleOf,
+  zoneHolder,
 } from './win-conditions';
+import { mapZones } from './zones';
 
 /** What a match needs to know about one player before it starts. */
 export interface PlayerSpawn {
@@ -156,12 +158,17 @@ export class MatchEngine {
   /** The players a recording drives, by seat. */
   private readonly ghosts: ReadonlyMap<number, GhostController>;
   private readonly win: WinRule;
+  /** The layout of the match - for the hold zone the bots head for. */
+  private readonly map: GameMap;
+  /** The centre of the hold zone on the arena last asked for, by its size. */
+  private hill: { size: string; at: Point | null } | null = null;
 
   public constructor(spawns: readonly PlayerSpawn[], options: MatchOptions) {
     this.seed = options.seed;
     this.balance = options.balance ?? gameBalance;
     this.ghosts = options.ghosts ?? new Map();
     this.win = winRuleOf(options);
+    this.map = options.map ?? getMap('corridors');
     this.playerList = spawns.map((spawn, index) => {
       if (spawn.isBot && !this.ghosts.has(index)) {
         this.bots.set(
@@ -190,7 +197,7 @@ export class MatchEngine {
     if (options.arena != null) {
       this.simulation.resize(options.arena.width, options.arena.height);
     }
-    this.simulation.setMap(options.map ?? getMap('corridors'));
+    this.simulation.setMap(this.map);
     const radius = this.balance.startBacteriaRadius;
     this.simulation.init(
       spawns.map((spawn, index) => ({
@@ -292,6 +299,7 @@ export class MatchEngine {
     this.simulation.step(this.playerList, TICK_SEC);
     this.tickEvents = addEvents(this.tickEvents, this.simulation.getEvents());
     this.syncColonyStats();
+    this.holdZone();
     this.ownsPlayers = false;
     this.ticks++;
   }
@@ -475,6 +483,42 @@ export class MatchEngine {
     }
   }
 
+  /** On a hold-the-zone level: a tick more for the colony that holds it. */
+  private holdZone(): void {
+    if (this.win.kind !== 'hold') {
+      return;
+    }
+    const holder = zoneHolder(this.simulation.summaries());
+    const player = holder === null ? undefined : this.playerList[holder];
+    if (player !== undefined) {
+      this.update(player.id, { holdTicks: player.holdTicks + 1 });
+    }
+  }
+
+  /**
+   * The centre of the zone a hold-the-zone level is won on, on an arena of
+   * that size - null on any other level.
+   */
+  private hillAt(width: number, height: number): Point | null {
+    const size = `${width}x${height}`;
+    if (this.hill?.size !== size) {
+      const zone =
+        this.win.kind === 'hold'
+          ? mapZones(this.map, width, height).find(
+              ({ kind }) => kind === 'hill'
+            )
+          : undefined;
+      this.hill = {
+        size,
+        at:
+          zone === undefined
+            ? null
+            : { x: zone.x + zone.width / 2, y: zone.y + zone.height / 2 },
+      };
+    }
+    return this.hill.at;
+  }
+
   /** Lets every computer opponent look at the arena and steer its crosshair. */
   private runBots(width: number, height: number): void {
     if (this.bots.size === 0) {
@@ -495,7 +539,8 @@ export class MatchEngine {
         (from) => this.simulation.nearestEnemy(playerId, from),
         this.simulation.getNutrients(),
         isBoostReady(player),
-        this.balance.maxEnergy
+        this.balance.maxEnergy,
+        this.hillAt(width, height)
       );
       const decision = bot.decide(view, TICK_SEC);
       if (decision.target != null) {

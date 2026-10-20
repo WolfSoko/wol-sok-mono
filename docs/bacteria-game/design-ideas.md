@@ -916,8 +916,10 @@ the match clock, and the Reactor chapter opens with the first timed level,
 Half-Life. Zones (2.2) followed: antibiotic, agar, ice and heat as rects
 or discs in the map, in both simulations - on the GPU in the wall mask's
 spare bits - and drawn by both painters; Containment lays out all four.
-Hold the zone can build on them next, harvest waits for pellets counted
-per colony, and survive for the boss levels. The bot does not read the
+Hold the zone followed on them: a white zone to hold, held each tick by
+the colony with the most bacteria on it, counted in both simulations; the
+bot goes for it, and Control Room is the first such level. Harvest waits
+for pellets counted per colony, and survive for the boss levels. The bot does not read the
 zones yet.
 Phase 7 can be sprinkled in between the others; each of its items is a
 self-contained PR. Of the groundwork the phases assumed, three pieces have

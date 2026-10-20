@@ -98,6 +98,7 @@ import {
   nextLevel,
 } from './state/levels';
 import { Rect } from './state/maps';
+import { holdTarget } from './state/win-conditions';
 import { mapZones, Zone } from './state/zones';
 import { MedalTier } from './state/medallions';
 import { isBoosted, Player } from './state/player.model';
@@ -197,6 +198,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly clockLabel: Signal<string>;
   /** True in the last seconds of a timed match, while it is on. */
   protected readonly timeRunningOut: Signal<boolean>;
+  /** The seconds a colony must hold the zone - null but on such a level. */
+  protected readonly holdTarget = computed(() =>
+    holdTarget(this.store.winRule())
+  );
   /** True once a match is over and its result is shown, until the next one. */
   protected readonly matchOver: Signal<boolean>;
   /** The name of the computer's difficulty, for the menu's summary line. */

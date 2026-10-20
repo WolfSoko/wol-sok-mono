@@ -38,6 +38,8 @@ export interface Player {
   lowestSizeRatio: number;
   /** Average energy of the colony, relative to {@link GameBalance.maxEnergy}. */
   averageEnergy: number;
+  /** Ticks the colony held the hold zone - see `WinRule`. */
+  holdTicks: number;
 }
 
 /** True while the player's boost is running. */
@@ -76,6 +78,7 @@ export function createPlayer(params: Partial<Player>): Player {
     peakCount: 0,
     lowestSizeRatio: 1,
     averageEnergy: 1,
+    holdTicks: 0,
     ...params,
   } as Player;
 }

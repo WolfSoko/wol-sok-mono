@@ -828,6 +828,7 @@ export class GpuSimulation implements Simulation {
         lost: colony.lost,
         totalEnergy: colony.totalEnergy,
         center: colony.center,
+        onHill: colony.onHill,
       };
     });
 
@@ -1023,6 +1024,8 @@ export class GpuSimulation implements Simulation {
       lost: 0,
       totalEnergy: counts[slot] * this.balance.maxEnergy,
       center: counts[slot] > 0 ? { x: spawn.x, y: spawn.y } : null,
+      // No level puts its hold zone on a start spot.
+      onHill: 0,
     }));
   }
 

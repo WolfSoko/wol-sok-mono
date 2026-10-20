@@ -325,6 +325,9 @@ export class WinnerComponent {
     if (this.state.endedBy() === 'time') {
       return this.timeUp(player);
     }
+    if (this.state.endedBy() === 'hold' && player != null) {
+      return this.zoneHeld(player);
+    }
     if (player == null) {
       return 'It is a draw - both colonies wiped each other out!';
     }
@@ -341,6 +344,21 @@ export class WinnerComponent {
     }
     return `Congratulations! ${player.name} wins the match!`;
   });
+
+  /** The headline of a match won by holding the zone long enough. */
+  private zoneHeld(player: Player): string {
+    if (this.againstGhost()) {
+      return player.isBot
+        ? 'The ghost held the zone!'
+        : 'You held the zone - and beat the ghost!';
+    }
+    if (player.isBot) {
+      return 'The computer held the zone - it wins!';
+    }
+    return this.mode() === 'vs-computer'
+      ? 'You held the zone - you win!'
+      : `${player.name} held the zone and wins!`;
+  }
 
   /** The headline of a match the clock ended: the bigger colony won. */
   private timeUp(player: Player | null): string {

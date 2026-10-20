@@ -61,6 +61,21 @@
   font-variant-numeric: tabular-nums;
 }
 
+.colony-held {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15em;
+  margin-left: 0.4em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+
+  mat-icon {
+    width: 1em;
+    height: 1em;
+    font-size: 1em;
+  }
+}
+
 .game-time.running-out {
   color: var(--mat-sys-error);
   font-weight: 700;

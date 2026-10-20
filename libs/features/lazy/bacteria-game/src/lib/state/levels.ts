@@ -258,6 +258,23 @@ export const LEVELS: readonly Level[] = [
     },
     crosshairSpeed: 210,
   },
+  {
+    id: 'control-room',
+    name: '15 · Control Room',
+    description:
+      'Take the white zone in the middle and hold it: whoever has the most bacteria on it for thirty seconds wins. Or wipe the enemy out first.',
+    mapId: 'control-room',
+    medal: { silverSec: 75, goldSec: 50, goldLossShare: 1.0 },
+    win: { kind: 'hold', holdSec: 30 },
+    balance: {
+      aggression: 0.85,
+      divideChancePerSec: 4.2,
+      combatDrainPerSec: 2.4,
+      nutrientCount: 10,
+      nutrientRespawnDelaySec: 1.5,
+    },
+    crosshairSpeed: 210,
+  },
 ];
 
 /** True for the id of a hand-made level - one of the campaign's ladder. */

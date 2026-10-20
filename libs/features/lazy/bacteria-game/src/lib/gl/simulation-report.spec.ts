@@ -101,6 +101,18 @@ describe('decodeReport poisoned', () => {
 
     expect(report.poisoned).toBe(7);
   });
+
+  it('sums the bacteria of each colony on the hold zone over the columns', () => {
+    const report = decodeReport(
+      readBack([
+        { x: 0, y: 2, value: [0, 0, 3, 1] },
+        { x: 2, y: 2, value: [0, 0, 4, 6] },
+      ]),
+      layout
+    );
+
+    expect(report.colonies.map((colony) => colony.onHill)).toEqual([7, 7]);
+  });
 });
 
 describe('nearestEnemyBlock', () => {

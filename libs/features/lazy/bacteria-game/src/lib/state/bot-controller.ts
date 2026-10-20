@@ -73,6 +73,8 @@ export interface BotView {
   nearestEnemy: Point | null;
   nutrients: readonly Nutrient[];
   boostReady: boolean;
+  /** The centre of the zone to hold on a hold-the-zone level, else null. */
+  hill: Point | null;
 }
 
 export interface BotDecision {
@@ -177,6 +179,11 @@ export class BotController {
         distance(own, enemy) <= this.profile.boostRange * this.unit;
       return { target: this.aim(view, this.attackPoint(view, enemy)), boost };
     }
+    // On a hold-the-zone level the zone is the place to be: food only for
+    // a hungry colony, and no retreat.
+    if (view.hill != null && (!hungry || food == null)) {
+      return { target: this.aim(view, view.hill), boost: false };
+    }
     if (food != null) {
       return { target: this.aim(view, food), boost: false };
     }
@@ -264,7 +271,8 @@ export function buildBotView(
   nearestEnemy: (from: Point) => Point | null,
   nutrients: readonly Nutrient[],
   boostReady: boolean,
-  maxEnergy: number
+  maxEnergy: number,
+  hill: Point | null = null
 ): BotView {
   const ownView = colonyView(own, maxEnergy);
   let enemy: ColonyView | null = null;
@@ -286,6 +294,7 @@ export function buildBotView(
     nearestEnemy: enemy == null ? null : nearestEnemy(ownView),
     nutrients,
     boostReady,
+    hill,
   };
 }
 

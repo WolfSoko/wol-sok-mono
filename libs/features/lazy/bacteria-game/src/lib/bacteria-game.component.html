@@ -298,6 +298,15 @@
                     colony.name
                   }}</span>
                   <span class="colony-count">{{ colony.bacterias }}</span>
+                  @if (holdTarget(); as target) {
+                    <span class="colony-held"
+                      ><mat-icon aria-hidden="true">flag</mat-icon
+                      >{{ colony.held }}/{{ target
+                      }}<span class="cdk-visually-hidden">
+                        seconds held</span
+                      ></span
+                    >
+                  }
                 </span>
               }
             </span>

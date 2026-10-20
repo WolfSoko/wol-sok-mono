@@ -485,6 +485,19 @@ export const LEVEL_MUSIC: Record<string, LevelMusic> = {
     echo: 0.4,
     seed: 14,
   },
+  // An alarm: a driving pulse under a tense, rising lead.
+  'control-room': {
+    root: 40,
+    scale: PHRYGIAN_DOMINANT,
+    bpm: 126,
+    progression: [0, 1, 0, 6],
+    lead: 'sawtooth',
+    density: 0.5,
+    bass: 'pulse',
+    drums: 'drive',
+    echo: 0.25,
+    seed: 15,
+  },
 };
 
 /**
