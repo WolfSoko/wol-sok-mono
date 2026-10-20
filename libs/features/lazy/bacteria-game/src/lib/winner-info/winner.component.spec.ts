@@ -397,6 +397,7 @@ describe('WinnerComponent', () => {
         winner: createPlayer({ id: 0, name: 'You', isBot: false }),
         levelId: LEVELS[0].id,
         endless: { seed: 1, wins: 3, lives: 2 },
+        endlessMatch: true,
       });
       const picked = jest.fn();
       fixture.componentInstance.action.subscribe(picked);
@@ -408,12 +409,26 @@ describe('WinnerComponent', () => {
       expect(picked).toHaveBeenCalledWith('endless');
     });
 
+    it('shows no run after a match that was none of it', () => {
+      store.update({
+        mode: 'vs-computer',
+        winner: createPlayer({ id: 0, name: 'You', isBot: false }),
+        levelId: LEVELS[0].id,
+        endless: { seed: 1, wins: 3, lives: 2 },
+        endlessMatch: false,
+      });
+
+      expect(text()).not.toContain('Endless run');
+      expect(text()).toContain('Play again');
+    });
+
     it('offers the same level again after a defeat, a new run at the end', () => {
       store.update({
         mode: 'vs-computer',
         winner: createPlayer({ id: 1, name: 'Computer', isBot: true }),
         levelId: LEVELS[0].id,
         endless: { seed: 1, wins: 3, lives: 1 },
+        endlessMatch: true,
       });
       expect(endlessButton()?.textContent).toContain('Try it again');
 

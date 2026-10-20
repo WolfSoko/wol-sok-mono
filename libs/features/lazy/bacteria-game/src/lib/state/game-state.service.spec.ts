@@ -356,7 +356,7 @@ describe('GameStateService', () => {
 
     describe('an endless run', () => {
       /** Ends the match on the run's level, won by the human or the bot. */
-      function finish(humanWins: boolean): void {
+      function finish(humanWins: boolean, reset = true): void {
         service.start();
         const [human, bot] = playerStore.entities();
         playerStore.upsertPlayers([
@@ -370,7 +370,9 @@ describe('GameStateService', () => {
           .mockImplementation(() => matchOutcome(playerStore.entities()));
         service.advance(WIDTH, HEIGHT, 1);
         jest.restoreAllMocks();
-        service.reset();
+        if (reset) {
+          service.reset();
+        }
       }
 
       beforeEach(() => {
@@ -409,13 +411,24 @@ describe('GameStateService', () => {
         expect(store.snapshot().matchLevel).toBeNull();
       });
 
-      it('outlasts the reset between its matches, until it is left', () => {
+      it('outlasts the reset between its matches, and ends with another', () => {
         service.startEndless();
         service.reset();
         expect(store.snapshot().endless).not.toBeNull();
 
-        service.endEndless();
+        // Left for a match of the setup, by whatever way.
+        service.start();
+
         expect(store.snapshot().endless).toBeNull();
+      });
+
+      it('earns no medallion on its new levels, but keeps the depth', () => {
+        service.startEndless();
+
+        finish(true, false);
+
+        expect(store.snapshot().earnings?.award).toBeNull();
+        expect(TestBed.inject(ProgressService).endlessBest()).toBe(1);
       });
     });
 
@@ -471,6 +484,7 @@ describe('GameStateService', () => {
           ghost: null,
           matchLevel: null,
           dailyDay: null,
+          endlessMatch: false,
         });
         expect(store.level().id).toBe(store.snapshot().levelId);
       });

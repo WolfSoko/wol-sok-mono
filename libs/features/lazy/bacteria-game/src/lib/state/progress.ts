@@ -257,12 +257,13 @@ export function parseProgress(value: unknown): Progress {
     achievements: parseAchievements(value['achievements']),
     couchWins: parseCouchWins(value['couchWins']),
     daily: parseDaily(value['daily']),
-    endlessBest:
-      Number.isInteger(value['endlessBest']) &&
-      (value['endlessBest'] as number) > 0
-        ? (value['endlessBest'] as number)
-        : 0,
+    endlessBest: isCount(value['endlessBest']) ? value['endlessBest'] : 0,
   };
+}
+
+/** True for a whole number above zero. */
+function isCount(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) > 0;
 }
 
 /** The daily record, null for anything else. */
@@ -271,12 +272,10 @@ function parseDaily(value: unknown): DailyRecord | null {
     return null;
   }
   const { day, attempts, streak } = value;
-  const count = (n: unknown): n is number =>
-    Number.isInteger(n) && (n as number) > 0;
   return typeof day === 'string' &&
     ISO_DATE.test(day) &&
-    count(attempts) &&
-    count(streak)
+    isCount(attempts) &&
+    isCount(streak)
     ? { day, attempts, streak }
     : null;
 }

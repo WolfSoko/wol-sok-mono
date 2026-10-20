@@ -26,7 +26,6 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { WsThanosDirective } from '@wolsok/thanos';
 import { GhostChallengeComponent } from './ghost/ghost-challenge.component';
 import { DAILY_ATTEMPTS } from './state/daily';
-import { isRunOver } from './state/endless';
 import {
   ElemResizedDirective,
   ResizedEvent,
@@ -496,6 +495,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     };
   });
 
+  /** True in a match of an endless run - no restart, it would cost no life. */
+  protected readonly inEndlessRun = this.store.endlessMatch;
+
   /** Starts a new endless run, on its first level. */
   protected playEndless(): void {
     if (this.resetting()) {
@@ -503,16 +505,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     this.gameStateService.startEndless();
     this.startGame();
-  }
-
-  /** The next match of the endless run - or a new run, once it is over. */
-  private takeEndlessOn(): void {
-    const run = this.store.snapshot().endless;
-    if (run === null || isRunOver(run)) {
-      this.gameStateService.startEndless();
-    } else {
-      this.gameStateService.continueEndless();
-    }
   }
 
   /** Starts a match on today's daily level, against the computer. */
@@ -571,9 +563,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
             this.gameStateService.replayOneMatch(rematch);
           }
           if (action === 'endless') {
-            this.takeEndlessOn();
-          } else if (action === 'menu' || action === 'levels') {
-            this.gameStateService.endEndless();
+            this.gameStateService.advanceEndless();
           }
           if (
             action === 'again' ||

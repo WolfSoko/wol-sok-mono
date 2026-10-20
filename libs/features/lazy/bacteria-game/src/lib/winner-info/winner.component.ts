@@ -36,7 +36,7 @@ export type MatchEndAction =
   | 'levels'
   | 'menu'
   | 'ghost'
-  /** On with the endless run - or a new one, once it is over. */
+  // On with the endless run - or a new one, once it is over.
   | 'endless';
 
 /**
@@ -100,8 +100,10 @@ export class WinnerComponent {
     return `Daily level · ${attempt} · ${daily.streak}-day streak`;
   });
 
-  /** The endless run the match was part of, null outside one. */
-  public endless = this.state.endless;
+  /** The endless run the match was part of, null when it was none of it. */
+  private endless = computed(() =>
+    this.state.endlessMatch() ? this.state.endless() : null
+  );
   private endlessBest = inject(ProgressService).endlessBest;
 
   /** Where the endless run stands after the match, in a line. */
@@ -115,9 +117,14 @@ export class WinnerComponent {
     if (isRunOver(run)) {
       return `Endless run over · ${beaten} · best ${this.endlessBest()}`;
     }
-    const lives = run.lives === 1 ? '1 life left' : `${run.lives} lives left`;
+    const lives = counted(run.lives, 'life left', 'lives left');
     return `Endless run · ${beaten} · ${lives}`;
   });
+
+  /** What the match was part of - the daily level, an endless run - in a line. */
+  public runNote: Signal<string | null> = computed(
+    () => this.dailyNote() ?? this.endlessNote()
+  );
 
   /** The button that takes the endless run on - null outside one. */
   public endlessAction: Signal<string | null> = computed(() => {
@@ -331,4 +338,9 @@ export class WinnerComponent {
     }
     return `Congratulations! ${player.name} wins the match!`;
   });
+}
+
+/** "1 level beaten", "3 levels beaten". */
+function counted(n: number, one: string, many: string): string {
+  return `${n} ${n === 1 ? one : many}`;
 }

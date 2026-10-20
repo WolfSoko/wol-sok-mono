@@ -40,6 +40,14 @@ import { GameStorage } from './storage/game-storage';
 
 export const PROGRESS_STORAGE_KEY = 'bacteria-game.progress';
 
+/** What a match was part of, beyond the level it was played on. */
+export interface MatchContext {
+  /** The UTC day of the daily level it was played as. */
+  dailyDay?: string | null;
+  /** The levels the endless run it was part of has beaten after it. */
+  endlessWins?: number | null;
+}
+
 /** What a match on the daily level past the attempts of its day says. */
 const PRACTICE_HINT = `Your ${DAILY_ATTEMPTS} attempts of the day are used - this one was practice.`;
 
@@ -135,8 +143,7 @@ export class ProgressService {
    */
   public recordMatch(
     record: MatchRecord,
-    /** The UTC day of the daily level the match was played as, if it was. */
-    dailyDay: string | null = null
+    { dailyDay = null, endlessWins = null }: MatchContext = {}
   ): MatchEarnings {
     const previousBest = this.medal(record.levelId, record.difficulty);
     const judged = judgeMatch(getLevel(record.levelId).medal, record);
@@ -151,20 +158,23 @@ export class ProgressService {
     const { medal, hint } = practice
       ? { medal: null, hint: PRACTICE_HINT }
       : judged;
+    const endless = endlessWins !== null;
     const withMatch = (progress: Progress, medalCounts: boolean) => {
       const counted = addTotals(progress, {
         ...totalsOf(record),
         matchXp: matchXp(record),
       });
-      return judged.medal === null || !medalCounts
+      // Every endless level is new: it earns no medallion to keep.
+      return judged.medal === null || !medalCounts || endless
         ? counted
         : addMedal(counted, record.levelId, record.difficulty, judged.medal);
     };
     const known = this.loaded();
     const earnings: MatchEarnings = {
-      award: { record, medal, previousBest, hint },
+      award: endless ? null : { record, medal, previousBest, hint },
       ...this.record(
-        (progress) => progress,
+        (progress) =>
+          endless ? addEndlessRun(progress, endlessWins) : progress,
         // The stored attempts decide; here, before the storage has told
         // them, a daily medallion waits for the stored progress to bring it.
         (progress) => withMatch(progress, counts(progress)),
@@ -187,12 +197,6 @@ export class ProgressService {
 
   /** The most levels beaten in one endless run. */
   public readonly endlessBest = computed(() => this.progress().endlessBest);
-
-  /** Remembers how deep an endless run got, if deeper than ever before. */
-  public recordEndlessRun(wins: number): void {
-    this.progress.update((progress) => addEndlessRun(progress, wins));
-    this.store(this.progress(), (progress) => progress);
-  }
 
   /**
    * Counts an attempt at the daily level of that UTC day as its match

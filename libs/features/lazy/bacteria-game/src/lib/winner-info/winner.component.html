@@ -1,10 +1,7 @@
 <h2 class="headline">{{ headline() }}</h2>
 <p class="level-info">{{ level().name }}</p>
-@if (dailyNote(); as note) {
-  <p class="daily-note">{{ note }}</p>
-}
-@if (endlessNote(); as note) {
-  <p class="daily-note">{{ note }}</p>
+@if (runNote(); as note) {
+  <p class="run-note">{{ note }}</p>
 }
 
 @if (award(); as award) {
