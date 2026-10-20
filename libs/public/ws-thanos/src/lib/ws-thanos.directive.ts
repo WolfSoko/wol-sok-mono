@@ -1,4 +1,11 @@
-import { Directive, ElementRef, Output, inject, input } from '@angular/core';
+import {
+  Directive,
+  ElementRef,
+  Output,
+  afterNextRender,
+  inject,
+  input,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, Observable, Subject, take, tap } from 'rxjs';
 import { AnimationState } from './animation.state';
@@ -29,6 +36,15 @@ export class WsThanosDirective {
   private readonly thanosOptions: WsThanosOptions = inject(
     WS_THANOS_OPTIONS_TOKEN
   );
+
+  public constructor() {
+    // only in the browser, the service runs it once for all elements
+    afterNextRender(() => {
+      if (this.thanosOptions.preload) {
+        void this.thanosService.preload();
+      }
+    });
+  }
 
   /**
    *

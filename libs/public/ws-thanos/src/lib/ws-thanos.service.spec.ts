@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import html2canvas from 'html2canvas';
 import { Subscription } from 'rxjs';
 import { SnapSoundService } from './snap-sound.service';
 import { provideWsThanosOptions } from './ws-thanos-options.token';
@@ -7,16 +8,8 @@ import { WsThanosService } from './ws-thanos.service';
 
 jest.mock('html2canvas', () => ({
   __esModule: true,
-  default: jest.fn(async () => {
-    const data = new Uint8ClampedArray(4 * 4 * 4).fill(255);
-    return {
-      width: 4,
-      height: 4,
-      getContext: () => ({
-        getImageData: () => ({ width: 4, height: 4, data }),
-      }),
-    };
-  }),
+  // draws on the canvas it gets, its fake 2d context returns opaque pixels
+  default: jest.fn(async (_elem: HTMLElement, { canvas }) => canvas),
 }));
 
 describe('WsThanosService', () => {
@@ -39,6 +32,10 @@ describe('WsThanosService', () => {
   function givenElement(): HTMLElement {
     const parent = document.createElement('div');
     const elem = document.createElement('div');
+    // jsdom does no layout
+    jest
+      .spyOn(elem, 'getBoundingClientRect')
+      .mockReturnValue(new DOMRect(0, 0, 4, 4));
     parent.appendChild(elem);
     document.body.appendChild(parent);
     return elem;
@@ -81,7 +78,9 @@ describe('WsThanosService', () => {
           canvas: this,
           clearRect: () => undefined,
           getImageData: () => ({
-            data: new Uint8ClampedArray(width * height * 4),
+            width,
+            height,
+            data: new Uint8ClampedArray(width * height * 4).fill(255),
           }),
           putImageData: () => undefined,
         } as unknown as CanvasRenderingContext2D;
@@ -178,6 +177,37 @@ describe('WsThanosService', () => {
     const canvas = await untilEffectStarted(elem);
 
     expect(canvas.dataset['wsThanosCrumble']).toBe('dust');
+  });
+
+  it('should capture the element into a canvas of its size', async () => {
+    const service = givenService();
+
+    await vaporize(service, givenElement());
+
+    const { canvas } = jest.mocked(html2canvas).mock.calls[0][1] ?? {};
+    expect([canvas?.width, canvas?.height]).toEqual([4, 4]);
+  });
+
+  describe('preload()', () => {
+    it('should run the effect once and leave nothing behind', async () => {
+      const debug = jest.spyOn(console, 'debug').mockImplementation();
+      const service = givenService();
+      const bodyChildren = document.body.childElementCount;
+
+      await Promise.all([service.preload(), service.preload()]);
+
+      expect(html2canvas).toHaveBeenCalledTimes(1);
+      expect(document.body.childElementCount).toBe(bodyChildren);
+      expect(debug).not.toHaveBeenCalled();
+    });
+
+    it('should not fail when the warm up fails', async () => {
+      jest.spyOn(console, 'debug').mockImplementation();
+      jest.mocked(html2canvas).mockRejectedValueOnce(new Error('no capture'));
+      const service = givenService();
+
+      await expect(service.preload()).resolves.toBeUndefined();
+    });
   });
 
   it('should remove the effect canvas when done', async () => {

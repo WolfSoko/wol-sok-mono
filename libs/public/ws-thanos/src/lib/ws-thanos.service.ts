@@ -19,9 +19,10 @@ import { EFFECT_HEIGHT_SCALE, EFFECT_WIDTH_SCALE } from './capture-scale';
 import {
   chooseParticleRenderer,
   GpuContextBudget,
+  ParticleRendererChoice,
 } from './choose-particle-renderer';
 import { ParticleRenderer } from './particle-renderer';
-import { createParticles } from './particles';
+import { createParticles, Particles } from './particles';
 import { SnapSound, SnapSoundService } from './snap-sound.service';
 import { WS_THANOS_OPTIONS_TOKEN } from './ws-thanos-options.token';
 import type { WsThanosOptions } from './ws-thanos.options';
@@ -34,6 +35,23 @@ interface RunningEffect {
   sound?: SnapSound;
 }
 
+/** the captured element, its css size and the device pixels per css pixel */
+interface Capture {
+  imageData: ImageData;
+  width: number;
+  height: number;
+  scale: number;
+}
+
+/** resolves once the browser has nothing else to do, or after a second at the latest */
+function idle(window: Window): Promise<void> {
+  return new Promise((resolve) =>
+    typeof window.requestIdleCallback === 'function'
+      ? window.requestIdleCallback(() => resolve(), { timeout: 1000 })
+      : window.setTimeout(resolve, 200)
+  );
+}
+
 @Injectable({ providedIn: 'root' })
 export class WsThanosService {
   private readonly thanosOptions: WsThanosOptions = inject(
@@ -43,6 +61,7 @@ export class WsThanosService {
   private readonly snapSound = inject(SnapSoundService);
   /** shared by all effects, browsers only allow a few WebGL contexts */
   private readonly gpuBudget = new GpuContextBudget();
+  private preloaded?: Promise<void>;
 
   /**
    * start the vaporize-effect.
@@ -58,63 +77,87 @@ export class WsThanosService {
     );
   }
 
+  /**
+   * Snap a tiny invisible element once, so the first real snap starts without a stutter:
+   * html2canvas, reading back its canvas and compiling the WebGL shaders are slow the first time.
+   * Runs once while the browser is idle, the directive starts it unless `preload` is off.
+   */
+  public preload(): Promise<void> {
+    this.preloaded ??= this.preloadIntern().catch((error) =>
+      console.debug('ws-thanos: preload failed', error)
+    );
+    return this.preloaded;
+  }
+
+  private async preloadIntern(): Promise<void> {
+    const { body, defaultView: window } = this.document;
+    if (window == null || body == null) {
+      return;
+    }
+    await idle(window);
+
+    const elem = this.document.createElement('div');
+    elem.textContent = 'ws';
+    elem.setAttribute('aria-hidden', 'true');
+    // draws what cards usually draw: text, a gradient, rounded borders and a shadow.
+    // html2canvas ignores clip-path, so it captures the element while the page shows nothing
+    elem.style.cssText = [
+      'position:fixed;left:0;top:0;width:32px;height:32px',
+      'clip-path:inset(50%);pointer-events:none',
+      'border:2px solid #888;border-radius:8px;box-shadow:0 2px 4px #0004',
+      'background:linear-gradient(#fff,#888)',
+    ].join(';');
+    body.appendChild(elem);
+
+    const { maxParticleCount, particleAcceleration } = this.thanosOptions;
+    const rendererChoice = this.chooseRenderer(maxParticleCount);
+    try {
+      const capture = await this.capture(elem, rendererChoice);
+      await idle(window);
+      // dust skips the crack shader, the other variants compile every shader
+      const { renderer } = this.createRenderer(rendererChoice, capture, {
+        particleAcceleration,
+        crumble: 'shards',
+      });
+      renderer.render({
+        deltaTSec: 0,
+        animationT: 0,
+        maxWidth: renderer.canvas.width,
+        maxHeight: renderer.canvas.height,
+      });
+      renderer.dispose();
+    } finally {
+      elem.remove();
+      rendererChoice.release();
+    }
+  }
+
   private vaporizeIntern(
     elem: HTMLElement,
     options: WsThanosOptions
   ): Observable<AnimationState> {
     const { animationLength, maxParticleCount, particleAcceleration, crumble } =
       options;
-    const window = this.document.defaultView;
 
     elem.style.opacity = elem.style.opacity || '1';
 
-    const rendererChoice = chooseParticleRenderer({
-      maxParticleCount,
-      devicePixelRatio: window?.devicePixelRatio ?? 1,
-      createCanvas: () => this.document.createElement('canvas'),
-      gpuBudget: this.gpuBudget,
-    });
-    const { width, height } = elem.getBoundingClientRect();
-    const scale = rendererChoice.captureScale(width, height);
-    const seed = Math.random() * 1000;
+    const rendererChoice = this.chooseRenderer(maxParticleCount);
     let effect: RunningEffect | undefined;
 
-    const html2CanvasPromise: Promise<HTMLCanvasElement> = html2canvas(elem, {
-      backgroundColor: null,
-      scale,
-      allowTaint: true,
-      windowHeight: window?.innerHeight,
-      windowWidth: window?.innerWidth,
-      scrollY: -(window?.scrollY ?? 0),
-    });
-
-    return from(html2CanvasPromise).pipe(
-      map((capturedElem): RunningEffect => {
-        const effectWidth = capturedElem.width * EFFECT_WIDTH_SCALE;
-        const effectHeight = capturedElem.height * EFFECT_HEIGHT_SCALE;
-        const imageData = capturedElem
-          .getContext('2d', { willReadFrequently: true })
-          ?.getImageData(0, 0, capturedElem.width, capturedElem.height);
-        if (imageData == null) {
-          throw new Error('Could not get image data from canvas');
-        }
-
-        const particles = createParticles(
-          imageData,
-          rendererChoice.maxParticleCount,
-          effectHeight
+    return from(this.capture(elem, rendererChoice)).pipe(
+      map((capture): RunningEffect => {
+        const { renderer, particles } = this.createRenderer(
+          rendererChoice,
+          capture,
+          { particleAcceleration, crumble }
         );
-        const renderer = rendererChoice.create(particles, {
-          width: effectWidth,
-          height: effectHeight,
-          // particles move in device pixels, keep their speed in css pixels
-          particleAcceleration: particleAcceleration * scale,
-          pixelScale: scale,
-          crumble,
-          seed,
-        });
 
-        this.placeEffectCanvas(elem, renderer.canvas, width, height);
+        this.placeEffectCanvas(
+          elem,
+          renderer.canvas,
+          capture.width,
+          capture.height
+        );
         renderer.canvas.dataset['wsThanosRenderer'] = renderer.kind;
         renderer.canvas.dataset['wsThanosCrumble'] = renderer.crumble;
         // when every pixel became a particle, the particles replace the element right away
@@ -159,6 +202,72 @@ export class WsThanosService {
         rendererChoice.release();
       })
     );
+  }
+
+  private chooseRenderer(maxParticleCount: number): ParticleRendererChoice {
+    return chooseParticleRenderer({
+      maxParticleCount,
+      devicePixelRatio: this.document.defaultView?.devicePixelRatio ?? 1,
+      createCanvas: () => this.document.createElement('canvas'),
+      gpuBudget: this.gpuBudget,
+    });
+  }
+
+  /** draw the element into an image at the scale the renderer needs */
+  private async capture(
+    elem: HTMLElement,
+    rendererChoice: ParticleRendererChoice
+  ): Promise<Capture> {
+    const window = this.document.defaultView;
+    const { width, height } = elem.getBoundingClientRect();
+    const scale = rendererChoice.captureScale(width, height);
+    // a canvas that is read back is drawn on the CPU: a GPU canvas would compile
+    // the shaders for everything html2canvas draws on the first read back
+    const canvas = this.document.createElement('canvas');
+    canvas.width = Math.floor(Math.ceil(width) * scale);
+    canvas.height = Math.floor(Math.ceil(height) * scale);
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (context == null) {
+      throw new Error('Could not get a 2d context for the capture');
+    }
+    await html2canvas(elem, {
+      canvas,
+      backgroundColor: null,
+      scale,
+      allowTaint: true,
+      windowHeight: window?.innerHeight,
+      windowWidth: window?.innerWidth,
+      scrollY: -(window?.scrollY ?? 0),
+    });
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    return { imageData, width, height, scale };
+  }
+
+  private createRenderer(
+    rendererChoice: ParticleRendererChoice,
+    { imageData, scale }: Capture,
+    {
+      particleAcceleration,
+      crumble,
+    }: Pick<WsThanosOptions, 'particleAcceleration' | 'crumble'>
+  ): { renderer: ParticleRenderer; particles: Particles } {
+    const effectWidth = imageData.width * EFFECT_WIDTH_SCALE;
+    const effectHeight = imageData.height * EFFECT_HEIGHT_SCALE;
+    const particles = createParticles(
+      imageData,
+      rendererChoice.maxParticleCount,
+      effectHeight
+    );
+    const renderer = rendererChoice.create(particles, {
+      width: effectWidth,
+      height: effectHeight,
+      // particles move in device pixels, keep their speed in css pixels
+      particleAcceleration: particleAcceleration * scale,
+      pixelScale: scale,
+      crumble,
+      seed: Math.random() * 1000,
+    });
+    return { renderer, particles };
   }
 
   /** the element sits at the bottom left of the larger effect canvas */
