@@ -17,6 +17,7 @@ import { getLevel, LEVELS } from './levels';
 import { MatchEarnings } from './earnings';
 import { HeadStart, Series, SeriesLength } from './rivalry';
 import { Player } from './player.model';
+import type { Replay } from './replay';
 
 /** Who steers the second crosshair. */
 export type GameMode = 'two-players' | 'vs-computer';
@@ -73,6 +74,14 @@ export interface GameStateState {
   headStart: HeadStart;
   /** The series two players have under way, null outside one. */
   series: Series | null;
+  /** The recording of the last match but a ghost match, null before one. */
+  lastReplay: Replay | null;
+  /**
+   * The recording the opponent plays back in a ghost match - the player's
+   * own earlier run, turned to the other side - null outside one. It holds
+   * for the one match it was set for.
+   */
+  ghost: Replay | null;
 }
 
 export function createInitialState(): GameStateState {
@@ -93,6 +102,8 @@ export function createInitialState(): GameStateState {
     seriesLength: 1,
     headStart: 0,
     series: null,
+    lastReplay: null,
+    ghost: null,
   };
 }
 
@@ -104,9 +115,9 @@ export function createInitialState(): GameStateState {
 export const GameStateStore = signalStore(
   { providedIn: 'root' },
   withState(createInitialState),
-  withComputed(({ currentState, levelId, timePassed }) => ({
-    /** The level that is selected, resolved from the stored id. */
-    level: computed(() => getLevel(levelId())),
+  withComputed(({ currentState, levelId, timePassed, ghost }) => ({
+    /** The level of the next match: the selected one, or the ghost's. */
+    level: computed(() => getLevel(ghost()?.header.levelId ?? levelId())),
     /** True while a match is on, paused or not. */
     isMatchOn: computed(() => isMatchOn(currentState())),
     /** True while the match is paused. */

@@ -274,7 +274,7 @@ While a match runs, the engine records what the humans put in, each input
 once, when it changes: the steering vector from a tick on, a drag target and
 a boost before a tick. The crosshairs follow from those inputs, so a match
 records a few hundred entries rather than a position per tick. When the match
-ends, `GameStateService.lastReplay` holds it as a
+ends, the game state's `lastReplay` holds it - a ghost match aside - as a
 [`Replay`](./src/lib/state/replay.ts): that recording under a header with
 everything the match was derived from (level, mode, difficulty, colours,
 head start, grid size, seed, balance version and which simulation ran it).
@@ -285,6 +285,22 @@ A replay of another format or balance version, or one the GPU ran, is refused
 rather than played out wrong, and `parseReplay` refuses anything that is not
 a whole one. Raise `BALANCE_VERSION` with every change that plays a recorded
 match out differently.
+
+## Ghost
+
+After a match against the computer, the result screen offers to fight your
+ghost: a match on the same level and seed where the computer's colony is
+steered by your own run - the same steering, drag targets and boosts, turned
+through the centre of the arena so the left colony's moves are made by the
+right one, and stretched onto the arena size of the device. The maps are
+point symmetric, so the turned run meets the same walls. A
+[`GhostController`](./src/lib/state/ghost.ts) plays one seat of a recording
+into another; replays play every human back the same way. The ghost reacts
+to nothing, it only does what you did - beating it means beating your own
+plan. A ghost match earns no medallion and no XP, and it does not replace
+the run it plays. The ghost holds for the one match it was picked for: any
+way out of that match ends it, and "Fight it again" sets it again. It
+plays on its own level and leaves the player's setup as it was.
 
 ## Tuning
 

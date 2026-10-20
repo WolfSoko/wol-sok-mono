@@ -71,7 +71,7 @@ export class PlayerService {
    */
   public init(
     spawns: PlayerSpawn[],
-    options: Omit<MatchOptions, 'seed' | 'simulation' | 'replay'> & {
+    options: Omit<MatchOptions, 'seed' | 'simulation'> & {
       /** Where every chance of the match comes from - a fresh one when absent. */
       seed?: number;
     } = {}
@@ -231,7 +231,9 @@ export class PlayerService {
    * arrow keys both work - and the keys never touch a bot's crosshair.
    */
   private steerHumans(keysPressed: readonly string[]): void {
-    const humans = this.engine.players.filter((player) => !player.isBot);
+    const humans = this.engine.players.filter((player) =>
+      this.engine.isLive(player.id)
+    );
     humans.forEach((human, index) => {
       const stick = this.sticks.get(human.id);
       const direction = { x: stick?.x ?? 0, y: stick?.y ?? 0 };

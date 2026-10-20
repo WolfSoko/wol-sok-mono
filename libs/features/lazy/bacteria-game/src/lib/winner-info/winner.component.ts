@@ -24,7 +24,7 @@ import { getColonyColor } from '../state/colony-colors';
 import { ProgressService } from '../progress.service';
 
 /** What the player picked when the match was over. */
-export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu';
+export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu' | 'ghost';
 
 /**
  * The screen a match ends on: who won, and what to play next. It sits in the
@@ -70,6 +70,21 @@ export class WinnerComponent {
   );
 
   private mode: Signal<GameMode> = this.state.mode;
+
+  /** True in a match against the player's own ghost. */
+  public againstGhost: Signal<boolean> = computed(
+    () => this.state.ghost() !== null
+  );
+
+  /**
+   * True when the run just played can come back as a ghost - after a match
+   * against the computer, not against a ghost already.
+   */
+  public canFightGhost: Signal<boolean> = computed(
+    () =>
+      !this.againstGhost() &&
+      this.state.lastReplay()?.header.mode === 'vs-computer'
+  );
 
   /** Everything the match earned, null until it has ended. */
   public earnings: Signal<MatchEarnings | null> = this.state.earnings;
@@ -176,6 +191,11 @@ export class WinnerComponent {
     const player = this.winner();
     if (player == null) {
       return 'It is a draw - both colonies wiped each other out!';
+    }
+    if (this.againstGhost()) {
+      return player.isBot
+        ? 'Your ghost wins - your old run ate you!'
+        : 'You beat your ghost!';
     }
     if (player.isBot) {
       return 'The computer wins - your colony was eaten!';

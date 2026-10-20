@@ -123,8 +123,14 @@
   }
   <button mat-stroked-button type="button" (click)="action.emit('again')">
     <mat-icon>replay</mat-icon>
-    Play again
+    {{ againstGhost() ? "Fight it again" : "Play again" }}
   </button>
+  @if (canFightGhost()) {
+    <button mat-stroked-button type="button" (click)="action.emit('ghost')">
+      <mat-icon>blur_on</mat-icon>
+      Fight your ghost
+    </button>
+  }
   @if (upcoming(); as next) {
     <button
       mat-flat-button

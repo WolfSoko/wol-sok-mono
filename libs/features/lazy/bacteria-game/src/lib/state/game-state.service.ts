@@ -64,8 +64,6 @@ export class GameStateService {
   private progress = inject(ProgressService);
   /** What the colonies on the board were spawned from - see `initPlayers`. */
   private plan: MatchPlan | null = null;
-  /** The recording of the match that ended last, null before one has. */
-  public lastReplay: Replay | null = null;
 
   /**
    * The ticks of the display frames the game runs on - see
@@ -161,11 +159,12 @@ export class GameStateService {
    * award reach the store together.
    */
   private endMatch(outcome: MatchOutcome): void {
-    const { series } = this.gameStateStore.snapshot();
+    const { series, ghost } = this.gameStateStore.snapshot();
     const earnings = this.recordMatch(outcome.winner);
-    this.lastReplay = this.replay();
     // One update, so the result and the award reach the readers together.
     this.gameStateStore.update({
+      // A ghost match is no match to play again: its opponent is no bot.
+      ...(ghost === null ? { lastReplay: this.replay() } : {}),
       currentState: GameState.END,
       winner: outcome.winner,
       matchEnded: true,
@@ -195,8 +194,12 @@ export class GameStateService {
    * it earned. Null for a match against the computer without a human in it.
    */
   private recordMatch(winner: Player | null): MatchEarnings | null {
-    const { mode, levelId, difficulty, timePassed, width, colors } =
+    const { mode, levelId, difficulty, timePassed, width, colors, ghost } =
       this.gameStateStore.snapshot();
+    if (ghost !== null) {
+      // Beating your own ghost is for the fun of it - no medallion, no XP.
+      return null;
+    }
     switch (mode) {
       case 'two-players': {
         const seat = winnerSeat(winner);
@@ -224,23 +227,56 @@ export class GameStateService {
 
   /**
    * Spawns both colonies with the map and the balance of the current level,
-   * from a fresh seed - every spawn is a match that may be played.
+   * from a fresh seed - every spawn is a match that may be played. A ghost
+   * match is played on the seed of the ghost's run.
    */
   private initPlayers() {
-    const { width, height, levelId, mode, difficulty, colors, headStart } =
-      this.gameStateStore.snapshot();
-    this.plan = {
+    const {
+      width,
+      height,
       levelId,
       mode,
       difficulty,
       colors,
       headStart,
+      ghost,
+    } = this.gameStateStore.snapshot();
+    this.plan = {
+      levelId: ghost?.header.levelId ?? levelId,
+      mode: ghost === null ? mode : 'vs-computer',
+      difficulty,
+      colors,
+      headStart,
       width,
       height,
-      seed: randomSeed(),
+      seed: ghost?.header.seed ?? randomSeed(),
     };
-    const { spawns, options } = planMatch(this.plan);
+    const { spawns, options } = planMatch(this.plan, ghost);
     this.playerService.init(spawns, options);
+  }
+
+  /**
+   * Sets the next match against a ghost - the run of the last match against
+   * the computer unless another one is given: on its level, the computer's
+   * colony steered as the player steered their own back then. It holds for
+   * that one match; {@link reset} ends it, whichever way the match is left.
+   * The setup stays as it is, the ghost's level and mode are its own.
+   */
+  public playGhost(run = this.gameStateStore.snapshot().lastReplay): void {
+    if (run === null || run.header.mode !== 'vs-computer') {
+      return;
+    }
+    this.gameStateStore.update({ ghost: run });
+  }
+
+  /**
+   * Spawns the colonies of the next match again, now that its setup changed
+   * - not during one, which keeps the rules it started with.
+   */
+  private respawnIfIdle(): void {
+    if (this.isIdle()) {
+      this.initPlayers();
+    }
   }
 
   /**
@@ -283,9 +319,7 @@ export class GameStateService {
         JSON.stringify(setup[key]) !== JSON.stringify(current[key])
     );
     this.gameStateStore.update(changed ? { ...setup, series: null } : setup);
-    if (this.isIdle()) {
-      this.initPlayers();
-    }
+    this.respawnIfIdle();
   }
 
   /**
@@ -376,6 +410,7 @@ export class GameStateService {
     this.gameStateStore.update(() => ({
       currentState: GameState.END,
       timePassed: 0,
+      ghost: null,
     }));
     this.initPlayers();
     this.gameStateStore.update(() => ({

@@ -288,6 +288,11 @@ describe('GameStateService', () => {
       service.setLevel('hourglass');
       service.setArenaSize(WIDTH, HEIGHT);
       service.init(WIDTH, HEIGHT);
+      winMatch();
+    }
+
+    /** Starts a match as it is set up and lets the right colony die out. */
+    function winMatch(): void {
       service.start();
       TestBed.inject(GameStateStore).update({ timePassed: 30_000 - TICK_MS });
       const [human, other] = playerStore.entities();
@@ -307,13 +312,65 @@ describe('GameStateService', () => {
 
     afterEach(() => service.cleanup());
 
+    describe('against the ghost', () => {
+      it('plays the last run on its level, leaving the setup as it is', () => {
+        winAgainst('vs-computer');
+        const run = store.snapshot().lastReplay;
+        service.setLevel('corridors');
+
+        service.playGhost();
+        service.start();
+
+        expect(store.snapshot().ghost).toBe(run);
+        expect(store.level().id).toBe('hourglass');
+        expect(store.snapshot().levelId).toBe('corridors');
+        expect(playerStore.entities()[1].name).toBe('Ghost');
+      });
+
+      it('earns nothing, and keeps the run it plays as the last one', () => {
+        winAgainst('vs-computer');
+        const run = store.snapshot().lastReplay;
+        service.playGhost();
+
+        winMatch();
+
+        const state = store.snapshot();
+        expect(state.currentState).toBe(GameState.END);
+        expect(state.earnings).toBeNull();
+        expect(state.lastReplay).toBe(run);
+      });
+
+      it('holds for the one match it was set for', () => {
+        winAgainst('vs-computer');
+        service.playGhost();
+        // A setup restored late changes the next match, not the ghost's.
+        service.applySetup({ difficulty: 'hard' });
+        expect(store.snapshot().ghost).not.toBeNull();
+
+        service.reset();
+        service.start();
+
+        expect(store.snapshot().ghost).toBeNull();
+        expect(playerStore.entities()[1].name).toBe('Computer');
+      });
+
+      it('needs a run against the computer', () => {
+        service.playGhost();
+        expect(store.snapshot().ghost).toBeNull();
+
+        winAgainst('two-players');
+        service.playGhost();
+        expect(store.snapshot().ghost).toBeNull();
+      });
+    });
+
     it('judges a win against the computer and keeps the award', () => {
       winAgainst('vs-computer');
 
       const state = store.snapshot();
       expect(state.currentState).toBe(GameState.END);
       expect(state.matchEnded).toBe(true);
-      expect(service.lastReplay?.header.levelId).toBe('hourglass');
+      expect(state.lastReplay?.header.levelId).toBe('hourglass');
       expect(state.earnings?.award).toEqual(
         expect.objectContaining({
           medal: 'platinum',
