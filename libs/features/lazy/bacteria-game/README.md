@@ -72,7 +72,9 @@ CSS animation, still for players who ask for less motion):
 - **Profile** - levels won, medallions per metal and every medallion level by
   level.
 - **Settings** - colony colours, how the bacteria look, the two resolutions,
-  sound, music, the frame rate badge and browser fullscreen.
+  sound with music and effects switched and set in volume on their own,
+  vibration where the device can, the frame rate badge and browser
+  fullscreen.
 - **How to play** - the rules in three steps, the keys and the touch layout.
 
 While a screen is open, the arena, its bar and the seats under it are inert.

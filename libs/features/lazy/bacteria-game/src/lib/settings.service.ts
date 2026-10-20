@@ -26,6 +26,7 @@ import {
   SeriesLength,
   seriesWinner,
 } from './state/rivalry';
+import { clamp } from './state/geometry';
 import { isObject } from './state/is-object';
 import { GameStorage } from './storage/game-storage';
 
@@ -41,6 +42,13 @@ export interface StoredSettings {
   arena?: string;
   sound?: boolean;
   music?: boolean;
+  /** Whether the sound effects play - under the sound switch. */
+  effects?: boolean;
+  /** Volumes from 0 to 100. */
+  musicVolume?: number;
+  effectsVolume?: number;
+  /** Whether the phone vibrates with the match. */
+  vibration?: boolean;
   /** The colour ids of the left and the right colony. */
   colors?: [string, string];
   /** Between two players: how many matches a series is the best of. */
@@ -65,6 +73,11 @@ export const BACTERIA_LOOKS: readonly { id: BacteriaLook; name: string }[] = [
 
 export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 
+/** The volume sliders run from 0 to this. */
+export const MAX_VOLUME = 100;
+export const DEFAULT_MUSIC_VOLUME = 70;
+export const DEFAULT_EFFECTS_VOLUME = 80;
+
 /** The settings that set up a match - kept in the game state store. */
 const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
   'mode',
@@ -79,8 +92,9 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
  * Keeps the player's choices - opponent, difficulty, level, colours, the
  * series and the head start between two players, free play or the campaign
  * ladder, the arena, how the bacteria look, the resolutions, whether the
- * frame rate is shown and whether the game makes sound and plays music -
- * across visits, in the game storage.
+ * frame rate is shown, whether the game makes sound, plays music and
+ * effects and how loud, and whether the phone vibrates - across visits, in
+ * the game storage.
  *
  * The match settings live in the game state store, as they did; this service
  * only restores them once the storage answers and writes them back whenever
@@ -115,6 +129,14 @@ export class GameSettingsService {
   public readonly sound = signal(true);
   /** True while the levels play their music - under the sound switch. */
   public readonly music = signal(true);
+  /** True while the sound effects play - under the sound switch. */
+  public readonly effects = signal(true);
+  /** How loud the music plays, from 0 to {@link MAX_VOLUME}. */
+  public readonly musicVolume = signal(DEFAULT_MUSIC_VOLUME);
+  /** How loud the sound effects play, from 0 to {@link MAX_VOLUME}. */
+  public readonly effectsVolume = signal(DEFAULT_EFFECTS_VOLUME);
+  /** True while the phone vibrates with the match, where it can. */
+  public readonly vibration = signal(true);
   /** How the bacteria are drawn. */
   public readonly look = signal<BacteriaLook>('slime');
   /** How finely the war is simulated - the arena's size in cells. */
@@ -173,6 +195,38 @@ export class GameSettingsService {
   public setMusic(on: boolean): void {
     this.music.set(on);
     this.changed('music');
+  }
+
+  public setEffects(on: boolean): void {
+    this.effects.set(on);
+    this.changed('effects');
+  }
+
+  public setMusicVolume(volume: number): void {
+    this.previewMusicVolume(volume);
+    this.changed('musicVolume');
+  }
+
+  public setEffectsVolume(volume: number): void {
+    this.previewEffectsVolume(volume);
+    this.changed('effectsVolume');
+  }
+
+  /**
+   * A volume while its slider is still being dragged: heard right away,
+   * but not written until the slider is let go of.
+   */
+  public previewMusicVolume(volume: number): void {
+    this.musicVolume.set(clampVolume(volume, DEFAULT_MUSIC_VOLUME));
+  }
+
+  public previewEffectsVolume(volume: number): void {
+    this.effectsVolume.set(clampVolume(volume, DEFAULT_EFFECTS_VOLUME));
+  }
+
+  public setVibration(on: boolean): void {
+    this.vibration.set(on);
+    this.changed('vibration');
   }
 
   public setLook(look: BacteriaLook): void {
@@ -246,6 +300,18 @@ export class GameSettingsService {
     if (restores('music') && typeof stored.music === 'boolean') {
       this.music.set(stored.music);
     }
+    if (restores('effects') && typeof stored.effects === 'boolean') {
+      this.effects.set(stored.effects);
+    }
+    if (restores('musicVolume') && isVolume(stored.musicVolume)) {
+      this.musicVolume.set(stored.musicVolume);
+    }
+    if (restores('effectsVolume') && isVolume(stored.effectsVolume)) {
+      this.effectsVolume.set(stored.effectsVolume);
+    }
+    if (restores('vibration') && typeof stored.vibration === 'boolean') {
+      this.vibration.set(stored.vibration);
+    }
   }
 
   /** The stored setup of the match a late answer found under way. */
@@ -305,6 +371,10 @@ export class GameSettingsService {
       arena: this.arena() ?? undefined,
       sound: this.sound(),
       music: this.music(),
+      effects: this.effects(),
+      musicVolume: this.musicVolume(),
+      effectsVolume: this.effectsVolume(),
+      vibration: this.vibration(),
     };
     this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }
@@ -338,6 +408,23 @@ export class GameSettingsService {
     ).map((key) => [key, pending[key]]);
     return { ...setup, ...Object.fromEntries(kept) };
   }
+}
+
+/** True for a whole number from 0 to {@link MAX_VOLUME}. */
+function isVolume(value: unknown): value is number {
+  return (
+    typeof value === 'number' &&
+    Number.isInteger(value) &&
+    value >= 0 &&
+    value <= MAX_VOLUME
+  );
+}
+
+/** A whole number on the slider - or the default for what is no number. */
+function clampVolume(volume: number, fallback: number): number {
+  return Number.isFinite(volume)
+    ? Math.round(clamp(volume, 0, MAX_VOLUME))
+    : fallback;
 }
 
 function sameMatchSetup(a: MatchSetup, b: MatchSetup): boolean {

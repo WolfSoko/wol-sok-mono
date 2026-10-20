@@ -48,6 +48,27 @@
   min-height: 2.75rem;
 }
 
+// A switch with the slider for its volume under it.
+.volume {
+  display: flex;
+  flex-direction: column;
+}
+
+.volume-slider {
+  --mat-slider-active-track-color: var(--bw-gold);
+  --mat-slider-handle-color: var(--bw-gold);
+  --mat-slider-focus-handle-color: var(--bw-gold);
+  --mat-slider-hover-handle-color: var(--bw-gold);
+  --mat-slider-inactive-track-color: var(--bw-line-strong);
+  --mat-slider-label-container-color: var(--bw-gold);
+  --mat-slider-label-label-text-color: var(--bw-ground);
+  --mat-slider-with-tick-marks-active-container-color: var(--bw-ground);
+
+  width: 100%;
+  max-width: 20rem;
+  margin: 0 0.5rem;
+}
+
 .arena-picker {
   width: 100%;
 }
