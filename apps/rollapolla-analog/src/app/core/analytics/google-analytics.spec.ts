@@ -127,6 +127,35 @@ describe('provideGoogleAnalytics', () => {
     expect(localStorage.getItem('rap-analytics-consent')).toBe('denied');
   });
 
+  it('removes the Google Analytics cookies when consent is withdrawn', () => {
+    localStorage.setItem('rap-analytics-consent', 'granted');
+    render();
+    document.cookie = '_ga=GA1.1.1; path=/';
+    document.cookie = '_ga_6ZM8TB6QCY=GS1.1.1; path=/';
+    document.cookie = 'other=kept; path=/';
+
+    TestBed.inject(AnalyticsConsent).decide('denied');
+
+    expect(document.cookie).toBe('other=kept');
+    document.cookie = 'other=; max-age=0; path=/';
+  });
+
+  it('starts analytics with ads denied when a visitor who declined accepts', () => {
+    localStorage.setItem('rap-analytics-consent', 'denied');
+    render();
+
+    TestBed.inject(AnalyticsConsent).decide('granted');
+
+    expect(setConsent).toHaveBeenCalledExactlyOnceWith({
+      analytics_storage: 'granted',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+    });
+    expect(getAnalytics).toHaveBeenCalledOnce();
+    expect(setAnalyticsCollectionEnabled).not.toHaveBeenCalled();
+  });
+
   it('collects again when the visitor grants consent after withdrawing', () => {
     localStorage.setItem('rap-analytics-consent', 'granted');
     render();

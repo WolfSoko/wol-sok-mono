@@ -8,7 +8,7 @@ import {
 import { getAnalytics, provideAnalytics } from '@angular/fire/analytics';
 import { FirebaseApp } from '@angular/fire/app';
 import { AnalyticsConsent } from './analytics-consent';
-import { ConsentPrompt } from './consent-settings.component';
+import { ConsentPrompt } from './consent';
 
 /**
  * Firebase Analytics for the GA4 property of the Firebase app (its

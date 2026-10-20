@@ -1,8 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  ConsentPrompt,
-  ConsentSettingsComponent,
-} from './consent-settings.component';
+import { ConsentPrompt } from './consent';
+import { ConsentSettingsComponent } from './consent-settings.component';
 
 describe('ConsentSettingsComponent', () => {
   function settingsButton(element: HTMLElement): HTMLButtonElement | null {

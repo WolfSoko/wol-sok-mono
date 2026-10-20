@@ -7,7 +7,7 @@ import {
   MatSnackBarLabel,
   MatSnackBarRef,
 } from '@angular/material/snack-bar';
-import type { ConsentChoice } from './analytics-consent';
+import { ConsentChoice } from './consent';
 
 export interface ConsentBannerData {
   decide(choice: ConsentChoice): void;

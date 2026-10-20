@@ -5,11 +5,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-
-/** Asks for analytics consent again; provided only where analytics runs. */
-export abstract class ConsentPrompt {
-  public abstract ask(): void;
-}
+import { ConsentPrompt } from './consent';
 
 /**
  * Lets visitors change their analytics choice. Shown only where analytics runs

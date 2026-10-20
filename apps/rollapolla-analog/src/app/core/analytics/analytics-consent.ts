@@ -9,9 +9,7 @@ import {
   ConsentBannerComponent,
   ConsentBannerData,
 } from './consent-banner.component';
-import { ConsentPrompt } from './consent-settings.component';
-
-export type ConsentChoice = 'granted' | 'denied';
+import { ConsentChoice, ConsentPrompt } from './consent';
 
 const STORAGE_KEY = 'rap-analytics-consent';
 
@@ -53,6 +51,9 @@ export class AnalyticsConsent implements ConsentPrompt {
     if (this.analytics) {
       setConsent({ analytics_storage: choice });
       setAnalyticsCollectionEnabled(this.analytics, choice === 'granted');
+      if (choice === 'denied') {
+        deleteAnalyticsCookies();
+      }
     } else if (choice === 'granted') {
       // set before the instance exists, the SDK sends it as the consent default
       // ahead of its first hit; an update sent now would overtake that default
@@ -64,6 +65,24 @@ export class AnalyticsConsent implements ConsentPrompt {
       });
       // AngularFire creates the instance, and loads gtag.js, on first injection
       this.analytics = this.injector.get(Analytics);
+    }
+  }
+}
+
+/**
+ * Removes the client ids gtag.js stored (`_ga`, `_ga_<container>`). They sit on
+ * the widest domain the browser allowed, so try every parent of the host.
+ */
+function deleteAnalyticsCookies(): void {
+  const names = document.cookie
+    .split(';')
+    .map((cookie) => cookie.split('=')[0].trim())
+    .filter((name) => name === '_ga' || name.startsWith('_ga_'));
+  const labels = location.hostname.split('.');
+  const domains = labels.map((_, i) => `; domain=${labels.slice(i).join('.')}`);
+  for (const name of names) {
+    for (const domain of ['', ...domains]) {
+      document.cookie = `${name}=; max-age=0; path=/${domain}`;
     }
   }
 }
