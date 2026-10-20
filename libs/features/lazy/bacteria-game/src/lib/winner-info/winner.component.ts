@@ -8,14 +8,12 @@ import {
   output,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MedallionComponent } from '../medallion/medallion.component';
-import { GameStateQuery } from '../state/game-state.query';
-import { DEFAULT_MODE, GameMode } from '../state/game.states';
-import { getLevel, Level, LEVELS, nextLevel } from '../state/levels';
+import { GameMode, GameStateStore } from '../state/game.states';
+import { getLevel, Level, nextLevel } from '../state/levels';
 import { MedalAward, MEDAL_NAMES, medalRank } from '../state/medallions';
 import { Player } from '../state/player.model';
 import { Achievement, getAchievement } from '../state/achievements';
@@ -47,7 +45,7 @@ export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WinnerComponent {
-  private state = inject(GameStateQuery);
+  private state = inject(GameStateStore);
 
   /**
    * Why the next level is still locked on the campaign ladder, null when it
@@ -61,29 +59,20 @@ export class WinnerComponent {
   public readonly action = output<MatchEndAction>();
 
   /** Null when both colonies wiped each other out in the same step. */
-  public winner: Signal<Player | null | undefined> = toSignal(
-    this.state.selectWinnerId()
-  );
+  public winner: Signal<Player | null> = this.state.winner;
 
   /** The level that was just played. */
-  public level: Signal<Level> = toSignal(this.state.selectLevel(), {
-    initialValue: LEVELS[0],
-  });
+  public level: Signal<Level> = this.state.level;
 
   /** The level that comes next, null after the last one. */
   public upcoming: Signal<Level | null> = computed(() =>
     nextLevel(this.level().id)
   );
 
-  private mode: Signal<GameMode> = toSignal(this.state.selectMode(), {
-    initialValue: DEFAULT_MODE,
-  });
+  private mode: Signal<GameMode> = this.state.mode;
 
   /** Everything the match earned, null until it has ended. */
-  public earnings: Signal<MatchEarnings | null> = toSignal(
-    this.state.selectEarnings(),
-    { initialValue: null }
-  );
+  public earnings: Signal<MatchEarnings | null> = this.state.earnings;
 
   /** What the match earned against the computer, null between two players. */
   public award: Signal<MedalAward | null> = computed(
@@ -100,10 +89,8 @@ export class WinnerComponent {
     () => this.earnings()?.cosmetics ?? []
   );
 
-  private series = toSignal(this.state.selectSeries(), { initialValue: null });
-  private colors = toSignal(this.state.selectColors(), {
-    initialValue: ['', ''] as [string, string],
-  });
+  private series = this.state.series;
+  private colors = this.state.colors;
   private couchWins = inject(ProgressService).couchWins;
 
   /**

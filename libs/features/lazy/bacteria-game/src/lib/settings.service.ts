@@ -1,5 +1,5 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { distinctUntilChanged, filter, pairwise, take } from 'rxjs';
+import { Injectable, inject, signal, untracked } from '@angular/core';
+import { filter, pairwise, take } from 'rxjs';
 import {
   DEFAULT_SCREEN_RESOLUTION,
   DEFAULT_SIM_RESOLUTION,
@@ -10,11 +10,11 @@ import {
 } from './state/arena-size';
 import { BotDifficulty, difficultyOption } from './state/bot-controller';
 import { sameColors, validColorPair } from './state/colony-colors';
-import { GameStateQuery } from './state/game-state.query';
 import { GameStateService, MatchSetup } from './state/game-state.service';
 import {
   GameMode,
   GameState,
+  GameStateStore,
   isGameMode,
   isMatchOn,
 } from './state/game.states';
@@ -107,7 +107,7 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
 @Injectable({ providedIn: 'root' })
 export class GameSettingsService {
   private readonly gameState = inject(GameStateService);
-  private readonly query = inject(GameStateQuery);
+  private readonly store = inject(GameStateStore);
   private readonly storage = inject(GameStorage);
   private restored = false;
   /** The settings the player changed - what restoring must keep. */
@@ -147,9 +147,10 @@ export class GameSettingsService {
   );
 
   constructor() {
-    this.query
-      .select(matchSetup)
-      .pipe(distinctUntilChanged(sameMatchSetup), pairwise())
+    // Synchronous, so a change is told apart from a restored setup.
+    this.store
+      .select$(() => this.currentMatchSetup(), sameMatchSetup)
+      .pipe(pairwise())
       .subscribe(([before, after]) =>
         this.changed(
           ...MATCH_SETUP_KEYS.filter(
@@ -165,8 +166,8 @@ export class GameSettingsService {
         this.restored = true;
         this.persist();
       });
-    this.query
-      .select((state) => state.currentState)
+    this.store
+      .select$(() => this.store.currentState())
       .pipe(filter((state) => state === GameState.START))
       .subscribe(() => this.restorePendingSetup());
   }
@@ -260,7 +261,7 @@ export class GameSettingsService {
    * their value; the match setup waits while a match is on.
    */
   private restore(stored: StoredSettings): void {
-    if (isMatchOn(this.query.getValue().currentState)) {
+    if (isMatchOn(this.store.snapshot().currentState)) {
       this.pendingSetup = stored;
     } else {
       this.restoreMatchSetup(stored);
@@ -318,7 +319,7 @@ export class GameSettingsService {
     const stored = this.pendingSetup;
     // A series under way keeps its setup too - the stored one waits for it
     // to end.
-    const { series } = this.query.getValue();
+    const { series } = this.store.snapshot();
     if (stored !== null && (series === null || seriesWinner(series) !== null)) {
       // Still pending while it is applied, so the write on the way stores
       // the same setup - and the backend skips it.
@@ -378,12 +379,26 @@ export class GameSettingsService {
     this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }
 
+  /** The match setup as it stands, without tracking it. */
+  private currentMatchSetup(): MatchSetup {
+    const { mode, difficulty, levelId, colors, seriesLength, headStart } =
+      this.store;
+    return untracked(() => ({
+      mode: mode(),
+      difficulty: difficulty(),
+      levelId: levelId(),
+      colors: colors(),
+      seriesLength: seriesLength(),
+      headStart: headStart(),
+    }));
+  }
+
   /**
    * The match setup to store: the current one, but while a stored setup
    * waits for the menu, its values for what the player has not changed.
    */
   private matchSetupToStore(): MatchSetup {
-    const setup = matchSetup(this.query.getValue());
+    const setup = this.currentMatchSetup();
     const pending = this.pendingSetup;
     if (pending === null) {
       return setup;
@@ -410,11 +425,6 @@ function clampVolume(volume: number, fallback: number): number {
   return Number.isFinite(volume)
     ? Math.round(clamp(volume, 0, MAX_VOLUME))
     : fallback;
-}
-
-function matchSetup(state: MatchSetup): MatchSetup {
-  const { mode, difficulty, levelId, colors, seriesLength, headStart } = state;
-  return { mode, difficulty, levelId, colors, seriesLength, headStart };
 }
 
 function sameMatchSetup(a: MatchSetup, b: MatchSetup): boolean {

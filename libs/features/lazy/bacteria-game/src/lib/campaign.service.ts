@@ -1,5 +1,4 @@
 import { computed, effect, inject, Injectable, untracked } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { ProgressService } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import { difficultyOption } from './state/bot-controller';
@@ -7,7 +6,7 @@ import { CampaignSummary, furthestOpenLevel } from './state/campaign';
 import { activeArena } from './state/unlocks';
 import { getLevel, LEVELS } from './state/levels';
 import { medalTally } from './state/progress';
-import { GameStateQuery } from './state/game-state.query';
+import { GameStateStore } from './state/game.states';
 import { GameStateService } from './state/game-state.service';
 
 /**
@@ -24,21 +23,12 @@ export class CampaignService {
   private readonly progress = inject(ProgressService);
   private readonly settings = inject(GameSettingsService);
   private readonly gameState = inject(GameStateService);
-  private readonly query = inject(GameStateQuery);
+  private readonly store = inject(GameStateStore);
 
-  private readonly mode = toSignal(this.query.selectMode(), {
-    requireSync: true,
-  });
-  private readonly levelId = toSignal(
-    this.query.select((state) => state.levelId),
-    { requireSync: true }
-  );
-  private readonly matchOn = toSignal(this.query.selectIsMatchOn(), {
-    requireSync: true,
-  });
-  private readonly difficulty = toSignal(this.query.selectDifficulty(), {
-    requireSync: true,
-  });
+  private readonly mode = this.store.mode;
+  private readonly levelId = this.store.levelId;
+  private readonly matchOn = this.store.isMatchOn;
+  private readonly difficulty = this.store.difficulty;
 
   /**
    * The arena every level is drawn in - the one chosen in the settings once

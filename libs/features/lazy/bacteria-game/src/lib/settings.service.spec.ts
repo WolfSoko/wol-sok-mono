@@ -7,7 +7,6 @@ import {
   SETTINGS_STORAGE_KEY,
   StoredSettings,
 } from './settings.service';
-import { GameStateQuery } from './state/game-state.query';
 import { GameStateService } from './state/game-state.service';
 import { GameStateStore } from './state/game.states';
 import { LEVELS } from './state/levels';
@@ -36,7 +35,7 @@ describe('GameSettingsService', () => {
     );
 
     const service = TestBed.inject(GameSettingsService);
-    const state = TestBed.inject(GameStateQuery).getValue();
+    const state = TestBed.inject(GameStateStore).snapshot();
 
     expect(state.mode).toBe('two-players');
     expect(state.difficulty).toBe('hard');
@@ -51,7 +50,7 @@ describe('GameSettingsService', () => {
     );
 
     const service = TestBed.inject(GameSettingsService);
-    const state = TestBed.inject(GameStateQuery).getValue();
+    const state = TestBed.inject(GameStateStore).snapshot();
 
     expect(state.mode).toBe('vs-computer');
     expect(state.levelId).toBe(LEVELS[0].id);
@@ -122,7 +121,7 @@ describe('GameSettingsService', () => {
     expect(stored()).toMatchObject({ seriesLength: 5, headStart: -1 });
     TestBed.resetTestingModule();
     TestBed.inject(GameSettingsService);
-    expect(TestBed.inject(GameStateQuery).getValue()).toMatchObject({
+    expect(TestBed.inject(GameStateStore).snapshot()).toMatchObject({
       seriesLength: 5,
       headStart: -1,
     });
@@ -240,7 +239,7 @@ describe('GameSettingsService', () => {
     });
     TestBed.resetTestingModule();
     expect(TestBed.inject(GameSettingsService).look()).toBe('pixels');
-    expect(TestBed.inject(GameStateQuery).getValue().colors).toEqual([
+    expect(TestBed.inject(GameStateStore).snapshot().colors).toEqual([
       'purple',
       'blue',
     ]);
@@ -255,7 +254,7 @@ describe('GameSettingsService', () => {
     const service = TestBed.inject(GameSettingsService);
 
     expect(service.look()).toBe('slime');
-    expect(TestBed.inject(GameStateQuery).getValue().colors).toEqual([
+    expect(TestBed.inject(GameStateStore).snapshot().colors).toEqual([
       'orange',
       'blue',
     ]);
@@ -307,7 +306,7 @@ describe('GameSettingsService', () => {
       storage.flush();
 
       expect(service.sound()).toBe(false);
-      expect(TestBed.inject(GameStateQuery).getValue().levelId).toBe(
+      expect(TestBed.inject(GameStateStore).snapshot().levelId).toBe(
         LEVELS[2].id
       );
     });
@@ -339,7 +338,7 @@ describe('GameSettingsService', () => {
 
       expect(service.sound()).toBe(true);
       expect(service.look()).toBe('pixels');
-      expect(TestBed.inject(GameStateQuery).getValue().levelId).toBe(
+      expect(TestBed.inject(GameStateStore).snapshot().levelId).toBe(
         LEVELS[3].id
       );
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
@@ -356,15 +355,15 @@ describe('GameSettingsService', () => {
         showFps: true,
       });
       const gameState = TestBed.inject(GameStateService);
-      const query = TestBed.inject(GameStateQuery);
+      const store = TestBed.inject(GameStateStore);
 
       gameState.start();
       storage.flush();
       service.setSound(false);
       storage.flush();
 
-      expect(query.getValue().levelId).toBe(LEVELS[0].id);
-      expect(query.getValue().difficulty).toBe('normal');
+      expect(store.snapshot().levelId).toBe(LEVELS[0].id);
+      expect(store.snapshot().difficulty).toBe('normal');
       expect(service.showFps()).toBe(true);
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
         levelId: LEVELS[2].id,
@@ -374,14 +373,14 @@ describe('GameSettingsService', () => {
 
       gameState.reset();
 
-      expect(query.getValue().levelId).toBe(LEVELS[2].id);
-      expect(query.getValue().difficulty).toBe('hard');
+      expect(store.snapshot().levelId).toBe(LEVELS[2].id);
+      expect(store.snapshot().difficulty).toBe('hard');
     });
 
     it('lets a stored setup wait for a series under way to end', () => {
       createWith({ colors: ['green', 'pink'] });
       const gameState = TestBed.inject(GameStateService);
-      const query = TestBed.inject(GameStateQuery);
+      const store = TestBed.inject(GameStateStore);
       gameState.setMode('two-players');
       gameState.setSeriesLength(3);
 
@@ -392,18 +391,18 @@ describe('GameSettingsService', () => {
       });
       gameState.reset();
 
-      expect(query.getValue().colors).toEqual(['orange', 'blue']);
-      expect(query.getValue().series?.wins).toEqual([1, 0]);
+      expect(store.snapshot().colors).toEqual(['orange', 'blue']);
+      expect(store.snapshot().series?.wins).toEqual([1, 0]);
 
       gameState.endSeries();
       gameState.reset();
-      expect(query.getValue().colors).toEqual(['green', 'pink']);
+      expect(store.snapshot().colors).toEqual(['green', 'pink']);
     });
 
     it('drops the stored setup the player changed during the match', () => {
       createWith({ levelId: LEVELS[2].id, difficulty: 'hard' });
       const gameState = TestBed.inject(GameStateService);
-      const query = TestBed.inject(GameStateQuery);
+      const store = TestBed.inject(GameStateStore);
 
       gameState.start();
       storage.flush();
@@ -411,8 +410,8 @@ describe('GameSettingsService', () => {
       gameState.reset();
       storage.flush();
 
-      expect(query.getValue().levelId).toBe(LEVELS[4].id);
-      expect(query.getValue().difficulty).toBe('hard');
+      expect(store.snapshot().levelId).toBe(LEVELS[4].id);
+      expect(store.snapshot().difficulty).toBe('hard');
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
         levelId: LEVELS[4].id,
         difficulty: 'hard',

@@ -5,7 +5,9 @@
 }
 
 .screen-sections {
-  @include screen.sections;
+  // Wide enough for the eight colour swatches and four resolutions side by
+  // side: a phone held sideways gets two columns, not three cramped ones.
+  @include screen.sections(22rem);
 }
 
 .screen-section {
