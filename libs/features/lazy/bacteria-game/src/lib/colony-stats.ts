@@ -1,4 +1,5 @@
 import { GameBalance, gameBalance } from './state/game-balance';
+import { TICKS_PER_SEC } from './state/fixed-tick';
 import { clamp } from './state/geometry';
 import { isBoosted, isBoostReady, Player } from './state/player.model';
 
@@ -25,6 +26,8 @@ export interface ColonyStats {
   boostCharge: number;
   /** The key that fires the boost, for the button label. */
   boostKey: BoostKey;
+  /** Whole seconds the colony held the hold zone. */
+  held: number;
 }
 
 /** The keys that fire a boost: Space for the first human, Enter for the second. */
@@ -97,6 +100,7 @@ export function toColonyStats(
       : Math.ceil(player.boostCooldownSec),
     boostCharge: boostChargeOf(player, balance),
     boostKey: boostKeyOf(humans, player),
+    held: Math.floor(player.holdTicks / TICKS_PER_SEC),
   }));
 }
 

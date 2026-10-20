@@ -73,6 +73,11 @@ export interface BotView {
   nearestEnemy: Point | null;
   nutrients: readonly Nutrient[];
   boostReady: boolean;
+  /**
+   * Where the level is won, if anywhere - the centre of the zone to hold on
+   * a hold-the-zone level, else null.
+   */
+  objective: Point | null;
 }
 
 export interface BotDecision {
@@ -170,6 +175,12 @@ export class BotController {
     const stronger = own.count >= enemy.count * this.profile.attackRatio;
     const hungry = own.energy < HUNGRY_ENERGY;
 
+    // Where the level is won is the place to be - stronger or not, and with
+    // no retreat. Only a hungry colony eats first.
+    if (view.objective != null && (!hungry || food == null)) {
+      return { target: this.aim(view, view.objective), boost: false };
+    }
+
     if (stronger && !hungry) {
       const boost =
         this.profile.usesBoost &&
@@ -264,7 +275,8 @@ export function buildBotView(
   nearestEnemy: (from: Point) => Point | null,
   nutrients: readonly Nutrient[],
   boostReady: boolean,
-  maxEnergy: number
+  maxEnergy: number,
+  objective: Point | null
 ): BotView {
   const ownView = colonyView(own, maxEnergy);
   let enemy: ColonyView | null = null;
@@ -286,6 +298,7 @@ export function buildBotView(
     nearestEnemy: enemy == null ? null : nearestEnemy(ownView),
     nutrients,
     boostReady,
+    objective,
   };
 }
 

@@ -170,6 +170,8 @@ export class BacteriaSimulation implements Simulation {
   private zone = new Uint8Array(0);
   /** False on a map without zones - the lookups are skipped then. */
   private hasZones = false;
+  /** True on a map with a zone to hold, whose bacteria are counted. */
+  private hasHill = false;
   /** Energy snapshot of the frame start, read by the combat phase. */
   private energy = new Float32Array(0);
   /** Energy handed out by nutrients this frame. */
@@ -252,9 +254,16 @@ export class BacteriaSimulation implements Simulation {
     return this.colonies.map((colony) => {
       let sumX = 0;
       let sumY = 0;
+      let onHill = 0;
       for (const bacterium of colony.bacterias) {
         sumX += bacterium.x;
         sumY += bacterium.y;
+        if (
+          this.hasHill &&
+          this.zone[bacterium.y * this.width + bacterium.x] === ZONE_CODE.hill
+        ) {
+          onHill++;
+        }
       }
       const count = colony.bacterias.length;
       return {
@@ -265,6 +274,7 @@ export class BacteriaSimulation implements Simulation {
         lost: colony.lost,
         totalEnergy: colony.totalEnergy,
         center: count > 0 ? { x: sumX / count, y: sumY / count } : null,
+        onHill,
       };
     });
   }
@@ -372,6 +382,7 @@ export class BacteriaSimulation implements Simulation {
     const zones = mapZones(this.map, this.width, this.height);
     stampZones(this.zone, this.width, this.height, zones);
     this.hasZones = zones.length > 0;
+    this.hasHill = zones.some(({ kind }) => kind === 'hill');
     for (const wall of this.map.createWalls(this.width, this.height)) {
       stampRect(this.staticOwner, this.width, this.height, wall, WALL_CELL);
     }

@@ -19,6 +19,8 @@ export interface ColonySummary {
   totalEnergy: number;
   /** Centre of mass, null once the colony is gone. */
   center: Point | null;
+  /** Living bacteria on the zone a hold-the-zone level is won on. */
+  onHill: number;
 }
 
 /**

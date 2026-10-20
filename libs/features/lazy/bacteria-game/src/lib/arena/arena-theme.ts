@@ -237,6 +237,20 @@ const THEMES: Record<string, ArenaTheme> = {
     moteCount: 24,
     current: { x: 2, y: 1 },
   },
+  // Consoles in the dark, an alarm light sweeping the room.
+  'control-room': {
+    floor: [22, 10, 12],
+    rim: [7, 2, 3],
+    pattern: 'circuit',
+    patternColor: [90, 30, 36],
+    patternStrength: 0.4,
+    wall: [150, 120, 125],
+    wallEdge: [255, 210, 210],
+    border: [255, 70, 50],
+    motes: [255, 150, 130],
+    moteCount: 22,
+    current: { x: -1, y: 2 },
+  },
 };
 
 /**

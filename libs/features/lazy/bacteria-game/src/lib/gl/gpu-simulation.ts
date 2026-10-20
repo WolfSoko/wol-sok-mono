@@ -192,6 +192,8 @@ export class GpuSimulation implements Simulation {
   private mask = new Uint8Array(0);
   private staticMask = new Uint8Array(0);
   private maskDirty = true;
+  /** True on a map with a zone to hold, whose bacteria the report counts. */
+  private hasHill = false;
   private escapePending = false;
   private readonly pellets: NutrientPellets;
   /** The pellet generations as of the report rendered last. */
@@ -828,6 +830,7 @@ export class GpuSimulation implements Simulation {
         lost: colony.lost,
         totalEnergy: colony.totalEnergy,
         center: colony.center,
+        onHill: colony.onHill,
       };
     });
 
@@ -898,13 +901,9 @@ export class GpuSimulation implements Simulation {
   private buildMask(): void {
     this.staticMask = new Uint8Array(this.width * this.height);
     // The zones above the wall bit - a wall covers the zone under it.
-    stampZones(
-      this.staticMask,
-      this.width,
-      this.height,
-      mapZones(this.map, this.width, this.height),
-      ZONE_SHIFT
-    );
+    const zones = mapZones(this.map, this.width, this.height);
+    stampZones(this.staticMask, this.width, this.height, zones, ZONE_SHIFT);
+    this.hasHill = zones.some(({ kind }) => kind === 'hill');
     for (const wall of this.map.createWalls(this.width, this.height)) {
       stampRect(this.staticMask, this.width, this.height, wall, WALL_BIT);
     }
@@ -944,6 +943,10 @@ export class GpuSimulation implements Simulation {
       this.mask
     );
     this.maskDirty = false;
+    // Only a map with a zone to hold has its bacteria on it counted.
+    const report = resources.programs.report;
+    this.gl.useProgram(report.program);
+    this.gl.uniform1i(report.uniforms['uCountHill'], this.hasHill ? 1 : 0);
   }
 
   /** Puts each player's starting blob into a fresh state, at full energy. */
@@ -1023,6 +1026,9 @@ export class GpuSimulation implements Simulation {
       lost: 0,
       totalEnergy: counts[slot] * this.balance.maxEnergy,
       center: counts[slot] > 0 ? { x: spawn.x, y: spawn.y } : null,
+      // Counted from the first report on - the ticks before it are credited
+      // to whoever holds the zone then.
+      onHill: 0,
     }));
   }
 
@@ -1187,6 +1193,7 @@ function compiledPrograms(gl: WebGL2RenderingContext): Programs {
       'uPrevious',
       'uCellSize',
       'uBlocks',
+      'uCountHill',
       ...pellets,
     ]),
     effects: program(EFFECTS_FRAGMENT, [

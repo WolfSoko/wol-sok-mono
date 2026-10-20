@@ -247,8 +247,18 @@ colony wins (equal ones draw); a colony wiped out before still ends it at
 once. The match clock counts down on a timed level and turns red in its last
 ten seconds, the level choice notes the limit ("Timed · 2:30") and the result
 screen says that time was up. The first timed level, _Half-Life_, opens the
-Reactor chapter. The rule is part of the level, so a replay plays it again
-with its level.
+Reactor chapter.
+
+On a _hold_ level a colony also wins once it has held the map's hold zone
+(a `hill` zone, white) for `holdSec` in all: each tick, the `MatchEngine`
+credits the colony with the most bacteria on the zone - nobody on a tie
+(`zoneHolder`). Both simulations count each colony's bacteria on the zone
+in their summaries, the GPU one in two spare channels of its report. The
+HUD shows each colony's seconds held, the level choice notes the rule
+("Hold the zone · 0:30"), the bot heads for the zone unless it is hungry,
+and _Control Room_ closes the Reactor chapter with one behind four
+shields. The rule is part of the level, so a replay plays it again with
+its level.
 
 ## Zones
 
@@ -261,6 +271,8 @@ one kind:
 - **Agar** (golden) doubles the chance to divide.
 - **Ice** (pale blue) gives a bacterium a 50 % chance to sit each movement
   step out.
+- **Hold zone** (white) does nothing to the bacteria - it is the ground a
+  hold level is won on.
 - **Heat** (red) raises the colony's aggression by 0.25 there, up to 0.95 -
   the crosshair keeps a pull.
 

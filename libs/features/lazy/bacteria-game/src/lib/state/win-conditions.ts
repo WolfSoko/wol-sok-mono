@@ -1,4 +1,4 @@
-import { clock } from './fixed-tick';
+import { clock, TICKS_PER_SEC } from './fixed-tick';
 import { Player } from './player.model';
 
 /**
@@ -8,16 +8,20 @@ import { Player } from './player.model';
  * - `annihilation`: the last colony left wins - every level until now.
  * - `timed`: the same, but once `limitSec` - whole seconds - of match time
  *   have passed the biggest colony wins - a losing match ends as well.
+ * - `hold`: the same, but a colony also wins once it has held the map's
+ *   hold zone for `holdSec` in all - held while it has more bacteria on it
+ *   than any other colony.
  *
  * A replay takes the rule from its level, so a change to a level's rule
  * raises `BALANCE_VERSION`, as a change to its balance does.
  */
 export type WinRule =
   | { kind: 'annihilation' }
-  | { kind: 'timed'; limitSec: number };
+  | { kind: 'timed'; limitSec: number }
+  | { kind: 'hold'; holdSec: number };
 
 /** What ended a match. */
-export type EndReason = 'annihilation' | 'time';
+export type EndReason = 'annihilation' | 'time' | 'hold';
 
 /** How a match ended: the winner, or null for a draw - and what ended it. */
 export interface MatchOutcome {
@@ -48,11 +52,31 @@ export function judgeOutcome(
   if (players.length < 2) {
     return null;
   }
+  // A wiped out colony ends the match whatever the rule.
   const wipedOut = annihilation(players);
-  if (wipedOut !== null || rule.kind === 'annihilation') {
+  if (wipedOut !== null) {
     return wipedOut;
   }
-  return timeLeft(rule, elapsedSec) === 0 ? biggest(players) : null;
+  switch (rule.kind) {
+    case 'annihilation':
+      return null;
+    case 'timed':
+      return timeLeft(rule, elapsedSec) === 0
+        ? {
+            winner: soleLeader(players, (p) => p.bacteriaCount),
+            reason: 'time',
+          }
+        : null;
+    case 'hold': {
+      const target = rule.holdSec * TICKS_PER_SEC;
+      for (const player of players) {
+        if (player.holdTicks >= target) {
+          return { winner: player, reason: 'hold' };
+        }
+      }
+      return null;
+    }
+  }
 }
 
 /** Seconds of match time left, null for a rule without a limit. */
@@ -65,10 +89,49 @@ export function timeLeft(rule: WinRule, elapsedSec: number): number | null {
  * annihilation, which goes without saying.
  */
 export function ruleNote(rule: WinRule): string | null {
-  if (rule.kind !== 'timed') {
-    return null;
+  switch (rule.kind) {
+    case 'annihilation':
+      return null;
+    case 'timed':
+      return `Timed · ${clock(rule.limitSec)}`;
+    case 'hold':
+      return `Hold the zone · ${clock(rule.holdSec)}`;
   }
-  return `Timed · ${clock(rule.limitSec)}`;
+}
+
+/** The seconds a colony must hold the zone, null for a rule without one. */
+export function holdTarget(rule: WinRule): number | null {
+  return rule.kind === 'hold' ? rule.holdSec : null;
+}
+
+/**
+ * The colony that holds the zone this tick: the one with the most bacteria
+ * on it - null while nobody is on it, or two have as many.
+ */
+export function zoneHolder(
+  colonies: readonly { playerId: number; onHill: number }[]
+): number | null {
+  const holder = soleLeader(colonies, ({ onHill }) => onHill);
+  return holder !== null && holder.onHill > 0 ? holder.playerId : null;
+}
+
+/** The one item with the highest value - null when two share it. */
+function soleLeader<T>(
+  items: readonly T[],
+  value: (item: T) => number
+): T | null {
+  let leader: T | null = null;
+  let most = -Infinity;
+  for (const item of items) {
+    const v = value(item);
+    if (v > most) {
+      leader = item;
+      most = v;
+    } else if (v === most) {
+      leader = null;
+    }
+  }
+  return leader;
 }
 
 /** The last colony left wins; both gone at once is a draw. */
@@ -83,14 +146,4 @@ function annihilation(players: readonly Player[]): MatchOutcome | null {
   return survivors.length === 0 && fought
     ? { winner: null, reason: 'annihilation' }
     : null;
-}
-
-/** The biggest colony wins; a tie at the top is a draw. */
-function biggest(players: readonly Player[]): MatchOutcome {
-  const most = Math.max(...players.map((player) => player.bacteriaCount));
-  const leaders = players.filter((player) => player.bacteriaCount === most);
-  return {
-    winner: leaders.length === 1 ? leaders[0] : null,
-    reason: 'time',
-  };
 }

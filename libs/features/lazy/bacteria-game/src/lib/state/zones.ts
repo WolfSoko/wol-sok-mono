@@ -8,8 +8,10 @@ import { GameMap, Rect, stampRect } from './maps';
  * - `agar`: rich ground, bacteria on it divide twice as often.
  * - `ice`: bacteria on it move at half the speed.
  * - `heat`: bacteria on it hunt the enemy harder.
+ * - `hill`: the ground of a hold-the-zone level - it does nothing to the
+ *   bacteria, but the colony with the most of them on it holds it.
  */
-export type ZoneKind = 'antibiotic' | 'agar' | 'ice' | 'heat';
+export type ZoneKind = 'antibiotic' | 'agar' | 'ice' | 'heat' | 'hill';
 
 /** The kinds as the menus name them. */
 export const ZONE_NAMES: Readonly<Record<ZoneKind, string>> = {
@@ -17,6 +19,7 @@ export const ZONE_NAMES: Readonly<Record<ZoneKind, string>> = {
   agar: 'Agar',
   ice: 'Ice',
   heat: 'Heat',
+  hill: 'Hold zone',
 };
 
 /** A stretch of ground of one kind - a rect, or the ellipse in it. */
@@ -47,6 +50,7 @@ export const ZONE_CODE: Readonly<Record<ZoneKind, number>> = {
   agar: 2,
   ice: 3,
   heat: 4,
+  hill: 5,
 };
 
 /**

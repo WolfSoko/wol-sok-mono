@@ -65,6 +65,7 @@ const uint ANTIBIOTIC = ${ZONE_CODE.antibiotic}u;
 const uint AGAR = ${ZONE_CODE.agar}u;
 const uint ICE = ${ZONE_CODE.ice}u;
 const uint HEAT = ${ZONE_CODE.heat}u;
+const uint HILL = ${ZONE_CODE.hill}u;
 const ivec2 NEIGHBOURS[8] = ivec2[8](
   ivec2(-1, -1), ivec2(0, -1), ivec2(1, -1), ivec2(-1, 0),
   ivec2(1, 0), ivec2(-1, 1), ivec2(0, 1), ivec2(1, 1)
@@ -520,6 +521,7 @@ uniform usampler2D uEvents;
 uniform usampler2D uPrevious;
 uniform int uCellSize;
 uniform ivec2 uBlocks;
+uniform bool uCountHill;
 ${PELLETS}
 out uvec4 outValue;
 
@@ -548,15 +550,26 @@ void main() {
     return;
   }
   if (at.y == uBlocks.y) {
-    // The pellets' eaters - and, running on, the deaths by antibiotic in
-    // this column of the arena.
+    // The pellets' eaters - and, in this column of the arena, the deaths
+    // by antibiotic running on, and each colony's bacteria on the hill.
     uint poisoned = texelFetch(uPrevious, at, 0).y;
+    uvec2 onHill = uvec2(0u);
     if (at.x < uBlocks.x) {
       for (int y = 0; y < uSize.y; y++) {
         for (int x = 0; x < uCellSize; x++) {
           ivec2 cell = ivec2(at.x * uCellSize + x, y);
-          if (inside(cell) && (texelFetch(uEvents, cell, 0).a & POISONED) != 0u) {
+          if (!inside(cell)) {
+            continue;
+          }
+          if ((texelFetch(uEvents, cell, 0).a & POISONED) != 0u) {
             poisoned++;
+          }
+          if (!uCountHill) {
+            continue;
+          }
+          uint owner = texelFetch(uState, cell, 0).r;
+          if (owner != 0u && zoneAt(cell) == HILL) {
+            onHill[int(owner) - 1]++;
           }
         }
       }
@@ -570,7 +583,7 @@ void main() {
         }
       }
     }
-    outValue = uvec4(eaters, poisoned, 0u, 0u);
+    outValue = uvec4(eaters, poisoned, onHill);
     return;
   }
   uvec4 totals = texelFetch(uPrevious, at, 0);

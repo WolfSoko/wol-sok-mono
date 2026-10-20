@@ -49,6 +49,8 @@ export interface ColonyReport {
   /** Running totals since the match started. */
   captured: number;
   lost: number;
+  /** Bacteria on the zone a hold-the-zone level is won on. */
+  onHill: number;
 }
 
 /** Everything the CPU learns from one read back of the report. */
@@ -98,11 +100,15 @@ export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
 
     let captured = 0;
     let lost = 0;
+    let onHill = 0;
     const totalsRow = blocksY + 1;
     for (let bx = 0; bx < blocksX; bx++) {
       const texel = (totalsRow * width + bx) * 4;
       captured += data[texel + slot];
       lost += data[texel + 2 + slot];
+      // The pellet row carries the bacteria on the hold zone per column.
+      const pelletTexel = (blocksY * width + bx) * 4;
+      onHill += data[pelletTexel + 2 + slot];
     }
 
     blockCounts.push(counts);
@@ -121,6 +127,7 @@ export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
           : null,
       captured,
       lost,
+      onHill,
     });
   }
 

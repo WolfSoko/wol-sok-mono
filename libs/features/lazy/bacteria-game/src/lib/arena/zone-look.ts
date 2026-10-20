@@ -4,7 +4,8 @@ import { rgba } from './canvas-math';
 
 /**
  * The colour of each kind of zone, the same on every level so a player
- * learns it once: violet poison, golden food, pale blue ice, red heat -
+ * learns it once: violet poison, golden food, pale blue ice, red heat,
+ * white for the ground to hold -
  * red rather than orange, which the default colony wears.
  */
 export const ZONE_COLORS: Readonly<Record<ZoneKind, Rgb>> = {
@@ -12,6 +13,7 @@ export const ZONE_COLORS: Readonly<Record<ZoneKind, Rgb>> = {
   agar: [255, 215, 90],
   ice: [150, 215, 255],
   heat: [255, 60, 60],
+  hill: [255, 255, 255],
 };
 
 /** How strongly a zone tints the floor, and how strongly its rim shows. */

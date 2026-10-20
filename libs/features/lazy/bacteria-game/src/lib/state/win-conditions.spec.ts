@@ -1,4 +1,5 @@
 import { TICKS_PER_SEC } from './fixed-tick';
+import { GameMap } from './maps';
 import { MatchEngine } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import { createPlayer, Player } from './player.model';
@@ -8,6 +9,7 @@ import {
   ruleNote,
   timeLeft,
   WinRule,
+  zoneHolder,
 } from './win-conditions';
 
 describe('win conditions', () => {
@@ -123,5 +125,102 @@ describe('win conditions', () => {
     const { options } = planMatch(REACTOR);
 
     expect(options.win).toEqual({ kind: 'timed', limitSec: 150 });
+  });
+
+  describe('hold', () => {
+    const HOLD: WinRule = { kind: 'hold', holdSec: 30 };
+
+    it('gives the match to the colony that held the zone long enough', () => {
+      const players = colonies(30, 40);
+      players[1] = { ...players[1], holdTicks: 30 * TICKS_PER_SEC };
+
+      expect(judgeOutcome(HOLD, players, 50)).toEqual({
+        winner: players[1],
+        reason: 'hold',
+      });
+    });
+
+    it('goes on until then, and still ends on a wipe-out', () => {
+      const players = colonies(30, 40);
+      players[0] = { ...players[0], holdTicks: 30 * TICKS_PER_SEC - 1 };
+
+      expect(judgeOutcome(HOLD, players, 50)).toBeNull();
+      expect(judgeOutcome(HOLD, colonies(0, 40), 50)?.reason).toBe(
+        'annihilation'
+      );
+    });
+
+    it('notes the time to hold for the level choice', () => {
+      expect(ruleNote(HOLD)).toBe('Hold the zone · 0:30');
+    });
+  });
+
+  it('lets the colony with the most bacteria on the zone hold it', () => {
+    expect(
+      zoneHolder([
+        { playerId: 0, onHill: 12 },
+        { playerId: 1, onHill: 5 },
+      ])
+    ).toBe(0);
+    expect(
+      zoneHolder([
+        { playerId: 0, onHill: 5 },
+        { playerId: 1, onHill: 5 },
+      ])
+    ).toBeNull();
+    expect(
+      zoneHolder([
+        { playerId: 0, onHill: 0 },
+        { playerId: 1, onHill: 0 },
+      ])
+    ).toBeNull();
+  });
+
+  it('counts the time the zone is held, on the engine, tick by tick', () => {
+    const { spawns, options } = planMatch({
+      ...REACTOR,
+      levelId: 'control-room',
+    });
+    const engine = new MatchEngine(spawns, options);
+    try {
+      expect(options.win).toEqual({ kind: 'hold', holdSec: 30 });
+      // Nobody is on the zone at the start - nobody holds it.
+      engine.tick(320, 180);
+      expect(engine.players.map((player) => player.holdTicks)).toEqual([0, 0]);
+    } finally {
+      engine.dispose();
+    }
+  });
+
+  it('credits the colony on the zone with the time it holds it', () => {
+    // A zone over the whole left half - the left colony starts on it.
+    const leftHalf: GameMap = {
+      id: 'left-hill',
+      name: 'Left hill',
+      description: '',
+      createWalls: () => [],
+      createZones: (width, height) => [
+        { kind: 'hill', x: 0, y: 0, width: width / 2, height },
+      ],
+    };
+    const { spawns, options } = planMatch(REACTOR);
+    const engine = new MatchEngine(spawns, {
+      ...options,
+      map: leftHalf,
+      win: { kind: 'hold', holdSec: 1 },
+    });
+    try {
+      while (engine.outcome() == null) {
+        engine.tick(320, 180);
+      }
+
+      expect(engine.tickCount).toBe(TICKS_PER_SEC);
+      expect(engine.outcome()).toEqual({
+        winner: engine.players[0],
+        reason: 'hold',
+      });
+    } finally {
+      engine.dispose();
+    }
   });
 });

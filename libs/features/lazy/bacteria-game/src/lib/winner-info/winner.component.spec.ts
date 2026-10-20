@@ -85,6 +85,17 @@ describe('WinnerComponent', () => {
     expect(text()).toContain('Time is up - your colony is the bigger one');
   });
 
+  it('tells who held the zone long enough', () => {
+    store.update({
+      mode: 'vs-computer',
+      winner: createPlayer({ id: 1, name: 'Computer', isBot: true }),
+      endedBy: 'hold',
+      levelId: LEVELS[0].id,
+    });
+
+    expect(text()).toContain('The computer held the zone');
+  });
+
   it('calls a timed match between equal colonies a draw', () => {
     store.update({ winner: null, endedBy: 'time', levelId: LEVELS[0].id });
 

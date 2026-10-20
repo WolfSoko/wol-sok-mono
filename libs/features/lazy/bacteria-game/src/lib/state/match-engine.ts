@@ -24,7 +24,7 @@ import {
 } from './geometry';
 import { DEFAULT_CROSSHAIR_SPEED } from './levels';
 import { getMap } from './game-maps';
-import { GameMap } from './maps';
+import { GameMap, rectCenter } from './maps';
 import {
   createPlayer,
   isBoostReady,
@@ -38,7 +38,9 @@ import {
   MatchOutcome,
   WinRule,
   winRuleOf,
+  zoneHolder,
 } from './win-conditions';
+import { mapZones } from './zones';
 
 /** What a match needs to know about one player before it starts. */
 export interface PlayerSpawn {
@@ -156,12 +158,26 @@ export class MatchEngine {
   /** The players a recording drives, by seat. */
   private readonly ghosts: ReadonlyMap<number, GhostController>;
   private readonly win: WinRule;
+  /** The layout of the match - for the hold zone the bots head for. */
+  private readonly map: GameMap;
+  /**
+   * The colony summaries the hold time was last credited from, and the tick
+   * count up to which it was. The GPU reports a few ticks late and now and
+   * then not at all for a while: each report credits the ticks since the one
+   * before to whoever holds the zone in it.
+   */
+  private heldFrom: readonly ColonySummary[] | null = null;
+  private heldUpTo = 0;
+  /** The centre of the hold zone on the arena last asked for, by its size. */
+  private hill: { width: number; height: number; at: Point | null } | null =
+    null;
 
   public constructor(spawns: readonly PlayerSpawn[], options: MatchOptions) {
     this.seed = options.seed;
     this.balance = options.balance ?? gameBalance;
     this.ghosts = options.ghosts ?? new Map();
     this.win = winRuleOf(options);
+    this.map = options.map ?? getMap('corridors');
     this.playerList = spawns.map((spawn, index) => {
       if (spawn.isBot && !this.ghosts.has(index)) {
         this.bots.set(
@@ -190,7 +206,7 @@ export class MatchEngine {
     if (options.arena != null) {
       this.simulation.resize(options.arena.width, options.arena.height);
     }
-    this.simulation.setMap(options.map ?? getMap('corridors'));
+    this.simulation.setMap(this.map);
     const radius = this.balance.startBacteriaRadius;
     this.simulation.init(
       spawns.map((spawn, index) => ({
@@ -291,7 +307,7 @@ export class MatchEngine {
     this.runBots(width, height);
     this.simulation.step(this.playerList, TICK_SEC);
     this.tickEvents = addEvents(this.tickEvents, this.simulation.getEvents());
-    this.syncColonyStats();
+    this.syncColonyStats(true);
     this.ownsPlayers = false;
     this.ticks++;
   }
@@ -475,6 +491,27 @@ export class MatchEngine {
     }
   }
 
+  /**
+   * The centre of the zone a hold-the-zone level is won on, on an arena of
+   * that size - null on any other level.
+   */
+  private hillAt(width: number, height: number): Point | null {
+    if (this.win.kind !== 'hold') {
+      return null;
+    }
+    if (this.hill?.width !== width || this.hill.height !== height) {
+      const zone = mapZones(this.map, width, height).find(
+        ({ kind }) => kind === 'hill'
+      );
+      this.hill = {
+        width,
+        height,
+        at: zone === undefined ? null : rectCenter(zone),
+      };
+    }
+    return this.hill.at;
+  }
+
   /** Lets every computer opponent look at the arena and steer its crosshair. */
   private runBots(width: number, height: number): void {
     if (this.bots.size === 0) {
@@ -495,7 +532,8 @@ export class MatchEngine {
         (from) => this.simulation.nearestEnemy(playerId, from),
         this.simulation.getNutrients(),
         isBoostReady(player),
-        this.balance.maxEnergy
+        this.balance.maxEnergy,
+        this.hillAt(width, height)
       );
       const decision = bot.decide(view, TICK_SEC);
       if (decision.target != null) {
@@ -509,10 +547,21 @@ export class MatchEngine {
 
   /**
    * Takes the colony scoreboard over into the players - with the peak and
-   * the lowest size ratio the match is judged on.
+   * the lowest size ratio the match is judged on, and after a tick played
+   * (`ticked`) the time the hold zone was held.
    */
-  private syncColonyStats(): void {
+  private syncColonyStats(ticked = false): void {
     const colonies = this.simulation.summaries();
+    // On a hold-the-zone level, the ticks played since the last report are
+    // held by the colony with the most bacteria on the zone in this one.
+    let holder: number | null = null;
+    let held = 0;
+    if (ticked && this.win.kind === 'hold' && colonies !== this.heldFrom) {
+      this.heldFrom = colonies;
+      held = this.ticks + 1 - this.heldUpTo;
+      this.heldUpTo = this.ticks + 1;
+      holder = zoneHolder(colonies);
+    }
     for (const colony of colonies) {
       const player = this.playerList[colony.playerId];
       if (player == null) {
@@ -532,6 +581,7 @@ export class MatchEngine {
           bacteriaCount > 0 && enemyCount > 0
             ? Math.min(player.lowestSizeRatio, bacteriaCount / enemyCount)
             : player.lowestSizeRatio,
+        holdTicks: player.holdTicks + (colony.playerId === holder ? held : 0),
       });
     }
   }

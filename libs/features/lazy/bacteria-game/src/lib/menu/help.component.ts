@@ -22,6 +22,7 @@ const ZONE_RULES: Readonly<Record<ZoneKind, string>> = {
   antibiotic: 'drains energy - linger and your bacteria die.',
   ice: `bacteria crawl at ${Math.round((1 - iceStayChance) * 100)} % of their speed.`,
   heat: 'bacteria go for the enemy harder.',
+  hill: 'have the most bacteria on it long enough to win.',
 };
 
 /**
