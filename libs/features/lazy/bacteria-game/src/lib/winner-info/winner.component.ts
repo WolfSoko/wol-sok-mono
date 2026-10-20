@@ -347,14 +347,17 @@ export class WinnerComponent {
     if (player == null) {
       return 'Time is up - and both colonies are the same size. A draw!';
     }
-    if (!player.isBot) {
-      return this.mode() === 'vs-computer'
-        ? 'Time is up - your colony is the bigger one. You win!'
-        : `Time is up - ${player.name} has the bigger colony and wins!`;
+    if (this.againstGhost()) {
+      return player.isBot
+        ? 'Time is up - the ghost has the bigger colony.'
+        : 'Time is up - you beat the ghost!';
     }
-    return this.againstGhost()
-      ? 'Time is up - the ghost has the bigger colony.'
-      : 'Time is up - the computer has the bigger colony.';
+    if (player.isBot) {
+      return 'Time is up - the computer has the bigger colony.';
+    }
+    return this.mode() === 'vs-computer'
+      ? 'Time is up - your colony is the bigger one. You win!'
+      : `Time is up - ${player.name} has the bigger colony and wins!`;
   }
 }
 

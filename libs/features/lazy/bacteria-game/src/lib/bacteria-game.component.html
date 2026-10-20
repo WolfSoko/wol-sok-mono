@@ -294,11 +294,9 @@
         @if (fullscreen() && !screenOpen()) {
           <div class="stage-bar">
             <span class="hud-level">{{ level().name }}</span>
-            <span
-              class="game-time"
-              [class.running-out]="timeRunningOut()"
-              [attr.aria-label]="countingDown() ? 'Time left' : 'Game time'"
-              >{{ clockSeconds() * 1000 | date: "m:ss" : "UTC" }}</span
+            <span class="game-time" [class.running-out]="timeRunningOut()"
+              ><span class="cdk-visually-hidden">{{ clockLabel() }}: </span
+              >{{ clockText() }}</span
             >
             <span class="hud-colonies">
               @for (colony of stats(); track colony.id) {
@@ -401,8 +399,7 @@
 <ng-template #scoreboard>
   <div class="statistics">
     <span class="game-time" [class.running-out]="timeRunningOut()">{{
-      (countingDown() ? "Time left: " : "Game time: ") +
-        (clockSeconds() * 1000 | date: "m:ss" : "UTC")
+      clockLabel() + ": " + clockText()
     }}</span>
     @for (colony of stats(); track colony.id) {
       <div class="colony" [class.boosting]="colony.boosting">

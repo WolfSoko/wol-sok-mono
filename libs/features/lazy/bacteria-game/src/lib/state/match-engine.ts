@@ -34,10 +34,10 @@ import {
 import type { GhostController } from './ghost';
 import type { ReplayInputs } from './replay';
 import {
-  ANNIHILATION,
   judgeOutcome,
   MatchOutcome,
   WinRule,
+  winRuleOf,
 } from './win-conditions';
 
 /** What a match needs to know about one player before it starts. */
@@ -161,7 +161,7 @@ export class MatchEngine {
     this.seed = options.seed;
     this.balance = options.balance ?? gameBalance;
     this.ghosts = options.ghosts ?? new Map();
-    this.win = options.win ?? ANNIHILATION;
+    this.win = winRuleOf(options);
     this.playerList = spawns.map((spawn, index) => {
       if (spawn.isBot && !this.ghosts.has(index)) {
         this.bots.set(

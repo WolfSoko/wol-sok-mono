@@ -35,7 +35,7 @@ import {
 } from '../state/bot-controller';
 import { GameMode } from '../state/game.states';
 import { getLevel, levelTitle, LEVELS } from '../state/levels';
-import { ruleNote } from '../state/win-conditions';
+import { ruleNote, winRuleOf } from '../state/win-conditions';
 import { MEDAL_NAMES, medalGoal } from '../state/medallions';
 import { Progress } from '../state/progress';
 import {
@@ -224,7 +224,7 @@ export class LevelSelectComponent {
         made === null
           ? level.name
           : `${RECIPES[made.recipe].label} · difficulty ${made.difficulty}`,
-        ruleNote(level.win),
+        ruleNote(winRuleOf(level)),
       ]
         .filter((part) => part !== null)
         .join(' · '),

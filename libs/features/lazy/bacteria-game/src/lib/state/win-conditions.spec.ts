@@ -77,6 +77,10 @@ describe('win conditions', () => {
       });
     });
 
+    it('does not end a match of fewer than two colonies', () => {
+      expect(judgeOutcome(TIMED, colonies(30, 40).slice(1), 200)).toBeNull();
+    });
+
     it('still ends early when a colony is wiped out', () => {
       const players = colonies(25, 0);
 
@@ -90,7 +94,6 @@ describe('win conditions', () => {
   it('notes a time limit for the level choice', () => {
     expect(ruleNote({ kind: 'timed', limitSec: 150 })).toBe('Timed · 2:30');
     expect(ruleNote(ANNIHILATION)).toBeNull();
-    expect(ruleNote(undefined)).toBeNull();
   });
 
   it('counts the time left down on a timed level only', () => {

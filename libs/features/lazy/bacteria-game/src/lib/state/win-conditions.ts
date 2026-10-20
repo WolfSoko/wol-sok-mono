@@ -6,8 +6,11 @@ import { Player } from './player.model';
  * link can carry it:
  *
  * - `annihilation`: the last colony left wins - every level until now.
- * - `timed`: the same, but once `limitSec` of match time have passed the
- *   biggest colony wins - a losing match ends as well.
+ * - `timed`: the same, but once `limitSec` - whole seconds - of match time
+ *   have passed the biggest colony wins - a losing match ends as well.
+ *
+ * A replay takes the rule from its level, so a change to a level's rule
+ * raises `BALANCE_VERSION`, as a change to its balance does.
  */
 export type WinRule =
   | { kind: 'annihilation' }
@@ -24,6 +27,11 @@ export interface MatchOutcome {
 
 export const ANNIHILATION: WinRule = { kind: 'annihilation' };
 
+/** The rule of a level or a match - annihilation where none is set. */
+export function winRuleOf({ win }: { win?: WinRule }): WinRule {
+  return win ?? ANNIHILATION;
+}
+
 /**
  * Decides whether the match is over, after `elapsedSec` of match time.
  *
@@ -37,11 +45,14 @@ export function judgeOutcome(
   players: readonly Player[],
   elapsedSec: number
 ): MatchOutcome | null {
+  if (players.length < 2) {
+    return null;
+  }
   const wipedOut = annihilation(players);
   if (wipedOut !== null || rule.kind === 'annihilation') {
     return wipedOut;
   }
-  return elapsedSec >= rule.limitSec ? biggest(players) : null;
+  return timeLeft(rule, elapsedSec) === 0 ? biggest(players) : null;
 }
 
 /** Seconds of match time left, null for a rule without a limit. */
@@ -53,8 +64,8 @@ export function timeLeft(rule: WinRule, elapsedSec: number): number | null {
  * The rule in a few words for the level choice - "Timed · 2:30" - null for
  * annihilation, which goes without saying.
  */
-export function ruleNote(rule: WinRule | undefined): string | null {
-  if (rule?.kind !== 'timed') {
+export function ruleNote(rule: WinRule): string | null {
+  if (rule.kind !== 'timed') {
     return null;
   }
   return `Timed · ${clock(rule.limitSec)}`;
@@ -62,9 +73,6 @@ export function ruleNote(rule: WinRule | undefined): string | null {
 
 /** The last colony left wins; both gone at once is a draw. */
 function annihilation(players: readonly Player[]): MatchOutcome | null {
-  if (players.length < 2) {
-    return null;
-  }
   const survivors = players.filter((player) => player.bacteriaCount > 0);
   if (survivors.length === 1) {
     return { winner: survivors[0], reason: 'annihilation' };

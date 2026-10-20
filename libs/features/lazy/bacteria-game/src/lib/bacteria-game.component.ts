@@ -84,7 +84,7 @@ import {
   toColonyStats,
 } from './colony-stats';
 import { GameBalance } from './state/game-balance';
-import { GameFrame } from './state/fixed-tick';
+import { clock, GameFrame } from './state/fixed-tick';
 import { SteeringVector } from './state/geometry';
 import { GameStateService } from './state/game-state.service';
 import { GameMode, GameState, GameStateStore } from './state/game.states';
@@ -187,13 +187,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly running: Signal<boolean>;
   protected readonly paused: Signal<boolean>;
   /**
-   * What the match clock shows, in whole seconds so it only re-renders once
-   * a second: the time left on a timed level, else the time played.
+   * What the match clock shows, once a second: the time left on a timed
+   * level, else the time played - "1:05".
    */
-  protected readonly clockSeconds: Signal<number>;
-  /** True on a timed level, where the clock counts down. */
-  protected readonly countingDown: Signal<boolean>;
-  /** True in the last seconds of a timed level. */
+  protected readonly clockText: Signal<string>;
+  /** What the clock tells - the time left or the time played. */
+  protected readonly clockLabel: Signal<string>;
+  /** True in the last seconds of a timed match, while it is on. */
   protected readonly timeRunningOut: Signal<boolean>;
   /** True once a match is over and its result is shown, until the next one. */
   protected readonly matchOver: Signal<boolean>;
@@ -452,12 +452,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
     this.running = this.store.isMatchOn;
     this.paused = this.store.isPaused;
-    this.clockSeconds = computed(
-      () => this.store.secondsLeft() ?? this.store.gameSeconds()
+    this.clockText = computed(() =>
+      clock(this.store.secondsLeft() ?? this.store.gameSeconds())
     );
-    this.countingDown = computed(() => this.store.secondsLeft() !== null);
+    this.clockLabel = computed(() =>
+      this.store.secondsLeft() === null ? 'Game time' : 'Time left'
+    );
     this.timeRunningOut = computed(
-      () => (this.store.secondsLeft() ?? Infinity) <= RUNNING_OUT_SEC
+      () =>
+        this.running() &&
+        (this.store.secondsLeft() ?? Infinity) <= RUNNING_OUT_SEC
     );
     this.matchOver = this.store.matchEnded;
     // A resumed match picks its music up where the match clock stands, so
