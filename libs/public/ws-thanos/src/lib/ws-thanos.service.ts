@@ -110,11 +110,14 @@ export class WsThanosService {
     body.appendChild(elem);
 
     const { maxParticleCount, particleAcceleration } = this.thanosOptions;
-    const rendererChoice = this.chooseRenderer(maxParticleCount);
+    let rendererChoice: ParticleRendererChoice | undefined;
     let renderer: ParticleRenderer | undefined;
     try {
-      const capture = await this.capture(elem, rendererChoice);
+      // the scale does not matter for a warm up
+      const capture = await this.capture(elem, () => 1);
       await idle(window);
+      // take a WebGL context only now, not while waiting for idle time
+      rendererChoice = this.chooseRenderer(maxParticleCount);
       // dust skips the crack shader, the other variants compile every shader
       ({ renderer } = this.createRenderer(rendererChoice, capture, {
         particleAcceleration,
@@ -129,7 +132,7 @@ export class WsThanosService {
     } finally {
       renderer?.dispose();
       elem.remove();
-      rendererChoice.release();
+      rendererChoice?.release();
     }
   }
 
@@ -145,7 +148,10 @@ export class WsThanosService {
     const rendererChoice = this.chooseRenderer(maxParticleCount);
     let effect: RunningEffect | undefined;
 
-    return from(this.capture(elem, rendererChoice)).pipe(
+    const capture = this.capture(elem, (width, height) =>
+      rendererChoice.captureScale(width, height)
+    );
+    return from(capture).pipe(
       map((capture): RunningEffect => {
         const { renderer, particles } = this.createRenderer(
           rendererChoice,
@@ -217,11 +223,11 @@ export class WsThanosService {
   /** draw the element into an image at the scale the renderer needs */
   private async capture(
     elem: HTMLElement,
-    rendererChoice: ParticleRendererChoice
+    captureScale: ParticleRendererChoice['captureScale']
   ): Promise<Capture> {
     const window = this.document.defaultView;
     const { width, height } = elem.getBoundingClientRect();
-    const scale = rendererChoice.captureScale(width, height);
+    const scale = captureScale(width, height);
     // a canvas that is read back is drawn on the CPU: a GPU canvas would compile
     // the shaders for everything html2canvas draws on the first read back
     const canvas = this.document.createElement('canvas');
