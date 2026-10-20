@@ -8,49 +8,9 @@
  * {@link pointSymmetric}. Nothing grows into the spots the colonies start on.
  */
 
-import { distance, seeded, wrap } from './geometry';
+import { seeded, wrap } from './geometry';
+import { blob, movingBlob, nearSpawn } from './level-generator/shapes';
 import { DynamicWall, GameMap, pointSymmetric, Rect } from './maps';
-
-/**
- * How far a blob stays from where a colony starts: the largest start radius
- * any level uses, plus a few cells of air.
- */
-const SPAWN_CLEARANCE = 20;
-
-/** A round wall around a point, on whole cells so its mirror image is exact. */
-function blob(x: number, y: number, radius: number): Rect {
-  const r = Math.max(1, Math.round(radius));
-  return {
-    x: Math.round(x) - r,
-    y: Math.round(y) - r,
-    width: 2 * r,
-    height: 2 * r,
-    round: true,
-  };
-}
-
-/** A round wall that is part of a living, moving layout. */
-function movingBlob(x: number, y: number, radius: number): DynamicWall {
-  const wall = blob(x, y, radius) as DynamicWall;
-  wall.solid = true;
-  wall.warning = 0;
-  return wall;
-}
-
-/** True when a blob there would reach into one of the two start spots. */
-function nearSpawn(
-  x: number,
-  y: number,
-  radius: number,
-  width: number,
-  height: number
-): boolean {
-  return [width / 4, (width * 3) / 4].some(
-    (spawnX) =>
-      distance({ x, y }, { x: spawnX, y: height / 2 }) <
-      SPAWN_CLEARANCE + radius
-  );
-}
 
 /**
  * Air sacs of every size, packed like the inside of a lung. The colonies

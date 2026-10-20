@@ -1,3 +1,4 @@
+import { generatedLevel } from '../state/level-generator/generate-level';
 import { seeded } from '../state/geometry';
 import { HEART_PERIOD_SEC } from '../state/organic-maps';
 
@@ -452,7 +453,19 @@ export const LEVEL_MUSIC: Record<string, LevelMusic> = {
   },
 };
 
-/** The music of the level with that id, falling back to the first level's. */
+/**
+ * The music of the level with that id, falling back to the first level's. A
+ * generated level plays the music of a hand-made one of its style, with a
+ * melody of its own seed.
+ */
 export function levelMusic(levelId: string): LevelMusic {
-  return LEVEL_MUSIC[levelId] ?? LEVEL_MUSIC['petri-dish'];
+  const handMade = LEVEL_MUSIC[levelId];
+  if (handMade !== undefined) {
+    return handMade;
+  }
+  const made = generatedLevel(levelId);
+  const family = made === null ? undefined : LEVEL_MUSIC[made.family];
+  return family === undefined || made === null
+    ? LEVEL_MUSIC['petri-dish']
+    : { ...family, seed: made.seed };
 }
