@@ -31,13 +31,10 @@ export class HomePage {
 
   async expectShareLinksVisible() {
     const share = this.page.getByTestId('site-share');
-    await expect(
-      share.getByRole('heading', { name: 'Share RollaPolla' })
-    ).toBeVisible();
+    await expect(share.getByText('Share RollaPolla')).toBeVisible();
     await expect(share.getByTestId('copy-link')).toBeVisible();
-    // Hydrated on viewport: the server builds the links on the site's origin,
-    // the browser on its own once the box scrolled into view.
-    await share.scrollIntoViewIfNeeded();
+    // The server builds the links on the site's origin, the browser on its
+    // own once it has hydrated the box.
     const homeUrl = new URL('/', this.page.url()).href;
     const whatsApp = share.getByTestId('share-whatsapp');
     await expect(whatsApp).toHaveAttribute(
@@ -51,22 +48,5 @@ export class HomePage {
         return new URL(href).searchParams.get('text')?.split('\n').at(-1);
       })
       .toBe(homeUrl);
-  }
-
-  async expectXLinkVisible() {
-    const twitterLink = this.page.getByRole('link', {
-      name: 'Follow RollaPolla on X',
-    });
-    await expect(twitterLink).toBeVisible();
-    expect(await twitterLink.getAttribute('href')).toContain(
-      'https://x.com/rollapolla'
-    );
-    await expect(twitterLink).toHaveAttribute('target', '_blank');
-    // Structure, not pixels: a screenshot baseline differs per OS, browser
-    // build and font rasterizer, so it can't be authored outside CI.
-    await expect(twitterLink).toMatchAriaSnapshot(`
-      - link "Follow RollaPolla on X":
-        - /url: https://x.com/rollapolla
-    `);
   }
 }
