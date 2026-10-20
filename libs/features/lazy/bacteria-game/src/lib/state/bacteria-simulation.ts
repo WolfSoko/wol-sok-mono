@@ -1,3 +1,4 @@
+import { heatedAggression, stampZones, ZONE_CODE, ZONE_EFFECTS } from './zones';
 import type { ColonyLayer } from '../arena/colony-renderer';
 import { colonyCapacity, GameBalance, gameBalance } from './game-balance';
 import { clamp, Point } from './geometry';
@@ -112,7 +113,7 @@ interface Capture {
   victim: number;
   /** Position of the bacterium inside the victim's array. */
   victimIndex: number;
-  /** Index of the colony that killed it. */
+  /** Index of the colony that killed it, -1 when an antibiotic did. */
   winner: number;
 }
 
@@ -154,6 +155,8 @@ export class BacteriaSimulation implements Simulation {
   private baseOwner = new Int32Array(0);
   /** The static walls alone - the moving ones are stamped on top of it. */
   private staticOwner = new Int32Array(0);
+  /** The zone under each cell - see `ZONE_CODE`, 0 for none. */
+  private zone = new Uint8Array(0);
   /** Energy snapshot of the frame start, read by the combat phase. */
   private energy = new Float32Array(0);
   /** Energy handed out by nutrients this frame. */
@@ -328,6 +331,7 @@ export class BacteriaSimulation implements Simulation {
     this.owner = new Int32Array(cells);
     this.baseOwner = new Int32Array(cells).fill(EMPTY_CELL);
     this.staticOwner = new Int32Array(cells).fill(EMPTY_CELL);
+    this.zone = new Uint8Array(cells);
     this.energy = new Float32Array(cells);
     this.nutrientBonus = new Float32Array(cells);
     this.feed = new Float32Array(cells);
@@ -351,6 +355,13 @@ export class BacteriaSimulation implements Simulation {
       return;
     }
     this.staticOwner.fill(EMPTY_CELL);
+    this.zone.fill(0);
+    stampZones(
+      this.zone,
+      this.width,
+      this.height,
+      this.map.createZones?.(this.width, this.height) ?? []
+    );
     for (const wall of this.map.createWalls(this.width, this.height)) {
       stampRect(this.staticOwner, this.width, this.height, wall, WALL_CELL);
     }
@@ -730,11 +741,15 @@ export class BacteriaSimulation implements Simulation {
         let energy =
           bacterium.energy + this.nutrientBonus[index] + this.feed[index];
 
+        const poisoned = this.zone[index] === ZONE_CODE.antibiotic;
+        if (poisoned) {
+          energy -= ZONE_EFFECTS.antibioticDrainPerSec * deltaTimeSec;
+        }
         const pressure =
           enemy > 0 ? enemy + frontlinePressure - own * defenceFactor : 0;
         if (pressure > 0) {
           energy -= pressure * combatDrainPerSec * deltaTimeSec;
-        } else if (energy < maxEnergy) {
+        } else if (energy < maxEnergy && !poisoned) {
           energy = Math.min(
             maxEnergy,
             energy + energyRegenPerSec * deltaTimeSec
@@ -754,6 +769,17 @@ export class BacteriaSimulation implements Simulation {
         }
 
         const winner = strongestEnemy(enemyStrength, colonyIndex);
+        if (winner < 0 && poisoned) {
+          // The antibiotic killed it: lost, and nobody captured it.
+          this.colonies[colonyIndex].lost++;
+          captures.push({
+            bacterium,
+            victim: colonyIndex,
+            victimIndex: i,
+            winner,
+          });
+          continue;
+        }
         if (winner < 0) {
           // Nothing around that could take over - stay alive on fumes.
           bacterium.energy = Math.min(
@@ -785,13 +811,18 @@ export class BacteriaSimulation implements Simulation {
       return;
     }
     const { captureEnergy, feedEnergyPerCapture, consumeChance } = this.balance;
-    this.events.captures += captures.length;
 
     for (const capture of captures) {
-      const colony = this.colonies[capture.winner];
       const bacterium = capture.bacterium;
       const index = bacterium.y * this.width + bacterium.x;
+      if (capture.winner < 0) {
+        this.owner[index] = EMPTY_CELL;
+        this.energy[index] = 0;
+        continue;
+      }
+      const colony = this.colonies[capture.winner];
       colony.captured++;
+      this.events.captures++;
 
       if (this.random() < consumeChance) {
         // Digested completely: the cell frees up and the carrying capacity of
@@ -861,7 +892,12 @@ export class BacteriaSimulation implements Simulation {
         if (bacterium.energy < divideEnergyThreshold) {
           continue;
         }
-        if (this.random() >= chance) {
+        const onAgar =
+          this.zone[bacterium.y * this.width + bacterium.x] === ZONE_CODE.agar;
+        if (
+          this.random() >=
+          (onAgar ? chance * ZONE_EFFECTS.agarDivideFactor : chance)
+        ) {
           continue;
         }
         const cell = this.findFreeNeighbour(bacterium.x, bacterium.y);
@@ -928,6 +964,15 @@ export class BacteriaSimulation implements Simulation {
       const { aggression, steps: maxStep } = intent;
 
       for (const bacterium of colony.bacterias) {
+        const zone = this.zone[bacterium.y * this.width + bacterium.x];
+        if (
+          zone === ZONE_CODE.ice &&
+          this.random() < ZONE_EFFECTS.iceStayChance
+        ) {
+          continue;
+        }
+        const hunt =
+          zone === ZONE_CODE.heat ? heatedAggression(aggression) : aggression;
         let dirX = targetX - bacterium.x;
         let dirY = targetY - bacterium.y;
         const length = Math.sqrt(dirX * dirX + dirY * dirY);
@@ -943,8 +988,8 @@ export class BacteriaSimulation implements Simulation {
         const huntX = this.huntFieldX[huntCell];
         const huntY = this.huntFieldY[huntCell];
         if (huntX !== 0 || huntY !== 0) {
-          dirX = dirX * (1 - aggression) + huntX * aggression;
-          dirY = dirY * (1 - aggression) + huntY * aggression;
+          dirX = dirX * (1 - hunt) + huntX * hunt;
+          dirY = dirY * (1 - hunt) + huntY * hunt;
         }
 
         dirX += (this.random() - 0.5) * jitter;

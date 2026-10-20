@@ -223,6 +223,20 @@ const THEMES: Record<string, ArenaTheme> = {
     moteCount: 36,
     current: { x: 0, y: -4 },
   },
+  // A sealed hall of steel plates under cold lab light.
+  containment: {
+    floor: [14, 18, 24],
+    rim: [4, 5, 8],
+    pattern: 'grid',
+    patternColor: [50, 64, 84],
+    patternStrength: 0.35,
+    wall: [160, 170, 185],
+    wallEdge: [230, 236, 245],
+    border: [230, 240, 255],
+    motes: [200, 220, 255],
+    moteCount: 24,
+    current: { x: 2, y: 1 },
+  },
 };
 
 /**

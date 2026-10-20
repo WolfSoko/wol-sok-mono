@@ -20,12 +20,30 @@
     <span class="step-number">3</span>
     <h3 class="section-title">Eat the other colony</h3>
     <p>
-      Surround the enemy to eat it. The match ends when one colony is gone - win
-      fast and clean for a better medallion.
+      Surround the enemy to eat it. The match ends when one colony is gone, or
+      when the clock of a timed level runs out - win fast and clean for a better
+      medallion.
     </p>
   </li>
 </ol>
 <div class="screen-sections">
+  <section class="screen-section">
+    <h3 class="section-title">Ground</h3>
+    <ul class="zones">
+      @for (zone of zones; track zone.kind) {
+        <li>
+          <span
+            class="swatch"
+            aria-hidden="true"
+            [style.color]="zone.css"
+          ></span>
+          <span
+            ><strong>{{ zone.name }}</strong> - {{ zone.rule }}</span
+          >
+        </li>
+      }
+    </ul>
+  </section>
   <section class="screen-section">
     <h3 class="section-title">Keyboard</h3>
     <p>

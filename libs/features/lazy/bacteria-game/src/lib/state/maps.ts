@@ -12,6 +12,7 @@
  */
 
 import { Point, wrap } from './geometry';
+import type { Zone } from './zones';
 
 export interface Rect {
   x: number;
@@ -34,6 +35,11 @@ export interface GameMap {
   description: string;
   /** The walls for an arena of the given size. */
   createWalls(width: number, height: number): Rect[];
+  /**
+   * The zones on an arena of the given size - antibiotic, agar, ice and
+   * heat. Point symmetric like the walls; maps without any leave it out.
+   */
+  createZones?(width: number, height: number): Zone[];
   /**
    * The walls that move or open and close while the match runs, at the given
    * match time. Maps without any leave it out. Like the static walls they are

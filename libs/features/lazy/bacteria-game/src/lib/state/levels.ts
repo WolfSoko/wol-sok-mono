@@ -242,6 +242,22 @@ export const LEVELS: readonly Level[] = [
     },
     crosshairSpeed: 210,
   },
+  {
+    id: 'containment',
+    name: '14 · Containment',
+    description:
+      'Golden agar in the middle doubles division, violet antibiotic on the flanks kills whoever lingers. Ice slows, heat sends your colony at the enemy.',
+    mapId: 'containment',
+    medal: { silverSec: 100, goldSec: 65, goldLossShare: 1.2 },
+    balance: {
+      aggression: 0.85,
+      divideChancePerSec: 4.2,
+      combatDrainPerSec: 2.4,
+      nutrientCount: 10,
+      nutrientRespawnDelaySec: 1.5,
+    },
+    crosshairSpeed: 210,
+  },
 ];
 
 /** True for the id of a level of the game - a generated one included. */

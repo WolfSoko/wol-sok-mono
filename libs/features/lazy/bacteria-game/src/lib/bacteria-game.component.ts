@@ -97,6 +97,7 @@ import {
   nextLevel,
 } from './state/levels';
 import { Rect } from './state/maps';
+import { Zone } from './state/zones';
 import { MedalTier } from './state/medallions';
 import { isBoosted, Player } from './state/player.model';
 import { PlayerStore } from './state/player.store';
@@ -269,6 +270,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly balance: Signal<GameBalance>;
   /** Walls of the selected level, drawn every frame. */
   protected readonly walls: Signal<Rect[]>;
+  /** Zones of the selected level, drawn under the walls. */
+  protected readonly zones: Signal<Zone[]>;
   /** How the selected level looks and sounds. */
   protected readonly theme: Signal<ArenaTheme>;
   /** The frame colour of the arena, as a CSS `rgb()` triple. */
@@ -404,6 +407,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       const { width, height } = this.arena();
       return levelMap(this.level()).createWalls(width, height);
     });
+    this.zones = computed(() => {
+      const { width, height } = this.arena();
+      return levelMap(this.level()).createZones?.(width, height) ?? [];
+    });
     this.upcomingLevel = computed(() => nextLevel(this.level().id));
     void this.takeChallenge();
     this.theme = computed(() =>
@@ -435,6 +442,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     effect(() => {
       this.painter?.setTheme(this.theme());
       this.walls();
+      this.zones();
       this.colors();
       this.settings.look();
       this.reducedMotion();
@@ -857,6 +865,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       clear,
       deltaTimeSec,
       timeSec: this.animationSec,
+      zones: this.zones(),
       walls: this.walls(),
       dynamicWalls: this.playerService.getDynamicWalls(),
       colonies: simulation.colonyLayers(boosts),

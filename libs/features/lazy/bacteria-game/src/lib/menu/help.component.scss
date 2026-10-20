@@ -50,3 +50,28 @@ kbd {
   font-size: 0.9em;
   white-space: nowrap;
 }
+
+.zones {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+  }
+}
+
+/* A patch of the ground as the arena tints it: a pale fill and a rim. */
+.swatch {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 30%, transparent);
+  transform: translateY(2px);
+}

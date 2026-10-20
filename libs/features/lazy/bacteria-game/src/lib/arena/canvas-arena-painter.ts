@@ -52,6 +52,7 @@ export class CanvasArenaPainter implements ArenaPainter {
     // Lay the floor over the previous frame, so movement leaves a short trail.
     this.arena.drawFloor(cx, frame.clear);
     this.arena.drawMotes(cx, frame.deltaTimeSec);
+    this.arena.drawZones(cx, frame.zones);
     this.arena.drawWalls(cx, frame.walls);
     this.arena.drawDynamicWalls(cx, frame.dynamicWalls);
 

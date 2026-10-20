@@ -18,6 +18,11 @@ function scalable(map: GameMap): GameMap {
           wall.height > 0 &&
           overlapsArena(wall, width, height)
       ),
+    createZones:
+      map.createZones == null
+        ? undefined
+        : (width, height) =>
+            scaled(width, height, (w, h) => map.createZones?.(w, h) ?? []),
     createDynamicWalls:
       map.createDynamicWalls == null
         ? undefined

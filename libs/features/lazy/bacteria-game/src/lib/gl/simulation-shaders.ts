@@ -10,7 +10,8 @@
  *   that captured it in bits 0-1, the slot + 1 of the colony that lost it
  *   in bits 2-3
  *
- * Walls live in a separate R8UI mask, so a wall is never in the state.
+ * Walls live in a separate R8UI mask, so a wall is never in the state: bit
+ * 0 is the wall, the bits above it the zone under the cell (`ZONE_CODE`).
  *
  * A GPU cannot move bacteria one after the other the way the CPU does - two
  * of them would land in the same cell. So movement and division are a claim
@@ -21,6 +22,15 @@
  */
 
 import { MIN_CELL_DENSITY } from '../arena/colony-renderer';
+import { ZONE_CODE, ZONE_EFFECTS } from '../state/zones';
+
+/** The bit of the mask that marks a wall - the zone sits above it. */
+export const WALL_BIT = 1;
+
+/** A number as a GLSL float literal - "2.0", never the int "2". */
+function glslFloat(value: number): string {
+  return Number.isInteger(value) ? value.toFixed(1) : String(value);
+}
 
 /** Fixed point scale of the energy: 1.0 is stored as 16384. */
 export const ENERGY_SCALE = 16384;
@@ -45,6 +55,11 @@ uniform ivec2 uSize;
 uniform uint uSeed;
 
 const float ENERGY_SCALE = ${ENERGY_SCALE}.0;
+const uint WALL_BIT = ${WALL_BIT}u;
+const uint ANTIBIOTIC = ${ZONE_CODE.antibiotic}u;
+const uint AGAR = ${ZONE_CODE.agar}u;
+const uint ICE = ${ZONE_CODE.ice}u;
+const uint HEAT = ${ZONE_CODE.heat}u;
 const ivec2 NEIGHBOURS[8] = ivec2[8](
   ivec2(-1, -1), ivec2(0, -1), ivec2(1, -1), ivec2(-1, 0),
   ivec2(1, 0), ivec2(-1, 1), ivec2(0, 1), ivec2(1, 1)
@@ -59,7 +74,12 @@ uvec4 stateAt(ivec2 cell) {
 }
 
 bool wallAt(ivec2 cell) {
-  return !inside(cell) || texelFetch(uMask, cell, 0).r != 0u;
+  return !inside(cell) || (texelFetch(uMask, cell, 0).r & WALL_BIT) != 0u;
+}
+
+/** The zone under a cell - see \`ZONE_CODE\` - 0 for none. */
+uint zoneAt(ivec2 cell) {
+  return inside(cell) ? texelFetch(uMask, cell, 0).r >> 1u : 0u;
 }
 
 bool freeAt(ivec2 cell) {
@@ -220,12 +240,19 @@ int moveIntent(ivec2 cell) {
   if (uStep >= uSteps[colony]) {
     return -1;
   }
+  uint zone = zoneAt(cell);
+  if (zone == ICE && random(cell, stepSalt(6u)) < ${glslFloat(ZONE_EFFECTS.iceStayChance)}) {
+    return -1;
+  }
+  float aggression = zone == HEAT
+    ? min(1.0, uAggression[colony] + ${glslFloat(ZONE_EFFECTS.heatAggression)})
+    : uAggression[colony];
   vec2 towards = uTarget[colony] - vec2(cell);
   vec2 direction = length(towards) > 0.0 ? normalize(towards) : vec2(0.0);
   ivec4 hunt = texelFetch(uHunt, cell / uCellSize, 0);
   vec2 enemies = vec2(colony == 0 ? hunt.xy : hunt.zw) / 32767.0;
   if (enemies != vec2(0.0)) {
-    direction = mix(direction, enemies, uAggression[colony]);
+    direction = mix(direction, enemies, aggression);
   }
   direction += (vec2(random(cell, stepSalt(1u)), random(cell, stepSalt(2u))) - 0.5) * uJitter;
   if (length(direction) < 1e-4) {
@@ -268,7 +295,9 @@ int divideIntent(ivec2 cell) {
   if (energyOf(state) < uDivideThreshold) {
     return -1;
   }
-  if (random(cell, 21u) >= uDivideChance[colony]) {
+  float chance = uDivideChance[colony]
+    * (zoneAt(cell) == AGAR ? ${glslFloat(ZONE_EFFECTS.agarDivideFactor)} : 1.0);
+  if (random(cell, 21u) >= chance) {
     return -1;
   }
   return randomFreeNeighbour(cell, 22u);
@@ -409,10 +438,14 @@ void main() {
   float energy = energyOf(state) + float(state.b) / ENERGY_SCALE
     + uNutrientGain * float(pelletsInReach(cell));
 
+  bool poisoned = zoneAt(cell) == ANTIBIOTIC;
+  if (poisoned) {
+    energy -= ${glslFloat(ZONE_EFFECTS.antibioticDrainPerSec)} * uDt;
+  }
   float pressure = enemy > 0.0 ? enemy + uFrontlinePressure - own * uDefenceFactor : 0.0;
   if (pressure > 0.0) {
     energy -= pressure * uCombatDrain * uDt;
-  } else if (energy < uMaxEnergy) {
+  } else if (energy < uMaxEnergy && !poisoned) {
     energy = min(uMaxEnergy, energy + uRegen * uDt);
   }
   if (energy > uMaxEnergy) {
@@ -426,6 +459,11 @@ void main() {
   uint winner = strength.x == 0.0 && strength.y == 0.0
     ? 0u
     : (strength.x >= strength.y ? 1u : 2u);
+  if (winner == 0u && poisoned) {
+    // The antibiotic killed it: lost, and nobody captured it.
+    outState = uvec4(0u, 0u, 0u, owner << 2u);
+    return;
+  }
   if (winner == 0u || winner == owner) {
     // Nothing around that could take over - stay alive on fumes.
     outState = uvec4(owner, encodeEnergy(min(uMaxEnergy, uRegen * uDt)), 0u, 0u);

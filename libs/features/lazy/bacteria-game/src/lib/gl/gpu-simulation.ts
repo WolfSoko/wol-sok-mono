@@ -1,3 +1,4 @@
+import { stampZones } from '../state/zones';
 import type { StateLayer } from '../arena/colony-renderer';
 import {
   ColonySpawn,
@@ -42,6 +43,7 @@ import {
   MAX_GPU_COLONIES,
   MAX_PELLETS,
   REPORT_FRAGMENT,
+  WALL_BIT,
 } from './simulation-shaders';
 import {
   decodeReport,
@@ -868,7 +870,7 @@ export class GpuSimulation implements Simulation {
   }
 
   private readonly isOpenCell = (x: number, y: number): boolean =>
-    this.mask[y * this.width + x] === 0;
+    (this.mask[y * this.width + x] & WALL_BIT) === 0;
 
   /** Moves the gates and sliding walls on and notes what they did. */
   private advanceDynamicWalls(): void {
@@ -896,8 +898,16 @@ export class GpuSimulation implements Simulation {
   /** The static walls, and the moving ones as of the match time. */
   private buildMask(): void {
     this.staticMask = new Uint8Array(this.width * this.height);
+    // The zones above the wall bit - a wall covers the zone under it.
+    stampZones(
+      this.staticMask,
+      this.width,
+      this.height,
+      this.map.createZones?.(this.width, this.height) ?? [],
+      1
+    );
     for (const wall of this.map.createWalls(this.width, this.height)) {
-      stampRect(this.staticMask, this.width, this.height, wall, 1);
+      stampRect(this.staticMask, this.width, this.height, wall, WALL_BIT);
     }
     this.dynamicWalls =
       this.map.createDynamicWalls?.(this.width, this.height, this.elapsedSec) ??
@@ -914,7 +924,7 @@ export class GpuSimulation implements Simulation {
     this.mask.set(this.staticMask);
     for (const wall of this.dynamicWalls) {
       if (wall.solid) {
-        stampRect(this.mask, this.width, this.height, wall, 1);
+        stampRect(this.mask, this.width, this.height, wall, WALL_BIT);
       }
     }
     this.maskDirty = true;

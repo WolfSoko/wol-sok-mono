@@ -234,6 +234,24 @@ screen says that time was up. The first timed level, _Half-Life_, opens the
 Reactor chapter. The rule is part of the level, so a replay plays it again
 with its level.
 
+## Zones
+
+Besides walls, a map can lay out zones (`createZones`, point symmetric like
+the walls - [`zones.ts`](./src/lib/state/zones.ts)), each a rect or a disc of
+one kind:
+
+- **Antibiotic** (violet) drains 0.5 energy a second and stops regeneration -
+  a bacterium that lingers dies, lost without anybody capturing it.
+- **Agar** (golden) doubles the chance to divide.
+- **Ice** (pale blue) makes a bacterium sit every other movement step out.
+- **Heat** (red) raises the colony's aggression by 0.35 there.
+
+The CPU simulation keeps a zone code per cell; the GPU one keeps it above
+the wall bit of its wall mask, so no texture is added. Both painters tint
+the ground in the zone's colour with a rim around it, under the walls, and
+_How to play_ lists the four. _Containment_, the second level of the Reactor
+chapter, has all of them.
+
 ## Boost
 
 Every player has a boost (Space for the first player, Enter for the second, or

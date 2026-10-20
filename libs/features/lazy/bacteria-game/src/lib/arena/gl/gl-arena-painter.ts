@@ -261,6 +261,7 @@ export class GlArenaPainter implements ArenaPainter {
       this.background,
       theme,
       this.motes,
+      frame.zones,
       frame.walls,
       frame.dynamicWalls
     );
