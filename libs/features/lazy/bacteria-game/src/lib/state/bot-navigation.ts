@@ -8,9 +8,9 @@
  */
 
 import { BASE_ARENA } from './arena-size';
-import { clamp, Point } from './geometry';
-import { coversCell, Rect } from './maps';
-import { Zone, ZoneKind } from './zones';
+import { clamp, distance, Point } from './geometry';
+import { Rect, stampRect } from './maps';
+import { stampZones, Zone, ZONE_CODE, ZONE_EFFECTS, ZoneKind } from './zones';
 
 /** Cells of the base arena per side of a grid cell. */
 export const NAV_CELL = 4;
@@ -19,12 +19,21 @@ export const NAV_CELL = 4;
 const ZONE_COST: Readonly<Record<ZoneKind, number>> = {
   // Kills a colony that lingers - only worth crossing to save a long way.
   antibiotic: 8,
-  // Half the speed.
-  ice: 2,
+  // As much slower as the bacteria on it sit their steps out.
+  ice: 1 / (1 - ZONE_EFFECTS.iceStayChance),
   agar: 0.8,
   heat: 1,
   hill: 1,
 };
+
+/** {@link ZONE_COST} by zone code, 1 for no zone. */
+const COST_BY_CODE: readonly number[] = (() => {
+  const costs = [1];
+  for (const [kind, code] of Object.entries(ZONE_CODE)) {
+    costs[code] = ZONE_COST[kind as ZoneKind];
+  }
+  return costs;
+})();
 
 /** A cell no colony gets through. */
 const BLOCKED = Number.POSITIVE_INFINITY;
@@ -59,6 +68,9 @@ const STEPS: readonly [number, number, number][] = [
 
 /** The arena as the bot plans on it: what each grid cell costs to cross. */
 export interface NavGrid {
+  /** The arena it covers, in arena cells. */
+  width: number;
+  height: number;
   columns: number;
   rows: number;
   /** Arena cells per side of a grid cell. */
@@ -68,8 +80,9 @@ export interface NavGrid {
 }
 
 /**
- * The grid of an arena of that size: a cell is blocked where a wall covers
- * its centre, and costs what the zone under its centre costs.
+ * The grid of an arena of that size: a cell is blocked where walls cover
+ * most of it, and costs what the zone under its centre costs - laid out by
+ * the same stamping the simulations use.
  */
 export function navGrid(
   width: number,
@@ -80,24 +93,21 @@ export function navGrid(
   const cell = Math.max(1, (NAV_CELL * width) / BASE_ARENA.width);
   const columns = Math.ceil(width / cell);
   const rows = Math.ceil(height / cell);
-  const cost = new Float32Array(columns * rows).fill(1);
-  for (let row = 0; row < rows; row++) {
-    for (let column = 0; column < columns; column++) {
-      const x = Math.min(width - 1, Math.floor((column + 0.5) * cell));
-      const y = Math.min(height - 1, Math.floor((row + 0.5) * cell));
-      const index = row * columns + column;
-      if (walls.some((wall) => coversCell(wall, x, y))) {
-        cost[index] = BLOCKED;
-        continue;
-      }
-      // The last zone over a spot wins, as when the zones are stamped.
-      const zone = zones.findLast((candidate) => coversCell(candidate, x, y));
-      if (zone !== undefined) {
-        cost[index] = ZONE_COST[zone.kind];
-      }
-    }
+  const grid: NavGrid = {
+    width,
+    height,
+    columns,
+    rows,
+    cell,
+    cost: new Float32Array(columns * rows),
+  };
+  const codes = new Uint8Array(width * height);
+  stampZones(codes, width, height, zones);
+  for (let index = 0; index < grid.cost.length; index++) {
+    grid.cost[index] = COST_BY_CODE[codes[arenaIndex(grid, index)]];
   }
-  return { columns, rows, cell, cost };
+  blockWalls(grid, grid.cost, walls);
+  return grid;
 }
 
 /** The grid with these walls blocked as well - gates and sliding walls. */
@@ -106,28 +116,52 @@ export function withWalls(grid: NavGrid, walls: readonly Rect[]): NavGrid {
     return grid;
   }
   const cost = grid.cost.slice();
+  blockWalls(grid, cost, walls);
+  return { ...grid, cost };
+}
+
+/**
+ * Blocks the cells of `cost` that walls cover for the most part - a cell
+ * half open still lets a thin channel through, as it does the bacteria.
+ */
+function blockWalls(
+  grid: NavGrid,
+  cost: Float32Array,
+  walls: readonly Rect[]
+): void {
+  const { width, height, columns, cell } = grid;
+  const solid = new Uint8Array(width * height);
   for (const wall of walls) {
-    const fromColumn = Math.max(0, Math.floor(wall.x / grid.cell));
-    const toColumn = Math.min(
-      grid.columns - 1,
-      Math.floor((wall.x + wall.width) / grid.cell)
-    );
-    const fromRow = Math.max(0, Math.floor(wall.y / grid.cell));
-    const toRow = Math.min(
-      grid.rows - 1,
-      Math.floor((wall.y + wall.height) / grid.cell)
-    );
-    for (let row = fromRow; row <= toRow; row++) {
-      for (let column = fromColumn; column <= toColumn; column++) {
-        const x = Math.floor((column + 0.5) * grid.cell);
-        const y = Math.floor((row + 0.5) * grid.cell);
-        if (coversCell(wall, x, y)) {
-          cost[row * grid.columns + column] = BLOCKED;
-        }
-      }
+    stampRect(solid, width, height, wall, 1);
+  }
+  const covered = new Uint16Array(cost.length);
+  const area = new Uint16Array(cost.length);
+  for (let y = 0; y < height; y++) {
+    const row = Math.floor(y / cell) * columns;
+    for (let x = 0; x < width; x++) {
+      const index = row + Math.floor(x / cell);
+      area[index]++;
+      covered[index] += solid[y * width + x];
     }
   }
-  return { ...grid, cost };
+  for (let index = 0; index < cost.length; index++) {
+    if (2 * covered[index] > area[index]) {
+      cost[index] = BLOCKED;
+    }
+  }
+}
+
+/** The arena cell at the centre of a grid cell, as an index into the arena. */
+function arenaIndex(grid: NavGrid, index: number): number {
+  const x = Math.min(
+    grid.width - 1,
+    Math.floor(((index % grid.columns) + 0.5) * grid.cell)
+  );
+  const y = Math.min(
+    grid.height - 1,
+    Math.floor((Math.floor(index / grid.columns) + 0.5) * grid.cell)
+  );
+  return y * grid.width + x;
 }
 
 /** The travel distances out from one spot - see {@link flood}. */
@@ -210,8 +244,23 @@ export function travel(field: NavField, to: Point): number {
  */
 export function waypoint(field: NavField, to: Point): Point {
   const { grid } = field;
-  const goal = nearestOpen(grid, cellOf(grid, to));
-  if (goal < 0 || field.start < 0 || !isFinite(field.distance[goal])) {
+  if (field.start < 0) {
+    return to;
+  }
+  let goal = nearestOpen(grid, cellOf(grid, to));
+  if (goal < 0 || !isFinite(field.distance[goal])) {
+    // Out of reach - behind a shut gate, say: as close as the colony gets,
+    // rather than into the wall.
+    goal = closestReached(field, to);
+    to = centreOf(grid, goal);
+  }
+  const from = centreOf(grid, field.start);
+  const line = lineOf(grid, from, to);
+  if (
+    line === 'clear' ||
+    (line === 'walled' &&
+      field.distance[goal] <= distance(from, to) * DETOUR_LIMIT)
+  ) {
     return to;
   }
   const path: number[] = [];
@@ -219,19 +268,10 @@ export function waypoint(field: NavField, to: Point): Point {
     path.push(index);
   }
   path.reverse();
-  const from = centreOf(grid, field.start);
-  const line = lineOf(grid, from, to);
-  const straight = Math.hypot(to.x - from.x, to.y - from.y);
-  if (
-    line === 'clear' ||
-    (line === 'walled' && field.distance[goal] <= straight * DETOUR_LIMIT)
-  ) {
-    return to;
-  }
   let reach = 0;
   while (
     reach + 1 < path.length &&
-    clearLine(grid, from, centreOf(grid, path[reach + 1]))
+    lineOf(grid, from, centreOf(grid, path[reach + 1])) === 'clear'
   ) {
     reach++;
   }
@@ -239,39 +279,72 @@ export function waypoint(field: NavField, to: Point): Point {
   return centreOf(grid, path[Math.max(reach, lead)]);
 }
 
-/** True when the straight line between two points crosses no costly cell. */
-function clearLine(grid: NavGrid, from: Point, to: Point): boolean {
-  return lineOf(grid, from, to) === 'clear';
-}
-
 /**
  * What the straight line between two points crosses: nothing in the way,
  * only walls - a colony slides along those - or ground worth going round.
+ * The ground at either end does not count: there is no way round what the
+ * colony stands on, or what it is after.
  */
-function lineOf(
+export function lineOf(
   grid: NavGrid,
   from: Point,
   to: Point
 ): 'clear' | 'walled' | 'costly' {
-  const length = Math.hypot(to.x - from.x, to.y - from.y);
-  const steps = Math.max(1, Math.ceil((2 * length) / grid.cell));
+  const steps = Math.max(1, Math.ceil((2 * distance(from, to)) / grid.cell));
+  const first = cellOf(grid, from);
+  const last = cellOf(grid, to);
   let walled = false;
+  let previous = first;
   for (let step = 0; step <= steps; step++) {
     const t = step / steps;
-    const cost =
-      grid.cost[
-        cellOf(grid, {
-          x: from.x + (to.x - from.x) * t,
-          y: from.y + (to.y - from.y) * t,
-        })
-      ];
-    if (cost === BLOCKED) {
+    const index = cellAt(
+      grid,
+      from.x + (to.x - from.x) * t,
+      from.y + (to.y - from.y) * t
+    );
+    const cost = grid.cost[index];
+    if (cost === BLOCKED || cutsCorner(grid, previous, index)) {
       walled = true;
-    } else if (cost > DETOUR_COST) {
+    } else if (cost > DETOUR_COST && index !== first && index !== last) {
       return 'costly';
     }
+    previous = index;
   }
   return walled ? 'walled' : 'clear';
+}
+
+/**
+ * True for a diagonal step between two cells whose shared corner two
+ * walls meet at - a seam the flood does not pass either.
+ */
+function cutsCorner(grid: NavGrid, from: number, to: number): boolean {
+  const fromColumn = from % grid.columns;
+  const toColumn = to % grid.columns;
+  const fromRow = Math.floor(from / grid.columns);
+  const toRow = Math.floor(to / grid.columns);
+  return (
+    fromColumn !== toColumn &&
+    fromRow !== toRow &&
+    (grid.cost[fromRow * grid.columns + toColumn] === BLOCKED ||
+      grid.cost[toRow * grid.columns + fromColumn] === BLOCKED)
+  );
+}
+
+/** The cell the flood reached that lies closest to a point. */
+function closestReached(field: NavField, to: Point): number {
+  let best = field.start;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (let index = 0; index < field.distance.length; index++) {
+    if (!isFinite(field.distance[index])) {
+      continue;
+    }
+    const gap = distance(centreOf(field.grid, index), to);
+    if (gap < bestDistance) {
+      best = index;
+      bestDistance = gap;
+    }
+  }
+  return best;
 }
 
 function inGrid(grid: NavGrid, column: number, row: number): boolean {
@@ -279,8 +352,12 @@ function inGrid(grid: NavGrid, column: number, row: number): boolean {
 }
 
 function cellOf(grid: NavGrid, point: Point): number {
-  const column = clamp(Math.floor(point.x / grid.cell), 0, grid.columns - 1);
-  const row = clamp(Math.floor(point.y / grid.cell), 0, grid.rows - 1);
+  return cellAt(grid, point.x, point.y);
+}
+
+function cellAt(grid: NavGrid, x: number, y: number): number {
+  const column = clamp(Math.floor(x / grid.cell), 0, grid.columns - 1);
+  const row = clamp(Math.floor(y / grid.cell), 0, grid.rows - 1);
   return row * grid.columns + column;
 }
 
@@ -299,35 +376,24 @@ function nearestOpen(grid: NavGrid, index: number): number {
   if (grid.cost[index] !== BLOCKED) {
     return index;
   }
+  // Rare - a scan of the whole grid is cheap enough.
   const column = index % grid.columns;
   const row = Math.floor(index / grid.columns);
-  const most = Math.max(grid.columns, grid.rows);
-  for (let ring = 1; ring < most; ring++) {
-    let best = -1;
-    let bestSquared = Number.POSITIVE_INFINITY;
-    for (let dy = -ring; dy <= ring; dy++) {
-      for (let dx = -ring; dx <= ring; dx++) {
-        if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) {
-          continue;
-        }
-        const x = column + dx;
-        const y = row + dy;
-        const squared = dx * dx + dy * dy;
-        if (
-          inGrid(grid, x, y) &&
-          grid.cost[y * grid.columns + x] !== BLOCKED &&
-          squared < bestSquared
-        ) {
-          best = y * grid.columns + x;
-          bestSquared = squared;
-        }
-      }
+  let best = -1;
+  let bestSquared = Number.POSITIVE_INFINITY;
+  for (let other = 0; other < grid.cost.length; other++) {
+    if (grid.cost[other] === BLOCKED) {
+      continue;
     }
-    if (best >= 0) {
-      return best;
+    const dx = (other % grid.columns) - column;
+    const dy = Math.floor(other / grid.columns) - row;
+    const squared = dx * dx + dy * dy;
+    if (squared < bestSquared) {
+      best = other;
+      bestSquared = squared;
     }
   }
-  return -1;
+  return best;
 }
 
 /** A binary heap of cells by travel cost, cheapest first. */

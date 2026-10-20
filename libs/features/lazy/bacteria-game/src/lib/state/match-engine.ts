@@ -44,6 +44,7 @@ import {
 import { mapZones } from './zones';
 import {
   flood,
+  lineOf,
   NavField,
   NavGrid,
   navGrid,
@@ -509,11 +510,18 @@ export class MatchEngine {
    * not every tick.
    */
   private routesFrom(from: Point, width: number, height: number): BotRoutes {
+    let grid: NavGrid | null = null;
     let field: NavField | null = null;
-    const field$ = () => (field ??= flood(this.navGridAt(width, height), from));
+    const grid$ = () => (grid ??= this.navGridAt(width, height));
+    const field$ = () => (field ??= flood(grid$(), from));
+    // A clear straight line needs no flood - most decisions on open ground.
+    const clear = (to: Point) => lineOf(grid$(), from, to) === 'clear';
     return {
-      waypoint: (to) => waypoint(field$(), to),
-      travel: (to) => travel(field$(), to),
+      waypoint: (to) => (clear(to) ? to : waypoint(field$(), to)),
+      travel: (to) =>
+        clear(to)
+          ? Math.hypot(to.x - from.x, to.y - from.y)
+          : travel(field$(), to),
     };
   }
 

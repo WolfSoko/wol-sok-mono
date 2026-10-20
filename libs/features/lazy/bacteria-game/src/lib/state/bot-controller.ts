@@ -210,7 +210,9 @@ export class BotController {
       return { target: this.aim(view, food), boost: false };
     }
     return {
-      target: this.aim(view, this.retreatPoint(own, enemy)),
+      // Straight away - a way round to a spot behind a wall could lead past
+      // the enemy.
+      target: this.aim(view, this.retreatPoint(own, enemy), false),
       boost: false,
     };
   }
@@ -244,7 +246,11 @@ export class BotController {
         continue;
       }
       let cost = ownDistance;
-      if (view.enemy != null && distance(nutrient, view.enemy) < ownDistance) {
+      // Who is closer, as the crow flies on both sides.
+      if (
+        view.enemy != null &&
+        distance(nutrient, view.enemy) < distance(nutrient, view.own)
+      ) {
         cost += CONTESTED_PENALTY * this.unit;
       }
       if (cost < bestCost) {
@@ -278,8 +284,8 @@ export class BotController {
    * Sends the crosshair on the way to a point - round the walls in between
    * - with the profile's aiming error, inside the arena.
    */
-  private aim(view: BotView, destination: Point): Point {
-    const point = view.routes.waypoint(destination);
+  private aim(view: BotView, destination: Point, route = true): Point {
+    const point = route ? view.routes.waypoint(destination) : destination;
     const noise = this.profile.aimNoise * this.unit;
     return {
       x: clamp(point.x + (this.random() - 0.5) * 2 * noise, 0, view.width),
@@ -303,7 +309,7 @@ export function buildBotView(
   boostReady: boolean,
   maxEnergy: number,
   objective: Point | null,
-  routes: (from: Point) => BotRoutes = straightRoutes
+  routes: (from: Point) => BotRoutes
 ): BotView {
   const ownView = colonyView(own, maxEnergy);
   let enemy: ColonyView | null = null;

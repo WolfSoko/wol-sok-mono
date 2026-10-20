@@ -45,8 +45,11 @@ describe('bot navigation', () => {
     const field = flood(navGrid(WIDTH, HEIGHT, box, []), from);
 
     expect(travel(field, to)).toBe(Number.POSITIVE_INFINITY);
-    // With nowhere to go, the crosshair is sent at the point itself.
-    expect(waypoint(field, to)).toEqual(to);
+    // As close as the colony gets - outside the box, not into its wall.
+    const next = waypoint(field, to);
+    const inBox = next.x > 200 && next.x < 280 && next.y > 20 && next.y < 66;
+    expect(inBox).toBe(false);
+    expect(Math.hypot(next.x - to.x, next.y - to.y)).toBeLessThan(50);
   });
 
   it('goes round antibiotic when the way round is short', () => {
@@ -74,6 +77,19 @@ describe('bot navigation', () => {
 
     expect(open).toBeLessThan(Number.POSITIVE_INFINITY);
     expect(shut).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it('keeps a thin channel open that walls only half fill', () => {
+    // Two walls 6 cells apart leave a channel narrower than two grid cells.
+    const walls: Rect[] = [
+      { x: 0, y: 70, width: 157, height: 20 },
+      { x: 163, y: 70, width: 157, height: 20 },
+    ];
+    const field = flood(navGrid(WIDTH, HEIGHT, walls, []), from);
+
+    expect(travel(field, { x: 80, y: 140 })).toBeLessThan(
+      Number.POSITIVE_INFINITY
+    );
   });
 
   it('starts from the nearest open spot when the colony sits on a wall', () => {
