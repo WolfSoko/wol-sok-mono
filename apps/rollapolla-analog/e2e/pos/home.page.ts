@@ -52,21 +52,4 @@ export class HomePage {
       })
       .toBe(homeUrl);
   }
-
-  async expectXLinkVisible() {
-    const twitterLink = this.page.getByRole('link', {
-      name: 'Follow RollaPolla on X',
-    });
-    await expect(twitterLink).toBeVisible();
-    expect(await twitterLink.getAttribute('href')).toContain(
-      'https://x.com/rollapolla'
-    );
-    await expect(twitterLink).toHaveAttribute('target', '_blank');
-    // Structure, not pixels: a screenshot baseline differs per OS, browser
-    // build and font rasterizer, so it can't be authored outside CI.
-    await expect(twitterLink).toMatchAriaSnapshot(`
-      - link "Follow RollaPolla on X":
-        - /url: https://x.com/rollapolla
-    `);
-  }
 }
