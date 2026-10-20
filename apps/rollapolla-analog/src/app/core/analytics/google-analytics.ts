@@ -2,30 +2,29 @@ import {
   afterNextRender,
   EnvironmentProviders,
   inject,
-  Injector,
   makeEnvironmentProviders,
   provideEnvironmentInitializer,
 } from '@angular/core';
-import {
-  Analytics,
-  getAnalytics,
-  provideAnalytics,
-} from '@angular/fire/analytics';
+import { getAnalytics, provideAnalytics } from '@angular/fire/analytics';
 import { FirebaseApp } from '@angular/fire/app';
+import { AnalyticsConsent } from './analytics-consent';
+import { ConsentPrompt } from './consent-settings.component';
 
 /**
  * Firebase Analytics for the GA4 property of the Firebase app (its
- * `measurementId`). Page views, the first and those on in-app navigation,
- * come from GA4's enhanced measurement.
+ * `measurementId`), once the visitor consents. Page views, the first and those
+ * on in-app navigation, come from GA4's enhanced measurement.
  */
 export function provideGoogleAnalytics(): EnvironmentProviders {
   return makeEnvironmentProviders([
     provideAnalytics((injector) => getAnalytics(injector.get(FirebaseApp))),
-    // AngularFire creates the instance (and loads gtag.js) on first injection,
-    // after the first render so it does not compete with hydration
+    AnalyticsConsent,
+    { provide: ConsentPrompt, useExisting: AnalyticsConsent },
+    // after the first render, so neither gtag.js nor the banner competes with
+    // hydration
     provideEnvironmentInitializer(() => {
-      const injector = inject(Injector);
-      afterNextRender(() => injector.get(Analytics));
+      const consent = inject(AnalyticsConsent);
+      afterNextRender(() => consent.restore());
     }),
   ]);
 }
