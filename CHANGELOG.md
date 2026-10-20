@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.29.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.28.1...v74.29.0) (2026-10-20)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ zones - antibiotic, agar, ice and heat ([#2508](https://github.com/WolfSoko/wol-sok-mono/issues/2508)) ([12b8b16](https://github.com/WolfSoko/wol-sok-mono/commit/12b8b16deb7f9236c9585ca4c7b157becff7edf2))
+
 ## [74.28.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.28.0...v74.28.1) (2026-10-20)
 
 ### Bug Fixes
