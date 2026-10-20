@@ -10,8 +10,7 @@ import {
   initializeApp,
   provideFirebaseApp,
 } from '@angular/fire/app';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { AnalyticsConsent } from './analytics-consent';
+import { ConsentChoice, ConsentPrompt } from './consent';
 import { provideGoogleAnalytics } from './google-analytics';
 
 const analyticsInstance = {};
@@ -23,6 +22,15 @@ vi.mock('@angular/fire/analytics', async (importOriginal) => ({
   setAnalyticsCollectionEnabled: vi.fn(),
 }));
 
+const STORAGE_KEY = 'rap-analytics-consent';
+
+const GRANTED_DEFAULT = {
+  analytics_storage: 'granted',
+  ad_storage: 'denied',
+  ad_user_data: 'denied',
+  ad_personalization: 'denied',
+};
+
 describe('provideGoogleAnalytics', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -30,91 +38,96 @@ describe('provideGoogleAnalytics', () => {
   });
 
   afterEach(() => {
-    document.querySelector('.cdk-overlay-container')?.remove();
+    document.cookie = 'other=; max-age=0; path=/';
   });
 
-  function render(): void {
+  /** Renders once, with the choice stored on an earlier visit. */
+  async function render(stored?: ConsentChoice): Promise<ConsentPrompt> {
+    if (stored) {
+      localStorage.setItem(STORAGE_KEY, stored);
+    }
     TestBed.configureTestingModule({
       providers: [
-        provideNoopAnimations(),
         provideFirebaseApp(() => initializeApp({ appId: 'test' })),
         provideGoogleAnalytics(),
       ],
     });
     TestBed.inject(ApplicationRef).tick();
+    await vi.dynamicImportSettled();
+    return TestBed.inject(ConsentPrompt);
   }
 
-  function banner(): Element | null {
-    return document.querySelector('[data-testid="consent-banner"]');
+  async function decide(
+    consent: ConsentPrompt,
+    choice: ConsentChoice
+  ): Promise<void> {
+    consent.decide(choice);
+    await vi.dynamicImportSettled();
   }
 
-  function click(testId: string): void {
-    document
-      .querySelector<HTMLButtonElement>(`[data-testid="${testId}"]`)
-      ?.click();
+  function setAnalyticsCookies(): void {
+    document.cookie = '_ga=GA1.1.1; path=/';
+    document.cookie = '_ga_6ZM8TB6QCY=GS1.1.1; path=/';
+    document.cookie = 'other=kept; path=/';
   }
 
-  it('asks first and loads nothing before the visitor accepts', () => {
-    render();
+  it('asks first and loads nothing before the visitor accepts', async () => {
+    const consent = await render();
 
-    expect(banner()).not.toBeNull();
+    expect(consent.asking()).toBe(true);
     expect(getAnalytics).not.toHaveBeenCalled();
   });
 
-  it('starts analytics with ads denied once the visitor accepts', () => {
-    render();
+  it('starts analytics with ads denied once the visitor accepts', async () => {
+    const consent = await render();
 
-    click('consent-accept');
+    await decide(consent, 'granted');
 
-    expect(setConsent).toHaveBeenCalledExactlyOnceWith({
-      analytics_storage: 'granted',
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-    });
+    expect(consent.asking()).toBe(false);
+    expect(setConsent).toHaveBeenCalledExactlyOnceWith(GRANTED_DEFAULT);
     expect(getAnalytics).toHaveBeenCalledExactlyOnceWith(
       TestBed.inject(FirebaseApp)
     );
     expect(vi.mocked(setConsent).mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(getAnalytics).mock.invocationCallOrder[0]
     );
-    expect(localStorage.getItem('rap-analytics-consent')).toBe('granted');
+    expect(localStorage.getItem(STORAGE_KEY)).toBe('granted');
   });
 
-  it('loads nothing when the visitor declines', () => {
-    render();
+  it('loads nothing when the visitor declines', async () => {
+    const consent = await render();
 
-    click('consent-decline');
+    await decide(consent, 'denied');
 
+    expect(consent.asking()).toBe(false);
     expect(getAnalytics).not.toHaveBeenCalled();
     expect(setConsent).not.toHaveBeenCalled();
-    expect(localStorage.getItem('rap-analytics-consent')).toBe('denied');
+    expect(localStorage.getItem(STORAGE_KEY)).toBe('denied');
   });
 
-  it('starts analytics right away when granted on an earlier visit', () => {
-    localStorage.setItem('rap-analytics-consent', 'granted');
+  it('starts analytics right away when granted on an earlier visit', async () => {
+    const consent = await render('granted');
 
-    render();
-
-    expect(banner()).toBeNull();
+    expect(consent.asking()).toBe(false);
     expect(getAnalytics).toHaveBeenCalledOnce();
   });
 
-  it('neither asks nor loads when declined on an earlier visit', () => {
-    localStorage.setItem('rap-analytics-consent', 'denied');
+  it('neither asks nor loads when declined on an earlier visit, and removes old GA cookies', async () => {
+    setAnalyticsCookies();
 
-    render();
+    const consent = await render('denied');
 
-    expect(banner()).toBeNull();
+    expect(consent.asking()).toBe(false);
     expect(getAnalytics).not.toHaveBeenCalled();
+    expect(document.cookie).toBe('other=kept');
   });
 
-  it('stops collecting when the visitor withdraws consent', () => {
-    localStorage.setItem('rap-analytics-consent', 'granted');
-    render();
+  it('stops collecting and removes the GA cookies when the visitor withdraws consent', async () => {
+    const consent = await render('granted');
+    setAnalyticsCookies();
     vi.mocked(setConsent).mockClear();
 
-    TestBed.inject(AnalyticsConsent).decide('denied');
+    await decide(consent, 'denied');
 
     expect(setConsent).toHaveBeenCalledExactlyOnceWith({
       analytics_storage: 'denied',
@@ -123,47 +136,17 @@ describe('provideGoogleAnalytics', () => {
       analyticsInstance,
       false
     );
-    expect(getAnalytics).toHaveBeenCalledOnce();
-    expect(localStorage.getItem('rap-analytics-consent')).toBe('denied');
-  });
-
-  it('removes the Google Analytics cookies when consent is withdrawn', () => {
-    localStorage.setItem('rap-analytics-consent', 'granted');
-    render();
-    document.cookie = '_ga=GA1.1.1; path=/';
-    document.cookie = '_ga_6ZM8TB6QCY=GS1.1.1; path=/';
-    document.cookie = 'other=kept; path=/';
-
-    TestBed.inject(AnalyticsConsent).decide('denied');
-
     expect(document.cookie).toBe('other=kept');
-    document.cookie = 'other=; max-age=0; path=/';
-  });
-
-  it('starts analytics with ads denied when a visitor who declined accepts', () => {
-    localStorage.setItem('rap-analytics-consent', 'denied');
-    render();
-
-    TestBed.inject(AnalyticsConsent).decide('granted');
-
-    expect(setConsent).toHaveBeenCalledExactlyOnceWith({
-      analytics_storage: 'granted',
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-    });
     expect(getAnalytics).toHaveBeenCalledOnce();
-    expect(setAnalyticsCollectionEnabled).not.toHaveBeenCalled();
+    expect(localStorage.getItem(STORAGE_KEY)).toBe('denied');
   });
 
-  it('collects again when the visitor grants consent after withdrawing', () => {
-    localStorage.setItem('rap-analytics-consent', 'granted');
-    render();
-    const consent = TestBed.inject(AnalyticsConsent);
-    consent.decide('denied');
+  it('collects again when the visitor grants consent after withdrawing', async () => {
+    const consent = await render('granted');
+    await decide(consent, 'denied');
     vi.mocked(setConsent).mockClear();
 
-    consent.decide('granted');
+    await decide(consent, 'granted');
 
     expect(setConsent).toHaveBeenCalledExactlyOnceWith({
       analytics_storage: 'granted',
@@ -173,5 +156,15 @@ describe('provideGoogleAnalytics', () => {
       true
     );
     expect(getAnalytics).toHaveBeenCalledOnce();
+  });
+
+  it('starts analytics with ads denied when a visitor who declined accepts', async () => {
+    const consent = await render('denied');
+
+    await decide(consent, 'granted');
+
+    expect(setConsent).toHaveBeenCalledExactlyOnceWith(GRANTED_DEFAULT);
+    expect(getAnalytics).toHaveBeenCalledOnce();
+    expect(setAnalyticsCollectionEnabled).not.toHaveBeenCalled();
   });
 });

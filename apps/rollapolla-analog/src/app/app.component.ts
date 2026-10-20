@@ -6,12 +6,14 @@ import { RouterLink, RouterOutlet } from '@angular/router';
 import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
 import { icon } from '@fortawesome/fontawesome-svg-core';
 import { AccountComponent } from './core/account/account.component';
+import { ConsentBannerComponent } from './core/analytics/consent-banner.component';
 import { ConsentSettingsComponent } from './core/analytics/consent-settings.component';
 
 @Component({
   selector: 'rap-root',
   imports: [
     AccountComponent,
+    ConsentBannerComponent,
     ConsentSettingsComponent,
     MatButtonModule,
     MatIconModule,
@@ -79,6 +81,7 @@ import { ConsentSettingsComponent } from './core/analytics/consent-settings.comp
         </nav>
       </div>
     </footer>
+    <rap-consent-banner />
   `,
   styles: `
     .site-header {

@@ -1,71 +1,79 @@
-import { inject, Injectable, Injector } from '@angular/core';
-import {
-  Analytics,
-  setAnalyticsCollectionEnabled,
-  setConsent,
-} from '@angular/fire/analytics';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import {
-  ConsentBannerComponent,
-  ConsentBannerData,
-} from './consent-banner.component';
+import { inject, Injectable, Injector, signal } from '@angular/core';
+import type { Analytics } from '@angular/fire/analytics';
+import { FirebaseApp } from '@angular/fire/app';
 import { ConsentChoice, ConsentPrompt } from './consent';
 
 const STORAGE_KEY = 'rap-analytics-consent';
 
+interface StartedAnalytics {
+  sdk: typeof import('@angular/fire/analytics');
+  instance: Analytics;
+}
+
 /**
- * Google Consent Mode for Firebase Analytics, in its basic form: gtag.js loads
- * only once the visitor has granted analytics storage. Ad storage, ad user data
- * and ad personalization stay denied; RollaPolla shows no ads.
+ * Google Consent Mode for Firebase Analytics, in its basic form: the SDK and
+ * gtag.js load only once the visitor has granted analytics storage. Ad storage,
+ * ad user data and ad personalization stay denied; RollaPolla shows no ads.
  */
 @Injectable()
 export class AnalyticsConsent implements ConsentPrompt {
   private readonly injector = inject(Injector);
-  private readonly snackBar = inject(MatSnackBar);
-  private choice = loadChoice();
-  private analytics?: Analytics;
+  private readonly askingState = signal(false);
+  private analytics?: Promise<StartedAnalytics>;
+
+  public readonly asking = this.askingState.asReadonly();
 
   /** Applies the choice made on an earlier visit, or asks for one. */
   public restore(): void {
-    if (this.choice === null) {
+    const choice = loadChoice();
+    if (choice === null) {
       this.ask();
     } else {
-      this.apply(this.choice);
+      this.apply(choice);
     }
   }
 
   public ask(): void {
-    this.snackBar.openFromComponent<ConsentBannerComponent, ConsentBannerData>(
-      ConsentBannerComponent,
-      { data: { decide: (choice) => this.decide(choice) } }
-    );
+    this.askingState.set(true);
   }
 
   public decide(choice: ConsentChoice): void {
-    this.choice = choice;
+    this.askingState.set(false);
     saveChoice(choice);
     this.apply(choice);
   }
 
   private apply(choice: ConsentChoice): void {
     if (this.analytics) {
-      setConsent({ analytics_storage: choice });
-      setAnalyticsCollectionEnabled(this.analytics, choice === 'granted');
-      if (choice === 'denied') {
-        deleteAnalyticsCookies();
-      }
-    } else if (choice === 'granted') {
-      // set before the instance exists, the SDK sends it as the consent default
-      // ahead of its first hit; an update sent now would overtake that default
-      setConsent({
-        analytics_storage: 'granted',
-        ad_storage: 'denied',
-        ad_user_data: 'denied',
-        ad_personalization: 'denied',
+      void this.analytics.then(({ sdk, instance }) => {
+        sdk.setConsent({ analytics_storage: choice });
+        sdk.setAnalyticsCollectionEnabled(instance, choice === 'granted');
+        if (choice === 'denied') {
+          deleteAnalyticsCookies();
+        }
       });
-      // AngularFire creates the instance, and loads gtag.js, on first injection
-      this.analytics = this.injector.get(Analytics);
+    } else if (choice === 'granted') {
+      this.analytics = this.start();
+    } else {
+      // left from before consent was asked for
+      deleteAnalyticsCookies();
     }
+  }
+
+  private async start(): Promise<StartedAnalytics> {
+    const sdk = await import('@angular/fire/analytics');
+    // set before the instance exists, the SDK sends it as the consent default
+    // ahead of its first hit; an update sent now would overtake that default
+    sdk.setConsent({
+      analytics_storage: 'granted',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+    });
+    return {
+      sdk,
+      instance: sdk.getAnalytics(this.injector.get(FirebaseApp)),
+    };
   }
 }
 

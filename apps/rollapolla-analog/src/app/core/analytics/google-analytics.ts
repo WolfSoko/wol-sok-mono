@@ -5,8 +5,6 @@ import {
   makeEnvironmentProviders,
   provideEnvironmentInitializer,
 } from '@angular/core';
-import { getAnalytics, provideAnalytics } from '@angular/fire/analytics';
-import { FirebaseApp } from '@angular/fire/app';
 import { AnalyticsConsent } from './analytics-consent';
 import { ConsentPrompt } from './consent';
 
@@ -17,10 +15,9 @@ import { ConsentPrompt } from './consent';
  */
 export function provideGoogleAnalytics(): EnvironmentProviders {
   return makeEnvironmentProviders([
-    provideAnalytics((injector) => getAnalytics(injector.get(FirebaseApp))),
     AnalyticsConsent,
     { provide: ConsentPrompt, useExisting: AnalyticsConsent },
-    // after the first render, so neither gtag.js nor the banner competes with
+    // after the first render, so neither the banner nor gtag.js competes with
     // hydration
     provideEnvironmentInitializer(() => {
       const consent = inject(AnalyticsConsent);
