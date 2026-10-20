@@ -1,6 +1,7 @@
 import { AchievementId, isAchievementId } from './achievement-ids';
 import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
 import { isColonyColor } from './colony-colors';
+import { DailyAttempts, nextStreak, Streak } from './daily';
 import { isObject } from './is-object';
 import { LEVELS } from './levels';
 import { betterMedal, MatchRecord, MEDAL_TIERS, MedalTier } from './medallions';
@@ -36,6 +37,10 @@ export interface Progress {
    * the rivalry on this device, "Orange leads 14 : 9".
    */
   couchWins: Partial<Record<string, number>>;
+  /** The daily level's attempts of the last day it was played. */
+  daily: DailyAttempts | null;
+  /** Days in a row of playing the daily level. */
+  streak: Streak | null;
 }
 
 export const NO_TOTALS: LifetimeTotals = {
@@ -54,6 +59,8 @@ export const EMPTY_PROGRESS: Progress = {
   totals: NO_TOTALS,
   achievements: {},
   couchWins: {},
+  daily: null,
+  streak: null,
 };
 
 /**
@@ -156,6 +163,27 @@ export function addCouchWin(progress: Progress, colorId: string): Progress {
  * stored totals when it is written (ProgressService), so the higher one is
  * the one that counted more of the matches.
  */
+/**
+ * One more attempt at the daily level of `day`, and the streak with that day
+ * - a count, so it is added to the stored progress like the totals.
+ */
+export function addDailyAttempt(progress: Progress, day: string): Progress {
+  const { daily } = progress;
+  return {
+    ...progress,
+    daily: {
+      day,
+      attempts: daily?.day === day ? daily.attempts + 1 : 1,
+    },
+    streak: nextStreak(progress.streak, day),
+  };
+}
+
+/** The attempts at the daily level of `day` made so far. */
+export function dailyAttempts(progress: Progress, day: string): number {
+  return progress.daily?.day === day ? progress.daily.attempts : 0;
+}
+
 export function mergeProgress(progress: Progress, other: Progress): Progress {
   let merged = progress;
   for (const [levelId, byDifficulty] of Object.entries(other.medals)) {
@@ -197,7 +225,39 @@ export function mergeProgress(progress: Progress, other: Progress): Progress {
       couchWins: { ...merged.couchWins, ...Object.fromEntries(moreWins) },
     };
   }
+  // The later day wins, and on the same day the higher count.
+  const daily = later(
+    merged.daily,
+    other.daily,
+    (d) => d.day,
+    (d) => d.attempts
+  );
+  const streak = later(
+    merged.streak,
+    other.streak,
+    (s) => s.lastDay,
+    (s) => s.days
+  );
+  if (daily !== merged.daily || streak !== merged.streak) {
+    merged = { ...merged, daily, streak };
+  }
   return merged;
+}
+
+/** Of two dated counts the later one, or the higher on the same day. */
+function later<T>(
+  held: T | null,
+  other: T | null,
+  day: (value: T) => string,
+  count: (value: T) => number
+): T | null {
+  if (other === null || held === null) {
+    return held ?? other;
+  }
+  if (day(other) !== day(held)) {
+    return day(other) > day(held) ? other : held;
+  }
+  return count(other) > count(held) ? other : held;
 }
 
 /**
@@ -214,7 +274,29 @@ export function parseProgress(value: unknown): Progress {
     totals: parseTotals(value['totals']),
     achievements: parseAchievements(value['achievements']),
     couchWins: parseCouchWins(value['couchWins']),
+    daily: parseDated(value['daily'], 'day', 'attempts'),
+    streak: parseDated(value['streak'], 'lastDay', 'days'),
   };
+}
+
+/** A count with its ISO day, null for anything else. */
+function parseDated<D extends string, C extends string>(
+  value: unknown,
+  dayKey: D,
+  countKey: C
+): (Record<D, string> & Record<C, number>) | null {
+  if (!isObject(value)) {
+    return null;
+  }
+  const day = value[dayKey];
+  const count = value[countKey];
+  return typeof day === 'string' &&
+    /^\d{4}-\d{2}-\d{2}$/.test(day) &&
+    Number.isInteger(count) &&
+    (count as number) > 0
+    ? ({ [dayKey]: day, [countKey]: count } as Record<D, string> &
+        Record<C, number>)
+    : null;
 }
 
 function parseMedals(value: unknown): Progress['medals'] {

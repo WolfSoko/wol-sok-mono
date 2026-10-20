@@ -10,7 +10,15 @@ import { MatchEarnings } from './state/earnings';
 import { arenaLocks, colorLocks, newCosmetics } from './state/unlocks';
 import { COUCH_XP, matchXp, xpGain, xpOf } from './state/xp';
 import {
+  DAILY_ATTEMPTS,
+  dailyLevelId,
+  standingStreak,
+  utcDay,
+} from './state/daily';
+import {
   addCouchWin,
+  addDailyAttempt,
+  dailyAttempts,
   addMedal,
   addTotals,
   bestMedal,
@@ -24,6 +32,15 @@ import {
 import { GameStorage } from './storage/game-storage';
 
 export const PROGRESS_STORAGE_KEY = 'bacteria-game.progress';
+
+/** Today's daily level as the main menu offers it. */
+export interface DailyOffer {
+  levelId: string;
+  /** Attempts left today that count towards its medallion. */
+  attemptsLeft: number;
+  /** Days in a row it has been played, 0 without a streak. */
+  streak: number;
+}
 
 /**
  * Keeps the best medallion a player has won against the computer per level
@@ -104,23 +121,57 @@ export class ProgressService {
    */
   public recordMatch(record: MatchRecord): MatchEarnings {
     const previousBest = this.medal(record.levelId, record.difficulty);
-    const { medal, hint } = judgeMatch(getLevel(record.levelId).medal, record);
-    return {
+    const judged = judgeMatch(getLevel(record.levelId).medal, record);
+    const day = utcDay(new Date());
+    const daily = record.levelId === dailyLevelId(day);
+    const attempt = daily ? dailyAttempts(this.progress(), day) + 1 : 0;
+    // Past the attempts of the day, the daily level is practice.
+    const practice = attempt > DAILY_ATTEMPTS;
+    const { medal, hint } = practice
+      ? {
+          medal: null,
+          hint: `Your ${DAILY_ATTEMPTS} attempts of the day are used - this one was practice.`,
+        }
+      : judged;
+    const earnings: MatchEarnings = {
       award: { record, medal, previousBest, hint },
       ...this.record(
         (progress) =>
           medal === null
             ? progress
             : addMedal(progress, record.levelId, record.difficulty, medal),
-        (progress) =>
-          addTotals(progress, {
+        (progress) => {
+          const counted = addTotals(progress, {
             ...totalsOf(record),
             matchXp: matchXp(record),
-          }),
+          });
+          return daily ? addDailyAttempt(counted, day) : counted;
+        },
         record
       ),
     };
+    return daily
+      ? {
+          ...earnings,
+          daily: {
+            attempt,
+            counted: !practice,
+            streak: standingStreak(this.progress().streak, day),
+          },
+        }
+      : earnings;
   }
+
+  /** Today's daily level, its attempts left and the streak, for the menu. */
+  public readonly daily = computed((): DailyOffer => {
+    const day = utcDay(new Date());
+    const progress = this.progress();
+    return {
+      levelId: dailyLevelId(day),
+      attemptsLeft: Math.max(0, DAILY_ATTEMPTS - dailyAttempts(progress, day)),
+      streak: standingStreak(progress.streak, day),
+    };
+  });
 
   /**
    * Counts a match between two players that has ended - won by the colony
@@ -197,7 +248,13 @@ export class ProgressService {
     progress: Progress,
     count: (progress: Progress) => Progress
   ): void {
-    const gains = { ...progress, totals: NO_TOTALS, couchWins: {} };
+    const gains = {
+      ...progress,
+      totals: NO_TOTALS,
+      couchWins: {},
+      daily: null,
+      streak: null,
+    };
     this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
       mergeProgress(count(parseProgress(stored)), gains)
     );

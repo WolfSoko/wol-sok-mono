@@ -84,6 +84,12 @@ export interface GameStateState {
   ghost: Replay | null;
   /** A run someone shared in a link, offered as a ghost to fight. */
   challenge: Replay | null;
+  /**
+   * A level picked for one match against the computer outside the setup -
+   * the daily level - null otherwise. Like the ghost, it holds for that one
+   * match.
+   */
+  matchLevel: string | null;
 }
 
 export function createInitialState(): GameStateState {
@@ -107,6 +113,7 @@ export function createInitialState(): GameStateState {
     lastReplay: null,
     ghost: null,
     challenge: null,
+    matchLevel: null,
   };
 }
 
@@ -118,9 +125,14 @@ export function createInitialState(): GameStateState {
 export const GameStateStore = signalStore(
   { providedIn: 'root' },
   withState(createInitialState),
-  withComputed(({ currentState, levelId, timePassed, ghost }) => ({
-    /** The level of the next match: the selected one, or the ghost's. */
-    level: computed(() => getLevel(ghost()?.header.levelId ?? levelId())),
+  withComputed(({ currentState, levelId, timePassed, ghost, matchLevel }) => ({
+    /**
+     * The level of the next match: the ghost's, one picked for the match,
+     * or the selected one.
+     */
+    level: computed(() =>
+      getLevel(ghost()?.header.levelId ?? matchLevel() ?? levelId())
+    ),
     /** True while a match is on, paused or not. */
     isMatchOn: computed(() => isMatchOn(currentState())),
     /** True while the match is paused. */

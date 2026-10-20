@@ -72,4 +72,25 @@ describe('MainMenuComponent', () => {
     expect(sound).toHaveBeenCalledWith(false);
     expect(leave).toHaveBeenCalled();
   });
+
+  it('offers the daily level with its attempts and streak', () => {
+    fixture.componentRef.setInput('daily', {
+      name: 'Hungry Locks',
+      note: '2 of 3 attempts left · 4-day streak',
+    });
+    fixture.detectChanges();
+    const daily = jest.fn();
+    fixture.componentInstance.playDaily.subscribe(daily);
+
+    const card = button('Daily level');
+    card.click();
+
+    expect(card.textContent).toContain('Hungry Locks');
+    expect(card.textContent).toContain('4-day streak');
+    expect(daily).toHaveBeenCalled();
+  });
+
+  it('leaves the daily level out without one', () => {
+    expect(host.textContent).not.toContain('Daily level');
+  });
 });

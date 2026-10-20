@@ -195,12 +195,14 @@ export class GameStateService {
    * it earned. Null for a match against the computer without a human in it.
    */
   private recordMatch(winner: Player | null): MatchEarnings | null {
-    const { mode, levelId, difficulty, timePassed, width, colors, ghost } =
+    const { difficulty, timePassed, width, colors, ghost, ...setup } =
       this.gameStateStore.snapshot();
     if (ghost !== null) {
       // Beating your own ghost is for the fun of it - no medallion, no XP.
       return null;
     }
+    // The match as it was spawned - a level picked for it included.
+    const { mode, levelId } = this.plan ?? setup;
     switch (mode) {
       case 'two-players': {
         const seat = winnerSeat(winner);
@@ -241,10 +243,12 @@ export class GameStateService {
       colors,
       headStart,
       ghost,
+      matchLevel,
     } = this.gameStateStore.snapshot();
     this.plan = {
-      levelId: ghost?.header.levelId ?? levelId,
-      mode: ghost === null ? mode : 'vs-computer',
+      levelId: ghost?.header.levelId ?? matchLevel ?? levelId,
+      // A ghost or a level picked for the match is fought against the computer.
+      mode: ghost === null && matchLevel === null ? mode : 'vs-computer',
       difficulty,
       colors,
       headStart,
@@ -254,6 +258,15 @@ export class GameStateService {
     };
     const { spawns, options } = planMatch(this.plan, ghost);
     this.playerService.init(spawns, options);
+  }
+
+  /**
+   * Sets the next match on a level of its own against the computer - the
+   * daily level - leaving the setup as it is. It holds for that one match;
+   * {@link reset} ends it.
+   */
+  public playLevelOnce(levelId: string): void {
+    this.gameStateStore.update({ matchLevel: getLevel(levelId).id });
   }
 
   /**
@@ -412,8 +425,12 @@ export class GameStateService {
     this.initPlayers();
     this.gameStateStore.update((state) => ({
       currentState: GameState.RUNNING,
-      // A match against a ghost is no match of a series.
-      series: state.ghost === null ? nextSeries(state) : null,
+      // A match against a ghost or on a level of its own is no match of a
+      // series.
+      series:
+        state.ghost === null && state.matchLevel === null
+          ? nextSeries(state)
+          : null,
       // Restart from the pause menu starts without a reset in between.
       timePassed: 0,
       winner: null,
@@ -427,6 +444,7 @@ export class GameStateService {
       currentState: GameState.END,
       timePassed: 0,
       ghost: null,
+      matchLevel: null,
     }));
     this.initPlayers();
     this.gameStateStore.update(() => ({

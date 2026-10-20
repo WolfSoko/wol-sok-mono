@@ -353,6 +353,42 @@ describe('GameStateService', () => {
 
     afterEach(() => service.cleanup());
 
+    describe('a level for one match', () => {
+      it('plays it against the computer, leaving the setup as it is', () => {
+        service.setMode('two-players');
+        service.setLevel('corridors');
+        service.setArenaSize(WIDTH, HEIGHT);
+        service.init(WIDTH, HEIGHT);
+
+        service.playLevelOnce('gen:cave:20261020:5');
+        winMatch();
+
+        const state = store.snapshot();
+        expect(store.level().id).toBe('gen:cave:20261020:5');
+        expect(state.levelId).toBe('corridors');
+        expect(state.series).toBeNull();
+        expect(state.earnings?.award?.record.levelId).toBe(
+          'gen:cave:20261020:5'
+        );
+        expect(state.lastReplay?.header).toEqual(
+          expect.objectContaining({
+            levelId: 'gen:cave:20261020:5',
+            mode: 'vs-computer',
+          })
+        );
+      });
+
+      it('holds for that one match', () => {
+        service.setArenaSize(WIDTH, HEIGHT);
+        service.playLevelOnce('gen:cave:20261020:5');
+
+        service.reset();
+
+        expect(store.snapshot().matchLevel).toBeNull();
+        expect(store.level().id).toBe(store.snapshot().levelId);
+      });
+    });
+
     describe('against the ghost', () => {
       it('plays the last run on its level, leaving the setup as it is', () => {
         winAgainst('vs-computer');

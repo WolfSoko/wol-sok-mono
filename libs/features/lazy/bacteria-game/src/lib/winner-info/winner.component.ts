@@ -26,6 +26,7 @@ import { formatScore, rivalryScore, seriesWinner } from '../state/rivalry';
 import { getColonyColor } from '../state/colony-colors';
 import { ProgressService } from '../progress.service';
 import { replayLink } from '../state/replay-link';
+import { DAILY_ATTEMPTS } from '../state/daily';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu' | 'ghost';
@@ -76,6 +77,18 @@ export class WinnerComponent {
   );
 
   private mode: Signal<GameMode> = this.state.mode;
+
+  /** On the daily level: the attempt and the streak, in a line. */
+  public dailyNote: Signal<string | null> = computed(() => {
+    const daily = this.earnings()?.daily;
+    if (daily === undefined) {
+      return null;
+    }
+    const attempt = daily.counted
+      ? `attempt ${daily.attempt} of ${DAILY_ATTEMPTS}`
+      : 'practice';
+    return `Daily level · ${attempt} · ${daily.streak}-day streak`;
+  });
 
   /** True in a match against the player's own ghost. */
   public againstGhost: Signal<boolean> = computed(

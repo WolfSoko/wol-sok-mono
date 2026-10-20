@@ -1,5 +1,8 @@
 <h2 class="headline">{{ headline() }}</h2>
 <p class="level-info">{{ level().name }}</p>
+@if (dailyNote(); as note) {
+  <p class="daily-note">{{ note }}</p>
+}
 
 @if (award(); as award) {
   <div class="award" [class.earned]="award.medal !== null">

@@ -54,6 +54,20 @@
         <mat-icon>group</mat-icon>
         Two players, one screen
       </button>
+      @if (daily(); as card) {
+        <button
+          mat-stroked-button
+          type="button"
+          class="continue daily"
+          (click)="playDaily.emit()"
+        >
+          <mat-icon>today</mat-icon>
+          <span class="continue-text">
+            <span class="continue-title">Daily level · {{ card.name }}</span>
+            <span class="continue-level">{{ card.note }}</span>
+          </span>
+        </button>
+      }
     </div>
 
     <nav class="tiles" aria-label="More">

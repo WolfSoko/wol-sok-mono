@@ -337,6 +337,21 @@ are kept like any other, but count neither towards the campaign's tally nor
 towards XP. A change to a recipe that would lay out an old id differently
 needs a new recipe name instead.
 
+## Daily level
+
+Every day has one generated level, the same for everyone
+([`state/daily.ts`](./src/lib/state/daily.ts)): the seed is the date in UTC,
+the recipe changes from day to day and the difficulty warms up over the week,
+from Monday's 3 to Saturday's 7. The main menu offers it with the attempts
+left and the streak. The first three attempts of a day count towards its
+medallion; after them it is practice. The streak counts the days it was
+played in a row, and one missed day only pauses it. Both live in the
+progress as counts, added to the stored value like the totals, and a merge
+keeps the later day, or the higher count on the same day.
+
+The daily level is a level for one match, like a ghost: it does not change
+the setup, a reset ends it, and "Play again" is the next attempt.
+
 ## Tuning
 
 Every number that shapes how the game feels lives in

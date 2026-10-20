@@ -18,6 +18,13 @@ import { Level, LEVELS } from '../state/levels';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
 import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 
+/** Today's daily level as the main menu shows it. */
+export interface DailyCard {
+  name: string;
+  /** Attempts left and the streak, in a line. */
+  note: string;
+}
+
 /** The sub screens the main menu opens. */
 export type MenuPage = 'profile' | 'settings' | 'help';
 
@@ -46,6 +53,8 @@ export type MenuPage = 'profile' | 'settings' | 'help';
 export class MainMenuComponent {
   public readonly campaign = input.required<CampaignSummary>();
   public readonly sound = input(true);
+  /** Today's daily level, null to leave it out. */
+  public readonly daily = input<DailyCard | null>(null);
   /** The level of a run someone shared, to fight as a ghost - null without. */
   public readonly challenge = input<Level | null>(null);
 
@@ -57,6 +66,7 @@ export class MainMenuComponent {
   public readonly soundChange = output<boolean>();
   /** Back to the page around the game. */
   public readonly leave = output<void>();
+  public readonly playDaily = output<void>();
   public readonly fightChallenge = output<void>();
   public readonly dismissChallenge = output<void>();
 
