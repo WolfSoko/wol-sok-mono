@@ -5,6 +5,7 @@ import { arenaTheme } from './arena/arena-theme';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { GameSettingsService } from './settings.service';
+import { GameSoundService } from './sound/game-sound.service';
 import { GameStateService } from './state/game-state.service';
 import { GameStateStore } from './state/game.states';
 import { levelTitle, LEVELS } from './state/levels';
@@ -498,6 +499,34 @@ describe('BacteriaGameComponent', () => {
       TestBed.inject(GameStateService).setDifficulty('hard');
 
       expect(component['difficultyName']()).toBe('Hard');
+    });
+  });
+
+  describe('the vaporize effect', () => {
+    it('snaps only while the sound and the effects are on', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+
+      expect(component['thanosOptions']().sound).toBe(true);
+      settings.setSound(false);
+      expect(component['thanosOptions']().sound).toBe(false);
+      settings.setSound(true);
+      settings.setEffects(false);
+      expect(component['thanosOptions']().sound).toBe(false);
+    });
+
+    it('snaps as loud as the other effects', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+      const louder = () => component['thanosOptions']().soundVolume ?? 0;
+
+      const atDefault = louder();
+      settings.setEffectsVolume(40);
+
+      expect(louder()).toBeLessThan(atDefault);
+      expect(louder()).toBeCloseTo(
+        TestBed.inject(GameSoundService).effectsGain() * 0.8
+      );
     });
   });
 
