@@ -7,6 +7,7 @@ import {
 import { ColonySummary, Simulation, SimulationFactory } from './simulation';
 import {
   BotController,
+  BotRoutes,
   BotDifficulty,
   buildBotView,
   DEFAULT_DIFFICULTY,
@@ -41,6 +42,16 @@ import {
   zoneHolder,
 } from './win-conditions';
 import { mapZones } from './zones';
+import {
+  flood,
+  lineOf,
+  NavField,
+  NavGrid,
+  navGrid,
+  travel,
+  waypoint,
+  withWalls,
+} from './bot-navigation';
 
 /** What a match needs to know about one player before it starts. */
 export interface PlayerSpawn {
@@ -168,6 +179,8 @@ export class MatchEngine {
    */
   private heldFrom: readonly ColonySummary[] | null = null;
   private heldUpTo = 0;
+  /** The bots' grid of the static walls and the zones, by arena size. */
+  private nav: { width: number; height: number; grid: NavGrid } | null = null;
   /** The centre of the hold zone on the arena last asked for, by its size. */
   private hill: { width: number; height: number; at: Point | null } | null =
     null;
@@ -492,6 +505,52 @@ export class MatchEngine {
   }
 
   /**
+   * The ways round the walls from a bot's colony. The grid and the flood
+   * are only worked out once the bot asks - it decides a few times a second,
+   * not every tick.
+   */
+  private routesFrom(from: Point, width: number, height: number): BotRoutes {
+    let grid: NavGrid | null = null;
+    let field: NavField | null = null;
+    const grid$ = () => (grid ??= this.navGridAt(width, height));
+    const field$ = () => (field ??= flood(grid$(), from));
+    // A clear straight line needs no flood - most decisions on open ground.
+    const clear = (to: Point) => lineOf(grid$(), from, to) === 'clear';
+    return {
+      waypoint: (to) => (clear(to) ? to : waypoint(field$(), to)),
+      travel: (to) =>
+        clear(to)
+          ? Math.hypot(to.x - from.x, to.y - from.y)
+          : travel(field$(), to),
+    };
+  }
+
+  /**
+   * The grid the bots plan on: the static walls and the zones, and the
+   * gates and sliding walls that are shut - or about to shut - right now.
+   */
+  private navGridAt(width: number, height: number): NavGrid {
+    if (this.nav?.width !== width || this.nav.height !== height) {
+      this.nav = {
+        width,
+        height,
+        grid: navGrid(
+          width,
+          height,
+          this.map.createWalls(width, height),
+          mapZones(this.map, width, height)
+        ),
+      };
+    }
+    return withWalls(
+      this.nav.grid,
+      this.simulation
+        .getDynamicWalls()
+        .filter((wall) => wall.solid || wall.warning > 0)
+    );
+  }
+
+  /**
    * The centre of the zone a hold-the-zone level is won on, on an arena of
    * that size - null on any other level.
    */
@@ -533,7 +592,8 @@ export class MatchEngine {
         this.simulation.getNutrients(),
         isBoostReady(player),
         this.balance.maxEnergy,
-        this.hillAt(width, height)
+        this.hillAt(width, height),
+        (from) => this.routesFrom(from, width, height)
       );
       const decision = bot.decide(view, TICK_SEC);
       if (decision.target != null) {

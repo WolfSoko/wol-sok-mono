@@ -12,6 +12,22 @@ one screen (and keyboard) with a second human.
   far ahead, Normal feeds first and attacks when stronger, Hard takes even
   fights, charges the enemy bacteria nearest to its own colony and boosts on
   contact. The human may use WASD or the arrow keys.
+
+  The bot finds its way ([`bot-navigation.ts`](./src/lib/state/bot-navigation.ts)):
+  a grid over the arena, a cell per four base cells, blocked by the walls and
+  by the gates and sliding walls that are shut or about to shut, with the
+  zones as costs (antibiotic dear, ice slow, agar a little cheap). On each
+  decision it floods the travel costs out from its colony, picks food by the
+  way there rather than as the crow flies, and steers round what is in the
+  way. A wall a colony slides along on its own - a way round at most a
+  quarter longer - is no detour: the crosshair goes straight at the target,
+  since gathering a big colony at a corner only holds it up. A real detour -
+  out of a dead end, round to a keep's door, round antibiotic or ice - sends
+  the crosshair along the cheapest way: to the furthest spot the colony can
+  reach in a straight line, and at least eight grid cells on, so it waits
+  round the corner and the colony flows after it. The bot's decisions are part of a replay, so this
+  raised `BALANCE_VERSION` to 2: runs recorded before no longer play back.
+
 - **2 Players** - Orange on WASD, Blue on the arrow keys, or one finger each on
   a touchscreen.
 
