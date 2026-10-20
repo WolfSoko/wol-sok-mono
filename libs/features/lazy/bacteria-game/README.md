@@ -338,10 +338,12 @@ stable for good: `getLevel`, `getMap`, `arenaTheme` and `levelMusic`
 understand it like any hand-made id, and a medallion, a replay or a link can
 name it. The difficulty sets the rules between the calmest and the busiest
 hand-made level and tightens the medallion limits. A generated level is named
-from its seed ("Hungry Locks") and borrows the look and the music of a
-hand-made level of its style, with a melody of its own seed. Its medallions
-are kept like any other, but count neither towards the campaign's tally nor
-towards XP. A change to a recipe that would lay out an old id differently
+from its seed ("Hungry Locks"), borrows the look of a hand-made level of its
+style, and has a tune of its own: the style sets the mood of the key, the
+groove and the instruments, the seed the chords, the key's pitch and the
+melody, the difficulty the tempo. Only the daily level keeps a medallion of
+the generated ones - a rolled or an endless level has no second go - and
+none of them counts towards the campaign's tally or XP. A change to a recipe that would lay out an old id differently
 needs a new recipe name instead.
 
 ## Daily level

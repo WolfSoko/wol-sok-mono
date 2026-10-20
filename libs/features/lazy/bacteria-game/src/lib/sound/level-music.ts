@@ -1,4 +1,8 @@
-import { generatedLevel } from '../state/level-generator/generate-level';
+import {
+  generatedLevel,
+  parseGeneratedId,
+} from '../state/level-generator/generate-level';
+import type { RecipeId } from '../state/level-generator/recipes';
 import { seeded } from '../state/geometry';
 import { HEART_PERIOD_SEC } from '../state/organic-maps';
 
@@ -455,8 +459,7 @@ export const LEVEL_MUSIC: Record<string, LevelMusic> = {
 
 /**
  * The music of the level with that id, falling back to the first level's. A
- * generated level plays the music of a hand-made one of its style, with a
- * melody of its own seed.
+ * generated level gets a tune of its own - see {@link generatedMusic}.
  */
 export function levelMusic(levelId: string): LevelMusic {
   return (
@@ -470,16 +473,84 @@ export function levelMusic(levelId: string): LevelMusic {
  */
 const generatedTunes = new WeakMap<object, LevelMusic>();
 
-/** The family's music with the level's own melody, for a generated level. */
+/**
+ * How each style of the generator sounds: the mood of its key, its groove
+ * and its instruments - the seed then picks the chords, the key's pitch and
+ * the melody, the difficulty the tempo.
+ */
+const STYLE_SOUNDS: Record<
+  RecipeId,
+  Pick<LevelMusic, 'root' | 'scale' | 'lead' | 'bass' | 'drums' | 'echo'>
+> = {
+  // Open ground: bright and calm.
+  field: {
+    root: 45,
+    scale: MAJOR,
+    lead: 'triangle',
+    bass: 'root',
+    drums: 'soft',
+    echo: 0.3,
+  },
+  // Walls and gates: driving, mechanical.
+  corridor: {
+    root: 45,
+    scale: MINOR,
+    lead: 'square',
+    bass: 'pulse',
+    drums: 'drive',
+    echo: 0.35,
+  },
+  // Keeps to hold: a marching walk.
+  fortress: {
+    root: 43,
+    scale: DORIAN,
+    lead: 'sawtooth',
+    bass: 'walk',
+    drums: 'drive',
+    echo: 0.25,
+  },
+  // Living tissue: dark, wet, a pulse.
+  cave: {
+    root: 41,
+    scale: HARMONIC_MINOR,
+    lead: 'sine',
+    bass: 'drone',
+    drums: 'heart',
+    echo: 0.45,
+  },
+};
+
+/** The chord progressions a generated tune picks from. */
+const PROGRESSIONS: readonly (readonly number[])[] = [
+  [0, 5, 3, 4],
+  [0, 3, 6, 4],
+  [0, 5, 2, 6],
+  [0, 2, 5, 4],
+  [0, 1, 0, 4],
+  [0, 6, 3, 0],
+];
+
+/** The tune of a generated level: its style's sound, its seed's chords. */
 function generatedMusic(levelId: string): LevelMusic | undefined {
   const made = generatedLevel(levelId);
-  const family = made === null ? undefined : LEVEL_MUSIC[made.family];
-  if (family === undefined || made === null) {
+  const recipe = parseGeneratedId(levelId);
+  if (made === null || recipe === null) {
     return undefined;
   }
   let tune = generatedTunes.get(made);
   if (tune === undefined) {
-    tune = { ...family, seed: made.seed };
+    const random = seeded(made.seed);
+    const sound = STYLE_SOUNDS[recipe.recipe];
+    tune = {
+      ...sound,
+      // A step or two up or down: another key, the same mood.
+      root: sound.root + Math.floor(random() * 5) - 2,
+      progression: PROGRESSIONS[Math.floor(random() * PROGRESSIONS.length)],
+      density: 0.3 + random() * 0.3,
+      // A harder level, a faster beat.
+      bpm: 84 + recipe.difficulty * 5,
+      seed: made.seed,
+    };
     generatedTunes.set(made, tune);
   }
   return tune;

@@ -1,5 +1,5 @@
 import { arenaTheme } from '../../arena/arena-theme';
-import { levelMusic, LEVEL_MUSIC } from '../../sound/level-music';
+import { composeLoop, levelMusic, LEVEL_MUSIC } from '../../sound/level-music';
 import { getMap } from '../game-maps';
 import { getLevel, isLevelId, LEVELS } from '../levels';
 import { Rect, stampRect } from '../maps';
@@ -120,16 +120,36 @@ describe('generated levels', () => {
       expect(levelMusic(id)).toBe(levelMusic(id));
     });
 
-    it('borrows the look and the sound of a hand-made level of its style', () => {
+    it('borrows the look of a hand-made level of its style', () => {
       const family = generatedLevel(id)?.family ?? '';
 
       expect(LEVELS.some((level) => level.id === family)).toBe(true);
       expect(arenaTheme(id)).toBe(arenaTheme(family));
-      expect(levelMusic(id)).toEqual({
-        ...LEVEL_MUSIC[family],
-        seed: generatedLevel(id)?.seed,
-      });
-      expect(levelMusic(id).seed).not.toBe(LEVEL_MUSIC[family].seed);
+    });
+
+    it('plays a tune of its own: the style sets the sound, the seed the chords', () => {
+      const tune = levelMusic(id);
+      const sameStyle = levelMusic('gen:corridor:999:4');
+      const harder = levelMusic('gen:corridor:12345:9');
+
+      // Corridors drive in a minor key; the seed moves the key a little.
+      expect(tune.drums).toBe('drive');
+      expect(tune.bass).toBe(sameStyle.bass);
+      expect(Math.abs(tune.root - 45)).toBeLessThanOrEqual(2);
+      expect(harder.bpm).toBeGreaterThan(tune.bpm);
+      expect(levelMusic('gen:cave:12345:4').lead).not.toBe(tune.lead);
+      expect(LEVELS.some((level) => LEVEL_MUSIC[level.id] === tune)).toBe(
+        false
+      );
+    });
+
+    it('composes into a loop for every style', () => {
+      for (const recipe of RECIPE_IDS) {
+        const loop = composeLoop(levelMusic(`gen:${recipe}:4242:6`));
+
+        expect(loop.notes.length).toBeGreaterThan(0);
+        expect(loop.steps).toBeGreaterThan(0);
+      }
     });
   });
 });
