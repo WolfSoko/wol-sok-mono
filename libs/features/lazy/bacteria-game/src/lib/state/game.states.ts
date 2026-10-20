@@ -19,6 +19,7 @@ import { HeadStart, Series, SeriesLength } from './rivalry';
 import { Player } from './player.model';
 import type { Replay } from './replay';
 import type { EndlessRun } from './endless';
+import { EndReason, timeLeft, winRuleOf } from './win-conditions';
 
 /** Who steers the second crosshair. */
 export type GameMode = 'two-players' | 'vs-computer';
@@ -53,8 +54,11 @@ export interface GameStateState {
   width: number;
   height: number;
   winner: Player | null;
-  /** True once a match is over - also for a draw, where `winner` stays null. */
-  matchEnded: boolean;
+  /**
+   * What ended the match that is over - also set for a draw, where
+   * `winner` stays null - and null while no match is over.
+   */
+  endedBy: EndReason | null;
   /**
    * What the match that just ended earned - null until a match is over, and
    * after one against the computer without a human in it.
@@ -107,7 +111,7 @@ export function createInitialState(): GameStateState {
     width: 480,
     height: 320,
     winner: null,
-    matchEnded: false,
+    endedBy: null,
     earnings: null,
     keysPressed: [],
     levelId: LEVELS[0].id,
@@ -135,20 +139,37 @@ export function createInitialState(): GameStateState {
 export const GameStateStore = signalStore(
   { providedIn: 'root' },
   withState(createInitialState),
-  withComputed(({ currentState, levelId, timePassed, matchLevel, mode }) => ({
-    /** The level of the next match: one picked for it, or the selected one. */
-    level: computed(() => getLevel(matchLevel() ?? levelId())),
-    /** How the next match is played: a level picked for it, vs the computer. */
-    matchMode: computed((): GameMode =>
-      matchLevel() === null ? mode() : 'vs-computer'
-    ),
-    /** True while a match is on, paused or not. */
-    isMatchOn: computed(() => isMatchOn(currentState())),
-    /** True while the match is paused. */
-    isPaused: computed(() => currentState() === GameState.PAUSED),
-    /** Whole seconds of the match played, as the match clock shows them. */
-    gameSeconds: computed(() => Math.floor(timePassed() / 1000)),
-  })),
+  withComputed(
+    ({ currentState, levelId, timePassed, matchLevel, mode, endedBy }) => {
+      const level = computed(() => getLevel(matchLevel() ?? levelId()));
+      const winRule = computed(() => winRuleOf(level()));
+      const gameSeconds = computed(() => Math.floor(timePassed() / 1000));
+      return {
+        /** The level of the next match: one picked for it, or the selected one. */
+        level,
+        /** How the next match is won. */
+        winRule,
+        /** How the next match is played: a level picked for it, vs the computer. */
+        matchMode: computed((): GameMode =>
+          matchLevel() === null ? mode() : 'vs-computer'
+        ),
+        /** True while a match is on, paused or not. */
+        isMatchOn: computed(() => isMatchOn(currentState())),
+        /** True while the match is paused. */
+        isPaused: computed(() => currentState() === GameState.PAUSED),
+        /** Whole seconds of the match played, as the match clock shows them. */
+        gameSeconds,
+        /**
+         * Whole seconds a timed level has left, as its clock counts them
+         * down - null on a level without a time limit. The match ends on
+         * the tick its limit is reached, when this turns 0.
+         */
+        secondsLeft: computed(() => timeLeft(winRule(), gameSeconds())),
+        /** True once a match is over - also for a draw. */
+        matchEnded: computed(() => endedBy() !== null),
+      };
+    }
+  ),
   withProps((store) => {
     const listeners = new Set<() => void>();
     // One watcher for the lifetime of the store: each watchState call adds a

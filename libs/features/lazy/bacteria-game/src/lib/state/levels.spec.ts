@@ -12,6 +12,20 @@ import {
 import { GAME_MAPS } from './game-maps';
 
 describe('LEVELS', () => {
+  it('asks a timed level for a win before its clock runs out for silver', () => {
+    // A win on time is bronze: silver and gold ask for a wipe-out before.
+    const timed = LEVELS.flatMap((level) =>
+      level.win?.kind === 'timed'
+        ? [{ silverSec: level.medal.silverSec, limitSec: level.win.limitSec }]
+        : []
+    );
+
+    expect(timed.length).toBeGreaterThan(0);
+    expect(
+      timed.filter(({ silverSec, limitSec }) => silverSec >= limitSec)
+    ).toEqual([]);
+  });
+
   it('uses unique ids', () => {
     const ids = LEVELS.map((level) => level.id);
 

@@ -322,6 +322,9 @@ export class WinnerComponent {
    */
   public headline: Signal<string> = computed(() => {
     const player = this.winner();
+    if (this.state.endedBy() === 'time') {
+      return this.timeUp(player);
+    }
     if (player == null) {
       return 'It is a draw - both colonies wiped each other out!';
     }
@@ -338,6 +341,24 @@ export class WinnerComponent {
     }
     return `Congratulations! ${player.name} wins the match!`;
   });
+
+  /** The headline of a match the clock ended: the bigger colony won. */
+  private timeUp(player: Player | null): string {
+    if (player == null) {
+      return 'Time is up - and both colonies are the same size. A draw!';
+    }
+    if (this.againstGhost()) {
+      return player.isBot
+        ? 'Time is up - the ghost has the bigger colony.'
+        : 'Time is up - you beat the ghost!';
+    }
+    if (player.isBot) {
+      return 'Time is up - the computer has the bigger colony.';
+    }
+    return this.mode() === 'vs-computer'
+      ? 'Time is up - your colony is the bigger one. You win!'
+      : `Time is up - ${player.name} has the bigger colony and wins!`;
+  }
 }
 
 /** "1 level beaten", "3 levels beaten". */

@@ -459,6 +459,19 @@ export const LEVEL_MUSIC: Record<string, LevelMusic> = {
     echo: 0.35,
     seed: 12,
   },
+  // A ticking reactor: a pulsing bass under a cold, clipped lead.
+  'half-life': {
+    root: 42,
+    scale: HARMONIC_MINOR,
+    bpm: 118,
+    progression: [0, 5, 3, 4],
+    lead: 'square',
+    density: 0.45,
+    bass: 'pulse',
+    drums: 'drive',
+    echo: 0.3,
+    seed: 13,
+  },
 };
 
 /**

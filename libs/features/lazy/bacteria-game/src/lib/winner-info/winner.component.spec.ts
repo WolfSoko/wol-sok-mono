@@ -74,6 +74,23 @@ describe('WinnerComponent', () => {
     expect(text()).toContain('draw');
   });
 
+  it('tells that the clock ended the match, and who was bigger', () => {
+    store.update({
+      mode: 'vs-computer',
+      winner: createPlayer({ id: 0, name: 'You' }),
+      endedBy: 'time',
+      levelId: LEVELS[0].id,
+    });
+
+    expect(text()).toContain('Time is up - your colony is the bigger one');
+  });
+
+  it('calls a timed match between equal colonies a draw', () => {
+    store.update({ winner: null, endedBy: 'time', levelId: LEVELS[0].id });
+
+    expect(text()).toContain('the same size. A draw');
+  });
+
   it('offers the level that comes next', () => {
     store.update({ winner: null, levelId: LEVELS[0].id });
 

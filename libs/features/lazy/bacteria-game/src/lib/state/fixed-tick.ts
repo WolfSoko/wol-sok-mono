@@ -71,3 +71,8 @@ export class TickClock {
     };
   }
 }
+
+/** Seconds as the match clock shows them, "1:05". */
+export function clock(seconds: number): string {
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}

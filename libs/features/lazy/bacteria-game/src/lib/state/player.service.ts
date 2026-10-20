@@ -9,7 +9,6 @@ import {
   FrameEvents,
   MatchEngine,
   MatchOptions,
-  MatchOutcome,
   noFrameEvents,
   PlayerSpawn,
 } from './match-engine';
@@ -17,6 +16,7 @@ import { GameStateStore } from './game.states';
 import { Player } from './player.model';
 import { PlayerStore } from './player.store';
 import { ReplayInputs } from './replay';
+import { MatchOutcome } from './win-conditions';
 
 export type { FrameEvents, PlayerSpawn } from './match-engine';
 

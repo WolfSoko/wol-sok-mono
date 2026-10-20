@@ -13,6 +13,7 @@ import { GhostController, turnedOnto } from './ghost';
 import { HeadStart, startScales } from './rivalry';
 import { spawnSpots } from './shapes';
 import type { Replay } from './replay';
+import { winRuleOf } from './win-conditions';
 
 /**
  * Everything a match is derived from. The same plan spawns the same
@@ -81,6 +82,7 @@ export function planMatch(
       difficulty: plan.difficulty,
       arena: { width, height },
       seed: plan.seed,
+      win: winRuleOf(level),
       // The run was played from the left: the ghost plays it from the right.
       ghosts:
         ghost === null

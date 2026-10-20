@@ -6,10 +6,11 @@ import { isObject } from './is-object';
 import { isLevelId } from './levels';
 import { isGameMode } from './game.states';
 import { GhostController } from './ghost';
-import { MatchEngine, MatchOutcome } from './match-engine';
+import { MatchEngine } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import { Player } from './player.model';
 import { isHeadStart } from './rivalry';
+import { MatchOutcome } from './win-conditions';
 
 /** The format of a replay - a new one for every change old ones cannot follow. */
 export const REPLAY_VERSION = 1;

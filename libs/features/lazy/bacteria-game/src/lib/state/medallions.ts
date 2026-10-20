@@ -1,4 +1,5 @@
 import { BotDifficulty } from './bot-controller';
+import { clock } from './fixed-tick';
 import { Player } from './player.model';
 
 /**
@@ -224,9 +225,4 @@ function slower(durationSec: number, limitSec: number): string | null {
 
 function percent(share: number): string {
   return `${Math.round(share * 100)} %`;
-}
-
-/** Seconds as the match clock shows them, "1:05". */
-function clock(seconds: number): string {
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }

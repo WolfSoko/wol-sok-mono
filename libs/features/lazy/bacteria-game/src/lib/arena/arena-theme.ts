@@ -209,6 +209,20 @@ const THEMES: Record<string, ArenaTheme> = {
     moteCount: 28,
     current: { x: 3, y: 0 },
   },
+  // The cooling pond of a reactor, lit by the glow of its core.
+  'half-life': {
+    floor: [8, 22, 16],
+    rim: [2, 7, 5],
+    pattern: 'rings',
+    patternColor: [40, 110, 70],
+    patternStrength: 0.4,
+    wall: [120, 150, 135],
+    wallEdge: [200, 255, 170],
+    border: [190, 255, 60],
+    motes: [210, 255, 140],
+    moteCount: 36,
+    current: { x: 0, y: -4 },
+  },
 };
 
 /**

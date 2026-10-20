@@ -30,4 +30,9 @@ export const CHAPTERS: readonly Chapter[] = [
     blurb: 'Living walls that grow, beat and sway.',
     levelIds: ['alveoli', 'mycelium', 'heartbeat', 'villi'],
   },
+  {
+    name: 'Reactor',
+    blurb: 'A clock that ends the match - the bigger colony wins.',
+    levelIds: ['half-life'],
+  },
 ];

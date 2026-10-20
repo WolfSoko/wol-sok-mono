@@ -909,6 +909,12 @@ tables and the generator are asked in `getLevel`, `getMap`, `arenaTheme` and
 `levelMusic` alike), and the hand-made organic maps as recipes with fixed
 seeds - they share `hexLattice` and `growThread` with the generator already,
 but moving walls are no part of a recipe yet.
+Phase 4 has started with pluggable win conditions (2.3): a level carries a
+`win` rule, annihilation unless it says otherwise, and `timed` ends a match
+after a limit with the bigger colony as the winner. The countdown shows on
+the match clock, and the Reactor chapter opens with the first timed level,
+Half-Life. Hold the zone waits for zones, harvest for pellets counted per
+colony, and survive for the boss levels.
 Phase 7 can be sprinkled in between the others; each of its items is a
 self-contained PR. Of the groundwork the phases assumed, three pieces have
 landed since the first version of this document: the seeded generator (for

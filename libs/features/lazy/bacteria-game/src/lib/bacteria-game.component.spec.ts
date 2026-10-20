@@ -449,7 +449,7 @@ describe('BacteriaGameComponent', () => {
       create();
       startMatch('vs-computer');
 
-      store.update({ matchEnded: true });
+      store.update({ endedBy: 'annihilation' });
 
       expect(component['panel']()).toBe('over');
     });
@@ -463,7 +463,7 @@ describe('BacteriaGameComponent', () => {
         vaporize: () => vaporized,
       };
       const before = store.snapshot().levelId;
-      store.update({ matchEnded: true });
+      store.update({ endedBy: 'annihilation' });
 
       component['onMatchEnd']('next');
       expect(store.snapshot().levelId).toBe(before);
@@ -516,7 +516,7 @@ describe('BacteriaGameComponent', () => {
       create();
       startMatch('vs-computer');
       const before = store.snapshot().levelId;
-      store.update({ matchEnded: true });
+      store.update({ endedBy: 'annihilation' });
 
       expect(component['upcomingLock']()).toBe(
         `Win ${levelTitle(LEVELS[0])} to unlock`
