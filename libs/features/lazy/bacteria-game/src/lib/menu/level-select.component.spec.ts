@@ -151,6 +151,9 @@ describe('LevelSelectComponent', () => {
     expect(host.querySelector('.branches')?.textContent).toContain(
       getLevel('gen:field:77:6').name
     );
+    expect(host.querySelector('.details-number')?.textContent).toContain(
+      'Field · difficulty 6'
+    );
     expect(host.querySelector('.details')?.textContent).toContain(
       getLevel('gen:field:77:6').description
     );
@@ -170,7 +173,7 @@ describe('LevelSelectComponent', () => {
       host.querySelectorAll<HTMLButtonElement>('.branch')
     );
     branches.find((b) => b.textContent?.includes('Hungry Locks'))?.click();
-    branches.find((b) => b.textContent?.includes('Best: 4'))?.click();
+    branches.find((b) => b.textContent?.includes('best 4'))?.click();
 
     expect(daily).toHaveBeenCalled();
     expect(endless).toHaveBeenCalled();
@@ -184,5 +187,23 @@ describe('LevelSelectComponent', () => {
 
     expect(host.querySelectorAll('.branch')).toHaveLength(0);
     expect(host.querySelector('.generator')).not.toBeNull();
+  });
+
+  it('keeps the rolled level offered, and its style, after a ladder pick', () => {
+    const host = render({ levelId: 'gen:cave:77:8' });
+
+    fixture.componentRef.setInput('levelId', LEVELS[0].id);
+    fixture.detectChanges();
+
+    expect(host.querySelector('.branches')?.textContent).toContain(
+      getLevel('gen:cave:77:8').name
+    );
+    expect(host.textContent).toContain('Difficulty 8');
+  });
+
+  it('counts the open levels only where the ladder locks them', () => {
+    const host = render({ freePlay: true });
+
+    expect(host.querySelector('.chapter-open')).toBeNull();
   });
 });

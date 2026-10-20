@@ -1,38 +1,3 @@
-<ng-template #levelCard let-card>
-  <button
-    type="button"
-    class="level-card"
-    [class.current]="card.id === levelId()"
-    [class.locked]="card.lock !== null"
-    [disabled]="card.lock !== null"
-    [attr.aria-current]="card.id === levelId() ? 'true' : null"
-    [style.--card-floor]="card.floor"
-    [style.--card-edge]="card.edge"
-    (click)="levelChange.emit(card.id)"
-  >
-    <span class="card-top">
-      <span class="number">{{ card.number || card.style }}</span>
-      @if (card.lock !== null) {
-        <mat-icon class="lock">lock</mat-icon>
-      }
-    </span>
-    <span class="title">{{ card.title }}</span>
-    <span class="card-foot">
-      @if (card.lock !== null) {
-        <span class="lock-reason">{{ card.lock }}</span>
-      } @else if (vsComputer()) {
-        @for (slot of card.medals; track slot.difficulty) {
-          <feat-lazy-bac-game-medallion
-            [tier]="slot.tier"
-            [size]="22"
-            [difficulty]="slot.difficulty"
-          />
-        }
-      }
-    </span>
-  </button>
-</ng-template>
-
 <feat-lazy-bac-game-screen-header title="Choose a level" (back)="back.emit()">
   <div class="controls">
     <mat-button-toggle-group
@@ -90,16 +55,21 @@
       <section class="chapter" [attr.aria-label]="chapter.name">
         <header class="chapter-head">
           <h3 class="chapter-name">{{ chapter.name }}</h3>
-          <span class="chapter-open"
-            >{{ chapter.open }} of {{ chapter.cards.length }} open</span
-          >
+          @if (laddered()) {
+            <span class="chapter-open"
+              >{{ chapter.open }} of {{ chapter.cards.length }} open</span
+            >
+          }
           <p class="chapter-blurb">{{ chapter.blurb }}</p>
         </header>
         <ul class="levels">
           @for (card of chapter.cards; track card.id) {
             <li>
-              <ng-container
-                *ngTemplateOutlet="levelCard; context: { $implicit: card }"
+              <feat-lazy-bac-game-level-card
+                [card]="card"
+                [current]="card.id === levelId()"
+                [showMedals]="vsComputer()"
+                (pick)="levelChange.emit($event)"
               />
             </li>
           }
@@ -117,20 +87,14 @@
           @if (daily(); as card) {
             <button type="button" class="branch" (click)="playDaily.emit()">
               <mat-icon aria-hidden="true">today</mat-icon>
-              <span class="branch-title">Daily · {{ card.name }}</span>
+              <span class="branch-title">Daily level · {{ card.name }}</span>
               <span class="branch-note">{{ card.note }}</span>
             </button>
           }
           <button type="button" class="branch" (click)="playEndless.emit()">
             <mat-icon aria-hidden="true">all_inclusive</mat-icon>
             <span class="branch-title">Endless run</span>
-            <span class="branch-note">
-              {{
-                endlessBest() > 0
-                  ? "Best: " + endlessBest() + " levels"
-                  : "Three lives, harder every win"
-              }}
-            </span>
+            <span class="branch-note">{{ endlessNote(endlessBest()) }}</span>
           </button>
         }
         <div class="generator">
@@ -174,9 +138,13 @@
             Generate
           </button>
         </div>
-        @if (generated(); as card) {
-          <ng-container
-            *ngTemplateOutlet="levelCard; context: { $implicit: card }"
+        @if (rolledCard(); as card) {
+          <!-- Rolled levels keep no medallion: there is no second go. -->
+          <feat-lazy-bac-game-level-card
+            [card]="card"
+            [current]="card.id === levelId()"
+            [showMedals]="false"
+            (pick)="levelChange.emit($event)"
           />
         }
       </div>
@@ -185,7 +153,7 @@
 
   <aside class="details" aria-label="Selected level">
     @let chosen = selected();
-    <span class="details-number">{{ chosen.level.name }}</span>
+    <span class="details-number">{{ chosen.kicker }}</span>
     <h3 class="details-title">{{ chosen.title }}</h3>
     <p class="details-description">{{ chosen.level.description }}</p>
     @if (vsComputer()) {

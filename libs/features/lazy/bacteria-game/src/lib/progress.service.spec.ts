@@ -206,6 +206,13 @@ describe('ProgressService', () => {
     expect(stored()['endlessBest']).toBe(4);
   });
 
+  it('keeps no medallion for a rolled level - there is no second go', () => {
+    const rolled = { ...GOLD_WIN, levelId: 'gen:cave:123:5' };
+
+    expect(create().recordMatch(rolled).award).toBeNull();
+    expect(stored()['medals']).toEqual({});
+  });
+
   describe('the daily level', () => {
     const DAY = '2026-10-20';
     const daily = (won: boolean, day = DAY): MatchRecord => ({

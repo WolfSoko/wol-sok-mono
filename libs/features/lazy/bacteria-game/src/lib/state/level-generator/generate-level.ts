@@ -1,10 +1,10 @@
-import { streamSeed } from '../geometry';
+import { randomSeed, streamSeed } from '../geometry';
 import { GameBalance } from '../game-balance';
 import type { Level } from '../levels';
 import { GameMap, pointSymmetric, Rect } from '../maps';
 import { MedalLimits } from '../medallions';
 import { checkLayout, isPlayable } from './layout-check';
-import { isRecipeId, Recipe, RecipeId, RECIPES } from './recipes';
+import { isRecipeId, Recipe, RECIPE_IDS, RecipeId, RECIPES } from './recipes';
 import { Rng } from './rng';
 
 /** The difficulties a generated level comes in, from calm to frantic. */
@@ -36,6 +36,22 @@ export function generatedLevelId({
   difficulty,
 }: LevelRecipe): string {
   return `gen:${recipe}:${seed >>> 0}:${difficulty}`;
+}
+
+/**
+ * A new generated level of a style - any of them for 'any' - and a
+ * difficulty, from a fresh seed.
+ */
+export function rollLevelId(
+  style: RecipeId | 'any',
+  difficulty: number,
+  seed = randomSeed()
+): string {
+  return generatedLevelId({
+    recipe: style === 'any' ? RECIPE_IDS[seed % RECIPE_IDS.length] : style,
+    seed,
+    difficulty,
+  });
 }
 
 /** What a generated level's id is made from, null for any other id. */

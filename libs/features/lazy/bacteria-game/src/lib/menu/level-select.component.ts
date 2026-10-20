@@ -3,10 +3,9 @@ import {
   Component,
   computed,
   input,
+  linkedSignal,
   output,
-  signal,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,15 +13,19 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSliderModule } from '@angular/material/slider';
 import { arenaTheme, cssTriple } from '../arena/arena-theme';
 import { CHAPTERS } from '../state/chapters';
-import { randomSeed } from '../state/geometry';
 import {
-  generatedLevelId,
   MAX_DIFFICULTY,
   MIN_DIFFICULTY,
   parseGeneratedId,
+  rollLevelId,
 } from '../state/level-generator/generate-level';
-import { RECIPE_IDS, RecipeId } from '../state/level-generator/recipes';
-import { DailyCard } from './main-menu.component';
+import {
+  RECIPE_IDS,
+  RecipeId,
+  RECIPES,
+} from '../state/level-generator/recipes';
+import { DailyCard, endlessNote } from './menu-cards';
+import { LevelCard, LevelCardComponent } from './level-card.component';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { ScreenHeaderComponent } from './screen-header.component';
 import {
@@ -54,7 +57,7 @@ import {
 @Component({
   selector: 'feat-lazy-bac-game-level-select',
   imports: [
-    NgTemplateOutlet,
+    LevelCardComponent,
     MatButtonModule,
     MatButtonToggleModule,
     MatIconModule,
@@ -139,50 +142,64 @@ export class LevelSelectComponent {
     })
   );
 
-  /** The generated level chosen, null while it is a level of the ladder. */
-  protected readonly generated = computed(() => {
-    const made = parseGeneratedId(this.levelId());
-    return made === null
-      ? null
-      : {
-          ...this.card(this.levelId()),
-          title: getLevel(this.levelId()).name,
-          style: STYLE_NAMES[made.recipe],
-          difficulty: made.difficulty,
-        };
+  /** True while the ladder's locks apply - against the computer, no free play. */
+  protected readonly laddered = computed(
+    () => this.vsComputer() && !this.freePlay()
+  );
+
+  /**
+   * The level rolled last, still offered once a ladder level is picked -
+   * there is no other way back to its seed.
+   */
+  private readonly rolled = linkedSignal<string, string | null>({
+    source: this.levelId,
+    computation: (id, previous) =>
+      parseGeneratedId(id) !== null ? id : (previous?.value ?? null),
+  });
+
+  protected readonly rolledCard = computed(() => {
+    const id = this.rolled();
+    return id === null ? null : this.card(id);
   });
 
   protected readonly styles = [
     { id: 'any' as const, name: 'Any' },
-    ...RECIPE_IDS.map((id) => ({ id, name: STYLE_NAMES[id] })),
+    ...RECIPE_IDS.map((id) => ({ id, name: RECIPES[id].label })),
   ];
+  protected readonly endlessNote = endlessNote;
   protected readonly minDifficulty = MIN_DIFFICULTY;
   protected readonly maxDifficulty = MAX_DIFFICULTY;
-  /** The style and the difficulty the next generated level gets. */
-  protected readonly style = signal<RecipeId | 'any'>('any');
-  protected readonly heat = signal(5);
+  /**
+   * The style and the difficulty the next generated level gets - those of
+   * the level rolled last, until changed.
+   */
+  protected readonly style = linkedSignal<RecipeId | 'any'>(
+    () => parseGeneratedId(this.rolled() ?? '')?.recipe ?? 'any'
+  );
+  protected readonly heat = linkedSignal(
+    () => parseGeneratedId(this.rolled() ?? '')?.difficulty ?? 5
+  );
 
   /** Makes a level of the chosen style and difficulty and picks it. */
   protected generate(): void {
-    const seed = randomSeed();
-    const style = this.style();
-    this.levelChange.emit(
-      generatedLevelId({
-        recipe: style === 'any' ? RECIPE_IDS[seed % RECIPE_IDS.length] : style,
-        seed,
-        difficulty: this.heat(),
-      })
-    );
+    this.levelChange.emit(rollLevelId(this.style(), this.heat()));
   }
 
-  /** A level's card: its place on the ladder, its lock, its medallions. */
-  private card(id: string) {
+  /**
+   * A level's card: its badge - its place on the ladder, or the style of a
+   * generated one - its lock, its medallions, its arena's colours.
+   */
+  private card(id: string): LevelCard {
     const level = getLevel(id);
     const theme = arenaTheme(id);
+    const made = parseGeneratedId(id);
     return {
       id,
-      number: LEVELS.indexOf(level) + 1,
-      title: levelTitle(level),
+      badge:
+        made === null
+          ? String(LEVELS.indexOf(level) + 1)
+          : RECIPES[made.recipe].label,
+      title: made === null ? levelTitle(level) : level.name,
       lock: this.locks()[id] ?? null,
       floor: cssTriple(theme.floor),
       edge: cssTriple(theme.border),
@@ -197,8 +214,14 @@ export class LevelSelectComponent {
   protected readonly selected = computed(() => {
     const level = getLevel(this.levelId());
     const best = this.medals()[level.id]?.[this.difficulty()] ?? null;
+    const made = parseGeneratedId(level.id);
     return {
       level,
+      // Above the name: the ladder's number and name, or what was rolled.
+      kicker:
+        made === null
+          ? level.name
+          : `${RECIPES[made.recipe].label} · difficulty ${made.difficulty}`,
       title: levelTitle(level),
       best,
       bestName:
@@ -214,11 +237,3 @@ export class LevelSelectComponent {
     difficultyOption(this.difficulty())
   );
 }
-
-/** The generator's styles as the level choice names them. */
-const STYLE_NAMES: Record<RecipeId, string> = {
-  field: 'Field',
-  corridor: 'Corridors',
-  fortress: 'Fortress',
-  cave: 'Cave',
-};

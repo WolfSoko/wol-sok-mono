@@ -1,5 +1,3 @@
-import { LEVELS } from './levels';
-
 /** A stretch of the ladder with a story of its own - see the design notes. */
 export interface Chapter {
   name: string;
@@ -33,10 +31,3 @@ export const CHAPTERS: readonly Chapter[] = [
     levelIds: ['alveoli', 'mycelium', 'heartbeat', 'villi'],
   },
 ];
-
-/** The ladder's levels, chapter by chapter - the same order as `LEVELS`. */
-export function chapterLevels(chapter: Chapter) {
-  return chapter.levelIds.map(
-    (id) => LEVELS.find((level) => level.id === id) ?? LEVELS[0]
-  );
-}

@@ -56,7 +56,8 @@ import {
 } from './colony-colors/colony-colors.component';
 import { MatchSetupComponent } from './match-setup/match-setup.component';
 import { LevelSelectComponent } from './menu/level-select.component';
-import { DailyCard, MainMenuComponent } from './menu/main-menu.component';
+import { MainMenuComponent } from './menu/main-menu.component';
+import { DailyCard } from './menu/menu-cards';
 import { HelpComponent } from './menu/help.component';
 import { ProfileComponent } from './menu/profile.component';
 import { SettingsComponent } from './menu/settings.component';

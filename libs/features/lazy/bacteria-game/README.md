@@ -71,7 +71,9 @@ CSS animation, still for players who ask for less motion):
   its medallion per difficulty or the lock of the ladder; and _Beyond the
   ladder_: the daily level and an endless run against the computer, and
   _Generate a level_ - a style and a difficulty from 1 to 10, rolled into a
-  generated level that is then picked like any other. Beside them the chosen
+  generated level that is then picked like any other and stays offered while
+  another is picked. Generated levels are open from the start and, like
+  endless ones, keep no medallion - there is no second go at a rolled seed. Beside them the chosen
   level: its briefing, the computer's, the best medallion held and what the
   next one needs, and _Start_.
 - **Profile** - levels won, medallions per metal and every medallion level by

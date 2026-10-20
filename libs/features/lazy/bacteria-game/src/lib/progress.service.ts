@@ -9,7 +9,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { BotDifficulty } from './state/bot-controller';
 import { ladderLocks, newlyUnlocked } from './state/campaign';
-import { getLevel } from './state/levels';
+import { getLevel, LEVELS } from './state/levels';
 import { judgeMatch, MatchRecord, MedalTier } from './state/medallions';
 import { earnAchievements } from './state/achievements';
 import { MatchEarnings } from './state/earnings';
@@ -159,19 +159,23 @@ export class ProgressService {
       ? { medal: null, hint: PRACTICE_HINT }
       : judged;
     const endless = endlessWins !== null;
+    // Only the ladder's levels and the daily level keep a medallion: an
+    // endless or a rolled level is new every time, there is no second go.
+    const keepsMedal =
+      !endless &&
+      (dailyDay !== null || LEVELS.some(({ id }) => id === record.levelId));
     const withMatch = (progress: Progress, medalCounts: boolean) => {
       const counted = addTotals(progress, {
         ...totalsOf(record),
         matchXp: matchXp(record),
       });
-      // Every endless level is new: it earns no medallion to keep.
-      return judged.medal === null || !medalCounts || endless
+      return judged.medal === null || !medalCounts || !keepsMedal
         ? counted
         : addMedal(counted, record.levelId, record.difficulty, judged.medal);
     };
     const known = this.loaded();
     const earnings: MatchEarnings = {
-      award: endless ? null : { record, medal, previousBest, hint },
+      award: keepsMedal ? { record, medal, previousBest, hint } : null,
       ...this.record(
         (progress) =>
           endless ? addEndlessRun(progress, endlessWins) : progress,

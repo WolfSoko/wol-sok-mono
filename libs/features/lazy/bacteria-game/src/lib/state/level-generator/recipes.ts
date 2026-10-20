@@ -21,6 +21,8 @@ export function isRecipeId(value: unknown): value is RecipeId {
  * the generator mirrors it into the right one - and what it aims at.
  */
 export interface Recipe {
+  /** The style's name in the level choice - "Corridors". */
+  label: string;
   /** The second word of a generated name - "Quiet Corridors". */
   nouns: readonly string[];
   /** The briefing of a generated level. */
@@ -94,6 +96,7 @@ function bar(
  * and bigger the hotter the level.
  */
 const field: Recipe = {
+  label: 'Field',
   nouns: ['Meadow', 'Flats', 'Garden', 'Plain', 'Shallows'],
   description: 'Open ground with pillars for cover - mass beats cleverness.',
   detour: 1.1,
@@ -111,6 +114,7 @@ const field: Recipe = {
  * the gaps narrower the hotter the level.
  */
 const corridor: Recipe = {
+  label: 'Corridors',
   nouns: ['Corridors', 'Halls', 'Passage', 'Lanes', 'Locks'],
   description: 'Walls from edge to edge, with gaps to push through.',
   detour: 1.35,
@@ -145,6 +149,7 @@ const corridor: Recipe = {
  * the field between - a base to hold, a door to storm.
  */
 const fortress: Recipe = {
+  label: 'Fortress',
   nouns: ['Keep', 'Bastion', 'Citadel', 'Ramparts', 'Redoubt'],
   description: 'A keep around each colony, with doors to hold or to storm.',
   detour: 1.45,
@@ -209,6 +214,7 @@ function withDoor(wall: Rect, door: number, rng: Rng): Rect[] {
  * growing in from the edges - channels and no straight line anywhere.
  */
 const cave: Recipe = {
+  label: 'Cave',
   nouns: ['Caverns', 'Grotto', 'Hollows', 'Burrow', 'Tissue'],
   description:
     'Round walls like living tissue - winding channels, no straights.',
