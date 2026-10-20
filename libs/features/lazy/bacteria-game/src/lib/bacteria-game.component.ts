@@ -497,6 +497,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Starts a match on today's daily level, against the computer. */
   protected playDaily(): void {
+    // Not while the last match still turns to dust - the reset would end it.
+    if (this.resetting()) {
+      return;
+    }
     this.gameStateService.playDaily(this.progress.daily().day);
     this.startGame();
   }
@@ -504,7 +508,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Starts a match against the ghost of the run someone shared. */
   protected fightChallenge(): void {
     const run = this.store.challenge();
-    if (run === null) {
+    if (run === null || this.resetting()) {
       return;
     }
     this.dismissChallenge();
