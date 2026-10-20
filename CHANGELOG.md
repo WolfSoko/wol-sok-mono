@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.18.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.17.2...v74.18.0) (2026-10-20)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ menu music, richer effects, sound and vibration settings ([#2497](https://github.com/WolfSoko/wol-sok-mono/issues/2497)) ([2f1f134](https://github.com/WolfSoko/wol-sok-mono/commit/2f1f13475730b3f262caf0ac7511d3502b71f38a))
+
 ## [74.17.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.17.1...v74.17.2) (2026-10-19)
 
 ### Refactorings
