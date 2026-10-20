@@ -1,6 +1,7 @@
 import { AchievementId, isAchievementId } from './achievement-ids';
 import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
 import { isColonyColor } from './colony-colors';
+import { addAttempt, DailyRecord } from './daily';
 import { isObject } from './is-object';
 import { LEVELS } from './levels';
 import { betterMedal, MatchRecord, MEDAL_TIERS, MedalTier } from './medallions';
@@ -36,6 +37,8 @@ export interface Progress {
    * the rivalry on this device, "Orange leads 14 : 9".
    */
   couchWins: Partial<Record<string, number>>;
+  /** The daily level: the last day played, its attempts and the streak. */
+  daily: DailyRecord | null;
 }
 
 export const NO_TOTALS: LifetimeTotals = {
@@ -54,6 +57,7 @@ export const EMPTY_PROGRESS: Progress = {
   totals: NO_TOTALS,
   achievements: {},
   couchWins: {},
+  daily: null,
 };
 
 /**
@@ -146,6 +150,14 @@ export function addCouchWin(progress: Progress, colorId: string): Progress {
 }
 
 /**
+ * One more attempt at the daily level of `day`, with the streak - a count,
+ * so it is added to the stored progress like the totals.
+ */
+export function addDailyAttempt(progress: Progress, day: string): Progress {
+  return { ...progress, daily: addAttempt(progress.daily, day) };
+}
+
+/**
  * The progress with the best of either: the better medallion per level and
  * difficulty, the higher of each total and of each colour's wins, and the
  * earlier day of each achievement. Merging can only gain, so progress from several tabs or
@@ -197,7 +209,26 @@ export function mergeProgress(progress: Progress, other: Progress): Progress {
       couchWins: { ...merged.couchWins, ...Object.fromEntries(moreWins) },
     };
   }
+  // The later day wins, and on the same day the more attempts.
+  const daily = laterDaily(merged.daily, other.daily);
+  if (daily !== merged.daily) {
+    merged = { ...merged, daily };
+  }
   return merged;
+}
+
+/** Of two daily records the later one, or the one with more attempts. */
+function laterDaily(
+  held: DailyRecord | null,
+  other: DailyRecord | null
+): DailyRecord | null {
+  if (other === null || held === null) {
+    return held ?? other;
+  }
+  if (other.day !== held.day) {
+    return other.day > held.day ? other : held;
+  }
+  return other.attempts > held.attempts ? other : held;
 }
 
 /**
@@ -214,7 +245,24 @@ export function parseProgress(value: unknown): Progress {
     totals: parseTotals(value['totals']),
     achievements: parseAchievements(value['achievements']),
     couchWins: parseCouchWins(value['couchWins']),
+    daily: parseDaily(value['daily']),
   };
+}
+
+/** The daily record, null for anything else. */
+function parseDaily(value: unknown): DailyRecord | null {
+  if (!isObject(value)) {
+    return null;
+  }
+  const { day, attempts, streak } = value;
+  const count = (n: unknown): n is number =>
+    Number.isInteger(n) && (n as number) > 0;
+  return typeof day === 'string' &&
+    ISO_DATE.test(day) &&
+    count(attempts) &&
+    count(streak)
+    ? { day, attempts, streak }
+    : null;
 }
 
 function parseMedals(value: unknown): Progress['medals'] {

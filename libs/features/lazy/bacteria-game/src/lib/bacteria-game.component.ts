@@ -25,6 +25,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { WsThanosDirective } from '@wolsok/thanos';
 import { GhostChallengeComponent } from './ghost/ghost-challenge.component';
+import { DAILY_ATTEMPTS } from './state/daily';
 import {
   ElemResizedDirective,
   ResizedEvent,
@@ -55,7 +56,7 @@ import {
 } from './colony-colors/colony-colors.component';
 import { MatchSetupComponent } from './match-setup/match-setup.component';
 import { LevelSelectComponent } from './menu/level-select.component';
-import { MainMenuComponent } from './menu/main-menu.component';
+import { DailyCard, MainMenuComponent } from './menu/main-menu.component';
 import { HelpComponent } from './menu/help.component';
 import { ProfileComponent } from './menu/profile.component';
 import { SettingsComponent } from './menu/settings.component';
@@ -481,10 +482,33 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  /** Today's daily level for the main menu. */
+  protected readonly dailyCard = computed((): DailyCard => {
+    const { levelId, attemptsLeft, streak } = this.progress.daily();
+    const attempts =
+      attemptsLeft > 0
+        ? `${attemptsLeft} of ${DAILY_ATTEMPTS} attempts left`
+        : 'Attempts used - practice until 00:00 UTC';
+    return {
+      name: getLevel(levelId).name,
+      note: streak > 0 ? `${attempts} · ${streak}-day streak` : attempts,
+    };
+  });
+
+  /** Starts a match on today's daily level, against the computer. */
+  protected playDaily(): void {
+    // Not while the last match still turns to dust - the reset would end it.
+    if (this.resetting()) {
+      return;
+    }
+    this.gameStateService.playDaily(this.progress.daily().day);
+    this.startGame();
+  }
+
   /** Starts a match against the ghost of the run someone shared. */
   protected fightChallenge(): void {
     const run = this.store.challenge();
-    if (run === null) {
+    if (run === null || this.resetting()) {
       return;
     }
     this.dismissChallenge();
@@ -506,8 +530,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const next = action === 'next' ? this.upcomingLevel() : null;
-    // The reset ends a ghost match: a rematch sets the same ghost again.
-    const rematch = action === 'again' ? this.store.snapshot().ghost : null;
+    // The reset ends a match set outside the setup: a rematch sets it again.
+    const rematch =
+      action === 'again' ? this.gameStateService.oneMatch() : null;
     this.screen.set(action === 'levels' ? 'levels' : 'menu');
     if (action === 'menu') {
       this.gameStateService.endSeries();
@@ -523,7 +548,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           if (action === 'ghost') {
             this.gameStateService.playGhost();
           } else if (rematch !== null) {
-            this.gameStateService.playGhost(rematch);
+            this.gameStateService.replayOneMatch(rematch);
           }
           if (action === 'again' || action === 'next' || action === 'ghost') {
             this.startGame();

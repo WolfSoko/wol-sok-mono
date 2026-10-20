@@ -10,6 +10,7 @@ import {
   parseProgress,
   Progress,
   totalsOf,
+  addDailyAttempt,
 } from './progress';
 
 describe('addMedal', () => {
@@ -57,6 +58,7 @@ describe('mergeProgress', () => {
     totals: { ...NO_TOTALS, matches: 7, wins: 5 },
     achievements: { 'first-blood': '2026-10-01', blitz: '2026-10-09' },
     couchWins: { orange: 4, blue: 2 },
+    daily: { day: '2026-10-19', attempts: 2, streak: 4 },
   };
   const elsewhere: Progress = {
     medals: {
@@ -66,6 +68,7 @@ describe('mergeProgress', () => {
     totals: { ...NO_TOTALS, matches: 9, wins: 4, couchMatches: 2 },
     achievements: { blitz: '2026-10-03', siege: '2026-10-04' },
     couchWins: { orange: 3, green: 1 },
+    daily: { day: '2026-10-19', attempts: 3, streak: 4 },
   };
 
   it('keeps the better medallion, the higher total and the earlier day', () => {
@@ -81,6 +84,8 @@ describe('mergeProgress', () => {
         siege: '2026-10-04',
       },
       couchWins: { orange: 4, blue: 2, green: 1 },
+      // The daily record of the same day: the one with more attempts.
+      daily: { day: '2026-10-19', attempts: 3, streak: 4 },
     });
   });
 
@@ -94,6 +99,32 @@ describe('mergeProgress', () => {
     expect(mergeProgress(here, EMPTY_PROGRESS)).toBe(here);
     expect(mergeProgress(here, here)).toBe(here);
     expect(mergeProgress(EMPTY_PROGRESS, here)).toEqual(here);
+  });
+});
+
+describe('addDailyAttempt', () => {
+  it('counts an attempt at the daily level of a day, with the streak', () => {
+    const progress = addDailyAttempt(
+      addDailyAttempt(EMPTY_PROGRESS, '2026-10-20'),
+      '2026-10-21'
+    );
+
+    expect(progress.daily).toEqual({
+      day: '2026-10-21',
+      attempts: 1,
+      streak: 2,
+    });
+  });
+
+  it('keeps the later day when merging', () => {
+    const today = addDailyAttempt(EMPTY_PROGRESS, '2026-10-21');
+    const yesterday = addDailyAttempt(
+      addDailyAttempt(EMPTY_PROGRESS, '2026-10-20'),
+      '2026-10-20'
+    );
+
+    expect(mergeProgress(yesterday, today).daily).toEqual(today.daily);
+    expect(mergeProgress(today, yesterday).daily).toEqual(today.daily);
   });
 });
 
@@ -151,6 +182,7 @@ describe('parseProgress', () => {
       totals: { ...NO_TOTALS, matches: 3, wins: 2 },
       achievements: { pacifist: '2026-10-19' },
       couchWins: { purple: 7 },
+      daily: { day: '2026-10-20', attempts: 2, streak: 6 },
     };
     expect(parseProgress(JSON.parse(JSON.stringify(progress)))).toEqual(
       progress
@@ -180,12 +212,14 @@ describe('parseProgress', () => {
           comeback: '',
         },
         couchWins: { red: 2.5, mauve: 4, blue: -1 },
+        daily: { day: 'yesterday', attempts: 2, streak: 1 },
       })
     ).toEqual({
       medals: { corridors: { normal: 'gold' } },
       totals: { ...NO_TOTALS, matches: 4, couchMatches: 3 },
       achievements: { blitz: '2026-10-19' },
       couchWins: { red: 2 },
+      daily: null,
     });
   });
 

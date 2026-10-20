@@ -229,6 +229,12 @@
 }
 
 // Under the buttons: what the locked next level still needs.
+.daily-note {
+  margin: -0.25rem 0 0;
+  color: var(--bw-gold, inherit);
+  font-weight: 600;
+}
+
 .share-note {
   margin: -0.5rem 0 0;
   text-align: right;

@@ -207,6 +207,8 @@
                     (soundChange)="setSound($event)"
                     (leave)="leaveFullscreen()"
                     [challenge]="challengeLevel()"
+                    [daily]="dailyCard()"
+                    (playDaily)="playDaily()"
                     (fightChallenge)="fightChallenge()"
                     (dismissChallenge)="dismissChallenge()"
                   />

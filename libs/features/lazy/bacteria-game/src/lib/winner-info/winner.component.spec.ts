@@ -363,6 +363,23 @@ describe('WinnerComponent', () => {
     });
   });
 
+  it('tells the attempt and the streak of the daily level', () => {
+    store.update({
+      mode: 'vs-computer',
+      winner: createPlayer({ id: 0, name: 'You' }),
+      levelId: LEVELS[0].id,
+      earnings: earnings({
+        daily: { attempt: 2, streak: 5 },
+      }),
+    });
+    expect(text()).toContain('Daily level · attempt 2 of 3 · 5-day streak');
+
+    store.update({
+      earnings: earnings({ daily: { attempt: 4, streak: 5 } }),
+    });
+    expect(text()).toContain('Daily level · practice');
+  });
+
   it('reports what the player picks', () => {
     store.update({ winner: null, levelId: LEVELS[0].id });
     const picked = jest.fn();
