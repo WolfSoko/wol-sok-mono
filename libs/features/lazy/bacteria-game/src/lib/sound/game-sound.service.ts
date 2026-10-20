@@ -1,4 +1,4 @@
-import { Injectable, effect, inject } from '@angular/core';
+import { Injectable, computed, effect, inject } from '@angular/core';
 import { GameSettingsService, MAX_VOLUME } from '../settings.service';
 import { FrameEvents, MatchResult } from '../state/match-engine';
 import { MedalTier, medalRank } from '../state/medallions';
@@ -135,6 +135,14 @@ export class GameSoundService {
       ? perceived(this.settings.effectsVolume() / MAX_VOLUME)
       : 0;
   }
+
+  /**
+   * How loud an effect plays from 0 to 1, the sound switch included - for
+   * effects made outside the service, such as the vaporize snap.
+   */
+  public readonly effectsGain = computed(() =>
+    this.settings.sound() ? this.effectsLevel() : 0
+  );
 
   /** Creates or wakes the audio context, on a user gesture. */
   private unlock(): void {

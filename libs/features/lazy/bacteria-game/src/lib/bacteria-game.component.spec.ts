@@ -5,6 +5,7 @@ import { arenaTheme } from './arena/arena-theme';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { GameSettingsService } from './settings.service';
+import { GameSoundService } from './sound/game-sound.service';
 import { GameStateService } from './state/game-state.service';
 import { GameStateStore } from './state/game.states';
 import { levelTitle, LEVELS } from './state/levels';
@@ -506,10 +507,7 @@ describe('BacteriaGameComponent', () => {
       create();
       const settings = TestBed.inject(GameSettingsService);
 
-      expect(component['thanosOptions']()).toEqual({
-        sound: true,
-        soundVolume: 0.5,
-      });
+      expect(component['thanosOptions']().sound).toBe(true);
       settings.setSound(false);
       expect(component['thanosOptions']().sound).toBe(false);
       settings.setSound(true);
@@ -517,11 +515,18 @@ describe('BacteriaGameComponent', () => {
       expect(component['thanosOptions']().sound).toBe(false);
     });
 
-    it('snaps as loud as the effects', () => {
+    it('snaps as loud as the other effects', () => {
       create();
-      TestBed.inject(GameSettingsService).setEffectsVolume(40);
+      const settings = TestBed.inject(GameSettingsService);
+      const louder = () => component['thanosOptions']().soundVolume ?? 0;
 
-      expect(component['thanosOptions']().soundVolume).toBeCloseTo(0.25);
+      const atDefault = louder();
+      settings.setEffectsVolume(40);
+
+      expect(louder()).toBeLessThan(atDefault);
+      expect(louder()).toBeCloseTo(
+        TestBed.inject(GameSoundService).effectsGain() * 0.8
+      );
     });
   });
 

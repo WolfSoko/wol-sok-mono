@@ -112,8 +112,11 @@ import {
   WinnerComponent,
 } from './winner-info/winner.component';
 
-/** How loud the vaporize snap is at the default effects volume. */
-const THANOS_SOUND_VOLUME = 0.5;
+/**
+ * The vaporize snap's volume at full effects - about the library's own
+ * default at the default effects volume.
+ */
+const SNAP_LEVEL = 0.8;
 
 /** The last seconds of a timed level, when its clock turns red. */
 const RUNNING_OUT_SEC = 10;
@@ -204,19 +207,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly clockLabel: Signal<string>;
   /** True in the last seconds of a timed match, while it is on. */
   protected readonly timeRunningOut: Signal<boolean>;
-  /**
-   * The vaporize effect's snap follows the sound settings like every other
-   * effect: silent while the sound or the effects are off, and as loud as
-   * the effects - its own default at the default effects volume.
-   */
-  protected readonly thanosOptions = computed((): Partial<WsThanosOptions> => ({
-    sound: this.settings.sound() && this.settings.effects(),
-    soundVolume: Math.min(
-      1,
-      (THANOS_SOUND_VOLUME * this.settings.effectsVolume()) /
-        DEFAULT_EFFECTS_VOLUME
-    ),
-  }));
+  /** The vaporize snap, as loud as the game's other effects. */
+  protected readonly thanosOptions = computed((): Partial<WsThanosOptions> => {
+    const gain = this.sound.effectsGain();
+    return { sound: gain > 0, soundVolume: gain * SNAP_LEVEL };
+  });
   /** The seconds a colony must hold the zone - null but on such a level. */
   protected readonly holdTarget = computed(() =>
     holdTarget(this.store.winRule())
