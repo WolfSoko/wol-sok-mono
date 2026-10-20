@@ -208,15 +208,17 @@ describe('WsThanosDirective options input', () => {
 
 describe('WsThanosDirective preload', () => {
   @Component({
-    template: `<div wsThanos></div>
-      <div wsThanos></div>`,
+    template: `<div wsThanos [wsThanosOptions]="elementOptions"></div>`,
     imports: [WsThanosDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
   })
-  class PreloadHostComponent {}
+  class PreloadHostComponent {
+    public elementOptions?: Partial<WsThanosOptions>;
+  }
 
   async function renderWith(
-    options: Partial<WsThanosOptions>
+    options: Partial<WsThanosOptions>,
+    elementOptions?: Partial<WsThanosOptions>
   ): Promise<jest.SpyInstance> {
     TestBed.configureTestingModule({
       providers: [provideWsThanosOptions(options)],
@@ -225,6 +227,7 @@ describe('WsThanosDirective preload', () => {
       .spyOn(TestBed.inject(WsThanosService), 'preload')
       .mockResolvedValue();
     const fixture = TestBed.createComponent(PreloadHostComponent);
+    fixture.componentInstance.elementOptions = elementOptions;
     await fixture.whenStable();
     return preload;
   }
@@ -237,6 +240,12 @@ describe('WsThanosDirective preload', () => {
 
   it('should not warm up when preload is off', async () => {
     const preload = await renderWith({ preload: false });
+
+    expect(preload).not.toHaveBeenCalled();
+  });
+
+  it('should not warm up when the element turns preload off', async () => {
+    const preload = await renderWith({}, { preload: false });
 
     expect(preload).not.toHaveBeenCalled();
   });

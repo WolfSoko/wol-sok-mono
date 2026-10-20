@@ -40,7 +40,9 @@ export class WsThanosDirective {
   public constructor() {
     // only in the browser, the service runs it once for all elements
     afterNextRender(() => {
-      if (this.thanosOptions.preload) {
+      const preload =
+        this.wsThanosOptions()?.preload ?? this.thanosOptions.preload;
+      if (preload) {
         void this.thanosService.preload();
       }
     });
