@@ -205,6 +205,74 @@ describe('WinnerComponent', () => {
     expect(text()).not.toContain('Choose a level');
   });
 
+  describe('the ghost', () => {
+    /** A run to fight, as the end of a match against the computer leaves it. */
+    const run = {
+      header: {
+        levelId: LEVELS[0].id,
+        mode: 'vs-computer' as const,
+        difficulty: 'normal' as const,
+        colors: ['orange', 'blue'] as [string, string],
+        headStart: 0 as const,
+        width: 320,
+        height: 140,
+        seed: 1,
+        version: 1,
+        balanceVersion: 1,
+        simulation: 'cpu' as const,
+        ticks: 600,
+      },
+      inputs: { steers: [], drags: [], boosts: [] },
+    };
+
+    function ghostButton(): HTMLButtonElement | undefined {
+      fixture.detectChanges();
+      return Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('button')
+      ).find((button) => button.textContent?.includes('Fight your ghost'));
+    }
+
+    it('offers to fight the run just played against the computer', () => {
+      store.update({
+        mode: 'vs-computer',
+        winner: createPlayer({ id: 0, name: 'You' }),
+        levelId: LEVELS[0].id,
+        lastReplay: run,
+      });
+      const picked = jest.fn();
+      fixture.componentInstance.action.subscribe(picked);
+
+      ghostButton()?.click();
+
+      expect(picked).toHaveBeenCalledWith('ghost');
+    });
+
+    it('is no offer between two players or without a run', () => {
+      store.update({ mode: 'two-players', lastReplay: run });
+      expect(ghostButton()).toBeUndefined();
+
+      store.update({ mode: 'vs-computer', lastReplay: null });
+      expect(ghostButton()).toBeUndefined();
+    });
+
+    it('tells who won against the ghost, and offers it again', () => {
+      store.update({
+        mode: 'vs-computer',
+        winner: createPlayer({ id: 1, name: 'Ghost', isBot: true }),
+        levelId: LEVELS[0].id,
+        lastReplay: run,
+        ghost: run,
+      });
+
+      expect(text()).toContain('Your ghost wins');
+      expect(text()).toContain('Fight it again');
+      expect(ghostButton()).toBeUndefined();
+
+      store.update({ winner: createPlayer({ id: 0, name: 'You' }) });
+      expect(text()).toContain('You beat your ghost');
+    });
+  });
+
   it('reports what the player picks', () => {
     store.update({ winner: null, levelId: LEVELS[0].id });
     const picked = jest.fn();

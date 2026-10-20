@@ -44,6 +44,7 @@ import { Player } from './player.model';
 import { randomSeed } from './geometry';
 import { MatchOutcome } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
+import { GhostController, turnedOnto } from './ghost';
 import { Replay, replayOf } from './replay';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
@@ -64,8 +65,6 @@ export class GameStateService {
   private progress = inject(ProgressService);
   /** What the colonies on the board were spawned from - see `initPlayers`. */
   private plan: MatchPlan | null = null;
-  /** The recording of the match that ended last, null before one has. */
-  public lastReplay: Replay | null = null;
 
   /**
    * The ticks of the display frames the game runs on - see
@@ -161,11 +160,13 @@ export class GameStateService {
    * award reach the store together.
    */
   private endMatch(outcome: MatchOutcome): void {
-    const { series } = this.gameStateStore.snapshot();
+    const { series, ghost, mode, lastReplay } = this.gameStateStore.snapshot();
     const earnings = this.recordMatch(outcome.winner);
-    this.lastReplay = this.replay();
     // One update, so the result and the award reach the readers together.
     this.gameStateStore.update({
+      // A ghost match is not one to play again: its opponent is no bot.
+      lastReplay:
+        mode === 'vs-computer' && ghost === null ? this.replay() : lastReplay,
       currentState: GameState.END,
       winner: outcome.winner,
       matchEnded: true,
@@ -195,8 +196,12 @@ export class GameStateService {
    * it earned. Null for a match against the computer without a human in it.
    */
   private recordMatch(winner: Player | null): MatchEarnings | null {
-    const { mode, levelId, difficulty, timePassed, width, colors } =
+    const { mode, levelId, difficulty, timePassed, width, colors, ghost } =
       this.gameStateStore.snapshot();
+    if (ghost !== null) {
+      // Beating your own ghost is for the fun of it - no medallion, no XP.
+      return null;
+    }
     switch (mode) {
       case 'two-players': {
         const seat = winnerSeat(winner);
@@ -224,11 +229,20 @@ export class GameStateService {
 
   /**
    * Spawns both colonies with the map and the balance of the current level,
-   * from a fresh seed - every spawn is a match that may be played.
+   * from a fresh seed - every spawn is a match that may be played. In a
+   * ghost match the right colony is the ghost, on the seed of its run.
    */
   private initPlayers() {
-    const { width, height, levelId, mode, difficulty, colors, headStart } =
-      this.gameStateStore.snapshot();
+    const {
+      width,
+      height,
+      levelId,
+      mode,
+      difficulty,
+      colors,
+      headStart,
+      ghost,
+    } = this.gameStateStore.snapshot();
     this.plan = {
       levelId,
       mode,
@@ -237,10 +251,56 @@ export class GameStateService {
       headStart,
       width,
       height,
-      seed: randomSeed(),
+      seed: ghost?.header.seed ?? randomSeed(),
     };
     const { spawns, options } = planMatch(this.plan);
+    if (ghost !== null) {
+      spawns[1] = { ...spawns[1], name: 'Ghost' };
+      // The run was played from the left: the ghost plays it from the right.
+      options.ghosts = new Map([
+        [
+          1,
+          new GhostController(
+            ghost.inputs,
+            0,
+            turnedOnto(ghost.header, { width, height })
+          ),
+        ],
+      ]);
+    }
     this.playerService.init(spawns, options);
+  }
+
+  /**
+   * Sets the next matches against the ghost of the last match against the
+   * computer: on its level, the computer's colony steered as the player
+   * steered their own back then.
+   */
+  public playGhost(): void {
+    const { lastReplay } = this.gameStateStore.snapshot();
+    if (lastReplay === null) {
+      return;
+    }
+    this.gameStateStore.update({
+      ghost: lastReplay,
+      levelId: lastReplay.header.levelId,
+      mode: 'vs-computer',
+      series: null,
+    });
+    if (this.isIdle()) {
+      this.initPlayers();
+    }
+  }
+
+  /** Back to the computer as the opponent. */
+  public endGhost(): void {
+    if (this.gameStateStore.snapshot().ghost === null) {
+      return;
+    }
+    this.gameStateStore.update({ ghost: null });
+    if (this.isIdle()) {
+      this.initPlayers();
+    }
   }
 
   /**
@@ -282,7 +342,12 @@ export class GameStateService {
         setup[key] !== undefined &&
         JSON.stringify(setup[key]) !== JSON.stringify(current[key])
     );
-    this.gameStateStore.update(changed ? { ...setup, series: null } : setup);
+    // Any other setup ends a ghost match as well.
+    this.gameStateStore.update(
+      changed
+        ? { ...setup, series: null, ghost: null }
+        : { ...setup, ghost: null }
+    );
     if (this.isIdle()) {
       this.initPlayers();
     }

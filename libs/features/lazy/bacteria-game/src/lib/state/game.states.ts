@@ -1,3 +1,4 @@
+import type { Replay } from './replay';
 import { computed, untracked } from '@angular/core';
 import {
   getState,
@@ -73,6 +74,13 @@ export interface GameStateState {
   headStart: HeadStart;
   /** The series two players have under way, null outside one. */
   series: Series | null;
+  /** The recording of the last match against the computer, null before one. */
+  lastReplay: Replay | null;
+  /**
+   * The recording the opponent plays back in a ghost match - the player's
+   * own earlier run, turned to the other side - null outside one.
+   */
+  ghost: Replay | null;
 }
 
 export function createInitialState(): GameStateState {
@@ -93,6 +101,8 @@ export function createInitialState(): GameStateState {
     seriesLength: 1,
     headStart: 0,
     series: null,
+    lastReplay: null,
+    ghost: null,
   };
 }
 

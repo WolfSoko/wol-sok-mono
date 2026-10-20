@@ -71,7 +71,7 @@ export class PlayerService {
    */
   public init(
     spawns: PlayerSpawn[],
-    options: Omit<MatchOptions, 'seed' | 'simulation' | 'replay'> & {
+    options: Omit<MatchOptions, 'seed' | 'simulation'> & {
       /** Where every chance of the match comes from - a fresh one when absent. */
       seed?: number;
     } = {}

@@ -31,6 +31,7 @@ import {
   Player,
   PlayerColorArray,
 } from './player.model';
+import { GhostController } from './ghost';
 import type { ReplayInputs } from './replay';
 
 /** What a match needs to know about one player before it starts. */
@@ -66,11 +67,12 @@ export interface MatchOptions {
   /** Builds the simulation - the CPU one when absent. */
   simulation?: SimulationFactory;
   /**
-   * The humans' inputs of a recorded match, to play it again: the humans
-   * then steer, drag and boost as the recording says, and what is set from
-   * outside is ignored.
+   * The players driven by a recording, by seat - all the humans when a
+   * replay is played again, the opponent in a ghost match. What is set from
+   * outside for them is ignored. A ghost seat spawns as a bot, so the game
+   * treats it as nobody at the screen, but no bot steers it.
    */
-  replay?: ReplayInputs;
+  ghosts?: ReadonlyMap<number, GhostController>;
 }
 
 /** A frame in which nothing happened. */
@@ -151,19 +153,17 @@ export class MatchEngine {
   /** What the ticks of the frame under way did so far. */
   private tickEvents: StepEvents = noEvents();
   private ticks = 0;
-  /** What the humans put in, for the replay - or what they do, when playing one. */
-  private readonly inputs: ReplayInputs;
-  private readonly playingBack: boolean;
-  /** How far playing back got through each list of the recording. */
-  private readonly next = { steers: 0, drags: 0, boosts: 0 };
+  /** What the humans at the screen put in, for the replay. */
+  private readonly inputs: ReplayInputs = { steers: [], drags: [], boosts: [] };
+  /** The players a recording drives, by seat. */
+  private readonly ghosts: ReadonlyMap<number, GhostController>;
 
   public constructor(spawns: readonly PlayerSpawn[], options: MatchOptions) {
     this.seed = options.seed;
     this.balance = options.balance ?? gameBalance;
-    this.playingBack = options.replay != null;
-    this.inputs = options.replay ?? { steers: [], drags: [], boosts: [] };
+    this.ghosts = options.ghosts ?? new Map();
     this.playerList = spawns.map((spawn, index) => {
-      if (spawn.isBot) {
+      if (spawn.isBot && !this.ghosts.has(index)) {
         this.bots.set(
           index,
           new BotController(
@@ -232,7 +232,7 @@ export class MatchEngine {
    * crosshair arrives, or as soon as the player steers.
    */
   public setDragTarget(playerId: number, x: number, y: number): void {
-    if (this.playingBack || this.bots.has(playerId)) {
+    if (!this.isLive(playerId)) {
       return;
     }
     this.dragTargets.set(playerId, { x, y });
@@ -246,7 +246,7 @@ export class MatchEngine {
    * target.
    */
   public setSteering(playerId: number, vector: SteeringVector): void {
-    if (this.playingBack) {
+    if (!this.isLive(playerId)) {
       return;
     }
     this.steer(playerId, vector);
@@ -258,10 +258,15 @@ export class MatchEngine {
    * Returns whether it fired.
    */
   public boost(playerId: number): boolean {
-    if (this.playingBack && !this.bots.has(playerId)) {
+    if (this.ghosts.has(playerId)) {
       return false;
     }
     return this.fireBoost(playerId);
+  }
+
+  /** True for a human at the screen - neither a bot nor a ghost. */
+  public isLive(playerId: number): boolean {
+    return !this.bots.has(playerId) && !this.ghosts.has(playerId);
   }
 
   /**
@@ -272,11 +277,8 @@ export class MatchEngine {
     for (const player of this.playerList) {
       this.lastCrosshairs.set(player.id, player);
     }
-    if (this.playingBack) {
-      this.playBack();
-    } else {
-      this.record();
-    }
+    this.playGhosts();
+    this.record();
     for (const player of this.playerList) {
       this.movePlayer(player.id, width, height);
     }
@@ -360,7 +362,7 @@ export class MatchEngine {
     });
     this.ownsPlayers = false;
     this.firedBoosts.push(player.isBot);
-    if (!player.isBot && !this.playingBack) {
+    if (this.isLive(playerId)) {
       // Fired between two ticks, it counts from the next one on.
       this.inputs.boosts.push([this.ticks, playerId]);
     }
@@ -374,7 +376,7 @@ export class MatchEngine {
     }
     this.newDrags.clear();
     for (const player of this.playerList) {
-      if (player.isBot) {
+      if (!this.isLive(player.id)) {
         continue;
       }
       const now = this.steering.get(player.id) ?? AT_REST;
@@ -386,30 +388,19 @@ export class MatchEngine {
     }
   }
 
-  /** Puts in what the recording has the humans put in before this tick. */
-  private playBack(): void {
-    const { steers, drags, boosts } = this.inputs;
-    const due = <T extends readonly number[]>(
-      list: T[],
-      at: number
-    ): T | null =>
-      at < list.length && list[at][0] <= this.ticks ? list[at] : null;
-    for (
-      let boost;
-      (boost = due(boosts, this.next.boosts));
-      this.next.boosts++
-    ) {
-      this.fireBoost(boost[1]);
-    }
-    for (let drag; (drag = due(drags, this.next.drags)); this.next.drags++) {
-      this.dragTargets.set(drag[1], { x: drag[2], y: drag[3] });
-    }
-    for (
-      let steer;
-      (steer = due(steers, this.next.steers));
-      this.next.steers++
-    ) {
-      this.steer(steer[1], { x: steer[2], y: steer[3] });
+  /** Puts in what the recordings have the ghosts put in before this tick. */
+  private playGhosts(): void {
+    for (const [playerId, ghost] of this.ghosts) {
+      const { boost, drag, steer } = ghost.before(this.ticks);
+      if (boost) {
+        this.fireBoost(playerId);
+      }
+      if (drag != null) {
+        this.dragTargets.set(playerId, drag);
+      }
+      if (steer != null) {
+        this.steer(playerId, steer);
+      }
     }
   }
 

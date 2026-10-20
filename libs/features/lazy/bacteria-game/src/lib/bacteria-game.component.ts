@@ -450,6 +450,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (action === 'menu') {
       this.gameStateService.endSeries();
     }
+    if (action !== 'again' && action !== 'ghost') {
+      this.gameStateService.endGhost();
+    }
     this.resetGame$()
       .pipe(
         tap(() => {
@@ -458,7 +461,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           if (next != null) {
             this.gameStateService.setLevel(next.id);
           }
-          if (action === 'again' || action === 'next') {
+          if (action === 'ghost') {
+            this.gameStateService.playGhost();
+          }
+          if (action === 'again' || action === 'next' || action === 'ghost') {
             this.startGame();
           }
         }),

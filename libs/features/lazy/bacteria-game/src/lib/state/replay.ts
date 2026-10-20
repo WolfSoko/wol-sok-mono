@@ -5,6 +5,7 @@ import { BALANCE_VERSION } from './game-balance';
 import { isObject } from './is-object';
 import { isLevelId } from './levels';
 import { isGameMode } from './game.states';
+import { GhostController } from './ghost';
 import { MatchEngine, MatchOutcome } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import { Player } from './player.model';
@@ -106,7 +107,13 @@ export function playReplay(replay: Replay): ReplayResult | null {
     return null;
   }
   const { spawns, options } = planMatch(header);
-  const engine = new MatchEngine(spawns, { ...options, replay: inputs });
+  // Every human is played back from the recording, as they were.
+  const ghosts = new Map(
+    spawns.flatMap((spawn, seat) =>
+      spawn.isBot ? [] : [[seat, new GhostController(inputs, seat)] as const]
+    )
+  );
+  const engine = new MatchEngine(spawns, { ...options, ghosts });
   try {
     let outcome = engine.outcome();
     while (outcome == null && engine.tickCount < header.ticks) {

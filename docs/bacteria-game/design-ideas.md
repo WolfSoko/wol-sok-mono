@@ -870,7 +870,9 @@ Phase 2 has started with its groundwork: the fixed 60 Hz tick behind the
 frame pacer and one seed per match through the simulation, the pellets and
 the bot (5.1), and replays (5.2): an Angular-free `MatchEngine` records the
 humans' crosshairs and boosts, and `playReplay` plays a match out again on
-the CPU. The ghost bot and share links build on it.
+the CPU. The ghost is in as well: after a match against the computer, the
+player fights their own run, played by the computer's colony through a
+`GhostController` and turned to the other side. Share links build on it.
 Phase 7 can be sprinkled in between the others; each of its items is a
 self-contained PR. Of the groundwork the phases assumed, three pieces have
 landed since the first version of this document: the seeded generator (for
