@@ -23,7 +23,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { WsThanosDirective } from '@wolsok/thanos';
+import { WsThanosDirective, WsThanosOptions } from '@wolsok/thanos';
 import { GhostChallengeComponent } from './ghost/ghost-challenge.component';
 import { DAILY_ATTEMPTS } from './state/daily';
 import {
@@ -65,7 +65,10 @@ import { SettingsComponent } from './menu/settings.component';
 import { SwarmComponent } from './menu/swarm.component';
 import { getColonyColor, pickColor, readableOn } from './state/colony-colors';
 import { BotDifficulty, difficultyOption } from './state/bot-controller';
-import { GameSettingsService } from './settings.service';
+import {
+  DEFAULT_EFFECTS_VOLUME,
+  GameSettingsService,
+} from './settings.service';
 import { ProgressService } from './progress.service';
 import { CampaignService } from './campaign.service';
 import { dismissSplash } from './splash';
@@ -108,6 +111,9 @@ import {
   MatchEndAction,
   WinnerComponent,
 } from './winner-info/winner.component';
+
+/** How loud the vaporize snap is at the default effects volume. */
+const THANOS_SOUND_VOLUME = 0.5;
 
 /** The last seconds of a timed level, when its clock turns red. */
 const RUNNING_OUT_SEC = 10;
@@ -198,6 +204,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly clockLabel: Signal<string>;
   /** True in the last seconds of a timed match, while it is on. */
   protected readonly timeRunningOut: Signal<boolean>;
+  /**
+   * The vaporize effect's snap follows the sound settings like every other
+   * effect: silent while the sound or the effects are off, and as loud as
+   * the effects - its own default at the default effects volume.
+   */
+  protected readonly thanosOptions = computed((): Partial<WsThanosOptions> => ({
+    sound: this.settings.sound() && this.settings.effects(),
+    soundVolume: Math.min(
+      1,
+      (THANOS_SOUND_VOLUME * this.settings.effectsVolume()) /
+        DEFAULT_EFFECTS_VOLUME
+    ),
+  }));
   /** The seconds a colony must hold the zone - null but on such a level. */
   protected readonly holdTarget = computed(() =>
     holdTarget(this.store.winRule())

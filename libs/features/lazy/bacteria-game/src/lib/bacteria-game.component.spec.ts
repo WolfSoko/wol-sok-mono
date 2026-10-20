@@ -501,6 +501,30 @@ describe('BacteriaGameComponent', () => {
     });
   });
 
+  describe('the vaporize effect', () => {
+    it('snaps only while the sound and the effects are on', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+
+      expect(component['thanosOptions']()).toEqual({
+        sound: true,
+        soundVolume: 0.5,
+      });
+      settings.setSound(false);
+      expect(component['thanosOptions']().sound).toBe(false);
+      settings.setSound(true);
+      settings.setEffects(false);
+      expect(component['thanosOptions']().sound).toBe(false);
+    });
+
+    it('snaps as loud as the effects', () => {
+      create();
+      TestBed.inject(GameSettingsService).setEffectsVolume(40);
+
+      expect(component['thanosOptions']().soundVolume).toBeCloseTo(0.25);
+    });
+  });
+
   describe('a new game', () => {
     it('sets the game up for the mode picked', () => {
       create();

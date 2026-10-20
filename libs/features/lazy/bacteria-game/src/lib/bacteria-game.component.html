@@ -329,6 +329,7 @@
         <div
           wsThanos
           class="thanos-container"
+          [wsThanosOptions]="thanosOptions()"
           (wsSharedUiElemResized)="onArenaBoxResized($event)"
         >
           <ws-shared-ui-show-fps
