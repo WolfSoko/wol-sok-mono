@@ -67,7 +67,9 @@ import { dismissSplash } from './splash';
 import { HeadStart, rivalryScore, SeriesLength } from './state/rivalry';
 import { loadFonts } from './fonts';
 import { arenaSize, renderScale, scaleOf } from './state/arena-size';
-import { GameSoundService, MatchResult } from './sound/game-sound.service';
+import { GameHapticsService } from './haptics.service';
+import { GameSoundService, Soundtrack } from './sound/game-sound.service';
+import { MatchResult } from './state/match-engine';
 import { levelMusic } from './sound/level-music';
 import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
 import {
@@ -133,7 +135,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private playerService = inject(PlayerService);
   private playerStore = inject(PlayerStore);
   protected readonly settings = inject(GameSettingsService);
-  private readonly sound = inject(GameSoundService);
+  protected readonly sound = inject(GameSoundService);
+  private readonly haptics = inject(GameHapticsService);
   private readonly progress = inject(ProgressService);
   /** No flickering glow for players who asked their system for less motion. */
   private readonly reducedMotion = prefersReducedMotion();
@@ -191,6 +194,22 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   private readonly resetting = signal(false);
   /**
+   * What plays underneath: the level's music while the match is on, the
+   * menu's between matches while the game fills the stage, and nothing
+   * on the pause menu and at the end of a match.
+   */
+  private readonly soundtrack = computed<Soundtrack | null>(() => {
+    if (this.running() && !this.paused()) {
+      return levelMusic(this.level().id);
+    }
+    const inMenu =
+      this.fullscreen() &&
+      !this.running() &&
+      !this.matchOver() &&
+      !this.resetting();
+    return inMenu ? 'menu' : null;
+  });
+  /**
    * The panel laid over the arena: the match result, the pause menu, one of
    * the menu screens - or none, while a match is on.
    */
@@ -223,6 +242,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly nativeFullscreen = signal(false);
   /** False where the browser has no Fullscreen API, as on iPhones. */
   protected readonly nativeFullscreenSupported = signal(false);
+  /** False where the device cannot vibrate - the setting is left out then. */
+  protected readonly vibrationSupported = this.haptics.supported;
 
   /** The level the next match is played on. */
   protected readonly level: Signal<Level>;
@@ -409,14 +430,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.paused = this.store.isPaused;
     this.gameSeconds = this.store.gameSeconds;
     this.matchOver = this.store.matchEnded;
-    effect(() => this.sound.setEnabled(this.settings.sound()));
-    effect(() => this.sound.setMusicEnabled(this.settings.music()));
-    // The level's music plays while the match is on and stops on pause. A
-    // resumed match picks it up where the match clock stands, so it stays
-    // in step with a map that moves to it.
+    // A resumed match picks its music up where the match clock stands, so
+    // it stays in step with a map that moves to it.
     effect(() => {
-      const music =
-        this.running() && !this.paused() ? levelMusic(this.level().id) : null;
+      const music = this.soundtrack();
       untracked(() =>
         this.sound.setMusic(music, this.store.snapshot().timePassed / 1000)
       );
@@ -469,14 +486,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Plays the end of the match, and the medallion it earned after it. */
   private finishMatch(): void {
-    const { earnings, levelId } = this.store.snapshot();
-    const award = earnings?.award;
-    this.sound.matchEnd(
-      this.matchResult(),
-      award?.medal == null
-        ? null
-        : { tier: award.medal, music: levelMusic(levelId) }
-    );
+    const medal = this.store.snapshot().earnings?.award?.medal ?? null;
+    const result = this.matchResult();
+    this.sound.matchEnd(result, medal);
+    this.haptics.matchEnd(result, medal != null);
   }
 
   /**
@@ -491,16 +504,37 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     return winner.isBot ? 'loss' : 'win';
   }
 
-  /** Turns the sound on or off, and remembers it. */
+  /** Turns the sound on or off - with a tick to show it is on. */
   protected setSound(on: boolean): void {
     this.settings.setSound(on);
     if (on) {
-      this.sound.click();
+      this.sound.tick();
+    }
+  }
+
+  /** Turns the sound effects on or off - with a tick to show they are on. */
+  protected setEffects(on: boolean): void {
+    this.settings.setEffects(on);
+    if (on) {
+      this.sound.tick();
+    }
+  }
+
+  /** Turns the vibration on or off - with a buzz to show it is on. */
+  protected setVibration(on: boolean): void {
+    this.settings.setVibration(on);
+    if (on) {
+      this.haptics.tap();
+    } else {
+      this.haptics.stop();
     }
   }
 
   /** Opens one of the menu screens. */
   protected show(screen: MenuScreen): void {
+    if (screen !== this.screen()) {
+      this.sound.navigate();
+    }
     this.screen.set(screen);
   }
 
@@ -594,7 +628,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // A match started from the level choice backs out to the main menu.
     this.screen.set('menu');
     this.requestNativeFullscreen();
-    this.sound.matchStart();
+    this.sound.matchStart(levelMusic(this.level().id));
+    this.haptics.matchStart();
     this.clearNextFrame = true;
     this.gameStateService.cleanup();
     this.gameStateService.init(this.arena().width, this.arena().height);
@@ -647,7 +682,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     const { width, height } = this.arena();
     this.gameStateService.advance(width, height, frame.ticks);
-    this.sound.frame(this.playerService.getFrameEvents());
+    const events = this.playerService.getFrameEvents();
+    this.sound.frame(events);
+    this.haptics.frame(events);
     this.paint(frame.elapsedSec, false, frame.alpha);
   }
 
@@ -737,7 +774,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Toggles pause - the touch equivalent of the P key. */
   togglePause() {
     this.requestNativeFullscreen();
-    this.sound.click();
+    if (this.paused()) {
+      this.sound.resume();
+    } else {
+      this.sound.pause();
+    }
+    this.haptics.tap();
     this.gameStateService.togglePause();
   }
 

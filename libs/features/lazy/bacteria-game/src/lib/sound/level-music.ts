@@ -105,13 +105,18 @@ export function midiToHz(midi: number): number {
 
 /**
  * The MIDI note of a scale degree, any number of steps above or below the
- * root - degree 7 of a seven note scale is the root an octave up.
+ * root - degree 7 of a seven note scale is the root an octave up - and
+ * `octaves` more octaves up from there.
  */
-export function degreeToMidi(music: LevelMusic, degree: number): number {
+export function degreeToMidi(
+  music: LevelMusic,
+  degree: number,
+  octaves = 0
+): number {
   const length = music.scale.length;
   const octave = Math.floor(degree / length);
   const index = degree - octave * length;
-  return music.root + 12 * octave + music.scale[index];
+  return music.root + 12 * (octave + octaves) + music.scale[index];
 }
 
 /**

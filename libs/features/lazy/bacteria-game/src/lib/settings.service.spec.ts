@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import {
+  DEFAULT_EFFECTS_VOLUME,
+  DEFAULT_MUSIC_VOLUME,
   GameSettingsService,
+  MAX_VOLUME,
   SETTINGS_STORAGE_KEY,
   StoredSettings,
 } from './settings.service';
@@ -149,6 +152,79 @@ describe('GameSettingsService', () => {
     const restored = TestBed.inject(GameSettingsService);
     expect(restored.music()).toBe(false);
     expect(restored.sound()).toBe(true);
+  });
+
+  it('plays the effects at their volumes and vibrates, unless told otherwise', () => {
+    const service = TestBed.inject(GameSettingsService);
+
+    expect(service.effects()).toBe(true);
+    expect(service.vibration()).toBe(true);
+    expect(service.musicVolume()).toBe(DEFAULT_MUSIC_VOLUME);
+    expect(service.effectsVolume()).toBe(DEFAULT_EFFECTS_VOLUME);
+
+    service.setEffects(false);
+    service.setVibration(false);
+    service.setMusicVolume(35);
+    service.setEffectsVolume(100);
+
+    expect(stored()).toMatchObject({
+      effects: false,
+      vibration: false,
+      musicVolume: 35,
+      effectsVolume: 100,
+    });
+    TestBed.resetTestingModule();
+    const restored = TestBed.inject(GameSettingsService);
+    expect(restored.effects()).toBe(false);
+    expect(restored.vibration()).toBe(false);
+    expect(restored.musicVolume()).toBe(35);
+    expect(restored.effectsVolume()).toBe(100);
+  });
+
+  it('keeps the volumes on the slider', () => {
+    const service = TestBed.inject(GameSettingsService);
+
+    service.setMusicVolume(140);
+    service.setEffectsVolume(-3);
+    expect(service.musicVolume()).toBe(MAX_VOLUME);
+    expect(service.effectsVolume()).toBe(0);
+
+    service.setMusicVolume(33.4);
+    expect(service.musicVolume()).toBe(33);
+
+    service.setMusicVolume(Number.NaN);
+    service.setEffectsVolume(Number.NaN);
+    expect(service.musicVolume()).toBe(DEFAULT_MUSIC_VOLUME);
+    expect(service.effectsVolume()).toBe(DEFAULT_EFFECTS_VOLUME);
+  });
+
+  it('previews a volume without writing it', () => {
+    const service = TestBed.inject(GameSettingsService);
+
+    service.previewMusicVolume(20);
+    service.previewEffectsVolume(30);
+
+    expect(service.musicVolume()).toBe(20);
+    expect(service.effectsVolume()).toBe(30);
+    expect(stored()).toMatchObject({
+      musicVolume: DEFAULT_MUSIC_VOLUME,
+      effectsVolume: DEFAULT_EFFECTS_VOLUME,
+    });
+
+    service.setMusicVolume(25);
+    expect(stored()).toMatchObject({ musicVolume: 25, effectsVolume: 30 });
+  });
+
+  it('ignores volumes it cannot read', () => {
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({ musicVolume: 'loud', effectsVolume: 250 })
+    );
+
+    const service = TestBed.inject(GameSettingsService);
+
+    expect(service.musicVolume()).toBe(DEFAULT_MUSIC_VOLUME);
+    expect(service.effectsVolume()).toBe(DEFAULT_EFFECTS_VOLUME);
   });
 
   it('remembers the colours and the look of the bacteria', () => {
