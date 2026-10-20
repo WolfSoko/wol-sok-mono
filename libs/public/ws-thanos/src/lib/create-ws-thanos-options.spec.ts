@@ -17,6 +17,10 @@ describe('createWsThanosOptions', () => {
     expect(createWsThanosOptions().crumble).toBe('shards');
   });
 
+  it('should preload the effect by default', () => {
+    expect(createWsThanosOptions().preload).toBe(true);
+  });
+
   it('should let callers disable the sound', () => {
     expect(createWsThanosOptions({ sound: false }).sound).toBe(false);
   });

@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.31.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.31.0...v74.31.1) (2026-10-20)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** 🔇 the vaporize snap respects the sound settings ([#2512](https://github.com/WolfSoko/wol-sok-mono/issues/2512)) ([ce59064](https://github.com/WolfSoko/wol-sok-mono/commit/ce5906448e71e19d5dd3a55ca423f6354db67a8f))
+
+## [74.31.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.30.0...v74.31.0) (2026-10-20)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ hold the zone ([#2511](https://github.com/WolfSoko/wol-sok-mono/issues/2511)) ([ff0314b](https://github.com/WolfSoko/wol-sok-mono/commit/ff0314bc88d30d4f48a0e45b6363f0ddb3e7bddf))
+
 ## [74.30.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.29.0...v74.30.0) (2026-10-20)
 
 ### Features
