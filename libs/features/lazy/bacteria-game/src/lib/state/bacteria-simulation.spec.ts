@@ -4,6 +4,7 @@ import { DEFAULT_CROSSHAIR_SPEED } from './levels';
 import { getMap } from './game-maps';
 import { GameMap, gateState } from './maps';
 import { Bacteria, createPlayer, Player } from './player.model';
+import { heatedAggression, Zone, ZoneKind } from './zones';
 
 // The production canvas size. Smaller arenas push the walls outside the grid,
 // which would make every wall test pass without a single wall cell existing.
@@ -632,5 +633,92 @@ describe('dynamic walls', () => {
     ]);
 
     expect(simulation.getDynamicWalls()[0].solid).toBe(false);
+  });
+});
+
+describe('zones', () => {
+  /** A map without walls and with these zones. */
+  function zoneMap(zones: Zone[]): GameMap {
+    return {
+      id: 'zone-test',
+      name: 'Zone test',
+      description: '',
+      createWalls: () => [],
+      createZones: () => zones,
+    };
+  }
+
+  /** One bacterium at (50, 50), with a zone of that kind under it or not. */
+  function lone(
+    kind: ZoneKind | null,
+    options: Parameters<typeof setup>[1] = {}
+  ) {
+    const scene = setup([[bacterium(50, 50)]], {
+      ...options,
+      balance: { divideChancePerSec: 0, ...options.balance },
+    });
+    scene.simulation.setMap(
+      zoneMap(
+        kind === null ? [] : [{ kind, x: 40, y: 40, width: 20, height: 20 }]
+      )
+    );
+    return scene;
+  }
+
+  function run(
+    { simulation, players }: ReturnType<typeof setup>,
+    seconds: number
+  ): void {
+    for (let tick = 0; tick < seconds * 60; tick++) {
+      simulation.step(players, 1 / 60);
+    }
+  }
+
+  it('lets an antibiotic kill a bacterium that stays, captured by nobody', () => {
+    const poisoned = lone('antibiotic', { targets: [{ x: 50, y: 50 }] });
+    const clean = lone(null, { targets: [{ x: 50, y: 50 }] });
+
+    run(poisoned, 3);
+    run(clean, 3);
+
+    expect(poisoned.colonies[0].bacterias).toHaveLength(0);
+    expect(poisoned.colonies[0].lost).toBe(1);
+    expect(poisoned.simulation.getEvents().captures).toBe(0);
+    expect(clean.colonies[0].bacterias).toHaveLength(1);
+  });
+
+  it('doubles the division on agar', () => {
+    // A chance of a half per step: the roll of 0.6 misses it, but not twice it.
+    const options = {
+      balance: { divideChancePerSec: 1 },
+      random: () => 0.6,
+    };
+    const onAgar = lone('agar', options);
+    const plain = lone(null, options);
+
+    onAgar.simulation.step(onAgar.players, 0.5);
+    plain.simulation.step(plain.players, 0.5);
+
+    expect(onAgar.colonies[0].bacterias).toHaveLength(2);
+    expect(plain.colonies[0].bacterias).toHaveLength(1);
+  });
+
+  it('holds a bacterium on ice back for a step now and then', () => {
+    const options = { targets: [{ x: 100, y: 50 }], random: () => 0.4 };
+    const onIce = lone('ice', options);
+    const plain = lone(null, options);
+
+    onIce.simulation.step(onIce.players, 1 / 60);
+    plain.simulation.step(plain.players, 1 / 60);
+
+    expect(onIce.colonies[0].bacterias[0].x).toBe(50);
+    expect(plain.colonies[0].bacterias[0].x).toBeGreaterThan(50);
+  });
+
+  it('makes a colony on hot ground hunt harder, never beyond the crosshair', () => {
+    expect(heatedAggression(0.45)).toBeCloseTo(0.7);
+    expect(heatedAggression(0.85)).toBe(0.95);
+    // A boost that hunts harder already keeps its own.
+    expect(heatedAggression(0.98)).toBe(0.98);
   });
 });

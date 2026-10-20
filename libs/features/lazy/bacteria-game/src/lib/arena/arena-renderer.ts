@@ -3,6 +3,8 @@ import { DynamicWall, Rect } from '../state/maps';
 import { ArenaPattern, ArenaTheme, Rgb } from './arena-theme';
 import { createCanvas, hash, lerp, mix, rgba, smoothstep } from './canvas-math';
 import { darker } from './colony-renderer';
+import { Zone } from '../state/zones';
+import { ZONE_CSS } from './zone-look';
 
 /**
  * Paints the floor of an arena into an RGBA pixel buffer: the theme's floor
@@ -119,6 +121,38 @@ export class ArenaRenderer {
       cx.fillRect(0, 0, this.width, this.height);
     }
     cx.globalAlpha = 1;
+  }
+
+  /** Tints the zones' ground in their colour, with a rim around each. */
+  public drawZones(cx: CanvasRenderingContext2D, zones: readonly Zone[]): void {
+    cx.lineWidth = 1;
+    for (const zone of zones) {
+      const css = ZONE_CSS[zone.kind];
+      cx.fillStyle = css.fill;
+      cx.strokeStyle = css.edge;
+      if (zone.round) {
+        cx.beginPath();
+        cx.ellipse(
+          zone.x + zone.width / 2,
+          zone.y + zone.height / 2,
+          zone.width / 2,
+          zone.height / 2,
+          0,
+          0,
+          2 * Math.PI
+        );
+        cx.fill();
+        cx.stroke();
+        continue;
+      }
+      cx.fillRect(zone.x, zone.y, zone.width, zone.height);
+      cx.strokeRect(
+        zone.x + 0.5,
+        zone.y + 0.5,
+        zone.width - 1,
+        zone.height - 1
+      );
+    }
   }
 
   /**

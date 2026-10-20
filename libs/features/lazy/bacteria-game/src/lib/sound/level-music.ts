@@ -472,6 +472,19 @@ export const LEVEL_MUSIC: Record<string, LevelMusic> = {
     echo: 0.3,
     seed: 13,
   },
+  // Clean room hum: a slow drone under a bright, careful lead.
+  containment: {
+    root: 44,
+    scale: LYDIAN,
+    bpm: 100,
+    progression: [0, 1, 4, 3],
+    lead: 'triangle',
+    density: 0.4,
+    bass: 'drone',
+    drums: 'soft',
+    echo: 0.4,
+    seed: 14,
+  },
 };
 
 /**

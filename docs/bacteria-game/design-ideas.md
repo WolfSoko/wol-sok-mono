@@ -913,8 +913,12 @@ Phase 4 has started with pluggable win conditions (2.3): a level carries a
 `win` rule, annihilation unless it says otherwise, and `timed` ends a match
 after a limit with the bigger colony as the winner. The countdown shows on
 the match clock, and the Reactor chapter opens with the first timed level,
-Half-Life. Hold the zone waits for zones, harvest for pellets counted per
-colony, and survive for the boss levels.
+Half-Life. Zones (2.2) followed: antibiotic, agar, ice and heat as rects
+or discs in the map, in both simulations - on the GPU in the wall mask's
+spare bits - and drawn by both painters; Containment lays out all four.
+Hold the zone can build on them next, harvest waits for pellets counted
+per colony, and survive for the boss levels. The bot does not read the
+zones yet.
 Phase 7 can be sprinkled in between the others; each of its items is a
 self-contained PR. Of the groundwork the phases assumed, three pieces have
 landed since the first version of this document: the seeded generator (for

@@ -2,6 +2,7 @@ import { BacteriaLook } from '../settings.service';
 import { Nutrient } from '../state/bacteria-simulation';
 import { GameBalance } from '../state/game-balance';
 import { DynamicWall, Rect } from '../state/maps';
+import { Zone } from '../state/zones';
 import { ArenaTheme } from './arena-theme';
 import { ColonyLayer } from './colony-renderer';
 
@@ -23,6 +24,7 @@ export interface ArenaFrame {
   deltaTimeSec: number;
   /** Seconds of animation - the jam wobble and the boost shimmer. */
   timeSec: number;
+  zones: readonly Zone[];
   walls: readonly Rect[];
   dynamicWalls: readonly DynamicWall[];
   colonies: readonly ColonyLayer[];

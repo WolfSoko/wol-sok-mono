@@ -6,6 +6,12 @@
 
 import { GameMap, pointSymmetric, Rect } from './maps';
 import { blob } from './shapes';
+import { Zone, ZoneKind } from './zones';
+
+/** A round zone around a point - see {@link blob}. */
+function disc(kind: ZoneKind, x: number, y: number, radius: number): Zone {
+  return { ...blob(x, y, radius), kind };
+}
 
 /** The fuel rods of the left half, as shares of the arena. */
 const RODS = [
@@ -39,5 +45,62 @@ const reactorCore: GameMap = {
   },
 };
 
+/**
+ * The containment hall: rich agar in the middle, worth fighting for, and
+ * a strip of antibiotic along each flank that punishes going round. Ice
+ * slows the way back to the start, and the heat by the middle sends a
+ * colony at the enemy harder.
+ */
+const containment: GameMap = {
+  id: 'containment',
+  name: 'Containment',
+  description: 'Agar in the middle, antibiotic on the flanks.',
+  createWalls(width, height) {
+    const thickness = 6;
+    return pointSymmetric(
+      [
+        {
+          x: Math.round(width * 0.4),
+          y: Math.round(height * 0.16),
+          width: thickness,
+          height: Math.round(height * 0.18),
+        },
+        {
+          x: Math.round(width * 0.2),
+          y: Math.round(height * 0.72),
+          width: Math.round(width * 0.1),
+          height: thickness,
+        },
+      ],
+      width,
+      height
+    );
+  },
+  createZones(width, height) {
+    return pointSymmetric(
+      [
+        disc('agar', width / 2, height / 2, height * 0.16),
+        {
+          kind: 'antibiotic',
+          x: Math.round(width * 0.18),
+          y: 0,
+          width: Math.round(width * 0.2),
+          height: Math.round(height * 0.14),
+        },
+        {
+          kind: 'ice',
+          x: Math.round(width * 0.04),
+          y: Math.round(height * 0.3),
+          width: Math.round(width * 0.08),
+          height: Math.round(height * 0.4),
+        },
+        disc('heat', width * 0.4, height * 0.72, height * 0.09),
+      ],
+      width,
+      height
+    );
+  },
+};
+
 /** The reactor's layouts, in the order the levels use them. */
-export const REACTOR_MAPS: readonly GameMap[] = [reactorCore];
+export const REACTOR_MAPS: readonly GameMap[] = [reactorCore, containment];

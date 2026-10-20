@@ -2,6 +2,7 @@ import { BASE_ARENA, scaleOf, scaleRect } from './arena-size';
 import { CLASSIC_MAPS, GameMap, overlapsArena, Rect } from './maps';
 import { generatedLevel } from './level-generator/generate-level';
 import { ORGANIC_MAPS } from './organic-maps';
+import { mapZones } from './zones';
 import { REACTOR_MAPS } from './reactor-maps';
 
 /**
@@ -12,12 +13,16 @@ function scalable(map: GameMap): GameMap {
   return {
     ...map,
     createWalls: (width, height) =>
-      scaled(width, height, (w, h) => map.createWalls(w, h)).filter(
-        (wall) =>
-          wall.width > 0 &&
-          wall.height > 0 &&
-          overlapsArena(wall, width, height)
+      scaled(width, height, (w, h) => map.createWalls(w, h)).filter((wall) =>
+        hasCells(wall, width, height)
       ),
+    createZones:
+      map.createZones == null
+        ? undefined
+        : (width, height) =>
+            scaled(width, height, (w, h) => mapZones(map, w, h)).filter(
+              (zone) => hasCells(zone, width, height)
+            ),
     createDynamicWalls:
       map.createDynamicWalls == null
         ? undefined
@@ -28,6 +33,13 @@ function scalable(map: GameMap): GameMap {
               (w, h) => map.createDynamicWalls?.(w, h, timeSec) ?? []
             ),
   };
+}
+
+/** True for a rect the scaling left with a cell in the arena. */
+function hasCells(rect: Rect, width: number, height: number): boolean {
+  return (
+    rect.width > 0 && rect.height > 0 && overlapsArena(rect, width, height)
+  );
 }
 
 /**
