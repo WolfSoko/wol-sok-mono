@@ -4,18 +4,22 @@ import { RECIPE_IDS } from './level-generator/recipes';
 /** Attempts a day that count towards the daily level's medallion. */
 export const DAILY_ATTEMPTS = 3;
 
-/** Days in a row of playing the daily level - one missed day only pauses it. */
-export interface Streak {
-  days: number;
-  /** The last day the daily level was played, as an ISO date. */
-  lastDay: string;
-}
-
-/** The daily attempts of one day. */
-export interface DailyAttempts {
+/**
+ * The daily level as the progress keeps it: the last day it was played, the
+ * attempts of that day, and the days in a row up to it.
+ */
+export interface DailyRecord {
   day: string;
   attempts: number;
+  /** Days in a row of playing it - one missed day only pauses the count. */
+  streak: number;
 }
+
+/** Days that may pass between two days played before the streak ends. */
+const STREAK_GRACE_DAYS = 2;
+
+/** How hard the daily level is, Sunday first. */
+const WEEKDAY_DIFFICULTY = [6, 3, 4, 5, 5, 6, 7] as const;
 
 /** The day of a moment, in UTC - the same day for everyone, "2026-10-20". */
 export function utcDay(moment: Date): string {
@@ -29,42 +33,54 @@ export function daysBetween(from: string, to: string): number {
 
 /** The generated level everybody plays on that day. */
 export function dailyLevelId(day: string): string {
-  const date = new Date(`${day}T00:00:00Z`);
-  // The style changes from day to day; the week warms up to its weekend.
-  const dayNumber = Math.floor(date.getTime() / 86_400_000);
+  const dayNumber = daysBetween('1970-01-01', day);
+  // The style changes from day to day; the week warms up to its weekend -
+  // 1 January 1970 was a Thursday.
   return generatedLevelId({
     recipe: RECIPE_IDS[dayNumber % RECIPE_IDS.length],
     seed: Number(day.replaceAll('-', '')),
-    difficulty: WEEKDAY_DIFFICULTY[date.getUTCDay()],
+    difficulty: WEEKDAY_DIFFICULTY[(dayNumber + 4) % 7],
   });
 }
 
-/** How hard the daily level is, Sunday first. */
-const WEEKDAY_DIFFICULTY = [6, 3, 4, 5, 5, 6, 7] as const;
-
 /**
- * The streak after playing the daily level on `day`: one more day when the
- * last one was yesterday - or the day before, a missed day pauses it rather
- * than ending it - the same on a day already counted, and a new one after
- * a longer break.
+ * The daily record after one more attempt on `day`: one more attempt of
+ * that day, and the streak one day longer when the last day played was
+ * yesterday - or the day before, a missed day pauses it rather than ending
+ * it - the same on a day already counted, new after a longer break.
  */
-export function nextStreak(streak: Streak | null, day: string): Streak {
-  if (streak === null) {
-    return { days: 1, lastDay: day };
+export function addAttempt(
+  record: DailyRecord | null,
+  day: string
+): DailyRecord {
+  if (record === null) {
+    return { day, attempts: 1, streak: 1 };
   }
-  const gap = daysBetween(streak.lastDay, day);
+  const gap = daysBetween(record.day, day);
   if (gap <= 0) {
-    return streak;
+    return { ...record, attempts: record.attempts + 1 };
   }
-  return { days: gap <= 2 ? streak.days + 1 : 1, lastDay: day };
+  return {
+    day,
+    attempts: 1,
+    streak: gap <= STREAK_GRACE_DAYS ? record.streak + 1 : 1,
+  };
+}
+
+/** The attempts made on `day` so far. */
+export function attemptsOn(record: DailyRecord | null, day: string): number {
+  return record?.day === day ? record.attempts : 0;
 }
 
 /**
  * The streak as it stands on `day`: kept while the last day played is at
  * most two days back, else gone.
  */
-export function standingStreak(streak: Streak | null, day: string): number {
-  return streak !== null && daysBetween(streak.lastDay, day) <= 2
-    ? streak.days
+export function standingStreak(
+  record: DailyRecord | null,
+  day: string
+): number {
+  return record !== null && daysBetween(record.day, day) <= STREAK_GRACE_DAYS
+    ? record.streak
     : 0;
 }

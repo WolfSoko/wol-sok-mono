@@ -76,7 +76,8 @@ export class WinnerComponent {
     nextLevel(this.level().id)
   );
 
-  private mode: Signal<GameMode> = this.state.mode;
+  /** How the match was played - a daily level vs the computer, say. */
+  private mode: Signal<GameMode> = this.state.matchMode;
 
   /** On the daily level: the attempt and the streak, in a line. */
   public dailyNote: Signal<string | null> = computed(() => {
@@ -84,9 +85,10 @@ export class WinnerComponent {
     if (daily === undefined) {
       return null;
     }
-    const attempt = daily.counted
-      ? `attempt ${daily.attempt} of ${DAILY_ATTEMPTS}`
-      : 'practice';
+    const attempt =
+      daily.attempt <= DAILY_ATTEMPTS
+        ? `attempt ${daily.attempt} of ${DAILY_ATTEMPTS}`
+        : 'practice';
     return `Daily level · ${attempt} · ${daily.streak}-day streak`;
   });
 

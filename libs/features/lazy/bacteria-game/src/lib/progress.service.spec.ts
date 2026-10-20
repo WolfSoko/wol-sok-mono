@@ -196,14 +196,20 @@ describe('ProgressService', () => {
 
   describe('the daily level', () => {
     const DAY = '2026-10-20';
-    const daily = (won: boolean): MatchRecord => ({
+    const daily = (won: boolean, day = DAY): MatchRecord => ({
       ...GOLD_WIN,
-      levelId: dailyLevelId(DAY),
+      levelId: dailyLevelId(day),
       won,
       durationSec: 10,
       lost: 0,
       boostsFired: 0,
     });
+
+    /** A daily match from its start to its end. */
+    function play(progress: ProgressService, won: boolean, day = DAY) {
+      progress.startDailyAttempt(day);
+      return progress.recordMatch(daily(won, day), day);
+    }
 
     beforeEach(() => {
       jest.useFakeTimers({ now: new Date(`${DAY}T12:00:00Z`) });
@@ -213,6 +219,7 @@ describe('ProgressService', () => {
 
     it("offers today's level with three attempts and no streak yet", () => {
       expect(create().daily()).toEqual({
+        day: DAY,
         levelId: dailyLevelId(DAY),
         attemptsLeft: 3,
         streak: 0,
@@ -222,48 +229,73 @@ describe('ProgressService', () => {
     it('counts three attempts towards its medallion, then is practice', () => {
       const progress = create();
 
-      const first = progress.recordMatch(daily(false));
-      progress.recordMatch(daily(false));
-      progress.recordMatch(daily(false));
-      const fourth = progress.recordMatch(daily(true));
+      const first = play(progress, false);
+      play(progress, false);
+      play(progress, false);
+      const fourth = play(progress, true);
 
-      expect(first.daily).toEqual({ attempt: 1, counted: true, streak: 1 });
-      expect(fourth.daily).toEqual({ attempt: 4, counted: false, streak: 1 });
+      expect(first.daily).toEqual({ attempt: 1, streak: 1 });
+      expect(fourth.daily).toEqual({ attempt: 4, streak: 1 });
       expect(fourth.award?.medal).toBeNull();
       expect(fourth.award?.hint).toContain('practice');
       expect(progress.medal(dailyLevelId(DAY), 'hard')).toBeNull();
       expect(progress.daily().attemptsLeft).toBe(0);
     });
 
+    it('counts an attempt as it starts - one given up is used as well', () => {
+      const progress = create();
+
+      progress.startDailyAttempt(DAY);
+
+      expect(progress.daily().attemptsLeft).toBe(2);
+      expect(stored()['daily']).toEqual({ day: DAY, attempts: 1, streak: 1 });
+    });
+
     it('keeps the medallion of a counted attempt', () => {
       const progress = create();
 
-      progress.recordMatch(daily(true));
+      play(progress, true);
 
       expect(progress.medal(dailyLevelId(DAY), 'hard')).not.toBeNull();
-      expect(stored()['daily']).toEqual({ day: DAY, attempts: 1 });
     });
 
     it('grows the streak day by day, across visits', () => {
-      create().recordMatch(daily(false));
+      play(create(), false);
       jest.setSystemTime(new Date('2026-10-21T08:00:00Z'));
       TestBed.resetTestingModule();
 
       const tomorrow = create();
-      const earnings = tomorrow.recordMatch({
-        ...daily(false),
-        levelId: dailyLevelId('2026-10-21'),
-      });
+      const earnings = play(tomorrow, false, '2026-10-21');
 
       expect(earnings.daily?.streak).toBe(2);
       expect(tomorrow.daily()).toEqual({
+        day: '2026-10-21',
         levelId: dailyLevelId('2026-10-21'),
         attemptsLeft: 2,
         streak: 2,
       });
     });
 
-    it('is no daily match on another level', () => {
+    it('counts a match that ran past midnight for the day it started', () => {
+      const progress = create();
+      progress.startDailyAttempt(DAY);
+      jest.setSystemTime(new Date('2026-10-21T00:01:00Z'));
+
+      progress.recordMatch(daily(false), DAY);
+
+      expect(stored()['daily']).toEqual({ day: DAY, attempts: 1, streak: 1 });
+    });
+
+    it('turns the menu to the next day at midnight', () => {
+      const progress = create();
+
+      jest.setSystemTime(new Date('2026-10-21T00:00:30Z'));
+      jest.advanceTimersByTime(60_000);
+
+      expect(progress.daily().day).toBe('2026-10-21');
+    });
+
+    it('is no daily match without the day it was played as', () => {
       expect(create().recordMatch(GOLD_WIN).daily).toBeUndefined();
     });
   });
@@ -278,6 +310,34 @@ describe('ProgressService', () => {
       });
       return create();
     }
+
+    it('holds the daily attempts to the stored ones, however late they come', () => {
+      jest.useFakeTimers({ now: new Date('2026-10-20T12:00:00Z') });
+      const day = '2026-10-20';
+      const progress = createWith({
+        [PROGRESS_STORAGE_KEY]: { daily: { day, attempts: 3, streak: 9 } },
+      });
+
+      progress.startDailyAttempt(day);
+      const earnings = progress.recordMatch(
+        {
+          ...GOLD_WIN,
+          levelId: dailyLevelId(day),
+          durationSec: 10,
+          boostsFired: 0,
+        },
+        day
+      );
+      storage.flush();
+
+      // Which attempt it was is not known before the storage answers.
+      expect(earnings.daily).toBeUndefined();
+      expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
+        daily: { day, attempts: 4, streak: 9 },
+      });
+      expect(progress.medal(dailyLevelId(day), 'hard')).toBeNull();
+      jest.useRealTimers();
+    });
 
     it('shows the stored medallions once the storage answers', () => {
       const progress = createWith({

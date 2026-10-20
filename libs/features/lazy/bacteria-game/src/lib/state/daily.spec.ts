@@ -1,7 +1,8 @@
 import {
+  addAttempt,
+  attemptsOn,
   dailyLevelId,
   daysBetween,
-  nextStreak,
   standingStreak,
   utcDay,
 } from './daily';
@@ -37,27 +38,30 @@ describe('the daily level', () => {
   });
 });
 
-describe('the streak', () => {
-  it('grows by a day for each day in a row', () => {
-    let streak = nextStreak(null, '2026-10-20');
-    streak = nextStreak(streak, '2026-10-21');
-    streak = nextStreak(streak, '2026-10-21');
+describe('the daily record', () => {
+  it('counts the attempts of a day, and the streak by the day', () => {
+    let record = addAttempt(null, '2026-10-20');
+    record = addAttempt(record, '2026-10-20');
+    expect(record).toEqual({ day: '2026-10-20', attempts: 2, streak: 1 });
+    expect(attemptsOn(record, '2026-10-20')).toBe(2);
 
-    expect(streak).toEqual({ days: 2, lastDay: '2026-10-21' });
+    record = addAttempt(record, '2026-10-21');
+    expect(record).toEqual({ day: '2026-10-21', attempts: 1, streak: 2 });
+    expect(attemptsOn(record, '2026-10-20')).toBe(0);
   });
 
-  it('pauses over one missed day and starts over after more', () => {
-    const streak = { days: 5, lastDay: '2026-10-20' };
+  it('pauses the streak over one missed day and starts over after more', () => {
+    const record = { day: '2026-10-20', attempts: 3, streak: 5 };
 
-    expect(nextStreak(streak, '2026-10-22').days).toBe(6);
-    expect(nextStreak(streak, '2026-10-23').days).toBe(1);
+    expect(addAttempt(record, '2026-10-22').streak).toBe(6);
+    expect(addAttempt(record, '2026-10-23').streak).toBe(1);
   });
 
-  it('stands until more than a day is missed', () => {
-    const streak = { days: 5, lastDay: '2026-10-20' };
+  it('keeps the streak standing until more than a day is missed', () => {
+    const record = { day: '2026-10-20', attempts: 1, streak: 5 };
 
-    expect(standingStreak(streak, '2026-10-22')).toBe(5);
-    expect(standingStreak(streak, '2026-10-23')).toBe(0);
+    expect(standingStreak(record, '2026-10-22')).toBe(5);
+    expect(standingStreak(record, '2026-10-23')).toBe(0);
     expect(standingStreak(null, '2026-10-23')).toBe(0);
   });
 });

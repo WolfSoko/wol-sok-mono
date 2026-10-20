@@ -86,10 +86,12 @@ export interface GameStateState {
   challenge: Replay | null;
   /**
    * A level picked for one match against the computer outside the setup -
-   * the daily level - null otherwise. Like the ghost, it holds for that one
-   * match.
+   * a ghost's, the daily level - null otherwise. It holds for that one
+   * match; a reset ends it.
    */
   matchLevel: string | null;
+  /** The UTC day of the daily level the match is played as, null otherwise. */
+  dailyDay: string | null;
 }
 
 export function createInitialState(): GameStateState {
@@ -114,6 +116,7 @@ export function createInitialState(): GameStateState {
     ghost: null,
     challenge: null,
     matchLevel: null,
+    dailyDay: null,
   };
 }
 
@@ -125,13 +128,12 @@ export function createInitialState(): GameStateState {
 export const GameStateStore = signalStore(
   { providedIn: 'root' },
   withState(createInitialState),
-  withComputed(({ currentState, levelId, timePassed, ghost, matchLevel }) => ({
-    /**
-     * The level of the next match: the ghost's, one picked for the match,
-     * or the selected one.
-     */
-    level: computed(() =>
-      getLevel(ghost()?.header.levelId ?? matchLevel() ?? levelId())
+  withComputed(({ currentState, levelId, timePassed, matchLevel, mode }) => ({
+    /** The level of the next match: one picked for it, or the selected one. */
+    level: computed(() => getLevel(matchLevel() ?? levelId())),
+    /** How the next match is played: a level picked for it, vs the computer. */
+    matchMode: computed((): GameMode =>
+      matchLevel() === null ? mode() : 'vs-computer'
     ),
     /** True while a match is on, paused or not. */
     isMatchOn: computed(() => isMatchOn(currentState())),

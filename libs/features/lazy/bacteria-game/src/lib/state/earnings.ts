@@ -24,7 +24,5 @@ export interface MatchEarnings {
 export interface DailyResult {
   /** The attempt of the day, from 1 - past `DAILY_ATTEMPTS` it is practice. */
   attempt: number;
-  /** True while the attempt counts towards the daily medallion. */
-  counted: boolean;
   streak: number;
 }

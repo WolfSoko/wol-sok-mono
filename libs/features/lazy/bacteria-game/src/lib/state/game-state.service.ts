@@ -45,6 +45,7 @@ import { randomSeed } from './geometry';
 import { MatchOutcome } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import { Replay, replayOf } from './replay';
+import { dailyLevelId } from './daily';
 import { replayFromHash } from './replay-link';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
@@ -56,6 +57,21 @@ import { ProgressService } from '../progress.service';
  * more ticks on ever longer frames.
  */
 const MAX_FRAME_MS = 3 * TICK_MS;
+
+/**
+ * What the next match is set to outside the setup: a ghost to fight, a
+ * level picked for it, the daily day it counts for. It holds for one match.
+ */
+export type OneMatch = Pick<
+  GameStateState,
+  'ghost' | 'matchLevel' | 'dailyDay'
+>;
+
+const NO_ONE_MATCH: OneMatch = {
+  ghost: null,
+  matchLevel: null,
+  dailyDay: null,
+};
 
 @Injectable({ providedIn: 'root' })
 export class GameStateService {
@@ -195,14 +211,15 @@ export class GameStateService {
    * it earned. Null for a match against the computer without a human in it.
    */
   private recordMatch(winner: Player | null): MatchEarnings | null {
-    const { difficulty, timePassed, width, colors, ghost, ...setup } =
+    const { timePassed, ghost, dailyDay, ...setup } =
       this.gameStateStore.snapshot();
     if (ghost !== null) {
       // Beating your own ghost is for the fun of it - no medallion, no XP.
       return null;
     }
-    // The match as it was spawned - a level picked for it included.
-    const { mode, levelId } = this.plan ?? setup;
+    // The match as it was spawned - a level picked for it included, and
+    // whatever the setup was changed to since.
+    const { mode, levelId, difficulty, width, colors } = this.plan ?? setup;
     switch (mode) {
       case 'two-players': {
         const seat = winnerSeat(winner);
@@ -223,7 +240,9 @@ export class GameStateService {
             2
           ),
         });
-        return record === null ? null : this.progress.recordMatch(record);
+        return record === null
+          ? null
+          : this.progress.recordMatch(record, dailyDay);
       }
     }
   }
@@ -246,9 +265,9 @@ export class GameStateService {
       matchLevel,
     } = this.gameStateStore.snapshot();
     this.plan = {
-      levelId: ghost?.header.levelId ?? matchLevel ?? levelId,
-      // A ghost or a level picked for the match is fought against the computer.
-      mode: ghost === null && matchLevel === null ? mode : 'vs-computer',
+      levelId: matchLevel ?? levelId,
+      // A level picked for the match is fought against the computer.
+      mode: matchLevel === null ? mode : 'vs-computer',
       difficulty,
       colors,
       headStart,
@@ -261,12 +280,26 @@ export class GameStateService {
   }
 
   /**
-   * Sets the next match on a level of its own against the computer - the
-   * daily level - leaving the setup as it is. It holds for that one match;
+   * Sets the next match on the daily level of that UTC day, against the
+   * computer, leaving the setup as it is. It holds for that one match;
    * {@link reset} ends it.
    */
-  public playLevelOnce(levelId: string): void {
-    this.gameStateStore.update({ matchLevel: getLevel(levelId).id });
+  public playDaily(day: string): void {
+    this.gameStateStore.update({
+      matchLevel: dailyLevelId(day),
+      dailyDay: day,
+    });
+  }
+
+  /** What the next match is set to outside the setup - see {@link reset}. */
+  public oneMatch(): OneMatch {
+    const { ghost, matchLevel, dailyDay } = this.gameStateStore.snapshot();
+    return { ghost, matchLevel, dailyDay };
+  }
+
+  /** Sets the next match as one before it was - for a rematch. */
+  public replayOneMatch(match: OneMatch): void {
+    this.gameStateStore.update(match);
   }
 
   /**
@@ -294,7 +327,7 @@ export class GameStateService {
     if (run === null || run.header.mode !== 'vs-computer') {
       return;
     }
-    this.gameStateStore.update({ ghost: run });
+    this.gameStateStore.update({ ghost: run, matchLevel: run.header.levelId });
   }
 
   /**
@@ -423,14 +456,16 @@ export class GameStateService {
 
   start() {
     this.initPlayers();
+    const { dailyDay } = this.gameStateStore.snapshot();
+    if (dailyDay !== null) {
+      // A restart is an attempt as well.
+      this.progress.startDailyAttempt(dailyDay);
+    }
     this.gameStateStore.update((state) => ({
       currentState: GameState.RUNNING,
       // A match against a ghost or on a level of its own is no match of a
       // series.
-      series:
-        state.ghost === null && state.matchLevel === null
-          ? nextSeries(state)
-          : null,
+      series: state.matchLevel === null ? nextSeries(state) : null,
       // Restart from the pause menu starts without a reset in between.
       timePassed: 0,
       winner: null,
@@ -443,8 +478,7 @@ export class GameStateService {
     this.gameStateStore.update(() => ({
       currentState: GameState.END,
       timePassed: 0,
-      ghost: null,
-      matchLevel: null,
+      ...NO_ONE_MATCH,
     }));
     this.initPlayers();
     this.gameStateStore.update(() => ({

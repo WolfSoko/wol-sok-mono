@@ -1,7 +1,7 @@
 import { AchievementId, isAchievementId } from './achievement-ids';
 import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
 import { isColonyColor } from './colony-colors';
-import { DailyAttempts, nextStreak, Streak } from './daily';
+import { addAttempt, DailyRecord } from './daily';
 import { isObject } from './is-object';
 import { LEVELS } from './levels';
 import { betterMedal, MatchRecord, MEDAL_TIERS, MedalTier } from './medallions';
@@ -37,10 +37,8 @@ export interface Progress {
    * the rivalry on this device, "Orange leads 14 : 9".
    */
   couchWins: Partial<Record<string, number>>;
-  /** The daily level's attempts of the last day it was played. */
-  daily: DailyAttempts | null;
-  /** Days in a row of playing the daily level. */
-  streak: Streak | null;
+  /** The daily level: the last day played, its attempts and the streak. */
+  daily: DailyRecord | null;
 }
 
 export const NO_TOTALS: LifetimeTotals = {
@@ -60,7 +58,6 @@ export const EMPTY_PROGRESS: Progress = {
   achievements: {},
   couchWins: {},
   daily: null,
-  streak: null,
 };
 
 /**
@@ -153,6 +150,14 @@ export function addCouchWin(progress: Progress, colorId: string): Progress {
 }
 
 /**
+ * One more attempt at the daily level of `day`, with the streak - a count,
+ * so it is added to the stored progress like the totals.
+ */
+export function addDailyAttempt(progress: Progress, day: string): Progress {
+  return { ...progress, daily: addAttempt(progress.daily, day) };
+}
+
+/**
  * The progress with the best of either: the better medallion per level and
  * difficulty, the higher of each total and of each colour's wins, and the
  * earlier day of each achievement. Merging can only gain, so progress from several tabs or
@@ -163,27 +168,6 @@ export function addCouchWin(progress: Progress, colorId: string): Progress {
  * stored totals when it is written (ProgressService), so the higher one is
  * the one that counted more of the matches.
  */
-/**
- * One more attempt at the daily level of `day`, and the streak with that day
- * - a count, so it is added to the stored progress like the totals.
- */
-export function addDailyAttempt(progress: Progress, day: string): Progress {
-  const { daily } = progress;
-  return {
-    ...progress,
-    daily: {
-      day,
-      attempts: daily?.day === day ? daily.attempts + 1 : 1,
-    },
-    streak: nextStreak(progress.streak, day),
-  };
-}
-
-/** The attempts at the daily level of `day` made so far. */
-export function dailyAttempts(progress: Progress, day: string): number {
-  return progress.daily?.day === day ? progress.daily.attempts : 0;
-}
-
 export function mergeProgress(progress: Progress, other: Progress): Progress {
   let merged = progress;
   for (const [levelId, byDifficulty] of Object.entries(other.medals)) {
@@ -225,39 +209,26 @@ export function mergeProgress(progress: Progress, other: Progress): Progress {
       couchWins: { ...merged.couchWins, ...Object.fromEntries(moreWins) },
     };
   }
-  // The later day wins, and on the same day the higher count.
-  const daily = later(
-    merged.daily,
-    other.daily,
-    (d) => d.day,
-    (d) => d.attempts
-  );
-  const streak = later(
-    merged.streak,
-    other.streak,
-    (s) => s.lastDay,
-    (s) => s.days
-  );
-  if (daily !== merged.daily || streak !== merged.streak) {
-    merged = { ...merged, daily, streak };
+  // The later day wins, and on the same day the more attempts.
+  const daily = laterDaily(merged.daily, other.daily);
+  if (daily !== merged.daily) {
+    merged = { ...merged, daily };
   }
   return merged;
 }
 
-/** Of two dated counts the later one, or the higher on the same day. */
-function later<T>(
-  held: T | null,
-  other: T | null,
-  day: (value: T) => string,
-  count: (value: T) => number
-): T | null {
+/** Of two daily records the later one, or the one with more attempts. */
+function laterDaily(
+  held: DailyRecord | null,
+  other: DailyRecord | null
+): DailyRecord | null {
   if (other === null || held === null) {
     return held ?? other;
   }
-  if (day(other) !== day(held)) {
-    return day(other) > day(held) ? other : held;
+  if (other.day !== held.day) {
+    return other.day > held.day ? other : held;
   }
-  return count(other) > count(held) ? other : held;
+  return other.attempts > held.attempts ? other : held;
 }
 
 /**
@@ -274,28 +245,23 @@ export function parseProgress(value: unknown): Progress {
     totals: parseTotals(value['totals']),
     achievements: parseAchievements(value['achievements']),
     couchWins: parseCouchWins(value['couchWins']),
-    daily: parseDated(value['daily'], 'day', 'attempts'),
-    streak: parseDated(value['streak'], 'lastDay', 'days'),
+    daily: parseDaily(value['daily']),
   };
 }
 
-/** A count with its ISO day, null for anything else. */
-function parseDated<D extends string, C extends string>(
-  value: unknown,
-  dayKey: D,
-  countKey: C
-): (Record<D, string> & Record<C, number>) | null {
+/** The daily record, null for anything else. */
+function parseDaily(value: unknown): DailyRecord | null {
   if (!isObject(value)) {
     return null;
   }
-  const day = value[dayKey];
-  const count = value[countKey];
+  const { day, attempts, streak } = value;
+  const count = (n: unknown): n is number =>
+    Number.isInteger(n) && (n as number) > 0;
   return typeof day === 'string' &&
-    /^\d{4}-\d{2}-\d{2}$/.test(day) &&
-    Number.isInteger(count) &&
-    (count as number) > 0
-    ? ({ [dayKey]: day, [countKey]: count } as Record<D, string> &
-        Record<C, number>)
+    ISO_DATE.test(day) &&
+    count(attempts) &&
+    count(streak)
+    ? { day, attempts, streak }
     : null;
 }
 

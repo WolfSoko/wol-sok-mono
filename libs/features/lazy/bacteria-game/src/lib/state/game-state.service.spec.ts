@@ -1,5 +1,6 @@
 import { ProgressService } from '../progress.service';
 import { TestBed } from '@angular/core/testing';
+import { dailyLevelId } from './daily';
 import { TICK_MS } from './fixed-tick';
 import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
@@ -360,31 +361,52 @@ describe('GameStateService', () => {
         service.setArenaSize(WIDTH, HEIGHT);
         service.init(WIDTH, HEIGHT);
 
-        service.playLevelOnce('gen:cave:20261020:5');
+        service.playDaily('2026-10-20');
         winMatch();
 
         const state = store.snapshot();
-        expect(store.level().id).toBe('gen:cave:20261020:5');
+        expect(store.matchMode()).toBe('vs-computer');
+        expect(store.level().id).toBe(dailyLevelId('2026-10-20'));
         expect(state.levelId).toBe('corridors');
         expect(state.series).toBeNull();
         expect(state.earnings?.award?.record.levelId).toBe(
-          'gen:cave:20261020:5'
+          dailyLevelId('2026-10-20')
         );
         expect(state.lastReplay?.header).toEqual(
           expect.objectContaining({
-            levelId: 'gen:cave:20261020:5',
+            levelId: dailyLevelId('2026-10-20'),
             mode: 'vs-computer',
           })
         );
       });
 
+      it('counts an attempt with every start of the daily level', () => {
+        const attempt = jest.spyOn(
+          TestBed.inject(ProgressService),
+          'startDailyAttempt'
+        );
+        service.setArenaSize(WIDTH, HEIGHT);
+        service.playDaily('2026-10-20');
+
+        service.start();
+        // Restart from the pause menu: no reset in between.
+        service.start();
+
+        expect(attempt).toHaveBeenCalledTimes(2);
+        expect(attempt).toHaveBeenCalledWith('2026-10-20');
+      });
+
       it('holds for that one match', () => {
         service.setArenaSize(WIDTH, HEIGHT);
-        service.playLevelOnce('gen:cave:20261020:5');
+        service.playDaily('2026-10-20');
 
         service.reset();
 
-        expect(store.snapshot().matchLevel).toBeNull();
+        expect(service.oneMatch()).toEqual({
+          ghost: null,
+          matchLevel: null,
+          dailyDay: null,
+        });
         expect(store.level().id).toBe(store.snapshot().levelId);
       });
     });

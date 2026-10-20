@@ -1,4 +1,10 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import {
+  DestroyRef,
+  Injectable,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { BotDifficulty } from './state/bot-controller';
@@ -10,6 +16,7 @@ import { MatchEarnings } from './state/earnings';
 import { arenaLocks, colorLocks, newCosmetics } from './state/unlocks';
 import { COUCH_XP, matchXp, xpGain, xpOf } from './state/xp';
 import {
+  attemptsOn,
   DAILY_ATTEMPTS,
   dailyLevelId,
   standingStreak,
@@ -18,7 +25,6 @@ import {
 import {
   addCouchWin,
   addDailyAttempt,
-  dailyAttempts,
   addMedal,
   addTotals,
   bestMedal,
@@ -33,8 +39,13 @@ import { GameStorage } from './storage/game-storage';
 
 export const PROGRESS_STORAGE_KEY = 'bacteria-game.progress';
 
+/** What a match on the daily level past the attempts of its day says. */
+const PRACTICE_HINT = `Your ${DAILY_ATTEMPTS} attempts of the day are used - this one was practice.`;
+
 /** Today's daily level as the main menu offers it. */
 export interface DailyOffer {
+  /** The UTC day it is the daily level of. */
+  day: string;
   levelId: string;
   /** Attempts left today that count towards its medallion. */
   attemptsLeft: number;
@@ -61,6 +72,8 @@ export class ProgressService {
   public readonly loaded = signal(false);
 
   constructor() {
+    const clock = setInterval(() => this.today.set(utcDay(new Date())), 60_000);
+    inject(DestroyRef).onDestroy(() => clearInterval(clock));
     this.storage
       .watch(PROGRESS_STORAGE_KEY)
       .pipe(map(parseProgress), takeUntilDestroyed())
@@ -119,57 +132,80 @@ export class ProgressService {
    * medallion, its numbers, the achievements and the XP it earned, and
    * returns what it earned.
    */
-  public recordMatch(record: MatchRecord): MatchEarnings {
+  public recordMatch(
+    record: MatchRecord,
+    /** The UTC day of the daily level the match was played as, if it was. */
+    dailyDay: string | null = null
+  ): MatchEarnings {
     const previousBest = this.medal(record.levelId, record.difficulty);
     const judged = judgeMatch(getLevel(record.levelId).medal, record);
-    const day = utcDay(new Date());
-    const daily = record.levelId === dailyLevelId(day);
-    const attempt = daily ? dailyAttempts(this.progress(), day) + 1 : 0;
-    // Past the attempts of the day, the daily level is practice.
-    const practice = attempt > DAILY_ATTEMPTS;
+    // The attempt was counted as the match started; past the attempts of the
+    // day it is practice - judged on the stored attempts, not the ones here.
+    const counts = (progress: Progress) =>
+      dailyDay === null ||
+      attemptsOn(progress.daily, dailyDay) <= DAILY_ATTEMPTS;
+    const attempt =
+      dailyDay === null ? 0 : attemptsOn(this.progress().daily, dailyDay);
+    const practice = dailyDay !== null && !counts(this.progress());
     const { medal, hint } = practice
-      ? {
-          medal: null,
-          hint: `Your ${DAILY_ATTEMPTS} attempts of the day are used - this one was practice.`,
-        }
+      ? { medal: null, hint: PRACTICE_HINT }
       : judged;
+    const withMatch = (progress: Progress, medalCounts: boolean) => {
+      const counted = addTotals(progress, {
+        ...totalsOf(record),
+        matchXp: matchXp(record),
+      });
+      return judged.medal === null || !medalCounts
+        ? counted
+        : addMedal(counted, record.levelId, record.difficulty, judged.medal);
+    };
+    const known = this.loaded();
     const earnings: MatchEarnings = {
       award: { record, medal, previousBest, hint },
       ...this.record(
+        (progress) => progress,
+        // The stored attempts decide; here, before the storage has told
+        // them, a daily medallion waits for the stored progress to bring it.
+        (progress) => withMatch(progress, counts(progress)),
+        record,
         (progress) =>
-          medal === null
-            ? progress
-            : addMedal(progress, record.levelId, record.difficulty, medal),
-        (progress) => {
-          const counted = addTotals(progress, {
-            ...totalsOf(record),
-            matchXp: matchXp(record),
-          });
-          return daily ? addDailyAttempt(counted, day) : counted;
-        },
-        record
+          withMatch(progress, counts(progress) && (dailyDay === null || known))
       ),
     };
-    return daily
-      ? {
+    // Before the storage has answered, which attempt it was is not known.
+    return dailyDay === null || !this.loaded()
+      ? earnings
+      : {
           ...earnings,
           daily: {
             attempt,
-            counted: !practice,
-            streak: standingStreak(this.progress().streak, day),
+            streak: standingStreak(this.progress().daily, dailyDay),
           },
-        }
-      : earnings;
+        };
   }
+
+  /**
+   * Counts an attempt at the daily level of that UTC day as its match
+   * starts - a match given up or restarted is an attempt all the same.
+   */
+  public startDailyAttempt(day: string): void {
+    const count = (progress: Progress) => addDailyAttempt(progress, day);
+    this.progress.update(count);
+    this.store(this.progress(), count);
+  }
+
+  /** The UTC day, looked at again every minute - the daily level turns over. */
+  private readonly today = signal(utcDay(new Date()));
 
   /** Today's daily level, its attempts left and the streak, for the menu. */
   public readonly daily = computed((): DailyOffer => {
-    const day = utcDay(new Date());
-    const progress = this.progress();
+    const day = this.today();
+    const { daily } = this.progress();
     return {
+      day,
       levelId: dailyLevelId(day),
-      attemptsLeft: Math.max(0, DAILY_ATTEMPTS - dailyAttempts(progress, day)),
-      streak: standingStreak(progress.streak, day),
+      attemptsLeft: Math.max(0, DAILY_ATTEMPTS - attemptsOn(daily, day)),
+      streak: standingStreak(daily, day),
     };
   });
 
@@ -210,14 +246,16 @@ export class ProgressService {
   private record(
     gain: (progress: Progress) => Progress,
     count: (progress: Progress) => Progress,
-    record: MatchRecord | null
+    record: MatchRecord | null,
+    /** The count as applied here, where it differs from the stored one. */
+    countHere: (progress: Progress) => Progress = count
   ): Omit<MatchEarnings, 'award'> {
     const before = this.progress();
     const locksBefore = this.ladderLocks();
     const cosmeticsBefore = this.cosmeticLocks();
     const known = this.loaded();
     const { progress, earned } = earnAchievements(
-      count(gain(before)),
+      countHere(gain(before)),
       record,
       today()
     );
@@ -253,7 +291,6 @@ export class ProgressService {
       totals: NO_TOTALS,
       couchWins: {},
       daily: null,
-      streak: null,
     };
     this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
       mergeProgress(count(parseProgress(stored)), gains)
@@ -261,7 +298,11 @@ export class ProgressService {
   }
 }
 
-/** Today as an ISO date in the player's time zone, "2026-10-19". */
+/**
+ * Today as an ISO date in the player's time zone, "2026-10-19" - for the
+ * day an achievement was earned. The daily level counts days in UTC
+ * instead (`utcDay`), the same for everyone.
+ */
 function today(): string {
   const now = new Date();
   const two = (n: number) => String(n).padStart(2, '0');

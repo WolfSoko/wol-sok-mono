@@ -488,7 +488,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const attempts =
       attemptsLeft > 0
         ? `${attemptsLeft} of ${DAILY_ATTEMPTS} attempts left`
-        : 'Attempts used - practice until tomorrow';
+        : 'Attempts used - practice until 00:00 UTC';
     return {
       name: getLevel(levelId).name,
       note: streak > 0 ? `${attempts} · ${streak}-day streak` : attempts,
@@ -497,7 +497,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Starts a match on today's daily level, against the computer. */
   protected playDaily(): void {
-    this.gameStateService.playLevelOnce(this.progress.daily().levelId);
+    this.gameStateService.playDaily(this.progress.daily().day);
     this.startGame();
   }
 
@@ -526,10 +526,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const next = action === 'next' ? this.upcomingLevel() : null;
-    // The reset ends a ghost match: a rematch sets the same ghost again.
-    const { ghost, matchLevel } = this.store.snapshot();
-    const rematch = action === 'again' ? ghost : null;
-    const replay = action === 'again' ? matchLevel : null;
+    // The reset ends a match set outside the setup: a rematch sets it again.
+    const rematch =
+      action === 'again' ? this.gameStateService.oneMatch() : null;
     this.screen.set(action === 'levels' ? 'levels' : 'menu');
     if (action === 'menu') {
       this.gameStateService.endSeries();
@@ -545,10 +544,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           if (action === 'ghost') {
             this.gameStateService.playGhost();
           } else if (rematch !== null) {
-            this.gameStateService.playGhost(rematch);
-          }
-          if (replay !== null) {
-            this.gameStateService.playLevelOnce(replay);
+            this.gameStateService.replayOneMatch(rematch);
           }
           if (action === 'again' || action === 'next' || action === 'ghost') {
             this.startGame();

@@ -369,13 +369,13 @@ describe('WinnerComponent', () => {
       winner: createPlayer({ id: 0, name: 'You' }),
       levelId: LEVELS[0].id,
       earnings: earnings({
-        daily: { attempt: 2, counted: true, streak: 5 },
+        daily: { attempt: 2, streak: 5 },
       }),
     });
     expect(text()).toContain('Daily level · attempt 2 of 3 · 5-day streak');
 
     store.update({
-      earnings: earnings({ daily: { attempt: 4, counted: false, streak: 5 } }),
+      earnings: earnings({ daily: { attempt: 4, streak: 5 } }),
     });
     expect(text()).toContain('Daily level · practice');
   });
