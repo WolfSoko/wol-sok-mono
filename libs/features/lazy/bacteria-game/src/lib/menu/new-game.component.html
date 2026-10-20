@@ -38,7 +38,6 @@
                     type="button"
                     class="mode"
                     [class.current]="mode.kind === kind()"
-                    [disabled]="mode.disabled"
                     (click)="pickKind(mode.kind)"
                   >
                     <mat-icon aria-hidden="true">{{ mode.icon }}</mat-icon>
@@ -54,7 +53,7 @@
                 <feat-lazy-bac-game-level-map
                   [levelId]="levelId()"
                   [medals]="medals()"
-                  [locks]="kind() === 'campaign' ? locks() : {}"
+                  [locks]="locks()"
                   [laddered]="kind() === 'campaign'"
                   [showMedals]="vsComputer()"
                   [generator]="kind() !== 'campaign'"
@@ -95,7 +94,7 @@
                       {{ chosen.level.description }}
                     </p>
                     @if (kind() === "daily") {
-                      <p class="note">{{ daily()?.note }}</p>
+                      <p class="note">{{ daily().note }}</p>
                     }
                   } @else {
                     <span class="details-number">Endless run</span>

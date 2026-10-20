@@ -90,14 +90,20 @@ describe('NewGameComponent', () => {
     expect(button('Start Petri Dish')).toBeDefined();
   });
 
-  it('opens every level and the generator in free play', async () => {
-    await render({ locks: { [LEVELS[1].id]: 'Win Petri Dish to unlock' } });
+  it('offers the generator in free play, but no medallion for a rolled level', async () => {
+    await render();
 
     button('Free play').click();
     await settle();
-
-    expect(button('Corridors').disabled).toBe(false);
     expect(host().querySelector('.generator')).not.toBeNull();
+
+    fixture.componentRef.setInput('levelId', 'gen:field:77:6');
+    button('Next').click();
+    await settle();
+    expect(host().querySelector('.details-number')?.textContent).toContain(
+      'Field · difficulty 6'
+    );
+    expect(host().querySelector('.best')).toBeNull();
   });
 
   it('skips the level choice for the daily level and briefs on it', async () => {

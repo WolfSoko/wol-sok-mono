@@ -517,15 +517,6 @@ describe('BacteriaGameComponent', () => {
       expect(settings.freePlay()).toBe(false);
     });
 
-    it('puts the campaign back on the ladder from a generated level', () => {
-      create();
-      TestBed.inject(GameStateService).setLevel('gen:field:7:3');
-
-      component['setPlayKind']('campaign');
-
-      expect(store.snapshot().levelId).toBe(LEVELS[0].id);
-    });
-
     it('opens on the mode last played, and its levels after a match', () => {
       create();
       component['setPlayKind']('free');
@@ -541,6 +532,18 @@ describe('BacteriaGameComponent', () => {
       expect(component['newGameEntry']()).toEqual({
         kind: 'free',
         step: 'level',
+      });
+    });
+
+    it('opens the daily level, which has no level to choose, on its mode', () => {
+      create();
+      component['setPlayKind']('daily');
+
+      component['onMatchEnd']('levels');
+
+      expect(component['newGameEntry']()).toEqual({
+        kind: 'daily',
+        step: 'mode',
       });
     });
   });

@@ -4,7 +4,7 @@ import { GameSettingsService } from './settings.service';
 import { difficultyOption } from './state/bot-controller';
 import { CampaignSummary, furthestOpenLevel } from './state/campaign';
 import { activeArena } from './state/unlocks';
-import { getLevel, LEVELS } from './state/levels';
+import { getLevel, isLadderLevel, LEVELS } from './state/levels';
 import { medalTally } from './state/progress';
 import { GameStateStore } from './state/game.states';
 import { GameStateService } from './state/game-state.service';
@@ -52,24 +52,31 @@ export class CampaignService {
     continueLabel: `${getLevel(this.furthestLevel()).name} · ${difficultyOption(this.difficulty())?.name ?? ''}`,
   }));
 
+  /** True while the campaign's ladder applies - against the computer, no free play. */
+  private readonly onLadder = computed(
+    () => this.mode() === 'vs-computer' && !this.settings.freePlay()
+  );
+
   /**
    * Why each level is still locked, by level id - the open ones are absent,
    * and all of them in free play and between two players, who have nothing
    * to prove to the computer.
    */
   public readonly locks = computed((): Readonly<Record<string, string>> =>
-    this.mode() === 'vs-computer' && !this.settings.freePlay()
-      ? this.progress.ladderLocks()
-      : {}
+    this.onLadder() ? this.progress.ladderLocks() : {}
   );
 
   constructor() {
+    // On the ladder, the next match is on a level of it that is open - a
+    // locked one, or a generated one picked in free play, gives way.
     effect(() => {
       const locks = this.locks();
+      const id = this.levelId();
       if (
         this.progress.loaded() &&
         !this.matchOn() &&
-        this.levelId() in locks
+        this.onLadder() &&
+        (id in locks || !isLadderLevel(id))
       ) {
         untracked(() => this.gameState.setLevel(furthestOpenLevel(locks)));
       }

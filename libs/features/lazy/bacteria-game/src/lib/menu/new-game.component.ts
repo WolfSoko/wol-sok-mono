@@ -22,7 +22,13 @@ import {
 import { ENDLESS_LIVES } from '../state/endless';
 import { parseGeneratedId } from '../state/level-generator/generate-level';
 import { RECIPES } from '../state/level-generator/recipes';
-import { getLevel, Level, levelMap, levelTitle } from '../state/levels';
+import {
+  getLevel,
+  isLadderLevel,
+  Level,
+  levelMap,
+  levelTitle,
+} from '../state/levels';
 import { mapZones, ZONE_NAMES } from '../state/zones';
 import { MEDAL_NAMES, medalGoal } from '../state/medallions';
 import { Progress } from '../state/progress';
@@ -94,8 +100,8 @@ export class NewGameComponent {
   ]);
   /** The lifetime wins of the two colonies' colours - the rivalry. */
   public readonly rivalry = input<readonly [number, number]>([0, 0]);
-  /** Today's daily level, null where there is none. */
-  public readonly daily = input<DailyCard | null>(null);
+  /** Today's daily level. */
+  public readonly daily = input.required<DailyCard>();
   /** The most levels beaten in one endless run. */
   public readonly endlessBest = input(0);
 
@@ -127,7 +133,6 @@ export class NewGameComponent {
     PLAY_MODES.map((mode) => ({
       ...mode,
       note: this.modeNote(mode.kind),
-      disabled: mode.kind === 'daily' && this.daily() === null,
     }))
   );
 
@@ -139,7 +144,7 @@ export class NewGameComponent {
       case 'endless':
         return null;
       case 'daily':
-        return this.daily()?.levelId ?? null;
+        return this.daily().levelId;
       default:
         return this.levelId();
     }
@@ -176,6 +181,10 @@ export class NewGameComponent {
       return null;
     }
     const { level } = brief;
+    // A rolled level keeps no medallion - only the daily one does.
+    if (!isLadderLevel(level.id) && this.kind() !== 'daily') {
+      return null;
+    }
     const best = this.medals()[level.id]?.[this.difficulty()] ?? null;
     return {
       best,
@@ -267,7 +276,7 @@ export class NewGameComponent {
       case 'campaign':
         return this.campaignNote();
       case 'daily':
-        return this.daily()?.note ?? 'Not today';
+        return this.daily().note;
       case 'endless':
         return endlessNote(this.endlessBest());
       case 'free':

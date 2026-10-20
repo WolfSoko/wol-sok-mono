@@ -80,6 +80,19 @@ describe('CampaignService', () => {
     expect(store.snapshot().levelId).toBe(LEVELS[0].id);
   });
 
+  it('puts the ladder back on a ladder level from a generated one', () => {
+    create();
+    settings.setFreePlay(true);
+    gameState.setLevel('gen:field:7:3');
+    TestBed.tick();
+    expect(store.snapshot().levelId).toBe('gen:field:7:3');
+
+    settings.setFreePlay(false);
+    TestBed.tick();
+
+    expect(store.snapshot().levelId).toBe(LEVELS[0].id);
+  });
+
   it('does not change the level of a match under way', () => {
     create();
     settings.setFreePlay(true);

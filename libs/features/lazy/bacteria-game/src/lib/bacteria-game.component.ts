@@ -56,7 +56,7 @@ import {
 } from './colony-colors/colony-colors.component';
 import { MatchSetupComponent } from './match-setup/match-setup.component';
 import { NewGameComponent } from './menu/new-game.component';
-import { NewGameEntry, opponentOf, PlayKind } from './menu/play-modes';
+import { NewGameEntry, opponentOf, PlayKind, stepsOf } from './menu/play-modes';
 import { MainMenuComponent } from './menu/main-menu.component';
 import { DailyCard } from './menu/menu-cards';
 import { HelpComponent } from './menu/help.component';
@@ -92,7 +92,6 @@ import { GameMode, GameState, GameStateStore } from './state/game.states';
 import {
   getLevel,
   Level,
-  isLadderLevel,
   LEVELS,
   levelBalance,
   levelMap,
@@ -578,7 +577,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const rematch =
       action === 'again' ? this.gameStateService.oneMatch() : null;
     if (action === 'levels') {
-      this.newGameEntry.set({ kind: this.playKind(), step: 'level' });
+      // The daily level and an endless run have no level to choose: their
+      // mode then, to pick another.
+      const kind = this.playKind();
+      this.newGameEntry.set({
+        kind,
+        step: stepsOf(kind).includes('level') ? 'level' : 'mode',
+      });
     }
     this.screen.set(action === 'levels' ? 'new-game' : 'menu');
     if (action === 'menu') {
@@ -691,11 +696,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       `${this.campaign.summary().openLevels} of ${LEVELS.length} levels open`
   );
 
+  /** The mode picked in a new game this visit, null before. */
+  private readonly lastKind = signal<PlayKind | null>(null);
+
   /**
-   * The mode the game is set up for: the daily level or an endless run
-   * while one is on, else who plays and whether the ladder applies.
+   * The mode last played: the one picked in a new game, else the daily
+   * level or an endless run while one is on, else who plays and whether
+   * the ladder applies.
    */
   private readonly playKind = computed((): PlayKind => {
+    const last = this.lastKind();
+    if (last !== null) {
+      return last;
+    }
     if (this.store.dailyDay() !== null) {
       return 'daily';
     }
@@ -716,16 +729,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /**
    * Sets the game up for a mode: who plays, and whether the ladder's locks
-   * apply. The campaign is played on the ladder - a generated level picked
-   * before gives way to the furthest one open.
+   * apply - the campaign service keeps the next match on an open ladder
+   * level while they do.
    */
   protected setPlayKind(kind: PlayKind): void {
+    this.lastKind.set(kind);
     this.selectMode(opponentOf(kind));
     if (kind === 'campaign' || kind === 'free') {
       this.settings.setFreePlay(kind === 'free');
-    }
-    if (kind === 'campaign' && !isLadderLevel(this.store.levelId())) {
-      this.gameStateService.setLevel(this.campaign.furthestLevel());
     }
   }
 

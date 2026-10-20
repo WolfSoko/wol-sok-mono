@@ -78,7 +78,7 @@
     color: var(--bw-gold);
   }
 
-  &:hover:not(:disabled) {
+  &:hover {
     border-color: var(--bw-line-strong);
     background: var(--bw-surface-raised);
   }
@@ -90,11 +90,6 @@
 
   &.current {
     border-color: var(--bw-gold);
-  }
-
-  &:disabled {
-    cursor: default;
-    opacity: 0.5;
   }
 }
 
