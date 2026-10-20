@@ -1,9 +1,13 @@
 import {
-  generatedLevel,
+  heatOf,
+  lerp,
   parseGeneratedId,
+  tuneSeed,
 } from '../state/level-generator/generate-level';
+import { keepRecent } from '../state/recent-cache';
+import { Rng } from '../state/level-generator/rng';
 import type { RecipeId } from '../state/level-generator/recipes';
-import { seeded } from '../state/geometry';
+import { seeded, streamSeed } from '../state/geometry';
 import { HEART_PERIOD_SEC } from '../state/organic-maps';
 
 /**
@@ -468,10 +472,12 @@ export function levelMusic(levelId: string): LevelMusic {
 }
 
 /**
- * The music of a generated level, kept with the level: the player restarts a
- * tune it is handed anew.
+ * The tunes of the generated levels asked for lately, by id: the player
+ * restarts a tune it is handed anew, so one id keeps one tune. Built from
+ * the id alone - a tune needs no layout.
  */
-const generatedTunes = new WeakMap<object, LevelMusic>();
+const generatedTunes = new Map<string, LevelMusic>();
+const KEPT_TUNES = 32;
 
 /**
  * How each style of the generator sounds: the mood of its key, its groove
@@ -520,7 +526,7 @@ const STYLE_SOUNDS: Record<
   },
 };
 
-/** The chord progressions a generated tune picks from. */
+/** The chord progressions a generated tune picks from - a few of the hand-made tunes'. */
 const PROGRESSIONS: readonly (readonly number[])[] = [
   [0, 5, 3, 4],
   [0, 3, 6, 4],
@@ -532,26 +538,27 @@ const PROGRESSIONS: readonly (readonly number[])[] = [
 
 /** The tune of a generated level: its style's sound, its seed's chords. */
 function generatedMusic(levelId: string): LevelMusic | undefined {
-  const made = generatedLevel(levelId);
-  const recipe = parseGeneratedId(levelId);
-  if (made === null || recipe === null) {
+  const kept = generatedTunes.get(levelId);
+  if (kept !== undefined) {
+    return kept;
+  }
+  const made = parseGeneratedId(levelId);
+  if (made === null) {
     return undefined;
   }
-  let tune = generatedTunes.get(made);
-  if (tune === undefined) {
-    const random = seeded(made.seed);
-    const sound = STYLE_SOUNDS[recipe.recipe];
-    tune = {
-      ...sound,
-      // A step or two up or down: another key, the same mood.
-      root: sound.root + Math.floor(random() * 5) - 2,
-      progression: PROGRESSIONS[Math.floor(random() * PROGRESSIONS.length)],
-      density: 0.3 + random() * 0.3,
-      // A harder level, a faster beat.
-      bpm: 84 + recipe.difficulty * 5,
-      seed: made.seed,
-    };
-    generatedTunes.set(made, tune);
-  }
-  return tune;
+  const seed = tuneSeed(made);
+  // Another stream than the melody's, so the two do not go hand in hand.
+  const rng = new Rng(streamSeed(seed, 1));
+  const sound = STYLE_SOUNDS[made.recipe];
+  const tune: LevelMusic = {
+    ...sound,
+    // A step or two up or down: another key, the same mood.
+    root: sound.root + rng.int(-2, 2),
+    progression: rng.pick(PROGRESSIONS),
+    density: rng.range(0.3, 0.6),
+    // A hotter level, a faster beat.
+    bpm: Math.round(lerp(84, 134, heatOf(made))),
+    seed,
+  };
+  return keepRecent(generatedTunes, levelId, tune, KEPT_TUNES);
 }

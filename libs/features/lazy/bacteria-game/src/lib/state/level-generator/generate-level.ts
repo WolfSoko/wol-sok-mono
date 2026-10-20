@@ -3,6 +3,7 @@ import { GameBalance } from '../game-balance';
 import type { Level } from '../levels';
 import { GameMap, pointSymmetric, Rect } from '../maps';
 import { MedalLimits } from '../medallions';
+import { keepRecent } from '../recent-cache';
 import { checkLayout, isPlayable } from './layout-check';
 import { isRecipeId, Recipe, RECIPE_IDS, RecipeId, RECIPES } from './recipes';
 import { Rng } from './rng';
@@ -79,10 +80,16 @@ export interface GeneratedLevel {
   level: Level;
   /** The layout, on an arena of any size - not yet scaled to the grid. */
   map: GameMap;
-  /** The hand-made level whose look and music it borrows. */
+  /** The hand-made level whose look it borrows. */
   family: string;
-  /** Seed of its melody. */
-  seed: number;
+}
+
+/**
+ * Seed of a generated level's tune - mixed, so a low seed does not play a
+ * hand-made tune note for note.
+ */
+export function tuneSeed({ seed }: LevelRecipe): number {
+  return streamSeed(seed, 3);
 }
 
 /**
@@ -102,12 +109,7 @@ export function generatedLevel(id: string): GeneratedLevel | null {
   if (recipe === null) {
     return null;
   }
-  const level = generate(recipe);
-  generated.set(id, level);
-  if (generated.size > KEPT_LEVELS) {
-    generated.delete(generated.keys().next().value as string);
-  }
-  return level;
+  return keepRecent(generated, id, generate(recipe), KEPT_LEVELS);
 }
 
 /** The first word of a generated name. */
@@ -129,8 +131,7 @@ const ADJECTIVES: readonly string[] = [
 function generate(made: LevelRecipe): GeneratedLevel {
   const recipe = RECIPES[made.recipe];
   const id = generatedLevelId(made);
-  const heat =
-    (made.difficulty - MIN_DIFFICULTY) / (MAX_DIFFICULTY - MIN_DIFFICULTY);
+  const heat = heatOf(made);
   const rng = new Rng(streamSeed(made.seed, 1));
   const name = `${rng.pick(ADJECTIVES)} ${rng.pick(recipe.nouns)}`;
   const layouts = new Map<string, Rect[]>();
@@ -160,8 +161,6 @@ function generate(made: LevelRecipe): GeneratedLevel {
     },
     map,
     family: rng.pick(recipe.family),
-    // Mixed, so a low seed does not play a hand-made tune note for note.
-    seed: streamSeed(made.seed, 3),
   };
 }
 
@@ -207,6 +206,11 @@ function bestLayout(
   return best?.walls ?? [];
 }
 
+/** How hot a level of that difficulty is, from 0 (calm) to 1 (frantic). */
+export function heatOf({ difficulty }: LevelRecipe): number {
+  return (difficulty - MIN_DIFFICULTY) / (MAX_DIFFICULTY - MIN_DIFFICULTY);
+}
+
 /**
  * The tuning of a generated level, between the calmest and the busiest of
  * the hand-made ones.
@@ -233,6 +237,6 @@ function medalLimitsFor(heat: number): MedalLimits {
 }
 
 /** `heat` of the way from the calm value to the frantic one. */
-function lerp(calm: number, frantic: number, heat: number): number {
+export function lerp(calm: number, frantic: number, heat: number): number {
   return calm + (frantic - calm) * heat;
 }

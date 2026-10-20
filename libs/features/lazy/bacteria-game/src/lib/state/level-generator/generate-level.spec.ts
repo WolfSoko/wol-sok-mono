@@ -9,6 +9,7 @@ import {
   MAX_DIFFICULTY,
   MIN_DIFFICULTY,
   parseGeneratedId,
+  tuneSeed,
 } from './generate-level';
 import { checkLayout, isPlayable } from './layout-check';
 import { RECIPE_IDS } from './recipes';
@@ -115,7 +116,7 @@ describe('generated levels', () => {
       expect(getMap(level.mapId).createWalls(640, 360).length).toBeGreaterThan(
         0
       );
-      expect(levelMusic(id).seed).toBe(generatedLevel(id)?.seed);
+      expect(levelMusic(id).seed).toBe(tuneSeed(parseGeneratedId(id)!));
       // The same tune each time: the player restarts one handed anew.
       expect(levelMusic(id)).toBe(levelMusic(id));
     });
@@ -138,9 +139,9 @@ describe('generated levels', () => {
       expect(Math.abs(tune.root - 45)).toBeLessThanOrEqual(2);
       expect(harder.bpm).toBeGreaterThan(tune.bpm);
       expect(levelMusic('gen:cave:12345:4').lead).not.toBe(tune.lead);
-      expect(LEVELS.some((level) => LEVEL_MUSIC[level.id] === tune)).toBe(
-        false
-      );
+      for (const level of LEVELS) {
+        expect(tune).not.toEqual(LEVEL_MUSIC[level.id]);
+      }
     });
 
     it('composes into a loop for every style', () => {
