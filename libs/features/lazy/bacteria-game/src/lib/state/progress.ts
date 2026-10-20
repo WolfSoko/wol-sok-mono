@@ -39,6 +39,8 @@ export interface Progress {
   couchWins: Partial<Record<string, number>>;
   /** The daily level: the last day played, its attempts and the streak. */
   daily: DailyRecord | null;
+  /** The most levels beaten in one endless run. */
+  endlessBest: number;
 }
 
 export const NO_TOTALS: LifetimeTotals = {
@@ -58,6 +60,7 @@ export const EMPTY_PROGRESS: Progress = {
   achievements: {},
   couchWins: {},
   daily: null,
+  endlessBest: 0,
 };
 
 /**
@@ -149,6 +152,13 @@ export function addCouchWin(progress: Progress, colorId: string): Progress {
   };
 }
 
+/** The progress with an endless run that beat `wins` levels - the best kept. */
+export function addEndlessRun(progress: Progress, wins: number): Progress {
+  return wins > progress.endlessBest
+    ? { ...progress, endlessBest: wins }
+    : progress;
+}
+
 /**
  * One more attempt at the daily level of `day`, with the streak - a count,
  * so it is added to the stored progress like the totals.
@@ -209,6 +219,7 @@ export function mergeProgress(progress: Progress, other: Progress): Progress {
       couchWins: { ...merged.couchWins, ...Object.fromEntries(moreWins) },
     };
   }
+  merged = addEndlessRun(merged, other.endlessBest);
   // The later day wins, and on the same day the more attempts.
   const daily = laterDaily(merged.daily, other.daily);
   if (daily !== merged.daily) {
@@ -246,7 +257,13 @@ export function parseProgress(value: unknown): Progress {
     achievements: parseAchievements(value['achievements']),
     couchWins: parseCouchWins(value['couchWins']),
     daily: parseDaily(value['daily']),
+    endlessBest: isCount(value['endlessBest']) ? value['endlessBest'] : 0,
   };
+}
+
+/** True for a whole number above zero. */
+function isCount(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) > 0;
 }
 
 /** The daily record, null for anything else. */
@@ -255,12 +272,10 @@ function parseDaily(value: unknown): DailyRecord | null {
     return null;
   }
   const { day, attempts, streak } = value;
-  const count = (n: unknown): n is number =>
-    Number.isInteger(n) && (n as number) > 0;
   return typeof day === 'string' &&
     ISO_DATE.test(day) &&
-    count(attempts) &&
-    count(streak)
+    isCount(attempts) &&
+    isCount(streak)
     ? { day, attempts, streak }
     : null;
 }

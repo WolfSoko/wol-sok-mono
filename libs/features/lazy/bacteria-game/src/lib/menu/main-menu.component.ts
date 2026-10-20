@@ -53,6 +53,8 @@ export type MenuPage = 'profile' | 'settings' | 'help';
 export class MainMenuComponent {
   public readonly campaign = input.required<CampaignSummary>();
   public readonly sound = input(true);
+  /** The most levels beaten in one endless run. */
+  public readonly endlessBest = input(0);
   /** Today's daily level, null to leave it out. */
   public readonly daily = input<DailyCard | null>(null);
   /** The level of a run someone shared, to fight as a ghost - null without. */
@@ -67,6 +69,7 @@ export class MainMenuComponent {
   /** Back to the page around the game. */
   public readonly leave = output<void>();
   public readonly playDaily = output<void>();
+  public readonly playEndless = output<void>();
   public readonly fightChallenge = output<void>();
   public readonly dismissChallenge = output<void>();
 

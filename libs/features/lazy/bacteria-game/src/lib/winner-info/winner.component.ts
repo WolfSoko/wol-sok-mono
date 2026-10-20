@@ -27,9 +27,17 @@ import { getColonyColor } from '../state/colony-colors';
 import { ProgressService } from '../progress.service';
 import { replayLink } from '../state/replay-link';
 import { DAILY_ATTEMPTS } from '../state/daily';
+import { isRunOver } from '../state/endless';
 
 /** What the player picked when the match was over. */
-export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu' | 'ghost';
+export type MatchEndAction =
+  | 'again'
+  | 'next'
+  | 'levels'
+  | 'menu'
+  | 'ghost'
+  // On with the endless run - or a new one, once it is over.
+  | 'endless';
 
 /**
  * The screen a match ends on: who won, and what to play next. It sits in the
@@ -90,6 +98,44 @@ export class WinnerComponent {
         ? `attempt ${daily.attempt} of ${DAILY_ATTEMPTS}`
         : 'practice';
     return `Daily level · ${attempt} · ${daily.streak}-day streak`;
+  });
+
+  /** The endless run the match was part of, null when it was none of it. */
+  private endless = computed(() =>
+    this.state.endlessMatch() ? this.state.endless() : null
+  );
+  private endlessBest = inject(ProgressService).endlessBest;
+
+  /** Where the endless run stands after the match, in a line. */
+  public endlessNote: Signal<string | null> = computed(() => {
+    const run = this.endless();
+    if (run === null) {
+      return null;
+    }
+    const beaten =
+      run.wins === 1 ? '1 level beaten' : `${run.wins} levels beaten`;
+    if (isRunOver(run)) {
+      return `Endless run over · ${beaten} · best ${this.endlessBest()}`;
+    }
+    const lives = counted(run.lives, 'life left', 'lives left');
+    return `Endless run · ${beaten} · ${lives}`;
+  });
+
+  /** What the match was part of - the daily level, an endless run - in a line. */
+  public runNote: Signal<string | null> = computed(
+    () => this.dailyNote() ?? this.endlessNote()
+  );
+
+  /** The button that takes the endless run on - null outside one. */
+  public endlessAction: Signal<string | null> = computed(() => {
+    const run = this.endless();
+    if (run === null) {
+      return null;
+    }
+    if (isRunOver(run)) {
+      return 'New run';
+    }
+    return this.winner()?.isBot === false ? 'Next level' : 'Try it again';
   });
 
   /** True in a match against the player's own ghost. */
@@ -292,4 +338,9 @@ export class WinnerComponent {
     }
     return `Congratulations! ${player.name} wins the match!`;
   });
+}
+
+/** "1 level beaten", "3 levels beaten". */
+function counted(n: number, one: string, many: string): string {
+  return `${n} ${n === 1 ? one : many}`;
 }

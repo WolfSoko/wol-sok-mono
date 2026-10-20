@@ -356,6 +356,20 @@ the setup, a reset ends it, and "Play again" is the next attempt. The match
 carries the day it was started for, so one that runs past midnight UTC
 counts for the day it began.
 
+## Endless run
+
+An endless run ([`state/endless.ts`](./src/lib/state/endless.ts)) is a
+ladder of generated levels from a seed of its own: every level a style of
+its own, the difficulty one step up with every win, up to the hardest. A
+defeat - a draw counts as one - costs one of three lives and the same level
+comes again; the last life ends the run. The run outlasts the reset between
+its matches and ends with the next match that is not one of it, whichever
+way the player left. Its matches have no Restart - it would cost no life -
+and its levels, new every time, earn no medallion. The most levels ever
+beaten in one run is kept in the progress, merged by the higher number,
+written with the match that set it, and shown on the main menu and at the
+end of a run.
+
 ## Tuning
 
 Every number that shapes how the game feels lives in

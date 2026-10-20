@@ -148,15 +148,17 @@
                       <mat-icon>play_arrow</mat-icon>
                       Resume
                     </button>
-                    <button
-                      mat-stroked-button
-                      type="button"
-                      class="menu-button"
-                      (click)="startGame()"
-                    >
-                      <mat-icon>replay</mat-icon>
-                      Restart
-                    </button>
+                    @if (!inEndlessRun()) {
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        class="menu-button"
+                        (click)="startGame()"
+                      >
+                        <mat-icon>replay</mat-icon>
+                        Restart
+                      </button>
+                    }
                     <button
                       mat-stroked-button
                       type="button"
@@ -208,6 +210,8 @@
                     (leave)="leaveFullscreen()"
                     [challenge]="challengeLevel()"
                     [daily]="dailyCard()"
+                    [endlessBest]="progress.endlessBest()"
+                    (playEndless)="playEndless()"
                     (playDaily)="playDaily()"
                     (fightChallenge)="fightChallenge()"
                     (dismissChallenge)="dismissChallenge()"

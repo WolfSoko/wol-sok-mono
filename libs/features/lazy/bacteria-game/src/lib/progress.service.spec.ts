@@ -194,6 +194,18 @@ describe('ProgressService', () => {
     expect(create().medal('hourglass', 'hard')).toBeNull();
   });
 
+  it('keeps the deepest endless run, and gives its levels no medallion', () => {
+    const progress = create();
+
+    const deep = progress.recordMatch(GOLD_WIN, { endlessWins: 4 });
+    progress.recordMatch(GOLD_WIN, { endlessWins: 2 });
+
+    expect(deep.award).toBeNull();
+    expect(progress.medal('hourglass', 'hard')).toBeNull();
+    expect(progress.endlessBest()).toBe(4);
+    expect(stored()['endlessBest']).toBe(4);
+  });
+
   describe('the daily level', () => {
     const DAY = '2026-10-20';
     const daily = (won: boolean, day = DAY): MatchRecord => ({
@@ -208,7 +220,7 @@ describe('ProgressService', () => {
     /** A daily match from its start to its end. */
     function play(progress: ProgressService, won: boolean, day = DAY) {
       progress.startDailyAttempt(day);
-      return progress.recordMatch(daily(won, day), day);
+      return progress.recordMatch(daily(won, day), { dailyDay: day });
     }
 
     beforeEach(() => {
@@ -281,7 +293,7 @@ describe('ProgressService', () => {
       progress.startDailyAttempt(DAY);
       jest.setSystemTime(new Date('2026-10-21T00:01:00Z'));
 
-      progress.recordMatch(daily(false), DAY);
+      progress.recordMatch(daily(false), { dailyDay: DAY });
 
       expect(stored()['daily']).toEqual({ day: DAY, attempts: 1, streak: 1 });
     });
@@ -326,7 +338,7 @@ describe('ProgressService', () => {
           durationSec: 10,
           boostsFired: 0,
         },
-        day
+        { dailyDay: day }
       );
       storage.flush();
 
@@ -337,6 +349,20 @@ describe('ProgressService', () => {
       });
       expect(progress.medal(dailyLevelId(day), 'hard')).toBeNull();
       jest.useRealTimers();
+    });
+
+    it('keeps the deeper endless run, the stored one or the new one', () => {
+      const progress = createWith({
+        [PROGRESS_STORAGE_KEY]: { endlessBest: 9 },
+      });
+
+      progress.recordMatch(GOLD_WIN, { endlessWins: 3 });
+      storage.flush();
+
+      expect(progress.endlessBest()).toBe(9);
+      expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
+        endlessBest: 9,
+      });
     });
 
     it('shows the stored medallions once the storage answers', () => {

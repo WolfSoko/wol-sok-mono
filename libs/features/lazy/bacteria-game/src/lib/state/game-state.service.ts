@@ -46,6 +46,7 @@ import { MatchOutcome } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import { Replay, replayOf } from './replay';
 import { dailyLevelId } from './daily';
+import { afterMatch, endlessLevelId, isRunOver, newRun } from './endless';
 import { replayFromHash } from './replay-link';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
@@ -64,13 +65,14 @@ const MAX_FRAME_MS = 3 * TICK_MS;
  */
 export type OneMatch = Pick<
   GameStateState,
-  'ghost' | 'matchLevel' | 'dailyDay'
+  'ghost' | 'matchLevel' | 'dailyDay' | 'endlessMatch'
 >;
 
 const NO_ONE_MATCH: OneMatch = {
   ghost: null,
   matchLevel: null,
   dailyDay: null,
+  endlessMatch: false,
 };
 
 @Injectable({ providedIn: 'root' })
@@ -176,12 +178,19 @@ export class GameStateService {
    * award reach the store together.
    */
   private endMatch(outcome: MatchOutcome): void {
-    const { series, ghost } = this.gameStateStore.snapshot();
-    const earnings = this.recordMatch(outcome.winner);
+    const { series, ghost, endless, endlessMatch } =
+      this.gameStateStore.snapshot();
+    // The run's match takes the run on - a draw is no win.
+    const run =
+      endless !== null && endlessMatch
+        ? afterMatch(endless, outcome.winner?.isBot === false)
+        : null;
+    const earnings = this.recordMatch(outcome.winner, run?.wins ?? null);
     // One update, so the result and the award reach the readers together.
     this.gameStateStore.update({
       // A ghost match is no match to play again: its opponent is no bot.
       ...(ghost === null ? { lastReplay: this.replay() } : {}),
+      endless: run,
       currentState: GameState.END,
       winner: outcome.winner,
       matchEnded: true,
@@ -210,7 +219,11 @@ export class GameStateService {
    * and numbers, between two players that it was played - and returns what
    * it earned. Null for a match against the computer without a human in it.
    */
-  private recordMatch(winner: Player | null): MatchEarnings | null {
+  private recordMatch(
+    winner: Player | null,
+    /** The levels the endless run has beaten after this match, if it was one. */
+    endlessWins: number | null
+  ): MatchEarnings | null {
     const { timePassed, ghost, dailyDay, ...setup } =
       this.gameStateStore.snapshot();
     if (ghost !== null) {
@@ -242,7 +255,7 @@ export class GameStateService {
         });
         return record === null
           ? null
-          : this.progress.recordMatch(record, dailyDay);
+          : this.progress.recordMatch(record, { dailyDay, endlessWins });
       }
     }
   }
@@ -291,10 +304,42 @@ export class GameStateService {
     });
   }
 
+  /** Starts a new endless run, set up for its first match. */
+  public startEndless(): void {
+    this.gameStateStore.update({ endless: newRun(randomSeed()) });
+    this.continueEndless();
+  }
+
+  /**
+   * Sets the next match on the level the endless run is at - the next one
+   * after a win, the same again after a defeat. Nothing once it is over.
+   */
+  public continueEndless(): void {
+    const { endless } = this.gameStateStore.snapshot();
+    if (endless !== null && !isRunOver(endless)) {
+      this.gameStateStore.update({
+        ...NO_ONE_MATCH,
+        matchLevel: endlessLevelId(endless),
+        endlessMatch: true,
+      });
+    }
+  }
+
+  /** On with the endless run after a match - or a new one, once it is over. */
+  public advanceEndless(): void {
+    const { endless } = this.gameStateStore.snapshot();
+    if (endless === null || isRunOver(endless)) {
+      this.startEndless();
+    } else {
+      this.continueEndless();
+    }
+  }
+
   /** What the next match is set to outside the setup - see {@link reset}. */
   public oneMatch(): OneMatch {
-    const { ghost, matchLevel, dailyDay } = this.gameStateStore.snapshot();
-    return { ghost, matchLevel, dailyDay };
+    const { ghost, matchLevel, dailyDay, endlessMatch } =
+      this.gameStateStore.snapshot();
+    return { ghost, matchLevel, dailyDay, endlessMatch };
   }
 
   /** Sets the next match as one before it was - for a rematch. */
@@ -466,6 +511,8 @@ export class GameStateService {
       // A match against a ghost or on a level of its own is no match of a
       // series.
       series: state.matchLevel === null ? nextSeries(state) : null,
+      // Any match but the run's leaves the endless run.
+      endless: state.endlessMatch ? state.endless : null,
       // Restart from the pause menu starts without a reset in between.
       timePassed: 0,
       winner: null,

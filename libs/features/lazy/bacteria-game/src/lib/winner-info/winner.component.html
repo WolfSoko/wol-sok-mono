@@ -1,7 +1,7 @@
 <h2 class="headline">{{ headline() }}</h2>
 <p class="level-info">{{ level().name }}</p>
-@if (dailyNote(); as note) {
-  <p class="daily-note">{{ note }}</p>
+@if (runNote(); as note) {
+  <p class="run-note">{{ note }}</p>
 }
 
 @if (award(); as award) {
@@ -118,42 +118,51 @@
     <mat-icon>home</mat-icon>
     Main menu
   </button>
-  @if (canChooseLevel()) {
-    <button mat-stroked-button type="button" (click)="action.emit('levels')">
-      <mat-icon>grid_view</mat-icon>
-      Choose a level
+  @if (endlessAction(); as label) {
+    <button mat-flat-button type="button" (click)="action.emit('endless')">
+      <mat-icon>all_inclusive</mat-icon>
+      {{ label }}
     </button>
-  }
-  <button mat-stroked-button type="button" (click)="action.emit('again')">
-    <mat-icon>replay</mat-icon>
-    {{ againstGhost() ? "Fight it again" : "Play again" }}
-  </button>
-  @if (canFightGhost()) {
-    <button mat-stroked-button type="button" (click)="action.emit('ghost')">
-      <mat-icon>blur_on</mat-icon>
-      Fight your ghost
+  } @else {
+    @if (canChooseLevel()) {
+      <button mat-stroked-button type="button" (click)="action.emit('levels')">
+        <mat-icon>grid_view</mat-icon>
+        Choose a level
+      </button>
+    }
+    <button mat-stroked-button type="button" (click)="action.emit('again')">
+      <mat-icon>replay</mat-icon>
+      {{ againstGhost() ? "Fight it again" : "Play again" }}
     </button>
-    <button
-      mat-button
-      type="button"
-      class="share"
-      [disabled]="shareLink() === null"
-      (click)="shareRun()"
-    >
-      <mat-icon>share</mat-icon>
-      Share your run
-    </button>
-  }
-  @if (upcoming(); as next) {
-    <button
-      mat-flat-button
-      type="button"
-      [disabled]="upcomingLock() !== null"
-      (click)="action.emit('next')"
-    >
-      <mat-icon>{{ upcomingLock() === null ? "skip_next" : "lock" }}</mat-icon>
-      Next: {{ next.name }}
-    </button>
+    @if (canFightGhost()) {
+      <button mat-stroked-button type="button" (click)="action.emit('ghost')">
+        <mat-icon>blur_on</mat-icon>
+        Fight your ghost
+      </button>
+      <button
+        mat-button
+        type="button"
+        class="share"
+        [disabled]="shareLink() === null"
+        (click)="shareRun()"
+      >
+        <mat-icon>share</mat-icon>
+        Share your run
+      </button>
+    }
+    @if (upcoming(); as next) {
+      <button
+        mat-flat-button
+        type="button"
+        [disabled]="upcomingLock() !== null"
+        (click)="action.emit('next')"
+      >
+        <mat-icon>{{
+          upcomingLock() === null ? "skip_next" : "lock"
+        }}</mat-icon>
+        Next: {{ next.name }}
+      </button>
+    }
   }
 </div>
 @if (shareNote(); as note) {

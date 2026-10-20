@@ -93,4 +93,17 @@ describe('MainMenuComponent', () => {
   it('leaves the daily level out without one', () => {
     expect(host.textContent).not.toContain('Daily level');
   });
+
+  it('offers an endless run with the best one so far', () => {
+    fixture.componentRef.setInput('endlessBest', 7);
+    fixture.detectChanges();
+    const endless = jest.fn();
+    fixture.componentInstance.playEndless.subscribe(endless);
+
+    const card = button('Endless run');
+    card.click();
+
+    expect(card.textContent).toContain('best 7');
+    expect(endless).toHaveBeenCalled();
+  });
 });

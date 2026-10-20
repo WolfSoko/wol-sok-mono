@@ -59,6 +59,7 @@ describe('mergeProgress', () => {
     achievements: { 'first-blood': '2026-10-01', blitz: '2026-10-09' },
     couchWins: { orange: 4, blue: 2 },
     daily: { day: '2026-10-19', attempts: 2, streak: 4 },
+    endlessBest: 6,
   };
   const elsewhere: Progress = {
     medals: {
@@ -69,6 +70,7 @@ describe('mergeProgress', () => {
     achievements: { blitz: '2026-10-03', siege: '2026-10-04' },
     couchWins: { orange: 3, green: 1 },
     daily: { day: '2026-10-19', attempts: 3, streak: 4 },
+    endlessBest: 4,
   };
 
   it('keeps the better medallion, the higher total and the earlier day', () => {
@@ -86,6 +88,7 @@ describe('mergeProgress', () => {
       couchWins: { orange: 4, blue: 2, green: 1 },
       // The daily record of the same day: the one with more attempts.
       daily: { day: '2026-10-19', attempts: 3, streak: 4 },
+      endlessBest: 6,
     });
   });
 
@@ -183,6 +186,7 @@ describe('parseProgress', () => {
       achievements: { pacifist: '2026-10-19' },
       couchWins: { purple: 7 },
       daily: { day: '2026-10-20', attempts: 2, streak: 6 },
+      endlessBest: 11,
     };
     expect(parseProgress(JSON.parse(JSON.stringify(progress)))).toEqual(
       progress
@@ -213,6 +217,7 @@ describe('parseProgress', () => {
         },
         couchWins: { red: 2.5, mauve: 4, blue: -1 },
         daily: { day: 'yesterday', attempts: 2, streak: 1 },
+        endlessBest: -3,
       })
     ).toEqual({
       medals: { corridors: { normal: 'gold' } },
@@ -220,6 +225,7 @@ describe('parseProgress', () => {
       achievements: { blitz: '2026-10-19' },
       couchWins: { red: 2 },
       daily: null,
+      endlessBest: 0,
     });
   });
 
