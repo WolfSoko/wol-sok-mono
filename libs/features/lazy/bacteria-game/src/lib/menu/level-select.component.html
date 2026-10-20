@@ -1,3 +1,38 @@
+<ng-template #levelCard let-card>
+  <button
+    type="button"
+    class="level-card"
+    [class.current]="card.id === levelId()"
+    [class.locked]="card.lock !== null"
+    [disabled]="card.lock !== null"
+    [attr.aria-current]="card.id === levelId() ? 'true' : null"
+    [style.--card-floor]="card.floor"
+    [style.--card-edge]="card.edge"
+    (click)="levelChange.emit(card.id)"
+  >
+    <span class="card-top">
+      <span class="number">{{ card.number || card.style }}</span>
+      @if (card.lock !== null) {
+        <mat-icon class="lock">lock</mat-icon>
+      }
+    </span>
+    <span class="title">{{ card.title }}</span>
+    <span class="card-foot">
+      @if (card.lock !== null) {
+        <span class="lock-reason">{{ card.lock }}</span>
+      } @else if (vsComputer()) {
+        @for (slot of card.medals; track slot.difficulty) {
+          <feat-lazy-bac-game-medallion
+            [tier]="slot.tier"
+            [size]="22"
+            [difficulty]="slot.difficulty"
+          />
+        }
+      }
+    </span>
+  </button>
+</ng-template>
+
 <feat-lazy-bac-game-screen-header title="Choose a level" (back)="back.emit()">
   <div class="controls">
     <mat-button-toggle-group
@@ -50,42 +85,103 @@
 </feat-lazy-bac-game-screen-header>
 
 <div class="body">
-  <ul class="levels" aria-label="Levels">
-    @for (card of cards(); track card.id) {
-      <li>
-        <button
-          type="button"
-          class="level-card"
-          [class.current]="card.id === levelId()"
-          [class.locked]="card.lock !== null"
-          [disabled]="card.lock !== null"
-          [attr.aria-current]="card.id === levelId() ? 'true' : null"
-          (click)="levelChange.emit(card.id)"
-        >
-          <span class="card-top">
-            <span class="number">{{ card.number }}</span>
-            @if (card.lock !== null) {
-              <mat-icon class="lock">lock</mat-icon>
-            }
-          </span>
-          <span class="title">{{ card.title }}</span>
-          <span class="card-foot">
-            @if (card.lock !== null) {
-              <span class="lock-reason">{{ card.lock }}</span>
-            } @else if (vsComputer()) {
-              @for (slot of card.medals; track slot.difficulty) {
-                <feat-lazy-bac-game-medallion
-                  [tier]="slot.tier"
-                  [size]="22"
-                  [difficulty]="slot.difficulty"
-                />
-              }
-            }
-          </span>
-        </button>
-      </li>
+  <div class="map">
+    @for (chapter of chapters(); track chapter.name) {
+      <section class="chapter" [attr.aria-label]="chapter.name">
+        <header class="chapter-head">
+          <h3 class="chapter-name">{{ chapter.name }}</h3>
+          <span class="chapter-open"
+            >{{ chapter.open }} of {{ chapter.cards.length }} open</span
+          >
+          <p class="chapter-blurb">{{ chapter.blurb }}</p>
+        </header>
+        <ul class="levels">
+          @for (card of chapter.cards; track card.id) {
+            <li>
+              <ng-container
+                *ngTemplateOutlet="levelCard; context: { $implicit: card }"
+              />
+            </li>
+          }
+        </ul>
+      </section>
     }
-  </ul>
+
+    <section class="chapter branches" aria-label="Beyond the ladder">
+      <header class="chapter-head">
+        <h3 class="chapter-name">Beyond the ladder</h3>
+        <p class="chapter-blurb">Levels made from a seed - new every time.</p>
+      </header>
+      <div class="branch-row">
+        @if (vsComputer()) {
+          @if (daily(); as card) {
+            <button type="button" class="branch" (click)="playDaily.emit()">
+              <mat-icon aria-hidden="true">today</mat-icon>
+              <span class="branch-title">Daily · {{ card.name }}</span>
+              <span class="branch-note">{{ card.note }}</span>
+            </button>
+          }
+          <button type="button" class="branch" (click)="playEndless.emit()">
+            <mat-icon aria-hidden="true">all_inclusive</mat-icon>
+            <span class="branch-title">Endless run</span>
+            <span class="branch-note">
+              {{
+                endlessBest() > 0
+                  ? "Best: " + endlessBest() + " levels"
+                  : "Three lives, harder every win"
+              }}
+            </span>
+          </button>
+        }
+        <div class="generator">
+          <span class="branch-title">Generate a level</span>
+          <mat-button-toggle-group
+            class="style-picker"
+            aria-label="Style"
+            hideSingleSelectionIndicator
+            [value]="style()"
+            (change)="style.set($event.value)"
+          >
+            @for (option of styles; track option.id) {
+              <mat-button-toggle [value]="option.id">{{
+                option.name
+              }}</mat-button-toggle>
+            }
+          </mat-button-toggle-group>
+          <label class="heat">
+            <span class="branch-note">Difficulty {{ heat() }}</span>
+            <mat-slider
+              discrete
+              [min]="minDifficulty"
+              [max]="maxDifficulty"
+              [step]="1"
+            >
+              <input
+                matSliderThumb
+                aria-label="Difficulty of the generated level"
+                [value]="heat()"
+                (valueChange)="heat.set($event)"
+              />
+            </mat-slider>
+          </label>
+          <button
+            mat-stroked-button
+            type="button"
+            class="generate"
+            (click)="generate()"
+          >
+            <mat-icon>casino</mat-icon>
+            Generate
+          </button>
+        </div>
+        @if (generated(); as card) {
+          <ng-container
+            *ngTemplateOutlet="levelCard; context: { $implicit: card }"
+          />
+        }
+      </div>
+    </section>
+  </div>
 
   <aside class="details" aria-label="Selected level">
     @let chosen = selected();

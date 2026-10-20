@@ -20,15 +20,49 @@
   min-height: 0;
 }
 
-.levels {
+// The ladder chapter by chapter, then what lies beyond it - scrolling.
+.map {
   flex: 1 1 auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
-  align-content: start;
-  gap: 0.75rem;
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
   padding: 0.25rem;
   overflow: auto;
+}
+
+.chapter-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.chapter-name {
+  @include screen.figure;
+
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.chapter-open {
+  font-size: 0.85rem;
+  color: var(--bw-gold);
+}
+
+.chapter-blurb {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--bw-muted);
+}
+
+.levels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
   list-style: none;
 
   li {
@@ -36,9 +70,88 @@
   }
 }
 
+.branch-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  align-items: start;
+  gap: 0.75rem;
+}
+
+.branch,
+.generator {
+  @include screen.panel;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  color: var(--bw-text);
+  font: inherit;
+  text-align: left;
+
+  mat-icon {
+    color: var(--bw-gold);
+  }
+}
+
+.branch {
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--bw-line-strong);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--bw-gold);
+    outline-offset: 2px;
+  }
+}
+
+.branch-title {
+  font-weight: 700;
+}
+
+.branch-note {
+  font-size: 0.85rem;
+  color: var(--bw-muted);
+}
+
+.style-picker {
+  --mat-button-toggle-height: 32px;
+
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.heat {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  mat-slider {
+    --mat-slider-active-track-color: var(--bw-gold);
+    --mat-slider-handle-color: var(--bw-gold);
+    --mat-slider-focus-handle-color: var(--bw-gold);
+    --mat-slider-hover-handle-color: var(--bw-gold);
+    --mat-slider-inactive-track-color: var(--bw-line-strong);
+    --mat-slider-ripple-color: var(--bw-gold);
+
+    width: 100%;
+  }
+}
+
 .level-card {
   @include screen.panel;
 
+  // The colours of the level's arena, where it has them.
+  background: linear-gradient(
+    160deg,
+    rgb(var(--card-floor, 18 24 33) / 95%),
+    var(--bw-surface) 70%
+  );
+  border-color: rgb(var(--card-edge, 38 49 66) / 40%);
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;

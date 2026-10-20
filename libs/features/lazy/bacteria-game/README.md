@@ -64,11 +64,16 @@ CSS animation, still for players who ask for less motion):
   screen_, the way to Profile, Settings and How to play, and a card with the
   campaign so far: levels open, medallions per metal and _Continue the
   campaign_, which starts the furthest open level right away.
-- **Choose a level** - opened by both Play buttons. Opponent, difficulty and
-  free play at the top, a card per level with its medallion per difficulty
-  or the lock of the ladder, and the chosen level beside them: its briefing,
-  the computer's, the best medallion held and what the next one needs, and
-  _Start_.
+- **Choose a level** - opened by both Play buttons, a map of the levels.
+  Opponent, difficulty and free play at the top; the ladder in chapters
+  (Petri, Laboratory, Body - [`state/chapters.ts`](./src/lib/state/chapters.ts))
+  with the levels open in each, a card per level in its arena's colours with
+  its medallion per difficulty or the lock of the ladder; and _Beyond the
+  ladder_: the daily level and an endless run against the computer, and
+  _Generate a level_ - a style and a difficulty from 1 to 10, rolled into a
+  generated level that is then picked like any other. Beside them the chosen
+  level: its briefing, the computer's, the best medallion held and what the
+  next one needs, and _Start_.
 - **Profile** - levels won, medallions per metal and every medallion level by
   level.
 - **Settings** - colony colours, how the bacteria look, the two resolutions,

@@ -236,6 +236,10 @@
                     [rivalry]="rivalry()"
                     (seriesLengthChange)="selectSeriesLength($event)"
                     (headStartChange)="selectHeadStart($event)"
+                    [daily]="dailyCard()"
+                    [endlessBest]="progress.endlessBest()"
+                    (playDaily)="playDaily()"
+                    (playEndless)="playEndless()"
                     (start)="startGame()"
                     (back)="show('menu')"
                   />

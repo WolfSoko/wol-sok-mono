@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LEVELS } from '../state/levels';
+import { getLevel, LEVELS } from '../state/levels';
+import { parseGeneratedId } from '../state/level-generator/generate-level';
 import { LevelSelectComponent } from './level-select.component';
 
 describe('LevelSelectComponent', () => {
@@ -111,5 +112,77 @@ describe('LevelSelectComponent', () => {
     );
     expect(series).toHaveBeenCalledWith(3);
     expect(headStart).toHaveBeenCalledWith(-2);
+  });
+
+  it('groups the ladder in chapters, each with its open levels', () => {
+    const host = render({
+      locks: { [LEVELS[2].id]: 'Win Corridors to unlock' },
+    });
+
+    const chapters = Array.from(host.querySelectorAll('.chapter-head')).map(
+      (head) => head.textContent ?? ''
+    );
+    expect(chapters[0]).toContain('Petri');
+    expect(chapters[0]).toContain('2 of 3 open');
+    expect(chapters.some((head) => head.includes('Beyond the ladder'))).toBe(
+      true
+    );
+  });
+
+  it('generates a level of the chosen style and difficulty and picks it', () => {
+    const host = render();
+    const picked = jest.fn();
+    fixture.componentInstance.levelChange.subscribe(picked);
+
+    Array.from(host.querySelectorAll<HTMLButtonElement>('.style-picker button'))
+      .find((b) => b.textContent?.includes('Cave'))
+      ?.click();
+    host.querySelector<HTMLButtonElement>('.generate')?.click();
+
+    const id = picked.mock.calls[0][0] as string;
+    expect(parseGeneratedId(id)).toEqual(
+      expect.objectContaining({ recipe: 'cave', difficulty: 5 })
+    );
+  });
+
+  it('shows the generated level picked, beyond the ladder', () => {
+    const host = render({ levelId: 'gen:field:77:6' });
+
+    expect(host.querySelector('.branches')?.textContent).toContain(
+      getLevel('gen:field:77:6').name
+    );
+    expect(host.querySelector('.details')?.textContent).toContain(
+      getLevel('gen:field:77:6').description
+    );
+  });
+
+  it('leads to the daily level and an endless run against the computer', () => {
+    const host = render({
+      daily: { name: 'Hungry Locks', note: '3 of 3 attempts left' },
+      endlessBest: 4,
+    });
+    const daily = jest.fn();
+    const endless = jest.fn();
+    fixture.componentInstance.playDaily.subscribe(daily);
+    fixture.componentInstance.playEndless.subscribe(endless);
+
+    const branches = Array.from(
+      host.querySelectorAll<HTMLButtonElement>('.branch')
+    );
+    branches.find((b) => b.textContent?.includes('Hungry Locks'))?.click();
+    branches.find((b) => b.textContent?.includes('Best: 4'))?.click();
+
+    expect(daily).toHaveBeenCalled();
+    expect(endless).toHaveBeenCalled();
+  });
+
+  it('leaves the daily level and the endless run out between two players', () => {
+    const host = render({
+      mode: 'two-players',
+      daily: { name: 'Hungry Locks', note: '3 of 3 attempts left' },
+    });
+
+    expect(host.querySelectorAll('.branch')).toHaveLength(0);
+    expect(host.querySelector('.generator')).not.toBeNull();
   });
 });

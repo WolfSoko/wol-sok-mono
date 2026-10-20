@@ -4,11 +4,25 @@ import {
   computed,
   input,
   output,
+  signal,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSliderModule } from '@angular/material/slider';
+import { arenaTheme, cssTriple } from '../arena/arena-theme';
+import { CHAPTERS } from '../state/chapters';
+import { randomSeed } from '../state/geometry';
+import {
+  generatedLevelId,
+  MAX_DIFFICULTY,
+  MIN_DIFFICULTY,
+  parseGeneratedId,
+} from '../state/level-generator/generate-level';
+import { RECIPE_IDS, RecipeId } from '../state/level-generator/recipes';
+import { DailyCard } from './main-menu.component';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { ScreenHeaderComponent } from './screen-header.component';
 import {
@@ -40,10 +54,12 @@ import {
 @Component({
   selector: 'feat-lazy-bac-game-level-select',
   imports: [
+    NgTemplateOutlet,
     MatButtonModule,
     MatButtonToggleModule,
     MatIconModule,
     MatSlideToggleModule,
+    MatSliderModule,
     MedallionComponent,
     ScreenHeaderComponent,
   ],
@@ -73,6 +89,10 @@ export class LevelSelectComponent {
   ]);
   /** The lifetime wins of the two colonies' colours - the rivalry. */
   public readonly rivalry = input<readonly [number, number]>([0, 0]);
+  /** Today's daily level, null to leave it out. */
+  public readonly daily = input<DailyCard | null>(null);
+  /** The most levels beaten in one endless run. */
+  public readonly endlessBest = input(0);
 
   public readonly modeChange = output<GameMode>();
   public readonly difficultyChange = output<BotDifficulty>();
@@ -82,6 +102,8 @@ export class LevelSelectComponent {
   public readonly headStartChange = output<HeadStart>();
   public readonly start = output<void>();
   public readonly back = output<void>();
+  public readonly playDaily = output<void>();
+  public readonly playEndless = output<void>();
 
   protected readonly difficulties = BOT_DIFFICULTIES;
   protected readonly seriesLengths = SERIES_LENGTHS;
@@ -101,19 +123,75 @@ export class LevelSelectComponent {
 
   protected readonly vsComputer = computed(() => this.mode() === 'vs-computer');
 
-  /** A card per level, in the order of the ladder. */
-  protected readonly cards = computed(() =>
-    LEVELS.map((level, index) => ({
-      id: level.id,
-      number: index + 1,
+  /**
+   * The ladder chapter by chapter, a card per level - each in the colours of
+   * its arena.
+   */
+  protected readonly chapters = computed(() =>
+    CHAPTERS.map((chapter) => {
+      const cards = chapter.levelIds.map((id) => this.card(id));
+      return {
+        name: chapter.name,
+        blurb: chapter.blurb,
+        open: cards.filter((card) => card.lock === null).length,
+        cards,
+      };
+    })
+  );
+
+  /** The generated level chosen, null while it is a level of the ladder. */
+  protected readonly generated = computed(() => {
+    const made = parseGeneratedId(this.levelId());
+    return made === null
+      ? null
+      : {
+          ...this.card(this.levelId()),
+          title: getLevel(this.levelId()).name,
+          style: STYLE_NAMES[made.recipe],
+          difficulty: made.difficulty,
+        };
+  });
+
+  protected readonly styles = [
+    { id: 'any' as const, name: 'Any' },
+    ...RECIPE_IDS.map((id) => ({ id, name: STYLE_NAMES[id] })),
+  ];
+  protected readonly minDifficulty = MIN_DIFFICULTY;
+  protected readonly maxDifficulty = MAX_DIFFICULTY;
+  /** The style and the difficulty the next generated level gets. */
+  protected readonly style = signal<RecipeId | 'any'>('any');
+  protected readonly heat = signal(5);
+
+  /** Makes a level of the chosen style and difficulty and picks it. */
+  protected generate(): void {
+    const seed = randomSeed();
+    const style = this.style();
+    this.levelChange.emit(
+      generatedLevelId({
+        recipe: style === 'any' ? RECIPE_IDS[seed % RECIPE_IDS.length] : style,
+        seed,
+        difficulty: this.heat(),
+      })
+    );
+  }
+
+  /** A level's card: its place on the ladder, its lock, its medallions. */
+  private card(id: string) {
+    const level = getLevel(id);
+    const theme = arenaTheme(id);
+    return {
+      id,
+      number: LEVELS.indexOf(level) + 1,
       title: levelTitle(level),
-      lock: this.locks()[level.id] ?? null,
+      lock: this.locks()[id] ?? null,
+      floor: cssTriple(theme.floor),
+      edge: cssTriple(theme.border),
       medals: BOT_DIFFICULTIES.map((difficulty) => ({
         difficulty: difficulty.id,
-        tier: this.medals()[level.id]?.[difficulty.id] ?? null,
+        tier: this.medals()[id]?.[difficulty.id] ?? null,
       })),
-    }))
-  );
+    };
+  }
 
   /** The chosen level, with its best medallion and what the next one needs. */
   protected readonly selected = computed(() => {
@@ -136,3 +214,11 @@ export class LevelSelectComponent {
     difficultyOption(this.difficulty())
   );
 }
+
+/** The generator's styles as the level choice names them. */
+const STYLE_NAMES: Record<RecipeId, string> = {
+  field: 'Field',
+  corridor: 'Corridors',
+  fortress: 'Fortress',
+  cave: 'Cave',
+};

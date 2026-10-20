@@ -896,7 +896,10 @@ recipes yet; the daily level, endless mode and the level map build on it.
 The daily level (1.7) is in: one generated level a day for everyone,
 three attempts towards its medallion, a streak that one missed day only
 pauses. Endless mode (4.6) as well: generated levels one after the other,
-each win a step harder, three lives, the best depth kept. Two follow-ups
+each win a step harder, three lives, the best depth kept. The level choice
+is a map (2.5): the ladder in the chapters of 2.1, cards in their arena's
+colours, and the daily level, the endless run and "Generate a level" as the
+side branches. Two follow-ups
 from the generator's review: one resolver for level ids (the hand-made
 tables and the generator are asked in `getLevel`, `getMap`, `arenaTheme` and
 `levelMusic` alike), and the hand-made organic maps as recipes with fixed
