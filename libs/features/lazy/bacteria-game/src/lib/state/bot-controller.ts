@@ -62,6 +62,22 @@ export interface ColonyView extends Point {
   energy: number;
 }
 
+/**
+ * How the bot finds its way to a point on the arena it plays on - straight
+ * there on open ground.
+ */
+export interface BotRoutes {
+  /** Where to send the crosshair to get the colony to a point. */
+  waypoint(to: Point): Point;
+  /** How far the colony has to travel to a point, infinite if it cannot. */
+  travel(to: Point): number;
+}
+
+/** Routes on open ground: straight there, as the crow flies. */
+export function straightRoutes(from: Point): BotRoutes {
+  return { waypoint: (to) => to, travel: (to) => distance(from, to) };
+}
+
 /** Everything the bot gets to look at before deciding. */
 export interface BotView {
   width: number;
@@ -78,6 +94,8 @@ export interface BotView {
    * a hold-the-zone level, else null.
    */
   objective: Point | null;
+  /** The way from the own colony round the walls, and what it costs. */
+  routes: BotRoutes;
 }
 
 export interface BotDecision {
@@ -220,7 +238,11 @@ export class BotController {
       if (nutrient.amount <= 0) {
         continue;
       }
-      const ownDistance = distance(nutrient, view.own);
+      // The way there, round the walls - a pellet behind one is far away.
+      const ownDistance = view.routes.travel(nutrient);
+      if (!isFinite(ownDistance)) {
+        continue;
+      }
       let cost = ownDistance;
       if (view.enemy != null && distance(nutrient, view.enemy) < ownDistance) {
         cost += CONTESTED_PENALTY * this.unit;
@@ -252,8 +274,12 @@ export class BotController {
     };
   }
 
-  /** Adds the profile's aiming error and keeps the point inside the arena. */
-  private aim(view: BotView, point: Point): Point {
+  /**
+   * Sends the crosshair on the way to a point - round the walls in between
+   * - with the profile's aiming error, inside the arena.
+   */
+  private aim(view: BotView, destination: Point): Point {
+    const point = view.routes.waypoint(destination);
     const noise = this.profile.aimNoise * this.unit;
     return {
       x: clamp(point.x + (this.random() - 0.5) * 2 * noise, 0, view.width),
@@ -276,7 +302,8 @@ export function buildBotView(
   nutrients: readonly Nutrient[],
   boostReady: boolean,
   maxEnergy: number,
-  objective: Point | null
+  objective: Point | null,
+  routes: (from: Point) => BotRoutes = straightRoutes
 ): BotView {
   const ownView = colonyView(own, maxEnergy);
   let enemy: ColonyView | null = null;
@@ -299,6 +326,7 @@ export function buildBotView(
     nutrients,
     boostReady,
     objective,
+    routes: routes(ownView),
   };
 }
 

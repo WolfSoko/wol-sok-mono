@@ -4,6 +4,7 @@ import {
   BotDifficulty,
   BotView,
   ColonyView,
+  straightRoutes,
 } from './bot-controller';
 
 const WIDTH = 320;
@@ -23,6 +24,7 @@ function view(overrides: Partial<BotView> = {}): BotView {
     nutrients: [],
     boostReady: true,
     objective: null,
+    routes: straightRoutes(overrides.own ?? colony(80, 70, 100)),
     ...overrides,
   };
 }
@@ -152,6 +154,37 @@ describe('BotController', () => {
     );
 
     expect(decision.target).toEqual({ x: 60, y: 30 });
+  });
+
+  it('picks food by the way there, skipping what it cannot reach', () => {
+    const near = { x: 100, y: 70, amount: 10 };
+    const far = { x: 40, y: 20, amount: 10 };
+    const walledIn = { x: 85, y: 75, amount: 10 };
+    // A wall puts the near pellet far away, and walls the closest one in.
+    const routes = {
+      waypoint: (to: { x: number; y: number }) => to,
+      travel: (to: { x: number; y: number }) =>
+        to === near ? 300 : to === walledIn ? Number.POSITIVE_INFINITY : 60,
+    };
+
+    const decision = bot('normal').decide(
+      view({ nutrients: [near, far, walledIn], routes }),
+      1
+    );
+
+    expect(decision.target).toEqual({ x: 40, y: 20 });
+  });
+
+  it('sends the crosshair on the way round, not at the target', () => {
+    const waypoint = { x: 120, y: 130 };
+    const routes = { waypoint: () => waypoint, travel: () => 50 };
+
+    const decision = bot('normal').decide(
+      view({ enemy: colony(240, 70, 10), routes }),
+      1
+    );
+
+    expect(decision.target).toEqual(waypoint);
   });
 
   it('feeds before it fights while its colony is hungry', () => {
