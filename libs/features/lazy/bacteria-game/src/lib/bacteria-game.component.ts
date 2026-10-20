@@ -16,6 +16,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -142,6 +143,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly haptics = inject(GameHapticsService);
   private readonly progress = inject(ProgressService);
   private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router);
   /** No flickering glow for players who asked their system for less motion. */
   private readonly reducedMotion = prefersReducedMotion();
 
@@ -468,21 +470,24 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * out of the address, so a reload or a bookmark does not offer it again.
    */
   private async takeChallenge(): Promise<void> {
-    const { location, defaultView } = this.document;
-    if (!(await this.gameStateService.offerChallenge(location.hash))) {
+    if (
+      !(await this.gameStateService.offerChallenge(this.document.location.hash))
+    ) {
       return;
     }
-    defaultView?.history.replaceState(
-      defaultView.history.state,
-      '',
-      location.pathname + location.search
-    );
+    // Through the router, so it does not keep the run in the url it holds.
+    await this.router.navigateByUrl(this.router.url.split('#')[0], {
+      replaceUrl: true,
+    });
   }
 
   /** Starts a match against the ghost of the run someone shared. */
   protected fightChallenge(): void {
-    const run = this.store.snapshot().challenge;
-    this.store.update({ challenge: null });
+    const run = this.store.challenge();
+    if (run === null) {
+      return;
+    }
+    this.dismissChallenge();
     this.gameStateService.playGhost(run);
     this.startGame();
   }

@@ -130,7 +130,13 @@
       <mat-icon>blur_on</mat-icon>
       Fight your ghost
     </button>
-    <button mat-button type="button" class="share" (click)="shareRun()">
+    <button
+      mat-button
+      type="button"
+      class="share"
+      [disabled]="shareLink() === null"
+      (click)="shareRun()"
+    >
       <mat-icon>share</mat-icon>
       Share your run
     </button>

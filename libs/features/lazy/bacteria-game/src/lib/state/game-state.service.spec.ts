@@ -395,6 +395,19 @@ describe('GameStateService', () => {
         expect(playerStore.entities()[1].name).toBe('Computer');
       });
 
+      it('plays no part in a series between two players', () => {
+        winAgainst('vs-computer');
+        const run = store.snapshot().lastReplay;
+        service.setMode('two-players');
+        service.setSeriesLength(3);
+
+        service.playGhost(run);
+        service.start();
+
+        expect(store.snapshot().series).toBeNull();
+        expect(playerStore.entities()[1].name).toBe('Ghost');
+      });
+
       it('needs a run against the computer', () => {
         service.playGhost();
         expect(store.snapshot().ghost).toBeNull();

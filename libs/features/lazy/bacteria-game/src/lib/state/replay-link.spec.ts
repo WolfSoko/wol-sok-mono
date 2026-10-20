@@ -66,6 +66,18 @@ describe('replay links', () => {
     expect(await replayFromHash(hash)).toBeNull();
   });
 
+  it('carry nothing from another balance of the game', async () => {
+    const link = await replayLink('https://x.y/', {
+      ...replay,
+      header: {
+        ...replay.header,
+        balanceVersion: replay.header.balanceVersion + 1,
+      },
+    });
+
+    expect(await replayFromHash(new URL(link).hash)).toBeNull();
+  });
+
   it('carry nothing from another version of the game', async () => {
     const link = await replayLink('https://x.y/', {
       ...replay,

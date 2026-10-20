@@ -4,10 +4,12 @@ import {
   signal,
   Signal,
   computed,
+  effect,
   inject,
   input,
   output,
 } from '@angular/core';
+import { Clipboard } from '@angular/cdk/clipboard';
 import { DatePipe, DOCUMENT } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -49,6 +51,7 @@ export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu' | 'ghost';
 export class WinnerComponent {
   private state = inject(GameStateStore);
   private document = inject(DOCUMENT);
+  private clipboard = inject(Clipboard);
 
   /**
    * Why the next level is still locked on the campaign ladder, null when it
@@ -79,46 +82,76 @@ export class WinnerComponent {
     () => this.state.ghost() !== null
   );
 
-  /**
-   * True when the run just played can come back as a ghost - after a match
-   * against the computer, not against a ghost already.
-   */
   /** What sharing the run came to, under the buttons - null before. */
   public readonly shareNote = signal<string | null>(null);
 
   /**
-   * Shares a link to the run just played, for a friend to fight as a ghost:
-   * through the system's share sheet where there is one, else copied.
+   * The link to the run just played, made as soon as the result shows:
+   * sharing has to happen right in the tap, the browsers allow no waiting.
    */
-  public async shareRun(): Promise<void> {
-    const run = this.state.lastReplay();
-    const navigator = this.document.defaultView?.navigator;
-    if (run === null || navigator == null) {
-      return;
-    }
-    const url = await replayLink(this.document.location.href, run);
-    try {
-      if (typeof navigator.share === 'function') {
-        await navigator.share({
-          title: 'Bacteria War',
-          text: `Beat my run on ${getLevel(run.header.levelId).name}!`,
-          url,
-        });
-        this.shareNote.set(null);
-      } else {
-        await navigator.clipboard.writeText(url);
-        this.shareNote.set(
-          'Link copied - send it to a friend to fight your ghost.'
-        );
+  public readonly shareLink = signal<string | null>(null);
+  private sharing = false;
+
+  public constructor() {
+    effect(() => {
+      const run = this.canFightGhost() ? this.state.lastReplay() : null;
+      this.shareLink.set(null);
+      if (run === null) {
+        return;
       }
-    } catch (error) {
-      // Closing the share sheet is no failure.
-      if (!(error instanceof DOMException && error.name === 'AbortError')) {
-        this.shareNote.set('The link could not be shared.');
-      }
-    }
+      replayLink(this.document.location.href, run).then(
+        (url) => {
+          if (this.state.lastReplay() === run) {
+            this.shareLink.set(url);
+          }
+        },
+        () => this.shareNote.set('The link to your run could not be made.')
+      );
+    });
   }
 
+  /**
+   * Shares the link to the run just played, for a friend to fight as a
+   * ghost: through the system's share sheet where there is one, else copied.
+   */
+  public shareRun(): void {
+    const url = this.shareLink();
+    const run = this.state.lastReplay();
+    const navigator = this.document.defaultView?.navigator;
+    if (url === null || run === null || navigator == null || this.sharing) {
+      return;
+    }
+    if (typeof navigator.share !== 'function') {
+      this.shareNote.set(
+        this.clipboard.copy(url)
+          ? 'Link copied - send it to a friend to fight your ghost.'
+          : 'The link could not be copied.'
+      );
+      return;
+    }
+    this.sharing = true;
+    navigator
+      .share({
+        title: 'Bacteria War',
+        text: `Beat my run on ${getLevel(run.header.levelId).name}!`,
+        url,
+      })
+      .then(
+        () => this.shareNote.set(null),
+        (error: unknown) => {
+          // Closing the share sheet is no failure.
+          if (!(error instanceof DOMException && error.name === 'AbortError')) {
+            this.shareNote.set('The link could not be shared.');
+          }
+        }
+      )
+      .finally(() => (this.sharing = false));
+  }
+
+  /**
+   * True when the run just played can come back as a ghost - after a match
+   * against the computer, not against a ghost already.
+   */
   public canFightGhost: Signal<boolean> = computed(
     () =>
       !this.againstGhost() &&

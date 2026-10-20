@@ -412,7 +412,8 @@ export class GameStateService {
     this.initPlayers();
     this.gameStateStore.update((state) => ({
       currentState: GameState.RUNNING,
-      series: nextSeries(state),
+      // A match against a ghost is no match of a series.
+      series: state.ghost === null ? nextSeries(state) : null,
       // Restart from the pause menu starts without a reset in between.
       timePassed: 0,
       winner: null,

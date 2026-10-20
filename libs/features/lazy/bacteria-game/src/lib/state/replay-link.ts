@@ -1,3 +1,4 @@
+import { BALANCE_VERSION } from './game-balance';
 import { DRAG_STEPS, STEER_STEPS } from './match-engine';
 import { parseReplay, Replay, ReplayInputs, REPLAY_VERSION } from './replay';
 
@@ -5,8 +6,9 @@ import { parseReplay, Replay, ReplayInputs, REPLAY_VERSION } from './replay';
 const HASH_KEY = 'ghost';
 
 /**
- * The most a run may grow to once unpacked. An hour of play is far below it;
- * a link that unpacks to more is no run, but a way to fill the memory.
+ * The most a run may grow to once unpacked. An hour of turning a stick all
+ * the time comes to about 1 MB; a link that unpacks to more is no run, but a
+ * way to fill the memory.
  */
 const MAX_UNPACKED_BYTES = 2 * 1024 * 1024;
 
@@ -26,7 +28,7 @@ export async function replayLink(
 
 /**
  * The run a link's hash carries, null for a hash without one, or with one
- * that is damaged or from another version of the game.
+ * that is damaged or from another version of the game or its balance.
  */
 export async function replayFromHash(hash: string): Promise<Replay | null> {
   const payload = new URLSearchParams(hash.replace(/^#/, '')).get(HASH_KEY);
@@ -42,48 +44,50 @@ export async function replayFromHash(hash: string): Promise<Replay | null> {
     const replay = parseReplay(
       unpack(JSON.parse(new TextDecoder().decode(json)))
     );
-    return replay?.header.version === REPLAY_VERSION ? replay : null;
+    // A ghost of another balance would not play out as it was played.
+    return replay?.header.version === REPLAY_VERSION &&
+      replay.header.balanceVersion === BALANCE_VERSION
+      ? replay
+      : null;
   } catch {
     return null;
   }
 }
 
 /**
- * A run as a link carries it: the inputs as whole numbers on the engine's
- * grid, each tick told as the ticks since the input before - small numbers
- * that pack well.
+ * How a link packs each kind of input: the key it goes under, the numbers
+ * of an entry and the grid its values lie on. The values are written as
+ * whole numbers on that grid, each tick as the ticks since the input before
+ * - small numbers that pack well.
  */
-interface PackedReplay {
-  h: Replay['header'];
-  s: number[];
-  d: number[];
-  b: number[];
+const KINDS = {
+  steers: { key: 's', size: 4, steps: STEER_STEPS },
+  drags: { key: 'd', size: 4, steps: DRAG_STEPS },
+  boosts: { key: 'b', size: 2, steps: 1 },
+} as const satisfies Record<
+  keyof ReplayInputs,
+  { key: string; size: number; steps: number }
+>;
+
+type Kind = keyof typeof KINDS;
+const KIND_NAMES = Object.keys(KINDS) as Kind[];
+
+function pack({ header, inputs }: Replay): Record<string, unknown> {
+  const packed: Record<string, unknown> = { h: header };
+  for (const kind of KIND_NAMES) {
+    packed[KINDS[kind].key] = flatten(inputs[kind], KINDS[kind].steps);
+  }
+  return packed;
 }
 
-function pack({ header, inputs }: Replay): PackedReplay {
-  return {
-    h: header,
-    s: flatten(inputs.steers, STEER_STEPS),
-    d: flatten(inputs.drags, DRAG_STEPS),
-    b: flatten(inputs.boosts, 1),
-  };
-}
-
-/** The packed run as a replay to parse - anything else comes back as it is. */
-function unpack(value: unknown): unknown {
-  if (typeof value !== 'object' || value == null) {
-    return value;
+/** The packed run back as a replay to parse - throws where it is no run. */
+function unpack(packed: Record<string, unknown>): unknown {
+  const inputs: Record<string, unknown[][]> = {};
+  for (const kind of KIND_NAMES) {
+    const { key, size, steps } = KINDS[kind];
+    inputs[kind] = unflatten(packed[key], size, steps);
   }
-  const { h, s, d, b } = value as Partial<PackedReplay>;
-  if (!Array.isArray(s) || !Array.isArray(d) || !Array.isArray(b)) {
-    return null;
-  }
-  const inputs: ReplayInputs = {
-    steers: unflatten(s, 4, STEER_STEPS) as ReplayInputs['steers'],
-    drags: unflatten(d, 4, DRAG_STEPS) as ReplayInputs['drags'],
-    boosts: unflatten(b, 2, 1) as ReplayInputs['boosts'],
-  };
-  return { header: h, inputs };
+  return { header: packed['h'], inputs };
 }
 
 /** `[tick, seat, ...values]` entries as one list of whole numbers. */
@@ -100,20 +104,18 @@ function flatten(
   return flat;
 }
 
-function unflatten(
-  flat: readonly unknown[],
-  size: number,
-  steps: number
-): unknown[][] {
+function unflatten(flat: unknown, size: number, steps: number): unknown[][] {
+  if (!Array.isArray(flat) || flat.length % size !== 0) {
+    throw new Error('No list of inputs');
+  }
   const entries: unknown[][] = [];
   let tick = 0;
-  for (let i = 0; i + size <= flat.length; i += size) {
+  for (let i = 0; i < flat.length; i += size) {
     const [delta, seat, ...values] = flat.slice(i, i + size) as number[];
     tick += delta;
     entries.push([tick, seat, ...values.map((v) => v / steps)]);
   }
-  // A list cut short is no list of inputs: parseReplay refuses the rest.
-  return flat.length % size === 0 ? entries : [[NaN]];
+  return entries;
 }
 
 /** The bytes through a compression or decompression stream. */

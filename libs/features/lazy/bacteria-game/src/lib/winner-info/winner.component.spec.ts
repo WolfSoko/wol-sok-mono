@@ -1,3 +1,4 @@
+import { Clipboard } from '@angular/cdk/clipboard';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GameStateStore } from '../state/game.states';
 import { LEVELS } from '../state/levels';
@@ -259,14 +260,10 @@ describe('WinnerComponent', () => {
     });
 
     describe('sharing', () => {
-      const navigator = window.navigator as Navigator & {
-        share?: unknown;
-        clipboard?: unknown;
-      };
+      const navigator = window.navigator as Navigator & { share?: unknown };
 
       afterEach(() => {
         delete navigator.share;
-        delete navigator.clipboard;
       });
 
       function shareButton(): HTMLButtonElement | undefined {
@@ -282,6 +279,13 @@ describe('WinnerComponent', () => {
         }
       }
 
+      /** Shows the result and lets the link to the run be made. */
+      async function ready(): Promise<void> {
+        fixture.detectChanges();
+        await settle();
+        fixture.detectChanges();
+      }
+
       beforeEach(() => {
         store.update({
           mode: 'vs-computer',
@@ -292,16 +296,15 @@ describe('WinnerComponent', () => {
       });
 
       it('copies a link to the run where there is no share sheet', async () => {
-        const writeText = jest.fn().mockResolvedValue(undefined);
-        Object.defineProperty(navigator, 'clipboard', {
-          configurable: true,
-          value: { writeText },
-        });
+        const copy = jest
+          .spyOn(TestBed.inject(Clipboard), 'copy')
+          .mockReturnValue(true);
 
+        await ready();
         shareButton()?.click();
         await settle();
 
-        expect(writeText).toHaveBeenCalledWith(
+        expect(copy).toHaveBeenCalledWith(
           expect.stringMatching(/#ghost=[\w-]+$/)
         );
         expect(text()).toContain('Link copied');
@@ -314,6 +317,7 @@ describe('WinnerComponent', () => {
           value: share,
         });
 
+        await ready();
         shareButton()?.click();
         await settle();
 
@@ -333,6 +337,7 @@ describe('WinnerComponent', () => {
             .mockRejectedValue(new DOMException('closed', 'AbortError')),
         });
 
+        await ready();
         shareButton()?.click();
         await settle();
 

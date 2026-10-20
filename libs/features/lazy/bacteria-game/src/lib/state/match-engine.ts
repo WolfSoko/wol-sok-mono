@@ -467,6 +467,8 @@ export class MatchEngine {
     } else {
       return;
     }
+    // Real input stays inside the arena anyway; a crafted link may not.
+    next = { x: clamp(next.x, 0, width), y: clamp(next.y, 0, height) };
     if (next.x !== player.x || next.y !== player.y) {
       this.update(playerId, { x: next.x, y: next.y });
     }
