@@ -17,4 +17,6 @@ export interface WsThanosOptions {
   soundVolume: number;
   /** how the element breaks apart */
   crumble: WsThanosCrumble;
+  /** warm up the effect while the browser is idle, so the first snap does not stutter */
+  preload: boolean;
 }

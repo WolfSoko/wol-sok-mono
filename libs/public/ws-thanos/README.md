@@ -58,6 +58,7 @@ export class SharedModule {}
 | sound                | boolean |    true |                           play a windy, sandy sound while vaporizing |
 | soundVolume          | number  |     0.5 |                                      volume of the sound from 0 to 1 |
 | crumble              | string  |  shards |                   how the element breaks apart, see crumble variants |
+| preload              | boolean |    true |       warm up the effect while idle, so the first snap won't stutter |
 
 #### Sound
 
@@ -72,6 +73,21 @@ With `crumble: 'dust'` there is no crunch or rumble, the dust only crackles thin
 A limiter keeps many simultaneous snaps from getting too loud.
 Browsers only allow audio after the user interacted with the page, so snaps before the first click or tap stay silent.
 Turn it off with `provideWsThanosOptions({ sound: false })`.
+
+#### Preloading
+
+The first snap does work the browser hasn't done before: html2canvas runs for the first time,
+and the browser compiles the WebGL shaders and the shaders for drawing the captured element.
+To keep that from stalling the first snap, `wsThanos` snaps a tiny invisible element once while the browser is idle after the first render.
+Browsers cache compiled shaders, so the first real snap does not have to compile them again.
+
+Turn it off with `provideWsThanosOptions({ preload: false })`.
+Using `WsThanosService` without the directive? Call `preload()` yourself, e.g. in a component's constructor:
+
+```typescript
+const thanos = inject(WsThanosService);
+afterNextRender(() => void thanos.preload());
+```
 
 #### GPU rendering
 
