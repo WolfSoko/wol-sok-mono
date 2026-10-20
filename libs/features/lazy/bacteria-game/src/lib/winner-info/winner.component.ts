@@ -1,13 +1,16 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  signal,
   Signal,
   computed,
+  effect,
   inject,
   input,
   output,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { Clipboard } from '@angular/cdk/clipboard';
+import { DatePipe, DOCUMENT } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -22,6 +25,7 @@ import { xpClimb } from '../state/ranks';
 import { formatScore, rivalryScore, seriesWinner } from '../state/rivalry';
 import { getColonyColor } from '../state/colony-colors';
 import { ProgressService } from '../progress.service';
+import { replayLink } from '../state/replay-link';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu' | 'ghost';
@@ -46,6 +50,8 @@ export type MatchEndAction = 'again' | 'next' | 'levels' | 'menu' | 'ghost';
 })
 export class WinnerComponent {
   private state = inject(GameStateStore);
+  private document = inject(DOCUMENT);
+  private clipboard = inject(Clipboard);
 
   /**
    * Why the next level is still locked on the campaign ladder, null when it
@@ -75,6 +81,72 @@ export class WinnerComponent {
   public againstGhost: Signal<boolean> = computed(
     () => this.state.ghost() !== null
   );
+
+  /** What sharing the run came to, under the buttons - null before. */
+  public readonly shareNote = signal<string | null>(null);
+
+  /**
+   * The link to the run just played, made as soon as the result shows:
+   * sharing has to happen right in the tap, the browsers allow no waiting.
+   */
+  public readonly shareLink = signal<string | null>(null);
+  private sharing = false;
+
+  public constructor() {
+    effect(() => {
+      const run = this.canFightGhost() ? this.state.lastReplay() : null;
+      this.shareLink.set(null);
+      if (run === null) {
+        return;
+      }
+      replayLink(this.document.location.href, run).then(
+        (url) => {
+          if (this.state.lastReplay() === run) {
+            this.shareLink.set(url);
+          }
+        },
+        () => this.shareNote.set('The link to your run could not be made.')
+      );
+    });
+  }
+
+  /**
+   * Shares the link to the run just played, for a friend to fight as a
+   * ghost: through the system's share sheet where there is one, else copied.
+   */
+  public shareRun(): void {
+    const url = this.shareLink();
+    const run = this.state.lastReplay();
+    const navigator = this.document.defaultView?.navigator;
+    if (url === null || run === null || navigator == null || this.sharing) {
+      return;
+    }
+    if (typeof navigator.share !== 'function') {
+      this.shareNote.set(
+        this.clipboard.copy(url)
+          ? 'Link copied - send it to a friend to fight your ghost.'
+          : 'The link could not be copied.'
+      );
+      return;
+    }
+    this.sharing = true;
+    navigator
+      .share({
+        title: 'Bacteria War',
+        text: `Beat my run on ${getLevel(run.header.levelId).name}!`,
+        url,
+      })
+      .then(
+        () => this.shareNote.set(null),
+        (error: unknown) => {
+          // Closing the share sheet is no failure.
+          if (!(error instanceof DOMException && error.name === 'AbortError')) {
+            this.shareNote.set('The link could not be shared.');
+          }
+        }
+      )
+      .finally(() => (this.sharing = false));
+  }
 
   /**
    * True when the run just played can come back as a ghost - after a match
@@ -194,8 +266,8 @@ export class WinnerComponent {
     }
     if (this.againstGhost()) {
       return player.isBot
-        ? 'Your ghost wins - your old run ate you!'
-        : 'You beat your ghost!';
+        ? 'The ghost wins - its run ate your colony!'
+        : 'You beat the ghost!';
     }
     if (player.isBot) {
       return 'The computer wins - your colony was eaten!';

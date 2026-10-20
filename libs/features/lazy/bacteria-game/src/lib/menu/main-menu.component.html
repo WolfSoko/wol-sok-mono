@@ -27,6 +27,13 @@
       survivor.
     </p>
 
+    @if (challenge(); as level) {
+      <feat-lazy-bac-game-ghost-challenge
+        [level]="level"
+        (fight)="fightChallenge.emit()"
+        (dismiss)="dismissChallenge.emit()"
+      />
+    }
     <div class="actions">
       <button
         mat-flat-button

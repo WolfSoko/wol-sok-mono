@@ -130,6 +130,16 @@
       <mat-icon>blur_on</mat-icon>
       Fight your ghost
     </button>
+    <button
+      mat-button
+      type="button"
+      class="share"
+      [disabled]="shareLink() === null"
+      (click)="shareRun()"
+    >
+      <mat-icon>share</mat-icon>
+      Share your run
+    </button>
   }
   @if (upcoming(); as next) {
     <button
@@ -143,6 +153,9 @@
     </button>
   }
 </div>
+@if (shareNote(); as note) {
+  <p class="share-note" role="status">{{ note }}</p>
+}
 <!-- Only with a Next button for the reason to explain. -->
 @if (upcoming() !== null && upcomingLock(); as lock) {
   <p class="lock-reason">{{ lock }}</p>

@@ -882,7 +882,11 @@ the bot (5.1), and replays (5.2): an Angular-free `MatchEngine` records the
 humans' crosshairs and boosts, and `playReplay` plays a match out again on
 the CPU. The ghost is in as well: after a match against the computer, the
 player fights their own run, played by the computer's colony through a
-`GhostController` and turned to the other side. Share links build on it.
+`GhostController` and turned to the other side. Share links carry a run in
+the hash of the address (packed, a few KB for a minute of play), and opening
+one offers the ghost as a challenge. Phase 2 is done, apart from the daily
+leaderboard of 5.2, which waits for the daily level of phase 3 and a
+Firebase backend.
 Phase 7 can be sprinkled in between the others; each of its items is a
 self-contained PR. Of the groundwork the phases assumed, three pieces have
 landed since the first version of this document: the seeded generator (for

@@ -229,6 +229,12 @@
 }
 
 // Under the buttons: what the locked next level still needs.
+.share-note {
+  margin: -0.5rem 0 0;
+  text-align: right;
+  color: var(--bw-muted, inherit);
+}
+
 .lock-reason {
   margin: -0.5rem 0 0;
   text-align: right;

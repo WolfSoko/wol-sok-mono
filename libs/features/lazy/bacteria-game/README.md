@@ -302,6 +302,17 @@ the run it plays. The ghost holds for the one match it was picked for: any
 way out of that match ends it, and "Fight it again" sets it again. It
 plays on its own level and leaves the player's setup as it was.
 
+A run can be shared too: **Share your run** on the result screen makes a
+link with the run packed into its hash
+([`replay-link.ts`](./src/lib/state/replay-link.ts)) - the inputs as whole
+numbers on the engine's grid, ticks as the distance to the input before,
+deflated and written in base64url. A minute of steering a stick all the time
+fits in a few KB, and the run never reaches a server. Opening the link offers
+a ghost challenge on the main menu and above the setup of the page layout;
+the hash is taken out of the address once read. The engine keeps a stick push
+in steps of 1/16 and a drag target in quarter cells, so what is played is
+exactly what the link carries.
+
 ## Tuning
 
 Every number that shapes how the game feels lives in

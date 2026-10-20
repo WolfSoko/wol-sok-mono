@@ -9,6 +9,7 @@ import { GameStateService } from './state/game-state.service';
 import { GameStateStore } from './state/game.states';
 import { levelTitle, LEVELS } from './state/levels';
 import { PlayerStore } from './state/player.store';
+import { replayOf } from './state/replay';
 
 /**
  * Lets the helpers believe the browser offers the API and that the given
@@ -560,6 +561,46 @@ describe('BacteriaGameComponent', () => {
 
       component['selectColor']({ seat: 1, colorId: 'blue' });
       expect(store.snapshot().colors).toEqual(['orange', 'blue']);
+    });
+  });
+
+  describe('a shared run', () => {
+    const run = replayOf(
+      {
+        levelId: LEVELS[3].id,
+        mode: 'vs-computer',
+        difficulty: 'normal',
+        colors: ['orange', 'blue'],
+        headStart: 0,
+        width: 320,
+        height: 140,
+        seed: 9,
+      },
+      'cpu',
+      600,
+      { steers: [[0, 0, 1, 0]], drags: [], boosts: [] }
+    );
+
+    it('starts a match against it on Fight it', () => {
+      create();
+      store.update({ challenge: run });
+
+      component['fightChallenge']();
+
+      expect(store.ghost()).toEqual(run);
+      expect(store.challenge()).toBeNull();
+      expect(store.level().id).toBe(LEVELS[3].id);
+      expect(TestBed.inject(PlayerStore).entities()[1].name).toBe('Ghost');
+    });
+
+    it('lets it go on Not now', () => {
+      create();
+      store.update({ challenge: run });
+
+      component['dismissChallenge']();
+
+      expect(store.challenge()).toBeNull();
+      expect(store.ghost()).toBeNull();
     });
   });
 

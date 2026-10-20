@@ -45,6 +45,7 @@ import { randomSeed } from './geometry';
 import { MatchOutcome } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
 import { Replay, replayOf } from './replay';
+import { replayFromHash } from './replay-link';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
 import { ProgressService } from '../progress.service';
@@ -256,6 +257,20 @@ export class GameStateService {
   }
 
   /**
+   * Offers the run a link carries in `hash` as a ghost to fight. Resolves to
+   * whether there was one - a run against the computer, from this version of
+   * the game.
+   */
+  public async offerChallenge(hash: string): Promise<boolean> {
+    const run = await replayFromHash(hash);
+    if (run === null || run.header.mode !== 'vs-computer') {
+      return false;
+    }
+    this.gameStateStore.update({ challenge: run });
+    return true;
+  }
+
+  /**
    * Sets the next match against a ghost - the run of the last match against
    * the computer unless another one is given: on its level, the computer's
    * colony steered as the player steered their own back then. It holds for
@@ -397,7 +412,8 @@ export class GameStateService {
     this.initPlayers();
     this.gameStateStore.update((state) => ({
       currentState: GameState.RUNNING,
-      series: nextSeries(state),
+      // A match against a ghost is no match of a series.
+      series: state.ghost === null ? nextSeries(state) : null,
       // Restart from the pause menu starts without a reset in between.
       timePassed: 0,
       winner: null,

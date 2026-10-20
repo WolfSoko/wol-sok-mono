@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -16,6 +16,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,6 +24,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { WsThanosDirective } from '@wolsok/thanos';
+import { GhostChallengeComponent } from './ghost/ghost-challenge.component';
 import {
   ElemResizedDirective,
   ResizedEvent,
@@ -85,6 +87,7 @@ import { SteeringVector } from './state/geometry';
 import { GameStateService } from './state/game-state.service';
 import { GameMode, GameState, GameStateStore } from './state/game.states';
 import {
+  getLevel,
   Level,
   LEVELS,
   levelBalance,
@@ -124,6 +127,7 @@ import {
     LevelSelectComponent,
     ProfileComponent,
     ColonyColorsComponent,
+    GhostChallengeComponent,
   ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
@@ -138,6 +142,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
   private readonly progress = inject(ProgressService);
+  private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router);
   /** No flickering glow for players who asked their system for less motion. */
   private readonly reducedMotion = prefersReducedMotion();
 
@@ -263,6 +269,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private repaintPending = false;
   /** The level that follows the selected one, null at the end of the list. */
   protected readonly upcomingLevel: Signal<Level | null>;
+  /** The level of a run someone shared in a link, null without one. */
+  protected readonly challengeLevel = computed(() => {
+    const run = this.store.challenge();
+    return run === null ? null : getLevel(run.header.levelId);
+  });
   /** Two humans or one human against the computer. */
   protected readonly mode: Signal<GameMode>;
   /** How hard the computer plays. */
@@ -382,6 +393,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return levelMap(this.level()).createWalls(width, height);
     });
     this.upcomingLevel = computed(() => nextLevel(this.level().id));
+    void this.takeChallenge();
     this.theme = computed(() =>
       arenaTheme(this.campaign.activeArena() ?? this.level().id)
     );
@@ -451,6 +463,37 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.gameStateService.frames$
       .pipe(untilDestroyed(this))
       .subscribe((frame) => this.runFrame(frame));
+  }
+
+  /**
+   * Takes the run a link carries in its hash as a challenge, and takes it
+   * out of the address, so a reload or a bookmark does not offer it again.
+   */
+  private async takeChallenge(): Promise<void> {
+    if (
+      !(await this.gameStateService.offerChallenge(this.document.location.hash))
+    ) {
+      return;
+    }
+    // Through the router, so it does not keep the run in the url it holds.
+    await this.router.navigateByUrl(this.router.url.split('#')[0], {
+      replaceUrl: true,
+    });
+  }
+
+  /** Starts a match against the ghost of the run someone shared. */
+  protected fightChallenge(): void {
+    const run = this.store.challenge();
+    if (run === null) {
+      return;
+    }
+    this.dismissChallenge();
+    this.gameStateService.playGhost(run);
+    this.startGame();
+  }
+
+  protected dismissChallenge(): void {
+    this.store.update({ challenge: null });
   }
 
   /**
