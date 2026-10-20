@@ -20,15 +20,49 @@
   min-height: 0;
 }
 
-.levels {
+// The ladder chapter by chapter, then what lies beyond it - scrolling.
+.map {
   flex: 1 1 auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
-  align-content: start;
-  gap: 0.75rem;
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
   padding: 0.25rem;
   overflow: auto;
+}
+
+.chapter-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.chapter-name {
+  @include screen.figure;
+
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.chapter-open {
+  font-size: 0.85rem;
+  color: var(--bw-gold);
+}
+
+.chapter-blurb {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--bw-muted);
+}
+
+.levels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
   list-style: none;
 
   li {
@@ -36,22 +70,36 @@
   }
 }
 
-.level-card {
+.branch-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  align-items: start;
+  gap: 0.75rem;
+}
+
+.branch,
+.generator {
   @include screen.panel;
 
-  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 0.35rem;
-  min-height: 7.5rem;
   padding: 0.85rem 1rem;
   border-radius: 1rem;
   color: var(--bw-text);
   font: inherit;
   text-align: left;
+
+  mat-icon {
+    color: var(--bw-gold);
+  }
+}
+
+.branch {
   cursor: pointer;
 
-  &:hover:not(:disabled) {
+  &:hover {
     border-color: var(--bw-line-strong);
   }
 
@@ -59,63 +107,39 @@
     outline: 3px solid var(--bw-gold);
     outline-offset: 2px;
   }
-
-  &.current {
-    background: var(--bw-surface-raised);
-    border: 2px solid var(--bw-player);
-
-    .number {
-      color: var(--bw-player);
-    }
-  }
-
-  &.locked {
-    background: rgb(11 15 20 / 85%);
-    border-style: dashed;
-    color: var(--bw-muted);
-    cursor: not-allowed;
-
-    .number {
-      color: var(--bw-faint);
-    }
-  }
 }
 
-.card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-}
-
-.number {
-  @include screen.figure;
-
-  font-size: 1.6rem;
-  color: var(--bw-gold);
-}
-
-.lock {
-  font-size: 1.2rem;
-  width: 1.2rem;
-  height: 1.2rem;
-}
-
-.title {
+.branch-title {
   font-weight: 700;
-  font-size: 1.05rem;
 }
 
-.card-foot {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 22px;
-  margin-top: auto;
+.branch-note {
+  font-size: 0.85rem;
   color: var(--bw-muted);
 }
 
-.lock-reason {
-  font-size: 0.8rem;
+.style-picker {
+  --mat-button-toggle-height: 32px;
+
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.heat {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  mat-slider {
+    --mat-slider-active-track-color: var(--bw-gold);
+    --mat-slider-handle-color: var(--bw-gold);
+    --mat-slider-focus-handle-color: var(--bw-gold);
+    --mat-slider-hover-handle-color: var(--bw-gold);
+    --mat-slider-inactive-track-color: var(--bw-line-strong);
+    --mat-slider-ripple-color: var(--bw-gold);
+
+    width: 100%;
+  }
 }
 
 .details {
@@ -236,7 +260,7 @@
     flex-direction: column;
   }
 
-  .levels {
+  .map {
     flex: none;
     overflow: visible;
   }
@@ -252,13 +276,31 @@
     flex-direction: row;
   }
 
-  .levels {
-    grid-auto-flow: column;
-    grid-template-columns: none;
-    grid-template-rows: 1fr;
-    grid-auto-columns: 9rem;
+  // The chapters and what lies beyond them side by side, swiped as one.
+  .map {
+    flex-direction: row;
     overflow-x: auto;
     overflow-y: hidden;
+  }
+
+  .chapter {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chapter-blurb {
+    display: none;
+  }
+
+  .levels,
+  .branch-row {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: 9rem;
+  }
+
+  .branch-row {
+    grid-auto-columns: 13rem;
   }
 
   .details {
@@ -274,10 +316,6 @@
 
   .body {
     gap: 0.5rem 0.75rem;
-  }
-
-  .level-card {
-    min-height: 0;
   }
 
   // Projected into the header, after the title.

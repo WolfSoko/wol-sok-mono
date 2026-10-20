@@ -3,12 +3,29 @@ import {
   Component,
   computed,
   input,
+  linkedSignal,
   output,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSliderModule } from '@angular/material/slider';
+import { arenaTheme, cssTriple } from '../arena/arena-theme';
+import { CHAPTERS } from '../state/chapters';
+import {
+  MAX_DIFFICULTY,
+  MIN_DIFFICULTY,
+  parseGeneratedId,
+  rollLevelId,
+} from '../state/level-generator/generate-level';
+import {
+  RECIPE_IDS,
+  RecipeId,
+  RECIPES,
+} from '../state/level-generator/recipes';
+import { DailyCard, endlessNote } from './menu-cards';
+import { LevelCard, LevelCardComponent } from './level-card.component';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { ScreenHeaderComponent } from './screen-header.component';
 import {
@@ -40,10 +57,12 @@ import {
 @Component({
   selector: 'feat-lazy-bac-game-level-select',
   imports: [
+    LevelCardComponent,
     MatButtonModule,
     MatButtonToggleModule,
     MatIconModule,
     MatSlideToggleModule,
+    MatSliderModule,
     MedallionComponent,
     ScreenHeaderComponent,
   ],
@@ -73,6 +92,10 @@ export class LevelSelectComponent {
   ]);
   /** The lifetime wins of the two colonies' colours - the rivalry. */
   public readonly rivalry = input<readonly [number, number]>([0, 0]);
+  /** Today's daily level, null to leave it out. */
+  public readonly daily = input<DailyCard | null>(null);
+  /** The most levels beaten in one endless run. */
+  public readonly endlessBest = input(0);
 
   public readonly modeChange = output<GameMode>();
   public readonly difficultyChange = output<BotDifficulty>();
@@ -82,6 +105,8 @@ export class LevelSelectComponent {
   public readonly headStartChange = output<HeadStart>();
   public readonly start = output<void>();
   public readonly back = output<void>();
+  public readonly playDaily = output<void>();
+  public readonly playEndless = output<void>();
 
   protected readonly difficulties = BOT_DIFFICULTIES;
   protected readonly seriesLengths = SERIES_LENGTHS;
@@ -101,26 +126,102 @@ export class LevelSelectComponent {
 
   protected readonly vsComputer = computed(() => this.mode() === 'vs-computer');
 
-  /** A card per level, in the order of the ladder. */
-  protected readonly cards = computed(() =>
-    LEVELS.map((level, index) => ({
-      id: level.id,
-      number: index + 1,
-      title: levelTitle(level),
-      lock: this.locks()[level.id] ?? null,
+  /**
+   * The ladder chapter by chapter, a card per level - each in the colours of
+   * its arena.
+   */
+  protected readonly chapters = computed(() =>
+    CHAPTERS.map((chapter) => {
+      const cards = chapter.levelIds.map((id) => this.card(id));
+      return {
+        name: chapter.name,
+        blurb: chapter.blurb,
+        open: cards.filter((card) => card.lock === null).length,
+        cards,
+      };
+    })
+  );
+
+  /** True while the ladder's locks apply - against the computer, no free play. */
+  protected readonly laddered = computed(
+    () => this.vsComputer() && !this.freePlay()
+  );
+
+  /**
+   * The level rolled last, still offered once a ladder level is picked -
+   * there is no other way back to its seed.
+   */
+  private readonly rolled = linkedSignal<string, string | null>({
+    source: this.levelId,
+    computation: (id, previous) =>
+      parseGeneratedId(id) !== null ? id : (previous?.value ?? null),
+  });
+
+  protected readonly rolledCard = computed(() => {
+    const id = this.rolled();
+    return id === null ? null : this.card(id);
+  });
+
+  protected readonly styles = [
+    { id: 'any' as const, name: 'Any' },
+    ...RECIPE_IDS.map((id) => ({ id, name: RECIPES[id].label })),
+  ];
+  protected readonly endlessNote = endlessNote;
+  protected readonly minDifficulty = MIN_DIFFICULTY;
+  protected readonly maxDifficulty = MAX_DIFFICULTY;
+  /**
+   * The style and the difficulty the next generated level gets - those of
+   * the level rolled last, until changed.
+   */
+  protected readonly style = linkedSignal<RecipeId | 'any'>(
+    () => parseGeneratedId(this.rolled() ?? '')?.recipe ?? 'any'
+  );
+  protected readonly heat = linkedSignal(
+    () => parseGeneratedId(this.rolled() ?? '')?.difficulty ?? 5
+  );
+
+  /** Makes a level of the chosen style and difficulty and picks it. */
+  protected generate(): void {
+    this.levelChange.emit(rollLevelId(this.style(), this.heat()));
+  }
+
+  /**
+   * A level's card: its badge - its place on the ladder, or the style of a
+   * generated one - its lock, its medallions, its arena's colours.
+   */
+  private card(id: string): LevelCard {
+    const level = getLevel(id);
+    const theme = arenaTheme(id);
+    const made = parseGeneratedId(id);
+    return {
+      id,
+      badge:
+        made === null
+          ? String(LEVELS.indexOf(level) + 1)
+          : RECIPES[made.recipe].label,
+      title: made === null ? levelTitle(level) : level.name,
+      lock: this.locks()[id] ?? null,
+      floor: cssTriple(theme.floor),
+      edge: cssTriple(theme.border),
       medals: BOT_DIFFICULTIES.map((difficulty) => ({
         difficulty: difficulty.id,
-        tier: this.medals()[level.id]?.[difficulty.id] ?? null,
+        tier: this.medals()[id]?.[difficulty.id] ?? null,
       })),
-    }))
-  );
+    };
+  }
 
   /** The chosen level, with its best medallion and what the next one needs. */
   protected readonly selected = computed(() => {
     const level = getLevel(this.levelId());
     const best = this.medals()[level.id]?.[this.difficulty()] ?? null;
+    const made = parseGeneratedId(level.id);
     return {
       level,
+      // Above the name: the ladder's number and name, or what was rolled.
+      kicker:
+        made === null
+          ? level.name
+          : `${RECIPES[made.recipe].label} · difficulty ${made.difficulty}`,
       title: levelTitle(level),
       best,
       bestName:

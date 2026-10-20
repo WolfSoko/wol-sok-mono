@@ -63,14 +63,7 @@
         <mat-icon>all_inclusive</mat-icon>
         <span class="continue-text">
           <span class="continue-title">Endless run</span>
-          <span class="continue-level">
-            @if (endlessBest() > 0) {
-              Generated levels, harder with every win · best
-              {{ endlessBest() }}
-            } @else {
-              Generated levels, harder with every win - three lives
-            }
-          </span>
+          <span class="continue-level">{{ endlessNote(endlessBest()) }}</span>
         </span>
       </button>
       @if (daily(); as card) {

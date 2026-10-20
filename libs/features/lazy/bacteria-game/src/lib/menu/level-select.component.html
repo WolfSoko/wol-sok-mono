@@ -50,46 +50,110 @@
 </feat-lazy-bac-game-screen-header>
 
 <div class="body">
-  <ul class="levels" aria-label="Levels">
-    @for (card of cards(); track card.id) {
-      <li>
-        <button
-          type="button"
-          class="level-card"
-          [class.current]="card.id === levelId()"
-          [class.locked]="card.lock !== null"
-          [disabled]="card.lock !== null"
-          [attr.aria-current]="card.id === levelId() ? 'true' : null"
-          (click)="levelChange.emit(card.id)"
-        >
-          <span class="card-top">
-            <span class="number">{{ card.number }}</span>
-            @if (card.lock !== null) {
-              <mat-icon class="lock">lock</mat-icon>
-            }
-          </span>
-          <span class="title">{{ card.title }}</span>
-          <span class="card-foot">
-            @if (card.lock !== null) {
-              <span class="lock-reason">{{ card.lock }}</span>
-            } @else if (vsComputer()) {
-              @for (slot of card.medals; track slot.difficulty) {
-                <feat-lazy-bac-game-medallion
-                  [tier]="slot.tier"
-                  [size]="22"
-                  [difficulty]="slot.difficulty"
-                />
-              }
-            }
-          </span>
-        </button>
-      </li>
+  <div class="map">
+    @for (chapter of chapters(); track chapter.name) {
+      <section class="chapter" [attr.aria-label]="chapter.name">
+        <header class="chapter-head">
+          <h3 class="chapter-name">{{ chapter.name }}</h3>
+          @if (laddered()) {
+            <span class="chapter-open"
+              >{{ chapter.open }} of {{ chapter.cards.length }} open</span
+            >
+          }
+          <p class="chapter-blurb">{{ chapter.blurb }}</p>
+        </header>
+        <ul class="levels">
+          @for (card of chapter.cards; track card.id) {
+            <li>
+              <feat-lazy-bac-game-level-card
+                [card]="card"
+                [current]="card.id === levelId()"
+                [showMedals]="vsComputer()"
+                (pick)="levelChange.emit($event)"
+              />
+            </li>
+          }
+        </ul>
+      </section>
     }
-  </ul>
+
+    <section class="chapter branches" aria-label="Beyond the ladder">
+      <header class="chapter-head">
+        <h3 class="chapter-name">Beyond the ladder</h3>
+        <p class="chapter-blurb">Levels made from a seed - new every time.</p>
+      </header>
+      <div class="branch-row">
+        @if (vsComputer()) {
+          @if (daily(); as card) {
+            <button type="button" class="branch" (click)="playDaily.emit()">
+              <mat-icon aria-hidden="true">today</mat-icon>
+              <span class="branch-title">Daily level · {{ card.name }}</span>
+              <span class="branch-note">{{ card.note }}</span>
+            </button>
+          }
+          <button type="button" class="branch" (click)="playEndless.emit()">
+            <mat-icon aria-hidden="true">all_inclusive</mat-icon>
+            <span class="branch-title">Endless run</span>
+            <span class="branch-note">{{ endlessNote(endlessBest()) }}</span>
+          </button>
+        }
+        <div class="generator">
+          <span class="branch-title">Generate a level</span>
+          <mat-button-toggle-group
+            class="style-picker"
+            aria-label="Style"
+            hideSingleSelectionIndicator
+            [value]="style()"
+            (change)="style.set($event.value)"
+          >
+            @for (option of styles; track option.id) {
+              <mat-button-toggle [value]="option.id">{{
+                option.name
+              }}</mat-button-toggle>
+            }
+          </mat-button-toggle-group>
+          <label class="heat">
+            <span class="branch-note">Difficulty {{ heat() }}</span>
+            <mat-slider
+              discrete
+              [min]="minDifficulty"
+              [max]="maxDifficulty"
+              [step]="1"
+            >
+              <input
+                matSliderThumb
+                aria-label="Difficulty of the generated level"
+                [value]="heat()"
+                (valueChange)="heat.set($event)"
+              />
+            </mat-slider>
+          </label>
+          <button
+            mat-stroked-button
+            type="button"
+            class="generate"
+            (click)="generate()"
+          >
+            <mat-icon>casino</mat-icon>
+            Generate
+          </button>
+        </div>
+        @if (rolledCard(); as card) {
+          <!-- Rolled levels keep no medallion: there is no second go. -->
+          <feat-lazy-bac-game-level-card
+            [card]="card"
+            [current]="card.id === levelId()"
+            [showMedals]="false"
+            (pick)="levelChange.emit($event)"
+          />
+        }
+      </div>
+    </section>
+  </div>
 
   <aside class="details" aria-label="Selected level">
     @let chosen = selected();
-    <span class="details-number">{{ chosen.level.name }}</span>
+    <span class="details-number">{{ chosen.kicker }}</span>
     <h3 class="details-title">{{ chosen.title }}</h3>
     <p class="details-description">{{ chosen.level.description }}</p>
     @if (vsComputer()) {

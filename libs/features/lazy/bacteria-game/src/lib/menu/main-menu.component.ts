@@ -15,15 +15,9 @@ import { ACHIEVEMENTS } from '../state/achievements';
 import { CampaignSummary } from '../state/campaign';
 import { RankStandingComponent } from '../rank/rank-standing.component';
 import { Level, LEVELS } from '../state/levels';
+import { DailyCard, endlessNote } from './menu-cards';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
 import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
-
-/** Today's daily level as the main menu shows it. */
-export interface DailyCard {
-  name: string;
-  /** Attempts left and the streak, in a line. */
-  note: string;
-}
 
 /** The sub screens the main menu opens. */
 export type MenuPage = 'profile' | 'settings' | 'help';
@@ -82,4 +76,5 @@ export class MainMenuComponent {
   protected readonly totalLevels = LEVELS.length;
   protected readonly totalMedals = LEVELS.length * BOT_DIFFICULTIES.length;
   protected readonly totalAchievements = ACHIEVEMENTS.length;
+  protected readonly endlessNote = endlessNote;
 }
