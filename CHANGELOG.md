@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.19.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.18.0...v74.19.0) (2026-10-20)
+
+### Features
+
+* **rollapolla-analog:** track with Firebase Analytics ([#2498](https://github.com/WolfSoko/wol-sok-mono/issues/2498)) ([4244a83](https://github.com/WolfSoko/wol-sok-mono/commit/4244a8399bce26e0f9b61786f277f998d72d29d9))
+
 ## [74.18.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.17.2...v74.18.0) (2026-10-20)
 
 ### Features
