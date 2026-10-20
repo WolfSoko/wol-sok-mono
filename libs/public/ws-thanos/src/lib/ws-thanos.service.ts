@@ -43,11 +43,11 @@ interface Capture {
   scale: number;
 }
 
-/** resolves once the browser has nothing else to do, or after a second at the latest */
+/** resolves once the browser has nothing else to do */
 function idle(window: Window): Promise<void> {
   return new Promise((resolve) =>
     typeof window.requestIdleCallback === 'function'
-      ? window.requestIdleCallback(() => resolve(), { timeout: 1000 })
+      ? window.requestIdleCallback(() => resolve())
       : window.setTimeout(resolve, 200)
   );
 }
@@ -111,22 +111,23 @@ export class WsThanosService {
 
     const { maxParticleCount, particleAcceleration } = this.thanosOptions;
     const rendererChoice = this.chooseRenderer(maxParticleCount);
+    let renderer: ParticleRenderer | undefined;
     try {
       const capture = await this.capture(elem, rendererChoice);
       await idle(window);
       // dust skips the crack shader, the other variants compile every shader
-      const { renderer } = this.createRenderer(rendererChoice, capture, {
+      ({ renderer } = this.createRenderer(rendererChoice, capture, {
         particleAcceleration,
         crumble: 'shards',
-      });
+      }));
       renderer.render({
         deltaTSec: 0,
         animationT: 0,
         maxWidth: renderer.canvas.width,
         maxHeight: renderer.canvas.height,
       });
-      renderer.dispose();
     } finally {
+      renderer?.dispose();
       elem.remove();
       rendererChoice.release();
     }

@@ -201,12 +201,19 @@ describe('WsThanosService', () => {
       expect(debug).not.toHaveBeenCalled();
     });
 
-    it('should not fail when the warm up fails', async () => {
-      jest.spyOn(console, 'debug').mockImplementation();
+    it('should clean up and only log when the warm up fails', async () => {
+      const debug = jest.spyOn(console, 'debug').mockImplementation();
       jest.mocked(html2canvas).mockRejectedValueOnce(new Error('no capture'));
       const service = givenService();
+      const bodyChildren = document.body.childElementCount;
 
       await expect(service.preload()).resolves.toBeUndefined();
+
+      expect(document.body.childElementCount).toBe(bodyChildren);
+      expect(debug).toHaveBeenCalledWith(
+        'ws-thanos: preload failed',
+        expect.any(Error)
+      );
     });
   });
 

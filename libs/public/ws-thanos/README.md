@@ -79,7 +79,7 @@ Turn it off with `provideWsThanosOptions({ sound: false })`.
 The first snap does work the browser hasn't done before: html2canvas runs for the first time,
 and the browser compiles the WebGL shaders and the shaders for drawing the captured element.
 To keep that from stalling the first snap, `wsThanos` snaps a tiny invisible element once while the browser is idle after the first render.
-Later snaps reuse what was compiled.
+Browsers cache compiled shaders, so the first real snap does not have to compile them again.
 
 Turn it off with `provideWsThanosOptions({ preload: false })`.
 Using `WsThanosService` without the directive? Call `preload()` yourself, e.g. in a component's constructor:
