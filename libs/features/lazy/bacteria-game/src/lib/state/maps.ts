@@ -84,6 +84,11 @@ export function coversCell(rect: Rect, x: number, y: number): boolean {
   return dx * dx + dy * dy <= 1;
 }
 
+/** The centre of a rect - and of the ellipse in it. */
+export function rectCenter(rect: Rect): Point {
+  return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+}
+
 /** Fills the cells a wall covers in a grid of the arena, clipped to it. */
 export function stampRect(
   grid: Int32Array | Uint8Array,

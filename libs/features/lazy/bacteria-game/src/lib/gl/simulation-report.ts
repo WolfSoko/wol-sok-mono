@@ -106,7 +106,9 @@ export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
       const texel = (totalsRow * width + bx) * 4;
       captured += data[texel + slot];
       lost += data[texel + 2 + slot];
-      onHill += data[(blocksY * width + bx) * 4 + 2 + slot];
+      // The pellet row carries the bacteria on the hold zone per column.
+      const pelletTexel = (blocksY * width + bx) * 4;
+      onHill += data[pelletTexel + 2 + slot];
     }
 
     blockCounts.push(counts);

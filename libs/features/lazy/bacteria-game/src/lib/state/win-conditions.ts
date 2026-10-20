@@ -52,19 +52,29 @@ export function judgeOutcome(
   if (players.length < 2) {
     return null;
   }
+  // A wiped out colony ends the match whatever the rule.
   const wipedOut = annihilation(players);
+  if (wipedOut !== null) {
+    return wipedOut;
+  }
   switch (rule.kind) {
     case 'annihilation':
-      return wipedOut;
+      return null;
     case 'timed':
-      return (
-        wipedOut ?? (timeLeft(rule, elapsedSec) === 0 ? biggest(players) : null)
-      );
+      return timeLeft(rule, elapsedSec) === 0
+        ? {
+            winner: soleLeader(players, (p) => p.bacteriaCount),
+            reason: 'time',
+          }
+        : null;
     case 'hold': {
-      const holder = players.find(
-        (player) => player.holdTicks >= rule.holdSec * TICKS_PER_SEC
-      );
-      return wipedOut ?? (holder ? { winner: holder, reason: 'hold' } : null);
+      const target = rule.holdSec * TICKS_PER_SEC;
+      for (const player of players) {
+        if (player.holdTicks >= target) {
+          return { winner: player, reason: 'hold' };
+        }
+      }
+      return null;
     }
   }
 }
@@ -101,17 +111,27 @@ export function holdTarget(rule: WinRule): number | null {
 export function zoneHolder(
   colonies: readonly { playerId: number; onHill: number }[]
 ): number | null {
-  let holder: number | null = null;
-  let most = 0;
-  for (const { playerId, onHill } of colonies) {
-    if (onHill > most) {
-      holder = playerId;
-      most = onHill;
-    } else if (onHill === most) {
-      holder = null;
+  const holder = soleLeader(colonies, ({ onHill }) => onHill);
+  return holder !== null && holder.onHill > 0 ? holder.playerId : null;
+}
+
+/** The one item with the highest value - null when two share it. */
+function soleLeader<T>(
+  items: readonly T[],
+  value: (item: T) => number
+): T | null {
+  let leader: T | null = null;
+  let most = -Infinity;
+  for (const item of items) {
+    const v = value(item);
+    if (v > most) {
+      leader = item;
+      most = v;
+    } else if (v === most) {
+      leader = null;
     }
   }
-  return holder;
+  return leader;
 }
 
 /** The last colony left wins; both gone at once is a draw. */
@@ -126,14 +146,4 @@ function annihilation(players: readonly Player[]): MatchOutcome | null {
   return survivors.length === 0 && fought
     ? { winner: null, reason: 'annihilation' }
     : null;
-}
-
-/** The biggest colony wins; a tie at the top is a draw. */
-function biggest(players: readonly Player[]): MatchOutcome {
-  const most = Math.max(...players.map((player) => player.bacteriaCount));
-  const leaders = players.filter((player) => player.bacteriaCount === most);
-  return {
-    winner: leaders.length === 1 ? leaders[0] : null,
-    reason: 'time',
-  };
 }

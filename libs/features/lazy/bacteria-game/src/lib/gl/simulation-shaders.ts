@@ -521,6 +521,7 @@ uniform usampler2D uEvents;
 uniform usampler2D uPrevious;
 uniform int uCellSize;
 uniform ivec2 uBlocks;
+uniform bool uCountHill;
 ${PELLETS}
 out uvec4 outValue;
 
@@ -562,6 +563,9 @@ void main() {
           }
           if ((texelFetch(uEvents, cell, 0).a & POISONED) != 0u) {
             poisoned++;
+          }
+          if (!uCountHill) {
+            continue;
           }
           uint owner = texelFetch(uState, cell, 0).r;
           if (owner != 0u && zoneAt(cell) == HILL) {

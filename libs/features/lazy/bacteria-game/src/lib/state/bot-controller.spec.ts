@@ -22,7 +22,7 @@ function view(overrides: Partial<BotView> = {}): BotView {
     nearestEnemy: { x: 200, y: 70 },
     nutrients: [],
     boostReady: true,
-    hill: null,
+    objective: null,
     ...overrides,
   };
 }
@@ -115,13 +115,28 @@ describe('BotController', () => {
     const nutrients = [{ x: 60, y: 30, amount: 10 }];
 
     const weaker = bot('normal').decide(
-      view({ own: colony(80, 70, 50), enemy: colony(240, 70, 200), hill }),
+      view({
+        own: colony(80, 70, 50),
+        enemy: colony(240, 70, 200),
+        objective: hill,
+      }),
       1
     );
-    const fed = bot('normal').decide(view({ nutrients, hill }), 1);
+    const fed = bot('normal').decide(view({ nutrients, objective: hill }), 1);
 
     expect(weaker.target).toEqual(hill);
     expect(fed.target).toEqual(hill);
+  });
+
+  it('takes the zone rather than the fight, however strong it is', () => {
+    const hill = { x: 160, y: 70 };
+
+    const decision = bot('hard').decide(
+      view({ own: colony(80, 70, 400), objective: hill }),
+      1
+    );
+
+    expect(decision.target).toEqual(hill);
   });
 
   it('still feeds a hungry colony first on a hold-the-zone level', () => {
@@ -131,7 +146,7 @@ describe('BotController', () => {
       view({
         own: colony(80, 70, 50, 0.4),
         nutrients,
-        hill: { x: 160, y: 70 },
+        objective: { x: 160, y: 70 },
       }),
       1
     );
