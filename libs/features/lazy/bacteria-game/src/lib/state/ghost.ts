@@ -1,4 +1,5 @@
 import { Point, SteeringVector } from './geometry';
+import { mirrorPoint } from './maps';
 import type { ReplayInputs } from './replay';
 
 /** How a recording's board maps onto the board it is played on. */
@@ -25,11 +26,12 @@ export function turnedOnto(
   const scaleX = to.width / from.width;
   const scaleY = to.height / from.height;
   return {
-    point: ({ x, y }) => ({
-      x: (from.width - x) * scaleX,
-      y: (from.height - y) * scaleY,
-    }),
-    direction: ({ x, y }) => ({ x: x === 0 ? 0 : -x, y: y === 0 ? 0 : -y }),
+    point: (point) => {
+      const { x, y } = mirrorPoint(point, from.width, from.height);
+      return { x: x * scaleX, y: y * scaleY };
+    },
+    // 0 - x rather than -x: a zero stays a zero, not -0.
+    direction: ({ x, y }) => ({ x: 0 - x, y: 0 - y }),
   };
 }
 
@@ -40,16 +42,29 @@ export interface GhostInputs {
   steer: SteeringVector | null;
 }
 
+/** One list of a recording, read in the order of its ticks. */
+class Cursor<T extends readonly number[]> {
+  private index = 0;
+
+  public constructor(private readonly list: readonly T[]) {}
+
+  /** Every input due by `tick` that was not read yet, in order. */
+  public *dueBy(tick: number): Generator<T> {
+    while (this.index < this.list.length && this.list[this.index][0] <= tick) {
+      yield this.list[this.index++];
+    }
+  }
+}
+
 /**
  * A crosshair driven by what a human put in during a recorded match: the
  * replay plays every human back this way, a ghost match one of them against
  * a live player.
  */
 export class GhostController {
-  private readonly steers: ReplayInputs['steers'];
-  private readonly drags: ReplayInputs['drags'];
-  private readonly boosts: ReplayInputs['boosts'];
-  private readonly next = { steers: 0, drags: 0, boosts: 0 };
+  private readonly steers: Cursor<ReplayInputs['steers'][number]>;
+  private readonly drags: Cursor<ReplayInputs['drags'][number]>;
+  private readonly boosts: Cursor<ReplayInputs['boosts'][number]>;
 
   /** Plays the inputs of `seat` in the recording, mapped by `mapping`. */
   public constructor(
@@ -57,39 +72,23 @@ export class GhostController {
     seat: number,
     private readonly mapping: GhostMapping = SAME_BOARD
   ) {
-    this.steers = inputs.steers.filter(([, player]) => player === seat);
-    this.drags = inputs.drags.filter(([, player]) => player === seat);
-    this.boosts = inputs.boosts.filter(([, player]) => player === seat);
+    const of = <T extends readonly number[]>(list: readonly T[]) =>
+      new Cursor(list.filter((input) => input[1] === seat));
+    this.steers = of(inputs.steers);
+    this.drags = of(inputs.drags);
+    this.boosts = of(inputs.boosts);
   }
 
   /** What the human put in before `tick`, each kind's last input winning. */
   public before(tick: number): GhostInputs {
-    let boost = false;
-    while (this.due(this.boosts, 'boosts', tick) != null) {
-      boost = true;
+    const inputs: GhostInputs = { boost: false, drag: null, steer: null };
+    inputs.boost = [...this.boosts.dueBy(tick)].length > 0;
+    for (const [, , x, y] of this.drags.dueBy(tick)) {
+      inputs.drag = this.mapping.point({ x, y });
     }
-    let drag: Point | null = null;
-    for (let at; (at = this.due(this.drags, 'drags', tick));) {
-      drag = this.mapping.point({ x: at[2], y: at[3] });
+    for (const [, , x, y] of this.steers.dueBy(tick)) {
+      inputs.steer = this.mapping.direction({ x, y });
     }
-    let steer: SteeringVector | null = null;
-    for (let at; (at = this.due(this.steers, 'steers', tick));) {
-      steer = this.mapping.direction({ x: at[2], y: at[3] });
-    }
-    return { boost, drag, steer };
-  }
-
-  /** The next input of a list if it is due by `tick` - taken off the list. */
-  private due<T extends readonly number[]>(
-    list: readonly T[],
-    kind: keyof GhostController['next'],
-    tick: number
-  ): T | null {
-    const input = list[this.next[kind]];
-    if (input == null || input[0] > tick) {
-      return null;
-    }
-    this.next[kind]++;
-    return input;
+    return inputs;
   }
 }

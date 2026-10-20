@@ -108,11 +108,12 @@ export function playReplay(replay: Replay): ReplayResult | null {
   }
   const { spawns, options } = planMatch(header);
   // Every human is played back from the recording, as they were.
-  const ghosts = new Map(
-    spawns.flatMap((spawn, seat) =>
-      spawn.isBot ? [] : [[seat, new GhostController(inputs, seat)] as const]
-    )
-  );
+  const ghosts = new Map<number, GhostController>();
+  spawns.forEach((spawn, seat) => {
+    if (!spawn.isBot) {
+      ghosts.set(seat, new GhostController(inputs, seat));
+    }
+  });
   const engine = new MatchEngine(spawns, { ...options, ghosts });
   try {
     let outcome = engine.outcome();

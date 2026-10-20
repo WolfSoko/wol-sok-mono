@@ -247,8 +247,11 @@ describe('WinnerComponent', () => {
       expect(picked).toHaveBeenCalledWith('ghost');
     });
 
-    it('is no offer between two players or without a run', () => {
-      store.update({ mode: 'two-players', lastReplay: run });
+    it('is no offer after a match between two players or without a run', () => {
+      store.update({
+        mode: 'two-players',
+        lastReplay: { ...run, header: { ...run.header, mode: 'two-players' } },
+      });
       expect(ghostButton()).toBeUndefined();
 
       store.update({ mode: 'vs-computer', lastReplay: null });

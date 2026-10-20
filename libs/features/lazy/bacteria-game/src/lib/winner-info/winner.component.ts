@@ -82,9 +82,8 @@ export class WinnerComponent {
    */
   public canFightGhost: Signal<boolean> = computed(
     () =>
-      this.mode() === 'vs-computer' &&
       !this.againstGhost() &&
-      this.state.lastReplay() !== null
+      this.state.lastReplay()?.header.mode === 'vs-computer'
   );
 
   /** Everything the match earned, null until it has ended. */

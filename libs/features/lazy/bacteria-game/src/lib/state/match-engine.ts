@@ -31,7 +31,7 @@ import {
   Player,
   PlayerColorArray,
 } from './player.model';
-import { GhostController } from './ghost';
+import type { GhostController } from './ghost';
 import type { ReplayInputs } from './replay';
 
 /** What a match needs to know about one player before it starts. */
@@ -69,8 +69,9 @@ export interface MatchOptions {
   /**
    * The players driven by a recording, by seat - all the humans when a
    * replay is played again, the opponent in a ghost match. What is set from
-   * outside for them is ignored. A ghost seat spawns as a bot, so the game
-   * treats it as nobody at the screen, but no bot steers it.
+   * outside for them is ignored, and no bot steers them, even where the seat
+   * spawns as one - as the ghost does, so the game treats it as nobody at
+   * the screen.
    */
   ghosts?: ReadonlyMap<number, GhostController>;
 }

@@ -446,12 +446,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const next = action === 'next' ? this.upcomingLevel() : null;
+    // The reset ends a ghost match: a rematch sets the same ghost again.
+    const rematch = action === 'again' ? this.store.snapshot().ghost : null;
     this.screen.set(action === 'levels' ? 'levels' : 'menu');
     if (action === 'menu') {
       this.gameStateService.endSeries();
-    }
-    if (action !== 'again' && action !== 'ghost') {
-      this.gameStateService.endGhost();
     }
     this.resetGame$()
       .pipe(
@@ -463,6 +462,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           }
           if (action === 'ghost') {
             this.gameStateService.playGhost();
+          } else if (rematch !== null) {
+            this.gameStateService.playGhost(rematch);
           }
           if (action === 'again' || action === 'next' || action === 'ghost') {
             this.startGame();

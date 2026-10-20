@@ -313,16 +313,17 @@ describe('GameStateService', () => {
     afterEach(() => service.cleanup());
 
     describe('against the ghost', () => {
-      it('plays the last run against the computer, on its level', () => {
+      it('plays the last run on its level, leaving the setup as it is', () => {
         winAgainst('vs-computer');
         const run = store.snapshot().lastReplay;
         service.setLevel('corridors');
 
         service.playGhost();
+        service.start();
 
-        const state = store.snapshot();
-        expect(state.ghost).toBe(run);
-        expect(state.levelId).toBe('hourglass');
+        expect(store.snapshot().ghost).toBe(run);
+        expect(store.level().id).toBe('hourglass');
+        expect(store.snapshot().levelId).toBe('corridors');
         expect(playerStore.entities()[1].name).toBe('Ghost');
       });
 
@@ -337,25 +338,28 @@ describe('GameStateService', () => {
         expect(state.currentState).toBe(GameState.END);
         expect(state.earnings).toBeNull();
         expect(state.lastReplay).toBe(run);
-        expect(state.ghost).toBe(run);
       });
 
-      it('ends with any other setup, or on request', () => {
+      it('holds for the one match it was set for', () => {
         winAgainst('vs-computer');
         service.playGhost();
+        // A setup restored late changes the next match, not the ghost's.
+        service.applySetup({ difficulty: 'hard' });
+        expect(store.snapshot().ghost).not.toBeNull();
 
-        service.setDifficulty('hard');
+        service.reset();
+        service.start();
+
         expect(store.snapshot().ghost).toBeNull();
         expect(playerStore.entities()[1].name).toBe('Computer');
-
-        service.playGhost();
-        service.endGhost();
-        expect(store.snapshot().ghost).toBeNull();
       });
 
-      it('needs a run against the computer first', () => {
+      it('needs a run against the computer', () => {
         service.playGhost();
+        expect(store.snapshot().ghost).toBeNull();
 
+        winAgainst('two-players');
+        service.playGhost();
         expect(store.snapshot().ghost).toBeNull();
       });
     });

@@ -9,7 +9,9 @@ import {
   levelMap,
 } from './levels';
 import { MatchOptions, PlayerSpawn } from './match-engine';
+import { GhostController, turnedOnto } from './ghost';
 import { HeadStart, startScales } from './rivalry';
+import type { Replay } from './replay';
 
 /**
  * Everything a match is derived from. The same plan spawns the same
@@ -34,9 +36,13 @@ export interface MatchPlan {
  *
  * In `vs-computer` mode the second crosshair belongs to the bot, and the
  * names change with it so the scoreboard reads "You" and "Computer".
- * Between two players each one is called by their colour.
+ * Between two players each one is called by their colour. Against a
+ * `ghost` the second colony plays that recorded run instead of a bot.
  */
-export function planMatch(plan: MatchPlan): {
+export function planMatch(
+  plan: MatchPlan,
+  ghost: Replay | null = null
+): {
   spawns: PlayerSpawn[];
   options: MatchOptions;
 } {
@@ -62,7 +68,8 @@ export function planMatch(plan: MatchPlan): {
         x: (width / 4) * 3,
         y: height / 2,
         color: toPlayerColor(right),
-        name: versusComputer ? 'Computer' : right.name,
+        name:
+          ghost !== null ? 'Ghost' : versusComputer ? 'Computer' : right.name,
         isBot: versusComputer,
         startScale: rightScale,
       },
@@ -74,6 +81,20 @@ export function planMatch(plan: MatchPlan): {
       difficulty: plan.difficulty,
       arena: { width, height },
       seed: plan.seed,
+      // The run was played from the left: the ghost plays it from the right.
+      ghosts:
+        ghost === null
+          ? undefined
+          : new Map([
+              [
+                1,
+                new GhostController(
+                  ghost.inputs,
+                  0,
+                  turnedOnto(ghost.header, { width, height })
+                ),
+              ],
+            ]),
     },
   };
 }

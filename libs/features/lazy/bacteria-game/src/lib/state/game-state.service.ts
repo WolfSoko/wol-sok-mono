@@ -44,7 +44,6 @@ import { Player } from './player.model';
 import { randomSeed } from './geometry';
 import { MatchOutcome } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
-import { GhostController, turnedOnto } from './ghost';
 import { Replay, replayOf } from './replay';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
@@ -160,13 +159,12 @@ export class GameStateService {
    * award reach the store together.
    */
   private endMatch(outcome: MatchOutcome): void {
-    const { series, ghost, mode, lastReplay } = this.gameStateStore.snapshot();
+    const { series, ghost } = this.gameStateStore.snapshot();
     const earnings = this.recordMatch(outcome.winner);
     // One update, so the result and the award reach the readers together.
     this.gameStateStore.update({
-      // A ghost match is not one to play again: its opponent is no bot.
-      lastReplay:
-        mode === 'vs-computer' && ghost === null ? this.replay() : lastReplay,
+      // A ghost match is no match to play again: its opponent is no bot.
+      ...(ghost === null ? { lastReplay: this.replay() } : {}),
       currentState: GameState.END,
       winner: outcome.winner,
       matchEnded: true,
@@ -229,8 +227,8 @@ export class GameStateService {
 
   /**
    * Spawns both colonies with the map and the balance of the current level,
-   * from a fresh seed - every spawn is a match that may be played. In a
-   * ghost match the right colony is the ghost, on the seed of its run.
+   * from a fresh seed - every spawn is a match that may be played. A ghost
+   * match is played on the seed of the ghost's run.
    */
   private initPlayers() {
     const {
@@ -244,8 +242,8 @@ export class GameStateService {
       ghost,
     } = this.gameStateStore.snapshot();
     this.plan = {
-      levelId,
-      mode,
+      levelId: ghost?.header.levelId ?? levelId,
+      mode: ghost === null ? mode : 'vs-computer',
       difficulty,
       colors,
       headStart,
@@ -253,51 +251,29 @@ export class GameStateService {
       height,
       seed: ghost?.header.seed ?? randomSeed(),
     };
-    const { spawns, options } = planMatch(this.plan);
-    if (ghost !== null) {
-      spawns[1] = { ...spawns[1], name: 'Ghost' };
-      // The run was played from the left: the ghost plays it from the right.
-      options.ghosts = new Map([
-        [
-          1,
-          new GhostController(
-            ghost.inputs,
-            0,
-            turnedOnto(ghost.header, { width, height })
-          ),
-        ],
-      ]);
-    }
+    const { spawns, options } = planMatch(this.plan, ghost);
     this.playerService.init(spawns, options);
   }
 
   /**
-   * Sets the next matches against the ghost of the last match against the
-   * computer: on its level, the computer's colony steered as the player
-   * steered their own back then.
+   * Sets the next match against a ghost - the run of the last match against
+   * the computer unless another one is given: on its level, the computer's
+   * colony steered as the player steered their own back then. It holds for
+   * that one match; {@link reset} ends it, whichever way the match is left.
+   * The setup stays as it is, the ghost's level and mode are its own.
    */
-  public playGhost(): void {
-    const { lastReplay } = this.gameStateStore.snapshot();
-    if (lastReplay === null) {
+  public playGhost(run = this.gameStateStore.snapshot().lastReplay): void {
+    if (run === null || run.header.mode !== 'vs-computer') {
       return;
     }
-    this.gameStateStore.update({
-      ghost: lastReplay,
-      levelId: lastReplay.header.levelId,
-      mode: 'vs-computer',
-      series: null,
-    });
-    if (this.isIdle()) {
-      this.initPlayers();
-    }
+    this.gameStateStore.update({ ghost: run });
   }
 
-  /** Back to the computer as the opponent. */
-  public endGhost(): void {
-    if (this.gameStateStore.snapshot().ghost === null) {
-      return;
-    }
-    this.gameStateStore.update({ ghost: null });
+  /**
+   * Spawns the colonies of the next match again, now that its setup changed
+   * - not during one, which keeps the rules it started with.
+   */
+  private respawnIfIdle(): void {
     if (this.isIdle()) {
       this.initPlayers();
     }
@@ -342,15 +318,8 @@ export class GameStateService {
         setup[key] !== undefined &&
         JSON.stringify(setup[key]) !== JSON.stringify(current[key])
     );
-    // Any other setup ends a ghost match as well.
-    this.gameStateStore.update(
-      changed
-        ? { ...setup, series: null, ghost: null }
-        : { ...setup, ghost: null }
-    );
-    if (this.isIdle()) {
-      this.initPlayers();
-    }
+    this.gameStateStore.update(changed ? { ...setup, series: null } : setup);
+    this.respawnIfIdle();
   }
 
   /**
@@ -441,6 +410,7 @@ export class GameStateService {
     this.gameStateStore.update(() => ({
       currentState: GameState.END,
       timePassed: 0,
+      ghost: null,
     }));
     this.initPlayers();
     this.gameStateStore.update(() => ({

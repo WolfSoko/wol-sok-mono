@@ -11,7 +11,7 @@
  * describes one half, the other one is generated from it.
  */
 
-import { wrap } from './geometry';
+import { Point, wrap } from './geometry';
 
 export interface Rect {
   x: number;
@@ -194,6 +194,15 @@ export function mirrorRect(rect: Rect, width: number, height: number): Rect {
     width: rect.width,
     height: rect.height,
   };
+}
+
+/** The point rotated by 180° around the centre of the arena. */
+export function mirrorPoint(
+  point: Point,
+  width: number,
+  height: number
+): Point {
+  return { x: width - point.x, y: height - point.y };
 }
 
 /**

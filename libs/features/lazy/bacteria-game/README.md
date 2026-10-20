@@ -272,7 +272,7 @@ While a match runs, the engine records what the humans put in, each input
 once, when it changes: the steering vector from a tick on, a drag target and
 a boost before a tick. The crosshairs follow from those inputs, so a match
 records a few hundred entries rather than a position per tick. When the match
-ends, the game state's `lastReplay` holds it as a
+ends, the game state's `lastReplay` holds it - a ghost match aside - as a
 [`Replay`](./src/lib/state/replay.ts): that recording under a header with
 everything the match was derived from (level, mode, difficulty, colours,
 head start, grid size, seed, balance version and which simulation ran it).
@@ -296,7 +296,9 @@ point symmetric, so the turned run meets the same walls. A
 into another; replays play every human back the same way. The ghost reacts
 to nothing, it only does what you did - beating it means beating your own
 plan. A ghost match earns no medallion and no XP, and it does not replace
-the run it plays.
+the run it plays. The ghost holds for the one match it was picked for: any
+way out of that match ends it, and "Fight it again" sets it again. It
+plays on its own level and leaves the player's setup as it was.
 
 ## Tuning
 
