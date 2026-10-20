@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.28.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.28.0...v74.28.1) (2026-10-20)
+
+### Bug Fixes
+
+* **rollapolla-analog:** remove the X profile link and lead with the share card ([#2509](https://github.com/WolfSoko/wol-sok-mono/issues/2509)) ([ef2a326](https://github.com/WolfSoko/wol-sok-mono/commit/ef2a32630cfeb03c005232c5357431c195409e48))
+
 ## [74.28.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.27.0...v74.28.0) (2026-10-20)
 
 ### Features
