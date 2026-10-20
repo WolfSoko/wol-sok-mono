@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.32.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.31.1...v74.32.0) (2026-10-20)
+
+### Features
+
+* **ws-thanos:** preload the effect so the first snap does not stutter ([#2513](https://github.com/WolfSoko/wol-sok-mono/issues/2513)) ([127d04f](https://github.com/WolfSoko/wol-sok-mono/commit/127d04f764d06694a86aa955ee93eac40f2d2084))
+
+### Chore
+
+* **release:** publish ([705e19d](https://github.com/WolfSoko/wol-sok-mono/commit/705e19df55f35b1a72e00087d8db01584ad1fd1d))
+
 ## [74.31.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.31.0...v74.31.1) (2026-10-20)
 
 ### Bug Fixes
