@@ -1,3 +1,4 @@
+import { aMatchRecord } from '../../testing/match-record';
 import { ACHIEVEMENT_IDS, isAchievementId } from './achievement-ids';
 import { ACHIEVEMENTS, earnAchievements, getAchievement } from './achievements';
 import { LEVELS } from './levels';
@@ -5,19 +6,15 @@ import { MatchRecord } from './medallions';
 import { addMedal, EMPTY_PROGRESS, NO_TOTALS, Progress } from './progress';
 
 /** A plain win: a minute long, two boosts, nothing remarkable. */
-const WIN: MatchRecord = {
+const WIN = aMatchRecord({
   levelId: 'corridors',
-  difficulty: 'normal',
-  won: true,
-  durationSec: 60,
   boostsFired: 2,
   lost: 300,
-  peakCount: 1000,
   lowestSizeRatio: 0.8,
   captured: 400,
   enemyCrushed: 50,
   peakShare: 0.5,
-};
+});
 
 function earnedBy(
   match: MatchRecord | null,
@@ -65,6 +62,7 @@ describe('achievements', () => {
         wins: 1,
         enemyCrushed: 500,
         captured: 10_000,
+        pellets: 100,
         couchMatches: 10,
       },
     };
@@ -73,8 +71,19 @@ describe('achievements', () => {
       'first-blood',
       'gatekeeper',
       'converter',
+      'glutton',
       'couch-war',
     ]);
+  });
+
+  it('waits for the hundredth pellet with Glutton', () => {
+    const withPellets = (pellets: number): Progress => ({
+      ...EMPTY_PROGRESS,
+      totals: { ...NO_TOTALS, pellets },
+    });
+
+    expect(earnedBy(null, withPellets(99))).not.toContain('glutton');
+    expect(earnedBy(null, withPellets(100))).toContain('glutton');
   });
 
   it('earns the medallion ones from the cabinet', () => {

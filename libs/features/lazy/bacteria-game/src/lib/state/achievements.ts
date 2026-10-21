@@ -1,5 +1,6 @@
 import { ACHIEVEMENT_IDS, AchievementId } from './achievement-ids';
 import { goldOn, levelWon } from './campaign';
+import { CHAPTERS } from './chapters';
 import { LEVELS } from './levels';
 import { MatchRecord } from './medallions';
 import { bestMedal, medalTally, Progress } from './progress';
@@ -29,9 +30,10 @@ const CLEAN_SWEEP_LOSS_SHARE = 0.1;
 const FULL_DISH_SHARE = 0.95;
 const GATEKEEPER_CRUSHED = 500;
 const CONVERTER_CAPTURED = 10_000;
+const GLUTTON_PELLETS = 100;
 const COUCH_WAR_MATCHES = 10;
-/** The levels Petri Scholar asks gold on - the first four, the classics. */
-const SCHOLAR_LEVELS = LEVELS.slice(0, 4);
+/** The levels Petri Scholar asks gold on - the first chapter's. */
+const SCHOLAR_LEVELS = CHAPTERS[0].levelIds;
 
 const won = (match: MatchRecord | null): match is MatchRecord =>
   match?.won === true;
@@ -85,8 +87,13 @@ const RULES: Record<AchievementId, Omit<Achievement, 'id'>> = {
   },
   converter: {
     name: 'Converter',
-    condition: 'Capture 10,000 enemy bacteria',
+    condition: `Capture ${CONVERTER_CAPTURED.toLocaleString('en')} enemy bacteria`,
     earned: (progress) => progress.totals.captured >= CONVERTER_CAPTURED,
+  },
+  glutton: {
+    name: 'Glutton',
+    condition: `Eat up ${GLUTTON_PELLETS} pellets against the computer`,
+    earned: (progress) => progress.totals.pellets >= GLUTTON_PELLETS,
   },
   flawless: {
     name: 'Flawless',
@@ -95,9 +102,8 @@ const RULES: Record<AchievementId, Omit<Achievement, 'id'>> = {
   },
   'petri-scholar': {
     name: 'Petri Scholar',
-    condition: 'Gold on levels 1 to 4',
-    earned: (progress) =>
-      SCHOLAR_LEVELS.every(({ id }) => goldOn(progress, id)),
+    condition: `Gold on every level of the ${CHAPTERS[0].name} chapter`,
+    earned: (progress) => SCHOLAR_LEVELS.every((id) => goldOn(progress, id)),
   },
   'hard-boiled': {
     name: 'Hard Boiled',

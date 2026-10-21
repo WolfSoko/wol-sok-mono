@@ -173,8 +173,15 @@ describe('totalsOf', () => {
         captured: 70,
         enemyCrushed: 12,
         peakShare: 0.3,
+        pellets: 9,
       })
-    ).toEqual({ matches: 1, wins: 1, captured: 70, enemyCrushed: 12 });
+    ).toEqual({
+      matches: 1,
+      wins: 1,
+      captured: 70,
+      enemyCrushed: 12,
+      pellets: 9,
+    });
   });
 });
 

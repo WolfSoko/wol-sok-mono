@@ -1,3 +1,4 @@
+import { aMatchRecord } from '../testing/match-record';
 import { TestBed } from '@angular/core/testing';
 import { PROGRESS_STORAGE_KEY, ProgressService } from './progress.service';
 import { dailyLevelId } from './state/daily';
@@ -9,19 +10,12 @@ import { LateGameStorage } from '../testing/late-game-storage';
 const LIMITS = getLevel('hourglass').medal;
 
 /** A gold win: in time and clean, but with a boost. */
-const GOLD_WIN: MatchRecord = {
+const GOLD_WIN = aMatchRecord({
   levelId: 'hourglass',
   difficulty: 'hard',
-  won: true,
   durationSec: LIMITS.goldSec,
   boostsFired: 1,
-  lost: 0,
-  peakCount: 1000,
-  lowestSizeRatio: 1,
-  captured: 0,
-  enemyCrushed: 0,
-  peakShare: 0,
-};
+});
 
 describe('ProgressService', () => {
   beforeEach(() => {
@@ -77,10 +71,23 @@ describe('ProgressService', () => {
       wins: 1,
       captured: 350,
       enemyCrushed: 40,
+      pellets: 0,
       couchMatches: 0,
       matchXp: 150 + 30,
     });
     expect(stored()['totals']).toEqual(progress.totals());
+  });
+
+  it('adds up the pellets eaten and earns Glutton at a hundred', () => {
+    const progress = create();
+
+    progress.recordMatch({ ...GOLD_WIN, pellets: 60 });
+    expect(progress.totals().pellets).toBe(60);
+    expect(progress.achievements()['glutton']).toBeUndefined();
+
+    progress.recordMatch({ ...GOLD_WIN, won: false, pellets: 40 });
+    expect(progress.totals().pellets).toBe(100);
+    expect(progress.achievements()['glutton']).toBeDefined();
   });
 
   it('earns an achievement once, on the day it is earned', () => {
