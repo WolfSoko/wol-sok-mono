@@ -187,7 +187,7 @@ describe('BotController', () => {
     expect(decision.target).toEqual(waypoint);
   });
 
-  it('boosts whenever it can as a boss that has fallen behind', () => {
+  it('charges with its boost as a boss that has fallen behind', () => {
     const behind = view({
       own: colony(80, 70, 50),
       enemy: colony(240, 70, 200),
@@ -195,9 +195,15 @@ describe('BotController', () => {
 
     const boss = new BotController('normal', () => 0.5, true).decide(behind, 1);
     const plain = bot('normal').decide(behind, 1);
+    const easyBoss = new BotController('easy', () => 0.5, true).decide(
+      behind,
+      1
+    );
 
-    expect(boss.boost).toBe(true);
+    expect(boss).toEqual({ target: { x: 240, y: 70 }, boost: true });
+    // A plain bot retreats, and an easy boss never boosts.
     expect(plain.boost).toBe(false);
+    expect(easyBoss.boost).toBe(false);
   });
 
   it('feeds before it fights while its colony is hungry', () => {

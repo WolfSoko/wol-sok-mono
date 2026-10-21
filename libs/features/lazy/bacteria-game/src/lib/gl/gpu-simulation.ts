@@ -1,8 +1,10 @@
 import { mapZones, stampZones } from '../state/zones';
 import type { StateLayer } from '../arena/colony-renderer';
 import {
+  attackOf,
   ColonySpawn,
   colonyIntent,
+  divideChanceOf,
   noEvents,
   Nutrient,
   StepEvents,
@@ -487,14 +489,11 @@ export class GpuSimulation implements Simulation {
     u.targets.fill(NaN);
     this.spawns.forEach((spawn, slot) => {
       const traits = spawn.traits ?? PLAIN_TRAITS;
-      u.divideChance[slot] =
-        b.divideChancePerSec * traits.divideFactor * deltaTimeSec;
+      u.divideChance[slot] = divideChanceOf(b, traits, deltaTimeSec);
       const target = players.find((player) => player.id === spawn.playerId);
       const intent = colonyIntent(target, b, deltaTimeSec);
       u.aggression[slot] = intent?.aggression ?? b.aggression;
-      u.attack[slot] =
-        traits.attackFactor *
-        (isBoosted(target ?? null) ? b.boostAttackFactor : 1);
+      u.attack[slot] = attackOf(b, traits, isBoosted(target ?? null));
       u.divideBudget[slot] = this.divideBudget(slot, capacity);
       if (target == null || intent == null) {
         return;

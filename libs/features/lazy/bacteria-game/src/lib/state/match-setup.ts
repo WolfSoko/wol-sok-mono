@@ -13,7 +13,7 @@ import { GhostController, turnedOnto } from './ghost';
 import { HeadStart, startScales } from './rivalry';
 import { spawnSpots } from './shapes';
 import type { Replay } from './replay';
-import { winRuleOf } from './win-conditions';
+import { WinRule, winRuleOf } from './win-conditions';
 
 /**
  * Everything a match is derived from. The same plan spawns the same
@@ -50,6 +50,7 @@ export function planMatch(
 } {
   const { width, height, mode } = plan;
   const level = getLevel(plan.levelId);
+  const boss = ghost === null ? level.boss : undefined;
   const scale = scaleOf(width);
   const versusComputer = mode === 'vs-computer';
   const [left, right] = plan.colors.map(getColonyColor);
@@ -72,9 +73,11 @@ export function planMatch(
         name:
           ghost !== null ? 'Ghost' : versusComputer ? 'Computer' : right.name,
         isBot: versusComputer,
-        // The boss is the right colony, whoever steers it.
-        startScale: rightScale * (level.boss?.startScale ?? 1),
-        traits: level.boss?.traits,
+        // The boss plays from the right seat - BOSS_SEAT - whoever steers
+        // it. Not a ghost: it replays a run played from the left seat.
+        startScale: rightScale * (boss?.startScale ?? 1),
+        traits: boss?.traits,
+        boss: boss !== undefined,
       },
     ],
     options: {
@@ -84,7 +87,7 @@ export function planMatch(
       difficulty: plan.difficulty,
       arena: { width, height },
       seed: plan.seed,
-      win: winRuleOf(level),
+      win: ghostRace(winRuleOf(level), ghost),
       // The run was played from the left: the ghost plays it from the right.
       ghosts:
         ghost === null
@@ -101,4 +104,14 @@ export function planMatch(
             ]),
     },
   };
+}
+
+/**
+ * The rule of a race against a ghost: the level's, but a survive level's
+ * clock decides by size - there is no boss in the race to survive.
+ */
+function ghostRace(rule: WinRule, ghost: Replay | null): WinRule {
+  return ghost !== null && rule.kind === 'survive'
+    ? { kind: 'timed', limitSec: rule.limitSec }
+    : rule;
 }

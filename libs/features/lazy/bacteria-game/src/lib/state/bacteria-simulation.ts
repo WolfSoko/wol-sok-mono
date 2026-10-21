@@ -80,6 +80,24 @@ export interface StepEvents {
 }
 
 /** A step in which nothing happened. */
+/** How hard a colony's bacteria press this frame - its boost and traits. */
+export function attackOf(
+  balance: GameBalance,
+  traits: ColonyTraits,
+  boosted: boolean
+): number {
+  return traits.attackFactor * (boosted ? balance.boostAttackFactor : 1);
+}
+
+/** A bacterium's chance to divide this frame, before ground and room. */
+export function divideChanceOf(
+  balance: GameBalance,
+  traits: ColonyTraits,
+  deltaTimeSec: number
+): number {
+  return balance.divideChancePerSec * traits.divideFactor * deltaTimeSec;
+}
+
 /**
  * How a colony heads for its crosshair this frame: how keen it is to hunt
  * and how many cells it travels - null while it aims at nothing.
@@ -548,9 +566,11 @@ export class BacteriaSimulation implements Simulation {
     // in the combat phase, so it is resolved once here.
     const attackFactor = new Float32Array(this.colonies.length);
     targets.forEach((target, index) => {
-      attackFactor[index] =
-        this.colonies[index].traits.attackFactor *
-        (isBoosted(target) ? this.balance.boostAttackFactor : 1);
+      attackFactor[index] = attackOf(
+        this.balance,
+        this.colonies[index].traits,
+        isBoosted(target)
+      );
     });
 
     this.buildGrid();
@@ -913,14 +933,12 @@ export class BacteriaSimulation implements Simulation {
    * the arena reaches its carrying capacity.
    */
   private divide(colonies: Colony[], deltaTimeSec: number): void {
-    const { divideEnergyThreshold, divideChancePerSec, parentEnergyShare } =
-      this.balance;
+    const { divideEnergyThreshold, parentEnergyShare } = this.balance;
     const capacity = colonyCapacity(this.balance, this.colonies.length);
 
     for (const colony of colonies) {
       const colonyIndex = this.colonies.indexOf(colony);
-      const chance =
-        divideChancePerSec * colony.traits.divideFactor * deltaTimeSec;
+      const chance = divideChanceOf(this.balance, colony.traits, deltaTimeSec);
       const bacterias = colony.bacterias;
       let count = bacterias.length;
       const parents = count;

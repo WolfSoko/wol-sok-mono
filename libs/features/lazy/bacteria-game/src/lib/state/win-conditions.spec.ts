@@ -3,6 +3,7 @@ import { GameMap } from './maps';
 import { MatchEngine } from './match-engine';
 import { getLevel } from './levels';
 import { MatchPlan, planMatch } from './match-setup';
+import { replayOf } from './replay';
 import { createPlayer, Player } from './player.model';
 import {
   ANNIHILATION,
@@ -264,5 +265,20 @@ describe('win conditions', () => {
     } finally {
       engine.dispose();
     }
+  });
+
+  it('races a ghost on a boss level without the boss, by size at the end', () => {
+    const plan = { ...REACTOR, levelId: 'meltdown' };
+    const ghost = replayOf(plan, 'cpu', 600, {
+      steers: [],
+      drags: [],
+      boosts: [],
+    });
+
+    const { spawns, options } = planMatch(plan, ghost);
+
+    expect(spawns[1].traits).toBeUndefined();
+    expect(spawns[1].startScale).toBe(1);
+    expect(options.win).toEqual({ kind: 'timed', limitSec: 60 });
   });
 });

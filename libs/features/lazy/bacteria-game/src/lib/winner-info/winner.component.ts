@@ -28,6 +28,7 @@ import { ProgressService } from '../progress.service';
 import { replayLink } from '../state/replay-link';
 import { DAILY_ATTEMPTS } from '../state/daily';
 import { isRunOver } from '../state/endless';
+import { BOSS_SEAT } from '../state/win-conditions';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction =
@@ -328,7 +329,11 @@ export class WinnerComponent {
     if (this.state.endedBy() === 'hold' && player != null) {
       return this.zoneHeld(player);
     }
-    if (this.level().boss !== undefined && player != null) {
+    if (
+      this.level().boss !== undefined &&
+      !this.againstGhost() &&
+      player != null
+    ) {
       return this.bossFight(player);
     }
     if (player == null) {
@@ -351,8 +356,10 @@ export class WinnerComponent {
   /** The headline of a chapter's finale against a boss. */
   private bossFight(player: Player): string {
     const survived = this.state.endedBy() === 'survive';
-    if (player.isBot) {
-      return 'The boss wins - your colony was eaten!';
+    if (player.id === BOSS_SEAT) {
+      return this.mode() === 'vs-computer'
+        ? 'The boss wins - your colony was eaten!'
+        : `${player.name} wins as the boss!`;
     }
     if (this.mode() !== 'vs-computer') {
       return survived

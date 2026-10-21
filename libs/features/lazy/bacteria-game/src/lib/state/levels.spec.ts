@@ -1,3 +1,4 @@
+import { clockOf, winRuleOf } from './win-conditions';
 import { gameBalance } from './game-balance';
 import {
   DEFAULT_CROSSHAIR_SPEED,
@@ -15,9 +16,14 @@ describe('LEVELS', () => {
   it('asks a timed level for a win before its clock runs out for silver', () => {
     // A win on time is bronze: silver and gold ask for a wipe-out before.
     const timed = LEVELS.flatMap((level) =>
-      level.win?.kind === 'timed' || level.win?.kind === 'survive'
-        ? [{ silverSec: level.medal.silverSec, limitSec: level.win.limitSec }]
-        : []
+      clockOf(winRuleOf(level)) === null
+        ? []
+        : [
+            {
+              silverSec: level.medal.silverSec,
+              limitSec: clockOf(winRuleOf(level)) ?? 0,
+            },
+          ]
     );
 
     expect(timed.length).toBeGreaterThan(0);

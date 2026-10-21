@@ -13,7 +13,12 @@ import {
   DEFAULT_DIFFICULTY,
 } from './bot-controller';
 import { countDown, TICK_SEC, TICKS_PER_SEC } from './fixed-tick';
-import { ColonyTraits, GameBalance, gameBalance } from './game-balance';
+import {
+  ColonyTraits,
+  GameBalance,
+  gameBalance,
+  PLAIN_TRAITS,
+} from './game-balance';
 import {
   clamp,
   clampLength,
@@ -63,8 +68,10 @@ export interface PlayerSpawn {
   isBot: boolean;
   /** The colony's start area as a share of the level's - 1 when absent. */
   startScale?: number;
-  /** A boss's traits - plain when absent. A boss bot also plays as one. */
+  /** A boss's traits - plain when absent. */
   traits?: ColonyTraits;
+  /** True for a boss - a boss bot charges with every boost once behind. */
+  boss?: boolean;
 }
 
 /** The simulation on the CPU - the reference. */
@@ -203,7 +210,7 @@ export class MatchEngine {
           new BotController(
             options.difficulty ?? DEFAULT_DIFFICULTY,
             seeded(streamSeed(this.seed, index + 1)),
-            spawn.traits !== undefined
+            spawn.boss === true
           )
         );
       }
@@ -395,11 +402,13 @@ export class MatchEngine {
     if (player == null || !isBoostReady(player)) {
       return false;
     }
+    const cooldown =
+      this.balance.boostCooldownSec *
+      (this.traits[playerId] ?? PLAIN_TRAITS).cooldownFactor;
     this.update(playerId, {
       boostActiveSec: this.balance.boostDurationSec,
-      boostCooldownSec:
-        this.balance.boostCooldownSec *
-        (this.traits[playerId]?.cooldownFactor ?? 1),
+      boostCooldownSec: cooldown,
+      boostCooldownFullSec: cooldown,
       boostsFired: player.boostsFired + 1,
     });
     this.ownsPlayers = false;

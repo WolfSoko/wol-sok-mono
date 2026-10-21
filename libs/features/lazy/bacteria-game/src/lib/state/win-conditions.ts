@@ -34,6 +34,12 @@ export interface MatchOutcome {
 
 export const ANNIHILATION: WinRule = { kind: 'annihilation' };
 
+/**
+ * The seat a level's boss plays from - the right one, whoever steers it.
+ * On a survive level the colony up against it is the one to survive.
+ */
+export const BOSS_SEAT = 1;
+
 /** The rule of a level or a match - annihilation where none is set. */
 export function winRuleOf({ win }: { win?: WinRule }): WinRule {
   return win ?? ANNIHILATION;
@@ -72,7 +78,10 @@ export function judgeOutcome(
         : null;
     case 'survive':
       return timeLeft(rule, elapsedSec) === 0
-        ? { winner: players[0], reason: 'survive' }
+        ? {
+            winner: players.find((player) => player.id !== BOSS_SEAT) ?? null,
+            reason: 'survive',
+          }
         : null;
     case 'hold': {
       const target = rule.holdSec * TICKS_PER_SEC;
@@ -88,8 +97,14 @@ export function judgeOutcome(
 
 /** Seconds of match time left, null for a rule without a limit. */
 export function timeLeft(rule: WinRule, elapsedSec: number): number | null {
+  const limit = clockOf(rule);
+  return limit === null ? null : Math.max(0, limit - elapsedSec);
+}
+
+/** The seconds a rule's clock runs, null for a rule without a clock. */
+export function clockOf(rule: WinRule): number | null {
   return rule.kind === 'timed' || rule.kind === 'survive'
-    ? Math.max(0, rule.limitSec - elapsedSec)
+    ? rule.limitSec
     : null;
 }
 

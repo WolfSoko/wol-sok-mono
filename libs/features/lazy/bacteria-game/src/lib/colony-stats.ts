@@ -114,10 +114,12 @@ function boostChargeOf(player: Player, balance: GameBalance): number {
   if (isBoostReady(player)) {
     return 1;
   }
-  if (player.boostActiveSec > 0 || balance.boostCooldownSec <= 0) {
+  // The cooldown the boost started - a boss's is shorter than the balance's.
+  const full = player.boostCooldownFullSec || balance.boostCooldownSec;
+  if (player.boostActiveSec > 0 || full <= 0) {
     return 0;
   }
-  const charge = 1 - player.boostCooldownSec / balance.boostCooldownSec;
+  const charge = 1 - player.boostCooldownSec / full;
   return clamp(Math.round(charge * 100) / 100, 0, 1);
 }
 

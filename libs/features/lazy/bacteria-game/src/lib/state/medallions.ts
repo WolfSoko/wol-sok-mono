@@ -39,10 +39,19 @@ export interface MedalLimits {
    * losses add up to more than the colony ever was: shares above 1 are fine.
    */
   goldLossShare: number;
+  /**
+   * Platinum asks never to fall below this share of the computer's size -
+   * {@link PLATINUM_SIZE_RATIO} unless a level, a boss's, sets it lower.
+   */
+  platinumSizeRatio?: number;
 }
 
 /** Platinum asks never to fall below this share of the computer's size. */
 const PLATINUM_SIZE_RATIO = 0.5;
+
+function platinumRatio(limits: MedalLimits): number {
+  return limits.platinumSizeRatio ?? PLATINUM_SIZE_RATIO;
+}
 
 /** What a match against the computer measured, for its medallion. */
 export interface MatchRecord {
@@ -162,7 +171,7 @@ export function medalGoal(
     case 'silver':
       return `Gold needs a win within ${clock(limits.goldSec)}, losing under ${percent(limits.goldLossShare)} of your peak colony.`;
     case 'gold':
-      return `Platinum needs a gold win without a boost that never falls below ${percent(PLATINUM_SIZE_RATIO)} of the computer’s size.`;
+      return `Platinum needs a gold win without a boost that never falls below ${percent(platinumRatio(limits))} of the computer’s size.`;
     case 'platinum':
       return null;
   }
@@ -209,9 +218,9 @@ function missing(
       if (record.boostsFired > 0) {
         return 'a gold win without a boost';
       }
-      return record.lowestSizeRatio >= PLATINUM_SIZE_RATIO
+      return record.lowestSizeRatio >= platinumRatio(limits)
         ? null
-        : `a gold win that never falls below ${percent(PLATINUM_SIZE_RATIO)} of the computer’s size`;
+        : `a gold win that never falls below ${percent(platinumRatio(limits))} of the computer’s size`;
   }
 }
 
