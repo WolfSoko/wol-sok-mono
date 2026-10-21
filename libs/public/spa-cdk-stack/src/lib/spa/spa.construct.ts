@@ -47,7 +47,7 @@ export interface SpaProps {
    * Like noCacheFiles, they are left out of the main deployment and uploaded
    * after it, so each file is written once with one header. Keep the globs
    * of different entries disjoint: a file matched twice is uploaded twice and
-   * the later header wins. `**` may only appear in the last segment.
+   * the later header wins. Wildcards may only appear in the last segment.
    */
   cacheOverrides?: CacheOverride[];
 }
@@ -68,10 +68,12 @@ function onlyInclude(files: string[]): string[] {
   const included = new Set<string>();
   for (const file of files) {
     const folders = file.split('/').slice(0, -1);
-    if (folders.some((folder) => folder.includes('**'))) {
-      // Re-including the folders that '**' spans would bring back every
-      // file below them, so they would be uploaded twice again.
-      throw new Error(`'**' is only supported in the last segment: ${file}`);
+    if (folders.some((folder) => /[*?[\]{}]/.test(folder))) {
+      // Re-including a folder wildcard such as `assets/*` would also bring
+      // back the files it matches, so they would be uploaded twice again.
+      throw new Error(
+        `Wildcards are only supported in the last segment: ${file}`
+      );
     }
     folders.forEach((_, i) => included.add(folders.slice(0, i + 1).join('/')));
     included.add(file);

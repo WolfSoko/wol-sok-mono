@@ -215,10 +215,13 @@ describe('SpaCdkStack', () => {
       ]);
     });
 
-    it("should reject '**' in a folder segment", () => {
-      expect(() =>
-        deployedFiles({ noCacheFiles: ['**/federation.manifest.json'] })
-      ).toThrow("'**' is only supported in the last segment");
-    });
+    it.each(['**/federation.manifest.json', 'assets/*/manifest.json'])(
+      'should reject the wildcard folder in %s',
+      (glob) => {
+        expect(() => deployedFiles({ noCacheFiles: [glob] })).toThrow(
+          'Wildcards are only supported in the last segment'
+        );
+      }
+    );
   });
 });
