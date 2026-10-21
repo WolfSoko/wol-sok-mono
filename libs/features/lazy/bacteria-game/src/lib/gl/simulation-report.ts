@@ -3,6 +3,8 @@ import {
   ENERGY_SCALE,
   MAX_GPU_COLONIES,
   MAX_PELLETS,
+  REPORT_EXTRA_ROWS,
+  REPORT_ROWS,
 } from './simulation-shaders';
 
 /** How the GPU report texture is laid out - see `REPORT_FRAGMENT`. */
@@ -32,9 +34,8 @@ export function reportLayout(
     blocksY,
     cellSize,
     width: Math.max(blocksX, MAX_PELLETS),
-    // Counts and energy per coarse cell, then a row each for the pellets,
-    // the captures, the losses and the hold zone - see REPORT_FRAGMENT.
-    height: 2 * blocksY + 4,
+    // Counts and energy per coarse cell, then REPORT_ROWS.
+    height: 2 * blocksY + REPORT_EXTRA_ROWS,
     arenaWidth,
     arenaHeight,
   };
@@ -66,15 +67,22 @@ export interface Report {
   poisoned: number;
 }
 
-/** Turns the raw read back - four 32 bit integers per texel - into numbers. */
-export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
+/**
+ * Turns the raw read back - four 32 bit integers per texel - into numbers,
+ * for the first `colonies` slots: the ones in play.
+ */
+export function decodeReport(
+  data: Uint32Array,
+  layout: ReportLayout,
+  colonies = MAX_GPU_COLONIES
+): Report {
   const { blocksX, blocksY, cellSize, width } = layout;
   /** The first value of a texel, by column and row. */
   const texel = (x: number, y: number) => (y * width + x) * 4;
   const pelletRow = 2 * blocksY;
-  const colonies: ColonyReport[] = [];
+  const reports: ColonyReport[] = [];
   const blockCounts: Uint32Array[] = [];
-  for (let slot = 0; slot < MAX_GPU_COLONIES; slot++) {
+  for (let slot = 0; slot < colonies; slot++) {
     const counts = new Uint32Array(blocksX * blocksY);
     let count = 0;
     let energy = 0;
@@ -106,13 +114,13 @@ export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
     let lost = 0;
     let onHill = 0;
     for (let bx = 0; bx < blocksX; bx++) {
-      captured += data[texel(bx, pelletRow + 1) + slot];
-      lost += data[texel(bx, pelletRow + 2) + slot];
-      onHill += data[texel(bx, pelletRow + 3) + slot];
+      captured += data[texel(bx, pelletRow + REPORT_ROWS.captures) + slot];
+      lost += data[texel(bx, pelletRow + REPORT_ROWS.losses) + slot];
+      onHill += data[texel(bx, pelletRow + REPORT_ROWS.hill) + slot];
     }
 
     blockCounts.push(counts);
-    colonies.push({
+    reports.push({
       count,
       totalEnergy: energy / ENERGY_SCALE,
       center: count > 0 ? { x: sumX / count, y: sumY / count } : null,
@@ -139,7 +147,7 @@ export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
   for (let bx = 0; bx < blocksX; bx++) {
     poisoned += data[texel(bx, pelletRow) + 1];
   }
-  return { colonies, eaters, blockCounts, poisoned };
+  return { colonies: reports, eaters, blockCounts, poisoned };
 }
 
 /**

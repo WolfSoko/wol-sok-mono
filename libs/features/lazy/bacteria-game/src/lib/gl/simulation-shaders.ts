@@ -37,8 +37,34 @@ function glslFloat(value: number): string {
 /** Fixed point scale of the energy: 1.0 is stored as 16384. */
 export const ENERGY_SCALE = 16384;
 
-/** The most colonies the GPU simulation runs. */
+/**
+ * The most colonies the GPU simulation runs - four, one per channel of the
+ * coarse counts and of the report's rows.
+ */
 export const MAX_GPU_COLONIES = 4;
+
+/**
+ * An event record: the slot + 1 of the colony that captured a cell in the
+ * low bits, of the one that lost it above, and a flag for a death by
+ * antibiotic above those - all within the 8 bits the effects keep.
+ */
+const RECORD_BITS = Math.ceil(Math.log2(MAX_GPU_COLONIES + 1));
+export const RECORD_MASK = (1 << RECORD_BITS) - 1;
+export const LOSER_SHIFT = RECORD_BITS;
+export const POISONED = 1 << (2 * RECORD_BITS);
+
+/** The colonies one hunt texture holds: two, x and y each. */
+export const HUNT_COLONIES = 2;
+
+/** The rows of the report after the per block ones - see REPORT_FRAGMENT. */
+export const REPORT_ROWS = {
+  /** The pellets' eaters, and the deaths by antibiotic per column. */
+  pellets: 0,
+  captures: 1,
+  losses: 2,
+  hill: 3,
+} as const;
+export const REPORT_EXTRA_ROWS = Object.keys(REPORT_ROWS).length;
 
 /** The most nutrient pellets the shaders take. */
 export const MAX_PELLETS = 16;
@@ -59,11 +85,9 @@ uniform uint uSeed;
 const float ENERGY_SCALE = ${ENERGY_SCALE}.0;
 const uint WALL_BIT = ${WALL_BIT}u;
 const uint ZONE_SHIFT = ${ZONE_SHIFT}u;
-/** An event record: who captured a cell in bits 0-2, who lost it above. */
-const uint RECORD_MASK = 7u;
-const uint LOSER_SHIFT = 3u;
-/** The bit of an event record that marks a death by antibiotic. */
-const uint POISONED = 64u;
+const uint RECORD_MASK = ${RECORD_MASK}u;
+const uint LOSER_SHIFT = ${LOSER_SHIFT}u;
+const uint POISONED = ${POISONED}u;
 const uint ANTIBIOTIC = ${ZONE_CODE.antibiotic}u;
 const uint AGAR = ${ZONE_CODE.agar}u;
 const uint ICE = ${ZONE_CODE.ice}u;
@@ -101,6 +125,16 @@ float energyOf(uvec4 state) {
 
 uint encodeEnergy(float energy) {
   return uint(clamp(round(energy * ENERGY_SCALE), 0.0, 65535.0));
+}
+
+/** The slot + 1 of the colony that captured a cell, 0 for none. */
+uint capturer(uint record) {
+  return record & RECORD_MASK;
+}
+
+/** The slot + 1 of the colony that lost a cell, 0 for none. */
+uint loser(uint record) {
+  return (record >> LOSER_SHIFT) & RECORD_MASK;
 }
 
 uint pcg(uvec3 v) {
@@ -203,10 +237,10 @@ void main() {
         continue;
       }
       uvec4 counts = texelFetch(uInfluence, at, 0);
-      uint all = counts.x + counts.y + counts.z + counts.w;
+      uint total = counts.x + counts.y + counts.z + counts.w;
       // The enemies of a colony are every other colony's bacteria.
-      for (int i = 0; i < 2; i++) {
-        towards[i] += vec2(dx, dy) * float(all - counts[uPair * 2 + i]);
+      for (int i = 0; i < ${HUNT_COLONIES}; i++) {
+        towards[i] += vec2(dx, dy) * float(total - counts[uPair * ${HUNT_COLONIES} + i]);
       }
     }
   }
@@ -267,10 +301,10 @@ int moveIntent(ivec2 cell) {
     : uAggression[colony];
   vec2 towards = uTarget[colony] - vec2(cell);
   vec2 direction = length(towards) > 0.0 ? normalize(towards) : vec2(0.0);
-  ivec4 hunt = colony < 2
+  ivec4 hunt = colony < ${HUNT_COLONIES}
     ? texelFetch(uHunt, cell / uCellSize, 0)
     : texelFetch(uHuntMore, cell / uCellSize, 0);
-  vec2 enemies = vec2(colony % 2 == 0 ? hunt.xy : hunt.zw) / 32767.0;
+  vec2 enemies = vec2(colony % ${HUNT_COLONIES} == 0 ? hunt.xy : hunt.zw) / 32767.0;
   if (enemies != vec2(0.0)) {
     direction = mix(direction, enemies, aggression);
   }
@@ -517,9 +551,9 @@ out uvec4 outState;
 void main() {
   ivec2 cell = ivec2(gl_FragCoord.xy);
   uvec4 state = texelFetch(uState, cell, 0);
-  float feed = (state.a & RECORD_MASK) != 0u ? uFeed : 0.0;
+  float feed = capturer(state.a) != 0u ? uFeed : 0.0;
   for (int i = 0; i < 8; i++) {
-    uint winner = stateAt(cell + NEIGHBOURS[i]).a & RECORD_MASK;
+    uint winner = capturer(stateAt(cell + NEIGHBOURS[i]).a);
     if (winner != 0u && winner == state.r) {
       feed += uFeed;
     }
@@ -528,12 +562,15 @@ void main() {
 }`;
 
 /**
- * The numbers the CPU needs, in one small texture it reads back:
- * - one row per coarse row: bacteria and summed energy per colony
- * - one row for the pellets: bacteria within reach of each
- * - one row of running totals per coarse column: captures and losses per
- *   colony since the match started - added up on the GPU, so a read the
- *   CPU misses loses nothing
+ * The numbers the CPU needs, in one small texture it reads back - a
+ * channel per colony:
+ * - one row per coarse row: the bacteria of each colony
+ * - one row per coarse row: their summed energy
+ * - then the REPORT_ROWS, one texel per coarse column: the pellets'
+ *   eaters (one texel per pellet) beside the deaths by antibiotic, the
+ *   captures and the losses of each colony - running totals since the
+ *   match started, added up on the GPU, so a read the CPU misses loses
+ *   nothing - and each colony's bacteria on the hold zone
  */
 export const REPORT_FRAGMENT = `${COMMON}
 uniform usampler2D uEvents;
@@ -544,33 +581,35 @@ uniform bool uCountHill;
 ${PELLETS}
 out uvec4 outValue;
 
-/** What one column of the arena says, for a row of the report - see the layout. */
-uvec4 column(int columnX, int row) {
-  uvec4 sums = row == 3 ? uvec4(0u) : texelFetch(uPrevious, ivec2(columnX, int(gl_FragCoord.y)), 0);
+/**
+ * Who a cell counts for in a row of the report: the slot + 1, or 0 for
+ * nobody - a death by antibiotic counts in the second channel.
+ */
+uint countedFor(ivec2 cell, int row) {
+  uint record = texelFetch(uEvents, cell, 0).a;
+  if (row == ${REPORT_ROWS.pellets}) {
+    return (record & POISONED) != 0u ? 2u : 0u;
+  }
+  if (row == ${REPORT_ROWS.captures}) {
+    return capturer(record);
+  }
+  if (row == ${REPORT_ROWS.losses}) {
+    return loser(record);
+  }
+  return zoneAt(cell) == HILL ? texelFetch(uState, cell, 0).r : 0u;
+}
+
+/** One column of the arena counted for a row, onto the sums so far. */
+uvec4 column(int columnX, int row, uvec4 sums) {
   for (int y = 0; y < uSize.y; y++) {
     for (int x = 0; x < uCellSize; x++) {
       ivec2 cell = ivec2(columnX * uCellSize + x, y);
       if (!inside(cell)) {
         continue;
       }
-      uint record = texelFetch(uEvents, cell, 0).a;
-      if (row == 0) {
-        sums.y += (record & POISONED) != 0u ? 1u : 0u;
-      } else if (row == 1) {
-        uint winner = record & RECORD_MASK;
-        if (winner != 0u) {
-          sums[int(winner) - 1]++;
-        }
-      } else if (row == 2) {
-        uint loser = (record >> LOSER_SHIFT) & RECORD_MASK;
-        if (loser != 0u) {
-          sums[int(loser) - 1]++;
-        }
-      } else if (uCountHill) {
-        uint owner = texelFetch(uState, cell, 0).r;
-        if (owner != 0u && zoneAt(cell) == HILL) {
-          sums[int(owner) - 1]++;
-        }
+      uint slot = countedFor(cell, row);
+      if (slot != 0u) {
+        sums[int(slot) - 1]++;
       }
     }
   }
@@ -601,8 +640,14 @@ void main() {
     return;
   }
   int row = at.y - 2 * blocksY;
-  uvec4 sums = at.x < uBlocks.x ? column(at.x, row) : uvec4(0u);
-  if (row == 0) {
+  // The hold zone is counted afresh each step - and only where there is one;
+  // the other rows run on from the last report.
+  bool fresh = row == ${REPORT_ROWS.hill};
+  uvec4 sums = fresh ? uvec4(0u) : texelFetch(uPrevious, at, 0);
+  if (at.x < uBlocks.x && (!fresh || uCountHill)) {
+    sums = column(at.x, row, sums);
+  }
+  if (row == ${REPORT_ROWS.pellets}) {
     // The pellets' eaters ride along in the row of the deaths by antibiotic.
     uint eaters = 0u;
     if (at.x < uPelletCount) {
@@ -652,9 +697,9 @@ void main() {
  * colony pushing into a cell it did not hold. Each fades by `uFade` per
  * frame, so a flash lingers for a moment.
  *
- * Alpha packs the owner of the cell this frame in bits 0-1, so the next
- * frame sees who moved in, and the colony that left the glow in bits 2-3,
- * for its colour.
+ * Alpha packs the owner of the cell this frame in the low bits, as a
+ * record's capturer, so the next frame sees who moved in, and the colony
+ * that left the glow above them, as a record's loser, for its colour.
  */
 export const EFFECTS_FRAGMENT = `${COMMON}
 uniform usampler2D uEvents;
@@ -668,8 +713,8 @@ void main() {
   ivec2 cell = ivec2(gl_FragCoord.xy);
   vec4 previous = texelFetch(uPreviousEffects, cell, 0);
   uint packed = uint(round(previous.a * 255.0));
-  uint lastOwner = packed & RECORD_MASK;
-  uint glowOwner = (packed >> LOSER_SHIFT) & RECORD_MASK;
+  uint lastOwner = capturer(packed);
+  uint glowOwner = loser(packed);
   uint owner = texelFetch(uState, cell, 0).r;
 
   vec3 heat = previous.rgb * uFade;

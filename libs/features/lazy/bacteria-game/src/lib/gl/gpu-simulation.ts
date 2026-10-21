@@ -47,6 +47,7 @@ import {
   HUNT_FRAGMENT,
   INFLUENCE_FRAGMENT,
   MAX_GPU_COLONIES,
+  HUNT_COLONIES,
   MAX_PELLETS,
   REPORT_FRAGMENT,
   WALL_BIT,
@@ -381,7 +382,7 @@ export class GpuSimulation implements Simulation {
     gl.useProgram(programs.hunt.program);
     gl.uniform1i(programs.hunt.uniforms['uPair'], 0);
     this.pass(resources, programs.hunt, resources.hunt);
-    if (this.spawns.length > 2) {
+    if (this.spawns.length > HUNT_COLONIES) {
       gl.uniform1i(programs.hunt.uniforms['uPair'], 1);
       this.pass(resources, programs.hunt, resources.huntMore);
     }
@@ -835,7 +836,10 @@ export class GpuSimulation implements Simulation {
       gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, data);
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
       this.reportStep = readback.step;
-      this.takeReport(decodeReport(data, this.layout), readback.generation);
+      this.takeReport(
+        decodeReport(data, this.layout, this.spawns.length),
+        readback.generation
+      );
     }
   }
 

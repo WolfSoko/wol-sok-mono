@@ -4,7 +4,11 @@
  * same coordinates the simulation uses.
  */
 
-import { MAX_GPU_COLONIES } from '../../gl/simulation-shaders';
+import {
+  LOSER_SHIFT,
+  MAX_GPU_COLONIES,
+  RECORD_MASK,
+} from '../../gl/simulation-shaders';
 
 /** The arena position under a fragment of a full screen pass. */
 const ARENA_POSITION = `
@@ -253,7 +257,7 @@ void main() {
 
   uint packed = uint(round(texelFetch(uEffects, ivec2(cell), 0).a * 255.0));
   // The owner the glow follows sits above the last owner - see EFFECTS_FRAGMENT.
-  uint owner = (packed >> 3u) & 7u;
+  uint owner = (packed >> ${LOSER_SHIFT}u) & ${RECORD_MASK}u;
   if (owner != 0u) {
     color += mix(uColors[owner - 1u] / 255.0, vec3(1.0), 0.45) * move * 0.35;
   }
