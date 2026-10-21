@@ -1,9 +1,10 @@
+import { aMatchRecord } from '../../testing/match-record';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GameStateStore } from '../state/game.states';
 import { LEVELS } from '../state/levels';
 import { MatchEarnings } from '../state/earnings';
-import { MatchRecord, MedalAward } from '../state/medallions';
+import { MedalAward } from '../state/medallions';
 import { createPlayer } from '../state/player.model';
 import { WinnerComponent } from './winner.component';
 
@@ -498,20 +499,11 @@ describe('WinnerComponent', () => {
   });
 
   describe('medallion', () => {
-    const win: MatchRecord = {
+    const win = aMatchRecord({
       levelId: 'hourglass',
-      difficulty: 'normal',
-      won: true,
       durationSec: 59.6,
-      boostsFired: 0,
-      lost: 0,
       peakCount: 500,
-      lowestSizeRatio: 1,
-      captured: 0,
-      enemyCrushed: 0,
-      peakShare: 0,
-      pellets: 0,
-    };
+    });
 
     function award(changes: Partial<MedalAward>): MedalAward {
       return {

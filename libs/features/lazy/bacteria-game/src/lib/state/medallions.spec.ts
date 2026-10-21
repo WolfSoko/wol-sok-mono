@@ -1,3 +1,4 @@
+import { aMatchRecord } from '../../testing/match-record';
 import {
   betterMedal,
   judgeMatch,
@@ -12,20 +13,14 @@ import { createPlayer } from './player.model';
 const LIMITS: MedalLimits = { silverSec: 60, goldSec: 40, goldLossShare: 0.3 };
 
 /** A flawless win, which the tests take apart one condition at a time. */
-const PLATINUM_RUN: MatchRecord = {
-  levelId: 'petri-dish',
-  difficulty: 'normal',
-  won: true,
+const PLATINUM_RUN = aMatchRecord({
   durationSec: 30,
-  boostsFired: 0,
   lost: 10,
-  peakCount: 1000,
   lowestSizeRatio: 0.9,
   captured: 800,
   enemyCrushed: 100,
   peakShare: 0.5,
-  pellets: 0,
-};
+});
 
 function run(changes: Partial<MatchRecord>): MatchRecord {
   return { ...PLATINUM_RUN, ...changes };

@@ -168,7 +168,7 @@ numbers:
 | Achievement   | Condition                                         | Source                         |
 | ------------- | ------------------------------------------------- | ------------------------------ |
 | First Blood   | Win a match                                       | `matchEnded`, `winner`         |
-| Glutton       | Eat 100 pellets in total                          | `pelletsEaten`                 |
+| Glutton       | Eat 100 pellets in total                          | `pellets` per colony           |
 | Gatekeeper    | 500 enemy bacteria crushed by gates and pistons   | `crushed` per colony (new)     |
 | Pacifist      | Win without firing a boost                        | `FrameEvents.boosts`           |
 | Comeback      | Win after being below 25 % of the enemy's size    | `ColonySummary.count` per step |
@@ -871,8 +871,8 @@ done, apart from the cloud profile of 1.1, which waits for a Firebase backend
 of the GameStorage port, and the daily level of 1.7, which needs the level
 generator of phase 3.
 Glutton came with the pellets counted per colony of phase 4, Flawless (a
-platinum medallion) besides it, and Petri Scholar asks gold on levels 1 to
-4 - the first chapter. The medallion limits are a first
+platinum medallion) besides it, and Petri Scholar asks gold on every level
+of the first chapter. The medallion limits are a first
 pass from bot matches and want tuning by play. Everything is stored through
 the `GameStorage` port, so the cloud profile of 1.1 is a backend to provide,
 not a change to the services.

@@ -1,21 +1,16 @@
-import { MatchRecord } from './medallions';
+import { aMatchRecord } from '../../testing/match-record';
 import { addMedal, addTotals, EMPTY_PROGRESS, Progress } from './progress';
 import { matchXp, xpGain, xpOf } from './xp';
 
-const WIN: MatchRecord = {
+const WIN = aMatchRecord({
   levelId: 'corridors',
-  difficulty: 'normal',
-  won: true,
-  durationSec: 60,
   boostsFired: 2,
   lost: 300,
-  peakCount: 1000,
   lowestSizeRatio: 0.8,
   captured: 400,
   enemyCrushed: 50,
   peakShare: 0.5,
-  pellets: 0,
-};
+});
 
 describe('matchXp', () => {
   it('pays finishing and winning, times the difficulty', () => {
