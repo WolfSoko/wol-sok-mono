@@ -498,6 +498,32 @@ export const LEVEL_MUSIC: Record<string, LevelMusic> = {
     echo: 0.25,
     seed: 15,
   },
+  // A boss fight: a heavy, fast pulse under a screaming lead.
+  meltdown: {
+    root: 41,
+    scale: PHRYGIAN_DOMINANT,
+    bpm: 138,
+    progression: [0, 1, 4, 1],
+    lead: 'sawtooth',
+    density: 0.6,
+    bass: 'pulse',
+    drums: 'drive',
+    echo: 0.2,
+    seed: 16,
+  },
+  // Where it began: slow, cold dread that builds.
+  'patient-zero': {
+    root: 41,
+    scale: HARMONIC_MINOR,
+    bpm: 96,
+    progression: [0, 6, 5, 4],
+    lead: 'square',
+    density: 0.45,
+    bass: 'drone',
+    drums: 'heart',
+    echo: 0.45,
+    seed: 17,
+  },
 };
 
 /**

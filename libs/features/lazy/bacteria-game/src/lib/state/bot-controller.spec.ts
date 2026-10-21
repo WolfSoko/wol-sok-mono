@@ -187,6 +187,25 @@ describe('BotController', () => {
     expect(decision.target).toEqual(waypoint);
   });
 
+  it('charges with its boost as a boss that has fallen behind', () => {
+    const behind = view({
+      own: colony(80, 70, 50),
+      enemy: colony(240, 70, 200),
+    });
+
+    const boss = new BotController('normal', () => 0.5, true).decide(behind, 1);
+    const plain = bot('normal').decide(behind, 1);
+    const easyBoss = new BotController('easy', () => 0.5, true).decide(
+      behind,
+      1
+    );
+
+    expect(boss).toEqual({ target: { x: 240, y: 70 }, boost: true });
+    // A plain bot retreats, and an easy boss never boosts.
+    expect(plain.boost).toBe(false);
+    expect(easyBoss.boost).toBe(false);
+  });
+
   it('feeds before it fights while its colony is hungry', () => {
     const nutrients = [{ x: 60, y: 30, amount: 10 }];
 

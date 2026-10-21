@@ -85,6 +85,17 @@ describe('WinnerComponent', () => {
     expect(text()).toContain('Time is up - your colony is the bigger one');
   });
 
+  it('frames a boss level as the chapter finale', () => {
+    store.update({
+      mode: 'vs-computer',
+      winner: createPlayer({ id: 0, name: 'You' }),
+      endedBy: 'survive',
+      levelId: 'meltdown',
+    });
+
+    expect(text()).toContain('You survived the boss');
+  });
+
   it('tells who held the zone long enough', () => {
     store.update({
       mode: 'vs-computer',

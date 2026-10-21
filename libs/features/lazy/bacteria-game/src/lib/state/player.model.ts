@@ -40,6 +40,8 @@ export interface Player {
   averageEnergy: number;
   /** Ticks the colony held the hold zone - see `WinRule`. */
   holdTicks: number;
+  /** The cooldown the last boost started - a boss's is shorter. */
+  boostCooldownFullSec: number;
 }
 
 /** True while the player's boost is running. */
@@ -79,6 +81,7 @@ export function createPlayer(params: Partial<Player>): Player {
     lowestSizeRatio: 1,
     averageEnergy: 1,
     holdTicks: 0,
+    boostCooldownFullSec: 0,
     ...params,
   } as Player;
 }

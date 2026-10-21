@@ -918,8 +918,12 @@ or discs in the map, in both simulations - on the GPU in the wall mask's
 spare bits - and drawn by both painters; Containment lays out all four.
 Hold the zone followed on them: a white zone to hold, held each tick by
 the colony with the most bacteria on it, counted in both simulations; the
-bot goes for it, and Control Room is the first such level. Harvest waits
-for pellets counted per colony, and survive for the boss levels. The bot
+bot goes for it, and Control Room is the first such level. Boss levels
+(2.4) and survive came next: per-colony traits for division, attack and
+boost cooldown in both simulations, a bigger start, a boss bot that boosts
+whenever it can once behind, Meltdown as the Reactor finale (survive) and
+Patient Zero opening Outbreak. Harvest waits for pellets counted per
+colony. The bot
 heads for the zone to hold but does not avoid the other zones yet, and a
 next counted rule needs room in the GPU report: the hold zone took its
 last two free channels.

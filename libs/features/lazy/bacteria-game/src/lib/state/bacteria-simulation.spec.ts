@@ -261,6 +261,26 @@ describe('BacteriaSimulation', () => {
     });
   });
 
+  describe('traits', () => {
+    it('lets a colony with a higher divide factor divide where another does not', () => {
+      // A chance of a half per step: the roll of 0.6 misses it, but not 1.5 times it.
+      const { simulation, colonies, players } = setup(
+        [[bacterium(20, 20)], [bacterium(260, 30)]],
+        { balance: { divideChancePerSec: 1 }, random: () => 0.6 }
+      );
+      colonies[1].traits = {
+        divideFactor: 1.5,
+        attackFactor: 1,
+        cooldownFactor: 1,
+      };
+
+      simulation.step(players, 0.5);
+
+      expect(colonies[0].bacterias).toHaveLength(1);
+      expect(colonies[1].bacterias).toHaveLength(2);
+    });
+  });
+
   describe('movement', () => {
     it('never moves a bacterium into a wall', () => {
       const walls = createWalls(WIDTH, HEIGHT);

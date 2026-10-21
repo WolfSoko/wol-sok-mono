@@ -32,7 +32,12 @@ export const CHAPTERS: readonly Chapter[] = [
   },
   {
     name: 'Reactor',
-    blurb: 'A clock, ground that fights back, and a zone to hold.',
-    levelIds: ['half-life', 'containment', 'control-room'],
+    blurb: 'A clock, ground that fights back, a zone to hold - and a boss.',
+    levelIds: ['half-life', 'containment', 'control-room', 'meltdown'],
+  },
+  {
+    name: 'Outbreak',
+    blurb: 'Bosses: colonies bigger, faster and hungrier than yours.',
+    levelIds: ['patient-zero'],
   },
 ];

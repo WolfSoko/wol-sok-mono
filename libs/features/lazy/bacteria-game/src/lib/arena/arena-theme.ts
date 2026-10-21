@@ -251,6 +251,34 @@ const THEMES: Record<string, ArenaTheme> = {
     moteCount: 22,
     current: { x: -1, y: 2 },
   },
+  // Molten slag glowing through cracks in a black floor.
+  meltdown: {
+    floor: [26, 12, 4],
+    rim: [8, 3, 1],
+    pattern: 'veins',
+    patternColor: [120, 46, 10],
+    patternStrength: 0.5,
+    wall: [110, 90, 80],
+    wallEdge: [255, 190, 120],
+    border: [255, 140, 20],
+    motes: [255, 200, 120],
+    moteCount: 40,
+    current: { x: 0, y: -6 },
+  },
+  // A sterile ward under green emergency light.
+  'patient-zero': {
+    floor: [12, 22, 18],
+    rim: [3, 7, 6],
+    pattern: 'grid',
+    patternColor: [40, 80, 64],
+    patternStrength: 0.35,
+    wall: [170, 190, 180],
+    wallEdge: [230, 250, 240],
+    border: [120, 255, 200],
+    motes: [190, 255, 225],
+    moteCount: 20,
+    current: { x: 1, y: 1 },
+  },
 };
 
 /**

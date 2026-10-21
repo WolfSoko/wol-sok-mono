@@ -1,4 +1,4 @@
-import { GameBalance, gameBalance } from './game-balance';
+import { ColonyTraits, GameBalance, gameBalance } from './game-balance';
 import { getMap } from './game-maps';
 import { GameMap } from './maps';
 import { MedalLimits } from './medallions';
@@ -31,6 +31,14 @@ export interface Level {
   medal: MedalLimits;
   /** How the level is won - by annihilation when absent. */
   win?: WinRule;
+  /** The right colony is a boss: bigger from the start, and stronger. */
+  boss?: Boss;
+}
+
+/** A boss colony: its start area times the normal one, and its traits. */
+export interface Boss {
+  startScale: number;
+  traits: ColonyTraits;
 }
 
 /*
@@ -40,6 +48,15 @@ export interface Level {
  * busy levels lose more bacteria than their colony ever held, hence shares
  * above 1. Tune them by playing.
  */
+/** The balance the boss levels are fought with - the boss's traits on top. */
+const BOSS_BALANCE: Partial<GameBalance> = {
+  aggression: 0.85,
+  divideChancePerSec: 4,
+  combatDrainPerSec: 2.4,
+  nutrientCount: 12,
+  nutrientRespawnDelaySec: 1.4,
+};
+
 export const LEVELS: readonly Level[] = [
   {
     id: 'petri-dish',
@@ -273,6 +290,47 @@ export const LEVELS: readonly Level[] = [
       nutrientCount: 10,
       nutrientRespawnDelaySec: 1.5,
     },
+    crosshairSpeed: 210,
+  },
+  // The chapters' finales: a boss, a colony bigger and stronger than yours.
+  {
+    id: 'meltdown',
+    name: '16 · Meltdown',
+    description:
+      'The reactor melts down and something huge grows in it: a boss twice your size that divides faster and hits harder. Live through a minute - or wipe it out.',
+    mapId: 'meltdown',
+    medal: {
+      silverSec: 50,
+      goldSec: 35,
+      goldLossShare: 1.5,
+      // Twice your size at the start: half of it is where you begin.
+      platinumSizeRatio: 0.3,
+    },
+    win: { kind: 'survive', limitSec: 60 },
+    boss: {
+      startScale: 2,
+      traits: { divideFactor: 1.15, attackFactor: 1.05, cooldownFactor: 0.8 },
+    },
+    balance: BOSS_BALANCE,
+    crosshairSpeed: 210,
+  },
+  {
+    id: 'patient-zero',
+    name: '17 · Patient Zero',
+    description:
+      'Where it all began: a boss half again your size, quick to divide and quick to boost. No clock, no zone to hide in - one of you is left.',
+    mapId: 'ward',
+    medal: {
+      silverSec: 120,
+      goldSec: 80,
+      goldLossShare: 1.5,
+      platinumSizeRatio: 0.4,
+    },
+    boss: {
+      startScale: 1.6,
+      traits: { divideFactor: 1.1, attackFactor: 1, cooldownFactor: 0.8 },
+    },
+    balance: BOSS_BALANCE,
     crosshairSpeed: 210,
   },
 ];

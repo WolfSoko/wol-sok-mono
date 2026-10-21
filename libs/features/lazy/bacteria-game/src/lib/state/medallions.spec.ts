@@ -59,6 +59,13 @@ describe('medalFor', () => {
     expect(medalFor(LIMITS, PLATINUM_RUN)).toBe('platinum');
   });
 
+  it('lowers the platinum bar where a level sets it - against a boss', () => {
+    const boss = { ...LIMITS, platinumSizeRatio: 0.3 };
+
+    expect(medalFor(boss, run({ lowestSizeRatio: 0.4 }))).toBe('platinum');
+    expect(medalFor(boss, run({ lowestSizeRatio: 0.2 }))).toBe('gold');
+  });
+
   it('never skips a tier: a slow flawless win is bronze', () => {
     expect(medalFor(LIMITS, run({ durationSec: 90 }))).toBe('bronze');
   });

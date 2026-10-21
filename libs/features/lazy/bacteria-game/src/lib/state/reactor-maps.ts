@@ -138,9 +138,45 @@ const controlRoom: GameMap = {
   },
 };
 
+/**
+ * The meltdown: the core is gone, its heat is left - a hot middle that
+ * sends whoever stands in it at the enemy, rods above and below, and room
+ * round both start spots for a boss's colony.
+ */
+const meltdown: GameMap = {
+  id: 'meltdown',
+  name: 'Meltdown',
+  description: 'A molten middle, rods above and below it.',
+  createWalls(width, height) {
+    const thickness = 6;
+    return pointSymmetric(
+      [
+        {
+          x: Math.round(width * 0.44),
+          y: Math.round(height * 0.06),
+          width: thickness,
+          height: Math.round(height * 0.2),
+        },
+        {
+          x: Math.round(width * 0.56) - thickness,
+          y: Math.round(height * 0.06),
+          width: thickness,
+          height: Math.round(height * 0.2),
+        },
+      ],
+      width,
+      height
+    );
+  },
+  createZones(width, height) {
+    return [disc('heat', width / 2, height / 2, height * 0.2)];
+  },
+};
+
 /** The reactor's layouts, in the order the levels use them. */
 export const REACTOR_MAPS: readonly GameMap[] = [
   reactorCore,
   containment,
   controlRoom,
+  meltdown,
 ];

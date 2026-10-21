@@ -265,6 +265,20 @@ ten seconds, the level choice notes the limit ("Timed · 2:30") and the result
 screen says that time was up. The first timed level, _Half-Life_, opens the
 Reactor chapter.
 
+On a _survive_ level the left colony - the one up against a boss - wins
+once it is still alive after `limitSec`; the clock counts down as on a
+timed level.
+
+A boss level (`boss` on the level) makes the right colony a boss, whoever
+steers it: it starts `startScale` times the area, and its `ColonyTraits`
+multiply its chance to divide, the pressure its bacteria exert and its
+boost's cooldown - per colony, in both simulations (the GPU one already
+took the division chance and the attack per colony). The boss bot, once
+its colony has fallen behind, boosts whenever it can. The result screen
+frames a boss level as its chapter's finale. _Meltdown_ closes the
+Reactor chapter (survive a minute), _Patient Zero_ opens the Outbreak
+chapter (beat it).
+
 On a _hold_ level a colony also wins once it has held the map's hold zone
 (a `hill` zone, white) for `holdSec` in all: each tick, the `MatchEngine`
 credits the colony with the most bacteria on the zone - nobody on a tie

@@ -1,7 +1,9 @@
 import { TICKS_PER_SEC } from './fixed-tick';
 import { GameMap } from './maps';
 import { MatchEngine } from './match-engine';
+import { getLevel } from './levels';
 import { MatchPlan, planMatch } from './match-setup';
+import { replayOf } from './replay';
 import { createPlayer, Player } from './player.model';
 import {
   ANNIHILATION,
@@ -222,5 +224,61 @@ describe('win conditions', () => {
     } finally {
       engine.dispose();
     }
+  });
+
+  describe('survive', () => {
+    const SURVIVE: WinRule = { kind: 'survive', limitSec: 90 };
+
+    it('gives the match to the left colony once it lived through the clock', () => {
+      const players = colonies(20, 900);
+
+      expect(judgeOutcome(SURVIVE, players, 89)).toBeNull();
+      expect(judgeOutcome(SURVIVE, players, 90)).toEqual({
+        winner: players[0],
+        reason: 'survive',
+      });
+    });
+
+    it('still ends on a wipe-out, either way', () => {
+      expect(judgeOutcome(SURVIVE, colonies(0, 900), 30)?.winner?.id).toBe(1);
+      expect(judgeOutcome(SURVIVE, colonies(20, 0), 30)?.reason).toBe(
+        'annihilation'
+      );
+    });
+
+    it('counts down and notes the clock', () => {
+      expect(timeLeft(SURVIVE, 30)).toBe(60);
+      expect(ruleNote(SURVIVE)).toBe('Survive · 1:30');
+    });
+  });
+
+  it('spawns the boss bigger and stronger on a boss level', () => {
+    const { spawns, options } = planMatch({ ...REACTOR, levelId: 'meltdown' });
+    const boss = getLevel('meltdown').boss;
+    const engine = new MatchEngine(spawns, options);
+    try {
+      expect(spawns[1].startScale).toBe(boss?.startScale);
+      expect(spawns[1].traits).toEqual(boss?.traits);
+      expect(spawns[0].traits).toBeUndefined();
+      const [you, theBoss] = engine.players;
+      expect(theBoss.bacteriaCount).toBeGreaterThan(1.5 * you.bacteriaCount);
+    } finally {
+      engine.dispose();
+    }
+  });
+
+  it('races a ghost on a boss level without the boss, by size at the end', () => {
+    const plan = { ...REACTOR, levelId: 'meltdown' };
+    const ghost = replayOf(plan, 'cpu', 600, {
+      steers: [],
+      drags: [],
+      boosts: [],
+    });
+
+    const { spawns, options } = planMatch(plan, ghost);
+
+    expect(spawns[1].traits).toBeUndefined();
+    expect(spawns[1].startScale).toBe(1);
+    expect(options.win).toEqual({ kind: 'timed', limitSec: 60 });
   });
 });
