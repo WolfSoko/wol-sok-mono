@@ -159,11 +159,9 @@ describe('win conditions', () => {
       expect(judgeOutcome(HARVEST, players, 60)?.winner).toBe(players[1]);
     });
 
-    it('calls it a draw when both get there with as many', () => {
-      expect(judgeOutcome(HARVEST, eaten(20, 20), 60)).toEqual({
-        winner: null,
-        reason: 'harvest',
-      });
+    it('plays on while both got there with as many - until one is ahead', () => {
+      expect(judgeOutcome(HARVEST, eaten(20, 20), 60)).toBeNull();
+      expect(judgeOutcome(HARVEST, eaten(21, 20), 61)?.winner?.id).toBe(0);
     });
 
     it('notes the rule and its target', () => {

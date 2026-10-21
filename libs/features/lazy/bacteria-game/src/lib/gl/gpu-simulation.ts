@@ -213,8 +213,6 @@ export class GpuSimulation implements Simulation {
   /** The step the report in hand was rendered in. */
   private reportStep = 0;
   private colonySummaries: ColonySummary[] = [];
-  /** Pellets each colony ate up, by slot - see `NutrientPellets.drain`. */
-  private pelletsEaten: number[] = [];
   /** Totals of the last report, to turn them into this frame's events. */
   private reported = { captured: 0, lost: 0, poisoned: 0 };
   /** Seconds the pellets have not been drained for, waiting on a report. */
@@ -848,6 +846,7 @@ export class GpuSimulation implements Simulation {
   /** Turns a report into the scoreboard, the frame's events and the eaters. */
   private takeReport(report: Report, generation: readonly number[]): void {
     this.report = report;
+    const before = this.colonySummaries;
     this.colonySummaries = this.spawns.map((spawn, index) => {
       const colony = report.colonies[index];
       return {
@@ -859,7 +858,8 @@ export class GpuSimulation implements Simulation {
         totalEnergy: colony.totalEnergy,
         center: colony.center,
         onHill: colony.onHill,
-        pellets: this.pelletsEaten[index] ?? 0,
+        // Counted here, as the pellets are drained - carried on.
+        pellets: before[index]?.pellets ?? 0,
       };
     });
 
@@ -888,11 +888,7 @@ export class GpuSimulation implements Simulation {
       if (eaten !== null) {
         this.events.pelletsEaten++;
         if (eaten.by !== null) {
-          this.pelletsEaten[eaten.by] = (this.pelletsEaten[eaten.by] ?? 0) + 1;
-          const summary = this.colonySummaries[eaten.by];
-          if (summary != null) {
-            summary.pellets = this.pelletsEaten[eaten.by];
-          }
+          this.colonySummaries[eaten.by].pellets++;
         }
       }
     });
@@ -1055,7 +1051,6 @@ export class GpuSimulation implements Simulation {
     for (const readback of resources.pendingReadbacks) {
       readback.stale = true;
     }
-    this.pelletsEaten = [];
     this.colonySummaries = spawns.map((spawn, slot) => ({
       playerId: spawn.playerId,
       color: spawn.color,

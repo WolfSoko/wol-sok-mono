@@ -142,11 +142,12 @@ export function decodeReport(
   const eaters: number[][] = [];
   for (let i = 0; i < MAX_PELLETS; i++) {
     const at = texel(i, pelletRow);
-    // Two colonies per channel, 16 bits each.
-    const packed = [data[at + 2], data[at + 3]];
+    // Two colonies per channel from blue on, 16 bits each.
     const byColony: number[] = [];
     for (let slot = 0; slot < colonies; slot++) {
-      byColony.push((packed[slot >> 1] >>> ((slot & 1) * 16)) & 0xffff);
+      byColony.push(
+        (data[at + 2 + (slot >> 1)] >>> ((slot & 1) * 16)) & 0xffff
+      );
     }
     eaters.push(byColony);
   }

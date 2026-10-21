@@ -239,6 +239,18 @@ describe('BotController', () => {
     expect(decision.target).toEqual({ x: 60, y: 30 });
   });
 
+  it('leaves prey alone where only pellets win the match', () => {
+    const prey = [{ x: 60, y: 30, amount: 400 }];
+    const nutrients = [{ x: 100, y: 120, amount: 10 }];
+
+    const decision = bot('normal').decide(
+      view({ prey, nutrients, feeding: true }),
+      1
+    );
+
+    expect(decision.target).toEqual({ x: 100, y: 120 });
+  });
+
   it('feeds before it fights while its colony is hungry', () => {
     const nutrients = [{ x: 60, y: 30, amount: 10 }];
 

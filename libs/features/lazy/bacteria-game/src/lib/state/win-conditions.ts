@@ -15,7 +15,7 @@ import { Player } from './player.model';
  *   than any other colony.
  * - `harvest`: the same, but a colony also wins once it has eaten up
  *   `pellets` pellets - a pellet goes to the colony that took the most of
- *   it.
+ *   it - and more than any other colony.
  *
  * A replay takes the rule from its level, so a change to a level's rule
  * raises `BALANCE_VERSION`, as a change to its balance does.
@@ -102,14 +102,11 @@ export function judgeOutcome(
       return null;
     }
     case 'harvest': {
-      // Two colonies can reach it in one tick: the one with more wins.
+      // Two colonies can reach it in one tick: the one with more wins, and
+      // with as many the race goes on - until one is ahead.
       const done = players.filter(({ pellets }) => pellets >= rule.pellets);
-      return done.length === 0
-        ? null
-        : {
-            winner: soleLeader(done, ({ pellets }) => pellets),
-            reason: 'harvest',
-          };
+      const winner = soleLeader(done, ({ pellets }) => pellets);
+      return winner === null ? null : { winner, reason: 'harvest' };
     }
   }
 }
@@ -168,7 +165,7 @@ export function zoneHolder(
 }
 
 /** The one item with the highest value - null when two share it. */
-function soleLeader<T>(
+export function soleLeader<T>(
   items: readonly T[],
   value: (item: T) => number
 ): T | null {

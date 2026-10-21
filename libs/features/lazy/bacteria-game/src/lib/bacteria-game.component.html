@@ -298,21 +298,12 @@
                     colony.name
                   }}</span>
                   <span class="colony-count">{{ colony.bacterias }}</span>
-                  @if (holdTarget(); as target) {
+                  @if (goal(); as goal) {
                     <span class="colony-held"
-                      ><mat-icon aria-hidden="true">flag</mat-icon
-                      >{{ colony.held }}/{{ target
+                      ><mat-icon aria-hidden="true">{{ goal.icon }}</mat-icon
+                      >{{ colony[goal.of] }}/{{ goal.target
                       }}<span class="cdk-visually-hidden">
-                        seconds held</span
-                      ></span
-                    >
-                  }
-                  @if (harvestTarget(); as target) {
-                    <span class="colony-held"
-                      ><mat-icon aria-hidden="true">restaurant</mat-icon
-                      >{{ colony.pellets }}/{{ target
-                      }}<span class="cdk-visually-hidden">
-                        pellets eaten</span
+                        {{ goal.label }}</span
                       ></span
                     >
                   }

@@ -206,6 +206,8 @@ export class BacteriaSimulation implements Simulation {
   private energy = new Float32Array(0);
   /** Energy handed out by nutrients this frame. */
   private nutrientBonus = new Float32Array(0);
+  /** Each colony's bacteria within reach of the pellet being drained. */
+  private eaters = new Int32Array(0);
   /** Energy left behind by a kill, consumed by whoever stands there next. */
   private feed = new Float32Array(0);
 
@@ -706,7 +708,10 @@ export class BacteriaSimulation implements Simulation {
     const { nutrientRadius, nutrientDrainPerSec } = this.balance;
     const gain = nutrientDrainPerSec * deltaTimeSec;
     const nutrients = this.pellets.nutrients;
-    const eaters = new Int32Array(this.colonies.length);
+    if (this.eaters.length !== this.colonies.length) {
+      this.eaters = new Int32Array(this.colonies.length);
+    }
+    const eaters = this.eaters;
 
     for (let n = 0; n < nutrients.length; n++) {
       const nutrient = nutrients[n];

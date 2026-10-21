@@ -1,4 +1,5 @@
 import { Nutrient } from './bacteria-simulation';
+import { soleLeader } from './win-conditions';
 import { GameBalance } from './game-balance';
 
 /**
@@ -101,7 +102,13 @@ export class NutrientPellets {
     }
     nutrient.amount = 0;
     this.timers[n] = this.balance.nutrientRespawnDelaySec;
-    return { by: biggestBite(bites) };
+    // The slot that took the most - nobody when two took as much.
+    return {
+      by: soleLeader(
+        bites.map((_, slot) => slot),
+        (slot) => bites[slot]
+      ),
+    };
   }
 
   private spawnPair(first: number): void {
@@ -139,19 +146,4 @@ export class NutrientPellets {
     }
     return { x: margin, y: margin };
   }
-}
-
-/** The slot that took the most - null when two took as much. */
-function biggestBite(bites: readonly number[]): number | null {
-  let by: number | null = null;
-  let most = 0;
-  bites.forEach((bite, slot) => {
-    if (bite > most) {
-      by = slot;
-      most = bite;
-    } else if (bite === most) {
-      by = null;
-    }
-  });
-  return by;
 }
