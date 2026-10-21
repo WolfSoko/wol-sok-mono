@@ -32,7 +32,9 @@ export function reportLayout(
     blocksY,
     cellSize,
     width: Math.max(blocksX, MAX_PELLETS),
-    height: blocksY + 2,
+    // Counts and energy per coarse cell, then a row each for the pellets,
+    // the captures, the losses and the hold zone - see REPORT_FRAGMENT.
+    height: 2 * blocksY + 4,
     arenaWidth,
     arenaHeight,
   };
@@ -67,6 +69,9 @@ export interface Report {
 /** Turns the raw read back - four 32 bit integers per texel - into numbers. */
 export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
   const { blocksX, blocksY, cellSize, width } = layout;
+  /** The first value of a texel, by column and row. */
+  const texel = (x: number, y: number) => (y * width + x) * 4;
+  const pelletRow = 2 * blocksY;
   const colonies: ColonyReport[] = [];
   const blockCounts: Uint32Array[] = [];
   for (let slot = 0; slot < MAX_GPU_COLONIES; slot++) {
@@ -81,14 +86,13 @@ export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
     let maxY = -Infinity;
     for (let by = 0; by < blocksY; by++) {
       for (let bx = 0; bx < blocksX; bx++) {
-        const texel = (by * width + bx) * 4;
-        const n = data[texel + slot];
+        const n = data[texel(bx, by) + slot];
         if (n === 0) {
           continue;
         }
         counts[by * blocksX + bx] = n;
         count += n;
-        energy += data[texel + 2 + slot];
+        energy += data[texel(bx, blocksY + by) + slot];
         sumX += n * blockCenter(bx, cellSize, layout.arenaWidth);
         sumY += n * blockCenter(by, cellSize, layout.arenaHeight);
         minX = Math.min(minX, bx);
@@ -101,14 +105,10 @@ export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
     let captured = 0;
     let lost = 0;
     let onHill = 0;
-    const totalsRow = blocksY + 1;
     for (let bx = 0; bx < blocksX; bx++) {
-      const texel = (totalsRow * width + bx) * 4;
-      captured += data[texel + slot];
-      lost += data[texel + 2 + slot];
-      // The pellet row carries the bacteria on the hold zone per column.
-      const pelletTexel = (blocksY * width + bx) * 4;
-      onHill += data[pelletTexel + 2 + slot];
+      captured += data[texel(bx, pelletRow + 1) + slot];
+      lost += data[texel(bx, pelletRow + 2) + slot];
+      onHill += data[texel(bx, pelletRow + 3) + slot];
     }
 
     blockCounts.push(counts);
@@ -133,11 +133,11 @@ export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
 
   const eaters: number[] = [];
   for (let i = 0; i < MAX_PELLETS; i++) {
-    eaters.push(data[(blocksY * width + i) * 4]);
+    eaters.push(data[texel(i, pelletRow)]);
   }
   let poisoned = 0;
   for (let bx = 0; bx < blocksX; bx++) {
-    poisoned += data[(blocksY * width + bx) * 4 + 1];
+    poisoned += data[texel(bx, pelletRow) + 1];
   }
   return { colonies, eaters, blockCounts, poisoned };
 }

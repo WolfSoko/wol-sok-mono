@@ -7,8 +7,8 @@
  * - g: the energy, in fixed point (see {@link ENERGY_SCALE})
  * - b: food left by a kill, eaten in the next frame's combat
  * - a: what happened to the cell this frame - the slot + 1 of the colony
- *   that captured it in bits 0-1, the slot + 1 of the colony that lost it
- *   in bits 2-3, and bit 4 set when an antibiotic killed it
+ *   that captured it in bits 0-2, the slot + 1 of the colony that lost it
+ *   in bits 3-5, and bit 6 set when an antibiotic killed it
  *
  * Walls live in a separate R8UI mask, so a wall is never in the state: bit
  * 0 is the wall, the bits above it the zone under the cell (`ZONE_CODE`).
@@ -37,8 +37,8 @@ function glslFloat(value: number): string {
 /** Fixed point scale of the energy: 1.0 is stored as 16384. */
 export const ENERGY_SCALE = 16384;
 
-/** The most colonies the GPU simulation runs - the game has two. */
-export const MAX_GPU_COLONIES = 2;
+/** The most colonies the GPU simulation runs. */
+export const MAX_GPU_COLONIES = 4;
 
 /** The most nutrient pellets the shaders take. */
 export const MAX_PELLETS = 16;
@@ -59,8 +59,11 @@ uniform uint uSeed;
 const float ENERGY_SCALE = ${ENERGY_SCALE}.0;
 const uint WALL_BIT = ${WALL_BIT}u;
 const uint ZONE_SHIFT = ${ZONE_SHIFT}u;
+/** An event record: who captured a cell in bits 0-2, who lost it above. */
+const uint RECORD_MASK = 7u;
+const uint LOSER_SHIFT = 3u;
 /** The bit of an event record that marks a death by antibiotic. */
-const uint POISONED = 16u;
+const uint POISONED = 64u;
 const uint ANTIBIOTIC = ${ZONE_CODE.antibiotic}u;
 const uint AGAR = ${ZONE_CODE.agar}u;
 const uint ICE = ${ZONE_CODE.ice}u;
@@ -164,25 +167,30 @@ uniform int uCellSize;
 out uvec4 outValue;
 void main() {
   ivec2 block = ivec2(gl_FragCoord.xy) * uCellSize;
-  uvec2 counts = uvec2(0u);
+  uvec4 counts = uvec4(0u);
   for (int y = 0; y < uCellSize; y++) {
     for (int x = 0; x < uCellSize; x++) {
       uint owner = stateAt(block + ivec2(x, y)).r;
-      counts += uvec2(owner == 1u ? 1u : 0u, owner == 2u ? 1u : 0u);
+      if (owner != 0u) {
+        counts[int(owner) - 1]++;
+      }
     }
   }
-  outValue = uvec4(counts, 0u, 0u);
+  outValue = counts;
 }`;
 
 /**
  * For each coarse cell and colony, the direction towards the closest
- * enemies around it - scaled to 16 bit signed integers.
+ * enemies around it - scaled to 16 bit signed integers. One pass covers
+ * two colonies, `uPair` which two: the first pair's, then - with more than
+ * two colonies - the second's.
  */
 export const HUNT_FRAGMENT = `#version 300 es
 precision highp float;
 precision highp int;
 precision highp usampler2D;
 uniform usampler2D uInfluence;
+uniform int uPair;
 out ivec4 outValue;
 void main() {
   ivec2 cell = ivec2(gl_FragCoord.xy);
@@ -195,9 +203,11 @@ void main() {
         continue;
       }
       uvec4 counts = texelFetch(uInfluence, at, 0);
-      // The enemies of each colony are the other one's bacteria.
-      towards[0] += vec2(dx, dy) * float(counts.y);
-      towards[1] += vec2(dx, dy) * float(counts.x);
+      uint all = counts.x + counts.y + counts.z + counts.w;
+      // The enemies of a colony are every other colony's bacteria.
+      for (int i = 0; i < 2; i++) {
+        towards[i] += vec2(dx, dy) * float(all - counts[uPair * 2 + i]);
+      }
     }
   }
   vec2 a = length(towards[0]) > 0.0 ? normalize(towards[0]) : vec2(0.0);
@@ -213,15 +223,16 @@ void main() {
 const INTENTS = `
 uniform int uKind;        // 0 move, 1 escape a wall, 2 divide
 uniform int uStep;        // which movement step of the frame
-uniform int uSteps[2];    // movement steps per colony this frame
-uniform vec2 uTarget[2];  // each colony's crosshair
-uniform float uAggression[2];
+uniform int uSteps[${MAX_GPU_COLONIES}];    // movement steps per colony this frame
+uniform vec2 uTarget[${MAX_GPU_COLONIES}];  // each colony's crosshair
+uniform float uAggression[${MAX_GPU_COLONIES}];
 uniform float uJitter;
 uniform int uCellSize;
 uniform isampler2D uHunt;
+uniform isampler2D uHuntMore; // the hunt of the third and fourth colony
 uniform float uDivideThreshold;
-uniform float uDivideChance[2]; // per bacterium, on plain ground
-uniform float uDivideBudget[2]; // the most it may be anywhere - see divideBudget
+uniform float uDivideChance[${MAX_GPU_COLONIES}]; // per bacterium, on plain ground
+uniform float uDivideBudget[${MAX_GPU_COLONIES}]; // the most it may be anywhere - see divideBudget
 uniform float uParentShare;
 
 const float PI = 3.14159265;
@@ -256,8 +267,10 @@ int moveIntent(ivec2 cell) {
     : uAggression[colony];
   vec2 towards = uTarget[colony] - vec2(cell);
   vec2 direction = length(towards) > 0.0 ? normalize(towards) : vec2(0.0);
-  ivec4 hunt = texelFetch(uHunt, cell / uCellSize, 0);
-  vec2 enemies = vec2(colony == 0 ? hunt.xy : hunt.zw) / 32767.0;
+  ivec4 hunt = colony < 2
+    ? texelFetch(uHunt, cell / uCellSize, 0)
+    : texelFetch(uHuntMore, cell / uCellSize, 0);
+  vec2 enemies = vec2(colony % 2 == 0 ? hunt.xy : hunt.zw) / 32767.0;
   if (enemies != vec2(0.0)) {
     direction = mix(direction, enemies, aggression);
   }
@@ -391,7 +404,7 @@ void main() {
   ivec2 cell = ivec2(gl_FragCoord.xy);
   uvec4 state = texelFetch(uState, cell, 0);
   if (state.r != 0u && wallAt(cell)) {
-    outState = uvec4(0u, 0u, 0u, state.r << 2u);
+    outState = uvec4(0u, 0u, 0u, state.r << LOSER_SHIFT);
     return;
   }
   outState = uvec4(state.rgb, 0u);
@@ -404,7 +417,7 @@ void main() {
  */
 export const COMBAT_FRAGMENT = `${COMMON}
 uniform float uDt;
-uniform float uAttack[2];
+uniform float uAttack[${MAX_GPU_COLONIES}];
 ${PELLETS}
 uniform float uNutrientGain;
 uniform float uDefenceFactor;
@@ -428,7 +441,7 @@ void main() {
   uint owner = state.r;
   float own = 0.0;
   float enemy = 0.0;
-  vec2 strength = vec2(0.0);
+  vec4 strength = vec4(0.0);
   for (int i = 0; i < 8; i++) {
     uvec4 neighbour = stateAt(cell + NEIGHBOURS[i]);
     if (neighbour.r == 0u) {
@@ -466,12 +479,18 @@ void main() {
     outState = uvec4(owner, encodeEnergy(energy), 0u, 0u);
     return;
   }
-  uint winner = strength.x == 0.0 && strength.y == 0.0
-    ? 0u
-    : (strength.x >= strength.y ? 1u : 2u);
+  // The strongest attacker - on a tie the first, as the CPU one does.
+  uint winner = 0u;
+  float most = 0.0;
+  for (int i = 0; i < ${MAX_GPU_COLONIES}; i++) {
+    if (strength[i] > most) {
+      winner = uint(i + 1);
+      most = strength[i];
+    }
+  }
   if (winner == 0u && poisoned) {
     // The antibiotic killed it: lost, and nobody captured it.
-    outState = uvec4(0u, 0u, 0u, (owner << 2u) | POISONED);
+    outState = uvec4(0u, 0u, 0u, (owner << LOSER_SHIFT) | POISONED);
     return;
   }
   if (winner == 0u || winner == owner) {
@@ -479,7 +498,7 @@ void main() {
     outState = uvec4(owner, encodeEnergy(min(uMaxEnergy, uRegen * uDt)), 0u, 0u);
     return;
   }
-  uint record = winner | (owner << 2u);
+  uint record = winner | (owner << LOSER_SHIFT);
   if (random(cell, 41u) < uConsumeChance) {
     // Digested completely: the cell frees up.
     outState = uvec4(0u, 0u, 0u, record);
@@ -498,9 +517,9 @@ out uvec4 outState;
 void main() {
   ivec2 cell = ivec2(gl_FragCoord.xy);
   uvec4 state = texelFetch(uState, cell, 0);
-  float feed = (state.a & 3u) != 0u ? uFeed : 0.0;
+  float feed = (state.a & RECORD_MASK) != 0u ? uFeed : 0.0;
   for (int i = 0; i < 8; i++) {
-    uint winner = stateAt(cell + NEIGHBOURS[i]).a & 3u;
+    uint winner = stateAt(cell + NEIGHBOURS[i]).a & RECORD_MASK;
     if (winner != 0u && winner == state.r) {
       feed += uFeed;
     }
@@ -525,55 +544,66 @@ uniform bool uCountHill;
 ${PELLETS}
 out uvec4 outValue;
 
+/** What one column of the arena says, for a row of the report - see the layout. */
+uvec4 column(int columnX, int row) {
+  uvec4 sums = row == 3 ? uvec4(0u) : texelFetch(uPrevious, ivec2(columnX, int(gl_FragCoord.y)), 0);
+  for (int y = 0; y < uSize.y; y++) {
+    for (int x = 0; x < uCellSize; x++) {
+      ivec2 cell = ivec2(columnX * uCellSize + x, y);
+      if (!inside(cell)) {
+        continue;
+      }
+      uint record = texelFetch(uEvents, cell, 0).a;
+      if (row == 0) {
+        sums.y += (record & POISONED) != 0u ? 1u : 0u;
+      } else if (row == 1) {
+        uint winner = record & RECORD_MASK;
+        if (winner != 0u) {
+          sums[int(winner) - 1]++;
+        }
+      } else if (row == 2) {
+        uint loser = (record >> LOSER_SHIFT) & RECORD_MASK;
+        if (loser != 0u) {
+          sums[int(loser) - 1]++;
+        }
+      } else if (uCountHill) {
+        uint owner = texelFetch(uState, cell, 0).r;
+        if (owner != 0u && zoneAt(cell) == HILL) {
+          sums[int(owner) - 1]++;
+        }
+      }
+    }
+  }
+  return sums;
+}
+
 void main() {
   ivec2 at = ivec2(gl_FragCoord.xy);
-  if (at.y < uBlocks.y) {
+  int blocksY = uBlocks.y;
+  if (at.y < 2 * blocksY) {
+    // Per coarse cell: the bacteria of each colony, then their energy.
     if (at.x >= uBlocks.x) {
       outValue = uvec4(0u);
       return;
     }
-    ivec2 block = at * uCellSize;
+    bool energy = at.y >= blocksY;
+    ivec2 block = ivec2(at.x, energy ? at.y - blocksY : at.y) * uCellSize;
     uvec4 sums = uvec4(0u);
     for (int y = 0; y < uCellSize; y++) {
       for (int x = 0; x < uCellSize; x++) {
         uvec4 state = stateAt(block + ivec2(x, y));
-        if (state.r == 1u) {
-          sums.x += 1u;
-          sums.z += state.g;
-        } else if (state.r == 2u) {
-          sums.y += 1u;
-          sums.w += state.g;
+        if (state.r != 0u) {
+          sums[int(state.r) - 1] += energy ? state.g : 1u;
         }
       }
     }
     outValue = sums;
     return;
   }
-  if (at.y == uBlocks.y) {
-    // The pellets' eaters - and, in this column of the arena, the deaths
-    // by antibiotic running on, and each colony's bacteria on the hill.
-    uint poisoned = texelFetch(uPrevious, at, 0).y;
-    uvec2 onHill = uvec2(0u);
-    if (at.x < uBlocks.x) {
-      for (int y = 0; y < uSize.y; y++) {
-        for (int x = 0; x < uCellSize; x++) {
-          ivec2 cell = ivec2(at.x * uCellSize + x, y);
-          if (!inside(cell)) {
-            continue;
-          }
-          if ((texelFetch(uEvents, cell, 0).a & POISONED) != 0u) {
-            poisoned++;
-          }
-          if (!uCountHill) {
-            continue;
-          }
-          uint owner = texelFetch(uState, cell, 0).r;
-          if (owner != 0u && zoneAt(cell) == HILL) {
-            onHill[int(owner) - 1]++;
-          }
-        }
-      }
-    }
+  int row = at.y - 2 * blocksY;
+  uvec4 sums = at.x < uBlocks.x ? column(at.x, row) : uvec4(0u);
+  if (row == 0) {
+    // The pellets' eaters ride along in the row of the deaths by antibiotic.
     uint eaters = 0u;
     if (at.x < uPelletCount) {
       ivec2 pellet = ivec2(uPellets[at.x].xy);
@@ -583,28 +613,9 @@ void main() {
         }
       }
     }
-    outValue = uvec4(eaters, poisoned, onHill);
-    return;
+    sums.x = eaters;
   }
-  uvec4 totals = texelFetch(uPrevious, at, 0);
-  if (at.x < uBlocks.x) {
-    for (int y = 0; y < uSize.y; y++) {
-      for (int x = 0; x < uCellSize; x++) {
-        ivec2 cell = ivec2(at.x * uCellSize + x, y);
-        if (!inside(cell)) {
-          continue;
-        }
-        uint record = texelFetch(uEvents, cell, 0).a;
-        uint winner = record & 3u;
-        uint victim = (record >> 2u) & 3u;
-        totals.x += winner == 1u ? 1u : 0u;
-        totals.y += winner == 2u ? 1u : 0u;
-        totals.z += victim == 1u ? 1u : 0u;
-        totals.w += victim == 2u ? 1u : 0u;
-      }
-    }
-  }
-  outValue = totals;
+  outValue = sums;
 }`;
 
 /**
@@ -657,8 +668,8 @@ void main() {
   ivec2 cell = ivec2(gl_FragCoord.xy);
   vec4 previous = texelFetch(uPreviousEffects, cell, 0);
   uint packed = uint(round(previous.a * 255.0));
-  uint lastOwner = packed & 3u;
-  uint glowOwner = (packed >> 2u) & 3u;
+  uint lastOwner = packed & RECORD_MASK;
+  uint glowOwner = (packed >> LOSER_SHIFT) & RECORD_MASK;
   uint owner = texelFetch(uState, cell, 0).r;
 
   vec3 heat = previous.rgb * uFade;
@@ -676,5 +687,5 @@ void main() {
       glowOwner = owner;
     }
   }
-  outEffects = vec4(heat, float(owner | (glowOwner << 2u)) / 255.0);
+  outEffects = vec4(heat, float(owner | (glowOwner << LOSER_SHIFT)) / 255.0);
 }`;

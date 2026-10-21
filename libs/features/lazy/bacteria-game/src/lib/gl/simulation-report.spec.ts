@@ -20,8 +20,10 @@ function readBack(
 }
 
 describe('reportLayout', () => {
-  it('has a row per coarse row, one for the pellets and one for the totals', () => {
-    expect(layout).toMatchObject({ blocksX: 4, blocksY: 2, height: 4 });
+  it('has two rows per coarse row and four for the pellets and totals', () => {
+    // Counts and energy rows per coarse row, then pellets, captures, losses
+    // and the hold zone.
+    expect(layout).toMatchObject({ blocksX: 4, blocksY: 2, height: 8 });
     // Wide enough for every pellet even on a small arena.
     expect(layout.width).toBeGreaterThanOrEqual(16);
   });
@@ -31,8 +33,11 @@ describe('decodeReport', () => {
   it('adds up bacteria and energy and finds the centre and box of a colony', () => {
     const report = decodeReport(
       readBack([
-        { x: 0, y: 0, value: [10, 0, 10 * ENERGY_SCALE, 0] },
-        { x: 1, y: 1, value: [10, 4, 5 * ENERGY_SCALE, 4 * ENERGY_SCALE] },
+        // Counts in the first rows, energy two rows down.
+        { x: 0, y: 0, value: [10, 0, 0, 0] },
+        { x: 0, y: 2, value: [10 * ENERGY_SCALE, 0, 0, 0] },
+        { x: 1, y: 1, value: [10, 4, 0, 0] },
+        { x: 1, y: 3, value: [5 * ENERGY_SCALE, 4 * ENERGY_SCALE, 0, 0] },
       ]),
       layout
     );
@@ -49,7 +54,7 @@ describe('decodeReport', () => {
 
   it('clips the box of the last coarse cell at the arena edge', () => {
     const report = decodeReport(
-      readBack([{ x: 3, y: 0, value: [1, 0, ENERGY_SCALE, 0] }]),
+      readBack([{ x: 3, y: 0, value: [1, 0, 0, 0] }]),
       layout
     );
 
@@ -74,9 +79,12 @@ describe('decodeReport', () => {
   it('reads the eaters per pellet and sums the running totals per column', () => {
     const report = decodeReport(
       readBack([
-        { x: 2, y: 2, value: [7, 0, 0, 0] },
-        { x: 0, y: 3, value: [3, 1, 2, 5] },
-        { x: 3, y: 3, value: [1, 1, 1, 1] },
+        { x: 2, y: 4, value: [7, 0, 0, 0] },
+        // Captures per colony, then losses per colony.
+        { x: 0, y: 5, value: [3, 1, 0, 2] },
+        { x: 3, y: 5, value: [1, 1, 0, 0] },
+        { x: 0, y: 6, value: [2, 5, 1, 0] },
+        { x: 3, y: 6, value: [1, 1, 0, 0] },
       ]),
       layout
     );
@@ -84,6 +92,8 @@ describe('decodeReport', () => {
     expect(report.eaters[2]).toBe(7);
     expect(report.colonies[0]).toMatchObject({ captured: 4, lost: 3 });
     expect(report.colonies[1]).toMatchObject({ captured: 2, lost: 6 });
+    expect(report.colonies[2]).toMatchObject({ captured: 0, lost: 1 });
+    expect(report.colonies[3]).toMatchObject({ captured: 2, lost: 0 });
   });
 });
 
@@ -91,10 +101,10 @@ describe('decodeReport poisoned', () => {
   it('sums the deaths by antibiotic over the columns of the pellet row', () => {
     const report = decodeReport(
       readBack([
-        { x: 0, y: 2, value: [7, 2, 0, 0] },
-        { x: 3, y: 2, value: [0, 5, 0, 0] },
+        { x: 0, y: 4, value: [7, 2, 0, 0] },
+        { x: 3, y: 4, value: [0, 5, 0, 0] },
         // Beyond the arena's columns: a pellet's eaters only.
-        { x: 9, y: 2, value: [1, 99, 0, 0] },
+        { x: 9, y: 4, value: [1, 99, 0, 0] },
       ]),
       layout
     );
@@ -105,18 +115,20 @@ describe('decodeReport poisoned', () => {
   it('sums the bacteria of each colony on the hold zone over the columns', () => {
     const report = decodeReport(
       readBack([
-        { x: 0, y: 2, value: [0, 0, 3, 1] },
-        { x: 2, y: 2, value: [0, 0, 4, 6] },
+        { x: 0, y: 7, value: [3, 1, 0, 2] },
+        { x: 2, y: 7, value: [4, 6, 1, 0] },
       ]),
       layout
     );
 
-    expect(report.colonies.map((colony) => colony.onHill)).toEqual([7, 7]);
+    expect(report.colonies.map((colony) => colony.onHill)).toEqual([
+      7, 7, 1, 2,
+    ]);
   });
 });
 
 describe('nearestEnemyBlock', () => {
-  it('finds the closest coarse cell of the other colony', () => {
+  it('finds the closest coarse cell of any other colony', () => {
     const report = decodeReport(
       readBack([
         { x: 0, y: 0, value: [5, 0, 0, 0] },

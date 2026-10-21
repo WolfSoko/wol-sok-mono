@@ -92,6 +92,7 @@ const UNIT = {
   influence: 2,
   hunt: 3,
   previous: 3,
+  huntMore: 4,
 };
 
 interface Programs {
@@ -131,6 +132,8 @@ interface Resources {
   mask: WebGLTexture;
   influence: Target;
   hunt: Target;
+  /** The hunt of the third and fourth colony - see `HUNT_FRAGMENT`. */
+  huntMore: Target;
   /** Ping and pong of the report, so the running totals can carry on. */
   reports: [Target, Target];
   /** Ping and pong of the glow the painter adds - see `EFFECTS_FRAGMENT`. */
@@ -375,8 +378,15 @@ export class GpuSimulation implements Simulation {
     gl.viewport(0, 0, this.layout.blocksX, this.layout.blocksY);
     this.pass(resources, programs.influence, resources.influence);
     bindTexture(gl, UNIT.influence, resources.influence.texture, null);
+    gl.useProgram(programs.hunt.program);
+    gl.uniform1i(programs.hunt.uniforms['uPair'], 0);
     this.pass(resources, programs.hunt, resources.hunt);
+    if (this.spawns.length > 2) {
+      gl.uniform1i(programs.hunt.uniforms['uPair'], 1);
+      this.pass(resources, programs.hunt, resources.huntMore);
+    }
     bindTexture(gl, UNIT.hunt, resources.hunt.texture, null);
+    bindTexture(gl, UNIT.huntMore, resources.huntMore.texture, null);
 
     gl.viewport(0, 0, this.width, this.height);
     // 2. Out of the way of a wall that moved, or crushed.
@@ -603,10 +613,15 @@ export class GpuSimulation implements Simulation {
     const cellSize = b.influenceCellSize;
     set(programs.influence, {}, { uCellSize: cellSize });
     set(programs.hunt, {}, { uInfluence: UNIT.influence });
-    set(programs.claim, intents, { uCellSize: cellSize, uHunt: UNIT.hunt });
+    set(programs.claim, intents, {
+      uCellSize: cellSize,
+      uHunt: UNIT.hunt,
+      uHuntMore: UNIT.huntMore,
+    });
     set(programs.apply, intents, {
       uCellSize: cellSize,
       uHunt: UNIT.hunt,
+      uHuntMore: UNIT.huntMore,
       uClaims: UNIT.claims,
     });
     set(programs.crush, {});
@@ -1107,6 +1122,13 @@ export class GpuSimulation implements Simulation {
         layout.blocksY,
         gl.NEAREST
       ),
+      huntMore: createTarget(
+        gl,
+        gl.RGBA16I,
+        layout.blocksX,
+        layout.blocksY,
+        gl.NEAREST
+      ),
       reports: [report(), report()],
       effects: [effects(), effects()],
       freeReadbacks,
@@ -1138,6 +1160,7 @@ function renderTargets(resources: Resources): Target[] {
     resources.claims,
     resources.influence,
     resources.hunt,
+    resources.huntMore,
     ...resources.reports,
     ...resources.effects,
   ];
@@ -1165,6 +1188,7 @@ function compiledPrograms(gl: WebGL2RenderingContext): Programs {
     'uJitter',
     'uCellSize',
     'uHunt',
+    'uHuntMore',
     'uDivideThreshold',
     'uDivideChance[0]',
     'uDivideBudget[0]',
@@ -1175,7 +1199,7 @@ function compiledPrograms(gl: WebGL2RenderingContext): Programs {
     createProgram(gl, FULLSCREEN_VERTEX, fragment, [...common, ...uniforms]);
   const programs: Programs = {
     influence: program(INFLUENCE_FRAGMENT, ['uCellSize']),
-    hunt: program(HUNT_FRAGMENT, ['uInfluence']),
+    hunt: program(HUNT_FRAGMENT, ['uInfluence', 'uPair']),
     claim: program(CLAIM_FRAGMENT, intents),
     apply: program(APPLY_FRAGMENT, [...intents, 'uClaims']),
     crush: program(CRUSH_FRAGMENT, []),
