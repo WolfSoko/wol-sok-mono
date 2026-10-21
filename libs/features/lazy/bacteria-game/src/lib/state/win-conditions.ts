@@ -13,6 +13,9 @@ import { Player } from './player.model';
  * - `hold`: the same, but a colony also wins once it has held the map's
  *   hold zone for `holdSec` in all - held while it has more bacteria on it
  *   than any other colony.
+ * - `harvest`: the same, but a colony also wins once it has eaten up
+ *   `pellets` pellets - a pellet goes to the colony that took the most of
+ *   it.
  *
  * A replay takes the rule from its level, so a change to a level's rule
  * raises `BALANCE_VERSION`, as a change to its balance does.
@@ -21,10 +24,16 @@ export type WinRule =
   | { kind: 'annihilation' }
   | { kind: 'timed'; limitSec: number }
   | { kind: 'survive'; limitSec: number }
-  | { kind: 'hold'; holdSec: number };
+  | { kind: 'hold'; holdSec: number }
+  | { kind: 'harvest'; pellets: number };
 
 /** What ended a match. */
-export type EndReason = 'annihilation' | 'time' | 'hold' | 'survive';
+export type EndReason =
+  | 'annihilation'
+  | 'time'
+  | 'hold'
+  | 'survive'
+  | 'harvest';
 
 /** How a match ended: the winner, or null for a draw - and what ended it. */
 export interface MatchOutcome {
@@ -92,6 +101,16 @@ export function judgeOutcome(
       }
       return null;
     }
+    case 'harvest': {
+      // Two colonies can reach it in one tick: the one with more wins.
+      const done = players.filter(({ pellets }) => pellets >= rule.pellets);
+      return done.length === 0
+        ? null
+        : {
+            winner: soleLeader(done, ({ pellets }) => pellets),
+            reason: 'harvest',
+          };
+    }
   }
 }
 
@@ -122,12 +141,19 @@ export function ruleNote(rule: WinRule): string | null {
       return `Survive · ${clock(rule.limitSec)}`;
     case 'hold':
       return `Hold the zone · ${clock(rule.holdSec)}`;
+    case 'harvest':
+      return `Harvest · ${rule.pellets} pellets`;
   }
 }
 
 /** The seconds a colony must hold the zone, null for a rule without one. */
 export function holdTarget(rule: WinRule): number | null {
   return rule.kind === 'hold' ? rule.holdSec : null;
+}
+
+/** The pellets a colony must eat, null for a rule without a harvest. */
+export function harvestTarget(rule: WinRule): number | null {
+  return rule.kind === 'harvest' ? rule.pellets : null;
 }
 
 /**

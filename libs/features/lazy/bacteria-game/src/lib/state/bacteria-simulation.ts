@@ -48,6 +48,8 @@ export interface Colony {
   lost: number;
   /** Sum of the energy of all bacteria of this colony. */
   totalEnergy: number;
+  /** Pellets it ate up since the game started - see `NutrientPellets.drain`. */
+  pellets: number;
   /** How it plays differently from the balance - a boss's traits. */
   traits: ColonyTraits;
 }
@@ -303,6 +305,7 @@ export class BacteriaSimulation implements Simulation {
         totalEnergy: colony.totalEnergy,
         center: count > 0 ? { x: sumX / count, y: sumY / count } : null,
         onHill,
+        pellets: colony.pellets,
       };
     });
   }
@@ -356,6 +359,7 @@ export class BacteriaSimulation implements Simulation {
       captured: 0,
       lost: 0,
       totalEnergy: 0,
+      pellets: 0,
       traits: spawn.traits ?? PLAIN_TRAITS,
     }));
     this.colonySummaries = null;
@@ -702,6 +706,7 @@ export class BacteriaSimulation implements Simulation {
     const { nutrientRadius, nutrientDrainPerSec } = this.balance;
     const gain = nutrientDrainPerSec * deltaTimeSec;
     const nutrients = this.pellets.nutrients;
+    const eaters = new Int32Array(this.colonies.length);
 
     for (let n = 0; n < nutrients.length; n++) {
       const nutrient = nutrients[n];
@@ -715,7 +720,7 @@ export class BacteriaSimulation implements Simulation {
       const yMin = Math.max(nutrient.y - nutrientRadius, 0);
       const yMax = Math.min(nutrient.y + nutrientRadius, this.height - 1);
 
-      let eaters = 0;
+      eaters.fill(0);
       for (let y = yMin; y <= yMax; y++) {
         for (let x = xMin; x <= xMax; x++) {
           const index = y * this.width + x;
@@ -723,12 +728,16 @@ export class BacteriaSimulation implements Simulation {
             continue;
           }
           this.nutrientBonus[index] += gain;
-          eaters++;
+          eaters[this.owner[index]]++;
         }
       }
 
-      if (this.pellets.drain(n, eaters, gain)) {
+      const eaten = this.pellets.drain(n, eaters, gain);
+      if (eaten !== null) {
         this.events.pelletsEaten++;
+        if (eaten.by !== null) {
+          this.colonies[eaten.by].pellets++;
+        }
       }
     }
   }

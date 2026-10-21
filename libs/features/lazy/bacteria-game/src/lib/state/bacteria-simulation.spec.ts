@@ -394,6 +394,34 @@ describe('BacteriaSimulation', () => {
       );
     });
 
+    it('credits a pellet eaten up to the colony that ate it', () => {
+      const simulation = new BacteriaSimulation(
+        balance({
+          nutrientCount: 1,
+          divideChancePerSec: 0,
+          nutrientDrainPerSec: 1000,
+        }),
+        () => 0
+      );
+      simulation.resize(WIDTH, HEIGHT);
+      simulation.init([
+        { playerId: 0, color: [255, 0, 0, 255], x: 0, y: 0, radius: 0 },
+        { playerId: 1, color: [0, 0, 255, 255], x: 0, y: 0, radius: 0 },
+      ]);
+      const [nutrient] = simulation.getNutrients();
+      const colonies = simulation.getColonies() as Colony[];
+      colonies[0].bacterias = [bacterium(nutrient.x, nutrient.y)];
+      colonies[1].bacterias = [];
+      const at = { x: nutrient.x, y: nutrient.y };
+
+      simulation.step(
+        [createPlayer({ id: 0, ...at }), createPlayer({ id: 1, ...at })],
+        0.5
+      );
+
+      expect(simulation.summaries().map((c) => c.pellets)).toEqual([1, 0]);
+    });
+
     it('spawns nutrients in pairs that mirror each other', () => {
       const simulation = new BacteriaSimulation(balance({ nutrientCount: 8 }));
       simulation.resize(WIDTH, HEIGHT);

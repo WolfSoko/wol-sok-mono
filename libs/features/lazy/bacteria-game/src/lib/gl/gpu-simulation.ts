@@ -213,6 +213,8 @@ export class GpuSimulation implements Simulation {
   /** The step the report in hand was rendered in. */
   private reportStep = 0;
   private colonySummaries: ColonySummary[] = [];
+  /** Pellets each colony ate up, by slot - see `NutrientPellets.drain`. */
+  private pelletsEaten: number[] = [];
   /** Totals of the last report, to turn them into this frame's events. */
   private reported = { captured: 0, lost: 0, poisoned: 0 };
   /** Seconds the pellets have not been drained for, waiting on a report. */
@@ -857,6 +859,7 @@ export class GpuSimulation implements Simulation {
         totalEnergy: colony.totalEnergy,
         center: colony.center,
         onHill: colony.onHill,
+        pellets: this.pelletsEaten[index] ?? 0,
       };
     });
 
@@ -881,8 +884,16 @@ export class GpuSimulation implements Simulation {
         // The pellet moved since this report was taken.
         return;
       }
-      if (this.pellets.drain(n, report.eaters[n] ?? 0, gain)) {
+      const eaten = this.pellets.drain(n, report.eaters[n] ?? [], gain);
+      if (eaten !== null) {
         this.events.pelletsEaten++;
+        if (eaten.by !== null) {
+          this.pelletsEaten[eaten.by] = (this.pelletsEaten[eaten.by] ?? 0) + 1;
+          const summary = this.colonySummaries[eaten.by];
+          if (summary != null) {
+            summary.pellets = this.pelletsEaten[eaten.by];
+          }
+        }
       }
     });
   }
@@ -1044,6 +1055,7 @@ export class GpuSimulation implements Simulation {
     for (const readback of resources.pendingReadbacks) {
       readback.stale = true;
     }
+    this.pelletsEaten = [];
     this.colonySummaries = spawns.map((spawn, slot) => ({
       playerId: spawn.playerId,
       color: spawn.color,
@@ -1055,6 +1067,7 @@ export class GpuSimulation implements Simulation {
       // Counted from the first report on - the ticks before it are credited
       // to whoever holds the zone then.
       onHill: 0,
+      pellets: 0,
     }));
   }
 

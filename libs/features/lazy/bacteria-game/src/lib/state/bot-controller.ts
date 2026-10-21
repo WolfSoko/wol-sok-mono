@@ -93,6 +93,8 @@ export interface BotView {
    * Food that bites back: worth it to a colony that is not hungry.
    */
   prey?: readonly Nutrient[];
+  /** True on a level won by eating pellets: food before anything else. */
+  feeding?: boolean;
   boostReady: boolean;
   /**
    * Where the level is won, if anywhere - the centre of the zone to hold on
@@ -216,6 +218,11 @@ export class BotController {
     const food = this.bestNutrient(view, !hungry);
     if (enemy == null || enemy.count === 0) {
       return { target: this.aim(view, food ?? own), boost: false };
+    }
+
+    // Where the pellets win the match, they come first - stronger or not.
+    if (view.feeding && food != null) {
+      return { target: this.aim(view, food), boost: false };
     }
 
     const stronger = own.count >= enemy.count * this.profile.attackRatio;

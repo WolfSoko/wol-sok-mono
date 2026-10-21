@@ -567,7 +567,9 @@ void main() {
  * - one row per coarse row: the bacteria of each colony
  * - one row per coarse row: their summed energy
  * - then the REPORT_ROWS, one texel per coarse column: the pellets'
- *   eaters (one texel per pellet) beside the deaths by antibiotic, the
+ *   eaters (one texel per pellet: all of them, and each colony's in 16 bits
+ *   apiece - the first two in blue, the others in alpha) beside the deaths
+ *   by antibiotic, the
  *   captures and the losses of each colony - running totals since the
  *   match started, added up on the GPU, so a read the CPU misses loses
  *   nothing - and each colony's bacteria on the hold zone
@@ -650,15 +652,22 @@ void main() {
   if (row == ${REPORT_ROWS.pellets}) {
     // The pellets' eaters ride along in the row of the deaths by antibiotic.
     uint eaters = 0u;
+    uvec4 byColony = uvec4(0u);
     if (at.x < uPelletCount) {
       ivec2 pellet = ivec2(uPellets[at.x].xy);
       for (int dy = -uPelletRadius; dy <= uPelletRadius; dy++) {
         for (int dx = -uPelletRadius; dx <= uPelletRadius; dx++) {
-          eaters += stateAt(pellet + ivec2(dx, dy)).r != 0u ? 1u : 0u;
+          uint owner = stateAt(pellet + ivec2(dx, dy)).r;
+          if (owner != 0u) {
+            eaters++;
+            byColony[int(owner) - 1]++;
+          }
         }
       }
     }
     sums.x = eaters;
+    sums.z = byColony.x | (byColony.y << 16u);
+    sums.w = byColony.z | (byColony.w << 16u);
   }
   outValue = sums;
 }`;

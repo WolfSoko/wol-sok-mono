@@ -367,6 +367,22 @@ export const LEVELS: readonly Level[] = [
     },
     crosshairSpeed: 190,
   },
+  // A race to eat: the pellets decide, not the fight.
+  {
+    id: 'feeding-ground',
+    name: '19 · Feeding Ground',
+    description:
+      'Food everywhere and colonies too sluggish to fight. The first to eat up 40 pellets wins - a pellet goes to whoever ate the most of it.',
+    mapId: 'inner-ring',
+    medal: { silverSec: 65, goldSec: 50, goldLossShare: 0.3 },
+    win: { kind: 'harvest', pellets: 40 },
+    balance: {
+      aggression: 0.3,
+      nutrientCount: 12,
+      nutrientRespawnDelaySec: 1.5,
+    },
+    crosshairSpeed: 200,
+  },
 ];
 
 /** True for the id of a hand-made level - one of the campaign's ladder. */

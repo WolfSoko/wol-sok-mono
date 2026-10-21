@@ -17,6 +17,8 @@ export class NutrientPellets {
    */
   public readonly generations: number[] = [];
   private timers: number[] = [];
+  /** What each colony took of each pellet since it was placed, by slot. */
+  private bites: number[][] = [];
   private width = 0;
   private height = 0;
   private isFree: (x: number, y: number) => boolean = () => true;
@@ -41,6 +43,7 @@ export class NutrientPellets {
     this.isFree = isFree;
     this.nutrients = [];
     this.timers = [];
+    this.bites = [];
     if (width === 0 || height === 0) {
       return;
     }
@@ -69,21 +72,36 @@ export class NutrientPellets {
   }
 
   /**
-   * Takes what `eaters` bacteria sucked out of a pellet. True when that ate
-   * it up - its respawn delay starts then.
+   * Takes what the bacteria within reach sucked out of a pellet - `eaters`
+   * holds how many of them each colony has, by slot. Null while the pellet
+   * lasts; once this ate it up - its respawn delay starts then - who ate it:
+   * the slot of the colony that took the most of it all along, null when
+   * two took as much.
    */
-  public drain(n: number, eaters: number, gain: number): boolean {
+  public drain(
+    n: number,
+    eaters: ArrayLike<number>,
+    gain: number
+  ): { by: number | null } | null {
     const nutrient = this.nutrients[n];
-    if (eaters <= 0 || nutrient.amount <= 0) {
-      return false;
+    let total = 0;
+    for (let slot = 0; slot < eaters.length; slot++) {
+      total += eaters[slot];
     }
-    nutrient.amount -= eaters * gain;
+    if (total <= 0 || nutrient.amount <= 0) {
+      return null;
+    }
+    const bites = (this.bites[n] ??= []);
+    for (let slot = 0; slot < eaters.length; slot++) {
+      bites[slot] = (bites[slot] ?? 0) + eaters[slot] * gain;
+    }
+    nutrient.amount -= total * gain;
     if (nutrient.amount > 0) {
-      return false;
+      return null;
     }
     nutrient.amount = 0;
     this.timers[n] = this.balance.nutrientRespawnDelaySec;
-    return true;
+    return { by: biggestBite(bites) };
   }
 
   private spawnPair(first: number): void {
@@ -101,6 +119,7 @@ export class NutrientPellets {
   private place(n: number, nutrient: Nutrient): void {
     this.nutrients[n] = nutrient;
     this.timers[n] = 0;
+    this.bites[n] = [];
     this.generations[n]++;
   }
 
@@ -120,4 +139,19 @@ export class NutrientPellets {
     }
     return { x: margin, y: margin };
   }
+}
+
+/** The slot that took the most - null when two took as much. */
+function biggestBite(bites: readonly number[]): number | null {
+  let by: number | null = null;
+  let most = 0;
+  bites.forEach((bite, slot) => {
+    if (bite > most) {
+      by = slot;
+      most = bite;
+    } else if (bite === most) {
+      by = null;
+    }
+  });
+  return by;
 }

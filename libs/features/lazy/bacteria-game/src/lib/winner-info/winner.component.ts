@@ -329,6 +329,9 @@ export class WinnerComponent {
     if (this.state.endedBy() === 'hold' && player != null) {
       return this.zoneHeld(player);
     }
+    if (this.state.endedBy() === 'harvest' && player != null) {
+      return this.harvested(player);
+    }
     if (
       this.level().boss !== undefined &&
       !this.againstGhost() &&
@@ -384,6 +387,21 @@ export class WinnerComponent {
     return this.mode() === 'vs-computer'
       ? 'You held the zone - you win!'
       : `${player.name} held the zone and wins!`;
+  }
+
+  /** The headline of a match a harvest ended: the colony that ate enough. */
+  private harvested(player: Player): string {
+    if (this.againstGhost()) {
+      return player.isBot
+        ? 'The ghost ate its fill first!'
+        : 'You ate your fill first - and beat the ghost!';
+    }
+    if (player.isBot) {
+      return 'The computer ate its fill first - it wins!';
+    }
+    return this.mode() === 'vs-computer'
+      ? 'You ate your fill first - you win!'
+      : `${player.name} ate its fill first and wins!`;
   }
 
   /** The headline of a match the clock ended: the bigger colony won. */

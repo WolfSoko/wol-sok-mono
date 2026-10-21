@@ -59,8 +59,8 @@ export interface ColonyReport {
 /** Everything the CPU learns from one read back of the report. */
 export interface Report {
   colonies: ColonyReport[];
-  /** Bacteria within reach of each pellet. */
-  eaters: number[];
+  /** Bacteria within reach of each pellet, per colony slot. */
+  eaters: number[][];
   /** Bacteria per colony per coarse cell, for the nearest enemy. */
   blockCounts: Uint32Array[];
   /** Bacteria an antibiotic killed since the match started, all colonies. */
@@ -139,9 +139,16 @@ export function decodeReport(
     });
   }
 
-  const eaters: number[] = [];
+  const eaters: number[][] = [];
   for (let i = 0; i < MAX_PELLETS; i++) {
-    eaters.push(data[texel(i, pelletRow)]);
+    const at = texel(i, pelletRow);
+    // Two colonies per channel, 16 bits each.
+    const packed = [data[at + 2], data[at + 3]];
+    const byColony: number[] = [];
+    for (let slot = 0; slot < colonies; slot++) {
+      byColony.push((packed[slot >> 1] >>> ((slot & 1) * 16)) & 0xffff);
+    }
+    eaters.push(byColony);
   }
   let poisoned = 0;
   for (let bx = 0; bx < blocksX; bx++) {

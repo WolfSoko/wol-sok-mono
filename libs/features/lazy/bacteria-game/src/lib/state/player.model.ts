@@ -40,6 +40,8 @@ export interface Player {
   averageEnergy: number;
   /** Ticks the colony held the hold zone - see `WinRule`. */
   holdTicks: number;
+  /** Pellets the colony ate up - see `WinRule`'s harvest. */
+  pellets: number;
   /** The cooldown the last boost started - a boss's is shorter. */
   boostCooldownFullSec: number;
 }
@@ -81,6 +83,7 @@ export function createPlayer(params: Partial<Player>): Player {
     lowestSizeRatio: 1,
     averageEnergy: 1,
     holdTicks: 0,
+    pellets: 0,
     boostCooldownFullSec: 0,
     ...params,
   } as Player;
