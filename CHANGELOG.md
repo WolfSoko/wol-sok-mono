@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.40.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.39.0...v74.40.0) (2026-10-21)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ big maps with a camera, and the Expanse level ([#2524](https://github.com/WolfSoko/wol-sok-mono/issues/2524)) ([5c818ed](https://github.com/WolfSoko/wol-sok-mono/commit/5c818edd9b6ed4d468df47cec0af6f909d24c35f))
+
 ## [74.39.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.38.0...v74.39.0) (2026-10-21)
 
 ### Features
