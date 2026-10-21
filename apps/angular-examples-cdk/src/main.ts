@@ -7,7 +7,10 @@ import { AngularExamplesStack } from './stacks/angular-examples.stack';
 // The CDK executors run from the workspace root.
 const { version } = JSON.parse(
   readFileSync(join(process.cwd(), 'version.json'), 'utf8')
-) as { version: string };
+) as { version?: unknown };
+if (typeof version !== 'string') {
+  throw new Error('version.json has no string "version"');
+}
 
 const app = new App();
 
