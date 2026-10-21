@@ -68,19 +68,34 @@ export interface DynamicWall extends Rect {
  * round wall its centre also lies in the ellipse.
  */
 export function coversCell(rect: Rect, x: number, y: number): boolean {
+  return (
+    x >= rect.x &&
+    y >= rect.y &&
+    x < rect.x + rect.width &&
+    y < rect.y + rect.height &&
+    coversPoint(rect, x + 0.5, y + 0.5)
+  );
+}
+
+/**
+ * True when the wall covers a point of the arena - the rect, or for a round
+ * wall the ellipse in it. The cell test asks it for the cell's centre, the
+ * zones' fine layer for points between the cells.
+ */
+export function coversPoint(rect: Rect, x: number, y: number): boolean {
   if (
     x < rect.x ||
     y < rect.y ||
-    x >= rect.x + rect.width ||
-    y >= rect.y + rect.height
+    x > rect.x + rect.width ||
+    y > rect.y + rect.height
   ) {
     return false;
   }
   if (!rect.round) {
     return true;
   }
-  const dx = (x + 0.5 - rect.x - rect.width / 2) / (rect.width / 2);
-  const dy = (y + 0.5 - rect.y - rect.height / 2) / (rect.height / 2);
+  const dx = (x - rect.x - rect.width / 2) / (rect.width / 2);
+  const dy = (y - rect.y - rect.height / 2) / (rect.height / 2);
   return dx * dx + dy * dy <= 1;
 }
 

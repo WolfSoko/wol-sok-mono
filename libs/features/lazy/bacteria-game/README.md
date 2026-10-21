@@ -298,7 +298,7 @@ one kind:
 
 - **Antibiotic** (violet) drains 0.5 energy a second and stops regeneration -
   a bacterium that lingers dies, lost without anybody capturing it.
-- **Agar** (golden) doubles the chance to divide.
+- **Agar** (green) doubles the chance to divide.
 - **Ice** (pale blue) gives a bacterium a 50 % chance to sit each movement
   step out.
 - **Hold zone** (white) does nothing to the bacteria - it is the ground a
@@ -307,9 +307,15 @@ one kind:
   the crosshair keeps a pull.
 
 The CPU simulation keeps a zone code per cell; the GPU one keeps it above
-the wall bit of its wall mask, so no texture is added. Both painters tint
-the ground in the zone's colour with a rim around it, under the walls, and
-_How to play_ lists the four. _Containment_, the second level of the Reactor
+the wall bit of its wall mask, so no texture is added. A level lays its
+zones out as puddles - overlapping round blobs (`puddle`) - not boxes. The
+painters show them as a layer of their own over the floor
+([`zone-decal.ts`](./src/lib/arena/zone-decal.ts)), painted once per level
+as fine as the canvas shows it and softened by a pixel, so the edges are
+smooth: each zone tinted in its colour with a bright rim, and strewn with
+what tells it apart at a glance - pills on antibiotic, bubbles of food on
+agar, crystals on ice, flames on heat, flags on the zone to hold.
+_How to play_ lists them. _Containment_, the second level of the Reactor
 chapter, has all of them.
 
 ## Boost

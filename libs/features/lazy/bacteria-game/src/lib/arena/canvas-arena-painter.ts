@@ -1,3 +1,4 @@
+import { Zone } from '../state/zones';
 import {
   ArenaFrame,
   ArenaPainter,
@@ -28,7 +29,7 @@ export class CanvasArenaPainter implements ArenaPainter {
     scale: number
   ) {
     this.unit = scaleOf(width);
-    this.arena = new ArenaRenderer(width, height);
+    this.arena = new ArenaRenderer(width, height, Math.random, scale);
     this.colonies = new ColonyRenderer(width, height);
     // Everything is drawn in arena cells; the transform scales it up.
     cx.setTransform(scale, 0, 0, scale, 0, 0);
@@ -39,8 +40,8 @@ export class CanvasArenaPainter implements ArenaPainter {
     // Nothing but the context, which goes with its canvas.
   }
 
-  public setTheme(theme: ArenaTheme): void {
-    this.arena.setTheme(theme);
+  public setFloor(theme: ArenaTheme, zones: readonly Zone[]): void {
+    this.arena.setFloor(theme, zones);
   }
 
   public showLastFrame(): void {
@@ -52,7 +53,6 @@ export class CanvasArenaPainter implements ArenaPainter {
     // Lay the floor over the previous frame, so movement leaves a short trail.
     this.arena.drawFloor(cx, frame.clear);
     this.arena.drawMotes(cx, frame.deltaTimeSec);
-    this.arena.drawZones(cx, frame.zones);
     this.arena.drawWalls(cx, frame.walls);
     this.arena.drawDynamicWalls(cx, frame.dynamicWalls);
 

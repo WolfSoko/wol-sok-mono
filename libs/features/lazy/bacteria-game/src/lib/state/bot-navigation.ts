@@ -10,7 +10,14 @@
 import { BASE_ARENA } from './arena-size';
 import { clamp, distance, Point } from './geometry';
 import { Rect, stampRect } from './maps';
-import { stampZones, Zone, ZONE_CODE, ZONE_EFFECTS, ZoneKind } from './zones';
+import {
+  kindOfCode,
+  stampZones,
+  Zone,
+  ZONE_CODE,
+  ZONE_EFFECTS,
+  ZoneKind,
+} from './zones';
 
 /** Cells of the base arena per side of a grid cell. */
 export const NAV_CELL = 4;
@@ -27,13 +34,13 @@ const ZONE_COST: Readonly<Record<ZoneKind, number>> = {
 };
 
 /** {@link ZONE_COST} by zone code, 1 for no zone. */
-const COST_BY_CODE: readonly number[] = (() => {
-  const costs = [1];
-  for (const [kind, code] of Object.entries(ZONE_CODE)) {
-    costs[code] = ZONE_COST[kind as ZoneKind];
+const COST_BY_CODE: readonly number[] = Array.from(
+  { length: Math.max(...Object.values(ZONE_CODE)) + 1 },
+  (_, code) => {
+    const kind = kindOfCode(code);
+    return kind === undefined ? 1 : ZONE_COST[kind];
   }
-  return costs;
-})();
+);
 
 /** A cell no colony gets through. */
 const BLOCKED = Number.POSITIVE_INFINITY;

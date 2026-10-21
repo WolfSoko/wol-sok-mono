@@ -4,6 +4,8 @@ import { Bacteria } from '../../state/player.model';
 import { CellBounds, emptyBounds, growBounds } from '../../state/geometry';
 import { ArenaFrame, ArenaPainter } from '../arena-painter';
 import { paintArenaBackground } from '../arena-renderer';
+import { paintZoneLayer } from '../zone-decal';
+import { Zone } from '../../state/zones';
 import { ArenaTheme } from '../arena-theme';
 import {
   cellDensity,
@@ -34,6 +36,7 @@ import {
   FLOOR_FRAGMENT,
   SHAPE_FRAGMENT,
   SHAPE_VERTEX,
+  ZONES_FRAGMENT,
 } from './shaders';
 import {
   pushBackground,
@@ -91,6 +94,7 @@ const MARGIN = {
 
 interface Programs {
   floor: Program;
+  zones: Program;
   blit: Program;
   blur: Program;
   colony: Program;
@@ -107,6 +111,8 @@ interface Resources {
   shapes: WebGLVertexArrayObject;
   instances: WebGLBuffer;
   floor: WebGLTexture;
+  /** The zones' layer, finer than the cells - null without zones. */
+  zones: WebGLTexture | null;
   /** One colony's cells - uploaded from the CPU, or drawn from the GPU state. */
   cells: Target;
   /** The two halves of the separable blur. */
@@ -135,6 +141,8 @@ export class GlArenaPainter implements ArenaPainter {
   /** True once the context was handed back - it is not built again then. */
   private disposed = false;
   private theme: ArenaTheme | null = null;
+  /** The zones painted into the floor. */
+  private zones: readonly Zone[] = [];
   private readonly motes: Motes;
   private readonly background = new ShapeBatch();
   private readonly foreground = new ShapeBatch();
@@ -198,6 +206,7 @@ export class GlArenaPainter implements ArenaPainter {
       if (this.theme != null) {
         this.uploadFloor(this.theme);
       }
+      this.uploadZones(this.zones);
     });
   }
 
@@ -225,13 +234,16 @@ export class GlArenaPainter implements ArenaPainter {
     this.gl.getExtension('WEBGL_lose_context')?.loseContext();
   }
 
-  public setTheme(theme: ArenaTheme): void {
-    if (this.theme === theme) {
-      return;
+  public setFloor(theme: ArenaTheme, zones: readonly Zone[]): void {
+    if (this.zones !== zones) {
+      this.zones = zones;
+      this.uploadZones(zones);
     }
-    this.theme = theme;
-    this.motes.reset(theme);
-    this.uploadFloor(theme);
+    if (this.theme !== theme) {
+      this.theme = theme;
+      this.motes.reset(theme);
+      this.uploadFloor(theme);
+    }
   }
 
   public paint(frame: ArenaFrame): void {
@@ -255,13 +267,21 @@ export class GlArenaPainter implements ArenaPainter {
     gl.uniform2f(programs.floor.uniforms['uArena'], this.width, this.height);
     gl.uniform1f(programs.floor.uniforms['uAlpha'], frame.clear ? 1 : 0.7);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (resources.zones != null) {
+      this.useFullscreen(programs.zones);
+      bindTexture(gl, 0, resources.zones, programs.zones.uniforms['uZones']);
+      gl.uniform2f(programs.zones.uniforms['uArena'], this.width, this.height);
+      gl.uniform1f(programs.zones.uniforms['uAlpha'], frame.clear ? 1 : 0.7);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      this.useAlphaBlend();
+    }
 
     this.background.clear();
     pushBackground(
       this.background,
       theme,
       this.motes,
-      frame.zones,
       frame.walls,
       frame.dynamicWalls
     );
@@ -563,6 +583,53 @@ export class GlArenaPainter implements ArenaPainter {
     this.gl.bindVertexArray(this.resources?.quad ?? null);
   }
 
+  /**
+   * Paints a level's zones once, as fine as the canvas shows them, and
+   * hands them to the GPU - smoothly sampled, for soft edges.
+   */
+  private uploadZones(zones: readonly Zone[]): void {
+    const gl = this.gl;
+    const resources = this.resources;
+    if (resources == null) {
+      return;
+    }
+    if (resources.zones != null) {
+      gl.deleteTexture(resources.zones);
+      resources.zones = null;
+    }
+    const layer = paintZoneLayer(
+      this.width,
+      this.height,
+      zones,
+      this.canvasWidth / this.width
+    );
+    if (layer === null) {
+      return;
+    }
+    resources.zones = createTexture(
+      gl,
+      gl.RGBA8,
+      layer.width,
+      layer.height,
+      gl.LINEAR
+    );
+    gl.bindTexture(gl.TEXTURE_2D, resources.zones);
+    // Premultiplied, so the smooth sampling of an edge never darkens it.
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    gl.texSubImage2D(
+      gl.TEXTURE_2D,
+      0,
+      0,
+      0,
+      layer.width,
+      layer.height,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      new Uint8Array(layer.data.buffer)
+    );
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+  }
+
   /** Paints a level's floor once and hands it to the GPU. */
   private uploadFloor(theme: ArenaTheme): void {
     const gl = this.gl;
@@ -603,6 +670,11 @@ export class GlArenaPainter implements ArenaPainter {
     const programs: Programs = {
       floor: createProgram(gl, FULLSCREEN_VERTEX, FLOOR_FRAGMENT, [
         'uFloor',
+        'uArena',
+        'uAlpha',
+      ]),
+      zones: createProgram(gl, FULLSCREEN_VERTEX, ZONES_FRAGMENT, [
+        'uZones',
         'uArena',
         'uAlpha',
       ]),
@@ -676,7 +748,17 @@ export class GlArenaPainter implements ArenaPainter {
     ];
     const trail = this.target(this.canvasWidth, this.canvasHeight, gl.NEAREST);
 
-    return { programs, quad, shapes, instances, floor, cells, blur, trail };
+    return {
+      programs,
+      quad,
+      shapes,
+      instances,
+      floor,
+      zones: null,
+      cells,
+      blur,
+      trail,
+    };
   }
 
   /** A target to render into, cleared to black. */

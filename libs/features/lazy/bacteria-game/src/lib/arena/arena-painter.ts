@@ -24,7 +24,6 @@ export interface ArenaFrame {
   deltaTimeSec: number;
   /** Seconds of animation - the jam wobble and the boost shimmer. */
   timeSec: number;
-  zones: readonly Zone[];
   walls: readonly Rect[];
   dynamicWalls: readonly DynamicWall[];
   colonies: readonly ColonyLayer[];
@@ -42,8 +41,11 @@ export interface ArenaFrame {
  */
 export interface ArenaPainter {
   readonly kind: 'webgl' | 'canvas';
-  /** Switches to another level's look. */
-  setTheme(theme: ArenaTheme): void;
+  /**
+   * Lays another level's floor: its look, and its zones painted into it -
+   * they never move, so they are not drawn again every frame.
+   */
+  setFloor(theme: ArenaTheme, zones: readonly Zone[]): void;
   paint(frame: ArenaFrame): void;
   /**
    * Puts the last painted frame on the canvas again. A WebGL canvas lets go

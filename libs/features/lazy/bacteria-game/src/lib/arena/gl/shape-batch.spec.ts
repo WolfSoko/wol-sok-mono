@@ -82,7 +82,6 @@ describe('pushBackground', () => {
       batch,
       theme,
       motes,
-      [],
       [{ x: 0, y: 0, width: 8, height: 20 }],
       [
         { x: 10, y: 10, width: 8, height: 20, solid: true, warning: 0 },
@@ -105,33 +104,9 @@ describe('pushBackground', () => {
     const motes = new Motes(320, 140);
     motes.reset(theme);
 
-    pushBackground(batch, theme, motes, [], [], []);
+    pushBackground(batch, theme, motes, [], []);
 
     expect(batch.count).toBe(theme.moteCount);
-  });
-
-  it('tints a zone and rims it - a disc with a ring', () => {
-    const batch = new ShapeBatch();
-    const motes = new Motes(320, 140);
-
-    pushBackground(
-      batch,
-      theme,
-      motes,
-      [
-        { kind: 'ice', x: 0, y: 0, width: 20, height: 10 },
-        { kind: 'agar', x: 40, y: 40, width: 16, height: 16, round: true },
-      ],
-      [],
-      []
-    );
-
-    expect(kinds(batch)).toEqual([
-      SHAPE.rect,
-      SHAPE.outline,
-      SHAPE.disc,
-      SHAPE.ring,
-    ]);
   });
 });
 

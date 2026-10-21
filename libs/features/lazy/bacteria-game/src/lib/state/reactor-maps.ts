@@ -6,7 +6,7 @@
 
 import { GameMap, pointSymmetric, Rect } from './maps';
 import { blob } from './shapes';
-import { Zone, ZoneKind } from './zones';
+import { puddle, Zone, ZoneKind } from './zones';
 
 /** A round zone around a point - see {@link blob}. */
 function disc(kind: ZoneKind, x: number, y: number, radius: number): Zone {
@@ -77,24 +77,41 @@ const containment: GameMap = {
     );
   },
   createZones(width, height) {
+    // Puddles, not boxes - mirrored, like everything else.
     return pointSymmetric(
       [
-        disc('agar', width / 2, height / 2, height * 0.16),
-        {
-          kind: 'antibiotic',
-          x: Math.round(width * 0.18),
-          y: 0,
-          width: Math.round(width * 0.2),
-          height: Math.round(height * 0.14),
-        },
-        {
-          kind: 'ice',
-          x: Math.round(width * 0.04),
-          y: Math.round(height * 0.3),
-          width: Math.round(width * 0.08),
-          height: Math.round(height * 0.4),
-        },
-        disc('heat', width * 0.4, height * 0.72, height * 0.09),
+        ...puddle(
+          'agar',
+          width / 2,
+          height / 2,
+          height * 0.17,
+          height * 0.15,
+          1
+        ),
+        ...puddle(
+          'antibiotic',
+          width * 0.28,
+          height * 0.07,
+          width * 0.11,
+          height * 0.09,
+          2
+        ),
+        ...puddle(
+          'ice',
+          width * 0.08,
+          height * 0.5,
+          width * 0.05,
+          height * 0.21,
+          3
+        ),
+        ...puddle(
+          'heat',
+          width * 0.4,
+          height * 0.72,
+          height * 0.09,
+          height * 0.08,
+          4
+        ),
       ],
       width,
       height
@@ -169,7 +186,11 @@ const meltdown: GameMap = {
     );
   },
   createZones(width, height) {
-    return [disc('heat', width / 2, height / 2, height * 0.2)];
+    return pointSymmetric(
+      puddle('heat', width / 2, height / 2, height * 0.2, height * 0.19, 5),
+      width,
+      height
+    );
   },
 };
 

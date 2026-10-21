@@ -264,6 +264,23 @@ void main() {
   outColor = vec4(color, 1.0);
 }`;
 
+/**
+ * The zones' layer over the floor - finer than the cells, and sampled
+ * smoothly, so their edges are soft.
+ */
+export const ZONES_FRAGMENT = `#version 300 es
+precision highp float;
+in vec2 vNdc;
+uniform sampler2D uZones;
+uniform vec2 uArena;
+uniform float uAlpha;
+out vec4 outColor;
+${ARENA_POSITION}
+void main() {
+  // Premultiplied: the colour fades with the alpha.
+  outColor = texture(uZones, arenaPosition(vNdc, uArena) / uArena) * uAlpha;
+}`;
+
 /** One instance per shape, its rect in arena cells - see `SHAPE`. */
 export const SHAPE_VERTEX = `#version 300 es
 layout(location = 0) in vec2 aCorner;

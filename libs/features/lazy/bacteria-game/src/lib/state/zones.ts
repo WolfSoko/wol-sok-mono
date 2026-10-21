@@ -1,4 +1,6 @@
+import { seeded } from './geometry';
 import { GameMap, Rect, stampRect } from './maps';
+import { blob } from './shapes';
 
 /**
  * The kinds of ground a level can lay out besides walls:
@@ -53,6 +55,19 @@ export const ZONE_CODE: Readonly<Record<ZoneKind, number>> = {
   hill: 5,
 };
 
+/** The kind a code in a zone grid stands for, undefined for none. */
+export function kindOfCode(code: number): ZoneKind | undefined {
+  return KINDS_BY_CODE[code];
+}
+
+const KINDS_BY_CODE: readonly (ZoneKind | undefined)[] = (() => {
+  const kinds: (ZoneKind | undefined)[] = [];
+  for (const [kind, code] of Object.entries(ZONE_CODE)) {
+    kinds[code] = kind as ZoneKind;
+  }
+  return kinds;
+})();
+
 /**
  * Lays the zones into a grid of zone codes, one per cell, shifted left by
  * `shift` bits - a later zone covers an earlier one where they overlap.
@@ -81,4 +96,47 @@ export function heatedAggression(aggression: number): number {
     aggression,
     Math.min(heatMaxAggression, aggression + heatAggression)
   );
+}
+
+/**
+ * An organic stretch of ground: overlapping round blobs filling an ellipse
+ * of radii `rx` and `ry` round a centre, each a little off its place and
+ * its size - from a fixed seed, so a level always looks the same.
+ */
+export function puddle(
+  kind: ZoneKind,
+  centreX: number,
+  centreY: number,
+  rx: number,
+  ry: number,
+  seed: number
+): Zone[] {
+  const random = seeded(seed);
+  const size = Math.max(3, Math.min(rx, ry) * 0.7);
+  const step = size * 0.75;
+  // A lattice centred on the centre, so the puddle sits where it is put.
+  const across = Math.floor(Math.max(0, 2 * rx - size) / step);
+  const down = Math.floor(Math.max(0, 2 * ry - size) / step);
+  const zones: Zone[] = [];
+  for (let row = 0; row <= down; row++) {
+    const y = (row - down / 2) * step;
+    for (let column = 0; column <= across; column++) {
+      const x = (column - across / 2) * step;
+      // Only the blobs inside the ellipse, so the outline stays round.
+      if ((x / rx) ** 2 + (y / ry) ** 2 > 1) {
+        continue;
+      }
+      const jitter = size * 0.25;
+      const radius = size * (0.55 + 0.25 * random());
+      zones.push({
+        ...blob(
+          centreX + x + (random() - 0.5) * 2 * jitter,
+          centreY + y + (random() - 0.5) * 2 * jitter,
+          radius
+        ),
+        kind,
+      });
+    }
+  }
+  return zones;
 }

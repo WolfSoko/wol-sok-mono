@@ -4,7 +4,7 @@ import { ArenaPattern, ArenaTheme, Rgb } from './arena-theme';
 import { createCanvas, hash, lerp, mix, rgba, smoothstep } from './canvas-math';
 import { darker } from './colony-renderer';
 import { Zone } from '../state/zones';
-import { ZONE_CSS } from './zone-look';
+import { paintZoneLayer } from './zone-decal';
 
 /**
  * Paints the floor of an arena into an RGBA pixel buffer: the theme's floor
@@ -77,6 +77,10 @@ export function paintArenaBackground(
 export class ArenaRenderer {
   private theme: ArenaTheme | null = null;
   private floor: HTMLCanvasElement | null = null;
+  /** The zones the floor was laid with. */
+  private zones: readonly Zone[] = [];
+  /** The zones as a layer over the floor, finer than the cells. */
+  private zoneLayer: HTMLCanvasElement | null = null;
   /** Diagonal hazard stripes for the closed gates and sliding walls. */
   private hazard: CanvasPattern | null = null;
   /** The theme's colours as CSS, built once instead of every frame. */
@@ -86,13 +90,19 @@ export class ArenaRenderer {
   public constructor(
     private readonly width: number,
     private readonly height: number,
-    random: () => number = Math.random
+    random: () => number = Math.random,
+    /** Screen pixels per arena cell - the zones are drawn that fine. */
+    private readonly scale = 1
   ) {
     this.motes = new Motes(width, height, random);
   }
 
   /** Switches to another level's look, repainting its floor. */
-  public setTheme(theme: ArenaTheme): void {
+  public setFloor(theme: ArenaTheme, zones: readonly Zone[]): void {
+    if (this.zones !== zones) {
+      this.zones = zones;
+      this.zoneLayer = this.paintZones(zones);
+    }
     if (this.theme === theme) {
       return;
     }
@@ -120,39 +130,14 @@ export class ArenaRenderer {
       cx.fillStyle = rgba(this.theme?.floor ?? [0, 0, 0]);
       cx.fillRect(0, 0, this.width, this.height);
     }
-    cx.globalAlpha = 1;
-  }
-
-  /** Tints the zones' ground in their colour, with a rim around each. */
-  public drawZones(cx: CanvasRenderingContext2D, zones: readonly Zone[]): void {
-    cx.lineWidth = 1;
-    for (const zone of zones) {
-      const css = ZONE_CSS[zone.kind];
-      cx.fillStyle = css.fill;
-      cx.strokeStyle = css.edge;
-      if (zone.round) {
-        cx.beginPath();
-        cx.ellipse(
-          zone.x + zone.width / 2,
-          zone.y + zone.height / 2,
-          zone.width / 2,
-          zone.height / 2,
-          0,
-          0,
-          2 * Math.PI
-        );
-        cx.fill();
-        cx.stroke();
-        continue;
-      }
-      cx.fillRect(zone.x, zone.y, zone.width, zone.height);
-      cx.strokeRect(
-        zone.x + 0.5,
-        zone.y + 0.5,
-        zone.width - 1,
-        zone.height - 1
-      );
+    if (this.zoneLayer != null) {
+      // Finer than the cells, and smoothed: soft edges, not steps.
+      const smoothing = cx.imageSmoothingEnabled;
+      cx.imageSmoothingEnabled = true;
+      cx.drawImage(this.zoneLayer, 0, 0, this.width, this.height);
+      cx.imageSmoothingEnabled = smoothing;
     }
+    cx.globalAlpha = 1;
   }
 
   /**
@@ -291,15 +276,28 @@ export class ArenaRenderer {
 
   /** The floor in an offscreen canvas, or null where there is no canvas. */
   private paintFloor(theme: ArenaTheme): HTMLCanvasElement | null {
-    const canvas = createCanvas(this.width, this.height);
-    const context = canvas?.getContext?.('2d');
-    if (canvas == null || context == null) {
+    return imageCanvas(
+      paintArenaBackground(
+        new Uint8ClampedArray(this.width * this.height * 4),
+        this.width,
+        this.height,
+        theme
+      ),
+      this.width,
+      this.height
+    );
+  }
+
+  /** The zone layer in an offscreen canvas - null without zones or a canvas. */
+  private paintZones(zones: readonly Zone[]): HTMLCanvasElement | null {
+    // No canvas, no layer - not worth painting it then.
+    if (createCanvas(1, 1) == null) {
       return null;
     }
-    const image = context.createImageData(this.width, this.height);
-    paintArenaBackground(image.data, this.width, this.height, theme);
-    context.putImageData(image, 0, 0);
-    return canvas;
+    const layer = paintZoneLayer(this.width, this.height, zones, this.scale);
+    return layer === null
+      ? null
+      : imageCanvas(layer.data, layer.width, layer.height);
   }
 }
 
@@ -501,4 +499,21 @@ function valueNoise(x: number, y: number, seed: number): number {
   const top = lerp(hash(ix, iy, seed), hash(ix + 1, iy, seed), sx);
   const bottom = lerp(hash(ix, iy + 1, seed), hash(ix + 1, iy + 1, seed), sx);
   return lerp(top, bottom, sy);
+}
+
+/** RGBA pixels in an offscreen canvas, or null where there is no canvas. */
+function imageCanvas(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number
+): HTMLCanvasElement | null {
+  const canvas = createCanvas(width, height);
+  const context = canvas?.getContext?.('2d');
+  if (canvas == null || context == null) {
+    return null;
+  }
+  const image = context.createImageData(width, height);
+  image.data.set(data);
+  context.putImageData(image, 0, 0);
+  return canvas;
 }
