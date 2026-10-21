@@ -11,6 +11,21 @@ Features are:
 - Redirect from HTTP to HTTPS with an ACM certificate.
 - Route53 alias record creation,
 
+## Usage
+
+`SpaStack` is a stack holding one `SpaConstruct`. Use it as is, or extend it and
+call `this.spa.addExtraAssets(...)` to deploy further files with their own cache
+headers:
+
+```ts
+new SpaStack(app, 'MyApp', {
+  env: { region: 'us-east-1', account: '123456789012' },
+  buildOutputPath: 'dist/apps/my-app',
+  domainName: 'my-app.example.com',
+  noCacheFiles: ['remoteEntry.json'],
+});
+```
+
 ## Building
 
 ## Running unit tests
