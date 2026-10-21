@@ -1,0 +1,57 @@
+is the new verision deployed on npm
+
+---
+
+yes
+
+---
+
+<task-notification>
+<task-id>bt4pzi8c7</task-id>
+<summary>Monitor event: "PR #2519 CI checks and new review comments"</summary>
+<event>check Analyze (javascript): pass
+check CodeQL: pass
+check CodeRabbit: pass
+check Self-Healing: skipping</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bt4pzi8c7</task-id>
+<summary>Monitor event: "PR #2519 CI checks and new review comments"</summary>
+<event>6312765927 comment by coderabbitai[bot]
+6312766213 comment by chatgpt-codex-connector[bot]
+6312767086 comment by chatgpt-codex-connector[bot]
+6312771683 comment by coderabbitai[bot]
+6312820188 comment by nx-cloud[bot]</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bt4pzi8c7</task-id>
+<summary>Monitor event: "PR #2519 CI checks and new review comments"</summary>
+<event>check Self-Healing: skipping
+check main: pass
+check trigger-release: skipping</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bt4pzi8c7</task-id>
+<tool-use-id>toolu_01J7KKriLNozXu8bn1tvP5ZM</tool-use-id>
+<output-file>C:\Users\Wolfr\AppData\Local\Temp\claude\E--\538c2ac8-45b8-5bc5-9134-de50d46f4299\tasks\bt4pzi8c7.output</output-file>
+<status>completed</status>
+<summary>Monitor "PR #2519 CI checks and new review comments" stream ended</summary>
+<event>ALL CHECKS DONE</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+---
+
+allow to merge
