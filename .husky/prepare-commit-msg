@@ -1,0 +1,3 @@
+# Skip when Entire's own wrapper sits in .husky/_ (it reinstalls itself), so Entire runs once.
+if grep -qs '# Entire CLI hooks' "$(dirname "$0")/_/prepare-commit-msg"; then :;
+elif command -v entire >/dev/null 2>&1; then entire hooks git prepare-commit-msg "$1" "$2" 2>/dev/null || true; fi
