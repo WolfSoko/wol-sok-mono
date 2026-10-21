@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.42.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.41.1...v74.42.0) (2026-10-21)
+
+### Features
+
+* **feat-lazy-bacteria-game:** neutral colonies wander, hunt the small and flee the big ([#2529](https://github.com/WolfSoko/wol-sok-mono/issues/2529)) ([d1fcea8](https://github.com/WolfSoko/wol-sok-mono/commit/d1fcea881f3e69ce24f7ded71bf9198d381ca8b4))
+
 ## [74.41.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.41.0...v74.41.1) (2026-10-21)
 
 ### Bug Fixes
