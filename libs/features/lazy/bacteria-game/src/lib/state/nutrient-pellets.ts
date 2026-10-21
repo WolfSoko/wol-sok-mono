@@ -93,8 +93,10 @@ export class NutrientPellets {
       return null;
     }
     const bites = (this.bites[n] ??= []);
+    // The last bite takes no more than is left - each colony its share.
+    const share = Math.min(1, nutrient.amount / (total * gain));
     for (let slot = 0; slot < eaters.length; slot++) {
-      bites[slot] = (bites[slot] ?? 0) + eaters[slot] * gain;
+      bites[slot] = (bites[slot] ?? 0) + eaters[slot] * gain * share;
     }
     nutrient.amount -= total * gain;
     if (nutrient.amount > 0) {

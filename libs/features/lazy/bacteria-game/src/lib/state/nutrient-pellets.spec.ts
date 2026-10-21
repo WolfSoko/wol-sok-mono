@@ -58,6 +58,16 @@ describe('NutrientPellets', () => {
     expect(field.drain(0, [1, 1], quarter)).toEqual({ by: 1 });
   });
 
+  it('counts a last bite only for what was left of the pellet', () => {
+    const field = pellets();
+    const energy = gameBalance.nutrientEnergy;
+
+    // The first colony takes all but a sliver; the last bite of the second
+    // would be a whole pellet, but only the sliver is left.
+    expect(field.drain(0, [1, 0], energy * 0.9)).toBeNull();
+    expect(field.drain(0, [0, 1], energy)).toEqual({ by: 0 });
+  });
+
   it('gives a pellet to nobody when two colonies took as much of it', () => {
     const field = pellets();
 
