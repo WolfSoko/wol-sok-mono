@@ -240,6 +240,7 @@ export class GameStateService {
         );
       }
       case 'vs-computer': {
+        const level = getLevel(levelId);
         const record = matchRecord(untracked(this.playerStore.entities), {
           levelId,
           difficulty,
@@ -248,10 +249,7 @@ export class GameStateService {
           winner,
           // The cap the simulation holds each of the two colonies to.
           capacity: colonyCapacity(
-            levelBalance(
-              getLevel(levelId),
-              gridScale(getLevel(levelId), width)
-            ),
+            levelBalance(level, gridScale(level, width)),
             2
           ),
         });

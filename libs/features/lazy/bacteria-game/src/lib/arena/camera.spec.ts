@@ -63,9 +63,29 @@ describe('Camera', () => {
 
   it('goes back to the whole arena without a target, and on a reset', () => {
     const camera = new Camera(WIDTH, HEIGHT, 2);
+    for (let i = 0; i < 200; i++) {
+      camera.follow({ x: 100, y: 100 }, 0.05);
+    }
+    for (let i = 0; i < 200; i++) {
+      camera.follow(null, 0.05);
+    }
+    expect(camera.view.x).toBeCloseTo(320);
+    expect(camera.view.y).toBeCloseTo(180);
+    expect(camera.view.zoom).toBeCloseTo(1);
+
     camera.follow({ x: 100, y: 100 }, 1);
     camera.reset();
-
     expect(camera.view).toEqual({ x: 320, y: 180, zoom: 1 });
+  });
+
+  it('tells when it has arrived, and nothing is left to ease', () => {
+    const camera = new Camera(WIDTH, HEIGHT, 2);
+    expect(camera.settledOn(null)).toBe(true);
+    expect(camera.settledOn({ x: 100, y: 100 })).toBe(false);
+
+    for (let i = 0; i < 200; i++) {
+      camera.follow({ x: 100, y: 100 }, 0.05);
+    }
+    expect(camera.settledOn({ x: 100, y: 100 })).toBe(true);
   });
 });

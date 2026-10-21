@@ -3,8 +3,8 @@
  * laid out on that bigger base. The camera follows the colony across them.
  */
 
-import { seeded } from './geometry';
-import { GameMap, pointSymmetric } from './maps';
+import { distance, seeded } from './geometry';
+import { GameMap, pointSymmetric, rectCenter } from './maps';
 import { hexLattice } from './shapes';
 
 /** Where Expanse keeps room for its neutral colonies, as shares. */
@@ -33,10 +33,10 @@ const expanse: GameMap = {
     }).filter((rock) =>
       EXPANSE_NEUTRALS.every(
         (spot) =>
-          Math.hypot(
-            rock.x + rock.width / 2 - spot.x * width,
-            rock.y + rock.height / 2 - spot.y * height
-          ) >
+          distance(rectCenter(rock), {
+            x: spot.x * width,
+            y: spot.y * height,
+          }) >
           clearing + rock.width / 2
       )
     );

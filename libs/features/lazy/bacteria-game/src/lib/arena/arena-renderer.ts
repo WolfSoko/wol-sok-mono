@@ -1,4 +1,3 @@
-import { scaleOf } from '../state/arena-size';
 import { Motes } from './motes';
 import { DynamicWall, Rect } from '../state/maps';
 import { ArenaPattern, ArenaTheme, Rgb } from './arena-theme';
@@ -91,11 +90,11 @@ export class ArenaRenderer {
   public constructor(
     private readonly width: number,
     private readonly height: number,
-    random: () => number = Math.random,
+    random: () => number,
     /** Screen pixels per arena cell - the zones are drawn that fine. */
-    private readonly scale = 1,
+    private readonly scale: number,
     /** Cells per base cell - the zones' marks are as big on every grid. */
-    private readonly unit = scaleOf(width)
+    private readonly unit: number
   ) {
     this.motes = new Motes(width, height, random);
   }

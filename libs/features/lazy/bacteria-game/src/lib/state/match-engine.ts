@@ -578,7 +578,7 @@ export class MatchEngine {
           height,
           this.map.createWalls(width, height),
           mapZones(this.map, width, height),
-          scaleOf(width, this.map.size)
+          this.unitAt(width)
         ),
       };
     }
@@ -639,9 +639,9 @@ export class MatchEngine {
         this.balance.maxEnergy,
         this.hillAt(width, height),
         (from) => this.routesFrom(from, width, height),
+        this.unitAt(width),
         prey,
-        this.win.kind === 'harvest',
-        scaleOf(width, this.map.size)
+        this.win.kind === 'harvest'
       );
       const decision = bot.decide(view, TICK_SEC);
       if (decision.target != null) {
@@ -651,6 +651,11 @@ export class MatchEngine {
         this.fireBoost(playerId);
       }
     }
+  }
+
+  /** Arena cells per base cell on an arena that wide - the grid's resolution. */
+  private unitAt(width: number): number {
+    return scaleOf(width, this.map.size);
   }
 
   /**

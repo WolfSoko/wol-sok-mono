@@ -20,6 +20,7 @@ function view(overrides: Partial<BotView> = {}): BotView {
   return {
     width: WIDTH,
     height: HEIGHT,
+    unit: 1,
     own: colony(80, 70, 100),
     enemy: colony(240, 70, 100),
     nearestEnemy: { x: 200, y: 70 },

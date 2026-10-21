@@ -933,7 +933,12 @@ Phase 4 is done. Phase 5 has started with bigger maps (6.1): a map's
 factors apart, and a CSS camera over a canvas drawn whole follows the
 player's crosshair and zooms with the wheel (6.2, without the painter-side
 view and its level of detail). Expanse is the first big level. The
-minimap, activity tiles, pinch zoom, split screen and fog are next.
+minimap, activity tiles, pinch zoom, split screen and fog are next. The CSS
+camera draws the whole map every frame - size² the pixels of a base map,
+on a canvas capped at 4096 wide - so the painter-side view of 6.2, drawing
+only what the camera shows, is due before maps of size 3; and the CPU
+simulation on a big map at Ultra runs four times the cells of a base one,
+so a resolution cap on big maps (4 of 6.3) belongs with it.
 Phase 7 can be sprinkled in between the others; each of its items is a
 self-contained PR. Of the groundwork the phases assumed, three pieces have
 landed since the first version of this document: the seeded generator (for

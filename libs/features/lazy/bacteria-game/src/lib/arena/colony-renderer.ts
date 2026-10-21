@@ -1,5 +1,4 @@
 import { BacteriaLook } from '../settings.service';
-import { scaleOf } from '../state/arena-size';
 import { Nutrient } from '../state/bacteria-simulation';
 import { GameBalance, gameBalance } from '../state/game-balance';
 import { CellBounds, clamp, Point } from '../state/geometry';
@@ -380,7 +379,7 @@ export class ColonyRenderer {
     private readonly width: number,
     private readonly height: number,
     /** Cells per base cell - the boost's waves are as wide on every grid. */
-    private readonly unit = scaleOf(width)
+    private readonly unit: number
   ) {
     const cells = width * height;
     this.density = new Float32Array(cells);

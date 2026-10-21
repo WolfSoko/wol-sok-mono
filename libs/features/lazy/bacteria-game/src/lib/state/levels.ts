@@ -390,7 +390,7 @@ export const LEVELS: readonly Level[] = [
     id: 'expanse',
     name: '20 · Expanse',
     description:
-      'Four times the room, strewn with rocks, and two grey colonies to feed on. The camera follows you - zoom out with the wheel to find the enemy. Biggest colony after four minutes wins.',
+      'Four times the room, strewn with rocks, and two grey colonies to feed on. The camera follows you - zoom out with the mouse wheel to find the enemy. Biggest colony after four minutes wins.',
     mapId: 'expanse',
     // As the other timed level: silver and gold ask for a wipe-out first.
     medal: { silverSec: 160, goldSec: 105, goldLossShare: 1.2 },

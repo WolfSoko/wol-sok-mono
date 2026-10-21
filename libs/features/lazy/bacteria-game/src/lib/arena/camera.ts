@@ -1,4 +1,5 @@
 import { clamp, Point } from '../state/geometry';
+import { lerp } from './canvas-math';
 
 /** How quickly the camera catches up, per second - higher is snappier. */
 const FOLLOW_RATE = 4;
@@ -62,10 +63,21 @@ export class Camera {
         : { x: target.x, y: target.y, zoom: this.wanted };
     const k = 1 - Math.exp(-FOLLOW_RATE * Math.max(0, deltaSec));
     this.current = {
-      x: this.current.x + (goal.x - this.current.x) * k,
-      y: this.current.y + (goal.y - this.current.y) * k,
-      zoom: this.current.zoom + (goal.zoom - this.current.zoom) * k,
+      x: lerp(this.current.x, goal.x, k),
+      y: lerp(this.current.y, goal.y, k),
+      zoom: lerp(this.current.zoom, goal.zoom, k),
     };
+  }
+
+  /** True once the camera is where it is heading - nothing left to ease. */
+  public settledOn(target: Point | null): boolean {
+    const goal = target ?? this.whole();
+    const zoom = target == null ? 1 : this.wanted;
+    return (
+      Math.abs(this.current.x - goal.x) < 0.5 &&
+      Math.abs(this.current.y - goal.y) < 0.5 &&
+      Math.abs(this.current.zoom - zoom) < 0.005
+    );
   }
 
   /**

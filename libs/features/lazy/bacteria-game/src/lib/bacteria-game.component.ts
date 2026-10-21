@@ -95,7 +95,7 @@ import {
 } from './colony-stats';
 import { GameBalance } from './state/game-balance';
 import { clock, GameFrame } from './state/fixed-tick';
-import { SteeringVector } from './state/geometry';
+import { Point, SteeringVector } from './state/geometry';
 import { GameStateService } from './state/game-state.service';
 import { GameMode, GameState, GameStateStore } from './state/game.states';
 import {
@@ -196,6 +196,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private painter: ArenaPainter | null = null;
   /** The camera over a map bigger than the base arena, null on any other. */
   private camera: Camera | null = null;
+  /** The transform the canvas was given last - not written again unchanged. */
+  private cameraTransform = '';
+  /** The frame the camera eases in while no match draws, null without one. */
+  private cameraFrame: number | null = null;
   /** Lay the next frame's floor down fully instead of fading into a trail. */
   private clearNextFrame = true;
 
@@ -877,6 +881,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     );
     this.camera =
       this.mapSize() > 1 ? new Camera(width, height, this.mapSize()) : null;
+    this.cameraTransform = '';
     this.applyCamera(0);
     if (this.painter == null) {
       throw new Error('Could not get rendering context');
@@ -1000,26 +1005,60 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (this.camera == null || canvas == null) {
       return;
     }
-    const humans = untracked(this.humans);
-    const human = humans.length === 1 ? humans[0] : null;
-    this.camera.follow(
-      untracked(this.running) && human != null
-        ? this.playerService.crosshairAt(human, 1)
-        : null,
-      deltaTimeSec
-    );
+    const target = this.cameraTarget();
+    this.camera.follow(target, deltaTimeSec);
+    // No match frame moves it on now - a finished match, a pause, the
+    // start screen: it eases on by itself until it arrives.
+    if (!this.camera.settledOn(target)) {
+      this.easeCamera();
+    }
     const { x, y, scale } = this.camera.transform();
-    canvas.style.transform = `translate(${x}%, ${y}%) scale(${scale})`;
+    const transform = `translate(${x.toFixed(2)}%, ${y.toFixed(2)}%) scale(${scale.toFixed(3)})`;
+    if (transform !== this.cameraTransform) {
+      this.cameraTransform = transform;
+      canvas.style.transform = transform;
+    }
   }
 
-  /** The wheel zooms the camera over a big map, in or out. */
+  /** What the camera follows: the one human's crosshair in a match. */
+  private cameraTarget(): Point | null {
+    const humans = untracked(this.humans);
+    return untracked(this.running) && humans.length === 1
+      ? this.playerService.crosshairAt(humans[0], 1)
+      : null;
+  }
+
+  /**
+   * The wheel zooms the camera over a big map, in or out - during a match;
+   * otherwise it shows the whole map and the wheel scrolls the page.
+   */
   protected onWheel(event: WheelEvent): void {
-    if (this.camera == null) {
+    if (this.camera == null || !untracked(this.running)) {
       return;
     }
     event.preventDefault();
     this.camera.zoomBy(Math.exp(-event.deltaY / 500));
-    this.draw();
+    this.easeCamera();
+  }
+
+  /**
+   * Eases the camera frame by frame while no match draws the arena -
+   * paused, or before one starts - without drawing it again: only the
+   * transform changes. A running match moves the camera as it paints.
+   */
+  private easeCamera(): void {
+    if (
+      this.cameraFrame != null ||
+      (untracked(this.running) && !untracked(this.paused))
+    ) {
+      return;
+    }
+    const from = performance.now();
+    // Moving it asks for the next frame, until it has arrived.
+    this.cameraFrame = requestAnimationFrame((now) => {
+      this.cameraFrame = null;
+      this.applyCamera((now - from) / 1000);
+    });
   }
 
   /** What the arena shows right now, for the painter. */

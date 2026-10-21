@@ -1,6 +1,5 @@
 import { countDown } from './fixed-tick';
 import { Nutrient } from './bacteria-simulation';
-import { scaleOf } from './arena-size';
 import { clamp, distance, Point } from './geometry';
 import { ColonySummary } from './simulation';
 
@@ -82,11 +81,8 @@ export function straightRoutes(from: Point): BotRoutes {
 export interface BotView {
   width: number;
   height: number;
-  /**
-   * Arena cells per base cell - the grid's resolution. Worked out from the
-   * width when absent, which holds on a map of the base size only.
-   */
-  unit?: number;
+  /** Arena cells per base cell - the grid's resolution, not the map's size. */
+  unit: number;
   own: ColonyView;
   /** The strongest enemy colony, null once there is none left. */
   enemy: ColonyView | null;
@@ -193,7 +189,7 @@ export class BotController {
     }
     this.cooldown = this.profile.reactionSec;
     // The bot thinks in cells of the base arena.
-    this.unit = view.unit ?? scaleOf(view.width);
+    this.unit = view.unit;
     const { own, enemy } = view;
     // A boss that has fallen behind goes berserk: it charges the enemy with
     // every boost it gets - where its difficulty boosts at all.
@@ -352,9 +348,9 @@ export function buildBotView(
   maxEnergy: number,
   objective: Point | null,
   routes: (from: Point) => BotRoutes,
+  unit: number,
   prey: readonly Nutrient[] = [],
-  feeding = false,
-  unit = scaleOf(width)
+  feeding = false
 ): BotView {
   const ownView = colonyView(own, maxEnergy);
   let enemy: ColonyView | null = null;

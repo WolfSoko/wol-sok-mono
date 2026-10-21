@@ -7,7 +7,6 @@
  * Pure and deterministic, so a recorded match plays out the same again.
  */
 
-import { BASE_ARENA } from './arena-size';
 import { clamp, distance, Point } from './geometry';
 import { Rect, stampRect } from './maps';
 import {
@@ -97,7 +96,7 @@ export function navGrid(
   walls: readonly Rect[],
   zones: readonly Zone[],
   /** Arena cells per base cell - a nav cell is as big on every grid. */
-  unit = width / BASE_ARENA.width
+  unit: number
 ): NavGrid {
   const cell = Math.max(1, NAV_CELL * unit);
   const columns = Math.ceil(width / cell);

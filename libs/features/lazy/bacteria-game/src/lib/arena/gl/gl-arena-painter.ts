@@ -1,4 +1,3 @@
-import { scaleOf } from '../../state/arena-size';
 import { GameBalance } from '../../state/game-balance';
 import { Bacteria } from '../../state/player.model';
 import { CellBounds, emptyBounds, growBounds } from '../../state/geometry';
@@ -157,7 +156,7 @@ export class GlArenaPainter implements ArenaPainter {
     canvas: HTMLCanvasElement,
     width: number,
     height: number,
-    unit = scaleOf(width)
+    unit: number
   ): GlArenaPainter | null {
     let gl: WebGL2RenderingContext | null = null;
     try {

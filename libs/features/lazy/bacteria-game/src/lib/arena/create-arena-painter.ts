@@ -1,4 +1,3 @@
-import { scaleOf } from '../state/arena-size';
 import { ArenaPainter } from './arena-painter';
 import { CanvasArenaPainter } from './canvas-arena-painter';
 import { GlArenaPainter } from './gl/gl-arena-painter';
@@ -17,7 +16,7 @@ export function createArenaPainter(
   width: number,
   height: number,
   scale: number,
-  unit = scaleOf(width)
+  unit: number
 ): ArenaPainter | null {
   canvas.width = Math.round(width * scale);
   canvas.height = Math.round(height * scale);

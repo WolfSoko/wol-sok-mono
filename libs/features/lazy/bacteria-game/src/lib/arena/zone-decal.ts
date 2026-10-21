@@ -1,4 +1,3 @@
-import { scaleOf } from '../state/arena-size';
 import {
   kindOfCode,
   stampZones,
@@ -74,7 +73,7 @@ export function paintZoneLayer(
   zones: readonly Zone[],
   scale: number,
   /** Cells per base cell - the marks are as big on every grid. */
-  unit = scaleOf(width)
+  unit: number
 ): ZoneLayer | null {
   if (zones.length === 0) {
     return null;
