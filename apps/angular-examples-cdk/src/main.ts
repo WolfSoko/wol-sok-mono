@@ -1,5 +1,6 @@
 import { envOrDie } from '@wolsok/spa-cdk-stack';
-import { App, RemovalPolicy, Tags } from 'aws-cdk-lib';
+import { App, Duration, RemovalPolicy, Tags } from 'aws-cdk-lib';
+import { CacheControl } from 'aws-cdk-lib/aws-s3-deployment';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { AngularExamplesStack } from './stacks/angular-examples.stack';
@@ -23,6 +24,17 @@ new AngularExamplesStack(app, stackName, {
   buildOutputPath: 'dist/apps/angular-examples',
   domainName: 'angularexamples.wolsok.de',
   bucketRemovalPolicy: RemovalPolicy.DESTROY,
+  // Federation files keep their names across releases but point at hashed
+  // bundles, so a cached copy pins the old bundles. remoteEntry.json is the
+  // shell's own import map, the manifests list the remotes.
+  noCacheFiles: ['remoteEntry.json', 'assets/federation.manifest*.json'],
+  cacheOverrides: [
+    {
+      files: ['fib-wasm/optimized.wasm'],
+      cacheControl: CacheControl.maxAge(Duration.days(1)),
+      contentType: 'application/wasm',
+    },
+  ],
   version,
 });
 

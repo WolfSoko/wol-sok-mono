@@ -41,6 +41,34 @@ export interface SpaProps {
    * bundles get, and are uploaded after those bundles.
    */
   noCacheFiles?: string[];
+  /**
+   * Files that get their own Cache-Control, and optionally Content-Type,
+   * instead of the one year max-age, as globs relative to buildOutputPath.
+   * Like noCacheFiles, they are left out of the main deployment and uploaded
+   * after it, so each file is written once with one header.
+   */
+  cacheOverrides?: CacheOverride[];
+}
+
+export interface CacheOverride {
+  /** Globs relative to buildOutputPath, e.g. `assets/manifest*.json`. */
+  files: string[];
+  cacheControl: CacheControl;
+  contentType?: string;
+}
+
+/**
+ * Exclude globs that keep only `files`. '**' also skips every folder as a
+ * whole, so the folders above a nested file are re-included first.
+ */
+function onlyInclude(files: string[]): string[] {
+  const included = new Set<string>();
+  for (const file of files) {
+    const folders = file.split('/').slice(0, -1);
+    folders.forEach((_, i) => included.add(folders.slice(0, i + 1).join('/')));
+    included.add(file);
+  }
+  return ['**', ...[...included].map((glob) => '!' + glob)];
 }
 
 const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
@@ -65,7 +93,18 @@ export class SpaConstruct extends Construct {
     super(parent, spaName);
     const removalPolicy: RemovalPolicy =
       props.bucketRemovalPolicy ?? defaultBucketRemovalPolicy;
-    const { buildOutputPath, extraAllowedOrigins, noCacheFiles = [] } = props;
+    const {
+      buildOutputPath,
+      extraAllowedOrigins,
+      noCacheFiles = [],
+      cacheOverrides = [],
+    } = props;
+    const overrides: CacheOverride[] = [
+      ...(noCacheFiles.length > 0
+        ? [{ files: noCacheFiles, cacheControl: CacheControl.noCache() }]
+        : []),
+      ...cacheOverrides,
+    ];
 
     const { mainDomain, siteDomain } = this.extractDomains(props.domainName);
 
@@ -109,7 +148,7 @@ export class SpaConstruct extends Construct {
     );
 
     const deploymentAssets = Source.asset(buildOutputPath, {
-      exclude: ['index.html', ...noCacheFiles],
+      exclude: ['index.html', ...overrides.flatMap(({ files }) => files)],
     });
 
     this.bucketDeployments.push(
@@ -126,14 +165,11 @@ export class SpaConstruct extends Construct {
     // serve the SPA so chain the deployments
     this.bucketDeployments[1].node.addDependency(this.bucketDeployments[0]);
 
-    if (noCacheFiles.length > 0) {
+    for (const { files, cacheControl, contentType } of overrides) {
       this.addExtraAssets(
-        [
-          Source.asset(buildOutputPath, {
-            exclude: ['**', ...noCacheFiles.map((file) => '!' + file)],
-          }),
-        ],
-        CacheControl.noCache()
+        [Source.asset(buildOutputPath, { exclude: onlyInclude(files) })],
+        cacheControl,
+        contentType
       );
     }
   }

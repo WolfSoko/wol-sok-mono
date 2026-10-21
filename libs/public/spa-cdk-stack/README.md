@@ -26,6 +26,26 @@ new SpaStack(app, 'MyApp', {
 });
 ```
 
+Hashed bundles get a one year `max-age`. Files that keep their names across
+releases go into `noCacheFiles`, and files that need another header or content
+type go into `cacheOverrides`. Both take globs relative to `buildOutputPath`.
+Those files are left out of the main upload, so each file is uploaded once with
+one header:
+
+```ts
+new SpaStack(app, 'MyApp', {
+  // ...
+  noCacheFiles: ['remoteEntry.json', 'assets/federation.manifest*.json'],
+  cacheOverrides: [
+    {
+      files: ['wasm/*.wasm'],
+      cacheControl: CacheControl.maxAge(Duration.days(1)),
+      contentType: 'application/wasm',
+    },
+  ],
+});
+```
+
 ## Building
 
 ## Running unit tests
