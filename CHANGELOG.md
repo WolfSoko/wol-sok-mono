@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.37.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.36.1...v74.37.0) (2026-10-21)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ neutral colonies and the Quarantine level ([#2520](https://github.com/WolfSoko/wol-sok-mono/issues/2520)) ([1e14f49](https://github.com/WolfSoko/wol-sok-mono/commit/1e14f49f9fb038da4fc5c4132cf05b0be730a012))
+
 ## [74.36.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.36.0...v74.36.1) (2026-10-21)
 
 ### Bug Fixes
