@@ -1,0 +1,5 @@
+in wol-sok-mono
+
+---
+
+ws-thanos can support a wider range of peer deps for angular
