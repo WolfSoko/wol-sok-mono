@@ -128,19 +128,21 @@ export class Pinch {
   private readonly fingers = new Map<number, Point>();
   private pair: readonly [number, number] | null = null;
 
+  /** A finger that took hold of the arena - one that grabbed a crosshair. */
   public down(pointerId: number, point: Point): void {
     this.fingers.set(pointerId, point);
   }
 
   /**
-   * Pinches with `pointerId` and the one other finger on the arena -
-   * false, and no pinch, unless there are exactly two.
+   * Lands a finger that pinches with the one other finger on the arena -
+   * false, and the finger is not tracked, unless there is exactly one.
    */
-  public start(pointerId: number): boolean {
-    const other = [...this.fingers.keys()].find((id) => id !== pointerId);
-    if (this.fingers.size !== 2 || other == null) {
+  public start(pointerId: number, point: Point): boolean {
+    const [other] = this.fingers.keys();
+    if (this.fingers.size !== 1 || other === pointerId) {
       return false;
     }
+    this.fingers.set(pointerId, point);
     this.pair = [other, pointerId];
     return true;
   }

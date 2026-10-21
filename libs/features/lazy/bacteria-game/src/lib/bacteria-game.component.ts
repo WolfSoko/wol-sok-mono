@@ -1325,14 +1325,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (point == null) {
       return;
     }
-    this.pinch.down(event.pointerId, clientPoint(event));
     const playerId = nearestFreeCrosshair(
       this.humans(),
       point,
       new Set(this.draggedBy.values())
     );
     if (playerId == null) {
-      if (this.zooms() && this.pinch.start(event.pointerId)) {
+      if (
+        this.zooms() &&
+        this.pinch.start(event.pointerId, clientPoint(event))
+      ) {
         this.draggedBy.clear();
         (event.target as Element).setPointerCapture?.(event.pointerId);
         event.preventDefault();
@@ -1340,6 +1342,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.draggedBy.set(event.pointerId, playerId);
+    this.pinch.down(event.pointerId, clientPoint(event));
     // Keep receiving moves once the finger slides off the canvas.
     (event.target as Element).setPointerCapture?.(event.pointerId);
     this.playerService.setDragTarget(playerId, point.x, point.y);

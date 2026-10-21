@@ -134,8 +134,7 @@ describe('Pinch', () => {
   function pinched(): Pinch {
     const pinch = new Pinch();
     pinch.down(1, { x: 100, y: 100 });
-    pinch.down(2, { x: 200, y: 100 });
-    pinch.start(2);
+    pinch.start(2, { x: 200, y: 100 });
     return pinch;
   }
 
@@ -146,14 +145,11 @@ describe('Pinch', () => {
     expect(pinch.move(1, { x: 200, y: 100 })).toBeCloseTo(0.5);
   });
 
-  it('starts only with exactly two fingers on the arena', () => {
-    const one = new Pinch();
-    one.down(1, { x: 0, y: 0 });
-    expect(one.start(1)).toBe(false);
+  it('starts only with exactly one other finger on the arena', () => {
+    expect(new Pinch().start(1, { x: 0, y: 0 })).toBe(false);
 
     const three = pinched();
-    three.down(3, { x: 50, y: 50 });
-    expect(three.start(3)).toBe(false);
+    expect(three.start(3, { x: 50, y: 50 })).toBe(false);
     expect(three.pinches(3)).toBe(false);
     expect(three.pinches(1)).toBe(true);
   });
