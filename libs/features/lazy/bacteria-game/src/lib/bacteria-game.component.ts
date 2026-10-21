@@ -550,6 +550,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         (this.store.secondsLeft() ?? Infinity) <= RUNNING_OUT_SEC
     );
     this.matchOver = this.store.matchEnded;
+    // A pause or the end of a match stops the match's frames: one more
+    // frame lets the camera ease on by itself from there.
+    effect(() => {
+      if (!this.running() || this.paused()) {
+        untracked(() => this.draw());
+      }
+    });
     // A resumed match picks its music up where the match clock stands, so
     // it stays in step with a map that moves to it.
     effect(() => {
@@ -921,6 +928,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.haptics.matchStart();
     this.clearNextFrame = true;
     this.camera?.reset();
+    this.cameraMovedAt = null;
     this.gameStateService.cleanup();
     this.gameStateService.init(this.arena().width, this.arena().height);
     this.gameStateService.start();
@@ -999,13 +1007,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private paint(deltaTimeSec: number, clear: boolean, alpha: number): void {
     this.animationSec += deltaTimeSec;
     const view = this.moveCamera();
-    // The trail of the last frame lies elsewhere in a view that moved.
+    // The trail of the last frame lies elsewhere in a view that moved - by
+    // half a pixel or more: the spring creeps on by less for a long while.
     const last = this.lastView;
+    const halfPixel =
+      view.width / (2 * (this.canvasRef()?.nativeElement.width || 1));
     const moved =
       last == null ||
-      last.x !== view.x ||
-      last.y !== view.y ||
-      last.width !== view.width;
+      Math.abs(last.x - view.x) >= halfPixel ||
+      Math.abs(last.y - view.y) >= halfPixel ||
+      Math.abs(last.width - view.width) >= halfPixel;
     this.lastView = view;
     const frame = this.frame(
       deltaTimeSec,
@@ -1035,9 +1046,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.cameraMovedAt = now;
     const target = this.cameraTarget();
     this.camera.follow(target, deltaSec);
-    // No match frame moves it on now - a finished match, a pause, the
-    // start screen: it asks for frames itself until it arrives.
-    if (!this.camera.settledOn(target) && !this.matchPaints()) {
+    if (this.camera.settledOn(target)) {
+      // Its next move starts afresh, not with the time it sat still.
+      this.cameraMovedAt = null;
+    } else if (!this.matchPaints()) {
+      // No match frame moves it on now - a finished match, a pause, the
+      // start screen: it asks for frames itself until it arrives.
       this.draw();
     }
     return this.camera.viewRect();

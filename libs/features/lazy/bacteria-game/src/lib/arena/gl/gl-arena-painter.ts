@@ -363,7 +363,7 @@ export class GlArenaPainter implements ArenaPainter {
       layer.kind === 'cells'
         ? this.uploadCells(layer.bacterias, frame.balance)
         : layer.bounds;
-    if (bounds == null) {
+    if (bounds == null || !this.inView(bounds, MARGIN.colony)) {
       return;
     }
     // Only the box around the colony is blurred and drawn - the rest of the
@@ -452,6 +452,13 @@ export class GlArenaPainter implements ArenaPainter {
   private setView(program: Program): void {
     const { x, y, width, height } = this.view;
     this.gl.uniform4f(program.uniforms['uView'], x, y, width, height);
+  }
+
+  /** True when any of the colony's box, grown by the margin, is in view. */
+  private inView(bounds: CellBounds, margin: number): boolean {
+    const [x0, y0, x1, y1] = this.box(bounds, margin);
+    const { x, y, width, height } = this.view;
+    return x0 < x + width && x1 > x && y0 < y + height && y1 > y;
   }
 
   /** Scissors a pass on the arena grid - its row y is arena row y. */
