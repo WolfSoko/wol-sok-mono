@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.33.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.32.0...v74.33.0) (2026-10-20)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ the computer finds its way round walls ([#2514](https://github.com/WolfSoko/wol-sok-mono/issues/2514)) ([68b38ea](https://github.com/WolfSoko/wol-sok-mono/commit/68b38eafb18fc6b3ed2e0b1dab9aebd8bb890df3))
+
 ## [74.32.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.31.1...v74.32.0) (2026-10-20)
 
 ### Features
