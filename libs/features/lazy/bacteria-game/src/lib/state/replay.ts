@@ -111,7 +111,7 @@ export function playReplay(replay: Replay): ReplayResult | null {
   // Every human is played back from the recording, as they were.
   const ghosts = new Map<number, GhostController>();
   spawns.forEach((spawn, seat) => {
-    if (!spawn.isBot) {
+    if (!spawn.isBot && spawn.neutral !== true) {
       ghosts.set(seat, new GhostController(inputs, seat));
     }
   });

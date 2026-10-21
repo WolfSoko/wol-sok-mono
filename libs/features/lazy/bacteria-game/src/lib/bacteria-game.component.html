@@ -309,12 +309,13 @@
                   }
                 </span>
               }
-              @if (neutralCount() !== null) {
+              @let neutral = neutralCount();
+              @if (neutral !== null) {
                 <span class="hud-colony neutral">
                   <span class="colony-name" [style.color]="neutralCss"
                     >Neutral</span
                   >
-                  <span class="colony-count">{{ neutralCount() }}</span>
+                  <span class="colony-count">{{ neutral }}</span>
                 </span>
               }
             </span>
@@ -434,10 +435,11 @@
         </span>
       </div>
     }
-    @if (neutralCount() !== null) {
+    @let neutral = neutralCount();
+    @if (neutral !== null) {
       <div class="colony neutral">
         <span class="colony-name" [style.color]="neutralCss">Neutral</span>
-        <span class="colony-count">{{ neutralCount() }} bacterias</span>
+        <span class="colony-count">{{ neutral }} bacterias</span>
         <span class="colony-detail">Nobody's - food for both sides</span>
       </div>
     }

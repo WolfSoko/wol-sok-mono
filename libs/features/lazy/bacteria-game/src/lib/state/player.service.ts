@@ -88,10 +88,8 @@ export class PlayerService {
     this.sticks.clear();
     this.frameEvents = noFrameEvents();
     this.mirrored = this.engine.players;
-    this.playerStore.setPlayers(
-      this.mirrored,
-      spawns.some((spawn) => spawn.neutral) ? this.engine.neutralCount : null
-    );
+    this.playerStore.setPlayers(this.mirrored);
+    this.playerStore.setNeutralCount(this.engine.neutralCount);
   }
 
   /** See {@link MatchEngine.setDragTarget}. */

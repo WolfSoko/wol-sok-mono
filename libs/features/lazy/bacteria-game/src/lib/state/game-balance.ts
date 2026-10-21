@@ -133,7 +133,10 @@ export const gameBalance: GameBalance = {
  * How many bacteria each colony may grow to: its even share of the arena's
  * carrying capacity, never above the per-player cap. A single budget for all
  * of them would let the bigger colony use it up and freeze the smaller one
- * out of dividing altogether.
+ * out of dividing altogether. Every colony of the match has its share
+ * for the whole match, a neutral one too: eating it adds its bacteria to
+ * yours, but not its share - or the colonies grow so big that the match
+ * stalls.
  */
 export function colonyCapacity(balance: GameBalance, colonies: number): number {
   return Math.max(

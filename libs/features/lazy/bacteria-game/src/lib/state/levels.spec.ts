@@ -11,8 +11,17 @@ import {
   nextLevel,
 } from './levels';
 import { GAME_MAPS } from './game-maps';
+import { MAX_GPU_COLONIES } from '../gl/simulation-shaders';
 
 describe('LEVELS', () => {
+  it('has room on the GPU for the colonies of every level, neutral ones included', () => {
+    for (const level of LEVELS) {
+      expect(2 + (level.neutrals?.length ?? 0)).toBeLessThanOrEqual(
+        MAX_GPU_COLONIES
+      );
+    }
+  });
+
   it('asks a timed level for a win before its clock runs out for silver', () => {
     // A win on time is bronze: silver and gold ask for a wipe-out before.
     const timed = LEVELS.flatMap((level) =>

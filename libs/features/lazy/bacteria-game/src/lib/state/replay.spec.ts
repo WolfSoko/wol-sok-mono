@@ -67,6 +67,21 @@ describe('replay', () => {
     expect(result?.players).not.toEqual(engine.players);
   });
 
+  it('plays a match with neutral colonies out the same', () => {
+    const plan: MatchPlan = {
+      ...PLAN,
+      levelId: 'quarantine',
+      width: 320,
+      height: 180,
+    };
+    const { engine, replay } = record(plan, 300);
+
+    const result = playReplay(replay);
+
+    expect(result?.players).toEqual(engine.players);
+    expect(result?.players).toHaveLength(2);
+  });
+
   it('plays a match between two players out the same', () => {
     const plan: MatchPlan = { ...PLAN, mode: 'two-players', headStart: 1 };
     const { engine, replay } = record(plan, 300);

@@ -202,7 +202,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** The neutral colonies' bacteria, null on a level without any. */
   protected readonly neutralCount: Signal<number | null>;
   /** The grey the neutral colonies are drawn in. */
-  protected readonly neutralCss = `rgb(${NEUTRAL_COLOR.slice(0, 3).join(' ')})`;
+  protected readonly neutralCss = `rgb(${cssTriple([
+    NEUTRAL_COLOR[0],
+    NEUTRAL_COLOR[1],
+    NEUTRAL_COLOR[2],
+  ])})`;
   protected readonly fps = this.store.fps;
   /** True while a match is on, paused or not. */
   protected readonly running: Signal<boolean>;

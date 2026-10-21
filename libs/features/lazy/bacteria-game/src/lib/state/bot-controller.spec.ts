@@ -3,8 +3,8 @@ import {
   BotController,
   BotDifficulty,
   BotView,
-  buildBotView,
   ColonyView,
+  neutralFood,
   straightRoutes,
 } from './bot-controller';
 import { ColonySummary } from './simulation';
@@ -208,6 +208,26 @@ describe('BotController', () => {
     expect(easyBoss.boost).toBe(false);
   });
 
+  it('goes for prey - a neutral colony - like food when it is not hungry', () => {
+    const prey = [{ x: 60, y: 30, amount: 400 }];
+
+    const decision = bot('normal').decide(view({ prey }), 1);
+
+    expect(decision.target).toEqual({ x: 60, y: 30 });
+  });
+
+  it('leaves prey alone while its colony is hungry - it bites back', () => {
+    const prey = [{ x: 60, y: 30, amount: 400 }];
+    const nutrients = [{ x: 100, y: 120, amount: 10 }];
+
+    const decision = bot('normal').decide(
+      view({ own: colony(80, 70, 100, 0.4), prey, nutrients }),
+      1
+    );
+
+    expect(decision.target).toEqual({ x: 100, y: 120 });
+  });
+
   it('feeds before it fights while its colony is hungry', () => {
     const nutrients = [{ x: 60, y: 30, amount: 10 }];
 
@@ -309,13 +329,13 @@ describe('BotController', () => {
   });
 });
 
-describe('buildBotView', () => {
-  function summary(playerId: number, x: number, count: number): ColonySummary {
+describe('neutralFood', () => {
+  function summary(count: number): ColonySummary {
     return {
-      playerId,
+      playerId: 2,
       color: [0, 0, 0, 255],
       count,
-      center: { x, y: 70 },
+      center: count > 0 ? { x: 160, y: 70 } : null,
       totalEnergy: count,
       captured: 0,
       lost: 0,
@@ -323,26 +343,11 @@ describe('buildBotView', () => {
     };
   }
 
-  it('takes a neutral colony for food, never for the enemy', () => {
-    const own = summary(1, 240, 50);
-    const enemy = summary(0, 80, 40);
-    const neutral = summary(2, 160, 500);
+  it('makes a neutral colony a pellet as big as it is, at its centre', () => {
+    expect(neutralFood(summary(500))).toEqual([{ x: 160, y: 70, amount: 500 }]);
+  });
 
-    const seen = buildBotView(
-      WIDTH,
-      HEIGHT,
-      own,
-      [enemy, own, neutral],
-      () => null,
-      [],
-      true,
-      1,
-      null,
-      straightRoutes,
-      [neutral]
-    );
-
-    expect(seen.enemy).toMatchObject({ x: 80, count: 40 });
-    expect(seen.nutrients).toEqual([{ x: 160, y: 70, amount: 500 }]);
+  it('makes no food of a neutral colony that is eaten up', () => {
+    expect(neutralFood(summary(0))).toEqual([]);
   });
 });
