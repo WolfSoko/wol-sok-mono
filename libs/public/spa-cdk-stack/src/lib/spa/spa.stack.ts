@@ -14,12 +14,7 @@ export class SpaStack extends Stack {
   constructor(parent: Construct, name: string, props: SpaStackProps) {
     super(parent, name, props);
 
-    this.spa = new SpaConstruct(this, name, {
-      domainName: props.domainName,
-      buildOutputPath: props.buildOutputPath,
-      bucketRemovalPolicy: props.bucketRemovalPolicy,
-      extraAllowedOrigins: props.extraAllowedOrigins,
-      noCacheFiles: props.noCacheFiles,
-    });
+    // SpaConstruct only reads its own props, so new SpaProps fields pass through.
+    this.spa = new SpaConstruct(this, name, props);
   }
 }
