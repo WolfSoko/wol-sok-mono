@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01Rxj76swDQbMvrxoWGDTtgz",
+  "agent_id": "ae888380d0453dc93",
+  "subagent_type": "Explore",
+  "task_description": "Reuse review of cache overrides",
+  "token_usage": {
+    "input_tokens": 12,
+    "cache_creation_tokens": 71868,
+    "cache_read_tokens": 284006,
+    "output_tokens": 296,
+    "api_call_count": 6
+  },
+  "started_at": "2026-10-21T21:31:56.9341967+02:00",
+  "completed_at": "2026-10-21T21:32:58.5416538+02:00"
+}

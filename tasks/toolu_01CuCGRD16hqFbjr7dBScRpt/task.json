@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01CuCGRD16hqFbjr7dBScRpt",
+  "agent_id": "aed996df21d5afbb0",
+  "subagent_type": "Explore",
+  "task_description": "Efficiency review of cache overrides",
+  "token_usage": {
+    "input_tokens": 12,
+    "cache_creation_tokens": 65892,
+    "cache_read_tokens": 275201,
+    "output_tokens": 80,
+    "api_call_count": 6
+  },
+  "started_at": "2026-10-21T21:31:56.9292302+02:00",
+  "completed_at": "2026-10-21T21:33:17.5631736+02:00"
+}

@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01Jdo2BWM4cAXFR9dR6AWhTM",
+  "agent_id": "aeff7d54c5f1222fc",
+  "subagent_type": "Explore",
+  "task_description": "Altitude review of cache overrides",
+  "token_usage": {
+    "input_tokens": 10,
+    "cache_creation_tokens": 66895,
+    "cache_read_tokens": 225940,
+    "output_tokens": 254,
+    "api_call_count": 5
+  },
+  "started_at": "2026-10-21T21:31:57.1170653+02:00",
+  "completed_at": "2026-10-21T21:32:56.6152721+02:00"
+}
