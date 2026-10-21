@@ -1,2 +1,5 @@
+# Skip when Entire's own wrapper sits in .husky/_ (it reinstalls itself), so Entire runs once.
+if grep -qs '# Entire CLI hooks' "$(dirname "$0")/_/commit-msg"; then :;
+elif command -v entire >/dev/null 2>&1; then entire hooks git commit-msg "$1" || true; else printf '%s\n' '[entire] Entire CLI is enabled but not installed or not on PATH. Skipping Entire Git hook; continuing. Installation guide: https://docs.entire.io/cli/installation#installation-methods' >&2 || :; fi
 npx --no-install commitlint --edit "$1"
 npx devmoji -e --lint
