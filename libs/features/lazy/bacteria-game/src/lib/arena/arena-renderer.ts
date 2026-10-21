@@ -91,7 +91,7 @@ export class ArenaRenderer {
     private readonly width: number,
     private readonly height: number,
     random: () => number,
-    /** Screen pixels per arena cell - the zones are drawn that fine. */
+    /** Pixels per arena cell the zones are painted with. */
     private readonly scale: number,
     /** Cells per base cell - the zones' marks are as big on every grid. */
     private readonly unit: number

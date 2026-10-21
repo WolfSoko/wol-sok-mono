@@ -1,4 +1,5 @@
 import { clamp, Point } from '../state/geometry';
+import { Rect } from '../state/maps';
 import { lerp } from './canvas-math';
 
 /** How quickly the camera catches up, per second - higher is snappier. */
@@ -20,8 +21,8 @@ export interface CameraView {
  * on a soft spring, zooms between the whole arena and the size of a base
  * map, and never shows anything outside the arena.
  *
- * Pure numbers, no DOM: the component turns {@link transform} into a CSS
- * transform of the canvas, which the painters draw whole.
+ * Pure numbers, no DOM: the painters draw {@link viewRect} of the arena
+ * onto a canvas as big as for a base map.
  */
 export class Camera {
   private current: CameraView;
@@ -81,19 +82,18 @@ export class Camera {
   }
 
   /**
-   * The view as a scale and a shift of the canvas, the shift in percent of
-   * its size - `translate(x%, y%) scale(scale)` from its top left corner
-   * puts the camera's point in the middle, the arena's edge no further in
-   * than the view's.
+   * The part of the arena in view, in cells: the camera's point in the
+   * middle, unless that would show beyond an edge of the arena.
    */
-  public transform(): { x: number; y: number; scale: number } {
-    const { zoom } = this.current;
-    const shift = (at: number, size: number) =>
-      clamp(50 - (zoom * at * 100) / size, 100 - zoom * 100, 0);
+  public viewRect(): Rect {
+    const { x, y, zoom } = this.current;
+    const width = this.width / zoom;
+    const height = this.height / zoom;
     return {
-      x: shift(this.current.x, this.width),
-      y: shift(this.current.y, this.height),
-      scale: zoom,
+      x: clamp(x - width / 2, 0, this.width - width),
+      y: clamp(y - height / 2, 0, this.height - height),
+      width,
+      height,
     };
   }
 

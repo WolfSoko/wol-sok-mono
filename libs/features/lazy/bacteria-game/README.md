@@ -363,14 +363,19 @@ cells). Bigger is more room, not smaller bacteria, so two factors stay apart
   cells along each side (`arenaSize(resolution, size)`), and the colonies
   room for `size`² times the bacteria (`levelBalance`).
 
-The painters draw the whole arena on a canvas with as many pixels per cell
-as a base map (`renderScale(sim, screen, size)`, at most 4096 wide), and a
-[`Camera`](./src/lib/arena/camera.ts) shows part of it: it follows the
-crosshair of the one human in a match on a soft spring, zooms with the wheel
-between the whole map and the size of a base one, and never looks past the
-arena's edge. It is a CSS transform of the canvas inside a box that clips it
-and wears the arena's frame, so it costs no drawing, and the pointer still
-maps through the canvas's rect. Every match starts on the whole map.
+A [`Camera`](./src/lib/arena/camera.ts) shows part of a big map: it
+follows the crosshair of the one human in a match on a soft spring, zooms
+with the wheel between the whole map and the size of a base one, and never
+looks past the arena's edge. The canvas is as big as a base map's
+(`renderScale(sim, screen, size)`) and the painters draw only the camera's
+`view` onto it, so a big map costs no more pixels than a base one: the GL
+passes map the canvas through a `uView` uniform, the Canvas 2D one through
+its transform, and its slime is worked out only around the colonies in
+view (`slimeRegion`). The zones are painted as fine as the camera ever
+zooms (`detailScale`), the pointer maps through the view
+(`arenaPointFromClient`), and a frame whose view moved lays its floor fully
+instead of fading into a trail that lies elsewhere. Every match starts on
+the whole map.
 _Expanse_ opens the chapter of the same name: four times the room, rocks,
 and two neutral colonies, won on size after four minutes.
 

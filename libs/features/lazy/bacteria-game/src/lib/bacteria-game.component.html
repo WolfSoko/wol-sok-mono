@@ -347,24 +347,17 @@
             [fps]="fps()"
           ></ws-shared-ui-show-fps>
           @for (key of canvasKey(); track key) {
-            <div
-              class="arena-view"
-              [class.camera]="mapSize() > 1"
+            <canvas
+              #canvasElement
+              id="canvasElement"
               [style.width.px]="canvasSize()?.width"
               [style.height.px]="canvasSize()?.height"
+              (pointerdown)="onPointerDown($event)"
+              (pointermove)="onPointerMove($event)"
+              (pointerup)="onPointerUp($event)"
+              (pointercancel)="onPointerUp($event)"
             >
-              <canvas
-                #canvasElement
-                id="canvasElement"
-                [style.width.px]="canvasSize()?.width"
-                [style.height.px]="canvasSize()?.height"
-                (pointerdown)="onPointerDown($event)"
-                (pointermove)="onPointerMove($event)"
-                (pointerup)="onPointerUp($event)"
-                (pointercancel)="onPointerUp($event)"
-              >
-              </canvas>
-            </div>
+            </canvas>
           }
         </div>
       </div>

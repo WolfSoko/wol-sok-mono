@@ -7,7 +7,12 @@ describe('Camera', () => {
   it('shows the whole arena to begin with', () => {
     const camera = new Camera(WIDTH, HEIGHT, 2);
 
-    expect(camera.transform()).toEqual({ x: 0, y: 0, scale: 1 });
+    expect(camera.viewRect()).toEqual({
+      x: 0,
+      y: 0,
+      width: WIDTH,
+      height: HEIGHT,
+    });
   });
 
   it('closes in on its target at the zoom picked', () => {
@@ -16,11 +21,12 @@ describe('Camera', () => {
       camera.follow({ x: 320, y: 180 }, 0.05);
     }
 
-    const { x, y, scale } = camera.transform();
-    expect(scale).toBeCloseTo(2);
+    const { x, y, width, height } = camera.viewRect();
+    expect(width).toBeCloseTo(WIDTH / 2);
+    expect(height).toBeCloseTo(HEIGHT / 2);
     // The middle of the arena in the middle of the view.
-    expect(x).toBeCloseTo(-50);
-    expect(y).toBeCloseTo(-50);
+    expect(x).toBeCloseTo(160);
+    expect(y).toBeCloseTo(90);
   });
 
   it('eases towards its target instead of jumping', () => {
@@ -39,10 +45,11 @@ describe('Camera', () => {
     }
 
     // The left edge at the left of the view, the bottom at the bottom.
-    expect(camera.transform()).toEqual({
+    expect(camera.viewRect()).toEqual({
       x: 0,
-      y: expect.closeTo(-100),
-      scale: expect.closeTo(2),
+      y: expect.closeTo(HEIGHT / 2),
+      width: expect.closeTo(WIDTH / 2),
+      height: expect.closeTo(HEIGHT / 2),
     });
   });
 

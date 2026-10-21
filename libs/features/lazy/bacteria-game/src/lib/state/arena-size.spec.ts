@@ -1,4 +1,10 @@
-import { arenaSize, renderScale, scaleOf, scaleRect } from './arena-size';
+import {
+  arenaSize,
+  detailScale,
+  renderScale,
+  scaleOf,
+  scaleRect,
+} from './arena-size';
 import { getLevel, gridScale, levelBalance, levelSize } from './levels';
 import { GAME_MAPS } from './game-maps';
 import { coversCell, Rect } from './maps';
@@ -26,12 +32,15 @@ describe('arena size', () => {
     expect(scaleOf(1280, 2)).toBe(scaleOf(640));
   });
 
-  it('draws a bigger map on a bigger canvas, as many pixels per cell', () => {
-    expect(renderScale('normal', 'medium', 2)).toBe(
+  it('draws a bigger map on the canvas of a base map, its zones as fine', () => {
+    expect(
+      arenaSize('normal', 2).width * renderScale('normal', 'medium', 2)
+    ).toBe(960);
+    expect(detailScale('normal', 'medium', 2)).toBe(
       renderScale('normal', 'medium')
     );
-    // Up to a canvas the GPU takes.
-    expect(1280 * renderScale('ultra', 'full-hd', 4)).toBeLessThanOrEqual(4096);
+    // Up to a layer the GPU takes.
+    expect(1280 * detailScale('ultra', 'full-hd', 4)).toBeLessThanOrEqual(4096);
   });
 
   it('gives a bigger map room for more bacteria, the rest as on a base map', () => {
