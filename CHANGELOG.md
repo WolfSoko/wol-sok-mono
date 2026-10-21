@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.43.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.42.0...v74.43.0) (2026-10-21)
+
+### Features
+
+* **feat-lazy-bacteria-game:** pinch to zoom the camera on a big map ([#2530](https://github.com/WolfSoko/wol-sok-mono/issues/2530)) ([2b15753](https://github.com/WolfSoko/wol-sok-mono/commit/2b157539f6a2d7076c81d55bbc26fcf7c0b458f9))
+
 ## [74.42.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.41.1...v74.42.0) (2026-10-21)
 
 ### Features
