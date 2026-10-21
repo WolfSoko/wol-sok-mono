@@ -7,6 +7,7 @@ import { replayOf } from './replay';
 import { createPlayer, Player } from './player.model';
 import {
   ANNIHILATION,
+  harvestTarget,
   judgeOutcome,
   ruleNote,
   timeLeft,
@@ -127,6 +128,47 @@ describe('win conditions', () => {
     const { options } = planMatch(REACTOR);
 
     expect(options.win).toEqual({ kind: 'timed', limitSec: 150 });
+  });
+
+  describe('harvest', () => {
+    const HARVEST: WinRule = { kind: 'harvest', pellets: 20 };
+
+    function eaten(left: number, right: number): Player[] {
+      return colonies(30, 40).map((player, seat) => ({
+        ...player,
+        pellets: seat === 0 ? left : right,
+      }));
+    }
+
+    it('goes on until a colony has eaten enough', () => {
+      expect(judgeOutcome(HARVEST, eaten(19, 12), 60)).toBeNull();
+    });
+
+    it('gives the match to the colony that ate enough first', () => {
+      const players = eaten(20, 12);
+
+      expect(judgeOutcome(HARVEST, players, 60)).toEqual({
+        winner: players[0],
+        reason: 'harvest',
+      });
+    });
+
+    it('gives it to the one that ate more when both get there at once', () => {
+      const players = eaten(20, 21);
+
+      expect(judgeOutcome(HARVEST, players, 60)?.winner).toBe(players[1]);
+    });
+
+    it('plays on while both got there with as many - until one is ahead', () => {
+      expect(judgeOutcome(HARVEST, eaten(20, 20), 60)).toBeNull();
+      expect(judgeOutcome(HARVEST, eaten(21, 20), 61)?.winner?.id).toBe(0);
+    });
+
+    it('notes the rule and its target', () => {
+      expect(ruleNote(HARVEST)).toBe('Harvest · 20 pellets');
+      expect(harvestTarget(HARVEST)).toBe(20);
+      expect(harvestTarget(ANNIHILATION)).toBeNull();
+    });
   });
 
   describe('hold', () => {

@@ -28,6 +28,8 @@ export interface ColonyStats {
   boostKey: BoostKey;
   /** Whole seconds the colony held the hold zone. */
   held: number;
+  /** Pellets the colony ate up. */
+  pellets: number;
 }
 
 /** The keys that fire a boost: Space for the first human, Enter for the second. */
@@ -101,6 +103,7 @@ export function toColonyStats(
     boostCharge: boostChargeOf(player, balance),
     boostKey: boostKeyOf(humans, player),
     held: Math.floor(player.holdTicks / TICKS_PER_SEC),
+    pellets: player.pellets,
   }));
 }
 

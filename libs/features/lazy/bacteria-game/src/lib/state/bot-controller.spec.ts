@@ -228,6 +228,29 @@ describe('BotController', () => {
     expect(decision.target).toEqual({ x: 100, y: 120 });
   });
 
+  it('goes for food first where the pellets win the match, however strong', () => {
+    const nutrients = [{ x: 60, y: 30, amount: 10 }];
+
+    const decision = bot('hard').decide(
+      view({ own: colony(80, 70, 400), nutrients, feeding: true }),
+      1
+    );
+
+    expect(decision.target).toEqual({ x: 60, y: 30 });
+  });
+
+  it('leaves prey alone where only pellets win the match', () => {
+    const prey = [{ x: 60, y: 30, amount: 400 }];
+    const nutrients = [{ x: 100, y: 120, amount: 10 }];
+
+    const decision = bot('normal').decide(
+      view({ prey, nutrients, feeding: true }),
+      1
+    );
+
+    expect(decision.target).toEqual({ x: 100, y: 120 });
+  });
+
   it('feeds before it fights while its colony is hungry', () => {
     const nutrients = [{ x: 60, y: 30, amount: 10 }];
 
@@ -340,6 +363,7 @@ describe('neutralFood', () => {
       captured: 0,
       lost: 0,
       onHill: 0,
+      pellets: 0,
     };
   }
 

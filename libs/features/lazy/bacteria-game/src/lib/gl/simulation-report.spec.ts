@@ -76,10 +76,13 @@ describe('decodeReport', () => {
     });
   });
 
-  it('reads the eaters per pellet and sums the running totals per column', () => {
+  it('reads the eaters per pellet and colony and sums the running totals per column', () => {
     const report = decodeReport(
       readBack([
-        { x: 2, y: 4, value: [7, 0, 0, 0] },
+        // 7 eaters: 3 of the first colony, 4 of the second, none else.
+        { x: 2, y: 4, value: [7, 0, 3 | (4 << 16), 0] },
+        // Of the third and the fourth, in alpha.
+        { x: 5, y: 4, value: [9, 0, 0, 2 | (7 << 16)] },
         // Captures per colony, then losses per colony.
         { x: 0, y: 5, value: [3, 1, 0, 2] },
         { x: 3, y: 5, value: [1, 1, 0, 0] },
@@ -89,7 +92,8 @@ describe('decodeReport', () => {
       layout
     );
 
-    expect(report.eaters[2]).toBe(7);
+    expect(report.eaters[2]).toEqual([3, 4, 0, 0]);
+    expect(report.eaters[5]).toEqual([0, 0, 2, 7]);
     expect(report.colonies[0]).toMatchObject({ captured: 4, lost: 3 });
     expect(report.colonies[1]).toMatchObject({ captured: 2, lost: 6 });
     expect(report.colonies[2]).toMatchObject({ captured: 0, lost: 1 });

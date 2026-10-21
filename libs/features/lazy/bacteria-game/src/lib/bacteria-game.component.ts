@@ -106,7 +106,7 @@ import {
   nextLevel,
 } from './state/levels';
 import { Rect } from './state/maps';
-import { holdTarget } from './state/win-conditions';
+import { harvestTarget, holdTarget } from './state/win-conditions';
 import { mapZones, Zone } from './state/zones';
 import { MedalTier } from './state/medallions';
 import { isBoosted, Player } from './state/player.model';
@@ -125,6 +125,16 @@ const SNAP_LEVEL = 0.8;
 
 /** The last seconds of a timed level, when its clock turns red. */
 const RUNNING_OUT_SEC = 10;
+
+/** A goal the HUD counts each colony up towards. */
+interface HudGoal {
+  icon: string;
+  /** What is counted, for a screen reader. */
+  label: string;
+  target: number;
+  /** The colony's number that counts up. */
+  of: 'held' | 'pellets';
+}
 
 @UntilDestroy()
 @Component({
@@ -225,10 +235,26 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const gain = this.sound.effectsGain();
     return { sound: gain > 0, soundVolume: gain * SNAP_LEVEL };
   });
-  /** The seconds a colony must hold the zone - null but on such a level. */
-  protected readonly holdTarget = computed(() =>
-    holdTarget(this.store.winRule())
-  );
+  /**
+   * What a colony counts up towards on a level won by reaching a goal - the
+   * seconds on the zone, the pellets eaten - null on any other level.
+   */
+  protected readonly goal = computed((): HudGoal | null => {
+    const rule = this.store.winRule();
+    const hold = holdTarget(rule);
+    if (hold !== null) {
+      return { icon: 'flag', label: 'seconds held', target: hold, of: 'held' };
+    }
+    const harvest = harvestTarget(rule);
+    return harvest === null
+      ? null
+      : {
+          icon: 'restaurant',
+          label: 'pellets eaten',
+          target: harvest,
+          of: 'pellets',
+        };
+  });
   /** True once a match is over and its result is shown, until the next one. */
   protected readonly matchOver: Signal<boolean>;
   /** The name of the computer's difficulty, for the menu's summary line. */

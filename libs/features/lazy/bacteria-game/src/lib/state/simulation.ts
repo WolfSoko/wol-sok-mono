@@ -21,6 +21,8 @@ export interface ColonySummary {
   center: Point | null;
   /** Living bacteria on the zone a hold-the-zone level is won on. */
   onHill: number;
+  /** Pellets the colony ate up since the match started. */
+  pellets: number;
 }
 
 /**

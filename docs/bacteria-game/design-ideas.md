@@ -922,11 +922,12 @@ bot goes for it, and Control Room is the first such level. Boss levels
 (2.4) and survive came next: per-colony traits for division, attack and
 boost cooldown in both simulations, a bigger start, a boss bot that boosts
 whenever it can once behind, Meltdown as the Reactor finale (survive) and
-Patient Zero opening Outbreak. Harvest waits for pellets counted per
-colony. The bot
-heads for the zone to hold but does not avoid the other zones yet, and a
-next counted rule needs room in the GPU report: the hold zone took its
-last two free channels.
+Patient Zero opening Outbreak. Neutral colonies (Quarantine) and harvest
+(Feeding Ground) followed: a pellet goes to the colony that took the most
+of it, counted on the GPU in the pellet row's two spare channels, 16 bits
+per colony. The bot heads for the zone to hold but does not avoid the
+other zones yet, and a next counted rule needs room in the GPU report:
+the report rows are full.
 Phase 7 can be sprinkled in between the others; each of its items is a
 self-contained PR. Of the groundwork the phases assumed, three pieces have
 landed since the first version of this document: the seeded generator (for

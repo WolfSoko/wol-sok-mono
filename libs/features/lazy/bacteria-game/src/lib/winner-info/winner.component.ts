@@ -327,7 +327,10 @@ export class WinnerComponent {
       return this.timeUp(player);
     }
     if (this.state.endedBy() === 'hold' && player != null) {
-      return this.zoneHeld(player);
+      return this.goalReached(player, 'held the zone');
+    }
+    if (this.state.endedBy() === 'harvest' && player != null) {
+      return this.goalReached(player, 'ate up enough pellets first');
     }
     if (
       this.level().boss !== undefined &&
@@ -371,19 +374,23 @@ export class WinnerComponent {
       : 'The boss is gone - the chapter is yours!';
   }
 
-  /** The headline of a match won by holding the zone long enough. */
-  private zoneHeld(player: Player): string {
+  /**
+   * The headline of a match a colony won by reaching the level's goal -
+   * `deed` says what it did: "held the zone", "ate up enough pellets
+   * first".
+   */
+  private goalReached(player: Player, deed: string): string {
     if (this.againstGhost()) {
       return player.isBot
-        ? 'The ghost held the zone!'
-        : 'You held the zone - and beat the ghost!';
+        ? `The ghost ${deed}!`
+        : `You ${deed} - and beat the ghost!`;
     }
     if (player.isBot) {
-      return 'The computer held the zone - it wins!';
+      return `The computer ${deed} - it wins!`;
     }
     return this.mode() === 'vs-computer'
-      ? 'You held the zone - you win!'
-      : `${player.name} held the zone and wins!`;
+      ? `You ${deed} - you win!`
+      : `${player.name} ${deed} and wins!`;
   }
 
   /** The headline of a match the clock ended: the bigger colony won. */

@@ -524,6 +524,19 @@ export const LEVEL_MUSIC: Record<string, LevelMusic> = {
     echo: 0.4,
     seed: 18,
   },
+  // A feast: bouncy, quick and greedy.
+  'feeding-ground': {
+    root: 45,
+    scale: MAJOR,
+    bpm: 132,
+    progression: [0, 3, 4, 3],
+    lead: 'square',
+    density: 0.6,
+    bass: 'pulse',
+    drums: 'drive',
+    echo: 0.2,
+    seed: 19,
+  },
   // Where it began: slow, cold dread that builds.
   'patient-zero': {
     root: 41,

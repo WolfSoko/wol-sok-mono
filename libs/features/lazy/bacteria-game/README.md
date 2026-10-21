@@ -307,6 +307,19 @@ and _Control Room_ closes the Reactor chapter with one behind four
 shields. The rule is part of the level, so a replay plays it again with
 its level.
 
+On a _harvest_ level a colony also wins once it has eaten up `pellets`
+pellets. A pellet goes to the colony that took the most of it over its
+life - `NutrientPellets.drain` adds up each colony's bites and names the
+biggest once the pellet is gone, nobody on a tie. The CPU simulation
+counts the eaters of a pellet per colony as it drains it; the GPU one
+reads them from the report's pellet row, where each colony's eaters take
+16 bits of the two channels beside the total. Both keep a count per
+colony in their summaries (`pellets`). Should two colonies get there in
+one tick, the one with more wins. The HUD shows each colony's pellets
+against the target, the level choice notes "Harvest · 40 pellets", the
+bot goes for food before anything else, and _Feeding Ground_ closes the
+Outbreak chapter with one.
+
 ## Zones
 
 Besides walls, a map can lay out zones (`createZones`, point symmetric like

@@ -846,6 +846,7 @@ export class GpuSimulation implements Simulation {
   /** Turns a report into the scoreboard, the frame's events and the eaters. */
   private takeReport(report: Report, generation: readonly number[]): void {
     this.report = report;
+    const before = this.colonySummaries;
     this.colonySummaries = this.spawns.map((spawn, index) => {
       const colony = report.colonies[index];
       return {
@@ -857,6 +858,8 @@ export class GpuSimulation implements Simulation {
         totalEnergy: colony.totalEnergy,
         center: colony.center,
         onHill: colony.onHill,
+        // Counted here, as the pellets are drained - carried on.
+        pellets: before[index]?.pellets ?? 0,
       };
     });
 
@@ -881,8 +884,12 @@ export class GpuSimulation implements Simulation {
         // The pellet moved since this report was taken.
         return;
       }
-      if (this.pellets.drain(n, report.eaters[n] ?? 0, gain)) {
+      const eaten = this.pellets.drain(n, report.eaters[n] ?? [], gain);
+      if (eaten !== null) {
         this.events.pelletsEaten++;
+        if (eaten.by !== null) {
+          this.colonySummaries[eaten.by].pellets++;
+        }
       }
     });
   }
@@ -1055,6 +1062,7 @@ export class GpuSimulation implements Simulation {
       // Counted from the first report on - the ticks before it are credited
       // to whoever holds the zone then.
       onHill: 0,
+      pellets: 0,
     }));
   }
 

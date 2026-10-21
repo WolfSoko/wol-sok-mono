@@ -279,6 +279,20 @@ const THEMES: Record<string, ArenaTheme> = {
     moteCount: 18,
     current: { x: 0, y: 1 },
   },
+  // A rich broth, warm and green, where everything feeds.
+  'feeding-ground': {
+    floor: [16, 24, 10],
+    rim: [5, 8, 3],
+    pattern: 'bubbles',
+    patternColor: [56, 84, 30],
+    patternStrength: 0.4,
+    wall: [150, 170, 110],
+    wallEdge: [220, 240, 170],
+    border: [170, 230, 60],
+    motes: [230, 255, 170],
+    moteCount: 30,
+    current: { x: 2, y: -1 },
+  },
   // A sterile ward under green emergency light.
   'patient-zero': {
     floor: [12, 22, 18],

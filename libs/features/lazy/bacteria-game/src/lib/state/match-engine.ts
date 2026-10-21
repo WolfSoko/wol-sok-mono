@@ -636,9 +636,11 @@ export class MatchEngine {
         isBoostReady(player),
         this.balance.maxEnergy,
         this.hillAt(width, height),
-        (from) => this.routesFrom(from, width, height)
+        (from) => this.routesFrom(from, width, height),
+        prey,
+        this.win.kind === 'harvest'
       );
-      const decision = bot.decide({ ...view, prey }, TICK_SEC);
+      const decision = bot.decide(view, TICK_SEC);
       if (decision.target != null) {
         this.dragTargets.set(playerId, decision.target);
       }
@@ -709,6 +711,7 @@ export class MatchEngine {
             ? Math.min(player.lowestSizeRatio, bacteriaCount / enemyCount)
             : player.lowestSizeRatio,
         holdTicks: player.holdTicks + (colony.playerId === holder ? held : 0),
+        pellets: colony.pellets,
       });
     }
   }
