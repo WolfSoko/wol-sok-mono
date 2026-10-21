@@ -30,7 +30,11 @@ Hashed bundles get a one year `max-age`. Files that keep their names across
 releases go into `noCacheFiles`, and files that need another header or content
 type go into `cacheOverrides`. Both take globs relative to `buildOutputPath`.
 Those files are left out of the main upload, so each file is uploaded once with
-one header:
+one header.
+The build output goes up first, then the overrides and extra assets, and
+`index.html` last, so it never points at a bundle that is not there yet. No
+upload prunes the bucket, so tabs still running an older release keep finding
+its bundles:
 
 ```ts
 new SpaStack(app, 'MyApp', {

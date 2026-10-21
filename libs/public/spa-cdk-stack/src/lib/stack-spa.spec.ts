@@ -75,22 +75,26 @@ describe('SpaCdkStack', () => {
     });
   });
 
-  it('should upload noCacheFiles with no-cache after the hashed bundles', () => {
-    const { template } = testStackFactory({
+  it('should deploy index.html last and prune nothing', () => {
+    const { template, stack } = testStackFactory({
       noCacheFiles: ['test-javascript-asset.js'],
     });
+    stack.spa.addExtraAssets([
+      Source.asset(path.join(__dirname, '../../extra-assets-path')),
+    ]);
+    const deployments = template().findResources('Custom::CDKBucketDeployment');
+    const index = Object.keys(deployments).find((id) =>
+      /DeployWithInvalidation2/.test(id)
+    ) as string;
+    const others = Object.keys(deployments).filter((id) => id !== index);
     //then
-    template().resourceCountIs('Custom::CDKBucketDeployment', 3);
-    const deployments = Object.values(
-      template().findResources('Custom::CDKBucketDeployment')
+    expect(others).toHaveLength(3);
+    expect(deployments[index]['DependsOn']).toEqual(
+      expect.arrayContaining(others)
     );
-    const cacheControl = deployments.map(
-      (deployment) => deployment.Properties.SystemMetadata['cache-control']
-    );
-    expect(cacheControl).toEqual(['no-cache', 'max-age=31536000', 'no-cache']);
-    expect(deployments[2].DependsOn).toEqual(
-      expect.arrayContaining([expect.stringMatching(/DeployWithInvalidation2/)])
-    );
+    expect(
+      Object.values(deployments).map(({ Properties }) => Properties['Prune'])
+    ).toEqual([false, false, false, false]);
   });
 
   it('should create an extra BucketDeployment when using addExtraAssets', () => {
@@ -137,15 +141,13 @@ describe('SpaCdkStack', () => {
       contentType?: string;
       files: string[];
     }[] {
-      const app = new App();
-      const stack = new SpaStack(app, 'TestSpaStack', {
-        ...defaultTestProps,
+      const { app, template } = testStackFactory({
         buildOutputPath: nestedBuildPath,
         ...props,
       });
       const assemblyDir = app.synth().directory;
       return Object.values(
-        Template.fromStack(stack).findResources('Custom::CDKBucketDeployment')
+        template().findResources('Custom::CDKBucketDeployment')
       ).map(({ Properties }) => ({
         cacheControl: Properties['SystemMetadata']['cache-control'],
         contentType: Properties['SystemMetadata']['content-type'],
@@ -182,11 +184,11 @@ describe('SpaCdkStack', () => {
           ],
         })
       ).toEqual([
-        { cacheControl: 'no-cache', files: ['index.html'] },
         {
           cacheControl: 'max-age=31536000',
           files: ['assets/logo.svg', 'main.js'],
         },
+        { cacheControl: 'no-cache', files: ['index.html'] },
         {
           cacheControl: 'no-cache',
           files: ['assets/federation.manifest.json', 'remoteEntry.json'],
@@ -197,6 +199,26 @@ describe('SpaCdkStack', () => {
           files: ['fib-wasm/optimized.wasm'],
         },
       ]);
+    });
+
+    it('should deploy the contents of a folder named in noCacheFiles', () => {
+      expect(deployedFiles({ noCacheFiles: ['assets'] })).toEqual([
+        {
+          cacheControl: 'max-age=31536000',
+          files: ['fib-wasm/optimized.wasm', 'main.js', 'remoteEntry.json'],
+        },
+        { cacheControl: 'no-cache', files: ['index.html'] },
+        {
+          cacheControl: 'no-cache',
+          files: ['assets/federation.manifest.json', 'assets/logo.svg'],
+        },
+      ]);
+    });
+
+    it("should reject '**' in a folder segment", () => {
+      expect(() =>
+        deployedFiles({ noCacheFiles: ['**/federation.manifest.json'] })
+      ).toThrow("'**' is only supported in the last segment");
     });
   });
 });

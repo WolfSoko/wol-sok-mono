@@ -1,9 +1,8 @@
-import { envOrDie } from '@wolsok/spa-cdk-stack';
+import { envOrDie, SpaStack } from '@wolsok/spa-cdk-stack';
 import { App, Duration, RemovalPolicy, Tags } from 'aws-cdk-lib';
-import { CacheControl } from 'aws-cdk-lib/aws-s3-deployment';
+import { CacheControl, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { AngularExamplesStack } from './stacks/angular-examples.stack';
 
 // The CDK executors run from the workspace root.
 const { version } = JSON.parse(
@@ -16,7 +15,7 @@ if (typeof version !== 'string') {
 const app = new App();
 
 const stackName = 'AngularExamples';
-new AngularExamplesStack(app, stackName, {
+const stack = new SpaStack(app, stackName, {
   env: {
     region: 'us-east-1',
     account: '088632064895',
@@ -35,8 +34,11 @@ new AngularExamplesStack(app, stackName, {
       contentType: 'application/wasm',
     },
   ],
-  version,
 });
+stack.spa.addExtraAssets(
+  [Source.jsonData('version.json', version)],
+  CacheControl.noCache()
+);
 
 const tags: Tags = Tags.of(app);
 tags.add('app', 'AngularExamples');
