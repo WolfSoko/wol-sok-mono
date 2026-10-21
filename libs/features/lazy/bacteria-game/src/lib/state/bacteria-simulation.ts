@@ -1057,8 +1057,16 @@ export class BacteriaSimulation implements Simulation {
           huntOffset +
           Math.floor(bacterium.y / cellSize) * this.influenceWidth +
           Math.floor(bacterium.x / cellSize);
-        const huntX = this.huntFieldX[huntCell];
-        const huntY = this.huntFieldY[huntCell];
+        let huntX = this.huntFieldX[huntCell];
+        let huntY = this.huntFieldY[huntCell];
+        // The hunt never drags a colony back against its crosshair: the
+        // part of it that points away from the crosshair is dropped, so a
+        // colony can always run - it only bends sideways towards the enemy.
+        const back = huntX * dirX + huntY * dirY;
+        if (back < 0) {
+          huntX -= back * dirX;
+          huntY -= back * dirY;
+        }
         if (huntX !== 0 || huntY !== 0) {
           dirX = dirX * (1 - hunt) + huntX * hunt;
           dirY = dirY * (1 - hunt) + huntY * hunt;

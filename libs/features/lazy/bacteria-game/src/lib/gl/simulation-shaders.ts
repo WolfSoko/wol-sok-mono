@@ -305,6 +305,8 @@ int moveIntent(ivec2 cell) {
     ? texelFetch(uHunt, cell / uCellSize, 0)
     : texelFetch(uHuntMore, cell / uCellSize, 0);
   vec2 enemies = vec2(colony % ${HUNT_COLONIES} == 0 ? hunt.xy : hunt.zw) / 32767.0;
+  // Never back against the crosshair - see the CPU's move.
+  enemies -= min(0.0, dot(enemies, direction)) * direction;
   if (enemies != vec2(0.0)) {
     direction = mix(direction, enemies, aggression);
   }
