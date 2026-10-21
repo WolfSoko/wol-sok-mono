@@ -89,7 +89,7 @@ export interface GameBalance {
  * differently: a replay only plays again under the version it was recorded
  * with.
  */
-export const BALANCE_VERSION = 4;
+export const BALANCE_VERSION = 5;
 
 export const gameBalance: GameBalance = {
   startBacteriaRadius: 14,

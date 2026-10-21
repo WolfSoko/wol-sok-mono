@@ -280,10 +280,17 @@ Reactor chapter (survive a minute), _Patient Zero_ opens the Outbreak
 chapter (beat it).
 
 A level can add neutral colonies (`neutrals` on the level: where each
-starts, as shares of the arena, and its start area): grey colonies nobody
-steers. `planMatch` spawns them after the players with `neutral: true`
-and `NEUTRAL_TRAITS` - slow to divide, weak to bite. The simulations run
-them like any colony; without a crosshair they stay put. The `MatchEngine`
+starts, as shares of the arena, and its start area): grey colonies no
+player steers. `planMatch` spawns them after the players with `neutral: true`
+and `NEUTRAL_TRAITS` - slow to divide, weak to bite. A
+[`NeutralBrain`](./src/lib/state/neutral-brain.ts) per colony moves it
+(`NEUTRAL_MOVES`): it strolls about the map, goes after a player's colony
+that comes near and is less than 0.4 of its size, and keeps away from one
+more than 1.25 of its size - colonies measured edge to edge, as discs.
+The engine hands the simulation a crosshair for it on the ticks it moves:
+slower than a step a tick, it steps only on the ticks its pace has made
+up a step for. Its random numbers come from a seeded stream, so a replay
+plays it out alike. The `MatchEngine`
 gives them no player, so they count for no side: the outcome is judged on
 the players, a player's size is measured against the other player's, and
 nobody holds a zone with them. They keep their share of the arena's

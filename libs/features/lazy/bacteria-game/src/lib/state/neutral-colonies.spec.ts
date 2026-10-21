@@ -94,6 +94,44 @@ describe('neutral colonies', () => {
     }
   });
 
+  it('lets a neutral colony wander about the map, slowly', () => {
+    const { spawns, options } = planMatch(QUARANTINE);
+    const engine = new MatchEngine(spawns, options);
+    try {
+      const start = engine.simulation.summaries()[2].center;
+      for (let tick = 0; tick < 4 * 60; tick++) {
+        engine.tick(320, 180);
+      }
+      const later = engine.simulation.summaries()[2].center;
+
+      expect(start).not.toBeNull();
+      expect(later).not.toBeNull();
+      const moved = Math.hypot(later!.x - start!.x, later!.y - start!.y);
+      expect(moved).toBeGreaterThan(3);
+      // Never faster than its hurried pace.
+      expect(moved).toBeLessThan(4 * 30);
+    } finally {
+      engine.dispose();
+    }
+  });
+
+  it("plays a neutral colony's moves out the same again from the seed", () => {
+    const centers = () => {
+      const { spawns, options } = planMatch(QUARANTINE);
+      const engine = new MatchEngine(spawns, options);
+      try {
+        for (let tick = 0; tick < 120; tick++) {
+          engine.tick(320, 180);
+        }
+        return engine.simulation.summaries().map(({ center }) => center);
+      } finally {
+        engine.dispose();
+      }
+    };
+
+    expect(centers()).toEqual(centers());
+  });
+
   it('refuses a neutral colony before a player', () => {
     const { spawns, options } = planMatch(QUARANTINE);
 
