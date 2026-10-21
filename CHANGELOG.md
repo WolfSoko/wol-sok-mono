@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.35.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.34.0...v74.35.0) (2026-10-21)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ the GPU simulation runs up to four colonies ([#2516](https://github.com/WolfSoko/wol-sok-mono/issues/2516)) ([03d5210](https://github.com/WolfSoko/wol-sok-mono/commit/03d52108c00cd785edaa3bb17366894184434718))
+
 ## [74.34.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.33.0...v74.34.0) (2026-10-21)
 
 ### Features
