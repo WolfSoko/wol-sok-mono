@@ -41,4 +41,9 @@ export const CHAPTERS: readonly Chapter[] = [
       'Bosses bigger than you, grey colonies nobody steers, a race to eat.',
     levelIds: ['patient-zero', 'quarantine', 'feeding-ground'],
   },
+  {
+    name: 'Expanse',
+    blurb: 'Maps bigger than the screen - the camera follows your colony.',
+    levelIds: ['expanse'],
+  },
 ];

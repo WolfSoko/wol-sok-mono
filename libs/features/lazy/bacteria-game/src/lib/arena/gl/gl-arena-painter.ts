@@ -156,7 +156,8 @@ export class GlArenaPainter implements ArenaPainter {
   public static create(
     canvas: HTMLCanvasElement,
     width: number,
-    height: number
+    height: number,
+    unit = scaleOf(width)
   ): GlArenaPainter | null {
     let gl: WebGL2RenderingContext | null = null;
     try {
@@ -173,19 +174,22 @@ export class GlArenaPainter implements ArenaPainter {
     } catch {
       return null;
     }
-    return gl == null ? null : new GlArenaPainter(canvas, gl, width, height);
+    return gl == null
+      ? null
+      : new GlArenaPainter(canvas, gl, width, height, unit);
   }
 
   private constructor(
     canvas: HTMLCanvasElement,
     private readonly gl: WebGL2RenderingContext,
     private readonly width: number,
-    private readonly height: number
+    private readonly height: number,
+    unit: number
   ) {
     // Sized by `createArenaPainter`.
     this.canvasWidth = canvas.width;
     this.canvasHeight = canvas.height;
-    this.unit = scaleOf(width);
+    this.unit = unit;
     this.motes = new Motes(width, height);
     this.cellBytes = new Uint8Array(width * height * 2);
     this.resources = this.setup();
@@ -601,7 +605,8 @@ export class GlArenaPainter implements ArenaPainter {
       this.width,
       this.height,
       zones,
-      this.canvasWidth / this.width
+      this.canvasWidth / this.width,
+      this.unit
     );
     if (layer === null) {
       return;

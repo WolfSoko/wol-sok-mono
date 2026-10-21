@@ -537,6 +537,19 @@ export const LEVEL_MUSIC: Record<string, LevelMusic> = {
     echo: 0.2,
     seed: 19,
   },
+  // Wide open: slow, airy and far-reaching.
+  expanse: {
+    root: 40,
+    scale: LYDIAN,
+    bpm: 92,
+    progression: [0, 4, 1, 4],
+    lead: 'sine',
+    density: 0.35,
+    bass: 'drone',
+    drums: 'heart',
+    echo: 0.5,
+    seed: 20,
+  },
   // Where it began: slow, cold dread that builds.
   'patient-zero': {
     root: 41,

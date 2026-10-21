@@ -928,6 +928,12 @@ of it, counted on the GPU in the pellet row's two spare channels, 16 bits
 per colony. The bot heads for the zone to hold but does not avoid the
 other zones yet, and a next counted rule needs room in the GPU report:
 the report rows are full.
+Phase 4 is done. Phase 5 has started with bigger maps (6.1): a map's
+`size` lays it out on a bigger base, the resolution and the size are two
+factors apart, and a CSS camera over a canvas drawn whole follows the
+player's crosshair and zooms with the wheel (6.2, without the painter-side
+view and its level of detail). Expanse is the first big level. The
+minimap, activity tiles, pinch zoom, split screen and fog are next.
 Phase 7 can be sprinkled in between the others; each of its items is a
 self-contained PR. Of the groundwork the phases assumed, three pieces have
 landed since the first version of this document: the seeded generator (for

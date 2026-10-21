@@ -79,7 +79,8 @@ import { CampaignService } from './campaign.service';
 import { dismissSplash } from './splash';
 import { HeadStart, rivalryScore, SeriesLength } from './state/rivalry';
 import { loadFonts } from './fonts';
-import { arenaSize, renderScale, scaleOf } from './state/arena-size';
+import { arenaSize, renderScale, simScale } from './state/arena-size';
+import { Camera } from './arena/camera';
 import { GameHapticsService } from './haptics.service';
 import { GameSoundService, Soundtrack } from './sound/game-sound.service';
 import { MatchResult } from './state/match-engine';
@@ -99,10 +100,12 @@ import { GameStateService } from './state/game-state.service';
 import { GameMode, GameState, GameStateStore } from './state/game.states';
 import {
   getLevel,
+  gridScale,
   Level,
   LEVELS,
   levelBalance,
   levelMap,
+  levelSize,
   nextLevel,
 } from './state/levels';
 import { Rect } from './state/maps';
@@ -191,19 +194,26 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private thanos!: WsThanosDirective;
   /** Draws the arena - on the GPU where the browser can. */
   private painter: ArenaPainter | null = null;
+  /** The camera over a map bigger than the base arena, null on any other. */
+  private camera: Camera | null = null;
   /** Lay the next frame's floor down fully instead of fading into a trail. */
   private clearNextFrame = true;
 
-  /** The arena in cells, as fine as the simulation resolution asks for. */
+  /**
+   * The arena in cells, as fine as the simulation resolution asks for and
+   * as big as the level's map.
+   */
   protected readonly arena = computed(() =>
-    arenaSize(this.settings.simResolution())
+    arenaSize(this.settings.simResolution(), this.mapSize())
   );
+  /** How many times the base arena the level's map is along each side. */
+  protected readonly mapSize = computed(() => levelSize(this.store.level()));
   /**
    * One key per pair of resolutions: the canvas is rendered for the key, so
    * either resolution changing hands the painter a fresh canvas and context.
    */
   protected readonly canvasKey = computed(() => [
-    `${this.settings.simResolution()}:${this.settings.screenResolution()}`,
+    `${this.settings.simResolution()}:${this.settings.screenResolution()}:${this.mapSize()}`,
   ]);
 
   stats: Signal<ColonyStats[]>;
@@ -460,7 +470,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
     this.level = this.store.level;
     this.balance = computed(() =>
-      levelBalance(this.level(), scaleOf(this.arena().width))
+      levelBalance(this.level(), gridScale(this.level(), this.arena().width))
     );
     this.walls = computed(() => {
       const { width, height } = this.arena();
@@ -860,9 +870,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       height,
       renderScale(
         this.settings.simResolution(),
-        this.settings.screenResolution()
-      )
+        this.settings.screenResolution(),
+        this.mapSize()
+      ),
+      simScale(this.settings.simResolution())
     );
+    this.camera =
+      this.mapSize() > 1 ? new Camera(width, height, this.mapSize()) : null;
+    this.applyCamera(0);
     if (this.painter == null) {
       throw new Error('Could not get rendering context');
     }
@@ -891,6 +906,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.sound.matchStart(levelMusic(this.level().id));
     this.haptics.matchStart();
     this.clearNextFrame = true;
+    this.camera?.reset();
     this.gameStateService.cleanup();
     this.gameStateService.init(this.arena().width, this.arena().height);
     this.gameStateService.start();
@@ -971,6 +987,39 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const frame = this.frame(deltaTimeSec, clear || this.clearNextFrame, alpha);
     this.clearNextFrame = false;
     this.painter?.paint(frame);
+    this.applyCamera(deltaTimeSec);
+  }
+
+  /**
+   * Moves the camera over a big map - after the crosshair of the one human
+   * in a match, over the whole arena otherwise - and shows its view: the
+   * painters draw the whole arena, the camera scales and shifts the canvas.
+   */
+  private applyCamera(deltaTimeSec: number): void {
+    const canvas = this.canvasRef()?.nativeElement;
+    if (this.camera == null || canvas == null) {
+      return;
+    }
+    const humans = untracked(this.humans);
+    const human = humans.length === 1 ? humans[0] : null;
+    this.camera.follow(
+      untracked(this.running) && human != null
+        ? this.playerService.crosshairAt(human, 1)
+        : null,
+      deltaTimeSec
+    );
+    const { x, y, scale } = this.camera.transform();
+    canvas.style.transform = `translate(${x}%, ${y}%) scale(${scale})`;
+  }
+
+  /** The wheel zooms the camera over a big map, in or out. */
+  protected onWheel(event: WheelEvent): void {
+    if (this.camera == null) {
+      return;
+    }
+    event.preventDefault();
+    this.camera.zoomBy(Math.exp(-event.deltaY / 500));
+    this.draw();
   }
 
   /** What the arena shows right now, for the painter. */

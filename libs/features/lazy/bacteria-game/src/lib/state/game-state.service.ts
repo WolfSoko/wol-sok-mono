@@ -11,7 +11,6 @@ import {
   switchMap,
   takeUntil,
 } from 'rxjs';
-import { scaleOf } from './arena-size';
 import { FramePacer } from './frame-pacer';
 import { GameFrame, TICK_MS, TickClock, ticksToMs } from './fixed-tick';
 import { BotDifficulty } from './bot-controller';
@@ -28,7 +27,7 @@ import {
   GameStateStore,
   isMatchOn,
 } from './game.states';
-import { getLevel, levelBalance } from './levels';
+import { getLevel, gridScale, levelBalance } from './levels';
 import { colonyCapacity } from './game-balance';
 import { MatchEarnings } from './earnings';
 import {
@@ -249,7 +248,10 @@ export class GameStateService {
           winner,
           // The cap the simulation holds each of the two colonies to.
           capacity: colonyCapacity(
-            levelBalance(getLevel(levelId), scaleOf(width)),
+            levelBalance(
+              getLevel(levelId),
+              gridScale(getLevel(levelId), width)
+            ),
             2
           ),
         });

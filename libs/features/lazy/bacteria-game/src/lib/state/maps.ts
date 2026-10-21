@@ -33,6 +33,13 @@ export interface GameMap {
   name: string;
   /** One line on what the layout does to a match. */
   description: string;
+  /**
+   * How much bigger than the base arena the layout is, along each side - 2
+   * lays it out on 640 x 360 base cells. A bigger map is more room, not
+   * smaller bacteria: the camera follows the colony across it. 1 when
+   * absent.
+   */
+  size?: number;
   /** The walls for an arena of the given size. */
   createWalls(width: number, height: number): Rect[];
   /**

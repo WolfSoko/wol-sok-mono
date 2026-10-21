@@ -348,6 +348,32 @@ agar, crystals on ice, flames on heat, flags on the zone to hold.
 _How to play_ lists them. _Containment_, the second level of the Reactor
 chapter, has all of them.
 
+## Big maps and the camera
+
+A map can be bigger than the base arena: `GameMap.size` times it along each
+side, laid out on that bigger base (`size: 2` lays out on 640 x 360 base
+cells). Bigger is more room, not smaller bacteria, so two factors stay apart
+([`arena-size.ts`](./src/lib/state/arena-size.ts)):
+
+- the grid's resolution, cells per base cell (`scaleOf(width, size)`,
+  `gridScale(level, width)`), which keeps the game the same on every grid:
+  the jam, the crosshairs, the bot's distances and nav cells, the start
+  blob, the crosshair speed;
+- the map's size, which makes it bigger: the arena has `size` times the
+  cells along each side (`arenaSize(resolution, size)`), and the colonies
+  room for `size`² times the bacteria (`levelBalance`).
+
+The painters draw the whole arena on a canvas with as many pixels per cell
+as a base map (`renderScale(sim, screen, size)`, at most 4096 wide), and a
+[`Camera`](./src/lib/arena/camera.ts) shows part of it: it follows the
+crosshair of the one human in a match on a soft spring, zooms with the wheel
+between the whole map and the size of a base one, and never looks past the
+arena's edge. It is a CSS transform of the canvas inside a box that clips it
+and wears the arena's frame, so it costs no drawing, and the pointer still
+maps through the canvas's rect. Every match starts on the whole map.
+_Expanse_ opens the chapter of the same name: four times the room, rocks,
+and two neutral colonies, won on size after four minutes.
+
 ## Boost
 
 Every player has a boost (Space for the first player, Enter for the second, or

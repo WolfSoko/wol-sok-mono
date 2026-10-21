@@ -1,3 +1,4 @@
+import { scaleOf } from './arena-size';
 import {
   addEvents,
   BacteriaSimulation,
@@ -576,7 +577,8 @@ export class MatchEngine {
           width,
           height,
           this.map.createWalls(width, height),
-          mapZones(this.map, width, height)
+          mapZones(this.map, width, height),
+          scaleOf(width, this.map.size)
         ),
       };
     }
@@ -638,7 +640,8 @@ export class MatchEngine {
         this.hillAt(width, height),
         (from) => this.routesFrom(from, width, height),
         prey,
-        this.win.kind === 'harvest'
+        this.win.kind === 'harvest',
+        scaleOf(width, this.map.size)
       );
       const decision = bot.decide(view, TICK_SEC);
       if (decision.target != null) {

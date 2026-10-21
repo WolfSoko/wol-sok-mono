@@ -516,7 +516,7 @@ export class BacteriaSimulation implements Simulation {
 
   /** The closest free cell within a few steps, or -1 when it is all packed. */
   private findEscape(x: number, y: number): number {
-    const reach = escapeReach(this.width);
+    const reach = escapeReach(this.width, this.map.size);
     for (let radius = 1; radius <= reach; radius++) {
       for (let dy = -radius; dy <= radius; dy++) {
         for (let dx = -radius; dx <= radius; dx++) {

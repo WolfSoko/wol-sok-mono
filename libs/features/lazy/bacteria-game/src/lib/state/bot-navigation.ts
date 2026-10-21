@@ -95,9 +95,11 @@ export function navGrid(
   width: number,
   height: number,
   walls: readonly Rect[],
-  zones: readonly Zone[]
+  zones: readonly Zone[],
+  /** Arena cells per base cell - a nav cell is as big on every grid. */
+  unit = width / BASE_ARENA.width
 ): NavGrid {
-  const cell = Math.max(1, (NAV_CELL * width) / BASE_ARENA.width);
+  const cell = Math.max(1, NAV_CELL * unit);
   const columns = Math.ceil(width / cell);
   const rows = Math.ceil(height / cell);
   const grid: NavGrid = {

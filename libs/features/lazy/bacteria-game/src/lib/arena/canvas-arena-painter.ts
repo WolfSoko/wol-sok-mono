@@ -5,7 +5,6 @@ import {
   boostRingRadius,
   crosshairBars,
 } from './arena-painter';
-import { scaleOf } from '../state/arena-size';
 import { ArenaRenderer } from './arena-renderer';
 import { ArenaTheme } from './arena-theme';
 import { ColonyRenderer, drawJam } from './colony-renderer';
@@ -26,11 +25,12 @@ export class CanvasArenaPainter implements ArenaPainter {
     private readonly cx: CanvasRenderingContext2D,
     private readonly width: number,
     private readonly height: number,
-    scale: number
+    scale: number,
+    unit: number
   ) {
-    this.unit = scaleOf(width);
-    this.arena = new ArenaRenderer(width, height, Math.random, scale);
-    this.colonies = new ColonyRenderer(width, height);
+    this.unit = unit;
+    this.arena = new ArenaRenderer(width, height, Math.random, scale, unit);
+    this.colonies = new ColonyRenderer(width, height, unit);
     // Everything is drawn in arena cells; the transform scales it up.
     cx.setTransform(scale, 0, 0, scale, 0, 0);
     cx.imageSmoothingEnabled = false;

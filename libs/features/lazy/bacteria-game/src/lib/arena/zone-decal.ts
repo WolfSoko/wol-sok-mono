@@ -72,7 +72,9 @@ export function paintZoneLayer(
   width: number,
   height: number,
   zones: readonly Zone[],
-  scale: number
+  scale: number,
+  /** Cells per base cell - the marks are as big on every grid. */
+  unit = scaleOf(width)
 ): ZoneLayer | null {
   if (zones.length === 0) {
     return null;
@@ -131,7 +133,6 @@ export function paintZoneLayer(
   }
 
   // As big and as far apart on every grid: in base cells, not grid cells.
-  const unit = scaleOf(width);
   const spacing = MARK_SPACING * unit;
   const markPixel = Math.max(1, Math.round(unit * s));
   for (let gy = 0; gy * spacing < height; gy++) {

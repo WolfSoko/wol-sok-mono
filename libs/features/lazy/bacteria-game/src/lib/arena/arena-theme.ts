@@ -293,6 +293,20 @@ const THEMES: Record<string, ArenaTheme> = {
     moteCount: 30,
     current: { x: 2, y: -1 },
   },
+  // Dusty open country under a pale sky - room to roam.
+  expanse: {
+    floor: [24, 20, 16],
+    rim: [8, 6, 5],
+    pattern: 'dunes',
+    patternColor: [70, 58, 44],
+    patternStrength: 0.35,
+    wall: [150, 130, 110],
+    wallEdge: [230, 210, 180],
+    border: [240, 170, 90],
+    motes: [255, 230, 200],
+    moteCount: 40,
+    current: { x: 3, y: 0 },
+  },
   // A sterile ward under green emergency light.
   'patient-zero': {
     floor: [12, 22, 18],

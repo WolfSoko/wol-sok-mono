@@ -82,6 +82,11 @@ export function straightRoutes(from: Point): BotRoutes {
 export interface BotView {
   width: number;
   height: number;
+  /**
+   * Arena cells per base cell - the grid's resolution. Worked out from the
+   * width when absent, which holds on a map of the base size only.
+   */
+  unit?: number;
   own: ColonyView;
   /** The strongest enemy colony, null once there is none left. */
   enemy: ColonyView | null;
@@ -188,7 +193,7 @@ export class BotController {
     }
     this.cooldown = this.profile.reactionSec;
     // The bot thinks in cells of the base arena.
-    this.unit = scaleOf(view.width);
+    this.unit = view.unit ?? scaleOf(view.width);
     const { own, enemy } = view;
     // A boss that has fallen behind goes berserk: it charges the enemy with
     // every boost it gets - where its difficulty boosts at all.
@@ -348,7 +353,8 @@ export function buildBotView(
   objective: Point | null,
   routes: (from: Point) => BotRoutes,
   prey: readonly Nutrient[] = [],
-  feeding = false
+  feeding = false,
+  unit = scaleOf(width)
 ): BotView {
   const ownView = colonyView(own, maxEnergy);
   let enemy: ColonyView | null = null;
@@ -374,6 +380,7 @@ export function buildBotView(
     routes: routes(ownView),
     prey,
     feeding,
+    unit,
   };
 }
 

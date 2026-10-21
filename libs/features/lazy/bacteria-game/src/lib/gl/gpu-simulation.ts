@@ -393,7 +393,7 @@ export class GpuSimulation implements Simulation {
     // 2. Out of the way of a wall that moved, or crushed.
     if (this.escapePending) {
       // One cell per step, as far as a wall may shove a bacterium.
-      const steps = escapeReach(this.width);
+      const steps = escapeReach(this.width, this.map.size);
       for (let step = 0; step < steps; step++) {
         this.claimAndApply(resources, KIND.escape, step);
       }

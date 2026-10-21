@@ -1,4 +1,5 @@
-import { arenaSize, renderScale, scaleRect } from './arena-size';
+import { arenaSize, renderScale, scaleOf, scaleRect } from './arena-size';
+import { getLevel, gridScale, levelBalance, levelSize } from './levels';
 import { GAME_MAPS } from './game-maps';
 import { coversCell, Rect } from './maps';
 
@@ -18,6 +19,44 @@ function asymmetricCells(walls: Rect[], width: number, height: number) {
 }
 
 describe('arena size', () => {
+  it('makes a bigger map bigger, not finer', () => {
+    expect(arenaSize('normal', 2)).toEqual({ width: 640, height: 360 });
+    expect(arenaSize('ultra', 2)).toEqual({ width: 1280, height: 720 });
+    // As many cells per base cell as a base map on the same grid.
+    expect(scaleOf(1280, 2)).toBe(scaleOf(640));
+  });
+
+  it('draws a bigger map on a bigger canvas, as many pixels per cell', () => {
+    expect(renderScale('normal', 'medium', 2)).toBe(
+      renderScale('normal', 'medium')
+    );
+    // Up to a canvas the GPU takes.
+    expect(1280 * renderScale('ultra', 'full-hd', 4)).toBeLessThanOrEqual(4096);
+  });
+
+  it('gives a bigger map room for more bacteria, the rest as on a base map', () => {
+    const expanse = getLevel('expanse');
+    expect(levelSize(expanse)).toBe(2);
+    expect(gridScale(expanse, 640)).toBe(1);
+
+    const big = levelBalance(expanse, 1);
+    const base = levelBalance({ ...expanse, mapId: 'open-field' }, 1);
+    expect(big.maxBacteriaPerPlayer).toBe(4 * base.maxBacteriaPerPlayer);
+    expect(big.maxTotalBacteria).toBe(4 * base.maxTotalBacteria);
+    expect(big.startBacteriaRadius).toBe(base.startBacteriaRadius);
+    expect(big.nutrientRadius).toBe(base.nutrientRadius);
+  });
+
+  it('lays a bigger map out on its own base, the same on every grid', () => {
+    const expanse = GAME_MAPS.find(({ id }) => id === 'expanse');
+    const base = expanse?.createWalls(640, 360) ?? [];
+    const ultra = expanse?.createWalls(1280, 720) ?? [];
+
+    expect(base.length).toBeGreaterThan(10);
+    expect(ultra).toHaveLength(base.length);
+    expect(ultra[0].x).toBe(base[0].x * 2);
+  });
+
   it('keeps the arena 16:9 and on whole cells at every resolution', () => {
     expect(arenaSize('low')).toEqual({ width: 256, height: 144 });
     expect(arenaSize('normal')).toEqual({ width: 320, height: 180 });
