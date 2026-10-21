@@ -63,7 +63,12 @@ import { HelpComponent } from './menu/help.component';
 import { ProfileComponent } from './menu/profile.component';
 import { SettingsComponent } from './menu/settings.component';
 import { SwarmComponent } from './menu/swarm.component';
-import { getColonyColor, pickColor, readableOn } from './state/colony-colors';
+import {
+  getColonyColor,
+  NEUTRAL_COLOR,
+  pickColor,
+  readableOn,
+} from './state/colony-colors';
 import { BotDifficulty, difficultyOption } from './state/bot-controller';
 import {
   DEFAULT_EFFECTS_VOLUME,
@@ -194,6 +199,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   stats: Signal<ColonyStats[]>;
   /** The colonies a finger may steer - one seat each in the touch layout. */
   protected readonly humanStats: Signal<ColonyStats[]>;
+  /** The neutral colonies' bacteria, null on a level without any. */
+  protected readonly neutralCount: Signal<number | null>;
+  /** The grey the neutral colonies are drawn in. */
+  protected readonly neutralCss = `rgb(${NEUTRAL_COLOR.slice(0, 3).join(' ')})`;
   protected readonly fps = this.store.fps;
   /** True while a match is on, paused or not. */
   protected readonly running: Signal<boolean>;
@@ -450,6 +459,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.stats = computed(() => toColonyStats(players(), this.balance()), {
       equal: sameColonyStats,
     });
+    this.neutralCount = this.playerStore.neutralCount;
     this.humanStats = computed(() =>
       this.stats().filter((colony) => !colony.isBot)
     );

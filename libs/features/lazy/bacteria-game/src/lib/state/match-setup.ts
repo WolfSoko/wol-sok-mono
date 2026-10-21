@@ -1,6 +1,7 @@
 import { scaleOf } from './arena-size';
 import { BotDifficulty } from './bot-controller';
-import { getColonyColor, toPlayerColor } from './colony-colors';
+import { getColonyColor, NEUTRAL_COLOR, toPlayerColor } from './colony-colors';
+import { NEUTRAL_TRAITS } from './game-balance';
 import type { GameMode } from './game.states';
 import {
   getLevel,
@@ -79,6 +80,17 @@ export function planMatch(
         traits: boss?.traits,
         boss: boss !== undefined,
       },
+      // After the players: nobody steers them, so no seat is theirs.
+      ...(level.neutrals ?? []).map((spot): PlayerSpawn => ({
+        x: Math.round(spot.x * width),
+        y: Math.round(spot.y * height),
+        color: NEUTRAL_COLOR,
+        name: 'Neutral',
+        isBot: false,
+        startScale: spot.startScale,
+        traits: NEUTRAL_TRAITS,
+        neutral: true,
+      })),
     ],
     options: {
       balance: levelBalance(level, scale),

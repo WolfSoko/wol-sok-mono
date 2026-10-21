@@ -88,7 +88,10 @@ export class PlayerService {
     this.sticks.clear();
     this.frameEvents = noFrameEvents();
     this.mirrored = this.engine.players;
-    this.playerStore.setPlayers(this.mirrored);
+    this.playerStore.setPlayers(
+      this.mirrored,
+      spawns.some((spawn) => spawn.neutral) ? this.engine.neutralCount : null
+    );
   }
 
   /** See {@link MatchEngine.setDragTarget}. */
@@ -260,5 +263,6 @@ export class PlayerService {
       this.mirrored = players;
       this.playerStore.upsertPlayers(players);
     }
+    this.playerStore.setNeutralCount(this.engine.neutralCount);
   }
 }

@@ -265,6 +265,20 @@ const THEMES: Record<string, ArenaTheme> = {
     moteCount: 40,
     current: { x: 0, y: -6 },
   },
+  // Isolation rooms behind yellow-black hazard tape.
+  quarantine: {
+    floor: [18, 18, 20],
+    rim: [5, 5, 6],
+    pattern: 'grid',
+    patternColor: [60, 60, 66],
+    patternStrength: 0.3,
+    wall: [200, 190, 120],
+    wallEdge: [255, 240, 150],
+    border: [255, 214, 40],
+    motes: [220, 220, 230],
+    moteCount: 18,
+    current: { x: 0, y: 1 },
+  },
   // A sterile ward under green emergency light.
   'patient-zero': {
     floor: [12, 22, 18],

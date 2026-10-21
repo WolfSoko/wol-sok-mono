@@ -3,9 +3,11 @@ import {
   BotController,
   BotDifficulty,
   BotView,
+  buildBotView,
   ColonyView,
   straightRoutes,
 } from './bot-controller';
+import { ColonySummary } from './simulation';
 
 const WIDTH = 320;
 const HEIGHT = 140;
@@ -304,5 +306,43 @@ describe('BotController', () => {
 
       expect(decision.boost).toBe(false);
     });
+  });
+});
+
+describe('buildBotView', () => {
+  function summary(playerId: number, x: number, count: number): ColonySummary {
+    return {
+      playerId,
+      color: [0, 0, 0, 255],
+      count,
+      center: { x, y: 70 },
+      totalEnergy: count,
+      captured: 0,
+      lost: 0,
+      onHill: 0,
+    };
+  }
+
+  it('takes a neutral colony for food, never for the enemy', () => {
+    const own = summary(1, 240, 50);
+    const enemy = summary(0, 80, 40);
+    const neutral = summary(2, 160, 500);
+
+    const seen = buildBotView(
+      WIDTH,
+      HEIGHT,
+      own,
+      [enemy, own, neutral],
+      () => null,
+      [],
+      true,
+      1,
+      null,
+      straightRoutes,
+      [neutral]
+    );
+
+    expect(seen.enemy).toMatchObject({ x: 80, count: 40 });
+    expect(seen.nutrients).toEqual([{ x: 160, y: 70, amount: 500 }]);
   });
 });

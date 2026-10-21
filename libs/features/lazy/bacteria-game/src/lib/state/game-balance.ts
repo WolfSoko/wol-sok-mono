@@ -164,3 +164,13 @@ export const PLAIN_TRAITS: ColonyTraits = {
   attackFactor: 1,
   cooldownFactor: 1,
 };
+
+/**
+ * A neutral colony: nobody steers it, it grows slowly and bites back only
+ * weakly - food that takes some eating.
+ */
+export const NEUTRAL_TRAITS: ColonyTraits = {
+  divideFactor: 0.5,
+  attackFactor: 0.6,
+  cooldownFactor: 1,
+};

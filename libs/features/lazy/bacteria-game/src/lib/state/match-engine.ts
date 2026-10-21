@@ -72,6 +72,11 @@ export interface PlayerSpawn {
   traits?: ColonyTraits;
   /** True for a boss - a boss bot charges with every boost once behind. */
   boss?: boolean;
+  /**
+   * True for a neutral colony: it has no crosshair and no player, and counts
+   * for no side. Neutral spawns come after every player's.
+   */
+  neutral?: boolean;
 }
 
 /** The simulation on the CPU - the reference. */
@@ -192,6 +197,10 @@ export class MatchEngine {
   private heldUpTo = 0;
   /** The bots' grid of the static walls and the zones, by arena size. */
   private nav: { width: number; height: number; grid: NavGrid } | null = null;
+  /** The ids of the neutral colonies - colonies without a player. */
+  private readonly neutralIds: ReadonlySet<number>;
+  /** The neutral colonies' bacteria, all together. */
+  private neutralBacteria = 0;
   /** The centre of the hold zone on the arena last asked for, by its size. */
   private hill: { width: number; height: number; at: Point | null } | null =
     null;
@@ -203,7 +212,14 @@ export class MatchEngine {
     this.win = winRuleOf(options);
     this.traits = spawns.map((spawn) => spawn.traits);
     this.map = options.map ?? getMap('corridors');
-    this.playerList = spawns.map((spawn, index) => {
+    const players = spawns.filter((spawn) => spawn.neutral !== true);
+    if (spawns.slice(0, players.length).some((spawn) => spawn.neutral)) {
+      throw new Error('Neutral colonies spawn after every player.');
+    }
+    this.neutralIds = new Set(
+      spawns.flatMap((spawn, index) => (spawn.neutral ? [index] : []))
+    );
+    this.playerList = players.map((spawn, index) => {
       if (spawn.isBot && !this.ghosts.has(index)) {
         this.bots.set(
           index,
@@ -252,6 +268,11 @@ export class MatchEngine {
   /** The players as they stand after the last tick. */
   public get players(): readonly Player[] {
     return this.playerList;
+  }
+
+  /** The bacteria of the neutral colonies, all together. */
+  public get neutralCount(): number {
+    return this.neutralBacteria;
   }
 
   /** Ticks played so far. */
@@ -595,6 +616,9 @@ export class MatchEngine {
       return;
     }
     const colonies = this.simulation.summaries();
+    const neutral = colonies.filter(({ playerId }) =>
+      this.neutralIds.has(playerId)
+    );
     for (const [playerId, bot] of this.bots) {
       const player = this.playerList[playerId];
       const own = colonies.find((colony) => colony.playerId === playerId);
@@ -611,7 +635,8 @@ export class MatchEngine {
         isBoostReady(player),
         this.balance.maxEnergy,
         this.hillAt(width, height),
-        (from) => this.routesFrom(from, width, height)
+        (from) => this.routesFrom(from, width, height),
+        neutral
       );
       const decision = bot.decide(view, TICK_SEC);
       if (decision.target != null) {
@@ -629,13 +654,25 @@ export class MatchEngine {
    * (`ticked`) the time the hold zone was held.
    */
   private syncColonyStats(ticked = false): void {
-    const colonies = this.simulation.summaries();
+    const all = this.simulation.summaries();
+    // The neutral colonies fight, but count for nobody: not as an enemy to
+    // measure up against, not as the one holding the zone.
+    const colonies =
+      this.neutralIds.size === 0
+        ? all
+        : all.filter(({ playerId }) => !this.neutralIds.has(playerId));
+    this.neutralBacteria = 0;
+    for (const colony of all) {
+      if (this.neutralIds.has(colony.playerId)) {
+        this.neutralBacteria += colony.count;
+      }
+    }
     // On a hold-the-zone level, the ticks played since the last report are
     // held by the colony with the most bacteria on the zone in this one.
     let holder: number | null = null;
     let held = 0;
-    if (ticked && this.win.kind === 'hold' && colonies !== this.heldFrom) {
-      this.heldFrom = colonies;
+    if (ticked && this.win.kind === 'hold' && all !== this.heldFrom) {
+      this.heldFrom = all;
       held = this.ticks + 1 - this.heldUpTo;
       this.heldUpTo = this.ticks + 1;
       holder = zoneHolder(colonies);

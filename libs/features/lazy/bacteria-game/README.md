@@ -276,8 +276,22 @@ boost's cooldown - per colony, in both simulations (the GPU one already
 took the division chance and the attack per colony). The boss bot, once
 its colony has fallen behind, boosts whenever it can. The result screen
 frames a boss level as its chapter's finale. _Meltdown_ closes the
-Reactor chapter (survive a minute), _Patient Zero_ opens the Outbreak
+Reactor chapter (survive a minute), _Patient Zero_ closes the Outbreak
 chapter (beat it).
+
+A level can add neutral colonies (`neutrals` on the level: where each
+starts, as shares of the arena, and its start area): grey colonies nobody
+steers. `planMatch` spawns them after the players with `neutral: true`
+and `NEUTRAL_TRAITS` - slow to divide, weak to bite. The simulations run
+them like any colony; without a crosshair they stay put. The `MatchEngine`
+gives them no player, so they count for no side: the outcome is judged on
+the players, a player's size is measured against the other player's, and
+nobody holds a zone with them. The bot sees a neutral colony as food - a
+pellet as big as the colony - never as the enemy. The HUD and the
+scoreboard show their bacteria together ("Neutral"). Two at most: with the
+two players that is the four colonies the GPU runs. _Quarantine_ opens
+the Outbreak chapter with two of them, kept in isolation rooms between
+the start spots.
 
 On a _hold_ level a colony also wins once it has held the map's hold zone
 (a `hill` zone, white) for `holdSec` in all: each tick, the `MatchEngine`

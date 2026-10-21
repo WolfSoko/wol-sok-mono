@@ -33,6 +33,21 @@ export interface Level {
   win?: WinRule;
   /** The right colony is a boss: bigger from the start, and stronger. */
   boss?: Boss;
+  /**
+   * Neutral colonies: grey, nobody steers them and they count for no side -
+   * food for whoever eats them first. Two at most, the GPU runs four.
+   */
+  neutrals?: readonly NeutralSpot[];
+}
+
+/**
+ * Where a neutral colony starts, as shares of the arena's width and height,
+ * and its start area times the normal one.
+ */
+export interface NeutralSpot {
+  x: number;
+  y: number;
+  startScale: number;
 }
 
 /** A boss colony: its start area times the normal one, and its traits. */
@@ -315,8 +330,26 @@ export const LEVELS: readonly Level[] = [
     crosshairSpeed: 210,
   },
   {
+    id: 'quarantine',
+    name: '17 · Quarantine',
+    description:
+      'Two grey colonies sit in isolation, between you and the enemy. Nobody steers them and they bite back only weakly - whoever eats them first has the bigger army.',
+    mapId: 'quarantine',
+    medal: { silverSec: 95, goldSec: 65, goldLossShare: 0.5 },
+    neutrals: [
+      { x: 0.5, y: 0.2, startScale: 1.5 },
+      { x: 0.5, y: 0.8, startScale: 1.5 },
+    ],
+    balance: {
+      aggression: 0.6,
+      nutrientCount: 6,
+      nutrientRespawnDelaySec: 2,
+    },
+    crosshairSpeed: 190,
+  },
+  {
     id: 'patient-zero',
-    name: '17 · Patient Zero',
+    name: '18 · Patient Zero',
     description:
       'Where it all began: a boss half again your size, quick to divide and quick to boost. No clock, no zone to hide in - one of you is left.',
     mapId: 'ward',

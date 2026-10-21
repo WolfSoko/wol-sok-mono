@@ -331,12 +331,17 @@ export function buildBotView(
   boostReady: boolean,
   maxEnergy: number,
   objective: Point | null,
-  routes: (from: Point) => BotRoutes
+  routes: (from: Point) => BotRoutes,
+  neutral: readonly ColonySummary[] = []
 ): BotView {
   const ownView = colonyView(own, maxEnergy);
   let enemy: ColonyView | null = null;
   for (const colony of colonies) {
-    if (colony.playerId === own.playerId || colony.count === 0) {
+    if (
+      colony.playerId === own.playerId ||
+      colony.count === 0 ||
+      neutral.includes(colony)
+    ) {
       continue;
     }
     const view = colonyView(colony, maxEnergy);
@@ -351,11 +356,22 @@ export function buildBotView(
     own: ownView,
     enemy,
     nearestEnemy: enemy == null ? null : nearestEnemy(ownView),
-    nutrients,
+    // A neutral colony is no enemy: it is food, like a pellet.
+    nutrients:
+      neutral.length === 0
+        ? nutrients
+        : [...nutrients, ...neutral.flatMap(neutralFood)],
     boostReady,
     objective,
     routes: routes(ownView),
   };
+}
+
+/** A neutral colony as the bot sees it - a big pellet at its centre. */
+function neutralFood(colony: ColonySummary): Nutrient[] {
+  return colony.count === 0 || colony.center == null
+    ? []
+    : [{ x: colony.center.x, y: colony.center.y, amount: colony.count }];
 }
 
 /** Centre of mass, size and average energy of a colony. */
