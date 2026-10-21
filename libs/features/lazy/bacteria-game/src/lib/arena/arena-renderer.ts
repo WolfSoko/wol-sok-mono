@@ -99,18 +99,14 @@ export class ArenaRenderer {
 
   /** Switches to another level's look, repainting its floor. */
   public setFloor(theme: ArenaTheme, zones: readonly Zone[]): void {
-    if (this.theme === theme && this.zones === zones) {
-      return;
-    }
-    const newTheme = this.theme !== theme;
     if (this.zones !== zones) {
       this.zones = zones;
       this.zoneLayer = this.paintZones(zones);
     }
-    this.theme = theme;
-    if (!newTheme) {
+    if (this.theme === theme) {
       return;
     }
+    this.theme = theme;
     this.floor = this.paintFloor(theme);
     this.hazard = this.paintHazard(theme);
     this.css = {
@@ -280,30 +276,28 @@ export class ArenaRenderer {
 
   /** The floor in an offscreen canvas, or null where there is no canvas. */
   private paintFloor(theme: ArenaTheme): HTMLCanvasElement | null {
-    const canvas = createCanvas(this.width, this.height);
-    const context = canvas?.getContext?.('2d');
-    if (canvas == null || context == null) {
-      return null;
-    }
-    const image = context.createImageData(this.width, this.height);
-    paintArenaBackground(image.data, this.width, this.height, theme);
-    context.putImageData(image, 0, 0);
-    return canvas;
+    return imageCanvas(
+      paintArenaBackground(
+        new Uint8ClampedArray(this.width * this.height * 4),
+        this.width,
+        this.height,
+        theme
+      ),
+      this.width,
+      this.height
+    );
   }
 
   /** The zone layer in an offscreen canvas - null without zones or a canvas. */
   private paintZones(zones: readonly Zone[]): HTMLCanvasElement | null {
-    const layer = paintZoneLayer(this.width, this.height, zones, this.scale);
-    const canvas =
-      layer === null ? null : createCanvas(layer.width, layer.height);
-    const context = canvas?.getContext?.('2d');
-    if (layer === null || canvas == null || context == null) {
+    // No canvas, no layer - not worth painting it then.
+    if (createCanvas(1, 1) == null) {
       return null;
     }
-    const image = context.createImageData(layer.width, layer.height);
-    image.data.set(layer.data);
-    context.putImageData(image, 0, 0);
-    return canvas;
+    const layer = paintZoneLayer(this.width, this.height, zones, this.scale);
+    return layer === null
+      ? null
+      : imageCanvas(layer.data, layer.width, layer.height);
   }
 }
 
@@ -505,4 +499,21 @@ function valueNoise(x: number, y: number, seed: number): number {
   const top = lerp(hash(ix, iy, seed), hash(ix + 1, iy, seed), sx);
   const bottom = lerp(hash(ix, iy + 1, seed), hash(ix + 1, iy + 1, seed), sx);
   return lerp(top, bottom, sy);
+}
+
+/** RGBA pixels in an offscreen canvas, or null where there is no canvas. */
+function imageCanvas(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number
+): HTMLCanvasElement | null {
+  const canvas = createCanvas(width, height);
+  const context = canvas?.getContext?.('2d');
+  if (canvas == null || context == null) {
+    return null;
+  }
+  const image = context.createImageData(width, height);
+  image.data.set(data);
+  context.putImageData(image, 0, 0);
+  return canvas;
 }

@@ -272,8 +272,8 @@ uniform float uAlpha;
 out vec4 outColor;
 ${ARENA_POSITION}
 void main() {
-  vec4 color = texture(uZones, arenaPosition(vNdc, uArena) / uArena);
-  outColor = vec4(color.rgb, color.a * uAlpha);
+  // Premultiplied: the colour fades with the alpha.
+  outColor = texture(uZones, arenaPosition(vNdc, uArena) / uArena) * uAlpha;
 }`;
 
 /** One instance per shape, its rect in arena cells - see `SHAPE`. */

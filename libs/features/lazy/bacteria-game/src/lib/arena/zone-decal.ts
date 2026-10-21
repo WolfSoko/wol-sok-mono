@@ -1,11 +1,22 @@
 import { scaleOf } from '../state/arena-size';
-import { stampZones, Zone, ZONE_CODE, ZoneKind } from '../state/zones';
+import {
+  kindOfCode,
+  stampZones,
+  Zone,
+  ZONE_CODE,
+  ZoneKind,
+} from '../state/zones';
+import { coversPoint } from '../state/maps';
+import { hash, mix } from './canvas-math';
 import { Rgb } from './arena-theme';
 import { ZONE_COLORS } from './zone-look';
 
 /** How opaque a zone is inside, and along its rim. */
 const FILL = 0.24;
 const RIM = 0.8;
+
+/** The finest the zone layer is painted, in pixels per arena cell. */
+const MAX_LAYER_SCALE = 4;
 
 /** Base cells between two marks scattered over a zone. */
 const MARK_SPACING = 13;
@@ -41,14 +52,6 @@ const MARK_COLORS: Readonly<Record<string, Rgb>> = {
   o: [255, 120, 40],
 };
 
-const KIND_OF_CODE: readonly (ZoneKind | undefined)[] = (() => {
-  const kinds: (ZoneKind | undefined)[] = [];
-  for (const [kind, code] of Object.entries(ZONE_CODE)) {
-    kinds[code] = kind as ZoneKind;
-  }
-  return kinds;
-})();
-
 /** The zones as an image of their own, laid over the floor. */
 export interface ZoneLayer {
   /** Straight alpha RGBA, `scale` pixels per arena cell along each side. */
@@ -74,7 +77,8 @@ export function paintZoneLayer(
   if (zones.length === 0) {
     return null;
   }
-  const s = Math.max(1, Math.round(scale));
+  // Finer than this adds nothing a softened edge would show - and costs.
+  const s = Math.min(MAX_LAYER_SCALE, Math.max(1, Math.round(scale)));
   const cells = new Uint8Array(width * height);
   stampZones(cells, width, height, zones);
   const cellAt = (x: number, y: number) =>
@@ -88,11 +92,12 @@ export function paintZoneLayer(
   for (let cy = 0; cy < height; cy++) {
     for (let cx = 0; cx < width; cx++) {
       const code = cells[cy * width + cx];
-      const edge =
-        cellAt(cx - 1, cy) !== code ||
-        cellAt(cx + 1, cy) !== code ||
-        cellAt(cx, cy - 1) !== code ||
-        cellAt(cx, cy + 1) !== code;
+      let edge = false;
+      for (let dy = -1; dy <= 1 && !edge; dy++) {
+        for (let dx = -1; dx <= 1 && !edge; dx++) {
+          edge = cellAt(cx + dx, cy + dy) !== code;
+        }
+      }
       for (let sy = 0; sy < s; sy++) {
         for (let sx = 0; sx < s; sx++) {
           const x = cx * s + sx;
@@ -112,7 +117,7 @@ export function paintZoneLayer(
   for (let y = 0; y < layerH; y++) {
     for (let x = 0; x < layerW; x++) {
       const code = codes[y * layerW + x];
-      const kind = KIND_OF_CODE[code];
+      const kind = kindOfCode(code);
       if (kind === undefined) {
         continue;
       }
@@ -125,26 +130,23 @@ export function paintZoneLayer(
     }
   }
 
-  const unit = Math.max(1, Math.round(scaleOf(width)));
+  // As big and as far apart on every grid: in base cells, not grid cells.
+  const unit = scaleOf(width);
   const spacing = MARK_SPACING * unit;
+  const markPixel = Math.max(1, Math.round(unit * s));
   for (let gy = 0; gy * spacing < height; gy++) {
     for (let gx = 0; gx * spacing < width; gx++) {
       // A jitter per spot, from its place alone.
-      const jitter = hash(gx, gy);
-      const x = Math.round(
-        (gx + 0.25 + (0.5 * (jitter & 0xff)) / 255) * spacing * s
-      );
-      const y = Math.round(
-        (gy + 0.25 + (0.5 * ((jitter >>> 8) & 0xff)) / 255) * spacing * s
-      );
+      const x = Math.round((gx + 0.25 + 0.5 * hash(gx, gy, 1)) * spacing * s);
+      const y = Math.round((gy + 0.25 + 0.5 * hash(gx, gy, 2)) * spacing * s);
       const code = codeAt(x, y);
-      const kind = KIND_OF_CODE[code];
+      const kind = kindOfCode(code);
       const sprites = kind === undefined ? undefined : MARKS[kind];
       if (sprites === undefined) {
         continue;
       }
-      const sprite = sprites[(jitter >>> 16) % sprites.length];
-      stamp(data, layerW, codeAt, code, x, y, sprite, unit * s);
+      const sprite = sprites[Math.floor(hash(gx, gy, 3) * sprites.length)];
+      stamp(data, layerW, codeAt, code, x, y, sprite, markPixel);
     }
   }
   return { data: soften(data, layerW, layerH), width: layerW, height: layerH };
@@ -153,23 +155,9 @@ export function paintZoneLayer(
 /** The code of the zone over a point of the arena - the last one wins. */
 function zoneCodeAt(zones: readonly Zone[], x: number, y: number): number {
   for (let i = zones.length - 1; i >= 0; i--) {
-    const zone = zones[i];
-    if (
-      x < zone.x ||
-      y < zone.y ||
-      x >= zone.x + zone.width ||
-      y >= zone.y + zone.height
-    ) {
-      continue;
+    if (coversPoint(zones[i], x, y)) {
+      return ZONE_CODE[zones[i].kind];
     }
-    if (zone.round) {
-      const dx = (x - zone.x - zone.width / 2) / (zone.width / 2);
-      const dy = (y - zone.y - zone.height / 2) / (zone.height / 2);
-      if (dx * dx + dy * dy > 1) {
-        continue;
-      }
-    }
-    return ZONE_CODE[zone.kind];
   }
   return 0;
 }
@@ -200,8 +188,8 @@ function stamp(
       }
     }
   }
-  const kind = KIND_OF_CODE[code] as ZoneKind;
-  const light = lighter(ZONE_COLORS[kind]);
+  const kind = kindOfCode(code) as ZoneKind;
+  const light = mix(ZONE_COLORS[kind], [255, 255, 255], 0.5);
   for (let y = 0; y < spriteH; y++) {
     const row = sprite[Math.floor(y / pixel)];
     for (let x = 0; x < spriteW; x++) {
@@ -244,61 +232,40 @@ function soften(
     premultiplied[i + 2] = data[i + 2] * a;
     premultiplied[i + 3] = data[i + 3];
   }
-  const blurred = blur(
-    blur(premultiplied, width, height, 1, 0),
-    width,
-    height,
-    0,
-    1
-  );
-  const out = new Uint8ClampedArray(data.length);
+  // Across, into a scratch buffer, then down, back into the first one.
+  const scratch = new Float32Array(data.length);
+  blur(premultiplied, scratch, width, height, 1, 0);
+  blur(scratch, premultiplied, width, height, 0, 1);
   for (let i = 0; i < data.length; i += 4) {
-    const a = blurred[i + 3];
-    if (a <= 0) {
-      continue;
-    }
-    const k = 255 / a;
-    out[i] = blurred[i] * k;
-    out[i + 1] = blurred[i + 1] * k;
-    out[i + 2] = blurred[i + 2] * k;
-    out[i + 3] = a;
+    const a = premultiplied[i + 3];
+    const k = a > 0 ? 255 / a : 0;
+    data[i] = premultiplied[i] * k;
+    data[i + 1] = premultiplied[i + 1] * k;
+    data[i + 2] = premultiplied[i + 2] * k;
+    data[i + 3] = a;
   }
-  return out;
+  return data;
 }
 
-/** A [1 2 1] blur along one axis. */
+/** A [1 2 1] blur along one axis, from `source` into `target`. */
 function blur(
-  data: Float32Array,
+  source: Float32Array,
+  target: Float32Array,
   width: number,
   height: number,
   dx: number,
   dy: number
-): Float32Array {
-  const out = new Float32Array(data.length);
+): void {
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
-      const ax = Math.max(0, x - dx);
-      const ay = Math.max(0, y - dy);
-      const bx = Math.min(width - 1, x + dx);
-      const by = Math.min(height - 1, y + dy);
-      const a = (ay * width + ax) * 4;
-      const b = (by * width + bx) * 4;
+      const a = (Math.max(0, y - dy) * width + Math.max(0, x - dx)) * 4;
+      const b =
+        (Math.min(height - 1, y + dy) * width + Math.min(width - 1, x + dx)) *
+        4;
       for (let c = 0; c < 4; c++) {
-        out[i + c] = (data[a + c] + 2 * data[i + c] + data[b + c]) / 4;
+        target[i + c] = (source[a + c] + 2 * source[i + c] + source[b + c]) / 4;
       }
     }
   }
-  return out;
-}
-
-function lighter([r, g, b]: Rgb): Rgb {
-  return [r + (255 - r) * 0.5, g + (255 - g) * 0.5, b + (255 - b) * 0.5];
-}
-
-/** A well mixed 32 bit number for a spot of the grid. */
-function hash(x: number, y: number): number {
-  let h = Math.imul(x + 1, 0x27d4eb2d) ^ Math.imul(y + 1, 0x165667b1);
-  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
-  return (h ^ (h >>> 13)) >>> 0;
 }

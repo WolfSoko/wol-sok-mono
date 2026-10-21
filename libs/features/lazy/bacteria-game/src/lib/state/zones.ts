@@ -55,6 +55,19 @@ export const ZONE_CODE: Readonly<Record<ZoneKind, number>> = {
   hill: 5,
 };
 
+/** The kind a code in a zone grid stands for, undefined for none. */
+export function kindOfCode(code: number): ZoneKind | undefined {
+  return KINDS_BY_CODE[code];
+}
+
+const KINDS_BY_CODE: readonly (ZoneKind | undefined)[] = (() => {
+  const kinds: (ZoneKind | undefined)[] = [];
+  for (const [kind, code] of Object.entries(ZONE_CODE)) {
+    kinds[code] = kind as ZoneKind;
+  }
+  return kinds;
+})();
+
 /**
  * Lays the zones into a grid of zone codes, one per cell, shifted left by
  * `shift` bits - a later zone covers an earlier one where they overlap.
@@ -100,9 +113,15 @@ export function puddle(
 ): Zone[] {
   const random = seeded(seed);
   const size = Math.max(3, Math.min(rx, ry) * 0.7);
+  const step = size * 0.75;
+  // A lattice centred on the centre, so the puddle sits where it is put.
+  const across = Math.floor(Math.max(0, 2 * rx - size) / step);
+  const down = Math.floor(Math.max(0, 2 * ry - size) / step);
   const zones: Zone[] = [];
-  for (let y = -ry + size / 2; y <= ry - size / 2 + 0.01; y += size * 0.75) {
-    for (let x = -rx + size / 2; x <= rx - size / 2 + 0.01; x += size * 0.75) {
+  for (let row = 0; row <= down; row++) {
+    const y = (row - down / 2) * step;
+    for (let column = 0; column <= across; column++) {
+      const x = (column - across / 2) * step;
       // Only the blobs inside the ellipse, so the outline stays round.
       if ((x / rx) ** 2 + (y / ry) ** 2 > 1) {
         continue;

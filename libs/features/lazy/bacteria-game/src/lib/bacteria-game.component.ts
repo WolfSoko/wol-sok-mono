@@ -462,7 +462,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     effect(() => {
       this.painter?.setFloor(this.theme(), this.zones());
       this.walls();
-      this.zones();
       this.colors();
       this.settings.look();
       this.reducedMotion();
