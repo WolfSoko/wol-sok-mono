@@ -88,6 +88,11 @@ export interface BotView {
   /** The enemy bacterium closest to the own centre of mass, if any. */
   nearestEnemy: Point | null;
   nutrients: readonly Nutrient[];
+  /**
+   * Colonies nobody steers - neutral ones - as pellets as big as they are.
+   * Food that bites back: worth it to a colony that is not hungry.
+   */
+  prey?: readonly Nutrient[];
   boostReady: boolean;
   /**
    * Where the level is won, if anywhere - the centre of the zone to hold on
@@ -207,13 +212,13 @@ export class BotController {
     if (own.count === 0) {
       return { target: null, boost: false };
     }
-    const food = this.bestNutrient(view);
+    const hungry = own.energy < HUNGRY_ENERGY;
+    const food = this.bestNutrient(view, !hungry);
     if (enemy == null || enemy.count === 0) {
       return { target: this.aim(view, food ?? own), boost: false };
     }
 
     const stronger = own.count >= enemy.count * this.profile.attackRatio;
-    const hungry = own.energy < HUNGRY_ENERGY;
 
     // Where the level is won is the place to be - stronger or not, and with
     // no retreat. Only a hungry colony eats first.
@@ -255,10 +260,11 @@ export class BotController {
    * The pellet that is cheapest to reach. A pellet the enemy stands closer to
    * than we do is probably eaten before we arrive, so it counts as further away.
    */
-  private bestNutrient(view: BotView): Nutrient | null {
+  private bestNutrient(view: BotView, withPrey: boolean): Nutrient | null {
     let best: Nutrient | null = null;
     let bestCost = Number.POSITIVE_INFINITY;
-    for (const nutrient of view.nutrients) {
+    const prey = withPrey ? (view.prey ?? []) : [];
+    for (const nutrient of [...view.nutrients, ...prey]) {
       if (nutrient.amount <= 0) {
         continue;
       }
@@ -356,6 +362,15 @@ export function buildBotView(
     objective,
     routes: routes(ownView),
   };
+}
+
+/**
+ * A neutral colony as a bot sees it - prey as big as the colony, at its
+ * centre - none once it is eaten up.
+ */
+export function neutralFood(colony: ColonySummary): Nutrient[] {
+  const { x, y, count } = colonyView(colony, 1);
+  return count === 0 ? [] : [{ x, y, amount: count }];
 }
 
 /** Centre of mass, size and average energy of a colony. */

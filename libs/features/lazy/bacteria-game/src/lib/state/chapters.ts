@@ -37,7 +37,8 @@ export const CHAPTERS: readonly Chapter[] = [
   },
   {
     name: 'Outbreak',
-    blurb: 'Bosses: colonies bigger, faster and hungrier than yours.',
-    levelIds: ['patient-zero'],
+    blurb:
+      'Grey colonies nobody steers, and bosses bigger and hungrier than you.',
+    levelIds: ['patient-zero', 'quarantine'],
   },
 ];

@@ -511,6 +511,19 @@ export const LEVEL_MUSIC: Record<string, LevelMusic> = {
     echo: 0.2,
     seed: 16,
   },
+  // Waiting behind glass: sparse, tense and patient.
+  quarantine: {
+    root: 43,
+    scale: HARMONIC_MINOR,
+    bpm: 104,
+    progression: [0, 3, 0, 4],
+    lead: 'triangle',
+    density: 0.4,
+    bass: 'pulse',
+    drums: 'heart',
+    echo: 0.4,
+    seed: 18,
+  },
   // Where it began: slow, cold dread that builds.
   'patient-zero': {
     root: 41,

@@ -24,6 +24,12 @@ export const COLONY_COLORS: readonly ColonyColor[] = [
   { id: 'red', name: 'Red', rgb: [230, 40, 40] },
 ];
 
+/**
+ * The grey of a neutral colony - no player's, and apart from every colour
+ * a player can pick.
+ */
+export const NEUTRAL_COLOR: PlayerColorArray = [150, 156, 162, 255];
+
 /** Orange on the left, blue on the right - the colours the game started with. */
 export const DEFAULT_COLORS: readonly [string, string] = ['orange', 'blue'];
 

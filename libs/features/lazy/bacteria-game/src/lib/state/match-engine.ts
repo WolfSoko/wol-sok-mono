@@ -11,6 +11,7 @@ import {
   BotDifficulty,
   buildBotView,
   DEFAULT_DIFFICULTY,
+  neutralFood,
 } from './bot-controller';
 import { countDown, TICK_SEC, TICKS_PER_SEC } from './fixed-tick';
 import {
@@ -72,6 +73,11 @@ export interface PlayerSpawn {
   traits?: ColonyTraits;
   /** True for a boss - a boss bot charges with every boost once behind. */
   boss?: boolean;
+  /**
+   * True for a neutral colony: it has no crosshair and no player, and counts
+   * for no side. Neutral spawns come after every player's.
+   */
+  neutral?: boolean;
 }
 
 /** The simulation on the CPU - the reference. */
@@ -192,6 +198,10 @@ export class MatchEngine {
   private heldUpTo = 0;
   /** The bots' grid of the static walls and the zones, by arena size. */
   private nav: { width: number; height: number; grid: NavGrid } | null = null;
+  /** True when the match has neutral colonies - see {@link neutralCount}. */
+  private readonly hasNeutral: boolean;
+  /** The neutral colonies' bacteria, all together. */
+  private neutralBacteria = 0;
   /** The centre of the hold zone on the arena last asked for, by its size. */
   private hill: { width: number; height: number; at: Point | null } | null =
     null;
@@ -203,7 +213,12 @@ export class MatchEngine {
     this.win = winRuleOf(options);
     this.traits = spawns.map((spawn) => spawn.traits);
     this.map = options.map ?? getMap('corridors');
-    this.playerList = spawns.map((spawn, index) => {
+    const players = spawns.filter((spawn) => spawn.neutral !== true);
+    if (spawns.slice(0, players.length).some((spawn) => spawn.neutral)) {
+      throw new Error('Neutral colonies spawn after every player.');
+    }
+    this.hasNeutral = players.length < spawns.length;
+    this.playerList = players.map((spawn, index) => {
       if (spawn.isBot && !this.ghosts.has(index)) {
         this.bots.set(
           index,
@@ -252,6 +267,11 @@ export class MatchEngine {
   /** The players as they stand after the last tick. */
   public get players(): readonly Player[] {
     return this.playerList;
+  }
+
+  /** The bacteria of the neutral colonies, all together - null without any. */
+  public get neutralCount(): number | null {
+    return this.hasNeutral ? this.neutralBacteria : null;
   }
 
   /** Ticks played so far. */
@@ -594,7 +614,9 @@ export class MatchEngine {
     if (this.bots.size === 0) {
       return;
     }
-    const colonies = this.simulation.summaries();
+    const { players: colonies, neutral } = this.splitColonies();
+    // A neutral colony is no enemy to the bots: it is prey, food that bites.
+    const prey = neutral.flatMap(neutralFood);
     for (const [playerId, bot] of this.bots) {
       const player = this.playerList[playerId];
       const own = colonies.find((colony) => colony.playerId === playerId);
@@ -606,14 +628,17 @@ export class MatchEngine {
         height,
         own,
         colonies,
-        (from) => this.simulation.nearestEnemy(playerId, from),
+        // The simulation's nearest enemy may be a neutral bacterium: with
+        // neutral colonies about, the bots charge the enemy's centre.
+        (from) =>
+          this.hasNeutral ? null : this.simulation.nearestEnemy(playerId, from),
         this.simulation.getNutrients(),
         isBoostReady(player),
         this.balance.maxEnergy,
         this.hillAt(width, height),
         (from) => this.routesFrom(from, width, height)
       );
-      const decision = bot.decide(view, TICK_SEC);
+      const decision = bot.decide({ ...view, prey }, TICK_SEC);
       if (decision.target != null) {
         this.dragTargets.set(playerId, decision.target);
       }
@@ -624,18 +649,42 @@ export class MatchEngine {
   }
 
   /**
+   * The colonies of the last step, split: the players' and the neutral ones
+   * - those past the last player's seat. A neutral colony fights, but counts
+   * for nobody: not as an enemy to measure up against, not as the one
+   * holding the zone.
+   */
+  private splitColonies(): {
+    all: readonly ColonySummary[];
+    players: readonly ColonySummary[];
+    neutral: readonly ColonySummary[];
+  } {
+    const all = this.simulation.summaries();
+    if (!this.hasNeutral) {
+      return { all, players: all, neutral: [] };
+    }
+    const seats = this.playerList.length;
+    return {
+      all,
+      players: all.filter(({ playerId }) => playerId < seats),
+      neutral: all.filter(({ playerId }) => playerId >= seats),
+    };
+  }
+
+  /**
    * Takes the colony scoreboard over into the players - with the peak and
    * the lowest size ratio the match is judged on, and after a tick played
    * (`ticked`) the time the hold zone was held.
    */
   private syncColonyStats(ticked = false): void {
-    const colonies = this.simulation.summaries();
+    const { all, players: colonies, neutral } = this.splitColonies();
+    this.neutralBacteria = neutral.reduce((sum, { count }) => sum + count, 0);
     // On a hold-the-zone level, the ticks played since the last report are
     // held by the colony with the most bacteria on the zone in this one.
     let holder: number | null = null;
     let held = 0;
-    if (ticked && this.win.kind === 'hold' && colonies !== this.heldFrom) {
-      this.heldFrom = colonies;
+    if (ticked && this.win.kind === 'hold' && all !== this.heldFrom) {
+      this.heldFrom = all;
       held = this.ticks + 1 - this.heldUpTo;
       this.heldUpTo = this.ticks + 1;
       holder = zoneHolder(colonies);

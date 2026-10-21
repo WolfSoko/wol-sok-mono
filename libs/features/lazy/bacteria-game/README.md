@@ -279,6 +279,23 @@ frames a boss level as its chapter's finale. _Meltdown_ closes the
 Reactor chapter (survive a minute), _Patient Zero_ opens the Outbreak
 chapter (beat it).
 
+A level can add neutral colonies (`neutrals` on the level: where each
+starts, as shares of the arena, and its start area): grey colonies nobody
+steers. `planMatch` spawns them after the players with `neutral: true`
+and `NEUTRAL_TRAITS` - slow to divide, weak to bite. The simulations run
+them like any colony; without a crosshair they stay put. The `MatchEngine`
+gives them no player, so they count for no side: the outcome is judged on
+the players, a player's size is measured against the other player's, and
+nobody holds a zone with them. They keep their share of the arena's
+capacity (`colonyCapacity`) all match: eating one adds its bacteria to
+yours, but not its share - with it, bot matches grew big enough to stall. The bot sees a neutral colony as prey - a pellet as big as the
+colony that it goes for unless it is hungry - never as the enemy, and with
+neutrals about it charges the enemy's centre. The HUD and the
+scoreboard show their bacteria together ("Neutral"). Two at most: with the
+two players that is the four colonies the GPU runs, which a levels spec
+checks. _Quarantine_ follows _Patient Zero_ with two of them, kept in
+isolation rooms between the start spots.
+
 On a _hold_ level a colony also wins once it has held the map's hold zone
 (a `hill` zone, white) for `holdSec` in all: each tick, the `MatchEngine`
 credits the colony with the most bacteria on the zone - nobody on a tie
