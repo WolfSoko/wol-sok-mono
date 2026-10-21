@@ -17,6 +17,7 @@ const WIN: MatchRecord = {
   captured: 400,
   enemyCrushed: 50,
   peakShare: 0.5,
+  pellets: 0,
 };
 
 function earnedBy(
@@ -65,6 +66,7 @@ describe('achievements', () => {
         wins: 1,
         enemyCrushed: 500,
         captured: 10_000,
+        pellets: 100,
         couchMatches: 10,
       },
     };
@@ -73,6 +75,7 @@ describe('achievements', () => {
       'first-blood',
       'gatekeeper',
       'converter',
+      'glutton',
       'couch-war',
     ]);
   });

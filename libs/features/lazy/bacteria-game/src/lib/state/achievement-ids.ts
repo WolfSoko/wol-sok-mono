@@ -9,6 +9,7 @@ export const ACHIEVEMENT_IDS = [
   'full-dish',
   'gatekeeper',
   'converter',
+  'glutton',
   'flawless',
   'petri-scholar',
   'hard-boiled',

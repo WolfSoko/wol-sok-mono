@@ -862,7 +862,7 @@ has started: medallions per level and difficulty (section 3, without the
 level map and the medallion's level theme) are built, with the result-screen
 panel, the level list and the bells, the campaign ladder (1.2) with free
 play, the menu screens with the level choice and the profile, lifetime
-totals with thirteen achievements (1.4), XP with eight ranks (1.5) told on
+totals with fourteen achievements (1.4), XP with eight ranks (1.5) told on
 a result screen in the order of 1.9, and colony colours and arenas to unlock
 (1.6, without crosshair shapes and boost sounds; an earned arena dresses
 every level, not only in free play), and the two-player rivalry (1.8: series,
@@ -870,9 +870,9 @@ head start, wins per colour); the lib's README describes them. Phase 1 is
 done, apart from the cloud profile of 1.1, which waits for a Firebase backend
 of the GameStorage port, and the daily level of 1.7, which needs the level
 generator of phase 3.
-Glutton waits for pellets counted per colony, which the GPU report does not
-give yet - Flawless (a platinum medallion) takes its place - and Petri
-Scholar asks gold on levels 1 to 4 until chapters exist. The medallion limits are a first
+Glutton came with the pellets counted per colony of phase 4, Flawless (a
+platinum medallion) besides it, and Petri Scholar asks gold on levels 1 to
+4 - the first chapter. The medallion limits are a first
 pass from bot matches and want tuning by play. Everything is stored through
 the `GameStorage` port, so the cloud profile of 1.1 is a backend to provide,
 not a change to the services.

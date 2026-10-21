@@ -510,6 +510,7 @@ describe('WinnerComponent', () => {
       captured: 0,
       enemyCrushed: 0,
       peakShare: 0,
+      pellets: 0,
     };
 
     function award(changes: Partial<MedalAward>): MedalAward {

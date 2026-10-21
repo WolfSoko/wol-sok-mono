@@ -14,6 +14,7 @@ const WIN: MatchRecord = {
   captured: 400,
   enemyCrushed: 50,
   peakShare: 0.5,
+  pellets: 0,
 };
 
 describe('matchXp', () => {

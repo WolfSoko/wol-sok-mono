@@ -24,6 +24,7 @@ const PLATINUM_RUN: MatchRecord = {
   captured: 800,
   enemyCrushed: 100,
   peakShare: 0.5,
+  pellets: 0,
 };
 
 function run(changes: Partial<MatchRecord>): MatchRecord {
@@ -121,6 +122,7 @@ describe('matchRecord', () => {
     peakCount: 300,
     lowestSizeRatio: 0.4,
     captured: 250,
+    pellets: 7,
   });
   const computer = createPlayer({ id: 1, isBot: true, lost: 270 });
   const match = {
@@ -148,6 +150,7 @@ describe('matchRecord', () => {
       captured: 250,
       enemyCrushed: 20,
       peakShare: 0.5,
+      pellets: 7,
     });
   });
 

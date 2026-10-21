@@ -74,6 +74,8 @@ export interface MatchRecord {
   enemyCrushed: number;
   /** The colony at its peak, as a share of the level's colony capacity. */
   peakShare: number;
+  /** Pellets the human's colony ate up. */
+  pellets: number;
 }
 
 /** What a match against the computer earned, for the result screen. */
@@ -118,6 +120,7 @@ export function matchRecord(
     captured: human.captured,
     enemyCrushed: Math.max(0, (bot?.lost ?? 0) - human.captured),
     peakShare: capacity > 0 ? human.peakCount / capacity : 0,
+    pellets: human.pellets,
   };
 }
 

@@ -21,6 +21,7 @@ const GOLD_WIN: MatchRecord = {
   captured: 0,
   enemyCrushed: 0,
   peakShare: 0,
+  pellets: 0,
 };
 
 describe('ProgressService', () => {
@@ -77,6 +78,7 @@ describe('ProgressService', () => {
       wins: 1,
       captured: 350,
       enemyCrushed: 40,
+      pellets: 0,
       couchMatches: 0,
       matchXp: 150 + 30,
     });

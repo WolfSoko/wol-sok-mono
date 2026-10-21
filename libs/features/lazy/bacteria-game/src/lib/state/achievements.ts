@@ -29,6 +29,7 @@ const CLEAN_SWEEP_LOSS_SHARE = 0.1;
 const FULL_DISH_SHARE = 0.95;
 const GATEKEEPER_CRUSHED = 500;
 const CONVERTER_CAPTURED = 10_000;
+const GLUTTON_PELLETS = 100;
 const COUCH_WAR_MATCHES = 10;
 /** The levels Petri Scholar asks gold on - the first four, the classics. */
 const SCHOLAR_LEVELS = LEVELS.slice(0, 4);
@@ -87,6 +88,11 @@ const RULES: Record<AchievementId, Omit<Achievement, 'id'>> = {
     name: 'Converter',
     condition: 'Capture 10,000 enemy bacteria',
     earned: (progress) => progress.totals.captured >= CONVERTER_CAPTURED,
+  },
+  glutton: {
+    name: 'Glutton',
+    condition: `Eat up ${GLUTTON_PELLETS} pellets`,
+    earned: (progress) => progress.totals.pellets >= GLUTTON_PELLETS,
   },
   flawless: {
     name: 'Flawless',

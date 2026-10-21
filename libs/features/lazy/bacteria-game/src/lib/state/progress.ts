@@ -16,6 +16,8 @@ export interface LifetimeTotals {
   captured: number;
   /** Enemy bacteria the walls crushed in matches against the computer. */
   enemyCrushed: number;
+  /** Pellets eaten up in matches against the computer. */
+  pellets: number;
   /** Matches between two players played to the end. */
   couchMatches: number;
   /**
@@ -48,6 +50,7 @@ export const NO_TOTALS: LifetimeTotals = {
   wins: 0,
   captured: 0,
   enemyCrushed: 0,
+  pellets: 0,
   couchMatches: 0,
   matchXp: 0,
 };
@@ -126,6 +129,7 @@ export function totalsOf(record: MatchRecord): Partial<LifetimeTotals> {
     wins: record.won ? 1 : 0,
     captured: record.captured,
     enemyCrushed: record.enemyCrushed,
+    pellets: record.pellets,
   };
 }
 

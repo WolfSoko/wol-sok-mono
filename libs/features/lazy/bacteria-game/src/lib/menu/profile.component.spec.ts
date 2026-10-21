@@ -65,14 +65,14 @@ describe('ProfileComponent', () => {
     const host = render({}, { achievements: { blitz: '2026-10-19' } });
 
     const items = Array.from(host.querySelectorAll('.achievements li'));
-    expect(items).toHaveLength(13);
+    expect(items).toHaveLength(14);
     const blitz = items.find((li) => li.textContent?.includes('Blitz'));
     expect(blitz?.classList.contains('earned')).toBe(true);
     expect(blitz?.textContent).toContain('Earned 19 Oct 2026');
     const siege = items.find((li) => li.textContent?.includes('Siege'));
     expect(siege?.textContent).toContain('5 minutes or more');
     expect(host.querySelector('.achievements h3')?.textContent).toContain(
-      '1 of 13'
+      '1 of 14'
     );
   });
 
