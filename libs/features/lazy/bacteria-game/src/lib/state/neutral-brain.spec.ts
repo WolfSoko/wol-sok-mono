@@ -102,6 +102,29 @@ describe('NeutralBrain', () => {
     expect(course!.goal.y).toBeGreaterThanOrEqual(NEUTRAL_MOVES.margin);
   });
 
+  it('runs along the edge when the threat drives it into it', () => {
+    const atEdge = colony(2, 1000, 300, 15);
+    const course = steer(atEdge, [colony(0, 3000, 300, 70)]);
+
+    // Not into the edge, where it would stay put: along it.
+    expect(Math.abs(course!.goal.x - 300)).toBeGreaterThan(
+      NEUTRAL_MOVES.fleeReach / 2
+    );
+  });
+
+  it('keeps running until it is safe, not just out of reach', () => {
+    const brain = new NeutralBrain(() => 0.25);
+    const threat = colony(0, 3000, 360, 180);
+    brain.steer(self, [threat], WIDTH, HEIGHT, 1, 1 / 60);
+
+    // A gap of about 50: past the reach it ran from, short of safe.
+    const further = colony(0, 3000, 400, 180);
+    const course = brain.steer(self, [further], WIDTH, HEIGHT, 1, 1 / 60);
+
+    expect(course?.speed).toBe(NEUTRAL_MOVES.hurry);
+    expect(course!.goal.x).toBeLessThan(300);
+  });
+
   it('has nowhere to go once it is eaten up', () => {
     expect(steer({ ...self, count: 0, center: null }, [])).toBeNull();
   });

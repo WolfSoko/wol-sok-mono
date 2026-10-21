@@ -1,4 +1,4 @@
-import { clamp, Point } from './geometry';
+import { clamp, delta, distance, Point, scaleTo } from './geometry';
 import { ColonySummary } from './simulation';
 
 /**
@@ -13,8 +13,10 @@ export const NEUTRAL_MOVES = {
   hurry: 30,
   /** How close the edge of a colony it would eat has to be to be noticed. */
   sense: 70,
-  /** How far it keeps the edge of a bigger colony away. */
+  /** How close the edge of a bigger colony may come before it runs. */
   keepAway: 40,
+  /** How far away it has to be before a colony that runs stops. */
+  safe: 60,
   /** How far ahead it heads while it runs. */
   fleeReach: 60,
   /** How far past its edge it wanders before it picks the next spot. */
@@ -49,6 +51,8 @@ export interface NeutralCourse {
 export class NeutralBrain {
   private wanderGoal: Point | null = null;
   private wanderLeftSec = 0;
+  /** True while it runs from a threat - until it is safe, not just out of reach. */
+  private fleeing = false;
 
   public constructor(private readonly random: () => number) {}
 
@@ -70,7 +74,8 @@ export class NeutralBrain {
     }
     const radius = discRadius(self.count);
     let threat: Point | null = null;
-    let threatGap = NEUTRAL_MOVES.keepAway * unit;
+    let threatGap =
+      (this.fleeing ? NEUTRAL_MOVES.safe : NEUTRAL_MOVES.keepAway) * unit;
     let prey: Point | null = null;
     let preyGap = NEUTRAL_MOVES.sense * unit;
     for (const other of others) {
@@ -78,9 +83,7 @@ export class NeutralBrain {
         continue;
       }
       const gap =
-        Math.hypot(other.center.x - center.x, other.center.y - center.y) -
-        radius -
-        discRadius(other.count);
+        distance(center, other.center) - radius - discRadius(other.count);
       if (other.count > self.count * BIGGER && gap < threatGap) {
         threat = other.center;
         threatGap = gap;
@@ -91,20 +94,13 @@ export class NeutralBrain {
     }
 
     const hurry = NEUTRAL_MOVES.hurry * unit;
+    this.fleeing = threat != null;
     if (threat != null) {
-      // Running drops the stroll - it picks a new spot once it is safe.
-      this.wanderGoal = null;
-      const away = this.direction(center.x - threat.x, center.y - threat.y);
-      return {
-        goal: this.inside(
-          center.x + away.x * NEUTRAL_MOVES.fleeReach * unit,
-          center.y + away.y * NEUTRAL_MOVES.fleeReach * unit,
-          width,
-          height,
-          unit
-        ),
-        speed: hurry,
-      };
+      const goal = this.escape(center, threat, width, height, unit);
+      // Once safe, it strolls on the way it ran - not back into the threat.
+      this.wanderGoal = goal;
+      this.wanderLeftSec = WANDER_SEC;
+      return { goal, speed: hurry };
     }
     if (prey != null) {
       return { goal: prey, speed: hurry };
@@ -115,10 +111,9 @@ export class NeutralBrain {
     if (
       goal == null ||
       this.wanderLeftSec <= 0 ||
-      Math.hypot(goal.x - center.x, goal.y - center.y) <
-        NEUTRAL_MOVES.arrived * unit
+      distance(goal, center) < NEUTRAL_MOVES.arrived * unit
     ) {
-      const heading = this.direction(0, 0);
+      const heading = this.randomHeading();
       // From its edge: a spot inside a big colony takes it nowhere.
       const reach =
         radius + NEUTRAL_MOVES.wanderReach * unit * (0.5 + 0.5 * this.random());
@@ -137,12 +132,47 @@ export class NeutralBrain {
     };
   }
 
-  /** That direction, one long - a random one for none. */
-  private direction(x: number, y: number): Point {
-    const length = Math.hypot(x, y);
-    if (length > 0) {
-      return { x: x / length, y: y / length };
+  /**
+   * Where to run from a threat: straight away from it - or, where the edge
+   * of the arena cuts that short, along the edge to the side with more
+   * room, so a colony in a corner does not just press into it.
+   */
+  private escape(
+    center: Point,
+    threat: Point,
+    width: number,
+    height: number,
+    unit: number
+  ): Point {
+    const reach = NEUTRAL_MOVES.fleeReach * unit;
+    const away = delta(threat, center);
+    const run = scaleTo(
+      away.x === 0 && away.y === 0 ? this.randomHeading() : away,
+      reach
+    );
+    const straight = this.inside(
+      center.x + run.x,
+      center.y + run.y,
+      width,
+      height,
+      unit
+    );
+    if (distance(straight, center) >= reach / 2) {
+      return straight;
     }
+    const sideways = [
+      { x: -run.y, y: run.x },
+      { x: run.y, y: -run.x },
+    ].map((side) =>
+      this.inside(center.x + side.x, center.y + side.y, width, height, unit)
+    );
+    return distance(sideways[0], threat) >= distance(sideways[1], threat)
+      ? sideways[0]
+      : sideways[1];
+  }
+
+  /** A direction one long, picked at random. */
+  private randomHeading(): Point {
     const angle = this.random() * Math.PI * 2;
     return { x: Math.cos(angle), y: Math.sin(angle) };
   }

@@ -145,6 +145,8 @@ function onGrid(value: number, steps: number): number {
 interface NeutralMover {
   seat: number;
   brain: NeutralBrain;
+  /** Its crosshair, moved where its mind sends it on the ticks it steps. */
+  crosshair: Player;
   /** The part of a step it has made up and not yet taken. */
   pace: number;
 }
@@ -230,11 +232,12 @@ export class MatchEngine {
       throw new Error('Neutral colonies spawn after every player.');
     }
     this.hasNeutral = players.length < spawns.length;
-    this.neutralMovers = spawns.slice(players.length).map((_, index) => {
+    this.neutralMovers = spawns.slice(players.length).map((spawn, index) => {
       const seat = players.length + index;
       return {
         seat,
         brain: new NeutralBrain(seeded(streamSeed(this.seed, seat + 1))),
+        crosshair: createPlayer({ id: seat, color: spawn.color }),
         pace: 0,
       };
     });
@@ -684,14 +687,14 @@ export class MatchEngine {
     }
     const { players: colonies, neutral } = this.splitColonies();
     const unit = this.unitAt(width);
-    const steered = [...this.playerList];
+    let steered: Player[] | null = null;
     for (const mover of this.neutralMovers) {
       const own = neutral.find((colony) => colony.playerId === mover.seat);
       const course =
-        own == null
+        own?.center == null
           ? null
           : mover.brain.steer(own, colonies, width, height, unit, TICK_SEC);
-      if (own == null || course == null) {
+      if (own?.center == null || course == null) {
         continue;
       }
       mover.pace += course.speed * TICK_SEC;
@@ -700,17 +703,20 @@ export class MatchEngine {
         continue;
       }
       mover.pace -= steps;
-      steered.push(
-        createPlayer({
-          id: mover.seat,
-          x: course.goal.x,
-          y: course.goal.y,
-          color: own.color,
-          maxSpeed: steps / TICK_SEC,
-        })
+      // Around the walls, as the bots go, not into the one in the way.
+      const at = this.routesFrom(own.center, width, height).waypoint(
+        course.goal
       );
+      mover.crosshair = {
+        ...mover.crosshair,
+        x: at.x,
+        y: at.y,
+        maxSpeed: steps / TICK_SEC,
+      };
+      steered ??= [...this.playerList];
+      steered.push(mover.crosshair);
     }
-    return steered;
+    return steered ?? this.playerList;
   }
 
   /** Arena cells per base cell on an arena that wide - the grid's resolution. */
