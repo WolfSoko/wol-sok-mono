@@ -1037,7 +1037,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     event.preventDefault();
-    this.camera.zoomBy(Math.exp(-event.deltaY / 500));
+    // In pixels: Firefox counts a mouse wheel's notches in lines.
+    const perUnit =
+      event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? 16
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? 400
+          : 1;
+    this.camera.zoomBy(Math.exp((-event.deltaY * perUnit) / 500));
     this.easeCamera();
   }
 
