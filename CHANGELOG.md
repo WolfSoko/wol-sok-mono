@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.41.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.40.0...v74.41.0) (2026-10-21)
+
+### Features
+
+* **spa-cdk-stack:** share one SpaStack across the four CDK apps ([#2527](https://github.com/WolfSoko/wol-sok-mono/issues/2527)) ([db5c8e4](https://github.com/WolfSoko/wol-sok-mono/commit/db5c8e4335671e685178ef94e8e9c41c856894f1)), closes [#2483](https://github.com/WolfSoko/wol-sok-mono/issues/2483)
+
+### Chore
+
+* **release:** publish ([7fd213b](https://github.com/WolfSoko/wol-sok-mono/commit/7fd213b6918d893ece842b65ff89b613e3ba2fd6))
+
 ## [74.40.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.39.0...v74.40.0) (2026-10-21)
 
 ### Features
