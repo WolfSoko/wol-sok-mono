@@ -41,6 +41,45 @@ export interface SpaProps {
    * bundles get, and are uploaded after those bundles.
    */
   noCacheFiles?: string[];
+  /**
+   * Files that get their own Cache-Control, and optionally Content-Type,
+   * instead of the one year max-age, as globs relative to buildOutputPath.
+   * Like noCacheFiles, they are left out of the main deployment and uploaded
+   * after it, so each file is written once with one header. Keep the globs
+   * of different entries disjoint: a file matched twice is uploaded twice and
+   * the later header wins. Wildcards may only appear in the last segment.
+   */
+  cacheOverrides?: CacheOverride[];
+}
+
+export interface CacheOverride {
+  /** Globs relative to buildOutputPath, e.g. `assets/manifest*.json`. */
+  files: string[];
+  cacheControl: CacheControl;
+  contentType?: string;
+}
+
+/**
+ * Exclude globs that keep only `files`. '**' also skips every folder as a
+ * whole, so the folders above a nested file are re-included first, and
+ * `<glob>/**` keeps the contents of a glob that names a folder.
+ */
+function onlyInclude(files: string[]): string[] {
+  const included = new Set<string>();
+  for (const file of files) {
+    const folders = file.split('/').slice(0, -1);
+    if (folders.some((folder) => /[*?[\]{}]/.test(folder))) {
+      // Re-including a folder wildcard such as `assets/*` would also bring
+      // back the files it matches, so they would be uploaded twice again.
+      throw new Error(
+        `Wildcards are only supported in the last segment: ${file}`
+      );
+    }
+    folders.forEach((_, i) => included.add(folders.slice(0, i + 1).join('/')));
+    included.add(file);
+    included.add(file + '/**');
+  }
+  return ['**', ...[...included].map((glob) => '!' + glob)];
 }
 
 const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
@@ -54,6 +93,8 @@ const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
  */
 export class SpaConstruct extends Construct {
   private bucketDeployments: BucketDeployment[] = [];
+  private readonly indexDeployment: BucketDeployment;
+  private lastUpload: BucketDeployment;
   private readonly bucket: Bucket;
   private readonly distribution: Distribution;
 
@@ -65,7 +106,18 @@ export class SpaConstruct extends Construct {
     super(parent, spaName);
     const removalPolicy: RemovalPolicy =
       props.bucketRemovalPolicy ?? defaultBucketRemovalPolicy;
-    const { buildOutputPath, extraAllowedOrigins, noCacheFiles = [] } = props;
+    const {
+      buildOutputPath,
+      extraAllowedOrigins,
+      noCacheFiles = [],
+      cacheOverrides = [],
+    } = props;
+    const overrides: CacheOverride[] = [
+      ...(noCacheFiles.length > 0
+        ? [{ files: noCacheFiles, cacheControl: CacheControl.noCache() }]
+        : []),
+      ...cacheOverrides,
+    ];
 
     const { mainDomain, siteDomain } = this.extractDomains(props.domainName);
 
@@ -94,52 +146,49 @@ export class SpaConstruct extends Construct {
     );
     this.createARecord(siteDomain, this.distribution, zone);
 
-    const indexAsset = Source.asset(buildOutputPath, {
-      // glob ignore all but index.html
-      exclude: ['**', '!index.html'],
-    });
-    this.bucketDeployments.push(
-      this.createBucketDeployment(
-        [indexAsset],
-        CacheControl.noCache(),
-        true,
-        this.bucket,
-        this.distribution
-      )
+    // No deployment prunes: a pruning sync of index.html alone would delete
+    // every other file, and an upload whose asset did not change is not run
+    // again to restore it. Old bundles stay for tabs still running them.
+    // The first deployment owns the handler that all of them share, so the
+    // build output comes first and index.html, which waits for the rest, second.
+    this.lastUpload = this.createBucketDeployment(
+      [
+        Source.asset(buildOutputPath, {
+          exclude: ['index.html', ...overrides.flatMap(({ files }) => files)],
+        }),
+      ],
+      CacheControl.maxAge(Duration.days(365)),
+      false,
+      this.bucket,
+      this.distribution
     );
+    this.bucketDeployments.push(this.lastUpload);
 
-    const deploymentAssets = Source.asset(buildOutputPath, {
-      exclude: ['index.html', ...noCacheFiles],
-    });
-
-    this.bucketDeployments.push(
-      this.createBucketDeployment(
-        [deploymentAssets],
-        CacheControl.maxAge(Duration.days(365)),
-        false,
-        this.bucket,
-        this.distribution
-      )
+    // index.html goes last, once every file it points at is uploaded.
+    this.indexDeployment = this.createBucketDeployment(
+      [Source.asset(buildOutputPath, { exclude: ['**', '!index.html'] })],
+      CacheControl.noCache(),
+      false,
+      this.bucket,
+      this.distribution
     );
+    this.bucketDeployments.push(this.indexDeployment);
+    this.indexDeployment.node.addDependency(this.lastUpload);
 
-    // Make sure that the index.html is deployed last, as it's needed to
-    // serve the SPA so chain the deployments
-    this.bucketDeployments[1].node.addDependency(this.bucketDeployments[0]);
-
-    if (noCacheFiles.length > 0) {
+    for (const { files, cacheControl, contentType } of overrides) {
       this.addExtraAssets(
-        [
-          Source.asset(buildOutputPath, {
-            exclude: ['**', ...noCacheFiles.map((file) => '!' + file)],
-          }),
-        ],
-        CacheControl.noCache()
+        [Source.asset(buildOutputPath, { exclude: onlyInclude(files) })],
+        cacheControl,
+        contentType
       );
     }
   }
 
   /**
-   * Add some additional assets to the bucket of the SPA
+   * Add some additional assets to the bucket of the SPA, uploaded after the
+   * build output and before index.html. Use it for files that are not in
+   * buildOutputPath; for those that are, use noCacheFiles or cacheOverrides,
+   * or they are uploaded twice.
    */
   public addExtraAssets(
     assets: ISource[],
@@ -155,13 +204,10 @@ export class SpaConstruct extends Construct {
       contentType
     );
 
-    const latestDeployment: BucketDeployment | undefined =
-      this.bucketDeployments.at(-1);
-    if (latestDeployment) {
-      extraAssetsDeployment.node.addDependency(latestDeployment);
-    }
-
+    extraAssetsDeployment.node.addDependency(this.lastUpload);
+    this.lastUpload = extraAssetsDeployment;
     this.bucketDeployments.push(extraAssetsDeployment);
+    this.indexDeployment.node.addDependency(extraAssetsDeployment);
   }
 
   private createBucket(

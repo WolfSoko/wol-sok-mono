@@ -444,7 +444,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           "/*",
         ],
         "OutputObjectKeys": true,
-        "Prune": true,
+        "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
             "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
@@ -455,10 +455,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "no-cache",
+          "cache-control": "max-age=31536000",
         },
         "WaitForDistributionInvalidation": true,
       },
@@ -469,6 +469,8 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
         "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
+        "TestSpaStackDeployWithInvalidation3AwsCliLayer60F92F7F",
+        "TestSpaStackDeployWithInvalidation3CustomResource1024MiB2A9CDE31",
       ],
       "Properties": {
         "Content": {
@@ -484,6 +486,8 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
         "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
+        "TestSpaStackDeployWithInvalidation3AwsCliLayer60F92F7F",
+        "TestSpaStackDeployWithInvalidation3CustomResource1024MiB2A9CDE31",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -507,10 +511,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "max-age=31536000",
+          "cache-control": "no-cache",
         },
         "WaitForDistributionInvalidation": true,
       },
@@ -519,8 +523,8 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     },
     "TestSpaStackDeployWithInvalidation3AwsCliLayer60F92F7F": {
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9",
-        "TestSpaStackDeployWithInvalidation2CustomResource1024MiBCCBCCC1C",
+        "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
+        "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
       ],
       "Properties": {
         "Content": {
@@ -534,8 +538,8 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     "TestSpaStackDeployWithInvalidation3CustomResource1024MiB2A9CDE31": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9",
-        "TestSpaStackDeployWithInvalidation2CustomResource1024MiBCCBCCC1C",
+        "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
+        "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -1149,7 +1153,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           "/*",
         ],
         "OutputObjectKeys": true,
-        "Prune": true,
+        "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
             "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
@@ -1160,10 +1164,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "no-cache",
+          "cache-control": "max-age=31536000",
         },
         "WaitForDistributionInvalidation": true,
       },
@@ -1174,6 +1178,8 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
         "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
+        "TestSpaStackDeployWithInvalidation3AwsCliLayer60F92F7F",
+        "TestSpaStackDeployWithInvalidation3CustomResource1024MiB2A9CDE31",
       ],
       "Properties": {
         "Content": {
@@ -1189,6 +1195,8 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
       "DependsOn": [
         "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
         "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
+        "TestSpaStackDeployWithInvalidation3AwsCliLayer60F92F7F",
+        "TestSpaStackDeployWithInvalidation3CustomResource1024MiB2A9CDE31",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -1212,10 +1220,10 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "max-age=31536000",
+          "cache-control": "no-cache",
         },
         "WaitForDistributionInvalidation": true,
       },
@@ -1224,8 +1232,8 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     },
     "TestSpaStackDeployWithInvalidation3AwsCliLayer60F92F7F": {
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9",
-        "TestSpaStackDeployWithInvalidation2CustomResource1024MiBCCBCCC1C",
+        "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
+        "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
       ],
       "Properties": {
         "Content": {
@@ -1239,8 +1247,8 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
     "TestSpaStackDeployWithInvalidation3CustomResource1024MiB2A9CDE31": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
-        "TestSpaStackDeployWithInvalidation2AwsCliLayer4C103DD9",
-        "TestSpaStackDeployWithInvalidation2CustomResource1024MiBCCBCCC1C",
+        "TestSpaStackDeployWithInvalidation1AwsCliLayerBA18C0E3",
+        "TestSpaStackDeployWithInvalidation1CustomResource1024MiBDA77345F",
       ],
       "Properties": {
         "DestinationBucketName": {
@@ -1850,7 +1858,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
           "/*",
         ],
         "OutputObjectKeys": true,
-        "Prune": true,
+        "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
             "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
@@ -1861,10 +1869,10 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "no-cache",
+          "cache-control": "max-age=31536000",
         },
         "WaitForDistributionInvalidation": true,
       },
@@ -1913,10 +1921,10 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "max-age=31536000",
+          "cache-control": "no-cache",
         },
         "WaitForDistributionInvalidation": true,
       },
@@ -2381,7 +2389,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
           "/*",
         ],
         "OutputObjectKeys": true,
-        "Prune": true,
+        "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
             "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
@@ -2392,10 +2400,10 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "no-cache",
+          "cache-control": "max-age=31536000",
         },
         "WaitForDistributionInvalidation": true,
       },
@@ -2444,10 +2452,10 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "max-age=31536000",
+          "cache-control": "no-cache",
         },
         "WaitForDistributionInvalidation": true,
       },
@@ -3035,7 +3043,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
           "/*",
         ],
         "OutputObjectKeys": true,
-        "Prune": true,
+        "Prune": false,
         "ServiceToken": {
           "Fn::GetAtt": [
             "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C1024MiBB049752D",
@@ -3046,10 +3054,10 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
+          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "no-cache",
+          "cache-control": "max-age=31536000",
         },
         "WaitForDistributionInvalidation": true,
       },
@@ -3098,10 +3106,10 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
           "cdk-hnb659fds-assets-123456789-us-east-1",
         ],
         "SourceObjectKeys": [
-          "6cb995cbc0e98502c08737dd41e937e60aaa12bf14a18ba9269206cdc90f5dbf.zip",
+          "226338cf3d8df99aff2ad8781a74dfe716bdb86a9a55efdbb988d0329e55784e.zip",
         ],
         "SystemMetadata": {
-          "cache-control": "max-age=31536000",
+          "cache-control": "no-cache",
         },
         "WaitForDistributionInvalidation": true,
       },
