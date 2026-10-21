@@ -66,26 +66,40 @@ export function arenaSize(
   };
 }
 
-/** The widest the canvas of a bigger map is drawn, in pixels. */
-const MAX_CANVAS_WIDTH = 4096;
+/** The widest a layer painted once - the zones - is, in pixels. */
+const MAX_LAYER_WIDTH = 4096;
 
 /**
- * Canvas pixels per arena cell, for that grid drawn at that size. A bigger
- * map gets a bigger canvas, as many pixels per cell as a base one - the
- * camera shows part of it at a time - up to a width the GPU takes.
+ * Canvas pixels per arena cell with all of the arena in view, for that grid
+ * drawn at that size. The canvas of a bigger map is as big as a base one's:
+ * the camera shows part of it at a time, drawn as fine as a base map.
  */
 export function renderScale(
   sim: SimResolution,
   screen: ScreenResolution,
   size = 1
 ): number {
-  const canvasWidth = option(
-    SCREEN_RESOLUTIONS,
-    screen,
-    DEFAULT_SCREEN_RESOLUTION
-  ).value;
-  const width = arenaSize(sim, size).width;
-  return Math.min(canvasWidth * size, MAX_CANVAS_WIDTH) / width;
+  return canvasWidthOf(screen) / arenaSize(sim, size).width;
+}
+
+/**
+ * Pixels per arena cell of the layers painted once, such as the zones: as
+ * many as the canvas shows with the camera zoomed in all the way, up to a
+ * width the GPU takes.
+ */
+export function detailScale(
+  sim: SimResolution,
+  screen: ScreenResolution,
+  size = 1
+): number {
+  return (
+    Math.min(canvasWidthOf(screen) * size, MAX_LAYER_WIDTH) /
+    arenaSize(sim, size).width
+  );
+}
+
+function canvasWidthOf(screen: ScreenResolution): number {
+  return option(SCREEN_RESOLUTIONS, screen, DEFAULT_SCREEN_RESOLUTION).value;
 }
 
 /**

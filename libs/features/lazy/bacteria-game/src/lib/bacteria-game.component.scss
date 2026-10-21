@@ -95,29 +95,6 @@
     position: relative;
   }
 
-  // The canvas's own box, as big as the canvas - see the camera below.
-  .arena-view {
-    line-height: 0;
-  }
-
-  // A map bigger than the base arena: the canvas holds all of it and the
-  // camera scales and shifts it (see `applyCamera`), so its box clips it -
-  // and wears the arena's frame, which would be scaled with the canvas.
-  .arena-view.camera {
-    overflow: hidden;
-    outline: 2px solid rgb(var(--arena-border, 200 200 200));
-    box-shadow:
-      0 0 14px 2px rgb(var(--arena-border, 200 200 200) / 45%),
-      0 0 40px 8px rgb(var(--arena-border, 200 200 200) / 15%);
-
-    canvas {
-      transform-origin: 0 0;
-      will-change: transform;
-      outline: none;
-      box-shadow: none;
-    }
-  }
-
   canvas {
     display: block;
     width: 100%;
@@ -182,14 +159,6 @@
       bottom: 0.25rem;
       font-size: 0.7rem;
       opacity: 0.6;
-    }
-
-    // The canvas's box holds it inside the arena's box even before the
-    // component has sized both - see `canvasSize`.
-    .arena-view {
-      max-width: 100%;
-      max-height: 100%;
-      overflow: hidden;
     }
 
     // The size comes from the component, which fits the arena into the box

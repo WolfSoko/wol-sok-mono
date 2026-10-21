@@ -25,14 +25,13 @@ export class CanvasArenaPainter implements ArenaPainter {
     private readonly cx: CanvasRenderingContext2D,
     private readonly width: number,
     private readonly height: number,
-    scale: number,
+    /** Pixels per cell the zones are painted with. */
+    detail: number,
     unit: number
   ) {
     this.unit = unit;
-    this.arena = new ArenaRenderer(width, height, Math.random, scale, unit);
+    this.arena = new ArenaRenderer(width, height, Math.random, detail, unit);
     this.colonies = new ColonyRenderer(width, height, unit);
-    // Everything is drawn in arena cells; the transform scales it up.
-    cx.setTransform(scale, 0, 0, scale, 0, 0);
     cx.imageSmoothingEnabled = false;
   }
 
@@ -50,6 +49,10 @@ export class CanvasArenaPainter implements ArenaPainter {
 
   public paint(frame: ArenaFrame): void {
     const cx = this.cx;
+    // Everything is drawn in arena cells; the transform shows the view.
+    const { view } = frame;
+    const scale = cx.canvas.width / view.width;
+    cx.setTransform(scale, 0, 0, scale, -view.x * scale, -view.y * scale);
     // Lay the floor over the previous frame, so movement leaves a short trail.
     this.arena.drawFloor(cx, frame.clear);
     this.arena.drawMotes(cx, frame.deltaTimeSec);
@@ -60,7 +63,8 @@ export class CanvasArenaPainter implements ArenaPainter {
       frame.colonies,
       frame.balance,
       frame.look,
-      frame.timeSec
+      frame.timeSec,
+      view
     );
     if (layer != null) {
       // The slime layer is scaled up smoothly, the pixel layer stays crisp.

@@ -7,7 +7,9 @@ import {
   paintSlime,
   shimmerAt,
   SLIME_SCALE,
+  slimeRegion,
 } from './colony-renderer';
+import { Rect } from '../state/maps';
 
 const WIDTH = 40;
 const HEIGHT = 20;
@@ -26,8 +28,15 @@ function blob(cx: number, cy: number, radius: number): Bacteria[] {
   return result;
 }
 
-function slime(bacterias: Bacteria[], shimmerTimeSec: number | null = null) {
+const WHOLE: Rect = { x: 0, y: 0, width: WIDTH, height: HEIGHT };
+
+function slime(
+  bacterias: Bacteria[],
+  shimmerTimeSec: number | null = null,
+  view: Rect = WHOLE
+) {
   const target: Point = { x: 30, y: 10 };
+  const region = slimeRegion(bacterias, view, WIDTH, HEIGHT);
   const cells = WIDTH * HEIGHT;
   const density = new Float32Array(cells);
   const heat = new Float32Array(cells);
@@ -37,9 +46,14 @@ function slime(bacterias: Bacteria[], shimmerTimeSec: number | null = null) {
     new Float32Array(cells),
     WIDTH,
     HEIGHT,
-    bacterias
+    bacterias,
+    gameBalance,
+    region ?? undefined
   );
   const data = new Uint8ClampedArray(cells * SLIME_SCALE * SLIME_SCALE * 4);
+  if (region == null) {
+    return data;
+  }
   paintSlime(
     data,
     density,
@@ -47,7 +61,10 @@ function slime(bacterias: Bacteria[], shimmerTimeSec: number | null = null) {
     WIDTH,
     HEIGHT,
     ORANGE,
-    shimmerTimeSec == null ? null : { timeSec: shimmerTimeSec, target, unit: 1 }
+    shimmerTimeSec == null
+      ? null
+      : { timeSec: shimmerTimeSec, target, unit: 1 },
+    region
   );
   return data;
 }
@@ -79,6 +96,26 @@ describe('paintSlime', () => {
 
     expect(r).toBeGreaterThan(g);
     expect(g).toBeGreaterThan(b);
+  });
+
+  it('paints what is in view as it paints the whole arena', () => {
+    const colony = [...blob(8, 10, 4), ...blob(30, 9, 6)];
+    const view: Rect = { x: 12.5, y: 3.25, width: 20, height: 9 };
+
+    const whole = slime(colony);
+    const cut = slime(colony, null, view);
+
+    for (let y = 3; y <= 12; y++) {
+      for (let x = 12; x <= 33; x++) {
+        expect(at(cut, x, y)).toEqual(at(whole, x, y));
+      }
+    }
+  });
+
+  it('paints nothing of a colony out of view', () => {
+    const view: Rect = { x: 20, y: 0, width: 20, height: 20 };
+
+    expect(slimeRegion(blob(5, 10, 3), view, WIDTH, HEIGHT)).toBeNull();
   });
 
   it('lights a boosted colony up', () => {

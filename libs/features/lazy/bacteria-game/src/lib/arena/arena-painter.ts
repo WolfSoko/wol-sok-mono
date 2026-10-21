@@ -24,6 +24,11 @@ export interface ArenaFrame {
   deltaTimeSec: number;
   /** Seconds of animation - the jam wobble and the boost shimmer. */
   timeSec: number;
+  /**
+   * The part of the arena the canvas shows, in cells - all of it, but on a
+   * map bigger than the base arena, where the camera picks it.
+   */
+  view: Rect;
   walls: readonly Rect[];
   dynamicWalls: readonly DynamicWall[];
   colonies: readonly ColonyLayer[];

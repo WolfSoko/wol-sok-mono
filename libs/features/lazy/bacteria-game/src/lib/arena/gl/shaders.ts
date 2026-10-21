@@ -1,7 +1,8 @@
 /**
  * The GLSL of the WebGL2 arena painter. All passes draw in arena cells:
  * `p` below is a position in cells with the origin at the top left, the
- * same coordinates the simulation uses.
+ * same coordinates the simulation uses. The canvas shows `uView` of the
+ * arena - x, y, width and height in cells - all of it on a base map.
  */
 
 import {
@@ -12,8 +13,9 @@ import {
 
 /** The arena position under a fragment of a full screen pass. */
 const ARENA_POSITION = `
-vec2 arenaPosition(vec2 ndc, vec2 arena) {
-  return vec2((ndc.x + 1.0) * 0.5 * arena.x, (1.0 - ndc.y) * 0.5 * arena.y);
+uniform vec4 uView;
+vec2 arenaPosition(vec2 ndc) {
+  return uView.xy + vec2(ndc.x + 1.0, 1.0 - ndc.y) * 0.5 * uView.zw;
 }`;
 
 /** A cheap integer hash, for sparkles that look random. */
@@ -42,7 +44,7 @@ out vec4 outColor;
 ${ARENA_POSITION}
 void main() {
   ivec2 cell = clamp(
-    ivec2(floor(arenaPosition(vNdc, uArena))),
+    ivec2(floor(arenaPosition(vNdc))),
     ivec2(0),
     ivec2(uArena) - 1
   );
@@ -133,7 +135,7 @@ bool sparkle(vec2 p, float t) {
 }
 
 void main() {
-  vec2 p = arenaPosition(vNdc, uArena);
+  vec2 p = arenaPosition(vNdc);
   bool boosted = uShimmer >= 0.0;
 
   if (uLook == 1) {
@@ -220,7 +222,7 @@ float noise(vec2 cell, float t, uint salt) {
 }
 
 void main() {
-  vec2 p = arenaPosition(vNdc, uArena);
+  vec2 p = arenaPosition(vNdc);
   vec2 texel = 1.0 / uArena;
   vec2 uv = p / uArena;
   vec4 here = texture(uEffects, uv);
@@ -278,7 +280,7 @@ out vec4 outColor;
 ${ARENA_POSITION}
 void main() {
   // Premultiplied: the colour fades with the alpha.
-  outColor = texture(uZones, arenaPosition(vNdc, uArena) / uArena) * uAlpha;
+  outColor = texture(uZones, arenaPosition(vNdc) / uArena) * uAlpha;
 }`;
 
 /** One instance per shape, its rect in arena cells - see `SHAPE`. */
@@ -288,7 +290,7 @@ layout(location = 1) in vec4 aRect;
 layout(location = 2) in vec4 aColor;
 layout(location = 3) in vec4 aColor2;
 layout(location = 4) in vec4 aExtra;
-uniform vec2 uArena;
+uniform vec4 uView;
 out vec2 vWorld;
 flat out vec4 vRect;
 flat out vec4 vColor;
@@ -301,12 +303,8 @@ void main() {
   vColor = aColor;
   vColor2 = aColor2;
   vExtra = aExtra;
-  gl_Position = vec4(
-    world.x / uArena.x * 2.0 - 1.0,
-    1.0 - world.y / uArena.y * 2.0,
-    0.0,
-    1.0
-  );
+  vec2 inView = (world - uView.xy) / uView.zw;
+  gl_Position = vec4(inView.x * 2.0 - 1.0, 1.0 - inView.y * 2.0, 0.0, 1.0);
 }`;
 
 export const SHAPE_FRAGMENT = `#version 300 es

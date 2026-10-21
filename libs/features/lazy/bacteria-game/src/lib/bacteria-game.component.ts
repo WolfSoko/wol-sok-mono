@@ -79,7 +79,12 @@ import { CampaignService } from './campaign.service';
 import { dismissSplash } from './splash';
 import { HeadStart, rivalryScore, SeriesLength } from './state/rivalry';
 import { loadFonts } from './fonts';
-import { arenaSize, renderScale, simScale } from './state/arena-size';
+import {
+  arenaSize,
+  detailScale,
+  renderScale,
+  simScale,
+} from './state/arena-size';
 import { Camera } from './arena/camera';
 import { GameHapticsService } from './haptics.service';
 import { GameSoundService, Soundtrack } from './sound/game-sound.service';
@@ -196,10 +201,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private painter: ArenaPainter | null = null;
   /** The camera over a map bigger than the base arena, null on any other. */
   private camera: Camera | null = null;
-  /** The transform the canvas was given last - not written again unchanged. */
-  private cameraTransform = '';
-  /** The frame the camera eases in while no match draws, null without one. */
-  private cameraFrame: number | null = null;
+  /** When the camera last moved on, null before it ever did. */
+  private cameraMovedAt: number | null = null;
+  /** What of the arena the last frame showed. */
+  private lastView: Rect | null = null;
   /** Lay the next frame's floor down fully instead of fading into a trail. */
   private clearNextFrame = true;
 
@@ -545,6 +550,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         (this.store.secondsLeft() ?? Infinity) <= RUNNING_OUT_SEC
     );
     this.matchOver = this.store.matchEnded;
+    // A pause or the end of a match stops the match's frames: one more
+    // frame lets the camera ease on by itself from there.
+    effect(() => {
+      if (!this.running() || this.paused()) {
+        untracked(() => this.draw());
+      }
+    });
     // A resumed match picks its music up where the match clock stands, so
     // it stays in step with a map that moves to it.
     effect(() => {
@@ -877,12 +889,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         this.settings.screenResolution(),
         this.mapSize()
       ),
+      detailScale(
+        this.settings.simResolution(),
+        this.settings.screenResolution(),
+        this.mapSize()
+      ),
       simScale(this.settings.simResolution())
     );
     this.camera =
       this.mapSize() > 1 ? new Camera(width, height, this.mapSize()) : null;
-    this.cameraTransform = '';
-    this.applyCamera(0);
+    this.lastView = null;
     if (this.painter == null) {
       throw new Error('Could not get rendering context');
     }
@@ -912,6 +928,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.haptics.matchStart();
     this.clearNextFrame = true;
     this.camera?.reset();
+    this.cameraMovedAt = null;
     this.gameStateService.cleanup();
     this.gameStateService.init(this.arena().width, this.arena().height);
     this.gameStateService.start();
@@ -989,35 +1006,60 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** `alpha` is how far the crosshairs are drawn along their last tick. */
   private paint(deltaTimeSec: number, clear: boolean, alpha: number): void {
     this.animationSec += deltaTimeSec;
-    const frame = this.frame(deltaTimeSec, clear || this.clearNextFrame, alpha);
+    const view = this.moveCamera();
+    // The trail of the last frame lies elsewhere in a view that moved - by
+    // half a pixel or more: the spring creeps on by less for a long while.
+    const last = this.lastView;
+    const halfPixel =
+      view.width / (2 * (this.canvasRef()?.nativeElement.width || 1));
+    const moved =
+      last == null ||
+      Math.abs(last.x - view.x) >= halfPixel ||
+      Math.abs(last.y - view.y) >= halfPixel ||
+      Math.abs(last.width - view.width) >= halfPixel;
+    this.lastView = view;
+    const frame = this.frame(
+      deltaTimeSec,
+      clear || this.clearNextFrame || moved,
+      alpha,
+      view
+    );
     this.clearNextFrame = false;
     this.painter?.paint(frame);
-    this.applyCamera(deltaTimeSec);
   }
 
   /**
    * Moves the camera over a big map - after the crosshair of the one human
-   * in a match, over the whole arena otherwise - and shows its view: the
-   * painters draw the whole arena, the camera scales and shifts the canvas.
+   * in a match, to the whole arena otherwise - and returns what of the
+   * arena the frame shows: all of it on a base map.
    */
-  private applyCamera(deltaTimeSec: number): void {
-    const canvas = this.canvasRef()?.nativeElement;
-    if (this.camera == null || canvas == null) {
-      return;
+  private moveCamera(): Rect {
+    const { width, height } = this.arena();
+    if (this.camera == null) {
+      return { x: 0, y: 0, width, height };
     }
+    const now = performance.now();
+    const deltaSec =
+      this.cameraMovedAt == null
+        ? 0
+        : Math.min(0.1, (now - this.cameraMovedAt) / 1000);
+    this.cameraMovedAt = now;
     const target = this.cameraTarget();
-    this.camera.follow(target, deltaTimeSec);
-    // No match frame moves it on now - a finished match, a pause, the
-    // start screen: it eases on by itself until it arrives.
-    if (!this.camera.settledOn(target)) {
-      this.easeCamera();
+    this.camera.follow(target, deltaSec);
+    if (this.camera.settledOn(target)) {
+      // Its next move starts afresh, not with the time it sat still.
+      this.cameraMovedAt = null;
+    } else if (!this.matchPaints()) {
+      // No match frame moves it on now - a finished match, a pause, the
+      // start screen: it asks for frames itself until it arrives.
+      this.draw();
     }
-    const { x, y, scale } = this.camera.transform();
-    const transform = `translate(${x.toFixed(2)}%, ${y.toFixed(2)}%) scale(${scale.toFixed(3)})`;
-    if (transform !== this.cameraTransform) {
-      this.cameraTransform = transform;
-      canvas.style.transform = transform;
-    }
+    return this.camera.viewRect();
+  }
+
+  /** True while a running match paints every frame. */
+  private matchPaints(): boolean {
+    return untracked(this.running) && !untracked(this.paused);
   }
 
   /** What the camera follows: the one human's crosshair in a match. */
@@ -1045,34 +1087,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           ? 400
           : 1;
     this.camera.zoomBy(Math.exp((-event.deltaY * perUnit) / 500));
-    this.easeCamera();
-  }
-
-  /**
-   * Eases the camera frame by frame while no match draws the arena -
-   * paused, or before one starts - without drawing it again: only the
-   * transform changes. A running match moves the camera as it paints.
-   */
-  private easeCamera(): void {
-    if (
-      this.cameraFrame != null ||
-      (untracked(this.running) && !untracked(this.paused))
-    ) {
-      return;
+    if (!this.matchPaints()) {
+      this.draw();
     }
-    const from = performance.now();
-    // Moving it asks for the next frame, until it has arrived.
-    this.cameraFrame = requestAnimationFrame((now) => {
-      this.cameraFrame = null;
-      this.applyCamera((now - from) / 1000);
-    });
   }
 
   /** What the arena shows right now, for the painter. */
   private frame(
     deltaTimeSec: number,
     clear: boolean,
-    alpha: number
+    alpha: number,
+    view: Rect
   ): ArenaFrame {
     const balance = this.balance();
     const players = untracked(this.playerStore.entities);
@@ -1096,6 +1121,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       clear,
       deltaTimeSec,
       timeSec: this.animationSec,
+      view,
       walls: this.walls(),
       dynamicWalls: this.playerService.getDynamicWalls(),
       colonies: simulation.colonyLayers(boosts),
@@ -1321,8 +1347,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       event.clientX,
       event.clientY,
       canvas.getBoundingClientRect(),
-      this.arena().width,
-      this.arena().height
+      this.lastView ?? { x: 0, y: 0, ...this.arena() }
     );
   }
 

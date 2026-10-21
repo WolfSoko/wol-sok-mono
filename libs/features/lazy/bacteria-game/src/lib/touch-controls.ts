@@ -14,6 +14,7 @@ import {
   scaleTo,
   SteeringVector,
 } from './state/geometry';
+import { Rect } from './state/maps';
 
 export type ArenaPoint = Point;
 
@@ -37,30 +38,26 @@ export interface CrosshairPosition {
  * coordinates.
  *
  * The canvas is rendered at its intrinsic size but stretched to the container
- * width by CSS, so the two coordinate systems differ by a scale factor.
- * Returns null while the element has no layout yet.
+ * width by CSS, so the two coordinate systems differ by a scale factor. It
+ * shows `view` of the arena - all of it, but on a map the camera follows
+ * over - and a pointer off the canvas is kept on its edge. Returns null
+ * while the element has no layout yet.
  */
 export function arenaPointFromClient(
   clientX: number,
   clientY: number,
   bounds: ElementBounds,
-  arenaWidth: number,
-  arenaHeight: number
+  view: Rect
 ): ArenaPoint | null {
   if (bounds.width <= 0 || bounds.height <= 0) {
     return null;
   }
   return {
-    x: clamp(
-      ((clientX - bounds.left) / bounds.width) * arenaWidth,
-      0,
-      arenaWidth
-    ),
-    y: clamp(
-      ((clientY - bounds.top) / bounds.height) * arenaHeight,
-      0,
-      arenaHeight
-    ),
+    x:
+      view.x + clamp((clientX - bounds.left) / bounds.width, 0, 1) * view.width,
+    y:
+      view.y +
+      clamp((clientY - bounds.top) / bounds.height, 0, 1) * view.height,
   };
 }
 
