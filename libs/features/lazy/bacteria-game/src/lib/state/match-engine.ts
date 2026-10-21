@@ -49,6 +49,7 @@ import {
   zoneHolder,
 } from './win-conditions';
 import { mapZones } from './zones';
+import { NeutralBrain } from './neutral-brain';
 import {
   flood,
   lineOf,
@@ -140,6 +141,14 @@ function onGrid(value: number, steps: number): number {
   return Math.round(value * steps) / steps || 0;
 }
 
+/** A neutral colony's mind, and how far its pace has carried it so far. */
+interface NeutralMover {
+  seat: number;
+  brain: NeutralBrain;
+  /** The part of a step it has made up and not yet taken. */
+  pace: number;
+}
+
 /** A crosshair nobody steers. */
 const AT_REST: SteeringVector = Object.freeze({ x: 0, y: 0 });
 
@@ -203,6 +212,8 @@ export class MatchEngine {
   private readonly hasNeutral: boolean;
   /** The neutral colonies' bacteria, all together. */
   private neutralBacteria = 0;
+  /** What moves each neutral colony, in seat order. */
+  private readonly neutralMovers: readonly NeutralMover[];
   /** The centre of the hold zone on the arena last asked for, by its size. */
   private hill: { width: number; height: number; at: Point | null } | null =
     null;
@@ -219,6 +230,14 @@ export class MatchEngine {
       throw new Error('Neutral colonies spawn after every player.');
     }
     this.hasNeutral = players.length < spawns.length;
+    this.neutralMovers = spawns.slice(players.length).map((_, index) => {
+      const seat = players.length + index;
+      return {
+        seat,
+        brain: new NeutralBrain(seeded(streamSeed(this.seed, seat + 1))),
+        pace: 0,
+      };
+    });
     this.playerList = players.map((spawn, index) => {
       if (spawn.isBot && !this.ghosts.has(index)) {
         this.bots.set(
@@ -353,7 +372,7 @@ export class MatchEngine {
     this.simulation.resize(width, height);
     this.tickBoosts();
     this.runBots(width, height);
-    this.simulation.step(this.playerList, TICK_SEC);
+    this.simulation.step(this.steerNeutrals(width, height), TICK_SEC);
     this.tickEvents = addEvents(this.tickEvents, this.simulation.getEvents());
     this.syncColonyStats(true);
     this.ownsPlayers = false;
@@ -651,6 +670,47 @@ export class MatchEngine {
         this.fireBoost(playerId);
       }
     }
+  }
+
+  /**
+   * The crosshairs the war steps with: the players', and one for each
+   * neutral colony that moves this tick, where its mind sends it. A neutral
+   * colony is slower than a step a tick: it steps on the ticks its pace has
+   * made up a step for, and stays put on the others.
+   */
+  private steerNeutrals(width: number, height: number): Player[] {
+    if (this.neutralMovers.length === 0) {
+      return this.playerList;
+    }
+    const { players: colonies, neutral } = this.splitColonies();
+    const unit = this.unitAt(width);
+    const steered = [...this.playerList];
+    for (const mover of this.neutralMovers) {
+      const own = neutral.find((colony) => colony.playerId === mover.seat);
+      const course =
+        own == null
+          ? null
+          : mover.brain.steer(own, colonies, width, height, unit, TICK_SEC);
+      if (own == null || course == null) {
+        continue;
+      }
+      mover.pace += course.speed * TICK_SEC;
+      const steps = Math.floor(mover.pace);
+      if (steps === 0) {
+        continue;
+      }
+      mover.pace -= steps;
+      steered.push(
+        createPlayer({
+          id: mover.seat,
+          x: course.goal.x,
+          y: course.goal.y,
+          color: own.color,
+          maxSpeed: steps / TICK_SEC,
+        })
+      );
+    }
+    return steered;
   }
 
   /** Arena cells per base cell on an arena that wide - the grid's resolution. */
