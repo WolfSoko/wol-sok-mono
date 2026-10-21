@@ -460,7 +460,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // also wipes the glow from the trail once the player asks for less
     // motion, even while the game is paused.
     effect(() => {
-      this.painter?.setTheme(this.theme());
+      this.painter?.setFloor(this.theme(), this.zones());
       this.walls();
       this.zones();
       this.colors();
@@ -836,7 +836,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         ? null
         : (balance, random) => gl.createSimulation(balance, random)
     );
-    this.painter.setTheme(this.theme());
+    this.painter.setFloor(this.theme(), this.zones());
     this.gameStateService.setArenaSize(width, height);
     this.draw();
   }
@@ -962,7 +962,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       clear,
       deltaTimeSec,
       timeSec: this.animationSec,
-      zones: this.zones(),
       walls: this.walls(),
       dynamicWalls: this.playerService.getDynamicWalls(),
       colonies: simulation.colonyLayers(boosts),

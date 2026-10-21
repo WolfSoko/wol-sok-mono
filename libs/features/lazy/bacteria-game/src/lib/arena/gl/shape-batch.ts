@@ -13,8 +13,6 @@ import {
 import { ArenaTheme, Rgb } from '../arena-theme';
 import { darker, JamDrop } from '../colony-renderer';
 import { Motes } from '../motes';
-import { Zone } from '../../state/zones';
-import { ZONE_COLORS, ZONE_EDGE_ALPHA, ZONE_FILL_ALPHA } from '../zone-look';
 
 /**
  * What the shape shader draws for one instance. Every shape is a rect in
@@ -97,7 +95,6 @@ export class ShapeBatch {
 
 /**
  * Everything drawn between the floor and the colonies: the drifting specks,
- * the zones tinting the ground,
  * the walls with their lit edge, and the gates and sliding walls - striped
  * when closed, a blinking outline while open.
  */
@@ -105,32 +102,12 @@ export function pushBackground(
   batch: ShapeBatch,
   theme: ArenaTheme,
   motes: Motes,
-  zones: readonly Zone[],
   walls: readonly Rect[],
   dynamicWalls: readonly DynamicWall[]
 ): void {
   motes.forEach((x, y, alpha) =>
     batch.push(SHAPE.rect, { x, y, width: 1, height: 1 }, theme.motes, alpha)
   );
-  for (const zone of zones) {
-    const color = ZONE_COLORS[zone.kind];
-    if (zone.round) {
-      batch.push(SHAPE.disc, zone, color, ZONE_FILL_ALPHA);
-      batch.push(
-        SHAPE.ring,
-        zone,
-        color,
-        ZONE_EDGE_ALPHA,
-        color,
-        ZONE_EDGE_ALPHA,
-        Math.min(zone.width, zone.height) / 2 - 0.5,
-        1
-      );
-      continue;
-    }
-    batch.push(SHAPE.rect, zone, color, ZONE_FILL_ALPHA);
-    batch.push(SHAPE.outline, zone, color, ZONE_EDGE_ALPHA);
-  }
   pushBlobs(batch, walls, darker(theme.wall), theme);
   for (const wall of walls) {
     if (wall.round) {

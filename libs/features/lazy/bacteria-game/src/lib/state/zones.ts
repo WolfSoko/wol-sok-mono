@@ -1,4 +1,6 @@
+import { seeded } from './geometry';
 import { GameMap, Rect, stampRect } from './maps';
+import { blob } from './shapes';
 
 /**
  * The kinds of ground a level can lay out besides walls:
@@ -81,4 +83,41 @@ export function heatedAggression(aggression: number): number {
     aggression,
     Math.min(heatMaxAggression, aggression + heatAggression)
   );
+}
+
+/**
+ * An organic stretch of ground: overlapping round blobs filling an ellipse
+ * of radii `rx` and `ry` round a centre, each a little off its place and
+ * its size - from a fixed seed, so a level always looks the same.
+ */
+export function puddle(
+  kind: ZoneKind,
+  centreX: number,
+  centreY: number,
+  rx: number,
+  ry: number,
+  seed: number
+): Zone[] {
+  const random = seeded(seed);
+  const size = Math.max(3, Math.min(rx, ry) * 0.7);
+  const zones: Zone[] = [];
+  for (let y = -ry + size / 2; y <= ry - size / 2 + 0.01; y += size * 0.75) {
+    for (let x = -rx + size / 2; x <= rx - size / 2 + 0.01; x += size * 0.75) {
+      // Only the blobs inside the ellipse, so the outline stays round.
+      if ((x / rx) ** 2 + (y / ry) ** 2 > 1) {
+        continue;
+      }
+      const jitter = size * 0.25;
+      const radius = size * (0.55 + 0.25 * random());
+      zones.push({
+        ...blob(
+          centreX + x + (random() - 0.5) * 2 * jitter,
+          centreY + y + (random() - 0.5) * 2 * jitter,
+          radius
+        ),
+        kind,
+      });
+    }
+  }
+  return zones;
 }
