@@ -6,7 +6,13 @@ import {
   ZONE_EFFECTS,
 } from './zones';
 import type { ColonyLayer } from '../arena/colony-renderer';
-import { colonyCapacity, GameBalance, gameBalance } from './game-balance';
+import {
+  colonyCapacity,
+  ColonyTraits,
+  GameBalance,
+  gameBalance,
+  PLAIN_TRAITS,
+} from './game-balance';
 import { clamp, Point } from './geometry';
 import { NutrientPellets } from './nutrient-pellets';
 import { ColonySummary, Simulation } from './simulation';
@@ -42,6 +48,8 @@ export interface Colony {
   lost: number;
   /** Sum of the energy of all bacteria of this colony. */
   totalEnergy: number;
+  /** How it plays differently from the balance - a boss's traits. */
+  traits: ColonyTraits;
 }
 
 export interface ColonySpawn {
@@ -50,6 +58,8 @@ export interface ColonySpawn {
   x: number;
   y: number;
   radius: number;
+  /** A boss's traits - plain when absent. */
+  traits?: ColonyTraits;
 }
 
 /**
@@ -328,6 +338,7 @@ export class BacteriaSimulation implements Simulation {
       captured: 0,
       lost: 0,
       totalEnergy: 0,
+      traits: spawn.traits ?? PLAIN_TRAITS,
     }));
     this.colonySummaries = null;
     for (const colony of this.colonies) {
@@ -535,11 +546,11 @@ export class BacteriaSimulation implements Simulation {
 
     // A boosted colony hits harder - the factor is read per attacking colony
     // in the combat phase, so it is resolved once here.
-    const attackFactor = new Float32Array(this.colonies.length).fill(1);
+    const attackFactor = new Float32Array(this.colonies.length);
     targets.forEach((target, index) => {
-      if (isBoosted(target)) {
-        attackFactor[index] = this.balance.boostAttackFactor;
-      }
+      attackFactor[index] =
+        this.colonies[index].traits.attackFactor *
+        (isBoosted(target) ? this.balance.boostAttackFactor : 1);
     });
 
     this.buildGrid();
@@ -904,11 +915,12 @@ export class BacteriaSimulation implements Simulation {
   private divide(colonies: Colony[], deltaTimeSec: number): void {
     const { divideEnergyThreshold, divideChancePerSec, parentEnergyShare } =
       this.balance;
-    const chance = divideChancePerSec * deltaTimeSec;
     const capacity = colonyCapacity(this.balance, this.colonies.length);
 
     for (const colony of colonies) {
       const colonyIndex = this.colonies.indexOf(colony);
+      const chance =
+        divideChancePerSec * colony.traits.divideFactor * deltaTimeSec;
       const bacterias = colony.bacterias;
       let count = bacterias.length;
       const parents = count;

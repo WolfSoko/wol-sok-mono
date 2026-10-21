@@ -10,6 +10,7 @@ import {
 } from './maps';
 import { rectNearSpawn } from './shapes';
 import { stampZones } from './zones';
+import { LEVELS } from './levels';
 
 // The production canvas size. A smaller arena pushes most layouts outside the
 // grid, which would make every test pass without a single wall cell existing.
@@ -174,6 +175,30 @@ describe('GAME_MAPS', () => {
       expect(
         poison.filter((zone) => rectNearSpawn(zone, WIDTH, HEIGHT))
       ).toEqual([]);
+    }
+  );
+
+  const bossMaps = LEVELS.filter((level) => level.boss !== undefined).map(
+    (level) => [level.name, getMap(level.mapId), level] as const
+  );
+
+  it.each(bossMaps)(
+    '%s leaves room round both start spots for a boss colony',
+    (_name, map, level) => {
+      const walls = map.createWalls(WIDTH, HEIGHT);
+      // The boss blob: the largest start radius, grown by the boss's area.
+      const radius = Math.ceil(16 * Math.sqrt(level.boss?.startScale ?? 1));
+
+      for (const centreX of [WIDTH / 4, (WIDTH / 4) * 3]) {
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            if (dx * dx + dy * dy > radius * radius) {
+              continue;
+            }
+            expect(isSolid(walls, centreX + dx, HEIGHT / 2 + dy)).toBe(false);
+          }
+        }
+      }
     }
   );
 

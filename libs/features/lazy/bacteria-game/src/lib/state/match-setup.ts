@@ -72,7 +72,9 @@ export function planMatch(
         name:
           ghost !== null ? 'Ghost' : versusComputer ? 'Computer' : right.name,
         isBot: versusComputer,
-        startScale: rightScale,
+        // The boss is the right colony, whoever steers it.
+        startScale: rightScale * (level.boss?.startScale ?? 1),
+        traits: level.boss?.traits,
       },
     ],
     options: {

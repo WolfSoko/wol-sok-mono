@@ -7,7 +7,11 @@ import {
   Nutrient,
   StepEvents,
 } from '../state/bacteria-simulation';
-import { colonyCapacity, GameBalance } from '../state/game-balance';
+import {
+  colonyCapacity,
+  GameBalance,
+  PLAIN_TRAITS,
+} from '../state/game-balance';
 import { CellBounds, clamp, Point } from '../state/geometry';
 import {
   compareDynamicWalls,
@@ -481,12 +485,16 @@ export class GpuSimulation implements Simulation {
     const capacity = colonyCapacity(b, this.spawns.length);
     u.steps.fill(0);
     u.targets.fill(NaN);
-    u.divideChance.fill(b.divideChancePerSec * deltaTimeSec);
     this.spawns.forEach((spawn, slot) => {
+      const traits = spawn.traits ?? PLAIN_TRAITS;
+      u.divideChance[slot] =
+        b.divideChancePerSec * traits.divideFactor * deltaTimeSec;
       const target = players.find((player) => player.id === spawn.playerId);
       const intent = colonyIntent(target, b, deltaTimeSec);
       u.aggression[slot] = intent?.aggression ?? b.aggression;
-      u.attack[slot] = isBoosted(target ?? null) ? b.boostAttackFactor : 1;
+      u.attack[slot] =
+        traits.attackFactor *
+        (isBoosted(target ?? null) ? b.boostAttackFactor : 1);
       u.divideBudget[slot] = this.divideBudget(slot, capacity);
       if (target == null || intent == null) {
         return;

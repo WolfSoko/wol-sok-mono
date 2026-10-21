@@ -8,6 +8,8 @@ import { Player } from './player.model';
  * - `annihilation`: the last colony left wins - every level until now.
  * - `timed`: the same, but once `limitSec` - whole seconds - of match time
  *   have passed the biggest colony wins - a losing match ends as well.
+ * - `survive`: the same, but the left colony - up against a boss - wins
+ *   once it is still alive after `limitSec`.
  * - `hold`: the same, but a colony also wins once it has held the map's
  *   hold zone for `holdSec` in all - held while it has more bacteria on it
  *   than any other colony.
@@ -18,10 +20,11 @@ import { Player } from './player.model';
 export type WinRule =
   | { kind: 'annihilation' }
   | { kind: 'timed'; limitSec: number }
+  | { kind: 'survive'; limitSec: number }
   | { kind: 'hold'; holdSec: number };
 
 /** What ended a match. */
-export type EndReason = 'annihilation' | 'time' | 'hold';
+export type EndReason = 'annihilation' | 'time' | 'hold' | 'survive';
 
 /** How a match ended: the winner, or null for a draw - and what ended it. */
 export interface MatchOutcome {
@@ -67,6 +70,10 @@ export function judgeOutcome(
             reason: 'time',
           }
         : null;
+    case 'survive':
+      return timeLeft(rule, elapsedSec) === 0
+        ? { winner: players[0], reason: 'survive' }
+        : null;
     case 'hold': {
       const target = rule.holdSec * TICKS_PER_SEC;
       for (const player of players) {
@@ -81,7 +88,9 @@ export function judgeOutcome(
 
 /** Seconds of match time left, null for a rule without a limit. */
 export function timeLeft(rule: WinRule, elapsedSec: number): number | null {
-  return rule.kind === 'timed' ? Math.max(0, rule.limitSec - elapsedSec) : null;
+  return rule.kind === 'timed' || rule.kind === 'survive'
+    ? Math.max(0, rule.limitSec - elapsedSec)
+    : null;
 }
 
 /**
@@ -94,6 +103,8 @@ export function ruleNote(rule: WinRule): string | null {
       return null;
     case 'timed':
       return `Timed · ${clock(rule.limitSec)}`;
+    case 'survive':
+      return `Survive · ${clock(rule.limitSec)}`;
     case 'hold':
       return `Hold the zone · ${clock(rule.holdSec)}`;
   }

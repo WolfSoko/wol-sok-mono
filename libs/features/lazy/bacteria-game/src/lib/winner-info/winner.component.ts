@@ -328,6 +328,9 @@ export class WinnerComponent {
     if (this.state.endedBy() === 'hold' && player != null) {
       return this.zoneHeld(player);
     }
+    if (this.level().boss !== undefined && player != null) {
+      return this.bossFight(player);
+    }
     if (player == null) {
       return 'It is a draw - both colonies wiped each other out!';
     }
@@ -344,6 +347,22 @@ export class WinnerComponent {
     }
     return `Congratulations! ${player.name} wins the match!`;
   });
+
+  /** The headline of a chapter's finale against a boss. */
+  private bossFight(player: Player): string {
+    const survived = this.state.endedBy() === 'survive';
+    if (player.isBot) {
+      return 'The boss wins - your colony was eaten!';
+    }
+    if (this.mode() !== 'vs-computer') {
+      return survived
+        ? `${player.name} survived the boss!`
+        : `${player.name} beat the boss!`;
+    }
+    return survived
+      ? 'You survived the boss - the chapter is yours!'
+      : 'The boss is gone - the chapter is yours!';
+  }
 
   /** The headline of a match won by holding the zone long enough. */
   private zoneHeld(player: Player): string {

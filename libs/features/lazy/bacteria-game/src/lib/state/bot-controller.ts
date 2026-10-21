@@ -162,7 +162,9 @@ export class BotController {
 
   constructor(
     public readonly difficulty: BotDifficulty,
-    random: () => number = Math.random
+    random: () => number = Math.random,
+    /** A boss: once its colony has fallen behind, it boosts whenever it can. */
+    private readonly boss = false
   ) {
     this.profile = PROFILES[difficulty];
     this.random = random;
@@ -180,7 +182,22 @@ export class BotController {
     this.cooldown = this.profile.reactionSec;
     // The bot thinks in cells of the base arena.
     this.unit = scaleOf(view.width);
+    const decision = this.choose(view);
+    const { own, enemy } = view;
+    if (
+      this.boss &&
+      view.boostReady &&
+      enemy != null &&
+      own.count > 0 &&
+      own.count < enemy.count
+    ) {
+      return { ...decision, boost: true };
+    }
+    return decision;
+  }
 
+  /** Where to send the crosshair now, and whether to boost. */
+  private choose(view: BotView): BotDecision {
     const { own, enemy } = view;
     if (own.count === 0) {
       return { target: null, boost: false };

@@ -13,7 +13,7 @@ import {
   DEFAULT_DIFFICULTY,
 } from './bot-controller';
 import { countDown, TICK_SEC, TICKS_PER_SEC } from './fixed-tick';
-import { GameBalance, gameBalance } from './game-balance';
+import { ColonyTraits, GameBalance, gameBalance } from './game-balance';
 import {
   clamp,
   clampLength,
@@ -63,6 +63,8 @@ export interface PlayerSpawn {
   isBot: boolean;
   /** The colony's start area as a share of the level's - 1 when absent. */
   startScale?: number;
+  /** A boss's traits - plain when absent. A boss bot also plays as one. */
+  traits?: ColonyTraits;
 }
 
 /** The simulation on the CPU - the reference. */
@@ -169,6 +171,8 @@ export class MatchEngine {
   /** The players a recording drives, by seat. */
   private readonly ghosts: ReadonlyMap<number, GhostController>;
   private readonly win: WinRule;
+  /** Each seat's traits, a boss's or none. */
+  private readonly traits: readonly (ColonyTraits | undefined)[];
   /** The layout of the match - for the hold zone the bots head for. */
   private readonly map: GameMap;
   /**
@@ -190,6 +194,7 @@ export class MatchEngine {
     this.balance = options.balance ?? gameBalance;
     this.ghosts = options.ghosts ?? new Map();
     this.win = winRuleOf(options);
+    this.traits = spawns.map((spawn) => spawn.traits);
     this.map = options.map ?? getMap('corridors');
     this.playerList = spawns.map((spawn, index) => {
       if (spawn.isBot && !this.ghosts.has(index)) {
@@ -197,7 +202,8 @@ export class MatchEngine {
           index,
           new BotController(
             options.difficulty ?? DEFAULT_DIFFICULTY,
-            seeded(streamSeed(this.seed, index + 1))
+            seeded(streamSeed(this.seed, index + 1)),
+            spawn.traits !== undefined
           )
         );
       }
@@ -229,6 +235,7 @@ export class MatchEngine {
         y: spawn.y,
         // The scale is one of area: the radius shrinks by its root.
         radius: Math.max(1, radius * Math.sqrt(spawn.startScale ?? 1)),
+        traits: spawn.traits,
       }))
     );
     this.syncColonyStats();
@@ -390,7 +397,9 @@ export class MatchEngine {
     }
     this.update(playerId, {
       boostActiveSec: this.balance.boostDurationSec,
-      boostCooldownSec: this.balance.boostCooldownSec,
+      boostCooldownSec:
+        this.balance.boostCooldownSec *
+        (this.traits[playerId]?.cooldownFactor ?? 1),
       boostsFired: player.boostsFired + 1,
     });
     this.ownsPlayers = false;

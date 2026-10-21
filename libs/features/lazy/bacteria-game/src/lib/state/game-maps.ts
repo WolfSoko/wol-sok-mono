@@ -3,6 +3,7 @@ import { CLASSIC_MAPS, GameMap, overlapsArena, Rect } from './maps';
 import { generatedLevel } from './level-generator/generate-level';
 import { ORGANIC_MAPS } from './organic-maps';
 import { mapZones } from './zones';
+import { OUTBREAK_MAPS } from './outbreak-maps';
 import { REACTOR_MAPS } from './reactor-maps';
 
 /**
@@ -68,6 +69,7 @@ export const GAME_MAPS: readonly GameMap[] = [
   ...CLASSIC_MAPS,
   ...ORGANIC_MAPS,
   ...REACTOR_MAPS,
+  ...OUTBREAK_MAPS,
 ].map(scalable);
 
 const CORRIDORS = GAME_MAPS.find((map) => map.id === 'corridors') as GameMap;

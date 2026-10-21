@@ -144,3 +144,23 @@ export function colonyCapacity(balance: GameBalance, colonies: number): number {
     )
   );
 }
+
+/**
+ * How one colony plays differently from the level's balance - a boss
+ * divides faster, hits harder and recharges its boost sooner.
+ */
+export interface ColonyTraits {
+  /** Times the chance to divide. */
+  divideFactor: number;
+  /** Times the pressure its bacteria exert, on top of a boost. */
+  attackFactor: number;
+  /** Times the boost's cooldown. */
+  cooldownFactor: number;
+}
+
+/** A colony like any other. */
+export const PLAIN_TRAITS: ColonyTraits = {
+  divideFactor: 1,
+  attackFactor: 1,
+  cooldownFactor: 1,
+};
