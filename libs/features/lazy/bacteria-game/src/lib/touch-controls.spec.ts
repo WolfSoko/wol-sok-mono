@@ -2,6 +2,7 @@ import { isSteering } from './state/geometry';
 import {
   arenaPointFromClient,
   nearestFreeCrosshair,
+  Pinch,
   steeringVector,
 } from './touch-controls';
 
@@ -126,5 +127,49 @@ describe('steeringVector', () => {
 
     expect(vector.x).toBeCloseTo(vector.y);
     expect(Math.hypot(vector.x, vector.y)).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('Pinch', () => {
+  function pinched(): Pinch {
+    const pinch = new Pinch();
+    pinch.down(1, { x: 100, y: 100 });
+    pinch.start(2, { x: 200, y: 100 });
+    return pinch;
+  }
+
+  it('zooms by how much the gap between the two fingers grew', () => {
+    const pinch = pinched();
+
+    expect(pinch.move(2, { x: 300, y: 100 })).toBeCloseTo(2);
+    expect(pinch.move(1, { x: 200, y: 100 })).toBeCloseTo(0.5);
+  });
+
+  it('starts only with exactly one other finger on the arena', () => {
+    expect(new Pinch().start(1, { x: 0, y: 0 })).toBe(false);
+
+    const three = pinched();
+    expect(three.start(3, { x: 50, y: 50 })).toBe(false);
+    expect(three.pinches(3)).toBe(false);
+    expect(three.pinches(1)).toBe(true);
+  });
+
+  it('leaves a finger that does not pinch alone', () => {
+    const pinch = new Pinch();
+    pinch.down(1, { x: 100, y: 100 });
+
+    expect(pinch.move(1, { x: 300, y: 100 })).toBe(1);
+    expect(pinch.pinches(1)).toBe(false);
+  });
+
+  it('keeps the finger left on the screen out of play until it is lifted', () => {
+    const pinch = pinched();
+    pinch.up(1);
+
+    expect(pinch.pinches(2)).toBe(true);
+    expect(pinch.move(2, { x: 400, y: 100 })).toBe(1);
+
+    pinch.up(2);
+    expect(pinch.pinches(2)).toBe(false);
   });
 });
