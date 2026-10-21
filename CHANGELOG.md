@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.36.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.36.0...v74.36.1) (2026-10-21)
+
+### Bug Fixes
+
+* **ws-thanos:** accept Angular 20 to 22 and any rxjs 7.4+ as peer deps ([#2519](https://github.com/WolfSoko/wol-sok-mono/issues/2519)) ([72826ab](https://github.com/WolfSoko/wol-sok-mono/commit/72826abcb600ab50b5930dd0b9662e8214591506))
+
+### Chore
+
+* **release:** publish ([b442947](https://github.com/WolfSoko/wol-sok-mono/commit/b442947430db4a5c4a764b8e3511b5c6bd0a627e))
+
+## [74.36.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.35.0...v74.36.0) (2026-10-21)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ zones as organic puddles with smooth edges and marks ([#2517](https://github.com/WolfSoko/wol-sok-mono/issues/2517)) ([53e1305](https://github.com/WolfSoko/wol-sok-mono/commit/53e13052abd5abbe88b44e7943d2b3758f4f5769))
+
+### Chore
+
+* **tools:** wire Entire into the Husky hooks ([80b2f9f](https://github.com/WolfSoko/wol-sok-mono/commit/80b2f9f3749ffe06b45781cf11ae57e9d6869412))
+
 ## [74.35.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.34.0...v74.35.0) (2026-10-21)
 
 ### Features
