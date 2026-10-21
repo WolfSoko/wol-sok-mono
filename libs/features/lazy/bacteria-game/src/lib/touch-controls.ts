@@ -115,3 +115,69 @@ export function steeringVector(
   const strength = Math.min(1, (deflection - deadZone) / (1 - deadZone));
   return scaleTo(push, strength);
 }
+
+/**
+ * The fingers on the arena, in client pixels, so a second finger that has
+ * no crosshair left to grab can pinch the camera with the first. Client
+ * pixels, not cells: the cells under a finger change as the camera zooms.
+ *
+ * A finger stays in its pinch until it is lifted - the one left on the
+ * screen does not grab a crosshair halfway through a gesture.
+ */
+export class Pinch {
+  private readonly fingers = new Map<number, Point>();
+  private pair: readonly [number, number] | null = null;
+
+  public down(pointerId: number, point: Point): void {
+    this.fingers.set(pointerId, point);
+  }
+
+  /**
+   * Pinches with `pointerId` and the one other finger on the arena -
+   * false, and no pinch, unless there are exactly two.
+   */
+  public start(pointerId: number): boolean {
+    const other = [...this.fingers.keys()].find((id) => id !== pointerId);
+    if (this.fingers.size !== 2 || other == null) {
+      return false;
+    }
+    this.pair = [other, pointerId];
+    return true;
+  }
+
+  public pinches(pointerId: number): boolean {
+    return this.pair?.includes(pointerId) ?? false;
+  }
+
+  /**
+   * Moves a finger and returns by how much the gap between the two
+   * pinching grew since its last move: the factor to zoom by, 1 while the
+   * finger does not pinch.
+   */
+  public move(pointerId: number, point: Point): number {
+    if (!this.fingers.has(pointerId)) {
+      return 1;
+    }
+    const before = this.gap();
+    this.fingers.set(pointerId, point);
+    const after = this.gap();
+    return this.pinches(pointerId) && before > 0 && after > 0
+      ? after / before
+      : 1;
+  }
+
+  public up(pointerId: number): void {
+    this.fingers.delete(pointerId);
+    if (this.pair != null && !this.pair.some((id) => this.fingers.has(id))) {
+      this.pair = null;
+    }
+  }
+
+  private gap(): number {
+    if (this.pair == null) {
+      return 0;
+    }
+    const [a, b] = this.pair.map((id) => this.fingers.get(id));
+    return a == null || b == null ? 0 : distance(a, b);
+  }
+}

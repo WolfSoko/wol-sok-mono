@@ -372,8 +372,11 @@ cells). Bigger is more room, not smaller bacteria, so two factors stay apart
 
 A [`Camera`](./src/lib/arena/camera.ts) shows part of a big map: it
 follows the crosshair of the one human in a match on a soft spring, zooms
-with the wheel between the whole map and the size of a base one, and never
-looks past the arena's edge. The canvas is as big as a base map's
+with the wheel or a pinch between the whole map and the size of a base one,
+and never looks past the arena's edge. A second finger on the arena with no
+crosshair left to grab pinches with the first, which lets go of its
+crosshair; both stay out of play until lifted ([`Pinch`](./src/lib/touch-controls.ts),
+in client pixels, since the cells under a finger change as it zooms). The canvas is as big as a base map's
 (`renderScale(sim, screen, size)`) and the painters draw only the camera's
 `view` onto it, so a big map costs no more pixels than a base one: the GL
 passes map the canvas through a `uView` uniform, the Canvas 2D one through

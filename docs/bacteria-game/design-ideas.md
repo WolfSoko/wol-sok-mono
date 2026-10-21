@@ -931,11 +931,11 @@ the report rows are full.
 Phase 4 is done. Phase 5 has started with bigger maps (6.1): a map's
 `size` lays it out on a bigger base, the resolution and the size are two
 factors apart, and a camera follows the player's crosshair and zooms with
-the wheel (6.2). The painters draw only the camera's view, on a canvas as
+the wheel or a pinch (6.2). The painters draw only the camera's view, on a canvas as
 big as a base map's - the first camera scaled a canvas drawn whole with
 CSS, size² the pixels, which the Canvas 2D fallback could not keep up
 with (8 fps on Expanse, 41 now) - but without a level of detail yet.
-Expanse is the first big level. The minimap, activity tiles, pinch zoom,
+Expanse is the first big level. The minimap, activity tiles,
 split screen and fog are next. The CPU simulation on a big map at Ultra
 runs four times the cells of a base one, so a resolution cap on big maps
 (4 of 6.3) is still due.

@@ -90,7 +90,11 @@ import { GameHapticsService } from './haptics.service';
 import { GameSoundService, Soundtrack } from './sound/game-sound.service';
 import { MatchResult } from './state/match-engine';
 import { levelMusic } from './sound/level-music';
-import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
+import {
+  arenaPointFromClient,
+  nearestFreeCrosshair,
+  Pinch,
+} from './touch-controls';
 import {
   boostLabel,
   ColonyStats,
@@ -469,6 +473,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Which crosshair each active pointer is dragging: pointerId -> playerId. */
   private readonly draggedBy = new Map<number, number>();
+  /** The fingers on the arena, two of which may pinch the camera. */
+  private readonly pinch = new Pinch();
 
   constructor() {
     loadFonts(document);
@@ -1071,11 +1077,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * The wheel zooms the camera over a big map, in or out - during a match;
-   * otherwise it shows the whole map and the wheel scrolls the page.
+   * The wheel zooms the camera over a big map, in or out - during a match
+   * of one human; otherwise it shows the whole map and the wheel scrolls
+   * the page.
    */
   protected onWheel(event: WheelEvent): void {
-    if (this.camera == null || !untracked(this.running)) {
+    if (!this.zooms()) {
       return;
     }
     event.preventDefault();
@@ -1086,7 +1093,22 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
           ? 400
           : 1;
-    this.camera.zoomBy(Math.exp((-event.deltaY * perUnit) / 500));
+    this.zoomBy(Math.exp((-event.deltaY * perUnit) / 500));
+  }
+
+  /**
+   * True while the camera may zoom: over a big map, in a match it follows
+   * the one human through - with two, it shows the whole map.
+   */
+  private zooms(): boolean {
+    return this.camera != null && this.cameraTarget() != null;
+  }
+
+  private zoomBy(factor: number): void {
+    if (factor === 1) {
+      return;
+    }
+    this.camera?.zoomBy(factor);
     if (!this.matchPaints()) {
       this.draw();
     }
@@ -1295,19 +1317,26 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * Grabs the crosshair nearest to the touch and starts dragging it.
    *
    * Two pointers can be active at once, one per player, so both can play on the
-   * same screen.
+   * same screen. A second finger with no crosshair left to grab pinches the
+   * camera over a big map with the first, which lets go of its crosshair.
    */
   onPointerDown(event: PointerEvent) {
     const point = this.toArenaPoint(event);
     if (point == null) {
       return;
     }
+    this.pinch.down(event.pointerId, clientPoint(event));
     const playerId = nearestFreeCrosshair(
       this.humans(),
       point,
       new Set(this.draggedBy.values())
     );
     if (playerId == null) {
+      if (this.zooms() && this.pinch.start(event.pointerId)) {
+        this.draggedBy.clear();
+        (event.target as Element).setPointerCapture?.(event.pointerId);
+        event.preventDefault();
+      }
       return;
     }
     this.draggedBy.set(event.pointerId, playerId);
@@ -1318,6 +1347,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   onPointerMove(event: PointerEvent) {
+    const factor = this.pinch.move(event.pointerId, clientPoint(event));
+    if (this.pinch.pinches(event.pointerId)) {
+      this.zoomBy(factor);
+      event.preventDefault();
+      return;
+    }
     const playerId = this.draggedBy.get(event.pointerId);
     if (playerId == null) {
       return;
@@ -1336,6 +1371,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   onPointerUp(event: PointerEvent) {
     this.draggedBy.delete(event.pointerId);
+    this.pinch.up(event.pointerId);
   }
 
   private toArenaPoint(event: PointerEvent) {
@@ -1429,6 +1465,11 @@ export type StagePanel = MenuScreen | 'pause' | 'over' | null;
  * panel lives in the CDK overlay container, and typing a level name there must
  * not throw the page into fullscreen.
  */
+/** Where the pointer is, in client pixels. */
+function clientPoint(event: PointerEvent): Point {
+  return { x: event.clientX, y: event.clientY };
+}
+
 function isTypingTarget(target: EventTarget | null): boolean {
   const element = target as HTMLElement | null;
   if (element == null || typeof element.closest !== 'function') {
