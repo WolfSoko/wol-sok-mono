@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.41.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.41.0...v74.41.1) (2026-10-21)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** let a colony run from the enemy it touches ([#2525](https://github.com/WolfSoko/wol-sok-mono/issues/2525)) ([26854ca](https://github.com/WolfSoko/wol-sok-mono/commit/26854caeaf04d41c572282b25a4169a6e018dd61))
+* **spa-cdk-stack:** upload each file once, with its own cache header ([#2528](https://github.com/WolfSoko/wol-sok-mono/issues/2528)) ([5686044](https://github.com/WolfSoko/wol-sok-mono/commit/56860447d91ad517ed948f0ada0c2914a3e2d75d))
+
+### Chore
+
+* **release:** publish ([7f61300](https://github.com/WolfSoko/wol-sok-mono/commit/7f61300b0f0d71b4224a9b920f4a0381c7fa00ca))
+
+### Performance
+
+* **feat-lazy-bacteria-game:** draw only what the camera shows ([#2526](https://github.com/WolfSoko/wol-sok-mono/issues/2526)) ([c44e106](https://github.com/WolfSoko/wol-sok-mono/commit/c44e10617914a6bc5d1e9d20d9f2f03d3be7f349))
+
 ## [74.41.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.40.0...v74.41.0) (2026-10-21)
 
 ### Features
