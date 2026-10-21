@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M5FYPDYKYYJ5S648TE54K1RA",
+  "strategy": "manual-commit",
+  "branch": "refactor/cdk-shared-spa-stack",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "apps/angular-examples-cdk/src/main.ts",
+    "apps/angular-examples-cdk/src/stacks/angular-examples.stack.ts",
+    "apps/angular-examples-cdk/tsconfig.json",
+    "libs/public/spa-cdk-stack/src/lib/spa/spa.stack.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 44,
+    "cache_creation_tokens": 28277,
+    "cache_read_tokens": 2573789,
+    "output_tokens": 10590,
+    "api_call_count": 18,
+    "subagent_tokens": {
+      "input_tokens": 44,
+      "cache_creation_tokens": 220881,
+      "cache_read_tokens": 1020407,
+      "output_tokens": 2049,
+      "api_call_count": 22
+    }
+  }
+}

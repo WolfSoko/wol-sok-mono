@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01JRQ2GBDiRhubsrNwktcmtX",
+  "agent_id": "a4a1e9e8bac0f2862",
+  "subagent_type": "Explore",
+  "task_description": "Efficiency review of CDK diff",
+  "token_usage": {
+    "input_tokens": 6,
+    "cache_creation_tokens": 55435,
+    "cache_read_tokens": 98054,
+    "output_tokens": 314,
+    "api_call_count": 3
+  },
+  "started_at": "2026-10-21T21:20:15.7865366+02:00",
+  "completed_at": "2026-10-21T21:20:30.457131+02:00"
+}
