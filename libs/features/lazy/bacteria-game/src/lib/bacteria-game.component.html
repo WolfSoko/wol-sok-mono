@@ -340,23 +340,31 @@
           class="thanos-container"
           [wsThanosOptions]="thanosOptions()"
           (wsSharedUiElemResized)="onArenaBoxResized($event)"
+          (wheel)="onWheel($event)"
         >
           <ws-shared-ui-show-fps
             [show]="settings.showFps()"
             [fps]="fps()"
           ></ws-shared-ui-show-fps>
           @for (key of canvasKey(); track key) {
-            <canvas
-              #canvasElement
-              id="canvasElement"
+            <div
+              class="arena-view"
+              [class.camera]="mapSize() > 1"
               [style.width.px]="canvasSize()?.width"
               [style.height.px]="canvasSize()?.height"
-              (pointerdown)="onPointerDown($event)"
-              (pointermove)="onPointerMove($event)"
-              (pointerup)="onPointerUp($event)"
-              (pointercancel)="onPointerUp($event)"
             >
-            </canvas>
+              <canvas
+                #canvasElement
+                id="canvasElement"
+                [style.width.px]="canvasSize()?.width"
+                [style.height.px]="canvasSize()?.height"
+                (pointerdown)="onPointerDown($event)"
+                (pointermove)="onPointerMove($event)"
+                (pointerup)="onPointerUp($event)"
+                (pointercancel)="onPointerUp($event)"
+              >
+              </canvas>
+            </div>
           }
         </div>
       </div>

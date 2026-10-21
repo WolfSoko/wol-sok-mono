@@ -1,3 +1,4 @@
+import { scaleOf } from './arena-size';
 import {
   addEvents,
   BacteriaSimulation,
@@ -576,7 +577,8 @@ export class MatchEngine {
           width,
           height,
           this.map.createWalls(width, height),
-          mapZones(this.map, width, height)
+          mapZones(this.map, width, height),
+          this.unitAt(width)
         ),
       };
     }
@@ -637,6 +639,7 @@ export class MatchEngine {
         this.balance.maxEnergy,
         this.hillAt(width, height),
         (from) => this.routesFrom(from, width, height),
+        this.unitAt(width),
         prey,
         this.win.kind === 'harvest'
       );
@@ -648,6 +651,11 @@ export class MatchEngine {
         this.fireBoost(playerId);
       }
     }
+  }
+
+  /** Arena cells per base cell on an arena that wide - the grid's resolution. */
+  private unitAt(width: number): number {
+    return scaleOf(width, this.map.size);
   }
 
   /**

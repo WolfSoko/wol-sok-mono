@@ -27,11 +27,11 @@ describe('paintZoneLayer', () => {
   }
 
   it('paints nothing without zones', () => {
-    expect(paintZoneLayer(WIDTH, HEIGHT, [], SCALE)).toBeNull();
+    expect(paintZoneLayer(WIDTH, HEIGHT, [], SCALE, 1)).toBeNull();
   });
 
   it('is finer than the cells, and clear outside the zones', () => {
-    const layer = paintZoneLayer(WIDTH, HEIGHT, [poison], SCALE);
+    const layer = paintZoneLayer(WIDTH, HEIGHT, [poison], SCALE, 1);
     if (layer === null) {
       throw new Error('no layer');
     }
@@ -41,7 +41,7 @@ describe('paintZoneLayer', () => {
   });
 
   it('tints the inside lightly and the rim strongly, in the zone colour', () => {
-    const layer = paintZoneLayer(WIDTH, HEIGHT, [poison], SCALE);
+    const layer = paintZoneLayer(WIDTH, HEIGHT, [poison], SCALE, 1);
     if (layer === null) {
       throw new Error('no layer');
     }
@@ -54,7 +54,7 @@ describe('paintZoneLayer', () => {
   });
 
   it('softens the edge - alphas between clear and the rim', () => {
-    const layer = paintZoneLayer(WIDTH, HEIGHT, [poison], SCALE);
+    const layer = paintZoneLayer(WIDTH, HEIGHT, [poison], SCALE, 1);
     if (layer === null) {
       throw new Error('no layer');
     }
@@ -68,7 +68,7 @@ describe('paintZoneLayer', () => {
   });
 
   it('strews antibiotic with red pills', () => {
-    const layer = paintZoneLayer(WIDTH, HEIGHT, [poison], SCALE);
+    const layer = paintZoneLayer(WIDTH, HEIGHT, [poison], SCALE, 1);
     if (layer === null) {
       throw new Error('no layer');
     }
@@ -89,8 +89,8 @@ describe('paintZoneLayer', () => {
       { kind: 'agar', x: 200, y: 60, width: 50, height: 50, round: true },
     ];
 
-    expect(paintZoneLayer(WIDTH, HEIGHT, zones, SCALE)?.data).toEqual(
-      paintZoneLayer(WIDTH, HEIGHT, zones, SCALE)?.data
+    expect(paintZoneLayer(WIDTH, HEIGHT, zones, SCALE, 1)?.data).toEqual(
+      paintZoneLayer(WIDTH, HEIGHT, zones, SCALE, 1)?.data
     );
   });
 });

@@ -1,10 +1,10 @@
-import { scaleOf } from './arena-size';
 import { BotDifficulty } from './bot-controller';
 import { getColonyColor, NEUTRAL_COLOR, toPlayerColor } from './colony-colors';
 import { NEUTRAL_TRAITS } from './game-balance';
 import type { GameMode } from './game.states';
 import {
   getLevel,
+  gridScale,
   levelBalance,
   levelCrosshairSpeed,
   levelMap,
@@ -52,7 +52,7 @@ export function planMatch(
   const { width, height, mode } = plan;
   const level = getLevel(plan.levelId);
   const boss = ghost === null ? level.boss : undefined;
-  const scale = scaleOf(width);
+  const scale = gridScale(level, width);
   const versusComputer = mode === 'vs-computer';
   const [left, right] = plan.colors.map(getColonyColor);
   const [leftScale, rightScale] = versusComputer

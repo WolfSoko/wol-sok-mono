@@ -48,42 +48,61 @@ export function simScale(resolution: SimResolution): number {
   return option(SIM_RESOLUTIONS, resolution, DEFAULT_SIM_RESOLUTION).value;
 }
 
-/** The arena in cells on that grid. */
-export function arenaSize(resolution: SimResolution): {
+/**
+ * The arena in cells on that grid, for a map `size` times the base arena
+ * along each side.
+ */
+export function arenaSize(
+  resolution: SimResolution,
+  size = 1
+): {
   width: number;
   height: number;
 } {
-  const scale = simScale(resolution);
+  const scale = simScale(resolution) * size;
   return {
     width: Math.round(BASE_ARENA.width * scale),
     height: Math.round(BASE_ARENA.height * scale),
   };
 }
 
-/** Canvas pixels per arena cell, for that grid drawn at that size. */
+/** The widest the canvas of a bigger map is drawn, in pixels. */
+const MAX_CANVAS_WIDTH = 4096;
+
+/**
+ * Canvas pixels per arena cell, for that grid drawn at that size. A bigger
+ * map gets a bigger canvas, as many pixels per cell as a base one - the
+ * camera shows part of it at a time - up to a width the GPU takes.
+ */
 export function renderScale(
   sim: SimResolution,
-  screen: ScreenResolution
+  screen: ScreenResolution,
+  size = 1
 ): number {
   const canvasWidth = option(
     SCREEN_RESOLUTIONS,
     screen,
     DEFAULT_SCREEN_RESOLUTION
   ).value;
-  return canvasWidth / arenaSize(sim).width;
+  const width = arenaSize(sim, size).width;
+  return Math.min(canvasWidth * size, MAX_CANVAS_WIDTH) / width;
 }
 
 /**
  * How far a moving wall may shove a bacterium before it crushes it: 3 cells
  * of the base arena, more on a finer grid, where a wall moves more cells.
  */
-export function escapeReach(width: number): number {
-  return Math.max(3, Math.ceil(3 * scaleOf(width)));
+export function escapeReach(width: number, size = 1): number {
+  return Math.max(3, Math.ceil(3 * scaleOf(width, size)));
 }
 
-/** How many cells an arena of that width has per base cell. */
-export function scaleOf(width: number): number {
-  return width / BASE_ARENA.width;
+/**
+ * How many cells an arena of that width has per base cell - the grid's
+ * resolution. A map `size` times the base arena has as many cells per base
+ * cell as a base one on the same grid: it is bigger, not finer.
+ */
+export function scaleOf(width: number, size = 1): number {
+  return width / (BASE_ARENA.width * size);
 }
 
 /**

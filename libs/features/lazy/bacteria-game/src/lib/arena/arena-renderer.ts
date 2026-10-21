@@ -90,9 +90,11 @@ export class ArenaRenderer {
   public constructor(
     private readonly width: number,
     private readonly height: number,
-    random: () => number = Math.random,
+    random: () => number,
     /** Screen pixels per arena cell - the zones are drawn that fine. */
-    private readonly scale = 1
+    private readonly scale: number,
+    /** Cells per base cell - the zones' marks are as big on every grid. */
+    private readonly unit: number
   ) {
     this.motes = new Motes(width, height, random);
   }
@@ -294,7 +296,13 @@ export class ArenaRenderer {
     if (createCanvas(1, 1) == null) {
       return null;
     }
-    const layer = paintZoneLayer(this.width, this.height, zones, this.scale);
+    const layer = paintZoneLayer(
+      this.width,
+      this.height,
+      zones,
+      this.scale,
+      this.unit
+    );
     return layer === null
       ? null
       : imageCanvas(layer.data, layer.width, layer.height);

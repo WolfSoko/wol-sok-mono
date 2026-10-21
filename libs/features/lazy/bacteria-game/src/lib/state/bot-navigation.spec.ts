@@ -17,14 +17,14 @@ describe('bot navigation', () => {
   const to: Point = { x: 240, y: 40 };
 
   it('goes straight where nothing is in the way', () => {
-    const field = flood(navGrid(WIDTH, HEIGHT, [], []), from);
+    const field = flood(navGrid(WIDTH, HEIGHT, [], [], 1), from);
 
     expect(waypoint(field, to)).toEqual(to);
     expect(travel(field, to)).toBeCloseTo(160, -1);
   });
 
   it('heads round a wall instead of into it', () => {
-    const field = flood(navGrid(WIDTH, HEIGHT, [barrier(140)], []), from);
+    const field = flood(navGrid(WIDTH, HEIGHT, [barrier(140)], [], 1), from);
 
     const next = waypoint(field, to);
 
@@ -42,7 +42,7 @@ describe('bot navigation', () => {
       { x: 200, y: 20, width: 6, height: 46 },
       { x: 274, y: 20, width: 6, height: 46 },
     ];
-    const field = flood(navGrid(WIDTH, HEIGHT, box, []), from);
+    const field = flood(navGrid(WIDTH, HEIGHT, box, [], 1), from);
 
     expect(travel(field, to)).toBe(Number.POSITIVE_INFINITY);
     // As close as the colony gets - outside the box, not into its wall.
@@ -60,7 +60,7 @@ describe('bot navigation', () => {
       width: 40,
       height: 40,
     };
-    const field = flood(navGrid(WIDTH, HEIGHT, [], [poison]), from);
+    const field = flood(navGrid(WIDTH, HEIGHT, [], [poison], 1), from);
 
     const next = waypoint(field, to);
 
@@ -69,7 +69,7 @@ describe('bot navigation', () => {
   });
 
   it('treats a gate that is shut as a wall', () => {
-    const grid = navGrid(WIDTH, HEIGHT, [barrier(140)], []);
+    const grid = navGrid(WIDTH, HEIGHT, [barrier(140)], [], 1);
     const gate: Rect = { x: 156, y: 140, width: 8, height: 40 };
 
     const open = travel(flood(grid, from), to);
@@ -85,7 +85,7 @@ describe('bot navigation', () => {
       { x: 0, y: 70, width: 157, height: 20 },
       { x: 163, y: 70, width: 157, height: 20 },
     ];
-    const field = flood(navGrid(WIDTH, HEIGHT, walls, []), from);
+    const field = flood(navGrid(WIDTH, HEIGHT, walls, [], 1), from);
 
     expect(travel(field, { x: 80, y: 140 })).toBeLessThan(
       Number.POSITIVE_INFINITY
@@ -94,7 +94,7 @@ describe('bot navigation', () => {
 
   it('starts from the nearest open spot when the colony sits on a wall', () => {
     const wall: Rect = { x: 60, y: 20, width: 40, height: 40 };
-    const field = flood(navGrid(WIDTH, HEIGHT, [wall], []), from);
+    const field = flood(navGrid(WIDTH, HEIGHT, [wall], [], 1), from);
 
     expect(travel(field, to)).toBeLessThan(Number.POSITIVE_INFINITY);
   });

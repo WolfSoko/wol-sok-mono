@@ -1,5 +1,7 @@
+import { scaleOf } from './arena-size';
 import { ColonyTraits, GameBalance, gameBalance } from './game-balance';
 import { getMap } from './game-maps';
+import { EXPANSE_NEUTRALS } from './expanse-maps';
 import { GameMap } from './maps';
 import { MedalLimits } from './medallions';
 import { WinRule } from './win-conditions';
@@ -383,6 +385,24 @@ export const LEVELS: readonly Level[] = [
     },
     crosshairSpeed: 200,
   },
+  // The first map bigger than the screen: the camera follows the colony.
+  {
+    id: 'expanse',
+    name: '20 · Expanse',
+    description:
+      'Four times the room, strewn with rocks, and two grey colonies to feed on. The camera follows you - zoom out with the mouse wheel to find the enemy. Biggest colony after four minutes wins.',
+    mapId: 'expanse',
+    // As the other timed level: silver and gold ask for a wipe-out first.
+    medal: { silverSec: 160, goldSec: 105, goldLossShare: 1.2 },
+    win: { kind: 'timed', limitSec: 240 },
+    neutrals: EXPANSE_NEUTRALS.map((spot) => ({ ...spot, startScale: 2 })),
+    balance: {
+      aggression: 0.6,
+      nutrientCount: 16,
+      nutrientRespawnDelaySec: 1.5,
+    },
+    crosshairSpeed: 220,
+  },
 ];
 
 /** True for the id of a hand-made level - one of the campaign's ladder. */
@@ -419,15 +439,18 @@ export function getLevel(id: string): Level {
  */
 export function levelBalance(level: Level, scale = 1): GameBalance {
   const balance = { ...gameBalance, ...level.balance };
-  if (scale === 1) {
+  const size = levelSize(level);
+  if (scale === 1 && size === 1) {
     return balance;
   }
   const area = scale * scale;
+  // A bigger map holds more bacteria - as many per base cell as a base one.
+  const room = area * size * size;
   return {
     ...balance,
     startBacteriaRadius: Math.round(balance.startBacteriaRadius * scale),
-    maxBacteriaPerPlayer: Math.round(balance.maxBacteriaPerPlayer * area),
-    maxTotalBacteria: Math.round(balance.maxTotalBacteria * area),
+    maxBacteriaPerPlayer: Math.round(balance.maxBacteriaPerPlayer * room),
+    maxTotalBacteria: Math.round(balance.maxTotalBacteria * room),
     influenceCellSize: Math.max(
       1,
       Math.round(balance.influenceCellSize * scale)
@@ -440,6 +463,19 @@ export function levelBalance(level: Level, scale = 1): GameBalance {
 /** The map a level is fought on. */
 export function levelMap(level: Level): GameMap {
   return getMap(level.mapId);
+}
+
+/** How many times the base arena the level's map is along each side. */
+export function levelSize(level: Level): number {
+  return levelMap(level).size ?? 1;
+}
+
+/**
+ * The level's arena cells per base cell on an arena that wide - the grid's
+ * resolution, whatever the size of the map.
+ */
+export function gridScale(level: Level, width: number): number {
+  return scaleOf(width, levelSize(level));
 }
 
 /** A level's name without its number - "Hourglass" for "3 · Hourglass". */

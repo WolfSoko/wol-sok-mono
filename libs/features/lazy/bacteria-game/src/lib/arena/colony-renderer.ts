@@ -1,5 +1,4 @@
 import { BacteriaLook } from '../settings.service';
-import { scaleOf } from '../state/arena-size';
 import { Nutrient } from '../state/bacteria-simulation';
 import { GameBalance, gameBalance } from '../state/game-balance';
 import { CellBounds, clamp, Point } from '../state/geometry';
@@ -378,7 +377,9 @@ export class ColonyRenderer {
 
   public constructor(
     private readonly width: number,
-    private readonly height: number
+    private readonly height: number,
+    /** Cells per base cell - the boost's waves are as wide on every grid. */
+    private readonly unit: number
   ) {
     const cells = width * height;
     this.density = new Float32Array(cells);
@@ -406,7 +407,7 @@ export class ColonyRenderer {
       const shimmer =
         colony.boostTarget == null
           ? null
-          : { timeSec, target: colony.boostTarget, unit: scaleOf(this.width) };
+          : { timeSec, target: colony.boostTarget, unit: this.unit };
       if (look === 'slime') {
         const hot = colonyDensity(
           this.density,
