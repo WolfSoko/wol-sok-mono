@@ -1,0 +1,41 @@
+<task-notification>
+<task-id>a80a0493ca6bfc370</task-id>
+<tool-use-id>toolu_01BDbWWeQUVeU2nFNZCDBj2q</tool-use-id>
+<output-file>C:\Users\Wolfr\AppData\Local\Temp\claude\E--IdeaProjects-wol-sok-mono\a62e3ae5-697d-4133-b5f5-09a722943c4b\tasks\a80a0493ca6bfc370.output</output-file>
+<status>completed</status>
+<summary>Agent "Altitude review of CDK diff" is waiting on its own background work</summary>
+<note>This agent stopped with background work of its own still running. It may resume on its own when that work completes or reports, and the same task-id notifies again if it does; the result below may be interim.</note>
+<result>This agent's report was delivered to you as a message from "a80a0493ca6bfc370" (its SubagentHandback call). Read it there; it is not repeated here.
+</result>
+<usage><subagent_tokens>70786</subagent_tokens><tool_uses>11</tool_uses><duration_ms>184406</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a80a0493ca6bfc370</task-id>
+<output-file>C:\Users\Wolfr\AppData\Local\Temp\claude\E--IdeaProjects-wol-sok-mono\a62e3ae5-697d-4133-b5f5-09a722943c4b\tasks\a80a0493ca6bfc370.output</output-file>
+<status>completed</status>
+<summary>Agent "Altitude review of CDK diff" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>This agent's report was delivered to you as a message from "a80a0493ca6bfc370" (its SubagentHandback call). Read it there; it is not repeated here.
+</result>
+<usage><subagent_tokens>71474</subagent_tokens><tool_uses>11</tool_uses><duration_ms>191994</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a6f53dccc691ce7f3</task-id>
+<output-file>C:\Users\Wolfr\AppData\Local\Temp\claude\E--IdeaProjects-wol-sok-mono\a62e3ae5-697d-4133-b5f5-09a722943c4b\tasks\a6f53dccc691ce7f3.output</output-file>
+<status>completed</status>
+<summary>Agent "Simplification review of CDK diff" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>This agent's report was delivered to you as a message from "a6f53dccc691ce7f3" (its SubagentHandback call). Read it there; it is not repeated here.
+</result>
+<usage><subagent_tokens>64037</subagent_tokens><tool_uses>8</tool_uses><duration_ms>194459</duration_ms></usage>
+</task-notification>
+
+---
+
+fix it in an own PR

@@ -1,0 +1,110 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M5FYZMMW9YVFCA1DFB9464TK",
+  "session_id": "a62e3ae5-697d-4133-b5f5-09a722943c4b",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-21T19:28:38.4722069Z",
+  "branch": "fix/spa-cdk-stack-cache-overrides",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/angular-examples-cdk/src/main.ts",
+    "apps/angular-examples-cdk/src/stacks/angular-examples.stack.ts",
+    "libs/public/spa-cdk-stack/README.md",
+    "libs/public/spa-cdk-stack/src/lib/spa/spa.construct.ts",
+    "libs/public/spa-cdk-stack/src/lib/stack-spa.spec.ts",
+    "libs/public/spa-cdk-stack/test-nested-build-path/assets/federation.manifest.json",
+    "libs/public/spa-cdk-stack/test-nested-build-path/assets/logo.svg",
+    "libs/public/spa-cdk-stack/test-nested-build-path/fib-wasm/optimized.wasm",
+    "libs/public/spa-cdk-stack/test-nested-build-path/index.html",
+    "libs/public/spa-cdk-stack/test-nested-build-path/main.js",
+    "libs/public/spa-cdk-stack/test-nested-build-path/remoteEntry.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "58c134877452",
+  "checkpoint_transcript_start": 703,
+  "transcript_lines_at_start": 703,
+  "compact_transcript_start": 76,
+  "token_usage": {
+    "input_tokens": 32,
+    "cache_creation_tokens": 29950,
+    "cache_read_tokens": 2767734,
+    "output_tokens": 16481,
+    "api_call_count": 16,
+    "subagent_tokens": {
+      "input_tokens": 8,
+      "cache_creation_tokens": 4687,
+      "cache_read_tokens": 130271,
+      "output_tokens": 157,
+      "api_call_count": 2
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01Ui9L9fJRmRKzxKBzU84C7a",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "code-review"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "5e1af061038e",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 534,
+        "end": 535,
+        "entry_ids": [
+          "f54068d6-4f92-4183-8d1f-315deddf7169"
+        ],
+        "tool_use_id": "toolu_01Ui9L9fJRmRKzxKBzU84C7a"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01Ui9L9fJRmRKzxKBzU84C7a"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: code-review",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_01R3TQ28xFMnzenhJ9W4QRC3",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "simplify"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "5e1af061038e",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 584,
+        "end": 585,
+        "entry_ids": [
+          "a960efb4-29c6-4a36-b936-93a82e056462"
+        ],
+        "tool_use_id": "toolu_01R3TQ28xFMnzenhJ9W4QRC3"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01R3TQ28xFMnzenhJ9W4QRC3"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: simplify",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 7
+  }
+}
