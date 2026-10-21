@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.34.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.33.0...v74.34.0) (2026-10-21)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ boss levels and the survive rule ([#2515](https://github.com/WolfSoko/wol-sok-mono/issues/2515)) ([eead844](https://github.com/WolfSoko/wol-sok-mono/commit/eead84481a5aea9d4b3ff7a04fea88bfc967adf4))
+
 ## [74.33.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.32.0...v74.33.0) (2026-10-20)
 
 ### Features
