@@ -341,6 +341,27 @@ describe('BacteriaSimulation', () => {
       }
     });
 
+    it('lets a colony run from the enemy it touches, boosted too', () => {
+      // The enemy a coarse cell to the right, the crosshair far to the left.
+      const runner = bacterium(39, 20);
+      const { simulation, players } = setup([[runner], ring(42, 20)], {
+        balance: { jitter: 0, divideChancePerSec: 0 },
+        targets: [
+          { x: 0, y: 20 },
+          { x: 42, y: 20 },
+        ],
+      });
+      // Boosted, it hunts hardest - and still must not be dragged back.
+      players[0] = { ...players[0], boostActiveSec: 1 };
+
+      simulation.step(players, 0.1);
+
+      const steps = Math.round(
+        DEFAULT_CROSSHAIR_SPEED * gameBalance.boostSpeedFactor * 0.1
+      );
+      expect(runner).toMatchObject({ x: 39 - steps, y: 20 });
+    });
+
     it('never puts two bacteria on the same cell', () => {
       const { simulation, colonies, players } = setup(
         [ring(10, 10), ring(50, 30)],
