@@ -1,6 +1,5 @@
-import { envOrDie } from '@wolsok/spa-cdk-stack';
+import { envOrDie, SpaStack } from '@wolsok/spa-cdk-stack';
 import { App, RemovalPolicy, Tags } from 'aws-cdk-lib';
-import { SpaStack } from './stacks/spa.stack';
 
 const app = new App();
 

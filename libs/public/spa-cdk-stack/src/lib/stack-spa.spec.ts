@@ -1,8 +1,8 @@
-import { App, Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import { App, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import * as path from 'path';
 import { vitest } from 'vitest';
-import { SpaConstruct, SpaProps } from './spa/spa.construct';
+import { SpaStack, SpaStackProps } from './spa/spa.stack';
 import { CacheControl, Source } from 'aws-cdk-lib/aws-s3-deployment';
 
 // Mock the fromLookup method
@@ -17,23 +17,7 @@ vitest.mock('aws-cdk-lib/aws-route53', () => {
     ARecord: vitest.fn(),
   };
 });
-class TestSpaStack extends Stack {
-  spaConstruct: SpaConstruct;
-  constructor(parent: App, name: string, props: SpaProps & StackProps) {
-    super(parent, name, props);
-
-    const { domainName, buildOutputPath, bucketRemovalPolicy, noCacheFiles } =
-      props;
-    this.spaConstruct = new SpaConstruct(this, name, {
-      domainName,
-      buildOutputPath,
-      bucketRemovalPolicy: bucketRemovalPolicy,
-      noCacheFiles,
-    });
-  }
-}
-
-const defaultTestProps: SpaProps & StackProps = {
+const defaultTestProps: SpaStackProps = {
   env: {
     region: 'us-east-1',
     account: '123456789',
@@ -42,14 +26,16 @@ const defaultTestProps: SpaProps & StackProps = {
   domainName: 'test-domain.com',
 };
 describe('SpaCdkStack', () => {
-  function testStackFactory(
-    props: Partial<SpaProps & StackProps> = defaultTestProps
-  ): { app: App; template: () => Template; stack: TestSpaStack } {
+  function testStackFactory(props: Partial<SpaStackProps> = defaultTestProps): {
+    app: App;
+    template: () => Template;
+    stack: SpaStack;
+  } {
     // GIVEN
     const app = new App();
 
     // WHEN
-    const stack = new TestSpaStack(app, 'TestSpaStack', {
+    const stack = new SpaStack(app, 'TestSpaStack', {
       ...defaultTestProps,
       ...props,
     });
@@ -108,7 +94,7 @@ describe('SpaCdkStack', () => {
 
   it('should create an extra BucketDeployment when using addExtraAssets', () => {
     const { template, stack } = testStackFactory();
-    stack.spaConstruct.addExtraAssets([
+    stack.spa.addExtraAssets([
       Source.asset(path.join(__dirname, '../../extra-assets-path')),
     ]);
     //then
@@ -117,7 +103,7 @@ describe('SpaCdkStack', () => {
 
   it('should create an extra BucketDeployment when using addExtraAssets with cache control', () => {
     const { template, stack } = testStackFactory();
-    stack.spaConstruct.addExtraAssets(
+    stack.spa.addExtraAssets(
       [Source.asset(path.join(__dirname, '../../extra-assets-path'))],
       CacheControl.maxAge(Duration.seconds(123456))
     );
@@ -129,7 +115,7 @@ describe('SpaCdkStack', () => {
     const { template, stack } = testStackFactory();
 
     //when
-    stack.spaConstruct.addExtraAssets([
+    stack.spa.addExtraAssets([
       Source.asset(path.join(__dirname, '../../extra-assets-path')),
     ]);
     //then
