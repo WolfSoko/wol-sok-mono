@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.39.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.38.0...v74.39.0) (2026-10-21)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ Glutton achievement - eat up 100 pellets ([#2523](https://github.com/WolfSoko/wol-sok-mono/issues/2523)) ([a4a9487](https://github.com/WolfSoko/wol-sok-mono/commit/a4a9487eafd99cea22b5f7a55d9897cff75092ce))
+
 ## [74.38.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.37.0...v74.38.0) (2026-10-21)
 
 ### Features
