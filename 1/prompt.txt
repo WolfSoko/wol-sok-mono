@@ -1,0 +1,39 @@
+Bitte die Warnung einbauen; 
+
+<pasted_content id="442d">
+ entire enable -y --agent claude-code
+  Agent: Claude Code
+[entire] Your prepare-commit-msg hook still runs, after Entire's (moved to .husky\_\prepare-commit-msg.pre-entire).
+[entire] Your commit-msg hook still runs, after Entire's (moved to .husky\_\commit-msg.pre-entire).
+[entire] Your post-commit hook still runs, after Entire's (moved to .husky\_\post-commit.pre-entire).
+[entire] Your post-rewrite hook still runs, after Entire's (moved to .husky\_\post-rewrite.pre-entire).
+[entire] Your pre-push hook still runs, after Entire's (moved to .husky\_\pre-push.pre-entire).
+
+Warning: Husky detected (.husky/)
+
+  Husky may overwrite hooks installed by Entire on npm install.
+  To make Entire hooks permanent, add these lines to your Husky hook files:
+
+    .husky/prepare-commit-msg:
+      if command -v entire >/dev/null 2>&1; then entire hooks git prepare-commit-msg "$1" "$2" 2>/dev/null || true; else :; fi
+
+    .husky/commit-msg:
+      if command -v entire >/dev/null 2>&1; then entire hooks git commit-msg "$1" || true; else printf '%s\n' '[entire] Entire CLI is enabled but not installed or not on PATH. Skipping Entire Git hook; continuing. Installation guide: https://docs.entire.io/cli/installation#installation-methods' >&2 || :; fi
+
+    .husky/post-commit:
+      if command -v entire >/dev/null 2>&1; then entire hooks git post-commit 2>/dev/null || true; else :; fi
+
+    .husky/post-rewrite:
+      if command -v entire >/dev/null 2>&1; then entire hooks git post-rewrite "$1" 2>/dev/null || true; else :; fi
+
+    .husky/pre-push:
+      if command -v entire >/dev/null 2>&1; then entire hooks git pre-push "$1"; else :; fi
+
+  Installed 10 hooks for Claude Code - Anthropic's CLI coding assistant
+  ✓ Configured project
+    .entire/settings.json
+</pasted_content id="442d">
+
+---
+
+ja
