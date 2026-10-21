@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M5FZMTCVTNN02DS71F49A1WJ",
+  "strategy": "manual-commit",
+  "branch": "fix/spa-cdk-stack-cache-overrides",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "libs/public/spa-cdk-stack/src/lib/spa/spa.construct.ts",
+    "libs/public/spa-cdk-stack/src/lib/stack-spa.spec.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 22,
+    "cache_creation_tokens": 11382,
+    "cache_read_tokens": 2750016,
+    "output_tokens": 7800,
+    "api_call_count": 11,
+    "subagent_tokens": {
+      "input_tokens": 24,
+      "cache_creation_tokens": 56770,
+      "cache_read_tokens": 720055,
+      "output_tokens": 332,
+      "api_call_count": 12
+    }
+  }
+}
