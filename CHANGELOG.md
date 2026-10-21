@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.38.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.37.0...v74.38.0) (2026-10-21)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ harvest rule and the Feeding Ground level ([#2522](https://github.com/WolfSoko/wol-sok-mono/issues/2522)) ([8e97430](https://github.com/WolfSoko/wol-sok-mono/commit/8e974302834546e881964894448d4c535f5272ad))
+
 ## [74.37.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.36.1...v74.37.0) (2026-10-21)
 
 ### Features
