@@ -1,5 +1,5 @@
 {
-  "name": "bacteria-game-android",
+  "name": "bacteria-wars-android",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "tags": ["type:android"],
@@ -8,7 +8,7 @@
     "apk": {
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "apps/bacteria-game-android",
+        "cwd": "apps/bacteria-wars-android",
         "command": "./gradlew assembleDebug"
       },
       "configurations": {
@@ -20,14 +20,14 @@
     "bundle": {
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "apps/bacteria-game-android",
+        "cwd": "apps/bacteria-wars-android",
         "command": "./gradlew bundleRelease"
       }
     },
     "lint-android": {
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "apps/bacteria-game-android",
+        "cwd": "apps/bacteria-wars-android",
         "command": "./gradlew lintDebug"
       }
     }

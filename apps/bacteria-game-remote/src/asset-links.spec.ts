@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-// The Android app (apps/bacteria-game-android) reads its package name from
+// The Android app (apps/bacteria-wars-android) reads its package name from
 // this file and gets fullscreen only while the file names its signing keys.
 interface AssetLink {
   relation: string[];

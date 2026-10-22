@@ -1,19 +1,19 @@
 name: Android app
 
-# Builds the Bacteria War Android app (apps/bacteria-game-android). The Nx
+# Builds the Bacteria War Android app (apps/bacteria-wars-android). The Nx
 # agents of the CI/CD workflow have no Android SDK, so it runs here.
 on:
   push:
     branches:
       - main
     paths:
-      - 'apps/bacteria-game-android/**'
+      - 'apps/bacteria-wars-android/**'
       # The app reads its package name from the site's asset links.
       - 'apps/bacteria-game-remote/src/.well-known/assetlinks.json'
       - '.github/workflows/android.yml'
   pull_request:
     paths:
-      - 'apps/bacteria-game-android/**'
+      - 'apps/bacteria-wars-android/**'
       # The app reads its package name from the site's asset links.
       - 'apps/bacteria-game-remote/src/.well-known/assetlinks.json'
       - '.github/workflows/android.yml'
@@ -35,7 +35,7 @@ jobs:
     timeout-minutes: 30
     defaults:
       run:
-        working-directory: apps/bacteria-game-android
+        working-directory: apps/bacteria-wars-android
     env:
       # Release builds are signed with the upload key on manual runs only.
       # The key itself only reaches the step that signs.
@@ -56,7 +56,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: bacteria-war-debug-apk
-          path: apps/bacteria-game-android/app/build/outputs/apk/debug/*.apk
+          path: apps/bacteria-wars-android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
       - name: Build the signed release APK and app bundle
@@ -75,8 +75,8 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: env.SIGN_RELEASE == 'true'
         with:
-          name: bacteria-war-release
+          name: bacteria-wars-release
           path: |
-            apps/bacteria-game-android/app/build/outputs/apk/release/*.apk
-            apps/bacteria-game-android/app/build/outputs/bundle/release/*.aab
+            apps/bacteria-wars-android/app/build/outputs/apk/release/*.apk
+            apps/bacteria-wars-android/app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
