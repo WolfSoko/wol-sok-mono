@@ -3,7 +3,7 @@
  * with, for the channel owner.
  *
  * Step 1 prints Google's consent URL; open it in any browser, sign in and
- * pick the wol-sok-org channel on the account chooser - the token is bound to
+ * pick the wolfsoko-org channel on the account chooser - the token is bound to
  * that choice. Google then redirects to http://127.0.0.1:8765/..., which does
  * not load; copy that address from the address bar and hand it to step 2,
  * which writes the refresh token to a file (mode 600) for the GitHub secret
