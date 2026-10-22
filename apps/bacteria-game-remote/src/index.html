@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Bacteria Game</title>
+    <title>Bacteria Wars</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
@@ -23,8 +23,112 @@
       href="https://fonts.googleapis.com/css?family=Roboto:300,400,500"
       rel="stylesheet"
     />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap"
+      rel="stylesheet"
+    />
+    <!--
+      The loading screen, shown while the game downloads. The game takes it
+      down once its first view is up (dismissSplash in the lib); should that
+      never happen, it gives way after a while so an error is not hidden.
+    -->
+    <style>
+      #bacteria-game-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 28px;
+        background: #0b0f14;
+        color: #e8eef5;
+        font-family: "Atkinson Hyperlegible", "Roboto", sans-serif;
+        transition: opacity 0.4s ease;
+      }
+      #bacteria-game-splash.done {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #bacteria-game-splash .logo {
+        width: min(200px, 34vmin);
+        height: min(200px, 34vmin);
+        border-radius: 50%;
+        box-shadow:
+          0 0 0 3px rgb(232 185 73 / 60%),
+          0 0 60px rgb(233 185 73 / 35%);
+        animation: splash-spin 7s linear infinite;
+      }
+      #bacteria-game-splash .title {
+        margin: 0;
+        font-family: "Bricolage Grotesque", "Roboto", sans-serif;
+        font-weight: 800;
+        font-size: min(104px, 14vmin);
+        line-height: 0.9;
+        letter-spacing: -0.035em;
+        text-align: center;
+      }
+      #bacteria-game-splash .title span {
+        color: #ff7a2e;
+      }
+      #bacteria-game-splash .bar {
+        width: min(420px, 70vw);
+        height: 8px;
+        border-radius: 4px;
+        background: #1e2733;
+        overflow: hidden;
+      }
+      #bacteria-game-splash .bar span {
+        display: block;
+        width: 40%;
+        height: 100%;
+        border-radius: 4px;
+        background: #e9b949;
+        animation: splash-load 1.4s ease-in-out infinite;
+      }
+      #bacteria-game-splash .note {
+        margin: -16px 0 0;
+        color: #b7c3d0;
+      }
+      @keyframes splash-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes splash-load {
+        from {
+          transform: translateX(-100%);
+        }
+        to {
+          transform: translateX(250%);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #bacteria-game-splash .logo,
+        #bacteria-game-splash .bar span {
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
     <wolsok-root></wolsok-root>
+    <div id="bacteria-game-splash" role="status">
+      <img
+        class="logo"
+        src="icons/icon-192.png"
+        alt="Bacteria Wars logo: a petri dish of orange and blue colonies"
+      />
+      <p class="title">Bacteria <span>Wars</span></p>
+      <div class="bar" aria-hidden="true"><span></span></div>
+      <p class="note">Growing the colonies…</p>
+    </div>
+    <script>
+      setTimeout(function () {
+        var splash = document.getElementById("bacteria-game-splash");
+        if (splash) splash.remove();
+      }, 20000);
+    </script>
   </body>
 </html>

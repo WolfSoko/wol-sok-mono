@@ -11,7 +11,8 @@
  * describes one half, the other one is generated from it.
  */
 
-import { wrap } from './geometry';
+import { Point, wrap } from './geometry';
+import type { Zone } from './zones';
 
 export interface Rect {
   x: number;
@@ -32,8 +33,20 @@ export interface GameMap {
   name: string;
   /** One line on what the layout does to a match. */
   description: string;
+  /**
+   * How much bigger than the base arena the layout is, along each side - 2
+   * lays it out on 640 x 360 base cells. A bigger map is more room, not
+   * smaller bacteria: the camera follows the colony across it. 1 when
+   * absent.
+   */
+  size?: number;
   /** The walls for an arena of the given size. */
   createWalls(width: number, height: number): Rect[];
+  /**
+   * The zones on an arena of the given size - antibiotic, agar, ice and
+   * heat. Point symmetric like the walls; maps without any leave it out.
+   */
+  createZones?(width: number, height: number): Zone[];
   /**
    * The walls that move or open and close while the match runs, at the given
    * match time. Maps without any leave it out. Like the static walls they are
@@ -62,20 +75,40 @@ export interface DynamicWall extends Rect {
  * round wall its centre also lies in the ellipse.
  */
 export function coversCell(rect: Rect, x: number, y: number): boolean {
+  return (
+    x >= rect.x &&
+    y >= rect.y &&
+    x < rect.x + rect.width &&
+    y < rect.y + rect.height &&
+    coversPoint(rect, x + 0.5, y + 0.5)
+  );
+}
+
+/**
+ * True when the wall covers a point of the arena - the rect, or for a round
+ * wall the ellipse in it. The cell test asks it for the cell's centre, the
+ * zones' fine layer for points between the cells.
+ */
+export function coversPoint(rect: Rect, x: number, y: number): boolean {
   if (
     x < rect.x ||
     y < rect.y ||
-    x >= rect.x + rect.width ||
-    y >= rect.y + rect.height
+    x > rect.x + rect.width ||
+    y > rect.y + rect.height
   ) {
     return false;
   }
   if (!rect.round) {
     return true;
   }
-  const dx = (x + 0.5 - rect.x - rect.width / 2) / (rect.width / 2);
-  const dy = (y + 0.5 - rect.y - rect.height / 2) / (rect.height / 2);
+  const dx = (x - rect.x - rect.width / 2) / (rect.width / 2);
+  const dy = (y - rect.y - rect.height / 2) / (rect.height / 2);
   return dx * dx + dy * dy <= 1;
+}
+
+/** The centre of a rect - and of the ellipse in it. */
+export function rectCenter(rect: Rect): Point {
+  return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
 }
 
 /** Fills the cells a wall covers in a grid of the arena, clipped to it. */
@@ -196,6 +229,15 @@ export function mirrorRect(rect: Rect, width: number, height: number): Rect {
   };
 }
 
+/** The point rotated by 180° around the centre of the arena. */
+export function mirrorPoint(
+  point: Point,
+  width: number,
+  height: number
+): Point {
+  return { x: width - point.x, y: height - point.y };
+}
+
 /**
  * The part of the rect that is inside the arena, or null when nothing is. A
  * round wall is kept whole - clipping would squash its ellipse - and only
@@ -257,7 +299,9 @@ export function pointSymmetric<T extends Rect>(
     if (clipped == null) {
       continue;
     }
-    const key = `${clipped.x}:${clipped.y}:${clipped.width}:${clipped.height}:${rect.round === true}`;
+    // A zone of another kind on the same spot is another rect.
+    const kind = 'kind' in rect ? String(rect.kind) : '';
+    const key = `${clipped.x}:${clipped.y}:${clipped.width}:${clipped.height}:${rect.round === true}:${kind}`;
     if (seen.has(key)) {
       continue;
     }

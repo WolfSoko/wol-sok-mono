@@ -49,3 +49,18 @@ describe('sameColonyStats', () => {
     ).toBe(false);
   });
 });
+
+describe('the boost ring', () => {
+  it('starts empty after a boost, however short the cooldown', () => {
+    // A boss's boost: a 9.6 s cooldown where the balance has 12.
+    const [colony] = toColonyStats([
+      {
+        ...createPlayer({ id: 0, color: [255, 100, 20, 255] }),
+        boostCooldownSec: 9.6,
+        boostCooldownFullSec: 9.6,
+      },
+    ]);
+
+    expect(colony.boostCharge).toBe(0);
+  });
+});

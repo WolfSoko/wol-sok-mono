@@ -43,22 +43,60 @@ describe('NutrientPellets', () => {
   it('reports the bite that eats a pellet up, and only that one', () => {
     const field = pellets();
 
-    expect(field.drain(0, 1, gameBalance.nutrientEnergy / 2)).toBe(false);
-    expect(field.drain(0, 1, gameBalance.nutrientEnergy)).toBe(true);
+    expect(field.drain(0, [1], gameBalance.nutrientEnergy / 2)).toBeNull();
+    expect(field.drain(0, [1], gameBalance.nutrientEnergy)).toEqual({ by: 0 });
     expect(field.nutrients[0].amount).toBe(0);
-    expect(field.drain(0, 1, 1)).toBe(false);
+    expect(field.drain(0, [1], 1)).toBeNull();
+  });
+
+  it('gives a pellet to the colony that took the most of it all along', () => {
+    const field = pellets();
+    const quarter = gameBalance.nutrientEnergy / 4;
+
+    // The second colony takes two quarters early, the first one the last.
+    expect(field.drain(0, [0, 2], quarter)).toBeNull();
+    expect(field.drain(0, [1, 1], quarter)).toEqual({ by: 1 });
+  });
+
+  it('counts a last bite only for what was left of the pellet', () => {
+    const field = pellets();
+    const energy = gameBalance.nutrientEnergy;
+
+    // The first colony takes all but a sliver; the last bite of the second
+    // would be a whole pellet, but only the sliver is left.
+    expect(field.drain(0, [1, 0], energy * 0.9)).toBeNull();
+    expect(field.drain(0, [0, 1], energy)).toEqual({ by: 0 });
+  });
+
+  it('gives a pellet to nobody when two colonies took as much of it', () => {
+    const field = pellets();
+
+    expect(field.drain(0, [1, 1], gameBalance.nutrientEnergy)).toEqual({
+      by: null,
+    });
+  });
+
+  it('counts bites anew once a pellet is placed again', () => {
+    const field = pellets();
+    const half = gameBalance.nutrientEnergy / 2;
+    field.drain(0, [0, 2], half);
+    field.drain(1, [0, 2], half);
+    field.tickEmpty(0, 5);
+    field.tickEmpty(1, 5);
+
+    expect(field.drain(0, [2, 0], half)).toEqual({ by: 0 });
   });
 
   it('brings a pair back once both are eaten and the delay is over', () => {
     const field = pellets();
-    field.drain(0, 1, 100);
+    field.drain(0, [1], 100);
 
     // The partner is still being eaten from - nothing moves yet.
     field.tickEmpty(0, 2);
     expect(field.nutrients[0].amount).toBe(0);
     const generation = field.generations[0];
 
-    field.drain(1, 1, 100);
+    field.drain(1, [1], 100);
     field.tickEmpty(1, 3);
 
     expect(field.generations[0]).toBe(generation + 1);

@@ -1,0 +1,48 @@
+@for (seat of seats(); track $index; let index = $index) {
+  <div class="seat-colors">
+    <span class="seat-name">{{ seat }}</span>
+    <mat-button-toggle-group
+      class="swatches"
+      hideSingleSelectionIndicator
+      [attr.aria-label]="'Colour of ' + seat"
+      [value]="colors()[index]"
+      [disabled]="disabled()"
+      (change)="pick(index, $event.value)"
+    >
+      @for (color of palette; track color.id) {
+        @let lock = locks()[color.id];
+        <mat-button-toggle
+          [value]="color.id"
+          [disabled]="blocked(index, color.id)"
+          [disabledInteractive]="true"
+          [aria-label]="lock ? color.name + ', locked: ' + lock : color.name"
+          [matTooltip]="lock ? color.name + ' - ' + lock : color.name"
+          [class.locked]="!!lock"
+        >
+          <span
+            class="swatch"
+            [style.background-color]="'rgb(' + color.rgb.join(',') + ')'"
+          >
+            @if (lock) {
+              <mat-icon class="lock" aria-hidden="true">lock</mat-icon>
+            }
+          </span>
+        </mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+  </div>
+}
+@if (lockedList().length > 0) {
+  <ul class="locked-list" aria-label="Colours still to earn">
+    @for (locked of lockedList(); track locked.id) {
+      <li>
+        <span
+          class="swatch small"
+          [style.background-color]="locked.css"
+          aria-hidden="true"
+        ></span>
+        {{ locked.name }} - {{ locked.lock }}
+      </li>
+    }
+  </ul>
+}

@@ -1,0 +1,9 @@
+@use 'screen';
+
+:host {
+  @include screen.header;
+}
+
+.screen-title {
+  @include screen.title;
+}

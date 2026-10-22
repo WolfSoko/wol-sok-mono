@@ -1,3 +1,4 @@
+import { aMatchRecord } from '../../testing/match-record';
 import {
   betterMedal,
   judgeMatch,
@@ -5,22 +6,21 @@ import {
   matchRecord,
   MedalLimits,
   medalFor,
+  medalGoal,
 } from './medallions';
 import { createPlayer } from './player.model';
 
 const LIMITS: MedalLimits = { silverSec: 60, goldSec: 40, goldLossShare: 0.3 };
 
 /** A flawless win, which the tests take apart one condition at a time. */
-const PLATINUM_RUN: MatchRecord = {
-  levelId: 'petri-dish',
-  difficulty: 'normal',
-  won: true,
+const PLATINUM_RUN = aMatchRecord({
   durationSec: 30,
-  boostsFired: 0,
   lost: 10,
-  peakCount: 1000,
   lowestSizeRatio: 0.9,
-};
+  captured: 800,
+  enemyCrushed: 100,
+  peakShare: 0.5,
+});
 
 function run(changes: Partial<MatchRecord>): MatchRecord {
   return { ...PLATINUM_RUN, ...changes };
@@ -53,6 +53,13 @@ describe('medalFor', () => {
 
   it('gives platinum for a flawless win', () => {
     expect(medalFor(LIMITS, PLATINUM_RUN)).toBe('platinum');
+  });
+
+  it('lowers the platinum bar where a level sets it - against a boss', () => {
+    const boss = { ...LIMITS, platinumSizeRatio: 0.3 };
+
+    expect(medalFor(boss, run({ lowestSizeRatio: 0.4 }))).toBe('platinum');
+    expect(medalFor(boss, run({ lowestSizeRatio: 0.2 }))).toBe('gold');
   });
 
   it('never skips a tier: a slow flawless win is bronze', () => {
@@ -109,9 +116,15 @@ describe('matchRecord', () => {
     boostsFired: 2,
     peakCount: 300,
     lowestSizeRatio: 0.4,
+    captured: 250,
+    pellets: 7,
   });
-  const computer = createPlayer({ id: 1, isBot: true });
-  const match = { levelId: 'hourglass', difficulty: 'hard' as const };
+  const computer = createPlayer({ id: 1, isBot: true, lost: 270 });
+  const match = {
+    levelId: 'hourglass',
+    difficulty: 'hard' as const,
+    capacity: 600,
+  };
 
   it('takes what the human did from their player', () => {
     expect(
@@ -129,6 +142,10 @@ describe('matchRecord', () => {
       lost: 120,
       peakCount: 300,
       lowestSizeRatio: 0.4,
+      captured: 250,
+      enemyCrushed: 20,
+      peakShare: 0.5,
+      pellets: 7,
     });
   });
 
@@ -154,5 +171,22 @@ describe('betterMedal', () => {
     expect(betterMedal(null, 'bronze')).toBe('bronze');
     expect(betterMedal('silver', null)).toBe('silver');
     expect(betterMedal(null, null)).toBeNull();
+  });
+});
+
+describe('medalGoal', () => {
+  const limits = { silverSec: 90, goldSec: 65, goldLossShare: 0.45 };
+
+  it('names what the next medallion asks for', () => {
+    expect(medalGoal(limits, null)).toBe('Bronze needs a win.');
+    expect(medalGoal(limits, 'bronze')).toBe('Silver needs a win within 1:30.');
+    expect(medalGoal(limits, 'silver')).toBe(
+      'Gold needs a win within 1:05, losing under 45 % of your peak colony.'
+    );
+    expect(medalGoal(limits, 'gold')).toContain('without a boost');
+  });
+
+  it('has nothing left to ask after platinum', () => {
+    expect(medalGoal(limits, 'platinum')).toBeNull();
   });
 });

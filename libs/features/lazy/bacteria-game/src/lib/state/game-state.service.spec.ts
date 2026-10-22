@@ -1,24 +1,29 @@
+import { ProgressService } from '../progress.service';
 import { TestBed } from '@angular/core/testing';
-import { GameStateQuery } from './game-state.query';
+import { dailyLevelId } from './daily';
+import { TICK_MS } from './fixed-tick';
 import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
 import { getLevel, levelCrosshairSpeed } from './levels';
-import { PlayerQuery } from './player.query';
 import { PlayerStore } from './player.store';
+import { ANNIHILATION, judgeOutcome } from './win-conditions';
+import { PlayerService } from './player.service';
+import { playReplay, Replay, REPLAY_VERSION, replayOf } from './replay';
+import { replayLink } from './replay-link';
 
 const WIDTH = 320;
 const HEIGHT = 140;
 
 describe('GameStateService', () => {
   let service: GameStateService;
-  let query: GameStateQuery;
-  let playerQuery: PlayerQuery;
+  let store: GameStateStore;
+  let playerStore: PlayerStore;
 
   beforeEach(() => {
     TestBed.resetTestingModule();
     service = TestBed.inject(GameStateService);
-    query = TestBed.inject(GameStateQuery);
-    playerQuery = TestBed.inject(PlayerQuery);
+    store = TestBed.inject(GameStateStore);
+    playerStore = TestBed.inject(PlayerStore);
     TestBed.inject(GameStateStore).update({ width: WIDTH, height: HEIGHT });
   });
 
@@ -26,7 +31,7 @@ describe('GameStateService', () => {
     it('spawns both colonies inside the arena', () => {
       service.setArenaSize(WIDTH, HEIGHT);
 
-      for (const player of playerQuery.getAll()) {
+      for (const player of playerStore.entities()) {
         expect(player.x).toBeGreaterThan(0);
         expect(player.x).toBeLessThan(WIDTH);
         expect(player.y).toBeGreaterThan(0);
@@ -39,7 +44,7 @@ describe('GameStateService', () => {
     it('stores the level', () => {
       service.setLevel('serpentine');
 
-      expect(query.getValue().levelId).toBe('serpentine');
+      expect(store.snapshot().levelId).toBe('serpentine');
     });
 
     it('gives the crosshairs the speed of the level', () => {
@@ -48,7 +53,7 @@ describe('GameStateService', () => {
       service.setLevel('serpentine');
 
       const speed = levelCrosshairSpeed(getLevel('serpentine'));
-      for (const player of playerQuery.getAll()) {
+      for (const player of playerStore.entities()) {
         expect(player.maxSpeed).toBe(speed);
       }
     });
@@ -60,7 +65,7 @@ describe('GameStateService', () => {
       service.setColor(0, 'green');
       service.setColor(1, 'pink');
 
-      const [left, right] = playerQuery.getAll();
+      const [left, right] = playerStore.entities();
       expect([left.name, right.name]).toEqual(['Green', 'Pink']);
       expect(left.color).toEqual([40, 200, 70, 255]);
       expect(right.color).toEqual([255, 70, 170, 255]);
@@ -69,20 +74,20 @@ describe('GameStateService', () => {
     it('swaps the colours when a seat picks the other one', () => {
       service.setColor(0, 'blue');
 
-      expect(query.getValue().colors).toEqual(['blue', 'orange']);
+      expect(store.snapshot().colors).toEqual(['blue', 'orange']);
     });
 
     it('leaves a running match alone', () => {
       service.setArenaSize(WIDTH, HEIGHT);
       service.start();
-      const before = playerQuery.getAll().map((player) => player.maxSpeed);
+      const before = playerStore.entities().map((player) => player.maxSpeed);
 
       service.setLevel('serpentine');
 
-      expect(playerQuery.getAll().map((player) => player.maxSpeed)).toEqual(
+      expect(playerStore.entities().map((player) => player.maxSpeed)).toEqual(
         before
       );
-      expect(query.getValue().levelId).toBe('serpentine');
+      expect(store.snapshot().levelId).toBe('serpentine');
     });
 
     it('keeps the current level for an id that does not exist', () => {
@@ -90,7 +95,7 @@ describe('GameStateService', () => {
 
       service.setLevel('not-a-level');
 
-      expect(query.getValue().levelId).toBe(getLevel('not-a-level').id);
+      expect(store.snapshot().levelId).toBe(getLevel('not-a-level').id);
     });
   });
 
@@ -100,8 +105,8 @@ describe('GameStateService', () => {
 
       service.setMode('vs-computer');
 
-      const [human, computer] = playerQuery.getAll();
-      expect(query.getValue().mode).toBe('vs-computer');
+      const [human, computer] = playerStore.entities();
+      expect(store.snapshot().mode).toBe('vs-computer');
       expect(human.isBot).toBe(false);
       expect(human.name).toBe('You');
       expect(computer.isBot).toBe(true);
@@ -113,11 +118,11 @@ describe('GameStateService', () => {
 
       service.setMode('two-players');
 
-      expect(playerQuery.getAll().map((player) => player.name)).toEqual([
+      expect(playerStore.entities().map((player) => player.name)).toEqual([
         'Orange',
         'Blue',
       ]);
-      expect(playerQuery.getAll().some((player) => player.isBot)).toBe(false);
+      expect(playerStore.entities().some((player) => player.isBot)).toBe(false);
     });
 
     it('leaves a running match alone', () => {
@@ -127,8 +132,8 @@ describe('GameStateService', () => {
 
       service.setMode('vs-computer');
 
-      expect(playerQuery.getAll().some((player) => player.isBot)).toBe(false);
-      expect(query.getValue().mode).toBe('vs-computer');
+      expect(playerStore.entities().some((player) => player.isBot)).toBe(false);
+      expect(store.snapshot().mode).toBe('vs-computer');
     });
 
     it('leaves a paused match alone as well', () => {
@@ -139,7 +144,7 @@ describe('GameStateService', () => {
 
       service.setMode('vs-computer');
 
-      expect(playerQuery.getAll().some((player) => player.isBot)).toBe(false);
+      expect(playerStore.entities().some((player) => player.isBot)).toBe(false);
     });
   });
 
@@ -147,7 +152,7 @@ describe('GameStateService', () => {
     it('stores the difficulty', () => {
       service.setDifficulty('hard');
 
-      expect(query.getValue().difficulty).toBe('hard');
+      expect(store.snapshot().difficulty).toBe('hard');
     });
   });
 
@@ -158,7 +163,7 @@ describe('GameStateService', () => {
 
       service.boost(0);
 
-      expect(playerQuery.getEntity(0)?.boostActiveSec).toBeGreaterThan(0);
+      expect(playerStore.entityMap()[0]?.boostActiveSec).toBeGreaterThan(0);
     });
 
     it('does nothing on the start screen', () => {
@@ -166,12 +171,158 @@ describe('GameStateService', () => {
 
       service.boost(0);
 
-      expect(playerQuery.getEntity(0)?.boostActiveSec).toBe(0);
+      expect(playerStore.entityMap()[0]?.boostActiveSec).toBe(0);
+    });
+  });
+
+  describe('head start', () => {
+    function startingCounts(): number[] {
+      return playerStore.entities().map((player) => player.bacteriaCount);
+    }
+
+    it('starts the colony of the seat without it smaller', () => {
+      service.setMode('two-players');
+      service.setArenaSize(WIDTH, HEIGHT);
+      const [left, right] = startingCounts();
+      expect(left).toBe(right);
+
+      service.setHeadStart(-2);
+      const [ahead, behind] = startingCounts();
+
+      expect(ahead).toBe(left);
+      expect(behind).toBeLessThan(right);
+    });
+
+    it('gives the computer none', () => {
+      service.setHeadStart(2);
+      service.setMode('vs-computer');
+      service.setArenaSize(WIDTH, HEIGHT);
+      const [human, computer] = startingCounts();
+
+      expect(human).toBe(computer);
+    });
+  });
+
+  describe('advance', () => {
+    afterEach(() => service.cleanup());
+
+    it('counts the ticks of a frame on the match clock', () => {
+      service.setArenaSize(WIDTH, HEIGHT);
+      service.init(WIDTH, HEIGHT);
+      service.start();
+
+      service.advance(WIDTH, HEIGHT, 3);
+
+      expect(store.snapshot().timePassed).toBeCloseTo(3 * TICK_MS);
+    });
+
+    it('lands on every second exactly', () => {
+      service.setArenaSize(WIDTH, HEIGHT);
+      service.init(WIDTH, HEIGHT);
+      service.start();
+
+      for (let frame = 0; frame < 60; frame++) {
+        service.advance(WIDTH, HEIGHT, 1);
+      }
+
+      expect(store.snapshot().timePassed).toBe(1000);
+    });
+
+    it('records a replay that plays the match out the same', () => {
+      service.setMode('vs-computer');
+      service.setDifficulty('hard');
+      service.setArenaSize(WIDTH, HEIGHT);
+      service.init(WIDTH, HEIGHT);
+      service.start();
+      const players = TestBed.inject(PlayerService);
+
+      store.update({ keysPressed: ['d'] });
+      service.advance(WIDTH, HEIGHT, 3);
+      store.update({ keysPressed: [] });
+      players.setDragTarget(0, 40, 20);
+      service.boost(0);
+      service.advance(WIDTH, HEIGHT, 3);
+      for (let frame = 0; frame < 100; frame++) {
+        service.advance(WIDTH, HEIGHT, 3);
+      }
+
+      const replay = service['replay']() as Replay;
+      expect(replay.header).toEqual(
+        expect.objectContaining({
+          version: REPLAY_VERSION,
+          mode: 'vs-computer',
+          difficulty: 'hard',
+          simulation: 'cpu',
+          ticks: 306,
+        })
+      );
+      expect(playReplay(replay)?.players).toEqual(playerStore.entities());
+    });
+
+    it('plays no tick of the frame after the one that ended the match', () => {
+      service.setArenaSize(WIDTH, HEIGHT);
+      service.init(WIDTH, HEIGHT);
+      service.start();
+      const players = TestBed.inject(PlayerService);
+      const tick = jest.spyOn(players, 'tick').mockImplementation(() => {
+        if (tick.mock.calls.length === 2) {
+          TestBed.inject(GameStateStore).update({
+            currentState: GameState.END,
+          });
+        }
+      });
+
+      service.advance(WIDTH, HEIGHT, 5);
+
+      expect(tick).toHaveBeenCalledTimes(2);
+      expect(store.snapshot().timePassed).toBeCloseTo(2 * TICK_MS);
+    });
+  });
+
+  describe('offerChallenge', () => {
+    const run = replayOf(
+      {
+        levelId: 'corridors',
+        mode: 'vs-computer',
+        difficulty: 'hard',
+        colors: ['orange', 'blue'],
+        headStart: 0,
+        width: WIDTH,
+        height: HEIGHT,
+        seed: 3,
+      },
+      'cpu',
+      120,
+      { steers: [[0, 0, 1, 0]], drags: [], boosts: [] }
+    );
+
+    async function hashOf(replay: Replay): Promise<string> {
+      return new URL(await replayLink('http://localhost/game', replay)).hash;
+    }
+
+    it('offers the run a link carries as a ghost to fight', async () => {
+      expect(await service.offerChallenge(await hashOf(run))).toBe(true);
+
+      expect(store.challenge()).toEqual(run);
+    });
+
+    it('offers nothing for a broken link or a run between two players', async () => {
+      const couch = {
+        ...run,
+        header: { ...run.header, mode: 'two-players' as const },
+      };
+
+      expect(await service.offerChallenge('#ghost=broken')).toBe(false);
+      expect(await service.offerChallenge(await hashOf(couch))).toBe(false);
+      expect(await service.offerChallenge('')).toBe(false);
+      expect(store.challenge()).toBeNull();
     });
   });
 
   describe('match end', () => {
-    beforeEach(() => localStorage.clear());
+    // The progress service reads the storage as it is built, before any
+    // beforeEach here runs: clear up after each match instead.
+    afterEach(() => localStorage.clear());
 
     /** Starts a match and lets the computer's colony die out. */
     function winAgainst(mode: 'vs-computer' | 'two-players'): void {
@@ -179,23 +330,243 @@ describe('GameStateService', () => {
       service.setLevel('hourglass');
       service.setArenaSize(WIDTH, HEIGHT);
       service.init(WIDTH, HEIGHT);
+      winMatch();
+    }
+
+    /** Starts a match as it is set up and lets the right colony die out. */
+    function winMatch(): void {
       service.start();
-      TestBed.inject(GameStateStore).update({ timePassed: 30_000 });
-      const [human, other] = playerQuery.getAll();
-      const players = TestBed.inject(PlayerStore);
-      players.update(human.id, { bacteriaCount: 400, peakCount: 500 });
-      players.update(other.id, { bacteriaCount: 0, lost: 300 });
+      TestBed.inject(GameStateStore).update({ timePassed: 30_000 - TICK_MS });
+      const [human, other] = playerStore.entities();
+      playerStore.upsertPlayers([
+        { ...human, bacteriaCount: 400, peakCount: 500 },
+        { ...other, bacteriaCount: 0, lost: 300 },
+      ]);
+      // The next tick finds the colonies as set here, and the match over.
+      const playerService = TestBed.inject(PlayerService);
+      jest.spyOn(playerService, 'tick').mockImplementation(() => undefined);
+      jest
+        .spyOn(playerService, 'outcome')
+        .mockImplementation(() =>
+          judgeOutcome(ANNIHILATION, playerStore.entities(), 0)
+        );
+      service.advance(WIDTH, HEIGHT, 1);
+      jest.restoreAllMocks();
     }
 
     afterEach(() => service.cleanup());
 
+    describe('an endless run', () => {
+      /** Ends the match on the run's level, won by the human or the bot. */
+      function finish(humanWins: boolean, reset = true): void {
+        service.start();
+        const [human, bot] = playerStore.entities();
+        playerStore.upsertPlayers([
+          { ...human, bacteriaCount: humanWins ? 400 : 0, lost: 300 },
+          { ...bot, bacteriaCount: humanWins ? 0 : 400, lost: 300 },
+        ]);
+        const players = TestBed.inject(PlayerService);
+        jest.spyOn(players, 'tick').mockImplementation(() => undefined);
+        jest
+          .spyOn(players, 'outcome')
+          .mockImplementation(() =>
+            judgeOutcome(ANNIHILATION, playerStore.entities(), 0)
+          );
+        service.advance(WIDTH, HEIGHT, 1);
+        jest.restoreAllMocks();
+        if (reset) {
+          service.reset();
+        }
+      }
+
+      beforeEach(() => {
+        service.setArenaSize(WIDTH, HEIGHT);
+        service.init(WIDTH, HEIGHT);
+      });
+
+      it('climbs a level with every win and keeps the best run', () => {
+        service.startEndless();
+        const first = store.level().id;
+
+        finish(true);
+        service.continueEndless();
+
+        expect(store.snapshot().endless?.wins).toBe(1);
+        expect(store.level().id).not.toBe(first);
+        expect(TestBed.inject(ProgressService).endlessBest()).toBe(1);
+      });
+
+      it('costs a life on a defeat, on the same level, until it is over', () => {
+        service.startEndless();
+        const level = store.level().id;
+
+        finish(false);
+        service.continueEndless();
+        expect(store.snapshot().endless?.lives).toBe(2);
+        expect(store.level().id).toBe(level);
+
+        finish(false);
+        service.continueEndless();
+        finish(false);
+        service.continueEndless();
+
+        expect(store.snapshot().endless?.lives).toBe(0);
+        // Over: no level is set for it any more.
+        expect(store.snapshot().matchLevel).toBeNull();
+      });
+
+      it('outlasts the reset between its matches, and ends with another', () => {
+        service.startEndless();
+        service.reset();
+        expect(store.snapshot().endless).not.toBeNull();
+
+        // Left for a match of the setup, by whatever way.
+        service.start();
+
+        expect(store.snapshot().endless).toBeNull();
+      });
+
+      it('earns no medallion on its new levels, but keeps the depth', () => {
+        service.startEndless();
+
+        finish(true, false);
+
+        expect(store.snapshot().earnings?.award).toBeNull();
+        expect(TestBed.inject(ProgressService).endlessBest()).toBe(1);
+      });
+    });
+
+    describe('a level for one match', () => {
+      it('plays it against the computer, leaving the setup as it is', () => {
+        service.setMode('two-players');
+        service.setLevel('corridors');
+        service.setArenaSize(WIDTH, HEIGHT);
+        service.init(WIDTH, HEIGHT);
+
+        service.playDaily('2026-10-20');
+        winMatch();
+
+        const state = store.snapshot();
+        expect(store.matchMode()).toBe('vs-computer');
+        expect(store.level().id).toBe(dailyLevelId('2026-10-20'));
+        expect(state.levelId).toBe('corridors');
+        expect(state.series).toBeNull();
+        expect(state.earnings?.award?.record.levelId).toBe(
+          dailyLevelId('2026-10-20')
+        );
+        expect(state.lastReplay?.header).toEqual(
+          expect.objectContaining({
+            levelId: dailyLevelId('2026-10-20'),
+            mode: 'vs-computer',
+          })
+        );
+      });
+
+      it('counts an attempt with every start of the daily level', () => {
+        const attempt = jest.spyOn(
+          TestBed.inject(ProgressService),
+          'startDailyAttempt'
+        );
+        service.setArenaSize(WIDTH, HEIGHT);
+        service.playDaily('2026-10-20');
+
+        service.start();
+        // Restart from the pause menu: no reset in between.
+        service.start();
+
+        expect(attempt).toHaveBeenCalledTimes(2);
+        expect(attempt).toHaveBeenCalledWith('2026-10-20');
+      });
+
+      it('holds for that one match', () => {
+        service.setArenaSize(WIDTH, HEIGHT);
+        service.playDaily('2026-10-20');
+
+        service.reset();
+
+        expect(service.oneMatch()).toEqual({
+          ghost: null,
+          matchLevel: null,
+          dailyDay: null,
+          endlessMatch: false,
+        });
+        expect(store.level().id).toBe(store.snapshot().levelId);
+      });
+    });
+
+    describe('against the ghost', () => {
+      it('plays the last run on its level, leaving the setup as it is', () => {
+        winAgainst('vs-computer');
+        const run = store.snapshot().lastReplay;
+        service.setLevel('corridors');
+
+        service.playGhost();
+        service.start();
+
+        expect(store.snapshot().ghost).toBe(run);
+        expect(store.level().id).toBe('hourglass');
+        expect(store.snapshot().levelId).toBe('corridors');
+        expect(playerStore.entities()[1].name).toBe('Ghost');
+      });
+
+      it('earns nothing, and keeps the run it plays as the last one', () => {
+        winAgainst('vs-computer');
+        const run = store.snapshot().lastReplay;
+        service.playGhost();
+
+        winMatch();
+
+        const state = store.snapshot();
+        expect(state.currentState).toBe(GameState.END);
+        expect(state.earnings).toBeNull();
+        expect(state.lastReplay).toBe(run);
+      });
+
+      it('holds for the one match it was set for', () => {
+        winAgainst('vs-computer');
+        service.playGhost();
+        // A setup restored late changes the next match, not the ghost's.
+        service.applySetup({ difficulty: 'hard' });
+        expect(store.snapshot().ghost).not.toBeNull();
+
+        service.reset();
+        service.start();
+
+        expect(store.snapshot().ghost).toBeNull();
+        expect(playerStore.entities()[1].name).toBe('Computer');
+      });
+
+      it('plays no part in a series between two players', () => {
+        winAgainst('vs-computer');
+        const run = store.snapshot().lastReplay;
+        service.setMode('two-players');
+        service.setSeriesLength(3);
+
+        service.playGhost(run);
+        service.start();
+
+        expect(store.snapshot().series).toBeNull();
+        expect(playerStore.entities()[1].name).toBe('Ghost');
+      });
+
+      it('needs a run against the computer', () => {
+        service.playGhost();
+        expect(store.snapshot().ghost).toBeNull();
+
+        winAgainst('two-players');
+        service.playGhost();
+        expect(store.snapshot().ghost).toBeNull();
+      });
+    });
+
     it('judges a win against the computer and keeps the award', () => {
       winAgainst('vs-computer');
 
-      const state = query.getValue();
+      const state = store.snapshot();
       expect(state.currentState).toBe(GameState.END);
-      expect(state.matchEnded).toBe(true);
-      expect(state.award).toEqual(
+      expect(state.endedBy).toBe('annihilation');
+      expect(state.lastReplay?.header.levelId).toBe('hourglass');
+      expect(state.earnings?.award).toEqual(
         expect.objectContaining({
           medal: 'platinum',
           previousBest: null,
@@ -211,8 +582,86 @@ describe('GameStateService', () => {
     it('awards nothing between two players', () => {
       winAgainst('two-players');
 
-      expect(query.getValue().matchEnded).toBe(true);
-      expect(query.getValue().award).toBeNull();
+      expect(store.snapshot().endedBy).toBe('annihilation');
+      expect(store.snapshot().earnings?.award).toBeNull();
+    });
+
+    it('keeps the achievements the match earned, in either mode', () => {
+      winAgainst('vs-computer');
+      expect(store.snapshot().earnings?.achievements).toContain('first-blood');
+
+      service.start();
+      expect(store.snapshot().earnings).toBeNull();
+    });
+
+    it('counts a match between two players', () => {
+      winAgainst('two-players');
+
+      expect(TestBed.inject(ProgressService).totals().couchMatches).toBe(1);
+    });
+
+    it('records what the colonies did against the computer', () => {
+      winAgainst('vs-computer');
+
+      expect(store.snapshot().earnings?.award?.record).toEqual(
+        expect.objectContaining({
+          enemyCrushed: 300,
+          peakShare: expect.any(Number),
+        })
+      );
+      expect(
+        store.snapshot().earnings?.award?.record.peakShare
+      ).toBeGreaterThan(0);
+    });
+
+    it('plays a series between two players to the end', () => {
+      service.setSeriesLength(3);
+      winAgainst('two-players');
+      expect(store.snapshot().series?.wins).toEqual([1, 0]);
+
+      winAgainst('two-players');
+      expect(store.snapshot().series).toEqual({ bestOf: 3, wins: [2, 0] });
+
+      // Taken: the next match starts a new one.
+      service.start();
+      expect(store.snapshot().series?.wins).toEqual([0, 0]);
+    });
+
+    it('ends a series when its setup changes, or on request', () => {
+      service.setSeriesLength(3);
+      winAgainst('two-players');
+
+      service.setColor(0, 'orange');
+      expect(store.snapshot().series).not.toBeNull();
+      service.setHeadStart(1);
+      expect(store.snapshot().series).toBeNull();
+
+      winAgainst('two-players');
+      service.endSeries();
+      expect(store.snapshot().series).toBeNull();
+    });
+
+    it('carries a series from level to level', () => {
+      service.setSeriesLength(3);
+      winAgainst('two-players');
+
+      service.setLevel('corridors');
+
+      expect(store.snapshot().series?.wins).toEqual([1, 0]);
+    });
+
+    it('plays single matches without a series', () => {
+      winAgainst('two-players');
+
+      expect(store.snapshot().series).toBeNull();
+    });
+
+    it('counts the win for the winning colour', () => {
+      winAgainst('two-players');
+
+      expect(TestBed.inject(ProgressService).couchWins()).toEqual({
+        orange: 1,
+      });
     });
 
     it('starts the match clock over on a restart', () => {
@@ -220,7 +669,7 @@ describe('GameStateService', () => {
 
       service.start();
 
-      expect(query.getValue().timePassed).toBe(0);
+      expect(store.snapshot().timePassed).toBe(0);
     });
 
     it('forgets the award as the next match starts', () => {
@@ -228,7 +677,7 @@ describe('GameStateService', () => {
 
       service.start();
 
-      expect(query.getValue().award).toBeNull();
+      expect(store.snapshot().earnings).toBeNull();
     });
   });
 });

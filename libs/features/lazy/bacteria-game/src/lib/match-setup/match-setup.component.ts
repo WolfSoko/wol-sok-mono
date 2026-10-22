@@ -9,15 +9,26 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import {
+  ColonyColorsComponent,
+  ColorChange,
+} from '../colony-colors/colony-colors.component';
 import { MedallionComponent } from '../medallion/medallion.component';
 import {
   BOT_DIFFICULTIES,
   BotDifficulty,
   difficultyOption,
 } from '../state/bot-controller';
-import { COLONY_COLORS } from '../state/colony-colors';
+import { getColonyColor } from '../state/colony-colors';
 import { GameMode } from '../state/game.states';
+import {
+  HEAD_STARTS,
+  HeadStart,
+  headStartLabel,
+  SERIES_LENGTHS,
+  SeriesLength,
+} from '../state/rivalry';
 import { Level, LEVELS } from '../state/levels';
 import { MedalTier } from '../state/medallions';
 
@@ -35,8 +46,9 @@ import { MedalTier } from '../state/medallions';
     MatFormFieldModule,
     MatIconModule,
     MatSelectModule,
-    MatTooltipModule,
+    MatSlideToggleModule,
     MedallionComponent,
+    ColonyColorsComponent,
   ],
   templateUrl: './match-setup.component.html',
   styleUrl: './match-setup.component.scss',
@@ -55,37 +67,50 @@ export class MatchSetupComponent {
   public readonly medals = input<Readonly<Record<string, MedalTier | null>>>(
     {}
   );
+  /**
+   * Why a level is still locked on the campaign ladder, by level id - a
+   * level missing or null is open.
+   */
+  public readonly locked = input<Readonly<Record<string, string | null>>>({});
+  /** Between two players: how many matches a series is the best of. */
+  public readonly seriesLength = input<SeriesLength>(1);
+  /** Between two players: who starts bigger. */
+  public readonly headStart = input<HeadStart>(0);
+  /** Why each colony colour still to earn is locked, by colour id. */
+  public readonly colorLocks = input<Readonly<Record<string, string>>>({});
+  /** True while every level is open against the computer. */
+  public readonly freePlay = input(false);
   /** True while a match is on and the setup must not change. */
   public readonly disabled = input(false);
 
   public readonly modeChange = output<GameMode>();
   public readonly difficultyChange = output<BotDifficulty>();
   public readonly levelChange = output<string>();
+  public readonly freePlayChange = output<boolean>();
+  public readonly seriesLengthChange = output<SeriesLength>();
+  public readonly headStartChange = output<HeadStart>();
+
+  protected readonly seriesLengths = SERIES_LENGTHS;
+
+  /** The head starts on offer, named after the colony that gets it. */
+  protected readonly headStarts = computed(() => {
+    const [left, right] = this.colors();
+    const names: [string, string] = [
+      getColonyColor(left).name,
+      getColonyColor(right).name,
+    ];
+    return HEAD_STARTS.map((value) => ({
+      value,
+      label: headStartLabel(value, names),
+    }));
+  });
   public readonly colorChange = output<ColorChange>();
 
   protected readonly levels = LEVELS;
   protected readonly difficulties = BOT_DIFFICULTIES;
-  protected readonly palette = COLONY_COLORS;
-
-  /** Who sits in each seat, for the label of its colour picker. */
-  protected readonly seats = computed(() =>
-    this.mode() === 'vs-computer'
-      ? (['You', 'Computer'] as const)
-      : (['Left player', 'Right player'] as const)
-  );
-
-  protected pickColor(seat: number, colorId: string): void {
-    this.colorChange.emit({ seat: seat === 0 ? 0 : 1, colorId });
-  }
 
   /** The briefing of the selected difficulty. */
   protected readonly difficultyDescription = computed(
     () => difficultyOption(this.difficulty())?.description ?? ''
   );
-}
-
-/** A seat - 0 is the left one, 1 the right one - picked another colour. */
-export interface ColorChange {
-  seat: 0 | 1;
-  colorId: string;
 }

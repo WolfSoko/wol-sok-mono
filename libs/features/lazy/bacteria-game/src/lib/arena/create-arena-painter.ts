@@ -7,21 +7,28 @@ import { GlArenaPainter } from './gl/gl-arena-painter';
  * browser has it, with the Canvas 2D API otherwise. Null when the canvas
  * gives neither, as in a test without a real canvas.
  *
- * The canvas is sized here - `scale` canvas pixels per arena cell - and
- * nowhere else.
+ * The canvas is sized here - `scale` canvas pixels per arena cell, with
+ * all of it in view - and nowhere else. `detail` is the pixels per cell the
+ * zones are painted with, as fine as the camera ever shows them. `unit` is
+ * the arena's cells per base cell, which the jam, the crosshairs and the
+ * marks are drawn as big as on every grid with.
  */
 export function createArenaPainter(
   canvas: HTMLCanvasElement,
   width: number,
   height: number,
-  scale: number
+  scale: number,
+  detail: number,
+  unit: number
 ): ArenaPainter | null {
   canvas.width = Math.round(width * scale);
   canvas.height = Math.round(height * scale);
-  const gl = GlArenaPainter.create(canvas, width, height);
+  const gl = GlArenaPainter.create(canvas, width, height, detail, unit);
   if (gl != null) {
     return gl;
   }
   const cx = canvas.getContext('2d');
-  return cx == null ? null : new CanvasArenaPainter(cx, width, height, scale);
+  return cx == null
+    ? null
+    : new CanvasArenaPainter(cx, width, height, detail, unit);
 }

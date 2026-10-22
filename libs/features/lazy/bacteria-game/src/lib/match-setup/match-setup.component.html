@@ -29,61 +29,89 @@
       </mat-select>
     </mat-form-field>
     <p class="difficulty-description">{{ difficultyDescription() }}</p>
+  } @else {
+    <mat-button-toggle-group
+      class="series-picker"
+      aria-label="Series"
+      hideSingleSelectionIndicator
+      [value]="seriesLength()"
+      [disabled]="disabled()"
+      (change)="seriesLengthChange.emit($event.value)"
+    >
+      @for (option of seriesLengths; track option.id) {
+        <mat-button-toggle [value]="option.id">{{
+          option.name
+        }}</mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+    <mat-button-toggle-group
+      class="head-start-picker"
+      aria-label="Head start"
+      hideSingleSelectionIndicator
+      [value]="headStart()"
+      [disabled]="disabled()"
+      (change)="headStartChange.emit($event.value)"
+    >
+      @for (option of headStarts(); track option.value) {
+        <mat-button-toggle [value]="option.value">{{
+          option.label
+        }}</mat-button-toggle>
+      }
+    </mat-button-toggle-group>
   }
 </div>
 
-<div class="color-picker">
-  @for (seat of seats(); track $index; let index = $index) {
-    <div class="seat-colors">
-      <span class="seat-name">{{ seat }}</span>
-      <mat-button-toggle-group
-        class="swatches"
-        hideSingleSelectionIndicator
-        [attr.aria-label]="'Colour of ' + seat"
-        [value]="colors()[index]"
-        [disabled]="disabled()"
-        (change)="pickColor(index, $event.value)"
-      >
-        @for (color of palette; track color.id) {
-          <mat-button-toggle
-            [value]="color.id"
-            [aria-label]="color.name"
-            [matTooltip]="color.name"
-          >
-            <span
-              class="swatch"
-              [style.background-color]="'rgb(' + color.rgb.join(',') + ')'"
-            ></span>
-          </mat-button-toggle>
-        }
-      </mat-button-toggle-group>
-    </div>
-  }
-</div>
+<feat-lazy-bac-game-colony-colors
+  class="color-picker"
+  [mode]="mode()"
+  [colors]="colors()"
+  [disabled]="disabled()"
+  [locks]="colorLocks()"
+  (colorChange)="colorChange.emit($event)"
+/>
 
 <div class="level-picker">
   <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label>Level</mat-label>
     <mat-select
       class="level-select"
+      panelWidth=""
       [value]="level().id"
       [disabled]="disabled()"
       (selectionChange)="levelChange.emit($event.value)"
     >
       @for (option of levels; track option.id) {
-        <mat-option [value]="option.id">
+        @let lock = locked()[option.id] ?? null;
+        <mat-option [value]="option.id" [disabled]="lock !== null">
           <span class="level-option">
-            @if (mode() === "vs-computer") {
+            @if (lock !== null) {
+              <mat-icon class="lock" aria-hidden="true">lock</mat-icon>
+            } @else if (mode() === "vs-computer") {
               <feat-lazy-bac-game-medallion
                 [tier]="medals()[option.id] ?? null"
                 [size]="22"
               />
             }
-            {{ option.name }}
+            <span class="level-name">
+              {{ option.name }}
+              @if (lock !== null) {
+                <small class="lock-reason">{{ lock }}</small>
+              }
+            </span>
           </span>
         </mat-option>
       }
     </mat-select>
   </mat-form-field>
+  @if (mode() === "vs-computer") {
+    <mat-slide-toggle
+      class="free-play"
+      [checked]="freePlay()"
+      [disabled]="disabled()"
+      (change)="freePlayChange.emit($event.checked)"
+    >
+      Free play
+    </mat-slide-toggle>
+  }
   <p class="level-description">{{ level().description }}</p>
 </div>

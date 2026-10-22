@@ -1,3 +1,5 @@
+import { generatedLevel } from '../state/level-generator/generate-level';
+
 /** A colour as red, green and blue from 0 to 255. */
 export type Rgb = readonly [number, number, number];
 
@@ -207,11 +209,130 @@ const THEMES: Record<string, ArenaTheme> = {
     moteCount: 28,
     current: { x: 3, y: 0 },
   },
+  // The cooling pond of a reactor, lit by the glow of its core.
+  'half-life': {
+    floor: [8, 22, 16],
+    rim: [2, 7, 5],
+    pattern: 'rings',
+    patternColor: [40, 110, 70],
+    patternStrength: 0.4,
+    wall: [120, 150, 135],
+    wallEdge: [200, 255, 170],
+    border: [190, 255, 60],
+    motes: [210, 255, 140],
+    moteCount: 36,
+    current: { x: 0, y: -4 },
+  },
+  // A sealed hall of steel plates under cold lab light.
+  containment: {
+    floor: [14, 18, 24],
+    rim: [4, 5, 8],
+    pattern: 'grid',
+    patternColor: [50, 64, 84],
+    patternStrength: 0.35,
+    wall: [160, 170, 185],
+    wallEdge: [230, 236, 245],
+    border: [230, 240, 255],
+    motes: [200, 220, 255],
+    moteCount: 24,
+    current: { x: 2, y: 1 },
+  },
+  // Consoles in the dark, an alarm light sweeping the room.
+  'control-room': {
+    floor: [22, 10, 12],
+    rim: [7, 2, 3],
+    pattern: 'circuit',
+    patternColor: [90, 30, 36],
+    patternStrength: 0.4,
+    wall: [150, 120, 125],
+    wallEdge: [255, 210, 210],
+    border: [255, 70, 50],
+    motes: [255, 150, 130],
+    moteCount: 22,
+    current: { x: -1, y: 2 },
+  },
+  // Molten slag glowing through cracks in a black floor.
+  meltdown: {
+    floor: [26, 12, 4],
+    rim: [8, 3, 1],
+    pattern: 'veins',
+    patternColor: [120, 46, 10],
+    patternStrength: 0.5,
+    wall: [110, 90, 80],
+    wallEdge: [255, 190, 120],
+    border: [255, 140, 20],
+    motes: [255, 200, 120],
+    moteCount: 40,
+    current: { x: 0, y: -6 },
+  },
+  // Isolation rooms behind yellow-black hazard tape.
+  quarantine: {
+    floor: [18, 18, 20],
+    rim: [5, 5, 6],
+    pattern: 'grid',
+    patternColor: [60, 60, 66],
+    patternStrength: 0.3,
+    wall: [200, 190, 120],
+    wallEdge: [255, 240, 150],
+    border: [255, 214, 40],
+    motes: [220, 220, 230],
+    moteCount: 18,
+    current: { x: 0, y: 1 },
+  },
+  // A rich broth, warm and green, where everything feeds.
+  'feeding-ground': {
+    floor: [16, 24, 10],
+    rim: [5, 8, 3],
+    pattern: 'bubbles',
+    patternColor: [56, 84, 30],
+    patternStrength: 0.4,
+    wall: [150, 170, 110],
+    wallEdge: [220, 240, 170],
+    border: [170, 230, 60],
+    motes: [230, 255, 170],
+    moteCount: 30,
+    current: { x: 2, y: -1 },
+  },
+  // Dusty open country under a pale sky - room to roam.
+  expanse: {
+    floor: [24, 20, 16],
+    rim: [8, 6, 5],
+    pattern: 'dunes',
+    patternColor: [70, 58, 44],
+    patternStrength: 0.35,
+    wall: [150, 130, 110],
+    wallEdge: [230, 210, 180],
+    border: [240, 170, 90],
+    motes: [255, 230, 200],
+    moteCount: 40,
+    current: { x: 3, y: 0 },
+  },
+  // A sterile ward under green emergency light.
+  'patient-zero': {
+    floor: [12, 22, 18],
+    rim: [3, 7, 6],
+    pattern: 'grid',
+    patternColor: [40, 80, 64],
+    patternStrength: 0.35,
+    wall: [170, 190, 180],
+    wallEdge: [230, 250, 240],
+    border: [120, 255, 200],
+    motes: [190, 255, 225],
+    moteCount: 20,
+    current: { x: 1, y: 1 },
+  },
 };
 
-/** The look of the level with that id, falling back to the petri dish. */
+/**
+ * The look of the level with that id - a generated level borrows the look of
+ * a hand-made one of its style - falling back to the petri dish.
+ */
 export function arenaTheme(levelId: string): ArenaTheme {
-  return THEMES[levelId] ?? THEMES['petri-dish'];
+  return (
+    THEMES[levelId] ??
+    THEMES[generatedLevel(levelId)?.family ?? ''] ??
+    THEMES['petri-dish']
+  );
 }
 
 /** The colour as the space separated triple CSS `rgb()` takes. */

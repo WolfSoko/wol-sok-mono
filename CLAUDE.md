@@ -11,7 +11,7 @@ Angular + Nx monorepo. Read this before touching anything.
 - **Testing**: Jest (most unit tests), Vitest (Vite projects), Playwright (E2E)
 - **Lint / Format**: oxlint (`.oxlintrc.json`, targets inferred by `@nx/oxlint`), angular-eslint for templates only (`eslint.config.mjs`, target `lint-templates`) and oxfmt (`.oxfmtrc.json`, driven by `nx format`)
 - **UI**: Angular Material + CDK everywhere (no custom primitives if AM covers it)
-- **State**: Angular Signals (local/sync), RxJS (async), Akita/Elf (app-wide stores)
+- **State**: Angular Signals (local/sync), RxJS (async), NgRx Signal Store (bacteria game), Akita/Elf (older app-wide stores)
 - **Backend**: Firebase (Hosting, Auth, DB), AWS CDK (S3/CloudFront infra)
 - **Package manager**: npm (use `npm ci`, never yarn/pnpm)
 
@@ -24,6 +24,7 @@ apps/                   # Deployable apps
   rollapolla-analog/    # Analog.js SSR demo
   *-remote/             # Module Federation remotes
   *-cdk/                # AWS CDK infra stacks
+  bacteria-wars-android/ # Android app (Gradle, Trusted Web Activity)
 libs/
   features/             # Domain features (can use shared + utils + ui-kit)
   shared/               # Cross-cutting concerns (can use utils)
@@ -118,6 +119,13 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - Each app has an `esbuild` target (`@angular/build:application`) wrapped by a `build`/`serve` target from `@angular-architects/native-federation`. Change build options on `esbuild`.
 - Exception: `bacteria-game-remote` is also a standalone PWA. Its federation build is `build-federation`; `build` then reruns `ngsw-config`, since the federation builder writes its files after Angular has hashed the output into `ngsw.json`.
 - `nx serve angular-examples` only serves the shell. Use `nx run angular-examples:serve-all` to boot the shell plus all remotes (ports 4200-4203).
+
+## Android App
+
+- `apps/bacteria-wars-android` is a Gradle project, not a web build: a Trusted Web Activity that opens `https://bacteria-game.wolsok.de` (the `bacteria-game-remote` PWA) fullscreen in Chrome. Game changes go into the PWA; the app picks them up with the next web deploy.
+- Its Nx targets are `apk`, `bundle`, `lint-android` and `deploy`, deliberately not `build`/`lint`/`test`: the Nx agents have no Android SDK. The `Android app` GitHub workflow (`.github/workflows/android.yml`) builds and lints it on PRs instead. `deploy` signs the release, attaches the APK and bundle to the GitHub release and uploads the bundle to Play's internal track; the `android` leg of `deploy.yml` runs it when a release affects the app. See its `README.md` for signing and Play.
+- Fullscreen depends on `apps/bacteria-game-remote/src/.well-known/assetlinks.json` naming the app's package and signing-key fingerprints. Gradle reads the package name from that file, so it is the one place to change it; the host is set in both `app/build.gradle.kts` and the CDK stack.
+- Launcher icons and splash come from `npx nx run bacteria-game-remote:icons`; don't edit the PNGs by hand.
 
 ## SEO & Sitemaps
 

@@ -1,10 +1,10 @@
+import { Zone } from '../state/zones';
 import {
   ArenaFrame,
   ArenaPainter,
   boostRingRadius,
   crosshairBars,
 } from './arena-painter';
-import { scaleOf } from '../state/arena-size';
 import { ArenaRenderer } from './arena-renderer';
 import { ArenaTheme } from './arena-theme';
 import { ColonyRenderer, drawJam } from './colony-renderer';
@@ -25,13 +25,13 @@ export class CanvasArenaPainter implements ArenaPainter {
     private readonly cx: CanvasRenderingContext2D,
     private readonly width: number,
     private readonly height: number,
-    scale: number
+    /** Pixels per cell the zones are painted with. */
+    detail: number,
+    unit: number
   ) {
-    this.unit = scaleOf(width);
-    this.arena = new ArenaRenderer(width, height);
-    this.colonies = new ColonyRenderer(width, height);
-    // Everything is drawn in arena cells; the transform scales it up.
-    cx.setTransform(scale, 0, 0, scale, 0, 0);
+    this.unit = unit;
+    this.arena = new ArenaRenderer(width, height, Math.random, detail, unit);
+    this.colonies = new ColonyRenderer(width, height, unit);
     cx.imageSmoothingEnabled = false;
   }
 
@@ -39,8 +39,8 @@ export class CanvasArenaPainter implements ArenaPainter {
     // Nothing but the context, which goes with its canvas.
   }
 
-  public setTheme(theme: ArenaTheme): void {
-    this.arena.setTheme(theme);
+  public setFloor(theme: ArenaTheme, zones: readonly Zone[]): void {
+    this.arena.setFloor(theme, zones);
   }
 
   public showLastFrame(): void {
@@ -49,6 +49,10 @@ export class CanvasArenaPainter implements ArenaPainter {
 
   public paint(frame: ArenaFrame): void {
     const cx = this.cx;
+    // Everything is drawn in arena cells; the transform shows the view.
+    const { view } = frame;
+    const scale = cx.canvas.width / view.width;
+    cx.setTransform(scale, 0, 0, scale, -view.x * scale, -view.y * scale);
     // Lay the floor over the previous frame, so movement leaves a short trail.
     this.arena.drawFloor(cx, frame.clear);
     this.arena.drawMotes(cx, frame.deltaTimeSec);
@@ -59,7 +63,8 @@ export class CanvasArenaPainter implements ArenaPainter {
       frame.colonies,
       frame.balance,
       frame.look,
-      frame.timeSec
+      frame.timeSec,
+      view
     );
     if (layer != null) {
       // The slime layer is scaled up smoothly, the pixel layer stays crisp.

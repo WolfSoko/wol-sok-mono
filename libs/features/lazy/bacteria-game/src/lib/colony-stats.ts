@@ -1,4 +1,5 @@
 import { GameBalance, gameBalance } from './state/game-balance';
+import { TICKS_PER_SEC } from './state/fixed-tick';
 import { clamp } from './state/geometry';
 import { isBoosted, isBoostReady, Player } from './state/player.model';
 
@@ -25,6 +26,10 @@ export interface ColonyStats {
   boostCharge: number;
   /** The key that fires the boost, for the button label. */
   boostKey: BoostKey;
+  /** Whole seconds the colony held the hold zone. */
+  held: number;
+  /** Pellets the colony ate up. */
+  pellets: number;
 }
 
 /** The keys that fire a boost: Space for the first human, Enter for the second. */
@@ -97,6 +102,8 @@ export function toColonyStats(
       : Math.ceil(player.boostCooldownSec),
     boostCharge: boostChargeOf(player, balance),
     boostKey: boostKeyOf(humans, player),
+    held: Math.floor(player.holdTicks / TICKS_PER_SEC),
+    pellets: player.pellets,
   }));
 }
 
@@ -110,10 +117,12 @@ function boostChargeOf(player: Player, balance: GameBalance): number {
   if (isBoostReady(player)) {
     return 1;
   }
-  if (player.boostActiveSec > 0 || balance.boostCooldownSec <= 0) {
+  // The cooldown the boost started - a boss's is shorter than the balance's.
+  const full = player.boostCooldownFullSec || balance.boostCooldownSec;
+  if (player.boostActiveSec > 0 || full <= 0) {
     return 0;
   }
-  const charge = 1 - player.boostCooldownSec / balance.boostCooldownSec;
+  const charge = 1 - player.boostCooldownSec / full;
   return clamp(Math.round(charge * 100) / 100, 0, 1);
 }
 

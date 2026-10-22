@@ -10,6 +10,7 @@ export function createWsThanosOptions(
     sound: true,
     soundVolume: 0.5,
     crumble: 'shards',
+    preload: true,
     ...options,
   };
 }

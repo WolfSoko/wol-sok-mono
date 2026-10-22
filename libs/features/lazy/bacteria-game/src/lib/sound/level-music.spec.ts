@@ -35,6 +35,7 @@ describe('level music', () => {
     expect(degreeToMidi(music, 7)).toBe(music.root + 12);
     expect(degreeToMidi(music, -1)).toBe(music.root - 1);
     expect(degreeToMidi(music, 2)).toBe(music.root + 4);
+    expect(degreeToMidi(music, 2, 2)).toBe(music.root + 28);
   });
 
   it('plays a sixteenth in a quarter of a beat', () => {

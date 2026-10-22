@@ -1,4 +1,13 @@
-import { seeded } from '../state/geometry';
+import {
+  heatOf,
+  lerp,
+  parseGeneratedId,
+  tuneSeed,
+} from '../state/level-generator/generate-level';
+import { keepRecent } from '../state/recent-cache';
+import { Rng } from '../state/level-generator/rng';
+import type { RecipeId } from '../state/level-generator/recipes';
+import { seeded, streamSeed } from '../state/geometry';
 import { HEART_PERIOD_SEC } from '../state/organic-maps';
 
 /**
@@ -105,13 +114,18 @@ export function midiToHz(midi: number): number {
 
 /**
  * The MIDI note of a scale degree, any number of steps above or below the
- * root - degree 7 of a seven note scale is the root an octave up.
+ * root - degree 7 of a seven note scale is the root an octave up - and
+ * `octaves` more octaves up from there.
  */
-export function degreeToMidi(music: LevelMusic, degree: number): number {
+export function degreeToMidi(
+  music: LevelMusic,
+  degree: number,
+  octaves = 0
+): number {
   const length = music.scale.length;
   const octave = Math.floor(degree / length);
   const index = degree - octave * length;
-  return music.root + 12 * octave + music.scale[index];
+  return music.root + 12 * (octave + octaves) + music.scale[index];
 }
 
 /**
@@ -445,9 +459,210 @@ export const LEVEL_MUSIC: Record<string, LevelMusic> = {
     echo: 0.35,
     seed: 12,
   },
+  // A ticking reactor: a pulsing bass under a cold, clipped lead.
+  'half-life': {
+    root: 42,
+    scale: HARMONIC_MINOR,
+    bpm: 118,
+    progression: [0, 5, 3, 4],
+    lead: 'square',
+    density: 0.45,
+    bass: 'pulse',
+    drums: 'drive',
+    echo: 0.3,
+    seed: 13,
+  },
+  // Clean room hum: a slow drone under a bright, careful lead.
+  containment: {
+    root: 44,
+    scale: LYDIAN,
+    bpm: 100,
+    progression: [0, 1, 4, 3],
+    lead: 'triangle',
+    density: 0.4,
+    bass: 'drone',
+    drums: 'soft',
+    echo: 0.4,
+    seed: 14,
+  },
+  // An alarm: a driving pulse under a tense, rising lead.
+  'control-room': {
+    root: 40,
+    scale: PHRYGIAN_DOMINANT,
+    bpm: 126,
+    progression: [0, 1, 0, 6],
+    lead: 'sawtooth',
+    density: 0.5,
+    bass: 'pulse',
+    drums: 'drive',
+    echo: 0.25,
+    seed: 15,
+  },
+  // A boss fight: a heavy, fast pulse under a screaming lead.
+  meltdown: {
+    root: 41,
+    scale: PHRYGIAN_DOMINANT,
+    bpm: 138,
+    progression: [0, 1, 4, 1],
+    lead: 'sawtooth',
+    density: 0.6,
+    bass: 'pulse',
+    drums: 'drive',
+    echo: 0.2,
+    seed: 16,
+  },
+  // Waiting behind glass: sparse, tense and patient.
+  quarantine: {
+    root: 43,
+    scale: HARMONIC_MINOR,
+    bpm: 104,
+    progression: [0, 3, 0, 4],
+    lead: 'triangle',
+    density: 0.4,
+    bass: 'pulse',
+    drums: 'heart',
+    echo: 0.4,
+    seed: 18,
+  },
+  // A feast: bouncy, quick and greedy.
+  'feeding-ground': {
+    root: 45,
+    scale: MAJOR,
+    bpm: 132,
+    progression: [0, 3, 4, 3],
+    lead: 'square',
+    density: 0.6,
+    bass: 'pulse',
+    drums: 'drive',
+    echo: 0.2,
+    seed: 19,
+  },
+  // Wide open: slow, airy and far-reaching.
+  expanse: {
+    root: 40,
+    scale: LYDIAN,
+    bpm: 92,
+    progression: [0, 4, 1, 4],
+    lead: 'sine',
+    density: 0.35,
+    bass: 'drone',
+    drums: 'heart',
+    echo: 0.5,
+    seed: 20,
+  },
+  // Where it began: slow, cold dread that builds.
+  'patient-zero': {
+    root: 41,
+    scale: HARMONIC_MINOR,
+    bpm: 96,
+    progression: [0, 6, 5, 4],
+    lead: 'square',
+    density: 0.45,
+    bass: 'drone',
+    drums: 'heart',
+    echo: 0.45,
+    seed: 17,
+  },
 };
 
-/** The music of the level with that id, falling back to the first level's. */
+/**
+ * The music of the level with that id, falling back to the first level's. A
+ * generated level gets a tune of its own - see {@link generatedMusic}.
+ */
 export function levelMusic(levelId: string): LevelMusic {
-  return LEVEL_MUSIC[levelId] ?? LEVEL_MUSIC['petri-dish'];
+  return (
+    LEVEL_MUSIC[levelId] ?? generatedMusic(levelId) ?? LEVEL_MUSIC['petri-dish']
+  );
+}
+
+/**
+ * The tunes of the generated levels asked for lately, by id: the player
+ * restarts a tune it is handed anew, so one id keeps one tune. Built from
+ * the id alone - a tune needs no layout.
+ */
+const generatedTunes = new Map<string, LevelMusic>();
+const KEPT_TUNES = 32;
+
+/**
+ * How each style of the generator sounds: the mood of its key, its groove
+ * and its instruments - the seed then picks the chords, the key's pitch and
+ * the melody, the difficulty the tempo.
+ */
+const STYLE_SOUNDS: Record<
+  RecipeId,
+  Pick<LevelMusic, 'root' | 'scale' | 'lead' | 'bass' | 'drums' | 'echo'>
+> = {
+  // Open ground: bright and calm.
+  field: {
+    root: 45,
+    scale: MAJOR,
+    lead: 'triangle',
+    bass: 'root',
+    drums: 'soft',
+    echo: 0.3,
+  },
+  // Walls and gates: driving, mechanical.
+  corridor: {
+    root: 45,
+    scale: MINOR,
+    lead: 'square',
+    bass: 'pulse',
+    drums: 'drive',
+    echo: 0.35,
+  },
+  // Keeps to hold: a marching walk.
+  fortress: {
+    root: 43,
+    scale: DORIAN,
+    lead: 'sawtooth',
+    bass: 'walk',
+    drums: 'drive',
+    echo: 0.25,
+  },
+  // Living tissue: dark, wet, a pulse.
+  cave: {
+    root: 41,
+    scale: HARMONIC_MINOR,
+    lead: 'sine',
+    bass: 'drone',
+    drums: 'heart',
+    echo: 0.45,
+  },
+};
+
+/** The chord progressions a generated tune picks from - a few of the hand-made tunes'. */
+const PROGRESSIONS: readonly (readonly number[])[] = [
+  [0, 5, 3, 4],
+  [0, 3, 6, 4],
+  [0, 5, 2, 6],
+  [0, 2, 5, 4],
+  [0, 1, 0, 4],
+  [0, 6, 3, 0],
+];
+
+/** The tune of a generated level: its style's sound, its seed's chords. */
+function generatedMusic(levelId: string): LevelMusic | undefined {
+  const kept = generatedTunes.get(levelId);
+  if (kept !== undefined) {
+    return kept;
+  }
+  const made = parseGeneratedId(levelId);
+  if (made === null) {
+    return undefined;
+  }
+  const seed = tuneSeed(made);
+  // Another stream than the melody's, so the two do not go hand in hand.
+  const rng = new Rng(streamSeed(seed, 1));
+  const sound = STYLE_SOUNDS[made.recipe];
+  const tune: LevelMusic = {
+    ...sound,
+    // A step or two up or down: another key, the same mood.
+    root: sound.root + rng.int(-2, 2),
+    progression: rng.pick(PROGRESSIONS),
+    density: rng.range(0.3, 0.6),
+    // A hotter level, a faster beat.
+    bpm: Math.round(lerp(84, 134, heatOf(made))),
+    seed,
+  };
+  return keepRecent(generatedTunes, levelId, tune, KEPT_TUNES);
 }

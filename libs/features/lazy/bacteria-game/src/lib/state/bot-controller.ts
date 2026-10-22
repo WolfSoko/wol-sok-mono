@@ -1,5 +1,5 @@
+import { countDown } from './fixed-tick';
 import { Nutrient } from './bacteria-simulation';
-import { scaleOf } from './arena-size';
 import { clamp, distance, Point } from './geometry';
 import { ColonySummary } from './simulation';
 
@@ -61,17 +61,49 @@ export interface ColonyView extends Point {
   energy: number;
 }
 
+/**
+ * How the bot finds its way to a point on the arena it plays on - straight
+ * there on open ground.
+ */
+export interface BotRoutes {
+  /** Where to send the crosshair to get the colony to a point. */
+  waypoint(to: Point): Point;
+  /** How far the colony has to travel to a point, infinite if it cannot. */
+  travel(to: Point): number;
+}
+
+/** Routes on open ground: straight there, as the crow flies. */
+export function straightRoutes(from: Point): BotRoutes {
+  return { waypoint: (to) => to, travel: (to) => distance(from, to) };
+}
+
 /** Everything the bot gets to look at before deciding. */
 export interface BotView {
   width: number;
   height: number;
+  /** Arena cells per base cell - the grid's resolution, not the map's size. */
+  unit: number;
   own: ColonyView;
   /** The strongest enemy colony, null once there is none left. */
   enemy: ColonyView | null;
   /** The enemy bacterium closest to the own centre of mass, if any. */
   nearestEnemy: Point | null;
   nutrients: readonly Nutrient[];
+  /**
+   * Colonies nobody steers - neutral ones - as pellets as big as they are.
+   * Food that bites back: worth it to a colony that is not hungry.
+   */
+  prey?: readonly Nutrient[];
+  /** True on a level won by eating pellets: food before anything else. */
+  feeding?: boolean;
   boostReady: boolean;
+  /**
+   * Where the level is won, if anywhere - the centre of the zone to hold on
+   * a hold-the-zone level, else null.
+   */
+  objective: Point | null;
+  /** The way from the own colony round the walls, and what it costs. */
+  routes: BotRoutes;
 }
 
 export interface BotDecision {
@@ -138,7 +170,9 @@ export class BotController {
 
   constructor(
     public readonly difficulty: BotDifficulty,
-    random: () => number = Math.random
+    random: () => number = Math.random,
+    /** A boss: once its colony has fallen behind, it charges with every boost. */
+    private readonly boss = false
   ) {
     this.profile = PROFILES[difficulty];
     this.random = random;
@@ -149,25 +183,58 @@ export class BotController {
    * Between decisions the crosshair keeps travelling to the last target.
    */
   public decide(view: BotView, deltaTimeSec: number): BotDecision {
-    this.cooldown -= deltaTimeSec;
+    this.cooldown = countDown(this.cooldown, deltaTimeSec);
     if (this.cooldown > 0) {
       return { target: null, boost: false };
     }
     this.cooldown = this.profile.reactionSec;
     // The bot thinks in cells of the base arena.
-    this.unit = scaleOf(view.width);
+    this.unit = view.unit;
+    const { own, enemy } = view;
+    // A boss that has fallen behind goes berserk: it charges the enemy with
+    // every boost it gets - where its difficulty boosts at all.
+    if (
+      this.boss &&
+      this.profile.usesBoost &&
+      view.boostReady &&
+      enemy != null &&
+      own.count > 0 &&
+      own.count < enemy.count
+    ) {
+      return {
+        target: this.aim(view, this.attackPoint(view, enemy)),
+        boost: true,
+      };
+    }
+    return this.choose(view);
+  }
 
+  /** Where to send the crosshair now, and whether to boost. */
+  private choose(view: BotView): BotDecision {
     const { own, enemy } = view;
     if (own.count === 0) {
       return { target: null, boost: false };
     }
-    const food = this.bestNutrient(view);
+    const hungry = own.energy < HUNGRY_ENERGY;
+    const food = this.bestNutrient(view, !hungry);
     if (enemy == null || enemy.count === 0) {
       return { target: this.aim(view, food ?? own), boost: false };
     }
 
+    // Where the pellets win the match, they come first - stronger or not,
+    // and only they: prey counts for nothing there.
+    const pellet = view.feeding ? this.bestNutrient(view, false) : null;
+    if (pellet != null) {
+      return { target: this.aim(view, pellet), boost: false };
+    }
+
     const stronger = own.count >= enemy.count * this.profile.attackRatio;
-    const hungry = own.energy < HUNGRY_ENERGY;
+
+    // Where the level is won is the place to be - stronger or not, and with
+    // no retreat. Only a hungry colony eats first.
+    if (view.objective != null && (!hungry || food == null)) {
+      return { target: this.aim(view, view.objective), boost: false };
+    }
 
     if (stronger && !hungry) {
       const boost =
@@ -180,7 +247,9 @@ export class BotController {
       return { target: this.aim(view, food), boost: false };
     }
     return {
-      target: this.aim(view, this.retreatPoint(own, enemy)),
+      // Straight away - a way round to a spot behind a wall could lead past
+      // the enemy.
+      target: this.aim(view, this.retreatPoint(own, enemy), false),
       boost: false,
     };
   }
@@ -201,16 +270,25 @@ export class BotController {
    * The pellet that is cheapest to reach. A pellet the enemy stands closer to
    * than we do is probably eaten before we arrive, so it counts as further away.
    */
-  private bestNutrient(view: BotView): Nutrient | null {
+  private bestNutrient(view: BotView, withPrey: boolean): Nutrient | null {
     let best: Nutrient | null = null;
     let bestCost = Number.POSITIVE_INFINITY;
-    for (const nutrient of view.nutrients) {
+    const prey = withPrey ? (view.prey ?? []) : [];
+    for (const nutrient of [...view.nutrients, ...prey]) {
       if (nutrient.amount <= 0) {
         continue;
       }
-      const ownDistance = distance(nutrient, view.own);
+      // The way there, round the walls - a pellet behind one is far away.
+      const ownDistance = view.routes.travel(nutrient);
+      if (!isFinite(ownDistance)) {
+        continue;
+      }
       let cost = ownDistance;
-      if (view.enemy != null && distance(nutrient, view.enemy) < ownDistance) {
+      // Who is closer, as the crow flies on both sides.
+      if (
+        view.enemy != null &&
+        distance(nutrient, view.enemy) < distance(nutrient, view.own)
+      ) {
         cost += CONTESTED_PENALTY * this.unit;
       }
       if (cost < bestCost) {
@@ -240,8 +318,12 @@ export class BotController {
     };
   }
 
-  /** Adds the profile's aiming error and keeps the point inside the arena. */
-  private aim(view: BotView, point: Point): Point {
+  /**
+   * Sends the crosshair on the way to a point - round the walls in between
+   * - with the profile's aiming error, inside the arena.
+   */
+  private aim(view: BotView, destination: Point, route = true): Point {
+    const point = route ? view.routes.waypoint(destination) : destination;
     const noise = this.profile.aimNoise * this.unit;
     return {
       x: clamp(point.x + (this.random() - 0.5) * 2 * noise, 0, view.width),
@@ -263,7 +345,12 @@ export function buildBotView(
   nearestEnemy: (from: Point) => Point | null,
   nutrients: readonly Nutrient[],
   boostReady: boolean,
-  maxEnergy: number
+  maxEnergy: number,
+  objective: Point | null,
+  routes: (from: Point) => BotRoutes,
+  unit: number,
+  prey: readonly Nutrient[] = [],
+  feeding = false
 ): BotView {
   const ownView = colonyView(own, maxEnergy);
   let enemy: ColonyView | null = null;
@@ -285,7 +372,21 @@ export function buildBotView(
     nearestEnemy: enemy == null ? null : nearestEnemy(ownView),
     nutrients,
     boostReady,
+    objective,
+    routes: routes(ownView),
+    prey,
+    feeding,
+    unit,
   };
+}
+
+/**
+ * A neutral colony as a bot sees it - prey as big as the colony, at its
+ * centre - none once it is eaten up.
+ */
+export function neutralFood(colony: ColonySummary): Nutrient[] {
+  const { x, y, count } = colonyView(colony, 1);
+  return count === 0 ? [] : [{ x, y, amount: count }];
 }
 
 /** Centre of mass, size and average energy of a colony. */

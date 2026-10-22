@@ -44,7 +44,11 @@ jobs:
             extra-deploy-args: ''
           - app-type: non-cdk
             deploy-tag-suffix: non-cdk-deployed
-            exclude-pattern: 'tag:cdk,tag:published'
+            exclude-pattern: 'tag:cdk,tag:published,tag:type:android'
+            extra-deploy-args: ''
+          - app-type: android
+            deploy-tag-suffix: android-deployed
+            exclude-pattern: '*,!tag:type:android'
             extra-deploy-args: ''
           - app-type: cdk
             deploy-tag-suffix: cdk-deployed
@@ -75,6 +79,14 @@ jobs:
       - name: Upgrade npm for OIDC trusted publishing
         if: matrix.config.app-type == 'npm-packages'
         run: npm install -g npm@11.5.1
+
+      # The runner image has the Android SDK; Gradle needs a JDK on top.
+      - name: Setup Java for the Android app
+        if: matrix.config.app-type == 'android'
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
 
       - name: Find previous deployment tag
         id: previous_deployment
@@ -127,6 +139,17 @@ jobs:
       - name: Deploy Apps
         if: success() && env.triggerRelease == 'true' && matrix.config.app-type != 'npm-packages'
         run: npx nx affected --target=deploy --exclude='${{ matrix.config.exclude-pattern }}' ${{ matrix.config.extra-deploy-args}}
+        env:
+          # The upload key and the Play account only reach the Android leg.
+          ANDROID_KEYSTORE_BASE64: ${{ matrix.config.app-type == 'android' && secrets.ANDROID_KEYSTORE_BASE64 || '' }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ matrix.config.app-type == 'android' && secrets.ANDROID_KEYSTORE_PASSWORD || '' }}
+          ANDROID_KEY_ALIAS: ${{ matrix.config.app-type == 'android' && secrets.ANDROID_KEY_ALIAS || '' }}
+          ANDROID_KEY_PASSWORD: ${{ matrix.config.app-type == 'android' && secrets.ANDROID_KEY_PASSWORD || '' }}
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ matrix.config.app-type == 'android' && secrets.PLAY_SERVICE_ACCOUNT_JSON || '' }}
+          PLAY_RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS }}
+          YOUTUBE_OAUTH_CLIENT_ID: ${{ matrix.config.app-type == 'android' && secrets.YOUTUBE_OAUTH_CLIENT_ID || '' }}
+          YOUTUBE_OAUTH_CLIENT_SECRET: ${{ matrix.config.app-type == 'android' && secrets.YOUTUBE_OAUTH_CLIENT_SECRET || '' }}
+          YOUTUBE_OAUTH_REFRESH_TOKEN: ${{ matrix.config.app-type == 'android' && secrets.YOUTUBE_OAUTH_REFRESH_TOKEN || '' }}
 
       - name: Tag deployment success
         if: success() && env.triggerRelease == 'true'

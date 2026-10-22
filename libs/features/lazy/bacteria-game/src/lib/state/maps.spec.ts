@@ -8,6 +8,9 @@ import {
   slideOffset,
   stampRect,
 } from './maps';
+import { rectNearSpawn, spawnSpots } from './shapes';
+import { stampZones } from './zones';
+import { levelBalance, LEVELS } from './levels';
 
 // The production canvas size. A smaller arena pushes most layouts outside the
 // grid, which would make every test pass without a single wall cell existing.
@@ -144,6 +147,61 @@ describe('GAME_MAPS', () => {
 
       expect(spawnsConnected(walls)).toBe(true);
       expect(openAtSomePoint).toBe(true);
+    }
+  );
+
+  const zoned = GAME_MAPS.filter((map) => map.createZones != null).map(
+    (map) => [map.name, map] as const
+  );
+
+  it.each(zoned)('%s lays its zones out point symmetric', (_name, map) => {
+    const zones = map.createZones?.(WIDTH, HEIGHT) ?? [];
+    const grid = new Uint8Array(WIDTH * HEIGHT);
+    stampZones(grid, WIDTH, HEIGHT, zones);
+
+    expect(zones.length).toBeGreaterThan(0);
+    expect(
+      grid.filter((code, i) => code !== grid[grid.length - 1 - i])
+    ).toEqual(new Uint8Array(0));
+  });
+
+  it.each(zoned)(
+    '%s keeps the antibiotic off the start spots',
+    (_name, map) => {
+      const poison = (map.createZones?.(WIDTH, HEIGHT) ?? []).filter(
+        (zone) => zone.kind === 'antibiotic'
+      );
+
+      expect(
+        poison.filter((zone) => rectNearSpawn(zone, WIDTH, HEIGHT))
+      ).toEqual([]);
+    }
+  );
+
+  const bossMaps = LEVELS.filter((level) => level.boss !== undefined).map(
+    (level) => [level.name, getMap(level.mapId), level] as const
+  );
+
+  it.each(bossMaps)(
+    '%s leaves room round both start spots for a boss colony',
+    (_name, map, level) => {
+      const walls = map.createWalls(WIDTH, HEIGHT);
+      // The level's start blob, grown by the boss's area.
+      const radius = Math.ceil(
+        levelBalance(level).startBacteriaRadius *
+          Math.sqrt(level.boss?.startScale ?? 1)
+      );
+
+      for (const spot of spawnSpots(WIDTH, HEIGHT)) {
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            if (dx * dx + dy * dy > radius * radius) {
+              continue;
+            }
+            expect(isSolid(walls, spot.x + dx, spot.y + dy)).toBe(false);
+          }
+        }
+      }
     }
   );
 

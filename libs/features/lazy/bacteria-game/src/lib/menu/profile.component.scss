@@ -1,0 +1,237 @@
+@use 'screen';
+
+:host {
+  @include screen.screen;
+}
+
+.body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  min-height: 0;
+}
+
+.summary {
+  @include screen.panel;
+
+  flex: 1 1 18rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.25rem;
+}
+
+.ranks {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.75rem;
+  text-align: center;
+
+  li {
+    padding: 0.35rem 0.15rem;
+    border-radius: 0.5rem;
+    background: var(--bw-surface-raised);
+    color: var(--bw-muted);
+
+    &.reached {
+      color: var(--bw-gold);
+    }
+
+    &.current {
+      background: var(--bw-gold);
+      color: var(--bw-ground);
+      font-weight: 700;
+    }
+  }
+}
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.figure {
+  padding: 0.85rem 1rem;
+  border-radius: 0.9rem;
+  background: var(--bw-surface-raised);
+
+  dt {
+    font-size: 0.85rem;
+    color: var(--bw-muted);
+  }
+
+  dd {
+    @include screen.figure;
+
+    margin: 0.15rem 0 0;
+    font-size: 1.6rem;
+  }
+
+  .of {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--bw-muted);
+  }
+}
+
+.tally {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+}
+
+.tally-count {
+  @include screen.figure;
+
+  font-size: 1.4rem;
+}
+
+.tally-name {
+  color: var(--bw-muted);
+}
+
+.achievements {
+  @include screen.panel;
+
+  flex: 2 1 24rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  padding: 1.25rem;
+
+  .of {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--bw-muted);
+  }
+
+  ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.5rem 0.65rem;
+    border: 1px dashed var(--bw-line);
+    border-radius: 0.75rem;
+
+    &.earned {
+      border-style: solid;
+      background: var(--bw-surface-raised);
+
+      .badge {
+        background: var(--bw-gold);
+        color: var(--bw-ground);
+      }
+    }
+  }
+}
+
+.badge {
+  @include screen.figure;
+
+  flex: 0 0 2.1rem;
+  display: grid;
+  place-items: center;
+  height: 2.1rem;
+  border-radius: 0.6rem;
+  background: var(--bw-surface-raised);
+  color: var(--bw-faint);
+}
+
+.achievement-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.achievement-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.achievement-note {
+  font-size: 0.8rem;
+  color: var(--bw-muted);
+}
+
+.cabinet {
+  @include screen.panel;
+
+  flex: 2 1 24rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+  padding: 1.25rem;
+}
+
+.section-title {
+  @include screen.title;
+
+  font-size: 1.35rem;
+}
+
+.table-box {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+thead th {
+  padding-bottom: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bw-muted);
+}
+
+tbody tr {
+  border-top: 1px solid var(--bw-line);
+}
+
+th[scope='row'] {
+  padding: 0.3rem 0;
+  font-weight: 400;
+  text-align: left;
+}
+
+th[scope='col']:first-child {
+  text-align: left;
+}
+
+td {
+  width: 4.5rem;
+  text-align: center;
+  color: var(--bw-muted);
+}

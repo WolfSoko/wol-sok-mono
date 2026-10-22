@@ -103,10 +103,10 @@ export const APP_ROUTES: MainNavRoutes = [
         './Routes'
       ).then((routes) => routes.entryRoutes),
     data: {
-      linkText: 'Bacteria Game',
+      linkText: 'Bacteria Wars',
       subTitle: 'Served independently by MF',
       description:
-        'Bacteria War: a browser game where bacteria colonies fight for territory, built with Angular and loaded at runtime via Native Federation.',
+        'Bacteria Wars: a browser game where bacteria colonies fight for territory, built with Angular and loaded at runtime via Native Federation.',
     },
   },
   {

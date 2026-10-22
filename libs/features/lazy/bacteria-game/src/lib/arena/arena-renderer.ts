@@ -3,6 +3,8 @@ import { DynamicWall, Rect } from '../state/maps';
 import { ArenaPattern, ArenaTheme, Rgb } from './arena-theme';
 import { createCanvas, hash, lerp, mix, rgba, smoothstep } from './canvas-math';
 import { darker } from './colony-renderer';
+import { Zone } from '../state/zones';
+import { paintZoneLayer } from './zone-decal';
 
 /**
  * Paints the floor of an arena into an RGBA pixel buffer: the theme's floor
@@ -75,6 +77,10 @@ export function paintArenaBackground(
 export class ArenaRenderer {
   private theme: ArenaTheme | null = null;
   private floor: HTMLCanvasElement | null = null;
+  /** The zones the floor was laid with. */
+  private zones: readonly Zone[] = [];
+  /** The zones as a layer over the floor, finer than the cells. */
+  private zoneLayer: HTMLCanvasElement | null = null;
   /** Diagonal hazard stripes for the closed gates and sliding walls. */
   private hazard: CanvasPattern | null = null;
   /** The theme's colours as CSS, built once instead of every frame. */
@@ -84,13 +90,21 @@ export class ArenaRenderer {
   public constructor(
     private readonly width: number,
     private readonly height: number,
-    random: () => number = Math.random
+    random: () => number,
+    /** Pixels per arena cell the zones are painted with. */
+    private readonly scale: number,
+    /** Cells per base cell - the zones' marks are as big on every grid. */
+    private readonly unit: number
   ) {
     this.motes = new Motes(width, height, random);
   }
 
   /** Switches to another level's look, repainting its floor. */
-  public setTheme(theme: ArenaTheme): void {
+  public setFloor(theme: ArenaTheme, zones: readonly Zone[]): void {
+    if (this.zones !== zones) {
+      this.zones = zones;
+      this.zoneLayer = this.paintZones(zones);
+    }
     if (this.theme === theme) {
       return;
     }
@@ -117,6 +131,13 @@ export class ArenaRenderer {
     } else {
       cx.fillStyle = rgba(this.theme?.floor ?? [0, 0, 0]);
       cx.fillRect(0, 0, this.width, this.height);
+    }
+    if (this.zoneLayer != null) {
+      // Finer than the cells, and smoothed: soft edges, not steps.
+      const smoothing = cx.imageSmoothingEnabled;
+      cx.imageSmoothingEnabled = true;
+      cx.drawImage(this.zoneLayer, 0, 0, this.width, this.height);
+      cx.imageSmoothingEnabled = smoothing;
     }
     cx.globalAlpha = 1;
   }
@@ -257,15 +278,34 @@ export class ArenaRenderer {
 
   /** The floor in an offscreen canvas, or null where there is no canvas. */
   private paintFloor(theme: ArenaTheme): HTMLCanvasElement | null {
-    const canvas = createCanvas(this.width, this.height);
-    const context = canvas?.getContext?.('2d');
-    if (canvas == null || context == null) {
+    return imageCanvas(
+      paintArenaBackground(
+        new Uint8ClampedArray(this.width * this.height * 4),
+        this.width,
+        this.height,
+        theme
+      ),
+      this.width,
+      this.height
+    );
+  }
+
+  /** The zone layer in an offscreen canvas - null without zones or a canvas. */
+  private paintZones(zones: readonly Zone[]): HTMLCanvasElement | null {
+    // No canvas, no layer - not worth painting it then.
+    if (createCanvas(1, 1) == null) {
       return null;
     }
-    const image = context.createImageData(this.width, this.height);
-    paintArenaBackground(image.data, this.width, this.height, theme);
-    context.putImageData(image, 0, 0);
-    return canvas;
+    const layer = paintZoneLayer(
+      this.width,
+      this.height,
+      zones,
+      this.scale,
+      this.unit
+    );
+    return layer === null
+      ? null
+      : imageCanvas(layer.data, layer.width, layer.height);
   }
 }
 
@@ -467,4 +507,21 @@ function valueNoise(x: number, y: number, seed: number): number {
   const top = lerp(hash(ix, iy, seed), hash(ix + 1, iy, seed), sx);
   const bottom = lerp(hash(ix, iy + 1, seed), hash(ix + 1, iy + 1, seed), sx);
   return lerp(top, bottom, sy);
+}
+
+/** RGBA pixels in an offscreen canvas, or null where there is no canvas. */
+function imageCanvas(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number
+): HTMLCanvasElement | null {
+  const canvas = createCanvas(width, height);
+  const context = canvas?.getContext?.('2d');
+  if (canvas == null || context == null) {
+    return null;
+  }
+  const image = context.createImageData(width, height);
+  image.data.set(data);
+  context.putImageData(image, 0, 0);
+  return canvas;
 }

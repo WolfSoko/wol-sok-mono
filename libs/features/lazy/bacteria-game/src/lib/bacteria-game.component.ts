@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -16,34 +16,28 @@ import {
   viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { WsThanosDirective } from '@wolsok/thanos';
+import { WsThanosDirective, WsThanosOptions } from '@wolsok/thanos';
+import { GhostChallengeComponent } from './ghost/ghost-challenge.component';
+import { DAILY_ATTEMPTS } from './state/daily';
 import {
   ElemResizedDirective,
   ResizedEvent,
   ShowFpsComponent,
 } from '@wolsok/ui-kit';
 import { defer, fromEvent, Observable } from 'rxjs';
-import {
-  defaultIfEmpty,
-  distinctUntilChanged,
-  last,
-  map,
-  switchMap,
-  take,
-  tap,
-} from 'rxjs/operators';
+import { defaultIfEmpty, last, map, take, tap } from 'rxjs/operators';
 import { ArenaFrame, ArenaPainter } from './arena/arena-painter';
 import { createArenaPainter } from './arena/create-arena-painter';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
+import { rgba } from './arena/canvas-math';
 import { BoostPadComponent } from './boost-pad/boost-pad.component';
 import {
   exitFullscreen,
@@ -57,27 +51,51 @@ import {
 } from './fullscreen';
 import { JoystickComponent } from './joystick/joystick.component';
 import {
+  ColonyColorsComponent,
   ColorChange,
-  MatchSetupComponent,
-} from './match-setup/match-setup.component';
-import { DEFAULT_COLORS, getColonyColor } from './state/colony-colors';
+} from './colony-colors/colony-colors.component';
+import { MatchSetupComponent } from './match-setup/match-setup.component';
+import { NewGameComponent } from './menu/new-game.component';
+import { NewGameEntry, opponentOf, PlayKind, stepsOf } from './menu/play-modes';
+import { MainMenuComponent } from './menu/main-menu.component';
+import { DailyCard } from './menu/menu-cards';
+import { HelpComponent } from './menu/help.component';
+import { ProfileComponent } from './menu/profile.component';
+import { SettingsComponent } from './menu/settings.component';
+import { SwarmComponent } from './menu/swarm.component';
 import {
-  BotDifficulty,
-  difficultyOption,
-  DEFAULT_DIFFICULTY,
-} from './state/bot-controller';
-import { BACTERIA_LOOKS, GameSettingsService } from './settings.service';
+  getColonyColor,
+  NEUTRAL_COLOR,
+  pickColor,
+  readableOn,
+} from './state/colony-colors';
+import { BotDifficulty, difficultyOption } from './state/bot-controller';
+import {
+  DEFAULT_EFFECTS_VOLUME,
+  GameSettingsService,
+} from './settings.service';
 import { ProgressService } from './progress.service';
+import { CampaignService } from './campaign.service';
+import { dismissSplash } from './splash';
+import { HeadStart, rivalryScore, SeriesLength } from './state/rivalry';
+import { loadFonts } from './fonts';
 import {
   arenaSize,
+  detailScale,
   renderScale,
-  SCREEN_RESOLUTIONS,
-  scaleOf,
-  SIM_RESOLUTIONS,
+  simScale,
 } from './state/arena-size';
-import { GameSoundService, MatchResult } from './sound/game-sound.service';
+import { Camera } from './arena/camera';
+import { MinimapPainter } from './arena/minimap';
+import { GameHapticsService } from './haptics.service';
+import { GameSoundService, Soundtrack } from './sound/game-sound.service';
+import { MatchResult } from './state/match-engine';
 import { levelMusic } from './sound/level-music';
-import { arenaPointFromClient, nearestFreeCrosshair } from './touch-controls';
+import {
+  arenaPointFromClient,
+  nearestFreeCrosshair,
+  Pinch,
+} from './touch-controls';
 import {
   boostLabel,
   ColonyStats,
@@ -86,26 +104,53 @@ import {
   toColonyStats,
 } from './colony-stats';
 import { GameBalance } from './state/game-balance';
-import { SteeringVector } from './state/geometry';
-import { GameStateQuery } from './state/game-state.query';
+import { clock, GameFrame } from './state/fixed-tick';
+import { Point, SteeringVector } from './state/geometry';
 import { GameStateService } from './state/game-state.service';
-import { DEFAULT_MODE, GameMode, GameState } from './state/game.states';
+import { GameMode, GameState, GameStateStore } from './state/game.states';
 import {
+  getLevel,
+  gridScale,
   Level,
   LEVELS,
   levelBalance,
   levelMap,
+  levelSize,
   nextLevel,
 } from './state/levels';
-import { Rect } from './state/maps';
+import { DynamicWall, Rect } from './state/maps';
+import { harvestTarget, holdTarget } from './state/win-conditions';
+import { mapZones, Zone } from './state/zones';
 import { MedalTier } from './state/medallions';
 import { isBoosted, Player } from './state/player.model';
-import { PlayerQuery } from './state/player.query';
+import { PlayerStore } from './state/player.store';
 import { PlayerService } from './state/player.service';
 import {
   MatchEndAction,
   WinnerComponent,
 } from './winner-info/winner.component';
+
+/**
+ * The vaporize snap's volume at full effects - about the library's own
+ * default at the default effects volume.
+ */
+const SNAP_LEVEL = 0.8;
+
+/** The last seconds of a timed level, when its clock turns red. */
+const RUNNING_OUT_SEC = 10;
+
+/** How often the minimap takes in where the colonies are. */
+const MINIMAP_UPDATE_MS = 100;
+
+/** A goal the HUD counts each colony up towards. */
+interface HudGoal {
+  icon: string;
+  /** What is counted, for a screen reader. */
+  label: string;
+  target: number;
+  /** The colony's number that counts up. */
+  of: 'held' | 'pellets';
+}
 
 @UntilDestroy()
 @Component({
@@ -123,21 +168,30 @@ import {
     BoostPadComponent,
     ElemResizedDirective,
     WinnerComponent,
-    MatButtonToggleModule,
-    MatSlideToggleModule,
+    SwarmComponent,
+    SettingsComponent,
+    HelpComponent,
+    MainMenuComponent,
+    NewGameComponent,
+    ProfileComponent,
+    ColonyColorsComponent,
+    GhostChallengeComponent,
   ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
-  private query = inject(GameStateQuery);
+  private store = inject(GameStateStore);
   private gameStateService = inject(GameStateService);
   private playerService = inject(PlayerService);
-  private playerQuery = inject(PlayerQuery);
+  private playerStore = inject(PlayerStore);
   protected readonly settings = inject(GameSettingsService);
-  private readonly sound = inject(GameSoundService);
-  private readonly progress = inject(ProgressService);
+  protected readonly sound = inject(GameSoundService);
+  private readonly haptics = inject(GameHapticsService);
+  protected readonly progress = inject(ProgressService);
+  private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router);
   /** No flickering glow for players who asked their system for less motion. */
   private readonly reducedMotion = prefersReducedMotion();
 
@@ -147,38 +201,100 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   private readonly canvasRef =
     viewChild<ElementRef<HTMLCanvasElement>>('canvasElement');
+  private readonly minimapRef =
+    viewChild<ElementRef<HTMLCanvasElement>>('minimapElement');
   @ViewChild('arenaStage', { static: true })
   private stageRef!: ElementRef<HTMLElement>;
   @ViewChild(WsThanosDirective, { static: true })
   private thanos!: WsThanosDirective;
   /** Draws the arena - on the GPU where the browser can. */
   private painter: ArenaPainter | null = null;
+  /** The camera over a map bigger than the base arena, null on any other. */
+  private camera: Camera | null = null;
+  /** When the camera last moved on, null before it ever did. */
+  private cameraMovedAt: number | null = null;
+  /** What of the arena the last frame showed. */
+  private lastView: Rect | null = null;
+  /** The whole map in a corner, while the camera shows part of it. */
+  private minimap: MinimapPainter | null = null;
+  /** When the minimap last took in where the colonies are. */
+  private minimapUpdatedAt = Number.NEGATIVE_INFINITY;
   /** Lay the next frame's floor down fully instead of fading into a trail. */
   private clearNextFrame = true;
 
-  /** The arena in cells, as fine as the simulation resolution asks for. */
+  /**
+   * The arena in cells, as fine as the simulation resolution asks for and
+   * as big as the level's map.
+   */
   protected readonly arena = computed(() =>
-    arenaSize(this.settings.simResolution())
+    arenaSize(this.settings.simResolution(), this.mapSize())
+  );
+  /** How many times the base arena the level's map is along each side. */
+  protected readonly mapSize = computed(() => levelSize(this.store.level()));
+  /**
+   * True while the camera shows part of a big map: in a match of one human -
+   * with two, it shows the whole map.
+   */
+  protected readonly showMinimap = computed(
+    () => this.mapSize() > 1 && this.running() && this.humans().length === 1
   );
   /**
    * One key per pair of resolutions: the canvas is rendered for the key, so
    * either resolution changing hands the painter a fresh canvas and context.
    */
   protected readonly canvasKey = computed(() => [
-    `${this.settings.simResolution()}:${this.settings.screenResolution()}`,
+    `${this.settings.simResolution()}:${this.settings.screenResolution()}:${this.mapSize()}`,
   ]);
-  protected readonly simResolutions = SIM_RESOLUTIONS;
-  protected readonly screenResolutions = SCREEN_RESOLUTIONS;
 
   stats: Signal<ColonyStats[]>;
   /** The colonies a finger may steer - one seat each in the touch layout. */
   protected readonly humanStats: Signal<ColonyStats[]>;
-  fps$: Observable<number>;
+  /** The neutral colonies' bacteria, null on a level without any. */
+  protected readonly neutralCount: Signal<number | null>;
+  /** The grey the neutral colonies are drawn in. */
+  protected readonly neutralCss = `rgb(${cssTriple([
+    NEUTRAL_COLOR[0],
+    NEUTRAL_COLOR[1],
+    NEUTRAL_COLOR[2],
+  ])})`;
+  protected readonly fps = this.store.fps;
   /** True while a match is on, paused or not. */
   protected readonly running: Signal<boolean>;
   protected readonly paused: Signal<boolean>;
-  /** Whole seconds of match time, so the clock only re-renders once a second. */
-  protected readonly gameSeconds: Signal<number>;
+  /**
+   * What the match clock shows, once a second: the time left on a timed
+   * level, else the time played - "1:05".
+   */
+  protected readonly clockText: Signal<string>;
+  /** What the clock tells - the time left or the time played. */
+  protected readonly clockLabel: Signal<string>;
+  /** True in the last seconds of a timed match, while it is on. */
+  protected readonly timeRunningOut: Signal<boolean>;
+  /** The vaporize snap, as loud as the game's other effects. */
+  protected readonly thanosOptions = computed((): Partial<WsThanosOptions> => {
+    const gain = this.sound.effectsGain();
+    return { sound: gain > 0, soundVolume: gain * SNAP_LEVEL };
+  });
+  /**
+   * What a colony counts up towards on a level won by reaching a goal - the
+   * seconds on the zone, the pellets eaten - null on any other level.
+   */
+  protected readonly goal = computed((): HudGoal | null => {
+    const rule = this.store.winRule();
+    const hold = holdTarget(rule);
+    if (hold !== null) {
+      return { icon: 'flag', label: 'seconds held', target: hold, of: 'held' };
+    }
+    const harvest = harvestTarget(rule);
+    return harvest === null
+      ? null
+      : {
+          icon: 'restaurant',
+          label: 'pellets eaten',
+          target: harvest,
+          of: 'pellets',
+        };
+  });
   /** True once a match is over and its result is shown, until the next one. */
   protected readonly matchOver: Signal<boolean>;
   /** The name of the computer's difficulty, for the menu's summary line. */
@@ -196,6 +312,22 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   private readonly resetting = signal(false);
   /**
+   * What plays underneath: the level's music while the match is on, the
+   * menu's between matches while the game fills the stage, and nothing
+   * on the pause menu and at the end of a match.
+   */
+  private readonly soundtrack = computed<Soundtrack | null>(() => {
+    if (this.running() && !this.paused()) {
+      return levelMusic(this.level().id);
+    }
+    const inMenu =
+      this.fullscreen() &&
+      !this.running() &&
+      !this.matchOver() &&
+      !this.resetting();
+    return inMenu ? 'menu' : null;
+  });
+  /**
    * The panel laid over the arena: the match result, the pause menu, one of
    * the menu screens - or none, while a match is on.
    */
@@ -211,10 +343,25 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     return this.running() ? null : this.screen();
   });
+  /**
+   * True while a menu screen fills the stage: what lies under it - the
+   * arena, its bar and the seats - is out of reach then.
+   */
+  protected readonly screenOpen = computed(() => {
+    const panel = this.panel();
+    return (
+      this.fullscreen() &&
+      panel !== null &&
+      panel !== 'pause' &&
+      panel !== 'over'
+    );
+  });
   /** True while the browser shows the stage on the whole screen. */
   protected readonly nativeFullscreen = signal(false);
   /** False where the browser has no Fullscreen API, as on iPhones. */
   protected readonly nativeFullscreenSupported = signal(false);
+  /** False where the device cannot vibrate - the setting is left out then. */
+  protected readonly vibrationSupported = this.haptics.supported;
 
   /** The level the next match is played on. */
   protected readonly level: Signal<Level>;
@@ -222,6 +369,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly balance: Signal<GameBalance>;
   /** Walls of the selected level, drawn every frame. */
   protected readonly walls: Signal<Rect[]>;
+  /** Zones of the selected level, drawn under the walls. */
+  protected readonly zones: Signal<Zone[]>;
   /** How the selected level looks and sounds. */
   protected readonly theme: Signal<ArenaTheme>;
   /** The frame colour of the arena, as a CSS `rgb()` triple. */
@@ -234,6 +383,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private repaintPending = false;
   /** The level that follows the selected one, null at the end of the list. */
   protected readonly upcomingLevel: Signal<Level | null>;
+  /** The level of a run someone shared in a link, null without one. */
+  protected readonly challengeLevel = computed(() => {
+    const run = this.store.challenge();
+    return run === null ? null : getLevel(run.header.levelId);
+  });
   /** Two humans or one human against the computer. */
   protected readonly mode: Signal<GameMode>;
   /** How hard the computer plays. */
@@ -241,11 +395,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** The colour ids of the left and the right colony. */
   protected readonly colors: Signal<[string, string]>;
   /** The names of the left and the right colour, for the help texts. */
-  protected readonly colorNames = computed(() =>
-    this.colors().map((id) => getColonyColor(id).name)
-  );
-  /** The looks the bacteria can be drawn in. */
-  protected readonly looks = BACTERIA_LOOKS;
+  protected readonly colorNames = computed((): [string, string] => {
+    const [left, right] = this.colors();
+    return [getColonyColor(left).name, getColonyColor(right).name];
+  });
   /** The best medallion of every level at the selected difficulty. */
   protected readonly levelMedals = computed(() => {
     const difficulty = this.difficulty();
@@ -255,6 +408,47 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         this.progress.medal(level.id, difficulty),
       ])
     );
+  });
+  /** Why each level is still locked on the campaign ladder, by level id. */
+  protected readonly campaign = inject(CampaignService);
+  protected readonly lockedLevels = this.campaign.locks;
+  /** Between two players: the series length, the head start, the series. */
+  protected readonly seriesLength = this.store.seriesLength;
+  protected readonly headStart = this.store.headStart;
+  /** The lifetime wins of the two colours between two players. */
+  protected readonly rivalry = computed(() =>
+    rivalryScore(this.progress.couchWins(), this.colors())
+  );
+  /** Every medallion held, by level id, then by difficulty. */
+  protected readonly medals = this.progress.medals;
+  protected readonly achievements = this.progress.achievements;
+  protected readonly totals = this.progress.totals;
+  protected readonly xp = this.progress.xp;
+  protected readonly colorLocks = this.progress.colorLocks;
+  protected readonly arenaLocks = this.progress.arenaLocks;
+  /**
+   * The colony colours as RGB and as CSS, with a text colour that reads on
+   * the player's - for the menu screens.
+   */
+  protected readonly colonyRgb = computed(
+    () =>
+      this.colors().map((id) => getColonyColor(id).rgb) as [
+        readonly [number, number, number],
+        readonly [number, number, number],
+      ]
+  );
+  protected readonly colonyCss = computed(() =>
+    this.colonyRgb().map((rgb) => rgba(rgb))
+  );
+  protected readonly onPlayerColor = computed(() =>
+    readableOn(this.colonyRgb()[0])
+  );
+  /** Why the level after the selected one is locked, null when it is open. */
+  protected readonly upcomingLock = computed(() => {
+    const upcoming = this.upcomingLevel();
+    return upcoming === null
+      ? null
+      : (this.lockedLevels()[upcoming.id] ?? null);
   });
   /** The crosshairs a finger or a key may steer - never the computer's. */
   private readonly humans: Signal<Player[]>;
@@ -296,45 +490,48 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Which crosshair each active pointer is dragging: pointerId -> playerId. */
   private readonly draggedBy = new Map<number, number>();
+  /** The fingers on the arena, two of which may pinch the camera. */
+  private readonly pinch = new Pinch();
 
   constructor() {
-    this.fps$ = this.query.selectFps();
+    loadFonts(document);
     this.gameStateService.reset();
+    // A series lasts for a visit of the page: one left unfinished last time
+    // does not carry over.
+    this.gameStateService.endSeries();
 
-    this.level = toSignal(this.query.selectLevel(), {
-      initialValue: LEVELS[0],
-    });
+    this.level = this.store.level;
     this.balance = computed(() =>
-      levelBalance(this.level(), scaleOf(this.arena().width))
+      levelBalance(this.level(), gridScale(this.level(), this.arena().width))
     );
     this.walls = computed(() => {
       const { width, height } = this.arena();
       return levelMap(this.level()).createWalls(width, height);
     });
+    this.zones = computed(() => {
+      const { width, height } = this.arena();
+      return mapZones(levelMap(this.level()), width, height);
+    });
     this.upcomingLevel = computed(() => nextLevel(this.level().id));
-    this.theme = computed(() => arenaTheme(this.level().id));
+    void this.takeChallenge();
+    this.theme = computed(() =>
+      arenaTheme(this.campaign.activeArena() ?? this.level().id)
+    );
     this.arenaBorder = computed(() => cssTriple(this.theme().border));
     this.arenaRim = computed(() => cssTriple(this.theme().rim));
 
-    this.mode = toSignal(this.query.selectMode(), {
-      initialValue: DEFAULT_MODE,
-    });
-    this.colors = toSignal(this.query.selectColors(), {
-      initialValue: [DEFAULT_COLORS[0], DEFAULT_COLORS[1]] as [string, string],
-    });
-    this.difficulty = toSignal(this.query.selectDifficulty(), {
-      initialValue: DEFAULT_DIFFICULTY,
-    });
+    this.mode = this.store.mode;
+    this.colors = this.store.colors;
+    this.difficulty = this.store.difficulty;
 
-    const players = toSignal(this.playerQuery.selectAll(), {
-      initialValue: [] as Player[],
-    });
+    const players = this.playerStore.entities;
     this.humans = computed(() => players().filter((player) => !player.isBot));
     // The crosshairs move the players every frame - the scoreboard only
     // renders again once one of its numbers changes.
     this.stats = computed(() => toColonyStats(players(), this.balance()), {
       equal: sameColonyStats,
     });
+    this.neutralCount = this.playerStore.neutralCount;
     this.humanStats = computed(() =>
       this.stats().filter((colony) => !colony.isBot)
     );
@@ -345,12 +542,28 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // also wipes the glow from the trail once the player asks for less
     // motion, even while the game is paused.
     effect(() => {
-      this.painter?.setTheme(this.theme());
+      this.painter?.setFloor(this.theme(), this.zones());
       this.walls();
       this.colors();
       this.settings.look();
       this.reducedMotion();
       this.draw();
+    });
+
+    // The minimap is drawn afresh for another map, and goes with the match.
+    effect(() => {
+      const canvas = this.minimapRef()?.nativeElement;
+      const cx = canvas?.getContext('2d');
+      const { width, height } = this.arena();
+      const theme = this.theme();
+      const walls = this.walls();
+      untracked(() => {
+        this.minimap =
+          cx == null ? null : new MinimapPainter(cx, width, height);
+        this.minimap?.setMap(theme, walls);
+        this.minimapUpdatedAt = Number.NEGATIVE_INFINITY;
+        this.draw();
+      });
     });
 
     // A fresh canvas - the first one, or one for another resolution - gets a
@@ -362,31 +575,33 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       }
     });
 
-    this.running = toSignal(this.query.selectIsMatchOn(), {
-      initialValue: false,
-    });
-    this.paused = toSignal(this.query.selectIsPaused(), {
-      initialValue: false,
-    });
-    this.gameSeconds = toSignal(
-      this.query
-        .select((state) => Math.floor(state.timePassed / 1000))
-        .pipe(distinctUntilChanged()),
-      { initialValue: 0 }
+    this.running = this.store.isMatchOn;
+    this.paused = this.store.isPaused;
+    this.clockText = computed(() =>
+      clock(this.store.secondsLeft() ?? this.store.gameSeconds())
     );
-    this.matchOver = toSignal(this.query.selectMatchEnded(), {
-      initialValue: false,
-    });
-    effect(() => this.sound.setEnabled(this.settings.sound()));
-    effect(() => this.sound.setMusicEnabled(this.settings.music()));
-    // The level's music plays while the match is on and stops on pause. A
-    // resumed match picks it up where the match clock stands, so it stays
-    // in step with a map that moves to it.
+    this.clockLabel = computed(() =>
+      this.store.secondsLeft() === null ? 'Game time' : 'Time left'
+    );
+    this.timeRunningOut = computed(
+      () =>
+        this.running() &&
+        (this.store.secondsLeft() ?? Infinity) <= RUNNING_OUT_SEC
+    );
+    this.matchOver = this.store.matchEnded;
+    // A pause or the end of a match stops the match's frames: one more
+    // frame lets the camera ease on by itself from there.
     effect(() => {
-      const music =
-        this.running() && !this.paused() ? levelMusic(this.level().id) : null;
+      if (!this.running() || this.paused()) {
+        untracked(() => this.draw());
+      }
+    });
+    // A resumed match picks its music up where the match clock stands, so
+    // it stays in step with a map that moves to it.
+    effect(() => {
+      const music = this.soundtrack();
       untracked(() =>
-        this.sound.setMusic(music, this.query.getValue().timePassed / 1000)
+        this.sound.setMusic(music, this.store.snapshot().timePassed / 1000)
       );
     });
     effect(() => {
@@ -401,7 +616,74 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
     this.gameStateService.frames$
       .pipe(untilDestroyed(this))
-      .subscribe((deltaTimeMs) => this.runFrame(deltaTimeMs / 1000));
+      .subscribe((frame) => this.runFrame(frame));
+  }
+
+  /**
+   * Takes the run a link carries in its hash as a challenge, and takes it
+   * out of the address, so a reload or a bookmark does not offer it again.
+   */
+  private async takeChallenge(): Promise<void> {
+    if (
+      !(await this.gameStateService.offerChallenge(this.document.location.hash))
+    ) {
+      return;
+    }
+    // Through the router, so it does not keep the run in the url it holds.
+    await this.router.navigateByUrl(this.router.url.split('#')[0], {
+      replaceUrl: true,
+    });
+  }
+
+  /** Today's daily level for the main menu. */
+  protected readonly dailyCard = computed((): DailyCard => {
+    const { levelId, attemptsLeft, streak } = this.progress.daily();
+    const attempts =
+      attemptsLeft > 0
+        ? `${attemptsLeft} of ${DAILY_ATTEMPTS} attempts left`
+        : 'Attempts used - practice until 00:00 UTC';
+    return {
+      levelId,
+      name: getLevel(levelId).name,
+      note: streak > 0 ? `${attempts} · ${streak}-day streak` : attempts,
+    };
+  });
+
+  /** True in a match of an endless run - no restart, it would cost no life. */
+  protected readonly inEndlessRun = this.store.endlessMatch;
+
+  /** Starts a new endless run, on its first level. */
+  protected playEndless(): void {
+    if (this.resetting()) {
+      return;
+    }
+    this.gameStateService.startEndless();
+    this.startGame();
+  }
+
+  /** Starts a match on today's daily level, against the computer. */
+  protected playDaily(): void {
+    // Not while the last match still turns to dust - the reset would end it.
+    if (this.resetting()) {
+      return;
+    }
+    this.gameStateService.playDaily(this.progress.daily().day);
+    this.startGame();
+  }
+
+  /** Starts a match against the ghost of the run someone shared. */
+  protected fightChallenge(): void {
+    const run = this.store.challenge();
+    if (run === null || this.resetting()) {
+      return;
+    }
+    this.dismissChallenge();
+    this.gameStateService.playGhost(run);
+    this.startGame();
+  }
+
+  protected dismissChallenge(): void {
+    this.store.update({ challenge: null });
   }
 
   /**
@@ -410,8 +692,26 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * "next level".
    */
   protected onMatchEnd(action: MatchEndAction): void {
+    if (action === 'next' && this.upcomingLock() !== null) {
+      return;
+    }
     const next = action === 'next' ? this.upcomingLevel() : null;
-    this.screen.set('menu');
+    // The reset ends a match set outside the setup: a rematch sets it again.
+    const rematch =
+      action === 'again' ? this.gameStateService.oneMatch() : null;
+    if (action === 'levels') {
+      // The daily level and an endless run have no level to choose: their
+      // mode then, to pick another.
+      const kind = this.playKind();
+      this.newGameEntry.set({
+        kind,
+        step: stepsOf(kind).includes('level') ? 'level' : 'mode',
+      });
+    }
+    this.screen.set(action === 'levels' ? 'new-game' : 'menu');
+    if (action === 'menu') {
+      this.gameStateService.endSeries();
+    }
     this.resetGame$()
       .pipe(
         tap(() => {
@@ -420,7 +720,20 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           if (next != null) {
             this.gameStateService.setLevel(next.id);
           }
-          if (action !== 'menu') {
+          if (action === 'ghost') {
+            this.gameStateService.playGhost();
+          } else if (rematch !== null) {
+            this.gameStateService.replayOneMatch(rematch);
+          }
+          if (action === 'endless') {
+            this.gameStateService.advanceEndless();
+          }
+          if (
+            action === 'again' ||
+            action === 'next' ||
+            action === 'ghost' ||
+            action === 'endless'
+          ) {
             this.startGame();
           }
         }),
@@ -431,13 +744,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Plays the end of the match, and the medallion it earned after it. */
   private finishMatch(): void {
-    const { award, levelId } = this.query.getValue();
-    this.sound.matchEnd(
-      this.matchResult(),
-      award?.medal == null
-        ? null
-        : { tier: award.medal, music: levelMusic(levelId) }
-    );
+    const medal = this.store.snapshot().earnings?.award?.medal ?? null;
+    const result = this.matchResult();
+    this.sound.matchEnd(result, medal);
+    this.haptics.matchEnd(result, medal != null);
   }
 
   /**
@@ -445,29 +755,139 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * win or a loss, between two players always a win for one of them.
    */
   private matchResult(): MatchResult {
-    const winner = this.query.getValue().winner;
+    const winner = this.store.snapshot().winner;
     if (winner == null) {
       return 'draw';
     }
     return winner.isBot ? 'loss' : 'win';
   }
 
-  /** Turns the sound on or off, and remembers it. */
+  /** Turns the sound on or off - with a tick to show it is on. */
   protected setSound(on: boolean): void {
     this.settings.setSound(on);
     if (on) {
-      this.sound.click();
+      this.sound.tick();
+    }
+  }
+
+  /** Turns the sound effects on or off - with a tick to show they are on. */
+  protected setEffects(on: boolean): void {
+    this.settings.setEffects(on);
+    if (on) {
+      this.sound.tick();
+    }
+  }
+
+  /** Turns the vibration on or off - with a buzz to show it is on. */
+  protected setVibration(on: boolean): void {
+    this.settings.setVibration(on);
+    if (on) {
+      this.haptics.tap();
+    } else {
+      this.haptics.stop();
     }
   }
 
   /** Opens one of the menu screens. */
   protected show(screen: MenuScreen): void {
+    if (screen !== this.screen()) {
+      this.sound.navigate();
+    }
     this.screen.set(screen);
+  }
+
+  protected selectSeriesLength(length: SeriesLength): void {
+    this.gameStateService.setSeriesLength(length);
+  }
+
+  protected selectHeadStart(headStart: HeadStart): void {
+    this.gameStateService.setHeadStart(headStart);
+  }
+
+  /** The level picked for the next match, beside the daily and the run. */
+  protected readonly selectedLevelId = this.store.levelId;
+
+  /** Where a new game opens - on the mode last played, to pick another. */
+  protected readonly newGameEntry = signal<NewGameEntry>({
+    kind: null,
+    step: 'mode',
+  });
+
+  /** "5 of 14 levels open" - the campaign so far, for its mode card. */
+  protected readonly campaignNote = computed(
+    () =>
+      `${this.campaign.summary().openLevels} of ${LEVELS.length} levels open`
+  );
+
+  /** The mode picked in a new game this visit, null before. */
+  private readonly lastKind = signal<PlayKind | null>(null);
+
+  /**
+   * The mode last played: the one picked in a new game, else the daily
+   * level or an endless run while one is on, else who plays and whether
+   * the ladder applies.
+   */
+  private readonly playKind = computed((): PlayKind => {
+    const last = this.lastKind();
+    if (last !== null) {
+      return last;
+    }
+    if (this.store.dailyDay() !== null) {
+      return 'daily';
+    }
+    if (this.store.endlessMatch()) {
+      return 'endless';
+    }
+    if (this.mode() === 'two-players') {
+      return 'two-players';
+    }
+    return this.settings.freePlay() ? 'free' : 'campaign';
+  });
+
+  /** Opens a new game on its first step. */
+  protected openNewGame(): void {
+    this.newGameEntry.set({ kind: this.playKind(), step: 'mode' });
+    this.show('new-game');
+  }
+
+  /**
+   * Sets the game up for a mode: who plays, and whether the ladder's locks
+   * apply - the campaign service keeps the next match on an open ladder
+   * level while they do.
+   */
+  protected setPlayKind(kind: PlayKind): void {
+    this.lastKind.set(kind);
+    this.selectMode(opponentOf(kind));
+    if (kind === 'campaign' || kind === 'free') {
+      this.settings.setFreePlay(kind === 'free');
+    }
+  }
+
+  /** Starts what a new game set up: a match, the daily level or a run. */
+  protected startNewGame(kind: PlayKind): void {
+    switch (kind) {
+      case 'daily':
+        this.playDaily();
+        return;
+      case 'endless':
+        this.playEndless();
+        return;
+      default:
+        this.startGame();
+    }
+  }
+
+  /** Starts a match on the furthest level the campaign ladder has opened. */
+  protected continueCampaign(): void {
+    this.selectMode('vs-computer');
+    this.gameStateService.setLevel(this.campaign.furthestLevel());
+    this.startGame();
   }
 
   /** Gives the match up and returns to the main menu. */
   protected quitToMenu(): void {
     this.screen.set('menu');
+    this.gameStateService.endSeries();
     this.resetGame();
   }
 
@@ -481,6 +901,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    dismissSplash(document);
     this.nativeFullscreenSupported.set(
       isFullscreenSupported(document, this.stageRef?.nativeElement)
     );
@@ -504,9 +925,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       height,
       renderScale(
         this.settings.simResolution(),
-        this.settings.screenResolution()
-      )
+        this.settings.screenResolution(),
+        this.mapSize()
+      ),
+      detailScale(
+        this.settings.simResolution(),
+        this.settings.screenResolution(),
+        this.mapSize()
+      ),
+      simScale(this.settings.simResolution())
     );
+    this.camera =
+      this.mapSize() > 1 ? new Camera(width, height, this.mapSize()) : null;
+    this.lastView = null;
     if (this.painter == null) {
       throw new Error('Could not get rendering context');
     }
@@ -515,9 +946,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // With a WebGL2 context the war itself runs on the GPU as well.
     const gl = this.painter instanceof GlArenaPainter ? this.painter : null;
     this.playerService.useSimulation(
-      gl == null ? null : (balance) => gl.createSimulation(balance)
+      gl == null
+        ? null
+        : (balance, random) => gl.createSimulation(balance, random)
     );
-    this.painter.setTheme(this.theme());
+    this.painter.setFloor(this.theme(), this.zones());
     this.gameStateService.setArenaSize(width, height);
     this.draw();
   }
@@ -527,9 +960,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * gesture nearly every session makes, so it also takes the screen.
    */
   startGame() {
+    // A match started from the level choice backs out to the main menu.
+    this.screen.set('menu');
     this.requestNativeFullscreen();
-    this.sound.matchStart();
+    this.sound.matchStart(levelMusic(this.level().id));
+    this.haptics.matchStart();
     this.clearNextFrame = true;
+    this.camera?.reset();
+    this.cameraMovedAt = null;
     this.gameStateService.cleanup();
     this.gameStateService.init(this.arena().width, this.arena().height);
     this.gameStateService.start();
@@ -557,9 +995,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     return defer(() => {
       this.resetting.set(true);
       this.gameStateService.pause();
-      return this.query.selectCurrentGameState(GameState.PAUSED).pipe(
-        take(1),
-        switchMap(() => this.vaporize()),
+      return this.vaporize().pipe(
         defaultIfEmpty(undefined),
         last(),
         tap(() => {
@@ -573,17 +1009,20 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Advances the war by one frame and paints it - called by the game loop,
-   * inside the animation frame, so what is painted is shown on that frame.
+   * Advances the war by the frame's ticks and paints it - called by the game
+   * loop, inside the animation frame, so what is painted is shown on that
+   * frame.
    */
-  private runFrame(deltaTimeSec: number): void {
+  private runFrame(frame: GameFrame): void {
     if (this.painter == null) {
       return;
     }
     const { width, height } = this.arena();
-    this.playerService.gameLoop(width, height, deltaTimeSec);
-    this.sound.frame(this.playerService.getFrameEvents());
-    this.paint(deltaTimeSec, false);
+    this.gameStateService.advance(width, height, frame.ticks);
+    const events = this.playerService.getFrameEvents();
+    this.sound.frame(events);
+    this.haptics.frame(events);
+    this.paint(frame.elapsedSec, false, frame.alpha);
   }
 
   /**
@@ -599,25 +1038,156 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.repaintPending = true;
     requestAnimationFrame(() => {
       this.repaintPending = false;
-      this.paint(1 / 1000, true);
+      this.paint(1 / 1000, true, 1);
     });
   }
 
-  private paint(deltaTimeSec: number, clear: boolean): void {
+  /** `alpha` is how far the crosshairs are drawn along their last tick. */
+  private paint(deltaTimeSec: number, clear: boolean, alpha: number): void {
     this.animationSec += deltaTimeSec;
-    const frame = this.frame(deltaTimeSec, clear || this.clearNextFrame);
+    const view = this.moveCamera();
+    // The trail of the last frame lies elsewhere in a view that moved - by
+    // half a pixel or more: the spring creeps on by less for a long while.
+    const last = this.lastView;
+    const halfPixel =
+      view.width / (2 * (this.canvasRef()?.nativeElement.width || 1));
+    const moved =
+      last == null ||
+      Math.abs(last.x - view.x) >= halfPixel ||
+      Math.abs(last.y - view.y) >= halfPixel ||
+      Math.abs(last.width - view.width) >= halfPixel;
+    this.lastView = view;
+    const frame = this.frame(
+      deltaTimeSec,
+      clear || this.clearNextFrame || moved,
+      alpha,
+      view
+    );
     this.clearNextFrame = false;
     this.painter?.paint(frame);
+    this.paintMinimap(view, frame.dynamicWalls);
+  }
+
+  /**
+   * Draws the minimap: the camera's frame on every frame, where the
+   * colonies are ten times a second - enough to follow a fight.
+   */
+  private paintMinimap(view: Rect, dynamicWalls: readonly DynamicWall[]): void {
+    if (this.minimap == null) {
+      return;
+    }
+    const now = performance.now();
+    if (now - this.minimapUpdatedAt >= MINIMAP_UPDATE_MS) {
+      const simulation = this.playerService.getSimulation();
+      const blocks = simulation.blockCounts();
+      if (blocks != null) {
+        this.minimap.update(
+          blocks,
+          simulation.summaries().map((colony) => colony.color)
+        );
+        this.minimapUpdatedAt = now;
+      }
+    }
+    this.minimap.paint(view, dynamicWalls);
+  }
+
+  /**
+   * Moves the camera over a big map - after the crosshair of the one human
+   * in a match, to the whole arena otherwise - and returns what of the
+   * arena the frame shows: all of it on a base map.
+   */
+  private moveCamera(): Rect {
+    const { width, height } = this.arena();
+    if (this.camera == null) {
+      return { x: 0, y: 0, width, height };
+    }
+    const now = performance.now();
+    const deltaSec =
+      this.cameraMovedAt == null
+        ? 0
+        : Math.min(0.1, (now - this.cameraMovedAt) / 1000);
+    this.cameraMovedAt = now;
+    const target = this.cameraTarget();
+    this.camera.follow(target, deltaSec);
+    if (this.camera.settledOn(target)) {
+      // Its next move starts afresh, not with the time it sat still.
+      this.cameraMovedAt = null;
+    } else if (!this.matchPaints()) {
+      // No match frame moves it on now - a finished match, a pause, the
+      // start screen: it asks for frames itself until it arrives.
+      this.draw();
+    }
+    return this.camera.viewRect();
+  }
+
+  /** True while a running match paints every frame. */
+  private matchPaints(): boolean {
+    return untracked(this.running) && !untracked(this.paused);
+  }
+
+  /** What the camera follows: the one human's crosshair in a match. */
+  private cameraTarget(): Point | null {
+    const humans = untracked(this.humans);
+    return untracked(this.running) && humans.length === 1
+      ? this.playerService.crosshairAt(humans[0], 1)
+      : null;
+  }
+
+  /**
+   * The wheel zooms the camera over a big map, in or out - during a match
+   * of one human; otherwise it shows the whole map and the wheel scrolls
+   * the page.
+   */
+  protected onWheel(event: WheelEvent): void {
+    if (!this.zooms()) {
+      return;
+    }
+    event.preventDefault();
+    // In pixels: Firefox counts a mouse wheel's notches in lines.
+    const perUnit =
+      event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? 16
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? 400
+          : 1;
+    this.zoomBy(Math.exp((-event.deltaY * perUnit) / 500));
+  }
+
+  /**
+   * True while the camera may zoom: over a big map, in a match it follows
+   * the one human through - with two, it shows the whole map.
+   */
+  private zooms(): boolean {
+    return this.camera != null && this.cameraTarget() != null;
+  }
+
+  private zoomBy(factor: number): void {
+    if (factor === 1) {
+      return;
+    }
+    this.camera?.zoomBy(factor);
+    if (!this.matchPaints()) {
+      this.draw();
+    }
   }
 
   /** What the arena shows right now, for the painter. */
-  private frame(deltaTimeSec: number, clear: boolean): ArenaFrame {
+  private frame(
+    deltaTimeSec: number,
+    clear: boolean,
+    alpha: number,
+    view: Rect
+  ): ArenaFrame {
     const balance = this.balance();
-    const players = this.playerQuery.getAll();
+    const players = untracked(this.playerStore.entities);
+    const drawn = players.map((player) => ({
+      player,
+      at: this.playerService.crosshairAt(player, alpha),
+    }));
     const boosts = new Map(
-      players
-        .filter(isBoosted)
-        .map((player) => [player.id, { x: player.x, y: player.y }])
+      drawn
+        .filter(({ player }) => isBoosted(player))
+        .map(({ player, at }) => [player.id, at])
     );
     const simulation = this.playerService.getSimulation();
     // Which processor runs the war - for the e2e tests and for debugging.
@@ -630,6 +1200,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       clear,
       deltaTimeSec,
       timeSec: this.animationSec,
+      view,
       walls: this.walls(),
       dynamicWalls: this.playerService.getDynamicWalls(),
       colonies: simulation.colonyLayers(boosts),
@@ -637,9 +1208,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       nutrients: this.playerService.getNutrients(),
       balance,
       look: this.settings.look(),
-      cursors: players.map((player) => ({
-        x: player.x,
-        y: player.y,
+      cursors: drawn.map(({ player, at }) => ({
+        ...at,
         color: player.color,
         boostLeft:
           isBoosted(player) && balance.boostDurationSec > 0
@@ -650,6 +1220,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.gameStateService.endSeries();
     this.gameStateService.cleanup();
     // The GPU simulation lives in this canvas's context, which goes with it.
     this.playerService.useSimulation(null);
@@ -663,11 +1234,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Toggles pause - the touch equivalent of the P key. */
   togglePause() {
     this.requestNativeFullscreen();
-    this.sound.click();
+    if (this.paused()) {
+      this.sound.resume();
+    } else {
+      this.sound.pause();
+    }
+    this.haptics.tap();
     this.gameStateService.togglePause();
   }
 
-  /** Picks the level the next match is played on. */
+  /** Picks the level the next match is played on - one the ladder opened. */
   protected selectLevel(levelId: string): void {
     this.gameStateService.setLevel(levelId);
   }
@@ -679,6 +1255,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Gives a seat's colony another colour. */
   protected selectColor(change: ColorChange): void {
+    // Neither seat may end up with a colour still to earn - a swap would
+    // hand the other seat one just as well. A colour a seat has, it keeps.
+    const colors = this.colors();
+    const next = pickColor(colors, change.seat, change.colorId);
+    const locks = this.colorLocks();
+    if (next.some((id, seat) => id !== colors[seat] && id in locks)) {
+      return;
+    }
     this.gameStateService.setColor(change.seat, change.colorId);
   }
 
@@ -790,7 +1374,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * Grabs the crosshair nearest to the touch and starts dragging it.
    *
    * Two pointers can be active at once, one per player, so both can play on the
-   * same screen.
+   * same screen. A second finger with no crosshair left to grab pinches the
+   * camera over a big map with the first, which lets go of its crosshair.
    */
   onPointerDown(event: PointerEvent) {
     const point = this.toArenaPoint(event);
@@ -803,9 +1388,18 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       new Set(this.draggedBy.values())
     );
     if (playerId == null) {
+      if (
+        this.zooms() &&
+        this.pinch.start(event.pointerId, clientPoint(event))
+      ) {
+        this.draggedBy.clear();
+        (event.target as Element).setPointerCapture?.(event.pointerId);
+        event.preventDefault();
+      }
       return;
     }
     this.draggedBy.set(event.pointerId, playerId);
+    this.pinch.down(event.pointerId, clientPoint(event));
     // Keep receiving moves once the finger slides off the canvas.
     (event.target as Element).setPointerCapture?.(event.pointerId);
     this.playerService.setDragTarget(playerId, point.x, point.y);
@@ -813,6 +1407,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   onPointerMove(event: PointerEvent) {
+    const factor = this.pinch.move(event.pointerId, clientPoint(event));
+    if (this.pinch.pinches(event.pointerId)) {
+      this.zoomBy(factor);
+      event.preventDefault();
+      return;
+    }
     const playerId = this.draggedBy.get(event.pointerId);
     if (playerId == null) {
       return;
@@ -831,6 +1431,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   onPointerUp(event: PointerEvent) {
     this.draggedBy.delete(event.pointerId);
+    this.pinch.up(event.pointerId);
   }
 
   private toArenaPoint(event: PointerEvent) {
@@ -842,8 +1443,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       event.clientX,
       event.clientY,
       canvas.getBoundingClientRect(),
-      this.arena().width,
-      this.arena().height
+      this.lastView ?? { x: 0, y: 0, ...this.arena() }
     );
   }
 
@@ -873,7 +1473,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // while a button has the focus: a keyboard user pressing Enter on "Reset"
     // expects a reset, not a boost. Outside of a match Space still scrolls.
     const boosted =
-      this.query.getValue().currentState === GameState.RUNNING &&
+      this.store.snapshot().currentState === GameState.RUNNING &&
       !isInteractiveTarget($event.target)
         ? humanForBoostKey(this.humans(), $event.key)
         : null;
@@ -913,7 +1513,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 const ARENA_FRAME_PX = 6;
 
 /** The screens of the menu that is shown while no match is on. */
-export type MenuScreen = 'menu' | 'settings' | 'help';
+export type MenuScreen = 'menu' | 'new-game' | 'profile' | 'settings' | 'help';
 
 /** What is laid over the arena right now, nothing while a match is on. */
 export type StagePanel = MenuScreen | 'pause' | 'over' | null;
@@ -925,6 +1525,11 @@ export type StagePanel = MenuScreen | 'pause' | 'over' | null;
  * panel lives in the CDK overlay container, and typing a level name there must
  * not throw the page into fullscreen.
  */
+/** Where the pointer is, in client pixels. */
+function clientPoint(event: PointerEvent): Point {
+  return { x: event.clientX, y: event.clientY };
+}
+
 function isTypingTarget(target: EventTarget | null): boolean {
   const element = target as HTMLElement | null;
   if (element == null || typeof element.closest !== 'function') {

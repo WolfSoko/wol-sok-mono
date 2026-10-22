@@ -25,7 +25,12 @@
           "apps/bacteria-game-remote/src/favicon.ico",
           "apps/bacteria-game-remote/src/manifest.webmanifest",
           "apps/bacteria-game-remote/src/icons",
-          "apps/bacteria-game-remote/src/assets"
+          "apps/bacteria-game-remote/src/assets",
+          {
+            "glob": "assetlinks.json",
+            "input": "apps/bacteria-game-remote/src/.well-known",
+            "output": ".well-known"
+          }
         ],
         "styles": [
           "apps/bacteria-game-remote/src/styles.scss",
@@ -68,6 +73,17 @@
           "optimization": false,
           "extractLicenses": false,
           "sourceMap": true
+        },
+        "emulator": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "fileReplacements": [
+            {
+              "replace": "apps/bacteria-game-remote/src/environments/environment.ts",
+              "with": "apps/bacteria-game-remote/src/environments/environment.emulator.ts"
+            }
+          ]
         }
       },
       "defaultConfiguration": "production"
@@ -117,6 +133,9 @@
         },
         "development": {
           "buildTarget": "bacteria-game-remote:esbuild:development"
+        },
+        "emulator": {
+          "buildTarget": "bacteria-game-remote:esbuild:emulator"
         }
       },
       "defaultConfiguration": "development",
@@ -132,6 +151,31 @@
         "open": false
       },
       "continuous": true
+    },
+    "serve-emulator": {
+      "executor": "@angular-architects/native-federation:build",
+      "dependsOn": ["firebase-emulators"],
+      "options": {
+        "target": "bacteria-game-remote:serve-original:emulator",
+        "rebuildDelay": 500,
+        "dev": true,
+        "port": 4202,
+        "open": false
+      },
+      "continuous": true
+    },
+    "firebase-emulators": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "firebase emulators:start --only auth,firestore --project demo-bacteria-wars --config apps/bacteria-game-remote/firebase.json"
+      },
+      "continuous": true
+    },
+    "deploy-firestore-rules": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "firebase deploy --only firestore:rules --config apps/bacteria-game-remote/firebase.json --project {args.firebaseProject}"
+      }
     },
     "icons": {
       "executor": "nx:run-commands",
@@ -161,6 +205,7 @@
       "options": {
         "staticFilePath": "dist/apps/bacteria-game-remote",
         "port": 4202,
+        "spa": true,
         "watch": false
       },
       "configurations": {

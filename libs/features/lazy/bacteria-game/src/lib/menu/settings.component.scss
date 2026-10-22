@@ -1,0 +1,78 @@
+@use 'screen';
+
+:host {
+  @include screen.screen;
+}
+
+.screen-sections {
+  // Wide enough for the eight colour swatches and four resolutions side by
+  // side: a phone held sideways gets two columns, not three cramped ones.
+  @include screen.sections(22rem);
+}
+
+.screen-section {
+  @include screen.section;
+}
+
+.section-title {
+  @include screen.section-title;
+}
+
+.section-note {
+  font-size: 0.85rem;
+}
+
+// Seats under each other, so the swatches fit a third of the screen.
+.stacked {
+  flex-direction: column;
+}
+
+.option-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.option-label {
+  font-size: 0.9rem;
+  color: var(--bw-muted);
+}
+
+.resolution-hint {
+  font-size: 0.85rem;
+  color: var(--bw-muted);
+}
+
+.switches mat-slide-toggle {
+  min-height: 2.75rem;
+}
+
+// A switch with the slider for its volume under it.
+.volume {
+  display: flex;
+  flex-direction: column;
+}
+
+.volume-slider {
+  --mat-slider-active-track-color: var(--bw-gold);
+  --mat-slider-handle-color: var(--bw-gold);
+  --mat-slider-focus-handle-color: var(--bw-gold);
+  --mat-slider-hover-handle-color: var(--bw-gold);
+  --mat-slider-inactive-track-color: var(--bw-line-strong);
+  --mat-slider-label-container-color: var(--bw-gold);
+  --mat-slider-label-label-text-color: var(--bw-ground);
+  --mat-slider-with-tick-marks-active-container-color: var(--bw-ground);
+
+  width: 100%;
+  max-width: 20rem;
+  margin: 0 0.5rem;
+}
+
+.arena-picker {
+  width: 100%;
+}
+
+.arena-lock {
+  opacity: 0.75;
+}

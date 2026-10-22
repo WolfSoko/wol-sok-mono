@@ -1,3 +1,4 @@
+import { clockOf, winRuleOf } from './win-conditions';
 import { gameBalance } from './game-balance';
 import {
   DEFAULT_CROSSHAIR_SPEED,
@@ -6,11 +7,40 @@ import {
   levelBalance,
   levelCrosshairSpeed,
   levelMap,
+  levelTitle,
   nextLevel,
 } from './levels';
 import { GAME_MAPS } from './game-maps';
+import { MAX_GPU_COLONIES } from '../gl/simulation-shaders';
 
 describe('LEVELS', () => {
+  it('has room on the GPU for the colonies of every level, neutral ones included', () => {
+    for (const level of LEVELS) {
+      expect(2 + (level.neutrals?.length ?? 0)).toBeLessThanOrEqual(
+        MAX_GPU_COLONIES
+      );
+    }
+  });
+
+  it('asks a timed level for a win before its clock runs out for silver', () => {
+    // A win on time is bronze: silver and gold ask for a wipe-out before.
+    const timed = LEVELS.flatMap((level) =>
+      clockOf(winRuleOf(level)) === null
+        ? []
+        : [
+            {
+              silverSec: level.medal.silverSec,
+              limitSec: clockOf(winRuleOf(level)) ?? 0,
+            },
+          ]
+    );
+
+    expect(timed.length).toBeGreaterThan(0);
+    expect(
+      timed.filter(({ silverSec, limitSec }) => silverSec >= limitSec)
+    ).toEqual([]);
+  });
+
   it('uses unique ids', () => {
     const ids = LEVELS.map((level) => level.id);
 
@@ -116,5 +146,12 @@ describe('levelBalance on a finer grid', () => {
     expect(levelCrosshairSpeed(level, 1.5)).toBe(
       levelCrosshairSpeed(level) * 1.5
     );
+  });
+});
+
+describe('levelTitle', () => {
+  it('drops the number from the name', () => {
+    expect(levelTitle(getLevel('hourglass'))).toBe('Hourglass');
+    expect(LEVELS.every((level) => !/\d/.test(levelTitle(level)))).toBe(true);
   });
 });

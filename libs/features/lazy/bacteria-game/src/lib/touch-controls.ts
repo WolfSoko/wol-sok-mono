@@ -14,6 +14,7 @@ import {
   scaleTo,
   SteeringVector,
 } from './state/geometry';
+import { Rect } from './state/maps';
 
 export type ArenaPoint = Point;
 
@@ -37,30 +38,26 @@ export interface CrosshairPosition {
  * coordinates.
  *
  * The canvas is rendered at its intrinsic size but stretched to the container
- * width by CSS, so the two coordinate systems differ by a scale factor.
- * Returns null while the element has no layout yet.
+ * width by CSS, so the two coordinate systems differ by a scale factor. It
+ * shows `view` of the arena - all of it, but on a map the camera follows
+ * over - and a pointer off the canvas is kept on its edge. Returns null
+ * while the element has no layout yet.
  */
 export function arenaPointFromClient(
   clientX: number,
   clientY: number,
   bounds: ElementBounds,
-  arenaWidth: number,
-  arenaHeight: number
+  view: Rect
 ): ArenaPoint | null {
   if (bounds.width <= 0 || bounds.height <= 0) {
     return null;
   }
   return {
-    x: clamp(
-      ((clientX - bounds.left) / bounds.width) * arenaWidth,
-      0,
-      arenaWidth
-    ),
-    y: clamp(
-      ((clientY - bounds.top) / bounds.height) * arenaHeight,
-      0,
-      arenaHeight
-    ),
+    x:
+      view.x + clamp((clientX - bounds.left) / bounds.width, 0, 1) * view.width,
+    y:
+      view.y +
+      clamp((clientY - bounds.top) / bounds.height, 0, 1) * view.height,
   };
 }
 
@@ -117,4 +114,72 @@ export function steeringVector(
   }
   const strength = Math.min(1, (deflection - deadZone) / (1 - deadZone));
   return scaleTo(push, strength);
+}
+
+/**
+ * The fingers on the arena, in client pixels, so a second finger that has
+ * no crosshair left to grab can pinch the camera with the first. Client
+ * pixels, not cells: the cells under a finger change as the camera zooms.
+ *
+ * A finger stays in its pinch until it is lifted - the one left on the
+ * screen does not grab a crosshair halfway through a gesture.
+ */
+export class Pinch {
+  private readonly fingers = new Map<number, Point>();
+  private pair: readonly [number, number] | null = null;
+
+  /** A finger that took hold of the arena - one that grabbed a crosshair. */
+  public down(pointerId: number, point: Point): void {
+    this.fingers.set(pointerId, point);
+  }
+
+  /**
+   * Lands a finger that pinches with the one other finger on the arena -
+   * false, and the finger is not tracked, unless there is exactly one.
+   */
+  public start(pointerId: number, point: Point): boolean {
+    const [other] = this.fingers.keys();
+    if (this.fingers.size !== 1 || other === pointerId) {
+      return false;
+    }
+    this.fingers.set(pointerId, point);
+    this.pair = [other, pointerId];
+    return true;
+  }
+
+  public pinches(pointerId: number): boolean {
+    return this.pair?.includes(pointerId) ?? false;
+  }
+
+  /**
+   * Moves a finger and returns by how much the gap between the two
+   * pinching grew since its last move: the factor to zoom by, 1 while the
+   * finger does not pinch.
+   */
+  public move(pointerId: number, point: Point): number {
+    if (!this.fingers.has(pointerId)) {
+      return 1;
+    }
+    const before = this.gap();
+    this.fingers.set(pointerId, point);
+    const after = this.gap();
+    return this.pinches(pointerId) && before > 0 && after > 0
+      ? after / before
+      : 1;
+  }
+
+  public up(pointerId: number): void {
+    this.fingers.delete(pointerId);
+    if (this.pair != null && !this.pair.some((id) => this.fingers.has(id))) {
+      this.pair = null;
+    }
+  }
+
+  private gap(): number {
+    if (this.pair == null) {
+      return 0;
+    }
+    const [a, b] = this.pair.map((id) => this.fingers.get(id));
+    return a == null || b == null ? 0 : distance(a, b);
+  }
 }

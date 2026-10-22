@@ -19,6 +19,27 @@ export interface ColonySummary {
   totalEnergy: number;
   /** Centre of mass, null once the colony is gone. */
   center: Point | null;
+  /** Living bacteria on the zone a hold-the-zone level is won on. */
+  onHill: number;
+  /** Pellets the colony ate up since the match started. */
+  pellets: number;
+}
+
+/**
+ * Where the colonies are, coarsely: the arena cut into blocks of cells, and
+ * the bacteria of each colony in each block - for the minimap.
+ */
+export interface BlockCounts {
+  /** Blocks across and down. */
+  blocksX: number;
+  blocksY: number;
+  /** Arena cells per block along each axis. */
+  cellSize: number;
+  /**
+   * Per colony, in the order of the summaries: its bacteria per block, row
+   * by row.
+   */
+  counts: readonly Uint32Array[];
 }
 
 /**
@@ -33,13 +54,15 @@ export interface Simulation {
   resize(width: number, height: number): void;
   /** Replaces all colonies with a fresh blob per player. */
   init(spawns: ColonySpawn[]): void;
-  /** Advances the war by one frame towards the players' crosshairs. */
+  /** Advances the war by one tick towards the players' crosshairs. */
   step(players: Player[], deltaTimeSec: number): void;
   getNutrients(): Nutrient[];
   getDynamicWalls(): readonly DynamicWall[];
-  /** What happened during the last frame. */
+  /** What happened during the last tick. */
   getEvents(): StepEvents;
   summaries(): readonly ColonySummary[];
+  /** Where the colonies are, block by block - null before the GPU reported. */
+  blockCounts(): BlockCounts | null;
   /**
    * The colonies as the painter draws them; `boosts` holds the crosshairs
    * of the players whose boost runs, by player id.
@@ -51,5 +74,11 @@ export interface Simulation {
   dispose(): void;
 }
 
-/** Builds the simulation of one match. */
-export type SimulationFactory = (balance: GameBalance) => Simulation;
+/**
+ * Builds the simulation of one match, drawing every chance - the pellets
+ * included - from `random`.
+ */
+export type SimulationFactory = (
+  balance: GameBalance,
+  random: () => number
+) => Simulation;

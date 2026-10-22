@@ -1,0 +1,53 @@
+{
+  "name": "bacteria-wars-android",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "tags": ["type:android"],
+  "targets": {
+    "apk": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/bacteria-wars-android",
+        "command": "./gradlew assembleDebug"
+      },
+      "configurations": {
+        "release": {
+          "command": "./gradlew assembleRelease"
+        }
+      }
+    },
+    "bundle": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/bacteria-wars-android",
+        "command": "./gradlew bundleRelease"
+      }
+    },
+    "lint-android": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/bacteria-wars-android",
+        "command": "./gradlew lintDebug"
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "dependsOn": [],
+      "options": {
+        "command": "tsx ./tools/bacteria-game/deploy-android.ts"
+      }
+    },
+    "store-assets": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx ./tools/bacteria-game/generate-store-assets.ts"
+      }
+    },
+    "promo-video": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx ./tools/bacteria-game/promo-video/make.ts"
+      }
+    }
+  }
+}

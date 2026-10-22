@@ -59,14 +59,24 @@ below lists what they changed.
   (`ColonySummary`: count, captured, lost, total energy, centre).
 - **Settings in local storage** (`settings.service.ts`): mode, difficulty,
   level, colours, look, simulation and screen resolution, FPS badge, sound,
-  music. Nothing about a player's history is stored.
+  music and effects with a switch and a volume each, vibration. Nothing
+  about a player's history is stored.
 - **Sound and music synthesised** with the Web Audio API. Effects live in
-  `sound/game-sound.service.ts`; every level has its own tune
+  `sound/game-sound.service.ts`, written in the key of the level that plays
+  (the start and end jingles, the pellet blips that climb a ladder for
+  pellets eaten in a row); music and effects sit on buses of their own under
+  a master and a compressor. Every level has its own tune
   (`sound/level-music.ts`): a key, a tempo, a chord progression, instruments
   and a seed, from which `composeLoop` writes bass, pads, melody and drums as
-  plain data, played ahead of the audio clock by `sound/music-player.ts`.
-  Fights push the music's intensity up, and the Heartbeat level's drums beat
-  in time with its map (`HEART_PERIOD_SEC`).
+  plain data, played ahead of the audio clock by `sound/music-player.ts` on
+  the `sound/step-scheduler.ts` clock. Fights push the music's intensity up,
+  and the Heartbeat level's drums beat in time with its map
+  (`HEART_PERIOD_SEC`). The menu has an ambient piece of its own
+  (`sound/menu-music.ts`, `sound/menu-music-player.ts`): eight chords held
+  by pads over a sub bass, with seeded bells and breaths of noise, composed
+  afresh on every pass.
+- **Vibration** (`haptics.service.ts`) through the Vibration API where the
+  device has it: boosts, gates, the start and the end of a match, medallions.
 - **Touch seats** for two humans at one phone, fullscreen on entry.
 
 Everything below builds on these pieces rather than replacing them.
@@ -158,7 +168,7 @@ numbers:
 | Achievement   | Condition                                         | Source                         |
 | ------------- | ------------------------------------------------- | ------------------------------ |
 | First Blood   | Win a match                                       | `matchEnded`, `winner`         |
-| Glutton       | Eat 100 pellets in total                          | `pelletsEaten`                 |
+| Glutton       | Eat 100 pellets in total                          | `pellets` per colony           |
 | Gatekeeper    | 500 enemy bacteria crushed by gates and pistons   | `crushed` per colony (new)     |
 | Pacifist      | Win without firing a boost                        | `FrameEvents.boosts`           |
 | Comeback      | Win after being below 25 % of the enemy's size    | `ColonySummary.count` per step |
@@ -545,25 +555,26 @@ kind of remote play to add first. The simulations decide a lot of this.
 Lockstep networking (both sides run the simulation, only inputs are sent)
 needs both sides to compute the same frame from the same inputs. The CPU
 simulation can do that: seeded random (4.1) and a **fixed tick** instead of
-the measured frame delta the loop passes today. Since #2477 the loop runs
-inside the animation frame and `FramePacer` picks the display frames the game
-steps on, but the delta it hands to `gameLoop(width, height, deltaTimeInSec)`
-is still whatever the display measured, so two machines still step
-differently. The fixed tick slots in behind the pacer: an accumulator turns
-the measured delta into whole 30 Hz ticks, and the crosshairs are
-interpolated for the frames in between. The GPU simulation cannot promise
-determinism across two devices either way: floating point and driver
-differences in the shaders diverge within seconds. So:
+the measured frame delta. Both are built: `FramePacer` picks the display
+frames the game steps on, a `TickClock` behind it turns the measured delta
+into whole ticks, the crosshairs are carried ahead along their last step on
+the frames in between, and every match has a seed that the simulation, its
+pellets and the bot draw from. The tick runs at 60 Hz, not the 30 Hz first
+planned: the balance is tuned per step, and at 30 Hz a match of the hard bot
+against an idle colony took 1.5 to 2.5 times as long, which would have upset
+the medallion limits. A 30 Hz tick needs a retuned balance first. The GPU
+simulation cannot promise determinism across two devices either way:
+floating point and driver differences in the shaders diverge within seconds. So:
 
 - **Replays, ghosts and verified leaderboards** run on the CPU simulation at a
-  fixed 30 Hz tick with a seed. It is the reference. A match that is to be
+  fixed 60 Hz tick with a seed. It is the reference. A match that is to be
   recorded or ranked therefore runs on the CPU simulation on the player's
   device from its first tick: the two simulations do not produce the same
   sequence of states, so a GPU match replayed on the CPU could end at another
   time or with another winner than the one the player saw. The match setup
   says so where it matters ("ranked matches run on the reference engine"),
   and the match is pinned to the _Normal_ simulation resolution, which the
-  CPU holds at 30 ticks a second and which keeps every ranked grid the same.
+  CPU holds at 60 ticks a second and which keeps every ranked grid the same.
 - **Live play** can keep the GPU simulation when one machine owns the truth:
   free play, big maps (section 6) and the host of an online match (5.3).
 
@@ -684,8 +695,9 @@ of the fixed `renderScale` of today.
   draws the full slime.
 - Default camera follows the own crosshair with a soft spring; a pinch or the
   wheel zooms; double tap recentres on the colony. A **minimap** in a corner
-  shows the whole owner grid downsampled (one `drawArrays` of the owner
-  texture at 1 : 8).
+  shows the whole arena coarsely. As built, it is drawn from the coarse
+  block counts the GPU report reads back anyway, not from the owner texture,
+  so one Canvas 2D overlay serves both simulations and both painters.
 - Local two-player on a big map means **split screen**: the painter renders
   twice into two viewports, one per seat. The seat layout in the SCSS already
   knows where each player sits.
@@ -699,12 +711,14 @@ that choose it. A 960 × 540 base map is nine times the base and, at _Normal_,
 about twice _Ultra_. Measures, in order of payoff:
 
 1. **Tick rate below frame rate**: `FramePacer` already halves the work on a
-   120 Hz display; a 30 Hz simulation tick (section 5.1) halves it again on
-   every display.
-2. **Activity tiles**: a 16 × 16 tile mask marking tiles that held a bacterium
-   or a change last tick, produced by a mip-style reduction; passes run with a
-   scissor or an instanced quad per active tile. Empty space costs nothing, so
-   a big map with two colonies in corners runs like a small one.
+   120 Hz display; a 30 Hz simulation tick would halve it again on every
+   display, once the balance is tuned to it (section 5.1).
+2. **Activity tiles** (built, coarser): instead of a tile mask from a new
+   reduction, the cell passes are scissored to the colonies' boxes from the
+   report they read back anyway, grown by the reach since, plus the last
+   three ticks' boxes. About half the cells of an _Expanse_ tick; a finer
+   tile mask would pay where colonies sprawl, a lower tick rate (1.) on
+   every map.
 3. **Fewer move steps per tick** on big maps, with a higher `crosshairSpeed`
    to compensate.
 4. The CPU simulation gets a size cap and a "this level needs WebGL2" notice.
@@ -849,8 +863,86 @@ Ordered by payoff per effort and by what each one needs from the one before.
 Phase 1 is the one that changes whether people come back and costs the least. It
 has started: medallions per level and difficulty (section 3, without the
 level map and the medallion's level theme) are built, with the result-screen
-panel, the level list and the bells; the lib's README describes them. The
-limits are a first pass from bot matches and want tuning by play.
+panel, the level list and the bells, the campaign ladder (1.2) with free
+play, the menu screens with the level choice and the profile, lifetime
+totals with fourteen achievements (1.4), XP with eight ranks (1.5) told on
+a result screen in the order of 1.9, and colony colours and arenas to unlock
+(1.6, without crosshair shapes and boost sounds; an earned arena dresses
+every level, not only in free play), and the two-player rivalry (1.8: series,
+head start, wins per colour); the lib's README describes them. Phase 1 is
+done, apart from the cloud profile of 1.1, which waits for a Firebase backend
+of the GameStorage port, and the daily level of 1.7, which needs the level
+generator of phase 3.
+Glutton came with the pellets counted per colony of phase 4, Flawless (a
+platinum medallion) besides it, and Petri Scholar asks gold on every level
+of the first chapter. The medallion limits are a first
+pass from bot matches and want tuning by play. Everything is stored through
+the `GameStorage` port, so the cloud profile of 1.1 is a backend to provide,
+not a change to the services.
+Phase 2 has started with its groundwork: the fixed 60 Hz tick behind the
+frame pacer and one seed per match through the simulation, the pellets and
+the bot (5.1), and replays (5.2): an Angular-free `MatchEngine` records the
+humans' crosshairs and boosts, and `playReplay` plays a match out again on
+the CPU. The ghost is in as well: after a match against the computer, the
+player fights their own run, played by the computer's colony through a
+`GhostController` and turned to the other side. Share links carry a run in
+the hash of the address (packed, a few KB for a minute of play), and opening
+one offers the ghost as a challenge. Phase 2 is done, apart from the daily
+leaderboard of 5.2, which waits for the daily level of phase 3 and a
+Firebase backend.
+Phase 3 has started with the generator itself: four recipes (field,
+corridor, fortress, cave) lay out a half from a seed, validation keeps only
+playable layouts (free spawns, a way at least three cells wide, 3 to 35 %
+walls) and the closest of five to the recipe's detour wins. `gen:` ids work
+as levels, maps, looks and tunes. Gates, sliders and zones are not in the
+recipes yet; the daily level, endless mode and the level map build on it.
+The daily level (1.7) is in: one generated level a day for everyone,
+three attempts towards its medallion, a streak that one missed day only
+pauses. Endless mode (4.6) as well: generated levels one after the other,
+each win a step harder, three lives, the best depth kept. The level choice
+is a map (2.5): the ladder in the chapters of 2.1, cards in their arena's
+colours, and the daily level, the endless run and "Generate a level" as the
+side branches. Generated levels play tunes of their own (4.5): the style
+sets the key's mood, the groove and the instruments, the seed the chords
+and the melody, the difficulty the tempo. With that, phase 3 is done; the
+mutate mode of 4.6, gates and sliders in the recipes, and levels shared by
+link are what is left of section 4. Two follow-ups
+from the generator's review: one resolver for level ids (the hand-made
+tables and the generator are asked in `getLevel`, `getMap`, `arenaTheme` and
+`levelMusic` alike), and the hand-made organic maps as recipes with fixed
+seeds - they share `hexLattice` and `growThread` with the generator already,
+but moving walls are no part of a recipe yet.
+Phase 4 has started with pluggable win conditions (2.3): a level carries a
+`win` rule, annihilation unless it says otherwise, and `timed` ends a match
+after a limit with the bigger colony as the winner. The countdown shows on
+the match clock, and the Reactor chapter opens with the first timed level,
+Half-Life. Zones (2.2) followed: antibiotic, agar, ice and heat as rects
+or discs in the map, in both simulations - on the GPU in the wall mask's
+spare bits - and drawn by both painters; Containment lays out all four.
+Hold the zone followed on them: a white zone to hold, held each tick by
+the colony with the most bacteria on it, counted in both simulations; the
+bot goes for it, and Control Room is the first such level. Boss levels
+(2.4) and survive came next: per-colony traits for division, attack and
+boost cooldown in both simulations, a bigger start, a boss bot that boosts
+whenever it can once behind, Meltdown as the Reactor finale (survive) and
+Patient Zero opening Outbreak. Neutral colonies (Quarantine) and harvest
+(Feeding Ground) followed: a pellet goes to the colony that took the most
+of it, counted on the GPU in the pellet row's two spare channels, 16 bits
+per colony. The bot heads for the zone to hold but does not avoid the
+other zones yet, and a next counted rule needs room in the GPU report:
+the report rows are full.
+Phase 4 is done. Phase 5 has started with bigger maps (6.1): a map's
+`size` lays it out on a bigger base, the resolution and the size are two
+factors apart, and a camera follows the player's crosshair and zooms with
+the wheel or a pinch (6.2), with a minimap in a corner. The painters draw only the camera's view, on a canvas as
+big as a base map's - the first camera scaled a canvas drawn whole with
+CSS, size² the pixels, which the Canvas 2D fallback could not keep up
+with (8 fps on Expanse, 41 now) - but without a level of detail yet.
+Expanse is the first big level. The cell passes of the GPU
+simulation run only around the colonies (6.3, 2). Split screen and fog are
+next. The CPU simulation on a big map at Ultra
+runs four times the cells of a base one, so a resolution cap on big maps
+(4 of 6.3) is still due.
 Phase 7 can be sprinkled in between the others; each of its items is a
 self-contained PR. Of the groundwork the phases assumed, three pieces have
 landed since the first version of this document: the seeded generator (for
@@ -859,7 +951,7 @@ settings (for phase 7).
 
 ### Decisions worth an ADR when their phase starts
 
-- The CPU simulation at a fixed 30 Hz tick with a seed, on the _Normal_
+- The CPU simulation at a fixed 60 Hz tick with a seed, on the _Normal_
   simulation resolution, is the **reference simulation** for replays and
   verification; the GPU one is for playing.
 - Progress is stored **locally first**, cloud sync is opt-in and anonymous.

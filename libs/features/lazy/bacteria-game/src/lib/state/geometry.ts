@@ -103,3 +103,17 @@ export function seeded(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+/** A fresh seed for a match nobody asked to play again. */
+export function randomSeed(): number {
+  return Math.floor(Math.random() * 2 ** 32);
+}
+
+/**
+ * The seed of one random stream out of a match's seed - the simulation
+ * draws from stream 0, which is the seed itself, each bot from its own. A
+ * bot that thinks more or less often then leaves the war as it is.
+ */
+export function streamSeed(seed: number, stream: number): number {
+  return (seed ^ Math.imul(stream, 0x9e3779b9)) >>> 0;
+}

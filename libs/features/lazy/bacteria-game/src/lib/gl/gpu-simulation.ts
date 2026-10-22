@@ -1,24 +1,33 @@
+import { mapZones, stampZones } from '../state/zones';
 import type { StateLayer } from '../arena/colony-renderer';
 import {
+  attackOf,
   ColonySpawn,
   colonyIntent,
+  divideChanceOf,
   noEvents,
   Nutrient,
   StepEvents,
 } from '../state/bacteria-simulation';
-import { colonyCapacity, GameBalance } from '../state/game-balance';
+import {
+  colonyCapacity,
+  GameBalance,
+  PLAIN_TRAITS,
+} from '../state/game-balance';
 import { CellBounds, clamp, Point } from '../state/geometry';
 import {
   compareDynamicWalls,
   DynamicWall,
   GameMap,
+  Rect,
   stampRect,
 } from '../state/maps';
+import { activeRects } from './active-area';
 import { escapeReach } from '../state/arena-size';
 import { getMap } from '../state/game-maps';
 import { NutrientPellets } from '../state/nutrient-pellets';
 import { createBacteriaBlob, isBoosted, Player } from '../state/player.model';
-import { ColonySummary, Simulation } from '../state/simulation';
+import { BlockCounts, ColonySummary, Simulation } from '../state/simulation';
 import {
   bindTexture,
   createProgram,
@@ -40,8 +49,11 @@ import {
   HUNT_FRAGMENT,
   INFLUENCE_FRAGMENT,
   MAX_GPU_COLONIES,
+  HUNT_COLONIES,
   MAX_PELLETS,
   REPORT_FRAGMENT,
+  WALL_BIT,
+  ZONE_SHIFT,
 } from './simulation-shaders';
 import {
   decodeReport,
@@ -59,8 +71,18 @@ import {
  */
 const MAX_MOVE_STEPS = 12;
 
-/** Read backs in flight at once - the GPU is a frame or two behind. */
+/** Read backs in flight at once - the GPU is a step or two behind. */
 const READBACK_SLOTS = 3;
+
+/**
+ * Ticks the cell passes keep covering a spot after the colonies left it -
+ * or after the last of a colony died there - so every state texture is
+ * written empty there before the passes stop at it. One tick writes all
+ * three; the others are to spare.
+ */
+const AREA_HISTORY = 3;
+/** Ticks of reach kept - a report further behind runs the whole arena. */
+const REACH_HISTORY = READBACK_SLOTS + 3;
 
 /**
  * How fast the glow of a fight, a meal and a push fades: the share of it
@@ -83,6 +105,7 @@ const UNIT = {
   influence: 2,
   hunt: 3,
   previous: 3,
+  huntMore: 4,
 };
 
 interface Programs {
@@ -102,6 +125,8 @@ interface Readback {
   sync: WebGLSync | null;
   /** The pellets as they were when the report was rendered. */
   generation: readonly number[];
+  /** The step the report was rendered in. */
+  step: number;
   /** Requested in an earlier match - read, so the buffer is free, but ignored. */
   stale: boolean;
 }
@@ -120,6 +145,8 @@ interface Resources {
   mask: WebGLTexture;
   influence: Target;
   hunt: Target;
+  /** The hunt of the third and fourth colony - see `HUNT_FRAGMENT`. */
+  huntMore: Target;
   /** Ping and pong of the report, so the running totals can carry on. */
   reports: [Target, Target];
   /** Ping and pong of the glow the painter adds - see `EFFECTS_FRAGMENT`. */
@@ -139,6 +166,7 @@ interface FrameUniforms {
   aggression: Float32Array;
   attack: Float32Array;
   divideChance: Float32Array;
+  divideBudget: Float32Array;
   pellets: Float32Array;
 }
 
@@ -173,7 +201,8 @@ export class GpuSimulation implements Simulation {
   private layout: ReportLayout;
   private map: GameMap = getMap('corridors');
   private elapsedSec = 0;
-  private frame = 0;
+  /** Steps run in this match. */
+  private steps = 0;
   /** The state the next pass reads. */
   private current = 0;
   /** The state combat rendered into this frame. */
@@ -185,19 +214,32 @@ export class GpuSimulation implements Simulation {
   private mask = new Uint8Array(0);
   private staticMask = new Uint8Array(0);
   private maskDirty = true;
+  /** True on a map with a zone to hold, whose bacteria the report counts. */
+  private hasHill = false;
   private escapePending = false;
   private readonly pellets: NutrientPellets;
   /** The pellet generations as of the report rendered last. */
   private renderedGeneration: readonly number[] = [];
   private events: StepEvents = noEvents();
   private report: Report | null = null;
+  /** The step the report in hand was rendered in. */
+  private reportStep = 0;
   private colonySummaries: ColonySummary[] = [];
   /** Totals of the last report, to turn them into this frame's events. */
-  private reported = { captured: 0, lost: 0 };
+  private reported = { captured: 0, lost: 0, poisoned: 0 };
   /** Seconds the pellets have not been drained for, waiting on a report. */
   private undrainedSec = 0;
   /** True once this match has rendered a report that can be read back. */
   private reportRendered = false;
+  /**
+   * Where this tick's cell passes run - see {@link activeRects}; null for
+   * the whole arena.
+   */
+  private area: Rect[] | null = null;
+  /** The colonies' own rects of the last ticks, newest first. */
+  private readonly recentAreas: Rect[][] = [];
+  /** How far a bacterium got in each of the last ticks, newest first. */
+  private readonly recentReach: number[] = [];
   /** The most cells each colony gets per frame, boosted - for its box. */
   private readonly reach = new Int32Array(MAX_GPU_COLONIES).fill(
     MAX_MOVE_STEPS
@@ -208,6 +250,7 @@ export class GpuSimulation implements Simulation {
     aggression: new Float32Array(MAX_GPU_COLONIES),
     attack: new Float32Array(MAX_GPU_COLONIES),
     divideChance: new Float32Array(MAX_GPU_COLONIES),
+    divideBudget: new Float32Array(MAX_GPU_COLONIES),
     pellets: new Float32Array(MAX_PELLETS * 3),
   };
 
@@ -296,12 +339,14 @@ export class GpuSimulation implements Simulation {
     }
     this.spawns = spawns;
     this.elapsedSec = 0;
-    this.frame = 0;
+    this.steps = 0;
     this.events = noEvents();
     this.report = null;
-    this.reported = { captured: 0, lost: 0 };
+    this.reported = { captured: 0, lost: 0, poisoned: 0 };
     this.undrainedSec = 0;
     this.reportRendered = false;
+    this.recentAreas.length = 0;
+    this.recentReach.length = 0;
     this.buildMask();
     this.pellets.reset(this.width, this.height, this.isOpenCell);
     this.uploadSpawns(spawns);
@@ -323,6 +368,20 @@ export class GpuSimulation implements Simulation {
     return this.colonySummaries;
   }
 
+  /** The block counts of the last report read back - a frame late. */
+  public blockCounts(): BlockCounts | null {
+    if (this.report == null) {
+      return null;
+    }
+    const { blocksX, blocksY, cellSize } = this.layout;
+    return {
+      blocksX,
+      blocksY,
+      cellSize,
+      counts: this.report.blockCounts,
+    };
+  }
+
   public nearestEnemy(playerId: number, from: Point): Point | null {
     const slot = this.slotOf(playerId);
     if (this.report == null || slot == null) {
@@ -340,13 +399,14 @@ export class GpuSimulation implements Simulation {
     const gl = this.gl;
     const { programs } = resources;
     this.elapsedSec += deltaTimeSec;
-    this.frame++;
+    this.steps++;
     this.advanceDynamicWalls();
     if (this.maskDirty) {
       this.uploadMask(resources);
     }
     this.tickPellets(deltaTimeSec);
     const mostSteps = this.fillFrameUniforms(players, deltaTimeSec);
+    this.updateArea(mostSteps);
 
     gl.disable(gl.BLEND);
     gl.disable(gl.SCISSOR_TEST);
@@ -357,14 +417,21 @@ export class GpuSimulation implements Simulation {
     gl.viewport(0, 0, this.layout.blocksX, this.layout.blocksY);
     this.pass(resources, programs.influence, resources.influence);
     bindTexture(gl, UNIT.influence, resources.influence.texture, null);
+    gl.useProgram(programs.hunt.program);
+    gl.uniform1i(programs.hunt.uniforms['uPair'], 0);
     this.pass(resources, programs.hunt, resources.hunt);
+    if (this.spawns.length > HUNT_COLONIES) {
+      gl.uniform1i(programs.hunt.uniforms['uPair'], 1);
+      this.pass(resources, programs.hunt, resources.huntMore);
+    }
     bindTexture(gl, UNIT.hunt, resources.hunt.texture, null);
+    bindTexture(gl, UNIT.huntMore, resources.huntMore.texture, null);
 
     gl.viewport(0, 0, this.width, this.height);
     // 2. Out of the way of a wall that moved, or crushed.
     if (this.escapePending) {
       // One cell per step, as far as a wall may shove a bacterium.
-      const steps = escapeReach(this.width);
+      const steps = escapeReach(this.width, this.map.size);
       for (let step = 0; step < steps; step++) {
         this.claimAndApply(resources, KIND.escape, step);
       }
@@ -408,8 +475,7 @@ export class GpuSimulation implements Simulation {
 
   /**
    * The box around a colony, for the painter to scissor to. The report is a
-   * frame or two old, so the box is grown by how far the colony gets in the
-   * frames its read back may take.
+   * few steps old, so the box is grown by how far the colony gets in them.
    */
   private boundsOf(slot: number): CellBounds | null {
     const bounds =
@@ -419,7 +485,7 @@ export class GpuSimulation implements Simulation {
     if (bounds == null) {
       return null;
     }
-    const margin = this.reach[slot] * READBACK_SLOTS;
+    const margin = this.reach[slot] * this.stepsBehind();
     return {
       minX: clamp(bounds.minX - margin, 0, this.width - 1),
       minY: clamp(bounds.minY - margin, 0, this.height - 1),
@@ -470,13 +536,14 @@ export class GpuSimulation implements Simulation {
     const capacity = colonyCapacity(b, this.spawns.length);
     u.steps.fill(0);
     u.targets.fill(NaN);
-    u.divideChance.fill(0);
     this.spawns.forEach((spawn, slot) => {
+      const traits = spawn.traits ?? PLAIN_TRAITS;
+      u.divideChance[slot] = divideChanceOf(b, traits, deltaTimeSec);
       const target = players.find((player) => player.id === spawn.playerId);
       const intent = colonyIntent(target, b, deltaTimeSec);
       u.aggression[slot] = intent?.aggression ?? b.aggression;
-      u.attack[slot] = isBoosted(target ?? null) ? b.boostAttackFactor : 1;
-      u.divideChance[slot] = this.divideChance(slot, capacity, deltaTimeSec);
+      u.attack[slot] = attackOf(b, traits, isBoosted(target ?? null));
+      u.divideBudget[slot] = this.divideBudget(slot, capacity);
       if (target == null || intent == null) {
         return;
       }
@@ -508,6 +575,7 @@ export class GpuSimulation implements Simulation {
       gl.uniform2fv(at['uTarget[0]'], u.targets);
       gl.uniform1fv(at['uAggression[0]'], u.aggression);
       gl.uniform1fv(at['uDivideChance[0]'], u.divideChance);
+      gl.uniform1fv(at['uDivideBudget[0]'], u.divideBudget);
     }
     for (const program of [
       programs.combat,
@@ -528,24 +596,28 @@ export class GpuSimulation implements Simulation {
   }
 
   /**
-   * The chance of each bacterium of a colony to divide this frame. All of
-   * them divide in the same pass, and the count is a few frames old - so
-   * the chance is cut down until even the bacteria born in the frames the
-   * count lags behind fit into the room the colony has left.
+   * The most a bacterium of a colony may divide with this frame, whatever
+   * ground it is on. All of them divide in the same pass, and the count is
+   * a few frames old - so the chance is cut down until even the bacteria
+   * born in the frames the count lags behind fit into the room the colony
+   * has left.
    */
-  private divideChance(
-    slot: number,
-    capacity: number,
-    deltaTimeSec: number
-  ): number {
+  private divideBudget(slot: number, capacity: number): number {
     const count = this.colonySummaries[slot]?.count ?? 0;
     const room = capacity - count;
-    if (room <= 0) {
-      return 0;
-    }
-    const chance = this.balance.divideChancePerSec * deltaTimeSec;
-    const framesBehind = READBACK_SLOTS + 1;
-    return Math.min(chance, room / (Math.max(1, count) * framesBehind));
+    return room <= 0
+      ? 0
+      : room / (Math.max(1, count) * (this.stepsBehind() + 1));
+  }
+
+  /**
+   * How many steps the report in hand lags behind the war - at least the
+   * read backs in flight. A display frame may run several steps, and the GPU
+   * finishes no read back between the steps of one frame.
+   */
+  private stepsBehind(): number {
+    const behind = this.report == null ? 0 : this.steps - this.reportStep;
+    return Math.max(READBACK_SLOTS, behind);
   }
 
   /**
@@ -580,10 +652,15 @@ export class GpuSimulation implements Simulation {
     const cellSize = b.influenceCellSize;
     set(programs.influence, {}, { uCellSize: cellSize });
     set(programs.hunt, {}, { uInfluence: UNIT.influence });
-    set(programs.claim, intents, { uCellSize: cellSize, uHunt: UNIT.hunt });
+    set(programs.claim, intents, {
+      uCellSize: cellSize,
+      uHunt: UNIT.hunt,
+      uHuntMore: UNIT.huntMore,
+    });
     set(programs.apply, intents, {
       uCellSize: cellSize,
       uHunt: UNIT.hunt,
+      uHuntMore: UNIT.huntMore,
       uClaims: UNIT.claims,
     });
     set(programs.crush, {});
@@ -643,7 +720,7 @@ export class GpuSimulation implements Simulation {
       gl.uniform1i(program.uniforms['uKind'], kind);
       gl.uniform1i(program.uniforms['uStep'], step);
     }
-    this.pass(resources, claim, resources.claims);
+    this.pass(resources, claim, resources.claims, this.area);
     bindTexture(gl, UNIT.claims, resources.claims.texture, null);
     this.statePass(resources, apply);
   }
@@ -657,7 +734,7 @@ export class GpuSimulation implements Simulation {
     program: Program,
     into = this.nextState()
   ): void {
-    this.pass(resources, program, resources.states[into]);
+    this.pass(resources, program, resources.states[into], this.area);
     this.current = into;
   }
 
@@ -671,14 +748,79 @@ export class GpuSimulation implements Simulation {
     return (this.current + 1) % 3;
   }
 
-  /** A pass that reads the current state, into a target. */
-  private pass(resources: Resources, program: Program, target: Target): void {
+  /**
+   * A pass that reads the current state, into a target - over all of it, or
+   * only over the rects of `area`.
+   */
+  private pass(
+    resources: Resources,
+    program: Program,
+    target: Target,
+    area: readonly Rect[] | null = null
+  ): void {
     const gl = this.gl;
     gl.useProgram(program.program);
     bindTexture(gl, UNIT.state, resources.states[this.current].texture, null);
-    gl.uniform1ui(program.uniforms['uSeed'], (this.frame * 2654435761) >>> 0);
+    gl.uniform1ui(program.uniforms['uSeed'], (this.steps * 2654435761) >>> 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (area == null) {
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      return;
+    }
+    gl.enable(gl.SCISSOR_TEST);
+    for (const rect of area) {
+      gl.scissor(rect.x, rect.y, rect.width, rect.height);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+    gl.disable(gl.SCISSOR_TEST);
+  }
+
+  /**
+   * Works out where this tick's cell passes run: around the colonies as the
+   * report saw them, grown by how far a bacterium gets in the ticks since -
+   * a step per move, one more for a child, one to spare, and as far as a
+   * wall shoves it in a tick it escapes one. The whole arena
+   * runs while no report is in hand, for the first ticks, whose state
+   * textures still hold the last match, while a wall shoves bacteria out of
+   * the way, and when the report is further behind than the reach kept.
+   */
+  private updateArea(mostSteps: number): void {
+    const reach = this.recentReach;
+    reach.unshift(
+      mostSteps +
+        2 +
+        (this.escapePending ? escapeReach(this.width, this.map.size) : 0)
+    );
+    reach.length = Math.min(reach.length, REACH_HISTORY);
+    const behind = this.steps - this.reportStep;
+    const whole = [{ x: 0, y: 0, width: this.width, height: this.height }];
+    const own =
+      this.report == null ||
+      this.escapePending ||
+      this.steps <= AREA_HISTORY ||
+      behind > reach.length
+        ? whole
+        : activeRects(
+            this.report.colonies.map((colony) => colony.bounds),
+            reach.slice(0, behind).reduce((sum, cells) => sum + cells, 0),
+            this.width,
+            this.height
+          );
+    const area = activeRects(
+      [],
+      0,
+      this.width,
+      this.height,
+      [own, ...this.recentAreas].flat()
+    );
+    this.recentAreas.unshift(own);
+    this.recentAreas.length = Math.min(this.recentAreas.length, AREA_HISTORY);
+    this.area =
+      area.length === 1 &&
+      area[0].width === this.width &&
+      area[0].height === this.height
+        ? null
+        : area;
   }
 
   /** Lets the glow of the last frames fade and lights what happened now. */
@@ -703,7 +845,7 @@ export class GpuSimulation implements Simulation {
       fade(EFFECT_FADE_PER_SEC.move)
     );
     // The first frame would find every starting bacterium freshly arrived.
-    gl.uniform1i(program.uniforms['uTrack'], this.frame > 1 ? 1 : 0);
+    gl.uniform1i(program.uniforms['uTrack'], this.steps > 1 ? 1 : 0);
     this.pass(resources, program, resources.effects[this.effectsIndex]);
   }
 
@@ -763,6 +905,7 @@ export class GpuSimulation implements Simulation {
     readback.sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
     // The report read is last frame's, so are the pellets it counted at.
     readback.generation = this.renderedGeneration;
+    readback.step = this.steps - 1;
     readback.stale = false;
     resources.pendingReadbacks.push(readback);
     gl.flush();
@@ -795,13 +938,18 @@ export class GpuSimulation implements Simulation {
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, readback.buffer);
       gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, data);
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-      this.takeReport(decodeReport(data, this.layout), readback.generation);
+      this.reportStep = readback.step;
+      this.takeReport(
+        decodeReport(data, this.layout, this.spawns.length),
+        readback.generation
+      );
     }
   }
 
   /** Turns a report into the scoreboard, the frame's events and the eaters. */
   private takeReport(report: Report, generation: readonly number[]): void {
     this.report = report;
+    const before = this.colonySummaries;
     this.colonySummaries = this.spawns.map((spawn, index) => {
       const colony = report.colonies[index];
       return {
@@ -812,17 +960,23 @@ export class GpuSimulation implements Simulation {
         lost: colony.lost,
         totalEnergy: colony.totalEnergy,
         center: colony.center,
+        onHill: colony.onHill,
+        // Counted here, as the pellets are drained - carried on.
+        pellets: before[index]?.pellets ?? 0,
       };
     });
 
     const captured = report.colonies.reduce((sum, c) => sum + c.captured, 0);
     const lost = report.colonies.reduce((sum, c) => sum + c.lost, 0);
+    const { poisoned } = report;
     const newCaptures = captured - this.reported.captured;
     const newLosses = lost - this.reported.lost;
+    const newPoisoned = poisoned - this.reported.poisoned;
     this.events.captures += newCaptures;
-    // A loss nobody captured is a bacterium a wall crushed.
-    this.events.crushed += Math.max(0, newLosses - newCaptures);
-    this.reported = { captured, lost };
+    // A loss nobody captured is a bacterium a wall crushed - or one an
+    // antibiotic killed, which makes no noise.
+    this.events.crushed += Math.max(0, newLosses - newCaptures - newPoisoned);
+    this.reported = { captured, lost, poisoned };
 
     // The eaters drain the pellets for all the time since the last report,
     // however many frames that was.
@@ -833,8 +987,12 @@ export class GpuSimulation implements Simulation {
         // The pellet moved since this report was taken.
         return;
       }
-      if (this.pellets.drain(n, report.eaters[n] ?? 0, gain)) {
+      const eaten = this.pellets.drain(n, report.eaters[n] ?? [], gain);
+      if (eaten !== null) {
         this.events.pelletsEaten++;
+        if (eaten.by !== null) {
+          this.colonySummaries[eaten.by].pellets++;
+        }
       }
     });
   }
@@ -850,7 +1008,7 @@ export class GpuSimulation implements Simulation {
   }
 
   private readonly isOpenCell = (x: number, y: number): boolean =>
-    this.mask[y * this.width + x] === 0;
+    (this.mask[y * this.width + x] & WALL_BIT) === 0;
 
   /** Moves the gates and sliding walls on and notes what they did. */
   private advanceDynamicWalls(): void {
@@ -878,8 +1036,12 @@ export class GpuSimulation implements Simulation {
   /** The static walls, and the moving ones as of the match time. */
   private buildMask(): void {
     this.staticMask = new Uint8Array(this.width * this.height);
+    // The zones above the wall bit - a wall covers the zone under it.
+    const zones = mapZones(this.map, this.width, this.height);
+    stampZones(this.staticMask, this.width, this.height, zones, ZONE_SHIFT);
+    this.hasHill = zones.some(({ kind }) => kind === 'hill');
     for (const wall of this.map.createWalls(this.width, this.height)) {
-      stampRect(this.staticMask, this.width, this.height, wall, 1);
+      stampRect(this.staticMask, this.width, this.height, wall, WALL_BIT);
     }
     this.dynamicWalls =
       this.map.createDynamicWalls?.(this.width, this.height, this.elapsedSec) ??
@@ -896,7 +1058,7 @@ export class GpuSimulation implements Simulation {
     this.mask.set(this.staticMask);
     for (const wall of this.dynamicWalls) {
       if (wall.solid) {
-        stampRect(this.mask, this.width, this.height, wall, 1);
+        stampRect(this.mask, this.width, this.height, wall, WALL_BIT);
       }
     }
     this.maskDirty = true;
@@ -917,6 +1079,10 @@ export class GpuSimulation implements Simulation {
       this.mask
     );
     this.maskDirty = false;
+    // Only a map with a zone to hold has its bacteria on it counted.
+    const report = resources.programs.report;
+    this.gl.useProgram(report.program);
+    this.gl.uniform1i(report.uniforms['uCountHill'], this.hasHill ? 1 : 0);
   }
 
   /** Puts each player's starting blob into a fresh state, at full energy. */
@@ -996,6 +1162,10 @@ export class GpuSimulation implements Simulation {
       lost: 0,
       totalEnergy: counts[slot] * this.balance.maxEnergy,
       center: counts[slot] > 0 ? { x: spawn.x, y: spawn.y } : null,
+      // Counted from the first report on - the ticks before it are credited
+      // to whoever holds the zone then.
+      onHill: 0,
+      pellets: 0,
     }));
   }
 
@@ -1042,7 +1212,7 @@ export class GpuSimulation implements Simulation {
           gl.STREAM_READ
         );
         gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-        return { buffer, sync: null, generation: [], stale: false };
+        return { buffer, sync: null, generation: [], step: 0, stale: false };
       }
     );
 
@@ -1061,6 +1231,13 @@ export class GpuSimulation implements Simulation {
         gl.NEAREST
       ),
       hunt: createTarget(
+        gl,
+        gl.RGBA16I,
+        layout.blocksX,
+        layout.blocksY,
+        gl.NEAREST
+      ),
+      huntMore: createTarget(
         gl,
         gl.RGBA16I,
         layout.blocksX,
@@ -1098,6 +1275,7 @@ function renderTargets(resources: Resources): Target[] {
     resources.claims,
     resources.influence,
     resources.hunt,
+    resources.huntMore,
     ...resources.reports,
     ...resources.effects,
   ];
@@ -1125,8 +1303,10 @@ function compiledPrograms(gl: WebGL2RenderingContext): Programs {
     'uJitter',
     'uCellSize',
     'uHunt',
+    'uHuntMore',
     'uDivideThreshold',
     'uDivideChance[0]',
+    'uDivideBudget[0]',
     'uParentShare',
   ];
   const pellets = ['uPellets[0]', 'uPelletCount', 'uPelletRadius'];
@@ -1134,7 +1314,7 @@ function compiledPrograms(gl: WebGL2RenderingContext): Programs {
     createProgram(gl, FULLSCREEN_VERTEX, fragment, [...common, ...uniforms]);
   const programs: Programs = {
     influence: program(INFLUENCE_FRAGMENT, ['uCellSize']),
-    hunt: program(HUNT_FRAGMENT, ['uInfluence']),
+    hunt: program(HUNT_FRAGMENT, ['uInfluence', 'uPair']),
     claim: program(CLAIM_FRAGMENT, intents),
     apply: program(APPLY_FRAGMENT, [...intents, 'uClaims']),
     crush: program(CRUSH_FRAGMENT, []),
@@ -1159,6 +1339,7 @@ function compiledPrograms(gl: WebGL2RenderingContext): Programs {
       'uPrevious',
       'uCellSize',
       'uBlocks',
+      'uCountHill',
       ...pellets,
     ]),
     effects: program(EFFECTS_FRAGMENT, [

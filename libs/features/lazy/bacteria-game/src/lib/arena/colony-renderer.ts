@@ -1,8 +1,14 @@
 import { BacteriaLook } from '../settings.service';
-import { scaleOf } from '../state/arena-size';
 import { Nutrient } from '../state/bacteria-simulation';
 import { GameBalance, gameBalance } from '../state/game-balance';
-import { CellBounds, clamp, Point } from '../state/geometry';
+import {
+  CellBounds,
+  clamp,
+  emptyBounds,
+  growBounds,
+  Point,
+} from '../state/geometry';
+import { Rect } from '../state/maps';
 import { Bacteria } from '../state/player.model';
 import { Rgb } from './arena-theme';
 import { createCanvas, hash, lerp, rgba, smoothstep } from './canvas-math';
@@ -120,6 +126,9 @@ export function createImageDataFromBacterias(
  * close to a gaussian - so neighbours melt into one blob. `heat` gets the
  * same treatment for the overcharge of each bacterium.
  *
+ * Only the cells of `region` are worked out, the bacteria outside it left
+ * out - see {@link slimeRegion}.
+ *
  * Returns false when no bacterium is overcharged - `heat` is then left as it
  * was and must not be read.
  */
@@ -130,11 +139,16 @@ export function colonyDensity(
   width: number,
   height: number,
   bacterias: readonly Bacteria[],
-  balance: GameBalance = gameBalance
+  balance: GameBalance = gameBalance,
+  region: CellBounds = wholeArena(width, height)
 ): boolean {
   density.fill(0);
   let hot = false;
+  const { minX, minY, maxX, maxY } = region;
   for (const { x, y, energy } of bacterias) {
+    if (x < minX || x > maxX || y < minY || y > maxY) {
+      continue;
+    }
     const index = y * width + x;
     density[index] += cellDensity(strengthOf(energy, balance));
     const over = overcharge(energy, balance);
@@ -146,13 +160,69 @@ export function colonyDensity(
       heat[index] += over;
     }
   }
-  boxBlur(density, scratch, width, height);
-  boxBlur(density, scratch, width, height);
+  boxBlur(density, scratch, width, region);
+  boxBlur(density, scratch, width, region);
   if (hot) {
-    boxBlur(heat, scratch, width, height);
-    boxBlur(heat, scratch, width, height);
+    boxBlur(heat, scratch, width, region);
+    boxBlur(heat, scratch, width, region);
   }
   return hot;
+}
+
+/** Every cell of an arena that size. */
+function wholeArena(width: number, height: number): CellBounds {
+  return { minX: 0, minY: 0, maxX: width - 1, maxY: height - 1 };
+}
+
+/**
+ * How far around its bacteria a colony's slime is worked out: the blur
+ * spreads it by two cells, the slime between the cells reads one more.
+ */
+const SLIME_REACH = 3;
+
+/**
+ * The cells the slime of a colony is worked out on: its bacteria and
+ * {@link SLIME_REACH} around them, cut to what the canvas shows - null when
+ * none of it is in view. Cut at the view, the blur clamps a few cells short
+ * of the truth, so the cut lies {@link SLIME_REACH} cells beyond the view;
+ * around the bacteria the density is zero anyway.
+ */
+export function slimeRegion(
+  bacterias: readonly Bacteria[],
+  view: Rect,
+  width: number,
+  height: number
+): CellBounds | null {
+  if (bacterias.length === 0) {
+    return null;
+  }
+  const bounds = emptyBounds();
+  for (const { x, y } of bacterias) {
+    growBounds(bounds, x, y);
+  }
+  // The cells the view touches, one more for a pixel half in it.
+  const reach = SLIME_REACH + 1;
+  const minX = Math.max(
+    0,
+    bounds.minX - SLIME_REACH,
+    Math.floor(view.x) - reach
+  );
+  const minY = Math.max(
+    0,
+    bounds.minY - SLIME_REACH,
+    Math.floor(view.y) - reach
+  );
+  const maxX = Math.min(
+    width - 1,
+    bounds.maxX + SLIME_REACH,
+    Math.ceil(view.x + view.width) + reach
+  );
+  const maxY = Math.min(
+    height - 1,
+    bounds.maxY + SLIME_REACH,
+    Math.ceil(view.y + view.height) + reach
+  );
+  return minX > maxX || minY > maxY ? null : { minX, minY, maxX, maxY };
 }
 
 /**
@@ -164,7 +234,8 @@ export function colonyDensity(
  * here and there.
  *
  * The density is sampled bilinearly between the cells, which is what makes
- * the outline round. `heat` is null when nothing is overcharged.
+ * the outline round. `heat` is null when nothing is overcharged. Only the
+ * pixels of `region`'s cells are painted.
  */
 export function paintSlime(
   data8: Uint8ClampedArray,
@@ -173,20 +244,26 @@ export function paintSlime(
   width: number,
   height: number,
   color: readonly number[],
-  shimmer: BoostShimmer | null
+  shimmer: BoostShimmer | null,
+  region: CellBounds = wholeArena(width, height)
 ): void {
   const [r, g, b] = color;
   const outWidth = width * SLIME_SCALE;
-  const outHeight = height * SLIME_SCALE;
   const step = 1 / SLIME_SCALE;
+  const fromX = region.minX * SLIME_SCALE;
+  const toX = (region.maxX + 1) * SLIME_SCALE;
 
-  for (let py = 0; py < outHeight; py++) {
+  for (
+    let py = region.minY * SLIME_SCALE;
+    py < (region.maxY + 1) * SLIME_SCALE;
+    py++
+  ) {
     // Pixel centres, in cell units, shifted so a cell's centre is a lattice point.
     const gy = (py + 0.5) * step - 0.5;
     const y0 = clamp(Math.floor(gy), 0, height - 1);
     const y1 = clamp(y0 + 1, 0, height - 1);
     const fy = clamp(gy - y0, 0, 1);
-    for (let px = 0; px < outWidth; px++) {
+    for (let px = fromX; px < toX; px++) {
       const gx = (px + 0.5) * step - 0.5;
       const x0 = clamp(Math.floor(gx), 0, width - 1);
       const x1 = clamp(x0 + 1, 0, width - 1);
@@ -378,7 +455,9 @@ export class ColonyRenderer {
 
   public constructor(
     private readonly width: number,
-    private readonly height: number
+    private readonly height: number,
+    /** Cells per base cell - the boost's waves are as wide on every grid. */
+    private readonly unit: number
   ) {
     const cells = width * height;
     this.density = new Float32Array(cells);
@@ -386,12 +465,17 @@ export class ColonyRenderer {
     this.scratch = new Float32Array(cells);
   }
 
-  /** The layer with every colony on it, or null where there is no canvas. */
+  /**
+   * The layer with every colony on it, or null where there is no canvas.
+   * The slime is only worked out for what the canvas shows of the arena,
+   * `view`.
+   */
   public render(
     colonies: readonly ColonyLayer[],
     balance: GameBalance,
     look: BacteriaLook,
-    timeSec: number
+    timeSec: number,
+    view: Rect
   ): HTMLCanvasElement | null {
     const scale = look === 'slime' ? SLIME_SCALE : 1;
     if (!this.prepare(scale) || this.image == null || this.context == null) {
@@ -406,8 +490,17 @@ export class ColonyRenderer {
       const shimmer =
         colony.boostTarget == null
           ? null
-          : { timeSec, target: colony.boostTarget, unit: scaleOf(this.width) };
+          : { timeSec, target: colony.boostTarget, unit: this.unit };
       if (look === 'slime') {
+        const region = slimeRegion(
+          colony.bacterias,
+          view,
+          this.width,
+          this.height
+        );
+        if (region == null) {
+          continue;
+        }
         const hot = colonyDensity(
           this.density,
           this.heat,
@@ -415,7 +508,8 @@ export class ColonyRenderer {
           this.width,
           this.height,
           colony.bacterias,
-          balance
+          balance,
+          region
         );
         paintSlime(
           data,
@@ -424,7 +518,8 @@ export class ColonyRenderer {
           this.width,
           this.height,
           colony.color,
-          shimmer
+          shimmer,
+          region
         );
       } else {
         createImageDataFromBacterias(
@@ -505,26 +600,26 @@ function sparkle(x: number, y: number, timeSec: number): boolean {
   return hash(x >> 1, y >> 1, Math.floor(timeSec * 10)) > 0.992;
 }
 
-/** Blurs the field in place with a 3x3 box, the edges clamped. */
+/** Blurs the region of the field in place with a 3x3 box, its edges clamped. */
 function boxBlur(
   field: Float32Array,
   scratch: Float32Array,
   width: number,
-  height: number
+  { minX, minY, maxX, maxY }: CellBounds
 ): void {
-  for (let y = 0; y < height; y++) {
+  for (let y = minY; y <= maxY; y++) {
     const row = y * width;
-    for (let x = 0; x < width; x++) {
-      const left = field[row + (x > 0 ? x - 1 : x)];
-      const right = field[row + (x < width - 1 ? x + 1 : x)];
+    for (let x = minX; x <= maxX; x++) {
+      const left = field[row + (x > minX ? x - 1 : x)];
+      const right = field[row + (x < maxX ? x + 1 : x)];
       scratch[row + x] = (left + field[row + x] + right) / 3;
     }
   }
-  for (let y = 0; y < height; y++) {
-    const up = (y > 0 ? y - 1 : y) * width;
+  for (let y = minY; y <= maxY; y++) {
+    const up = (y > minY ? y - 1 : y) * width;
     const row = y * width;
-    const down = (y < height - 1 ? y + 1 : y) * width;
-    for (let x = 0; x < width; x++) {
+    const down = (y < maxY ? y + 1 : y) * width;
+    for (let x = minX; x <= maxX; x++) {
       field[row + x] =
         (scratch[up + x] + scratch[row + x] + scratch[down + x]) / 3;
     }

@@ -1,4 +1,10 @@
 import {
+  fadeIn,
+  fadeOutAndRelease,
+  feedbackEcho,
+  SoundtrackPlayer,
+} from './audio-nodes';
+import {
   composeLoop,
   Drum,
   DrumHit,
@@ -9,11 +15,8 @@ import {
   MusicNote,
   stepSeconds,
 } from './level-music';
+import { byStep, StepScheduler } from './step-scheduler';
 
-/** How far ahead notes are handed to the audio clock, in seconds. */
-const LOOKAHEAD_SEC = 0.25;
-/** How often the scheduler wakes up to hand them over, in milliseconds. */
-const TICK_MS = 60;
 /** Seconds for the fighting to cool the music back down by two thirds. */
 const COOL_DOWN_SEC = 4;
 
@@ -22,14 +25,14 @@ const VOLUME = { lead: 0.045, pad: 0.012, bass: 0.07 } as const;
 
 /**
  * Plays a level's music on a Web Audio context: composes the loop once and
- * schedules its notes a little ahead of the audio clock, so a busy frame on
- * the main thread never makes the music stumble.
+ * hands its notes to a {@link StepScheduler}, which plays them a little
+ * ahead of the audio clock.
  *
  * The music answers the match: {@link excite} pushes it towards full
  * intensity - louder drums, a brighter melody - and it cools down again on
  * its own once the fighting stops.
  */
-export class MusicPlayer {
+export class MusicPlayer implements SoundtrackPlayer {
   private readonly loop: MusicLoop;
   /** The loop's notes and drum hits, sorted by the sixteenth they fall on. */
   private readonly notesByStep: MusicNote[][];
@@ -39,10 +42,7 @@ export class MusicPlayer {
   private readonly leadFilter: BiquadFilterNode;
   private readonly drumBus: GainNode;
   private readonly nodes: AudioNode[] = [];
-  private timer: ReturnType<typeof setInterval> | null = null;
-  /** The sixteenth of the loop that is scheduled next, and when it plays. */
-  private nextStep = 0;
-  private nextStepAt = 0;
+  private readonly scheduler: StepScheduler;
   private intensity = 0;
   /** The intensity the audio params were last steered to. */
   private appliedIntensity = -1;
@@ -60,6 +60,12 @@ export class MusicPlayer {
     this.notesByStep = byStep(this.loop.steps, this.loop.notes);
     this.drumsByStep = byStep(this.loop.steps, this.loop.drums);
     this.stepSec = stepSeconds(music.bpm);
+    this.scheduler = new StepScheduler(context, {
+      steps: this.loop.steps,
+      stepSec: this.stepSec,
+      play: (step, at) => this.playStep(step, at),
+      tick: (now) => this.coolDown(now),
+    });
 
     this.bus = context.createGain();
     this.bus.gain.value = 0;
@@ -67,18 +73,13 @@ export class MusicPlayer {
 
     // An echo of a dotted eighth, fed back into itself.
     if (music.echo > 0) {
-      const delay = context.createDelay(1);
-      delay.delayTime.value = this.stepSec * 3;
-      const feedback = context.createGain();
-      feedback.gain.value = music.echo;
-      const wet = context.createGain();
-      wet.gain.value = 0.5;
-      this.bus.connect(delay);
-      delay.connect(feedback);
-      feedback.connect(delay);
-      delay.connect(wet);
-      wet.connect(destination);
-      this.nodes.push(delay, feedback, wet);
+      this.nodes.push(
+        ...feedbackEcho(context, this.bus, destination, {
+          delaySec: this.stepSec * 3,
+          feedback: music.echo,
+          wet: 0.5,
+        })
+      );
     }
 
     this.leadFilter = context.createBiquadFilter();
@@ -95,31 +96,14 @@ export class MusicPlayer {
    * picks up where its music would be, in step with a map that moves to it.
    */
   public start(atSec = 0): void {
-    if (this.timer != null) {
-      clearInterval(this.timer);
-    }
-    const now = this.context.currentTime;
-    const firstStep = Math.ceil(atSec / this.stepSec - 1e-6);
-    this.nextStep = firstStep % this.loop.steps;
-    this.nextStepAt = now + 0.05 + (firstStep * this.stepSec - atSec);
-    this.lastTickAt = now;
-    this.bus.gain.cancelScheduledValues(now);
-    this.bus.gain.setTargetAtTime(1, now, 0.4);
-    this.tick();
-    this.timer = setInterval(() => this.tick(), TICK_MS);
+    this.lastTickAt = this.context.currentTime;
+    fadeIn(this.context, this.bus, 0.4);
+    this.scheduler.start(atSec);
   }
 
-  /** Fades the music out and lets go of its audio nodes. */
   public stop(): void {
-    if (this.timer != null) {
-      clearInterval(this.timer);
-      this.timer = null;
-    }
-    const now = this.context.currentTime;
-    this.bus.gain.cancelScheduledValues(now);
-    this.bus.gain.setTargetAtTime(0, now, 0.25);
-    const nodes = [this.bus, ...this.nodes];
-    setTimeout(() => nodes.forEach((node) => node.disconnect()), 2500);
+    this.scheduler.stop();
+    fadeOutAndRelease(this.context, this.bus, this.nodes, 0.25, 2500);
   }
 
   /** Heats the music up - by a little for every bacterium that changed sides. */
@@ -127,24 +111,11 @@ export class MusicPlayer {
     this.intensity = Math.min(1, this.intensity + amount);
   }
 
-  private tick(): void {
-    const now = this.context.currentTime;
+  /** Lets the heat of the fighting fade with time. */
+  private coolDown(now: number): void {
     this.intensity *= Math.exp(-(now - this.lastTickAt) / COOL_DOWN_SEC);
     this.lastTickAt = now;
     this.applyIntensity();
-
-    // Throttled in a background tab: skip what is already late rather than
-    // playing a burst of it at once.
-    if (this.nextStepAt < now) {
-      const behind = Math.ceil((now - this.nextStepAt) / this.stepSec);
-      this.nextStep = (this.nextStep + behind) % this.loop.steps;
-      this.nextStepAt += behind * this.stepSec;
-    }
-    while (this.nextStepAt < now + LOOKAHEAD_SEC) {
-      this.playStep(this.nextStep, this.nextStepAt);
-      this.nextStep = (this.nextStep + 1) % this.loop.steps;
-      this.nextStepAt += this.stepSec;
-    }
   }
 
   private applyIntensity(): void {
@@ -248,13 +219,4 @@ export class MusicPlayer {
     source.start(at);
     source.stop(at + length + 0.02);
   }
-}
-
-/** Sorts what plays in a loop into one list per sixteenth. */
-function byStep<T extends { step: number }>(steps: number, items: T[]): T[][] {
-  const buckets: T[][] = Array.from({ length: steps }, () => []);
-  for (const item of items) {
-    buckets[item.step].push(item);
-  }
-  return buckets;
 }

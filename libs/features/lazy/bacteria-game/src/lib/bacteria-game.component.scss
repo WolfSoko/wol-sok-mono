@@ -1,4 +1,5 @@
 @use 'colony';
+@use 'menu/screen';
 
 .toolbar-spacer {
   flex: 1 1 auto;
@@ -60,6 +61,26 @@
   font-variant-numeric: tabular-nums;
 }
 
+.colony-held {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15em;
+  margin-left: 0.4em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+
+  mat-icon {
+    width: 1em;
+    height: 1em;
+    font-size: 1em;
+  }
+}
+
+.game-time.running-out {
+  color: var(--mat-sys-error);
+  font-weight: 700;
+}
+
 .stage {
   position: relative;
 
@@ -74,7 +95,12 @@
     position: relative;
   }
 
-  canvas {
+  // The arena canvas and the minimap over its corner.
+  .arena-frame {
+    position: relative;
+  }
+
+  .arena-canvas {
     display: block;
     width: 100%;
     image-rendering: pixelated;
@@ -87,6 +113,19 @@
       0 0 40px 8px rgb(var(--arena-border, 200 200 200) / 15%);
     // Dragging a crosshair must not scroll or zoom the page underneath.
     touch-action: none;
+  }
+
+  // Only a glance: small, in the top right corner, and never in the way of
+  // a finger.
+  .minimap {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: clamp(6rem, 22%, 14rem);
+    border: 1px solid rgb(255 255 255 / 35%);
+    border-radius: 4px;
+    opacity: 0.85;
+    pointer-events: none;
   }
 
   // The touch layout: the stage covers the viewport and is handed to the
@@ -142,7 +181,12 @@
 
     // The size comes from the component, which fits the arena into the box
     // without letterboxing inside the element - see `canvasSize`.
-    canvas {
+    .arena-frame {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .arena-canvas {
       width: auto;
       max-width: 100%;
       max-height: 100%;
@@ -264,9 +308,11 @@
   }
 }
 
-// Match setup before a match and the pause notice during one, laid over the
-// arena. Only the card takes input, the seats around it stay usable.
+// The pause menu and the match result, cards laid over the arena - and the
+// menu screens, which fill it (.screens). Only the panel takes input.
 .stage-panel {
+  @include screen.tokens;
+
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -276,8 +322,18 @@
   padding: 1rem;
   pointer-events: none;
 
+  // The way forward is the player's colour, here as on the menu screens.
+  --mat-button-filled-container-color: var(--bw-player);
+  --mat-button-filled-label-text-color: var(--bw-on-player);
+
   .panel-card {
-    width: min(100%, 36rem);
+    --mat-card-elevated-container-color: var(--bw-surface);
+
+    width: min(100%, 40rem);
+    border: 1px solid var(--bw-line);
+    border-radius: 1.5rem;
+    color: var(--bw-text);
+    font-family: var(--bw-body);
     max-height: 100%;
     overflow: auto;
     pointer-events: auto;
@@ -286,12 +342,12 @@
   }
 
   .panel-title {
+    @include screen.title;
+
     margin: 0 0 0.75rem;
-    font-size: 1.4rem;
-    font-weight: 700;
   }
 
-  // The main menu and the pause menu: a stack of big buttons.
+  // The pause menu: a stack of big buttons.
   .menu {
     display: flex;
     flex-direction: column;
@@ -300,56 +356,33 @@
     text-align: center;
   }
 
-  .menu-title {
-    margin: 0;
-    font-size: 2.2rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .menu-tagline,
-  .menu-summary {
-    margin: 0;
-    opacity: 0.8;
-  }
-
   .menu-button {
     width: min(100%, 18rem);
     height: 2.75rem;
     font-size: 1.05rem;
   }
+}
 
-  .menu-link {
-    opacity: 0.7;
-  }
+// The menu screens fill the stage, opaque, over a drifting swarm. They set
+// the look every screen shares (menu/_screen.scss): the colours of a dark
+// lab dish, gold for progress and the player's colony colour - bound in the
+// template - for the way forward.
+.stage-panel.screens {
+  display: block;
+  padding: 0;
+  background: var(--bw-ground);
+  color: var(--bw-text);
+  pointer-events: auto;
+  touch-action: manipulation;
 
-  .settings {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+  .screen {
+    position: relative;
+    height: 100%;
   }
+}
 
-  .option-picker {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 1rem;
-  }
-
-  .option-label {
-    min-width: 6.5rem;
-    opacity: 0.8;
-  }
-
-  .resolution-hint {
-    font-size: 0.8rem;
-    opacity: 0.7;
-  }
-
-  .help p {
-    margin: 0 0 0.75rem;
-  }
+.page-challenge {
+  margin-bottom: 1rem;
 }
 
 .page-result {

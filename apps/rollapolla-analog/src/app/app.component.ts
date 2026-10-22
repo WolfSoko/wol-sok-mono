@@ -1,16 +1,18 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
-import { DomSanitizer, Title } from '@angular/platform-browser';
+import { MatIconModule } from '@angular/material/icon';
+import { Title } from '@angular/platform-browser';
 import { RouterLink, RouterOutlet } from '@angular/router';
-import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
-import { icon } from '@fortawesome/fontawesome-svg-core';
 import { AccountComponent } from './core/account/account.component';
+import { ConsentBannerComponent } from './core/analytics/consent-banner.component';
+import { ConsentSettingsComponent } from './core/analytics/consent-settings.component';
 
 @Component({
   selector: 'rap-root',
   imports: [
     AccountComponent,
+    ConsentBannerComponent,
+    ConsentSettingsComponent,
     MatButtonModule,
     MatIconModule,
     RouterLink,
@@ -47,17 +49,6 @@ import { AccountComponent } from './core/account/account.component';
             <span class="browse-label">Browse</span>
           </a>
           <rap-account />
-          <a
-            mat-stroked-button
-            class="follow-link"
-            target="_blank"
-            rel="noopener"
-            href="https://x.com/rollapolla"
-            aria-label="Follow RollaPolla on X"
-          >
-            <mat-icon svgIcon="fa:xTwitter" />
-            Follow
-          </a>
         </div>
       </div>
     </header>
@@ -69,13 +60,12 @@ import { AccountComponent } from './core/account/account.component';
         <span>© RollaPolla · Polls for everyone</span>
         <nav class="footer-links" aria-label="More">
           <a routerLink="/polls">Browse polls</a>
-          <a href="https://x.com/rollapolla" target="_blank" rel="noopener"
-            >Follow us on X</a
-          >
+          <rap-consent-settings />
           <span>Built with Angular &amp; Analog</span>
         </nav>
       </div>
     </footer>
+    <rap-consent-banner />
   `,
   styles: `
     .site-header {
@@ -121,8 +111,7 @@ import { AccountComponent } from './core/account/account.component';
       align-items: center;
       gap: 0.5rem;
     }
-    /* phones: brand, browse link and account bar share one row; following
-       on X moves to the footer */
+    /* phones: brand, browse link and account bar share one row */
     @media (max-width: 599.98px) {
       .browse-link {
         min-width: 0;
@@ -132,8 +121,7 @@ import { AccountComponent } from './core/account/account.component';
       .browse-link .mat-icon {
         margin: 0;
       }
-      .browse-label,
-      .follow-link {
+      .browse-label {
         display: none;
       }
     }
@@ -166,12 +154,6 @@ import { AccountComponent } from './core/account/account.component';
 })
 export class AppComponent {
   constructor() {
-    const svg = icon(faXTwitter).html.join('');
-    inject(MatIconRegistry).addSvgIconLiteralInNamespace(
-      'fa',
-      'xTwitter',
-      inject(DomSanitizer).bypassSecurityTrustHtml(svg)
-    );
     inject(Title).setTitle('Polls for everyone | RollaPolla.com');
   }
 }

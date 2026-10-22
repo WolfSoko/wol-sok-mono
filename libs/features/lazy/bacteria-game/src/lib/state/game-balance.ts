@@ -83,6 +83,14 @@ export interface GameBalance {
   boostAttackFactor: number;
 }
 
+/**
+ * The version of the balance table and of the rules the simulation applies
+ * with it. Raise it with every change that plays a recorded match out
+ * differently: a replay only plays again under the version it was recorded
+ * with.
+ */
+export const BALANCE_VERSION = 5;
+
 export const gameBalance: GameBalance = {
   startBacteriaRadius: 14,
   maxBacteriaPerPlayer: 5000,
@@ -125,7 +133,10 @@ export const gameBalance: GameBalance = {
  * How many bacteria each colony may grow to: its even share of the arena's
  * carrying capacity, never above the per-player cap. A single budget for all
  * of them would let the bigger colony use it up and freeze the smaller one
- * out of dividing altogether.
+ * out of dividing altogether. Every colony of the match has its share
+ * for the whole match, a neutral one too: eating it adds its bacteria to
+ * yours, but not its share - or the colonies grow so big that the match
+ * stalls.
  */
 export function colonyCapacity(balance: GameBalance, colonies: number): number {
   return Math.max(
@@ -136,3 +147,33 @@ export function colonyCapacity(balance: GameBalance, colonies: number): number {
     )
   );
 }
+
+/**
+ * How one colony plays differently from the level's balance - a boss
+ * divides faster, hits harder and recharges its boost sooner.
+ */
+export interface ColonyTraits {
+  /** Times the chance to divide. */
+  divideFactor: number;
+  /** Times the pressure its bacteria exert, on top of a boost. */
+  attackFactor: number;
+  /** Times the boost's cooldown. */
+  cooldownFactor: number;
+}
+
+/** A colony like any other. */
+export const PLAIN_TRAITS: ColonyTraits = {
+  divideFactor: 1,
+  attackFactor: 1,
+  cooldownFactor: 1,
+};
+
+/**
+ * A neutral colony: nobody steers it, it grows slowly and bites back only
+ * weakly - food that takes some eating.
+ */
+export const NEUTRAL_TRAITS: ColonyTraits = {
+  divideFactor: 0.5,
+  attackFactor: 0.6,
+  cooldownFactor: 1,
+};

@@ -24,6 +24,12 @@ export const COLONY_COLORS: readonly ColonyColor[] = [
   { id: 'red', name: 'Red', rgb: [230, 40, 40] },
 ];
 
+/**
+ * The grey of a neutral colony - no player's, and apart from every colour
+ * a player can pick.
+ */
+export const NEUTRAL_COLOR: PlayerColorArray = [150, 156, 162, 255];
+
 /** Orange on the left, blue on the right - the colours the game started with. */
 export const DEFAULT_COLORS: readonly [string, string] = ['orange', 'blue'];
 
@@ -35,6 +41,26 @@ export function getColonyColor(id: string): ColonyColor {
 /** True for the id of a colour on offer. */
 export function isColonyColor(id: unknown): id is string {
   return COLONY_COLORS.some((color) => color.id === id);
+}
+
+/**
+ * Black or white, whichever reads better on a colour - by the WCAG contrast
+ * of each against it.
+ */
+export function readableOn([r, g, b]: readonly [
+  number,
+  number,
+  number,
+]): string {
+  const channel = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  const luminance =
+    0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+  return (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05)
+    ? '#140a02'
+    : '#ffffff';
 }
 
 /** The colour as the RGBA array a player is drawn with. */

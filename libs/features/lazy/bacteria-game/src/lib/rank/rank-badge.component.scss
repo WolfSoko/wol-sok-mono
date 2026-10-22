@@ -1,0 +1,25 @@
+:host {
+  display: inline-block;
+  flex: none;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hexagon {
+  fill: var(--bw-surface-raised, #19212c);
+  stroke: var(--bw-gold, #e9b949);
+  stroke-width: 2.5;
+}
+
+.initial {
+  fill: var(--bw-gold, #e9b949);
+  font: 800 24px/1 var(--bw-display, sans-serif);
+}
+
+.pip {
+  fill: var(--bw-gold, #e9b949);
+}

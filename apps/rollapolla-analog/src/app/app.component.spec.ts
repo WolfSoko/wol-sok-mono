@@ -1,6 +1,5 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MatIconRegistry } from '@angular/material/icon';
 import { Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { AccountAdapterMock } from './adapter/account-adapter-mock.service';
@@ -32,22 +31,6 @@ describe('AppComponent', () => {
     TestBed.createComponent(AppComponent);
     expect(TestBed.inject(Title).getTitle()).toEqual(
       'Polls for everyone | RollaPolla.com'
-    );
-  });
-
-  it('should register xTwitter icons to MatIconRegistry', async () => {
-    const addSvgIconSpy = vi.spyOn(
-      TestBed.inject(MatIconRegistry),
-      'addSvgIconLiteralInNamespace'
-    );
-    TestBed.createComponent(AppComponent);
-
-    expect(addSvgIconSpy).toHaveBeenCalledWith(
-      'fa',
-      'xTwitter',
-      expect.objectContaining({
-        changingThisBreaksApplicationSecurity: expect.stringContaining('<svg'),
-      })
     );
   });
 });

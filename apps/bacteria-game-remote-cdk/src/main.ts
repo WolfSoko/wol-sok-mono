@@ -1,6 +1,5 @@
-import { envOrDie } from '@wolsok/spa-cdk-stack';
+import { envOrDie, SpaStack } from '@wolsok/spa-cdk-stack';
 import { App, RemovalPolicy, Tags } from 'aws-cdk-lib';
-import { SpaStack } from './stacks/spa.stack';
 
 const app = new App();
 
@@ -15,7 +14,8 @@ new SpaStack(app, stackName, {
   bucketRemovalPolicy: RemovalPolicy.DESTROY,
   extraAllowedOrigins: ['https://angularexamples.wolsok.de'],
   // These keep their names across releases: the import maps, the files of
-  // the installed app (ngsw.json tells it a release is out) and its icons.
+  // the installed app (ngsw.json tells it a release is out), its icons and
+  // the asset links that let the Android app show the game fullscreen.
   noCacheFiles: [
     'remoteEntry.json',
     'importmap.json',
@@ -27,6 +27,7 @@ new SpaStack(app, stackName, {
     'favicon.ico',
     'icons',
     'icons/*',
+    '.well-known/assetlinks.json',
   ],
 });
 

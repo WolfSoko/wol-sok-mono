@@ -205,3 +205,48 @@ describe('WsThanosDirective options input', () => {
     });
   });
 });
+
+describe('WsThanosDirective preload', () => {
+  @Component({
+    template: `<div wsThanos [wsThanosOptions]="elementOptions"></div>`,
+    imports: [WsThanosDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+  })
+  class PreloadHostComponent {
+    public elementOptions?: Partial<WsThanosOptions>;
+  }
+
+  async function renderWith(
+    options: Partial<WsThanosOptions>,
+    elementOptions?: Partial<WsThanosOptions>
+  ): Promise<jest.SpyInstance> {
+    TestBed.configureTestingModule({
+      providers: [provideWsThanosOptions(options)],
+    });
+    const preload = jest
+      .spyOn(TestBed.inject(WsThanosService), 'preload')
+      .mockResolvedValue();
+    const fixture = TestBed.createComponent(PreloadHostComponent);
+    fixture.componentInstance.elementOptions = elementOptions;
+    await fixture.whenStable();
+    return preload;
+  }
+
+  it('should warm up the effect after the first render', async () => {
+    const preload = await renderWith({});
+
+    expect(preload).toHaveBeenCalled();
+  });
+
+  it('should not warm up when preload is off', async () => {
+    const preload = await renderWith({ preload: false });
+
+    expect(preload).not.toHaveBeenCalled();
+  });
+
+  it('should not warm up when the element turns preload off', async () => {
+    const preload = await renderWith({}, { preload: false });
+
+    expect(preload).not.toHaveBeenCalled();
+  });
+});

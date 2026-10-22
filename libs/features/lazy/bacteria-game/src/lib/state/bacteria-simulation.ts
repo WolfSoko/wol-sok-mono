@@ -1,8 +1,21 @@
+import {
+  heatedAggression,
+  mapZones,
+  stampZones,
+  ZONE_CODE,
+  ZONE_EFFECTS,
+} from './zones';
 import type { ColonyLayer } from '../arena/colony-renderer';
-import { colonyCapacity, GameBalance, gameBalance } from './game-balance';
+import {
+  colonyCapacity,
+  ColonyTraits,
+  GameBalance,
+  gameBalance,
+  PLAIN_TRAITS,
+} from './game-balance';
 import { clamp, Point } from './geometry';
 import { NutrientPellets } from './nutrient-pellets';
-import { ColonySummary, Simulation } from './simulation';
+import { BlockCounts, ColonySummary, Simulation } from './simulation';
 import { compareDynamicWalls, DynamicWall, GameMap, stampRect } from './maps';
 import { escapeReach } from './arena-size';
 import { getMap } from './game-maps';
@@ -35,6 +48,10 @@ export interface Colony {
   lost: number;
   /** Sum of the energy of all bacteria of this colony. */
   totalEnergy: number;
+  /** Pellets it ate up since the game started - see `NutrientPellets.drain`. */
+  pellets: number;
+  /** How it plays differently from the balance - a boss's traits. */
+  traits: ColonyTraits;
 }
 
 export interface ColonySpawn {
@@ -43,10 +60,12 @@ export interface ColonySpawn {
   x: number;
   y: number;
   radius: number;
+  /** A boss's traits - plain when absent. */
+  traits?: ColonyTraits;
 }
 
 /**
- * What happened during one frame - read by the sound, which has no business
+ * What happened during one step - read by the sound, which has no business
  * looking into the grid itself.
  */
 export interface StepEvents {
@@ -62,7 +81,25 @@ export interface StepEvents {
   gatesWarned: number;
 }
 
-/** A frame in which nothing happened. */
+/** A step in which nothing happened. */
+/** How hard a colony's bacteria press this frame - its boost and traits. */
+export function attackOf(
+  balance: GameBalance,
+  traits: ColonyTraits,
+  boosted: boolean
+): number {
+  return traits.attackFactor * (boosted ? balance.boostAttackFactor : 1);
+}
+
+/** A bacterium's chance to divide this frame, before ground and room. */
+export function divideChanceOf(
+  balance: GameBalance,
+  traits: ColonyTraits,
+  deltaTimeSec: number
+): number {
+  return balance.divideChancePerSec * traits.divideFactor * deltaTimeSec;
+}
+
 /**
  * How a colony heads for its crosshair this frame: how keen it is to hunt
  * and how many cells it travels - null while it aims at nothing.
@@ -95,12 +132,28 @@ export function noEvents(): StepEvents {
   };
 }
 
-interface Capture {
+/** The events of two steps together. */
+export function addEvents(a: StepEvents, b: StepEvents): StepEvents {
+  return {
+    captures: a.captures + b.captures,
+    pelletsEaten: a.pelletsEaten + b.pelletsEaten,
+    crushed: a.crushed + b.crushed,
+    gatesClosed: a.gatesClosed + b.gatesClosed,
+    gatesWarned: a.gatesWarned + b.gatesWarned,
+  };
+}
+
+/** A bacterium that dies this frame - and nobody captures it. */
+interface Death {
   bacterium: Bacteria;
   /** Index of the colony that is losing the bacterium. */
   victim: number;
   /** Position of the bacterium inside the victim's array. */
   victimIndex: number;
+}
+
+/** A bacterium another colony killed this frame. */
+interface Capture extends Death {
   /** Index of the colony that killed it. */
   winner: number;
 }
@@ -143,10 +196,18 @@ export class BacteriaSimulation implements Simulation {
   private baseOwner = new Int32Array(0);
   /** The static walls alone - the moving ones are stamped on top of it. */
   private staticOwner = new Int32Array(0);
+  /** The zone under each cell - see `ZONE_CODE`, 0 for none. */
+  private zone = new Uint8Array(0);
+  /** False on a map without zones - the lookups are skipped then. */
+  private hasZones = false;
+  /** True on a map with a zone to hold, whose bacteria are counted. */
+  private hasHill = false;
   /** Energy snapshot of the frame start, read by the combat phase. */
   private energy = new Float32Array(0);
   /** Energy handed out by nutrients this frame. */
   private nutrientBonus = new Float32Array(0);
+  /** Each colony's bacteria within reach of the pellet being drained. */
+  private eaters = new Int32Array(0);
   /** Energy left behind by a kill, consumed by whoever stands there next. */
   private feed = new Float32Array(0);
 
@@ -163,6 +224,7 @@ export class BacteriaSimulation implements Simulation {
   private colonies: Colony[] = [];
   /** The summaries as of the last step, built when first asked for. */
   private colonySummaries: ColonySummary[] | null = null;
+  private colonyBlocks: BlockCounts | null = null;
   private readonly pellets: NutrientPellets;
   /** Wall layout the match is fought on. */
   private map: GameMap = getMap('corridors');
@@ -170,7 +232,7 @@ export class BacteriaSimulation implements Simulation {
   private elapsedSec = 0;
   /** The moving walls and gates as of the current match time. */
   private dynamicWalls: DynamicWall[] = [];
-  /** What the last frame did, for the sound. */
+  /** What the last step did, for the sound. */
   private events: StepEvents = noEvents();
 
   constructor(
@@ -210,7 +272,7 @@ export class BacteriaSimulation implements Simulation {
     return this.dynamicWalls;
   }
 
-  /** What happened during the last frame. */
+  /** What happened during the last step. */
   public getEvents(): StepEvents {
     return this.events;
   }
@@ -225,9 +287,16 @@ export class BacteriaSimulation implements Simulation {
     return this.colonies.map((colony) => {
       let sumX = 0;
       let sumY = 0;
+      let onHill = 0;
       for (const bacterium of colony.bacterias) {
         sumX += bacterium.x;
         sumY += bacterium.y;
+        if (
+          this.hasHill &&
+          this.zone[bacterium.y * this.width + bacterium.x] === ZONE_CODE.hill
+        ) {
+          onHill++;
+        }
       }
       const count = colony.bacterias.length;
       return {
@@ -238,6 +307,8 @@ export class BacteriaSimulation implements Simulation {
         lost: colony.lost,
         totalEnergy: colony.totalEnergy,
         center: count > 0 ? { x: sumX / count, y: sumY / count } : null,
+        onHill,
+        pellets: colony.pellets,
       };
     });
   }
@@ -249,6 +320,32 @@ export class BacteriaSimulation implements Simulation {
       bacterias: colony.bacterias,
       boostTarget: boosts.get(colony.playerId) ?? null,
     }));
+  }
+
+  /**
+   * Counts the bacteria into blocks as big as the GPU simulation's - once
+   * per tick at the most, and only when asked.
+   */
+  public blockCounts(): BlockCounts {
+    this.colonyBlocks ??= this.countBlocks();
+    return this.colonyBlocks;
+  }
+
+  private countBlocks(): BlockCounts {
+    const cellSize = this.balance.influenceCellSize;
+    const blocksX = this.influenceWidth;
+    const blocksY = this.influenceHeight;
+    const counts = this.colonies.map((colony) => {
+      const blocks = new Uint32Array(blocksX * blocksY);
+      for (const bacterium of colony.bacterias) {
+        blocks[
+          Math.floor(bacterium.y / cellSize) * blocksX +
+            Math.floor(bacterium.x / cellSize)
+        ]++;
+      }
+      return blocks;
+    });
+    return { blocksX, blocksY, cellSize, counts };
   }
 
   /** The bacterium of another colony closest to a point, null without one. */
@@ -291,8 +388,11 @@ export class BacteriaSimulation implements Simulation {
       captured: 0,
       lost: 0,
       totalEnergy: 0,
+      pellets: 0,
+      traits: spawn.traits ?? PLAIN_TRAITS,
     }));
     this.colonySummaries = null;
+    this.colonyBlocks = null;
     for (const colony of this.colonies) {
       colony.totalEnergy = colony.bacterias.length * this.balance.maxEnergy;
     }
@@ -317,6 +417,7 @@ export class BacteriaSimulation implements Simulation {
     this.owner = new Int32Array(cells);
     this.baseOwner = new Int32Array(cells).fill(EMPTY_CELL);
     this.staticOwner = new Int32Array(cells).fill(EMPTY_CELL);
+    this.zone = new Uint8Array(cells);
     this.energy = new Float32Array(cells);
     this.nutrientBonus = new Float32Array(cells);
     this.feed = new Float32Array(cells);
@@ -340,6 +441,11 @@ export class BacteriaSimulation implements Simulation {
       return;
     }
     this.staticOwner.fill(EMPTY_CELL);
+    this.zone.fill(0);
+    const zones = mapZones(this.map, this.width, this.height);
+    stampZones(this.zone, this.width, this.height, zones);
+    this.hasZones = zones.length > 0;
+    this.hasHill = zones.some(({ kind }) => kind === 'hill');
     for (const wall of this.map.createWalls(this.width, this.height)) {
       stampRect(this.staticOwner, this.width, this.height, wall, WALL_CELL);
     }
@@ -438,7 +544,7 @@ export class BacteriaSimulation implements Simulation {
 
   /** The closest free cell within a few steps, or -1 when it is all packed. */
   private findEscape(x: number, y: number): number {
-    const reach = escapeReach(this.width);
+    const reach = escapeReach(this.width, this.map.size);
     for (let radius = 1; radius <= reach; radius++) {
       for (let dy = -radius; dy <= radius; dy++) {
         for (let dx = -radius; dx <= radius; dx++) {
@@ -470,7 +576,7 @@ export class BacteriaSimulation implements Simulation {
   }
 
   /**
-   * Advances the war by one frame. `players` only provides the crosshair each
+   * Advances the war by one step. `players` only provides the crosshair each
    * colony moves towards - the bacteria themselves belong to the simulation.
    */
   public step(players: Player[], deltaTimeSec: number): void {
@@ -478,6 +584,7 @@ export class BacteriaSimulation implements Simulation {
     // last frame's events again.
     this.events = noEvents();
     this.colonySummaries = null;
+    this.colonyBlocks = null;
     if (this.colonies.length === 0 || this.width === 0 || deltaTimeSec <= 0) {
       return;
     }
@@ -492,18 +599,22 @@ export class BacteriaSimulation implements Simulation {
 
     // A boosted colony hits harder - the factor is read per attacking colony
     // in the combat phase, so it is resolved once here.
-    const attackFactor = new Float32Array(this.colonies.length).fill(1);
+    const attackFactor = new Float32Array(this.colonies.length);
     targets.forEach((target, index) => {
-      if (isBoosted(target)) {
-        attackFactor[index] = this.balance.boostAttackFactor;
-      }
+      attackFactor[index] = attackOf(
+        this.balance,
+        this.colonies[index].traits,
+        isBoosted(target)
+      );
     });
 
     this.buildGrid();
     this.updateNutrients(deltaTimeSec);
-    const captures = this.runCombat(deltaTimeSec, attackFactor);
+    const deaths: Death[] = [];
+    const captures = this.runCombat(deltaTimeSec, attackFactor, deaths);
     this.applyCaptures(captures);
-    this.compact(captures);
+    this.clearDeaths(deaths);
+    this.compact([...captures, ...deaths]);
     // Division and movement compete for the same free cells, so whoever is
     // handled first has an edge - shuffle to keep the colonies symmetric.
     this.divide(this.shuffled(), deltaTimeSec);
@@ -626,6 +737,10 @@ export class BacteriaSimulation implements Simulation {
     const { nutrientRadius, nutrientDrainPerSec } = this.balance;
     const gain = nutrientDrainPerSec * deltaTimeSec;
     const nutrients = this.pellets.nutrients;
+    if (this.eaters.length !== this.colonies.length) {
+      this.eaters = new Int32Array(this.colonies.length);
+    }
+    const eaters = this.eaters;
 
     for (let n = 0; n < nutrients.length; n++) {
       const nutrient = nutrients[n];
@@ -639,7 +754,7 @@ export class BacteriaSimulation implements Simulation {
       const yMin = Math.max(nutrient.y - nutrientRadius, 0);
       const yMax = Math.min(nutrient.y + nutrientRadius, this.height - 1);
 
-      let eaters = 0;
+      eaters.fill(0);
       for (let y = yMin; y <= yMax; y++) {
         for (let x = xMin; x <= xMax; x++) {
           const index = y * this.width + x;
@@ -647,12 +762,16 @@ export class BacteriaSimulation implements Simulation {
             continue;
           }
           this.nutrientBonus[index] += gain;
-          eaters++;
+          eaters[this.owner[index]]++;
         }
       }
 
-      if (this.pellets.drain(n, eaters, gain)) {
+      const eaten = this.pellets.drain(n, eaters, gain);
+      if (eaten !== null) {
         this.events.pelletsEaten++;
+        if (eaten.by !== null) {
+          this.colonies[eaten.by].pellets++;
+        }
       }
     }
   }
@@ -662,11 +781,13 @@ export class BacteriaSimulation implements Simulation {
    * collects the ones that ran out of energy.
    *
    * `attackFactor` scales the pressure each colony exerts - a boosted colony's
-   * bacteria count for more than their energy alone.
+   * bacteria count for more than their energy alone. The ones an antibiotic
+   * killed go into `deaths`.
    */
   private runCombat(
     deltaTimeSec: number,
-    attackFactor: Float32Array
+    attackFactor: Float32Array,
+    deaths: Death[]
   ): Capture[] {
     const {
       defenceFactor,
@@ -719,11 +840,16 @@ export class BacteriaSimulation implements Simulation {
         let energy =
           bacterium.energy + this.nutrientBonus[index] + this.feed[index];
 
+        const poisoned =
+          this.hasZones && this.zone[index] === ZONE_CODE.antibiotic;
+        if (poisoned) {
+          energy -= ZONE_EFFECTS.antibioticDrainPerSec * deltaTimeSec;
+        }
         const pressure =
           enemy > 0 ? enemy + frontlinePressure - own * defenceFactor : 0;
         if (pressure > 0) {
           energy -= pressure * combatDrainPerSec * deltaTimeSec;
-        } else if (energy < maxEnergy) {
+        } else if (energy < maxEnergy && !poisoned) {
           energy = Math.min(
             maxEnergy,
             energy + energyRegenPerSec * deltaTimeSec
@@ -743,6 +869,12 @@ export class BacteriaSimulation implements Simulation {
         }
 
         const winner = strongestEnemy(enemyStrength, colonyIndex);
+        if (winner < 0 && poisoned) {
+          // The antibiotic killed it: lost, and nobody captured it.
+          this.colonies[colonyIndex].lost++;
+          deaths.push({ bacterium, victim: colonyIndex, victimIndex: i });
+          continue;
+        }
         if (winner < 0) {
           // Nothing around that could take over - stay alive on fumes.
           bacterium.energy = Math.min(
@@ -810,8 +942,17 @@ export class BacteriaSimulation implements Simulation {
     }
   }
 
+  /** Frees the cells of the bacteria that died without a captor. */
+  private clearDeaths(deaths: readonly Death[]): void {
+    for (const { bacterium } of deaths) {
+      const index = bacterium.y * this.width + bacterium.x;
+      this.owner[index] = EMPTY_CELL;
+      this.energy[index] = 0;
+    }
+  }
+
   /** Removes the bacteria that were killed this frame from their old colony. */
-  private compact(captures: Capture[]): void {
+  private compact(captures: readonly Death[]): void {
     if (captures.length === 0) {
       return;
     }
@@ -835,13 +976,12 @@ export class BacteriaSimulation implements Simulation {
    * the arena reaches its carrying capacity.
    */
   private divide(colonies: Colony[], deltaTimeSec: number): void {
-    const { divideEnergyThreshold, divideChancePerSec, parentEnergyShare } =
-      this.balance;
-    const chance = divideChancePerSec * deltaTimeSec;
+    const { divideEnergyThreshold, parentEnergyShare } = this.balance;
     const capacity = colonyCapacity(this.balance, this.colonies.length);
 
     for (const colony of colonies) {
       const colonyIndex = this.colonies.indexOf(colony);
+      const chance = divideChanceOf(this.balance, colony.traits, deltaTimeSec);
       const bacterias = colony.bacterias;
       let count = bacterias.length;
       const parents = count;
@@ -850,7 +990,13 @@ export class BacteriaSimulation implements Simulation {
         if (bacterium.energy < divideEnergyThreshold) {
           continue;
         }
-        if (this.random() >= chance) {
+        const onAgar =
+          this.hasZones &&
+          this.zone[bacterium.y * this.width + bacterium.x] === ZONE_CODE.agar;
+        if (
+          this.random() >=
+          (onAgar ? chance * ZONE_EFFECTS.agarDivideFactor : chance)
+        ) {
           continue;
         }
         const cell = this.findFreeNeighbour(bacterium.x, bacterium.y);
@@ -917,6 +1063,17 @@ export class BacteriaSimulation implements Simulation {
       const { aggression, steps: maxStep } = intent;
 
       for (const bacterium of colony.bacterias) {
+        const zone = this.hasZones
+          ? this.zone[bacterium.y * this.width + bacterium.x]
+          : 0;
+        if (
+          zone === ZONE_CODE.ice &&
+          this.random() < ZONE_EFFECTS.iceStayChance
+        ) {
+          continue;
+        }
+        const hunt =
+          zone === ZONE_CODE.heat ? heatedAggression(aggression) : aggression;
         let dirX = targetX - bacterium.x;
         let dirY = targetY - bacterium.y;
         const length = Math.sqrt(dirX * dirX + dirY * dirY);
@@ -929,11 +1086,19 @@ export class BacteriaSimulation implements Simulation {
           huntOffset +
           Math.floor(bacterium.y / cellSize) * this.influenceWidth +
           Math.floor(bacterium.x / cellSize);
-        const huntX = this.huntFieldX[huntCell];
-        const huntY = this.huntFieldY[huntCell];
+        let huntX = this.huntFieldX[huntCell];
+        let huntY = this.huntFieldY[huntCell];
+        // The hunt never drags a colony back against its crosshair: the
+        // part of it that points away from the crosshair is dropped, so a
+        // colony can always run - it only bends sideways towards the enemy.
+        const back = huntX * dirX + huntY * dirY;
+        if (back < 0) {
+          huntX -= back * dirX;
+          huntY -= back * dirY;
+        }
         if (huntX !== 0 || huntY !== 0) {
-          dirX = dirX * (1 - aggression) + huntX * aggression;
-          dirY = dirY * (1 - aggression) + huntY * aggression;
+          dirX = dirX * (1 - hunt) + huntX * hunt;
+          dirY = dirY * (1 - hunt) + huntY * hunt;
         }
 
         dirX += (this.random() - 0.5) * jitter;

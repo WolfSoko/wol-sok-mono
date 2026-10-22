@@ -1,5 +1,9 @@
 <h2 class="headline">{{ headline() }}</h2>
 <p class="level-info">{{ level().name }}</p>
+@if (runNote(); as note) {
+  <p class="run-note">{{ note }}</p>
+}
+
 @if (award(); as award) {
   <div class="award" [class.earned]="award.medal !== null">
     <feat-lazy-bac-game-medallion
@@ -25,24 +29,146 @@
     </div>
   </div>
 }
+
+@if (duel(); as duel) {
+  <div class="duel">
+    @if (duel.series; as series) {
+      <p class="series">
+        <span class="duel-label">Series</span>
+        <span class="duel-score">{{ series.score }}</span>
+        <span class="duel-note">{{ series.note }}</span>
+      </p>
+    }
+    <p class="rivalry">
+      <span class="duel-label">Rivalry</span>
+      <span class="duel-score">{{ duel.rivalry }}</span>
+    </p>
+  </div>
+}
+
+@if (xp(); as xp) {
+  <div class="xp">
+    <div class="xp-head">
+      <span class="xp-total">+{{ xp.gain.total }} XP</span>
+      <span class="xp-parts">
+        @for (part of xp.gain.parts; track part.label) {
+          <span class="xp-part">{{ part.label }} {{ part.xp }}</span>
+        }
+      </span>
+    </div>
+    @if (xp.climb; as climb) {
+      <mat-progress-bar
+        class="xp-bar"
+        mode="buffer"
+        [attr.aria-label]="
+          'XP towards ' + (climb.standing.next?.name ?? 'the top')
+        "
+        [value]="climb.held"
+        [bufferValue]="climb.held + climb.gained"
+      />
+      <p class="xp-rank">
+        @if (climb.rankUp) {
+          <span class="rank-up">Rank up!</span>
+        }
+        {{ climb.standing.rank.name }}
+        @if (climb.standing.next; as next) {
+          · {{ climb.standing.toNext?.toLocaleString("en") }} XP to
+          {{ next.name }}
+        }
+      </p>
+    }
+  </div>
+}
+
+@if (earned().length > 0 || unlocked().length > 0 || cosmetics().length > 0) {
+  <ul class="news" aria-label="New this match">
+    @for (achievement of earned(); track achievement.id) {
+      <li class="chip">
+        <mat-icon class="badge" aria-hidden="true">emoji_events</mat-icon>
+        <span class="chip-text">
+          <span class="chip-label">Achievement</span>
+          <span class="chip-name">{{ achievement.name }}</span>
+          <span class="chip-note">{{ achievement.condition }}</span>
+        </span>
+      </li>
+    }
+    @for (cosmetic of cosmetics(); track cosmetic) {
+      <li class="chip unlock">
+        <mat-icon class="badge" aria-hidden="true">palette</mat-icon>
+        <span class="chip-text">
+          <span class="chip-label">Unlocked</span>
+          <span class="chip-name">{{ cosmetic }}</span>
+        </span>
+      </li>
+    }
+    @for (level of unlocked(); track level.id) {
+      <li class="chip unlock">
+        <mat-icon class="badge" aria-hidden="true">lock_open</mat-icon>
+        <span class="chip-text">
+          <span class="chip-label">Unlocked</span>
+          <span class="chip-name">{{ level.name }}</span>
+        </span>
+      </li>
+    }
+  </ul>
+}
+
 <div class="actions">
   <button mat-button type="button" (click)="action.emit('menu')">
     <mat-icon>home</mat-icon>
     Main menu
   </button>
-  <button mat-stroked-button type="button" (click)="action.emit('again')">
-    <mat-icon>replay</mat-icon>
-    Play again
-  </button>
-  @if (upcoming(); as next) {
-    <button
-      mat-flat-button
-      color="primary"
-      type="button"
-      (click)="action.emit('next')"
-    >
-      <mat-icon>skip_next</mat-icon>
-      Next: {{ next.name }}
+  @if (endlessAction(); as label) {
+    <button mat-flat-button type="button" (click)="action.emit('endless')">
+      <mat-icon>all_inclusive</mat-icon>
+      {{ label }}
     </button>
+  } @else {
+    @if (canChooseLevel()) {
+      <button mat-stroked-button type="button" (click)="action.emit('levels')">
+        <mat-icon>grid_view</mat-icon>
+        Choose a level
+      </button>
+    }
+    <button mat-stroked-button type="button" (click)="action.emit('again')">
+      <mat-icon>replay</mat-icon>
+      {{ againstGhost() ? "Fight it again" : "Play again" }}
+    </button>
+    @if (canFightGhost()) {
+      <button mat-stroked-button type="button" (click)="action.emit('ghost')">
+        <mat-icon>blur_on</mat-icon>
+        Fight your ghost
+      </button>
+      <button
+        mat-button
+        type="button"
+        class="share"
+        [disabled]="shareLink() === null"
+        (click)="shareRun()"
+      >
+        <mat-icon>share</mat-icon>
+        Share your run
+      </button>
+    }
+    @if (upcoming(); as next) {
+      <button
+        mat-flat-button
+        type="button"
+        [disabled]="upcomingLock() !== null"
+        (click)="action.emit('next')"
+      >
+        <mat-icon>{{
+          upcomingLock() === null ? "skip_next" : "lock"
+        }}</mat-icon>
+        Next: {{ next.name }}
+      </button>
+    }
   }
 </div>
+@if (shareNote(); as note) {
+  <p class="share-note" role="status">{{ note }}</p>
+}
+<!-- Only with a Next button for the reason to explain. -->
+@if (upcoming() !== null && upcomingLock(); as lock) {
+  <p class="lock-reason">{{ lock }}</p>
+}

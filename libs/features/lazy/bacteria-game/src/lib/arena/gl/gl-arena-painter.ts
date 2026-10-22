@@ -1,9 +1,11 @@
-import { scaleOf } from '../../state/arena-size';
 import { GameBalance } from '../../state/game-balance';
 import { Bacteria } from '../../state/player.model';
 import { CellBounds, emptyBounds, growBounds } from '../../state/geometry';
+import { Rect } from '../../state/maps';
 import { ArenaFrame, ArenaPainter } from '../arena-painter';
 import { paintArenaBackground } from '../arena-renderer';
+import { paintZoneLayer } from '../zone-decal';
+import { Zone } from '../../state/zones';
 import { ArenaTheme } from '../arena-theme';
 import {
   cellDensity,
@@ -34,6 +36,7 @@ import {
   FLOOR_FRAGMENT,
   SHAPE_FRAGMENT,
   SHAPE_VERTEX,
+  ZONES_FRAGMENT,
 } from './shaders';
 import {
   pushBackground,
@@ -91,6 +94,7 @@ const MARGIN = {
 
 interface Programs {
   floor: Program;
+  zones: Program;
   blit: Program;
   blur: Program;
   colony: Program;
@@ -107,6 +111,8 @@ interface Resources {
   shapes: WebGLVertexArrayObject;
   instances: WebGLBuffer;
   floor: WebGLTexture;
+  /** The zones' layer, finer than the cells - null without zones. */
+  zones: WebGLTexture | null;
   /** One colony's cells - uploaded from the CPU, or drawn from the GPU state. */
   cells: Target;
   /** The two halves of the separable blur. */
@@ -135,6 +141,8 @@ export class GlArenaPainter implements ArenaPainter {
   /** True once the context was handed back - it is not built again then. */
   private disposed = false;
   private theme: ArenaTheme | null = null;
+  /** The zones painted into the floor. */
+  private zones: readonly Zone[] = [];
   private readonly motes: Motes;
   private readonly background = new ShapeBatch();
   private readonly foreground = new ShapeBatch();
@@ -143,12 +151,18 @@ export class GlArenaPainter implements ArenaPainter {
   private readonly canvasHeight: number;
   /** Cells per base cell - the jam and the crosshairs are as big on every grid. */
   private readonly unit: number;
+  /** Pixels per cell the zones are painted with. */
+  private readonly detail: number;
+  /** What of the arena the frame being painted shows. */
+  private view: Rect;
 
   /** A painter for the canvas, or null where WebGL2 is not available. */
   public static create(
     canvas: HTMLCanvasElement,
     width: number,
-    height: number
+    height: number,
+    detail: number,
+    unit: number
   ): GlArenaPainter | null {
     let gl: WebGL2RenderingContext | null = null;
     try {
@@ -165,19 +179,25 @@ export class GlArenaPainter implements ArenaPainter {
     } catch {
       return null;
     }
-    return gl == null ? null : new GlArenaPainter(canvas, gl, width, height);
+    return gl == null
+      ? null
+      : new GlArenaPainter(canvas, gl, width, height, detail, unit);
   }
 
   private constructor(
     canvas: HTMLCanvasElement,
     private readonly gl: WebGL2RenderingContext,
     private readonly width: number,
-    private readonly height: number
+    private readonly height: number,
+    detail: number,
+    unit: number
   ) {
     // Sized by `createArenaPainter`.
     this.canvasWidth = canvas.width;
     this.canvasHeight = canvas.height;
-    this.unit = scaleOf(width);
+    this.unit = unit;
+    this.detail = detail;
+    this.view = { x: 0, y: 0, width, height };
     this.motes = new Motes(width, height);
     this.cellBytes = new Uint8Array(width * height * 2);
     this.resources = this.setup();
@@ -198,6 +218,7 @@ export class GlArenaPainter implements ArenaPainter {
       if (this.theme != null) {
         this.uploadFloor(this.theme);
       }
+      this.uploadZones(this.zones);
     });
   }
 
@@ -208,8 +229,11 @@ export class GlArenaPainter implements ArenaPainter {
    * A simulation that runs the war on this painter's GPU context - its
    * state is then drawn without leaving the GPU.
    */
-  public createSimulation(balance: GameBalance): GpuSimulation {
-    return new GpuSimulation(this.gl, balance);
+  public createSimulation(
+    balance: GameBalance,
+    random: () => number
+  ): GpuSimulation {
+    return new GpuSimulation(this.gl, balance, random);
   }
 
   /**
@@ -222,13 +246,16 @@ export class GlArenaPainter implements ArenaPainter {
     this.gl.getExtension('WEBGL_lose_context')?.loseContext();
   }
 
-  public setTheme(theme: ArenaTheme): void {
-    if (this.theme === theme) {
-      return;
+  public setFloor(theme: ArenaTheme, zones: readonly Zone[]): void {
+    if (this.zones !== zones) {
+      this.zones = zones;
+      this.uploadZones(zones);
     }
-    this.theme = theme;
-    this.motes.reset(theme);
-    this.uploadFloor(theme);
+    if (this.theme !== theme) {
+      this.theme = theme;
+      this.motes.reset(theme);
+      this.uploadFloor(theme);
+    }
   }
 
   public paint(frame: ArenaFrame): void {
@@ -240,6 +267,7 @@ export class GlArenaPainter implements ArenaPainter {
     }
     const { programs } = resources;
     this.motes.advance(frame.deltaTimeSec);
+    this.view = frame.view;
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
     gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
@@ -249,9 +277,20 @@ export class GlArenaPainter implements ArenaPainter {
     // Lay the floor over the previous frame, so movement leaves a short trail.
     this.useFullscreen(programs.floor);
     bindTexture(gl, 0, resources.floor, programs.floor.uniforms['uFloor']);
+    this.setView(programs.floor);
     gl.uniform2f(programs.floor.uniforms['uArena'], this.width, this.height);
     gl.uniform1f(programs.floor.uniforms['uAlpha'], frame.clear ? 1 : 0.7);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (resources.zones != null) {
+      this.useFullscreen(programs.zones);
+      bindTexture(gl, 0, resources.zones, programs.zones.uniforms['uZones']);
+      this.setView(programs.zones);
+      gl.uniform2f(programs.zones.uniforms['uArena'], this.width, this.height);
+      gl.uniform1f(programs.zones.uniforms['uAlpha'], frame.clear ? 1 : 0.7);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      this.useAlphaBlend();
+    }
 
     this.background.clear();
     pushBackground(
@@ -324,7 +363,7 @@ export class GlArenaPainter implements ArenaPainter {
       layer.kind === 'cells'
         ? this.uploadCells(layer.bacterias, frame.balance)
         : layer.bounds;
-    if (bounds == null) {
+    if (bounds == null || !this.inView(bounds, MARGIN.colony)) {
       return;
     }
     // Only the box around the colony is blurred and drawn - the rest of the
@@ -353,6 +392,7 @@ export class GlArenaPainter implements ArenaPainter {
     this.useFullscreen(program);
     bindTexture(gl, 0, blur[1].texture, program.uniforms['uDensity']);
     bindTexture(gl, 1, cells.texture, program.uniforms['uCells']);
+    this.setView(program);
     gl.uniform2f(program.uniforms['uArena'], this.width, this.height);
     gl.uniform3f(
       program.uniforms['uColor'],
@@ -388,19 +428,37 @@ export class GlArenaPainter implements ArenaPainter {
     ];
   }
 
-  /** Scissors a pass on the canvas, whose row 0 is the bottom of the arena. */
+  /**
+   * Scissors a pass on the canvas, whose row 0 is the bottom of the view -
+   * cut to the canvas, which a box out of view misses altogether.
+   */
   private scissorCanvas(bounds: CellBounds, margin: number): void {
     const [x0, y0, x1, y1] = this.box(bounds, margin);
-    const scale = this.canvasWidth / this.width;
+    const view = this.view;
+    const scale = this.canvasWidth / view.width;
+    const clampX = (x: number) => Math.min(Math.max(x, 0), this.canvasWidth);
+    const clampY = (y: number) => Math.min(Math.max(y, 0), this.canvasHeight);
     // Out to whole pixels - at a scale like 7.5 a cell edge falls inside one.
-    const left = Math.floor(x0 * scale);
-    const bottom = Math.floor(this.canvasHeight - y1 * scale);
-    this.gl.scissor(
-      left,
-      bottom,
-      Math.ceil(x1 * scale) - left,
-      Math.ceil(this.canvasHeight - y0 * scale) - bottom
+    const left = clampX(Math.floor((x0 - view.x) * scale));
+    const right = clampX(Math.ceil((x1 - view.x) * scale));
+    const bottom = clampY(
+      Math.floor(this.canvasHeight - (y1 - view.y) * scale)
     );
+    const top = clampY(Math.ceil(this.canvasHeight - (y0 - view.y) * scale));
+    this.gl.scissor(left, bottom, right - left, top - bottom);
+  }
+
+  /** Hands a pass that draws onto the canvas the part of the arena it shows. */
+  private setView(program: Program): void {
+    const { x, y, width, height } = this.view;
+    this.gl.uniform4f(program.uniforms['uView'], x, y, width, height);
+  }
+
+  /** True when any of the colony's box, grown by the margin, is in view. */
+  private inView(bounds: CellBounds, margin: number): boolean {
+    const [x0, y0, x1, y1] = this.box(bounds, margin);
+    const { x, y, width, height } = this.view;
+    return x0 < x + width && x1 > x && y0 < y + height && y1 > y;
   }
 
   /** Scissors a pass on the arena grid - its row y is arena row y. */
@@ -499,6 +557,7 @@ export class GlArenaPainter implements ArenaPainter {
     this.scissorCanvas(around, MARGIN.effects);
     this.useFullscreen(program);
     bindTexture(gl, 0, effects, program.uniforms['uEffects']);
+    this.setView(program);
     gl.uniform2f(program.uniforms['uArena'], this.width, this.height);
     // The colours go as bytes - the shader scales them.
     gl.uniform3fv(program.uniforms['uColors[0]'], colors);
@@ -546,7 +605,7 @@ export class GlArenaPainter implements ArenaPainter {
     }
     const program = resources.programs.shape;
     gl.useProgram(program.program);
-    gl.uniform2f(program.uniforms['uArena'], this.width, this.height);
+    this.setView(program);
     gl.bindVertexArray(resources.shapes);
     gl.bindBuffer(gl.ARRAY_BUFFER, resources.instances);
     gl.bufferData(gl.ARRAY_BUFFER, batch.instances, gl.DYNAMIC_DRAW);
@@ -557,6 +616,54 @@ export class GlArenaPainter implements ArenaPainter {
   private useFullscreen(program: Program): void {
     this.gl.useProgram(program.program);
     this.gl.bindVertexArray(this.resources?.quad ?? null);
+  }
+
+  /**
+   * Paints a level's zones once, as fine as the canvas shows them, and
+   * hands them to the GPU - smoothly sampled, for soft edges.
+   */
+  private uploadZones(zones: readonly Zone[]): void {
+    const gl = this.gl;
+    const resources = this.resources;
+    if (resources == null) {
+      return;
+    }
+    if (resources.zones != null) {
+      gl.deleteTexture(resources.zones);
+      resources.zones = null;
+    }
+    const layer = paintZoneLayer(
+      this.width,
+      this.height,
+      zones,
+      this.detail,
+      this.unit
+    );
+    if (layer === null) {
+      return;
+    }
+    resources.zones = createTexture(
+      gl,
+      gl.RGBA8,
+      layer.width,
+      layer.height,
+      gl.LINEAR
+    );
+    gl.bindTexture(gl.TEXTURE_2D, resources.zones);
+    // Premultiplied, so the smooth sampling of an edge never darkens it.
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    gl.texSubImage2D(
+      gl.TEXTURE_2D,
+      0,
+      0,
+      0,
+      layer.width,
+      layer.height,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      new Uint8Array(layer.data.buffer)
+    );
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
   }
 
   /** Paints a level's floor once and hands it to the GPU. */
@@ -599,6 +706,13 @@ export class GlArenaPainter implements ArenaPainter {
     const programs: Programs = {
       floor: createProgram(gl, FULLSCREEN_VERTEX, FLOOR_FRAGMENT, [
         'uFloor',
+        'uView',
+        'uArena',
+        'uAlpha',
+      ]),
+      zones: createProgram(gl, FULLSCREEN_VERTEX, ZONES_FRAGMENT, [
+        'uZones',
+        'uView',
         'uArena',
         'uAlpha',
       ]),
@@ -610,6 +724,7 @@ export class GlArenaPainter implements ArenaPainter {
       colony: createProgram(gl, FULLSCREEN_VERTEX, COLONY_FRAGMENT, [
         'uDensity',
         'uCells',
+        'uView',
         'uArena',
         'uColor',
         'uAlpha',
@@ -618,7 +733,7 @@ export class GlArenaPainter implements ArenaPainter {
         'uBoostTarget',
         'uUnit',
       ]),
-      shape: createProgram(gl, SHAPE_VERTEX, SHAPE_FRAGMENT, ['uArena']),
+      shape: createProgram(gl, SHAPE_VERTEX, SHAPE_FRAGMENT, ['uView']),
       cells: createProgram(gl, FULLSCREEN_VERTEX, CELLS_FRAGMENT, [
         'uState',
         'uOwner',
@@ -627,6 +742,7 @@ export class GlArenaPainter implements ArenaPainter {
       ]),
       effects: createProgram(gl, FULLSCREEN_VERTEX, EFFECTS_FRAGMENT, [
         'uEffects',
+        'uView',
         'uArena',
         'uColors[0]',
         'uTime',
@@ -672,7 +788,17 @@ export class GlArenaPainter implements ArenaPainter {
     ];
     const trail = this.target(this.canvasWidth, this.canvasHeight, gl.NEAREST);
 
-    return { programs, quad, shapes, instances, floor, cells, blur, trail };
+    return {
+      programs,
+      quad,
+      shapes,
+      instances,
+      floor,
+      zones: null,
+      cells,
+      blur,
+      trail,
+    };
   }
 
   /** A target to render into, cleared to black. */

@@ -1,0 +1,120 @@
+<feat-lazy-bac-game-screen-header title="Profile" (back)="back.emit()">
+  <feat-lazy-bac-game-account />
+</feat-lazy-bac-game-screen-header>
+
+<div class="body">
+  <section class="summary" aria-label="Rank and totals">
+    <feat-lazy-bac-game-rank-standing [xp]="xp()" [badgeSize]="68" />
+    <ol class="ranks" aria-label="Ranks">
+      @let rank = standing();
+      @for (each of ranks; track each.name; let i = $index) {
+        <li
+          [class.reached]="i + 1 < rank.number"
+          [class.current]="i + 1 === rank.number"
+          [attr.aria-current]="i + 1 === rank.number ? 'step' : null"
+        >
+          {{ each.name }}
+        </li>
+      }
+    </ol>
+    <dl class="figures">
+      <div class="figure">
+        <dt>Levels won</dt>
+        <dd>
+          {{ levelsWon() }} <span class="of">of {{ levelCount }}</span>
+        </dd>
+      </div>
+      <div class="figure">
+        <dt>Medallions</dt>
+        <dd>
+          {{ heldCount() }} <span class="of">of {{ totalCount }}</span>
+        </dd>
+      </div>
+      <div class="figure">
+        <dt>Matches won</dt>
+        <dd>
+          {{ totals().wins }} <span class="of">of {{ totals().matches }}</span>
+        </dd>
+      </div>
+      <div class="figure">
+        <dt>Bacteria captured</dt>
+        <dd>{{ totals().captured.toLocaleString("en") }}</dd>
+      </div>
+      <div class="figure">
+        <dt>Crushed by walls</dt>
+        <dd>{{ totals().enemyCrushed.toLocaleString("en") }}</dd>
+      </div>
+      <div class="figure">
+        <dt>Two-player matches</dt>
+        <dd>{{ totals().couchMatches }}</dd>
+      </div>
+    </dl>
+    <ul class="tally" aria-label="Medallions by metal">
+      @for (metal of tally(); track metal.tier) {
+        <li>
+          <feat-lazy-bac-game-medallion [tier]="metal.tier" [size]="40" />
+          <span class="tally-count">{{ metal.count }}</span
+          >{{ " " }}<span class="tally-name">{{ metal.name }}</span>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="achievements" aria-labelledby="achievements-title">
+    <h3 id="achievements-title" class="section-title">
+      Achievements
+      <span class="of">{{ earnedCount() }} of {{ achievementCount }}</span>
+    </h3>
+    <ul>
+      @for (achievement of achievementList(); track achievement.id) {
+        <li [class.earned]="achievement.earnedOn !== null">
+          <span class="badge" aria-hidden="true">{{
+            achievement.name[0]
+          }}</span>
+          <span class="achievement-text">
+            <span class="achievement-name">{{ achievement.name }}</span>
+            <span class="achievement-note">
+              @if (achievement.earnedOn; as day) {
+                Earned {{ day | date: "d MMM y" }}
+              } @else {
+                {{ achievement.condition }}
+              }
+            </span>
+          </span>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="cabinet" aria-labelledby="cabinet-title">
+    <h3 id="cabinet-title" class="section-title">Medallions</h3>
+    <div class="table-box">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Level</th>
+            @for (difficulty of difficulties; track difficulty.id) {
+              <th scope="col">{{ difficulty.name }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of cabinet(); track row.id) {
+            <tr>
+              <th scope="row">{{ row.name }}</th>
+              @for (slot of row.slots; track slot.difficulty) {
+                <td>
+                  <feat-lazy-bac-game-medallion
+                    [tier]="slot.tier"
+                    [size]="24"
+                    [difficulty]="slot.difficulty"
+                  />
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

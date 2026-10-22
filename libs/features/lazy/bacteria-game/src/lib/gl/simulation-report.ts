@@ -3,6 +3,8 @@ import {
   ENERGY_SCALE,
   MAX_GPU_COLONIES,
   MAX_PELLETS,
+  REPORT_EXTRA_ROWS,
+  REPORT_ROWS,
 } from './simulation-shaders';
 
 /** How the GPU report texture is laid out - see `REPORT_FRAGMENT`. */
@@ -32,7 +34,8 @@ export function reportLayout(
     blocksY,
     cellSize,
     width: Math.max(blocksX, MAX_PELLETS),
-    height: blocksY + 2,
+    // Counts and energy per coarse cell, then REPORT_ROWS.
+    height: 2 * blocksY + REPORT_EXTRA_ROWS,
     arenaWidth,
     arenaHeight,
   };
@@ -49,23 +52,37 @@ export interface ColonyReport {
   /** Running totals since the match started. */
   captured: number;
   lost: number;
+  /** Bacteria on the zone a hold-the-zone level is won on. */
+  onHill: number;
 }
 
 /** Everything the CPU learns from one read back of the report. */
 export interface Report {
   colonies: ColonyReport[];
-  /** Bacteria within reach of each pellet. */
-  eaters: number[];
+  /** Bacteria within reach of each pellet, per colony slot. */
+  eaters: number[][];
   /** Bacteria per colony per coarse cell, for the nearest enemy. */
   blockCounts: Uint32Array[];
+  /** Bacteria an antibiotic killed since the match started, all colonies. */
+  poisoned: number;
 }
 
-/** Turns the raw read back - four 32 bit integers per texel - into numbers. */
-export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
+/**
+ * Turns the raw read back - four 32 bit integers per texel - into numbers,
+ * for the first `colonies` slots: the ones in play.
+ */
+export function decodeReport(
+  data: Uint32Array,
+  layout: ReportLayout,
+  colonies = MAX_GPU_COLONIES
+): Report {
   const { blocksX, blocksY, cellSize, width } = layout;
-  const colonies: ColonyReport[] = [];
+  /** The first value of a texel, by column and row. */
+  const texel = (x: number, y: number) => (y * width + x) * 4;
+  const pelletRow = 2 * blocksY;
+  const reports: ColonyReport[] = [];
   const blockCounts: Uint32Array[] = [];
-  for (let slot = 0; slot < MAX_GPU_COLONIES; slot++) {
+  for (let slot = 0; slot < colonies; slot++) {
     const counts = new Uint32Array(blocksX * blocksY);
     let count = 0;
     let energy = 0;
@@ -77,14 +94,13 @@ export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
     let maxY = -Infinity;
     for (let by = 0; by < blocksY; by++) {
       for (let bx = 0; bx < blocksX; bx++) {
-        const texel = (by * width + bx) * 4;
-        const n = data[texel + slot];
+        const n = data[texel(bx, by) + slot];
         if (n === 0) {
           continue;
         }
         counts[by * blocksX + bx] = n;
         count += n;
-        energy += data[texel + 2 + slot];
+        energy += data[texel(bx, blocksY + by) + slot];
         sumX += n * blockCenter(bx, cellSize, layout.arenaWidth);
         sumY += n * blockCenter(by, cellSize, layout.arenaHeight);
         minX = Math.min(minX, bx);
@@ -96,15 +112,15 @@ export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
 
     let captured = 0;
     let lost = 0;
-    const totalsRow = blocksY + 1;
+    let onHill = 0;
     for (let bx = 0; bx < blocksX; bx++) {
-      const texel = (totalsRow * width + bx) * 4;
-      captured += data[texel + slot];
-      lost += data[texel + 2 + slot];
+      captured += data[texel(bx, pelletRow + REPORT_ROWS.captures) + slot];
+      lost += data[texel(bx, pelletRow + REPORT_ROWS.losses) + slot];
+      onHill += data[texel(bx, pelletRow + REPORT_ROWS.hill) + slot];
     }
 
     blockCounts.push(counts);
-    colonies.push({
+    reports.push({
       count,
       totalEnergy: energy / ENERGY_SCALE,
       center: count > 0 ? { x: sumX / count, y: sumY / count } : null,
@@ -119,14 +135,27 @@ export function decodeReport(data: Uint32Array, layout: ReportLayout): Report {
           : null,
       captured,
       lost,
+      onHill,
     });
   }
 
-  const eaters: number[] = [];
+  const eaters: number[][] = [];
   for (let i = 0; i < MAX_PELLETS; i++) {
-    eaters.push(data[(blocksY * width + i) * 4]);
+    const at = texel(i, pelletRow);
+    // Two colonies per channel from blue on, 16 bits each.
+    const byColony: number[] = [];
+    for (let slot = 0; slot < colonies; slot++) {
+      byColony.push(
+        (data[at + 2 + (slot >> 1)] >>> ((slot & 1) * 16)) & 0xffff
+      );
+    }
+    eaters.push(byColony);
   }
-  return { colonies, eaters, blockCounts };
+  let poisoned = 0;
+  for (let bx = 0; bx < blocksX; bx++) {
+    poisoned += data[texel(bx, pelletRow) + 1];
+  }
+  return { colonies: reports, eaters, blockCounts, poisoned };
 }
 
 /**

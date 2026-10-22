@@ -1,7 +1,14 @@
-import { GameBalance, gameBalance } from './game-balance';
+import { scaleOf } from './arena-size';
+import { ColonyTraits, GameBalance, gameBalance } from './game-balance';
 import { getMap } from './game-maps';
+import { EXPANSE_NEUTRALS } from './expanse-maps';
 import { GameMap } from './maps';
 import { MedalLimits } from './medallions';
+import { WinRule } from './win-conditions';
+import {
+  generatedLevel,
+  parseGeneratedId,
+} from './level-generator/generate-level';
 
 /**
  * A level is a map plus the tuning that makes it play differently.
@@ -24,6 +31,31 @@ export interface Level {
   crosshairSpeed?: number;
   /** How fast and cleanly the level has to be won for each medallion. */
   medal: MedalLimits;
+  /** How the level is won - by annihilation when absent. */
+  win?: WinRule;
+  /** The right colony is a boss: bigger from the start, and stronger. */
+  boss?: Boss;
+  /**
+   * Neutral colonies: grey, nobody steers them and they count for no side -
+   * food for whoever eats them first. Two at most, the GPU runs four.
+   */
+  neutrals?: readonly NeutralSpot[];
+}
+
+/**
+ * Where a neutral colony starts, as shares of the arena's width and height,
+ * and its start area times the normal one.
+ */
+export interface NeutralSpot {
+  x: number;
+  y: number;
+  startScale: number;
+}
+
+/** A boss colony: its start area times the normal one, and its traits. */
+export interface Boss {
+  startScale: number;
+  traits: ColonyTraits;
 }
 
 /*
@@ -33,6 +65,15 @@ export interface Level {
  * busy levels lose more bacteria than their colony ever held, hence shares
  * above 1. Tune them by playing.
  */
+/** The balance the boss levels are fought with - the boss's traits on top. */
+const BOSS_BALANCE: Partial<GameBalance> = {
+  aggression: 0.85,
+  divideChancePerSec: 4,
+  combatDrainPerSec: 2.4,
+  nutrientCount: 12,
+  nutrientRespawnDelaySec: 1.4,
+};
+
 export const LEVELS: readonly Level[] = [
   {
     id: 'petri-dish',
@@ -217,11 +258,176 @@ export const LEVELS: readonly Level[] = [
     },
     crosshairSpeed: 220,
   },
+  // The reactor: the match no longer waits for a colony to be wiped out.
+  {
+    id: 'half-life',
+    name: '13 · Half-Life',
+    description:
+      'The reactor shuts down after two and a half minutes - whoever holds the bigger colony then wins. Wipe the enemy out sooner for the better medallions.',
+    mapId: 'reactor-core',
+    medal: { silverSec: 100, goldSec: 65, goldLossShare: 1.2 },
+    win: { kind: 'timed', limitSec: 150 },
+    balance: {
+      aggression: 0.85,
+      divideChancePerSec: 4.2,
+      combatDrainPerSec: 2.4,
+      nutrientCount: 12,
+      nutrientRespawnDelaySec: 1.4,
+    },
+    crosshairSpeed: 210,
+  },
+  {
+    id: 'containment',
+    name: '14 · Containment',
+    description:
+      'Golden agar in the middle doubles division, violet antibiotic on the flanks kills whoever lingers. Ice slows, heat sends your colony at the enemy.',
+    mapId: 'containment',
+    medal: { silverSec: 100, goldSec: 65, goldLossShare: 1.2 },
+    balance: {
+      aggression: 0.85,
+      divideChancePerSec: 4.2,
+      combatDrainPerSec: 2.4,
+      nutrientCount: 10,
+      nutrientRespawnDelaySec: 1.5,
+    },
+    crosshairSpeed: 210,
+  },
+  {
+    id: 'control-room',
+    name: '15 · Control Room',
+    description:
+      'Take the white zone in the middle and hold it: whoever has the most bacteria on it for thirty seconds wins. Or wipe the enemy out first.',
+    mapId: 'control-room',
+    medal: { silverSec: 75, goldSec: 50, goldLossShare: 1.0 },
+    win: { kind: 'hold', holdSec: 30 },
+    balance: {
+      aggression: 0.85,
+      divideChancePerSec: 4.2,
+      combatDrainPerSec: 2.4,
+      nutrientCount: 10,
+      nutrientRespawnDelaySec: 1.5,
+    },
+    crosshairSpeed: 210,
+  },
+  // The chapters' finales: a boss, a colony bigger and stronger than yours.
+  {
+    id: 'meltdown',
+    name: '16 · Meltdown',
+    description:
+      'The reactor melts down and something huge grows in it: a boss twice your size that divides faster and hits harder. Live through a minute - or wipe it out.',
+    mapId: 'meltdown',
+    medal: {
+      silverSec: 50,
+      goldSec: 35,
+      goldLossShare: 1.5,
+      // Twice your size at the start: half of it is where you begin.
+      platinumSizeRatio: 0.3,
+    },
+    win: { kind: 'survive', limitSec: 60 },
+    boss: {
+      startScale: 2,
+      traits: { divideFactor: 1.15, attackFactor: 1.05, cooldownFactor: 0.8 },
+    },
+    balance: BOSS_BALANCE,
+    crosshairSpeed: 210,
+  },
+  {
+    id: 'patient-zero',
+    name: '17 · Patient Zero',
+    description:
+      'Where it all began: a boss half again your size, quick to divide and quick to boost. No clock, no zone to hide in - one of you is left.',
+    mapId: 'ward',
+    medal: {
+      silverSec: 120,
+      goldSec: 80,
+      goldLossShare: 1.5,
+      platinumSizeRatio: 0.4,
+    },
+    boss: {
+      startScale: 1.6,
+      traits: { divideFactor: 1.1, attackFactor: 1, cooldownFactor: 0.8 },
+    },
+    balance: BOSS_BALANCE,
+    crosshairSpeed: 210,
+  },
+  // Neutral colonies: food for whoever eats them first.
+  {
+    id: 'quarantine',
+    name: '18 · Quarantine',
+    description:
+      'Two grey colonies sit in isolation, between you and the enemy. Nobody steers them and they bite back only weakly - whoever eats them first has the bigger army.',
+    mapId: 'quarantine',
+    medal: { silverSec: 95, goldSec: 65, goldLossShare: 0.5 },
+    neutrals: [
+      { x: 0.5, y: 0.2, startScale: 1.5 },
+      { x: 0.5, y: 0.8, startScale: 1.5 },
+    ],
+    balance: {
+      aggression: 0.6,
+      nutrientCount: 6,
+      nutrientRespawnDelaySec: 2,
+    },
+    crosshairSpeed: 190,
+  },
+  // A race to eat: the pellets decide, not the fight.
+  {
+    id: 'feeding-ground',
+    name: '19 · Feeding Ground',
+    description:
+      'Food everywhere and colonies too sluggish to fight. The first to eat up 40 pellets wins - a pellet goes to whoever ate the most of it.',
+    mapId: 'inner-ring',
+    medal: { silverSec: 65, goldSec: 50, goldLossShare: 0.3 },
+    win: { kind: 'harvest', pellets: 40 },
+    balance: {
+      aggression: 0.3,
+      nutrientCount: 12,
+      nutrientRespawnDelaySec: 1.5,
+    },
+    crosshairSpeed: 200,
+  },
+  // The first map bigger than the screen: the camera follows the colony.
+  {
+    id: 'expanse',
+    name: '20 · Expanse',
+    description:
+      'Four times the room, strewn with rocks, and two grey colonies to feed on. The camera follows you - zoom out with the mouse wheel to find the enemy. Biggest colony after four minutes wins.',
+    mapId: 'expanse',
+    // As the other timed level: silver and gold ask for a wipe-out first.
+    medal: { silverSec: 160, goldSec: 105, goldLossShare: 1.2 },
+    win: { kind: 'timed', limitSec: 240 },
+    neutrals: EXPANSE_NEUTRALS.map((spot) => ({ ...spot, startScale: 2 })),
+    balance: {
+      aggression: 0.6,
+      nutrientCount: 16,
+      nutrientRespawnDelaySec: 1.5,
+    },
+    crosshairSpeed: 220,
+  },
 ];
 
-/** The level with that id, falling back to the first one. */
+/** True for the id of a hand-made level - one of the campaign's ladder. */
+export function isLadderLevel(id: string): boolean {
+  return LEVELS.some((level) => level.id === id);
+}
+
+/** True for the id of a level of the game - a generated one included. */
+export function isLevelId(value: unknown): value is string {
+  return (
+    (typeof value === 'string' && isLadderLevel(value)) ||
+    (typeof value === 'string' && parseGeneratedId(value) !== null)
+  );
+}
+
+/**
+ * The level with that id - a generated one for a `gen:` id - falling back to
+ * the first one.
+ */
 export function getLevel(id: string): Level {
-  return LEVELS.find((level) => level.id === id) ?? LEVELS[0];
+  return (
+    LEVELS.find((level) => level.id === id) ??
+    generatedLevel(id)?.level ??
+    LEVELS[0]
+  );
 }
 
 /**
@@ -233,15 +439,18 @@ export function getLevel(id: string): Level {
  */
 export function levelBalance(level: Level, scale = 1): GameBalance {
   const balance = { ...gameBalance, ...level.balance };
-  if (scale === 1) {
+  const size = levelSize(level);
+  if (scale === 1 && size === 1) {
     return balance;
   }
   const area = scale * scale;
+  // A bigger map holds more bacteria - as many per base cell as a base one.
+  const room = area * size * size;
   return {
     ...balance,
     startBacteriaRadius: Math.round(balance.startBacteriaRadius * scale),
-    maxBacteriaPerPlayer: Math.round(balance.maxBacteriaPerPlayer * area),
-    maxTotalBacteria: Math.round(balance.maxTotalBacteria * area),
+    maxBacteriaPerPlayer: Math.round(balance.maxBacteriaPerPlayer * room),
+    maxTotalBacteria: Math.round(balance.maxTotalBacteria * room),
     influenceCellSize: Math.max(
       1,
       Math.round(balance.influenceCellSize * scale)
@@ -254,6 +463,30 @@ export function levelBalance(level: Level, scale = 1): GameBalance {
 /** The map a level is fought on. */
 export function levelMap(level: Level): GameMap {
   return getMap(level.mapId);
+}
+
+/** How many times the base arena the level's map is along each side. */
+export function levelSize(level: Level): number {
+  return levelMap(level).size ?? 1;
+}
+
+/**
+ * The level's arena cells per base cell on an arena that wide - the grid's
+ * resolution, whatever the size of the map.
+ */
+export function gridScale(level: Level, width: number): number {
+  return scaleOf(width, levelSize(level));
+}
+
+/** A level's name without its number - "Hourglass" for "3 · Hourglass". */
+export function levelTitle(level: Level): string {
+  return level.name.replace(/^\d+ · /, '');
+}
+
+/** The level before this one, or null when it is the first. */
+export function previousLevel(id: string): Level | null {
+  const index = LEVELS.findIndex((level) => level.id === id);
+  return index > 0 ? LEVELS[index - 1] : null;
 }
 
 /** The level after this one, or null when it is the last. */

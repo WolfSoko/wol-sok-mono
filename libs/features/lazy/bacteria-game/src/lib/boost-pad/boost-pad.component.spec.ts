@@ -18,6 +18,8 @@ const orange: ColonyStats = {
   boostCooldown: 0,
   boostCharge: 1,
   boostKey: 'Space',
+  held: 0,
+  pellets: 0,
 };
 
 describe('BoostPadComponent', () => {

@@ -1,10 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject } from 'rxjs';
+import { arenaTheme } from './arena/arena-theme';
 import { BacteriaGameComponent } from './bacteria-game.component';
-import { GameStateQuery } from './state/game-state.query';
+import { PROGRESS_STORAGE_KEY } from './progress.service';
+import { GameSettingsService } from './settings.service';
+import { GameSoundService } from './sound/game-sound.service';
 import { GameStateService } from './state/game-state.service';
-import { PlayerQuery } from './state/player.query';
+import { GameStateStore } from './state/game.states';
+import { levelTitle, LEVELS } from './state/levels';
+import { PlayerStore } from './state/player.store';
+import { replayOf } from './state/replay';
 
 /**
  * Lets the helpers believe the browser offers the API and that the given
@@ -65,7 +71,7 @@ async function settle(): Promise<void> {
 describe('BacteriaGameComponent', () => {
   let fixture: ComponentFixture<BacteriaGameComponent>;
   let component: BacteriaGameComponent;
-  let query: GameStateQuery;
+  let store: GameStateStore;
 
   /**
    * Creates the component with a stage whose fullscreen request the browser
@@ -77,7 +83,7 @@ describe('BacteriaGameComponent', () => {
     TestBed.configureTestingModule({
       imports: [BacteriaGameComponent, NoopAnimationsModule],
     });
-    query = TestBed.inject(GameStateQuery);
+    store = TestBed.inject(GameStateStore);
     fixture = TestBed.createComponent(BacteriaGameComponent);
     component = fixture.componentInstance;
     const arena = stage(granted);
@@ -87,18 +93,27 @@ describe('BacteriaGameComponent', () => {
     return arena;
   }
 
-  function startMatch(mode: 'two-players' | 'vs-computer'): PlayerQuery {
+  function startMatch(mode: 'two-players' | 'vs-computer'): PlayerStore {
     const service = TestBed.inject(GameStateService);
     service.setArenaSize(320, 140);
     service.setMode(mode);
     service.start();
-    return TestBed.inject(PlayerQuery);
+    return TestBed.inject(PlayerStore);
   }
 
   beforeEach(() => {
+    localStorage.clear();
     stubFullscreen(null);
     stubActivation(false);
   });
+
+  /** Stores a win on a level, as an earlier visit would have. */
+  function storeWin(levelId: string): void {
+    localStorage.setItem(
+      PROGRESS_STORAGE_KEY,
+      JSON.stringify({ medals: { [levelId]: { easy: 'bronze' } } })
+    );
+  }
 
   describe('the F shortcut', () => {
     it('goes fullscreen for a key pressed in the arena', () => {
@@ -109,7 +124,7 @@ describe('BacteriaGameComponent', () => {
 
       expect(component['fullscreen']()).toBe(true);
       expect(arena.requestFullscreen).toHaveBeenCalled();
-      expect(query.getValue().keysPressed).not.toContain('f');
+      expect(store.snapshot().keysPressed).not.toContain('f');
     });
 
     it('leaves fullscreen again', () => {
@@ -148,7 +163,7 @@ describe('BacteriaGameComponent', () => {
   describe('the boost keys', () => {
     function boostOf(playerId: number): number {
       return (
-        TestBed.inject(PlayerQuery).getEntity(playerId)?.boostActiveSec ?? 0
+        TestBed.inject(PlayerStore).entityMap()[playerId]?.boostActiveSec ?? 0
       );
     }
 
@@ -182,7 +197,7 @@ describe('BacteriaGameComponent', () => {
       component.onKeyDown(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
-      expect(query.getValue().keysPressed).not.toContain(' ');
+      expect(store.snapshot().keysPressed).not.toContain(' ');
     });
 
     it('ignores a held key', () => {
@@ -362,7 +377,7 @@ describe('BacteriaGameComponent', () => {
       component.onKeyDown(keyEvent('Escape', document.body));
 
       expect(component['fullscreen']()).toBe(false);
-      expect(query.getValue().keysPressed).not.toContain('Escape');
+      expect(store.snapshot().keysPressed).not.toContain('Escape');
     });
   });
 
@@ -435,26 +450,27 @@ describe('BacteriaGameComponent', () => {
       create();
       startMatch('vs-computer');
 
-      query['store'].update({ matchEnded: true });
+      store.update({ endedBy: 'annihilation' });
 
       expect(component['panel']()).toBe('over');
     });
 
     it('switches to the next level only once the old arena is vaporized', () => {
+      storeWin(LEVELS[0].id);
       create();
       startMatch('vs-computer');
       const vaporized = new Subject<void>();
       (component as unknown as { thanos: unknown }).thanos = {
         vaporize: () => vaporized,
       };
-      const before = query.getValue().levelId;
-      query['store'].update({ matchEnded: true });
+      const before = store.snapshot().levelId;
+      store.update({ endedBy: 'annihilation' });
 
       component['onMatchEnd']('next');
-      expect(query.getValue().levelId).toBe(before);
+      expect(store.snapshot().levelId).toBe(before);
 
       vaporized.complete();
-      expect(query.getValue().levelId).not.toBe(before);
+      expect(store.snapshot().levelId).not.toBe(before);
     });
 
     it('puts the arena back on the canvas right before it is vaporized', () => {
@@ -486,17 +502,195 @@ describe('BacteriaGameComponent', () => {
     });
   });
 
+  describe('the vaporize effect', () => {
+    it('snaps only while the sound and the effects are on', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+
+      expect(component['thanosOptions']().sound).toBe(true);
+      settings.setSound(false);
+      expect(component['thanosOptions']().sound).toBe(false);
+      settings.setSound(true);
+      settings.setEffects(false);
+      expect(component['thanosOptions']().sound).toBe(false);
+    });
+
+    it('snaps as loud as the other effects', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+      const louder = () => component['thanosOptions']().soundVolume ?? 0;
+
+      const atDefault = louder();
+      settings.setEffectsVolume(40);
+
+      expect(louder()).toBeLessThan(atDefault);
+      expect(louder()).toBeCloseTo(
+        TestBed.inject(GameSoundService).effectsGain() * 0.8
+      );
+    });
+  });
+
+  describe('a new game', () => {
+    it('sets the game up for the mode picked', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+
+      component['setPlayKind']('two-players');
+      expect(store.snapshot().mode).toBe('two-players');
+
+      component['setPlayKind']('free');
+      expect(store.snapshot().mode).toBe('vs-computer');
+      expect(settings.freePlay()).toBe(true);
+
+      component['setPlayKind']('campaign');
+      expect(settings.freePlay()).toBe(false);
+    });
+
+    it('opens on the mode last played, and its levels after a match', () => {
+      create();
+      component['setPlayKind']('free');
+
+      component['openNewGame']();
+      expect(component['panel']()).toBe('new-game');
+      expect(component['newGameEntry']()).toEqual({
+        kind: 'free',
+        step: 'mode',
+      });
+
+      component['onMatchEnd']('levels');
+      expect(component['newGameEntry']()).toEqual({
+        kind: 'free',
+        step: 'level',
+      });
+    });
+
+    it('opens the daily level, which has no level to choose, on its mode', () => {
+      create();
+      component['setPlayKind']('daily');
+
+      component['onMatchEnd']('levels');
+
+      expect(component['newGameEntry']()).toEqual({
+        kind: 'daily',
+        step: 'mode',
+      });
+    });
+  });
+
+  describe('the campaign ladder', () => {
+    it('marks the levels the ladder has not opened', () => {
+      create();
+      TestBed.inject(GameStateService).setMode('vs-computer');
+
+      expect(component['lockedLevels']()[LEVELS[2].id]).toBe(
+        `Win ${levelTitle(LEVELS[1])} to unlock`
+      );
+      expect(LEVELS[0].id in component['lockedLevels']()).toBe(false);
+    });
+
+    it('locks the next level on the result screen until it is open', () => {
+      create();
+      startMatch('vs-computer');
+      const before = store.snapshot().levelId;
+      store.update({ endedBy: 'annihilation' });
+
+      expect(component['upcomingLock']()).toBe(
+        `Win ${levelTitle(LEVELS[0])} to unlock`
+      );
+      component['onMatchEnd']('next');
+      expect(store.snapshot().levelId).toBe(before);
+    });
+  });
+
+  describe('the arena', () => {
+    it('draws a level in an arena the player earned, in its own otherwise', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+      const own = component['theme']();
+
+      settings.setArena(LEVELS[2].id);
+      expect(component['theme']()).toEqual(own);
+
+      localStorage.setItem(
+        PROGRESS_STORAGE_KEY,
+        JSON.stringify({ medals: { [LEVELS[2].id]: { easy: 'gold' } } })
+      );
+      create();
+      TestBed.inject(GameSettingsService).setArena(LEVELS[2].id);
+      expect(component['theme']()).toEqual(arenaTheme(LEVELS[2].id));
+    });
+  });
+
+  describe('the colony colours', () => {
+    it('keeps a colour still to earn from either seat, also by a swap', () => {
+      create();
+      const gameState = TestBed.inject(GameStateService);
+      gameState.setMode('two-players');
+      // Settings from before the lock: the right seat plays green.
+      gameState.setColors(['orange', 'green']);
+
+      component['selectColor']({ seat: 0, colorId: 'green' });
+      expect(store.snapshot().colors).toEqual(['orange', 'green']);
+
+      component['selectColor']({ seat: 1, colorId: 'orange' });
+      expect(store.snapshot().colors).toEqual(['orange', 'green']);
+
+      component['selectColor']({ seat: 1, colorId: 'blue' });
+      expect(store.snapshot().colors).toEqual(['orange', 'blue']);
+    });
+  });
+
+  describe('a shared run', () => {
+    const run = replayOf(
+      {
+        levelId: LEVELS[3].id,
+        mode: 'vs-computer',
+        difficulty: 'normal',
+        colors: ['orange', 'blue'],
+        headStart: 0,
+        width: 320,
+        height: 140,
+        seed: 9,
+      },
+      'cpu',
+      600,
+      { steers: [[0, 0, 1, 0]], drags: [], boosts: [] }
+    );
+
+    it('starts a match against it on Fight it', () => {
+      create();
+      store.update({ challenge: run });
+
+      component['fightChallenge']();
+
+      expect(store.ghost()).toEqual(run);
+      expect(store.challenge()).toBeNull();
+      expect(store.level().id).toBe(LEVELS[3].id);
+      expect(TestBed.inject(PlayerStore).entities()[1].name).toBe('Ghost');
+    });
+
+    it('lets it go on Not now', () => {
+      create();
+      store.update({ challenge: run });
+
+      component['dismissChallenge']();
+
+      expect(store.challenge()).toBeNull();
+      expect(store.ghost()).toBeNull();
+    });
+  });
+
   describe('the joysticks', () => {
     it('steer the crosshair of their player', () => {
       create();
-      const playerQuery = startMatch('two-players');
-      const before = playerQuery.getEntity(1)?.x ?? 0;
+      const playerStore = startMatch('two-players');
+      const before = playerStore.entityMap()[1]?.x ?? 0;
 
       component['steer'](1, { x: 1, y: 0 });
-      query['store'].update({ timeDelta: 100 });
+      TestBed.inject(GameStateService).advance(320, 140, 3);
 
-      expect(playerQuery.getEntity(1)?.x).toBeGreaterThan(before);
-      expect(playerQuery.getEntity(0)?.x).toBe(80);
+      expect(playerStore.entityMap()[1]?.x).toBeGreaterThan(before);
+      expect(playerStore.entityMap()[0]?.x).toBe(80);
     });
   });
 });
