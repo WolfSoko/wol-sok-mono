@@ -194,7 +194,7 @@ export class WinnerComponent {
     this.sharing = true;
     navigator
       .share({
-        title: 'Bacteria War',
+        title: 'Bacteria Wars',
         text: `Beat my run on ${getLevel(run.header.levelId).name}!`,
         url,
       })

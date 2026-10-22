@@ -1,5 +1,5 @@
 /**
- * Draws the Bacteria Game app icon: two colonies of cells fighting over a
+ * Draws the Bacteria Wars app icon: two colonies of cells fighting over a
  * petri dish.
  *
  * Output: apps/bacteria-game-remote/src/icons/icon.svg, the PNGs the web app
