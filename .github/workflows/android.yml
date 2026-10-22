@@ -8,18 +8,22 @@ on:
       - main
     paths:
       - 'apps/bacteria-game-android/**'
+      # The app reads its package name from the site's asset links.
+      - 'apps/bacteria-game-remote/src/.well-known/assetlinks.json'
       - '.github/workflows/android.yml'
-      # A release bumps it, and with it the app's version code.
-      - 'version.json'
   pull_request:
     paths:
       - 'apps/bacteria-game-android/**'
+      # The app reads its package name from the site's asset links.
+      - 'apps/bacteria-game-remote/src/.well-known/assetlinks.json'
       - '.github/workflows/android.yml'
+  # Builds the signed release for Google Play, with the version code of the
+  # current version.json: run it once per release that should ship.
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
-  # Runs on main build release artifacts, so only superseded PR runs stop.
+  # Manual runs build release artifacts, so only superseded PR runs stop.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -33,9 +37,9 @@ jobs:
       run:
         working-directory: apps/bacteria-game-android
     env:
-      # Release builds are signed with the upload key only off pull requests.
+      # Release builds are signed with the upload key on manual runs only.
       # The key itself only reaches the step that signs.
-      SIGN_RELEASE: ${{ github.event_name != 'pull_request' && secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      SIGN_RELEASE: ${{ github.event_name == 'workflow_dispatch' && secrets.ANDROID_KEYSTORE_BASE64 != '' }}
     steps:
       - uses: actions/checkout@v7
 

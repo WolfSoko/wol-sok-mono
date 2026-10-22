@@ -5,11 +5,14 @@ plugins {
 }
 
 // The app is a Trusted Web Activity: Chrome shows the game from this host
-// fullscreen, once the host's /.well-known/assetlinks.json names the key the
-// app is signed with (apps/bacteria-game-remote/src/.well-known).
+// (the domain of apps/bacteria-game-remote-cdk) fullscreen, once the host's
+// /.well-known/assetlinks.json names the app and the key it is signed with.
+// The package name is read from that file, so the two cannot drift apart.
 val host = "bacteria-game.wolsok.de"
 val launchUrl = "https://$host/"
-val backgroundColor = "#060e19"
+val assetLinks = rootDir.resolve("../bacteria-game-remote/src/.well-known/assetlinks.json")
+val packageName = ((JsonSlurper().parse(assetLinks) as List<*>).single() as Map<*, *>)
+  .let { it["target"] as Map<*, *> }["package_name"] as String
 
 // The app follows the workspace release: 74.44.1 becomes version code
 // 74044001, so every release counts up.
@@ -20,11 +23,10 @@ val (major, minor, patch) = release.split(".").map(String::toInt)
 val keystoreFile: String? = System.getenv("ANDROID_KEYSTORE_FILE")
 
 android {
-  namespace = "de.wolsok.bacteriagame"
+  namespace = packageName
   compileSdk = 37
 
   defaultConfig {
-    applicationId = "de.wolsok.bacteriagame"
     minSdk = 24
     targetSdk = 37
     versionCode = major * 1_000_000 + minor * 1_000 + patch
@@ -32,7 +34,7 @@ android {
 
     manifestPlaceholders["hostName"] = host
     manifestPlaceholders["launchUrl"] = launchUrl
-    resValue("color", "background", backgroundColor)
+    resValue("color", "background", "#060e19")
     // Android string resources drop bare double quotes, hence the backslashes.
     resValue(
       "string",
@@ -58,7 +60,6 @@ android {
 
   buildTypes {
     release {
-      isMinifyEnabled = false
       signingConfig = signingConfigs.findByName("release")
     }
   }

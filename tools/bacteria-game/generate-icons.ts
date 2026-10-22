@@ -32,11 +32,12 @@ const DISH_R = 186;
 /** Half the width of the gap between the colonies. */
 const GAP = 11;
 
-const SEED = 7;
-let seed = SEED;
-function rnd(): number {
-  seed = (seed * 16807) % 2147483647;
-  return (seed - 1) / 2147483646;
+/** A seeded pseudo-random number generator, the same numbers on every run. */
+function prng(seed: number): () => number {
+  return () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
 }
 
 /** The front line both colonies push against, as cubic bezier segments. */
@@ -108,7 +109,7 @@ function insideDish(x: number, y: number, margin: number): boolean {
 }
 
 /** A jittered hex grid of cells, smaller towards the front where they divide. */
-function cells(side: Side): Cell[] {
+function cells(side: Side, rnd: () => number): Cell[] {
   const result: Cell[] = [];
   const step = 30;
   for (let row = 0; row * step * 0.87 < 512; row++) {
@@ -201,26 +202,28 @@ interface IconOptions {
 
 /**
  * The random parts of the picture: sparks along the front and the cells of
- * each colony, in COLONIES order. Starts from the seed every time, so every
- * variant of the icon draws the same ones.
+ * each colony, in COLONIES order. Drawn once, so every variant of the icon
+ * shows the same ones.
  */
 function scatter(): { sparks: string; colonyCells: Cell[][] } {
-  seed = SEED;
+  const rnd = prng(7);
   const sparks = Array.from({ length: 14 }, () => {
     const y = 70 + rnd() * 380;
     const x = frontX(y) + (rnd() - 0.5) * 34;
     return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(1.5 + rnd() * 3).toFixed(1)}" opacity="${(0.55 + rnd() * 0.45).toFixed(2)}"/>`;
   }).join('\n      ');
-  return { sparks, colonyCells: COLONIES.map(({ side }) => cells(side)) };
+  return { sparks, colonyCells: COLONIES.map(({ side }) => cells(side, rnd)) };
 }
+
+const SCATTER = scatter();
 
 function iconSvg({
   viewBox = '0 0 512 512',
   background = true,
 }: IconOptions = {}): string {
-  const { sparks, colonyCells: cellLists } = scatter();
+  const { sparks } = SCATTER;
   const colonyCells = COLONIES.map((colony, i) =>
-    cellCircles(colony, cellLists[i])
+    cellCircles(colony, SCATTER.colonyCells[i])
   );
   const frontPath = 'M ' + toPath(front);
 
@@ -294,8 +297,8 @@ function backgroundSvg(): string {
  * one colour: the monochrome layer Android tints for themed icons.
  */
 function monochromeSvg(viewBox: string): string {
-  const circles = scatter()
-    .colonyCells.flat()
+  const circles = SCATTER.colonyCells
+    .flat()
     .map(
       (c) =>
         `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${(c.r * 0.8).toFixed(1)}"/>`
