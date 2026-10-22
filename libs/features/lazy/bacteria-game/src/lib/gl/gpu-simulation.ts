@@ -19,8 +19,10 @@ import {
   compareDynamicWalls,
   DynamicWall,
   GameMap,
+  Rect,
   stampRect,
 } from '../state/maps';
+import { activeRects } from './active-area';
 import { escapeReach } from '../state/arena-size';
 import { getMap } from '../state/game-maps';
 import { NutrientPellets } from '../state/nutrient-pellets';
@@ -71,6 +73,15 @@ const MAX_MOVE_STEPS = 12;
 
 /** Read backs in flight at once - the GPU is a step or two behind. */
 const READBACK_SLOTS = 3;
+
+/**
+ * Ticks the cell passes keep covering a spot after the colonies left it -
+ * or after the last of a colony died there - so every state texture is
+ * written empty there before the passes stop at it.
+ */
+const AREA_HISTORY = 3;
+/** Ticks of reach kept - a report further behind runs the whole arena. */
+const REACH_HISTORY = READBACK_SLOTS + 3;
 
 /**
  * How fast the glow of a fight, a meal and a push fades: the share of it
@@ -219,6 +230,15 @@ export class GpuSimulation implements Simulation {
   private undrainedSec = 0;
   /** True once this match has rendered a report that can be read back. */
   private reportRendered = false;
+  /**
+   * Where this tick's cell passes run - see {@link activeRects}; null for
+   * the whole arena.
+   */
+  private area: Rect[] | null = null;
+  /** The colonies' own rects of the last ticks, newest first. */
+  private readonly recentAreas: Rect[][] = [];
+  /** How far a bacterium got in each of the last ticks, newest first. */
+  private readonly recentReach: number[] = [];
   /** The most cells each colony gets per frame, boosted - for its box. */
   private readonly reach = new Int32Array(MAX_GPU_COLONIES).fill(
     MAX_MOVE_STEPS
@@ -324,6 +344,8 @@ export class GpuSimulation implements Simulation {
     this.reported = { captured: 0, lost: 0, poisoned: 0 };
     this.undrainedSec = 0;
     this.reportRendered = false;
+    this.recentAreas.length = 0;
+    this.recentReach.length = 0;
     this.buildMask();
     this.pellets.reset(this.width, this.height, this.isOpenCell);
     this.uploadSpawns(spawns);
@@ -383,6 +405,7 @@ export class GpuSimulation implements Simulation {
     }
     this.tickPellets(deltaTimeSec);
     const mostSteps = this.fillFrameUniforms(players, deltaTimeSec);
+    this.updateArea(mostSteps);
 
     gl.disable(gl.BLEND);
     gl.disable(gl.SCISSOR_TEST);
@@ -696,7 +719,7 @@ export class GpuSimulation implements Simulation {
       gl.uniform1i(program.uniforms['uKind'], kind);
       gl.uniform1i(program.uniforms['uStep'], step);
     }
-    this.pass(resources, claim, resources.claims);
+    this.pass(resources, claim, resources.claims, this.area);
     bindTexture(gl, UNIT.claims, resources.claims.texture, null);
     this.statePass(resources, apply);
   }
@@ -710,7 +733,7 @@ export class GpuSimulation implements Simulation {
     program: Program,
     into = this.nextState()
   ): void {
-    this.pass(resources, program, resources.states[into]);
+    this.pass(resources, program, resources.states[into], this.area);
     this.current = into;
   }
 
@@ -724,14 +747,74 @@ export class GpuSimulation implements Simulation {
     return (this.current + 1) % 3;
   }
 
-  /** A pass that reads the current state, into a target. */
-  private pass(resources: Resources, program: Program, target: Target): void {
+  /**
+   * A pass that reads the current state, into a target - over all of it, or
+   * only over the rects of `area`.
+   */
+  private pass(
+    resources: Resources,
+    program: Program,
+    target: Target,
+    area: readonly Rect[] | null = null
+  ): void {
     const gl = this.gl;
     gl.useProgram(program.program);
     bindTexture(gl, UNIT.state, resources.states[this.current].texture, null);
     gl.uniform1ui(program.uniforms['uSeed'], (this.steps * 2654435761) >>> 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (area == null) {
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      return;
+    }
+    gl.enable(gl.SCISSOR_TEST);
+    for (const rect of area) {
+      gl.scissor(rect.x, rect.y, rect.width, rect.height);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+    gl.disable(gl.SCISSOR_TEST);
+  }
+
+  /**
+   * Works out where this tick's cell passes run: around the colonies as the
+   * report saw them, grown by how far a bacterium gets in the ticks since -
+   * a step per move, one more for a child, one to spare. The whole arena
+   * runs while no report is in hand, for the first ticks, whose state
+   * textures still hold the last match, while a wall shoves bacteria out of
+   * the way, and when the report is further behind than the reach kept.
+   */
+  private updateArea(mostSteps: number): void {
+    const reach = this.recentReach;
+    reach.unshift(mostSteps + 2);
+    reach.length = Math.min(reach.length, REACH_HISTORY);
+    const behind = this.steps - this.reportStep;
+    const whole = [{ x: 0, y: 0, width: this.width, height: this.height }];
+    const own =
+      this.report == null ||
+      this.escapePending ||
+      this.steps <= AREA_HISTORY ||
+      behind > reach.length
+        ? whole
+        : activeRects(
+            this.report.colonies.map((colony) => colony.bounds),
+            reach.slice(0, behind).reduce((sum, cells) => sum + cells, 0),
+            this.width,
+            this.height
+          );
+    const area = activeRects(
+      [],
+      0,
+      this.width,
+      this.height,
+      [own, ...this.recentAreas].flat()
+    );
+    this.recentAreas.unshift(own);
+    this.recentAreas.length = Math.min(this.recentAreas.length, AREA_HISTORY);
+    this.area =
+      area.length === 1 &&
+      area[0].width === this.width &&
+      area[0].height === this.height
+        ? null
+        : area;
   }
 
   /** Lets the glow of the last frames fade and lights what happened now. */
