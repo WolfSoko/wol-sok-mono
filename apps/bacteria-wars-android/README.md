@@ -76,6 +76,30 @@ again (Actions → Deploy release → Run workflow, with the tag). Web changes d
 not ship the app: the app shows the live site, so only changes here need a
 new build.
 
+### Store listing
+
+The same deploy brings the Play store listing in line with `store/`:
+
+- `store/listings/<language>/` holds `title.txt`, `short-description.txt`
+  and `full-description.txt` for each language (Play takes 30, 80 and 4000
+  characters),
+- `store/graphics/` holds `icon.png`, `feature-graphic.png` and
+  `screenshot-<n>.png`, the same for every language; the landscape
+  screenshots serve phones and tablets alike.
+
+Only what differs from Play is sent, images compared by their SHA-256, so an
+unchanged listing goes to no review. Since the files sit in this project, a
+change to them alone also makes the app affected and ships it with the next
+release. The graphics come from the running game:
+
+```bash
+npx nx serve bacteria-game-remote                 # in one terminal
+npx nx run bacteria-wars-android:store-assets     # in another
+```
+
+The matches are live, so every run draws slightly different screenshots:
+commit the ones worth showing.
+
 Set the repository variable `PLAY_RELEASE_STATUS` to `draft` while the app's
 Play setup is incomplete: Play then accepts the bundles but holds them back
 instead of rolling them out.
