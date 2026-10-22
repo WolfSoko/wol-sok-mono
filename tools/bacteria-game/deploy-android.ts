@@ -2,7 +2,7 @@
  * Ships a release of the Bacteria Wars Android app: builds the signed APK and
  * app bundle, uploads the bundle to the internal testing track on Google Play
  * and attaches both to the GitHub release. Promoting a build to production
- * stays a step in the Play Console. The same edit brings the store listing in
+ * stays a step in the Play Console. A second edit then brings the store listing in
  * line with store/: the texts in store/listings/<language>/ and the graphics
  * in store/graphics/ (see tools/bacteria-game/generate-store-assets.ts).
  *
@@ -95,7 +95,10 @@ function versionCode(version: string): number {
 /** The listing of each language in store/listings/<language>/. */
 function storeListings(): Listing[] {
   const listingsDir = join(storeDir, 'listings');
-  return readdirSync(listingsDir).map((language) => {
+  const languages = readdirSync(listingsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+  return languages.map((language) => {
     const text = (name: string) =>
       readFileSync(join(listingsDir, language, name), 'utf8').trim();
     const listing: Listing = {
@@ -157,8 +160,9 @@ async function updateListing(
       live == null ||
       fields.some((field) => live[field] !== listing[field])
     ) {
+      // A patch keeps what store/ does not hold, such as a promo video.
       await call(`${editUrl}/listings/${listing.language}`, {
-        method: 'PUT',
+        method: 'PATCH',
         body: JSON.stringify(listing),
       });
       console.log(`Updated the ${listing.language} listing texts.`);
@@ -256,8 +260,9 @@ async function accessToken(account: ServiceAccount): Promise<string> {
 }
 
 /**
- * In one edit: uploads the bundle, rolls it out to the internal track and
- * updates the store listing.
+ * Uploads the bundle and rolls it out to the internal track, then updates
+ * the store listing in an edit of its own: a listing Play turns down does
+ * not hold back the app, and a run again skips the bundle that is on Play.
  */
 async function publishToPlay(
   packageName: string,
@@ -318,13 +323,18 @@ async function publishToPlay(
       releases: [{ name: releaseName, versionCodes: [String(code)], status }],
     }),
   });
-  await updateListing(
-    call,
-    editUrl,
-    `${PLAY_UPLOAD_API}/${packageName}/edits/${edit.id}`
-  );
   await call(`${editUrl}:commit`, { method: 'POST' });
   console.log(`Released ${releaseName} to the ${TRACK} track (${status}).`);
+
+  const listingEdit = await call<{ id: string }>(`${app}/edits`, {
+    method: 'POST',
+  });
+  await updateListing(
+    call,
+    `${app}/edits/${listingEdit.id}`,
+    `${PLAY_UPLOAD_API}/${packageName}/edits/${listingEdit.id}`
+  );
+  await call(`${app}/edits/${listingEdit.id}:commit`, { method: 'POST' });
 }
 
 async function main(): Promise<void> {
