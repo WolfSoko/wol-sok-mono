@@ -15,8 +15,7 @@ new SpaStack(app, stackName, {
   extraAllowedOrigins: ['https://angularexamples.wolsok.de'],
   // These keep their names across releases: the import maps, the files of
   // the installed app (ngsw.json tells it a release is out), its icons and
-  // the asset links that let the Android app show the game fullscreen, and
-  // the privacy policy the Play listing links to.
+  // the asset links that let the Android app show the game fullscreen.
   noCacheFiles: [
     'remoteEntry.json',
     'importmap.json',
@@ -29,7 +28,6 @@ new SpaStack(app, stackName, {
     'icons',
     'icons/*',
     '.well-known/assetlinks.json',
-    'privacy.html',
   ],
 });
 

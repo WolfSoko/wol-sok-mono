@@ -309,3 +309,22 @@ test('should keep the colours still to earn locked, saying what opens them', asy
     'Green - Earn First Blood'
   );
 });
+
+test('should show the privacy policy on a page of its own', async ({
+  page,
+}) => {
+  await page.goto('/privacy#en-delete');
+
+  await expect(page).toHaveTitle('Datenschutz - Bacteria War');
+  await expect(
+    page.getByRole('heading', { name: 'Datenschutzerklärung' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '8. Deleting your account and data' })
+  ).toBeInViewport();
+  await expect(page.locator('#bacteria-game-splash')).toHaveCount(0);
+
+  await page.getByRole('link', { name: /Back to the game/ }).click();
+
+  await expect(page.getByRole('button', { name: /New game/ })).toBeVisible();
+});

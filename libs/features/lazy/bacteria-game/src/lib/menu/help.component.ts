@@ -15,8 +15,7 @@ const { agarDivideFactor, iceStayChance } = ZONE_EFFECTS;
  * The game's privacy policy, on the game's own site: the Play listing links
  * to it as well, and inside the shell a relative link would miss it.
  */
-export const PRIVACY_POLICY_URL =
-  'https://bacteria-game.wolsok.de/privacy.html';
+export const PRIVACY_POLICY_URL = 'https://bacteria-game.wolsok.de/privacy';
 
 /** "twice", "3 times". */
 function timesAsFast(factor: number): string {
