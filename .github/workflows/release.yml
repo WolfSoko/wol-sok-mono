@@ -95,11 +95,17 @@ jobs:
             notes_args=(--generate-notes)
           fi
 
-          gh release create "$TAG" release.zip \
+          # Create the release without the asset: with files, gh first creates a
+          # draft, uploads, then publishes, and a failed upload leaves a draft
+          # behind that the tag lookup above cannot see. Created this way the
+          # release is published at once, deploy.yml starts, and a failed upload
+          # is retried on the rerun path above.
+          gh release create "$TAG" \
             --title "$TAG" \
             --verify-tag \
             --repo "$GITHUB_REPOSITORY" \
             "${notes_args[@]}"
+          gh release upload "$TAG" release.zip --clobber --repo "$GITHUB_REPOSITORY"
 
       - name: Create Sentry Release
         uses: getsentry/action-release@v3
