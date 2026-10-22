@@ -1,6 +1,6 @@
 # YouTube uploads
 
-`youtube.ts` puts videos on the wol-sok-org YouTube channel, each file once:
+`youtube.ts` puts videos on the wolfsoko-org YouTube channel, each file once:
 a video carries the SHA-256 of its file as a tag, so a run finds what is on
 the channel already. The Bacteria Wars deploy
 (`tools/bacteria-game/deploy-android.ts`) uploads its promo videos with it.
@@ -20,14 +20,14 @@ OAuth refresh token.
 3. **OAuth client:** Clients → Create client → **Desktop app**. Its client id
    and secret go into the repository secrets `YOUTUBE_OAUTH_CLIENT_ID` and
    `YOUTUBE_OAUTH_CLIENT_SECRET`.
-4. **Refresh token**, signed in as the owner of the wol-sok-org channel:
+4. **Refresh token**, signed in as the owner of the wolfsoko-org channel:
 
    ```bash
    YOUTUBE_OAUTH_CLIENT_ID=... YOUTUBE_OAUTH_CLIENT_SECRET=... \
      npx tsx tools/youtube/youtube-auth.ts --start --state-file /tmp/yt-state
    ```
 
-   Open the printed URL, pick the **wol-sok-org** channel on the account
+   Open the printed URL, pick the **wolfsoko-org** channel on the account
    chooser (the token is bound to it) and allow the access. The browser then
    fails to load `http://127.0.0.1:8765/...`; copy that address:
 

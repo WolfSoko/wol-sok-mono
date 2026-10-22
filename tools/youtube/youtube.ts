@@ -1,5 +1,5 @@
 /**
- * Uploads videos to the wol-sok-org YouTube channel, once each.
+ * Uploads videos to the wolfsoko-org YouTube channel, once each.
  *
  * YouTube has no service accounts: the API acts as the channel owner, through
  * an OAuth refresh token minted once with `youtube-auth.ts`. It reads
