@@ -25,10 +25,17 @@ storage until then. Settings stay with the device either way.
   injector and would not see a provider on that route, so `GameStorage` and
   `GameAccount` ask the root `GameCloud`, which the route's initializer sets
   before the game starts. `gameCloud: null` keeps everything local.
-- The Firebase SDK loads with a dynamic import, only when a project is set, as
-  its own named app (`bacteria-wars`) next to the shell's default app, which
-  belongs to another project. Native Federation shares `firebase/*` with the
-  shell through the import map.
+- Firebase comes through AngularFire (`@angular/fire`): `provideGameCloud`
+  provides the game's own named app (`bacteria-wars`), Auth and Firestore on
+  that route, where they stand in for the shell's, which belong to another
+  project. The backends call AngularFire inside that route's injection
+  context (`FirebaseConnection.run`). The app is zoneless, so AngularFire's
+  zone wrapping runs through a no-op zone.
+- Only `firebase-connection.ts` imports AngularFire at runtime, and only
+  `provide-game-cloud.ts` imports that file; the rest takes AngularFire's
+  types only, so the specs never load the SDK.
+- The release pipeline deploys `apps/bacteria-game-remote/firestore.rules`
+  (`bacteria-game-remote:deploy`, config `firebase.bacteria-game-remote.json`).
 - Treat the ports as asynchronous, even though local storage answers at once:
   - `watch` may emit later than the subscription, and again when another tab
     or device changes the value.
@@ -81,4 +88,12 @@ storage until then. Settings stay with the device either way.
   `FakeGameAccount` adds a player per storage and switches between them.
 - Local development against the Firebase emulators:
   `nx run bacteria-game-remote:serve-emulator` (starts
-  `firebase-emulators`, a `demo-` project, no credentials needed).
+  `firebase-emulators`, a `demo-` project, no credentials needed). The
+  emulators use their own ports (`firebase.bacteria-game-remote.json`), apart
+  from rollapolla's, which may run on the same CI agent.
+- E2E never touches the real project: Playwright serves `serve-e2e`, the
+  production build with `environment.e2e.ts` (the emulators), in its own
+  `dist/apps/bacteria-game-remote-e2e`, next to `firebase-emulators`. The
+  Firestore emulator needs a JVM; the Nx agents install one
+  (`.nx/workflows/agents.yml`). `e2e/cloud-save.spec.ts` covers the cloud:
+  each test signs in to accounts of its own (`uniqueEmail`).

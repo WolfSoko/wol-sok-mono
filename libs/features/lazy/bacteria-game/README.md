@@ -160,21 +160,27 @@ the profile they can **Sign in with Google** to keep it on every device:
 - Signing out starts a new guest from the start. The progress stays with the
   Google account.
 
-The game uses its own Firebase project. To switch it on:
+The game uses its own Firebase project, `bacteria-wars` (production builds
+only; development builds stay local). Its config sits in
+`apps/bacteria-game-remote/src/environments/environment.prod.ts`, and the
+project needs, in the [Firebase console](https://console.firebase.google.com/project/bacteria-wars):
 
-1. Create the project in the [Firebase console](https://console.firebase.google.com/)
-   and add a web app.
-2. Enable **Authentication** with the providers **Anonymous** and **Google**.
-   Add the domains the game runs on (the CloudFront domain of the game and
-   the shell's domain) under _Authentication > Settings > Authorized domains_.
-3. Create a **Firestore** database and deploy its rules:
-   `npx nx run bacteria-game-remote:deploy-firestore-rules --firebaseProject=<project-id>`.
-4. Put the web app's config into `gameCloud.firebase` in
-   `apps/bacteria-game-remote/src/environments/environment.prod.ts`.
+1. **Authentication** with the providers **Anonymous** and **Google**, and the
+   domains the game runs on (the CloudFront domain of the game and the
+   shell's domain) under _Authentication > Settings > Authorized domains_.
+2. A **Firestore** database.
+
+The release pipeline deploys the Firestore rules
+(`apps/bacteria-game-remote/firestore.rules`): `bacteria-game-remote` has a
+`deploy` target (`firebase deploy --only firestore:rules`, config in
+`firebase.bacteria-game-remote.json`, project alias in `.firebaserc`), which
+the non-CDK job of `deploy.yml` runs with the `FIREBASE_TOKEN` secret like
+the other Firebase apps. The token's account needs access to the project.
 
 To play against local emulators instead (a `demo-` project, no credentials):
 `npx nx run bacteria-game-remote:serve-emulator`. It needs Java for the
-Firestore emulator.
+Firestore emulator. The e2e tests (`npx nx e2e bacteria-game-remote`) run
+the production build against the same emulators, never the real project.
 
 ## Medallions
 

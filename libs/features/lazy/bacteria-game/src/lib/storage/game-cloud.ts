@@ -1,14 +1,9 @@
-import {
-  EnvironmentProviders,
-  inject,
-  Injectable,
-  provideEnvironmentInitializer,
-} from '@angular/core';
-import type { FirebaseOptions } from 'firebase/app';
+import { Injectable } from '@angular/core';
+import type { FirebaseOptions } from '@angular/fire/app';
 import { DeviceAccount } from './device-account';
 import type { GameAccount } from './game-account';
 import type { GameStorage } from './game-storage';
-import { connectFirebase } from './firebase-connection';
+import type { FirebaseConnection } from './firebase-connection';
 import { FirebaseGameAccount } from './firebase-game-account';
 import { FirestoreGameStorage } from './firestore-game-storage';
 import { LocalGameStorage } from './local-game-storage';
@@ -30,42 +25,27 @@ export interface GameCloudOptions {
 }
 
 /**
- * Connects the game to its Firebase project: the player's progress then
- * follows their account, a guest one at first, one they can sign in to
- * with Google later. Without options - no project set up yet - everything
- * stays in the browser's local storage.
- *
- * Belongs into the providers of the route the game is loaded under, so it
- * holds inside the shell, which never sees the remote's app config, as
- * well as on the game's own page.
- */
-export function provideGameCloud(
-  options: GameCloudOptions | null
-): EnvironmentProviders {
-  return provideEnvironmentInitializer(() => inject(GameCloud).use(options));
-}
-
-/**
  * Where the game's services keep their data: in the Firebase project once
- * `provideGameCloud` named one, else on this device. The game's services
+ * `provideGameCloud` connected one, else on this device. The game's services
  * live in the root injector while the project is named on a route, so they
  * ask here instead of a provider on that route, which they would not see.
  */
 @Injectable({ providedIn: 'root' })
 export class GameCloud {
-  private options: GameCloudOptions | null = null;
+  private connection: FirebaseConnection | null = null;
   private backend: { account: GameAccount; storage: GameStorage } | null = null;
-  /** Whether a service has asked already - the options come too late then. */
+  /** Whether a service has asked already - a project comes too late then. */
   private asked = false;
 
-  public use(options: GameCloudOptions | null): void {
-    if (this.asked && options !== this.options) {
+  /** Uses the project connected to, none for this device only. */
+  public use(connection: FirebaseConnection | null): void {
+    if (this.asked && connection !== this.connection) {
       console.error(
         'The game cloud was set up after the game started - staying on this device.'
       );
       return;
     }
-    this.options = options;
+    this.connection = connection;
   }
 
   /** The storage of whoever plays. */
@@ -80,11 +60,11 @@ export class GameCloud {
 
   private connected() {
     this.asked = true;
-    if (this.options === null) {
+    const { connection } = this;
+    if (connection === null) {
       return null;
     }
     if (this.backend === null) {
-      const connection = connectFirebase(this.options);
       const account = new FirebaseGameAccount(connection);
       this.backend = {
         account,

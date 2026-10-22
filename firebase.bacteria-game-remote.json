@@ -1,0 +1,13 @@
+{
+  "firestore": {
+    "rules": "apps/bacteria-game-remote/firestore.rules"
+  },
+  "emulators": {
+    "auth": { "port": 9399 },
+    "firestore": { "port": 8380, "websocketPort": 9160 },
+    "hub": { "port": 4410 },
+    "logging": { "port": 4510 },
+    "ui": { "enabled": false },
+    "singleProjectMode": true
+  }
+}

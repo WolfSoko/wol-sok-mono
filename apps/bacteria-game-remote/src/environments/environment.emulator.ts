@@ -3,7 +3,9 @@ import { Environment } from './environment.type';
 /**
  * Development against the local Firebase emulators, started by
  * `nx run bacteria-game-remote:firebase-emulators`. A `demo-` project needs
- * no real project and no credentials.
+ * no real project and no credentials. The ports are the game's own
+ * (`firebase.bacteria-game-remote.json`), apart from rollapolla's emulators,
+ * which may run on the same CI agent.
  */
 export const environment: Environment = {
   production: false,
@@ -14,9 +16,9 @@ export const environment: Environment = {
       projectId: 'demo-bacteria-wars',
     },
     emulators: {
-      authUrl: 'http://127.0.0.1:9099',
+      authUrl: 'http://127.0.0.1:9399',
       firestoreHost: '127.0.0.1',
-      firestorePort: 8080,
+      firestorePort: 8380,
     },
   },
 };

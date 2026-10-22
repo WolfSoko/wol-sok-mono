@@ -69,11 +69,12 @@ class FakeAuth {
     this.listener(user);
   }
 
-  public connection(): Promise<FirebaseConnection> {
-    return Promise.resolve({
+  public connection(): FirebaseConnection {
+    return {
       auth: this,
       authSdk: this.sdk,
-    } as unknown as FirebaseConnection);
+      run: <T>(call: () => T) => call(),
+    } as unknown as FirebaseConnection;
   }
 }
 

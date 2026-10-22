@@ -1,5 +1,5 @@
 import { signal } from '@angular/core';
-import type { User, UserCredential } from 'firebase/auth';
+import type { User, UserCredential } from '@angular/fire/auth';
 import { map, Observable, ReplaySubject } from 'rxjs';
 import type { FirebaseConnection } from './firebase-connection';
 import { beforeRetry, errorCode } from './retry';
@@ -44,38 +44,37 @@ export class FirebaseGameAccount implements GameAccount {
   /** Set while this tab signs in to a Google account that played elsewhere. */
   private adoptingGuest = false;
 
-  public constructor(private readonly connection: Promise<FirebaseConnection>) {
-    connection.then(
-      ({ auth, authSdk }) =>
-        authSdk.onAuthStateChanged(auth, (user) => {
-          this.profileState.set(user === null ? null : profileOf(user));
-          // Nobody before the first guest is no switch: the visit has just
-          // started. Nobody after a player is - the one signed out is gone.
-          const playerId = user?.uid ?? null;
-          if (playerId !== this.playerId) {
-            this.playerId = playerId;
-            this.switches.next({ playerId, adoptsGuest: this.adoptingGuest });
-          }
-          this.adoptingGuest = false;
-          if (user === null) {
-            void this.signInAsGuest();
-          }
-        }),
-      (error: unknown) =>
-        console.error('Could not connect to the game cloud', error)
+  public constructor(private readonly connection: FirebaseConnection) {
+    const { auth, authSdk, run } = connection;
+    run(() =>
+      authSdk.onAuthStateChanged(auth, (user) => {
+        this.profileState.set(user === null ? null : profileOf(user));
+        // Nobody before the first guest is no switch: the visit has just
+        // started. Nobody after a player is - the one signed out is gone.
+        const playerId = user?.uid ?? null;
+        if (playerId !== this.playerId) {
+          this.playerId = playerId;
+          this.switches.next({ playerId, adoptsGuest: this.adoptingGuest });
+        }
+        this.adoptingGuest = false;
+        if (user === null) {
+          void this.signInAsGuest();
+        }
+      })
     );
   }
 
   public async signIn(): Promise<SignInOutcome> {
-    const { auth, authSdk } = await this.connection;
+    const { auth, authSdk, run } = this.connection;
     const provider = new authSdk.GoogleAuthProvider();
-    const popups = authSdk.browserPopupRedirectResolver;
     const user = auth.currentUser;
     let error: unknown;
     try {
-      const credential: UserCredential = user?.isAnonymous
-        ? await authSdk.linkWithPopup(user, provider, popups)
-        : await authSdk.signInWithPopup(auth, provider, popups);
+      const credential: UserCredential = await run(() =>
+        user?.isAnonymous
+          ? authSdk.linkWithPopup(user, provider)
+          : authSdk.signInWithPopup(auth, provider)
+      );
       // Linking keeps the user, so no auth state change tells the profile.
       this.profileState.set(profileOf(credential.user));
       return 'signed-in';
@@ -102,7 +101,7 @@ export class FirebaseGameAccount implements GameAccount {
     // guest, and the guest's progress joins it.
     this.adoptingGuest = true;
     try {
-      await authSdk.signInWithCredential(auth, google);
+      await run(() => authSdk.signInWithCredential(auth, google));
       return 'signed-in';
     } catch (signInError) {
       this.adoptingGuest = false;
@@ -112,8 +111,8 @@ export class FirebaseGameAccount implements GameAccount {
   }
 
   public async signOut(): Promise<void> {
-    const { auth, authSdk } = await this.connection;
-    await authSdk.signOut(auth);
+    const { auth, authSdk, run } = this.connection;
+    await run(() => authSdk.signOut(auth));
   }
 
   /**
@@ -123,10 +122,10 @@ export class FirebaseGameAccount implements GameAccount {
    * switched off - is not tried again.
    */
   private async signInAsGuest(): Promise<void> {
-    const { auth, authSdk } = await this.connection;
+    const { auth, authSdk, run } = this.connection;
     for (let attempt = 0; auth.currentUser === null; attempt++) {
       try {
-        await authSdk.signInAnonymously(auth);
+        await run(() => authSdk.signInAnonymously(auth));
       } catch (error) {
         if (errorCode(error) !== NETWORK_ERROR) {
           console.error('Could not sign in as a guest', error);

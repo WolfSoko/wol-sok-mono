@@ -46,9 +46,13 @@ root services and their specs; not worth it for one configuration value.
 
 ## Consequences
 
-- The SDK (`firebase/app`, `auth`, `firestore`) loads with a dynamic import
-  only when a project is set, and is shared with the shell through the
-  Native Federation import map.
+- Firebase comes through AngularFire, provided on the remote's entry route
+  next to the shell's own AngularFire setup for its project; both apps are
+  zoneless. The SDK loads with the game's route and is shared with the shell
+  through the Native Federation import map.
+- The release pipeline deploys the Firestore rules (`bacteria-game-remote`
+  carries `type:firebase` and a `deploy` target), with the same
+  `FIREBASE_TOKEN` as the other Firebase apps.
 - The offline queue lives in memory. A match finished offline is lost if the
   page closes before the device is online again. Firestore's own offline
   writes cannot replace the transaction without giving up exactly-once

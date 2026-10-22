@@ -57,11 +57,12 @@ class FakeFirestore {
     },
   };
 
-  public connection(): Promise<FirebaseConnection> {
-    return Promise.resolve({
+  public connection(): FirebaseConnection {
+    return {
       db: {},
       dbSdk: this.sdk,
-    } as unknown as FirebaseConnection);
+      run: <T>(call: () => T) => call(),
+    } as unknown as FirebaseConnection;
   }
 
   public value(uid: string): unknown {
