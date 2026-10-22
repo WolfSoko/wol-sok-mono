@@ -326,5 +326,7 @@ test('should show the privacy policy on a page of its own', async ({
 
   await page.getByRole('link', { name: /Back to the game/ }).click();
 
-  await expect(page.getByRole('button', { name: /New game/ })).toBeVisible();
+  // The click lets the game ask for native fullscreen, which WebKit may
+  // refuse and so leave the game in the page: the arena is there either way.
+  await expect(new BacteriaGamePo(page).playArea).toBeVisible();
 });
