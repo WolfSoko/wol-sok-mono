@@ -6,15 +6,22 @@ const page = readFileSync(join(__dirname, 'privacy.html'), 'utf8');
 
 describe('privacy policy', () => {
   it('loads nothing from other hosts, so reading it sends nobody data', () => {
-    const loads = [...page.matchAll(/<(?:link|script|img)\b[^>]*>/g)].map(
-      ([tag]) => /(?:href|src)="([^"]*)"/.exec(tag)?.[1] ?? ''
-    );
+    // Everything the browser fetches by itself: src and srcset of any
+    // element, href of a <link>, url() and @import in the styles. Links a
+    // reader follows (<a href>) are not fetched.
+    const loads = [
+      ...page.matchAll(/\b(?:src|srcset)="([^"]*)"/g),
+      ...page.matchAll(/<link\b[^>]*\bhref="([^"]*)"/g),
+      ...page.matchAll(/url\(\s*['"]?([^'")]*)/g),
+      ...page.matchAll(/@import\s+['"]([^'"]*)/g),
+    ].map(([, url]) => url);
     const external = loads.filter(
       (url) =>
         /^(https?:)?\/\//.test(url) &&
         !url.startsWith('https://bacteria-game.wolsok.de/')
     );
 
+    expect(loads.length).toBeGreaterThan(0);
     expect(external).toEqual([]);
   });
 
