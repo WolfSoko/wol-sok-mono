@@ -13,6 +13,33 @@ service cloud.firestore {
       allow delete: if isPlayer(playerId);
     }
 
+    // The rooms online matches meet in (FirestoreGameRooms): the host opens
+    // one under a code with its offer, one guest answers it. Anyone signed
+    // in reads a room by its code - knowing the code is the invitation -
+    // but nobody lists them. A TTL policy on expireAt deletes old rooms.
+    match /rooms/{code} {
+      allow get: if request.auth != null;
+      allow create: if request.auth != null &&
+        code.matches('[A-HJ-NP-Z2-9]{6}') &&
+        request.resource.data.keys().hasOnly(['host', 'offer', 'createdAt', 'expireAt']) &&
+        request.resource.data.host == request.auth.uid &&
+        isDescription(request.resource.data.offer) &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.expireAt is timestamp &&
+        request.resource.data.expireAt < request.time + duration.value(2, 'h');
+      allow update: if request.auth != null &&
+        !('answer' in resource.data) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['guest', 'answer']) &&
+        request.resource.data.guest == request.auth.uid &&
+        isDescription(request.resource.data.answer);
+      allow delete: if request.auth != null && request.auth.uid == resource.data.host;
+    }
+
+    // A WebRTC session description, with its candidates.
+    function isDescription(value) {
+      return value is string && value.size() <= 20000;
+    }
+
     function isPlayer(playerId) {
       return request.auth != null && request.auth.uid == playerId;
     }

@@ -10,7 +10,7 @@ import {
   levelMap,
 } from './levels';
 import { MatchOptions, PlayerSpawn } from './match-engine';
-import { GhostController, turnedOnto } from './ghost';
+import { GhostController, SeatDriver, turnedOnto } from './ghost';
 import { HeadStart, startScales } from './rivalry';
 import { spawnSpots } from './shapes';
 import type { Replay } from './replay';
@@ -34,6 +34,13 @@ export interface MatchPlan {
   seed: number;
 }
 
+/** The seat of the player at this device in an online match, and its drivers. */
+export interface OnlineSeats {
+  seat: 0 | 1;
+  /** What plays both seats - the lockstep of the two devices. */
+  drivers: ReadonlyMap<number, SeatDriver>;
+}
+
 /**
  * The players and the rules of a planned match.
  *
@@ -41,14 +48,23 @@ export interface MatchPlan {
  * names change with it so the scoreboard reads "You" and "Computer".
  * Between two players each one is called by their colour. Against a
  * `ghost` the second colony plays that recorded run instead of a bot.
+ *
+ * `online` makes it a match between two devices, played between two players
+ * without a head start: the other device's seat spawns as a bot, as the
+ * ghost does - the game treats it as nobody at this screen - and the
+ * lockstep drives both seats.
  */
 export function planMatch(
   plan: MatchPlan,
-  ghost: Replay | null = null
+  ghost: Replay | null = null,
+  online: OnlineSeats | null = null
 ): {
   spawns: PlayerSpawn[];
   options: MatchOptions;
 } {
+  if (online !== null) {
+    return planOnline(plan, online);
+  }
   const { width, height, mode } = plan;
   const level = getLevel(plan.levelId);
   const boss = ghost === null ? level.boss : undefined;
@@ -115,6 +131,29 @@ export function planMatch(
               ],
             ]),
     },
+  };
+}
+
+function planOnline(
+  plan: MatchPlan,
+  online: OnlineSeats
+): ReturnType<typeof planMatch> {
+  const { spawns, options } = planMatch({
+    ...plan,
+    mode: 'two-players',
+    headStart: 0,
+  });
+  return {
+    spawns: spawns.map((spawn, seat) =>
+      spawn.neutral === true
+        ? spawn
+        : {
+            ...spawn,
+            name: seat === online.seat ? 'You' : 'Opponent',
+            isBot: seat !== online.seat,
+          }
+    ),
+    options: { ...options, ghosts: online.drivers },
   };
 }
 

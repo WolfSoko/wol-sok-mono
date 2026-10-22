@@ -118,13 +118,17 @@
     <mat-icon>home</mat-icon>
     Main menu
   </button>
-  @if (endlessAction(); as label) {
+  @if (onlineGuest()) {
+    <p class="online-wait">Your opponent starts the next match.</p>
+  } @else if (online() && !connected()) {
+    <p class="online-wait">The connection to your opponent is gone.</p>
+  } @else if (endlessAction(); as label) {
     <button mat-flat-button type="button" (click)="action.emit('endless')">
       <mat-icon>all_inclusive</mat-icon>
       {{ label }}
     </button>
   } @else {
-    @if (canChooseLevel()) {
+    @if (canChooseLevel() && !online()) {
       <button mat-stroked-button type="button" (click)="action.emit('levels')">
         <mat-icon>grid_view</mat-icon>
         Choose a level
@@ -169,6 +173,6 @@
   <p class="share-note" role="status">{{ note }}</p>
 }
 <!-- Only with a Next button for the reason to explain. -->
-@if (upcoming() !== null && upcomingLock(); as lock) {
+@if (upcoming() !== null && !online() && upcomingLock(); as lock) {
   <p class="lock-reason">{{ lock }}</p>
 }

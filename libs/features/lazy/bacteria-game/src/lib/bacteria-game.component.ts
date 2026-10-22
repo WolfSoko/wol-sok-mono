@@ -32,7 +32,7 @@ import {
   ShowFpsComponent,
 } from '@wolsok/ui-kit';
 import { defer, fromEvent, Observable } from 'rxjs';
-import { defaultIfEmpty, last, map, take, tap } from 'rxjs/operators';
+import { defaultIfEmpty, filter, last, map, take, tap } from 'rxjs/operators';
 import { ArenaFrame, ArenaPainter } from './arena/arena-painter';
 import { createArenaPainter } from './arena/create-arena-painter';
 import { GlArenaPainter } from './arena/gl/gl-arena-painter';
@@ -82,9 +82,12 @@ import { loadFonts } from './fonts';
 import {
   arenaSize,
   detailScale,
+  ONLINE_SIM_RESOLUTION,
   renderScale,
+  SimResolution,
   simScale,
 } from './state/arena-size';
+import { OnlineMatchService } from './net/online-match.service';
 import { Camera } from './arena/camera';
 import { MinimapPainter } from './arena/minimap';
 import { GameHapticsService } from './haptics.service';
@@ -116,6 +119,7 @@ import {
   levelBalance,
   levelMap,
   levelSize,
+  ONLINE_LOCKS,
   nextLevel,
 } from './state/levels';
 import { DynamicWall, Rect } from './state/maps';
@@ -192,6 +196,18 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly progress = inject(ProgressService);
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
+  private readonly online = inject(OnlineMatchService);
+  /** The lobby of an online match, for the new game's start. */
+  protected readonly onlineLobby = this.online.lobby;
+  protected readonly onlineAvailable = this.online.available;
+  /** True while this device is connected to an online match. */
+  protected readonly onlineSeat = computed(
+    () => this.store.online()?.seat ?? null
+  );
+  /** True while an online match waits for the other device. */
+  protected readonly waitingForPeer = this.store.waitingForPeer;
+  /** A match the host started while this device still cleared the last one. */
+  private onlineStartPending = false;
   /** No flickering glow for players who asked their system for less motion. */
   private readonly reducedMotion = prefersReducedMotion();
 
@@ -227,7 +243,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * as big as the level's map.
    */
   protected readonly arena = computed(() =>
-    arenaSize(this.settings.simResolution(), this.mapSize())
+    arenaSize(this.simResolution(), this.mapSize())
+  );
+  /**
+   * The grid the war runs on: the setting, but online the one grid both
+   * devices run - also under the result of a match the other device left,
+   * which a new grid would wipe off the board.
+   */
+  private readonly simResolution = computed((): SimResolution =>
+    this.store.online() === null && this.store.endedBy() !== 'forfeit'
+      ? this.settings.simResolution()
+      : ONLINE_SIM_RESOLUTION
   );
   /** How many times the base arena the level's map is along each side. */
   protected readonly mapSize = computed(() => levelSize(this.store.level()));
@@ -243,7 +269,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * either resolution changing hands the painter a fresh canvas and context.
    */
   protected readonly canvasKey = computed(() => [
-    `${this.settings.simResolution()}:${this.settings.screenResolution()}:${this.mapSize()}`,
+    `${this.simResolution()}:${this.settings.screenResolution()}:${this.mapSize()}`,
   ]);
 
   stats: Signal<ColonyStats[]>;
@@ -412,6 +438,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Why each level is still locked on the campaign ladder, by level id. */
   protected readonly campaign = inject(CampaignService);
   protected readonly lockedLevels = this.campaign.locks;
+  /**
+   * The locked levels of the level choice: the ladder's, and online the
+   * big maps, which the CPU both devices run cannot keep up with.
+   */
+  protected readonly choiceLocks = computed(() =>
+    this.lastKind() === 'online' ? ONLINE_LOCKS : this.lockedLevels()
+  );
   /** Between two players: the series length, the head start, the series. */
   protected readonly seriesLength = this.store.seriesLength;
   protected readonly headStart = this.store.headStart;
@@ -446,10 +479,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Why the level after the selected one is locked, null when it is open. */
   protected readonly upcomingLock = computed(() => {
     const upcoming = this.upcomingLevel();
-    return upcoming === null
-      ? null
-      : (this.lockedLevels()[upcoming.id] ?? null);
+    const locks =
+      this.store.online() === null ? this.lockedLevels() : ONLINE_LOCKS;
+    return upcoming === null ? null : (locks[upcoming.id] ?? null);
   });
+  /** True where Restart may start the match again - online, the host only. */
+  protected readonly canRestart = computed(
+    () => !this.inEndlessRun() && this.onlineSeat() !== 1
+  );
   /** The crosshairs a finger or a key may steer - never the computer's. */
   private readonly humans: Signal<Player[]>;
 
@@ -617,6 +654,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.gameStateService.frames$
       .pipe(untilDestroyed(this))
       .subscribe((frame) => this.runFrame(frame));
+
+    // The guest of an online match plays what the host starts.
+    this.online.events$
+      .pipe(
+        filter((event) => event.type === 'start'),
+        untilDestroyed(this)
+      )
+      .subscribe(() => this.followOnlineStart());
   }
 
   /**
@@ -657,6 +702,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (this.resetting()) {
       return;
     }
+    this.gameStateService.leaveOnline();
     this.gameStateService.startEndless();
     this.startGame();
   }
@@ -667,6 +713,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (this.resetting()) {
       return;
     }
+    this.gameStateService.leaveOnline();
     this.gameStateService.playDaily(this.progress.daily().day);
     this.startGame();
   }
@@ -678,6 +725,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.dismissChallenge();
+    this.gameStateService.leaveOnline();
     this.gameStateService.playGhost(run);
     this.startGame();
   }
@@ -711,6 +759,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.screen.set(action === 'levels' ? 'new-game' : 'menu');
     if (action === 'menu') {
       this.gameStateService.endSeries();
+      this.gameStateService.leaveOnline();
     }
     this.resetGame$()
       .pipe(
@@ -740,6 +789,44 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         untilDestroyed(this)
       )
       .subscribe();
+  }
+
+  /**
+   * Starts the match the host of an online match started - once the arena
+   * is clear: a result on screen is cleared first.
+   */
+  private followOnlineStart(): void {
+    if (this.resetting() || this.matchOver()) {
+      this.onlineStartPending = true;
+      if (!this.resetting()) {
+        // Not resetGame: that gives the online match up.
+        this.resetGame$().pipe(untilDestroyed(this)).subscribe();
+      }
+      return;
+    }
+    this.startOnlineMatch();
+  }
+
+  private startOnlineMatch(): void {
+    // Not once this device has left - it would start a match of its own.
+    if (this.store.snapshot().online?.seat === 1) {
+      this.startGame();
+    }
+  }
+
+  /** Opens an online match for a friend to join. */
+  protected hostOnline(): void {
+    void this.online.host();
+  }
+
+  /** Joins a friend's online match under the code they passed on. */
+  protected joinOnline(code: string): void {
+    void this.online.join(code);
+  }
+
+  /** Leaves the online match, or its lobby. */
+  protected leaveOnline(): void {
+    this.gameStateService.leaveOnline();
   }
 
   /** Plays the end of the match, and the medallion it earned after it. */
@@ -806,6 +893,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** The level picked for the next match, beside the daily and the run. */
   protected readonly selectedLevelId = this.store.levelId;
+  /** The level the level choice shows picked - online, the host's. */
+  protected readonly choiceLevelId = computed(
+    () => this.store.online()?.levelId ?? this.selectedLevelId()
+  );
 
   /** Where a new game opens - on the mode last played, to pick another. */
   protected readonly newGameEntry = signal<NewGameEntry>({
@@ -857,7 +948,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   protected setPlayKind(kind: PlayKind): void {
     this.lastKind.set(kind);
-    this.selectMode(opponentOf(kind));
+    if (kind !== 'online') {
+      // Another mode is no online match.
+      this.gameStateService.leaveOnline();
+    }
+    const opponent = opponentOf(kind);
+    if (opponent !== null) {
+      this.selectMode(opponent);
+    }
     if (kind === 'campaign' || kind === 'free') {
       this.settings.setFreePlay(kind === 'free');
     }
@@ -879,6 +977,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** Starts a match on the furthest level the campaign ladder has opened. */
   protected continueCampaign(): void {
+    this.gameStateService.leaveOnline();
     this.selectMode('vs-computer');
     this.gameStateService.setLevel(this.campaign.furthestLevel());
     this.startGame();
@@ -924,16 +1023,16 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       width,
       height,
       renderScale(
-        this.settings.simResolution(),
+        this.simResolution(),
         this.settings.screenResolution(),
         this.mapSize()
       ),
       detailScale(
-        this.settings.simResolution(),
+        this.simResolution(),
         this.settings.screenResolution(),
         this.mapSize()
       ),
-      simScale(this.settings.simResolution())
+      simScale(this.simResolution())
     );
     this.camera =
       this.mapSize() > 1 ? new Camera(width, height, this.mapSize()) : null;
@@ -979,8 +1078,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     return this.thanos.vaporize(false).pipe(take(1));
   }
 
-  /** Pauses, vaporizes the canvas and returns to the start screen. */
+  /**
+   * Pauses, vaporizes the canvas and returns to the start screen - giving
+   * an online match up, which the other device then wins.
+   */
   resetGame() {
+    this.gameStateService.leaveOnline();
     this.resetGame$().pipe(untilDestroyed(this)).subscribe();
   }
 
@@ -1002,6 +1105,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
           this.gameStateService.reset();
           this.draw();
           this.resetting.set(false);
+          if (this.onlineStartPending) {
+            this.onlineStartPending = false;
+            this.startOnlineMatch();
+          }
         }),
         map(() => undefined)
       );
@@ -1220,6 +1327,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.gameStateService.leaveOnline();
     this.gameStateService.endSeries();
     this.gameStateService.cleanup();
     // The GPU simulation lives in this canvas's context, which goes with it.

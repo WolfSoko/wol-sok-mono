@@ -16,6 +16,7 @@ import { GameStateStore } from './game.states';
 import { Player } from './player.model';
 import { PlayerStore } from './player.store';
 import { ReplayInputs } from './replay';
+import type { Lockstep } from '../net/lockstep';
 import { MatchOutcome } from './win-conditions';
 
 export type { FrameEvents, PlayerSpawn } from './match-engine';
@@ -60,6 +61,12 @@ export class PlayerService {
   private mirrored: readonly Player[] = [];
   /** What the last frame did, for the sound. */
   private frameEvents: FrameEvents = noFrameEvents();
+  /** The lockstep of an online match, null in any other. */
+  private lockstep: Lockstep | null = null;
+  /** Where the player at this device sent the crosshair since the last tick. */
+  private localDrag: Point | null = null;
+  /** True when the player at this device fired the boost since the last tick. */
+  private localBoost = false;
 
   /**
    * Starts a fresh match: new players in the store, new colonies in the
@@ -68,23 +75,33 @@ export class PlayerService {
    * The level decides the wall layout and the balance, so the simulation is
    * rebuilt with them - its balance is fixed for the lifetime of a match on
    * purpose, nothing may change the rules while the colonies are fighting.
+   *
+   * An online match runs on the CPU, the simulation both devices play
+   * alike, and its ticks wait for the `lockstep`.
    */
   public init(
     spawns: PlayerSpawn[],
     options: Omit<MatchOptions, 'seed' | 'simulation'> & {
       /** Where every chance of the match comes from - a fresh one when absent. */
       seed?: number;
+      /** The lockstep with the other device of an online match. */
+      lockstep?: Lockstep;
     } = {}
   ): void {
-    const { arena, ...rules } = options;
+    const { arena, lockstep, ...rules } = options;
     this.engine.dispose();
+    this.lockstep = lockstep ?? null;
     this.engine = new MatchEngine(spawns, {
       ...rules,
       seed: options.seed ?? randomSeed(),
       // Sized in there, where the GPU may still fail and leave it to the CPU.
       simulation: (balance, random) =>
-        this.createSimulation(balance, random, arena),
+        lockstep === undefined
+          ? this.createSimulation(balance, random, arena)
+          : sized(cpuSimulation(balance, random), arena),
     });
+    this.localDrag = null;
+    this.localBoost = false;
     this.sticks.clear();
     this.frameEvents = noFrameEvents();
     this.mirrored = this.engine.players;
@@ -94,6 +111,10 @@ export class PlayerService {
 
   /** See {@link MatchEngine.setDragTarget}. */
   public setDragTarget(playerId: number, x: number, y: number): void {
+    if (this.lockstep?.localSeat === playerId) {
+      this.localDrag = { x, y };
+      return;
+    }
     this.engine.setDragTarget(playerId, x, y);
   }
 
@@ -110,8 +131,15 @@ export class PlayerService {
     }
   }
 
-  /** See {@link MatchEngine.boost}. */
+  /**
+   * See {@link MatchEngine.boost}. Online, the boost goes out with the next
+   * tick's input, and fires when the lockstep plays it.
+   */
   public boost(playerId: number): void {
+    if (this.lockstep?.localSeat === playerId) {
+      this.localBoost = true;
+      return;
+    }
     if (this.engine.boost(playerId)) {
       this.mirror();
     }
@@ -122,9 +150,32 @@ export class PlayerService {
    * the bots and the war.
    */
   public tick(width: number, height: number): void {
-    this.steerHumans(untracked(this.gameStateStore.keysPressed));
-    this.engine.tick(width, height);
+    const keys = untracked(this.gameStateStore.keysPressed);
+    const { lockstep } = this;
+    if (lockstep === null) {
+      this.steerHumans(keys);
+      this.engine.tick(width, height);
+    } else {
+      lockstep.putLocal(
+        this.engine.tickCount,
+        this.steering(lockstep.localSeat, keys),
+        this.localDrag,
+        this.localBoost
+      );
+      this.localDrag = null;
+      this.localBoost = false;
+      this.engine.tick(width, height);
+      lockstep.ticked(this.engine.tickCount, this.engine.players);
+    }
     this.mirror();
+  }
+
+  /**
+   * True when the next tick may be played: always, but in an online match
+   * only once the other device's input for it is in.
+   */
+  public canTick(): boolean {
+    return this.lockstep?.ready(this.engine.tickCount) ?? true;
   }
 
   /**
@@ -153,6 +204,11 @@ export class PlayerService {
   /** How the match ended, null while it is still on. */
   public outcome(): MatchOutcome | null {
     return this.engine.outcome();
+  }
+
+  /** True once the two devices of an online match played different matches. */
+  public get desynced(): boolean {
+    return this.lockstep?.desynced ?? false;
   }
 
   /** Ticks the match has run. */
@@ -207,10 +263,7 @@ export class PlayerService {
     let simulation: Simulation | null = null;
     try {
       simulation = this.simulationFactory(balance, random);
-      if (arena != null) {
-        simulation.resize(arena.width, arena.height);
-      }
-      return simulation;
+      return sized(simulation, arena);
     } catch (error) {
       // Let go of the context listeners, or a restored context revives it.
       simulation?.dispose();
@@ -236,22 +289,38 @@ export class PlayerService {
       this.engine.isLive(player.id)
     );
     humans.forEach((human, index) => {
-      const stick = this.sticks.get(human.id);
-      const direction = { x: stick?.x ?? 0, y: stick?.y ?? 0 };
-      KEY_SETS.forEach((keySet, setIndex) => {
-        if (Math.min(setIndex, humans.length - 1) !== index) {
-          return;
-        }
-        for (const key of keysPressed) {
-          const step = keySet[key.toLowerCase()];
-          if (step != null) {
-            direction.x += step.x;
-            direction.y += step.y;
-          }
-        }
-      });
-      this.engine.setSteering(human.id, direction);
+      // The last human also takes the key sets nobody else has.
+      const lastSet = index === humans.length - 1 ? KEY_SETS.length - 1 : index;
+      this.engine.setSteering(
+        human.id,
+        this.steering(human.id, keysPressed, index, lastSet)
+      );
     });
+  }
+
+  /**
+   * A player's stick and the held keys of their key sets - `firstSet` to
+   * `lastSet` of {@link KEY_SETS} - summed.
+   */
+  private steering(
+    playerId: number,
+    keysPressed: readonly string[],
+    firstSet = 0,
+    lastSet = KEY_SETS.length - 1
+  ): SteeringVector {
+    const stick = this.sticks.get(playerId);
+    const direction = { x: stick?.x ?? 0, y: stick?.y ?? 0 };
+    for (let set = firstSet; set <= lastSet; set++) {
+      const keySet = KEY_SETS[set];
+      for (const key of keysPressed) {
+        const step = keySet[key.toLowerCase()];
+        if (step != null) {
+          direction.x += step.x;
+          direction.y += step.y;
+        }
+      }
+    }
+    return direction;
   }
 
   /** Mirrors the engine's players into the store, in one go, if they changed. */
@@ -263,4 +332,15 @@ export class PlayerService {
     }
     this.playerStore.setNeutralCount(this.engine.neutralCount);
   }
+}
+
+/** The simulation, sized to the arena where it is known. */
+function sized(
+  simulation: Simulation,
+  arena?: { width: number; height: number }
+): Simulation {
+  if (arena != null) {
+    simulation.resize(arena.width, arena.height);
+  }
+  return simulation;
 }

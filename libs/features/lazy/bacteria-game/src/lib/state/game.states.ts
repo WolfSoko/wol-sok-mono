@@ -34,6 +34,17 @@ export function isGameMode(value: unknown): value is GameMode {
   return value === 'vs-computer' || value === 'two-players';
 }
 
+/**
+ * An online match as this device takes part in it: its seat - 0 for the
+ * host - and the setup the host picked for the next match.
+ */
+export interface OnlineSeat {
+  seat: 0 | 1;
+  levelId: string;
+  /** The colour ids of the host's (left) and the guest's (right) colony. */
+  colors: [string, string];
+}
+
 export enum GameState {
   RUNNING,
   PAUSED,
@@ -101,6 +112,10 @@ export interface GameStateState {
   endlessMatch: boolean;
   /** The endless run under way, null outside one - it outlasts a match. */
   endless: EndlessRun | null;
+  /** The online match this device is connected to, null outside one. */
+  online: OnlineSeat | null;
+  /** True while an online match waits for the other device's inputs. */
+  waitingForPeer: boolean;
 }
 
 export function createInitialState(): GameStateState {
@@ -128,6 +143,8 @@ export function createInitialState(): GameStateState {
     dailyDay: null,
     endlessMatch: false,
     endless: null,
+    online: null,
+    waitingForPeer: false,
   };
 }
 
@@ -140,8 +157,18 @@ export const GameStateStore = signalStore(
   { providedIn: 'root' },
   withState(createInitialState),
   withComputed(
-    ({ currentState, levelId, timePassed, matchLevel, mode, endedBy }) => {
-      const level = computed(() => getLevel(matchLevel() ?? levelId()));
+    ({
+      currentState,
+      levelId,
+      timePassed,
+      matchLevel,
+      mode,
+      endedBy,
+      online,
+    }) => {
+      const level = computed(() =>
+        getLevel(online()?.levelId ?? matchLevel() ?? levelId())
+      );
       const winRule = computed(() => winRuleOf(level()));
       const gameSeconds = computed(() => Math.floor(timePassed() / 1000));
       return {

@@ -58,7 +58,7 @@ describe('NewGameComponent', () => {
     const modes = Array.from(host().querySelectorAll('.mode')).map(
       (mode) => mode.textContent ?? ''
     );
-    expect(modes).toHaveLength(5);
+    expect(modes).toHaveLength(6);
     expect(modes[0]).toContain('5 of 14 levels open');
     expect(modes[1]).toContain('3 of 3 attempts left');
     expect(modes[2]).toContain('best 4');
@@ -157,6 +157,57 @@ describe('NewGameComponent', () => {
     );
     expect(series).toHaveBeenCalledWith(3);
     expect(headStart).toHaveBeenCalledWith(-2);
+  });
+
+  it('opens an online match or joins one, and only the host starts', async () => {
+    const lobby = {
+      phase: 'idle' as const,
+      role: null,
+      code: null,
+      notice: null,
+    };
+    await render({
+      entry: { kind: 'online', step: 'start' } satisfies NewGameEntry,
+      online: lobby,
+      onlineAvailable: true,
+      colonyNames: ['Orange', 'Blue'],
+    });
+    const hosted = jest.fn();
+    const joined = jest.fn();
+    const started = jest.fn();
+    fixture.componentInstance.hostOnline.subscribe(hosted);
+    fixture.componentInstance.joinOnline.subscribe(joined);
+    fixture.componentInstance.start.subscribe(started);
+
+    expect(host().querySelector('.start')).toBeNull();
+    button('Open a match').click();
+    const input = host().querySelector<HTMLInputElement>('input[name="code"]');
+    if (input === null) {
+      throw new Error('no code input');
+    }
+    input.value = 'k7qpxm';
+    input.dispatchEvent(new Event('input'));
+    button('Join').click();
+    expect(hosted).toHaveBeenCalled();
+    expect(joined).toHaveBeenCalledWith('k7qpxm');
+
+    fixture.componentRef.setInput('online', {
+      ...lobby,
+      phase: 'connected',
+      role: 'guest',
+    });
+    await settle();
+    expect(host().textContent).toContain('you play Blue');
+    expect(host().querySelector('.start')).toBeNull();
+
+    fixture.componentRef.setInput('online', {
+      ...lobby,
+      phase: 'connected',
+      role: 'host',
+    });
+    await settle();
+    button('Start').click();
+    expect(started).toHaveBeenCalledWith('online');
   });
 
   it('shows the best medallion, what the next one needs, and the rules', async () => {

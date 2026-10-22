@@ -33,7 +33,11 @@ export type EndReason =
   | 'time'
   | 'hold'
   | 'survive'
-  | 'harvest';
+  | 'harvest'
+  /** Online: the other device left or lost the connection. */
+  | 'forfeit'
+  /** Online: the two devices came to different matches. */
+  | 'desync';
 
 /** How a match ended: the winner, or null for a draw - and what ended it. */
 export interface MatchOutcome {

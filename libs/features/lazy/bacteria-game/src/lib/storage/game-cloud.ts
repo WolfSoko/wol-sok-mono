@@ -5,7 +5,9 @@ import type { GameAccount } from './game-account';
 import type { GameStorage } from './game-storage';
 import type { FirebaseConnection } from './firebase-connection';
 import { FirebaseGameAccount } from './firebase-game-account';
+import { FirestoreGameRooms } from './firestore-game-rooms';
 import { FirestoreGameStorage } from './firestore-game-storage';
+import type { GameRooms } from './game-rooms';
 import { LocalGameStorage } from './local-game-storage';
 
 /** The Firebase project the game keeps the players' progress in. */
@@ -33,7 +35,11 @@ export interface GameCloudOptions {
 @Injectable({ providedIn: 'root' })
 export class GameCloud {
   private connection: FirebaseConnection | null = null;
-  private backend: { account: GameAccount; storage: GameStorage } | null = null;
+  private backend: {
+    account: GameAccount;
+    storage: GameStorage;
+    rooms: GameRooms;
+  } | null = null;
   /** Whether a service has asked already - a project comes too late then. */
   private asked = false;
 
@@ -58,6 +64,11 @@ export class GameCloud {
     return this.connected()?.account ?? new DeviceAccount();
   }
 
+  /** Where online matches meet - null without a project, there are none then. */
+  public rooms(): GameRooms | null {
+    return this.connected()?.rooms ?? null;
+  }
+
   private connected() {
     this.asked = true;
     const { connection } = this;
@@ -69,6 +80,7 @@ export class GameCloud {
       this.backend = {
         account,
         storage: new FirestoreGameStorage(connection, account.playerIds),
+        rooms: new FirestoreGameRooms(connection, account.playerIds),
       };
     }
     return this.backend;

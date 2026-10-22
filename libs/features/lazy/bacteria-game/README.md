@@ -1,6 +1,6 @@
 # feat-lazy-bacteria-game
 
-Bacteria war for one or two players. Each player steers a crosshair, the colony
+Bacteria war for one or two players, on one screen or two devices. Each player steers a crosshair, the colony
 follows it and tries to eat the other one. Play against the computer or share
 one screen (and keyboard) with a second human.
 
@@ -30,6 +30,9 @@ one screen (and keyboard) with a second human.
 
 - **2 Players** - Orange on WASD, Blue on the arrow keys, or one finger each on
   a touchscreen.
+
+- **Online** - two devices, a colony each ([`net/`](./src/lib/net)). See
+  [Online matches](#online-matches).
 
 ## Touch layout
 
@@ -270,6 +273,38 @@ progress, so nothing about them is stored:
   its own.
 
 The result screen names what a match opened.
+
+## Online matches
+
+Two players on two devices, through the game's Firebase project
+([ADR 0009](../../../../docs/adr/0009-bacteria-wars-online-lockstep.md)):
+
+- **Lobby** - _Online_ in the new game's modes. One player opens a match
+  and gets a code of six letters and digits; the other types it in. The
+  host plays the left colony, picks the level and the colours and starts
+  each match; the guest plays the right one and follows - their result
+  screen waits for the host's next start. Big maps are locked online.
+- **Lockstep** - both devices run the same match: the same `MatchEngine`,
+  the same seed, the CPU simulation on the _Normal_ grid whatever the
+  settings. Each tick is played once both players' inputs for it are in
+  ([`Lockstep`](./src/lib/net/lockstep.ts)); what a player puts in is
+  played six ticks (100 ms) later on both devices, so it has time to reach
+  the other one. Both seats are played by the lockstep through the engine's
+  seat drivers, as a ghost is. A device that waits too long says so
+  ("Waiting for your opponent…"); pausing holds the match on both.
+- **Checks** - once a second the devices compare a checksum of the
+  players; should they differ, the match ends as out of step. A device that
+  leaves or loses the connection forfeits the match under way.
+- **Connection** - a WebRTC data channel, ordered and reliable
+  ([`PeerLink`](./src/lib/net/peer-link.ts)). The host writes its offer
+  into `rooms/{code}` in Firestore, the guest its answer
+  ([`FirestoreGameRooms`](./src/lib/storage/firestore-game-rooms.ts)); the
+  rules let anyone signed in read a room by its code, never list them, and
+  one guest answer it. There is no TURN server, so two devices behind
+  strict NATs cannot connect. The project needs a TTL policy on the
+  `rooms` collection's `expireAt` field, which deletes rooms after an hour.
+- Online matches earn nothing - no medallion, XP or totals - and leave no
+  replay. Without a Firebase project the mode says it is not available.
 
 ## Two-player rivalry
 

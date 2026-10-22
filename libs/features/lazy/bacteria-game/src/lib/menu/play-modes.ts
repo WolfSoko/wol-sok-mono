@@ -6,7 +6,8 @@ export type PlayKind =
   | 'daily'
   | 'endless'
   | 'free'
-  | 'two-players';
+  | 'two-players'
+  | 'online';
 
 /** The steps of a new game: the mode, then the level, then the start. */
 export type NewGameStep = 'mode' | 'level' | 'start';
@@ -55,6 +56,12 @@ export const PLAY_MODES: readonly PlayMode[] = [
     icon: 'group',
     blurb: 'One screen, two colonies - a series between friends.',
   },
+  {
+    kind: 'online',
+    name: 'Online',
+    icon: 'public',
+    blurb: 'Two devices, one match - share a code with a friend.',
+  },
 ];
 
 export const STEP_LABELS: Readonly<Record<NewGameStep, string>> = {
@@ -74,7 +81,17 @@ export function stepsOf(kind: PlayKind | null): readonly NewGameStep[] {
     : ['mode', 'level', 'start'];
 }
 
-/** Who plays in a mode: the computer, or a second human. */
-export function opponentOf(kind: PlayKind): GameMode {
-  return kind === 'two-players' ? 'two-players' : 'vs-computer';
+/**
+ * Who plays in a mode: the computer, or a second human - null online, where
+ * the connection decides and the setup stays as it is.
+ */
+export function opponentOf(kind: PlayKind): GameMode | null {
+  switch (kind) {
+    case 'online':
+      return null;
+    case 'two-players':
+      return 'two-players';
+    default:
+      return 'vs-computer';
+  }
 }

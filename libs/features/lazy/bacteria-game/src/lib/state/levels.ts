@@ -471,6 +471,23 @@ export function levelSize(level: Level): number {
 }
 
 /**
+ * True for a level an online match may be played on: not a big map, which
+ * the CPU simulation both devices run cannot keep up with.
+ */
+export function playableOnline(level: Level): boolean {
+  return levelSize(level) === 1;
+}
+
+/** Why a level cannot be played online, by level id. */
+export const ONLINE_LOCKS: Readonly<Record<string, string>> =
+  Object.fromEntries(
+    LEVELS.filter((level) => !playableOnline(level)).map((level) => [
+      level.id,
+      'Too big for an online match',
+    ])
+  );
+
+/**
  * The level's arena cells per base cell on an arena that wide - the grid's
  * resolution, whatever the size of the map.
  */

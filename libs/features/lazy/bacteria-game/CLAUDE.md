@@ -33,6 +33,10 @@ storage until then. Settings stay with the device either way.
   the wrapping only adds pending tasks (a write held offline keeps the app
   from turning stable), and it wraps every function argument as a callback,
   which breaks the popup resolver class.
+- Online matches meet through the `GameRooms` port (`storage/game-rooms.ts`,
+  `FirestoreGameRooms`), asked of `GameCloud.rooms()` - null without a
+  project. The match itself goes device to device (`net/`), never through
+  Firestore.
 - Only `firebase-connection.ts` imports Firebase at runtime, and only
   `provide-game-cloud.ts` imports that file; the rest takes types only, so
   the specs never load the SDK.
@@ -99,3 +103,14 @@ storage until then. Settings stay with the device either way.
   Firestore emulator needs a JVM; the Nx agents install one
   (`.nx/workflows/agents.yml`). `e2e/cloud-save.spec.ts` covers the cloud:
   each test signs in to accounts of its own (`uniqueEmail`).
+
+## Online matches: keep the engine deterministic
+
+Online matches run in lockstep (`net/lockstep.ts`, ADR 0009): both devices
+play the same `MatchEngine` from the same seed and the same inputs. Anything
+that changes what a tick does from those - a `Math.random`, the wall clock,
+a frame delta, a value only one device has - desyncs every online match, as
+it breaks replays. Inputs reach the engine only on the input grid
+(`onGrid`, `STEER_STEPS`, `DRAG_STEPS`), and `NET_VERSION` follows
+`BALANCE_VERSION`, so two devices with different balance tables refuse to
+play each other.
