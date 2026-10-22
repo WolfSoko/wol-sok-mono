@@ -32,13 +32,17 @@ export interface GameRooms {
 const CODE_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 export const CODE_LENGTH = 6;
 
-/** A fresh room code, "K7QPXM". */
-export function roomCode(random: () => number = secureRandom): string {
-  let code = '';
-  for (let i = 0; i < CODE_LENGTH; i++) {
-    code += CODE_LETTERS[Math.floor(random() * CODE_LETTERS.length)];
-  }
-  return code;
+/**
+ * A fresh room code, "K7QPXM", a letter per random byte: 256 is a multiple
+ * of the 32 letters, so each one is as likely as any other.
+ */
+export function roomCode(
+  bytes: Uint8Array = crypto.getRandomValues(new Uint8Array(CODE_LENGTH))
+): string {
+  return Array.from(
+    bytes.subarray(0, CODE_LENGTH),
+    (byte) => CODE_LETTERS[byte % CODE_LETTERS.length]
+  ).join('');
 }
 
 /**
@@ -50,8 +54,4 @@ export function normalizeRoomCode(typed: string): string | null {
   return new RegExp(`^[${CODE_LETTERS}]{${CODE_LENGTH}}$`).test(code)
     ? code
     : null;
-}
-
-function secureRandom(): number {
-  return crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32;
 }
