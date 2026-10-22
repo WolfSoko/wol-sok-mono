@@ -100,6 +100,28 @@ npx nx run bacteria-wars-android:store-assets     # in another
 The matches are live, so every run draws slightly different screenshots:
 commit the ones worth showing.
 
+### Promo video
+
+`store/promo-video/` holds the promo video, as `bacteria-wars-promo-<lang>-<format>.mp4`
+(English and German 16:9, English 9:16), and `videos.json` with each one's
+YouTube title, description, tags and privacy, and the Play listing it belongs
+to. The deploy uploads every video whose file is not on the YouTube channel
+yet (see `tools/youtube/README.md`) and sets it as the promo video of its
+listing. Without the YouTube secrets it leaves the videos alone.
+
+The videos come from the running game, like the graphics:
+
+```bash
+npx nx serve bacteria-game-remote                 # in one terminal
+npx nx run bacteria-wars-android:promo-video     # in another
+```
+
+`tools/bacteria-game/promo-video/make.ts` plays four clips, records them with
+Chrome's screencast, lays them into the scenes of `scenes.html` with the
+captions of `copy.json` along `timeline.json`, and adds a synthesised
+soundtrack. It needs an ffmpeg with libx264 (`FFMPEG`, the PATH, or
+`uvx --from imageio-ffmpeg`).
+
 Set the repository variable `PLAY_RELEASE_STATUS` to `draft` while the app's
 Play setup is incomplete: Play then accepts the bundles but holds them back
 instead of rolling them out.
