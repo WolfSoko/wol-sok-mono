@@ -25,7 +25,7 @@ import { escapeReach } from '../state/arena-size';
 import { getMap } from '../state/game-maps';
 import { NutrientPellets } from '../state/nutrient-pellets';
 import { createBacteriaBlob, isBoosted, Player } from '../state/player.model';
-import { ColonySummary, Simulation } from '../state/simulation';
+import { BlockCounts, ColonySummary, Simulation } from '../state/simulation';
 import {
   bindTexture,
   createProgram,
@@ -343,6 +343,20 @@ export class GpuSimulation implements Simulation {
 
   public summaries(): readonly ColonySummary[] {
     return this.colonySummaries;
+  }
+
+  /** The block counts of the last report read back - a frame late. */
+  public blockCounts(): BlockCounts | null {
+    if (this.report == null) {
+      return null;
+    }
+    const { blocksX, blocksY, cellSize } = this.layout;
+    return {
+      blocksX,
+      blocksY,
+      cellSize,
+      counts: this.report.blockCounts.slice(0, this.spawns.length),
+    };
   }
 
   public nearestEnemy(playerId: number, from: Point): Point | null {

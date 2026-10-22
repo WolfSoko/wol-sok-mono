@@ -86,6 +86,7 @@ import {
   simScale,
 } from './state/arena-size';
 import { Camera } from './arena/camera';
+import { MinimapPainter } from './arena/minimap';
 import { GameHapticsService } from './haptics.service';
 import { GameSoundService, Soundtrack } from './sound/game-sound.service';
 import { MatchResult } from './state/match-engine';
@@ -117,7 +118,7 @@ import {
   levelSize,
   nextLevel,
 } from './state/levels';
-import { Rect } from './state/maps';
+import { DynamicWall, Rect } from './state/maps';
 import { harvestTarget, holdTarget } from './state/win-conditions';
 import { mapZones, Zone } from './state/zones';
 import { MedalTier } from './state/medallions';
@@ -137,6 +138,9 @@ const SNAP_LEVEL = 0.8;
 
 /** The last seconds of a timed level, when its clock turns red. */
 const RUNNING_OUT_SEC = 10;
+
+/** How often the minimap takes in where the colonies are. */
+const MINIMAP_UPDATE_MS = 100;
 
 /** A goal the HUD counts each colony up towards. */
 interface HudGoal {
@@ -197,6 +201,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   private readonly canvasRef =
     viewChild<ElementRef<HTMLCanvasElement>>('canvasElement');
+  private readonly minimapRef =
+    viewChild<ElementRef<HTMLCanvasElement>>('minimapElement');
   @ViewChild('arenaStage', { static: true })
   private stageRef!: ElementRef<HTMLElement>;
   @ViewChild(WsThanosDirective, { static: true })
@@ -209,6 +215,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private cameraMovedAt: number | null = null;
   /** What of the arena the last frame showed. */
   private lastView: Rect | null = null;
+  /** The whole map in a corner, while the camera shows part of it. */
+  private minimap: MinimapPainter | null = null;
+  /** When the minimap last took in where the colonies are. */
+  private minimapUpdatedAt = Number.NEGATIVE_INFINITY;
   /** Lay the next frame's floor down fully instead of fading into a trail. */
   private clearNextFrame = true;
 
@@ -221,6 +231,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   );
   /** How many times the base arena the level's map is along each side. */
   protected readonly mapSize = computed(() => levelSize(this.store.level()));
+  /**
+   * True while the camera shows part of a big map: in a match of one human -
+   * with two, it shows the whole map.
+   */
+  protected readonly showMinimap = computed(
+    () => this.mapSize() > 1 && this.running() && this.humans().length === 1
+  );
   /**
    * One key per pair of resolutions: the canvas is rendered for the key, so
    * either resolution changing hands the painter a fresh canvas and context.
@@ -531,6 +548,22 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.settings.look();
       this.reducedMotion();
       this.draw();
+    });
+
+    // The minimap is drawn afresh for another map, and goes with the match.
+    effect(() => {
+      const canvas = this.minimapRef()?.nativeElement;
+      const cx = canvas?.getContext('2d');
+      const { width, height } = this.arena();
+      const theme = this.theme();
+      const walls = this.walls();
+      untracked(() => {
+        this.minimap =
+          cx == null ? null : new MinimapPainter(cx, width, height);
+        this.minimap?.setMap(theme, walls);
+        this.minimapUpdatedAt = Number.NEGATIVE_INFINITY;
+        this.draw();
+      });
     });
 
     // A fresh canvas - the first one, or one for another resolution - gets a
@@ -1032,6 +1065,30 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     );
     this.clearNextFrame = false;
     this.painter?.paint(frame);
+    this.paintMinimap(view, frame.dynamicWalls);
+  }
+
+  /**
+   * Draws the minimap: the camera's frame on every frame, where the
+   * colonies are ten times a second - enough to follow a fight.
+   */
+  private paintMinimap(view: Rect, dynamicWalls: readonly DynamicWall[]): void {
+    if (this.minimap == null) {
+      return;
+    }
+    const now = performance.now();
+    if (now - this.minimapUpdatedAt >= MINIMAP_UPDATE_MS) {
+      const simulation = this.playerService.getSimulation();
+      const blocks = simulation.blockCounts();
+      if (blocks != null) {
+        this.minimap.update(
+          blocks,
+          simulation.summaries().map((colony) => colony.color)
+        );
+        this.minimapUpdatedAt = now;
+      }
+    }
+    this.minimap.paint(view, dynamicWalls);
   }
 
   /**

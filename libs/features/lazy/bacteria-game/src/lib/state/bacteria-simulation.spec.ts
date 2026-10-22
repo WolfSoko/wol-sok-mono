@@ -791,3 +791,25 @@ describe('zones', () => {
     expect(heatedAggression(0.98)).toBe(0.98);
   });
 });
+
+describe('BacteriaSimulation block counts', () => {
+  it('counts each colony into blocks as big as the GPU report', () => {
+    const { simulation } = setup([
+      [bacterium(1, 1), bacterium(7, 7), bacterium(8, 0)],
+      [bacterium(WIDTH - 1, HEIGHT - 1)],
+    ]);
+
+    const blocks = simulation.blockCounts();
+
+    const size = gameBalance.influenceCellSize;
+    expect(blocks).toMatchObject({
+      blocksX: Math.ceil(WIDTH / size),
+      blocksY: Math.ceil(HEIGHT / size),
+      cellSize: size,
+    });
+    expect(blocks.counts[0][0]).toBe(2);
+    expect(blocks.counts[0][1]).toBe(1);
+    expect(blocks.counts[1][blocks.blocksX * blocks.blocksY - 1]).toBe(1);
+    expect(blocks.counts[1].reduce((sum, n) => sum + n, 0)).toBe(1);
+  });
+});
