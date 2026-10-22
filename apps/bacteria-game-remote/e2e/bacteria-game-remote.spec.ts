@@ -8,7 +8,7 @@ test('should open on the main menu with the game and its controls', async ({
   await po.goto();
 
   await expect(po.stage).toBeVisible();
-  await expect(po.menuTitle).toHaveText('Bacteria War');
+  await expect(po.menuTitle).toHaveText('Bacteria Wars');
   await expect(po.playArea).toBeVisible();
   await expect(po.playCta).toBeVisible();
   await expect(po.profileCta).toBeVisible();
@@ -24,7 +24,7 @@ test('should return to the page on request', async ({ page }) => {
   await po.leaveFullscreenCta.click();
 
   await expect(po.stage).toHaveCount(0);
-  await expect(po.mainTitle).toContainText('Bacteria War Game');
+  await expect(po.mainTitle).toContainText('Bacteria Wars');
   await expect(po.intro).toBeVisible();
   await expect(po.fullscreenCta).toBeVisible();
 

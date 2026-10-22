@@ -1,4 +1,4 @@
-# Bacteria War for Android
+# Bacteria Wars for Android
 
 The Android app of the bacteria game. It is a
 [Trusted Web Activity](https://developer.chrome.com/docs/android/trusted-web-activity)
