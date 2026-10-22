@@ -28,7 +28,7 @@ import {
   isMatchOn,
   OnlineSeat,
 } from './game.states';
-import { getLevel, gridScale, levelBalance, levelSize } from './levels';
+import { getLevel, gridScale, levelBalance, levelSize, LEVELS } from './levels';
 import { colonyCapacity } from './game-balance';
 import { MatchEarnings } from './earnings';
 import {
@@ -147,11 +147,13 @@ export class GameStateService {
       const outcome = this.playerService.outcome();
       if (outcome != null) {
         this.endMatch(outcome);
-      } else if (this.playerService.desynced) {
-        this.endMatch({ winner: null, reason: 'desync' });
       }
     }
-    this.noteStall(ticks > 0 && played === 0);
+    // Checked here too: a device that waits on the other one plays no tick.
+    if (this.isRunning() && this.playerService.desynced) {
+      this.endMatch({ winner: null, reason: 'desync' });
+    }
+    this.noteStall(this.isRunning() && ticks > 0 && played === 0);
     this.playerService.endFrame();
   }
 
@@ -168,6 +170,10 @@ export class GameStateService {
   private onOnline(event: OnlineEvent): void {
     switch (event.type) {
       case 'connected': {
+        // A big map is too much for the CPU both devices run.
+        if (levelSize(getLevel(this.gameStateStore.snapshot().levelId)) > 1) {
+          this.setLevel(LEVELS[0].id);
+        }
         const { levelId, colors } = this.gameStateStore.snapshot();
         this.gameStateStore.update({
           online: { seat: event.seat, levelId, colors },

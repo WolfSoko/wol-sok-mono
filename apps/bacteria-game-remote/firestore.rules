@@ -29,7 +29,6 @@ service cloud.firestore {
         request.resource.data.expireAt < request.time + duration.value(2, 'h');
       allow update: if request.auth != null &&
         !('answer' in resource.data) &&
-        request.auth.uid != resource.data.host &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['guest', 'answer']) &&
         request.resource.data.guest == request.auth.uid &&
         isDescription(request.resource.data.answer);

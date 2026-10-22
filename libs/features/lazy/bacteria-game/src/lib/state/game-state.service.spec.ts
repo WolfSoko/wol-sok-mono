@@ -4,7 +4,7 @@ import { dailyLevelId } from './daily';
 import { TICK_MS } from './fixed-tick';
 import { GameStateService } from './game-state.service';
 import { GameState, GameStateStore } from './game.states';
-import { getLevel, levelCrosshairSpeed } from './levels';
+import { getLevel, LEVELS, levelCrosshairSpeed } from './levels';
 import { PlayerStore } from './player.store';
 import { ANNIHILATION, judgeOutcome } from './win-conditions';
 import { PlayerService } from './player.service';
@@ -802,6 +802,30 @@ describe('GameStateService online', () => {
     expect(state.winner?.id).toBe(1);
     expect(state.earnings).toBeNull();
     expect(state.online).toBeNull();
+  });
+
+  it('takes no big map online', () => {
+    service.setLevel('expanse');
+
+    online.connect(0);
+
+    expect(store.snapshot().online?.levelId).toBe(LEVELS[0].id);
+  });
+
+  it('ends a match out of step even while it waits for the other device', () => {
+    online.connect(0);
+    service.start();
+    for (let frame = 0; frame < INPUT_DELAY_TICKS + 2; frame++) {
+      service.advance(320, 180, 1);
+    }
+    const lockstep = online.startMatch.mock.results[0].value as Lockstep;
+
+    lockstep.putRemoteSum(60, 1);
+    lockstep.ticked(60, playerStore.entities());
+    service.advance(320, 180, 1);
+
+    expect(store.snapshot().endedBy).toBe('desync');
+    expect(store.snapshot().winner).toBeNull();
   });
 
   it('starts nothing as the guest until the host started', () => {

@@ -385,7 +385,11 @@
   </mat-card-content>
   @if (!fullscreen()) {
     <mat-card-actions>
-      <button mat-raised-button (click)="startGame()" [disabled]="running()">
+      <button
+        mat-raised-button
+        (click)="startGame()"
+        [disabled]="running() || onlineSeat() === 1"
+      >
         Start
       </button>
       <button mat-raised-button (click)="togglePause()" [disabled]="!running()">

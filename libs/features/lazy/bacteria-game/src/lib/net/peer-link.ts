@@ -84,8 +84,13 @@ export class PeerLink {
       new RTCPeerConnection({ iceServers: ICE_SERVERS })
     );
     const { connection } = link;
-    await connection.setLocalDescription(await connection.createOffer());
-    return { link, offer: await link.description() };
+    try {
+      await connection.setLocalDescription(await connection.createOffer());
+      return { link, offer: await link.description() };
+    } catch (error) {
+      link.close();
+      throw error;
+    }
   }
 
   /** A link for the guest, answering the host's offer. */

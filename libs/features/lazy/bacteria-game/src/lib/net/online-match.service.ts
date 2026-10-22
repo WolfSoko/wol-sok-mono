@@ -12,6 +12,7 @@ import {
   parseNetMessage,
 } from './net-message';
 import { PeerLink } from './peer-link';
+import { errorCode } from '../storage/retry';
 
 /** Where the lobby of an online match stands. */
 export type OnlinePhase =
@@ -155,6 +156,11 @@ export class OnlineMatchService {
       await room.answer(answer);
       await link.opened;
     } catch (error) {
+      if (errorCode(error) === 'permission-denied') {
+        // Another guest answered the room first.
+        this.endWith(attempt, 'Someone else joined that match first.');
+        return;
+      }
       this.fail(attempt, error);
     }
   }

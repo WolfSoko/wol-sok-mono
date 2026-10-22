@@ -50,6 +50,11 @@ export class FirestoreGameRooms implements GameRooms {
         stop = dbSdk.onSnapshot(
           ref,
           (snapshot) => {
+            if (!snapshot.exists()) {
+              stop();
+              reject(new Error('The room is gone.'));
+              return;
+            }
             const value: unknown = snapshot.get('answer');
             if (typeof value === 'string') {
               stop();

@@ -798,7 +798,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (this.resetting() || this.matchOver()) {
       this.onlineStartPending = true;
       if (!this.resetting()) {
-        this.resetGame();
+        // Not resetGame: that gives the online match up.
+        this.resetGame$().pipe(untilDestroyed(this)).subscribe();
       }
       return;
     }
@@ -985,7 +986,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected quitToMenu(): void {
     this.screen.set('menu');
     this.gameStateService.endSeries();
-    this.gameStateService.leaveOnline();
     this.resetGame();
   }
 
@@ -1077,8 +1077,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     return this.thanos.vaporize(false).pipe(take(1));
   }
 
-  /** Pauses, vaporizes the canvas and returns to the start screen. */
+  /**
+   * Pauses, vaporizes the canvas and returns to the start screen - giving
+   * an online match up, which the other device then wins.
+   */
   resetGame() {
+    this.gameStateService.leaveOnline();
     this.resetGame$().pipe(untilDestroyed(this)).subscribe();
   }
 
