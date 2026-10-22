@@ -71,10 +71,10 @@ describe('AccountComponent', () => {
     },
     // Zoneless CD normally flushes this click's signal writes on a microtask,
     // but once the scheduler's brief post-tick microtask window has closed it
-    // falls back to a requestAnimationFrame-raced callback (see
-    // ChangeDetectionSchedulerImpl#switchToMicrotaskScheduler in
-    // @angular/core/testing); under a loaded CI runner that can occasionally
-    // outlast the 5s default test timeout even though the app settles fine.
+    // falls back to a requestAnimationFrame-raced callback in Angular's
+    // internal zoneless change-detection scheduler (@angular/core); under a
+    // loaded CI runner that can occasionally outlast the 5s default test
+    // timeout even though the app settles fine.
     10000
   );
 
