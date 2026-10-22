@@ -6,7 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { map, switchMap } from 'rxjs';
 import { BotDifficulty } from './state/bot-controller';
 import { ladderLocks, newlyUnlocked } from './state/campaign';
 import { getLevel, isLadderLevel, LEVELS } from './state/levels';
@@ -24,6 +24,7 @@ import {
 } from './state/daily';
 import {
   addCouchWin,
+  adoptProgress,
   addDailyAttempt,
   addEndlessRun,
   addMedal,
@@ -36,6 +37,7 @@ import {
   Progress,
   totalsOf,
 } from './state/progress';
+import { GameAccount, PlayerSwitch } from './storage/game-account';
 import { GameStorage } from './storage/game-storage';
 
 export const PROGRESS_STORAGE_KEY = 'bacteria-game.progress';
@@ -72,10 +74,14 @@ export interface DailyOffer {
  * replaced, and a match's numbers are added to the stored totals: whatever
  * another tab or device stores, and whenever the storage answers, nothing
  * is lost.
+ *
+ * The progress is the player's: when another player takes over - a sign-in
+ * or a sign-out - it starts over from theirs.
  */
 @Injectable({ providedIn: 'root' })
 export class ProgressService {
   private readonly storage = inject(GameStorage);
+  private readonly account = inject(GameAccount);
   private readonly progress = signal(EMPTY_PROGRESS);
   /** True once the storage has answered - before, nothing is known yet. */
   public readonly loaded = signal(false);
@@ -83,9 +89,17 @@ export class ProgressService {
   constructor() {
     const clock = setInterval(() => this.today.set(utcDay(new Date())), 60_000);
     inject(DestroyRef).onDestroy(() => clearInterval(clock));
-    this.storage
-      .watch(PROGRESS_STORAGE_KEY)
-      .pipe(map(parseProgress), takeUntilDestroyed())
+    this.account.players
+      .pipe(
+        switchMap((player, index) => {
+          if (index > 0) {
+            this.switchTo(player);
+          }
+          return this.storage.watch(PROGRESS_STORAGE_KEY);
+        }),
+        map(parseProgress),
+        takeUntilDestroyed()
+      )
       .subscribe((stored) => {
         // What the stored progress earns on its own - a medallion won before
         // the achievement existed, say - is earned now, quietly, rather
@@ -101,6 +115,24 @@ export class ProgressService {
           this.store(progress, (stored) => stored);
         }
       });
+  }
+
+  /**
+   * Starts over for the next player, from what the storage tells of them -
+   * nothing of the player before carries over, unless they played here as
+   * a guest and signed in: then the guest's progress joins the account's,
+   * once.
+   */
+  private switchTo({ adoptsGuest }: PlayerSwitch): void {
+    const guest = this.progress();
+    this.loaded.set(false);
+    if (!adoptsGuest) {
+      this.progress.set(EMPTY_PROGRESS);
+      return;
+    }
+    this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
+      adoptProgress(parseProgress(stored), guest)
+    );
   }
 
   /** Every medallion held, by level id, then by difficulty. */

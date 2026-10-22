@@ -232,6 +232,26 @@ export function mergeProgress(progress: Progress, other: Progress): Progress {
   return merged;
 }
 
+/**
+ * An account's progress with what a guest played joined in, for a guest who
+ * signs in to an account that has played elsewhere: the guest's counts - the
+ * totals, each colour's wins - are added, and the rest merges. Applied once,
+ * as the counts would count twice.
+ */
+export function adoptProgress(progress: Progress, guest: Progress): Progress {
+  let adopted = addTotals(progress, guest.totals);
+  for (const [colorId, wins] of Object.entries(guest.couchWins)) {
+    adopted = {
+      ...adopted,
+      couchWins: {
+        ...adopted.couchWins,
+        [colorId]: (adopted.couchWins[colorId] ?? 0) + (wins ?? 0),
+      },
+    };
+  }
+  return mergeProgress(adopted, { ...guest, totals: NO_TOTALS, couchWins: {} });
+}
+
 /** Of two daily records the later one, or the one with more attempts. */
 function laterDaily(
   held: DailyRecord | null,

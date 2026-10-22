@@ -1,4 +1,5 @@
 import {
+  adoptProgress,
   addCouchWin,
   addMedal,
   addTotals,
@@ -102,6 +103,31 @@ describe('mergeProgress', () => {
     expect(mergeProgress(here, EMPTY_PROGRESS)).toBe(here);
     expect(mergeProgress(here, here)).toBe(here);
     expect(mergeProgress(EMPTY_PROGRESS, here)).toEqual(here);
+  });
+});
+
+describe('adoptProgress', () => {
+  it("adds the guest's counts and merges the rest", () => {
+    const account = parseProgress({
+      medals: { hourglass: { hard: 'silver' } },
+      totals: { matches: 10, wins: 4 },
+      couchWins: { orange: 3 },
+      endlessBest: 2,
+    });
+    const guest = parseProgress({
+      medals: { hourglass: { hard: 'gold' }, corridors: { easy: 'bronze' } },
+      totals: { matches: 2, wins: 1 },
+      couchWins: { orange: 1, blue: 2 },
+      endlessBest: 5,
+    });
+
+    expect(adoptProgress(account, guest)).toEqual({
+      ...EMPTY_PROGRESS,
+      medals: { hourglass: { hard: 'gold' }, corridors: { easy: 'bronze' } },
+      totals: { ...NO_TOTALS, matches: 12, wins: 5 },
+      couchWins: { orange: 4, blue: 2 },
+      endlessBest: 5,
+    });
   });
 });
 

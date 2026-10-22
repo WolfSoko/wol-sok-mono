@@ -12,7 +12,8 @@
     "@angular/router": "22.2.3",
     "@ngrx/signals": "22.0.1",
     "@wolsok/utils-measure-fps": "0.0.1",
-    "@angular/cdk": "22.2.3"
+    "@angular/cdk": "22.2.3",
+    "firebase": "11.10.0"
   },
   "devDependencies": {
     "tslib": "2.5.2"

@@ -4,12 +4,6 @@
   @include screen.screen;
 }
 
-.kept {
-  margin-left: auto;
-  font-size: 0.9rem;
-  color: var(--bw-muted);
-}
-
 .body {
   flex: 1 1 auto;
   display: flex;

@@ -10,7 +10,7 @@ import {
 import { GameStateService } from './state/game-state.service';
 import { GameStateStore } from './state/game.states';
 import { LEVELS } from './state/levels';
-import { GameStorage } from './storage/game-storage';
+import { DeviceStorage } from './storage/game-storage';
 import { LateGameStorage } from '../testing/late-game-storage';
 
 describe('GameSettingsService', () => {
@@ -294,7 +294,7 @@ describe('GameSettingsService', () => {
     function createWith(stored: StoredSettings): GameSettingsService {
       storage = new LateGameStorage({ [SETTINGS_STORAGE_KEY]: stored });
       TestBed.configureTestingModule({
-        providers: [{ provide: GameStorage, useValue: storage }],
+        providers: [{ provide: DeviceStorage, useValue: storage }],
       });
       return TestBed.inject(GameSettingsService);
     }
