@@ -68,8 +68,13 @@ storage until then. Settings stay with the device either way.
   (`adoptProgress`). Any other switch (signing out starts a new guest) resets
   the service to the next player's progress. A service that keeps the
   player's data has to do the same: listen to `players` and start over.
-- `playerIds` hears of a switch before `players`, so a service that stores
-  right as it hears of a switch stores for the next player.
+- `playerIds` follows `players` from the same replaying subject, which keeps
+  a switch before it tells anyone: a service that stores right as it hears of
+  a switch stores for the next player. Between a sign-out and the next guest
+  the player is null; the storage holds back what is stored meanwhile for
+  that guest.
+- The first cloud player adopts the progress this device kept in local
+  storage before the cloud (`moveDeviceProgress`), once.
 - Specs for a service that stores data also run it against `LateGameStorage`
   (`src/testing/`, kept out of the lib build), an asynchronous fake, so a
   service that depends on local storage answering synchronously fails a test.

@@ -15,3 +15,9 @@ export function beforeRetry(attempt: number): Promise<void> {
   const delay = Math.min(1000 * 2 ** attempt, MAX_DELAY_MS);
   return new Promise((resolve) => setTimeout(resolve, delay));
 }
+
+/** The code of a Firebase error, "" for anything else. */
+export function errorCode(error: unknown): string {
+  const code = (error as { code?: unknown } | null)?.code;
+  return typeof code === 'string' ? code : '';
+}

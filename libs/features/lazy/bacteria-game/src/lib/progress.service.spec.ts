@@ -1,4 +1,5 @@
 import { aMatchRecord } from '../testing/match-record';
+import { Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { PROGRESS_STORAGE_KEY, ProgressService } from './progress.service';
 import { dailyLevelId } from './state/daily';
@@ -483,13 +484,17 @@ describe('ProgressService', () => {
   describe('when another player takes over', () => {
     let account: FakeGameAccount;
 
-    function createFor(stored: Record<string, unknown> = {}): ProgressService {
+    function createFor(
+      stored: Record<string, unknown> = {},
+      providers: Provider[] = []
+    ): ProgressService {
       account = new FakeGameAccount('guest');
-      account.storageOf('guest', stored);
+      account.seed('guest', stored);
       TestBed.configureTestingModule({
         providers: [
           { provide: GameAccount, useValue: account },
           { provide: GameStorage, useValue: account.storage },
+          ...providers,
         ],
       });
       return create();
@@ -499,7 +504,7 @@ describe('ProgressService', () => {
       const progress = createFor();
       progress.recordMatch(GOLD_WIN);
       account.flush();
-      account.storageOf('ada', {
+      account.seed('ada', {
         [PROGRESS_STORAGE_KEY]: { medals: { corridors: { easy: 'silver' } } },
       });
 
@@ -538,15 +543,9 @@ describe('ProgressService', () => {
           totals: { matches: 3 },
         },
       });
-      account = new FakeGameAccount('guest');
-      TestBed.configureTestingModule({
-        providers: [
-          { provide: GameAccount, useValue: account },
-          { provide: GameStorage, useValue: account.storage },
-          { provide: DeviceStorage, useValue: device },
-        ],
-      });
-      const progress = create();
+      const progress = createFor({}, [
+        { provide: DeviceStorage, useValue: device },
+      ]);
 
       device.flush();
       account.flush();
@@ -565,7 +564,7 @@ describe('ProgressService', () => {
       });
       progress.recordMatch(GOLD_WIN);
       account.flush();
-      account.storageOf('ada', {
+      account.seed('ada', {
         [PROGRESS_STORAGE_KEY]: {
           medals: { corridors: { easy: 'silver' } },
           totals: { matches: 10, wins: 4 },

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { filter, fromEvent, map, Observable, startWith } from 'rxjs';
 import type { GameStorage } from './game-storage';
+import { parseStoredJson } from './stored-json';
 
 /**
  * The game's storage in the browser's local storage, one JSON value per key.
@@ -53,9 +54,9 @@ const LOCK_PREFIX = 'bacteria-game-storage:';
 /** The JSON stored under a key, null when there is none or it is unreadable. */
 function readStoredJson(key: string): unknown {
   try {
-    const raw = localStorage.getItem(key);
-    return raw == null ? null : JSON.parse(raw);
+    return parseStoredJson(localStorage.getItem(key));
   } catch {
+    // Storage refused.
     return null;
   }
 }

@@ -12,7 +12,10 @@ describe('AccountComponent', () => {
     account = new FakeGameAccount();
   });
 
-  async function render(provided: GameAccount | null = account) {
+  async function render(
+    provided: GameAccount | null = account,
+    { loaded = true } = {}
+  ) {
     TestBed.configureTestingModule({
       providers:
         provided === null
@@ -23,7 +26,9 @@ describe('AccountComponent', () => {
             ],
     });
     const fixture = TestBed.createComponent(AccountComponent);
-    account.flush();
+    if (loaded) {
+      account.flush();
+    }
     await fixture.whenStable();
     return fixture;
   }
@@ -51,14 +56,7 @@ describe('AccountComponent', () => {
 
   it("offers the sign-in only once the guest's progress is here", async () => {
     account.profile.set({ guest: true, name: null });
-    TestBed.configureTestingModule({
-      providers: [
-        { provide: GameAccount, useValue: account },
-        { provide: GameStorage, useValue: account.storage },
-      ],
-    });
-    const fixture = TestBed.createComponent(AccountComponent);
-    await fixture.whenStable();
+    const fixture = await render(account, { loaded: false });
     const button = () => fixture.nativeElement.querySelector('button');
     expect(button().disabled).toBe(true);
 

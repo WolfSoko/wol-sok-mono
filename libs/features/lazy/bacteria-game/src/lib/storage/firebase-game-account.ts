@@ -1,8 +1,8 @@
 import { signal } from '@angular/core';
 import type { User, UserCredential } from 'firebase/auth';
-import { Observable, ReplaySubject } from 'rxjs';
+import { map, Observable, ReplaySubject } from 'rxjs';
 import type { FirebaseConnection } from './firebase-connection';
-import { beforeRetry } from './retry';
+import { beforeRetry, errorCode } from './retry';
 import type {
   GameAccount,
   PlayerProfile,
@@ -29,19 +29,18 @@ export class FirebaseGameAccount implements GameAccount {
   public readonly cloud = true;
   private readonly profileState = signal<PlayerProfile | null>(null);
   public readonly profile = this.profileState.asReadonly();
-  private readonly ids = new ReplaySubject<string | null>(1);
   private readonly switches = new ReplaySubject<PlayerSwitch>(1);
   private playerId: string | null = null;
   public readonly players: Observable<PlayerSwitch> =
     this.switches.asObservable();
   /**
-   * The uid of whoever plays, null between a sign-out and the next guest,
-   * again on every switch - told before `players`, so a service that hears
-   * of a switch and stores right away stores for the next player, not the
-   * one before.
+   * The uid of whoever plays, null between a sign-out and the next guest.
+   * A service that hears of a switch and stores right away stores for the
+   * next player: the subject keeps the switch before it tells anyone.
    */
-  public readonly playerIds: Observable<string | null> =
-    this.ids.asObservable();
+  public readonly playerIds: Observable<string | null> = this.players.pipe(
+    map(({ playerId }) => playerId)
+  );
   /** Set while this tab signs in to a Google account that played elsewhere. */
   private adoptingGuest = false;
 
@@ -55,7 +54,6 @@ export class FirebaseGameAccount implements GameAccount {
           const playerId = user?.uid ?? null;
           if (playerId !== this.playerId) {
             this.playerId = playerId;
-            this.ids.next(playerId);
             this.switches.next({ playerId, adoptsGuest: this.adoptingGuest });
           }
           this.adoptingGuest = false;
@@ -71,42 +69,45 @@ export class FirebaseGameAccount implements GameAccount {
   public async signIn(): Promise<SignInOutcome> {
     const { auth, authSdk } = await this.connection;
     const provider = new authSdk.GoogleAuthProvider();
+    const popups = authSdk.browserPopupRedirectResolver;
     const user = auth.currentUser;
+    let error: unknown;
     try {
       const credential: UserCredential = user?.isAnonymous
-        ? await authSdk.linkWithPopup(user, provider)
-        : await authSdk.signInWithPopup(auth, provider);
+        ? await authSdk.linkWithPopup(user, provider, popups)
+        : await authSdk.signInWithPopup(auth, provider, popups);
       // Linking keeps the user, so no auth state change tells the profile.
       this.profileState.set(profileOf(credential.user));
       return 'signed-in';
-    } catch (error) {
-      const code = (error as { code?: string }).code ?? '';
-      if (CANCELLED.has(code)) {
-        return 'cancelled';
-      }
-      const google =
-        code === 'auth/credential-already-in-use'
-          ? authSdk.GoogleAuthProvider.credentialFromError(
-              error as Parameters<
-                typeof authSdk.GoogleAuthProvider.credentialFromError
-              >[0]
-            )
-          : null;
-      if (google === null) {
-        console.error('Could not sign in with Google', error);
-        return 'failed';
-      }
-      // The Google account has played elsewhere: it takes over from the
-      // guest, and the guest's progress joins it.
-      this.adoptingGuest = true;
-      try {
-        await authSdk.signInWithCredential(auth, google);
-        return 'signed-in';
-      } catch (signInError) {
-        this.adoptingGuest = false;
-        console.error('Could not sign in with Google', signInError);
-        return 'failed';
-      }
+    } catch (linkError) {
+      error = linkError;
+    }
+    const code = errorCode(error);
+    if (CANCELLED.has(code)) {
+      return 'cancelled';
+    }
+    const google =
+      code === 'auth/credential-already-in-use'
+        ? authSdk.GoogleAuthProvider.credentialFromError(
+            error as Parameters<
+              typeof authSdk.GoogleAuthProvider.credentialFromError
+            >[0]
+          )
+        : null;
+    if (google === null) {
+      console.error('Could not sign in with Google', error);
+      return 'failed';
+    }
+    // The Google account has played elsewhere: it takes over from the
+    // guest, and the guest's progress joins it.
+    this.adoptingGuest = true;
+    try {
+      await authSdk.signInWithCredential(auth, google);
+      return 'signed-in';
+    } catch (signInError) {
+      this.adoptingGuest = false;
+      console.error('Could not sign in with Google', signInError);
+      return 'failed';
     }
   }
 
@@ -127,7 +128,7 @@ export class FirebaseGameAccount implements GameAccount {
       try {
         await authSdk.signInAnonymously(auth);
       } catch (error) {
-        if ((error as { code?: string }).code !== NETWORK_ERROR) {
+        if (errorCode(error) !== NETWORK_ERROR) {
           console.error('Could not sign in as a guest', error);
           return;
         }

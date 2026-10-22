@@ -30,18 +30,27 @@ export async function connectFirebase(
     import('firebase/firestore'),
   ]);
   const existing = appSdk.getApps().find((app) => app.name === APP_NAME);
-  const app = existing ?? appSdk.initializeApp(options.firebase, APP_NAME);
-  const auth = authSdk.getAuth(app);
-  const db =
-    existing === undefined
-      ? dbSdk.initializeFirestore(app, {
-          localCache: dbSdk.persistentLocalCache({
-            tabManager: dbSdk.persistentMultipleTabManager(),
-          }),
-        })
-      : dbSdk.getFirestore(app);
+  if (existing !== undefined) {
+    // Set up before - a module reloaded in development.
+    const auth = authSdk.getAuth(existing);
+    return { auth, authSdk, db: dbSdk.getFirestore(existing), dbSdk };
+  }
+  const app = appSdk.initializeApp(options.firebase, APP_NAME);
+  // The popup resolver joins at the sign-in (FirebaseGameAccount): set up
+  // here, it loads Google's sign-in frame on phones as the game starts.
+  const auth = authSdk.initializeAuth(app, {
+    persistence: [
+      authSdk.indexedDBLocalPersistence,
+      authSdk.browserLocalPersistence,
+    ],
+  });
+  const db = dbSdk.initializeFirestore(app, {
+    localCache: dbSdk.persistentLocalCache({
+      tabManager: dbSdk.persistentMultipleTabManager(),
+    }),
+  });
   const { emulators } = options;
-  if (emulators !== undefined && existing === undefined) {
+  if (emulators !== undefined) {
     authSdk.connectAuthEmulator(auth, emulators.authUrl, {
       disableWarnings: true,
     });

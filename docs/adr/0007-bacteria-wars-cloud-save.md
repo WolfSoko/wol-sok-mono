@@ -40,7 +40,9 @@ transactions, queued per key, retried once online.
 **Configured on the route.** `provideGameCloud(environment.gameCloud)` in the
 remote's entry route sets the root `GameCloud`, which `GameStorage` and
 `GameAccount` ask for their backend. With `gameCloud: null` the game stays on
-local storage, as before.
+local storage, as before. Providing the game's services on that route
+instead of in root would make the holder unnecessary, but moves about ten
+root services and their specs; not worth it for one configuration value.
 
 ## Consequences
 

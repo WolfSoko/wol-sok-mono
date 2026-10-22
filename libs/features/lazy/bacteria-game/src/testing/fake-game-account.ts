@@ -9,6 +9,9 @@ import type {
 import type { GameStorage } from '../lib/storage/game-storage';
 import { LateGameStorage } from './late-game-storage';
 
+/** Where what is stored while nobody plays lands in the fake. */
+const NOBODY = 'nobody';
+
 /**
  * An account for specs whose player switches on `switchTo`, with a
  * `LateGameStorage` per player behind `storage`, which answers for whoever
@@ -32,23 +35,27 @@ export class FakeGameAccount implements GameAccount {
   public readonly storage: GameStorage = {
     watch: (key) =>
       this.switches.pipe(
-        switchMap(({ playerId }) => this.storageOf(playerId).watch(key))
+        switchMap(({ playerId }) =>
+          this.storageOf(playerId ?? NOBODY).watch(key)
+        )
       ),
     write: (key, value) => this.current().write(key, value),
     update: (key, change) => this.current().update(key, change),
   };
 
-  /** The storage of a player, with what it holds from the start. */
-  public storageOf(
-    playerId: string,
-    stored?: Record<string, unknown>
-  ): LateGameStorage {
+  /** The storage of a player. */
+  public storageOf(playerId: string): LateGameStorage {
     let storage = this.storages.get(playerId);
-    if (storage === undefined || stored !== undefined) {
-      storage = new LateGameStorage(stored);
+    if (storage === undefined) {
+      storage = new LateGameStorage();
       this.storages.set(playerId, storage);
     }
     return storage;
+  }
+
+  /** Gives a player a new storage holding `stored`. */
+  public seed(playerId: string, stored: Record<string, unknown>): void {
+    this.storages.set(playerId, new LateGameStorage(stored));
   }
 
   public switchTo(playerId: string, adoptsGuest = false): void {
@@ -69,6 +76,6 @@ export class FakeGameAccount implements GameAccount {
   }
 
   private current(): LateGameStorage {
-    return this.storageOf(this.switches.value.playerId);
+    return this.storageOf(this.switches.value.playerId ?? NOBODY);
   }
 }

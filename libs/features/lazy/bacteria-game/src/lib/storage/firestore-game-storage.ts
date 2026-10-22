@@ -10,7 +10,8 @@ import {
 } from 'rxjs';
 import type { FirebaseConnection } from './firebase-connection';
 import type { GameStorage } from './game-storage';
-import { beforeRetry } from './retry';
+import { beforeRetry, errorCode } from './retry';
+import { parseStoredJson } from './stored-json';
 
 /**
  * Errors after which trying again cannot help: the rules refuse the write -
@@ -77,14 +78,14 @@ export class FirestoreGameStorage implements GameStorage {
         try {
           await dbSdk.runTransaction(db, async (transaction) => {
             const before = jsonOf(await transaction.get(ref));
-            const after = JSON.stringify(change(parseJson(before)));
+            const after = JSON.stringify(change(parseStoredJson(before)));
             if (after !== undefined && after !== before) {
               transaction.set(ref, stored(dbSdk, after));
             }
           });
           return;
         } catch (error) {
-          if (FINAL_ERRORS.has((error as { code?: string }).code ?? '')) {
+          if (FINAL_ERRORS.has(errorCode(error))) {
             console.error(`Could not store ${key}`, error);
             return;
           }
@@ -133,7 +134,7 @@ export class FirestoreGameStorage implements GameStorage {
         (snapshot) => {
           const json = jsonOf(snapshot);
           this.seen.set(ref.path, json);
-          subscriber.next(parseJson(json));
+          subscriber.next(parseStoredJson(json));
         },
         (error) => {
           console.error(`Could not read ${key}`, error);
@@ -161,13 +162,4 @@ function stored(dbSdk: FirebaseConnection['dbSdk'], json: string) {
 function jsonOf(snapshot: DocumentSnapshot): string | null {
   const json: unknown = snapshot.get('json');
   return typeof json === 'string' ? json : null;
-}
-
-/** The value of stored JSON, null when there is none or it is unreadable. */
-function parseJson(json: string | null): unknown {
-  try {
-    return json === null ? null : JSON.parse(json);
-  } catch {
-    return null;
-  }
 }

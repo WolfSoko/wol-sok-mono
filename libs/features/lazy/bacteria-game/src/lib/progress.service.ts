@@ -133,9 +133,7 @@ export class ProgressService {
       this.progress.set(EMPTY_PROGRESS);
       return;
     }
-    this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
-      adoptProgress(parseProgress(stored), guest)
-    );
+    this.adopt(guest);
   }
 
   /**
@@ -150,12 +148,16 @@ export class ProgressService {
         if (stored === null) {
           return;
         }
-        const kept = parseProgress(stored);
-        this.storage.update(PROGRESS_STORAGE_KEY, (account) =>
-          adoptProgress(parseProgress(account), kept)
-        );
+        this.adopt(parseProgress(stored));
         this.device.write(PROGRESS_STORAGE_KEY, null);
       });
+  }
+
+  /** Adds progress from elsewhere to the stored progress, once. */
+  private adopt(progress: Progress): void {
+    this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
+      adoptProgress(parseProgress(stored), progress)
+    );
   }
 
   /** Every medallion held, by level id, then by difficulty. */
