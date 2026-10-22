@@ -55,7 +55,7 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: bacteria-war-debug-apk
+          name: bacteria-wars-debug-apk
           path: apps/bacteria-wars-android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
