@@ -17,7 +17,7 @@ export interface GameCloudOptions {
    * `nx run bacteria-game-remote:firebase-emulators`.
    */
   emulators?: {
-    /** The Auth emulator, "http://127.0.0.1:9399". */
+    /** The Auth emulator, "http://localhost:9399". */
     authUrl: string;
     firestoreHost: string;
     firestorePort: number;

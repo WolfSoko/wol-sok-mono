@@ -16,7 +16,10 @@ export const environment: Environment = {
       projectId: 'demo-bacteria-wars',
     },
     emulators: {
-      authUrl: 'http://127.0.0.1:9399',
+      // On the game's own host: the Google popup hands the sign-in to the
+      // emulator's frame in the page, which Chromium's headless shell does
+      // not always load when it comes from another site (127.0.0.1).
+      authUrl: 'http://localhost:9399',
       firestoreHost: '127.0.0.1',
       firestorePort: 8380,
     },
