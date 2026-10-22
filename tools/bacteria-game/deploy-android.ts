@@ -2,7 +2,9 @@
  * Ships a release of the Bacteria Wars Android app: builds the signed APK and
  * app bundle, uploads the bundle to the internal testing track on Google Play
  * and attaches both to the GitHub release. Promoting a build to production
- * stays a step in the Play Console.
+ * stays a step in the Play Console. A second edit then brings the store listing in
+ * line with store/: the texts in store/listings/<language>/ and the graphics
+ * in store/graphics/ (see tools/bacteria-game/generate-store-assets.ts).
  *
  * Runs as `npx nx run bacteria-wars-android:deploy` in the deploy workflow,
  * whenever a release affects the app. It reads from the environment:
@@ -21,10 +23,11 @@
  * a failed deploy can simply run again.
  */
 import { execFileSync } from 'node:child_process';
-import { createSign } from 'node:crypto';
+import { createHash, createSign } from 'node:crypto';
 import {
   copyFileSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -34,11 +37,34 @@ import { join, resolve } from 'node:path';
 
 const appDir = resolve('apps/bacteria-wars-android');
 const outputsDir = join(appDir, 'app/build/outputs');
+const storeDir = join(appDir, 'store');
 const PLAY_API =
   'https://androidpublisher.googleapis.com/androidpublisher/v3/applications';
 const PLAY_UPLOAD_API =
   'https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications';
 const TRACK = 'internal';
+
+/** The store listing of one language, as the Play API takes it. */
+interface Listing {
+  language: string;
+  title: string;
+  shortDescription: string;
+  fullDescription: string;
+}
+
+/** Play's limits on the listing texts, in characters. */
+const LIMITS = { title: 30, shortDescription: 80, fullDescription: 4000 };
+
+/** A Play image type and the files that fill it, in order. */
+interface Images {
+  type: string;
+  files: string[];
+}
+
+type PlayCall = <T>(
+  url: string,
+  init?: Omit<RequestInit, 'headers'> & { headers?: Record<string, string> }
+) => Promise<T>;
 
 interface ServiceAccount {
   client_email: string;
@@ -64,6 +90,108 @@ function readJson<T>(path: string): T {
 function versionCode(version: string): number {
   const [major, minor, patch] = version.split('.').map(Number);
   return major * 1_000_000 + minor * 1_000 + patch;
+}
+
+/** The listing of each language in store/listings/<language>/. */
+function storeListings(): Listing[] {
+  const listingsDir = join(storeDir, 'listings');
+  const languages = readdirSync(listingsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+  return languages.map((language) => {
+    const text = (name: string) =>
+      readFileSync(join(listingsDir, language, name), 'utf8').trim();
+    const listing: Listing = {
+      language,
+      title: text('title.txt'),
+      shortDescription: text('short-description.txt'),
+      fullDescription: text('full-description.txt'),
+    };
+    for (const [field, limit] of Object.entries(LIMITS)) {
+      const length = listing[field as keyof typeof LIMITS].length;
+      if (length > limit) {
+        throw new Error(
+          `${language} ${field} has ${length} characters, Play takes ${limit}`
+        );
+      }
+    }
+    return listing;
+  });
+}
+
+/** The graphics in store/graphics/, by the Play image type they fill. */
+function storeImages(): Images[] {
+  const graphicsDir = join(storeDir, 'graphics');
+  const screenshots = readdirSync(graphicsDir)
+    .filter((name) => /^screenshot-\d+\.png$/.test(name))
+    .sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
+    .map((name) => join(graphicsDir, name));
+  return [
+    { type: 'icon', files: [join(graphicsDir, 'icon.png')] },
+    {
+      type: 'featureGraphic',
+      files: [join(graphicsDir, 'feature-graphic.png')],
+    },
+    // The landscape screenshots fit phones and tablets alike.
+    ...['phoneScreenshots', 'sevenInchScreenshots', 'tenInchScreenshots'].map(
+      (type) => ({ type, files: screenshots })
+    ),
+  ];
+}
+
+/**
+ * Brings the store listing on Play in line with store/: the texts of every
+ * language and, for each, the graphics. Only what differs is sent, so an
+ * unchanged listing goes to no review.
+ */
+async function updateListing(
+  call: PlayCall,
+  editUrl: string,
+  uploadUrl: string
+): Promise<void> {
+  const { listings: current = [] } = await call<{ listings?: Listing[] }>(
+    `${editUrl}/listings`
+  );
+  const images = storeImages();
+  for (const listing of storeListings()) {
+    const live = current.find((each) => each.language === listing.language);
+    const fields = Object.keys(LIMITS) as (keyof typeof LIMITS)[];
+    if (
+      live == null ||
+      fields.some((field) => live[field] !== listing[field])
+    ) {
+      // A patch keeps what store/ does not hold, such as a promo video.
+      await call(`${editUrl}/listings/${listing.language}`, {
+        method: 'PATCH',
+        body: JSON.stringify(listing),
+      });
+      console.log(`Updated the ${listing.language} listing texts.`);
+    }
+    for (const { type, files } of images) {
+      const imagesUrl = `/listings/${listing.language}/${type}`;
+      const { images: onPlay = [] } = await call<{
+        images?: { sha256: string }[];
+      }>(`${editUrl}${imagesUrl}`);
+      const wanted = files.map((file) =>
+        createHash('sha256').update(readFileSync(file)).digest('hex')
+      );
+      if (
+        onPlay.length === wanted.length &&
+        onPlay.every((image, index) => image.sha256 === wanted[index])
+      ) {
+        continue;
+      }
+      await call(`${editUrl}${imagesUrl}`, { method: 'DELETE' });
+      for (const file of files) {
+        await call(`${uploadUrl}${imagesUrl}?uploadType=media`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'image/png' },
+          body: readFileSync(file),
+        });
+      }
+      console.log(`Replaced the ${listing.language} ${type}.`);
+    }
+  }
 }
 
 /** Builds the signed release, with the key from the environment. */
@@ -131,7 +259,11 @@ async function accessToken(account: ServiceAccount): Promise<string> {
   return ((await response.json()) as { access_token: string }).access_token;
 }
 
-/** Uploads the bundle in one edit and rolls it out to the internal track. */
+/**
+ * Uploads the bundle and rolls it out to the internal track, then updates
+ * the store listing in an edit of its own: a listing Play turns down does
+ * not hold back the app, and a run again skips the bundle that is on Play.
+ */
 async function publishToPlay(
   packageName: string,
   bundle: string,
@@ -141,11 +273,9 @@ async function publishToPlay(
   const token = await accessToken(
     JSON.parse(env('PLAY_SERVICE_ACCOUNT_JSON')) as ServiceAccount
   );
-  const call = async <T>(
+  const call: PlayCall = async <T>(
     url: string,
-    init: Omit<RequestInit, 'headers'> & {
-      headers?: Record<string, string>;
-    } = {}
+    init: Parameters<PlayCall>[1] = {}
   ): Promise<T> => {
     const response = await fetch(url, {
       ...init,
@@ -160,7 +290,8 @@ async function publishToPlay(
         `Play ${init.method ?? 'GET'} ${url} failed: ${response.status} ${await response.text()}`
       );
     }
-    return (await response.json()) as T;
+    const text = await response.text();
+    return (text ? JSON.parse(text) : {}) as T;
   };
 
   const app = `${PLAY_API}/${packageName}`;
@@ -194,6 +325,16 @@ async function publishToPlay(
   });
   await call(`${editUrl}:commit`, { method: 'POST' });
   console.log(`Released ${releaseName} to the ${TRACK} track (${status}).`);
+
+  const listingEdit = await call<{ id: string }>(`${app}/edits`, {
+    method: 'POST',
+  });
+  await updateListing(
+    call,
+    `${app}/edits/${listingEdit.id}`,
+    `${PLAY_UPLOAD_API}/${packageName}/edits/${listingEdit.id}`
+  );
+  await call(`${app}/edits/${listingEdit.id}:commit`, { method: 'POST' });
 }
 
 async function main(): Promise<void> {
@@ -202,6 +343,8 @@ async function main(): Promise<void> {
   const [assetLink] = readJson<{ target: { package_name: string } }[]>(
     'apps/bacteria-game-remote/src/.well-known/assetlinks.json'
   );
+  // Bad listing texts fail here, before the build.
+  storeListings();
 
   build();
 

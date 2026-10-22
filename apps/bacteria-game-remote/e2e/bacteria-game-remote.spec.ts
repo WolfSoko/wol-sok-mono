@@ -8,7 +8,7 @@ test('should open on the main menu with the game and its controls', async ({
   await po.goto();
 
   await expect(po.stage).toBeVisible();
-  await expect(po.menuTitle).toHaveText('Bacteria War');
+  await expect(po.menuTitle).toHaveText('Bacteria Wars');
   await expect(po.playArea).toBeVisible();
   await expect(po.playCta).toBeVisible();
   await expect(po.profileCta).toBeVisible();
@@ -24,7 +24,7 @@ test('should return to the page on request', async ({ page }) => {
   await po.leaveFullscreenCta.click();
 
   await expect(po.stage).toHaveCount(0);
-  await expect(po.mainTitle).toContainText('Bacteria War Game');
+  await expect(po.mainTitle).toContainText('Bacteria Wars');
   await expect(po.intro).toBeVisible();
   await expect(po.fullscreenCta).toBeVisible();
 
@@ -308,4 +308,25 @@ test('should keep the colours still to earn locked, saying what opens them', asy
   await expect(page.locator('.locked-list')).toContainText(
     'Green - Earn First Blood'
   );
+});
+
+test('should show the privacy policy on a page of its own', async ({
+  page,
+}) => {
+  await page.goto('/privacy#en-delete');
+
+  await expect(page).toHaveTitle('Datenschutz - Bacteria War');
+  await expect(
+    page.getByRole('heading', { name: 'Datenschutzerklärung' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '8. Deleting your account and data' })
+  ).toBeInViewport();
+  await expect(page.locator('#bacteria-game-splash')).toHaveCount(0);
+
+  await page.getByRole('link', { name: /Back to the game/ }).click();
+
+  // The click lets the game ask for native fullscreen, which WebKit may
+  // refuse and so leave the game in the page: the arena is there either way.
+  await expect(new BacteriaGamePo(page).playArea).toBeVisible();
 });

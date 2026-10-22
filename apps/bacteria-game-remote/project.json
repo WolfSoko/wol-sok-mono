@@ -224,6 +224,7 @@
       "options": {
         "staticFilePath": "dist/apps/bacteria-game-remote",
         "port": 4202,
+        "spa": true,
         "watch": false
       },
       "configurations": {
@@ -258,6 +259,7 @@
       "options": {
         "staticFilePath": "dist/apps/bacteria-game-remote-e2e",
         "port": 4222,
+        "spa": true,
         "watch": false
       }
     }

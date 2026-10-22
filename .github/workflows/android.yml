@@ -1,6 +1,6 @@
 name: Android app
 
-# Builds the Bacteria War Android app (apps/bacteria-wars-android). The Nx
+# Builds the Bacteria Wars Android app (apps/bacteria-wars-android). The Nx
 # agents of the CI/CD workflow have no Android SDK, so it runs here.
 on:
   push:
