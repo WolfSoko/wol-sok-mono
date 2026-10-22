@@ -7,9 +7,7 @@ import {
 } from 'aws-cdk-lib/aws-route53';
 
 export interface FirebaseDomainProps {
-  /** The zone the domain lives in, "wolsok.de". */
-  zoneName: string;
-  /** The custom domain of the Firebase Hosting site. */
+  /** The custom domain of the Firebase Hosting site, in a zone of Route53. */
   domain: string;
   /** The Firebase Hosting site the domain points at. */
   site: string;
@@ -26,11 +24,12 @@ const FIREBASE_HOSTING_IP = '199.36.158.100';
  */
 export function addFirebaseDomain(
   stack: Stack,
-  { zoneName, domain, site }: FirebaseDomainProps
+  { domain, site }: FirebaseDomainProps
 ): void {
+  // The zone is the domain's last two labels, as SpaConstruct finds it.
   const zone = HostedZone.fromLookup(stack, 'FirebaseDomainZone', {
     privateZone: false,
-    domainName: zoneName,
+    domainName: domain.split('.').slice(-2).join('.'),
   });
   new ARecord(stack, 'FirebaseHostingRecord', {
     recordName: domain,

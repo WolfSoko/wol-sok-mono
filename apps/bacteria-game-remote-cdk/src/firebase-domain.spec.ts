@@ -14,7 +14,6 @@ describe('addFirebaseDomain', () => {
 
   const stack = spaStack();
   addFirebaseDomain(stack, {
-    zoneName: 'wolsok.de',
     domain: 'bacteria-wars.wolsok.de',
     site: 'bacteria-wars',
   });

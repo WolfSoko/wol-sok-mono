@@ -24,7 +24,7 @@
         ]
       },
       {
-        "source": "**/*.@(js|css|woff2|png|webp|svg|wasm)",
+        "source": "**/*.@(js|css)",
         "headers": [
           {
             "key": "Cache-Control",
@@ -34,15 +34,6 @@
       },
       {
         "source": "/@(ngsw-worker|safety-worker|worker-basic.min).js",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "/icons/**",
         "headers": [
           {
             "key": "Cache-Control",

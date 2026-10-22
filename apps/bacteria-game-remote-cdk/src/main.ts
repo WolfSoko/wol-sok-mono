@@ -36,7 +36,6 @@ const stack = new SpaStack(app, stackName, {
 // Its domain points there already; this domain keeps serving the game until
 // the new one is live, then turns into a redirect to it.
 addFirebaseDomain(stack, {
-  zoneName: 'wolsok.de',
   domain: 'bacteria-wars.wolsok.de',
   site: 'bacteria-wars',
 });
