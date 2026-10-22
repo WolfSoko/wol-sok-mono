@@ -10,14 +10,14 @@ describe('privacy policy', () => {
     // element, href of a <link>, url() and @import in the styles. Links a
     // reader follows (<a href>) are not fetched.
     const loads = [
-      ...page.matchAll(/\b(?:src|srcset)="([^"]*)"/g),
-      ...page.matchAll(/<link\b[^>]*\bhref="([^"]*)"/g),
-      ...page.matchAll(/url\(\s*['"]?([^'")]*)/g),
-      ...page.matchAll(/@import\s+['"]([^'"]*)/g),
+      ...page.matchAll(/\b(?:src|srcset)\s*=\s*["']?([^"'\s>]*)/gi),
+      ...page.matchAll(/<link\b[^>]*\bhref\s*=\s*["']?([^"'\s>]*)/gi),
+      ...page.matchAll(/url\(\s*['"]?([^'")]*)/gi),
+      ...page.matchAll(/@import\s+['"]([^'"]*)/gi),
     ].map(([, url]) => url);
     const external = loads.filter(
       (url) =>
-        /^(https?:)?\/\//.test(url) &&
+        /^(https?:)?\/\//i.test(url) &&
         !url.startsWith('https://bacteria-game.wolsok.de/')
     );
 
