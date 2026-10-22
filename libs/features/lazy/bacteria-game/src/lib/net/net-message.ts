@@ -2,6 +2,8 @@ import { validColorPair } from '../state/colony-colors';
 import { BALANCE_VERSION } from '../state/game-balance';
 import { isObject } from '../state/is-object';
 import { isLevelId } from '../state/levels';
+import { TICKS_PER_SEC } from '../state/fixed-tick';
+import { parseStoredJson } from '../storage/stored-json';
 
 /**
  * The version of what two devices say to each other - a new one for every
@@ -32,13 +34,6 @@ export interface OnlineStart extends OnlineSetup {
   seed: number;
 }
 
-/** What the lockstep of a match sends. */
-export type LockstepMessage =
-  /** A seat's input for tick `t`. */
-  | ({ k: 'in'; t: number } & TickInput)
-  /** The checksum of the match after tick `t` - see `matchChecksum`. */
-  | { k: 'sum'; t: number; h: number };
-
 /**
  * Everything that goes over the wire, told apart by `k`. The matches of a
  * connection are numbered (`n`), so what is left of one that was replaced
@@ -51,12 +46,17 @@ export type NetMessage =
   | ({ k: 'setup' } & OnlineSetup)
   /** The host starts a match. */
   | ({ k: 'start'; n: number } & OnlineStart)
-  | (LockstepMessage & { n: number })
+  /** A seat's input for tick `t`. */
+  | ({ k: 'in'; n: number; t: number } & TickInput)
+  /** The checksum of the match after tick `t` - see `matchChecksum`. */
+  | { k: 'sum'; n: number; t: number; h: number }
   /** The other side leaves. */
   | { k: 'bye' };
 
-/** The longest match a tick may belong to: an hour at 60 ticks a second. */
-const MAX_TICK = 60 * 60 * 60;
+/** The longest match a tick may belong to: an hour. */
+const MAX_TICK = 60 * 60 * TICKS_PER_SEC;
+/** The biggest seed or match number. */
+const MAX_UINT32 = 2 ** 32 - 1;
 
 /**
  * Reads what the other device sent - null for anything that is not a
@@ -64,12 +64,7 @@ const MAX_TICK = 60 * 60 * 60;
  * checked, and what reaches the match is on the input grid.
  */
 export function parseNetMessage(data: unknown): NetMessage | null {
-  let value: unknown;
-  try {
-    value = typeof data === 'string' ? JSON.parse(data) : null;
-  } catch {
-    return null;
-  }
+  const value = typeof data === 'string' ? parseStoredJson(data) : null;
   if (!isObject(value)) {
     return null;
   }
@@ -85,7 +80,9 @@ export function parseNetMessage(data: unknown): NetMessage | null {
     case 'start': {
       const setup = parseSetup(value);
       const { seed, n } = value;
-      return setup === null || !isUint32(seed) || !isUint32(n)
+      return setup === null ||
+        !isUpTo(seed, MAX_UINT32) ||
+        !isUpTo(n, MAX_UINT32)
         ? null
         : { k: 'start', n, ...setup, seed };
     }
@@ -96,8 +93,8 @@ export function parseNetMessage(data: unknown): NetMessage | null {
         value['drag'] === null ? null : parsePair(value['drag'], 1e5);
       const boost = value['boost'];
       if (
-        !isTick(t) ||
-        !isUint32(n) ||
+        !isUpTo(t, MAX_TICK) ||
+        !isUpTo(n, MAX_UINT32) ||
         steer === null ||
         (drag === null && value['drag'] !== null) ||
         typeof boost !== 'boolean'
@@ -108,7 +105,9 @@ export function parseNetMessage(data: unknown): NetMessage | null {
     }
     case 'sum': {
       const { t, h, n } = value;
-      return isTick(t) && isUint32(h) && isUint32(n)
+      return isUpTo(t, MAX_TICK) &&
+        isUpTo(h, MAX_UINT32) &&
+        isUpTo(n, MAX_UINT32)
         ? { k: 'sum', n, t, h }
         : null;
     }
@@ -138,18 +137,11 @@ function isWithin(value: unknown, limit: number): value is number {
   return typeof value === 'number' && Math.abs(value) <= limit;
 }
 
-function isTick(value: unknown): value is number {
+/** An integer from 0 to `max`. */
+function isUpTo(value: unknown, max: number): value is number {
   return (
     Number.isInteger(value) &&
     (value as number) >= 0 &&
-    (value as number) <= MAX_TICK
-  );
-}
-
-function isUint32(value: unknown): value is number {
-  return (
-    Number.isInteger(value) &&
-    (value as number) >= 0 &&
-    (value as number) < 2 ** 32
+    (value as number) <= max
   );
 }

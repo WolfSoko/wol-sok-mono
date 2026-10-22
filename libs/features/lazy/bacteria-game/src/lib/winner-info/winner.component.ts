@@ -241,7 +241,6 @@ export class WinnerComponent {
   public canFightGhost: Signal<boolean> = computed(
     () =>
       !this.againstGhost() &&
-      !this.online() &&
       this.state.lastReplay()?.header.mode === 'vs-computer'
   );
 

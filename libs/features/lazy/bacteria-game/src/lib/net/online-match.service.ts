@@ -52,7 +52,7 @@ export type OnlineEvent =
   /** The connection is gone. */
   | { type: 'ended'; reason: OnlineEnd };
 
-const IDLE: OnlineLobby = {
+export const IDLE_LOBBY: OnlineLobby = {
   phase: 'idle',
   role: null,
   code: null,
@@ -70,7 +70,7 @@ const IDLE: OnlineLobby = {
 @Injectable({ providedIn: 'root' })
 export class OnlineMatchService {
   private readonly cloud = inject(GameCloud);
-  private readonly lobbyState = signal<OnlineLobby>(IDLE);
+  private readonly lobbyState = signal<OnlineLobby>(IDLE_LOBBY);
   private readonly events = new Subject<OnlineEvent>();
   private link: PeerLink | null = null;
   private room: OpenRoom | null = null;
@@ -168,7 +168,7 @@ export class OnlineMatchService {
   /** Leaves the room or the match, telling the other device. */
   public leave(): void {
     this.send({ k: 'bye' });
-    this.restart(IDLE);
+    this.restart(IDLE_LOBBY);
   }
 
   /** The host shares the setup of the next match with the guest. */
@@ -202,8 +202,14 @@ export class OnlineMatchService {
     return pending;
   }
 
-  /** Lets go of whatever was under way and sets the lobby to `lobby`. */
-  private restart(lobby: Partial<OnlineLobby>): number {
+  /**
+   * Lets go of whatever was under way and sets the lobby to `lobby` -
+   * telling the game, for `reason`, if it was connected.
+   */
+  private restart(
+    lobby: Partial<OnlineLobby>,
+    reason: OnlineEnd = 'left'
+  ): number {
     const wasConnected = this.greeted;
     this.attempt++;
     this.room?.close();
@@ -214,9 +220,9 @@ export class OnlineMatchService {
     this.lockstep = null;
     this.pendingStart = null;
     this.greeted = false;
-    this.lobbyState.set({ ...IDLE, ...lobby });
+    this.lobbyState.set({ ...IDLE_LOBBY, ...lobby });
     if (wasConnected) {
-      this.events.next({ type: 'ended', reason: 'left' });
+      this.events.next({ type: 'ended', reason });
     }
     return this.attempt;
   }
@@ -330,22 +336,21 @@ export class OnlineMatchService {
     if (attempt !== this.attempt) {
       return;
     }
-    const wasConnected = this.greeted;
-    this.greeted = false;
-    this.restart({ notice });
-    if (wasConnected) {
-      this.events.next({ type: 'ended', reason });
-    }
+    this.restart({ notice }, reason);
   }
 
   private newLockstep(seat: 0 | 1): Lockstep {
     const match = this.match;
-    return new Lockstep(seat, (message) => {
-      // A match that was replaced sends nothing more.
-      if (match === this.match) {
-        this.send({ ...message, n: match });
-      }
-    });
+    return new Lockstep(
+      seat,
+      (message) => {
+        // A match that was replaced sends nothing more.
+        if (match === this.match) {
+          this.send(message);
+        }
+      },
+      match
+    );
   }
 
   private send(message: NetMessage): void {

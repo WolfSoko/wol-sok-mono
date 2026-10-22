@@ -43,7 +43,7 @@ import {
 import { ruleNote, winRuleOf } from '../state/win-conditions';
 import { LevelMapComponent } from './level-map.component';
 import { OnlineLobbyComponent } from './online-lobby.component';
-import type { OnlineLobby } from '../net/online-match.service';
+import { IDLE_LOBBY, OnlineLobby } from '../net/online-match.service';
 import { DailyCard, endlessNote, levelColors } from './menu-cards';
 import {
   NewGameEntry,
@@ -108,12 +108,7 @@ export class NewGameComponent {
   /** The most levels beaten in one endless run. */
   public readonly endlessBest = input(0);
   /** The lobby of an online match. */
-  public readonly online = input<OnlineLobby>({
-    phase: 'idle',
-    role: null,
-    code: null,
-    notice: null,
-  });
+  public readonly online = input<OnlineLobby>(IDLE_LOBBY);
   /** False where online matches cannot be played. */
   public readonly onlineAvailable = input(false);
 

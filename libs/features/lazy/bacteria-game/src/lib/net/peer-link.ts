@@ -80,33 +80,39 @@ export class PeerLink {
 
   /** A link for the host, with the offer to pass on to the guest. */
   public static async offer(): Promise<{ link: PeerLink; offer: string }> {
-    const link = new PeerLink(
-      new RTCPeerConnection({ iceServers: ICE_SERVERS })
+    const { link, description } = await PeerLink.negotiate(async (connection) =>
+      connection.setLocalDescription(await connection.createOffer())
     );
-    const { connection } = link;
-    try {
-      await connection.setLocalDescription(await connection.createOffer());
-      return { link, offer: await link.description() };
-    } catch (error) {
-      link.close();
-      throw error;
-    }
+    return { link, offer: description };
   }
 
   /** A link for the guest, answering the host's offer. */
   public static async answer(
     offer: string
   ): Promise<{ link: PeerLink; answer: string }> {
+    const { link, description } = await PeerLink.negotiate(
+      async (connection) => {
+        await connection.setRemoteDescription({ type: 'offer', sdp: offer });
+        await connection.setLocalDescription(await connection.createAnswer());
+      }
+    );
+    link.giveUpLater();
+    return { link, answer: description };
+  }
+
+  /**
+   * A new link and its local description once `steps` set it - the link
+   * closed again when they fail.
+   */
+  private static async negotiate(
+    steps: (connection: RTCPeerConnection) => Promise<void>
+  ): Promise<{ link: PeerLink; description: string }> {
     const link = new PeerLink(
       new RTCPeerConnection({ iceServers: ICE_SERVERS })
     );
-    const { connection } = link;
     try {
-      await connection.setRemoteDescription({ type: 'offer', sdp: offer });
-      await connection.setLocalDescription(await connection.createAnswer());
-      const answer = await link.description();
-      link.giveUpLater();
-      return { link, answer };
+      await steps(link.connection);
+      return { link, description: await link.description() };
     } catch (error) {
       link.close();
       throw error;

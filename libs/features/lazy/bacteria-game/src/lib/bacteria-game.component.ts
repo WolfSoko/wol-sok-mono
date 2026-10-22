@@ -119,6 +119,7 @@ import {
   levelBalance,
   levelMap,
   levelSize,
+  ONLINE_LOCKS,
   nextLevel,
 } from './state/levels';
 import { DynamicWall, Rect } from './state/maps';
@@ -1615,14 +1616,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
   }
 }
-
-/** Why a level cannot be played online: the big maps. */
-const ONLINE_LOCKS: Readonly<Record<string, string>> = Object.fromEntries(
-  LEVELS.filter((level) => levelSize(level) > 1).map((level) => [
-    level.id,
-    'Too big for an online match',
-  ])
-);
 
 /** Room kept free around the arena for its frame, in CSS pixels. */
 const ARENA_FRAME_PX = 6;

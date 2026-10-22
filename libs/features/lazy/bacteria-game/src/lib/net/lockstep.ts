@@ -1,8 +1,9 @@
 import { clampLength, SteeringVector } from '../state/geometry';
 import { DRAG_STEPS, onGrid, STEER_STEPS } from '../state/match-engine';
 import type { GhostInputs, SeatDriver } from '../state/ghost';
+import { TICKS_PER_SEC } from '../state/fixed-tick';
 import { Player } from '../state/player.model';
-import { LockstepMessage, TickInput } from './net-message';
+import { NetMessage, TickInput } from './net-message';
 
 /**
  * How many ticks after it is put in an input is played: 100 ms at 60 ticks
@@ -10,10 +11,10 @@ import { LockstepMessage, TickInput } from './net-message';
  * before that device plays the tick - a colony follows its crosshair slowly
  * anyway, so nobody feels the delay.
  */
-export const INPUT_DELAY_TICKS = 6;
+export const INPUT_DELAY_TICKS = TICKS_PER_SEC / 10;
 
 /** How often the two devices compare their matches: once a second. */
-export const CHECK_EVERY_TICKS = 60;
+export const CHECK_EVERY_TICKS = TICKS_PER_SEC;
 
 /** An input that changes nothing - the ticks before the first inputs. */
 const NOTHING: GhostInputs = { boost: false, drag: null, steer: null };
@@ -32,8 +33,8 @@ const NOTHING: GhostInputs = { boost: false, drag: null, steer: null };
 export class Lockstep {
   /** The inputs by seat, then by tick. */
   private readonly inputs = [
-    new Map<number, TickInput>(),
-    new Map<number, TickInput>(),
+    new Map<number, GhostInputs>(),
+    new Map<number, GhostInputs>(),
   ];
   /** This device's checksums by tick, until the other one's arrives. */
   private readonly localSums = new Map<number, number>();
@@ -44,7 +45,9 @@ export class Lockstep {
   public constructor(
     /** The seat of the player at this device - 0 for the host. */
     public readonly localSeat: 0 | 1,
-    private readonly send: (message: LockstepMessage) => void,
+    private readonly send: (message: NetMessage) => void,
+    /** The match's number, which its messages carry. */
+    private readonly match = 0,
     public readonly delay = INPUT_DELAY_TICKS
   ) {}
 
@@ -93,15 +96,15 @@ export class Lockstep {
       boost,
     };
     const due = tick + this.delay;
-    this.inputs[this.localSeat].set(due, input);
-    this.send({ k: 'in', t: due, ...input });
+    this.inputs[this.localSeat].set(due, played(input));
+    this.send({ k: 'in', n: this.match, t: due, ...input });
   }
 
   /** Takes an input the other device sent. */
   public putRemote(tick: number, input: TickInput): void {
     // Its first inputs are due after the delay; an earlier one is made up.
     if (tick >= this.delay) {
-      this.inputs[this.remoteSeat].set(tick, input);
+      this.inputs[this.remoteSeat].set(tick, played(input));
     }
   }
 
@@ -114,7 +117,7 @@ export class Lockstep {
       return;
     }
     const sum = matchChecksum(players);
-    this.send({ k: 'sum', t: tick, h: sum });
+    this.send({ k: 'sum', n: this.match, t: tick, h: sum });
     this.compare(tick, sum, this.remoteSums, this.localSums);
   }
 
@@ -148,19 +151,19 @@ export class Lockstep {
         const input = inputs.get(tick);
         // Played once: what lies behind is no longer needed.
         inputs.delete(tick);
-        return input === undefined
-          ? NOTHING
-          : {
-              boost: input.boost,
-              drag:
-                input.drag === null
-                  ? null
-                  : { x: input.drag[0], y: input.drag[1] },
-              steer: { x: input.steer[0], y: input.steer[1] },
-            };
+        return input ?? NOTHING;
       },
     };
   }
+}
+
+/** An input as the engine plays it. */
+function played({ steer, drag, boost }: TickInput): GhostInputs {
+  return {
+    boost,
+    drag: drag === null ? null : { x: drag[0], y: drag[1] },
+    steer: { x: steer[0], y: steer[1] },
+  };
 }
 
 /**

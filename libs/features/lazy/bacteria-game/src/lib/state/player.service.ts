@@ -158,7 +158,7 @@ export class PlayerService {
     } else {
       lockstep.putLocal(
         this.engine.tickCount,
-        this.steering(lockstep.localSeat, keys, KEY_SETS),
+        this.steering(lockstep.localSeat, keys),
         this.localDrag,
         this.localBoost
       );
@@ -289,25 +289,29 @@ export class PlayerService {
       this.engine.isLive(player.id)
     );
     humans.forEach((human, index) => {
-      const keySets = KEY_SETS.filter(
-        (_, setIndex) => Math.min(setIndex, humans.length - 1) === index
-      );
+      // The last human also takes the key sets nobody else has.
+      const lastSet = index === humans.length - 1 ? KEY_SETS.length - 1 : index;
       this.engine.setSteering(
         human.id,
-        this.steering(human.id, keysPressed, keySets)
+        this.steering(human.id, keysPressed, index, lastSet)
       );
     });
   }
 
-  /** A player's stick and the held keys of their key sets, summed. */
+  /**
+   * A player's stick and the held keys of their key sets - `firstSet` to
+   * `lastSet` of {@link KEY_SETS} - summed.
+   */
   private steering(
     playerId: number,
     keysPressed: readonly string[],
-    keySets: readonly Record<string, SteeringVector>[]
+    firstSet = 0,
+    lastSet = KEY_SETS.length - 1
   ): SteeringVector {
     const stick = this.sticks.get(playerId);
     const direction = { x: stick?.x ?? 0, y: stick?.y ?? 0 };
-    for (const keySet of keySets) {
+    for (let set = firstSet; set <= lastSet; set++) {
+      const keySet = KEY_SETS[set];
       for (const key of keysPressed) {
         const step = keySet[key.toLowerCase()];
         if (step != null) {

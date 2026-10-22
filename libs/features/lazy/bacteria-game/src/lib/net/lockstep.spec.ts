@@ -7,7 +7,7 @@ import {
   Lockstep,
   matchChecksum,
 } from './lockstep';
-import { LockstepMessage } from './net-message';
+import { NetMessage } from './net-message';
 
 const PLAN: MatchPlan = {
   levelId: 'petri-dish',
@@ -24,11 +24,11 @@ const PLAN: MatchPlan = {
 interface Device {
   lockstep: Lockstep;
   engine: MatchEngine;
-  outbox: LockstepMessage[];
+  outbox: NetMessage[];
 }
 
 function device(seat: 0 | 1): Device {
-  const outbox: LockstepMessage[] = [];
+  const outbox: NetMessage[] = [];
   const lockstep = new Lockstep(seat, (message) => outbox.push(message));
   const { spawns, options } = planMatch(PLAN, null, {
     seat,
@@ -42,7 +42,7 @@ function deliver(from: Device, to: Device): void {
   for (const message of from.outbox.splice(0)) {
     if (message.k === 'in') {
       to.lockstep.putRemote(message.t, message);
-    } else {
+    } else if (message.k === 'sum') {
       to.lockstep.putRemoteSum(message.t, message.h);
     }
   }
@@ -131,7 +131,7 @@ describe('Lockstep', () => {
   });
 
   it('sends its inputs on the input grid, a key and a stick no harder than one', () => {
-    const outbox: LockstepMessage[] = [];
+    const outbox: NetMessage[] = [];
     const lockstep = new Lockstep(1, (message) => outbox.push(message));
 
     lockstep.putLocal(10, { x: 2, y: 0.33 }, { x: 10.3, y: 4.1 }, true);
@@ -139,6 +139,7 @@ describe('Lockstep', () => {
     expect(outbox).toEqual([
       {
         k: 'in',
+        n: 0,
         t: 10 + INPUT_DELAY_TICKS,
         steer: [1, 0.1875],
         drag: [10.25, 4],
@@ -148,7 +149,7 @@ describe('Lockstep', () => {
   });
 
   it('finds out when the two devices fell out of step', () => {
-    const outbox: LockstepMessage[] = [];
+    const outbox: NetMessage[] = [];
     const lockstep = new Lockstep(0, (message) => outbox.push(message));
     const players = [createPlayer({ bacteriaCount: 10 })];
 
