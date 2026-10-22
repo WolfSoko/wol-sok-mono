@@ -1,4 +1,8 @@
-import { expect, Locator, Page } from '@playwright/test';
+import { expect as baseExpect, Locator, Page } from '@playwright/test';
+
+// The popup hands the sign-in back through the emulator, and signing out
+// signs in a new guest: seconds on a busy agent.
+const expect = baseExpect.configure({ timeout: 15_000 });
 
 /**
  * The player's account in the profile, against the Firebase Auth emulator:
@@ -28,6 +32,8 @@ export class AccountPo {
       this.page.waitForEvent('popup'),
       this.signInCta.click(),
     ]);
+    // Its buttons do nothing until its scripts have run.
+    await popup.waitForLoadState();
     if (existing) {
       await popup.getByText(email).click();
     } else {

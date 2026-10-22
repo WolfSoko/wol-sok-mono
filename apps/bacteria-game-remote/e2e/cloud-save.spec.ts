@@ -1,10 +1,14 @@
-import { expect, Page, test } from '@playwright/test';
+import { expect as baseExpect, Page, test } from '@playwright/test';
 import { AccountPo, uniqueEmail } from './pos/account.po';
 import { BacteriaGamePo } from './pos/bacteria-game.po';
 
 // The game runs against the Firebase emulators (environment.e2e.ts): every
 // browser context is a new guest, and every test signs in to accounts of
 // its own, so the tests share the emulators without meeting.
+
+// What the cloud keeps shows once the guest is signed in and Firestore has
+// answered, while the game still renders its start: seconds on a busy agent.
+const expect = baseExpect.configure({ timeout: 15_000 });
 
 /** The daily level's card in a new game, with the attempts left today. */
 function dailyCard(page: Page) {
@@ -19,10 +23,8 @@ function dailyCard(page: Page) {
  */
 async function useDailyAttempt(po: BacteriaGamePo): Promise<void> {
   await po.playCta.click();
+  // The daily level picks its level itself: straight on to the start.
   await po.chooseMode('Daily level');
-  while (!(await po.startCta.isVisible())) {
-    await po.nextCta.click();
-  }
   await po.startCta.click();
   await po.pauseCta.click();
   await po.quitCta.click();
