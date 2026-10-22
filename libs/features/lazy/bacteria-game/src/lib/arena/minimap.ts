@@ -1,6 +1,7 @@
 import { BlockCounts } from '../state/simulation';
 import { DynamicWall, Rect } from '../state/maps';
-import { ArenaTheme, cssTriple, Rgb } from './arena-theme';
+import { ArenaTheme } from './arena-theme';
+import { rgba } from './canvas-math';
 
 /** How faint a block with a single bacterium is - a full one is opaque. */
 const MIN_ALPHA = 0.35;
@@ -83,9 +84,9 @@ export class MinimapPainter {
     if (cx == null) {
       return;
     }
-    cx.fillStyle = rgb(theme.floor);
+    cx.fillStyle = rgba(theme.floor);
     cx.fillRect(0, 0, this.base.width, this.base.height);
-    cx.fillStyle = rgb(theme.wallEdge);
+    cx.fillStyle = rgba(theme.wallEdge);
     for (const wall of walls) {
       this.fillWall(cx, wall);
     }
@@ -127,7 +128,7 @@ export class MinimapPainter {
       );
     }
     if (this.theme != null) {
-      cx.fillStyle = rgb(this.theme.border);
+      cx.fillStyle = rgba(this.theme.border);
       for (const wall of dynamicWalls) {
         if (wall.solid) {
           this.fillWall(cx, wall);
@@ -162,8 +163,4 @@ export class MinimapPainter {
       cx.fillRect(wall.x * s, wall.y * s, wall.width * s, wall.height * s);
     }
   }
-}
-
-function rgb(color: Rgb): string {
-  return `rgb(${cssTriple(color)})`;
 }

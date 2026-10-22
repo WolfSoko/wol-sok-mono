@@ -355,7 +355,7 @@ export class GpuSimulation implements Simulation {
       blocksX,
       blocksY,
       cellSize,
-      counts: this.report.blockCounts.slice(0, this.spawns.length),
+      counts: this.report.blockCounts,
     };
   }
 

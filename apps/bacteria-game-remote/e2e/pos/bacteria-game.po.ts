@@ -35,7 +35,7 @@ export class BacteriaGamePo {
 
   constructor(private readonly page: Page) {
     this.mainTitle = page.locator('mat-toolbar h1');
-    this.playArea = page.locator('.stage canvas');
+    this.playArea = page.locator('.stage .arena-canvas');
     this.playCta = page.getByRole('button', { name: /New game/ });
     this.startCta = page.getByRole('button', { name: /^Start / });
     this.profileCta = page.getByRole('button', { name: 'Profile' });

@@ -322,7 +322,6 @@ export class BacteriaSimulation implements Simulation {
     }));
   }
 
-  /** The bacterium of another colony closest to a point, null without one. */
   /**
    * Counts the bacteria into blocks as big as the GPU simulation's - once
    * per tick at the most, and only when asked.
@@ -334,8 +333,8 @@ export class BacteriaSimulation implements Simulation {
 
   private countBlocks(): BlockCounts {
     const cellSize = this.balance.influenceCellSize;
-    const blocksX = Math.ceil(this.width / cellSize);
-    const blocksY = Math.ceil(this.height / cellSize);
+    const blocksX = this.influenceWidth;
+    const blocksY = this.influenceHeight;
     const counts = this.colonies.map((colony) => {
       const blocks = new Uint32Array(blocksX * blocksY);
       for (const bacterium of colony.bacterias) {
@@ -349,6 +348,7 @@ export class BacteriaSimulation implements Simulation {
     return { blocksX, blocksY, cellSize, counts };
   }
 
+  /** The bacterium of another colony closest to a point, null without one. */
   public nearestEnemy(playerId: number, from: Point): Point | null {
     let nearest: Point | null = null;
     let nearestDistance = Number.POSITIVE_INFINITY;
