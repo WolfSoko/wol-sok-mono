@@ -244,7 +244,8 @@
       "dependsOn": ["^build"],
       "cache": true,
       "options": {
-        "target": "bacteria-game-remote:esbuild:production,e2e"
+        "target": "bacteria-game-remote:esbuild:production,e2e",
+        "projectName": "bacteria-game-remote-e2e"
       }
     },
     "build-e2e": {
