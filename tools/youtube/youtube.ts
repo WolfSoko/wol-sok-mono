@@ -39,6 +39,16 @@ export interface VideoMeta {
   privacy: 'private' | 'unlisted' | 'public';
 }
 
+/** A video on the channel. */
+export interface ChannelVideo {
+  id: string;
+  /** `private` for every upload of a project YouTube has not audited. */
+  privacy: string;
+}
+
+/** Upload states of a video that will never play. */
+const BROKEN = new Set(['failed', 'rejected', 'deleted']);
+
 /** True when the environment holds a refresh token to upload with. */
 export function youtubeConfigured(): boolean {
   return [CLIENT_ID_ENV, CLIENT_SECRET_ENV, REFRESH_TOKEN_ENV].every(
@@ -95,13 +105,18 @@ export class YoutubeChannel {
     return (await response.json()) as T;
   }
 
-  /** The id of every video on the channel, by its tags. */
-  public async videosByTag(): Promise<Map<string, string>> {
+  /**
+   * Every video on the channel that plays or will, by its tags; failed and
+   * rejected uploads are left out, so their files go up again. The uploads
+   * playlist lists a new video only after a few minutes: a run right after
+   * another may upload its new files a second time.
+   */
+  public async videosByTag(): Promise<Map<string, ChannelVideo>> {
     const { items: channels = [] } = await this.call<{
       items?: { contentDetails: { relatedPlaylists: { uploads: string } } }[];
     }>(`${API}/channels?part=contentDetails&mine=true`);
     const uploads = channels[0]?.contentDetails.relatedPlaylists.uploads;
-    const byTag = new Map<string, string>();
+    const byTag = new Map<string, ChannelVideo>();
     if (uploads == null) {
       return byTag;
     }
@@ -116,11 +131,21 @@ export class YoutubeChannel {
       const ids = (page.items ?? []).map((item) => item.contentDetails.videoId);
       if (ids.length > 0) {
         const { items: videos = [] } = await this.call<{
-          items?: { id: string; snippet: { tags?: string[] } }[];
-        }>(`${API}/videos?part=snippet&id=${ids.join(',')}`);
+          items?: {
+            id: string;
+            snippet: { tags?: string[] };
+            status: { privacyStatus: string; uploadStatus: string };
+          }[];
+        }>(`${API}/videos?part=snippet,status&id=${ids.join(',')}`);
         for (const video of videos) {
+          if (BROKEN.has(video.status.uploadStatus)) {
+            continue;
+          }
           for (const tag of video.snippet.tags ?? []) {
-            byTag.set(tag, video.id);
+            byTag.set(tag, {
+              id: video.id,
+              privacy: video.status.privacyStatus,
+            });
           }
         }
       }
@@ -129,12 +154,12 @@ export class YoutubeChannel {
     return byTag;
   }
 
-  /** Uploads a file in one resumable session and returns the video id. */
+  /** Uploads a file in one resumable session. */
   public async upload(
     file: string,
     meta: VideoMeta,
     tag: string
-  ): Promise<string> {
+  ): Promise<ChannelVideo> {
     const session = await fetch(
       `${UPLOAD_API}?uploadType=resumable&part=snippet,status`,
       {
@@ -178,24 +203,28 @@ export class YoutubeChannel {
     console.log(
       `Uploaded ${file} as https://youtu.be/${video.id} (${video.status.privacyStatus}).`
     );
-    return video.id;
+    return { id: video.id, privacy: video.status.privacyStatus };
   }
 }
 
 /**
- * Makes sure each file is on the channel and returns its video id, by file:
- * a file whose hash tag is on a video already is not uploaded again.
+ * Makes sure each file is on the channel and returns its video, by file: a
+ * file whose hash tag is on a video already is not uploaded again. A video
+ * locked to private before the audit stays so; delete it in YouTube Studio
+ * for the next run to upload the file again.
  */
 export async function publishVideos(
   videos: { file: string; meta: VideoMeta }[]
-): Promise<Map<string, string>> {
+): Promise<Map<string, ChannelVideo>> {
   const channel = await YoutubeChannel.connect();
   const onChannel = await channel.videosByTag();
-  const ids = new Map<string, string>();
+  const published = new Map<string, ChannelVideo>();
   for (const { file, meta } of videos) {
     const tag = hashTag(file);
-    const id = onChannel.get(tag) ?? (await channel.upload(file, meta, tag));
-    ids.set(file, id);
+    published.set(
+      file,
+      onChannel.get(tag) ?? (await channel.upload(file, meta, tag))
+    );
   }
-  return ids;
+  return published;
 }

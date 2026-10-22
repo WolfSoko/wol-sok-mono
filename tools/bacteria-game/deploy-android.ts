@@ -190,7 +190,7 @@ async function updateListing(
         method: 'PATCH',
         body: JSON.stringify(listing),
       });
-      console.log(`Updated the ${listing.language} listing texts and video.`);
+      console.log(`Updated the ${listing.language} listing.`);
     }
     for (const { type, files } of images) {
       const imagesUrl = `/listings/${listing.language}/${type}`;
@@ -287,7 +287,8 @@ async function accessToken(account: ServiceAccount): Promise<string> {
 /**
  * Puts the promo videos of store/promo-video/videos.json on the YouTube
  * channel, each file once, and returns the video URL per Play listing
- * language. Without the YouTube secrets the listing keeps its video.
+ * language - for the videos people can watch: Play shows no private video.
+ * Without the YouTube secrets the listing keeps its video.
  */
 async function promoVideoLinks(): Promise<Map<string, string>> {
   if (!youtubeConfigured()) {
@@ -298,28 +299,37 @@ async function promoVideoLinks(): Promise<Map<string, string>> {
   const videos = readJson<PromoVideo[]>(join(videosDir, 'videos.json')).map(
     (video) => ({ ...video, file: join(videosDir, video.file) })
   );
-  const ids = await publishVideos(videos);
-  return new Map(
-    videos
-      .filter((video) => video.listing != null)
-      .map((video) => [
-        video.listing as string,
-        `https://www.youtube.com/watch?v=${ids.get(video.file)}`,
-      ])
-  );
+  const published = await publishVideos(videos);
+  const links = new Map<string, string>();
+  for (const { file, listing } of videos) {
+    const video = published.get(file);
+    if (listing == null || video == null) {
+      continue;
+    }
+    if (video.privacy === 'private') {
+      console.log(
+        `https://youtu.be/${video.id} is private, the ${listing} listing keeps its video.`
+      );
+      continue;
+    }
+    links.set(listing, `https://www.youtube.com/watch?v=${video.id}`);
+  }
+  return links;
 }
 
 /**
  * Uploads the bundle and rolls it out to the internal track, then updates
  * the store listing in an edit of its own: a listing Play turns down does
  * not hold back the app, and a run again skips the bundle that is on Play.
+ * Returns the error of the YouTube upload, if any, for the caller to throw
+ * once the rest is out.
  */
 async function publishToPlay(
   packageName: string,
   bundle: string,
   code: number,
   releaseName: string
-): Promise<void> {
+): Promise<unknown> {
   const token = await accessToken(
     JSON.parse(env('PLAY_SERVICE_ACCOUNT_JSON')) as ServiceAccount
   );
@@ -376,7 +386,12 @@ async function publishToPlay(
   await call(`${editUrl}:commit`, { method: 'POST' });
   console.log(`Released ${releaseName} to the ${TRACK} track (${status}).`);
 
-  const videos = await promoVideoLinks();
+  // A YouTube failure fails the deploy, but only after the listing is out.
+  let youtubeError: unknown = null;
+  const videos = await promoVideoLinks().catch((error: unknown) => {
+    youtubeError = error;
+    return new Map<string, string>();
+  });
   const listingEdit = await call<{ id: string }>(`${app}/edits`, {
     method: 'POST',
   });
@@ -387,6 +402,7 @@ async function publishToPlay(
     videos
   );
   await call(`${app}/edits/${listingEdit.id}:commit`, { method: 'POST' });
+  return youtubeError;
 }
 
 async function main(): Promise<void> {
@@ -407,7 +423,7 @@ async function main(): Promise<void> {
   try {
     // Play first: the release only lists files that are on Play, and a run
     // again after a failed GitHub upload skips the Play upload.
-    await publishToPlay(
+    const youtubeError = await publishToPlay(
       assetLink.target.package_name,
       bundle,
       versionCode(version),
@@ -416,6 +432,9 @@ async function main(): Promise<void> {
     execFileSync('gh', ['release', 'upload', tag, apk, bundle, '--clobber'], {
       stdio: 'inherit',
     });
+    if (youtubeError != null) {
+      throw youtubeError;
+    }
   } finally {
     rmSync(apk, { force: true });
     rmSync(bundle, { force: true });
