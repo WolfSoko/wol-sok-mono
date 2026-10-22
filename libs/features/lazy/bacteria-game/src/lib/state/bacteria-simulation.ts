@@ -15,7 +15,7 @@ import {
 } from './game-balance';
 import { clamp, Point } from './geometry';
 import { NutrientPellets } from './nutrient-pellets';
-import { ColonySummary, Simulation } from './simulation';
+import { BlockCounts, ColonySummary, Simulation } from './simulation';
 import { compareDynamicWalls, DynamicWall, GameMap, stampRect } from './maps';
 import { escapeReach } from './arena-size';
 import { getMap } from './game-maps';
@@ -224,6 +224,7 @@ export class BacteriaSimulation implements Simulation {
   private colonies: Colony[] = [];
   /** The summaries as of the last step, built when first asked for. */
   private colonySummaries: ColonySummary[] | null = null;
+  private colonyBlocks: BlockCounts | null = null;
   private readonly pellets: NutrientPellets;
   /** Wall layout the match is fought on. */
   private map: GameMap = getMap('corridors');
@@ -321,6 +322,32 @@ export class BacteriaSimulation implements Simulation {
     }));
   }
 
+  /**
+   * Counts the bacteria into blocks as big as the GPU simulation's - once
+   * per tick at the most, and only when asked.
+   */
+  public blockCounts(): BlockCounts {
+    this.colonyBlocks ??= this.countBlocks();
+    return this.colonyBlocks;
+  }
+
+  private countBlocks(): BlockCounts {
+    const cellSize = this.balance.influenceCellSize;
+    const blocksX = this.influenceWidth;
+    const blocksY = this.influenceHeight;
+    const counts = this.colonies.map((colony) => {
+      const blocks = new Uint32Array(blocksX * blocksY);
+      for (const bacterium of colony.bacterias) {
+        blocks[
+          Math.floor(bacterium.y / cellSize) * blocksX +
+            Math.floor(bacterium.x / cellSize)
+        ]++;
+      }
+      return blocks;
+    });
+    return { blocksX, blocksY, cellSize, counts };
+  }
+
   /** The bacterium of another colony closest to a point, null without one. */
   public nearestEnemy(playerId: number, from: Point): Point | null {
     let nearest: Point | null = null;
@@ -365,6 +392,7 @@ export class BacteriaSimulation implements Simulation {
       traits: spawn.traits ?? PLAIN_TRAITS,
     }));
     this.colonySummaries = null;
+    this.colonyBlocks = null;
     for (const colony of this.colonies) {
       colony.totalEnergy = colony.bacterias.length * this.balance.maxEnergy;
     }
@@ -556,6 +584,7 @@ export class BacteriaSimulation implements Simulation {
     // last frame's events again.
     this.events = noEvents();
     this.colonySummaries = null;
+    this.colonyBlocks = null;
     if (this.colonies.length === 0 || this.width === 0 || deltaTimeSec <= 0) {
       return;
     }

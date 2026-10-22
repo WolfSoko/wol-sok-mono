@@ -346,19 +346,30 @@
             [show]="settings.showFps()"
             [fps]="fps()"
           ></ws-shared-ui-show-fps>
-          @for (key of canvasKey(); track key) {
-            <canvas
-              #canvasElement
-              id="canvasElement"
-              [style.width.px]="canvasSize()?.width"
-              [style.height.px]="canvasSize()?.height"
-              (pointerdown)="onPointerDown($event)"
-              (pointermove)="onPointerMove($event)"
-              (pointerup)="onPointerUp($event)"
-              (pointercancel)="onPointerUp($event)"
-            >
-            </canvas>
-          }
+          <div class="arena-frame">
+            @for (key of canvasKey(); track key) {
+              <canvas
+                #canvasElement
+                id="canvasElement"
+                class="arena-canvas"
+                [style.width.px]="canvasSize()?.width"
+                [style.height.px]="canvasSize()?.height"
+                (pointerdown)="onPointerDown($event)"
+                (pointermove)="onPointerMove($event)"
+                (pointerup)="onPointerUp($event)"
+                (pointercancel)="onPointerUp($event)"
+              >
+              </canvas>
+            }
+            @if (showMinimap()) {
+              <canvas
+                #minimapElement
+                class="minimap"
+                width="240"
+                aria-hidden="true"
+              ></canvas>
+            }
+          </div>
         </div>
       </div>
     </div>

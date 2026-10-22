@@ -26,6 +26,23 @@ export interface ColonySummary {
 }
 
 /**
+ * Where the colonies are, coarsely: the arena cut into blocks of cells, and
+ * the bacteria of each colony in each block - for the minimap.
+ */
+export interface BlockCounts {
+  /** Blocks across and down. */
+  blocksX: number;
+  blocksY: number;
+  /** Arena cells per block along each axis. */
+  cellSize: number;
+  /**
+   * Per colony, in the order of the summaries: its bacteria per block, row
+   * by row.
+   */
+  counts: readonly Uint32Array[];
+}
+
+/**
  * The colony war, whichever processor runs it. The CPU one is
  * `BacteriaSimulation`; the GPU one runs the same rules as WebGL2 shader
  * passes and reports its numbers a frame late.
@@ -44,6 +61,8 @@ export interface Simulation {
   /** What happened during the last tick. */
   getEvents(): StepEvents;
   summaries(): readonly ColonySummary[];
+  /** Where the colonies are, block by block - null before the GPU reported. */
+  blockCounts(): BlockCounts | null;
   /**
    * The colonies as the painter draws them; `boosts` holds the crosshairs
    * of the players whose boost runs, by player id.

@@ -386,6 +386,16 @@ zooms (`detailScale`), the pointer maps through the view
 (`arenaPointFromClient`), and a frame whose view moved lays its floor fully
 instead of fading into a trail that lies elsewhere. Every match starts on
 the whole map.
+While the camera shows part of the map, a
+[minimap](./src/lib/arena/minimap.ts) in the arena's top right corner shows
+all of it: the walls, laid once per map, the colonies block by block - each
+block of `influenceCellSize` cells in the colour of the colony with the most
+bacteria in it (`minimapPixels`) - and a frame around the camera's view. Both
+simulations hand out those blocks (`Simulation.blockCounts`): the GPU one
+reads them back with its report anyway, the CPU one counts its bacteria
+only when asked. The minimap is a small Canvas 2D overlay whichever painter
+draws the arena; it takes in the colonies ten times a second and draws the
+view frame on every frame.
 _Expanse_ opens the chapter of the same name: four times the room, rocks,
 and two neutral colonies, won on size after four minutes.
 
