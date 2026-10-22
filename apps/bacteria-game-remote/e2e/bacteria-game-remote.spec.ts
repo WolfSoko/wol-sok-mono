@@ -315,7 +315,7 @@ test('should show the privacy policy on a page of its own', async ({
 }) => {
   await page.goto('/privacy#en-delete');
 
-  await expect(page).toHaveTitle('Datenschutz - Bacteria War');
+  await expect(page).toHaveTitle('Datenschutz - Bacteria Wars');
   await expect(
     page.getByRole('heading', { name: 'Datenschutzerklärung' })
   ).toBeVisible();

@@ -54,9 +54,9 @@ describe('PrivacyComponent', () => {
 
     await open();
 
-    expect(title.getTitle()).toBe('Datenschutz - Bacteria War');
+    expect(title.getTitle()).toBe('Datenschutz - Bacteria Wars');
     expect(meta.getTag('name="description"')?.content).toContain(
-      'Privacy policy of Bacteria War'
+      'Privacy policy of Bacteria Wars'
     );
     expect(
       doc.head.querySelector('link[rel="canonical"]')?.getAttribute('href')

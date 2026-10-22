@@ -16,14 +16,14 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
  * links here too (PRIVACY_POLICY_URL in the game lib). Not imported from
  * there: the lib's entry point would pull the whole game into this page.
  */
-const CANONICAL_URL = 'https://bacteria-game.wolsok.de/privacy';
+const CANONICAL_URL = 'https://bacteria-wars.wolsok.de/privacy';
 /** The loading screen in index.html, which the game takes down otherwise. */
 const SPLASH_ID = 'bacteria-game-splash';
 
-const TITLE = 'Datenschutz - Bacteria War';
+const TITLE = 'Datenschutz - Bacteria Wars';
 const DESCRIPTION =
-  'Datenschutzerklärung von Bacteria War, im Web und als Android-App. ' +
-  'Privacy policy of Bacteria War, on the web and as an Android app.';
+  'Datenschutzerklärung von Bacteria Wars, im Web und als Android-App. ' +
+  'Privacy policy of Bacteria Wars, on the web and as an Android app.';
 
 /**
  * The privacy policy of the game, its web app and its Android app, in

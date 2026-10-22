@@ -117,15 +117,15 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - A remote also has to run standalone (its own e2e serves it that way), so check both: loaded through the shell _and_ opened on its own port.
 - Remotes are listed in `apps/angular-examples/src/assets/federation.manifest.json` (dev) and `federation.manifest.prod.json` (prod).
 - Each app has an `esbuild` target (`@angular/build:application`) wrapped by a `build`/`serve` target from `@angular-architects/native-federation`. Change build options on `esbuild`.
-- `bacteria-game-remote` is moving to Firebase Hosting (`firebase.bacteria-game-remote.json`, site `bacteria-wars`, domain `bacteria-wars.wolsok.de`), deployed by its `deploy` target together with the Firestore rules. Until that domain is live, `bacteria-game-remote-cdk` keeps serving `bacteria-game.wolsok.de` from S3/CloudFront and only adds the new domain's DNS records; then the old domain turns into a redirect and the shell manifest and the Android host move over.
+- `bacteria-game-remote` is moving to Firebase Hosting (`firebase.bacteria-game-remote.json`, site `bacteria-wars`, domain `bacteria-wars.wolsok.de`), deployed by its `deploy` target together with the Firestore rules. `bacteria-wars.wolsok.de` is live and the Android app already opens it. `bacteria-game-remote-cdk` still serves `bacteria-game.wolsok.de` from S3/CloudFront and adds the new domain's DNS records; still to come: the old domain turns into a redirect and the shell's prod manifest moves over.
 - Exception: `bacteria-game-remote` is also a standalone PWA. Its federation build is `build-federation`; `build` then reruns `ngsw-config`, since the federation builder writes its files after Angular has hashed the output into `ngsw.json`.
 - `nx serve angular-examples` only serves the shell. Use `nx run angular-examples:serve-all` to boot the shell plus all remotes (ports 4200-4203).
 
 ## Android App
 
-- `apps/bacteria-wars-android` is a Gradle project, not a web build: a Trusted Web Activity that opens `https://bacteria-game.wolsok.de` (the `bacteria-game-remote` PWA) fullscreen in Chrome. Game changes go into the PWA; the app picks them up with the next web deploy.
+- `apps/bacteria-wars-android` is a Gradle project, not a web build: a Trusted Web Activity that opens `https://bacteria-wars.wolsok.de` (the `bacteria-game-remote` PWA) fullscreen in Chrome. Game changes go into the PWA; the app picks them up with the next web deploy.
 - Its Nx targets are `apk`, `bundle`, `lint-android` and `deploy`, deliberately not `build`/`lint`/`test`: the Nx agents have no Android SDK. The `Android app` GitHub workflow (`.github/workflows/android.yml`) builds and lints it on PRs instead. `deploy` signs the release, attaches the APK and bundle to the GitHub release and uploads the bundle to Play's internal track; the `android` leg of `deploy.yml` runs it when a release affects the app. See its `README.md` for signing and Play.
-- Fullscreen depends on `apps/bacteria-game-remote/src/.well-known/assetlinks.json` naming the app's package and signing-key fingerprints. Gradle reads the package name from that file, so it is the one place to change it; the host is set in both `app/build.gradle.kts` and the CDK stack.
+- Fullscreen depends on `apps/bacteria-game-remote/src/.well-known/assetlinks.json` naming the app's package and signing-key fingerprints. Gradle reads the package name from that file, so it is the one place to change it; the host is set in `app/build.gradle.kts` and served by Firebase Hosting (`firebase.bacteria-game-remote.json`).
 - Launcher icons and splash come from `npx nx run bacteria-game-remote:icons`; don't edit the PNGs by hand.
 
 ## SEO & Sitemaps
