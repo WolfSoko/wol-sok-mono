@@ -41,6 +41,11 @@ export const SCREEN_RESOLUTIONS: readonly ResolutionOption<ScreenResolution>[] =
   ];
 
 export const DEFAULT_SIM_RESOLUTION: SimResolution = 'normal';
+/**
+ * The grid of an online match, whatever either device is set to: both run
+ * the same grid, on the CPU, which holds 60 ticks a second at this one.
+ */
+export const ONLINE_SIM_RESOLUTION: SimResolution = 'normal';
 export const DEFAULT_SCREEN_RESOLUTION: ScreenResolution = 'medium';
 
 /** Cells per base cell on that grid. */

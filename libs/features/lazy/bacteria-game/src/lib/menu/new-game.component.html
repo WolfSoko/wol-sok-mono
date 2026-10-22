@@ -107,7 +107,16 @@
                 </section>
 
                 <section class="setup" aria-label="Opponent">
-                  @if (vsComputer()) {
+                  @if (kind() === "online") {
+                    <feat-lazy-bac-game-online-lobby
+                      [lobby]="online()"
+                      [available]="onlineAvailable()"
+                      [colonyNames]="colonyNames()"
+                      (host)="hostOnline.emit()"
+                      (join)="joinOnline.emit($event)"
+                      (leave)="leaveOnline.emit()"
+                    />
+                  } @else if (vsComputer()) {
                     <span class="best-label">Opponent</span>
                     <mat-button-toggle-group
                       class="difficulty-picker"
@@ -179,15 +188,17 @@
                       <span class="rivalry-score">{{ rivalryLine() }}</span>
                     </p>
                   }
-                  <button
-                    mat-flat-button
-                    type="button"
-                    class="start"
-                    (click)="startGame()"
-                  >
-                    <mat-icon>play_arrow</mat-icon>
-                    {{ startLabel() }}
-                  </button>
+                  @if (canStart()) {
+                    <button
+                      mat-flat-button
+                      type="button"
+                      class="start"
+                      (click)="startGame()"
+                    >
+                      <mat-icon>play_arrow</mat-icon>
+                      {{ startLabel() }}
+                    </button>
+                  }
                 </section>
               </div>
             }

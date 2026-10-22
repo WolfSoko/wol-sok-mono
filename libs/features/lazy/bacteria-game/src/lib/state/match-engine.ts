@@ -39,7 +39,7 @@ import {
   Player,
   PlayerColorArray,
 } from './player.model';
-import type { GhostController } from './ghost';
+import type { SeatDriver } from './ghost';
 import type { ReplayInputs } from './replay';
 import {
   judgeOutcome,
@@ -109,7 +109,7 @@ export interface MatchOptions {
    * spawns as one - as the ghost does, so the game treats it as nobody at
    * the screen.
    */
-  ghosts?: ReadonlyMap<number, GhostController>;
+  ghosts?: ReadonlyMap<number, SeatDriver>;
   /** How the match is won - by annihilation when absent. */
   win?: WinRule;
 }
@@ -136,7 +136,8 @@ export type MatchResult = 'win' | 'loss' | 'draw';
 export const STEER_STEPS = 16;
 export const DRAG_STEPS = 4;
 
-function onGrid(value: number, steps: number): number {
+/** A value put on one of those grids. */
+export function onGrid(value: number, steps: number): number {
   // `|| 0` turns a rounded -0 into 0, as it comes back from a link.
   return Math.round(value * steps) / steps || 0;
 }
@@ -194,7 +195,7 @@ export class MatchEngine {
   /** What the humans at the screen put in, for the replay. */
   private readonly inputs: ReplayInputs = { steers: [], drags: [], boosts: [] };
   /** The players a recording drives, by seat. */
-  private readonly ghosts: ReadonlyMap<number, GhostController>;
+  private readonly ghosts: ReadonlyMap<number, SeatDriver>;
   private readonly win: WinRule;
   /** Each seat's traits, a boss's or none. */
   private readonly traits: readonly (ColonyTraits | undefined)[];

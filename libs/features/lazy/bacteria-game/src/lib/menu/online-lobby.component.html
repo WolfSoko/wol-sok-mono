@@ -1,0 +1,80 @@
+@if (!available()) {
+  <p class="text">
+    Online matches need the game's cloud, which this build of the game does not
+    connect to.
+  </p>
+} @else {
+  @switch (lobby().phase) {
+    @case ("idle") {
+      <p class="text">
+        Open a match and send the code to a friend, or type in theirs. You play
+        on two devices, each with its own colony.
+      </p>
+      <button mat-flat-button type="button" class="host" (click)="host.emit()">
+        <mat-icon>wifi_tethering</mat-icon>
+        Open a match
+      </button>
+      <form class="join" (submit)="submit($event)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Code from a friend</mat-label>
+          <input
+            matInput
+            name="code"
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+            [maxLength]="codeLength + 2"
+            [value]="typed()"
+            (input)="type($event)"
+          />
+        </mat-form-field>
+        <button mat-stroked-button type="submit">
+          <mat-icon>login</mat-icon>
+          Join
+        </button>
+      </form>
+    }
+    @case ("opening") {
+      <p class="status">
+        <mat-spinner diameter="20" />
+        Opening a match…
+      </p>
+    }
+    @case ("waiting") {
+      <span class="label">Send your friend this code</span>
+      <p class="code" aria-live="polite">{{ lobby().code }}</p>
+      <p class="status">
+        <mat-spinner diameter="20" />
+        Waiting for them to join…
+      </p>
+    }
+    @case ("connecting") {
+      <p class="status">
+        <mat-spinner diameter="20" />
+        Connecting to your opponent…
+      </p>
+    }
+    @case ("connected") {
+      <p class="status connected">
+        <mat-icon aria-hidden="true">link</mat-icon>
+        Connected - you play {{ ownColony() }}.
+      </p>
+      <p class="text">
+        @if (lobby().role === "host") {
+          You pick the level and start the matches.
+        } @else {
+          Your opponent picks the level and starts the matches.
+        }
+      </p>
+    }
+  }
+  @if (lobby().notice; as notice) {
+    <p class="notice" role="status">{{ notice }}</p>
+  }
+  @if (lobby().phase !== "idle") {
+    <button mat-button type="button" class="leave" (click)="leave.emit()">
+      <mat-icon>close</mat-icon>
+      {{ lobby().phase === "connected" ? "Leave" : "Cancel" }}
+    </button>
+  }
+}

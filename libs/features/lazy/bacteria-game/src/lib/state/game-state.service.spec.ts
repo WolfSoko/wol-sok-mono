@@ -10,6 +10,15 @@ import { ANNIHILATION, judgeOutcome } from './win-conditions';
 import { PlayerService } from './player.service';
 import { playReplay, Replay, REPLAY_VERSION, replayOf } from './replay';
 import { replayLink } from './replay-link';
+import { signal } from '@angular/core';
+import { Subject } from 'rxjs';
+import { Lockstep, INPUT_DELAY_TICKS } from '../net/lockstep';
+import type { OnlineStart } from '../net/net-message';
+import {
+  OnlineEvent,
+  OnlineLobby,
+  OnlineMatchService,
+} from '../net/online-match.service';
 
 const WIDTH = 320;
 const HEIGHT = 140;
@@ -679,5 +688,127 @@ describe('GameStateService', () => {
 
       expect(store.snapshot().earnings).toBeNull();
     });
+  });
+});
+
+describe('GameStateService online', () => {
+  /** The online service, without a network: the test plays the other device. */
+  class FakeOnline {
+    public readonly events = new Subject<OnlineEvent>();
+    public readonly events$ = this.events.asObservable();
+    public readonly lobby = signal<OnlineLobby>({
+      phase: 'idle',
+      role: null,
+      code: null,
+      notice: null,
+    });
+    public readonly sent: unknown[] = [];
+    public readonly share = jest.fn();
+    public readonly leave = jest.fn();
+    public pending: { start: OnlineStart; lockstep: Lockstep } | null = null;
+    public startMatch = jest.fn(
+      (start: OnlineStart) =>
+        new Lockstep(0, (message) => this.sent.push({ ...start, ...message }))
+    );
+    public takeStart() {
+      const pending = this.pending;
+      this.pending = null;
+      return pending;
+    }
+    public connect(seat: 0 | 1): void {
+      this.lobby.set({
+        phase: 'connected',
+        role: seat === 0 ? 'host' : 'guest',
+        code: null,
+        notice: null,
+      });
+      this.events.next({ type: 'connected', seat });
+    }
+  }
+
+  let service: GameStateService;
+  let store: GameStateStore;
+  let playerStore: PlayerStore;
+  let online: FakeOnline;
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    online = new FakeOnline();
+    TestBed.configureTestingModule({
+      providers: [{ provide: OnlineMatchService, useValue: online }],
+    });
+    service = TestBed.inject(GameStateService);
+    store = TestBed.inject(GameStateStore);
+    playerStore = TestBed.inject(PlayerStore);
+    service.setArenaSize(320, 180);
+  });
+
+  it('shares the setup and starts the match as the host', () => {
+    service.setLevel('petri-dish');
+    online.connect(0);
+
+    expect(store.snapshot().online).toEqual({
+      seat: 0,
+      levelId: 'petri-dish',
+      colors: store.snapshot().colors,
+    });
+    expect(online.share).toHaveBeenCalledWith({
+      levelId: 'petri-dish',
+      colors: store.snapshot().colors,
+    });
+
+    service.setLevel('serpentine');
+    expect(online.share).toHaveBeenLastCalledWith(
+      expect.objectContaining({ levelId: 'serpentine' })
+    );
+
+    service.start();
+
+    expect(online.startMatch).toHaveBeenCalledWith(
+      expect.objectContaining({ levelId: 'serpentine' })
+    );
+    expect(store.snapshot().currentState).toBe(GameState.RUNNING);
+    const [you, opponent] = playerStore.entities();
+    expect([you.name, you.isBot]).toEqual(['You', false]);
+    expect([opponent.name, opponent.isBot]).toEqual(['Opponent', true]);
+  });
+
+  it('waits for the other device, and says so after a while', () => {
+    online.connect(0);
+    service.start();
+
+    for (let frame = 0; frame < 30; frame++) {
+      service.advance(320, 180, 1);
+    }
+
+    expect(TestBed.inject(PlayerService).tickCount).toBe(INPUT_DELAY_TICKS);
+    expect(store.snapshot().waitingForPeer).toBe(true);
+  });
+
+  it('gives the match to the player left when the other one goes', () => {
+    online.connect(1);
+    online.pending = {
+      start: { levelId: 'petri-dish', colors: ['orange', 'blue'], seed: 9 },
+      lockstep: new Lockstep(1, () => undefined),
+    };
+    service.start();
+    expect(store.snapshot().currentState).toBe(GameState.RUNNING);
+
+    online.events.next({ type: 'ended', reason: 'left' });
+
+    const state = store.snapshot();
+    expect(state.currentState).toBe(GameState.END);
+    expect(state.endedBy).toBe('forfeit');
+    expect(state.winner?.id).toBe(1);
+    expect(state.earnings).toBeNull();
+    expect(state.online).toBeNull();
+  });
+
+  it('starts nothing as the guest until the host started', () => {
+    online.connect(1);
+
+    service.start();
+
+    expect(store.snapshot().currentState).toBe(GameState.START);
   });
 });

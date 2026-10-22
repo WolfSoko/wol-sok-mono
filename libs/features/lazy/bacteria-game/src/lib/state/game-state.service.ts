@@ -26,8 +26,9 @@ import {
   GameStateState,
   GameStateStore,
   isMatchOn,
+  OnlineSeat,
 } from './game.states';
-import { getLevel, gridScale, levelBalance } from './levels';
+import { getLevel, gridScale, levelBalance, levelSize } from './levels';
 import { colonyCapacity } from './game-balance';
 import { MatchEarnings } from './earnings';
 import {
@@ -50,6 +51,9 @@ import { replayFromHash } from './replay-link';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
 import { ProgressService } from '../progress.service';
+import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
+import type { Lockstep } from '../net/lockstep';
+import { arenaSize, ONLINE_SIM_RESOLUTION } from './arena-size';
 
 /**
  * The most time one frame may take the war forward, in milliseconds. A
@@ -57,6 +61,12 @@ import { ProgressService } from '../progress.service';
  * more ticks on ever longer frames.
  */
 const MAX_FRAME_MS = 3 * TICK_MS;
+
+/**
+ * Frames an online match may wait for the other device before it says so:
+ * a short stutter on a slow connection is no news.
+ */
+const WAIT_NOTICE_FRAMES = 20;
 
 /**
  * What the next match is set to outside the setup: a ghost to fight, a
@@ -80,8 +90,11 @@ export class GameStateService {
   private playerStore = inject(PlayerStore);
   private playerService = inject(PlayerService);
   private progress = inject(ProgressService);
+  private online = inject(OnlineMatchService);
   /** What the colonies on the board were spawned from - see `initPlayers`. */
   private plan: MatchPlan | null = null;
+  /** Frames in a row an online match could not go on, waiting for the other device. */
+  private stalledFrames = 0;
 
   /**
    * The ticks of the display frames the game runs on - see
@@ -109,12 +122,23 @@ export class GameStateService {
    */
   public readonly frames$: Observable<GameFrame> = this.frames.asObservable();
 
+  public constructor() {
+    this.online.events$.subscribe((event) => this.onOnline(event));
+  }
+
   /**
    * Runs the ticks of a display frame. The match may end in any of them;
    * the ones after that are not played, and not counted on the match clock.
    */
   public advance(width: number, height: number, ticks: number): void {
-    for (let tick = 0; tick < ticks && this.isRunning(); tick++) {
+    let played = 0;
+    // An online match waits for the other device's inputs: the ticks it
+    // cannot play now are not made up later, both devices slow down alike.
+    for (
+      ;
+      played < ticks && this.isRunning() && this.playerService.canTick();
+      played++
+    ) {
       // Counted in whole ticks, so the clock lands on every second exactly.
       this.gameStateStore.update((state) => ({
         timePassed: ticksToMs(Math.round(state.timePassed / TICK_MS) + 1),
@@ -123,9 +147,89 @@ export class GameStateService {
       const outcome = this.playerService.outcome();
       if (outcome != null) {
         this.endMatch(outcome);
+      } else if (this.playerService.desynced) {
+        this.endMatch({ winner: null, reason: 'desync' });
       }
     }
+    this.noteStall(ticks > 0 && played === 0);
     this.playerService.endFrame();
+  }
+
+  /** Tells the player once an online match has waited for a while. */
+  private noteStall(stalled: boolean): void {
+    this.stalledFrames = stalled ? this.stalledFrames + 1 : 0;
+    const waiting = this.stalledFrames > WAIT_NOTICE_FRAMES;
+    if (waiting !== this.gameStateStore.snapshot().waitingForPeer) {
+      this.gameStateStore.update({ waitingForPeer: waiting });
+    }
+  }
+
+  /** Follows the online match: the lobby, the host's setup, the connection. */
+  private onOnline(event: OnlineEvent): void {
+    switch (event.type) {
+      case 'connected': {
+        const { levelId, colors } = this.gameStateStore.snapshot();
+        this.gameStateStore.update({
+          online: { seat: event.seat, levelId, colors },
+        });
+        // The guest shows the host's setup once it arrives.
+        this.shareSetup();
+        this.respawnIfIdle();
+        return;
+      }
+      case 'setup': {
+        const { online } = this.gameStateStore.snapshot();
+        if (online !== null) {
+          this.gameStateStore.update({
+            online: { ...online, ...event.setup },
+          });
+          this.respawnIfIdle();
+        }
+        return;
+      }
+      case 'ended':
+        this.endOnline();
+        return;
+      case 'start':
+        // The game component starts the match - see `start`.
+        return;
+    }
+  }
+
+  /**
+   * The online connection is gone: a match under way is won by the player
+   * still here, and the game is back to this device's setup.
+   */
+  private endOnline(): void {
+    const { online, currentState } = this.gameStateStore.snapshot();
+    if (online === null) {
+      return;
+    }
+    const matchOn = isMatchOn(currentState);
+    if (matchOn) {
+      const winner =
+        untracked(this.playerStore.entities).find(
+          (player) => player.id === online.seat
+        ) ?? null;
+      this.endMatch({ winner, reason: 'forfeit' });
+    }
+    this.gameStateStore.update({ online: null, waitingForPeer: false });
+    // A match it ended stays on the board under its result until reset.
+    if (!matchOn) {
+      this.respawnIfIdle();
+    }
+  }
+
+  /** The host tells the guest how the next match is set up. */
+  private shareSetup(): void {
+    const { online, levelId, colors } = this.gameStateStore.snapshot();
+    if (online?.seat !== 0) {
+      return;
+    }
+    if (online.levelId !== levelId || online.colors !== colors) {
+      this.gameStateStore.update({ online: { ...online, levelId, colors } });
+    }
+    this.online.share({ levelId, colors });
   }
 
   private isRunning(): boolean {
@@ -177,7 +281,7 @@ export class GameStateService {
    * award reach the store together.
    */
   private endMatch(outcome: MatchOutcome): void {
-    const { series, ghost, endless, endlessMatch } =
+    const { series, ghost, endless, endlessMatch, online } =
       this.gameStateStore.snapshot();
     // The run's match takes the run on - a draw is no win.
     const run =
@@ -188,7 +292,11 @@ export class GameStateService {
     // One update, so the result and the award reach the readers together.
     this.gameStateStore.update({
       // A ghost match is no match to play again: its opponent is no bot.
-      ...(ghost === null ? { lastReplay: this.replay() } : {}),
+      // Nor is one online: it has no human to play the other side again.
+      ...(ghost === null && online === null
+        ? { lastReplay: this.replay() }
+        : {}),
+      waitingForPeer: false,
       endless: run,
       currentState: GameState.END,
       winner: outcome.winner,
@@ -223,10 +331,11 @@ export class GameStateService {
     /** The levels the endless run has beaten after this match, if it was one. */
     endlessWins: number | null
   ): MatchEarnings | null {
-    const { timePassed, ghost, dailyDay, ...setup } =
+    const { timePassed, ghost, dailyDay, online, ...setup } =
       this.gameStateStore.snapshot();
-    if (ghost !== null) {
+    if (ghost !== null || online !== null) {
       // Beating your own ghost is for the fun of it - no medallion, no XP.
+      // An online match counts for nothing either: it is played for fun.
       return null;
     }
     // The match as it was spawned - a level picked for it included, and
@@ -265,7 +374,12 @@ export class GameStateService {
    * from a fresh seed - every spawn is a match that may be played. A ghost
    * match is played on the seed of the ghost's run.
    */
-  private initPlayers() {
+  private initPlayers(match?: { seed: number; lockstep: Lockstep }) {
+    const { online } = this.gameStateStore.snapshot();
+    if (online !== null) {
+      this.initOnline(online, match);
+      return;
+    }
     const {
       width,
       height,
@@ -290,6 +404,36 @@ export class GameStateService {
     };
     const { spawns, options } = planMatch(this.plan, ghost);
     this.playerService.init(spawns, options);
+  }
+
+  /**
+   * Spawns the colonies of an online match: the host's setup, on the grid
+   * both devices run, played by the lockstep once the match starts.
+   */
+  private initOnline(
+    online: OnlineSeat,
+    match?: { seed: number; lockstep: Lockstep }
+  ): void {
+    const { difficulty } = this.gameStateStore.snapshot();
+    const { width, height } = arenaSize(
+      ONLINE_SIM_RESOLUTION,
+      levelSize(getLevel(online.levelId))
+    );
+    this.plan = {
+      levelId: online.levelId,
+      mode: 'two-players',
+      difficulty,
+      colors: online.colors,
+      headStart: 0,
+      width,
+      height,
+      seed: match?.seed ?? 0,
+    };
+    const { spawns, options } = planMatch(this.plan, null, {
+      seat: online.seat,
+      drivers: match?.lockstep.drivers() ?? new Map(),
+    });
+    this.playerService.init(spawns, { ...options, lockstep: match?.lockstep });
   }
 
   /**
@@ -425,6 +569,7 @@ export class GameStateService {
         JSON.stringify(setup[key]) !== JSON.stringify(current[key])
     );
     this.gameStateStore.update(changed ? { ...setup, series: null } : setup);
+    this.shareSetup();
     this.respawnIfIdle();
   }
 
@@ -500,6 +645,11 @@ export class GameStateService {
   }
 
   start() {
+    const { online } = this.gameStateStore.snapshot();
+    if (online !== null) {
+      this.startOnline(online);
+      return;
+    }
     this.initPlayers();
     const { dailyDay } = this.gameStateStore.snapshot();
     if (dailyDay !== null) {
@@ -519,6 +669,59 @@ export class GameStateService {
       endedBy: null,
       earnings: null,
     }));
+  }
+
+  /**
+   * Starts an online match: the host picks the seed and tells the guest,
+   * the guest takes the match the host started - and neither starts one
+   * on its own.
+   */
+  private startOnline(online: OnlineSeat): void {
+    let match: { seed: number; lockstep: Lockstep } | null = null;
+    if (online.seat === 0) {
+      const seed = randomSeed();
+      const lockstep = this.online.startMatch({
+        levelId: online.levelId,
+        colors: online.colors,
+        seed,
+      });
+      match = lockstep === null ? null : { seed, lockstep };
+    } else {
+      const taken = this.online.takeStart();
+      if (taken !== null) {
+        const { levelId, colors } = taken.start;
+        this.gameStateStore.update({ online: { ...online, levelId, colors } });
+        match = { seed: taken.start.seed, lockstep: taken.lockstep };
+      }
+    }
+    if (match === null) {
+      return;
+    }
+    this.initPlayers(match);
+    this.stalledFrames = 0;
+    this.gameStateStore.update({
+      currentState: GameState.RUNNING,
+      series: null,
+      endless: null,
+      timePassed: 0,
+      winner: null,
+      endedBy: null,
+      earnings: null,
+      waitingForPeer: false,
+    });
+  }
+
+  /**
+   * Leaves the online match - the connection, and the match if one is on,
+   * which the other device then wins.
+   */
+  public leaveOnline(): void {
+    if (this.online.lobby().phase === 'idle') {
+      return;
+    }
+    // Whoever leaves wins nothing: the match goes with the connection.
+    this.gameStateStore.update({ online: null, waitingForPeer: false });
+    this.online.leave();
   }
 
   reset() {

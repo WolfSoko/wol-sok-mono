@@ -126,6 +126,10 @@
           </div>
         }
 
+        @if (running() && !paused() && waitingForPeer()) {
+          <p class="peer-wait" role="status">Waiting for your opponent…</p>
+        }
+
         @if (panel(); as open) {
           @if (open === "pause" || open === "over") {
             <div
@@ -148,7 +152,7 @@
                       <mat-icon>play_arrow</mat-icon>
                       Resume
                     </button>
-                    @if (!inEndlessRun()) {
+                    @if (canRestart()) {
                       <button
                         mat-stroked-button
                         type="button"
@@ -218,9 +222,9 @@
                     class="screen"
                     [entry]="newGameEntry()"
                     [difficulty]="difficulty()"
-                    [levelId]="selectedLevelId()"
+                    [levelId]="choiceLevelId()"
                     [medals]="medals()"
-                    [locks]="lockedLevels()"
+                    [locks]="choiceLocks()"
                     [campaignNote]="campaignNote()"
                     [seriesLength]="seriesLength()"
                     [headStart]="headStart()"
@@ -228,6 +232,11 @@
                     [rivalry]="rivalry()"
                     [daily]="dailyCard()"
                     [endlessBest]="progress.endlessBest()"
+                    [online]="onlineLobby()"
+                    [onlineAvailable]="onlineAvailable"
+                    (hostOnline)="hostOnline()"
+                    (joinOnline)="joinOnline($event)"
+                    (leaveOnline)="leaveOnline()"
                     (kindChange)="setPlayKind($event)"
                     (levelChange)="selectLevel($event)"
                     (difficultyChange)="selectDifficulty($event)"

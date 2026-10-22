@@ -42,6 +42,15 @@ export interface GhostInputs {
   steer: SteeringVector | null;
 }
 
+/**
+ * Whatever puts in for a seat the humans at this screen do not steer
+ * directly: a recording, or the other device of an online match.
+ */
+export interface SeatDriver {
+  /** What the seat puts in before `tick`. */
+  before(tick: number): GhostInputs;
+}
+
 /** One list of a recording, read in the order of its ticks. */
 class Cursor<T extends readonly number[]> {
   private index = 0;
@@ -61,7 +70,7 @@ class Cursor<T extends readonly number[]> {
  * replay plays every human back this way, a ghost match one of them against
  * a live player.
  */
-export class GhostController {
+export class GhostController implements SeatDriver {
   private readonly steers: Cursor<ReplayInputs['steers'][number]>;
   private readonly drags: Cursor<ReplayInputs['drags'][number]>;
   private readonly boosts: Cursor<ReplayInputs['boosts'][number]>;

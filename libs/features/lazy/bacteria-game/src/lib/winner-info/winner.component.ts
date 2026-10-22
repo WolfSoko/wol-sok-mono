@@ -28,7 +28,7 @@ import { ProgressService } from '../progress.service';
 import { replayLink } from '../state/replay-link';
 import { DAILY_ATTEMPTS } from '../state/daily';
 import { isRunOver } from '../state/endless';
-import { BOSS_SEAT } from '../state/win-conditions';
+import { BOSS_SEAT, EndReason } from '../state/win-conditions';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction =
@@ -139,6 +139,30 @@ export class WinnerComponent {
     return this.winner()?.isBot === false ? 'Next level' : 'Try it again';
   });
 
+  /**
+   * True after a match between two devices - also once the other one left,
+   * which ended it.
+   */
+  public online: Signal<boolean> = computed(
+    () =>
+      this.state.online() !== null ||
+      this.state.endedBy() === 'forfeit' ||
+      this.state.endedBy() === 'desync'
+  );
+
+  /** True while the online connection holds. */
+  public connected: Signal<boolean> = computed(
+    () => this.state.online() !== null
+  );
+
+  /**
+   * True for the guest of an online match, who waits for the host to start
+   * the next one.
+   */
+  public onlineGuest: Signal<boolean> = computed(
+    () => this.state.online()?.seat === 1
+  );
+
   /** True in a match against the player's own ghost. */
   public againstGhost: Signal<boolean> = computed(
     () => this.state.ghost() !== null
@@ -217,6 +241,7 @@ export class WinnerComponent {
   public canFightGhost: Signal<boolean> = computed(
     () =>
       !this.againstGhost() &&
+      !this.online() &&
       this.state.lastReplay()?.header.mode === 'vs-computer'
   );
 
@@ -323,6 +348,9 @@ export class WinnerComponent {
    */
   public headline: Signal<string> = computed(() => {
     const player = this.winner();
+    if (this.online()) {
+      return onlineHeadline(player, this.state.endedBy());
+    }
     if (this.state.endedBy() === 'time') {
       return this.timeUp(player);
     }
@@ -410,6 +438,40 @@ export class WinnerComponent {
       ? 'Time is up - your colony is the bigger one. You win!'
       : `Time is up - ${player.name} has the bigger colony and wins!`;
   }
+}
+
+/** What the winner of an online match did to win, by what ended it. */
+const ONLINE_DEEDS: Partial<Record<EndReason, string>> = {
+  annihilation: 'ate the other colony',
+  time: 'had the bigger colony when time ran out',
+  hold: 'held the zone',
+  survive: 'survived',
+  harvest: 'ate up enough pellets first',
+};
+
+/**
+ * The headline of an online match, for the player at this device: the
+ * other device's colony is "your opponent".
+ */
+function onlineHeadline(
+  winner: Player | null,
+  reason: EndReason | null
+): string {
+  if (reason === 'forfeit') {
+    return 'Your opponent is gone - the match is yours.';
+  }
+  if (reason === 'desync') {
+    return 'The two devices fell out of step - the match is off.';
+  }
+  if (winner === null) {
+    return reason === 'time'
+      ? 'Time is up - and both colonies are the same size. A draw!'
+      : 'It is a draw - both colonies wiped each other out!';
+  }
+  const deed = ONLINE_DEEDS[reason ?? 'annihilation'] ?? 'won';
+  return winner.isBot
+    ? `Your opponent ${deed} - they win.`
+    : `You ${deed} - you win!`;
 }
 
 /** "1 level beaten", "3 levels beaten". */

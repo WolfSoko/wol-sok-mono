@@ -308,6 +308,21 @@
   }
 }
 
+// Over the arena while an online match waits for the other device.
+.peer-wait {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 70%);
+  color: #fff;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
 // The pause menu and the match result, cards laid over the arena - and the
 // menu screens, which fill it (.screens). Only the panel takes input.
 .stage-panel {

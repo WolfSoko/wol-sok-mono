@@ -42,6 +42,8 @@ import {
 } from '../state/rivalry';
 import { ruleNote, winRuleOf } from '../state/win-conditions';
 import { LevelMapComponent } from './level-map.component';
+import { OnlineLobbyComponent } from './online-lobby.component';
+import type { OnlineLobby } from '../net/online-match.service';
 import { DailyCard, endlessNote, levelColors } from './menu-cards';
 import {
   NewGameEntry,
@@ -71,6 +73,7 @@ import { ScreenHeaderComponent } from './screen-header.component';
     MatIconModule,
     MatStepperModule,
     MedallionComponent,
+    OnlineLobbyComponent,
     ScreenHeaderComponent,
   ],
   templateUrl: './new-game.component.html',
@@ -104,6 +107,15 @@ export class NewGameComponent {
   public readonly daily = input.required<DailyCard>();
   /** The most levels beaten in one endless run. */
   public readonly endlessBest = input(0);
+  /** The lobby of an online match. */
+  public readonly online = input<OnlineLobby>({
+    phase: 'idle',
+    role: null,
+    code: null,
+    notice: null,
+  });
+  /** False where online matches cannot be played. */
+  public readonly onlineAvailable = input(false);
 
   /** A mode was picked - the host sets the game up for it. */
   public readonly kindChange = output<PlayKind>();
@@ -113,6 +125,9 @@ export class NewGameComponent {
   public readonly headStartChange = output<HeadStart>();
   /** Start the match - or the run - of the mode picked. */
   public readonly start = output<PlayKind>();
+  public readonly hostOnline = output<void>();
+  public readonly joinOnline = output<string>();
+  public readonly leaveOnline = output<void>();
   public readonly back = output<void>();
 
   /** The mode picked, null until one is. */
@@ -136,7 +151,21 @@ export class NewGameComponent {
     }))
   );
 
-  protected readonly vsComputer = computed(() => this.kind() !== 'two-players');
+  protected readonly vsComputer = computed(
+    () => this.kind() !== 'two-players' && this.kind() !== 'online'
+  );
+
+  /**
+   * True while the Start button may start: always, but online only for
+   * the host, once the guest is there.
+   */
+  protected readonly canStart = computed(() => {
+    if (this.kind() !== 'online') {
+      return true;
+    }
+    const { phase, role } = this.online();
+    return phase === 'connected' && role === 'host';
+  });
 
   /** The id of the level the match is played on - none for a run. */
   private readonly briefedId = computed(() => {
@@ -265,7 +294,7 @@ export class NewGameComponent {
 
   protected startGame(): void {
     const kind = this.kind();
-    if (kind !== null) {
+    if (kind !== null && this.canStart()) {
       this.start.emit(kind);
     }
   }
@@ -283,6 +312,10 @@ export class NewGameComponent {
         return 'Any difficulty, any level';
       case 'two-players':
         return this.rivalryLine();
+      case 'online':
+        return this.onlineAvailable()
+          ? 'A friend on another device'
+          : 'Not in this build';
     }
   }
 }

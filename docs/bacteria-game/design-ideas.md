@@ -608,6 +608,13 @@ The cheapest multiplayer that works tonight and needs no server logic:
 
 ### 5.3 Step two: live 1 v 1, host-authoritative
 
+> Built differently: online 1 v 1 runs in **lockstep** on the CPU simulation
+> over a WebRTC data channel, with Firestore rooms for signalling
+> ([ADR 0009](../adr/0009-bacteria-wars-online-lockstep.md)) - the fixed
+> tick, the seeds and the engine's seat drivers made it cheaper than the
+> state stream below. The lib's README describes it. What follows stays as
+> the way to go should big maps or the GPU simulation be wanted online.
+
 One browser is the host, runs the simulation (GPU allowed), and sends state to
 the guest; the guest sends its crosshair and boost. Transport is WebRTC with
 two data channels, since a channel's reliability is fixed when it is created:
@@ -955,8 +962,8 @@ settings (for phase 7).
   simulation resolution, is the **reference simulation** for replays and
   verification; the GPU one is for playing.
 - Progress is stored **locally first**, cloud sync is opt-in and anonymous.
-- Online play is **host-authoritative over WebRTC with Firestore signalling**,
-  not lockstep, until four-player lockstep is actually wanted.
+- Online play is **lockstep over WebRTC with Firestore signalling**, on the
+  CPU simulation (ADR 0009) - not host-authoritative as first planned.
 - Generated level ids (`gen:<recipe>:<seed>:<difficulty>`) are **stable
   forever**: a change to the generator that would alter the output of an old
   seed gets a new recipe name instead.
