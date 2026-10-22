@@ -1,6 +1,9 @@
 [![.github/workflows/ci.yml](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/ci.yml/badge.svg)](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/ci.yml)
 ![renovate](https://img.shields.io/badge/maintained%20with-renovate-blue?logo=renovatebot)
 [![codecov](https://codecov.io/github/WolfSoko/wol-sok-mono/branch/main/graph/badge.svg?token=SYKFAX478R)](https://codecov.io/github/WolfSoko/wol-sok-mono)
+[![Get it on Google Play](https://img.shields.io/badge/Google_Play-Bacteria_Wars-414141?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=de.wolsok.bacteriawars)
+[![@wolsok/thanos on npm](https://img.shields.io/npm/v/@wolsok/thanos?logo=npm&label=%40wolsok%2Fthanos)](https://www.npmjs.com/package/@wolsok/thanos)
+[![@wolsok/nx-aws-cdk-v2 on npm](https://img.shields.io/npm/v/@wolsok/nx-aws-cdk-v2?logo=npm&label=%40wolsok%2Fnx-aws-cdk-v2)](https://www.npmjs.com/package/@wolsok/nx-aws-cdk-v2)
 
 wol-sok-mono repo
 
@@ -28,17 +31,15 @@ The project emphasizes clean code architecture following the Angular style guide
 
 ## Live Apps
 
-| App | Link | What it is |
-| --- | --- | --- |
-| **Angular Examples** | [angularexamples.wolsok.de](https://angularexamples.wolsok.de/) | The main showcase: shader, Fourier, neural-network, reaction-diffusion and more experiments ([`angular-examples`](./apps/angular-examples)) |
-| **Bacteria Wars** | [bacteria-game.wolsok.de](https://bacteria-game.wolsok.de/) | Two bacteria colonies, one petri dish. Play in the browser, install as PWA, or get the Android app ([`bacteria-game-remote`](./apps/bacteria-game-remote)) |
-| **Bacteria Wars for Android** | [Google Play](https://play.google.com/store/apps/details?id=de.wolsok.bacteriawars) | Trusted Web Activity wrapping the Bacteria Wars PWA ([`bacteria-wars-android`](./apps/bacteria-wars-android)) |
-| **Fourier Analysis** | [fourier-analysis.wolsok.de](https://fourier-analysis.wolsok.de/) | Native Federation remote, also runs standalone ([`fourier-analysis-remote`](./apps/fourier-analysis-remote)) |
-| **Shader Examples** | [shader-examples.wolsok.de](https://shader-examples.wolsok.de/) | Native Federation remote with WebGL shaders ([`shader-examples-remote`](./apps/shader-examples-remote)) |
-| **Pacetrainer** | [pacetrainer-ef5b4.web.app](https://pacetrainer-ef5b4.web.app/) | Pace training app built with Analog.js ([`pacetrainer`](./apps/pacetrainer)) |
-| **RollaPolla** | [rollapolla.com](https://rollapolla.com/) | Polls, server-side rendered with Analog.js ([`rollapolla-analog`](./apps/rollapolla-analog)) |
-
-[![Get it on Google Play](https://img.shields.io/badge/Google_Play-Bacteria_Wars-414141?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=de.wolsok.bacteriawars)
+| App | Link | Status | What it is |
+| --- | --- | --- | --- |
+| **Angular Examples** | [angularexamples.wolsok.de](https://angularexamples.wolsok.de/) | [![Angular Examples](https://img.shields.io/website?url=https://angularexamples.wolsok.de/&label=status&up_message=online&down_message=offline)](https://angularexamples.wolsok.de/) | The main showcase: shader, Fourier, neural-network, reaction-diffusion and more experiments ([`angular-examples`](./apps/angular-examples)) |
+| **Bacteria Wars** | [bacteria-wars.wolsok.de](https://bacteria-wars.wolsok.de/) | [![Bacteria Wars](https://img.shields.io/website?url=https://bacteria-wars.wolsok.de/&label=status&up_message=online&down_message=offline)](https://bacteria-wars.wolsok.de/) | Two bacteria colonies, one petri dish. Play in the browser, install as PWA, or get the Android app ([`bacteria-game-remote`](./apps/bacteria-game-remote)) |
+| **Bacteria Wars for Android** | [Google Play](https://play.google.com/store/apps/details?id=de.wolsok.bacteriawars) | [![Get it on Google Play](https://img.shields.io/badge/Google_Play-Bacteria_Wars-414141?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=de.wolsok.bacteriawars) | Trusted Web Activity wrapping the Bacteria Wars PWA ([`bacteria-wars-android`](./apps/bacteria-wars-android)) |
+| **Fourier Analysis** | [fourier-analysis.wolsok.de](https://fourier-analysis.wolsok.de/) | [![Fourier Analysis](https://img.shields.io/website?url=https://fourier-analysis.wolsok.de/&label=status&up_message=online&down_message=offline)](https://fourier-analysis.wolsok.de/) | Native Federation remote, also runs standalone ([`fourier-analysis-remote`](./apps/fourier-analysis-remote)) |
+| **Shader Examples** | [shader-examples.wolsok.de](https://shader-examples.wolsok.de/) | [![Shader Examples](https://img.shields.io/website?url=https://shader-examples.wolsok.de/&label=status&up_message=online&down_message=offline)](https://shader-examples.wolsok.de/) | Native Federation remote with WebGL shaders ([`shader-examples-remote`](./apps/shader-examples-remote)) |
+| **Pacetrainer** | [pacetrainer-ef5b4.web.app](https://pacetrainer-ef5b4.web.app/) | [![Pacetrainer](https://img.shields.io/website?url=https://pacetrainer-ef5b4.web.app/&label=status&up_message=online&down_message=offline)](https://pacetrainer-ef5b4.web.app/) | Pace training app built with Analog.js ([`pacetrainer`](./apps/pacetrainer)) |
+| **RollaPolla** | [rollapolla.com](https://rollapolla.com/) | [![RollaPolla](https://img.shields.io/website?url=https://rollapolla.com/&label=status&up_message=online&down_message=offline)](https://rollapolla.com/) | Polls, server-side rendered with Analog.js ([`rollapolla-analog`](./apps/rollapolla-analog)) |
 
 ## Documentation
 
@@ -71,7 +72,7 @@ For detailed setup instructions, see the [Getting Started Guide](./docs/GETTING_
 
 A special angular-component is extracted from these experiments called `ws-thanos`. It vaporizes your html Elements into
 tiny atoms.
-[@wolsok/thanos on npm](https://www.npmjs.com/package/@wolsok/thanos)
+[![npm](https://img.shields.io/npm/v/@wolsok/thanos?logo=npm)](https://www.npmjs.com/package/@wolsok/thanos) [![downloads](https://img.shields.io/npm/dm/@wolsok/thanos)](https://www.npmjs.com/package/@wolsok/thanos)
 
 Readme under: [README.md](./libs/public/ws-thanos/README.md)
 
@@ -82,7 +83,7 @@ A running version can be found at https://angularexamples.wolsok.de/
 The Nx plugin that powers the `*-cdk` infrastructure projects in this repo lives here too, as
 `libs/public/nx-aws-cdk-v2`. It provides `deploy`, `destroy`, `synth` and `bootstrap` executors plus an
 application generator for AWS CDK v2 apps.
-[@wolsok/nx-aws-cdk-v2 on npm](https://www.npmjs.com/package/@wolsok/nx-aws-cdk-v2)
+[![npm](https://img.shields.io/npm/v/@wolsok/nx-aws-cdk-v2?logo=npm)](https://www.npmjs.com/package/@wolsok/nx-aws-cdk-v2) [![downloads](https://img.shields.io/npm/dm/@wolsok/nx-aws-cdk-v2)](https://www.npmjs.com/package/@wolsok/nx-aws-cdk-v2)
 
 Readme under: [README.md](./libs/public/nx-aws-cdk-v2/README.md), docs under [docs/nx-aws-cdk-v2](./docs/nx-aws-cdk-v2).
 
