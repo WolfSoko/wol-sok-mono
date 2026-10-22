@@ -8,7 +8,7 @@
  * 80 % safe zone, so the same picture works as a maskable icon. The cells
  * come from a seeded PRNG, so a run without changes reproduces the files.
  *
- * The Android app (apps/bacteria-game-android) gets the same picture as its
+ * The Android app (apps/bacteria-wars-android) gets the same picture as its
  * launcher icon, split into the layers of an adaptive icon (plus a one-colour
  * layer for themed icons), and the dish alone for the splash screen.
  *
@@ -21,7 +21,7 @@ import { render, toIco } from '../icons/render-icons';
 
 const srcDir = resolve('apps/bacteria-game-remote/src');
 const iconsDir = join(srcDir, 'icons');
-const androidResDir = resolve('apps/bacteria-game-android/app/src/main/res');
+const androidResDir = resolve('apps/bacteria-wars-android/app/src/main/res');
 
 type Point = [number, number];
 /** -1 for the orange colony on the left, 1 for the blue one on the right. */
