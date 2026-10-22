@@ -1,7 +1,7 @@
 /**
  * Ships a release of the Bacteria Wars Android app: builds the signed APK and
- * app bundle, attaches both to the GitHub release and uploads the bundle to
- * the internal testing track on Google Play. Promoting a build to production
+ * app bundle, uploads the bundle to the internal testing track on Google Play
+ * and attaches both to the GitHub release. Promoting a build to production
  * stays a step in the Play Console.
  *
  * Runs as `npx nx run bacteria-wars-android:deploy` in the deploy workflow,
@@ -210,15 +210,17 @@ async function main(): Promise<void> {
   copyFileSync(join(outputsDir, 'apk/release/app-release.apk'), apk);
   copyFileSync(join(outputsDir, 'bundle/release/app-release.aab'), bundle);
   try {
-    execFileSync('gh', ['release', 'upload', tag, apk, bundle, '--clobber'], {
-      stdio: 'inherit',
-    });
+    // Play first: the release only lists files that are on Play, and a run
+    // again after a failed GitHub upload skips the Play upload.
     await publishToPlay(
       assetLink.target.package_name,
       bundle,
       versionCode(version),
       tag
     );
+    execFileSync('gh', ['release', 'upload', tag, apk, bundle, '--clobber'], {
+      stdio: 'inherit',
+    });
   } finally {
     rmSync(apk, { force: true });
     rmSync(bundle, { force: true });

@@ -66,9 +66,9 @@ every release, in its own `android` leg that compares against the last
 
 1. builds the signed release APK and app bundle, with the version code of the
    release's `version.json`,
-2. attaches both to the GitHub release as `bacteria-wars-<tag>.apk` and
-   `.aab`,
-3. uploads the bundle to the **internal testing** track on Google Play.
+2. uploads the bundle to the **internal testing** track on Google Play,
+3. attaches the APK and bundle to the GitHub release as
+   `bacteria-wars-<tag>.apk` and `.aab`.
 
 Promoting a build to production stays a step in the Play Console. A release
 whose bundle is on Play already skips the upload, so a failed deploy can run
