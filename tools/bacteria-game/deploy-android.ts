@@ -4,7 +4,9 @@
  * and attaches both to the GitHub release. Promoting a build to production
  * stays a step in the Play Console. A second edit then brings the store listing in
  * line with store/: the texts in store/listings/<language>/ and the graphics
- * in store/graphics/ (see tools/bacteria-game/generate-store-assets.ts).
+ * in store/graphics/ (see tools/bacteria-game/generate-store-assets.ts), and
+ * the promo videos of store/promo-video/, uploaded to YouTube once each (see
+ * tools/youtube/youtube.ts) and linked from their listing.
  *
  * Runs as `npx nx run bacteria-wars-android:deploy` in the deploy workflow,
  * whenever a release affects the app. It reads from the environment:
@@ -17,6 +19,8 @@
  * - PLAY_RELEASE_STATUS: optional, `draft` while the app's Play setup is
  *   incomplete; `completed` otherwise
  * - GITHUB_TOKEN (or GH_TOKEN): for `gh release upload`
+ * - YOUTUBE_OAUTH_CLIENT_ID, YOUTUBE_OAUTH_CLIENT_SECRET,
+ *   YOUTUBE_OAUTH_REFRESH_TOKEN: optional, to upload the promo videos
  *
  * The version code is the one of version.json, as in app/build.gradle.kts.
  * A run for a release whose bundle is on Play already skips the upload, so
@@ -34,6 +38,11 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import {
+  publishVideos,
+  VideoMeta,
+  youtubeConfigured,
+} from '../youtube/youtube';
 
 const appDir = resolve('apps/bacteria-wars-android');
 const outputsDir = join(appDir, 'app/build/outputs');
@@ -50,6 +59,16 @@ interface Listing {
   title: string;
   shortDescription: string;
   fullDescription: string;
+  /** The YouTube URL of the promo video. */
+  video?: string;
+}
+
+/** A promo video in store/promo-video/ and the listing that shows it. */
+interface PromoVideo {
+  file: string;
+  /** The Play listing language whose promo video it is, if any. */
+  listing?: string;
+  meta: VideoMeta;
 }
 
 /** Play's limits on the listing texts, in characters. */
@@ -147,7 +166,8 @@ function storeImages(): Images[] {
 async function updateListing(
   call: PlayCall,
   editUrl: string,
-  uploadUrl: string
+  uploadUrl: string,
+  videos: Map<string, string>
 ): Promise<void> {
   const { listings: current = [] } = await call<{ listings?: Listing[] }>(
     `${editUrl}/listings`
@@ -155,17 +175,22 @@ async function updateListing(
   const images = storeImages();
   for (const listing of storeListings()) {
     const live = current.find((each) => each.language === listing.language);
+    const video = videos.get(listing.language);
+    if (video != null) {
+      listing.video = video;
+    }
     const fields = Object.keys(LIMITS) as (keyof typeof LIMITS)[];
     if (
       live == null ||
-      fields.some((field) => live[field] !== listing[field])
+      fields.some((field) => live[field] !== listing[field]) ||
+      (video != null && live.video !== video)
     ) {
       // A patch keeps what store/ does not hold, such as a promo video.
       await call(`${editUrl}/listings/${listing.language}`, {
         method: 'PATCH',
         body: JSON.stringify(listing),
       });
-      console.log(`Updated the ${listing.language} listing texts.`);
+      console.log(`Updated the ${listing.language} listing texts and video.`);
     }
     for (const { type, files } of images) {
       const imagesUrl = `/listings/${listing.language}/${type}`;
@@ -260,6 +285,31 @@ async function accessToken(account: ServiceAccount): Promise<string> {
 }
 
 /**
+ * Puts the promo videos of store/promo-video/videos.json on the YouTube
+ * channel, each file once, and returns the video URL per Play listing
+ * language. Without the YouTube secrets the listing keeps its video.
+ */
+async function promoVideoLinks(): Promise<Map<string, string>> {
+  if (!youtubeConfigured()) {
+    console.log('No YouTube secrets, the promo videos stay as they are.');
+    return new Map();
+  }
+  const videosDir = join(storeDir, 'promo-video');
+  const videos = readJson<PromoVideo[]>(join(videosDir, 'videos.json')).map(
+    (video) => ({ ...video, file: join(videosDir, video.file) })
+  );
+  const ids = await publishVideos(videos);
+  return new Map(
+    videos
+      .filter((video) => video.listing != null)
+      .map((video) => [
+        video.listing as string,
+        `https://www.youtube.com/watch?v=${ids.get(video.file)}`,
+      ])
+  );
+}
+
+/**
  * Uploads the bundle and rolls it out to the internal track, then updates
  * the store listing in an edit of its own: a listing Play turns down does
  * not hold back the app, and a run again skips the bundle that is on Play.
@@ -326,13 +376,15 @@ async function publishToPlay(
   await call(`${editUrl}:commit`, { method: 'POST' });
   console.log(`Released ${releaseName} to the ${TRACK} track (${status}).`);
 
+  const videos = await promoVideoLinks();
   const listingEdit = await call<{ id: string }>(`${app}/edits`, {
     method: 'POST',
   });
   await updateListing(
     call,
     `${app}/edits/${listingEdit.id}`,
-    `${PLAY_UPLOAD_API}/${packageName}/edits/${listingEdit.id}`
+    `${PLAY_UPLOAD_API}/${packageName}/edits/${listingEdit.id}`,
+    videos
   );
   await call(`${app}/edits/${listingEdit.id}:commit`, { method: 'POST' });
 }
