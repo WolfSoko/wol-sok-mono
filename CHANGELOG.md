@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.45.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.44.1...v74.45.0) (2026-10-22)
+
+### Features
+
+* **bacteria-game-android:** ship Bacteria War as an Android app ([#2536](https://github.com/WolfSoko/wol-sok-mono/issues/2536)) ([4585f18](https://github.com/WolfSoko/wol-sok-mono/commit/4585f18692016d15c5c6a7e8a14c548b16573187))
+* **feat-lazy-bacteria-game:** save progress in firebase with guest and google accounts ([#2537](https://github.com/WolfSoko/wol-sok-mono/issues/2537)) ([7074020](https://github.com/WolfSoko/wol-sok-mono/commit/70740201a5ca248a2ec76703e547874c3d2c5485))
+
 ## [74.44.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.44.0...v74.44.1) (2026-10-22)
 
 ### Performance
