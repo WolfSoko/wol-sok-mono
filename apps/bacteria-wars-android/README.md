@@ -2,7 +2,7 @@
 
 The Android app of the bacteria game. It is a
 [Trusted Web Activity](https://developer.chrome.com/docs/android/trusted-web-activity)
-(TWA): a thin native shell that opens https://bacteria-game.wolsok.de in
+(TWA): a thin native shell that opens https://bacteria-wars.wolsok.de in
 Chrome, fullscreen and without any browser UI. The game itself is the PWA
 `bacteria-game-remote`, so every web deploy updates the app as well; only
 changes to this folder need a new app release. Offline play, saves, sound and
@@ -14,7 +14,7 @@ What the shell adds:
   splash screen, both drawn by `tools/bacteria-game/generate-icons.ts`
   (`npx nx run bacteria-game-remote:icons`)
 - immersive mode, matching `"display": "fullscreen"` of the web manifest
-- links to bacteria-game.wolsok.de open in the app
+- links to bacteria-wars.wolsok.de open in the app
 - a WebView fallback for devices without a TWA-capable browser
 
 ## Build
@@ -50,7 +50,7 @@ Chrome only hides its URL bar when the site and the app vouch for each other:
 - the site names the app's package and the SHA-256 fingerprints of the keys it
   is signed with in
   `apps/bacteria-game-remote/src/.well-known/assetlinks.json`, deployed to
-  `https://bacteria-game.wolsok.de/.well-known/assetlinks.json`
+  `https://bacteria-wars.wolsok.de/.well-known/assetlinks.json`
 
 Until a fingerprint is listed there, the app still runs, but Chrome shows a
 URL bar on top of it. The Gradle build reads the package name from that file,

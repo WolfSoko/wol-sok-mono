@@ -5,10 +5,11 @@ plugins {
 }
 
 // The app is a Trusted Web Activity: Chrome shows the game from this host
-// (the domain of apps/bacteria-game-remote-cdk) fullscreen, once the host's
-// /.well-known/assetlinks.json names the app and the key it is signed with.
+// (Firebase Hosting of apps/bacteria-game-remote, see ADR 0008) fullscreen,
+// once the host's /.well-known/assetlinks.json names the app and the key it
+// is signed with.
 // The package name is read from that file, so the two cannot drift apart.
-val host = "bacteria-game.wolsok.de"
+val host = "bacteria-wars.wolsok.de"
 val launchUrl = "https://$host/"
 val assetLinks = rootDir.resolve("../bacteria-game-remote/src/.well-known/assetlinks.json")
 val packageName = ((JsonSlurper().parse(assetLinks) as List<*>).single() as Map<*, *>)
