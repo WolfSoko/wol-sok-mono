@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.47.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.46.0...v74.47.0) (2026-10-22)
+
+### Features
+
+* **bacteria-game-remote:** add a privacy policy page for the Play listing ([#2543](https://github.com/WolfSoko/wol-sok-mono/issues/2543)) ([bfa878c](https://github.com/WolfSoko/wol-sok-mono/commit/bfa878cb8f9012c3333da3b6152c469d2d5e68e3)), references [#en-delete](https://github.com/WolfSoko/wol-sok-mono/issues/en-delete)
+* **bacteria-wars-android:** a promo video, uploaded to YouTube and Play ([#2549](https://github.com/WolfSoko/wol-sok-mono/issues/2549)) ([9b32458](https://github.com/WolfSoko/wol-sok-mono/commit/9b3245877f58d3715e17015617d84942326d7744))
+* **bacteria-wars-android:** release the Play store listing with the app ([#2544](https://github.com/WolfSoko/wol-sok-mono/issues/2544)) ([30dfba2](https://github.com/WolfSoko/wol-sok-mono/commit/30dfba25834b56f74a5295bcb305c0914d06b976))
+* **rollapolla-analog:** add Google AdSense site verification meta tag ([#2546](https://github.com/WolfSoko/wol-sok-mono/issues/2546)) ([2973b29](https://github.com/WolfSoko/wol-sok-mono/commit/2973b292611463f7b1a4c47255393ce06d6ab590))
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** call the game Bacteria Wars everywhere ([#2545](https://github.com/WolfSoko/wol-sok-mono/issues/2545)) ([332f03e](https://github.com/WolfSoko/wol-sok-mono/commit/332f03e1dffc5d9d59b8bc4007ce3b9f97d65e45))
+* **github:** create the GitHub release with gh instead of action-automatic-releases ([#2548](https://github.com/WolfSoko/wol-sok-mono/issues/2548)) ([2588a9d](https://github.com/WolfSoko/wol-sok-mono/commit/2588a9d548000ff480c8eda77c21883f578a057f))
+
+### Documentation
+
+* **tools:** name the YouTube channel wolfsoko-org ([#2550](https://github.com/WolfSoko/wol-sok-mono/issues/2550)) ([c89957b](https://github.com/WolfSoko/wol-sok-mono/commit/c89957bb40cf831de76dc453791ece648719933a))
+
 ## [74.46.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.45.1...v74.46.0) (2026-10-22)
 
 ### Features
