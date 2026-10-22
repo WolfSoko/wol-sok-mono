@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.48.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.48.0...v74.48.1) (2026-10-22)
+
+### Bug Fixes
+
+* **bacteria-game-remote-cdk:** 🐛 point bacteria-wars.wolsok.de at bacteria-wars.web.app with a CNAME ([8991283](https://github.com/WolfSoko/wol-sok-mono/commit/899128306242ce565099a5e4514c3afca7a21a70)), references [#2551](https://github.com/WolfSoko/wol-sok-mono/issues/2551)
+
 ## [74.48.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.47.0...v74.48.0) (2026-10-22)
 
 ### Features
