@@ -77,7 +77,8 @@ const READBACK_SLOTS = 3;
 /**
  * Ticks the cell passes keep covering a spot after the colonies left it -
  * or after the last of a colony died there - so every state texture is
- * written empty there before the passes stop at it.
+ * written empty there before the passes stop at it. One tick writes all
+ * three; the others are to spare.
  */
 const AREA_HISTORY = 3;
 /** Ticks of reach kept - a report further behind runs the whole arena. */
@@ -777,14 +778,19 @@ export class GpuSimulation implements Simulation {
   /**
    * Works out where this tick's cell passes run: around the colonies as the
    * report saw them, grown by how far a bacterium gets in the ticks since -
-   * a step per move, one more for a child, one to spare. The whole arena
+   * a step per move, one more for a child, one to spare, and as far as a
+   * wall shoves it in a tick it escapes one. The whole arena
    * runs while no report is in hand, for the first ticks, whose state
    * textures still hold the last match, while a wall shoves bacteria out of
    * the way, and when the report is further behind than the reach kept.
    */
   private updateArea(mostSteps: number): void {
     const reach = this.recentReach;
-    reach.unshift(mostSteps + 2);
+    reach.unshift(
+      mostSteps +
+        2 +
+        (this.escapePending ? escapeReach(this.width, this.map.size) : 0)
+    );
     reach.length = Math.min(reach.length, REACH_HISTORY);
     const behind = this.steps - this.reportStep;
     const whole = [{ x: 0, y: 0, width: this.width, height: this.height }];
