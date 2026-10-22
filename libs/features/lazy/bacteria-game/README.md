@@ -396,6 +396,20 @@ reads them back with its report anyway, the CPU one counts its bacteria
 only when asked. The minimap is a small Canvas 2D overlay whichever painter
 draws the arena; it takes in the colonies ten times a second and draws the
 view frame on every frame.
+
+Empty space costs the GPU simulation little: its cell passes - crush,
+combat, feed, the claim and apply pairs - run only over the
+[active area](./src/lib/gl/active-area.ts), the colonies' boxes from the
+report grown by how far a bacterium gets in the ticks since (a step per
+move, one for a child, one to spare), together with the area of the last
+three ticks, so a spot a colony left is written empty in every state
+texture before the passes stop at it. Every pass finds its cell from
+`gl_FragCoord`, so a scissor per rect is all it takes, and a cell drawn
+twice where two rects overlap comes out the same. The whole arena runs for
+the first ticks of a match, while a wall shoves bacteria aside, when the
+report lags further behind than the reach kept, and once the rects cover
+nine tenths of it. On _Expanse_ that is about half the cells of a tick;
+the coarse passes, the glow and the report still run over everything.
 _Expanse_ opens the chapter of the same name: four times the room, rocks,
 and two neutral colonies, won on size after four minutes.
 

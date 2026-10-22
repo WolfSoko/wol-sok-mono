@@ -713,10 +713,12 @@ about twice _Ultra_. Measures, in order of payoff:
 1. **Tick rate below frame rate**: `FramePacer` already halves the work on a
    120 Hz display; a 30 Hz simulation tick would halve it again on every
    display, once the balance is tuned to it (section 5.1).
-2. **Activity tiles**: a 16 × 16 tile mask marking tiles that held a bacterium
-   or a change last tick, produced by a mip-style reduction; passes run with a
-   scissor or an instanced quad per active tile. Empty space costs nothing, so
-   a big map with two colonies in corners runs like a small one.
+2. **Activity tiles** (built, coarser): instead of a tile mask from a new
+   reduction, the cell passes are scissored to the colonies' boxes from the
+   report they read back anyway, grown by the reach since, plus the last
+   three ticks' boxes. About half the cells of an _Expanse_ tick; a finer
+   tile mask would pay where colonies sprawl, a lower tick rate (1.) on
+   every map.
 3. **Fewer move steps per tick** on big maps, with a higher `crosshairSpeed`
    to compensate.
 4. The CPU simulation gets a size cap and a "this level needs WebGL2" notice.
@@ -936,8 +938,9 @@ the wheel or a pinch (6.2), with a minimap in a corner. The painters draw only t
 big as a base map's - the first camera scaled a canvas drawn whole with
 CSS, size² the pixels, which the Canvas 2D fallback could not keep up
 with (8 fps on Expanse, 41 now) - but without a level of detail yet.
-Expanse is the first big level. Activity tiles,
-split screen and fog are next. The CPU simulation on a big map at Ultra
+Expanse is the first big level. The cell passes of the GPU
+simulation run only around the colonies (6.3, 2). Split screen and fog are
+next. The CPU simulation on a big map at Ultra
 runs four times the cells of a base one, so a resolution cap on big maps
 (4 of 6.3) is still due.
 Phase 7 can be sprinkled in between the others; each of its items is a
