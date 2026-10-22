@@ -199,19 +199,28 @@ interface IconOptions {
   background?: boolean;
 }
 
-function iconSvg({
-  viewBox = '0 0 512 512',
-  background = true,
-}: IconOptions = {}): string {
-  // Every variant of the icon draws the same cells.
+/**
+ * The random parts of the picture: sparks along the front and the cells of
+ * each colony, in COLONIES order. Starts from the seed every time, so every
+ * variant of the icon draws the same ones.
+ */
+function scatter(): { sparks: string; colonyCells: Cell[][] } {
   seed = SEED;
   const sparks = Array.from({ length: 14 }, () => {
     const y = 70 + rnd() * 380;
     const x = frontX(y) + (rnd() - 0.5) * 34;
     return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(1.5 + rnd() * 3).toFixed(1)}" opacity="${(0.55 + rnd() * 0.45).toFixed(2)}"/>`;
   }).join('\n      ');
-  const colonyCells = COLONIES.map((colony) =>
-    cellCircles(colony, cells(colony.side))
+  return { sparks, colonyCells: COLONIES.map(({ side }) => cells(side)) };
+}
+
+function iconSvg({
+  viewBox = '0 0 512 512',
+  background = true,
+}: IconOptions = {}): string {
+  const { sparks, colonyCells: cellLists } = scatter();
+  const colonyCells = COLONIES.map((colony, i) =>
+    cellCircles(colony, cellLists[i])
   );
   const frontPath = 'M ' + toPath(front);
 
@@ -285,8 +294,8 @@ function backgroundSvg(): string {
  * one colour: the monochrome layer Android tints for themed icons.
  */
 function monochromeSvg(viewBox: string): string {
-  seed = SEED;
-  const circles = COLONIES.flatMap(({ side }) => cells(side))
+  const circles = scatter()
+    .colonyCells.flat()
     .map(
       (c) =>
         `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${(c.r * 0.8).toFixed(1)}"/>`
