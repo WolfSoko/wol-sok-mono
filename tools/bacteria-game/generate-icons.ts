@@ -340,7 +340,9 @@ const ANDROID_DENSITIES: Record<string, number> = {
 /**
  * The Android images: `dir` and `file` within res, their size in dp. The
  * adaptive icon is 108 dp, of which launchers show at least the central
- * 66 dp circle, so the dish shrinks to a 68 dp circle on its foreground layer.
+ * 66 dp circle, so the dish shrinks to that circle on its layers. Where the
+ * backdrop is transparent, the dish leaves room for its drop shadow, which
+ * reaches about 40 units further down.
  */
 function androidImages(): Array<{
   dir: string;
@@ -361,19 +363,19 @@ function androidImages(): Array<{
       dir: 'mipmap',
       file: 'ic_launcher.png',
       dp: 48,
-      svg: iconSvg({ viewBox: dishView(44, 48), background: false }),
+      svg: iconSvg({ viewBox: dishView(40, 48), background: false }),
     },
     {
       dir: 'mipmap',
       file: 'ic_launcher_foreground.png',
       dp: 108,
-      svg: iconSvg({ viewBox: dishView(68, 108), background: false }),
+      svg: iconSvg({ viewBox: dishView(66, 108), background: false }),
     },
     {
       dir: 'mipmap',
       file: 'ic_launcher_monochrome.png',
       dp: 108,
-      svg: monochromeSvg(dishView(68, 108)),
+      svg: monochromeSvg(dishView(66, 108)),
     },
     {
       dir: 'mipmap',
@@ -385,7 +387,7 @@ function androidImages(): Array<{
       dir: 'drawable',
       file: 'splash.png',
       dp: 160,
-      svg: iconSvg({ viewBox: dishView(140, 160), background: false }),
+      svg: iconSvg({ viewBox: dishView(128, 160), background: false }),
     },
   ];
 }

@@ -9,6 +9,8 @@ on:
     paths:
       - 'apps/bacteria-game-android/**'
       - '.github/workflows/android.yml'
+      # A release bumps it, and with it the app's version code.
+      - 'version.json'
   pull_request:
     paths:
       - 'apps/bacteria-game-android/**'
@@ -17,7 +19,8 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
-  cancel-in-progress: true
+  # Runs on main build release artifacts, so only superseded PR runs stop.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -31,7 +34,8 @@ jobs:
         working-directory: apps/bacteria-game-android
     env:
       # Release builds are signed with the upload key only off pull requests.
-      ANDROID_KEYSTORE_BASE64: ${{ github.event_name != 'pull_request' && secrets.ANDROID_KEYSTORE_BASE64 || '' }}
+      # The key itself only reaches the step that signs.
+      SIGN_RELEASE: ${{ github.event_name != 'pull_request' && secrets.ANDROID_KEYSTORE_BASE64 != '' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -52,19 +56,20 @@ jobs:
           if-no-files-found: error
 
       - name: Build the signed release APK and app bundle
-        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        if: env.SIGN_RELEASE == 'true'
         env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           export ANDROID_KEYSTORE_FILE="$RUNNER_TEMP/upload.jks"
+          trap 'rm -f "$ANDROID_KEYSTORE_FILE"' EXIT
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_FILE"
           ./gradlew assembleRelease bundleRelease
-          rm "$ANDROID_KEYSTORE_FILE"
 
       - uses: actions/upload-artifact@v7
-        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        if: env.SIGN_RELEASE == 'true'
         with:
           name: bacteria-war-release
           path: |

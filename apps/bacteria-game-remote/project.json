@@ -153,15 +153,6 @@
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/apps/bacteria-game-remote"],
-      "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/jest.preset.js",
-        "{workspaceRoot}/jest.config.ts",
-        "{workspaceRoot}/.codecov.yml",
-        "{workspaceRoot}/apps/bacteria-game-android/app/build.gradle.kts",
-        "{workspaceRoot}/apps/bacteria-game-remote-cdk/src/main.ts"
-      ],
       "options": {
         "jestConfig": "apps/bacteria-game-remote/jest.config.ts",
         "codeCoverage": true,

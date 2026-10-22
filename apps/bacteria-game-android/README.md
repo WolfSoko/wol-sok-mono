@@ -36,7 +36,11 @@ The version comes from the workspace's `version.json`: 74.44.1 becomes
 `versionName` 74.44.1 and `versionCode` 74044001.
 
 The `Android app` GitHub workflow builds and lints the debug APK on every
-change to this folder and keeps it as a workflow artifact, ready to install.
+change to this folder and keeps it as a workflow artifact, to try the app on a
+phone. Each run signs it with a fresh debug key, so uninstall the previous one
+before installing the next, and expect Chrome's URL bar on top: only keys
+listed in `assetlinks.json` get fullscreen. On `main` it also runs for every
+release, since the release bumps `version.json` and with it the version code.
 
 ## Fullscreen needs Digital Asset Links
 
@@ -50,7 +54,7 @@ Chrome only hides its URL bar when the site and the app vouch for each other:
   `https://bacteria-game.wolsok.de/.well-known/assetlinks.json`
 
 Until a fingerprint is listed there, the app still runs, but Chrome shows a
-URL bar on top of it. `asset-links.spec.ts` in `bacteria-game-remote` checks
+URL bar on top of it. `asset-links.spec.ts` in `bacteria-game-remote-cdk` checks
 that package name and host agree on both sides.
 
 ## Release signing and Google Play

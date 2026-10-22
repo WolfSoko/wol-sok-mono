@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-// The Android app (apps/bacteria-game-android) shows this site fullscreen only
-// while the site's asset links name the app, so both sides have to agree.
+// The Android app (apps/bacteria-game-android) shows the site this stack
+// deploys fullscreen only while the site's asset links
+// (apps/bacteria-game-remote) name the app, so all three have to agree. The
+// stack depends on both projects, so a change to any of them runs this spec.
 const workspaceRoot = join(__dirname, '../../..');
 
 function read(path: string): string {
