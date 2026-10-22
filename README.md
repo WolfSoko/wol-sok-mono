@@ -26,6 +26,20 @@ This repository contains multiple Angular applications demonstrating various top
 
 The project emphasizes clean code architecture following the Angular style guide and Nx monorepo best practices, with extensive use of RxJS for reactive programming and Angular Material for consistent UI components. **All applications are built with zoneless change detection** for optimal performance.
 
+## Live Apps
+
+| App | Link | What it is |
+| --- | --- | --- |
+| **Angular Examples** | [angularexamples.wolsok.de](https://angularexamples.wolsok.de/) | The main showcase: shader, Fourier, neural-network, reaction-diffusion and more experiments ([`angular-examples`](./apps/angular-examples)) |
+| **Bacteria Wars** | [bacteria-game.wolsok.de](https://bacteria-game.wolsok.de/) | Two bacteria colonies, one petri dish. Play in the browser, install as PWA, or get the Android app ([`bacteria-game-remote`](./apps/bacteria-game-remote)) |
+| **Bacteria Wars for Android** | [Google Play](https://play.google.com/store/apps/details?id=de.wolsok.bacteriawars) | Trusted Web Activity wrapping the Bacteria Wars PWA ([`bacteria-wars-android`](./apps/bacteria-wars-android)) |
+| **Fourier Analysis** | [fourier-analysis.wolsok.de](https://fourier-analysis.wolsok.de/) | Native Federation remote, also runs standalone ([`fourier-analysis-remote`](./apps/fourier-analysis-remote)) |
+| **Shader Examples** | [shader-examples.wolsok.de](https://shader-examples.wolsok.de/) | Native Federation remote with WebGL shaders ([`shader-examples-remote`](./apps/shader-examples-remote)) |
+| **Pacetrainer** | [pacetrainer-ef5b4.web.app](https://pacetrainer-ef5b4.web.app/) | Pace training app built with Analog.js ([`pacetrainer`](./apps/pacetrainer)) |
+| **RollaPolla** | [rollapolla.com](https://rollapolla.com/) | Polls, server-side rendered with Analog.js ([`rollapolla-analog`](./apps/rollapolla-analog)) |
+
+[![Get it on Google Play](https://img.shields.io/badge/Google_Play-Bacteria_Wars-414141?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=de.wolsok.bacteriawars)
+
 ## Documentation
 
 - **[Getting Started Guide](./docs/GETTING_STARTED.md)** - Setup instructions and first steps
@@ -61,7 +75,7 @@ tiny atoms.
 
 Readme under: [README.md](./libs/public/ws-thanos/README.md)
 
-A running version can be found on GitHub pages: https://angularexamples.wolsok.de/
+A running version can be found at https://angularexamples.wolsok.de/
 
 ## nx-aws-cdk-v2
 
@@ -78,27 +92,31 @@ This monorepo leverages modern web technologies:
 
 - **Framework**: Angular 20 with Signals, Standalone Components, and Zoneless Change Detection
 - **Meta-framework**: Analog.js for SSR and file-based routing
-- **Build Tools**: Nx 23, Vite, Webpack with Module Federation
-- **State Management**: Angular Signals, RxJS, Akita
+- **Build Tools**: Nx 23, Vite, esbuild with Native Federation
+- **State Management**: Angular Signals, RxJS, NgRx Signal Store, Akita/Elf
 - **UI**: Angular Material, Angular CDK
 - **Graphics**: Three.js, p5.js, WebGL
 - **Testing**: Jest, Playwright, Vitest
 - **Backend**: Firebase, tRPC, AWS CDK
+- **Mobile**: Android Trusted Web Activity (Gradle), published on Google Play
 - **Scientific**: TensorFlow.js, math.js, GPU.js, WebAssembly
 
 ## Project Structure
 
 ```
 apps/          # Deployable applications
-  ├── angular-examples/        # Main showcase app
-  ├── pacetrainer/            # Pace training app
-  ├── rollapolla-analog/      # Analog.js demo
-  └── *-remote/               # Module Federation remotes
+  ├── angular-examples/        # Main showcase app (Native Federation shell)
+  ├── *-remote/               # Native Federation remotes
+  ├── bacteria-wars-android/  # Android app (Trusted Web Activity)
+  ├── pacetrainer/            # Pace training app (Analog.js)
+  ├── rollapolla-analog/      # Polls (Analog.js SSR)
+  └── *-cdk/                  # AWS CDK infra stacks
 
 libs/          # Reusable libraries
   ├── features/               # Domain features
   ├── shared/                 # Shared logic
   ├── utils/                  # Utilities
+  ├── ui-kit/                 # Reusable UI components
   └── public/                 # Published packages
 ```
 
