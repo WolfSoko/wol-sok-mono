@@ -24,6 +24,7 @@ apps/                   # Deployable apps
   rollapolla-analog/    # Analog.js SSR demo
   *-remote/             # Module Federation remotes
   *-cdk/                # AWS CDK infra stacks
+  bacteria-game-android/ # Android app (Gradle, Trusted Web Activity)
 libs/
   features/             # Domain features (can use shared + utils + ui-kit)
   shared/               # Cross-cutting concerns (can use utils)
@@ -118,6 +119,13 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - Each app has an `esbuild` target (`@angular/build:application`) wrapped by a `build`/`serve` target from `@angular-architects/native-federation`. Change build options on `esbuild`.
 - Exception: `bacteria-game-remote` is also a standalone PWA. Its federation build is `build-federation`; `build` then reruns `ngsw-config`, since the federation builder writes its files after Angular has hashed the output into `ngsw.json`.
 - `nx serve angular-examples` only serves the shell. Use `nx run angular-examples:serve-all` to boot the shell plus all remotes (ports 4200-4203).
+
+## Android App
+
+- `apps/bacteria-game-android` is a Gradle project, not a web build: a Trusted Web Activity that opens `https://bacteria-game.wolsok.de` (the `bacteria-game-remote` PWA) fullscreen in Chrome. Game changes go into the PWA; the app picks them up with the next web deploy.
+- Its Nx targets are `apk`, `bundle` and `lint-android`, deliberately not `build`/`lint`/`test`: the Nx agents and the release workflow have no Android SDK. The `Android app` GitHub workflow (`.github/workflows/android.yml`) builds it instead. See its `README.md` for signing and Play.
+- Fullscreen depends on `apps/bacteria-game-remote/src/.well-known/assetlinks.json` naming the app's package and signing-key fingerprints. Gradle reads the package name from that file, so it is the one place to change it; the host is set in both `app/build.gradle.kts` and the CDK stack.
+- Launcher icons and splash come from `npx nx run bacteria-game-remote:icons`; don't edit the PNGs by hand.
 
 ## SEO & Sitemaps
 

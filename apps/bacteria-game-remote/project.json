@@ -25,7 +25,12 @@
           "apps/bacteria-game-remote/src/favicon.ico",
           "apps/bacteria-game-remote/src/manifest.webmanifest",
           "apps/bacteria-game-remote/src/icons",
-          "apps/bacteria-game-remote/src/assets"
+          "apps/bacteria-game-remote/src/assets",
+          {
+            "glob": "assetlinks.json",
+            "input": "apps/bacteria-game-remote/src/.well-known",
+            "output": ".well-known"
+          }
         ],
         "styles": [
           "apps/bacteria-game-remote/src/styles.scss",

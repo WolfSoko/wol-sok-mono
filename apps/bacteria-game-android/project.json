@@ -1,0 +1,35 @@
+{
+  "name": "bacteria-game-android",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "tags": ["type:android"],
+  "implicitDependencies": ["bacteria-game-remote"],
+  "targets": {
+    "apk": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/bacteria-game-android",
+        "command": "./gradlew assembleDebug"
+      },
+      "configurations": {
+        "release": {
+          "command": "./gradlew assembleRelease"
+        }
+      }
+    },
+    "bundle": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/bacteria-game-android",
+        "command": "./gradlew bundleRelease"
+      }
+    },
+    "lint-android": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/bacteria-game-android",
+        "command": "./gradlew lintDebug"
+      }
+    }
+  }
+}

@@ -1,0 +1,82 @@
+name: Android app
+
+# Builds the Bacteria War Android app (apps/bacteria-game-android). The Nx
+# agents of the CI/CD workflow have no Android SDK, so it runs here.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/bacteria-game-android/**'
+      # The app reads its package name from the site's asset links.
+      - 'apps/bacteria-game-remote/src/.well-known/assetlinks.json'
+      - '.github/workflows/android.yml'
+  pull_request:
+    paths:
+      - 'apps/bacteria-game-android/**'
+      # The app reads its package name from the site's asset links.
+      - 'apps/bacteria-game-remote/src/.well-known/assetlinks.json'
+      - '.github/workflows/android.yml'
+  # Builds the signed release for Google Play, with the version code of the
+  # current version.json: run it once per release that should ship.
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  # Manual runs build release artifacts, so only superseded PR runs stop.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: apps/bacteria-game-android
+    env:
+      # Release builds are signed with the upload key on manual runs only.
+      # The key itself only reaches the step that signs.
+      SIGN_RELEASE: ${{ github.event_name == 'workflow_dispatch' && secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Lint and build the debug APK
+        run: ./gradlew lintDebug assembleDebug
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: bacteria-war-debug-apk
+          path: apps/bacteria-game-android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Build the signed release APK and app bundle
+        if: env.SIGN_RELEASE == 'true'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          export ANDROID_KEYSTORE_FILE="$RUNNER_TEMP/upload.jks"
+          trap 'rm -f "$ANDROID_KEYSTORE_FILE"' EXIT
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_FILE"
+          ./gradlew assembleRelease bundleRelease
+
+      - uses: actions/upload-artifact@v7
+        if: env.SIGN_RELEASE == 'true'
+        with:
+          name: bacteria-war-release
+          path: |
+            apps/bacteria-game-android/app/build/outputs/apk/release/*.apk
+            apps/bacteria-game-android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
