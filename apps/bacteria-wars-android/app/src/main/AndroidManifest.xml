@@ -4,6 +4,7 @@
   <application
     android:icon="@mipmap/ic_launcher"
     android:label="@string/app_name"
+    android:manageSpaceActivity="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity"
     android:supportsRtl="true"
     android:theme="@style/Theme.BacteriaGame">
 
@@ -63,6 +64,14 @@
     </activity>
 
     <activity android:name="com.google.androidbrowserhelper.trusted.FocusActivity" />
+
+    <!-- The launcher adds a "Site settings" shortcut to it on start and crashes without it;
+         Settings > Apps > Manage space opens it too. -->
+    <activity android:name="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity">
+      <meta-data
+        android:name="android.support.customtabs.trusted.MANAGE_SPACE_URL"
+        android:value="${launchUrl}" />
+    </activity>
 
     <activity
       android:name="com.google.androidbrowserhelper.trusted.WebViewFallbackActivity"
