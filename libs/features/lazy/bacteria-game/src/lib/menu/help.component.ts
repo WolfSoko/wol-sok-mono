@@ -11,6 +11,12 @@ import { ScreenHeaderComponent } from './screen-header.component';
 
 const { agarDivideFactor, iceStayChance } = ZONE_EFFECTS;
 
+/**
+ * The game's privacy policy, on the game's own site: the Play listing links
+ * to it as well, and inside the shell a relative link would miss it.
+ */
+export const PRIVACY_POLICY_URL = 'https://bacteria-game.wolsok.de/privacy';
+
 /** "twice", "3 times". */
 function timesAsFast(factor: number): string {
   return factor === 2 ? 'twice' : `${String(factor)} times`;
@@ -27,7 +33,7 @@ const ZONE_RULES: Readonly<Record<ZoneKind, string>> = {
 
 /**
  * How to play: the rules in three steps, the ground some levels lay out,
- * the keys and the touch layout.
+ * the keys and the touch layout - and where the privacy policy is.
  */
 @Component({
   selector: 'feat-lazy-bac-game-help',
@@ -41,6 +47,8 @@ export class HelpComponent {
   public readonly colorNames = input.required<readonly string[]>();
 
   public readonly back = output<void>();
+
+  protected readonly privacyPolicyUrl = PRIVACY_POLICY_URL;
 
   protected readonly zones = (Object.keys(ZONE_RULES) as ZoneKind[]).map(
     (kind) => ({
