@@ -32,6 +32,8 @@ class FakeAuth {
   public currentUser: FakeUser | null = null;
   private listener: (user: FakeUser | null) => void = () => undefined;
   private guests = 0;
+  /** The error code guest sign-ins fail with, null while they work. */
+  public refusesGuests: string | null = null;
   public linkWithPopup = jest.fn();
   public signInWithCredential = jest.fn(async (_auth, credential: string) => {
     this.become(google(credential, 'Ada'));
@@ -45,6 +47,9 @@ class FakeAuth {
       return () => undefined;
     },
     signInAnonymously: async () => {
+      if (this.refusesGuests !== null) {
+        throw { code: this.refusesGuests };
+      }
       this.become(guest(`guest-${++this.guests}`));
       return { user: this.currentUser };
     },
@@ -143,6 +148,36 @@ describe('FirebaseGameAccount', () => {
       adoptsGuest: false,
     });
     expect(account.profile()).toEqual({ guest: true, name: null });
+  });
+
+  it('has nobody play between a sign-out and the next guest', async () => {
+    jest.useFakeTimers();
+    auth.refusesGuests = 'auth/network-request-failed';
+    const ids: (string | null)[] = [];
+    account.playerIds.subscribe((id) => ids.push(id));
+
+    await account.signOut();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(switches.at(-1)).toEqual({ playerId: null, adoptsGuest: false });
+    expect(account.profile()).toBeNull();
+    auth.refusesGuests = null;
+    await jest.advanceTimersByTimeAsync(1000);
+    expect(ids).toEqual(['guest-1', null, 'guest-2']);
+    jest.useRealTimers();
+  });
+
+  it('stops asking for a guest the project refuses', async () => {
+    jest.useFakeTimers();
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    auth.refusesGuests = 'auth/operation-not-allowed';
+    const tries = jest.spyOn(auth.sdk, 'signInAnonymously');
+
+    await account.signOut();
+    await jest.advanceTimersByTimeAsync(120_000);
+
+    expect(tries).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
   });
 
   it('tells a closed popup from a failed sign-in', async () => {

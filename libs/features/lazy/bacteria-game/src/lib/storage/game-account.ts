@@ -12,8 +12,11 @@ export interface PlayerProfile {
 
 /** A player taking over the game: at the start, after a sign-in or sign-out. */
 export interface PlayerSwitch {
-  /** Names the player, the same on every device they sign in on. */
-  playerId: string;
+  /**
+   * Names the player, the same on every device they sign in on - null
+   * between a sign-out and the next guest, when nobody plays.
+   */
+  playerId: string | null;
   /**
    * True when the player signed in on this device to an account that has
    * progress of its own: what they played as a guest here joins it, once.

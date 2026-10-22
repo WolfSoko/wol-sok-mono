@@ -6,7 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { map, switchMap } from 'rxjs';
+import { map, switchMap, take } from 'rxjs';
 import { BotDifficulty } from './state/bot-controller';
 import { ladderLocks, newlyUnlocked } from './state/campaign';
 import { getLevel, isLadderLevel, LEVELS } from './state/levels';
@@ -38,7 +38,7 @@ import {
   totalsOf,
 } from './state/progress';
 import { GameAccount, PlayerSwitch } from './storage/game-account';
-import { GameStorage } from './storage/game-storage';
+import { DeviceStorage, GameStorage } from './storage/game-storage';
 
 export const PROGRESS_STORAGE_KEY = 'bacteria-game.progress';
 
@@ -82,6 +82,7 @@ export interface DailyOffer {
 export class ProgressService {
   private readonly storage = inject(GameStorage);
   private readonly account = inject(GameAccount);
+  private readonly device = inject(DeviceStorage);
   private readonly progress = signal(EMPTY_PROGRESS);
   /** True once the storage has answered - before, nothing is known yet. */
   public readonly loaded = signal(false);
@@ -94,6 +95,8 @@ export class ProgressService {
         switchMap((player, index) => {
           if (index > 0) {
             this.switchTo(player);
+          } else if (this.account.cloud) {
+            this.moveDeviceProgress();
           }
           return this.storage.watch(PROGRESS_STORAGE_KEY);
         }),
@@ -133,6 +136,26 @@ export class ProgressService {
     this.storage.update(PROGRESS_STORAGE_KEY, (stored) =>
       adoptProgress(parseProgress(stored), guest)
     );
+  }
+
+  /**
+   * Hands the progress this device kept before the game had the cloud - in
+   * its own storage, under the same key - to the first player, once.
+   */
+  private moveDeviceProgress(): void {
+    this.device
+      .watch(PROGRESS_STORAGE_KEY)
+      .pipe(take(1))
+      .subscribe((stored) => {
+        if (stored === null) {
+          return;
+        }
+        const kept = parseProgress(stored);
+        this.storage.update(PROGRESS_STORAGE_KEY, (account) =>
+          adoptProgress(parseProgress(account), kept)
+        );
+        this.device.write(PROGRESS_STORAGE_KEY, null);
+      });
   }
 
   /** Every medallion held, by level id, then by difficulty. */

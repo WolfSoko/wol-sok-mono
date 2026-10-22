@@ -2,6 +2,7 @@ import type { DocumentReference, DocumentSnapshot } from 'firebase/firestore';
 import {
   catchError,
   EMPTY,
+  filter,
   firstValueFrom,
   from,
   Observable,
@@ -38,17 +39,20 @@ export class FirestoreGameStorage implements GameStorage {
 
   public constructor(
     private readonly connection: Promise<FirebaseConnection>,
-    private readonly playerIds: Observable<string>
+    /** Whoever plays, null while nobody does. */
+    private readonly playerIds: Observable<string | null>
   ) {}
 
   public watch(key: string): Observable<unknown> {
     return this.playerIds.pipe(
       switchMap((uid) =>
-        from(this.connection).pipe(
-          switchMap((connection) => this.snapshots(connection, uid, key)),
-          // Without a connection, nothing is stored.
-          catchError(() => EMPTY)
-        )
+        uid === null
+          ? EMPTY
+          : from(this.connection).pipe(
+              switchMap((connection) => this.snapshots(connection, uid, key)),
+              // Without a connection, nothing is stored.
+              catchError(() => EMPTY)
+            )
       )
     );
   }
@@ -56,10 +60,10 @@ export class FirestoreGameStorage implements GameStorage {
   public write(key: string, value: unknown): void {
     const json = JSON.stringify(value);
     this.enqueue(key, async ({ dbSdk }, ref) => {
+      // The snapshot of the write itself, which comes at once, updates `seen`.
       if (json === undefined || this.seen.get(ref.path) === json) {
         return;
       }
-      this.seen.set(ref.path, json);
       // Not awaited: offline, Firestore keeps the write and sends it later.
       dbSdk.setDoc(ref, stored(dbSdk, json)).catch((error: unknown) => {
         console.error(`Could not store ${key}`, error);
@@ -101,7 +105,11 @@ export class FirestoreGameStorage implements GameStorage {
       ref: DocumentReference
     ) => Promise<void>
   ): void {
-    const player = firstValueFrom(this.playerIds);
+    // Nobody plays between a sign-out and the next guest: what is stored
+    // meanwhile is the next guest's.
+    const player = firstValueFrom(
+      this.playerIds.pipe(filter((uid): uid is string => uid !== null))
+    );
     const queued = (this.queues.get(key) ?? Promise.resolve())
       .then(async () => {
         const [connection, uid] = await Promise.all([this.connection, player]);

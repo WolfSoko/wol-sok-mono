@@ -239,17 +239,14 @@ export function mergeProgress(progress: Progress, other: Progress): Progress {
  * as the counts would count twice.
  */
 export function adoptProgress(progress: Progress, guest: Progress): Progress {
-  let adopted = addTotals(progress, guest.totals);
+  const couchWins = { ...progress.couchWins };
   for (const [colorId, wins] of Object.entries(guest.couchWins)) {
-    adopted = {
-      ...adopted,
-      couchWins: {
-        ...adopted.couchWins,
-        [colorId]: (adopted.couchWins[colorId] ?? 0) + (wins ?? 0),
-      },
-    };
+    couchWins[colorId] = (couchWins[colorId] ?? 0) + (wins ?? 0);
   }
-  return mergeProgress(adopted, { ...guest, totals: NO_TOTALS, couchWins: {} });
+  return mergeProgress(
+    { ...addTotals(progress, guest.totals), couchWins },
+    { ...guest, totals: NO_TOTALS, couchWins: {} }
+  );
 }
 
 /** Of two daily records the later one, or the one with more attempts. */

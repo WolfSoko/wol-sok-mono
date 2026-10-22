@@ -5,7 +5,7 @@ import { dailyLevelId } from './state/daily';
 import { getLevel } from './state/levels';
 import { MatchRecord } from './state/medallions';
 import { GameAccount } from './storage/game-account';
-import { GameStorage } from './storage/game-storage';
+import { DeviceStorage, GameStorage } from './storage/game-storage';
 import { FakeGameAccount } from '../testing/fake-game-account';
 import { LateGameStorage } from '../testing/late-game-storage';
 
@@ -529,6 +529,34 @@ describe('ProgressService', () => {
       expect(account.storageOf('guest').stored(PROGRESS_STORAGE_KEY)).toBe(
         null
       );
+    });
+
+    it('hands the progress this device kept before the cloud to the first player, once', () => {
+      const device = new LateGameStorage({
+        [PROGRESS_STORAGE_KEY]: {
+          medals: { hourglass: { hard: 'gold' } },
+          totals: { matches: 3 },
+        },
+      });
+      account = new FakeGameAccount('guest');
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: GameAccount, useValue: account },
+          { provide: GameStorage, useValue: account.storage },
+          { provide: DeviceStorage, useValue: device },
+        ],
+      });
+      const progress = create();
+
+      device.flush();
+      account.flush();
+      device.flush();
+
+      expect(progress.medal('hourglass', 'hard')).toBe('gold');
+      expect(
+        account.storageOf('guest').stored(PROGRESS_STORAGE_KEY)
+      ).toMatchObject({ totals: { matches: 3 } });
+      expect(device.stored(PROGRESS_STORAGE_KEY)).toBeNull();
     });
 
     it("adds the guest's progress to the account signed in to, once", () => {

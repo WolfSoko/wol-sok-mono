@@ -17,6 +17,9 @@ const CANCELLED = new Set([
   'auth/user-cancelled',
 ]);
 
+/** The sign-in error of a device that is offline - the one worth retrying. */
+const NETWORK_ERROR = 'auth/network-request-failed';
+
 /**
  * The player as Firebase Auth knows them: a guest - an anonymous account,
  * signed in to without asking - until they sign in with Google. Linking
@@ -26,17 +29,19 @@ export class FirebaseGameAccount implements GameAccount {
   public readonly cloud = true;
   private readonly profileState = signal<PlayerProfile | null>(null);
   public readonly profile = this.profileState.asReadonly();
-  private readonly ids = new ReplaySubject<string>(1);
+  private readonly ids = new ReplaySubject<string | null>(1);
   private readonly switches = new ReplaySubject<PlayerSwitch>(1);
   private playerId: string | null = null;
   public readonly players: Observable<PlayerSwitch> =
     this.switches.asObservable();
   /**
-   * The uid of whoever plays, again on every switch - told before
-   * `players`, so a service that hears of a switch and stores right away
-   * stores for the next player, not the one before.
+   * The uid of whoever plays, null between a sign-out and the next guest,
+   * again on every switch - told before `players`, so a service that hears
+   * of a switch and stores right away stores for the next player, not the
+   * one before.
    */
-  public readonly playerIds: Observable<string> = this.ids.asObservable();
+  public readonly playerIds: Observable<string | null> =
+    this.ids.asObservable();
   /** Set while this tab signs in to a Google account that played elsewhere. */
   private adoptingGuest = false;
 
@@ -44,21 +49,19 @@ export class FirebaseGameAccount implements GameAccount {
     connection.then(
       ({ auth, authSdk }) =>
         authSdk.onAuthStateChanged(auth, (user) => {
-          if (user === null) {
-            this.profileState.set(null);
-            void this.signInAsGuest();
-            return;
-          }
-          this.profileState.set(profileOf(user));
-          if (user.uid !== this.playerId) {
-            this.playerId = user.uid;
-            this.ids.next(user.uid);
-            this.switches.next({
-              playerId: user.uid,
-              adoptsGuest: this.adoptingGuest,
-            });
+          this.profileState.set(user === null ? null : profileOf(user));
+          // Nobody before the first guest is no switch: the visit has just
+          // started. Nobody after a player is - the one signed out is gone.
+          const playerId = user?.uid ?? null;
+          if (playerId !== this.playerId) {
+            this.playerId = playerId;
+            this.ids.next(playerId);
+            this.switches.next({ playerId, adoptsGuest: this.adoptingGuest });
           }
           this.adoptingGuest = false;
+          if (user === null) {
+            void this.signInAsGuest();
+          }
         }),
       (error: unknown) =>
         console.error('Could not connect to the game cloud', error)
@@ -114,7 +117,9 @@ export class FirebaseGameAccount implements GameAccount {
 
   /**
    * Signs in a new guest - once online, when the device is not. Until then
-   * nobody plays: the storage answers nothing and keeps what is played.
+   * nobody plays: the storage answers nothing and holds back what is played
+   * for the guest to come. A project that refuses guests - anonymous sign-in
+   * switched off - is not tried again.
    */
   private async signInAsGuest(): Promise<void> {
     const { auth, authSdk } = await this.connection;
@@ -122,7 +127,10 @@ export class FirebaseGameAccount implements GameAccount {
       try {
         await authSdk.signInAnonymously(auth);
       } catch (error) {
-        console.warn('Could not sign in as a guest', error);
+        if ((error as { code?: string }).code !== NETWORK_ERROR) {
+          console.error('Could not sign in as a guest', error);
+          return;
+        }
         await beforeRetry(attempt);
       }
     }

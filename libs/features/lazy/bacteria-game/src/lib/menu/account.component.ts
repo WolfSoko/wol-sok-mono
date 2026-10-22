@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { ProgressService } from '../progress.service';
 import { GameAccount } from '../storage/game-account';
 
 /**
@@ -27,7 +28,7 @@ import { GameAccount } from '../storage/game-account';
         <button
           mat-stroked-button
           type="button"
-          [disabled]="busy()"
+          [disabled]="busy() || !progress.loaded()"
           (click)="signIn()"
           title="Keep your progress on every device you sign in on"
         >
@@ -49,7 +50,7 @@ import { GameAccount } from '../storage/game-account';
         </button>
       }
       @if (failed()) {
-        <span class="failed" role="status">Sign-in failed - try again.</span>
+        <span class="failed" role="status">That did not work - try again.</span>
       }
     }
   `,
@@ -83,21 +84,35 @@ import { GameAccount } from '../storage/game-account';
 })
 export class AccountComponent {
   protected readonly account = inject(GameAccount);
+  /**
+   * The guest's progress has to be here before a sign-in: an account that
+   * played elsewhere adopts what the guest has, and the guest's stored
+   * progress is out of reach once the account has taken over.
+   */
+  protected readonly progress = inject(ProgressService);
   protected readonly busy = signal(false);
   protected readonly failed = signal(false);
 
   protected async signIn(): Promise<void> {
-    this.busy.set(true);
-    this.failed.set(false);
-    const outcome = await this.account.signIn();
-    this.failed.set(outcome === 'failed');
-    this.busy.set(false);
+    await this.whileBusy(async () => {
+      this.failed.set((await this.account.signIn()) === 'failed');
+    });
   }
 
   protected async signOut(): Promise<void> {
+    await this.whileBusy(() => this.account.signOut());
+  }
+
+  private async whileBusy(task: () => Promise<void>): Promise<void> {
     this.busy.set(true);
     this.failed.set(false);
-    await this.account.signOut();
-    this.busy.set(false);
+    try {
+      await task();
+    } catch (error) {
+      console.error(error);
+      this.failed.set(true);
+    } finally {
+      this.busy.set(false);
+    }
   }
 }

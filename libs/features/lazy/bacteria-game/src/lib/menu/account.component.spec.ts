@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { AccountComponent } from './account.component';
 import { GameAccount, SignInOutcome } from '../storage/game-account';
+import { GameStorage } from '../storage/game-storage';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 
 describe('AccountComponent', () => {
@@ -14,9 +15,15 @@ describe('AccountComponent', () => {
   async function render(provided: GameAccount | null = account) {
     TestBed.configureTestingModule({
       providers:
-        provided === null ? [] : [{ provide: GameAccount, useValue: provided }],
+        provided === null
+          ? []
+          : [
+              { provide: GameAccount, useValue: provided },
+              { provide: GameStorage, useValue: account.storage },
+            ],
     });
     const fixture = TestBed.createComponent(AccountComponent);
+    account.flush();
     await fixture.whenStable();
     return fixture;
   }
@@ -42,6 +49,25 @@ describe('AccountComponent', () => {
     expect(signIn).toHaveBeenCalled();
   });
 
+  it("offers the sign-in only once the guest's progress is here", async () => {
+    account.profile.set({ guest: true, name: null });
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: GameAccount, useValue: account },
+        { provide: GameStorage, useValue: account.storage },
+      ],
+    });
+    const fixture = TestBed.createComponent(AccountComponent);
+    await fixture.whenStable();
+    const button = () => fixture.nativeElement.querySelector('button');
+    expect(button().disabled).toBe(true);
+
+    account.flush();
+    await fixture.whenStable();
+
+    expect(button().disabled).toBe(false);
+  });
+
   it('names who is signed in and offers to sign out', async () => {
     account.profile.set({ guest: false, name: 'Ada' });
     const signOut = jest.spyOn(account, 'signOut');
@@ -51,6 +77,19 @@ describe('AccountComponent', () => {
     fixture.nativeElement.querySelector('button').click();
 
     expect(signOut).toHaveBeenCalled();
+  });
+
+  it('tells when signing out failed, and lets the player try again', async () => {
+    account.profile.set({ guest: false, name: 'Ada' });
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    jest.spyOn(account, 'signOut').mockRejectedValue(new Error('offline'));
+    const fixture = await render();
+
+    fixture.nativeElement.querySelector('button').click();
+    await fixture.whenStable();
+
+    expect(text(fixture.nativeElement)).toContain('That did not work');
+    expect(fixture.nativeElement.querySelector('button').disabled).toBe(false);
   });
 
   it('tells when the sign-in failed', async () => {
@@ -63,6 +102,6 @@ describe('AccountComponent', () => {
     fixture.nativeElement.querySelector('button').click();
     await fixture.whenStable();
 
-    expect(text(fixture.nativeElement)).toContain('Sign-in failed');
+    expect(text(fixture.nativeElement)).toContain('That did not work');
   });
 });

@@ -90,13 +90,13 @@ async function settle(): Promise<void> {
 
 describe('FirestoreGameStorage', () => {
   let firestore: FakeFirestore;
-  let players: BehaviorSubject<string>;
+  let players: BehaviorSubject<string | null>;
   let storage: FirestoreGameStorage;
   let subscription: Subscription | undefined;
 
   beforeEach(() => {
     firestore = new FakeFirestore();
-    players = new BehaviorSubject('alice');
+    players = new BehaviorSubject<string | null>('alice');
     storage = new FirestoreGameStorage(firestore.connection(), players);
   });
 
@@ -193,5 +193,18 @@ describe('FirestoreGameStorage', () => {
 
     expect(values).toEqual([{ owner: 'alice' }, null, { owner: 'bob' }]);
     expect(firestore.value('alice')).toEqual({ owner: 'alice' });
+  });
+
+  it('holds back what is stored while nobody plays, for the next guest', async () => {
+    players.next(null);
+    storage.update(KEY, addOne);
+    await settle();
+    expect(firestore.writes).toBe(0);
+
+    players.next('guest');
+    await settle();
+
+    expect(firestore.value('guest')).toEqual({ count: 1 });
+    expect(firestore.value('alice')).toBeNull();
   });
 });
