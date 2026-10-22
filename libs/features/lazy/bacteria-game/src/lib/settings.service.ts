@@ -28,7 +28,7 @@ import {
 } from './state/rivalry';
 import { clamp } from './state/geometry';
 import { isObject } from './state/is-object';
-import { GameStorage } from './storage/game-storage';
+import { DeviceStorage } from './storage/game-storage';
 
 /** What the game remembers between visits. */
 export interface StoredSettings {
@@ -94,7 +94,7 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
  * ladder, the arena, how the bacteria look, the resolutions, whether the
  * frame rate is shown, whether the game makes sound, plays music and
  * effects and how loud, and whether the phone vibrates - across visits, in
- * the game storage.
+ * the storage of this device - they stay with the device whoever signs in.
  *
  * The match settings live in the game state store, as they did; this service
  * only restores them once the storage answers and writes them back whenever
@@ -108,7 +108,7 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
 export class GameSettingsService {
   private readonly gameState = inject(GameStateService);
   private readonly store = inject(GameStateStore);
-  private readonly storage = inject(GameStorage);
+  private readonly storage = inject(DeviceStorage);
   private restored = false;
   /** The settings the player changed - what restoring must keep. */
   private readonly touched = new Set<keyof StoredSettings>();

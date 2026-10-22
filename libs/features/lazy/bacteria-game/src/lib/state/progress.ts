@@ -145,13 +145,17 @@ export function addTotals(
   return { ...progress, totals };
 }
 
-/** The progress with a match between two players won by a colour. */
-export function addCouchWin(progress: Progress, colorId: string): Progress {
+/** The progress with matches between two players won by a colour, one by default. */
+export function addCouchWin(
+  progress: Progress,
+  colorId: string,
+  wins = 1
+): Progress {
   return {
     ...progress,
     couchWins: {
       ...progress.couchWins,
-      [colorId]: (progress.couchWins[colorId] ?? 0) + 1,
+      [colorId]: (progress.couchWins[colorId] ?? 0) + wins,
     },
   };
 }
@@ -230,6 +234,24 @@ export function mergeProgress(progress: Progress, other: Progress): Progress {
     merged = { ...merged, daily };
   }
   return merged;
+}
+
+/**
+ * An account's progress with what a guest played joined in, for a guest who
+ * signs in to an account that has played elsewhere: the guest's counts - the
+ * totals, each colour's wins - are added, and the rest merges. Applied once,
+ * as the counts would count twice.
+ */
+export function adoptProgress(progress: Progress, guest: Progress): Progress {
+  const counted = Object.entries(guest.couchWins).reduce(
+    (sum, [colorId, wins]) => addCouchWin(sum, colorId, wins ?? 0),
+    addTotals(progress, guest.totals)
+  );
+  return mergeProgress(counted, {
+    ...guest,
+    totals: NO_TOTALS,
+    couchWins: {},
+  });
 }
 
 /** Of two daily records the later one, or the one with more attempts. */

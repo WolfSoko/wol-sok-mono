@@ -133,11 +133,48 @@ difficulty, level and the frame rate badge in the game storage.
 
 ## Storage
 
-Everything the game remembers goes through the
-[`GameStorage`](./src/lib/storage/game-storage.ts) port. Its default backend is
-[`LocalGameStorage`](./src/lib/storage/local-game-storage.ts), and a Firebase
-backend can take its place later. [`CLAUDE.md`](./CLAUDE.md) has the rules
-that keep it exchangeable.
+Everything the game remembers goes through the ports in
+[`src/lib/storage/`](./src/lib/storage/game-storage.ts):
+
+- **Progress** (medallions, campaign, XP, achievements, totals) goes through
+  `GameStorage` and belongs to the player. With a Firebase project configured
+  it lives in Firestore
+  ([`FirestoreGameStorage`](./src/lib/storage/firestore-game-storage.ts)),
+  otherwise in local storage
+  ([`LocalGameStorage`](./src/lib/storage/local-game-storage.ts)).
+- **Settings** go through `DeviceStorage` and always stay in this browser's
+  local storage, whoever signs in.
+
+[`CLAUDE.md`](./CLAUDE.md) has the rules that keep the backends exchangeable.
+
+### Cloud save
+
+With a project, every visitor plays as a guest (an anonymous Firebase
+account) and their progress is saved to the cloud from the first match. In
+the profile they can **Sign in with Google** to keep it on every device:
+
+- A guest signing in to a Google account for the first time keeps their
+  progress. The guest account becomes the Google account.
+- Signing in to a Google account that already played elsewhere adds what the
+  guest played on this device to it, once.
+- Signing out starts a new guest from the start. The progress stays with the
+  Google account.
+
+The game uses its own Firebase project. To switch it on:
+
+1. Create the project in the [Firebase console](https://console.firebase.google.com/)
+   and add a web app.
+2. Enable **Authentication** with the providers **Anonymous** and **Google**.
+   Add the domains the game runs on (the CloudFront domain of the game and
+   the shell's domain) under _Authentication > Settings > Authorized domains_.
+3. Create a **Firestore** database and deploy its rules:
+   `npx nx run bacteria-game-remote:deploy-firestore-rules --firebaseProject=<project-id>`.
+4. Put the web app's config into `gameCloud.firebase` in
+   `apps/bacteria-game-remote/src/environments/environment.prod.ts`.
+
+To play against local emulators instead (a `demo-` project, no credentials):
+`npx nx run bacteria-game-remote:serve-emulator`. It needs Java for the
+Firestore emulator.
 
 ## Medallions
 

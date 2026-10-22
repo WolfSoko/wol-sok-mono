@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { MedallionComponent } from '../medallion/medallion.component';
+import { AccountComponent } from './account.component';
 import { ScreenHeaderComponent } from './screen-header.component';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { LEVELS } from '../state/levels';
@@ -24,11 +25,12 @@ import {
 /**
  * The player's profile: what they have done over all their matches, every
  * medallion won, level by level and difficulty by difficulty, and the
- * achievements, earned or still to earn. Kept on this device.
+ * achievements, earned or still to earn - and where it is all kept.
  */
 @Component({
   selector: 'feat-lazy-bac-game-profile',
   imports: [
+    AccountComponent,
     DatePipe,
     MedallionComponent,
     RankStandingComponent,

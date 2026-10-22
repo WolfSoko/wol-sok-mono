@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // What the game stores for a player, a document per key
+    // (FirestoreGameStorage): only the player reads and writes it - a guest
+    // (anonymous) account as much as a Google one.
+    match /players/{playerId}/storage/{key} {
+      allow read: if isPlayer(playerId);
+      allow create, update: if isPlayer(playerId) &&
+        key.matches('bacteria-game[.][a-z-]+') &&
+        isStoredValue(request.resource.data);
+      allow delete: if isPlayer(playerId);
+    }
+
+    function isPlayer(playerId) {
+      return request.auth != null && request.auth.uid == playerId;
+    }
+
+    // The value as JSON, kept well below the document limit of 1 MiB.
+    function isStoredValue(data) {
+      return data.keys().hasOnly(['json', 'updatedAt']) &&
+        data.json is string &&
+        data.json.size() <= 200000 &&
+        data.updatedAt == request.time;
+    }
+  }
+}
