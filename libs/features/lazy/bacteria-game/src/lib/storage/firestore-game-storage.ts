@@ -1,7 +1,4 @@
-import type {
-  DocumentReference,
-  DocumentSnapshot,
-} from '@angular/fire/firestore';
+import type { DocumentReference, DocumentSnapshot } from 'firebase/firestore';
 import { EMPTY, filter, firstValueFrom, Observable, switchMap } from 'rxjs';
 import type { FirebaseConnection } from './firebase-connection';
 import type { GameStorage } from './game-storage';
@@ -47,33 +44,33 @@ export class FirestoreGameStorage implements GameStorage {
 
   public write(key: string, value: unknown): void {
     const json = JSON.stringify(value);
-    const { dbSdk, run } = this.connection;
+    const { dbSdk } = this.connection;
     this.enqueue(key, async (ref) => {
       // The snapshot of the write itself, which comes at once, updates `seen`.
       if (json === undefined || this.seen.get(ref.path) === json) {
         return;
       }
       // Not awaited: offline, Firestore keeps the write and sends it later.
-      run(() => dbSdk.setDoc(ref, stored(dbSdk, json))).catch(
-        (error: unknown) => console.error(`Could not store ${key}`, error)
-      );
+      dbSdk
+        .setDoc(ref, stored(dbSdk, json))
+        .catch((error: unknown) =>
+          console.error(`Could not store ${key}`, error)
+        );
     });
   }
 
   public update(key: string, change: (stored: unknown) => unknown): void {
-    const { db, dbSdk, run } = this.connection;
+    const { db, dbSdk } = this.connection;
     this.enqueue(key, async (ref) => {
       for (let attempt = 0; ; attempt++) {
         try {
-          await run(() =>
-            dbSdk.runTransaction(db, async (transaction) => {
-              const before = jsonOf(await transaction.get(ref));
-              const after = JSON.stringify(change(parseStoredJson(before)));
-              if (after !== undefined && after !== before) {
-                transaction.set(ref, stored(dbSdk, after));
-              }
-            })
-          );
+          await dbSdk.runTransaction(db, async (transaction) => {
+            const before = jsonOf(await transaction.get(ref));
+            const after = JSON.stringify(change(parseStoredJson(before)));
+            if (after !== undefined && after !== before) {
+              transaction.set(ref, stored(dbSdk, after));
+            }
+          });
           return;
         } catch (error) {
           if (FINAL_ERRORS.has(errorCode(error))) {
@@ -108,29 +105,27 @@ export class FirestoreGameStorage implements GameStorage {
   }
 
   private snapshots(uid: string, key: string): Observable<unknown> {
-    const { dbSdk, run } = this.connection;
+    const { dbSdk } = this.connection;
     const ref = this.document(uid, key);
     return new Observable((subscriber) =>
-      run(() =>
-        dbSdk.onSnapshot(
-          ref,
-          (snapshot) => {
-            const json = jsonOf(snapshot);
-            this.seen.set(ref.path, json);
-            subscriber.next(parseStoredJson(json));
-          },
-          (error) => {
-            console.error(`Could not read ${key}`, error);
-            subscriber.next(null);
-          }
-        )
+      dbSdk.onSnapshot(
+        ref,
+        (snapshot) => {
+          const json = jsonOf(snapshot);
+          this.seen.set(ref.path, json);
+          subscriber.next(parseStoredJson(json));
+        },
+        (error) => {
+          console.error(`Could not read ${key}`, error);
+          subscriber.next(null);
+        }
       )
     );
   }
 
   private document(uid: string, key: string): DocumentReference {
-    const { db, dbSdk, run } = this.connection;
-    return run(() => dbSdk.doc(db, 'players', uid, 'storage', key));
+    const { db, dbSdk } = this.connection;
+    return dbSdk.doc(db, 'players', uid, 'storage', key);
   }
 }
 

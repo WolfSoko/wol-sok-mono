@@ -86,32 +86,12 @@
           ]
         },
         "e2e": {
-          "sourceMap": {
-            "hidden": false,
-            "scripts": true,
-            "styles": true,
-            "vendor": true
-          },
-          "budgets": [
-            {
-              "type": "initial",
-              "maximumWarning": "500kb",
-              "maximumError": "1mb"
-            },
-            {
-              "type": "anyComponentStyle",
-              "maximumWarning": "6kb",
-              "maximumError": "8kb"
-            }
-          ],
           "fileReplacements": [
             {
               "replace": "apps/bacteria-game-remote/src/environments/environment.ts",
               "with": "apps/bacteria-game-remote/src/environments/environment.e2e.ts"
             }
           ],
-          "serviceWorker": "apps/bacteria-game-remote/ngsw-config.json",
-          "outputHashing": "all",
           "outputPath": {
             "base": "dist/apps/bacteria-game-remote-e2e",
             "browser": ""
@@ -262,7 +242,7 @@
       "dependsOn": ["^build"],
       "cache": true,
       "options": {
-        "target": "bacteria-game-remote:esbuild:e2e"
+        "target": "bacteria-game-remote:esbuild:production,e2e"
       }
     },
     "build-e2e": {
@@ -280,7 +260,7 @@
       "dependsOn": ["build-e2e"],
       "options": {
         "staticFilePath": "dist/apps/bacteria-game-remote-e2e",
-        "port": 4202,
+        "port": 4222,
         "watch": false
       }
     }

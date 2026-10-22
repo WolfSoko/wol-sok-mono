@@ -28,12 +28,14 @@ storage until then. Settings stay with the device either way.
 - Firebase comes through AngularFire (`@angular/fire`): `provideGameCloud`
   provides the game's own named app (`bacteria-wars`), Auth and Firestore on
   that route, where they stand in for the shell's, which belong to another
-  project. The backends call AngularFire inside that route's injection
-  context (`FirebaseConnection.run`). The app is zoneless, so AngularFire's
-  zone wrapping runs through a no-op zone.
-- Only `firebase-connection.ts` imports AngularFire at runtime, and only
-  `provide-game-cloud.ts` imports that file; the rest takes AngularFire's
-  types only, so the specs never load the SDK.
+  project. The backends call the Firebase SDK itself on the injected
+  instances, not AngularFire's wrapped functions: the app is zoneless, where
+  the wrapping only adds pending tasks (a write held offline keeps the app
+  from turning stable), and it wraps every function argument as a callback,
+  which breaks the popup resolver class.
+- Only `firebase-connection.ts` imports Firebase at runtime, and only
+  `provide-game-cloud.ts` imports that file; the rest takes types only, so
+  the specs never load the SDK.
 - The release pipeline deploys `apps/bacteria-game-remote/firestore.rules`
   (`bacteria-game-remote:deploy`, config `firebase.bacteria-game-remote.json`).
 - Treat the ports as asynchronous, even though local storage answers at once:

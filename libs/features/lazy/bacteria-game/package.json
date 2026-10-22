@@ -13,7 +13,8 @@
     "@ngrx/signals": "22.0.1",
     "@wolsok/utils-measure-fps": "0.0.1",
     "@angular/cdk": "22.2.3",
-    "@angular/fire": "20.1.1"
+    "@angular/fire": "20.1.1",
+    "firebase": "11.10.0"
   },
   "devDependencies": {
     "tslib": "2.5.2"

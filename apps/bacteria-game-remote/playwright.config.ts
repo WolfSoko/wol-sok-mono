@@ -3,7 +3,9 @@ import { nxE2EPreset } from '@nx/playwright/preset';
 import { defineConfig, devices } from '@playwright/test';
 
 // For CI, you may want to set BASE_URL to the deployed application.
-const baseURL = process.env['BASE_URL'] || 'http://localhost:4202';
+// serve-e2e has a port of its own, so a running dev or production server is
+// never mistaken for it.
+const baseURL = process.env['BASE_URL'] || 'http://localhost:4222';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -26,7 +28,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'npx nx run bacteria-game-remote:serve-e2e',
-      url: 'http://localhost:4202',
+      url: 'http://localhost:4222',
       reuseExistingServer: true,
       cwd: workspaceRoot,
       timeout: process.env['CI'] ? 360_000 : 120_000,

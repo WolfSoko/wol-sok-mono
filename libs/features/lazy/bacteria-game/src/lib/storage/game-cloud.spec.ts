@@ -12,8 +12,8 @@ import { LocalGameStorage } from './local-game-storage';
 /** A project nobody signs in to - just enough to set the backend up. */
 const CONNECTION = {
   auth: {},
+  db: {},
   authSdk: { onAuthStateChanged: () => () => undefined },
-  run: <T>(call: () => T) => call(),
 } as unknown as FirebaseConnection;
 
 describe('GameCloud', () => {

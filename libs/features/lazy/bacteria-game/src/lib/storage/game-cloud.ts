@@ -17,7 +17,7 @@ export interface GameCloudOptions {
    * `nx run bacteria-game-remote:firebase-emulators`.
    */
   emulators?: {
-    /** The Auth emulator, "http://127.0.0.1:9099". */
+    /** The Auth emulator, "http://127.0.0.1:9399". */
     authUrl: string;
     firestoreHost: string;
     firestorePort: number;
@@ -39,7 +39,7 @@ export class GameCloud {
 
   /** Uses the project connected to, none for this device only. */
   public use(connection: FirebaseConnection | null): void {
-    if (this.asked && connection !== this.connection) {
+    if (this.asked && connection?.db !== this.connection?.db) {
       console.error(
         'The game cloud was set up after the game started - staying on this device.'
       );

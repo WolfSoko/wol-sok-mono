@@ -48,7 +48,9 @@ root services and their specs; not worth it for one configuration value.
 
 - Firebase comes through AngularFire, provided on the remote's entry route
   next to the shell's own AngularFire setup for its project; both apps are
-  zoneless. The SDK loads with the game's route and is shared with the shell
+  zoneless. The backends call the Firebase SDK on the provided instances
+  rather than AngularFire's wrapped functions, whose zone wrapping adds only
+  pending tasks in a zoneless app and breaks the popup resolver. The SDK loads with the game's route and is shared with the shell
   through the Native Federation import map.
 - The release pipeline deploys the Firestore rules (`bacteria-game-remote`
   carries `type:firebase` and a `deploy` target), with the same

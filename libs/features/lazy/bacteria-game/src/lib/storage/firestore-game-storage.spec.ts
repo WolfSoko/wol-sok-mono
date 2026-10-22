@@ -61,7 +61,6 @@ class FakeFirestore {
     return {
       db: {},
       dbSdk: this.sdk,
-      run: <T>(call: () => T) => call(),
     } as unknown as FirebaseConnection;
   }
 

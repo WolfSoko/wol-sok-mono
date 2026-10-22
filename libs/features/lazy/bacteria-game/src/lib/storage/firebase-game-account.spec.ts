@@ -73,7 +73,6 @@ class FakeAuth {
     return {
       auth: this,
       authSdk: this.sdk,
-      run: <T>(call: () => T) => call(),
     } as unknown as FirebaseConnection;
   }
 }
