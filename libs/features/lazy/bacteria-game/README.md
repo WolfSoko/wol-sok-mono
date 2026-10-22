@@ -170,6 +170,9 @@ project needs, in the [Firebase console](https://console.firebase.google.com/pro
    shell's domain) under _Authentication > Settings > Authorized domains_.
 2. A **Firestore** database.
 
+The game itself is moving to Firebase Hosting in the same project, at
+`bacteria-wars.wolsok.de` ([ADR 0008](../../../../docs/adr/0008-bacteria-wars-on-firebase-hosting.md)).
+
 The release pipeline deploys the Firestore rules
 (`apps/bacteria-game-remote/firestore.rules`): `bacteria-game-remote` has a
 `deploy` target (`firebase deploy --only firestore:rules`, config in

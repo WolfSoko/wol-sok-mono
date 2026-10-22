@@ -117,6 +117,7 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - A remote also has to run standalone (its own e2e serves it that way), so check both: loaded through the shell _and_ opened on its own port.
 - Remotes are listed in `apps/angular-examples/src/assets/federation.manifest.json` (dev) and `federation.manifest.prod.json` (prod).
 - Each app has an `esbuild` target (`@angular/build:application`) wrapped by a `build`/`serve` target from `@angular-architects/native-federation`. Change build options on `esbuild`.
+- `bacteria-game-remote` is moving to Firebase Hosting (`firebase.bacteria-game-remote.json`, site `bacteria-wars`, domain `bacteria-wars.wolsok.de`), deployed by its `deploy` target together with the Firestore rules. Until that domain is live, `bacteria-game-remote-cdk` keeps serving `bacteria-game.wolsok.de` from S3/CloudFront and only adds the new domain's DNS records; then the old domain turns into a redirect and the shell manifest and the Android host move over.
 - Exception: `bacteria-game-remote` is also a standalone PWA. Its federation build is `build-federation`; `build` then reruns `ngsw-config`, since the federation builder writes its files after Angular has hashed the output into `ngsw.json`.
 - `nx serve angular-examples` only serves the shell. Use `nx run angular-examples:serve-all` to boot the shell plus all remotes (ports 4200-4203).
 

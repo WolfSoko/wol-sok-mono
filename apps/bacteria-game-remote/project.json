@@ -192,12 +192,14 @@
     "deploy": {
       "executor": "nx:run-commands",
       "inputs": [
-        "{projectRoot}/firestore.rules",
+        "production",
+        "^production",
         "{workspaceRoot}/firebase.{projectName}.json",
         "{workspaceRoot}/.firebaserc"
       ],
+      "dependsOn": ["build"],
       "options": {
-        "command": "nx run {projectName}:firebase deploy --only firestore:rules"
+        "command": "nx run {projectName}:firebase deploy --only hosting,firestore:rules"
       }
     },
     "icons": {
