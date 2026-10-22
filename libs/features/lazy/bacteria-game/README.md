@@ -166,16 +166,17 @@ only; development builds stay local). Its config sits in
 project needs, in the [Firebase console](https://console.firebase.google.com/project/bacteria-wars):
 
 1. **Authentication** with the providers **Anonymous** and **Google**, and the
-   domains the game runs on (the CloudFront domain of the game and the
-   shell's domain) under _Authentication > Settings > Authorized domains_.
+   domains the game runs on (`bacteria-game.wolsok.de`,
+   `bacteria-wars.wolsok.de` and the shell's `angularexamples.wolsok.de`)
+   under _Authentication > Settings > Authorized domains_.
 2. A **Firestore** database.
 
 The game itself is moving to Firebase Hosting in the same project, at
 `bacteria-wars.wolsok.de` ([ADR 0008](../../../../docs/adr/0008-bacteria-wars-on-firebase-hosting.md)).
 
-The release pipeline deploys the Firestore rules
-(`apps/bacteria-game-remote/firestore.rules`): `bacteria-game-remote` has a
-`deploy` target (`firebase deploy --only firestore:rules`, config in
+The release pipeline deploys the game to Firebase Hosting and the Firestore
+rules (`apps/bacteria-game-remote/firestore.rules`): `bacteria-game-remote` has a
+`deploy` target (`firebase deploy --only hosting,firestore:rules`, config in
 `firebase.bacteria-game-remote.json`, project alias in `.firebaserc`), which
 the non-CDK job of `deploy.yml` runs with the `FIREBASE_TOKEN` secret like
 the other Firebase apps. The token's account needs access to the project.

@@ -20,8 +20,8 @@ the console and its records check out, which takes minutes to hours.
 
 **Firebase Hosting, site `bacteria-wars`, domain `bacteria-wars.wolsok.de`.**
 `firebase.bacteria-game-remote.json` serves the production build as an SPA,
-with the headers CloudFront set: CORS for the shell
-(`https://angularexamples.wolsok.de`), `no-cache` by default, a year for
+with the headers CloudFront set: CORS for any origin (public files, no
+credentials), `no-cache` by default, a year for
 hashed bundles, `no-cache` again for the service worker files and the icons,
 and the asset links the Android app needs. `bacteria-game-remote:deploy`
 deploys hosting and the Firestore rules in the release pipeline.
@@ -45,6 +45,13 @@ with Google to take it along. That loss is accepted.
 
 - The release now also deploys Firebase Hosting for the game; the CDK stack
   only holds the old domain and the new domain's records.
+- Only paths without a file extension fall back to `index.html`: a missing
+  bundle answers 404, not an HTML page cached for a year as script.
+- A deploy replaces the whole site, while the S3 setup kept old bundles for
+  tabs still running them. The installed PWA has them in its service worker;
+  a shell tab that loads the remote after a release does not. Step 2 has to
+  cover that before the shell points at Firebase Hosting (keep the previous
+  release's bundles, or reload the shell on a failed remote chunk).
 - The Android app needs a release with the new host for step 2, and its asset
   links must be served by the new domain (they are, under `.well-known`).
 - The `bacteria-wars.wolsok.de` domain has to be an authorized domain of

@@ -5,7 +5,7 @@
     "ignore": ["firebase.json", "**/node_modules/**"],
     "rewrites": [
       {
-        "source": "**",
+        "source": "**/!(*.*)",
         "destination": "/index.html"
       }
     ],
@@ -15,11 +15,7 @@
         "headers": [
           {
             "key": "Access-Control-Allow-Origin",
-            "value": "https://angularexamples.wolsok.de"
-          },
-          {
-            "key": "Vary",
-            "value": "Origin"
+            "value": "*"
           },
           {
             "key": "Cache-Control",
@@ -79,9 +75,6 @@
     "firestore": {
       "port": 8380,
       "websocketPort": 9160
-    },
-    "hosting": {
-      "port": 5010
     },
     "hub": {
       "port": 4410
