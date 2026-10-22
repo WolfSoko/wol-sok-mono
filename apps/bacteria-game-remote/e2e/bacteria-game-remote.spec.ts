@@ -328,5 +328,9 @@ test('should show the privacy policy on a page of its own', async ({
 
   // The click lets the game ask for native fullscreen, which WebKit may
   // refuse and so leave the game in the page: the arena is there either way.
-  await expect(new BacteriaGamePo(page).playArea).toBeVisible();
+  // The game's chunk, Firebase included, loads only now, while the service
+  // worker the policy page registered prefetches the app.
+  await expect(new BacteriaGamePo(page).playArea).toBeVisible({
+    timeout: 15_000,
+  });
 });

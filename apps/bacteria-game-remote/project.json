@@ -4,14 +4,14 @@
   "projectType": "application",
   "sourceRoot": "apps/bacteria-game-remote/src",
   "prefix": "wolsok",
-  "tags": ["app", "type:remote"],
+  "tags": ["app", "type:remote", "type:firebase"],
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals", "federation"]
   },
   "targets": {
     "esbuild": {
       "executor": "@angular/build:application",
-      "outputs": ["{workspaceRoot}/dist/apps/bacteria-game-remote"],
+      "outputs": ["{workspaceRoot}/{options.outputPath.base}"],
       "dependsOn": ["^build"],
       "options": {
         "outputPath": {
@@ -84,6 +84,18 @@
               "with": "apps/bacteria-game-remote/src/environments/environment.emulator.ts"
             }
           ]
+        },
+        "e2e": {
+          "fileReplacements": [
+            {
+              "replace": "apps/bacteria-game-remote/src/environments/environment.ts",
+              "with": "apps/bacteria-game-remote/src/environments/environment.e2e.ts"
+            }
+          ],
+          "outputPath": {
+            "base": "dist/apps/bacteria-game-remote-e2e",
+            "browser": ""
+          }
         }
       },
       "defaultConfiguration": "production"
@@ -167,14 +179,21 @@
     "firebase-emulators": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "firebase emulators:start --only auth,firestore --project demo-bacteria-wars --config apps/bacteria-game-remote/firebase.json"
+        "command": "firebase emulators:start --only auth,firestore --project demo-bacteria-wars --config firebase.{projectName}.json"
       },
       "continuous": true
     },
-    "deploy-firestore-rules": {
+    "firebase": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "firebase deploy --only firestore:rules --config apps/bacteria-game-remote/firebase.json --project {args.firebaseProject}"
+        "command": "firebase --config=firebase.{projectName}.json --project={projectName}"
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "command": "nx run {projectName}:firebase deploy --only hosting,firestore:rules"
       }
     },
     "icons": {
@@ -211,6 +230,37 @@
       "configurations": {
         "development": {},
         "production": {}
+      }
+    },
+    "build-federation-e2e": {
+      "executor": "@angular-architects/native-federation:build",
+      "outputs": ["{workspaceRoot}/dist/apps/bacteria-game-remote-e2e"],
+      "inputs": ["sharedGlobals", "production", "^production"],
+      "dependsOn": ["^build"],
+      "cache": true,
+      "options": {
+        "target": "bacteria-game-remote:esbuild:production,e2e",
+        "projectName": "bacteria-game-remote-e2e"
+      }
+    },
+    "build-e2e": {
+      "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/dist/apps/bacteria-game-remote-e2e/ngsw.json"
+      ],
+      "dependsOn": ["build-federation-e2e"],
+      "options": {
+        "command": "ngsw-config dist/apps/bacteria-game-remote-e2e apps/bacteria-game-remote/ngsw-config.json /"
+      }
+    },
+    "serve-e2e": {
+      "executor": "@nx/web:file-server",
+      "dependsOn": ["build-e2e"],
+      "options": {
+        "staticFilePath": "dist/apps/bacteria-game-remote-e2e",
+        "port": 4222,
+        "spa": true,
+        "watch": false
       }
     }
   }

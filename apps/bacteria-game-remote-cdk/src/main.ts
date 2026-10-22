@@ -1,10 +1,11 @@
 import { envOrDie, SpaStack } from '@wolsok/spa-cdk-stack';
 import { App, RemovalPolicy, Tags } from 'aws-cdk-lib';
+import { addFirebaseDomain } from './firebase-domain';
 
 const app = new App();
 
 const stackName = 'BacteriaGame';
-new SpaStack(app, stackName, {
+const stack = new SpaStack(app, stackName, {
   env: {
     region: 'us-east-1',
     account: '088632064895',
@@ -29,6 +30,14 @@ new SpaStack(app, stackName, {
     'icons/*',
     '.well-known/assetlinks.json',
   ],
+});
+
+// The game moves to Firebase Hosting (firebase.bacteria-game-remote.json).
+// Its domain points there already; this domain keeps serving the game until
+// the new one is live, then turns into a redirect to it.
+addFirebaseDomain(stack, {
+  domain: 'bacteria-wars.wolsok.de',
+  site: 'bacteria-wars',
 });
 
 const tags: Tags = Tags.of(app);
