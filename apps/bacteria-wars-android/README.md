@@ -23,10 +23,10 @@ Needs JDK 21 and the Android SDK (`ANDROID_HOME`, or `sdk.dir` in
 `local.properties`). The Gradle wrapper downloads Gradle itself.
 
 ```bash
-npx nx run bacteria-game-android:apk               # debug APK
-npx nx run bacteria-game-android:apk:release       # release APK
-npx nx run bacteria-game-android:bundle            # release app bundle for Play
-npx nx run bacteria-game-android:lint-android      # Android lint
+npx nx run bacteria-wars-android:apk               # debug APK
+npx nx run bacteria-wars-android:apk:release       # release APK
+npx nx run bacteria-wars-android:bundle            # release app bundle for Play
+npx nx run bacteria-wars-android:lint-android      # Android lint
 ```
 
 Outputs land in `app/build/outputs/`. Install a debug APK with
@@ -81,8 +81,8 @@ so it is the one place to change it.
    `ANDROID_KEYSTORE_FILE` pointing at the keystore instead of the base64
    secret.
 
-3. Create the app `de.wolsok.bacteriagame` in the Play Console with Play App
-   Signing and upload the `.aab` from the workflow's `bacteria-war-release`
+3. Create the app `de.wolsok.bacteriawars` in the Play Console with Play App
+   Signing and upload the `.aab` from the workflow's `bacteria-wars-release`
    artifact.
 
 4. Put both SHA-256 fingerprints into `assetlinks.json` and deploy the web

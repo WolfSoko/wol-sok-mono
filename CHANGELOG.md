@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.45.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.45.0...v74.45.1) (2026-10-22)
+
+### Refactorings
+
+* **bacteria-wars-android:** rename the Android app to bacteria-wars ([#2538](https://github.com/WolfSoko/wol-sok-mono/issues/2538)) ([1fcb0b8](https://github.com/WolfSoko/wol-sok-mono/commit/1fcb0b864d58f2ea7c5cd3b77b5f66b62b8b65ee))
+
 ## [74.45.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.44.1...v74.45.0) (2026-10-22)
 
 ### Features

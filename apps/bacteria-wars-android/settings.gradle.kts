@@ -13,5 +13,5 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "bacteria-game-android"
+rootProject.name = "bacteria-wars-android"
 include(":app")
