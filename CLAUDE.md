@@ -123,7 +123,7 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 ## Android App
 
 - `apps/bacteria-wars-android` is a Gradle project, not a web build: a Trusted Web Activity that opens `https://bacteria-game.wolsok.de` (the `bacteria-game-remote` PWA) fullscreen in Chrome. Game changes go into the PWA; the app picks them up with the next web deploy.
-- Its Nx targets are `apk`, `bundle` and `lint-android`, deliberately not `build`/`lint`/`test`: the Nx agents and the release workflow have no Android SDK. The `Android app` GitHub workflow (`.github/workflows/android.yml`) builds it instead. See its `README.md` for signing and Play.
+- Its Nx targets are `apk`, `bundle`, `lint-android` and `deploy`, deliberately not `build`/`lint`/`test`: the Nx agents have no Android SDK. The `Android app` GitHub workflow (`.github/workflows/android.yml`) builds and lints it on PRs instead. `deploy` signs the release, attaches the APK and bundle to the GitHub release and uploads the bundle to Play's internal track; the `android` leg of `deploy.yml` runs it when a release affects the app. See its `README.md` for signing and Play.
 - Fullscreen depends on `apps/bacteria-game-remote/src/.well-known/assetlinks.json` naming the app's package and signing-key fingerprints. Gradle reads the package name from that file, so it is the one place to change it; the host is set in both `app/build.gradle.kts` and the CDK stack.
 - Launcher icons and splash come from `npx nx run bacteria-game-remote:icons`; don't edit the PNGs by hand.
 
