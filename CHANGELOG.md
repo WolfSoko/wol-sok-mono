@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.46.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.45.1...v74.46.0) (2026-10-22)
+
+### Features
+
+* **bacteria-wars-android:** ship the Android app with the Nx release ([#2542](https://github.com/WolfSoko/wol-sok-mono/issues/2542)) ([62227a8](https://github.com/WolfSoko/wol-sok-mono/commit/62227a844c7a1024f769cc6cafa85030b61dfbac))
+* **rollapolla-analog:** add Google AdSense script to index.html ([#2541](https://github.com/WolfSoko/wol-sok-mono/issues/2541)) ([4612480](https://github.com/WolfSoko/wol-sok-mono/commit/46124806ca0e31555eaa558adca3c2cae9961401))
+
+### Bug Fixes
+
+* **bacteria-game-remote:** let the Play build of Bacteria Wars open fullscreen ([#2540](https://github.com/WolfSoko/wol-sok-mono/issues/2540)) ([4c9e6ba](https://github.com/WolfSoko/wol-sok-mono/commit/4c9e6ba72ee2fe08103d48dd01563be14796177b))
+
 ## [74.45.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.45.0...v74.45.1) (2026-10-22)
 
 ### Refactorings
