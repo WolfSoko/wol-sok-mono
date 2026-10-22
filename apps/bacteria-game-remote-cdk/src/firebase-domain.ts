@@ -1,10 +1,5 @@
 import { Stack } from 'aws-cdk-lib';
-import {
-  ARecord,
-  HostedZone,
-  RecordTarget,
-  TxtRecord,
-} from 'aws-cdk-lib/aws-route53';
+import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53';
 
 export interface FirebaseDomainProps {
   /** The custom domain of the Firebase Hosting site, in a zone of Route53. */
@@ -13,14 +8,12 @@ export interface FirebaseDomainProps {
   site: string;
 }
 
-/** Firebase Hosting's address for custom domains. */
-const FIREBASE_HOSTING_IP = '199.36.158.100';
-
 /**
- * The records Firebase Hosting asks for when a custom domain is added: the
- * address of its servers and the proof that the domain is the site's. They
- * sit on the stack itself, under ids of their own, so they stay put however
- * the rest of the stack changes.
+ * The record Firebase Hosting asks for when a subdomain is added: a CNAME to
+ * the site's own address, `<site>.web.app`, which also proves the domain is
+ * the site's. A CNAME allows no other record of the same name. It sits on the
+ * stack itself, under an id of its own, so it stays put however the rest of
+ * the stack changes.
  */
 export function addFirebaseDomain(
   stack: Stack,
@@ -31,14 +24,9 @@ export function addFirebaseDomain(
     privateZone: false,
     domainName: domain.split('.').slice(-2).join('.'),
   });
-  new ARecord(stack, 'FirebaseHostingRecord', {
+  new CnameRecord(stack, 'FirebaseHostingRecord', {
     recordName: domain,
-    target: RecordTarget.fromIpAddresses(FIREBASE_HOSTING_IP),
-    zone,
-  });
-  new TxtRecord(stack, 'FirebaseHostingVerification', {
-    recordName: domain,
-    values: [`hosting-site=${site}`],
+    domainName: `${site}.web.app`,
     zone,
   });
 }

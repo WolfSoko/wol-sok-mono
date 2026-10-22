@@ -30,8 +30,8 @@ deploys hosting and the Firestore rules in the release pipeline.
 has a certificate:
 
 1. Hosting goes live (reachable at `bacteria-wars.web.app`), and the CDK stack
-   adds the new domain's records (`A 199.36.158.100`,
-   `TXT hosting-site=bacteria-wars`) next to the old site, which keeps serving
+   adds the new domain's record (`CNAME bacteria-wars.web.app`, the one
+   Firebase asks for a subdomain) next to the old site, which keeps serving
    the game. The domain is then added in the Firebase console.
 2. Once `https://bacteria-wars.wolsok.de` serves the game, the old domain
    becomes a 301 redirect (the distribution changed in place under its old

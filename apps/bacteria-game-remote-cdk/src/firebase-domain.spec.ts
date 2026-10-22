@@ -19,16 +19,16 @@ describe('addFirebaseDomain', () => {
   });
   const template = Template.fromStack(stack);
 
-  it('points the domain at Firebase Hosting and proves it is the site’s', () => {
+  it('points the domain at the Firebase Hosting site', () => {
+    template.resourcePropertiesCountIs(
+      'AWS::Route53::RecordSet',
+      { Name: 'bacteria-wars.wolsok.de.' },
+      1
+    );
     template.hasResourceProperties('AWS::Route53::RecordSet', {
       Name: 'bacteria-wars.wolsok.de.',
-      Type: 'A',
-      ResourceRecords: ['199.36.158.100'],
-    });
-    template.hasResourceProperties('AWS::Route53::RecordSet', {
-      Name: 'bacteria-wars.wolsok.de.',
-      Type: 'TXT',
-      ResourceRecords: ['"hosting-site=bacteria-wars"'],
+      Type: 'CNAME',
+      ResourceRecords: ['bacteria-wars.web.app'],
     });
   });
 
@@ -39,6 +39,6 @@ describe('addFirebaseDomain', () => {
     const after = Object.keys(template.toJSON()['Resources']);
 
     expect(after).toEqual(expect.arrayContaining(before));
-    expect(after).toHaveLength(before.length + 2);
+    expect(after).toHaveLength(before.length + 1);
   });
 });
