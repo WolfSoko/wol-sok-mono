@@ -3,8 +3,17 @@
     <img src="icons/icon-192.png" alt="" />
     <p class="brand">Bacteria <span>War</span></p>
     <nav aria-label="Sprache / Language">
-      <a routerLink="." fragment="de" hreflang="de">Deutsch</a>
-      <a routerLink="." fragment="en" hreflang="en" lang="en">English</a>
+      <a routerLink="." fragment="de" hreflang="de" (click)="scrollTo('de')"
+        >Deutsch</a
+      >
+      <a
+        routerLink="."
+        fragment="en"
+        hreflang="en"
+        lang="en"
+        (click)="scrollTo('en')"
+        >English</a
+      >
     </nav>
   </header>
 

@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Meta, Title } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { PRIVACY_POLICY_URL } from '@wolsok/feat-lazy-bac-game';
 import { PrivacyComponent } from './privacy.component';
 
 describe('PrivacyComponent', () => {
@@ -59,7 +60,7 @@ describe('PrivacyComponent', () => {
     );
     expect(
       doc.head.querySelector('link[rel="canonical"]')?.getAttribute('href')
-    ).toBe('https://bacteria-game.wolsok.de/privacy');
+    ).toBe(PRIVACY_POLICY_URL);
 
     await TestBed.inject(Router).navigateByUrl('/');
 
@@ -76,13 +77,21 @@ describe('PrivacyComponent', () => {
 
     await open();
 
-    expect(splash.classList).toContain('done');
-    splash.remove();
+    expect(splash.isConnected).toBe(false);
   });
 
   it('scrolls to the section a link names', async () => {
     await open('/privacy#en-delete');
 
     expect(scrolledTo).toContain('en-delete');
+  });
+
+  it('scrolls to a language on every click, the same one again too', async () => {
+    const page = await open('/privacy#de');
+    scrolledTo = [];
+
+    page.querySelector<HTMLAnchorElement>('nav a[hreflang="de"]')?.click();
+
+    expect(scrolledTo).toEqual(['de']);
   });
 });
