@@ -56,19 +56,45 @@ Until a fingerprint is listed there, the app still runs, but Chrome shows a
 URL bar on top of it. The Gradle build reads the package name from that file,
 so it is the one place to change it.
 
-## Release signing and Google Play
+## Releases and Google Play
 
-1. Create an upload key once and keep it safe, outside the repository:
+The app ships with the workspace release, as an Nx `deploy` target like the
+other apps. The `Deploy release` workflow runs `nx affected -t deploy` for
+every release, in its own `android` leg that compares against the last
+`*-android-deployed` tag. When a release touches this folder,
+`nx run bacteria-wars-android:deploy` (`tools/bacteria-game/deploy-android.ts`):
+
+1. builds the signed release APK and app bundle, with the version code of the
+   release's `version.json`,
+2. uploads the bundle to the **internal testing** track on Google Play,
+3. attaches the APK and bundle to the GitHub release as
+   `bacteria-wars-<tag>.apk` and `.aab`.
+
+Promoting a build to production stays a step in the Play Console. A release
+whose bundle is on Play already skips the upload, so a failed deploy can run
+again (Actions → Deploy release → Run workflow, with the tag). Web changes do
+not ship the app: the app shows the live site, so only changes here need a
+new build.
+
+Set the repository variable `PLAY_RELEASE_STATUS` to `draft` while the app's
+Play setup is incomplete: Play then accepts the bundles but holds them back
+instead of rolling them out.
+
+The `Android app` workflow can still build the signed artifacts by hand
+(Actions → Android app → Run workflow), without publishing them.
+
+### One-time setup
+
+1. An upload key, kept outside the repository:
 
    ```bash
    keytool -genkeypair -keystore upload.jks -alias upload \
      -keyalg RSA -keysize 2048 -validity 10000
    ```
 
-2. Add it to the repository secrets. A manual run of the `Android app`
-   workflow (Actions → Android app → Run workflow) then builds the signed
-   release APK and app bundle, with the version code of the current
-   `version.json`; run it once per release that should go to Play:
+2. The key in the repository secrets. Locally, the same values go into the
+   environment, with `ANDROID_KEYSTORE_FILE` pointing at the keystore instead
+   of the base64 secret.
 
    | Secret                      | Value                   |
    | --------------------------- | ----------------------- |
@@ -77,15 +103,18 @@ so it is the one place to change it.
    | `ANDROID_KEY_ALIAS`         | `upload`                |
    | `ANDROID_KEY_PASSWORD`      | the key password        |
 
-   Locally, the same values go into the environment, with
-   `ANDROID_KEYSTORE_FILE` pointing at the keystore instead of the base64
-   secret.
+3. The app `de.wolsok.bacteriawars` in the Play Console with Play App
+   Signing. Play takes the first bundle of a new app only through the
+   console, so upload one by hand once.
 
-3. Create the app `de.wolsok.bacteriawars` in the Play Console with Play App
-   Signing and upload the `.aab` from the workflow's `bacteria-wars-release`
-   artifact.
+4. A service account that may upload:
+   `play-publisher@bacteria-wars.iam.gserviceaccount.com` in the GCP project
+   `bacteria-wars`, with the Google Play Android Developer API enabled. Its
+   JSON key is the secret `PLAY_SERVICE_ACCOUNT_JSON`. In the Play Console,
+   under Users and permissions, invite it with access to the app and the
+   permission to release to testing tracks.
 
-4. Put both SHA-256 fingerprints into `assetlinks.json` and deploy the web
-   app: the one of the upload key (`keytool -list -v -keystore upload.jks`),
-   for APKs installed outside Play, and the one of the app signing key from
-   Play Console → Test and release → App integrity, for installs from Play.
+5. Both SHA-256 fingerprints in `assetlinks.json`, then a web deploy: the one
+   of the upload key (`keytool -list -v -keystore upload.jks`), for APKs
+   installed outside Play, and the one of the app signing key from Play
+   Console → Test and release → App integrity, for installs from Play.
