@@ -1,3 +1,4 @@
+import type { WeaponId } from '../state/evolution';
 import { generatedLevel } from '../state/level-generator/generate-level';
 
 /** A colour as red, green and blue from 0 to 255. */
@@ -339,3 +340,12 @@ export function arenaTheme(levelId: string): ArenaTheme {
 export function cssTriple([r, g, b]: Rgb): string {
   return `${r} ${g} ${b}`;
 }
+
+/** Each weapon's colour - its effects in the arena, its aura and card in the menus. */
+export const WEAPON_COLORS: Readonly<Record<WeaponId, Rgb>> = {
+  'toxin-bomb': [150, 255, 90],
+  'cryo-pulse': [120, 215, 255],
+  'phage-strike': [255, 90, 210],
+  'agar-bloom': [255, 200, 70],
+  'biofilm-shield': [80, 255, 200],
+};

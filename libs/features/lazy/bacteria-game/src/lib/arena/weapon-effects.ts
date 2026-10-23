@@ -1,7 +1,7 @@
 import type { ScreenResolution } from '../state/arena-size';
 import type { ActiveEffect, WeaponFire, WeaponId } from '../state/evolution';
 import { clamp } from '../state/geometry';
-import { Rgb } from './arena-theme';
+import { Rgb, WEAPON_COLORS } from './arena-theme';
 import { hash, lerp, smoothstep } from './canvas-math';
 
 /**
@@ -195,20 +195,20 @@ const FADE_IN_SEC = 0.3;
 const FADE_OUT_SEC = 0.6;
 
 // The weapons' colours. The main one of each is the colour the menus show
-// the weapon in (`WEAPON_COLORS`), so a weapon looks the same in both.
+// the weapon in, so a weapon looks the same in both.
 const WHITE: Rgb = [255, 255, 255];
 const WHITE_HOT: Rgb = [255, 247, 226];
-const TOXIC: Rgb = [150, 255, 90];
+const TOXIC: Rgb = WEAPON_COLORS['toxin-bomb'];
 const TOXIC_LIGHT: Rgb = [205, 255, 120];
 const TOXIC_DARK: Rgb = [55, 125, 30];
-const ICE: Rgb = [120, 215, 255];
+const ICE: Rgb = WEAPON_COLORS['cryo-pulse'];
 const ICE_LIGHT: Rgb = [226, 247, 255];
-const PHAGE: Rgb = [255, 90, 210];
-const GOLD: Rgb = [255, 200, 70];
+const PHAGE: Rgb = WEAPON_COLORS['phage-strike'];
+const GOLD: Rgb = WEAPON_COLORS['agar-bloom'];
 const GOLD_DEEP: Rgb = [232, 140, 28];
 const GOLD_LIGHT: Rgb = [255, 236, 160];
 const GOLD_PALE: Rgb = [255, 250, 215];
-const MEMBRANE: Rgb = [80, 255, 200];
+const MEMBRANE: Rgb = WEAPON_COLORS['biofilm-shield'];
 const SHADOW: Rgb = [0, 0, 0];
 
 /** How a particle looks and moves. */

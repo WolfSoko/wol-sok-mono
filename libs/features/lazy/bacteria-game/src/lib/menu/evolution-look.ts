@@ -14,14 +14,7 @@ import {
  * cent - "+12 % division".
  */
 
-/** Each weapon's colour - its aura in the colony preview, its card's glow. */
-export const WEAPON_COLORS: Readonly<Record<WeaponId, Rgb>> = {
-  'toxin-bomb': [150, 255, 90],
-  'cryo-pulse': [120, 215, 255],
-  'phage-strike': [255, 90, 210],
-  'agar-bloom': [255, 200, 70],
-  'biofilm-shield': [80, 255, 200],
-};
+export { WEAPON_COLORS } from '../arena/arena-theme';
 
 /** Each gene's colour, for its card's icon and the particles bought with. */
 export const GENE_COLORS: Readonly<Record<GeneId, Rgb>> = {
