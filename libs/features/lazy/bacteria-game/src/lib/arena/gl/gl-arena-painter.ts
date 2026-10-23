@@ -81,9 +81,12 @@ export function encodeCells(
  * 3 cells out - the blur spreads it by two, the slope of the slime reads one
  * more. Each pass reads past its own box, so the one before it has to cover
  * that too: the slime reads the vertical blur 1 cell further out, the
- * vertical blur reads the horizontal one 2 rows further out. A pass that
- * read past what was blurred this frame would pick up stale density - the
- * other colony's, where the two meet.
+ * vertical blur reads the horizontal one 2 rows further out, the horizontal
+ * blur the cells 2 columns. A pass that read past what was blurred this
+ * frame would pick up stale density - the other colony's, where the two
+ * meet. A look that reaches further past the colony, like the lattice
+ * looks with their cells and tiles, moves the whole chain out by its reach
+ * ({@link passMargins}).
  */
 const MARGIN = {
   colony: 3,
@@ -91,9 +94,23 @@ const MARGIN = {
   horizontalBlur: 6,
   /** The glow's halo reaches three cells out. */
   effects: 4,
-  /** The horizontal blur reads the cells 2 columns beyond its box. */
   cells: 8,
 } as const;
+
+/** The margins of a colony's passes for a look that reaches that far past it. */
+export function passMargins(reach: number): {
+  colony: number;
+  verticalBlur: number;
+  horizontalBlur: number;
+  cells: number;
+} {
+  return {
+    colony: MARGIN.colony + reach,
+    verticalBlur: MARGIN.verticalBlur + reach,
+    horizontalBlur: MARGIN.horizontalBlur + reach,
+    cells: MARGIN.cells + reach,
+  };
+}
 
 interface Programs {
   floor: Program;
@@ -367,17 +384,17 @@ export class GlArenaPainter implements ArenaPainter {
         ? this.uploadCells(layer.bacterias, frame.balance)
         : layer.bounds;
     // A look that reaches past the colony - the lattice looks, with their
-    // cells and tiles - is drawn that much further out. The blur boxes
-    // already cover it: past MARGIN.verticalBlur the density is zero.
-    const margin = MARGIN.colony + lookReach(frame.look, this.unit);
-    if (bounds == null || !this.inView(bounds, margin)) {
+    // cells and tiles - is drawn that much further out, and every pass
+    // before the drawing moves out with it, or it would read stale density.
+    const margin = passMargins(lookReach(frame.look, this.unit));
+    if (bounds == null || !this.inView(bounds, margin.colony)) {
       return;
     }
     // Only the box around the colony is blurred and drawn - the rest of the
     // arena would be fragments the GPU works on to discard them.
     gl.enable(gl.SCISSOR_TEST);
     if (layer.kind === 'state') {
-      this.drawCellsFromState(layer, bounds, frame.balance);
+      this.drawCellsFromState(layer, bounds, frame.balance, margin.cells);
     }
 
     const blurred = LOOKS[frame.look].fromDensity;
@@ -385,16 +402,16 @@ export class GlArenaPainter implements ArenaPainter {
       gl.disable(gl.BLEND);
       gl.viewport(0, 0, this.width, this.height);
       this.useFullscreen(programs.blur);
-      this.scissorCells(bounds, MARGIN.horizontalBlur);
+      this.scissorCells(bounds, margin.horizontalBlur);
       this.blurPass(cells.texture, blur[0], 1, 0);
-      this.scissorCells(bounds, MARGIN.verticalBlur);
+      this.scissorCells(bounds, margin.verticalBlur);
       this.blurPass(blur[0].texture, blur[1], 0, 1);
       gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
       gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
       gl.enable(gl.BLEND);
     }
 
-    this.scissorCanvas(bounds, margin);
+    this.scissorCanvas(bounds, margin.colony);
     const program = programs.colony;
     this.useFullscreen(program);
     bindTexture(gl, 0, blur[1].texture, program.uniforms['uDensity']);
@@ -522,7 +539,9 @@ export class GlArenaPainter implements ArenaPainter {
   private drawCellsFromState(
     colony: StateLayer,
     bounds: CellBounds,
-    balance: GameBalance
+    balance: GameBalance,
+    /** How far past the bounds to draw - what the horizontal blur reads. */
+    margin: number
   ): void {
     const gl = this.gl;
     const resources = this.resources;
@@ -533,7 +552,7 @@ export class GlArenaPainter implements ArenaPainter {
     gl.disable(gl.BLEND);
     gl.viewport(0, 0, this.width, this.height);
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.cells.framebuffer);
-    this.scissorCells(bounds, MARGIN.cells);
+    this.scissorCells(bounds, margin);
     this.useFullscreen(program);
     bindTexture(gl, 0, colony.state, program.uniforms['uState']);
     gl.uniform1ui(program.uniforms['uOwner'], colony.owner);
