@@ -41,6 +41,13 @@ has a certificate:
 Progress kept in the browser on the old domain stays behind; players sign in
 with Google to take it along. That loss is accepted.
 
+**Update 2026-10-23: no redirect.** Step 2 went differently: the old domain
+is not worth a redirect, so it is simply gone. The shell's prod manifest and
+the Android app point at the new domain, and the shell reloads once when a
+remote bundle a release replaced fails to load. The `BacteriaGame` stack keeps
+only the CNAME of the new domain, under its old construct id; its
+distribution, certificate, alias record and bucket are deleted.
+
 ## Consequences
 
 - The release now also deploys Firebase Hosting for the game; the CDK stack

@@ -4,7 +4,6 @@
   "projectType": "application",
   "sourceRoot": "apps/bacteria-game-remote-cdk/src",
   "tags": ["infra", "cdk"],
-  "implicitDependencies": ["bacteria-game-remote"],
   "targets": {
     "deploy": {
       "dependsOn": ["^build"],

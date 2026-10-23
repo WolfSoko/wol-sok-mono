@@ -1,40 +1,19 @@
-import { envOrDie, SpaStack } from '@wolsok/spa-cdk-stack';
-import { App, RemovalPolicy, Tags } from 'aws-cdk-lib';
+import { envOrDie } from '@wolsok/spa-cdk-stack';
+import { App, Stack, Tags } from 'aws-cdk-lib';
 import { addFirebaseDomain } from './firebase-domain';
 
 const app = new App();
 
-const stackName = 'BacteriaGame';
-const stack = new SpaStack(app, stackName, {
+// The game is on Firebase Hosting at bacteria-wars.wolsok.de (ADR 0008). The
+// old site at bacteria-game.wolsok.de is gone: this stack, under its old
+// name, only holds the new domain's record, which keeps its id.
+const stack = new Stack(app, 'BacteriaGame', {
   env: {
     region: 'us-east-1',
     account: '088632064895',
   },
-  buildOutputPath: 'dist/apps/bacteria-game-remote',
-  domainName: 'bacteria-game.wolsok.de',
-  bucketRemovalPolicy: RemovalPolicy.DESTROY,
-  extraAllowedOrigins: ['https://angularexamples.wolsok.de'],
-  // These keep their names across releases: the import maps, the files of
-  // the installed app (ngsw.json tells it a release is out), its icons and
-  // the asset links that let the Android app show the game fullscreen.
-  noCacheFiles: [
-    'remoteEntry.json',
-    'importmap.json',
-    'ngsw.json',
-    'ngsw-worker.js',
-    'safety-worker.js',
-    'worker-basic.min.js',
-    'manifest.webmanifest',
-    'favicon.ico',
-    'icons',
-    'icons/*',
-    '.well-known/assetlinks.json',
-  ],
 });
 
-// The game moves to Firebase Hosting (firebase.bacteria-game-remote.json).
-// Its domain points there already; this domain keeps serving the game until
-// the new one is live, then turns into a redirect to it.
 addFirebaseDomain(stack, {
   domain: 'bacteria-wars.wolsok.de',
   site: 'bacteria-wars',
