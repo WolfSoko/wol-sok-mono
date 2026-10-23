@@ -1,4 +1,4 @@
-import { CfnOutput, Duration, FileSystem, RemovalPolicy } from 'aws-cdk-lib';
+import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import {
   Certificate,
   CertificateValidation,
@@ -62,11 +62,7 @@ export interface SpaProps {
 interface DeploymentOptions {
   /** @default one year max-age */
   cacheControl?: CacheControl;
-  /** Set, the deployment invalidates every path of this distribution once its upload is done. */
-  distribution?: IDistribution;
   contentType?: string;
-  /** Object metadata; also part of the deployment's properties, so a change reruns it. */
-  metadata?: Record<string, string>;
 }
 
 export interface CacheOverride {
@@ -173,11 +169,9 @@ export class SpaConstruct extends Construct {
     // again to restore it. Old bundles stay for tabs still running them.
     // The first deployment owns the handler that all of them share, so the
     // build output comes first and index.html, which waits for the rest, second.
-    // The build output's deployments share one invalidation, issued by the
-    // index.html deployment: each invalidation is waited for, and one after
-    // the last upload covers them all. A fingerprint of the build output in
-    // that deployment's metadata reruns it, and with it the invalidation,
-    // whenever any file of the build output changed, even if index.html did not.
+    // Every deployment invalidates the distribution when its content changed,
+    // but only the last one, index.html, waits for its invalidation: one wait
+    // at the end instead of one per deployment.
     this.lastUpload = this.createBucketDeployment([
       Source.asset(buildOutputPath, {
         exclude: ['index.html', ...overrides.flatMap(({ files }) => files)],
@@ -188,13 +182,8 @@ export class SpaConstruct extends Construct {
     // index.html goes last, once every file it points at is uploaded.
     this.indexDeployment = this.createBucketDeployment(
       [Source.asset(buildOutputPath, { exclude: ['**', '!index.html'] })],
-      {
-        cacheControl: CacheControl.noCache(),
-        distribution: this.distribution,
-        metadata: {
-          'build-fingerprint': FileSystem.fingerprint(buildOutputPath),
-        },
-      }
+      { cacheControl: CacheControl.noCache() },
+      true
     );
     this.bucketDeployments.push(this.indexDeployment);
     this.indexDeployment.node.addDependency(this.lastUpload);
@@ -211,20 +200,14 @@ export class SpaConstruct extends Construct {
    * Add some additional assets to the bucket of the SPA, uploaded after the
    * build output and before index.html. Use it for files that are not in
    * buildOutputPath; for those that are, use noCacheFiles or cacheOverrides,
-   * or they are uploaded twice. Not being part of the build output, these
-   * assets are not covered by its fingerprint, so their deployment invalidates
-   * the distribution on its own.
+   * or they are uploaded twice.
    */
   public addExtraAssets(
     assets: ISource[],
-    cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365)),
+    cacheControl?: CacheControl,
     contentType?: string
   ): void {
-    this.addUpload(assets, {
-      cacheControl,
-      contentType,
-      distribution: this.distribution,
-    });
+    this.addUpload(assets, { cacheControl, contentType });
   }
 
   /** Adds a deployment that runs after the uploads so far and before index.html. */
@@ -357,25 +340,23 @@ export class SpaConstruct extends Construct {
     sources: ISource[],
     {
       cacheControl = CacheControl.maxAge(Duration.days(365)),
-      distribution,
       contentType,
-      metadata,
-    }: DeploymentOptions = {}
+    }: DeploymentOptions = {},
+    waitForDistributionInvalidation = false
   ): BucketDeployment {
-    // The construct id is kept for every deployment, invalidating or not, so
-    // that existing stacks keep their logical ids; the spec guards it.
     return new BucketDeployment(
       this,
       'DeployWithInvalidation' + (this.bucketDeployments.length + 1),
       {
         sources,
         destinationBucket: this.bucket,
+        distribution: this.distribution,
+        distributionPaths: ['/*'],
+        waitForDistributionInvalidation,
         prune: false,
         memoryLimit: 1024,
         cacheControl: [cacheControl],
-        ...(distribution ? { distribution, distributionPaths: ['/*'] } : {}),
-        ...(contentType ? { contentType } : {}),
-        ...(metadata ? { metadata } : {}),
+        contentType,
       }
     );
   }

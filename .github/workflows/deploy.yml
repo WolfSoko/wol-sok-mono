@@ -78,17 +78,19 @@ jobs:
           registry-url: 'https://registry.npmjs.org/'
 
       # The runner image has the Android SDK; Gradle needs a JDK on top.
-      # setup-gradle restores the Gradle distribution and dependencies that the
-      # Android app workflow saved on main; a run on a tag could not save a
-      # cache that later tag runs could read, so it only reads.
       - name: Setup Java for the Android app
         if: matrix.config.app-type == 'android'
         uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v6
+
+      # Restores the Gradle distribution and dependencies the Android app
+      # workflow saved on main. Read-only: a run on a tag could not save a cache
+      # that later tag runs could read.
+      - name: Restore the Gradle cache for the Android app
         if: matrix.config.app-type == 'android'
+        uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: true
 

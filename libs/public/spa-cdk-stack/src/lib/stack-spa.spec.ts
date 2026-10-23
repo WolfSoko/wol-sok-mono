@@ -1,4 +1,4 @@
-import { App, Duration, FileSystem, RemovalPolicy, Stack } from 'aws-cdk-lib';
+import { App, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import { readdirSync } from 'fs';
 import * as path from 'path';
@@ -107,40 +107,19 @@ describe('SpaCdkStack', () => {
     ).toEqual([false, false, false, false]);
   });
 
-  it('should keep the construct ids of the deployments, invalidating or not', () => {
-    // Existing stacks keep their logical ids this way; renaming the construct
-    // would replace every deployment resource on the next deploy.
-    const { deployments } = fourDeploymentsFactory();
-    //then
-    expect(Object.keys(deployments)).toHaveLength(4);
-    for (const id of Object.keys(deployments)) {
-      expect(id).toMatch(/DeployWithInvalidation[1-4]/);
-    }
-  });
-
-  it('should invalidate once for the build output, with index.html, and once for extra assets', () => {
-    const { deployments, index } = fourDeploymentsFactory();
-    const invalidating = Object.keys(deployments).filter(
-      (id) => deployments[id].Properties['DistributionId'] !== undefined
-    );
-    const extraAssets = Object.keys(deployments).find((id) =>
-      /DeployWithInvalidation4/.test(id)
-    ) as string;
-    //then
-    expect(invalidating.sort()).toEqual([index, extraAssets].sort());
-    expect(deployments[index].Properties['DistributionPaths']).toEqual(['/*']);
-  });
-
-  it('should rerun the index.html deployment whenever the build output changes', () => {
+  it('should invalidate with every deployment and wait only for the last one, index.html', () => {
     const { deployments, index, others } = fourDeploymentsFactory();
     //then
-    expect(deployments[index].Properties['UserMetadata']).toEqual({
-      'build-fingerprint': FileSystem.fingerprint(
-        defaultTestProps.buildOutputPath
-      ),
-    });
+    for (const { Properties } of Object.values(deployments)) {
+      expect(Properties['DistributionPaths']).toEqual(['/*']);
+    }
+    expect(
+      deployments[index].Properties['WaitForDistributionInvalidation']
+    ).toBe(true);
     for (const id of others) {
-      expect(deployments[id].Properties['UserMetadata']).toBeUndefined();
+      expect(
+        deployments[id].Properties['WaitForDistributionInvalidation']
+      ).toBe(false);
     }
   });
 

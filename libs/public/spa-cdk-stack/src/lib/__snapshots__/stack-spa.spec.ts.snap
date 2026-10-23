@@ -437,6 +437,12 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
+        "DistributionId": {
+          "Ref": "TestSpaStackDistributionB76F2A7E",
+        },
+        "DistributionPaths": [
+          "/*",
+        ],
         "OutputObjectKeys": true,
         "Prune": false,
         "ServiceToken": {
@@ -454,7 +460,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "SystemMetadata": {
           "cache-control": "max-age=31536000",
         },
-        "WaitForDistributionInvalidation": true,
+        "WaitForDistributionInvalidation": false,
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -510,9 +516,6 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "SystemMetadata": {
           "cache-control": "no-cache",
         },
-        "UserMetadata": {
-          "build-fingerprint": "193c4b574e880b1eed4c7cc6342f54606a533dda82f739b2a7a478b004001f66",
-        },
         "WaitForDistributionInvalidation": true,
       },
       "Type": "Custom::CDKBucketDeployment",
@@ -565,7 +568,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "SystemMetadata": {
           "cache-control": "max-age=31536000",
         },
-        "WaitForDistributionInvalidation": true,
+        "WaitForDistributionInvalidation": false,
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -1143,6 +1146,12 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
+        "DistributionId": {
+          "Ref": "TestSpaStackDistributionB76F2A7E",
+        },
+        "DistributionPaths": [
+          "/*",
+        ],
         "OutputObjectKeys": true,
         "Prune": false,
         "ServiceToken": {
@@ -1160,7 +1169,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "SystemMetadata": {
           "cache-control": "max-age=31536000",
         },
-        "WaitForDistributionInvalidation": true,
+        "WaitForDistributionInvalidation": false,
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -1216,9 +1225,6 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "SystemMetadata": {
           "cache-control": "no-cache",
         },
-        "UserMetadata": {
-          "build-fingerprint": "193c4b574e880b1eed4c7cc6342f54606a533dda82f739b2a7a478b004001f66",
-        },
         "WaitForDistributionInvalidation": true,
       },
       "Type": "Custom::CDKBucketDeployment",
@@ -1271,7 +1277,7 @@ exports[`SpaCdkStack > should create an extra BucketDeployment when using addExt
         "SystemMetadata": {
           "cache-control": "max-age=123456",
         },
-        "WaitForDistributionInvalidation": true,
+        "WaitForDistributionInvalidation": false,
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -1845,6 +1851,12 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
+        "DistributionId": {
+          "Ref": "TestSpaStackDistributionB76F2A7E",
+        },
+        "DistributionPaths": [
+          "/*",
+        ],
         "OutputObjectKeys": true,
         "Prune": false,
         "ServiceToken": {
@@ -1862,7 +1874,7 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         "SystemMetadata": {
           "cache-control": "max-age=31536000",
         },
-        "WaitForDistributionInvalidation": true,
+        "WaitForDistributionInvalidation": false,
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -1913,9 +1925,6 @@ exports[`SpaCdkStack > should match snapshot 1`] = `
         ],
         "SystemMetadata": {
           "cache-control": "no-cache",
-        },
-        "UserMetadata": {
-          "build-fingerprint": "193c4b574e880b1eed4c7cc6342f54606a533dda82f739b2a7a478b004001f66",
         },
         "WaitForDistributionInvalidation": true,
       },
@@ -2373,6 +2382,12 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
+        "DistributionId": {
+          "Ref": "TestSpaStackDistributionB76F2A7E",
+        },
+        "DistributionPaths": [
+          "/*",
+        ],
         "OutputObjectKeys": true,
         "Prune": false,
         "ServiceToken": {
@@ -2390,7 +2405,7 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         "SystemMetadata": {
           "cache-control": "max-age=31536000",
         },
-        "WaitForDistributionInvalidation": true,
+        "WaitForDistributionInvalidation": false,
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -2441,9 +2456,6 @@ exports[`SpaCdkStack > should match snapshot setting bucket removal policy to re
         ],
         "SystemMetadata": {
           "cache-control": "no-cache",
-        },
-        "UserMetadata": {
-          "build-fingerprint": "193c4b574e880b1eed4c7cc6342f54606a533dda82f739b2a7a478b004001f66",
         },
         "WaitForDistributionInvalidation": true,
       },
@@ -3024,6 +3036,12 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         "DestinationBucketName": {
           "Ref": "TestSpaStackBucketAD480A08",
         },
+        "DistributionId": {
+          "Ref": "TestSpaStackDistributionB76F2A7E",
+        },
+        "DistributionPaths": [
+          "/*",
+        ],
         "OutputObjectKeys": true,
         "Prune": false,
         "ServiceToken": {
@@ -3041,7 +3059,7 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         "SystemMetadata": {
           "cache-control": "max-age=31536000",
         },
-        "WaitForDistributionInvalidation": true,
+        "WaitForDistributionInvalidation": false,
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
@@ -3092,9 +3110,6 @@ exports[`SpaCdkStack > should use the main domain name even if a subdomain is pr
         ],
         "SystemMetadata": {
           "cache-control": "no-cache",
-        },
-        "UserMetadata": {
-          "build-fingerprint": "193c4b574e880b1eed4c7cc6342f54606a533dda82f739b2a7a478b004001f66",
         },
         "WaitForDistributionInvalidation": true,
       },
