@@ -97,6 +97,25 @@ describe('SpaCdkStack', () => {
     ).toEqual([false, false, false, false]);
   });
 
+  it('should invalidate the distribution once, with index.html', () => {
+    const { template, stack } = testStackFactory({
+      noCacheFiles: ['test-javascript-asset.js'],
+    });
+    stack.spa.addExtraAssets([
+      Source.asset(path.join(__dirname, '../../extra-assets-path')),
+    ]);
+    const deployments = template().findResources('Custom::CDKBucketDeployment');
+    const invalidating = Object.entries(deployments).filter(
+      ([, { Properties }]) => Properties['DistributionId'] !== undefined
+    );
+    //then
+    expect(invalidating).toHaveLength(1);
+    expect(invalidating[0][0]).toMatch(/DeployWithInvalidation2/);
+    expect(invalidating[0][1]['Properties']['DistributionPaths']).toEqual([
+      '/*',
+    ]);
+  });
+
   it('should create an extra BucketDeployment when using addExtraAssets', () => {
     const { template, stack } = testStackFactory();
     stack.spa.addExtraAssets([

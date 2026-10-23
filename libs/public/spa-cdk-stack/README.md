@@ -6,7 +6,7 @@ It creates an S3 bucket and a CloudFront distribution to serve the SPA.
 Features are:
 
 - Deployment of your build files to the S3 bucket.
-- Cloudfront invalidation with deployment
+- One CloudFront invalidation per deployment, after index.html is uploaded last
 - Creation of a certificate for your domain. CloudFront only takes certificates
   from us-east-1, so in any other region `SpaStack` puts it into a second stack,
   `<name>Certificate` in us-east-1, referenced across regions. Deploy such an

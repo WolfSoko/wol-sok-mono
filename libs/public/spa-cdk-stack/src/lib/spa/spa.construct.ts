@@ -163,6 +163,8 @@ export class SpaConstruct extends Construct {
     // again to restore it. Old bundles stay for tabs still running them.
     // The first deployment owns the handler that all of them share, so the
     // build output comes first and index.html, which waits for the rest, second.
+    // Only the index.html deployment invalidates the distribution: each
+    // invalidation is waited for, and one after the last upload covers them all.
     this.lastUpload = this.createBucketDeployment(
       [
         Source.asset(buildOutputPath, {
@@ -171,8 +173,7 @@ export class SpaConstruct extends Construct {
       ],
       CacheControl.maxAge(Duration.days(365)),
       false,
-      this.bucket,
-      this.distribution
+      this.bucket
     );
     this.bucketDeployments.push(this.lastUpload);
 
@@ -212,7 +213,7 @@ export class SpaConstruct extends Construct {
       cacheControl,
       false,
       this.bucket,
-      this.distribution,
+      undefined,
       contentType
     );
 
@@ -339,26 +340,30 @@ export class SpaConstruct extends Construct {
     new CfnOutput(this, `${this.spaName}-ARecord`, { value: siteDomain });
   }
 
+  /**
+   * Deploys sources to the bucket; with a distribution, it also invalidates
+   * every path of that distribution once the upload is done.
+   */
   private createBucketDeployment(
     sources: ISource[],
     cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365)),
     prune: boolean,
     destinationBucket: IBucket,
-    distribution: IDistribution,
+    distribution?: IDistribution,
     contentType?: string
   ): BucketDeployment {
-    // Deploy site contents to S3 spaBucket
+    // The construct id is kept for every deployment, invalidating or not, so
+    // that existing stacks keep their logical ids.
     return new BucketDeployment(
       this,
       'DeployWithInvalidation' + (this.bucketDeployments.length + 1),
       {
         sources,
         destinationBucket,
-        distribution,
         prune,
         memoryLimit: 1024,
-        distributionPaths: ['/*'],
         cacheControl: [cacheControl],
+        ...(distribution ? { distribution, distributionPaths: ['/*'] } : {}),
         ...(contentType ? { contentType } : {}),
       }
     );
