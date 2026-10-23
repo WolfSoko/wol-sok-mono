@@ -22,6 +22,8 @@
  */
 
 import { MIN_CELL_DENSITY } from '../arena/colony-renderer';
+import { WEAPON_EFFECTS } from '../state/evolution';
+import { WEAPON_CODE } from '../state/weapon-effects';
 import { ZONE_CODE, ZONE_EFFECTS } from '../state/zones';
 
 /** The bit of the mask that marks a wall - the zone sits above it. */
@@ -68,6 +70,12 @@ export const REPORT_EXTRA_ROWS = Object.keys(REPORT_ROWS).length;
 
 /** The most nutrient pellets the shaders take. */
 export const MAX_PELLETS = 16;
+
+/**
+ * The most weapon effects the shaders take at once. Each seat has one
+ * acting at a time at the most, a strike for a single step besides.
+ */
+export const MAX_EFFECTS = 4;
 
 const COMMON = `#version 300 es
 precision highp float;
@@ -193,6 +201,42 @@ int pelletsInReach(ivec2 cell) {
 }`;
 
 /**
+ * The weapons' effects acting this step, as circles with an owner - see
+ * `WeaponEffects`. The biofilm shield needs no circle: it changes its
+ * colony's toughness, which combat takes per colony.
+ */
+const WEAPONS = `
+uniform vec4 uEffects[${MAX_EFFECTS}];      // centre x, y and radius squared
+uniform ivec2 uEffectKinds[${MAX_EFFECTS}]; // the weapon's code and the owner's slot + 1
+uniform int uEffectCount;
+const int TOXIN_BOMB = ${WEAPON_CODE['toxin-bomb']};
+const int CRYO_PULSE = ${WEAPON_CODE['cryo-pulse']};
+const int PHAGE_STRIKE = ${WEAPON_CODE['phage-strike']};
+const int AGAR_BLOOM = ${WEAPON_CODE['agar-bloom']};
+
+/**
+ * The slot + 1 of the colony whose effect of that kind covers a cell, 0
+ * for none: \`hostile\` an enemy's of the colony \`owner\` (slot + 1) -
+ * every other colony counts as one - otherwise its own.
+ */
+uint effectOver(ivec2 cell, uint owner, int kind, bool hostile) {
+  for (int i = 0; i < ${MAX_EFFECTS}; i++) {
+    if (i >= uEffectCount) {
+      break;
+    }
+    ivec2 info = uEffectKinds[i];
+    if (info.x != kind || (uint(info.y) != owner) != hostile) {
+      continue;
+    }
+    vec2 offset = vec2(cell) - uEffects[i].xy;
+    if (dot(offset, offset) <= uEffects[i].z) {
+      return uint(info.y);
+    }
+  }
+  return 0u;
+}`;
+
+/**
  * Bacteria per colony in each coarse cell - the density field the hunting
  * reads, and the base of the report.
  */
@@ -254,7 +298,7 @@ void main() {
  * wall), or put a child into a free cell (division). Shared by the claim
  * and the apply pass, so both always agree.
  */
-const INTENTS = `
+const INTENTS = `${WEAPONS}
 uniform int uKind;        // 0 move, 1 escape a wall, 2 divide
 uniform int uStep;        // which movement step of the frame
 uniform int uSteps[${MAX_GPU_COLONIES}];    // movement steps per colony this frame
@@ -294,6 +338,12 @@ int moveIntent(ivec2 cell) {
   }
   uint zone = zoneAt(cell);
   if (zone == ICE && random(cell, stepSalt(6u)) < ${glslFloat(ZONE_EFFECTS.iceStayChance)}) {
+    return -1;
+  }
+  // Frozen by an enemy's cryo pulse, it all but sits the step out.
+  if (uEffectCount > 0
+    && effectOver(cell, state.r, CRYO_PULSE, true) != 0u
+    && random(cell, stepSalt(7u)) < ${glslFloat(WEAPON_EFFECTS.cryoStayChance)}) {
     return -1;
   }
   float aggression = zone == HEAT
@@ -351,10 +401,20 @@ int divideIntent(ivec2 cell) {
   if (energyOf(state) < uDivideThreshold) {
     return -1;
   }
+  float effects = 1.0;
+  if (uEffectCount > 0) {
+    if (effectOver(cell, state.r, AGAR_BLOOM, false) != 0u) {
+      effects *= ${glslFloat(WEAPON_EFFECTS.agarBloomDivideFactor)};
+    }
+    if (effectOver(cell, state.r, CRYO_PULSE, true) != 0u) {
+      effects *= ${glslFloat(WEAPON_EFFECTS.cryoDivideFactor)};
+    }
+  }
   float chance = min(
     uDivideBudget[colony],
     uDivideChance[colony]
       * (zoneAt(cell) == AGAR ? ${glslFloat(ZONE_EFFECTS.agarDivideFactor)} : 1.0)
+      * effects
   );
   if (random(cell, 21u) >= chance) {
     return -1;
@@ -451,9 +511,10 @@ void main() {
  * 3 of the CPU simulation. Reads the state as it was at the start of the
  * pass, so the outcome never depends on an order.
  */
-export const COMBAT_FRAGMENT = `${COMMON}
+export const COMBAT_FRAGMENT = `${COMMON}${WEAPONS}
 uniform float uDt;
 uniform float uAttack[${MAX_GPU_COLONIES}];
+uniform float uToughness[${MAX_GPU_COLONIES}]; // times the pressure on a colony
 ${PELLETS}
 uniform float uNutrientGain;
 uniform float uDefenceFactor;
@@ -475,6 +536,12 @@ void main() {
     return;
   }
   uint owner = state.r;
+  // An enemy's phages turn a share of the bacteria in their circle, at once.
+  uint phage = uEffectCount > 0 ? effectOver(cell, owner, PHAGE_STRIKE, true) : 0u;
+  if (phage != 0u && random(cell, 43u) < ${glslFloat(WEAPON_EFFECTS.phageConvertShare)}) {
+    outState = uvec4(phage, state.g, 0u, phage | (owner << LOSER_SHIFT));
+    return;
+  }
   float own = 0.0;
   float enemy = 0.0;
   vec4 strength = vec4(0.0);
@@ -497,13 +564,19 @@ void main() {
   float energy = energyOf(state) + float(state.b) / ENERGY_SCALE
     + uNutrientGain * float(pelletsInReach(cell));
 
-  bool poisoned = zoneAt(cell) == ANTIBIOTIC;
-  if (poisoned) {
+  bool antibiotic = zoneAt(cell) == ANTIBIOTIC;
+  if (antibiotic) {
     energy -= ${glslFloat(ZONE_EFFECTS.antibioticDrainPerSec)} * uDt;
   }
+  // An enemy's toxin cloud drains like antibiotic ground, only harder.
+  bool toxic = uEffectCount > 0 && effectOver(cell, owner, TOXIN_BOMB, true) != 0u;
+  if (toxic) {
+    energy -= ${glslFloat(WEAPON_EFFECTS.toxinDrainPerSec)} * uDt;
+  }
+  bool poisoned = antibiotic || toxic;
   float pressure = enemy > 0.0 ? enemy + uFrontlinePressure - own * uDefenceFactor : 0.0;
   if (pressure > 0.0) {
-    energy -= pressure * uCombatDrain * uDt;
+    energy -= pressure * uToughness[int(owner) - 1] * uCombatDrain * uDt;
   } else if (energy < uMaxEnergy && !poisoned) {
     energy = min(uMaxEnergy, energy + uRegen * uDt);
   }
@@ -525,7 +598,7 @@ void main() {
     }
   }
   if (winner == 0u && poisoned) {
-    // The antibiotic killed it: lost, and nobody captured it.
+    // The antibiotic or the toxin killed it: lost, and nobody captured it.
     outState = uvec4(0u, 0u, 0u, (owner << LOSER_SHIFT) | POISONED);
     return;
   }

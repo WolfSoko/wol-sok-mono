@@ -1,4 +1,10 @@
-import type { ActiveEffect } from '../state/evolution';
+import type { ActiveEffect, EvolvedTraits } from '../state/evolution';
+import {
+  LiveEffect,
+  toughnessOf,
+  WEAPON_CODE,
+  WeaponEffects,
+} from '../state/weapon-effects';
 import { mapZones, stampZones } from '../state/zones';
 import type { StateLayer } from '../arena/colony-renderer';
 import {
@@ -49,6 +55,7 @@ import {
   FEED_FRAGMENT,
   HUNT_FRAGMENT,
   INFLUENCE_FRAGMENT,
+  MAX_EFFECTS,
   MAX_GPU_COLONIES,
   HUNT_COLONIES,
   MAX_PELLETS,
@@ -169,6 +176,11 @@ interface FrameUniforms {
   divideChance: Float32Array;
   divideBudget: Float32Array;
   pellets: Float32Array;
+  toughness: Float32Array;
+  /** Per effect: its centre and its radius squared, and a spare. */
+  effects: Float32Array;
+  /** Per effect: the weapon's code and the owner's slot + 1. */
+  effectKinds: Int32Array;
 }
 
 /**
@@ -219,6 +231,8 @@ export class GpuSimulation implements Simulation {
   private hasHill = false;
   private escapePending = false;
   private readonly pellets: NutrientPellets;
+  /** The weapons' effects - none at all in a plain match. */
+  private readonly weaponEffects = new WeaponEffects();
   /** The pellet generations as of the report rendered last. */
   private renderedGeneration: readonly number[] = [];
   private events: StepEvents = noEvents();
@@ -253,6 +267,9 @@ export class GpuSimulation implements Simulation {
     divideChance: new Float32Array(MAX_GPU_COLONIES),
     divideBudget: new Float32Array(MAX_GPU_COLONIES),
     pellets: new Float32Array(MAX_PELLETS * 3),
+    toughness: new Float32Array(MAX_GPU_COLONIES),
+    effects: new Float32Array(MAX_EFFECTS * 4),
+    effectKinds: new Int32Array(MAX_EFFECTS * 2),
   };
 
   public constructor(
@@ -348,6 +365,7 @@ export class GpuSimulation implements Simulation {
     this.reportRendered = false;
     this.recentAreas.length = 0;
     this.recentReach.length = 0;
+    this.weaponEffects.clear();
     this.buildMask();
     this.pellets.reset(this.width, this.height, this.isOpenCell);
     this.uploadSpawns(spawns);
@@ -358,8 +376,11 @@ export class GpuSimulation implements Simulation {
   }
 
   public getActiveEffects(): readonly ActiveEffect[] {
-    // TODO(evolution): the weapons' effects.
-    return [];
+    return this.weaponEffects.active;
+  }
+
+  public addEffect(effect: ActiveEffect): void {
+    this.weaponEffects.add(effect);
   }
 
   public getDynamicWalls(): readonly DynamicWall[] {
@@ -411,7 +432,11 @@ export class GpuSimulation implements Simulation {
       this.uploadMask(resources);
     }
     this.tickPellets(deltaTimeSec);
-    const mostSteps = this.fillFrameUniforms(players, deltaTimeSec);
+    const mostSteps = this.fillFrameUniforms(
+      players,
+      deltaTimeSec,
+      this.weaponEffects.begin()
+    );
     this.updateArea(mostSteps);
 
     gl.disable(gl.BLEND);
@@ -462,6 +487,7 @@ export class GpuSimulation implements Simulation {
     this.collectReadbacks(resources);
     this.requestReadback(resources);
     this.renderReport(resources);
+    this.weaponEffects.end(deltaTimeSec);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindVertexArray(null);
@@ -531,7 +557,11 @@ export class GpuSimulation implements Simulation {
    * read them - they keep their values until the next frame. Returns the
    * most cells a colony travels.
    */
-  private fillFrameUniforms(players: Player[], deltaTimeSec: number): number {
+  private fillFrameUniforms(
+    players: Player[],
+    deltaTimeSec: number,
+    effects: readonly LiveEffect[]
+  ): number {
     const gl = this.gl;
     const b = this.balance;
     const u = this.uniforms;
@@ -543,12 +573,13 @@ export class GpuSimulation implements Simulation {
     u.steps.fill(0);
     u.targets.fill(NaN);
     this.spawns.forEach((spawn, slot) => {
-      const traits = spawn.traits ?? PLAIN_TRAITS;
+      const traits: EvolvedTraits = spawn.traits ?? PLAIN_TRAITS;
       u.divideChance[slot] = divideChanceOf(b, traits, deltaTimeSec);
       const target = players.find((player) => player.id === spawn.playerId);
-      const intent = colonyIntent(target, b, deltaTimeSec);
+      const intent = colonyIntent(target, b, deltaTimeSec, traits);
       u.aggression[slot] = intent?.aggression ?? b.aggression;
       u.attack[slot] = attackOf(b, traits, isBoosted(target ?? null));
+      u.toughness[slot] = toughnessOf(traits, effects, spawn.playerId);
       u.divideBudget[slot] = this.divideBudget(slot, capacity);
       if (target == null || intent == null) {
         return;
@@ -560,10 +591,16 @@ export class GpuSimulation implements Simulation {
         MAX_MOVE_STEPS,
         Math.max(
           1,
-          Math.round(target.maxSpeed * b.boostSpeedFactor * deltaTimeSec)
+          Math.round(
+            target.maxSpeed *
+              b.boostSpeedFactor *
+              (traits.speedFactor ?? 1) *
+              deltaTimeSec
+          )
         )
       );
     });
+    const effectCount = this.fillEffectUniforms(effects);
 
     const nutrients = this.pellets.nutrients;
     u.pellets.fill(0);
@@ -583,6 +620,13 @@ export class GpuSimulation implements Simulation {
       gl.uniform1fv(at['uDivideChance[0]'], u.divideChance);
       gl.uniform1fv(at['uDivideBudget[0]'], u.divideBudget);
     }
+    for (const program of [programs.claim, programs.apply, programs.combat]) {
+      const at = program.uniforms;
+      gl.useProgram(program.program);
+      gl.uniform4fv(at['uEffects[0]'], u.effects);
+      gl.uniform2iv(at['uEffectKinds[0]'], u.effectKinds);
+      gl.uniform1i(at['uEffectCount'], effectCount);
+    }
     for (const program of [
       programs.combat,
       programs.report,
@@ -597,8 +641,38 @@ export class GpuSimulation implements Simulation {
     gl.useProgram(programs.combat.program);
     gl.uniform1f(combat['uDt'], deltaTimeSec);
     gl.uniform1fv(combat['uAttack[0]'], u.attack);
+    gl.uniform1fv(combat['uToughness[0]'], u.toughness);
     gl.uniform1f(combat['uNutrientGain'], b.nutrientDrainPerSec * deltaTimeSec);
     return Math.max(0, ...u.steps);
+  }
+
+  /**
+   * Puts the effects that act on cells this step into the uniform arrays -
+   * the shield acts through the toughness instead, and a strike only in
+   * its first step. Returns how many there are; more than the shaders take
+   * are left out, the oldest first in.
+   */
+  private fillEffectUniforms(effects: readonly LiveEffect[]): number {
+    const u = this.uniforms;
+    let count = 0;
+    for (const effect of effects) {
+      const slot = this.slotOf(effect.owner);
+      if (
+        count >= MAX_EFFECTS ||
+        slot === null ||
+        effect.weapon === 'biofilm-shield' ||
+        (effect.weapon === 'phage-strike' && !effect.fresh)
+      ) {
+        continue;
+      }
+      u.effects.set(
+        [effect.x, effect.y, effect.radius * effect.radius, 0],
+        count * 4
+      );
+      u.effectKinds.set([WEAPON_CODE[effect.weapon], slot + 1], count * 2);
+      count++;
+    }
+    return count;
   }
 
   /**
@@ -1316,17 +1390,20 @@ function compiledPrograms(gl: WebGL2RenderingContext): Programs {
     'uParentShare',
   ];
   const pellets = ['uPellets[0]', 'uPelletCount', 'uPelletRadius'];
+  const weapons = ['uEffects[0]', 'uEffectKinds[0]', 'uEffectCount'];
   const program = (fragment: string, uniforms: string[]) =>
     createProgram(gl, FULLSCREEN_VERTEX, fragment, [...common, ...uniforms]);
   const programs: Programs = {
     influence: program(INFLUENCE_FRAGMENT, ['uCellSize']),
     hunt: program(HUNT_FRAGMENT, ['uInfluence', 'uPair']),
-    claim: program(CLAIM_FRAGMENT, intents),
-    apply: program(APPLY_FRAGMENT, [...intents, 'uClaims']),
+    claim: program(CLAIM_FRAGMENT, [...intents, ...weapons]),
+    apply: program(APPLY_FRAGMENT, [...intents, ...weapons, 'uClaims']),
     crush: program(CRUSH_FRAGMENT, []),
     combat: program(COMBAT_FRAGMENT, [
+      ...weapons,
       'uDt',
       'uAttack[0]',
+      'uToughness[0]',
       ...pellets,
       'uNutrientGain',
       'uDefenceFactor',
