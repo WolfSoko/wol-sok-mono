@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.59.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.58.0...v74.59.0) (2026-10-23)
+
+### Features
+
+* **feat-lazy-bacteria-game:** replay v2 for the server — wave 2 of ADR 0011/0012 ([#2592](https://github.com/WolfSoko/wol-sok-mono/issues/2592)) ([1bd7d0c](https://github.com/WolfSoko/wol-sok-mono/commit/1bd7d0cc16aad71e026a4dc83b3ca3c29e709c03))
+* **ws-thanos:** ✨ keep images in shape when they vaporize, new tech tiles ([#2589](https://github.com/WolfSoko/wol-sok-mono/issues/2589)) ([83db2ee](https://github.com/WolfSoko/wol-sok-mono/commit/83db2eedc17fffdf880d3e22000bf8113cf27725))
+
+### Chore
+
+* **release:** publish ([d39183d](https://github.com/WolfSoko/wol-sok-mono/commit/d39183dfc16bc7a42104c15873e3b41cc5da4a24))
+
 ## [74.58.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.57.0...v74.58.0) (2026-10-23)
 
 ### Features
