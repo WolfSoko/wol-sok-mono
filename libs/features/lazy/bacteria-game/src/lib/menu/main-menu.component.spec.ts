@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
-import { CampaignSummary } from '../state/campaign';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';
+import { I18nService } from '../i18n/i18n.service';
+import { CampaignSummary, continueText } from '../state/campaign';
 import { MainMenuComponent } from './main-menu.component';
 
 const CAMPAIGN: CampaignSummary = {
@@ -61,19 +62,67 @@ describe('MainMenuComponent', () => {
     expect(resume).toHaveBeenCalled();
   });
 
-  it('mutes, unmutes and leaves for the page', () => {
+  it('mutes, unmutes and toggles fullscreen', () => {
     const sound = jest.fn();
-    const leave = jest.fn();
+    const fullscreen = jest.fn();
     fixture.componentInstance.soundChange.subscribe(sound);
-    fixture.componentInstance.leave.subscribe(leave);
+    fixture.componentInstance.fullscreenChange.subscribe(fullscreen);
 
     host.querySelector<HTMLButtonElement>('[aria-label="Mute"]')?.click();
+    host.querySelector<HTMLButtonElement>('[aria-label="Fullscreen"]')?.click();
+    fixture.componentRef.setInput('fullscreen', true);
+    fixture.detectChanges();
     host
-      .querySelector<HTMLButtonElement>('[aria-label="Back to the page"]')
+      .querySelector<HTMLButtonElement>('[aria-label="Exit fullscreen"]')
       ?.click();
 
     expect(sound).toHaveBeenCalledWith(false);
-    expect(leave).toHaveBeenCalled();
+    expect(fullscreen.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it('shows the friends only with the cloud, with the requests waiting', () => {
+    const tile = () =>
+      Array.from(host.querySelectorAll('.tiles button')).find((b) =>
+        b.textContent?.includes('Friends')
+      );
+    expect(tile()).toBeUndefined();
+
+    fixture.componentRef.setInput('friendsAvailable', true);
+    fixture.detectChanges();
+    expect(tile()?.querySelector('.count')).toBeNull();
+
+    fixture.componentRef.setInput('friendRequests', 2);
+    fixture.detectChanges();
+    expect(tile()?.querySelector('.count')?.textContent?.trim()).toBe('2');
+    expect(
+      tile()?.querySelector('.cdk-visually-hidden')?.textContent?.trim()
+    ).toBe('2 friend requests');
+    // What a screen reader names the button: the hidden parts left out.
+    const named = tile()?.cloneNode(true) as HTMLElement;
+    named.querySelectorAll('[aria-hidden="true"]').forEach((n) => n.remove());
+    expect(named.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      'Friends 2 friend requests'
+    );
+
+    const open = jest.fn();
+    fixture.componentInstance.open.subscribe(open);
+    button('Friends').click();
+    expect(open).toHaveBeenCalledWith('friends');
+  });
+
+  it('speaks German, the campaign line included', () => {
+    TestBed.inject(I18nService).setLanguage('de');
+    fixture.componentRef.setInput('campaign', {
+      ...CAMPAIGN,
+      continueText: continueText('pillar-field', 'normal'),
+    });
+    fixture.detectChanges();
+
+    expect(button('Neues Spiel')).toBeDefined();
+    expect(host.querySelector('[aria-label="Vollbild"]')).not.toBeNull();
+    expect(host.querySelector('.continue-level')?.textContent?.trim()).toBe(
+      '5 · Säulenfeld · Normal'
+    );
   });
 
   it('offers no support where the game does not ask for it', () => {
@@ -121,6 +170,14 @@ describe('MainMenuComponent support tile', () => {
     expect(link?.textContent).toContain('Support');
     expect(link?.href).toBe('https://buymeacoffee.com/wolf');
     expect(link?.target).toBe('_blank');
+  });
+
+  it('asks for support in German too', () => {
+    const host = render('web');
+    TestBed.inject(I18nService).setLanguage('de');
+    TestBed.tick();
+
+    expect(host.querySelector('a.tile')?.textContent).toContain('Unterstützen');
   });
 
   it('opens the Play tips in the app', () => {

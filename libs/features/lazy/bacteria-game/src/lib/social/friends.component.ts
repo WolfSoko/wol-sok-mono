@@ -10,6 +10,9 @@ import { Clipboard } from '@angular/cdk/clipboard';
 import { DOCUMENT } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslationKey } from '../i18n/dictionaries';
+import { I18nService } from '../i18n/i18n.service';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { AvatarComponent } from './avatar.component';
 import { FriendView, SocialService } from './social.service';
 
@@ -19,7 +22,7 @@ import { FriendView, SocialService } from './social.service';
  */
 @Component({
   selector: 'feat-lazy-bac-game-friends',
-  imports: [AvatarComponent, MatButtonModule, MatIconModule],
+  imports: [AvatarComponent, MatButtonModule, MatIconModule, TranslatePipe],
   templateUrl: './friends.component.html',
   styleUrl: './friends.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,34 +31,41 @@ export class FriendsComponent {
   protected readonly social = inject(SocialService);
   private readonly clipboard = inject(Clipboard);
   private readonly document = inject(DOCUMENT);
+  private readonly i18n = inject(I18nService);
 
   /** False while the player is in a match or a lobby - no new challenge. */
   public readonly canChallenge = input(true);
   /** Challenge a friend to a match. */
   public readonly challenge = output<FriendView>();
 
-  protected readonly note = signal<string | null>(null);
+  /** What became of the last step - a link that could not be copied as it is. */
+  protected readonly note = signal<
+    { key: TranslationKey } | { key: null; link: string } | null
+  >(null);
   protected readonly busy = signal(false);
 
   /** The friend's status, and their motto after it. */
   protected statusLine(friend: FriendView): string {
-    const status = this.statusLabel(friend);
+    const status = this.i18n.t(this.statusKey(friend));
     return friend.card.motto === ''
       ? status
-      : `${status} · ${friend.card.motto}`;
+      : this.i18n.t('social.friends.statusLine', {
+          status,
+          motto: friend.card.motto,
+        });
   }
 
-  private statusLabel(friend: FriendView): string {
+  private statusKey(friend: FriendView): TranslationKey {
     if (!friend.mutual) {
-      return 'Not accepted yet';
+      return 'social.friends.status.pending';
     }
     switch (friend.status) {
       case 'online':
-        return 'Online';
+        return 'social.friends.status.online';
       case 'playing':
-        return 'Playing';
+        return 'social.friends.status.playing';
       default:
-        return 'Offline';
+        return 'social.friends.status.offline';
     }
   }
 
@@ -86,8 +96,8 @@ export class FriendsComponent {
     if (typeof view.navigator.share === 'function') {
       try {
         await view.navigator.share({
-          title: 'Bacteria Wars',
-          text: 'Be my friend in Bacteria Wars - and fight me!',
+          title: this.i18n.t('social.friends.share.title'),
+          text: this.i18n.t('social.friends.share.text'),
           url: link,
         });
         return;
@@ -99,8 +109,8 @@ export class FriendsComponent {
     }
     this.note.set(
       this.clipboard.copy(link)
-        ? 'Link copied - send it to a friend. It works for a week.'
-        : link
+        ? { key: 'social.friends.copied' }
+        : { key: null, link }
     );
   }
 
@@ -111,7 +121,7 @@ export class FriendsComponent {
       return await task();
     } catch (error) {
       console.error(error);
-      this.note.set('That did not work - try again.');
+      this.note.set({ key: 'social.failed' });
       return null;
     } finally {
       this.busy.set(false);

@@ -704,6 +704,7 @@ describe('GameStateService online', () => {
     });
     public readonly sent: unknown[] = [];
     public readonly share = jest.fn();
+    public readonly offerColors = jest.fn();
     public readonly leave = jest.fn();
     public pending: { start: OnlineStart; lockstep: Lockstep } | null = null;
     public startMatch = jest.fn(

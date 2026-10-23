@@ -1,3 +1,4 @@
+import { I18nService } from '../i18n/i18n.service';
 import { aMatchRecord } from '../../testing/match-record';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -582,5 +583,17 @@ describe('WinnerComponent', () => {
       expect(text()).toContain('Bronze needs a win.');
       expect(text()).not.toContain('Won in');
     });
+  });
+
+  it('speaks German', () => {
+    TestBed.inject(I18nService).setLanguage('de');
+    store.update({
+      mode: 'two-players',
+      winner: createPlayer({ id: 1, name: 'Blue' }),
+      levelId: LEVELS[0].id,
+    });
+
+    expect(text()).toContain('Glückwunsch! Blau gewinnt das Match!');
+    expect(text()).toContain('Hauptmenü');
   });
 });

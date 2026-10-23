@@ -126,7 +126,8 @@ test('an invitation link makes two players friends', async ({ browser }) => {
   const cyd = await player(browser, `Cyd ${run}`);
   const dee = await player(browser, `Dee ${run}`);
 
-  await lobby(cyd);
+  // Friends have a screen of their own, beside the lobby.
+  await cyd.po.friendsCta.click();
   await cyd.page.getByRole('button', { name: 'Invite a friend' }).click();
   await expect(cyd.page.getByText('Link copied')).toBeVisible();
   const link = await cyd.page.evaluate(() => navigator.clipboard.readText());
@@ -140,7 +141,7 @@ test('an invitation link makes two players friends', async ({ browser }) => {
   await offer.getByRole('button', { name: 'Add friend' }).click();
   await expect(offer).toHaveCount(0);
 
-  await lobby(dee);
+  await dee.po.friendsCta.click();
   await expect(
     dee.page
       .locator('feat-lazy-bac-game-friends .person')

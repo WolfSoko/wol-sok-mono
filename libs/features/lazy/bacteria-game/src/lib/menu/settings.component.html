@@ -1,11 +1,13 @@
 <feat-lazy-bac-game-screen-header
-  title="Settings"
-  [backLabel]="backLabel()"
+  [title]="'settings.title' | t"
+  [backLabel]="backLabel() ?? ('common.menu' | t)"
   (back)="back.emit()"
 />
 <div class="screen-sections">
   <section class="screen-section" aria-labelledby="settings-colonies">
-    <h3 id="settings-colonies" class="section-title">Colonies</h3>
+    <h3 id="settings-colonies" class="section-title">
+      {{ "settings.colonies.title" | t }}
+    </h3>
     <feat-lazy-bac-game-colony-colors
       class="stacked"
       [mode]="mode()"
@@ -14,73 +16,83 @@
       [locks]="colorLocks()"
       (colorChange)="colorChange.emit($event)"
     />
-    <p class="section-note">Picking the other colony's colour swaps the two.</p>
+    <p class="section-note">{{ "settings.colonies.swapNote" | t }}</p>
   </section>
   <section class="screen-section" aria-labelledby="settings-display">
-    <h3 id="settings-display" class="section-title">Display</h3>
+    <h3 id="settings-display" class="section-title">
+      {{ "settings.display.title" | t }}
+    </h3>
     <mat-form-field
       class="arena-picker"
       appearance="outline"
       subscriptSizing="dynamic"
     >
-      <mat-label>Arena</mat-label>
+      <mat-label>{{ "settings.display.arena" | t }}</mat-label>
       <mat-select
         panelWidth=""
         [disabled]="locked()"
         [value]="activeArena() ?? ownArena"
         (selectionChange)="pickArena($event.value)"
       >
-        <mat-option [value]="ownArena">Each level its own</mat-option>
+        <mat-option [value]="ownArena">
+          {{ "settings.display.ownArena" | t }}
+        </mat-option>
         @for (level of levels; track level.id) {
-          @let lock = arenaLocks()[level.id];
-          <mat-option [value]="level.id" [disabled]="!!lock">
-            {{ level.name }}
-            @if (lock) {
-              <small class="arena-lock">- {{ lock }}</small>
+          <mat-option [value]="level.id" [disabled]="!!arenaLocks()[level.id]">
+            {{ level.name | gameText }}
+            @if (arenaLocks()[level.id]) {
+              <small class="arena-lock">- {{ level.lock | gameText }}</small>
             }
           </mat-option>
         }
       </mat-select>
     </mat-form-field>
     <div class="option-picker">
-      <span class="option-label">Bacteria look</span>
+      <span class="option-label">{{ "settings.display.look" | t }}</span>
       <mat-button-toggle-group
-        aria-label="Bacteria look"
         hideSingleSelectionIndicator
+        [attr.aria-label]="'settings.display.look' | t"
         [value]="settings.look()"
         (change)="settings.setLook($event.value)"
       >
         @for (option of looks; track option.id) {
           <mat-button-toggle [value]="option.id">
-            {{ option.name }}
+            {{ option.label | t }}
           </mat-button-toggle>
         }
       </mat-button-toggle-group>
     </div>
     <div class="option-picker">
-      <span class="option-label">Simulation resolution</span>
+      <span class="option-label">
+        {{ "settings.display.simResolution" | t }}
+      </span>
       <mat-button-toggle-group
-        aria-label="Simulation resolution"
         hideSingleSelectionIndicator
+        [attr.aria-label]="'settings.display.simResolution' | t"
         [disabled]="locked()"
         [value]="settings.simResolution()"
         (change)="settings.setSimResolution($event.value)"
       >
         @for (option of simResolutions; track option.id) {
           <mat-button-toggle [value]="option.id">
-            {{ option.name }}
+            {{ option.label | t }}
           </mat-button-toggle>
         }
       </mat-button-toggle-group>
       <span class="resolution-hint">
-        {{ arenaSize().width }} × {{ arenaSize().height }} cells
+        {{
+          "settings.display.cells"
+            | t: { width: arenaSize().width, height: arenaSize().height }
+        }}
       </span>
     </div>
     <div class="option-picker">
-      <span class="option-label">Screen resolution</span>
+      <span class="option-label">
+        {{ "settings.display.screenResolution" | t }}
+      </span>
       <mat-button-toggle-group
-        aria-label="Screen resolution"
         hideSingleSelectionIndicator
+        [attr.aria-label]="'settings.display.screenResolution' | t"
         [disabled]="locked()"
         [value]="settings.screenResolution()"
         (change)="settings.setScreenResolution($event.value)"
@@ -93,24 +105,26 @@
       </mat-button-toggle-group>
     </div>
     <div class="option-picker">
-      <span class="option-label">Vaporize effect</span>
+      <span class="option-label">{{ "settings.display.vaporize" | t }}</span>
       <mat-button-toggle-group
-        aria-label="Vaporize effect"
+        [attr.aria-label]="'settings.display.vaporize' | t"
         hideSingleSelectionIndicator
         [value]="settings.vaporize()"
         (change)="settings.setVaporize($event.value)"
       >
         @for (option of vaporizeQualities; track option.id) {
           <mat-button-toggle [value]="option.id">
-            {{ option.name }}
+            {{ option.label | t }}
           </mat-button-toggle>
         }
       </mat-button-toggle-group>
     </div>
     <div class="option-picker">
-      <span class="option-label">Vaporize duration</span>
+      <span class="option-label">{{
+        "settings.display.vaporizeDuration" | t
+      }}</span>
       <mat-button-toggle-group
-        aria-label="Vaporize duration"
+        [attr.aria-label]="'settings.display.vaporizeDuration' | t"
         hideSingleSelectionIndicator
         [disabled]="settings.vaporize() === 'off'"
         [value]="settings.vaporizeMs()"
@@ -118,25 +132,24 @@
       >
         @for (option of vaporizeDurations; track option.ms) {
           <mat-button-toggle [value]="option.ms">
-            {{ option.name }}
+            {{ option.label | t }}
           </mat-button-toggle>
         }
       </mat-button-toggle-group>
     </div>
     @if (locked()) {
-      <span class="resolution-hint">
-        Pick the colours and resolutions before a match - they stay as they are
-        while one is on.
-      </span>
+      <span class="resolution-hint">{{ "settings.display.locked" | t }}</span>
     }
   </section>
   <section class="screen-section switches" aria-labelledby="settings-sound">
-    <h3 id="settings-sound" class="section-title">Sound</h3>
+    <h3 id="settings-sound" class="section-title">
+      {{ "settings.sound.title" | t }}
+    </h3>
     <mat-slide-toggle
       [checked]="settings.sound()"
       (change)="soundChange.emit($event.checked)"
     >
-      Sound
+      {{ "settings.sound.sound" | t }}
     </mat-slide-toggle>
     <div class="volume">
       <mat-slide-toggle
@@ -144,14 +157,14 @@
         [disabled]="!settings.sound()"
         (change)="settings.setMusic($event.checked)"
       >
-        Music
+        {{ "settings.sound.music" | t }}
       </mat-slide-toggle>
       <mat-slider
         class="volume-slider"
         [min]="0"
         [max]="maxVolume"
         [step]="5"
-        [displayWith]="percent"
+        [displayWith]="percent()"
         [disabled]="!settings.sound() || !settings.music()"
         discrete
       >
@@ -159,7 +172,7 @@
         <input
           #music="matSliderThumb"
           matSliderThumb
-          aria-label="Music volume"
+          [attr.aria-label]="'settings.sound.musicVolume' | t"
           [value]="settings.musicVolume()"
           (input)="settings.previewMusicVolume(music.value)"
           (valueChange)="settings.setMusicVolume($event)"
@@ -172,21 +185,21 @@
         [disabled]="!settings.sound()"
         (change)="effectsChange.emit($event.checked)"
       >
-        Sound effects
+        {{ "settings.sound.effects" | t }}
       </mat-slide-toggle>
       <mat-slider
         class="volume-slider"
         [min]="0"
         [max]="maxVolume"
         [step]="5"
-        [displayWith]="percent"
+        [displayWith]="percent()"
         [disabled]="!settings.sound() || !settings.effects()"
         discrete
       >
         <input
           #effects="matSliderThumb"
           matSliderThumb
-          aria-label="Effects volume"
+          [attr.aria-label]="'settings.sound.effectsVolume' | t"
           [value]="settings.effectsVolume()"
           (input)="
             settings.previewEffectsVolume(effects.value);
@@ -201,28 +214,51 @@
         [checked]="settings.vibration()"
         (change)="vibrationChange.emit($event.checked)"
       >
-        Vibration
+        {{ "settings.sound.vibration" | t }}
       </mat-slide-toggle>
-      <p class="section-note">
-        A buzz for a boost, a thud for a gate, a flourish for a medallion.
-      </p>
+      <p class="section-note">{{ "settings.sound.vibrationNote" | t }}</p>
     }
   </section>
   <section class="screen-section switches" aria-labelledby="settings-screen">
-    <h3 id="settings-screen" class="section-title">Screen</h3>
+    <h3 id="settings-screen" class="section-title">
+      {{ "settings.screen.title" | t }}
+    </h3>
     <mat-slide-toggle
       [checked]="settings.showFps()"
       (change)="settings.setShowFps($event.checked)"
     >
-      Show the frame rate
+      {{ "settings.screen.showFps" | t }}
     </mat-slide-toggle>
     @if (nativeFullscreenSupported()) {
       <mat-slide-toggle
         [checked]="nativeFullscreen()"
         (change)="nativeFullscreenChange.emit($event.checked)"
       >
-        Browser fullscreen
+        {{ "settings.screen.fullscreen" | t }}
       </mat-slide-toggle>
     }
+  </section>
+  <section class="screen-section" aria-labelledby="settings-language">
+    <h3 id="settings-language" class="section-title">
+      {{ "settings.language.title" | t }}
+    </h3>
+    <mat-button-toggle-group
+      class="language-picker"
+      hideSingleSelectionIndicator
+      [attr.aria-label]="'settings.language.title' | t"
+      [value]="languageChoice()"
+      (change)="pickLanguage($event.value)"
+    >
+      <mat-button-toggle [value]="automatic">
+        {{ "settings.language.automatic" | t }}
+      </mat-button-toggle>
+      @for (language of languages; track language.id) {
+        <!-- Each language under its own name, read out in that language. -->
+        <mat-button-toggle [value]="language.id" [attr.lang]="language.id">
+          {{ language.name }}
+        </mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+    <p class="section-note">{{ "settings.language.note" | t }}</p>
   </section>
 </div>

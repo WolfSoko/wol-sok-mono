@@ -32,15 +32,16 @@ export const VAPORIZE_QUALITIES: readonly VaporizeQualityOption[] = [
 export const DEFAULT_VAPORIZE_QUALITY: VaporizeQuality = 'medium';
 
 export interface VaporizeDurationOption {
+  id: 'short' | 'normal' | 'long';
   ms: number;
   name: string;
 }
 
 /** How long the arena takes to blow away. */
 export const VAPORIZE_DURATIONS: readonly VaporizeDurationOption[] = [
-  { ms: 1500, name: 'Short' },
-  { ms: 2500, name: 'Normal' },
-  { ms: 5000, name: 'Long' },
+  { id: 'short', ms: 1500, name: 'Short' },
+  { id: 'normal', ms: 2500, name: 'Normal' },
+  { id: 'long', ms: 5000, name: 'Long' },
 ];
 
 export const DEFAULT_VAPORIZE_MS = 2500;

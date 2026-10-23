@@ -1,9 +1,9 @@
+import { english, GameText } from '../i18n/game-text';
 import { AchievementId } from './achievement-ids';
-import { getAchievement } from './achievements';
+import { achievementTexts } from './achievements';
 import { goldOn, newlyUnlocked } from './campaign';
-import { COLONY_COLORS } from './colony-colors';
-import { getLevel, levelTitle, LEVELS } from './levels';
-import { MEDAL_NAMES } from './medallions';
+import { COLONY_COLORS, colonyColorText } from './colony-colors';
+import { getLevel, levelTitleText, LEVELS } from './levels';
 import { Progress } from './progress';
 import { Rank, RANKS } from './ranks';
 import { xpOf } from './xp';
@@ -20,17 +20,23 @@ export type Locks = Readonly<Record<string, string>>;
 
 /** What opens a colour, and the test of it. */
 interface ColorUnlock {
-  condition: string;
+  condition: GameText;
   open(progress: Progress): boolean;
 }
 
 const achieved = (id: AchievementId): ColorUnlock => ({
-  condition: `Earn ${getAchievement(id).name}`,
+  condition: {
+    key: 'game.unlocks.earnAchievement',
+    params: { achievement: achievementTexts(id).name },
+  },
   open: (progress) => progress.achievements[id] != null,
 });
 
 const reached = (rank: Rank): ColorUnlock => ({
-  condition: `Reach the rank ${rank.name}`,
+  condition: {
+    key: 'game.unlocks.reachRank',
+    params: { rank: { key: `game.ranks.${rank.id}` } },
+  },
   open: (progress) => xpOf(progress) >= rank.xp,
 });
 
@@ -46,7 +52,7 @@ const rankNamed = (name: string): Rank => {
 const COLOR_UNLOCKS: Readonly<Record<string, ColorUnlock>> = {
   green: achieved('first-blood'),
   yellow: {
-    condition: `Earn a ${MEDAL_NAMES.gold.toLowerCase()} medallion`,
+    condition: { key: 'game.unlocks.earnGold' },
     open: (progress) => LEVELS.some(({ id }) => goldOn(progress, id)),
   },
   cyan: achieved('pacifist'),
@@ -57,7 +63,14 @@ const COLOR_UNLOCKS: Readonly<Record<string, ColorUnlock>> = {
 
 /** Why each locked colour is locked - "Earn Pacifist" - by colour id. */
 export function colorLocks(progress: Progress): Locks {
-  const locks: Record<string, string> = {};
+  return englishLocks(colorLockTexts(progress));
+}
+
+/** {@link colorLocks} as texts to translate. */
+export function colorLockTexts(
+  progress: Progress
+): Readonly<Record<string, GameText>> {
+  const locks: Record<string, GameText> = {};
   for (const { id } of COLONY_COLORS) {
     const unlock = COLOR_UNLOCKS[id];
     if (unlock != null && !unlock.open(progress)) {
@@ -73,13 +86,42 @@ export function colorLocks(progress: Progress): Locks {
  * gold medallion on it, at any difficulty.
  */
 export function arenaLocks(progress: Progress): Locks {
-  const locks: Record<string, string> = {};
+  return englishLocks(arenaLockTexts(progress));
+}
+
+/** {@link arenaLocks} as texts to translate. */
+export function arenaLockTexts(
+  progress: Progress
+): Readonly<Record<string, GameText>> {
+  const locks: Record<string, GameText> = {};
   for (const level of LEVELS) {
     if (!goldOn(progress, level.id)) {
-      locks[level.id] = `${MEDAL_NAMES.gold} on ${levelTitle(level)}`;
+      locks[level.id] = arenaLockText(level.id);
     }
   }
   return locks;
+}
+
+/** Why a level's arena is locked, while it is: "Gold on Hourglass". */
+export function arenaLockText(levelId: string): GameText {
+  return {
+    key: 'game.unlocks.goldOn',
+    params: { title: levelTitleText(getLevel(levelId)) },
+  };
+}
+
+/**
+ * What opens a colour - "Earn Pacifist" - null for a colour that is free
+ * from the start.
+ */
+export function colorLockText(colorId: string): GameText | null {
+  return COLOR_UNLOCKS[colorId]?.condition ?? null;
+}
+
+function englishLocks(texts: Readonly<Record<string, GameText>>): Locks {
+  return Object.fromEntries(
+    Object.entries(texts).map(([id, text]) => [id, english(text)])
+  );
 }
 
 /** The arena a choice draws in: the chosen one once earned, else none. */
@@ -98,12 +140,24 @@ export function newCosmetics(
   before: { colors: Locks; arenas: Locks },
   after: { colors: Locks; arenas: Locks }
 ): string[] {
+  return newCosmeticTexts(before, after).map(english);
+}
+
+/** {@link newCosmetics} as texts to translate. */
+export function newCosmeticTexts(
+  before: { colors: Locks; arenas: Locks },
+  after: { colors: Locks; arenas: Locks }
+): GameText[] {
   return [
     ...COLONY_COLORS.filter(
       ({ id }) => id in before.colors && !(id in after.colors)
-    ).map(({ name }) => `${name} colonies`),
-    ...newlyUnlocked(before.arenas, after.arenas).map(
-      (id) => `${levelTitle(getLevel(id))} arena`
-    ),
+    ).map(({ id }): GameText => ({
+      key: 'game.unlocks.colonies',
+      params: { color: colonyColorText(id) },
+    })),
+    ...newlyUnlocked(before.arenas, after.arenas).map((id): GameText => ({
+      key: 'game.unlocks.arena',
+      params: { title: levelTitleText(getLevel(id)) },
+    })),
   ];
 }

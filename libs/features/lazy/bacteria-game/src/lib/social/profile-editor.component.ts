@@ -12,6 +12,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { TranslationKey } from '../i18n/dictionaries';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { GameAccount } from '../storage/game-account';
 import { AvatarComponent } from './avatar.component';
 import {
@@ -40,6 +42,7 @@ import { SocialService } from './social.service';
     MatIconModule,
     MatInputModule,
     MatSlideToggleModule,
+    TranslatePipe,
   ],
   templateUrl: './profile-editor.component.html',
   styleUrl: './profile-editor.component.scss',
@@ -65,7 +68,7 @@ export class ProfileEditorComponent {
 
   protected readonly changed = signal(false);
   protected readonly busy = signal(false);
-  protected readonly note = signal<string | null>(null);
+  protected readonly note = signal<TranslationKey | null>(null);
   /**
    * The profile as edited - the saved one until the player changes it. One
    * that arrives later does not undo what the player typed.
@@ -109,7 +112,7 @@ export class ProfileEditorComponent {
     }
     const data = await shrinkImage(file);
     if (data === null) {
-      this.note.set('That image could not be read - try another one.');
+      this.note.set('profile.editor.unreadable');
       return;
     }
     this.note.set(null);
@@ -131,10 +134,10 @@ export class ProfileEditorComponent {
     try {
       await this.social.saveProfile(profile);
       this.changed.set(false);
-      this.note.set('Saved.');
+      this.note.set('profile.editor.saved');
     } catch (error) {
       console.error('Could not save the profile', error);
-      this.note.set('That did not work - try again.');
+      this.note.set('social.failed');
     } finally {
       this.busy.set(false);
     }

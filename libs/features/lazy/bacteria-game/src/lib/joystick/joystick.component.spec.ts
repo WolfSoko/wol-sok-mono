@@ -1,3 +1,4 @@
+import { I18nService } from '../i18n/i18n.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SteeringVector } from '../state/geometry';
 import { JOYSTICK_RADIUS, JoystickComponent } from './joystick.component';
@@ -151,5 +152,15 @@ describe('JoystickComponent', () => {
 
     expect(steered).toEqual([]);
     expect(component['origin']()).toBeNull();
+  });
+
+  it('names the player in German', () => {
+    TestBed.inject(I18nService).setLanguage('de');
+    fixture.componentRef.setInput('label', 'Blue');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.getAttribute('aria-label')).toBe(
+      'Joystick Blau'
+    );
   });
 });

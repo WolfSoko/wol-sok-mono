@@ -36,6 +36,8 @@ import {
   isVaporizeQuality,
   VaporizeQuality,
 } from './vaporize-effect';
+import { I18nService } from './i18n/i18n.service';
+import { isLanguage, Language } from './i18n/language';
 
 /** What the game remembers between visits. */
 export interface StoredSettings {
@@ -69,6 +71,8 @@ export interface StoredSettings {
   vaporize?: VaporizeQuality;
   /** How long it takes, in ms. */
   vaporizeMs?: number;
+  /** The language the player picked, absent to follow the browser. */
+  language?: Language;
 }
 
 /**
@@ -105,8 +109,9 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
  * ladder, the arena, how the bacteria look, the resolutions, how the arena
  * vaporizes and for how long, whether the
  * frame rate is shown, whether the game makes sound, plays music and
- * effects and how loud, and whether the phone vibrates - across visits, in
- * the storage of this device - they stay with the device whoever signs in.
+ * effects and how loud, whether the phone vibrates and the language -
+ * across visits, in the storage of this device - they stay with the device
+ * whoever signs in.
  *
  * The match settings live in the game state store, as they did; this service
  * only restores them once the storage answers and writes them back whenever
@@ -121,6 +126,7 @@ export class GameSettingsService {
   private readonly gameState = inject(GameStateService);
   private readonly store = inject(GameStateStore);
   private readonly storage = inject(DeviceStorage);
+  private readonly i18n = inject(I18nService);
   private restored = false;
   /** The settings the player changed - what restoring must keep. */
   private readonly touched = new Set<keyof StoredSettings>();
@@ -161,6 +167,9 @@ export class GameSettingsService {
   public readonly vaporize = signal<VaporizeQuality>(DEFAULT_VAPORIZE_QUALITY);
   /** How long the arena takes to blow away, in ms. */
   public readonly vaporizeMs = signal(DEFAULT_VAPORIZE_MS);
+
+  /** The language the player picked, null to follow the browser. */
+  public readonly language = this.i18n.choice;
 
   constructor() {
     // Synchronous, so a change is told apart from a restored setup.
@@ -270,6 +279,12 @@ export class GameSettingsService {
     this.changed('vaporizeMs');
   }
 
+  /** Speaks a language from now on, or follows the browser for null. */
+  public setLanguage(language: Language | null): void {
+    this.i18n.setLanguage(language);
+    this.changed('language');
+  }
+
   /**
    * Remembers which settings the player changed, so restoring keeps them,
    * and writes the settings back once they are restored.
@@ -344,6 +359,11 @@ export class GameSettingsService {
     if (restores('vibration') && typeof stored.vibration === 'boolean') {
       this.vibration.set(stored.vibration);
     }
+    if (restores('language')) {
+      this.i18n.setLanguage(
+        isLanguage(stored.language) ? stored.language : null
+      );
+    }
   }
 
   /** The stored setup of the match a late answer found under way. */
@@ -409,6 +429,7 @@ export class GameSettingsService {
       musicVolume: this.musicVolume(),
       effectsVolume: this.effectsVolume(),
       vibration: this.vibration(),
+      language: this.language() ?? undefined,
     };
     this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }

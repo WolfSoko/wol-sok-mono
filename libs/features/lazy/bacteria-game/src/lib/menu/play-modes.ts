@@ -1,3 +1,4 @@
+import type { TranslationKey } from '../i18n/dictionaries';
 import type { GameMode } from '../state/game.states';
 
 /** The ways to play a new game offers, each with steps of its own. */
@@ -20,54 +21,35 @@ export interface NewGameEntry {
 
 export interface PlayMode {
   kind: PlayKind;
-  name: string;
+  /** The keys of its name and its line. */
+  name: TranslationKey;
+  blurb: TranslationKey;
   icon: string;
-  blurb: string;
 }
 
-export const PLAY_MODES: readonly PlayMode[] = [
-  {
-    kind: 'campaign',
-    name: 'Campaign',
-    icon: 'flag',
-    blurb: 'The ladder level by level - win one to open the next.',
-  },
-  {
-    kind: 'daily',
-    name: 'Daily level',
-    icon: 'today',
-    blurb: 'One generated level a day, the same for everyone.',
-  },
-  {
-    kind: 'endless',
-    name: 'Endless run',
-    icon: 'all_inclusive',
-    blurb: 'Generated levels one after the other - how deep can you get?',
-  },
-  {
-    kind: 'free',
-    name: 'Free play',
-    icon: 'explore',
-    blurb: 'Every level open, and new ones from the generator.',
-  },
-  {
-    kind: 'two-players',
-    name: 'Two players',
-    icon: 'group',
-    blurb: 'One screen, two colonies - a series between friends.',
-  },
-  {
-    kind: 'online',
-    name: 'Online',
-    icon: 'public',
-    blurb: 'Two devices, one match - share a code with a friend.',
-  },
-];
+const ICONS: Readonly<Record<PlayKind, string>> = {
+  campaign: 'flag',
+  daily: 'today',
+  endless: 'all_inclusive',
+  free: 'explore',
+  'two-players': 'group',
+  online: 'public',
+};
 
-export const STEP_LABELS: Readonly<Record<NewGameStep, string>> = {
-  mode: 'Mode',
-  level: 'Level',
-  start: 'Start',
+export const PLAY_MODES: readonly PlayMode[] = (
+  Object.keys(ICONS) as PlayKind[]
+).map((kind) => ({
+  kind,
+  name: `newGame.modes.${kind}.name`,
+  blurb: `newGame.modes.${kind}.blurb`,
+  icon: ICONS[kind],
+}));
+
+/** The keys of the steps' names. */
+export const STEP_LABELS: Readonly<Record<NewGameStep, TranslationKey>> = {
+  mode: 'newGame.steps.mode',
+  level: 'newGame.steps.level',
+  start: 'newGame.steps.start',
 };
 
 /**

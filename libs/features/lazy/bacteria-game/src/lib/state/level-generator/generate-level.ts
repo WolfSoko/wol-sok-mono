@@ -1,3 +1,4 @@
+import { english, GameText } from '../../i18n/game-text';
 import { randomSeed, streamSeed } from '../geometry';
 import { GameBalance } from '../game-balance';
 import type { Level } from '../levels';
@@ -112,28 +113,33 @@ export function generatedLevel(id: string): GeneratedLevel | null {
   return keepRecent(generated, id, generate(recipe), KEPT_LEVELS);
 }
 
-/** The first word of a generated name. */
-const ADJECTIVES: readonly string[] = [
-  'Quiet',
-  'Rusty',
-  'Hollow',
-  'Bitter',
-  'Silent',
-  'Restless',
-  'Pale',
-  'Hungry',
-  'Crooked',
-  'Sunken',
-  'Feral',
-  'Glassy',
-];
+/** The first word of a generated name, by its id in the dictionaries. */
+export const GENERATED_ADJECTIVES = [
+  'quiet',
+  'rusty',
+  'hollow',
+  'bitter',
+  'silent',
+  'restless',
+  'pale',
+  'hungry',
+  'crooked',
+  'sunken',
+  'feral',
+  'glassy',
+] as const;
 
 function generate(made: LevelRecipe): GeneratedLevel {
   const recipe = RECIPES[made.recipe];
   const id = generatedLevelId(made);
   const heat = heatOf(made);
   const rng = new Rng(streamSeed(made.seed, 1));
-  const name = `${rng.pick(ADJECTIVES)} ${rng.pick(recipe.nouns)}`;
+  const adjective = rng.pick(GENERATED_ADJECTIVES);
+  const title: GameText = {
+    key: `levels.generated.nouns.${rng.pick(recipe.nouns)}`,
+    params: { adjective: { key: `levels.generated.adjectives.${adjective}` } },
+  };
+  const name = english(title);
   const layouts = new Map<string, Rect[]>();
   const map: GameMap = {
     id,
@@ -153,6 +159,7 @@ function generate(made: LevelRecipe): GeneratedLevel {
     level: {
       id,
       name,
+      title,
       description: recipe.description,
       mapId: id,
       balance: balanceFor(heat),

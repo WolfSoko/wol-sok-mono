@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { I18nService } from '../i18n/i18n.service';
 import { getLevel, LEVELS } from '../state/levels';
 import { parseGeneratedId } from '../state/level-generator/generate-level';
 import { LevelMapComponent } from './level-map.component';
@@ -109,5 +110,24 @@ describe('LevelMapComponent', () => {
       getLevel('gen:cave:77:8').name
     );
     expect(host.textContent).toContain('Difficulty 8');
+  });
+
+  it('names the chapters, the levels and their locks in German', () => {
+    TestBed.inject(I18nService).setLanguage('de');
+    const host = render({
+      laddered: true,
+      generator: true,
+      locks: { [LEVELS[1].id]: 'Win Petri Dish to unlock' },
+    });
+
+    expect(host.querySelector('.chapter-open')?.textContent).toContain(
+      '2 von 3 offen'
+    );
+    expect(cards(host)[1].textContent).toContain(
+      'Gewinne Petrischale zum Freischalten'
+    );
+    expect(host.querySelector('.generate')?.textContent).toContain(
+      'Generieren'
+    );
   });
 });

@@ -1,5 +1,5 @@
 <feat-lazy-bac-game-screen-header
-  title="New game"
+  [title]="'newGame.title' | t"
   [backLabel]="backLabel()"
   (back)="goBack()"
 />
@@ -24,7 +24,7 @@
   @for (id of steps(); track id; let position = $index) {
     <!-- Done once passed - and nothing is, before a mode is picked. -->
     <mat-step
-      [label]="stepLabels[id]"
+      [label]="stepLabels[id] | t"
       [completed]="kind() !== null && position < index()"
     >
       <!-- Only the step on screen is rendered - the map is not kept behind. -->
@@ -41,8 +41,8 @@
                     (click)="pickKind(mode.kind)"
                   >
                     <mat-icon aria-hidden="true">{{ mode.icon }}</mat-icon>
-                    <span class="mode-name">{{ mode.name }}</span>
-                    <span class="mode-blurb">{{ mode.blurb }}</span>
+                    <span class="mode-name">{{ mode.name | t }}</span>
+                    <span class="mode-blurb">{{ mode.blurb | t }}</span>
                     <span class="mode-note">{{ mode.note }}</span>
                   </button>
                 }
@@ -65,7 +65,7 @@
                   class="next"
                   (click)="next()"
                 >
-                  Next
+                  {{ "newGame.next" | t }}
                   <mat-icon iconPositionEnd>arrow_forward</mat-icon>
                 </button>
               </div>
@@ -74,7 +74,7 @@
               <div class="start-step">
                 <section
                   class="details"
-                  aria-label="Briefing"
+                  [attr.aria-label]="'newGame.briefing' | t"
                   [style.--level-floor]="briefing()?.floor"
                   [style.--level-edge]="briefing()?.edge"
                 >
@@ -83,7 +83,7 @@
                     <h3 class="details-title">{{ chosen.title }}</h3>
                     @if (chosen.facts.length > 0) {
                       <ul class="facts">
-                        @for (fact of chosen.facts; track fact.label) {
+                        @for (fact of chosen.facts; track $index) {
                           <li class="fact" [style.--fact-color]="fact.color">
                             {{ fact.label }}
                           </li>
@@ -91,22 +91,31 @@
                       </ul>
                     }
                     <p class="details-description">
-                      {{ chosen.level.description }}
+                      {{ chosen.description }}
                     </p>
                     @if (kind() === "daily") {
-                      <p class="note">{{ daily().note }}</p>
+                      <p class="note">{{ dailyNote() }}</p>
                     }
                   } @else {
-                    <span class="details-number">Endless run</span>
-                    <h3 class="details-title">As deep as you can</h3>
+                    <span class="details-number">{{
+                      "newGame.endless.kicker" | t
+                    }}</span>
+                    <h3 class="details-title">
+                      {{ "newGame.endless.title" | t }}
+                    </h3>
                     <p class="details-description">
-                      Generated levels one after the other, each win a step
-                      harder. A defeat costs one of {{ endlessLives }} lives.
+                      {{
+                        "newGame.endless.description"
+                          | t: { count: endlessLives }
+                      }}
                     </p>
                   }
                 </section>
 
-                <section class="setup" aria-label="Opponent">
+                <section
+                  class="setup"
+                  [attr.aria-label]="'newGame.opponent' | t"
+                >
                   @if (kind() === "online") {
                     <feat-lazy-bac-game-online-lobby
                       [lobby]="online()"
@@ -117,23 +126,23 @@
                       (leave)="leaveOnline.emit()"
                     />
                   } @else if (vsComputer()) {
-                    <span class="best-label">Opponent</span>
+                    <span class="best-label">{{ "newGame.opponent" | t }}</span>
                     <mat-button-toggle-group
                       class="difficulty-picker"
-                      aria-label="Difficulty"
+                      [attr.aria-label]="'newGame.difficulty' | t"
                       hideSingleSelectionIndicator
                       [value]="difficulty()"
                       (change)="difficultyChange.emit($event.value)"
                     >
                       @for (option of difficulties; track option.id) {
                         <mat-button-toggle [value]="option.id">{{
-                          option.name
+                          option.name | t
                         }}</mat-button-toggle>
                       }
                     </mat-button-toggle-group>
                     <p class="opponent">
                       <mat-icon aria-hidden="true">smart_toy</mat-icon>
-                      <span>{{ difficultyOption()?.description }}</span>
+                      <span>{{ difficultyTexts().description | t }}</span>
                     </p>
                     @if (standing(); as held) {
                       <div class="best">
@@ -143,33 +152,36 @@
                           [difficulty]="difficulty()"
                         />
                         <div class="best-text">
-                          <span class="best-label"
-                            >Your best on {{ difficultyOption()?.name }}</span
-                          >
+                          <span class="best-label">{{
+                            "newGame.yourBest"
+                              | t: { difficulty: (difficultyTexts().name | t) }
+                          }}</span>
                           <span class="best-name">{{ held.bestName }}</span>
                           <span class="goal">{{ held.goal }}</span>
                         </div>
                       </div>
                     }
                   } @else {
-                    <span class="best-label">Series</span>
+                    <span class="best-label">{{ "common.series" | t }}</span>
                     <mat-button-toggle-group
                       class="series-picker"
-                      aria-label="Series"
+                      [attr.aria-label]="'common.series' | t"
                       hideSingleSelectionIndicator
                       [value]="seriesLength()"
                       (change)="seriesLengthChange.emit($event.value)"
                     >
                       @for (option of seriesLengths; track option.id) {
                         <mat-button-toggle [value]="option.id">{{
-                          option.name
+                          option.name | t
                         }}</mat-button-toggle>
                       }
                     </mat-button-toggle-group>
-                    <span class="best-label">Head start</span>
+                    <span class="best-label">{{
+                      "newGame.headStart.label" | t
+                    }}</span>
                     <mat-button-toggle-group
                       class="head-start-picker"
-                      aria-label="Head start"
+                      [attr.aria-label]="'newGame.headStart.label' | t"
                       hideSingleSelectionIndicator
                       [value]="headStart()"
                       (change)="headStartChange.emit($event.value)"
@@ -180,11 +192,9 @@
                         }}</mat-button-toggle>
                       }
                     </mat-button-toggle-group>
-                    <span class="goal"
-                      >The other colony starts smaller - a step per +.</span
-                    >
+                    <span class="goal">{{ "newGame.headStart.note" | t }}</span>
                     <p class="rivalry">
-                      <span class="best-label">Rivalry</span>
+                      <span class="best-label">{{ "common.rivalry" | t }}</span>
                       <span class="rivalry-score">{{ rivalryLine() }}</span>
                     </p>
                   }
