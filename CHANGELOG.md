@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.60.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.59.0...v74.60.0) (2026-10-23)
+
+### Features
+
+* **bacteria-game-remote:** ✨ install banner, legal footer and Impressum on the game's site ([#2591](https://github.com/WolfSoko/wol-sok-mono/issues/2591)) ([96a7d6a](https://github.com/WolfSoko/wol-sok-mono/commit/96a7d6a2633c013d7c6fee36681158cded44ca3e))
+* **feat-lazy-bacteria-game:** ✨ five new bacteria skins - cells, honeycomb, crystal, neon and ink ([#2590](https://github.com/WolfSoko/wol-sok-mono/issues/2590)) ([c9f05a8](https://github.com/WolfSoko/wol-sok-mono/commit/c9f05a8f45252cd0aa14a9c3a756857338189d29))
+
 ## [74.59.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.58.0...v74.59.0) (2026-10-23)
 
 ### Features
