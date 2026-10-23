@@ -6,7 +6,6 @@
   "tags": ["infra", "cdk"],
   "targets": {
     "deploy": {
-      "dependsOn": ["^build"],
       "executor": "@wolsok/nx-aws-cdk-v2:deploy",
       "options": {
         "output": "{workspaceRoot}/dist/{projectRoot}",

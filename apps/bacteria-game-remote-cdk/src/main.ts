@@ -1,4 +1,3 @@
-import { envOrDie } from '@wolsok/spa-cdk-stack';
 import { App, Stack, Tags } from 'aws-cdk-lib';
 import { addFirebaseDomain } from './firebase-domain';
 
@@ -21,4 +20,8 @@ addFirebaseDomain(stack, {
 
 const tags: Tags = Tags.of(app);
 tags.add('app', 'BacteriaGame');
-tags.add('version', envOrDie('RELEASE_VERSION'));
+const version = process.env['RELEASE_VERSION'];
+if (!version) {
+  throw new Error('Environment variable RELEASE_VERSION is required');
+}
+tags.add('version', version);
