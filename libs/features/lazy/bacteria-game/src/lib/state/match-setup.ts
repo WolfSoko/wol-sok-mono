@@ -1,3 +1,4 @@
+import type { Loadout } from './evolution';
 import { BotDifficulty } from './bot-controller';
 import { getColonyColor, NEUTRAL_COLOR, toPlayerColor } from './colony-colors';
 import { NEUTRAL_TRAITS } from './game-balance';
@@ -32,6 +33,12 @@ export interface MatchPlan {
   width: number;
   height: number;
   seed: number;
+  /**
+   * What each seat evolved - see `evolution.ts`. Plain when absent, as in
+   * every match that is not against the computer on the ladder or a
+   * generated level.
+   */
+  loadouts?: readonly [Loadout, Loadout];
 }
 
 /** The seat of the player at this device in an online match, and its drivers. */

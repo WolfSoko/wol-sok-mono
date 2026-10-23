@@ -1,3 +1,4 @@
+import type { ActiveEffect } from '../state/evolution';
 import { mapZones, stampZones } from '../state/zones';
 import type { StateLayer } from '../arena/colony-renderer';
 import {
@@ -354,6 +355,11 @@ export class GpuSimulation implements Simulation {
 
   public getNutrients(): Nutrient[] {
     return this.pellets.nutrients;
+  }
+
+  public getActiveEffects(): readonly ActiveEffect[] {
+    // TODO(evolution): the weapons' effects.
+    return [];
   }
 
   public getDynamicWalls(): readonly DynamicWall[] {

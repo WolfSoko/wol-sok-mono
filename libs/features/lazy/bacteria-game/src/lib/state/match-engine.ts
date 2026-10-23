@@ -1,3 +1,4 @@
+import type { WeaponFire } from './evolution';
 import { scaleOf } from './arena-size';
 import {
   addEvents,
@@ -116,13 +117,15 @@ export interface MatchOptions {
 
 /** A frame in which nothing happened. */
 export function noFrameEvents(): FrameEvents {
-  return { ...noEvents(), boosts: [] };
+  return { ...noEvents(), boosts: [], weapons: [] };
 }
 
 /** What happened during a frame - the simulation's events and the boosts. */
 export interface FrameEvents extends StepEvents {
   /** One entry per boost fired since the frame before, true for the computer's. */
   boosts: boolean[];
+  /** The weapons fired since the frame before. */
+  weapons: WeaponFire[];
 }
 
 /** How a match ended, from the point of view of the people at the screen. */
@@ -355,6 +358,18 @@ export class MatchEngine {
     return this.fireBoost(playerId);
   }
 
+  /**
+   * Fires a player's weapon at their crosshair. Nothing happens without a
+   * weapon or while it recharges. Returns whether it fired.
+   */
+  public fireWeapon(playerId: number): boolean {
+    if (this.ghosts.has(playerId)) {
+      return false;
+    }
+    // TODO(evolution): fire it, record it.
+    return false;
+  }
+
   /** True for a human at the screen - neither a bot nor a ghost. */
   public isLive(playerId: number): boolean {
     return !this.bots.has(playerId) && !this.ghosts.has(playerId);
@@ -388,7 +403,12 @@ export class MatchEngine {
    * the last one, become the frame's events.
    */
   public takeFrameEvents(): FrameEvents {
-    const events = { ...this.tickEvents, boosts: this.firedBoosts };
+    const events = {
+      ...this.tickEvents,
+      boosts: this.firedBoosts,
+      // TODO(evolution): the weapons fired since the last frame.
+      weapons: [],
+    };
     this.tickEvents = noEvents();
     this.firedBoosts = [];
     return events;

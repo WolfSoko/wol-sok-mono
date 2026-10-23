@@ -15,6 +15,7 @@ describe('GameSoundService', () => {
       sound.setMusic(levelMusic('heartbeat'), 3);
       sound.frame({
         boosts: [true],
+        weapons: [],
         captures: 3,
         pelletsEaten: 1,
         crushed: 2,
@@ -118,6 +119,7 @@ describe('GameSoundService', () => {
 
       sound.frame({
         boosts: [],
+        weapons: [],
         captures: 10,
         pelletsEaten: 0,
         crushed: 0,
@@ -138,6 +140,7 @@ describe('GameSoundService', () => {
       const pellet = () =>
         sound.frame({
           boosts: [],
+          weapons: [],
           captures: 0,
           pelletsEaten: 1,
           crushed: 0,

@@ -1,3 +1,4 @@
+import type { WeaponId } from './evolution';
 import { gameBalance } from './game-balance';
 
 export type PlayerColorArray = [number, number, number, number];
@@ -44,11 +45,26 @@ export interface Player {
   pellets: number;
   /** The cooldown the last boost started - a boss's is shorter. */
   boostCooldownFullSec: number;
+  /** The weapon the colony carries - see `evolution.ts` - null for none. */
+  weapon: WeaponId | null;
+  /** Seconds the weapon's effect keeps acting, 0 while there is none. */
+  weaponActiveSec: number;
+  /** Seconds until the weapon can be fired again, 0 when it is ready. */
+  weaponCooldownSec: number;
+  /** The cooldown the last shot started, for the button's ring. */
+  weaponCooldownFullSec: number;
+  /** Weapons fired since the game started. */
+  weaponsFired: number;
 }
 
 /** True while the player's boost is running. */
 export function isBoosted(player: Player | null): boolean {
   return player != null && player.boostActiveSec > 0;
+}
+
+/** True when the player carries a weapon that can be fired right now. */
+export function isWeaponReady(player: Player): boolean {
+  return player.weapon !== null && player.weaponCooldownSec <= 0;
 }
 
 /** True when the player can fire a boost right now. */
@@ -85,6 +101,11 @@ export function createPlayer(params: Partial<Player>): Player {
     holdTicks: 0,
     pellets: 0,
     boostCooldownFullSec: 0,
+    weapon: null,
+    weaponActiveSec: 0,
+    weaponCooldownSec: 0,
+    weaponCooldownFullSec: 0,
+    weaponsFired: 0,
     ...params,
   } as Player;
 }

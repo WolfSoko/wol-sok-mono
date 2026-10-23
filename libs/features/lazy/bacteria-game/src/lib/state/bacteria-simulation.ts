@@ -1,3 +1,4 @@
+import type { ActiveEffect } from './evolution';
 import {
   heatedAggression,
   mapZones,
@@ -272,6 +273,11 @@ export class BacteriaSimulation implements Simulation {
   }
 
   /** The moving walls and gates as they stand right now, for rendering. */
+  public getActiveEffects(): readonly ActiveEffect[] {
+    // TODO(evolution): the weapons' effects.
+    return [];
+  }
+
   public getDynamicWalls(): readonly DynamicWall[] {
     return this.dynamicWalls;
   }

@@ -698,6 +698,14 @@ export class GameStateService {
     this.playerService.boost(playerId);
   }
 
+  /** Fires a player's weapon - the button equivalent of its key. */
+  public fireWeapon(playerId: number): void {
+    if (!this.isRunning()) {
+      return;
+    }
+    this.playerService.fireWeapon(playerId);
+  }
+
   start() {
     const { online, dailyDay } = this.gameStateStore.snapshot();
     if (online !== null) {

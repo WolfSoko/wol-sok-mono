@@ -1,3 +1,4 @@
+import type { ActiveEffect } from './evolution';
 import { Injectable, inject, untracked } from '@angular/core';
 import { Nutrient } from './bacteria-simulation';
 import { Simulation, SimulationFactory } from './simulation';
@@ -143,6 +144,21 @@ export class PlayerService {
     if (this.engine.boost(playerId)) {
       this.mirror();
     }
+  }
+
+  /** See {@link MatchEngine.fireWeapon}. Online matches carry no weapons. */
+  public fireWeapon(playerId: number): void {
+    if (this.lockstep !== null) {
+      return;
+    }
+    if (this.engine.fireWeapon(playerId)) {
+      this.mirror();
+    }
+  }
+
+  /** The weapons' effects acting on the war now. */
+  public getActiveEffects(): readonly ActiveEffect[] {
+    return this.engine.simulation.getActiveEffects();
   }
 
   /**

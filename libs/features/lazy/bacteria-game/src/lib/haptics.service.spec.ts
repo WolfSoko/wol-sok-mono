@@ -5,6 +5,7 @@ import { FrameEvents } from './state/match-engine';
 
 const QUIET: FrameEvents = {
   boosts: [],
+  weapons: [],
   captures: 0,
   pelletsEaten: 0,
   crushed: 0,
