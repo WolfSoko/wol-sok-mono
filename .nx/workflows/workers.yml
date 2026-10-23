@@ -1,20 +1,24 @@
+# Launch template of the Nx Cloud workers; .nx/ci-config.yaml says how many to start.
+# Reference: https://nx.dev/docs/kb/launch-templates
 launch-templates:
   wolsokmono-linux-extra-large:
-    resourceClass: 'docker_linux_amd64/extra_large'
-    image: 'ubuntu22.04-node20.11-v9'
+    resource-class: 'docker_linux_amd64/extra_large'
+    # Newest image Nx Cloud lists; the install-node step below still installs
+    # the version from .nvmrc via nvm.
+    image: 'ubuntu22.04-node24.14-v1'
     env:
       HUSKY: 0
       NODE_OPTIONS: '--max_old_space_size=4096'
 
     init-steps:
       - name: Checkout # using a reusable step
-        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/checkout/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/checkout/main.yaml'
         env:
           GIT_CHECKOUT_DEPTH: '50'
           GIT_FETCH_TAGS: 'true'
 
       - name: Install Node
-        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/install-node/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/install-node/main.yaml'
 
       - name: Install necessary binaries
         script: |
@@ -29,7 +33,7 @@ launch-templates:
           sudo apt-get install -y openjdk-21-jre-headless
 
       - name: Restore Node Modules Cache
-        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/cache/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/cache/main.yaml'
         inputs:
           key: 'package-lock.json'
           paths: |
@@ -42,4 +46,4 @@ launch-templates:
           npm install
 
       - name: Install Browsers (if needed)
-        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/install-browsers/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/install-browsers/main.yaml'
