@@ -60,13 +60,21 @@ the manifest. A tip unlocks nothing, so no server checks it: the game consumes
 the purchase right away, which also acknowledges it, and consumes leftovers on
 the next start.
 
-In the Play Console, create the consumable in-app products `tip_small`,
-`tip_medium` and `tip_large` (Monetize → Products → In-app products) with a
-price and a title, and set up a payments profile. The ids are in
+The tips are consumable one-time products, kept in `store/tips.json`: id,
+net EUR base price (Play adds each region's tax: 2.52 / 4.20 / 8.40 come to
+2.99 / 4.99 / 9.99 € in Germany) and a title and description for every
+listing language. The deploy creates or updates them after the bundle is on
+Play (`tools/bacteria-game/play-tips.ts`), as Play takes in-app products only
+for an app whose bundle asks for billing; bad texts fail the deploy before
+the build. The game asks Play for the ids in
 `apps/bacteria-game-remote/src/environments/game-support.ts`; products
-missing in Play are left out, and without any the app shows no tips.
-Purchases can only be tried on a phone, with a bundle from a Play testing
-track and a license tester account.
+missing on Play are left out, and without any the app shows no tips.
+
+Two things the deploy cannot do: link a payments profile to the Play Console,
+and give the service account the permission to manage in-app products (Users
+and permissions → the service account → app permissions). Purchases can only
+be tried on a phone, with a bundle from a Play testing track and a license
+tester account.
 
 ## Fullscreen needs Digital Asset Links
 
