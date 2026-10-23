@@ -87,8 +87,9 @@ export class RtdbGamePresence implements GamePresence {
     const { rtdbSdk } = this.connection;
     const ref = rtdbSdk.ref(this.rtdb, `status/${uid}`);
     try {
-      await rtdbSdk.onDisconnect(ref).cancel();
+      // Removed first: if that fails, the disconnect still clears it.
       await rtdbSdk.remove(ref);
+      await rtdbSdk.onDisconnect(ref).cancel();
     } catch (error) {
       console.warn('Could not take the online status back', error);
     }
