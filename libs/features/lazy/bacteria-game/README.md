@@ -177,9 +177,11 @@ project needs, in the [Firebase console](https://console.firebase.google.com/pro
 The game itself is moving to Firebase Hosting in the same project, at
 `bacteria-wars.wolsok.de` ([ADR 0008](../../../../docs/adr/0008-bacteria-wars-on-firebase-hosting.md)).
 
-The release pipeline deploys the game to Firebase Hosting and the Firestore
-rules (`apps/bacteria-game-remote/firestore.rules`): `bacteria-game-remote` has a
-`deploy` target (`firebase deploy --only hosting,firestore:rules`, config in
+The release pipeline deploys the game to Firebase Hosting, the Firestore
+rules (`apps/bacteria-game-remote/firestore.rules`) and the indexes with the
+TTL policy of the rooms (`apps/bacteria-game-remote/firestore.indexes.json`):
+`bacteria-game-remote` has a `deploy` target
+(`firebase deploy --only hosting,firestore`, config in
 `firebase.bacteria-game-remote.json`, project alias in `.firebaserc`), which
 the non-CDK job of `deploy.yml` runs with the `FIREBASE_TOKEN` secret like
 the other Firebase apps. The token's account needs access to the project.
@@ -301,8 +303,10 @@ Two players on two devices, through the game's Firebase project
   ([`FirestoreGameRooms`](./src/lib/storage/firestore-game-rooms.ts)); the
   rules let anyone signed in read a room by its code, never list them, and
   one guest answer it. There is no TURN server, so two devices behind
-  strict NATs cannot connect. The project needs a TTL policy on the
-  `rooms` collection's `expireAt` field, which deletes rooms after an hour.
+  strict NATs cannot connect. A room expires an hour after it was opened
+  (`expireAt`); a TTL policy on that field (`firestore.indexes.json`,
+  deployed with the rules) has Firestore delete it some time after that,
+  usually within a day.
 - Online matches earn nothing - no medallion, XP or totals - and leave no
   replay. Without a Firebase project the mode says it is not available.
 

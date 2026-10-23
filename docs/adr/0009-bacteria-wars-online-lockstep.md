@@ -62,7 +62,8 @@ Online matches earn no medallions, XP or totals.
 - A big map, or the GPU simulation's look and speed, is not available
   online. Lifting either means the host-authoritative design after all.
 - Pausing on one device holds the match on both (the other waits).
-- The Firebase project needs a TTL policy on the `rooms` collection's
-  `expireAt` field (Firestore console, _TTL_), or rooms pile up.
+- The rooms need a TTL policy on `expireAt`, or they pile up. It is
+  declared in `apps/bacteria-game-remote/firestore.indexes.json` and
+  deployed with the rules, so the release sets it up.
 - Without a Firebase project (development builds) the mode is shown but
   says it is not available.
