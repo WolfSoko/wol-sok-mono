@@ -2,7 +2,7 @@
   wsThanos
   #thanos="thanos"
   class="thanos-container"
-  [wsThanosOptions]="thanosOptions()"
+  [wsThanosOptions]="{ crumble: crumble() }"
   (wsThanosComplete)="nextCrumble()"
 >
   <mat-card

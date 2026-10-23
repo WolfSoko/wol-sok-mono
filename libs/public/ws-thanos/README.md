@@ -122,6 +122,7 @@ The `crumble` option decides how the element breaks apart while it vaporizes:
 
 The variants need WebGL2, the canvas fallback always turns into `'dust'`.
 The effect canvas shows the variant in use in its `data-ws-thanos-crumble` attribute.
+`WS_THANOS_CRUMBLES` lists all variants, e.g. to pick a random one for every snap.
 
 #### Options per element
 
