@@ -11,10 +11,12 @@ export interface WsThanosOptions {
   animationLength: number;
   maxParticleCount: number;
   /**
-   * the most device pixels per css pixel the element is captured and drawn with:
-   * lower it to snap big elements with fewer pixels, below 1 the particles get coarser
+   * the most pixels the element is captured with, every one a particle:
+   * a big element is captured at a lower pixel ratio, below css pixels if needed.
+   * Unlike maxParticleCount, which leaves out random pixels, the particles get coarser.
+   * No limit when unset.
    */
-  maxPixelRatio: number;
+  maxCapturePixels?: number;
   particleAcceleration: number;
   /** play a windy, sandy sound while vaporizing */
   sound: boolean;

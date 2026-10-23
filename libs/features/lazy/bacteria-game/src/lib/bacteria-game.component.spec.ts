@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject } from 'rxjs';
-import type { ResizedEvent } from '@wolsok/ui-kit';
 import { arenaTheme } from './arena/arena-theme';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
@@ -539,23 +538,19 @@ describe('BacteriaGameComponent', () => {
       expect(component['thanosOptions']().animationLength).toBe(5000);
     });
 
-    it('snaps a big arena box with fewer pixels', () => {
+    it('captures the arena within the pixel budget of the quality', () => {
       create();
       const settings = TestBed.inject(GameSettingsService);
-      component['onArenaBoxResized']({
-        newWidth: 1600,
-        newHeight: 900,
-      } as ResizedEvent);
-      const ratio = () => component['thanosOptions']().maxPixelRatio ?? 0;
+      const pixels = () => component['thanosOptions']().maxCapturePixels;
 
-      const medium = ratio();
+      expect(pixels()).toBe(500_000);
       settings.setVaporize('low');
-
-      expect(medium).toBeLessThan(1);
-      expect(ratio()).toBeLessThan(medium);
+      expect(pixels()).toBe(250_000);
+      settings.setVaporize('full');
+      expect(pixels()).toBeUndefined();
     });
 
-    it('simply clears the arena while the effect is off', () => {
+    it('simply clears the arena while the effect is off', async () => {
       create();
       TestBed.inject(GameSettingsService).setVaporize('off');
       const vaporize = jest.fn(() => new Subject<void>());
@@ -563,6 +558,9 @@ describe('BacteriaGameComponent', () => {
       const done = jest.fn();
 
       component['vaporize']().subscribe({ complete: done });
+      // Like the effect, it is over only after the caller is through.
+      expect(done).not.toHaveBeenCalled();
+      await Promise.resolve();
 
       expect(vaporize).not.toHaveBeenCalled();
       expect(done).toHaveBeenCalled();

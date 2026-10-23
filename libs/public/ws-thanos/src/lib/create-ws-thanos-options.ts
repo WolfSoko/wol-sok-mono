@@ -6,7 +6,6 @@ export function createWsThanosOptions(
   return {
     animationLength: 5000,
     maxParticleCount: 3_000_000,
-    maxPixelRatio: 2,
     particleAcceleration: 30,
     sound: true,
     soundVolume: 0.5,

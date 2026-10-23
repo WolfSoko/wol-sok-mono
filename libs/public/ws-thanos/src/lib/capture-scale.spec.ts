@@ -23,15 +23,40 @@ describe('computeCaptureScale', () => {
     ).toBe(2);
   });
 
-  it('should cap the device pixel ratio at the max pixel ratio', () => {
+  it('should stay within the max capture pixels, below css pixels if needed', () => {
+    const scale = computeCaptureScale({
+      width: 1600,
+      height: 900,
+      devicePixelRatio: 2,
+      maxCanvasSize: 16384,
+      maxCapturePixels: 360_000,
+    });
+    expect(scale).toBeCloseTo(0.5);
+    expect(1600 * scale * 900 * scale).toBeCloseTo(360_000);
+  });
+
+  it('should keep a small element crisp within the max capture pixels', () => {
     expect(
       computeCaptureScale({
         ...smallCard,
         devicePixelRatio: 2,
         maxCanvasSize: 16384,
-        maxPixelRatio: 0.5,
+        maxCapturePixels: 1_000_000,
       })
-    ).toBe(0.5);
+    ).toBe(2);
+  });
+
+  it('should ignore max capture pixels that are not above 0', () => {
+    for (const maxCapturePixels of [0, -1, NaN]) {
+      expect(
+        computeCaptureScale({
+          ...smallCard,
+          devicePixelRatio: 2,
+          maxCanvasSize: 16384,
+          maxCapturePixels,
+        })
+      ).toBe(2);
+    }
   });
 
   it('should shrink so the 5x taller effect canvas fits the device limit', () => {

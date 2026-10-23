@@ -31,7 +31,7 @@ import {
   ResizedEvent,
   ShowFpsComponent,
 } from '@wolsok/ui-kit';
-import { defer, fromEvent, Observable, of } from 'rxjs';
+import { asapScheduler, defer, fromEvent, Observable, timer } from 'rxjs';
 import { defaultIfEmpty, filter, last, map, take, tap } from 'rxjs/operators';
 import { ArenaFrame, ArenaPainter } from './arena/arena-painter';
 import { createArenaPainter } from './arena/create-arena-painter';
@@ -74,7 +74,7 @@ import {
   DEFAULT_EFFECTS_VOLUME,
   GameSettingsService,
 } from './settings.service';
-import { vaporizePixelRatio } from './vaporize-effect';
+import { vaporizePixels } from './vaporize-effect';
 import { ProgressService } from './progress.service';
 import { CampaignService } from './campaign.service';
 import { dismissSplash } from './splash';
@@ -310,16 +310,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly timeRunningOut: Signal<boolean>;
   /**
    * The vaporize effect as set: as long as chosen, within the quality's
-   * pixel budget for the arena box - a big desktop window is snapped with
+   * pixel budget - a big desktop window is snapped with
    * coarser particles - and its snap as loud as the game's other effects.
    */
   protected readonly thanosOptions = computed((): Partial<WsThanosOptions> => {
     const gain = this.sound.effectsGain();
-    const quality = this.settings.vaporize();
     return {
       animationLength: this.settings.vaporizeMs(),
-      maxPixelRatio: vaporizePixelRatio(quality, this.arenaBoxSize()),
-      preload: quality !== 'off',
+      maxCapturePixels: vaporizePixels(this.settings.vaporize()),
       sound: gain > 0,
       soundVolume: gain * SNAP_LEVEL,
     };
@@ -1155,9 +1153,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private vaporize(): Observable<void> {
-    // Switched off, the arena simply clears.
+    // Switched off, the arena simply clears - still after the caller is
+    // through, as it would after the effect.
     if (this.settings.vaporize() === 'off') {
-      return of(undefined);
+      return timer(0, asapScheduler).pipe(map(() => undefined));
     }
     // The effect takes its snapshot of the canvas right away.
     this.painter?.showLastFrame();

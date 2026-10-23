@@ -109,7 +109,7 @@ export class WsThanosService {
     ].join(';');
     body.appendChild(elem);
 
-    const { maxParticleCount, maxPixelRatio, particleAcceleration } =
+    const { maxParticleCount, maxCapturePixels, particleAcceleration } =
       this.thanosOptions;
     let rendererChoice: ParticleRendererChoice | undefined;
     let renderer: ParticleRenderer | undefined;
@@ -118,7 +118,7 @@ export class WsThanosService {
       const capture = await this.capture(elem, () => 1);
       await idle(window);
       // take a WebGL context only now, not while waiting for idle time
-      rendererChoice = this.chooseRenderer(maxParticleCount, maxPixelRatio);
+      rendererChoice = this.chooseRenderer(maxParticleCount, maxCapturePixels);
       // dust skips the crack shader, the other variants compile every shader
       ({ renderer } = this.createRenderer(rendererChoice, capture, {
         particleAcceleration,
@@ -144,14 +144,17 @@ export class WsThanosService {
     const {
       animationLength,
       maxParticleCount,
-      maxPixelRatio,
+      maxCapturePixels,
       particleAcceleration,
       crumble,
     } = options;
 
     elem.style.opacity = elem.style.opacity || '1';
 
-    const rendererChoice = this.chooseRenderer(maxParticleCount, maxPixelRatio);
+    const rendererChoice = this.chooseRenderer(
+      maxParticleCount,
+      maxCapturePixels
+    );
     let effect: RunningEffect | undefined;
 
     const capture = this.capture(elem, (width, height) =>
@@ -219,11 +222,11 @@ export class WsThanosService {
 
   private chooseRenderer(
     maxParticleCount: number,
-    maxPixelRatio: number
+    maxCapturePixels: number | undefined
   ): ParticleRendererChoice {
     return chooseParticleRenderer({
       maxParticleCount,
-      maxPixelRatio,
+      maxCapturePixels,
       devicePixelRatio: this.document.defaultView?.devicePixelRatio ?? 1,
       createCanvas: () => this.document.createElement('canvas'),
       gpuBudget: this.gpuBudget,
