@@ -198,7 +198,7 @@ The workflow:
 
 The main deployment workflow is triggered by:
 
-1. **Release Creation** - When a release tag (e.g., `v4.8.7`) is pushed
+1. **Release Creation** - When the `trigger-release` job of the CI/CD workflow publishes a release: it bumps the version, pushes the tag and creates the GitHub release on one runner (`.github/actions/create-release`; `release.yml` recreates a release by hand)
 2. **Manual Trigger** - Via GitHub Actions UI with version input
 
 ### Workflow Steps

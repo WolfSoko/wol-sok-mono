@@ -1,18 +1,20 @@
-name: Create release
+name: Create release (manual)
+
+# The release of a version is normally created by the trigger-release job of
+# ci-cd.yml right after it pushed the tag, on the same runner. This workflow
+# recreates the GitHub release (or refreshes its asset) for a tag that already
+# exists, for when that step failed.
 on:
-  push:
-    # Pattern matched against refs/tags
-    # Exclude deploy-marker tags pushed by deploy.yml (e.g. v1.2.3-cdk-deployed) so
-    # they don't re-trigger this workflow and cascade into another release/deploy.
-    tags:
-      - 'v*'
-      - '!v*-cdk-deployed'
-      - '!v*-non-cdk-deployed'
-      - '!v*-npm-deployed'
-      - '!v*-android-deployed'
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        type: string
+        default: v74.52.2
+        description: Release tag (v<version>)
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ inputs.tag }}
   cancel-in-progress: true
 
 permissions:
@@ -31,105 +33,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.tag }}
           fetch-depth: 50
           filter: tree:0
 
       - name: Install Deps
         uses: ./.github/actions/install-deps
 
-      - name: create sentry release version
-        id: sentry-version
-        run: |
-          SENTRY_VERSION="angular-examples@${{ github.ref_name }}"
-          echo "Sentry version: ${SENTRY_VERSION}"
-          echo "sentry-version=${SENTRY_VERSION}" >> $GITHUB_ENV
-
-      - name: Build
-        run: npx nx run-many -t="build" -c="production" --projects="tag:app"
-
-      - name: ZIP-files for release
-        uses: vimtor/action-zip@v1
+      - name: Create release
+        uses: ./.github/actions/create-release
         with:
-          files: dist version.json
-          recursive: false
-          dest: release.zip
-
-      # The release has to be created with a PAT (RELEASE_GH_TOKEN), not GITHUB_TOKEN:
-      # events caused by GITHUB_TOKEN start no workflows, and deploy.yml runs on
-      # `release: published`.
-      - name: Create GitHub release
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_GH_TOKEN }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          api_error="$RUNNER_TEMP/release-lookup.err"
-          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --silent 2> "$api_error"; then
-            # A rerun after the release was published: refresh the asset only. The
-            # deploy apps attach their own files to this release, and a redeploy
-            # goes through deploy.yml's workflow_dispatch, not through a new
-            # published event.
-            gh release upload "$TAG" release.zip --clobber --repo "$GITHUB_REPOSITORY"
-            exit 0
-          elif ! grep -q "HTTP 404" "$api_error"; then
-            cat "$api_error" >&2
-            exit 1
-          fi
-
-          # The release notes are this version's section of CHANGELOG.md, which
-          # commit-and-tag-version wrote in trigger-release.yml. Its version
-          # headings are `## [x.y.z](...)`, older patch releases `### [x.y.z](...)`;
-          # the type headings below them (`### Features`) carry no bracket.
-          notes="$RUNNER_TEMP/release-notes.md"
-          awk -v version="${TAG#v}" '
-            /^##+ \[/ { if (found) exit; found = index($0, "[" version "]") > 0; next }
-            found { print }
-          ' CHANGELOG.md > "$notes"
-
-          if [[ -s "$notes" ]]; then
-            notes_args=(--notes-file "$notes")
-          else
-            echo "CHANGELOG.md has no section for $TAG, using GitHub's generated notes."
-            notes_args=(--generate-notes)
-          fi
-
-          # Create the release without the asset: with files, gh first creates a
-          # draft, uploads, then publishes, and a failed upload leaves a draft
-          # behind that the tag lookup above cannot see. Created this way the
-          # release is published at once, deploy.yml starts, and a failed upload
-          # is retried on the rerun path above.
-          gh release create "$TAG" \
-            --title "$TAG" \
-            --verify-tag \
-            --repo "$GITHUB_REPOSITORY" \
-            "${notes_args[@]}"
-          gh release upload "$TAG" release.zip --clobber --repo "$GITHUB_REPOSITORY"
-
-      - name: Create Sentry Release
-        uses: getsentry/action-release@v3
-        with:
-          release: ${{ env.sentry-version }}
-          sourcemaps: 'dist/apps'
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: 'wolsok'
-          SENTRY_PROJECT: 'angular-examples'
-
-      - name: Create Issue on Failure
-        if: failure()
-        uses: actions/github-script@v9
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const issueTitle = 'bug(release): create release pipeline failed';
-            const issueBody = 'GitHub [create release workflow](https://github.com/WolfSoko/wol-sok-mono/actions/workflows/release.yml) failed';
-            const labels = ['bug'];
-            const assignees = [context.actor];
-
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: issueTitle,
-              body: issueBody,
-              assignees: assignees,
-              labels: labels
-            });
+          tag: ${{ inputs.tag }}
+          github-token: ${{ secrets.RELEASE_GH_TOKEN }}
+          sentry-auth-token: ${{ secrets.SENTRY_AUTH_TOKEN }}

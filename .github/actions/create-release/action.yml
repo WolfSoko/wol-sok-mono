@@ -1,0 +1,85 @@
+name: 'Create release'
+description: 'Builds the apps at the checked-out release tag, publishes the GitHub release with the build as asset and creates the Sentry release'
+inputs:
+  tag:
+    description: 'The release tag (v<version>), checked out already'
+    required: true
+  github-token:
+    description: 'A PAT, not GITHUB_TOKEN: events caused by GITHUB_TOKEN start no workflows, and deploy.yml runs on `release: published`'
+    required: true
+  sentry-auth-token:
+    description: 'Auth token of the Sentry org'
+    required: true
+
+runs:
+  using: composite
+
+  steps:
+    - name: Build
+      shell: bash
+      run: npx nx run-many -t="build" -c="production" --projects="tag:app"
+
+    - name: ZIP-files for release
+      uses: vimtor/action-zip@v1
+      with:
+        files: dist version.json
+        recursive: false
+        dest: release.zip
+
+    - name: Create GitHub release
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        TAG: ${{ inputs.tag }}
+      run: |
+        api_error="$RUNNER_TEMP/release-lookup.err"
+        if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --silent 2> "$api_error"; then
+          # A rerun after the release was published: refresh the asset only. The
+          # deploy apps attach their own files to this release, and a redeploy
+          # goes through deploy.yml's workflow_dispatch, not through a new
+          # published event.
+          gh release upload "$TAG" release.zip --clobber --repo "$GITHUB_REPOSITORY"
+          exit 0
+        elif ! grep -q "HTTP 404" "$api_error"; then
+          cat "$api_error" >&2
+          exit 1
+        fi
+
+        # The release notes are this version's section of CHANGELOG.md, which
+        # commit-and-tag-version wrote in trigger-release.yml. Its version
+        # headings are `## [x.y.z](...)`, older patch releases `### [x.y.z](...)`;
+        # the type headings below them (`### Features`) carry no bracket.
+        notes="$RUNNER_TEMP/release-notes.md"
+        awk -v version="${TAG#v}" '
+          /^##+ \[/ { if (found) exit; found = index($0, "[" version "]") > 0; next }
+          found { print }
+        ' CHANGELOG.md > "$notes"
+
+        if [[ -s "$notes" ]]; then
+          notes_args=(--notes-file "$notes")
+        else
+          echo "CHANGELOG.md has no section for $TAG, using GitHub's generated notes."
+          notes_args=(--generate-notes)
+        fi
+
+        # Create the release without the asset: with files, gh first creates a
+        # draft, uploads, then publishes, and a failed upload leaves a draft
+        # behind that the tag lookup above cannot see. Created this way the
+        # release is published at once, deploy.yml starts, and a failed upload
+        # is retried on the rerun path above.
+        gh release create "$TAG" \
+          --title "$TAG" \
+          --verify-tag \
+          --repo "$GITHUB_REPOSITORY" \
+          "${notes_args[@]}"
+        gh release upload "$TAG" release.zip --clobber --repo "$GITHUB_REPOSITORY"
+
+    - name: Create Sentry Release
+      uses: getsentry/action-release@v3
+      with:
+        release: angular-examples@${{ inputs.tag }}
+        sourcemaps: 'dist/apps'
+      env:
+        SENTRY_AUTH_TOKEN: ${{ inputs.sentry-auth-token }}
+        SENTRY_ORG: 'wolsok'
+        SENTRY_PROJECT: 'angular-examples'
