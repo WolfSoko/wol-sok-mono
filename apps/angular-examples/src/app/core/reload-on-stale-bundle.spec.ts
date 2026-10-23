@@ -35,13 +35,13 @@ describe('reloadOnStaleBundle', () => {
     const storage = memory();
     const reload = jest.fn();
 
-    reloadOnStaleBundle(failed(stale), storage, reload, 100_000, true);
-    reloadOnStaleBundle(failed(stale), storage, reload, 105_000, true);
+    reloadOnStaleBundle(failed(stale), { storage, reload, now: 100_000 });
+    reloadOnStaleBundle(failed(stale), { storage, reload, now: 105_000 });
 
     expect(reload).toHaveBeenCalledTimes(1);
     expect(reload).toHaveBeenCalledWith('/bacteriaGame');
 
-    reloadOnStaleBundle(failed(stale), storage, reload, 120_000, true);
+    reloadOnStaleBundle(failed(stale), { storage, reload, now: 120_000 });
     expect(reload).toHaveBeenCalledTimes(2);
   });
 
@@ -54,16 +54,23 @@ describe('reloadOnStaleBundle', () => {
       },
     };
 
-    reloadOnStaleBundle(failed(stale), memory(), reload, 0, false);
-    reloadOnStaleBundle(failed(stale), null, reload, 0, true);
-    reloadOnStaleBundle(failed(stale), broken, reload, 0, true);
+    reloadOnStaleBundle(failed(stale), {
+      storage: memory(),
+      reload,
+      online: false,
+    });
+    reloadOnStaleBundle(failed(stale), { storage: null, reload });
+    reloadOnStaleBundle(failed(stale), { storage: broken, reload });
 
     expect(reload).not.toHaveBeenCalled();
   });
 
   it('leaves other navigation errors alone', () => {
     const reload = jest.fn();
-    reloadOnStaleBundle(failed(new Error('boom')), memory(), reload, 0, true);
+    reloadOnStaleBundle(failed(new Error('boom')), {
+      storage: memory(),
+      reload,
+    });
     expect(reload).not.toHaveBeenCalled();
   });
 });

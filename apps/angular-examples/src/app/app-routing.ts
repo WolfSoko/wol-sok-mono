@@ -191,5 +191,5 @@ export const provideAppRouter = () =>
       anchorScrolling: 'enabled',
     }),
     // A remote released since this tab loaded has replaced its bundles.
-    withNavigationErrorHandler((error) => reloadOnStaleBundle(error))
+    withNavigationErrorHandler(reloadOnStaleBundle)
   );

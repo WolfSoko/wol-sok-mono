@@ -4,6 +4,14 @@ import { NavigationError } from '@angular/router';
 const RELOAD_GUARD_MS = 10_000;
 const RELOAD_KEY = 'reloaded-for-stale-bundle';
 
+/** What the reload depends on - the browser's own unless a spec says. */
+export interface StaleBundleReloadDeps {
+  storage: Pick<Storage, 'getItem' | 'setItem'> | null;
+  reload: (url: string) => void;
+  now: number;
+  online: boolean;
+}
+
 /**
  * True for the error a browser throws when a lazily loaded bundle is gone,
  * as after a release of a remote: its old hashed files are replaced, while
@@ -11,7 +19,7 @@ const RELOAD_KEY = 'reloaded-for-stale-bundle';
  */
 export function isStaleBundleError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
-  return /dynamically imported module|Importing a module script failed|Loading chunk .* failed/i.test(
+  return /dynamically imported module|Importing a module script failed/i.test(
     message
   );
 }
@@ -24,11 +32,14 @@ export function isStaleBundleError(error: unknown): boolean {
  */
 export function reloadOnStaleBundle(
   { error, url }: NavigationError,
-  storage: Pick<Storage, 'getItem' | 'setItem'> | null = sessionStorageOrNull(),
-  reload: (url: string) => void = (target) => location.assign(target),
-  now: number = Date.now(),
-  online: boolean = typeof navigator === 'undefined' || navigator.onLine
+  deps: Partial<StaleBundleReloadDeps> = {}
 ): void {
+  const {
+    storage = sessionStorageOrNull(),
+    reload = (target: string) => location.assign(target),
+    now = Date.now(),
+    online = typeof navigator === 'undefined' || navigator.onLine,
+  } = deps;
   // Offline, the reload fails as well and only loses the page.
   if (!online || storage === null || !isStaleBundleError(error)) {
     return;
