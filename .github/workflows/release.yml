@@ -36,9 +36,6 @@ jobs:
 
       - name: Install Deps
         uses: ./.github/actions/install-deps
-        with:
-          apt-packages: 'true'
-          run-scripts: 'true'
 
       - name: create sentry release version
         id: sentry-version

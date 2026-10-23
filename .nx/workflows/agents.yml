@@ -21,12 +21,15 @@ launch-templates:
 
           echo "node version used: $(node -v)"
 
-          echo "Install packages to compile node_modules gl with node-gyp"
+          # No compiler toolchain or X11 headers: install scripts are off below, and
+          # `gl` (the only module that needed them) is denied in allowScripts anyway.
+          # The three libraries are runtime deps of the Playwright browsers that
+          # `playwright install --with-deps` misses on this image.
           sudo apt-get update -y
-          sudo apt-get install -y build-essential pkg-config python3 python-is-python3 libx11-dev libxext-dev libxi-dev libxrandr-dev libxfixes-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev xserver-xorg-dev libavif13 libgtk-4-1 libgraphene-1.0-dev
+          sudo apt-get install -y --no-install-recommends libavif13 libgtk-4-1 libgraphene-1.0-0
 
           echo "Install a JVM for the Firestore emulator (bacteria-game-remote e2e)"
-          sudo apt-get install -y openjdk-21-jre-headless
+          sudo apt-get install -y --no-install-recommends openjdk-21-jre-headless
 
       - name: Restore Node Modules Cache
         uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/cache/main.yaml'
@@ -37,9 +40,11 @@ launch-templates:
             ~/.npm
           base-branch: 'main'
 
+      # npm install, not npm ci: with the restored node_modules it only verifies the
+      # tree, while npm ci would delete it first. Scripts stay off as on the runners.
       - name: Install Node Modules
         script: |
-          npm install
+          npm install --ignore-scripts --no-audit --no-fund
 
       - name: Install Browsers (if needed)
         uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/install-browsers/main.yaml'
