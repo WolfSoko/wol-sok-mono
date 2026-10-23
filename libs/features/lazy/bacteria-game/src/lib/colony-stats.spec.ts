@@ -1,4 +1,8 @@
-import { sameColonyStats, toColonyStats } from './colony-stats';
+import {
+  humanForWeaponKey,
+  sameColonyStats,
+  toColonyStats,
+} from './colony-stats';
 import { createPlayer } from './state/player.model';
 
 function players(bacteriaCount: number, x = 10) {
@@ -62,5 +66,26 @@ describe('the boost ring', () => {
     ]);
 
     expect(colony.boostCharge).toBe(0);
+  });
+});
+
+describe('humanForWeaponKey', () => {
+  const left = createPlayer({ id: 0 });
+  const right = createPlayer({ id: 1 });
+
+  it('hands E to the first human and the right Shift to the second', () => {
+    expect(humanForWeaponKey([left, right], 'e', 'KeyE')).toBe(left);
+    expect(humanForWeaponKey([left, right], 'E', 'KeyE')).toBe(left);
+    expect(humanForWeaponKey([left, right], 'Shift', 'ShiftRight')).toBe(right);
+  });
+
+  it('gives both keys to a single human', () => {
+    expect(humanForWeaponKey([left], 'Shift', 'ShiftRight')).toBe(left);
+  });
+
+  it('ignores the left Shift and every other key', () => {
+    expect(humanForWeaponKey([left, right], 'Shift', 'ShiftLeft')).toBeNull();
+    expect(humanForWeaponKey([left, right], ' ', 'Space')).toBeNull();
+    expect(humanForWeaponKey([], 'e', 'KeyE')).toBeNull();
   });
 });

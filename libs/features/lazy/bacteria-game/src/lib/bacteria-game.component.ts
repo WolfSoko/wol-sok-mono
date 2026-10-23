@@ -116,6 +116,7 @@ import {
 import {
   ColonyStats,
   humanForBoostKey,
+  humanForWeaponKey,
   sameColonyStats,
   toColonyStats,
 } from './colony-stats';
@@ -1711,19 +1712,31 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       this.onEscape();
       return;
     }
-    // The boost keys belong to the game only while a match is on, and never
-    // while a button has the focus: a keyboard user pressing Enter on "Reset"
-    // expects a reset, not a boost. Outside of a match Space still scrolls.
-    const boosted =
+    // The boost and weapon keys belong to the game only while a match is
+    // on, and never while a button has the focus: a keyboard user pressing
+    // Enter on "Reset" expects a reset, not a boost. Outside of a match
+    // Space still scrolls.
+    const inMatch =
       this.store.snapshot().currentState === GameState.RUNNING &&
-      !isInteractiveTarget($event.target)
-        ? humanForBoostKey(this.humans(), $event.key)
-        : null;
+      !isInteractiveTarget($event.target);
+    const boosted = inMatch
+      ? humanForBoostKey(this.humans(), $event.key)
+      : null;
     if (boosted != null) {
       // Space would scroll the page.
       $event.preventDefault();
       if (!$event.repeat) {
         this.boost(boosted.id);
+      }
+      return;
+    }
+    const armed = inMatch
+      ? humanForWeaponKey(this.humans(), $event.key, $event.code)
+      : null;
+    if (armed != null) {
+      $event.preventDefault();
+      if (!$event.repeat) {
+        this.gameStateService.fireWeapon(armed.id);
       }
       return;
     }
