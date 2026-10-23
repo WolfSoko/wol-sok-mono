@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.51.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.50.0...v74.51.0) (2026-10-23)
+
+### Features
+
+* **bacteria-game-remote-cdk:** 🔥 drop the old site at bacteria-game.wolsok.de ([#2570](https://github.com/WolfSoko/wol-sok-mono/issues/2570)) ([30f58ed](https://github.com/WolfSoko/wol-sok-mono/commit/30f58ed170a353fc5b1a6715605bd295857810be))
+
 ## [74.50.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.49.0...v74.50.0) (2026-10-23)
 
 ### Features
