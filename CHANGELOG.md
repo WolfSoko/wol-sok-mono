@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.56.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.55.0...v74.56.0) (2026-10-23)
+
+### Features
+
+* **feat-lazy-bacteria-game:** friends menu, own colours online, one stage layout, English and German ([#2573](https://github.com/WolfSoko/wol-sok-mono/issues/2573)) ([0fddf2c](https://github.com/WolfSoko/wol-sok-mono/commit/0fddf2c677d066621c42fa2f9ed42f4f800bdebf))
+
+### Documentation
+
+* **feat-lazy-bacteria-game:** decide on leaderboards, replays, admin and matchmaking level (ADR 0011, 0012) ([#2585](https://github.com/WolfSoko/wol-sok-mono/issues/2585)) ([e16064e](https://github.com/WolfSoko/wol-sok-mono/commit/e16064e9095b9221df90d85df4213ab429d146b5))
+
 ## [74.55.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.54.0...v74.55.0) (2026-10-23)
 
 ### Features
