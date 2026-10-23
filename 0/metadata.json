@@ -1,0 +1,96 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M5NEXHWHMPY84XFP6K2GQHXD",
+  "session_id": "36c034db-f68a-5d50-9554-9b0017c6283b",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-23T22:43:23.74419Z",
+  "branch": "feat/eu-central-1",
+  "checkpoints_count": 35,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "41d90e15bb11",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 522,
+    "cache_creation_tokens": 592246,
+    "cache_read_tokens": 68365309,
+    "output_tokens": 151233,
+    "api_call_count": 240,
+    "subagent_tokens": {
+      "input_tokens": 86,
+      "cache_creation_tokens": 405841,
+      "cache_read_tokens": 2807452,
+      "output_tokens": 36866,
+      "api_call_count": 43
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01KfHnpLsjUC4Q5CU9MhARZP",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "code-review"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "41d90e15bb11",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 769,
+        "end": 770,
+        "entry_ids": [
+          "1c58dad5-9ad1-437e-a5ad-4de5d8cd0739"
+        ],
+        "tool_use_id": "toolu_01KfHnpLsjUC4Q5CU9MhARZP"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01KfHnpLsjUC4Q5CU9MhARZP"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: code-review",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_01Xsvbfz4eBv3q45V75cFM72",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "simplify"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "41d90e15bb11",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 883,
+        "end": 884,
+        "entry_ids": [
+          "b950fffe-d169-4a4a-90df-0ab65b0de2cb"
+        ],
+        "tool_use_id": "toolu_01Xsvbfz4eBv3q45V75cFM72"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01Xsvbfz4eBv3q45V75cFM72"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: simplify",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 35
+  }
+}
