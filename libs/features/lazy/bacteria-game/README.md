@@ -169,12 +169,12 @@ only; development builds stay local). Its config sits in
 project needs, in the [Firebase console](https://console.firebase.google.com/project/bacteria-wars):
 
 1. **Authentication** with the providers **Anonymous** and **Google**, and the
-   domains the game runs on (`bacteria-game.wolsok.de`,
-   `bacteria-wars.wolsok.de` and the shell's `angularexamples.wolsok.de`)
+   domains the game runs on (`bacteria-wars.wolsok.de` and the shell's
+   `angularexamples.wolsok.de`)
    under _Authentication > Settings > Authorized domains_.
 2. A **Firestore** database.
 
-The game itself is moving to Firebase Hosting in the same project, at
+The game itself runs on Firebase Hosting in the same project, at
 `bacteria-wars.wolsok.de` ([ADR 0008](../../../../docs/adr/0008-bacteria-wars-on-firebase-hosting.md)).
 
 The release pipeline deploys the game to Firebase Hosting, the Firestore

@@ -1,18 +1,11 @@
-import { App } from 'aws-cdk-lib';
+import { App, Stack } from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
-import { SpaStack } from '@wolsok/spa-cdk-stack';
 import { addFirebaseDomain } from './firebase-domain';
 
 describe('addFirebaseDomain', () => {
-  function spaStack(): SpaStack {
-    return new SpaStack(new App(), 'BacteriaGame', {
-      env: { region: 'us-east-1', account: '123456789012' },
-      domainName: 'bacteria-game.wolsok.de',
-      buildOutputPath: __dirname,
-    });
-  }
-
-  const stack = spaStack();
+  const stack = new Stack(new App(), 'BacteriaGame', {
+    env: { region: 'us-east-1', account: '123456789012' },
+  });
   addFirebaseDomain(stack, {
     domain: 'bacteria-wars.wolsok.de',
     site: 'bacteria-wars',
@@ -32,13 +25,11 @@ describe('addFirebaseDomain', () => {
     });
   });
 
-  it('leaves the resources of the stack as they were', () => {
-    const before = Object.keys(
-      Template.fromStack(spaStack()).toJSON()['Resources']
-    );
-    const after = Object.keys(template.toJSON()['Resources']);
-
-    expect(after).toEqual(expect.arrayContaining(before));
-    expect(after).toHaveLength(before.length + 1);
+  it('keeps the logical id the record had next to the old site', () => {
+    // A new id would replace the record: the domain would go offline in
+    // between, as a CNAME may not exist twice.
+    expect(Object.keys(template.toJSON()['Resources'])).toEqual([
+      expect.stringMatching(/^FirebaseHostingRecord[0-9A-F]{8}$/),
+    ]);
   });
 });

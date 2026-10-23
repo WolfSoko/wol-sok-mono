@@ -170,7 +170,7 @@ The workflow:
 - `angular-examples-cdk` - CDK stack for angular-examples app
 - `fourier-analysis-remote-cdk` - CDK stack for fourier analysis
 - `shader-examples-remote-cdk` - CDK stack for shader examples
-- `bacteria-game-remote-cdk` - CDK stack for bacteria game
+- `bacteria-game-remote-cdk` - DNS record of bacteria-wars.wolsok.de (the game is on Firebase Hosting)
 
 ### Local Testing
 
