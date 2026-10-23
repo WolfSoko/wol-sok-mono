@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.50.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.49.0...v74.50.0) (2026-10-23)
+
+### Features
+
+* **angular-examples:** ✨ load Bacteria Wars from bacteria-wars.wolsok.de ([#2567](https://github.com/WolfSoko/wol-sok-mono/issues/2567)) ([3556808](https://github.com/WolfSoko/wol-sok-mono/commit/35568087b79f9507ef406a256ff6ba048cb17b36))
+* **feat-lazy-bacteria-game:** ✨ add profiles, friends, online status and matchmaking ([#2565](https://github.com/WolfSoko/wol-sok-mono/issues/2565)) ([20bdbd6](https://github.com/WolfSoko/wol-sok-mono/commit/20bdbd66e90b842de7815bf9e23afca23398e2e6))
+* **portfolio:** add wolsok.de, an index of all projects with AdSense ([#2566](https://github.com/WolfSoko/wol-sok-mono/issues/2566)) ([0841db0](https://github.com/WolfSoko/wol-sok-mono/commit/0841db034a12dbc85cfe98198844547e06a4ea01))
+
+### Chore
+
+* **release:** publish ([855f8ca](https://github.com/WolfSoko/wol-sok-mono/commit/855f8ca7a52b364630a75eed56204cace1c0ed31))
+
 ## [74.49.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.48.1...v74.49.0) (2026-10-23)
 
 ### Features
