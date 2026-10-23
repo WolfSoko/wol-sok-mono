@@ -1,4 +1,4 @@
-import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
+import { CfnOutput, Duration, FileSystem, RemovalPolicy } from 'aws-cdk-lib';
 import {
   Certificate,
   CertificateValidation,
@@ -57,6 +57,16 @@ export interface SpaProps {
    * the later header wins. Wildcards may only appear in the last segment.
    */
   cacheOverrides?: CacheOverride[];
+}
+
+interface DeploymentOptions {
+  /** @default one year max-age */
+  cacheControl?: CacheControl;
+  /** Set, the deployment invalidates every path of this distribution once its upload is done. */
+  distribution?: IDistribution;
+  contentType?: string;
+  /** Object metadata; also part of the deployment's properties, so a change reruns it. */
+  metadata?: Record<string, string>;
 }
 
 export interface CacheOverride {
@@ -163,36 +173,36 @@ export class SpaConstruct extends Construct {
     // again to restore it. Old bundles stay for tabs still running them.
     // The first deployment owns the handler that all of them share, so the
     // build output comes first and index.html, which waits for the rest, second.
-    // Only the index.html deployment invalidates the distribution: each
-    // invalidation is waited for, and one after the last upload covers them all.
-    this.lastUpload = this.createBucketDeployment(
-      [
-        Source.asset(buildOutputPath, {
-          exclude: ['index.html', ...overrides.flatMap(({ files }) => files)],
-        }),
-      ],
-      CacheControl.maxAge(Duration.days(365)),
-      false,
-      this.bucket
-    );
+    // The build output's deployments share one invalidation, issued by the
+    // index.html deployment: each invalidation is waited for, and one after
+    // the last upload covers them all. A fingerprint of the build output in
+    // that deployment's metadata reruns it, and with it the invalidation,
+    // whenever any file of the build output changed, even if index.html did not.
+    this.lastUpload = this.createBucketDeployment([
+      Source.asset(buildOutputPath, {
+        exclude: ['index.html', ...overrides.flatMap(({ files }) => files)],
+      }),
+    ]);
     this.bucketDeployments.push(this.lastUpload);
 
     // index.html goes last, once every file it points at is uploaded.
     this.indexDeployment = this.createBucketDeployment(
       [Source.asset(buildOutputPath, { exclude: ['**', '!index.html'] })],
-      CacheControl.noCache(),
-      false,
-      this.bucket,
-      this.distribution
+      {
+        cacheControl: CacheControl.noCache(),
+        distribution: this.distribution,
+        metadata: {
+          'build-fingerprint': FileSystem.fingerprint(buildOutputPath),
+        },
+      }
     );
     this.bucketDeployments.push(this.indexDeployment);
     this.indexDeployment.node.addDependency(this.lastUpload);
 
     for (const { files, cacheControl, contentType } of overrides) {
-      this.addExtraAssets(
+      this.addUpload(
         [Source.asset(buildOutputPath, { exclude: onlyInclude(files) })],
-        cacheControl,
-        contentType
+        { cacheControl, contentType }
       );
     }
   }
@@ -201,26 +211,29 @@ export class SpaConstruct extends Construct {
    * Add some additional assets to the bucket of the SPA, uploaded after the
    * build output and before index.html. Use it for files that are not in
    * buildOutputPath; for those that are, use noCacheFiles or cacheOverrides,
-   * or they are uploaded twice.
+   * or they are uploaded twice. Not being part of the build output, these
+   * assets are not covered by its fingerprint, so their deployment invalidates
+   * the distribution on its own.
    */
   public addExtraAssets(
     assets: ISource[],
     cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365)),
     contentType?: string
   ): void {
-    const extraAssetsDeployment: BucketDeployment = this.createBucketDeployment(
-      assets,
+    this.addUpload(assets, {
       cacheControl,
-      false,
-      this.bucket,
-      undefined,
-      contentType
-    );
+      contentType,
+      distribution: this.distribution,
+    });
+  }
 
-    extraAssetsDeployment.node.addDependency(this.lastUpload);
-    this.lastUpload = extraAssetsDeployment;
-    this.bucketDeployments.push(extraAssetsDeployment);
-    this.indexDeployment.node.addDependency(extraAssetsDeployment);
+  /** Adds a deployment that runs after the uploads so far and before index.html. */
+  private addUpload(sources: ISource[], options: DeploymentOptions): void {
+    const deployment = this.createBucketDeployment(sources, options);
+    deployment.node.addDependency(this.lastUpload);
+    this.lastUpload = deployment;
+    this.bucketDeployments.push(deployment);
+    this.indexDeployment.node.addDependency(deployment);
   }
 
   private createBucket(
@@ -340,31 +353,29 @@ export class SpaConstruct extends Construct {
     new CfnOutput(this, `${this.spaName}-ARecord`, { value: siteDomain });
   }
 
-  /**
-   * Deploys sources to the bucket; with a distribution, it also invalidates
-   * every path of that distribution once the upload is done.
-   */
   private createBucketDeployment(
     sources: ISource[],
-    cacheControl: CacheControl = CacheControl.maxAge(Duration.days(365)),
-    prune: boolean,
-    destinationBucket: IBucket,
-    distribution?: IDistribution,
-    contentType?: string
+    {
+      cacheControl = CacheControl.maxAge(Duration.days(365)),
+      distribution,
+      contentType,
+      metadata,
+    }: DeploymentOptions = {}
   ): BucketDeployment {
     // The construct id is kept for every deployment, invalidating or not, so
-    // that existing stacks keep their logical ids.
+    // that existing stacks keep their logical ids; the spec guards it.
     return new BucketDeployment(
       this,
       'DeployWithInvalidation' + (this.bucketDeployments.length + 1),
       {
         sources,
-        destinationBucket,
-        prune,
+        destinationBucket: this.bucket,
+        prune: false,
         memoryLimit: 1024,
         cacheControl: [cacheControl],
         ...(distribution ? { distribution, distributionPaths: ['/*'] } : {}),
         ...(contentType ? { contentType } : {}),
+        ...(metadata ? { metadata } : {}),
       }
     );
   }

@@ -1,4 +1,4 @@
-import { App, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
+import { App, Duration, FileSystem, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import { readdirSync } from 'fs';
 import * as path from 'path';
@@ -75,7 +75,12 @@ describe('SpaCdkStack', () => {
     });
   });
 
-  it('should deploy index.html last and prune nothing', () => {
+  /** Build output, index.html, a no-cache override and extra assets. */
+  function fourDeploymentsFactory(): {
+    deployments: Record<string, { Properties: Record<string, unknown> }>;
+    index: string;
+    others: string[];
+  } {
     const { template, stack } = testStackFactory({
       noCacheFiles: ['test-javascript-asset.js'],
     });
@@ -87,6 +92,11 @@ describe('SpaCdkStack', () => {
       /DeployWithInvalidation2/.test(id)
     ) as string;
     const others = Object.keys(deployments).filter((id) => id !== index);
+    return { deployments, index, others };
+  }
+
+  it('should deploy index.html last and prune nothing', () => {
+    const { deployments, index, others } = fourDeploymentsFactory();
     //then
     expect(others).toHaveLength(3);
     expect(deployments[index]['DependsOn']).toEqual(
@@ -97,23 +107,41 @@ describe('SpaCdkStack', () => {
     ).toEqual([false, false, false, false]);
   });
 
-  it('should invalidate the distribution once, with index.html', () => {
-    const { template, stack } = testStackFactory({
-      noCacheFiles: ['test-javascript-asset.js'],
-    });
-    stack.spa.addExtraAssets([
-      Source.asset(path.join(__dirname, '../../extra-assets-path')),
-    ]);
-    const deployments = template().findResources('Custom::CDKBucketDeployment');
-    const invalidating = Object.entries(deployments).filter(
-      ([, { Properties }]) => Properties['DistributionId'] !== undefined
-    );
+  it('should keep the construct ids of the deployments, invalidating or not', () => {
+    // Existing stacks keep their logical ids this way; renaming the construct
+    // would replace every deployment resource on the next deploy.
+    const { deployments } = fourDeploymentsFactory();
     //then
-    expect(invalidating).toHaveLength(1);
-    expect(invalidating[0][0]).toMatch(/DeployWithInvalidation2/);
-    expect(invalidating[0][1]['Properties']['DistributionPaths']).toEqual([
-      '/*',
-    ]);
+    expect(Object.keys(deployments)).toHaveLength(4);
+    for (const id of Object.keys(deployments)) {
+      expect(id).toMatch(/DeployWithInvalidation[1-4]/);
+    }
+  });
+
+  it('should invalidate once for the build output, with index.html, and once for extra assets', () => {
+    const { deployments, index } = fourDeploymentsFactory();
+    const invalidating = Object.keys(deployments).filter(
+      (id) => deployments[id].Properties['DistributionId'] !== undefined
+    );
+    const extraAssets = Object.keys(deployments).find((id) =>
+      /DeployWithInvalidation4/.test(id)
+    ) as string;
+    //then
+    expect(invalidating.sort()).toEqual([index, extraAssets].sort());
+    expect(deployments[index].Properties['DistributionPaths']).toEqual(['/*']);
+  });
+
+  it('should rerun the index.html deployment whenever the build output changes', () => {
+    const { deployments, index, others } = fourDeploymentsFactory();
+    //then
+    expect(deployments[index].Properties['UserMetadata']).toEqual({
+      'build-fingerprint': FileSystem.fingerprint(
+        defaultTestProps.buildOutputPath
+      ),
+    });
+    for (const id of others) {
+      expect(deployments[id].Properties['UserMetadata']).toBeUndefined();
+    }
   });
 
   it('should create an extra BucketDeployment when using addExtraAssets', () => {
