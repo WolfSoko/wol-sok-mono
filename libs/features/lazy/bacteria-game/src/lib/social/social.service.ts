@@ -1,4 +1,12 @@
-import { computed, effect, inject, Injectable, Signal } from '@angular/core';
+import {
+  computed,
+  effect,
+  inject,
+  Injectable,
+  Signal,
+  signal,
+  untracked,
+} from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import {
   catchError,
@@ -174,7 +182,18 @@ export class SocialService {
     return uid !== undefined && this.friends().some((f) => f.uid === uid);
   });
 
+  private readonly challengedState = signal<FriendView | null>(null);
+  /** The friend challenged to the room this player opened, if any. */
+  public readonly challenged = this.challengedState.asReadonly();
+
   public constructor() {
+    // A lobby back to idle ends the challenge.
+    effect(() => {
+      if (this.online.lobby().phase === 'idle') {
+        untracked(() => this.challengedState.set(null));
+      }
+    });
+
     // The player shows up as online while they share it - playing while an
     // online match is on. Nothing is told before their stored profile is
     // read, which may say they do not share it, and the status goes with
@@ -281,6 +300,32 @@ export class SocialService {
   /** Challenges a friend to the match in room `code`. */
   public async challenge(friend: string, code: string): Promise<void> {
     await this.withPlayer((social, me) => social.challenge(me, friend, code));
+  }
+
+  /**
+   * Opens a room and challenges the friend to it - from the lobby or the
+   * friends screen. A challenge that does not go out leaves the room again.
+   */
+  public challengeFriend(friend: FriendView): void {
+    this.challengedState.set(friend);
+    void this.online.host({
+      onCode: (code) =>
+        void this.challenge(friend.uid, code).catch((error: unknown) => {
+          console.error('Could not challenge', error);
+          this.online.leave();
+        }),
+    });
+  }
+
+  /**
+   * Takes back the challenge to the room this player opened, unless the
+   * friend is already there - leaving the room is the caller's part.
+   */
+  public cancelChallenge(): void {
+    const friend = this.challengedState();
+    if (friend !== null && this.online.lobby().phase !== 'connected') {
+      void this.withdrawChallenge(friend.uid).catch(() => undefined);
+    }
   }
 
   /** Answers a challenge - joining is the caller's part. */

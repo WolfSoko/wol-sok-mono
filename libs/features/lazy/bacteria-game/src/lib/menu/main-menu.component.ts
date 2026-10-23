@@ -25,7 +25,7 @@ import {
 } from '../support/support-dialog.component';
 
 /** The sub screens the main menu opens. */
-export type MenuPage = 'profile' | 'settings' | 'help';
+export type MenuPage = 'profile' | 'friends' | 'settings' | 'help';
 
 /**
  * The landing screen of the fullscreen game: the title, a new game, the
@@ -55,6 +55,10 @@ export class MainMenuComponent {
   public readonly sound = input(true);
   /** The level of a run someone shared, to fight as a ghost - null without. */
   public readonly challenge = input<Level | null>(null);
+  /** True with the game's cloud: then the friends have a tile. */
+  public readonly friendsAvailable = input(false);
+  /** The friend requests waiting for an answer, counted on the tile. */
+  public readonly friendRequests = input(0);
 
   /** A new game, to set up step by step. */
   public readonly newGame = output<void>();

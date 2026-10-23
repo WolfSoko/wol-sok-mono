@@ -8,6 +8,7 @@ export class BacteriaGamePo {
   public readonly resetCta: Locator;
   public readonly startCta: Locator;
   public readonly profileCta: Locator;
+  public readonly friendsCta: Locator;
   /** The last step of a new game: the briefing, the opponent, Start. */
   public readonly startStep: Locator;
   public readonly nextCta: Locator;
@@ -39,6 +40,8 @@ export class BacteriaGamePo {
     this.playCta = page.getByRole('button', { name: /New game/ });
     this.startCta = page.getByRole('button', { name: /^Start / });
     this.profileCta = page.getByRole('button', { name: 'Profile' });
+    // The tile's name goes on with the friend requests waiting.
+    this.friendsCta = page.getByRole('button', { name: /^Friends/ });
     this.resetCta = page.getByRole('button', { name: 'Reset' });
     this.startStep = page.locator('feat-lazy-bac-game-new-game .start-step');
     this.nextCta = page.getByRole('button', { name: /^Next/ });

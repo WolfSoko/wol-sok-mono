@@ -2,12 +2,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   inject,
   input,
   output,
   signal,
-  untracked,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,11 +13,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatchmakerService } from '../net/matchmaker.service';
-import { OnlineMatchService } from '../net/online-match.service';
 import type { OnlineLobby } from '../net/online-match.service';
 import { AvatarComponent } from '../social/avatar.component';
 import { FriendsComponent } from '../social/friends.component';
-import { FriendView, SocialService } from '../social/social.service';
+import { SocialService } from '../social/social.service';
 import { CODE_LENGTH } from '../storage/game-rooms';
 
 /**
@@ -46,7 +43,6 @@ import { CODE_LENGTH } from '../storage/game-rooms';
 export class OnlineLobbyComponent {
   protected readonly matchmaker = inject(MatchmakerService);
   protected readonly social = inject(SocialService);
-  private readonly online = inject(OnlineMatchService);
 
   public readonly lobby = input.required<OnlineLobby>();
   /** False without the cloud or a browser that connects devices directly. */
@@ -71,36 +67,9 @@ export class OnlineLobbyComponent {
     return role === null ? null : this.colonyNames()[role === 'host' ? 0 : 1];
   });
 
-  /** The friend challenged to the room this player opened, if any. */
-  protected readonly challenged = signal<FriendView | null>(null);
-
-  public constructor() {
-    // A lobby back to idle ends the challenge.
-    effect(() => {
-      if (this.lobby().phase === 'idle') {
-        untracked(() => this.challenged.set(null));
-      }
-    });
-  }
-
-  /** Opens a room and challenges the friend to it. */
-  protected challenge(friend: FriendView): void {
-    this.challenged.set(friend);
-    void this.online.host({
-      onCode: (code) =>
-        void this.social.challenge(friend.uid, code).catch((error: unknown) => {
-          console.error('Could not challenge', error);
-          this.online.leave();
-        }),
-    });
-  }
-
   /** Leaves the room, the match or the search - and takes a challenge back. */
   protected cancel(): void {
-    const friend = this.challenged();
-    if (friend !== null && this.lobby().phase !== 'connected') {
-      void this.social.withdrawChallenge(friend.uid).catch(() => undefined);
-    }
+    this.social.cancelChallenge();
     if (this.matchmaker.state() !== 'idle') {
       void this.matchmaker.cancel();
     }

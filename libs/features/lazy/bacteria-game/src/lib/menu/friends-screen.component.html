@@ -1,0 +1,18 @@
+<feat-lazy-bac-game-screen-header title="Friends" (back)="back.emit()" />
+<section class="friends" aria-label="Your friends">
+  @if (social.available) {
+    <p class="intro">
+      See who is online, answer friend requests and challenge a friend to a
+      match - or invite someone new.
+    </p>
+    <feat-lazy-bac-game-friends
+      [canChallenge]="canChallenge()"
+      (challenge)="challenge.emit($event)"
+    />
+  } @else {
+    <p class="intro">
+      Friends need the game's cloud, which this build of the game does not
+      connect to.
+    </p>
+  }
+</section>

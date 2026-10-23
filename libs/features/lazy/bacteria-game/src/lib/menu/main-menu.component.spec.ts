@@ -76,6 +76,36 @@ describe('MainMenuComponent', () => {
     expect(leave).toHaveBeenCalled();
   });
 
+  it('shows the friends only with the cloud, with the requests waiting', () => {
+    const tile = () =>
+      Array.from(host.querySelectorAll('.tiles button')).find((b) =>
+        b.textContent?.includes('Friends')
+      );
+    expect(tile()).toBeUndefined();
+
+    fixture.componentRef.setInput('friendsAvailable', true);
+    fixture.detectChanges();
+    expect(tile()?.querySelector('.count')).toBeNull();
+
+    fixture.componentRef.setInput('friendRequests', 2);
+    fixture.detectChanges();
+    expect(tile()?.querySelector('.count')?.textContent?.trim()).toBe('2');
+    expect(
+      tile()?.querySelector('.cdk-visually-hidden')?.textContent?.trim()
+    ).toBe('2 friend requests');
+    // What a screen reader names the button: the hidden parts left out.
+    const named = tile()?.cloneNode(true) as HTMLElement;
+    named.querySelectorAll('[aria-hidden="true"]').forEach((n) => n.remove());
+    expect(named.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      'Friends 2 friend requests'
+    );
+
+    const open = jest.fn();
+    fixture.componentInstance.open.subscribe(open);
+    button('Friends').click();
+    expect(open).toHaveBeenCalledWith('friends');
+  });
+
   it('offers no support where the game does not ask for it', () => {
     expect(host.textContent).not.toContain('Support');
   });

@@ -220,6 +220,8 @@
                     (soundChange)="setSound($event)"
                     (leave)="leaveFullscreen()"
                     [challenge]="challengeLevel()"
+                    [friendsAvailable]="social.available"
+                    [friendRequests]="social.requests().length"
                     (fightChallenge)="fightChallenge()"
                     (dismissChallenge)="dismissChallenge()"
                   />
@@ -260,6 +262,14 @@
                     [achievements]="achievements()"
                     [totals]="totals()"
                     [xp]="xp()"
+                    (back)="show('menu')"
+                  />
+                }
+                @case ("friends") {
+                  <feat-lazy-bac-game-friends-screen
+                    class="screen"
+                    [canChallenge]="onlineLobby().phase === 'idle'"
+                    (challenge)="challengeFriend($event)"
                     (back)="show('menu')"
                   />
                 }

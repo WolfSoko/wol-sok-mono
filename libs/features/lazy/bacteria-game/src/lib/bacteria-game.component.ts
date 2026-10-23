@@ -25,6 +25,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { WsThanosDirective, WsThanosOptions } from '@wolsok/thanos';
 import { GhostChallengeComponent } from './ghost/ghost-challenge.component';
+import { I18nService } from './i18n/i18n.service';
 import { DAILY_ATTEMPTS } from './state/daily';
 import {
   ElemResizedDirective,
@@ -59,6 +60,7 @@ import { NewGameComponent } from './menu/new-game.component';
 import { NewGameEntry, opponentOf, PlayKind, stepsOf } from './menu/play-modes';
 import { MainMenuComponent } from './menu/main-menu.component';
 import { DailyCard } from './menu/menu-cards';
+import { FriendsScreenComponent } from './menu/friends-screen.component';
 import { HelpComponent } from './menu/help.component';
 import { ProfileComponent } from './menu/profile.component';
 import { SettingsComponent } from './menu/settings.component';
@@ -93,7 +95,11 @@ import {
   InviteOffer,
   SocialNoticesComponent,
 } from './social/social-notices.component';
-import { ChallengeView, SocialService } from './social/social.service';
+import {
+  ChallengeView,
+  FriendView,
+  SocialService,
+} from './social/social.service';
 import { Camera } from './arena/camera';
 import { MinimapPainter } from './arena/minimap';
 import { GameHapticsService } from './haptics.service';
@@ -184,6 +190,7 @@ interface HudGoal {
     SwarmComponent,
     SettingsComponent,
     HelpComponent,
+    FriendsScreenComponent,
     MainMenuComponent,
     NewGameComponent,
     ProfileComponent,
@@ -193,6 +200,8 @@ interface HudGoal {
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // The game speaks its own language, whatever the shell around it speaks.
+  host: { '[attr.lang]': 'language()' },
 })
 export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private store = inject(GameStateStore);
@@ -200,6 +209,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private playerService = inject(PlayerService);
   private playerStore = inject(PlayerStore);
   protected readonly settings = inject(GameSettingsService);
+  protected readonly language = inject(I18nService).language;
   protected readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
   protected readonly progress = inject(ProgressService);
@@ -215,7 +225,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   );
   /** True while an online match waits for the other device. */
   protected readonly waitingForPeer = this.store.waitingForPeer;
-  private readonly social = inject(SocialService);
+  protected readonly social = inject(SocialService);
   /** An invitation link opened on this visit, until it is answered. */
   protected readonly inviteOffer = signal<InviteOffer | null>(null);
   /** A match the host started while this device still cleared the last one. */
@@ -482,11 +492,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly arenaLocks = this.progress.arenaLocks;
   /**
    * The colony colours as RGB and as CSS, with a text colour that reads on
-   * the player's - for the menu screens.
+   * the player's - for the menu screens. Online the player's colour is
+   * their seat's in the match, which for the guest is the right one.
    */
   protected readonly colonyRgb = computed(
     () =>
-      this.colors().map((id) => getColonyColor(id).rgb) as [
+      this.store.playerColors().map((id) => getColonyColor(id).rgb) as [
         readonly [number, number, number],
         readonly [number, number, number],
       ]
@@ -758,6 +769,17 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.newGameEntry.set({ kind: 'online', step: 'start' });
     this.show('new-game');
     void this.online.join(call.code);
+  }
+
+  /** Challenges a friend from the friends screen: on to the online lobby. */
+  protected challengeFriend(friend: FriendView): void {
+    if (this.onlineLobby().phase !== 'idle') {
+      return;
+    }
+    this.setPlayKind('online');
+    this.newGameEntry.set({ kind: 'online', step: 'start' });
+    this.show('new-game');
+    this.social.challengeFriend(friend);
   }
 
   /** Today's daily level for the main menu. */
@@ -1706,7 +1728,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 const ARENA_FRAME_PX = 6;
 
 /** The screens of the menu that is shown while no match is on. */
-export type MenuScreen = 'menu' | 'new-game' | 'profile' | 'settings' | 'help';
+export type MenuScreen =
+  | 'menu'
+  | 'new-game'
+  | 'profile'
+  | 'friends'
+  | 'settings'
+  | 'help';
 
 /** What is laid over the arena right now, nothing while a match is on. */
 export type StagePanel = MenuScreen | 'pause' | 'over' | null;

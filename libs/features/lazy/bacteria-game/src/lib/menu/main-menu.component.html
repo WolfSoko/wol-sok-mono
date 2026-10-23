@@ -54,6 +54,20 @@
         <mat-icon class="gold">person</mat-icon>
         Profile
       </button>
+      @if (friendsAvailable()) {
+        <button type="button" class="tile" (click)="open.emit('friends')">
+          <mat-icon>group</mat-icon>
+          Friends
+          @if (friendRequests() > 0) {
+            @let count = friendRequests();
+            <span class="count" aria-hidden="true">{{ count }}</span>
+            <span class="cdk-visually-hidden"
+              >{{ count }} friend
+              {{ count === 1 ? "request" : "requests" }}</span
+            >
+          }
+        </button>
+      }
       <button type="button" class="tile" (click)="open.emit('settings')">
         <mat-icon>tune</mat-icon>
         Settings
