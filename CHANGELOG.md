@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.53.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.52.2...v74.53.0) (2026-10-23)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ vaporize effect settings - fewer pixels on desktop, off switch, shorter, quieter ([#2576](https://github.com/WolfSoko/wol-sok-mono/issues/2576)) ([450ca2c](https://github.com/WolfSoko/wol-sok-mono/commit/450ca2c624a903a5092b113306bd7d7e46c9446c))
+
+### Chore
+
+* **release:** publish ([e5204dc](https://github.com/WolfSoko/wol-sok-mono/commit/e5204dcc48b4976214a3974ea97134ed4c78695a))
+
 ## [74.52.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.52.1...v74.52.2) (2026-10-23)
 
 ### Performance
