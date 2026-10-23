@@ -4,12 +4,14 @@ import { Subject } from 'rxjs';
 import { arenaTheme } from './arena/arena-theme';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { I18nService } from './i18n/i18n.service';
+import { MatchmakerService } from './net/matchmaker.service';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import { GameSoundService } from './sound/game-sound.service';
 import { GameStateService } from './state/game-state.service';
 import { GameStateStore } from './state/game.states';
 import { levelTitle, LEVELS } from './state/levels';
+import { MATCH_LEVELS } from './state/match-level';
 import { PlayerStore } from './state/player.store';
 import { replayOf } from './state/replay';
 
@@ -782,6 +784,26 @@ describe('BacteriaGameComponent', () => {
 
       expect(store.challenge()).toBeNull();
       expect(store.ghost()).toBeNull();
+    });
+  });
+
+  describe('a match the matchmaking set up', () => {
+    it('is played on the level the matchmaking picked', () => {
+      create();
+      const levelId = MATCH_LEVELS[3].id;
+      jest
+        .spyOn(TestBed.inject(MatchmakerService), 'matchLevel')
+        .mockReturnValue({ levelId, reason: 'theirs' });
+      const start = jest
+        .spyOn(component as unknown as { startGame(): void }, 'startGame')
+        .mockImplementation(() => undefined);
+
+      (
+        component as unknown as { startMatchmadeMatch(): void }
+      ).startMatchmadeMatch();
+
+      expect(store.snapshot().levelId).toBe(levelId);
+      expect(start).toHaveBeenCalled();
     });
   });
 

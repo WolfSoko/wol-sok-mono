@@ -4,6 +4,29 @@
   @let searching = matchmaker.state() !== "idle";
   @switch (lobby().phase) {
     @case ("idle") {
+      @if (matchmaker.available) {
+        <mat-form-field
+          class="match-level"
+          appearance="outline"
+          subscriptSizing="dynamic"
+        >
+          <mat-label>{{ "online.level" | t }}</mat-label>
+          <mat-select
+            panelWidth=""
+            [value]="settings.matchLevel() ?? anyLevel"
+            (selectionChange)="pickLevel($event.value)"
+          >
+            <mat-option [value]="anyLevel">
+              {{ "online.anyLevel" | t }}
+            </mat-option>
+            @for (level of matchLevels; track level.id) {
+              <mat-option [value]="level.id">
+                {{ level.title | gameText }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
       @if (searching) {
         <p class="status">
           <mat-spinner diameter="20" />
@@ -116,6 +139,11 @@
         }
       </p>
     }
+  }
+  @if (pickedLevel(); as picked) {
+    <p class="text picked-level">
+      {{ picked.key | t: { level: (picked.title | gameText) } }}
+    </p>
   }
   @if (lobby().notice; as notice) {
     <p class="notice" role="status">{{ notice | gameText }}</p>

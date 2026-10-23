@@ -2,24 +2,31 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
 import {
   GameTextPipe,
   playerNameText,
   renderGameText,
 } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
+import type { TranslationKey } from '../i18n/dictionaries';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { MatchmakerService } from '../net/matchmaker.service';
+import { GameSettingsService } from '../settings.service';
+import { getLevel, levelTitleText } from '../state/levels';
+import { MATCH_LEVELS } from '../state/match-level';
 import type { OnlineLobby } from '../net/online-match.service';
 import { AvatarComponent } from '../social/avatar.component';
 import { FriendsComponent } from '../social/friends.component';
@@ -43,6 +50,7 @@ import { CODE_LENGTH } from '../storage/game-rooms';
     MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    MatSelectModule,
     TranslatePipe,
   ],
   templateUrl: './online-lobby.component.html',
@@ -52,6 +60,7 @@ import { CODE_LENGTH } from '../storage/game-rooms';
 export class OnlineLobbyComponent {
   protected readonly matchmaker = inject(MatchmakerService);
   protected readonly social = inject(SocialService);
+  protected readonly settings = inject(GameSettingsService);
   private readonly i18n = inject(I18nService);
 
   public readonly lobby = input.required<OnlineLobby>();
@@ -68,6 +77,34 @@ export class OnlineLobbyComponent {
   public readonly leave = output<void>();
 
   protected readonly codeLength = CODE_LENGTH;
+  /** The levels the matchmaking may ask for, under the level map's names. */
+  protected readonly matchLevels = MATCH_LEVELS.map((level) => ({
+    id: level.id,
+    title: levelTitleText(level),
+  }));
+  /** The select's value for any level - Material reads null as none chosen. */
+  protected readonly anyLevel = 'any';
+
+  /** The level of the match the matchmaking found, and whose choice it was. */
+  protected readonly pickedLevel = computed(() => {
+    const picked = this.matchmaker.matchLevel();
+    const lobby = this.lobby();
+    if (picked === null || !lobby.auto || lobby.phase === 'idle') {
+      return null;
+    }
+    return {
+      title: levelTitleText(getLevel(picked.levelId)),
+      key: `online.levelPicked.${picked.reason}` satisfies TranslationKey,
+    };
+  });
+
+  public constructor() {
+    // The matchmaking asks for the level set - also one restored late.
+    effect(() => {
+      const level = this.settings.matchLevel();
+      untracked(() => this.matchmaker.setLevel(level));
+    });
+  }
   /** The code typed in so far. */
   protected readonly typed = signal('');
 
@@ -95,6 +132,10 @@ export class OnlineLobbyComponent {
       void this.matchmaker.cancel();
     }
     this.leave.emit();
+  }
+
+  protected pickLevel(value: string): void {
+    this.settings.setMatchLevel(value === this.anyLevel ? null : value);
   }
 
   protected type(event: Event): void {

@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
 import type { Profile } from '../social/profile';
+import type { PickedMatchLevel } from '../state/match-level';
 
 /** A friend's challenge to a match: the room it opened. */
 export interface Challenge {
@@ -13,8 +14,15 @@ export interface QueueEntry {
   since: number | null;
   /** The last time the player said they still wait - ms, server clock. */
   seen: number | null;
+  /** The level the player would like to play - null for any level. */
+  level: string | null;
   /** The room a newer player opened for them, null until one claims them. */
   claim: string | null;
+  /**
+   * The level the claimer picked for the match, and whose choice it was -
+   * null before a claim, and from a claimer whose build does not say.
+   */
+  picked: PickedMatchLevel | null;
 }
 
 /** A waiting player as others see them in the queue. */
@@ -63,10 +71,15 @@ export interface GameSocial {
   /** Clears the challenge from `from` to `to` - either may. */
   clearChallenge(to: string, from: string): Promise<void>;
 
-  /** Puts a player in the matchmaking queue, or keeps them there. */
-  enqueue(uid: string): Promise<void>;
+  /**
+   * Puts a player in the matchmaking queue, or keeps them there, with the
+   * level they would like - null for any.
+   */
+  enqueue(uid: string, level: string | null): Promise<void>;
   /** Tells the queue the player still waits. */
   stillWaiting(uid: string): Promise<void>;
+  /** Changes the level a waiting player would like, keeping their place. */
+  setQueueLevel(uid: string, level: string | null): Promise<void>;
   leaveQueue(uid: string): Promise<void>;
   /** The player's own entry - null once it is gone. */
   watchQueueEntry(uid: string): Observable<QueueEntry | null>;
@@ -76,10 +89,16 @@ export interface GameSocial {
    */
   waiting(limit: number, seenSince: number): Promise<Waiting[]>;
   /**
-   * Hands a waiting player the room `code`, if nobody did before - true
-   * when this claim got them.
+   * Hands a waiting player the room `code`, if nobody did before, with the
+   * level `pick` makes of the level they would like, read in the same
+   * transaction - the picked level when this claim got them, else null.
    */
-  claim(uid: string, by: string, code: string): Promise<boolean>;
+  claim(
+    uid: string,
+    by: string,
+    code: string,
+    pick: (level: string | null) => PickedMatchLevel
+  ): Promise<PickedMatchLevel | null>;
 }
 
 /** What a player is up to, when they share it. */
