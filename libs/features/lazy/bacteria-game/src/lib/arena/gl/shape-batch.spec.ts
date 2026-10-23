@@ -1,12 +1,15 @@
 import { arenaTheme } from '../arena-theme';
 import { JamDrop } from '../colony-renderer';
 import { Motes } from '../motes';
+import { MarkLayer } from '../weapon-effects';
 import {
   pushBackground,
   pushForeground,
+  pushWeaponMarks,
   SHAPE,
   SHAPE_STRIDE,
   ShapeBatch,
+  WEAPON_INDEX,
 } from './shape-batch';
 
 /** The kind of every instance in the batch, in drawing order. */
@@ -162,5 +165,62 @@ describe('pushForeground', () => {
       SHAPE.rect,
       SHAPE.ring,
     ]);
+  });
+});
+
+describe('pushWeaponMarks', () => {
+  /** The floats of one instance. */
+  function instance(batch: ShapeBatch, index: number): number[] {
+    return Array.from(
+      batch.instances.subarray(index * SHAPE_STRIDE, (index + 1) * SHAPE_STRIDE)
+    );
+  }
+
+  it('turns each mark into an instance of its shape', () => {
+    const layer = new MarkLayer();
+    layer.add('glow', 10, 20, 4, [255, 255, 255], 0.5);
+    layer.add('ring', 10, 20, 6, [255, 255, 255], 1).size = 2;
+    const hex = layer.add('hex', 30, 40, 3, [0, 255, 0], 1);
+    hex.size = 0.5;
+    hex.angle = 0.25;
+    const petal = layer.add('ellipse', 50, 50, 5, [255, 0, 0], 1);
+    petal.size = 1;
+    petal.angle = 1.5;
+    const field = layer.add('field', 60, 30, 20, [0, 0, 255], 0.75);
+    field.weapon = 'cryo-pulse';
+    field.timeSec = 3;
+    field.growth = 0.5;
+    const batch = new ShapeBatch();
+
+    pushWeaponMarks(batch, layer);
+
+    expect(kinds(batch)).toEqual([
+      SHAPE.glow,
+      SHAPE.ring,
+      SHAPE.hex,
+      SHAPE.ellipse,
+      SHAPE.field,
+    ]);
+    // A glow fills the square around its circle.
+    expect(instance(batch, 0).slice(0, 4)).toEqual([6, 16, 8, 8]);
+    // A ring has room for its line.
+    expect(instance(batch, 1).slice(0, 4)).toEqual([2, 12, 16, 16]);
+    expect(instance(batch, 1).slice(13, 15)).toEqual([6, 2]);
+    // A hexagon: its turn, its line and its corners.
+    expect(instance(batch, 2).slice(13)).toEqual([0.25, 0.5, 3]);
+    // An ellipse turned any way fits the square of its long radius.
+    expect(instance(batch, 3).slice(0, 4)).toEqual([45, 45, 10, 10]);
+    expect(instance(batch, 3).slice(13)).toEqual([1.5, 5, 1]);
+    // A field: the weapon, its clock and how far it has spread.
+    expect(instance(batch, 4).slice(13)).toEqual([
+      WEAPON_INDEX['cryo-pulse'],
+      3,
+      0.5,
+    ]);
+    expect(instance(batch, 4)[7]).toBeCloseTo(0.75);
+  });
+
+  it('tells every weapon apart', () => {
+    expect(new Set(Object.values(WEAPON_INDEX)).size).toBe(5);
   });
 });

@@ -11,6 +11,9 @@ import {
   RECORD_MASK,
 } from '../../gl/simulation-shaders';
 
+/** The most weapons' effects that shade one colony at once. */
+export const MAX_TINTS = 4;
+
 /** The arena position under a fragment of a full screen pass. */
 const ARENA_POSITION = `
 uniform vec4 uView;
@@ -28,6 +31,51 @@ uint hash(uvec3 v) {
   v ^= v >> 16u;
   v.x += v.y * v.z;
   return v.x;
+}`;
+
+/** Value noise and its fractal sum, from the hash above. */
+const NOISE = `
+float hash21(vec2 c) {
+  return float(hash(uvec3(uvec2(ivec2(floor(c)) + 8192), 29u))) / 4294967295.0;
+}
+float valueNoise(vec2 x) {
+  vec2 i = floor(x);
+  vec2 f = fract(x);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(hash21(i), hash21(i + vec2(1.0, 0.0)), u.x),
+    mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), u.x),
+    u.y
+  );
+}
+float fbm(vec2 x) {
+  float sum = 0.0;
+  float amplitude = 0.5;
+  for (int i = 0; i < 3; i++) {
+    sum += amplitude * valueNoise(x);
+    x = x * 2.03 + 17.1;
+    amplitude *= 0.5;
+  }
+  return sum / 0.875;
+}`;
+
+/**
+ * A honeycomb: hexCell gives the position in the hexagon a point lies in
+ * (xy, its centre at 0) and that hexagon's id (zw); hexEdge is 0.5 on the
+ * border of a hexagon of width 1 and 0 at its centre.
+ */
+const HEX = `
+vec4 hexCell(vec2 uv) {
+  const vec2 s = vec2(1.0, 1.7320508);
+  vec4 ids = floor(vec4(uv, uv - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
+  vec4 h = vec4(uv - ids.xy * s, uv - (ids.zw + 0.5) * s);
+  return dot(h.xy, h.xy) < dot(h.zw, h.zw)
+    ? vec4(h.xy, ids.xy)
+    : vec4(h.zw, ids.zw + 0.5);
+}
+float hexEdge(vec2 p) {
+  p = abs(p);
+  return max(dot(p, vec2(0.5, 0.8660254)), p.x);
 }`;
 
 /**
@@ -112,6 +160,12 @@ uniform int uLook;
 uniform float uShimmer;
 uniform vec2 uBoostTarget;
 uniform float uUnit;
+uniform float uTime;
+// The weapons' effects on this colony - see ColonyTint: centre, radius and
+// strength, and the mode of each (0 toxin, 1 cryo, 2 shield, 3 bloom).
+uniform int uTintCount;
+uniform vec4 uTints[${MAX_TINTS}];
+uniform vec4 uTintModes;
 out vec4 outColor;
 ${ARENA_POSITION}
 
@@ -134,6 +188,50 @@ bool sparkle(vec2 p, float t) {
   return float(hash(key)) / 4294967295.0 > 0.992;
 }
 
+${HEX}
+
+// Toxin turns the enemy sickly and bruised, cryo freezes it pale blue with
+// frost glittering on it, a shield lays its membrane over the owner's
+// colony and a bloom makes the owner's bacteria on it gleam golden.
+vec3 applyTints(vec3 rgb, vec2 p) {
+  for (int i = 0; i < ${MAX_TINTS}; i++) {
+    if (i >= uTintCount) {
+      break;
+    }
+    vec4 tint = uTints[i];
+    float mode = uTintModes[i];
+    float d = length(p - tint.xy);
+    float inside = (1.0 - smoothstep(tint.z * 0.85, tint.z, d)) * tint.w;
+    if (inside <= 0.0) {
+      continue;
+    }
+    if (mode < 0.5) {
+      float bubble = 0.5 + 0.5 * sin(uTime * 6.0 + d * 0.9 / uUnit);
+      float lum = dot(rgb, vec3(0.3, 0.5, 0.2));
+      vec3 sick = mix(vec3(0.36, 0.5, 0.06), vec3(0.8, 0.95, 0.25), lum);
+      rgb = mix(rgb, sick, inside * (0.6 + 0.2 * bubble));
+    } else if (mode < 1.5) {
+      float lum = dot(rgb, vec3(0.3, 0.5, 0.2));
+      vec3 ice = mix(vec3(0.5, 0.78, 1.0), vec3(0.94, 0.98, 1.0), lum);
+      rgb = mix(rgb, ice, inside * 0.7);
+      uvec3 key = uvec3(uvec2(floor(p * 1.5)), uint(floor(uTime * 8.0)));
+      if (float(hash(key)) / 4294967295.0 > 0.96) {
+        rgb = mix(rgb, vec3(1.0), inside);
+      }
+    } else if (mode < 2.5) {
+      vec4 h = hexCell(p / (3.5 * uUnit));
+      float edge = 1.0 - smoothstep(0.0, 0.08, 0.5 - hexEdge(h.xy));
+      float wave = 0.5 + 0.5 * sin(uTime * 4.0 - length(h.zw) * 0.7);
+      rgb = mix(rgb, mix(rgb, vec3(1.0), 0.8), inside * edge * (0.35 + 0.4 * wave));
+      rgb += rgb * 0.15 * inside * wave;
+    } else {
+      float wave = 0.5 + 0.5 * sin(uTime * 3.0 - d * 0.5 / uUnit);
+      rgb = mix(rgb, mix(rgb, vec3(1.0, 0.86, 0.42), 0.65), inside * (0.2 + 0.4 * wave * wave));
+    }
+  }
+  return clamp(rgb, 0.0, 1.0);
+}
+
 void main() {
   vec2 p = arenaPosition(vNdc);
   bool boosted = uShimmer >= 0.0;
@@ -149,11 +247,14 @@ void main() {
       heat = max(heat, shimmer(cell, uShimmer));
     }
     if (heat > 0.0) {
-      outColor = vec4(uColor + (1.0 - uColor) * heat, uAlpha);
+      outColor = vec4(applyTints(uColor + (1.0 - uColor) * heat, cell), uAlpha);
       return;
     }
     float strength = clamp((texel.r - 0.55) / 0.45, 0.0, 1.0);
-    outColor = vec4(uColor, uAlpha * (0.3 + 0.7 * strength * strength));
+    outColor = vec4(
+      applyTints(uColor, cell),
+      uAlpha * (0.3 + 0.7 * strength * strength)
+    );
     return;
   }
 
@@ -189,7 +290,10 @@ void main() {
   }
 
   vec3 body = uColor * shade;
-  outColor = vec4(body + (1.0 - body) * white, 0.94 * coverage * uAlpha);
+  outColor = vec4(
+    applyTints(body + (1.0 - body) * white, p),
+    0.94 * coverage * uAlpha
+  );
 }`;
 
 /**
@@ -309,6 +413,7 @@ void main() {
 
 export const SHAPE_FRAGMENT = `#version 300 es
 precision highp float;
+precision highp int;
 in vec2 vWorld;
 flat in vec4 vRect;
 flat in vec4 vColor;
@@ -329,6 +434,101 @@ float ellipseCoverage(vec2 q, vec2 radii, out vec2 unit) {
   float r = length(unit);
   float aa = fwidth(r);
   return 1.0 - smoothstep(1.0 - aa, 1.0 + aa, r);
+}
+
+vec2 turn(vec2 q, float angle) {
+  float s = sin(-angle);
+  float c = cos(-angle);
+  return vec2(c * q.x - s * q.y, s * q.x + c * q.y);
+}
+
+${HASH}
+${NOISE}
+${HEX}
+
+// 1 on the borders of jittered cells, like the facets of ice.
+float facets(vec2 x) {
+  vec2 i = floor(x);
+  vec2 f = fract(x);
+  float d1 = 8.0;
+  float d2 = 8.0;
+  for (int y = -1; y <= 1; y++) {
+    for (int k = -1; k <= 1; k++) {
+      vec2 g = vec2(float(k), float(y));
+      vec2 o = vec2(hash21(i + g), hash21(i + g + 31.0));
+      float d = length(g + o - f);
+      if (d < d1) {
+        d2 = d1;
+        d1 = d;
+      } else if (d < d2) {
+        d2 = d;
+      }
+    }
+  }
+  return 1.0 - smoothstep(0.0, 0.08, d2 - d1);
+}
+
+// A weapon's effect over its circle - q from -1 to 1 across it, grow how
+// far it has spread. Returns the colour and its opacity.
+vec4 weaponField(vec2 q, float weapon, float t, float grow) {
+  float r = length(q);
+  float angle = atan(q.y, q.x);
+  vec3 rgb;
+  float a;
+  if (weapon < 0.5) {
+    // Toxin: a cloud folding over itself, lighter where it is thick.
+    vec2 uv = q * 2.6;
+    vec2 warp = vec2(
+      fbm(uv + vec2(t * 0.31, -t * 0.22)),
+      fbm(uv + vec2(-t * 0.27, t * 0.35) + 5.2)
+    );
+    float n = fbm(uv * 1.3 + warp * 1.8 + vec2(0.0, t * 0.45));
+    float body = 1.0 - smoothstep(0.55, 1.0, r + (n - 0.5) * 0.45);
+    rgb = mix(vColor2.rgb, vColor.rgb, smoothstep(0.25, 0.7, n));
+    rgb += vec3(0.5, 0.8, 0.25) * pow(max(n - 0.5, 0.0) * 2.0, 2.0) * 0.8;
+    a = body * (0.45 + 0.5 * smoothstep(0.2, 0.75, n));
+  } else if (weapon < 1.5) {
+    // Ice: facets, cracks running out from the centre, a frosted rim.
+    float facet = facets(q * 4.5);
+    float crack = (1.0 - smoothstep(0.0, 0.05,
+      abs(sin(angle * 4.5 + fbm(q * 3.5) * 3.0)) * r)) * smoothstep(0.1, 0.5, r);
+    float rim = smoothstep(0.75, 0.95, r);
+    float frost = max(facet * 0.6, crack);
+    rgb = mix(vColor.rgb, vColor2.rgb, clamp(frost + rim * 0.8, 0.0, 1.0));
+    a = 0.32 + 0.45 * frost + 0.45 * rim;
+    a *= 1.0 - smoothstep(grow - 0.05, grow, r);
+  } else if (weapon < 2.5) {
+    // Phage: a wave of hexagons running out, white hot at the start.
+    vec4 h = hexCell(q * 6.0);
+    float edge = 1.0 - smoothstep(0.0, 0.09, 0.5 - hexEdge(h.xy));
+    float wave = 1.0 - smoothstep(0.0, 0.22, abs(r - grow));
+    float core = pow(max(1.0 - r, 0.0), 2.0) * (1.0 - grow);
+    rgb = mix(vColor2.rgb, vColor.rgb, clamp(wave * 0.5 + core, 0.0, 1.0));
+    a = edge * wave * 0.9 + core * 0.8 + wave * 0.12;
+  } else if (weapon < 3.5) {
+    // Agar: a flower of eight lobes unfurling, rippling with warmth.
+    float lobes = abs(cos(angle * 4.0 + sin(t * 0.7) * 0.3));
+    float reach = grow * (0.55 + 0.45 * pow(lobes, 0.6));
+    float inside = 1.0 - smoothstep(reach - 0.07, reach, r);
+    float ripple = 0.5 + 0.5 * sin(r * 22.0 - t * 3.0 + fbm(q * 3.0) * 4.0);
+    float grain = fbm(q * 9.0);
+    rgb = mix(vColor.rgb, vColor2.rgb,
+      clamp((1.0 - r / max(reach, 0.01)) * 0.8 + ripple * 0.2, 0.0, 1.0));
+    rgb *= 0.85 + 0.3 * grain;
+    a = inside * (0.3 + 0.25 * ripple) + (1.0 - smoothstep(0.0, 0.25, r)) * 0.3 * grow;
+  } else {
+    // Shield: a membrane of hexagons, a pulse running out through it.
+    vec4 h = hexCell(q * 5.5);
+    float edge = 1.0 - smoothstep(0.0, 0.07, 0.5 - hexEdge(h.xy));
+    float wave = 1.0 - smoothstep(0.0, 0.18, abs(r - fract(t * 0.6)));
+    float pulse = 0.5 + 0.5 * sin(t * 4.0 - length(h.zw) * 0.9);
+    float rim = smoothstep(0.82, 0.98, r);
+    rgb = mix(vColor.rgb, vColor2.rgb, clamp(edge * 0.5 + wave * 0.5 + rim * 0.5, 0.0, 1.0));
+    a = edge * (0.25 + 0.3 * pulse + 0.4 * wave) + rim * 0.45 + 0.05;
+    a *= 1.0 - smoothstep(grow - 0.08, grow, r);
+  }
+  a *= 1.0 - smoothstep(0.94, 1.0, r);
+  return vec4(rgb, clamp(a, 0.0, 1.0));
 }
 
 void main() {
@@ -371,6 +571,33 @@ void main() {
         ? mix(vColor2.rgb, vColor.rgb, t / 0.55)
         : mix(vColor.rgb, dark, (t - 0.55) / 0.45);
     }
+  } else if (kind == 6) {
+    // A soft glow, brightest in the middle and gone at the rim.
+    float r = length(vWorld - center) / (vRect.z * 0.5);
+    float f = max(1.0 - r * r, 0.0);
+    color.a *= f * f;
+  } else if (kind == 7) {
+    // A hexagon, its corners p2 out - an outline p1 wide, or filled for 0.
+    vec2 q = turn(vWorld - center, vExtra.y);
+    float s = hexEdge(q.yx) / 0.8660254;
+    float aa = fwidth(s);
+    color.a *= vExtra.z > 0.0
+      ? 1.0 - smoothstep(vExtra.z * 0.5 - aa, vExtra.z * 0.5 + aa, abs(s - vExtra.w))
+      : 1.0 - smoothstep(vExtra.w - aa, vExtra.w + aa, s);
+  } else if (kind == 8) {
+    vec2 q = (vWorld - center) / (vRect.z * 0.5);
+    if (dot(q, q) >= 1.0) {
+      discard;
+    }
+    vec4 field = weaponField(q, vExtra.y, vExtra.z, vExtra.w);
+    color = vec4(field.rgb, vColor.a * field.a);
+  } else if (kind == 9) {
+    // An ellipse turned by p0, its radii p1 and p2, shading from the first
+    // colour at its base to the second at its tip.
+    vec2 q = turn(vWorld - center, vExtra.y);
+    vec2 unit;
+    color.a *= ellipseCoverage(q, vExtra.zw, unit);
+    color.rgb = mix(vColor.rgb, vColor2.rgb, clamp(unit.x * 0.5 + 0.5, 0.0, 1.0));
   }
 
   if (color.a <= 0.0) {

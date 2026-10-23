@@ -1,9 +1,23 @@
 import { Injectable, inject } from '@angular/core';
 import { GameSettingsService } from './settings.service';
+import type { WeaponId } from './state/evolution';
 import { FrameEvents, MatchResult } from './state/match-engine';
 
 /** A short buzz is skipped this close after the last one, in milliseconds. */
 const BUZZ_INTERVAL_MS = 90;
+
+/**
+ * How each weapon feels as it is fired, buzzes and pauses in ms: the toxin
+ * bubbles, the cryo pulse ticks like cracking ice, the phage strike hits
+ * hard, the bloom swells and the shield hums twice.
+ */
+export const WEAPON_PATTERNS: Readonly<Record<WeaponId, readonly number[]>> = {
+  'toxin-bomb': [25, 35, 20, 35, 15],
+  'cryo-pulse': [10, 25, 10, 25, 10, 25, 40],
+  'phage-strike': [90, 40, 30],
+  'agar-bloom': [15, 50, 30, 50, 45],
+  'biofilm-shield': [60, 30, 60],
+};
 
 /**
  * The game felt through the phone: a tap for a boost, a thud for a gate, a
@@ -32,10 +46,16 @@ export class GameHapticsService {
     }
   }
 
-  /** What a frame of the match is felt as: boosts, bursts and the gates. */
+  /**
+   * What a frame of the match is felt as: weapons, boosts, bursts and the
+   * gates. Only the weapons the people at the screen fire are felt.
+   */
   public frame(events: FrameEvents): void {
+    const fired = events.weapons.find((fire) => !fire.isBot);
     if (events.gatesClosed > 0) {
       this.pattern([70]);
+    } else if (fired !== undefined) {
+      this.pattern([...WEAPON_PATTERNS[fired.weapon]]);
     } else if (events.boosts.some((isBot) => !isBot)) {
       this.buzz(30);
     } else if (events.crushed > 0) {

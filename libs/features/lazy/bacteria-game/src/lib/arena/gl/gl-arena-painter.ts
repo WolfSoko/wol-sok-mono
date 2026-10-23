@@ -36,14 +36,54 @@ import {
   FLOOR_FRAGMENT,
   SHAPE_FRAGMENT,
   SHAPE_VERTEX,
+  MAX_TINTS,
   ZONES_FRAGMENT,
 } from './shaders';
 import {
   pushBackground,
   pushForeground,
+  pushWeaponMarks,
   SHAPE_STRIDE,
   ShapeBatch,
 } from './shape-batch';
+import {
+  ColonyTint,
+  MarkLayer,
+  TINT_MODES,
+  tintApplies,
+  WeaponEffects,
+} from '../weapon-effects';
+
+/**
+ * Packs the weapons' tints that shade a colony - the one drawn in that
+ * colour - for the colony shader: centre, radius and strength in
+ * `circles`, the mode's number in `modes`. Returns how many there are, at
+ * most {@link MAX_TINTS}.
+ */
+export function packTints(
+  tints: readonly ColonyTint[],
+  colonyColor: readonly number[],
+  circles: Float32Array,
+  modes: Float32Array
+): number {
+  let count = 0;
+  for (const tint of tints) {
+    if (count >= MAX_TINTS) {
+      break;
+    }
+    if (!tintApplies(tint, colonyColor)) {
+      continue;
+    }
+    const at = count * 4;
+    circles[at] = tint.x;
+    circles[at + 1] = tint.y;
+    circles[at + 2] = tint.radius;
+    circles[at + 3] = tint.strength;
+    modes[count] = TINT_MODES.indexOf(tint.mode);
+    count++;
+  }
+  return count;
+}
 
 /**
  * Packs a colony into the cells texture, two bytes per arena cell: its
@@ -123,8 +163,8 @@ interface Resources {
 
 /**
  * The arena drawn on the GPU with WebGL2: the floor and the fading trail,
- * the colonies in either look, the walls and gates, the jam and the
- * crosshairs. Per frame the CPU only packs each colony's cells into a small
+ * the colonies in either look, the walls and gates, the weapons' effects
+ * (see `WeaponEffects`), the jam and the crosshairs. Per frame the CPU only packs each colony's cells into a small
  * texture and the shapes into one instance buffer.
  *
  * The frame is built in an offscreen texture that is kept between frames -
@@ -146,6 +186,11 @@ export class GlArenaPainter implements ArenaPainter {
   private readonly motes: Motes;
   private readonly background = new ShapeBatch();
   private readonly foreground = new ShapeBatch();
+  /** The weapons going off and acting, and a batch per layer of them. */
+  private readonly weapons: WeaponEffects;
+  private readonly weaponBatch = new ShapeBatch();
+  private readonly tintCircles = new Float32Array(MAX_TINTS * 4);
+  private readonly tintModes = new Float32Array(4);
   private readonly cellBytes: Uint8Array;
   private readonly canvasWidth: number;
   private readonly canvasHeight: number;
@@ -199,6 +244,7 @@ export class GlArenaPainter implements ArenaPainter {
     this.detail = detail;
     this.view = { x: 0, y: 0, width, height };
     this.motes = new Motes(width, height);
+    this.weapons = new WeaponEffects(unit);
     this.cellBytes = new Uint8Array(width * height * 2);
     this.resources = this.setup();
 
@@ -267,6 +313,7 @@ export class GlArenaPainter implements ArenaPainter {
     }
     const { programs } = resources;
     this.motes.advance(frame.deltaTimeSec);
+    this.weapons.update(frame);
     this.view = frame.view;
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
@@ -301,6 +348,7 @@ export class GlArenaPainter implements ArenaPainter {
       frame.dynamicWalls
     );
     this.drawShapes(this.background);
+    this.drawWeaponLayer(this.weapons.ground, false);
 
     for (const colony of frame.colonies) {
       this.drawColony(frame, colony);
@@ -308,6 +356,11 @@ export class GlArenaPainter implements ArenaPainter {
     if (!frame.reducedMotion) {
       this.drawEffects(frame);
     }
+    // The weapons over the colonies - the clouds, the ice and the membrane,
+    // then their flashes, shockwaves and sparks as light. The crosshairs
+    // stay on top of it all.
+    this.drawWeaponLayer(this.weapons.over, false);
+    this.drawWeaponLayer(this.weapons.light, true);
 
     this.foreground.clear();
     pushForeground(
@@ -412,7 +465,19 @@ export class GlArenaPainter implements ArenaPainter {
         boostTarget.x,
         boostTarget.y
       );
-      gl.uniform1f(program.uniforms['uUnit'], this.unit);
+    }
+    gl.uniform1f(program.uniforms['uUnit'], this.unit);
+    const tints = packTints(
+      this.weapons.tints,
+      color,
+      this.tintCircles,
+      this.tintModes
+    );
+    gl.uniform1i(program.uniforms['uTintCount'], tints);
+    if (tints > 0) {
+      gl.uniform1f(program.uniforms['uTime'], frame.timeSec);
+      gl.uniform4fv(program.uniforms['uTints[0]'], this.tintCircles);
+      gl.uniform4fv(program.uniforms['uTintModes'], this.tintModes);
     }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.SCISSOR_TEST);
@@ -566,6 +631,23 @@ export class GlArenaPainter implements ArenaPainter {
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.SCISSOR_TEST);
     this.useAlphaBlend();
+  }
+
+  /** A layer of the weapons' marks - `light` adds it over the frame as light. */
+  private drawWeaponLayer(layer: MarkLayer, light: boolean): void {
+    if (layer.count === 0) {
+      return;
+    }
+    const gl = this.gl;
+    this.weaponBatch.clear();
+    pushWeaponMarks(this.weaponBatch, layer);
+    if (light) {
+      gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ZERO, gl.ONE);
+    }
+    this.drawShapes(this.weaponBatch);
+    if (light) {
+      this.useAlphaBlend();
+    }
   }
 
   /** The blending everything but the glow is drawn with. */
@@ -732,6 +814,10 @@ export class GlArenaPainter implements ArenaPainter {
         'uShimmer',
         'uBoostTarget',
         'uUnit',
+        'uTime',
+        'uTintCount',
+        'uTints[0]',
+        'uTintModes',
       ]),
       shape: createProgram(gl, SHAPE_VERTEX, SHAPE_FRAGMENT, ['uView']),
       cells: createProgram(gl, FULLSCREEN_VERTEX, CELLS_FRAGMENT, [

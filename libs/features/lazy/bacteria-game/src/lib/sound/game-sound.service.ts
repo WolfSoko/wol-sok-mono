@@ -1,5 +1,6 @@
 import { Injectable, computed, effect, inject } from '@angular/core';
 import { GameSettingsService, MAX_VOLUME } from '../settings.service';
+import type { WeaponId } from '../state/evolution';
 import { FrameEvents, MatchResult } from '../state/match-engine';
 import { MedalTier, medalRank } from '../state/medallions';
 import { SoundtrackPlayer } from './audio-nodes';
@@ -51,6 +52,20 @@ const PELLET_STREAK_SEC = 1.2;
 const PELLET_LADDER = [0, 2, 4, 7, 9, 11, 14, 16, 18];
 /** The slider's preview tick plays at most this often. */
 const PREVIEW_INTERVAL_SEC = 0.12;
+
+/** How loud the computer's weapons are next to the player's. */
+const BOT_WEAPON_LEVEL = 0.55;
+/** The bubbles of a toxin bomb: their pitch and when they pop, in seconds. */
+const TOXIN_BUBBLES: readonly [number, number][] = [
+  [380, 0.05],
+  [520, 0.13],
+  [310, 0.2],
+  [600, 0.29],
+  [440, 0.36],
+  [700, 0.45],
+];
+/** The bells of a cryo pulse, high and a little out of tune with each other. */
+const CRYO_BELLS: readonly number[] = [2093, 2637, 3136, 3951, 4699];
 
 /** The seed of the menu music - the player varies it with every pass. */
 const MENU_MUSIC_SEED = 2024;
@@ -224,6 +239,9 @@ export class GameSoundService {
     for (const isBot of events.boosts) {
       this.boost(isBot);
     }
+    for (const fire of events.weapons) {
+      this.weapon(fire.weapon, fire.isBot);
+    }
     if (events.pelletsEaten > 0) {
       this.pellet();
     }
@@ -317,6 +335,177 @@ export class GameSoundService {
       frequency: isBot ? 300 : 450,
       sweepTo: isBot ? 2200 : 3600,
       attack: 0.04,
+    });
+  }
+
+  /**
+   * A weapon going off, each with a sound of its own - quieter when the
+   * computer fires it:
+   *
+   * - toxin bomb: a hiss, and bubbles rising through it,
+   * - cryo pulse: a crystalline shimmer of high bells over an icy breath,
+   * - phage strike: a sharp zap and a deep thump with a crack,
+   * - agar bloom: a soft chord in the match's key, swelling up,
+   * - biofilm shield: a resonant hum that beats as it fades.
+   */
+  public weapon(weapon: WeaponId, isBot = false): void {
+    const level = isBot ? BOT_WEAPON_LEVEL : 1;
+    switch (weapon) {
+      case 'toxin-bomb':
+        this.toxinBombSound(level);
+        break;
+      case 'cryo-pulse':
+        this.cryoPulseSound(level);
+        break;
+      case 'phage-strike':
+        this.phageStrikeSound(level);
+        break;
+      case 'agar-bloom':
+        this.agarBloomSound(level);
+        break;
+      case 'biofilm-shield':
+        this.biofilmShieldSound(level);
+        break;
+    }
+  }
+
+  private toxinBombSound(level: number): void {
+    // The hiss of gas escaping, darkening as it spreads.
+    this.noise(0.7, {
+      volume: 0.13 * level,
+      filter: 'highpass',
+      frequency: 3200,
+      sweepTo: 900,
+      attack: 0.03,
+    });
+    this.noise(0.5, {
+      volume: 0.08 * level,
+      filter: 'bandpass',
+      frequency: 500,
+      sweepTo: 180,
+    });
+    // Bubbles: short sines popping upwards, one after the other.
+    TOXIN_BUBBLES.forEach(([hz, delay]) => {
+      this.tone(hz, 0.07, {
+        type: 'sine',
+        volume: 0.09 * level,
+        slideTo: hz * 2.2,
+        delay,
+      });
+    });
+  }
+
+  private cryoPulseSound(level: number): void {
+    // Glassy bells, a little out of step, ringing high.
+    CRYO_BELLS.forEach((hz, step) => {
+      this.tone(hz, 0.5 - step * 0.05, {
+        type: 'sine',
+        volume: 0.06 * level,
+        delay: step * 0.045,
+      });
+      this.tone(hz * 2.76, 0.2, {
+        type: 'sine',
+        volume: 0.015 * level,
+        delay: step * 0.045,
+      });
+    });
+    // The icy breath of the pulse running out.
+    this.noise(0.55, {
+      volume: 0.07 * level,
+      filter: 'highpass',
+      frequency: 6000,
+      sweepTo: 2500,
+      attack: 0.02,
+    });
+    this.tone(1400, 0.25, {
+      type: 'triangle',
+      volume: 0.04 * level,
+      slideTo: 2800,
+      lowpass: 5000,
+    });
+  }
+
+  private phageStrikeSound(level: number): void {
+    // The zap: a bright sawtooth diving down.
+    this.tone(2200, 0.16, {
+      type: 'sawtooth',
+      volume: 0.08 * level,
+      slideTo: 140,
+      lowpass: 6000,
+    });
+    this.tone(3300, 0.09, {
+      type: 'square',
+      volume: 0.03 * level,
+      slideTo: 400,
+      lowpass: 5000,
+    });
+    // The thump under it, and the crack of the phages bursting.
+    this.tone(95, 0.4, { type: 'sine', volume: 0.32 * level, slideTo: 38 });
+    this.noise(0.12, {
+      volume: 0.16 * level,
+      filter: 'bandpass',
+      frequency: 2400,
+      sweepTo: 400,
+    });
+    this.noise(0.35, {
+      volume: 0.08 * level,
+      filter: 'highpass',
+      frequency: 4000,
+      sweepTo: 7000,
+      delay: 0.12,
+    });
+  }
+
+  private agarBloomSound(level: number): void {
+    // A chord of four notes in the match's key, swelling up like a flower.
+    [0, 2, 4, 6].forEach((degree, step) => {
+      this.tone(this.hz(degree, 1), 1.2, {
+        type: 'triangle',
+        volume: 0.06 * level,
+        delay: step * 0.06,
+        attack: 0.3,
+        lowpass: 2200,
+      });
+    });
+    this.tone(this.hz(0, 2), 0.9, {
+      type: 'sine',
+      volume: 0.05 * level,
+      delay: 0.25,
+      attack: 0.25,
+    });
+    this.noise(0.9, {
+      volume: 0.035 * level,
+      filter: 'bandpass',
+      frequency: 600,
+      sweepTo: 2600,
+      attack: 0.4,
+    });
+  }
+
+  private biofilmShieldSound(level: number): void {
+    // Two low sines a little apart beat against each other as they hum.
+    this.tone(110, 1, { type: 'sine', volume: 0.16 * level, attack: 0.12 });
+    this.tone(113, 1, { type: 'sine', volume: 0.12 * level, attack: 0.12 });
+    this.tone(220, 0.8, {
+      type: 'triangle',
+      volume: 0.06 * level,
+      attack: 0.15,
+      lowpass: 900,
+    });
+    // The membrane closing: a resonant sweep up.
+    this.tone(330, 0.5, {
+      type: 'sawtooth',
+      volume: 0.025 * level,
+      slideTo: 660,
+      attack: 0.1,
+      lowpass: 1200,
+    });
+    this.noise(0.5, {
+      volume: 0.04 * level,
+      filter: 'bandpass',
+      frequency: 300,
+      sweepTo: 1200,
+      attack: 0.2,
     });
   }
 
