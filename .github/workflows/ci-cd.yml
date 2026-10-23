@@ -17,8 +17,11 @@ on:
   # fest statt zu mergen.
   merge_group:
 
+# One run per PR, the newest wins. On main (and in the merge queue) every
+# commit gets its own run, so a release (part of the run) never holds up the
+# checks of the next commit; the version job serializes itself (release.yml).
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') || startsWith(github.ref_name, 'renovate-github-sh') }}
 
 # Needed for nx-set-shas when run on the main branch
@@ -51,7 +54,7 @@ jobs:
           printenv
 
       - name: install deps
-        uses: ./.github/actions/install-deps
+        uses: $/.github/actions/install-deps
 
       # This line is needed for nx affected to work when CI is running on a PR
       - run: git branch --track main origin/main
@@ -90,11 +93,22 @@ jobs:
           flags: unittests
           fail_ci_if_error: true
           verbose: true
+      # Counted since the last release tag, not since the last run: a run whose
+      # release stood down because main had moved on (release.yml) leaves its
+      # changes to the next run, which must see them. On main the last release
+      # tag is v<version.json>: the release commit bumps the file and gets the
+      # tag in the same push.
       - name: determine if deployables or published packages are affected and a release should be triggered
         if: success() && github.ref_name == 'main'
         id: shouldTriggerRelease
         run: |
-          projects=$(npx nx show projects --affected --projects='tag:cdk,tag:type:firebase,tag:published')
+          last_release="v$(node -p "require('./version.json').version")"
+          echo "Last release: $last_release"
+          # What deploy.yml deploys: every project with a deploy target, plus the published packages.
+          projects=$(
+            npx nx show projects --affected --base="$last_release" --head="$NX_HEAD" --withTarget deploy
+            npx nx show projects --affected --base="$last_release" --head="$NX_HEAD" --projects='tag:published'
+          )
           echo "Affected releasable projects: $projects"
           if [[ -z "$projects" ]]; then
             echo "triggerRelease=false" >> $GITHUB_OUTPUT
@@ -103,9 +117,14 @@ jobs:
             echo "triggerRelease=true" >> $GITHUB_OUTPUT
             echo 'Deployable projects or published packages affected. Trigger release!!!' >> $GITHUB_STEP_SUMMARY
           fi
-  # as the main workflow is mandatory for the branch protection we need a separate job
-  trigger-release:
-    uses: ./.github/workflows/trigger-release.yml
+  # A separate job, as the main job is the check the branch protection requires.
+  # Versions, creates the GitHub release and deploys, all in this run.
+  release:
+    uses: ./.github/workflows/release.yml
     secrets: inherit
     needs: main
+    permissions:
+      contents: write
+      id-token: write
+      issues: write
     if: ${{ success() && needs.main.outputs.shouldTriggerRelease == 'true' && !contains(github.event.head_commit.message, 'chore(release):') && github.ref_name == 'main' }}
