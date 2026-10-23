@@ -6,6 +6,11 @@ name: Release
 # or with `tag` to recreate the GitHub release of an existing tag and deploy it.
 on:
   workflow_call:
+    inputs:
+      tag:
+        required: false
+        type: string
+        description: 'Recreate the GitHub release of this existing tag (v<version>) instead of versioning, then deploy it'
     outputs:
       version:
         description: 'The released tag (v<version>)'
