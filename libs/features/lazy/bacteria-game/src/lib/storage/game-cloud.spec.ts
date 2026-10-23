@@ -8,6 +8,9 @@ import type { FirebaseConnection } from './firebase-connection';
 import { GameCloud } from './game-cloud';
 import { GameStorage } from './game-storage';
 import { LocalGameStorage } from './local-game-storage';
+import { GameReplays } from './game-replays';
+import { LocalGameReplays } from './local-game-replays';
+import { FirestoreGameReplays } from './firestore-game-replays';
 
 /** A project nobody signs in to - just enough to set the backend up. */
 const CONNECTION = {
@@ -44,5 +47,23 @@ describe('GameCloud', () => {
     TestBed.inject(GameCloud).use(CONNECTION);
 
     expect(TestBed.inject(GameAccount)).toBeInstanceOf(DeviceAccount);
+  });
+
+  describe('replays', () => {
+    it('stay on this device without a project', () => {
+      expect(TestBed.inject(GameReplays)).toBeInstanceOf(LocalGameReplays);
+    });
+
+    it('stay on this device while the project takes none', () => {
+      TestBed.inject(GameCloud).use(CONNECTION);
+
+      expect(TestBed.inject(GameReplays)).toBeInstanceOf(LocalGameReplays);
+    });
+
+    it('go to the project once it takes them', () => {
+      TestBed.inject(GameCloud).use({ ...CONNECTION, replays: true });
+
+      expect(TestBed.inject(GameReplays)).toBeInstanceOf(FirestoreGameReplays);
+    });
   });
 });

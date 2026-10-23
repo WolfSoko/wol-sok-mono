@@ -77,7 +77,9 @@ export class PlayerService {
    * purpose, nothing may change the rules while the colonies are fighting.
    *
    * An online match runs on the CPU, the simulation both devices play
-   * alike, and its ticks wait for the `lockstep`.
+   * alike, and its ticks wait for the `lockstep`. So does a match with
+   * `recordedSeats`: only the CPU plays a recording back as it was played
+   * (ADR 0011).
    */
   public init(
     spawns: PlayerSpawn[],
@@ -96,7 +98,7 @@ export class PlayerService {
       seed: options.seed ?? randomSeed(),
       // Sized in there, where the GPU may still fail and leave it to the CPU.
       simulation: (balance, random) =>
-        lockstep === undefined
+        lockstep === undefined && rules.recordedSeats === undefined
           ? this.createSimulation(balance, random, arena)
           : sized(cpuSimulation(balance, random), arena),
     });
@@ -214,6 +216,11 @@ export class PlayerService {
   /** Ticks the match has run. */
   public get tickCount(): number {
     return this.engine.tickCount;
+  }
+
+  /** The players as the engine has them after the last tick - for the checksum. */
+  public get players(): readonly Player[] {
+    return this.engine.players;
   }
 
   /** What the humans did in the match, for its replay. */
