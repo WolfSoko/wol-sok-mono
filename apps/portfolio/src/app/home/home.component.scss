@@ -1,0 +1,147 @@
+:host {
+  display: block;
+}
+
+section {
+  padding: 3rem 0;
+}
+
+.hero {
+  position: relative;
+  padding: 5rem 0 3rem;
+}
+
+.eyebrow {
+  margin: 0 0 1rem;
+  color: var(--accent-warm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+h1 {
+  margin: 0;
+  max-width: 18ch;
+  font-size: clamp(2.4rem, 6vw, 4.2rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+
+  em {
+    font-style: normal;
+    background: linear-gradient(90deg, var(--accent-cool), var(--accent-warm));
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+.lead {
+  max-width: 60ch;
+  margin: 1.5rem 0 0;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 2rem;
+
+  a {
+    color: var(--text);
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 2px solid var(--accent-warm);
+  }
+}
+
+// Two colonies in a dish, drifting behind the title.
+.dish {
+  position: absolute;
+  inset: 1rem 0 auto auto;
+  width: min(42vw, 26rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--accent-warm) 40%, transparent);
+  overflow: hidden;
+  opacity: 0.35;
+  z-index: -1;
+
+  span {
+    position: absolute;
+    width: 45%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    filter: blur(28px);
+    animation: drift 14s ease-in-out infinite alternate;
+  }
+  span:nth-child(odd) {
+    background: var(--accent-cool);
+  }
+  span:nth-child(even) {
+    background: var(--accent-warm);
+  }
+  span:nth-child(1) {
+    top: 10%;
+    left: 5%;
+  }
+  span:nth-child(2) {
+    top: 45%;
+    left: 50%;
+    animation-delay: -3s;
+  }
+  span:nth-child(3) {
+    top: 55%;
+    left: 10%;
+    animation-delay: -6s;
+  }
+  span:nth-child(4) {
+    top: 5%;
+    left: 55%;
+    animation-delay: -9s;
+  }
+  span:nth-child(5) {
+    top: 30%;
+    left: 30%;
+    width: 30%;
+    animation-delay: -12s;
+  }
+}
+
+@keyframes drift {
+  to {
+    transform: translate(18%, -12%) scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dish span {
+    animation: none;
+  }
+}
+
+h2 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.intro {
+  margin: 0.5rem 0 1.75rem;
+  color: var(--muted);
+
+  a {
+    color: var(--text);
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  gap: 1.25rem;
+
+  &.small {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  }
+}
