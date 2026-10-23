@@ -27,6 +27,7 @@
     />
     <div
       class="seat"
+      [class.armed]="colony.weapon !== null"
       [attr.inert]="screenOpen() ? '' : null"
       [style.grid-area]="'boost-' + seat"
       [attr.data-seat]="seat"
@@ -36,6 +37,13 @@
         [disabled]="!running()"
         (boost)="boost(colony.id)"
       />
+      @if (colony.weapon; as weapon) {
+        <feat-lazy-bac-game-weapon-pad
+          [weapon]="weapon"
+          [disabled]="!running()"
+          (fire)="fireWeapon(colony.id)"
+        />
+      }
     </div>
   }
 
@@ -138,6 +146,7 @@
               [challenge]="challengeLevel()"
               [friendsAvailable]="social.available"
               [friendRequests]="social.requests().length"
+              [evolveDna]="evolution.canEvolve() ? evolution.dna() : 0"
               (fightChallenge)="fightChallenge()"
               (dismissChallenge)="dismissChallenge()"
             />
@@ -209,6 +218,13 @@
               [arenaLocks]="arenaLocks()"
               [activeArena]="campaign.activeArena()"
               (nativeFullscreenChange)="setNativeFullscreen($event)"
+              (back)="show('menu')"
+            />
+          }
+          @case ("evolution") {
+            <feat-lazy-bac-game-evolution
+              class="screen"
+              [color]="colonyRgb()[0]"
               (back)="show('menu')"
             />
           }

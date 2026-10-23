@@ -48,6 +48,7 @@ import { GlArenaPainter } from './arena/gl/gl-arena-painter';
 import { ArenaTheme, arenaTheme, cssTriple } from './arena/arena-theme';
 import { rgba } from './arena/canvas-math';
 import { BoostPadComponent } from './boost-pad/boost-pad.component';
+import { WeaponPadComponent } from './weapon-pad/weapon-pad.component';
 import {
   exitFullscreen,
   fitInside,
@@ -66,6 +67,7 @@ import { MainMenuComponent } from './menu/main-menu.component';
 import { DailyCard } from './menu/menu-cards';
 import { FriendsScreenComponent } from './menu/friends-screen.component';
 import { HelpComponent } from './menu/help.component';
+import { EvolutionComponent } from './menu/evolution.component';
 import { ProfileComponent } from './menu/profile.component';
 import { SettingsComponent } from './menu/settings.component';
 import { SwarmComponent } from './menu/swarm.component';
@@ -79,6 +81,7 @@ import { BotDifficulty } from './state/bot-controller';
 import { GameSettingsService } from './settings.service';
 import { vaporizePixels } from './vaporize-effect';
 import { ProgressService } from './progress.service';
+import { EvolutionService } from './evolution.service';
 import { CampaignService } from './campaign.service';
 import { dismissSplash } from './splash';
 import { HeadStart, rivalryScore, SeriesLength } from './state/rivalry';
@@ -181,6 +184,7 @@ interface HudGoal {
     SocialNoticesComponent,
     JoystickComponent,
     BoostPadComponent,
+    WeaponPadComponent,
     ElemResizedDirective,
     WinnerComponent,
     SwarmComponent,
@@ -190,6 +194,7 @@ interface HudGoal {
     MainMenuComponent,
     NewGameComponent,
     ProfileComponent,
+    EvolutionComponent,
     TranslatePipe,
     GameTextPipe,
   ],
@@ -211,6 +216,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
   protected readonly progress = inject(ProgressService);
+  protected readonly evolution = inject(EvolutionService);
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
   private readonly online = inject(OnlineMatchService);
@@ -848,8 +854,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         step: stepsOf(kind).includes('level') ? 'level' : 'mode',
       });
     }
-    this.screen.set(action === 'levels' ? 'new-game' : 'menu');
-    if (action === 'menu') {
+    this.screen.set(
+      action === 'levels'
+        ? 'new-game'
+        : action === 'evolve'
+          ? 'evolution'
+          : 'menu'
+    );
+    if (action === 'menu' || action === 'evolve') {
       this.gameStateService.endSeries();
       this.gameStateService.leaveOnline();
     }
@@ -1512,6 +1524,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.gameStateService.boost(playerId);
   }
 
+  /** Fires a player's weapon - the button next to the boost. */
+  protected fireWeapon(playerId: number): void {
+    this.gameStateService.fireWeapon(playerId);
+  }
+
   /** Pushes or releases a player's on-screen joystick. */
   protected steer(playerId: number, vector: SteeringVector): void {
     this.playerService.setSteering(playerId, vector);
@@ -1761,7 +1778,8 @@ export type MenuScreen =
   | 'profile'
   | 'friends'
   | 'settings'
-  | 'help';
+  | 'help'
+  | 'evolution';
 
 /** What is laid over the arena right now, nothing while a match is on. */
 export type StagePanel = MenuScreen | 'pause' | 'over' | null;

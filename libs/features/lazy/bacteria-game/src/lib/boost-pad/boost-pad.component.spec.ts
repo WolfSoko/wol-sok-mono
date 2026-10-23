@@ -21,6 +21,7 @@ const orange: ColonyStats = {
   boostKey: 'Space',
   held: 0,
   pellets: 0,
+  weapon: null,
 };
 
 describe('BoostPadComponent', () => {

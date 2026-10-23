@@ -78,6 +78,14 @@ describe('ProfileComponent', () => {
     );
   });
 
+  it('shows all the DNA the XP has grown', () => {
+    const host = render({}, { xp: 1275 });
+
+    expect(host.querySelector('.figures')?.textContent).toContain(
+      'DNA earned25'
+    );
+  });
+
   it('shows the rank and the way to the next', () => {
     const host = render(
       {},

@@ -64,6 +64,10 @@
         <dt>{{ "profile.figures.couchMatches" | t }}</dt>
         <dd>{{ totals().couchMatches }}</dd>
       </div>
+      <div class="figure">
+        <dt>{{ "evolution.profile.earned" | t }}</dt>
+        <dd>{{ dna().toLocaleString(locale()) }}</dd>
+      </div>
     </dl>
     <ul class="tally" [attr.aria-label]="'profile.tally' | t">
       @for (metal of tally(); track metal.tier) {
