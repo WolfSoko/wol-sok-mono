@@ -238,11 +238,9 @@ const vec3 CELL_SHAPE = vec3(CELL_RADIUS, CELL_RADIUS_MIN, CELL_RADIUS_VARY);
 const vec3 BUBBLE_SHAPE = vec3(BUBBLE_RADIUS, BUBBLE_RADIUS_MIN, BUBBLE_RADIUS_VARY);
 
 // The bubble or cell of the lattice look the fragment is deepest in: its
-// unit disc coordinates in xy, its radius in z and the lattice point's
-// index in the lattice loop's row-major order in w (-1 for none) - see
-// bestLattice.
-ivec2 bestLattice;
-vec4 nearestBubble(vec2 p, float spacing, vec3 shape) {
+// unit disc coordinates in xy, its radius in z (0 for none) and the square
+// of its unit distance in w, with the lattice point it sits on.
+vec4 nearestBubble(vec2 p, float spacing, vec3 shape, out ivec2 bestLattice) {
   float rowHeight = spacing * CELL_ROW_HEIGHT;
   int row = int(floor(p.y / rowHeight));
   float bestQ2 = 1e9;
@@ -305,7 +303,7 @@ float dnaAt(vec2 u, ivec2 lattice, float aa) {
     float rung = abs(across) <= abs(wave) + DNA_WIDTH && mod(turn, 3.1416) < DNA_RUNG
       ? 0.8
       : 0.0;
-    float ends = smoothstep(halfLength, halfLength - 0.08, abs(along));
+    float ends = 1.0 - smoothstep(halfLength - 0.08, halfLength, abs(along));
     cover = max(cover, max(strand, rung) * ends);
   }
   return cover;
@@ -316,7 +314,8 @@ vec4 bubblesLook(vec2 p, float d) {
   if (d < CELL_CLIP_START) {
     return vec4(0.0);
   }
-  vec4 best = nearestBubble(p, BUBBLE_SPACING * uUnit, BUBBLE_SHAPE);
+  ivec2 lattice;
+  vec4 best = nearestBubble(p, BUBBLE_SPACING * uUnit, BUBBLE_SHAPE, lattice);
   float baseAlpha = BUBBLE_BASE_ALPHA * smoothstep(EDGE_START, EDGE_END, d);
   float bubbleAlpha = 0.0;
   vec3 face = vec3(0.0);
@@ -327,7 +326,7 @@ vec4 bubblesLook(vec2 p, float d) {
     if (edge > 0.0) {
       float rim = smoothstep(BUBBLE_RIM_START, BUBBLE_RIM_END, q);
       float spot = 1.0 - smoothstep(BUBBLE_SPOT_START, BUBBLE_SPOT_END, length(best.xy - CELL_FOCAL));
-      float dna = dnaAt(best.xy, bestLattice, uPixel / best.z);
+      float dna = dnaAt(best.xy, lattice, uPixel / best.z);
       bubbleAlpha = max(max(BUBBLE_FILM, rim * BUBBLE_RIM), max(spot, dna)) * edge;
       // The film and the rim in the light colour, the spot and the
       // snippets towards white.
@@ -355,7 +354,8 @@ vec4 cellsLook(vec2 p, float d) {
   if (d < CELL_CLIP_START) {
     return vec4(0.0);
   }
-  vec4 best = nearestBubble(p, CELL_SPACING * uUnit, CELL_SHAPE);
+  ivec2 lattice;
+  vec4 best = nearestBubble(p, CELL_SPACING * uUnit, CELL_SHAPE, lattice);
   float bestQ2 = best.w;
   float bestRadius = best.z;
   vec2 unit = best.xy;

@@ -43,7 +43,8 @@ function slime(
   bacterias: Bacteria[],
   shimmerTimeSec: number | null = null,
   view: Rect = WHOLE,
-  look: Exclude<BacteriaLook, 'pixels'> = 'slime'
+  look: Exclude<BacteriaLook, 'pixels'> = 'slime',
+  timeSec = 0
 ) {
   const target: Point = { x: 30, y: 10 };
   const region = slimeRegion(bacterias, view, WIDTH, HEIGHT);
@@ -78,44 +79,10 @@ function slime(
     ORANGE,
     shimmer,
     1,
-    region
+    region,
+    region,
+    timeSec
   );
-  return data;
-}
-
-/** The bubbles look at a later time. */
-function sliceOfTime(bacterias: Bacteria[], timeSec: number) {
-  const region = slimeRegion(bacterias, WHOLE, WIDTH, HEIGHT);
-  const cells = WIDTH * HEIGHT;
-  const density = new Float32Array(cells);
-  const heat = new Float32Array(cells);
-  colonyDensity(
-    density,
-    heat,
-    new Float32Array(cells),
-    WIDTH,
-    HEIGHT,
-    bacterias,
-    gameBalance,
-    region ?? undefined
-  );
-  const data = new Uint8ClampedArray(cells * SLIME_SCALE * SLIME_SCALE * 4);
-  if (region != null) {
-    paintColony(
-      'bubbles',
-      data,
-      density,
-      null,
-      WIDTH,
-      HEIGHT,
-      ORANGE,
-      null,
-      1,
-      region,
-      region,
-      timeSec
-    );
-  }
   return data;
 }
 
@@ -289,12 +256,21 @@ describe('paintTiles', () => {
 describe('paintBubbles', () => {
   it('floats snippets inside the bubbles that move with the time', () => {
     const bacterias = blob(20, 10, 7);
-    const now = slime(bacterias, null, WHOLE, 'bubbles');
-    const later = sliceOfTime(bacterias, 2);
+    const now = pixelsWithin(
+      slime(bacterias, null, WHOLE, 'bubbles'),
+      20,
+      10,
+      5
+    );
+    const later = pixelsWithin(
+      slime(bacterias, null, WHOLE, 'bubbles', 2),
+      20,
+      10,
+      5
+    );
 
-    const moved = pixelsWithin(now, 20, 10, 5).filter(
-      (pixel, i) =>
-        brightness(pixel) !== brightness(pixelsWithin(later, 20, 10, 5)[i])
+    const moved = now.filter(
+      (pixel, i) => brightness(pixel) !== brightness(later[i])
     );
     expect(moved.length).toBeGreaterThan(0);
   });

@@ -311,32 +311,6 @@ export interface LookDescription {
 }
 
 /**
- * How far a cell or a tile of the lattice looks can reach past the colony,
- * in base cells: a cell's centre lies within a cell of the colony, its
- * radius is at most `CELL_RADIUS` spacings and a bit, a facet strays
- * `CRYSTAL_JITTER` spacings and fills to the next centre.
- */
-const LATTICE_REACH = 3;
-/** The bubbles are bigger: `BUBBLE_RADIUS` spacings and a bit, from within a cell. */
-const BUBBLE_REACH = 5;
-
-export const LOOKS: Readonly<Record<BacteriaLook, LookDescription>> = {
-  slime: { fromDensity: true, reach: 0, glIndex: 0 },
-  pixels: { fromDensity: false, reach: 0, glIndex: 1 },
-  cells: { fromDensity: true, reach: LATTICE_REACH, glIndex: 2 },
-  honeycomb: { fromDensity: true, reach: LATTICE_REACH, glIndex: 3 },
-  crystal: { fromDensity: true, reach: LATTICE_REACH, glIndex: 4 },
-  neon: { fromDensity: true, reach: 0, glIndex: 5 },
-  ink: { fromDensity: true, reach: 0, glIndex: 6 },
-  bubbles: { fromDensity: true, reach: BUBBLE_REACH, glIndex: 7 },
-};
-
-/** How many cells past the colony a look reaches on a grid of that unit. */
-export function lookReach(look: BacteriaLook, unit: number): number {
-  return Math.ceil(LOOKS[look].reach * unit);
-}
-
-/**
  * The numbers the looks are tuned by, in one place for both painters: the
  * colony shader gets every one of them as a `const float` of the same name
  * (see `COLONY_FRAGMENT`), so the Canvas and the WebGL painter cannot
@@ -523,6 +497,42 @@ const {
   DNA_DRIFT,
   DNA_SPIN,
 } = LOOK_TUNING;
+
+/**
+ * How far past the colony a lattice look's cells can reach, in base cells:
+ * a cell's centre lies within a cell of the colony, and its body reaches
+ * `radius` base cells from there.
+ */
+function latticeReach(radius: number): number {
+  return Math.ceil(radius) + 1;
+}
+
+/** The cells and the tiles: the biggest cell, or a facet strayed and filled to the next centre. */
+const LATTICE_REACH = latticeReach(
+  Math.max(
+    CELL_SPACING * CELL_RADIUS * (CELL_RADIUS_MIN + CELL_RADIUS_VARY),
+    TILE_SPACING * (0.5 + CRYSTAL_JITTER)
+  )
+);
+const BUBBLE_REACH = latticeReach(
+  BUBBLE_SPACING * BUBBLE_RADIUS * (BUBBLE_RADIUS_MIN + BUBBLE_RADIUS_VARY)
+);
+
+export const LOOKS: Readonly<Record<BacteriaLook, LookDescription>> = {
+  slime: { fromDensity: true, reach: 0, glIndex: 0 },
+  pixels: { fromDensity: false, reach: 0, glIndex: 1 },
+  cells: { fromDensity: true, reach: LATTICE_REACH, glIndex: 2 },
+  honeycomb: { fromDensity: true, reach: LATTICE_REACH, glIndex: 3 },
+  crystal: { fromDensity: true, reach: LATTICE_REACH, glIndex: 4 },
+  neon: { fromDensity: true, reach: 0, glIndex: 5 },
+  ink: { fromDensity: true, reach: 0, glIndex: 6 },
+  bubbles: { fromDensity: true, reach: BUBBLE_REACH, glIndex: 7 },
+};
+
+/** How many cells past the colony a look reaches on a grid of that unit. */
+export function lookReach(look: BacteriaLook, unit: number): number {
+  return Math.ceil(LOOKS[look].reach * unit);
+}
 
 /** How big the cells of a lattice look are, in spacings, and how they vary. */
 interface CellShape {
@@ -1259,22 +1269,26 @@ export const paintInk: LookPainter = (
   );
 };
 
+/** A helix: the centre it has drifted to, the cosine and sine of its turn, half its length. */
+const HELIX_STRIDE = 5;
+/** A bubble's lattice entry: centre x, y, radius, how many helices, then up to three. */
+const BUBBLE_STRIDE = 3 + 1 + 3 * HELIX_STRIDE;
+
 /**
- * How much of a DNA snippet covers a point of a bubble's unit disc: two or
- * three double helices per bubble, each drifting around the bubble and
- * turning slowly with the time, drawn by the lattice point's hashes. `aa`
- * is a pixel's width on the disc, for the anti-aliasing of the strands.
+ * Lays the DNA snippets of a bubble into its lattice entry at this moment:
+ * two or three double helices, drawn by the lattice point's hashes, that
+ * drift around the bubble and turn slowly with the time. Worked out once
+ * per bubble and frame; {@link dnaAt} projects every pixel onto them.
  */
-function dnaAt(
-  ux: number,
-  uy: number,
+function layHelices(
   col: number,
   row: number,
   timeSec: number,
-  aa: number
-): number {
-  let cover = 0;
+  values: Float32Array,
+  at: number
+): void {
   const count = 2 + (hash(col, row, 20) > 0.5 ? 1 : 0);
+  values[at] = count;
   for (let k = 0; k < count; k++) {
     const salt = 21 + k * 6;
     const orbit = DNA_ORBIT_MIN + DNA_ORBIT_VARY * hash(col, row, salt);
@@ -1282,14 +1296,40 @@ function dnaAt(
     const angle =
       hash(col, row, salt + 2) * Math.PI * 2 +
       timeSec * drift * (hash(col, row, salt + 3) < 0.5 ? -1 : 1);
-    const dx = ux - orbit * Math.cos(angle);
-    const dy = uy - orbit * Math.sin(angle);
     const theta = hash(col, row, salt + 4) * Math.PI * 2 + timeSec * DNA_SPIN;
-    const cos = Math.cos(theta);
-    const sin = Math.sin(theta);
+    const helix = at + 1 + k * HELIX_STRIDE;
+    values[helix] = orbit * Math.cos(angle);
+    values[helix + 1] = orbit * Math.sin(angle);
+    values[helix + 2] = Math.cos(theta);
+    values[helix + 3] = Math.sin(theta);
+    values[helix + 4] = DNA_HALF_MIN + DNA_HALF_VARY * hash(col, row, salt + 5);
+  }
+}
+
+/**
+ * How much of a DNA snippet covers a point of a bubble's unit disc, from
+ * the helices {@link layHelices} laid into the lattice at `at`. `aa` is a
+ * pixel's width on the disc, for the anti-aliasing of the strands.
+ */
+function dnaAt(
+  ux: number,
+  uy: number,
+  values: Float32Array,
+  at: number,
+  timeSec: number,
+  aa: number
+): number {
+  let cover = 0;
+  const count = values[at];
+  for (let k = 0; k < count; k++) {
+    const helix = at + 1 + k * HELIX_STRIDE;
+    const dx = ux - values[helix];
+    const dy = uy - values[helix + 1];
+    const cos = values[helix + 2];
+    const sin = values[helix + 3];
+    const halfLength = values[helix + 4];
     const along = dx * cos + dy * sin;
-    const half = DNA_HALF_MIN + DNA_HALF_VARY * hash(col, row, salt + 5);
-    if (Math.abs(along) > half) {
+    if (Math.abs(along) > halfLength) {
       continue;
     }
     const across = -dx * sin + dy * cos;
@@ -1306,7 +1346,7 @@ function dnaAt(
       turn - Math.floor(turn / Math.PI) * Math.PI < DNA_RUNG
         ? 0.8
         : 0;
-    const ends = smoothstep(half, half - 0.08, Math.abs(along));
+    const ends = 1 - smoothstep(halfLength - 0.08, halfLength, Math.abs(along));
     cover = Math.max(cover, Math.max(strand, rung) * ends);
   }
   return cover;
@@ -1334,11 +1374,11 @@ export const paintBubbles: LookPainter = (
   const { light, base } = palette;
   const spacing = BUBBLE_SPACING * unit;
   // Each lattice point's bubble: centre x, y, radius (0 for none), and
-  // its column and row, which draw what floats inside.
+  // the snippets floating inside at this moment.
   const lattice = buildLattice(
     latticeRegion,
     spacing,
-    5,
+    BUBBLE_STRIDE,
     (col, row, at, values) => {
       const bubble = cellBubble(
         col,
@@ -1353,8 +1393,7 @@ export const paintBubbles: LookPainter = (
         values[at] = bubble.x;
         values[at + 1] = bubble.y;
         values[at + 2] = bubble.radius;
-        values[at + 3] = col;
-        values[at + 4] = row;
+        layHelices(col, row, timeSec, values, at + 3);
       }
     }
   );
@@ -1414,8 +1453,8 @@ export const paintBubbles: LookPainter = (
           const dna = dnaAt(
             ux,
             uy,
-            values[bestAt + 3],
-            values[bestAt + 4],
+            values,
+            bestAt + 3,
             timeSec,
             1 / (radius * SLIME_SCALE)
           );
