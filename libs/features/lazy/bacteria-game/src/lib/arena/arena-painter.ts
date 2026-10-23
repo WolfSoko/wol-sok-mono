@@ -1,5 +1,6 @@
 import { BacteriaLook } from '../settings.service';
 import { Nutrient } from '../state/bacteria-simulation';
+import type { ActiveEffect, WeaponFire } from '../state/evolution';
 import { GameBalance } from '../state/game-balance';
 import { DynamicWall, Rect } from '../state/maps';
 import { Zone } from '../state/zones';
@@ -38,6 +39,14 @@ export interface ArenaFrame {
   balance: GameBalance;
   look: BacteriaLook;
   cursors: readonly CursorShape[];
+  /** The weapons fired since the last frame - each bursts out now. */
+  weaponFires: readonly WeaponFire[];
+  /** The weapons' effects acting on the war now. */
+  weaponEffects: readonly ActiveEffect[];
+  /** Each seat's colony colour, RGBA - whose effect is whose. */
+  seatColors: ReadonlyMap<number, readonly number[]>;
+  /** How many particles the weapons' effects may fly at once. */
+  particleBudget: number;
 }
 
 /**

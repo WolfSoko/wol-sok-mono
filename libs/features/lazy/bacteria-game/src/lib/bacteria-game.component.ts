@@ -102,8 +102,10 @@ import {
   FriendView,
   SocialService,
 } from './social/social.service';
-import { Camera } from './arena/camera';
+import { Camera, CameraShake } from './arena/camera';
 import { MinimapPainter } from './arena/minimap';
+import { particleBudget } from './arena/weapon-effects';
+import type { WeaponFire } from './state/evolution';
 import { GameHapticsService } from './haptics.service';
 import { GameSoundService, Soundtrack } from './sound/game-sound.service';
 import { MatchResult } from './state/match-engine';
@@ -250,6 +252,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private camera: Camera | null = null;
   /** When the camera last moved on, null before it ever did. */
   private cameraMovedAt: number | null = null;
+  /** The shake of the view as a weapon goes off - on every map. */
+  private readonly shake = new CameraShake();
   /** What of the arena the last frame showed. */
   private lastView: Rect | null = null;
   /** The whole map in a corner, while the camera shows part of it. */
@@ -1190,6 +1194,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.clearNextFrame = true;
     this.camera?.reset();
     this.cameraMovedAt = null;
+    this.shake.reset();
     this.gameStateService.cleanup();
     this.gameStateService.init(this.arena().width, this.arena().height);
     this.gameStateService.start();
@@ -1257,7 +1262,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const events = this.playerService.getFrameEvents();
     this.sound.frame(events);
     this.haptics.frame(events);
-    this.paint(frame.elapsedSec, false, frame.alpha);
+    this.shake.fire(events.weapons, this.reducedMotion());
+    this.paint(frame.elapsedSec, false, frame.alpha, events.weapons);
   }
 
   /**
@@ -1277,10 +1283,24 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  /** `alpha` is how far the crosshairs are drawn along their last tick. */
-  private paint(deltaTimeSec: number, clear: boolean, alpha: number): void {
+  /**
+   * `alpha` is how far the crosshairs are drawn along their last tick,
+   * `fires` the weapons fired since the frame before.
+   */
+  private paint(
+    deltaTimeSec: number,
+    clear: boolean,
+    alpha: number,
+    fires: readonly WeaponFire[] = []
+  ): void {
     this.animationSec += deltaTimeSec;
-    const view = this.moveCamera();
+    const camera = this.moveCamera();
+    // The shake goes with the match's frames: a pause holds the view still.
+    this.shake.advance(deltaTimeSec);
+    const { width, height } = this.arena();
+    const view = this.matchPaints()
+      ? this.shake.shake(camera, width, height)
+      : camera;
     // The trail of the last frame lies elsewhere in a view that moved - by
     // half a pixel or more: the spring creeps on by less for a long while.
     const last = this.lastView;
@@ -1296,11 +1316,12 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       deltaTimeSec,
       clear || this.clearNextFrame || moved,
       alpha,
-      view
+      view,
+      fires
     );
     this.clearNextFrame = false;
     this.painter?.paint(frame);
-    this.paintMinimap(view, frame.dynamicWalls);
+    this.paintMinimap(camera, frame.dynamicWalls);
   }
 
   /**
@@ -1411,7 +1432,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     deltaTimeSec: number,
     clear: boolean,
     alpha: number,
-    view: Rect
+    view: Rect,
+    fires: readonly WeaponFire[]
   ): ArenaFrame {
     const balance = this.balance();
     const players = untracked(this.playerStore.entities);
@@ -1451,6 +1473,13 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
             ? player.boostActiveSec / balance.boostDurationSec
             : null,
       })),
+      weaponFires: fires,
+      weaponEffects: this.playerService.getActiveEffects(),
+      seatColors: new Map(players.map((player) => [player.id, player.color])),
+      particleBudget: particleBudget(
+        this.settings.screenResolution(),
+        this.reducedMotion()
+      ),
     };
   }
 
