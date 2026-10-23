@@ -291,10 +291,15 @@ export async function syncAchievements(
   for (const config of configs) {
     const name = nameOf(config);
     if (name == null || !names.has(name)) {
+      // Play deletes drafts only; a published achievement stays for good.
+      const fate =
+        config.published == null
+          ? 'delete the draft in Play Console if it should go'
+          : 'it is published, so it stays';
       console.warn(
         name == null
-          ? `Play Games lists an achievement without an English name (${config.id}), which the game cannot match: name it in Play Console, or delete it.`
-          : `Play Games lists the achievement ${name} (${config.id}), which the game has not: delete it in Play Console if it should go.`
+          ? `Play Games lists an achievement without an English name (${config.id}), which the game cannot match: name it in Play Console, or ${fate}.`
+          : `Play Games lists the achievement ${name} (${config.id}), which the game has not: ${fate}.`
       );
     }
   }

@@ -131,10 +131,14 @@ it still needs; `store/` holds all of it:
   them as drafts through the Play Games Services Publishing API
   (`tools/bacteria-game/play-games.ts`), matched by their English name: an
   achievement renamed in the game is a new one on Play, and the deploy never
-  deletes one, since that takes the players' progress on it; delete the old
-  one in the console. Drafts go live with the Publish button there. A change
-  to the file alone does not ship the app: it reaches Play with the next
-  release that does, or a run of the Deploy release workflow by hand.
+  deletes one, since that takes the players' progress on it. Delete the old
+  one in the console while it is a draft; once published, Play keeps it for
+  good, so rename with care. Drafts go live with the Publish button there. A
+  change to the file alone does not ship the app, and the Deploy release
+  workflow finds nothing to deploy for it: the achievements reach Play with
+  the next release that ships the app, or with
+  `npx nx run bacteria-wars-android:deploy` run locally with the secrets of
+  the README's setup (the whole Android deploy, not only the sync).
 - **Achievement icons** are `store/play-games/achievements/<id>.png`
   (512 × 512, transparent), drawn by
 
