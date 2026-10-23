@@ -6,6 +6,13 @@ export const online: Translation<typeof en> = {
     'Online-Matches gibt es nur mit der Cloud des Spiels – und mit der verbindet sich diese Version nicht.',
   searching: 'Suche einen Gegner …',
   find: 'Gegner finden',
+  level: 'Level',
+  anyLevel: 'Beliebiges Level',
+  levelPicked: {
+    yours: 'Level: {level} (deine Wahl)',
+    theirs: 'Level: {level} (Wahl deines Gegners)',
+    random: 'Level: {level} (zufällig)',
+  },
   withCode: 'Mit Code spielen',
   withCodeText:
     'Eröffne ein Match und schick den Code an einen Freund – oder gib seinen ein.',

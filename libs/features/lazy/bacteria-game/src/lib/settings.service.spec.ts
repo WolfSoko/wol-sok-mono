@@ -10,7 +10,8 @@ import {
 import { I18nService } from './i18n/i18n.service';
 import { GameStateService } from './state/game-state.service';
 import { GameStateStore } from './state/game.states';
-import { LEVELS } from './state/levels';
+import { LEVELS, playableOnline } from './state/levels';
+import { MATCH_LEVELS } from './state/match-level';
 import { DeviceStorage } from './storage/game-storage';
 import { LateGameStorage } from '../testing/late-game-storage';
 
@@ -93,6 +94,33 @@ describe('GameSettingsService', () => {
     expect(stored().freePlay).toBe(true);
     TestBed.resetTestingModule();
     expect(TestBed.inject(GameSettingsService).freePlay()).toBe(true);
+  });
+
+  it('remembers the matchmaking level, any level by default', () => {
+    const service = TestBed.inject(GameSettingsService);
+    expect(service.matchLevel()).toBeNull();
+
+    service.setMatchLevel(MATCH_LEVELS[2].id);
+    expect(stored().matchLevel).toBe(MATCH_LEVELS[2].id);
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(GameSettingsService).matchLevel()).toBe(
+      MATCH_LEVELS[2].id
+    );
+
+    TestBed.inject(GameSettingsService).setMatchLevel(null);
+    expect(stored().matchLevel).toBeUndefined();
+  });
+
+  it('takes only a level that plays online for the matchmaking', () => {
+    const offline = LEVELS.find((level) => !playableOnline(level))?.id;
+    for (const matchLevel of ['moon', offline, 42]) {
+      localStorage.setItem(
+        SETTINGS_STORAGE_KEY,
+        JSON.stringify({ matchLevel })
+      );
+      TestBed.resetTestingModule();
+      expect(TestBed.inject(GameSettingsService).matchLevel()).toBeNull();
+    }
   });
 
   it('remembers the arena, and ignores one it does not know', () => {
@@ -366,6 +394,24 @@ describe('GameSettingsService', () => {
       });
       return TestBed.inject(GameSettingsService);
     }
+
+    it('restores the matchmaking level once the storage answers', () => {
+      const service = createWith({ matchLevel: MATCH_LEVELS[1].id });
+      expect(service.matchLevel()).toBeNull();
+
+      storage.flush();
+
+      expect(service.matchLevel()).toBe(MATCH_LEVELS[1].id);
+    });
+
+    it('keeps a matchmaking level picked before the storage answered', () => {
+      const service = createWith({ matchLevel: MATCH_LEVELS[1].id });
+
+      service.setMatchLevel(null);
+      storage.flush();
+
+      expect(service.matchLevel()).toBeNull();
+    });
 
     it('restores the settings once the storage answers', () => {
       const service = createWith({ levelId: LEVELS[2].id, sound: false });

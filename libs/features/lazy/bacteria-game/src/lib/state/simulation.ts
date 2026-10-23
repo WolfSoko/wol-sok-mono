@@ -1,9 +1,53 @@
-import type { ColonyLayer } from '../arena/colony-renderer';
 import { ColonySpawn, Nutrient, StepEvents } from './bacteria-simulation';
 import { GameBalance } from './game-balance';
-import { Point } from './geometry';
+import { CellBounds, Point } from './geometry';
 import { DynamicWall, GameMap } from './maps';
-import { Player, PlayerColorArray } from './player.model';
+import { Bacteria, Player, PlayerColorArray } from './player.model';
+
+/**
+ * A texture of the GPU simulation (a `WebGLTexture`), typed without the DOM
+ * library so the engine type-checks in Node too. Only the WebGL painter and
+ * the GPU simulation, which share the context, touch it.
+ */
+export type GpuTexture = object;
+
+/** What the renderer needs to know about one colony. */
+export type ColonyLayer = CellsLayer | StateLayer;
+
+interface ColonyLayerBase {
+  /** RGBA, the alpha from 0 to 255. */
+  color: readonly number[];
+  /**
+   * The crosshair of a colony whose boost runs - waves of light rush across
+   * the colony towards it. Null without a boost.
+   */
+  boostTarget: Point | null;
+}
+
+/** A colony of the CPU simulation: its bacteria. */
+export interface CellsLayer extends ColonyLayerBase {
+  kind: 'cells';
+  bacterias: readonly Bacteria[];
+}
+
+/**
+ * A colony of the GPU simulation: where it is in the state texture. Only
+ * the WebGL painter, which shares the simulation's context, can draw it.
+ */
+export interface StateLayer extends ColonyLayerBase {
+  kind: 'state';
+  /** The simulation's cell state texture. */
+  state: GpuTexture;
+  /**
+   * The glow of fights, meals and pushes - one texture for all colonies,
+   * see the simulation's `EFFECTS_FRAGMENT`.
+   */
+  effects: GpuTexture;
+  /** The owner value of the colony's cells in the state. */
+  owner: number;
+  /** The coarse box around the colony, null once it is gone. */
+  bounds: CellBounds | null;
+}
 
 /** What the rest of the game needs to know about a colony each frame. */
 export interface ColonySummary {

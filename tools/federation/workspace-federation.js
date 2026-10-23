@@ -73,6 +73,8 @@ function workspaceFederation(config) {
       // from the shell's last build. Skipped, the remote bundles its own.
       '@wolsok/feat-fourier-analysis',
       '@wolsok/feat-lazy-bac-game',
+      // The engine entry point (for Cloud Functions) belongs to it too.
+      '@wolsok/feat-lazy-bac-game/engine',
       '@wolsok/feat-shader-examples',
       ...(config.skip ?? []),
     ],

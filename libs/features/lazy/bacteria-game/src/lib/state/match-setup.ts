@@ -1,7 +1,7 @@
 import { BotDifficulty } from './bot-controller';
 import { getColonyColor, NEUTRAL_COLOR, toPlayerColor } from './colony-colors';
 import { NEUTRAL_TRAITS } from './game-balance';
-import type { GameMode } from './game.states';
+import type { GameMode } from './game-mode';
 import {
   getLevel,
   gridScale,
