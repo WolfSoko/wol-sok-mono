@@ -89,6 +89,7 @@ describe('MainMenuComponent support tile', () => {
           provide: GAME_SUPPORT,
           useValue: {
             buyMeACoffeeHandle: 'wolf',
+            androidPackage: 'de.wolsok.bacteriawars',
             playTipProductIds: ['tip_small'],
             ads: null,
           },

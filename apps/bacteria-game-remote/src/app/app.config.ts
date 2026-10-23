@@ -35,6 +35,6 @@ export const appConfig: ApplicationConfig = {
     { provide: OverlayContainer, useClass: FullscreenOverlayContainer },
     // Not on the route like the game cloud: inside the shell the game shows
     // neither tips nor ads.
-    ...(environment.support ? [provideGameSupport(environment.support)] : []),
+    provideGameSupport(environment.support),
   ],
 };

@@ -10,6 +10,6 @@ export interface Environment {
    * in the browser's local storage.
    */
   gameCloud: GameCloudOptions | null;
-  /** Tips and ads on the game's own site, null for neither. */
-  support: GameSupportOptions | null;
+  /** Tips and ads on the game's own site. */
+  support: GameSupportOptions;
 }

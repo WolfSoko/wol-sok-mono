@@ -1,4 +1,5 @@
 import {
+  afterNextRender,
   EnvironmentProviders,
   inject,
   makeEnvironmentProviders,
@@ -18,7 +19,11 @@ export function provideGameSupport(
   return makeEnvironmentProviders([
     { provide: GAME_SUPPORT, useValue: options },
     // The consent banner comes with the ad script, and has to be up before
-    // the first ad is asked for - so the script loads with the app.
-    provideEnvironmentInitializer(() => inject(GameAds).start()),
+    // the first ad is asked for - so the script loads with the app, once
+    // its first view is up.
+    provideEnvironmentInitializer(() => {
+      const ads = inject(GameAds);
+      afterNextRender(() => ads.start());
+    }),
   ]);
 }

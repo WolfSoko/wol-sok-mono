@@ -10,7 +10,9 @@ plugins {
 // is signed with.
 // The package name is read from that file, so the two cannot drift apart.
 val host = "bacteria-wars.wolsok.de"
-val launchUrl = "https://$host/"
+// The game tells the app from the browser by this source: the WebView
+// fallback sends no referrer (isTwaSession in the game's support folder).
+val launchUrl = "https://$host/?source=twa"
 val assetLinks = rootDir.resolve("../bacteria-game-remote/src/.well-known/assetlinks.json")
 val packageName = ((JsonSlurper().parse(assetLinks) as List<*>).single() as Map<*, *>)
   .let { it["target"] as Map<*, *> }["package_name"] as String

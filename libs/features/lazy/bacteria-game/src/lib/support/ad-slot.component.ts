@@ -15,7 +15,7 @@ import { GameAds } from './game-ads.service';
 @Component({
   selector: 'feat-lazy-bac-game-ad-slot',
   template: `
-    @if (ads.ready() && ads.ad; as ad) {
+    @if (ads.consentAnswered() && ads.ad; as ad) {
       <span class="label" aria-hidden="true">Ad</span>
       <ins
         #slot
@@ -25,7 +25,6 @@ import { GameAds } from './game-ads.service';
         data-full-width-responsive="true"
         [attr.data-ad-client]="ad.client"
         [attr.data-ad-slot]="ad.slot"
-        [attr.data-npa]="ads.personalised() ? null : '1'"
       ></ins>
     }
   `,
@@ -47,12 +46,9 @@ export class AdSlotComponent {
   private readonly slot = viewChild<ElementRef<HTMLElement>>('slot');
 
   public constructor() {
-    let filled: HTMLElement | null = null;
+    // Runs again only when the slot element changes.
     afterRenderEffect(() => {
-      const slot = this.slot()?.nativeElement ?? null;
-      if (!slot || slot === filled) return;
-      filled = slot;
-      this.ads.fill();
+      if (this.slot()) this.ads.fill();
     });
   }
 }

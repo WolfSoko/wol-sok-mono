@@ -37,6 +37,7 @@ describe('HelpComponent', () => {
           provide: GAME_SUPPORT,
           useValue: {
             buyMeACoffeeHandle: 'wolf',
+            androidPackage: 'de.wolsok.bacteriawars',
             playTipProductIds: [],
             ads: { client: 'ca-pub-1', slot: '42' },
           },
@@ -46,8 +47,10 @@ describe('HelpComponent', () => {
     jest
       .spyOn(TestBed.inject(GameSupport), 'url')
       .mockReturnValue('https://buymeacoffee.com/wolf');
+    const ads = TestBed.inject(GameAds);
+    jest.spyOn(ads, 'consentAnswered').mockReturnValue(true);
     const reopen = jest
-      .spyOn(TestBed.inject(GameAds), 'openConsentSettings')
+      .spyOn(ads, 'openConsentSettings')
       .mockImplementation(() => undefined);
 
     const host = render();

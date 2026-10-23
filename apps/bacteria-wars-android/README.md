@@ -48,8 +48,10 @@ Google Play allows tips to the developer only through Play Billing, so inside
 the app the game never shows its Buy Me a Coffee link. It offers consumable
 Play products instead, bought with the Digital Goods API and Payment Request
 (`libs/features/lazy/bacteria-game/src/lib/support/`). The game tells the app
-from the browser by the referrer `android-app://…`, which it keeps in the
-session storage for reloads.
+from the browser by the launch URL's `?source=twa` (set in
+`app/build.gradle.kts`; the WebView fallback sends no referrer) or, for links
+the app opens, by the referrer `android-app://<package>`, and keeps that in
+the session storage for reloads.
 
 This project adds what Chrome needs for that: the `billing` module of
 androidbrowserhelper, `DelegationService` (registers the
@@ -61,7 +63,7 @@ the next start.
 In the Play Console, create the consumable in-app products `tip_small`,
 `tip_medium` and `tip_large` (Monetize → Products → In-app products) with a
 price and a title, and set up a payments profile. The ids are in
-`apps/bacteria-game-remote/src/environments/environment.prod.ts`; products
+`apps/bacteria-game-remote/src/environments/game-support.ts`; products
 missing in Play are left out, and without any the app shows no tips.
 Purchases can only be tried on a phone, with a bundle from a Play testing
 track and a license tester account.

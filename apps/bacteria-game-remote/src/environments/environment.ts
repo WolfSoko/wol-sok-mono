@@ -3,6 +3,7 @@
 // The list of file replacements can be found in `angular.json`.
 
 import { Environment } from './environment.type';
+import { SUPPORT_DEFAULTS } from './game-support';
 
 export const environment: Environment = {
   production: false,
@@ -10,9 +11,5 @@ export const environment: Environment = {
   // Firebase emulators instead.
   gameCloud: null,
   // The coffee link and the tips; no ads outside the live site.
-  support: {
-    buyMeACoffeeHandle: 'wolf',
-    playTipProductIds: ['tip_small', 'tip_medium', 'tip_large'],
-    ads: null,
-  },
+  support: SUPPORT_DEFAULTS,
 };

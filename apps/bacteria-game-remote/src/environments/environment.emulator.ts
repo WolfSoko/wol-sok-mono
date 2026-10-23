@@ -1,4 +1,5 @@
 import { Environment } from './environment.type';
+import { SUPPORT_DEFAULTS } from './game-support';
 
 /**
  * Development against the local Firebase emulators, started by
@@ -26,9 +27,5 @@ export const environment: Environment = {
       databasePort: 9410,
     },
   },
-  support: {
-    buyMeACoffeeHandle: 'wolf',
-    playTipProductIds: ['tip_small', 'tip_medium', 'tip_large'],
-    ads: null,
-  },
+  support: SUPPORT_DEFAULTS,
 };

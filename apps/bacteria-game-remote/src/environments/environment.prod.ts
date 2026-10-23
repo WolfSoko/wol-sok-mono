@@ -1,4 +1,5 @@
 import { Environment } from './environment.type';
+import { SUPPORT_DEFAULTS } from './game-support';
 
 export const environment: Environment = {
   production: true,
@@ -18,15 +19,7 @@ export const environment: Environment = {
         'https://bacteria-wars-default-rtdb.europe-west1.firebasedatabase.app',
     },
   },
-  support: {
-    buyMeACoffeeHandle: 'wolf',
-    // Consumable in-app products of the Play listing (de.wolsok.bacteriawars).
-    playTipProductIds: ['tip_small', 'tip_medium', 'tip_large'],
-    ads: {
-      client: 'ca-pub-6346271540341424',
-      // The display ad unit for the menu screens, from AdSense. Empty keeps
-      // the ads, and the consent banner they need, off.
-      slot: '',
-    },
-  },
+  // For ads, add the display ad unit for the menu screens from AdSense:
+  // ads: { client: 'ca-pub-6346271540341424', slot: '<ad unit id>' }
+  support: SUPPORT_DEFAULTS,
 };

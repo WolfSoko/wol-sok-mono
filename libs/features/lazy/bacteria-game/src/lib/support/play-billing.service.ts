@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { inject, Injectable } from '@angular/core';
 
-export const PLAY_BILLING_METHOD = 'https://play.google.com/billing';
+const PLAY_BILLING_METHOD = 'https://play.google.com/billing';
 
 /** A tip product as the Play Store sells it in the player's country. */
 export interface TipProduct {
@@ -24,13 +24,13 @@ interface DigitalGoodsPurchase {
 }
 
 /** The part of the Digital Goods API the app's billing bridge answers. */
-export interface DigitalGoodsService {
+interface DigitalGoodsService {
   getDetails(itemIds: string[]): Promise<DigitalGoodsItem[]>;
   listPurchases(): Promise<DigitalGoodsPurchase[]>;
   consume(purchaseToken: string): Promise<void>;
 }
 
-export type DigitalGoodsWindow = Window & {
+type DigitalGoodsWindow = Window & {
   getDigitalGoodsService?: (method: string) => Promise<DigitalGoodsService>;
 };
 
@@ -46,7 +46,7 @@ export type DigitalGoodsWindow = Window & {
 export class PlayBillingService {
   private readonly window = inject(DOCUMENT)
     .defaultView as DigitalGoodsWindow | null;
-  private service: Promise<DigitalGoodsService | null> | null = null;
+  private service: DigitalGoodsService | null = null;
 
   /** The products in the given order, or null without Play Billing. */
   public async loadProducts(
@@ -119,14 +119,12 @@ export class PlayBillingService {
     }
   }
 
-  private digitalGoods(): Promise<DigitalGoodsService | null> {
-    const pending = (this.service ??= this.connect());
-    // A failed connect - the app's bridge not bound yet - is tried again on
-    // the next call rather than turning billing off for the session.
-    void pending.then((service) => {
-      if (!service && this.service === pending) this.service = null;
-    });
-    return pending;
+  /**
+   * Keeps only a connected service: a failed connect - the app's bridge
+   * not bound yet - is tried again on the next call.
+   */
+  private async digitalGoods(): Promise<DigitalGoodsService | null> {
+    return (this.service ??= await this.connect());
   }
 
   private async connect(): Promise<DigitalGoodsService | null> {

@@ -7,6 +7,7 @@ import { PlayBillingService, TipProduct } from './play-billing.service';
 const OPTIONS: GameSupportOptions = {
   buyMeACoffeeHandle: 'wolf',
   playTipProductIds: ['tip_small', 'tip_large'],
+  androidPackage: 'de.wolsok.bacteriawars',
   ads: null,
 };
 
@@ -33,6 +34,7 @@ describe('GameSupport', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    history.replaceState(null, '', '/');
   });
 
   async function setUp(
@@ -48,6 +50,7 @@ describe('GameSupport', () => {
     });
     const support = TestBed.inject(GameSupport);
     TestBed.inject(ApplicationRef).tick();
+    await Promise.resolve();
     await Promise.resolve();
     return support;
   }
@@ -75,6 +78,43 @@ describe('GameSupport', () => {
     );
   });
 
+  it('knows the app by the source its launch URL carries, as in the WebView', async () => {
+    history.replaceState(null, '', '/?source=twa');
+
+    const support = await setUp();
+
+    expect(support.url()).toBeNull();
+  });
+
+  it('stays on the web when another app opened the game', async () => {
+    const support = await setUp(
+      OPTIONS,
+      'android-app://com.google.android.gm/'
+    );
+
+    expect(support.url()).toBe('https://buymeacoffee.com/wolf');
+    expect(billing.loadProducts).not.toHaveBeenCalled();
+  });
+
+  it('consumes leftover tips once billing answers', async () => {
+    jest.useFakeTimers();
+    billing.loadProducts.mockResolvedValueOnce(null);
+    const support = await setUp(
+      OPTIONS,
+      'android-app://de.wolsok.bacteriawars/'
+    );
+    expect(billing.consumePending).not.toHaveBeenCalled();
+
+    // The first retry waits two seconds.
+    await jest.advanceTimersByTimeAsync(2000);
+
+    expect(support.tipProducts()).toEqual(PRODUCTS);
+    expect(billing.consumePending).toHaveBeenCalledWith(
+      OPTIONS.playTipProductIds
+    );
+    jest.useRealTimers();
+  });
+
   it('still knows it is in the app after a reload', async () => {
     sessionStorage.setItem('bacteria-game.twa', '1');
 
@@ -96,11 +136,11 @@ describe('GameSupport', () => {
     );
 
     const tip = support.tip('tip_small');
-    expect(support.busyTip()).toBe('tip_small');
+    expect(support.tipBusy()).toBe(true);
     await tip;
 
     expect(billing.buy).toHaveBeenCalledWith('tip_small');
-    expect(support.busyTip()).toBeNull();
+    expect(support.tipBusy()).toBe(false);
     expect(support.tipNotice()).toBe('thanks');
   });
 

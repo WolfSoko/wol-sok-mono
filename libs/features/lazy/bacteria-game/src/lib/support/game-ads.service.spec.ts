@@ -11,17 +11,13 @@ import { GAME_SUPPORT, GameSupportOptions } from './game-support';
 const OPTIONS: GameSupportOptions = {
   buyMeACoffeeHandle: 'wolf',
   playTipProductIds: [],
+  androidPackage: 'de.wolsok.bacteriawars',
   ads: { client: 'ca-pub-1', slot: '42' },
-};
-
-const ALL_CONSENTS = {
-  purpose: { consents: { 1: true, 3: true, 4: true } },
-  vendor: { consents: { 755: true } },
 };
 
 describe('GameAds', () => {
   const adsWindow = window as AdsWindow;
-  let listener: ((tcData: TcData, success: boolean) => void) | undefined;
+  let listeners: ((tcData: TcData, success: boolean) => void)[];
 
   function setUp(options: GameSupportOptions | null = OPTIONS): GameAds {
     TestBed.configureTestingModule({
@@ -32,20 +28,30 @@ describe('GameAds', () => {
 
   function installCmp(): void {
     adsWindow.__tcfapi = (_command, _version, callback) => {
-      listener = callback;
+      listeners.push(callback);
     };
   }
 
+  function report(tcData: TcData): void {
+    for (const listener of listeners) listener(tcData, true);
+  }
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    listeners = [];
+  });
+
   afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers();
     document.getElementById(AD_SCRIPT_ID)?.remove();
     delete adsWindow.__tcfapi;
     delete adsWindow.adsbygoogle;
     delete adsWindow.googlefc;
-    listener = undefined;
-    jest.useRealTimers();
   });
 
-  it('loads the ad script once with the publisher id', () => {
+  it('loads the ad script and listens for the consent once', () => {
+    installCmp();
     const ads = setUp();
 
     ads.start();
@@ -56,15 +62,28 @@ describe('GameAds', () => {
     expect((scripts[0] as HTMLScriptElement).src).toBe(
       'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1'
     );
+    expect(listeners).toHaveLength(1);
   });
 
-  it('loads nothing without an ad unit', () => {
-    const ads = setUp({ ...OPTIONS, ads: { client: 'ca-pub-1', slot: '' } });
+  it('loads nothing without ads', () => {
+    const ads = setUp({ ...OPTIONS, ads: null });
 
     ads.start();
 
     expect(document.getElementById(AD_SCRIPT_ID)).toBeNull();
     expect(ads.ad).toBeNull();
+  });
+
+  it('stops waiting for the consent banner when the script is blocked', () => {
+    const ads = setUp();
+    ads.start();
+
+    document.getElementById(AD_SCRIPT_ID)?.dispatchEvent(new Event('error'));
+    jest.advanceTimersByTime(TCF_POLL_INTERVAL_MS);
+    installCmp();
+    jest.advanceTimersByTime(TCF_POLL_INTERVAL_MS * 5);
+
+    expect(listeners).toHaveLength(0);
   });
 
   it('loads nothing without support options, as inside the shell', () => {
@@ -75,35 +94,26 @@ describe('GameAds', () => {
     expect(document.getElementById(AD_SCRIPT_ID)).toBeNull();
   });
 
-  it('waits for the consent before it shows ads', () => {
+  it('waits for the player to answer the consent banner', () => {
     installCmp();
     const ads = setUp();
     ads.start();
 
-    listener?.({ eventStatus: 'cmpuishown', ...ALL_CONSENTS }, true);
-    expect(ads.ready()).toBe(false);
+    report({ eventStatus: 'cmpuishown' });
+    expect(ads.consentAnswered()).toBe(false);
 
-    listener?.({ eventStatus: 'useractioncomplete', ...ALL_CONSENTS }, true);
-    expect(ads.ready()).toBe(true);
-    expect(ads.personalised()).toBe(true);
+    report({ eventStatus: 'useractioncomplete' });
+    expect(ads.consentAnswered()).toBe(true);
   });
 
-  it('shows non-personalised ads when the player declined profiling', () => {
+  it('shows ads at once to a player who answered on an earlier visit', () => {
     installCmp();
     const ads = setUp();
     ads.start();
 
-    listener?.(
-      {
-        eventStatus: 'tcloaded',
-        purpose: { consents: { 1: true } },
-        vendor: { consents: { 755: true } },
-      },
-      true
-    );
+    report({ eventStatus: 'tcloaded' });
 
-    expect(ads.ready()).toBe(true);
-    expect(ads.personalised()).toBe(false);
+    expect(ads.consentAnswered()).toBe(true);
   });
 
   it('needs no answer where the GDPR does not apply', () => {
@@ -111,22 +121,21 @@ describe('GameAds', () => {
     const ads = setUp();
     ads.start();
 
-    listener?.({ eventStatus: 'tcloaded', gdprApplies: false }, true);
+    report({ eventStatus: 'cmpuishown', gdprApplies: false });
 
-    expect(ads.ready()).toBe(true);
-    expect(ads.personalised()).toBe(true);
+    expect(ads.consentAnswered()).toBe(true);
   });
 
   it('listens once the script has brought the consent banner', () => {
-    jest.useFakeTimers();
     const ads = setUp();
     ads.start();
-    expect(listener).toBeUndefined();
+    expect(listeners).toHaveLength(0);
 
     installCmp();
     jest.advanceTimersByTime(TCF_POLL_INTERVAL_MS);
+    jest.advanceTimersByTime(TCF_POLL_INTERVAL_MS * 5);
 
-    expect(listener).toBeDefined();
+    expect(listeners).toHaveLength(1);
   });
 
   it('fills a slot by pushing to the ad queue', () => {
@@ -139,12 +148,13 @@ describe('GameAds', () => {
 
   it('opens the consent banner again once the consent data is ready', () => {
     const ads = setUp();
-    const showRevocationMessage = jest.fn();
-    adsWindow.googlefc = { showRevocationMessage };
 
     ads.openConsentSettings();
-    expect(showRevocationMessage).not.toHaveBeenCalled();
-    adsWindow.googlefc.callbackQueue?.[0]?.['CONSENT_DATA_READY']?.();
+    // The consent script may set up its own object meanwhile.
+    const queue = adsWindow.googlefc?.callbackQueue;
+    const showRevocationMessage = jest.fn();
+    adsWindow.googlefc = { callbackQueue: queue, showRevocationMessage };
+    queue?.[0]?.['CONSENT_DATA_READY']?.();
 
     expect(showRevocationMessage).toHaveBeenCalled();
   });

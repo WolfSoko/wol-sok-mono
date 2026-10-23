@@ -18,7 +18,9 @@ export interface GameSupportOptions {
    * Billing, so the app never shows the Buy Me a Coffee link.
    */
   readonly playTipProductIds: readonly string[];
-  /** Null for no ads. */
+  /** The package of the Play Store app, to tell it from the browser. */
+  readonly androidPackage: string;
+  /** Null for no ads, and no consent banner either. */
   readonly ads: GameAdsOptions | null;
 }
 

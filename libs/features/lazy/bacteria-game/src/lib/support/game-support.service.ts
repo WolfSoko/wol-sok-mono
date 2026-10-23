@@ -6,6 +6,7 @@ import {
   Injectable,
   signal,
 } from '@angular/core';
+import { beforeRetry } from '../storage/retry';
 import { GAME_SUPPORT } from './game-support';
 import { PlayBillingService, TipProduct } from './play-billing.service';
 import { isTwaSession } from './twa-session';
@@ -13,10 +14,9 @@ import { isTwaSession } from './twa-session';
 /** What happened to the last tip, for a line under the tip buttons. */
 export type TipNotice = 'thanks' | 'failed' | null;
 
-export const PRODUCT_LOAD_ATTEMPTS = 3;
-export const PRODUCT_LOAD_RETRY_MS = 2000;
+const PRODUCT_LOAD_ATTEMPTS = 3;
 
-export function buyMeACoffeeUrl(handle: string): string {
+function buyMeACoffeeUrl(handle: string): string {
   return `https://buymeacoffee.com/${encodeURIComponent(handle)}`;
 }
 
@@ -33,37 +33,40 @@ export class GameSupport {
   private readonly billing = inject(PlayBillingService);
   private readonly document = inject(DOCUMENT);
 
-  private readonly where = signal<'web' | 'app' | null>(null);
+  private readonly onWeb = signal(false);
   private readonly products = signal<readonly TipProduct[]>([]);
-  private readonly buying = signal<string | null>(null);
+  private readonly buying = signal(false);
   private readonly lastTip = signal<TipNotice>(null);
 
   /** The Buy Me a Coffee page, null in the app or without a handle. */
   public readonly url = computed(() => {
     const handle = this.options?.buyMeACoffeeHandle;
-    return this.where() === 'web' && handle ? buyMeACoffeeUrl(handle) : null;
+    return this.onWeb() && handle ? buyMeACoffeeUrl(handle) : null;
   });
   /** The tips the Play Store sells, empty outside the app. */
   public readonly tipProducts = this.products.asReadonly();
   public readonly available = computed(
     () => this.url() !== null || this.products().length > 0
   );
-  /** The tip whose purchase is open, null while none is. */
-  public readonly busyTip = this.buying.asReadonly();
+  /** True while a tip's purchase is open. */
+  public readonly tipBusy = this.buying.asReadonly();
   public readonly tipNotice = this.lastTip.asReadonly();
 
   public constructor() {
-    if (!this.options) return;
+    const options = this.options;
+    if (!options) return;
     afterNextRender(() => {
-      const app = isTwaSession(this.document);
-      this.where.set(app ? 'app' : 'web');
-      if (app) void this.loadProducts();
+      if (isTwaSession(this.document, options.androidPackage)) {
+        void this.loadProducts();
+      } else {
+        this.onWeb.set(true);
+      }
     });
   }
 
   public async tip(productId: string): Promise<void> {
     if (this.buying()) return;
-    this.buying.set(productId);
+    this.buying.set(true);
     this.lastTip.set(null);
     try {
       const outcome = await this.billing.buy(productId);
@@ -71,25 +74,24 @@ export class GameSupport {
     } catch {
       this.lastTip.set('failed');
     } finally {
-      this.buying.set(null);
+      this.buying.set(false);
     }
   }
 
   private async loadProducts(): Promise<void> {
     const ids = this.options?.playTipProductIds ?? [];
     if (ids.length === 0) return;
-    void this.billing.consumePending(ids);
     // Right after the start the app's billing bridge may not be bound yet.
     for (let attempt = 1; ; attempt++) {
       const products = await this.billing.loadProducts(ids);
       if (products) {
         this.products.set(products);
+        // Now that billing answers, tips a closed app left unconsumed.
+        await this.billing.consumePending(ids);
         return;
       }
       if (attempt === PRODUCT_LOAD_ATTEMPTS) return;
-      await new Promise((done) =>
-        setTimeout(done, PRODUCT_LOAD_RETRY_MS * attempt)
-      );
+      await beforeRetry(attempt);
     }
   }
 }

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { SUPPORT_DEFAULTS } from './environments/game-support';
 
 // The Android app (apps/bacteria-wars-android) reads its package name from
 // this file and gets fullscreen only while the file names its signing keys.
@@ -34,5 +35,11 @@ describe('asset links for the Android app', () => {
     for (const fingerprint of assetLinks[0].target.sha256_cert_fingerprints) {
       expect(fingerprint).toMatch(/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/);
     }
+  });
+
+  it('name the package the game tells the app by', () => {
+    expect(assetLinks[0].target.package_name).toBe(
+      SUPPORT_DEFAULTS.androidPackage
+    );
   });
 });

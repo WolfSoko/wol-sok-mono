@@ -26,7 +26,7 @@ import { GameSupport } from './game-support.service';
             <button
               mat-flat-button
               type="button"
-              [disabled]="support.busyTip() !== null"
+              [disabled]="support.tipBusy()"
               (click)="support.tip(product.id)"
             >
               <mat-icon>local_cafe</mat-icon>
