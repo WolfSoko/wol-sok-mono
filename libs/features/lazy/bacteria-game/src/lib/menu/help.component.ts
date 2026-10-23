@@ -19,15 +19,10 @@ import { AdSlotComponent } from '../support/ad-slot.component';
 import { GameAds } from '../support/game-ads.service';
 import { GameSupport } from '../support/game-support.service';
 import { SupportCardComponent } from '../support/support-card.component';
+import { PRIVACY_POLICY_URL } from '../support/legal-links';
 import { ScreenHeaderComponent } from './screen-header.component';
 
 const { agarDivideFactor, iceStayChance } = ZONE_EFFECTS;
-
-/**
- * The game's privacy policy, on the game's own site: the Play listing links
- * to it as well, and inside the shell a relative link would miss it.
- */
-export const PRIVACY_POLICY_URL = 'https://bacteria-wars.wolsok.de/privacy';
 
 /**
  * The values each kind of ground's rule is filled with - every kind has
