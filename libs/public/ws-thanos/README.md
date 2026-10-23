@@ -54,6 +54,7 @@ export class SharedModule {}
 | -------------------- | :-----: | ------: | -------------------------------------------------------------------: |
 | animationLength      | number  |    5000 |                                           the animation length in ms |
 | maxParticleCount     | number  | 3000000 | max amount of particles (capped at 400000 without WebGL2, see below) |
+| maxCapturePixels     | number  |   unset |           most pixels to capture the element with, see GPU rendering |
 | particleAcceleration | number  |      30 |                                   speed of the particle acceleration |
 | sound                | boolean |    true |                           play a windy, sandy sound while vaporizing |
 | soundVolume          | number  |     0.5 |                                      volume of the sound from 0 to 1 |
@@ -94,6 +95,11 @@ afterNextRender(() => void thanos.preload());
 The particles are simulated and drawn on the graphics card with WebGL2,
 one particle per device pixel (up to a pixel ratio of 2) for crisp results on high resolution screens.
 Without WebGL2 ws-thanos falls back to the CPU canvas renderer, which captures at css pixels and uses at most 400000 particles.
+
+A big element on a big screen makes millions of pixels, and the effect canvas around it is five times as tall.
+Set `maxCapturePixels` to capture it with fewer: ws-thanos lowers the pixel ratio, below css pixels if needed,
+so the particles get coarser. `maxParticleCount` instead leaves out random pixels at full resolution.
+Both renderers follow it.
 The effect canvas has a `data-ws-thanos-renderer` attribute (`webgl` or `canvas`) showing which renderer is in use.
 
 #### Crumble variants

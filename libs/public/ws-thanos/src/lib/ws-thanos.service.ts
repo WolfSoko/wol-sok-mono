@@ -109,7 +109,8 @@ export class WsThanosService {
     ].join(';');
     body.appendChild(elem);
 
-    const { maxParticleCount, particleAcceleration } = this.thanosOptions;
+    const { maxParticleCount, maxCapturePixels, particleAcceleration } =
+      this.thanosOptions;
     let rendererChoice: ParticleRendererChoice | undefined;
     let renderer: ParticleRenderer | undefined;
     try {
@@ -117,7 +118,7 @@ export class WsThanosService {
       const capture = await this.capture(elem, () => 1);
       await idle(window);
       // take a WebGL context only now, not while waiting for idle time
-      rendererChoice = this.chooseRenderer(maxParticleCount);
+      rendererChoice = this.chooseRenderer(maxParticleCount, maxCapturePixels);
       // dust skips the crack shader, the other variants compile every shader
       ({ renderer } = this.createRenderer(rendererChoice, capture, {
         particleAcceleration,
@@ -140,12 +141,20 @@ export class WsThanosService {
     elem: HTMLElement,
     options: WsThanosOptions
   ): Observable<AnimationState> {
-    const { animationLength, maxParticleCount, particleAcceleration, crumble } =
-      options;
+    const {
+      animationLength,
+      maxParticleCount,
+      maxCapturePixels,
+      particleAcceleration,
+      crumble,
+    } = options;
 
     elem.style.opacity = elem.style.opacity || '1';
 
-    const rendererChoice = this.chooseRenderer(maxParticleCount);
+    const rendererChoice = this.chooseRenderer(
+      maxParticleCount,
+      maxCapturePixels
+    );
     let effect: RunningEffect | undefined;
 
     const capture = this.capture(elem, (width, height) =>
@@ -211,9 +220,13 @@ export class WsThanosService {
     );
   }
 
-  private chooseRenderer(maxParticleCount: number): ParticleRendererChoice {
+  private chooseRenderer(
+    maxParticleCount: number,
+    maxCapturePixels: number | undefined
+  ): ParticleRendererChoice {
     return chooseParticleRenderer({
       maxParticleCount,
+      maxCapturePixels,
       devicePixelRatio: this.document.defaultView?.devicePixelRatio ?? 1,
       createCanvas: () => this.document.createElement('canvas'),
       gpuBudget: this.gpuBudget,

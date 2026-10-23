@@ -92,6 +92,37 @@
         }
       </mat-button-toggle-group>
     </div>
+    <div class="option-picker">
+      <span class="option-label">Vaporize effect</span>
+      <mat-button-toggle-group
+        aria-label="Vaporize effect"
+        hideSingleSelectionIndicator
+        [value]="settings.vaporize()"
+        (change)="settings.setVaporize($event.value)"
+      >
+        @for (option of vaporizeQualities; track option.id) {
+          <mat-button-toggle [value]="option.id">
+            {{ option.name }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    </div>
+    <div class="option-picker">
+      <span class="option-label">Vaporize duration</span>
+      <mat-button-toggle-group
+        aria-label="Vaporize duration"
+        hideSingleSelectionIndicator
+        [disabled]="settings.vaporize() === 'off'"
+        [value]="settings.vaporizeMs()"
+        (change)="settings.setVaporizeMs($event.value)"
+      >
+        @for (option of vaporizeDurations; track option.ms) {
+          <mat-button-toggle [value]="option.ms">
+            {{ option.name }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    </div>
     @if (locked()) {
       <span class="resolution-hint">
         Pick the colours and resolutions before a match - they stay as they are
