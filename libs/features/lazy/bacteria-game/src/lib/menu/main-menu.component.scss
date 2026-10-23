@@ -140,6 +140,33 @@
   }
 }
 
+// Evolution glows while its DNA buys something.
+.tile.evolve.ready {
+  border-color: var(--bw-gold);
+  animation: evolve-ready 1.8s ease-in-out infinite;
+}
+
+.tile-helix {
+  color: var(--bw-soft);
+}
+
+@keyframes evolve-ready {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(233 185 73 / 0%);
+  }
+
+  50% {
+    box-shadow: 0 0 16px 1px rgb(233 185 73 / 45%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile.evolve.ready {
+    animation: none;
+  }
+}
+
 // The friend requests waiting, a gold pill in the tile's corner.
 .count {
   @include screen.figure;

@@ -13,6 +13,15 @@ describe('HelpComponent', () => {
     return fixture.nativeElement;
   }
 
+  it('explains evolution: the DNA, the genes, the weapons and where they count', () => {
+    const section = render().querySelector('.evolution');
+
+    expect(section?.querySelector('h3')?.textContent?.trim()).toBe('Evolution');
+    expect(section?.textContent).toContain('Every 50 XP you earn');
+    expect(section?.textContent).toContain('second button next to the boost');
+    expect(section?.textContent).toContain('daily level, endless runs');
+  });
+
   it('links to the privacy policy in a tab of its own', () => {
     const host = render();
 

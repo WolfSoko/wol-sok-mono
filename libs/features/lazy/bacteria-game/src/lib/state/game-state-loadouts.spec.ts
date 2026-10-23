@@ -102,7 +102,12 @@ describe('GameStateService loadouts', () => {
       throw new Error('no plan');
     }
     const inputs = { steers: [], drags: [], boosts: [] } as ReplayInputs;
-    const run = replayOf({ ...recorded, loadouts: undefined }, 'cpu', 0, inputs);
+    const run = replayOf(
+      { ...recorded, loadouts: undefined },
+      'cpu',
+      0,
+      inputs
+    );
 
     service.playGhost(run);
     service.start();

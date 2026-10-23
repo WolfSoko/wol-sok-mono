@@ -102,6 +102,30 @@
   </div>
 }
 
+@if (dna() !== null || canEvolve()) {
+  <div class="dna">
+    @if (dna(); as count) {
+      <p class="dna-gain">
+        <feat-lazy-bac-game-dna-helix class="dna-helix" [size]="30" />
+        <span class="dna-count">{{
+          "evolution.match.dna" | t: { count }
+        }}</span>
+      </p>
+    }
+    @if (canEvolve()) {
+      <button
+        mat-flat-button
+        type="button"
+        class="evolve"
+        (click)="action.emit('evolve')"
+      >
+        <mat-icon>auto_awesome</mat-icon>
+        {{ "evolution.match.evolve" | t }}
+      </button>
+    }
+  </div>
+}
+
 @if (earned().length > 0 || unlocked().length > 0 || cosmetics().length > 0) {
   <ul class="news" [attr.aria-label]="'match.news.label' | t">
     @for (achievement of earned(); track achievement.id) {

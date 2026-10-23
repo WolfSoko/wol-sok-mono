@@ -80,6 +80,25 @@ describe('MainMenuComponent', () => {
     expect(fullscreen.mock.calls).toEqual([[true], [false]]);
   });
 
+  it('opens Evolution, with a badge while the DNA buys something', () => {
+    const tile = () => button('Evolution');
+    expect(tile().querySelector('.count')).toBeNull();
+    expect(tile().classList).not.toContain('ready');
+
+    fixture.componentRef.setInput('evolveDna', 7);
+    fixture.detectChanges();
+
+    expect(tile().classList).toContain('ready');
+    expect(tile().querySelector('.count')?.textContent?.trim()).toBe('7');
+    expect(
+      tile().querySelector('.cdk-visually-hidden')?.textContent?.trim()
+    ).toBe('7 DNA to spend');
+    const open = jest.fn();
+    fixture.componentInstance.open.subscribe(open);
+    tile().click();
+    expect(open).toHaveBeenCalledWith('evolution');
+  });
+
   it('shows the friends only with the cloud, with the requests waiting', () => {
     const tile = () =>
       Array.from(host.querySelectorAll('.tiles button')).find((b) =>
