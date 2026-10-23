@@ -11,7 +11,9 @@ import {
   cellDensity,
   ColonyLayer,
   hatchPattern,
+  isLatticeLook,
   jamDrops,
+  LATTICE_REACH,
   overcharge,
   StateLayer,
   strengthOf,
@@ -365,7 +367,11 @@ export class GlArenaPainter implements ArenaPainter {
       layer.kind === 'cells'
         ? this.uploadCells(layer.bacterias, frame.balance)
         : layer.bounds;
-    if (bounds == null || !this.inView(bounds, MARGIN.colony)) {
+    // The lattice looks reach past the colony with their cells and tiles.
+    const margin =
+      MARGIN.colony +
+      (isLatticeLook(frame.look) ? Math.ceil(LATTICE_REACH * this.unit) : 0);
+    if (bounds == null || !this.inView(bounds, margin)) {
       return;
     }
     // Only the box around the colony is blurred and drawn - the rest of the
@@ -390,7 +396,7 @@ export class GlArenaPainter implements ArenaPainter {
       gl.enable(gl.BLEND);
     }
 
-    this.scissorCanvas(bounds, MARGIN.colony);
+    this.scissorCanvas(bounds, margin);
     const program = programs.colony;
     this.useFullscreen(program);
     bindTexture(gl, 0, blur[1].texture, program.uniforms['uDensity']);

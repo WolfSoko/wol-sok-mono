@@ -184,14 +184,17 @@ const SLIME_REACH = 3;
  * The cells the slime of a colony is worked out on: its bacteria and
  * {@link SLIME_REACH} around them, cut to what the canvas shows - null when
  * none of it is in view. Cut at the view, the blur clamps a few cells short
- * of the truth, so the cut lies {@link SLIME_REACH} cells beyond the view;
+ * of the truth, so the cut lies {@link SLIME_REACH} cells beyond the view,
+ * and `beyondView` more for a look whose cells reach in from past it;
  * around the bacteria the density is zero anyway.
  */
 export function slimeRegion(
   bacterias: readonly Bacteria[],
   view: Rect,
   width: number,
-  height: number
+  height: number,
+  /** How many cells past the view a look still reads - the lattice looks'. */
+  beyondView = 0
 ): CellBounds | null {
   if (bacterias.length === 0) {
     return null;
@@ -201,7 +204,7 @@ export function slimeRegion(
     growBounds(bounds, x, y);
   }
   // The cells the view touches, one more for a pixel half in it.
-  const reach = SLIME_REACH + 1;
+  const reach = SLIME_REACH + 1 + beyondView;
   const minX = Math.max(
     0,
     bounds.minX - SLIME_REACH,
@@ -330,8 +333,9 @@ export function paintSlime(
  * they are as big on every grid. A cell exists where the colony's density
  * at its centre reaches {@link CELL_MIN}; it grows with the density, so the
  * cells are small along the front and where the colony is weak, and big and
- * tightly packed inside. The WebGL painter draws the same lattice - see
- * `COLONY_FRAGMENT`.
+ * tightly packed inside. The WebGL painter draws the same lattice with the
+ * same constants (`COLONY_FRAGMENT` interpolates them), jittered by its own
+ * hash - so the two painters agree on the look, not on each cell.
  */
 export const CELL_SPACING = 3.4;
 /** The height of a lattice row, in spacings - a hex lattice. */
@@ -339,15 +343,15 @@ export const CELL_ROW_HEIGHT = 0.866;
 /** The density at a cell's centre below which there is no cell. */
 export const CELL_MIN = 0.12;
 /** The biggest cell, as a share of the spacing - neighbours just overlap. */
-const CELL_RADIUS = 0.62;
+export const CELL_RADIUS = 0.62;
 /** Where the light spot sits on a cell, on its unit disc. */
-const CELL_FOCAL_X = -0.35;
-const CELL_FOCAL_Y = -0.4;
+export const CELL_FOCAL_X = -0.35;
+export const CELL_FOCAL_Y = -0.4;
 /** How dark the base under the cells and the tiles is, a share of the colour. */
-const CELL_BASE = 0.42;
+export const CELL_BASE = 0.42;
 /** The density below which no cell shows, so none floats over bare floor. */
-const CELL_CLIP_START = 0.03;
-const CELL_CLIP_END = 0.09;
+export const CELL_CLIP_START = 0.03;
+export const CELL_CLIP_END = 0.09;
 
 /**
  * The honeycomb and the crystal look: the colony tiled, every tile the
@@ -359,32 +363,46 @@ const CELL_CLIP_END = 0.09;
  */
 export const TILE_SPACING = 2.8;
 export const TILE_MIN = 0.12;
-/** How far a crystal facet's centre strays from its lattice point. */
-const CRYSTAL_JITTER = 0.3;
+/** How far a crystal facet's centre strays from its lattice point, in spacings. */
+export const CRYSTAL_JITTER = 0.3;
 /** How wide the seams between the tiles are, in spacings. */
-const TILE_SEAM = 0.12;
+export const TILE_SEAM = 0.12;
+
+/**
+ * How far past the colony a cell or a tile of the lattice looks can reach,
+ * in base cells: a cell's centre lies within a cell of the colony, its
+ * radius is at most {@link CELL_RADIUS} spacings and a bit, a facet strays
+ * {@link CRYSTAL_JITTER} spacings and fills to the next centre. Both
+ * painters work that much further out for these looks than for the slime.
+ */
+export const LATTICE_REACH = 3;
+
+/** True for the looks laid on a lattice, which reach {@link LATTICE_REACH}. */
+export function isLatticeLook(look: BacteriaLook): boolean {
+  return look === 'cells' || look === 'honeycomb' || look === 'crystal';
+}
 
 /**
  * The neon look: a dark body whose outline glows in the colony's colour,
  * with a fainter line further in and a soft halo outside.
  */
-const NEON_LINE_START = 0.04;
-const NEON_LINE_END = 0.24;
-const NEON_INNER_START = 0.38;
-const NEON_INNER_END = 0.45;
-const NEON_BODY = 0.22;
+export const NEON_LINE_START = 0.04;
+export const NEON_LINE_END = 0.24;
+export const NEON_INNER_START = 0.38;
+export const NEON_INNER_END = 0.45;
+export const NEON_BODY = 0.22;
 
 /**
  * The ink look: a flat body hatched with lines {@link INK_HATCH_SPACING}
  * base cells apart - crossed where the colony is thin - and a thick outline
  * in ink. Each colony is hatched in its own pattern ({@link hatchPattern}).
  */
-const INK_HATCH_SPACING = 2.2;
-const INK_HATCH_WIDTH = 0.4;
-const INK_OUTLINE_END = 0.31;
-const INK_CROSS_BELOW = 0.45;
-const INK = 0.18;
-const INK_HATCH = 0.62;
+export const INK_HATCH_SPACING = 2.2;
+export const INK_HATCH_WIDTH = 0.4;
+export const INK_OUTLINE_END = 0.31;
+export const INK_CROSS_BELOW = 0.45;
+export const INK = 0.18;
+export const INK_HATCH = 0.62;
 
 /** One cell of the cells look: its centre in arena cells and its radius. */
 export interface CellBubble {
@@ -445,14 +463,12 @@ export function latticeTile(
   height: number
 ): { x: number; y: number; density: number; shade: number } {
   const rowHeight = spacing * CELL_ROW_HEIGHT;
-  const jitter = crystal ? CRYSTAL_JITTER : 0;
-  const x =
-    (col + 0.5) * spacing +
-    cellLatticeOffset(row, spacing) +
-    (hash(col, row, 4) - 0.5) * spacing * jitter * 2;
-  const y =
-    (row + 0.5) * rowHeight +
-    (hash(col, row, 5) - 0.5) * rowHeight * jitter * 2;
+  let x = (col + 0.5) * spacing + cellLatticeOffset(row, spacing);
+  let y = (row + 0.5) * rowHeight;
+  if (crystal) {
+    x += (hash(col, row, 4) - 0.5) * spacing * CRYSTAL_JITTER * 2;
+    y += (hash(col, row, 5) - 0.5) * rowHeight * CRYSTAL_JITTER * 2;
+  }
   return {
     x,
     y,
@@ -602,14 +618,102 @@ function paintLook(
   }
 }
 
-/** The lattice points around a region, one ring more, for the lattice looks. */
-function latticeAround(region: CellBounds, spacing: number) {
+/**
+ * The points of a lattice look around a region, one ring more, each with
+ * `stride` values worked out once by `fill` - a pixel then only looks the
+ * nine around it up ({@link forLatticeNeighbours}).
+ */
+interface Lattice {
+  values: Float32Array;
+  stride: number;
+  spacing: number;
+  rowHeight: number;
+  row0: number;
+  row1: number;
+  col0: number;
+  cols: number;
+}
+
+function buildLattice(
+  region: CellBounds,
+  spacing: number,
+  stride: number,
+  fill: (col: number, row: number, at: number, values: Float32Array) => void
+): Lattice {
   const rowHeight = spacing * CELL_ROW_HEIGHT;
   const row0 = Math.floor(region.minY / rowHeight) - 1;
   const row1 = Math.floor((region.maxY + 1) / rowHeight) + 1;
   const col0 = Math.floor((region.minX - spacing * 0.5) / spacing) - 1;
   const col1 = Math.floor((region.maxX + 1) / spacing) + 1;
-  return { row0, row1, col0, col1, cols: col1 - col0 + 1, rowHeight };
+  const cols = col1 - col0 + 1;
+  const values = new Float32Array(cols * (row1 - row0 + 1) * stride);
+  for (let row = row0; row <= row1; row++) {
+    for (let col = col0; col <= col1; col++) {
+      fill(col, row, ((row - row0) * cols + (col - col0)) * stride, values);
+    }
+  }
+  return { values, stride, spacing, rowHeight, row0, row1, col0, cols };
+}
+
+/**
+ * Visits the lattice points around an arena position - the three rows
+ * around it, three points each - with the index of each one's values.
+ */
+function forLatticeNeighbours(
+  { values, stride, spacing, rowHeight, row0, row1, col0, cols }: Lattice,
+  x: number,
+  y: number,
+  visit: (at: number, values: Float32Array) => void
+): void {
+  const row = Math.floor(y / rowHeight);
+  for (let dr = -1; dr <= 1; dr++) {
+    const candidateRow = row + dr;
+    if (candidateRow < row0 || candidateRow > row1) {
+      continue;
+    }
+    const c0 = Math.floor(
+      (x - cellLatticeOffset(candidateRow, spacing)) / spacing
+    );
+    for (let dc = -1; dc <= 1; dc++) {
+      const col = c0 + dc;
+      if (col < col0 || col >= col0 + cols) {
+        continue;
+      }
+      visit(((candidateRow - row0) * cols + (col - col0)) * stride, values);
+    }
+  }
+}
+
+/**
+ * Lays a look's colour in `out` with its alpha over the dark base of the
+ * lattice looks, and returns the alpha of both together - 0 for a clear
+ * pixel.
+ */
+function overBase(
+  out: Float64Array,
+  alpha: number,
+  base: readonly number[],
+  baseAlpha: number
+): number {
+  const total = alpha + baseAlpha * (1 - alpha);
+  if (total <= 0) {
+    return 0;
+  }
+  const rest = baseAlpha * (1 - alpha);
+  for (let c = 0; c < 3; c++) {
+    out[c] = alpha > 0 ? (out[c] * alpha + base[c] * rest) / total : base[c];
+  }
+  out[3] = total;
+  return total;
+}
+
+/** The colony's colour lightened, darkened and as the base under its cells. */
+function lookPalette(color: readonly number[]) {
+  return {
+    light: color.slice(0, 3).map((c) => c + (255 - c) * 0.55),
+    dark: color.slice(0, 3).map((c) => c * 0.5),
+    base: color.slice(0, 3).map((c) => c * CELL_BASE),
+  };
 }
 
 /**
@@ -657,29 +761,40 @@ export function paintCells(
   unit: number,
   region: CellBounds = wholeArena(width, height)
 ): void {
-  const light = color.slice(0, 3).map((c) => c + (255 - c) * 0.55);
-  const dark = color.slice(0, 3).map((c) => c * 0.5);
-  const base = color.slice(0, 3).map((c) => c * CELL_BASE);
+  const { light, dark, base } = lookPalette(color);
   const spacing = CELL_SPACING * unit;
-  const { row0, row1, col0, col1, cols, rowHeight } = latticeAround(
-    region,
-    spacing
-  );
-
-  // The cells whose lattice points lie around the region, worked out once:
-  // a pixel then only looks the nine around it up.
-  const lattice = new Float32Array(cols * (row1 - row0 + 1) * 3);
-  for (let row = row0; row <= row1; row++) {
-    for (let col = col0; col <= col1; col++) {
-      const bubble = cellBubble(col, row, spacing, density, width, height);
-      if (bubble != null) {
-        const at = ((row - row0) * cols + (col - col0)) * 3;
-        lattice[at] = bubble.x;
-        lattice[at + 1] = bubble.y;
-        lattice[at + 2] = bubble.radius;
-      }
+  // Each lattice point's cell: centre x, y and radius, 0 for none.
+  const lattice = buildLattice(region, spacing, 3, (col, row, at, values) => {
+    const bubble = cellBubble(col, row, spacing, density, width, height);
+    if (bubble != null) {
+      values[at] = bubble.x;
+      values[at + 1] = bubble.y;
+      values[at + 2] = bubble.radius;
     }
-  }
+  });
+
+  // The cell the pixel is deepest in, of the nine lattice points around.
+  let bestQ2 = Infinity;
+  let bestRadius = 0;
+  let ux = 0;
+  let uy = 0;
+  let x = 0;
+  let y = 0;
+  const nearestCell = (at: number, values: Float32Array) => {
+    const radius = values[at + 2];
+    if (radius <= 0) {
+      return;
+    }
+    const vx = (x - values[at]) / radius;
+    const vy = (y - values[at + 1]) / radius;
+    const q2 = vx * vx + vy * vy;
+    if (q2 < bestQ2) {
+      bestQ2 = q2;
+      bestRadius = radius;
+      ux = vx;
+      uy = vy;
+    }
+  };
 
   paintLook(
     data8,
@@ -690,68 +805,27 @@ export function paintCells(
     shimmer,
     region,
     CELL_CLIP_START,
-    (x, y, d, out) => {
-      // The cell the pixel is deepest in, of the nine lattice points around.
-      const row = Math.floor(y / rowHeight);
-      let bestQ = Infinity;
-      let bestRadius = 0;
-      let ux = 0;
-      let uy = 0;
-      for (let dr = -1; dr <= 1; dr++) {
-        const candidateRow = row + dr;
-        if (candidateRow < row0 || candidateRow > row1) {
-          continue;
-        }
-        const c0 = Math.floor(
-          (x - cellLatticeOffset(candidateRow, spacing)) / spacing
-        );
-        for (let dc = -1; dc <= 1; dc++) {
-          const col = c0 + dc;
-          if (col < col0 || col > col1) {
-            continue;
-          }
-          const at = ((candidateRow - row0) * cols + (col - col0)) * 3;
-          const radius = lattice[at + 2];
-          if (radius <= 0) {
-            continue;
-          }
-          const vx = (x - lattice[at]) / radius;
-          const vy = (y - lattice[at + 1]) / radius;
-          const q = Math.hypot(vx, vy);
-          if (q < bestQ) {
-            bestQ = q;
-            bestRadius = radius;
-            ux = vx;
-            uy = vy;
-          }
-        }
-      }
+    (px, py, d, out) => {
+      x = px;
+      y = py;
+      bestQ2 = Infinity;
+      bestRadius = 0;
+      forLatticeNeighbours(lattice, x, y, nearestCell);
 
       const baseAlpha = 0.92 * smoothstep(SLIME_EDGE_START, SLIME_EDGE_END, d);
       // Anti-aliased at the rim, one layer pixel wide.
       const cellAlpha =
         bestRadius > 0
-          ? clamp((1 - bestQ) * bestRadius * SLIME_SCALE + 0.5, 0, 1) *
-            smoothstep(CELL_CLIP_START, CELL_CLIP_END, d)
+          ? clamp(
+              (1 - Math.sqrt(bestQ2)) * bestRadius * SLIME_SCALE + 0.5,
+              0,
+              1
+            ) * smoothstep(CELL_CLIP_START, CELL_CLIP_END, d)
           : 0;
-      const alpha = cellAlpha + baseAlpha * (1 - cellAlpha);
-      if (alpha <= 0) {
-        return false;
-      }
       if (cellAlpha > 0) {
         sphereShade(ux, uy, color, light, dark, out);
-        for (let c = 0; c < 3; c++) {
-          out[c] =
-            (out[c] * cellAlpha + base[c] * baseAlpha * (1 - cellAlpha)) /
-            alpha;
-        }
-      } else {
-        out[0] = base[0];
-        out[1] = base[1];
-        out[2] = base[2];
       }
-      out[3] = alpha;
-      return true;
+      return overBase(out, cellAlpha, base, baseAlpha) > 0;
     }
   );
 }
@@ -779,35 +853,45 @@ export function paintTiles(
   crystal: boolean,
   region: CellBounds = wholeArena(width, height)
 ): void {
-  const light = color.slice(0, 3).map((c) => c + (255 - c) * 0.55);
-  const dark = color.slice(0, 3).map((c) => c * 0.5);
-  const base = color.slice(0, 3).map((c) => c * CELL_BASE);
+  const { light, dark, base } = lookPalette(color);
   const spacing = TILE_SPACING * unit;
-  const { row0, row1, col0, col1, cols, rowHeight } = latticeAround(
-    region,
-    spacing
-  );
+  // Each lattice point's tile: centre x, y, the density under it, its shade.
+  const lattice = buildLattice(region, spacing, 4, (col, row, at, values) => {
+    const tile = latticeTile(
+      col,
+      row,
+      spacing,
+      crystal,
+      density,
+      width,
+      height
+    );
+    values[at] = tile.x;
+    values[at + 1] = tile.y;
+    values[at + 2] = tile.density;
+    values[at + 3] = tile.shade;
+  });
+  const radius = spacing * 0.55;
 
-  // Each lattice point's tile - centre, density under it and shade - once.
-  const lattice = new Float32Array(cols * (row1 - row0 + 1) * 4);
-  for (let row = row0; row <= row1; row++) {
-    for (let col = col0; col <= col1; col++) {
-      const tile = latticeTile(
-        col,
-        row,
-        spacing,
-        crystal,
-        density,
-        width,
-        height
-      );
-      const at = ((row - row0) * cols + (col - col0)) * 4;
-      lattice[at] = tile.x;
-      lattice[at + 1] = tile.y;
-      lattice[at + 2] = tile.density;
-      lattice[at + 3] = tile.shade;
+  // The nearest tile centre and the second nearest - the seam lies where
+  // they are as far away.
+  let nearest2 = Infinity;
+  let second2 = Infinity;
+  let nearestAt = -1;
+  let x = 0;
+  let y = 0;
+  const nearestTiles = (at: number, values: Float32Array) => {
+    const dx = x - values[at];
+    const dy = y - values[at + 1];
+    const distance2 = dx * dx + dy * dy;
+    if (distance2 < nearest2) {
+      second2 = nearest2;
+      nearest2 = distance2;
+      nearestAt = at;
+    } else if (distance2 < second2) {
+      second2 = distance2;
     }
-  }
+  };
 
   paintLook(
     data8,
@@ -818,63 +902,36 @@ export function paintTiles(
     shimmer,
     region,
     CELL_CLIP_START,
-    (x, y, d, out) => {
-      // The nearest tile centre and the second nearest - the seam lies
-      // where they are as far away.
-      const row = Math.floor(y / rowHeight);
-      let nearest = Infinity;
-      let second = Infinity;
-      let at = -1;
-      for (let dr = -1; dr <= 1; dr++) {
-        const candidateRow = row + dr;
-        if (candidateRow < row0 || candidateRow > row1) {
-          continue;
-        }
-        const c0 = Math.floor(
-          (x - cellLatticeOffset(candidateRow, spacing)) / spacing
-        );
-        for (let dc = -1; dc <= 1; dc++) {
-          const col = c0 + dc;
-          if (col < col0 || col > col1) {
-            continue;
-          }
-          const candidate = ((candidateRow - row0) * cols + (col - col0)) * 4;
-          const distance = Math.hypot(
-            x - lattice[candidate],
-            y - lattice[candidate + 1]
-          );
-          if (distance < nearest) {
-            second = nearest;
-            nearest = distance;
-            at = candidate;
-          } else if (distance < second) {
-            second = distance;
-          }
-        }
-      }
+    (px, py, d, out) => {
+      x = px;
+      y = py;
+      nearest2 = Infinity;
+      second2 = Infinity;
+      nearestAt = -1;
+      forLatticeNeighbours(lattice, x, y, nearestTiles);
+      const values = lattice.values;
 
       const baseAlpha = 0.92 * smoothstep(SLIME_EDGE_START, SLIME_EDGE_END, d);
-      const tileDensity = at < 0 ? 0 : lattice[at + 2];
+      const tileDensity = nearestAt < 0 ? 0 : values[nearestAt + 2];
       const tileAlpha =
         smoothstep(TILE_MIN, TILE_MIN + 0.1, tileDensity) *
         smoothstep(CELL_CLIP_START, CELL_CLIP_END, d);
-      const alpha = tileAlpha + baseAlpha * (1 - tileAlpha);
-      if (alpha <= 0) {
-        return false;
-      }
       if (tileAlpha > 0) {
         // 0 on the seam, 1 a seam's width into the tile.
-        const inside = smoothstep(0, TILE_SEAM, (second - nearest) / spacing);
+        const inside = smoothstep(
+          0,
+          TILE_SEAM,
+          (Math.sqrt(second2) - Math.sqrt(nearest2)) / spacing
+        );
         if (crystal) {
-          const shade = lattice[at + 3];
+          const shade = values[nearestAt + 3];
           for (let c = 0; c < 3; c++) {
             out[c] = lerp(light[c], color[c] * shade, inside);
           }
         } else {
-          const radius = spacing * 0.55;
           sphereShade(
-            (x - lattice[at]) / radius,
-            (y - lattice[at + 1]) / radius,
+            (x - values[nearestAt]) / radius,
+            (y - values[nearestAt + 1]) / radius,
             color,
             light,
             dark,
@@ -885,18 +942,8 @@ export function paintTiles(
           out[1] *= seam;
           out[2] *= seam;
         }
-        for (let c = 0; c < 3; c++) {
-          out[c] =
-            (out[c] * tileAlpha + base[c] * baseAlpha * (1 - tileAlpha)) /
-            alpha;
-        }
-      } else {
-        out[0] = base[0];
-        out[1] = base[1];
-        out[2] = base[2];
       }
-      out[3] = alpha;
-      return true;
+      return overBase(out, tileAlpha, base, baseAlpha) > 0;
     }
   );
 }
@@ -1185,7 +1232,8 @@ export class ColonyRenderer {
           colony.bacterias,
           view,
           this.width,
-          this.height
+          this.height,
+          isLatticeLook(look) ? Math.ceil(LATTICE_REACH * this.unit) : 0
         );
         if (region == null) {
           continue;

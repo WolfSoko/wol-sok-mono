@@ -11,12 +11,36 @@ import {
   RECORD_MASK,
 } from '../../gl/simulation-shaders';
 import {
+  CELL_BASE,
+  CELL_CLIP_END,
+  CELL_CLIP_START,
+  CELL_FOCAL_X,
+  CELL_FOCAL_Y,
   CELL_MIN,
+  CELL_RADIUS,
   CELL_ROW_HEIGHT,
   CELL_SPACING,
+  CRYSTAL_JITTER,
+  INK,
+  INK_CROSS_BELOW,
+  INK_HATCH,
+  INK_HATCH_SPACING,
+  INK_HATCH_WIDTH,
+  INK_OUTLINE_END,
+  NEON_BODY,
+  NEON_INNER_END,
+  NEON_INNER_START,
+  NEON_LINE_END,
+  NEON_LINE_START,
   TILE_MIN,
+  TILE_SEAM,
   TILE_SPACING,
 } from '../colony-renderer';
+
+/** A number as a GLSL float literal - a whole one needs its point. */
+function float(value: number): string {
+  return Number.isInteger(value) ? value.toFixed(1) : String(value);
+}
 
 /** The value of `uLook` for each look of the colony pass. */
 export const LOOK_INDEX = {
@@ -162,29 +186,29 @@ ${ARENA_POSITION}
 const float EDGE_START = 0.07;
 const float EDGE_END = 0.17;
 const vec2 LIGHT = vec2(-0.6, -0.8);
-const float CELL_SPACING = ${CELL_SPACING};
-const float CELL_ROW_HEIGHT = ${CELL_ROW_HEIGHT};
-const float CELL_MIN = ${CELL_MIN};
-const float CELL_RADIUS = 0.62;
-const vec2 CELL_FOCAL = vec2(-0.35, -0.4);
-const float CELL_BASE = 0.42;
-const float CELL_CLIP_START = 0.03;
-const float CELL_CLIP_END = 0.09;
-const float TILE_SPACING = ${TILE_SPACING};
-const float TILE_MIN = ${TILE_MIN};
-const float CRYSTAL_JITTER = 0.3;
-const float TILE_SEAM = 0.12;
-const float NEON_LINE_START = 0.04;
-const float NEON_LINE_END = 0.24;
-const float NEON_INNER_START = 0.38;
-const float NEON_INNER_END = 0.45;
-const float NEON_BODY = 0.22;
-const float INK_HATCH_SPACING = 2.2;
-const float INK_HATCH_WIDTH = 0.4;
-const float INK_OUTLINE_END = 0.31;
-const float INK_CROSS_BELOW = 0.45;
-const float INK = 0.18;
-const float INK_HATCH = 0.62;
+const float CELL_SPACING = ${float(CELL_SPACING)};
+const float CELL_ROW_HEIGHT = ${float(CELL_ROW_HEIGHT)};
+const float CELL_MIN = ${float(CELL_MIN)};
+const float CELL_RADIUS = ${float(CELL_RADIUS)};
+const vec2 CELL_FOCAL = vec2(${float(CELL_FOCAL_X)}, ${float(CELL_FOCAL_Y)});
+const float CELL_BASE = ${float(CELL_BASE)};
+const float CELL_CLIP_START = ${float(CELL_CLIP_START)};
+const float CELL_CLIP_END = ${float(CELL_CLIP_END)};
+const float TILE_SPACING = ${float(TILE_SPACING)};
+const float TILE_MIN = ${float(TILE_MIN)};
+const float CRYSTAL_JITTER = ${float(CRYSTAL_JITTER)};
+const float TILE_SEAM = ${float(TILE_SEAM)};
+const float NEON_LINE_START = ${float(NEON_LINE_START)};
+const float NEON_LINE_END = ${float(NEON_LINE_END)};
+const float NEON_INNER_START = ${float(NEON_INNER_START)};
+const float NEON_INNER_END = ${float(NEON_INNER_END)};
+const float NEON_BODY = ${float(NEON_BODY)};
+const float INK_HATCH_SPACING = ${float(INK_HATCH_SPACING)};
+const float INK_HATCH_WIDTH = ${float(INK_HATCH_WIDTH)};
+const float INK_OUTLINE_END = ${float(INK_OUTLINE_END)};
+const float INK_CROSS_BELOW = ${float(INK_CROSS_BELOW)};
+const float INK = ${float(INK)};
+const float INK_HATCH = ${float(INK_HATCH)};
 
 // Crests closing in on the crosshair - see shimmerAt in colony-renderer.ts.
 float shimmer(vec2 p, float t) {
@@ -291,13 +315,16 @@ vec4 cellsLook(vec2 p, float d) {
 // and the density under it - see latticeTile in colony-renderer.ts.
 vec3 latticeTile(ivec2 lattice, float spacing, bool crystal) {
   float rowHeight = spacing * CELL_ROW_HEIGHT;
-  float jitter = crystal ? CRYSTAL_JITTER : 0.0;
   vec2 centre = vec2(
-    (float(lattice.x) + 0.5) * spacing + latticeOffset(lattice.y, spacing)
-      + (hash01(lattice, 4u) - 0.5) * spacing * jitter * 2.0,
+    (float(lattice.x) + 0.5) * spacing + latticeOffset(lattice.y, spacing),
     (float(lattice.y) + 0.5) * rowHeight
-      + (hash01(lattice, 5u) - 0.5) * rowHeight * jitter * 2.0
   );
+  if (crystal) {
+    centre += vec2(
+      (hash01(lattice, 4u) - 0.5) * spacing,
+      (hash01(lattice, 5u) - 0.5) * rowHeight
+    ) * CRYSTAL_JITTER * 2.0;
+  }
   return vec3(centre, textureLod(uDensity, centre / uArena, 0.0).r);
 }
 

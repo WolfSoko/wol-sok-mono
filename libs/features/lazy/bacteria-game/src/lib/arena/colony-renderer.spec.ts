@@ -341,6 +341,22 @@ describe('hatchPattern', () => {
   });
 });
 
+describe('slimeRegion', () => {
+  it('reaches further past the view for a look that asks for it', () => {
+    const view: Rect = { x: 10, y: 0, width: 10, height: HEIGHT };
+    const bacterias = blob(20, 10, 8);
+
+    const slime = slimeRegion(bacterias, view, WIDTH, HEIGHT);
+    const lattice = slimeRegion(bacterias, view, WIDTH, HEIGHT, 3);
+
+    expect(slime).not.toBeNull();
+    // Past the view's right edge, where the colony goes on.
+    expect(lattice?.maxX).toBe((slime?.maxX ?? 0) + 3);
+    // On the left the bacteria end first, which cuts both the same.
+    expect(lattice?.minX).toBe(slime?.minX);
+  });
+});
+
 describe('cellBubble', () => {
   const field = (value: number) => new Float32Array(WIDTH * HEIGHT).fill(value);
 
