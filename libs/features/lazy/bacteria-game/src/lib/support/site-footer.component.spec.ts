@@ -8,7 +8,8 @@ import { GAME_SUPPORT } from './game-support';
 import { SiteFooterComponent } from './site-footer.component';
 
 describe('SiteFooterComponent', () => {
-  let ads: Pick<GameAds, 'consentAnswered' | 'openConsentSettings'> & {
+  let ads: {
+    consentAnswered: GameAds['consentAnswered'];
     openConsentSettings: jest.Mock;
   };
 

@@ -4,7 +4,10 @@ import { I18nService } from '../i18n/i18n.service';
 import { InstallBannerComponent } from './install-banner.component';
 import { InstallOffer } from './install-offer.service';
 
-type FakeOffer = Pick<InstallOffer, 'platform' | 'storeUrl'> & {
+// The service's fields are readonly; a spec sets them per case.
+type FakeOffer = {
+  -readonly [K in 'platform' | 'storeUrl']: InstallOffer[K];
+} & {
   canInstallWebApp: ReturnType<typeof signal<boolean>>;
   installWebApp: jest.Mock;
   dismiss: jest.Mock;
