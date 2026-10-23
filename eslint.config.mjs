@@ -21,6 +21,7 @@ const selectorPrefixes = {
   'apps/fourier-analysis-remote': ['wolsok', 'wolsok'],
   'apps/shader-examples-remote': ['app', 'app'],
   'apps/pacetrainer': ['pace', 'pace'],
+  'apps/portfolio': ['wolsok', 'wolsok'],
   'apps/rollapolla-analog': ['rap', 'rap'],
   'libs/features/api/auth': ['ftApiAuth', 'ft-api-auth'],
   'libs/features/lazy/bacteria-game': ['featLazyBacGame', 'feat-lazy-bac-game'],
