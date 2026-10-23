@@ -64,6 +64,11 @@ import { InstallOffer } from './install-offer.service';
       display: block;
     }
 
+    // Without an offer the host would still take a slot, and a gap, in the menu's column.
+    :host:empty {
+      display: none;
+    }
+
     .banner {
       position: relative;
       display: grid;

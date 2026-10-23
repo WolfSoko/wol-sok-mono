@@ -7,7 +7,7 @@ import {
   Injectable,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { isObject } from '../state/is-object';
 import { DeviceStorage } from '../storage/game-storage';
@@ -71,10 +71,14 @@ export class InstallOffer {
 
   private readonly inBrowser = signal(false);
   private readonly promptEvent = signal<BeforeInstallPromptEvent | null>(null);
-  /** Undefined until the device storage has answered. */
-  private readonly dismissedAt = toSignal(
-    this.storage.watch(INSTALL_OFFER_KEY).pipe(map(parseDismissedAt))
-  );
+  /** True while the browser's install prompt is open. */
+  private readonly prompting = signal(false);
+  /**
+   * When the offer was dismissed, null for never - undefined until the
+   * device has answered. Set by `dismiss` as well, since the local storage
+   * tells only other tabs of a write.
+   */
+  private readonly dismissedAt = signal<number | null | undefined>(undefined);
 
   public readonly platform: InstallPlatform;
   /** The Play listing of the Android app, null without the game's support options. */
@@ -108,6 +112,11 @@ export class InstallOffer {
     this.storeUrl = options ? playStoreUrl(options.androidPackage) : null;
     if (!options || !window) return;
 
+    this.storage
+      .watch(INSTALL_OFFER_KEY)
+      .pipe(map(parseDismissedAt), takeUntilDestroyed())
+      .subscribe((at) => this.dismissedAt.set(at));
+
     const onPrompt = (event: Event): void => {
       // Chrome's own mini-infobar stays away; the banner asks instead.
       event.preventDefault();
@@ -134,24 +143,32 @@ export class InstallOffer {
     });
   }
 
-  /** Shows the browser's install prompt, where it offered one. */
+  /**
+   * Shows the browser's install prompt, where it offered one. The banner
+   * stays up while the prompt is open; the browser lets the prompt show
+   * once, so a refused one is gone until the next page load.
+   */
   public async installWebApp(): Promise<void> {
     const event = this.promptEvent();
-    if (!event) return;
-    // The browser lets a prompt show once; a refused one comes again with the next page load.
-    this.promptEvent.set(null);
+    if (!event || this.prompting()) return;
+    this.prompting.set(true);
     try {
       await event.prompt();
       const { outcome } = await event.userChoice;
       if (outcome === 'accepted') this.inBrowser.set(false);
     } catch {
       // The prompt was not available after all: the banner falls back to the store link.
+    } finally {
+      this.prompting.set(false);
+      this.promptEvent.set(null);
     }
   }
 
   /** Puts the offer away for a month on this device. */
   public dismiss(): void {
-    this.storage.write(INSTALL_OFFER_KEY, { dismissedAt: Date.now() });
+    const now = Date.now();
+    this.dismissedAt.set(now);
+    this.storage.write(INSTALL_OFFER_KEY, { dismissedAt: now });
   }
 
   /** True when the page runs as an installed web app, not in a browser tab. */

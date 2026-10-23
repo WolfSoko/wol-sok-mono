@@ -1,9 +1,9 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { I18nService } from '../i18n/i18n.service';
 import { GameAds } from './game-ads.service';
 import { GAME_SUPPORT, GameSupportOptions } from './game-support';
-import { LEGAL_NOTICE_URL, PRIVACY_POLICY_URL } from './legal-links';
 import { SiteFooterComponent } from './site-footer.component';
 
 const OPTIONS: GameSupportOptions = {
@@ -25,6 +25,7 @@ describe('SiteFooterComponent', () => {
   function render(options: GameSupportOptions | null = OPTIONS): HTMLElement {
     TestBed.configureTestingModule({
       providers: [
+        provideRouter([]),
         { provide: GAME_SUPPORT, useValue: options },
         {
           provide: GameAds,
@@ -44,9 +45,12 @@ describe('SiteFooterComponent', () => {
     expect(host.textContent).toContain(
       `© ${new Date().getFullYear()} Wolfram Sokollek`
     );
-    expect(links.map((a) => [a.textContent?.trim(), a.href])).toEqual([
-      ['Privacy policy', PRIVACY_POLICY_URL],
-      ['Legal notice', LEGAL_NOTICE_URL],
+    // Routes of the site's own app, so the game is not torn down on the way.
+    expect(
+      links.map((a) => [a.textContent?.trim(), a.getAttribute('href')])
+    ).toEqual([
+      ['Privacy policy', '/privacy'],
+      ['Legal notice', '/impressum'],
     ]);
     expect(host.querySelector('button')).toBeNull();
   });

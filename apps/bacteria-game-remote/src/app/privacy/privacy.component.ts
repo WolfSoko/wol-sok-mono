@@ -9,6 +9,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { setUpLegalPage } from '../legal/legal-page';
+import { SITE_OWNER } from '../legal/site-owner';
 
 /**
  * Where the policy lives, for its canonical link. The game's help screen
@@ -37,6 +38,9 @@ const DESCRIPTION =
 export class PrivacyComponent {
   private readonly document = inject(DOCUMENT);
   private readonly fragment = toSignal(inject(ActivatedRoute).fragment);
+
+  /** The controller, named in both languages. */
+  protected readonly owner = SITE_OWNER;
 
   public constructor() {
     setUpLegalPage({

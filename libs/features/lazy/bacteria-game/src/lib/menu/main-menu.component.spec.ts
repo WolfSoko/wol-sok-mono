@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { provideRouter } from '@angular/router';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';
@@ -135,6 +136,8 @@ describe('MainMenuComponent support tile', () => {
   function render(where: 'web' | 'app'): HTMLElement {
     TestBed.configureTestingModule({
       providers: [
+        // The footer's links are routes of the game's own site.
+        provideRouter([]),
         {
           provide: GAME_SUPPORT,
           useValue: {

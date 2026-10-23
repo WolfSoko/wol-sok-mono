@@ -1,8 +1,8 @@
 <main>
   <header>
     <img src="icons/icon-192.png" alt="" />
-    <p class="brand">Bacteria <span>War</span></p>
-    <nav aria-label="Sprache / Language">
+    <p class="brand">Bacteria <span>Wars</span></p>
+    <nav aria-label="Sprache und Seiten / Language and pages">
       <a routerLink="." fragment="de" hreflang="de" (click)="scrollTo('de')"
         >Deutsch</a
       >
@@ -39,8 +39,11 @@
     </p>
     <h2 id="de-verantwortlich">1. Verantwortlicher</h2>
     <address class="contact">
-      Wolfram Sokollek<br />
-      E-Mail: <a href="mailto:privacy@wolsok.de">privacy&#64;wolsok.de</a>
+      {{ owner.name }}<br />
+      @for (line of owner.addressLines; track line) {
+        {{ line }}<br />
+      }
+      E-Mail: <a href="mailto:{{ owner.email }}">{{ owner.email }}</a>
     </address>
     <p>
       Für alle Fragen zum Datenschutz und zur Ausübung deiner Rechte kannst du
@@ -317,8 +320,11 @@
 
     <h2 id="en-controller">1. Controller</h2>
     <address class="contact">
-      Wolfram Sokollek<br />
-      Email: <a href="mailto:privacy@wolsok.de">privacy&#64;wolsok.de</a>
+      {{ owner.name }}<br />
+      @for (line of owner.addressLines; track line) {
+        {{ line }}<br />
+      }
+      Email: <a href="mailto:{{ owner.email }}">{{ owner.email }}</a>
     </address>
     <p>
       Contact this address with any question about your data or to exercise your

@@ -94,15 +94,22 @@ describe('InstallOffer', () => {
     return offer;
   }
 
-  function installPrompt(): { prompt: jest.Mock; event: Event } {
+  function installPrompt(outcome: 'accepted' | 'dismissed' = 'accepted'): {
+    prompt: jest.Mock;
+    event: Event;
+    choose: () => void;
+  } {
     const event = new Event('beforeinstallprompt', { cancelable: true });
     const prompt = jest.fn().mockResolvedValue(undefined);
+    let choose: () => void = () => undefined;
     Object.assign(event, {
       prompt,
-      userChoice: Promise.resolve({ outcome: 'accepted' }),
+      userChoice: new Promise((resolve) => {
+        choose = () => resolve({ outcome });
+      }),
     });
     window.dispatchEvent(event);
-    return { prompt, event };
+    return { prompt, event, choose };
   }
 
   it('offers the Play Store app on Android, once the device has answered', () => {
@@ -132,18 +139,40 @@ describe('InstallOffer', () => {
     storage.flush();
     expect(offer.visible()).toBe(false);
 
-    const { prompt, event } = installPrompt();
+    const { prompt, event, choose } = installPrompt();
 
     // Chrome's own mini-infobar stays away.
     expect(event.defaultPrevented).toBe(true);
     expect(offer.visible()).toBe(true);
     expect(offer.canInstallWebApp()).toBe(true);
 
-    await offer.installWebApp();
+    const installing = offer.installWebApp();
+    await Promise.resolve();
+    // The banner stays up while the browser's prompt is open.
+    expect(prompt).toHaveBeenCalledTimes(1);
+    expect(offer.visible()).toBe(true);
+    void offer.installWebApp();
+    expect(prompt).toHaveBeenCalledTimes(1);
 
-    expect(prompt).toHaveBeenCalled();
+    choose();
+    await installing;
+
     // Installed: the browser tab is no longer where the game is played.
     expect(offer.visible()).toBe(false);
+  });
+
+  it('keeps the store link when the browser prompt is refused on Android', async () => {
+    const offer = setUp(ANDROID_UA);
+    storage.flush();
+    const { choose } = installPrompt('dismissed');
+
+    const installing = offer.installWebApp();
+    choose();
+    await installing;
+
+    // The browser shows its prompt once per page load; the store stays.
+    expect(offer.canInstallWebApp()).toBe(false);
+    expect(offer.visible()).toBe(true);
   });
 
   it('is put away for a month, per device', () => {
@@ -153,6 +182,8 @@ describe('InstallOffer', () => {
     jest.spyOn(Date, 'now').mockReturnValue(now);
 
     offer.dismiss();
+    // Gone at once - the local storage tells only other tabs of the write.
+    expect(offer.visible()).toBe(false);
     storage.flush();
 
     expect(storage.stored(INSTALL_OFFER_KEY)).toEqual({ dismissedAt: now });

@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { GameAds } from './game-ads.service';
 import { GAME_SUPPORT } from './game-support';
 import {
-  LEGAL_NOTICE_URL,
-  PRIVACY_POLICY_URL,
+  LEGAL_NOTICE_PATH,
+  PRIVACY_POLICY_PATH,
   SITE_OWNER,
 } from './legal-links';
 
@@ -12,18 +13,23 @@ import {
  * The legal lines a site owes under every page: who runs it, the privacy
  * policy, the legal notice (Impressum) and, once the consent banner was
  * answered, the way back into it. Only on the game's own site, in the
- * browser and the Play Store app alike: the shell has pages of its own.
+ * browser and the Play Store app alike, where the pages are routes of this
+ * app: the shell has pages of its own.
  */
 @Component({
   selector: 'feat-lazy-bac-game-site-footer',
-  imports: [TranslatePipe],
+  imports: [RouterLink, TranslatePipe],
   template: `
     @if (onSite) {
       <footer class="footer">
         <span class="owner">© {{ year }} {{ owner }}</span>
         <nav class="links" [attr.aria-label]="'site.footer.label' | t">
-          <a [href]="privacyPolicyUrl">{{ 'site.footer.privacy' | t }}</a>
-          <a [href]="legalNoticeUrl">{{ 'site.footer.legalNotice' | t }}</a>
+          <a [routerLink]="privacyPolicyPath">{{
+            'site.footer.privacy' | t
+          }}</a>
+          <a [routerLink]="legalNoticePath">{{
+            'site.footer.legalNotice' | t
+          }}</a>
           @if (ads.consentAnswered()) {
             <button type="button" (click)="ads.openConsentSettings()">
               {{ 'support.adSettings' | t }}
@@ -36,6 +42,11 @@ import {
   styles: `
     :host {
       display: block;
+    }
+
+    // Without an offer the host would still take a slot, and a gap, in the menu's column.
+    :host:empty {
+      display: none;
     }
 
     .footer {
@@ -89,6 +100,6 @@ export class SiteFooterComponent {
 
   protected readonly owner = SITE_OWNER;
   protected readonly year = new Date().getFullYear();
-  protected readonly privacyPolicyUrl = PRIVACY_POLICY_URL;
-  protected readonly legalNoticeUrl = LEGAL_NOTICE_URL;
+  protected readonly privacyPolicyPath = PRIVACY_POLICY_PATH;
+  protected readonly legalNoticePath = LEGAL_NOTICE_PATH;
 }
