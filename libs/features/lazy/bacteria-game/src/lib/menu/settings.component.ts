@@ -92,7 +92,7 @@ export class SettingsComponent {
   public readonly nativeFullscreenChange = output<boolean>();
   public readonly back = output<void>();
 
-  protected readonly looks = BACTERIA_LOOKS.map(({ id }) => ({
+  protected readonly looks = BACTERIA_LOOKS.map((id) => ({
     id,
     label: `settings.display.looks.${id}` satisfies TranslationKey,
   }));

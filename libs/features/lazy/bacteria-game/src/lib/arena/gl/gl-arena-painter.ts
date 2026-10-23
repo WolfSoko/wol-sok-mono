@@ -11,9 +11,9 @@ import {
   cellDensity,
   ColonyLayer,
   hatchPattern,
-  isLatticeLook,
   jamDrops,
-  LATTICE_REACH,
+  lookReach,
+  LOOKS,
   overcharge,
   StateLayer,
   strengthOf,
@@ -37,7 +37,6 @@ import {
   COLONY_FRAGMENT,
   EFFECTS_FRAGMENT,
   FLOOR_FRAGMENT,
-  LOOK_INDEX,
   SHAPE_FRAGMENT,
   SHAPE_VERTEX,
   ZONES_FRAGMENT,
@@ -367,10 +366,10 @@ export class GlArenaPainter implements ArenaPainter {
       layer.kind === 'cells'
         ? this.uploadCells(layer.bacterias, frame.balance)
         : layer.bounds;
-    // The lattice looks reach past the colony with their cells and tiles.
-    const margin =
-      MARGIN.colony +
-      (isLatticeLook(frame.look) ? Math.ceil(LATTICE_REACH * this.unit) : 0);
+    // A look that reaches past the colony - the lattice looks, with their
+    // cells and tiles - is drawn that much further out. The blur boxes
+    // already cover it: past MARGIN.verticalBlur the density is zero.
+    const margin = MARGIN.colony + lookReach(frame.look, this.unit);
     if (bounds == null || !this.inView(bounds, margin)) {
       return;
     }
@@ -381,8 +380,7 @@ export class GlArenaPainter implements ArenaPainter {
       this.drawCellsFromState(layer, bounds, frame.balance);
     }
 
-    // Every look but the pixels draws from the blurred density.
-    const blurred = frame.look !== 'pixels';
+    const blurred = LOOKS[frame.look].fromDensity;
     if (blurred) {
       gl.disable(gl.BLEND);
       gl.viewport(0, 0, this.width, this.height);
@@ -410,7 +408,7 @@ export class GlArenaPainter implements ArenaPainter {
       color[2] / 255
     );
     gl.uniform1f(program.uniforms['uAlpha'], (color[3] ?? 255) / 255);
-    gl.uniform1i(program.uniforms['uLook'], LOOK_INDEX[frame.look]);
+    gl.uniform1i(program.uniforms['uLook'], LOOKS[frame.look].glIndex);
     gl.uniform1f(program.uniforms['uUnit'], this.unit);
     gl.uniform1f(
       program.uniforms['uPixel'],

@@ -95,15 +95,20 @@ export type BacteriaLook =
   | 'ink'
   | 'pixels';
 
-export const BACTERIA_LOOKS: readonly { id: BacteriaLook; name: string }[] = [
-  { id: 'slime', name: 'Slime' },
-  { id: 'cells', name: 'Cells' },
-  { id: 'honeycomb', name: 'Honeycomb' },
-  { id: 'crystal', name: 'Crystal' },
-  { id: 'neon', name: 'Neon' },
-  { id: 'ink', name: 'Ink' },
-  { id: 'pixels', name: 'Pixels' },
+/** The looks in the order the settings offer them; their names are texts. */
+export const BACTERIA_LOOKS: readonly BacteriaLook[] = [
+  'slime',
+  'cells',
+  'honeycomb',
+  'crystal',
+  'neon',
+  'ink',
+  'pixels',
 ];
+
+export function isBacteriaLook(value: unknown): value is BacteriaLook {
+  return BACTERIA_LOOKS.some((look) => look === value);
+}
 
 export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 
@@ -327,11 +332,8 @@ export class GameSettingsService {
       this.restoreMatchSetup(stored);
     }
     const restores = (key: keyof StoredSettings) => !this.touched.has(key);
-    if (
-      restores('look') &&
-      BACTERIA_LOOKS.some((option) => option.id === stored.look)
-    ) {
-      this.look.set(stored.look as BacteriaLook);
+    if (restores('look') && isBacteriaLook(stored.look)) {
+      this.look.set(stored.look);
     }
     if (
       restores('simResolution') &&

@@ -7,7 +7,7 @@ import {
 } from './arena-painter';
 import { ArenaRenderer } from './arena-renderer';
 import { ArenaTheme } from './arena-theme';
-import { ColonyRenderer, drawJam } from './colony-renderer';
+import { ColonyRenderer, drawJam, LOOKS } from './colony-renderer';
 
 /**
  * The arena drawn with the Canvas 2D API - the fallback for browsers
@@ -67,9 +67,9 @@ export class CanvasArenaPainter implements ArenaPainter {
       view
     );
     if (layer != null) {
-      // The slime and cells layers are scaled up smoothly, the pixel layer
-      // stays crisp.
-      cx.imageSmoothingEnabled = frame.look !== 'pixels';
+      // A layer drawn from the density is scaled up smoothly, the pixel
+      // layer stays crisp.
+      cx.imageSmoothingEnabled = LOOKS[frame.look].fromDensity;
       cx.drawImage(layer, 0, 0, this.width, this.height);
       cx.imageSmoothingEnabled = false;
     }

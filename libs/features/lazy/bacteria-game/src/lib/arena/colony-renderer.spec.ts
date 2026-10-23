@@ -3,24 +3,22 @@ import { Point } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
 import { BacteriaLook } from '../settings.service';
 import { COLONY_COLORS } from '../state/colony-colors';
+
 import {
   cellBubble,
-  CELL_MIN,
-  CELL_SPACING,
   colonyDensity,
   createImageDataFromBacterias,
   hatchPattern,
   latticeTile,
-  paintCells,
-  paintInk,
-  paintNeon,
-  paintSlime,
-  paintTiles,
+  LOOK_TUNING,
+  paintColony,
   shimmerAt,
   SLIME_SCALE,
   slimeRegion,
 } from './colony-renderer';
 import { Rect } from '../state/maps';
+
+const { CELL_MIN, CELL_SPACING } = LOOK_TUNING;
 
 const WIDTH = 40;
 const HEIGHT = 20;
@@ -70,40 +68,19 @@ function slime(
     shimmerTimeSec == null
       ? null
       : { timeSec: shimmerTimeSec, target, unit: 1 };
-  const h = hot ? heat : null;
-  switch (look) {
-    case 'cells':
-      paintCells(data, density, h, WIDTH, HEIGHT, ORANGE, shimmer, 1, region);
-      break;
-    case 'honeycomb':
-    case 'crystal':
-      paintTiles(
-        data,
-        density,
-        h,
-        WIDTH,
-        HEIGHT,
-        ORANGE,
-        shimmer,
-        1,
-        look === 'crystal',
-        region
-      );
-      break;
-    case 'neon':
-      paintNeon(data, density, h, WIDTH, HEIGHT, ORANGE, shimmer, region);
-      break;
-    case 'ink':
-      paintInk(data, density, h, WIDTH, HEIGHT, ORANGE, shimmer, 1, region);
-      break;
-    default:
-      paintSlime(data, density, h, WIDTH, HEIGHT, ORANGE, shimmer, region);
-  }
+  paintColony(
+    look,
+    data,
+    density,
+    hot ? heat : null,
+    WIDTH,
+    HEIGHT,
+    ORANGE,
+    shimmer,
+    1,
+    region
+  );
   return data;
-}
-
-function cells(bacterias: Bacteria[], shimmerTimeSec: number | null = null) {
-  return slime(bacterias, shimmerTimeSec, WHOLE, 'cells');
 }
 
 /** Every look's pixels inside and outside a colony. */
@@ -184,57 +161,34 @@ describe('paintSlime', () => {
   it('lights a boosted colony up', () => {
     const plain = slime(blob(20, 10, 6));
     const boosted = slime(blob(20, 10, 6), 0.3);
-    const brightness = (data: Uint8ClampedArray) =>
+    const light = (data: Uint8ClampedArray) =>
       data.reduce(
         (sum, value, index) => (index % 4 === 3 ? sum : sum + value),
         0
       );
 
-    expect(brightness(boosted)).toBeGreaterThan(brightness(plain));
+    expect(light(boosted)).toBeGreaterThan(light(plain));
   });
 });
 
 describe('paintCells', () => {
-  it('covers a colony and leaves the floor around it clear', () => {
-    const data = cells(blob(20, 10, 6));
-
-    for (const pixel of pixelsWithin(data, 20, 10, 4)) {
-      expect(pixel[3]).toBeGreaterThan(200);
-    }
-    expect(at(data, 20, 1)[3]).toBe(0);
-    expect(at(data, 2, 10)[3]).toBe(0);
-  });
-
   it('draws glossy cells in the colour of the colony on a dark base', () => {
-    const data = cells(blob(20, 10, 6));
-    const inside = pixelsWithin(data, 20, 10, 4);
+    const { inside } = withLook('cells');
 
     // The base is the colony's colour darkened; a cell's light spot is
     // brighter than the colour, its rim darker, all of it still orange.
-    const brightness = inside.map(([r, g, b]) => r + g + b);
-    const [r, g, b] = ORANGE;
-    expect(Math.max(...brightness)).toBeGreaterThan(r + g + b);
-    expect(Math.min(...brightness)).toBeLessThan((r + g + b) * 0.5);
+    const levels = inside.map(brightness);
+    expect(Math.max(...levels)).toBeGreaterThan(brightness(ORANGE));
+    expect(Math.min(...levels)).toBeLessThan(brightness(ORANGE) * 0.5);
     for (const [red, green, blue] of inside) {
       expect(red).toBeGreaterThan(green);
       expect(green).toBeGreaterThan(blue);
     }
   });
-
-  it('lights a boosted colony up', () => {
-    const plain = cells(blob(20, 10, 6));
-    const boosted = cells(blob(20, 10, 6), 0.3);
-
-    const sum = (data: Uint8ClampedArray) =>
-      pixelsWithin(data, 20, 10, 4).reduce(
-        (total, [r, g, b]) => total + r + g + b,
-        0
-      );
-    expect(sum(boosted)).toBeGreaterThan(sum(plain));
-  });
 });
 
 describe.each<Exclude<BacteriaLook, 'pixels'>>([
+  'cells',
   'honeycomb',
   'crystal',
   'neon',
