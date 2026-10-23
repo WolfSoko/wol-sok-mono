@@ -5,8 +5,10 @@ import {
   withComponentInputBinding,
   withEnabledBlockingInitialNavigation,
   withInMemoryScrolling,
+  withNavigationErrorHandler,
   withRouterConfig,
 } from '@angular/router';
+import { reloadOnStaleBundle } from './core/reload-on-stale-bundle';
 import { InfoComponent } from './feature/lazy/info/info.component';
 import { loadRemoteModule } from '@angular-architects/native-federation';
 
@@ -187,5 +189,7 @@ export const provideAppRouter = () =>
     withInMemoryScrolling({
       scrollPositionRestoration: 'enabled',
       anchorScrolling: 'enabled',
-    })
+    }),
+    // A remote released since this tab loaded has replaced its bundles.
+    withNavigationErrorHandler((error) => reloadOnStaleBundle(error))
   );
