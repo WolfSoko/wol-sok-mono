@@ -114,8 +114,17 @@ export class SettingsComponent {
     label: `settings.display.simResolutions.${id}` satisfies TranslationKey,
   }));
   protected readonly screenResolutions = SCREEN_RESOLUTIONS;
-  protected readonly vaporizeQualities = VAPORIZE_QUALITIES;
-  protected readonly vaporizeDurations = VAPORIZE_DURATIONS;
+  protected readonly vaporizeQualities = VAPORIZE_QUALITIES.map(({ id }) => ({
+    id,
+    label: `settings.display.vaporizeQualities.${id}` satisfies TranslationKey,
+  }));
+  protected readonly vaporizeDurations = VAPORIZE_DURATIONS.map(
+    ({ id, ms }) => ({
+      ms,
+      label:
+        `settings.display.vaporizeDurations.${id}` satisfies TranslationKey,
+    })
+  );
 
   /** The language picker's value for following the browser. */
   protected readonly automatic = 'auto' as const;

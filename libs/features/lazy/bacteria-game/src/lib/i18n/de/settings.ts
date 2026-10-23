@@ -24,6 +24,19 @@ export const settings: Translation<typeof en> = {
       ultra: 'Ultra',
     },
     cells: '{width} × {height} Zellen',
+    vaporize: 'Verdampfen',
+    vaporizeQualities: {
+      off: 'Aus',
+      low: 'Niedrig',
+      medium: 'Mittel',
+      full: 'Voll',
+    },
+    vaporizeDuration: 'Dauer des Verdampfens',
+    vaporizeDurations: {
+      short: 'Kurz',
+      normal: 'Normal',
+      long: 'Lang',
+    },
     screenResolution: 'Bildschirmauflösung',
     locked:
       'Farben und Auflösungen wählst du vor einem Match – solange eines läuft, bleiben sie, wie sie sind.',

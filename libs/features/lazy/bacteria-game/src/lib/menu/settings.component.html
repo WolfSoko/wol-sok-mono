@@ -105,24 +105,26 @@
       </mat-button-toggle-group>
     </div>
     <div class="option-picker">
-      <span class="option-label">Vaporize effect</span>
+      <span class="option-label">{{ "settings.display.vaporize" | t }}</span>
       <mat-button-toggle-group
-        aria-label="Vaporize effect"
+        [attr.aria-label]="'settings.display.vaporize' | t"
         hideSingleSelectionIndicator
         [value]="settings.vaporize()"
         (change)="settings.setVaporize($event.value)"
       >
         @for (option of vaporizeQualities; track option.id) {
           <mat-button-toggle [value]="option.id">
-            {{ option.name }}
+            {{ option.label | t }}
           </mat-button-toggle>
         }
       </mat-button-toggle-group>
     </div>
     <div class="option-picker">
-      <span class="option-label">Vaporize duration</span>
+      <span class="option-label">{{
+        "settings.display.vaporizeDuration" | t
+      }}</span>
       <mat-button-toggle-group
-        aria-label="Vaporize duration"
+        [attr.aria-label]="'settings.display.vaporizeDuration' | t"
         hideSingleSelectionIndicator
         [disabled]="settings.vaporize() === 'off'"
         [value]="settings.vaporizeMs()"
@@ -130,7 +132,7 @@
       >
         @for (option of vaporizeDurations; track option.ms) {
           <mat-button-toggle [value]="option.ms">
-            {{ option.name }}
+            {{ option.label | t }}
           </mat-button-toggle>
         }
       </mat-button-toggle-group>

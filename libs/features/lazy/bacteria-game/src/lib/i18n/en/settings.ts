@@ -22,6 +22,19 @@ export const settings = {
       ultra: 'Ultra',
     },
     cells: '{width} × {height} cells',
+    vaporize: 'Vaporize effect',
+    vaporizeQualities: {
+      off: 'Off',
+      low: 'Low',
+      medium: 'Medium',
+      full: 'Full',
+    },
+    vaporizeDuration: 'Vaporize duration',
+    vaporizeDurations: {
+      short: 'Short',
+      normal: 'Normal',
+      long: 'Long',
+    },
     screenResolution: 'Screen resolution',
     locked:
       'Pick the colours and resolutions before a match - they stay as they are while one is on.',
