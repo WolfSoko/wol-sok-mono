@@ -29,6 +29,18 @@ What the shell adds:
   it again from the Firebase console (Project settings → Your apps) after
   adding a signing key there.
 - Google Play Billing for tips, see below
+- the Play Games Services SDK (`play-services-games-v2`), started by
+  `BacteriaWarsApplication`: on every launch it signs the player in to Play
+  Games against the project named by `com.google.android.gms.games.APP_ID`
+  in the manifest, silently, since the app's own activity has handed over to
+  Chrome before the SDK could show its welcome popup. Nothing reads that
+  sign-in yet: it puts the game into the player's Play Games library and is
+  the ground for achievements, which are still to come. The game runs in
+  Chrome, which reaches no native SDK, so earning them will take the Play
+  Games REST API with the player's Google sign-in on the web. Gradle fills
+  the id from the `project_number` of `app/google-services.json`, since the
+  game project sits on the game's Cloud project; the deploy reads the same
+  number for the achievements.
 
 ## Build
 
@@ -52,7 +64,9 @@ The `Android app` GitHub workflow builds and lints the debug APK on every
 change to this folder and keeps it as a workflow artifact, to try the app on a
 phone. Each run signs it with a fresh debug key, so uninstall the previous one
 before installing the next, and expect Chrome's URL bar on top: only keys
-listed in `assetlinks.json` get fullscreen.
+listed in `assetlinks.json` get fullscreen. The Play Games sign-in fails on
+such a build as well: only keys whose SHA-1 is on the Firebase app's Android
+OAuth client may sign in.
 
 ## Tips through Play Billing
 
@@ -113,7 +127,8 @@ every release, in its own `android` leg that compares against the last
 
 1. builds the signed release APK and app bundle, with the version code of the
    release's `version.json`,
-2. uploads the bundle to the **internal testing** track on Google Play,
+2. uploads the bundle to the **closed testing** track on Google Play (`alpha`
+   in the API), so the testers of that track get it at once,
 3. attaches the APK and bundle to the GitHub release as
    `bacteria-wars-<tag>.apk` and `.aab`.
 
@@ -187,8 +202,10 @@ it still needs; `store/` holds all of it:
   (Achievements → the achievement → Icon); the committed files show in the diff
   which ones.
 
-Without the repository variable `PLAY_GAMES_APPLICATION_ID` the deploy leaves
-the achievements alone. Setting up:
+The deploy takes the game's id from `app/google-services.json`. Until the
+service account may edit the game, the Publishing API answers 403: the
+deploy says so and leaves the achievements alone, without failing. Setting
+up:
 
 1. **The game project**, under Configuration: created on the existing Cloud
    project `bacteria-wars`, with an Android credential for
@@ -200,10 +217,7 @@ the achievements alone. Setting up:
 3. **The service account**: on Play Console's API access page, the Game
    Services Publishing API switched on and `play-publisher@...` granted access
    to the game.
-4. **The variable**: `PLAY_GAMES_APPLICATION_ID` is the game's project id as
-   the Configuration page shows it, the number of its Cloud project
-   (`project_number` in `app/google-services.json`).
-5. **Publishing**: the OAuth consent screen of the Cloud project published,
+4. **Publishing**: the OAuth consent screen of the Cloud project published,
    then Publish in the console, at least two hours before a release that
    relies on it.
 

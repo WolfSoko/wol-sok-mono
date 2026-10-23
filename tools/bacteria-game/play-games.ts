@@ -26,11 +26,13 @@ const achievementsFile = resolve(
   'libs/features/lazy/bacteria-game/src/lib/state/play-games-achievements.json'
 );
 /**
- * The id of the game in Play Games Services, a repository variable: the
- * number of the Cloud project the game is linked to (the `project_number` of
- * `app/google-services.json` when it is the Firebase project).
+ * The game's Play Games Services project sits on its Cloud project, the one
+ * of the Firebase app: the project's number is the game id, the same one
+ * app/build.gradle.kts puts into the manifest.
  */
-export const APPLICATION_ID_ENV = 'PLAY_GAMES_APPLICATION_ID';
+const googleServicesFile = resolve(
+  'apps/bacteria-wars-android/app/google-services.json'
+);
 /** The locale of the game's own texts. */
 const SOURCE_LOCALE = 'en-US';
 /** Play's limits: points per achievement and per game, a multiple of 5 each. */
@@ -82,9 +84,12 @@ interface AchievementConfiguration {
   published?: Detail;
 }
 
-/** True when the environment names the game to sync. */
-export function playGamesConfigured(): boolean {
-  return !!process.env[APPLICATION_ID_ENV];
+/** The id of the game in Play Games Services, from google-services.json. */
+export function playGamesApplicationId(): string {
+  const { project_info } = JSON.parse(
+    readFileSync(googleServicesFile, 'utf8')
+  ) as { project_info: { project_number: string } };
+  return project_info.project_number;
 }
 
 function text(id: string, locale: string, value: unknown): AchievementText {
@@ -215,12 +220,17 @@ function nameOf(config: AchievementConfiguration): string | undefined {
 
 /**
  * A call to a Google API as JSON, signed with the androidpublisher scope:
- * the deploy's own, which the Publishing API shares.
+ * the deploy's own, which the Publishing API shares. A failed call throws an
+ * error that carries the HTTP status.
  */
 export type GoogleApiCall = <T>(
   url: string,
   init?: { method?: string; body?: string }
 ) => Promise<T>;
+
+function statusOf(error: unknown): number | undefined {
+  return (error as { status?: number } | null)?.status;
+}
 
 /** Every achievement configuration of the game, page by page. */
 async function listConfigurations(
@@ -249,13 +259,26 @@ async function listConfigurations(
  * in line with the game's achievements, as drafts: created where missing,
  * updated where they differ, matched by their English name. An achievement
  * on Play the game lacks is left alone and reported, since deleting one
- * takes the players' progress on it.
+ * takes the players' progress on it. Until the service account may edit the
+ * game (see README.md), Play answers 403: then the achievements stay as they
+ * are, and the deploy says so.
  */
 export async function syncAchievements(
   call: GoogleApiCall,
   applicationId: string
 ): Promise<void> {
-  const configs = await listConfigurations(call, applicationId);
+  let configs: AchievementConfiguration[];
+  try {
+    configs = await listConfigurations(call, applicationId);
+  } catch (error: unknown) {
+    if (statusOf(error) !== 403) {
+      throw error;
+    }
+    console.warn(
+      `The service account may not edit the Play Games project ${applicationId} yet (see apps/bacteria-wars-android/README.md), the achievements stay as they are.`
+    );
+    return;
+  }
   const wanted = playGamesAchievements();
   let changed = 0;
   for (const achievement of wanted) {

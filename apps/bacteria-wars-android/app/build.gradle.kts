@@ -19,6 +19,11 @@ val assetLinks = rootDir.resolve("../bacteria-game-remote/src/.well-known/assetl
 val packageName = ((JsonSlurper().parse(assetLinks) as List<*>).single() as Map<*, *>)
   .let { it["target"] as Map<*, *> }["package_name"] as String
 
+// The Play Games Services project is the game's Cloud project, the one of the
+// Firebase app: its number is the game id the Play Games SDK asks for.
+val googleServices = JsonSlurper().parse(projectDir.resolve("google-services.json")) as Map<*, *>
+val gameServicesProjectId = (googleServices["project_info"] as Map<*, *>)["project_number"] as String
+
 // The app follows the workspace release: 74.44.1 becomes version code
 // 74044001, so every release counts up.
 val release = (JsonSlurper().parse(rootDir.resolve("../../version.json")) as Map<*, *>)["version"] as String
@@ -40,6 +45,7 @@ android {
     manifestPlaceholders["hostName"] = host
     manifestPlaceholders["launchUrl"] = launchUrl
     resValue("color", "background", "#060e19")
+    resValue("string", "game_services_project_id", gameServicesProjectId)
     // Android string resources drop bare double quotes, hence the backslashes.
     resValue(
       "string",
@@ -77,6 +83,8 @@ dependencies {
   // and Analytics counts the app's installs and opens beside the web game's.
   implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
   implementation("com.google.firebase:firebase-analytics")
+  // Play Games Services: signs the player in to Play Games on launch (BacteriaWarsApplication).
+  implementation("com.google.android.gms:play-services-games-v2:22.1.0")
   // Tips through Play Billing, offered to the game by the Digital Goods API.
   implementation("com.google.androidbrowserhelper:billing:1.2.0")
 }
