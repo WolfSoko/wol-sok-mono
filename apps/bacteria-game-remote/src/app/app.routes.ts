@@ -8,6 +8,13 @@ export const appRoutes: Route[] = [
       import('./privacy/privacy.component').then((m) => m.PrivacyComponent),
   },
   {
+    path: 'impressum',
+    loadComponent: () =>
+      import('./impressum/impressum.component').then(
+        (m) => m.ImpressumComponent
+      ),
+  },
+  {
     path: '',
     loadChildren: () =>
       import('./remote-entry/entry.routes').then((m) => m.entryRoutes),

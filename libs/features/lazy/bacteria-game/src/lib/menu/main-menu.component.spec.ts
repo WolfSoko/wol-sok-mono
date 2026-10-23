@@ -127,6 +127,7 @@ describe('MainMenuComponent', () => {
 
   it('offers no support where the game does not ask for it', () => {
     expect(host.textContent).not.toContain('Support');
+    expect(host.querySelector('footer')).toBeNull();
   });
 });
 
@@ -170,6 +171,13 @@ describe('MainMenuComponent support tile', () => {
     expect(link?.textContent).toContain('Support');
     expect(link?.href).toBe('https://buymeacoffee.com/wolf');
     expect(link?.target).toBe('_blank');
+  });
+
+  it("ends in the legal lines on the game's own site", () => {
+    const footer = render('web').querySelector('footer');
+
+    expect(footer?.textContent).toContain('Privacy policy');
+    expect(footer?.textContent).toContain('Legal notice');
   });
 
   it('asks for support in German too', () => {

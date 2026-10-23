@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { GameAds } from './game-ads.service';
 import { GAME_SUPPORT, GameSupportOptions } from './game-support';
+import { InstallOffer } from './install-offer.service';
 
 /**
  * Turns on the tips and the ads. Belongs into the game's own app config,
@@ -24,6 +25,9 @@ export function provideGameSupport(
     provideEnvironmentInitializer(() => {
       const ads = inject(GameAds);
       afterNextRender(() => ads.start());
+      // The browser offers its install prompt once, early: someone has to be
+      // listening before the menu is up.
+      inject(InstallOffer);
     }),
   ]);
 }

@@ -21,6 +21,8 @@ import { Level, LEVELS } from '../state/levels';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
 import { MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 import { GameSupport } from '../support/game-support.service';
+import { InstallBannerComponent } from '../support/install-banner.component';
+import { SiteFooterComponent } from '../support/site-footer.component';
 import {
   SUPPORT_DIALOG_HEADING_ID,
   SupportDialogComponent,
@@ -36,7 +38,8 @@ export type MenuPage = 'profile' | 'friends' | 'settings' | 'help';
  *
  * A dumb component - it shows what it is given and reports what the player
  * picks. Only the way to support the game it finds itself, as it differs
- * between the web and the Play Store app.
+ * between the web and the Play Store app - and, on the game's own site, the
+ * offer to install it and the legal lines under everything.
  */
 @Component({
   selector: 'feat-lazy-bac-game-main-menu',
@@ -47,6 +50,8 @@ export type MenuPage = 'profile' | 'friends' | 'settings' | 'help';
     MatTooltipModule,
     RankStandingComponent,
     GhostChallengeComponent,
+    InstallBannerComponent,
+    SiteFooterComponent,
     TranslatePipe,
     GameTextPipe,
   ],

@@ -3,7 +3,8 @@ import { GameAds } from '../support/game-ads.service';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { I18nService } from '../i18n/i18n.service';
-import { HelpComponent, PRIVACY_POLICY_URL } from './help.component';
+import { PRIVACY_POLICY_URL } from '../support/legal-links';
+import { HelpComponent } from './help.component';
 
 describe('HelpComponent', () => {
   function render(): HTMLElement {

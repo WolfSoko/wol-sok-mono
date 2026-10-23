@@ -1,0 +1,134 @@
+<main>
+  <header>
+    <img src="icons/icon-192.png" alt="" />
+    <p class="brand">Bacteria <span>Wars</span></p>
+    <nav aria-label="Seiten / Pages">
+      <a routerLink="/privacy">Datenschutz</a>
+      <a routerLink="/privacy" fragment="en" lang="en" hreflang="en">Privacy</a>
+    </nav>
+  </header>
+
+  <article id="de" lang="de">
+    <h1>Impressum</h1>
+    <p class="stand">
+      Angaben gemäß § 5 DDG für das Spiel Bacteria Wars unter
+      <a href="https://bacteria-wars.wolsok.de">bacteria-wars.wolsok.de</a>
+      und für die Android-App „Bacteria Wars“ (de.wolsok.bacteriawars).
+    </p>
+
+    <h2 id="de-anbieter">Anbieter</h2>
+    <address class="contact owner">
+      {{ owner.name }}<br />
+      @for (line of owner.addressLines; track line) {
+        {{ line }}<br />
+      }
+      E-Mail:
+      <a href="mailto:{{ owner.email }}">{{ owner.email }}</a>
+    </address>
+
+    <h2 id="de-kontakt">Kontakt</h2>
+    <p>
+      Am schnellsten erreichst du mich per E-Mail an
+      <a href="mailto:{{ owner.email }}">{{ owner.email }}</a
+      >. Anfragen zum Datenschutz beantwortet die
+      <a routerLink="/privacy">Datenschutzerklärung</a>; dort steht auch, wie du
+      dein Konto und deine Daten löschen lässt.
+    </p>
+
+    <h2 id="de-streitbeilegung">Verbraucherstreitbeilegung</h2>
+    <p>
+      Ich bin nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren
+      vor einer Verbraucherschlichtungsstelle teilzunehmen (§ 36 VSBG).
+    </p>
+
+    <h2 id="de-inhalte">Haftung für Inhalte</h2>
+    <p>
+      Die Inhalte dieser Seiten wurden mit Sorgfalt erstellt. Für Richtigkeit,
+      Vollständigkeit und Aktualität übernehme ich jedoch keine Gewähr. Für
+      eigene Inhalte bin ich nach den allgemeinen Gesetzen verantwortlich. Von
+      Spielern eingegebene Inhalte wie Namen und Avatare sind fremde
+      Informationen, die ich nicht allgemein überwache (Art. 6 und 8 der
+      Verordnung (EU) 2022/2065, Digital Services Act); bei Hinweisen auf
+      Rechtsverletzungen entferne ich sie umgehend. Hinweise bitte an die
+      E-Mail-Adresse oben.
+    </p>
+
+    <h2 id="de-links">Haftung für Links</h2>
+    <p>
+      Das Spiel verlinkt auf Seiten Dritter, etwa Google Play und Buy Me a
+      Coffee, deren Inhalte ich nicht beeinflusse. Für sie ist der jeweilige
+      Anbieter verantwortlich. Zum Zeitpunkt der Verlinkung waren keine
+      Rechtsverstöße erkennbar; bekannt gewordene Verstöße führen zur Entfernung
+      des Links.
+    </p>
+
+    <h2 id="de-urheberrecht">Urheberrecht</h2>
+    <p>
+      Spiel, Grafiken und Texte unterliegen dem deutschen Urheberrecht. Der
+      Quellcode des Spiels ist unter
+      <a href="https://github.com/WolfSoko/wol-sok-mono">github.com/WolfSoko</a>
+      veröffentlicht; die dort genannte Lizenz gilt für ihn. Spielernamen und
+      Avatare gehören den Spielern, die sie angelegt haben.
+    </p>
+  </article>
+
+  <article id="en" lang="en">
+    <h1>Legal notice</h1>
+    <p class="stand">
+      Information under § 5 of the German Digital Services Act (DDG) for the
+      game Bacteria Wars at
+      <a href="https://bacteria-wars.wolsok.de">bacteria-wars.wolsok.de</a>
+      and for the Android app “Bacteria Wars” (de.wolsok.bacteriawars). The
+      German version is the binding one.
+    </p>
+
+    <h2 id="en-provider">Provider</h2>
+    <address class="contact owner">
+      {{ owner.name }}<br />
+      @for (line of owner.addressLines; track line) {
+        {{ line }}<br />
+      }
+      Email:
+      <a href="mailto:{{ owner.email }}">{{ owner.email }}</a>
+    </address>
+
+    <h2 id="en-contact">Contact</h2>
+    <p>
+      Email is the fastest way:
+      <a href="mailto:{{ owner.email }}">{{ owner.email }}</a
+      >. For questions about your data, see the
+      <a routerLink="/privacy" fragment="en">privacy policy</a>, which also says
+      how to have your account and data deleted.
+    </p>
+
+    <h2 id="en-disputes">Consumer dispute resolution</h2>
+    <p>
+      I am neither willing nor obliged to take part in dispute resolution
+      proceedings before a consumer arbitration board (§ 36 VSBG).
+    </p>
+
+    <h2 id="en-liability">Liability</h2>
+    <p>
+      The content of these pages was prepared with care, but I do not warrant
+      that it is accurate, complete or current. Content players enter, such as
+      names and avatars, is third-party information that I do not monitor in
+      general (Articles 6 and 8 of Regulation (EU) 2022/2065, the Digital
+      Services Act); I remove it promptly when made aware of an infringement.
+      The game links to third-party sites, such as Google Play and Buy Me a
+      Coffee, whose content their providers are responsible for.
+    </p>
+
+    <h2 id="en-copyright">Copyright</h2>
+    <p>
+      The game, its graphics and texts are protected under German copyright law.
+      The game's source code is published at
+      <a href="https://github.com/WolfSoko/wol-sok-mono">github.com/WolfSoko</a>
+      under the licence stated there. Player names and avatars belong to the
+      players who made them.
+    </p>
+  </article>
+
+  <footer>
+    <a mat-stroked-button routerLink="/">Zum Spiel / Back to the game</a>
+  </footer>
+</main>

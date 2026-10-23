@@ -27,6 +27,8 @@
     <h1 class="title">Bacteria <span class="war">Wars</span></h1>
     <p class="tagline">{{ "menu.tagline" | t: { levels: totalLevels } }}</p>
 
+    <feat-lazy-bac-game-install-banner />
+
     @if (challenge(); as level) {
       <feat-lazy-bac-game-ghost-challenge
         [level]="level"
@@ -154,3 +156,5 @@
     </button>
   </aside>
 </div>
+
+<feat-lazy-bac-game-site-footer />
