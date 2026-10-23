@@ -91,5 +91,11 @@ export const newGame = {
       difficultyLabel: 'Difficulty of the generated level',
       generate: 'Generate',
     },
+    /** A level's preview picture. */
+    preview: {
+      alt: 'Map of {title}',
+      size: '{size}× map',
+      sizeLabel: 'A map {size} times as big as the screen',
+    },
   },
 };

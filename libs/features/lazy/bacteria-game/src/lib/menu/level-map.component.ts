@@ -32,7 +32,7 @@ import {
   rollLevelId,
 } from '../state/level-generator/generate-level';
 import { RECIPE_IDS, RecipeId } from '../state/level-generator/recipes';
-import { getLevel, LEVELS } from '../state/levels';
+import { getLevel, LEVELS, levelSize } from '../state/levels';
 import { Progress } from '../state/progress';
 import { LevelCard, LevelCardComponent } from './level-card.component';
 import { levelColors } from './menu-cards';
@@ -131,7 +131,8 @@ export class LevelMapComponent {
 
   /**
    * A level's card: its badge - its place on the ladder, or the style of a
-   * generated one - its lock, its medallions, its arena's colours. Its
+   * generated one - its lock, its medallions, its arena's colours and the
+   * size of its map, whose picture the card draws. Its
    * texts are in the active language: the computeds that call it follow a
    * switch.
    */
@@ -148,6 +149,7 @@ export class LevelMapComponent {
       title: this.text(levelTitleText(level)),
       lock: lock === undefined ? null : this.text(lockText(id, lock)),
       ...levelColors(id),
+      size: levelSize(level),
       medals: BOT_DIFFICULTIES.map((difficulty) => ({
         difficulty: difficulty.id,
         tier: this.medals()[id]?.[difficulty.id] ?? null,

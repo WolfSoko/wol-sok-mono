@@ -1,7 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { I18nService } from '../i18n/i18n.service';
+import { CHAPTERS } from '../state/chapters';
 import { getLevel, LEVELS } from '../state/levels';
 import { parseGeneratedId } from '../state/level-generator/generate-level';
+import {
+  drawPreviews,
+  fakePreviewUrl,
+  provideFakePreviews,
+} from '../../testing/fake-preview-renderer';
 import { LevelMapComponent } from './level-map.component';
 
 describe('LevelMapComponent', () => {
@@ -129,5 +135,58 @@ describe('LevelMapComponent', () => {
     expect(host.querySelector('.generate')?.textContent).toContain(
       'Generieren'
     );
+  });
+
+  it('badges a big map with its size where no picture is drawn', () => {
+    const host = render();
+    const expanse = CHAPTERS.flatMap((c) => c.levelIds).indexOf('expanse');
+
+    expect(host.querySelector('feat-lazy-bac-game-level-preview')).toBeNull();
+    expect(cards(host)[expanse].querySelector('.size')?.textContent).toBe(
+      '2× map'
+    );
+    expect(cards(host)[0].querySelector('.size')).toBeNull();
+  });
+
+  describe('with pictures of the maps', () => {
+    beforeEach(() => {
+      TestBed.configureTestingModule({ providers: [provideFakePreviews()] });
+    });
+
+    it('shows each level its map, once drawn, named for the level', async () => {
+      const host = render();
+      const preview = () =>
+        cards(host)[0].querySelector('feat-lazy-bac-game-level-preview');
+
+      // The arena's colours hold its place until the picture is drawn.
+      expect(preview()).not.toBeNull();
+      expect(preview()?.querySelector('img')).toBeNull();
+      await drawPreviews(LEVELS.length + 4);
+      fixture.detectChanges();
+
+      const image = preview()?.querySelector('img');
+      expect(image?.getAttribute('src')).toBe(fakePreviewUrl(LEVELS[0].id));
+      expect(image?.getAttribute('alt')).toBe('Map of Petri Dish');
+      expect(host.querySelectorAll('.level-card img')).toHaveLength(
+        LEVELS.length
+      );
+    });
+
+    it('badges the picture of a big map with its size, in German too', async () => {
+      TestBed.inject(I18nService).setLanguage('de');
+      const host = render();
+      const expanse = CHAPTERS.flatMap((c) => c.levelIds).indexOf('expanse');
+      await drawPreviews(LEVELS.length + 4);
+      fixture.detectChanges();
+
+      const card = cards(host)[expanse];
+      expect(
+        card.querySelector('feat-lazy-bac-game-level-preview .size')
+          ?.textContent
+      ).toBe('2× Karte');
+      expect(card.querySelector('img')?.getAttribute('alt')).toBe(
+        `Karte von ${card.querySelector('.title')?.textContent?.trim()}`
+      );
+    });
   });
 });
