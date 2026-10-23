@@ -122,3 +122,14 @@ it breaks replays. Inputs reach the engine only on the input grid
 (`onGrid`, `STEER_STEPS`, `DRAG_STEPS`), and `NET_VERSION` follows
 `BALANCE_VERSION`, so two devices with different balance tables refuse to
 play each other.
+
+## Texts: English and German
+
+- Every text the player sees goes through `I18nService.t` or the `t` pipe
+  (`src/lib/i18n/`), with an English and a German entry in the area's
+  `en/` and `de/` files. No literal user-facing strings in templates or
+  notices.
+- The state and the engine keep ids, not texts: level names, achievement
+  texts, colour names and the like are looked up by their id in the
+  components, never translated by the engine. The engine stays
+  language-free like it stays deterministic.

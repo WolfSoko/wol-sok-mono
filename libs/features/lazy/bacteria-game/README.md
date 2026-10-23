@@ -134,6 +134,26 @@ once its first view is up ([`splash.ts`](./src/lib/splash.ts)).
 [`GameSettingsService`](./src/lib/settings.service.ts) remembers opponent,
 difficulty, level and the frame rate badge in the game storage.
 
+## Languages
+
+The game speaks English and German ([`i18n/`](./src/lib/i18n)), switched at
+runtime: one build serves both, as a remote inside the shell and as the PWA.
+[`I18nService`](./src/lib/i18n/i18n.service.ts) follows the browser's
+preferred language (German if it starts with `de`, English otherwise) until
+the player picks one under Settings > Language; the choice is a setting of
+the device (`GameSettingsService.setLanguage`). The game's root element
+carries the active language as its `lang`.
+
+Templates take the `t` pipe, `{{ 'settings.title' | t }}` or
+`{{ 'lobby.waiting' | t: { name } }}`; code calls `I18nService.t(key, params)`
+inside a `computed` or right where it builds a text. The texts are plain
+objects per area, `en/<area>.ts` and `de/<area>.ts`, merged in
+[`dictionaries.ts`](./src/lib/i18n/dictionaries.ts). The German object is
+typed against the English one, so a missing or an extra key fails to
+compile, and so does a key that names no text. A text holds `{name}`
+placeholders, and a plural is `{ one, other }`, picked by the `count` param
+with `Intl.PluralRules`. A text German lacks at runtime falls back to English.
+
 ## Storage
 
 Everything the game remembers goes through the ports in
