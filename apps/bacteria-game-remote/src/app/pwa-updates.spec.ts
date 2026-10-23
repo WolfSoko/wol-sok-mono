@@ -54,6 +54,12 @@ describe('providePwaUpdates', () => {
 
   afterEach(() => jest.useRealTimers());
 
+  /** Waits for the game's texts, which the offer loads lazily. */
+  async function gameTexts(): Promise<void> {
+    await import('@wolsok/feat-lazy-bac-game');
+    await Promise.resolve();
+  }
+
   it('offers a reload once a new version is ready', async () => {
     await setUp(true);
 
@@ -64,6 +70,7 @@ describe('providePwaUpdates', () => {
     expect(snackBar.open).not.toHaveBeenCalled();
 
     versionUpdates.next(VERSION_READY);
+    await gameTexts();
     expect(snackBar.open).toHaveBeenCalledWith(
       'A new version of the game is ready',
       'Reload'
@@ -79,6 +86,7 @@ describe('providePwaUpdates', () => {
     TestBed.inject(I18nService).setLanguage('de');
 
     versionUpdates.next(VERSION_READY);
+    await gameTexts();
     expect(snackBar.open).toHaveBeenCalledWith(
       'Eine neue Version des Spiels ist da',
       'Neu laden'

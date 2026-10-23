@@ -5,12 +5,12 @@ import {
   EnvironmentProviders,
   inject,
   InjectionToken,
+  Injector,
   provideAppInitializer,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SwUpdate } from '@angular/service-worker';
-import { I18nService } from '@wolsok/feat-lazy-bac-game';
 import { first, interval, switchMap } from 'rxjs';
 
 /** An installed game can stay open for days, so look for releases hourly. */
@@ -40,18 +40,22 @@ export function providePwaUpdates(): EnvironmentProviders {
     }
     const snackBar = inject(MatSnackBar);
     const reloadPage = inject(RELOAD_PAGE);
-    // The game's language, which its settings choose.
-    const i18n = inject(I18nService);
+    const injector = inject(Injector);
     const destroyRef = inject(DestroyRef);
 
     swUpdate.versionUpdates
       .pipe(takeUntilDestroyed(destroyRef))
       .subscribe((event) => {
         if (event.type === 'VERSION_READY') {
-          snackBar
-            .open(i18n.t('stage.update.ready'), i18n.t('stage.update.reload'))
-            .onAction()
-            .subscribe(reloadPage);
+          // In the game's language, which its settings choose. The game is
+          // loaded lazily, so its texts come only now, not with this page.
+          void import('@wolsok/feat-lazy-bac-game').then(({ I18nService }) => {
+            const i18n = injector.get(I18nService);
+            snackBar
+              .open(i18n.t('stage.update.ready'), i18n.t('stage.update.reload'))
+              .onAction()
+              .subscribe(reloadPage);
+          });
         } else if (event.type === 'VERSION_INSTALLATION_FAILED') {
           console.error('Could not install the new version', event.error);
         }
