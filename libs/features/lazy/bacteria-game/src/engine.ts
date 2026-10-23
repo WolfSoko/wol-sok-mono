@@ -128,6 +128,97 @@ export type { ColonyColorId } from './lib/state/colony-colors';
 export { dailyLevelId, utcDay } from './lib/state/daily';
 export { endlessLevelId } from './lib/state/endless';
 
+// Leaderboards, declared attempts and admin commands (ADR 0012).
+export {
+  ANONYMOUS_NAME,
+  atHourOf,
+  BOARD_CUT,
+  BOARD_KINDS,
+  boardAvatar,
+  boardTag,
+  CHECKING_ROWS,
+  compareRows,
+  competitionRanks,
+  dailyBoardId,
+  dailySort,
+  DEFAULT_NAME,
+  endlessSort,
+  formatTag,
+  isBoardId,
+  isEntryId,
+  isUtcDay,
+  NEXT_CANDIDATES,
+  onlineSort,
+  PAGE_ROWS,
+  parseBoardId,
+  posesAsLabel,
+  TAG_COUNT,
+  TOP_ROWS,
+  VISIBLE_STATUSES,
+  XP_FULL_COUNT,
+  XP_FULL_COUNT_BEFORE,
+  XP_RISE_BASE,
+  XP_RISE_PER_DAY,
+  XP_RISE_PER_HOUR,
+  xpRiseCap,
+  xpSort,
+} from './lib/state/boards';
+export type {
+  BoardId,
+  BoardKind,
+  BoardRef,
+  BoardRow,
+  EntryShow,
+  EntryStatus,
+} from './lib/state/boards';
+export {
+  ARRIVAL_SLACK_MS,
+  ATTEMPT_DAYS,
+  attemptExpireAt,
+  attemptSeed,
+  canDeclare,
+  COUNTDOWN_MS,
+  dailyAttemptId,
+  declaredBeforeMatch,
+  endlessAttemptId,
+  endlessRunId,
+  isRankedPlan,
+  nextDailyAttemptId,
+  nextRunId,
+  parseAttemptId,
+  parseRunId,
+  RANKED_DAILY_ATTEMPTS,
+  RANKED_RUNS_PER_DAY,
+  rankedPlan,
+  requiredAttempt,
+  RUN_MATCHES,
+  submissionDeadline,
+  UPLOAD_WINDOW_MS,
+} from './lib/state/attempts';
+export type {
+  Attempt,
+  DailyAttempt,
+  EndlessAttempt,
+} from './lib/state/attempts';
+export {
+  ADMIN_COMMAND_TYPES,
+  BAN_REASONS,
+  DESTRUCTIVE_COMMAND_TYPES,
+  isAdminCommandType,
+  isUid,
+  parseAdminCommand,
+  REASON_MAX,
+} from './lib/state/admin-commands';
+export type {
+  AdminCommand,
+  AdminCommandType,
+  BanReason,
+  EntryTarget,
+  PlayerTarget,
+} from './lib/state/admin-commands';
+export { AVATAR_COUNT, defaultProfile } from './lib/social/profile';
+export type { Avatar, Profile } from './lib/social/profile';
+
 // Results.
 export { judgeOutcome, winRuleOf } from './lib/state/win-conditions';
 export type {
