@@ -60,6 +60,8 @@ import { replayFromHash } from './replay-link';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
 import { ProgressService } from '../progress.service';
+import { EvolutionService } from '../evolution.service';
+import { Loadout, PLAIN_LOADOUT } from './evolution';
 import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
 import type { Lockstep } from '../net/lockstep';
 import type { OnlineSetup } from '../net/net-message';
@@ -100,6 +102,7 @@ export class GameStateService {
   private playerStore = inject(PlayerStore);
   private playerService = inject(PlayerService);
   private progress = inject(ProgressService);
+  private evolution = inject(EvolutionService);
   private online = inject(OnlineMatchService);
   /** What the colonies on the board were spawned from - see `initPlayers`. */
   private plan: MatchPlan | null = null;
@@ -435,11 +438,14 @@ export class GameStateService {
       headStart,
       ghost,
       matchLevel,
+      dailyDay,
+      endlessMatch,
     } = this.gameStateStore.snapshot();
+    const planMode: GameMode = matchLevel === null ? mode : 'vs-computer';
     this.plan = {
       levelId: matchLevel ?? levelId,
       // A level picked for the match is fought against the computer.
-      mode: matchLevel === null ? mode : 'vs-computer',
+      mode: planMode,
       difficulty,
       colors,
       headStart,
@@ -447,8 +453,28 @@ export class GameStateService {
       height,
       seed: ghost?.header.seed ?? randomSeed(),
     };
+    // Taken as the colonies spawn: the plan keeps it for the whole match,
+    // whatever the storage or the player change meanwhile.
+    const evolved =
+      planMode === 'vs-computer' &&
+      ghost === null &&
+      dailyDay === null &&
+      !endlessMatch;
+    if (evolved) {
+      this.plan.loadouts = [this.playerLoadout(), PLAIN_LOADOUT];
+    }
     const { spawns, options } = planMatch(this.plan, ghost);
     this.playerService.init(spawns, options);
+  }
+
+  /**
+   * What the player at the screen evolved, for a match against the computer
+   * on the ladder or a generated level - see `evolution.ts`. The daily
+   * level and endless runs feed the leaderboards and stay plain, as do
+   * ghost races, couch and online matches.
+   */
+  private playerLoadout(): Loadout {
+    return untracked(this.evolution.loadout);
   }
 
   /**
