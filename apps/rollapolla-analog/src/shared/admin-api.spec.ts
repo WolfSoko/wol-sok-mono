@@ -5,7 +5,7 @@ import { ADMIN_CLAIM } from './admin-api';
 
 // read as text: importing the script would run it
 const grantAdminScript = readFileSync(
-  join(__dirname, '../../scripts/grant-admin.mjs'),
+  join(__dirname, '../../../../tools/firebase/grant-admin.mjs'),
   'utf8'
 );
 

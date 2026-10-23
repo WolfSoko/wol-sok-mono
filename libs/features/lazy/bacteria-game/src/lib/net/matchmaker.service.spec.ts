@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeGameSocial } from '../../testing/fake-game-social';
+import { MATCH_LEVELS } from '../state/match-level';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
 import { claimable, MatchmakerService } from './matchmaker.service';
@@ -135,6 +136,105 @@ describe('MatchmakerService', () => {
     expect(social.get('queue/bob')).not.toBeNull();
   });
 
+  describe('the level the players would like', () => {
+    const [hourglass, corridors] = MATCH_LEVELS.slice(1).map(({ id }) => id);
+
+    it('goes into the queue entry, null for any level', async () => {
+      const first = matchmaker('ada');
+      await first.find();
+      expect(social.get('queue/ada')).toEqual(
+        expect.objectContaining({ level: null })
+      );
+
+      await first.cancel();
+      first.setLevel(hourglass);
+      await first.find();
+      expect(social.get('queue/ada')).toEqual(
+        expect.objectContaining({ level: hourglass })
+      );
+    });
+
+    it('changes in the queue entry while waiting, keeping the place', async () => {
+      const first = matchmaker('ada');
+      await first.find();
+      const { since } = social.get('queue/ada') as { since: number };
+
+      first.setLevel(hourglass);
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(social.get('queue/ada')).toEqual(
+        expect.objectContaining({ since, level: hourglass, claim: null })
+      );
+      expect(first.state()).toBe('searching');
+    });
+
+    it('plays the waiting player’s level, which the claimer keeps', async () => {
+      await social.enqueue('ada', hourglass);
+      const second = matchmaker('bob');
+      second.setLevel(corridors);
+
+      await second.find();
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(social.get('queue/ada')).toEqual(
+        expect.objectContaining({
+          claim: 'ROOM22',
+          picked: { levelId: hourglass, pick: 'waiting' },
+        })
+      );
+      expect(second.matchLevel()).toEqual({
+        levelId: hourglass,
+        reason: 'theirs',
+      });
+    });
+
+    it('plays the claimer’s level when the waiting player takes any', async () => {
+      await social.enqueue('ada', 'a-level-of-a-newer-build');
+      const second = matchmaker('bob');
+      second.setLevel(corridors);
+
+      await second.find();
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(second.matchLevel()).toEqual({
+        levelId: corridors,
+        reason: 'yours',
+      });
+    });
+
+    it('tells the waiting player the level and whose choice it was', async () => {
+      const first = matchmaker('ada');
+      first.setLevel(hourglass);
+      await first.find();
+
+      social.put('queue/ada', {
+        ...(social.get('queue/ada') as object),
+        claim: 'K7QPXM',
+        picked: { levelId: hourglass, pick: 'waiting' },
+      });
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(first.matchLevel()).toEqual({
+        levelId: hourglass,
+        reason: 'yours',
+      });
+    });
+
+    it('says nothing about a claim from an older build', async () => {
+      const first = matchmaker('ada');
+      await first.find();
+
+      social.put('queue/ada', {
+        ...(social.get('queue/ada') as object),
+        claim: 'K7QPXM',
+      });
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(online.join).toHaveBeenCalledWith('K7QPXM', { auto: true });
+      expect(first.matchLevel()).toBeNull();
+    });
+  });
+
   it('leaves the queue when the player stops looking', async () => {
     const first = matchmaker('ada');
     await first.find();
@@ -147,7 +247,14 @@ describe('MatchmakerService', () => {
 });
 
 describe('claimable', () => {
-  const entry = { uid: 'old', since: 1000, seen: 50_000, claim: null };
+  const entry = {
+    uid: 'old',
+    since: 1000,
+    seen: 50_000,
+    level: null,
+    claim: null,
+    picked: null,
+  };
 
   it('takes an older, unclaimed, fresh entry of someone else', () => {
     expect(claimable(entry, 'me', 2000, 60_000)).toBe(true);

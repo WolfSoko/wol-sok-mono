@@ -95,31 +95,41 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.from == request.auth.uid;
     }
 
-    // The matchmaking queue: a player's entry, which a newer player may
-    // claim once by writing a room's code into it.
+    // The matchmaking queue: a player's entry, with the level they would
+    // like (null for any), which a newer player may claim once by writing
+    // a room's code into it - and the level it picked, and whose choice
+    // that was (ADR 0012; an older claimer writes neither).
     match /queue/{uid} {
       allow read: if signedIn();
       allow create: if isPlayer(uid) &&
-        request.resource.data.keys().hasOnly(['since', 'seen', 'expireAt', 'claim']) &&
+        request.resource.data.keys().hasOnly(['since', 'seen', 'expireAt', 'level', 'claim']) &&
         request.resource.data.since == request.time &&
         request.resource.data.seen == request.time &&
         request.resource.data.claim == null &&
+        isQueueLevel(request.resource.data.get('level', null)) &&
         expiresWithin(request.resource.data.expireAt, duration.value(1, 'h'));
       allow update: if (isPlayer(uid) &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seen', 'expireAt']) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seen', 'expireAt', 'level']) &&
           request.resource.data.seen == request.time &&
+          isQueueLevel(request.resource.data.get('level', null)) &&
           expiresWithin(request.resource.data.expireAt, duration.value(1, 'h'))) ||
         (signedIn() && request.auth.uid != uid &&
           resource.data.claim == null &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claim']) &&
-          request.resource.data.claim.keys().hasOnly(['by', 'code']) &&
+          request.resource.data.claim.keys().hasOnly(['by', 'code', 'level', 'pick']) &&
           request.resource.data.claim.by == request.auth.uid &&
-          isRoomCode(request.resource.data.claim.code));
+          isRoomCode(request.resource.data.claim.code) &&
+          isQueueLevel(request.resource.data.claim.get('level', null)) &&
+          request.resource.data.claim.get('pick', 'waiting') in ['waiting', 'claimer', 'random']);
       allow delete: if isPlayer(uid);
     }
 
     function signedIn() {
       return request.auth != null;
+    }
+
+    function isQueueLevel(level) {
+      return level == null || (level is string && level.matches('^[a-z0-9-]{1,40}$'));
     }
 
     function isRoomCode(code) {

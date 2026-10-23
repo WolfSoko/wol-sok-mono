@@ -19,6 +19,7 @@ import {
   isMatchOn,
 } from './state/game.states';
 import { isLevelId } from './state/levels';
+import { isMatchLevel } from './state/match-level';
 import {
   HeadStart,
   isHeadStart,
@@ -73,6 +74,8 @@ export interface StoredSettings {
   vaporizeMs?: number;
   /** The language the player picked, absent to follow the browser. */
   language?: Language;
+  /** The level the player would like to meet opponents on, absent for any. */
+  matchLevel?: string;
 }
 
 /**
@@ -109,7 +112,8 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
  * ladder, the arena, how the bacteria look, the resolutions, how the arena
  * vaporizes and for how long, whether the
  * frame rate is shown, whether the game makes sound, plays music and
- * effects and how loud, whether the phone vibrates and the language -
+ * effects and how loud, whether the phone vibrates, the level the
+ * matchmaking asks for and the language -
  * across visits, in the storage of this device - they stay with the device
  * whoever signs in.
  *
@@ -170,6 +174,8 @@ export class GameSettingsService {
 
   /** The language the player picked, null to follow the browser. */
   public readonly language = this.i18n.choice;
+  /** The level the matchmaking asks for, null for any level. */
+  public readonly matchLevel = signal<string | null>(null);
 
   constructor() {
     // Synchronous, so a change is told apart from a restored setup.
@@ -279,6 +285,12 @@ export class GameSettingsService {
     this.changed('vaporizeMs');
   }
 
+  /** Asks the matchmaking for a level that plays online, or any for null. */
+  public setMatchLevel(levelId: string | null): void {
+    this.matchLevel.set(isMatchLevel(levelId) ? levelId : null);
+    this.changed('matchLevel');
+  }
+
   /** Speaks a language from now on, or follows the browser for null. */
   public setLanguage(language: Language | null): void {
     this.i18n.setLanguage(language);
@@ -359,6 +371,9 @@ export class GameSettingsService {
     if (restores('vibration') && typeof stored.vibration === 'boolean') {
       this.vibration.set(stored.vibration);
     }
+    if (restores('matchLevel') && isMatchLevel(stored.matchLevel)) {
+      this.matchLevel.set(stored.matchLevel);
+    }
     if (restores('language')) {
       this.i18n.setLanguage(
         isLanguage(stored.language) ? stored.language : null
@@ -430,6 +445,7 @@ export class GameSettingsService {
       effectsVolume: this.effectsVolume(),
       vibration: this.vibration(),
       language: this.language() ?? undefined,
+      matchLevel: this.matchLevel() ?? undefined,
     };
     this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }

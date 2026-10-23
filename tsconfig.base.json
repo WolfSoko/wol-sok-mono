@@ -25,6 +25,9 @@
       "@wolsok/feat-lazy-bac-game": [
         "./libs/features/lazy/bacteria-game/src/index.ts"
       ],
+      "@wolsok/feat-lazy-bac-game/engine": [
+        "./libs/features/lazy/bacteria-game/src/engine.ts"
+      ],
       "@wolsok/feat-lazy-gravity-rocks": [
         "./libs/features/lazy/gravity-rocks/src/index.ts"
       ],

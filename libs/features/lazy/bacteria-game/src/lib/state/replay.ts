@@ -4,7 +4,7 @@ import { TICKS_PER_SEC } from './fixed-tick';
 import { BALANCE_VERSION } from './game-balance';
 import { isObject } from './is-object';
 import { isLevelId } from './levels';
-import { isGameMode } from './game.states';
+import { isGameMode } from './game-mode';
 import { GhostController } from './ghost';
 import { MatchEngine } from './match-engine';
 import { MatchPlan, planMatch } from './match-setup';
