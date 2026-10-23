@@ -29,6 +29,13 @@ import {
 import { clamp } from './state/geometry';
 import { isObject } from './state/is-object';
 import { DeviceStorage } from './storage/game-storage';
+import {
+  DEFAULT_VAPORIZE_MS,
+  DEFAULT_VAPORIZE_QUALITY,
+  isVaporizeMs,
+  isVaporizeQuality,
+  VaporizeQuality,
+} from './vaporize-effect';
 
 /** What the game remembers between visits. */
 export interface StoredSettings {
@@ -58,6 +65,10 @@ export interface StoredSettings {
   look?: BacteriaLook;
   simResolution?: SimResolution;
   screenResolution?: ScreenResolution;
+  /** How finely the arena turns to dust once a match is left, or 'off'. */
+  vaporize?: VaporizeQuality;
+  /** How long it takes, in ms. */
+  vaporizeMs?: number;
 }
 
 /**
@@ -91,7 +102,8 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
 /**
  * Keeps the player's choices - opponent, difficulty, level, colours, the
  * series and the head start between two players, free play or the campaign
- * ladder, the arena, how the bacteria look, the resolutions, whether the
+ * ladder, the arena, how the bacteria look, the resolutions, how the arena
+ * vaporizes and for how long, whether the
  * frame rate is shown, whether the game makes sound, plays music and
  * effects and how loud, and whether the phone vibrates - across visits, in
  * the storage of this device - they stay with the device whoever signs in.
@@ -145,6 +157,10 @@ export class GameSettingsService {
   public readonly screenResolution = signal<ScreenResolution>(
     DEFAULT_SCREEN_RESOLUTION
   );
+  /** How finely the arena turns to dust once a match is left, or 'off'. */
+  public readonly vaporize = signal<VaporizeQuality>(DEFAULT_VAPORIZE_QUALITY);
+  /** How long the arena takes to blow away, in ms. */
+  public readonly vaporizeMs = signal(DEFAULT_VAPORIZE_MS);
 
   constructor() {
     // Synchronous, so a change is told apart from a restored setup.
@@ -244,6 +260,16 @@ export class GameSettingsService {
     this.changed('screenResolution');
   }
 
+  public setVaporize(quality: VaporizeQuality): void {
+    this.vaporize.set(quality);
+    this.changed('vaporize');
+  }
+
+  public setVaporizeMs(ms: number): void {
+    this.vaporizeMs.set(ms);
+    this.changed('vaporizeMs');
+  }
+
   /**
    * Remembers which settings the player changed, so restoring keeps them,
    * and writes the settings back once they are restored.
@@ -284,6 +310,12 @@ export class GameSettingsService {
       SCREEN_RESOLUTIONS.some((option) => option.id === stored.screenResolution)
     ) {
       this.screenResolution.set(stored.screenResolution as ScreenResolution);
+    }
+    if (restores('vaporize') && isVaporizeQuality(stored.vaporize)) {
+      this.vaporize.set(stored.vaporize);
+    }
+    if (restores('vaporizeMs') && isVaporizeMs(stored.vaporizeMs)) {
+      this.vaporizeMs.set(stored.vaporizeMs);
     }
     if (restores('showFps') && typeof stored.showFps === 'boolean') {
       this.showFps.set(stored.showFps);
@@ -366,6 +398,8 @@ export class GameSettingsService {
       look: this.look(),
       simResolution: this.simResolution(),
       screenResolution: this.screenResolution(),
+      vaporize: this.vaporize(),
+      vaporizeMs: this.vaporizeMs(),
       showFps: this.showFps(),
       freePlay: this.freePlay(),
       arena: this.arena() ?? undefined,

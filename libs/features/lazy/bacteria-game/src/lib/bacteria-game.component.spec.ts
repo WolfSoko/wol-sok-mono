@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject } from 'rxjs';
+import type { ResizedEvent } from '@wolsok/ui-kit';
 import { arenaTheme } from './arena/arena-theme';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
@@ -525,8 +526,46 @@ describe('BacteriaGameComponent', () => {
 
       expect(louder()).toBeLessThan(atDefault);
       expect(louder()).toBeCloseTo(
-        TestBed.inject(GameSoundService).effectsGain() * 0.8
+        TestBed.inject(GameSoundService).effectsGain() * 0.3
       );
+    });
+
+    it('takes as long as set', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+
+      expect(component['thanosOptions']().animationLength).toBe(2500);
+      settings.setVaporizeMs(5000);
+      expect(component['thanosOptions']().animationLength).toBe(5000);
+    });
+
+    it('snaps a big arena box with fewer pixels', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+      component['onArenaBoxResized']({
+        newWidth: 1600,
+        newHeight: 900,
+      } as ResizedEvent);
+      const ratio = () => component['thanosOptions']().maxPixelRatio ?? 0;
+
+      const medium = ratio();
+      settings.setVaporize('low');
+
+      expect(medium).toBeLessThan(1);
+      expect(ratio()).toBeLessThan(medium);
+    });
+
+    it('simply clears the arena while the effect is off', () => {
+      create();
+      TestBed.inject(GameSettingsService).setVaporize('off');
+      const vaporize = jest.fn(() => new Subject<void>());
+      (component as unknown as { thanos: unknown }).thanos = { vaporize };
+      const done = jest.fn();
+
+      component['vaporize']().subscribe({ complete: done });
+
+      expect(vaporize).not.toHaveBeenCalled();
+      expect(done).toHaveBeenCalled();
     });
   });
 
