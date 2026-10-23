@@ -78,18 +78,21 @@ describe('fitImagesForCapture', () => {
 
   function givenImage(
     objectFit: string,
-    natural = { width: 400, height: 100 }
+    natural = { width: 400, height: 100 },
+    box = { width: 222, height: 122 }
   ): HTMLImageElement {
     const img = document.createElement('img');
     img.src = 'logo.svg';
     img.decode = jest.fn().mockResolvedValue(undefined);
     // jsdom neither loads images nor does layout
     Object.defineProperties(img, {
+      complete: { value: true },
       naturalWidth: { value: natural.width },
       naturalHeight: { value: natural.height },
-      clientWidth: { value: 220 },
-      clientHeight: { value: 120 },
     });
+    jest
+      .spyOn(img, 'getBoundingClientRect')
+      .mockReturnValue(new DOMRect(0, 0, box.width, box.height));
     img.dataset['objectFit'] = objectFit;
     return img;
   }
@@ -107,6 +110,10 @@ describe('fitImagesForCapture', () => {
             paddingRight: '10px',
             paddingTop: '10px',
             paddingBottom: '10px',
+            borderLeftWidth: '1px',
+            borderRightWidth: '1px',
+            borderTopWidth: '1px',
+            borderBottomWidth: '1px',
           } as CSSStyleDeclaration);
     });
     // jsdom has no canvas
@@ -177,7 +184,7 @@ describe('fitImagesForCapture', () => {
     jest.useFakeTimers();
     jest.spyOn(console, 'debug').mockImplementation();
     const elem = document.createElement('div');
-    const img = givenImage('contain');
+    const img = givenImage('contain', { width: 0, height: 0 });
     img.decode = jest.fn(() => new Promise<void>(() => undefined));
     elem.appendChild(img);
 
@@ -186,6 +193,24 @@ describe('fitImagesForCapture', () => {
     await fitted;
 
     expect(img.src).toMatch(/logo\.svg$/);
+  });
+
+  it('should skip a hidden image without loading it', async () => {
+    const img = givenImage('contain', undefined, { width: 0, height: 0 });
+
+    await fitImagesForCapture(img, 1);
+
+    expect(img.decode).not.toHaveBeenCalled();
+    expect(img.src).toMatch(/logo\.svg$/);
+  });
+
+  it('should fit a loaded image even when decode() rejects, as some browsers do for svg', async () => {
+    const img = givenImage('contain');
+    img.decode = jest.fn().mockRejectedValue(new Error('EncodingError'));
+
+    await fitImagesForCapture(img, 1);
+
+    expect(img.src).toBe('data:image/png;base64,fitted');
   });
 
   it('should leave an image from another origin as it is', async () => {

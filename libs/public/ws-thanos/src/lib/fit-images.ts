@@ -100,17 +100,51 @@ export async function fitImagesForCapture(
 const DECODE_TIMEOUT_MS = 1000;
 
 /** waits for the image to be ready to draw, throws when it fails or takes too long */
-function decode(img: HTMLImageElement): Promise<void> {
+async function decode(img: HTMLImageElement): Promise<void> {
   let timeout: ReturnType<typeof setTimeout> | undefined;
-  return Promise.race([
-    img.decode(),
-    new Promise<never>((_, reject) => {
-      timeout = setTimeout(
-        () => reject(new Error('image took too long to load')),
-        DECODE_TIMEOUT_MS
-      );
-    }),
-  ]).finally(() => clearTimeout(timeout));
+  try {
+    await Promise.race([
+      img.decode(),
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(
+          () => reject(new Error('image took too long to load')),
+          DECODE_TIMEOUT_MS
+        );
+      }),
+    ]);
+  } catch (error) {
+    // some browsers reject decode() for svg images that are loaded fine
+    if (!(img.complete && img.naturalWidth > 0)) {
+      throw error;
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/** the size html2canvas draws the image into: its border box without borders and padding */
+function contentBox(img: HTMLImageElement, style: CSSStyleDeclaration): Size {
+  const { width, height } = img.getBoundingClientRect();
+  const px = (...values: string[]): number =>
+    values.reduce((sum, value) => sum + (parseFloat(value) || 0), 0);
+  return {
+    width:
+      width -
+      px(
+        style.borderLeftWidth,
+        style.borderRightWidth,
+        style.paddingLeft,
+        style.paddingRight
+      ),
+    height:
+      height -
+      px(
+        style.borderTopWidth,
+        style.borderBottomWidth,
+        style.paddingTop,
+        style.paddingBottom
+      ),
+  };
 }
 
 async function fitImage(img: HTMLImageElement, scale: number): Promise<void> {
@@ -118,22 +152,15 @@ async function fitImage(img: HTMLImageElement, scale: number): Promise<void> {
   if (style == null || (style.objectFit || 'fill') === 'fill') {
     return;
   }
+  // a hidden image has no box, it isn't captured and doesn't need to load
+  const box = contentBox(img, style);
+  if (!(box.width > 0 && box.height > 0)) {
+    return;
+  }
   try {
     await decode(img);
     const image = { width: img.naturalWidth, height: img.naturalHeight };
-    const box = {
-      width:
-        img.clientWidth -
-        parseFloat(style.paddingLeft) -
-        parseFloat(style.paddingRight),
-      height:
-        img.clientHeight -
-        parseFloat(style.paddingTop) -
-        parseFloat(style.paddingBottom),
-    };
-    if (
-      !(image.width > 0 && image.height > 0 && box.width > 0 && box.height > 0)
-    ) {
+    if (!(image.width > 0 && image.height > 0)) {
       return;
     }
     const canvas = img.ownerDocument.createElement('canvas');

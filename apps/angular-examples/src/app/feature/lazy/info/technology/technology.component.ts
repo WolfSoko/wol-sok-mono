@@ -41,7 +41,7 @@ export class TechnologyComponent implements OnInit {
   @Input() title!: string;
   @Input() link!: string;
   @Input() image!: string;
-  @Input() darkImage?: string;
+  @Input() public darkImage?: string;
   @Input() autoVaporize = false;
   @Input() autoVaporizeAfter = 1000;
 
