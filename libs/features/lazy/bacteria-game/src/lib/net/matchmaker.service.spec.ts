@@ -73,6 +73,20 @@ describe('MatchmakerService', () => {
     expect(online.host).not.toHaveBeenCalled();
   });
 
+  it('leaves the queue again when cancelled while joining it', async () => {
+    const first = matchmaker('ada');
+    const timers = jest.getTimerCount();
+
+    const finding = first.find();
+    const cancelling = first.cancel();
+    await Promise.all([finding, cancelling]);
+
+    expect(first.state()).toBe('idle');
+    expect(social.get('queue/ada')).toBeNull();
+    // No search goes on behind the cancel.
+    expect(jest.getTimerCount()).toBe(timers);
+  });
+
   it('claims the older player with a room of its own, and leaves the queue', async () => {
     await social.enqueue('ada');
     const second = matchmaker('bob');

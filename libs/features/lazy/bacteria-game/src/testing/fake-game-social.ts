@@ -128,13 +128,14 @@ export class FakeGameSocial implements GameSocial {
     return this.watch(`queue/${uid}`) as Observable<QueueEntry | null>;
   }
 
-  public async waiting(limit: number): Promise<Waiting[]> {
+  public async waiting(limit: number, seenSince: number): Promise<Waiting[]> {
     return [...this.docs.value]
       .filter(([path]) => path.startsWith('queue/'))
       .map(([path, value]) => ({
         uid: path.slice('queue/'.length),
         ...(value as QueueEntry),
       }))
+      .filter((entry) => (entry.seen ?? -Infinity) >= seenSince)
       .sort((a, b) => (a.since ?? 0) - (b.since ?? 0))
       .slice(0, limit);
   }

@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   input,
+  signal,
 } from '@angular/core';
 import { avatarArt } from './avatar-art';
 import { Avatar } from './profile';
@@ -12,7 +13,7 @@ import { Avatar } from './profile';
   selector: 'feat-lazy-bac-game-avatar',
   template: `
     @let shown = avatar();
-    @if (shown.kind === 'preset') {
+    @if (shown.kind === 'preset' || broken() === shown) {
       @let art = preset();
       <svg viewBox="0 0 100 100" role="img" [attr.aria-label]="label()">
         <circle cx="50" cy="50" r="50" class="ground" />
@@ -54,6 +55,7 @@ import { Avatar } from './profile';
         [src]="shown.kind === 'photo' ? shown.url : shown.data"
         [alt]="label()"
         referrerpolicy="no-referrer"
+        (error)="broken.set(shown)"
       />
     }
   `,
@@ -89,8 +91,11 @@ export class AvatarComponent {
   /** Whose picture it is, for screen readers. */
   public readonly label = input('Avatar');
 
+  /** The image that failed to load - a bacterium stands in for it. */
+  protected readonly broken = signal<Avatar | null>(null);
+
   protected readonly preset = computed(() => {
     const avatar = this.avatar();
-    return avatar.kind === 'preset' ? avatarArt(avatar.id) : null;
+    return avatarArt(avatar.kind === 'preset' ? avatar.id : 0);
   });
 }

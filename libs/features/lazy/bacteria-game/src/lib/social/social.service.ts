@@ -76,7 +76,10 @@ export class SocialService {
       switchMap((uid) =>
         uid === null || this.social === null
           ? of(null)
-          : this.social.watchProfile(uid).pipe(map((value) => ({ uid, value })))
+          : this.social.watchProfile(uid).pipe(
+              map((value): { uid: string; value: unknown } => ({ uid, value })),
+              catchError(() => of({ uid, value: null }))
+            )
       )
     ),
     { initialValue: null }
@@ -173,16 +176,29 @@ export class SocialService {
 
   public constructor() {
     // The player shows up as online while they share it - playing while an
-    // online match is on.
+    // online match is on. Nothing is told before their stored profile is
+    // read, which may say they do not share it, and the status goes with
+    // the player who signs out.
+    let shown: string | null = null;
     effect(() => {
+      const presence = this.presence;
       const uid = this.uid();
+      const loaded = this.stored()?.uid === uid;
       const profile = this.profile();
       const playing =
         this.store.online() !== null && isMatchOn(this.store.currentState());
-      if (uid === null || this.presence === null) {
+      if (presence === null) {
         return;
       }
-      this.presence.set(
+      if (shown !== null && shown !== uid) {
+        presence.set(shown, null);
+        shown = null;
+      }
+      if (uid === null || !loaded) {
+        return;
+      }
+      shown = uid;
+      presence.set(
         uid,
         profile?.shareStatus === true ? (playing ? 'playing' : 'online') : null
       );

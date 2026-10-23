@@ -93,9 +93,7 @@ export function parseAvatar(value: unknown): Avatar | null {
     }
     case 'photo': {
       const url = value['url'];
-      return typeof url === 'string' &&
-        url.startsWith('https://') &&
-        url.length <= PHOTO_MAX
+      return typeof url === 'string' && isGooglePhoto(url)
         ? { kind: 'photo', url }
         : null;
     }
@@ -108,6 +106,14 @@ export function parseAvatar(value: unknown): Avatar | null {
     default:
       return null;
   }
+}
+
+/** True for the URL of a Google account's photo - the one host allowed. */
+export function isGooglePhoto(url: string): boolean {
+  return (
+    url.length <= PHOTO_MAX &&
+    /^https:\/\/lh\d+\.googleusercontent\.com\/.+$/.test(url)
+  );
 }
 
 /** True for a data URL of a WebP, PNG or JPEG image no bigger than allowed. */

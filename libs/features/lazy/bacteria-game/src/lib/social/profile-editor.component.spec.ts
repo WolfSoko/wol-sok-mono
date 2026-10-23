@@ -47,7 +47,7 @@ describe('ProfileEditorComponent', () => {
     account.profile.set({
       guest: false,
       name: 'Ada',
-      photoUrl: 'https://photos.test/ada.png',
+      photoUrl: 'https://lh3.googleusercontent.com/a/ada',
     });
     const host = await render();
     const [name, motto] = Array.from(
@@ -72,7 +72,7 @@ describe('ProfileEditorComponent', () => {
     expect(social.get('profiles/ada')).toEqual({
       name: 'Ada L',
       motto: 'Divide and conquer',
-      avatar: { kind: 'photo', url: 'https://photos.test/ada.png' },
+      avatar: { kind: 'photo', url: 'https://lh3.googleusercontent.com/a/ada' },
       shareStatus: true,
     });
   });

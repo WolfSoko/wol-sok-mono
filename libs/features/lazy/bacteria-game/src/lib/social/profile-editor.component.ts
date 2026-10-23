@@ -19,6 +19,7 @@ import {
   AVATAR_COUNT,
   cleanMotto,
   cleanName,
+  isGooglePhoto,
   MOTTO_MAX,
   NAME_MAX,
   Profile,
@@ -57,7 +58,9 @@ export class ProfileEditorComponent {
   /** The Google photo, offered once the player signed in with Google. */
   protected readonly photo = computed((): Avatar | null => {
     const url = this.account.profile()?.photoUrl;
-    return url === undefined ? null : { kind: 'photo', url };
+    return url === undefined || !isGooglePhoto(url)
+      ? null
+      : { kind: 'photo', url };
   });
 
   protected readonly changed = signal(false);

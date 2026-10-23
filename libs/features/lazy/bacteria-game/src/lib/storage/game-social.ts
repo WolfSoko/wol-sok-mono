@@ -70,8 +70,11 @@ export interface GameSocial {
   leaveQueue(uid: string): Promise<void>;
   /** The player's own entry - null once it is gone. */
   watchQueueEntry(uid: string): Observable<QueueEntry | null>;
-  /** The oldest players waiting, oldest first. */
-  waiting(limit: number): Promise<Waiting[]>;
+  /**
+   * The players waiting who refreshed their entry at `seenSince` (ms, the
+   * server's clock) or later - up to `limit`, oldest first.
+   */
+  waiting(limit: number, seenSince: number): Promise<Waiting[]>;
   /**
    * Hands a waiting player the room `code`, if nobody did before - true
    * when this claim got them.

@@ -53,9 +53,11 @@ describe('profile', () => {
   it('takes only avatars the rules take', () => {
     expect(parseAvatar({ kind: 'preset', id: AVATAR_COUNT })).toBeNull();
     expect(parseAvatar({ kind: 'photo', url: 'http://x' })).toBeNull();
-    expect(parseAvatar({ kind: 'photo', url: 'https://x/y.png' })).toEqual({
+    expect(parseAvatar({ kind: 'photo', url: 'https://x/y.png' })).toBeNull();
+    const photo = 'https://lh3.googleusercontent.com/a/ada=s96-c';
+    expect(parseAvatar({ kind: 'photo', url: photo })).toEqual({
       kind: 'photo',
-      url: 'https://x/y.png',
+      url: photo,
     });
     expect(isImageData('data:image/webp;base64,AAAA')).toBe(true);
     expect(isImageData('data:image/svg+xml;base64,AAAA')).toBe(false);

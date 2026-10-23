@@ -176,6 +176,8 @@ export class FirestoreGameSocial implements GameSocial {
 
   public async enqueue(uid: string): Promise<void> {
     const { dbSdk } = this.connection;
+    // A fresh entry: the rules let an existing one change only `seen`.
+    await dbSdk.deleteDoc(this.doc('queue', uid));
     await dbSdk.setDoc(this.doc('queue', uid), {
       since: dbSdk.serverTimestamp(),
       seen: dbSdk.serverTimestamp(),
@@ -202,19 +204,20 @@ export class FirestoreGameSocial implements GameSocial {
     );
   }
 
-  public async waiting(limit: number): Promise<Waiting[]> {
+  public async waiting(limit: number, seenSince: number): Promise<Waiting[]> {
     const { dbSdk } = this.connection;
+    // Only entries refreshed lately, so players who left never fill the
+    // page; the oldest of them first. One inequality, no composite index.
     const snapshot = await dbSdk.getDocs(
       dbSdk.query(
         this.collection('queue'),
-        dbSdk.orderBy('since'),
+        dbSdk.where('seen', '>=', dbSdk.Timestamp.fromMillis(seenSince)),
         dbSdk.limit(limit)
       )
     );
-    return snapshot.docs.map((doc) => ({
-      uid: doc.id,
-      ...this.queueEntry(doc),
-    }));
+    return snapshot.docs
+      .map((doc) => ({ uid: doc.id, ...this.queueEntry(doc) }))
+      .sort((a, b) => (a.since ?? 0) - (b.since ?? 0));
   }
 
   public async claim(uid: string, by: string, code: string): Promise<boolean> {

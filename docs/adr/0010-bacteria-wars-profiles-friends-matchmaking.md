@@ -49,7 +49,7 @@ side can end a friendship by deleting both entries.
 by the database itself (`onDisconnect`) when the connection drops. Firestore
 has no such hook; a heartbeat there would lag by minutes and bill a write
 a minute per player. The status holds no more than the state, and anyone
-signed in may read it; only friends know whose uid to look up.
+signed in may read it.
 
 **Direct challenges** - a player challenges an online friend by opening a
 room (ADR 0009) and leaving its code in `players/{friend}/challenges/{me}`,
@@ -87,5 +87,12 @@ friend" knows whom to ask.
   (`firestore.indexes.json`), and are deleted by their owner when done.
 - Profiles are public to signed-in players: the name and picture are what
   others see in a match anyway. An uploaded picture is not moderated.
+- Uids are not secret: every signed-in player can read the matchmaking
+  queue, and every opponent learns the other's uid. So sharing the status
+  does not limit it to friends - any signed-in player who knows a uid can
+  read whether that player is online or playing. The game only shows it to
+  friends, and turning sharing off removes it for everyone.
+- A photo avatar must be a Google account photo (`lh*.googleusercontent.com`),
+  so a profile cannot make other players load images from arbitrary hosts.
 - Each player reads one status per friend while the friend list is open;
   big friend lists would want a server-side fan-out.

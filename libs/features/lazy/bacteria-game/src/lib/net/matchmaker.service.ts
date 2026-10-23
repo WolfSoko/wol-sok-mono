@@ -40,6 +40,8 @@ export class MatchmakerService {
     seen: null,
   };
   private claiming = false;
+  /** Counts the searches, so one that was stopped meanwhile gives up. */
+  private run = 0;
 
   public readonly state = this.stateSignal.asReadonly();
   public readonly available = this.social !== null && this.online.available;
@@ -80,6 +82,7 @@ export class MatchmakerService {
   public async cancel(): Promise<void> {
     const wasFound = this.stateSignal() === 'found';
     this.stop();
+    this.clearJoinTimeout();
     this.stateSignal.set('idle');
     if (wasFound && this.online.lobby().phase !== 'connected') {
       this.online.leave();
@@ -95,13 +98,24 @@ export class MatchmakerService {
       return;
     }
     this.stop();
+    this.clearJoinTimeout();
+    const run = this.run;
     this.stateSignal.set('searching');
     this.own = { since: null, seen: null };
     try {
       await social.enqueue(me);
     } catch (error) {
       console.warn('Could not join the matchmaking queue', error);
-      this.stateSignal.set('idle');
+      if (run === this.run) {
+        this.stateSignal.set('idle');
+      }
+      return;
+    }
+    if (run !== this.run) {
+      // Cancelled while joining: the entry goes again.
+      if (this.stateSignal() === 'idle') {
+        await social.leaveQueue(me).catch(() => undefined);
+      }
       return;
     }
     this.watching = social.watchQueueEntry(me).subscribe((entry) => {
@@ -142,7 +156,8 @@ export class MatchmakerService {
     }
     this.claiming = true;
     try {
-      const candidates = (await social.waiting(LOOK_AT)).filter((entry) =>
+      const waiting = await social.waiting(LOOK_AT, seen - STALE_MS);
+      const candidates = waiting.filter((entry) =>
         claimable(entry, me, since, seen)
       );
       if (candidates.length === 0 || this.stateSignal() !== 'searching') {
@@ -158,13 +173,17 @@ export class MatchmakerService {
         }
         if (await social.claim(candidate.uid, me, code).catch(() => false)) {
           this.found();
-          await social.leaveQueue(me).catch(() => undefined);
           this.joinTimeout = setTimeout(() => {
+            this.joinTimeout = null;
             // They never came - a closed tab: on with the search.
-            if (this.online.lobby().phase !== 'connected') {
+            if (
+              this.stateSignal() === 'found' &&
+              this.online.lobby().phase !== 'connected'
+            ) {
               this.online.leave();
             }
           }, JOIN_TIMEOUT_MS);
+          await social.leaveQueue(me).catch(() => undefined);
           return;
         }
       }
@@ -203,6 +222,7 @@ export class MatchmakerService {
   }
 
   private stop(): void {
+    this.run++;
     this.watching?.unsubscribe();
     this.watching = null;
     this.timers.forEach(clearInterval);

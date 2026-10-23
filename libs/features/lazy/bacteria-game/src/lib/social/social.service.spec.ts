@@ -124,6 +124,20 @@ describe('SocialService', () => {
     expect(presence.stateOf('ada')).toBeNull();
   });
 
+  it('shows nothing before the stored profile says whether to share', async () => {
+    await social.saveProfile('ada', {
+      ...defaultProfile('ada'),
+      shareStatus: false,
+    });
+    const set = jest.spyOn(presence, 'set');
+
+    service();
+    TestBed.tick();
+
+    expect(set).not.toHaveBeenCalledWith('ada', 'online');
+    expect(presence.stateOf('ada')).toBeNull();
+  });
+
   it('reads a card once, however often it is asked for', async () => {
     const players = service();
     await social.saveProfile('eve', { ...defaultProfile('eve'), name: 'Eve' });

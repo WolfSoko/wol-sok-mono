@@ -49,7 +49,8 @@ service cloud.firestore {
     match /players/{owner}/friends/{friend} {
       allow get: if isPlayer(owner) || isPlayer(friend);
       allow list: if isPlayer(owner);
-      allow create: if owner != friend &&
+      // Update too: asking or accepting again rewrites an existing entry.
+      allow create, update: if owner != friend &&
         request.resource.data.since == request.time &&
         ((isPlayer(owner) && request.resource.data.keys().hasOnly(['since'])) ||
          (isPlayer(friend) &&
@@ -63,7 +64,7 @@ service cloud.firestore {
     match /players/{owner}/requests/{from} {
       allow get: if isPlayer(owner) || isPlayer(from);
       allow list: if isPlayer(owner);
-      allow create: if isPlayer(from) && from != owner &&
+      allow create, update: if isPlayer(from) && from != owner &&
         request.resource.data.keys().hasOnly(['at']) &&
         request.resource.data.at == request.time;
       allow delete: if isPlayer(owner) || isPlayer(from);
@@ -138,14 +139,15 @@ service cloud.firestore {
         isAvatar(data.avatar);
     }
 
-    // A drawn bacterium, a Google photo's URL, or a small uploaded image.
+    // A drawn bacterium, the URL of a Google account's photo, or a small
+    // uploaded image.
     function isAvatar(avatar) {
       return avatar is map && (
         (avatar.kind == 'preset' && avatar.keys().hasOnly(['kind', 'id']) &&
           avatar.id is int && avatar.id >= 0 && avatar.id < 12) ||
         (avatar.kind == 'photo' && avatar.keys().hasOnly(['kind', 'url']) &&
           avatar.url is string && avatar.url.size() <= 500 &&
-          avatar.url.matches('https://.+')) ||
+          avatar.url.matches('https://lh[0-9]+[.]googleusercontent[.]com/.+')) ||
         (avatar.kind == 'image' && avatar.keys().hasOnly(['kind', 'data']) &&
           avatar.data is string && avatar.data.size() <= 40000 &&
           avatar.data.matches('data:image/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+')));
