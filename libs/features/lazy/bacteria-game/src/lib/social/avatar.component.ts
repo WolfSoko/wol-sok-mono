@@ -2,9 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   signal,
 } from '@angular/core';
+import { I18nService } from '../i18n/i18n.service';
 import { avatarArt } from './avatar-art';
 import { Avatar } from './profile';
 
@@ -15,7 +17,7 @@ import { Avatar } from './profile';
     @let shown = avatar();
     @if (shown.kind === 'preset' || broken() === shown) {
       @let art = preset();
-      <svg viewBox="0 0 100 100" role="img" [attr.aria-label]="label()">
+      <svg viewBox="0 0 100 100" role="img" [attr.aria-label]="name()">
         <circle cx="50" cy="50" r="50" class="ground" />
         @if (art; as art) {
           <path
@@ -53,7 +55,7 @@ import { Avatar } from './profile';
     } @else {
       <img
         [src]="shown.kind === 'photo' ? shown.url : shown.data"
-        [alt]="label()"
+        [alt]="name()"
         referrerpolicy="no-referrer"
         (error)="broken.set(shown)"
       />
@@ -88,8 +90,13 @@ import { Avatar } from './profile';
 export class AvatarComponent {
   public readonly avatar = input.required<Avatar>();
   public readonly size = input(40);
-  /** Whose picture it is, for screen readers. */
-  public readonly label = input('Avatar');
+  private readonly i18n = inject(I18nService);
+
+  /** Whose picture it is, for screen readers - "Avatar" when not told. */
+  public readonly label = input<string | null>(null);
+  protected readonly name = computed(
+    () => this.label() ?? this.i18n.t('social.avatar')
+  );
 
   /** The image that failed to load - a bacterium stands in for it. */
   protected readonly broken = signal<Avatar | null>(null);

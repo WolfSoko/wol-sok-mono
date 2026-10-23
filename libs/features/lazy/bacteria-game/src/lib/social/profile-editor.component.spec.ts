@@ -4,6 +4,7 @@ import {
   FakeGamePresence,
   FakeGameSocial,
 } from '../../testing/fake-game-social';
+import { I18nService } from '../i18n/i18n.service';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
 import { ProfileEditorComponent } from './profile-editor.component';
@@ -84,5 +85,14 @@ describe('ProfileEditorComponent', () => {
     expect(host.querySelectorAll('.picture[role="radio"]')).toHaveLength(12);
     expect(host.querySelector('[aria-label="Google photo"]')).toBeNull();
     expect(host.textContent).toContain("Friends see when I'm online");
+  });
+
+  it('speaks German', async () => {
+    account.profile.set({ guest: true, name: null });
+    TestBed.inject(I18nService).setLanguage('de');
+    const host = await render();
+
+    expect(host.textContent).toContain('Freunde sehen, wenn ich online bin');
+    expect(host.querySelector('[aria-label="Bakterium 1"]')).not.toBeNull();
   });
 });

@@ -7,3 +7,4 @@ export type {
   GameAdsOptions,
   GameSupportOptions,
 } from './lib/support/game-support';
+export { I18nService } from './lib/i18n/i18n.service';

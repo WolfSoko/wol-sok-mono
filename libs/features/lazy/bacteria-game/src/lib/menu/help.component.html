@@ -1,41 +1,30 @@
-<feat-lazy-bac-game-screen-header title="How to play" (back)="back.emit()" />
+<feat-lazy-bac-game-screen-header
+  [title]="'help.title' | t"
+  (back)="back.emit()"
+/>
 <ol class="steps">
   <li class="screen-section">
     <span class="step-number">1</span>
-    <h3 class="section-title">Steer the crosshair</h3>
-    <p>
-      Your colony follows its crosshair. Well fed bacteria divide, and the drops
-      of jam supercharge whoever grabs them first.
-    </p>
+    <h3 class="section-title">{{ "help.steps.steer.title" | t }}</h3>
+    <p>{{ "help.steps.steer.text" | t }}</p>
   </li>
   <li class="screen-section">
     <span class="step-number">2</span>
-    <h3 class="section-title">Fire the boost</h3>
-    <p>
-      For a few seconds your bacteria are faster and more aggressive, then the
-      boost recharges - fire it to break a frontline.
-    </p>
+    <h3 class="section-title">{{ "help.steps.boost.title" | t }}</h3>
+    <p>{{ "help.steps.boost.text" | t }}</p>
   </li>
   <li class="screen-section">
     <span class="step-number">3</span>
-    <h3 class="section-title">Eat the other colony</h3>
-    <p>
-      Surround the enemy to eat it. The match ends when one colony is gone, or
-      when the clock of a timed level runs out, or when a colony has eaten
-      enough pellets on a harvest level - win fast and clean for a better
-      medallion.
-    </p>
-    <p>
-      Grey colonies are neutral: nobody steers them and they count for no side.
-      Eat them first and your army grows.
-    </p>
+    <h3 class="section-title">{{ "help.steps.eat.title" | t }}</h3>
+    <p>{{ "help.steps.eat.text" | t }}</p>
+    <p>{{ "help.steps.eat.neutral" | t }}</p>
   </li>
 </ol>
 <div class="screen-sections">
   <section class="screen-section">
-    <h3 class="section-title">Ground</h3>
+    <h3 class="section-title">{{ "help.ground.title" | t }}</h3>
     <ul class="zones">
-      @for (zone of zones; track zone.kind) {
+      @for (zone of zones(); track zone.kind) {
         <li>
           <span
             class="swatch"
@@ -43,41 +32,47 @@
             [style.color]="zone.css"
           ></span>
           <span
-            ><strong>{{ zone.name }}</strong> - {{ zone.rule }}</span
+            ><strong>{{ zone.name | t }}</strong>
+            {{ "help.ground.separator" | t }}
+            {{ zone.rule | t: zone.params }}</span
           >
         </li>
       }
     </ul>
   </section>
   <section class="screen-section">
-    <h3 class="section-title">Keyboard</h3>
+    <h3 class="section-title">{{ "help.keyboard.title" | t }}</h3>
     <p>
-      {{ colorNames()[0] }} uses <kbd>W A S D</kbd> and <kbd>Space</kbd>,
-      {{ colorNames()[1] }} the <kbd>arrow keys</kbd> and <kbd>Enter</kbd>.
-      Against the computer both sets are yours.
-    </p>
-    <p>
-      <kbd>P</kbd> or <kbd>Esc</kbd> pauses, <kbd>F</kbd> toggles fullscreen.
-    </p>
-  </section>
-  <section class="screen-section">
-    <h3 class="section-title">Touch</h3>
-    <p>
-      Push the joystick zone at your edge and tap the boost button - or drag
-      your crosshair across the arena.
-    </p>
-    <p>
-      For two players lay the phone flat between you, one at each end - each
-      player's controls are turned towards them.
-    </p>
-  </section>
-  <section class="screen-section">
-    <h3 class="section-title">Privacy</h3>
-    <p>
-      What the game keeps about you, and how to have it deleted, is in the
-      <a [href]="privacyPolicyUrl" target="_blank" rel="noopener"
-        >privacy policy</a
+      {{ "help.keyboard.leftUses" | t: { name: names()[0] } }}
+      <kbd>W A S D</kbd> {{ "help.keyboard.and" | t }}
+      <kbd>{{ "help.keyboard.space" | t }}</kbd
+      >,
+      {{ "help.keyboard.rightUses" | t: { name: names()[1] } }}
+      <kbd>{{ "help.keyboard.arrows" | t }}</kbd>
+      {{ "help.keyboard.and" | t }}
+      <kbd>{{ "help.keyboard.enter" | t }}</kbd
       >.
+      {{ "help.keyboard.both" | t }}
+    </p>
+    <p>
+      <kbd>P</kbd> {{ "help.keyboard.or" | t }} <kbd>Esc</kbd>
+      {{ "help.keyboard.pauses" | t }} <kbd>F</kbd>
+      {{ "help.keyboard.fullscreen" | t }}
+    </p>
+  </section>
+  <section class="screen-section">
+    <h3 class="section-title">{{ "help.touch.title" | t }}</h3>
+    <p>{{ "help.touch.controls" | t }}</p>
+    <p>{{ "help.touch.twoPlayers" | t }}</p>
+  </section>
+  <section class="screen-section">
+    <h3 class="section-title">{{ "help.privacy.title" | t }}</h3>
+    <p>
+      {{ "help.privacy.before" | t }}
+      <a [href]="privacyPolicyUrl" target="_blank" rel="noopener">{{
+        "help.privacy.link" | t
+      }}</a
+      >{{ "help.privacy.after" | t }}
     </p>
     @if (ads.consentAnswered()) {
       <p>

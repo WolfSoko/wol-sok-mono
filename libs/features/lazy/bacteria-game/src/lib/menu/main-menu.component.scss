@@ -62,30 +62,39 @@
 .play {
   @include screen.primary;
 
-  height: 4.25rem;
+  height: auto;
+  min-height: 4.25rem;
+  padding-block: 0.5rem;
   justify-content: flex-start;
   font-size: 1.6rem;
+  text-align: left;
 
-  // Material's label is inline: as a row, the note sits at the far end and
-  // wraps on its own instead of breaking the line under the name.
+  // Material's label may shrink, so the note wraps inside the button.
   ::ng-deep .mdc-button__label {
-    flex: 1 1 auto;
-    display: flex;
-    align-items: center;
     min-width: 0;
-    white-space: nowrap;
   }
+}
 
-  .play-note {
-    margin-left: auto;
-    padding-left: 1rem;
-    font-family: var(--bw-body);
-    font-weight: 700;
-    font-size: 0.85rem;
-    line-height: 1.25;
-    text-align: right;
-    white-space: normal;
-  }
+// The modes in a line under the name: beside it the note wrapped into a
+// ragged block next to the name at 1280px - and German is longer still.
+.play-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.play-title {
+  line-height: 1.1;
+}
+
+.play-note {
+  font-family: var(--bw-body);
+  font-weight: 700;
+  font-size: 0.85rem;
+  line-height: 1.25;
+  white-space: normal;
+  opacity: 0.85;
 }
 
 .tiles {
@@ -255,9 +264,9 @@
   color: var(--bw-muted);
 }
 
-// Too narrow for the note beside Play.
+// Too narrow for the note under Play.
 @media (max-width: 30rem) {
-  .play .play-note {
+  .play-note {
     display: none;
   }
 }
@@ -285,7 +294,12 @@
   }
 
   .play {
-    height: 3.5rem;
+    min-height: 3.5rem;
+  }
+
+  // Side by side the hero is short of height: the name alone.
+  .play-note {
+    display: none;
   }
 
   .tiles .tile {

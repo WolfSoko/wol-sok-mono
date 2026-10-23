@@ -40,7 +40,9 @@
   }
 
   @if (running() && !paused() && waitingForPeer()) {
-    <p class="peer-wait" role="status">Waiting for your opponent…</p>
+    <p class="peer-wait" role="status">
+      {{ "stage.waitingForPeer" | t }}
+    </p>
   }
 
   @if (panel(); as open) {
@@ -54,7 +56,7 @@
         <mat-card class="panel-card" appearance="raised">
           @if (open === "pause") {
             <mat-card-content class="menu">
-              <h2 class="panel-title">Paused</h2>
+              <h2 class="panel-title">{{ "stage.pause.title" | t }}</h2>
               <button
                 mat-flat-button
                 color="primary"
@@ -63,7 +65,7 @@
                 (click)="togglePause()"
               >
                 <mat-icon>play_arrow</mat-icon>
-                Resume
+                {{ "stage.pause.resume" | t }}
               </button>
               @if (canRestart()) {
                 <button
@@ -73,7 +75,7 @@
                   (click)="startGame()"
                 >
                   <mat-icon>replay</mat-icon>
-                  Restart
+                  {{ "stage.pause.restart" | t }}
                 </button>
               }
               <button
@@ -83,7 +85,7 @@
                 (click)="show('settings')"
               >
                 <mat-icon>tune</mat-icon>
-                Settings
+                {{ "settings.title" | t }}
               </button>
               <button
                 mat-stroked-button
@@ -92,7 +94,7 @@
                 (click)="quitToMenu()"
               >
                 <mat-icon>home</mat-icon>
-                Quit to menu
+                {{ "stage.pause.quit" | t }}
               </button>
             </mat-card-content>
           } @else {
@@ -148,7 +150,7 @@
               [levelId]="choiceLevelId()"
               [medals]="medals()"
               [locks]="choiceLocks()"
-              [campaignNote]="campaignNote()"
+              [openLevels]="openLevels()"
               [seriesLength]="seriesLength()"
               [headStart]="headStart()"
               [colonyNames]="colorNames()"
@@ -196,7 +198,7 @@
               [arenaSize]="arena()"
               [nativeFullscreenSupported]="nativeFullscreenSupported()"
               [nativeFullscreen]="nativeFullscreen()"
-              [backLabel]="paused() ? 'Pause menu' : 'Menu'"
+              [backLabel]="settingsBackLabel()"
               [vibrationSupported]="vibrationSupported"
               (colorChange)="selectColor($event)"
               (soundChange)="setSound($event)"
@@ -225,7 +227,7 @@
   <div class="center" [attr.inert]="screenOpen() ? '' : null">
     @if (!screenOpen()) {
       <div class="stage-bar">
-        <span class="hud-level">{{ level().name }}</span>
+        <span class="hud-level">{{ levelName() | gameText }}</span>
         <span class="game-time" [class.running-out]="timeRunningOut()"
           ><span class="cdk-visually-hidden">{{ clockLabel() }}: </span
           >{{ clockText() }}</span
@@ -234,7 +236,7 @@
           @for (colony of stats(); track colony.id) {
             <span class="hud-colony" [class.boosting]="colony.boosting">
               <span class="colony-name" [style.color]="colony.css">{{
-                colony.name
+                colonyName(colony.name)
               }}</span>
               <span class="colony-count">{{ colony.bacterias }}</span>
               @if (goal(); as goal) {
@@ -242,7 +244,7 @@
                   ><mat-icon aria-hidden="true">{{ goal.icon }}</mat-icon
                   >{{ colony[goal.of] }}/{{ goal.target
                   }}<span class="cdk-visually-hidden">
-                    {{ goal.label }}</span
+                    {{ goal.label | t }}</span
                   ></span
                 >
               }
@@ -251,9 +253,9 @@
           @let neutral = neutralCount();
           @if (neutral !== null) {
             <span class="hud-colony neutral">
-              <span class="colony-name" [style.color]="neutralCss"
-                >Neutral</span
-              >
+              <span class="colony-name" [style.color]="neutralCss">{{
+                "game.players.neutral" | t
+              }}</span>
               <span class="colony-count">{{ neutral }}</span>
             </span>
           }
@@ -262,8 +264,12 @@
           <button
             mat-icon-button
             type="button"
-            [attr.aria-label]="settings.sound() ? 'Mute' : 'Unmute'"
-            [matTooltip]="settings.sound() ? 'Mute' : 'Unmute'"
+            [attr.aria-label]="
+              (settings.sound() ? 'common.mute' : 'common.unmute') | t
+            "
+            [matTooltip]="
+              (settings.sound() ? 'common.mute' : 'common.unmute') | t
+            "
             (click)="setSound(!settings.sound())"
           >
             <mat-icon>{{
@@ -274,8 +280,11 @@
             <button
               mat-icon-button
               type="button"
-              aria-label="Pause"
-              matTooltip="Pause (P)"
+              [attr.aria-label]="'stage.hud.pause' | t"
+              [matTooltip]="
+                'common.withKey'
+                  | t: { label: ('stage.hud.pause' | t), key: 'P' }
+              "
               (click)="togglePause()"
             >
               <mat-icon>pause</mat-icon>
@@ -284,9 +293,20 @@
           <button
             mat-icon-button
             type="button"
-            [attr.aria-label]="fullscreen() ? 'Exit fullscreen' : 'Fullscreen'"
+            [attr.aria-label]="
+              (fullscreen() ? 'common.exitFullscreen' : 'common.fullscreen') | t
+            "
             [matTooltip]="
-              (fullscreen() ? 'Exit fullscreen' : 'Fullscreen') + ' (F)'
+              'common.withKey'
+                | t
+                  : {
+                      label:
+                        ((fullscreen()
+                          ? 'common.exitFullscreen'
+                          : 'common.fullscreen'
+                        ) | t),
+                      key: 'F',
+                    }
             "
             (click)="setFullscreen(!fullscreen())"
           >

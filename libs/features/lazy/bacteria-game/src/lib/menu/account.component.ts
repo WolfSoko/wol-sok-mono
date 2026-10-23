@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { ProgressService } from '../progress.service';
 import { GameAccount } from '../storage/game-account';
 
@@ -15,29 +16,32 @@ import { GameAccount } from '../storage/game-account';
  */
 @Component({
   selector: 'feat-lazy-bac-game-account',
-  imports: [MatButtonModule, MatIconModule],
+  imports: [MatButtonModule, MatIconModule, TranslatePipe],
   template: `
     @if (!account.cloud) {
-      <span class="note">Kept on this device</span>
+      <span class="note">{{ 'profile.account.local' | t }}</span>
     } @else {
       @let player = account.profile();
       @if (player === null) {
-        <span class="note">Connecting…</span>
+        <span class="note">{{ 'profile.account.connecting' | t }}</span>
       } @else if (player.guest) {
-        <span class="note">Playing as a guest</span>
+        <span class="note">{{ 'profile.account.guest' | t }}</span>
         <button
           mat-stroked-button
           type="button"
           [disabled]="busy() || !progress.loaded()"
           (click)="signIn()"
-          title="Keep your progress on every device you sign in on"
+          [title]="'profile.account.signInHint' | t"
         >
           <mat-icon>login</mat-icon>
-          Sign in with Google
+          {{ 'profile.account.signIn' | t }}
         </button>
       } @else {
         <span class="note">
-          Signed in as <strong>{{ player.name ?? 'Google user' }}</strong>
+          {{ 'profile.account.signedInAs' | t }}
+          <strong>{{
+            player.name ?? ('profile.account.googleUser' | t)
+          }}</strong>
         </span>
         <button
           mat-stroked-button
@@ -46,11 +50,11 @@ import { GameAccount } from '../storage/game-account';
           (click)="signOut()"
         >
           <mat-icon>logout</mat-icon>
-          Sign out
+          {{ 'profile.account.signOut' | t }}
         </button>
       }
       @if (failed()) {
-        <span class="failed" role="status">That did not work - try again.</span>
+        <span class="failed" role="status">{{ 'social.failed' | t }}</span>
       }
     }
   `,

@@ -5,6 +5,7 @@ import {
   input,
   output,
 } from '@angular/core';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { FriendsComponent } from '../social/friends.component';
 import { FriendView, SocialService } from '../social/social.service';
 import { ScreenHeaderComponent } from './screen-header.component';
@@ -16,7 +17,7 @@ import { ScreenHeaderComponent } from './screen-header.component';
  */
 @Component({
   selector: 'feat-lazy-bac-game-friends-screen',
-  imports: [FriendsComponent, ScreenHeaderComponent],
+  imports: [FriendsComponent, ScreenHeaderComponent, TranslatePipe],
   templateUrl: './friends-screen.component.html',
   styleUrl: './friends-screen.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

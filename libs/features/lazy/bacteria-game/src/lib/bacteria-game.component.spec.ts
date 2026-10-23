@@ -3,6 +3,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject } from 'rxjs';
 import { arenaTheme } from './arena/arena-theme';
 import { BacteriaGameComponent } from './bacteria-game.component';
+import { I18nService } from './i18n/i18n.service';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import { GameSoundService } from './sound/game-sound.service';
@@ -551,6 +552,21 @@ describe('BacteriaGameComponent', () => {
       TestBed.inject(GameStateService).setDifficulty('hard');
 
       expect(component['difficultyName']()).toBe('Hard');
+    });
+
+    it('speaks German once the player picks it', () => {
+      create();
+      TestBed.inject(GameStateService).setDifficulty('hard');
+      expect(component['clockLabel']()).toBe('Game time');
+      expect(component['colonyName']('You')).toBe('You');
+
+      TestBed.inject(I18nService).setLanguage('de');
+
+      expect(component['clockLabel']()).toBe('Spielzeit');
+      expect(component['difficultyName']()).toBe('Schwer');
+      expect(component['colonyName']('You')).toBe('Du');
+      expect(component['colonyName']('Ada')).toBe('Ada');
+      expect(component['settingsBackLabel']()).toBe('Menü');
     });
   });
 

@@ -5,6 +5,8 @@ import {
   input,
 } from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { rankKey } from '../i18n/game-texts';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { rankFor, RANKS } from '../state/ranks';
 import { RankBadgeComponent } from './rank-badge.component';
 
@@ -14,32 +16,36 @@ import { RankBadgeComponent } from './rank-badge.component';
  */
 @Component({
   selector: 'feat-lazy-bac-game-rank-standing',
-  imports: [MatProgressBarModule, RankBadgeComponent],
+  imports: [MatProgressBarModule, RankBadgeComponent, TranslatePipe],
   template: `
     @let rank = standing();
+    @let name = rankKey(rank.rank.id) | t;
     <div class="rank">
       <feat-lazy-bac-game-rank-badge
-        [name]="rank.rank.name"
+        [name]="name"
         [number]="rank.number"
         [size]="badgeSize()"
       />
       <span class="rank-text">
-        <span class="rank-label"
-          >Rank {{ rank.number }} of {{ rankCount }}</span
-        >
-        <span class="rank-name">{{ rank.rank.name }}</span>
+        <span class="rank-label">{{
+          'match.rank.of' | t: { number: rank.number, count: rankCount }
+        }}</span>
+        <span class="rank-name">{{ name }}</span>
       </span>
     </div>
     <span class="xp-line">
-      <span>{{ xp().toLocaleString('en') }} XP</span>
+      <span>{{ 'match.rank.xp' | t: { xp: xp() } }}</span>
       @if (rank.next; as next) {
-        <span>{{ rank.toNext?.toLocaleString('en') }} to {{ next.name }}</span>
+        <span>{{
+          'match.rank.toNext'
+            | t: { xp: rank.toNext ?? 0, rank: (rankKey(next.id) | t) }
+        }}</span>
       }
     </span>
     <mat-progress-bar
       class="bar"
       mode="determinate"
-      aria-label="XP to the next rank"
+      [attr.aria-label]="'match.rank.bar' | t"
       [value]="100 * rank.progress"
     />
   `,
@@ -53,4 +59,5 @@ export class RankStandingComponent {
 
   protected readonly standing = computed(() => rankFor(this.xp()));
   protected readonly rankCount = RANKS.length;
+  protected readonly rankKey = rankKey;
 }

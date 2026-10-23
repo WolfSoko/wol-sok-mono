@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { GameAds } from '../support/game-ads.service';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
+import { I18nService } from '../i18n/i18n.service';
 import { HelpComponent, PRIVACY_POLICY_URL } from './help.component';
 
 describe('HelpComponent', () => {
@@ -21,6 +22,19 @@ describe('HelpComponent', () => {
 
     expect(link?.textContent?.trim()).toBe('privacy policy');
     expect(link?.target).toBe('_blank');
+  });
+
+  it('explains the keys and the ground in German, the colours named in it', () => {
+    TestBed.inject(I18nService).setLanguage('de');
+    const fixture = TestBed.createComponent(HelpComponent);
+    fixture.componentRef.setInput('colorNames', ['Orange', 'Blue']);
+    fixture.detectChanges();
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('Spielanleitung');
+    expect(text).toContain('Blau die');
+    expect(text).toContain('Bakterien teilen sich doppelt so schnell.');
+    expect(text).toContain('Datenschutzerklärung');
   });
 
   it('asks for no support and has no ad settings where the game has neither', () => {

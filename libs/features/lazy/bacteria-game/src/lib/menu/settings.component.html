@@ -38,11 +38,10 @@
           {{ "settings.display.ownArena" | t }}
         </mat-option>
         @for (level of levels; track level.id) {
-          @let lock = arenaLocks()[level.id];
-          <mat-option [value]="level.id" [disabled]="!!lock">
-            {{ level.name }}
-            @if (lock) {
-              <small class="arena-lock">- {{ lock }}</small>
+          <mat-option [value]="level.id" [disabled]="!!arenaLocks()[level.id]">
+            {{ level.name | gameText }}
+            @if (arenaLocks()[level.id]) {
+              <small class="arena-lock">- {{ level.lock | gameText }}</small>
             }
           </mat-option>
         }

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { I18nService } from '../i18n/i18n.service';
 import { getLevel, LEVELS } from '../state/levels';
 import { NewGameComponent } from './new-game.component';
 import { NewGameEntry } from './play-modes';
@@ -7,8 +8,8 @@ describe('NewGameComponent', () => {
   let fixture: ComponentFixture<NewGameComponent>;
   const DAILY = {
     levelId: 'gen:corridor:42:5',
-    name: 'Hungry Locks',
-    note: '3 of 3 attempts left',
+    attemptsLeft: 3,
+    streak: 0,
   };
 
   async function render(
@@ -53,13 +54,13 @@ describe('NewGameComponent', () => {
   }
 
   it('opens on the modes, each with where the player stands in it', async () => {
-    await render({ campaignNote: '5 of 14 levels open', endlessBest: 4 });
+    await render({ openLevels: 5, endlessBest: 4 });
 
     const modes = Array.from(host().querySelectorAll('.mode')).map(
       (mode) => mode.textContent ?? ''
     );
     expect(modes).toHaveLength(6);
-    expect(modes[0]).toContain('5 of 14 levels open');
+    expect(modes[0]).toContain(`5 of ${LEVELS.length} levels open`);
     expect(modes[1]).toContain('3 of 3 attempts left');
     expect(modes[2]).toContain('best 4');
     expect(stepLabels()).toEqual(['Mode', 'Level', 'Start']);
@@ -253,5 +254,29 @@ describe('NewGameComponent', () => {
     button('Menu').click();
 
     expect(back).toHaveBeenCalled();
+  });
+
+  it('notes the daily streak, and that the attempts are used', async () => {
+    await render({ daily: { ...DAILY, attemptsLeft: 0, streak: 4 } });
+
+    expect(host().querySelectorAll('.mode')[1].textContent).toContain(
+      'Attempts used - practice until 00:00 UTC · 4-day streak'
+    );
+  });
+
+  it('speaks German', async () => {
+    TestBed.inject(I18nService).setLanguage('de');
+    await render({
+      entry: { kind: 'two-players', step: 'start' } satisfies NewGameEntry,
+      colonyNames: ['Orange', 'Blue'],
+      rivalry: [14, 9],
+    });
+
+    expect(stepLabels()).toEqual(['Modus', 'Level', 'Start']);
+    expect(host().querySelector('.rivalry')?.textContent).toContain(
+      'Orange 14 : 9 Blau'
+    );
+    expect(button('Blau ++')).toBeDefined();
+    expect(button('Zurück')).toBeDefined();
   });
 });

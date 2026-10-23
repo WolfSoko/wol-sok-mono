@@ -25,8 +25,16 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { WsThanosDirective, WsThanosOptions } from '@wolsok/thanos';
+import { TranslationKey } from './i18n/dictionaries';
 import { I18nService } from './i18n/i18n.service';
-import { DAILY_ATTEMPTS } from './state/daily';
+import {
+  difficultyKeys,
+  GameTextPipe,
+  levelNameText,
+  playerNameText,
+  renderGameText,
+} from './i18n/game-texts';
+import { TranslatePipe } from './i18n/translate.pipe';
 import {
   ElemResizedDirective,
   ResizedEvent,
@@ -67,11 +75,8 @@ import {
   pickColor,
   readableOn,
 } from './state/colony-colors';
-import { BotDifficulty, difficultyOption } from './state/bot-controller';
-import {
-  DEFAULT_EFFECTS_VOLUME,
-  GameSettingsService,
-} from './settings.service';
+import { BotDifficulty } from './state/bot-controller';
+import { GameSettingsService } from './settings.service';
 import { vaporizePixels } from './vaporize-effect';
 import { ProgressService } from './progress.service';
 import { CampaignService } from './campaign.service';
@@ -158,7 +163,7 @@ const MINIMAP_UPDATE_MS = 100;
 interface HudGoal {
   icon: string;
   /** What is counted, for a screen reader. */
-  label: string;
+  label: TranslationKey;
   target: number;
   /** The colony's number that counts up. */
   of: 'held' | 'pellets';
@@ -185,6 +190,8 @@ interface HudGoal {
     MainMenuComponent,
     NewGameComponent,
     ProfileComponent,
+    TranslatePipe,
+    GameTextPipe,
   ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
@@ -199,7 +206,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private playerStore = inject(PlayerStore);
   protected readonly settings = inject(GameSettingsService);
   private readonly injector = inject(Injector);
-  protected readonly language = inject(I18nService).language;
+  private readonly i18n = inject(I18nService);
+  protected readonly language = this.i18n.language;
   protected readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
   protected readonly progress = inject(ProgressService);
@@ -330,14 +338,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const rule = this.store.winRule();
     const hold = holdTarget(rule);
     if (hold !== null) {
-      return { icon: 'flag', label: 'seconds held', target: hold, of: 'held' };
+      return {
+        icon: 'flag',
+        label: 'stage.hud.secondsHeld',
+        target: hold,
+        of: 'held',
+      };
     }
     const harvest = harvestTarget(rule);
     return harvest === null
       ? null
       : {
           icon: 'restaurant',
-          label: 'pellets eaten',
+          label: 'stage.hud.pelletsEaten',
           target: harvest,
           of: 'pellets',
         };
@@ -402,6 +415,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
 
   /** The level the next match is played on. */
   protected readonly level: Signal<Level>;
+  /** Its name in the HUD: "3 · Hourglass". */
+  protected readonly levelName = computed(() => levelNameText(this.level()));
   /** Balance of the selected level - drives both rendering and the scoreboard. */
   protected readonly balance: Signal<GameBalance>;
   /** Walls of the selected level, drawn every frame. */
@@ -637,7 +652,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       clock(this.store.secondsLeft() ?? this.store.gameSeconds())
     );
     this.clockLabel = computed(() =>
-      this.store.secondsLeft() === null ? 'Game time' : 'Time left'
+      this.i18n.t(
+        this.store.secondsLeft() === null
+          ? 'stage.hud.gameTime'
+          : 'stage.hud.timeLeft'
+      )
     );
     this.timeRunningOut = computed(
       () =>
@@ -666,8 +685,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       }
     });
 
-    this.difficultyName = computed(
-      () => difficultyOption(this.difficulty())?.name ?? ''
+    this.difficultyName = computed(() =>
+      this.i18n.t(difficultyKeys(this.difficulty()).name)
     );
 
     this.gameStateService.frames$
@@ -760,15 +779,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   /** Today's daily level for the main menu. */
   protected readonly dailyCard = computed((): DailyCard => {
     const { levelId, attemptsLeft, streak } = this.progress.daily();
-    const attempts =
-      attemptsLeft > 0
-        ? `${attemptsLeft} of ${DAILY_ATTEMPTS} attempts left`
-        : 'Attempts used - practice until 00:00 UTC';
-    return {
-      levelId,
-      name: getLevel(levelId).name,
-      note: streak > 0 ? `${attempts} · ${streak}-day streak` : attempts,
-    };
+    return { levelId, attemptsLeft, streak };
   });
 
   /** True in a match of an endless run - no restart, it would cost no life. */
@@ -952,6 +963,22 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  /**
+   * A colony's name in the active language: "You", "Computer" and the
+   * colours are translated, an online opponent's name stays as it is.
+   */
+  protected colonyName(name: string): string {
+    const text = playerNameText(name);
+    return text === null
+      ? name
+      : renderGameText(text, (key, params) => this.i18n.t(key, params));
+  }
+
+  /** The settings' way back: to the pause menu during a match. */
+  protected readonly settingsBackLabel = computed(() =>
+    this.i18n.t(this.paused() ? 'stage.pause.back' : 'common.menu')
+  );
+
   /** Opens one of the menu screens. */
   protected show(screen: MenuScreen): void {
     if (screen !== this.screen()) {
@@ -981,10 +1008,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     step: 'mode',
   });
 
-  /** "5 of 14 levels open" - the campaign so far, for its mode card. */
-  protected readonly campaignNote = computed(
-    () =>
-      `${this.campaign.summary().openLevels} of ${LEVELS.length} levels open`
+  /** The levels of the ladder open so far, for the campaign's mode card. */
+  protected readonly openLevels = computed(
+    () => this.campaign.summary().openLevels
   );
 
   /** The mode picked in a new game this visit, null before. */

@@ -6,6 +6,7 @@ import {
   UnrecoverableStateEvent,
   VersionEvent,
 } from '@angular/service-worker';
+import { I18nService } from '@wolsok/feat-lazy-bac-game';
 import { Subject } from 'rxjs';
 import { providePwaUpdates, RELOAD_PAGE } from './pwa-updates';
 
@@ -71,6 +72,17 @@ describe('providePwaUpdates', () => {
 
     snackAction.next();
     expect(reloadPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers the reload in the language the game speaks', async () => {
+    await setUp(true);
+    TestBed.inject(I18nService).setLanguage('de');
+
+    versionUpdates.next(VERSION_READY);
+    expect(snackBar.open).toHaveBeenCalledWith(
+      'Eine neue Version des Spiels ist da',
+      'Neu laden'
+    );
   });
 
   it('reloads when the service worker cannot serve the app any more', async () => {

@@ -1,3 +1,4 @@
+import { english, GameText } from '../i18n/game-text';
 import { clock, TICKS_PER_SEC } from './fixed-tick';
 import { Player } from './player.model';
 
@@ -133,17 +134,32 @@ export function clockOf(rule: WinRule): number | null {
  * annihilation, which goes without saying.
  */
 export function ruleNote(rule: WinRule): string | null {
+  const text = ruleNoteText(rule);
+  return text === null ? null : english(text);
+}
+
+/** {@link ruleNote} as a text to translate. */
+export function ruleNoteText(rule: WinRule): GameText | null {
   switch (rule.kind) {
     case 'annihilation':
       return null;
     case 'timed':
-      return `Timed · ${clock(rule.limitSec)}`;
+      return {
+        key: 'levels.rules.timed',
+        params: { clock: clock(rule.limitSec) },
+      };
     case 'survive':
-      return `Survive · ${clock(rule.limitSec)}`;
+      return {
+        key: 'levels.rules.survive',
+        params: { clock: clock(rule.limitSec) },
+      };
     case 'hold':
-      return `Hold the zone · ${clock(rule.holdSec)}`;
+      return {
+        key: 'levels.rules.hold',
+        params: { clock: clock(rule.holdSec) },
+      };
     case 'harvest':
-      return `Harvest · ${rule.pellets} pellets`;
+      return { key: 'levels.rules.harvest', params: { count: rule.pellets } };
   }
 }
 

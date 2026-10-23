@@ -37,7 +37,7 @@ export const settings: Translation<typeof en> = {
     effectsVolume: 'Effektlautstärke',
     vibration: 'Vibration',
     vibrationNote:
-      'Ein Summen für einen Boost, ein Rums für ein Tor, ein Tusch für ein Medaillon.',
+      'Ein Summen für einen Boost, ein Rums für ein Tor, ein Tusch für eine Medaille.',
   },
   screen: {
     title: 'Bildschirm',

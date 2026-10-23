@@ -11,13 +11,15 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { GameTextPipe, medalKey } from '../i18n/game-texts';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { ACHIEVEMENTS } from '../state/achievements';
 import { CampaignSummary } from '../state/campaign';
 import { RankStandingComponent } from '../rank/rank-standing.component';
 import { Level, LEVELS } from '../state/levels';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
-import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
+import { MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 import { GameSupport } from '../support/game-support.service';
 import {
   SUPPORT_DIALOG_HEADING_ID,
@@ -45,6 +47,8 @@ export type MenuPage = 'profile' | 'friends' | 'settings' | 'help';
     MatTooltipModule,
     RankStandingComponent,
     GhostChallengeComponent,
+    TranslatePipe,
+    GameTextPipe,
   ],
   templateUrl: './main-menu.component.html',
   styleUrl: './main-menu.component.scss',
@@ -77,7 +81,7 @@ export class MainMenuComponent {
     Object.values(this.campaign().medals).reduce((sum, n) => sum + n, 0)
   );
 
-  protected readonly names = MEDAL_NAMES;
+  protected readonly medalKey = medalKey;
   protected readonly tiers = MEDAL_TIERS_RAREST_FIRST;
   protected readonly totalLevels = LEVELS.length;
   protected readonly totalMedals = LEVELS.length * BOT_DIFFICULTIES.length;

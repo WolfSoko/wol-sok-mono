@@ -11,6 +11,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { of, switchMap } from 'rxjs';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { AvatarComponent } from './avatar.component';
 import { ChallengeView, SocialService } from './social.service';
 
@@ -26,7 +27,7 @@ export interface InviteOffer {
  */
 @Component({
   selector: 'feat-lazy-bac-game-social-notices',
-  imports: [AvatarComponent, MatButtonModule, MatIconModule],
+  imports: [AvatarComponent, MatButtonModule, MatIconModule, TranslatePipe],
   template: `
     @if (challenge(); as call) {
       <div class="notice" role="alert">
@@ -35,8 +36,8 @@ export interface InviteOffer {
           [label]="call.card.name"
         />
         <span class="text"
-          ><strong>{{ call.card.name }}</strong> challenges you to a
-          match!</span
+          ><strong>{{ call.card.name }}</strong>
+          {{ 'social.notices.challenges' | t }}</span
         >
         <button
           mat-flat-button
@@ -44,12 +45,12 @@ export interface InviteOffer {
           [disabled]="busy()"
           (click)="acceptChallenge(call)"
         >
-          Play
+          {{ 'social.notices.play' | t }}
         </button>
         <button
           mat-icon-button
           type="button"
-          aria-label="Decline"
+          [attr.aria-label]="'social.notices.decline' | t"
           [disabled]="busy()"
           (click)="declineChallenge(call)"
         >
@@ -65,7 +66,9 @@ export interface InviteOffer {
             [label]="card.name"
           />
           <span class="text"
-            >Add <strong>{{ card.name }}</strong> as a friend?</span
+            >{{ 'social.notices.inviteBefore' | t }}
+            <strong>{{ card.name }}</strong>
+            {{ 'social.notices.inviteAfter' | t }}</span
           >
           <button
             mat-flat-button
@@ -73,12 +76,12 @@ export interface InviteOffer {
             [disabled]="busy()"
             (click)="acceptInvite()"
           >
-            Add friend
+            {{ 'social.notices.addFriend' | t }}
           </button>
           <button
             mat-icon-button
             type="button"
-            aria-label="Dismiss"
+            [attr.aria-label]="'social.notices.dismiss' | t"
             [disabled]="busy()"
             (click)="inviteDone.emit()"
           >
@@ -88,7 +91,7 @@ export interface InviteOffer {
       }
     }
     @if (failed()) {
-      <p class="failed" role="status">That did not work - try again.</p>
+      <p class="failed" role="status">{{ 'social.failed' | t }}</p>
     }
   `,
   styles: `

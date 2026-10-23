@@ -17,6 +17,7 @@ import {
 } from '../colony-colors/colony-colors.component';
 import { Size } from '../fullscreen';
 import { TranslationKey } from '../i18n/dictionaries';
+import { GameTextPipe } from '../i18n/game-text.pipe';
 import { I18nService } from '../i18n/i18n.service';
 import { Language, LANGUAGES } from '../i18n/language';
 import { TranslatePipe } from '../i18n/translate.pipe';
@@ -27,7 +28,8 @@ import {
 } from '../settings.service';
 import { SCREEN_RESOLUTIONS, SIM_RESOLUTIONS } from '../state/arena-size';
 import { GameMode } from '../state/game.states';
-import { LEVELS } from '../state/levels';
+import { arenaLockText } from '../state/unlocks';
+import { LEVELS, levelNameText } from '../state/levels';
 import { VAPORIZE_DURATIONS, VAPORIZE_QUALITIES } from '../vaporize-effect';
 import { ScreenHeaderComponent } from './screen-header.component';
 
@@ -44,6 +46,7 @@ import { ScreenHeaderComponent } from './screen-header.component';
   selector: 'feat-lazy-bac-game-settings',
   imports: [
     ColonyColorsComponent,
+    GameTextPipe,
     MatButtonToggleModule,
     MatFormFieldModule,
     MatSelectModule,
@@ -93,7 +96,12 @@ export class SettingsComponent {
     id,
     label: `settings.display.looks.${id}` satisfies TranslationKey,
   }));
-  protected readonly levels = LEVELS;
+  /** The levels for the arena picker, each with why its arena is locked. */
+  protected readonly levels = LEVELS.map((level) => ({
+    id: level.id,
+    name: levelNameText(level),
+    lock: arenaLockText(level.id),
+  }));
   protected readonly maxVolume = MAX_VOLUME;
   /** The select's value for each level in its own arena - Material reads null as none chosen. */
   protected readonly ownArena = 'own';

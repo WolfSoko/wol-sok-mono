@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   linkedSignal,
   output,
@@ -12,39 +13,53 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatStepperModule } from '@angular/material/stepper';
 import { rgba } from '../arena/canvas-math';
 import { ZONE_COLORS } from '../arena/zone-look';
+import {
+  difficultyKeys,
+  GameText,
+  levelDescriptionText,
+  levelNameText,
+  levelTitleText,
+  medalGoalText,
+  medalKey,
+  playerNameText,
+  recipeKeys,
+  renderGameText,
+  ruleNoteText,
+  seriesKey,
+  zoneKey,
+} from '../i18n/game-texts';
+import { I18nService } from '../i18n/i18n.service';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { BASE_ARENA } from '../state/arena-size';
 import { MedallionComponent } from '../medallion/medallion.component';
-import {
-  BOT_DIFFICULTIES,
-  BotDifficulty,
-  difficultyOption,
-} from '../state/bot-controller';
+import { BOT_DIFFICULTIES, BotDifficulty } from '../state/bot-controller';
 import { ENDLESS_LIVES } from '../state/endless';
 import { parseGeneratedId } from '../state/level-generator/generate-level';
-import { RECIPES } from '../state/level-generator/recipes';
 import {
   getLevel,
   isLadderLevel,
   Level,
+  LEVELS,
   levelMap,
-  levelTitle,
 } from '../state/levels';
-import { mapZones, ZONE_NAMES } from '../state/zones';
-import { MEDAL_NAMES, medalGoal } from '../state/medallions';
+import { mapZones } from '../state/zones';
 import { Progress } from '../state/progress';
 import {
-  formatScore,
   HEAD_STARTS,
   HeadStart,
-  headStartLabel,
   SERIES_LENGTHS,
   SeriesLength,
 } from '../state/rivalry';
-import { ruleNote, winRuleOf } from '../state/win-conditions';
+import { winRuleOf } from '../state/win-conditions';
 import { LevelMapComponent } from './level-map.component';
 import { OnlineLobbyComponent } from './online-lobby.component';
 import { IDLE_LOBBY, OnlineLobby } from '../net/online-match.service';
-import { DailyCard, endlessNote, levelColors } from './menu-cards';
+import {
+  DailyCard,
+  dailyNoteText,
+  endlessNoteText,
+  levelColors,
+} from './menu-cards';
 import {
   NewGameEntry,
   NewGameStep,
@@ -75,12 +90,15 @@ import { ScreenHeaderComponent } from './screen-header.component';
     MedallionComponent,
     OnlineLobbyComponent,
     ScreenHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './new-game.component.html',
   styleUrl: './new-game.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NewGameComponent {
+  private readonly i18n = inject(I18nService);
+
   /** The mode and the step the screen opens on. */
   public readonly entry = input<NewGameEntry>({ kind: null, step: 'mode' });
   public readonly difficulty = input.required<BotDifficulty>();
@@ -90,8 +108,8 @@ export class NewGameComponent {
   public readonly medals = input<Progress['medals']>({});
   /** Why each locked level of the ladder is locked, by level id. */
   public readonly locks = input<Readonly<Record<string, string>>>({});
-  /** "5 of 14 levels open" - the campaign so far. */
-  public readonly campaignNote = input('');
+  /** The levels of the ladder open so far - the campaign's note. */
+  public readonly openLevels = input(0);
   /** Between two players: how many matches a series is the best of. */
   public readonly seriesLength = input<SeriesLength>(1);
   /** Between two players: who starts bigger. */
@@ -135,8 +153,14 @@ export class NewGameComponent {
     Math.max(0, this.steps().indexOf(this.step()))
   );
   protected readonly stepLabels = STEP_LABELS;
-  protected readonly difficulties = BOT_DIFFICULTIES;
-  protected readonly seriesLengths = SERIES_LENGTHS;
+  protected readonly difficulties = BOT_DIFFICULTIES.map(({ id }) => ({
+    id,
+    name: difficultyKeys(id).name,
+  }));
+  protected readonly seriesLengths = SERIES_LENGTHS.map(({ id }) => ({
+    id,
+    name: seriesKey(id),
+  }));
 
   /** The modes, each with how far the player got in it. */
   protected readonly modes = computed(() =>
@@ -145,6 +169,12 @@ export class NewGameComponent {
       note: this.modeNote(mode.kind),
     }))
   );
+
+  /** The colonies' names in the active language - online ones as they are. */
+  private readonly names = computed((): readonly [string, string] => {
+    const [left, right] = this.colonyNames();
+    return [this.name(left), this.name(right)];
+  });
 
   protected readonly vsComputer = computed(
     () => this.kind() !== 'two-players' && this.kind() !== 'online'
@@ -185,13 +215,24 @@ export class NewGameComponent {
     return {
       level,
       // The ladder's number and name, or what was rolled.
-      kicker:
+      kicker: this.text(
         made === null
-          ? level.name
-          : `${RECIPES[made.recipe].label} · difficulty ${made.difficulty}`,
+          ? levelNameText(level)
+          : {
+              key: 'newGame.generatedKicker',
+              params: {
+                style: { key: recipeKeys(made.recipe).label },
+                difficulty: made.difficulty,
+              },
+            }
+      ),
       ...levelColors(id),
-      facts: levelFacts(level),
-      title: levelTitle(level),
+      facts: levelFacts(level).map(({ label, color }) => ({
+        label: this.text(label),
+        color,
+      })),
+      title: this.text(levelTitleText(level)),
+      description: this.text(levelDescriptionText(level)),
     };
   });
 
@@ -212,50 +253,62 @@ export class NewGameComponent {
     const best = this.medals()[level.id]?.[this.difficulty()] ?? null;
     return {
       best,
-      bestName:
-        best === null ? 'No medallion yet' : `${MEDAL_NAMES[best]} medallion`,
-      goal:
-        medalGoal(level.medal, best) ??
-        'Every medallion of this level is yours.',
+      bestName: this.text(
+        best === null
+          ? { key: 'common.noMedal' }
+          : { key: 'common.medal', params: { medal: { key: medalKey(best) } } }
+      ),
+      goal: this.text(
+        medalGoalText(level.medal, best) ?? { key: 'newGame.allMedals' }
+      ),
     };
   });
 
-  /** The name and the briefing of the selected difficulty. */
-  protected readonly difficultyOption = computed(() =>
-    difficultyOption(this.difficulty())
+  /** The keys of the name and the briefing of the selected difficulty. */
+  protected readonly difficultyTexts = computed(() =>
+    difficultyKeys(this.difficulty())
   );
 
   /** The head starts on offer, named after the colony that gets it. */
   protected readonly headStarts = computed(() =>
     HEAD_STARTS.map((value) => ({
       value,
-      label: headStartLabel(value, this.colonyNames()),
+      label:
+        value === 0
+          ? this.i18n.t('newGame.headStart.even')
+          : this.i18n.t('newGame.headStart.ahead', {
+              name: this.names()[value < 0 ? 0 : 1],
+              steps: '+'.repeat(Math.abs(value)),
+            }),
     }))
   );
 
   /** The lifetime score of the two colours, "Orange 14 : 9 Blue". */
-  protected readonly rivalryLine = computed(() =>
-    formatScore(this.colonyNames(), this.rivalry())
-  );
+  protected readonly rivalryLine = computed(() => {
+    const [left, right] = this.names();
+    const [leftWins, rightWins] = this.rivalry();
+    return this.i18n.t('newGame.score', { left, leftWins, rightWins, right });
+  });
 
-  protected readonly endlessNote = endlessNote;
   protected readonly endlessLives = ENDLESS_LIVES;
 
   /** What the Start button says. */
   protected readonly startLabel = computed(() => {
     switch (this.kind()) {
       case 'endless':
-        return 'Start the run';
+        return this.i18n.t('newGame.start.run');
       case 'daily':
-        return 'Start the daily level';
+        return this.i18n.t('newGame.start.daily');
       default:
-        return `Start ${this.briefing()?.title ?? ''}`;
+        return this.i18n.t('newGame.start.level', {
+          title: this.briefing()?.title ?? '',
+        });
     }
   });
 
   /** Where the way back leads: the step before, or the main menu. */
   protected readonly backLabel = computed(() =>
-    this.index() > 0 ? 'Back' : 'Menu'
+    this.i18n.t(this.index() > 0 ? 'common.back' : 'common.menu')
   );
 
   /** Picks a mode and goes on to its next step. */
@@ -294,36 +347,57 @@ export class NewGameComponent {
     }
   }
 
+  /** The line under the daily level: attempts left and the streak. */
+  protected readonly dailyNote = computed(() =>
+    this.text(dailyNoteText(this.daily()))
+  );
+
   /** The line under a mode: where the player stands in it. */
   private modeNote(kind: PlayKind): string {
     switch (kind) {
       case 'campaign':
-        return this.campaignNote();
+        return this.i18n.t('newGame.notes.campaign', {
+          open: this.openLevels(),
+          total: LEVELS.length,
+        });
       case 'daily':
-        return this.daily().note;
+        return this.dailyNote();
       case 'endless':
-        return endlessNote(this.endlessBest());
+        return this.text(endlessNoteText(this.endlessBest()));
       case 'free':
-        return 'Any difficulty, any level';
+        return this.i18n.t('newGame.notes.free');
       case 'two-players':
         return this.rivalryLine();
       case 'online':
-        return this.onlineAvailable()
-          ? 'A friend on another device'
-          : 'Not in this build';
+        return this.i18n.t(
+          this.onlineAvailable()
+            ? 'newGame.notes.online'
+            : 'newGame.notes.offline'
+        );
     }
+  }
+
+  /** A game text in the active language - a computed calling it follows a switch. */
+  private text(text: GameText): string {
+    return renderGameText(text, (key, params) => this.i18n.t(key, params));
+  }
+
+  /** A colony's name in the active language: "Orange", "You" - others as they are. */
+  private name(name: string): string {
+    const text = playerNameText(name);
+    return text === null ? name : this.text(text);
   }
 }
 
 /** A line of the briefing - a rule or a zone - with the colour it shows in. */
 interface LevelFact {
-  label: string;
+  label: GameText;
   color: string | null;
 }
 
 /** What sets a level apart besides its walls: its clock and its zones. */
 function levelFacts(level: Level): LevelFact[] {
-  const rule = ruleNote(winRuleOf(level));
+  const rule = ruleNoteText(winRuleOf(level));
   const kinds = new Set(
     mapZones(levelMap(level), BASE_ARENA.width, BASE_ARENA.height).map(
       (zone) => zone.kind
@@ -332,7 +406,7 @@ function levelFacts(level: Level): LevelFact[] {
   return [
     ...(rule === null ? [] : [{ label: rule, color: null }]),
     ...[...kinds].map((kind) => ({
-      label: ZONE_NAMES[kind],
+      label: { key: zoneKey(kind) },
       color: rgba(ZONE_COLORS[kind]),
     })),
   ];

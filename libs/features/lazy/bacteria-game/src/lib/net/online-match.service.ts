@@ -1,6 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, Observable, Subject } from 'rxjs';
+import type { GameText } from '../i18n/game-text';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
 import type { OpenRoom } from '../storage/game-rooms';
@@ -36,8 +37,11 @@ export interface OnlineLobby {
   role: 'host' | 'guest' | null;
   /** The room's code, for the host to pass on. */
   code: string | null;
-  /** What went wrong last, or why the other device left - null if nothing. */
-  notice: string | null;
+  /**
+   * What went wrong last, or why the other device left, as a text to
+   * translate - null if nothing.
+   */
+  notice: GameText | null;
   /** True for a match the matchmaking set up: the host starts at once. */
   auto: boolean;
 }
@@ -168,7 +172,7 @@ export class OnlineMatchService {
       return;
     }
     if (code === null) {
-      this.update({ notice: 'A code has six letters and digits.' });
+      this.update({ notice: { key: 'online.notices.badCode' } });
       return;
     }
     const attempt = this.restart({
@@ -183,7 +187,7 @@ export class OnlineMatchService {
         return;
       }
       if (room === null) {
-        this.endWith(attempt, 'There is no open match under that code.');
+        this.endWith(attempt, { key: 'online.notices.noRoom' });
         return;
       }
       const { link, answer } = await PeerLink.answer(room.offer);
@@ -195,7 +199,7 @@ export class OnlineMatchService {
     } catch (error) {
       if (errorCode(error) === 'permission-denied') {
         // Another guest answered the room first.
-        this.endWith(attempt, 'Someone else joined that match first.');
+        this.endWith(attempt, { key: 'online.notices.taken' });
         return;
       }
       this.fail(attempt, error);
@@ -338,17 +342,18 @@ export class OnlineMatchService {
         }
         return;
       case 'bye':
-        this.endWith(this.attempt, 'Your opponent left.', 'left');
+        this.endWith(
+          this.attempt,
+          { key: 'online.notices.opponentLeft' },
+          'left'
+        );
         return;
     }
   }
 
   private greet(version: string): void {
     if (version !== NET_VERSION) {
-      this.endWith(
-        this.attempt,
-        'Your opponent plays another version of the game - reload both.'
-      );
+      this.endWith(this.attempt, { key: 'online.notices.otherVersion' });
       return;
     }
     if (this.greeted) {
@@ -366,26 +371,19 @@ export class OnlineMatchService {
 
   private onClosed(link: PeerLink): void {
     if (link === this.link) {
-      this.endWith(
-        this.attempt,
-        'The connection to your opponent was lost.',
-        'lost'
-      );
+      this.endWith(this.attempt, { key: 'online.notices.lost' }, 'lost');
     }
   }
 
   private fail(attempt: number, error: unknown): void {
     console.warn('The online match could not connect', error);
-    this.endWith(
-      attempt,
-      'Could not connect. Try again - on the same Wi-Fi it works best.'
-    );
+    this.endWith(attempt, { key: 'online.notices.failed' });
   }
 
   /** Ends the attempt with a notice, telling the game if it was connected. */
   private endWith(
     attempt: number,
-    notice: string,
+    notice: GameText,
     reason: OnlineEnd = 'lost'
   ): void {
     if (attempt !== this.attempt) {

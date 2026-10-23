@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { I18nService } from '../i18n/i18n.service';
 import { AccountComponent } from './account.component';
 import { GameAccount, SignInOutcome } from '../storage/game-account';
 import { GameStorage } from '../storage/game-storage';
@@ -101,5 +102,14 @@ describe('AccountComponent', () => {
     await fixture.whenStable();
 
     expect(text(fixture.nativeElement)).toContain('That did not work');
+  });
+
+  it('speaks German', async () => {
+    account.profile.set({ guest: true, name: null });
+    const fixture = await render();
+    TestBed.inject(I18nService).setLanguage('de');
+    fixture.detectChanges();
+
+    expect(text(fixture.nativeElement)).toContain('Mit Google anmelden');
   });
 });

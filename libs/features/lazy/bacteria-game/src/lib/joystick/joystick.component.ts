@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   ElementRef,
   inject,
   input,
@@ -8,6 +9,8 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { playerNameText, renderGameText } from '../i18n/game-texts';
+import { I18nService } from '../i18n/i18n.service';
 import {
   clampLength,
   delta,
@@ -49,7 +52,7 @@ export const JOYSTICK_RADIUS = 44;
   host: {
     '[class.disabled]': 'disabled()',
     '[style.--joystick-color]': 'color()',
-    '[attr.aria-label]': '"Joystick " + label()',
+    '[attr.aria-label]': 'ariaLabel()',
     '(pointerdown)': 'onPointerDown($event)',
     '(pointermove)': 'onPointerMove($event)',
     '(pointerup)': 'onPointerUp($event)',
@@ -68,6 +71,19 @@ export class JoystickComponent implements OnDestroy {
 
   /** Where the stick is pushed; the zero vector once it is released. */
   public readonly steer = output<SteeringVector>();
+
+  private readonly i18n = inject(I18nService);
+
+  /** The player's name in the active language - an online name as it is. */
+  protected readonly name = computed(() => {
+    const text = playerNameText(this.label());
+    return text === null
+      ? this.label()
+      : renderGameText(text, (key, params) => this.i18n.t(key, params));
+  });
+  protected readonly ariaLabel = computed(() =>
+    this.i18n.t('controls.joystick', { name: this.name() })
+  );
 
   protected readonly radius = JOYSTICK_RADIUS;
   /** The centre of the stick in element pixels, null while nobody holds it. */

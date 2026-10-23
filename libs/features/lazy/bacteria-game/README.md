@@ -155,6 +155,9 @@ typed against the English one, so a missing or an extra key fails to
 compile, and so does a key that names no text. A text holds `{name}`
 placeholders, and a plural is `{ one, other }`, picked by the `count` param
 with `Intl.PluralRules`. A text German lacks at runtime falls back to English.
+Words several screens share (mute, fullscreen, a medallion's name, "of
+{total}") live in `common`; a screen's name is its area's `title`, which the
+buttons that open it take as well.
 
 ## Storage
 

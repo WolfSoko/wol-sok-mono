@@ -7,13 +7,14 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map, switchMap, take } from 'rxjs';
+import { english, GameText } from './i18n/game-text';
 import { BotDifficulty } from './state/bot-controller';
 import { ladderLocks, newlyUnlocked } from './state/campaign';
-import { getLevel, isLadderLevel, LEVELS } from './state/levels';
+import { getLevel, isLadderLevel } from './state/levels';
 import { judgeMatch, MatchRecord, MedalTier } from './state/medallions';
 import { earnAchievements } from './state/achievements';
 import { MatchEarnings } from './state/earnings';
-import { arenaLocks, colorLocks, newCosmetics } from './state/unlocks';
+import { arenaLocks, colorLocks, newCosmeticTexts } from './state/unlocks';
 import { COUCH_XP, matchXp, xpGain, xpOf } from './state/xp';
 import {
   attemptsOn,
@@ -51,7 +52,10 @@ export interface MatchContext {
 }
 
 /** What a match on the daily level past the attempts of its day says. */
-const PRACTICE_HINT = `Your ${DAILY_ATTEMPTS} attempts of the day are used - this one was practice.`;
+const PRACTICE_HINT_TEXT: GameText = {
+  key: 'game.practice',
+  params: { count: DAILY_ATTEMPTS },
+};
 
 /** Today's daily level as the main menu offers it. */
 export interface DailyOffer {
@@ -212,8 +216,12 @@ export class ProgressService {
     const attempt =
       dailyDay === null ? 0 : attemptsOn(this.progress().daily, dailyDay);
     const practice = dailyDay !== null && !counts(this.progress());
-    const { medal, hint } = practice
-      ? { medal: null, hint: PRACTICE_HINT }
+    const { medal, hint, hintText } = practice
+      ? {
+          medal: null,
+          hint: english(PRACTICE_HINT_TEXT),
+          hintText: PRACTICE_HINT_TEXT,
+        }
       : judged;
     const endless = endlessWins !== null;
     // Only the ladder's levels and the daily level keep a medallion: an
@@ -231,7 +239,9 @@ export class ProgressService {
     };
     const known = this.loaded();
     const earnings: MatchEarnings = {
-      award: keepsMedal ? { record, medal, previousBest, hint } : null,
+      award: keepsMedal
+        ? { record, medal, previousBest, hint, hintText }
+        : null,
       ...this.record(
         (progress) =>
           endless ? addEndlessRun(progress, endlessWins) : progress,
@@ -344,10 +354,17 @@ export class ProgressService {
             (id) => id !== record?.levelId
           )
         : [],
-      cosmetics: known
-        ? newCosmetics(cosmeticsBefore, this.cosmeticLocks())
-        : [],
+      ...this.cosmetics(
+        known ? newCosmeticTexts(cosmeticsBefore, this.cosmeticLocks()) : []
+      ),
     };
+  }
+
+  /** The cosmetics a match opened, in English and to translate. */
+  private cosmetics(
+    texts: readonly GameText[]
+  ): Pick<MatchEarnings, 'cosmetics' | 'cosmeticTexts'> {
+    return { cosmetics: texts.map(english), cosmeticTexts: texts };
   }
 
   /**

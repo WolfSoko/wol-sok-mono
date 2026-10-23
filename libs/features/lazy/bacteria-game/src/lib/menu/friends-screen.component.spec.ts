@@ -4,6 +4,7 @@ import {
   FakeGamePresence,
   FakeGameSocial,
 } from '../../testing/fake-game-social';
+import { I18nService } from '../i18n/i18n.service';
 import { defaultProfile } from '../social/profile';
 import { FriendView } from '../social/social.service';
 import { GameAccount } from '../storage/game-account';
@@ -90,5 +91,16 @@ describe('FriendsScreenComponent', () => {
 
     expect(host.textContent).toContain("Friends need the game's cloud");
     expect(host.querySelector('feat-lazy-bac-game-friends')).toBeNull();
+  });
+
+  it('speaks German', () => {
+    configure(false);
+    TestBed.inject(I18nService).setLanguage('de');
+    const fixture = TestBed.createComponent(FriendsScreenComponent);
+    fixture.detectChanges();
+    const host: HTMLElement = fixture.nativeElement;
+
+    expect(host.querySelector('h2')?.textContent).toBe('Freunde');
+    expect(host.textContent).toContain('Freunde gibt es nur mit der Cloud');
   });
 });

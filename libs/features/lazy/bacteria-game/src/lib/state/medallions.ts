@@ -1,3 +1,4 @@
+import { english, GameText } from '../i18n/game-text';
 import { BotDifficulty } from './bot-controller';
 import { clock } from './fixed-tick';
 import { Player } from './player.model';
@@ -26,6 +27,11 @@ export const MEDAL_NAMES: Record<MedalTier, string> = {
   gold: 'Gold',
   platinum: 'Platinum',
 };
+
+/** A medallion's name as a text to translate. */
+export function medalText(tier: MedalTier): GameText {
+  return { key: `game.medals.${tier}` };
+}
 
 /** How fast and how cleanly a level has to be won for each medallion. */
 export interface MedalLimits {
@@ -87,6 +93,8 @@ export interface MedalAward {
   previousBest: MedalTier | null;
   /** What the next medallion needs, null after a platinum. */
   hint: string | null;
+  /** The hint as a text to translate, absent where there is none. */
+  hintText?: GameText | null;
 }
 
 /**
@@ -126,20 +134,27 @@ export function matchRecord(
 
 /**
  * Judges a match: the medallion it earned, and what kept it from the next
- * one as a line for the result screen - null once there is none to earn.
+ * one as a line for the result screen - null once there is none to earn -
+ * in English and as a text to translate.
  */
 export function judgeMatch(
   limits: MedalLimits,
   record: MatchRecord
-): { medal: MedalTier | null; hint: string | null } {
+): { medal: MedalTier | null; hint: string | null; hintText: GameText | null } {
   const medal = medalFor(limits, record);
   const next = MEDAL_TIERS[medalRank(medal)] ?? null;
+  const lack = next == null ? null : missing(next, limits, record);
+  const hintText: GameText | null =
+    next == null || lack == null
+      ? null
+      : {
+          key: 'game.medalHint',
+          params: { medal: medalText(next), missing: lack },
+        };
   return {
     medal,
-    hint:
-      next == null
-        ? null
-        : `${MEDAL_NAMES[next]} needs ${missing(next, limits, record)}.`,
+    hint: hintText === null ? null : english(hintText),
+    hintText,
   };
 }
 
@@ -166,15 +181,36 @@ export function medalGoal(
   limits: MedalLimits,
   held: MedalTier | null
 ): string | null {
+  const text = medalGoalText(limits, held);
+  return text === null ? null : english(text);
+}
+
+/** {@link medalGoal} as a text to translate. */
+export function medalGoalText(
+  limits: MedalLimits,
+  held: MedalTier | null
+): GameText | null {
   switch (held) {
     case null:
-      return 'Bronze needs a win.';
+      return { key: 'game.medalGoals.bronze' };
     case 'bronze':
-      return `Silver needs a win within ${clock(limits.silverSec)}.`;
+      return {
+        key: 'game.medalGoals.silver',
+        params: { clock: clock(limits.silverSec) },
+      };
     case 'silver':
-      return `Gold needs a win within ${clock(limits.goldSec)}, losing under ${percent(limits.goldLossShare)} of your peak colony.`;
+      return {
+        key: 'game.medalGoals.gold',
+        params: {
+          clock: clock(limits.goldSec),
+          percent: percent(limits.goldLossShare),
+        },
+      };
     case 'gold':
-      return `Platinum needs a gold win without a boost that never falls below ${percent(platinumRatio(limits))} of the computer’s size.`;
+      return {
+        key: 'game.medalGoals.platinum',
+        params: { percent: percent(platinumRatio(limits)) },
+      };
     case 'platinum':
       return null;
   }
@@ -201,10 +237,10 @@ function missing(
   tier: MedalTier,
   limits: MedalLimits,
   record: MatchRecord
-): string | null {
+): GameText | null {
   switch (tier) {
     case 'bronze':
-      return record.won ? null : 'a win';
+      return record.won ? null : { key: 'game.medalMissing.win' };
     case 'silver':
       return slower(record.durationSec, limits.silverSec);
     case 'gold': {
@@ -214,27 +250,40 @@ function missing(
         slower(record.durationSec, limits.goldSec) ??
         (lostShare < limits.goldLossShare
           ? null
-          : `a cleaner win - losses under ${percent(limits.goldLossShare)} of your peak colony, you had ${percent(lostShare)}`)
+          : {
+              key: 'game.medalMissing.cleaner',
+              params: {
+                percent: percent(limits.goldLossShare),
+                had: percent(lostShare),
+              },
+            })
       );
     }
     case 'platinum':
       if (record.boostsFired > 0) {
-        return 'a gold win without a boost';
+        return { key: 'game.medalMissing.noBoost' };
       }
       return record.lowestSizeRatio >= platinumRatio(limits)
         ? null
-        : `a gold win that never falls below ${percent(platinumRatio(limits))} of the computer’s size`;
+        : {
+            key: 'game.medalMissing.bigger',
+            params: { percent: percent(platinumRatio(limits)) },
+          };
   }
 }
 
 /** How much faster the win has to be, null when it was fast enough. */
-function slower(durationSec: number, limitSec: number): string | null {
+function slower(durationSec: number, limitSec: number): GameText | null {
   if (durationSec <= limitSec) {
     return null;
   }
-  return `a win ${Math.ceil(durationSec - limitSec)} s faster`;
+  return {
+    key: 'game.medalMissing.faster',
+    params: { seconds: Math.ceil(durationSec - limitSec) },
+  };
 }
 
-function percent(share: number): string {
-  return `${Math.round(share * 100)} %`;
+/** A share in whole per cent, for a text's `{percent} %`. */
+function percent(share: number): number {
+  return Math.round(share * 100);
 }

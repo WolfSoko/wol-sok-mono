@@ -4,6 +4,8 @@ import { CampaignSummary } from '../state/campaign';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';
+import { I18nService } from '../i18n/i18n.service';
+import { CampaignSummary, continueText } from '../state/campaign';
 import { MainMenuComponent } from './main-menu.component';
 
 const CAMPAIGN: CampaignSummary = {
@@ -107,6 +109,21 @@ describe('MainMenuComponent', () => {
     fixture.componentInstance.open.subscribe(open);
     button('Friends').click();
     expect(open).toHaveBeenCalledWith('friends');
+  });
+
+  it('speaks German, the campaign line included', () => {
+    TestBed.inject(I18nService).setLanguage('de');
+    fixture.componentRef.setInput('campaign', {
+      ...CAMPAIGN,
+      continueText: continueText('pillar-field', 'normal'),
+    });
+    fixture.detectChanges();
+
+    expect(button('Neues Spiel')).toBeDefined();
+    expect(host.querySelector('[aria-label="Vollbild"]')).not.toBeNull();
+    expect(host.querySelector('.continue-level')?.textContent?.trim()).toBe(
+      '5 · Säulenfeld · Normal'
+    );
   });
 
   it('offers no support where the game does not ask for it', () => {

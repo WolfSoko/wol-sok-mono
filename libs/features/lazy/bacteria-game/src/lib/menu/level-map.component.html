@@ -1,13 +1,15 @@
-@for (chapter of chapters(); track chapter.name) {
-  <section class="chapter" [attr.aria-label]="chapter.name">
+@for (chapter of chapters(); track chapter.id) {
+  @let name = chapter.name | t;
+  <section class="chapter" [attr.aria-label]="name">
     <header class="chapter-head">
-      <h3 class="chapter-name">{{ chapter.name }}</h3>
+      <h3 class="chapter-name">{{ name }}</h3>
       @if (laddered()) {
-        <span class="chapter-open"
-          >{{ chapter.open }} of {{ chapter.cards.length }} open</span
-        >
+        <span class="chapter-open">{{
+          "newGame.levelMap.open"
+            | t: { open: chapter.open, total: chapter.cards.length }
+        }}</span>
       }
-      <p class="chapter-blurb">{{ chapter.blurb }}</p>
+      <p class="chapter-blurb">{{ chapter.blurb | t }}</p>
     </header>
     <ul class="levels">
       @for (card of chapter.cards; track card.id) {
@@ -25,29 +27,40 @@
 }
 
 @if (generator()) {
-  <section class="chapter branches" aria-label="Generated levels">
+  <section
+    class="chapter branches"
+    [attr.aria-label]="'newGame.levelMap.generated.label' | t"
+  >
     <header class="chapter-head">
-      <h3 class="chapter-name">Generated</h3>
-      <p class="chapter-blurb">Levels made from a seed - new every time.</p>
+      <h3 class="chapter-name">
+        {{ "newGame.levelMap.generated.title" | t }}
+      </h3>
+      <p class="chapter-blurb">
+        {{ "newGame.levelMap.generated.blurb" | t }}
+      </p>
     </header>
     <div class="branch-row">
       <div class="generator">
-        <span class="branch-title">Generate a level</span>
+        <span class="branch-title">{{
+          "newGame.levelMap.generated.generateTitle" | t
+        }}</span>
         <mat-button-toggle-group
           class="style-picker"
-          aria-label="Style"
           hideSingleSelectionIndicator
+          [attr.aria-label]="'newGame.levelMap.generated.style' | t"
           [value]="style()"
           (change)="style.set($event.value)"
         >
           @for (option of styles; track option.id) {
             <mat-button-toggle [value]="option.id">{{
-              option.name
+              option.name | t
             }}</mat-button-toggle>
           }
         </mat-button-toggle-group>
         <label class="heat">
-          <span class="branch-note">Difficulty {{ heat() }}</span>
+          <span class="branch-note">{{
+            "newGame.levelMap.generated.difficulty" | t: { difficulty: heat() }
+          }}</span>
           <mat-slider
             discrete
             [min]="minDifficulty"
@@ -56,7 +69,9 @@
           >
             <input
               matSliderThumb
-              aria-label="Difficulty of the generated level"
+              [attr.aria-label]="
+                'newGame.levelMap.generated.difficultyLabel' | t
+              "
               [value]="heat()"
               (valueChange)="heat.set($event)"
             />
@@ -69,7 +84,7 @@
           (click)="generate()"
         >
           <mat-icon>casino</mat-icon>
-          Generate
+          {{ "newGame.levelMap.generated.generate" | t }}
         </button>
       </div>
       @if (rolledCard(); as card) {
