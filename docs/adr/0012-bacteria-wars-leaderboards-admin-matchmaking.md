@@ -37,7 +37,7 @@ What ADR 0011 leaves to build on:
   the same checksum and winner.
 - **Re-simulation costs about 41 s of CPU per 3-minute match** (3.8 ms a
   tick, measured once on `petri-dish` with one bot on a dev core). Re-running
-  every match is too expensive, so 0011 reruns at most 30 candidates a day.
+  every match is too expensive, so 0011 reruns at most 20 candidates a day.
 - **`assertActive(uid)`** in `limits.ts`. Until now it does nothing.
 - **The admin claim** is set by `tools/firebase/grant-admin.mjs`. Rules and
   functions require `admin == true`, `email_verified == true` and
@@ -317,9 +317,13 @@ the rest of that run unranked ("This run is no longer ranked") instead of
 declaring further attempts that would fail the level check.
 
 **Server-side drops never cost an attempt.** Submissions that carry an
-attempt are exempt from ADR 0011's global daily cap (the attempt rules
-already bound them: three a day, one per endless match, five runs a day);
-the per-uid hourly limit still applies. Closing attempts skips any attempt
+attempt do not count against ADR 0011's global daily cap, which unranked
+replays could otherwise use up. They have a global daily cap of their own
+instead, 20,000 ranked submissions a day in `counters/{day}`, since the
+attempt rules bound them per account only (three a day, one per endless
+match, five runs a day) and guest accounts are free; the per-uid hourly
+limit still applies. A ranked submission over that cap is dropped and its
+attempt marked `void`. Closing attempts skips any attempt
 with a submission still pending, and an attempt whose submission the
 server dropped (functions down, parse failure on our side) is marked
 `void`, not lost.
@@ -384,7 +388,10 @@ unranked daily match spends only a local one. The result screen says
 - **A run** is `endlessRuns/{uid}_{runId}`: the run seed, and per declared
   match its index, the attempt, the replay id, the claimed result and its
   verification state. The document is created by the first accepted
-  replay of the run. Attempts of runs without one are ignored.
+  replay of the run, and computed then from all of the run's declared
+  attempts, so a declared match before it without a replay already counts
+  as a lost life. A run with no accepted replay has no wins and nothing to
+  rank, so its attempts are ignored.
   - A declared match without a replay or a pending submission 2 hours
     after its `at` counts as a lost life. `rankReplay` applies this
     lazily whenever it touches the run, and the hourly function sweeps the
@@ -427,7 +434,7 @@ The table assumes 20 s of CPU per match-minute:
 | endless board       | 180                 | 3,600 s                                     |
 | admin "verify now"  | 20                  | 400 s                                       |
 | **0012 total**      | **260 (hard cap)**  | **5,200 s, about 156,000 vCPU-s a month**   |
-| ADR 0011 worst case | 30 reruns of ≤ 80 s | 2,400 s, about 72,000 vCPU-s a month        |
+| ADR 0011 worst case | 20 reruns of ≤ 80 s | 1,600 s, about 48,000 vCPU-s a month        |
 | light triggers      | about 50,000 a day  | about 40,000 vCPU-s a month on `gcf_gen1`\* |
 
 \* The light triggers (`acceptReplay`, `rankReplay`, `rankProgress`,
@@ -435,8 +442,8 @@ The table assumes 20 s of CPU per match-minute:
 `cpu: 'gcf_gen1'` (a fraction of a vCPU at 256 MiB) instead of the 2nd-gen
 default of one vCPU.
 
-Together about 270,000 vCPU-s and 290,000 GiB-s a month, against Cloud
-Run's free 180,000 vCPU-s and 360,000 GiB-s: about $2-5 a month above the
+Together about 245,000 vCPU-s and 280,000 GiB-s a month, against Cloud
+Run's free 180,000 vCPU-s and 360,000 GiB-s: about $1-4 a month above the
 free tier, bounded by the hard cap. Unused daily budget passes to endless.
 An exhausted budget never shows a claim as verified: rows wait in "Being
 checked".
@@ -499,8 +506,11 @@ All of it is written by functions only, except `attempts`,
   - A screen therefore costs one read for the top 50, and at most one top
     document rewrite per relevant change.
 - **TTL** on `expireAt`:
-  - 31 days: `attempts`, `notices`, daily entries and top documents,
-    `dailyRuns`, `rankedReplays`, `endlessRuns` that are not a best run;
+  - 31 days: `attempts`, `notices`, the daily boards' entries and top
+    documents (`daily-{day}`), `dailyRuns`, `rankedReplays`, `endlessRuns`
+    that are not a best run. The all-time boards (`xp`, `online`,
+    `endless`) set no `expireAt` on their top documents or entries, which
+    stay until removed or the account is deleted;
   - 2 days: `pairs`;
   - 6 hours after the stub's `expireAt`: `rankedRooms`;
   - 1 day: `adminCommands`;
@@ -757,7 +767,7 @@ chose not to share their status, and the privacy page says so.
   up (below).
 - **Enforced in Firestore rules for every client-written path**. A
   `notBanned()` =
-  `!exists(ban) || (get(ban).data.until != null && get(ban).data.until < request.time)`
+  `!exists(ban) || (get(ban).data.until != null && get(ban).data.until <= request.time)`
   (one document read per request) is added to every `create` and `update`:
   - `players/{uid}/storage`;
   - `rooms` (open and answer), so there is no online play by code;
@@ -781,7 +791,8 @@ chose not to share their status, and the privacy page says so.
   screen, and the online buttons are disabled instead of failing.
 - **Enforced in RTDB rules**: `status/$uid` and `connections/$uid` allow a
   write only when `!newData.exists()`, or there is no `bans/$uid`, or its
-  value is not `0` and below `now`. Going offline still works.
+  value is not `0` and at most `now`, the same inclusive end as
+  `notBanned()`. Going offline still works.
 - **Enforced in functions**: `assertActive(uid)` (ADR 0011's hook) now
   reads `bans/{uid}`, cached 60 s per instance, honours `until`, and throws
   `Banned`. It is called only where the player's own write is acted on:
@@ -911,8 +922,8 @@ Marked in its text as "(changed by ADR 0012)" or "(added by ADR 0012)":
   attempt's day; without an attempt, for the UTC day of arrival or the day
   before.
 - `replaySubmissions` requires `createdAt == request.time`, may carry an
-  `attempt` id, and submissions with an attempt are exempt from the global
-  daily cap.
+  `attempt` id, and submissions with an attempt count against a separate
+  global daily cap for ranked submissions instead of the global one.
 - `replayCommands` requires `uid == request.auth.uid` and
   `createdAt == request.time`, and `replayCommand` uses the auth-context
   trigger and compares the writer.

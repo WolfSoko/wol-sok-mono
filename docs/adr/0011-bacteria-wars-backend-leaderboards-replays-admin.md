@@ -173,14 +173,17 @@ The client never loads `firebase/functions`; the game's `Routes` chunk
 keeps its size and the federation config gets no new shared package. It
 writes **command documents** the functions process:
 
-- `replaySubmissions/{auto}`: `{ uid, bytes, hint, createdAt }`, create
-  only, `uid == auth.uid`, `bytes` at most 600,000, `hint` a number 0-100
+- `replaySubmissions/{auto}`: `{ uid, bytes, hint, createdAt, expireAt }`,
+  create only, `uid == auth.uid`, `bytes` at most 600,000, `hint` a number 0-100
   (the client's own `replayScore`, used only to rank candidates).
+  `expireAt` is set by the client and must equal
+  `request.time + duration.value(1, 'd')` (the rules check it), so TTL
+  removes a submission a failed function left behind.
   (Added by ADR 0012: `createdAt == request.time`, and an optional
   `attempt`, an attempt id that must exist under the writer's
   `players/{uid}/attempts`.)
-- `replayCommands/{auto}`: `{ uid, type, replayId, createdAt }`, create
-  only. `type` is `remove` (any player), or `feature`, `unfeature`,
+- `replayCommands/{auto}`: `{ uid, type, replayId, createdAt, expireAt }`,
+  create only, with `expireAt` checked like a submission's. `type` is `remove` (any player), or `feature`, `unfeature`,
   `anonymise` (only with the admin claim, a verified email and Google
   sign-in, checked by the rules and again by the function). The writer may
   read its own command to see the result the function writes back.
@@ -311,7 +314,7 @@ install --omit dev`).
 | Function              | Kind                                                          | What it does                                                                                                                                                                                                                                                                                                                                                                         |
 | --------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `acceptReplay`        | Firestore `onDocumentCreated` on `replaySubmissions/{id}`     | Parses (inflation capped, strict v2), derives `kind` and the id, binds players (local: caller plus bot; online: room stub), enforces 60 submissions an hour per uid and a global daily cap, writes `replays/{id}` and its blob with `create()`, or adds the second online report in a transaction and sets `agreed` or `disputed`. Deletes the submission. Cheap: no rerun. 256 MiB. |
-| `featureBest`         | scheduled, daily 04:00 Europe/Berlin, 512 MiB, 1 vCPU, 1800 s | Picks at most 30 candidates from the previous day, reruns them, stores `verified` / `unverified` / `balance-mismatch` with summary and score, publishes up to 10, writes the runners-up to `replayCandidates/{day}`. Idempotent per day.                                                                                                                                             |
+| `featureBest`         | scheduled, daily 04:00 Europe/Berlin, 512 MiB, 1 vCPU, 1800 s | Picks at most 20 candidates from the previous day, reruns them, stores `verified` / `unverified` / `balance-mismatch` with summary and score, publishes up to 10, writes the runners-up to `replayCandidates/{day}`. Idempotent per day.                                                                                                                                             |
 | `replayCommand`       | Firestore `onDocumentCreated` on `replayCommands/{id}`        | `remove` by a player; `feature`, `unfeature`, `anonymise` by the owner after re-reading the user's current claims with `getUser()` (a revoked claim stops working at once, not after the token's hour). Featuring an unverified replay reruns it first (at most 6 minutes of match, under the 540 s limit). Writes `result`.                                                         |
 | `profileChanged`      | Firestore `onDocumentUpdated` on `profiles/{uid}`             | Re-snapshots or removes the player's name in their public replays when `name` or `publicName` changes.                                                                                                                                                                                                                                                                               |
 | `deletePlayerReplays` | `auth.user().onDelete` (v1)                                   | As above.                                                                                                                                                                                                                                                                                                                                                                            |
@@ -331,8 +334,8 @@ submission. `featureBest` takes the previous day's replays that:
 - involve no player with `galleryOptOut` or in `optOut`;
 - are ranked by the client's `hint`, at most 3 per uid.
 
-It reruns the top 30 at most (about 30 x 80 s worst case, well inside the
-1800 s timeout and the free 180,000 vCPU-seconds a month), stopping early
+It reruns the top 20 at most (about 20 x 80 s = 1,600 s worst case, inside
+the 1800 s timeout and the free 180,000 vCPU-seconds a month), stopping early
 when its time budget runs out. Guests can still be featured by hand.
 
 **Kinds are derived, not claimed.** `daily` when the level is the daily
