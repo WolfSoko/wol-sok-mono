@@ -69,6 +69,7 @@ jobs:
       - name: Install Deps
         uses: ./.github/actions/install-deps
 
+      # OIDC trusted publishing needs npm 11.5.1 or newer, which Node 24 bundles.
       - name: Setup Node.js for npm publishing
         if: matrix.config.app-type == 'npm-packages'
         uses: actions/setup-node@v7
@@ -76,17 +77,18 @@ jobs:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org/'
 
-      - name: Upgrade npm for OIDC trusted publishing
-        if: matrix.config.app-type == 'npm-packages'
-        run: npm install -g npm@11.5.1
-
-      # The runner image has the Android SDK; Gradle needs a JDK on top.
+      # The runner image has the Android SDK; Gradle needs a JDK on top, and
+      # setup-gradle caches the Gradle distribution and dependencies between runs.
       - name: Setup Java for the Android app
         if: matrix.config.app-type == 'android'
         uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
+      - uses: gradle/actions/setup-gradle@v6
+        if: matrix.config.app-type == 'android'
+        with:
+          cache-read-only: false
 
       - name: Find previous deployment tag
         id: previous_deployment
