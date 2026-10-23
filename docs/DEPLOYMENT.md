@@ -617,26 +617,32 @@ Typical CDK stack includes:
 
 ```typescript
 // apps/fourier-analysis-remote-cdk/src/main.ts
-import * as cdk from 'aws-cdk-lib';
-import { SpaCdkStack } from '@wolsok/spa-cdk-stack';
+import { SpaStack } from '@wolsok/spa-cdk-stack';
+import { App } from 'aws-cdk-lib';
 
-const app = new cdk.App();
+const app = new App();
 
-new SpaCdkStack(app, 'FourierAnalysisStack', {
-  appName: 'fourier-analysis',
-  domainName: 'fourier.example.com', // Optional custom domain
-  certificateArn: 'arn:aws:acm:...', // Optional SSL certificate
+new SpaStack(app, 'FourierAnalysis', {
+  env: { region: 'eu-central-1', account: '088632064895' },
+  buildOutputPath: 'dist/apps/fourier-analysis-remote',
+  domainName: 'fourier-analysis.wolsok.de',
 });
 ```
 
 ### Custom Domain Setup
 
-To use a custom domain:
+The domain needs a public Route53 hosted zone; `SpaStack` does the rest:
 
-1. **Create SSL Certificate** in ACM (us-east-1, the only region CloudFront takes certificates from; `SpaStack` does this for you)
-2. **Update CDK stack** with domain and certificate
-3. **Deploy stack**
-4. **Update DNS** with CloudFront distribution URL
+1. **Certificate:** without a `certificate` prop, `SpaStack` creates one with
+   DNS validation. CloudFront only takes certificates from us-east-1, so in any
+   other region it goes into a second stack, `<name>Certificate` in us-east-1,
+   referenced across regions. To bring your own, pass an `ICertificate` from
+   us-east-1 as `certificate`.
+2. **Bootstrap** both regions once: `nx bootstrap my-app aws://<account>/eu-central-1`
+   and `nx bootstrap my-app aws://<account>/us-east-1`.
+3. **Deploy** with `cdk deploy --all` (the deploy targets set `all: true`); the
+   certificate stack goes first.
+4. **DNS:** the stack creates the Route53 alias record to the distribution.
 
 ## GitHub Pages Deployment
 

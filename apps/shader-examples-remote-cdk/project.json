@@ -17,7 +17,9 @@
     },
     "destroy": {
       "executor": "@wolsok/nx-aws-cdk-v2:destroy",
-      "options": {}
+      "options": {
+        "all": true
+      }
     },
     "bootstrap": {
       "executor": "@wolsok/nx-aws-cdk-v2:bootstrap",

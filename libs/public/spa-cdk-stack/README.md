@@ -10,7 +10,8 @@ Features are:
 - Creation of a certificate for your domain. CloudFront only takes certificates
   from us-east-1, so in any other region `SpaStack` puts it into a second stack,
   `<name>Certificate` in us-east-1, referenced across regions. Deploy such an
-  app with `cdk deploy --all`, or name the SPA stack.
+  app with `cdk deploy --all`, or name the SPA stack, and bootstrap both
+  regions.
 - Redirect from HTTP to HTTPS with an ACM certificate.
 - Route53 alias record creation,
 
