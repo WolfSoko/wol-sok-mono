@@ -36,13 +36,15 @@ one screen (and keyboard) with a second human.
 
 ## Touch layout
 
-The page opens in fullscreen: the
-[`BacteriaGameComponent`](./src/lib/bacteria-game.component.ts) lays its stage
-over the whole viewport from the first render and asks the browser's
-Fullscreen API for the rest, where a browser offers it (iPhones do not) - right
-away when a click brought the player here, otherwise with the next gesture the
-game owns (Start, resume, F or the button), because browsers refuse the
-request without a gesture. The stage is a grid
+The [`BacteriaGameComponent`](./src/lib/bacteria-game.component.ts) has one
+stage, which looks the same embedded in the page and fullscreen. Embedded, it
+fills the viewport below whatever is above it (the shell's toolbar, or nothing
+on the game's own site). Fullscreen - the button in the menu or the bar, or F -
+lays it over the whole viewport and asks the browser's Fullscreen API for the
+rest, where a browser offers it (iPhones do not). A touch device opens
+fullscreen and asks right away when a click brought the player here, otherwise
+with the next gesture the game owns (Start, resume, F or the button), because
+browsers refuse the request without a gesture. The stage is a grid
 with the arena in the middle and one _seat_ per human player, made of a
 [joystick zone](./src/lib/joystick/joystick.component.ts) on one side of the
 arena and a [boost pad](./src/lib/boost-pad/boost-pad.component.ts) on the
@@ -64,9 +66,9 @@ the finger lands becomes the centre of the stick, and the crosshair keeps
 moving in the direction it is pushed - slower for a gentle push - until it is
 released. Dragging a crosshair across the arena still works too.
 
-Entering the native fullscreen also locks a phone into landscape. Escape, the
-back gesture or the button in the bar return to the page, where the keyboard
-instructions live.
+Entering the native fullscreen also locks a phone into landscape. Escape on
+the main menu, the back gesture or the fullscreen button put the stage back
+into the page.
 
 The host application has to provide the CDK's `FullscreenOverlayContainer` as
 its `OverlayContainer` (both apps in this workspace do): the browser paints
@@ -123,7 +125,7 @@ While a screen is open, the arena, its bar and the seats under it are inert.
 The pause menu (Resume, Restart, Settings, Quit to menu) and the match result
 (Main menu, Choose a level, Play again, Next) stay cards over the arena.
 Escape behaves like in a game: it pauses a match, backs out of a screen, and
-only leaves for the page from the main menu. The browser taking its own
+only leaves fullscreen from the main menu. The browser taking its own
 fullscreen off - its Escape, the back gesture, the settings toggle - is
 treated the same way, since that Escape never reaches the game.
 
@@ -557,7 +559,7 @@ and two neutral colonies, won on size after four minutes.
 ## Boost
 
 Every player has a boost (Space for the first player, Enter for the second, or
-the button next to the scoreboard). For `boostDurationSec` the colony moves
+the boost pad on a touchscreen). For `boostDurationSec` the colony moves
 `boostSpeedFactor` times faster, hunts with `boostAggression` and its bacteria
 exert `boostAttackFactor` times their energy as pressure. Once the boost is
 over it recharges for `boostCooldownSec` before it can be fired again. Fire it
@@ -649,7 +651,7 @@ link with the run packed into its hash
 numbers on the engine's grid, ticks as the distance to the input before,
 deflated and written in base64url. A minute of steering a stick all the time
 fits in a few KB, and the run never reaches a server. Opening the link offers
-a ghost challenge on the main menu and above the setup of the page layout;
+a ghost challenge on the main menu;
 the hash is taken out of the address once read. The engine keeps a stick push
 in steps of 1/16 and a drag target in quarter cells, so what is played is
 exactly what the link carries.

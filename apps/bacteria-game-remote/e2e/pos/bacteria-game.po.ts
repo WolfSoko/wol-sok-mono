@@ -2,10 +2,8 @@ import { Locator, Page } from '@playwright/test';
 
 /** The bacteria game page: the arena, its controls and the match setup. */
 export class BacteriaGamePo {
-  public readonly mainTitle: Locator;
   public readonly playArea: Locator;
   public readonly playCta: Locator;
-  public readonly resetCta: Locator;
   public readonly startCta: Locator;
   public readonly profileCta: Locator;
   public readonly friendsCta: Locator;
@@ -14,15 +12,18 @@ export class BacteriaGamePo {
   public readonly nextCta: Locator;
   /** One step back in a new game. */
   public readonly stepBackCta: Locator;
+  /** Lays the stage over the whole viewport. */
   public readonly fullscreenCta: Locator;
+  /** Puts the stage back into the page. */
+  public readonly exitFullscreenCta: Locator;
   public readonly difficultyPicker: Locator;
   public readonly boostCta: Locator;
   public readonly colonyNames: Locator;
-  /** The stage that fills the screen, with a seat per player. */
+  /** The stage, with the arena and a seat per player, in the page or not. */
   public readonly stage: Locator;
+  /** The stage while it is laid over the whole viewport. */
+  public readonly fullscreenStage: Locator;
   public readonly joysticks: Locator;
-  public readonly leaveFullscreenCta: Locator;
-  public readonly intro: Locator;
   public readonly settingsCta: Locator;
   public readonly helpCta: Locator;
   public readonly backCta: Locator;
@@ -35,27 +36,28 @@ export class BacteriaGamePo {
   public readonly unmuteCta: Locator;
 
   constructor(private readonly page: Page) {
-    this.mainTitle = page.locator('mat-toolbar h1');
     this.playArea = page.locator('.stage .arena-canvas');
     this.playCta = page.getByRole('button', { name: /New game/ });
     this.startCta = page.getByRole('button', { name: /^Start / });
     this.profileCta = page.getByRole('button', { name: 'Profile' });
     // The tile's name goes on with the friend requests waiting.
     this.friendsCta = page.getByRole('button', { name: /^Friends/ });
-    this.resetCta = page.getByRole('button', { name: 'Reset' });
     this.startStep = page.locator('feat-lazy-bac-game-new-game .start-step');
     this.nextCta = page.getByRole('button', { name: /^Next/ });
     this.stepBackCta = page.getByRole('button', { name: 'Back', exact: true });
-    this.fullscreenCta = page.getByRole('button', { name: /fullscreen/i });
+    this.fullscreenCta = page.getByRole('button', {
+      name: 'Fullscreen',
+      exact: true,
+    });
+    this.exitFullscreenCta = page.getByRole('button', {
+      name: 'Exit fullscreen',
+    });
     this.difficultyPicker = page.locator('.difficulty-picker');
     this.boostCta = page.getByRole('button', { name: /^Boost/ });
     this.colonyNames = page.locator('.colony-name');
-    this.stage = page.locator('.stage.fullscreen');
+    this.stage = page.locator('.stage');
+    this.fullscreenStage = page.locator('.stage.fullscreen');
     this.joysticks = page.getByLabel(/^Joystick /);
-    this.leaveFullscreenCta = page.getByRole('button', {
-      name: 'Back to the page',
-    });
-    this.intro = page.locator('mat-card-header');
     this.settingsCta = page.getByRole('button', { name: 'Settings' });
     this.helpCta = page.getByRole('button', { name: 'How to play' });
     this.backCta = page.getByRole('button', { name: 'Menu', exact: true });

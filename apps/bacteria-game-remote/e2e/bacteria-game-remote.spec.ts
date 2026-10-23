@@ -14,23 +14,27 @@ test('should open on the main menu with the game and its controls', async ({
   await expect(po.profileCta).toBeVisible();
   await expect(po.settingsCta).toBeVisible();
   await expect(po.helpCta).toBeVisible();
-  await expect(po.intro).toHaveCount(0);
 });
 
-test('should return to the page on request', async ({ page }) => {
+test('should look the same in the page and fullscreen', async ({ page }) => {
   const po = new BacteriaGamePo(page);
   await po.goto();
-
-  await po.leaveFullscreenCta.click();
-
-  await expect(po.stage).toHaveCount(0);
-  await expect(po.mainTitle).toContainText('Bacteria Wars');
-  await expect(po.intro).toBeVisible();
-  await expect(po.fullscreenCta).toBeVisible();
+  // A desktop opens the stage in the page, filling the viewport.
+  await expect(po.fullscreenStage).toHaveCount(0);
+  const embedded = await po.boxOf(po.stage);
+  expect(embedded.height).toBeGreaterThan(400);
 
   await po.fullscreenCta.click();
 
-  await expect(po.stage).toBeVisible();
+  await expect(po.fullscreenStage).toBeVisible();
+  await expect(po.menuTitle).toHaveText('Bacteria Wars');
+  await expect(po.playCta).toBeVisible();
+
+  await po.exitFullscreenCta.click();
+
+  await expect(po.fullscreenStage).toHaveCount(0);
+  await expect(po.menuTitle).toHaveText('Bacteria Wars');
+  await expect(po.fullscreenCta).toBeVisible();
 });
 
 test('should let the player pick a level when starting a match', async ({

@@ -61,19 +61,22 @@ describe('MainMenuComponent', () => {
     expect(resume).toHaveBeenCalled();
   });
 
-  it('mutes, unmutes and leaves for the page', () => {
+  it('mutes, unmutes and toggles fullscreen', () => {
     const sound = jest.fn();
-    const leave = jest.fn();
+    const fullscreen = jest.fn();
     fixture.componentInstance.soundChange.subscribe(sound);
-    fixture.componentInstance.leave.subscribe(leave);
+    fixture.componentInstance.fullscreenChange.subscribe(fullscreen);
 
     host.querySelector<HTMLButtonElement>('[aria-label="Mute"]')?.click();
+    host.querySelector<HTMLButtonElement>('[aria-label="Fullscreen"]')?.click();
+    fixture.componentRef.setInput('fullscreen', true);
+    fixture.detectChanges();
     host
-      .querySelector<HTMLButtonElement>('[aria-label="Back to the page"]')
+      .querySelector<HTMLButtonElement>('[aria-label="Exit fullscreen"]')
       ?.click();
 
     expect(sound).toHaveBeenCalledWith(false);
-    expect(leave).toHaveBeenCalled();
+    expect(fullscreen.mock.calls).toEqual([[true], [false]]);
   });
 
   it('shows the friends only with the cloud, with the requests waiting', () => {

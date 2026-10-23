@@ -66,12 +66,25 @@
   justify-content: flex-start;
   font-size: 1.6rem;
 
+  // Material's label is inline: as a row, the note sits at the far end and
+  // wraps on its own instead of breaking the line under the name.
+  ::ng-deep .mdc-button__label {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
   .play-note {
     margin-left: auto;
     padding-left: 1rem;
     font-family: var(--bw-body);
     font-weight: 700;
     font-size: 0.85rem;
+    line-height: 1.25;
+    text-align: right;
+    white-space: normal;
   }
 }
 
@@ -251,9 +264,15 @@
 
 // A phone held across: title and buttons beside a slimmer card.
 @media (max-height: 30rem) {
+  // Sound and fullscreen stacked in a rail of their own, clear of the card.
+  .top {
+    flex-direction: column;
+  }
+
   .layout {
     flex-wrap: nowrap;
     gap: 1.5rem;
+    padding-right: 3rem;
   }
 
   .hero {

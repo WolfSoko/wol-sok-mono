@@ -42,6 +42,21 @@ function stubActivation(isActive: boolean): void {
 }
 
 /**
+ * Lets the page believe it runs on a touch device, which opens the game
+ * fullscreen, or on a desktop, which opens it embedded in the page.
+ */
+function stubTouch(touch: boolean): void {
+  Object.defineProperty(window, 'matchMedia', {
+    value: (query: string) => ({
+      matches: touch && query === '(pointer: coarse)',
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    }),
+    configurable: true,
+  });
+}
+
+/**
  * A stage whose fullscreen request the browser grants or refuses. A granted
  * request puts the stage on the screen, as the browser would.
  */
@@ -76,9 +91,11 @@ describe('BacteriaGameComponent', () => {
   /**
    * Creates the component with a stage whose fullscreen request the browser
    * grants or refuses, and returns that stage. The template is not rendered,
-   * so the stage element is wired up by hand.
+   * so the stage element is wired up by hand. Unless told otherwise, the
+   * page runs on a touch device and so opens fullscreen.
    */
-  function create(granted = false) {
+  function create(granted = false, touch = true) {
+    stubTouch(touch);
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [BacteriaGameComponent, NoopAnimationsModule],
@@ -257,10 +274,32 @@ describe('BacteriaGameComponent', () => {
   });
 
   describe('entering the page', () => {
-    it('opens in the touch layout', () => {
+    it('opens fullscreen on a touch device', () => {
       create();
 
       expect(component['fullscreen']()).toBe(true);
+    });
+
+    it('opens embedded in the page on a desktop, on the main menu', () => {
+      const arena = create(false, false);
+
+      expect(component['fullscreen']()).toBe(false);
+      expect(component['panel']()).toBe('menu');
+      expect(component['screenOpen']()).toBe(true);
+
+      component.startGame();
+      expect(arena.requestFullscreen).not.toHaveBeenCalled();
+    });
+
+    it('fills the viewport below what is above the embedded stage', () => {
+      create(false, false);
+      (component as unknown as { stageRef: unknown }).stageRef = {
+        nativeElement: { getBoundingClientRect: () => ({ top: 64.4 }) },
+      };
+
+      component['measureStageTop']();
+
+      expect(component['stageTop']()).toBe(64);
     });
 
     it('does not waste the native request on a page opened without a gesture', () => {
@@ -312,8 +351,21 @@ describe('BacteriaGameComponent', () => {
     });
   });
 
+  describe('the fullscreen buttons', () => {
+    it('toggle between the page and the whole screen', () => {
+      const arena = create(false, false);
+
+      component['setFullscreen'](true);
+      expect(component['fullscreen']()).toBe(true);
+      expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
+
+      component['setFullscreen'](false);
+      expect(component['fullscreen']()).toBe(false);
+    });
+  });
+
   describe('leaving fullscreen', () => {
-    it('returns to the page and gives the screen back', () => {
+    it('puts the stage back into the page and gives the screen back', () => {
       const arena = create(true);
       const exit = stubFullscreen(arena as unknown as Element);
 
@@ -398,7 +450,7 @@ describe('BacteriaGameComponent', () => {
       expect(component['panel']()).toBe('menu');
     });
 
-    it('leaves the layout on Escape from the main menu only', () => {
+    it('leaves fullscreen on Escape from the main menu only', () => {
       create();
 
       component.onKeyDown(keyEvent('Escape', document.body));

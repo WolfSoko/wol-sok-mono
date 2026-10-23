@@ -11,11 +11,11 @@
   <button
     mat-icon-button
     type="button"
-    aria-label="Back to the page"
-    matTooltip="Back to the page"
-    (click)="leave.emit()"
+    [attr.aria-label]="fullscreen() ? 'Exit fullscreen' : 'Fullscreen'"
+    [matTooltip]="(fullscreen() ? 'Exit fullscreen' : 'Fullscreen') + ' (F)'"
+    (click)="fullscreenChange.emit(!fullscreen())"
   >
-    <mat-icon>fullscreen_exit</mat-icon>
+    <mat-icon>{{ fullscreen() ? "fullscreen_exit" : "fullscreen" }}</mat-icon>
   </button>
 </header>
 

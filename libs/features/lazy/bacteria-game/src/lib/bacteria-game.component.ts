@@ -1,13 +1,15 @@
-import { CommonModule, DOCUMENT } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
   HostListener,
+  Injector,
   OnDestroy,
   Signal,
   ViewChild,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -20,11 +22,9 @@ import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { WsThanosDirective, WsThanosOptions } from '@wolsok/thanos';
-import { GhostChallengeComponent } from './ghost/ghost-challenge.component';
 import { I18nService } from './i18n/i18n.service';
 import { DAILY_ATTEMPTS } from './state/daily';
 import {
@@ -51,11 +51,7 @@ import {
   unlockOrientation,
 } from './fullscreen';
 import { JoystickComponent } from './joystick/joystick.component';
-import {
-  ColonyColorsComponent,
-  ColorChange,
-} from './colony-colors/colony-colors.component';
-import { MatchSetupComponent } from './match-setup/match-setup.component';
+import { ColorChange } from './colony-colors/colony-colors.component';
 import { NewGameComponent } from './menu/new-game.component';
 import { NewGameEntry, opponentOf, PlayKind, stepsOf } from './menu/play-modes';
 import { MainMenuComponent } from './menu/main-menu.component';
@@ -112,7 +108,6 @@ import {
   Pinch,
 } from './touch-controls';
 import {
-  boostLabel,
   ColonyStats,
   humanForBoostKey,
   sameColonyStats,
@@ -138,7 +133,6 @@ import {
 import { DynamicWall, Rect } from './state/maps';
 import { harvestTarget, holdTarget } from './state/win-conditions';
 import { mapZones, Zone } from './state/zones';
-import { MedalTier } from './state/medallions';
 import { isBoosted, Player } from './state/player.model';
 import { PlayerStore } from './state/player.store';
 import { PlayerService } from './state/player.service';
@@ -173,15 +167,12 @@ interface HudGoal {
 @UntilDestroy()
 @Component({
   imports: [
-    CommonModule,
     MatCardModule,
     WsThanosDirective,
     MatButtonModule,
     ShowFpsComponent,
-    MatToolbarModule,
     MatIconModule,
     MatTooltipModule,
-    MatchSetupComponent,
     SocialNoticesComponent,
     JoystickComponent,
     BoostPadComponent,
@@ -194,8 +185,6 @@ interface HudGoal {
     MainMenuComponent,
     NewGameComponent,
     ProfileComponent,
-    ColonyColorsComponent,
-    GhostChallengeComponent,
   ],
   templateUrl: './bacteria-game.component.html',
   styleUrls: ['./bacteria-game.component.scss'],
@@ -209,6 +198,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private playerService = inject(PlayerService);
   private playerStore = inject(PlayerStore);
   protected readonly settings = inject(GameSettingsService);
+  private readonly injector = inject(Injector);
   protected readonly language = inject(I18nService).language;
   protected readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
@@ -356,7 +346,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly matchOver: Signal<boolean>;
   /** The name of the computer's difficulty, for the menu's summary line. */
   protected readonly difficultyName: Signal<string>;
-  protected readonly boostLabel = boostLabel;
 
   /**
    * Which of the menu screens is open while no match runs - and, while one
@@ -370,18 +359,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly resetting = signal(false);
   /**
    * What plays underneath: the level's music while the match is on, the
-   * menu's between matches while the game fills the stage, and nothing
-   * on the pause menu and at the end of a match.
+   * menu's between matches, and nothing on the pause menu and at the end
+   * of a match.
    */
   private readonly soundtrack = computed<Soundtrack | null>(() => {
     if (this.running() && !this.paused()) {
       return levelMusic(this.level().id);
     }
-    const inMenu =
-      this.fullscreen() &&
-      !this.running() &&
-      !this.matchOver() &&
-      !this.resetting();
+    const inMenu = !this.running() && !this.matchOver() && !this.resetting();
     return inMenu ? 'menu' : null;
   });
   /**
@@ -406,12 +391,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   protected readonly screenOpen = computed(() => {
     const panel = this.panel();
-    return (
-      this.fullscreen() &&
-      panel !== null &&
-      panel !== 'pause' &&
-      panel !== 'over'
-    );
+    return panel !== null && panel !== 'pause' && panel !== 'over';
   });
   /** True while the browser shows the stage on the whole screen. */
   protected readonly nativeFullscreen = signal(false);
@@ -455,16 +435,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly colorNames = computed((): [string, string] => {
     const [left, right] = this.colors();
     return [getColonyColor(left).name, getColonyColor(right).name];
-  });
-  /** The best medallion of every level at the selected difficulty. */
-  protected readonly levelMedals = computed(() => {
-    const difficulty = this.difficulty();
-    return Object.fromEntries(
-      LEVELS.map((level): [string, MedalTier | null] => [
-        level.id,
-        this.progress.medal(level.id, difficulty),
-      ])
-    );
   });
   /** Why each level is still locked on the campaign ladder, by level id. */
   protected readonly campaign = inject(CampaignService);
@@ -523,21 +493,26 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly humans: Signal<Player[]>;
 
   /**
-   * True while the arena fills the screen: the touch layout with a seat per
-   * player, laid over the whole viewport. The page opens this way - a phone
-   * between two players has no room for a page around the game.
+   * True while the stage is laid over the whole viewport rather than
+   * embedded in the page; it looks the same either way. A touch device opens
+   * this way - a phone between two players has no room for a page around the
+   * game.
    *
    * This is the component's own layout and works everywhere. On top of it the
    * browser's Fullscreen API is used where it exists, to hide the browser
    * chrome as well - see {@link requestNativeFullscreen}.
    */
-  protected readonly fullscreen = signal(true);
+  protected readonly fullscreen = signal(isTouchDevice());
+  /**
+   * How far below the top of the page the embedded stage starts, in CSS
+   * pixels: it fills the viewport from there - see {@link measureStageTop}.
+   */
+  protected readonly stageTop = signal(0);
   /** The box around the canvas in CSS pixels, null before its first layout. */
   private readonly arenaBoxSize = signal<Size | null>(null);
   /**
-   * Explicit canvas size while fullscreen: the largest box with the arena's
-   * aspect ratio that fits the box around it. Null while the normal layout
-   * sizes the canvas by CSS.
+   * Explicit canvas size: the largest box with the arena's aspect ratio that
+   * fits the box around it. Null before the box was first laid out.
    *
    * Letting CSS scale the drawing inside a bigger element would work visually,
    * but the pointer maths maps a touch through the bounding rect of the canvas
@@ -547,7 +522,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const box = this.arenaBoxSize();
     // Leave room for the glowing frame around the arena.
     const frame = 2 * ARENA_FRAME_PX;
-    return this.fullscreen() && box != null
+    return box != null
       ? fitInside(
           Math.max(0, box.width - frame),
           Math.max(0, box.height - frame),
@@ -1106,7 +1081,23 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.nativeFullscreenSupported.set(
       isFullscreenSupported(document, this.stageRef?.nativeElement)
     );
+    this.measureStageTop();
     this.requestNativeFullscreenOnOpen();
+  }
+
+  /**
+   * Measures where the embedded stage starts on the page - below the shell's
+   * toolbar, or right at the top on the game's own site - so that it fills
+   * the rest of the viewport. Laid over the viewport it keeps the last value.
+   */
+  @HostListener('window:resize')
+  protected measureStageTop(): void {
+    const stage = this.stageRef?.nativeElement;
+    if (this.fullscreen() || stage == null) {
+      return;
+    }
+    const top = stage.getBoundingClientRect().top + window.scrollY;
+    this.stageTop.set(Math.max(0, Math.round(top)));
   }
 
   /**
@@ -1497,13 +1488,22 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Lays the arena over the whole viewport and asks the browser for its
-   * fullscreen on top. Called from a gesture - the button or the F key -
+   * Lays the stage over the whole viewport and asks the browser for its
+   * fullscreen on top. Called from a gesture - a button or the F key -
    * where the browser grants the request.
    */
   protected enterFullscreen(): void {
     this.fullscreen.set(true);
     this.requestNativeFullscreen();
+  }
+
+  /** The fullscreen buttons: onto the whole viewport, or back into the page. */
+  protected setFullscreen(on: boolean): void {
+    if (on) {
+      this.enterFullscreen();
+    } else {
+      this.leaveFullscreen();
+    }
   }
 
   /**
@@ -1519,10 +1519,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  /** Brings the arena back into the page. */
+  /** Brings the stage back into the page. */
   protected leaveFullscreen(): void {
     this.fullscreen.set(false);
     exitFullscreen(document);
+    afterNextRender(() => this.measureStageTop(), { injector: this.injector });
   }
 
   /**
@@ -1578,7 +1579,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Remembers the size of the box around the canvas, which the touch layout
+   * Remembers the size of the box around the canvas, which the stage
    * fits the canvas into - see {@link canvasSize}.
    */
   protected onArenaBoxResized(event: ResizedEvent): void {
@@ -1670,15 +1671,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // F is handled here rather than in the store: the fullscreen request has
     // to happen inside the key event, browsers reject it otherwise.
     if ($event.key.toLowerCase() === 'f' && !$event.repeat) {
-      if (this.fullscreen()) {
-        this.leaveFullscreen();
-      } else {
-        this.enterFullscreen();
-      }
+      this.setFullscreen(!this.fullscreen());
       return;
     }
     // Escape, as in any game: pauses a match, backs out of a screen, and
-    // only from the main menu leaves the layout for the page. The browser
+    // only from the main menu leaves fullscreen for the page. The browser
     // takes its own fullscreen off on Escape before this runs.
     if ($event.key === 'Escape') {
       this.onEscape();
@@ -1784,6 +1781,13 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
   return !(
     (control as HTMLButtonElement).disabled ||
     control.getAttribute('aria-disabled') === 'true'
+  );
+}
+
+/** True on a device driven by touch, which opens the game fullscreen. */
+function isTouchDevice(): boolean {
+  return (
+    typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
   );
 }
 

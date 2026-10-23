@@ -28,7 +28,7 @@ import {
 export type MenuPage = 'profile' | 'friends' | 'settings' | 'help';
 
 /**
- * The landing screen of the fullscreen game: the title, a new game, the
+ * The landing screen of the game: the title, a new game, the
  * way to the other screens and a card with the campaign so far - and the
  * way straight on with it.
  *
@@ -59,6 +59,8 @@ export class MainMenuComponent {
   public readonly friendsAvailable = input(false);
   /** The friend requests waiting for an answer, counted on the tile. */
   public readonly friendRequests = input(0);
+  /** True while the game fills the whole screen rather than its page. */
+  public readonly fullscreen = input(false);
 
   /** A new game, to set up step by step. */
   public readonly newGame = output<void>();
@@ -66,8 +68,8 @@ export class MainMenuComponent {
   public readonly continueCampaign = output<void>();
   public readonly open = output<MenuPage>();
   public readonly soundChange = output<boolean>();
-  /** Back to the page around the game. */
-  public readonly leave = output<void>();
+  /** Onto the whole screen (true) or back into the page (false). */
+  public readonly fullscreenChange = output<boolean>();
   public readonly fightChallenge = output<void>();
   public readonly dismissChallenge = output<void>();
 
