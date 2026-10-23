@@ -394,6 +394,15 @@
     position: relative;
     height: 100%;
   }
+
+  // A friend's challenge or an invitation, over whichever screen is open.
+  .social-notices {
+    position: absolute;
+    z-index: 1;
+    right: 1rem;
+    bottom: 1rem;
+    max-width: min(30rem, calc(100% - 2rem));
+  }
 }
 
 .page-challenge {

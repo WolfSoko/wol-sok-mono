@@ -3,6 +3,12 @@
 </feat-lazy-bac-game-screen-header>
 
 <div class="body">
+  @if (social.available) {
+    <section class="online" aria-labelledby="online-title">
+      <h3 id="online-title" class="section-title">Online profile</h3>
+      <feat-lazy-bac-game-profile-editor />
+    </section>
+  }
   <section class="summary" aria-label="Rank and totals">
     <feat-lazy-bac-game-rank-standing [xp]="xp()" [badgeSize]="68" />
     <ol class="ranks" aria-label="Ranks">

@@ -8,6 +8,8 @@ export interface PlayerProfile {
   guest: boolean;
   /** The name of the Google account signed in to, null for a guest. */
   name: string | null;
+  /** The photo of the Google account, where it has one. */
+  photoUrl?: string;
 }
 
 /** A player taking over the game: at the start, after a sign-in or sign-out. */

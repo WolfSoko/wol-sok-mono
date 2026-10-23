@@ -113,6 +113,19 @@
   </ul>
 }
 
+@if (friendNote(); as note) {
+  <div class="friend">
+    <span class="friend-note" role="status">{{ note }}</span>
+  </div>
+} @else if (newFriend(); as opponent) {
+  <div class="friend">
+    <button mat-stroked-button type="button" (click)="addFriend(opponent.uid)">
+      <mat-icon>person_add</mat-icon>
+      Add {{ opponent.card.name }} as a friend
+    </button>
+  </div>
+}
+
 <div class="actions">
   <button mat-button type="button" (click)="action.emit('menu')">
     <mat-icon>home</mat-icon>

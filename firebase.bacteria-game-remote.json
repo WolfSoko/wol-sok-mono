@@ -68,6 +68,9 @@
       "port": 8380,
       "websocketPort": 9160
     },
+    "database": {
+      "port": 9410
+    },
     "hub": {
       "port": 4410
     },
@@ -78,5 +81,8 @@
       "enabled": false
     },
     "singleProjectMode": true
+  },
+  "database": {
+    "rules": "apps/bacteria-game-remote/database.rules.json"
   }
 }

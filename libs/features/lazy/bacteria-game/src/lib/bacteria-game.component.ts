@@ -88,6 +88,11 @@ import {
   simScale,
 } from './state/arena-size';
 import { OnlineMatchService } from './net/online-match.service';
+import {
+  InviteOffer,
+  SocialNoticesComponent,
+} from './social/social-notices.component';
+import { ChallengeView, SocialService } from './social/social.service';
 import { Camera } from './arena/camera';
 import { MinimapPainter } from './arena/minimap';
 import { GameHapticsService } from './haptics.service';
@@ -120,6 +125,7 @@ import {
   levelMap,
   levelSize,
   ONLINE_LOCKS,
+  playableOnline,
   nextLevel,
 } from './state/levels';
 import { DynamicWall, Rect } from './state/maps';
@@ -168,6 +174,7 @@ interface HudGoal {
     MatIconModule,
     MatTooltipModule,
     MatchSetupComponent,
+    SocialNoticesComponent,
     JoystickComponent,
     BoostPadComponent,
     ElemResizedDirective,
@@ -206,6 +213,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   );
   /** True while an online match waits for the other device. */
   protected readonly waitingForPeer = this.store.waitingForPeer;
+  private readonly social = inject(SocialService);
+  /** An invitation link opened on this visit, until it is answered. */
+  protected readonly inviteOffer = signal<InviteOffer | null>(null);
   /** A match the host started while this device still cleared the last one. */
   private onlineStartPending = false;
   /** No flickering glow for players who asked their system for less motion. */
@@ -551,6 +561,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     });
     this.upcomingLevel = computed(() => nextLevel(this.level().id));
     void this.takeChallenge();
+    void this.takeInvite();
     this.theme = computed(() =>
       arenaTheme(this.campaign.activeArena() ?? this.level().id)
     );
@@ -565,7 +576,18 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.humans = computed(() => players().filter((player) => !player.isBot));
     // The crosshairs move the players every frame - the scoreboard only
     // renders again once one of its numbers changes.
-    this.stats = computed(() => toColonyStats(players(), this.balance()), {
+    // Online, the other colony goes by its player's name, once their
+    // profile is in - it may come after the match started.
+    const named = computed(() => {
+      const online = this.store.online();
+      const name = this.social.opponent()?.card.name;
+      return online === null || name === undefined
+        ? players()
+        : players().map((player) =>
+            player.id === online.seat ? player : { ...player, name }
+          );
+    });
+    this.stats = computed(() => toColonyStats(named(), this.balance()), {
       equal: sameColonyStats,
     });
     this.neutralCount = this.playerStore.neutralCount;
@@ -662,6 +684,25 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
         untilDestroyed(this)
       )
       .subscribe(() => this.followOnlineStart());
+    // The host of a match the matchmaking set up starts it at once.
+    this.online.events$
+      .pipe(
+        filter(
+          (event) =>
+            event.type === 'connected' && event.auto && event.seat === 0
+        ),
+        untilDestroyed(this)
+      )
+      .subscribe(() => this.startMatchmadeMatch());
+  }
+
+  /** Starts an automatic online match, on a random level that plays online. */
+  private startMatchmadeMatch(): void {
+    const levels = LEVELS.filter(playableOnline);
+    this.gameStateService.setLevel(
+      levels[Math.floor(Math.random() * levels.length)].id
+    );
+    this.startGame();
   }
 
   /**
@@ -678,6 +719,34 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     await this.router.navigateByUrl(this.router.url.split('#')[0], {
       replaceUrl: true,
     });
+  }
+
+  /**
+   * Takes the invitation a link carries in its hash (`#friend=<token>`)
+   * and offers to add the inviter as a friend - and takes it out of the
+   * address, so a reload does not offer it again.
+   */
+  private async takeInvite(): Promise<void> {
+    const match = /^#friend=([a-z2-9]{20})$/.exec(this.document.location.hash);
+    if (match === null || !this.social.available) {
+      return;
+    }
+    const token = match[1];
+    await this.router.navigateByUrl(this.router.url.split('#')[0], {
+      replaceUrl: true,
+    });
+    const from = await this.social.readInvite(token).catch(() => null);
+    if (from !== null) {
+      this.inviteOffer.set({ token, from });
+    }
+  }
+
+  /** Takes a friend's challenge: on to the online lobby, into their room. */
+  protected playChallenge(call: ChallengeView): void {
+    this.setPlayKind('online');
+    this.newGameEntry.set({ kind: 'online', step: 'start' });
+    this.show('new-game');
+    void this.online.join(call.code);
   }
 
   /** Today's daily level for the main menu. */

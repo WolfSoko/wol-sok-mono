@@ -235,6 +235,15 @@
   font-weight: 600;
 }
 
+.friend {
+  display: flex;
+  justify-content: center;
+}
+
+.friend-note {
+  color: var(--bw-gold, inherit);
+}
+
 .online-wait {
   align-self: center;
   margin: 0;

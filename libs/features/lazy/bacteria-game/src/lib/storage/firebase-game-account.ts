@@ -143,8 +143,10 @@ function profileOf(user: User): PlayerProfile {
   const google = user.providerData.find(
     (profile) => profile.providerId === 'google.com'
   );
+  const photoUrl = user.photoURL ?? google?.photoURL ?? null;
   return {
     guest: false,
     name: user.displayName ?? google?.displayName ?? user.email,
+    ...(photoUrl === null ? {} : { photoUrl }),
   };
 }

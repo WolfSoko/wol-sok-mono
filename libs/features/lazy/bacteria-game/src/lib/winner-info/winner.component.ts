@@ -29,6 +29,7 @@ import { replayLink } from '../state/replay-link';
 import { DAILY_ATTEMPTS } from '../state/daily';
 import { isRunOver } from '../state/endless';
 import { BOSS_SEAT, EndReason } from '../state/win-conditions';
+import { SocialService } from '../social/social.service';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction =
@@ -149,6 +150,28 @@ export class WinnerComponent {
       this.state.endedBy() === 'forfeit' ||
       this.state.endedBy() === 'desync'
   );
+
+  private readonly social = inject(SocialService);
+  /** The opponent of an online match, to add as a friend - null otherwise. */
+  public readonly newFriend = computed(() => {
+    const opponent = this.social.opponent();
+    return this.online() && opponent !== null && !this.social.opponentIsFriend()
+      ? opponent
+      : null;
+  });
+  /** What adding the opponent came to - null before. */
+  public readonly friendNote = signal<string | null>(null);
+
+  /** Asks the opponent of the online match to be friends. */
+  public async addFriend(uid: string): Promise<void> {
+    try {
+      await this.social.addFriend(uid);
+      this.friendNote.set('Friend request sent.');
+    } catch (error) {
+      console.error('Could not send the friend request', error);
+      this.friendNote.set('The friend request did not go out - try again.');
+    }
+  }
 
   /** True while the online connection holds. */
   public connected: Signal<boolean> = computed(

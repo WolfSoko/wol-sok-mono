@@ -1,0 +1,90 @@
+@if (draft(); as profile) {
+  <div class="card">
+    <feat-lazy-bac-game-avatar
+      [avatar]="profile.avatar"
+      [size]="72"
+      [label]="profile.name"
+    />
+    <div class="fields">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Name</mat-label>
+        <input
+          matInput
+          name="name"
+          autocomplete="nickname"
+          [maxLength]="nameMax"
+          [value]="profile.name"
+          (input)="setName($event)"
+        />
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Motto</mat-label>
+        <input
+          matInput
+          name="motto"
+          autocomplete="off"
+          [maxLength]="mottoMax"
+          [value]="profile.motto"
+          (input)="setMotto($event)"
+        />
+      </mat-form-field>
+    </div>
+  </div>
+
+  <span class="label">Picture</span>
+  <div class="pictures" role="radiogroup" aria-label="Picture">
+    @for (avatar of presets; track $index) {
+      <button
+        type="button"
+        class="picture"
+        role="radio"
+        [attr.aria-checked]="isPicked(avatar)"
+        [attr.aria-label]="'Bacterium ' + ($index + 1)"
+        (click)="pick(avatar)"
+      >
+        <feat-lazy-bac-game-avatar [avatar]="avatar" [size]="44" />
+      </button>
+    }
+    @if (photo(); as google) {
+      <button
+        type="button"
+        class="picture"
+        role="radio"
+        aria-label="Google photo"
+        [attr.aria-checked]="isPicked(google)"
+        (click)="pick(google)"
+      >
+        <feat-lazy-bac-game-avatar [avatar]="google" [size]="44" />
+      </button>
+    }
+    <label class="picture upload" title="Upload a picture">
+      <mat-icon aria-hidden="true">add_photo_alternate</mat-icon>
+      <span class="visually-hidden">Upload a picture</span>
+      <input type="file" accept="image/*" (change)="upload($event)" />
+    </label>
+  </div>
+
+  @if (social.presenceAvailable) {
+    <mat-slide-toggle
+      [checked]="profile.shareStatus"
+      (change)="setShareStatus($event.checked)"
+    >
+      Friends see when I'm online
+    </mat-slide-toggle>
+  }
+
+  <div class="actions">
+    @if (note(); as text) {
+      <span class="note" role="status">{{ text }}</span>
+    }
+    <button
+      mat-flat-button
+      type="button"
+      [disabled]="!changed() || busy()"
+      (click)="save()"
+    >
+      <mat-icon>save</mat-icon>
+      Save
+    </button>
+  </div>
+}

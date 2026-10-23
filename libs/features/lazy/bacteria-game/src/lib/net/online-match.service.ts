@@ -1,5 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, Observable, Subject } from 'rxjs';
+import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
 import type { OpenRoom } from '../storage/game-rooms';
 import { normalizeRoomCode } from '../storage/game-rooms';
@@ -36,6 +38,8 @@ export interface OnlineLobby {
   code: string | null;
   /** What went wrong last, or why the other device left - null if nothing. */
   notice: string | null;
+  /** True for a match the matchmaking set up: the host starts at once. */
+  auto: boolean;
 }
 
 /** Why an online connection ended. */
@@ -44,7 +48,7 @@ export type OnlineEnd = 'left' | 'lost';
 /** What happens in an online match, for the game to follow. */
 export type OnlineEvent =
   /** The other device is there. */
-  | { type: 'connected'; seat: 0 | 1 }
+  | { type: 'connected'; seat: 0 | 1; auto: boolean }
   /** The host changed the next match's setup - for the guest. */
   | { type: 'setup'; setup: OnlineSetup }
   /** The host started a match - for the guest; see {@link takeStart}. */
@@ -57,6 +61,7 @@ export const IDLE_LOBBY: OnlineLobby = {
   role: null,
   code: null,
   notice: null,
+  auto: false,
 };
 
 /**
@@ -70,6 +75,12 @@ export const IDLE_LOBBY: OnlineLobby = {
 @Injectable({ providedIn: 'root' })
 export class OnlineMatchService {
   private readonly cloud = inject(GameCloud);
+  /** Who plays at this device - their uid goes to the other one. */
+  private readonly playerId = toSignal(
+    inject(GameAccount).players.pipe(map(({ playerId }) => playerId)),
+    { initialValue: null }
+  );
+  private readonly peerState = signal<string | null>(null);
   private readonly lobbyState = signal<OnlineLobby>(IDLE_LOBBY);
   private readonly events = new Subject<OnlineEvent>();
   private link: PeerLink | null = null;
@@ -87,6 +98,11 @@ export class OnlineMatchService {
   private attempt = 0;
 
   public readonly lobby = this.lobbyState.asReadonly();
+  /**
+   * The uid of the player at the other device once they said hello - kept
+   * after the connection, so the result can offer to add them as a friend.
+   */
+  public readonly peer = this.peerState.asReadonly();
   public readonly events$: Observable<OnlineEvent> = this.events.asObservable();
 
   /** True where online matches can be played: with the cloud and WebRTC. */
@@ -94,13 +110,23 @@ export class OnlineMatchService {
     return PeerLink.supported() && this.cloud.rooms() !== null;
   }
 
-  /** Opens a room and waits for a guest. */
-  public async host(): Promise<void> {
+  /**
+   * Opens a room and waits for a guest. `onCode` hears the room's code as
+   * soon as it is open - to challenge a friend with it, or hand it to a
+   * player waiting in the matchmaking queue.
+   */
+  public async host(
+    options: { auto?: boolean; onCode?: (code: string) => void } = {}
+  ): Promise<void> {
     const rooms = this.cloud.rooms();
     if (rooms === null) {
       return;
     }
-    const attempt = this.restart({ phase: 'opening', role: 'host' });
+    const attempt = this.restart({
+      phase: 'opening',
+      role: 'host',
+      auto: options.auto ?? false,
+    });
     try {
       const { link, offer } = await PeerLink.offer();
       if (!this.adopt(link, attempt)) {
@@ -113,6 +139,7 @@ export class OnlineMatchService {
       }
       this.room = room;
       this.update({ phase: 'waiting', code: room.code });
+      options.onCode?.(room.code);
       const answer = await room.answer;
       if (attempt !== this.attempt) {
         return;
@@ -129,7 +156,10 @@ export class OnlineMatchService {
   }
 
   /** Joins the room under the code a player typed in. */
-  public async join(typed: string): Promise<void> {
+  public async join(
+    typed: string,
+    options: { auto?: boolean } = {}
+  ): Promise<void> {
     const rooms = this.cloud.rooms();
     const code = normalizeRoomCode(typed);
     if (rooms === null) {
@@ -139,7 +169,12 @@ export class OnlineMatchService {
       this.update({ notice: 'A code has six letters and digits.' });
       return;
     }
-    const attempt = this.restart({ phase: 'connecting', role: 'guest', code });
+    const attempt = this.restart({
+      phase: 'connecting',
+      role: 'guest',
+      code,
+      auto: options.auto ?? false,
+    });
     try {
       const room = await rooms.join(code);
       if (attempt !== this.attempt) {
@@ -237,7 +272,7 @@ export class OnlineMatchService {
     link.messages$.subscribe((data) => this.receive(data));
     link.closed$.subscribe(() => this.onClosed(link));
     link.opened.then(
-      () => this.send({ k: 'hello', v: NET_VERSION }),
+      () => this.send({ k: 'hello', v: NET_VERSION, id: this.playerId() }),
       () => undefined
     );
     return true;
@@ -249,6 +284,7 @@ export class OnlineMatchService {
       return;
     }
     if (message.k === 'hello') {
+      this.peerState.set(message.id);
       this.greet(message.v);
       return;
     }
@@ -303,9 +339,11 @@ export class OnlineMatchService {
     }
     this.greeted = true;
     this.update({ phase: 'connected', notice: null });
+    const { role, auto } = this.lobby();
     this.events.next({
       type: 'connected',
-      seat: this.lobby().role === 'host' ? 0 : 1,
+      seat: role === 'host' ? 0 : 1,
+      auto,
     });
   }
 

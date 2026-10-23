@@ -7,7 +7,14 @@ describe('parseNetMessage', () => {
     expect(parseNetMessage(send({ k: 'hello', v: NET_VERSION }))).toEqual({
       k: 'hello',
       v: NET_VERSION,
+      id: null,
     });
+    expect(
+      parseNetMessage(send({ k: 'hello', v: NET_VERSION, id: 'uid_1-A' }))
+    ).toEqual({ k: 'hello', v: NET_VERSION, id: 'uid_1-A' });
+    expect(
+      parseNetMessage(send({ k: 'hello', v: NET_VERSION, id: '../x' }))
+    ).toEqual({ k: 'hello', v: NET_VERSION, id: null });
     expect(
       parseNetMessage(
         send({ k: 'setup', levelId: 'petri-dish', colors: ['orange', 'blue'] })
