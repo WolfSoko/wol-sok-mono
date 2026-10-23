@@ -1,5 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
 import { CampaignSummary } from '../state/campaign';
+import { GAME_SUPPORT } from '../support/game-support';
+import { GameSupport } from '../support/game-support.service';
+import { SupportDialogComponent } from '../support/support-dialog.component';
 import { MainMenuComponent } from './main-menu.component';
 
 const CAMPAIGN: CampaignSummary = {
@@ -70,5 +74,67 @@ describe('MainMenuComponent', () => {
 
     expect(sound).toHaveBeenCalledWith(false);
     expect(leave).toHaveBeenCalled();
+  });
+
+  it('offers no support where the game does not ask for it', () => {
+    expect(host.textContent).not.toContain('Support');
+  });
+});
+
+describe('MainMenuComponent support tile', () => {
+  function render(where: 'web' | 'app'): HTMLElement {
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: GAME_SUPPORT,
+          useValue: {
+            buyMeACoffeeHandle: 'wolf',
+            playTipProductIds: ['tip_small'],
+            ads: null,
+          },
+        },
+      ],
+    });
+    const support = TestBed.inject(GameSupport);
+    jest
+      .spyOn(support, 'url')
+      .mockReturnValue(
+        where === 'web' ? 'https://buymeacoffee.com/wolf' : null
+      );
+    jest
+      .spyOn(support, 'tipProducts')
+      .mockReturnValue(
+        where === 'app'
+          ? [{ id: 'tip_small', title: 'Coffee', price: '€1.99' }]
+          : []
+      );
+    const fixture = TestBed.createComponent(MainMenuComponent);
+    fixture.componentRef.setInput('campaign', CAMPAIGN);
+    fixture.detectChanges();
+    return fixture.nativeElement;
+  }
+
+  it('links to the Buy Me a Coffee page on the web, in a tab of its own', () => {
+    const link = render('web').querySelector<HTMLAnchorElement>('a.tile');
+
+    expect(link?.textContent).toContain('Support');
+    expect(link?.href).toBe('https://buymeacoffee.com/wolf');
+    expect(link?.target).toBe('_blank');
+  });
+
+  it('opens the Play tips in the app', () => {
+    const host = render('app');
+    const open = jest.spyOn(TestBed.inject(MatDialog), 'open');
+    const tile = Array.from(
+      host.querySelectorAll<HTMLButtonElement>('button.tile')
+    ).find((b) => b.textContent?.includes('Support'));
+
+    tile?.click();
+
+    expect(host.querySelector('a.tile')).toBeNull();
+    expect(open).toHaveBeenCalledWith(
+      SupportDialogComponent,
+      expect.anything()
+    );
   });
 });

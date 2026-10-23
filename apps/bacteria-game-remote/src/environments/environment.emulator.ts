@@ -26,4 +26,9 @@ export const environment: Environment = {
       databasePort: 9410,
     },
   },
+  support: {
+    buyMeACoffeeHandle: 'wolf',
+    playTipProductIds: ['tip_small', 'tip_medium', 'tip_large'],
+    ads: null,
+  },
 };

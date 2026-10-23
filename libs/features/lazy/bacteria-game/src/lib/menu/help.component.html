@@ -79,5 +79,23 @@
         >privacy policy</a
       >.
     </p>
+    @if (ads.ad) {
+      <p>
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="ads.openConsentSettings()"
+        >
+          Ad privacy settings
+        </button>
+      </p>
+    }
   </section>
+  @if (support.available()) {
+    <section class="screen-section">
+      <h3 class="section-title">Support the game</h3>
+      <feat-lazy-bac-game-support-card />
+    </section>
+  }
 </div>
+<feat-lazy-bac-game-ad-slot />

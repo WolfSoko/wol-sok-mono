@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools">
 
   <application
     android:icon="@mipmap/ic_launcher"
@@ -64,6 +65,42 @@
     </activity>
 
     <activity android:name="com.google.androidbrowserhelper.trusted.FocusActivity" />
+
+    <!-- Chrome binds to it for the Digital Goods API, with which the game sells its tips.
+         It only answers the browser the app has verified, so it needs no permission. -->
+    <service
+      android:name="de.wolsok.bacteriawars.DelegationService"
+      android:exported="true"
+      tools:ignore="ExportedService">
+      <intent-filter>
+        <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE" />
+        <category android:name="android.intent.category.DEFAULT" />
+      </intent-filter>
+    </service>
+
+    <!-- Google Play Billing as the payment app behind the game's Payment Request. -->
+    <activity
+      android:name="com.google.androidbrowserhelper.playbilling.provider.PaymentActivity"
+      android:configChanges="keyboardHidden|keyboard|orientation|screenLayout|screenSize"
+      android:exported="true"
+      android:theme="@android:style/Theme.Translucent.NoTitleBar">
+      <intent-filter>
+        <action android:name="org.chromium.intent.action.PAY" />
+      </intent-filter>
+      <meta-data
+        android:name="org.chromium.default_payment_method_name"
+        android:value="https://play.google.com/billing" />
+    </activity>
+
+    <!-- Checks who calls it at runtime, so it needs no permission. -->
+    <service
+      android:name="com.google.androidbrowserhelper.playbilling.provider.PaymentService"
+      android:exported="true"
+      tools:ignore="ExportedService">
+      <intent-filter>
+        <action android:name="org.chromium.intent.action.IS_READY_TO_PAY" />
+      </intent-filter>
+    </service>
 
     <!-- The launcher adds a "Site settings" shortcut to it on start and crashes without it;
          Settings > Apps > Manage space opens it too. -->

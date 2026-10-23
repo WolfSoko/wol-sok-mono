@@ -18,4 +18,15 @@ export const environment: Environment = {
         'https://bacteria-wars-default-rtdb.europe-west1.firebasedatabase.app',
     },
   },
+  support: {
+    buyMeACoffeeHandle: 'wolf',
+    // Consumable in-app products of the Play listing (de.wolsok.bacteriawars).
+    playTipProductIds: ['tip_small', 'tip_medium', 'tip_large'],
+    ads: {
+      client: 'ca-pub-6346271540341424',
+      // The display ad unit for the menu screens, from AdSense. Empty keeps
+      // the ads, and the consent banner they need, off.
+      slot: '',
+    },
+  },
 };

@@ -16,6 +16,7 @@ What the shell adds:
 - immersive mode, matching `"display": "fullscreen"` of the web manifest
 - links to bacteria-wars.wolsok.de open in the app
 - a WebView fallback for devices without a TWA-capable browser
+- Google Play Billing for tips, see below
 
 ## Build
 
@@ -40,6 +41,30 @@ change to this folder and keeps it as a workflow artifact, to try the app on a
 phone. Each run signs it with a fresh debug key, so uninstall the previous one
 before installing the next, and expect Chrome's URL bar on top: only keys
 listed in `assetlinks.json` get fullscreen.
+
+## Tips through Play Billing
+
+Google Play allows tips to the developer only through Play Billing, so inside
+the app the game never shows its Buy Me a Coffee link. It offers consumable
+Play products instead, bought with the Digital Goods API and Payment Request
+(`libs/features/lazy/bacteria-game/src/lib/support/`). The game tells the app
+from the browser by the referrer `android-app://…`, which it keeps in the
+session storage for reloads.
+
+This project adds what Chrome needs for that: the `billing` module of
+androidbrowserhelper, `DelegationService` (registers the
+`DigitalGoodsRequestHandler`), and `PaymentActivity` and `PaymentService` in
+the manifest. A tip unlocks nothing, so no server checks it: the game consumes
+the purchase right away, which also acknowledges it, and consumes leftovers on
+the next start.
+
+In the Play Console, create the consumable in-app products `tip_small`,
+`tip_medium` and `tip_large` (Monetize → Products → In-app products) with a
+price and a title, and set up a payments profile. The ids are in
+`apps/bacteria-game-remote/src/environments/environment.prod.ts`; products
+missing in Play are left out, and without any the app shows no tips.
+Purchases can only be tried on a phone, with a bundle from a Play testing
+track and a license tester account.
 
 ## Fullscreen needs Digital Asset Links
 

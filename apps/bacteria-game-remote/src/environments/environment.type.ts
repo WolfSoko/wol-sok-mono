@@ -1,4 +1,7 @@
-import type { GameCloudOptions } from '@wolsok/feat-lazy-bac-game';
+import type {
+  GameCloudOptions,
+  GameSupportOptions,
+} from '@wolsok/feat-lazy-bac-game';
 
 export interface Environment {
   production: boolean;
@@ -7,4 +10,6 @@ export interface Environment {
    * in the browser's local storage.
    */
   gameCloud: GameCloudOptions | null;
+  /** Tips and ads on the game's own site, null for neither. */
+  support: GameSupportOptions | null;
 }

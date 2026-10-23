@@ -68,4 +68,6 @@ android {
 
 dependencies {
   implementation("com.google.androidbrowserhelper:androidbrowserhelper:2.7.4")
+  // Tips through Play Billing, offered to the game by the Digital Goods API.
+  implementation("com.google.androidbrowserhelper:billing:1.2.0")
 }

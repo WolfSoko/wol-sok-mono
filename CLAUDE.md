@@ -127,6 +127,7 @@ Do not create circular dependencies. Run `npx nx graph` to verify.
 - Its Nx targets are `apk`, `bundle`, `lint-android` and `deploy`, deliberately not `build`/`lint`/`test`: the Nx Cloud workers have no Android SDK. The `Android app` GitHub workflow (`.github/workflows/android.yml`) builds and lints it on PRs instead. `deploy` signs the release, attaches the APK and bundle to the GitHub release and uploads the bundle to Play's internal track; the `android` leg of `deploy.yml` runs it when a release affects the app. See its `README.md` for signing and Play.
 - Fullscreen depends on `apps/bacteria-game-remote/src/.well-known/assetlinks.json` naming the app's package and signing-key fingerprints. Gradle reads the package name from that file, so it is the one place to change it; the host is set in `app/build.gradle.kts` and served by Firebase Hosting (`firebase.bacteria-game-remote.json`).
 - Launcher icons and splash come from `npx nx run bacteria-game-remote:icons`; don't edit the PNGs by hand.
+- Tips and ads live in the game lib's `support/` folder and are switched on by `provideGameSupport` in the remote's app config only, so the shell shows neither. On the web the game links to Buy Me a Coffee; in the app it sells Play tips instead (Play allows no other donation link). AdSense ads (and Google's consent banner, which comes with the ad script) stay off while `support.ads.slot` in `environment.prod.ts` is empty. Changes to them belong into the privacy policy (`src/app/privacy`) too.
 
 ## SEO & Sitemaps
 

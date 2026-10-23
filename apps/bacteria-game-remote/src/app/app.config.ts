@@ -12,6 +12,7 @@ import {
   withEnabledBlockingInitialNavigation,
 } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
+import { provideGameSupport } from '@wolsok/feat-lazy-bac-game';
 import { environment } from '../environments/environment';
 import { appRoutes } from './app.routes';
 import { providePwaUpdates } from './pwa-updates';
@@ -32,5 +33,8 @@ export const appConfig: ApplicationConfig = {
     // Only the element that fills the screen is painted, so dialogs and
     // tooltips have to move into it while a page is fullscreen.
     { provide: OverlayContainer, useClass: FullscreenOverlayContainer },
+    // Not on the route like the game cloud: inside the shell the game shows
+    // neither tips nor ads.
+    ...(environment.support ? [provideGameSupport(environment.support)] : []),
   ],
 };
