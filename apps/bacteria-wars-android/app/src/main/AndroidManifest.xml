@@ -10,6 +10,7 @@
     tools:node="remove" />
 
   <application
+    android:name="de.wolsok.bacteriawars.BacteriaWarsApplication"
     android:icon="@mipmap/ic_launcher"
     android:label="@string/app_name"
     android:manageSpaceActivity="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity"
@@ -19,6 +20,12 @@
     <meta-data
       android:name="google_analytics_adid_collection_enabled"
       android:value="false" />
+
+    <!-- The Play Games Services project, by the number of the game's Cloud project
+         (app/google-services.json); the SDK signs the player in against it. -->
+    <meta-data
+      android:name="com.google.android.gms.games.APP_ID"
+      android:value="@string/game_services_project_id" />
 
     <!-- Tells Chrome which site this app vouches for, the other half of assetlinks.json. -->
     <meta-data

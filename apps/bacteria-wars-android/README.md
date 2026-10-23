@@ -29,6 +29,14 @@ What the shell adds:
   it again from the Firebase console (Project settings → Your apps) after
   adding a signing key there.
 - Google Play Billing for tips, see below
+- the Play Games Services SDK (`play-services-games-v2`), started by
+  `BacteriaWarsApplication`: it signs the player in to Play Games on every
+  launch, against the project named by `com.google.android.gms.games.APP_ID`
+  in the manifest. Gradle fills that id from the `project_number` of
+  `app/google-services.json`, since the game project sits on the game's
+  Cloud project. Earning achievements from the game is still to come: the
+  game runs in Chrome, which reaches no native SDK, so it will take the
+  Play Games REST API with the player's Google sign-in on the web.
 
 ## Build
 
