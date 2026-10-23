@@ -288,6 +288,38 @@ describe('GameSettingsService', () => {
     expect(service.screenResolution()).toBe('medium');
   });
 
+  it('vaporizes at medium quality in half the time it used to, unless told otherwise', () => {
+    const service = TestBed.inject(GameSettingsService);
+
+    expect(service.vaporize()).toBe('medium');
+    expect(service.vaporizeMs()).toBe(2500);
+  });
+
+  it('remembers how the arena vaporizes', () => {
+    const service = TestBed.inject(GameSettingsService);
+
+    service.setVaporize('off');
+    service.setVaporizeMs(5000);
+
+    expect(stored()).toMatchObject({ vaporize: 'off', vaporizeMs: 5000 });
+    TestBed.resetTestingModule();
+    const restored = TestBed.inject(GameSettingsService);
+    expect(restored.vaporize()).toBe('off');
+    expect(restored.vaporizeMs()).toBe(5000);
+  });
+
+  it('ignores vaporize settings it does not know', () => {
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({ vaporize: 'ultra', vaporizeMs: 1234 })
+    );
+
+    const service = TestBed.inject(GameSettingsService);
+
+    expect(service.vaporize()).toBe('medium');
+    expect(service.vaporizeMs()).toBe(2500);
+  });
+
   describe('with storage that answers late', () => {
     let storage: LateGameStorage;
 

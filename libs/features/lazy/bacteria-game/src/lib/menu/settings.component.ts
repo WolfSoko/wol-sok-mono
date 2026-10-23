@@ -23,15 +23,17 @@ import {
 import { SCREEN_RESOLUTIONS, SIM_RESOLUTIONS } from '../state/arena-size';
 import { GameMode } from '../state/game.states';
 import { LEVELS } from '../state/levels';
+import { VAPORIZE_DURATIONS, VAPORIZE_QUALITIES } from '../vaporize-effect';
 import { ScreenHeaderComponent } from './screen-header.component';
 
 /**
- * The settings screen: colony colours, how the arena is drawn, sound,
- * music and effects with their volumes, vibration and the browser's
- * fullscreen. What only the game service keeps - look, resolutions, frame
- * rate, the music switch and the volumes - it sets right there; what the
- * game answers with a sound or a buzz of its own - colours, the sound,
- * effects and vibration switches, fullscreen - it reports.
+ * The settings screen: colony colours, how the arena is drawn and
+ * vaporized, sound, music and effects with their volumes, vibration and the
+ * browser's fullscreen. What only the game service keeps - look,
+ * resolutions, the vaporize effect, frame rate, the music switch and the
+ * volumes - it sets right there; what the game answers with a sound or a
+ * buzz of its own - colours, the sound, effects and vibration switches,
+ * fullscreen - it reports.
  */
 @Component({
   selector: 'feat-lazy-bac-game-settings',
@@ -91,6 +93,8 @@ export class SettingsComponent {
   }
   protected readonly simResolutions = SIM_RESOLUTIONS;
   protected readonly screenResolutions = SCREEN_RESOLUTIONS;
+  protected readonly vaporizeQualities = VAPORIZE_QUALITIES;
+  protected readonly vaporizeDurations = VAPORIZE_DURATIONS;
 
   /** The slider's label: a volume as a percentage. */
   protected readonly percent = (volume: number): string => `${volume}%`;

@@ -31,7 +31,7 @@ import {
   ResizedEvent,
   ShowFpsComponent,
 } from '@wolsok/ui-kit';
-import { defer, fromEvent, Observable } from 'rxjs';
+import { asapScheduler, defer, fromEvent, Observable, timer } from 'rxjs';
 import { defaultIfEmpty, filter, last, map, take, tap } from 'rxjs/operators';
 import { ArenaFrame, ArenaPainter } from './arena/arena-painter';
 import { createArenaPainter } from './arena/create-arena-painter';
@@ -74,6 +74,7 @@ import {
   DEFAULT_EFFECTS_VOLUME,
   GameSettingsService,
 } from './settings.service';
+import { vaporizePixels } from './vaporize-effect';
 import { ProgressService } from './progress.service';
 import { CampaignService } from './campaign.service';
 import { dismissSplash } from './splash';
@@ -141,10 +142,11 @@ import {
 } from './winner-info/winner.component';
 
 /**
- * The vaporize snap's volume at full effects - about the library's own
- * default at the default effects volume.
+ * The vaporize snap's volume at full effects. The game's effects are short
+ * and quiet blips, the snap's wind and sand blow for the whole effect: at
+ * this level they sit among the other effects instead of over them.
  */
-const SNAP_LEVEL = 0.8;
+const SNAP_LEVEL = 0.3;
 
 /** The last seconds of a timed level, when its clock turns red. */
 const RUNNING_OUT_SEC = 10;
@@ -306,10 +308,19 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly clockLabel: Signal<string>;
   /** True in the last seconds of a timed match, while it is on. */
   protected readonly timeRunningOut: Signal<boolean>;
-  /** The vaporize snap, as loud as the game's other effects. */
+  /**
+   * The vaporize effect as set: as long as chosen, within the quality's
+   * pixel budget - a big desktop window is snapped with
+   * coarser particles - and its snap as loud as the game's other effects.
+   */
   protected readonly thanosOptions = computed((): Partial<WsThanosOptions> => {
     const gain = this.sound.effectsGain();
-    return { sound: gain > 0, soundVolume: gain * SNAP_LEVEL };
+    return {
+      animationLength: this.settings.vaporizeMs(),
+      maxCapturePixels: vaporizePixels(this.settings.vaporize()),
+      sound: gain > 0,
+      soundVolume: gain * SNAP_LEVEL,
+    };
   });
   /**
    * What a colony counts up towards on a level won by reaching a goal - the
@@ -1142,6 +1153,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   private vaporize(): Observable<void> {
+    // Switched off, the arena simply clears - still after the caller is
+    // through, as it would after the effect.
+    if (this.settings.vaporize() === 'off') {
+      return timer(0, asapScheduler).pipe(map(() => undefined));
+    }
     // The effect takes its snapshot of the canvas right away.
     this.painter?.showLastFrame();
     return this.thanos.vaporize(false).pipe(take(1));
