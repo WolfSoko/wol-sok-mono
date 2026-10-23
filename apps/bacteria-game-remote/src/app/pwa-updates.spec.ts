@@ -6,7 +6,7 @@ import {
   UnrecoverableStateEvent,
   VersionEvent,
 } from '@angular/service-worker';
-import { I18nService } from '@wolsok/feat-lazy-bac-game';
+import { I18nService } from './remote-entry/entry.routes';
 import { Subject } from 'rxjs';
 import { providePwaUpdates, RELOAD_PAGE } from './pwa-updates';
 
@@ -56,7 +56,7 @@ describe('providePwaUpdates', () => {
 
   /** Waits for the game's texts, which the offer loads lazily. */
   async function gameTexts(): Promise<void> {
-    await import('@wolsok/feat-lazy-bac-game');
+    await import('./remote-entry/entry.routes');
     await Promise.resolve();
   }
 

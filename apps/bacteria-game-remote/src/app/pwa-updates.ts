@@ -48,8 +48,9 @@ export function providePwaUpdates(): EnvironmentProviders {
       .subscribe((event) => {
         if (event.type === 'VERSION_READY') {
           // In the game's language, which its settings choose. The game is
-          // loaded lazily, so its texts come only now, not with this page.
-          void import('@wolsok/feat-lazy-bac-game').then(({ I18nService }) => {
+          // loaded lazily, with its routes, so its texts come only now and
+          // never with the privacy page.
+          void import('./remote-entry/entry.routes').then(({ I18nService }) => {
             const i18n = injector.get(I18nService);
             snackBar
               .open(i18n.t('stage.update.ready'), i18n.t('stage.update.reload'))
