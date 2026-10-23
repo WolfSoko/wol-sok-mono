@@ -6,6 +6,7 @@ import {
   inject,
   viewChild,
 } from '@angular/core';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { GameAds } from './game-ads.service';
 
 /**
@@ -14,9 +15,10 @@ import { GameAds } from './game-ads.service';
  */
 @Component({
   selector: 'feat-lazy-bac-game-ad-slot',
+  imports: [TranslatePipe],
   template: `
     @if (ads.consentAnswered() && ads.ad; as ad) {
-      <span class="label" aria-hidden="true">Ad</span>
+      <span class="label" aria-hidden="true">{{ 'support.ad' | t }}</span>
       <ins
         #slot
         class="adsbygoogle"

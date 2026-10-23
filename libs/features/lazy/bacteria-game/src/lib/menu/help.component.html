@@ -81,14 +81,14 @@
           type="button"
           (click)="ads.openConsentSettings()"
         >
-          Ad privacy settings
+          {{ "support.adSettings" | t }}
         </button>
       </p>
     }
   </section>
   @if (support.available()) {
     <section class="screen-section">
-      <h3 class="section-title">Support the game</h3>
+      <h3 class="section-title">{{ "support.title" | t }}</h3>
       <feat-lazy-bac-game-support-card />
     </section>
   }

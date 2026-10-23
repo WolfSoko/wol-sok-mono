@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
-import { CampaignSummary } from '../state/campaign';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';
@@ -171,6 +170,14 @@ describe('MainMenuComponent support tile', () => {
     expect(link?.textContent).toContain('Support');
     expect(link?.href).toBe('https://buymeacoffee.com/wolf');
     expect(link?.target).toBe('_blank');
+  });
+
+  it('asks for support in German too', () => {
+    const host = render('web');
+    TestBed.inject(I18nService).setLanguage('de');
+    TestBed.tick();
+
+    expect(host.querySelector('a.tile')?.textContent).toContain('Unterstützen');
   });
 
   it('opens the Play tips in the app', () => {

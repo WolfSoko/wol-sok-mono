@@ -26,6 +26,8 @@ import { controls as deControls } from './de/controls';
 import { controls as enControls } from './en/controls';
 import { stage as deStage } from './de/stage';
 import { stage as enStage } from './en/stage';
+import { support as deSupport } from './de/support';
+import { support as enSupport } from './en/support';
 import type { Language } from './language';
 import type { Dictionary, EntryPath, Translation } from './translation';
 
@@ -52,6 +54,7 @@ export const EN = {
   achievements: enAchievements,
   game: enGame,
   settings: enSettings,
+  support: enSupport,
 } satisfies Dictionary;
 
 export const DE: Translation<typeof EN> = {
@@ -69,6 +72,7 @@ export const DE: Translation<typeof EN> = {
   achievements: deAchievements,
   game: deGame,
   settings: deSettings,
+  support: deSupport,
 };
 
 export const DICTIONARIES: Readonly<Record<Language, Dictionary>> = {

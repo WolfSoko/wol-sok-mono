@@ -1,12 +1,15 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { TranslatePipe } from '../i18n/translate.pipe';
 
 /**
  * The Buy Me a Coffee button in the look of the service's own widget, as a
  * plain link: the widget script would load third-party code into the game.
- * The label is the service's brand phrase, set in its Cookie font.
+ * The label is the service's brand phrase (German where the game speaks it),
+ * set in its Cookie font.
  */
 @Component({
   selector: 'feat-lazy-bac-game-bmc-button',
+  imports: [TranslatePipe],
   template: `
     <a
       class="bmc-button"
@@ -37,7 +40,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
           stroke-linecap="round"
         />
       </svg>
-      <span class="label">Buy me a coffee</span>
+      <span class="label">{{ 'support.buyCoffee' | t }}</span>
     </a>
   `,
   styles: `

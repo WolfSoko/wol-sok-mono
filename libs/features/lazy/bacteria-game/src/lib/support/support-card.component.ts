@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { BmcButtonComponent } from './bmc-button.component';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { GameSupport } from './game-support.service';
 
 /**
@@ -11,13 +12,10 @@ import { GameSupport } from './game-support.service';
  */
 @Component({
   selector: 'feat-lazy-bac-game-support-card',
-  imports: [BmcButtonComponent, MatButtonModule, MatIconModule],
+  imports: [BmcButtonComponent, MatButtonModule, MatIconModule, TranslatePipe],
   template: `
     @if (support.available()) {
-      <p class="pitch">
-        The game is free and made in my spare time. If it gives you a good
-        fight, a coffee keeps the servers running and new levels coming.
-      </p>
+      <p class="pitch">{{ 'support.pitch' | t }}</p>
       @if (support.url(); as url) {
         <feat-lazy-bac-game-bmc-button [url]="url" />
       } @else {
@@ -37,12 +35,10 @@ import { GameSupport } from './game-support.service';
         </div>
         @switch (support.tipNotice()) {
           @case ('thanks') {
-            <p class="notice" role="status">Thank you for the coffee!</p>
+            <p class="notice" role="status">{{ 'support.thanks' | t }}</p>
           }
           @case ('failed') {
-            <p class="notice" role="alert">
-              The purchase did not go through. Please try again.
-            </p>
+            <p class="notice" role="alert">{{ 'support.failed' | t }}</p>
           }
         }
       }
