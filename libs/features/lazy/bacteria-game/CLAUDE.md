@@ -104,12 +104,12 @@ storage until then. Settings stay with the device either way.
   `nx run bacteria-game-remote:serve-emulator` (starts
   `firebase-emulators`, a `demo-` project, no credentials needed). The
   emulators use their own ports (`firebase.bacteria-game-remote.json`), apart
-  from rollapolla's, which may run on the same CI agent.
+  from rollapolla's, which may run on the same Nx Cloud worker.
 - E2E never touches the real project: Playwright serves `serve-e2e`, the
   production build with `environment.e2e.ts` (the emulators), in its own
   `dist/apps/bacteria-game-remote-e2e`, next to `firebase-emulators`. The
-  Firestore emulator needs a JVM; the Nx agents install one
-  (`.nx/workflows/agents.yml`). `e2e/cloud-save.spec.ts` covers the cloud:
+  Firestore emulator needs a JVM; the Nx Cloud workers install one
+  (`.nx/workflows/workers.yml`). `e2e/cloud-save.spec.ts` covers the cloud:
   each test signs in to accounts of its own (`uniqueEmail`).
 
 ## Online matches: keep the engine deterministic

@@ -1,6 +1,8 @@
+# Launch template of the Nx Cloud workers; .nx/ci-config.yaml says how many to start.
+# Reference: https://nx.dev/docs/kb/launch-templates
 launch-templates:
   wolsokmono-linux-extra-large:
-    resourceClass: 'docker_linux_amd64/extra_large'
+    resource-class: 'docker_linux_amd64/extra_large'
     # Newest image Nx Cloud lists (https://nx.dev/docs/kb/launch-templates); the
     # install-node step below still installs the version from .nvmrc via nvm.
     image: 'ubuntu22.04-node24.14-v1'
@@ -10,13 +12,13 @@ launch-templates:
 
     init-steps:
       - name: Checkout # using a reusable step
-        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/checkout/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/checkout/main.yaml'
         env:
           GIT_CHECKOUT_DEPTH: '50'
           GIT_FETCH_TAGS: 'true'
 
       - name: Install Node
-        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/install-node/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/install-node/main.yaml'
 
       - name: Install necessary binaries
         script: |
@@ -34,7 +36,7 @@ launch-templates:
           sudo apt-get install -y --no-install-recommends openjdk-21-jre-headless
 
       - name: Restore Node Modules Cache
-        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/cache/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/cache/main.yaml'
         inputs:
           key: 'package-lock.json'
           paths: |
@@ -42,11 +44,12 @@ launch-templates:
             ~/.npm
           base-branch: 'main'
 
-      # npm install, not npm ci: with the restored node_modules it only verifies the
-      # tree, while npm ci would delete it first. Scripts stay off as on the runners.
+      # Own script instead of the install-node-modules step: that one runs npm ci,
+      # which deletes the restored node_modules first, while npm install only
+      # verifies the tree. Scripts stay off as on the runners.
       - name: Install Node Modules
         script: |
           npm install --ignore-scripts --no-audit --no-fund
 
       - name: Install Browsers (if needed)
-        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/install-browsers/main.yaml'
+        uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/install-browsers/main.yaml'
