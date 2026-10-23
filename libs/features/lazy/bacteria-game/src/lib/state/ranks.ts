@@ -5,8 +5,10 @@ export type RankId = keyof typeof gameTexts.ranks;
 
 /**
  * The ranks XP climbs, named after microbiology, from a dormant spore to a
- * bacterium nothing can stop. XP never unlocks gameplay - a rank is only
- * shown.
+ * bacterium nothing can stop. A rank itself is only shown, but the XP
+ * behind it does unlock gameplay: it earns the DNA the colony evolves with
+ * (`dnaEarned` in evolution.ts, ADR 0013), priced so that everything is
+ * bred about when the top rank is reached.
  */
 export interface Rank {
   /** The rank's id in the dictionaries. */
