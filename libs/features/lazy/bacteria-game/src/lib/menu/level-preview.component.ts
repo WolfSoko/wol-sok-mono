@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -34,6 +35,11 @@ export class LevelPreviewComponent {
   public readonly title = input.required<string>();
   /** How many times the base arena the map is along each side. */
   public readonly size = input(1);
+  /**
+   * True inside a control that names the level already - a level card -
+   * where the picture and its badge stay out of the accessible name.
+   */
+  public readonly decorative = input(false, { transform: booleanAttribute });
 
   protected readonly url = computed(() => this.previews.url(this.levelId()));
   protected readonly colors = computed(() => levelColors(this.levelId()));

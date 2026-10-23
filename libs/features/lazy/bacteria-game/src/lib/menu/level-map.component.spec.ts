@@ -153,7 +153,7 @@ describe('LevelMapComponent', () => {
       TestBed.configureTestingModule({ providers: [provideFakePreviews()] });
     });
 
-    it('shows each level its map, once drawn, named for the level', async () => {
+    it('shows each level its map, once drawn, kept out of the card name', async () => {
       const host = render();
       const preview = () =>
         cards(host)[0].querySelector('feat-lazy-bac-game-level-preview');
@@ -166,7 +166,8 @@ describe('LevelMapComponent', () => {
 
       const image = preview()?.querySelector('img');
       expect(image?.getAttribute('src')).toBe(fakePreviewUrl(LEVELS[0].id));
-      expect(image?.getAttribute('alt')).toBe('Map of Petri Dish');
+      // The card names the level: its picture adds nothing to the name.
+      expect(image?.getAttribute('alt')).toBe('');
       expect(host.querySelectorAll('.level-card img')).toHaveLength(
         LEVELS.length
       );
@@ -184,9 +185,12 @@ describe('LevelMapComponent', () => {
         card.querySelector('feat-lazy-bac-game-level-preview .size')
           ?.textContent
       ).toBe('2× Karte');
-      expect(card.querySelector('img')?.getAttribute('alt')).toBe(
-        `Karte von ${card.querySelector('.title')?.textContent?.trim()}`
-      );
+      // The card names the level; the badge stays out of that name.
+      expect(
+        card
+          .querySelector('feat-lazy-bac-game-level-preview .size')
+          ?.getAttribute('aria-hidden')
+      ).toBe('true');
     });
   });
 });
