@@ -1,13 +1,7 @@
-import { DOCUMENT } from '@angular/common';
-import {
-  afterRenderEffect,
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-} from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
+import { LEGAL_NOTICE_PATH } from '@wolsok/feat-lazy-bac-game';
 import { setUpLegalPage } from '../legal/legal-page';
 import { SITE_OWNER } from '../legal/site-owner';
 import { SiteOwnerComponent } from '../legal/site-owner.component';
@@ -25,31 +19,14 @@ import { SiteOwnerComponent } from '../legal/site-owner.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PrivacyComponent {
-  private readonly document = inject(DOCUMENT);
-  private readonly fragment = toSignal(inject(ActivatedRoute).fragment);
-
   /** For the email in the deletion links. */
   protected readonly owner = SITE_OWNER;
+  protected readonly legalNoticePath = LEGAL_NOTICE_PATH;
 
-  public constructor() {
-    setUpLegalPage({
-      title: 'Datenschutz - Bacteria Wars',
-      description:
-        'Datenschutzerklärung von Bacteria Wars, im Web und als Android-App. ' +
-        'Privacy policy of Bacteria Wars, on the web and as an Android app.',
-    });
-    // The body scrolls, not the window, so the router's anchor scrolling
-    // would not move: a link such as /privacy#en-delete is scrolled here.
-    afterRenderEffect(() => {
-      const id = this.fragment();
-      if (id) {
-        this.scrollTo(id);
-      }
-    });
-  }
-
-  /** Scrolls to a section - on every click, also when the URL keeps its fragment. */
-  protected scrollTo(id: string): void {
-    this.document.getElementById(id)?.scrollIntoView();
-  }
+  protected readonly page = setUpLegalPage({
+    title: 'Datenschutz - Bacteria Wars',
+    description:
+      'Datenschutzerklärung von Bacteria Wars, im Web und als Android-App. ' +
+      'Privacy policy of Bacteria Wars, on the web and as an Android app.',
+  });
 }

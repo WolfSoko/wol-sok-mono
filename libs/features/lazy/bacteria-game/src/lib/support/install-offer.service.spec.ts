@@ -196,6 +196,12 @@ describe('InstallOffer', () => {
     storage.write(INSTALL_OFFER_KEY, { dismissedAt: now - 1 });
     storage.flush();
     expect(offer.visible()).toBe(true);
+
+    // Dismissed with a clock a year ahead: not away for a year.
+    jest.spyOn(Date, 'now').mockReturnValue(now);
+    storage.write(INSTALL_OFFER_KEY, { dismissedAt: now + 365 * DAY_MS });
+    storage.flush();
+    expect(offer.visible()).toBe(true);
   });
 
   it('offers nothing inside the Play Store app', () => {

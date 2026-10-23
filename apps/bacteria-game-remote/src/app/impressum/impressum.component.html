@@ -2,9 +2,23 @@
   <header>
     <img src="icons/icon-192.png" alt="" />
     <p class="brand">Bacteria <span>Wars</span></p>
-    <nav aria-label="Seiten / Pages">
-      <a routerLink="/privacy">Datenschutz</a>
-      <a routerLink="/privacy" fragment="en" lang="en" hreflang="en">Privacy</a>
+    <nav aria-label="Sprache und Seiten / Language and pages">
+      <a
+        routerLink="."
+        fragment="de"
+        hreflang="de"
+        (click)="page.scrollTo('de')"
+        >Deutsch</a
+      >
+      <a
+        routerLink="."
+        fragment="en"
+        hreflang="en"
+        lang="en"
+        (click)="page.scrollTo('en')"
+        >English</a
+      >
+      <a [routerLink]="['/', privacyPolicyPath]">Datenschutz</a>
     </nav>
   </header>
 
@@ -12,7 +26,7 @@
     <h1>Impressum</h1>
     <p class="stand">
       Angaben gemäß § 5 DDG für das Spiel Bacteria Wars unter
-      <a href="https://bacteria-wars.wolsok.de">bacteria-wars.wolsok.de</a>
+      <a [href]="siteUrl">{{ siteHost }}</a>
       und für die Android-App „Bacteria Wars“ (de.wolsok.bacteriawars).
     </p>
 
@@ -24,8 +38,8 @@
       Am schnellsten erreichst du mich per E-Mail an
       <a href="mailto:{{ owner.email }}">{{ owner.email }}</a
       >. Anfragen zum Datenschutz beantwortet die
-      <a routerLink="/privacy">Datenschutzerklärung</a>; dort steht auch, wie du
-      dein Konto und deine Daten löschen lässt.
+      <a [routerLink]="['/', privacyPolicyPath]">Datenschutzerklärung</a>; dort
+      steht auch, wie du dein Konto und deine Daten löschen lässt.
     </p>
 
     <h2 id="de-streitbeilegung">Verbraucherstreitbeilegung</h2>
@@ -70,7 +84,7 @@
     <p class="stand">
       Information under § 5 of the German Digital Services Act (DDG) for the
       game Bacteria Wars at
-      <a href="https://bacteria-wars.wolsok.de">bacteria-wars.wolsok.de</a>
+      <a [href]="siteUrl">{{ siteHost }}</a>
       and for the Android app “Bacteria Wars” (de.wolsok.bacteriawars). The
       German version is the binding one.
     </p>
@@ -83,8 +97,8 @@
       Email is the fastest way:
       <a href="mailto:{{ owner.email }}">{{ owner.email }}</a
       >. For questions about your data, see the
-      <a routerLink="/privacy" fragment="en">privacy policy</a>, which also says
-      how to have your account and data deleted.
+      <a [routerLink]="['/', privacyPolicyPath]" fragment="en">privacy policy</a
+      >, which also says how to have your account and data deleted.
     </p>
 
     <h2 id="en-disputes">Consumer dispute resolution</h2>

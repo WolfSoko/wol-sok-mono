@@ -109,9 +109,11 @@ export class InstallOffer {
     if (!this.inBrowser()) return false;
     const dismissedAt = this.dismissedAt();
     if (dismissedAt === undefined) return false;
+    // Either way round: a clock that was off when the offer was dismissed
+    // still keeps it away for a month at most.
     if (
       dismissedAt !== null &&
-      Date.now() - dismissedAt < INSTALL_OFFER_DISMISSED_MS
+      Math.abs(Date.now() - dismissedAt) < INSTALL_OFFER_DISMISSED_MS
     ) {
       return false;
     }

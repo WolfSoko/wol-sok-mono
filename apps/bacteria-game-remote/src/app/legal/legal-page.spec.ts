@@ -8,17 +8,25 @@ import { setUpLegalPage } from './legal-page';
 
 @Component({
   selector: 'wolsok-legal-page-host',
-  template: 'legal',
+  template: '<h1 id="de">Recht</h1><h1 id="en">Law</h1>',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 class LegalPageHostComponent {
-  public constructor() {
-    setUpLegalPage({ title: 'Legal - Bacteria Wars', description: 'The law' });
-  }
+  public readonly page = setUpLegalPage({
+    title: 'Legal - Bacteria Wars',
+    description: 'The law',
+  });
 }
 
 describe('setUpLegalPage', () => {
+  let scrolledTo: string[];
+
   beforeEach(() => {
+    scrolledTo = [];
+    // jsdom has no layout, so no scrollIntoView either.
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolledTo.push(this.id);
+    };
     TestBed.configureTestingModule({
       providers: [
         provideRouter([
@@ -29,9 +37,9 @@ describe('setUpLegalPage', () => {
     });
   });
 
-  async function open(): Promise<void> {
+  async function open(url = '/legal'): Promise<LegalPageHostComponent> {
     const harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl('/legal', LegalPageHostComponent);
+    return harness.navigateByUrl(url, LegalPageHostComponent);
   }
 
   it('sets the title, description and the canonical URL of the route, and puts them back', async () => {
@@ -65,5 +73,14 @@ describe('setUpLegalPage', () => {
     await open();
 
     expect(splash.isConnected).toBe(false);
+  });
+
+  it('scrolls to the section the URL names, and to one on request', async () => {
+    const host = await open('/legal#en');
+    expect(scrolledTo).toEqual(['en']);
+
+    host.page.scrollTo('de');
+
+    expect(scrolledTo).toEqual(['en', 'de']);
   });
 });

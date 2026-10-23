@@ -1,10 +1,11 @@
 export * from './lib/routes';
 export {
+  GAME_SITE_URL,
   LEGAL_NOTICE_PATH,
-  LEGAL_NOTICE_URL,
   PRIVACY_POLICY_PATH,
   PRIVACY_POLICY_URL,
 } from './lib/support/legal-links';
+export { SPLASH_ID } from './lib/splash';
 export { provideGameCloud } from './lib/storage/provide-game-cloud';
 export type { GameCloudOptions } from './lib/storage/game-cloud';
 export { provideGameSupport } from './lib/support/provide-game-support';

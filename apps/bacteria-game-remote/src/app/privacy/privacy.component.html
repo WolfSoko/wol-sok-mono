@@ -3,7 +3,11 @@
     <img src="icons/icon-192.png" alt="" />
     <p class="brand">Bacteria <span>Wars</span></p>
     <nav aria-label="Sprache und Seiten / Language and pages">
-      <a routerLink="." fragment="de" hreflang="de" (click)="scrollTo('de')"
+      <a
+        routerLink="."
+        fragment="de"
+        hreflang="de"
+        (click)="page.scrollTo('de')"
         >Deutsch</a
       >
       <a
@@ -11,10 +15,10 @@
         fragment="en"
         hreflang="en"
         lang="en"
-        (click)="scrollTo('en')"
+        (click)="page.scrollTo('en')"
         >English</a
       >
-      <a routerLink="/impressum">Impressum</a>
+      <a [routerLink]="['/', legalNoticePath]">Impressum</a>
     </nav>
   </header>
 
