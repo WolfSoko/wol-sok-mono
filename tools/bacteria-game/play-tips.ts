@@ -113,20 +113,20 @@ export async function publishTips(
     if (!regionsVersion) {
       throw new Error(`${tip.id}: Play returned no regions version`);
     }
-    // The API's own spelling: lower case here, camel case for the states.
-    const productUrl = `${appUrl}/onetimeproducts/${tip.id}`;
-    const existing = await call<OneTimeProduct>(productUrl).catch(
-      (error: unknown) => {
-        if (String(error).includes(' 404 ')) return null;
-        throw error;
-      }
-    );
+    // The API's own spelling: camel case to read a product and change its
+    // states, lower case to write it.
+    const existing = await call<OneTimeProduct>(
+      `${appUrl}/oneTimeProducts/${tip.id}`
+    ).catch((error: unknown) => {
+      if (String(error).includes(' 404 ')) return null;
+      throw error;
+    });
     const query = new URLSearchParams({
       allowMissing: 'true',
       'regionsVersion.version': regionsVersion,
       updateMask: 'listings,purchaseOptions',
     });
-    await call(`${productUrl}?${query}`, {
+    await call(`${appUrl}/onetimeproducts/${tip.id}?${query}`, {
       method: 'PATCH',
       body: JSON.stringify(oneTimeProduct(tip, converted, packageName)),
     });
