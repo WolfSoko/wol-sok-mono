@@ -2,6 +2,7 @@ import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import {
   Certificate,
   CertificateValidation,
+  ICertificate,
 } from 'aws-cdk-lib/aws-certificatemanager';
 import {
   AllowedMethods,
@@ -34,6 +35,12 @@ export interface SpaProps {
   buildOutputPath: string;
   bucketRemovalPolicy?: RemovalPolicy;
   extraAllowedOrigins?: string[];
+  /**
+   * The certificate of the distribution, which CloudFront only takes from
+   * us-east-1. Without it the construct creates one, so it must then sit in a
+   * us-east-1 stack. SpaStack passes one when its region is another.
+   */
+  certificate?: ICertificate;
   /**
    * Files that keep their names across releases, such as a service worker,
    * its ngsw.json or an import map, as globs relative to buildOutputPath.
@@ -82,6 +89,15 @@ function onlyInclude(files: string[]): string[] {
   return ['**', ...[...included].map((glob) => '!' + glob)];
 }
 
+/**
+ * The names the certificate of a SPA covers: the main domain, and the site
+ * domain as well when it is a subdomain.
+ */
+export function certificateDomainNames(domainName: string): string[] {
+  const mainDomain = domainName.split('.').slice(-2).join('.');
+  return mainDomain === domainName ? [mainDomain] : [mainDomain, domainName];
+}
+
 const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
 
 /**
@@ -128,13 +144,9 @@ export class SpaConstruct extends Construct {
 
     new CfnOutput(this, `${spaName}-Site:`, { value: 'https://' + siteDomain });
 
-    let certificate: Certificate;
-
-    if (mainDomain === siteDomain) {
-      certificate = this.createCertificate(zone, mainDomain);
-    } else {
-      certificate = this.createCertificate(zone, mainDomain, siteDomain);
-    }
+    const certificate: ICertificate =
+      props.certificate ??
+      this.createCertificate(zone, ...certificateDomainNames(siteDomain));
 
     this.bucket = this.createBucket(siteDomain, removalPolicy);
 
@@ -262,7 +274,7 @@ export class SpaConstruct extends Construct {
 
   private createDistribution(
     siteDomain: string,
-    certificate: Certificate,
+    certificate: ICertificate,
     siteBucket: IBucket,
     allowedOrigins: string[] = []
   ): Distribution {

@@ -6,7 +6,7 @@ const app = new App();
 const stackName = 'ShaderExamples';
 new SpaStack(app, stackName, {
   env: {
-    region: 'us-east-1',
+    region: 'eu-central-1',
     account: '088632064895',
   },
   buildOutputPath: 'dist/apps/shader-examples-remote',

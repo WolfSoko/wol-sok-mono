@@ -89,7 +89,7 @@ Standardize environment handling:
 export const getEnvironmentConfig = (stage: 'dev' | 'staging' | 'prod') => {
   return {
     account: process.env[`AWS_ACCOUNT_${stage.toUpperCase()}`],
-    region: process.env[`AWS_REGION_${stage.toUpperCase()}`] || 'us-east-1',
+    region: process.env[`AWS_REGION_${stage.toUpperCase()}`] || 'eu-central-1',
     // ... other config
   };
 };
