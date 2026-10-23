@@ -17,8 +17,11 @@ on:
   # fest statt zu mergen.
   merge_group:
 
+# One run per PR, the newest wins. On main every commit gets its own run, so a
+# release (part of the run) never holds up the checks of the next commit; the
+# release job serializes itself (release.yml).
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.number || (github.ref == 'refs/heads/main' && github.sha) || github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') || startsWith(github.ref_name, 'renovate-github-sh') }}
 
 # Needed for nx-set-shas when run on the main branch
@@ -90,11 +93,20 @@ jobs:
           flags: unittests
           fail_ci_if_error: true
           verbose: true
+      # Counted since the last release tag, not since the last run: a run whose
+      # release stood down because main had moved on (release.yml) leaves its
+      # changes to the next run, which must see them.
       - name: determine if deployables or published packages are affected and a release should be triggered
         if: success() && github.ref_name == 'main'
         id: shouldTriggerRelease
         run: |
-          projects=$(npx nx show projects --affected --projects='tag:cdk,tag:type:firebase,tag:published')
+          if last_release=$(git describe --tags --abbrev=0 --match='v[0-9]*' --exclude='*-deployed' 2>/dev/null); then
+            echo "Last release: $last_release"
+          else
+            echo "No release tag found, counting since the last successful run."
+            last_release="$NX_BASE"
+          fi
+          projects=$(npx nx show projects --affected --base="$last_release" --head="$NX_HEAD" --projects='tag:cdk,tag:type:firebase,tag:published')
           echo "Affected releasable projects: $projects"
           if [[ -z "$projects" ]]; then
             echo "triggerRelease=false" >> $GITHUB_OUTPUT

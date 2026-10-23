@@ -206,9 +206,15 @@ A release is one pipeline, started by the CI/CD workflow after a green run on
    the build as asset, plus the Sentry release (`.github/actions/create-release`).
 2. **`deploy.yml`, called by `release.yml`** - deploys at that tag, see below.
 
+The release job works on the commit CI validated, not on the branch tip. If `main`
+moved on while CI ran, its push is rejected and the job stands down without a
+release; the run for the newer commit releases both changes, since the CI/CD
+workflow counts affected projects since the last release tag (`v*`). Deploys of one
+kind run one at a time, so a later version waits for the running deploy.
+
 Both can be run by hand from the Actions UI: `release.yml` releases now (or, given a
-`tag`, recreates that tag's GitHub release and deploys it), `deploy.yml` redeploys a
-version.
+`tag`, refreshes that tag's GitHub release notes and asset and deploys it again),
+`deploy.yml` redeploys a version.
 
 ## Deployment Workflow
 

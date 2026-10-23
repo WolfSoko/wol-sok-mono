@@ -3,14 +3,15 @@ name: Release
 # One pipeline per release: version bump, changelogs, tags and the GitHub
 # release, then the deploy of everything that changed since the last deploy.
 # ci-cd.yml calls it after a green run on main. Run it by hand to release now,
-# or with `tag` to recreate the GitHub release of an existing tag and deploy it.
+# or with `tag` to refresh the GitHub release of an existing tag (notes and
+# asset) and deploy it again.
 on:
   workflow_call:
     inputs:
       tag:
         required: false
         type: string
-        description: 'Recreate the GitHub release of this existing tag (v<version>) instead of versioning, then deploy it'
+        description: 'Refresh the GitHub release of this existing tag (v<version>) instead of versioning, then deploy it'
     outputs:
       version:
         description: 'The released tag (v<version>)'
@@ -20,7 +21,7 @@ on:
       tag:
         required: false
         type: string
-        description: 'Recreate the GitHub release of this existing tag (v<version>) instead of versioning, then deploy it'
+        description: 'Refresh the GitHub release of this existing tag (v<version>) instead of versioning, then deploy it'
 
 env:
   HUSKY: 0
@@ -29,7 +30,8 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Versioning, the production build of every app and the release.
+    timeout-minutes: 45
     permissions:
       contents: write
     # One release at a time: the version bump commits to main.
@@ -40,11 +42,12 @@ jobs:
       version: ${{ steps.version.outputs.version }}
 
     steps:
-      # The PAT pushes the release commit to the protected main branch.
+      # The commit CI just validated, not the branch tip, which may have moved on
+      # by now. The PAT pushes the release commit to the protected main branch.
       - uses: actions/checkout@v7
-        name: 'Checkout branch'
+        name: 'Checkout the validated commit'
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ inputs.tag || github.sha }}
           token: ${{ secrets.PAT_TOKEN }}
           fetch-depth: 0
           filter: tree:0
@@ -69,25 +72,20 @@ jobs:
           # `chore(release):` commits.
           npx commit-and-tag-version
 
-      - name: Push changes
-        if: ${{ !inputs.tag }}
-        run: git push origin HEAD:${{ github.ref }}
-
       # Independent versioning tags every released project, so this run can create
-      # several tags at once. No workflow runs on a tag push (the release is
-      # created below), so they go out in one push.
-      - name: Push tags
-        id: push-tags
+      # several tags at once. The commit and its tags land together or not at
+      # all: a tag on a commit that never reached the branch would stop
+      # `git describe` from finding newer release tags. No workflow runs on a tag
+      # push, the release is created below.
+      - name: Push the release commit and its tags
+        id: push
         if: ${{ !inputs.tag }}
+        env:
+          BRANCH: ${{ github.ref }}
+          VALIDATED_SHA: ${{ github.sha }}
         run: |
           git tag --list | LC_ALL=C sort > "$RUNNER_TEMP/tags-after.txt"
           mapfile -t new_tags < <(comm -13 "$RUNNER_TEMP/tags-before.txt" "$RUNNER_TEMP/tags-after.txt")
-
-          if [[ ${#new_tags[@]} -eq 0 ]]; then
-            echo "No new tags were created, nothing to push."
-            echo 'No new tags were created.' >> $GITHUB_STEP_SUMMARY
-            exit 0
-          fi
 
           release_tags=()
           for tag in "${new_tags[@]}"; do
@@ -95,18 +93,30 @@ jobs:
               release_tags+=("$tag")
             fi
           done
-          echo "New tags: ${new_tags[*]}"
+          echo "New tags: ${new_tags[*]:-none}"
           echo "Release tag: ${release_tags[*]:-none}"
 
-          git push origin "${new_tags[@]}"
+          if git push --atomic origin "HEAD:$BRANCH" "${new_tags[@]}"; then
+            echo "Pushed the release commit and ${#new_tags[@]} new tag(s)." >> $GITHUB_STEP_SUMMARY
+            echo "release_tag=${release_tags[*]: -1}" >> $GITHUB_OUTPUT
+            exit 0
+          fi
 
-          echo "Pushed ${#new_tags[@]} new tag(s)." >> $GITHUB_STEP_SUMMARY
-          echo "release_tag=${release_tags[*]: -1}" >> $GITHUB_OUTPUT
+          # Rejected because the branch moved on while CI ran: nothing is released
+          # from this run. The newer commit's run picks up these changes too, as
+          # ci-cd.yml counts the changes since the last release tag.
+          git fetch origin "$BRANCH"
+          if [[ "$(git rev-parse FETCH_HEAD)" != "$VALIDATED_SHA" ]]; then
+            echo "::notice::$BRANCH moved on since this run started, the run for its newest commit releases instead."
+            echo "No release: \`$BRANCH\` moved on since this run started, the run for its newest commit releases instead." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+          exit 1
 
       - name: Released version
         id: version
         env:
-          VERSION: ${{ inputs.tag || steps.push-tags.outputs.release_tag }}
+          VERSION: ${{ inputs.tag || steps.push.outputs.release_tag }}
         run: |
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           if [[ -n "$VERSION" ]]; then

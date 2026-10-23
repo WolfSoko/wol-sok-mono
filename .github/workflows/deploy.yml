@@ -38,9 +38,11 @@ jobs:
     timeout-minutes: 90
     runs-on: ubuntu-latest
     environment: aws-cdk
+    # One deploy per kind at a time, whatever the version: a later version waits
+    # for the running one instead of racing it or cutting it off halfway.
     concurrency:
-      group: deploy-${{ inputs.version }}-${{ matrix.config.app-type }}
-      cancel-in-progress: true
+      group: deploy-${{ matrix.config.app-type }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       matrix:
@@ -175,8 +177,10 @@ jobs:
           DEPLOY_TAG=$RELEASE_VERSION-${{ matrix.config.deploy-tag-suffix }}
           echo "Deploy tag: $DEPLOY_TAG"
 
-          echo "Tagging commit"
-          git tag -a "$DEPLOY_TAG" $GITHUB_SHA -m "Version $RELEASE_VERSION deployed ${{ matrix.config.app-type }} apps successfully"
+          # The commit the release tag points at: called from release.yml, this run
+          # started on the commit before the release commit, so GITHUB_SHA is not it.
+          echo "Tagging the release commit"
+          git tag -a "$DEPLOY_TAG" "$RELEASE_VERSION^{commit}" -m "Version $RELEASE_VERSION deployed ${{ matrix.config.app-type }} apps successfully"
 
           echo "Pushing tags"
           git push origin "$DEPLOY_TAG"
