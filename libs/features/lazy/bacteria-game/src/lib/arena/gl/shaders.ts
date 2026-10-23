@@ -167,6 +167,7 @@ ${ARENA_POSITION}
 const float EDGE_START = 0.07;
 const float EDGE_END = 0.17;
 const vec2 LIGHT = vec2(-0.6, -0.8);
+const float PI = 3.14159265;
 ${LOOK_CONSTANTS}
 
 // Crests closing in on the crosshair - see shimmerAt in colony-renderer.ts.
@@ -216,7 +217,8 @@ float latticeOffset(int row, float spacing) {
 
 // The cell of a lattice point: its centre and its radius, 0 for none - see
 // cellBubble in colony-renderer.ts.
-vec3 cellBubble(ivec2 lattice, float spacing, vec3 shape) {
+vec3 cellBubble(ivec2 lattice, vec4 cells) {
+  float spacing = cells.x * uUnit;
   float rowHeight = spacing * CELL_ROW_HEIGHT;
   vec2 centre = vec2(
     (float(lattice.x) + 0.5) * spacing + latticeOffset(lattice.y, spacing)
@@ -230,68 +232,107 @@ vec3 cellBubble(ivec2 lattice, float spacing, vec3 shape) {
   }
   float size = (0.5 + 0.5 * clamp((d - CELL_SIZE_FROM) / CELL_SIZE_RANGE, 0.0, 1.0))
     * smoothstep(CELL_MIN, CELL_MIN + CELL_GROW, d);
-  float radius = spacing * shape.x * size * (shape.y + shape.z * hash01(lattice, 3u));
+  float radius = spacing * cells.y * size * (cells.z + cells.w * hash01(lattice, 3u));
   return vec3(centre, radius);
 }
 
-const vec3 CELL_SHAPE = vec3(CELL_RADIUS, CELL_RADIUS_MIN, CELL_RADIUS_VARY);
-const vec3 BUBBLE_SHAPE = vec3(BUBBLE_RADIUS, BUBBLE_RADIUS_MIN, BUBBLE_RADIUS_VARY);
+// The lattice of a look's cells: spacing in base cells, radius in spacings,
+// varied from a share up by this much - CELLS and BUBBLES in colony-renderer.ts.
+const vec4 CELLS = vec4(CELL_SPACING, CELL_RADIUS, CELL_RADIUS_MIN, CELL_RADIUS_VARY);
+const vec4 BUBBLES = vec4(BUBBLE_SPACING, BUBBLE_RADIUS, BUBBLE_RADIUS_MIN, BUBBLE_RADIUS_VARY);
 
-// The bubble or cell of the lattice look the fragment is deepest in: its
-// unit disc coordinates in xy, its radius in z (0 for none) and the square
-// of its unit distance in w, with the lattice point it sits on.
-vec4 nearestBubble(vec2 p, float spacing, vec3 shape, out ivec2 bestLattice) {
+// The cell of a lattice look the fragment is deepest in: its unit disc
+// coordinates, its radius (0 for none), the square of the fragment's unit
+// distance and the lattice point it sits on - see nearestBubble in
+// colony-renderer.ts.
+struct Bubble {
+  vec2 unit;
+  float radius;
+  float q2;
+  ivec2 lattice;
+};
+
+Bubble nearestBubble(vec2 p, vec4 cells) {
+  float spacing = cells.x * uUnit;
   float rowHeight = spacing * CELL_ROW_HEIGHT;
   int row = int(floor(p.y / rowHeight));
-  float bestQ2 = 1e9;
-  float bestRadius = 0.0;
-  vec2 unit = vec2(0.0);
+  Bubble best = Bubble(vec2(0.0), 0.0, 1e9, ivec2(0));
   for (int dr = -1; dr <= 1; dr++) {
     int candidateRow = row + dr;
     int col = int(floor((p.x - latticeOffset(candidateRow, spacing)) / spacing));
     for (int dc = -1; dc <= 1; dc++) {
       ivec2 lattice = ivec2(col + dc, candidateRow);
-      vec3 bubble = cellBubble(lattice, spacing, shape);
+      vec3 bubble = cellBubble(lattice, cells);
       if (bubble.z <= 0.0) {
         continue;
       }
       vec2 v = (p - bubble.xy) / bubble.z;
       float q2 = dot(v, v);
-      if (q2 < bestQ2) {
-        bestQ2 = q2;
-        bestRadius = bubble.z;
-        unit = v;
-        bestLattice = lattice;
+      if (q2 < best.q2) {
+        best = Bubble(v, bubble.z, q2, lattice);
       }
     }
   }
-  return vec4(unit, bestRadius, bestQ2);
+  return best;
+}
+
+// How much of a lattice cell covers a fragment at that unit distance
+// squared: anti-aliased at the rim, one canvas pixel wide, and nothing where
+// the density under it is too thin for a cell to float over - cellEdge.
+float cellEdge(float q2, float radius, float d) {
+  return clamp((1.0 - sqrt(q2)) * radius / uPixel + 0.5, 0.0, 1.0)
+    * smoothstep(CELL_CLIP_START, CELL_CLIP_END, d);
+}
+
+// The colony's colour lightened - lookPalette's light.
+vec3 lightColor() {
+  return mix(uColor, vec3(1.0), TINT_LIGHT);
+}
+
+// The gradient of the icon's cells on a unit disc: a light spot at the top
+// left, the body colour around it and a dark rim.
+vec3 sphereShade(vec2 unit) {
+  float t = clamp(length(unit - CELL_FOCAL) / SPHERE_REACH, 0.0, 1.0);
+  vec3 light = lightColor();
+  vec3 dark = mix(uColor, vec3(0.0), TINT_DARK);
+  return t < SPHERE_BODY_STOP
+    ? mix(light, uColor, t / SPHERE_BODY_STOP)
+    : mix(uColor, dark, (t - SPHERE_BODY_STOP) / (1.0 - SPHERE_BODY_STOP));
+}
+
+// A byte of a hash, 0 to 1 - the helices take their numbers from a hash a
+// byte at a time, a hash being the costly part on a phone.
+float octet(uint h, uint i) {
+  return float((h >> (8u * i)) & 255u) / 255.0;
 }
 
 // How much of a DNA snippet covers a point of a bubble's unit disc - see
-// dnaAt in colony-renderer.ts. aa is a pixel's width on the disc.
+// layHelices and dnaAt in colony-renderer.ts. aa is a pixel's width on the
+// disc.
 float dnaAt(vec2 u, ivec2 lattice, float aa) {
   float cover = 0.0;
   int count = 2 + (hash01(lattice, 20u) > 0.5 ? 1 : 0);
-  for (int k = 0; k < 3; k++) {
-    if (k >= count) {
-      break;
-    }
-    uint salt = 21u + uint(k) * 6u;
-    float orbit = DNA_ORBIT_MIN + DNA_ORBIT_VARY * hash01(lattice, salt);
-    float drift = DNA_DRIFT * (0.6 + 0.8 * hash01(lattice, salt + 1u));
-    float angle = hash01(lattice, salt + 2u) * 6.2832
-      + uTime * drift * (hash01(lattice, salt + 3u) < 0.5 ? -1.0 : 1.0);
+  for (int k = 0; k < count; k++) {
+    uint h = hash(uvec3(uvec2(lattice), 21u + uint(k)));
+    uint h2 = hash(uvec3(uvec2(lattice), 25u + uint(k)));
+    float orbit = DNA_ORBIT_MIN + DNA_ORBIT_VARY * octet(h, 0u);
+    float drift = DNA_DRIFT * (0.6 + 0.8 * octet(h, 1u));
+    float angle = octet(h, 2u) * 2.0 * PI
+      + uTime * drift * (octet(h, 3u) < 0.5 ? -1.0 : 1.0);
     vec2 d = u - orbit * vec2(cos(angle), sin(angle));
-    float theta = hash01(lattice, salt + 4u) * 6.2832 + uTime * DNA_SPIN;
+    float theta = octet(h2, 0u) * 2.0 * PI + uTime * DNA_SPIN;
     float c = cos(theta);
     float s = sin(theta);
     float along = d.x * c + d.y * s;
-    float halfLength = DNA_HALF_MIN + DNA_HALF_VARY * hash01(lattice, salt + 5u);
+    float halfLength = DNA_HALF_MIN + DNA_HALF_VARY * octet(h2, 1u);
     if (abs(along) > halfLength) {
       continue;
     }
     float across = -d.x * s + d.y * c;
+    // Strands and rungs stay within the helix's amplitude.
+    if (abs(across) > DNA_AMPLITUDE + DNA_WIDTH + aa) {
+      continue;
+    }
     float phase = along * DNA_TWIST + uTime;
     float wave = DNA_AMPLITUDE * sin(phase);
     // The two backbones, and a rung between them every half turn.
@@ -299,8 +340,8 @@ float dnaAt(vec2 u, ivec2 lattice, float aa) {
       1.0 - smoothstep(DNA_WIDTH, DNA_WIDTH + aa, abs(across - wave)),
       1.0 - smoothstep(DNA_WIDTH, DNA_WIDTH + aa, abs(across + wave))
     );
-    float turn = phase + 1.5708;
-    float rung = abs(across) <= abs(wave) + DNA_WIDTH && mod(turn, 3.1416) < DNA_RUNG
+    float turn = phase + PI / 2.0;
+    float rung = abs(across) <= abs(wave) + DNA_WIDTH && mod(turn, PI) < DNA_RUNG
       ? 0.8
       : 0.0;
     float ends = 1.0 - smoothstep(halfLength - 0.08, halfLength, abs(along));
@@ -314,38 +355,23 @@ vec4 bubblesLook(vec2 p, float d) {
   if (d < CELL_CLIP_START) {
     return vec4(0.0);
   }
-  ivec2 lattice;
-  vec4 best = nearestBubble(p, BUBBLE_SPACING * uUnit, BUBBLE_SHAPE, lattice);
+  Bubble best = nearestBubble(p, BUBBLES);
   float baseAlpha = BUBBLE_BASE_ALPHA * smoothstep(EDGE_START, EDGE_END, d);
   float bubbleAlpha = 0.0;
   vec3 face = vec3(0.0);
-  if (best.z > 0.0) {
-    float q = sqrt(best.w);
-    float edge = clamp((1.0 - q) * best.z / uPixel + 0.5, 0.0, 1.0)
-      * smoothstep(CELL_CLIP_START, CELL_CLIP_END, d);
+  if (best.radius > 0.0) {
+    float edge = cellEdge(best.q2, best.radius, d);
     if (edge > 0.0) {
-      float rim = smoothstep(BUBBLE_RIM_START, BUBBLE_RIM_END, q);
-      float spot = 1.0 - smoothstep(BUBBLE_SPOT_START, BUBBLE_SPOT_END, length(best.xy - CELL_FOCAL));
-      float dna = dnaAt(best.xy, lattice, uPixel / best.z);
+      float rim = smoothstep(BUBBLE_RIM_START, BUBBLE_RIM_END, sqrt(best.q2));
+      float spot = 1.0 - smoothstep(BUBBLE_SPOT_START, BUBBLE_SPOT_END, length(best.unit - CELL_FOCAL));
+      float dna = dnaAt(best.unit, best.lattice, uPixel / best.radius);
       bubbleAlpha = max(max(BUBBLE_FILM, rim * BUBBLE_RIM), max(spot, dna)) * edge;
       // The film and the rim in the light colour, the spot and the
       // snippets towards white.
-      vec3 light = mix(uColor, vec3(1.0), TINT_LIGHT);
-      face = mix(light, vec3(1.0), max(spot, dna * 0.7));
+      face = mix(lightColor(), vec3(1.0), max(spot, dna * 0.7));
     }
   }
   return overBase(face, bubbleAlpha, baseAlpha);
-}
-
-// The gradient of the icon's cells on a unit disc: a light spot at the top
-// left, the body colour around it and a dark rim.
-vec3 sphereShade(vec2 unit) {
-  float t = clamp(length(unit - CELL_FOCAL) / SPHERE_REACH, 0.0, 1.0);
-  vec3 light = mix(uColor, vec3(1.0), TINT_LIGHT);
-  vec3 dark = mix(uColor, vec3(0.0), TINT_DARK);
-  return t < SPHERE_BODY_STOP
-    ? mix(light, uColor, t / SPHERE_BODY_STOP)
-    : mix(uColor, dark, (t - SPHERE_BODY_STOP) / (1.0 - SPHERE_BODY_STOP));
 }
 
 // The cells look at p: the colour of the base or of the cell the fragment
@@ -354,19 +380,10 @@ vec4 cellsLook(vec2 p, float d) {
   if (d < CELL_CLIP_START) {
     return vec4(0.0);
   }
-  ivec2 lattice;
-  vec4 best = nearestBubble(p, CELL_SPACING * uUnit, CELL_SHAPE, lattice);
-  float bestQ2 = best.w;
-  float bestRadius = best.z;
-  vec2 unit = best.xy;
-
+  Bubble best = nearestBubble(p, CELLS);
   float baseAlpha = BASE_ALPHA * smoothstep(EDGE_START, EDGE_END, d);
-  // Anti-aliased at the rim, one canvas pixel wide.
-  float cellAlpha = bestRadius > 0.0
-    ? clamp((1.0 - sqrt(bestQ2)) * bestRadius / uPixel + 0.5, 0.0, 1.0)
-      * smoothstep(CELL_CLIP_START, CELL_CLIP_END, d)
-    : 0.0;
-  vec3 face = cellAlpha > 0.0 ? sphereShade(unit) : vec3(0.0);
+  float cellAlpha = best.radius > 0.0 ? cellEdge(best.q2, best.radius, d) : 0.0;
+  vec3 face = cellAlpha > 0.0 ? sphereShade(best.unit) : vec3(0.0);
   return overBase(face, cellAlpha, baseAlpha);
 }
 
@@ -429,7 +446,7 @@ vec4 tilesLook(vec2 p, float d, bool crystal) {
     float inside = smoothstep(0.0, TILE_SEAM, (sqrt(second2) - sqrt(nearest2)) / spacing);
     if (crystal) {
       float shade = CRYSTAL_SHADE_MIN + CRYSTAL_SHADE_VARY * hash01(at, 6u);
-      face = mix(mix(uColor, vec3(1.0), TINT_LIGHT), uColor * shade, inside);
+      face = mix(lightColor(), uColor * shade, inside);
     } else {
       face = sphereShade((p - tile.xy) / (spacing * TILE_RADIUS))
         * (SEAM_DARK + (1.0 - SEAM_DARK) * inside);
