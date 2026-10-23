@@ -41,21 +41,6 @@ runs:
           found { print }
         ' CHANGELOG.md > "$notes"
 
-        api_error="$RUNNER_TEMP/release-lookup.err"
-        if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --silent 2> "$api_error"; then
-          # A rerun, or release.yml run with `tag`: refresh the notes and the
-          # asset of the published release. The deploy apps attach their own
-          # files to it, those stay.
-          if [[ -s "$notes" ]]; then
-            gh release edit "$TAG" --notes-file "$notes" --repo "$GITHUB_REPOSITORY"
-          fi
-          gh release upload "$TAG" release.zip --clobber --repo "$GITHUB_REPOSITORY"
-          exit 0
-        elif ! grep -q "HTTP 404" "$api_error"; then
-          cat "$api_error" >&2
-          exit 1
-        fi
-
         if [[ -s "$notes" ]]; then
           notes_args=(--notes-file "$notes")
         else
@@ -63,16 +48,27 @@ runs:
           notes_args=(--generate-notes)
         fi
 
-        # Create the release without the asset: with files, gh first creates a
-        # draft, uploads, then publishes, and a failed upload leaves a draft
-        # behind that the tag lookup above cannot see. Created this way the
-        # release is published at once and a failed upload is retried on the
-        # rerun path above.
-        gh release create "$TAG" \
-          --title "$TAG" \
-          --verify-tag \
-          --repo "$GITHUB_REPOSITORY" \
-          "${notes_args[@]}"
+        # A rerun refreshes the notes and the asset of the published release;
+        # the deploy apps attach their own files to it, those stay. A new release
+        # is created without the asset: with files, gh first creates a draft,
+        # uploads, then publishes, and a failed upload leaves a draft behind that
+        # the tag lookup cannot see. Created this way the release is published at
+        # once and a failed upload is retried on the rerun.
+        api_error="$RUNNER_TEMP/release-lookup.err"
+        if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --silent 2> "$api_error"; then
+          if [[ -s "$notes" ]]; then
+            gh release edit "$TAG" --notes-file "$notes" --repo "$GITHUB_REPOSITORY"
+          fi
+        elif grep -q "HTTP 404" "$api_error"; then
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --verify-tag \
+            --repo "$GITHUB_REPOSITORY" \
+            "${notes_args[@]}"
+        else
+          cat "$api_error" >&2
+          exit 1
+        fi
         gh release upload "$TAG" release.zip --clobber --repo "$GITHUB_REPOSITORY"
 
     - name: Create Sentry Release

@@ -17,11 +17,11 @@ on:
   # fest statt zu mergen.
   merge_group:
 
-# One run per PR, the newest wins. On main every commit gets its own run, so a
-# release (part of the run) never holds up the checks of the next commit; the
-# release job serializes itself (release.yml).
+# One run per PR, the newest wins. On main (and in the merge queue) every
+# commit gets its own run, so a release (part of the run) never holds up the
+# checks of the next commit; the version job serializes itself (release.yml).
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.number || (github.ref == 'refs/heads/main' && github.sha) || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') || startsWith(github.ref_name, 'renovate-github-sh') }}
 
 # Needed for nx-set-shas when run on the main branch
@@ -104,7 +104,11 @@ jobs:
         run: |
           last_release="v$(node -p "require('./version.json').version")"
           echo "Last release: $last_release"
-          projects=$(npx nx show projects --affected --base="$last_release" --head="$NX_HEAD" --projects='tag:cdk,tag:type:firebase,tag:published')
+          # What deploy.yml deploys: every project with a deploy target, plus the published packages.
+          projects=$(
+            npx nx show projects --affected --base="$last_release" --head="$NX_HEAD" --withTarget deploy
+            npx nx show projects --affected --base="$last_release" --head="$NX_HEAD" --projects='tag:published'
+          )
           echo "Affected releasable projects: $projects"
           if [[ -z "$projects" ]]; then
             echo "triggerRelease=false" >> $GITHUB_OUTPUT

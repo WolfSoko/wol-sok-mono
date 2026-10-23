@@ -176,10 +176,9 @@ jobs:
           DEPLOY_TAG=$RELEASE_VERSION-${{ matrix.config.deploy-tag-suffix }}
           echo "Deploy tag: $DEPLOY_TAG"
 
-          # The commit the release tag points at: called from release.yml, this run
-          # started on the commit before the release commit, so GITHUB_SHA is not it.
-          echo "Tagging the release commit"
-          git tag -a "$DEPLOY_TAG" "$RELEASE_VERSION^{commit}" -m "Version $RELEASE_VERSION deployed ${{ matrix.config.app-type }} apps successfully"
+          # HEAD is the checked-out release tag, the tree that was deployed.
+          echo "Tagging the deployed commit"
+          git tag -a "$DEPLOY_TAG" -m "Version $RELEASE_VERSION deployed ${{ matrix.config.app-type }} apps successfully"
 
           echo "Pushing tags"
           git push origin "$DEPLOY_TAG"
