@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.52.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.52.1...v74.52.2) (2026-10-23)
+
+### Performance
+
+* **spa-cdk-stack:** wait for one CloudFront invalidation per deploy, cache Gradle in the Android deploy ([#2575](https://github.com/WolfSoko/wol-sok-mono/issues/2575)) ([0bb7abd](https://github.com/WolfSoko/wol-sok-mono/commit/0bb7abd87e9fa339d487fd8ebdbe875a20d99f33))
+
 ## [74.52.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.52.0...v74.52.1) (2026-10-23)
 
 ### CI/CD
