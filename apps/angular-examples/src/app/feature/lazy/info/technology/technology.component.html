@@ -15,9 +15,20 @@
             [fill]="true"
             priority="false"
             [ngSrc]="image"
+            [class.light-theme-logo]="darkImage"
             alt="logo of {{ title }}"
             src=""
           />
+          @if (darkImage) {
+            <img
+              [fill]="true"
+              priority="false"
+              [ngSrc]="darkImage"
+              class="dark-theme-logo"
+              alt="logo of {{ title }}"
+              src=""
+            />
+          }
         </div>
       </mat-card-title-group>
     </mat-card-header>
