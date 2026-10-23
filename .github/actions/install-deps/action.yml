@@ -15,7 +15,9 @@ runs:
         node-version-file: '.nvmrc'
 
     # The whole node_modules tree is cached, keyed on everything that shapes it:
-    # the lockfile, the npm config and the Node version. An exact hit restores the
+    # the manifest, the lockfile, the npm config and the Node version (package.json
+    # is in the key so that a manifest edit without a lockfile update still runs
+    # npm ci, which rejects the mismatch). An exact hit restores the
     # finished install (including node_modules/.bin), so npm ci is skipped; there
     # are no restore-keys on purpose, because npm ci wipes node_modules anyway and
     # a stale tree would only cost the download. (An earlier attempt skipped
@@ -26,7 +28,7 @@ runs:
       uses: actions/cache/restore@v6
       with:
         path: node_modules
-        key: node-modules-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.nvmrc', '.npmrc', 'package-lock.json') }}
+        key: node-modules-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.nvmrc', '.npmrc', 'package.json', 'package-lock.json') }}
 
     # Install scripts stay off: nothing in CI needs them (the allowScripts list in
     # package.json denies `gl`, the only native module without a prebuild for
