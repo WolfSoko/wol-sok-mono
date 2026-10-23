@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.58.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.57.0...v74.58.0) (2026-10-23)
+
+### Features
+
+* **feat-lazy-bacteria-game:** wave 1 of ADR 0011/0012 — engine entry, admin script, optional match level ([#2587](https://github.com/WolfSoko/wol-sok-mono/issues/2587)) ([c8f084d](https://github.com/WolfSoko/wol-sok-mono/commit/c8f084daf67876e13cfd2857c75256ab825481e3))
+
+### Chore
+
+* **release:** publish ([7cf261a](https://github.com/WolfSoko/wol-sok-mono/commit/7cf261ac8923a1c8df2758608901dd914e0fc65e))
+
 ## [74.57.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.56.0...v74.57.0) (2026-10-23)
 
 ### Features
