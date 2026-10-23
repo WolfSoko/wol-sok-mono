@@ -5,7 +5,6 @@ import {
   ZONE_CODE,
   ZONE_EFFECTS,
 } from './zones';
-import type { ColonyLayer } from '../arena/colony-renderer';
 import {
   colonyCapacity,
   ColonyTraits,
@@ -15,7 +14,12 @@ import {
 } from './game-balance';
 import { clamp, Point } from './geometry';
 import { NutrientPellets } from './nutrient-pellets';
-import { BlockCounts, ColonySummary, Simulation } from './simulation';
+import {
+  BlockCounts,
+  ColonyLayer,
+  ColonySummary,
+  Simulation,
+} from './simulation';
 import { compareDynamicWalls, DynamicWall, GameMap, stampRect } from './maps';
 import { escapeReach } from './arena-size';
 import { getMap } from './game-maps';

@@ -13,18 +13,9 @@ import { Bacteria } from '../state/player.model';
 import { Rgb } from './arena-theme';
 import { createCanvas, hash, lerp, rgba, smoothstep } from './canvas-math';
 
-/** What the renderer needs to know about one colony. */
-export type ColonyLayer = CellsLayer | StateLayer;
+import type { ColonyLayer } from '../state/simulation';
 
-interface ColonyLayerBase {
-  /** RGBA, the alpha from 0 to 255. */
-  color: readonly number[];
-  /**
-   * The crosshair of a colony whose boost runs - waves of light rush across
-   * the colony towards it. Null without a boost.
-   */
-  boostTarget: Point | null;
-}
+export type { CellsLayer, ColonyLayer, StateLayer } from '../state/simulation';
 
 /** The shimmer of a boosted colony at one moment. */
 export interface BoostShimmer {
@@ -33,31 +24,6 @@ export interface BoostShimmer {
   target: Point;
   /** Arena cells per cell of the base arena - the waves are as wide on any grid. */
   unit: number;
-}
-
-/** A colony of the CPU simulation: its bacteria. */
-export interface CellsLayer extends ColonyLayerBase {
-  kind: 'cells';
-  bacterias: readonly Bacteria[];
-}
-
-/**
- * A colony of the GPU simulation: where it is in the state texture. Only
- * the WebGL painter, which shares the simulation's context, can draw it.
- */
-export interface StateLayer extends ColonyLayerBase {
-  kind: 'state';
-  /** The simulation's cell state texture. */
-  state: WebGLTexture;
-  /**
-   * The glow of fights, meals and pushes - one texture for all colonies,
-   * see the simulation's `EFFECTS_FRAGMENT`.
-   */
-  effects: WebGLTexture;
-  /** The owner value of the colony's cells in the state. */
-  owner: number;
-  /** The coarse box around the colony, null once it is gone. */
-  bounds: CellBounds | null;
 }
 
 /**
