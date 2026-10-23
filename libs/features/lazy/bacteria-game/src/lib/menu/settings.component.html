@@ -47,21 +47,22 @@
         }
       </mat-select>
     </mat-form-field>
-    <div class="option-picker">
-      <span class="option-label">{{ "settings.display.look" | t }}</span>
-      <mat-button-toggle-group
-        hideSingleSelectionIndicator
-        [attr.aria-label]="'settings.display.look' | t"
+    <mat-form-field
+      class="look-picker"
+      appearance="outline"
+      subscriptSizing="dynamic"
+    >
+      <mat-label>{{ "settings.display.look" | t }}</mat-label>
+      <mat-select
+        panelWidth=""
         [value]="settings.look()"
-        (change)="settings.setLook($event.value)"
+        (selectionChange)="settings.setLook($event.value)"
       >
         @for (option of looks; track option.id) {
-          <mat-button-toggle [value]="option.id">
-            {{ option.label | t }}
-          </mat-button-toggle>
+          <mat-option [value]="option.id">{{ option.label | t }}</mat-option>
         }
-      </mat-button-toggle-group>
-    </div>
+      </mat-select>
+    </mat-form-field>
     <div class="option-picker">
       <span class="option-label">
         {{ "settings.display.simResolution" | t }}

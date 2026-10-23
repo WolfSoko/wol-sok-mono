@@ -79,15 +79,39 @@ export interface StoredSettings {
 }
 
 /**
- * How the bacteria are drawn: as one gooey, glossy slime per colony, or as
- * the crisp pixels the game started with.
+ * How the bacteria are drawn - the skins, every one free to pick:
+ * - slime: one gooey, glossy slime per colony
+ * - cells: dense glossy cells of different sizes, like on the app icon
+ * - honeycomb: a comb of glossy hexagonal tiles with dark seams
+ * - crystal: irregular facets with bright seams, like shards of glass
+ * - neon: a dark body with its outline glowing in the colony's colour
+ * - ink: flat and hatched like a woodcut, with a thick outline - each
+ *   colony hatched its own way, so two are told apart without colour
+ * - pixels: the crisp pixels the game started with
  */
-export type BacteriaLook = 'slime' | 'pixels';
+export type BacteriaLook =
+  | 'slime'
+  | 'cells'
+  | 'honeycomb'
+  | 'crystal'
+  | 'neon'
+  | 'ink'
+  | 'pixels';
 
-export const BACTERIA_LOOKS: readonly { id: BacteriaLook; name: string }[] = [
-  { id: 'slime', name: 'Slime' },
-  { id: 'pixels', name: 'Pixels' },
+/** The looks in the order the settings offer them; their names are texts. */
+export const BACTERIA_LOOKS: readonly BacteriaLook[] = [
+  'slime',
+  'cells',
+  'honeycomb',
+  'crystal',
+  'neon',
+  'ink',
+  'pixels',
 ];
+
+export function isBacteriaLook(value: unknown): value is BacteriaLook {
+  return BACTERIA_LOOKS.some((look) => look === value);
+}
 
 export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 
@@ -320,11 +344,8 @@ export class GameSettingsService {
       this.restoreMatchSetup(stored);
     }
     const restores = (key: keyof StoredSettings) => !this.touched.has(key);
-    if (
-      restores('look') &&
-      BACTERIA_LOOKS.some((option) => option.id === stored.look)
-    ) {
-      this.look.set(stored.look as BacteriaLook);
+    if (restores('look') && isBacteriaLook(stored.look)) {
+      this.look.set(stored.look);
     }
     if (
       restores('simResolution') &&
