@@ -75,7 +75,12 @@ describe('SpaCdkStack', () => {
     });
   });
 
-  it('should deploy index.html last and prune nothing', () => {
+  /** Build output, index.html, a no-cache override and extra assets. */
+  function fourDeploymentsFactory(): {
+    deployments: Record<string, { Properties: Record<string, unknown> }>;
+    index: string;
+    others: string[];
+  } {
     const { template, stack } = testStackFactory({
       noCacheFiles: ['test-javascript-asset.js'],
     });
@@ -87,6 +92,11 @@ describe('SpaCdkStack', () => {
       /DeployWithInvalidation2/.test(id)
     ) as string;
     const others = Object.keys(deployments).filter((id) => id !== index);
+    return { deployments, index, others };
+  }
+
+  it('should deploy index.html last and prune nothing', () => {
+    const { deployments, index, others } = fourDeploymentsFactory();
     //then
     expect(others).toHaveLength(3);
     expect(deployments[index]['DependsOn']).toEqual(
@@ -95,6 +105,22 @@ describe('SpaCdkStack', () => {
     expect(
       Object.values(deployments).map(({ Properties }) => Properties['Prune'])
     ).toEqual([false, false, false, false]);
+  });
+
+  it('should invalidate with every deployment and wait only for the last one, index.html', () => {
+    const { deployments, index, others } = fourDeploymentsFactory();
+    //then
+    for (const { Properties } of Object.values(deployments)) {
+      expect(Properties['DistributionPaths']).toEqual(['/*']);
+    }
+    expect(
+      deployments[index].Properties['WaitForDistributionInvalidation']
+    ).toBe(true);
+    for (const id of others) {
+      expect(
+        deployments[id].Properties['WaitForDistributionInvalidation']
+      ).toBe(false);
+    }
   });
 
   it('should create an extra BucketDeployment when using addExtraAssets', () => {

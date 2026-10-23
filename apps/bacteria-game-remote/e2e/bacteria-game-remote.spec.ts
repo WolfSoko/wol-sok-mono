@@ -320,7 +320,7 @@ test('should show the privacy policy on a page of its own', async ({
     page.getByRole('heading', { name: 'Datenschutzerklärung' })
   ).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: '8. Deleting your account and data' })
+    page.getByRole('heading', { name: '10. Deleting your account and data' })
   ).toBeInViewport();
   await expect(page.locator('#bacteria-game-splash')).toHaveCount(0);
 

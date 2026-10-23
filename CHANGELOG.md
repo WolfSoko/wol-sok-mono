@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.54.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.53.0...v74.54.0) (2026-10-23)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ support Bacteria Wars with tips and ads ([#2578](https://github.com/WolfSoko/wol-sok-mono/issues/2578)) ([e71d73c](https://github.com/WolfSoko/wol-sok-mono/commit/e71d73c1bc074a534c4e0147c56b3c7903fbeaaf))
+
+### CI/CD
+
+* **github:** one release pipeline: version, GitHub release and deploy in one run ([#2577](https://github.com/WolfSoko/wol-sok-mono/issues/2577)) ([1bd4142](https://github.com/WolfSoko/wol-sok-mono/commit/1bd41424feb2bf98ce74ab1b013af7997916ae59))
+
+## [74.53.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.52.2...v74.53.0) (2026-10-23)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ vaporize effect settings - fewer pixels on desktop, off switch, shorter, quieter ([#2576](https://github.com/WolfSoko/wol-sok-mono/issues/2576)) ([450ca2c](https://github.com/WolfSoko/wol-sok-mono/commit/450ca2c624a903a5092b113306bd7d7e46c9446c))
+
+### Chore
+
+* **release:** publish ([e5204dc](https://github.com/WolfSoko/wol-sok-mono/commit/e5204dcc48b4976214a3974ea97134ed4c78695a))
+
+## [74.52.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.52.1...v74.52.2) (2026-10-23)
+
+### Performance
+
+* **spa-cdk-stack:** wait for one CloudFront invalidation per deploy, cache Gradle in the Android deploy ([#2575](https://github.com/WolfSoko/wol-sok-mono/issues/2575)) ([0bb7abd](https://github.com/WolfSoko/wol-sok-mono/commit/0bb7abd87e9fa339d487fd8ebdbe875a20d99f33))
+
+## [74.52.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.52.0...v74.52.1) (2026-10-23)
+
+### CI/CD
+
+* **github:** ⚡️ cache node_modules, drop the gl toolchain and start Nx Cloud workers from ci-config ([#2571](https://github.com/WolfSoko/wol-sok-mono/issues/2571)) ([235dfea](https://github.com/WolfSoko/wol-sok-mono/commit/235dfead7f8d927390b6f6afb493148dca8da070))
+
 ## [74.52.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.51.0...v74.52.0) (2026-10-23)
 
 ### Features

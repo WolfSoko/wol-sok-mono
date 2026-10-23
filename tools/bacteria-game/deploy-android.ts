@@ -6,9 +6,11 @@
  * line with store/: the texts in store/listings/<language>/ and the graphics
  * in store/graphics/ (see tools/bacteria-game/generate-store-assets.ts), and
  * the promo videos of store/promo-video/, uploaded to YouTube once each (see
- * tools/youtube/youtube.ts) and linked from their listing. Last, the
- * achievements of the game's Play Games Services project follow the game's
- * (see tools/bacteria-game/play-games.ts), as drafts for the Publish page.
+ * tools/youtube/youtube.ts) and linked from their listing. Then come the tips
+ * of store/tips.json, the app's in-app products (see play-tips.ts), and last
+ * the achievements of the game's Play Games Services project, which follow
+ * the game's (see tools/bacteria-game/play-games.ts), as drafts for the
+ * Publish page.
  *
  * Runs as `npx nx run bacteria-wars-android:deploy` in the deploy workflow,
  * whenever a release affects the app. It reads from the environment:
@@ -42,6 +44,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { publishTips, storeTips, Tip } from './play-tips';
 import {
   publishVideos,
   VideoMeta,
@@ -331,15 +334,17 @@ async function promoVideoLinks(): Promise<Map<string, string>> {
  * Uploads the bundle and rolls it out to the internal track, then updates
  * the store listing in an edit of its own: a listing Play turns down does
  * not hold back the app, and a run again skips the bundle that is on Play.
- * Last come the Play Games achievements. Returns the errors of the YouTube
- * upload and the achievements, if any, for the caller to throw once the
- * rest is out.
+ * Then the tips, which Play takes only once a bundle asks for billing, and
+ * last the Play Games achievements. Returns the errors of the YouTube
+ * upload, the tips and the achievements, if any, for the caller to throw
+ * once the rest is out.
  */
 async function publishToPlay(
   packageName: string,
   bundle: string,
   code: number,
-  releaseName: string
+  releaseName: string,
+  tips: Tip[]
 ): Promise<unknown[]> {
   const token = await accessToken(
     JSON.parse(env('PLAY_SERVICE_ACCOUNT_JSON')) as ServiceAccount
@@ -418,6 +423,9 @@ async function publishToPlay(
   if (youtubeError != null) {
     errors.push(youtubeError);
   }
+  await publishTips(call, app, packageName, tips).catch((error: unknown) =>
+    errors.push(error)
+  );
   // The same account, the same scope: the Publishing API takes the same calls.
   if (playGamesConfigured()) {
     await syncAchievements(call, env(APPLICATION_ID_ENV)).catch(
@@ -437,8 +445,11 @@ async function main(): Promise<void> {
   const [assetLink] = readJson<{ target: { package_name: string } }[]>(
     'apps/bacteria-game-remote/src/.well-known/assetlinks.json'
   );
-  // Bad listing texts and achievements fail here, before the build.
-  storeListings();
+  // Bad listing or tip texts and achievements fail here, before the build.
+  const tips = storeTips(
+    storeDir,
+    storeListings().map((listing) => listing.language)
+  );
   playGamesAchievements();
 
   build();
@@ -454,7 +465,8 @@ async function main(): Promise<void> {
       assetLink.target.package_name,
       bundle,
       versionCode(version),
-      tag
+      tag,
+      tips
     );
     execFileSync('gh', ['release', 'upload', tag, apk, bundle, '--clobber'], {
       stdio: 'inherit',

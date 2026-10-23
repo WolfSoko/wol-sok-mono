@@ -10,6 +10,13 @@ export type WsThanosCrumble = 'dust' | 'cracks' | 'shards' | 'chunks';
 export interface WsThanosOptions {
   animationLength: number;
   maxParticleCount: number;
+  /**
+   * the most pixels the element is captured with, every one a particle:
+   * a big element is captured at a lower pixel ratio, below css pixels if needed.
+   * Unlike maxParticleCount, which leaves out random pixels, the particles get coarser.
+   * No limit when unset.
+   */
+  maxCapturePixels?: number;
   particleAcceleration: number;
   /** play a windy, sandy sound while vaporizing */
   sound: boolean;

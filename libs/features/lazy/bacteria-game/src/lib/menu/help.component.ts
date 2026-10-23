@@ -1,12 +1,18 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  inject,
   input,
   output,
 } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { rgba } from '../arena/canvas-math';
 import { ZONE_COLORS } from '../arena/zone-look';
 import { ZONE_EFFECTS, ZONE_NAMES, ZoneKind } from '../state/zones';
+import { AdSlotComponent } from '../support/ad-slot.component';
+import { GameAds } from '../support/game-ads.service';
+import { GameSupport } from '../support/game-support.service';
+import { SupportCardComponent } from '../support/support-card.component';
 import { ScreenHeaderComponent } from './screen-header.component';
 
 const { agarDivideFactor, iceStayChance } = ZONE_EFFECTS;
@@ -33,11 +39,17 @@ const ZONE_RULES: Readonly<Record<ZoneKind, string>> = {
 
 /**
  * How to play: the rules in three steps, the ground some levels lay out,
- * the keys and the touch layout - and where the privacy policy is.
+ * the keys and the touch layout - where the privacy policy is, and how
+ * to support the game.
  */
 @Component({
   selector: 'feat-lazy-bac-game-help',
-  imports: [ScreenHeaderComponent],
+  imports: [
+    AdSlotComponent,
+    MatButtonModule,
+    ScreenHeaderComponent,
+    SupportCardComponent,
+  ],
   templateUrl: './help.component.html',
   styleUrl: './help.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,6 +61,8 @@ export class HelpComponent {
   public readonly back = output<void>();
 
   protected readonly privacyPolicyUrl = PRIVACY_POLICY_URL;
+  protected readonly ads = inject(GameAds);
+  protected readonly support = inject(GameSupport);
 
   protected readonly zones = (Object.keys(ZONE_RULES) as ZoneKind[]).map(
     (kind) => ({

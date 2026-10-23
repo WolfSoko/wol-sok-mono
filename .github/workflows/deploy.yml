@@ -1,19 +1,22 @@
 name: Deploy release
+
+# Deploys what changed since the last deploy of each kind, at the given release
+# tag. release.yml calls it right after creating the release; run it by hand to
+# redeploy a version.
 on:
-  release:
-    types: [published]
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: Release tag (v<version>)
 
   workflow_dispatch:
     inputs:
       version:
         required: true
         type: string
-        default: v4.8.7
-        description: Release version
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+        description: Release tag (v<version>)
 
 permissions:
   issues: write
@@ -22,7 +25,7 @@ permissions:
 
 env:
   HUSKY: 0
-  RELEASE_VERSION: ${{ github.event.inputs.version || github.ref_name }}
+  RELEASE_VERSION: ${{ inputs.version }}
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -34,6 +37,11 @@ jobs:
     timeout-minutes: 90
     runs-on: ubuntu-latest
     environment: aws-cdk
+    # One deploy per kind at a time, whatever the version: a later version waits
+    # for the running one instead of racing it or cutting it off halfway.
+    concurrency:
+      group: deploy-${{ matrix.config.app-type }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       matrix:
@@ -67,18 +75,15 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
 
       - name: Install Deps
-        uses: ./.github/actions/install-deps
+        uses: $/.github/actions/install-deps
 
+      # OIDC trusted publishing needs npm 11.5.1 or newer, which Node 24 bundles.
       - name: Setup Node.js for npm publishing
         if: matrix.config.app-type == 'npm-packages'
         uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org/'
-
-      - name: Upgrade npm for OIDC trusted publishing
-        if: matrix.config.app-type == 'npm-packages'
-        run: npm install -g npm@11.5.1
 
       # The runner image has the Android SDK; Gradle needs a JDK on top.
       - name: Setup Java for the Android app
@@ -87,6 +92,15 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+
+      # Restores the Gradle distribution and dependencies the Android app
+      # workflow saved on main. Read-only: a run on a tag could not save a cache
+      # that later tag runs could read.
+      - name: Restore the Gradle cache for the Android app
+        if: matrix.config.app-type == 'android'
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
 
       - name: Find previous deployment tag
         id: previous_deployment
@@ -163,8 +177,9 @@ jobs:
           DEPLOY_TAG=$RELEASE_VERSION-${{ matrix.config.deploy-tag-suffix }}
           echo "Deploy tag: $DEPLOY_TAG"
 
-          echo "Tagging commit"
-          git tag -a "$DEPLOY_TAG" $GITHUB_SHA -m "Version $RELEASE_VERSION deployed ${{ matrix.config.app-type }} apps successfully"
+          # HEAD is the checked-out release tag, the tree that was deployed.
+          echo "Tagging the deployed commit"
+          git tag -a "$DEPLOY_TAG" -m "Version $RELEASE_VERSION deployed ${{ matrix.config.app-type }} apps successfully"
 
           echo "Pushing tags"
           git push origin "$DEPLOY_TAG"
@@ -174,6 +189,6 @@ jobs:
         run: |
           gh issue create \
             --title "bug(deploy): Deploy release ${{ env.RELEASE_VERSION }} for ${{ matrix.config.app-type }} apps failed" \
-            --body "GitHub [Deploy release workflow](${{ github.event.html_url }})" \
+            --body "GitHub [Deploy release workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" \
             --label "bug" \
             --assignee "${{ github.actor }}"

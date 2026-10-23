@@ -525,8 +525,45 @@ describe('BacteriaGameComponent', () => {
 
       expect(louder()).toBeLessThan(atDefault);
       expect(louder()).toBeCloseTo(
-        TestBed.inject(GameSoundService).effectsGain() * 0.8
+        TestBed.inject(GameSoundService).effectsGain() * 0.3
       );
+    });
+
+    it('takes as long as set', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+
+      expect(component['thanosOptions']().animationLength).toBe(2500);
+      settings.setVaporizeMs(5000);
+      expect(component['thanosOptions']().animationLength).toBe(5000);
+    });
+
+    it('captures the arena within the pixel budget of the quality', () => {
+      create();
+      const settings = TestBed.inject(GameSettingsService);
+      const pixels = () => component['thanosOptions']().maxCapturePixels;
+
+      expect(pixels()).toBe(500_000);
+      settings.setVaporize('low');
+      expect(pixels()).toBe(250_000);
+      settings.setVaporize('full');
+      expect(pixels()).toBeUndefined();
+    });
+
+    it('simply clears the arena while the effect is off', async () => {
+      create();
+      TestBed.inject(GameSettingsService).setVaporize('off');
+      const vaporize = jest.fn(() => new Subject<void>());
+      (component as unknown as { thanos: unknown }).thanos = { vaporize };
+      const done = jest.fn();
+
+      component['vaporize']().subscribe({ complete: done });
+      // Like the effect, it is over only after the caller is through.
+      expect(done).not.toHaveBeenCalled();
+      await Promise.resolve();
+
+      expect(vaporize).not.toHaveBeenCalled();
+      expect(done).toHaveBeenCalled();
     });
   });
 
