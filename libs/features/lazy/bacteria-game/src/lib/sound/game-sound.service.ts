@@ -37,6 +37,11 @@ interface NoiseOptions {
 const JINGLE_STEP_SEC = 0.14;
 /** How long the jingle's last note rings. */
 const JINGLE_LAST_NOTE_SEC = 0.5;
+/**
+ * When an Evolution purchase's chime rings - as its strands of DNA land
+ * (`menu/evolution-fx.ts`).
+ */
+export const EVOLVE_LAND_SEC = 0.85;
 
 /** Captures are heard at most this often, or a fight would be one long hiss. */
 const CAPTURE_INTERVAL_SEC = 0.07;
@@ -426,6 +431,87 @@ export class GameSoundService {
         volume: 0.04,
         delay,
       });
+    });
+  }
+
+  /**
+   * The Evolution screen's purchase: a synth sweep rising while the DNA
+   * flies, then a chime as it lands - climbing higher with the level
+   * bought (1 for a weapon), and a full chord of bells for a gene bred to
+   * the top.
+   */
+  public evolve(level: number, maxed = false): void {
+    // A riser under the flight of the strands.
+    this.tone(220, EVOLVE_LAND_SEC, {
+      type: 'sawtooth',
+      volume: 0.05,
+      slideTo: 880 + level * 110,
+      attack: 0.2,
+      lowpass: 2600,
+    });
+    this.noise(EVOLVE_LAND_SEC, {
+      volume: 0.04,
+      filter: 'bandpass',
+      frequency: 500,
+      sweepTo: 5000,
+      attack: 0.3,
+    });
+    // The chime: a pentatonic run, a step higher per level.
+    const degrees = [0, 2, 4, 7, 9, 12, 14, 16, 19];
+    const run = degrees.slice(level - 1, level + 3);
+    run.forEach((degree, step) => {
+      const frequency = 523.25 * 2 ** (degree / 12);
+      const last = step === run.length - 1;
+      const delay = EVOLVE_LAND_SEC + step * 0.07;
+      this.tone(frequency, last ? 0.7 : 0.16, {
+        type: 'triangle',
+        volume: 0.11,
+        delay,
+      });
+      this.tone(frequency * 2, last ? 0.5 : 0.1, {
+        type: 'sine',
+        volume: 0.04,
+        delay,
+      });
+    });
+    if (maxed) {
+      const at = EVOLVE_LAND_SEC + run.length * 0.07;
+      for (const degree of [0, 4, 7, 12]) {
+        this.tone(523.25 * 2 ** (degree / 12), 1.4, {
+          type: 'sine',
+          volume: 0.07,
+          delay: at,
+          attack: 0.05,
+        });
+      }
+    }
+  }
+
+  /** A click up as a weapon is equipped, a click down as it is put away. */
+  public equip(on = true): void {
+    const [from, to] = on ? [660, 990] : [990, 660];
+    this.tone(from, 0.06, { type: 'square', volume: 0.04, lowpass: 3000 });
+    this.tone(to, 0.1, {
+      type: 'square',
+      volume: 0.04,
+      delay: 0.06,
+      lowpass: 3000,
+    });
+  }
+
+  /** A falling sweep as everything evolved is given back. */
+  public devolve(): void {
+    this.tone(880, 0.6, {
+      type: 'sawtooth',
+      volume: 0.05,
+      slideTo: 110,
+      lowpass: 1800,
+    });
+    this.noise(0.5, {
+      volume: 0.06,
+      filter: 'bandpass',
+      frequency: 3000,
+      sweepTo: 300,
     });
   }
 

@@ -64,6 +64,14 @@ export class GameHapticsService {
     this.buzz(12);
   }
 
+  /**
+   * An Evolution purchase landing: a quick double kick, and a long roll on
+   * top for a gene bred to the top.
+   */
+  public evolve(maxed = false): void {
+    this.pattern(maxed ? [30, 40, 30, 40, 160] : [25, 45, 60]);
+  }
+
   /** A short buzz, unless one just played or a pattern still does. */
   private buzz(ms: number): void {
     if (performance.now() < this.busyUntilMs) {
