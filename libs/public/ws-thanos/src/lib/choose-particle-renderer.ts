@@ -1,4 +1,4 @@
-import { computeCaptureScale } from './capture-scale';
+import { computeCaptureScale, DEFAULT_MAX_PIXEL_RATIO } from './capture-scale';
 import {
   CANVAS_MAX_PARTICLE_COUNT,
   CanvasParticleRenderer,
@@ -35,6 +35,8 @@ export class GpuContextBudget {
 export interface ChooseParticleRendererParams {
   maxParticleCount: number;
   devicePixelRatio: number;
+  /** the most device pixels per css pixel an element is captured with */
+  maxPixelRatio?: number;
   createCanvas: () => HTMLCanvasElement;
   gpuBudget?: GpuContextBudget;
 }
@@ -60,6 +62,7 @@ export interface ParticleRendererChoice {
 export function chooseParticleRenderer({
   maxParticleCount,
   devicePixelRatio,
+  maxPixelRatio = DEFAULT_MAX_PIXEL_RATIO,
   createCanvas,
   gpuBudget = new GpuContextBudget(),
 }: ChooseParticleRendererParams): ParticleRendererChoice {
@@ -74,7 +77,8 @@ export function chooseParticleRenderer({
     );
   const canvasChoice: ParticleRendererChoice = {
     maxParticleCount: Math.min(maxParticleCount, CANVAS_MAX_PARTICLE_COUNT),
-    captureScale: () => 1,
+    // css pixels keep the CPU work low, fewer if asked for
+    captureScale: () => Math.min(1, maxPixelRatio),
     create: createCanvasRenderer,
     release: () => undefined,
   };
@@ -105,7 +109,13 @@ export function chooseParticleRenderer({
   return {
     maxParticleCount,
     captureScale: (width, height) =>
-      computeCaptureScale({ width, height, devicePixelRatio, maxCanvasSize }),
+      computeCaptureScale({
+        width,
+        height,
+        devicePixelRatio,
+        maxCanvasSize,
+        maxPixelRatio,
+      }),
     create: (particles, params) => {
       try {
         return new WebGlParticleRenderer(canvas, gl, particles, params);

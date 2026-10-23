@@ -23,6 +23,17 @@ describe('computeCaptureScale', () => {
     ).toBe(2);
   });
 
+  it('should cap the device pixel ratio at the max pixel ratio', () => {
+    expect(
+      computeCaptureScale({
+        ...smallCard,
+        devicePixelRatio: 2,
+        maxCanvasSize: 16384,
+        maxPixelRatio: 0.5,
+      })
+    ).toBe(0.5);
+  });
+
   it('should shrink so the 5x taller effect canvas fits the device limit', () => {
     // 800px * 5 (effect height) * scale must stay <= 4096
     const scale = computeCaptureScale({

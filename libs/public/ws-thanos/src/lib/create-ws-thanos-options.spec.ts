@@ -13,6 +13,10 @@ describe('createWsThanosOptions', () => {
     expect(createWsThanosOptions().maxParticleCount).toBe(3_000_000);
   });
 
+  it('should capture at up to 2 device pixels per css pixel by default', () => {
+    expect(createWsThanosOptions().maxPixelRatio).toBe(2);
+  });
+
   it('should crumble into shards by default', () => {
     expect(createWsThanosOptions().crumble).toBe('shards');
   });

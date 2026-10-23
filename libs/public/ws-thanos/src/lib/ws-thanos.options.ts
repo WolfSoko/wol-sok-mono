@@ -10,6 +10,11 @@ export type WsThanosCrumble = 'dust' | 'cracks' | 'shards' | 'chunks';
 export interface WsThanosOptions {
   animationLength: number;
   maxParticleCount: number;
+  /**
+   * the most device pixels per css pixel the element is captured and drawn with:
+   * lower it to snap big elements with fewer pixels, below 1 the particles get coarser
+   */
+  maxPixelRatio: number;
   particleAcceleration: number;
   /** play a windy, sandy sound while vaporizing */
   sound: boolean;

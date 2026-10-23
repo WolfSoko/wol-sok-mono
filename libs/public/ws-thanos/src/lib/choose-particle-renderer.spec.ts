@@ -83,6 +83,16 @@ describe('chooseParticleRenderer', () => {
       expect(choose().captureScale(300, 400)).toBe(1);
     });
 
+    it('should capture fewer pixels with a max pixel ratio below 1', () => {
+      const choice = chooseParticleRenderer({
+        maxParticleCount: 1_500_000,
+        devicePixelRatio: 2,
+        maxPixelRatio: 0.5,
+        createCanvas: () => fakeCanvas({ '2d': fake2d }),
+      });
+      expect(choice.captureScale(300, 400)).toBe(0.5);
+    });
+
     it('should cap the particles to what the CPU can handle', () => {
       expect(choose().maxParticleCount).toBe(CANVAS_MAX_PARTICLE_COUNT);
       expect(choose(500).maxParticleCount).toBe(500);
@@ -112,6 +122,16 @@ describe('chooseParticleRenderer', () => {
       expect(choose().captureScale(300, 400)).toBe(2);
       // 4096 / (800 * 5)
       expect(choose().captureScale(300, 800)).toBeCloseTo(1.024);
+    });
+
+    it('should capture at no more than the max pixel ratio', () => {
+      const choice = chooseParticleRenderer({
+        maxParticleCount: 1_500_000,
+        devicePixelRatio: 2,
+        maxPixelRatio: 0.75,
+        createCanvas: () => fakeCanvas({ webgl2: fakeWebGl2(), '2d': fake2d }),
+      });
+      expect(choice.captureScale(300, 400)).toBe(0.75);
     });
 
     it('should fall back to the canvas renderer when the GPU setup fails', () => {
