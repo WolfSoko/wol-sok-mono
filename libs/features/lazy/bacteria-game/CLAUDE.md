@@ -41,6 +41,7 @@ storage until then. Settings stay with the device either way.
   `provide-game-cloud.ts` imports that file; the rest takes types only, so
   the specs never load the SDK.
 - The release pipeline deploys `apps/bacteria-game-remote/firestore.rules`
+  and `firestore.indexes.json` beside it, which holds the rooms' TTL policy
   (`bacteria-game-remote:deploy`, config `firebase.bacteria-game-remote.json`).
 - Treat the ports as asynchronous, even though local storage answers at once:
   - `watch` may emit later than the subscription, and again when another tab

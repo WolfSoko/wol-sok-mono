@@ -193,7 +193,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["build"],
       "options": {
-        "command": "nx run {projectName}:firebase deploy --only hosting,firestore:rules"
+        "command": "nx run {projectName}:firebase deploy --only hosting,firestore"
       }
     },
     "icons": {

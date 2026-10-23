@@ -57,7 +57,8 @@
     ]
   },
   "firestore": {
-    "rules": "apps/bacteria-game-remote/firestore.rules"
+    "rules": "apps/bacteria-game-remote/firestore.rules",
+    "indexes": "apps/bacteria-game-remote/firestore.indexes.json"
   },
   "emulators": {
     "auth": {
