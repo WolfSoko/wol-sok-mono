@@ -96,13 +96,30 @@ export async function fitImagesForCapture(
   await Promise.all(images.map((img) => fitImage(img, scale)));
 }
 
+/** an image still loading gets this long, so a stalled request can't hold the snap back */
+const DECODE_TIMEOUT_MS = 1000;
+
+/** waits for the image to be ready to draw, throws when it fails or takes too long */
+function decode(img: HTMLImageElement): Promise<void> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  return Promise.race([
+    img.decode(),
+    new Promise<never>((_, reject) => {
+      timeout = setTimeout(
+        () => reject(new Error('image took too long to load')),
+        DECODE_TIMEOUT_MS
+      );
+    }),
+  ]).finally(() => clearTimeout(timeout));
+}
+
 async function fitImage(img: HTMLImageElement, scale: number): Promise<void> {
   const style = img.ownerDocument.defaultView?.getComputedStyle(img);
   if (style == null || (style.objectFit || 'fill') === 'fill') {
     return;
   }
   try {
-    await img.decode();
+    await decode(img);
     const image = { width: img.naturalWidth, height: img.naturalHeight };
     const box = {
       width:
@@ -141,9 +158,15 @@ async function fitImage(img: HTMLImageElement, scale: number): Promise<void> {
     );
     // throws for an image from another origin, that one stays stretched
     const fitted = canvas.toDataURL();
+    // the sources of a picture would win over the image's own src
+    if (img.parentElement?.tagName === 'PICTURE') {
+      img.parentElement
+        .querySelectorAll('source')
+        .forEach((source) => source.remove());
+    }
     img.srcset = '';
     img.src = fitted;
-    await img.decode();
+    await decode(img);
   } catch (error) {
     console.debug('ws-thanos: could not fit image for the capture', error);
   }

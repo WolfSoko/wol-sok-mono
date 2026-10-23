@@ -122,6 +122,7 @@ describe('fitImagesForCapture', () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     jest.restoreAllMocks();
     drawImage.mockReset();
     canvases.length = 0;
@@ -157,6 +158,34 @@ describe('fitImagesForCapture', () => {
 
     expect(stretched.src).toMatch(/logo\.svg$/);
     expect(notLoaded.src).toMatch(/logo\.svg$/);
+  });
+
+  it('should replace the sources of a picture, they would win over the src', async () => {
+    const picture = document.createElement('picture');
+    const source = document.createElement('source');
+    source.srcset = 'logo.webp';
+    const img = givenImage('contain');
+    picture.append(source, img);
+
+    await fitImagesForCapture(picture, 1);
+
+    expect(picture.querySelector('source')).toBeNull();
+    expect(img.src).toBe('data:image/png;base64,fitted');
+  });
+
+  it('should not wait for an image that does not finish loading', async () => {
+    jest.useFakeTimers();
+    jest.spyOn(console, 'debug').mockImplementation();
+    const elem = document.createElement('div');
+    const img = givenImage('contain');
+    img.decode = jest.fn(() => new Promise<void>(() => undefined));
+    elem.appendChild(img);
+
+    const fitted = fitImagesForCapture(elem, 1);
+    await jest.advanceTimersByTimeAsync(1000);
+    await fitted;
+
+    expect(img.src).toMatch(/logo\.svg$/);
   });
 
   it('should leave an image from another origin as it is', async () => {
