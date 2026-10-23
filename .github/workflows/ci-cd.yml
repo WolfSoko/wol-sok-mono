@@ -104,10 +104,13 @@ jobs:
             echo 'Deployable projects or published packages affected. Trigger release!!!' >> $GITHUB_STEP_SUMMARY
           fi
   # A separate job, as the main job is the check the branch protection requires.
-  # It bumps the version, pushes the tags and creates the GitHub release, which
-  # starts deploy.yml.
-  trigger-release:
-    uses: ./.github/workflows/trigger-release.yml
+  # Versions, creates the GitHub release and deploys, all in this run.
+  release:
+    uses: ./.github/workflows/release.yml
     secrets: inherit
     needs: main
+    permissions:
+      contents: write
+      id-token: write
+      issues: write
     if: ${{ success() && needs.main.outputs.shouldTriggerRelease == 'true' && !contains(github.event.head_commit.message, 'chore(release):') && github.ref_name == 'main' }}

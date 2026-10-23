@@ -194,12 +194,26 @@ The workflow:
 - Deploys stacks using CDK
 - Tags the deployment as `{version}-cdk-deployed`
 
+## Release Pipeline
+
+A release is one pipeline, started by the CI/CD workflow after a green run on
+`main` that affected a deployable project or a published package:
+
+1. **`release.yml`, job `release`** - bumps the versions (`nx release version` for
+   the published packages, `commit-and-tag-version` for the workspace version in
+   `version.json` and `CHANGELOG.md`), pushes the release commit and the tags, builds
+   the apps and creates the GitHub release with the changelog section as notes and
+   the build as asset, plus the Sentry release (`.github/actions/create-release`).
+2. **`deploy.yml`, called by `release.yml`** - deploys at that tag, see below.
+
+Both can be run by hand from the Actions UI: `release.yml` releases now (or, given a
+`tag`, recreates that tag's GitHub release and deploys it), `deploy.yml` redeploys a
+version.
+
 ## Deployment Workflow
 
-The main deployment workflow is triggered by:
-
-1. **Release Creation** - When the `trigger-release` job of the CI/CD workflow publishes a release: it bumps the version, pushes the tag and creates the GitHub release on one runner (`.github/actions/create-release`; `release.yml` recreates a release by hand)
-2. **Manual Trigger** - Via GitHub Actions UI with version input
+The deployment workflow runs with the release tag as input, called by `release.yml`
+or started by hand.
 
 ### Workflow Steps
 
@@ -212,11 +226,12 @@ The main deployment workflow is triggered by:
 
 ### Matrix Strategy
 
-The workflow runs three parallel jobs:
+The workflow runs four parallel jobs:
 
-1. **npm-packages** - Deploys projects with `tag:published`
-2. **non-cdk** - Deploys projects without `tag:cdk` or `tag:published`
-3. **cdk** - Deploys projects with `tag:cdk`
+1. **npm-packages** - Publishes projects with `tag:published`
+2. **non-cdk** - Deploys projects without `tag:cdk`, `tag:published` or `tag:type:android`
+3. **android** - Deploys projects with `tag:type:android`
+4. **cdk** - Deploys projects with `tag:cdk`
 
 ## Required Secrets
 

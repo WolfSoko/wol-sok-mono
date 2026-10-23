@@ -1,19 +1,23 @@
 name: Deploy release
+
+# Deploys what changed since the last deploy of each kind, at the given release
+# tag. release.yml calls it right after creating the release; run it by hand to
+# redeploy a version.
 on:
-  release:
-    types: [published]
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: Release tag (v<version>)
 
   workflow_dispatch:
     inputs:
       version:
         required: true
         type: string
-        default: v4.8.7
-        description: Release version
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+        default: v74.52.2
+        description: Release tag (v<version>)
 
 permissions:
   issues: write
@@ -22,7 +26,7 @@ permissions:
 
 env:
   HUSKY: 0
-  RELEASE_VERSION: ${{ github.event.inputs.version || github.ref_name }}
+  RELEASE_VERSION: ${{ inputs.version }}
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -34,6 +38,9 @@ jobs:
     timeout-minutes: 90
     runs-on: ubuntu-latest
     environment: aws-cdk
+    concurrency:
+      group: deploy-${{ inputs.version }}-${{ matrix.config.app-type }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
@@ -179,6 +186,6 @@ jobs:
         run: |
           gh issue create \
             --title "bug(deploy): Deploy release ${{ env.RELEASE_VERSION }} for ${{ matrix.config.app-type }} apps failed" \
-            --body "GitHub [Deploy release workflow](${{ github.event.html_url }})" \
+            --body "GitHub [Deploy release workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" \
             --label "bug" \
             --assignee "${{ github.actor }}"

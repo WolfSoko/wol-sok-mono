@@ -4,9 +4,6 @@ inputs:
   tag:
     description: 'The release tag (v<version>), checked out already'
     required: true
-  github-token:
-    description: 'A PAT, not GITHUB_TOKEN: events caused by GITHUB_TOKEN start no workflows, and deploy.yml runs on `release: published`'
-    required: true
   sentry-auth-token:
     description: 'Auth token of the Sentry org'
     required: true
@@ -29,7 +26,9 @@ runs:
     - name: Create GitHub release
       shell: bash
       env:
-        GH_TOKEN: ${{ inputs.github-token }}
+        # GITHUB_TOKEN is enough: nothing runs on the release event any more,
+        # release.yml deploys in the same run.
+        GH_TOKEN: ${{ github.token }}
         TAG: ${{ inputs.tag }}
       run: |
         api_error="$RUNNER_TEMP/release-lookup.err"
@@ -46,7 +45,7 @@ runs:
         fi
 
         # The release notes are this version's section of CHANGELOG.md, which
-        # commit-and-tag-version wrote in trigger-release.yml. Its version
+        # commit-and-tag-version wrote in release.yml. Its version
         # headings are `## [x.y.z](...)`, older patch releases `### [x.y.z](...)`;
         # the type headings below them (`### Features`) carry no bracket.
         notes="$RUNNER_TEMP/release-notes.md"

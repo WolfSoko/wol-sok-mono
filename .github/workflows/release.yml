@@ -1,48 +1,140 @@
-name: Create release (manual)
+name: Release
 
-# The release of a version is normally created by the trigger-release job of
-# ci-cd.yml right after it pushed the tag, on the same runner. This workflow
-# recreates the GitHub release (or refreshes its asset) for a tag that already
-# exists, for when that step failed.
+# One pipeline per release: version bump, changelogs, tags and the GitHub
+# release, then the deploy of everything that changed since the last deploy.
+# ci-cd.yml calls it after a green run on main. Run it by hand to release now,
+# or with `tag` to recreate the GitHub release of an existing tag and deploy it.
 on:
+  workflow_call:
+    outputs:
+      version:
+        description: 'The released tag (v<version>)'
+        value: ${{ jobs.release.outputs.version }}
   workflow_dispatch:
     inputs:
       tag:
-        required: true
+        required: false
         type: string
-        default: v74.52.2
-        description: Release tag (v<version>)
-
-concurrency:
-  group: ${{ github.workflow }}-${{ inputs.tag }}
-  cancel-in-progress: true
-
-permissions:
-  issues: write
-  contents: write
+        description: 'Recreate the GitHub release of this existing tag (v<version>) instead of versioning, then deploy it'
 
 env:
-  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
   HUSKY: 0
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
 jobs:
   release:
-    timeout-minutes: 30
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    # One release at a time: the version bump commits to main.
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+      # The PAT pushes the release commit to the protected main branch.
+      - uses: actions/checkout@v7
+        name: 'Checkout branch'
         with:
-          ref: ${{ inputs.tag }}
-          fetch-depth: 50
+          ref: ${{ inputs.tag || github.ref }}
+          token: ${{ secrets.PAT_TOKEN }}
+          fetch-depth: 0
           filter: tree:0
 
       - name: Install Deps
         uses: ./.github/actions/install-deps
 
+      - name: Snapshot tags before versioning
+        if: ${{ !inputs.tag }}
+        run: git tag --list | LC_ALL=C sort > "$RUNNER_TEMP/tags-before.txt"
+
+      - name: Version
+        if: ${{ !inputs.tag }}
+        run: |
+          git config --local user.email "github-actions[bot]@users.no-reply.github.com"
+          git config --local user.name "github-actions[bot]"
+          npx nx release version
+          # Leave the release commit as it is: the v* tag points at it, so amending
+          # it would leave the tag on a commit that never reaches the branch, and
+          # `git describe` on the branch stops finding new release tags. No
+          # [skip ci] needed: ci-cd.yml already skips its jobs for
+          # `chore(release):` commits.
+          npx commit-and-tag-version
+
+      - name: Push changes
+        if: ${{ !inputs.tag }}
+        run: git push origin HEAD:${{ github.ref }}
+
+      # Independent versioning tags every released project, so this run can create
+      # several tags at once. No workflow runs on a tag push (the release is
+      # created below), so they go out in one push.
+      - name: Push tags
+        id: push-tags
+        if: ${{ !inputs.tag }}
+        run: |
+          git tag --list | LC_ALL=C sort > "$RUNNER_TEMP/tags-after.txt"
+          mapfile -t new_tags < <(comm -13 "$RUNNER_TEMP/tags-before.txt" "$RUNNER_TEMP/tags-after.txt")
+
+          if [[ ${#new_tags[@]} -eq 0 ]]; then
+            echo "No new tags were created, nothing to push."
+            echo 'No new tags were created.' >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+          release_tags=()
+          for tag in "${new_tags[@]}"; do
+            if [[ "$tag" == v[0-9]* ]]; then
+              release_tags+=("$tag")
+            fi
+          done
+          echo "New tags: ${new_tags[*]}"
+          echo "Release tag: ${release_tags[*]:-none}"
+
+          git push origin "${new_tags[@]}"
+
+          echo "Pushed ${#new_tags[@]} new tag(s)." >> $GITHUB_STEP_SUMMARY
+          echo "release_tag=${release_tags[*]: -1}" >> $GITHUB_OUTPUT
+
+      - name: Released version
+        id: version
+        env:
+          VERSION: ${{ inputs.tag || steps.push-tags.outputs.release_tag }}
+        run: |
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          if [[ -n "$VERSION" ]]; then
+            echo "Release: $VERSION" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # HEAD is the release commit the tag points at, so the apps are built here.
       - name: Create release
+        if: steps.version.outputs.version != ''
         uses: ./.github/actions/create-release
         with:
-          tag: ${{ inputs.tag }}
-          github-token: ${{ secrets.RELEASE_GH_TOKEN }}
+          tag: ${{ steps.version.outputs.version }}
           sentry-auth-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Create Issue on Failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh issue create \
+            --title "bug(release): release pipeline failed" \
+            --body "GitHub [Release workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) failed" \
+            --label "bug" \
+            --assignee "${{ github.actor }}"
+
+  deploy:
+    needs: release
+    if: needs.release.outputs.version != ''
+    uses: ./.github/workflows/deploy.yml
+    with:
+      version: ${{ needs.release.outputs.version }}
+    secrets: inherit
+    permissions:
+      contents: write
+      id-token: write
+      issues: write
