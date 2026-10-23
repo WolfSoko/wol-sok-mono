@@ -1,7 +1,9 @@
 launch-templates:
   wolsokmono-linux-extra-large:
     resourceClass: 'docker_linux_amd64/extra_large'
-    image: 'ubuntu22.04-node20.11-v9'
+    # Newest image Nx Cloud lists (https://nx.dev/docs/kb/launch-templates); the
+    # install-node step below still installs the version from .nvmrc via nvm.
+    image: 'ubuntu22.04-node24.14-v1'
     env:
       HUSKY: 0
       NODE_OPTIONS: '--max_old_space_size=4096'
