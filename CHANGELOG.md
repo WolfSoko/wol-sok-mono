@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.52.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.52.0...v74.52.1) (2026-10-23)
+
+### CI/CD
+
+* **github:** ⚡️ cache node_modules, drop the gl toolchain and start Nx Cloud workers from ci-config ([#2571](https://github.com/WolfSoko/wol-sok-mono/issues/2571)) ([235dfea](https://github.com/WolfSoko/wol-sok-mono/commit/235dfead7f8d927390b6f6afb493148dca8da070))
+
 ## [74.52.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.51.0...v74.52.0) (2026-10-23)
 
 ### Features
