@@ -2,6 +2,8 @@ import groovy.json.JsonSlurper
 
 plugins {
   id("com.android.application")
+  // Registers the app with the Firebase project of the game (app/google-services.json).
+  id("com.google.gms.google-services")
 }
 
 // The app is a Trusted Web Activity: Chrome shows the game from this host
@@ -68,4 +70,9 @@ android {
 
 dependencies {
   implementation("com.google.androidbrowserhelper:androidbrowserhelper:2.7.4")
+  // The Firebase app `de.wolsok.bacteriawars` of the project `bacteria-wars`: the
+  // Android OAuth client Play Games Services asks for lives there (see README.md),
+  // and Analytics counts the app's installs and opens beside the web game's.
+  implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
+  implementation("com.google.firebase:firebase-analytics")
 }
