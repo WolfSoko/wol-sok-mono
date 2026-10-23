@@ -1,6 +1,6 @@
 /**
  * Ships a release of the Bacteria Wars Android app: builds the signed APK and
- * app bundle, uploads the bundle to the internal testing track on Google Play
+ * app bundle, uploads the bundle to the closed testing track on Google Play
  * and attaches both to the GitHub release. Promoting a build to production
  * stays a step in the Play Console. A second edit then brings the store listing in
  * line with store/: the texts in store/listings/<language>/ and the graphics
@@ -25,8 +25,6 @@
  * - GITHUB_TOKEN (or GH_TOKEN): for `gh release upload`
  * - YOUTUBE_OAUTH_CLIENT_ID, YOUTUBE_OAUTH_CLIENT_SECRET,
  *   YOUTUBE_OAUTH_REFRESH_TOKEN: optional, to upload the promo videos
- * - PLAY_GAMES_APPLICATION_ID: optional, the game's id in Play Games
- *   Services, to keep its achievements in line with the game
  *
  * The version code is the one of version.json, as in app/build.gradle.kts.
  * A run for a release whose bundle is on Play already skips the upload, so
@@ -51,9 +49,8 @@ import {
   youtubeConfigured,
 } from '../youtube/youtube';
 import {
-  APPLICATION_ID_ENV,
   playGamesAchievements,
-  playGamesConfigured,
+  playGamesApplicationId,
   syncAchievements,
 } from './play-games';
 
@@ -64,7 +61,8 @@ const PLAY_API =
   'https://androidpublisher.googleapis.com/androidpublisher/v3/applications';
 const PLAY_UPLOAD_API =
   'https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications';
-const TRACK = 'internal';
+/** Play's closed testing track: `alpha` is its name in the API. */
+const TRACK = 'alpha';
 
 /** The store listing of one language, as the Play API takes it. */
 interface Listing {
@@ -331,7 +329,7 @@ async function promoVideoLinks(): Promise<Map<string, string>> {
 }
 
 /**
- * Uploads the bundle and rolls it out to the internal track, then updates
+ * Uploads the bundle and rolls it out to the closed testing track, then updates
  * the store listing in an edit of its own: a listing Play turns down does
  * not hold back the app, and a run again skips the bundle that is on Play.
  * Then the tips, which Play takes only once a bundle asks for billing, and
@@ -362,8 +360,11 @@ async function publishToPlay(
       },
     });
     if (!response.ok) {
-      throw new Error(
-        `Play ${init.method ?? 'GET'} ${url} failed: ${response.status} ${await response.text()}`
+      throw Object.assign(
+        new Error(
+          `Play ${init.method ?? 'GET'} ${url} failed: ${response.status} ${await response.text()}`
+        ),
+        { status: response.status }
       );
     }
     const text = await response.text();
@@ -427,15 +428,9 @@ async function publishToPlay(
     errors.push(error)
   );
   // The same account, the same scope: the Publishing API takes the same calls.
-  if (playGamesConfigured()) {
-    await syncAchievements(call, env(APPLICATION_ID_ENV)).catch(
-      (error: unknown) => errors.push(error)
-    );
-  } else {
-    console.log(
-      `${APPLICATION_ID_ENV} is not set, the Play Games achievements stay as they are.`
-    );
-  }
+  await syncAchievements(call, playGamesApplicationId()).catch(
+    (error: unknown) => errors.push(error)
+  );
   return errors;
 }
 

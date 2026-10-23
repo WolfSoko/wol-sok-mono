@@ -24,12 +24,14 @@
       Diese Erklärung gilt für das Spiel Bacteria Wars unter
       <a href="https://bacteria-wars.wolsok.de">bacteria-wars.wolsok.de</a>
       (bisher bacteria-game.wolsok.de) und für die Android-App „Bacteria Wars“
-      (de.wolsok.bacteriawars). Kurz gesagt: Das Spiel nutzt keine
-      Analysedienste und verkauft keine Daten. Es speichert, was es braucht, um
-      deinen Spielstand zu behalten. Es zeigt Werbung von Google, personalisiert
-      nur mit deiner Einwilligung (Abschnitt 7), und bittet um ein freiwilliges
-      Trinkgeld (Abschnitt 8). Spielst du das Spiel eingebettet in einer anderen
-      Seite, etwa
+      (de.wolsok.bacteriawars). Kurz gesagt: Das Spiel im Browser nutzt keine
+      Analysedienste; die Android-App zählt nur ihre Installationen und Starts
+      und meldet dich bei Google Play Spiele an (Abschnitt 6). Das Spiel
+      verkauft keine Daten. Es speichert, was es braucht, um deinen Spielstand
+      zu behalten. Es zeigt Werbung von Google, personalisiert nur mit deiner
+      Einwilligung (Abschnitt 7), und bittet um ein freiwilliges Trinkgeld
+      (Abschnitt 8). Spielst du das Spiel eingebettet in einer anderen Seite,
+      etwa
       <a href="https://angularexamples.wolsok.de">angularexamples.wolsok.de</a>,
       zeigt es dort weder Werbung noch Trinkgeld, und diese Erklärung gilt nicht
       für jene Seite und ihre Dienste.
@@ -161,13 +163,21 @@
       Die Android-App ist eine Trusted Web Activity: Sie öffnet das Spiel von
       bacteria-wars.wolsok.de in Google Chrome (oder einem anderen Browser auf
       deinem Gerät) im Vollbild. Gibt es keinen passenden Browser, zeigt die App
-      das Spiel in einer eingebauten WebView von Android. Die App selbst erhebt
-      keine Daten und fordert keine Berechtigungen für Standort, Kontakte,
-      Kamera, Mikrofon oder Dateien an; sie bindet nur Google Play Billing für
-      das Trinkgeld an (Abschnitt 8). Es gilt alles, was oben für das Spiel im
-      Browser steht. Für den Browser gilt die Datenschutzerklärung seines
-      Anbieters. Den Download und die Updates der App wickelt Google Play ab;
-      dafür gilt die Datenschutzerklärung von Google.
+      das Spiel in einer eingebauten WebView von Android. Die App fordert keine
+      Berechtigungen für Standort, Kontakte, Kamera, Mikrofon oder Dateien an.
+      Sie bindet Google Play Billing für das Trinkgeld an (Abschnitt 8) und
+      nutzt zwei Dienste von Google: Firebase Analytics zählt, wie oft die App
+      installiert und gestartet wird, mit technischen Angaben zu Gerät und
+      App-Version; die Werbe-ID deines Geräts haben wir dafür abgeschaltet.
+      Google Play Spiele meldet dich beim Start der App ohne Nachfrage mit dem
+      Play-Spiele-Profil deines Google-Kontos an, damit Bacteria Wars in deiner
+      Play-Spiele-Bibliothek erscheint; wir erhalten dabei deine
+      Play-Spiele-Spieler-ID und deinen Spielernamen, keine E-Mail-Adresse. Für
+      beide Dienste gilt die Datenschutzerklärung von Google. Es gilt alles, was
+      oben für das Spiel im Browser steht. Für den Browser gilt die
+      Datenschutzerklärung seines Anbieters. Den Download und die Updates der
+      App wickelt Google Play ab; dafür gilt die Datenschutzerklärung von
+      Google.
     </p>
 
     <h2 id="de-werbung">7. Werbung (Google AdSense)</h2>
@@ -293,11 +303,12 @@
       This policy covers the game Bacteria Wars at
       <a href="https://bacteria-wars.wolsok.de">bacteria-wars.wolsok.de</a>
       (formerly bacteria-game.wolsok.de) and the Android app “Bacteria Wars”
-      (de.wolsok.bacteriawars). In short: the game uses no analytics and sells
-      no data. It stores what it needs to keep your progress. It shows ads from
-      Google, personalised only with your consent (section 7), and asks for a
-      voluntary tip (section 8). When you play the game embedded in another
-      site, such as
+      (de.wolsok.bacteriawars). In short: the game in the browser uses no
+      analytics; the Android app only counts its installs and launches and signs
+      you in to Google Play Games (section 6). The game sells no data. It stores
+      what it needs to keep your progress. It shows ads from Google,
+      personalised only with your consent (section 7), and asks for a voluntary
+      tip (section 8). When you play the game embedded in another site, such as
       <a href="https://angularexamples.wolsok.de">angularexamples.wolsok.de</a>,
       it shows neither ads nor the tip there, and this policy does not cover
       that site and its services. The German version above is the binding one.
@@ -420,9 +431,16 @@
       The Android app is a Trusted Web Activity: it opens the game at
       bacteria-wars.wolsok.de fullscreen in Google Chrome (or another browser on
       your device). Without a suitable browser, the app shows the game in
-      Android's built-in WebView. The app itself collects no data and asks for
-      no permission to your location, contacts, camera, microphone or files; it
-      only connects Google Play Billing for the tip (section 8). Everything
+      Android's built-in WebView. The app asks for no permission to your
+      location, contacts, camera, microphone or files. It connects Google Play
+      Billing for the tip (section 8) and uses two Google services: Firebase
+      Analytics counts how often the app is installed and launched, with
+      technical details of the device and the app version; we have turned the
+      advertising ID of your device off for it. Google Play Games signs you in
+      with the Play Games profile of your Google account when the app starts,
+      without asking, so that Bacteria Wars appears in your Play Games library;
+      we receive your Play Games player ID and player name, not your email
+      address. Google's privacy policy applies to both services. Everything
       above about the game in the browser applies. The browser's own privacy
       policy applies to the browser. Google Play handles downloading and
       updating the app, under Google's privacy policy.

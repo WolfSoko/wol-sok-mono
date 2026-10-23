@@ -19,7 +19,8 @@ export const environment: Environment = {
         'https://bacteria-wars-default-rtdb.europe-west1.firebasedatabase.app',
     },
   },
-  // For ads, add the display ad unit for the menu screens from AdSense:
+  // index.html loads AdSense and its consent banner. For ads on the menu
+  // screens, add the display ad unit from AdSense:
   // ads: { client: 'ca-pub-6346271540341424', slot: '<ad unit id>' }
   support: SUPPORT_DEFAULTS,
 };
