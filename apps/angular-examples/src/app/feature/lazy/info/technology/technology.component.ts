@@ -7,14 +7,20 @@ import {
   inject,
   Input,
   OnInit,
+  signal,
   ViewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { AnimationState, WsThanosDirective } from '@wolsok/thanos';
+import {
+  AnimationState,
+  WsThanosDirective,
+  WsThanosOptions,
+} from '@wolsok/thanos';
 import { ElevateCardDirective } from '@wolsok/ui-kit';
 import { Observable, switchMap, timer } from 'rxjs';
+import { randomCrumble } from './random-crumble';
 
 @Component({
   imports: [
@@ -43,6 +49,17 @@ export class TechnologyComponent implements OnInit {
   public thanos!: WsThanosDirective;
 
   private destroyRef: DestroyRef = inject(DestroyRef);
+
+  /** every tile snaps with a random crumble variant, and with another one the next time */
+  protected readonly thanosOptions = signal<Partial<WsThanosOptions>>({
+    crumble: randomCrumble(),
+  });
+
+  protected nextCrumble(): void {
+    this.thanosOptions.update(({ crumble }) => ({
+      crumble: randomCrumble(crumble),
+    }));
+  }
 
   ngOnInit(): void {
     if (this.autoVaporize) {

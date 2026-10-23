@@ -1,4 +1,10 @@
-<div wsThanos #thanos="thanos" class="thanos-container">
+<div
+  wsThanos
+  #thanos="thanos"
+  class="thanos-container"
+  [wsThanosOptions]="thanosOptions()"
+  (wsThanosComplete)="nextCrumble()"
+>
   <mat-card
     appearance="raised"
     (click)="thanos.vaporize(false)"
