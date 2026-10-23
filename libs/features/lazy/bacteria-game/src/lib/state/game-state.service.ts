@@ -16,8 +16,10 @@ import { GameFrame, TICK_MS, TickClock, ticksToMs } from './fixed-tick';
 import { BotDifficulty } from './bot-controller';
 import {
   getColonyColor,
+  onlineColors,
   pickColor,
   sameColors,
+  seatFirst,
   validColorPair,
 } from './colony-colors';
 import {
@@ -103,6 +105,11 @@ export class GameStateService {
   private plan: MatchPlan | null = null;
   /** Frames in a row an online match could not go on, waiting for the other device. */
   private stalledFrames = 0;
+  /**
+   * The host's word of the guest's own colours, null before it came - what
+   * the host makes the online pair from, with its own.
+   */
+  private guestColors: [string, string] | null = null;
 
   /**
    * The ticks of the display frames the game runs on - see
@@ -185,16 +192,31 @@ export class GameStateService {
         const levelId = playableOnline(getLevel(state.levelId))
           ? state.levelId
           : LEVELS[0].id;
-        const { colors } = state;
+        this.guestColors = null;
+        // The guest waits for the host's pair in its own colour - and tells
+        // the host what it picked, for the host to make the pair from.
+        const colors =
+          event.seat === 0
+            ? onlineColors(state.colors, null)
+            : seatFirst(state.colors, 1);
         this.gameStateStore.update({
           levelId,
           online: { seat: event.seat, levelId, colors },
         });
-        // The guest shows the host's setup once it arrives.
         if (event.seat === 0) {
           this.online.share({ levelId, colors });
+        } else {
+          this.online.offerColors(state.colors);
         }
         this.respawnIfIdle();
+        return;
+      }
+      case 'colors': {
+        if (this.gameStateStore.snapshot().online?.seat === 0) {
+          this.guestColors = event.colors;
+          this.shareSetup();
+          this.respawnIfIdle();
+        }
         return;
       }
       case 'setup': {
@@ -233,6 +255,7 @@ export class GameStateService {
         ) ?? null;
       this.endMatch({ winner, reason: 'forfeit' });
     }
+    this.guestColors = null;
     this.gameStateStore.update({ online: null, waitingForPeer: false });
     // A match it ended stays on the board under its result until reset.
     if (!matchOn) {
@@ -243,7 +266,8 @@ export class GameStateService {
   /** The host tells the guest when the next match is set up anew. */
   private shareSetup(): void {
     const { online, levelId, colors } = this.gameStateStore.snapshot();
-    const setup = { levelId, colors };
+    // The pair is made here and only here: the guest plays what it is sent.
+    const setup = { levelId, colors: onlineColors(colors, this.guestColors) };
     if (online?.seat !== 0 || sameSetup(online, setup)) {
       return;
     }
@@ -590,6 +614,15 @@ export class GameStateService {
         JSON.stringify(setup[key]) !== JSON.stringify(current[key])
     );
     this.gameStateStore.update(changed ? { ...setup, series: null } : setup);
+    // The guest's colours are its own pick: the host makes the pair of
+    // the match from them.
+    if (
+      setup.colors !== undefined &&
+      setup.colors !== current.colors &&
+      current.online?.seat === 1
+    ) {
+      this.online.offerColors(setup.colors);
+    }
     this.shareSetup();
     this.respawnIfIdle();
   }
@@ -732,6 +765,7 @@ export class GameStateService {
       return;
     }
     // Whoever leaves wins nothing: the match goes with the connection.
+    this.guestColors = null;
     this.gameStateStore.update({ online: null, waitingForPeer: false });
     this.online.leave();
   }

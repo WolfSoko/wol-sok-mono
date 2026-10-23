@@ -110,3 +110,36 @@ export function pickColor(
   next[seat] = colorId;
   return next;
 }
+
+/**
+ * The colours of an online match, made by the host from both players'
+ * picks: the host's own colour on the left, the guest's own on the right.
+ * A guest who picked the host's colour plays its second one, which its pair
+ * keeps apart from the first - so the two always differ. Until the guest's
+ * picks are in, the host's pair stands.
+ *
+ * Only the host makes the pair; the guest plays the one it is sent, so both
+ * devices spawn the same colours.
+ */
+export function onlineColors(
+  host: readonly [string, string],
+  guest: readonly [string, string] | null
+): [string, string] {
+  const own = validColorPair(host) ?? [DEFAULT_COLORS[0], DEFAULT_COLORS[1]];
+  const theirs = validColorPair(guest);
+  if (theirs === null) {
+    return own;
+  }
+  return [own[0], theirs[0] !== own[0] ? theirs[0] : theirs[1]];
+}
+
+/**
+ * The pair as one seat sees it: its own colour first, the other seat's
+ * second.
+ */
+export function seatFirst(
+  colors: readonly [string, string],
+  seat: 0 | 1
+): [string, string] {
+  return seat === 0 ? [colors[0], colors[1]] : [colors[1], colors[0]];
+}

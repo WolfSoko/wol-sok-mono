@@ -49,6 +49,8 @@ export type OnlineEnd = 'left' | 'lost';
 export type OnlineEvent =
   /** The other device is there. */
   | { type: 'connected'; seat: 0 | 1; auto: boolean }
+  /** The guest's own colours - for the host, see `offerColors`. */
+  | { type: 'colors'; colors: [string, string] }
   /** The host changed the next match's setup - for the guest. */
   | { type: 'setup'; setup: OnlineSetup }
   /** The host started a match - for the guest; see {@link takeStart}. */
@@ -214,6 +216,16 @@ export class OnlineMatchService {
   }
 
   /**
+   * The guest tells the host its own colours, which the host makes the
+   * match's pair from. The guest plays the pair the host sends back.
+   */
+  public offerColors(colors: [string, string]): void {
+    if (this.lobby().role === 'guest') {
+      this.send({ k: 'colors', colors });
+    }
+  }
+
+  /**
    * The host starts a match: tells the guest, and returns the lockstep to
    * play it with. Null while no guest is connected.
    */
@@ -296,6 +308,11 @@ export class OnlineMatchService {
       case 'setup':
         if (role === 'guest') {
           this.events.next({ type: 'setup', setup: setupOf(message) });
+        }
+        return;
+      case 'colors':
+        if (role === 'host') {
+          this.events.next({ type: 'colors', colors: message.colors });
         }
         return;
       case 'start':
