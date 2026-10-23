@@ -25,7 +25,11 @@ launch-templates:
 
           echo "node version used: $(node -v)"
 
-          echo "Install packages to compile node_modules gl with node-gyp"
+          # Not reduced to the Playwright libraries and the JDK: without these the
+          # bacteria-game-remote e2e server never comes up on the workers
+          # (PR #2571), although allowScripts denies the gl build they were
+          # added for.
+          echo "Install the packages the worker image lacks"
           sudo apt-get update -y
           sudo apt-get install -y build-essential pkg-config python3 python-is-python3 libx11-dev libxext-dev libxi-dev libxrandr-dev libxfixes-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev xserver-xorg-dev libavif13 libgtk-4-1 libgraphene-1.0-dev
 
