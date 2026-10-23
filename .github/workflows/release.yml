@@ -39,7 +39,7 @@ jobs:
       group: release
       cancel-in-progress: false
     outputs:
-      version: ${{ steps.version.outputs.version }}
+      version: ${{ inputs.tag || steps.push.outputs.release_tag }}
 
     steps:
       # The commit CI just validated, not the branch tip, which may have moved on
@@ -55,10 +55,6 @@ jobs:
       - name: Install Deps
         uses: $/.github/actions/install-deps
 
-      - name: Snapshot tags before versioning
-        if: ${{ !inputs.tag }}
-        run: git tag --list | LC_ALL=C sort > "$RUNNER_TEMP/tags-before.txt"
-
       - name: Version
         if: ${{ !inputs.tag }}
         run: |
@@ -73,10 +69,11 @@ jobs:
           npx commit-and-tag-version
 
       # Independent versioning tags every released project, so this run can create
-      # several tags at once. The commit and its tags land together or not at
-      # all: a tag on a commit that never reached the branch would stop
-      # `git describe` from finding newer release tags. No workflow runs on a tag
-      # push, the release is created below.
+      # several tags at once; both tools create annotated tags, which
+      # `--follow-tags` pushes along with the commit. The commit and its tags land
+      # together or not at all: a tag on a commit that never reached the branch
+      # would stop `git describe` from finding newer release tags. No workflow
+      # runs on a tag push, the release is created below.
       - name: Push the release commit and its tags
         id: push
         if: ${{ !inputs.tag }}
@@ -84,21 +81,13 @@ jobs:
           BRANCH: ${{ github.ref }}
           VALIDATED_SHA: ${{ github.sha }}
         run: |
-          git tag --list | LC_ALL=C sort > "$RUNNER_TEMP/tags-after.txt"
-          mapfile -t new_tags < <(comm -13 "$RUNNER_TEMP/tags-before.txt" "$RUNNER_TEMP/tags-after.txt")
+          # commit-and-tag-version tags v<version.json>.
+          release_tag="v$(node -p "require('./version.json').version")"
+          echo "Release tag: $release_tag"
 
-          release_tags=()
-          for tag in "${new_tags[@]}"; do
-            if [[ "$tag" == v[0-9]* ]]; then
-              release_tags+=("$tag")
-            fi
-          done
-          echo "New tags: ${new_tags[*]:-none}"
-          echo "Release tag: ${release_tags[*]:-none}"
-
-          if git push --atomic origin "HEAD:$BRANCH" "${new_tags[@]}"; then
-            echo "Pushed the release commit and ${#new_tags[@]} new tag(s)." >> $GITHUB_STEP_SUMMARY
-            echo "release_tag=${release_tags[*]: -1}" >> $GITHUB_OUTPUT
+          if git push --atomic --follow-tags origin "HEAD:$BRANCH"; then
+            echo "Pushed the release commit and its tags. Release: $release_tag" >> $GITHUB_STEP_SUMMARY
+            echo "release_tag=$release_tag" >> $GITHUB_OUTPUT
             exit 0
           fi
 
@@ -113,22 +102,12 @@ jobs:
           fi
           exit 1
 
-      - name: Released version
-        id: version
-        env:
-          VERSION: ${{ inputs.tag || steps.push.outputs.release_tag }}
-        run: |
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          if [[ -n "$VERSION" ]]; then
-            echo "Release: $VERSION" >> $GITHUB_STEP_SUMMARY
-          fi
-
       # HEAD is the release commit the tag points at, so the apps are built here.
       - name: Create release
-        if: steps.version.outputs.version != ''
+        if: ${{ inputs.tag || steps.push.outputs.release_tag }}
         uses: $/.github/actions/create-release
         with:
-          tag: ${{ steps.version.outputs.version }}
+          tag: ${{ inputs.tag || steps.push.outputs.release_tag }}
           sentry-auth-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
       - name: Create Issue on Failure

@@ -16,7 +16,6 @@ on:
       version:
         required: true
         type: string
-        default: v74.52.2
         description: Release tag (v<version>)
 
 permissions:

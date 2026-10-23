@@ -95,17 +95,15 @@ jobs:
           verbose: true
       # Counted since the last release tag, not since the last run: a run whose
       # release stood down because main had moved on (release.yml) leaves its
-      # changes to the next run, which must see them.
+      # changes to the next run, which must see them. On main the last release
+      # tag is v<version.json>: the release commit bumps the file and gets the
+      # tag in the same push.
       - name: determine if deployables or published packages are affected and a release should be triggered
         if: success() && github.ref_name == 'main'
         id: shouldTriggerRelease
         run: |
-          if last_release=$(git describe --tags --abbrev=0 --match='v[0-9]*' --exclude='*-deployed' 2>/dev/null); then
-            echo "Last release: $last_release"
-          else
-            echo "No release tag found, counting since the last successful run."
-            last_release="$NX_BASE"
-          fi
+          last_release="v$(node -p "require('./version.json').version")"
+          echo "Last release: $last_release"
           projects=$(npx nx show projects --affected --base="$last_release" --head="$NX_HEAD" --projects='tag:cdk,tag:type:firebase,tag:published')
           echo "Affected releasable projects: $projects"
           if [[ -z "$projects" ]]; then
