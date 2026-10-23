@@ -302,7 +302,7 @@ describe('GameStateService', () => {
       },
       'cpu',
       120,
-      { steers: [[0, 0, 1, 0]], drags: [], boosts: [] }
+      { steers: [[0, 0, 1, 0]], drags: [], boosts: [], weapons: [] }
     );
 
     async function hashOf(replay: Replay): Promise<string> {

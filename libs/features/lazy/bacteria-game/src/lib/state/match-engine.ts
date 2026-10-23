@@ -1,4 +1,4 @@
-import type { WeaponFire } from './evolution';
+import { EvolvedTraits, WeaponFire, WeaponId, weaponOf } from './evolution';
 import { scaleOf } from './arena-size';
 import {
   addEvents,
@@ -11,17 +11,13 @@ import {
   BotController,
   BotRoutes,
   BotDifficulty,
+  BotWeaponView,
   buildBotView,
   DEFAULT_DIFFICULTY,
   neutralFood,
 } from './bot-controller';
 import { countDown, TICK_SEC, TICKS_PER_SEC } from './fixed-tick';
-import {
-  ColonyTraits,
-  GameBalance,
-  gameBalance,
-  PLAIN_TRAITS,
-} from './game-balance';
+import { GameBalance, gameBalance, PLAIN_TRAITS } from './game-balance';
 import {
   clamp,
   clampLength,
@@ -37,6 +33,7 @@ import { GameMap, rectCenter } from './maps';
 import {
   createPlayer,
   isBoostReady,
+  isWeaponReady,
   Player,
   PlayerColorArray,
 } from './player.model';
@@ -72,8 +69,10 @@ export interface PlayerSpawn {
   isBot: boolean;
   /** The colony's start area as a share of the level's - 1 when absent. */
   startScale?: number;
-  /** A boss's traits - plain when absent. */
-  traits?: ColonyTraits;
+  /** A boss's or evolved traits - plain when absent. */
+  traits?: EvolvedTraits;
+  /** The weapon the colony carries - none when absent. */
+  weapon?: WeaponId | null;
   /** True for a boss - a boss bot charges with every boost once behind. */
   boss?: boolean;
   /**
@@ -158,6 +157,15 @@ interface NeutralMover {
 /** A crosshair nobody steers. */
 const AT_REST: SteeringVector = Object.freeze({ x: 0, y: 0 });
 
+/** A weapon fired, waiting for the next step of the war to act in. */
+interface Shot {
+  playerId: number;
+  weapon: WeaponId;
+  /** The crosshair it was fired at. */
+  x: number;
+  y: number;
+}
+
 /**
  * One match, tick by tick: the players' crosshairs and scores, the bots and
  * the simulation. It knows nothing of Angular, the stores or the keyboard,
@@ -192,16 +200,25 @@ export class MatchEngine {
   private readonly lastCrosshairs = new Map<number, Point>();
   /** Boosts fired since the last frame - true for the computer's. */
   private firedBoosts: boolean[] = [];
+  /** Weapons fired since the last frame. */
+  private firedWeapons: WeaponFire[] = [];
+  /** Weapons fired since the last tick, which act from its step on. */
+  private shots: Shot[] = [];
   /** What the ticks of the frame under way did so far. */
   private tickEvents: StepEvents = noEvents();
   private ticks = 0;
   /** What the humans at the screen put in, for the replay. */
-  private readonly inputs: ReplayInputs = { steers: [], drags: [], boosts: [] };
+  private readonly inputs: ReplayInputs = {
+    steers: [],
+    drags: [],
+    boosts: [],
+    weapons: [],
+  };
   /** The players a recording drives, by seat. */
   private readonly ghosts: ReadonlyMap<number, SeatDriver>;
   private readonly win: WinRule;
-  /** Each seat's traits, a boss's or none. */
-  private readonly traits: readonly (ColonyTraits | undefined)[];
+  /** Each seat's traits, a boss's, evolved ones or none. */
+  private readonly traits: readonly (EvolvedTraits | undefined)[];
   /** The layout of the match - for the hold zone the bots head for. */
   private readonly map: GameMap;
   /**
@@ -264,6 +281,7 @@ export class MatchEngine {
         name: spawn.name,
         isBot: spawn.isBot,
         maxSpeed: options.crosshairSpeed ?? DEFAULT_CROSSHAIR_SPEED,
+        weapon: spawn.weapon ?? null,
       });
     });
 
@@ -363,11 +381,10 @@ export class MatchEngine {
    * weapon or while it recharges. Returns whether it fired.
    */
   public fireWeapon(playerId: number): boolean {
-    if (this.ghosts.has(playerId)) {
+    if (!this.isLive(playerId)) {
       return false;
     }
-    // TODO(evolution): fire it, record it.
-    return false;
+    return this.shoot(playerId);
   }
 
   /** True for a human at the screen - neither a bot nor a ghost. */
@@ -390,7 +407,9 @@ export class MatchEngine {
     }
     this.simulation.resize(width, height);
     this.tickBoosts();
+    this.tickWeapons();
     this.runBots(width, height);
+    this.launchShots(width);
     this.simulation.step(this.steerNeutrals(width, height), TICK_SEC);
     this.tickEvents = addEvents(this.tickEvents, this.simulation.getEvents());
     this.syncColonyStats(true);
@@ -406,11 +425,11 @@ export class MatchEngine {
     const events = {
       ...this.tickEvents,
       boosts: this.firedBoosts,
-      // TODO(evolution): the weapons fired since the last frame.
-      weapons: [],
+      weapons: this.firedWeapons,
     };
     this.tickEvents = noEvents();
     this.firedBoosts = [];
+    this.firedWeapons = [];
     return events;
   }
 
@@ -484,6 +503,72 @@ export class MatchEngine {
     return true;
   }
 
+  /**
+   * Fires a player's weapon at their crosshair, when it is ready: its
+   * effect acts from the next step of the war on, and its cooldown starts
+   * once the effect has run out - as a boost's does.
+   */
+  private shoot(playerId: number): boolean {
+    const player = this.playerList[playerId];
+    if (player?.weapon == null || !isWeaponReady(player)) {
+      return false;
+    }
+    const weapon = weaponOf(player.weapon);
+    const cooldown =
+      weapon.cooldownSec * (this.traits[playerId]?.weaponCooldownFactor ?? 1);
+    this.update(playerId, {
+      weaponActiveSec: weapon.durationSec,
+      weaponCooldownSec: cooldown,
+      weaponCooldownFullSec: cooldown,
+      weaponsFired: player.weaponsFired + 1,
+    });
+    this.ownsPlayers = false;
+    this.shots.push({
+      playerId,
+      weapon: weapon.id,
+      x: player.x,
+      y: player.y,
+    });
+    if (this.isLive(playerId)) {
+      // Fired between two ticks, it counts from the next one on.
+      this.inputs.weapons.push([this.ticks, playerId]);
+    }
+    return true;
+  }
+
+  /**
+   * Hands the weapons fired since the last tick to the war, their radius
+   * grown with the grid, and notes them for the frame's events.
+   */
+  private launchShots(width: number): void {
+    if (this.shots.length === 0) {
+      return;
+    }
+    const unit = this.unitAt(width);
+    for (const { playerId, weapon: id, x, y } of this.shots) {
+      const weapon = weaponOf(id);
+      const radius = weapon.radius * unit;
+      this.simulation.addEffect({
+        weapon: id,
+        owner: playerId,
+        x,
+        y,
+        radius,
+        remainingSec: weapon.durationSec,
+        durationSec: weapon.durationSec,
+      });
+      this.firedWeapons.push({
+        playerId,
+        weapon: id,
+        x,
+        y,
+        radius,
+        isBot: this.playerList[playerId]?.isBot ?? false,
+      });
+    }
+    this.shots = [];
+  }
+
   /** Records what the humans changed since the last tick. */
   private record(): void {
     for (const [playerId, { x, y }] of this.newDrags) {
@@ -506,9 +591,12 @@ export class MatchEngine {
   /** Puts in what the recordings have the ghosts put in before this tick. */
   private playGhosts(): void {
     for (const [playerId, ghost] of this.ghosts) {
-      const { boost, drag, steer } = ghost.before(this.ticks);
+      const { boost, drag, steer, weapon } = ghost.before(this.ticks);
       if (boost) {
         this.fireBoost(playerId);
+      }
+      if (weapon === true) {
+        this.shoot(playerId);
       }
       if (drag != null) {
         this.dragTargets.set(playerId, drag);
@@ -584,6 +672,90 @@ export class MatchEngine {
         });
       }
     }
+  }
+
+  /**
+   * Counts the weapon timers down like the boost's: the effect runs out
+   * first, only then does the recharge start.
+   */
+  private tickWeapons(): void {
+    for (const player of this.playerList) {
+      if (player.weaponActiveSec > 0) {
+        this.update(player.id, {
+          weaponActiveSec: countDown(player.weaponActiveSec),
+        });
+      } else if (player.weaponCooldownSec > 0) {
+        this.update(player.id, {
+          weaponCooldownSec: countDown(player.weaponCooldownSec),
+        });
+      }
+    }
+  }
+
+  /**
+   * What a bot sees of the weapon it carries, null without one: the
+   * bacteria round its crosshair are counted only when it asks, from the
+   * blocks the simulation counts - a few times a second at the most.
+   */
+  private botWeaponView(player: Player, width: number): BotWeaponView | null {
+    if (player.weapon == null) {
+      return null;
+    }
+    const radius = weaponOf(player.weapon).radius * this.unitAt(width);
+    const crosshair = { x: player.x, y: player.y };
+    return {
+      id: player.weapon,
+      ready: isWeaponReady(player),
+      radius,
+      around: () => this.bacteriaAround(player.id, crosshair, radius),
+    };
+  }
+
+  /**
+   * A colony's own bacteria and everybody else's - neutral ones too, which
+   * the weapons hit as well - in the blocks whose centre lies in a circle.
+   */
+  private bacteriaAround(
+    playerId: number,
+    at: Point,
+    radius: number
+  ): { own: number; enemy: number } {
+    const blocks = this.simulation.blockCounts();
+    const around = { own: 0, enemy: 0 };
+    if (blocks === null) {
+      return around;
+    }
+    const { blocksX, blocksY, cellSize, counts } = blocks;
+    const summaries = this.simulation.summaries();
+    const reach = Math.ceil(radius / cellSize);
+    const centerX = Math.floor(at.x / cellSize);
+    const centerY = Math.floor(at.y / cellSize);
+    for (
+      let by = Math.max(0, centerY - reach);
+      by <= Math.min(blocksY - 1, centerY + reach);
+      by++
+    ) {
+      for (
+        let bx = Math.max(0, centerX - reach);
+        bx <= Math.min(blocksX - 1, centerX + reach);
+        bx++
+      ) {
+        const dx = (bx + 0.5) * cellSize - at.x;
+        const dy = (by + 0.5) * cellSize - at.y;
+        if (dx * dx + dy * dy > radius * radius) {
+          continue;
+        }
+        const block = by * blocksX + bx;
+        counts.forEach((colony, index) => {
+          if (summaries[index]?.playerId === playerId) {
+            around.own += colony[block];
+          } else {
+            around.enemy += colony[block];
+          }
+        });
+      }
+    }
+    return around;
   }
 
   /**
@@ -684,7 +856,8 @@ export class MatchEngine {
         (from) => this.routesFrom(from, width, height),
         this.unitAt(width),
         prey,
-        this.win.kind === 'harvest'
+        this.win.kind === 'harvest',
+        this.botWeaponView(player, width)
       );
       const decision = bot.decide(view, TICK_SEC);
       if (decision.target != null) {
@@ -692,6 +865,9 @@ export class MatchEngine {
       }
       if (decision.boost) {
         this.fireBoost(playerId);
+      }
+      if (decision.weapon === true) {
+        this.shoot(playerId);
       }
     }
   }

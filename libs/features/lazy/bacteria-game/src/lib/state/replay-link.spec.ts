@@ -42,6 +42,37 @@ describe('replay links', () => {
     expect(await replayFromHash(new URL(link).hash)).toEqual(replay);
   });
 
+  it('carry the weapons fired and the loadouts played with', async () => {
+    const evolved: Replay = {
+      header: {
+        ...replay.header,
+        loadouts: [
+          { genes: { mitosis: 2, flagella: 5 }, weapon: 'cryo-pulse' },
+          { genes: {}, weapon: null },
+        ],
+      },
+      inputs: {
+        ...replay.inputs,
+        weapons: [
+          [100, 0],
+          [1700, 0],
+        ],
+      },
+    };
+
+    const link = await replayLink('https://x.y/', evolved);
+
+    expect(await replayFromHash(new URL(link).hash)).toEqual(evolved);
+  });
+
+  it('read a plain run - packed as before the weapons - without any', async () => {
+    const link = await replayLink('https://x.y/', replay);
+
+    expect((await replayFromHash(new URL(link).hash))?.inputs.weapons).toEqual(
+      []
+    );
+  });
+
   it('stay short enough to share for a minute of steering', async () => {
     const link = await replayLink('https://wolfsoko.de/bacteriaGame', replay);
 

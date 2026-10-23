@@ -26,6 +26,7 @@ describe('GhostController', () => {
       [3, 0, 30, 40],
     ],
     boosts: [[4, 0]],
+    weapons: [],
   };
 
   it("plays one seat's inputs, each kind's last one when it is due", () => {
@@ -99,7 +100,12 @@ describe('a ghost match', () => {
   });
 
   it('leaves the ghost to its run - no bot, no keys, no boost', () => {
-    const engine = ghostMatch({ steers: [], drags: [], boosts: [] });
+    const engine = ghostMatch({
+      steers: [],
+      drags: [],
+      boosts: [],
+      weapons: [],
+    });
     const start = engine.players[1];
 
     engine.setSteering(1, { x: 1, y: 0 });

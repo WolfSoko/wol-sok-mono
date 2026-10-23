@@ -1,4 +1,11 @@
 import { BotDifficulty, difficultyOption } from './bot-controller';
+import {
+  GENES,
+  isGeneId,
+  isWeaponId,
+  Loadout,
+  MAX_GENE_LEVEL,
+} from './evolution';
 import { validColorPair } from './colony-colors';
 import { TICKS_PER_SEC } from './fixed-tick';
 import { BALANCE_VERSION } from './game-balance';
@@ -31,6 +38,8 @@ export type ReplaySteer = [
 export type ReplayDrag = [tick: number, playerId: number, x: number, y: number];
 /** Before this tick, a human fired a boost. */
 export type ReplayBoost = [tick: number, playerId: number];
+/** Before this tick, a human fired their weapon. */
+export type ReplayWeapon = [tick: number, playerId: number];
 
 /**
  * What the humans put in during a match, each input once, when it changed.
@@ -41,8 +50,14 @@ export interface ReplayInputs {
   steers: ReplaySteer[];
   drags: ReplayDrag[];
   boosts: ReplayBoost[];
+  /** Empty in a replay from before the weapons - it plays as it did. */
+  weapons: ReplayWeapon[];
 }
 
+/**
+ * How a match was set up - with the seats' `loadouts` where they evolved,
+ * absent for plain colonies, as in every replay from before evolution.
+ */
 export interface ReplayHeader extends MatchPlan {
   version: number;
   /** The balance table the match was played with - see `BALANCE_VERSION`. */
@@ -89,6 +104,7 @@ export function replayOf(
       steers: inputs.steers.slice(),
       drags: inputs.drags.slice(),
       boosts: inputs.boosts.slice(),
+      weapons: inputs.weapons.slice(),
     },
   };
 }
@@ -147,7 +163,9 @@ export function parseReplay(value: unknown): Replay | null {
   const steers = inputList(inputs['steers'], 4, seats, header.ticks);
   const drags = inputList(inputs['drags'], 4, seats, header.ticks);
   const boosts = inputList(inputs['boosts'], 2, seats, header.ticks);
-  if (steers == null || drags == null || boosts == null) {
+  // A replay from before the weapons has none.
+  const weapons = inputList(inputs['weapons'] ?? [], 2, seats, header.ticks);
+  if (steers == null || drags == null || boosts == null || weapons == null) {
     return null;
   }
   return {
@@ -156,6 +174,7 @@ export function parseReplay(value: unknown): Replay | null {
       steers: steers as ReplaySteer[],
       drags: drags as ReplayDrag[],
       boosts: boosts as ReplayBoost[],
+      weapons: weapons as ReplayWeapon[],
     },
   };
 }
@@ -187,6 +206,10 @@ function parseHeader(raw: Record<string, unknown>): ReplayHeader | null {
   ) {
     return null;
   }
+  const loadouts = parseLoadouts(raw['loadouts']);
+  if (loadouts === null) {
+    return null;
+  }
   return {
     version,
     balanceVersion,
@@ -200,6 +223,47 @@ function parseHeader(raw: Record<string, unknown>): ReplayHeader | null {
     width,
     height,
     seed,
+    ...(loadouts === undefined ? {} : { loadouts }),
+  };
+}
+
+/**
+ * The seats' loadouts of a header: undefined where it has none - plain
+ * colonies - and null where they are damaged. Unlike a stored loadout,
+ * which keeps what it can, a damaged one could only play another match.
+ */
+function parseLoadouts(
+  value: unknown
+): readonly [Loadout, Loadout] | undefined | null {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!Array.isArray(value) || value.length !== 2) {
+    return null;
+  }
+  const [left, right] = value.map(strictLoadout);
+  return left === null || right === null ? null : [left, right];
+}
+
+/** A loadout exactly as written, null for anything else. */
+function strictLoadout(value: unknown): Loadout | null {
+  if (!isObject(value) || !isObject(value['genes'])) {
+    return null;
+  }
+  const { genes, weapon } = value;
+  const levels = Object.entries(genes);
+  if (
+    levels.length > GENES.length ||
+    !levels.every(
+      ([id, level]) => isGeneId(id) && isInteger(level, 1, MAX_GENE_LEVEL)
+    ) ||
+    (weapon !== null && !isWeaponId(weapon))
+  ) {
+    return null;
+  }
+  return {
+    genes: Object.fromEntries(levels) as Loadout['genes'],
+    weapon,
   };
 }
 

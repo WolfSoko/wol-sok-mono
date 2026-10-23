@@ -64,6 +64,7 @@ const KINDS = {
   steers: { key: 's', size: 4, steps: STEER_STEPS },
   drags: { key: 'd', size: 4, steps: DRAG_STEPS },
   boosts: { key: 'b', size: 2, steps: 1 },
+  weapons: { key: 'w', size: 2, steps: 1 },
 } as const satisfies Record<
   keyof ReplayInputs,
   { key: string; size: number; steps: number }
@@ -75,17 +76,25 @@ const KIND_NAMES = Object.keys(KINDS) as Kind[];
 function pack({ header, inputs }: Replay): Record<string, unknown> {
   const packed: Record<string, unknown> = { h: header };
   for (const kind of KIND_NAMES) {
+    // A plain run packs as it did before the weapons.
+    if (kind === 'weapons' && inputs[kind].length === 0) {
+      continue;
+    }
     packed[KINDS[kind].key] = flatten(inputs[kind], KINDS[kind].steps);
   }
   return packed;
 }
 
-/** The packed run back as a replay to parse - throws where it is no run. */
+/**
+ * The packed run back as a replay to parse - throws where it is no run. A
+ * link from before the weapons has no list of them, and none were fired.
+ */
 function unpack(packed: Record<string, unknown>): unknown {
   const inputs: Record<string, unknown[][]> = {};
   for (const kind of KIND_NAMES) {
     const { key, size, steps } = KINDS[kind];
-    inputs[kind] = unflatten(packed[key], size, steps);
+    const list = kind === 'weapons' ? (packed[key] ?? []) : packed[key];
+    inputs[kind] = unflatten(list, size, steps);
   }
   return { header: packed['h'], inputs };
 }
