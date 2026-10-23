@@ -177,7 +177,7 @@ once per environment — see the
 
 ```shell
 nx bootstrap my-app --profile=my-profile
-nx bootstrap my-app aws://123456789012/us-east-1
+nx bootstrap my-app aws://123456789012/eu-central-1
 ```
 
 ### Passing extra CDK flags

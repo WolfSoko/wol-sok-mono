@@ -633,7 +633,7 @@ new SpaCdkStack(app, 'FourierAnalysisStack', {
 
 To use a custom domain:
 
-1. **Create SSL Certificate** in ACM (us-east-1)
+1. **Create SSL Certificate** in ACM (us-east-1, the only region CloudFront takes certificates from; `SpaStack` does this for you)
 2. **Update CDK stack** with domain and certificate
 3. **Deploy stack**
 4. **Update DNS** with CloudFront distribution URL
@@ -778,7 +778,7 @@ Use environment variables for sensitive configuration:
 ```bash
 # .env (not committed)
 FIREBASE_API_KEY=your_api_key
-AWS_REGION=us-east-1
+AWS_REGION=eu-central-1
 ```
 
 Access in code:
