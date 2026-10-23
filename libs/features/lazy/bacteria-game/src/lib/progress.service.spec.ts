@@ -35,7 +35,8 @@ describe('ProgressService', () => {
   }
 
   it('awards a medallion and remembers it across visits', () => {
-    expect(create().recordMatch(GOLD_WIN)).toEqual({
+    // Partly: the texts to translate beside the English ones are left out.
+    expect(create().recordMatch(GOLD_WIN)).toMatchObject({
       award: {
         record: GOLD_WIN,
         medal: 'gold',

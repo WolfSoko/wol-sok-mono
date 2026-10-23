@@ -1,8 +1,5 @@
 @if (!available()) {
-  <p class="text">
-    Online matches need the game's cloud, which this build of the game does not
-    connect to.
-  </p>
+  <p class="text">{{ "online.noCloud" | t }}</p>
 } @else {
   @let searching = matchmaker.state() !== "idle";
   @switch (lobby().phase) {
@@ -10,7 +7,7 @@
       @if (searching) {
         <p class="status">
           <mat-spinner diameter="20" />
-          Looking for an opponent…
+          {{ "online.searching" | t }}
         </p>
       } @else {
         @if (matchmaker.available) {
@@ -21,25 +18,25 @@
             (click)="matchmaker.find()"
           >
             <mat-icon>travel_explore</mat-icon>
-            Find an opponent
+            {{ "online.find" | t }}
           </button>
         }
 
         @if (social.available) {
-          <feat-lazy-bac-game-friends (challenge)="challenge($event)" />
+          <feat-lazy-bac-game-friends
+            (challenge)="social.challengeFriend($event)"
+          />
         }
 
-        <span class="label">Play with a code</span>
-        <p class="text">
-          Open a match and send the code to a friend, or type in theirs.
-        </p>
+        <span class="label">{{ "online.withCode" | t }}</span>
+        <p class="text">{{ "online.withCodeText" | t }}</p>
         <button mat-stroked-button type="button" (click)="host.emit()">
           <mat-icon>wifi_tethering</mat-icon>
-          Open a match
+          {{ "online.open" | t }}
         </button>
         <form class="join" (submit)="submit($event)">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Code from a friend</mat-label>
+            <mat-label>{{ "online.codeField" | t }}</mat-label>
             <input
               matInput
               name="code"
@@ -53,7 +50,7 @@
           </mat-form-field>
           <button mat-stroked-button type="submit">
             <mat-icon>login</mat-icon>
-            Join
+            {{ "online.join" | t }}
           </button>
         </form>
       }
@@ -61,39 +58,37 @@
     @case ("opening") {
       <p class="status">
         <mat-spinner diameter="20" />
-        {{
-          searching ? "Opponent found - opening the match…" : "Opening a match…"
-        }}
+        {{ (searching ? "online.found" : "online.opening") | t }}
       </p>
     }
     @case ("waiting") {
-      @if (challenged(); as friend) {
+      @if (social.challenged(); as friend) {
         <p class="status">
           <feat-lazy-bac-game-avatar
             [avatar]="friend.card.avatar"
             [label]="friend.card.name"
             [size]="32"
           />
-          Waiting for {{ friend.card.name }} to accept…
+          {{ "online.waitingFor" | t: { name: friend.card.name } }}
         </p>
       } @else if (searching) {
         <p class="status">
           <mat-spinner diameter="20" />
-          Looking for an opponent…
+          {{ "online.searching" | t }}
         </p>
       } @else {
-        <span class="label">Send your friend this code</span>
+        <span class="label">{{ "online.sendCode" | t }}</span>
         <p class="code" aria-live="polite">{{ lobby().code }}</p>
         <p class="status">
           <mat-spinner diameter="20" />
-          Waiting for them to join…
+          {{ "online.waitingToJoin" | t }}
         </p>
       }
     }
     @case ("connecting") {
       <p class="status">
         <mat-spinner diameter="20" />
-        Connecting to your opponent…
+        {{ "online.connecting" | t }}
       </p>
     }
     @case ("connected") {
@@ -104,28 +99,33 @@
             [label]="opponent.card.name"
             [size]="32"
           />
-          Connected to {{ opponent.card.name }} - you play {{ ownColony() }}.
+          {{
+            "online.connectedTo"
+              | t: { name: opponent.card.name, colony: ownColony() ?? "" }
+          }}
         } @else {
           <mat-icon aria-hidden="true">link</mat-icon>
-          Connected - you play {{ ownColony() }}.
+          {{ "online.connected" | t: { colony: ownColony() ?? "" } }}
         }
       </p>
       <p class="text">
         @if (lobby().role === "host") {
-          You pick the level and start the matches.
+          {{ "online.hostPicks" | t }}
         } @else {
-          Your opponent picks the level and starts the matches.
+          {{ "online.guestFollows" | t }}
         }
       </p>
     }
   }
   @if (lobby().notice; as notice) {
-    <p class="notice" role="status">{{ notice }}</p>
+    <p class="notice" role="status">{{ notice | gameText }}</p>
   }
   @if (lobby().phase !== "idle" || searching) {
     <button mat-button type="button" class="leave" (click)="cancel()">
       <mat-icon>close</mat-icon>
-      {{ lobby().phase === "connected" ? "Leave" : "Cancel" }}
+      {{
+        (lobby().phase === "connected" ? "online.leave" : "common.cancel") | t
+      }}
     </button>
   }
 }

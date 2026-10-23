@@ -1,23 +1,30 @@
+import type { game as gameTexts } from '../i18n/en/game';
+
+/** The id of a rank, as the dictionaries list it. */
+export type RankId = keyof typeof gameTexts.ranks;
+
 /**
  * The ranks XP climbs, named after microbiology, from a dormant spore to a
  * bacterium nothing can stop. XP never unlocks gameplay - a rank is only
  * shown.
  */
 export interface Rank {
+  /** The rank's id in the dictionaries. */
+  id: RankId;
   name: string;
   /** The XP the rank starts at. */
   xp: number;
 }
 
 export const RANKS: readonly Rank[] = [
-  { name: 'Spore', xp: 0 },
-  { name: 'Coccus', xp: 250 },
-  { name: 'Bacillus', xp: 750 },
-  { name: 'Spirillum', xp: 1500 },
-  { name: 'Biofilm', xp: 3000 },
-  { name: 'Colony', xp: 5000 },
-  { name: 'Culture', xp: 8000 },
-  { name: 'Superbug', xp: 12000 },
+  { id: 'spore', name: 'Spore', xp: 0 },
+  { id: 'coccus', name: 'Coccus', xp: 250 },
+  { id: 'bacillus', name: 'Bacillus', xp: 750 },
+  { id: 'spirillum', name: 'Spirillum', xp: 1500 },
+  { id: 'biofilm', name: 'Biofilm', xp: 3000 },
+  { id: 'colony', name: 'Colony', xp: 5000 },
+  { id: 'culture', name: 'Culture', xp: 8000 },
+  { id: 'superbug', name: 'Superbug', xp: 12000 },
 ];
 
 /** Where an XP count stands: its rank, and the way to the next one. */

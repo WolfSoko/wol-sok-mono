@@ -39,6 +39,11 @@
   color: var(--bw-muted);
 }
 
+// As wide as its options, like the pickers above, not the whole section.
+.language-picker {
+  align-self: flex-start;
+}
+
 .resolution-hint {
   font-size: 0.85rem;
   color: var(--bw-muted);

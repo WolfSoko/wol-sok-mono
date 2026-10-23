@@ -47,6 +47,11 @@ export type NetMessage =
   | { k: 'hello'; v: string; id: string | null }
   /** The host changed the setup of the next match. */
   | ({ k: 'setup' } & OnlineSetup)
+  /**
+   * The guest's own colours - its pick first - for the host to make the
+   * match's pair from (see `onlineColors`).
+   */
+  | { k: 'colors'; colors: [string, string] }
   /** The host starts a match. */
   | ({ k: 'start'; n: number } & OnlineStart)
   /** A seat's input for tick `t`. */
@@ -82,6 +87,10 @@ export function parseNetMessage(data: unknown): NetMessage | null {
     case 'setup': {
       const setup = parseSetup(value);
       return setup === null ? null : { k: 'setup', ...setup };
+    }
+    case 'colors': {
+      const colors = validColorPair(value['colors']);
+      return colors === null ? null : { k: 'colors', colors };
     }
     case 'start': {
       const setup = parseSetup(value);

@@ -7,6 +7,7 @@ import {
   SETTINGS_STORAGE_KEY,
   StoredSettings,
 } from './settings.service';
+import { I18nService } from './i18n/i18n.service';
 import { GameStateService } from './state/game-state.service';
 import { GameStateStore } from './state/game.states';
 import { LEVELS } from './state/levels';
@@ -320,6 +321,41 @@ describe('GameSettingsService', () => {
     expect(service.vaporizeMs()).toBe(2500);
   });
 
+  it('follows the browser until the player picks a language, and remembers it', () => {
+    const service = TestBed.inject(GameSettingsService);
+    const i18n = TestBed.inject(I18nService);
+    expect(service.language()).toBeNull();
+    expect(i18n.language()).toBe('en');
+
+    service.setLanguage('de');
+
+    expect(i18n.language()).toBe('de');
+    expect(stored()).toMatchObject({ language: 'de' });
+
+    service.setLanguage(null);
+
+    expect(i18n.language()).toBe('en');
+    expect(stored()['language']).toBeUndefined();
+  });
+
+  it('restores the language, and follows the browser for one it does not know', () => {
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({ language: 'de' })
+    );
+    TestBed.inject(GameSettingsService);
+    expect(TestBed.inject(I18nService).language()).toBe('de');
+
+    TestBed.resetTestingModule();
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({ language: 'klingon' })
+    );
+    const service = TestBed.inject(GameSettingsService);
+    expect(service.language()).toBeNull();
+    expect(TestBed.inject(I18nService).language()).toBe('en');
+  });
+
   describe('with storage that answers late', () => {
     let storage: LateGameStorage;
 
@@ -473,6 +509,19 @@ describe('GameSettingsService', () => {
       expect(service.arena()).toBe(LEVELS[5].id);
       expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
         arena: LEVELS[5].id,
+      });
+    });
+
+    it('keeps a language picked before the storage answered', () => {
+      const service = createWith({ language: 'en' });
+
+      service.setLanguage('de');
+      storage.flush();
+      storage.flush();
+
+      expect(service.language()).toBe('de');
+      expect(storage.stored(SETTINGS_STORAGE_KEY)).toMatchObject({
+        language: 'de',
       });
     });
 

@@ -6,23 +6,23 @@
       [value]="colony().boostCharge * 100"
       [diameter]="ringSize"
       [strokeWidth]="4"
-      aria-label="Boost recharge"
+      [attr.aria-label]="'controls.boost.recharge' | t"
     />
     <button
       mat-fab
       type="button"
       class="boost-fab"
-      [attr.aria-label]="'Boost ' + colony().name"
+      [attr.aria-label]="'controls.boost.button' | t: { name: name() }"
       [disabled]="disabled() || !colony().boostReady"
       (pointerdown)="onPress($event)"
       (click)="boost.emit()"
     >
       <mat-icon>bolt</mat-icon>
-      <span class="boost-state">{{ boostLabel(colony()) }}</span>
+      <span class="boost-state">{{ boostLabel() }}</span>
     </button>
   </span>
   <span class="pad-info">
-    <span class="pad-name">{{ colony().name }}</span>
+    <span class="pad-name">{{ name() }}</span>
     <span class="pad-stats">
       <span>{{ colony().bacterias }}</span>
       <span>⚡ {{ colony().energy }}%</span>
@@ -31,7 +31,7 @@
       class="share"
       mode="determinate"
       [value]="colony().share"
-      aria-label="Share of all bacteria"
+      [attr.aria-label]="'controls.boost.share' | t"
     />
   </span>
 </div>

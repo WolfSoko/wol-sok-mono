@@ -4,6 +4,7 @@ import {
   FakeGamePresence,
   FakeGameSocial,
 } from '../../testing/fake-game-social';
+import { I18nService } from '../i18n/i18n.service';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
 import { defaultProfile } from './profile';
@@ -71,5 +72,21 @@ describe('FriendsComponent', () => {
     ).click();
     await new Promise((resolve) => setTimeout(resolve));
     expect(social.get('players/ada/friends/cyd')).not.toBeNull();
+  });
+
+  it('speaks German', async () => {
+    await social.saveProfile('bob', { ...defaultProfile('bob'), name: 'Bob' });
+    await social.sendRequest('ada', 'bob');
+    await social.acceptRequest('bob', 'ada');
+    presence.set('bob', 'online');
+    TestBed.inject(I18nService).setLanguage('de');
+    const fixture = TestBed.createComponent(FriendsComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const host: HTMLElement = fixture.nativeElement;
+
+    expect(host.textContent).toContain('Herausfordern');
+    expect(host.textContent).toContain('Freund einladen');
   });
 });

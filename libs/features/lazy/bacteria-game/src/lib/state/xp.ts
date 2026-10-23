@@ -1,11 +1,8 @@
+import { english, GameText } from '../i18n/game-text';
 import { ACHIEVEMENT_IDS } from './achievement-ids';
-import {
-  BOT_DIFFICULTIES,
-  BotDifficulty,
-  difficultyOption,
-} from './bot-controller';
+import { BOT_DIFFICULTIES, BotDifficulty } from './bot-controller';
 import { isLadderLevel, LEVELS } from './levels';
-import { MatchRecord, MEDAL_NAMES, MedalTier } from './medallions';
+import { MatchRecord, medalText, MedalTier } from './medallions';
 import { bestMedal, Progress } from './progress';
 
 /**
@@ -21,6 +18,8 @@ import { bestMedal, Progress } from './progress';
 /** One line of what a match earned in XP, for the result screen. */
 export interface XpPart {
   label: string;
+  /** The label as a text to translate. */
+  text?: GameText;
   xp: number;
 }
 
@@ -85,33 +84,39 @@ export function xpGain(
   record: MatchRecord | null
 ): XpGain {
   const parts: XpPart[] = [];
+  const add = (text: GameText, xp: number) =>
+    parts.push({ label: english(text), text, xp });
   if (record === null) {
-    parts.push({ label: 'Two players', xp: COUCH_XP });
+    add({ key: 'game.xp.couch' }, COUCH_XP);
   } else {
-    const difficulty = difficultyOption(record.difficulty)?.name ?? '';
-    parts.push({
-      label: `${record.won ? 'Win' : 'Played'} · ${difficulty}`,
-      xp: matchXp(record),
-    });
+    add(
+      {
+        key: record.won ? 'game.xp.win' : 'game.xp.played',
+        params: {
+          difficulty: { key: `game.difficulties.${record.difficulty}.name` },
+        },
+      },
+      matchXp(record)
+    );
     const held = bestMedal(before, record.levelId, record.difficulty);
     const best = bestMedal(after, record.levelId, record.difficulty);
     // Only the ladder's medallions pay XP - see xpOf.
     const onLadder = isLadderLevel(record.levelId);
     if (onLadder && best !== null && best !== held) {
-      parts.push({
-        label: `${MEDAL_NAMES[best]} medallion, a new best`,
-        xp: MEDAL_XP[best] - (held === null ? 0 : MEDAL_XP[held]),
-      });
+      add(
+        { key: 'game.xp.medal', params: { medal: medalText(best) } },
+        MEDAL_XP[best] - (held === null ? 0 : MEDAL_XP[held])
+      );
     }
   }
   const earned = ACHIEVEMENT_IDS.filter(
     (id) => before.achievements[id] == null && after.achievements[id] != null
   ).length;
   if (earned > 0) {
-    parts.push({
-      label: earned === 1 ? 'Achievement' : `${earned} achievements`,
-      xp: earned * ACHIEVEMENT_XP,
-    });
+    add(
+      { key: 'game.xp.achievements', params: { count: earned } },
+      earned * ACHIEVEMENT_XP
+    );
   }
   return { parts, total: parts.reduce((sum, { xp }) => sum + xp, 0) };
 }

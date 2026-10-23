@@ -2,10 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
 } from '@angular/core';
+import { difficultyKeys, medalKey } from '../i18n/game-texts';
+import { I18nService } from '../i18n/i18n.service';
 import { BotDifficulty, difficultyOption } from '../state/bot-controller';
-import { MEDAL_NAMES, MedalTier } from '../state/medallions';
+import { MedalTier } from '../state/medallions';
 
 /** Highlight, body and rim of each metal. */
 const METALS: Record<MedalTier, readonly [string, string, string]> = {
@@ -69,6 +72,8 @@ export class MedallionComponent {
    */
   public readonly difficulty = input<BotDifficulty | null>(null);
 
+  private readonly i18n = inject(I18nService);
+
   /** Keeps the gradients of several medallions on one page apart. */
   protected readonly id = `bac-medal-${nextId++}`;
   protected readonly metal = computed(() => {
@@ -79,9 +84,16 @@ export class MedallionComponent {
     const tier = this.tier();
     return tier == null ? [] : CELLS[tier];
   });
+  /** The difficulty's name in the active language, null without one. */
+  private readonly difficultyName = computed(() => {
+    const difficulty = difficultyOption(this.difficulty());
+    return difficulty == null
+      ? null
+      : this.i18n.t(difficultyKeys(difficulty.id).name);
+  });
   /** The difficulty's letter, null without one. */
   protected readonly letter = computed(
-    () => difficultyOption(this.difficulty())?.name[0] ?? null
+    () => this.difficultyName()?.[0] ?? null
   );
   /** The chip in the corner - too small to read on a small medallion. */
   protected readonly chip = computed(() =>
@@ -90,8 +102,14 @@ export class MedallionComponent {
   protected readonly label = computed(() => {
     const tier = this.tier();
     const medal =
-      tier == null ? 'No medallion yet' : `${MEDAL_NAMES[tier]} medallion`;
-    const difficulty = difficultyOption(this.difficulty());
-    return difficulty == null ? medal : `${medal}, ${difficulty.name}`;
+      tier == null
+        ? this.i18n.t('common.noMedal')
+        : this.i18n.t('common.medal', {
+            medal: this.i18n.t(medalKey(tier)),
+          });
+    const difficulty = this.difficultyName();
+    return difficulty == null
+      ? medal
+      : this.i18n.t('match.medallion.withDifficulty', { medal, difficulty });
   });
 }

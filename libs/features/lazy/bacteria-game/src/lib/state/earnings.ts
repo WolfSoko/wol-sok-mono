@@ -1,3 +1,4 @@
+import type { GameText } from '../i18n/game-text';
 import { AchievementId } from './achievement-ids';
 import { MedalAward } from './medallions';
 import { XpGain } from './xp';
@@ -17,6 +18,8 @@ export interface MatchEarnings {
   unlocked: readonly string[];
   /** The cosmetics the match opened, named - "Green colonies". */
   cosmetics: readonly string[];
+  /** The cosmetics as texts to translate, in the same order. */
+  cosmeticTexts?: readonly GameText[];
   /** On the daily level: which attempt it was, and the streak after it. */
   daily?: DailyResult;
 }

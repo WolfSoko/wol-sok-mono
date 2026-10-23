@@ -1,3 +1,5 @@
+import { english, GameText } from '../i18n/game-text';
+import type { levels as levelTexts } from '../i18n/en/levels';
 import { scaleOf } from './arena-size';
 import { ColonyTraits, GameBalance, gameBalance } from './game-balance';
 import { getMap } from './game-maps';
@@ -23,6 +25,11 @@ export interface Level {
   name: string;
   /** Short briefing shown next to the level picker. */
   description: string;
+  /**
+   * The title as a text to translate - set on a generated level, whose
+   * title no dictionary lists by id; see {@link levelTitleText}.
+   */
+  title?: GameText;
   /** Id of the {@link GameMap} this level is fought on. */
   mapId: string;
   /** Tweaks applied on top of the base {@link gameBalance}. */
@@ -478,12 +485,15 @@ export function playableOnline(level: Level): boolean {
   return levelSize(level) === 1;
 }
 
+/** Why a level cannot be played online - the same for each of them. */
+export const ONLINE_LOCK_TEXT: GameText = { key: 'levels.locks.online' };
+
 /** Why a level cannot be played online, by level id. */
 export const ONLINE_LOCKS: Readonly<Record<string, string>> =
   Object.fromEntries(
     LEVELS.filter((level) => !playableOnline(level)).map((level) => [
       level.id,
-      'Too big for an online match',
+      english(ONLINE_LOCK_TEXT),
     ])
   );
 
@@ -498,6 +508,49 @@ export function gridScale(level: Level, width: number): number {
 /** A level's name without its number - "Hourglass" for "3 · Hourglass". */
 export function levelTitle(level: Level): string {
   return level.name.replace(/^\d+ · /, '');
+}
+
+/** The id of a hand-made level, as the dictionaries list it. */
+export type LadderLevelId = keyof typeof levelTexts.titles;
+
+/** True for the id of a hand-made level. */
+export function isLadderLevelId(id: string): id is LadderLevelId {
+  return isLadderLevel(id);
+}
+
+/**
+ * A level's title as a text to translate - "Hourglass" - for a generated
+ * level the name it was given.
+ */
+export function levelTitleText(level: Level): GameText {
+  return isLadderLevelId(level.id)
+    ? { key: `levels.titles.${level.id}` }
+    : // A level of neither kind is none of the game's - getLevel falls
+      // back to the first one for it.
+      (level.title ?? { key: 'levels.titles.petri-dish' });
+}
+
+/**
+ * A level's name as a text to translate: "3 · Hourglass" on the ladder,
+ * the title alone for a generated level.
+ */
+export function levelNameText(level: Level): GameText {
+  const index = LEVELS.findIndex(({ id }) => id === level.id);
+  return index < 0
+    ? levelTitleText(level)
+    : {
+        key: 'levels.name',
+        params: { number: index + 1, title: levelTitleText(level) },
+      };
+}
+
+/** A level's briefing as a text to translate. */
+export function levelDescriptionText(level: Level): GameText {
+  if (isLadderLevelId(level.id)) {
+    return { key: `levels.descriptions.${level.id}` };
+  }
+  const recipe = parseGeneratedId(level.id)?.recipe ?? 'field';
+  return { key: `levels.generated.styles.${recipe}.description` };
 }
 
 /** The level before this one, or null when it is the first. */

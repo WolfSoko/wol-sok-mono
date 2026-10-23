@@ -12,7 +12,7 @@ import {
 } from '@ngrx/signals';
 import { distinctUntilChanged, Observable } from 'rxjs';
 import { BotDifficulty, DEFAULT_DIFFICULTY } from './bot-controller';
-import { DEFAULT_COLORS } from './colony-colors';
+import { DEFAULT_COLORS, seatFirst } from './colony-colors';
 import { getLevel, LEVELS } from './levels';
 import { MatchEarnings } from './earnings';
 import { HeadStart, Series, SeriesLength } from './rivalry';
@@ -165,6 +165,7 @@ export const GameStateStore = signalStore(
       mode,
       endedBy,
       online,
+      colors,
     }) => {
       const level = computed(() =>
         getLevel(online()?.levelId ?? matchLevel() ?? levelId())
@@ -194,6 +195,16 @@ export const GameStateStore = signalStore(
         secondsLeft: computed(() => timeLeft(winRule(), gameSeconds())),
         /** True once a match is over - also for a draw. */
         matchEnded: computed(() => endedBy() !== null),
+        /**
+         * The colours of the player at this device and of their opponent,
+         * for the menus: the setup's left and right colour, and online the
+         * pair of the match from this device's seat - the guest plays the
+         * right colony.
+         */
+        playerColors: computed((): [string, string] => {
+          const seat = online();
+          return seat === null ? colors() : seatFirst(seat.colors, seat.seat);
+        }),
       };
     }
   ),
