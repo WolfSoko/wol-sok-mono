@@ -1,5 +1,11 @@
 import { effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { Subscription } from 'rxjs';
+import {
+  isMatchLevel,
+  MatchLevelPick,
+  PickedMatchLevel,
+  pickMatchLevel,
+} from '../state/match-level';
 import { GameCloud } from '../storage/game-cloud';
 import type { GameSocial, Waiting } from '../storage/game-social';
 import { SocialService } from '../social/social.service';
@@ -19,6 +25,15 @@ const LOOK_AT = 10;
 /** Where the search for an opponent stands. */
 export type MatchmakingState = 'idle' | 'searching' | 'found';
 
+/** Whose choice a matchmade match's level was, seen from this device. */
+export type MatchLevelReason = 'yours' | 'theirs' | 'random';
+
+/** The level of the match the matchmaking found, and why it is that one. */
+export interface MatchLevel {
+  levelId: string;
+  reason: MatchLevelReason;
+}
+
 /**
  * Finds an opponent for an online match without a server (ADR 0010): the
  * player waits in the queue, and the newer of two waiting players opens a
@@ -31,6 +46,9 @@ export class MatchmakerService {
   private readonly players = inject(SocialService);
   private readonly online = inject(OnlineMatchService);
   private readonly stateSignal = signal<MatchmakingState>('idle');
+  /** The level the player would like to play - null for any. */
+  private readonly level = signal<string | null>(null);
+  private readonly matchLevelSignal = signal<MatchLevel | null>(null);
   private watching: Subscription | null = null;
   private timers: ReturnType<typeof setInterval>[] = [];
   private joinTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -44,6 +62,11 @@ export class MatchmakerService {
   private run = 0;
 
   public readonly state = this.stateSignal.asReadonly();
+  /**
+   * The level of the match found and whose choice it was - null until a
+   * match is found, and when the claimer's build does not say.
+   */
+  public readonly matchLevel = this.matchLevelSignal.asReadonly();
   public readonly available = this.social !== null && this.online.available;
 
   public constructor() {
@@ -78,12 +101,33 @@ export class MatchmakerService {
     await this.search();
   }
 
+  /**
+   * Sets the level the player would like to play, null for any - and tells
+   * the queue at once while the player waits there, keeping their place.
+   */
+  public setLevel(level: string | null): void {
+    if (level === this.level()) {
+      return;
+    }
+    this.level.set(level);
+    const me = this.players.uid();
+    if (
+      me !== null &&
+      this.social !== null &&
+      this.stateSignal() === 'searching' &&
+      this.own.since !== null
+    ) {
+      this.social.setQueueLevel(me, level).catch(() => undefined);
+    }
+  }
+
   /** Stops looking - and gives up a room opened for a claimed player. */
   public async cancel(): Promise<void> {
     const wasFound = this.stateSignal() === 'found';
     this.stop();
     this.clearJoinTimeout();
     this.stateSignal.set('idle');
+    this.matchLevelSignal.set(null);
     if (wasFound && this.online.lobby().phase !== 'connected') {
       this.online.leave();
     }
@@ -101,9 +145,11 @@ export class MatchmakerService {
     this.clearJoinTimeout();
     const run = this.run;
     this.stateSignal.set('searching');
+    this.matchLevelSignal.set(null);
     this.own = { since: null, seen: null };
+    const level = this.level();
     try {
-      await social.enqueue(me);
+      await social.enqueue(me, level);
     } catch (error) {
       console.warn('Could not join the matchmaking queue', error);
       if (run === this.run) {
@@ -118,6 +164,10 @@ export class MatchmakerService {
       }
       return;
     }
+    if (this.level() !== level) {
+      // Changed while joining the queue.
+      social.setQueueLevel(me, this.level()).catch(() => undefined);
+    }
     this.watching = social.watchQueueEntry(me).subscribe((entry) => {
       if (entry === null || this.stateSignal() !== 'searching') {
         return;
@@ -125,6 +175,13 @@ export class MatchmakerService {
       this.own = { since: entry.since, seen: entry.seen };
       if (entry.claim !== null) {
         // An older player's turn ends here: a newer one opened a room.
+        // A level this build does not know comes with `start` all the same.
+        const { picked } = entry;
+        this.matchLevelSignal.set(
+          picked !== null && isMatchLevel(picked.levelId)
+            ? seenFrom('waiting', picked)
+            : null
+        );
         this.found();
         void social.leaveQueue(me);
         void this.online.join(entry.claim, { auto: true });
@@ -171,7 +228,13 @@ export class MatchmakerService {
         if (this.stateSignal() !== 'searching') {
           return;
         }
-        if (await social.claim(candidate.uid, me, code).catch(() => false)) {
+        const picked = await social
+          .claim(candidate.uid, me, code, (theirs) =>
+            pickMatchLevel(theirs, this.level(), Math.random)
+          )
+          .catch(() => null);
+        if (picked !== null) {
+          this.matchLevelSignal.set(seenFrom('claimer', picked));
           this.found();
           this.joinTimeout = setTimeout(() => {
             this.joinTimeout = null;
@@ -242,6 +305,20 @@ export class MatchmakerService {
       await this.social?.leaveQueue(me).catch(() => undefined);
     }
   }
+}
+
+/** The picked level as the player on `side` of the claim sees it. */
+function seenFrom(
+  side: Exclude<MatchLevelPick, 'random'>,
+  picked: PickedMatchLevel
+): MatchLevel {
+  const reason: MatchLevelReason =
+    picked.pick === 'random'
+      ? 'random'
+      : picked.pick === side
+        ? 'yours'
+        : 'theirs';
+  return { levelId: picked.levelId, reason };
 }
 
 /**

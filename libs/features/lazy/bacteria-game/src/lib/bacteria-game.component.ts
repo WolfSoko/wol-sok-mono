@@ -91,6 +91,7 @@ import {
   SimResolution,
   simScale,
 } from './state/arena-size';
+import { MatchmakerService } from './net/matchmaker.service';
 import { OnlineMatchService } from './net/online-match.service';
 import {
   InviteOffer,
@@ -127,14 +128,13 @@ import {
   getLevel,
   gridScale,
   Level,
-  LEVELS,
   levelBalance,
   levelMap,
   levelSize,
   ONLINE_LOCKS,
-  playableOnline,
   nextLevel,
 } from './state/levels';
+import { pickMatchLevel } from './state/match-level';
 import { DynamicWall, Rect } from './state/maps';
 import { harvestTarget, holdTarget } from './state/win-conditions';
 import { mapZones, Zone } from './state/zones';
@@ -214,6 +214,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
   private readonly online = inject(OnlineMatchService);
+  private readonly matchmaker = inject(MatchmakerService);
   /** The lobby of an online match, for the new game's start. */
   protected readonly onlineLobby = this.online.lobby;
   protected readonly onlineAvailable = this.online.available;
@@ -712,11 +713,14 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       .subscribe(() => this.startMatchmadeMatch());
   }
 
-  /** Starts an automatic online match, on a random level that plays online. */
+  /**
+   * Starts an automatic online match on the level the matchmaking picked -
+   * a random level that plays online if it has none.
+   */
   private startMatchmadeMatch(): void {
-    const levels = LEVELS.filter(playableOnline);
     this.gameStateService.setLevel(
-      levels[Math.floor(Math.random() * levels.length)].id
+      this.matchmaker.matchLevel()?.levelId ??
+        pickMatchLevel(null, null, Math.random).levelId
     );
     this.startGame();
   }

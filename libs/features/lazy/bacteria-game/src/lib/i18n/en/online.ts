@@ -4,6 +4,15 @@ export const online = {
     "Online matches need the game's cloud, which this build of the game does not connect to.",
   searching: 'Looking for an opponent…',
   find: 'Find an opponent',
+  /** The level the matchmaking asks for. */
+  level: 'Level',
+  anyLevel: 'Any level',
+  /** The level of the match the matchmaking found, and whose choice it was. */
+  levelPicked: {
+    yours: 'Level: {level} (your choice)',
+    theirs: "Level: {level} (opponent's choice)",
+    random: 'Level: {level} (random)',
+  },
   withCode: 'Play with a code',
   withCodeText:
     'Open a match and send the code to a friend, or type in theirs.',

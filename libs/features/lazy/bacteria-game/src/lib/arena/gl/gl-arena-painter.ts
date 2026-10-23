@@ -10,7 +10,10 @@ import { ArenaTheme } from '../arena-theme';
 import {
   cellDensity,
   ColonyLayer,
+  hatchPattern,
   jamDrops,
+  lookReach,
+  LOOKS,
   overcharge,
   StateLayer,
   strengthOf,
@@ -348,8 +351,8 @@ export class GlArenaPainter implements ArenaPainter {
 
   /**
    * One colony: its cells - uploaded from the CPU, or drawn straight from the
-   * GPU simulation's state - are blurred on the arena grid for the slime
-   * look, and drawn over the frame in a single pass.
+   * GPU simulation's state - are blurred on the arena grid for every look
+   * but the pixels, and drawn over the frame in a single pass.
    */
   private drawColony(frame: ArenaFrame, layer: ColonyLayer): void {
     const gl = this.gl;
@@ -363,7 +366,11 @@ export class GlArenaPainter implements ArenaPainter {
       layer.kind === 'cells'
         ? this.uploadCells(layer.bacterias, frame.balance)
         : layer.bounds;
-    if (bounds == null || !this.inView(bounds, MARGIN.colony)) {
+    // A look that reaches past the colony - the lattice looks, with their
+    // cells and tiles - is drawn that much further out. The blur boxes
+    // already cover it: past MARGIN.verticalBlur the density is zero.
+    const margin = MARGIN.colony + lookReach(frame.look, this.unit);
+    if (bounds == null || !this.inView(bounds, margin)) {
       return;
     }
     // Only the box around the colony is blurred and drawn - the rest of the
@@ -373,8 +380,8 @@ export class GlArenaPainter implements ArenaPainter {
       this.drawCellsFromState(layer, bounds, frame.balance);
     }
 
-    const slime = frame.look === 'slime';
-    if (slime) {
+    const blurred = LOOKS[frame.look].fromDensity;
+    if (blurred) {
       gl.disable(gl.BLEND);
       gl.viewport(0, 0, this.width, this.height);
       this.useFullscreen(programs.blur);
@@ -387,7 +394,7 @@ export class GlArenaPainter implements ArenaPainter {
       gl.enable(gl.BLEND);
     }
 
-    this.scissorCanvas(bounds, MARGIN.colony);
+    this.scissorCanvas(bounds, margin);
     const program = programs.colony;
     this.useFullscreen(program);
     bindTexture(gl, 0, blur[1].texture, program.uniforms['uDensity']);
@@ -401,7 +408,19 @@ export class GlArenaPainter implements ArenaPainter {
       color[2] / 255
     );
     gl.uniform1f(program.uniforms['uAlpha'], (color[3] ?? 255) / 255);
-    gl.uniform1i(program.uniforms['uLook'], slime ? 0 : 1);
+    gl.uniform1i(program.uniforms['uLook'], LOOKS[frame.look].glIndex);
+    gl.uniform1f(program.uniforms['uUnit'], this.unit);
+    gl.uniform1f(
+      program.uniforms['uPixel'],
+      this.view.width / this.canvasWidth
+    );
+    const hatch = hatchPattern(color);
+    gl.uniform3f(
+      program.uniforms['uHatch'],
+      hatch.direction[0],
+      hatch.direction[1],
+      hatch.cross ? 1 : 0
+    );
     gl.uniform1f(
       program.uniforms['uShimmer'],
       boostTarget == null ? -1 : frame.timeSec
@@ -412,7 +431,6 @@ export class GlArenaPainter implements ArenaPainter {
         boostTarget.x,
         boostTarget.y
       );
-      gl.uniform1f(program.uniforms['uUnit'], this.unit);
     }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.SCISSOR_TEST);
@@ -732,6 +750,8 @@ export class GlArenaPainter implements ArenaPainter {
         'uShimmer',
         'uBoostTarget',
         'uUnit',
+        'uPixel',
+        'uHatch',
       ]),
       shape: createProgram(gl, SHAPE_VERTEX, SHAPE_FRAGMENT, ['uView']),
       cells: createProgram(gl, FULLSCREEN_VERTEX, CELLS_FRAGMENT, [

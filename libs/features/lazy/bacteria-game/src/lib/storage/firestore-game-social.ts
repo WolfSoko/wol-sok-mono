@@ -7,6 +7,7 @@ import type {
 import { Observable } from 'rxjs';
 import type { Profile } from '../social/profile';
 import type { FirebaseConnection } from './firebase-connection';
+import type { MatchLevelPick, PickedMatchLevel } from '../state/match-level';
 import type { Challenge, GameSocial, QueueEntry, Waiting } from './game-social';
 
 /** How long an invitation link works. */
@@ -18,6 +19,9 @@ const QUEUE_TTL_MS = 10 * 60 * 1000;
 /** The letters of an invitation token - 32, so a byte maps to one evenly. */
 const TOKEN_LETTERS = 'abcdefghijkmnpqrstuvwxyz23456789';
 const TOKEN_LENGTH = 20;
+/** What the rules take as a queue entry's level. */
+const QUEUE_LEVEL = /^[a-z0-9-]{1,40}$/;
+const PICKS: readonly MatchLevelPick[] = ['waiting', 'claimer', 'random'];
 
 /**
  * The social data in Firestore - see ADR 0010 for the documents and
@@ -174,15 +178,27 @@ export class FirestoreGameSocial implements GameSocial {
     );
   }
 
-  public async enqueue(uid: string): Promise<void> {
+  public async enqueue(uid: string, level: string | null): Promise<void> {
     const { dbSdk } = this.connection;
-    // A fresh entry: the rules let an existing one change only `seen`.
+    // A fresh entry: the rules let an existing one change only `seen` and
+    // `level`.
     await dbSdk.deleteDoc(this.doc('queue', uid));
     await dbSdk.setDoc(this.doc('queue', uid), {
       since: dbSdk.serverTimestamp(),
       seen: dbSdk.serverTimestamp(),
       expireAt: dbSdk.Timestamp.fromMillis(Date.now() + QUEUE_TTL_MS),
+      level: readLevel(level),
       claim: null,
+    });
+  }
+
+  public async setQueueLevel(uid: string, level: string | null): Promise<void> {
+    const { dbSdk } = this.connection;
+    // With `seen` and `expireAt`, as the rules want it.
+    await dbSdk.updateDoc(this.doc('queue', uid), {
+      level: readLevel(level),
+      seen: dbSdk.serverTimestamp(),
+      expireAt: dbSdk.Timestamp.fromMillis(Date.now() + QUEUE_TTL_MS),
     });
   }
 
@@ -220,26 +236,46 @@ export class FirestoreGameSocial implements GameSocial {
       .sort((a, b) => (a.since ?? 0) - (b.since ?? 0));
   }
 
-  public async claim(uid: string, by: string, code: string): Promise<boolean> {
+  public async claim(
+    uid: string,
+    by: string,
+    code: string,
+    pick: (level: string | null) => PickedMatchLevel
+  ): Promise<PickedMatchLevel | null> {
     const { db, dbSdk } = this.connection;
     const ref = this.doc('queue', uid);
     return dbSdk.runTransaction(db, async (transaction) => {
       const entry = await transaction.get(ref);
       if (!entry.exists() || entry.get('claim') !== null) {
-        return false;
+        return null;
       }
-      transaction.update(ref, { claim: { by, code } });
-      return true;
+      // Their choice as it stands at the claim.
+      const picked = pick(readLevel(entry.get('level')));
+      transaction.update(ref, {
+        claim: { by, code, level: picked.levelId, pick: picked.pick },
+      });
+      return picked;
     });
   }
 
   private queueEntry(snapshot: DocumentSnapshot): QueueEntry {
     const claim: unknown = snapshot.get('claim');
-    const code = (claim as { code?: unknown } | null)?.code;
+    const { code, level, pick } = (claim ?? {}) as {
+      code?: unknown;
+      level?: unknown;
+      pick?: unknown;
+    };
     return {
       since: this.millis(snapshot, 'since'),
       seen: this.millis(snapshot, 'seen'),
+      level: readLevel(snapshot.get('level')),
       claim: typeof code === 'string' ? code : null,
+      picked:
+        typeof code === 'string' &&
+        typeof level === 'string' &&
+        PICKS.includes(pick as MatchLevelPick)
+          ? { levelId: level, pick: pick as MatchLevelPick }
+          : null,
     };
   }
 
@@ -294,6 +330,14 @@ export class FirestoreGameSocial implements GameSocial {
   private watchIds(query: Query<DocumentData>): Observable<string[]> {
     return this.watchQuery(query, (docs) => docs.map((doc) => doc.id));
   }
+}
+
+/**
+ * A queue entry's level - null for any, and for what the rules would not
+ * take as one.
+ */
+function readLevel(value: unknown): string | null {
+  return typeof value === 'string' && QUEUE_LEVEL.test(value) ? value : null;
 }
 
 /** A fresh invitation token - a letter per random byte, none favoured. */

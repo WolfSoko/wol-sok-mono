@@ -19,6 +19,7 @@ import {
   isMatchOn,
 } from './state/game.states';
 import { isLevelId } from './state/levels';
+import { isMatchLevel } from './state/match-level';
 import {
   HeadStart,
   isHeadStart,
@@ -73,18 +74,44 @@ export interface StoredSettings {
   vaporizeMs?: number;
   /** The language the player picked, absent to follow the browser. */
   language?: Language;
+  /** The level the player would like to meet opponents on, absent for any. */
+  matchLevel?: string;
 }
 
 /**
- * How the bacteria are drawn: as one gooey, glossy slime per colony, or as
- * the crisp pixels the game started with.
+ * How the bacteria are drawn - the skins, every one free to pick:
+ * - slime: one gooey, glossy slime per colony
+ * - cells: dense glossy cells of different sizes, like on the app icon
+ * - honeycomb: a comb of glossy hexagonal tiles with dark seams
+ * - crystal: irregular facets with bright seams, like shards of glass
+ * - neon: a dark body with its outline glowing in the colony's colour
+ * - ink: flat and hatched like a woodcut, with a thick outline - each
+ *   colony hatched its own way, so two are told apart without colour
+ * - pixels: the crisp pixels the game started with
  */
-export type BacteriaLook = 'slime' | 'pixels';
+export type BacteriaLook =
+  | 'slime'
+  | 'cells'
+  | 'honeycomb'
+  | 'crystal'
+  | 'neon'
+  | 'ink'
+  | 'pixels';
 
-export const BACTERIA_LOOKS: readonly { id: BacteriaLook; name: string }[] = [
-  { id: 'slime', name: 'Slime' },
-  { id: 'pixels', name: 'Pixels' },
+/** The looks in the order the settings offer them; their names are texts. */
+export const BACTERIA_LOOKS: readonly BacteriaLook[] = [
+  'slime',
+  'cells',
+  'honeycomb',
+  'crystal',
+  'neon',
+  'ink',
+  'pixels',
 ];
+
+export function isBacteriaLook(value: unknown): value is BacteriaLook {
+  return BACTERIA_LOOKS.some((look) => look === value);
+}
 
 export const SETTINGS_STORAGE_KEY = 'bacteria-game.settings';
 
@@ -109,7 +136,8 @@ const MATCH_SETUP_KEYS: readonly (keyof MatchSetup)[] = [
  * ladder, the arena, how the bacteria look, the resolutions, how the arena
  * vaporizes and for how long, whether the
  * frame rate is shown, whether the game makes sound, plays music and
- * effects and how loud, whether the phone vibrates and the language -
+ * effects and how loud, whether the phone vibrates, the level the
+ * matchmaking asks for and the language -
  * across visits, in the storage of this device - they stay with the device
  * whoever signs in.
  *
@@ -170,6 +198,8 @@ export class GameSettingsService {
 
   /** The language the player picked, null to follow the browser. */
   public readonly language = this.i18n.choice;
+  /** The level the matchmaking asks for, null for any level. */
+  public readonly matchLevel = signal<string | null>(null);
 
   constructor() {
     // Synchronous, so a change is told apart from a restored setup.
@@ -279,6 +309,12 @@ export class GameSettingsService {
     this.changed('vaporizeMs');
   }
 
+  /** Asks the matchmaking for a level that plays online, or any for null. */
+  public setMatchLevel(levelId: string | null): void {
+    this.matchLevel.set(isMatchLevel(levelId) ? levelId : null);
+    this.changed('matchLevel');
+  }
+
   /** Speaks a language from now on, or follows the browser for null. */
   public setLanguage(language: Language | null): void {
     this.i18n.setLanguage(language);
@@ -308,11 +344,8 @@ export class GameSettingsService {
       this.restoreMatchSetup(stored);
     }
     const restores = (key: keyof StoredSettings) => !this.touched.has(key);
-    if (
-      restores('look') &&
-      BACTERIA_LOOKS.some((option) => option.id === stored.look)
-    ) {
-      this.look.set(stored.look as BacteriaLook);
+    if (restores('look') && isBacteriaLook(stored.look)) {
+      this.look.set(stored.look);
     }
     if (
       restores('simResolution') &&
@@ -358,6 +391,9 @@ export class GameSettingsService {
     }
     if (restores('vibration') && typeof stored.vibration === 'boolean') {
       this.vibration.set(stored.vibration);
+    }
+    if (restores('matchLevel') && isMatchLevel(stored.matchLevel)) {
+      this.matchLevel.set(stored.matchLevel);
     }
     if (restores('language')) {
       this.i18n.setLanguage(
@@ -430,6 +466,7 @@ export class GameSettingsService {
       effectsVolume: this.effectsVolume(),
       vibration: this.vibration(),
       language: this.language() ?? undefined,
+      matchLevel: this.matchLevel() ?? undefined,
     };
     this.storage.write(SETTINGS_STORAGE_KEY, settings);
   }

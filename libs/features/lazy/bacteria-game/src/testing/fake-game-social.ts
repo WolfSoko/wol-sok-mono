@@ -1,5 +1,6 @@
 import { BehaviorSubject, map, Observable } from 'rxjs';
 import type { Profile } from '../lib/social/profile';
+import type { PickedMatchLevel } from '../lib/state/match-level';
 import type {
   Challenge,
   GamePresence,
@@ -108,9 +109,26 @@ export class FakeGameSocial implements GameSocial {
     this.remove(`players/${to}/challenges/${from}`);
   }
 
-  public async enqueue(uid: string): Promise<void> {
+  public async enqueue(
+    uid: string,
+    level: string | null = null
+  ): Promise<void> {
     const now = this.tick();
-    this.put(`queue/${uid}`, { since: now, seen: now, claim: null });
+    const entry: QueueEntry = {
+      since: now,
+      seen: now,
+      level,
+      claim: null,
+      picked: null,
+    };
+    this.put(`queue/${uid}`, entry);
+  }
+
+  public async setQueueLevel(uid: string, level: string | null): Promise<void> {
+    const entry = this.get(`queue/${uid}`) as QueueEntry | null;
+    if (entry !== null) {
+      this.put(`queue/${uid}`, { ...entry, level, seen: this.tick() });
+    }
   }
 
   public async stillWaiting(uid: string): Promise<void> {
@@ -140,13 +158,19 @@ export class FakeGameSocial implements GameSocial {
       .slice(0, limit);
   }
 
-  public async claim(uid: string, _by: string, code: string): Promise<boolean> {
+  public async claim(
+    uid: string,
+    _by: string,
+    code: string,
+    pick: (level: string | null) => PickedMatchLevel
+  ): Promise<PickedMatchLevel | null> {
     const entry = this.get(`queue/${uid}`) as QueueEntry | null;
     if (entry === null || entry.claim !== null) {
-      return false;
+      return null;
     }
-    this.put(`queue/${uid}`, { ...entry, claim: code });
-    return true;
+    const picked = pick(entry.level ?? null);
+    this.put(`queue/${uid}`, { ...entry, claim: code, picked });
+    return picked;
   }
 
   /** What is stored under a path - null for nothing. */
