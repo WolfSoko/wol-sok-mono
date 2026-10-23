@@ -310,6 +310,41 @@ Two players on two devices, through the game's Firebase project
 - Online matches earn nothing - no medallion, XP or totals - and leave no
   replay. Without a Firebase project the mode says it is not available.
 
+## Profiles, friends and matchmaking
+
+Online play has people behind it ([ADR 0010](../../../../docs/adr/0010-bacteria-wars-profiles-friends-matchmaking.md),
+[`social/`](./src/lib/social)):
+
+- **Profile** - in _Profile_, every player, guests too, has a name, a motto
+  and a picture: one of twelve bacteria the game draws
+  ([`avatar-art.ts`](./src/lib/social/avatar-art.ts)), their Google photo
+  once signed in with Google, or an image they upload, scaled down to
+  96 px in the browser ([`shrink-image.ts`](./src/lib/social/shrink-image.ts))
+  and kept in the profile document. A player without a saved profile goes
+  by a name and a bacterium made from their uid. The name and the picture
+  stand for the opponent in the match, the lobby and the result.
+- **Find an opponent** - the online lobby's first button. Players wait in a
+  queue in Firestore; the newer of two opens a room and hands its code to
+  the older one, who joins ([`MatchmakerService`](./src/lib/net/matchmaker.service.ts)).
+  The host starts at once on a random level that plays online.
+- **Friends** - "Add as a friend" on the result of an online match sends a
+  request; the other player accepts it in their lobby. _Invite a friend_
+  shares a link (`#friend=<token>`, a week long); whoever opens it is asked
+  to add the inviter. Friends are listed in the lobby with their status,
+  and the player can remove one there.
+- **Online status** - friends who share it show as online or playing, from
+  the Realtime Database, which clears it the moment a connection drops
+  ([`RtdbGamePresence`](./src/lib/storage/rtdb-game-presence.ts)). The
+  profile has the switch.
+- **Challenges** - _Challenge_ on an online friend opens a room and leaves
+  its code with them; they see it on any menu screen and _Play_ joins it.
+- Playing with a code stays as it was.
+
+The project needs a Realtime Database instance whose URL is the web app
+config's `databaseURL`; without one the game shows no online status.
+`database.rules.json` and the TTL policies of queue entries, challenges and
+invitations deploy with the other rules.
+
 ## Two-player rivalry
 
 Two players on one screen get a loop of their own

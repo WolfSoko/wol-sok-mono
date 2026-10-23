@@ -10,7 +10,7 @@ import { parseStoredJson } from '../storage/stored-json';
  * change an older game could not follow. Both sides also need the same
  * balance table, or the same inputs play another match.
  */
-export const NET_VERSION = `1/${BALANCE_VERSION}`;
+export const NET_VERSION = `2/${BALANCE_VERSION}`;
 
 /** What one seat puts in before one tick, on the engine's input grid. */
 export interface TickInput {
@@ -40,8 +40,11 @@ export interface OnlineStart extends OnlineSetup {
  * never reaches the next.
  */
 export type NetMessage =
-  /** The first word each side says: which version of the game it runs. */
-  | { k: 'hello'; v: string }
+  /**
+   * The first word each side says: which version of the game it runs, and
+   * who plays it - their uid, for their profile.
+   */
+  | { k: 'hello'; v: string; id: string | null }
   /** The host changed the setup of the next match. */
   | ({ k: 'setup' } & OnlineSetup)
   /** The host starts a match. */
@@ -69,10 +72,13 @@ export function parseNetMessage(data: unknown): NetMessage | null {
     return null;
   }
   switch (value['k']) {
-    case 'hello':
-      return typeof value['v'] === 'string'
-        ? { k: 'hello', v: value['v'] }
-        : null;
+    case 'hello': {
+      const { v, id } = value;
+      if (typeof v !== 'string') {
+        return null;
+      }
+      return { k: 'hello', v, id: isPlayerId(id) ? id : null };
+    }
     case 'setup': {
       const setup = parseSetup(value);
       return setup === null ? null : { k: 'setup', ...setup };
@@ -135,6 +141,11 @@ function parsePair(value: unknown, limit: number): [number, number] | null {
 
 function isWithin(value: unknown, limit: number): value is number {
   return typeof value === 'number' && Math.abs(value) <= limit;
+}
+
+/** True for something that can be a Firebase uid. */
+function isPlayerId(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);
 }
 
 /** An integer from 0 to `max`. */

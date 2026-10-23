@@ -47,17 +47,23 @@ test('two devices play an online match, and the one left wins', async ({
     .fill((await code.textContent()) ?? '');
   await guest.page.getByRole('button', { name: 'Join' }).click();
 
-  await expect(lobby(host.page)).toContainText('Connected - you play');
-  await expect(lobby(guest.page)).toContainText('Connected - you play');
+  await expect(lobby(host.page)).toContainText(/Connected( to .+)? - you play/);
+  await expect(lobby(guest.page)).toContainText(
+    /Connected( to .+)? - you play/
+  );
   // Only the host starts.
   await expect(guest.po.startCta).toHaveCount(0);
   await host.po.startCta.click();
 
-  // Both run the match, each with the other colony as its opponent.
+  // Both run the match, each with its own colony as "You" and the other
+  // under its player's name.
   for (const { po } of [host, guest]) {
     await expect(po.pauseCta).toBeVisible();
     await expect(
-      po.colonyNames.filter({ hasText: 'Opponent' })
+      po.colonyNames.filter({ hasText: /^\s*You\s*$/ })
+    ).not.toHaveCount(0);
+    await expect(
+      po.colonyNames.filter({ hasText: /Player \d{4}/ })
     ).not.toHaveCount(0);
   }
   await host.page.waitForTimeout(2000);

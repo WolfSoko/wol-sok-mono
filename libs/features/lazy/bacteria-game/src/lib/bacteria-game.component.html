@@ -201,6 +201,13 @@
               [style.--bw-on-player]="onPlayerColor()"
             >
               <feat-lazy-bac-game-swarm [colors]="colonyRgb()" />
+              <feat-lazy-bac-game-social-notices
+                class="social-notices"
+                [invite]="inviteOffer()"
+                [canPlay]="onlineLobby().phase === 'idle'"
+                (play)="playChallenge($event)"
+                (inviteDone)="inviteOffer.set(null)"
+              />
               @switch (open) {
                 @case ("menu") {
                   <feat-lazy-bac-game-main-menu

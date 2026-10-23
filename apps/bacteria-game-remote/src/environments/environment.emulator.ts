@@ -14,6 +14,7 @@ export const environment: Environment = {
       apiKey: 'demo-key',
       authDomain: 'demo-bacteria-wars.firebaseapp.com',
       projectId: 'demo-bacteria-wars',
+      databaseURL: 'https://demo-bacteria-wars-default-rtdb.firebaseio.com',
     },
     emulators: {
       // On the game's own host: the Google popup hands the sign-in to the
@@ -22,6 +23,7 @@ export const environment: Environment = {
       authUrl: 'http://localhost:9399',
       firestoreHost: '127.0.0.1',
       firestorePort: 8380,
+      databasePort: 9410,
     },
   },
 };

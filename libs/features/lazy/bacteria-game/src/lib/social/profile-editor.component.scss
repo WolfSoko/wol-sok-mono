@@ -1,0 +1,88 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.fields {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+
+  mat-form-field {
+    flex: 1 1 12rem;
+  }
+}
+
+.label {
+  font-size: 0.8rem;
+  color: var(--bw-muted);
+}
+
+.pictures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.picture {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: none;
+  color: var(--bw-soft);
+  cursor: pointer;
+
+  &[aria-checked='true'] {
+    border-color: var(--bw-gold);
+  }
+
+  &:focus-visible,
+  &:focus-within {
+    outline: 3px solid var(--bw-gold);
+    outline-offset: 1px;
+  }
+}
+
+.upload {
+  border: 2px dashed var(--bw-line-strong);
+
+  input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.note {
+  font-size: 0.9rem;
+  color: var(--bw-gold);
+}

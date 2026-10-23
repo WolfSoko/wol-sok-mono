@@ -179,7 +179,7 @@
     "firebase-emulators": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "firebase emulators:start --only auth,firestore --project demo-bacteria-wars --config firebase.{projectName}.json"
+        "command": "firebase emulators:start --only auth,firestore,database --project demo-bacteria-wars --config firebase.{projectName}.json"
       },
       "continuous": true
     },
@@ -193,7 +193,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["build"],
       "options": {
-        "command": "nx run {projectName}:firebase deploy --only hosting,firestore"
+        "command": "nx run {projectName}:firebase deploy --only hosting,firestore,database"
       }
     },
     "icons": {

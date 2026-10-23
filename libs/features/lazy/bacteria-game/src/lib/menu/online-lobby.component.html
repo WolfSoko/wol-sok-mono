@@ -4,49 +4,91 @@
     connect to.
   </p>
 } @else {
+  @let searching = matchmaker.state() !== "idle";
   @switch (lobby().phase) {
     @case ("idle") {
-      <p class="text">
-        Open a match and send the code to a friend, or type in theirs. You play
-        on two devices, each with its own colony.
-      </p>
-      <button mat-flat-button type="button" class="host" (click)="host.emit()">
-        <mat-icon>wifi_tethering</mat-icon>
-        Open a match
-      </button>
-      <form class="join" (submit)="submit($event)">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Code from a friend</mat-label>
-          <input
-            matInput
-            name="code"
-            autocomplete="off"
-            autocapitalize="characters"
-            spellcheck="false"
-            [maxLength]="codeLength + 2"
-            [value]="typed()"
-            (input)="type($event)"
-          />
-        </mat-form-field>
-        <button mat-stroked-button type="submit">
-          <mat-icon>login</mat-icon>
-          Join
+      @if (searching) {
+        <p class="status">
+          <mat-spinner diameter="20" />
+          Looking for an opponent…
+        </p>
+      } @else {
+        @if (matchmaker.available) {
+          <button
+            mat-flat-button
+            type="button"
+            class="host find"
+            (click)="matchmaker.find()"
+          >
+            <mat-icon>travel_explore</mat-icon>
+            Find an opponent
+          </button>
+        }
+
+        @if (social.available) {
+          <feat-lazy-bac-game-friends (challenge)="challenge($event)" />
+        }
+
+        <span class="label">Play with a code</span>
+        <p class="text">
+          Open a match and send the code to a friend, or type in theirs.
+        </p>
+        <button mat-stroked-button type="button" (click)="host.emit()">
+          <mat-icon>wifi_tethering</mat-icon>
+          Open a match
         </button>
-      </form>
+        <form class="join" (submit)="submit($event)">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Code from a friend</mat-label>
+            <input
+              matInput
+              name="code"
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              [maxLength]="codeLength + 2"
+              [value]="typed()"
+              (input)="type($event)"
+            />
+          </mat-form-field>
+          <button mat-stroked-button type="submit">
+            <mat-icon>login</mat-icon>
+            Join
+          </button>
+        </form>
+      }
     }
     @case ("opening") {
       <p class="status">
         <mat-spinner diameter="20" />
-        Opening a match…
+        {{
+          searching ? "Opponent found - opening the match…" : "Opening a match…"
+        }}
       </p>
     }
     @case ("waiting") {
-      <span class="label">Send your friend this code</span>
-      <p class="code" aria-live="polite">{{ lobby().code }}</p>
-      <p class="status">
-        <mat-spinner diameter="20" />
-        Waiting for them to join…
-      </p>
+      @if (challenged(); as friend) {
+        <p class="status">
+          <feat-lazy-bac-game-avatar
+            [avatar]="friend.card.avatar"
+            [label]="friend.card.name"
+            [size]="32"
+          />
+          Waiting for {{ friend.card.name }} to accept…
+        </p>
+      } @else if (searching) {
+        <p class="status">
+          <mat-spinner diameter="20" />
+          Looking for an opponent…
+        </p>
+      } @else {
+        <span class="label">Send your friend this code</span>
+        <p class="code" aria-live="polite">{{ lobby().code }}</p>
+        <p class="status">
+          <mat-spinner diameter="20" />
+          Waiting for them to join…
+        </p>
+      }
     }
     @case ("connecting") {
       <p class="status">
@@ -56,8 +98,17 @@
     }
     @case ("connected") {
       <p class="status connected">
-        <mat-icon aria-hidden="true">link</mat-icon>
-        Connected - you play {{ ownColony() }}.
+        @if (social.opponent(); as opponent) {
+          <feat-lazy-bac-game-avatar
+            [avatar]="opponent.card.avatar"
+            [label]="opponent.card.name"
+            [size]="32"
+          />
+          Connected to {{ opponent.card.name }} - you play {{ ownColony() }}.
+        } @else {
+          <mat-icon aria-hidden="true">link</mat-icon>
+          Connected - you play {{ ownColony() }}.
+        }
       </p>
       <p class="text">
         @if (lobby().role === "host") {
@@ -71,8 +122,8 @@
   @if (lobby().notice; as notice) {
     <p class="notice" role="status">{{ notice }}</p>
   }
-  @if (lobby().phase !== "idle") {
-    <button mat-button type="button" class="leave" (click)="leave.emit()">
+  @if (lobby().phase !== "idle" || searching) {
+    <button mat-button type="button" class="leave" (click)="cancel()">
       <mat-icon>close</mat-icon>
       {{ lobby().phase === "connected" ? "Leave" : "Cancel" }}
     </button>

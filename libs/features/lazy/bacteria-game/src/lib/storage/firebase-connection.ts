@@ -5,9 +5,11 @@ import {
   provideFirebaseApp,
 } from '@angular/fire/app';
 import { Auth, provideAuth } from '@angular/fire/auth';
+import { Database, provideDatabase } from '@angular/fire/database';
 import { Firestore, provideFirestore } from '@angular/fire/firestore';
 import * as authSdk from 'firebase/auth';
 import * as dbSdk from 'firebase/firestore';
+import * as rtdbSdk from 'firebase/database';
 import type { GameCloudOptions } from './game-cloud';
 
 /** The game's signed-in user and database, with the SDK calls on them. */
@@ -16,6 +18,9 @@ export interface FirebaseConnection {
   authSdk: typeof authSdk;
   db: Firestore;
   dbSdk: typeof dbSdk;
+  /** The Realtime Database, for the online status - null without one. */
+  rtdb: Database | null;
+  rtdbSdk: typeof rtdbSdk;
 }
 
 /**
@@ -68,6 +73,23 @@ export function provideFirebase(
       }
       return db;
     }),
+    // Only with a database in the config: the online status needs one,
+    // nothing else does.
+    ...(options.firebase.databaseURL === undefined
+      ? []
+      : [
+          provideDatabase((injector) => {
+            const rtdb = rtdbSdk.getDatabase(injector.get(FirebaseApp));
+            if (emulators?.databasePort !== undefined) {
+              rtdbSdk.connectDatabaseEmulator(
+                rtdb,
+                emulators.firestoreHost,
+                emulators.databasePort
+              );
+            }
+            return rtdb;
+          }),
+        ]),
   ];
 }
 
@@ -82,5 +104,12 @@ export function provideFirebase(
  * callback, the popup resolver class included.
  */
 export function injectFirebaseConnection(): FirebaseConnection {
-  return { auth: inject(Auth), authSdk, db: inject(Firestore), dbSdk };
+  return {
+    auth: inject(Auth),
+    authSdk,
+    db: inject(Firestore),
+    dbSdk,
+    rtdb: inject(Database, { optional: true }),
+    rtdbSdk,
+  };
 }

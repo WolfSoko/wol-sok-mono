@@ -6,6 +6,9 @@ import type { GameStorage } from './game-storage';
 import type { FirebaseConnection } from './firebase-connection';
 import { FirebaseGameAccount } from './firebase-game-account';
 import { FirestoreGameRooms } from './firestore-game-rooms';
+import { FirestoreGameSocial } from './firestore-game-social';
+import type { GamePresence, GameSocial } from './game-social';
+import { RtdbGamePresence } from './rtdb-game-presence';
 import { FirestoreGameStorage } from './firestore-game-storage';
 import type { GameRooms } from './game-rooms';
 import { LocalGameStorage } from './local-game-storage';
@@ -23,6 +26,8 @@ export interface GameCloudOptions {
     authUrl: string;
     firestoreHost: string;
     firestorePort: number;
+    /** The Realtime Database emulator, on the Firestore emulator's host. */
+    databasePort?: number;
   };
 }
 
@@ -39,6 +44,8 @@ export class GameCloud {
     account: GameAccount;
     storage: GameStorage;
     rooms: GameRooms;
+    social: GameSocial;
+    presence: GamePresence | null;
   } | null = null;
   /** Whether a service has asked already - a project comes too late then. */
   private asked = false;
@@ -69,6 +76,16 @@ export class GameCloud {
     return this.connected()?.rooms ?? null;
   }
 
+  /** Profiles, friends and matchmaking - null without a project. */
+  public social(): GameSocial | null {
+    return this.connected()?.social ?? null;
+  }
+
+  /** Who is online - null without a project or its Realtime Database. */
+  public presence(): GamePresence | null {
+    return this.connected()?.presence ?? null;
+  }
+
   private connected() {
     this.asked = true;
     const { connection } = this;
@@ -81,6 +98,11 @@ export class GameCloud {
         account,
         storage: new FirestoreGameStorage(connection, account.playerIds),
         rooms: new FirestoreGameRooms(connection, account.playerIds),
+        social: new FirestoreGameSocial(connection),
+        presence:
+          connection.rtdb == null
+            ? null
+            : new RtdbGamePresence(connection, connection.rtdb),
       };
     }
     return this.backend;

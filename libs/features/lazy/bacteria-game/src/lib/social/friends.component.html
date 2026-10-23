@@ -1,0 +1,98 @@
+@if (social.requests().length > 0) {
+  <span class="label">Friend requests</span>
+  <ul class="people">
+    @for (caller of social.requests(); track caller.uid) {
+      <li class="person">
+        <feat-lazy-bac-game-avatar
+          [avatar]="caller.card.avatar"
+          [label]="caller.card.name"
+        />
+        <span class="who">
+          <span class="name">{{ caller.card.name }}</span>
+          <span class="motto">wants to be friends</span>
+        </span>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="busy()"
+          (click)="accept(caller.uid)"
+        >
+          Accept
+        </button>
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Decline"
+          [disabled]="busy()"
+          (click)="decline(caller.uid)"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </li>
+    }
+  </ul>
+}
+
+<span class="label">Friends</span>
+@if (social.friends().length === 0) {
+  <p class="text">
+    No friends yet. Invite one, or add your opponent after an online match.
+  </p>
+} @else {
+  <ul class="people">
+    @for (friend of social.friends(); track friend.uid) {
+      <li
+        class="person"
+        [attr.data-status]="
+          friend.mutual ? (friend.status ?? 'offline') : 'pending'
+        "
+      >
+        <span class="face">
+          <feat-lazy-bac-game-avatar
+            [avatar]="friend.card.avatar"
+            [label]="friend.card.name"
+          />
+          <span class="dot" aria-hidden="true"></span>
+        </span>
+        <span class="who">
+          <span class="name">{{ friend.card.name }}</span>
+          <span class="motto">{{ statusLine(friend) }}</span>
+        </span>
+        @if (friend.mutual && friend.status === "online") {
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="!canChallenge()"
+            (click)="challenge.emit(friend)"
+          >
+            <mat-icon>sports_kabaddi</mat-icon>
+            Challenge
+          </button>
+        }
+        <button
+          mat-icon-button
+          type="button"
+          [attr.aria-label]="'Remove ' + friend.card.name"
+          [disabled]="busy()"
+          (click)="remove(friend)"
+        >
+          <mat-icon>person_remove</mat-icon>
+        </button>
+      </li>
+    }
+  </ul>
+}
+
+<button
+  mat-button
+  type="button"
+  class="invite"
+  [disabled]="busy()"
+  (click)="invite()"
+>
+  <mat-icon>person_add</mat-icon>
+  Invite a friend
+</button>
+@if (note(); as text) {
+  <p class="note" role="status">{{ text }}</p>
+}

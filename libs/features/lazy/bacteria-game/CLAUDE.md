@@ -37,6 +37,13 @@ storage until then. Settings stay with the device either way.
   `FirestoreGameRooms`), asked of `GameCloud.rooms()` - null without a
   project. The match itself goes device to device (`net/`), never through
   Firestore.
+- Profiles, friends, challenges and the matchmaking queue go through the
+  `GameSocial` port (`storage/game-social.ts`, `FirestoreGameSocial`), the
+  online status through `GamePresence` (`RtdbGamePresence`, the Realtime
+  Database) - `GameCloud.social()` and `.presence()`, null without a
+  project or its database. `SocialService` is the one place the game reads
+  them from; specs use `FakeGameSocial` and `FakeGamePresence`
+  (`src/testing/`).
 - Only `firebase-connection.ts` imports Firebase at runtime, and only
   `provide-game-cloud.ts` imports that file; the rest takes types only, so
   the specs never load the SDK.

@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   output,
 } from '@angular/core';
@@ -9,6 +10,8 @@ import { DatePipe } from '@angular/common';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { AccountComponent } from './account.component';
 import { ScreenHeaderComponent } from './screen-header.component';
+import { ProfileEditorComponent } from '../social/profile-editor.component';
+import { SocialService } from '../social/social.service';
 import { BOT_DIFFICULTIES } from '../state/bot-controller';
 import { LEVELS } from '../state/levels';
 import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
@@ -33,6 +36,7 @@ import {
     AccountComponent,
     DatePipe,
     MedallionComponent,
+    ProfileEditorComponent,
     RankStandingComponent,
     ScreenHeaderComponent,
   ],
@@ -41,6 +45,9 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileComponent {
+  /** The online profile is edited here, where the game has its cloud. */
+  protected readonly social = inject(SocialService);
+
   /** Every medallion held, by level id, then by difficulty. */
   public readonly medals = input<Progress['medals']>({});
   /** The day each achievement was earned. */
