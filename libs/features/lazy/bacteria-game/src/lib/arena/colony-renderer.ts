@@ -7,6 +7,7 @@ import {
   emptyBounds,
   growBounds,
   Point,
+  wrap,
 } from '../state/geometry';
 import { Rect } from '../state/maps';
 import { Bacteria } from '../state/player.model';
@@ -499,58 +500,62 @@ const {
 } = LOOK_TUNING;
 
 /**
- * How far past the colony a lattice look's cells can reach, in base cells:
- * a cell's centre lies within a cell of the colony, and its body reaches
- * `radius` base cells from there.
+ * The lattice a look's cells or bubbles sit on: its spacing in base cells,
+ * and the cells' radius in spacings, varied by lattice point from `min` up
+ * by `vary`.
+ */
+export interface LatticeCells {
+  spacing: number;
+  radius: number;
+  min: number;
+  vary: number;
+}
+
+export const CELLS: LatticeCells = {
+  spacing: CELL_SPACING,
+  radius: CELL_RADIUS,
+  min: CELL_RADIUS_MIN,
+  vary: CELL_RADIUS_VARY,
+};
+export const BUBBLES: LatticeCells = {
+  spacing: BUBBLE_SPACING,
+  radius: BUBBLE_RADIUS,
+  min: BUBBLE_RADIUS_MIN,
+  vary: BUBBLE_RADIUS_VARY,
+};
+
+/**
+ * How far past the colony a lattice look reaches, in base cells: a cell's
+ * centre lies within a cell of the colony, and its body reaches `radius`
+ * base cells from there.
  */
 function latticeReach(radius: number): number {
   return Math.ceil(radius) + 1;
 }
 
-/** The cells and the tiles: the biggest cell, or a facet strayed and filled to the next centre. */
-const LATTICE_REACH = latticeReach(
-  Math.max(
-    CELL_SPACING * CELL_RADIUS * (CELL_RADIUS_MIN + CELL_RADIUS_VARY),
-    TILE_SPACING * (0.5 + CRYSTAL_JITTER)
-  )
-);
-const BUBBLE_REACH = latticeReach(
-  BUBBLE_SPACING * BUBBLE_RADIUS * (BUBBLE_RADIUS_MIN + BUBBLE_RADIUS_VARY)
-);
+/** The biggest cell of a lattice. */
+function cellsReach({ spacing, radius, min, vary }: LatticeCells): number {
+  return latticeReach(spacing * radius * (min + vary));
+}
+
+/** A facet strayed from its lattice point and filled to the next centre. */
+const TILES_REACH = latticeReach(TILE_SPACING * (0.5 + CRYSTAL_JITTER));
 
 export const LOOKS: Readonly<Record<BacteriaLook, LookDescription>> = {
   slime: { fromDensity: true, reach: 0, glIndex: 0 },
   pixels: { fromDensity: false, reach: 0, glIndex: 1 },
-  cells: { fromDensity: true, reach: LATTICE_REACH, glIndex: 2 },
-  honeycomb: { fromDensity: true, reach: LATTICE_REACH, glIndex: 3 },
-  crystal: { fromDensity: true, reach: LATTICE_REACH, glIndex: 4 },
+  cells: { fromDensity: true, reach: cellsReach(CELLS), glIndex: 2 },
+  honeycomb: { fromDensity: true, reach: TILES_REACH, glIndex: 3 },
+  crystal: { fromDensity: true, reach: TILES_REACH, glIndex: 4 },
   neon: { fromDensity: true, reach: 0, glIndex: 5 },
   ink: { fromDensity: true, reach: 0, glIndex: 6 },
-  bubbles: { fromDensity: true, reach: BUBBLE_REACH, glIndex: 7 },
+  bubbles: { fromDensity: true, reach: cellsReach(BUBBLES), glIndex: 7 },
 };
 
 /** How many cells past the colony a look reaches on a grid of that unit. */
 export function lookReach(look: BacteriaLook, unit: number): number {
   return Math.ceil(LOOKS[look].reach * unit);
 }
-
-/** How big the cells of a lattice look are, in spacings, and how they vary. */
-interface CellShape {
-  radius: number;
-  min: number;
-  vary: number;
-}
-
-const CELL_SHAPE: CellShape = {
-  radius: CELL_RADIUS,
-  min: CELL_RADIUS_MIN,
-  vary: CELL_RADIUS_VARY,
-};
-const BUBBLE_SHAPE: CellShape = {
-  radius: BUBBLE_RADIUS,
-  min: BUBBLE_RADIUS_MIN,
-  vary: BUBBLE_RADIUS_VARY,
-};
 
 /** One cell of the cells look: its centre in arena cells and its radius. */
 export interface CellBubble {
@@ -573,12 +578,14 @@ function cellLatticeOffset(row: number, spacing: number): number {
 export function cellBubble(
   col: number,
   row: number,
-  spacing: number,
+  cells: LatticeCells,
+  /** Arena cells per base cell - the cells are as big on every grid. */
+  unit: number,
   density: Float32Array,
   width: number,
-  height: number,
-  shape: CellShape = CELL_SHAPE
+  height: number
 ): CellBubble | null {
+  const spacing = cells.spacing * unit;
   const rowHeight = spacing * CELL_ROW_HEIGHT;
   const x =
     (col + 0.5) * spacing +
@@ -596,9 +603,9 @@ export function cellBubble(
     smoothstep(CELL_MIN, CELL_MIN + CELL_GROW, d);
   const radius =
     spacing *
-    shape.radius *
+    cells.radius *
     size *
-    (shape.min + shape.vary * hash(col, row, 3));
+    (cells.min + cells.vary * hash(col, row, 3));
   return { x, y, radius };
 }
 
@@ -912,6 +919,56 @@ function lookPalette(color: readonly number[]) {
 }
 
 /**
+ * The cell of a lattice look the pixel is deepest in, of the nine lattice
+ * points around - the index of its values, or -1 outside every cell - with
+ * the square of the pixel's unit distance and its unit disc coordinates in
+ * `found`. A lattice entry starts with the cell's centre x, y and radius,
+ * 0 for none. The shader's `nearestBubble` is its twin.
+ */
+function nearestBubble(
+  lattice: Lattice,
+  x: number,
+  y: number,
+  around: Int32Array,
+  found: Float64Array
+): number {
+  const { values } = lattice;
+  let bestQ2 = Infinity;
+  let bestAt = -1;
+  const count = latticeNeighbours(lattice, x, y, around);
+  for (let n = 0; n < count; n++) {
+    const at = around[n];
+    const radius = values[at + 2];
+    if (radius <= 0) {
+      continue;
+    }
+    const vx = (x - values[at]) / radius;
+    const vy = (y - values[at + 1]) / radius;
+    const q2 = vx * vx + vy * vy;
+    if (q2 < bestQ2) {
+      bestQ2 = q2;
+      bestAt = at;
+      found[1] = vx;
+      found[2] = vy;
+    }
+  }
+  found[0] = bestQ2;
+  return bestAt;
+}
+
+/**
+ * How much of a lattice cell covers a pixel at that unit distance squared:
+ * anti-aliased at the rim, one layer pixel wide, and nothing where the
+ * density under the pixel is too thin for a cell to float over.
+ */
+function cellEdge(q2: number, radius: number, d: number): number {
+  return (
+    clamp((1 - Math.sqrt(q2)) * radius * SLIME_SCALE + 0.5, 0, 1) *
+    smoothstep(CELL_CLIP_START, CELL_CLIP_END, d)
+  );
+}
+
+/**
  * The gradient of the icon's cells on a unit disc, at `(ux, uy)`: a light
  * spot at the top left, the body colour around it and a dark rim.
  */
@@ -954,9 +1011,9 @@ export type LookPainter = (
   shimmer: BoostShimmer | null,
   unit: number,
   region: CellBounds,
-  latticeRegion?: CellBounds,
+  latticeRegion: CellBounds,
   /** Seconds of animation, for a look that moves. */
-  timeSec?: number
+  timeSec: number
 ) => void;
 
 /**
@@ -974,17 +1031,16 @@ export const paintCells: LookPainter = (
   shimmer,
   unit,
   region,
-  latticeRegion = region
+  latticeRegion
 ) => {
   const palette = lookPalette(color);
-  const spacing = CELL_SPACING * unit;
   // Each lattice point's cell: centre x, y and radius, 0 for none.
   const lattice = buildLattice(
     latticeRegion,
-    spacing,
+    CELLS.spacing * unit,
     3,
     (col, row, at, values) => {
-      const bubble = cellBubble(col, row, spacing, density, width, height);
+      const bubble = cellBubble(col, row, CELLS, unit, density, width, height);
       if (bubble != null) {
         values[at] = bubble.x;
         values[at + 1] = bubble.y;
@@ -994,6 +1050,7 @@ export const paintCells: LookPainter = (
   );
   const { values } = lattice;
   const around = new Int32Array(9);
+  const found = new Float64Array(3);
 
   paintLook(
     data8,
@@ -1005,42 +1062,12 @@ export const paintCells: LookPainter = (
     region,
     CELL_CLIP_START,
     (x, y, d, out) => {
-      // The cell the pixel is deepest in, of the nine lattice points around.
-      let bestQ2 = Infinity;
-      let bestRadius = 0;
-      let ux = 0;
-      let uy = 0;
-      const count = latticeNeighbours(lattice, x, y, around);
-      for (let n = 0; n < count; n++) {
-        const at = around[n];
-        const radius = values[at + 2];
-        if (radius <= 0) {
-          continue;
-        }
-        const vx = (x - values[at]) / radius;
-        const vy = (y - values[at + 1]) / radius;
-        const q2 = vx * vx + vy * vy;
-        if (q2 < bestQ2) {
-          bestQ2 = q2;
-          bestRadius = radius;
-          ux = vx;
-          uy = vy;
-        }
-      }
-
+      const at = nearestBubble(lattice, x, y, around, found);
       const baseAlpha =
         BASE_ALPHA * smoothstep(SLIME_EDGE_START, SLIME_EDGE_END, d);
-      // Anti-aliased at the rim, one layer pixel wide.
-      const cellAlpha =
-        bestRadius > 0
-          ? clamp(
-              (1 - Math.sqrt(bestQ2)) * bestRadius * SLIME_SCALE + 0.5,
-              0,
-              1
-            ) * smoothstep(CELL_CLIP_START, CELL_CLIP_END, d)
-          : 0;
+      const cellAlpha = at < 0 ? 0 : cellEdge(found[0], values[at + 2], d);
       if (cellAlpha > 0) {
-        sphereShade(ux, uy, palette, out);
+        sphereShade(found[1], found[2], palette, out);
       }
       return overBase(out, cellAlpha, palette.base, baseAlpha);
     }
@@ -1065,7 +1092,7 @@ function paintTiles(crystal: boolean): LookPainter {
     shimmer,
     unit,
     region,
-    latticeRegion = region
+    latticeRegion
   ) => {
     const palette = lookPalette(color);
     const { rgb, light } = palette;
@@ -1333,6 +1360,10 @@ function dnaAt(
       continue;
     }
     const across = -dx * sin + dy * cos;
+    // Strands and rungs stay within the helix's amplitude.
+    if (Math.abs(across) > DNA_AMPLITUDE + DNA_WIDTH + aa) {
+      continue;
+    }
     const phase = along * DNA_TWIST + timeSec;
     const wave = DNA_AMPLITUDE * Math.sin(phase);
     // The two backbones, and a rung between them every half turn.
@@ -1343,7 +1374,7 @@ function dnaAt(
     const turn = phase + Math.PI / 2;
     const rung =
       Math.abs(across) <= Math.abs(wave) + DNA_WIDTH &&
-      turn - Math.floor(turn / Math.PI) * Math.PI < DNA_RUNG
+      wrap(turn, Math.PI) < DNA_RUNG
         ? 0.8
         : 0;
     const ends = 1 - smoothstep(halfLength - 0.08, halfLength, Math.abs(along));
@@ -1367,27 +1398,25 @@ export const paintBubbles: LookPainter = (
   shimmer,
   unit,
   region,
-  latticeRegion = region,
-  timeSec = 0
+  latticeRegion,
+  timeSec
 ) => {
-  const palette = lookPalette(color);
-  const { light, base } = palette;
-  const spacing = BUBBLE_SPACING * unit;
+  const { light, base } = lookPalette(color);
   // Each lattice point's bubble: centre x, y, radius (0 for none), and
   // the snippets floating inside at this moment.
   const lattice = buildLattice(
     latticeRegion,
-    spacing,
+    BUBBLES.spacing * unit,
     BUBBLE_STRIDE,
     (col, row, at, values) => {
       const bubble = cellBubble(
         col,
         row,
-        spacing,
+        BUBBLES,
+        unit,
         density,
         width,
-        height,
-        BUBBLE_SHAPE
+        height
       );
       if (bubble != null) {
         values[at] = bubble.x;
@@ -1399,6 +1428,7 @@ export const paintBubbles: LookPainter = (
   );
   const { values } = lattice;
   const around = new Int32Array(9);
+  const found = new Float64Array(3);
 
   paintLook(
     data8,
@@ -1410,51 +1440,34 @@ export const paintBubbles: LookPainter = (
     region,
     CELL_CLIP_START,
     (x, y, d, out) => {
-      let bestQ2 = Infinity;
-      let bestAt = -1;
-      let ux = 0;
-      let uy = 0;
-      const count = latticeNeighbours(lattice, x, y, around);
-      for (let n = 0; n < count; n++) {
-        const at = around[n];
-        const radius = values[at + 2];
-        if (radius <= 0) {
-          continue;
-        }
-        const vx = (x - values[at]) / radius;
-        const vy = (y - values[at + 1]) / radius;
-        const q2 = vx * vx + vy * vy;
-        if (q2 < bestQ2) {
-          bestQ2 = q2;
-          bestAt = at;
-          ux = vx;
-          uy = vy;
-        }
-      }
-
+      const at = nearestBubble(lattice, x, y, around, found);
       const baseAlpha =
         BUBBLE_BASE_ALPHA * smoothstep(SLIME_EDGE_START, SLIME_EDGE_END, d);
       let bubbleAlpha = 0;
-      if (bestAt >= 0) {
-        const radius = values[bestAt + 2];
-        const q = Math.sqrt(bestQ2);
-        const edge =
-          clamp((1 - q) * radius * SLIME_SCALE + 0.5, 0, 1) *
-          smoothstep(CELL_CLIP_START, CELL_CLIP_END, d);
+      if (at >= 0) {
+        const radius = values[at + 2];
+        const edge = cellEdge(found[0], radius, d);
         if (edge > 0) {
-          const rim = smoothstep(BUBBLE_RIM_START, BUBBLE_RIM_END, q);
+          const [q2, ux, uy] = found;
+          const rim = smoothstep(
+            BUBBLE_RIM_START,
+            BUBBLE_RIM_END,
+            Math.sqrt(q2)
+          );
+          const fx = ux - CELL_FOCAL_X;
+          const fy = uy - CELL_FOCAL_Y;
           const spot =
             1 -
             smoothstep(
               BUBBLE_SPOT_START,
               BUBBLE_SPOT_END,
-              Math.hypot(ux - CELL_FOCAL_X, uy - CELL_FOCAL_Y)
+              Math.sqrt(fx * fx + fy * fy)
             );
           const dna = dnaAt(
             ux,
             uy,
             values,
-            bestAt + 3,
+            at + 3,
             timeSec,
             1 / (radius * SLIME_SCALE)
           );
