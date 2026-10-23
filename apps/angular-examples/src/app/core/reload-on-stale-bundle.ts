@@ -19,25 +19,29 @@ export function isStaleBundleError(error: unknown): boolean {
 /**
  * A navigation that failed on a bundle that is gone reloads the page at the
  * target URL once, which fetches the new release's file names. A second
- * failure soon after is a real error and stays one.
+ * failure soon after is a real error and stays one; so does any failure
+ * while offline, or where the guard against a reload loop cannot be kept.
  */
 export function reloadOnStaleBundle(
   { error, url }: NavigationError,
   storage: Pick<Storage, 'getItem' | 'setItem'> | null = sessionStorageOrNull(),
   reload: (url: string) => void = (target) => location.assign(target),
-  now: number = Date.now()
+  now: number = Date.now(),
+  online: boolean = typeof navigator === 'undefined' || navigator.onLine
 ): void {
-  if (!isStaleBundleError(error)) {
+  // Offline, the reload fails as well and only loses the page.
+  if (!online || storage === null || !isStaleBundleError(error)) {
     return;
   }
-  const last = Number(storage?.getItem(RELOAD_KEY) ?? 0);
+  const last = Number(storage.getItem(RELOAD_KEY) ?? 0);
   if (now - last < RELOAD_GUARD_MS) {
     return;
   }
   try {
-    storage?.setItem(RELOAD_KEY, String(now));
+    storage.setItem(RELOAD_KEY, String(now));
   } catch {
-    // Without storage no guard: still better than a dead page.
+    // Without the guard a reload could repeat on every page load.
+    return;
   }
   reload(url);
 }
