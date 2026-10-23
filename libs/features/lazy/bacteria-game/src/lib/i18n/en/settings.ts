@@ -12,6 +12,7 @@ export const settings = {
     look: 'Bacteria look',
     looks: {
       slime: 'Slime',
+      cells: 'Cells',
       pixels: 'Pixels',
     },
     simResolution: 'Simulation resolution',

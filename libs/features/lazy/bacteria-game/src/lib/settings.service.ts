@@ -76,13 +76,15 @@ export interface StoredSettings {
 }
 
 /**
- * How the bacteria are drawn: as one gooey, glossy slime per colony, or as
- * the crisp pixels the game started with.
+ * How the bacteria are drawn: as one gooey, glossy slime per colony, as
+ * dense glossy cells of different sizes like on the app icon, or as the
+ * crisp pixels the game started with. Every look is free to pick.
  */
-export type BacteriaLook = 'slime' | 'pixels';
+export type BacteriaLook = 'slime' | 'cells' | 'pixels';
 
 export const BACTERIA_LOOKS: readonly { id: BacteriaLook; name: string }[] = [
   { id: 'slime', name: 'Slime' },
+  { id: 'cells', name: 'Cells' },
   { id: 'pixels', name: 'Pixels' },
 ];
 

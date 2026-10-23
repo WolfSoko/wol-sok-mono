@@ -14,6 +14,7 @@ export const settings: Translation<typeof en> = {
     look: 'Aussehen der Bakterien',
     looks: {
       slime: 'Schleim',
+      cells: 'Zellen',
       pixels: 'Pixel',
     },
     simResolution: 'Simulationsauflösung',

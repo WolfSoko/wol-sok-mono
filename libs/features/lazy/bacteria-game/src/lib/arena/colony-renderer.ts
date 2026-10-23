@@ -323,6 +323,259 @@ export function paintSlime(
   }
 }
 
+/**
+ * The cells look, as on the app icon: glossy round cells of different sizes
+ * packed on a dark base in the colony's colour. The cells sit on a jittered
+ * hex lattice in arena cells, {@link CELL_SPACING} base cells apart, so
+ * they are as big on every grid. A cell exists where the colony's density
+ * at its centre reaches {@link CELL_MIN}; it grows with the density, so the
+ * cells are small along the front and where the colony is weak, and big and
+ * tightly packed inside. The WebGL painter draws the same lattice - see
+ * `COLONY_FRAGMENT`.
+ */
+export const CELL_SPACING = 3.4;
+/** The height of a lattice row, in spacings - a hex lattice. */
+export const CELL_ROW_HEIGHT = 0.866;
+/** The density at a cell's centre below which there is no cell. */
+export const CELL_MIN = 0.12;
+/** The biggest cell, as a share of the spacing - neighbours just overlap. */
+const CELL_RADIUS = 0.62;
+/** Where the light spot sits on a cell, on its unit disc. */
+const CELL_FOCAL_X = -0.35;
+const CELL_FOCAL_Y = -0.4;
+/** How dark the base under the cells is, a share of the colony's colour. */
+const CELL_BASE = 0.42;
+/** The density below which no cell shows, so none floats over bare floor. */
+const CELL_CLIP_START = 0.03;
+const CELL_CLIP_END = 0.09;
+
+/** One cell of the cells look: its centre in arena cells and its radius. */
+export interface CellBubble {
+  x: number;
+  y: number;
+  radius: number;
+}
+
+/** The lattice cell a column and row of the cells look sit on. */
+export function cellLatticeOffset(row: number, spacing: number): number {
+  return (row & 1) === 1 ? spacing * 0.5 : 0;
+}
+
+/**
+ * The cell of a lattice point, or null where the colony is too thin for
+ * one. Its size and place come from the lattice point - as hashes - and the
+ * density under its centre, so a cell stays where it is from frame to frame
+ * and only grows or shrinks with the colony.
+ */
+export function cellBubble(
+  col: number,
+  row: number,
+  spacing: number,
+  density: Float32Array,
+  width: number,
+  height: number
+): CellBubble | null {
+  const rowHeight = spacing * CELL_ROW_HEIGHT;
+  const x =
+    (col + 0.5) * spacing +
+    cellLatticeOffset(row, spacing) +
+    (hash(col, row, 1) - 0.5) * spacing * 0.5;
+  const y =
+    (row + 0.5) * rowHeight + (hash(col, row, 2) - 0.5) * rowHeight * 0.5;
+  const d = sampleDensity(density, width, height, x, y);
+  if (d < CELL_MIN) {
+    return null;
+  }
+  const size =
+    (0.5 + 0.5 * clamp((d - 0.15) / 0.6, 0, 1)) *
+    smoothstep(CELL_MIN, CELL_MIN + 0.08, d);
+  const radius =
+    spacing * CELL_RADIUS * size * (0.82 + 0.36 * hash(col, row, 3));
+  return { x, y, radius };
+}
+
+/**
+ * The density at an arena position, between the cells' centres - a cell's
+ * centre is its lattice point, as in {@link paintSlime}.
+ */
+export function sampleDensity(
+  density: Float32Array,
+  width: number,
+  height: number,
+  x: number,
+  y: number
+): number {
+  const gx = x - 0.5;
+  const gy = y - 0.5;
+  const x0 = clamp(Math.floor(gx), 0, width - 1);
+  const y0 = clamp(Math.floor(gy), 0, height - 1);
+  const x1 = clamp(x0 + 1, 0, width - 1);
+  const y1 = clamp(y0 + 1, 0, height - 1);
+  const fx = clamp(gx - x0, 0, 1);
+  const fy = clamp(gy - y0, 0, 1);
+  const top = lerp(density[y0 * width + x0], density[y0 * width + x1], fx);
+  const bottom = lerp(density[y1 * width + x0], density[y1 * width + x1], fx);
+  return lerp(top, bottom, fy);
+}
+
+/**
+ * Turns the density of a colony into the cells look on a buffer
+ * {@link SLIME_SCALE} times the size of the arena: a dark base where the
+ * slime would be, and on it the lattice's cells, each a glossy sphere lit
+ * from the top left with a dark rim, white heat where the colony is
+ * overcharged and, while it is boosted, waves of light with sparkles. Only
+ * the pixels of `region`'s cells are painted; `unit` is the arena cells per
+ * base cell, which keeps the cells as big on every grid.
+ */
+export function paintCells(
+  data8: Uint8ClampedArray,
+  density: Float32Array,
+  heat: Float32Array | null,
+  width: number,
+  height: number,
+  color: readonly number[],
+  shimmer: BoostShimmer | null,
+  unit: number,
+  region: CellBounds = wholeArena(width, height)
+): void {
+  const [r, g, b] = color;
+  const light = [r, g, b].map((c) => c + (255 - c) * 0.55);
+  const dark = [r, g, b].map((c) => c * 0.5);
+  const base = [r, g, b].map((c) => c * CELL_BASE);
+  const spacing = CELL_SPACING * unit;
+  const rowHeight = spacing * CELL_ROW_HEIGHT;
+
+  // The cells whose lattice points lie around the region, one ring more,
+  // worked out once: a pixel then only looks the nine around it up.
+  const row0 = Math.floor(region.minY / rowHeight) - 1;
+  const row1 = Math.floor((region.maxY + 1) / rowHeight) + 1;
+  const col0 = Math.floor((region.minX - spacing * 0.5) / spacing) - 1;
+  const col1 = Math.floor((region.maxX + 1) / spacing) + 1;
+  const cols = col1 - col0 + 1;
+  const lattice = new Float32Array(cols * (row1 - row0 + 1) * 3);
+  for (let row = row0; row <= row1; row++) {
+    for (let col = col0; col <= col1; col++) {
+      const bubble = cellBubble(col, row, spacing, density, width, height);
+      if (bubble != null) {
+        const at = ((row - row0) * cols + (col - col0)) * 3;
+        lattice[at] = bubble.x;
+        lattice[at + 1] = bubble.y;
+        lattice[at + 2] = bubble.radius;
+      }
+    }
+  }
+
+  const outWidth = width * SLIME_SCALE;
+  const step = 1 / SLIME_SCALE;
+  const fromX = region.minX * SLIME_SCALE;
+  const toX = (region.maxX + 1) * SLIME_SCALE;
+  const rgb = [0, 0, 0];
+
+  for (
+    let py = region.minY * SLIME_SCALE;
+    py < (region.maxY + 1) * SLIME_SCALE;
+    py++
+  ) {
+    const y = (py + 0.5) * step;
+    const row = Math.floor(y / rowHeight);
+    for (let px = fromX; px < toX; px++) {
+      const x = (px + 0.5) * step;
+      const d = sampleDensity(density, width, height, x, y);
+      if (d < CELL_CLIP_START) {
+        continue;
+      }
+
+      // The cell the pixel is deepest in, of the nine lattice points around.
+      let bestQ = Infinity;
+      let bestRadius = 0;
+      let ux = 0;
+      let uy = 0;
+      for (let dr = -1; dr <= 1; dr++) {
+        const candidateRow = row + dr;
+        if (candidateRow < row0 || candidateRow > row1) {
+          continue;
+        }
+        const c0 = Math.floor(
+          (x - cellLatticeOffset(candidateRow, spacing)) / spacing
+        );
+        for (let dc = -1; dc <= 1; dc++) {
+          const col = c0 + dc;
+          if (col < col0 || col > col1) {
+            continue;
+          }
+          const at = ((candidateRow - row0) * cols + (col - col0)) * 3;
+          const radius = lattice[at + 2];
+          if (radius <= 0) {
+            continue;
+          }
+          const vx = (x - lattice[at]) / radius;
+          const vy = (y - lattice[at + 1]) / radius;
+          const q = Math.hypot(vx, vy);
+          if (q < bestQ) {
+            bestQ = q;
+            bestRadius = radius;
+            ux = vx;
+            uy = vy;
+          }
+        }
+      }
+
+      const baseAlpha = 0.92 * smoothstep(SLIME_EDGE_START, SLIME_EDGE_END, d);
+      // Anti-aliased at the rim, one layer pixel wide.
+      const cellAlpha =
+        bestRadius > 0
+          ? clamp((1 - bestQ) * bestRadius * SLIME_SCALE + 0.5, 0, 1) *
+            smoothstep(CELL_CLIP_START, CELL_CLIP_END, d)
+          : 0;
+      const alpha = cellAlpha + baseAlpha * (1 - cellAlpha);
+      if (alpha <= 0) {
+        continue;
+      }
+
+      if (cellAlpha > 0) {
+        // A sphere: a light spot at the top left, the body colour around it
+        // and a dark rim - the gradient of the icon's cells.
+        const t = clamp(
+          Math.hypot(ux - CELL_FOCAL_X, uy - CELL_FOCAL_Y) / 1.25,
+          0,
+          1
+        );
+        for (let c = 0; c < 3; c++) {
+          const sphere =
+            t < 0.55
+              ? lerp(light[c], color[c], t / 0.55)
+              : lerp(color[c], dark[c], (t - 0.55) / 0.45);
+          rgb[c] =
+            (sphere * cellAlpha + base[c] * baseAlpha * (1 - cellAlpha)) /
+            alpha;
+        }
+      } else {
+        rgb[0] = base[0];
+        rgb[1] = base[1];
+        rgb[2] = base[2];
+      }
+
+      let white = 0;
+      if (heat != null) {
+        const hot = sampleDensity(heat, width, height, x, y);
+        white = Math.min(1, hot / Math.max(d, 0.05));
+      }
+      if (shimmer != null) {
+        white = Math.max(white, shimmerAt(x, y, shimmer) * 0.8);
+        if (sparkle(px, py, shimmer.timeSec)) {
+          white = 1;
+        }
+      }
+
+      const index = (py * outWidth + px) * 4;
+      data8[index] = rgb[0] + (255 - rgb[0]) * white;
+      data8[index + 1] = rgb[1] + (255 - rgb[1]) * white;
+      data8[index + 2] = rgb[2] + (255 - rgb[2]) * white;
+      data8[index + 3] = 255 * alpha;
+    }
+  }
+}
+
 /** A pellet of food as a drop of jam, in one of a few flavours. */
 export interface Jam {
   body: Rgb;
@@ -442,7 +695,8 @@ export function drawJam(
 /**
  * Draws the colonies into an offscreen layer and hands it back, ready to be
  * drawn over the floor: one pixel per bacterium for the pixel look, smooth
- * slime for the slime look. The buffers are kept between frames.
+ * slime for the slime look, glossy cells on a dark base for the cells look.
+ * The buffers are kept between frames.
  */
 export class ColonyRenderer {
   private canvas: HTMLCanvasElement | null = null;
@@ -477,7 +731,7 @@ export class ColonyRenderer {
     timeSec: number,
     view: Rect
   ): HTMLCanvasElement | null {
-    const scale = look === 'slime' ? SLIME_SCALE : 1;
+    const scale = look === 'pixels' ? 1 : SLIME_SCALE;
     if (!this.prepare(scale) || this.image == null || this.context == null) {
       return null;
     }
@@ -491,7 +745,7 @@ export class ColonyRenderer {
         colony.boostTarget == null
           ? null
           : { timeSec, target: colony.boostTarget, unit: this.unit };
-      if (look === 'slime') {
+      if (look !== 'pixels') {
         const region = slimeRegion(
           colony.bacterias,
           view,
@@ -511,16 +765,30 @@ export class ColonyRenderer {
           balance,
           region
         );
-        paintSlime(
-          data,
-          this.density,
-          hot ? this.heat : null,
-          this.width,
-          this.height,
-          colony.color,
-          shimmer,
-          region
-        );
+        if (look === 'slime') {
+          paintSlime(
+            data,
+            this.density,
+            hot ? this.heat : null,
+            this.width,
+            this.height,
+            colony.color,
+            shimmer,
+            region
+          );
+        } else {
+          paintCells(
+            data,
+            this.density,
+            hot ? this.heat : null,
+            this.width,
+            this.height,
+            colony.color,
+            shimmer,
+            this.unit,
+            region
+          );
+        }
       } else {
         createImageDataFromBacterias(
           data,

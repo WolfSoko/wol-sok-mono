@@ -67,8 +67,9 @@ export class CanvasArenaPainter implements ArenaPainter {
       view
     );
     if (layer != null) {
-      // The slime layer is scaled up smoothly, the pixel layer stays crisp.
-      cx.imageSmoothingEnabled = frame.look === 'slime';
+      // The slime and cells layers are scaled up smoothly, the pixel layer
+      // stays crisp.
+      cx.imageSmoothingEnabled = frame.look !== 'pixels';
       cx.drawImage(layer, 0, 0, this.width, this.height);
       cx.imageSmoothingEnabled = false;
     }

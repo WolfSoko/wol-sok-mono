@@ -34,6 +34,7 @@ import {
   COLONY_FRAGMENT,
   EFFECTS_FRAGMENT,
   FLOOR_FRAGMENT,
+  LOOK_INDEX,
   SHAPE_FRAGMENT,
   SHAPE_VERTEX,
   ZONES_FRAGMENT,
@@ -349,7 +350,7 @@ export class GlArenaPainter implements ArenaPainter {
   /**
    * One colony: its cells - uploaded from the CPU, or drawn straight from the
    * GPU simulation's state - are blurred on the arena grid for the slime
-   * look, and drawn over the frame in a single pass.
+   * and the cells look, and drawn over the frame in a single pass.
    */
   private drawColony(frame: ArenaFrame, layer: ColonyLayer): void {
     const gl = this.gl;
@@ -373,8 +374,9 @@ export class GlArenaPainter implements ArenaPainter {
       this.drawCellsFromState(layer, bounds, frame.balance);
     }
 
-    const slime = frame.look === 'slime';
-    if (slime) {
+    // The slime and the cells look draw from the blurred density.
+    const blurred = frame.look !== 'pixels';
+    if (blurred) {
       gl.disable(gl.BLEND);
       gl.viewport(0, 0, this.width, this.height);
       this.useFullscreen(programs.blur);
@@ -401,7 +403,12 @@ export class GlArenaPainter implements ArenaPainter {
       color[2] / 255
     );
     gl.uniform1f(program.uniforms['uAlpha'], (color[3] ?? 255) / 255);
-    gl.uniform1i(program.uniforms['uLook'], slime ? 0 : 1);
+    gl.uniform1i(program.uniforms['uLook'], LOOK_INDEX[frame.look]);
+    gl.uniform1f(program.uniforms['uUnit'], this.unit);
+    gl.uniform1f(
+      program.uniforms['uPixel'],
+      this.view.width / this.canvasWidth
+    );
     gl.uniform1f(
       program.uniforms['uShimmer'],
       boostTarget == null ? -1 : frame.timeSec
@@ -412,7 +419,6 @@ export class GlArenaPainter implements ArenaPainter {
         boostTarget.x,
         boostTarget.y
       );
-      gl.uniform1f(program.uniforms['uUnit'], this.unit);
     }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.SCISSOR_TEST);
@@ -732,6 +738,7 @@ export class GlArenaPainter implements ArenaPainter {
         'uShimmer',
         'uBoostTarget',
         'uUnit',
+        'uPixel',
       ]),
       shape: createProgram(gl, SHAPE_VERTEX, SHAPE_FRAGMENT, ['uView']),
       cells: createProgram(gl, FULLSCREEN_VERTEX, CELLS_FRAGMENT, [

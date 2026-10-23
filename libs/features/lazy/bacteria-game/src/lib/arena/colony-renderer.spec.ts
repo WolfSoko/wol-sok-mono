@@ -2,8 +2,12 @@ import { gameBalance } from '../state/game-balance';
 import { Point } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
 import {
+  cellBubble,
+  CELL_MIN,
+  CELL_SPACING,
   colonyDensity,
   createImageDataFromBacterias,
+  paintCells,
   paintSlime,
   shimmerAt,
   SLIME_SCALE,
@@ -33,7 +37,8 @@ const WHOLE: Rect = { x: 0, y: 0, width: WIDTH, height: HEIGHT };
 function slime(
   bacterias: Bacteria[],
   shimmerTimeSec: number | null = null,
-  view: Rect = WHOLE
+  view: Rect = WHOLE,
+  look: 'slime' | 'cells' = 'slime'
 ) {
   const target: Point = { x: 30, y: 10 };
   const region = slimeRegion(bacterias, view, WIDTH, HEIGHT);
@@ -54,19 +59,57 @@ function slime(
   if (region == null) {
     return data;
   }
-  paintSlime(
-    data,
-    density,
-    hot ? heat : null,
-    WIDTH,
-    HEIGHT,
-    ORANGE,
+  const shimmer =
     shimmerTimeSec == null
       ? null
-      : { timeSec: shimmerTimeSec, target, unit: 1 },
-    region
-  );
+      : { timeSec: shimmerTimeSec, target, unit: 1 };
+  if (look === 'cells') {
+    paintCells(
+      data,
+      density,
+      hot ? heat : null,
+      WIDTH,
+      HEIGHT,
+      ORANGE,
+      shimmer,
+      1,
+      region
+    );
+  } else {
+    paintSlime(
+      data,
+      density,
+      hot ? heat : null,
+      WIDTH,
+      HEIGHT,
+      ORANGE,
+      shimmer,
+      region
+    );
+  }
   return data;
+}
+
+function cells(bacterias: Bacteria[], shimmerTimeSec: number | null = null) {
+  return slime(bacterias, shimmerTimeSec, WHOLE, 'cells');
+}
+
+/** The layer pixels of the arena cells inside a disc around a point. */
+function pixelsWithin(
+  data: Uint8ClampedArray,
+  cx: number,
+  cy: number,
+  radius: number
+): number[][] {
+  const pixels: number[][] = [];
+  for (let y = cy - radius; y <= cy + radius; y++) {
+    for (let x = cx - radius; x <= cx + radius; x++) {
+      if ((x - cx) ** 2 + (y - cy) ** 2 <= radius * radius) {
+        pixels.push(at(data, x, y));
+      }
+    }
+  }
+  return pixels;
 }
 
 /** The RGBA of the slime pixel at an arena position. */
@@ -128,6 +171,76 @@ describe('paintSlime', () => {
       );
 
     expect(brightness(boosted)).toBeGreaterThan(brightness(plain));
+  });
+});
+
+describe('paintCells', () => {
+  it('covers a colony and leaves the floor around it clear', () => {
+    const data = cells(blob(20, 10, 6));
+
+    for (const pixel of pixelsWithin(data, 20, 10, 4)) {
+      expect(pixel[3]).toBeGreaterThan(200);
+    }
+    expect(at(data, 20, 1)[3]).toBe(0);
+    expect(at(data, 2, 10)[3]).toBe(0);
+  });
+
+  it('draws glossy cells in the colour of the colony on a dark base', () => {
+    const data = cells(blob(20, 10, 6));
+    const inside = pixelsWithin(data, 20, 10, 4);
+
+    // The base is the colony's colour darkened; a cell's light spot is
+    // brighter than the colour, its rim darker, all of it still orange.
+    const brightness = inside.map(([r, g, b]) => r + g + b);
+    const [r, g, b] = ORANGE;
+    expect(Math.max(...brightness)).toBeGreaterThan(r + g + b);
+    expect(Math.min(...brightness)).toBeLessThan((r + g + b) * 0.5);
+    for (const [red, green, blue] of inside) {
+      expect(red).toBeGreaterThan(green);
+      expect(green).toBeGreaterThan(blue);
+    }
+  });
+
+  it('lights a boosted colony up', () => {
+    const plain = cells(blob(20, 10, 6));
+    const boosted = cells(blob(20, 10, 6), 0.3);
+
+    const sum = (data: Uint8ClampedArray) =>
+      pixelsWithin(data, 20, 10, 4).reduce(
+        (total, [r, g, b]) => total + r + g + b,
+        0
+      );
+    expect(sum(boosted)).toBeGreaterThan(sum(plain));
+  });
+});
+
+describe('cellBubble', () => {
+  const field = (value: number) => new Float32Array(WIDTH * HEIGHT).fill(value);
+
+  it('grows a cell with the density under it', () => {
+    const thin = cellBubble(3, 2, CELL_SPACING, field(0.2), WIDTH, HEIGHT);
+    const dense = cellBubble(3, 2, CELL_SPACING, field(1), WIDTH, HEIGHT);
+
+    expect(thin).not.toBeNull();
+    expect(dense).not.toBeNull();
+    expect(dense?.radius).toBeGreaterThan(thin?.radius ?? Infinity);
+    expect(dense?.radius).toBeLessThan(CELL_SPACING);
+    // The same lattice point sits at the same place however dense it is.
+    expect([dense?.x, dense?.y]).toEqual([thin?.x, thin?.y]);
+  });
+
+  it('leaves out a cell where the colony is too thin for one', () => {
+    expect(
+      cellBubble(3, 2, CELL_SPACING, field(CELL_MIN / 2), WIDTH, HEIGHT)
+    ).toBeNull();
+  });
+
+  it('spaces the cells by the unit, so they are as big on a finer grid', () => {
+    const base = cellBubble(3, 2, CELL_SPACING, field(1), WIDTH, HEIGHT);
+    const fine = cellBubble(3, 2, CELL_SPACING * 2, field(1), WIDTH, HEIGHT);
+
+    expect(fine?.radius).toBeCloseTo((base?.radius ?? 0) * 2);
+    expect(fine?.x).toBeCloseTo((base?.x ?? 0) * 2);
   });
 });
 
