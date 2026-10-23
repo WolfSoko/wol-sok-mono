@@ -92,14 +92,6 @@ ul {
   margin-top: 0;
 }
 
-.contact {
-  font-style: normal;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-}
-
 article + article {
   margin-top: 4rem;
   padding-top: 2rem;
@@ -109,9 +101,4 @@ article + article {
 footer {
   margin-top: 3rem;
   color: var(--muted);
-}
-
-// Who runs the site, under the legal notice's heading.
-.owner {
-  line-height: 1.7;
 }

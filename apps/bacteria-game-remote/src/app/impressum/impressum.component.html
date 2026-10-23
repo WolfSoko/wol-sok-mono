@@ -17,14 +17,7 @@
     </p>
 
     <h2 id="de-anbieter">Anbieter</h2>
-    <address class="contact owner">
-      {{ owner.name }}<br />
-      @for (line of owner.addressLines; track line) {
-        {{ line }}<br />
-      }
-      E-Mail:
-      <a href="mailto:{{ owner.email }}">{{ owner.email }}</a>
-    </address>
+    <wolsok-site-owner emailLabel="E-Mail" />
 
     <h2 id="de-kontakt">Kontakt</h2>
     <p>
@@ -83,14 +76,7 @@
     </p>
 
     <h2 id="en-provider">Provider</h2>
-    <address class="contact owner">
-      {{ owner.name }}<br />
-      @for (line of owner.addressLines; track line) {
-        {{ line }}<br />
-      }
-      Email:
-      <a href="mailto:{{ owner.email }}">{{ owner.email }}</a>
-    </address>
+    <wolsok-site-owner emailLabel="Email" />
 
     <h2 id="en-contact">Contact</h2>
     <p>

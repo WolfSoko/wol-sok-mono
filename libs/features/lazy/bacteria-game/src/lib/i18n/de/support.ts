@@ -1,7 +1,7 @@
 import type { support as en } from '../en/support';
 import type { Translation } from '../translation';
 
-/** Tips and ads: the support tile, card and dialog, and the ad slot. */
+/** Tips and ads, the offer to install the game, the legal lines under the menu. */
 export const support: Translation<typeof en> = {
   tile: 'Unterstützen',
   title: 'Unterstütze das Spiel',
@@ -14,4 +14,20 @@ export const support: Translation<typeof en> = {
   close: 'Schließen',
   ad: 'Anzeige',
   adSettings: 'Datenschutz-Einstellungen für Anzeigen',
+  install: {
+    title: 'Spiel Bacteria Wars als App',
+    android:
+      'Im Vollbild, offline und direkt vom Startbildschirm: Hol dir die App bei Google Play oder installiere diese Web-App.',
+    ios: 'Im Vollbild, offline und direkt vom Startbildschirm: Tippe auf Teilen und dann auf „Zum Home-Bildschirm“.',
+    other:
+      'Im Vollbild, offline und direkt vom Desktop: Installiere die Web-App.',
+    playStore: 'Bei Google Play laden',
+    webApp: 'Web-App installieren',
+    dismiss: 'Später',
+  },
+  footer: {
+    label: 'Rechtliches',
+    privacy: 'Datenschutz',
+    legalNotice: 'Impressum',
+  },
 };

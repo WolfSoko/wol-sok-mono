@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
+import { GAME_SUPPORT_OPTIONS } from '../../testing/game-support-options';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';
@@ -128,7 +129,9 @@ describe('MainMenuComponent', () => {
 
   it('offers no support where the game does not ask for it', () => {
     expect(host.textContent).not.toContain('Support');
+    // Inside the shell: neither the legal lines nor the offer to install.
     expect(host.querySelector('footer')).toBeNull();
+    expect(host.querySelector('feat-lazy-bac-game-install-banner')).toBeNull();
   });
 });
 
@@ -141,10 +144,8 @@ describe('MainMenuComponent support tile', () => {
         {
           provide: GAME_SUPPORT,
           useValue: {
-            buyMeACoffeeHandle: 'wolf',
-            androidPackage: 'de.wolsok.bacteriawars',
+            ...GAME_SUPPORT_OPTIONS,
             playTipProductIds: ['tip_small'],
-            ads: null,
           },
         },
       ],

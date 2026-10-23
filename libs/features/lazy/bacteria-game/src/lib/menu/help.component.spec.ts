@@ -3,6 +3,7 @@ import { GameAds } from '../support/game-ads.service';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { I18nService } from '../i18n/i18n.service';
+import { GAME_SUPPORT_OPTIONS } from '../../testing/game-support-options';
 import { PRIVACY_POLICY_URL } from '../support/legal-links';
 import { HelpComponent } from './help.component';
 
@@ -51,9 +52,7 @@ describe('HelpComponent', () => {
         {
           provide: GAME_SUPPORT,
           useValue: {
-            buyMeACoffeeHandle: 'wolf',
-            androidPackage: 'de.wolsok.bacteriawars',
-            playTipProductIds: [],
+            ...GAME_SUPPORT_OPTIONS,
             ads: { client: 'ca-pub-1', slot: '42' },
           },
         },

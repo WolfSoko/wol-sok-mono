@@ -2,29 +2,23 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { I18nService } from '../i18n/i18n.service';
 import { InstallBannerComponent } from './install-banner.component';
-import { InstallOffer, InstallPlatform } from './install-offer.service';
+import { InstallOffer } from './install-offer.service';
+
+type FakeOffer = Pick<InstallOffer, 'platform' | 'storeUrl'> & {
+  canInstallWebApp: ReturnType<typeof signal<boolean>>;
+  installWebApp: jest.Mock;
+  dismiss: jest.Mock;
+};
 
 describe('InstallBannerComponent', () => {
-  const visible = signal(true);
-  const canInstallWebApp = signal(false);
-  let offer: {
-    visible: typeof visible;
-    canInstallWebApp: typeof canInstallWebApp;
-    platform: InstallPlatform;
-    storeUrl: string | null;
-    installWebApp: jest.Mock;
-    dismiss: jest.Mock;
-  };
+  let offer: FakeOffer;
 
   beforeEach(() => {
-    visible.set(true);
-    canInstallWebApp.set(false);
     offer = {
-      visible,
-      canInstallWebApp,
       platform: 'android',
       storeUrl:
         'https://play.google.com/store/apps/details?id=de.wolsok.bacteriawars',
+      canInstallWebApp: signal(false),
       installWebApp: jest.fn(),
       dismiss: jest.fn(),
     };
@@ -52,7 +46,7 @@ describe('InstallBannerComponent', () => {
 
   it('installs the web app where the browser offers to', () => {
     offer.platform = 'other';
-    canInstallWebApp.set(true);
+    offer.canInstallWebApp.set(true);
     const host = render();
 
     expect(host.textContent).toContain('install the web app');
@@ -74,14 +68,11 @@ describe('InstallBannerComponent', () => {
     expect(host.querySelector('[aria-label="Später"]')).not.toBeNull();
   });
 
-  it('is dismissed with its close button, and gone without an offer', () => {
+  it('is dismissed with its close button', () => {
     const host = render();
 
     host.querySelector<HTMLButtonElement>('[aria-label="Not now"]')?.click();
-    expect(offer.dismiss).toHaveBeenCalled();
 
-    visible.set(false);
-    TestBed.tick();
-    expect(host.querySelector('.banner')).toBeNull();
+    expect(offer.dismiss).toHaveBeenCalled();
   });
 });

@@ -38,13 +38,7 @@
       für jene Seite und ihre Dienste.
     </p>
     <h2 id="de-verantwortlich">1. Verantwortlicher</h2>
-    <address class="contact">
-      {{ owner.name }}<br />
-      @for (line of owner.addressLines; track line) {
-        {{ line }}<br />
-      }
-      E-Mail: <a href="mailto:{{ owner.email }}">{{ owner.email }}</a>
-    </address>
+    <wolsok-site-owner emailLabel="E-Mail" />
     <p>
       Für alle Fragen zum Datenschutz und zur Ausübung deiner Rechte kannst du
       dich an diese Adresse wenden.
@@ -252,8 +246,10 @@
       Um dein Konto und deinen Spielstand in der Cloud löschen zu lassen,
       schreib eine E-Mail an
       <a
-        href="mailto:privacy@wolsok.de?subject=Bacteria%20Wars%3A%20Konto%20l%C3%B6schen"
-        >privacy&#64;wolsok.de</a
+        href="mailto:{{
+          owner.email
+        }}?subject=Bacteria%20Wars%3A%20Konto%20l%C3%B6schen"
+        >{{ owner.email }}</a
       >
       mit dem Betreff „Bacteria Wars: Konto löschen“. Nenne die E-Mail-Adresse
       deines Google-Kontos. Ein Gastkonto hat nur eine zufällige Kennung, die
@@ -319,13 +315,7 @@
     </p>
 
     <h2 id="en-controller">1. Controller</h2>
-    <address class="contact">
-      {{ owner.name }}<br />
-      @for (line of owner.addressLines; track line) {
-        {{ line }}<br />
-      }
-      Email: <a href="mailto:{{ owner.email }}">{{ owner.email }}</a>
-    </address>
+    <wolsok-site-owner emailLabel="Email" />
     <p>
       Contact this address with any question about your data or to exercise your
       rights.
@@ -519,8 +509,10 @@
     <p>
       To have your account and your progress in the cloud deleted, email
       <a
-        href="mailto:privacy@wolsok.de?subject=Bacteria%20Wars%3A%20delete%20account"
-        >privacy&#64;wolsok.de</a
+        href="mailto:{{
+          owner.email
+        }}?subject=Bacteria%20Wars%3A%20delete%20account"
+        >{{ owner.email }}</a
       >
       with the subject “Bacteria Wars: delete account”. Give the email address
       of your Google account. A guest account has only a random identifier the

@@ -12,7 +12,6 @@ import { map } from 'rxjs';
 import { isObject } from '../state/is-object';
 import { DeviceStorage } from '../storage/game-storage';
 import { GAME_SUPPORT } from './game-support';
-import { playStoreUrl } from './legal-links';
 import { isTwaSession } from './twa-session';
 
 /** Where the player is, as far as installing goes. */
@@ -30,7 +29,25 @@ export const INSTALL_OFFER_KEY = 'bacteria-game.install-offer';
 export const INSTALL_OFFER_DISMISSED_MS = 30 * 24 * 60 * 60 * 1000;
 
 /** The display modes an installed web app opens in - the browser's is `browser`. */
-const INSTALLED_DISPLAY_MODES = ['standalone', 'fullscreen', 'minimal-ui'];
+const INSTALLED_DISPLAY_MODES =
+  '(display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui)';
+
+/** The Play Store listing of the Android app with the given package. */
+export function playStoreUrl(androidPackage: string): string {
+  return `https://play.google.com/store/apps/details?id=${encodeURIComponent(androidPackage)}`;
+}
+
+/** True when the page runs as an installed web app, not in a browser tab. */
+export function isInstalledWebApp(window: Window): boolean {
+  // Safari on iOS has no display-mode media feature, but this flag.
+  if ((window.navigator as { standalone?: boolean }).standalone === true) {
+    return true;
+  }
+  return (
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia(INSTALLED_DISPLAY_MODES).matches
+  );
+}
 
 /** When the offer was dismissed, from what the device stored - null for never. */
 export function parseDismissedAt(stored: unknown): number | null {
@@ -72,7 +89,7 @@ export class InstallOffer {
   private readonly inBrowser = signal(false);
   private readonly promptEvent = signal<BeforeInstallPromptEvent | null>(null);
   /** True while the browser's install prompt is open. */
-  private readonly prompting = signal(false);
+  private prompting = false;
   /**
    * When the offer was dismissed, null for never - undefined until the
    * device has answered. Set by `dismiss` as well, since the local storage
@@ -136,7 +153,7 @@ export class InstallOffer {
     afterNextRender(() => {
       if (
         !isTwaSession(this.document, options.androidPackage) &&
-        !this.isInstalled(window)
+        !isInstalledWebApp(window)
       ) {
         this.inBrowser.set(true);
       }
@@ -150,8 +167,8 @@ export class InstallOffer {
    */
   public async installWebApp(): Promise<void> {
     const event = this.promptEvent();
-    if (!event || this.prompting()) return;
-    this.prompting.set(true);
+    if (!event || this.prompting) return;
+    this.prompting = true;
     try {
       await event.prompt();
       const { outcome } = await event.userChoice;
@@ -159,7 +176,7 @@ export class InstallOffer {
     } catch {
       // The prompt was not available after all: the banner falls back to the store link.
     } finally {
-      this.prompting.set(false);
+      this.prompting = false;
       this.promptEvent.set(null);
     }
   }
@@ -169,17 +186,5 @@ export class InstallOffer {
     const now = Date.now();
     this.dismissedAt.set(now);
     this.storage.write(INSTALL_OFFER_KEY, { dismissedAt: now });
-  }
-
-  /** True when the page runs as an installed web app, not in a browser tab. */
-  private isInstalled(window: Window): boolean {
-    // Safari on iOS has no display-mode media feature, but this flag.
-    if ((window.navigator as { standalone?: boolean }).standalone === true) {
-      return true;
-    }
-    if (typeof window.matchMedia !== 'function') return false;
-    return INSTALLED_DISPLAY_MODES.some(
-      (mode) => window.matchMedia(`(display-mode: ${mode})`).matches
-    );
   }
 }

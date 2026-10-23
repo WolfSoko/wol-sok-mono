@@ -1,6 +1,8 @@
 export * from './lib/routes';
 export {
+  LEGAL_NOTICE_PATH,
   LEGAL_NOTICE_URL,
+  PRIVACY_POLICY_PATH,
   PRIVACY_POLICY_URL,
 } from './lib/support/legal-links';
 export { provideGameCloud } from './lib/storage/provide-game-cloud';

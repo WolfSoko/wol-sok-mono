@@ -1,14 +1,13 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { GAME_SUPPORT_OPTIONS } from '../../testing/game-support-options';
 import { GAME_SUPPORT, GameSupportOptions } from './game-support';
 import { GameSupport } from './game-support.service';
 import { PlayBillingService, TipProduct } from './play-billing.service';
 
 const OPTIONS: GameSupportOptions = {
-  buyMeACoffeeHandle: 'wolf',
+  ...GAME_SUPPORT_OPTIONS,
   playTipProductIds: ['tip_small', 'tip_large'],
-  androidPackage: 'de.wolsok.bacteriawars',
-  ads: null,
 };
 
 const PRODUCTS: TipProduct[] = [

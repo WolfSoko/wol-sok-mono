@@ -3,50 +3,39 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { GameAds } from './game-ads.service';
 import { GAME_SUPPORT } from './game-support';
-import {
-  LEGAL_NOTICE_PATH,
-  PRIVACY_POLICY_PATH,
-  SITE_OWNER,
-} from './legal-links';
+import { LEGAL_NOTICE_PATH, PRIVACY_POLICY_PATH } from './legal-links';
 
 /**
  * The legal lines a site owes under every page: who runs it, the privacy
  * policy, the legal notice (Impressum) and, once the consent banner was
- * answered, the way back into it. Only on the game's own site, in the
- * browser and the Play Store app alike, where the pages are routes of this
- * app: the shell has pages of its own.
+ * answered, the way back into it. Shown by the menu on the game's own
+ * site only, in the browser and the Play Store app alike, where the pages
+ * are routes of this app: the shell has pages of its own.
  */
 @Component({
   selector: 'feat-lazy-bac-game-site-footer',
   imports: [RouterLink, TranslatePipe],
   template: `
-    @if (onSite) {
-      <footer class="footer">
-        <span class="owner">© {{ year }} {{ owner }}</span>
-        <nav class="links" [attr.aria-label]="'site.footer.label' | t">
-          <a [routerLink]="privacyPolicyPath">{{
-            'site.footer.privacy' | t
-          }}</a>
-          <a [routerLink]="legalNoticePath">{{
-            'site.footer.legalNotice' | t
-          }}</a>
-          @if (ads.consentAnswered()) {
-            <button type="button" (click)="ads.openConsentSettings()">
-              {{ 'support.adSettings' | t }}
-            </button>
-          }
-        </nav>
-      </footer>
-    }
+    <footer class="footer">
+      <span class="owner">© {{ year }} {{ owner }}</span>
+      <nav class="links" [attr.aria-label]="'support.footer.label' | t">
+        <a [routerLink]="['/', privacyPolicyPath]">{{
+          'support.footer.privacy' | t
+        }}</a>
+        <a [routerLink]="['/', legalNoticePath]">{{
+          'support.footer.legalNotice' | t
+        }}</a>
+        @if (ads.consentAnswered()) {
+          <button type="button" (click)="ads.openConsentSettings()">
+            {{ 'support.adSettings' | t }}
+          </button>
+        }
+      </nav>
+    </footer>
   `,
   styles: `
     :host {
       display: block;
-    }
-
-    // Without an offer the host would still take a slot, and a gap, in the menu's column.
-    :host:empty {
-      display: none;
     }
 
     .footer {
@@ -95,10 +84,8 @@ import {
 })
 export class SiteFooterComponent {
   protected readonly ads = inject(GameAds);
-  /** True on the game's own site, where the support options are provided. */
-  protected readonly onSite = inject(GAME_SUPPORT) !== null;
 
-  protected readonly owner = SITE_OWNER;
+  protected readonly owner = inject(GAME_SUPPORT)?.siteOwner ?? '';
   protected readonly year = new Date().getFullYear();
   protected readonly privacyPolicyPath = PRIVACY_POLICY_PATH;
   protected readonly legalNoticePath = LEGAL_NOTICE_PATH;

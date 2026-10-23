@@ -20,8 +20,10 @@ import { RankStandingComponent } from '../rank/rank-standing.component';
 import { Level, LEVELS } from '../state/levels';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
 import { MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
+import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { InstallBannerComponent } from '../support/install-banner.component';
+import { InstallOffer } from '../support/install-offer.service';
 import { SiteFooterComponent } from '../support/site-footer.component';
 import {
   SUPPORT_DIALOG_HEADING_ID,
@@ -93,6 +95,9 @@ export class MainMenuComponent {
   protected readonly totalAchievements = ACHIEVEMENTS.length;
 
   protected readonly support = inject(GameSupport);
+  protected readonly installOffer = inject(InstallOffer);
+  /** True on the game's own site, where the support options are provided. */
+  protected readonly onSite = inject(GAME_SUPPORT) !== null;
   private readonly dialog = inject(MatDialog);
 
   /** The Play tips, in the app, where the Buy Me a Coffee page is not allowed. */

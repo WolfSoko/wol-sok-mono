@@ -20,6 +20,8 @@ export interface GameSupportOptions {
   readonly playTipProductIds: readonly string[];
   /** The package of the Play Store app, to tell it from the browser. */
   readonly androidPackage: string;
+  /** Who runs the site, for the footer's copyright line. */
+  readonly siteOwner: string;
   /** Null for no ads, and no consent banner either. */
   readonly ads: GameAdsOptions | null;
 }

@@ -1,5 +1,6 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { GAME_SUPPORT_OPTIONS } from '../../testing/game-support-options';
 import { LateGameStorage } from '../../testing/late-game-storage';
 import { DeviceStorage } from '../storage/game-storage';
 import { GAME_SUPPORT, GameSupportOptions } from './game-support';
@@ -10,13 +11,6 @@ import {
   InstallOffer,
   parseDismissedAt,
 } from './install-offer.service';
-
-const OPTIONS: GameSupportOptions = {
-  buyMeACoffeeHandle: 'wolf',
-  playTipProductIds: [],
-  androidPackage: 'de.wolsok.bacteriawars',
-  ads: null,
-};
 
 const ANDROID_UA =
   'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36';
@@ -78,7 +72,7 @@ describe('InstallOffer', () => {
 
   function setUp(
     userAgent: string,
-    options: GameSupportOptions | null = OPTIONS,
+    options: GameSupportOptions | null = GAME_SUPPORT_OPTIONS,
     referrer = ''
   ): InstallOffer {
     jest.spyOn(navigator, 'userAgent', 'get').mockReturnValue(userAgent);
@@ -207,7 +201,7 @@ describe('InstallOffer', () => {
   it('offers nothing inside the Play Store app', () => {
     const offer = setUp(
       ANDROID_UA,
-      OPTIONS,
+      GAME_SUPPORT_OPTIONS,
       'android-app://de.wolsok.bacteriawars/'
     );
     storage.flush();
@@ -216,7 +210,8 @@ describe('InstallOffer', () => {
   });
 
   it('offers nothing once the web app is installed', () => {
-    matches = (query) => query === '(display-mode: standalone)';
+    // One query names every installed mode; this browser is in one of them.
+    matches = (query) => query.includes('(display-mode: standalone)');
     const offer = setUp(ANDROID_UA);
     storage.flush();
 

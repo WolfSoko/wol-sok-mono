@@ -8,65 +8,58 @@ import { InstallOffer } from './install-offer.service';
 /**
  * The offer to play the game as an app, on the main menu of the game's own
  * site: the Android app on Google Play, the web app installed from the
- * browser, or on iOS the way to the home screen. `InstallOffer` decides
- * whether there is anything to offer.
+ * browser, or on iOS the way to the home screen. Shown by the menu while
+ * `InstallOffer.visible` says there is something to offer.
  */
 @Component({
   selector: 'feat-lazy-bac-game-install-banner',
   imports: [MatButtonModule, MatIconModule, TranslatePipe],
   template: `
-    @if (offer.visible()) {
-      <aside class="banner" [attr.aria-label]="'site.install.title' | t">
-        <mat-icon class="badge" aria-hidden="true">install_mobile</mat-icon>
-        <div class="text">
-          <strong class="title">{{ 'site.install.title' | t }}</strong>
-          <p class="note">{{ note | t }}</p>
-        </div>
-        <div class="actions">
-          @if (offer.platform === 'android' && offer.storeUrl; as url) {
-            <a
-              mat-flat-button
-              class="store"
-              [href]="url"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <mat-icon>shop</mat-icon>
-              {{ 'site.install.playStore' | t }}
-            </a>
-          }
-          @if (offer.canInstallWebApp()) {
-            <button
-              mat-flat-button
-              type="button"
-              class="web-app"
-              (click)="offer.installWebApp()"
-            >
-              <mat-icon>download</mat-icon>
-              {{ 'site.install.webApp' | t }}
-            </button>
-          }
-        </div>
-        <button
-          mat-icon-button
-          type="button"
-          class="dismiss"
-          [attr.aria-label]="'site.install.dismiss' | t"
-          (click)="offer.dismiss()"
-        >
-          <mat-icon>close</mat-icon>
-        </button>
-      </aside>
-    }
+    <aside class="banner" [attr.aria-label]="'support.install.title' | t">
+      <mat-icon class="badge" aria-hidden="true">install_mobile</mat-icon>
+      <div class="text">
+        <strong class="title">{{ 'support.install.title' | t }}</strong>
+        <p class="note">{{ note | t }}</p>
+      </div>
+      <div class="actions">
+        @if (offer.platform === 'android' && offer.storeUrl; as url) {
+          <a
+            mat-flat-button
+            class="store"
+            [href]="url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <mat-icon>shop</mat-icon>
+            {{ 'support.install.playStore' | t }}
+          </a>
+        }
+        @if (offer.canInstallWebApp()) {
+          <button
+            mat-flat-button
+            type="button"
+            class="web-app"
+            (click)="offer.installWebApp()"
+          >
+            <mat-icon>download</mat-icon>
+            {{ 'support.install.webApp' | t }}
+          </button>
+        }
+      </div>
+      <button
+        mat-icon-button
+        type="button"
+        class="dismiss"
+        [attr.aria-label]="'support.install.dismiss' | t"
+        (click)="offer.dismiss()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </aside>
   `,
   styles: `
     :host {
       display: block;
-    }
-
-    // Without an offer the host would still take a slot, and a gap, in the menu's column.
-    :host:empty {
-      display: none;
     }
 
     .banner {
@@ -145,7 +138,5 @@ export class InstallBannerComponent {
   protected readonly offer = inject(InstallOffer);
 
   /** How the app helps, and how to get it, where the player is. */
-  protected get note(): TranslationKey {
-    return `site.install.${this.offer.platform}`;
-  }
+  protected readonly note: TranslationKey = `support.install.${this.offer.platform}`;
 }

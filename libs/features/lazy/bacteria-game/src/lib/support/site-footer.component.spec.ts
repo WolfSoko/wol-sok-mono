@@ -1,36 +1,27 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { GAME_SUPPORT_OPTIONS } from '../../testing/game-support-options';
 import { I18nService } from '../i18n/i18n.service';
 import { GameAds } from './game-ads.service';
-import { GAME_SUPPORT, GameSupportOptions } from './game-support';
+import { GAME_SUPPORT } from './game-support';
 import { SiteFooterComponent } from './site-footer.component';
 
-const OPTIONS: GameSupportOptions = {
-  buyMeACoffeeHandle: 'wolf',
-  playTipProductIds: [],
-  androidPackage: 'de.wolsok.bacteriawars',
-  ads: null,
-};
-
 describe('SiteFooterComponent', () => {
-  const consentAnswered = signal(false);
-  const openConsentSettings = jest.fn();
+  let ads: Pick<GameAds, 'consentAnswered' | 'openConsentSettings'> & {
+    openConsentSettings: jest.Mock;
+  };
 
   beforeEach(() => {
-    consentAnswered.set(false);
-    openConsentSettings.mockClear();
+    ads = { consentAnswered: signal(false), openConsentSettings: jest.fn() };
   });
 
-  function render(options: GameSupportOptions | null = OPTIONS): HTMLElement {
+  function render(): HTMLElement {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        { provide: GAME_SUPPORT, useValue: options },
-        {
-          provide: GameAds,
-          useValue: { consentAnswered, openConsentSettings },
-        },
+        { provide: GAME_SUPPORT, useValue: GAME_SUPPORT_OPTIONS },
+        { provide: GameAds, useValue: ads },
       ],
     });
     const fixture = TestBed.createComponent(SiteFooterComponent);
@@ -38,12 +29,12 @@ describe('SiteFooterComponent', () => {
     return fixture.nativeElement;
   }
 
-  it("links to the privacy policy and the legal notice on the game's own site", () => {
+  it('names the owner and links to the privacy policy and the legal notice', () => {
     const host = render();
     const links = Array.from(host.querySelectorAll<HTMLAnchorElement>('a'));
 
     expect(host.textContent).toContain(
-      `© ${new Date().getFullYear()} Wolfram Sokollek`
+      `© ${new Date().getFullYear()} ${GAME_SUPPORT_OPTIONS.siteOwner}`
     );
     // Routes of the site's own app, so the game is not torn down on the way.
     expect(
@@ -56,13 +47,13 @@ describe('SiteFooterComponent', () => {
   });
 
   it('opens the ad consent settings once the banner was answered', () => {
-    consentAnswered.set(true);
+    ads.consentAnswered = signal(true);
     const host = render();
 
     const button = host.querySelector<HTMLButtonElement>('button');
     expect(button?.textContent?.trim()).toBe('Ad privacy settings');
     button?.click();
-    expect(openConsentSettings).toHaveBeenCalled();
+    expect(ads.openConsentSettings).toHaveBeenCalled();
   });
 
   it('speaks German', () => {
@@ -72,9 +63,5 @@ describe('SiteFooterComponent', () => {
 
     expect(host.textContent).toContain('Datenschutz');
     expect(host.textContent).toContain('Impressum');
-  });
-
-  it('shows nothing inside the shell, which has pages of its own', () => {
-    expect(render(null).querySelector('footer')).toBeNull();
   });
 });

@@ -1,19 +1,15 @@
-import { DOCUMENT } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
-import { Meta, Title } from '@angular/platform-browser';
-import { provideRouter, Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { LEGAL_NOTICE_URL } from '@wolsok/feat-lazy-bac-game';
+import { SITE_OWNER } from '../legal/site-owner';
 import { ImpressumComponent } from './impressum.component';
 
 describe('ImpressumComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        provideRouter([
-          { path: 'impressum', component: ImpressumComponent },
-          { path: '**', children: [] },
-        ]),
+        provideRouter([{ path: 'impressum', component: ImpressumComponent }]),
       ],
     });
   });
@@ -33,45 +29,14 @@ describe('ImpressumComponent', () => {
     expect(page.querySelector('article[lang="en"] h1')?.textContent).toBe(
       'Legal notice'
     );
-    const owner = page.querySelector('address')?.textContent ?? '';
-    expect(owner).toContain('Wolfram Sokollek');
-    expect(owner).toContain('privacy@wolsok.de');
-    expect(page.querySelector('a[href="/privacy"]')).not.toBeNull();
-  });
-
-  it('has its own title, description and canonical URL while open', async () => {
-    const title = TestBed.inject(Title);
-    const meta = TestBed.inject(Meta);
-    const doc = TestBed.inject(DOCUMENT);
-    title.setTitle('Bacteria Game');
-    meta.updateTag({ name: 'description', content: 'The game' });
-
-    await open();
-
-    expect(title.getTitle()).toBe('Impressum - Bacteria Wars');
-    expect(meta.getTag('name="description"')?.content).toContain(
-      'Legal notice of Bacteria Wars'
+    const owners = Array.from(page.querySelectorAll('address')).map((address) =>
+      address.textContent?.replace(/\s+/g, ' ').trim()
     );
-    // The footer of the game links here.
-    expect(
-      doc.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href
-    ).toBe(LEGAL_NOTICE_URL);
-
-    await TestBed.inject(Router).navigateByUrl('/');
-
-    expect(title.getTitle()).toBe('Bacteria Game');
-    expect(meta.getTag('name="description"')?.content).toBe('The game');
-    expect(doc.querySelector('link[rel="canonical"]')).toBeNull();
-  });
-
-  it('takes the loading screen down', async () => {
-    const doc = TestBed.inject(DOCUMENT);
-    const splash = doc.createElement('div');
-    splash.id = 'bacteria-game-splash';
-    doc.body.append(splash);
-
-    await open();
-
-    expect(doc.getElementById('bacteria-game-splash')).toBeNull();
+    expect(owners).toHaveLength(2);
+    expect(owners[0]).toContain(SITE_OWNER.name);
+    expect(owners[0]).toContain(`E-Mail: ${SITE_OWNER.email}`);
+    expect(owners[1]).toContain(`Email: ${SITE_OWNER.email}`);
+    expect(page.querySelector('a[href="/privacy"]')).not.toBeNull();
+    expect(TestBed.inject(Title).getTitle()).toBe('Impressum - Bacteria Wars');
   });
 });

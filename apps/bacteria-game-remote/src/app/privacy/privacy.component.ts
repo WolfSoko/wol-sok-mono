@@ -10,18 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { setUpLegalPage } from '../legal/legal-page';
 import { SITE_OWNER } from '../legal/site-owner';
-
-/**
- * Where the policy lives, for its canonical link. The game's help screen
- * links here too (PRIVACY_POLICY_URL in the game lib). Not imported from
- * there: the lib's entry point would pull the whole game into this page.
- */
-const CANONICAL_URL = 'https://bacteria-wars.wolsok.de/privacy';
-
-const TITLE = 'Datenschutz - Bacteria Wars';
-const DESCRIPTION =
-  'Datenschutzerklärung von Bacteria Wars, im Web und als Android-App. ' +
-  'Privacy policy of Bacteria Wars, on the web and as an Android app.';
+import { SiteOwnerComponent } from '../legal/site-owner.component';
 
 /**
  * The privacy policy of the game, its web app and its Android app, in
@@ -30,7 +19,7 @@ const DESCRIPTION =
  */
 @Component({
   selector: 'wolsok-privacy',
-  imports: [MatButtonModule, RouterLink],
+  imports: [MatButtonModule, RouterLink, SiteOwnerComponent],
   templateUrl: './privacy.component.html',
   styleUrl: './privacy.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,14 +28,15 @@ export class PrivacyComponent {
   private readonly document = inject(DOCUMENT);
   private readonly fragment = toSignal(inject(ActivatedRoute).fragment);
 
-  /** The controller, named in both languages. */
+  /** For the email in the deletion links. */
   protected readonly owner = SITE_OWNER;
 
   public constructor() {
     setUpLegalPage({
-      title: TITLE,
-      description: DESCRIPTION,
-      canonicalUrl: CANONICAL_URL,
+      title: 'Datenschutz - Bacteria Wars',
+      description:
+        'Datenschutzerklärung von Bacteria Wars, im Web und als Android-App. ' +
+        'Privacy policy of Bacteria Wars, on the web and as an Android app.',
     });
     // The body scrolls, not the window, so the router's anchor scrolling
     // would not move: a link such as /privacy#en-delete is scrolled here.
