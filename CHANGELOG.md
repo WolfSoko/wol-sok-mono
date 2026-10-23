@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.57.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.56.0...v74.57.0) (2026-10-23)
+
+### Features
+
+* **bacteria-game-remote:** ✨ load AdSense from the page head ([#2583](https://github.com/WolfSoko/wol-sok-mono/issues/2583)) ([9219934](https://github.com/WolfSoko/wol-sok-mono/commit/92199342bbacff9c8126c7e2191c9d3f3d496633))
+* **bacteria-wars-android:** ✨ Play Games sign-in in the app, releases to closed testing ([#2586](https://github.com/WolfSoko/wol-sok-mono/issues/2586)) ([0ee9492](https://github.com/WolfSoko/wol-sok-mono/commit/0ee949299ea527ae6778da6b8d248f680a672efa))
+
 ## [74.56.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.55.0...v74.56.0) (2026-10-23)
 
 ### Features
