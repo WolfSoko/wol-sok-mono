@@ -50,7 +50,7 @@ jobs:
           filter: tree:0
 
       - name: Install Deps
-        uses: ./.github/actions/install-deps
+        uses: $/.github/actions/install-deps
 
       - name: Snapshot tags before versioning
         if: ${{ !inputs.tag }}
@@ -116,7 +116,7 @@ jobs:
       # HEAD is the release commit the tag points at, so the apps are built here.
       - name: Create release
         if: steps.version.outputs.version != ''
-        uses: ./.github/actions/create-release
+        uses: $/.github/actions/create-release
         with:
           tag: ${{ steps.version.outputs.version }}
           sentry-auth-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
