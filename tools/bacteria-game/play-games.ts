@@ -2,12 +2,12 @@
  * The Play Games Services side of the Bacteria Wars Android app: the
  * achievements of the game, as Play Console's "Publish" page wants them.
  *
- * `store/play-games/achievements.json` lists them by the game's ids, in the
- * game's order, each with its points and its texts per locale. The game's
- * spec `play-games-achievements.spec.ts` (libs/features/lazy/bacteria-game)
- * keeps the file in step with the game's own achievements; here
- * `playGamesAchievements()` reads it and refuses what Play would: missing
- * texts, texts too long, points off its rules.
+ * The game lists them itself, in `play-games-achievements.json` next to its
+ * achievements (libs/features/lazy/bacteria-game/src/lib/state/): by id, in
+ * the game's order, each with its points and its texts per locale, and its
+ * spec `play-games-achievements.spec.ts` keeps the file in step with the
+ * achievements. Here `playGamesAchievements()` reads it and refuses what
+ * Play would: missing texts, texts too long, points off its rules.
  *
  * `syncAchievements` brings the achievement configurations of the game's
  * Play Games Services project in line with that list through the Play Games
@@ -22,6 +22,9 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const API = 'https://gamesconfiguration.googleapis.com/games/v1configuration';
+const achievementsFile = resolve(
+  'libs/features/lazy/bacteria-game/src/lib/state/play-games-achievements.json'
+);
 /**
  * The id of the game in Play Games Services, a repository variable: the
  * number of the Cloud project the game is linked to (the `project_number` of
@@ -42,7 +45,7 @@ export interface AchievementText {
   description: string;
 }
 
-/** An achievement in store/play-games/achievements.json. */
+/** An achievement in play-games-achievements.json. */
 interface AchievementEntry {
   points: number;
   [locale: string]: number | AchievementText;
@@ -50,7 +53,7 @@ interface AchievementEntry {
 
 /** An achievement as Play Games Services should list it. */
 export interface PlayAchievement {
-  /** The game's id of it, the key in achievements.json. */
+  /** The game's id of it, the key in play-games-achievements.json. */
   id: string;
   points: number;
   /** Its texts by locale, `en-US` among them. */
@@ -79,10 +82,6 @@ interface AchievementConfiguration {
   published?: Detail;
 }
 
-const achievementsFile = resolve(
-  'apps/bacteria-wars-android/store/play-games/achievements.json'
-);
-
 /** True when the environment names the game to sync. */
 export function playGamesConfigured(): boolean {
   return !!process.env[APPLICATION_ID_ENV];
@@ -110,7 +109,7 @@ function text(id: string, locale: string, value: unknown): AchievementText {
 }
 
 /**
- * Every achievement of achievements.json with its points and texts, in the
+ * Every achievement of play-games-achievements.json with its points and texts, in the
  * file's order. Throws when the file says something Play does not take.
  */
 export function playGamesAchievements(): PlayAchievement[] {
@@ -140,7 +139,7 @@ export function playGamesAchievements(): PlayAchievement[] {
     return { id, points, texts };
   });
   if (result.length === 0) {
-    throw new Error('achievements.json lists no achievement');
+    throw new Error('play-games-achievements.json lists no achievement');
   }
   const total = result.reduce((sum, { points }) => sum + points, 0);
   if (total > MAX_TOTAL_POINTS) {
@@ -214,30 +213,18 @@ function nameOf(config: AchievementConfiguration): string | undefined {
   );
 }
 
-type ApiCall = <T>(path: string, init?: RequestInit) => Promise<T>;
-
-function apiCall(token: string): ApiCall {
-  return async <T>(path: string, init: RequestInit = {}): Promise<T> => {
-    const response = await fetch(`${API}${path}`, {
-      ...init,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) {
-      throw new Error(
-        `Play Games ${init.method ?? 'GET'} ${path} failed: ${response.status} ${await response.text()}`
-      );
-    }
-    const body = await response.text();
-    return (body ? JSON.parse(body) : {}) as T;
-  };
-}
+/**
+ * A call to a Google API as JSON, signed with the androidpublisher scope:
+ * the deploy's own, which the Publishing API shares.
+ */
+export type GoogleApiCall = <T>(
+  url: string,
+  init?: { method?: string; body?: string }
+) => Promise<T>;
 
 /** Every achievement configuration of the game, page by page. */
 async function listConfigurations(
-  call: ApiCall,
+  call: GoogleApiCall,
   applicationId: string
 ): Promise<AchievementConfiguration[]> {
   const result: AchievementConfiguration[] = [];
@@ -250,7 +237,7 @@ async function listConfigurations(
     const page = await call<{
       items?: AchievementConfiguration[];
       nextPageToken?: string;
-    }>(`/applications/${applicationId}/achievements?${query}`);
+    }>(`${API}/applications/${applicationId}/achievements?${query}`);
     result.push(...(page.items ?? []));
     pageToken = page.nextPageToken;
   } while (pageToken);
@@ -262,52 +249,52 @@ async function listConfigurations(
  * in line with the game's achievements, as drafts: created where missing,
  * updated where they differ, matched by their English name. An achievement
  * on Play the game lacks is left alone and reported, since deleting one
- * takes the players' progress on it. `token` is an access token with the
- * androidpublisher scope.
+ * takes the players' progress on it.
  */
 export async function syncAchievements(
-  token: string,
+  call: GoogleApiCall,
   applicationId: string
 ): Promise<void> {
-  const call = apiCall(token);
   const configs = await listConfigurations(call, applicationId);
   const wanted = playGamesAchievements();
   let changed = 0;
   for (const achievement of wanted) {
     const name = achievement.texts[SOURCE_LOCALE].name;
     const config = configs.find((each) => nameOf(each) === name);
+    if (config != null && upToDate(config, achievement)) {
+      continue;
+    }
+    // Only what the game decides: `published`, `kind` and the icon are Play's.
+    const body: AchievementConfiguration = {
+      id: config?.id,
+      token: config?.token,
+      achievementType: 'STANDARD',
+      initialState: 'REVEALED',
+      draft: toDetail(achievement),
+    };
     if (config == null) {
-      const body: AchievementConfiguration = {
-        achievementType: 'STANDARD',
-        initialState: 'REVEALED',
-        draft: toDetail(achievement),
-      };
       const created = await call<AchievementConfiguration>(
-        `/applications/${applicationId}/achievements`,
+        `${API}/applications/${applicationId}/achievements`,
         { method: 'POST', body: JSON.stringify(body) }
       );
       console.log(`Created the achievement ${name} (${created.id}).`);
-      changed++;
-    } else if (!upToDate(config, achievement)) {
-      await call(`/achievements/${config.id}`, {
+    } else {
+      await call(`${API}/achievements/${config.id}`, {
         method: 'PUT',
-        body: JSON.stringify({
-          ...config,
-          achievementType: 'STANDARD',
-          initialState: 'REVEALED',
-          draft: toDetail(achievement),
-        }),
+        body: JSON.stringify(body),
       });
       console.log(`Updated the achievement ${name} (${config.id}).`);
-      changed++;
     }
+    changed++;
   }
   const names = new Set(wanted.map(({ texts }) => texts[SOURCE_LOCALE].name));
   for (const config of configs) {
     const name = nameOf(config);
     if (name == null || !names.has(name)) {
       console.warn(
-        `Play Games lists the achievement ${name ?? config.id} (${config.id}), which the game has not: delete it in Play Console if it should go.`
+        name == null
+          ? `Play Games lists an achievement without an English name (${config.id}), which the game cannot match: name it in Play Console, or delete it.`
+          : `Play Games lists the achievement ${name} (${config.id}), which the game has not: delete it in Play Console if it should go.`
       );
     }
   }

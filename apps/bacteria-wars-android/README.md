@@ -20,7 +20,9 @@ What the shell adds:
   `bacteria-wars` (`app/google-services.json`, the `google-services` Gradle
   plugin and Firebase Analytics): Analytics counts the app's installs and
   opens, and the Android OAuth client Play Games Services asks for lives on
-  that app. The file holds no secret: the API key identifies the project and
+  that app. The manifest drops the advertising id permission Analytics
+  brings along and turns its advertising id collection off, as the app's
+  Play declaration says it uses none. The file holds no secret: the API key identifies the project and
   ships in every build, so restrict it in the Cloud console rather than hide
   it. Download it again from the Firebase console (Project settings → Your
   apps) after adding a signing key there.
@@ -120,16 +122,19 @@ it still needs; `store/` holds all of it:
   the hi-res icon (512 × 512) and feature graphic (1024 × 500) from
   `store/graphics/`. The Publishing API has no way to them, so they go in by
   hand, and again when the listing changes.
-- **Achievements** come from `store/play-games/achievements.json`: every
-  achievement of the game, in its order, with its points (a multiple of 5,
-  200 at most, 2000 in all) and its texts per locale. The game's spec
-  `play-games-achievements.spec.ts` fails when the `en-US` texts or the ids
-  drift from the game's. The deploy creates and updates them as drafts through
-  the Play Games Services Publishing API (`tools/bacteria-game/play-games.ts`),
-  matched by their English name: an achievement renamed in the game is a new
-  one on Play, and the deploy never deletes one, since that takes the players'
-  progress on it; delete the old one in the console. Drafts go live with the
-  Publish button there.
+- **Achievements** the game lists itself, in
+  `libs/features/lazy/bacteria-game/src/lib/state/play-games-achievements.json`
+  next to its achievements: every one of them, in the game's order, with its
+  points (a multiple of 5, 200 at most, 2000 in all) and its texts per locale.
+  The spec beside it fails when the `en-US` texts or the ids drift from the
+  game's, so the game's tests guard the file. The deploy creates and updates
+  them as drafts through the Play Games Services Publishing API
+  (`tools/bacteria-game/play-games.ts`), matched by their English name: an
+  achievement renamed in the game is a new one on Play, and the deploy never
+  deletes one, since that takes the players' progress on it; delete the old
+  one in the console. Drafts go live with the Publish button there. A change
+  to the file alone does not ship the app: it reaches Play with the next
+  release that does, or a run of the Deploy release workflow by hand.
 - **Achievement icons** are `store/play-games/achievements/<id>.png`
   (512 × 512, transparent), drawn by
 

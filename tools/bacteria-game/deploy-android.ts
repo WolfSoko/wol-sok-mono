@@ -418,9 +418,9 @@ async function publishToPlay(
   if (youtubeError != null) {
     errors.push(youtubeError);
   }
-  // The same account, the same scope: the Publishing API takes the token.
+  // The same account, the same scope: the Publishing API takes the same calls.
   if (playGamesConfigured()) {
-    await syncAchievements(token, env(APPLICATION_ID_ENV)).catch(
+    await syncAchievements(call, env(APPLICATION_ID_ENV)).catch(
       (error: unknown) => errors.push(error)
     );
   } else {

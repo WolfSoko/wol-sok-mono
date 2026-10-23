@@ -1,16 +1,13 @@
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { join } from 'node:path';
 import { ACHIEVEMENT_IDS } from './achievement-ids';
 import { ACHIEVEMENTS } from './achievements';
 
 /**
- * The achievements as the Android app lists them on Play Games Services
- * (tools/bacteria-game/play-games.ts syncs the file on every release).
+ * The achievements as the Android app lists them on Play Games Services:
+ * tools/bacteria-game/play-games.ts sends the file with every release.
  */
-const PLAY_GAMES_FILE = resolve(
-  __dirname,
-  '../../../../../../../apps/bacteria-wars-android/store/play-games/achievements.json'
-);
+const PLAY_GAMES_FILE = join(__dirname, 'play-games-achievements.json');
 
 interface PlayText {
   name: string;

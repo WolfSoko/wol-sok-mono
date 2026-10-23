@@ -23,14 +23,6 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/jest.preset.js",
-        "{workspaceRoot}/jest.config.ts",
-        "{workspaceRoot}/.codecov.yml",
-        "{workspaceRoot}/apps/bacteria-wars-android/store/play-games/achievements.json"
-      ],
       "outputs": ["{workspaceRoot}/coverage/libs/features/lazy/bacteria-game"],
       "options": {
         "jestConfig": "libs/features/lazy/bacteria-game/jest.config.ts",
