@@ -16,6 +16,18 @@ What the shell adds:
 - immersive mode, matching `"display": "fullscreen"` of the web manifest
 - links to bacteria-wars.wolsok.de open in the app
 - a WebView fallback for devices without a TWA-capable browser
+- the Firebase app `de.wolsok.bacteriawars` of the game's project
+  `bacteria-wars` (`app/google-services.json`, the `google-services` Gradle
+  plugin and Firebase Analytics): Analytics counts the app's installs and
+  opens, and the Android OAuth client Play Games Services asks for lives on
+  that app. The manifest drops the advertising id permission Analytics
+  brings along and turns its advertising id collection off: the app itself
+  serves no ads (the web game's AdSense ads run in Chrome, without the
+  Android advertising id), and the app's Play declaration says so. The file
+  holds no secret: the API key identifies the project and ships in every
+  build, so restrict it in the Cloud console rather than hide it. Download
+  it again from the Firebase console (Project settings → Your apps) after
+  adding a signing key there.
 - Google Play Billing for tips, see below
 
 ## Build
@@ -134,6 +146,66 @@ npx nx run bacteria-wars-android:store-assets     # in another
 
 The matches are live, so every run draws slightly different screenshots:
 commit the ones worth showing.
+
+### Play Games Services
+
+The game is a Play Games Services project in the Play Console, on the Cloud
+project `bacteria-wars` (the Firebase project of the game). Its Publish page
+(Grow users → Play Games Services → Setup and management → Publish) names what
+it still needs; `store/` holds all of it:
+
+- **Game details and graphics** (Configuration → Properties) are the store
+  listing's: the display name and description from `store/listings/<language>/`,
+  the hi-res icon (512 × 512) and feature graphic (1024 × 500) from
+  `store/graphics/`. The Publishing API has no way to them, so they go in by
+  hand, and again when the listing changes.
+- **Achievements** the game lists itself, in
+  `libs/features/lazy/bacteria-game/src/lib/state/play-games-achievements.json`
+  next to its achievements: every one of them, in the game's order, with its
+  points (a multiple of 5, 200 at most, 2000 in all) and its texts per locale.
+  The spec beside it fails when the `en-US` texts or the ids drift from the
+  game's, so the game's tests guard the file. The deploy creates and updates
+  them as drafts through the Play Games Services Publishing API
+  (`tools/bacteria-game/play-games.ts`), matched by their English name: an
+  achievement renamed in the game is a new one on Play, and the deploy never
+  deletes one, since that takes the players' progress on it. Delete the old
+  one in the console while it is a draft; once published, Play keeps it for
+  good, so rename with care. Drafts go live with the Publish button there. A
+  change to the file alone does not ship the app, and the Deploy release
+  workflow finds nothing to deploy for it: the achievements reach Play with
+  the next release that ships the app, or with
+  `npx nx run bacteria-wars-android:deploy` run locally with the secrets of
+  the README's setup (the whole Android deploy, not only the sync).
+- **Achievement icons** are `store/play-games/achievements/<id>.png`
+  (512 × 512, transparent), drawn by
+
+  ```bash
+  npx nx run bacteria-wars-android:achievement-icons
+  ```
+
+  The API's image upload is gone, so a new or changed icon goes up by hand
+  (Achievements → the achievement → Icon); the committed files show in the diff
+  which ones.
+
+Without the repository variable `PLAY_GAMES_APPLICATION_ID` the deploy leaves
+the achievements alone. Setting up:
+
+1. **The game project**, under Configuration: created on the existing Cloud
+   project `bacteria-wars`, with an Android credential for
+   `de.wolsok.bacteriawars`. The OAuth client it asks for comes from the
+   Firebase app once both SHA-1 fingerprints (the upload key's and the Play
+   app signing key's, next to the SHA-256s of `assetlinks.json`) are added to
+   it in the Firebase console.
+2. **Testers**: your own account, under Testers, until the game is published.
+3. **The service account**: on Play Console's API access page, the Game
+   Services Publishing API switched on and `play-publisher@...` granted access
+   to the game.
+4. **The variable**: `PLAY_GAMES_APPLICATION_ID` is the game's project id as
+   the Configuration page shows it, the number of its Cloud project
+   (`project_number` in `app/google-services.json`).
+5. **Publishing**: the OAuth consent screen of the Cloud project published,
+   then Publish in the console, at least two hours before a release that
+   relies on it.
 
 ### Promo video
 

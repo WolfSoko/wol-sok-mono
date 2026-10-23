@@ -2,12 +2,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools">
 
+  <!-- Firebase Analytics brings the advertising id permission along. The app itself
+       serves no ads (the web game's AdSense ads run in Chrome, without the Android
+       advertising id), and Play's advertising id declaration says so, so it must not. -->
+  <uses-permission
+    android:name="com.google.android.gms.permission.AD_ID"
+    tools:node="remove" />
+
   <application
     android:icon="@mipmap/ic_launcher"
     android:label="@string/app_name"
     android:manageSpaceActivity="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity"
     android:supportsRtl="true"
     android:theme="@style/Theme.BacteriaGame">
+
+    <meta-data
+      android:name="google_analytics_adid_collection_enabled"
+      android:value="false" />
 
     <!-- Tells Chrome which site this app vouches for, the other half of assetlinks.json. -->
     <meta-data
