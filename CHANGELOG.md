@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.54.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.53.0...v74.54.0) (2026-10-23)
+
+### Features
+
+* **feat-lazy-bacteria-game:** ✨ support Bacteria Wars with tips and ads ([#2578](https://github.com/WolfSoko/wol-sok-mono/issues/2578)) ([e71d73c](https://github.com/WolfSoko/wol-sok-mono/commit/e71d73c1bc074a534c4e0147c56b3c7903fbeaaf))
+
+### CI/CD
+
+* **github:** one release pipeline: version, GitHub release and deploy in one run ([#2577](https://github.com/WolfSoko/wol-sok-mono/issues/2577)) ([1bd4142](https://github.com/WolfSoko/wol-sok-mono/commit/1bd41424feb2bf98ce74ab1b013af7997916ae59))
+
 ## [74.53.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.52.2...v74.53.0) (2026-10-23)
 
 ### Features
