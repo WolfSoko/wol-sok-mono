@@ -343,11 +343,48 @@ const CELL_RADIUS = 0.62;
 /** Where the light spot sits on a cell, on its unit disc. */
 const CELL_FOCAL_X = -0.35;
 const CELL_FOCAL_Y = -0.4;
-/** How dark the base under the cells is, a share of the colony's colour. */
+/** How dark the base under the cells and the tiles is, a share of the colour. */
 const CELL_BASE = 0.42;
 /** The density below which no cell shows, so none floats over bare floor. */
 const CELL_CLIP_START = 0.03;
 const CELL_CLIP_END = 0.09;
+
+/**
+ * The honeycomb and the crystal look: the colony tiled, every tile the
+ * nearest point of a hex lattice {@link TILE_SPACING} base cells apart - the
+ * honeycomb's regular, the crystal's jittered into irregular facets. A tile
+ * is laid where the density under its centre reaches {@link TILE_MIN}. The
+ * honeycomb's tiles are glossy with dark seams, the crystal's facets flat,
+ * each its own shade, with bright seams.
+ */
+export const TILE_SPACING = 2.8;
+export const TILE_MIN = 0.12;
+/** How far a crystal facet's centre strays from its lattice point. */
+const CRYSTAL_JITTER = 0.3;
+/** How wide the seams between the tiles are, in spacings. */
+const TILE_SEAM = 0.12;
+
+/**
+ * The neon look: a dark body whose outline glows in the colony's colour,
+ * with a fainter line further in and a soft halo outside.
+ */
+const NEON_LINE_START = 0.04;
+const NEON_LINE_END = 0.24;
+const NEON_INNER_START = 0.38;
+const NEON_INNER_END = 0.45;
+const NEON_BODY = 0.22;
+
+/**
+ * The ink look: a flat body hatched with lines {@link INK_HATCH_SPACING}
+ * base cells apart - crossed where the colony is thin - and a thick outline
+ * in ink. Each colony is hatched in its own pattern ({@link hatchPattern}).
+ */
+const INK_HATCH_SPACING = 2.2;
+const INK_HATCH_WIDTH = 0.4;
+const INK_OUTLINE_END = 0.31;
+const INK_CROSS_BELOW = 0.45;
+const INK = 0.18;
+const INK_HATCH = 0.62;
 
 /** One cell of the cells look: its centre in arena cells and its radius. */
 export interface CellBubble {
@@ -395,6 +432,81 @@ export function cellBubble(
 }
 
 /**
+ * The tile of a lattice point for the honeycomb or the crystal look: its
+ * centre, the density under it and - for the crystal - its shade.
+ */
+export function latticeTile(
+  col: number,
+  row: number,
+  spacing: number,
+  crystal: boolean,
+  density: Float32Array,
+  width: number,
+  height: number
+): { x: number; y: number; density: number; shade: number } {
+  const rowHeight = spacing * CELL_ROW_HEIGHT;
+  const jitter = crystal ? CRYSTAL_JITTER : 0;
+  const x =
+    (col + 0.5) * spacing +
+    cellLatticeOffset(row, spacing) +
+    (hash(col, row, 4) - 0.5) * spacing * jitter * 2;
+  const y =
+    (row + 0.5) * rowHeight +
+    (hash(col, row, 5) - 0.5) * rowHeight * jitter * 2;
+  return {
+    x,
+    y,
+    density: sampleDensity(density, width, height, x, y),
+    shade: 0.7 + 0.5 * hash(col, row, 6),
+  };
+}
+
+/** How a colony is hatched in the ink look. */
+export interface HatchPattern {
+  /** The direction of the lines, a unit vector. */
+  direction: readonly [number, number];
+  /** Crossed with lines at a right angle everywhere, not only where thin. */
+  cross: boolean;
+}
+
+/**
+ * The hatching of a colony of that colour in the ink look, one of eight by
+ * its hue - four directions of single lines and four of crossed ones - so
+ * every colony of the palette is told apart from every other without its
+ * colour. Red, orange and yellow, 50 degrees apart, get bins of their own.
+ */
+export function hatchPattern(color: readonly number[]): HatchPattern {
+  const [r, g, b] = color;
+  let hue = (Math.atan2(Math.sqrt(3) * (g - b), 2 * r - g - b) * 180) / Math.PI;
+  if (hue < HUE_START) {
+    hue += 360;
+  }
+  const bin = HUE_BINS.filter((edge) => hue >= edge).length;
+  return HATCH_PATTERNS[bin];
+}
+
+/** The hue each bin of {@link HATCH_PATTERNS} starts at, after the first. */
+const HUE_START = -25;
+const HUE_BINS = [10, 35, 90, 160, 200, 240, 300];
+
+const unit = (degrees: number): [number, number] => [
+  Math.cos((degrees * Math.PI) / 180),
+  Math.sin((degrees * Math.PI) / 180),
+];
+
+/** Red, orange, yellow, green, cyan, blue, purple and pink. */
+const HATCH_PATTERNS: readonly HatchPattern[] = [
+  { direction: unit(45), cross: false },
+  { direction: unit(135), cross: false },
+  { direction: unit(0), cross: false },
+  { direction: unit(90), cross: false },
+  { direction: unit(22.5), cross: true },
+  { direction: unit(67.5), cross: true },
+  { direction: unit(0), cross: true },
+  { direction: unit(45), cross: true },
+];
+
+/**
  * The density at an arena position, between the cells' centres - a cell's
  * centre is its lattice point, as in {@link paintSlime}.
  */
@@ -419,6 +531,113 @@ export function sampleDensity(
 }
 
 /**
+ * The colour and alpha of a look at a layer pixel, written into `out` as r,
+ * g, b from 0 to 255 and alpha from 0 to 1 - false for a pixel the look
+ * leaves clear. `x` and `y` are the pixel's centre in arena cells and `d`
+ * the density under it.
+ */
+type LookShader = (
+  x: number,
+  y: number,
+  d: number,
+  out: Float64Array
+) => boolean;
+
+/**
+ * Paints a look that is worked out pixel by pixel from the density, like
+ * the slime, onto a buffer {@link SLIME_SCALE} times the size of the arena:
+ * `shade` gives each pixel its colour, and over it come the white heat where
+ * the colony is overcharged and, while it is boosted, the waves of light and
+ * the sparkles every look shares. Pixels under `minDensity` are skipped
+ * before `shade` is asked. Only the pixels of `region`'s cells are painted.
+ */
+function paintLook(
+  data8: Uint8ClampedArray,
+  density: Float32Array,
+  heat: Float32Array | null,
+  width: number,
+  height: number,
+  shimmer: BoostShimmer | null,
+  region: CellBounds,
+  minDensity: number,
+  shade: LookShader
+): void {
+  const outWidth = width * SLIME_SCALE;
+  const step = 1 / SLIME_SCALE;
+  const fromX = region.minX * SLIME_SCALE;
+  const toX = (region.maxX + 1) * SLIME_SCALE;
+  const out = new Float64Array(4);
+
+  for (
+    let py = region.minY * SLIME_SCALE;
+    py < (region.maxY + 1) * SLIME_SCALE;
+    py++
+  ) {
+    const y = (py + 0.5) * step;
+    for (let px = fromX; px < toX; px++) {
+      const x = (px + 0.5) * step;
+      const d = sampleDensity(density, width, height, x, y);
+      if (d < minDensity || !shade(x, y, d, out) || out[3] <= 0) {
+        continue;
+      }
+
+      let white = 0;
+      if (heat != null) {
+        const hot = sampleDensity(heat, width, height, x, y);
+        white = Math.min(1, hot / Math.max(d, 0.05));
+      }
+      if (shimmer != null) {
+        white = Math.max(white, shimmerAt(x, y, shimmer) * 0.8);
+        if (sparkle(px, py, shimmer.timeSec)) {
+          white = 1;
+        }
+      }
+
+      const index = (py * outWidth + px) * 4;
+      data8[index] = out[0] + (255 - out[0]) * white;
+      data8[index + 1] = out[1] + (255 - out[1]) * white;
+      data8[index + 2] = out[2] + (255 - out[2]) * white;
+      data8[index + 3] = 255 * out[3];
+    }
+  }
+}
+
+/** The lattice points around a region, one ring more, for the lattice looks. */
+function latticeAround(region: CellBounds, spacing: number) {
+  const rowHeight = spacing * CELL_ROW_HEIGHT;
+  const row0 = Math.floor(region.minY / rowHeight) - 1;
+  const row1 = Math.floor((region.maxY + 1) / rowHeight) + 1;
+  const col0 = Math.floor((region.minX - spacing * 0.5) / spacing) - 1;
+  const col1 = Math.floor((region.maxX + 1) / spacing) + 1;
+  return { row0, row1, col0, col1, cols: col1 - col0 + 1, rowHeight };
+}
+
+/**
+ * The gradient of the icon's cells on a unit disc, at `(ux, uy)`: a light
+ * spot at the top left, the body colour around it and a dark rim.
+ */
+function sphereShade(
+  ux: number,
+  uy: number,
+  color: readonly number[],
+  light: readonly number[],
+  dark: readonly number[],
+  out: Float64Array
+): void {
+  const t = clamp(
+    Math.hypot(ux - CELL_FOCAL_X, uy - CELL_FOCAL_Y) / 1.25,
+    0,
+    1
+  );
+  for (let c = 0; c < 3; c++) {
+    out[c] =
+      t < 0.55
+        ? lerp(light[c], color[c], t / 0.55)
+        : lerp(color[c], dark[c], (t - 0.55) / 0.45);
+  }
+}
+
+/**
  * Turns the density of a colony into the cells look on a buffer
  * {@link SLIME_SCALE} times the size of the arena: a dark base where the
  * slime would be, and on it the lattice's cells, each a glossy sphere lit
@@ -438,20 +657,17 @@ export function paintCells(
   unit: number,
   region: CellBounds = wholeArena(width, height)
 ): void {
-  const [r, g, b] = color;
-  const light = [r, g, b].map((c) => c + (255 - c) * 0.55);
-  const dark = [r, g, b].map((c) => c * 0.5);
-  const base = [r, g, b].map((c) => c * CELL_BASE);
+  const light = color.slice(0, 3).map((c) => c + (255 - c) * 0.55);
+  const dark = color.slice(0, 3).map((c) => c * 0.5);
+  const base = color.slice(0, 3).map((c) => c * CELL_BASE);
   const spacing = CELL_SPACING * unit;
-  const rowHeight = spacing * CELL_ROW_HEIGHT;
+  const { row0, row1, col0, col1, cols, rowHeight } = latticeAround(
+    region,
+    spacing
+  );
 
-  // The cells whose lattice points lie around the region, one ring more,
-  // worked out once: a pixel then only looks the nine around it up.
-  const row0 = Math.floor(region.minY / rowHeight) - 1;
-  const row1 = Math.floor((region.maxY + 1) / rowHeight) + 1;
-  const col0 = Math.floor((region.minX - spacing * 0.5) / spacing) - 1;
-  const col1 = Math.floor((region.maxX + 1) / spacing) + 1;
-  const cols = col1 - col0 + 1;
+  // The cells whose lattice points lie around the region, worked out once:
+  // a pixel then only looks the nine around it up.
   const lattice = new Float32Array(cols * (row1 - row0 + 1) * 3);
   for (let row = row0; row <= row1; row++) {
     for (let col = col0; col <= col1; col++) {
@@ -465,27 +681,18 @@ export function paintCells(
     }
   }
 
-  const outWidth = width * SLIME_SCALE;
-  const step = 1 / SLIME_SCALE;
-  const fromX = region.minX * SLIME_SCALE;
-  const toX = (region.maxX + 1) * SLIME_SCALE;
-  const rgb = [0, 0, 0];
-
-  for (
-    let py = region.minY * SLIME_SCALE;
-    py < (region.maxY + 1) * SLIME_SCALE;
-    py++
-  ) {
-    const y = (py + 0.5) * step;
-    const row = Math.floor(y / rowHeight);
-    for (let px = fromX; px < toX; px++) {
-      const x = (px + 0.5) * step;
-      const d = sampleDensity(density, width, height, x, y);
-      if (d < CELL_CLIP_START) {
-        continue;
-      }
-
+  paintLook(
+    data8,
+    density,
+    heat,
+    width,
+    height,
+    shimmer,
+    region,
+    CELL_CLIP_START,
+    (x, y, d, out) => {
       // The cell the pixel is deepest in, of the nine lattice points around.
+      const row = Math.floor(y / rowHeight);
       let bestQ = Infinity;
       let bestRadius = 0;
       let ux = 0;
@@ -529,51 +736,279 @@ export function paintCells(
           : 0;
       const alpha = cellAlpha + baseAlpha * (1 - cellAlpha);
       if (alpha <= 0) {
-        continue;
+        return false;
       }
-
       if (cellAlpha > 0) {
-        // A sphere: a light spot at the top left, the body colour around it
-        // and a dark rim - the gradient of the icon's cells.
-        const t = clamp(
-          Math.hypot(ux - CELL_FOCAL_X, uy - CELL_FOCAL_Y) / 1.25,
-          0,
-          1
-        );
+        sphereShade(ux, uy, color, light, dark, out);
         for (let c = 0; c < 3; c++) {
-          const sphere =
-            t < 0.55
-              ? lerp(light[c], color[c], t / 0.55)
-              : lerp(color[c], dark[c], (t - 0.55) / 0.45);
-          rgb[c] =
-            (sphere * cellAlpha + base[c] * baseAlpha * (1 - cellAlpha)) /
+          out[c] =
+            (out[c] * cellAlpha + base[c] * baseAlpha * (1 - cellAlpha)) /
             alpha;
         }
       } else {
-        rgb[0] = base[0];
-        rgb[1] = base[1];
-        rgb[2] = base[2];
+        out[0] = base[0];
+        out[1] = base[1];
+        out[2] = base[2];
       }
+      out[3] = alpha;
+      return true;
+    }
+  );
+}
 
-      let white = 0;
-      if (heat != null) {
-        const hot = sampleDensity(heat, width, height, x, y);
-        white = Math.min(1, hot / Math.max(d, 0.05));
-      }
-      if (shimmer != null) {
-        white = Math.max(white, shimmerAt(x, y, shimmer) * 0.8);
-        if (sparkle(px, py, shimmer.timeSec)) {
-          white = 1;
+/**
+ * Turns the density of a colony into the honeycomb look, or the crystal
+ * look for `crystal`, on a buffer {@link SLIME_SCALE} times the size of the
+ * arena: a dark base where the slime would be, tiled with the lattice's
+ * tiles - each pixel belongs to the nearest tile centre - wherever the
+ * colony is dense enough under a tile's centre. The honeycomb's tiles are
+ * glossy with dark seams between them, the crystal's facets flat in their
+ * own shades with bright seams. Heat and the boost light it up like the
+ * slime. Only the pixels of `region`'s cells are painted; `unit` keeps the
+ * tiles as big on every grid.
+ */
+export function paintTiles(
+  data8: Uint8ClampedArray,
+  density: Float32Array,
+  heat: Float32Array | null,
+  width: number,
+  height: number,
+  color: readonly number[],
+  shimmer: BoostShimmer | null,
+  unit: number,
+  crystal: boolean,
+  region: CellBounds = wholeArena(width, height)
+): void {
+  const light = color.slice(0, 3).map((c) => c + (255 - c) * 0.55);
+  const dark = color.slice(0, 3).map((c) => c * 0.5);
+  const base = color.slice(0, 3).map((c) => c * CELL_BASE);
+  const spacing = TILE_SPACING * unit;
+  const { row0, row1, col0, col1, cols, rowHeight } = latticeAround(
+    region,
+    spacing
+  );
+
+  // Each lattice point's tile - centre, density under it and shade - once.
+  const lattice = new Float32Array(cols * (row1 - row0 + 1) * 4);
+  for (let row = row0; row <= row1; row++) {
+    for (let col = col0; col <= col1; col++) {
+      const tile = latticeTile(
+        col,
+        row,
+        spacing,
+        crystal,
+        density,
+        width,
+        height
+      );
+      const at = ((row - row0) * cols + (col - col0)) * 4;
+      lattice[at] = tile.x;
+      lattice[at + 1] = tile.y;
+      lattice[at + 2] = tile.density;
+      lattice[at + 3] = tile.shade;
+    }
+  }
+
+  paintLook(
+    data8,
+    density,
+    heat,
+    width,
+    height,
+    shimmer,
+    region,
+    CELL_CLIP_START,
+    (x, y, d, out) => {
+      // The nearest tile centre and the second nearest - the seam lies
+      // where they are as far away.
+      const row = Math.floor(y / rowHeight);
+      let nearest = Infinity;
+      let second = Infinity;
+      let at = -1;
+      for (let dr = -1; dr <= 1; dr++) {
+        const candidateRow = row + dr;
+        if (candidateRow < row0 || candidateRow > row1) {
+          continue;
+        }
+        const c0 = Math.floor(
+          (x - cellLatticeOffset(candidateRow, spacing)) / spacing
+        );
+        for (let dc = -1; dc <= 1; dc++) {
+          const col = c0 + dc;
+          if (col < col0 || col > col1) {
+            continue;
+          }
+          const candidate = ((candidateRow - row0) * cols + (col - col0)) * 4;
+          const distance = Math.hypot(
+            x - lattice[candidate],
+            y - lattice[candidate + 1]
+          );
+          if (distance < nearest) {
+            second = nearest;
+            nearest = distance;
+            at = candidate;
+          } else if (distance < second) {
+            second = distance;
+          }
         }
       }
 
-      const index = (py * outWidth + px) * 4;
-      data8[index] = rgb[0] + (255 - rgb[0]) * white;
-      data8[index + 1] = rgb[1] + (255 - rgb[1]) * white;
-      data8[index + 2] = rgb[2] + (255 - rgb[2]) * white;
-      data8[index + 3] = 255 * alpha;
+      const baseAlpha = 0.92 * smoothstep(SLIME_EDGE_START, SLIME_EDGE_END, d);
+      const tileDensity = at < 0 ? 0 : lattice[at + 2];
+      const tileAlpha =
+        smoothstep(TILE_MIN, TILE_MIN + 0.1, tileDensity) *
+        smoothstep(CELL_CLIP_START, CELL_CLIP_END, d);
+      const alpha = tileAlpha + baseAlpha * (1 - tileAlpha);
+      if (alpha <= 0) {
+        return false;
+      }
+      if (tileAlpha > 0) {
+        // 0 on the seam, 1 a seam's width into the tile.
+        const inside = smoothstep(0, TILE_SEAM, (second - nearest) / spacing);
+        if (crystal) {
+          const shade = lattice[at + 3];
+          for (let c = 0; c < 3; c++) {
+            out[c] = lerp(light[c], color[c] * shade, inside);
+          }
+        } else {
+          const radius = spacing * 0.55;
+          sphereShade(
+            (x - lattice[at]) / radius,
+            (y - lattice[at + 1]) / radius,
+            color,
+            light,
+            dark,
+            out
+          );
+          const seam = 0.45 + 0.55 * inside;
+          out[0] *= seam;
+          out[1] *= seam;
+          out[2] *= seam;
+        }
+        for (let c = 0; c < 3; c++) {
+          out[c] =
+            (out[c] * tileAlpha + base[c] * baseAlpha * (1 - tileAlpha)) /
+            alpha;
+        }
+      } else {
+        out[0] = base[0];
+        out[1] = base[1];
+        out[2] = base[2];
+      }
+      out[3] = alpha;
+      return true;
     }
-  }
+  );
+}
+
+/**
+ * Turns the density of a colony into the neon look on a buffer
+ * {@link SLIME_SCALE} times the size of the arena: the slime's outline as a
+ * glowing line in the colony's colour, a fainter line further in where the
+ * colony is thick, a soft halo outside and a dark body in between. Heat and
+ * the boost light it up like the slime. Only the pixels of `region`'s cells
+ * are painted.
+ */
+export function paintNeon(
+  data8: Uint8ClampedArray,
+  density: Float32Array,
+  heat: Float32Array | null,
+  width: number,
+  height: number,
+  color: readonly number[],
+  shimmer: BoostShimmer | null,
+  region: CellBounds = wholeArena(width, height)
+): void {
+  const neon = color.slice(0, 3).map((c) => c + (255 - c) * 0.45);
+  paintLook(
+    data8,
+    density,
+    heat,
+    width,
+    height,
+    shimmer,
+    region,
+    0.005,
+    (x, y, d, out) => {
+      const coverage = smoothstep(SLIME_EDGE_START, SLIME_EDGE_END, d);
+      const line = smoothstep(NEON_LINE_START, NEON_LINE_END, d);
+      const inner = smoothstep(NEON_INNER_START, NEON_INNER_END, d);
+      const glow = Math.max(
+        line * (1 - line) * 4,
+        inner * (1 - inner) * 4 * 0.6
+      );
+      const halo = smoothstep(0, NEON_LINE_START, d) * (1 - line) * 0.45;
+      const body = 0.85 * coverage;
+      const alpha = Math.max(body, glow, halo);
+      if (alpha <= 0) {
+        return false;
+      }
+      for (let c = 0; c < 3; c++) {
+        out[c] = Math.min(
+          255,
+          color[c] * NEON_BODY * coverage + neon[c] * glow + color[c] * halo
+        );
+      }
+      out[3] = alpha;
+      return true;
+    }
+  );
+}
+
+/**
+ * Turns the density of a colony into the ink look on a buffer
+ * {@link SLIME_SCALE} times the size of the arena: a flat body in the
+ * colony's colour, hatched in the colony's own pattern - crossed where the
+ * colony is thin - inside a thick outline of ink. Heat and the
+ * boost light it up like the slime. Only the pixels of `region`'s cells are
+ * painted; `unit` keeps the hatching as fine on every grid.
+ */
+export function paintInk(
+  data8: Uint8ClampedArray,
+  density: Float32Array,
+  heat: Float32Array | null,
+  width: number,
+  height: number,
+  color: readonly number[],
+  shimmer: BoostShimmer | null,
+  unit: number,
+  region: CellBounds = wholeArena(width, height)
+): void {
+  const ink = color.slice(0, 3).map((c) => c * INK);
+  const hatched = color.slice(0, 3).map((c) => c * INK_HATCH);
+  const {
+    direction: [hx, hy],
+    cross,
+  } = hatchPattern(color);
+  const spacing = INK_HATCH_SPACING * unit;
+  const stripe = (along: number) =>
+    along / spacing - Math.floor(along / spacing) < INK_HATCH_WIDTH;
+  paintLook(
+    data8,
+    density,
+    heat,
+    width,
+    height,
+    shimmer,
+    region,
+    SLIME_EDGE_START,
+    (x, y, d, out) => {
+      const coverage = smoothstep(SLIME_EDGE_START, SLIME_EDGE_END, d);
+      if (coverage <= 0) {
+        return false;
+      }
+      const outline = 1 - smoothstep(SLIME_EDGE_END, INK_OUTLINE_END, d);
+      const lined =
+        stripe(x * hx + y * hy) ||
+        ((cross || d < INK_CROSS_BELOW) && stripe(x * hy - y * hx));
+      const body = lined ? hatched : color;
+      for (let c = 0; c < 3; c++) {
+        out[c] = lerp(body[c], ink[c], outline);
+      }
+      out[3] = 0.95 * coverage;
+      return true;
+    }
+  );
 }
 
 /** A pellet of food as a drop of jam, in one of a few flavours. */
@@ -694,9 +1129,9 @@ export function drawJam(
 
 /**
  * Draws the colonies into an offscreen layer and hands it back, ready to be
- * drawn over the floor: one pixel per bacterium for the pixel look, smooth
- * slime for the slime look, glossy cells on a dark base for the cells look.
- * The buffers are kept between frames.
+ * drawn over the floor: one pixel per bacterium for the pixel look, and
+ * every other look from the colony's density - smooth slime, cells, tiles,
+ * neon or ink. The buffers are kept between frames.
  */
 export class ColonyRenderer {
   private canvas: HTMLCanvasElement | null = null;
@@ -765,29 +1200,73 @@ export class ColonyRenderer {
           balance,
           region
         );
-        if (look === 'slime') {
-          paintSlime(
-            data,
-            this.density,
-            hot ? this.heat : null,
-            this.width,
-            this.height,
-            colony.color,
-            shimmer,
-            region
-          );
-        } else {
-          paintCells(
-            data,
-            this.density,
-            hot ? this.heat : null,
-            this.width,
-            this.height,
-            colony.color,
-            shimmer,
-            this.unit,
-            region
-          );
+        const heat = hot ? this.heat : null;
+        const { width, height, unit } = this;
+        switch (look) {
+          case 'cells':
+            paintCells(
+              data,
+              this.density,
+              heat,
+              width,
+              height,
+              colony.color,
+              shimmer,
+              unit,
+              region
+            );
+            break;
+          case 'honeycomb':
+          case 'crystal':
+            paintTiles(
+              data,
+              this.density,
+              heat,
+              width,
+              height,
+              colony.color,
+              shimmer,
+              unit,
+              look === 'crystal',
+              region
+            );
+            break;
+          case 'neon':
+            paintNeon(
+              data,
+              this.density,
+              heat,
+              width,
+              height,
+              colony.color,
+              shimmer,
+              region
+            );
+            break;
+          case 'ink':
+            paintInk(
+              data,
+              this.density,
+              heat,
+              width,
+              height,
+              colony.color,
+              shimmer,
+              unit,
+              region
+            );
+            break;
+          default:
+            paintSlime(
+              data,
+              this.density,
+              heat,
+              width,
+              height,
+              colony.color,
+              shimmer,
+              region
+            );
         }
       } else {
         createImageDataFromBacterias(

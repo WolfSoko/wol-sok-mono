@@ -76,15 +76,32 @@ export interface StoredSettings {
 }
 
 /**
- * How the bacteria are drawn: as one gooey, glossy slime per colony, as
- * dense glossy cells of different sizes like on the app icon, or as the
- * crisp pixels the game started with. Every look is free to pick.
+ * How the bacteria are drawn - the skins, every one free to pick:
+ * - slime: one gooey, glossy slime per colony
+ * - cells: dense glossy cells of different sizes, like on the app icon
+ * - honeycomb: a comb of glossy hexagonal tiles with dark seams
+ * - crystal: irregular facets with bright seams, like shards of glass
+ * - neon: a dark body with its outline glowing in the colony's colour
+ * - ink: flat and hatched like a woodcut, with a thick outline - each
+ *   colony hatched its own way, so two are told apart without colour
+ * - pixels: the crisp pixels the game started with
  */
-export type BacteriaLook = 'slime' | 'cells' | 'pixels';
+export type BacteriaLook =
+  | 'slime'
+  | 'cells'
+  | 'honeycomb'
+  | 'crystal'
+  | 'neon'
+  | 'ink'
+  | 'pixels';
 
 export const BACTERIA_LOOKS: readonly { id: BacteriaLook; name: string }[] = [
   { id: 'slime', name: 'Slime' },
   { id: 'cells', name: 'Cells' },
+  { id: 'honeycomb', name: 'Honeycomb' },
+  { id: 'crystal', name: 'Crystal' },
+  { id: 'neon', name: 'Neon' },
+  { id: 'ink', name: 'Ink' },
   { id: 'pixels', name: 'Pixels' },
 ];
 

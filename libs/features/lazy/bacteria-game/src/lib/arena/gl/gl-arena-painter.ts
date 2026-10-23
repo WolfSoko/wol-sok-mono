@@ -10,6 +10,7 @@ import { ArenaTheme } from '../arena-theme';
 import {
   cellDensity,
   ColonyLayer,
+  hatchPattern,
   jamDrops,
   overcharge,
   StateLayer,
@@ -349,8 +350,8 @@ export class GlArenaPainter implements ArenaPainter {
 
   /**
    * One colony: its cells - uploaded from the CPU, or drawn straight from the
-   * GPU simulation's state - are blurred on the arena grid for the slime
-   * and the cells look, and drawn over the frame in a single pass.
+   * GPU simulation's state - are blurred on the arena grid for every look
+   * but the pixels, and drawn over the frame in a single pass.
    */
   private drawColony(frame: ArenaFrame, layer: ColonyLayer): void {
     const gl = this.gl;
@@ -374,7 +375,7 @@ export class GlArenaPainter implements ArenaPainter {
       this.drawCellsFromState(layer, bounds, frame.balance);
     }
 
-    // The slime and the cells look draw from the blurred density.
+    // Every look but the pixels draws from the blurred density.
     const blurred = frame.look !== 'pixels';
     if (blurred) {
       gl.disable(gl.BLEND);
@@ -408,6 +409,13 @@ export class GlArenaPainter implements ArenaPainter {
     gl.uniform1f(
       program.uniforms['uPixel'],
       this.view.width / this.canvasWidth
+    );
+    const hatch = hatchPattern(color);
+    gl.uniform3f(
+      program.uniforms['uHatch'],
+      hatch.direction[0],
+      hatch.direction[1],
+      hatch.cross ? 1 : 0
     );
     gl.uniform1f(
       program.uniforms['uShimmer'],
@@ -739,6 +747,7 @@ export class GlArenaPainter implements ArenaPainter {
         'uBoostTarget',
         'uUnit',
         'uPixel',
+        'uHatch',
       ]),
       shape: createProgram(gl, SHAPE_VERTEX, SHAPE_FRAGMENT, ['uView']),
       cells: createProgram(gl, FULLSCREEN_VERTEX, CELLS_FRAGMENT, [

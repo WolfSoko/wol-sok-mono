@@ -15,6 +15,10 @@ export const settings: Translation<typeof en> = {
     looks: {
       slime: 'Schleim',
       cells: 'Zellen',
+      honeycomb: 'Wabe',
+      crystal: 'Kristall',
+      neon: 'Neon',
+      ink: 'Tusche',
       pixels: 'Pixel',
     },
     simResolution: 'Simulationsauflösung',

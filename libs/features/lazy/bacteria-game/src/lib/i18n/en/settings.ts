@@ -13,6 +13,10 @@ export const settings = {
     looks: {
       slime: 'Slime',
       cells: 'Cells',
+      honeycomb: 'Honeycomb',
+      crystal: 'Crystal',
+      neon: 'Neon',
+      ink: 'Ink',
       pixels: 'Pixels',
     },
     simResolution: 'Simulation resolution',

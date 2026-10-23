@@ -1,14 +1,21 @@
 import { gameBalance } from '../state/game-balance';
 import { Point } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
+import { BacteriaLook } from '../settings.service';
+import { COLONY_COLORS } from '../state/colony-colors';
 import {
   cellBubble,
   CELL_MIN,
   CELL_SPACING,
   colonyDensity,
   createImageDataFromBacterias,
+  hatchPattern,
+  latticeTile,
   paintCells,
+  paintInk,
+  paintNeon,
   paintSlime,
+  paintTiles,
   shimmerAt,
   SLIME_SCALE,
   slimeRegion,
@@ -38,7 +45,7 @@ function slime(
   bacterias: Bacteria[],
   shimmerTimeSec: number | null = null,
   view: Rect = WHOLE,
-  look: 'slime' | 'cells' = 'slime'
+  look: Exclude<BacteriaLook, 'pixels'> = 'slime'
 ) {
   const target: Point = { x: 30, y: 10 };
   const region = slimeRegion(bacterias, view, WIDTH, HEIGHT);
@@ -63,29 +70,34 @@ function slime(
     shimmerTimeSec == null
       ? null
       : { timeSec: shimmerTimeSec, target, unit: 1 };
-  if (look === 'cells') {
-    paintCells(
-      data,
-      density,
-      hot ? heat : null,
-      WIDTH,
-      HEIGHT,
-      ORANGE,
-      shimmer,
-      1,
-      region
-    );
-  } else {
-    paintSlime(
-      data,
-      density,
-      hot ? heat : null,
-      WIDTH,
-      HEIGHT,
-      ORANGE,
-      shimmer,
-      region
-    );
+  const h = hot ? heat : null;
+  switch (look) {
+    case 'cells':
+      paintCells(data, density, h, WIDTH, HEIGHT, ORANGE, shimmer, 1, region);
+      break;
+    case 'honeycomb':
+    case 'crystal':
+      paintTiles(
+        data,
+        density,
+        h,
+        WIDTH,
+        HEIGHT,
+        ORANGE,
+        shimmer,
+        1,
+        look === 'crystal',
+        region
+      );
+      break;
+    case 'neon':
+      paintNeon(data, density, h, WIDTH, HEIGHT, ORANGE, shimmer, region);
+      break;
+    case 'ink':
+      paintInk(data, density, h, WIDTH, HEIGHT, ORANGE, shimmer, 1, region);
+      break;
+    default:
+      paintSlime(data, density, h, WIDTH, HEIGHT, ORANGE, shimmer, region);
   }
   return data;
 }
@@ -93,6 +105,14 @@ function slime(
 function cells(bacterias: Bacteria[], shimmerTimeSec: number | null = null) {
   return slime(bacterias, shimmerTimeSec, WHOLE, 'cells');
 }
+
+/** Every look's pixels inside and outside a colony. */
+function withLook(look: Exclude<BacteriaLook, 'pixels'>) {
+  const data = slime(blob(20, 10, 6), null, WHOLE, look);
+  return { data, inside: pixelsWithin(data, 20, 10, 4) };
+}
+
+const brightness = ([r, g, b]: number[]) => r + g + b;
 
 /** The layer pixels of the arena cells inside a disc around a point. */
 function pixelsWithin(
@@ -211,6 +231,113 @@ describe('paintCells', () => {
         0
       );
     expect(sum(boosted)).toBeGreaterThan(sum(plain));
+  });
+});
+
+describe.each<Exclude<BacteriaLook, 'pixels'>>([
+  'honeycomb',
+  'crystal',
+  'neon',
+  'ink',
+])('the %s look', (look) => {
+  it('covers a colony in its colour and leaves the floor around it clear', () => {
+    const { data, inside } = withLook(look);
+
+    for (const pixel of inside) {
+      expect(pixel[3]).toBeGreaterThan(150);
+      // Still orange, however light or dark the look makes it.
+      expect(pixel[0]).toBeGreaterThanOrEqual(pixel[1]);
+      expect(pixel[1]).toBeGreaterThanOrEqual(pixel[2]);
+    }
+    expect(at(data, 20, 1)[3]).toBe(0);
+    expect(at(data, 2, 10)[3]).toBe(0);
+  });
+
+  it('lights a boosted colony up', () => {
+    const plain = slime(blob(20, 10, 6), null, WHOLE, look);
+    const boosted = slime(blob(20, 10, 6), 0.3, WHOLE, look);
+
+    const sum = (data: Uint8ClampedArray) =>
+      pixelsWithin(data, 20, 10, 4).reduce(
+        (total, pixel) => total + brightness(pixel),
+        0
+      );
+    expect(sum(boosted)).toBeGreaterThan(sum(plain));
+  });
+});
+
+describe('paintTiles', () => {
+  it('lays tiles with seams between them', () => {
+    for (const look of ['honeycomb', 'crystal'] as const) {
+      const { inside } = withLook(look);
+      const levels = inside.map(brightness);
+      // Faces and seams differ clearly in brightness.
+      expect(Math.max(...levels) - Math.min(...levels)).toBeGreaterThan(150);
+    }
+  });
+
+  it('sets the honeycomb tiles on the lattice and the crystal facets off it', () => {
+    const field = new Float32Array(WIDTH * HEIGHT).fill(1);
+    const honeycomb = latticeTile(3, 2, 2.8, false, field, WIDTH, HEIGHT);
+    const crystal = latticeTile(3, 2, 2.8, true, field, WIDTH, HEIGHT);
+    const next = latticeTile(4, 2, 2.8, true, field, WIDTH, HEIGHT);
+    const strayed = Math.hypot(
+      crystal.x - honeycomb.x,
+      crystal.y - honeycomb.y
+    );
+
+    expect(honeycomb.x).toBeCloseTo(3.5 * 2.8);
+    expect(honeycomb.y).toBeCloseTo(2.5 * 2.8 * 0.866);
+    expect(strayed).toBeGreaterThan(0);
+    expect(strayed).toBeLessThan(2.8 * 0.6);
+    expect(crystal.shade).not.toBeCloseTo(next.shade, 3);
+    expect(honeycomb.density).toBe(1);
+  });
+});
+
+describe('paintNeon', () => {
+  it('glows at the outline and stays dark inside', () => {
+    const { data } = withLook('neon');
+    // The outline lies about where the slime's edge is, the body well inside.
+    const edge = Math.max(
+      ...[2, 3, 4, 5, 6].map((y) => brightness(at(data, 20, y)))
+    );
+    const body = brightness(at(data, 20, 10));
+
+    expect(edge).toBeGreaterThan(body * 2);
+    expect(body).toBeGreaterThan(0);
+  });
+});
+
+describe('paintInk', () => {
+  it('hatches the body in two tones inside a dark outline', () => {
+    const { data, inside } = withLook('ink');
+    const levels = new Set(
+      inside.map((pixel) => Math.round(brightness(pixel)))
+    );
+
+    const outline = Math.min(
+      ...[2, 3, 4, 5, 6].map((y) => brightness(at(data, 20, y)))
+    );
+
+    expect(levels.size).toBeGreaterThanOrEqual(2);
+    expect(outline).toBeLessThan(Math.max(...inside.map(brightness)) * 0.5);
+  });
+});
+
+describe('hatchPattern', () => {
+  it('hatches every colour of the palette in a pattern of its own', () => {
+    const patterns = COLONY_COLORS.map(({ rgb }) =>
+      JSON.stringify(hatchPattern([...rgb, 255]))
+    );
+
+    expect(new Set(patterns).size).toBe(COLONY_COLORS.length);
+  });
+
+  it('hatches along a unit vector', () => {
+    const { direction } = hatchPattern([255, 100, 20, 255]);
+
+    expect(Math.hypot(...direction)).toBeCloseTo(1, 6);
   });
 });
 
