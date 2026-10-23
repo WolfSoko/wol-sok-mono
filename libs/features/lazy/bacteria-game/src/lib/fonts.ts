@@ -1,6 +1,9 @@
-/** The faces of the menu screens: Bricolage Grotesque for display, Atkinson Hyperlegible for text. */
+/**
+ * The faces of the menu screens: Bricolage Grotesque for display, Atkinson
+ * Hyperlegible for text, Cookie for the Buy Me a Coffee button.
+ */
 export const FONTS_URL =
-  'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap';
+  'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Cookie&display=swap';
 
 /**
  * Links the game's fonts into the page, unless it has them already - an app

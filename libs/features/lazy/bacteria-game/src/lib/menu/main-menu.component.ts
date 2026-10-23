@@ -2,10 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   output,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -16,6 +18,11 @@ import { RankStandingComponent } from '../rank/rank-standing.component';
 import { Level, LEVELS } from '../state/levels';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
 import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
+import { GameSupport } from '../support/game-support.service';
+import {
+  SUPPORT_DIALOG_HEADING_ID,
+  SupportDialogComponent,
+} from '../support/support-dialog.component';
 
 /** The sub screens the main menu opens. */
 export type MenuPage = 'profile' | 'settings' | 'help';
@@ -26,7 +33,8 @@ export type MenuPage = 'profile' | 'settings' | 'help';
  * way straight on with it.
  *
  * A dumb component - it shows what it is given and reports what the player
- * picks.
+ * picks. Only the way to support the game it finds itself, as it differs
+ * between the web and the Play Store app.
  */
 @Component({
   selector: 'feat-lazy-bac-game-main-menu',
@@ -68,4 +76,15 @@ export class MainMenuComponent {
   protected readonly totalLevels = LEVELS.length;
   protected readonly totalMedals = LEVELS.length * BOT_DIFFICULTIES.length;
   protected readonly totalAchievements = ACHIEVEMENTS.length;
+
+  protected readonly support = inject(GameSupport);
+  private readonly dialog = inject(MatDialog);
+
+  /** The Play tips, in the app, where the Buy Me a Coffee page is not allowed. */
+  protected openTips(): void {
+    this.dialog.open(SupportDialogComponent, {
+      maxWidth: '30rem',
+      ariaLabelledBy: SUPPORT_DIALOG_HEADING_ID,
+    });
+  }
 }

@@ -6,7 +6,8 @@
  * line with store/: the texts in store/listings/<language>/ and the graphics
  * in store/graphics/ (see tools/bacteria-game/generate-store-assets.ts), and
  * the promo videos of store/promo-video/, uploaded to YouTube once each (see
- * tools/youtube/youtube.ts) and linked from their listing.
+ * tools/youtube/youtube.ts) and linked from their listing. Last come the tips
+ * of store/tips.json, the app's in-app products (see play-tips.ts).
  *
  * Runs as `npx nx run bacteria-wars-android:deploy` in the deploy workflow,
  * whenever a release affects the app. It reads from the environment:
@@ -38,6 +39,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { publishTips, storeTips, Tip } from './play-tips';
 import {
   publishVideos,
   VideoMeta,
@@ -321,14 +323,16 @@ async function promoVideoLinks(): Promise<Map<string, string>> {
  * Uploads the bundle and rolls it out to the internal track, then updates
  * the store listing in an edit of its own: a listing Play turns down does
  * not hold back the app, and a run again skips the bundle that is on Play.
- * Returns the error of the YouTube upload, if any, for the caller to throw
- * once the rest is out.
+ * Then the tips, which Play takes only once a bundle asks for billing.
+ * Returns the error of the YouTube upload or the tips, if any, for the
+ * caller to throw once the rest is out.
  */
 async function publishToPlay(
   packageName: string,
   bundle: string,
   code: number,
-  releaseName: string
+  releaseName: string,
+  tips: Tip[]
 ): Promise<unknown> {
   const token = await accessToken(
     JSON.parse(env('PLAY_SERVICE_ACCOUNT_JSON')) as ServiceAccount
@@ -402,7 +406,12 @@ async function publishToPlay(
     videos
   );
   await call(`${app}/edits/${listingEdit.id}:commit`, { method: 'POST' });
-  return youtubeError;
+
+  const tipsError = await publishTips(call, app, packageName, tips).then(
+    () => null,
+    (error: unknown) => error
+  );
+  return youtubeError ?? tipsError;
 }
 
 async function main(): Promise<void> {
@@ -411,8 +420,11 @@ async function main(): Promise<void> {
   const [assetLink] = readJson<{ target: { package_name: string } }[]>(
     'apps/bacteria-game-remote/src/.well-known/assetlinks.json'
   );
-  // Bad listing texts fail here, before the build.
-  storeListings();
+  // Bad listing or tip texts fail here, before the build.
+  const tips = storeTips(
+    storeDir,
+    storeListings().map((listing) => listing.language)
+  );
 
   build();
 
@@ -423,17 +435,18 @@ async function main(): Promise<void> {
   try {
     // Play first: the release only lists files that are on Play, and a run
     // again after a failed GitHub upload skips the Play upload.
-    const youtubeError = await publishToPlay(
+    const laterError = await publishToPlay(
       assetLink.target.package_name,
       bundle,
       versionCode(version),
-      tag
+      tag,
+      tips
     );
     execFileSync('gh', ['release', 'upload', tag, apk, bundle, '--clobber'], {
       stdio: 'inherit',
     });
-    if (youtubeError != null) {
-      throw youtubeError;
+    if (laterError != null) {
+      throw laterError;
     }
   } finally {
     rmSync(apk, { force: true });

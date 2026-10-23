@@ -16,6 +16,7 @@ What the shell adds:
 - immersive mode, matching `"display": "fullscreen"` of the web manifest
 - links to bacteria-wars.wolsok.de open in the app
 - a WebView fallback for devices without a TWA-capable browser
+- Google Play Billing for tips, see below
 
 ## Build
 
@@ -40,6 +41,40 @@ change to this folder and keeps it as a workflow artifact, to try the app on a
 phone. Each run signs it with a fresh debug key, so uninstall the previous one
 before installing the next, and expect Chrome's URL bar on top: only keys
 listed in `assetlinks.json` get fullscreen.
+
+## Tips through Play Billing
+
+Google Play allows tips to the developer only through Play Billing, so inside
+the app the game never shows its Buy Me a Coffee link. It offers consumable
+Play products instead, bought with the Digital Goods API and Payment Request
+(`libs/features/lazy/bacteria-game/src/lib/support/`). The game tells the app
+from the browser by the launch URL's `?source=twa` (set in
+`app/build.gradle.kts`; the WebView fallback sends no referrer) or, for links
+the app opens, by the referrer `android-app://<package>`, and keeps that in
+the session storage for reloads.
+
+This project adds what Chrome needs for that: the `billing` module of
+androidbrowserhelper, `DelegationService` (registers the
+`DigitalGoodsRequestHandler`), and `PaymentActivity` and `PaymentService` in
+the manifest. A tip unlocks nothing, so no server checks it: the game consumes
+the purchase right away, which also acknowledges it, and consumes leftovers on
+the next start.
+
+The tips are consumable one-time products, kept in `store/tips.json`: id,
+net EUR base price (Play adds each region's tax: 2.52 / 4.20 / 8.40 come to
+2.99 / 4.99 / 9.99 € in Germany) and a title and description for every
+listing language. The deploy creates or updates them after the bundle is on
+Play (`tools/bacteria-game/play-tips.ts`), as Play takes in-app products only
+for an app whose bundle asks for billing; bad texts fail the deploy before
+the build. The game asks Play for the ids in
+`apps/bacteria-game-remote/src/environments/game-support.ts`; products
+missing on Play are left out, and without any the app shows no tips.
+
+Two things the deploy cannot do: link a payments profile to the Play Console,
+and give the service account the permission to manage in-app products (Users
+and permissions → the service account → app permissions). Purchases can only
+be tried on a phone, with a bundle from a Play testing track and a license
+tester account.
 
 ## Fullscreen needs Digital Asset Links
 

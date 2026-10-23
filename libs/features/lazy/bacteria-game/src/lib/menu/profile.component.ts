@@ -18,6 +18,7 @@ import { MEDAL_NAMES, MEDAL_TIERS_RAREST_FIRST } from '../state/medallions';
 import { ACHIEVEMENTS } from '../state/achievements';
 import { rankFor, RANKS } from '../state/ranks';
 import { RankStandingComponent } from '../rank/rank-standing.component';
+import { AdSlotComponent } from '../support/ad-slot.component';
 import {
   LifetimeTotals,
   medalTally,
@@ -34,6 +35,7 @@ import {
   selector: 'feat-lazy-bac-game-profile',
   imports: [
     AccountComponent,
+    AdSlotComponent,
     DatePipe,
     MedallionComponent,
     ProfileEditorComponent,

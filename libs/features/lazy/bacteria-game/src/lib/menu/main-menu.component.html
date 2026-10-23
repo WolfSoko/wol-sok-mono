@@ -62,6 +62,17 @@
         <mat-icon>help_outline</mat-icon>
         How to play
       </button>
+      @if (support.url(); as url) {
+        <a class="tile" [href]="url" target="_blank" rel="noopener noreferrer">
+          <mat-icon class="gold">local_cafe</mat-icon>
+          Support
+        </a>
+      } @else if (support.tipProducts().length > 0) {
+        <button type="button" class="tile" (click)="openTips()">
+          <mat-icon class="gold">local_cafe</mat-icon>
+          Support
+        </button>
+      }
     </nav>
   </section>
 

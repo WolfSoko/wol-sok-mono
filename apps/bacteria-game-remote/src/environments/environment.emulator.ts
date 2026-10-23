@@ -1,4 +1,5 @@
 import { Environment } from './environment.type';
+import { SUPPORT_DEFAULTS } from './game-support';
 
 /**
  * Development against the local Firebase emulators, started by
@@ -26,4 +27,5 @@ export const environment: Environment = {
       databasePort: 9410,
     },
   },
+  support: SUPPORT_DEFAULTS,
 };

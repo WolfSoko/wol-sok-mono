@@ -1,4 +1,5 @@
 import { Environment } from './environment.type';
+import { SUPPORT_DEFAULTS } from './game-support';
 
 export const environment: Environment = {
   production: true,
@@ -18,4 +19,7 @@ export const environment: Environment = {
         'https://bacteria-wars-default-rtdb.europe-west1.firebasedatabase.app',
     },
   },
+  // For ads, add the display ad unit for the menu screens from AdSense:
+  // ads: { client: 'ca-pub-6346271540341424', slot: '<ad unit id>' }
+  support: SUPPORT_DEFAULTS,
 };
