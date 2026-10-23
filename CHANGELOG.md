@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.55.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.54.0...v74.55.0) (2026-10-23)
+
+### Features
+
+* **bacteria-wars-android:** ✨ keep the Play Games achievements and the Firebase app with the release ([#2580](https://github.com/WolfSoko/wol-sok-mono/issues/2580)) ([08bea80](https://github.com/WolfSoko/wol-sok-mono/commit/08bea800eeca3888d15015469eb517d1ff455b25))
+
+### Bug Fixes
+
+* **bacteria-wars-android:** 🐛 read the tip products where Play has them ([#2582](https://github.com/WolfSoko/wol-sok-mono/issues/2582)) ([284b8be](https://github.com/WolfSoko/wol-sok-mono/commit/284b8bec4e5e80e689542928074c7e81f20c0a73))
+
 ## [74.54.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.53.0...v74.54.0) (2026-10-23)
 
 ### Features
