@@ -23,6 +23,8 @@ export type {
   MatchOptions,
   MatchResult,
   PlayerSpawn,
+  SecondSampler,
+  SizeSample,
 } from './lib/state/match-engine';
 export { planMatch } from './lib/state/match-setup';
 export type { MatchPlan, OnlineSeats } from './lib/state/match-setup';
@@ -43,20 +45,45 @@ export {
 
 // Replays.
 export {
+  GHOST_REPLAY_VERSION,
+  MAX_TICKS,
   parseReplay,
   playReplay,
   REPLAY_VERSION,
   replayOf,
+  replayOutcome,
 } from './lib/state/replay';
 export type {
+  ParseOptions,
   Replay,
+  ReplayAttempt,
   ReplayBoost,
   ReplayDrag,
+  ReplayExtras,
   ReplayHeader,
   ReplayInputs,
+  ReplayOutcome,
   ReplayResult,
+  ReplaySeat,
   ReplaySteer,
 } from './lib/state/replay';
+export {
+  MAX_PACKED_BYTES,
+  MAX_UNPACKED_BYTES,
+  packReplay,
+  replayFromBytes,
+  replayToBytes,
+  unpackReplay,
+} from './lib/state/replay-pack';
+export type { PackedReplay, PackOptions } from './lib/state/replay-pack';
+export { replayScore } from './lib/state/replay-score';
+export type {
+  ReplayReason,
+  ReplayScore,
+  ReplayScoreInput,
+} from './lib/state/replay-score';
+export { onlineReplayId } from './lib/state/replay-id';
+export { matchChecksum } from './lib/state/checksum';
 export { replayFromHash, replayLink } from './lib/state/replay-link';
 export { GhostController } from './lib/state/ghost';
 export type { SeatDriver } from './lib/state/ghost';
