@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.52.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.51.0...v74.52.0) (2026-10-23)
+
+### Features
+
+* **spa-cdk-stack:** run the SPA stacks in eu-central-1 ([#2568](https://github.com/WolfSoko/wol-sok-mono/issues/2568)) ([87e8082](https://github.com/WolfSoko/wol-sok-mono/commit/87e80827ae574bf37e3bb1726202c9365daefb95))
+
+### Chore
+
+* **release:** publish ([ccf743d](https://github.com/WolfSoko/wol-sok-mono/commit/ccf743d0d065563edf1c8073db22c69d6c3a1c57))
+
 ## [74.51.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.50.0...v74.51.0) (2026-10-23)
 
 ### Features
