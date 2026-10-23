@@ -303,9 +303,10 @@ Two players on two devices, through the game's Firebase project
   ([`FirestoreGameRooms`](./src/lib/storage/firestore-game-rooms.ts)); the
   rules let anyone signed in read a room by its code, never list them, and
   one guest answer it. There is no TURN server, so two devices behind
-  strict NATs cannot connect. A TTL policy on the `rooms` collection's
-  `expireAt` field (`firestore.indexes.json`, deployed with the rules)
-  deletes rooms after an hour.
+  strict NATs cannot connect. A room expires an hour after it was opened
+  (`expireAt`); a TTL policy on that field (`firestore.indexes.json`,
+  deployed with the rules) has Firestore delete it some time after that,
+  usually within a day.
 - Online matches earn nothing - no medallion, XP or totals - and leave no
   replay. Without a Firebase project the mode says it is not available.
 
