@@ -64,3 +64,49 @@ describe('the boost ring', () => {
     expect(colony.boostCharge).toBe(0);
   });
 });
+
+describe('the weapon ring', () => {
+  const base = createPlayer({ id: 0, color: [255, 100, 20, 255] });
+
+  it('is none for a colony without a weapon', () => {
+    expect(toColonyStats([base])[0].weapon).toBeNull();
+  });
+
+  it('counts the recharge of the weapon carried', () => {
+    const [colony] = toColonyStats([
+      {
+        ...base,
+        weapon: 'cryo-pulse',
+        weaponCooldownSec: 15,
+        weaponCooldownFullSec: 20,
+        weaponActiveSec: 2,
+      },
+    ]);
+
+    expect(colony.weapon).toEqual({
+      id: 'cryo-pulse',
+      ready: false,
+      active: true,
+      cooldown: 15,
+      charge: 0.25,
+    });
+  });
+
+  it('is full and ready once it has recharged, and noticed when it changes', () => {
+    const ready = toColonyStats([{ ...base, weapon: 'toxin-bomb' }]);
+    const fired = toColonyStats([
+      {
+        ...base,
+        weapon: 'toxin-bomb',
+        weaponCooldownSec: 18,
+        weaponCooldownFullSec: 18,
+      },
+    ]);
+
+    expect(ready[0].weapon).toMatchObject({ ready: true, charge: 1 });
+    expect(sameColonyStats(ready, fired)).toBe(false);
+    expect(
+      sameColonyStats(ready, toColonyStats([{ ...base, weapon: 'toxin-bomb' }]))
+    ).toBe(true);
+  });
+});

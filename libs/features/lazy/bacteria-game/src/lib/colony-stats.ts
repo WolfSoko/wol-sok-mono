@@ -1,7 +1,13 @@
 import { GameBalance, gameBalance } from './state/game-balance';
 import { TICKS_PER_SEC } from './state/fixed-tick';
 import { clamp } from './state/geometry';
-import { isBoosted, isBoostReady, Player } from './state/player.model';
+import {
+  isBoosted,
+  isBoostReady,
+  isWeaponReady,
+  Player,
+} from './state/player.model';
+import type { WeaponId } from './state/evolution';
 
 /** Statistics of one colony, ready to be rendered by the template. */
 export interface ColonyStats {
@@ -30,6 +36,21 @@ export interface ColonyStats {
   held: number;
   /** Pellets the colony ate up. */
   pellets: number;
+  /** The weapon the colony carries and how it stands, null for none. */
+  weapon: WeaponStats | null;
+}
+
+/** A colony's weapon, ready to be rendered by its button. */
+export interface WeaponStats {
+  id: WeaponId;
+  /** True when it can be fired right now. */
+  ready: boolean;
+  /** True while its effect acts on the war. */
+  active: boolean;
+  /** Whole seconds until it can be fired again, 0 when it is ready. */
+  cooldown: number;
+  /** How far it has recharged, 0..1, in hundredths - the ring round the button. */
+  charge: number;
 }
 
 /** The keys that fire a boost: Space for the first human, Enter for the second. */
@@ -70,10 +91,28 @@ export function sameColonyStats(
     a.length === b.length &&
     a.every((colony, index) => {
       const other = b[index];
-      return (Object.keys(colony) as (keyof ColonyStats)[]).every(
-        (key) => colony[key] === other[key]
+      return (Object.keys(colony) as (keyof ColonyStats)[]).every((key) =>
+        key === 'weapon'
+          ? sameWeaponStats(colony.weapon, other.weapon)
+          : colony[key] === other[key]
       );
     })
+  );
+}
+
+function sameWeaponStats(
+  a: WeaponStats | null,
+  b: WeaponStats | null
+): boolean {
+  return (
+    a === b ||
+    (a !== null &&
+      b !== null &&
+      a.id === b.id &&
+      a.ready === b.ready &&
+      a.active === b.active &&
+      a.cooldown === b.cooldown &&
+      a.charge === b.charge)
   );
 }
 
@@ -104,7 +143,35 @@ export function toColonyStats(
     boostKey: boostKeyOf(humans, player),
     held: Math.floor(player.holdTicks / TICKS_PER_SEC),
     pellets: player.pellets,
+    weapon: weaponStatsOf(player),
   }));
+}
+
+/**
+ * Where a colony's weapon stands, null without one. Its charge counts in
+ * hundredths, like the boost's, so the ring is not redrawn every frame.
+ */
+export function weaponStatsOf(player: Player): WeaponStats | null {
+  if (player.weapon == null) {
+    return null;
+  }
+  const ready = isWeaponReady(player);
+  const full = player.weaponCooldownFullSec;
+  const charge =
+    ready || full <= 0
+      ? 1
+      : clamp(
+          Math.round((1 - player.weaponCooldownSec / full) * 100) / 100,
+          0,
+          1
+        );
+  return {
+    id: player.weapon,
+    ready,
+    active: player.weaponActiveSec > 0,
+    cooldown: ready ? 0 : Math.ceil(player.weaponCooldownSec),
+    charge: ready ? 1 : charge,
+  };
 }
 
 /**
