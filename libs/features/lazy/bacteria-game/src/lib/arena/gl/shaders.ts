@@ -135,6 +135,10 @@ void main() {
  * thin or everywhere for `uHatch.z` - the colony's own pattern - inside a
  * thick outline of ink - `paintInk`.
  *
+ * Bubbles: glassy bubbles of different sizes on the cells' lattice, a
+ * faint film with a bright rim and a light spot, each with snippets of DNA
+ * drifting and turning inside with `uTime` - `paintBubbles`.
+ *
  * Pixels: one crisp cell per bacterium from the raw cells, weak ones faded
  * and hot ones burning white.
  *
@@ -156,6 +160,7 @@ uniform vec2 uBoostTarget;
 uniform float uUnit;
 uniform float uPixel;
 uniform vec3 uHatch;
+uniform float uTime;
 out vec4 outColor;
 ${ARENA_POSITION}
 
@@ -211,7 +216,7 @@ float latticeOffset(int row, float spacing) {
 
 // The cell of a lattice point: its centre and its radius, 0 for none - see
 // cellBubble in colony-renderer.ts.
-vec3 cellBubble(ivec2 lattice, float spacing) {
+vec3 cellBubble(ivec2 lattice, float spacing, vec3 shape) {
   float rowHeight = spacing * CELL_ROW_HEIGHT;
   vec2 centre = vec2(
     (float(lattice.x) + 0.5) * spacing + latticeOffset(lattice.y, spacing)
@@ -225,9 +230,112 @@ vec3 cellBubble(ivec2 lattice, float spacing) {
   }
   float size = (0.5 + 0.5 * clamp((d - CELL_SIZE_FROM) / CELL_SIZE_RANGE, 0.0, 1.0))
     * smoothstep(CELL_MIN, CELL_MIN + CELL_GROW, d);
-  float radius = spacing * CELL_RADIUS * size
-    * (CELL_RADIUS_MIN + CELL_RADIUS_VARY * hash01(lattice, 3u));
+  float radius = spacing * shape.x * size * (shape.y + shape.z * hash01(lattice, 3u));
   return vec3(centre, radius);
+}
+
+const vec3 CELL_SHAPE = vec3(CELL_RADIUS, CELL_RADIUS_MIN, CELL_RADIUS_VARY);
+const vec3 BUBBLE_SHAPE = vec3(BUBBLE_RADIUS, BUBBLE_RADIUS_MIN, BUBBLE_RADIUS_VARY);
+
+// The bubble or cell of the lattice look the fragment is deepest in: its
+// unit disc coordinates in xy, its radius in z and the lattice point's
+// index in the lattice loop's row-major order in w (-1 for none) - see
+// bestLattice.
+ivec2 bestLattice;
+vec4 nearestBubble(vec2 p, float spacing, vec3 shape) {
+  float rowHeight = spacing * CELL_ROW_HEIGHT;
+  int row = int(floor(p.y / rowHeight));
+  float bestQ2 = 1e9;
+  float bestRadius = 0.0;
+  vec2 unit = vec2(0.0);
+  for (int dr = -1; dr <= 1; dr++) {
+    int candidateRow = row + dr;
+    int col = int(floor((p.x - latticeOffset(candidateRow, spacing)) / spacing));
+    for (int dc = -1; dc <= 1; dc++) {
+      ivec2 lattice = ivec2(col + dc, candidateRow);
+      vec3 bubble = cellBubble(lattice, spacing, shape);
+      if (bubble.z <= 0.0) {
+        continue;
+      }
+      vec2 v = (p - bubble.xy) / bubble.z;
+      float q2 = dot(v, v);
+      if (q2 < bestQ2) {
+        bestQ2 = q2;
+        bestRadius = bubble.z;
+        unit = v;
+        bestLattice = lattice;
+      }
+    }
+  }
+  return vec4(unit, bestRadius, bestQ2);
+}
+
+// How much of a DNA snippet covers a point of a bubble's unit disc - see
+// dnaAt in colony-renderer.ts. aa is a pixel's width on the disc.
+float dnaAt(vec2 u, ivec2 lattice, float aa) {
+  float cover = 0.0;
+  int count = 2 + (hash01(lattice, 20u) > 0.5 ? 1 : 0);
+  for (int k = 0; k < 3; k++) {
+    if (k >= count) {
+      break;
+    }
+    uint salt = 21u + uint(k) * 6u;
+    float orbit = DNA_ORBIT_MIN + DNA_ORBIT_VARY * hash01(lattice, salt);
+    float drift = DNA_DRIFT * (0.6 + 0.8 * hash01(lattice, salt + 1u));
+    float angle = hash01(lattice, salt + 2u) * 6.2832
+      + uTime * drift * (hash01(lattice, salt + 3u) < 0.5 ? -1.0 : 1.0);
+    vec2 d = u - orbit * vec2(cos(angle), sin(angle));
+    float theta = hash01(lattice, salt + 4u) * 6.2832 + uTime * DNA_SPIN;
+    float c = cos(theta);
+    float s = sin(theta);
+    float along = d.x * c + d.y * s;
+    float halfLength = DNA_HALF_MIN + DNA_HALF_VARY * hash01(lattice, salt + 5u);
+    if (abs(along) > halfLength) {
+      continue;
+    }
+    float across = -d.x * s + d.y * c;
+    float phase = along * DNA_TWIST + uTime;
+    float wave = DNA_AMPLITUDE * sin(phase);
+    // The two backbones, and a rung between them every half turn.
+    float strand = max(
+      1.0 - smoothstep(DNA_WIDTH, DNA_WIDTH + aa, abs(across - wave)),
+      1.0 - smoothstep(DNA_WIDTH, DNA_WIDTH + aa, abs(across + wave))
+    );
+    float turn = phase + 1.5708;
+    float rung = abs(across) <= abs(wave) + DNA_WIDTH && mod(turn, 3.1416) < DNA_RUNG
+      ? 0.8
+      : 0.0;
+    float ends = smoothstep(halfLength, halfLength - 0.08, abs(along));
+    cover = max(cover, max(strand, rung) * ends);
+  }
+  return cover;
+}
+
+// The bubbles look at p - see paintBubbles.
+vec4 bubblesLook(vec2 p, float d) {
+  if (d < CELL_CLIP_START) {
+    return vec4(0.0);
+  }
+  vec4 best = nearestBubble(p, BUBBLE_SPACING * uUnit, BUBBLE_SHAPE);
+  float baseAlpha = BUBBLE_BASE_ALPHA * smoothstep(EDGE_START, EDGE_END, d);
+  float bubbleAlpha = 0.0;
+  vec3 face = vec3(0.0);
+  if (best.z > 0.0) {
+    float q = sqrt(best.w);
+    float edge = clamp((1.0 - q) * best.z / uPixel + 0.5, 0.0, 1.0)
+      * smoothstep(CELL_CLIP_START, CELL_CLIP_END, d);
+    if (edge > 0.0) {
+      float rim = smoothstep(BUBBLE_RIM_START, BUBBLE_RIM_END, q);
+      float spot = 1.0 - smoothstep(BUBBLE_SPOT_START, BUBBLE_SPOT_END, length(best.xy - CELL_FOCAL));
+      float dna = dnaAt(best.xy, bestLattice, uPixel / best.z);
+      bubbleAlpha = max(max(BUBBLE_FILM, rim * BUBBLE_RIM), max(spot, dna)) * edge;
+      // The film and the rim in the light colour, the spot and the
+      // snippets towards white.
+      vec3 light = mix(uColor, vec3(1.0), TINT_LIGHT);
+      face = mix(light, vec3(1.0), max(spot, dna * 0.7));
+    }
+  }
+  return overBase(face, bubbleAlpha, baseAlpha);
 }
 
 // The gradient of the icon's cells on a unit disc: a light spot at the top
@@ -247,29 +355,10 @@ vec4 cellsLook(vec2 p, float d) {
   if (d < CELL_CLIP_START) {
     return vec4(0.0);
   }
-  float spacing = CELL_SPACING * uUnit;
-  float rowHeight = spacing * CELL_ROW_HEIGHT;
-  int row = int(floor(p.y / rowHeight));
-  float bestQ2 = 1e9;
-  float bestRadius = 0.0;
-  vec2 unit = vec2(0.0);
-  for (int dr = -1; dr <= 1; dr++) {
-    int candidateRow = row + dr;
-    int col = int(floor((p.x - latticeOffset(candidateRow, spacing)) / spacing));
-    for (int dc = -1; dc <= 1; dc++) {
-      vec3 bubble = cellBubble(ivec2(col + dc, candidateRow), spacing);
-      if (bubble.z <= 0.0) {
-        continue;
-      }
-      vec2 v = (p - bubble.xy) / bubble.z;
-      float q2 = dot(v, v);
-      if (q2 < bestQ2) {
-        bestQ2 = q2;
-        bestRadius = bubble.z;
-        unit = v;
-      }
-    }
-  }
+  vec4 best = nearestBubble(p, CELL_SPACING * uUnit, CELL_SHAPE);
+  float bestQ2 = best.w;
+  float bestRadius = best.z;
+  vec2 unit = best.xy;
 
   float baseAlpha = BASE_ALPHA * smoothstep(EDGE_START, EDGE_END, d);
   // Anti-aliased at the rim, one canvas pixel wide.
@@ -417,7 +506,8 @@ void main() {
       : uLook == LOOK_HONEYCOMB || uLook == LOOK_CRYSTAL
         ? tilesLook(p, density, uLook == LOOK_CRYSTAL)
       : uLook == LOOK_NEON ? neonLook(density)
-      : inkLook(p, density);
+      : uLook == LOOK_INK ? inkLook(p, density)
+      : bubblesLook(p, density);
     if (look.a <= 0.0) {
       discard;
     }

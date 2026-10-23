@@ -414,6 +414,7 @@ export class GlArenaPainter implements ArenaPainter {
       program.uniforms['uPixel'],
       this.view.width / this.canvasWidth
     );
+    gl.uniform1f(program.uniforms['uTime'], frame.timeSec);
     const hatch = hatchPattern(color);
     gl.uniform3f(
       program.uniforms['uHatch'],
@@ -752,6 +753,7 @@ export class GlArenaPainter implements ArenaPainter {
         'uUnit',
         'uPixel',
         'uHatch',
+        'uTime',
       ]),
       shape: createProgram(gl, SHAPE_VERTEX, SHAPE_FRAGMENT, ['uView']),
       cells: createProgram(gl, FULLSCREEN_VERTEX, CELLS_FRAGMENT, [

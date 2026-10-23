@@ -83,6 +83,42 @@ function slime(
   return data;
 }
 
+/** The bubbles look at a later time. */
+function sliceOfTime(bacterias: Bacteria[], timeSec: number) {
+  const region = slimeRegion(bacterias, WHOLE, WIDTH, HEIGHT);
+  const cells = WIDTH * HEIGHT;
+  const density = new Float32Array(cells);
+  const heat = new Float32Array(cells);
+  colonyDensity(
+    density,
+    heat,
+    new Float32Array(cells),
+    WIDTH,
+    HEIGHT,
+    bacterias,
+    gameBalance,
+    region ?? undefined
+  );
+  const data = new Uint8ClampedArray(cells * SLIME_SCALE * SLIME_SCALE * 4);
+  if (region != null) {
+    paintColony(
+      'bubbles',
+      data,
+      density,
+      null,
+      WIDTH,
+      HEIGHT,
+      ORANGE,
+      null,
+      1,
+      region,
+      region,
+      timeSec
+    );
+  }
+  return data;
+}
+
 /** Every look's pixels inside and outside a colony. */
 function withLook(look: Exclude<BacteriaLook, 'pixels'>) {
   const data = slime(blob(20, 10, 6), null, WHOLE, look);
@@ -193,6 +229,7 @@ describe.each<Exclude<BacteriaLook, 'pixels'>>([
   'crystal',
   'neon',
   'ink',
+  'bubbles',
 ])('the %s look', (look) => {
   it('covers a colony in its colour and leaves the floor around it clear', () => {
     const { data, inside } = withLook(look);
@@ -246,6 +283,20 @@ describe('paintTiles', () => {
     expect(strayed).toBeLessThan(2.8 * 0.6);
     expect(crystal.shade).not.toBeCloseTo(next.shade, 3);
     expect(honeycomb.density).toBe(1);
+  });
+});
+
+describe('paintBubbles', () => {
+  it('floats snippets inside the bubbles that move with the time', () => {
+    const bacterias = blob(20, 10, 7);
+    const now = slime(bacterias, null, WHOLE, 'bubbles');
+    const later = sliceOfTime(bacterias, 2);
+
+    const moved = pixelsWithin(now, 20, 10, 5).filter(
+      (pixel, i) =>
+        brightness(pixel) !== brightness(pixelsWithin(later, 20, 10, 5)[i])
+    );
+    expect(moved.length).toBeGreaterThan(0);
   });
 });
 

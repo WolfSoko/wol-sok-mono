@@ -87,6 +87,8 @@ export interface StoredSettings {
  * - neon: a dark body with its outline glowing in the colony's colour
  * - ink: flat and hatched like a woodcut, with a thick outline - each
  *   colony hatched its own way, so two are told apart without colour
+ * - bubbles: glassy bubbles of different sizes with snippets of DNA
+ *   floating inside
  * - pixels: the crisp pixels the game started with
  */
 export type BacteriaLook =
@@ -96,6 +98,7 @@ export type BacteriaLook =
   | 'crystal'
   | 'neon'
   | 'ink'
+  | 'bubbles'
   | 'pixels';
 
 /** The looks in the order the settings offer them; their names are texts. */
@@ -106,6 +109,7 @@ export const BACTERIA_LOOKS: readonly BacteriaLook[] = [
   'crystal',
   'neon',
   'ink',
+  'bubbles',
   'pixels',
 ];
 

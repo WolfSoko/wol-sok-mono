@@ -17,6 +17,7 @@ export const settings = {
       crystal: 'Crystal',
       neon: 'Neon',
       ink: 'Ink',
+      bubbles: 'Bubbles',
       pixels: 'Pixels',
     },
     simResolution: 'Simulation resolution',

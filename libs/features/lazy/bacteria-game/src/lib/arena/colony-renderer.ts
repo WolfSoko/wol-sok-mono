@@ -317,6 +317,8 @@ export interface LookDescription {
  * `CRYSTAL_JITTER` spacings and fills to the next centre.
  */
 const LATTICE_REACH = 3;
+/** The bubbles are bigger: `BUBBLE_RADIUS` spacings and a bit, from within a cell. */
+const BUBBLE_REACH = 5;
 
 export const LOOKS: Readonly<Record<BacteriaLook, LookDescription>> = {
   slime: { fromDensity: true, reach: 0, glIndex: 0 },
@@ -326,6 +328,7 @@ export const LOOKS: Readonly<Record<BacteriaLook, LookDescription>> = {
   crystal: { fromDensity: true, reach: LATTICE_REACH, glIndex: 4 },
   neon: { fromDensity: true, reach: 0, glIndex: 5 },
   ink: { fromDensity: true, reach: 0, glIndex: 6 },
+  bubbles: { fromDensity: true, reach: BUBBLE_REACH, glIndex: 7 },
 };
 
 /** How many cells past the colony a look reaches on a grid of that unit. */
@@ -362,6 +365,11 @@ export function lookReach(look: BacteriaLook, unit: number): number {
  * Ink: a flat body hatched with lines `INK_HATCH_SPACING` apart - crossed
  * where the colony is thin - and a thick outline in ink. Each colony is
  * hatched in its own pattern ({@link hatchPattern}).
+ *
+ * Bubbles: glassy bubbles of different sizes on the cells' lattice,
+ * `BUBBLE_SPACING` apart - a faint film, a bright rim and a light spot -
+ * each with two or three snippets of DNA inside, double helices that drift
+ * around and turn slowly with the time, over a thinner base.
  */
 export const LOOK_TUNING = {
   CELL_SPACING: 3.4,
@@ -421,6 +429,30 @@ export const LOOK_TUNING = {
   INK: 0.18,
   INK_HATCH: 0.62,
   INK_ALPHA: 0.95,
+  BUBBLE_SPACING: 4.4,
+  /** A bubble's radius in spacings, varied by lattice point from this share up by this much. */
+  BUBBLE_RADIUS: 0.72,
+  BUBBLE_RADIUS_MIN: 0.55,
+  BUBBLE_RADIUS_VARY: 0.7,
+  BUBBLE_BASE_ALPHA: 0.7,
+  /** The film of a bubble: how opaque, and the rim and the light spot on it. */
+  BUBBLE_FILM: 0.2,
+  BUBBLE_RIM_START: 0.72,
+  BUBBLE_RIM_END: 0.96,
+  BUBBLE_RIM: 0.9,
+  BUBBLE_SPOT_START: 0.12,
+  BUBBLE_SPOT_END: 0.3,
+  /** A DNA snippet on the bubble's unit disc: half its length, its helix and its drift. */
+  DNA_HALF_MIN: 0.22,
+  DNA_HALF_VARY: 0.3,
+  DNA_AMPLITUDE: 0.07,
+  DNA_TWIST: 14,
+  DNA_WIDTH: 0.025,
+  DNA_RUNG: 0.35,
+  DNA_ORBIT_MIN: 0.12,
+  DNA_ORBIT_VARY: 0.4,
+  DNA_DRIFT: 0.2,
+  DNA_SPIN: 0.4,
 } as const;
 
 const {
@@ -469,7 +501,46 @@ const {
   INK,
   INK_HATCH,
   INK_ALPHA,
+  BUBBLE_SPACING,
+  BUBBLE_RADIUS,
+  BUBBLE_RADIUS_MIN,
+  BUBBLE_RADIUS_VARY,
+  BUBBLE_BASE_ALPHA,
+  BUBBLE_FILM,
+  BUBBLE_RIM_START,
+  BUBBLE_RIM_END,
+  BUBBLE_RIM,
+  BUBBLE_SPOT_START,
+  BUBBLE_SPOT_END,
+  DNA_HALF_MIN,
+  DNA_HALF_VARY,
+  DNA_AMPLITUDE,
+  DNA_TWIST,
+  DNA_WIDTH,
+  DNA_RUNG,
+  DNA_ORBIT_MIN,
+  DNA_ORBIT_VARY,
+  DNA_DRIFT,
+  DNA_SPIN,
 } = LOOK_TUNING;
+
+/** How big the cells of a lattice look are, in spacings, and how they vary. */
+interface CellShape {
+  radius: number;
+  min: number;
+  vary: number;
+}
+
+const CELL_SHAPE: CellShape = {
+  radius: CELL_RADIUS,
+  min: CELL_RADIUS_MIN,
+  vary: CELL_RADIUS_VARY,
+};
+const BUBBLE_SHAPE: CellShape = {
+  radius: BUBBLE_RADIUS,
+  min: BUBBLE_RADIUS_MIN,
+  vary: BUBBLE_RADIUS_VARY,
+};
 
 /** One cell of the cells look: its centre in arena cells and its radius. */
 export interface CellBubble {
@@ -495,7 +566,8 @@ export function cellBubble(
   spacing: number,
   density: Float32Array,
   width: number,
-  height: number
+  height: number,
+  shape: CellShape = CELL_SHAPE
 ): CellBubble | null {
   const rowHeight = spacing * CELL_ROW_HEIGHT;
   const x =
@@ -514,9 +586,9 @@ export function cellBubble(
     smoothstep(CELL_MIN, CELL_MIN + CELL_GROW, d);
   const radius =
     spacing *
-    CELL_RADIUS *
+    shape.radius *
     size *
-    (CELL_RADIUS_MIN + CELL_RADIUS_VARY * hash(col, row, 3));
+    (shape.min + shape.vary * hash(col, row, 3));
   return { x, y, radius };
 }
 
@@ -872,7 +944,9 @@ export type LookPainter = (
   shimmer: BoostShimmer | null,
   unit: number,
   region: CellBounds,
-  latticeRegion?: CellBounds
+  latticeRegion?: CellBounds,
+  /** Seconds of animation, for a look that moves. */
+  timeSec?: number
 ) => void;
 
 /**
@@ -1185,6 +1259,181 @@ export const paintInk: LookPainter = (
   );
 };
 
+/**
+ * How much of a DNA snippet covers a point of a bubble's unit disc: two or
+ * three double helices per bubble, each drifting around the bubble and
+ * turning slowly with the time, drawn by the lattice point's hashes. `aa`
+ * is a pixel's width on the disc, for the anti-aliasing of the strands.
+ */
+function dnaAt(
+  ux: number,
+  uy: number,
+  col: number,
+  row: number,
+  timeSec: number,
+  aa: number
+): number {
+  let cover = 0;
+  const count = 2 + (hash(col, row, 20) > 0.5 ? 1 : 0);
+  for (let k = 0; k < count; k++) {
+    const salt = 21 + k * 6;
+    const orbit = DNA_ORBIT_MIN + DNA_ORBIT_VARY * hash(col, row, salt);
+    const drift = DNA_DRIFT * (0.6 + 0.8 * hash(col, row, salt + 1));
+    const angle =
+      hash(col, row, salt + 2) * Math.PI * 2 +
+      timeSec * drift * (hash(col, row, salt + 3) < 0.5 ? -1 : 1);
+    const dx = ux - orbit * Math.cos(angle);
+    const dy = uy - orbit * Math.sin(angle);
+    const theta = hash(col, row, salt + 4) * Math.PI * 2 + timeSec * DNA_SPIN;
+    const cos = Math.cos(theta);
+    const sin = Math.sin(theta);
+    const along = dx * cos + dy * sin;
+    const half = DNA_HALF_MIN + DNA_HALF_VARY * hash(col, row, salt + 5);
+    if (Math.abs(along) > half) {
+      continue;
+    }
+    const across = -dx * sin + dy * cos;
+    const phase = along * DNA_TWIST + timeSec;
+    const wave = DNA_AMPLITUDE * Math.sin(phase);
+    // The two backbones, and a rung between them every half turn.
+    const strand = Math.max(
+      1 - smoothstep(DNA_WIDTH, DNA_WIDTH + aa, Math.abs(across - wave)),
+      1 - smoothstep(DNA_WIDTH, DNA_WIDTH + aa, Math.abs(across + wave))
+    );
+    const turn = phase + Math.PI / 2;
+    const rung =
+      Math.abs(across) <= Math.abs(wave) + DNA_WIDTH &&
+      turn - Math.floor(turn / Math.PI) * Math.PI < DNA_RUNG
+        ? 0.8
+        : 0;
+    const ends = smoothstep(half, half - 0.08, Math.abs(along));
+    cover = Math.max(cover, Math.max(strand, rung) * ends);
+  }
+  return cover;
+}
+
+/**
+ * The bubbles look: glassy bubbles of different sizes on a thinner base -
+ * a faint film in the colony's light colour, a bright rim and a light spot
+ * - each with snippets of DNA floating inside ({@link dnaAt}).
+ */
+export const paintBubbles: LookPainter = (
+  data8,
+  density,
+  heat,
+  width,
+  height,
+  color,
+  shimmer,
+  unit,
+  region,
+  latticeRegion = region,
+  timeSec = 0
+) => {
+  const palette = lookPalette(color);
+  const { light, base } = palette;
+  const spacing = BUBBLE_SPACING * unit;
+  // Each lattice point's bubble: centre x, y, radius (0 for none), and
+  // its column and row, which draw what floats inside.
+  const lattice = buildLattice(
+    latticeRegion,
+    spacing,
+    5,
+    (col, row, at, values) => {
+      const bubble = cellBubble(
+        col,
+        row,
+        spacing,
+        density,
+        width,
+        height,
+        BUBBLE_SHAPE
+      );
+      if (bubble != null) {
+        values[at] = bubble.x;
+        values[at + 1] = bubble.y;
+        values[at + 2] = bubble.radius;
+        values[at + 3] = col;
+        values[at + 4] = row;
+      }
+    }
+  );
+  const { values } = lattice;
+  const around = new Int32Array(9);
+
+  paintLook(
+    data8,
+    density,
+    heat,
+    width,
+    height,
+    shimmer,
+    region,
+    CELL_CLIP_START,
+    (x, y, d, out) => {
+      let bestQ2 = Infinity;
+      let bestAt = -1;
+      let ux = 0;
+      let uy = 0;
+      const count = latticeNeighbours(lattice, x, y, around);
+      for (let n = 0; n < count; n++) {
+        const at = around[n];
+        const radius = values[at + 2];
+        if (radius <= 0) {
+          continue;
+        }
+        const vx = (x - values[at]) / radius;
+        const vy = (y - values[at + 1]) / radius;
+        const q2 = vx * vx + vy * vy;
+        if (q2 < bestQ2) {
+          bestQ2 = q2;
+          bestAt = at;
+          ux = vx;
+          uy = vy;
+        }
+      }
+
+      const baseAlpha =
+        BUBBLE_BASE_ALPHA * smoothstep(SLIME_EDGE_START, SLIME_EDGE_END, d);
+      let bubbleAlpha = 0;
+      if (bestAt >= 0) {
+        const radius = values[bestAt + 2];
+        const q = Math.sqrt(bestQ2);
+        const edge =
+          clamp((1 - q) * radius * SLIME_SCALE + 0.5, 0, 1) *
+          smoothstep(CELL_CLIP_START, CELL_CLIP_END, d);
+        if (edge > 0) {
+          const rim = smoothstep(BUBBLE_RIM_START, BUBBLE_RIM_END, q);
+          const spot =
+            1 -
+            smoothstep(
+              BUBBLE_SPOT_START,
+              BUBBLE_SPOT_END,
+              Math.hypot(ux - CELL_FOCAL_X, uy - CELL_FOCAL_Y)
+            );
+          const dna = dnaAt(
+            ux,
+            uy,
+            values[bestAt + 3],
+            values[bestAt + 4],
+            timeSec,
+            1 / (radius * SLIME_SCALE)
+          );
+          bubbleAlpha =
+            Math.max(BUBBLE_FILM, rim * BUBBLE_RIM, spot, dna) * edge;
+          // The film and the rim in the light colour, the spot and the
+          // snippets towards white.
+          const white = Math.max(spot, dna * 0.7);
+          for (let c = 0; c < 3; c++) {
+            out[c] = lerp(light[c], 255, white);
+          }
+        }
+      }
+      return overBase(out, bubbleAlpha, base, baseAlpha);
+    }
+  );
+};
+
 /** The slime, as every other look is called. */
 const paintSlimeLook: LookPainter = (
   data8,
@@ -1208,6 +1457,7 @@ const DENSITY_PAINTERS: Readonly<
   crystal: paintCrystal,
   neon: paintNeon,
   ink: paintInk,
+  bubbles: paintBubbles,
 };
 
 /** Paints a colony in a look drawn from its density - see {@link LookPainter}. */
@@ -1421,7 +1671,8 @@ export class ColonyRenderer {
           shimmer,
           unit,
           region,
-          wide
+          wide,
+          timeSec
         );
       } else {
         createImageDataFromBacterias(
