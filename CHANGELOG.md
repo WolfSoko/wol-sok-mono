@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.49.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.48.1...v74.49.0) (2026-10-23)
+
+### Features
+
+* **feat-lazy-bacteria-game:** add online matches between two devices ([#2556](https://github.com/WolfSoko/wol-sok-mono/issues/2556)) ([e4e1802](https://github.com/WolfSoko/wol-sok-mono/commit/e4e180297a2a23f3b67406c24b07608891ca2a8b))
+* **pacetrainer:** add sitemap.xml and reference it from robots.txt ([7339f1f](https://github.com/WolfSoko/wol-sok-mono/commit/7339f1fc8d9d45fc5b126221f2a67fd8a921396e))
+
+### Bug Fixes
+
+* **bacteria-wars-android:** 🐛 declare ManageDataLauncherActivity so the app starts ([#2555](https://github.com/WolfSoko/wol-sok-mono/issues/2555)) ([d1966ed](https://github.com/WolfSoko/wol-sok-mono/commit/d1966ed4120815d976b24c43a392c50c2c470e10))
+* **bacteria-wars-android:** move the app, privacy policy and promo texts to bacteria-wars.wolsok.de ([#2554](https://github.com/WolfSoko/wol-sok-mono/issues/2554)) ([1e8ec2a](https://github.com/WolfSoko/wol-sok-mono/commit/1e8ec2a75a88d557d0f8dc446ab0019be172416e))
+* **pacetrainer:** add canonical and og:url for pace-trainer.com ([f50c6ef](https://github.com/WolfSoko/wol-sok-mono/commit/f50c6efd357bf36b4d96214c02c581ac338dbade))
+* **pacetrainer:** serve og:image from pace-trainer.com ([c10e85b](https://github.com/WolfSoko/wol-sok-mono/commit/c10e85b1c0888d294b2e3f9762ad4cb6966f6e27))
+
+### Chore
+
+* **bacteria-game-remote:** deploy the rooms' TTL policy with the rules ([#2562](https://github.com/WolfSoko/wol-sok-mono/issues/2562)) ([a7cfca2](https://github.com/WolfSoko/wol-sok-mono/commit/a7cfca2cd4dcdfb9c4df747e679d4400666fb378))
+
+### Documentation
+
+* **angular-examples:** add status, Play and npm badges to README, use bacteria-wars.wolsok.de ([8c1c06c](https://github.com/WolfSoko/wol-sok-mono/commit/8c1c06c8c88a619ac4eff9be1df2419692e269ab))
+* **angular-examples:** link live apps and Play Store app in README ([#2553](https://github.com/WolfSoko/wol-sok-mono/issues/2553)) ([2ea0b95](https://github.com/WolfSoko/wol-sok-mono/commit/2ea0b95f9b7a89b5dbf88631bafa48510b094a17))
+* **pacetrainer:** link pace-trainer.com in README ([3f8a413](https://github.com/WolfSoko/wol-sok-mono/commit/3f8a41368d604f06c1bd27d2b8276d568ed0e36a))
+
+### Code style
+
+* **pacetrainer:** 🎨 format README.md and index.html ([#2561](https://github.com/WolfSoko/wol-sok-mono/issues/2561)) ([8902687](https://github.com/WolfSoko/wol-sok-mono/commit/89026875ad8689a819f8cdc6e064dc35d2ad7b03))
+
 ## [74.48.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.48.0...v74.48.1) (2026-10-22)
 
 ### Bug Fixes
