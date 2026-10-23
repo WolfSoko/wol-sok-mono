@@ -126,7 +126,12 @@ See [Architecture Overview](./docs/ARCHITECTURE.md) for detailed structure.
 
 ## npm install
 
-To run `npm install` you need to make sure `node-gyp` compilation process is working. See here: [node-gyp installation](https://github.com/nodejs/node-gyp#installation)
+Use `npm ci`. No compiler toolchain is needed: every native module ships a prebuilt
+binary, and the install scripts that may run are listed under `allowScripts` in
+`package.json`. The optional `gl` module (a dependency of `gpu.js` that only matters
+for Node, not the browser) is denied there, so node-gyp never runs. CI installs with
+`--ignore-scripts` and restores `node_modules` from a cache keyed on the lockfile
+(see `.github/actions/install-deps`).
 
 ## Contributors
 
