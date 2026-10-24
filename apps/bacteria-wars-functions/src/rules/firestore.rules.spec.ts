@@ -24,6 +24,8 @@ import {
 } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { Engine, loadEngine } from '../engine';
+import { MAX_SUBMISSION_BYTES } from '../replays/derive';
 
 /**
  * The game's Firestore rules (`apps/bacteria-game-remote/firestore.rules`)
@@ -711,5 +713,123 @@ describe('admin commands', () => {
     await seed((db) => setDoc(doc(db, 'adminAudit/a1'), { ok: true }));
     await assertFails(getDoc(doc(as('ana'), 'adminAudit/a1')));
     await assertSucceeds(getDoc(doc(asAdmin(), 'adminAudit/a1')));
+  });
+});
+
+/**
+ * The rules hold copies of constants the game and the functions keep in
+ * code. Each is checked against its source here, so a constant changed in
+ * one place fails a test.
+ */
+describe('parity with the code', () => {
+  let engine: Engine;
+
+  beforeAll(async () => {
+    engine = await loadEngine();
+  });
+
+  const adminCommand = (type: string) =>
+    type.startsWith('stats.')
+      ? {
+          uid: 'owner',
+          type,
+          target: null,
+          args: {},
+          createdAt: serverTimestamp(),
+          expireAt: later(DAY),
+        }
+      : {
+          uid: 'owner',
+          type,
+          target: { uid: 'ana' },
+          reason: 'a reason',
+          args: {},
+          createdAt: serverTimestamp(),
+          expireAt: later(DAY),
+        };
+
+  it('takes every ADMIN_COMMAND_TYPES type from an owner signed in just now', async () => {
+    for (const [index, type] of engine.ADMIN_COMMAND_TYPES.entries()) {
+      await assertSucceeds(
+        setDoc(doc(asAdmin(), `adminCommands/f${index}`), adminCommand(type))
+      );
+    }
+  });
+
+  it('wants a recent sign-in for exactly the DESTRUCTIVE_COMMAND_TYPES', async () => {
+    const stale = asAdmin('owner', (2 * HOUR) / 1000);
+    for (const [index, type] of engine.ADMIN_COMMAND_TYPES.entries()) {
+      const write = setDoc(
+        doc(stale, `adminCommands/s${index}`),
+        adminCommand(type)
+      );
+      if (engine.DESTRUCTIVE_COMMAND_TYPES.includes(type)) {
+        await assertFails(write);
+      } else {
+        await assertSucceeds(write);
+      }
+    }
+  });
+
+  it("keeps a declared attempt as long as the game's attemptExpireAt asks", async () => {
+    await assertSucceeds(
+      setDoc(doc(as('ana'), `players/ana/attempts/d_${today()}_1`), {
+        at: serverTimestamp(),
+        expireAt: Timestamp.fromMillis(engine.attemptExpireAt(Date.now())),
+      })
+    );
+  });
+
+  it('caps the submitted bytes at MAX_SUBMISSION_BYTES', async () => {
+    const submission = (size: number) => ({
+      uid: 'ana',
+      bytes: Bytes.fromUint8Array(new Uint8Array(size)),
+      hint: 0,
+      createdAt: serverTimestamp(),
+      expireAt: later(DAY),
+    });
+    expect(MAX_SUBMISSION_BYTES).toBe(engine.MAX_PACKED_BYTES);
+    await assertSucceeds(
+      setDoc(
+        doc(as('ana'), 'replaySubmissions/max'),
+        submission(MAX_SUBMISSION_BYTES)
+      )
+    );
+    await assertFails(
+      setDoc(
+        doc(as('ana'), 'replaySubmissions/over'),
+        submission(MAX_SUBMISSION_BYTES + 1)
+      )
+    );
+  });
+
+  it("takes a replay id exactly when the engine's REPLAY_ID does", async () => {
+    const ids = [
+      engine.onlineReplayId('ABCDEF', 1, 7),
+      'o_0123456789abcdef',
+      'o_0123456789abcde',
+      'o_0123456789ABCDEF',
+      'o_0123456789abcdef0',
+      'l_abc123',
+      `l_${'a'.repeat(40)}`,
+      `l_${'a'.repeat(41)}`,
+      'l_',
+      'l_a-b',
+      'x_abc',
+    ];
+    for (const [index, replayId] of ids.entries()) {
+      const write = setDoc(doc(as('ana'), `replayCommands/r${index}`), {
+        uid: 'ana',
+        type: 'remove',
+        replayId,
+        createdAt: serverTimestamp(),
+        expireAt: later(DAY),
+      });
+      if (engine.REPLAY_ID.test(replayId)) {
+        await assertSucceeds(write);
+      } else {
+        await assertFails(write);
+      }
+    }
   });
 });
