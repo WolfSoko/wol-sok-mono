@@ -1,5 +1,5 @@
 import { gameBalance } from '../../state/game-balance';
-import { encodeCells } from './gl-arena-painter';
+import { encodeCells, passMargins } from './gl-arena-painter';
 
 describe('encodeCells', () => {
   const width = 8;
@@ -39,5 +39,32 @@ describe('encodeCells', () => {
 
     expect(encodeCells(out, width, [], gameBalance)).toBeNull();
     expect(out.every((byte) => byte === 0)).toBe(true);
+  });
+});
+
+describe('passMargins', () => {
+  // The colony pass reads the vertical blur one cell further out than its
+  // box, the vertical blur the horizontal one two rows, the horizontal blur
+  // the cells two columns: each pass has to cover what the next one reads,
+  // or the next one picks up the other colony's stale density.
+  it.each([0, 3, 5, 10])(
+    'lets every pass cover what the next one reads, at a reach of %i',
+    (reach) => {
+      const margin = passMargins(reach);
+
+      expect(margin.verticalBlur).toBeGreaterThanOrEqual(margin.colony + 1);
+      expect(margin.horizontalBlur).toBeGreaterThanOrEqual(
+        margin.verticalBlur + 2
+      );
+      expect(margin.cells).toBeGreaterThanOrEqual(margin.horizontalBlur + 2);
+    }
+  );
+
+  it('moves the whole chain out by the reach', () => {
+    const near = passMargins(0);
+    const far = passMargins(5);
+
+    expect(far.colony).toBe(near.colony + 5);
+    expect(far.cells).toBe(near.cells + 5);
   });
 });

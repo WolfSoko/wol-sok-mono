@@ -1,11 +1,12 @@
 import { gameBalance } from '../state/game-balance';
 import { Point } from '../state/geometry';
 import { Bacteria } from '../state/player.model';
-import { BacteriaLook } from '../settings.service';
+import { BACTERIA_LOOKS, BacteriaLook } from '../settings.service';
 import { COLONY_COLORS } from '../state/colony-colors';
 
 import {
   cellBubble,
+  CELLS,
   colonyDensity,
   createImageDataFromBacterias,
   hatchPattern,
@@ -18,7 +19,7 @@ import {
 } from './colony-renderer';
 import { Rect } from '../state/maps';
 
-const { CELL_MIN, CELL_SPACING } = LOOK_TUNING;
+const { CELL_MIN } = LOOK_TUNING;
 
 const WIDTH = 40;
 const HEIGHT = 20;
@@ -43,7 +44,8 @@ function slime(
   bacterias: Bacteria[],
   shimmerTimeSec: number | null = null,
   view: Rect = WHOLE,
-  look: Exclude<BacteriaLook, 'pixels'> = 'slime'
+  look: Exclude<BacteriaLook, 'pixels'> = 'slime',
+  timeSec = 0
 ) {
   const target: Point = { x: 30, y: 10 };
   const region = slimeRegion(bacterias, view, WIDTH, HEIGHT);
@@ -78,7 +80,9 @@ function slime(
     ORANGE,
     shimmer,
     1,
-    region
+    region,
+    region,
+    timeSec
   );
   return data;
 }
@@ -187,13 +191,13 @@ describe('paintCells', () => {
   });
 });
 
-describe.each<Exclude<BacteriaLook, 'pixels'>>([
-  'cells',
-  'honeycomb',
-  'crystal',
-  'neon',
-  'ink',
-])('the %s look', (look) => {
+/** Every look drawn from the density, the slime with its own tests above. */
+const DENSITY_LOOKS = BACTERIA_LOOKS.filter(
+  (look): look is Exclude<BacteriaLook, 'pixels' | 'slime'> =>
+    look !== 'pixels' && look !== 'slime'
+);
+
+describe.each(DENSITY_LOOKS)('the %s look', (look) => {
   it('covers a colony in its colour and leaves the floor around it clear', () => {
     const { data, inside } = withLook(look);
 
@@ -246,6 +250,29 @@ describe('paintTiles', () => {
     expect(strayed).toBeLessThan(2.8 * 0.6);
     expect(crystal.shade).not.toBeCloseTo(next.shade, 3);
     expect(honeycomb.density).toBe(1);
+  });
+});
+
+describe('paintBubbles', () => {
+  it('floats snippets inside the bubbles that move with the time', () => {
+    const bacterias = blob(20, 10, 7);
+    const now = pixelsWithin(
+      slime(bacterias, null, WHOLE, 'bubbles'),
+      20,
+      10,
+      5
+    );
+    const later = pixelsWithin(
+      slime(bacterias, null, WHOLE, 'bubbles', 2),
+      20,
+      10,
+      5
+    );
+
+    const moved = now.filter(
+      (pixel, i) => brightness(pixel) !== brightness(later[i])
+    );
+    expect(moved.length).toBeGreaterThan(0);
   });
 });
 
@@ -315,26 +342,26 @@ describe('cellBubble', () => {
   const field = (value: number) => new Float32Array(WIDTH * HEIGHT).fill(value);
 
   it('grows a cell with the density under it', () => {
-    const thin = cellBubble(3, 2, CELL_SPACING, field(0.2), WIDTH, HEIGHT);
-    const dense = cellBubble(3, 2, CELL_SPACING, field(1), WIDTH, HEIGHT);
+    const thin = cellBubble(3, 2, CELLS, 1, field(0.2), WIDTH, HEIGHT);
+    const dense = cellBubble(3, 2, CELLS, 1, field(1), WIDTH, HEIGHT);
 
     expect(thin).not.toBeNull();
     expect(dense).not.toBeNull();
     expect(dense?.radius).toBeGreaterThan(thin?.radius ?? Infinity);
-    expect(dense?.radius).toBeLessThan(CELL_SPACING);
+    expect(dense?.radius).toBeLessThan(CELLS.spacing);
     // The same lattice point sits at the same place however dense it is.
     expect([dense?.x, dense?.y]).toEqual([thin?.x, thin?.y]);
   });
 
   it('leaves out a cell where the colony is too thin for one', () => {
     expect(
-      cellBubble(3, 2, CELL_SPACING, field(CELL_MIN / 2), WIDTH, HEIGHT)
+      cellBubble(3, 2, CELLS, 1, field(CELL_MIN / 2), WIDTH, HEIGHT)
     ).toBeNull();
   });
 
   it('spaces the cells by the unit, so they are as big on a finer grid', () => {
-    const base = cellBubble(3, 2, CELL_SPACING, field(1), WIDTH, HEIGHT);
-    const fine = cellBubble(3, 2, CELL_SPACING * 2, field(1), WIDTH, HEIGHT);
+    const base = cellBubble(3, 2, CELLS, 1, field(1), WIDTH, HEIGHT);
+    const fine = cellBubble(3, 2, CELLS, 2, field(1), WIDTH, HEIGHT);
 
     expect(fine?.radius).toBeCloseTo((base?.radius ?? 0) * 2);
     expect(fine?.x).toBeCloseTo((base?.x ?? 0) * 2);

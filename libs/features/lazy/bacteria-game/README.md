@@ -116,8 +116,8 @@ CSS animation, still for players who ask for less motion):
 - **Profile** - levels won, medallions per metal and every medallion level by
   level.
 - **Settings** - colony colours, how the bacteria look (slime, cells like
-  on the app icon, honeycomb, crystal, neon, ink or pixels), the two
-  resolutions,
+  on the app icon, honeycomb, crystal, neon, ink, bubbles or pixels), the
+  two resolutions,
   sound with music and effects switched and set in volume on their own,
   vibration where the device can, the frame rate badge and browser
   fullscreen.

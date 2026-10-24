@@ -19,6 +19,7 @@ export const settings: Translation<typeof en> = {
       crystal: 'Kristall',
       neon: 'Neon',
       ink: 'Tusche',
+      bubbles: 'Blasen',
       pixels: 'Pixel',
     },
     simResolution: 'Simulationsauflösung',
