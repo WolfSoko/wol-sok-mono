@@ -10,6 +10,7 @@ import {
   WeaponId,
 } from './evolution';
 import { isInteger, isObject } from './is-object';
+import { BacteriaLook, isPremiumSkin, PREMIUM_SKINS, skinCost } from './skins';
 
 /**
  * What a player has made of their colony - the genes bred, the weapons
@@ -24,6 +25,11 @@ import { isInteger, isObject } from './is-object';
  * is free and gives every strand back; it counts up the epoch, and a higher
  * epoch wins a merge outright, so a reset on one device is not undone by the
  * purchases another one still holds.
+ *
+ * Skins (`skins.ts`) are bought with the same DNA, but are cosmetics and
+ * stay bought: a reset keeps them, and their strands with them, and they
+ * merge as the union across epochs, so a reset on one device never takes a
+ * skin another device bought.
  */
 export interface EvolutionProgress {
   /** The level bred per gene - absent for none. */
@@ -39,6 +45,8 @@ export interface EvolutionProgress {
   equipCount: number;
   /** How often everything was reset - the higher one wins a merge. */
   epoch: number;
+  /** The skins bought, in the gallery's order - the free ones are never listed. */
+  skins: readonly BacteriaLook[];
 }
 
 export const EMPTY_EVOLUTION: EvolutionProgress = {
@@ -47,6 +55,7 @@ export const EMPTY_EVOLUTION: EvolutionProgress = {
   equipped: null,
   equipCount: 0,
   epoch: 0,
+  skins: [],
 };
 
 /**
@@ -72,8 +81,8 @@ export function geneCost(level: number): number {
   return cost;
 }
 
-/** The DNA everything held cost. */
-export function spentDna(evolution: EvolutionProgress): number {
+/** The DNA the genes and the weapons held cost - what a reset gives back. */
+export function refundableDna(evolution: EvolutionProgress): number {
   const genes = GENES.reduce(
     (sum, { id }) => sum + geneCost(levelOf(evolution, id)),
     0
@@ -82,6 +91,16 @@ export function spentDna(evolution: EvolutionProgress): number {
     (sum, weapon) => sum + weaponOf(weapon).cost,
     genes
   );
+}
+
+/** The DNA the skins bought cost. */
+export function skinsDna(evolution: EvolutionProgress): number {
+  return evolution.skins.reduce((sum, skin) => sum + skinCost(skin), 0);
+}
+
+/** The DNA everything held cost, skins included. */
+export function spentDna(evolution: EvolutionProgress): number {
+  return refundableDna(evolution) + skinsDna(evolution);
 }
 
 /**
@@ -127,7 +146,35 @@ export function canBuyWeapon(
   );
 }
 
-/** True when the DNA left buys anything at all - the menu's badge. */
+/** True for a skin the player may wear: free, or bought. */
+export function ownsSkin(
+  evolution: EvolutionProgress,
+  skin: BacteriaLook
+): boolean {
+  return skinCost(skin) === 0 || evolution.skins.includes(skin);
+}
+
+/** True for a skin not owned yet that the DNA left pays for. */
+export function canBuySkin(
+  earned: number,
+  evolution: EvolutionProgress,
+  skin: BacteriaLook
+): boolean {
+  return (
+    !ownsSkin(evolution, skin) &&
+    skinCost(skin) <= availableDna(earned, evolution)
+  );
+}
+
+/** True when the DNA left buys a skin - the My Colony tile's badge. */
+export function canBuyAnySkin(
+  earned: number,
+  evolution: EvolutionProgress
+): boolean {
+  return PREMIUM_SKINS.some(({ id }) => canBuySkin(earned, evolution, id));
+}
+
+/** True when the DNA left buys a gene or a weapon - the Evolution tile's badge. */
 export function canBuyAnything(
   earned: number,
   evolution: EvolutionProgress
@@ -173,6 +220,17 @@ export function withWeapon(
   return evolution.equipped === null ? withEquipped(bought, weapon) : bought;
 }
 
+/** A skin bought - a free one, or one held already, changes nothing. */
+export function withSkin(
+  evolution: EvolutionProgress,
+  skin: BacteriaLook
+): EvolutionProgress {
+  if (ownsSkin(evolution, skin)) {
+    return evolution;
+  }
+  return { ...evolution, skins: sortedSkins([...evolution.skins, skin]) };
+}
+
 /**
  * A weapon carried into the next match - null for none, one not held is
  * ignored. A pick counts up `equipCount`, so it wins a merge with any value
@@ -197,38 +255,55 @@ export function withEquipped(
 
 /**
  * Everything given back: no gene, no weapon, an epoch above `stored`'s and
- * the one held here, so the reset wins the merge on every device.
+ * the one held here, so the reset wins the merge on every device. The
+ * skins stay, those of both.
  */
 export function resetEvolution(
   held: EvolutionProgress,
   stored: EvolutionProgress = held
 ): EvolutionProgress {
-  return { ...EMPTY_EVOLUTION, epoch: Math.max(held.epoch, stored.epoch) + 1 };
+  return {
+    ...EMPTY_EVOLUTION,
+    epoch: Math.max(held.epoch, stored.epoch) + 1,
+    skins: orderedUnion(PREMIUM_SKIN_IDS, held.skins, stored.skins),
+  };
 }
 
 /**
  * Two evolutions in one: a higher epoch wins outright - it was reset after
  * the other's purchases. On the same epoch each gene keeps the higher level
  * and the weapons are those of both; the weapon carried is the one picked
- * last ({@link laterPick}). The same whichever way round the two come.
+ * last ({@link laterPick}). The skins are those of both whatever the
+ * epochs. The same whichever way round the two come.
  */
 export function mergeEvolution(
   held: EvolutionProgress,
   other: EvolutionProgress
 ): EvolutionProgress {
-  if (other.epoch !== held.epoch) {
-    return other.epoch > held.epoch ? other : held;
-  }
+  // The skins are the union of both whatever the epochs; the rest is
+  // governed by the epoch.
+  const skins = orderedUnion(PREMIUM_SKIN_IDS, held.skins, other.skins);
+  const base =
+    other.epoch === held.epoch
+      ? mergeSameEpoch(held, other)
+      : other.epoch > held.epoch
+        ? other
+        : held;
+  return sameList(skins, base.skins) ? base : { ...base, skins };
+}
+
+/** {@link mergeEvolution} of two evolutions on the same epoch, the skins aside. */
+function mergeSameEpoch(
+  held: EvolutionProgress,
+  other: EvolutionProgress
+): EvolutionProgress {
   let merged = held;
   for (const { id } of GENES) {
     merged = withGeneLevel(merged, id, levelOf(other, id));
   }
-  const added = other.weapons.filter((w) => !merged.weapons.includes(w));
-  if (added.length > 0) {
-    merged = {
-      ...merged,
-      weapons: sortedWeapons([...merged.weapons, ...added]),
-    };
+  const weapons = orderedUnion(WEAPON_IDS, merged.weapons, other.weapons);
+  if (weapons !== merged.weapons) {
+    merged = { ...merged, weapons };
   }
   const pick = laterPick(held, other);
   if (
@@ -309,6 +384,9 @@ export function parseEvolution(value: unknown): EvolutionProgress {
   const equipped = value['equipped'];
   const equipCount = value['equipCount'];
   const epoch = value['epoch'];
+  const skins = Array.isArray(value['skins'])
+    ? sortedSkins((value['skins'] as unknown[]).filter(isPremiumSkin))
+    : [];
   return {
     genes,
     weapons,
@@ -316,6 +394,7 @@ export function parseEvolution(value: unknown): EvolutionProgress {
       isWeaponId(equipped) && weapons.includes(equipped) ? equipped : null,
     equipCount: isInteger(equipCount, 1) ? equipCount : 0,
     epoch: isInteger(epoch, 1) ? epoch : 0,
+    skins,
   };
 }
 
@@ -328,13 +407,42 @@ export function sameEvolution(
     a.epoch === b.epoch &&
     a.equipped === b.equipped &&
     a.equipCount === b.equipCount &&
-    a.weapons.length === b.weapons.length &&
-    a.weapons.every((weapon, index) => b.weapons[index] === weapon) &&
+    sameList(a.weapons, b.weapons) &&
+    sameList(a.skins, b.skins) &&
     GENES.every(({ id }) => levelOf(a, id) === levelOf(b, id))
   );
 }
 
+const WEAPON_IDS: readonly WeaponId[] = WEAPONS.map(({ id }) => id);
+const PREMIUM_SKIN_IDS: readonly BacteriaLook[] = PREMIUM_SKINS.map(
+  ({ id }) => id
+);
+
 /** Weapons without doubles, in the order the menus offer them. */
 function sortedWeapons(weapons: readonly WeaponId[]): WeaponId[] {
-  return WEAPONS.map(({ id }) => id).filter((id) => weapons.includes(id));
+  return WEAPON_IDS.filter((id) => weapons.includes(id));
+}
+
+/** Skins without doubles, in the gallery's order. */
+function sortedSkins(skins: readonly BacteriaLook[]): BacteriaLook[] {
+  return PREMIUM_SKIN_IDS.filter((id) => skins.includes(id));
+}
+
+/**
+ * The items of both lists, without doubles, in `order` - `a` itself when
+ * `b` adds nothing, so a caller can tell.
+ */
+function orderedUnion<T>(
+  order: readonly T[],
+  a: readonly T[],
+  b: readonly T[]
+): readonly T[] {
+  return b.every((item) => a.includes(item))
+    ? a
+    : order.filter((item) => a.includes(item) || b.includes(item));
+}
+
+/** True when two lists hold the same items in the same order. */
+function sameList<T>(a: readonly T[], b: readonly T[]): boolean {
+  return a.length === b.length && a.every((item, index) => b[index] === item);
 }

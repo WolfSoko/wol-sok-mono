@@ -148,6 +148,7 @@
               [friendsAvailable]="social.available"
               [friendRequests]="social.requests().length"
               [evolveDna]="evolution.canEvolve() ? evolution.dna() : 0"
+              [colonyDna]="evolution.skinDna()"
               (fightChallenge)="fightChallenge()"
               (dismissChallenge)="dismissChallenge()"
             />
@@ -366,6 +367,16 @@
           (pointerup)="onPointerUp($event)"
           (pointercancel)="onPointerUp($event)"
         ></feat-lazy-bac-game-arena-view>
+        @if (settings.ambience()) {
+          <!-- Bubbles and mist over the arena; the pointer goes through it. -->
+          <canvas
+            #ambienceElement
+            class="ambience"
+            aria-hidden="true"
+            [style.width.px]="canvasSize()?.width"
+            [style.height.px]="canvasSize()?.height"
+          ></canvas>
+        }
         @if (showMinimap()) {
           <canvas
             #minimapElement

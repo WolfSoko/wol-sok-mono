@@ -41,6 +41,7 @@ import {
 } from '@wolsok/ui-kit';
 import { asapScheduler, defer, Observable, timer } from 'rxjs';
 import { defaultIfEmpty, filter, last, map, take, tap } from 'rxjs/operators';
+import { DishAmbience } from './arena/ambience';
 import { ArenaPainter } from './arena/arena-painter';
 import {
   ArenaContent,
@@ -248,12 +249,22 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private onlineStartPending = false;
   /** No flickering glow for players who asked their system for less motion. */
   private readonly reducedMotion = prefersReducedMotion();
+  /** The bubbles and the mist in the dish, over the arena - null without a painter. */
+  private ambience: DishAmbience | null = null;
+  /** The view the ambience was last drawn still for - nothing to redraw while it holds. */
+  private stillAmbience: Rect | null = null;
+  /** The skin the colonies wear: the look picked, once the player owns it. */
+  private readonly skin = computed(() =>
+    this.evolution.wornSkin(this.settings.look())
+  );
 
   /**
    * The arena on its canvas. A new resolution gets a new canvas - see
    * {@link arenaLayout} - which is when the painter is built again.
    */
   private readonly arenaView = viewChild(ArenaViewComponent);
+  private readonly ambienceRef =
+    viewChild<ElementRef<HTMLCanvasElement>>('ambienceElement');
   private readonly minimapRef =
     viewChild<ElementRef<HTMLCanvasElement>>('minimapElement');
   @ViewChild('arenaStage', { static: true })
@@ -325,8 +336,10 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly arenaScene: ArenaScene = {
     content: (alpha) => this.content(alpha),
     view: () => this.shakenView(),
-    painted: (frame) =>
-      this.paintMinimap(this.lastCamera ?? frame.view, frame.dynamicWalls),
+    painted: (frame) => {
+      this.paintAmbience(frame.view, frame.deltaTimeSec);
+      this.paintMinimap(this.lastCamera ?? frame.view, frame.dynamicWalls);
+    },
   };
 
   stats: Signal<ColonyStats[]>;
@@ -647,9 +660,11 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // motion, even while the game is paused. The arena view lays another
     // level's floor itself.
     effect(() => {
+      this.ambience?.setTheme(this.theme());
       this.walls();
       this.colors();
-      this.settings.look();
+      this.skin();
+      this.settings.ambience();
       this.reducedMotion();
       this.draw();
     });
@@ -1175,6 +1190,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     const { width, height } = this.arena();
     this.camera =
       this.mapSize() > 1 ? new Camera(width, height, this.mapSize()) : null;
+    this.ambience = new DishAmbience(width, height);
+    this.ambience.setTheme(this.theme());
     // With a WebGL2 context the war itself runs on the GPU as well.
     const gl = painter instanceof GlArenaPainter ? painter : null;
     this.playerService.useSimulation(
@@ -1282,6 +1299,48 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (this.painter != null) {
       this.arenaView()?.repaint();
     }
+  }
+
+  /**
+   * Draws the bubbles and the mist over the arena, on the canvas laid over
+   * it, at the arena canvas's own pixels. Still for a player who asked for
+   * less motion, and while the match does not paint: then only the dish's
+   * depth is drawn, and only once per view and canvas size.
+   */
+  private paintAmbience(view: Rect, deltaTimeSec: number): void {
+    const canvas = this.ambienceRef()?.nativeElement;
+    const arena = this.arenaView()?.canvas();
+    const ambience = this.ambience;
+    if (canvas == null || arena == null || ambience == null) {
+      return;
+    }
+    const { width, height } = arena;
+    const resized = canvas.width !== width || canvas.height !== height;
+    if (resized) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+    const moving = !this.reducedMotion() && this.matchPaints();
+    const still = this.stillAmbience;
+    if (
+      !moving &&
+      !resized &&
+      still != null &&
+      still.x === view.x &&
+      still.y === view.y &&
+      still.width === view.width
+    ) {
+      return;
+    }
+    const cx = canvas.getContext('2d');
+    if (cx == null) {
+      return;
+    }
+    if (moving) {
+      ambience.advance(deltaTimeSec);
+    }
+    ambience.paint(cx, view, width, height, !this.reducedMotion());
+    this.stillAmbience = moving ? null : { ...view };
   }
 
   /**
@@ -1414,7 +1473,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
       reducedMotion: this.reducedMotion(),
       nutrients: this.playerService.getNutrients(),
       balance,
-      look: this.settings.look(),
+      look: this.skin(),
       cursors: drawn.map(({ player, at }) => ({
         ...at,
         color: player.color,

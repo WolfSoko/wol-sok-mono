@@ -94,6 +94,20 @@ describe('MainMenuComponent', () => {
     expect(fullscreen.mock.calls).toEqual([[true], [false]]);
   });
 
+  it('badges My Colony while the DNA buys a skin', () => {
+    const tile = () => button('My Colony');
+    expect(tile().querySelector('.count')).toBeNull();
+
+    fixture.componentRef.setInput('colonyDna', 12);
+    fixture.detectChanges();
+
+    expect(tile().classList).toContain('ready');
+    expect(tile().querySelector('.count')?.textContent?.trim()).toBe('12');
+    expect(
+      tile().querySelector('.cdk-visually-hidden')?.textContent?.trim()
+    ).toBe('12 DNA - a new skin is within reach');
+  });
+
   it('opens Evolution, with a badge while the DNA buys something', () => {
     const tile = () => button('Evolution');
     expect(tile().querySelector('.count')).toBeNull();

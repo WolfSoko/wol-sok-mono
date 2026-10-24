@@ -26,6 +26,7 @@ export const settings = {
       normal: 'Normal',
       long: 'Long',
     },
+    ambience: 'Bubbles and mist in the dish',
     screenResolution: 'Screen resolution',
     locked:
       'Pick the colours and resolutions before a match - they stay as they are while one is on.',

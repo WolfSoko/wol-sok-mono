@@ -324,6 +324,17 @@ describe('GameSettingsService', () => {
     expect(service.vaporizeMs()).toBe(2500);
   });
 
+  it('fills the dish with bubbles and mist unless told otherwise', () => {
+    const service = TestBed.inject(GameSettingsService);
+    expect(service.ambience()).toBe(true);
+
+    service.setAmbience(false);
+
+    expect(stored()).toMatchObject({ ambience: false });
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(GameSettingsService).ambience()).toBe(false);
+  });
+
   it('remembers how the arena vaporizes', () => {
     const service = TestBed.inject(GameSettingsService);
 

@@ -8,8 +8,10 @@ import {
 import {
   adoptEvolution,
   availableDna,
+  canBuyAnySkin,
   canBuyAnything,
   canBuyGene,
+  canBuySkin,
   canBuyWeapon,
   EMPTY_EVOLUTION,
   EvolutionProgress,
@@ -17,15 +19,25 @@ import {
   loadoutOf,
   mergeEvolution,
   nextGeneCost,
+  ownsSkin,
   parseEvolution,
+  refundableDna,
   resetEvolution,
   sameEvolution,
   spentDna,
   withEquipped,
   withGeneLevel,
+  withSkin,
   withWeapon,
 } from './evolution-progress';
 import { RANKS } from './ranks';
+import {
+  BACTERIA_LOOKS,
+  isPremiumSkin,
+  PREMIUM_SKINS,
+  SKINS,
+  skinCost,
+} from './skins';
 
 function evolution(
   partial: Partial<EvolutionProgress> = {}
@@ -255,6 +267,7 @@ describe('evolution progress', () => {
         equipped: 'toxin-bomb',
         equipCount: 1,
         epoch: 1,
+        skins: [],
       });
     });
 
@@ -309,7 +322,79 @@ describe('evolution progress', () => {
         equipped: null,
         equipCount: 0,
         epoch: 0,
+        skins: [],
       });
+    });
+
+    it('reads the skins bought, free and unknown ones dropped', () => {
+      expect(
+        parseEvolution({ skins: ['chrome', 'slime', 'fur', 'marbles', 7] })
+          .skins
+      ).toEqual(['marbles', 'chrome']);
+    });
+  });
+
+  describe('skins', () => {
+    it('prices the five to buy at 102 strands together, the rest free', () => {
+      expect(PREMIUM_SKINS.reduce((sum, { cost }) => sum + cost, 0)).toBe(102);
+      expect(
+        SKINS.filter(({ cost }) => cost === 0).map(({ id }) => id)
+      ).toEqual(BACTERIA_LOOKS.slice(0, 8));
+      expect(skinCost('slime')).toBe(0);
+      expect(skinCost('chrome')).toBe(30);
+      expect(isPremiumSkin('chrome')).toBe(true);
+      expect(isPremiumSkin('cells')).toBe(false);
+      expect(isPremiumSkin('fur')).toBe(false);
+    });
+
+    it('buys a skin once, never a free one, with the DNA left', () => {
+      const bought = withSkin(EMPTY_EVOLUTION, 'lava');
+      expect(bought.skins).toEqual(['lava']);
+      expect(withSkin(bought, 'lava')).toBe(bought);
+      expect(withSkin(bought, 'slime')).toBe(bought);
+      expect(withSkin(bought, 'marbles').skins).toEqual(['marbles', 'lava']);
+      expect(ownsSkin(bought, 'lava')).toBe(true);
+      expect(ownsSkin(bought, 'slime')).toBe(true);
+      expect(ownsSkin(bought, 'chrome')).toBe(false);
+
+      expect(spentDna(bought)).toBe(16);
+      expect(refundableDna(bought)).toBe(0);
+      expect(canBuySkin(16 + 29, bought, 'chrome')).toBe(false);
+      expect(canBuySkin(16 + 30, bought, 'chrome')).toBe(true);
+      expect(canBuySkin(100, bought, 'lava')).toBe(false);
+      expect(canBuyAnySkin(16 + 11, bought)).toBe(false);
+      expect(canBuyAnySkin(16 + 12, bought)).toBe(true);
+      // A skin is not what the Evolution tile badges.
+      expect(canBuyAnything(16 + 1, bought)).toBe(false);
+    });
+
+    it('keeps the skins through a reset, and across epochs in a merge', () => {
+      const held = withSkin(
+        evolution({ genes: { mitosis: 2 }, weapons: ['toxin-bomb'] }),
+        'galaxy'
+      );
+      const reset = resetEvolution(held);
+      expect(reset.skins).toEqual(['galaxy']);
+      expect(reset.genes).toEqual({});
+      expect(spentDna(reset)).toBe(20);
+
+      const elsewhere = withSkin(evolution({ epoch: 0 }), 'plasma');
+      expect(mergeEvolution(reset, elsewhere).skins).toEqual([
+        'galaxy',
+        'plasma',
+      ]);
+      expect(mergeEvolution(elsewhere, reset).skins).toEqual([
+        'galaxy',
+        'plasma',
+      ]);
+      expect(mergeEvolution(reset, elsewhere).epoch).toBe(1);
+      const same = mergeEvolution(held, withSkin(held, 'plasma'));
+      expect(same.skins).toEqual(['galaxy', 'plasma']);
+      expect(sameEvolution(held, withSkin(held, 'plasma'))).toBe(false);
+      expect(adoptEvolution(reset, elsewhere).skins).toEqual([
+        'galaxy',
+        'plasma',
+      ]);
     });
   });
 
