@@ -4,6 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/bacteria-wars-functions/src",
   "tags": ["app", "type:firebase", "type:functions"],
+  "implicitDependencies": ["bacteria-game-remote"],
   "targets": {
     "build": {
       "executor": "@nx/esbuild:esbuild",
@@ -29,6 +30,15 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.js",
+        "{workspaceRoot}/jest.config.ts",
+        "{workspaceRoot}/.codecov.yml",
+        "{workspaceRoot}/apps/bacteria-game-remote/firestore.indexes.json",
+        "{workspaceRoot}/firebase.bacteria-game-remote.json"
+      ],
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "apps/bacteria-wars-functions/jest.config.ts",
